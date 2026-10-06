@@ -15,7 +15,7 @@ import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import type { Ficha } from './soulProfile/ficha/types';
-import type { EscolaId, RecursoId } from './soulProfile/ficha/types';
+import { escolaSkillSegura, type EscolaSkillId, type RecursoId } from './soulProfile/ficha/types';
 import type { StageSkills } from './soulProfile/ficha/skills';
 import type { Combatant } from './combate/curve';
 import { elementHits } from './combate/curve';
@@ -150,13 +150,12 @@ export function getArenaAttributes(ficha: Ficha): { principal: string; secundari
  * so that each school keeps its OWN neutral win rate (bisection of hp for a fixed dmg, 3200 runs);
  * arena.v3.test.ts (AC3b) pins the 6 archetypes in 40–80% / spread ≤ 20pp, as the old gate did.
  */
-export const ROLE_SHAPE: Record<EscolaId, { hp: number; dmg: number }> = {
+export const ROLE_SHAPE: Record<EscolaSkillId, { hp: number; dmg: number }> = {
   combate_fisico: { hp: 1.07, dmg: 0.85 },
   longo_alcance:  { hp: 0.95, dmg: 1.08 },
   conjuracao:     { hp: 0.93, dmg: 1.1 },
   benca:          { hp: 1.17, dmg: 0.9 },
   maldicao:       { hp: 0.96, dmg: 1.05 },
-  evocacao:       { hp: 1.0,  dmg: 1.0 },
 };
 
 /**
@@ -164,21 +163,21 @@ export const ROLE_SHAPE: Record<EscolaId, { hp: number; dmg: number }> = {
  * no ficha) and the reference build of the school in the balance simulations. Since PR9 the real
  * family comes from `StageSkill.familia` (`familyOfSkill`), new at every stage.
  */
-export const ESCOLA_FAMILY_PADRAO: Record<EscolaId, SpecialFamily> = {
+export const ESCOLA_FAMILY_PADRAO: Record<EscolaSkillId, SpecialFamily> = {
   combate_fisico: 'direct',
   longo_alcance: 'dot',
   conjuracao: 'direct',
   benca: 'heal',
   maldicao: 'defDebuff',
-  evocacao: 'atkBuff',
 };
 
-export function familyOfEscola(escola: EscolaId | undefined): SpecialFamily {
-  return ESCOLA_FAMILY_PADRAO[escola ?? 'combate_fisico'] ?? 'direct';
+export function familyOfEscola(escola: string | undefined): SpecialFamily {
+  // escola do save: a que não é de skill (um `evocacao` antigo, lixo) vira a padrão — nunca indexa a tabela crua.
+  return ESCOLA_FAMILY_PADRAO[escola === undefined ? 'combate_fisico' : escolaSkillSegura(escola)];
 }
 
 /** The family of a special skill: its own `familia` (PR9); without it, the default of its school. */
-export function familyOfSkill(skill: { familia?: SpecialFamily; escolaId?: EscolaId } | undefined | null): SpecialFamily {
+export function familyOfSkill(skill: { familia?: SpecialFamily; escolaId?: string } | undefined | null): SpecialFamily {
   // `familia` vem do save (cache da ficha): só vale se estiver na lista fechada das 7.
   const f = skill?.familia;
   return typeof f === 'string' && (SPECIAL_FAMILIES as readonly string[]).includes(f) ? f : familyOfEscola(skill?.escolaId);
@@ -384,12 +383,12 @@ export interface ArenaPlayerCfg {
   /** From `StageSkill.area` (`'circulo' → 'area'`). */
   area: 'single' | 'area';
   /** School of the BASIC skill: its `ROLE_SHAPE` reshapes HP and the basic hit. Absent = neutral. */
-  escolaBasica?: EscolaId;
+  escolaBasica?: EscolaSkillId;
   /** Absent = neutral element (what the balance sample measures). */
   elements?: ArenaElements;
 }
 
-const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[p.escolaBasica] : null);
+const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[escolaSkillSegura(p.escolaBasica)] : null);
 
 /** The player side of the core: HP reshaped by the school, the family's special, the area. */
 export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
@@ -501,7 +500,7 @@ export interface ArenaRunConfig {
   build: StatWeights;
   family: SpecialFamily;
   area: 'single' | 'area';
-  escolaBasica?: EscolaId;
+  escolaBasica?: EscolaSkillId;
   elements?: ArenaElements;
   /** With the pool the foes' elements are drawn (flavour); without it the matchup is neutral. */
   pool?: BestiaryCreature[];
@@ -585,7 +584,7 @@ export function buildDefaultArenaSkills(): StageSkills {
     elementoId: 'vigor',
     area: { tipo: 'unico' as const }, // combate_fisico: alvo único (Q-AREA)
     elementoNome: { pt: 'Vigor', en: 'Vigor' },
-    escolaId: 'combate_fisico' as EscolaId,
+    escolaId: 'combate_fisico' as EscolaSkillId,
     recursoId: 'furia' as RecursoId,
   };
   return {

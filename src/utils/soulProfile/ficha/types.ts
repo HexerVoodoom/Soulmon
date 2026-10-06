@@ -16,6 +16,26 @@ export type ElementoBaseId = ClassElementId;
 export type EscolaId =
   | 'combate_fisico' | 'longo_alcance' | 'evocacao' | 'conjuracao' | 'benca' | 'maldicao';
 
+/**
+ * As escolas que têm SKILL (básica/especial): todas menos `evocacao`. A evocação segue só como pontos da ficha
+ * (captura de companheiro, talentos do class-system) — nunca é escola de skill, de golpe, de papel da Arena
+ * nem de família do especial (PR9b). Todas as tabelas do combate são indexadas por esta.
+ */
+export type EscolaSkillId = Exclude<EscolaId, 'evocacao'>;
+
+export const ESCOLAS_SKILL: readonly EscolaSkillId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'];
+
+/** A escola padrão de uma skill sem escola válida (a mesma de `escolaDominante` sem pontos). */
+export const ESCOLA_SKILL_PADRAO: EscolaSkillId = 'conjuracao';
+
+/**
+ * A escola de skill de um dado que veio do SAVE: o que não é uma das 5 (um `evocacao` de save antigo, um id
+ * desconhecido, lixo) vira a padrão. Nenhuma tabela do combate é indexada por texto cru do save.
+ */
+export function escolaSkillSegura(id: unknown): EscolaSkillId {
+  return typeof id === 'string' && (ESCOLAS_SKILL as readonly string[]).includes(id) ? (id as EscolaSkillId) : ESCOLA_SKILL_PADRAO;
+}
+
 export type RecursoId = 'mana' | 'fe' | 'furia' | 'soullink' | 'ressonancia';
 
 export type ProfissaoId =

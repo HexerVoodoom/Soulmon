@@ -106,7 +106,7 @@ describe('PR9 — a família do especial é da SKILL (StageSkill.familia)', () =
     expect(familyOfSkill({ escolaId: 'benca' })).toBe(ESCOLA_FAMILY_PADRAO.benca);
     expect(familyOfSkill(undefined)).toBe('direct');
     expect(Object.keys(ESCOLA_FAMILY_PADRAO).sort()).toEqual(
-      ['benca', 'combate_fisico', 'conjuracao', 'evocacao', 'longo_alcance', 'maldicao']);
+      ['benca', 'combate_fisico', 'conjuracao', 'longo_alcance', 'maldicao']);
   });
 });
 

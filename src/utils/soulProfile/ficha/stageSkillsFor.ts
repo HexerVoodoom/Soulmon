@@ -4,6 +4,7 @@
  */
 import { getStageLevel } from '../../../types/progression';
 import type { StageSkills } from './skills';
+import { escolaSkillSegura } from './types';
 import type { FichaStage } from './types';
 
 /** Estágios que a ficha conhece; os dois níveis de bebê do pet caem em `rookie`. */
@@ -20,10 +21,12 @@ export function stageSkillsFor(skills: FichaSkills | undefined | null, evolution
 
 /**
  * PR9: o cache `soulmonSkills` do save é gravado UMA vez; um save anterior ao PR9 guarda skills sem `familia` (nome e
- * efeito da geração antiga). Quando a página do Pet recalcula do perfil local, esse cache velho é trocado pelo novo —
+ * efeito da geração antiga). PR9b: o cache também precisa do ID do nome (`lex`) e de uma escola de skill (um `evocacao`
+ * de save antigo não é mais escola). Quando a página do Pet recalcula do perfil local, esse cache velho é trocado pelo novo —
  * o cache que já tem a família do especial em todos os estágios que carrega fica como está.
  */
 export function skillsTemFamilia(skills: FichaSkills | null | undefined): boolean {
   const pares = skills ? Object.values(skills) : [];
-  return pares.length > 0 && pares.every(p => typeof p?.especial?.familia === 'string');
+  return pares.length > 0 && pares.every(p => typeof p?.especial?.familia === 'string' && !!p.especial.lex
+    && escolaSkillSegura(p.especial.escolaId) === p.especial.escolaId && escolaSkillSegura(p.basica?.escolaId) === p.basica?.escolaId);
 }

@@ -19,8 +19,8 @@
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
 import { attackFx, type AttackFxState } from './attackFxArt';
-import type { EscolaId } from './soulProfile/ficha/types';
-import { nomeEspecialInimigo } from './soulProfile/ficha/nomeEspecial';
+import { escolaSkillSegura } from './soulProfile/ficha/types';
+import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
 import { baseElementLabel } from './soulProfile/essenceLabels';
 import { AREA_FAMILIES, SPECIAL_BUDGET_HITS, type SpecialFamily } from './combate/specials';
 
@@ -105,14 +105,14 @@ export function elementStrikeForm(element: string | undefined | null, role: Skil
 }
 
 /** Skill do jogador (a da ficha) → forma do golpe. Sem escola (ficha ausente), cai no elemento; sem nada, à distância. */
-export function skillStrikeForm(skill: { escolaId?: EscolaId; elementoId?: string } | undefined | null, role: SkillRole): StrikeForm {
-  if (skill?.escolaId) return SCHOOL_STRIKE_FORM[skill.escolaId][role];
+export function skillStrikeForm(skill: { escolaId?: string; elementoId?: string } | undefined | null, role: SkillRole): StrikeForm {
+  if (skill?.escolaId) return SCHOOL_STRIKE_FORM[escolaSkillSegura(skill.escolaId)][role];
   return elementStrikeForm(skill?.elementoId, role);
 }
 
 /** Um lutador para `fighterStrikeForm`: a skill da ficha do papel (se houver) e o elemento dele. */
 export interface StrikeFighter {
-  skill?: { escolaId?: EscolaId } | null;
+  skill?: { escolaId?: string } | null;
   element?: string | null;
 }
 /**
@@ -120,13 +120,13 @@ export interface StrikeFighter {
  * da `StageSkill` decide (igual na Arena, Masmorra, Pesadelo e Duelo); sem ficha, o ELEMENTO.
  */
 export function fighterStrikeForm(fighter: StrikeFighter, role: SkillRole): StrikeForm {
-  if (fighter.skill?.escolaId) return SCHOOL_STRIKE_FORM[fighter.skill.escolaId][role];
+  if (fighter.skill?.escolaId) return SCHOOL_STRIKE_FORM[escolaSkillSegura(fighter.skill.escolaId)][role];
   return elementStrikeForm(fighter.element, role);
 }
 
 /** Compat: a skill BÁSICA da escola. */
-export function strikeKindForSchool(escola: EscolaId | undefined): StrikeForm {
-  return escola ? SCHOOL_STRIKE_FORM[escola].basica : ELEMENT_STRIKE_FALLBACK.basica;
+export function strikeKindForSchool(escola: string | undefined): StrikeForm {
+  return escola ? SCHOOL_STRIKE_FORM[escolaSkillSegura(escola)].basica : ELEMENT_STRIKE_FALLBACK.basica;
 }
 
 /**
@@ -146,7 +146,10 @@ export function specialLabel(isPt: boolean, skill?: { nome: { pt: string; en: st
  * inimigos do PvE o especial é sempre dano direto. Fica no lazy `nomeEspecial`: sem
  * rede, sem IA.
  */
-export function foeSpecialLabel(isPt: boolean, element: string | undefined | null, seed: string, familia?: string | null): string {
+export function foeSpecialLabel(isPt: boolean, element: string | undefined | null, seed: string, familia?: string | null, lex?: unknown): string {
+  // PvP: o servidor publica o ID do nome (família + índice + formato + elementos); recomposto aqui é o MESMO nome que o dono vê.
+  const exato = lex ? nomeDeLexico({ familia, lex }) : null;
+  if (exato) return isPt ? exato.pt : exato.en;
   const id = fxElementId(element) === FX_FALLBACK_ELEMENT ? 'vigor' : fxElementId(element);
   const nome = nomeEspecialInimigo({ pt: baseElementLabel(id, true), en: baseElementLabel(id, false) }, seed, familia);
   return isPt ? nome.pt : nome.en;

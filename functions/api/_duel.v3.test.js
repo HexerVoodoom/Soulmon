@@ -100,8 +100,11 @@ describe('a ficha vem do SAVE, e só números e ids de uma lista fechada saem de
     expect(duelSide({ ...base, soulmonSkills: { rookie: { especial: { escolaId: 'benca' } } } }).special.family).toBe('direct'); // outro estágio
     expect(duelSide(base).special.family).toBe('direct');
     expect(duelSide(null).combatant.level).toBe(1);
-    expect(duelSide({ ...base, soulmonSkills: skills('benca') }).fx).toEqual({ basica: 'combate_fisico', especial: 'benca', familia: 'heal' });
-    expect(duelSide(base).fx).toEqual({ basica: null, especial: null, familia: null });
+    expect(duelSide({ ...base, soulmonSkills: skills('benca') }).fx).toEqual({ basica: 'combate_fisico', especial: 'benca', familia: 'heal', lex: null });
+    expect(duelSide(base).fx).toEqual({ basica: null, especial: null, familia: null, lex: null });
+    // PR9b: `evocacao` já não é escola de skill — um save antigo com ela é "sem skill" (família padrão `direct`), nunca um erro
+    expect(duelSide({ ...base, soulmonSkills: skills('evocacao') }).special.family).toBe('direct');
+    expect(duelSide({ ...base, soulmonSkills: skills('evocacao') }).fx).toEqual({ basica: 'combate_fisico', especial: null, familia: null, lex: null });
     // PR9: a `familia` da skill vale (lista fechada das 7); lixo cai na padrão da escola
     const comFamilia = (familia) => ({ champion: { basica: { escolaId: 'combate_fisico' }, especial: { escolaId: 'benca', familia } } });
     expect(duelSide({ ...base, soulmonSkills: comFamilia('spdBuff') }).special.family).toBe('spdBuff');
