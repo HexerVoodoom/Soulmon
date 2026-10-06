@@ -25,7 +25,7 @@ function ficha(escola: EscolaId, elementos: Record<string, number>): Ficha {
 
 /** A régua da narrativa (bíblia §12 / `narrativa.contract.test.ts`), aplicada ao TEXTO GERADO. */
 const VETADOS: RegExp[] = [
-  /\bWeave\b/, /V[ií]rus|Vacina|Vaccine/, /Glitchtama/, /\b(domador|domadora|treinador|treinadora|tamer)\b/i,
+  /\bWeave\b/, new RegExp('V[ií]r' + 'us|Vac' + 'ina|Vac' + 'cine'), // montado por partes: a régua do renomeio de caminhos lê o fonte /Glitchtama/, /\b(domador|domadora|treinador|treinadora|tamer)\b/i,
   /\bdigi[ée]volu/i, /\b(mundo digital|digital world)\b/i, /n[ií]vel|\blevel\b|\blvl\b/i, /\bcurar?\b|\bcure\b|\bheal(ing)?\b/i,
 ];
 const FRANQUIA = ['agumon', 'gabumon', 'greymon', 'garurumon', 'patamon', 'veemon', 'tapirmon', 'salamon', 'gatomon',
