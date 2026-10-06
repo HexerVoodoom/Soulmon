@@ -44,7 +44,8 @@ import {
   getProfile, putProfile,
 } from './_profile.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
-import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS } from './_duel.js';
+import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
+import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -54,11 +55,35 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
+/** PR13 (BAIXO B1): atributo publico = numero FINITO e nao negativo (`Infinity`/`1e999` virava `null` no JSON). */
+const attrFinito = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
 const MATCHES_PER_DAY = 5;
 /** Prazo da marca `closed:<season>` ("já premiei"). Ver o fechamento de season. */
 export const CLOSED_SEASON_TTL = 86400 * 400;
 
 const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
+
+/**
+ * Serializa `duelStart`/`match` POR CONTA (PR13, ALTO-1). Sem isto, 3 `duelStart` em paralelo liam o MESMO
+ * `matchesToday`, todos passavam e devolviam 3 sementes por uma cota. A fila encadeia as chamadas da mesma `id` no
+ * isolate: a 2a le o rank que a 1a ja gravou (com o duelo aberto) e e recusada.
+ * ⚠️ LIMITE HONESTO: e por ISOLATE. O KV nao tem compare-and-set e e eventualmente consistente; cliente que espalhe as
+ * chamadas por isolates/colos diferentes ainda abre uma janela. Fecha-la de verdade exige Durable Object por conta
+ * (nao provisionado). Esta fila fecha o cenario do relatorio (rajada paralela da mesma conta no mesmo ponto de presenca).
+ */
+const duelLocks = new Map();
+async function withDuelLock(key, fn) {
+  const prev = duelLocks.get(key) || Promise.resolve();
+  let release = () => {};
+  const gate = new Promise(r => { release = () => r(undefined); });
+  const tail = prev.then(() => gate);
+  duelLocks.set(key, tail);
+  await prev;
+  try { return await fn(); } finally {
+    release();
+    if (duelLocks.get(key) === tail) duelLocks.delete(key);
+  }
+}
 
 // ── Teto de custo ────────────────────────────────────────────────────────────
 // Duas classes, porque o custo delas é diferente em uma ordem de grandeza:
@@ -331,22 +356,34 @@ async function handleCommunity({ request, env }) {
      mora no PERFIL para sobreviver à virada da season). Dono único da
      contabilidade: vitória, derrota e desistência passam por aqui, senão a
      desistência viraria um caminho barato que não paga o mesmo que perder. */
-  const settleMatch = async ({ id, oppSave, me, opp, myRank, outcome }) => {
+  const settleMatch = async ({ id, oppSave, me, opp, myRank, outcome, sides }) => {
     const season = currentSeason();
+    // Resultado sem ganho: o que o cliente usa para NAO pagar Honra de vitoria (`honorFactor`).
+    const nada = { gain: 0, factor: 1 };
     // EMPATE (combate v3, §2.4/§2.19): resultado válido, a partida conta como jogada (a cota já foi gasta) e
     // NENHUM lado ganha ou perde pontos, vitória, derrota nem Honra.
-    if (outcome === 'draw') { await putRank(env, season, id, myRank); return; }
+    if (outcome === 'draw') { await putRank(env, season, id, myRank); return nada; }
     const won = outcome === 'win';
-    myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
+    // PR13 (ALTO-2): rendimento decrescente. Levels da ficha CONGELADA (`sides`), nunca do corpo; sem ficha = fator 1.
+    const lvMe = sides?.me?.combatant?.level, lvOpp = sides?.opp?.combatant?.level;
+    const pairs = myRank.pairs && typeof myRank.pairs === 'object' ? myRank.pairs : (myRank.pairs = {});
+    const par = oppSave ? (pairs[oppSave] && typeof pairs[oppSave] === 'object' ? pairs[oppSave] : (pairs[oppSave] = { w: 0, l: 0 })) : { w: 0, l: 0 };
+    let mine = nada;
+    if (won) { mine = ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, par.w); par.w += 1; }
+    // Quem defende e vence (o desafiante perdeu) tambem rende menos contra o mesmo desafiante no dia / muito abaixo.
+    let theirs = nada;
+    if (!won && oppSave && opp) { theirs = ganhoDePontos(HONRA_PONTOS_DEFESA, lvOpp, lvMe, par.l); par.l += 1; }
+    myRank.points = Math.max(0, myRank.points + (won ? mine.gain : -8));
     if (won) myRank.wins += 1; else myRank.losses += 1;
     await putRank(env, season, id, myRank);
-    if (!oppSave || !opp) return;
+    if (!oppSave || !opp) return mine;
     const oppRank = await getRank(env, season, oppSave);
-    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
+    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : theirs.gain));
     if (won) oppRank.losses += 1; else oppRank.wins += 1;
     await putRank(env, season, oppSave, oppRank);
-    if (won) { me.lifetimePoints = (me.lifetimePoints || 0) + 20; await putProfile(env, id, me); }
-    else { opp.lifetimePoints = (opp.lifetimePoints || 0) + 10; await putProfile(env, oppSave, opp); }
+    if (won) { me.lifetimePoints = (me.lifetimePoints || 0) + mine.gain; await putProfile(env, id, me); }
+    else { opp.lifetimePoints = (opp.lifetimePoints || 0) + theirs.gain; await putProfile(env, oppSave, opp); }
+    return mine;
   };
 
   /* DESISTÊNCIA = DERROTA. Um duelo aberto (`myRank.pending`) que não chegou ao
@@ -359,7 +396,7 @@ async function handleCommunity({ request, env }) {
     if (!pend) return false;
     myRank.pending = null;
     const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
-    await settleMatch({ id, oppSave: pend.oppSave, me, opp, myRank, outcome: 'loss' });
+    await settleMatch({ id, oppSave: pend.oppSave, me, opp, myRank, outcome: 'loss', sides: pend.sides });
     return true;
   };
 
@@ -372,6 +409,12 @@ async function handleCommunity({ request, env }) {
     try {
       const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
       if (!value) return null;
+      // PR13 (ALTO-3): save acima do teto = "este lado nao luta", ANTES do parse. Um save de 5 MB (o teto da gravacao) parseado
+      // a cada listagem de oponentes estoura a CPU do worker, e `catch` nao pega estouro de CPU.
+      if (typeof value !== 'string' || value.length > DUEL_SAVE_MAX_CHARS) {
+        console.warn('community: save grande demais para ser oponente', { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
+        return null;
+      }
       const state = JSON.parse(value);
       if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
       return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
@@ -454,7 +497,7 @@ async function handleCommunity({ request, env }) {
       pvpEnabled,
       publicHidden,
       attrs: body.attrs && typeof body.attrs === 'object'
-        ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 }
+        ? { power: attrFinito(body.attrs.power), harmony: attrFinito(body.attrs.harmony), benevolence: attrFinito(body.attrs.benevolence) }
         : (prev.attrs || { power: 0, harmony: 0, benevolence: 0 }),
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : (prev.tasksDone || 0),
       friends: prev.friends || [],
@@ -617,7 +660,7 @@ async function handleCommunity({ request, env }) {
     if (!me?.pvpEnabled) return { res: json({ error: 'pvp disabled' }, 403) };
     if (!opp?.pvpEnabled || isHidden(opp)) return { res: json({ error: 'opponent unavailable' }, 404) };
     const myRank = await getRank(env, currentSeason(), id);
-    if (myRank.day !== today()) { myRank.day = today(); myRank.matchesToday = 0; }
+    if (myRank.day !== today()) { myRank.day = today(); myRank.matchesToday = 0; myRank.pairs = {}; }
     return { opponentId, oppSave, me, opp, myRank };
   };
 
@@ -626,10 +669,19 @@ async function handleCommunity({ request, env }) {
      viesse na lista de oponentes, um cliente editado simularia os três e
      escolheria o que vence; assim ela só existe depois que a partida já foi
      gasta. Duelo anterior que ficou aberto vira derrota antes de abrir o novo. */
-  if (action === 'duelStart' && method === 'POST') {
+  if (action === 'duelStart' && method === 'POST') return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, myRank } = ctx;
+    // PR13 (ALTO-1): duelo ABERTO e ainda valido = nao abre outro. Mesmo oponente: devolve o MESMO duelo (idempotente,
+    // sem gastar partida nem sortear semente nova). Outro oponente: 409. Passou de `DUEL_PENDING_MS` (ou ficha antiga
+    // sem congelamento): cai no caminho de sempre, que fecha o velho como derrota e abre o novo.
+    const aberto = myRank.pending;
+    if (aberto && aberto.sides?.me && aberto.sides?.opp && Date.now() - (aberto.at || 0) <= DUEL_PENDING_MS) {
+      const left = Math.max(0, MATCHES_PER_DAY - myRank.matchesToday);
+      if (aberto.opp === opponentId) return json({ seed: aberto.seed, me: aberto.sides.me, opp: aberto.sides.opp, matchesLeft: left });
+      return json({ error: 'duel open', matchesLeft: left, retryAfter: Math.max(1, Math.ceil((DUEL_PENDING_MS - (Date.now() - (aberto.at || 0))) / 1000)) }, 409);
+    }
     // A ficha dos DOIS lados sai do SAVE e é CONGELADA aqui (`pending.sides`): o `match` luta com ela, não relê o
     // save. Sem o congelamento, com a semente na mão o cliente editaria o save (família do especial, level) entre
     // as duas chamadas até a luta virar vitória. Falhou aqui = nada foi gasto (a cota só cai depois).
@@ -649,9 +701,9 @@ async function handleCommunity({ request, env }) {
       me: sides.me, opp: sides.opp,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
     });
-  }
+  });
 
-  if (action === 'match' && method === 'POST') {
+  if (action === 'match' && method === 'POST') return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
@@ -665,7 +717,7 @@ async function handleCommunity({ request, env }) {
     // Desistir (o cliente avisa) ou estourar o prazo do duelo = derrota, sem luta.
     if (open && (body.forfeit === true || Date.now() - (open.at || 0) > DUEL_PENDING_MS)) {
       myRank.pending = null;
-      await settleMatch({ id, oppSave, me, opp, myRank, outcome: 'loss' });
+      await settleMatch({ id, oppSave, me, opp, myRank, outcome: 'loss', sides: open.sides });
       return json({
         won: false, draw: false, outcome: 'loss', forfeit: true, myScore: 0, oppScore: 100,
         points: myRank.points,
@@ -705,7 +757,7 @@ async function handleCommunity({ request, env }) {
        resultado: só os toques por balde entram, higienizados e com teto; a ficha e a semente são do servidor. */
     const duel = simulateDuel({ me: sides.me, opp: sides.opp, seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === 'me' ? 'win' : duel.winner === 'opp' ? 'loss' : 'draw';
-    await settleMatch({ id, oppSave, me, opp, myRank, outcome });
+    const settled = await settleMatch({ id, oppSave, me, opp, myRank, outcome, sides });
 
     return json({
       won: outcome === 'win',
@@ -714,11 +766,14 @@ async function handleCommunity({ request, env }) {
       myScore: Math.round(100 * duel.hpMe),
       oppScore: Math.round(100 * duel.hpOpp),
       points: myRank.points,
+      // PR13: o que a vitoria rendeu de fato e o fator (0..1) que o app aplica a Honra; derrota/empate = 0 e 1.
+      gain: settled.gain,
+      honorFactor: outcome === 'win' ? settled.factor : 1,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
       duel: { events: duel.events, me: sides.me, opp: sides.opp },
     });
-  }
+  });
 
   if ((action === 'rank' || action === 'seasonResult') && method === 'GET') {
     const season = url.searchParams.get('season') || currentSeason();

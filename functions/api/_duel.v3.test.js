@@ -30,13 +30,13 @@ describe('AC3. teto S1: 1 level por dia de servidor desde a 1ª gravação; o va
   const now = 1_800_000_000_000;
   const forjado = { evolutionStage: 'ultra-power', perfectDays: 999, powerPoints: 50 };
 
-  it('maxLevelFor: 1 + dias de servidor; sem f vale o teto do estágio; relógio no futuro conta 0 dias', () => {
+  it('maxLevelFor: 1 + dias de servidor; sem f vale o piso (level 1); relógio no futuro conta 0 dias', () => {
     expect(maxLevelFor(now, now)).toBe(1);
     expect(maxLevelFor(now - 3 * DUEL_DAY_MS, now)).toBe(4);
     expect(maxLevelFor(now - 3 * DUEL_DAY_MS + 1, now)).toBe(3);
     expect(maxLevelFor(now - 400 * DUEL_DAY_MS, now)).toBe(401);
     expect(maxLevelFor(now + 5 * DUEL_DAY_MS, now)).toBe(1);
-    for (const lixo of [undefined, null, 0, -1, NaN, 'x', Infinity, {}]) expect(maxLevelFor(lixo, now), String(lixo)).toBe(MAX_LEVEL);
+    for (const lixo of [undefined, null, 0, -1, NaN, 'x', Infinity, {}]) expect(maxLevelFor(lixo, now), String(lixo)).toBe(1);
   });
 
   it('um save com perfectDays 999 e estágio ultra, com f de 3 dias atrás, luta com level ≤ 4 (limitado, não rejeitado)', () => {

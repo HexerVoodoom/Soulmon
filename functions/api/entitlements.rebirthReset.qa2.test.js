@@ -26,6 +26,8 @@ const { onRequestPost } = await import('./entitlements.js');
 const { ENT_PREFIX, REBIRTH_SPRITE_RESET_FIELD } = await import('./_entitlements.js');
 
 const ID = 'a'.repeat(32);
+// PR13: o servidor tambem confere o portao (conta paga + Vinculo 12); este XP e folgado para o Vinculo 12.
+const XP_VINCULO_12 = 60000;
 const REBIRTH = { criatura: 'lobo de brasa', escola: 'arcano', elemento: 'fogo', at: '2026-09-22T10:00:00.000Z', fromStage: 'ultra' };
 
 function fakeKV(seed = {}) {
@@ -43,7 +45,7 @@ const ENT_BASE = {
   aiLifetime: { sprite: 20 }, aiForms: { 'mega-power': 3 },
 };
 
-const env = ({ ent = ENT_BASE, save = { petName: 'Bolha', rebirth: REBIRTH } } = {}) => ({
+const env = ({ ent = ENT_BASE, save = { petName: 'Bolha', rebirth: REBIRTH, totalXP: XP_VINCULO_12 } } = {}) => ({
   DIGIAPP_SAVES: fakeKV({
     [ENT_PREFIX + ID]: JSON.stringify(ent),
     ...(save ? { [ID]: JSON.stringify(save) } : {}),
@@ -122,11 +124,32 @@ describe('#62 — renascer zera o teto vitalício de sprite', () => {
     expect(lerEnt(e).aiLifetime.sprite).toBe(5);
   });
 
-  it('conta sem entitlement ainda assim fica marcada — o reset não é reutilizável depois', async () => {
-    const e = { DIGIAPP_SAVES: fakeKV({ [ID]: JSON.stringify({ rebirth: REBIRTH }) }) };
-    expect((await chamar(e)).status).toBe(200);
-    const ent = JSON.parse(e.DIGIAPP_SAVES.store.get(ENT_PREFIX + ID));
-    expect(ent.aiLifetime.sprite).toBe(0);
-    expect(ent[REBIRTH_SPRITE_RESET_FIELD]).toBeGreaterThan(0);
+  it('conta SEM entitlement (gratis) não passa o portão: 403 e nada é gravado (PR13)', async () => {
+    const e = { DIGIAPP_SAVES: fakeKV({ [ID]: JSON.stringify({ rebirth: REBIRTH, totalXP: XP_VINCULO_12 }) }) };
+    const res = await chamar(e);
+    expect(res.status).toBe(403);
+    expect((await res.json()).reason).toBe('not-paid');
+    expect(e.DIGIAPP_SAVES.store.has(ENT_PREFIX + ID)).toBe(false);
+  });
+});
+
+describe('PR13 (MEDIO-4): o portão do Renascimento vale no servidor', () => {
+  it('conta grátis com `state.rebirth` forjado: 403 not-paid, o contador de sprite não muda', async () => {
+    const e = env({ ent: { ...ENT_BASE, tier: 'demo' } });
+    const res = await chamar(e);
+    expect(res.status).toBe(403);
+    expect((await res.json()).reason).toBe('not-paid');
+    expect(lerEnt(e).aiLifetime.sprite).toBe(20);
+  });
+  it('conta paga com Vínculo abaixo do 12: 403 low-bond, o contador não muda', async () => {
+    const e = env({ save: { rebirth: REBIRTH, totalXP: 100 } });
+    const res = await chamar(e);
+    expect(res.status).toBe(403);
+    expect((await res.json()).reason).toBe('low-bond');
+    expect(lerEnt(e).aiLifetime.sprite).toBe(20);
+  });
+  it('conta paga com Vínculo 12 e renascimento: passa (200)', async () => {
+    const res = await chamar(env());
+    expect(res.status).toBe(200);
   });
 });

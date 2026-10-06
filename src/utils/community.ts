@@ -144,6 +144,10 @@ export interface MatchResult {
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
   forfeit?: boolean;
+  /** PR13: quanto a vitória rendeu em pontos (0 em derrota/empate). O servidor reduz o ganho contra oponente bem abaixo do seu level e contra o mesmo oponente repetido no dia. */
+  gain?: number;
+  /** PR13: fator (0..1) que o app aplica à Honra de VITÓRIA (1 = inteira). Derrota e empate: 1 e nada muda. Ausente (servidor antigo) = 1. */
+  honorFactor?: number;
 }
 /** Abre o duelo: gasta a partida do dia e devolve a SEMENTE, sorteada no
  *  servidor só depois disso (o cliente nunca a vê antes de se comprometer), e a FICHA dos dois lados, derivada

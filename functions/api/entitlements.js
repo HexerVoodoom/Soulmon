@@ -58,6 +58,8 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv } from './_kv.js';
+import { bondLevelFor } from './_bond.js';
+import { gateFor } from './_gates.js';
 import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
 
 /**
@@ -217,6 +219,14 @@ export async function onRequestPost({ request, env }) {
       && typeof r.at === 'string' && r.at.length > 0
       && typeof r.fromStage === 'string' && r.fromStage.length > 0;
     if (!renasceu) return json({ ok: false, reason: 'rebirth-not-found' }, 409);
+
+    // PR13 (MEDIO-4): o PORTAO do Renascimento tambem vale no servidor — conta PAGA + Vinculo (`GATES.renascimento`), as mesmas
+    // duas regras de `rebirthRefusal` no app. Antes bastava `state.rebirth` forjado no save para zerar `aiLifetime.sprite` de graca.
+    // O tier vem do entitlement do servidor (ou do admin pelo token), nunca do save; o Vinculo, do `totalXP` do save (limite
+    // honesto de sempre: o cliente escreve o save). Conta que renasceu legitimamente passa nas duas.
+    const tierAtual = admin ? 'paid' : publicView(await readEntitlement(env, saveId)).tier;
+    if (tierAtual !== 'paid') return json({ ok: false, reason: 'not-paid' }, 403);
+    if (!gateFor('renascimento', bondLevelFor(state?.totalXP)).open) return json({ ok: false, reason: 'low-bond' }, 403);
 
     const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
     // `jaFeito` não é erro: retry de rede e duplo toque respondem 200 igual,

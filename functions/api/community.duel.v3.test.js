@@ -130,11 +130,11 @@ describe('AC3. nenhum dado do cliente decide o resultado', () => {
     expect(lista.json.opponents.every(o => o.duel.level <= 4)).toBe(true);
   });
 
-  it('save válido com a 1ª gravação antiga passa intacto; save SEM f (anterior à regra) vale o teto do estágio', async () => {
+  it('save válido com a 1ª gravação antiga passa intacto; save SEM f (anterior à regra) luta no level 1 até a 1ª gravação (PR13)', async () => {
     const env = mkEnv({ opp: { evolutionStage: 'mega-power', perfectDays: 12 } });
     env.DIGIAPP_SAVES.meta.set(OPP, { t: Date.now() }); // sem f
     const r = await call(env, 'duelStart', { opponentId: PID[OPP] });
-    expect(r.json.opp.combatant.level).toBe(30); // mega: 12 dias dariam o level 34, mas o teto do estágio é 30
+    expect(r.json.opp.combatant.level).toBe(1); // sem `f` o teto S1 e o piso (antes era o teto do estágio, 30)
   });
 
   it('toque forjado não rende mais que o teto: 999 por balde resolve IGUAL ao teto por balde', async () => {
@@ -214,21 +214,32 @@ describe('AC5. o empate é um resultado válido, sem pontos para ninguém', () =
     expect(oppProf.lifetimePoints ?? 0).toBe(0);
   });
 
-  it('a vitória e a derrota seguem pagando como antes (+20/−8, o oponente −4/+10)', async () => {
-    const env = mkEnv({ me: { evolutionStage: 'mega-power', perfectDays: 9 } }); // level 31+ contra um rookie: vitória certa
-    env.DIGIAPP_SAVES.meta.set(ME, { t: Date.now(), f: Date.now() - 400 * DUEL_DAY_MS });
-    await call(env, 'duelStart', { opponentId: PID[OPP] });
+  /* Procura uma semente que dá o resultado pedido para a ficha que o duelStart devolveu e a grava no duelo aberto. */
+  const forcarResultado = (env, duelo, alvo) => {
+    for (let seed = 1; seed < 400; seed++) {
+      if (simulateDuel({ me: duelo.me, opp: duelo.opp, seed, taps: [] }).winner === alvo) { setSeed(env, seed); return; }
+    }
+    throw new Error('sem semente para ' + alvo);
+  };
+
+  it('a vitória e a derrota seguem pagando como antes entre iguais (+20/−8, o oponente −4/+10)', async () => {
+    const env = mkEnv();
+    const d = await call(env, 'duelStart', { opponentId: PID[OPP] });
+    forcarResultado(env, d.json, 'me');
     const r = await call(env, 'match', { opponentId: PID[OPP], taps: [] });
     expect(r.json.outcome).toBe('win');
     expect(r.json.draw).toBe(false);
+    expect(r.json.gain).toBe(20);
+    expect(r.json.honorFactor).toBe(1);
     expect(rank(env).points).toBe(20);
     expect(rank(env).wins).toBe(1);
     expect(rankDe(env, OPP).losses).toBe(1);
-    const env2 = mkEnv({ opp: { evolutionStage: 'mega-power', perfectDays: 9 } });
-    env2.DIGIAPP_SAVES.meta.set(OPP, { t: Date.now(), f: Date.now() - 400 * DUEL_DAY_MS });
-    await call(env2, 'duelStart', { opponentId: PID[OPP] });
+    const env2 = mkEnv();
+    const d2 = await call(env2, 'duelStart', { opponentId: PID[OPP] });
+    forcarResultado(env2, d2.json, 'opp');
     const r2 = await call(env2, 'match', { opponentId: PID[OPP], taps: [] });
     expect(r2.json.outcome).toBe('loss');
+    expect(r2.json.gain).toBe(0);
     expect(rank(env2).losses).toBe(1);
     expect(rankDe(env2, OPP).wins).toBe(1);
     expect(rankDe(env2, OPP).points).toBe(10);
@@ -280,6 +291,7 @@ describe('duelo — desistir é perder (a regra antiga, no motor novo)', () => {
   it('fechar o app (duelo aberto) vira derrota na próxima abertura', async () => {
     const env = mkEnv();
     await call(env, 'duelStart', { opponentId: PID[OPP] });
+    mexerNoRank(env, rec => { rec.pending.at = Date.now() - DUEL_PENDING_MS - 1000; }); // o prazo do duelo aberto passou
     await call(env, 'duelStart', { opponentId: PID[OPP2] });
     const r = rank(env);
     expect(r.losses).toBe(1);
