@@ -23,6 +23,7 @@ import { escolaSkillSegura } from './soulProfile/ficha/types';
 import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
 import { baseElementLabel } from './soulProfile/essenceLabels';
 import { AREA_FAMILIES, SPECIAL_BUDGET_HITS, type SpecialFamily } from './combate/specials';
+import type { FighterFx } from './combate/fight';
 
 export type StageActionKind = 'melee' | 'ranged' | 'special';
 
@@ -318,13 +319,25 @@ export const FAMILY_STATUS: Readonly<Record<SpecialFamily, FamilyStatus | null>>
   defDebuff: { kind: 'debuff', variant: 'def', target: 'foe' },
   spdBuff: { kind: 'buff', variant: 'spd', target: 'self' },
 };
-/** Os efeitos que NENHUMA família alcança hoje (Q-FX1, decisão §2.13: prontos, inalcançáveis até a mecânica existir). */
+/**
+ * PR16 (decisão do dono): o debuff de DEFESA da escola `maldicao` mostra o selo/glifo/rótulo de MALDIÇÃO. É só APRESENTAÇÃO:
+ * a mecânica segue sendo a família `defDebuff` do núcleo (maldição como mecânica própria continua inexistente) e o balanço
+ * não muda. A escola vem da skill (PvE) ou do `fx` publicado (Duelo); sem escola, vale a família sozinha.
+ */
+export const CURSE_SCHOOL = 'maldicao';
+export function isCurseSpecial(family: SpecialFamily | null | undefined, escola: string | null | undefined): boolean {
+  return family === 'defDebuff' && escola === CURSE_SCHOOL;
+}
+const CURSE_STATUS: FamilyStatus = { kind: 'maldicao', target: 'foe' };
+
+/** Os efeitos que NENHUMA família/escola alcança hoje (Q-FX1: `hot` pronto, inalcançável até a mecânica existir). */
 export const UNREACHABLE_STATUS_FX: readonly StatusFxKind[] = STATUS_FX_KINDS.filter(
-  (k) => !Object.values(FAMILY_STATUS).some((f) => f?.kind === k),
+  (k) => k !== CURSE_STATUS.kind && !Object.values(FAMILY_STATUS).some((f) => f?.kind === k),
 );
 
-/** O efeito que uma família deixa (ou `null`). */
-export function statusFxOfFamily(family: SpecialFamily | null | undefined): FamilyStatus | null {
+/** O efeito que uma família deixa (ou `null`); com a `escola` do especial, o debuff da maldição vira o selo de MALDIÇÃO. */
+export function statusFxOfFamily(family: SpecialFamily | null | undefined, escola?: string | null): FamilyStatus | null {
+  if (isCurseSpecial(family, escola)) return CURSE_STATUS;
   return family ? FAMILY_STATUS[family] ?? null : null;
 }
 
@@ -357,9 +370,9 @@ export function emptyStatusBoard(nFoes: number): StatusBoard {
 /** Conjurou o especial: põe o efeito em quem carrega (o próprio conjurador, o alvo único ou todos os alvos da área). */
 export function castStatus(
   board: StatusBoard,
-  c: { caster: number; family: SpecialFamily; power: number; area: boolean; targets: readonly number[] },
+  c: { caster: number; family: SpecialFamily; power: number; area: boolean; targets: readonly number[]; escola?: string | null },
 ): StatusBoard {
-  const fam = FAMILY_STATUS[c.family];
+  const fam = statusFxOfFamily(c.family, c.escola);
   if (!fam) return board;
   const turns = statusTurnsFor(c.family, c.power);
   const holders = fam.target === 'self' ? [c.caster] : (c.area && AREA_FAMILIES.includes(c.family) ? c.targets : c.targets.slice(0, 1));
@@ -389,6 +402,40 @@ export function tickStatus(board: StatusBoard, ev: { kind: 'attack' | 'tick'; wh
     .filter((e) => e.turns > 0));
 }
 
+/** Os efeitos cujos turnos o NÚCLEO conta de verdade (PR16). `cura` não tem contador (é instantânea): segue na aproximação. */
+const REAL_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'escudo'];
+const FX_EPS = 1e-9;
+/** Turnos que faltam de um contador do núcleo: o que sobra (mesmo fracionado) ainda vale um golpe. */
+const left = (x: number): number => (x > FX_EPS ? Math.max(1, Math.ceil(x - FX_EPS)) : 0);
+
+/**
+ * PR16: troca, em cada lutador, os efeitos que o núcleo conta (reforço, debuff/maldição, DoT, escudo) pelos CONTADORES
+ * REAIS que ele expôs no evento (`fx`, índice = casa do quadro). Só `cura` continua na aproximação. Sem `fx` (save/teste
+ * que não pediu) devolve o quadro intacto: a aproximação antiga vale. `down` = quem caiu (limpo); `curseOn(h)` diz se o
+ * debuff que `h` carrega veio de um especial de MALDIÇÃO (selo próprio, mesma mecânica).
+ */
+export function withRealFx(
+  board: StatusBoard,
+  fx: readonly FighterFx[] | null | undefined,
+  down: readonly number[] = [],
+  curseOn: (holder: number) => boolean = () => false,
+): StatusBoard {
+  if (!fx) return board;
+  return board.map((list, h) => {
+    if (down.includes(h)) return [];
+    const keep = list.filter((e) => !REAL_KINDS.includes(e.kind));
+    const f = fx[h];
+    if (!f) return keep;
+    const real: BoardEntry[] = [];
+    if (f.nAtk > FX_EPS) real.push({ kind: 'buff', variant: 'atk', turns: left(f.nAtk), source: h });
+    if (f.nSpd > FX_EPS) real.push({ kind: 'buff', variant: 'spd', turns: left(f.nSpd), source: h });
+    if (f.nVuln > FX_EPS) real.push(curseOn(h) ? { kind: 'maldicao', turns: left(f.nVuln), source: -1 } : { kind: 'debuff', variant: 'def', turns: left(f.nVuln), source: -1 });
+    if (f.dot > 0) real.push({ kind: 'dot', turns: f.dot, source: -1 });
+    if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', turns: left(f.shieldHits), source: h });
+    return [...keep, ...real];
+  });
+}
+
 /** Quem caiu leva os efeitos embora (e o que veio dele e dependia dos golpes dele acaba junto, menos o escudo). */
 export function clearHolders(board: StatusBoard, down: readonly number[]): StatusBoard {
   return board.map((l, h) => (down.includes(h) ? [] : l.filter((e) => !down.includes(e.source) || e.kind === 'escudo')));
@@ -407,19 +454,30 @@ export function stageStatusOf(entries: readonly BoardEntry[] | undefined): Stage
 export function duelStatusBoard(
   events: readonly { readonly kind: 'attack' | 'cast' | 'tick' | 'ko'; readonly side: 0 | 1 }[],
   upTo: number,
-  specials: readonly [{ family: SpecialFamily; power: number } | null, { family: SpecialFamily; power: number } | null],
+  specials: readonly [DuelSpecial | null, DuelSpecial | null],
+  /** PR16: o rastro de contadores reais (um par por evento, de `simulatePvp`). Sem ele, a aproximação antiga. */
+  fxTrace?: readonly (readonly FighterFx[])[] | null,
 ): StatusBoard {
   let board = emptyStatusBoard(1);
+  const down: number[] = [];
   for (let i = 0; i < Math.min(upTo, events.length); i++) {
     const e = events[i];
     if (e.kind === 'cast') {
       const sp = specials[e.side];
-      if (sp) board = castStatus(board, { caster: e.side, family: sp.family, power: sp.power, area: false, targets: [1 - e.side] });
+      if (sp) board = castStatus(board, { caster: e.side, family: sp.family, power: sp.power, area: false, targets: [1 - e.side], escola: sp.escola });
     } else if (e.kind === 'ko') {
+      down.push(e.side);
       board = clearHolders(board, [e.side]);
     } else {
       board = tickStatus(board, { kind: e.kind, who: e.side });
     }
   }
+  const n = Math.min(upTo, events.length);
+  // o quadro real vale no último evento aplicado; o efeito que veio de uma maldição mostra o selo de maldição
+  if (fxTrace && n > 0 && fxTrace[n - 1]) {
+    return withRealFx(board, fxTrace[n - 1], down, (h) => isCurseSpecial(specials[1 - h]?.family, specials[1 - h]?.escola));
+  }
   return board;
 }
+/** O especial de um lado do Duelo: família + poder do núcleo e a escola (lista fechada) que decide o selo. */
+export interface DuelSpecial { family: SpecialFamily; power: number; escola?: string | null }

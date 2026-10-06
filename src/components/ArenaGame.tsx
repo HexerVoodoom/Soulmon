@@ -227,6 +227,7 @@ export function ArenaGame({
       foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
+      playerSpecialEscola: ident.especial.escola,
     };
   }, [ident, isPt, lang]);
 

@@ -149,7 +149,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Masmorra' });
     expect(folha.textContent).toContain('321');
-    expect(folha.textContent).toContain('Nível 1');
+    expect(folha.textContent).toContain('Camada 1');
     // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
     // atrás do "?" — fica fora da tela até o jogador tocar.
     expect(folha.textContent).not.toMatch(/nunca os seus corações/);

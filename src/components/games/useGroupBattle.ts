@@ -25,7 +25,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StageAction, StageHit } from './BattleStage';
 import {
-  impactMs, introMs, castStatus, clearHolders, emptyStatusBoard, stageStatusOf, tickStatus,
+  impactMs, introMs, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
   type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
 } from '../../utils/combatFx';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
@@ -66,6 +66,8 @@ export interface GroupScene {
   /** A FORMA do golpe do pet — da SKILL dele (básica ou especial). Nunca de índice/sorteio. */
   playerKind(special: boolean): StrikeForm;
   foeKind(foe: number, special: boolean): StrikeForm;
+  /** PR16: a ESCOLA do especial do pet (só decide o SELO: `maldicao` + família `defDebuff` mostra MALDIÇÃO, mecânica e balanço iguais). Inimigos não têm escola. */
+  playerSpecialEscola?: string | null;
   /** Selos curtos (já traduzidos). */
   labels: { blocked: string; ring: Record<RingGrade, string>; dodge: Partial<Record<DodgeGrade, string>> };
   /** Selo no pet quando o especial dele é pessoal (cura, escudo, buff): sem dano para mostrar. */
@@ -245,18 +247,27 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       const publish = () => setStatus({ me: stageStatusOf(board[0]), foes: foes.map((_, i) => stageStatusOf(board[i + 1])) });
       publish();
       /** Gasta os efeitos que os golpes/ticks deste grupo de eventos gastam; quem caiu leva os seus embora. */
+      // PR16: o debuff de DEFESA que o pet deixa nos inimigos mostra o selo de MALDIÇÃO quando o especial dele é da escola maldicao
+      const curseOn = (holder: number) => holder > 0 && isCurseSpecial(player.special?.family, scene.playerSpecialEscola);
+      /** Os turnos REAIS: os contadores que o núcleo expôs no evento (PR16); cura (instantânea) segue na aproximação. */
+      const realFx = (fx: GroupEvent['fx']) => {
+        const down = [...(hpNow <= EPS ? [0] : []), ...foesNow.flatMap((h, i) => (h <= EPS ? [i + 1] : []))];
+        board = withRealFx(board, fx, down, curseOn);
+      };
       const spendStatus = (batch: GroupEvent[], hpPet: number, foesHpNow: readonly number[]) => {
         for (const e of batch) if (e.kind === 'attack' || e.kind === 'tick') board = tickStatus(board, { kind: e.kind, who: e.who });
         const down = [...(hpPet <= EPS ? [0] : []), ...foesHpNow.flatMap((h, i) => (h <= EPS ? [i + 1] : []))];
         board = clearHolders(board, down);
+        realFx(batch[batch.length - 1]?.fx);
         publish();
       };
       /** O especial de `who` entrou em cena: a família dele deixa o efeito (o núcleo é quem diz qual família). */
-      const startStatus = (who: number, targets: readonly number[]) => {
+      const startStatus = (who: number, targets: readonly number[], fx?: GroupEvent['fx']) => {
         const side = who === 0 ? player : foes[who - 1];
         const sp = side?.special;
         if (!sp) return;
-        board = castStatus(board, { caster: who, family: sp.family, power: sp.power, area: side.area === 'area', targets });
+        board = castStatus(board, { caster: who, family: sp.family, power: sp.power, area: side.area === 'area', targets, escola: who === 0 ? scene.playerSpecialEscola : null });
+        realFx(fx);
         publish();
       };
 
@@ -265,6 +276,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         seed: round.seed, startHp: round.startHp, startEnergy: round.startEnergy,
         hitScale: round.hitScale,
         cheerDrain: () => { const n = discharges.current; discharges.current = 0; return n; },
+        withFx: true, // PR16: os turnos do selo vêm dos contadores reais do núcleo (não mudam a luta)
       });
       const queue: GroupEvent[] = [];
       let result: GroupResult | null = null;
@@ -346,7 +358,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             else if (scene.personalTag) showHits([{ id: ++seq.current, side: 'me', foe: 0, value: 0, tag: scene.personalTag }]);
             else setPetEnergy(ev.energy);
             // PR11: o efeito que a família do especial deixa — no foco único, ou em todos os vivos se a escola dele é em área
-            startStatus(0, player.area === 'area' ? foesNow.flatMap((h, i) => (h > EPS ? [i + 1] : [])) : [target + 1]);
+            startStatus(0, player.area === 'area' ? foesNow.flatMap((h, i) => (h > EPS ? [i + 1] : [])) : [target + 1], (batch.length ? batch[batch.length - 1] : ev).fx);
             ev = pull();
             continue;
           }
@@ -375,7 +387,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           while (nx && nx.kind !== 'cast' && Math.abs(nx.t - ev.t) < EPS) { batch.push(nx); nx = pull(); }
           if (nx) queue.unshift(nx);
           if (batch.length) apply(batch, true, dodgeG);
-          startStatus(ev.who, [0]); // o inimigo mira o pet; cura/escudo/buff ficam nele mesmo
+          startStatus(ev.who, [0], (batch.length ? batch[batch.length - 1] : ev).fx); // o inimigo mira o pet; cura/escudo/buff ficam nele mesmo
           ev = pull();
           continue;
         }

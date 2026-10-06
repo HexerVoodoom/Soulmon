@@ -149,6 +149,16 @@ describe('Arena — FX de status e cast (PR11)', () => {
     expect(document.querySelector('[data-stage-status]')).toBeNull();
   });
 
+  it('PR16: o especial da escola MALDIÇÃO (família defDebuff) mostra o selo de MALDIÇÃO no inimigo — e NÃO o de debuff; turnos reais do núcleo', async () => {
+    H.startEnergy = [100];
+    await entrar({ escola: 'maldicao' });
+    await avancar(Number(noAnel()?.getAttribute('data-ring-target')));
+    fireEvent.pointerDown(document.body);
+    expect(await ate(() => document.querySelector('[data-stage-status="maldicao"]') !== null, 3000)).toBe(true);
+    expect(document.querySelector('[data-stage-status="debuff"]')).toBeNull();
+    expect(document.querySelector('[data-stage-status="maldicao"]')!.getAttribute('aria-label')).toMatch(/^Maldição, \d+ turnos?$/);
+  });
+
   it('em inglês os selos saem em inglês', async () => {
     H.startEnergy = [100];
     await entrar({ escola: 'atkBuff', language: 'en-US' });
