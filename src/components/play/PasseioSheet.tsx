@@ -150,7 +150,7 @@ function MissoesDoDia({ ofertas, isPt, language, aberto, setAberto, onPick }: {
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                   <span style={sheetCardTitle}>{title}</span>
                   <span style={{ ...note, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <AreaGlyph area={c.area} size={20} />
+                    <AreaGlyph area={c.area} challengeId={c.id} size={24} />
                     {isPt ? `${region.namePt} · ${area.pt}` : `${region.nameEn} · ${area.en}`}
                   </span>
                 </span>
@@ -213,7 +213,7 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
             {isPt ? `Sua missão de hoje · ${nome}` : `Your mission today · ${nome}`}
           </p>
           <p data-travessia-titulo style={{ ...sheetCardTitle, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AreaGlyph area={challenge.area} />
+            <AreaGlyph area={challenge.area} challengeId={challenge.id} />
             <span>{titulo ?? (isPt ? challenge.textPt : challenge.textEn)}</span>
           </p>
           <p style={note}>{isPt ? area.pt : area.en}</p>

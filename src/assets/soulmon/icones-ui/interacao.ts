@@ -27,7 +27,7 @@ const porPrefixo = (mods: Record<string, string>, prefixo: string): Readonly<Rec
   return out;
 };
 
-/** Id do `ACTIVITY_CATALOG` → ícone (23 dos 28; os 5 sem arte caem em nada, como antes). */
+/** Id do `ACTIVITY_CATALOG` → ícone (28 dos 28 desde 05/10/2026). */
 export const ACTIVITY_ICON_ART = porPrefixo(
   import.meta.glob<string>('./interacao/ativ-*.png', { eager: true, import: 'default' }), 'ativ');
 
