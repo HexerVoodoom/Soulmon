@@ -377,3 +377,28 @@ export function clearHolders(board: StatusBoard, down: readonly number[]): Statu
 export function stageStatusOf(entries: readonly BoardEntry[] | undefined): StageStatus[] {
   return (entries ?? []).map(({ kind, variant, turns }) => ({ kind, variant, turns }));
 }
+
+/**
+ * O quadro de efeitos do DUELO (1v1) reconstruído dos EVENTOS do núcleo até o `upTo`-ésimo (PR11): é uma DOBRA pura
+ * da lista, então o replay, a luta ressimulada pela torcida e o modo offline dão sempre o mesmo selo. `side` 0 = o seu
+ * pet (casa 0 do quadro), 1 = o oponente (casa 1). Cada `cast` deixa o efeito da família de quem conjurou.
+ */
+export function duelStatusBoard(
+  events: readonly { readonly kind: 'attack' | 'cast' | 'tick' | 'ko'; readonly side: 0 | 1 }[],
+  upTo: number,
+  specials: readonly [{ family: SpecialFamily; power: number } | null, { family: SpecialFamily; power: number } | null],
+): StatusBoard {
+  let board = emptyStatusBoard(1);
+  for (let i = 0; i < Math.min(upTo, events.length); i++) {
+    const e = events[i];
+    if (e.kind === 'cast') {
+      const sp = specials[e.side];
+      if (sp) board = castStatus(board, { caster: e.side, family: sp.family, power: sp.power, area: false, targets: [1 - e.side] });
+    } else if (e.kind === 'ko') {
+      board = clearHolders(board, [e.side]);
+    } else {
+      board = tickStatus(board, { kind: e.kind, who: e.side });
+    }
+  }
+  return board;
+}
