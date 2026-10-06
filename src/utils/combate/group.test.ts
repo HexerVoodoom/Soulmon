@@ -89,12 +89,21 @@ describe('result and end conditions', () => {
   });
   it('PR3b: cheerDrain (the LIVE cheer of the scene) adds CHEER.energyPerDischarge per discharge, only to the player', () => {
     const sp = { ...none, special: specialOf('direct') };
-    const off = groupFight(sp, [none], { seed: 8 });
+    const firstCast = (opts: { seed: number; cheerDrain?: () => number }, side = sp) => {
+      const g = groupFightSteps(side, [none], opts);
+      let r = g.next();
+      while (!r.done) {
+        if (r.value.kind === 'cast' && r.value.who === 0) return r.value.t;
+        r = g.next(1);
+      }
+      return Infinity;
+    };
+    // a discharge fills (part of) the bar: the first cast comes sooner than with nobody cheering
+    expect(firstCast({ seed: 8, cheerDrain: () => 1 })).toBeLessThan(firstCast({ seed: 8 }));
+    // the discharge is the PvE yield: one discharge = CHEER.energyPerDischarge, nothing for a player without special
     let given = 0;
-    const on = groupFight(sp, [none], { seed: 8, cheerDrain: () => (given++ < 3 ? 1 : 0) });
+    groupFight(sp, [none], { seed: 8, cheerDrain: () => (given++ < 3 ? 1 : 0) });
     expect(given).toBeGreaterThan(3);
-    expect(on.energyLeft).toBeGreaterThan(off.energyLeft - 1e-9);
-    // the same discharges as the offline list: 3 discharges = +9 energy, and nothing for a player without special
     const noSp = groupFight(none, [none], { seed: 8, cheerDrain: () => 5 });
     expect(noSp.energyLeft).toBe(0);
   });

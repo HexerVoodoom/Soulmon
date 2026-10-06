@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   fxElementId, fxFrame, visualElementFor, strikeKindForSchool, VISUAL_ELEMENTS, FX_FALLBACK_ELEMENT,
   SCHOOL_STRIKE_FORM, ELEMENT_STRIKE_FORM, skillStrikeForm, elementStrikeForm, specialLabel, SPECIAL_LABEL,
-  STAGE_TIMING, DUEL_STEP_MS, PVE_STEP_MS, ARENA_STRIKE_MS, ARENA_DEFEND_MS, impactMs, totalMs,
+  STAGE_TIMING, DUEL_STEP_MS, impactMs, totalMs,
 } from './combatFx';
 import { ATTACK_FX_COUNT } from './attackFxArt';
 import classSystem from './soulProfile/ficha/classSystem.data.json';
@@ -204,18 +204,5 @@ describe('duelo fantasma — ritmo e calibração (modelo de tempo da tela)', ()
     expect(DUEL_TAPS_FULL).toBe(24);
     expect(DUEL_TAPS_FULL / 3).toBeGreaterThan(7);
     expect(DUEL_TAPS_FULL / 3).toBeLessThan(9);
-  });
-});
-
-describe('Arena — o ritmo do turno', () => {
-  it('o golpe do pet e o revide ficaram mais LENTOS (eram 1500 e 800 ms)', () => {
-    expect(ARENA_STRIKE_MS).toBeGreaterThanOrEqual(2200);
-    expect(ARENA_DEFEND_MS).toBeGreaterThanOrEqual(1200);
-    // Um turno contra UM inimigo: ~3,8 s ⇒ ~11 toques a 3 toques/s (a barra de cheer de 24 despeja a cada ~2 turnos).
-    // (O Duelo da Arena com ENERGIA usa o relógio de PvE — `PVE_STEP_MS` por lado —; estas constantes são do caminho antigo.)
-    const turno = (ARENA_STRIKE_MS + ARENA_DEFEND_MS) / 1000;
-    expect(turno * 3).toBeGreaterThan(10);
-    expect(turno * 3).toBeLessThan(13);
-    expect(PVE_STEP_MS).toBe(1700);
   });
 });

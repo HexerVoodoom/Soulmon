@@ -90,15 +90,15 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // Crescimento JUSTIFICADO, não perdoado — candidatos a pagar: `BattleStage` e
   // `ShopItemSheet` como `import()` (só carregam ao lutar/abrir a loja).
   // Re-medido em 04/10/2026: 759_120 → 893_158 (+134 KB). Rodada 6 dos ajustes do
-  // dono: combate v2 (`BattleStage`, `PveMechanics`, `usePveBattle`, `energia`,
+  // dono: combate v2 (`BattleStage`, `PveMechanics`, `useGroupBattle`, `energia`,
   // `combatFx`, mascote), missões diárias + 21 historinhas (`travessiasViagens`),
   // varredura do "?" (~55 textos viraram `InfoTip` — o texto continua no bundle),
   // `NpcSpeech`/`ShopItemSheet`. Crescimento JUSTIFICADO, não perdoado — e GRANDE:
-  // próxima tarefa é pagar com `import()` (`BattleStage`+`PveMechanics`+`usePveBattle`
+  // próxima tarefa é pagar com `import()` (`BattleStage`+`PveMechanics`+`useGroupBattle`
   // só ao lutar, `travessiasViagens` só ao abrir o relatório, `ShopItemSheet`).
   // PAGO EM PARTE em 04/10/2026 (rodada 6, perf — branch feat/r6-lazy): 893_158 → 540_385
   // (−352,8 KB, −39%). Saíram do chunk de entrada por import()/React.lazy: a luta do
-  // pesadelo inteira (NightmareBattle → BattleStage, usePveBattle, PveMechanics,
+  // pesadelo inteira (NightmareBattle → BattleStage, useGroupBattle, PveMechanics,
   // combatFx, attackFxArt ≈ 100 KB), o catálogo de atividades (31 KB, agora
   // `data/catalogoCarga.ts`), o motor do Oráculo (`oracle/motor.ts`, ~70 KB) e as
   // perguntas do ritual (`oracle.ts` ficou fora do caminho crítico: `oracle/base.ts`),

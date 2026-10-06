@@ -78,6 +78,7 @@ import {
   type EnemyTier,
 } from './dungeon';
 import { getStageLevel, type EvolutionStage } from '../types/progression';
+import { mulberry32 } from './combate/rng';
 import {
   dreamRarity,
   restConstancy,
@@ -276,31 +277,49 @@ export function nightmareRegularity(rest: RestState, now: Date): number {
 // 2. A onda de combate
 // ---------------------------------------------------------------------------
 
+/** FNV-1a de 32 bits da chave do dia: a semente do sabor da onda (determinística, sem `Math.random`). */
+function hashDayKey(key: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193);
+  return h | 0;
+}
+
+/**
+ * Os slots da onda do pesadelo para o tier `top` (índice 0..5 de `LADDER_TIERS`): `NIGHTMARE_WAVE_SIZE`
+ * slots terminando em `top` (`top−1..top`). Um dono só: a onda e a simulação do balanço leem esta função.
+ */
+export function nightmareSlots(top: number): number[] {
+  const size = Math.max(1, Math.min(NIGHTMARE_WAVE_SIZE, top + 1));
+  return Array.from({ length: size }, (_, k) => top + 1 - size + k);
+}
+
 /**
  * A onda do pesadelo — **delegada a `buildDungeonWave`**.
  *
- * Não existe combate reimplementado aqui: stats, escala por nível, sprite e
- * exclusão da linha do próprio jogador são todos da masmorra. Este módulo só
- * decide QUANTOS e ATÉ QUE TIER — o resto é o motor que já existe.
+ * Não existe combate reimplementado aqui: o inimigo (`dungeonFoe`, relativo ao level do jogador), o
+ * sprite e a exclusão da linha do próprio jogador são todos da masmorra. Este módulo só decide QUANTOS e
+ * ATÉ QUE TIER — o resto é o motor que já existe.
  *
- * `buildDungeonWave` devolve a escada inteira (`LADDER_TIERS`, 6 inimigos, na
- * ordem); a luta do pesadelo pega só a fatia que TERMINA no tier alvo, com
- * `NIGHTMARE_WAVE_SIZE` inimigos. Sem noite elegível → `[]`.
+ * Combate v3 (PR4): a onda é SEMPRE do andar 1 (o `max(1, top−1)` de antes levava o TTK a 31 s no top 5);
+ * `playerLevel` é o level do Soulmon (`soulLevel`) e `rng` o sorteio do sabor da onda (sem ele, determinístico
+ * pelo andar). Nunca `Math.random`. `buildDungeonWave` devolve a escada inteira (6 inimigos, na ordem); a
+ * luta do pesadelo pega só a fatia que TERMINA no tier alvo. Sem noite elegível → `[]`.
  */
 export function buildNightmareWave(
   rest: RestState,
   petStage: string,
   now: Date,
+  playerLevel?: number,
+  rng?: () => number,
 ): DungeonEnemy[] {
   const { count, tier } = nightmaresFor(rest, now, petStage);
   if (count <= 0) return [];
 
   const top = tierIndex(tier);
-  const level = Math.max(1, top - 1);
-  const wave = buildDungeonWave(level, petStage);
-
-  const size = Math.max(1, Math.min(NIGHTMARE_WAVE_SIZE, top + 1));
-  return wave.slice(top + 1 - size, top + 1);
+  // sem `rng`, a onda é a da NOITE: o mesmo dia sorteia as mesmas criaturas (e dias diferentes, outras)
+  const seed = rng ?? mulberry32(hashDayKey(nightmareDayKey(now, rest?.playerDayTz)));
+  const wave = buildDungeonWave(1, petStage, seed, playerLevel);
+  return nightmareSlots(top).map((slot) => wave[slot]);
 }
 
 // ---------------------------------------------------------------------------

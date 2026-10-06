@@ -80,7 +80,7 @@ export interface FightOptions {
   readonly startEnergy?: readonly [number, number];
   /** Multiplier of the n-th (0-based) BASIC attack of a side (auto-defence, counter-attack...). Default 1. */
   readonly hitScale?: (who: 0 | 1, n: number) => number;
-  /** Cheer discharges: at `t` seconds `side` gains CHEER.energyPerDischarge energy (if it has a special). */
+  /** Cheer discharges: at `t` seconds `side` gains CHEER.pvpEnergyPerDischarge energy (if it has a special). The 1v1 is the PvP's. */
   readonly cheer?: readonly CheerEvent[];
   /** End at the first KO (PvE: no ghost timing); HP/energy left are reported at that instant. */
   readonly stopAtFirstKo?: boolean;
@@ -170,7 +170,7 @@ export function* fightSteps(
       t: ch.t,
       fn: () => {
         const f = F[ch.side];
-        if (f.sp && f.dead === Infinity) f.en += CHEER.energyPerDischarge;
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge;
       },
     });
   }

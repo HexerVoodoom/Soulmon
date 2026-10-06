@@ -2,7 +2,7 @@
  * CONTRATO — o que só serve depois do primeiro paint NÃO mora no chunk de entrada.
  *
  * Rodada 6 (04/10/2026, perf): o `index-*.js` tinha crescido para 893 KB. Cortamos
- * ~350 KB com `import()`/`React.lazy`: a luta do pesadelo (BattleStage, usePveBattle,
+ * ~350 KB com `import()`/`React.lazy`: a luta do pesadelo (BattleStage, useGroupBattle,
  * combatFx, attackFxArt), o catálogo de atividades, o motor do Oráculo e as perguntas
  * do ritual. Basta UM import estático novo para tudo voltar sem ninguém notar —
  * o guard de bytes só cobra acima da folga. Este teste cobra a NATUREZA: nenhuma
