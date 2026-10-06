@@ -313,3 +313,27 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 - Sem consulta a advogado por ora (decisão do dono). Fontes primárias da lei não foram lidas (Planalto/Câmara/gov.br falharam em 05 e 07/10): lacuna declarada.
 - Combate v3 segue com: equipamento só com moeda ganha; Créditos só não-combate com teto +25%; sem RNG pago.
 - §2.31 (PR14): família do especial estável; muda só com mudança forte de perfil (elemento ou galho dominante), raro.
+
+## §2.28 PR12: três ajustes pós-PR8 decididos pelo dono (07/10/2026): PR12a (A+B) #248, PR12b (C)
+**Decisões do dono**
+- **A) Câmbio Créditos→Bits:** pacotes MENORES que caibam no teto de 25% do ganho grátis de um dia típico (os 100/250/600 só cabiam em dias de 400/1.000/2.400 grátis). Mantém o teto de 25% e o piso de referência (100). Créditos seguem acelerando só o que NÃO é combate. A loja de Créditos não muda além dos pacotes (verificação de idade/ECA segue story pendente).
+- **B) Masmorra com DEF e SPD do equipamento** (antes: só a soma dos 3 slots em dano), pelo núcleo e pelo canal do teto único de 5%. Medir com o núcleo real; gate estourou = reportar, não recalibrar.
+- **C) Implementar os 3 nós de Comércio "em breve"** sem arte nova e sem violar linhas vermelhas: `tal-com-04` (+1 espaço = MOCHILA mínima), `tal-com-06` (Bits de missão), `tal-com-07` (desconto rotativo semanal determinístico).
+
+**PR12a (#248, mergeado `--rebase`, main 13a7c5fb + dist de891f19; CI `tsc + vitest` verde 14m20s)**
+- **A:** `BITS_EXCHANGE` = 1/2/4 Créditos = 10/20/40 Bits (taxa 1→10 intacta). Medido no código: dia completo 100 (`BITS_PER_COMPLETE_DAY`) + minijogo até 150 (`MINIGAME_BITS_PER_DAY`). Dia típico (100 + metade do teto = 175 grátis) comporta 43 Bits; só cuidado (piso 100) = 25; dia cheio (250) = 62. O 10 cabe em qualquer dia, o 20 cabe já no piso, o 40 cabe a partir de 160 grátis. Singular "1 Crédito/Credit" na loja. Teste trava 43/62 e a borda 159/160.
+- **B:** `dungeonAttrBonus(talentePvE, equipamento)` (`equipment.ts`) → `combinedAttrBonus` (UM teto de 5% na soma dos 3 canais); `useDungeonBonus` (só `DungeonGame`); `SequenceConfig.bonus` no `dungeonFight`. O núcleo já aplicava DEF/SPD (`combatantAt` com bônus por atributo): motor intocado. Arena e Pesadelo ficam em `useTalentBonus` (escalar); `arena.v3` verde sem mexer.
+- **Medido (núcleo real, `dungeon.equipamento.test.ts`, N = 800–1200 runs):** razão das médias HP×3: cheio 4,0%, cheio+talento 4,9%, só DEF 1,4%, só SPD 1,5% (teto 5% / 5,5% ok). Sem equipamento (gates do `dungeon.v3` intactos): andares 1–4 100%, andar 5 37,4%, andar 6 0%. **Com equipamento a parede do andar 5 sobe:** só DEF 47,1%, só SPD 45,5%, cheio+talento 71,3% (o escalar antigo do PR8 já dava ~68%; andares 1–4 ≥97%, andar 6 ≤3%). Duração mediana por inimigo com equipamento cheio 19,4–28,4 s (andar 2 cai para ~19,5 s, abaixo do piso de 20 s; sem equipamento 20,1). **Habilidade ao concluir (boa−nenhuma): 30,2pp sem equipamento (o aceito), 31,4pp escalar antigo, 32,4pp canal novo** (meta 25pp). NÃO recalibrei: reportado. O teste trava só regressão (≤ 30,2+3pp com equipamento).
+
+**PR12b (C):** branch `combate-v3/pr12b` (preencher o link e o merge abaixo).
+- **Mochila (`tal-com-04`):** `BACKPACK_BASE` 3, +1 por grau (máx. 6 = 9 peças − 3 slots). Ocupa a peça possuída fora de slot. Compra que iria para a mochila cheia e "tirar do slot" cheio são recusados (`backpack-full`); a peça que cai em slot vazio não ocupa; equipar/trocar é neutro; save antigo acima da capacidade NADA perde (só não entra mais). Regra de cliente (como a procedência dos Bits); o servidor não corta `owned`.
+- **Bits de missão (`tal-com-06`):** `missionBitsGain`: +5% por grau (até +15%, dentro do +25%) sobre os `BITS_PER_COMPLETE_DAY` do dia completo em `computeDailyReset`; é a única fonte de Bits "de missão" que existe (as missões da semana e as de fundos não pagam Bits). Sem fonte nova; entra no ganho grátis do dia (base do câmbio). Picks inválidos para o Vínculo valem 0.
+- **Desconto rotativo (`tal-com-07`):** `weeklyDiscountItem(semanaISO)`: 20% em Bits em UMA peça por semana, ordem fixa (passo 4 sobre 9 peças: as 9 passam sem repetir em 9 semanas), sem sorteio e sem relógio do aparelho; soma com a Etiqueta e o total nunca passa de 60%; só Bits ganhos pagam; rótulo "desconto desta semana" sem contagem.
+- **Servidor:** `_talents.js` aceita os 3 ids novos (`PICKABLE`, paridade `talents.parity.test.js`); nenhum campo novo no save (contagem 106 inalterada); `save.js` já descarta o vetor inválido.
+- **Linha vermelha provada:** os 7 nós de Comércio juntos dão 0 em `talentBonus` (pve/pvp), `talentAttrBonus` e `talentCheerScale`.
+
+**Dúvidas de produto (sem decidir):**
+1. Gate do andar 5 e habilidade ao concluir com equipamento (37% → 47–71%, 30,2 → 32,4pp, andar 2 a ~19,5 s): aceitar, ou o equipamento deve valer menos na Masmorra / a parede subir?
+2. O valor real da mochila é baixo (peças de tier menor ficam redundantes; só importa para quem alterna conjuntos). Base 3 e +1/grau são default; o dono prefere outra capacidade ou uma ação de desmontar?
+3. "Missão" = dia completo (única fonte de Bits "de missão"). Se o dono quis incluir Pesadelo/minijogo, é mudança de escopo.
+4. Percentuais novos (5%/grau, 20% semanal, base 3) são defaults da squad.
