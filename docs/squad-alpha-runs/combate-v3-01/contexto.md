@@ -306,3 +306,10 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 - **Passo 3:** `bundleSemFranquia` com `basename`; `convertToWebp` com `writeFileSync` no gancho.
 - Portões: tsc app+server+desktop, vitest 588 arquivos/7443 testes, build, docsManual verdes; CI verde. Mergeado com `--rebase`.
 - Pendente: critérios 2/3 da story (guard de constantes lidas do módulo; grep de menções obsoletas) não implementados; `/manter-docs` full; valores dos portões (5/8/12) ainda são defaults da squad.
+
+### §2.32 Classificação etária e Créditos (decisão do dono, 07/10/2026)
+- O produto CONTINUA 18+ (política §7, termos §3, onboarding, decisões #15 e MIS-13 intactas). "Livre"/14+ não foi adotado: 14+ não dispensa ECA Digital nem LGPD art. 14 (ver COMPLIANCE-14MAIS.md, análise interna por IA, não parecer de advogado).
+- Tratamento de 14–15 anos não se aplica (produto não abre a menores). A resposta "confirmação do responsável" fica registrada só como preferência se um dia abrir 14+.
+- Sem consulta a advogado por ora (decisão do dono). Fontes primárias da lei não foram lidas (Planalto/Câmara/gov.br falharam em 05 e 07/10): lacuna declarada.
+- Combate v3 segue com: equipamento só com moeda ganha; Créditos só não-combate com teto +25%; sem RNG pago.
+- §2.31 (PR14): família do especial estável; muda só com mudança forte de perfil (elemento ou galho dominante), raro.
