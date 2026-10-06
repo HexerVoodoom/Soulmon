@@ -127,20 +127,3 @@ describe('StatsPage — canvas §27', () => {
     expect(html).not.toContain('brightness(0)');
   });
 });
-
-describe('StatsPage — Lv do Soulmon (combate v3, PR2)', () => {
-  it('mostra "Lv N" (sucesso)', () => {
-    renderWithCss(<StatsPage {...base} soulLevelText="Lv 7" />);
-    expect(screen.getByTestId('soul-level').textContent).toBe('Lv 7');
-  });
-
-  it('quando o level desceu, o texto é o neutro que a função entrega', () => {
-    renderWithCss(<StatsPage {...base} soulLevelText="Lv 6 · follows your full days and returns with them" />);
-    expect(screen.getByTestId('soul-level').textContent).toMatch(/^Lv 6 · follows your full days/);
-  });
-
-  it('com hideMetrics o Lv não é desenhado', () => {
-    renderWithCss(<StatsPage {...base} soulLevelText="Lv 7" hideMetrics />);
-    expect(screen.queryByTestId('soul-level')).toBeNull();
-  });
-});

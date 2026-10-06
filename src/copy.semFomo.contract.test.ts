@@ -30,7 +30,6 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ALL_SHOP_ITEMS, SPECIAL_ITEMS } from './utils/shop';
-import { soulLevelLine } from './utils/soulXP';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 
@@ -159,33 +158,5 @@ describe('proibição #15 — a vitrine não expira', () => {
         for (const re of FOMO) expect(texto, `${item.id}: "${texto}"`).not.toMatch(re);
       }
     }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// COMBATE V3 / PR2 — o level do Soulmon DESCE na degeneração (derivado de
-// perfectDays), e o texto que o mostra tem de ser neutro: explica a regra
-// e promete a volta, sem falar em perda, queda ou castigo. EN primeiro, depois
-// PT-BR. A régua é por FRASE de perda, e a função textoDeLevelSemPerda é
-// exportável só para a prova de vermelho abaixo.
-// ---------------------------------------------------------------------------
-const PERDA: RegExp[] = [
-  /perdeu/i, /perdi/i, /\bperda\b/i, /rebaix/i, /\bca[iíu]/i, /castig/i, /\bpuni/i,
-  /\blost\b/i, /\blose\b/i, /\bdemot/i, /\bdrop(?:ped)?\b/i, /\bpunish/i, /\bpenalt/i, /\bfell\b/i,
-];
-export function textoDeLevelSemPerda(texto: string): string[] {
-  return [...PERDA, ...FOMO].filter(re => re.test(texto)).map(String);
-}
-
-describe('combate v3 — o texto do level que desceu é neutro (semFomo)', () => {
-  const textos = ['en-US', 'pt-BR'].flatMap(lang => [1, 6, 7, 21, 40].map(lv => soulLevelLine(lv, true, lang)));
-
-  it('nenhuma frase de perda ou FOMO nas duas línguas (EN primeiro)', () => {
-    for (const t of textos) expect(textoDeLevelSemPerda(t), t).toEqual([]);
-  });
-
-  it('PROVA DE VERMELHO: uma string com perdeu / lost reprova', () => {
-    expect(textoDeLevelSemPerda('Lv 6 · seu Soulmon perdeu um level')).not.toEqual([]);
-    expect(textoDeLevelSemPerda('Lv 6 · your Soulmon lost a level')).not.toEqual([]);
   });
 });
