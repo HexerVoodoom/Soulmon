@@ -75,12 +75,13 @@ interface Regra { nome: string; esperado: number[]; re: RegExp }
 const pct = (frac: number) => [Math.round(frac * 100 * 1e6) / 1e6, frac];
 
 const PROSA: Regra[] = [
-  { nome: 'COMBAT_BONUS_CAP', esperado: pct(COMBAT_BONUS_CAP), re: /\bteto(?: único| global)? de (\d+(?:[.,]\d+)?) ?%/gi },
+  { nome: 'COMBAT_BONUS_CAP', esperado: pct(COMBAT_BONUS_CAP), re: /\bteto(?: único| global)? de (\d+(?:[.,]\d+)?) ?%(?! do ganho| of the free| sobre o ritmo)/gi },
   { nome: 'COMBAT_BONUS_CAP', esperado: pct(COMBAT_BONUS_CAP), re: /(\d+(?:[.,]\d+)?) ?% (?:de força|strength)/gi },
   { nome: 'COMBAT_BONUS_CAP', esperado: pct(COMBAT_BONUS_CAP), re: /\b(?:no máximo|at most) (\d+(?:[.,]\d+)?) ?% (?:de força|strength)/gi },
   { nome: 'TALENT_POINTS_MAX', esperado: [TALENT_POINTS_MAX], re: /(?:Vínculo|Bond) \((?:até|up to) (\d+)\)/g },
   { nome: 'TALENT_POINTS_MAX', esperado: [TALENT_POINTS_MAX], re: /Pontos de talento = Vínculo, até `?\w*`? ?\((\d+)\)/g },
   { nome: 'CREDIT_BITS_CAP_RATIO', esperado: pct(CREDIT_BITS_CAP_RATIO), re: /\+(\d+) ?% (?:sobre o ritmo|over the free)/g },
+  { nome: 'CREDIT_BITS_CAP_RATIO', esperado: pct(CREDIT_BITS_CAP_RATIO), re: /\bteto de (\d+(?:[.,]\d+)?) ?% do ganho/gi },
   { nome: 'GATES.pvp', esperado: [GATES.pvp.minBond], re: /(?:Arena|Duelo|Duel)(?: e (?:o )?Torneio| and the Tournament)? (?:abre|abrem|open|opens) (?:no|at) (?:Vínculo|Bond) (\d+)/gi },
   { nome: 'GATES.torneio', esperado: [GATES.torneio.minBond], re: /Torneio (?:abre|abrem|opens?) (?:no|at) (?:Vínculo|Bond) (\d+)/gi },
   { nome: 'GATES.pvp (Arena/PvP e Torneio no Vínculo N)', esperado: [GATES.pvp.minBond], re: /Arena\/PvP e Torneio no Vínculo (\d+)/g },
