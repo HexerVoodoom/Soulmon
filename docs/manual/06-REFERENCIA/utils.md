@@ -2910,3 +2910,8 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/talentArt.ts`
 **Dono de:** o carregamento sob demanda (`import.meta.glob` lazy) da arte da árvore de talentos; peça ausente devolve `null` e a tela cai no fallback de texto.
 **Exports:** `loadTalentArt`, `talentArtNames`.
+
+### `src/utils/talentCopy.ts`
+**Dono de:** os TEXTOS (EN/PT-BR) dos nós da árvore de talentos, separados de `talents.ts` para ficar fora do chunk de entrada (só a `TalentTreeCard`, `lazy`, os lê). Neutro (`copy.semFomo`).
+**Exports:** `TALENT_COPY`, `TalentCopy`.
+**Régua:** bloco "PR7" de `src/copy.semFomo.contract.test.ts` e `src/utils/talents.test.ts` (todo nó tem texto).

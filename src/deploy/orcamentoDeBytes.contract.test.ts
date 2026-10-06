@@ -110,7 +110,11 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 05/10/2026 (combate v3 PR1b): 550_797 → 559_001 (+23 B sobre a main) — `fighterStrikeForm`, nome da skill no selo e `stageSkillsFor`; a main já estava a 11 B da folga.
   // 05/10/2026 (ajustes): 559_001 → 559_558 (+557 B, soma ao PR1b) — card de missões na Home
   // (o card e a regra são `lazy`; fica no entrada só a fiação de navegação) e `MissionsSheet` passou a `lazy`.
-  'index.js': 559_558,
+  // 06/10/2026 (combate v3 PR7): 559_558 → 572_294 (+4,7 KB sobre a main, que já estava a 156 B da folga) — o que o
+  // entrada precisa do Vínculo como level: `talents.ts` (validação do `talentPicks` na hidratação e o bônus de talento
+  // das lutas), `gates.ts` (a tabela de portões e a frase do Renascimento). A tela da árvore, a arte e os TEXTOS dos
+  // nós (`talentCopy.ts`) ficam FORA, atrás de `lazy`/`import()`.
+  'index.js': 572_294,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)

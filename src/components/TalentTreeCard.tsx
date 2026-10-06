@@ -16,6 +16,7 @@ import {
   sanitizeTalentPicks, TALENTOS_PENDENTES_DO_DONO, type TalentNode, type TalentPath,
 } from '../utils/talents';
 import { loadTalentArt } from '../utils/talentArt';
+import { TALENT_COPY } from '../utils/talentCopy';
 
 const PATHS: readonly { id: TalentPath; art: string; pt: string; en: string; hintPt: string; hintEn: string }[] = [
   { id: 'pvp', art: 'talent-path-pvp', pt: 'Duelo', en: 'Duel', hintPt: 'Vale só nos Duelos e no Torneio.', hintEn: 'Counts only in Duels and the Tournament.' },
@@ -92,7 +93,8 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
     const g = graus.get(n.id) ?? 0;
     const pegavel = isPickable(n);
     const pode = pegavel && canPick(picks, n.id, bond);
-    const nome = isPt ? n.namePt : n.nameEn;
+    const txt = TALENT_COPY[n.id];
+    const nome = txt ? (isPt ? txt.namePt : txt.nameEn) : n.id;
     return (
       <li key={n.id} data-talent={n.id} style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: pegavel ? 1 : 0.6 }}>
         <Art nome={n.id} size={32} />
@@ -100,7 +102,7 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
           <b style={{ fontWeight: 500 }}>{nome}</b>{' '}
           <span className="sm2-num">{pegavel ? `${g}/${n.maxRank}` : (isPt ? 'em breve' : 'soon')}</span>
           <br />
-          <span className="sm2-stats-s">{isPt ? n.descPt : n.descEn}</span>
+          <span className="sm2-stats-s">{txt ? (isPt ? txt.descPt : txt.descEn) : ''}</span>
         </span>
         {pegavel && (
           <button
