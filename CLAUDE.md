@@ -779,7 +779,7 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
      é a parte vinda de Crédito) e SEM sorteio — nada de `Math.random`/odds/pity
      (um teste lê a fonte); (e) torcida só na Arena
      (`CHEER.energyPerDischarge` = 9) e no Duelo (`pvpEnergyPerDischarge` = 2,5);
-     Masmorra e Pesadelo NÃO têm; (f) o sorteio do inimigo da Arena é
+     Masmorra e Pesadelo NÃO têm; a Masmorra lê o equipamento por atributo (`useDungeonBonus`, DEF e SPD valem), Arena e Pesadelo só pela soma; (f) o sorteio do inimigo da Arena é
      estratificado por elemento (`pickEnemyCreature`): não volte ao uniforme sobre
      o pool, que desequilibra o anel com o corpus de 7.386 criaturas.
    - Os testes de paridade que sobraram: `cloudSync.test.ts`,

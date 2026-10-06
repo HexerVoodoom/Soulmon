@@ -183,13 +183,13 @@ describe('moeda certa por aba', () => {
   });
 
   it('Itens tem Bits e Créditos, nunca Emblemas; Créditos = diamond credit-ink + a troca', () => {
-    const { container } = abrir({ stall: 'itens' });
+    const { container } = abrir({ stall: 'itens', credits: 3 });
     expect(screen.queryByRole('tab', { name: 'Honor' })).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
     expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
-    const swap = screen.getByRole('button', { name: 'Swap 10 Credits for 100 Bits' });
+    const swap = screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' });
     expect(swap.hasAttribute('disabled')).toBe(false);
-    expect(screen.getByRole('button', { name: 'Swap 60 Credits for 600 Bits' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Swap 4 Credits for 40 Bits' }).hasAttribute('disabled')).toBe(true);
     // Nenhum item à venda na aba de Créditos.
     expect(container.querySelector('[data-shop-item]')).toBeNull();
   });

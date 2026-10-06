@@ -29,7 +29,7 @@ import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dung
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
-import { useTalentBonus } from '../contexts/useTalentBonus';
+import { useDungeonBonus } from '../contexts/useTalentBonus';
 import { gateLine, masmorraFloorOpen } from '../utils/gates';
 import { bondLevelFor } from '../utils/bond';
 import type { LText } from '../utils/oracle';
@@ -153,7 +153,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     [gs, evolutionStage],
   );
   /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
-  const bonusTalento = useTalentBonus('pve'); // canal único de bônus (teto 5%), PR7
+  const bonusTalento = useDungeonBonus(); // canal único de bônus (teto 5%): ATK/DEF/SPD (PR7 + PR12a)
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: dungeonFamily(par?.especial),

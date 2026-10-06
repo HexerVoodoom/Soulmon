@@ -18,7 +18,7 @@
  */
 
 import { earnedBits, spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
-import type { AttrBonus } from './combate/bonus';
+import { combinedAttrBonus, type AttrBonus } from './combate/bonus';
 import { ranksOf } from './talents';
 
 export type EquipSlot = 'nucleo' | 'carapaca' | 'rastro';
@@ -97,6 +97,16 @@ export function equipAttrBonus(raw: unknown): AttrBonus {
     if (id) out[SLOT_ATTR[slot]] += EQUIP_BY_ID.get(id)!.pct;
   }
   return out;
+}
+
+/**
+ * PR12a (§2.28 B) — o bônus da MASMORRA por atributo: o talento de PvE (um número, vai no ATK = dano dado) + o equipamento em
+ * ATK/DEF/SPD, pelo MESMO canal de 5% do PvP (`combinedAttrBonus`: a SOMA dos três canais nunca passa do teto). O núcleo
+ * (`combatantAt`) já aplica DEF (o inimigo precisa de mais golpes) e SPD (o golpe sai mais cedo), sem mudar o motor.
+ * Arena e Pesadelo seguem no canal escalar (`equipScalar`): não mudam.
+ */
+export function dungeonAttrBonus(talentPve: number, raw: unknown): AttrBonus {
+  return combinedAttrBonus({ talent: { atk: talentPve }, equipment: equipAttrBonus(raw) });
 }
 
 /** O mesmo bônus como UM número (a soma dos três): é a parcela de equipamento do canal da fenda (`combinedBonus`). */

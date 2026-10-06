@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useGameStateOptional } from './GameStateContext';
 import { bondLevelFor } from '../utils/bond';
 import { talentBonus, talentAttrBonus, talentCheerScale } from '../utils/talents';
-import { equipAttrBonus, equipScalar } from '../utils/equipment';
+import { dungeonAttrBonus, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { combinedBonus, combinedAttrBonus, NO_ATTR_BONUS, type AttrBonus } from '../utils/combate/bonus';
 
 /**
@@ -17,6 +17,15 @@ export function useTalentBonus(scope: 'pve'): number {
   const equipment = ctx?.gameState.equipment;
   // PR8: o equipamento entra aqui (a soma dos três slots), pelo MESMO canal e no MESMO teto de 5% do talento.
   return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment) }), [picks, xp, scope, equipment]);
+}
+
+/** PR12a (§2.28 B) — o bônus do jogador na MASMORRA: talento de PvE no ATK + equipamento em ATK/DEF/SPD, um teto de 5% na soma. */
+export function useDungeonBonus(): AttrBonus {
+  const ctx = useGameStateOptional();
+  const xp = ctx?.gameState.totalXP;
+  const picks = ctx?.gameState.talentPicks;
+  const equipment = ctx?.gameState.equipment;
+  return useMemo(() => dungeonAttrBonus(talentBonus(picks, bondLevelFor(xp ?? 0), 'pve'), equipment), [picks, xp, equipment]);
 }
 
 export interface PvpTalents {
