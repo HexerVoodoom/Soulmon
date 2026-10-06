@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * ARENA — FX de status e círculo de cast pela tela (PR11, run `combate-v3-01`). O núcleo roda de VERDADE:
- * o pet com especial de família `atkBuff` (escola `evocacao`) conjura, o núcleo devolve o evento, e a cena
+ * o pet com especial de família `atkBuff` (escola `combate_fisico`, família gravada) conjura, o núcleo devolve o evento, e a cena
  * mostra o buff dele com turnos e o círculo de cast. O status vem do motor; a tela não inventa.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -64,12 +64,14 @@ vi.mock('../utils/sprites', () => ({
   getSpriteForStage: () => 'pet.png',
 }));
 
-function skillsCom(escola: string): Partial<Record<string, StageSkills>> {
+/** `escola: 'atkBuff'` = escola combate_fisico com a FAMÍLIA atkBuff gravada na skill (a evocação saiu das escolas de skill, PR9b). */
+function skillsCom(escolaOuFamilia: string): Partial<Record<string, StageSkills>> {
+  const escola = escolaOuFamilia === 'atkBuff' ? 'combate_fisico' : escolaOuFamilia;
   const area = escola === 'conjuracao' || escola === 'longo_alcance' ? { tipo: 'circulo', raioMetros: 4 } : { tipo: 'unico' };
   const mk = (tipo: 'basica' | 'especial') => ({
     tipo, nome: { pt: tipo === 'especial' ? 'Lâmina do Crepúsculo' : 'Golpe', en: tipo === 'especial' ? 'Dusk Blade' : 'Strike' },
     descricao: { pt: 'd', en: 'd' }, elementoId: 'agua', elementoNome: { pt: 'Água', en: 'Water' },
-    escolaId: escola, recursoId: 'furia', custo: tipo === 'basica' ? 'baixo' : 'alto', area,
+    escolaId: escola, ...(tipo === 'especial' && escolaOuFamilia === 'atkBuff' ? { familia: 'atkBuff' } : {}), recursoId: 'furia', custo: tipo === 'basica' ? 'baixo' : 'alto', area,
   });
   return { rookie: { basica: mk('basica'), especial: mk('especial') } as unknown as StageSkills };
 }
@@ -120,7 +122,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 
 describe('Arena — FX de status e cast (PR11)', () => {
-  for (const [escola, kind, rotulo] of [['evocacao', 'buff', /^Ataque em alta, 3 turnos$/], ['benca', 'cura', /^Cura, 1 turno$/]] as const) {
+  for (const [escola, kind, rotulo] of [['atkBuff', 'buff', /^Ataque em alta, 3 turnos$/], ['benca', 'cura', /^Cura, 1 turno$/]] as const) {
     it(`o especial da escola ${escola} mostra o círculo de cast e deixa o efeito "${kind}" no pet (turnos do orçamento)`, async () => {
       H.startEnergy = [100];
       await entrar({ escola });
@@ -149,7 +151,7 @@ describe('Arena — FX de status e cast (PR11)', () => {
 
   it('em inglês os selos saem em inglês', async () => {
     H.startEnergy = [100];
-    await entrar({ escola: 'evocacao', language: 'en-US' });
+    await entrar({ escola: 'atkBuff', language: 'en-US' });
     await avancar(Number(noAnel()?.getAttribute('data-ring-target')));
     fireEvent.pointerDown(document.body);
     expect(await ate(() => document.querySelector('[data-stage-status="buff"]') !== null, 3000)).toBe(true);
