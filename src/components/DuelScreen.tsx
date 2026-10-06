@@ -197,7 +197,11 @@ export function DuelScreen({
     const apply = (e: FightEvent) => {
       setHpFrac({ me: clamp01(e.hp[0]), opp: clamp01(e.hp[1]) });
       setEnergia({ me: Math.max(0, e.energy[0]), opp: Math.max(0, e.energy[1]) });
-      const quadro = duelStatusBoard(sim.current.events, applied.current, [me.special, opp.special]);
+      const quadro = duelStatusBoard(
+        sim.current.events, applied.current,
+        [{ ...me.special, escola: meId.especial.escola }, { ...opp.special, escola: oppId.especial.escola }],
+        sim.current.fx,
+      );
       setStatus({ me: stageStatusOf(quadro[0]), opp: stageStatusOf(quadro[1]) });
       if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
         const alvoMe = e.side === 1; // o lado 1 bate no MEU pet

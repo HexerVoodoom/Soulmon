@@ -11,7 +11,7 @@
  * The client NEVER derives the opponent: `me` and `opp` come from `duelStart`.
  */
 import type { Combatant } from './curve';
-import { fightSteps, PVP_HP_SCALE, type FightEvent, type FightSide } from './fight';
+import { fightSteps, PVP_HP_SCALE, type FightEvent, type FightFxPair, type FightSide } from './fight';
 import { REFERENCE_BUILDS, combatantAt, firstLevelOfStage, stageOfLevel } from './level';
 import { CHEER, cheerEvents, specialOf, type Special } from './specials';
 
@@ -53,6 +53,8 @@ export type DuelWinner = 'me' | 'opp' | 'draw';
 
 export interface DuelResult {
   readonly events: FightEvent[];
+  /** PR16: os contadores REAIS de status dos dois lados em cada evento (mesma ordem de `events`); só a cena lê. O servidor não envia. */
+  readonly fx: FightFxPair[];
   readonly winner: DuelWinner;
   /** HP fraction of each side at the FIRST knock-out (the score). */
   readonly hpMe: number;
@@ -65,7 +67,8 @@ export interface DuelResult {
 export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult {
   const a: FightSide = { combatant: args.me.combatant, special: args.me.special };
   const b: FightSide = { combatant: args.opp.combatant, special: args.opp.special };
-  const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale) });
+  const fx: FightFxPair[] = [];
+  const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale), fxTrace: fx });
   const events: FightEvent[] = [];
   let hpMe: number | null = null;
   let hpOpp: number | null = null;
@@ -81,7 +84,7 @@ export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' |
   }
   const res = r.value;
   const winner: DuelWinner = res.winner === 'draw' ? 'draw' : res.winner === 'A' ? 'me' : 'opp';
-  return { events, winner, hpMe: hpMe ?? res.hpA, hpOpp: hpOpp ?? res.hpB, timeMe: res.timeA, timeOpp: res.timeB };
+  return { events, fx, winner, hpMe: hpMe ?? res.hpA, hpOpp: hpOpp ?? res.hpB, timeMe: res.timeA, timeOpp: res.timeB };
 }
 
 /**

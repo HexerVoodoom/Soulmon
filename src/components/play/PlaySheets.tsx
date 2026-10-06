@@ -124,7 +124,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         </ModalInfo>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={isPt ? `Nível ${level}` : `Level ${level}`} label={isPt ? 'dificuldade da semana' : "this week's difficulty"} />
+        <StatBox value={isPt ? `Camada ${level}` : `Layer ${level}`} label={isPt ? 'dificuldade da semana' : "this week's difficulty"} />
         <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
       </div>
       <p style={sectionHead}>{isPt ? 'Pode cair' : 'Possible drops'}</p>

@@ -18,7 +18,7 @@
  */
 
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { EPS, HIT_UNIT_H0, hitUnit, windowSeconds, type FightSide } from './fight';
+import { EPS, HIT_UNIT_H0, hitUnit, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import {
   AREA_EFFICIENCY, AREA_FAMILIES, CHEER, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
@@ -50,6 +50,12 @@ export interface GroupOptions {
   readonly cheerDrain?: () => number;
   /** Efficiency of the area. Default AREA_EFFICIENCY (1); a knob for the ruler to price the alternatives (0.9, or full E per foe). */
   readonly areaEfficiency?: number;
+  /**
+   * PR16 (read-only, opt-in): when `true` every event carries `fx` — the REAL status counters of each fighter
+   * (index = `who`). Nothing else changes: same draws, same events, same result. Off by default (the ruler runs this
+   * loop hundreds of thousands of times and pays nothing).
+   */
+  readonly withFx?: boolean;
 }
 
 export type GroupWinner = 'player' | 'foes' | 'draw';
@@ -76,6 +82,11 @@ export interface GroupEvent {
   readonly hp: number;
   readonly foesHp: readonly number[];
   readonly energy: number;
+  /**
+   * Only with `GroupOptions.withFx` (PR16): the real counters of each fighter right after this event (for a `cast`,
+   * after it takes effect — the field is filled when the driver answers the pause). Index = `who`.
+   */
+  readonly fx?: readonly FighterFx[];
 }
 
 interface G {
@@ -137,12 +148,29 @@ export function* groupFightSteps(
   let t = 0;
   let tPrev = 0;
   const pending: GroupEvent[] = [];
-  const ev = (kind: GroupEvent['kind'], who: number, frac: number, n = 0): GroupEvent => (
-    { kind, t, who, n, frac, hp: pl.hp, foesHp: E.map((f) => f.hp), energy: pl.en }
-  );
   const alive = () => E.filter((f) => f.dead === Infinity);
   const target = () => alive()[0];
   const hitsOn = (a: G, d: G) => hitsToKnockOut(a.c, d.c) / u;
+  /** DoT ticks still to land: who each pending tick lands on (single: the current target, as the tick itself will pick). */
+  const dots: { owner: G; vs: readonly G[]; single: boolean }[] = [];
+  const snapFx = (): FighterFx[] => {
+    const left = all.map(() => 0);
+    for (const d of dots) {
+      if (d.single) { const v = target() ?? d.vs[0]; left[all.indexOf(v)]++; } else for (const v of d.vs) left[all.indexOf(v)]++;
+    }
+    return all.map((f, i) => {
+      const atk = f === pl ? target() : pl;
+      return {
+        nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
+        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: left[i],
+      };
+    });
+  };
+  const ev = (kind: GroupEvent['kind'], who: number, frac: number, n = 0): GroupEvent => (
+    opts.withFx
+      ? { kind, t, who, n, frac, hp: pl.hp, foesHp: E.map((f) => f.hp), energy: pl.en, fx: snapFx() }
+      : { kind, t, who, n, frac, hp: pl.hp, foesHp: E.map((f) => f.hp), energy: pl.en }
+  );
   const gain = (f: G, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
@@ -178,11 +206,14 @@ export function* groupFightSteps(
         for (let k = 1; k <= 3; k++) {
           const vs = [...spread];
           const single = spread.length === 1 && me === pl;
+          const rec = { owner: me, vs, single };
+          dots.push(rec);
           timed.push({
             t: t0 + 0.25 * iv * k,
             // single: the remaining ticks pass to the next living foe (nothing is lost);
             // area: only whoever was inside the radius at the cast
             fn: () => {
+              dots.splice(dots.indexOf(rec), 1);
               const ts = single ? [target() ?? vs[0]] : vs;
               for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick');
             },
@@ -222,8 +253,10 @@ export function* groupFightSteps(
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
-      const m = yield ev('cast', me.who, 0, me.casts - 1);
+      const e = ev('cast', me.who, 0, me.casts - 1);
+      const m = yield e;
       cast(me, tt, m ?? 1);
+      if (opts.withFx) (e as { fx?: readonly FighterFx[] }).fx = snapFx(); // the cast reports the state AFTER it takes effect
     }
   }
 

@@ -92,7 +92,29 @@ export interface FightOptions {
   readonly cheer?: readonly CheerEvent[];
   /** End at the first KO (PvE: no ghost timing); HP/energy left are reported at that instant. */
   readonly stopAtFirstKo?: boolean;
+  /**
+   * PR16 (read-only, opt-in): the driver passes an array and the core pushes ONE `FightFxPair` per yielded event, in the
+   * same order — the REAL counters of each side at that event (for a `cast`, AFTER it takes effect). It changes nothing in
+   * the fight (no draw, no event field), so the events stay byte-identical to the server mirror (`_combate.js`).
+   */
+  readonly fxTrace?: FightFxPair[];
 }
+
+/**
+ * The real status counters of a fighter (PR16): what the scene draws as the seal's turns, read from the core instead of
+ * guessed from the events. `nAtk`/`nSpd` = attack/speed boosts left (each basic attack spends up to 1); `nVuln` = defence-down
+ * hits left ON this fighter; `shield` = absorption left (HP fraction) and `shieldHits` = the same in hits of the enemy;
+ * `dot` = DoT ticks still to land ON this fighter.
+ */
+export interface FighterFx {
+  readonly nAtk: number;
+  readonly nVuln: number;
+  readonly nSpd: number;
+  readonly shield: number;
+  readonly shieldHits: number;
+  readonly dot: number;
+}
+export type FightFxPair = readonly [FighterFx, FighterFx];
 
 export type FightWinner = 'A' | 'B' | 'draw';
 
@@ -144,6 +166,8 @@ interface Fighter {
 interface Timed {
   readonly t: number;
   readonly fn: () => void;
+  /** A DoT tick: whoever it lands on (for the real counter of ticks left). */
+  readonly dotOn?: Fighter;
 }
 
 export function* fightSteps(
@@ -185,11 +209,18 @@ export function* fightSteps(
   let t = 0;
   let tPrev = 0;
   const pending: FightEvent[] = [];
-  const ev = (kind: FightEvent['kind'], side: 0 | 1, frac: number, at: number): FightEvent => (
-    { kind, t: at, side, frac, hp: [F[0].hp, F[1].hp], energy: [F[0].en, F[1].en] }
-  );
+  const trace = opts.fxTrace;
+  const ev = (kind: FightEvent['kind'], side: 0 | 1, frac: number, at: number): FightEvent => {
+    trace?.push(snapFx());
+    return { kind, t: at, side, frac, hp: [F[0].hp, F[1].hp], energy: [F[0].en, F[1].en] };
+  };
 
   const hitsOn = (me: Fighter, foe: Fighter) => hitsToKnockOut(me.c, foe.c) / u;
+  const fxOf = (f: Fighter, foe: Fighter): FighterFx => ({
+    nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield, shieldHits: f.shield * hitsOn(foe, f),
+    dot: timed.reduce((n, e) => n + (e.dotOn === f ? 1 : 0), 0),
+  });
+  const snapFx = (): FightFxPair => [fxOf(F[0], F[1]), fxOf(F[1], F[0])];
   const gain = (f: Fighter, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
@@ -216,7 +247,7 @@ export function* fightSteps(
         break;
       case 'dot':
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe), 'tick') });
+          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe), 'tick') });
         }
         break;
       case 'heal':
@@ -253,8 +284,11 @@ export function* fightSteps(
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
-      const m = yield ev('cast', i, 0, tt);
+      const e = ev('cast', i, 0, tt);
+      const k = trace ? trace.length - 1 : -1;
+      const m = yield e;
       cast(me, F[1 - i], tt, m ?? 1);
+      if (trace) trace[k] = snapFx(); // the cast event reports the state AFTER it takes effect
     }
   }
   const finish = (): FightResult => {
