@@ -159,3 +159,22 @@ A cura rende pouco em grupo (o dano entra de vários lados) e muito na sequênci
 | Ofício, TTK | ≤ ±25% | ferreiro +0,1 · tecelão −3,7 · artesão −9,0 · joalheiro −2,4 · alquimista −0,4 · curtidor +0,1 · encantador −4,3 · escriba −8,9 · cozinheiro 0,0 · luthier −3,7 · cartógrafo −6,2 (%) |
 
 - **Torcida (`CHEER.energyPerDischarge`):** ver contexto §2.18. Fixado em 90: TTK no teto Arena −23,5% e Masmorra −22,6%; diferença por habilidade com os dois lados torcendo 2,3pp (Arena) e 0,0pp (Masmorra, 5 andares). **Efeito colateral medido e não limitado pelos critérios do dono:** com torcida no teto, andar 5 da Masmorra 100% e andar 6 97,8%; Arena run vencida 96,7% (sem torcida, 66,7%).
+
+
+## 8. PR4b: sem torcida na Masmorra e no Pesadelo; torcida da Arena (06/10/2026, contexto §2.19)
+- **Fonte:** `_medir/a.ts` do worktree do PR4b (copiado para `_sim/cv3-medir/pr4b/`). Gates no repo: `arena.v3.test.ts` (AC5/AC6) e `dungeon.v3.test.ts` (sem torcida).
+- **Masmorra e Pesadelo:** a torcida sai da UI (mascote, barra, toque) e do motor (`simulateDungeonRunV3` perde a opção `cheer`; `useGroupBattle` ganha `torcida: false`). A tabela da §7 foi calibrada **sem** torcida, então as metas dela não mudam (30,2pp ao concluir os 5 andares e Pesadelo ≤ 22,5 s: aceitos pelo dono).
+- **Arena, `CHEER.energyPerDischarge`:** a métrica é a diferença de vitória da RUN entre "torcendo no teto" e "sem torcer", com a MESMA habilidade, ≤ 25pp, e o TTK ≤ ±25%. Como a habilidade que não age é a mais sensível (48% de base), ela decide o teto.
+
+| `energyPerDischarge` | `nenhuma` (teto − sem) | `boa` (teto − sem) | TTK |
+|---|---|---|---|
+| 3 (antes do PR4) | +9,3pp | +6,4pp | −2,6% |
+| 7 | +22,4pp | +16,7pp | −6,9% |
+| 8 | +24,0pp | +17,8pp | −7,9% |
+| **9 (fixado)** | **+24,8pp** | **+17,9pp** | **−8,7%** |
+| 10 | +25,3pp (reprova) | +18,3pp | −9,6% |
+| 11 | +26,5pp | +17,8pp | −10,4% |
+| 90 (PR4) | +46,9pp (RED do gate) | — | −23,5% |
+
+- N = 3200 (a amostragem do gate; 9 passa em 24,0pp com N = 9600 e em 24,8pp com N = 2400). A margem do 9 é fina (0,2pp na amostragem do gate): a mesma semente repete o mesmo número, mas qualquer mudança em `ARENA_FOES` ou nas tabelas de anel/esquiva pede nova medição.
+- Arena `media`: run vencida 65,9% sem torcida e 86,3% com torcida no teto (era 96,7% com 90).
