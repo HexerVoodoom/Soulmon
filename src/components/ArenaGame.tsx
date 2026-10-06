@@ -288,10 +288,12 @@ export function ArenaGame({
           sceneElement={inimigos[0] ? fxElementId(inimigos[0].elements[0]) : null}
           specialLabel={specialLabel(isPt, especial)}
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          isPt={isPt}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
             element: fxElementId(basica?.elementoId ?? atributos.principal),
             energy: (pronto ? batalha.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
+            status: pronto ? batalha.status.me : undefined,
           }}
           foes={inimigos.map((e, i) => {
             const max = Math.max(1, Math.round(foesLado[i].combatant.hp));
@@ -300,6 +302,7 @@ export function ArenaGame({
               element: fxElementId(e.elements[0]), down: foesHp(i) <= 1e-9,
               // só quem tem especial (o chefe) mostra a barra de energia
               energy: foesLado[i].special && pronto ? (batalha.foeEnergy[i] ?? 0) / ENERGY_TRIGGER : undefined,
+              status: pronto ? batalha.status.foes[i] : undefined,
             };
           })}
           target={alvoIdx}

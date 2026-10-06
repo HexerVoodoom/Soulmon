@@ -277,16 +277,19 @@ export function NightmareBattle({
         <BattleStage
           specialLabel={specialLabel(isPt, par?.especial)}
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          isPt={isPt}
           scene={NIGHTMARE_SCENE.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
+            status: pronto ? battle.status.me : undefined,
           }}
           foes={[{
             key: idx, sprite: enemy.sprite, name: isPt ? 'Pesadelo' : 'Nightmare', hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
             element: enemyEl, down: foeHpFrac <= 1e-9,
             // só quem tem especial (o slot mega) mostra a barra de energia
             energy: enemy.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
+            status: pronto ? battle.status.foes[0] : undefined,
           }]}
           action={pronto ? battle.action : null}
           hit={pronto ? battle.hits : []}
