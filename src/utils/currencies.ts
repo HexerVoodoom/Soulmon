@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { noteFreeBits, type BitsOriginState } from './bitsOrigin';
 
 // As TRÊS moedas do Soulmon, num lugar só.
 //
@@ -252,7 +253,7 @@ export function remainingMinigameBits(state: MinigameBitsState, dayKey: string):
  * ⚠️ Os Bits do DIA COMPLETO **não passam por aqui** — são de `dailyReset.ts`,
  * e o teto deles é o próprio calendário.
  */
-export function creditMinigameBits<T extends MinigameBitsState>(
+export function creditMinigameBits<T extends MinigameBitsState & BitsOriginState>(
   prev: T,
   amount: number,
   dayKey: string,
@@ -265,9 +266,10 @@ export function creditMinigameBits<T extends MinigameBitsState>(
   if (pedido <= 0) return prev;
   const ganho = Math.min(pedido, remainingMinigameBits(prev, dayKey));
   if (ganho <= 0) return prev;
-  return {
+  // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (a base do teto de +25% do câmbio).
+  return noteFreeBits({
     ...prev,
     gamePoints: (prev.gamePoints ?? 0) + ganho,
     minigameBits: { day: dayKey, earned: minigameBitsToday(prev, dayKey) + ganho },
-  };
+  }, ganho, dayKey);
 }

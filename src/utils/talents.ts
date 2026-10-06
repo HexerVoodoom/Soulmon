@@ -37,6 +37,10 @@ export type TalentEffect =
   | { readonly kind: 'cheerBoost'; readonly perRank: number }
   /** Comércio: refazer UM ponto (o que você escolher) em vez da árvore toda. Só moeda GANHA (Bits). */
   | { readonly kind: 'respecOne' }
+  /** Comércio (PR8): equipamento mais barato em Bits (`equipment.ts › equipPriceDiscount`, só preço). */
+  | { readonly kind: 'equipPrice' }
+  /** Comércio (PR8): mais fragmentos por prêmio (`equipment.ts › fragmentGain`, dentro do +25%). */
+  | { readonly kind: 'fragmentGain' }
   /** Reduz o custo do respec em `perRank × grau` (Comércio: só moeda). */
   | { readonly kind: 'respecDiscount'; readonly perRank: number }
   /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. */
@@ -80,8 +84,8 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-pve-06', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
   { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
   // ── Comércio (só preço e ganho de moeda GANHA; nunca % de combate) ──────
-  { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'equipPrice' } },
+  { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'fragmentGain' } },
   { id: 'tal-com-03', path: 'comercio', tier: 1, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP } },
   { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
   { id: 'tal-com-05', path: 'comercio', tier: 2, maxRank: 1, effect: { kind: 'respecOne' } },

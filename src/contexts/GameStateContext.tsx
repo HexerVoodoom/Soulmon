@@ -21,6 +21,8 @@ import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
+import { sanitizeEquipment, type EquipmentState } from '../utils/equipment';
+import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, type AchievementId } from '../utils/achievements';
 import {
   resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
@@ -469,6 +471,12 @@ export interface GameState {
    *  derivado do Vínculo (`bondLevelFor(totalXP)`, nunca persistido). Vetor inválido é descartado na carga e no servidor
    *  (`functions/api/save.js`). Sobrevive à degeneração. Leitura: `?? []`. */
   talentPicks?: string[];
+  /** 🛡️ EQUIPAMENTO (Combate v3 / PR8, `utils/equipment.ts`): posse, o que está em cada slot e os fragmentos. O bônus é derivado
+   *  (percentual, canal único de 5%). Lixo é descartado peça a peça na carga e no servidor. Leitura: `?? EMPTY_EQUIPMENT`. */
+  equipment?: EquipmentState;
+  /** 💠 PROCEDÊNCIA dos Bits (PR8, `utils/bitsOrigin.ts`): quanto do saldo veio de Crédito e o câmbio do dia (teto de +25%).
+   *  Sem o campo todo Bit conta como ganho. */
+  bitsOrigin?: BitsOrigin;
   /** Id da moldura EQUIPADA (qualquer origem) ou `null` = sem moldura. Leitura: `?? null`; se deixou de valer (lugar de Mestre
    *  perdido), a tela desenha sem moldura (`resolveEquippedFrame`) e o id fica guardado. */
   equippedFrame?: string | null;
@@ -1293,6 +1301,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         equippedFrame: sanitizeEquippedFrame(loadedState.equippedFrame),
         // Talentos: vetor inválido para o Vínculo do save é DESCARTADO (`utils/talents.ts`), nunca corrigido.
         talentPicks: sanitizeTalentPicks(loadedState.talentPicks, bondLevelFor(num(loadedState.totalXP, 0))),
+        // Equipamento e procedência dos Bits (PR8): lixo é descartado peça a peça (`utils/equipment.ts`, `utils/bitsOrigin.ts`).
+        equipment: sanitizeEquipment(loadedState.equipment),
+        bitsOrigin: sanitizeBitsOrigin(loadedState.bitsOrigin),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de

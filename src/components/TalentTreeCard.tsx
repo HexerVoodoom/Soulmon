@@ -16,6 +16,7 @@ import {
   sanitizeTalentPicks, canRespecOne, respecOneCost, applyRespecOne, type TalentNode, type TalentPath,
 } from '../utils/talents';
 import { loadTalentArt } from '../utils/talentArt';
+import { spendBits } from '../utils/equipment';
 import { TALENT_COPY } from '../utils/talentCopy';
 
 const PATHS: readonly { id: TalentPath; art: string; pt: string; en: string; hintPt: string; hintEn: string }[] = [
@@ -77,7 +78,7 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
     }
     setGameState((prev) => {
       const re = applyRespec({ talentPicks: sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)), gamePoints: prev.gamePoints ?? 0 });
-      return re.ok ? { ...prev, talentPicks: [], gamePoints: re.state.gamePoints } : prev;
+      return re.ok ? spendBits({ ...prev, talentPicks: [] }, re.cost) : prev;
     });
     setConfirmando(false);
     setAviso(isPt ? 'Árvore refeita. Os pontos voltaram todos.' : 'Tree rebuilt. All points are back.');
@@ -95,7 +96,7 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
     }
     setGameState((prev) => {
       const re = applyRespecOne({ talentPicks: sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)), gamePoints: prev.gamePoints ?? 0 }, id);
-      return re.ok ? { ...prev, talentPicks: re.state.talentPicks, gamePoints: re.state.gamePoints } : prev;
+      return re.ok ? spendBits({ ...prev, talentPicks: re.state.talentPicks }, re.cost) : prev;
     });
     setAviso(isPt ? 'Um ponto voltou para você.' : 'One point is back with you.');
   };

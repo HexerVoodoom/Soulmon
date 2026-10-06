@@ -136,6 +136,8 @@ import {
 } from './utils/weeklyMissions';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
+import { noteFreeBits, creditExchangeRoom, applyCreditExchange } from './utils/bitsOrigin';
+import { spendBits } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
@@ -1151,7 +1153,7 @@ export default function App() {
     getGifts(saveId, true).then(({ gifts }) => {
       if (!gifts.length) return;
       const total = gifts.reduce((sum, g) => sum + g.bits, 0);
-      setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + total }));
+      setGameState(prev => noteFreeBits({ ...prev, gamePoints: (prev.gamePoints ?? 0) + total }, total, playerDayKey(new Date(), prev.playerDayTz)));
       toast.success(
         language === 'pt-BR'
           ? `Você recebeu ${total} Bits de amigos!`
@@ -3571,20 +3573,29 @@ export default function App() {
   const handleExchangeCredits = useCallback(async (creditos: number): Promise<boolean> => {
     const pack = BITS_EXCHANGE.find(p => p.credits === creditos);
     if (!pack) return false;
+    // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. Conferido ANTES de gastar o Crédito (dinheiro real):
+    // o pacote que passa do teto não é cobrado nem partido.
+    if (creditExchangeRoom(gameState, playerDayKey(new Date(), gameState.playerDayTz)) < pack.bits) {
+      toast(language === 'pt-BR'
+        ? 'O câmbio de hoje já chegou no limite. Amanhã a conta abre de novo, sem pressa.'
+        : "Today's exchange has reached its limit. The count opens again tomorrow, no rush.");
+      return false;
+    }
     const ent = await spendCredits(pack.credits, 'exchange-bits');
     if (!ent) {
       toast(language === 'pt-BR' ? 'Créditos insuficientes.' : 'Not enough credits.');
       return false;
     }
-    setGameState(prev => ({
-      ...prev,
-      gamePoints: (prev.gamePoints ?? 0) + pack.bits,
-      credits: ent.credits,
-      accountTier: ent.tier,
-    }));
+    setGameState(prev => {
+      // Reconferido sobre o `prev` (dois câmbios no mesmo lote leriam o mesmo estado). Sem espaço aqui o Crédito já foi gasto: os
+      // Bits entram do mesmo jeito (o servidor cobrou; o jogador não perde o que pagou), só que contados no dia.
+      const r = applyCreditExchange(prev, pack.bits, playerDayKey(new Date(), prev.playerDayTz));
+      const base = r.ok ? r.state : { ...prev, gamePoints: (prev.gamePoints ?? 0) + pack.bits };
+      return { ...base, credits: ent.credits, accountTier: ent.tier };
+    });
     toast(language === 'pt-BR' ? `+${pack.bits} Bits!` : `+${pack.bits} Bits!`);
     return true;
-  }, [language, setGameState]);
+  }, [language, setGameState, gameState]);
 
   const handleShopBuy = useCallback((itemId: string): boolean => {
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
@@ -4678,6 +4689,7 @@ export default function App() {
         (prev.energyPoints ?? 0) + (rewards.energy ?? 0),
       ),
       gamePoints: (prev.gamePoints ?? 0) + (rewards.bits ?? 0),
+      bitsOrigin: noteFreeBits(prev, rewards.bits ?? 0, playerDayKey(new Date(), prev.playerDayTz)).bitsOrigin,
       nightmares: markFought(
         prev.nightmares ?? EMPTY_NIGHTMARES,
         nightmareDayKey(new Date(), prev.rest?.playerDayTz),
@@ -6098,9 +6110,7 @@ export default function App() {
                      comprariam duas vezes com o dinheiro de uma). */
                   onSpendBits: (pts) => {
                     if ((gameState.gamePoints ?? 0) < pts) return false;
-                    setGameState(prev => (prev.gamePoints ?? 0) < pts
-                      ? prev
-                      : { ...prev, gamePoints: (prev.gamePoints ?? 0) - pts });
+                    setGameState(prev => spendBits(prev, pts));
                     return true;
                   },
                 }}

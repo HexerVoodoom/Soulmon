@@ -421,6 +421,11 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `TALENT_POINTS_MAX`, `PICKABLE`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `talentBonus`, `talentAttrBonus` e `talentCheerScale` (PR7b: canal de PvP por atributo e rendimento da torcida do Duelo; `_duel.js › duelSide` os lê e devolve `cheerScale`).
 **Régua:** `functions/api/talents.parity.test.js`.
 
+### `functions/api/_equipment.js`
+**Dono de:** o ESPELHO de `src/utils/equipment.ts` no servidor (PR8): sanea o campo `equipment` e o registro `bitsOrigin` do save (`save.js`) e dá a parcela de equipamento por atributo do canal de bônus do duelo (`_duel.js › duelSide`). Slot forjado é descartado; o teto de 5% limita um save forjado.
+**Exports:** `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `FRAGMENTS_MAX`, `EQUIP`, `sanitizeEquipment`, `equipAttrBonus`, `sanitizeBitsOrigin`.
+**Régua:** `functions/api/equipment.parity.test.js`.
+
 ### `functions/api/_gates.js`
 **Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
 **Exports:** `GATES`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.

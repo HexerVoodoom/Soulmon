@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGameStateOptional } from './GameStateContext';
 import { bondLevelFor } from '../utils/bond';
 import { talentBonus, talentAttrBonus, talentCheerScale } from '../utils/talents';
+import { equipAttrBonus, equipScalar } from '../utils/equipment';
 import { combinedBonus, combinedAttrBonus, NO_ATTR_BONUS, type AttrBonus } from '../utils/combate/bonus';
 
 /**
@@ -13,7 +14,9 @@ export function useTalentBonus(scope: 'pve'): number {
   const ctx = useGameStateOptional();
   const xp = ctx?.gameState.totalXP;
   const picks = ctx?.gameState.talentPicks;
-  return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope) }), [picks, xp, scope]);
+  const equipment = ctx?.gameState.equipment;
+  // PR8: o equipamento entra aqui (a soma dos três slots), pelo MESMO canal e no MESMO teto de 5% do talento.
+  return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment) }), [picks, xp, scope, equipment]);
 }
 
 export interface PvpTalents {
@@ -28,10 +31,12 @@ export function usePvpTalents(): PvpTalents {
   const ctx = useGameStateOptional();
   const xp = ctx?.gameState.totalXP;
   const picks = ctx?.gameState.talentPicks;
+  const equipment = ctx?.gameState.equipment;
   return useMemo(() => {
     const bond = bondLevelFor(xp ?? 0);
-    return { bonus: combinedAttrBonus({ talent: talentAttrBonus(picks, bond) }), cheerScale: talentCheerScale(picks, bond) };
-  }, [picks, xp]);
+    // PR8: talento + equipamento por atributo, UM teto de 5% na soma dos três canais (o servidor recalcula o mesmo, `_duel.js`).
+    return { bonus: combinedAttrBonus({ talent: talentAttrBonus(picks, bond), equipment: equipAttrBonus(equipment) }), cheerScale: talentCheerScale(picks, bond) };
+  }, [picks, xp, equipment]);
 }
 
 export { NO_ATTR_BONUS };
