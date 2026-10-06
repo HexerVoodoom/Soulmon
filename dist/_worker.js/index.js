@@ -3430,18 +3430,32 @@ function combatantAt(level, weights, bonus = 0) {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights);
-  return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  if (typeof bonus === "number") return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  const ab = toAttrBonus(bonus);
+  const fold = /* @__PURE__ */ __name((v, x) => x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v, "fold");
+  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
 }
 __name(combatantAt, "combatantAt");
 var COMBAT_BONUS_CAP = 0.05;
-function combinedBonus(sources) {
-  let sum = 0;
-  for (const v of [sources?.talent, sources?.equipment, sources?.commerce, sources?.rebirth]) {
-    if (typeof v === "number" && Number.isFinite(v) && v > 0) sum += v;
+var cleanN = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0, "cleanN");
+function combinedAttrBonus(sources) {
+  const sum = { atk: 0, def: 0, spd: 0 };
+  for (const src of [sources?.talent, sources?.equipment, sources?.commerce, sources?.rebirth]) {
+    if (!src || typeof src !== "object") continue;
+    sum.atk += cleanN(src.atk);
+    sum.def += cleanN(src.def);
+    sum.spd += cleanN(src.spd);
   }
-  return Math.min(sum, COMBAT_BONUS_CAP);
+  const total = sum.atk + sum.def + sum.spd;
+  const k = total > COMBAT_BONUS_CAP ? COMBAT_BONUS_CAP / total : 1;
+  return { atk: sum.atk * k, def: sum.def * k, spd: sum.spd * k };
 }
-__name(combinedBonus, "combinedBonus");
+__name(combinedAttrBonus, "combinedAttrBonus");
+function toAttrBonus(b) {
+  if (typeof b === "number") return { atk: cleanN(b), def: 0, spd: 0 };
+  return { atk: cleanN(b?.atk), def: cleanN(b?.def), spd: cleanN(b?.spd) };
+}
+__name(toAttrBonus, "toAttrBonus");
 var SPECIAL_BUDGET_HITS = 3;
 var SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
 function specialOf(family) {
@@ -3458,8 +3472,14 @@ var CHEER = {
   energyPerDischarge: 9,
   pvpEnergyPerDischarge: 2.5
 };
-function cheerEvents(taps, side) {
+var CHEER_SCALE_MAX = 1.15;
+function cleanCheerScale(x) {
+  return typeof x === "number" && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
+}
+__name(cleanCheerScale, "cleanCheerScale");
+function cheerEvents(taps, side, scale = 1) {
   const out = [];
+  const k = cleanCheerScale(scale);
   const perBucket = /* @__PURE__ */ new Map();
   let acc = 0;
   for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
@@ -3468,7 +3488,7 @@ function cheerEvents(taps, side) {
     if (n >= CHEER.tapsCapPerBucket) continue;
     perBucket.set(b, n + 1);
     acc++;
-    if (acc % CHEER.tapsFull === 0) out.push({ t: tap, side });
+    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
   }
   return out;
 }
@@ -3527,7 +3547,7 @@ function* fightSteps(a, b, opts) {
       t: ch.t,
       fn: /* @__PURE__ */ __name(() => {
         const f = F[ch.side];
-        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge;
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge * cleanCheerScale(ch.scale);
       }, "fn")
     });
   }
@@ -3697,12 +3717,14 @@ __name(soulCombatant, "soulCombatant");
 // api/_talents.js
 var TALENT_POINTS_MAX = 20;
 var PICKABLE = {
-  "tal-pvp-01": { maxRank: 4, kind: "combatBonus", scope: "pvp", perRank: 4e-3 },
-  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", perRank: 4e-3 },
-  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", perRank: 4e-3 },
+  "tal-pvp-01": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "atk", perRank: 4e-3 },
+  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "def", perRank: 4e-3 },
+  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "spd", perRank: 4e-3 },
+  "tal-pvp-05": { maxRank: 3, kind: "cheerBoost", perRank: 0.05 },
   "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
   "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
-  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1 }
+  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1 },
+  "tal-com-05": { maxRank: 1, kind: "respecOne" }
 };
 var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function talentPointsFor(bondLevel) {
@@ -3726,16 +3748,27 @@ function sanitizeTalentPicks(raw, bondLevel) {
   return isValidPicks(raw, bondLevel) ? [...raw] : [];
 }
 __name(sanitizeTalentPicks, "sanitizeTalentPicks");
-function talentBonus(picks, bondLevel, scope) {
-  if (!isValidPicks(picks, bondLevel)) return 0;
-  let sum = 0;
+function talentAttrBonus(picks, bondLevel) {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!isValidPicks(picks, bondLevel)) return out;
   for (const id of picks) {
     const n = PICKABLE[id];
-    if (n.kind === "combatBonus" && n.scope === scope) sum += n.perRank;
+    if (n.kind === "combatBonus" && n.scope === "pvp" && n.attr) out[n.attr] += n.perRank ?? 0;
   }
-  return sum;
+  return out;
 }
-__name(talentBonus, "talentBonus");
+__name(talentAttrBonus, "talentAttrBonus");
+function talentCheerScale(picks, bondLevel) {
+  if (!isValidPicks(picks, bondLevel)) return 1;
+  let sum = 0;
+  for (
+    const id of
+    /** @type {string[]} */
+    picks
+  ) if (PICKABLE[id].kind === "cheerBoost") sum += PICKABLE[id].perRank ?? 0;
+  return cleanCheerScale(1 + sum);
+}
+__name(talentCheerScale, "talentCheerScale");
 
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
@@ -3759,8 +3792,8 @@ function bucketTapTimes(counts) {
   return out;
 }
 __name(bucketTapTimes, "bucketTapTimes");
-function duelCheerEvents(rawTaps, side = 0) {
-  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side);
+function duelCheerEvents(rawTaps, side = 0, scale = 1) {
+  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side, scale);
 }
 __name(duelCheerEvents, "duelCheerEvents");
 function maxLevelFor(firstSeen, now) {
@@ -3787,9 +3820,9 @@ __name(fichaStageOf, "fichaStageOf");
 var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" && own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : null, "escolaOf");
 function duelSide(save, opts = {}) {
   const state = save && typeof save === "object" ? save : {};
-  const bonus = combinedBonus({
-    talent: talentBonus(state.talentPicks, bondLevelFor(state.totalXP), "pvp"),
-    equipment: 0
+  const bondLvl = bondLevelFor(state.totalXP);
+  const bonus = combinedAttrBonus({
+    talent: talentAttrBonus(state.talentPicks, bondLvl)
   });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
@@ -3797,14 +3830,14 @@ function duelSide(save, opts = {}) {
   const especial = escolaOf(skills?.especial);
   const familiaSalva = skills?.especial?.familia;
   const family = especial ? typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial] : "direct";
-  return { combatant, special: specialOf(family), fx: { basica, especial, familia: especial ? family : null } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null } };
 }
 __name(duelSide, "duelSide");
 function simulateDuel({ me, opp, seed, taps }) {
   const g = fightSteps(
     { combatant: me.combatant, special: me.special },
     { combatant: opp.combatant, special: opp.special },
-    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0) }
+    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0, me.cheerScale) }
   );
   const events = [];
   let hpMe = null, hpOpp = null;
@@ -5899,7 +5932,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-WJEuHm/functionsRoutes-0.09280377899656034.mjs
+// ../.wrangler/tmp/pages-pteghp/functionsRoutes-0.3437895888467687.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -6141,7 +6174,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -6467,7 +6500,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
