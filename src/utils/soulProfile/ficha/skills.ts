@@ -31,6 +31,7 @@ import { CLASS_DATA } from './buildSheet';
 import type { AreaConfig } from 'class-system';
 import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import { SCHOOL_STRIKE_FORM, type StrikeForm } from './strikeForm';
+import { familiasDaJornada, type PerfilEstagio } from './estabilidadeFamilia';
 import { familiaDoEspecial, nomeEscolhidoDoEspecial, descricaoDoEspecial, SUBSTANTIVOS_ESPECIAL, type LexNome } from './nomeEspecial';
 
 export interface SkillText { pt: string; en: string }
@@ -154,6 +155,25 @@ export function escolaDominante(ficha: Ficha): EscolaSkillId {
   return melhor;
 }
 
+/** Os elementos da básica e do especial de UMA ficha (o topo base, o topo geral, e o do especial). */
+function elementosDoStage(ficha: Ficha) {
+  const ranked = rankElementos(ficha);
+  const topBase = ranked.find(r => BASE_SET.has(r.id))?.id ?? CLASS_ELEMENT_ORDER[0];
+  const topGeral = ranked[0]?.id ?? topBase;
+  // básica fala a língua de todo dia (base); especial, a mais avançada.
+  const elBasica = topBase;
+  const elEspecial = topGeral !== topBase ? topGeral
+    : (ranked.find(r => r.id !== topBase)?.id ?? topBase);
+  return { topBase, topGeral, elBasica, elEspecial };
+}
+
+/** O perfil do estágio para a regra de estabilidade da família: pesos efetivos (par já ×CUSTO_PONTO_PAR). */
+export function perfilDaFicha(ficha: Ficha, galhos?: PerfilEstagio['galhos']): PerfilEstagio {
+  const elementos: Record<string, number> = {};
+  for (const r of rankElementos(ficha)) if (r.peso > 0) elementos[r.id] = r.peso;
+  return galhos ? { elementos, galhos } : { elementos };
+}
+
 /**
  * O par básica/especial de UM estágio. Determinístico por (ficha, seedKey).
  * A especial herda o elemento mais avançado que a ficha alcançou — par
@@ -165,19 +185,15 @@ export function buildStageSkills(
   ficha: Ficha,
   stage: FichaStage,
   seedKey: string,
-  /** Substantivos e famílias já usados nos estágios anteriores — a jornada não pode mostrar o mesmo
-   *  nome nem o mesmo efeito de especial em dois cards. Mutado ao gerar (chaves `esp:` e `fam:`). */
+  /** Substantivos já usados nos estágios anteriores — a jornada não pode mostrar o mesmo nome em dois
+   *  cards. Mutado ao gerar (chave `esp:`). A família NÃO entra aqui: ela é estável (PR14). */
   usados?: Set<string>,
   /** Elemento dominante da leitura do perfil (tendência leve da família do especial). */
   tendencia?: string,
+  /** A família do estágio, já decidida por `familiasDaJornada` (PR14). Sem ela: o sorteio puro da seed. */
+  familiaFixa?: SpecialFamily,
 ): StageSkills {
-  const ranked = rankElementos(ficha);
-  const topBase = ranked.find(r => BASE_SET.has(r.id))?.id ?? CLASS_ELEMENT_ORDER[0];
-  const topGeral = ranked[0]?.id ?? topBase;
-  // básica fala a língua de todo dia (base); especial, a mais avançada.
-  const elBasica = topBase;
-  const elEspecial = topGeral !== topBase ? topGeral
-    : (ranked.find(r => r.id !== topBase)?.id ?? topBase);
+  const { topBase, topGeral, elBasica, elEspecial } = elementosDoStage(ficha);
 
   const escola = escolaDominante(ficha);
   const recurso = (Object.keys(ficha.recursos)[0] ?? 'mana') as RecursoId;
@@ -219,13 +235,9 @@ export function buildStageSkills(
   // PR9 (§2.4 Q6/Q8): o especial de CADA estágio é novo — família e nome por regra, sem IA.
   const montarEspecial = (): StageSkill => {
     const b = base('especial', elEspecial);
-    const familiasUsadas = new Set<SpecialFamily>(
-      SPECIAL_FAMILIES.filter(f => usados?.has(`fam:${f}`)),
-    );
-    const familia = familiaDoEspecial({ escola, elementoId: elEspecial, tendencia, seedKey, stage, familiasUsadas });
+    const familia = familiaFixa ?? familiaDoEspecial({ escola, elementoId: elEspecial, tendencia, seedKey, stage });
     const evitar = new Set([...(usados ?? [])].filter(k => k.startsWith('esp:')).map(k => k.slice(4)));
     const { nome, lex } = nomeEscolhidoDoEspecial({ familia, elemento: b.elementoNome, elementoBasica: elementoNomeDe(elBasica), seedKey, stage }, evitar);
-    usados?.add(`fam:${familia}`);
     // a chave do substantivo é o EN dele (o primeiro token que não é elemento): guardamos o nome inteiro EN
     for (const n of SUBSTANTIVOS_ESPECIAL[familia]) if (nome.en.includes(n.en)) usados?.add(`esp:${n.en}`);
     return {
@@ -252,8 +264,16 @@ export function buildAllStageSkills(
 ): Record<FichaStage, StageSkills> {
   const saida = {} as Record<FichaStage, StageSkills>;
   const usados = new Set<string>();
-  for (const stage of Object.keys(fichaByStage) as FichaStage[]) {
-    saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey, usados, tendencia);
-  }
+  const stages = Object.keys(fichaByStage) as FichaStage[];
+  // PR14: a família é ESTÁVEL — só troca com mudança forte de perfil (elemento/galho dominante).
+  const jornada = familiasDaJornada({
+    seedKey, tendencia, stages,
+    escolas: stages.map(st => escolaDominante(fichaByStage[st])),
+    elementosEspecial: stages.map(st => elementosDoStage(fichaByStage[st]).elEspecial),
+    perfis: stages.map(st => perfilDaFicha(fichaByStage[st])),
+  });
+  stages.forEach((stage, i) => {
+    saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey, usados, tendencia, jornada[i].familia);
+  });
   return saida;
 }

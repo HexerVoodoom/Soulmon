@@ -144,7 +144,7 @@ export function familiasDaJornada(e: EntradaJornada): FamiliaDaJornada[] {
     if (i === 0) { saida.push({ familia: familiaDoEspecial(base), trocou: false }); continue; }
     const atual = saida[i - 1].familia;
     if (!perfilMudouForte(e.perfis[i - 1], e.perfis[i])) { saida.push({ familia: atual, trocou: false }); continue; }
-    saida.push({ familia: familiaDoEspecial({ ...base, familiasUsadas: new Set<SpecialFamily>([atual]) }), trocou: true });
+    saida.push({ familia: familiaDoEspecial({ ...base, excluir: atual }), trocou: true });
   }
   return saida;
 }

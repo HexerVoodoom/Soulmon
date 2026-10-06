@@ -2063,12 +2063,18 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/components/nav/AreaView.tsx`, `src/components/arena/DueloSheet.tsx` (⚰️ antes `ActivitiesPage.tsx`, minimal-ui F5), `src/components/ArenaGame.render.test.tsx`, `src/components/ArenaGame.tsx`, `src/components/PetPage.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/arena.ts`, `src/utils/soulProfile/ficha/fromInput.ts`, `src/utils/soulProfile/ficha/realSkillPower.ts`, `src/utils/soulProfile/index.ts`, `src/utils/soulProfile/pipeline.ts`
 **Régua:** `src/utils/soulProfile/ficha/nomeEspecial.test.ts` (especial novo por estágio) e `src/utils/soulProfile/ficha/skills.area.test.ts`.
 
+### `src/utils/soulProfile/ficha/estabilidadeFamilia.ts`
+**Dono de:** A regra da família ESTÁVEL do especial (PR14, decisão do dono 07/10/2026): ela só é sorteada de novo quando o PERFIL muda forte (elemento dominante ou galho Poder/Harmonia/Benevolência dominante), com limiares nomeados em `LIMIARES` e teto de troca `TETO_TAXA_TROCA` (25% por evolução). Elemento e skill seguem recalculados a cada estágio. Puro, sem relógio.
+**Exports:** `LIMIARES`, `TETO_TAXA_TROCA`, `perfilMudouForte`, `elementoMudouDeVerdade`, `galhoMudouDeVerdade`, `familiasDaJornada(entrada)`, `PerfilEstagio`.
+**Chamado por:** `src/utils/soulProfile/ficha/skills.ts` (`buildAllStageSkills`).
+**Régua:** `src/utils/soulProfile/ficha/estabilidadeFamilia.test.ts`, `src/utils/soulProfile/ficha/nomeEspecial.test.ts`
+
 ### `src/utils/soulProfile/ficha/nomeEspecial.ts`
-**Dono de:** A família do efeito e o nome próprio do ESPECIAL de cada estágio (PR9), por regra determinística: sem IA e sem rede, o perfil não sai do aparelho. Cada estágio gera um especial novo.
+**Dono de:** A família do efeito e o nome próprio do ESPECIAL de cada estágio (PR9), por regra determinística: sem IA e sem rede, o perfil não sai do aparelho. Cada estágio gera um NOME novo; a família é estável (PR14).
 **Exports:**
 - `SUBSTANTIVOS_ESPECIAL` — o léxico EN/PT por família (8 por família, disjunto do da básica).
 - `PESO_FAMILIA_ESCOLA`, `AFINIDADE_ELEMENTO` — as tabelas que inclinam a família (escola, elemento, tendência do perfil).
-- `familiaDoEspecial(entrada): SpecialFamily` — sorteio ponderado e determinístico; evita as famílias já usadas na jornada.
+- `familiaDoEspecial(entrada): SpecialFamily` — sorteio ponderado e determinístico; `excluir` tira a família em vigor quando ela troca (PR14: a família é estável, `familiasUsadas` saiu).
 - `nomeDoEspecial(entrada, evitarEn?)`, `descricaoDoEspecial(familia, elemento, recurso)` — nome e descrição `{en,pt}`.
 - `nomeEspecialInimigo(elemento, seed)` — o nome do especial de um inimigo (dano direto), pela identidade dele.
 **Chamado por:** `src/utils/soulProfile/ficha/skills.ts`, `src/utils/combatFx.ts`.
