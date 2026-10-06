@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import type { CrossingArea, Region } from '../../types/travessias';
 import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+import { travessiaIcon } from '../../assets/soulmon/travessias';
 
 /**
  * O SINAL VISUAL DE UMA TRAVESSIA (02/10/2026, F1 da rodada de ajustes).
@@ -14,9 +16,9 @@ import { Icon } from '../ui/Icon';
  *    Travessias de uma região vêm de áreas diferentes (contrato do
  *    catálogo), então região + área é único por Travessia.
  *
- * PROVISÓRIO: os glifos de área são nomes do subset Material Symbols do app
- * (nenhum é autoral ainda) — estão listados no relatório para o documento de
- * prompts do dono. Trocar por arte própria é só mudar `AREA_ICON`.
+ * 05/10/2026: cada desafio ganhou o ÍCONE PRÓPRIO do dono (`assets/soulmon/travessias/`, ligado
+ * por id do desafio). Os glifos de área abaixo (subset Material Symbols) ficam como FALLBACK de
+ * quem não tem arte.
  */
 export const AREA_ICON: Record<CrossingArea, string> = {
   corpo: 'accessibility_new',
@@ -52,11 +54,15 @@ export function RegionPostal({ region, width = 56, height = 44 }: { region: Regi
   return <span aria-hidden="true" data-travessia-postal={region.id} style={style} />;
 }
 
-/** O glifo da área da vida de uma Travessia (decorativo; a área também vai escrita). */
-export function AreaGlyph({ area, size = 24 }: { area: CrossingArea; size?: number }) {
+/**
+ * O sinal da Travessia (decorativo; a área também vai escrita): o ícone do desafio (`challengeId`)
+ * quando tem arte, senão o glifo da área da vida.
+ */
+export function AreaGlyph({ area, challengeId, size = 24 }: { area: CrossingArea; challengeId?: string; size?: number }) {
+  const art = travessiaIcon(challengeId);
   return (
-    <span aria-hidden="true" data-travessia-area={area} style={{ display: 'inline-flex', flexShrink: 0 }}>
-      <Icon name={AREA_ICON[area]} size={size} tone="primary" />
+    <span aria-hidden="true" data-travessia-area={area} data-travessia-icone={art ? challengeId : undefined} style={{ display: 'inline-flex', flexShrink: 0 }}>
+      {art ? <PixelIcon src={art} size={size} /> : <Icon name={AREA_ICON[area]} size={size} tone="primary" />}
     </span>
   );
 }

@@ -69,6 +69,7 @@ describe('missões do dia (04/10/2026) — a tela mostra as TRÊS e se escolhe U
     expect(card.textContent).toContain(C1.textPt);
     expect(card.querySelector('[data-travessia-postal]')).toBeTruthy();
     expect(card.querySelector(`[data-travessia-area="${C1.area}"]`)).toBeTruthy();
+    expect(card.querySelector(`[data-travessia-icone="${C1.id}"] img[data-pixel-icon]`)).toBeTruthy();
     expect(card.querySelector('[data-mission-mark="progress"]')).toBeTruthy();
     expect(container.querySelector('[data-mission-mark="available"]')).toBeNull();
   });

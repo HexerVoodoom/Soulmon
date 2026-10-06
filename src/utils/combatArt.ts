@@ -11,8 +11,8 @@
  *
  * Só os 17 elementos BASE têm arte; um derivado usa o seu 1º componente
  * (`DERIVED_ELEMENT_PAIRS`), `planta` (do Oráculo) usa `vida`, `industrial` usa
- * `marcial`; o resto (`neutro`, desconhecido) devolve `undefined` e o chamador
- * mantém o que tinha.
+ * `marcial`; `neutro` tem arte própria (05/10/2026: `bg-neutro` + `escudo-neutro`); o resto
+ * (desconhecido) devolve `undefined` e o chamador mantém o que tinha.
  *
  * ⚠️ Importado SÓ pela `BattleStage` (chunk preguiçoso da luta) — não importe
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
@@ -40,7 +40,7 @@ const BG_MEAN: Record<string, string> = {
   agua: '#184f53', ar: '#33686a', arcano: '#18474d', eletricidade: '#195154', espaco: '#174352',
   fogo: '#274644', gravidade: '#17434b', luz: '#716c48', marcial: '#245859', morte: '#275455',
   vida: '#1c504c', som: '#1e5c5f', sombra: '#12303b', tempo: '#1c5656', terra: '#39443c',
-  vigor: '#274a48', vileza: '#204c42',
+  vigor: '#274a48', vileza: '#204c42', neutro: '#285558',
 };
 
 const ORACLE_TO_BASE: Record<string, string> = { planta: 'vida', industrial: 'marcial' };
@@ -73,6 +73,6 @@ export function combatShadow(sceneElement: string | null | undefined): string {
   return combatBaseElement(sceneElement) === 'luz' ? sombraEscura : sombraClara;
 }
 
-/** Guard de instalação: 17 cenários e 17 escudos. */
+/** Guard de instalação: 17 cenários e 17 escudos dos elementos base + os do `neutro` (18). */
 export const COMBAT_BG_COUNT = Object.keys(BG).length;
 export const COMBAT_SHIELD_COUNT = Object.keys(ESCUDO).length;
