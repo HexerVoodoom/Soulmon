@@ -3723,6 +3723,8 @@ var PICKABLE = {
   "tal-pvp-05": { maxRank: 3, kind: "cheerBoost", perRank: 0.05 },
   "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
   "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
+  "tal-com-01": { maxRank: 3, kind: "equipPrice" },
+  "tal-com-02": { maxRank: 3, kind: "fragmentGain" },
   "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1 },
   "tal-com-05": { maxRank: 1, kind: "respecOne" }
 };
@@ -3769,6 +3771,60 @@ function talentCheerScale(picks, bondLevel) {
   return cleanCheerScale(1 + sum);
 }
 __name(talentCheerScale, "talentCheerScale");
+
+// api/_equipment.js
+var EQUIP_SLOTS = ["nucleo", "carapaca", "rastro"];
+var SLOT_ATTR = { nucleo: "atk", carapaca: "def", rastro: "spd" };
+var TIER_PCT = [5e-3, 0.01, 0.015];
+var FRAGMENTS_MAX = 999;
+var EQUIP = Object.fromEntries(
+  EQUIP_SLOTS.flatMap((slot) => [1, 2, 3].map((tier) => [`eq-${slot}-t${tier}`, { slot, pct: TIER_PCT[tier - 1] }]))
+);
+var has2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function sanitizeEquipment(raw) {
+  if (!raw || typeof raw !== "object") return { owned: [], equipped: {}, fragments: 0 };
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const owned = [];
+  if (Array.isArray(r.owned)) {
+    for (const id of r.owned) if (typeof id === "string" && has2(EQUIP, id) && !owned.includes(id)) owned.push(id);
+  }
+  const equipped = {};
+  const eq = r.equipped && typeof r.equipped === "object" ? (
+    /** @type {Record<string, unknown>} */
+    r.equipped
+  ) : {};
+  for (const slot of EQUIP_SLOTS) {
+    const id = has2(eq, slot) ? eq[slot] : void 0;
+    if (typeof id === "string" && owned.includes(id) && EQUIP[id].slot === slot) equipped[slot] = id;
+  }
+  const f = typeof r.fragments === "number" && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
+  return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
+}
+__name(sanitizeEquipment, "sanitizeEquipment");
+function equipAttrBonus(raw) {
+  const eq = sanitizeEquipment(raw);
+  const out = { atk: 0, def: 0, spd: 0 };
+  for (const slot of EQUIP_SLOTS) {
+    const id = eq.equipped[slot];
+    if (id) out[SLOT_ATTR[slot]] += EQUIP[id].pct;
+  }
+  return out;
+}
+__name(equipAttrBonus, "equipAttrBonus");
+var fin = /* @__PURE__ */ __name((n) => typeof n === "number" && Number.isFinite(n) && n > 0 ? Math.min(1e9, Math.floor(n)) : 0, "fin");
+function sanitizeBitsOrigin(raw) {
+  if (!raw || typeof raw !== "object") return void 0;
+  const o = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof o.day !== "string" || o.day.length === 0 || o.day.length > 40) return void 0;
+  return { day: o.day, free: fin(o.free), fromCredits: fin(o.fromCredits), paidLeft: fin(o.paidLeft) };
+}
+__name(sanitizeBitsOrigin, "sanitizeBitsOrigin");
 
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
@@ -3834,7 +3890,9 @@ function duelSide(save, opts = {}) {
   const state = save && typeof save === "object" ? save : {};
   const bondLvl = bondLevelFor(state.totalXP);
   const bonus = combinedAttrBonus({
-    talent: talentAttrBonus(state.talentPicks, bondLvl)
+    talent: talentAttrBonus(state.talentPicks, bondLvl),
+    // PR8: equipamento por slot (Nucleo ATK, Carapaca DEF, Rastro SPD), percentual, saneado do save; o teto de 5% e a SOMA dos tres.
+    equipment: equipAttrBonus(state.equipment)
   });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
@@ -5527,6 +5585,12 @@ async function onRequest5({ request, env }) {
     if ("equippedFrame" in state) state.equippedFrame = clampFrameId(state.equippedFrame);
     if ("ownedFrames" in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
     if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
+    if ("equipment" in state) state.equipment = sanitizeEquipment(state.equipment);
+    if ("bitsOrigin" in state) {
+      const o = sanitizeBitsOrigin(state.bitsOrigin);
+      if (o) state.bitsOrigin = o;
+      else delete state.bitsOrigin;
+    }
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
@@ -5945,7 +6009,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-GkPVif/functionsRoutes-0.7678995089169739.mjs
+// ../.wrangler/tmp/pages-LQ3Hjh/functionsRoutes-0.6472838073183675.mjs
 var routes = [
   {
     routePath: "/api/account",
