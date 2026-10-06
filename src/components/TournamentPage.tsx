@@ -72,6 +72,7 @@ import { simulatePvp, type DuelSide } from '../utils/combate/duel';
 import { specialOf } from '../utils/combate/specials';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { familyOfSkill } from '../utils/arena';
+import { useTalentBonus } from '../contexts/useTalentBonus';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { visualElementFor } from '../utils/combatFx';
@@ -275,6 +276,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   // O level e o ramo do treino vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
   const gs = ctx?.gameState;
+  const bonusTalento = useTalentBonus('pvp'); // o MESMO canal que o servidor aplica no duelo (teto 5%), PR7
   /** `npc` (R8): o desafiante NPC do Torneio vazio — o MESMO treino, com o retrato e o nome dele; nada de rede, partida ou ganho. */
   const startTraining = (npc?: TournamentNpc) => {
     // O SEU lado: o combatente do save (level e ramo) e a família do especial da ficha. O treino é 100% LOCAL, então
@@ -282,7 +284,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     const estado: SoulXPState = gs
       ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
       : { evolutionStage: petStage };
-    const combatant = soulCombatant(estado);
+    const combatant = soulCombatant(estado, bonusTalento);
     const par = stageSkillsFor(skills, petStage);
     const me: DuelSide = {
       combatant,

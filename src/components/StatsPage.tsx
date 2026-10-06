@@ -45,7 +45,7 @@
  * recompensas**: a palavra do vínculo, o cartão de nascimento, as artes
  * vistas e vividas, as medalhas e as listas sem contagem.
  */
-import { useMemo, type ReactNode } from 'react';
+import { lazy, Suspense, useMemo, type ReactNode } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
@@ -62,6 +62,8 @@ import {
 import type { RestState } from '../utils/restWindow';
 import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
+/* Combate v3 / PR7: a árvore de talentos (e a arte dela) só carrega quando a Estatística monta. */
+const TalentTreeCard = lazy(() => import('./TalentTreeCard'));
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
 interface CompletedTask {
@@ -323,6 +325,13 @@ export function StatsPage({
           </div>
         )}
       </section>
+
+      {/* ─────────────── Talentos do Vínculo (PR7) ─────────────── */}
+      {!hideMetrics && (
+        <Suspense fallback={null}>
+          <TalentTreeCard language={language} />
+        </Suspense>
+      )}
 
       {/* ─────────────── Quem ele é ─────────────── */}
       {(passive || carePattern) && (

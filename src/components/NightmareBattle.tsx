@@ -54,6 +54,7 @@ import type { GroupResult } from '../utils/combate/group';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
+import { useTalentBonus } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
@@ -114,12 +115,13 @@ export function NightmareBattle({
      Masmorra (`jeitoParaPve`). Antes o Pesadelo usava o `base.dmg` cru e ignorava o jeito: era uma divergência
      entre as duas telas, resolvida aqui — o Pesadelo aplica o jeito. Sem estado (testes), cai no estágio. */
   const estado = useMemo<SoulXPState>(() => soul ?? { evolutionStage: petStage }, [soul, petStage]);
+  const bonusTalento = useTalentBonus('pve'); // canal único de bônus (teto 5%), PR7
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
-    combatant: soulCombatant(estado),
+    combatant: soulCombatant(estado, bonusTalento),
     family: dungeonFamily(par?.especial),
     jeito: jeitoDaProfissao(profissao),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [estado, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [estado, bonusTalento, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));

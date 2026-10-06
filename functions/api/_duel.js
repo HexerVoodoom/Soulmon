@@ -37,6 +37,8 @@
 import {
   CHEER, MAX_LEVEL, PVP_HP_SCALE, cheerEvents, combinedBonus, fightSteps, soulCombatant, specialOf,
 } from './_combate.js';
+import { bondLevelFor } from './_bond.js';
+import { talentBonus } from './_talents.js';
 
 export { PVP_HP_SCALE };
 
@@ -113,8 +115,12 @@ const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' && own(
  */
 export function duelSide(save, opts = {}) {
   const state = save && typeof save === 'object' ? save : {};
-  // O bônus de talento/equipamento entra pelo canal único `combinedBonus` (teto 5%); vale 0 até o PR7/PR8.
-  const bonus = combinedBonus({ talent: 0, equipment: 0 });
+  // O bônus entra pelo canal único `combinedBonus` (teto 5% somando todas as fontes). Talento (PR7): vale só
+  // se o vetor do save é válido para o Vínculo derivado do próprio save (inválido = 0). Equipamento: 0 até o PR8.
+  const bonus = combinedBonus({
+    talent: talentBonus(state.talentPicks, bondLevelFor(state.totalXP), 'pvp'),
+    equipment: 0,
+  });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === 'object' ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
   const basica = escolaOf(skills?.basica);

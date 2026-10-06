@@ -1885,7 +1885,7 @@ Decisões do dono (pedido de 02/10/2026):
 
 ## 24. Combate v3: progressão por level, Vínculo com efeito de jogo e 5% no PvP (05/10/2026)
 
-Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano: [`PLANO-COMBATE-V3.md`](PLANO-COMBATE-V3.md) §11. **Ainda não implementado.**
+Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano: [`PLANO-COMBATE-V3.md`](PLANO-COMBATE-V3.md) §11. Em implementação por PRs (o PR7 cobre os itens 1 e 2, 8 e 10: ver §24.2).
 
 1. **Revogada** a regra "a recompensa do Vínculo é só cosmética" (`bond.ts`, invariante 3). O Vínculo passa a ser o level do usuário e dá 1 ponto de talento por level.
    - Perderam: (a) um segundo level de usuário, que duplicaria a fonte da verdade (footgun 9); (b) não ter level de usuário.
@@ -1908,3 +1908,15 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
 10. **Respec de talentos é sempre pago, com moeda ganha.**
 11. **ROLE_SHAPE fica**, limitado a ±25%.
 12. **Classificação Livre, com acesso provável por menores: o ECA Digital (Lei 15.211/2025) é tratado como aplicável.** A análise jurídica foi feita pelos próprios agentes (alpha-compliance, com fontes primárias). **É análise interna por IA, NÃO é parecer de advogado.** Não bloqueia o PR8, porque o desenho não tem RNG pago nem Créditos→combate.
+
+### 24.2 PR7 — Vínculo como level do usuário: talentos e portões (06/10/2026)
+
+O que o PR7 implementou das decisões acima, e o que perdeu a disputa.
+
+- **Invariante 3 do Vínculo REESCRITO (não contornado)** em `src/utils/bond.ts` e `bond.test.ts`. Antes: "recompensas 100% cosméticas, nunca vantagem de combate". Agora: o Vínculo é o level do usuário (1 ponto de talento por Vínculo, portões em `gates.ts`); o catálogo `BOND_REWARDS` segue cosmético; a única vantagem de combate é o talento, sob o teto único de 5%; nenhum caminho pago alcança talento, ponto ou portão.
+  - Perdeu: manter o invariante e esconder o talento fora do Vínculo (seria um segundo level de usuário, footgun 9).
+- **§6 do `bond.ts` reescrito** ("escada de gates é grind"): uma tabela única `src/utils/gates.ts` (espelho `functions/api/_gates.js`, `gates.parity.test.js`) com Arena/PvP, Torneio, andares altos da Masmorra (a partir do 4; o andar 1 segue livre) e Renascimento. Valores são DEFAULTS da squad, o dono ainda os confirma.
+  - Perdeu: gate único (Vínculo 5) e o gate de Masmorra por "sem gate de entrada".
+- **Renascimento = conta paga + Vínculo** (`rebirthGate.ts`, recusa `low-bond`): o dinheiro não compra Vínculo.
+- **Talentos** (`src/utils/talents.ts`, espelho `_talents.js`): persistido só `talentPicks: string[]` (um id por grau); pontos = Vínculo até 20; 3 caminhos; a árvore nunca fecha; vetor inválido é descartado inteiro no `save.js` e vale 0 no duelo; entra pelo canal `combinedBonus` (teto único de 5%). Respec sempre pago em Bits. Os dois talentos que tocam linha vermelha (`tal-pvp-05` câmbio/torcida, `tal-com-05`) NÃO foram implementados: pendência do dono.
+  - Perderam: talento só PvE com PvP normalizado; talento sem número.

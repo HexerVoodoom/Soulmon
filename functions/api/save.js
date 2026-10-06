@@ -12,6 +12,8 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { gateTombstone } from './_accountTombstone.js';
+import { bondLevelFor } from './_bond.js';
+import { sanitizeTalentPicks } from './_talents.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -226,6 +228,11 @@ export async function onRequest({ request, env }) {
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
     if ('equippedFrame' in state) state.equippedFrame = clampFrameId(state.equippedFrame);
     if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
+    // Talentos (Combate v3 / PR7): o vetor e VALIDADO contra o Vinculo do proprio save (`totalXP` -> `bondLevelFor`,
+    // o teto de pontos = level). Invalido (id desconhecido, grau a mais, pontos a mais) e DESCARTADO, nunca
+    // corrigido. Limite honesto: `totalXP` tambem e escrito pelo cliente (ver `_bond.js`); o teto de 5% do canal
+    // de bonus limita o que um XP forjado rende.
+    if ('talentPicks' in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });

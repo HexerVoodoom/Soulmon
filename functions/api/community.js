@@ -36,7 +36,8 @@
 
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
-import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
+import { bondLevelOf } from './_bond.js';
+import { gateFor } from './_gates.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
@@ -427,7 +428,7 @@ async function handleCommunity({ request, env }) {
     let bondLevel = null;
     if (querLigar && !jaEstavaLigado) {
       bondLevel = await bondLevelOf(env, id);
-      if (bondLevel < BOND_PVP_MIN_LEVEL) { pvpEnabled = false; pvpBlocked = true; }
+      if (!gateFor('pvp', bondLevel).open) { pvpEnabled = false; pvpBlocked = true; }
     }
     // Apelido: a mesma régua do nome da guilda (D-1). O perfil é gravado junto
     // do cloud save, então recusar derrubaria a sincronização inteira — o
@@ -480,7 +481,7 @@ async function handleCommunity({ request, env }) {
     return json({
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled, publicHidden,
       ...(nameRejected ? { nameRejected: true } : {}),
-      ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
+      ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor('pvp', bondLevel).minBond } : {}),
     });
   }
 

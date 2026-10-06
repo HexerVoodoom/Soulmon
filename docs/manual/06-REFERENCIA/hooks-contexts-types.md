@@ -229,3 +229,8 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Dono de:** Os tipos do catálogo de atividades curado (docs/PLANO-CATALOGO-ATIVIDADES.md §1) — `CatalogItem`, `LifeArea`, `StruggleId`, `StrengthId`, `CatalogLevel`, `CatalogLevelSpec`, `CatalogEvidence`/`EvidenceLevel`, e os rótulos bilíngues `LIFE_AREA_LABEL`/`STRUGGLE_LABEL`/`STRENGTH_LABEL`. O pool em si é dado, não tipo — mora em `src/data/activityCatalog.ts`.
 **Chamado por:** `src/data/activityCatalog.ts`, `src/utils/recommend.ts`, `src/utils/catalogLevel.ts`.
 **Régua:** `src/utils/recommend.test.ts`, `src/utils/catalogLevel.test.ts`; a evidência de cada item do pool é conferida em `docs/CATALOGO-EVIDENCIAS.md`.
+
+### `src/contexts/useTalentBonus.ts`
+**Dono de:** o bônus de talento do jogador para um escopo (`pvp`/`pve`), JÁ pelo canal único `combate/bonus.ts › combinedBonus` (teto de 5% somando todas as fontes). Sem Provider vale 0. Arena, Masmorra e Pesadelo leem `pve`; o treino do Torneio lê `pvp` (o duelo real é decidido no servidor, `_duel.js`).
+**Exports:** `useTalentBonus`.
+**Régua:** `src/contexts/useTalentBonus.test.tsx`.

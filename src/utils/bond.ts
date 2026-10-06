@@ -28,10 +28,13 @@
  * 2. O teto diário é SUAVE: ao bater, simplesmente PARA de somar, exatamente
  *    como o limite de comida ("o pet está satisfeito"). Nunca um contador que
  *    desce, nunca um aviso vermelho.
- * 3. Recompensas são 100% COSMÉTICAS: decoração/cenário que já existem em
- *    `utils/shop.ts`, sonhos do `DREAM_CATALOG` e títulos (string sob o nome
- *    do pet). NUNCA Bits/Emblemas/Créditos (as três moedas não se misturam),
- *    nunca HP, energia, perfectDays ou vantagem de combate.
+ * 3. (REESCRITO em 06/10/2026, Combate v3 / PR7 — decisão do dono, REGISTRO §24 itens 1 e 2.
+ *    Antes: "recompensas 100% cosméticas, nunca vantagem de combate".) O Vínculo é o LEVEL DO
+ *    USUÁRIO: cada Vínculo dá 1 ponto de talento (`utils/talents.ts`) e abre portões (`utils/gates.ts`).
+ *    O que NÃO mudou: o CATÁLOGO `BOND_REWARDS` segue cosmético (decoração/cenário de `utils/shop.ts`,
+ *    sonhos do `DREAM_CATALOG`, títulos) e NUNCA Bits/Emblemas/Créditos. A ÚNICA vantagem de combate
+ *    entra por talento, com TETO ÚNICO de 5% somando talento+equipamento+Comércio+Renascimento
+ *    (`combate/bonus.ts`). Dinheiro real nunca compra Vínculo, ponto de talento nem esse %.
  * 4. **O NÍVEL NUNCA É PERSISTIDO.** Ele é derivado de `totalXP`, sempre, por
  *    esta função. Guardar `bondLevel` no save é o footgun 9 (regra copiada
  *    diverge em silêncio) — o save e a fórmula divergiriam sem erro nenhum.
@@ -44,6 +47,7 @@
  * passa o estado e recebe números de volta.
  */
 import { HABIT_TIER_BONUS } from '../types/taskModel';
+import { GATES, gateFor } from './gates';
 import type { HabitTier } from '../types/taskModel';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -536,11 +540,12 @@ export function awardBondXP<T extends BondState>(state: T, event: BondEvent, day
  * de retenção com um objetivo social; pôr depois transformaria o Vínculo em
  * grind. Derivação completa em `level-de-conta.md` §6.
  *
- * **Todo destrave social futuro reusa ESTE nível.** Uma escada de gates sociais
- * é grind com outro nome — o Vínculo destrava cosmético e superfície social, e
- * NUNCA capacidade de cuidar do bicho.
+ * (REESCRITO em 06/10/2026, PR7.) Antes: "uma escada de gates sociais é grind com outro nome".
+ * Revogado pelo dono (REGISTRO §24 item 2): Arena/PvP, Torneio, andares altos da Masmorra e o
+ * Renascimento têm portão pelo Vínculo, numa tabela só (`utils/gates.ts`). O número de PvP vive lá;
+ * `BOND_PVP_MIN_LEVEL` é só o atalho para a entrada `pvp` dela.
  */
-export const BOND_PVP_MIN_LEVEL = 5;
+export const BOND_PVP_MIN_LEVEL = GATES.pvp.minBond;
 
 /**
  * O Vínculo já é suficiente para o PvP?
@@ -557,7 +562,7 @@ export const BOND_PVP_MIN_LEVEL = 5;
  * opt-out de privacidade = pendência TORC-5 do dono).
  */
 export function meetsPvpBond(totalXP: number): boolean {
-  return bondLevelFor(Math.max(0, safe(totalXP))) >= BOND_PVP_MIN_LEVEL;
+  return gateFor('pvp', bondLevelFor(Math.max(0, safe(totalXP)))).open;
 }
 
 /** Quanto falta para o PvP ficar disponível. `0` quando já está. Nunca negativo. */
