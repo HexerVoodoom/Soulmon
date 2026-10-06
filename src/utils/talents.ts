@@ -52,6 +52,12 @@ export type TalentEffect =
   /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. */
   | { readonly kind: 'pendente' };
 
+/** Um pré-requisito: o nó `id` precisa estar com pelo menos `rank` graus. */
+export interface TalentReq {
+  readonly id: string;
+  readonly rank: number;
+}
+
 export interface TalentNode {
   readonly id: string;
   readonly path: TalentPath;
@@ -59,6 +65,14 @@ export interface TalentNode {
   readonly tier: 1 | 2 | 3;
   readonly maxRank: number;
   readonly effect: TalentEffect;
+  /**
+   * PRÉ-REQUISITOS (§2.37). `requires` é ALL-OF: TODOS precisam estar no grau mínimo (às vezes são DOIS). `requiresAny` é ANY-OF:
+   * pelo menos UM (convergência de dois ramos). Sem nenhum dos dois o nó é PONTO DE PARTIDA, ligado ao centro. Um nó que se
+   * compra só pode exigir nós que também se compram (senão nunca abriria): o teste do grafo trava isso. Só o desenho (a
+   * posição dos nós) mora em `talentLayout.ts`, fora do chunk de entrada.
+   */
+  readonly requires?: readonly TalentReq[];
+  readonly requiresAny?: readonly TalentReq[];
 }
 
 /** Teto de pontos de talento: o Vínculo acima disto não rende ponto novo (a árvore tem de ficar maior que isto). */
@@ -72,31 +86,43 @@ export const RESPEC_STEP = 0.1;
 export const CHEER_STEP = 0.05;
 
 
+/** Atalho do pré-requisito: `req('tal-pvp-01', 2)` = o nó com pelo menos 2 graus. */
+const req = (id: string, rank: number): TalentReq => ({ id, rank });
+
+/**
+ * O GRAFO (§2.37). Do centro saem três pontos de partida (PvP, PvE, Comércio); cada caminho se BIFURCA depois do primeiro nó
+ * (dois ramos) e os ramos voltam a se encontrar no fim (nó que pede DOIS pré-requisitos, ou qualquer um de dois). Os ids e
+ * os efeitos são os de antes: só se acrescentou o que abre cada nó. Nada aqui aumenta poder nem o teto.
+ *
+ *  PvP: 01 → 02 e 03 (bifurca) · 04 pede 03 · 06 pede 02 · 05 pede 02 OU 03 (convergência) · 07 pede 05, 04 e 06.
+ *  PvE: 01 → 02 e 03 (bifurca) · 06 pede 02 · 04 e 05 pedem 03 · 07 pede 05 E 06.
+ *  Comércio: 01 → 02 e 03 (bifurca) · 04 e 06 pedem 02 · 05 (a Balança) pede 03 · 07 pede 04 E 05.
+ */
 export const TALENT_TREE: readonly TalentNode[] = [
   // ── PvP ──────────────────────────────────────────────────────────────────
   { id: 'tal-pvp-01', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'atk' } },
-  { id: 'tal-pvp-02', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'def' } },
-  { id: 'tal-pvp-03', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'spd' } },
-  { id: 'tal-pvp-04', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-pvp-05', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'cheerBoost', perRank: CHEER_STEP } },
-  { id: 'tal-pvp-06', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
+  { id: 'tal-pvp-02', path: 'pvp', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'def' }, requires: [req('tal-pvp-01', 2)] },
+  { id: 'tal-pvp-03', path: 'pvp', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'spd' }, requires: [req('tal-pvp-01', 2)] },
+  { id: 'tal-pvp-04', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pvp-03', 2)] },
+  { id: 'tal-pvp-05', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'cheerBoost', perRank: CHEER_STEP }, requiresAny: [req('tal-pvp-02', 2), req('tal-pvp-03', 2)] },
+  { id: 'tal-pvp-06', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pvp-02', 2)] },
+  { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'pendente' }, requires: [req('tal-pvp-05', 3), req('tal-pvp-04', 1), req('tal-pvp-06', 1)] },
   // ── PvE ──────────────────────────────────────────────────────────────────
   { id: 'tal-pve-01', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
-  { id: 'tal-pve-02', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
-  { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-pve-04', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-pve-05', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-pve-06', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
+  { id: 'tal-pve-02', path: 'pve', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP }, requires: [req('tal-pve-01', 2)] },
+  { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-01', 2)] },
+  { id: 'tal-pve-04', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-03', 1)] },
+  { id: 'tal-pve-05', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-03', 1)] },
+  { id: 'tal-pve-06', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-02', 2)] },
+  { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'pendente' }, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
   // ── Comércio (só preço e ganho de moeda GANHA; nunca % de combate) ──────
   { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'equipPrice' } },
-  { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'fragmentGain' } },
-  { id: 'tal-com-03', path: 'comercio', tier: 1, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP } },
-  { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'backpack' } },
-  { id: 'tal-com-05', path: 'comercio', tier: 2, maxRank: 1, effect: { kind: 'respecOne' } },
-  { id: 'tal-com-06', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'missionBits' } },
-  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'weeklyDiscount' } },
+  { id: 'tal-com-02', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'fragmentGain' }, requires: [req('tal-com-01', 2)] },
+  { id: 'tal-com-03', path: 'comercio', tier: 2, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP }, requires: [req('tal-com-01', 2)] },
+  { id: 'tal-com-04', path: 'comercio', tier: 3, maxRank: 3, effect: { kind: 'backpack' }, requires: [req('tal-com-02', 2)] },
+  { id: 'tal-com-05', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'respecOne' }, requires: [req('tal-com-03', 2)] },
+  { id: 'tal-com-06', path: 'comercio', tier: 3, maxRank: 3, effect: { kind: 'missionBits' }, requires: [req('tal-com-02', 1)] },
+  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'weeklyDiscount' }, requires: [req('tal-com-04', 1), req('tal-com-05', 1)] },
 ];
 
 export const TALENT_BY_ID: ReadonlyMap<string, TalentNode> = new Map(TALENT_TREE.map((n) => [n.id, n]));
@@ -132,11 +158,27 @@ export function ranksOf(picks: readonly string[]): Map<string, number> {
   return m;
 }
 
-/**
- * O vetor é VÁLIDO para este Vínculo? Todos são strings de nós pegáveis, nenhum passa do grau
- * máximo e o total não passa dos pontos do level.
- */
-export function isValidPicks(raw: unknown, bondLevel: unknown): raw is string[] {
+/** O pré-requisito está atendido com estes graus? */
+function reqOk(r: TalentReq, ranks: ReadonlyMap<string, number>): boolean {
+  return (ranks.get(r.id) ?? 0) >= r.rank;
+}
+
+/** Os pré-requisitos do nó estão atendidos com estes graus? (ALL-OF em `requires` e ANY-OF em `requiresAny`.) */
+export function prereqsMet(node: TalentNode, ranks: ReadonlyMap<string, number>): boolean {
+  if (node.requires && !node.requires.every((r) => reqOk(r, ranks))) return false;
+  if (node.requiresAny && !node.requiresAny.some((r) => reqOk(r, ranks))) return false;
+  return true;
+}
+
+/** O que FALTA para abrir o nó (para a tela dizer em texto): os de `requires` que não bateram e, se nenhum de `requiresAny` bateu, todos eles. */
+export function missingPrereqs(node: TalentNode, ranks: ReadonlyMap<string, number>): { readonly all: readonly TalentReq[]; readonly any: readonly TalentReq[] } {
+  const all = (node.requires ?? []).filter((r) => !reqOk(r, ranks));
+  const any = node.requiresAny && !node.requiresAny.some((r) => reqOk(r, ranks)) ? node.requiresAny : [];
+  return { all, any };
+}
+
+/** Os dados do vetor são BEM FORMADOS? (só ids de nós pegáveis, nenhum acima do grau máximo, no máximo os pontos do Vínculo.) Não olha pré-requisito. */
+function isWellFormed(raw: unknown, bondLevel: unknown): raw is string[] {
   if (!Array.isArray(raw)) return false;
   if (raw.length > talentPointsFor(bondLevel)) return false;
   const counts = new Map<string, number>();
@@ -151,9 +193,40 @@ export function isValidPicks(raw: unknown, bondLevel: unknown): raw is string[] 
   return true;
 }
 
-/** Vetor inválido é DESCARTADO (`[]`), nunca corrigido. */
+/** Ordem em que o vetor se COMPRA: devolve os graus que cabem na ordem em que cada pré-requisito vai sendo atendido (ponto fixo) e os que sobram. */
+function replay(picks: readonly string[]): { kept: string[]; dropped: string[] } {
+  const kept: string[] = [];
+  const ranks = new Map<string, number>();
+  let rest = [...picks];
+  for (let moved = true; moved && rest.length > 0;) {
+    moved = false;
+    const next: string[] = [];
+    for (const id of rest) {
+      if (prereqsMet(TALENT_BY_ID.get(id)!, ranks)) { kept.push(id); ranks.set(id, (ranks.get(id) ?? 0) + 1); moved = true; } else next.push(id);
+    }
+    rest = next;
+  }
+  return { kept, dropped: rest };
+}
+
+/**
+ * O vetor é VÁLIDO para este Vínculo? Bem formado (ids de nós pegáveis, grau máximo, pontos do level) E todos os graus
+ * respeitam os pré-requisitos (§2.37): dá para comprá-los em alguma ordem.
+ */
+export function isValidPicks(raw: unknown, bondLevel: unknown): raw is string[] {
+  return isWellFormed(raw, bondLevel) && replay(raw).dropped.length === 0;
+}
+
+/**
+ * Dado malformado (id inventado, grau a mais, pontos a mais, tipo errado) é DESCARTADO (`[]`), nunca corrigido: quem forja não
+ * escolhe o que sobra. Já o que só viola PRÉ-REQUISITO (§2.37: o caso de um save de antes da árvore com ramos) fica com os graus que
+ * se conseguem comprar na ordem do vetor e perde os outros: os pontos deles VOLTAM (`pointsLeft`), sem cobrar respec. Nada se ganha
+ * forjando, porque o que sobra é sempre um vetor válido de no máximo os pontos do Vínculo.
+ */
 export function sanitizeTalentPicks(raw: unknown, bondLevel: unknown): string[] {
-  return isValidPicks(raw, bondLevel) ? [...raw] : [];
+  if (!isWellFormed(raw, bondLevel)) return [];
+  const { kept, dropped } = replay(raw);
+  return dropped.length === 0 ? [...raw] : kept;
 }
 
 export function pointsLeft(picks: readonly string[], bondLevel: unknown): number {
@@ -263,10 +336,17 @@ export function respecOneCost(picks: readonly string[]): number {
 
 export type RespecOneResult<T> =
   | { ok: true; state: T; cost: number }
-  | { ok: false; reason: 'locked' | 'not-picked' | 'no-bits'; cost: number };
+  | { ok: false; reason: 'locked' | 'not-picked' | 'needed' | 'no-bits'; cost: number };
+
+/** Tirar o último grau de `id` deixa o resto válido? (Um nó que abre outro não perde grau enquanto o outro depende dele.) */
+export function canTakeBack(picks: readonly string[], id: string): boolean {
+  const at = picks.lastIndexOf(id);
+  if (at < 0) return false;
+  return isValidPicks(picks.filter((_, k) => k !== at), TALENT_POINTS_MAX);
+}
 
 /**
- * Tira o ÚLTIMO grau de `id` pagando `respecOneCost` em Bits. Sem o nó `tal-com-05`, sem o grau ou sem Bits suficientes nada
+ * Tira o ÚLTIMO grau de `id` (se nenhum nó aberto por ele ficar sem pré-requisito) pagando `respecOneCost` em Bits. Sem o nó `tal-com-05`, sem o grau ou sem Bits suficientes nada
  * muda. O custo vem dos picks ANTES da retirada (a ampulheta vale até o fim da conta). Bits nunca ficam negativos.
  */
 export function applyRespecOne<T extends RespecState>(state: T, id: string): RespecOneResult<T> {
@@ -275,6 +355,7 @@ export function applyRespecOne<T extends RespecState>(state: T, id: string): Res
   if (!canRespecOne(picks)) return { ok: false, reason: 'locked', cost };
   const at = picks.lastIndexOf(id);
   if (at < 0) return { ok: false, reason: 'not-picked', cost };
+  if (!canTakeBack(picks, id)) return { ok: false, reason: 'needed', cost };
   const bits = typeof state.gamePoints === 'number' && Number.isFinite(state.gamePoints) ? state.gamePoints : 0;
   if (bits < cost) return { ok: false, reason: 'no-bits', cost };
   return { ok: true, cost, state: { ...state, talentPicks: picks.filter((_, k) => k !== at), gamePoints: bits - cost } };
