@@ -59,7 +59,8 @@ async function poderDeUmaSkill(
     energia: Math.max(0.01, limites.energiaMaxima * fracaoEnergia),
     tempoConjuracaoSegundos: Math.max(limites.tempoConjuracaoMinimo, limites.tempoConjuracaoMinimo * fracaoTempo),
     alcanceMetros: Math.min(alcanceBase(escola), limites.alcanceMaximo),
-    area: { tipo: 'unico' as const },
+    // Q-AREA: a área vem da skill (por escola); skill persistida de antes não tem o campo → único
+    area: skill.area ?? { tipo: 'unico' as const },
     entrega: { tipo: 'instantaneo' as const },
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

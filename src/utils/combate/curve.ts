@@ -41,3 +41,12 @@ export function displayHits(hits: number): number {
 export function attacksPerWindow(spd: number): number {
   return (BASE_ATTACKS_PER_WINDOW * (1 + spd / CURVE_K)) / (1 + 1 / CURVE_K);
 }
+
+/**
+ * Element matchup in normalised hits (PR3a, §2.15): an advantage of `adv`
+ * hits multiplies the hits to knock out by 1 − adv/H0 (at the balanced mirror,
+ * 10 displayed hits: +1 advantage shows 9 and −1 shows 11).
+ */
+export function elementHits(adv: number, h0 = 10): number {
+  return 1 - adv / h0;
+}

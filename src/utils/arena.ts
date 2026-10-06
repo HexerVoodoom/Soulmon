@@ -573,6 +573,7 @@ export const DEFAULT_ARENA_ATTRIBUTES = { principal: 'vigor', secundario: 'vigor
 export function buildDefaultArenaSkills(): StageSkills {
   const base = {
     elementoId: 'vigor',
+    area: { tipo: 'unico' as const }, // combate_fisico: alvo único (Q-AREA)
     elementoNome: { pt: 'Vigor', en: 'Vigor' },
     escolaId: 'combate_fisico' as EscolaId,
     recursoId: 'furia' as RecursoId,

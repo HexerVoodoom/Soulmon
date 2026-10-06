@@ -28,6 +28,7 @@ import { cascataDosPares, CUSTO_PONTO_PAR } from './cascata';
 import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
 import { essenceLabel, baseElementLabel } from '../essenceLabels';
 import { CLASS_DATA } from './buildSheet';
+import type { AreaConfig } from 'class-system';
 
 export interface SkillText { pt: string; en: string }
 
@@ -41,6 +42,10 @@ export interface StageSkill {
   elementoNome: SkillText;
   escolaId: EscolaId;
   recursoId: RecursoId;
+  /** Área do golpe (Q-AREA, contexto §2.16): POR ESCOLA — conjuração e longo alcance
+   *  em círculo de 4 m (`RAIO_MAXIMO_BASE` do class-system), as outras de alvo único.
+   *  O núcleo de combate lê `area.tipo === 'circulo'` como área. */
+  area: AreaConfig;
   /** Custo qualitativo por desenho: básica é frequente, especial é rara. */
   custo: 'baixo' | 'alto';
   /** Impacto REAL calculado pelo motor do class-system (`calcularSkill`),
@@ -53,6 +58,17 @@ export interface StageSkill {
 }
 
 export interface StageSkills { basica: StageSkill; especial: StageSkill }
+
+/** Raio-base do class-system (`RAIO_MAXIMO_BASE`), em metros. */
+export const RAIO_AREA_BASE_METROS = 4;
+
+/** Q-AREA: escolas de área. As demais acertam um alvo só. */
+export const ESCOLAS_DE_AREA: readonly EscolaId[] = ['conjuracao', 'longo_alcance'];
+
+/** A área de uma escola (função pura da escola — determinística por ficha/estágio). */
+export function areaDaEscola(escola: EscolaId): AreaConfig {
+  return ESCOLAS_DE_AREA.includes(escola) ? { tipo: 'circulo', raioMetros: RAIO_AREA_BASE_METROS } : { tipo: 'unico' };
+}
 
 const PAR_NOME = new Map(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d]));
 
@@ -196,6 +212,7 @@ export function buildStageSkills(
       elementoId,
       elementoNome: el,
       escolaId: escola,
+      area: areaDaEscola(escola),
       recursoId: recurso,
       custo: tipo === 'basica' ? 'baixo' : 'alto',
     };
