@@ -16,7 +16,8 @@ const me: StageFighter = { key: 'me', sprite: 'me.png', name: 'Eu', hp: 40, maxH
 const foe = (extra: Partial<StageFighter> = {}): StageFighter => ({ key: 0, sprite: 'foe.png', name: 'Rival', hp: 30, maxHp: 60, element: 'agua', ...extra });
 const base = { scene: 'url(x.png) center/cover #123', title: 'Duelo', closeLabel: 'Sair', onClose: () => {} };
 const reduzir = () => vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false }));
-const flush = async () => { await act(async () => { await new Promise(r => setTimeout(r, 30)); }); };
+/** Espera as imagens sob demanda chegarem (carga preguiçosa: o 1º import dinâmico pode levar mais que um tique sob carga). */
+const flush = async () => { await act(async () => { await new Promise(r => setTimeout(r, 400)); }); };
 
 const chips = () => [...document.querySelectorAll('[data-stage-status]')] as HTMLElement[];
 const chip = (kind: StatusFxKind) => document.querySelector(`[data-stage-status="${kind}"]`) as HTMLElement | null;

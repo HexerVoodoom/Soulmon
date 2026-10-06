@@ -34,8 +34,8 @@ import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  fxElementId, impactMs, prefersReducedMotion, visualElementFor, fighterStrikeForm, specialLabel, foeSpecialLabel,
-  type StageActionKind,
+  fxElementId, impactMs, prefersReducedMotion, visualElementFor, fighterStrikeForm, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
+  type StageActionKind, type StageStatus,
 } from '../utils/combatFx';
 import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
@@ -106,6 +106,8 @@ export function DuelScreen({
   const [energia, setEnergia] = useState({ me: 0, opp: 0 });
   const [acao, setAcao] = useState<StageAction | null>(null);
   const [golpes, setGolpes] = useState<StageHit[]>([]);
+  /** Os efeitos de status de cada lado (PR11): dobra dos eventos já chegados, então o replay e a luta ressimulada dão o mesmo selo. */
+  const [status, setStatus] = useState<{ me: StageStatus[]; opp: StageStatus[] }>({ me: [], opp: [] });
   /** A barra de cheer mostrada: os toques aceitos até agora, módulo `CHEER.tapsFull`. */
   const [barra, setBarra] = useState(0);
   const [pausado, setPausado] = useState(false);
@@ -193,6 +195,8 @@ export function DuelScreen({
     const apply = (e: FightEvent) => {
       setHpFrac({ me: clamp01(e.hp[0]), opp: clamp01(e.hp[1]) });
       setEnergia({ me: Math.max(0, e.energy[0]), opp: Math.max(0, e.energy[1]) });
+      const quadro = duelStatusBoard(sim.current.events, applied.current, [me.special, opp.special]);
+      setStatus({ me: stageStatusOf(quadro[0]), opp: stageStatusOf(quadro[1]) });
       if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
         const alvoMe = e.side === 1; // o lado 1 bate no MEU pet
         const value = Math.max(1, Math.round(e.frac * (alvoMe ? maxMe : maxOpp)));
@@ -281,8 +285,8 @@ export function DuelScreen({
         specialLabel={specialLabel(isPt, par?.especial)}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia)}
         isPt={isPt}
-        me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER }}
-        foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER }]}
+        me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me }}
+        foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}
         title={isPt ? 'Duelo' : 'Duel'}
