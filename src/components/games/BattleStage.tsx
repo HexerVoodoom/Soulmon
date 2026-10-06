@@ -604,8 +604,7 @@ function bannerLabel(
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, children,
-  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, isPt = false, children,
+  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
