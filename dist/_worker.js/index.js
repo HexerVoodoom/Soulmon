@@ -3719,6 +3719,7 @@ var ESCOLA_FAMILY = {
   maldicao: "defDebuff",
   evocacao: "atkBuff"
 };
+var SPECIAL_FAMILY_IDS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
 var FICHA_STAGES = ["rookie", "champion", "ultimate", "mega", "ultra"];
 var own = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
 function fichaStageOf(evolutionStage) {
@@ -3734,8 +3735,9 @@ function duelSide(save, opts = {}) {
   const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
   const basica = escolaOf(skills?.basica);
   const especial = escolaOf(skills?.especial);
-  const family = especial ? ESCOLA_FAMILY[especial] : "direct";
-  return { combatant, special: specialOf(family), fx: { basica, especial } };
+  const familiaSalva = skills?.especial?.familia;
+  const family = especial ? typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial] : "direct";
+  return { combatant, special: specialOf(family), fx: { basica, especial, familia: especial ? family : null } };
 }
 __name(duelSide, "duelSide");
 function simulateDuel({ me, opp, seed, taps }) {
@@ -5836,7 +5838,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-SVDxyI/functionsRoutes-0.9826277397946691.mjs
+// ../.wrangler/tmp/pages-w2h1S1/functionsRoutes-0.3986058792510334.mjs
 var routes = [
   {
     routePath: "/api/account",
