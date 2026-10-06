@@ -136,3 +136,26 @@ Constantes: `ARENA_FOES` weak {0,45 · 0,12}, medium {0,95 · 0,235}, boss {1,2 
 | `dungeon` | 1 | 1,1 | 0,8 | 1 | 1,3 | 1,3 | 1,5 |
 
 A cura rende pouco em grupo (o dano entra de vários lados) e muito na sequência 1v1.
+
+
+## 7. Masmorra e Pesadelo no núcleo REAL — PR4 (06/10/2026)
+- **Fonte:** `_sim/cv3-medir/pr4/` (`m.ts` escada e Pesadelo, `opt2.ts` ajuste da tabela, `t.ts` torcida, `k.ts`/`q.ts` habilidade e vitória com torcida, `j.ts` ofício, saídas `*.out`). Os gates que ficam no repo são `dungeon.v3.test.ts`, `nightmares.v3.test.ts` e `profissaoMasmorra.v3.test.ts` (mesmas funções que a tela joga: `utils/dungeonFight.ts`).
+- **Por que a tabela da §3 mudou:** o `fightX` da §3 não carregava a energia entre as lutas (não tinha `startEnergy`), e o jogo carrega (HP e energia passam para o inimigo seguinte). Reproduzindo a §3 sem carregar o núcleo real dá 100/100/100/98/26/0 e A1 20,4 s (a §3: 100/100/100/98/32/0 e 20,4 s); **carregando**, a mesma tabela dá 100/100/100/100/99,5/33,5 e A1 18,3 s: as lutas encurtam ~2 s e a parede vai do andar 5 para o 6.
+- **Tabela recalibrada** (ajuste por busca aleatória sobre hp por slot, power por slot e os dois crescimentos, N = 600 runs por ponto, e depois à mão): `DUNGEON_SLOTS` hp 0,945 / 0,95 / 0,955 / 0,955 / 0,96 / 0,965 · power 0,026 / 0,038 / 0,04 / 0,06 / 0,089 / 0,096 · mega com especial `direct`; `DUNGEON_FLOOR_GROWTH` = { hp 0,14, power 0,11 }; cura entre andares `curaAndar` (0,25).
+- **Medido com a tabela final** (N = 1200 runs, 15 levels × 4 builds × 7 famílias, `media`):
+
+| Métrica | Meta | Medido |
+|---|---|---|
+| Andares 1–4 terminados | ~98–100% | 100 / 100 / 100 / 100% |
+| Andar 5 terminado | ~30–40% | 36,6% |
+| Andar 6 terminado | ~0% | 0,0% |
+| Mediana por inimigo A1..A5 | 20–29 s | 20,6 · 20,1 · 23,5 · 26,8 · 28,9 s (P95 até 39,9) |
+| Pesadelo top 1..5, mediana por inimigo | 18–22 s | 22,0 · 22,1 · 22,1 · 22,0 · 21,8 s (vitória 100%) |
+| Golpes do mega no L1, andar 1..6 | sobe ≥ 1 por andar | 10 / 11 / 12 / 14 / 15 / 16 (igual em todo level) |
+| Slot 0, andar 1 × ATK puro L40 com elemento | ≥ 3 golpes | 7 (o piso de 3 não chega a agir com esta tabela) |
+| Habilidade, 3 andares (a da story) | ≤ 25pp | 0,0pp |
+| Habilidade, média dos 5 andares | ≤ 25pp | 6,1pp (nenhuma 83,5% · média 87,3% · boa 89,6%) |
+| Habilidade, concluir os 5 andares | (a Arena: 23,6pp) | **30,2pp** (18,0% · 36,6% · 48,2%); RED com o anel e a esquiva antigos: 79,1pp |
+| Ofício, TTK | ≤ ±25% | ferreiro +0,1 · tecelão −3,7 · artesão −9,0 · joalheiro −2,4 · alquimista −0,4 · curtidor +0,1 · encantador −4,3 · escriba −8,9 · cozinheiro 0,0 · luthier −3,7 · cartógrafo −6,2 (%) |
+
+- **Torcida (`CHEER.energyPerDischarge`):** ver contexto §2.18. Fixado em 90: TTK no teto Arena −23,5% e Masmorra −22,6%; diferença por habilidade com os dois lados torcendo 2,3pp (Arena) e 0,0pp (Masmorra, 5 andares). **Efeito colateral medido e não limitado pelos critérios do dono:** com torcida no teto, andar 5 da Masmorra 100% e andar 6 97,8%; Arena run vencida 96,7% (sem torcida, 66,7%).
