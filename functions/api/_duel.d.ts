@@ -6,7 +6,7 @@ export interface DuelSide {
   special: Special;
   /** PR7b: rendimento da torcida (talento `tal-pvp-05`), 1 sem o nó. */
   cheerScale?: number;
-  fx: { basica: string | null; especial: string | null; familia?: string | null };
+  fx: { basica: string | null; especial: string | null; familia?: string | null; elBasica?: string | null; elEspecial?: string | null };
 }
 export type DuelWinner = 'me' | 'opp' | 'draw';
 export interface DuelResult {
@@ -35,3 +35,4 @@ export declare function duelSide(save: unknown, opts?: { maxLevel?: number }): D
 export declare function duelCombatant(save: unknown, opts?: { maxLevel?: number }): Combatant;
 export declare function duelSeed(...parts: Array<string | number>): number;
 export declare function simulateDuel(args: { me: Pick<DuelSide, 'combatant' | 'special'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult;
+export declare const ELEMENTOS_FICHA: ReadonlySet<string>;

@@ -56,7 +56,8 @@ import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fighterIdentity } from '../utils/fighterIdentity';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -149,7 +150,9 @@ export function NightmareBattle({
   waveRef.current = wave;
 
   const enemy = wave[idx];
-  const petEl = fxElementId(petElement);
+  // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
+  const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
+  const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
   const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
 
@@ -208,14 +211,14 @@ export function NightmareBattle({
     return {
       playerMaxHp: Math.max(1, Math.round(dungeonPlayerSide(p).combatant.hp)),
       foeMaxHp: [Math.max(1, Math.round(e?.foe.combatant.hp ?? 1))],
-      playerElement: () => petEl,
+      playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: () => foeEl,
-      playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
+      playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
       foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
     };
-  }, [petEl, par, isPt, lang]);
+  }, [ident, par, isPt, lang]);
 
   const aoFimDaLuta = useCallback((res: GroupResult) => {
     if (res.winner !== 'player') { lose(); return; } // derrota ou empate: não custa nada

@@ -35,7 +35,8 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
-import { fxElementId, prefersReducedMotion, fighterStrikeForm, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fighterIdentity } from '../utils/fighterIdentity';
 import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -88,6 +89,8 @@ export interface ArenaGameProps {
    *  localStorage e não sobe para a nuvem, então um aparelho novo chega aqui
    *  sem ficha e não pode encontrar uma porta fechada. */
   skills?: Partial<Record<FichaStage, StageSkills>>;
+  /** Elemento dominante do oráculo: só o FALLBACK da identidade quando o save não tem ficha (igual nas outras telas). */
+  petElement?: string;
   /** Atributos de arena (`getArenaAttributes(ficha)`), quando conhecidos. */
   attrs?: { principal: string; secundario: string };
   onEarnPoints?: (points: number) => void;
@@ -95,7 +98,7 @@ export interface ArenaGameProps {
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, attrs, onEarnPoints, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, attrs, onEarnPoints, onExit,
 }: ArenaGameProps) {
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
@@ -124,6 +127,8 @@ export function ArenaGame({
   const par = skills?.[stage];
   const basica = par?.basica;
   const especial = par?.especial;
+  // A identidade de combate (dono único): o MESMO golpe básico/especial da Masmorra, do Pesadelo, do Torneio e do PvP.
+  const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
   const atributos = attrs ?? DEFAULT_ARENA_ATTRIBUTES;
 
   // O level e o ramo vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
@@ -141,8 +146,9 @@ export function ArenaGame({
     family: familyOfSkill(especial),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
-    elements: { basica: basica?.elementoId ?? 'vigor', especial: especial?.elementoId ?? basica?.elementoId ?? 'vigor', attrs: atributos },
-  }), [estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, atributos]);
+    // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): segue como estava, na base da ficha (`basica.elementoId`); o que se VÊ é a identidade.
+    elements: { basica: basica?.elementoId ?? ident.basico.elemento, especial: especial?.elementoId ?? ident.especial.elemento, attrs: atributos },
+  }), [estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
@@ -213,17 +219,15 @@ export function ArenaGame({
     return {
       playerMaxHp: Math.max(1, Math.round(arenaPlayerSide(p).combatant.hp)),
       foeMaxHp: foes.map(f => Math.max(1, Math.round(f.combatant.hp))),
-      playerElement: (sp: boolean) => fxElementId((sp ? especial?.elementoId : basica?.elementoId) ?? atributos.principal ?? 'vigor'),
+      playerElement: (sp: boolean) => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.elements[0]),
       // A FORMA do golpe vem da skill da FICHA (escola; sem ficha, do elemento) — nunca de índice ou sorteio.
-      playerKind: (sp: boolean) => (sp
-        ? fighterStrikeForm({ skill: especial, element: especial?.elementoId }, 'especial')
-        : fighterStrikeForm({ skill: basica, element: basica?.elementoId }, 'basica')),
+      playerKind: (sp: boolean) => (sp ? ident.especial.forma : ident.basico.forma),
       foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
     };
-  }, [especial, basica, atributos.principal, isPt, lang]);
+  }, [ident, isPt, lang]);
 
   const aoFimDaRodada = useCallback((res: GroupResult) => {
     if (res.winner === 'player') {

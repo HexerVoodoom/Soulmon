@@ -7,6 +7,8 @@ import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
 import { getStageLevel } from '../../types/progression';
+import { fighterIdentity } from '../../utils/fighterIdentity';
+import { elementoNomeDe } from '../../utils/soulProfile/ficha/elementoNome';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { Language } from '../../utils/i18n';
@@ -44,21 +46,21 @@ function fichaStageOf(evolutionStage: string): FichaStage {
   return (['rookie', 'champion', 'ultimate', 'mega', 'ultra'].includes(nivel) ? nivel : 'rookie') as FichaStage;
 }
 
-export function DueloSheet({ language, evolutionStage, skills, onStart }: {
+export function DueloSheet({ language, evolutionStage, skills, petElement, onStart }: {
   language: Language;
   evolutionStage: string;
   skills?: Partial<Record<FichaStage, StageSkills>>;
+  /** Fallback da identidade sem ficha (o dominante do oráculo), igual nas telas de luta. */
+  petElement?: string;
   onStart: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const stage = fichaStageOf(evolutionStage);
   const par = skills?.[stage];
   const t = (x: { pt: string; en: string } | undefined) => (x ? (isPt ? x.pt : x.en) : null);
-  // O elemento REAL do Soulmon (base ou combinado), não o do golpe especial.
-  // Skills salvas antes do campo existir caem no elemento do golpe.
-  const dominante = par?.elementoDominante;
-  const elementoId = dominante?.id ?? par?.especial?.elementoId ?? par?.basica?.elementoId ?? 'neutro';
-  const elemento = t(dominante?.nome) ?? t(par?.especial?.elementoNome) ?? t(par?.basica?.elementoNome) ?? (isPt ? 'Neutro' : 'Neutral');
+  // O elemento do Soulmon = o do golpe BÁSICO, da identidade de combate (dono único): o mesmo que a luta usa.
+  const elementoId = fighterIdentity(par, petElement).basico.elemento;
+  const elemento = par ? t(elementoNomeDe(elementoId)) : (petElement ? t(elementoNomeDe(elementoId)) : (isPt ? 'Neutro' : 'Neutral'));
   const arte = elementIcon(elementoId) ?? elementIcon('neutro');
   // O mesmo poder que a luta usa (`ArenaGame`, Combate v3): o ATK do `soulCombatant` do save; sem save (demo, testes), o do estágio.
   const gs = useGameStateOptional()?.gameState;
