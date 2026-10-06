@@ -127,7 +127,7 @@ const SKILL: Record<string, Skill> = {
   media: { ring: [0.25, 0.5, 0.25], dodge: [0.3, 0.4, 0.3], acc: [0.7, 0.25] },
   boa: { ring: [0.1, 0.3, 0.6], dodge: [0.1, 0.3, 0.6], acc: [0.7, 0.25] },
 };
-const RING = [0.75, 1, 1.35], DODGE = [0, 0.5, 0.85];
+const RING: number[] = process.env.RING ? JSON.parse(process.env.RING) : [0.75, 1, 1.35], DODGE: number[] = process.env.DODGE ? JSON.parse(process.env.DODGE) : [0, 0.5, 0.85];
 const pick = (r: () => number, p: number[]) => { const x = r(); return x < p[0] ? 0 : x < p[0] + p[1] ? 1 : 2; };
 const FAMPOW: Record<string, number> = process.env.FAMPOW ? JSON.parse(process.env.FAMPOW) : {};
 interface Mods { hpMul?: number; dmg?: number; defBonus?: number; perfect?: number; counter?: number; incoming?: number; heal?: number }

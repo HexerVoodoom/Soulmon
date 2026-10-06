@@ -9,7 +9,8 @@ Cada executor recebe **uma story + `contexto.md`**, nunca o PRD inteiro. Cada PR
 | PR1 | `PR1-nucleo.md` | **mergeado** (#221, main 3f73ef78) |
 | PR1b | `PR1b-bugs-combate.md` | **próximo**: B1 energia uso único + B2 básico fixo por personagem + N1 nome no selo do pet |
 | PR2 | `PR2-xp-level-save.md` | pronto para despacho após PR1 |
-| PR3 | `PR3-arena.md` | idem |
+| PR3a | `PR3a-nucleo-v11-nx1.md` | idem |
+| PR3b | `PR3b-arena.md` | idem |
 | PR4 | `PR4-masmorra-pesadelo.md` | idem |
 | PR5 | `PR5-pvp-duel.md` | idem |
 | PR6 | `PR6-chips-distribuicao.md` | pergunta §10 antes do merge |
@@ -26,7 +27,7 @@ Cada executor recebe **uma story + `contexto.md`**, nunca o PRD inteiro. Cada PR
 ## Grafo de dependências
 
 ```
-PR1 ─► PR1b ─► PR2 ─► PR3 ─► PR4 ─┐
+PR1 ─► PR1b ─► PR2 ─► PR3a ─► PR3b ─► PR4 ─┐
         │        │      └────────► PR5 ─► PR7 ─► PR8 (BLOQUEADO: lootbox, D1)
         │        └─► PR6           ▲
         │                          └── PR4 (gates de andar)

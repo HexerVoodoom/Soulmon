@@ -9,7 +9,7 @@
 
 ## 1. Resumo: medições × metas
 
-Coluna "main" = núcleo atual. Coluna "proposta" = golpe normalizado (`HIT_UNIT_H0 = 10`) + σ 8% (pergunta P1 ao dono).
+Coluna "main" = núcleo atual. Coluna "proposta" = golpe normalizado (`HIT_UNIT_H0 = 10`) + σ 8%. **Aprovada pelo dono em §2.15 P1.** A Arena da §3 (1v1 em sequência) foi **substituída pela §6 (grupos N×1, P2)**. O anel e a esquiva foram recalibrados pela P4 (§6).
 
 | Métrica | Meta (contexto) | main | proposta | Situação |
 |---|---|---|---|---|
@@ -108,3 +108,31 @@ Onda = slots `top−1..top` (`NIGHTMARE_WAVE_SIZE = 2`) do **andar 1**, sempre. 
 - A Arena e a Masmorra são quase determinísticas na sequência (8 e 6 lutas somam a sorte). Por isso os coeficientes são sensíveis: power 0,12→0,13 levou a run de 86% para 60%. O teste do PR tem de fixar faixas, não pontos.
 - A espera do anel e da esquiva (pausa do relógio) não entra no TTK. Ela é tempo de cena.
 - O mais fraco por 1 Lv sobe de 8% (rookie) para 32% (ultra) porque, na curva, +1 ponto pesa menos com mais pontos. Isso é do PR1 (`level.ts`), não destes PRs.
+
+## 6. Arena em GRUPO (N×1) — §2.15 P2 e P4 (06/10/2026)
+- **Fonte:** `_sim/cv3-medir/groupfight.ts` (núcleo N×1 proposto para o PR3a) e `grupo.ts`. Saída em `grupo-final.txt`, com N = 3200 runs por lado (área e único).
+- **Compatibilidade:** `groupFight` com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()` (normalizado) em 300 de 300 lutas.
+- **Área × único (mesmo orçamento E):** a área dá E/k a cada inimigo vivo no cast; o único dá E ao alvo, e o DoT único repassa os ticks ao próximo alvo vivo.
+  - Régua pareada, mesmas seeds: direct −2,4pp / −2,0% · dot −5,4pp / +1,4% · defDebuff −4,2pp / −4,8%. Faixa ≤6pp / ≤5%.
+  - Sem o repasse do DoT, a área ganhava de +12 a +20pp. Com a eficiência do class-system (0,9), o direct em área perdia de 6 a 17pp. Por isso a eficiência é 1.
+- **Fonte de área no app:** o class-system tem `AreaConfig` (`unico | circulo`), mas `StageSkill` não tem o campo e `realSkillPower` fixa `unico`. A única fonte de área hoje é `SPECIAL_EFFECTS.targets` por escola. Ver Q-AREA no PR3a.
+
+| Métrica | Meta | Medido |
+|---|---|---|
+| Duração por rodada (mediana) | 20–29 s | R1 21,8 · R2 (2 inimigos) 19,8 · R3 21,0 · R4 (3) 27,6 · R5 boss 24,4; P95 até 44,8 (R4) |
+| Vitória por build (spread) | ≤20pp | 64,4–69,1% (4,6pp) |
+| Vitória por família × área (spread) | ≤20pp | 61,6–69,0% (7,4pp) |
+| Por estágio | uniforme | 63,7–68,9% |
+| Habilidade `nenhuma` × `boa` | ≤25pp (P4) | 47,9% × 71,9% = **24,0pp** (antes: 51,6pp) |
+| Masmorra com o anel/esquiva novos | AC do PR4 | andares 1–4 98–100%, 5 32%, 6 0% |
+
+Constantes: `ARENA_FOES` weak {0,45 · 0,12}, medium {0,95 · 0,235}, boss {1,2 · 0,495, direto}; `RING_MULT` 0,92/1/1,08; `DODGE_REDUCE` 0/0,2/0,35.
+
+`PVE_FAMILY_POWER`:
+
+| Motor | direct | dot | heal | shield | atkBuff | defDebuff | spdBuff |
+|---|---|---|---|---|---|---|---|
+| `arena` | 1 | 0,95 | 1,25 | 1,2 | 1,35 | 1,55 | 1,25 |
+| `dungeon` | 1 | 1,1 | 0,8 | 1 | 1,3 | 1,3 | 1,5 |
+
+A cura rende pouco em grupo (o dano entra de vários lados) e muito na sequência 1v1.

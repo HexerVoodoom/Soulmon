@@ -1,7 +1,7 @@
 # Story PR5 — PvP/Torneio no núcleo v3, com paridade e clamp S1 (run `combate-v3-01`, Builder)
 
 > Revisada em 06/10/2026 contra `origin/main` bd6adbed e o PR2 (`origin/combate-v3/pr2` 1b956d91), e medida (`builder/balanco-motores.md`).
-> Depende do PR2 (`_soulXP.js`) e do PR3 (núcleo v1.1: golpe normalizado, `cheer`, `fightSteps`). **Bloqueio:** a P3 (de onde vem o relógio do teto S1) precisa de resposta.
+> Depende do PR2 (`_soulXP.js`; o #226 reverteu e o #227 reaplica; leia `70417a61`) e do PR3a (núcleo v1.1). O PvP é 1v1 e não usa área: o especial em área age como único, porque N = 1. **P3 decidida (§2.15):** o teto é a data da 1ª gravação no metadata do KV, limita a 1 level por dia de servidor e vale só no duelo.
 
 ## Achados no código (corrigem a versão anterior)
 - **Não existe `combatStats`** em `save.js`, no save nem em lugar nenhum da main (grep vazio). No v3 os stats são **derivados**: o PR2 deriva o level de `evolutionStage` e `perfectDays` e não persiste nada. Por isso o S1 deixa de ser "clampar `combatStats`" e passa a ser **derivar no servidor e limitar o level com um relógio do servidor**.
@@ -33,13 +33,13 @@
    - `duelStart`, `match` e a lista de oponentes carregam o save dos dois lados (`kvOrThrow(env).get(saveId)`). Na lista são até 3 oponentes, ou seja, +3 leituras de KV.
    - O resultado passa a ter 3 valores. `settleMatch({ …, outcome })`, com `outcome: 'win' | 'loss' | 'draw'`, substitui o `won`. No `draw` nenhum lado ganha pontos nem Honra, e a partida conta como jogada. A resposta leva `draw: true`.
    - `myScore`/`oppScore` continuam sendo o % de HP restante.
-4. **Clamp S1.** Depende de P3; abaixo, a recomendação A.
+4. **Clamp S1** (§2.15 P3).
    - `save.js` passa a gravar `metadata.f` (primeira gravação, em ms) e preserva o `f` anterior em todo `put`. `getWithMetadata` já é usado no GET (l. 158), e o POST lê o metadata antes do `put`. Nenhum campo novo no state; a contagem de campos (`fuzz2`, 103) não muda.
    - `maxLevel = 1 + floor((agora − f) / 86 400 000)`, ou seja, no máximo 1 level por dia de servidor. Save sem `f` (gravado antes desta mudança) recebe `f = agora` na primeira gravação e, até lá, `maxLevel = levelCapFor(stage)`.
    - O teto vale **só no duelo** (`_duel.js`). O save não é reescrito, para não brigar com a evolução do cliente.
 5. **Cliente:**
    - `TournamentPage.tsx` (l. 268–270, 480) e `DuelScreen.tsx` (l. 41, 111, 151) usam o `fight` de `src/utils/combate` (o mesmo código do espelho) com a seed e os stats que vêm do servidor. O cliente nunca deriva o oponente.
-   - A cena consome `fightSteps`, como no PR3, mas sem anel e sem esquiva, porque no PvP ninguém age; a torcida só soma.
+   - A cena consome `fightSteps`, como no PR3b, mas sem anel e sem esquiva, porque no PvP ninguém age; a torcida só soma.
 6. **NPC de treino (`tournamentNpcs.ts` › `npcAtk`).** É substituído por `npcCombatant(L) = combatantAt(max(1, L − NPC_LEVEL_GAP), balanced)`, com `NPC_LEVEL_GAP = 2` como valor inicial. O treino continua sem contar partida (§23.4).
 
 ## Decisões do dono aplicadas
@@ -73,7 +73,7 @@
 5. `src/components/DuelScreen.render.test.tsx`, `strikeForm.pr1b.screens.test.tsx` e `combatFx.test.ts`: atualizar os imports de `duelStats` e `simulateDuel`.
 
 ## Calibração (medida)
-`PVP_HP_SCALE = 1,7` · `CHEER = { tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 3 }` (teto ≈ 0,67 energia/s, com o tempo dando 2/s) · `NPC_LEVEL_GAP = 2` (inicial) · σ, `HIT_UNIT_H0` e famílias vêm do PR3. **Sem** `PVE_FAMILY_POWER` no PvP.
+`PVP_HP_SCALE = 1,7` · `CHEER = { tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 3 }` (teto ≈ 0,67 energia/s, com o tempo dando 2/s) · `NPC_LEVEL_GAP = 2` (inicial) · σ, `HIT_UNIT_H0` e famílias vêm do PR3a. **Sem** `PVE_FAMILY_POWER` no PvP.
 
 ## Estados de UI
 Aguardando o servidor (carregando) · erro de rede (a luta não acontece, nada é cobrado) · offline (só treino local, rotulado) · vitória · derrota · empate (texto neutro, EN/PT, sem perdedor).

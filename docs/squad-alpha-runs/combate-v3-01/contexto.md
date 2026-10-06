@@ -162,3 +162,11 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 - **M2** O level do Soulmon aparece como **`Lv N`** abreviado, nunca "nível" por extenso (NARRATIVA §12).
 - **M3** Equipamento com **3 slots, um por atributo**: Núcleo→ATK, Carapaça→DEF, Rastro→SPD. Tiers comprados direto, sem RNG.
 - **M4** A maré de sorte fica **OCULTA**: a mecânica AR(1) continua, mas nenhum indicador aparece na UI.
+
+## §2.15 Decisões do dono sobre o balanço dos motores (06/10/2026, `builder/balanco-motores.md`)
+- **P1** O golpe é **normalizado**: cada ataque vale ~1/10 do espelho em todo level (`HIT_UNIT_H0 = 10`), com **σ 8%**. Essa decisão substitui o σ 15% da §2.10. As metas de vitória do mais fraco (~31% / ~19%) continuam.
+- **P2** A Arena **mantém os grupos**: o núcleo passa a fazer luta N contra 1, como extensão pura e compatível com o 1v1 quando N = 1.
+  - O especial pode ter efeito em **área**, com o dano dividido entre os alvos, ou ser **único**, com o dano concentrado. Os dois gastam o mesmo orçamento total, e a régua pareada compara área contra único.
+  - A forma (área ou único) é definida pelo class-system quando o Soulmon nasce ou evolui. A regra exata de escolha está pendente: ver Q-AREA no PR3a.
+- **P3** O teto S1 usa a data da 1ª gravação, guardada no metadata do KV do save. O teto é de **1 level por dia de servidor** e vale **só no duelo**; o save não é reescrito.
+- **P4** A diferença de vitória entre habilidades (sem agir × bem jogado no anel e na esquiva) fica **limitada a 25pp**. `RING_MULT` e `DODGE_REDUCE` foram recalibrados para caber nesse limite.

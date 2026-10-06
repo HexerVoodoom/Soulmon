@@ -1,0 +1,9 @@
+## 0 groupFight N=1 (área ligada) ≡ fight 1º KO/vencedor: divergências 0/300
+## Arena N×1 — CLS {"weak":{"hp":0.45,"power":0.12},"medium":{"hp":0.95,"power":0.235},"boss":{"hp":1.2,"power":0.495,"special":true}} GROW {"hp":0.04,"power":0.13} RING [0.92,1,1.08] DODGE [0,0.2,0.35] AREA_EFF 1
+    duração por rodada (mediana/P95): R1[1] 21.8/27.0 · R2[2] 19.8/27.5 · R3[1] 21.0/28.8 · R4[3] 27.6/44.8 · R5[1] 24.4/37.2
+    vitória por build: atk 64.4% · def 64.6% · spd 66.1% · balanced 69.1% → spread 4.6%
+    vitória por família/área: direct/single 68.1% · direct/area 65.7% · dot/single 69.0% · dot/area 63.6% · heal/single 67.5% · heal/area 67.5% · shield/single 65.9% · shield/area 65.9% · atkBuff/single 64.3% · atkBuff/area 64.3% · defDebuff/single 65.8% · defDebuff/area 61.6% · spdBuff/single 67.6% · spdBuff/area 67.6% → spread 7.4%
+    por estágio: s0 64.1% · s1 68.9% · s2 65.3% · s3 68.2% · s4 63.7% · média 66.0%
+    régua pareada área×único (mesmas seeds), só famílias de alvo: direct: Δvitória -2.4pp · Δtempo da run vencida -2.0% · dot: Δvitória -5.4pp · Δtempo da run vencida 1.4% · defDebuff: Δvitória -4.2pp · Δtempo da run vencida -4.8%
+    habilidade nenhuma: vitória 47.9%
+    habilidade boa: vitória 71.9%
