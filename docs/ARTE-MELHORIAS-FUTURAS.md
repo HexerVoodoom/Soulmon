@@ -143,3 +143,187 @@ Verificação não feita: o teste de legibilidade a 16 px em cinza sobre `#0B3A4
 ### Prompts Gemini corrigidos
 
 Os prompts da seção em inglês são os que se cola no Gemini (ficam em inglês de propósito). Uma peça por conversa nova, anexando `docs/ui-refs/REF-kit-v12.png` mais o irmão citado no prompt, terminando com o bloco STYLE e a linha `Square 1:1 full-bleed composition.`. Ícones soltos pedem fundo `#00FF00` e recorte por chroma-key. Se existe peça aprovada do mesmo elemento, anexá-la e pedir reprodução fiel vale mais que descrever a forma de novo.
+
+---
+
+## QA de acessibilidade visual a 16 px (medição de 06/10/2026)
+
+Só medição; nenhuma imagem foi gerada nem alterada. Scripts e folhas de contato em `E:\tmp\artqa\` (`common.py`, `metrics.py`, `report.py`, `cvd.py`; folhas `sheet_*.png`, `pairs_fail_*.png`, `pairs_tiers.png`, `cvd_fx.png`, `cvd_status.png`). English summary: 64 of 1953 piece pairs fail the 16 px shape-only test (10 of them equipment tiers); every piece has a 1.69:1 dark outline against `#0B3A40` (below 3:1), so legibility depends on the inner fills.
+
+### Condição de teste
+
+- Fonte: `origin/main` @ `3c2dc8298`, `src/assets/soulmon/combate-v3/` (status, atributos, hud `gate-*`/`soul-*`/`vinculo-*`/`talent-*`, arvore `talent-*`, talentos `tal-*`, equip `eq-*`): 63 peças. FX só entra no daltonismo (são folhas de 128 px, o teste de 16 px não se aplica).
+- Render: recorte pelo bbox do alfa, redução proporcional LANCZOS para caber em 16x16 (e 24x24), centrado, composto sobre `#0B3A40`; cinza = luma ITU-R 601. Sem aparelho real; tudo é script, a conferência das folhas foi visual (manual).
+- Contraste: WCAG 2.x (luminância relativa), fundo L = 0,034.
+- Similaridade: IoU da máscara de alfa (>50%) a 16 px; SSIM em cinza a 16 px (janela 5, média só sobre a união das máscaras dilatada em 1 px, para o fundo liso não inflar o número). Nos 1953 pares: SSIM mediana 0,10, p90 0,25, p99 0,43.
+- Limites propostos (o inventário não fixa número; decisão do dono): **reprova** = SSIM >= 0,35, ou IoU >= 0,80 com SSIM >= 0,20; **alerta** = SSIM >= 0,28 ou IoU >= 0,80. IoU sozinho não reprova: quase toda peça preenche o quadrado e o número sobe sem a forma interna ser parecida.
+- Daltonismo: matrizes de Machado et al. 2009 (severidade 1,0) em RGB linear; distância CIEDE2000 entre a cor de destaque média (pixels de croma alto) de cada glifo/folha de FX.
+
+### 1. Contraste não-texto (WCAG 1.4.11)
+
+- **Todas as 63 peças** têm contorno `#0D0D0D` contra `#0B3A40` a **1,69:1** (mediana do anel de borda), abaixo de 3:1. O aro ciano `#6EFFF8` pedido no STYLE block **não aparece** no PNG instalado (o pixel mais externo é sempre o preto). A forma só se separa do fundo pelo preenchimento interno, nunca pela borda. Bordas melhores: `tal-pvp-04` 3,61:1, `tal-pvp-05` 2,0, `oficio-benca` 1,96. Pior: `talent-point-chip` 1,14.
+- Critério proposto: >= 20% dos pixels do glifo a 16 px com >= 3:1 contra o fundo (cor viva que carrega a forma). Piores casos:
+
+| peça | pixels >= 3:1 a 16 px | tinta a 16 px (px) | resultado | prio |
+|---|---|---|---|---|
+| `oficio-maldicao` | 0% | 168 | reprova | P0 |
+| `talent-node-locked` | 0% | 125 | reprova | P0 |
+| `talent-root-pvp` | 1% | 90 | reprova | P0 |
+| `gate-torneio` | 1% | 85 | reprova | P0 |
+| `tal-com-04` | 2% | 178 | reprova | P0 |
+| `talent-root-pve` | 2% | 111 | reprova | P0 |
+| `oficio-combate_fisico` | 2% | 131 | reprova | P0 |
+| `oficio-longo_alcance` | 3% | 74 | reprova | P0 |
+| `gate-arena` | 6% | 149 | reprova | P1 |
+| `tal-pve-02` | 8% | 147 | reprova | P1 |
+| `tal-pve-04` | 8% | 122 | reprova | P1 |
+| `tal-com-05` | 9% | 134 | reprova | P1 |
+| `eq-rastro-t2` | 10% | 115 | reprova | P1 |
+| `eq-rastro-t1` | 10% | 127 | reprova | P1 |
+| `tal-pve-05` | 11% | 121 | reprova | P1 |
+| `strike-melee` | 11% | 118 | reprova | P1 |
+| `tal-pve-06` | 11% | 172 | reprova | P1 |
+| `soul-lv-badge` | 11% | 126 | reprova | P1 |
+| `st-maldicao` | 11% | 141 | reprova | P1 |
+| `soul-cap-mark` | 12% | 78 | reprova | P1 |
+| `st-dot` | 12% | 81 | reprova | P2 |
+| `talent-node-available` | 12% | 113 | reprova | P2 |
+| `eq-rastro-t3` | 13% | 126 | reprova | P2 |
+| `tal-pvp-05` | 13% | 124 | reprova | P2 |
+| `vinculo-badge` | 14% | 133 | reprova | P2 |
+
+39 de 63 peças reprovam (tabela mostra as 25 piores). Passam as que têm ciano/âmbar vivo (`st-cura`, `tal-pve-07`, `tal-pve-03`, `eq-nucleo-*`); o resto do kit é cobre/teal escuro e some no fundo. `talent-node-locked` com 0% é esperado (estado bloqueado), mas fica invisível a 16 px.
+
+### 2. Pares que reprovam "distinguível só pela forma" a 16 px em cinza
+
+Total: **64 pares reprovam** (P0 5, P1 21, P2 38), mais 93 em alerta, de 1953. Prioridade por contexto de uso: P0 = peças que aparecem lado a lado na mesma barra (status x status, atributo/strike, badges de HUD); P1 = mesma árvore de talentos, tiers de equipamento ou colisão de dono de silhueta entre telas; P2 = telas diferentes e rotuladas. Valores IoU / SSIM.
+
+| par | IoU | SSIM | resultado | prio |
+|---|---|---|---|---|
+| `soul-lv-badge` x `talent-respec` | 0.70 | 0.56 | reprova | P0 |
+| `soul-lv-badge` x `vinculo-badge` | 0.84 | 0.48 | reprova | P0 |
+| `st-buff-atk` x `st-buff-spd` | 0.75 | 0.43 | reprova | P0 |
+| `talent-respec` x `vinculo-badge` | 0.79 | 0.42 | reprova | P0 |
+| `st-cura` x `st-hot` | 0.76 | 0.37 | reprova | P0 |
+| `eq-carapaca-t1` x `eq-carapaca-t2` | 0.91 | 0.84 | reprova (tiers) | P1 |
+| `eq-nucleo-t1` x `eq-nucleo-t3` | 0.90 | 0.83 | reprova (tiers) | P1 |
+| `eq-nucleo-t1` x `eq-nucleo-t2` | 0.86 | 0.76 | reprova (tiers) | P1 |
+| `eq-nucleo-t2` x `eq-nucleo-t3` | 0.85 | 0.66 | reprova (tiers) | P1 |
+| `eq-nucleo-t2` x `tal-pve-07` | 0.79 | 0.48 | reprova | P1 |
+| `eq-nucleo-t1` x `tal-pve-07` | 0.73 | 0.47 | reprova | P1 |
+| `eq-carapaca-t2` x `eq-carapaca-t3` | 0.86 | 0.45 | reprova (tiers) | P1 |
+| `talent-node-available` x `talent-node-locked` | 0.82 | 0.45 | reprova (tiers) | P1 |
+| `eq-nucleo-t3` x `tal-pve-07` | 0.77 | 0.44 | reprova | P1 |
+| `talent-path-pvp` x `tal-pve-02` | 0.69 | 0.41 | reprova | P1 |
+| `talent-path-pvp` x `tal-pvp-07` | 0.67 | 0.40 | reprova | P1 |
+| `attr-atk` x `gate-torneio` | 0.51 | 0.39 | reprova | P1 |
+| `talent-root-com` x `talent-root-pve` | 0.72 | 0.37 | reprova (tiers) | P1 |
+| `tal-pve-07` x `tal-pvp-06` | 0.69 | 0.37 | reprova | P1 |
+| `tal-pve-03` x `tal-pve-07` | 0.68 | 0.36 | reprova | P1 |
+| `talent-path-pvp` x `tal-com-02` | 0.64 | 0.36 | reprova | P1 |
+| `tal-com-01` x `tal-pvp-06` | 0.64 | 0.35 | reprova | P1 |
+| `eq-nucleo-t3` x `tal-pve-02` | 0.84 | 0.35 | reprova | P1 |
+| `eq-nucleo-t2` x `tal-pve-02` | 0.87 | 0.34 | reprova | P1 |
+| `eq-carapaca-t1` x `eq-carapaca-t3` | 0.81 | 0.34 | reprova (tiers) | P1 |
+| `tal-pve-02` x `tal-pve-07` | 0.84 | 0.24 | reprova | P1 |
+| `eq-rastro-t1` x `eq-rastro-t3` | 0.77 | 0.63 | reprova (tiers) | P2 |
+| `eq-nucleo-t3` x `tal-com-02` | 0.63 | 0.48 | reprova | P2 |
+| `eq-rastro-t1` x `eq-rastro-t2` | 0.74 | 0.48 | reprova (tiers) | P2 |
+| `talent-node-available` x `vinculo-badge` | 0.73 | 0.48 | reprova | P2 |
+| `eq-nucleo-t2` x `tal-com-07` | 0.72 | 0.47 | reprova | P2 |
+| `talent-respec` x `tal-com-03` | 0.56 | 0.45 | reprova | P2 |
+| `attr-atk` x `tal-com-02` | 0.58 | 0.44 | reprova | P2 |
+| `st-escudo` x `tal-pve-07` | 0.80 | 0.44 | reprova | P2 |
+| `eq-nucleo-t2` x `st-cura` | 0.73 | 0.44 | reprova | P2 |
+| `eq-nucleo-t3` x `tal-pve-03` | 0.68 | 0.43 | reprova | P2 |
+| `eq-carapaca-t2` x `eq-nucleo-t1` | 0.68 | 0.42 | reprova | P2 |
+| `oficio-evocacao` x `tal-com-07` | 0.45 | 0.42 | reprova | P2 |
+| `eq-nucleo-t1` x `tal-com-02` | 0.61 | 0.42 | reprova | P2 |
+| `talent-path-comercio` x `talent-respec` | 0.66 | 0.42 | reprova | P2 |
+| `eq-nucleo-t1` x `st-cura` | 0.70 | 0.42 | reprova | P2 |
+| `st-escudo` x `tal-pve-04` | 0.72 | 0.41 | reprova | P2 |
+| `eq-carapaca-t2` x `tal-pve-03` | 0.82 | 0.40 | reprova | P2 |
+| `eq-carapaca-t2` x `eq-nucleo-t3` | 0.68 | 0.40 | reprova | P2 |
+| `eq-nucleo-t2` x `st-escudo` | 0.81 | 0.40 | reprova | P2 |
+| `talent-point-chip` x `tal-com-02` | 0.59 | 0.40 | reprova | P2 |
+| `st-cura` x `tal-pve-07` | 0.71 | 0.40 | reprova | P2 |
+| `oficio-evocacao` x `eq-nucleo-t2` | 0.50 | 0.39 | reprova | P2 |
+| `eq-carapaca-t1` x `eq-nucleo-t1` | 0.65 | 0.39 | reprova | P2 |
+| `soul-lv-badge` x `tal-com-03` | 0.60 | 0.39 | reprova | P2 |
+| `talent-point-chip` x `tal-pvp-07` | 0.58 | 0.39 | reprova | P2 |
+| `eq-nucleo-t3` x `st-escudo` | 0.82 | 0.38 | reprova | P2 |
+| `eq-carapaca-t2` x `eq-nucleo-t2` | 0.69 | 0.38 | reprova | P2 |
+| `eq-nucleo-t3` x `st-cura` | 0.73 | 0.37 | reprova | P2 |
+| `talent-path-pvp` x `talent-point-chip` | 0.59 | 0.36 | reprova | P2 |
+| `eq-nucleo-t1` x `tal-pve-03` | 0.68 | 0.36 | reprova | P2 |
+| `talent-root-pve` x `soul-lv-badge` | 0.62 | 0.36 | reprova | P2 |
+| `eq-nucleo-t2` x `tal-pve-03` | 0.71 | 0.35 | reprova | P2 |
+| `eq-nucleo-t1` x `tal-com-07` | 0.63 | 0.35 | reprova | P2 |
+| `st-escudo` x `tal-pve-03` | 0.80 | 0.35 | reprova | P2 |
+| `attr-atk` x `tal-pve-02` | 0.37 | 0.35 | reprova | P2 |
+| `st-escudo` x `tal-pve-02` | 0.89 | 0.33 | reprova | P2 |
+| `eq-carapaca-t3` x `tal-pve-03` | 0.81 | 0.28 | reprova | P2 |
+| `talent-node-bought` x `oficio-maldicao` | 0.81 | 0.22 | reprova | P2 |
+
+Pares esperados pelo pedido:
+
+| par esperado | IoU | SSIM | resultado |
+|---|---|---|---|
+| `st-buff-atk` x `st-buff-spd` | 0.75 | 0.43 | reprova |
+| `st-hot` x `st-cura` | 0.76 | 0.37 | reprova |
+| `oficio-combate_fisico` x `strike-melee` | 0.49 | 0.12 | passa na métrica |
+| `st-debuff-def` x `tal-pve-03` | 0.82 | 0.02 | passa na métrica |
+| `tal-pvp-03` x `st-buff-spd` | 0.51 | 0.02 | passa na métrica |
+| `tal-pvp-01` x `attr-atk` | 0.30 | -0.00 | passa na métrica |
+| `tal-pve-06` x `st-escudo` | 0.80 | 0.04 | passa na métrica |
+| `tal-pve-02` x `eq-carapaca-t1` | 0.64 | 0.24 | passa na métrica |
+| `tal-com-03` x `talent-respec` | 0.56 | 0.45 | reprova |
+
+Leitura: `oficio-combate_fisico` x `strike-melee`, `tal-pvp-01` x `attr-atk`, `tal-pve-02` x `eq-carapaca-t1` e `tal-pvp-03` x `st-buff-spd` passam na métrica (a forma interna difere), mas violam a regra "um dono por silhueta" (punho, espada, placa, pegada repetidos); seguem no backlog acima pela regra de dono, não pela medição. `st-debuff-def` x `tal-pve-03` e `tal-pve-06` x `st-escudo` têm IoU alto (>= 0,80) e SSIM ~0 (mesmo bloco, miolo diferente): alerta, não reprova. Evidência visual: `pairs_fail_1.png`, `pairs_fail_2.png`, `pairs_tiers.png`.
+
+### 3. Daltonismo (protanopia, deuteranopia, tritanopia)
+
+- A cor não é o único diferenciador dos status e a simulação confirma: âmbar/cobre (`st-dot`, `st-maldicao`, `st-debuff-def`, chevron do `fx-debuff`) vira oliva-amarelado em protanopia/deuteranopia e salmão em tritanopia; o ciano vira azul-acinzentado. Os dois grupos continuam separados em matiz e luminância nas três simulações (`cvd_status.png`, `cvd_fx.png`).
+- Pares que a cor sozinha NÃO separa nem na visão normal (CIEDE2000 < 6, só a forma salva): `st-buff-atk` x `st-buff-spd` 2,2; `st-buff-atk` x `st-escudo` 2,6; `st-buff-spd` x `st-escudo` 0,8; `st-cura` x `st-hot` 0,9; `st-dot` x `st-maldicao` 5,3 (ambos laranja). A simulação não piora estes (variação <= 0,3); somam ao problema de forma da seção 2.
+- FX: as quatro folhas são teal dominante (`fx-debuff` x `fx-maldicao` 2,7; `fx-debuff` x `fx-dot` 5,3; `fx-dot` x `fx-maldicao` 5,8 na visão normal): quem distingue é a forma (chevrons, cristal, corrente), não a cor. Os acentos âmbar/cobre sobrevivem em protanopia/deuteranopia; em tritanopia viram vermelho/salmão sem perder contraste com o teal. A conferência das simulações das folhas foi só visual. FX é decorativo (estado vai por glifo + texto `aria-label`, já previsto no inventário). P2.
+
+### 4. Recomendação de regeração (só texto; a geração é manual do dono)
+
+Regras para todos os prompts abaixo: uma peça por conversa, anexar `docs/ui-refs/REF-kit-v12.png` e a peça-irmã citada, terminar com o STYLE block e `Square 1:1 full-bleed composition.`, ícone único com a cláusula de fundo `#00FF00` + chroma-key. Acréscimos obrigatórios desta medição, para todo o lote: (a) **sem miolo texturizado**: no máximo 2 tons internos e uma forma cheia, para o SSIM a 16 px cair; (b) **aro externo claro** de 1 px `#6EFFF8` sobre o contorno preto, mantido no PNG final (hoje sumiu e deixa a borda em 1,69:1); (c) glifo ocupando pelo menos 70% do quadrado. Depois de gerar: refazer `metrics.py` e exigir SSIM < 0,28 contra cada vizinho da tabela e >= 20% de pixels a 3:1.
+
+Se existir peça aprovada do mesmo elemento, anexá-la e pedir reprodução fiel em vez de redescrever a forma.
+
+**P0 `st-buff-atk` / `st-buff-spd`** (hoje punho x pegada, SSIM 0,43; ambos blob + chevron)
+> A single 64x64 pixel-art status glyph, flat 2-tone: a short upright copper sword pointing up, thin blade and crossguard, NOT a fist, NOT a hand, with one bold upward chevron under the hilt. The sword must fill 70% of the height and have a wide empty gap on both sides so the outline is a tall narrow vertical. Light cyan 1-pixel rim outside the black outline. Reads at 16 px in grayscale. Attach attr-atk as shape reference.
+
+> A single 64x64 pixel-art status glyph, flat 2-tone: a winged boot in profile, one wing pointing back-left, bold upward chevron under it. The silhouette must be a wide diagonal shape, clearly different from the tall narrow sword of st-buff-atk and from any footprint or paw. Light cyan 1-pixel rim outside the black outline. Reads at 16 px in grayscale. Attach attr-spd as shape reference.
+
+**P0 `st-hot` x `st-cura`** (SSIM 0,37; hoje cruz + selo)
+> A single 64x64 pixel-art status glyph, flat 2-tone: a thin cyan plus-cross centered inside a large OPEN ring with a clear wide gap at 1 o'clock; the ring is as large as the glyph and carries a small arrowhead at the gap (continuous effect). The cross must be at most 40% of the width, so the overall silhouette is a ring, not a plus. NO side seal, NO badge. Reads at 16 px in grayscale as a ring, distinct from the solid plus of st-cura.
+
+**P0 `soul-lv-badge` x `vinculo-badge` x `talent-respec`** (anéis hexagonais/circulares, SSIM 0,42 a 0,56)
+> A single 64x64 pixel-art HUD badge: a solid filled hexagon (not a ring) with a bold copper numeral-free chevron stack inside (two upward chevrons), thick 3-pixel copper border. NO hollow center. Attach the current soul-lv-badge as the style anchor.
+
+> A single 128x128 pixel-art bond badge: a solid filled heart-shaped shield with a small linked-chain loop crossing its lower half, 3-pixel copper border, NO hollow ring, NO dots around the edge.
+
+> A single 64x64 pixel-art icon for "reset": one thick circular arrow (about 270 degrees) with a single arrowhead, cyan on teal, NO second arrow, NO copper dotted ring. It must have a clear opening in the circle so it is not a ring badge.
+
+**P1 `eq-nucleo-t1/t2/t3`, `eq-carapaca-t1/t2`** (tiers SSIM 0,66 a 0,84 entre si; confundem com `tal-pve-07`)
+> Three tiers of the same piece, each its own generation, 96x96: t1 plain dull copper crystal with NO inlay and 3 facets; t2 same shape with polished copper bracket and 2 cyan inlay stripes; t3 bigger crystal with 6 facets, electric blue core and 4 copper prongs breaking the silhouette. Each tier must differ in silhouette (number of prongs and height), not only in tint.
+
+**P1 `tal-pve-07`** (SSIM 0,36 a 0,48 contra `eq-nucleo-*`, `st-escudo`, `st-cura`)
+> A single 96x96 pixel-art talent icon: an arched stone crest (doorway arch) crowned by a four-point star above it. NO crystal, NO gem, NO hexagon.
+
+**P1 `tal-pvp-07`, `tal-com-02`, `tal-com-01`, `tal-pvp-06`, `tal-com-03`** (SSIM 0,35 a 0,56 contra `talent-point-chip`, `talent-path-pvp`, `talent-respec`)
+> Use the already corrected prompts above for `tal-pvp-06` (ember under a lid) and `tal-com-03` (hourglass over a coin). For `tal-pvp-07`: a single 96x96 icon, a rectangular banner-diamond emblem with a small star above, NO diamond frame ring. For `tal-com-02` and `tal-com-01`: attach the approved piece and ask for a faithful reproduction with the silhouette widened to at least 70% of the frame, flat 2-tone.
+
+**P2 `fx-*-loop`** (formas ok, cor quase igual): pedir só que a faixa de cor de cada FX tenha um matiz próprio (debuff: âmbar dominante; dot: âmbar; buff: ciano; maldição: cobre + ciano), e a luminância do tom quente maior que a do teal.
+
+
+### 5. Os 5 piores (prioridade, depois SSIM)
+
+1. `soul-lv-badge` x `talent-respec`: IoU 0.70, SSIM 0.56.
+2. `soul-lv-badge` x `vinculo-badge`: IoU 0.84, SSIM 0.48.
+3. `st-buff-atk` x `st-buff-spd`: IoU 0.75, SSIM 0.43.
+4. `talent-respec` x `vinculo-badge`: IoU 0.79, SSIM 0.42.
+5. `st-cura` x `st-hot`: IoU 0.76, SSIM 0.37.
