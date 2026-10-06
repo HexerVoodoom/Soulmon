@@ -3726,7 +3726,10 @@ var PICKABLE = {
   "tal-com-01": { maxRank: 3, kind: "equipPrice" },
   "tal-com-02": { maxRank: 3, kind: "fragmentGain" },
   "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1 },
-  "tal-com-05": { maxRank: 1, kind: "respecOne" }
+  "tal-com-04": { maxRank: 3, kind: "backpack" },
+  "tal-com-05": { maxRank: 1, kind: "respecOne" },
+  "tal-com-06": { maxRank: 3, kind: "missionBits" },
+  "tal-com-07": { maxRank: 1, kind: "weeklyDiscount" }
 };
 var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function talentPointsFor(bondLevel) {
@@ -6275,7 +6278,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-EWheSZ/functionsRoutes-0.4876227820335056.mjs
+// ../.wrangler/tmp/pages-MVV1bt/functionsRoutes-0.13387310732273305.mjs
 var routes = [
   {
     routePath: "/api/account",
