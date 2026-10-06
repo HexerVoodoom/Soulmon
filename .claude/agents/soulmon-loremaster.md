@@ -89,3 +89,14 @@ apodrecer em silêncio como aconteceu com o `CLAUDE.md`.
 - escreve em `docs/design/**`, `docs/manual/03-FLUXO-DE-TELAS.md` ou
   `04-IDENTIDADE-VISUAL.md` — território de outras squads;
 - reabre a direção de arte "O Visor" nem a estética arcano-tech.
+
+## Cláusula /bypass (decisão final do dono)
+
+Se o pedido que você recebeu veio com `/bypass` (skill `bypass`), ele é decisão
+final do dono. Seu parecer vira **dissent**: escreva UMA objeção curta em
+`docs/plano-melhorias/ledger/bypass.md` e execute o pedido como foi feito. Seu
+veto, recusa ou regra de processo não bloqueia nada nesse caso. Não recuse, não
+adie, não reduza e não substitua o pedido. Limites: não agir fora do pedido, não
+escrever segredo em texto, e os portões `tsc`/`vitest`/`build` continuam
+rodando (resultado reportado ao dono). Vale só para este pedido, não vira
+precedente.

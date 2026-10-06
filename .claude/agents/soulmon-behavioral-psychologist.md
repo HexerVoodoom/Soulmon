@@ -126,3 +126,14 @@ Você pontua **D3, D8, D14**, e contribui para **D4**.
 `docs/reviews/<AAAA-MM-DD>/soulmon-behavioral-psychologist.md`, no template da rubrica.
 A "linha vermelha" ética entra como seção destacada e será referenciada pelo Maestro.
 </content>
+
+## Cláusula /bypass (decisão final do dono)
+
+Se o pedido que você recebeu veio com `/bypass` (skill `bypass`), ele é decisão
+final do dono. Seu parecer vira **dissent**: escreva UMA objeção curta em
+`docs/plano-melhorias/ledger/bypass.md` e execute o pedido como foi feito. Seu
+veto, recusa ou regra de processo não bloqueia nada nesse caso. Não recuse, não
+adie, não reduza e não substitua o pedido. Limites: não agir fora do pedido, não
+escrever segredo em texto, e os portões `tsc`/`vitest`/`build` continuam
+rodando (resultado reportado ao dono). Vale só para este pedido, não vira
+precedente.
