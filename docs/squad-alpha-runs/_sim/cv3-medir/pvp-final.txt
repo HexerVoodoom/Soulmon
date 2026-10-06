@@ -1,0 +1,12 @@
+## 0 fightX (ganchos desligados) reproduz fight(): divergências 0/300
+## 3 PvP (hpScale 1.7) — 1º KO, builds e famílias variando
+    rookie L1/4/6: mediana 38.8 s · P95 56.8 · especiais/lado (até o 2º KO) 1.55 · lutas sem especial 0.0% · empates 3/600
+    champion L7/10/13: mediana 39.1 s · P95 57.7 · especiais/lado (até o 2º KO) 1.56 · lutas sem especial 0.0% · empates 2/600
+    ultimate L14/18/21: mediana 38.5 s · P95 58.1 · especiais/lado (até o 2º KO) 1.56 · lutas sem especial 0.0% · empates 4/600
+    mega L22/26/30: mediana 38.1 s · P95 56.7 · especiais/lado (até o 2º KO) 1.53 · lutas sem especial 0.0% · empates 3/600
+    mais fraco no PvP: −5% vence 25.7% · −1 Lv vence 13.9%
+    torcida +0 energia/s: TTK de quem torce ×1.000 · vence o espelho 51.0%
+    torcida +0.5 energia/s: TTK de quem torce ×0.993 · vence o espelho 57.8%
+    torcida +1 energia/s: TTK de quem torce ×0.952 · vence o espelho 81.7%
+    torcida +1.5 energia/s: TTK de quem torce ×0.920 · vence o espelho 89.0%
+    torcida +2 energia/s: TTK de quem torce ×0.898 · vence o espelho 93.5%

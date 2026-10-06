@@ -1,0 +1,16 @@
+## 0 fightX (ganchos desligados) reproduz fight(): divergências 0/300
+## 4 Arena (1v1 em sequência, 5 rodadas = 8 inimigos, cura 0.3 entre rodadas) — tabela {"weak":{"hp":0.7,"power":0.14,"special":false},"medium":{"hp":0.9,"power":0.24,"special":false},"boss":{"hp":1.15,"power":0.5,"special":true}} rodada +0.13 poder/+0.04 vida
+    TTK por inimigo: mediana 19.6 s · P95 29.1 (meta 20–29)
+    vitória da run por build: atk 32.2% · def 21.1% · spd 20.9% · balanced 30.4% → spread 11.3%
+    por família: direct 27.1% · dot 32.3% · heal 25.0% · shield 32.5% · atkBuff 23.8% · defDebuff 20.0% · spdBuff 21.3% → spread 12.5%
+    por estágio: s0 55.8% · s1 35.0% · s2 22.5% · s3 13.3% · s4 4.2%
+    habilidade nenhuma (anel/esquiva): vitória 18.0%
+    habilidade boa (anel/esquiva): vitória 31.7%
+## 5 Masmorra — slots hp [0.8,0.84,0.88,0.92,0.96,1] poder [0.06,0.08,0.1,0.12,0.14,0.18], por andar +0.11 vida/+0.25 poder, cura 0,25 entre andares
+    golpes p/ derrubar o slot mega por andar 1..6 (balanced): L1: 9.9/11.0/12.1/13.2/14.3/15.3 · L21: 69.8/77.4/85.1/92.8/100.4/108.1 · L40: 244.1/270.9/297.8/324.6/351.5/378.3
+    TTK por inimigo por andar (mediana/P95): A1 21.4/26.8 · A2 22.4/28.7 · A3 23.3/29.3
+    chega a terminar o andar n (de 8): 1:100.0% 2:7.0% 3:0.0% 4:0.0% 5:0.0% 6:0.0% 7:0.0% 8:0.0%
+    ofícios (3 andares, média de andares limpos; padrão 1.06, TTK médio 21.6 s):
+      ferreiro +54.7% (TTK ×1.043) · tecelao +88.7% (TTK ×1.008) · artesao +21.4% (TTK ×0.946) · joalheiro +8.2% (TTK ×0.988) · alquimista +2.5% (TTK ×0.983) · curtidor +28.3% (TTK ×1.038) · encantador +8.2% (TTK ×0.971) · escriba +25.8% (TTK ×0.939) · cozinheiro +16.4% (TTK ×1.027) · luthier +88.7% (TTK ×1.008) · cartografo +37.1% (TTK ×1.017)
+    alquimista contra-ataque cru (sem clamp) no andar 3: slots limpos 5.33
+## 6 Pesadelo (2 inimigos, andar max(1,top−1)): top 1: vence 100.0% · TTK med 19.7/P95 24.1 · top 2: vence 100.0% · TTK med 20.6/P95 24.9 · top 3: vence 100.0% · TTK med 23.3/P95 29.1 · top 4: vence 100.0% · TTK med 27.0/P95 33.6 · top 5: vence 100.0% · TTK med 31.0/P95 37.7

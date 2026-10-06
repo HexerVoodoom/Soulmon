@@ -1,0 +1,8 @@
+## 0 fightX (ganchos desligados) reproduz fight(): divergências 0/300
+## 4 Arena (1v1 em sequência, 5 rodadas = 8 inimigos, cura 0.3 entre rodadas) — tabela {"weak":{"hp":0.75,"power":0.125,"special":false},"medium":{"hp":0.95,"power":0.21,"special":false},"boss":{"hp":1.2,"power":0.445,"special":true}} rodada +0.13 poder/+0.04 vida
+    TTK por inimigo: mediana 20.5 s · P95 29.0 (meta 20–29)
+    vitória da run por build: atk 68.8% · def 73.8% · spd 68.0% · balanced 70.3% → spread 5.8%
+    por família: direct 72.5% · dot 75.0% · heal 77.2% · shield 67.9% · atkBuff 68.3% · defDebuff 62.9% · spdBuff 67.0% → spread 14.3%
+    por estágio: s0 76.3% · s1 72.6% · s2 68.5% · s3 68.0% · s4 65.4%
+    habilidade nenhuma (anel/esquiva): vitória 38.9%
+    habilidade boa (anel/esquiva): vitória 81.5%

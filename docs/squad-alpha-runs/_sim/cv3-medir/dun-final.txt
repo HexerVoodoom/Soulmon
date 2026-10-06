@@ -1,0 +1,9 @@
+## 0 fightX (ganchos desligados) reproduz fight(): divergências 0/300
+## 5 Masmorra — slots hp [0.74,0.78,0.82,0.86,0.9,0.94] poder [0.03,0.04,0.05,0.06,0.07,0.09], por andar +0.09 vida/+0.15 poder, cura 0,25 entre andares
+    golpes p/ derrubar o slot mega por andar 1..6 (balanced): L1: 9.3/10.1/11.0/11.8/12.7/13.5 · L21: 65.6/71.5/77.4/83.3/89.2/95.1 · L40: 229.4/250.1/270.7/291.4/312.0/332.7
+    TTK por inimigo por andar (mediana/P95): A1 20.4/24.6 · A2 21.7/26.3 · A3 23.0/28.4 · A4 24.2/30.2 · A5 24.8/32.0 · A6 25.2/33.7
+    chega a terminar o andar n (de 8): 1:100.0% 2:100.0% 3:100.0% 4:99.3% 5:40.3% 6:0.0% 7:0.0% 8:0.0%
+    ofícios (3 andares, média de andares limpos; padrão 3.00, TTK médio 21.9 s):
+      ferreiro +0.0% (TTK ×1.002) · tecelao +0.0% (TTK ×0.966) · artesao +0.0% (TTK ×0.923) · joalheiro +0.0% (TTK ×0.978) · alquimista +0.0% (TTK ×0.979) · curtidor +0.0% (TTK ×1.001) · encantador +0.0% (TTK ×0.961) · escriba +0.0% (TTK ×0.916) · cozinheiro +0.0% (TTK ×1.000) · luthier +0.0% (TTK ×0.966) · cartografo +0.0% (TTK ×0.982)
+    alquimista contra-ataque cru (sem clamp) no andar 3: slots limpos 6.00
+## 6 Pesadelo (2 inimigos = slots top−1..top, andar 1): top 1: vence 100.0% · TTK med 18.7/P95 22.5 · top 2: vence 100.0% · TTK med 19.6/P95 23.9 · top 3: vence 100.0% · TTK med 20.3/P95 24.5 · top 4: vence 100.0% · TTK med 21.0/P95 24.8 · top 5: vence 100.0% · TTK med 21.8/P95 25.9

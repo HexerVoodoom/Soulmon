@@ -1,0 +1,6 @@
+torcida +0 energia/s (PvP hp1.55, sorte por fração σ0.08): vence 49.7% · TTK ×1.000 · s0 51.5% · s1 49.2% · s2 49.0% · s3 49.8% · s4 49.0%
+torcida +0.5 energia/s (PvP hp1.55, sorte por fração σ0.08): vence 54.9% · TTK ×0.991 · s0 54.3% · s1 59.0% · s2 55.7% · s3 54.3% · s4 51.3%
+torcida +1 energia/s (PvP hp1.55, sorte por fração σ0.08): vence 59.9% · TTK ×0.977 · s0 70.8% · s1 67.0% · s2 56.0% · s3 54.3% · s4 51.3%
+torcida +1.5 energia/s (PvP hp1.55, sorte por fração σ0.08): vence 62.0% · TTK ×0.968 · s0 81.5% · s1 67.0% · s2 55.7% · s3 54.3% · s4 51.3%
+torcida +2 energia/s (PvP hp1.55, sorte por fração σ0.08): vence 63.8% · TTK ×0.964 · s0 85.7% · s1 71.7% · s2 56.0% · s3 54.3% · s4 51.3%
+torcida +3 energia/s (PvP hp1.55, sorte por fração σ0.08): vence 68.2% · TTK ×0.957 · s0 92.7% · s1 73.8% · s2 63.2% · s3 58.0% · s4 53.3%

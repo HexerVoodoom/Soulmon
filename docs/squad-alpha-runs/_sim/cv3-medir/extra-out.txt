@@ -1,0 +1,15 @@
+L1: golpes no espelho 9.9 · intervalo balanced 2.53 s · SPD puro 2.27 s · ataques/s (2 lados) 0.8
+L6: golpes no espelho 16.0 · intervalo balanced 1.56 s · SPD puro 1.56 s · ataques/s (2 lados) 1.3
+L7: golpes no espelho 23.5 · intervalo balanced 1.06 s · SPD puro 0.98 s · ataques/s (2 lados) 1.9
+L13: golpes no espelho 32.2 · intervalo balanced 0.78 s · SPD puro 0.72 s · ataques/s (2 lados) 2.6
+L14: golpes no espelho 50.6 · intervalo balanced 0.49 s · SPD puro 0.46 s · ataques/s (2 lados) 4.0
+L21: golpes no espelho 69.8 · intervalo balanced 0.36 s · SPD puro 0.32 s · ataques/s (2 lados) 5.6
+L22: golpes no espelho 102.6 · intervalo balanced 0.24 s · SPD puro 0.22 s · ataques/s (2 lados) 8.2
+L30: golpes no espelho 135.0 · intervalo balanced 0.19 s · SPD puro 0.16 s · ataques/s (2 lados) 10.8
+L31: golpes no espelho 199.3 · intervalo balanced 0.13 s · SPD puro 0.11 s · ataques/s (2 lados) 15.9
+L40: golpes no espelho 244.1 · intervalo balanced 0.10 s · SPD puro 0.09 s · ataques/s (2 lados) 19.5
+mais fraco por estágio, hpScale 1: s0 −5% 42.3% / −1Lv 19.9% · s1 −5% 38.4% / −1Lv 19.4% · s2 −5% 34.5% / −1Lv 16.3% · s3 −5% 25.8% / −1Lv 17.9% · s4 −5% 21.0% / −1Lv 14.2%
+mais fraco por estágio, hpScale 1.55: s0 −5% 40.0% / −1Lv 17.3% · s1 −5% 35.0% / −1Lv 16.4% · s2 −5% 26.9% / −1Lv 14.8% · s3 −5% 24.4% / −1Lv 11.3% · s4 −5% 16.0% / −1Lv 11.3%
+torcida +0.5/golpe no PvP: vence o espelho 55.5%
+torcida +1/golpe no PvP: vence o espelho 60.0%
+torcida +1.5/golpe no PvP: vence o espelho 65.0%

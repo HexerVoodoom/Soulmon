@@ -1,0 +1,19 @@
+régua golpe normalizado L1: direct 0.0% · dot -0.5% · heal 1.1% · shield 1.1% · atkBuff -1.6% · defDebuff -1.6% · spdBuff -1.8%
+régua golpe normalizado L6: direct 0.0% · dot -0.2% · heal 1.7% · shield 1.7% · atkBuff -1.8% · defDebuff -1.8% · spdBuff -1.8%
+régua golpe normalizado L13: direct 0.0% · dot -0.5% · heal 0.8% · shield 0.8% · atkBuff -1.8% · defDebuff -1.8% · spdBuff -1.9%
+régua golpe normalizado L21: direct 0.0% · dot -0.4% · heal 0.8% · shield 0.8% · atkBuff -2.1% · defDebuff -2.1% · spdBuff -1.9%
+régua golpe normalizado L30: direct 0.0% · dot 0.1% · heal 1.9% · shield 1.9% · atkBuff -1.6% · defDebuff -1.6% · spdBuff -1.6%
+régua golpe normalizado L40: direct 0.0% · dot -0.4% · heal 0.7% · shield 0.7% · atkBuff -2.1% · defDebuff -2.1% · spdBuff -2.3%
+fora da faixa: 0/42
+L1: especial direto encurta o TTK em 29.1% (normalizado) vs 23.8% (main)
+L13: especial direto encurta o TTK em 29.1% (normalizado) vs 9.4% (main)
+L21: especial direto encurta o TTK em 29.1% (normalizado) vs 4.1% (main)
+L40: especial direto encurta o TTK em 29.1% (normalizado) vs 1.4% (main)
+normalizado σ0.15 hp1: média 42.9%/33.0% · s0 42.9%/21.9% · s1 42.4%/31.3% · s2 43.6%/32.5% · s3 42.5%/38.0% · s4 43.0%/41.5%
+normalizado σ0.15 hp1.55: média 41.6%/28.1% · s0 43.4%/19.1% · s1 41.4%/24.1% · s2 41.3%/27.8% · s3 41.0%/33.1% · s4 41.3%/36.5%
+normalizado σ0.1 hp1: média 38.1%/26.0% · s0 37.0%/13.8% · s1 37.1%/22.9% · s2 39.6%/26.9% · s3 39.6%/33.4% · s4 37.3%/33.3%
+normalizado σ0.1 hp1.55: média 36.6%/22.3% · s0 36.5%/10.5% · s1 37.5%/19.4% · s2 36.5%/23.1% · s3 35.5%/27.4% · s4 37.0%/31.1%
+normalizado σ0.08 hp1: média 35.6%/22.6% · s0 34.3%/8.3% · s1 36.6%/18.8% · s2 35.5%/23.8% · s3 35.3%/30.8% · s4 36.3%/31.6%
+normalizado σ0.08 hp1.55: média 33.0%/18.6% · s0 33.4%/6.8% · s1 32.5%/14.0% · s2 33.1%/19.1% · s3 32.1%/23.5% · s4 33.8%/29.5%
+normalizado σ0.10 hp1: DEF×DEF P95 máx 31.1 s · espelho balanced mediana 21.0 P95 26.3
+normalizado σ0.10 hp1.55: DEF×DEF P95 máx 46.9 s · espelho balanced mediana 33.4 P95 40.5
