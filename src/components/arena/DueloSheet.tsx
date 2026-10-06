@@ -52,8 +52,11 @@ export function DueloSheet({ language, evolutionStage, skills, onStart }: {
   const stage = fichaStageOf(evolutionStage);
   const par = skills?.[stage];
   const t = (x: { pt: string; en: string } | undefined) => (x ? (isPt ? x.pt : x.en) : null);
-  const elementoId = par?.especial?.elementoId ?? par?.basica?.elementoId ?? 'neutro';
-  const elemento = t(par?.especial?.elementoNome) ?? t(par?.basica?.elementoNome) ?? (isPt ? 'Neutro' : 'Neutral');
+  // O elemento REAL do Soulmon (base ou combinado), não o do golpe especial.
+  // Skills salvas antes do campo existir caem no elemento do golpe.
+  const dominante = par?.elementoDominante;
+  const elementoId = dominante?.id ?? par?.especial?.elementoId ?? par?.basica?.elementoId ?? 'neutro';
+  const elemento = t(dominante?.nome) ?? t(par?.especial?.elementoNome) ?? t(par?.basica?.elementoNome) ?? (isPt ? 'Neutro' : 'Neutral');
   const arte = elementIcon(elementoId) ?? elementIcon('neutro');
   // O mesmo poder que a luta usa (`ArenaGame`: a básica define a escola; sem ficha, combate físico).
   const poder = getArenaPlayerStats(stage, par?.basica?.escolaId ?? 'combate_fisico').dmg;

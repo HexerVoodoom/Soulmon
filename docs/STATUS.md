@@ -9,6 +9,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 06/10/2026 — Duelo mostra o elemento REAL do Soulmon (base ou combinado)
+>
+> - `DueloSheet` lia o elemento do golpe ESPECIAL, que herda o 2º colocado da ficha quando o topo é
+>   uma base — o "elemento do Soulmon" na tela podia não ser o dele. `StageSkills` ganhou
+>   `elementoDominante` (opcional; saves antigos caem no elemento do golpe), calculado em
+>   `buildStageSkills` como o de maior peso da ficha (base OU um dos 136 pares). Régua:
+>   `arenaSheets.render.test.tsx`.
+> - **Medido, não suposto:** o class-system do Soulmon tem 17 base + 136 pares = 153 (não ~200);
+>   triplas/quádruplas existem só no class-system de origem e no roster de chefes.
+> - **Pendente com o dono:** bestiário "direto do repo, sem curadoria" e o nome da criatura no prompt.
+>   O corpus do `Besti-rio-` tem ~14 mil fichas, a maioria de franquia (`BESTIARIO-PROCEDENCIA.md`).
+> - Falha pré-existente (reproduz sem esta mudança): teste de reescrita de PNG do build ("PNG intacto
+>   quando a reescrita falhou"), provável efeito de rodar como root neste sandbox.
+
 > ## 02/10/2026 (tarde) — Rodada 4: torcida no Duelo da Arena (H14) e PvP sem interruptor (H13)
 >
 > - **H14:** `ArenaGame` (PvE contra NPCs) ganhou a torcida por toques: o pet golpeia SOZINHO
