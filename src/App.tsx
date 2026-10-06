@@ -61,6 +61,7 @@ import { initialNotificationsEnabled, readSystemNotificationPermission } from '.
 import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
+import { skillsTemFamilia } from './utils/soulProfile/ficha/stageSkillsFor';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -122,6 +123,7 @@ import {
 import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
+import { gateLine } from './utils/gates';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { memoryToShow, markMemoryShown } from './utils/memories';
@@ -650,7 +652,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 };
 
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
-// Pesadelo da manhã: leva junto BattleStage/PveMechanics/usePveBattle/combatFx/attackFxArt (~100 KB) — só na luta.
+// Pesadelo da manhã: leva junto BattleStage/PveMechanics/useGroupBattle/combatFx/attackFxArt (~100 KB) — só na luta.
 const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
@@ -3947,7 +3949,7 @@ export default function App() {
   // devolve aqui, para o conteúdo sobreviver a um aparelho novo (o perfil do
   // oráculo não sobe para a nuvem, as skills agora sim).
   const handleSkillsComputed = useCallback((skills: NonNullable<GameState['soulmonSkills']>) => {
-    setGameState(prev => (prev.soulmonSkills ? prev : { ...prev, soulmonSkills: skills }));
+    setGameState(prev => (prev.soulmonSkills && skillsTemFamilia(prev.soulmonSkills) ? prev : { ...prev, soulmonSkills: skills }));
   }, [setGameState]);
 
   const handleClassTitlesComputed = useCallback((titles: NonNullable<GameState['soulmonClassTitles']>) => {
@@ -4621,7 +4623,7 @@ export default function App() {
   const nightmareKey = nightmareDayKey(new Date(), gameState.rest?.playerDayTz);
   const nightmareWave = useMemo(
     () => (nightmareOpen
-      ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date())
+      ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date(), soulLevel(gameState))
       : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [nightmareOpen, nightmareKey, gameState.evolutionStage],
@@ -5606,6 +5608,14 @@ export default function App() {
               {language === 'pt-BR'
                 ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
                 : "The pattern hasn't yet reached the edge of what this form can hold."}
+            </p>
+          )}
+          {/* Combate v3 / PR7: Renascimento = conta paga + Vínculo. Paga e no ápice, mas com o Vínculo ainda
+              abaixo do portão (`utils/gates.ts`): texto neutro com o Vínculo pedido, sem botão e sem compra
+              (o Vínculo nunca é pago). */}
+          {labTab === 'evolution' && rebirthRefusal(gameState) === 'low-bond' && !gameState.demoCharacterId && (
+            <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block data-rebirth-low-bond>
+              {gateLine('renascimento', bondLevelFor(gameState.totalXP ?? 0), language)}
             </p>
           )}
           {/* EVO-21: o registro — linha 12 `muted` com `egg` FILL 1 20; memória,
@@ -7336,6 +7346,8 @@ export default function App() {
           demoCharacterId={petLine}
           petElement={gameState.soulmonMeta?.dominantElement}
           skills={gameState.soulmonSkills}
+          soul={gameState}
+          profissao={manifestacaoAtual?.profissao}
           language={language}
           onWin={handleNightmareWin}
           /* Derrota SÓ grava a noite como lutada: fechar aqui desmontava o modal

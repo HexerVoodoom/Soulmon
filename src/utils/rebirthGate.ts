@@ -7,6 +7,8 @@
  * Evolução. O resto (opções, `applyRebirth`) carrega por `import()` ao renascer.
  */
 import type { RebirthRecord } from './rebirth';
+import { bondLevelFor } from './bond';
+import { gateFor } from './gates';
 
 /** Estágio que habilita o Rebirth. O ápice da escada, não um número solto. */
 export const REBIRTH_REQUIRED_STAGE = 'ultra';
@@ -15,6 +17,8 @@ export interface RebirthEligibilityInput {
   evolutionStage?: string;
   accountTier?: 'demo' | 'paid';
   rebirth?: RebirthRecord | null;
+  /** XP do Vínculo (o level do usuário é DERIVADO dele; nunca persistido). Ausente = Vínculo 1. */
+  totalXP?: number;
 }
 
 /**
@@ -22,12 +26,14 @@ export interface RebirthEligibilityInput {
  * saída diferente na tela (comprar, subir a escada, ou nada — já usou). Um
  * `false` mudo mandaria o jogador adivinhar qual dos três é.
  */
-export type RebirthRefusal = 'not-ultra' | 'not-paid' | 'already-used' | null;
+export type RebirthRefusal = 'not-ultra' | 'not-paid' | 'low-bond' | 'already-used' | null;
 
 export function rebirthRefusal(input: RebirthEligibilityInput): RebirthRefusal {
   if (input.rebirth) return 'already-used';
   if (input.accountTier !== 'paid') return 'not-paid';
   if (input.evolutionStage !== REBIRTH_REQUIRED_STAGE) return 'not-ultra';
+  // Combate v3 / PR7: Renascimento = conta paga + Vínculo. O Vínculo nunca é pago (só se ganha jogando).
+  if (!gateFor('renascimento', bondLevelFor(input.totalXP ?? 0)).open) return 'low-bond';
   return null;
 }
 

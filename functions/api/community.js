@@ -17,7 +17,7 @@
 //   GET  player    ?id=                 → perfil detalhado
 //   GET  opponents ?id=                 → 3 oponentes com pvp habilitado
 //   POST duelStart {id, opponentId}     → abre o duelo: gasta a partida e sorteia a semente
-//   POST match     {id, opponentId, cheers?, forfeit?} → resolve a partida no servidor
+//   POST match     {id, opponentId, taps?, forfeit?} → resolve a partida no servidor (taps = toques por BALDE de 3 s)
 //                                          (forfeit = desistir do duelo aberto = derrota)
 //   GET  rank      ?season=             → top 50 da season (+ `myPlace`, a posição REAL, só com `&id=` autorizado)
 //   GET  seasonResult ?season=          → top 3 (para troféus)
@@ -36,14 +36,15 @@
 
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
-import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
+import { bondLevelOf } from './_bond.js';
+import { gateFor } from './_gates.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
   getProfile, putProfile,
 } from './_profile.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
-import { duelStats, simulateDuel, DUEL_PENDING_MS } from './_duel.js';
+import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS } from './_duel.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -330,8 +331,12 @@ async function handleCommunity({ request, env }) {
      mora no PERFIL para sobreviver à virada da season). Dono único da
      contabilidade: vitória, derrota e desistência passam por aqui, senão a
      desistência viraria um caminho barato que não paga o mesmo que perder. */
-  const settleMatch = async ({ id, oppSave, me, opp, myRank, won }) => {
+  const settleMatch = async ({ id, oppSave, me, opp, myRank, outcome }) => {
     const season = currentSeason();
+    // EMPATE (combate v3, §2.4/§2.19): resultado válido, a partida conta como jogada (a cota já foi gasta) e
+    // NENHUM lado ganha ou perde pontos, vitória, derrota nem Honra.
+    if (outcome === 'draw') { await putRank(env, season, id, myRank); return; }
+    const won = outcome === 'win';
     myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
     if (won) myRank.wins += 1; else myRank.losses += 1;
     await putRank(env, season, id, myRank);
@@ -354,8 +359,36 @@ async function handleCommunity({ request, env }) {
     if (!pend) return false;
     myRank.pending = null;
     const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
-    await settleMatch({ id, oppSave: pend.oppSave, me, opp, myRank, won: false });
+    await settleMatch({ id, oppSave: pend.oppSave, me, opp, myRank, outcome: 'loss' });
     return true;
+  };
+
+  /* A ficha de luta de um jogador, DERIVADA DO SAVE no KV (combate v3, PR5): o duelo nunca lê o perfil público
+     (`profile.stage`/`profile.attrs` são do cliente) nem aceita level, stats ou família do corpo. O level é
+     derivado de `evolutionStage` + `perfectDays` e LIMITADO pelo teto S1: no máximo 1 level por dia de servidor
+     desde a 1ª gravação do save (`metadata.f`, escrita só pelo `save.js`). Save ausente/ilegível = `null`. */
+  const loadDuelSide = async (saveId) => {
+    if (!VALID_ID.test(saveId || '')) return null;
+    try {
+      const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
+      if (!value) return null;
+      const state = JSON.parse(value);
+      if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
+      return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
+    } catch (err) {
+      // Falha parcial: um save ilegível ou um KV que engasgou vira "este lado não luta agora", nunca um 500 na lista inteira.
+      console.warn('community: ficha de duelo indisponível', { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
+      return null;
+    }
+  };
+
+  /* Os dois lados de uma partida. `{ res }` = a Response de erro (409: o save do próprio jogador some; 404: o do
+     oponente some), devolvida ANTES de qualquer partida ser gasta. */
+  const loadDuelSides = async (mySave, oppSave) => {
+    const [meSide, oppSide] = await Promise.all([loadDuelSide(mySave), loadDuelSide(oppSave)]);
+    if (!meSide) return { res: json({ error: 'save unavailable' }, 409) };
+    if (!oppSide) return { res: json({ error: 'opponent unavailable' }, 404) };
+    return { me: meSide, opp: oppSide };
   };
 
   // ── Perfil público (upsert; chamado junto do cloud save) ──────────────────
@@ -395,7 +428,7 @@ async function handleCommunity({ request, env }) {
     let bondLevel = null;
     if (querLigar && !jaEstavaLigado) {
       bondLevel = await bondLevelOf(env, id);
-      if (bondLevel < BOND_PVP_MIN_LEVEL) { pvpEnabled = false; pvpBlocked = true; }
+      if (!gateFor('pvp', bondLevel).open) { pvpEnabled = false; pvpBlocked = true; }
     }
     // Apelido: a mesma régua do nome da guilda (D-1). O perfil é gravado junto
     // do cloud save, então recusar derrubaria a sincronização inteira — o
@@ -448,7 +481,7 @@ async function handleCommunity({ request, env }) {
     return json({
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled, publicHidden,
       ...(nameRejected ? { nameRejected: true } : {}),
-      ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
+      ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor('pvp', bondLevel).minBond } : {}),
     });
   }
 
@@ -540,7 +573,7 @@ async function handleCommunity({ request, env }) {
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
-      pool.push({ profile: p, pub: await publicProfile(env, p) });
+      pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice('profile:'.length) });
     }
     // embaralha e devolve até 3
     for (let i = pool.length - 1; i > 0; i--) {
@@ -555,9 +588,12 @@ async function handleCommunity({ request, env }) {
     /* Duelo fantasma (`_duel.js`): cada oponente leva só a ficha de luta dele.
        A SEMENTE não vai aqui — ela nasce em `duelStart`, depois de a partida
        ser gasta, para o cliente não simular os três e escolher. */
-    const meProfile = id ? await getProfile(env, id) : null;
-    const opponents = pool.slice(0, 3).map(({ profile: p, pub }) => ({ ...pub, duel: duelStats(p) }));
-    return json({ opponents, me: { duel: duelStats(meProfile) }, matchesLeft: Math.max(0, matchesLeft) });
+    // Combate v3 (PR5): a lista só diz SE e em que level cada um luta (`duel: { level }`); a ficha inteira
+    // (stats, família, forma do golpe) só sai em `duelStart`, junto da semente. +1 leitura de KV por oponente.
+    const publicDuel = (side) => (side ? { level: side.combatant.level } : null);
+    const meSide = id ? await loadDuelSide(id) : null;
+    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => ({ ...pub, duel: publicDuel(await loadDuelSide(saveId)) })));
+    return json({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
   }
 
   /* Valida ator e oponente e devolve o contexto da partida. Compartilhado por
@@ -593,7 +629,12 @@ async function handleCommunity({ request, env }) {
   if (action === 'duelStart' && method === 'POST') {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
-    const { opponentId, oppSave, me, opp, myRank } = ctx;
+    const { opponentId, oppSave, me, myRank } = ctx;
+    // A ficha dos DOIS lados sai do SAVE e é CONGELADA aqui (`pending.sides`): o `match` luta com ela, não relê o
+    // save. Sem o congelamento, com a semente na mão o cliente editaria o save (família do especial, level) entre
+    // as duas chamadas até a luta virar vitória. Falhou aqui = nada foi gasto (a cota só cai depois).
+    const sides = await loadDuelSides(id, oppSave);
+    if (sides.res) return sides.res;
     await forfeitPending({ id, me, myRank });
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
       await putRank(env, currentSeason(), id, myRank);
@@ -601,11 +642,11 @@ async function handleCommunity({ request, env }) {
     }
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
     myRank.matchesToday += 1;
-    myRank.pending = { opp: opponentId, oppSave, seed, at: Date.now() };
+    myRank.pending = { opp: opponentId, oppSave, seed, at: Date.now(), sides: { me: sides.me, opp: sides.opp } };
     await putRank(env, currentSeason(), id, myRank);
     return json({
       seed,
-      me: duelStats(me), opp: duelStats(opp),
+      me: sides.me, opp: sides.opp,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
     });
   }
@@ -614,8 +655,6 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const meStats = duelStats(me);
-    const oppStats = duelStats(opp);
     const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage };
 
     // Um duelo aberto contra OUTRO oponente fica para trás: é desistência.
@@ -626,9 +665,9 @@ async function handleCommunity({ request, env }) {
     // Desistir (o cliente avisa) ou estourar o prazo do duelo = derrota, sem luta.
     if (open && (body.forfeit === true || Date.now() - (open.at || 0) > DUEL_PENDING_MS)) {
       myRank.pending = null;
-      await settleMatch({ id, oppSave, me, opp, myRank, won: false });
+      await settleMatch({ id, oppSave, me, opp, myRank, outcome: 'loss' });
       return json({
-        won: false, forfeit: true, myScore: 0, oppScore: 100,
+        won: false, draw: false, outcome: 'loss', forfeit: true, myScore: 0, oppScore: 100,
         points: myRank.points,
         matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
         opponent,
@@ -636,36 +675,48 @@ async function handleCommunity({ request, env }) {
     }
 
     let seed;
-    if (open) {
+    let sides;
+    if (open && open.sides?.me && open.sides?.opp) {
       seed = open.seed;           // a semente é a do SERVIDOR; a do cliente nunca existiu
+      sides = open.sides;         // e a ficha é a CONGELADA em `duelStart`
       myRank.pending = null;
     } else {
-      // Sem duelo aberto (cliente antigo, que não chama `duelStart`): a partida
-      // abre e fecha numa chamada só, com semente sorteada agora. `forfeit` sem
+      // Sem duelo aberto (cliente antigo, que não chama `duelStart`) ou aberto antes do v3 (sem ficha guardada):
+      // a partida abre e fecha numa chamada só, com semente sorteada agora e a ficha lida agora. `forfeit` sem
       // duelo aberto não custa nada — não há o que desistir.
-      if (body.forfeit === true) return json({ error: 'no open duel' }, 409);
-      if (myRank.matchesToday >= MATCHES_PER_DAY) {
-        // Futuro: liberar partidas extras via anúncio (ads). Hoje: bloqueia.
-        return json({ error: 'daily limit', matchesLeft: 0 }, 429);
+      if (!open && body.forfeit === true) return json({ error: 'no open duel' }, 409);
+      const lidos = await loadDuelSides(id, oppSave);
+      if (lidos.res) return lidos.res;     // 409/404 ANTES de gastar a partida
+      sides = { me: lidos.me, opp: lidos.opp };
+      if (open) {
+        seed = open.seed;
+        myRank.pending = null;
+      } else {
+        if (myRank.matchesToday >= MATCHES_PER_DAY) {
+          // Futuro: liberar partidas extras via anúncio (ads). Hoje: bloqueia.
+          return json({ error: 'daily limit', matchesLeft: 0 }, 429);
+        }
+        seed = crypto.getRandomValues(new Uint32Array(1))[0];
+        myRank.matchesToday += 1;
       }
-      seed = crypto.getRandomValues(new Uint32Array(1))[0];
-      myRank.matchesToday += 1;
     }
 
-    /* Duelo fantasma: os pets lutam sozinhos, a torcida do dono só SOMA
-       (`_duel.js`). */
-    const duel = simulateDuel({ me: meStats, opp: oppStats, seed, cheers: body.cheers });
-    const won = duel.won;
-    await settleMatch({ id, oppSave, me, opp, myRank, won });
+    /* Duelo fantasma: os pets lutam sozinhos, a torcida do dono só SOMA (`_duel.js`). NADA do cliente decide o
+       resultado: só os toques por balde entram, higienizados e com teto; a ficha e a semente são do servidor. */
+    const duel = simulateDuel({ me: sides.me, opp: sides.opp, seed, taps: body.taps ?? body.cheers });
+    const outcome = duel.winner === 'me' ? 'win' : duel.winner === 'opp' ? 'loss' : 'draw';
+    await settleMatch({ id, oppSave, me, opp, myRank, outcome });
 
     return json({
-      won,
-      myScore: Math.round((100 * duel.hpMe) / meStats.hp),
-      oppScore: Math.round((100 * duel.hpOpp) / oppStats.hp),
+      won: outcome === 'win',
+      draw: outcome === 'draw',
+      outcome,
+      myScore: Math.round(100 * duel.hpMe),
+      oppScore: Math.round(100 * duel.hpOpp),
       points: myRank.points,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
-      duel: { events: duel.events, me: meStats, opp: oppStats },
+      duel: { events: duel.events, me: sides.me, opp: sides.opp },
     });
   }
 

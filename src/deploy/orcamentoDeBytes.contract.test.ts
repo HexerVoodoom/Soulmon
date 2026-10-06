@@ -90,15 +90,15 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // Crescimento JUSTIFICADO, não perdoado — candidatos a pagar: `BattleStage` e
   // `ShopItemSheet` como `import()` (só carregam ao lutar/abrir a loja).
   // Re-medido em 04/10/2026: 759_120 → 893_158 (+134 KB). Rodada 6 dos ajustes do
-  // dono: combate v2 (`BattleStage`, `PveMechanics`, `usePveBattle`, `energia`,
+  // dono: combate v2 (`BattleStage`, `PveMechanics`, `useGroupBattle`, `energia`,
   // `combatFx`, mascote), missões diárias + 21 historinhas (`travessiasViagens`),
   // varredura do "?" (~55 textos viraram `InfoTip` — o texto continua no bundle),
   // `NpcSpeech`/`ShopItemSheet`. Crescimento JUSTIFICADO, não perdoado — e GRANDE:
-  // próxima tarefa é pagar com `import()` (`BattleStage`+`PveMechanics`+`usePveBattle`
+  // próxima tarefa é pagar com `import()` (`BattleStage`+`PveMechanics`+`useGroupBattle`
   // só ao lutar, `travessiasViagens` só ao abrir o relatório, `ShopItemSheet`).
   // PAGO EM PARTE em 04/10/2026 (rodada 6, perf — branch feat/r6-lazy): 893_158 → 540_385
   // (−352,8 KB, −39%). Saíram do chunk de entrada por import()/React.lazy: a luta do
-  // pesadelo inteira (NightmareBattle → BattleStage, usePveBattle, PveMechanics,
+  // pesadelo inteira (NightmareBattle → BattleStage, useGroupBattle, PveMechanics,
   // combatFx, attackFxArt ≈ 100 KB), o catálogo de atividades (31 KB, agora
   // `data/catalogoCarga.ts`), o motor do Oráculo (`oracle/motor.ts`, ~70 KB) e as
   // perguntas do ritual (`oracle.ts` ficou fora do caminho crítico: `oracle/base.ts`),
@@ -110,7 +110,11 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 05/10/2026 (combate v3 PR1b): 550_797 → 559_001 (+23 B sobre a main) — `fighterStrikeForm`, nome da skill no selo e `stageSkillsFor`; a main já estava a 11 B da folga.
   // 05/10/2026 (ajustes): 559_001 → 559_558 (+557 B, soma ao PR1b) — card de missões na Home
   // (o card e a regra são `lazy`; fica no entrada só a fiação de navegação) e `MissionsSheet` passou a `lazy`.
-  'index.js': 559_558,
+  // 06/10/2026 (combate v3 PR7): 559_558 → 572_294 (+4,7 KB sobre a main, que já estava a 156 B da folga) — o que o
+  // entrada precisa do Vínculo como level: `talents.ts` (validação do `talentPicks` na hidratação e o bônus de talento
+  // das lutas), `gates.ts` (a tabela de portões e a frase do Renascimento). A tela da árvore, a arte e os TEXTOS dos
+  // nós (`talentCopy.ts`) ficam FORA, atrás de `lazy`/`import()`.
+  'index.js': 572_294,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)

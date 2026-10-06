@@ -48,6 +48,8 @@ import atributoBenevolencia from './atributo-benevolencia.png';
 import atributoHabilidade from './atributo-habilidade.png';
 // 04/10/2026 (bloco 40 do dono): o "?" de quest em pixel, ouro com faísca turquesa, 96².
 import iconQuest from './quest.png';
+// 05/10/2026: o "!" de quest, a mesma linha do "?" (ouro, faísca turquesa), 96².
+import iconQuestExclamacao from './quest-exclamacao.png';
 
 export const UI_ICON_ART = {
   mapa: iconMapa,
@@ -67,9 +69,10 @@ export type UiIconArt = keyof typeof UI_ICON_ART;
 
 /**
  * O "?" de QUEST (missão escolhida, esperando o "Fiz"): `MissionMark`, `MissionsLink` e a aba Missões do
- * Torneio. O "!" (missões para escolher) continua o glifo autoral `exclamation` — o dono só gerou o "?".
+ * Torneio. O "!" (missões para escolher) é `QUEST_EXCLAMACAO_ART` desde 05/10/2026 (antes, o glifo `exclamation`).
  */
 export const QUEST_ART: string = iconQuest;
+export const QUEST_EXCLAMACAO_ART: string = iconQuestExclamacao;
 
 /** Moldura de pílula (cobre + cristais), 256×92, para 9-slice via
  *  `border-image`. Fatias medidas por amostragem de pixel: tampa lateral

@@ -29,7 +29,11 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
-import { fxFrame, impactMs, totalMs, prefersReducedMotion, SPECIAL_LABEL, type StageActionKind, type StrikeForm } from '../../utils/combatFx';
+import {
+  fxFrame, impactMs, totalMs, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId, statusShort,
+  type StageActionKind, type StageStatus, type StrikeForm,
+} from '../../utils/combatFx';
+import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
@@ -51,6 +55,11 @@ export interface StageFighter {
   down?: boolean;
   /** Energia 0..1 (a barra logo abaixo da de HP). Ausente = sem barra de energia. */
   energy?: number;
+  /**
+   * Efeitos de status que o lutador carrega (PR11): buff, debuff, DoT, cura, escudo… com os turnos que faltam.
+   * O MOTOR decide (`utils/combatFx.ts` `castStatus`/`tickStatus`); a cena só desenha. Ausente/vazio = sem camada.
+   */
+  status?: StageStatus[];
 }
 
 export interface StageAction {
@@ -327,6 +336,145 @@ function SpecialBanner({ action, layout, label }: { action: StageAction; layout:
   );
 }
 
+/**
+ * O CÍRCULO DE CAST do especial (PR11): o selo no chão de quem conjura, igual na Arena, Masmorra, Pesadelo e Duelo
+ * (`data-stage-cast="special"`). A arte é `combate-v3/fx/fx-cast-circle.png`, carregada sob demanda; sem ela
+ * (ou até ela chegar) sai um anel em CSS com os tokens do design system. Com movimento reduzido não gira nem cresce:
+ * aparece como flash único (`sm-bs-pop`), e o selo `SPECIAL!` carrega o texto.
+ */
+function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: number; dur: number; reduced: boolean }) {
+  const art = useCombatV3Art(['fx-cast-circle'])['fx-cast-circle'];
+  return (
+    <div
+      aria-hidden="true"
+      data-stage-cast="special"
+      data-stage-cast-art={art ? 'img' : 'css'}
+      data-stage-cast-motion={reduced ? 'flash' : 'ring'}
+      className={reduced ? 'sm-bs-pop' : 'sm-bs-circle'}
+      style={{
+        position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: 3, pointerEvents: 'none',
+        ['--bs-delay' as string]: '0ms', ['--bs-dur' as string]: `${dur}ms`,
+      } as CSSProperties}
+    >
+      {art ? (
+        <img src={art} alt="" width={size} height={size} style={{ display: 'block', width: size, height: size, maxWidth: 'none', imageRendering: 'pixelated' }} />
+      ) : (
+        <div style={{
+          position: 'absolute', left: '6%', right: '6%', top: '20%', bottom: '20%', boxSizing: 'border-box', borderRadius: '50%',
+          border: '3px solid var(--sm2-gold-ink)', boxShadow: '0 0 12px var(--sm2-gold-fill), inset 0 0 10px var(--sm2-gold-fill)',
+        }} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * A camada de STATUS de um lutador (PR11): (1) UMA camada animada em loop sobre o corpo (a de maior prioridade
+ * que tem folha), (2) a peça estática do efeito (cura/escudo) e (3) a fileira de selos acima das barras, cada um
+ * com glifo + forma (seta/sinal) + texto curto + turnos e `aria-label` completo EN/PT. O selo é a INFORMAÇÃO e nunca
+ * depende só da cor nem só da imagem: sem arte, a forma e o texto continuam. Movimento reduzido: sem o loop,
+ * o selo fica parado — a mesma informação.
+ */
+const LOOP_PRIORITY = ['maldicao', 'debuff', 'dot', 'buff'] as const;
+
+function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStatus[]; spot: Spot; barsH: number; isPt: boolean; reduced: boolean }) {
+  const loopOf = LOOP_PRIORITY.map((k) => status.find((st) => st.kind === k)).find(Boolean);
+  const stills = status.filter((st) => STATUS_FX[st.kind].still).slice(0, 1);
+  const shown = status.slice(0, MAX_STATUS_CHIPS);
+  const extra = status.length - shown.length;
+  const ids = [
+    ...shown.map((st) => statusGlyphId(st.kind, st.variant)),
+    !reduced && loopOf ? STATUS_FX[loopOf.kind].loop : null,
+    ...stills.map((st) => STATUS_FX[st.kind].still),
+  ];
+  const art = useCombatV3Art(ids);
+  const c = bodyCenter(spot);
+  const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
+  const barsTop = Math.round(spot.y - spot.size * SPRITE_TOP - barsH + 12);
+  const loopSrc = !reduced && loopOf ? art[STATUS_FX[loopOf.kind].loop ?? ''] : undefined;
+  return (
+    <>
+      {loopOf && loopSrc && (
+        <div
+          aria-hidden="true"
+          data-stage-fx-loop={loopOf.kind}
+          className="sm-bs-sheet"
+          style={{
+            position: 'absolute', left: c.x - spot.size / 2, top: c.y - spot.size / 2, width: spot.size, height: spot.size, zIndex: 4, pointerEvents: 'none',
+            backgroundImage: `url("${loopSrc}")`, backgroundSize: '300% 200%', backgroundRepeat: 'no-repeat', imageRendering: 'pixelated', opacity: 0.85,
+          }}
+        />
+      )}
+      {stills.map((st) => {
+        const src = art[STATUS_FX[st.kind].still ?? ''];
+        if (!src) return null;
+        const size = Math.round(spot.size * (st.kind === 'escudo' ? 1.05 : 0.55));
+        return (
+          <img
+            key={`still-${st.kind}`}
+            src={src}
+            alt=""
+            aria-hidden="true"
+            data-stage-fx-still={st.kind}
+            width={size}
+            height={size}
+            style={{
+              position: 'absolute', left: c.x - size / 2, top: (st.kind === 'escudo' ? c.y : c.y - spot.size * 0.3) - size / 2, width: size, height: size, maxWidth: 'none',
+              zIndex: 4, pointerEvents: 'none', imageRendering: 'pixelated', opacity: 0.6,
+            }}
+          />
+        );
+      })}
+      <div
+        data-stage-status-row
+        style={{
+          position: 'absolute', left: Math.round(spot.x - width / 2), top: barsTop - 2, width, transform: 'translateY(-100%)',
+          display: 'flex', flexWrap: 'wrap-reverse', justifyContent: 'center', gap: 3, zIndex: 3, pointerEvents: 'none',
+        }}
+      >
+        {shown.map((st, i) => {
+          const def = STATUS_FX[st.kind];
+          const glyph = art[statusGlyphId(st.kind, st.variant)];
+          const last = st.turns <= 1;
+          return (
+            <span
+              key={`${st.kind}-${st.variant ?? ''}-${i}`}
+              role="img"
+              aria-label={statusAriaLabel(st.kind, st.turns, isPt, st.variant)}
+              data-stage-status={st.kind}
+              data-stage-status-variant={st.variant}
+              data-stage-status-turns={st.turns}
+              data-stage-status-last={last ? '1' : '0'}
+              data-stage-status-art={glyph ? 'img' : 'css'}
+              className={reduced ? undefined : 'sm-bs-stpop'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3, height: 18, padding: '0 4px', boxSizing: 'border-box', borderRadius: 4,
+                backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: 10, lineHeight: 1, whiteSpace: 'nowrap',
+                border: `1px ${last ? 'dashed' : 'solid'} var(--sm2-line)`,
+              }}
+            >
+              {glyph && <img src={glyph} alt="" aria-hidden="true" width={12} height={12} style={{ width: 12, height: 12, maxWidth: 'none', imageRendering: 'pixelated' }} />}
+              <span aria-hidden="true" data-stage-status-mark>{def.mark}</span>
+              <span aria-hidden="true">{statusShort(st.kind, isPt, st.variant)}</span>
+              <span aria-hidden="true" className="sm2-num" style={{ opacity: 0.85 }}>{st.turns}</span>
+            </span>
+          );
+        })}
+        {extra > 0 && (
+          <span
+            role="img"
+            aria-label={isPt ? `mais ${extra} ${extra === 1 ? 'efeito' : 'efeitos'}` : `${extra} more ${extra === 1 ? 'effect' : 'effects'}`}
+            data-stage-status-more={extra}
+            style={{ display: 'inline-flex', alignItems: 'center', height: 18, padding: '0 4px', boxSizing: 'border-box', borderRadius: 4, backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: 10, border: '1px solid var(--sm2-line)' }}
+          >
+            <span aria-hidden="true">+{extra}</span>
+          </span>
+        )}
+      </div>
+    </>
+  );
+}
+
 function ActionFx({ action, layout, reduced }: { action: StageAction; layout: StageLayout; reduced: boolean }) {
   const meSpot = layout.me;
   const foeSpot = layout.foes[Math.min(action.foe, layout.foes.length - 1)] ?? layout.foes[0];
@@ -351,6 +499,12 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const fxScale = Math.max(1, meSpot.size / 190);
 
   const layers: ReactNode[] = [];
+  // PR11: o círculo de cast do ESPECIAL vale nas duas modalidades (movimento reduzido: flash único); o básico não tem.
+  if (big) {
+    layers.push(
+      <CastCircle key="castcircle" x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10) + Math.round(meSpot.size * 0.12)} size={Math.round(150 * fxScale)} dur={Math.max(700, (action.impactMs ?? impactMs('special', reduced)) + 200)} reduced={reduced} />,
+    );
+  }
   if (!reduced) {
     // O círculo de cast (e a aura) é SÓ do especial carregado — o golpe básico não carrega nada.
     if (big) {
@@ -428,13 +582,29 @@ export interface BattleStageProps {
   mechLabels?: { strike: string; dodgeLeft: string; dodgeRight: string };
   /** O texto do selo do especial (`specialLabel(isPt)` de `utils/combatFx.ts`); sem ele, o EN. */
   specialLabel?: string;
+  /** PR9: o selo do especial de um INIMIGO (nome por regra do elemento dele). Sem ele, cai em `specialLabel`. */
+  foeSpecialLabel?: (foe: { name: string; element?: string }) => string;
+  /** Língua dos selos de status (aria-label e legenda): `true` = PT-BR, padrão EN. */
+  isPt?: boolean;
   children?: ReactNode;
+}
+
+/** O texto do selo: o nome do pet quando ele conjura; o do inimigo (por regra do elemento) quando é ele. */
+function bannerLabel(
+  action: StageAction, foes: ReadonlyArray<{ name: string; element?: string }>,
+  specialLabel: string | undefined, foeLabel: BattleStageProps['foeSpecialLabel'],
+): string {
+  if (action.actor === 'foe' && foeLabel) {
+    const f = foes[Math.min(action.foe, foes.length - 1)];
+    if (f) return foeLabel(f);
+  }
+  return specialLabel ?? SPECIAL_LABEL.en;
 }
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, children,
+  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
@@ -562,8 +732,16 @@ export function BattleStage({
         })}
         <FighterBars fighter={me} spot={layout.me} tone="cyan" numeric barsH={layout.barsH} />
 
+        {/* PR11: os efeitos de status de cada lutador (vazio = nenhuma camada); alvo derrubado não carrega nada. */}
+        {foes.map((f, i) => {
+          const s = layout.foes[i];
+          if (!s || f.down || !f.status?.length) return null;
+          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} barsH={layout.barsH} isPt={isPt} reduced={reduced} />;
+        })}
+        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} barsH={layout.barsH} isPt={isPt} reduced={reduced} />}
+
         {action && <ActionFx key={action.id} action={action} layout={layout} reduced={reduced} />}
-        {action?.kind === 'special' && <SpecialBanner key={`sp${action.id}`} action={action} layout={layout} label={specialLabel ?? SPECIAL_LABEL.en} />}
+        {action?.kind === 'special' && <SpecialBanner key={`sp${action.id}`} action={action} layout={layout} label={bannerLabel(action, foes, specialLabel, foeSpecialLabel)} />}
         {charging && !action?.shield && (
           <div key="charge" aria-hidden="true" data-stage-charging className="sm-bs-charge" style={{ position: 'absolute', left: layout.me.x - layout.me.size * 0.7, top: meBody.y - layout.me.size * 0.7, width: layout.me.size * 1.4, height: layout.me.size * 1.4, zIndex: 2, pointerEvents: 'none', borderRadius: '50%' }} />
         )}

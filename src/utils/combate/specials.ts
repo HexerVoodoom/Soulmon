@@ -77,10 +77,20 @@ export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<Specia
 };
 
 /**
- * Cheer: 24 accepted taps = 1 discharge, at most 16 taps accepted per bucket
- * of 3 s, each discharge = +3 energy (ceiling about 0.67 energy/s).
+ * Cheer: 24 accepted taps = 1 discharge, at most 16 taps accepted per bucket of 3 s.
+ *
+ * - `energyPerDischarge` is the yield of the ARENA (`groupFightSteps`); the Dungeon and the Nightmare have no cheer
+ *   (contexto §2.19). PR4 raised it from 3 to 90 and the cheer alone won 95% of the runs; PR4b (owner's decision,
+ *   §2.19) fixed it at the BIGGEST value where, with the same skill, the run win rate with the cheer at the ceiling
+ *   minus without cheering stays ≤ 25pp and the TTK stays within ±25% (`arena.v3.test.ts`, AC5/AC6).
+ * - `pvpEnergyPerDischarge` is the PvP yield (`fight()`, the 1v1 of the duel). PR5 (contexto §2.19) calibrated it for the
+ *   BUCKET cheer (the discharge of a 3 s bucket lands at the END of the bucket, `functions/api/_duel.js`): 2.5 gives ~65%
+ *   against the ghost at the tap ceiling (3 gave 68.4%; §2.13 asks ~65%) and the TTK of whoever cheers moves < 2%.
+ *   It is NOT the PvE one (`energyPerDischarge`): the two are separate on purpose.
  */
-export const CHEER = { tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 3 } as const;
+export const CHEER = {
+  tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 9, pvpEnergyPerDischarge: 2.5,
+} as const;
 
 /**
  * Turns tap timestamps (seconds) into discharge events for `FightOptions.cheer`.

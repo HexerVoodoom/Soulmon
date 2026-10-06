@@ -21,11 +21,11 @@
  *
  * O jogador "médio" da barra era a convenção do balanceamento da Arena
  * (`accMean` 0,7 ± 0,25 uniforme, `utils/arena.ts`). A defesa automática mira o
- * MESMO jogador médio (`AUTO_DEF_MEAN`/`AUTO_DEF_SPREAD`), (o estágio do pet já
- * entra na luta pelo HP/dano de `PLAYER_STATS` e pela escada de inimigos, então
- * a defesa não ganha um segundo degrau por estágio), para que a taxa de vitória e a duração das
- * lutas fiquem onde estavam. A conta antes/depois (20.000 lutas) está em
- * `autoDefesa.test.ts` e em `docs/REGISTRO-DE-DECISOES.md` §20.
+ * MESMO jogador médio (`AUTO_DEF_MEAN`/`AUTO_DEF_SPREAD`; o level do pet já entra na luta pelo
+ * `soulCombatant` e pela escada de inimigos relativa a ele, então a defesa não ganha um segundo degrau
+ * por estágio), para que a taxa de vitória e a duração das
+ * lutas fiquem onde estavam. A medição da defesa DENTRO da luta (Masmorra e Pesadelo no núcleo v3) está em
+ * `dungeon.v3.test.ts` e `nightmares.v3.test.ts`; a conta histórica, em `docs/REGISTRO-DE-DECISOES.md` §20.
  *
  * ## A esquiva por timing
  *

@@ -220,7 +220,11 @@ export function applySpecialItem<T extends SpecialItemState>(
     };
   }
 
-  // Chip: só atributo, sem energia. Os três atributos são escritos por extenso
+  // Chip (combate v3, PR6): só PONTOS DE TIPO — inclinam o caminho (e a
+  // distribuição na evolução). Não dão XP, nível, energia nem total de combate:
+  // o total de pontos é o level (`soulXP.statPoints`) e `soulWeights` só
+  // normaliza estes pontos em fatias entre 15% e 45%.
+  // Chip: sem energia. Os três atributos são escritos por extenso
   // em vez de por chave computada porque a chave computada obriga o retorno a
   // largar o tipo do estado — e era exatamente disso que o updater inline vivia.
   const attr = special.attr as Attr;
@@ -233,7 +237,6 @@ export function applySpecialItem<T extends SpecialItemState>(
       powerPoints: prev.powerPoints + boost('power'),
       harmonyPoints: prev.harmonyPoints + boost('harmony'),
       benevolencePoints: prev.benevolencePoints + boost('benevolence'),
-      totalXP: prev.totalXP + CHIP_BOOST * 10,
       attributesSinceLastEvolution: {
         power: (since?.power ?? 0) + boost('power'),
         harmony: (since?.harmony ?? 0) + boost('harmony'),

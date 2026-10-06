@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -6,8 +6,8 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playFeed } from '../utils/sounds';
-import { playerStatsFor, DUNGEON_BITS_FACTOR } from '../utils/dungeon';
-import { newDefenseSeed, jeitoDefesaBonus } from '../utils/autoDefesa';
+import { DUNGEON_BITS_FACTOR } from '../utils/dungeon';
+import { newDefenseSeed } from '../utils/autoDefesa';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
@@ -15,16 +15,23 @@ import {
   getDungeonReached, recordDungeonReached,
   type DungeonEnemy,
 } from '../utils/dungeon';
-import {
-  CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
-} from '../utils/energia';
+import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
+import { ENERGY_TRIGGER } from '../utils/combate/specials';
+import { mulberry32 } from '../utils/combate/rng';
+import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
-import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { TorcidaLayer } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
-import { usePveBattle, type PveRules } from './games/usePveBattle';
+import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
+import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
-import { jeitoDaProfissao, fraseDaProfissao } from '../utils/profissaoMasmorra';
+import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
+import { useGameStateOptional } from '../contexts/GameStateContext';
+import { soulCombatant, type SoulXPState } from '../utils/soulXP';
+import { useTalentBonus } from '../contexts/useTalentBonus';
+import { gateLine, masmorraFloorOpen } from '../utils/gates';
+import { bondLevelFor } from '../utils/bond';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 
@@ -42,13 +49,18 @@ import type { Language } from '../utils/i18n';
  *
  * ── A LUTA (04/10/2026, REGISTRO §20.10) ──────────────────────────────────────
  * A cena é a MESMA tela cheia do Duelo (`games/BattleStage.tsx`): o Soulmon grande embaixo à
- * esquerda, o inimigo em cima à direita, HP e ENERGIA em cima de cada um, o mascote da torcida no
- * canto. O relógio, a energia e as mecânicas são do `games/usePveBattle.ts`; as regras de dano são
- * de `utils/energia.ts` (e o jeito do OFÍCIO da ficha as ajusta). O Soulmon golpeia e se defende
- * sozinho; a barra de CHEER (toques) enche devagar e despeja energia nele — e **a barra e a energia
- * PERSISTEM entre os inimigos e as camadas da run** (a masmorra é contínua). Energia cheia = o ESPECIAL,
- * com o ANEL (toque na hora certa); quando o inimigo solta o dele, dá para ESQUIVAR deslizando o dedo.
- * Vida do pet e dos inimigos × `PVE_HP_SCALE`: ~20–30 s por inimigo.
+ * esquerda, o inimigo em cima à direita, HP e ENERGIA em cima de cada um. SEM torcida (contexto §2.19):
+ * o Soulmon vai sozinho.
+ *
+ * ── COMBATE v3 (PR4, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.18) ───────────────────────────
+ * O MOTOR é o núcleo v3 (`utils/combate/`, `groupFightSteps` com 1 inimigo, igual ao 1v1): o pet é
+ * `soulCombatant(estado)` (level e ramo → ATK/DEF/SPD/HP), o inimigo é RELATIVO ao level dele
+ * (`dungeonFoe`, andar = base semanal + camada − 1) e o OFÍCIO da ficha entra por `jeitoParaPve`. As
+ * regras de cada luta moram em `utils/dungeonFight.ts` (a MESMA que o balanço simula); o relógio da cena
+ * é `games/useGroupBattle.ts`. O Soulmon golpeia e se defende sozinho (defesa automática); **a energia e o HP PERSISTEM entre os
+ * inimigos e as camadas da run** (a masmorra é contínua). Energia cheia = o ESPECIAL, com o ANEL (toque
+ * na hora certa); quando o inimigo (o mega) solta o dele, dá para ESQUIVAR deslizando o dedo. Sem
+ * `Math.random` na luta nem na onda: a semente da run (`newDefenseSeed`) decide tudo.
  *
  * A `TimingBar` de ataque/esquiva saiu desta tela (`TIMING_DODGE_ENABLED = false`, `utils/autoDefesa.ts`;
  * o componente `pixel/TimingBar.tsx` fica no repo para reaproveitar).
@@ -66,6 +78,9 @@ export const clearBonus = (floor: number) => Math.round((10 + 5 * (floor - 1)) *
 type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 
 /** O cartão de resultado sobre a cena (entre inimigos, camadas e no fim). */
+/** Sem torcida na Masmorra (contexto §2.19): o toque na cena não faz nada. */
+const noTap = (): void => {};
+
 const PANEL: CSSProperties = {
   position: 'absolute', left: 12, right: 12, zIndex: 7, boxSizing: 'border-box',
   bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 62px)',
@@ -121,18 +136,37 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const lang = isPt ? 'pt' : 'en';
   const jeito = jeitoDaProfissao(profissao);
-  const base = playerStatsFor(evolutionStage);
-  // Vida do pet × PVE_HP_SCALE: a luta ficou mais longa (04/10/2026); o dano por golpe não muda.
-  const playerStats = { hp: Math.round(base.hp * jeito.hp * PVE_HP_SCALE), dmg: base.dmg * jeito.dmg };
-  const PERFECT = jeito.perfeito;
+  const pve = jeitoParaPve(jeito);
+  const par = stageSkillsFor(skills, evolutionStage);
   const profissaoRotulo = profissao && profissaoNome ? (isPt ? profissaoNome.pt : profissaoNome.en) : undefined;
   const profissaoFrase = fraseDaProfissao(profissao, isPt);
 
+  // O level e o ramo vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
+  const ctx = useGameStateOptional();
+  const gs = ctx?.gameState;
+  const estado = useMemo<SoulXPState>(
+    () => (gs
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      : { evolutionStage }),
+    [gs, evolutionStage],
+  );
+  /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
+  const bonusTalento = useTalentBonus('pve'); // canal único de bônus (teto 5%), PR7
+  const jogador = useMemo<DungeonPlayerCfg>(() => ({
+    combatant: soulCombatant(estado, bonusTalento),
+    family: dungeonFamily(par?.especial),
+    jeito,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [estado, bonusTalento, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  const jogadorRef = useRef(jogador);
+  jogadorRef.current = jogador;
+  const nivelJogador = jogador.combatant.level;
+  const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
+
   const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
-  const [enemyHp, setEnemyHp] = useState(0);
-  const [playerHp, setPlayerHp] = useState(playerStats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
   const [rewardMsg, setRewardMsg] = useState('');
   /** O coraçãozinho caiu neste inimigo (JOGO-10) — vira glifo, não emoji na string. */
@@ -147,26 +181,28 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   // 5 scenes drawn per run from the classic pool + the shop backdrops.
   const [runScenes, setRunScenes] = useState<DungeonScene[]>(() => buildRunScenes());
   const runScoreRef = useRef(0);
-  /** A semente da luta: o sorteio da defesa automática, do anel e da esquiva (determinístico dentro da run). */
-  const [seedLuta, setSeedLuta] = useState(() => newDefenseSeed());
+  /** A SEMENTE da run: o sabor das ondas, a defesa automática, o anel e a esquiva. Nunca `Math.random` (o `newDefenseSeed` só a sorteia). */
+  const runSeedRef = useRef(newDefenseSeed());
+  const [seedLuta, setSeedLuta] = useState(() => runSeedRef.current);
+  /** Muda a cada inimigo: reinicia o relógio da cena. */
+  const [fightKey, setFightKey] = useState(0);
+  /** O que passa de um inimigo para o outro: HP (fração) e energia do pet. */
+  const hpCarryRef = useRef(1);
+  const energyCarryRef = useRef(0);
+  const [hpFrac, setHpFrac] = useState(1);
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausado, setPausado] = useState(false);
   const reduzido = useRef(prefersReducedMotion());
-  // As refs que as regras leem (sempre o estado mais novo, de dentro do relógio da luta).
-  const enemyHpRef = useRef(0);
-  const playerHpRef = useRef(playerStats.hp);
   const enemiesRef = useRef<DungeonEnemy[]>([]);
   const enemyIdxRef = useRef(0);
-  const battleRef = useRef<{ reset: (o: { foes: number; keepPet?: boolean }) => void } | null>(null);
 
   const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
   const petEl = fxElementId(petElement);
-  const par = stageSkillsFor(skills, evolutionStage);
   const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
-  const foeMax = enemy ? pveFoeHp(enemy.hp) : 1;
+  const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
 
   const addPoints = (pts: number) => {
     onEarnPoints(pts);
@@ -179,31 +215,34 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     onExit();
   };
 
-  /** Põe um inimigo da escada na luta (vida × escala, ref e estado). */
+  /** Põe um inimigo da escada na luta. */
   const enterEnemy = (list: DungeonEnemy[], idx: number) => {
     enemiesRef.current = list;
     enemyIdxRef.current = idx;
     setEnemyIdx(idx);
-    const hp = pveFoeHp(list[idx].hp);
-    enemyHpRef.current = hp;
-    setEnemyHp(hp);
+    setFightKey(k => k + 1);
   };
+
+  /** A onda de um andar: o sabor sai da semente da run e do andar (`mulberry32(seed ^ andar)`). */
+  const waveOf = (level: number, f: number) =>
+    buildDungeonWave(level, evolutionStage, mulberry32((runSeedRef.current ^ Math.imul(f, 0x9e3779b1)) | 0), nivelJogador);
 
   // Começa a run no andar 1 (level = base persistida). Sem gate de entrada.
   const startRun = () => {
     const res = onEnter();
-    const list = buildDungeonWave(res.level, evolutionStage);
+    runSeedRef.current = newDefenseSeed();
+    setSeedLuta(runSeedRef.current);
+    const list = waveOf(res.level, 1);
     setRunScenes(buildRunScenes());
     setBaseLevel(res.level);
     setBest(res.best);
     setFloor(1);
     setEnemies(list);
+    hpCarryRef.current = 1; // run nova: o HP e a energia começam do zero
+    energyCarryRef.current = 0;
+    setHpFrac(1);
     enterEnemy(list, 0);
-    playerHpRef.current = playerStats.hp;
-    setPlayerHp(playerStats.hp);
     runScoreRef.current = 0;
-    setSeedLuta(newDefenseSeed());
-    battleRef.current?.reset({ foes: 1, keepPet: false }); // run nova: a barra de cheer e a energia começam do zero
     setRunScore(0);
     setRewardMsg('');
     setGotHeart(false);
@@ -225,74 +264,68 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setPhase('enemy-down');
   };
 
-  const ringTag = (r: RingGrade) => (isPt ? { otimo: 'ÓTIMO!', bom: 'BOM', ruim: 'FRACO' } : { otimo: 'GREAT!', bom: 'GOOD', ruim: 'WEAK' })[r];
+  /* A luta é o núcleo v3 (`utils/combate/`, `groupFightSteps` com 1 inimigo): o `dungeonFight` monta o
+     jogador (`soulCombatant` + o jeito do ofício), o inimigo relativo ao level (`dungeonFoe`), a defesa
+     automática e o contra-ataque; o relógio da cena é o `useGroupBattle`, que consome os eventos no relógio do
+     núcleo. A defesa perfeita não dá dano; o especial do inimigo (o mega) pode ser esquivado. */
+  const rodadaDoNucleo = useCallback((): GroupRound => {
+    const e = enemiesRef.current[enemyIdxRef.current];
+    const f = dungeonFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot));
+    return {
+      player: f.player, foes: f.foes, seed: f.seed,
+      startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
+      hitScale: f.hitScale,
+      castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
+    };
+  }, []);
 
-  /* As regras da luta. O relógio (`usePveBattle`) chama estas funções no instante do IMPACTO de cada
-     golpe; elas leem/gravam as refs e o estado da tela. Mesma conta de antes (`torcida.ts`/`autoDefesa.ts`),
-     agora em `utils/energia.ts`: golpe-base = 0,5 × dmg; especial = 3× × a nota do anel; defesa perfeita
-     = sem dano + contra-ataque (ofício); o especial do inimigo vale 2× e a esquiva tira a parte dela. */
-  const regras: PveRules = {
-    perfect: PERFECT,
-    defenseBonus: jeitoDefesaBonus(jeito),
-    target: () => 0,
-    foes: () => (enemyHpRef.current > 0 ? [0] : []),
-    playerElement: () => petEl,
-    foeElement: () => enemyEl,
-    playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
-    foeKind: (_f, sp) => elementStrikeForm(enemyEl, sp ? 'especial' : 'basica'),
-    playerStrike: ({ special, ring }) => {
-      const e = enemiesRef.current[enemyIdxRef.current];
-      const guarda = (e?.dmgReduction ?? 0) * (1 - jeito.atravessaGuarda);
-      const dmg = pveStrikeDamage({ dmg: playerStats.dmg, guard: guarda, special, ring });
-      enemyHpRef.current = Math.max(0, enemyHpRef.current - dmg);
-      setEnemyHp(enemyHpRef.current);
-      try { navigator.vibrate?.(special ? 40 : 15); } catch { /* noop */ }
-      return { hits: [{ foe: 0, value: dmg }], tag: special ? ringTag(ring) : undefined, victory: enemyHpRef.current <= 0 };
-    },
-    foeStrike: ({ special, dodge, acc }) => {
-      const e = enemiesRef.current[enemyIdxRef.current];
-      if (!e) return { value: 0, blocked: false, defeat: false };
-      const r = pveFoeHitDamage({ atk: e.atk, acc, perfect: PERFECT, reducaoDano: jeito.reducaoDano, special, dodge });
-      if (r.blocked) {
-        // Defesa perfeita: sem dano + contra-ataque do ofício (a regra de sempre).
-        const counter = Math.max(1, Math.round(2 * jeito.contraAtaque * (1 - e.dmgReduction)));
-        enemyHpRef.current = Math.max(0, enemyHpRef.current - counter);
-        setEnemyHp(enemyHpRef.current);
-        try { navigator.vibrate?.(40); } catch { /* noop */ }
-        return {
-          value: 0, blocked: true, counter: { foe: 0, value: counter }, tag: isPt ? 'Defendeu!' : 'Defended!',
-          defeat: false, victory: enemyHpRef.current <= 0,
-        };
-      }
-      playerHpRef.current -= r.dmg;
-      setPlayerHp(playerHpRef.current);
-      try { navigator.vibrate?.(30); } catch { /* noop */ }
-      const tag = special
-        ? (dodge === 'otimo' ? (isPt ? 'Esquivou!' : 'Dodged!') : dodge === 'bom' ? (isPt ? 'Quase!' : 'Close!') : undefined)
-        : undefined;
-      return { value: r.dmg, blocked: false, tag, defeat: playerHpRef.current <= 0 };
-    },
-    onVictory: () => defeatEnemy(),
-    onDefeat: () => {
-      // C-6 (run `som-01`): sem som de degeneracao. Perder a run nao custa
-      // coracao nenhum, de proposito — sonorizar como perda estrutural inverte
-      // a regra escrita. O fim de partida ja e mostrado em tela.
-      // Não custa coração nenhum: `handleDungeonLose` é um callback vazio, de
-      // propósito. O que se perde ao cair é a RUN — bônus de andar, Glitchtama
-      // e placar. (WP4.20: este comentário afirmava um custo de um coração, e
-      // era falso desde que o handler ficou vazio.)
-      onLose();
-      const newBest = recordDungeonScore(runScoreRef.current);
-      setBest(newBest);
-      setRunScore(runScoreRef.current);
-      setPhase('lost');
-    },
-  };
-  const battle = usePveBattle({
+  const cena = useCallback((): GroupScene => {
+    const e = enemiesRef.current[enemyIdxRef.current];
+    const p = jogadorRef.current;
+    const foeEl = fxElementId(visualElementFor(e?.stage ?? 'x'));
+    return {
+      playerMaxHp: Math.max(1, Math.round(dungeonPlayerSide(p).combatant.hp)),
+      foeMaxHp: [Math.max(1, Math.round(e?.foe.combatant.hp ?? 1))],
+      playerElement: () => petEl,
+      foeElement: () => foeEl,
+      playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
+      foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+      labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
+      personalTag: PERSONAL_TAG[lang][p.family],
+    };
+  }, [petEl, par, isPt, lang]);
+
+  const aoFimDaLuta = useCallback((res: GroupResult) => {
+    if (res.winner === 'player') {
+      hpCarryRef.current = res.hpLeft;
+      energyCarryRef.current = res.energyLeft;
+      setHpFrac(res.hpLeft);
+      defeatEnemy();
+      return;
+    }
+    // Derrota ou empate (o empate conta como derrota, sem custo).
+    // C-6 (run `som-01`): sem som de degeneracao. Perder a run nao custa
+    // coracao nenhum, de proposito — sonorizar como perda estrutural inverte
+    // a regra escrita. O fim de partida ja e mostrado em tela.
+    // Não custa coração nenhum: `handleDungeonLose` é um callback vazio, de
+    // propósito. O que se perde ao cair é a RUN — bônus de andar, Glitchtama
+    // e placar. (WP4.20: este comentário afirmava um custo de um coração, e
+    // era falso desde que o handler ficou vazio.)
+    onLose();
+    const newBest = recordDungeonScore(runScoreRef.current);
+    setBest(newBest);
+    setRunScore(runScoreRef.current);
+    setHpFrac(0);
+    setPhase('lost');
+  // O relógio chama sempre a versão mais nova (`optsRef` do hook); `defeatEnemy` só lê refs e props do render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onLose, onEnemyDefeated, onEarnPoints, onHeartDrop]);
+
+  const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
-    paused: pausado, seed: seedLuta, reduced: reduzido.current, rules: regras,
+    paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: false,
   });
-  battleRef.current = battle;
 
   // Advance to the next enemy; or clear the floor (heal), or complete the run.
   const nextEnemy = () => {
@@ -313,27 +346,30 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         setPhase('run-complete');
         return;
       }
-      const heal = Math.ceil(playerStats.hp * jeito.curaAndar);
-      playerHpRef.current = Math.min(playerStats.hp, playerHpRef.current + heal);
-      setPlayerHp(playerHpRef.current);
+      // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
+      const heal = Math.ceil(hpMax * pve.cura);
+      hpCarryRef.current = Math.min(1, hpCarryRef.current + pve.cura);
+      setHpFrac(hpCarryRef.current);
       setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
       setPhase('floor-clear');
       return;
     }
-    enterEnemy(enemies, enemyIdx + 1);
-    battleRef.current?.reset({ foes: 1, keepPet: true }); // a barra de cheer e a energia do pet PERSISTEM
+    enterEnemy(enemies, enemyIdx + 1); // a energia do pet PERSISTE
     setRewardMsg('');
     setPhase('fight');
   };
 
   // Descend to the next (harder) floor, carrying HP over.
+  // PR7: só os andares ALTOS têm portão pelo Vínculo (`utils/gates.ts`); o andar 1 e os baixos seguem livres.
+  // Sem provider (demo, testes) não há Vínculo para medir e nada fecha.
+  const proximoAndarAberto = !gs || masmorraFloorOpen(floor + 1, bondLevelFor(gs.totalXP ?? 0));
   const nextFloor = () => {
+    if (!proximoAndarAberto) return;
     const f = floor + 1;
-    const list = buildDungeonWave(baseLevel + (f - 1), evolutionStage);
+    const list = waveOf(baseLevel + (f - 1), f);
     setFloor(f);
     setEnemies(list);
     enterEnemy(list, 0);
-    battleRef.current?.reset({ foes: 1, keepPet: true });
     setRewardMsg('');
     setPhase('fight');
   };
@@ -343,39 +379,48 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
 
-  /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a barra de cheer e a energia
-     seguem visíveis entre os inimigos (a masmorra é contínua). */
+  /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a energia
+     segue visível entre os inimigos (a masmorra é contínua). */
   if (inStage && enemy) {
     const fighting = phase === 'fight';
+    // Entre o começo da luta nova e o 1º passo do relógio, o estado do hook ainda é o do inimigo anterior: a cena pinta o novo cheio.
+    const pronto = battle.stateKey === fightKey;
+    const foeHpFrac = pronto ? (battle.foesHp[0] ?? 1) : 1;
+    const meHpFrac = fighting && pronto ? battle.hp : hpFrac;
     return (
       <TorcidaLayer
-        onTap={battle.cheer}
-        active={fighting && !pausado && battle.phase === 'idle'}
+        onTap={noTap}
+        active={false} /* sem torcida na Masmorra (contexto §2.19): a camada só leva o gesto da esquiva */
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
-        mascot
         swipeActive={fighting && battle.phase === 'dodge'}
         onSwipe={battle.swipe}
       >
         <BattleStage
           specialLabel={specialLabel(isPt, par?.especial)}
+          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          isPt={isPt}
           scene={scene.bg}
           me={{
-            key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, playerHp), maxHp: playerStats.hp,
-            element: petEl, energy: battle.petEnergy / ENERGY_MAX,
+            key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
+            status: pronto ? battle.status.me : undefined,
           }}
           foes={[{
-            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: enemy.name, hp: Math.max(0, enemyHp), maxHp: foeMax,
-            element: enemyEl, down: enemyHp <= 0, energy: (battle.foeEnergy[0] ?? 0) / ENERGY_MAX,
+            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: enemy.name, hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
+            element: enemyEl, down: foeHpFrac <= 1e-9,
+            // só quem tem especial (o mega) mostra a barra de energia
+            energy: enemy.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
+            status: pronto ? battle.status.foes[0] : undefined,
           }]}
-          action={battle.action}
-          hit={battle.hits}
-          charging={battle.charging}
-          ring={battle.ring}
+          action={pronto ? battle.action : null}
+          hit={pronto ? battle.hits : []}
+          charging={pronto && battle.charging}
+          ring={pronto ? battle.ring : null}
           onRingGrade={battle.resolveRing}
-          dodge={battle.dodge}
+          dodge={pronto ? battle.dodge : null}
           onDodge={battle.swipe}
-          petDodge={battle.petDodge}
+          petDodge={pronto ? battle.petDodge : null}
           mechLabels={{
             strike: isPt ? 'Golpear' : 'Strike',
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
@@ -392,7 +437,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             leave: exitLabel,
           } : undefined}
           onPauseChange={setPausado}
-          hud={<TorcidaGauge taps={battle.meter} onCheer={battle.cheer} isPt={isPt} disabled={!fighting} full={CHEER_TAPS_FULL} bare />}
         >
           {phase === 'enemy-down' && (
             <div role="status" style={PANEL}>
@@ -436,8 +480,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
               <p style={phaseLine}>{rewardMsg}</p>
+              {!proximoAndarAberto && gs && (
+                <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
+              )}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={nextFloor} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
+                <button type="button" onClick={nextFloor} disabled={!proximoAndarAberto} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap', ...(proximoAndarAberto ? {} : { opacity: 0.5, cursor: 'not-allowed' }) }}>
                   {isPt ? `Camada ${floor + 1}` : `Layer ${floor + 1}`}
                 </button>
                 <button type="button" onClick={exitRun} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
@@ -545,8 +592,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Seu Soulmon golpeia e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele — e ela fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
-                    : 'Your Soulmon strikes and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it — and it carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
+                    ? 'Seu Soulmon vai sozinho: golpeia e se defende, e a energia dele fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
+                    : 'Your Soulmon goes alone: it strikes and defends, and its energy carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
                 </span>
           </span>
         </InfoTip>

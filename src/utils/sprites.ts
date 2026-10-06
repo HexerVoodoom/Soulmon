@@ -115,11 +115,11 @@ export const DUNGEON_LINE_NAMES: Record<string, string> = {
  *  (baby-i/ii caem no rookie da linha; mega cobre ultimate também).
  *  `excludeLine` tira do sorteio a linha que o próprio jogador está usando
  *  (modo demo), pra ninguém encarar um espelho de si mesmo. */
-export function getDungeonEnemySprite(tier: string, excludeLine?: string): { sprite: string; name: string; line: string } {
+export function getDungeonEnemySprite(tier: string, excludeLine?: string, rng: () => number = Math.random): { sprite: string; name: string; line: string } {
   const all = Object.keys(DUNGEON_LINE_SPRITES);
   const lines = all.filter(l => l !== excludeLine);
   const pool = lines.length > 0 ? lines : all;
-  const line = pool[Math.floor(Math.random() * pool.length)];
+  const line = pool[Math.floor(rng() * pool.length)];
   const stage = tier === 'baby-i' || tier === 'baby-ii' ? 'rookie'
     : tier === 'rookie' ? 'rookie'
     : tier === 'champion' ? 'champion'

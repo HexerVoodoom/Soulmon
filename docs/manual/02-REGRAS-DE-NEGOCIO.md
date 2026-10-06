@@ -4103,7 +4103,10 @@ partida), `src/components/CreditsModal.tsx` (pacotes, anúncio, custo do reroll)
 
 **Em uma frase.** Um catálogo estático de consumíveis, cenários e decoração, com
 uma compra que debita, entrega e equipa na hora — e nada dela dá vantagem de
-jogo além dos três chips de atributo.
+jogo: os três chips de atributo só dão pontos de tipo (inclinam o caminho e a
+distribuição na evolução), sem XP, sem level e sem alterar o total de pontos de
+combate (combate v3, PR6; save antigo com +3 já somado fica como está — o
+combate lê o level e normaliza os pontos de tipo em fatias de 15% a 45%).
 
 **A regra.** O catálogo é dado puro em `src/utils/shop.ts`. Medido em
 09/09/2026 com `SHOP_ITEMS.length` / `.filter(...)`:
@@ -4515,8 +4518,8 @@ esquiva por timing ficam atrás de `TIMING_DODGE_ENABLED = false`. O Pesadelo é
 Os ofícios que mexiam na barra de desvio viraram bônus na defesa (`jeitoDefesaBonus`).
 
 **Energia, anel e esquiva desde 04/10/2026 (REGISTRO §20.10).** Cada lutador tem UMA
-barra de **energia** (0–100, `utils/energia.ts`; as constantes são de `_duel.js`): +9
-por ataque DADO, +7 por ataque SOFRIDO e +36 por despejo da **barra de cheer** — o
+barra de **energia** (0–100, `utils/energia.ts`; as constantes são do núcleo, `combate/specials.ts`): ganha
+por golpe DADO, golpe SOFRIDO, tempo e por despejo da **barra de cheer** — o
 medidor de toques do dono, que enche DEVAGAR (`CHEER_TAPS_FULL` = 24; o excedente fica)
 e, na Masmorra, **persiste entre os inimigos e as camadas da run**. Energia cheia = o
 ESPECIAL no golpe seguinte (o gauge de 8 toques que virava o especial saiu). O PvE tem
@@ -4691,37 +4694,37 @@ sendo oponente).
 ### A partida (o duelo fantasma)
 
 `functions/api/community.js`, ações `duelStart` e `match`; a regra da luta mora em
-`functions/api/_duel.js` (`simulateDuel`, `duelStats`). Desde 30/09/2026 o
-"Desafiar" abre o **duelo fantasma** (`src/components/DuelScreen.tsx`): os dois
-pets lutam sozinhos e o dono **torce** tocando em QUALQUER lugar da tela
-(`DUEL_CHEER_STRIKES`: `[1, 3, 5]` são os três golpes em que o gauge pode virar
-especial); a torcida só SOMA. **Desde 02/10/2026 (rodada 5/I10) a luta é uma CENA em tela cheia, mais lenta** (`BattleStage`, passo de ~1,5 s por golpe — ~17 s no total —, gauge de 16 toques: a 3 toques/s o primeiro especial sai no ~10º segundo; REGISTRO §20.9). ⚰️ **Desde 02/10/2026 a torcida é por TOQUES + GAUGE**
-(`REGISTRO-DE-DECISOES` §20) — a torcida por *timing* (anel que fecha sobre o alvo,
-×1 a ×1,35 pela precisão) foi trocada e ficou desativada
-(`TIMING_CHEER_ENABLED = false`, código guardado). ⚰️ Até então a partida era um placar sorteado:
-`power(p) = stagePower × 10 + min(20, atributos / 5) + random() × 18`, sem o
-jogador fazer nada.
+`functions/api/_duel.js` (`simulateDuel`, `duelSide`, `maxLevelFor`), sobre o núcleo de
+combate v3 espelhado em `functions/api/_combate.js` (travado por `combate.parity.test.js`).
+O "Desafiar" abre o **duelo fantasma** (`src/components/DuelScreen.tsx`): os dois pets lutam
+sozinhos, em tempo real (~38 s), e o dono **torce** tocando em QUALQUER lugar da tela; a
+torcida só SOMA. ⚰️ A torcida por *timing* (anel que fecha sobre o alvo) está desativada
+(código guardado, sem UI). ⚰️ Até o PR5 (06/10/2026) a luta era o motor próprio do duelo
+(`duelStats` do PERFIL público, 26 golpes, `DUEL_SPECIAL_MULT`); hoje é o `fight()` do núcleo
+(combate v3, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.19).
 
 ```
-duelStats(p) = { hp: 140 + sp × 12,  atk: 10 + sp × 1,2 + min(2, (power + harmony + benevolence) / 50) }   (04/10/2026: a vida dobrou)
-energia (cada lutador, 0..100): +9 por golpe dado, +7 por golpe sofrido; ao fechar cada janela do dono, a BARRA DE CHEER (DUEL_TAPS_FULL = 24)
-   soma os toques da janela (teto de DUEL_TAPS_CAP = 16 por janela, uma janela por golpe do dono, DUEL_CHEER_WINDOWS = 13); cheia, despeja +36 no pet e fica o excedente
-especial: energia >= 100 no golpe seguinte (do dono OU do fantasma) => dano × DUEL_SPECIAL_MULT (2) e a barra é gasta — DIRETO, sem mecânica de uso nem de defesa
-(legado, sem UI) cheerMultiplier(q) = 1,35 se q >= 0,92, senão 1 + 0,25 × q
-luta = até DUEL_MAX_TURNS (26) golpes (~35–42 s a DUEL_STEP_MS = 1,7 s); dano = max(1, round(atk × (1 ± 0,74 sorteado) × (especial ? 2 : 1)))
-won  = nocaute, ou a maior FRAÇÃO de vida restante
-calibração (20.000 duelos): mesmo estágio sem torcer 50,2% · 3 toques/s 72,3% · teto (16 por janela) 81,9% · um estágio abaixo 13,0% / 29,2% / 41,3%
+ficha de cada lado = o SAVE (KV saveId), derivada no servidor: level = soulLevel(evolutionStage, perfectDays)
+   LIMITADO pelo teto S1 (maxLevelFor: 1 + dias de servidor desde a 1ª gravação, metadata.f do KV; sem f vale o teto do estágio);
+   stats = combatantAt(level, galho); família do especial = escola da skill especial da ficha (desconhecida = direct);
+   bônus = combinedBonus({ talent: 0, equipment: 0 }) — o canal do 5%, valor 0 até o PR7/PR8
+luta = fight(me, opp, { seed do servidor, hpScale: PVP_HP_SCALE (1,7), cheer: descargas da torcida }) — empate quando os dois caem no mesmo instante
+torcida por BALDE de 3 s: o cliente manda os toques de cada balde (até 20 baldes, teto CHEER.tapsCapPerBucket = 16 por balde);
+   24 toques aceitos = 1 descarga de CHEER.pvpEnergyPerDischarge (2,5) de energia no pet, que cai no FIM do balde; só soma
+resultado = 'win' | 'loss' | 'draw'; placar = % de vida de cada lado no 1º nocaute
+calibração (N = 600 por estágio): duração mediana 38,1–39,1 s · o mais fraco por 5% vence 31,4% · 1 Lv abaixo 17,3% · torcida no teto 64,3% (vs fantasma sem torcida)
 ```
-(Até 04/10/2026: 12 golpes, `DUEL_TAPS_FULL` 16, especial ×1,35 só do dono em 3 janelas — `specialSlots`; REGISTRO §20.10.)
 
-O fluxo tem duas chamadas: **`duelStart`** consome a partida do dia, guarda o
-oponente em `myRank.pending` e sorteia a SEMENTE no servidor, *depois* do
-compromisso; **`match`** roda a luta com a semente GUARDADA (nunca uma enviada) e
-os toques por janela higienizados (`sanitizeTaps`: 13 inteiros em [0, 16]; o servidor
-recalcula a energia e o especial por `cheerDischarges` + `simulateDuel`). O cliente
-anima a mesma luta com `simulateDuel` — uma regra, um arquivo. A semente nunca
-vai na lista de oponentes (`opponents` leva só a `duelStats`), senão um cliente
-editado simularia os três e escolheria o que vence.
+O fluxo tem duas chamadas: **`duelStart`** lê o save dos DOIS lados (se algum faltar, `409 save unavailable` /
+`404 opponent unavailable` e NADA é gasto), consome a partida do dia, sorteia a SEMENTE no servidor, *depois* do
+compromisso, e **congela a ficha dos dois lados** em `myRank.pending.sides`; **`match`** luta com a semente e a ficha
+GUARDADAS (nunca uma enviada nem relida do save: com a semente na mão, o cliente editaria o save entre as duas chamadas)
+e os toques por balde higienizados (`sanitizeTaps`). O cliente anima a mesma luta com `simulatePvp`
+(`src/utils/combate/duel.ts`), mas quem decide é o servidor. A semente nunca vai na lista de oponentes (`opponents`
+leva só `duel: { level }`), senão um cliente editado simularia os três e escolheria o que vence.
+
+**Empate.** Um resultado válido (§2.4): a partida conta como jogada (a cota já foi gasta), e NENHUM lado ganha ou perde
+pontos, vitória, derrota, `lifetimePoints` nem Honra. A resposta leva `draw: true`; a tela diz "Empate", sem perdedor.
 
 **Desistência = derrota.** Sair do duelo antes do fim (× na tela, app fechado)
 ou passar de `DUEL_PENDING_MS` (5 min) fecha o duelo como derrota
@@ -4801,7 +4804,8 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
   ação, inclusive as GET destrutivas (`trophies?claim=1`, `gifts?claim=1`).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
-- **Torcida forjada** rende o mesmo que o teto (`DUEL_TAPS_CAP` = 16 toques por janela × 13 janelas; a barra de cheer de 24 despeja no máximo 8 vezes no jogo todo) — toque ilimitado, ou janelas a mais, não rendem mais (`_duel.test.js`, `community.duelo.test.js`); aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
+- **Torcida forjada** rende o mesmo que o teto (`DUEL_TAPS_CAP` = 16 toques por balde de 3 s × 20 baldes; a barra de cheer de 24 despeja no máximo 13 vezes na luta toda) — toque ilimitado, ou baldes a mais, não rendem mais (`_duel.v3.test.js`, `community.duel.v3.test.js`); aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
+- **Nada do cliente decide o resultado (PR5).** Level, stats, família do especial, semente e resultado são do servidor; o teto S1 (1 level por dia de servidor desde a 1ª gravação, `metadata.f`, só no duelo) LIMITA um save forjado (level 40 no dia 3 luta com level 4) sem rejeitá-lo. Limite honesto: a família do especial e a forma do golpe vêm do save (escrito pelo cliente), dentro de uma lista fechada de 7 famílias calibradas em ±5% na régua.
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **Opt-out da lista pública (TORC-5, 02/10/2026).** `publicHidden` no perfil

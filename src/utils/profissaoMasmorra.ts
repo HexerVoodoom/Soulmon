@@ -16,6 +16,7 @@
 // ---------------------------------------------------------------------------
 
 import type { LText } from './oracle';
+import { jeitoDefesaBonus } from './autoDefesa';
 
 export interface JeitoNaMasmorra {
   /** Multiplicador do HP do jogador na run (1 = igual). */
@@ -74,4 +75,66 @@ export function jeitoDaProfissao(profissao?: string | null): JeitoNaMasmorra {
 export function fraseDaProfissao(profissao: string | null | undefined, isPt: boolean): string | undefined {
   const p = profissao ? PROFISSAO_MASMORRA[profissao] : undefined;
   return p ? (isPt ? p.frase.pt : p.frase.en) : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// O JEITO NO NÚCLEO v3 (PR4, `builder/stories/PR4-masmorra-pesadelo.md`)
+// ---------------------------------------------------------------------------
+
+/** Teto do bônus do contra-ataque no próximo golpe básico (em golpes normalizados). */
+export const CONTRA_ATAQUE_TETO = 0.6;
+/** O contra-ataque vale 0,5 golpe por ponto de `contraAtaque` (o padrão 1 dá +0,5), até o teto. */
+export const CONTRA_ATAQUE_GOLPE = 0.5;
+/** Quanto cada ponto de `reducaoDano` tira do dano recebido (−10%). */
+export const REDUCAO_DANO_POR_PONTO = 0.1;
+/** Quanto cada ponto de `atravessaGuarda` soma ao golpe básico (+10%): a "guarda" deixou de existir. */
+export const ATRAVESSA_POR_PONTO = 0.1;
+
+/**
+ * O `JeitoNaMasmorra` traduzido para os ganchos do núcleo (UM dono, aqui; `utils/dungeonFight.ts` e as telas só
+ * leem este objeto):
+ *
+ * | campo do jeito | no v3 |
+ * |---|---|
+ * | `hp` | HP do jogador × hp |
+ * | `dmg` | golpe básico do jogador × dmg e o cast × dmg |
+ * | `perfeito` | limiar da auto-defesa |
+ * | `tempoDefesaExtra` / `velocidadeDefesa` | bônus da auto-defesa (`jeitoDefesaBonus`) |
+ * | `velocidadeAtaque` | golpe básico × 1/v |
+ * | `reducaoDano` | recebido × (1 − 0,1·r) |
+ * | `contraAtaque` | no bloqueio perfeito o próximo básico ganha +min(0,5·c, 0,6) |
+ * | `atravessaGuarda` | golpe básico × (1 + 0,1·a) |
+ * | `curaAndar` | cura entre andares |
+ */
+export interface JeitoPve {
+  /** Multiplica o HP do jogador. */
+  hp: number;
+  /** Multiplica o golpe BÁSICO do jogador (dmg · 1/velocidadeAtaque · atravessaGuarda). */
+  basico: number;
+  /** Multiplica o cast do jogador (dmg). */
+  cast: number;
+  /** Limiar da defesa perfeita (bloqueio limpo). */
+  perfeito: number;
+  /** Somado à precisão média da auto-defesa. */
+  defesaBonus: number;
+  /** Multiplica o que o jogador recebe (golpe e cast do inimigo). */
+  recebido: number;
+  /** Bônus (em golpes) do próximo básico depois de um bloqueio perfeito, já com o teto. */
+  contra: number;
+  /** Fração do HP máximo recuperada entre andares. */
+  cura: number;
+}
+
+export function jeitoParaPve(jeito: JeitoNaMasmorra, opts: { contraTeto?: number } = {}): JeitoPve {
+  const teto = opts.contraTeto ?? CONTRA_ATAQUE_TETO;
+  return {
+    hp: jeito.hp,
+    basico: (jeito.dmg / jeito.velocidadeAtaque) * (1 + ATRAVESSA_POR_PONTO * jeito.atravessaGuarda),
+    cast: jeito.dmg,
+    perfeito: jeito.perfeito,
+    defesaBonus: jeitoDefesaBonus(jeito),
+    recebido: 1 - REDUCAO_DANO_POR_PONTO * jeito.reducaoDano,
+    contra: Math.min(CONTRA_ATAQUE_GOLPE * jeito.contraAtaque, teto),
+    cura: jeito.curaAndar,
+  };
 }

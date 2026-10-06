@@ -215,17 +215,21 @@ describe('BattleStage — o que a cena desenha', () => {
     const action: StageAction = { id: 4, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'fogo' };
     render(<BattleStage {...baseProps} action={action} />);
     const srcs = srcsDe();
-    // Arte da rodada 2 (04/10/2026): `combate/escudo-<base>.png`; sem escudo (neutro) cai no `fx-*-defended`.
+    // Arte da rodada 2 (04/10/2026): `combate/escudo-<base>.png`; sem escudo (elemento sem arte) cai no `fx-*-defended`.
     expect(srcs.some(s => /escudo-fogo/.test(s))).toBe(true);
     expect(srcs.some(s => /fx-agua-impact/.test(s))).toBe(false);
     // E o escudo defende: o seu Soulmon não treme.
     expect(document.querySelector('.sm-bs-hit')).toBeNull();
   });
 
-  it('ESCUDO sem arte própria (neutro) cai no flash `defended` do FX', () => {
-    const action: StageAction = { id: 5, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'neutro' };
-    render(<BattleStage {...baseProps} action={action} />);
-    expect(srcsDe().some(s => /fx-neutro-defended/.test(s))).toBe(true);
+  it('ESCUDO do neutro usa a arte própria (05/10/2026); sem arte (id desconhecido) cai no flash `defended` do FX', () => {
+    const neutro: StageAction = { id: 5, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'neutro' };
+    const { unmount } = render(<BattleStage {...baseProps} action={neutro} />);
+    expect(srcsDe().some(s => /escudo-neutro/.test(s))).toBe(true);
+    unmount();
+    const semArte: StageAction = { id: 6, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'neutro-sem-arte' };
+    render(<BattleStage {...baseProps} action={semArte} />);
+    expect(srcsDe().some(s => /escudo-/.test(s))).toBe(false);
   });
 
   it('CENÁRIO por elemento: `sceneElement` com arte vence `scene` (camada pixelada); sem arte, fica o `scene`', () => {
@@ -236,7 +240,7 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(camada.style.imageRendering).toBe('pixelated');
     expect(document.querySelectorAll('[data-stage-platform]').length).toBeGreaterThan(0);
     unmount();
-    render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="neutro" />);
+    render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="sem-arte" />);
     expect(document.querySelector('[data-stage-scene]')).toBeNull();
     expect((document.querySelector('[data-battle-stage]') as HTMLElement).style.background).toMatch(/x\.png/);
   });

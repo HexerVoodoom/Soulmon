@@ -33,6 +33,12 @@ export const MIRROR_SECONDS = 25;
  */
 export const HIT_UNIT_H0 = 10;
 
+/**
+ * PvP (PR5): both HPs are multiplied by this so the duel lasts ~38 s (balanco-motores §4, measured 38.1-39.1 s).
+ * Mirrored in `functions/api/_combate.js` (`PVP_HP_SCALE`); the parity test pins both.
+ */
+export const PVP_HP_SCALE = 1.7;
+
 export const EPS = 1e-9;
 export const DRAW_EPS = 1e-6;
 const MAX_EVENTS = 200_000;
@@ -80,7 +86,7 @@ export interface FightOptions {
   readonly startEnergy?: readonly [number, number];
   /** Multiplier of the n-th (0-based) BASIC attack of a side (auto-defence, counter-attack...). Default 1. */
   readonly hitScale?: (who: 0 | 1, n: number) => number;
-  /** Cheer discharges: at `t` seconds `side` gains CHEER.energyPerDischarge energy (if it has a special). */
+  /** Cheer discharges: at `t` seconds `side` gains CHEER.pvpEnergyPerDischarge energy (if it has a special). The 1v1 is the PvP's. */
   readonly cheer?: readonly CheerEvent[];
   /** End at the first KO (PvE: no ghost timing); HP/energy left are reported at that instant. */
   readonly stopAtFirstKo?: boolean;
@@ -170,7 +176,7 @@ export function* fightSteps(
       t: ch.t,
       fn: () => {
         const f = F[ch.side];
-        if (f.sp && f.dead === Infinity) f.en += CHEER.energyPerDischarge;
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge;
       },
     });
   }

@@ -12,6 +12,8 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { gateTombstone } from './_accountTombstone.js';
+import { bondLevelFor } from './_bond.js';
+import { sanitizeTalentPicks } from './_talents.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -92,6 +94,16 @@ const MAX_STATE_BYTES = 5 * 1024 * 1024;
  * expirar.
  */
 const SAVE_TTL_SECONDS = 86400 * 365;
+
+/**
+ * O `f` do metadata (1ª gravação, ms) se for um número positivo e finito; senão `{}` (nunca inventa data).
+ * @param {unknown} metadata
+ * @returns {{ f?: number }}
+ */
+function firstSeenMeta(metadata) {
+  const f = metadata && typeof metadata === 'object' ? Number(/** @type {any} */ (metadata).f) : NaN;
+  return Number.isFinite(f) && f > 0 ? { f } : {};
+}
 const RENEW_AFTER_SECONDS = 86400 * 30;
 
 export async function onRequestOptions() {
@@ -177,7 +189,8 @@ export async function onRequest({ request, env }) {
         if (aindaIgual) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS,
-            metadata: { t: Date.now() },
+            // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata) },
           });
         } else {
           console.info('save: renovação de TTL pulada, conteúdo mudou entre leitura e renovação', { saveIdPrefix: saveId.slice(0, 8) });
@@ -215,14 +228,24 @@ export async function onRequest({ request, env }) {
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
     if ('equippedFrame' in state) state.equippedFrame = clampFrameId(state.equippedFrame);
     if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
+    // Talentos (Combate v3 / PR7): o vetor e VALIDADO contra o Vinculo do proprio save (`totalXP` -> `bondLevelFor`,
+    // o teto de pontos = level). Invalido (id desconhecido, grau a mais, pontos a mais) e DESCARTADO, nunca
+    // corrigido. Limite honesto: `totalXP` tambem e escrito pelo cliente (ver `_bond.js`); o teto de 5% do canal
+    // de bonus limita o que um XP forjado rende.
+    if ('talentPicks' in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });
       return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
     }
+    // `f` = a data da 1ª gravação deste save, em ms (teto S1 do duelo, `_duel.js` › `maxLevelFor`). É o ÚNICO
+    // relógio que o cliente não toca: o servidor a escreve e a preserva em toda gravação seguinte. Save sem `f`
+    // (gravado antes desta regra) recebe `f = agora` aqui. NADA vai para o state: a contagem de campos não muda.
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
-      metadata: { t: Date.now() },
+      metadata: { t: Date.now(), f },
     });
     return Response.json({ ok: true }, { headers: CORS });
   }

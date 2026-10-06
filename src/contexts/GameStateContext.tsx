@@ -19,7 +19,8 @@ import { migrateBranchIds } from '../utils/branchMigration';
 import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
-import { meetsPvpBond } from '../utils/bond';
+import { meetsPvpBond, bondLevelFor } from '../utils/bond';
+import { sanitizeTalentPicks } from '../utils/talents';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, type AchievementId } from '../utils/achievements';
 import {
   resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
@@ -464,6 +465,10 @@ export interface GameState {
   /** 🖼️ MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA (`utils/frames.ts`; nunca vantagem). Posse das de loja/conquista/evento
    *  (as de rank vêm da faixa e não ficam aqui). Leitura: `?? []`. O servidor só confere a FORMA (`functions/api/save.js`). */
   ownedFrames?: string[];
+  /** 🌳 TALENTOS do usuário (Combate v3 / PR7). Um id por GRAU comprado (`utils/talents.ts`); o resto (pontos, bônus) é
+   *  derivado do Vínculo (`bondLevelFor(totalXP)`, nunca persistido). Vetor inválido é descartado na carga e no servidor
+   *  (`functions/api/save.js`). Sobrevive à degeneração. Leitura: `?? []`. */
+  talentPicks?: string[];
   /** Id da moldura EQUIPADA (qualquer origem) ou `null` = sem moldura. Leitura: `?? null`; se deixou de valer (lugar de Mestre
    *  perdido), a tela desenha sem moldura (`resolveEquippedFrame`) e o id fica guardado. */
   equippedFrame?: string | null;
@@ -1286,6 +1291,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Molduras: lixo é descartado (`utils/frames.ts`), nunca derruba o load; save antigo entra vazio / sem moldura.
         ownedFrames: sanitizeOwnedFrames(loadedState.ownedFrames),
         equippedFrame: sanitizeEquippedFrame(loadedState.equippedFrame),
+        // Talentos: vetor inválido para o Vínculo do save é DESCARTADO (`utils/talents.ts`), nunca corrigido.
+        talentPicks: sanitizeTalentPicks(loadedState.talentPicks, bondLevelFor(num(loadedState.totalXP, 0))),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de
@@ -1684,4 +1691,13 @@ export function useGameState() {
   const ctx = useContext(GameStateContext);
   if (!ctx) throw new Error('useGameState must be used within GameStateProvider');
   return ctx;
+}
+
+/**
+ * Como `useGameState`, mas devolve `null` fora do provider em vez de lançar. Para o que lê o estado só
+ * para MELHORAR (o level da Arena) e precisa abrir também sem save (testes, demo): sem provider, o chamador
+ * cai no estágio.
+ */
+export function useGameStateOptional() {
+  return useContext(GameStateContext);
 }

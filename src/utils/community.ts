@@ -1,4 +1,5 @@
-import type { DuelStats, DuelEvent } from '../../functions/api/_duel.js';
+import type { DuelSide } from './combate/duel';
+import type { FightEvent } from './combate/fight';
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 import { authHeaders } from './auth';
@@ -125,26 +126,33 @@ export const getPlayer = (id: string) =>
 
 export interface Opponent {
   id: string; name: string; petName: string; stage: string;
-  /** Duelo fantasma (`functions/api/_duel.js`) — servidor antigo pode não mandar. */
-  duel?: DuelStats;
+  /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
+  duel?: { level: number } | null;
 }
 export const getOpponents = (id: string) =>
-  call<{ opponents: Opponent[]; me?: { duel: DuelStats }; matchesLeft: number }>('opponents', { params: { id } });
+  call<{ opponents: Opponent[]; me?: { duel: { level: number } | null }; matchesLeft: number }>('opponents', { params: { id } });
 
 export interface MatchResult {
-  won: boolean; myScore: number; oppScore: number; points: number; matchesLeft: number;
+  won: boolean;
+  /** EMPATE (PR5, §2.4): resultado válido — a partida conta como jogada, mas ninguém ganha pontos nem Honra. */
+  draw?: boolean;
+  /** `won` + `draw` num campo só: 'win' | 'loss' | 'draw'. */
+  outcome?: 'win' | 'loss' | 'draw';
+  myScore: number; oppScore: number; points: number; matchesLeft: number;
   opponent: { name: string; petName: string; stage: string };
-  duel?: { events: DuelEvent[]; me: DuelStats; opp: DuelStats };
+  /** A luta do SERVIDOR (autoritativa): os eventos do núcleo e a ficha dos dois lados. */
+  duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
   forfeit?: boolean;
 }
 /** Abre o duelo: gasta a partida do dia e devolve a SEMENTE, sorteada no
- *  servidor só depois disso (o cliente nunca a vê antes de se comprometer). */
+ *  servidor só depois disso (o cliente nunca a vê antes de se comprometer), e a FICHA dos dois lados, derivada
+ *  dos saves no servidor (o cliente nunca deriva o oponente). */
 export const startDuel = (id: string, opponentId: string) =>
-  call<{ seed: number; me: DuelStats; opp: DuelStats; matchesLeft: number }>('duelStart', { method: 'POST', body: { id, opponentId } });
-/** `forfeit: true` = desistir do duelo aberto (conta como derrota). */
-export const playMatch = (id: string, opponentId: string, cheers: number[] = [], forfeit = false) =>
-  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, cheers, ...(forfeit ? { forfeit: true } : {}) } });
+  call<{ seed: number; me: DuelSide; opp: DuelSide; matchesLeft: number }>('duelStart', { method: 'POST', body: { id, opponentId } });
+/** `taps` = toques dados em cada BALDE de 3 s da luta (o servidor higieniza e põe teto). `forfeit: true` = desistir do duelo aberto (conta como derrota). */
+export const playMatch = (id: string, opponentId: string, taps: number[] = [], forfeit = false) =>
+  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}) } });
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;

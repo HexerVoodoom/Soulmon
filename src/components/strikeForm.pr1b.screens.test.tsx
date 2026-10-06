@@ -2,25 +2,33 @@
 /**
  * PR1b B2/N1: o MESMO pet tem o MESMO golpe básico nas 4 telas (Arena, Masmorra, Pesadelo, Duelo).
  * Com ficha a escola decide (`fighterStrikeForm`), e o selo do especial leva o nome da skill.
- * As telas PvE são lidas pelas `rules` que entregam ao relógio (`usePveBattle`); o Duelo, pela cena.
+ * As telas PvE são lidas pela `scene()` que entregam ao relógio do núcleo v3 (`useGroupBattle`); o Duelo, pela cena.
+ * PR3b: a ARENA roda nesse relógio; PR4: a Masmorra e o Pesadelo também (a mesma pergunta, a mesma resposta).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, act, cleanup, fireEvent, screen } from '@testing-library/react';
-import type { PveRules } from './games/usePveBattle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { ArenaGame } from './ArenaGame';
 import { DungeonGame } from './DungeonGame';
 import { NightmareBattle } from './NightmareBattle';
 import { DuelScreen } from './DuelScreen';
-import { duelStats } from '../../functions/api/_duel.js';
+import { duelSide } from '../../functions/api/_duel.js';
+import { simulatePvp, type DuelSide } from '../utils/combate/duel';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
+import { dungeonFoe, type DungeonEnemy } from '../utils/dungeon';
 import { SPECIAL_LABEL } from '../utils/combatFx';
 
-const regras: PveRules[] = [];
+const regras: Array<{ playerKind(sp: boolean): string }> = [];
 const cenas: Array<{ action: { actor: string; kind: string; strike?: string } | null; specialLabel?: string }> = [];
-vi.mock('./games/usePveBattle', async (orig) => {
-  const m = await orig<typeof import('./games/usePveBattle')>();
-  return { ...m, usePveBattle: (o: Parameters<typeof m.usePveBattle>[0]) => { regras.push(o.rules); return m.usePveBattle(o); } };
+vi.mock('./games/useGroupBattle', async (orig) => {
+  const m = await orig<typeof import('./games/useGroupBattle')>();
+  return {
+    ...m,
+    useGroupBattle: (o: Parameters<typeof m.useGroupBattle>[0]) => {
+      regras.push({ playerKind: (sp: boolean) => o.scene().playerKind(sp) });
+      return m.useGroupBattle(o);
+    },
+  };
 });
 vi.mock('./games/BattleStage', async (orig) => {
   const m = await orig<typeof import('./games/BattleStage')>();
@@ -42,7 +50,7 @@ function ficha(basica: string, especial: string, elementoId: string): Ficha {
   });
   return { rookie: { basica: mk('basica', basica), especial: mk('especial', especial) } as unknown as StageSkills };
 }
-const onda = () => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, hp: 5, atk: 1, speed: 1, points: 1, dmgReduction: 0 }];
+const onda = (): DungeonEnemy[] => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, points: 1, slot: 0, floor: 1, foe: dungeonFoe(1, 0, 1) }];
 
 const PVE: Record<string, (skills: Ficha | undefined, el: string) => void> = {
   Arena: (skills) => { render(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={skills} onExit={() => {}} />); },
@@ -56,12 +64,22 @@ const PVE: Record<string, (skills: Ficha | undefined, el: string) => void> = {
   },
 };
 
+/** A 1ª semente em que o SEU pet solta o especial antes do 1º nocaute (para ver a forma dele). */
+function sementeComEspecial(): number {
+  const s = duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide;
+  for (let seed = 1; seed < 2000; seed++) {
+    const ev = simulatePvp({ me: s, opp: s, seed, taps: [] }).events;
+    if (ev.slice(0, ev.findIndex(e => e.kind === 'ko')).some(e => e.kind === 'cast' && e.side === 0)) return seed;
+  }
+  throw new Error('nenhuma semente com o especial do dono');
+}
+
 /** As formas do SEU pet no Duelo: corre a luta (com torcida, para sair especial) e anota cada golpe seu. */
 function duelo(skills: Ficha | undefined, el: string) {
   vi.useFakeTimers();
-  const s = duelStats({ stage: 'rookie' });
+  const s = duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide;
   const onDone = vi.fn();
-  render(<DuelScreen me={s} opp={s} seed={123} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement={el}
+  render(<DuelScreen me={s} opp={s} seed={sementeComEspecial()} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement={el}
     petStage="rookie" skills={skills} oppElement="agua" onDone={onDone} onClose={() => {}} />);
   for (let i = 0; i < 400 && !onDone.mock.calls.length; i++) {
     act(() => { vi.advanceTimersByTime(300); });

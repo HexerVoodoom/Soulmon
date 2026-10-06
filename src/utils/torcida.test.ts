@@ -3,14 +3,13 @@ import {
   torcidaStrike, torcidaTap, torcidaFill, torcidaCheio,
   TORCIDA_PVE_TAPS_FULL, TORCIDA_TAPS_FULL, TORCIDA_BASE_FRAC, TORCIDA_PVE_SPECIAL_MULT, TIMING_CHEER_ENABLED,
 } from './torcida';
-import { DUEL_TAPS_FULL } from '../../functions/api/_duel.js';
-import { PLAYER_STATS } from './dungeon';
+import { CHEER } from './combate/specials';
 
 describe('torcida (PvE) — toques enchem o gauge, o pet gasta no especial', () => {
   it('LEGADO: o gauge do PvE antigo segue em 8 e o do duelo/Arena antigo em 16 — a barra de cheer nova (24) é de `energia.ts`; a torcida por timing está desligada', () => {
     expect(TORCIDA_PVE_TAPS_FULL).toBe(8);
     expect(TORCIDA_TAPS_FULL).toBe(16);
-    expect(DUEL_TAPS_FULL).toBe(24); // a barra de cheer de agora (energia) é mais lenta que o gauge antigo
+    expect(CHEER.tapsFull).toBe(24); // a barra de cheer de agora (energia) é mais lenta que o gauge antigo
     expect(TORCIDA_TAPS_FULL).toBeGreaterThan(TORCIDA_PVE_TAPS_FULL);
     expect(TIMING_CHEER_ENABLED).toBe(false);
   });
@@ -37,7 +36,7 @@ describe('torcida (PvE) — toques enchem o gauge, o pet gasta no especial', () 
   });
 
   it('só soma: gauge vazio ou meio dá o golpe-base, nunca menos; o gauge parcial não se perde', () => {
-    for (const stats of Object.values(PLAYER_STATS)) {
+    for (const stats of [{ dmg: 3 }, { dmg: 4 }, { dmg: 5 }, { dmg: 8 }]) {
       const base = Math.max(1, Math.round(stats.dmg * TORCIDA_BASE_FRAC));
       expect(torcidaStrike(stats.dmg, 0).dmg).toBe(base);
       const meio = torcidaStrike(stats.dmg, TORCIDA_PVE_TAPS_FULL - 1);

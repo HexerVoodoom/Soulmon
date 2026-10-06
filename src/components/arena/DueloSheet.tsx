@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { ARENA_ROUNDS, getArenaPlayerStats } from '../../utils/arena';
+import { ARENA_ROUNDS } from '../../utils/arena';
+import { soulCombatant } from '../../utils/soulXP';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -58,8 +60,11 @@ export function DueloSheet({ language, evolutionStage, skills, onStart }: {
   const elementoId = dominante?.id ?? par?.especial?.elementoId ?? par?.basica?.elementoId ?? 'neutro';
   const elemento = t(dominante?.nome) ?? t(par?.especial?.elementoNome) ?? t(par?.basica?.elementoNome) ?? (isPt ? 'Neutro' : 'Neutral');
   const arte = elementIcon(elementoId) ?? elementIcon('neutro');
-  // O mesmo poder que a luta usa (`ArenaGame`: a básica define a escola; sem ficha, combate físico).
-  const poder = getArenaPlayerStats(stage, par?.basica?.escolaId ?? 'combate_fisico').dmg;
+  // O mesmo poder que a luta usa (`ArenaGame`, Combate v3): o ATK do `soulCombatant` do save; sem save (demo, testes), o do estágio.
+  const gs = useGameStateOptional()?.gameState;
+  const poder = soulCombatant(gs
+    ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+    : { evolutionStage }).atk;
   const golpes = [t(par?.basica?.nome), t(par?.especial?.nome)].filter(Boolean) as string[];
   const golpesTxt = golpes.length ? golpes.join(' · ') : (isPt ? 'Golpe básico' : 'Basic strike');
 

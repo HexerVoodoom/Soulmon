@@ -57,7 +57,7 @@ import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
 import { availableFrames, resolveEquippedFrame, type FrameContext } from '../utils/frames';
-import { TOURNAMENT_NPCS, npcAtk, type TournamentNpc } from '../utils/tournamentNpcs';
+import { TOURNAMENT_NPCS, npcSide, type TournamentNpc } from '../utils/tournamentNpcs';
 import { tournamentShopItems } from '../utils/mercadoCatalog';
 import type { WeeklyMission, WeeklyMissionId } from '../utils/weeklyMissions';
 import {
@@ -68,7 +68,13 @@ import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
-import { duelStats, simulateDuel, type DuelStats } from '../../functions/api/_duel.js';
+import { simulatePvp, type DuelSide } from '../utils/combate/duel';
+import { specialOf } from '../utils/combate/specials';
+import { soulCombatant, type SoulXPState } from '../utils/soulXP';
+import { familyOfSkill } from '../utils/arena';
+import { useTalentBonus } from '../contexts/useTalentBonus';
+import { useGameStateOptional } from '../contexts/GameStateContext';
+import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { visualElementFor } from '../utils/combatFx';
 import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
@@ -212,8 +218,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const [fighting, setFighting] = useState<string | null>(null);
   const [result, setResult] = useState<MatchResult | null>(null);
   /** Duelo fantasma em andamento (a luta animada antes do servidor decidir). */
-  const [duel, setDuel] = useState<{ opp: Opponent; seed: number; me: DuelStats; oppStats: DuelStats } | null>(null);
-  const [myDuel, setMyDuel] = useState<DuelStats | null>(null);
+  const [duel, setDuel] = useState<{ opp: Opponent; seed: number; me: DuelSide; oppSide: DuelSide } | null>(null);
+  /** O level com que o servidor diz que VOCÊ luta (já com o teto S1); a ficha inteira vem em `duelStart`. */
+  const [myDuel, setMyDuel] = useState<{ level: number } | null>(null);
   /** Erro de AÇÃO (a partida não foi). Era `alert()` — diálogo do sistema por
    *  cima de um app de bichinho, e sem par PT/EN garantido. */
   const [fightError, setFightError] = useState<string | null>(null);
@@ -263,19 +270,29 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      podia ser testado". Agora há uma sombra de treino, 100% LOCAL: sem rede, sem
      Vínculo, sem partida gasta, sem Honra, sem pontos e sem XP — não rende nem
      custa nada. A luta é a mesma `DuelScreen`, com a mesma simulação. */
-  const [training, setTraining] = useState<{ seed: number; me: DuelStats; opp: DuelStats; npc?: TournamentNpc } | null>(null);
-  const [trainingWon, setTrainingWon] = useState<boolean | null>(null);
+  const [training, setTraining] = useState<{ seed: number; me: DuelSide; opp: DuelSide; npc?: TournamentNpc } | null>(null);
+  /** O resultado do treino LOCAL: vitória, derrota ou empate (neutro). `null` = sem diálogo. */
+  const [trainingOutcome, setTrainingOutcome] = useState<'win' | 'loss' | 'draw' | null>(null);
+  // O level e o ramo do treino vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
+  const ctx = useGameStateOptional();
+  const gs = ctx?.gameState;
+  const bonusTalento = useTalentBonus('pvp'); // o MESMO canal que o servidor aplica no duelo (teto 5%), PR7
   /** `npc` (R8): o desafiante NPC do Torneio vazio — o MESMO treino, com o retrato e o nome dele; nada de rede, partida ou ganho. */
   const startTraining = (npc?: TournamentNpc) => {
-    const me = duelStats({ stage: petStage });
-    // A sombra bate um pouco mais fraco: o treino é para aprender a torcer, não para perder.
-    const sombra = duelStats({ stage: petStage });
-    setTraining({
-      seed: Math.floor(Math.random() * 0xffffffff),
-      me,
-      opp: { ...sombra, atk: npcAtk(sombra.atk) },
-      npc,
-    });
+    // O SEU lado: o combatente do save (level e ramo) e a família do especial da ficha. O treino é 100% LOCAL, então
+    // a semente pode ser sorteada aqui (não vale nada: sem partida, sem pontos, sem Honra).
+    const estado: SoulXPState = gs
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      : { evolutionStage: petStage };
+    const combatant = soulCombatant(estado, bonusTalento);
+    const par = stageSkillsFor(skills, petStage);
+    const me: DuelSide = {
+      combatant,
+      special: specialOf(familyOfSkill(par?.especial)),
+      fx: { basica: par?.basica.escolaId ?? null, especial: par?.especial.escolaId ?? null, familia: par ? familyOfSkill(par.especial) : null },
+    };
+    // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
+    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc });
   };
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
@@ -325,7 +342,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     try {
       const r = await startDuel(saveId, opp.id);
       setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : matchesLeft);
-      setDuel({ opp, seed: r.seed, me: r.me, oppStats: r.opp });
+      setDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
     } catch (err) {
       setFightError(err instanceof Error && err.message
         ? err.message
@@ -340,18 +357,19 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      efeito (o duelo aberto vira derrota na próxima chamada). */
   const leaveDuel = (opp: Opponent) => { void resolveMatch(opp, [], true); };
 
-  const resolveMatch = async (opp: Opponent, cheers: number[], forfeit = false) => {
+  const resolveMatch = async (opp: Opponent, taps: number[], forfeit = false) => {
     setFighting(opp.id);
     setFightError(null);
     try {
-      const r = await playMatch(saveId, opp.id, cheers, forfeit);
+      const r = await playMatch(saveId, opp.id, taps, forfeit);
       setResult(r);
       // `?? matchesLeft`: resposta sem o campo não pode zerar o contador nem
       // virar `undefined` na tela (ver a nota do estado de carregamento).
       setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : matchesLeft);
       // Emblemas: moeda EXCLUSIVA do torneio (utils/currencies.ts). Perder
       // também rende algo — a partida diária não pode virar tempo perdido.
-      onEarnEmblems(r.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS);
+      // EMPATE (PR5, §2.4): partida jogada, sem Honra e sem pontos para ninguém.
+      if (!r.draw) onEarnEmblems(r.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS);
       // 🔗 Vínculo: a partida rende XP dos dois lados do placar (`bondXP`), sob
       // o teto diário suave do torneio. Perder rende menos, nunca zero — falha
       // não pune, é a invariante 1 do módulo.
@@ -478,8 +496,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petName={isPt ? 'Você' : 'You'}
         oppName={training.npc ? (isPt ? training.npc.namePt : training.npc.nameEn) : (isPt ? 'Sombra de treino' : 'Training shadow')}
         isPt={isPt}
-        onDone={cheers => {
-          setTrainingWon(simulateDuel({ me: training.me, opp: training.opp, seed: training.seed, cheers }).won);
+        onDone={taps => {
+          const w = simulatePvp({ me: training.me, opp: training.opp, seed: training.seed, taps }).winner;
+          setTrainingOutcome(w === 'me' ? 'win' : w === 'opp' ? 'loss' : 'draw');
           setTraining(null);
         }}
         onClose={() => setTraining(null)}
@@ -491,7 +510,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     return (
       <DuelScreen
         me={duel.me}
-        opp={duel.oppStats}
+        opp={duel.oppSide}
         seed={duel.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
         oppSprite={getSpriteForStage(duel.opp.stage)}
@@ -502,7 +521,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
         isPt={isPt}
-        onDone={cheers => { void resolveMatch(duel.opp, cheers); }}
+        onDone={taps => { void resolveMatch(duel.opp, taps); }}
         onClose={() => leaveDuel(duel.opp)}
       />
     );
@@ -965,19 +984,19 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </div>
       )}
 
-      {trainingWon !== null && (
+      {trainingOutcome !== null && (
         <RitualDialog
           label={isPt ? 'Treino' : 'Training'}
-          onClose={() => setTrainingWon(null)}
+          onClose={() => setTrainingOutcome(null)}
           zIndex={400}
           maxWidth={320}
           style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}
         >
           <h2 data-treino-resultado style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
-            {trainingWon ? (isPt ? 'Treino vencido' : 'Training won') : (isPt ? 'Treino perdido' : 'Training lost')}
+            {trainingOutcome === 'win' ? (isPt ? 'Treino vencido' : 'Training won') : trainingOutcome === 'draw' ? (isPt ? 'Treino empatado' : 'Training drawn') : (isPt ? 'Treino perdido' : 'Training lost')}
           </h2>
           <p style={sm2Hint}>{isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.'}</p>
-          <button type="button" onClick={() => setTrainingWon(null)} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
+          <button type="button" onClick={() => setTrainingOutcome(null)} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
             {isPt ? 'Continuar' : 'Continue'}
           </button>
         </RitualDialog>
@@ -1005,7 +1024,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
  * dois — a saída não muda de cor com o resultado (D-J8).
  */
 function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: MatchResult; isPt: boolean; petStage: string; petLine?: string; onClose: () => void }) {
-  const title = result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
+  const draw = result.draw === true;
+  const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <RitualDialog label={title} onClose={onClose} zIndex={400} maxWidth={340} style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}>
       <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
@@ -1019,15 +1039,19 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       )}
       <p className="sm2-num" style={sm2Hint}>
         {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
-        {' · '}{result.myScore} × {result.oppScore}
+        {draw ? null : <>{' · '}{result.myScore} × {result.oppScore}</>}
       </p>
-      {/* Perder também rende Emblemas, e a tela diz. */}
-      <p style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, margin: 0 }}>
-        <span style={sm2Hint}>{isPt ? 'Honra' : 'Honor'}</span>
-        <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>
-          +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
-        </span>
-      </p>
+      {/* Perder também rende Emblemas, e a tela diz. O EMPATE não rende nada (nem pontos) e não tem perdedor: texto neutro. */}
+      {draw ? (
+        <p data-empate style={sm2Hint}>{isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.'}</p>
+      ) : (
+        <p style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, margin: 0 }}>
+          <span style={sm2Hint}>{isPt ? 'Honra' : 'Honor'}</span>
+          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>
+            +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
+          </span>
+        </p>
+      )}
       <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
         {isPt ? 'Continuar' : 'Continue'}
       </button>

@@ -14,6 +14,8 @@ import {
   REBIRTH_BUDGET_MULTIPLIER, REBIRTH_CRIATURA_MAX, herancaDoCiclo,
 } from './rebirth';
 import type { RebirthRecord } from './rebirth';
+import { xpForLevel } from './bond';
+import { GATES } from './gates';
 import { incubationFor, incubationReady, type Incubation } from './spriteTrigger';
 import { CARE_PATTERNS, type CareReading } from './carePattern';
 
@@ -25,10 +27,11 @@ const LEITURA: CareReading = {
 const NOW = new Date('2026-09-06T12:00:00Z');
 const ESCOLHAS = { criatura: 'uma raposa de vidro', escola: 'evocacao' as const, elemento: 'vapor' };
 
-/** Save de quem chegou ao topo tendo pago — o único que pode renascer. */
+/** Save de quem chegou ao topo tendo pago E no Vínculo do portão (PR7) — o único que pode renascer. */
 const noTopo = (extra: Record<string, unknown> = {}) => ({
   evolutionStage: 'ultra' as string,
   accountTier: 'paid' as 'demo' | 'paid' | undefined,
+  totalXP: xpForLevel(GATES.renascimento.minBond),
   powerPoints: 40, harmonyPoints: 31, benevolencePoints: 12,
   rebirth: undefined as RebirthRecord | null | undefined,
   incubation: undefined as Incubation | undefined,
@@ -43,6 +46,7 @@ describe('rebirth — quem pode', () => {
   it('cada recusa tem MOTIVO próprio — a tela mostra saídas diferentes', () => {
     expect(rebirthRefusal(noTopo({ evolutionStage: 'mega' }))).toBe('not-ultra');
     expect(rebirthRefusal(noTopo({ accountTier: 'demo' }))).toBe('not-paid');
+    expect(rebirthRefusal(noTopo({ totalXP: 0 }))).toBe('low-bond'); // paga e no ápice, mas o Vínculo nunca é pago
     expect(rebirthRefusal(noTopo({ rebirth: { criatura: 'x', escola: 'benca', elemento: 'fogo', at: '', fromStage: 'ultra' } })))
       .toBe('already-used');
   });
