@@ -3,6 +3,7 @@
  * PR1b B2/N1: o MESMO pet tem o MESMO golpe básico nas 4 telas (Arena, Masmorra, Pesadelo, Duelo).
  * Com ficha a escola decide (`fighterStrikeForm`), e o selo do especial leva o nome da skill.
  * As telas PvE são lidas pelas `rules` que entregam ao relógio (`usePveBattle`); o Duelo, pela cena.
+ * PR3b: a ARENA roda no relógio do núcleo v3 (`useGroupBattle`) e entrega a mesma pergunta pela `scene()`.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, act, cleanup, fireEvent, screen } from '@testing-library/react';
@@ -21,6 +22,16 @@ const cenas: Array<{ action: { actor: string; kind: string; strike?: string } | 
 vi.mock('./games/usePveBattle', async (orig) => {
   const m = await orig<typeof import('./games/usePveBattle')>();
   return { ...m, usePveBattle: (o: Parameters<typeof m.usePveBattle>[0]) => { regras.push(o.rules); return m.usePveBattle(o); } };
+});
+vi.mock('./games/useGroupBattle', async (orig) => {
+  const m = await orig<typeof import('./games/useGroupBattle')>();
+  return {
+    ...m,
+    useGroupBattle: (o: Parameters<typeof m.useGroupBattle>[0]) => {
+      regras.push({ playerKind: (sp: boolean) => o.scene().playerKind(sp) } as unknown as PveRules);
+      return m.useGroupBattle(o);
+    },
+  };
 });
 vi.mock('./games/BattleStage', async (orig) => {
   const m = await orig<typeof import('./games/BattleStage')>();

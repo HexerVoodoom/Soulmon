@@ -5,14 +5,12 @@ import { JEITO_PADRAO } from './profissaoMasmorra';
 import { TORCIDA_BASE_FRAC, TORCIDA_PVE_SPECIAL_MULT } from './torcida';
 import {
   ENERGY_MAX, ENERGY_DEALT, ENERGY_TAKEN, ENERGY_CHEER, CHEER_TAPS_FULL, CHEER_TAPS_CAP, PVE_HP_SCALE, PVE_FOE_HP_EXTRA,
-  PVE_SPECIAL_MULT, PVE_FOE_SPECIAL_MULT, RING_MULT, RING_OTIMO_MS, RING_BOM_MS, RING_FROM, RING_TO, DODGE_REDUCE, DODGE_OTIMO_MS,
+  PVE_SPECIAL_MULT, PVE_FOE_SPECIAL_MULT, RING_MULT, RING_MULT_PRE_V3, RING_OTIMO_MS, RING_BOM_MS, RING_FROM, RING_TO, DODGE_REDUCE, DODGE_REDUCE_PRE_V3, DODGE_OTIMO_MS,
   addEnergy, spendEnergy, strikeEnergy, energyFull, energyRatio, cheerTap, cheerRatio, pveStrikeDamage, pveFoeHitDamage, pveHp, pveFoeHp,
   ringSpec, ringScale, ringGrade, dodgeSpec, dodgeGrade,
   type RingGrade, type DodgeGrade,
 } from './energia';
 import { DUEL_ENERGY_MAX, DUEL_ENERGY_DEALT, DUEL_ENERGY_TAKEN, DUEL_ENERGY_CHEER, DUEL_TAPS_FULL } from '../../functions/api/_duel.js';
-import { simulateArenaRun, simulateArenaRunEnergy, ARENA_HP_SCALE, ARENA_FOE_HP_EXTRA, type ArenaArchetypeConfig, type BestiaryCreature } from './arena';
-import type { EscolaId } from './soulProfile/ficha/types';
 import { mulberry32 } from './oracle';
 import poolJson from './soulProfile/bestiary/pool.json';
 
@@ -107,6 +105,14 @@ describe('energia — o ANEL do especial (mecânica ativa do PvE, determinístic
     expect(media).toBeGreaterThan(0.97);
     expect(media).toBeLessThan(1.08);
   });
+
+  it('Combate v3 (PR3b, §2.15 P4): o anel vale 0,92 / 1 / 1,08; o Pesadelo e a Masmorra seguem na tabela de antes até o PR4', () => {
+    expect({ ...RING_MULT }).toEqual({ ruim: 0.92, bom: 1, otimo: 1.08 });
+    // O Pesadelo e a Masmorra (motor antigo) NÃO podem andar com a tabela nova: com ela a simulação do Pesadelo sai
+    // da faixa (+11pp contra ≤8pp) e o render do anel do Pesadelo (especial ÓTIMO = 8) quebra. Troca no PR4.
+    expect({ ...RING_MULT_PRE_V3 }).toEqual({ ruim: 0.75, bom: 1, otimo: 1.35 });
+    expect(pveStrikeDamage({ dmg: 20, special: true, ring: 'otimo' })).toBe(Math.round(20 * 0.5 * 3 * RING_MULT_PRE_V3.otimo));
+  });
 });
 
 describe('energia — a ESQUIVA do especial do inimigo (mecânica ativa do PvE)', () => {
@@ -137,6 +143,8 @@ describe('energia — a ESQUIVA do especial do inimigo (mecânica ativa do PvE)'
     expect(DODGE_REDUCE.bom).toBeGreaterThan(0);
     expect(DODGE_REDUCE.otimo).toBeGreaterThan(DODGE_REDUCE.bom);
     expect(DODGE_REDUCE.otimo).toBeLessThan(1); // nunca zera de graça
+    expect({ ...DODGE_REDUCE }).toEqual({ nada: 0, bom: 0.2, otimo: 0.35 }); // v3 (PR3b)
+    expect({ ...DODGE_REDUCE_PRE_V3 }).toEqual({ nada: 0, bom: 0.5, otimo: 0.85 }); // Pesadelo e Masmorra, até o PR4
     const base = { atk: 10, acc: 0.5, perfect: 0.92, special: true };
     const nada = pveFoeHitDamage({ ...base, dodge: 'nada' }).dmg;
     const bom = pveFoeHitDamage({ ...base, dodge: 'bom' }).dmg;
@@ -304,60 +312,8 @@ describe('simulação 20.000 lutas — Masmorra: a energia + vida × 1,8 mantém
   });
 });
 
-describe('simulação — Duelo da Arena: a energia + vida × escala mantém a taxa por escola e leva cada inimigo a ~20–30 s', () => {
-  const POOL = (poolJson as { criaturas: BestiaryCreature[] }).criaturas;
-  const ESCOLAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'evocacao', 'benca', 'maldicao'];
-  const cfg = (e: EscolaId): ArenaArchetypeConfig => ({
-    stage: 'rookie', escolaBasica: e, escolaEspecial: e, elementoBasica: 'vigor', elementoEspecial: 'vigor',
-    attrs: { principal: 'vigor', secundario: 'vigor' },
-  });
-  const RUNS = 3000;
-  const roda = (skill: 'nenhuma' | 'media' | 'boa', tapsPerTurn: number) => {
-    const taxas: number[] = []; let secs = 0; let kills = 0;
-    for (const e of ESCOLAS) {
-      const rng = mulberry32(20260818); let w = 0;
-      for (let i = 0; i < RUNS; i++) {
-        const r = simulateArenaRunEnergy(cfg(e), { rng, pool: POOL, skill, tapsPerTurn });
-        if (r.won) w++;
-        secs += r.seconds; kills += r.kills;
-      }
-      taxas.push(w / RUNS);
-    }
-    return { taxas, media: taxas.reduce((a, b) => a + b, 0) / taxas.length, segPorInimigo: secs / kills };
-  };
-
-  it('quem joga as mecânicas ≈ o Duelo de antes (±5pp na média); cada inimigo leva ~20–30 s; a torcida só soma', () => {
-    const antes = ESCOLAS.map(e => {
-      const rng = mulberry32(20260818); let w = 0;
-      for (let i = 0; i < RUNS; i++) if (simulateArenaRun(cfg(e), { rng, pool: POOL, accMean: 0.7, autoAttack: true }).won) w++;
-      return w / RUNS;
-    });
-    const antesMedia = antes.reduce((a, b) => a + b, 0) / antes.length;
-    const media0 = roda('media', 0);
-    const nenhuma0 = roda('nenhuma', 0);
-    const media11 = roda('media', 11);
-    const boa11 = roda('boa', 11);
-    relatorio.push(
-      `ARENA (6 escolas, ${RUNS} runs cada = ${RUNS * 6})\n  antes (pet sozinho, sem torcer): ${antes.map(x => (x * 100).toFixed(1)).join(' / ')} → média ${(antesMedia * 100).toFixed(1)}%\n`
-      + `  depois, joga as mecânicas, sem torcer: ${media0.taxas.map(x => (x * 100).toFixed(1)).join(' / ')} → ${(media0.media * 100).toFixed(1)}% · ${media0.segPorInimigo.toFixed(1)} s/inimigo\n`
-      + `  depois, nunca age: ${(nenhuma0.media * 100).toFixed(1)}% · 11 toques/turno: ${(media11.media * 100).toFixed(1)}% · bom jogador + 11 toques: ${(boa11.media * 100).toFixed(1)}% (HP ×${ARENA_HP_SCALE}, inimigo ×${ARENA_FOE_HP_EXTRA})`,
-    );
-    expect(Math.abs(media0.media - antesMedia)).toBeLessThan(0.05);
-    expect(Math.min(...media0.taxas)).toBeGreaterThanOrEqual(0.4);
-    expect(Math.max(...media0.taxas)).toBeLessThanOrEqual(0.8);
-    expect(media0.segPorInimigo).toBeGreaterThan(20);
-    expect(media0.segPorInimigo).toBeLessThan(30);
-    expect(media11.media).toBeGreaterThan(media0.media);
-    expect(boa11.media).toBeGreaterThan(media11.media);
-    expect(nenhuma0.media).toBeLessThan(media0.media);
-  });
-
-  it('toque ilimitado não rende mais que o teto da barra de cheer (CHEER_TAPS_CAP por turno)', () => {
-    const teto = roda('media', CHEER_TAPS_CAP);
-    const abuso = roda('media', 1000);
-    expect(abuso.taxas).toEqual(teto.taxas);
-  });
-});
+// A simulação do Duelo da Arena (motor de turnos) saiu no PR3b: a Arena roda no núcleo v3 e os gates dela
+// moram em `arena.v3.test.ts`. O Pesadelo e a Masmorra seguem aqui até o PR4.
 
 describe('relatório da simulação', () => {
   it('grava as contas (para o relatório) quando SIM_OUT está definido', async () => {

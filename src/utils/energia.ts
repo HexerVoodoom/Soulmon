@@ -34,6 +34,7 @@ import {
   DUEL_ENERGY_MAX, DUEL_ENERGY_DEALT, DUEL_ENERGY_TAKEN, DUEL_ENERGY_CHEER, DUEL_TAPS_FULL, DUEL_TAPS_CAP,
 } from '../../functions/api/_duel.js';
 import { defenseRoll } from './autoDefesa';
+import { DODGE_REDUCE_V3, RING_MULT_V3 } from './combate/specials';
 
 // ── a barra de energia (as constantes são as do servidor) ─────────────────────
 export const ENERGY_MAX = DUEL_ENERGY_MAX;
@@ -104,8 +105,15 @@ export const pveFoeHp = (base: number): number => Math.max(1, Math.round(base * 
 // ── PvE (a): o ANEL do especial do pet ────────────────────────────────────────
 
 export type RingGrade = 'ruim' | 'bom' | 'otimo';
-/** O multiplicador que o anel dá sobre o especial (média de um jogador comum ≈ 1). */
-export const RING_MULT: Record<RingGrade, number> = { ruim: 0.75, bom: 1, otimo: 1.35 };
+/**
+ * O multiplicador que o anel dá sobre o especial (média de um jogador comum ≈ 1).
+ * Combate v3 (PR3b, §2.15 P4 e §2.17): 0,92 / 1 / 1,08 — a habilidade vale no máximo 25pp de vitória.
+ * É a tabela do NÚCLEO (`combate/specials.ts`), reexportada aqui para o PvE; um teste trava a igualdade.
+ * Quem ainda roda no motor antigo (Pesadelo e Masmorra, até o PR4) usa `RING_MULT_PRE_V3`.
+ */
+export const RING_MULT: Record<RingGrade, number> = { ...RING_MULT_V3 };
+/** A tabela de antes do v3 (0,75 / 1 / 1,35): só o Pesadelo e a Masmorra, que seguem calibrados nela até o PR4. */
+export const RING_MULT_PRE_V3: Record<RingGrade, number> = { ruim: 0.75, bom: 1, otimo: 1.35 };
 /** Tamanho do anel que encolhe no início e quando encosta no alvo (escala 1). */
 export const RING_FROM = 2.4;
 export const RING_TO = 0.5;
@@ -138,8 +146,13 @@ export function ringGrade(tapMs: number | null, spec: RingSpec): RingGrade {
 // ── PvE (b): a ESQUIVA do especial do inimigo ─────────────────────────────────
 
 export type DodgeGrade = 'nada' | 'bom' | 'otimo';
-/** Quanto da pancada a esquiva tira (o resto é levado). */
-export const DODGE_REDUCE: Record<DodgeGrade, number> = { nada: 0, bom: 0.5, otimo: 0.85 };
+/**
+ * Quanto da pancada a esquiva tira (o resto é levado). Combate v3 (PR3b): 0 / 0,2 / 0,35, a tabela do núcleo.
+ * O Pesadelo e a Masmorra seguem em `DODGE_REDUCE_PRE_V3` até o PR4.
+ */
+export const DODGE_REDUCE: Record<DodgeGrade, number> = { ...DODGE_REDUCE_V3 };
+/** A tabela de antes do v3 (0 / 0,5 / 0,85): só o Pesadelo e a Masmorra, até o PR4. */
+export const DODGE_REDUCE_PRE_V3: Record<DodgeGrade, number> = { nada: 0, bom: 0.5, otimo: 0.85 };
 /** No último trecho antes do impacto a esquiva é ÓTIMA; antes disso (já com o projétil no ar) é boa. */
 export const DODGE_OTIMO_MS = 500;
 
@@ -173,14 +186,14 @@ export const PVE_BASE_FRAC = 0.5;
 
 /** O golpe do pet: base, ou ESPECIAL (× `PVE_SPECIAL_MULT` × nota do anel). `guard` = a casca do inimigo. */
 export function pveStrikeDamage(o: { dmg: number; guard?: number; special?: boolean; ring?: RingGrade }): number {
-  const mult = o.special ? PVE_SPECIAL_MULT * RING_MULT[o.ring ?? 'bom'] : 1;
+  const mult = o.special ? PVE_SPECIAL_MULT * RING_MULT_PRE_V3[o.ring ?? 'bom'] : 1;
   return Math.max(1, Math.round(o.dmg * PVE_BASE_FRAC * mult * (1 - (o.guard ?? 0))));
 }
 
 /**
  * O golpe do inimigo no pet, com a defesa automática (`acc`). Golpe normal: `acc ≥ perfect` = bloqueado
  * (0). ESPECIAL: não dá para bloquear de graça — vale `PVE_FOE_SPECIAL_MULT ×` o golpe normal, e
- * a esquiva do jogador tira a parte dela (`DODGE_REDUCE`; mínimo 1).
+ * a esquiva do jogador tira a parte dela (`DODGE_REDUCE_PRE_V3`; mínimo 1).
  */
 export function pveFoeHitDamage(o: {
   atk: number; acc: number; perfect: number; reducaoDano?: number; special?: boolean; dodge?: DodgeGrade;
@@ -188,5 +201,5 @@ export function pveFoeHitDamage(o: {
   const base = Math.max(1, Math.ceil(o.atk * (1 - o.acc)) - (o.reducaoDano ?? 0));
   if (!o.special) return o.acc >= o.perfect ? { dmg: 0, blocked: true } : { dmg: base, blocked: false };
   const full = base * PVE_FOE_SPECIAL_MULT;
-  return { dmg: Math.max(1, Math.round(full * (1 - DODGE_REDUCE[o.dodge ?? 'nada']))), blocked: false };
+  return { dmg: Math.max(1, Math.round(full * (1 - DODGE_REDUCE_PRE_V3[o.dodge ?? 'nada']))), blocked: false };
 }

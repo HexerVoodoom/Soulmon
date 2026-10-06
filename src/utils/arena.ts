@@ -1,39 +1,30 @@
-// ⚠️ **SEM CONSUMIDOR — nenhuma tela chama nada daqui** (verificado em
-// 07/09/2026: `grep` por `utils/arena` em `src/`, `desktop/` e `functions/`
-// devolve só o próprio arquivo e o `arena.test.ts`).
+// 🏟️ Arena logic — the Arena on the Combat v3 core, in GROUPS (N × 1)
+// (story PR3b, run `combate-v3-01`, contexto §2.15 P2/P4, §2.16 and §2.17).
 //
-// Isso é DECLARADO, não descoberto: são 501 linhas de sistema pronto e
-// simulado, esperando uma decisão de produto sobre entrar ou não. O registro
-// existe porque este repositório já foi mordido quatro vezes pelo mesmo
-// padrão — `weeklyMissions`, `bestiary`, `getLocalizedPrice`, `rebirthRefusal`
-// —, e nas quatro o custo não foi o código parado: foi ele parecer ligado.
-// Duas delas gravavam campo no save de TODO jogador sem ninguém ler.
+// The player is `soulCombatant(state)` (level and branch → ATK/DEF/SPD/HP, bonus 0); the
+// special is `specialOf(family)` with the area coming from `StageSkill.area`; the foes are
+// RELATIVE to the player's level (`arenaFoe`) and fight all at once (`groupFightSteps`).
+// The bestiary only gives the FLAVOUR (name, element, sprite) — NEVER the pool's `nome`, which
+// carries franchise names; the displayed name is always generated here.
 //
-// **A diferença entre este arquivo e aqueles quatro é que este não escreve
-// nada** — é puro, não toca o `GameState`, não custa byte no save de ninguém.
-// Enquanto for assim, esperar não tem preço. Se alguém for ligá-lo, ligue
-// inteiro; se decidirem que não entra, apague, não deixe morno.
-//
-// 🏟️ Arena logic — a SECOND, experimental dungeon that battle-tests the
-// class-system: the player's ficha (elements + school) drives damage, defense
-// and the special-skill archetype, and the enemies come from the bestiary
-// pool (stats/elements only — NEVER the pool's `nome`, which carries
-// franchise names; the displayed name is always generated here).
-//
-// Everything in this module is PURE and deterministic given an injected RNG,
-// so the balance simulation in `arena.test.ts` can run hundreds of seeded
-// runs — that test is the authority on the coefficients below.
+// Everything in this module is PURE and deterministic given a seed. The balance gates live in
+// `arena.v3.test.ts` and in the area × single ruler (`combate/ruler.ts`, which reads THIS
+// module's foes): the constants below were measured by `_sim/cv3-medir/grupo.ts`
+// (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
-import type { Ficha, FichaStage } from './soulProfile/ficha/types';
+import type { Ficha } from './soulProfile/ficha/types';
 import type { EscolaId, RecursoId } from './soulProfile/ficha/types';
 import type { StageSkills } from './soulProfile/ficha/skills';
-import { TORCIDA_TAPS_FULL, TORCIDA_TAPS_CAP } from './torcida';
-import {
-  CHEER_TAPS_CAP, CHEER_TAPS_FULL, DODGE_REDUCE, PVE_FOE_SPECIAL_MULT, RING_MULT, addEnergy, energyFull, strikeEnergy,
-  type DodgeGrade, type RingGrade,
-} from './energia';
+import type { Combatant } from './combate/curve';
+import { elementHits } from './combate/curve';
+import type { FightSide } from './combate/fight';
+import { cheerEvents, PVE_FAMILY_POWER, specialOf, type SpecialFamily } from './combate/specials';
+import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
+import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
+import { mulberry32 } from './combate/rng';
+import { DODGE_REDUCE, RING_MULT, type DodgeGrade, type RingGrade } from './energia';
 
 // ── Elements ────────────────────────────────────────────────────────────────
 
@@ -97,20 +88,17 @@ export function countersElement(attacker: string, defender: string): boolean {
   return COUNTERS[attacker]?.includes(defender) ?? false;
 }
 
-// Multipliers (tuned by the balance simulation in arena.test.ts).
-export const ADVANTAGE_MULT = 1.3;
-export const DISADVANTAGE_MULT = 0.8;
-
 /**
- * Attack multiplier of one element vs a defender's element list. Advantage
- * and disadvantage cancel out when both apply (mixed-element defender).
+ * Element matchup of an attacker element against a defender's element list, in HITS (PR3a):
+ * +1 = advantage (one displayed hit less), -1 = disadvantage (one more), 0 = neutral or both
+ * (advantage and disadvantage cancel out when the defender has mixed elements).
  */
-export function elementMultiplier(attackEl: string, defenderEls: string[]): number {
+export function elementAdvantage(attackEl: string, defenderEls: readonly string[]): -1 | 0 | 1 {
   const adv = defenderEls.some(d => countersElement(attackEl, d));
   const dis = defenderEls.some(d => countersElement(d, attackEl));
-  if (adv && !dis) return ADVANTAGE_MULT;
-  if (dis && !adv) return DISADVANTAGE_MULT;
-  return 1;
+  if (adv && !dis) return 1;
+  if (dis && !adv) return -1;
+  return 0;
 }
 
 // ── Player attributes from the ficha ────────────────────────────────────────
@@ -148,165 +136,59 @@ export function getArenaAttributes(ficha: Ficha): { principal: string; secundari
   return { principal, secundario };
 }
 
-// ── Player stats & skills ───────────────────────────────────────────────────
+// ── Player shape by school ──────────────────────────────────────────────────
 
 /**
- * Equal power budget per stage — roles reshape it, never grow it: the
- * hp×dmg product of every role multiplier pair stays ≈1.
+ * Role shape from the BASIC skill's dominant school (§2.11): `hp` multiplies the player's HP and
+ * `dmg` the damage of the BASIC attack (`hitScale`). It stays outside the measured ruler: the AC6
+ * of `arena.v3.test.ts` limits its effect on the fight length to ±25%.
+ *
+ * ⚠️ RECALIBRATED in PR3b. The old pairs (hp×dmg ≈ 1) were neutral in the old turn engine; in the
+ * group run they are NOT: HP carries over 5 rounds, so 1 point of HP is worth about twice 1 point of
+ * damage in win chance (combate_fisico 1.25/0.8 won 93%, benca 85%, against 61–70% for the others).
+ * These pairs keep the direction (tank = more HP, slower; cannon = less HP, faster) and are fitted
+ * so that each school keeps its OWN neutral win rate (bisection of hp for a fixed dmg, 3200 runs);
+ * arena.v3.test.ts (AC3b) pins the 6 archetypes in 40–80% / spread ≤ 20pp, as the old gate did.
  */
-const STAGE_BUDGET: Record<FichaStage, { hp: number; dmg: number }> = {
-  rookie:   { hp: 34, dmg: 7 },
-  champion: { hp: 40, dmg: 8 },
-  ultimate: { hp: 46, dmg: 9 },
-  mega:     { hp: 54, dmg: 10 },
-  ultra:    { hp: 62, dmg: 11 },
-};
-
-/** Role shape from the BASIC skill's dominant school (hp×dmg ≈ constant). */
-const ROLE_SHAPE: Record<EscolaId, { hp: number; dmg: number }> = {
-  combate_fisico: { hp: 1.25, dmg: 0.8 },
-  longo_alcance:  { hp: 0.94, dmg: 1.08 },
-  conjuracao:     { hp: 0.96, dmg: 1.1 },
-  benca:          { hp: 1.12, dmg: 0.9 },
-  maldicao:       { hp: 0.95, dmg: 1.05 },
+export const ROLE_SHAPE: Record<EscolaId, { hp: number; dmg: number }> = {
+  combate_fisico: { hp: 1.07, dmg: 0.85 },
+  longo_alcance:  { hp: 0.95, dmg: 1.08 },
+  conjuracao:     { hp: 0.93, dmg: 1.1 },
+  benca:          { hp: 1.17, dmg: 0.9 },
+  maldicao:       { hp: 0.96, dmg: 1.05 },
   evocacao:       { hp: 1.0,  dmg: 1.0 },
 };
 
-export interface ArenaPlayerStats { hp: number; dmg: number }
-
-export function getArenaPlayerStats(stage: FichaStage, escolaBasica: EscolaId, hpScale = 1): ArenaPlayerStats {
-  const base = STAGE_BUDGET[stage] ?? STAGE_BUDGET.rookie;
-  const shape = ROLE_SHAPE[escolaBasica] ?? ROLE_SHAPE.evocacao;
-  return { hp: Math.round(base.hp * shape.hp * hpScale), dmg: Math.round(base.dmg * shape.dmg) };
-}
-
-/** Turns of charge the special needs before it can fire. */
-export const SPECIAL_CHARGE_TURNS = 3;
-
-export interface ArenaSpecialEffect {
-  /** Damage multiplier over the basic's budget. */
-  mult: number;
-  /** How many targets ('all' = every living enemy). */
-  targets: 1 | 2 | 'all';
-  /** evocacao: extra hits of `echoMult` on the next `echoTurns` player turns. */
-  echoMult?: number;
-  echoTurns?: number;
-  /** benca: heals this fraction of max HP. */
-  healFrac?: number;
-  /** maldicao: enemies deal (1 − weakenFrac) damage for `weakenTurns` turns. */
-  weakenFrac?: number;
-  weakenTurns?: number;
-}
-
 /**
- * Special-skill effect per school. The numbers were CALIBRATED by the
- * balance simulation in arena.test.ts (win rate per archetype 40–80%,
- * spread ≤ 20pp) — don't hand-tweak without re-running it.
+ * PROVISIONAL family of the special by school, until PR9 gives `StageSkill` a real `familia`
+ * (a test fails the day `StageSkill.familia` exists, to force the swap).
  */
-export const SPECIAL_EFFECTS: Record<EscolaId, ArenaSpecialEffect> = {
-  combate_fisico: { mult: 2.6, targets: 1 },
-  longo_alcance:  { mult: 2.0, targets: 2 },
-  conjuracao:     { mult: 2.0, targets: 'all' },
-  evocacao:       { mult: 1.2, targets: 1, echoMult: 0.5, echoTurns: 2 },
-  benca:          { mult: 1.5, targets: 1, healFrac: 0.1 },
-  maldicao:       { mult: 2.2, targets: 1, weakenFrac: 0.3, weakenTurns: 2 },
+export const ESCOLA_FAMILY_PROVISORIO: Record<EscolaId, SpecialFamily> = {
+  combate_fisico: 'direct',
+  longo_alcance: 'dot',
+  conjuracao: 'direct',
+  benca: 'heal',
+  maldicao: 'defDebuff',
+  evocacao: 'atkBuff',
 };
 
-// Timing-bar accuracy → damage, same curve as the dungeon.
+export function familyOfEscola(escola: EscolaId | undefined): SpecialFamily {
+  return ESCOLA_FAMILY_PROVISORIO[escola ?? 'combate_fisico'] ?? 'direct';
+}
+
+/** From this accuracy up the automatic defence blocks the hit clean (the `perfeito` of `utils/autoDefesa.ts`). */
 export const PERFECT_ACC = 0.92;
-export const CRIT_MULT = 1.5;
-
-export function accuracyScale(acc: number): number {
-  return 0.25 + 0.75 * acc * acc;
-}
-
-// ── Torcida por toques no Duelo da Arena (02/10/2026, H14 / REGISTRO §20) ───
-//
-// O pet golpeia SOZINHO; o dono TORCE tocando em qualquer lugar. Cada toque
-// enche o gauge (`TORCIDA_TAPS_FULL` = 16 desde a rodada 5/I10 — eram 8 —, o mesmo do
-// duelo fantasma; o PvE segue em 8) e, com o
-// gauge cheio no momento do golpe, o pet GASTA tudo num golpe de TORCIDA.
-//
-// ⚠️ A torcida só SOMA: sem torcer o golpe é o golpe-base da simulação (nunca
-// menos), e o golpe de torcida é UM multiplicador por golpe (`ARENA_TORCIDA_MULT`),
-// sem empilhar — toque ilimitado rende no máximo UM golpe de torcida por turno
-// (`TORCIDA_TAPS_CAP` toques contam por turno e o gauge zera ao ser gasto).
 
 /**
- * Barra de timing do ATAQUE. DESLIGADA (decisão do dono, 02/10/2026): o pet
- * ataca sozinho. O caminho antigo (`TimingBar` de ataque em `ArenaGame`) fica
- * atrás desta flag, sem apagar. A DEFESA também deixou de ser da barra (TORC-3,
- * 02/10/2026): o pet se defende sozinho (`utils/autoDefesa.ts`, mesma lei
- * 0,70 ± 0,25 da `sampleAcc` abaixo).
+ * The auto-defence as the core's `hitScale` of a FOE: 0 if the defence was perfect, else (1 − acc)/0.3
+ * (the same linear law as the old fight: the average player takes 1× the normalised hit).
  */
-export const ARENA_TIMING_ATTACK_ENABLED = false;
-
-/**
- * Precisão do golpe automático do pet. Calibrada para que "sem torcida" renda
- * o mesmo que a simulação base (`accMean` 0,7 ± 0,25): ver `arena.test.ts`.
- * Abaixo de `PERFECT_ACC`: o golpe automático nunca é crítico.
- */
-export const ARENA_AUTO_ACC = 0.73;
-
-/** Força do golpe de TORCIDA, sobre o golpe do turno (básico ou especial da escola). */
-export const ARENA_TORCIDA_MULT = 1.35;
-
-export interface ArenaTorcidaTurn {
-  /** Multiplicador do golpe deste turno: 1 sem torcida, `ARENA_TORCIDA_MULT` com. */
-  mult: number;
-  /** O gauge estava cheio e foi gasto neste golpe. */
-  special: boolean;
-  /** Gauge que sobra depois do golpe (0 se gastou). */
-  gaugeLeft: number;
+export function autoDefenseHitScale(acc: number, perfect = PERFECT_ACC): number {
+  return acc >= perfect ? 0 : (1 - acc) / 0.3;
 }
 
-/**
- * O golpe de torcida de UM turno. `gauge` = toques acumulados até o golpe
- * (o excedente de `TORCIDA_TAPS_FULL` não rende nada). Pura.
- */
-export function arenaTorcidaTurn(gauge: number): ArenaTorcidaTurn {
-  const g = Math.min(TORCIDA_TAPS_FULL, Math.max(0, Math.floor(Number.isFinite(gauge) ? gauge : 0)));
-  const special = g >= TORCIDA_TAPS_FULL;
-  return { mult: special ? ARENA_TORCIDA_MULT : 1, special, gaugeLeft: special ? 0 : g };
-}
 
-/**
- * O golpe do turno é o ESPECIAL? Só a `carga` (`SPECIAL_CHARGE_TURNS`) dispara; o gauge da
- * torcida cheio só MULTIPLICA o golpe (`arenaTorcidaTurn`), nunca troca para especial
- * (PR1b/B1: uma barra = um uso). `_gauge` fica na assinatura para o teste travar isso.
- */
-export function arenaTurnIsSpecial(carga: number, _gauge: number): boolean {
-  return carga >= SPECIAL_CHARGE_TURNS;
-}
-
-/** One basic (or per-target special) hit. `mult` = elemental multiplier. */
-export function playerHitDamage(dmg: number, acc: number, elementMult: number, skillMult = 1): number {
-  const crit = acc >= PERFECT_ACC ? CRIT_MULT : 1;
-  return Math.max(1, Math.round(dmg * skillMult * accuracyScale(acc) * crit * elementMult));
-}
-
-/**
- * Damage the player takes from one enemy attack. Defense accuracy shaves it
- * off linearly (dungeon rule); the player's principal/secundário attributes
- * reduce damage from elements they counter (×DISADVANTAGE_MULT) and take
- * extra from elements that counter them (×ADVANTAGE_MULT).
- */
-export function enemyHitDamage(
-  atk: number, defAcc: number, enemyEl: string,
-  playerAttrs: { principal: string; secundario: string },
-  weakened: boolean,
-): number {
-  const attrs = [playerAttrs.principal, playerAttrs.secundario];
-  const defends = attrs.some(a => countersElement(a, enemyEl));
-  const exposed = attrs.some(a => countersElement(enemyEl, a));
-  let mult = 1;
-  if (defends && !exposed) mult = DISADVANTAGE_MULT;
-  else if (exposed && !defends) mult = ADVANTAGE_MULT;
-  if (weakened) mult *= 1 - (SPECIAL_EFFECTS.maldicao.weakenFrac ?? 0);
-  return Math.max(1, Math.ceil(atk * (1 - defAcc) * mult));
-}
-
-// ── Enemies from the bestiary pool ──────────────────────────────────────────
+// ── Enemies: flavour from the bestiary pool ─────────────────────────────────
 
 export interface BestiaryCreature {
   nome: string;
@@ -328,6 +210,7 @@ export async function loadBestiaryPool(): Promise<BestiaryCreature[]> {
 
 export type ArenaEnemyClass = 'weak' | 'medium' | 'boss';
 
+/** The FLAVOUR of one foe: name, element, sprite tier and Bits. Its strength comes from `arenaFoe`. */
 export interface ArenaEnemy {
   /** GENERATED name (element label + generic noun) — the pool's `nome` is a
    *  locked repo rule: it NEVER reaches the player (franchise names). */
@@ -335,10 +218,6 @@ export interface ArenaEnemy {
   nameEn: string;
   /** Base-element ids (1–2) driving the counter chart. */
   elements: string[];
-  hp: number;
-  maxHp: number;
-  atk: number;
-  speed: number;
   points: number;
   cls: ArenaEnemyClass;
   /** Sprite tier for getDungeonEnemySprite (resolved by the component, so
@@ -348,8 +227,8 @@ export interface ArenaEnemy {
 
 export const ARENA_ROUNDS = 5;
 
-/** Round composition: 1,3 = one medium · 2 = two weak · 4 = three weak · 5 = boss. */
-const ROUND_COMP: ArenaEnemyClass[][] = [
+/** Round composition: 1,3 = one medium · 2 = two weak · 4 = three weak · 5 = boss. THE declared composition (the ruler reads it). */
+export const ARENA_ROUND_COMP: readonly (readonly ArenaEnemyClass[])[] = [
   ['medium'],
   ['weak', 'weak'],
   ['medium'],
@@ -357,20 +236,10 @@ const ROUND_COMP: ArenaEnemyClass[][] = [
   ['boss'],
 ];
 
-const CLASS_SHAPE: Record<ArenaEnemyClass, { hp: number; atk: number; points: number; tier: ArenaEnemy['tier'] }> = {
-  weak:   { hp: 0.52, atk: 0.62, points: 4,  tier: 'rookie' },
-  medium: { hp: 1,    atk: 1,    points: 7,  tier: 'champion' },
-  boss:   { hp: 2.2,  atk: 1.3,  points: 16, tier: 'mega' },
-};
-
-// Round curve for a "medium" enemy at difficulty 1 (simulation-calibrated).
-const MEDIUM_HP_BASE = 15;
-const MEDIUM_ATK_BASE = 5;
-const ROUND_GROWTH = 0.13;      // +13% per round
-const DIFFICULTY_GROWTH = 0.15; // +15% per difficulty level
-
-const SIZE_FACTOR: Record<string, number> = {
-  'Minúsculo': 0, 'Pequeno': 0.25, 'Médio': 0.5, 'Grande': 0.75, 'Enorme': 1, 'Colossal': 1,
+const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['tier'] }> = {
+  weak:   { points: 4,  tier: 'rookie' },
+  medium: { points: 7,  tier: 'champion' },
+  boss:   { points: 16, tier: 'mega' },
 };
 
 /** Generic nouns per class — PT "Noun de Elemento" / EN "Element Noun". */
@@ -389,59 +258,32 @@ const CLASS_NOUNS: Record<ArenaEnemyClass, Array<{ pt: string; en: string }>> = 
   ],
 };
 
-function clamp01(x: number): number { return Math.min(1, Math.max(0, x)); }
-
 /**
- * Build the enemies of one round (1-based). Stats DERIVE their shape from
- * the bestiary creature (atributos + hostilidade + tamanho, ±15%) but are
- * normalized to the round's curve; the displayed name is always generated.
+ * The flavour of the foes of one round (1-based): creature from the pool (element), generated name,
+ * Bits. `rng` is the run's `mulberry32(seed)` stream — NEVER `Math.random`. The strength is not here:
+ * it is `arenaFoe(level, cls, round)`.
  */
 export function buildArenaRound(
   roundIdx: number,
   difficulty: number,
   rng: () => number,
   pool: BestiaryCreature[],
-  /** Escala de vida dos inimigos (duelo mais longo, 04/10/2026); 1 = a curva de antes. */
-  hpScale = 1,
 ): ArenaEnemy[] {
-  const comp = ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
-  const curve = (1 + ROUND_GROWTH * (roundIdx - 1)) * (1 + DIFFICULTY_GROWTH * (Math.max(1, difficulty) - 1));
-  const mediumHp = MEDIUM_HP_BASE * curve;
-  const mediumAtk = MEDIUM_ATK_BASE * curve;
-
+  const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   return comp.map(cls => {
-    const shape = CLASS_SHAPE[cls];
+    const shape = CLASS_FLAVOR[cls];
     const creature = pool.length > 0 ? pool[Math.floor(rng() * pool.length)] : null;
-
-    const size = clamp01(SIZE_FACTOR[creature?.tamanho ?? ''] ?? 0.5);
-    const forca = clamp01((creature?.atributos.forca ?? 5) / 10);
-    const magia = clamp01((creature?.atributos.magia ?? 5) / 10);
-    const veloc = clamp01((creature?.atributos.velocidade ?? 5) / 10);
-    const host = clamp01((creature?.hostilidade ?? 5) / 10);
-
-    // Shape within ±15% of the round curve — the creature flavors, the
-    // round curve rules.
-    const hpShape = 0.85 + 0.3 * ((size + forca) / 2);
-    const atkShape = 0.85 + 0.3 * ((host + Math.max(forca, magia)) / 2);
-
     const elements = (creature?.elementos ?? []).filter(e => BASE_SET.has(e)).slice(0, 2);
     if (elements.length === 0) {
       elements.push(CLASS_ELEMENT_ORDER[Math.floor(rng() * CLASS_ELEMENT_ORDER.length)]);
     }
-
     const nouns = CLASS_NOUNS[cls];
     const noun = nouns[Math.floor(rng() * nouns.length)];
     const el = elements[0];
-
-    const hp = Math.max(4, Math.round(mediumHp * shape.hp * hpShape * hpScale));
     return {
       namePt: `${noun.pt} de ${elementLabel(el, true)}`,
       nameEn: `${elementLabel(el, false)} ${noun.en}`,
       elements,
-      hp,
-      maxHp: hp,
-      atk: Math.max(2, Math.round(mediumAtk * shape.atk * atkShape)),
-      speed: +(0.95 + 0.5 * veloc + 0.05 * (roundIdx - 1)).toFixed(2),
       points: shape.points + Math.max(0, difficulty - 1),
       cls,
       tier: shape.tier,
@@ -449,119 +291,241 @@ export function buildArenaRound(
   });
 }
 
-/** HP fraction recovered when a round is cleared (dungeon-style breather). */
+
+// ── The foes: relative to the player's level (measured, balanco-motores §6) ─
+
+/** hp × power of each class, relative to the balanced mirror of the player's level. `power` is the damage bonus + 1. */
+export const ARENA_FOES = {
+  weak: { hp: 0.45, power: 0.12 },
+  medium: { hp: 0.95, power: 0.235 },
+  boss: { hp: 1.2, power: 0.495, special: true },
+} as const;
+
+/** Per-round growth of the foes (round r = 0..4). */
+export const ARENA_ROUND_GROWTH = { hp: 0.04, power: 0.13 } as const;
+
+/** HP fraction recovered when a round is cleared (the breather between rounds). */
 export const ROUND_CLEAR_HEAL = 0.3;
 
-// ── Full-run simulation (the balance test's engine) ─────────────────────────
+/**
+ * The foe of class `cls` at round `r` (0..4) for a player of level `L`:
+ * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.13·r) − 1 }`.
+ * The boss casts a `direct` special aimed at ONE target.
+ */
+export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number): FightSide {
+  const s = ARENA_FOES[cls];
+  const b = combatantAt(L, REFERENCE_BUILDS.balanced);
+  return {
+    combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r), bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) - 1 },
+    special: 'special' in s ? specialOf('direct') : null,
+  };
+}
 
-export interface ArenaArchetypeConfig {
-  stage: FichaStage;
-  escolaBasica: EscolaId;
-  escolaEspecial: EscolaId;
-  elementoBasica: string;
-  elementoEspecial: string;
+// ── The player and the round, shared by the simulation and the scene ───────
+
+export interface ArenaElements {
+  /** Element of the basic and of the special skill (the ficha's `elementoId`). */
+  basica: string;
+  especial: string;
+  /** The player's two arena attributes (`getArenaAttributes`): what the foes' elements are measured against. */
   attrs: { principal: string; secundario: string };
 }
 
-export interface ArenaSimOptions {
-  difficulty?: number;
-  accMean?: number;
-  /**
-   * O pet golpeia sozinho com `ARENA_AUTO_ACC` (sem sortear a precisão do
-   * ataque) — é o Duelo como ele é jogado desde 02/10/2026. A DEFESA continua
-   * sorteada (`sampleAcc`), e é a mesma lei da defesa automática do jogo
-   * (`autoDefense`: 0,70 ± 0,25 uniforme — TORC-3, `arena.test.ts` trava a paridade).
-   */
-  autoAttack?: boolean;
-  /**
-   * Toques por turno que a torcida dá antes do golpe do pet (0 = ninguém
-   * torce). Entra no gauge de `TORCIDA_TAPS_FULL` com teto por turno de
-   * `TORCIDA_TAPS_CAP`; cheio, o golpe do turno vale `ARENA_TORCIDA_MULT`.
-   */
-  tapsPerTurn?: number;
-  rng: () => number;
-  pool: BestiaryCreature[];
+export interface ArenaPlayerCfg {
+  /** `soulCombatant(state)` (bonus 0 in the Arena). */
+  combatant: Combatant;
+  family: SpecialFamily;
+  /** From `StageSkill.area` (`'circulo' → 'area'`). */
+  area: 'single' | 'area';
+  /** School of the BASIC skill: its `ROLE_SHAPE` reshapes HP and the basic hit. Absent = neutral. */
+  escolaBasica?: EscolaId;
+  /** Absent = neutral element (what the balance sample measures). */
+  elements?: ArenaElements;
 }
 
-export interface ArenaSimResult { won: boolean; roundsCleared: number }
+const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[p.escolaBasica] : null);
+
+/** The player side of the core: HP reshaped by the school, the family's special, the area. */
+export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
+  const role = roleOf(p);
+  return {
+    combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
+    special: specialOf(p.family),
+    area: p.area,
+  };
+}
+
+/** Multiplier of the n-th BASIC hit of the player (the school's `dmg`). */
+export function arenaPlayerHitScale(p: ArenaPlayerCfg): number {
+  return roleOf(p)?.dmg ?? 1;
+}
 
 /**
- * Plays one full 5-round run with the same rules the UI uses: special needs
- * SPECIAL_CHARGE_TURNS basic turns of charge, echo/heal/weaken effects apply,
- * every living enemy attacks after the player's turn, accuracy is sampled
- * around `accMean` (±0.25 uniform). Pure given the rng — this is what the
- * balance test hammers 300+ times per archetype.
+ * The foes of round `r` (0..4) as the core sees them. With `p.elements` and the `foeElements` of the
+ * round, the matchup moves exactly ±1 displayed hit (`elementHits`): the player's basic against the
+ * foe's element shrinks or grows the FOE's HP; the foe's element against the player's attributes
+ * shrinks or grows the foe's damage bonus.
  */
-export function simulateArenaRun(config: ArenaArchetypeConfig, opts: ArenaSimOptions): ArenaSimResult {
-  const { rng, pool } = opts;
-  const difficulty = opts.difficulty ?? 1;
-  const accMean = opts.accMean ?? 0.7;
-  const stats = getArenaPlayerStats(config.stage, config.escolaBasica);
-  const special = SPECIAL_EFFECTS[config.escolaEspecial];
+export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[]): FightSide[] {
+  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r), p, foeElements?.[i]));
+}
 
-  let hp = stats.hp;
-  let charge = 0;
-  let echoLeft = 0;
-  let weakenLeft = 0;
-  let gauge = 0;
-  const sampleAcc = () => clamp01(accMean + (rng() * 2 - 1) * 0.25);
-  const tapsPerTurn = Math.min(TORCIDA_TAPS_CAP, Math.max(0, Math.floor(opts.tapsPerTurn ?? 0)));
+/** One foe with the element matchup applied (see `arenaFoeSides`); neutral when there is no element on either side. */
+export function arenaFoeWithElement(f: FightSide, p: ArenaPlayerCfg, fe: readonly string[] | undefined): FightSide {
+  if (!p.elements || !fe || fe.length === 0) return f;
+  const mine = elementAdvantage(p.elements.basica, fe);
+  const theirs = elementAdvantage(fe[0], [p.elements.attrs.principal, p.elements.attrs.secundario]);
+  return {
+    ...f,
+    combatant: {
+      ...f.combatant,
+      hp: f.combatant.hp * elementHits(mine),
+      bonus: (1 + f.combatant.bonus) / elementHits(theirs) - 1,
+    },
+  };
+}
 
-  for (let round = 1; round <= ARENA_ROUNDS; round++) {
-    const enemies = buildArenaRound(round, difficulty, rng, pool);
-    let guard = 0;
-    while (enemies.some(e => e.hp > 0) && hp > 0 && guard++ < 200) {
-      const alive = () => enemies.filter(e => e.hp > 0);
+/** Seed of the core fight of round `r` of the run `seed`. */
+export const arenaRoundSeed = (seed: number, r: number): number => (seed * 101 + r) | 0;
 
-      // Evocation echo from a previous special.
-      if (echoLeft > 0) {
-        const t = alive()[0];
-        if (t) {
-          t.hp -= Math.max(1, Math.round(
-            stats.dmg * (special.echoMult ?? 0) * elementMultiplier(config.elementoEspecial, t.elements)));
-        }
-        echoLeft--;
+const specialAimsAtEnemy = (f: SpecialFamily): boolean => f === 'direct' || f === 'dot' || f === 'defDebuff';
+
+/**
+ * Scale of the player's SPECIAL when its element differs from the basic's: the foes' HP already carry
+ * the BASIC matchup, so the special pays the ratio (single = the first living foe; area = the mean of the living).
+ */
+export function arenaSpecialElementScale(
+  p: ArenaPlayerCfg, foeElements: readonly (readonly string[])[] | undefined, foesHp: readonly number[],
+): number {
+  const els = p.elements;
+  if (!els || !foeElements || els.basica === els.especial) return 1;
+  const living = foesHp.map((h, i) => (h > 1e-9 ? i : -1)).filter(i => i >= 0);
+  if (living.length === 0) return 1;
+  const ratio = (i: number) => {
+    const fe = foeElements[i];
+    if (!fe || fe.length === 0) return 1;
+    return elementHits(elementAdvantage(els.basica, fe)) / elementHits(elementAdvantage(els.especial, fe));
+  };
+  const pick = p.area === 'area' && specialAimsAtEnemy(p.family) ? living : [living[0]];
+  return pick.reduce((s, i) => s + ratio(i), 0) / pick.length;
+}
+
+/**
+ * The multiplier the scene hands to the core at the PLAYER's cast: the ring × the family's PvE power
+ * (`PVE_FAMILY_POWER.arena`) × the special's element. At a FOE's cast: `1 − DODGE_REDUCE[dodge]`.
+ */
+export function arenaPlayerCastScale(p: ArenaPlayerCfg, ring: RingGrade, elementScale = 1, knobs?: ArenaKnobs): number {
+  return (knobs?.ring ?? RING_MULT)[ring] * (knobs?.familyPower ?? PVE_FAMILY_POWER.arena)[p.family] * elementScale;
+}
+export const arenaFoeCastScale = (dodge: DodgeGrade, knobs?: ArenaKnobs): number => 1 - (knobs?.dodge ?? DODGE_REDUCE)[dodge];
+
+/** Knobs of the gates only (the RED tests feed a sabotaged table); the game never sets them. */
+export interface ArenaKnobs {
+  readonly familyPower?: Readonly<Record<SpecialFamily, number>>;
+  readonly ring?: Readonly<Record<RingGrade, number>>;
+  readonly dodge?: Readonly<Record<DodgeGrade, number>>;
+  /** Multiplies the HP of every foe (the duration gate's RED). */
+  readonly foeHp?: number;
+  /** Replaces the school's `ROLE_SHAPE` (the AC6 RED). */
+  readonly role?: { readonly hp: number; readonly dmg: number };
+}
+
+// ── Full-run simulation (the balance gates' engine) ─────────────────────────
+
+/**
+ * How well the player plays the mechanics: `nenhuma` never acts (ring `ruim`, no dodge), `media` and
+ * `boa` draw the grades with these odds.
+ */
+export type ArenaSkill = 'nenhuma' | 'media' | 'boa';
+/** Odds of [ruim, bom, otimo] on the ring and of [nada, bom, otimo] on the dodge. */
+export const ARENA_SKILL_ODDS: Record<ArenaSkill, { ring: readonly number[]; dodge: readonly number[] }> = {
+  nenhuma: { ring: [1, 0, 0], dodge: [1, 0, 0] },
+  media: { ring: [0.25, 0.5, 0.25], dodge: [0.3, 0.4, 0.3] },
+  boa: { ring: [0.1, 0.3, 0.6], dodge: [0.1, 0.3, 0.6] },
+};
+const RING_GRADES: readonly RingGrade[] = ['ruim', 'bom', 'otimo'];
+const DODGE_GRADES: readonly DodgeGrade[] = ['nada', 'bom', 'otimo'];
+const pickOdds = (r: () => number, p: readonly number[]): number => {
+  const x = r();
+  return x < p[0] ? 0 : x < p[0] + p[1] ? 1 : 2;
+};
+
+export interface ArenaRunConfig {
+  level: number;
+  build: StatWeights;
+  family: SpecialFamily;
+  area: 'single' | 'area';
+  escolaBasica?: EscolaId;
+  elements?: ArenaElements;
+  /** With the pool the foes' elements are drawn (flavour); without it the matchup is neutral. */
+  pool?: BestiaryCreature[];
+  /** `teto`: the player cheers at the cap (16 taps per 3 s) all the fight. Default: nobody cheers. */
+  cheer?: 'nenhum' | 'teto';
+  knobs?: ArenaKnobs;
+}
+
+export interface ArenaRunResult {
+  won: boolean;
+  /** Seconds of the fights played (only meaningful when won). */
+  total: number;
+  /** Duration of each fight played, round by round. */
+  rounds: readonly number[];
+  roundsCleared: number;
+  /** HP fraction when the run ended. */
+  hpLeft: number;
+}
+
+const CHEER_CEILING_TAPS: readonly number[] = Array.from({ length: 30 * 16 }, (_, i) => (i * 3) / 16);
+
+/**
+ * One 5-round run of the group Arena. Pure in (cfg, seed, skill). The ring and the dodge are drawn by
+ * `skill`; the foes' auto-defence is the same 0.7 ± 0.25 law of the game. A draw or a defeat ends the
+ * run (`won: false`). `areaEfficiency` is a knob of the ruler only.
+ */
+export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: ArenaSkill = 'media', areaEfficiency?: number): ArenaRunResult {
+  const p: ArenaPlayerCfg = {
+    combatant: combatantAt(cfg.level, cfg.build), family: cfg.family, area: cfg.area,
+    escolaBasica: cfg.escolaBasica, elements: cfg.elements,
+  };
+  const player0 = arenaPlayerSide(p);
+  const role = cfg.knobs?.role;
+  const player = role ? { ...player0, combatant: { ...p.combatant, hp: p.combatant.hp * role.hp } } : player0;
+  const odds = ARENA_SKILL_ODDS[skill];
+  const roleScale = role ? role.dmg : arenaPlayerHitScale(p);
+  const cheer = cfg.cheer === 'teto' ? cheerEvents(CHEER_CEILING_TAPS, 0) : undefined;
+  let hp = 1, en = 0, total = 0;
+  const rounds: number[] = [];
+  for (let r = 0; r < ARENA_ROUNDS; r++) {
+    const rng = mulberry32((seed * 7919 + r) | 0);
+    const foeEls = cfg.pool && cfg.elements ? buildArenaRound(r + 1, 1, mulberry32((seed * 31 + r) | 0), cfg.pool).map(e => e.elements) : undefined;
+    const foeHp = cfg.knobs?.foeHp ?? 1;
+    const foes = arenaFoeSides(p, r, foeEls).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
+    const g = groupFightSteps(player, foes, {
+      seed: arenaRoundSeed(seed, r), startHp: hp, startEnergy: en, areaEfficiency, cheer,
+      hitScale: (who) => {
+        if (who === 0) return roleScale;
+        return autoDefenseHitScale(Math.min(1, Math.max(0, 0.7 + (rng() * 2 - 1) * 0.25)));
+      },
+    });
+    let step = g.next();
+    while (!step.done) {
+      const e: GroupEvent = step.value;
+      let ans: number | undefined;
+      if (e.kind === 'cast') {
+        ans = e.who === 0
+          ? arenaPlayerCastScale(p, RING_GRADES[pickOdds(rng, odds.ring)], arenaSpecialElementScale(p, foeEls, e.foesHp), cfg.knobs)
+          : arenaFoeCastScale(DODGE_GRADES[pickOdds(rng, odds.dodge)], cfg.knobs);
       }
-
-      // Player action: special when charged, basic otherwise. A torcida só
-      // SOMA: sem toques o multiplicador é 1 e o golpe é o de sempre.
-      const acc = opts.autoAttack ? ARENA_AUTO_ACC : sampleAcc();
-      gauge = Math.min(TORCIDA_TAPS_FULL, gauge + tapsPerTurn);
-      const torcida = arenaTorcidaTurn(gauge);
-      gauge = torcida.gaugeLeft;
-      if (charge >= SPECIAL_CHARGE_TURNS) {
-        const targets = special.targets === 'all'
-          ? alive()
-          : alive().slice(0, special.targets);
-        for (const t of targets) {
-          t.hp -= playerHitDamage(stats.dmg, acc,
-            elementMultiplier(config.elementoEspecial, t.elements), special.mult * torcida.mult);
-        }
-        if (special.healFrac) hp = Math.min(stats.hp, hp + Math.round(stats.hp * special.healFrac));
-        if (special.weakenTurns) weakenLeft = special.weakenTurns;
-        if (special.echoTurns) echoLeft = special.echoTurns;
-        charge = 0;
-      } else {
-        const t = alive()[0];
-        if (t) {
-          t.hp -= playerHitDamage(stats.dmg, acc,
-            elementMultiplier(config.elementoBasica, t.elements), torcida.mult);
-        }
-        charge++;
-      }
-
-      // Enemy turns — every living enemy attacks; perfect defense dodges.
-      for (const e of alive()) {
-        const defAcc = sampleAcc();
-        if (defAcc >= PERFECT_ACC) continue; // clean dodge
-        hp -= enemyHitDamage(e.atk, defAcc, e.elements[0], config.attrs, weakenLeft > 0);
-      }
-      if (weakenLeft > 0) weakenLeft--;
+      step = g.next(ans);
     }
-    if (hp <= 0) return { won: false, roundsCleared: round - 1 };
-    hp = Math.min(stats.hp, hp + Math.round(stats.hp * ROUND_CLEAR_HEAL));
+    const res: GroupResult = step.value;
+    rounds.push(res.t);
+    total += res.t;
+    if (res.winner !== 'player') return { won: false, total, rounds, roundsCleared: r, hpLeft: res.hpLeft };
+    hp = Math.min(1, res.hpLeft + ROUND_CLEAR_HEAL);
+    en = res.energyLeft;
   }
-  return { won: true, roundsCleared: ARENA_ROUNDS };
+  return { won: true, total, rounds, roundsCleared: ARENA_ROUNDS, hpLeft: hp };
 }
 
 // ── Graceful fallback for saves without persisted skills ────────────────────
@@ -600,138 +564,4 @@ export function buildDefaultArenaSkills(): StageSkills {
       custo: 'alto',
     },
   };
-}
-
-// ── ENERGIA no Duelo da Arena (04/10/2026, REGISTRO §20.10) ─────────────────────
-//
-// O modelo de `utils/energia.ts` entra no Duelo contra NPCs: cada lutador tem UMA
-// barra de energia que enche por ataque DADO, ataque SOFRIDO e (só o pet) pelo CHEER.
-// Energia cheia = o ESPECIAL: no pet, o especial da ficha (a "carga de turnos" saiu
-// da tela — a barra de energia a substitui); no inimigo, um golpe ×`PVE_FOE_SPECIAL_MULT`.
-// PvE: o especial do pet pede o ANEL e o do inimigo pode ser ESQUIVADO (mecânicas ativas).
-// O caminho antigo (carga em turnos + golpe de torcida ×1,35) fica em `simulateArenaRun`
-// com `energy` desligado — atrás de `ARENA_ENERGY_ENABLED = false`, sem apagar.
-export const ARENA_ENERGY_ENABLED = true as boolean;
-
-/** Duelos mais longos: vida do pet e dos inimigos × isto (o dano não muda). Calibrado em `arena.test.ts`. */
-export const ARENA_HP_SCALE = 1.9;
-/** Vida extra dos inimigos, para o pet não ganhar força de graça com a energia (calibrado). */
-export const ARENA_FOE_HP_EXTRA = 0.9;
-
-export type ArenaSkill = 'nenhuma' | 'media' | 'boa';
-
-export interface ArenaEnergyResult {
-  won: boolean;
-  roundsCleared: number;
-  /** Turnos do pet jogados. */
-  turns: number;
-  /** Inimigos derrotados. */
-  kills: number;
-  /** Duração estimada na cena, em segundos (golpe do pet + um revide por inimigo vivo). */
-  seconds: number;
-}
-
-/**
- * A run inteira com ENERGIA. Pura dado o `rng`. `skill` modela quem joga as mecânicas do PvE
- * (nota do anel e da esquiva sorteadas): `nenhuma` = nunca age (anel `ruim`, sem esquiva),
- * `media` e `boa` sorteiam as notas. `tapsPerTurn` = toques de cheer entre os golpes do pet.
- */
-export function simulateArenaRunEnergy(config: ArenaArchetypeConfig, opts: {
-  rng: () => number; pool: BestiaryCreature[]; difficulty?: number; accMean?: number;
-  tapsPerTurn?: number; skill?: ArenaSkill; strikeMs?: number; defendMs?: number;
-}): ArenaEnergyResult {
-  const { rng, pool } = opts;
-  const difficulty = opts.difficulty ?? 1;
-  const accMean = opts.accMean ?? 0.7;
-  const skill = opts.skill ?? 'media';
-  const stats = getArenaPlayerStats(config.stage, config.escolaBasica, ARENA_HP_SCALE);
-  const special = SPECIAL_EFFECTS[config.escolaEspecial];
-  const tapsPerTurn = Math.min(CHEER_TAPS_CAP, Math.max(0, Math.floor(opts.tapsPerTurn ?? 0)));
-  const strikeMs = opts.strikeMs ?? 2400;
-  const defendMs = opts.defendMs ?? 1400;
-  const sampleAcc = () => clamp01(accMean + (rng() * 2 - 1) * 0.25);
-  const ringOf = (): RingGrade => {
-    const r = rng();
-    return skill === 'nenhuma' ? 'ruim'
-      : skill === 'media' ? (r < 0.25 ? 'ruim' : r < 0.75 ? 'bom' : 'otimo')
-      : (r < 0.1 ? 'ruim' : r < 0.4 ? 'bom' : 'otimo');
-  };
-  const dodgeOf = (): DodgeGrade => {
-    const r = rng();
-    return skill === 'nenhuma' ? 'nada'
-      : skill === 'media' ? (r < 0.3 ? 'nada' : r < 0.7 ? 'bom' : 'otimo')
-      : (r < 0.1 ? 'nada' : r < 0.4 ? 'bom' : 'otimo');
-  };
-
-  let hp = stats.hp;
-  let pE = 0;
-  let meter = 0;
-  let echoLeft = 0;
-  let weakenLeft = 0;
-  let turns = 0;
-  let kills = 0;
-  let ms = 0;
-
-  for (let round = 1; round <= ARENA_ROUNDS; round++) {
-    const enemies = buildArenaRound(round, difficulty, rng, pool, ARENA_HP_SCALE * ARENA_FOE_HP_EXTRA);
-    const eEn = enemies.map(() => 0);
-    let guard = 0;
-    while (enemies.some(e => e.hp > 0) && hp > 0 && guard++ < 400) {
-      const alive = () => enemies.filter(e => e.hp > 0);
-      turns++;
-      if (echoLeft > 0) {
-        const t = alive()[0];
-        if (t) {
-          t.hp -= Math.max(1, Math.round(stats.dmg * (special.echoMult ?? 0) * elementMultiplier(config.elementoEspecial, t.elements)));
-        }
-        echoLeft--;
-      }
-      // o cheer: os toques entre os golpes enchem a barra de cheer, que despeja energia no pet.
-      meter += tapsPerTurn;
-      while (meter >= CHEER_TAPS_FULL) { meter -= CHEER_TAPS_FULL; pE = addEnergy(pE, 'cheer'); }
-
-      const before = alive();
-      const pCast = energyFull(pE);
-      if (pCast) {
-        const ring = RING_MULT[ringOf()];
-        const targets = special.targets === 'all' ? alive() : alive().slice(0, special.targets);
-        for (const t of targets) {
-          t.hp -= playerHitDamage(stats.dmg, ARENA_AUTO_ACC, elementMultiplier(config.elementoEspecial, t.elements), special.mult * ring);
-          eEn[enemies.indexOf(t)] = addEnergy(eEn[enemies.indexOf(t)], 'taken');
-        }
-        if (special.healFrac) hp = Math.min(stats.hp, hp + Math.round(stats.hp * special.healFrac));
-        if (special.weakenTurns) weakenLeft = special.weakenTurns;
-        if (special.echoTurns) echoLeft = special.echoTurns;
-      } else {
-        const t = alive()[0];
-        if (t) {
-          t.hp -= playerHitDamage(stats.dmg, ARENA_AUTO_ACC, elementMultiplier(config.elementoBasica, t.elements));
-          eEn[enemies.indexOf(t)] = addEnergy(eEn[enemies.indexOf(t)], 'taken');
-        }
-      }
-      pE = strikeEnergy(pE, pCast); // B1 (PR1b): o cast zera e não rende "dado"
-      ms += strikeMs;
-      for (const e of before) if (e.hp <= 0) kills++;
-
-      for (const e of alive()) {
-        const i = enemies.indexOf(e);
-        const fs = energyFull(eEn[i]);
-        const defAcc = sampleAcc();
-        if (fs || defAcc < PERFECT_ACC) {
-          // O especial do inimigo não é bloqueado de graça: vale o golpe normal × mult, menos a esquiva.
-          const base = enemyHitDamage(e.atk, fs ? Math.min(defAcc, PERFECT_ACC - 0.01) : defAcc, e.elements[0], config.attrs, weakenLeft > 0);
-          hp -= fs
-            ? Math.max(1, Math.round(base * PVE_FOE_SPECIAL_MULT * (1 - DODGE_REDUCE[dodgeOf()])))
-            : base;
-        }
-        eEn[i] = strikeEnergy(eEn[i], fs);
-        pE = addEnergy(pE, 'taken');
-        ms += defendMs;
-      }
-      if (weakenLeft > 0) weakenLeft--;
-    }
-    if (hp <= 0) return { won: false, roundsCleared: round - 1, turns, kills, seconds: ms / 1000 };
-    hp = Math.min(stats.hp, hp + Math.round(stats.hp * ROUND_CLEAR_HEAL));
-  }
-  return { won: true, roundsCleared: ARENA_ROUNDS, turns, kills, seconds: ms / 1000 };
 }
