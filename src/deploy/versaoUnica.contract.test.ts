@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+// Import ESTÁTICO de propósito (fase de coleta, sem timeout de teste): o import
+// dinâmico dentro do `it` pagava o grafo frio de FeedbackLink→FormKit contra o
+// orçamento do teste e estourava sob carga (reproduzido: 15 s com 12 CPUs queimando).
+import { APP_VERSION } from '../components/FeedbackLink';
 
 /**
  * FRONTEIRA: versão mostrada ↔ versão empacotada.
@@ -47,8 +51,7 @@ describe('versão única', () => {
     expect(src).not.toMatch(/APP_VERSION\s*=\s*['"]\d+\.\d+\.\d+['"]/);
   });
 
-  it('em runtime (com o define aplicado pelo vitest.config), APP_VERSION == package.json › version', async () => {
-    const { APP_VERSION } = await import('../components/FeedbackLink');
+  it('em runtime (com o define aplicado pelo vitest.config), APP_VERSION == package.json › version', () => {
     expect(APP_VERSION).toBe(pkg.version);
   });
 });

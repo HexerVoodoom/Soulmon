@@ -101,6 +101,16 @@ const mascote = () => screen.getByRole('button', { name: 'Torcer pelo seu Soulmo
 const numeros = () => document.querySelectorAll('[data-stage-dmg]');
 const noAnel = () => document.querySelector('[data-stage-ring]') as HTMLElement | null;
 
+/**
+ * Existe um botão com esse nome? Varredura barata de `<button>` (texto ou aria-label).
+ * O `screen.queryByRole` recalcula a árvore de acessibilidade inteira (e o estilo
+ * computado de cada nó) a CADA tick de 100 ms de `ate()`: era o grosso dos 14 s da
+ * vitória de 5 rodadas sob carga. A asserção final ainda usa `getByRole` (o nome
+ * acessível de verdade); só a ESPERA, que roda centenas de vezes, ficou barata.
+ */
+const temBotao = (nome: string) => [...document.querySelectorAll('button')]
+  .some(b => (b.getAttribute('aria-label') ?? b.textContent ?? '').trim() === nome);
+
 /** Avança de 100 em 100 ms até a condição valer (ou `maxMs`). */
 async function ate(cond: () => boolean, maxMs = 30_000) {
   for (let t = 0; t < maxMs && !cond(); t += 100) await avancar(100);
@@ -108,7 +118,7 @@ async function ate(cond: () => boolean, maxMs = 30_000) {
 }
 /** Vence a rodada atual (foes frágeis) e abre a próxima. */
 async function proximaRodada() {
-  expect(await ate(() => screen.queryByRole('button', { name: 'Próxima rodada' }) !== null)).toBe(true);
+  expect(await ate(() => temBotao('Próxima rodada'))).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Próxima rodada' }));
   await avancar(10);
 }
@@ -181,7 +191,8 @@ describe('Arena em grupo — a barra de cheer (a torcida)', () => {
 
   it('toque a mais não rende: no máximo 16 toques por janela de 3 s da luta', async () => {
     await entrar();
-    for (let i = 0; i < 40; i++) fireEvent.click(mascote());
+    const m = mascote(); // uma consulta por papel, não 40 (cada `getByRole` varre a árvore)
+    for (let i = 0; i < 40; i++) fireEvent.click(m);
     expect(ratio()).toBeCloseTo(16 / CHEER_TAPS_FULL, 2);
   });
 
@@ -335,7 +346,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     contagem.push(document.querySelectorAll('[data-stage-sprite="foe"]').length);
     expect(contagem).toEqual([1, 2, 1, 3, 1]);
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).not.toBeNull(); // o chefe
-    expect(await ate(() => screen.queryByRole('button', { name: 'Terminar' }) !== null)).toBe(true);
+    expect(await ate(() => temBotao('Terminar'))).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Terminar' }));
     expect(screen.getByText('Arena vencida!')).toBeTruthy();
     expect(onEarn).toHaveBeenCalledWith(50);
