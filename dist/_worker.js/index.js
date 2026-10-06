@@ -3806,8 +3806,7 @@ var ESCOLA_FAMILY = {
   longo_alcance: "dot",
   conjuracao: "direct",
   benca: "heal",
-  maldicao: "defDebuff",
-  evocacao: "atkBuff"
+  maldicao: "defDebuff"
 };
 var SPECIAL_FAMILY_IDS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
 var FICHA_STAGES = ["rookie", "champion", "ultimate", "mega", "ultra"];
@@ -3817,6 +3816,19 @@ function fichaStageOf(evolutionStage) {
   return FICHA_STAGES.includes(nivel) ? nivel : "rookie";
 }
 __name(fichaStageOf, "fichaStageOf");
+var LEXICO_POR_FAMILIA = 8;
+var ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
+function lexOf(especial, basica, familia) {
+  const lex = especial && typeof especial === "object" ? especial.lex : null;
+  if (!lex || typeof lex !== "object" || !familia) return null;
+  const { n, f } = lex;
+  if (typeof n !== "number" || !Number.isInteger(n) || n < 0 || n >= LEXICO_POR_FAMILIA) return null;
+  if (f !== 0 && f !== 1 && f !== 2) return null;
+  const el = especial.elementoId, elB = basica && typeof basica === "object" ? basica.elementoId : null;
+  if (typeof el !== "string" || !ELEMENTO_ID.test(el) || typeof elB !== "string" || !ELEMENTO_ID.test(elB)) return null;
+  return { n, f, el, elB };
+}
+__name(lexOf, "lexOf");
 var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" && own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : null, "escolaOf");
 function duelSide(save, opts = {}) {
   const state = save && typeof save === "object" ? save : {};
@@ -3830,7 +3842,8 @@ function duelSide(save, opts = {}) {
   const especial = escolaOf(skills?.especial);
   const familiaSalva = skills?.especial?.familia;
   const family = especial ? typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial] : "direct";
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null } };
+  const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex } };
 }
 __name(duelSide, "duelSide");
 function simulateDuel({ me, opp, seed, taps }) {
@@ -5932,7 +5945,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-pteghp/functionsRoutes-0.3437895888467687.mjs
+// ../.wrangler/tmp/pages-GkPVif/functionsRoutes-0.7678995089169739.mjs
 var routes = [
   {
     routePath: "/api/account",
