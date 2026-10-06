@@ -190,7 +190,6 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 - `getStageBranch(stageId)` — atributo (`power`/`harmony`/`benevolence`) embutido no id, se houver.
 - `getMaxEnergyForStage(stageId)` — energia máxima = `FORM_REQUIREMENTS.required` do estágio.
 - `canSelectWeekdays(...)`, `AVAILABLE_BRANCHES`, `AvailableBranch`, `clampBranch(...)` — auxiliares de seleção de galho.
-- `STAGE_LEVEL_CAPS`, `stageIndexOf(stageId)`, `levelCapFor(stageId)` — teto de level do Soulmon por estágio (6/13/21/30/40), ACUMULADO de `FORM_REQUIREMENTS.cap` (combate v3, PR2); dono único, nunca número paralelo.
 - `MANUAL_EVOLUTION = true` — a evolução nunca dispara sozinha na virada; quem dispara é o jogador, tocando na criatura com a barra cheia.
 **Chamado por:** 35 arquivos (`grep -rl "from '.*/progression'" src desktop functions | wc -l`, 10/09/2026 — corrigido de "33" por doc-verificador), incluindo `desktop/renderer/src/cloudSync.ts` (`MAX_HP_BY_FORM`, `getStageLevel`, `getMaxEnergyForStage` — deixou de ser cópia em `d56bba7a`, ver footgun 9 do `CLAUDE.md`) e `functions/api/_aiGuard.js` (comentário cita as 11 formas por referência a este arquivo, mas `VALID_FORM_ID` é uma regex própria — não importa este módulo, porque Pages Functions não importam de `src/`).
 **Régua:** `src/types/progression.test.ts`, `src/types/ultra.doisCaminhos.test.ts`.

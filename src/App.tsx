@@ -83,7 +83,6 @@ import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
-import { soulLevel, soulLevelLine } from './utils/soulXP';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
@@ -5449,7 +5448,6 @@ export default function App() {
               gamePoints={gameState.gamePoints}
               totalXP={gameState.totalXP}
               streakDays={gameState.totalPerfectDays ?? 0}
-              soulLevelText={soulLevelLine(soulLevel(gameState), gameState.degeneratedByHP === true, language)}
               powerPoints={gameState.powerPoints}
               harmonyPoints={gameState.harmonyPoints}
               benevolencePoints={gameState.benevolencePoints}

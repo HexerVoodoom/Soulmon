@@ -1794,16 +1794,6 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ Família X-6, instância 2 — a recusa por saldo/posse era lida do `gameState` de FORA do `setGameState`; nenhum número da economia mudou no conserto, só a duplicidade.
 **Regra de negócio:** A compra reconfere saldo e posse sobre o estado real, nunca sobre uma leitura de fora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
-### `src/utils/soulXP.ts`
-**Dono de:** XP e level do Soulmon no combate v3 (PR2), DERIVADOS de `evolutionStage` + `perfectDays` (nada persistido; `fuzz2` segue em 103). XP por dia completo (66) + esforço contra a meta (34), nunca contagem (regra #16); 1 level por 100 XP; `soulLevel = min(levelFor(soulXP), levelCapFor(stage))`; degenerar baixa o level e recuperar devolve o mesmo; o dia perfeito de bônus (o 🌀) soma em `perfectDays` e portanto dá ponto. O texto do level que desceu é neutro (`soulLevelLine`, "Lv N").
-**Exports:**
-- `XP_PER_LEVEL`, `XP_COMPLETE_DAY_SHARE`, `XP_COMPLETE_DAY`, `XP_EFFORT_MAX`, `XP_FULL_DAY` (const); `DayFacts`, `SoulXPState` (interface).
-- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)`.
-- `soulLevelLabel(level)`, `soulLevelLine(level, dropped, language)`.
-**Chamado por:** `App.tsx` (texto do Lv na StatsPage). Os motores de luta (PR3+) leem `soulLevel`/`soulCombatant`.
-**Régua:** `src/utils/soulXP.test.ts`, `src/utils/soulXP.hydrate.test.tsx`, `functions/api/soulXP.parity.test.js`, bloco "combate v3" de `src/copy.semFomo.contract.test.ts`.
-**Avisos do arquivo:** o servidor nunca aceita level nem stats do cliente (espelho em `functions/api/_soulXP.js`). `dayXP` só lê somas de peso de esforço; o esforço parcial de dias NÃO completos não entra no level porque não há histórico persistido dele (campo novo = decisão do dono).
-
 ### `src/utils/soulProfile/astrology/chart.ts`
 **Dono de:** Cálculo do mapa astral real (posições, aspectos, ângulos, casas Placidus) via astronomy-engine.
 **Exports:**

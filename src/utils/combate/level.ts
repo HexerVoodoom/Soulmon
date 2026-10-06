@@ -9,14 +9,18 @@
  * exact by construction.
  */
 
-import { STAGE_LEVEL_CAPS } from '../../types/progression';
+import { FORM_REQUIREMENTS } from '../../types/progression';
 import type { Combatant } from './curve';
 
 /**
- * Level ceiling per stage (6/13/21/30/40): owned by `types/progression.ts`,
- * derived from `FORM_REQUIREMENTS.cap`. Re-exported for the core.
+ * Level ceiling per stage, accumulated from `FORM_REQUIREMENTS.cap`
+ * (6/7/8/9/10 → 6/13/21/30/40). Derived, never copied: if the ladder changes,
+ * the caps follow.
  */
-export { STAGE_LEVEL_CAPS };
+export const STAGE_LEVEL_CAPS: readonly number[] = Object.values(FORM_REQUIREMENTS).reduce<number[]>(
+  (acc, f) => [...acc, (acc[acc.length - 1] ?? 0) + f.cap],
+  [],
+);
 
 export const MAX_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
 

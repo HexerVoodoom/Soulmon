@@ -90,8 +90,6 @@ export interface StatsPageProps {
   /** Combustível do **Nível de Vínculo** (`utils/bond.ts`). Nunca exibido cru. */
   totalXP?: number;
   streakDays?: number;
-  /** "Lv N" do Soulmon (combate v3, `utils/soulXP.ts`). Derivado e já em texto neutro; nunca persistido. */
-  soulLevelText?: string;
   /** Insumo do galho de evolução: a casa deles é a página de Evolução. */
   powerPoints?: number;
   harmonyPoints?: number;
@@ -180,7 +178,6 @@ export function StatsPage({
   language = 'en-US',
   totalXP = 0,
   streakDays = 0,
-  soulLevelText,
   petPassive,
   carePattern,
   journey,
@@ -354,12 +351,6 @@ export function StatsPage({
             <span className="sm2-stats-word sm2-num">{streakDays}</span>
             <span className="sm2-stats-s">{isPt ? 'dias completos até aqui' : 'complete days so far'}</span>
           </div>
-        )}
-
-        {/* Combate v3 — o Lv do Soulmon. Sobe e desce com os dias completos (derivado);
-            o texto quando desce já vem neutro de `soulLevelLine`. Obedece `hideMetrics`. */}
-        {!hideMetrics && soulLevelText && (
-          <p className="sm2-stats-s sm2-num" data-testid="soul-level">{soulLevelText}</p>
         )}
 
         {/* WP2.11 — "dias juntos". Admissível como número exibido porque só
