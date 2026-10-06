@@ -89,7 +89,7 @@ describe('AC2. a semente nunca chega antes do compromisso', () => {
     expect(r.json.me.combatant.level).toBe(4); // rookie, 3 dias perfeitos
     expect(r.json.opp.combatant.level).toBe(9); // champion começa no level 7, mais 2 dias
     expect(r.json.opp.special.family).toBe('heal');
-    expect(r.json.opp.fx).toEqual({ basica: 'longo_alcance', especial: 'benca' });
+    expect(r.json.opp.fx).toEqual({ basica: 'longo_alcance', especial: 'benca', familia: 'heal' });
     expect(rank(env).matchesToday).toBe(1);
     expect(rank(env).pending.sides.opp.combatant.level).toBe(9); // congelada
   });

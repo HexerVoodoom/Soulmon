@@ -71,7 +71,7 @@ import { DuelScreen } from './DuelScreen';
 import { simulatePvp, type DuelSide } from '../utils/combate/duel';
 import { specialOf } from '../utils/combate/specials';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
-import { familyOfEscola } from '../utils/arena';
+import { familyOfSkill } from '../utils/arena';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { visualElementFor } from '../utils/combatFx';
@@ -286,8 +286,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     const par = stageSkillsFor(skills, petStage);
     const me: DuelSide = {
       combatant,
-      special: specialOf(familyOfEscola(par?.especial.escolaId)),
-      fx: { basica: par?.basica.escolaId ?? null, especial: par?.especial.escolaId ?? null },
+      special: specialOf(familyOfSkill(par?.especial)),
+      fx: { basica: par?.basica.escolaId ?? null, especial: par?.especial.escolaId ?? null, familia: par ? familyOfSkill(par.especial) : null },
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
     setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc });

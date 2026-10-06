@@ -20,7 +20,7 @@ import type { StageSkills } from './soulProfile/ficha/skills';
 import type { Combatant } from './combate/curve';
 import { elementHits } from './combate/curve';
 import type { FightSide } from './combate/fight';
-import { cheerEvents, PVE_FAMILY_POWER, specialOf, type SpecialFamily } from './combate/specials';
+import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
@@ -179,7 +179,9 @@ export function familyOfEscola(escola: EscolaId | undefined): SpecialFamily {
 
 /** The family of a special skill: its own `familia` (PR9); without it, the default of its school. */
 export function familyOfSkill(skill: { familia?: SpecialFamily; escolaId?: EscolaId } | undefined | null): SpecialFamily {
-  return skill?.familia ?? familyOfEscola(skill?.escolaId);
+  // `familia` vem do save (cache da ficha): só vale se estiver na lista fechada das 7.
+  const f = skill?.familia;
+  return typeof f === 'string' && (SPECIAL_FAMILIES as readonly string[]).includes(f) ? f : familyOfEscola(skill?.escolaId);
 }
 
 /** From this accuracy up the automatic defence blocks the hit clean (the `perfeito` of `utils/autoDefesa.ts`). */

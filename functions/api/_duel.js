@@ -86,10 +86,12 @@ export function maxLevelFor(firstSeen, now) {
   return 1 + Math.max(0, Math.floor((now - firstSeen) / DUEL_DAY_MS));
 }
 
-/** Escola do especial -> família (espelho do `ESCOLA_FAMILY_PROVISORIO` de `src/utils/arena.ts`; travado por teste). */
+/** Escola do especial -> família PADRÃO (espelho do `ESCOLA_FAMILY_PADRAO` de `src/utils/arena.ts`; travado por teste): só o fallback de uma skill sem `familia` válida. */
 export const ESCOLA_FAMILY = {
   combate_fisico: 'direct', longo_alcance: 'dot', conjuracao: 'direct', benca: 'heal', maldicao: 'defDebuff', evocacao: 'atkBuff',
 };
+/** As 7 famílias do núcleo (`SPECIAL_FAMILIES`); `familia` vinda do save só vale se estiver nesta lista fechada. */
+export const SPECIAL_FAMILY_IDS = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
 const FICHA_STAGES = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
@@ -104,7 +106,8 @@ const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' && own(
 /**
  * A ficha de luta de um lado, derivada do SAVE. Só números e ids de uma lista fechada saem daqui:
  *  - `combatant`: level (derivado e limitado por `maxLevel`), stats e bônus (canal `combinedBonus`, 0 até o PR7/PR8);
- *  - `special`: a família vem da escola da skill ESPECIAL da ficha (desconhecida/ausente = `direct`);
+ *  - `special`: a família é a `familia` da skill ESPECIAL da ficha (PR9; só se estiver na lista fechada das 7), senão a padrão da
+ *    escola dela (desconhecida/ausente = `direct`);
  *  - `fx`: as escolas do golpe básico e do especial, para o CLIENTE desenhar a forma do golpe (só cosmético).
  * @param {any} save @param {{ maxLevel?: number }} [opts]
  */
@@ -116,8 +119,12 @@ export function duelSide(save, opts = {}) {
   const skills = state.soulmonSkills && typeof state.soulmonSkills === 'object' ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
   const basica = escolaOf(skills?.basica);
   const especial = escolaOf(skills?.especial);
-  const family = especial ? ESCOLA_FAMILY[especial] : 'direct';
-  return { combatant, special: specialOf(family), fx: { basica, especial } };
+  const familiaSalva = skills?.especial?.familia;
+  const family = especial
+    ? (typeof familiaSalva === 'string' && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial])
+    : 'direct';
+  // `familia` também sai em `fx`: o CLIENTE deriva dela o nome do especial do oponente (regra fechada, nunca texto do save).
+  return { combatant, special: specialOf(family), fx: { basica, especial, familia: especial ? family : null } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */

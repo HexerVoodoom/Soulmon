@@ -156,6 +156,17 @@ describe('alcance: toda família tem chance > 0 (amostra declarada: 400 seeds ×
 });
 
 describe('inimigos', () => {
+  it('família do servidor: só a lista fechada vale; lixo vira dano direto', () => {
+    const el = elementoNomeDe('agua');
+    for (const f of SPECIAL_FAMILIES) {
+      const n = nomeEspecialInimigo(el, 'Rival', f);
+      expect(SUBSTANTIVOS_ESPECIAL[f].some(x => n.en.includes(x.en) && n.pt.includes(x.pt)), f).toBe(true);
+    }
+    for (const lixo of ['hackeada', '', null, undefined, '__proto__', 'constructor']) {
+      expect(nomeEspecialInimigo(el, 'Rival', lixo)).toEqual(nomeEspecialInimigo(el, 'Rival', 'direct'));
+    }
+  });
+
   it('o nome do especial do inimigo é do banco de dano direto, estável por identidade e com EN e PT', () => {
     const el = elementoNomeDe('fogo');
     const a = nomeEspecialInimigo(el, 'Fera de Fogo');
@@ -165,5 +176,19 @@ describe('inimigos', () => {
     expect(direct.some(n => a.en.includes(n.en) && a.pt.includes(n.pt))).toBe(true);
     const variados = new Set(Array.from({ length: 40 }, (_, i) => nomeEspecialInimigo(el, `inimigo-${i}`).en));
     expect(variados.size).toBeGreaterThan(5);
+  });
+});
+
+describe('cache do save (skills persistidas)', () => {
+  it('só o cache com família em todos os estágios fica; o anterior ao PR9 é trocado', async () => {
+    const { skillsTemFamilia } = await import('./stageSkillsFor');
+    const fichas = Object.fromEntries(FICHA_STAGE_ORDER.map(st => [st, ficha('benca', { vida: 3 })])) as Record<FichaStage, Ficha>;
+    const novo = buildAllStageSkills(fichas, 'x');
+    expect(skillsTemFamilia(novo)).toBe(true);
+    const velho = JSON.parse(JSON.stringify(novo));
+    for (const st of FICHA_STAGE_ORDER) delete velho[st].especial.familia;
+    expect(skillsTemFamilia(velho)).toBe(false);
+    expect(skillsTemFamilia(undefined)).toBe(false);
+    expect(skillsTemFamilia({})).toBe(false);
   });
 });
