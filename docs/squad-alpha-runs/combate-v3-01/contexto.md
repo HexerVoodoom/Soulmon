@@ -352,3 +352,11 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 - **Abertos (sem decisão de produto):** bitsOrigin/câmbio só-cliente (limitação declarada), desistência na virada de mês, torcida ótima offline, CAS do save (ADR-004), B2..B5.
 - **Rebase:** PR12a entrou durante o trabalho; conflitos só em `dist/` (regenerado). Falhas locais sem relação, que passam no CI: `ArenaGame.torcida.render` (timeout 15 s do `pool.json` de 3 MB na máquina), `spriteManualRetry.contract` (timeout 10 s).
 
+
+## §2.31 Decisões do dono para a família do especial e para o PR15 (07/10/2026)
+- **Família do especial** (PR14): pode mudar ao evoluir, mas é RARO (família estável; troca só com mudança forte de perfil: elemento/galho dominante, limiares em `LIMIARES`). O **ELEMENTO e a skill são recalculados a cada evolução** pelos pontos de tipo (Poder/Harmonia/Benevolência → pontos de elemento).
+- **PR15 (ficha reage ao comportamento):** o comportamento pesa **35%** na ficha do PRÓXIMO estágio (não 25%); janela = **só o estágio que termina** (`attributesSinceLastEvolution` lido na evolução); saves existentes: **só a PRÓXIMA evolução usa comportamento** (estágios já vividos ficam bit a bit iguais); escopo completo em 3 PRs (15a núcleo puro, 15b integração/migração, 15c servidor/paridade); **talentos NÃO modificam o especial**; o **orçamento total nunca muda** (só a direção; anti-farm, regra #16).
+- Ordem de entrega pedida: PR14 → PR15a → PR15b → PR15c, cada um mergeado com CI verde antes do próximo; em paralelo PR12b e PR16.
+
+## §2.33 Família no servidor: risco aceito (07/10/2026, dono)
+- Resposta à dúvida do MÉDIO-1 do PR13 (§2.29): **aceitar o risco** — as famílias são calibradas ±5% entre si e o servidor valida a lista fechada (`SPECIAL_FAMILY_IDS`). O PR15c grava e valida `fichaJornada` (plano recalculado dos galhos gravados) para fechar melhor.
