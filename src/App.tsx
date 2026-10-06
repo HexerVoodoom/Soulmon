@@ -650,7 +650,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 };
 
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
-// Pesadelo da manhã: leva junto BattleStage/PveMechanics/usePveBattle/combatFx/attackFxArt (~100 KB) — só na luta.
+// Pesadelo da manhã: leva junto BattleStage/PveMechanics/useGroupBattle/combatFx/attackFxArt (~100 KB) — só na luta.
 const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
@@ -4621,7 +4621,7 @@ export default function App() {
   const nightmareKey = nightmareDayKey(new Date(), gameState.rest?.playerDayTz);
   const nightmareWave = useMemo(
     () => (nightmareOpen
-      ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date())
+      ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date(), soulLevel(gameState))
       : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [nightmareOpen, nightmareKey, gameState.evolutionStage],
@@ -7336,6 +7336,8 @@ export default function App() {
           demoCharacterId={petLine}
           petElement={gameState.soulmonMeta?.dominantElement}
           skills={gameState.soulmonSkills}
+          soul={gameState}
+          profissao={manifestacaoAtual?.profissao}
           language={language}
           onWin={handleNightmareWin}
           /* Derrota SÓ grava a noite como lutada: fechar aqui desmontava o modal

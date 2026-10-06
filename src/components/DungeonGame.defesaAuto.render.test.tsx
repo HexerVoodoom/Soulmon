@@ -1,19 +1,46 @@
 // @vitest-environment jsdom
 /**
- * MASMORRA em tela cheia, com ENERGIA (04/10/2026, REGISTRO §20.10) — e o Soulmon segue se
- * defendendo SOZINHO (TORC-3, 02/10/2026: `TIMING_DODGE_ENABLED = false`). A regra mora em
- * `utils/autoDefesa.ts` e `utils/energia.ts`; aqui se trava o lado da TELA: a cena grande, as
- * barras em cima de cada lutador, o mascote da torcida e, principalmente, que **a barra de cheer
- * e a energia PERSISTEM entre os combates da run** (a masmorra é contínua).
+ * MASMORRA em tela cheia, no núcleo v3 (PR4, contexto §2.18) — e o Soulmon segue se defendendo SOZINHO
+ * (TORC-3, 02/10/2026: `TIMING_DODGE_ENABLED = false`). A regra mora em `utils/dungeonFight.ts`, `utils/dungeon.ts` e
+ * `utils/energia.ts`; aqui se trava o lado da TELA: a cena grande, as barras, o mascote da torcida e,
+ * principalmente, que **a barra de cheer, a energia e o HP PERSISTEM entre os combates da run** (a masmorra é contínua).
+ *
+ * ⚠️ O núcleo roda de VERDADE; o envoltório de `groupFightSteps` só anota a entrada (descargas de cheer
+ * recolhidas e o HP e a energia com que cada luta começou).
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { DungeonGame } from './DungeonGame';
-import { CHEER_TAPS_FULL, ENERGY_CHEER } from '../utils/energia';
+import { CHEER_TAPS_FULL } from '../utils/energia';
 
+const H = vi.hoisted(() => ({ calls: 0, cheerSeen: 0, hpStart: [] as number[], enStart: [] as number[] }));
+
+vi.mock('../utils/combate/group', async importOriginal => {
+  const real = await importOriginal<typeof import('../utils/combate/group')>();
+  return {
+    ...real,
+    groupFightSteps: function* (player: never, foes: never, opts: never) {
+      H.calls++;
+      const o = opts as { startHp?: number; startEnergy?: number; cheerDrain?: () => number };
+      H.hpStart.push(o.startHp ?? -1);
+      H.enStart.push(o.startEnergy ?? -1);
+      const drain = o.cheerDrain;
+      const g = real.groupFightSteps(player, foes, { ...o, cheerDrain: drain ? () => { const k = drain(); H.cheerSeen += k; return k; } : undefined } as never);
+      let r = g.next();
+      while (!r.done) {
+        const ans: number | undefined = yield r.value;
+        r = g.next(ans);
+      }
+      return r.value;
+    },
+  };
+});
 vi.mock('../utils/sounds', () => ({ playFeed: vi.fn(), playTaskComplete: vi.fn() }));
-beforeEach(() => { vi.spyOn(Math, 'random').mockReturnValue(0.3); });
+beforeEach(() => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.3);
+  Object.assign(H, { calls: 0, cheerSeen: 0, hpStart: [], enStart: [] });
+});
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 function montar(extra: { onLose?: () => void; onEnemyDefeated?: () => void; language?: 'pt-BR' | 'en-US' } = {}) {
@@ -47,13 +74,14 @@ async function ateInimigoCair(limiteMs = 120_000) {
 }
 
 describe('Masmorra — a cena em tela cheia', () => {
-  it('a luta é a CENA: lutadores grandes, HP e ENERGIA em cima de cada um, mascote da torcida, barra de cheer — sem texto explicativo', () => {
+  it('a luta é a CENA: lutadores grandes, HP e ENERGIA do pet, mascote da torcida, barra de cheer — sem texto explicativo', () => {
     vi.useFakeTimers();
     montar();
     descer();
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
     expect(document.querySelector('[data-stage-plate="me"] [data-stage-energy]')).not.toBeNull();
-    expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).not.toBeNull();
+    // o 1º inimigo da escada (baby-i) não tem especial: só o mega mostra a barra de energia
+    expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).toBeNull();
     expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
     expect(document.querySelector('[data-timing-bar]')).toBeNull();
     expect(document.querySelector('[data-visor-pet]')).toBeNull(); // o visor pequeno saiu da luta
@@ -63,7 +91,7 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(document.body.textContent).toMatch(/Camada 1\/5/);
   });
 
-  it('a explicação do lobby mora atrás do "?" e conta as mecânicas novas (cheer, energia, anel, esquiva)', () => {
+  it('a explicação do lobby mora atrás do "?" e conta as mecânicas (cheer, energia, anel, esquiva)', () => {
     vi.useFakeTimers();
     montar();
     fireEvent.click(screen.getByRole('button', { name: 'Como funciona a descida' }));
@@ -74,21 +102,20 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(nota).toMatch(/de um inimigo para o outro/i); // a barra persiste
   });
 
-  it('sem barra de esquiva: o golpe sai sozinho (~1,7 s) e a defesa automática responde sem nenhum toque', async () => {
+  it('sem barra de esquiva: o golpe sai sozinho e a defesa automática responde sem nenhum toque; o número só chega no IMPACTO', async () => {
     vi.useFakeTimers();
     montar();
     descer();
-    await avancar(1000);
     expect(document.querySelector('[data-stage-dmg]')).toBeNull();
-    await avancar(900);
-    expect(document.querySelector('[data-stage-dmg]')).not.toBeNull();
-    await avancar(1800); // o revide: ou "Defendeu!" (bloqueio perfeito) ou o dano no pet
-    expect(energia('foe')).toBeGreaterThan(0);
+    let visto = false;
+    for (let t = 0; t < 8000 && !visto; t += 100) { await avancar(100); visto = document.querySelector('[data-stage-dmg]') !== null; }
+    expect(visto, 'o primeiro golpe chega em até 8 s').toBe(true);
+    expect(energia('me')).toBeGreaterThan(0);
     expect(screen.queryByText('Desviar!')).toBeNull();
     expect(document.querySelector('[data-dodge-button]')).toBeNull(); // golpe normal: sem janela de esquiva
   });
 
-  it('a luta é mais LONGA: cada inimigo leva ~20–30 s (vida × 1,8)', async () => {
+  it('a luta é mais LONGA: cada inimigo leva ~20–30 s', async () => {
     vi.useFakeTimers();
     montar();
     descer();
@@ -100,23 +127,28 @@ describe('Masmorra — a cena em tela cheia', () => {
   });
 });
 
-describe('Masmorra — a barra de cheer e a energia PERSISTEM entre os combates da run', () => {
-  it('a barra de cheer enche devagar (24) e, cheia, despeja energia no pet', () => {
+describe('Masmorra — a barra de cheer, a energia e o HP PERSISTEM entre os combates da run', () => {
+  it('a barra de cheer enche devagar (24) e, cheia, despeja UMA descarga no núcleo e zera', async () => {
     vi.useFakeTimers();
     montar();
     descer();
-    for (let i = 0; i < CHEER_TAPS_FULL - 1; i++) fireEvent.click(mascote());
-    expect(energia('me')).toBe(0);
+    await avancar(10);
+    for (let i = 0; i < 12; i++) fireEvent.click(mascote()); // 12 por janela de 3 s: abaixo do teto de 16
+    await avancar(3100);
+    for (let i = 0; i < CHEER_TAPS_FULL - 12 - 1; i++) fireEvent.click(mascote());
+    expect(H.cheerSeen).toBe(0);
     fireEvent.click(mascote());
-    expect(energia('me')).toBe(ENERGY_CHEER);
     expect(ratio()).toBe(0);
+    await avancar(3000);
+    expect(H.cheerSeen).toBe(1);
   });
 
-  it('o primeiro inimigo cai e a barra continua do mesmo ponto no segundo — e a energia do pet também', async () => {
+  it('o primeiro inimigo cai e a barra, a energia e o HP continuam do mesmo ponto no segundo', async () => {
     vi.useFakeTimers();
     const onEnemyDefeated = vi.fn();
     montar({ onEnemyDefeated });
     descer();
+    await avancar(10);
     for (let i = 0; i < 9; i++) fireEvent.click(mascote()); // 9/24: não despeja
     const antes = ratio();
     expect(antes).toBeCloseTo(9 / CHEER_TAPS_FULL, 1);
@@ -125,13 +157,16 @@ describe('Masmorra — a barra de cheer e a energia PERSISTEM entre os combates 
     // o cartão do inimigo derrotado NÃO apaga a barra: a mesma cena segue na tela
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
     expect(ratio()).toBe(antes);
-    const energiaDoPet = energia('me');
-    expect(energiaDoPet).toBeGreaterThan(0);
+    expect(energia('me')).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /^Desafiar / }));
-    // segundo combate: a barra e a energia do pet seguem; a do INIMIGO novo recomeça do zero
+    await avancar(10);
+    // segundo combate: o núcleo recebeu o HP e a energia do primeiro (`startHp`/`startEnergy`)
+    expect(H.calls).toBe(2);
+    expect(H.hpStart[0]).toBe(1);
+    expect(H.hpStart[1]).toBeLessThanOrEqual(1);
+    expect(H.enStart[0]).toBe(0);
+    expect(H.enStart[1]).toBeGreaterThan(0);
     expect(ratio()).toBe(antes);
-    expect(energia('me')).toBe(energiaDoPet);
-    expect(energia('foe')).toBe(0);
     for (let i = 0; i < 3; i++) fireEvent.click(mascote());
     expect(ratio()).toBeCloseTo((9 + 3) / CHEER_TAPS_FULL, 1); // soma por cima do que já tinha
   });

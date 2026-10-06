@@ -213,6 +213,12 @@ describe('AC5. skill (P4): "does not act" × "plays well" ≤ 25pp', () => {
     console.log(`[AC5 RED] old tables: ${(100 * gap).toFixed(1)}pp`);
     expect(gap).toBeGreaterThan(0.25);
   });
+  it('PR4: with BOTH sides cheering at the ceiling (CHEER.energyPerDischarge = 90) the gap stays ≤ 25pp; the strict one (plays well AND cheers × does nothing) is a finding for the owner', () => {
+    const both = wins('boa', { cheer: 'teto' }) - wins('nenhuma', { cheer: 'teto' });
+    const strict = wins('boa', { cheer: 'teto' }) - wins('nenhuma');
+    console.log(`[AC5 cheer] gap with the cheer at the ceiling on both sides: ${(100 * both).toFixed(1)}pp · strict (boa + teto × nenhuma): ${(100 * strict).toFixed(1)}pp`);
+    expect(both).toBeLessThanOrEqual(0.25);
+  });
   it('the energia.ts tables ARE the v3 ones (0.92/1/1.08 · 0/0.2/0.35) and the skill odds sum to 1', () => {
     expect({ ...RING_MULT }).toEqual({ ruim: 0.92, bom: 1, otimo: 1.08 });
     expect({ ...DODGE_REDUCE }).toEqual({ nada: 0, bom: 0.2, otimo: 0.35 });

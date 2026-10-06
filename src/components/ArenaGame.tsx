@@ -32,7 +32,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
-import { CHEER_TAPS_FULL, type DodgeGrade, type RingGrade } from '../utils/energia';
+import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
+import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { fxElementId, prefersReducedMotion, fighterStrikeForm, elementStrikeForm, specialLabel } from '../utils/combatFx';
 import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
@@ -91,21 +92,6 @@ export interface ArenaGameProps {
   onEarnPoints?: (points: number) => void;
   onExit: () => void;
 }
-
-/** Selos do anel e da esquiva (PT/EN). */
-const RING_TAG: Record<'pt' | 'en', Record<RingGrade, string>> = {
-  pt: { otimo: 'ÓTIMO!', bom: 'BOM', ruim: 'FRACO' },
-  en: { otimo: 'GREAT!', bom: 'GOOD', ruim: 'WEAK' },
-};
-const DODGE_TAG: Record<'pt' | 'en', Partial<Record<DodgeGrade, string>>> = {
-  pt: { otimo: 'Esquivou!', bom: 'Quase!' },
-  en: { otimo: 'Dodged!', bom: 'Close!' },
-};
-/** Selo no pet quando o especial dele é pessoal (cura, escudo, buff): não há dano para mostrar. */
-const PERSONAL_TAG: Record<'pt' | 'en', Partial<Record<string, string>>> = {
-  pt: { heal: 'Cura!', shield: 'Escudo!', atkBuff: 'Poder!', spdBuff: 'Ligeiro!' },
-  en: { heal: 'Heal!', shield: 'Shield!', atkBuff: 'Power!', spdBuff: 'Swift!' },
-};
 
 export function ArenaGame({
   evolutionStage, demoCharacterId, language, skills, attrs, onEarnPoints, onExit,

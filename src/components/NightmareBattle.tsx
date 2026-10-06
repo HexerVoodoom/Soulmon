@@ -24,10 +24,10 @@
  * ───────────────────────────────────────────────────────────────────────────
  * O convite, a vitória e a derrota são o diálogo de sempre; a LUTA é a tela cheia da
  * `BattleStage` (a mesma do Duelo e da Masmorra): o Soulmon grande, HP e ENERGIA em cima de cada
- * um, o mascote da torcida no canto, a barra de cheer no pé. O relógio, a energia e as mecânicas
- * ativas (o ANEL do especial e a ESQUIVA do especial do pesadelo) são do `games/usePveBattle.ts`;
- * as regras de dano, de `utils/energia.ts`. Vida do pet e dos inimigos × `PVE_HP_SCALE` (~20–30 s
- * por inimigo). A `TimingBar` de esquiva saiu daqui (`TIMING_DODGE_ENABLED = false`).
+ * um, o mascote da torcida no canto, a barra de cheer no pé. Combate v3 (PR4, contexto §2.18): o MOTOR é o
+ * núcleo (`groupFightSteps` com 1 inimigo por vez, HP e energia carregados), com as regras da Masmorra
+ * (`utils/dungeonFight.ts`), e o relógio da cena é `games/useGroupBattle.ts`. A onda é SEMPRE do andar 1
+ * (`buildNightmareWave`). A `TimingBar` de esquiva saiu daqui (`TIMING_DODGE_ENABLED = false`).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * POR QUE O `DungeonGame` NÃO FOI REUTILIZADO (para quem for refatorar)
@@ -35,9 +35,9 @@
  * Ele não aceita uma onda pronta (a entrada de inimigos é interna), é uma RUN de 5 andares (andar,
  * bônus, Glitchtama) e escreve no localStorage direto (recorde e dificuldade semanal da Masmorra) —
  * misturaria duas economias que a regra mantém separadas. O que não podia continuar duplicado era a
- * MECÂNICA, e essa agora tem dono: `usePveBattle` + `utils/energia.ts` + `BattleStage`.
+ * MECÂNICA, e essa agora tem dono: `utils/dungeonFight.ts` + `useGroupBattle` + `BattleStage`.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
@@ -46,12 +46,15 @@ import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
 import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
-import { usePveBattle, type PveRules } from './games/usePveBattle';
-import { playerStatsFor } from '../utils/dungeon';
+import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
+import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { newDefenseSeed } from '../utils/autoDefesa';
-import {
-  CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
-} from '../utils/energia';
+import { CHEER_TAPS_FULL } from '../utils/energia';
+import { ENERGY_TRIGGER } from '../utils/combate/specials';
+import type { GroupResult } from '../utils/combate/group';
+import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
+import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
+import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
@@ -71,7 +74,7 @@ export interface NightmareBattleProps {
   wave: DungeonEnemy[];
   /** Raridade da noite (`nightmaresFor().rarity`) — decide nome, texto e prêmio. */
   rarity: DreamRarity;
-  /** Estágio do pet, só para o sprite e as stats do jogador. */
+  /** Estágio do pet, para o sprite e o sorteio de skills (as stats vêm de `soul`). */
   petStage: string;
   /** Personagem de demo, quando houver (mesma prop do DungeonGame). */
   demoCharacterId?: string;
@@ -79,6 +82,10 @@ export interface NightmareBattleProps {
   petElement?: string;
   /** As skills da ficha (o mesmo `skills` da Arena). Com elas, a escola decide o golpe e o selo leva o nome do especial (PR1b B2/N1); sem elas, o elemento. */
   skills?: FichaSkills;
+  /** O estado do save que o level lê (`soulCombatant`): level e ramo do Soulmon. Sem ele, cai no estágio do pet. */
+  soul?: SoulXPState;
+  /** O ofício da ficha (`manifestacao.profissao`): o jeito dele vale aqui como na Masmorra (`jeitoParaPve`). */
+  profissao?: string | null;
   language: Language;
   /** Venceu: as recompensas de `nightmareRewards(rarity, true)`. */
   onWin: (rewards: NightmareRewards) => void;
@@ -87,8 +94,6 @@ export interface NightmareBattleProps {
   onClose: () => void;
 }
 
-/** A defesa perfeita do pesadelo (limiar da defesa automática). */
-const PERFECT = 0.92;
 /* C1 (02/10/2026): o convite do pesadelo mostrava `dungeon-spirit.png` (bolha
    roxa com brilhos, uma bolinha roxa solta e franja clara). Agora é uma
    criatura que já existe no repo, com alfa limpo (binário, sem borda clara). */
@@ -97,52 +102,71 @@ const INTRO_CREATURE = DUNGEON_LINE_SPRITES.ignar.champion;
 type Phase = 'intro' | 'fight' | 'won' | 'lost';
 
 export function NightmareBattle({
-  open, wave, rarity, petStage, demoCharacterId, petElement, skills, language, onWin, onLose, onClose,
+  open, wave, rarity, petStage, demoCharacterId, petElement, skills, soul, profissao, language, onWin, onLose, onClose,
 }: NightmareBattleProps) {
   const isPt = language === 'pt-BR';
-  const base = playerStatsFor(petStage);
-  // Vida do pet × PVE_HP_SCALE: a luta ficou mais longa (04/10/2026); o dano por golpe não muda.
-  const stats = { hp: Math.round(base.hp * PVE_HP_SCALE), dmg: base.dmg };
+  const lang = isPt ? 'pt' : 'en';
+  const par = stageSkillsFor(skills, petStage);
+
+  /* O jogador do núcleo (PR4): `soulCombatant` do estado (level e ramo) e o jeito do OFÍCIO, o MESMO da
+     Masmorra (`jeitoParaPve`). Antes o Pesadelo usava o `base.dmg` cru e ignorava o jeito: era uma divergência
+     entre as duas telas, resolvida aqui — o Pesadelo aplica o jeito. Sem estado (testes), cai no estágio. */
+  const estado = useMemo<SoulXPState>(() => soul ?? { evolutionStage: petStage }, [soul, petStage]);
+  const jogador = useMemo<DungeonPlayerCfg>(() => ({
+    combatant: soulCombatant(estado),
+    family: dungeonFamily(par?.especial?.escolaId),
+    jeito: jeitoDaProfissao(profissao),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [estado, par?.especial?.escolaId, profissao]);
+  const jogadorRef = useRef(jogador);
+  jogadorRef.current = jogador;
+  const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
 
   /* Trap + Escape + devolução de foco vêm do `RitualDialog` (SIS-06, canvas
      Rituais): o × 44 pelado é o primeiro focável, Escape fecha. */
 
   const [idx, setIdx] = useState(0);
-  const [enemyHp, setEnemyHp] = useState(0);
-  const [playerHp, setPlayerHp] = useState(stats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
   const [rewards, setRewards] = useState<NightmareRewards | null>(null);
-  /** A semente da luta: o sorteio da defesa automática, do anel e da esquiva. */
-  const [seedLuta, setSeedLuta] = useState(() => newDefenseSeed());
+  /** A SEMENTE da luta: a defesa automática, o anel e a esquiva (determinísticos dentro da noite). */
+  const runSeedRef = useRef(newDefenseSeed());
+  const [seedLuta, setSeedLuta] = useState(() => runSeedRef.current);
+  /** Muda a cada inimigo: reinicia o relógio da cena. */
+  const [fightKey, setFightKey] = useState(0);
+  /** O que passa de um inimigo para o outro: HP (fração) e energia do pet. */
+  const hpCarryRef = useRef(1);
+  const energyCarryRef = useRef(0);
+  const [hpFrac, setHpFrac] = useState(1);
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausado, setPausado] = useState(false);
   const reduced = useRef(prefersReducedMotion());
-  const enemyHpRef = useRef(0);
-  const playerHpRef = useRef(stats.hp);
   const idxRef = useRef(0);
   const waveRef = useRef(wave);
   waveRef.current = wave;
-  const battleRef = useRef<{ reset: (o: { foes: number; keepPet?: boolean }) => void } | null>(null);
 
   const enemy = wave[idx];
   const petEl = fxElementId(petElement);
-  const par = stageSkillsFor(skills, petStage);
   const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
+  const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
+
+  const novaSemente = () => {
+    runSeedRef.current = newDefenseSeed();
+    setSeedLuta(runSeedRef.current);
+  };
 
   // Reabrir com outra noite recomeça limpo (o modal fica montado no App).
   useEffect(() => {
     if (!open) return;
     setIdx(0);
     idxRef.current = 0;
-    setEnemyHp(0);
-    enemyHpRef.current = 0;
-    setPlayerHp(stats.hp);
-    playerHpRef.current = stats.hp;
+    hpCarryRef.current = 1;
+    energyCarryRef.current = 0;
+    setHpFrac(1);
     setPhase('intro');
     setRewards(null);
-    setSeedLuta(newDefenseSeed());
-    battleRef.current?.reset({ foes: 1, keepPet: false });
-  }, [open, wave, stats.hp]);
+    novaSemente();
+    setFightKey(k => k + 1);
+  }, [open, wave]);
 
   const win = () => {
     playFeed();
@@ -154,72 +178,61 @@ export function NightmareBattle({
 
   const lose = () => {
     // Sem som de degeneração de propósito: perder aqui não é uma perda.
+    setHpFrac(0);
     setPhase('lost');
     onLose();
   };
 
-  const ringTag = (r: RingGrade) => (isPt ? { otimo: 'ÓTIMO!', bom: 'BOM', ruim: 'FRACO' } : { otimo: 'GREAT!', bom: 'GOOD', ruim: 'WEAK' })[r];
+  /* A luta é o núcleo v3 (`groupFightSteps` com 1 inimigo por vez; HP e energia passam de um para o outro) e
+     o relógio da cena é o `useGroupBattle`. As regras de cada luta são as da Masmorra (`dungeonFight`): defesa
+     perfeita = sem dano + contra-ataque do ofício, e o especial do pesadelo (do slot mega) pode ser esquivado. */
+  const rodadaDoNucleo = useCallback((): GroupRound => {
+    const e = waveRef.current[idxRef.current];
+    const f = dungeonFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot));
+    return {
+      player: f.player, foes: f.foes, seed: f.seed,
+      startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
+      hitScale: f.hitScale,
+      castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
+    };
+  }, []);
 
-  /* As regras da luta (o relógio é o `usePveBattle`): golpe-base = 0,5 × dmg, especial = 3× × a nota do anel,
-     defesa perfeita = sem dano + contra-ataque, e o especial do pesadelo (2×) pode ser esquivado. */
-  const regras: PveRules = {
-    perfect: PERFECT,
-    target: () => 0,
-    foes: () => (enemyHpRef.current > 0 ? [0] : []),
-    playerElement: () => petEl,
-    foeElement: () => enemyEl,
-    playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
-    foeKind: (_f, sp) => elementStrikeForm(enemyEl, sp ? 'especial' : 'basica'),
-    playerStrike: ({ special, ring }) => {
-      const e = waveRef.current[idxRef.current];
-      const dmg = pveStrikeDamage({ dmg: stats.dmg, guard: e?.dmgReduction ?? 0, special, ring });
-      enemyHpRef.current = Math.max(0, enemyHpRef.current - dmg);
-      setEnemyHp(enemyHpRef.current);
-      // A vibração NÃO passa por CSS nenhum, então `prefers-reduced-motion` só a
-      // alcança por guard em JS. E ela não é essencial: é tempero do acerto.
-      if (!reduced.current) {
-        try { navigator.vibrate?.(special ? 40 : 15); } catch { /* noop */ }
-      }
-      return { hits: [{ foe: 0, value: dmg }], tag: special ? ringTag(ring) : undefined, victory: enemyHpRef.current <= 0 };
-    },
-    foeStrike: ({ special, dodge, acc }) => {
-      const e = waveRef.current[idxRef.current];
-      if (!e) return { value: 0, blocked: false, defeat: false };
-      const r = pveFoeHitDamage({ atk: e.atk, acc, perfect: PERFECT, special, dodge });
-      if (r.blocked) {
-        const counter = Math.max(1, Math.round(2 * (1 - e.dmgReduction)));
-        enemyHpRef.current = Math.max(0, enemyHpRef.current - counter);
-        setEnemyHp(enemyHpRef.current);
-        return {
-          value: 0, blocked: true, counter: { foe: 0, value: counter }, tag: isPt ? 'Defendeu!' : 'Defended!',
-          defeat: false, victory: enemyHpRef.current <= 0,
-        };
-      }
-      playerHpRef.current -= r.dmg;
-      setPlayerHp(playerHpRef.current);
-      const tag = special
-        ? (dodge === 'otimo' ? (isPt ? 'Esquivou!' : 'Dodged!') : dodge === 'bom' ? (isPt ? 'Quase!' : 'Close!') : undefined)
-        : undefined;
-      return { value: r.dmg, blocked: false, tag, defeat: playerHpRef.current <= 0 };
-    },
-    onVictory: () => {
-      // C-1 (run `som-01`): morte de inimigo nao usa o som de conclusao.
-      const n = idxRef.current + 1;
-      if (n >= waveRef.current.length) { win(); return; }
-      idxRef.current = n;
-      setIdx(n);
-      const hp = pveFoeHp(waveRef.current[n].hp);
-      enemyHpRef.current = hp;
-      setEnemyHp(hp);
-      battleRef.current?.reset({ foes: 1, keepPet: true }); // a energia e a barra de cheer seguem para o próximo
-    },
-    onDefeat: () => lose(),
-  };
-  const battle = usePveBattle({
+  const cena = useCallback((): GroupScene => {
+    const e = waveRef.current[idxRef.current];
+    const p = jogadorRef.current;
+    const foeEl = fxElementId(visualElementFor(e?.stage ?? 'x'));
+    return {
+      playerMaxHp: Math.max(1, Math.round(dungeonPlayerSide(p).combatant.hp)),
+      foeMaxHp: [Math.max(1, Math.round(e?.foe.combatant.hp ?? 1))],
+      playerElement: () => petEl,
+      foeElement: () => foeEl,
+      playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
+      foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+      labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
+      personalTag: PERSONAL_TAG[lang][p.family],
+    };
+  }, [petEl, par, isPt, lang]);
+
+  const aoFimDaLuta = useCallback((res: GroupResult) => {
+    if (res.winner !== 'player') { lose(); return; } // derrota ou empate: não custa nada
+    // C-1 (run `som-01`): morte de inimigo nao usa o som de conclusao.
+    hpCarryRef.current = res.hpLeft;
+    energyCarryRef.current = res.energyLeft;
+    setHpFrac(res.hpLeft);
+    const n = idxRef.current + 1;
+    if (n >= waveRef.current.length) { win(); return; }
+    idxRef.current = n;
+    setIdx(n);
+    setFightKey(k => k + 1); // a energia e a barra de cheer seguem para o próximo
+  // O relógio chama sempre a versão mais nova (`optsRef` do hook); `win`/`lose` só leem props e refs.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rarity, onWin, onLose]);
+
+  const battle = useGroupBattle({
     running: open && phase === 'fight' && !!enemy,
-    paused: pausado, seed: seedLuta, reduced: reduced.current, rules: regras, runKey: idx,
+    paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta,
   });
-  battleRef.current = battle;
 
   if (!open) return null;
 
@@ -232,13 +245,11 @@ export function NightmareBattle({
     if (wave.length === 0) return;
     setIdx(0);
     idxRef.current = 0;
-    const hp = pveFoeHp(wave[0].hp);
-    enemyHpRef.current = hp;
-    setEnemyHp(hp);
-    setPlayerHp(stats.hp);
-    playerHpRef.current = stats.hp;
-    setSeedLuta(newDefenseSeed());
-    battleRef.current?.reset({ foes: 1, keepPet: false });
+    hpCarryRef.current = 1;
+    energyCarryRef.current = 0;
+    setHpFrac(1);
+    novaSemente();
+    setFightKey(k => k + 1);
     setPhase('fight');
   };
 
@@ -246,6 +257,10 @@ export function NightmareBattle({
 
   /* A LUTA: a tela cheia (a mesma cena do Duelo e da Masmorra). */
   if (phase === 'fight' && enemy) {
+    // Entre o começo da luta nova e o 1º passo do relógio, o estado do hook ainda é o do inimigo anterior: a cena pinta o novo cheio.
+    const pronto = battle.stateKey === fightKey;
+    const foeHpFrac = pronto ? (battle.foesHp[0] ?? 1) : 1;
+    const meHpFrac = pronto ? battle.hp : hpFrac;
     return (
       <TorcidaLayer
         onTap={battle.cheer}
@@ -260,21 +275,23 @@ export function NightmareBattle({
           specialLabel={specialLabel(isPt, par?.especial)}
           scene={NIGHTMARE_SCENE.bg}
           me={{
-            key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.max(0, playerHp), maxHp: stats.hp,
-            element: petEl, energy: battle.petEnergy / ENERGY_MAX,
+            key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
           }}
           foes={[{
-            key: idx, sprite: enemy.sprite, name: isPt ? 'Pesadelo' : 'Nightmare', hp: Math.max(0, enemyHp), maxHp: pveFoeHp(enemy.hp),
-            element: enemyEl, down: enemyHp <= 0, energy: (battle.foeEnergy[0] ?? 0) / ENERGY_MAX,
+            key: idx, sprite: enemy.sprite, name: isPt ? 'Pesadelo' : 'Nightmare', hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
+            element: enemyEl, down: foeHpFrac <= 1e-9,
+            // só quem tem especial (o slot mega) mostra a barra de energia
+            energy: enemy.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
           }]}
-          action={battle.action}
-          hit={battle.hits}
-          charging={battle.charging}
-          ring={battle.ring}
+          action={pronto ? battle.action : null}
+          hit={pronto ? battle.hits : []}
+          charging={pronto && battle.charging}
+          ring={pronto ? battle.ring : null}
           onRingGrade={battle.resolveRing}
-          dodge={battle.dodge}
+          dodge={pronto ? battle.dodge : null}
           onDodge={battle.swipe}
-          petDodge={battle.petDodge}
+          petDodge={pronto ? battle.petDodge : null}
           mechLabels={{
             strike: isPt ? 'Golpear' : 'Strike',
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',

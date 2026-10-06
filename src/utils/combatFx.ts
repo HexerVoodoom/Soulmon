@@ -179,21 +179,6 @@ export function totalMs(kind: StageActionKind, reduced: boolean): number {
  */
 export const DUEL_STEP_MS = 1700;
 
-/**
- * Passo da luta de PvE (Pesadelo, Masmorra, Duelo da Arena): tempo entre o começo de um golpe e o do
- * seguinte, de cada lado. A ida-e-volta dura ~3,4 s; com a vida de PvE × `PVE_HP_SCALE` (utils/energia.ts)
- * cada inimigo leva ~20–30 s.
- */
-export const PVE_STEP_MS = 1700;
-
-/**
- * Duelo da Arena: do começo do turno até o golpe do pet CHEGAR no alvo (era 1500 ms) e
- * do começo do revide até o inimigo CHEGAR no pet (era 800 ms). O gauge acumula entre
- * os turnos; um turno de um inimigo dura ~3,7 s, ~11 toques a 3 toques/s.
- */
-export const ARENA_STRIKE_MS = 2400;
-export const ARENA_DEFEND_MS = 1400;
-
 /** `prefers-reduced-motion` (lido uma vez por cena): sem investida nem projétil, só o flash. */
 export function prefersReducedMotion(): boolean {
   try {

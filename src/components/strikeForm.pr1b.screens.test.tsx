@@ -2,12 +2,11 @@
 /**
  * PR1b B2/N1: o MESMO pet tem o MESMO golpe básico nas 4 telas (Arena, Masmorra, Pesadelo, Duelo).
  * Com ficha a escola decide (`fighterStrikeForm`), e o selo do especial leva o nome da skill.
- * As telas PvE são lidas pelas `rules` que entregam ao relógio (`usePveBattle`); o Duelo, pela cena.
- * PR3b: a ARENA roda no relógio do núcleo v3 (`useGroupBattle`) e entrega a mesma pergunta pela `scene()`.
+ * As telas PvE são lidas pela `scene()` que entregam ao relógio do núcleo v3 (`useGroupBattle`); o Duelo, pela cena.
+ * PR3b: a ARENA roda nesse relógio; PR4: a Masmorra e o Pesadelo também (a mesma pergunta, a mesma resposta).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, act, cleanup, fireEvent, screen } from '@testing-library/react';
-import type { PveRules } from './games/usePveBattle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { ArenaGame } from './ArenaGame';
 import { DungeonGame } from './DungeonGame';
@@ -15,20 +14,17 @@ import { NightmareBattle } from './NightmareBattle';
 import { DuelScreen } from './DuelScreen';
 import { duelStats } from '../../functions/api/_duel.js';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
+import { dungeonFoe, type DungeonEnemy } from '../utils/dungeon';
 import { SPECIAL_LABEL } from '../utils/combatFx';
 
-const regras: PveRules[] = [];
+const regras: Array<{ playerKind(sp: boolean): string }> = [];
 const cenas: Array<{ action: { actor: string; kind: string; strike?: string } | null; specialLabel?: string }> = [];
-vi.mock('./games/usePveBattle', async (orig) => {
-  const m = await orig<typeof import('./games/usePveBattle')>();
-  return { ...m, usePveBattle: (o: Parameters<typeof m.usePveBattle>[0]) => { regras.push(o.rules); return m.usePveBattle(o); } };
-});
 vi.mock('./games/useGroupBattle', async (orig) => {
   const m = await orig<typeof import('./games/useGroupBattle')>();
   return {
     ...m,
     useGroupBattle: (o: Parameters<typeof m.useGroupBattle>[0]) => {
-      regras.push({ playerKind: (sp: boolean) => o.scene().playerKind(sp) } as unknown as PveRules);
+      regras.push({ playerKind: (sp: boolean) => o.scene().playerKind(sp) });
       return m.useGroupBattle(o);
     },
   };
@@ -53,7 +49,7 @@ function ficha(basica: string, especial: string, elementoId: string): Ficha {
   });
   return { rookie: { basica: mk('basica', basica), especial: mk('especial', especial) } as unknown as StageSkills };
 }
-const onda = () => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, hp: 5, atk: 1, speed: 1, points: 1, dmgReduction: 0 }];
+const onda = (): DungeonEnemy[] => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, points: 1, slot: 0, floor: 1, foe: dungeonFoe(1, 0, 1) }];
 
 const PVE: Record<string, (skills: Ficha | undefined, el: string) => void> = {
   Arena: (skills) => { render(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={skills} onExit={() => {}} />); },

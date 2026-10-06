@@ -77,10 +77,18 @@ export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<Specia
 };
 
 /**
- * Cheer: 24 accepted taps = 1 discharge, at most 16 taps accepted per bucket
- * of 3 s, each discharge = +3 energy (ceiling about 0.67 energy/s).
+ * Cheer: 24 accepted taps = 1 discharge, at most 16 taps accepted per bucket of 3 s.
+ *
+ * - `energyPerDischarge` is the PvE yield (Arena and Dungeon, `groupFightSteps`). Raised in PR4 by the owner's
+ *   decision (contexto §2.18) from 3 to the BIGGEST value that keeps the cheer outside the ruler: the TTK with the
+ *   cheer at the ceiling stays within ±25% of nobody cheering, in the Arena and in the Dungeon, and the gap between
+ *   "does not act" and "plays well" stays ≤ 25pp (`arena.v3.test.ts`, `dungeon.v3.test.ts`).
+ * - `pvpEnergyPerDischarge` is the PvP yield (`fight()`, the 1v1 of the duel): 3, the value measured in PR1b/PR3a
+ *   (ceiling ≈ 0.67 energy/s → ~65% against the ghost, §2.13). It is NOT raised with the PvE one: PR5 owns the PvP.
  */
-export const CHEER = { tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 3 } as const;
+export const CHEER = {
+  tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 90, pvpEnergyPerDischarge: 3,
+} as const;
 
 /**
  * Turns tap timestamps (seconds) into discharge events for `FightOptions.cheer`.

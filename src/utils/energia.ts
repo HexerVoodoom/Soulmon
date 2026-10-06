@@ -19,7 +19,7 @@
  *  · **PvP (duelo fantasma)** — servidor-autoritativo, SEM mecânica ativa: o especial
  *    sai direto. A regra é de `functions/api/_duel.js`; as constantes de energia vivem
  *    LÁ e são só reexportadas aqui (uma regra, um arquivo — footgun 9).
- *  · **PvE (Pesadelo, Masmorra, Duelo da Arena)** — mecânicas ATIVAS, clientes:
+ *  · **PvE (Pesadelo, Masmorra, Arena)** — mecânicas ATIVAS, clientes:
  *      - quando a energia do pet enche, o especial pede um ANEL que encolhe sobre o
  *        alvo: o toque no momento certo define o multiplicador (ruim / bom / ótimo);
  *      - quando o INIMIGO solta o especial dele, o jogador pode ESQUIVAR deslizando o
@@ -80,28 +80,6 @@ export function cheerTap(meter: number): CheerTap {
 /** 0..1 para a barra de CHEER. */
 export const cheerRatio = (meter: number): number => Math.min(1, Math.max(0, meter) / CHEER_TAPS_FULL);
 
-// ── PvE: números de luta ──────────────────────────────────────────────────────
-
-/**
- * As lutas de PvE ficaram mais LONGAS (04/10/2026): vida do pet e do inimigo × `PVE_HP_SCALE`
- * (o dano por golpe NÃO muda — são mais golpes para a mesma curva). Alvo: ~20–30 s por
- * inimigo (cada ida-e-volta ≈ 3,4 s na cena). A conta antes/depois está em `energia.test.ts`.
- */
-export const PVE_HP_SCALE = 1.8;
-/**
- * O inimigo também recebe energia pelos ataques (sem cheer) e solta o especial: para o
- * pet NÃO ficar mais forte "de graça" que na curva calibrada (a taxa de vitória sem torcer
- * é a de antes), a vida do inimigo sobe um pouco além do `PVE_HP_SCALE`.
- */
-export const PVE_FOE_HP_EXTRA = 1.1;
-/** Força do especial do pet em múltiplos do golpe-base (o 3× do dono, `TORCIDA_PVE_SPECIAL_MULT`). */
-export const PVE_SPECIAL_MULT = 3;
-/** Força do especial do INIMIGO em múltiplos do golpe normal dele. */
-export const PVE_FOE_SPECIAL_MULT = 2;
-
-export const pveHp = (base: number): number => Math.max(1, Math.round(base * PVE_HP_SCALE));
-export const pveFoeHp = (base: number): number => Math.max(1, Math.round(base * PVE_HP_SCALE * PVE_FOE_HP_EXTRA));
-
 // ── PvE (a): o ANEL do especial do pet ────────────────────────────────────────
 
 export type RingGrade = 'ruim' | 'bom' | 'otimo';
@@ -109,11 +87,8 @@ export type RingGrade = 'ruim' | 'bom' | 'otimo';
  * O multiplicador que o anel dá sobre o especial (média de um jogador comum ≈ 1).
  * Combate v3 (PR3b, §2.15 P4 e §2.17): 0,92 / 1 / 1,08 — a habilidade vale no máximo 25pp de vitória.
  * É a tabela do NÚCLEO (`combate/specials.ts`), reexportada aqui para o PvE; um teste trava a igualdade.
- * Quem ainda roda no motor antigo (Pesadelo e Masmorra, até o PR4) usa `RING_MULT_PRE_V3`.
  */
 export const RING_MULT: Record<RingGrade, number> = { ...RING_MULT_V3 };
-/** A tabela de antes do v3 (0,75 / 1 / 1,35): só o Pesadelo e a Masmorra, que seguem calibrados nela até o PR4. */
-export const RING_MULT_PRE_V3: Record<RingGrade, number> = { ruim: 0.75, bom: 1, otimo: 1.35 };
 /** Tamanho do anel que encolhe no início e quando encosta no alvo (escala 1). */
 export const RING_FROM = 2.4;
 export const RING_TO = 0.5;
@@ -148,11 +123,8 @@ export function ringGrade(tapMs: number | null, spec: RingSpec): RingGrade {
 export type DodgeGrade = 'nada' | 'bom' | 'otimo';
 /**
  * Quanto da pancada a esquiva tira (o resto é levado). Combate v3 (PR3b): 0 / 0,2 / 0,35, a tabela do núcleo.
- * O Pesadelo e a Masmorra seguem em `DODGE_REDUCE_PRE_V3` até o PR4.
  */
 export const DODGE_REDUCE: Record<DodgeGrade, number> = { ...DODGE_REDUCE_V3 };
-/** A tabela de antes do v3 (0 / 0,5 / 0,85): só o Pesadelo e a Masmorra, até o PR4. */
-export const DODGE_REDUCE_PRE_V3: Record<DodgeGrade, number> = { nada: 0, bom: 0.5, otimo: 0.85 };
 /** No último trecho antes do impacto a esquiva é ÓTIMA; antes disso (já com o projétil no ar) é boa. */
 export const DODGE_OTIMO_MS = 500;
 
@@ -177,29 +149,4 @@ export function dodgeGrade(swipeMs: number | null, spec: DodgeSpec): DodgeGrade 
   if (swipeMs === null || !Number.isFinite(swipeMs)) return 'nada';
   if (swipeMs < spec.castMs || swipeMs > spec.impactMs) return 'nada';
   return swipeMs >= spec.impactMs - DODGE_OTIMO_MS ? 'otimo' : 'bom';
-}
-
-// ── PvE: o dano ───────────────────────────────────────────────────────────────
-
-/** Fração do `dmg` do estágio que é o golpe-BASE do pet (a de `torcida.ts`, 0,5). */
-export const PVE_BASE_FRAC = 0.5;
-
-/** O golpe do pet: base, ou ESPECIAL (× `PVE_SPECIAL_MULT` × nota do anel). `guard` = a casca do inimigo. */
-export function pveStrikeDamage(o: { dmg: number; guard?: number; special?: boolean; ring?: RingGrade }): number {
-  const mult = o.special ? PVE_SPECIAL_MULT * RING_MULT_PRE_V3[o.ring ?? 'bom'] : 1;
-  return Math.max(1, Math.round(o.dmg * PVE_BASE_FRAC * mult * (1 - (o.guard ?? 0))));
-}
-
-/**
- * O golpe do inimigo no pet, com a defesa automática (`acc`). Golpe normal: `acc ≥ perfect` = bloqueado
- * (0). ESPECIAL: não dá para bloquear de graça — vale `PVE_FOE_SPECIAL_MULT ×` o golpe normal, e
- * a esquiva do jogador tira a parte dela (`DODGE_REDUCE_PRE_V3`; mínimo 1).
- */
-export function pveFoeHitDamage(o: {
-  atk: number; acc: number; perfect: number; reducaoDano?: number; special?: boolean; dodge?: DodgeGrade;
-}): { dmg: number; blocked: boolean } {
-  const base = Math.max(1, Math.ceil(o.atk * (1 - o.acc)) - (o.reducaoDano ?? 0));
-  if (!o.special) return o.acc >= o.perfect ? { dmg: 0, blocked: true } : { dmg: base, blocked: false };
-  const full = base * PVE_FOE_SPECIAL_MULT;
-  return { dmg: Math.max(1, Math.round(full * (1 - DODGE_REDUCE_PRE_V3[o.dodge ?? 'nada']))), blocked: false };
 }

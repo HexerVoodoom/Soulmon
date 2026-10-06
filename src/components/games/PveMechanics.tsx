@@ -1,7 +1,7 @@
 /**
  * AS DUAS MECÂNICAS ATIVAS DO PvE (04/10/2026, REGISTRO §20.10) — só desenho e gesto.
  * A regra (notas, multiplicadores, janelas) é de `utils/energia.ts`; o relógio é de
- * `usePveBattle.ts`. Nenhum texto explicativo na cena: só a figura e o nome acessível.
+ * `useGroupBattle.ts`. Nenhum texto explicativo na cena: só a figura e o nome acessível.
  *
  *  · `SpecialRing` — o anel que encolhe sobre o alvo (estilo Pokémon GO). Um toque QUALQUER na
  *    tela (ou o botão no alvo, para teclado) para o anel; perto do círculo do alvo = ótimo.

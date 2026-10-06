@@ -115,7 +115,7 @@ describe('hooks: startHp, startEnergy, hitScale, cheer, stopAtFirstKo', () => {
     expect(r.hpB).toBe(1);
     expect(seen.slice(0, 3)).toEqual([0, 1, 2]);
   });
-  it('a cheer discharge gives +3 energy; discharges bring the cast forward', () => {
+  it('a cheer discharge of the 1v1 (PvP) gives +3 energy (CHEER.pvpEnergyPerDischarge); discharges bring the cast forward', () => {
     const plain = drive({ seed: 8 }).log.find((e) => e.kind === 'cast' && e.side === 0) as FightEvent;
     const cheer = Array.from({ length: 12 }, (_, i) => ({ t: 1 + i, side: 0 as const }));
     const cheered = fight(dir, dir, { seed: 8, cheer });
@@ -128,7 +128,9 @@ describe('hooks: startHp, startEnergy, hitScale, cheer, stopAtFirstKo', () => {
     expect(t0).toBeLessThan(plain.t);
   });
   it('cheerEvents: 24 taps = 1 discharge, 16 taps per 3 s bucket accepted at most', () => {
-    expect(CHEER).toEqual({ tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 3 });
+    // PR4 (contexto §2.18): the PvE yield was raised to 90 by the owner's decision (the biggest that keeps the TTK within ±25%);
+    // the PvP yield (`fight()`) stays at the measured 3 — PR5 owns it.
+    expect(CHEER).toEqual({ tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 90, pvpEnergyPerDischarge: 3 });
     const fast = Array.from({ length: 100 }, (_, i) => i * 0.01); // 100 taps in 1 s → only 16 accepted
     expect(cheerEvents(fast, 0)).toHaveLength(0);
     const slow = Array.from({ length: 48 }, (_, i) => i * 0.5); // 6 per bucket → all accepted
