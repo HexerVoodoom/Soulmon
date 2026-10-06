@@ -76,7 +76,7 @@ no primeiro commit, o símbolo se reencontra por `grep`.
 [52. Bestiário](#bestiario) ·
 [53. Torneio: rodada, faixas e Arena](#torneio) ·
 [54. Minijogos: PPT e Corrida com obstáculos](#minijogos) ·
-[55. Vínculo e o gate de PvP](#vinculo) ·
+[55. Vínculo e o gate de PvP](#vinculo) · [55-B. Combate v3: level, talentos, equipamento e o teto de 5%](#combate-v3) ·
 [56. Comunidade e cooperativo](#comunidade) · [56-A. A Guilda](#guilda) ·
 [57. Estações](#estacoes) ·
 [57-A. Conquistas (emblemas de arte)](#conquistas) ·
@@ -4709,7 +4709,7 @@ torcida só SOMA. ⚰️ A torcida por *timing* (anel que fecha sobre o alvo) es
 ficha de cada lado = o SAVE (KV saveId), derivada no servidor: level = soulLevel(evolutionStage, perfectDays)
    LIMITADO pelo teto S1 (maxLevelFor: 1 + dias de servidor desde a 1ª gravação, metadata.f do KV; sem f vale o teto do estágio);
    stats = combatantAt(level, galho); família do especial = escola da skill especial da ficha (desconhecida = direct);
-   bônus = combinedBonus({ talent: 0, equipment: 0 }) — o canal do 5%, valor 0 até o PR7/PR8
+   bônus = os talentos e o equipamento DO SAVE, recalculados no servidor, no canal único de 5% (`combinedAttrBonus`; ⚰️ valia 0 até o PR7/PR8)
 luta = fight(me, opp, { seed do servidor, hpScale: PVP_HP_SCALE (1,7), cheer: descargas da torcida }) — empate quando os dois caem no mesmo instante
 torcida por BALDE de 3 s: o cliente manda os toques de cada balde (até 20 baldes, teto CHEER.tapsCapPerBucket = 16 por balde);
    24 toques aceitos = 1 descarga de CHEER.pvpEnergyPerDischarge (2,5) de energia no pet, que cai no FIM do balde; só soma
@@ -4963,9 +4963,12 @@ virou cobrança.
 1. Nenhuma função devolve XP negativo. Derrota de torneio **rende** XP.
 2. O teto diário é SUAVE: ao bater, simplesmente PARA de somar — como o limite de
    comida ("o pet está satisfeito"). Nunca um contador que desce.
-3. Recompensas são 100% cosméticas: decoração/cenário que já existem, sonhos do
-   `DREAM_CATALOG` e títulos. Nunca moeda, HP, energia, `perfectDays` ou
-   vantagem de combate.
+3. ⚰️ Até o PR7 do combate v3 (06/10/2026) valia "recompensas 100% cosméticas, nunca
+   vantagem de combate". **Reescrito** (REGISTRO §24 item 1): o catálogo `BOND_REWARDS`
+   segue cosmético (decoração/cenário, sonhos do `DREAM_CATALOG`, títulos), mas o Vínculo
+   é o level do usuário e dá 1 ponto de talento por Vínculo ([§55-B](#combate-v3)). A única
+   vantagem de combate é o talento, sob o teto único de 5%; nenhum caminho pago alcança
+   talento, ponto ou portão. Nunca moeda, HP, energia ou `perfectDays`.
 4. **O NÍVEL NUNCA É PERSISTIDO.** É sempre `bondLevelFor(totalXP)`. Guardar
    `bondLevel` no save seria o footgun 9 na forma mais cara: duas fontes para o
    mesmo número, uma delas gravada no aparelho de quem já joga.
@@ -5030,7 +5033,7 @@ calibração de retenção com um objetivo social.
 É um **LIMIAR, não uma manutenção**: `bondLevelFor` é monótona e `totalXP` nunca
 desce, então quem cruzou uma vez cruzou para sempre — sem janela, sem decaimento,
 sem "proteção de nível". **Todo destrave social futuro reusa ESTE nível**; uma
-escada de gates sociais é grind com outro nome.
+escada de gates sociais é grind com outro nome. ⚰️ **Revogado em 06/10/2026** (REGISTRO §24 item 2): os portões agora são UMA tabela (`src/utils/gates.ts`, [§55-B](#combate-v3)), todos sobre este mesmo nível.
 
 **Quem decide é o SERVIDOR.** O cliente tem `meetsPvpBond(totalXP)` e
 `xpToPvpBond(totalXP)`, que só desenham a tela. A decisão real acontece em
@@ -5082,6 +5085,33 @@ Não destrava capacidade de cuidar do bicho.
 nome do pet — `CompanionHUD.vinculo.render.test.tsx`),
 `src/components/TournamentPage.tsx` (o gate: quanto falta de XP, com o texto
 vindo do servidor).
+
+---
+
+<a id="combate-v3"></a>
+## 55-B. ⚔️ Combate v3: level, talentos, equipamento e o teto de 5%
+
+**Em uma frase.** O Soulmon tem um level (`Lv N`) que vem dos dias completos e da evolução, a pessoa tem um level (`Vínculo N`) que vira pontos de talento, e tudo o que dá vantagem em luta passa por UM teto de 5%.
+
+**A regra.** O motor é o núcleo puro `src/utils/combate/` (curva, level, golpe normalizado, sorte, especiais, régua pareada), espelhado no servidor em `functions/api/_combate.js`, `_gates.js`, `_talents.js` e `_equipment.js`, cada um travado por um teste `*.parity.test.js`.
+
+- **Golpe normalizado.** Cada ataque vale ~1/10 do espelho em qualquer level (`HIT_UNIT_H0` = 10), com sorte AR(1) de ρ = 0,9 e σ = 8% (`VARIANCE`). A luta, o Soulmon e o adversário usam o mesmo motor na Arena, na Masmorra, no Pesadelo e no Duelo.
+- **Level do Soulmon.** HP sobe sozinho com o level; os pontos de distribuição vão só para ATK/DEF/SPD, conduzidos pelo galho dominante. Na degeneração o level desce, com texto neutro (`copy.semFomo`). Os chips dão só pontos de tipo (Poder/Harmonia/Benevolência) e afetam apenas a evolução (§47).
+- **Vínculo = level do usuário.** Fonte única: `bondLevelFor(totalXP)` (nunca persistido). Pontos de talento = Vínculo, até `TALENT_POINTS_MAX` (20). Persiste só `talentPicks: string[]` (um id por grau; vetor inválido é descartado inteiro no `save.js`). Respec sempre pago em Bits ganhos (`RESPEC_COST_PER_POINT`).
+- **Portões** (`GATES`, `src/utils/gates.ts`): Arena/PvP e Torneio no Vínculo 5, andares altos da Masmorra (a partir do andar 4) no 8, Renascimento no 12 (somado à conta paga). O dinheiro nunca compra Vínculo. Valores são defaults da squad, o dono os confirma.
+- **Teto único de 5%** (`COMBAT_BONUS_CAP`): talento e equipamento entram como bônus em ATK/DEF/SPD pelo `combinedAttrBonus`; a SOMA dos canais nunca passa de 5% (acima disso os três escalam juntos). Vale também no PvP (decisão consciente do dono, REGISTRO §24 item 3); o servidor recalcula tudo do save.
+- **Equipamento** (`src/utils/equipment.ts`): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD) × 3 tiers (`TIER_PCT` 0,5/1/1,5%), por loja direta em Bits GANHOS (`TIER_BITS`) ou fragmentos (`TIER_FRAGMENTS`; `FRAGMENTS_PER_RUN` = 5 pela run completa da Masmorra). Sem sorteio, sem caixa. Percentual, nunca ponto plano.
+- **Procedência dos Bits** (`src/utils/bitsOrigin.ts`): `gamePoints` segue um número só; `bitsOrigin` guarda quanto veio de Crédito e o câmbio do dia. O equipamento só enxerga `saldo − paidLeft`. O câmbio Créditos→Bits cabe em `CREDIT_BITS_CAP_RATIO` (25%) do ganho grátis do dia. É regra de cliente (save local-first); o servidor garante a forma e o teto de 5%.
+- **Torcida** só na Arena e no Duelo: `CHEER.energyPerDischarge` = 9 na Arena (o maior valor com a torcida sozinha ≤ 25pp de vitória) e `CHEER.pvpEnergyPerDischarge` = 2,5 no Duelo. Masmorra e Pesadelo não têm torcida. Anel e esquiva ficam fora da régua (±25%); `ROLE_SHAPE` também.
+- **Sorteio do inimigo da Arena** é estratificado por elemento (`pickEnemyCreature`): primeiro o elemento, com chance igual entre os que o pool tem, depois uma criatura dentro dele. Sem isso, o corpus de 7.386 criaturas (vida em 18%) tirava ~9pp de vitória de quem usa vida/terra/gravidade.
+- **Duelo.** `_duel.js` lê o save dos DOIS lados; o teto S1 limita o level a 1 por dia de servidor desde a 1ª gravação (`metadata.f` do KV), só no duelo. Empate é resultado válido, sem pontos. O especial do oponente é nomeado no aparelho, por regra, a partir do ID exato que o servidor publica (sem IA, sem texto do save).
+- **Evocação** deixou de ser escola de skill (PR9b): segue só como pontos da ficha, pelo companheiro capturável.
+
+**Régua** (medida em 06/10/2026 sobre a `main` com o #232; `npx vitest run src/utils/arena.v3.test.ts src/utils/dungeon.v3.test.ts`, N = 3200): Arena, duração mediana R1–R5 de 19,7 a 27,6 s; vitória por build 64,0–68,6% (spread 4,6pp); 14 células família × área 60,3–72,3% (12,1pp); habilidade `nenhuma` 48,4% × `boa` 72,0% (23,6pp); torcida sozinha no teto +24,8pp (`nenhuma`) e +17,9pp (`boa`). Masmorra: andares limpos 83,5–89,6% (6,1pp). Detalhe e alternativas descartadas: REGISTRO §24.6.
+
+**O que NÃO faz.** Nenhum caminho pago dá talento, ponto, portão ou equipamento; não há sorteio pago; a torcida não vale Crédito; nada disto cobra o jogador (`copy.semFomo`).
+
+**Dono.** `src/utils/combate/` (motor), `src/utils/talents.ts`, `src/utils/equipment.ts`, `src/utils/bitsOrigin.ts`, `src/utils/gates.ts`, `src/utils/arena.ts`, `functions/api/_combate.js`, `_duel.js`, `_talents.js`, `_equipment.js`, `_gates.js`. **Onde a UI mostra:** StatsPage (talentos, `EquipmentCard`, "Vínculo N"), Arena, Duelo, aba de Créditos.
 
 ---
 

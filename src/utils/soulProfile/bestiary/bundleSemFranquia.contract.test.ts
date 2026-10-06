@@ -15,7 +15,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 const DIST = join(process.cwd(), 'dist', 'assets');
 
@@ -50,14 +50,14 @@ function todos(): string[] {
   return readdirSync(DIST).filter(f => f.endsWith('.js')).map(f => join(DIST, f));
 }
 function bundles(): string[] {
-  return todos().filter(f => !POOL_CHUNK.test(f.split('/').pop()!));
+  return todos().filter(f => !POOL_CHUNK.test(basename(f)));
 }
 
 describe('o `dist/` servido não carrega criatura de franquia', () => {
   const arquivos = bundles();
 
   it('a exceção é UM chunk do pool, sob demanda — o bundle de entrada não o contém', () => {
-    const pools = todos().filter(f => POOL_CHUNK.test(f.split('/').pop()!));
+    const pools = todos().filter(f => POOL_CHUNK.test(basename(f)));
     expect(pools.length, 'o pool deve ser um único chunk `pool-*.js`').toBe(1);
     const entrada = todos().filter(f => /\/index-[^/]+\.js$/.test(f));
     for (const f of entrada) {
@@ -76,7 +76,7 @@ describe('o `dist/` servido não carrega criatura de franquia', () => {
     for (const f of arquivos) {
       const src = readFileSync(f, 'utf8');
       for (const nome of PROIBIDOS) {
-        if (src.includes(nome)) achados.push(`${f.split('/').pop()}: ${nome}`);
+        if (src.includes(nome)) achados.push(`${basename(f)}: ${nome}`);
       }
     }
     expect(achados).toEqual([]);
@@ -85,7 +85,7 @@ describe('o `dist/` servido não carrega criatura de franquia', () => {
   it('nenhuma descrição nomeia o titular do direito', () => {
     const achados = arquivos
       .filter(f => TITULARES.test(readFileSync(f, 'utf8')))
-      .map(f => f.split('/').pop()!);
+      .map(f => basename(f));
     expect(achados).toEqual([]);
   });
 });
