@@ -55,7 +55,7 @@ import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type 
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -116,10 +116,10 @@ export function NightmareBattle({
   const estado = useMemo<SoulXPState>(() => soul ?? { evolutionStage: petStage }, [soul, petStage]);
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado),
-    family: dungeonFamily(par?.especial?.escolaId),
+    family: dungeonFamily(par?.especial),
     jeito: jeitoDaProfissao(profissao),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [estado, par?.especial?.escolaId, profissao]);
+  }), [estado, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
@@ -274,6 +274,7 @@ export function NightmareBattle({
       >
         <BattleStage
           specialLabel={specialLabel(isPt, par?.especial)}
+          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           scene={NIGHTMARE_SCENE.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,

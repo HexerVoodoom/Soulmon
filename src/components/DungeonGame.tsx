@@ -20,7 +20,7 @@ import { ENERGY_TRIGGER } from '../utils/combate/specials';
 import { mulberry32 } from '../utils/combate/rng';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
@@ -152,10 +152,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado),
-    family: dungeonFamily(par?.especial?.escolaId),
+    family: dungeonFamily(par?.especial),
     jeito,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [estado, par?.especial?.escolaId, profissao]);
+  }), [estado, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
@@ -390,6 +390,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       >
         <BattleStage
           specialLabel={specialLabel(isPt, par?.especial)}
+          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           scene={scene.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,

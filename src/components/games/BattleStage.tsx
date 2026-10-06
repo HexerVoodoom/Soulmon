@@ -428,13 +428,27 @@ export interface BattleStageProps {
   mechLabels?: { strike: string; dodgeLeft: string; dodgeRight: string };
   /** O texto do selo do especial (`specialLabel(isPt)` de `utils/combatFx.ts`); sem ele, o EN. */
   specialLabel?: string;
+  /** PR9: o selo do especial de um INIMIGO (nome por regra do elemento dele). Sem ele, cai em `specialLabel`. */
+  foeSpecialLabel?: (foe: { name: string; element?: string }) => string;
   children?: ReactNode;
+}
+
+/** O texto do selo: o nome do pet quando ele conjura; o do inimigo (por regra do elemento) quando é ele. */
+function bannerLabel(
+  action: StageAction, foes: ReadonlyArray<{ name: string; element?: string }>,
+  specialLabel: string | undefined, foeLabel: BattleStageProps['foeSpecialLabel'],
+): string {
+  if (action.actor === 'foe' && foeLabel) {
+    const f = foes[Math.min(action.foe, foes.length - 1)];
+    if (f) return foeLabel(f);
+  }
+  return specialLabel ?? SPECIAL_LABEL.en;
 }
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, children,
+  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
@@ -563,7 +577,7 @@ export function BattleStage({
         <FighterBars fighter={me} spot={layout.me} tone="cyan" numeric barsH={layout.barsH} />
 
         {action && <ActionFx key={action.id} action={action} layout={layout} reduced={reduced} />}
-        {action?.kind === 'special' && <SpecialBanner key={`sp${action.id}`} action={action} layout={layout} label={specialLabel ?? SPECIAL_LABEL.en} />}
+        {action?.kind === 'special' && <SpecialBanner key={`sp${action.id}`} action={action} layout={layout} label={bannerLabel(action, foes, specialLabel, foeSpecialLabel)} />}
         {charging && !action?.shield && (
           <div key="charge" aria-hidden="true" data-stage-charging className="sm-bs-charge" style={{ position: 'absolute', left: layout.me.x - layout.me.size * 0.7, top: meBody.y - layout.me.size * 0.7, width: layout.me.size * 1.4, height: layout.me.size * 1.4, zIndex: 2, pointerEvents: 'none', borderRadius: '50%' }} />
         )}

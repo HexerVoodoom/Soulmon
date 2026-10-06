@@ -34,7 +34,7 @@ import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  fxElementId, impactMs, prefersReducedMotion, visualElementFor, fighterStrikeForm, specialLabel,
+  fxElementId, impactMs, prefersReducedMotion, visualElementFor, fighterStrikeForm, specialLabel, foeSpecialLabel,
   type StageActionKind,
 } from '../utils/combatFx';
 import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
@@ -82,6 +82,9 @@ export interface DuelScreenProps {
   skills?: FichaSkills;
   /** Elemento do oponente (o servidor não o publica: o chamador dá um visual determinístico). */
   oppElement?: string;
+  /** PR9/PR5: o nome do especial do oponente, vindo do PERFIL dele no servidor (campo do payload do duelo; o PR5 liga).
+   *  Ausente (fantasma, servidor antigo): o nome sai por regra do elemento dele. */
+  oppSpecial?: { pt: string; en: string };
   /** Fim da luta animada: os toques de cada BALDE vão para o servidor decidir. */
   onDone: (taps: number[]) => void;
   onClose: () => void;
@@ -92,7 +95,7 @@ const escolaDe = (e: string | null | undefined): { escolaId: EscolaId } | null =
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', skills, oppElement, onDone, onClose,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', skills, oppElement, oppSpecial, onDone, onClose,
 }: DuelScreenProps) {
   const meEl = fxElementId(petElement);
   const oppEl = fxElementId(oppElement ?? visualElementFor(oppName));
@@ -279,6 +282,7 @@ export function DuelScreen({
         scene={ARENA_SCENE.bg}
         sceneElement={oppEl}
         specialLabel={specialLabel(isPt, par?.especial)}
+        foeSpecialLabel={(f) => (oppSpecial?.[isPt ? 'pt' : 'en']?.trim()) || foeSpecialLabel(isPt, f.element, f.name)}
         me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER }]}
         action={acao}

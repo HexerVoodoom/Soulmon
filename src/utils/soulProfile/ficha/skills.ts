@@ -29,6 +29,9 @@ import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
 import { essenceLabel, baseElementLabel } from '../essenceLabels';
 import { CLASS_DATA } from './buildSheet';
 import type { AreaConfig } from 'class-system';
+import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
+import { SCHOOL_STRIKE_FORM, type StrikeForm } from './strikeForm';
+import { familiaDoEspecial, nomeDoEspecial, descricaoDoEspecial, SUBSTANTIVOS_ESPECIAL } from './nomeEspecial';
 
 export interface SkillText { pt: string; en: string }
 
@@ -46,6 +49,11 @@ export interface StageSkill {
    *  em círculo de 4 m (`RAIO_MAXIMO_BASE` do class-system), as outras de alvo único.
    *  O núcleo de combate lê `area.tipo === 'circulo'` como área. */
   area: AreaConfig;
+  /** PR9: a família do efeito (uma das 7 do núcleo de combate). A básica é sempre `direct`; a do especial
+   *  muda a cada estágio. Ausente só em dado antigo: os consumidores caem em `familyOfEscola`. */
+  familia?: SpecialFamily;
+  /** PR9: a forma do golpe (corpo a corpo ou à distância) — a tabela da escola, lida do dono único. */
+  forma?: StrikeForm;
   /** Custo qualitativo por desenho: básica é frequente, especial é rara. */
   custo: 'baixo' | 'alto';
   /** Impacto REAL calculado pelo motor do class-system (`calcularSkill`),
@@ -72,7 +80,7 @@ export function areaDaEscola(escola: EscolaId): AreaConfig {
 
 const PAR_NOME = new Map(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d]));
 
-function elementoNomeDe(id: string): SkillText {
+export function elementoNomeDe(id: string): SkillText {
   const par = PAR_NOME.get(id);
   if (par) {
     const candidate = { id: par.id, nome: par.nome, score: 0, componentes: par.componentes };
@@ -81,10 +89,9 @@ function elementoNomeDe(id: string): SkillText {
   return { pt: baseElementLabel(id, true), en: baseElementLabel(id, false) };
 }
 
-/** Substantivos por escola — 2 variantes por tipo, sorteio determinístico. */
+/** Substantivos da BÁSICA por escola, sorteio determinístico. O ESPECIAL tem léxico, família e nome próprios em `nomeEspecial.ts` (PR9). */
 const NOMES: Record<EscolaId, {
   basica: Array<{ pt: string; en: string }>;
-  especial: Array<{ pt: string; en: string }>;
 }> = {
   // SEIS por (escola, tipo), não dois: a jornada tem 5 estágios e o
   // anti-repetição da rodada 1 esgotava o banco no 3º, voltando a mostrar
@@ -93,51 +100,34 @@ const NOMES: Record<EscolaId, {
   combate_fisico: {
     basica: [{ pt: 'Golpe de', en: 'Strike' }, { pt: 'Investida de', en: 'Rush' }, { pt: 'Corte de', en: 'Slash' },
       { pt: 'Impacto de', en: 'Impact' }, { pt: 'Pancada de', en: 'Smash' }, { pt: 'Estocada de', en: 'Thrust' }],
-    especial: [{ pt: 'Fúria de', en: 'Fury' }, { pt: 'Avalanche de', en: 'Avalanche' }, { pt: 'Devastação de', en: 'Devastation' },
-      { pt: 'Carnificina de', en: 'Onslaught' }, { pt: 'Colosso de', en: 'Colossus' }, { pt: 'Ruína de', en: 'Ruin' }],
   },
   longo_alcance: {
     basica: [{ pt: 'Disparo de', en: 'Shot' }, { pt: 'Flecha de', en: 'Arrow' }, { pt: 'Dardo de', en: 'Dart' },
       { pt: 'Míssil de', en: 'Missile' }, { pt: 'Lança de', en: 'Lance' }, { pt: 'Estilhaço de', en: 'Shard' }],
-    especial: [{ pt: 'Chuva de', en: 'Barrage' }, { pt: 'Salva de', en: 'Volley' }, { pt: 'Dilúvio de', en: 'Deluge' },
-      { pt: 'Tempestade de', en: 'Storm' }, { pt: 'Enxame de', en: 'Swarm' }, { pt: 'Julgamento de', en: 'Judgement' }],
   },
   conjuracao: {
     basica: [{ pt: 'Lampejo de', en: 'Spark' }, { pt: 'Rajada de', en: 'Bolt' }, { pt: 'Selo de', en: 'Sigil' },
       { pt: 'Fagulha de', en: 'Ember' }, { pt: 'Trama de', en: 'Weave' }, { pt: 'Pulso de', en: 'Pulse' }],
-    especial: [{ pt: 'Tormenta de', en: 'Tempest' }, { pt: 'Cataclismo de', en: 'Cataclysm' }, { pt: 'Vórtice de', en: 'Vortex' },
-      { pt: 'Nova de', en: 'Nova' }, { pt: 'Singularidade de', en: 'Singularity' }, { pt: 'Apocalipse de', en: 'Apocalypse' }],
   },
   benca: {
     basica: [{ pt: 'Toque de', en: 'Touch' }, { pt: 'Sopro de', en: 'Breath' }, { pt: 'Bênção de', en: 'Blessing' },
       { pt: 'Carícia de', en: 'Caress' }, { pt: 'Orvalho de', en: 'Dew' }, { pt: 'Abrigo de', en: 'Shelter' }],
-    especial: [{ pt: 'Êxtase de', en: 'Rapture' }, { pt: 'Aurora de', en: 'Halo' }, { pt: 'Milagre de', en: 'Miracle' },
-      { pt: 'Renascer de', en: 'Rebirth' }, { pt: 'Santuário de', en: 'Sanctuary' }, { pt: 'Coral de', en: 'Choir' }],
   },
   maldicao: {
     basica: [{ pt: 'Marca de', en: 'Mark' }, { pt: 'Aflição de', en: 'Bane' }, { pt: 'Praga de', en: 'Blight' },
       { pt: 'Sussurro de', en: 'Whisper' }, { pt: 'Mordida de', en: 'Bite' }, { pt: 'Grilhão de', en: 'Shackle' }],
-    especial: [{ pt: 'Sentença de', en: 'Doom' }, { pt: 'Eclipse de', en: 'Eclipse' }, { pt: 'Maldição de', en: 'Curse' },
-      { pt: 'Réquiem de', en: 'Requiem' }, { pt: 'Devorar de', en: 'Devouring' }, { pt: 'Colapso de', en: 'Collapse' }],
   },
   evocacao: {
     basica: [{ pt: 'Chamado de', en: 'Call' }, { pt: 'Eco de', en: 'Echo' }, { pt: 'Vulto de', en: 'Wisp' },
       { pt: 'Aceno de', en: 'Beckon' }, { pt: 'Presságio de', en: 'Omen' }, { pt: 'Rastro de', en: 'Trail' }],
-    especial: [{ pt: 'Convocação de', en: 'Summoning' }, { pt: 'Legião de', en: 'Legion' }, { pt: 'Alcateia de', en: 'Pack' },
-      { pt: 'Aparição de', en: 'Apparition' }, { pt: 'Coroa de', en: 'Crown' }, { pt: 'Dinastia de', en: 'Dynasty' }],
   },
 };
 
-const DESCRICAO: Record<'basica' | 'especial', (el: SkillText, recurso: string, recursoEn: string) => SkillText> = {
-  basica: (el, recurso, recursoEn) => ({
-    en: `A quick ${el.en.toLowerCase()} technique with a low ${recursoEn.toLowerCase()} cost — reliable, ready whenever it's needed.`,
-    pt: `Uma técnica rápida de ${el.pt.toLowerCase()} com custo baixo de ${recurso.toLowerCase()} — confiável, pronta sempre que precisar.`,
-  }),
-  especial: (el, recurso, recursoEn) => ({
-    en: `A devastating burst of ${el.en.toLowerCase()} that drains ${recursoEn.toLowerCase()} — saved for the moments that matter.`,
-    pt: `Uma explosão devastadora de ${el.pt.toLowerCase()} que drena ${recurso.toLowerCase()} — guardada para os momentos decisivos.`,
-  }),
-};
+/** Descrição da BÁSICA (a do especial vem da família: `descricaoDoEspecial`). */
+const DESCRICAO_BASICA = (el: SkillText, recurso: string, recursoEn: string): SkillText => ({
+  en: `A quick ${el.en.toLowerCase()} technique with a low ${recursoEn.toLowerCase()} cost — reliable, ready whenever it's needed.`,
+  pt: `Uma técnica rápida de ${el.pt.toLowerCase()} com custo baixo de ${recurso.toLowerCase()} — confiável, pronta sempre que precisar.`,
+});
 
 /** Nome EN dos recursos (o snapshot é PT-only). */
 const RECURSO_EN: Record<RecursoId, string> = {
@@ -156,7 +146,7 @@ function rankElementos(ficha: Ficha): Array<{ id: string; peso: number }> {
 
 const DISTRIBUIDAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'];
 
-function escolaDominante(ficha: Ficha): EscolaId {
+export function escolaDominante(ficha: Ficha): EscolaId {
   let melhor: EscolaId = 'conjuracao';
   let melhorPts = -1;
   for (const escola of DISTRIBUIDAS) {
@@ -177,9 +167,11 @@ export function buildStageSkills(
   ficha: Ficha,
   stage: FichaStage,
   seedKey: string,
-  /** Substantivos já usados nos estágios anteriores — a jornada não pode
-   *  mostrar "Investida de Ar" em três cards seguidos. Mutado ao gerar. */
+  /** Substantivos e famílias já usados nos estágios anteriores — a jornada não pode mostrar o mesmo
+   *  nome nem o mesmo efeito de especial em dois cards. Mutado ao gerar (chaves `esp:` e `fam:`). */
   usados?: Set<string>,
+  /** Elemento dominante da leitura do perfil (tendência leve da família do especial). */
+  tendencia?: string,
 ): StageSkills {
   const ranked = rankElementos(ficha);
   const topBase = ranked.find(r => BASE_SET.has(r.id))?.id ?? CLASS_ELEMENT_ORDER[0];
@@ -196,40 +188,69 @@ export function buildStageSkills(
 
   const rng = mulberry32(hashString(`${seedKey}|skills|${stage}`));
 
-  const montar = (tipo: 'basica' | 'especial', elementoId: string): StageSkill => {
+  const base = (tipo: 'basica' | 'especial', elementoId: string) => {
     const el = elementoNomeDe(elementoId);
-    // evita repetir o mesmo substantivo em estágios diferentes: a ficha
-    // escala mantendo a identidade (mesmo elemento dominante), então sem isto
-    // a página do Pet mostrava o mesmo nome de skill em 3 formas seguidas.
-    const banco = NOMES[escola][tipo];
-    const livres = usados ? banco.filter(n => !usados.has(n.pt)) : banco;
-    const substantivo = pick(rng, livres.length > 0 ? livres : banco);
-    usados?.add(substantivo.pt);
     return {
       tipo,
-      nome: { pt: `${substantivo.pt} ${el.pt}`, en: `${el.en} ${substantivo.en}` },
-      descricao: DESCRICAO[tipo](el, recursoNomePt, recursoNomeEn),
       elementoId,
       elementoNome: el,
       escolaId: escola,
       area: areaDaEscola(escola),
       recursoId: recurso,
-      custo: tipo === 'basica' ? 'baixo' : 'alto',
+      forma: SCHOOL_STRIKE_FORM[escola][tipo],
+      custo: (tipo === 'basica' ? 'baixo' : 'alto') as 'baixo' | 'alto',
     };
   };
 
-  return { basica: montar('basica', elBasica), especial: montar('especial', elEspecial) };
+  const montarBasica = (): StageSkill => {
+    const b = base('basica', elBasica);
+    const el = b.elementoNome;
+    // evita repetir o mesmo substantivo em estágios diferentes: a ficha escala mantendo a identidade.
+    const banco = NOMES[escola].basica;
+    const livres = usados ? banco.filter(n => !usados.has(n.pt)) : banco;
+    const substantivo = pick(rng, livres.length > 0 ? livres : banco);
+    usados?.add(substantivo.pt);
+    return {
+      ...b,
+      nome: { pt: `${substantivo.pt} ${el.pt}`, en: `${el.en} ${substantivo.en}` },
+      descricao: DESCRICAO_BASICA(el, recursoNomePt, recursoNomeEn),
+      familia: 'direct',
+    };
+  };
+
+  // PR9 (§2.4 Q6/Q8): o especial de CADA estágio é novo — família e nome por regra, sem IA.
+  const montarEspecial = (): StageSkill => {
+    const b = base('especial', elEspecial);
+    const familiasUsadas = new Set<SpecialFamily>(
+      SPECIAL_FAMILIES.filter(f => usados?.has(`fam:${f}`)),
+    );
+    const familia = familiaDoEspecial({ escola, elementoId: elEspecial, tendencia, seedKey, stage, familiasUsadas });
+    const evitar = new Set([...(usados ?? [])].filter(k => k.startsWith('esp:')).map(k => k.slice(4)));
+    const nome = nomeDoEspecial({ familia, elemento: b.elementoNome, elementoBasica: elementoNomeDe(elBasica), seedKey, stage }, evitar);
+    usados?.add(`fam:${familia}`);
+    // a chave do substantivo é o EN dele (o primeiro token que não é elemento): guardamos o nome inteiro EN
+    for (const n of SUBSTANTIVOS_ESPECIAL[familia]) if (nome.en.includes(n.en)) usados?.add(`esp:${n.en}`);
+    return {
+      ...b,
+      nome,
+      descricao: descricaoDoEspecial(familia, b.elementoNome, { pt: recursoNomePt, en: recursoNomeEn }),
+      familia,
+    };
+  };
+
+  return { basica: montarBasica(), especial: montarEspecial() };
 }
 
 /** As skills de todos os estágios de uma vez (pipeline / persistência). */
 export function buildAllStageSkills(
   fichaByStage: Record<FichaStage, Ficha>,
   seedKey: string,
+  tendencia?: string,
 ): Record<FichaStage, StageSkills> {
   const saida = {} as Record<FichaStage, StageSkills>;
   const usados = new Set<string>();
   for (const stage of Object.keys(fichaByStage) as FichaStage[]) {
-    saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey, usados);
+    saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey, usados, tendencia);
   }
   return saida;
 }
