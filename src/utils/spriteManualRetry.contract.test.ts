@@ -10,6 +10,10 @@ import {
   type SpriteLibrary,
 } from './spriteLibrary';
 import { SpriteGenError } from './spriteGen';
+// Import ESTÁTICO (fase de coleta, sem hookTimeout): antes era `await import()` no
+// `beforeEach`, e o grafo frio do hook estourava o teto de hook sob carga.
+// O `vi.mock('./spriteGen')` abaixo é içado, então vale para este import também.
+import { useSpriteGeneration } from '../hooks/useSpriteGeneration';
 
 // ---------------------------------------------------------------------------
 // O BOTÃO "TENTAR DE NOVO" — inerte desde o commit 60b0c89b.
@@ -69,14 +73,10 @@ function montar(over: { library?: SpriteLibrary; stages?: unknown } = {}) {
   return { hook, acervo: () => lib };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let useSpriteGeneration: any;
-
-beforeEach(async () => {
+beforeEach(() => {
   requestSprite.mockReset();
   vi.useFakeTimers();
   vi.setSystemTime(AGORA);
-  ({ useSpriteGeneration } = await import('../hooks/useSpriteGeneration'));
 });
 afterEach(() => { vi.useRealTimers(); });
 

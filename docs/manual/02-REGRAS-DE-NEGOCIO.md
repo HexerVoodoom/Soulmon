@@ -4456,27 +4456,21 @@ diário e sem porta de entrada — e perder **não custa um único coração**.
 subindo `LADDER_TIERS` em ordem: `baby-i → baby-ii → rookie → champion →
 ultimate → mega`.
 
-`buildDungeonWave(level, petStage)` (`src/utils/dungeon.ts`) monta a onda. A
-dificuldade do andar F é `base + (F − 1)`, e um "nível" vale grosso modo um tier
-de jogador — andar 1 serve um rookie, andar 2 um champion. Sobre `TIER_BASE`,
-com `step = max(0, level − 1)`:
-
-```
-hpMult      = 1 + 0.14 × step        (mais ±10% de variância por inimigo)
-atkMult     = 1 + 0.20 × step
-dmgReduction= min(0.72, 0.11 × step)
-speedBump   = min(0.50, 0.05 × step)
-ptsMult     = 1 + 0.12 × step
-```
-
-Stats do jogador: `PLAYER_STATS` (`src/utils/dungeon.ts`), por estágio, de
-`baby-i` (hp 10 / dmg 3) a `ultra` (hp 20 / dmg 8), resolvidos por
-`playerStatsFor` com `rookie` como piso. ⚠️ Essa tabela é lida também pelo
-Pesadelo e pela Arena — mexer nela muda os três de uma vez, e nenhum avisa.
+`buildDungeonWave(level, petStage, rng, playerLevel)` (`src/utils/dungeon.ts`) monta a onda. A
+dificuldade do andar F é `base + (F − 1)`. **Combate v3 (PR4, 06/10/2026): o inimigo é
+RELATIVO ao level do jogador.** `dungeonFoe(playerLevel, slot, floor)` devolve o espelho
+balanceado do level, com vida × `DUNGEON_SLOTS[slot].hp` e força × `.power` (o 6º slot
+solta um especial `direct`), e cada andar acima do 1 soma `DUNGEON_FLOOR_GROWTH` (vida
++14%, força +11% por andar), com piso de `DUNGEON_MIN_HITS` (3) golpes do melhor atacante
+do level. Por isso a parede é a mesma para todo level. Só os Bits seguem um multiplicador
+por andar: `ptsMult = 1 + 0.12 × (F − 1)`. ⚰️ `TIER_BASE`, o `step` com `hpMult`/`atkMult`/
+`dmgReduction`/`speedBump` e a tabela `PLAYER_STATS` (com `playerStatsFor`) saíram no PR4:
+o jogador é o `soulCombatant` do level, e a Arena e o Pesadelo leem o mesmo núcleo
+(`utils/combate/`), não uma tabela por estágio.
 
 **Recompensas.** Bits por inimigo (`enemy.points`) + bônus de andar
 `clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
-`ceil(playerStats.hp × 0.25)`; o HP do jogador **carrega** entre andares. Limpar
+uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício); o HP do jogador **carrega** entre andares. Limpar
 os 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base
 (`setDungeonDifficultyAtLeast(base + 1)`).
 

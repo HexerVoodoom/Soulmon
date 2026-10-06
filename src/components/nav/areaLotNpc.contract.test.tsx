@@ -13,7 +13,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { renderWithCss } from '../../test/renderEnv';
+import { render } from '@testing-library/react';
+import { installDomGlobals } from '../../test/renderEnv';
 import { AreaSheet } from './AreaSheet';
 import { LOT_NPC_ART, lotNpcArt } from '../../assets/soulmon/npcs';
 import { LOT_NPC_VOICE, lotNpcVoice } from '../../utils/areaNpcVoice';
@@ -57,6 +58,11 @@ describe('H11 — a tabela lote → NPC é única e completa', () => {
   });
 });
 
+// A leitura do NPC (src do busto + texto da linha) não depende de CSS: instalar o
+// `index.css` real (milhares de regras) só encarecia cada uma das 400 montagens
+// (11,7 s sob carga, contra o teto de 15 s). Os globais do jsdom bastam.
+installDomGlobals();
+
 describe('H11 — escolha determinística: N aberturas, sempre o mesmo NPC', () => {
   it('arte e voz de cada lote são idênticas em 50 chamadas, com Math.random proibido e relógio mexendo', () => {
     const rnd = vi.spyOn(Math, 'random').mockImplementation(() => { throw new Error('Math.random proibido na escolha do NPC'); });
@@ -79,12 +85,16 @@ describe('H11 — escolha determinística: N aberturas, sempre o mesmo NPC', () 
     expect(rnd).not.toHaveBeenCalled();
   });
 
-  it('a folha (AreaSheet) aberta 20 vezes por lote mostra sempre o mesmo busto e o mesmo nome', () => {
-    for (const k of ALL_KEYS) {
-      const [a, l] = k.split(':') as [AreaId, string];
+  // Um `it` POR ÁREA (e não um laço de 400 montagens num só): cada área ganha o seu
+  // próprio orçamento de teste, e o que cada uma prova (20 aberturas por lote, sempre
+  // o mesmo busto e nome) não mudou. Medido: o laço único levava ~10,5 s de 15 s sob carga.
+  it.each(LOTS)('a folha (AreaSheet) aberta 20 vezes por lote de %s mostra sempre o mesmo busto e o mesmo nome', (area, ids) => {
+    for (const l of ids) {
+      const a = area;
+      const k = `${a}:${l}`;
       const seen = new Set<string>();
       for (let i = 0; i < 20; i++) {
-        const r = renderWithCss(
+        const r = render(
           <AreaSheet areaId={a} lotId={l} language="pt-BR" title="t" closeLabel="x" open onClose={() => {}}><p>x</p></AreaSheet>,
         );
         const img = r.container.querySelector('[data-area-sheet-npc]') as HTMLImageElement;

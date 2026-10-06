@@ -109,6 +109,14 @@ beforeEach(() => {
 // teste ganha um teto de runner maior que o da espera (a espera estoura antes
 // e diz o que não achou).
 const ESPERA_LAZY_MS = 30_000;
+// Pré-aquecimento: os chunks `lazy()` que a suíte abre são importados AQUI, na
+// fase de coleta (sem teto de teste), e não dentro do primeiro `it` que clica.
+// Os doubles de `vi.mock` acima já valem; depois disso o `lazy()` do AreaView
+// resolve do cache de módulos e o `waitFor` só espera o React, não o disco.
+await Promise.all([
+  import('./PlaySheets'), import('../DungeonGame'), import('./OficinaSheet'),
+  import('./CadernoSheet'), import('./PasseioSheet'),
+]);
 vi.setConfig({ testTimeout: 60_000 });
 
 /** O conteúdo da folha e os jogos entram por `lazy()` no `AreaView`
