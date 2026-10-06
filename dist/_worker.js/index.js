@@ -2807,11 +2807,25 @@ function tooManyRequests(retryAfter, cors = {}) {
 }
 __name(tooManyRequests, "tooManyRequests");
 
+// api/_gates.js
+var GATES = {
+  pvp: { minBond: 5 },
+  torneio: { minBond: 5 },
+  masmorraAlto: { minBond: 8 },
+  renascimento: { minBond: 12 }
+};
+function gateFor(feature, bondLevel) {
+  const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
+  const minBond = GATES[feature].minBond;
+  return { open: lvl >= minBond, minBond, bondLevel: lvl };
+}
+__name(gateFor, "gateFor");
+
 // api/_bond.js
 var EARLY_STEPS = [75, 125, 200, 300, 400];
 var STEP_BASE = 400;
 var STEP_GROWTH = 100;
-var BOND_PVP_MIN_LEVEL = 5;
+var BOND_PVP_MIN_LEVEL = GATES.pvp.minBond;
 function stepFor(level) {
   if (level <= 0) return 0;
   if (level <= EARLY_STEPS.length) return EARLY_STEPS[level - 1];
@@ -3680,6 +3694,49 @@ function soulCombatant(state, opts = {}) {
 }
 __name(soulCombatant, "soulCombatant");
 
+// api/_talents.js
+var TALENT_POINTS_MAX = 20;
+var PICKABLE = {
+  "tal-pvp-01": { maxRank: 4, kind: "combatBonus", scope: "pvp", perRank: 4e-3 },
+  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", perRank: 4e-3 },
+  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", perRank: 4e-3 },
+  "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
+  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
+  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1 }
+};
+var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function talentPointsFor(bondLevel) {
+  const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
+  return Math.min(TALENT_POINTS_MAX, lvl);
+}
+__name(talentPointsFor, "talentPointsFor");
+function isValidPicks(raw, bondLevel) {
+  if (!Array.isArray(raw)) return false;
+  if (raw.length > talentPointsFor(bondLevel)) return false;
+  const counts = /* @__PURE__ */ Object.create(null);
+  for (const id of raw) {
+    if (typeof id !== "string" || !has(PICKABLE, id)) return false;
+    counts[id] = (counts[id] ?? 0) + 1;
+    if (counts[id] > PICKABLE[id].maxRank) return false;
+  }
+  return true;
+}
+__name(isValidPicks, "isValidPicks");
+function sanitizeTalentPicks(raw, bondLevel) {
+  return isValidPicks(raw, bondLevel) ? [...raw] : [];
+}
+__name(sanitizeTalentPicks, "sanitizeTalentPicks");
+function talentBonus(picks, bondLevel, scope) {
+  if (!isValidPicks(picks, bondLevel)) return 0;
+  let sum = 0;
+  for (const id of picks) {
+    const n = PICKABLE[id];
+    if (n.kind === "combatBonus" && n.scope === scope) sum += n.perRank;
+  }
+  return sum;
+}
+__name(talentBonus, "talentBonus");
+
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
 var DUEL_TAPS_FULL = CHEER.tapsFull;
@@ -3730,7 +3787,10 @@ __name(fichaStageOf, "fichaStageOf");
 var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" && own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : null, "escolaOf");
 function duelSide(save, opts = {}) {
   const state = save && typeof save === "object" ? save : {};
-  const bonus = combinedBonus({ talent: 0, equipment: 0 });
+  const bonus = combinedBonus({
+    talent: talentBonus(state.talentPicks, bondLevelFor(state.totalXP), "pvp"),
+    equipment: 0
+  });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
   const basica = escolaOf(skills?.basica);
@@ -3971,7 +4031,7 @@ async function handleCommunity({ request, env }) {
     let bondLevel = null;
     if (querLigar && !jaEstavaLigado) {
       bondLevel = await bondLevelOf(env, id);
-      if (bondLevel < BOND_PVP_MIN_LEVEL) {
+      if (!gateFor("pvp", bondLevel).open) {
         pvpEnabled = false;
         pvpBlocked = true;
       }
@@ -4019,7 +4079,7 @@ async function handleCommunity({ request, env }) {
       pvpEnabled: profile.pvpEnabled,
       publicHidden,
       ...nameRejected ? { nameRejected: true } : {},
-      ...pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}
+      ...pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor("pvp", bondLevel).minBond } : {}
     });
   }
   if (action === "players" && method === "GET") {
@@ -5420,6 +5480,7 @@ async function onRequest5({ request, env }) {
     if ("caderno" in state) state.caderno = clampCaderno(state.caderno);
     if ("equippedFrame" in state) state.equippedFrame = clampFrameId(state.equippedFrame);
     if ("ownedFrames" in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
+    if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
@@ -5838,7 +5899,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-w2h1S1/functionsRoutes-0.3986058792510334.mjs
+// ../.wrangler/tmp/pages-31aWXA/functionsRoutes-0.14425853585235515.mjs
 var routes = [
   {
     routePath: "/api/account",
