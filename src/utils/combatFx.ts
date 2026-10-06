@@ -136,13 +136,14 @@ export function specialLabel(isPt: boolean, skill?: { nome: { pt: string; en: st
 }
 
 /**
- * PR9: o selo do especial de um INIMIGO (Arena, Masmorra, Pesadelo, Duelo fantasma) — nome por regra a partir do
- * elemento e da identidade dele (o especial dele é sempre dano direto). Fica no lazy `nomeEspecial`: sem
+ * PR9: o selo do especial de um INIMIGO (Arena, Masmorra, Pesadelo, Duelo) — nome por regra a partir do
+ * elemento e da identidade dele. A família vem do servidor no PvP (`opp.fx.familia`, lista fechada); nos
+ * inimigos do PvE o especial é sempre dano direto. Fica no lazy `nomeEspecial`: sem
  * rede, sem IA.
  */
-export function foeSpecialLabel(isPt: boolean, element: string | undefined | null, seed: string): string {
+export function foeSpecialLabel(isPt: boolean, element: string | undefined | null, seed: string, familia?: string | null): string {
   const id = fxElementId(element) === FX_FALLBACK_ELEMENT ? 'vigor' : fxElementId(element);
-  const nome = nomeEspecialInimigo({ pt: baseElementLabel(id, true), en: baseElementLabel(id, false) }, seed);
+  const nome = nomeEspecialInimigo({ pt: baseElementLabel(id, true), en: baseElementLabel(id, false) }, seed, familia);
   return isPt ? nome.pt : nome.en;
 }
 

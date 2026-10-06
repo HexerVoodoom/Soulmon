@@ -61,6 +61,7 @@ import { initialNotificationsEnabled, readSystemNotificationPermission } from '.
 import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
+import { skillsTemFamilia } from './utils/soulProfile/ficha/stageSkillsFor';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -3947,7 +3948,7 @@ export default function App() {
   // devolve aqui, para o conteúdo sobreviver a um aparelho novo (o perfil do
   // oráculo não sobe para a nuvem, as skills agora sim).
   const handleSkillsComputed = useCallback((skills: NonNullable<GameState['soulmonSkills']>) => {
-    setGameState(prev => (prev.soulmonSkills ? prev : { ...prev, soulmonSkills: skills }));
+    setGameState(prev => (prev.soulmonSkills && skillsTemFamilia(prev.soulmonSkills) ? prev : { ...prev, soulmonSkills: skills }));
   }, [setGameState]);
 
   const handleClassTitlesComputed = useCallback((titles: NonNullable<GameState['soulmonClassTitles']>) => {

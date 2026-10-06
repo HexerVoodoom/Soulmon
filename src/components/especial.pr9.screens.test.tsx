@@ -12,10 +12,12 @@ import { DungeonGame } from './DungeonGame';
 import { NightmareBattle } from './NightmareBattle';
 import { DuelScreen } from './DuelScreen';
 import { BattleStage } from './games/BattleStage';
-import { duelStats } from '../../functions/api/_duel.js';
+import { duelSide } from '../../functions/api/_duel.js';
+import type { DuelSide } from '../utils/combate/duel';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { dungeonFoe, type DungeonEnemy } from '../utils/dungeon';
 import { SPECIAL_LABEL, foeSpecialLabel } from '../utils/combatFx';
+import { SUBSTANTIVOS_ESPECIAL } from '../utils/soulProfile/ficha/nomeEspecial';
 
 type Cena = { specialLabel?: string; foe?: string; foeName?: string };
 const cenas: Cena[] = [];
@@ -64,7 +66,7 @@ const TELAS: Record<string, () => void | Promise<void>> = {
     fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
   },
   Duelo: () => {
-    const s = duelStats({ stage: 'rookie' });
+    const s = (duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide);
     render(<DuelScreen me={s} opp={s} seed={1} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement="fogo"
       petStage="rookie" skills={ficha()} oppElement="agua" onDone={() => {}} onClose={() => {}} />);
   },
@@ -84,14 +86,16 @@ describe('o selo mostra o nome próprio nas 4 telas', () => {
     });
   }
 
-  it('Duelo: o nome do oponente vindo do servidor (oppSpecial) vence a regra; sem ele, a regra', () => {
-    const s = duelStats({ stage: 'rookie' });
-    const props = { me: s, opp: s, seed: 1, petSprite: '', oppSprite: '', petName: 'Pet', oppName: 'Rival', isPt: true, petElement: 'fogo', petStage: 'rookie', skills: ficha(), oppElement: 'agua', onDone: () => {}, onClose: () => {} };
-    render(<DuelScreen {...props} oppSpecial={{ pt: 'Véu de Água', en: 'Water Veil' }} />);
-    expect(cenas.at(-1)!.foe).toBe('Véu de Água');
+  it('Duelo: a família do oponente vem do servidor (opp.fx.familia) e dá o nome por regra; lixo cai em dano direto', () => {
+    const s = (duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide);
+    const props = { me: s, seed: 1, petSprite: '', oppSprite: '', petName: 'Pet', oppName: 'Rival', isPt: true, petElement: 'fogo', petStage: 'rookie', skills: ficha(), oppElement: 'agua', onDone: () => {}, onClose: () => {} };
+    render(<DuelScreen {...props} opp={{ ...s, fx: { basica: 'benca', especial: 'benca', familia: 'heal' } }} />);
+    const nome = cenas.at(-1)!.foe!;
+    expect(nome).toBe(foeSpecialLabel(true, 'agua', 'Rival', 'heal'));
+    expect(SUBSTANTIVOS_ESPECIAL.heal.some(n => nome.startsWith(n.pt))).toBe(true);
     cleanup(); cenas.length = 0;
-    render(<DuelScreen {...props} />);
-    expect(cenas.at(-1)!.foe).toBe(foeSpecialLabel(true, 'agua', 'Rival'));
+    render(<DuelScreen {...props} opp={{ ...s, fx: { basica: 'benca', especial: 'benca', familia: 'hackeada' } }} />);
+    expect(SUBSTANTIVOS_ESPECIAL.direct.some(n => cenas.at(-1)!.foe!.startsWith(n.pt))).toBe(true);
   });
 });
 

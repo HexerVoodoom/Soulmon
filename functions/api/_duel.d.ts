@@ -4,7 +4,7 @@ import type { Combatant, FightEvent, Special } from './_combate.js';
 export interface DuelSide {
   combatant: Combatant;
   special: Special;
-  fx: { basica: string | null; especial: string | null };
+  fx: { basica: string | null; especial: string | null; familia?: string | null };
 }
 export type DuelWinner = 'me' | 'opp' | 'draw';
 export interface DuelResult {
@@ -21,6 +21,7 @@ export declare const DUEL_TAPS_FULL: number;
 export declare const DUEL_TAPS_CAP: number;
 export declare const DUEL_CHEER_BUCKETS: number;
 export declare const DUEL_DAY_MS: number;
+export declare const SPECIAL_FAMILY_IDS: string[];
 export declare const ESCOLA_FAMILY: Record<string, string>;
 export declare function sanitizeTaps(raw: unknown): number[];
 export declare function bucketTapTimes(counts: readonly number[]): number[];

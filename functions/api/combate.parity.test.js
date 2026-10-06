@@ -18,7 +18,7 @@ import * as specialsApp from '../../src/utils/combate/specials';
 import * as bonusApp from '../../src/utils/combate/bonus';
 import * as duelApp from '../../src/utils/combate/duel';
 import { soulCombatant as soulCombatantApp } from '../../src/utils/soulXP';
-import { ESCOLA_FAMILY_PROVISORIO } from '../../src/utils/arena';
+import { ESCOLA_FAMILY_PADRAO } from '../../src/utils/arena';
 
 const BUILDS = Object.keys(levelApp.REFERENCE_BUILDS);
 const FAMILIES = specialsApp.SPECIAL_FAMILIES;
@@ -76,8 +76,12 @@ describe('as constantes do núcleo são as mesmas nos dois lados', () => {
     for (const c of casos) expect(srv.combinedBonus(c), JSON.stringify(c)).toBe(bonusApp.combinedBonus(c));
   });
 
-  it('a tabela escola → família do servidor é a PROVISÓRIA do app', () => {
-    expect(duelSrv.ESCOLA_FAMILY).toEqual(ESCOLA_FAMILY_PROVISORIO);
+  it('as 7 famílias do servidor são as do núcleo do app (PR9)', () => {
+    expect(duelSrv.SPECIAL_FAMILY_IDS).toEqual([...specialsApp.SPECIAL_FAMILIES]);
+  });
+
+  it('a tabela escola → família do servidor é a PADRÃO do app', () => {
+    expect(duelSrv.ESCOLA_FAMILY).toEqual(ESCOLA_FAMILY_PADRAO);
   });
 });
 

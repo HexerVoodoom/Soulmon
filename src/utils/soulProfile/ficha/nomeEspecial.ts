@@ -175,9 +175,10 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
 
 /**
  * Nome do especial de um INIMIGO (Arena, Masmorra, Pesadelo, Duelo fantasma). O especial do inimigo é
- * sempre `direct` (`arena.ts`), então o nome sai do banco `direct` + o elemento dele, determinístico pela
+ * `direct` no PvE (`arena.ts`) e a família publicada pelo servidor no PvP (só da lista fechada; outra coisa vira `direct`), então o nome sai do banco da família + o elemento dele, determinístico pela
  * identidade dele (`seed`: o nome gerado). Não depende de nada do jogador.
  */
-export function nomeEspecialInimigo(elemento: TextoPar, seed: string): TextoPar {
-  return nomeDoEspecial({ familia: 'direct', elemento, seedKey: seed, stage: 'foe' });
+export function nomeEspecialInimigo(elemento: TextoPar, seed: string, familia?: string | null): TextoPar {
+  const f = (SPECIAL_FAMILIES as readonly string[]).includes(familia ?? '') ? (familia as SpecialFamily) : 'direct';
+  return nomeDoEspecial({ familia: f, elemento, seedKey: seed, stage: 'foe' });
 }

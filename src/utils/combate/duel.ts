@@ -44,7 +44,7 @@ export interface DuelSide {
   readonly combatant: Combatant;
   readonly special: Special;
   /** The schools of the basic and of the special strike (cosmetic: the form of the blow on screen). */
-  readonly fx?: { readonly basica: string | null; readonly especial: string | null };
+  readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null };
 }
 
 export type DuelWinner = 'me' | 'opp' | 'draw';
