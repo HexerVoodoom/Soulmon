@@ -35,14 +35,16 @@ export function bucketTapTimes(counts: readonly number[]): number[] {
 }
 
 /** The `cheer` option of `fight()` for a bucket cheer (sanitised). */
-export function duelCheerEvents(rawTaps: unknown, side: 0 | 1 = 0): { t: number; side: 0 | 1 }[] {
-  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side);
+export function duelCheerEvents(rawTaps: unknown, side: 0 | 1 = 0, scale = 1): { t: number; side: 0 | 1; scale?: number }[] {
+  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side, scale);
 }
 
 /** One side of a duel as the server sends it (`duelSide` in `_duel.js`). */
 export interface DuelSide {
   readonly combatant: Combatant;
   readonly special: Special;
+  /** PR7b (`tal-pvp-05`): rendimento da torcida deste lado (1 sem o talento; o servidor calcula e limita). */
+  readonly cheerScale?: number;
   /** The schools of the basic and of the special strike (cosmetic: the form of the blow on screen). */
   readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null };
 }
@@ -60,10 +62,10 @@ export interface DuelResult {
 }
 
 /** The whole fight, pure and deterministic; the same function the server runs (`simulateDuel` of `_duel.js`). */
-export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult {
+export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult {
   const a: FightSide = { combatant: args.me.combatant, special: args.me.special };
   const b: FightSide = { combatant: args.opp.combatant, special: args.opp.special };
-  const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(args.taps, 0) });
+  const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale) });
   const events: FightEvent[] = [];
   let hpMe: number | null = null;
   let hpOpp: number | null = null;

@@ -23,6 +23,7 @@
 import { levelCapFor, stageIndexOf } from '../types/progression';
 import { combatantAt, firstLevelOfStage, MAX_LEVEL, type StatWeights } from './combate/level';
 import type { Combatant } from './combate/curve';
+import type { AttrBonus } from './combate/bonus';
 
 /** XP que separa um level do próximo. */
 export const XP_PER_LEVEL = 100;
@@ -95,7 +96,7 @@ export function soulWeights(state: SoulXPState): StatWeights {
 }
 
 /** Combatente do Soulmon de um estado (derivado; o bônus entra por `combate/bonus.ts`). */
-export function soulCombatant(state: SoulXPState, bonus = 0): Combatant {
+export function soulCombatant(state: SoulXPState, bonus: number | Partial<AttrBonus> = 0): Combatant {
   return combatantAt(soulLevel(state), soulWeights(state), bonus);
 }
 

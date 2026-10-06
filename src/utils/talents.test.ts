@@ -4,14 +4,17 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  TALENT_TREE, TALENT_BY_ID, TALENT_POINTS_MAX, TALENTOS_PENDENTES_DO_DONO, RESPEC_COST_PER_POINT,
+  TALENT_TREE, TALENT_BY_ID, TALENT_POINTS_MAX, RESPEC_COST_PER_POINT, CHEER_STEP, talentAttrBonus, talentCheerScale, canRespecOne, respecOneCost, applyRespecOne,
   talentPointsFor, isValidPicks, sanitizeTalentPicks, canPick, pickTalent, pointsLeft, talentBonus, pickableTreeCost, fullTreeCost,
   isPickable, respecCost, respecDiscount, applyRespec,
 } from './talents';
 import { bondLevelFor, xpForLevel, BOND_MAX_LEVEL } from './bond';
-import { combinedBonus, COMBAT_BONUS_CAP } from './combate/bonus';
+import { combinedBonus, combinedAttrBonus, COMBAT_BONUS_CAP } from './combate/bonus';
 import { combatantAt, REFERENCE_BUILDS, RULER_LEVELS } from './combate/level';
-import { fight } from './combate/fight';
+import { fight, PVP_HP_SCALE } from './combate/fight';
+import { hitsToKnockOut, attacksPerWindow } from './combate/curve';
+import { specialOf, cleanCheerScale, CHEER_SCALE_MAX } from './combate/specials';
+import { simulatePvp, duelCheerEvents } from './combate/duel';
 import type { Combatant } from './combate/curve';
 
 const PVP_IDS = ['tal-pvp-01', 'tal-pvp-02', 'tal-pvp-03'];
@@ -84,13 +87,25 @@ describe('2. a árvore nunca fecha', () => {
     expect(isValidPicks([...todosPvp(), ...todosPve(), 'tal-com-03'], BOND_MAX_LEVEL)).toBe(false); // ...e o 21º, não
   });
 
-  it('os dois talentos de linha vermelha NÃO estão na árvore (pendência do dono)', () => {
-    expect(TALENTOS_PENDENTES_DO_DONO.map((p) => p.id)).toEqual(['tal-pvp-05', 'tal-com-05']);
-    for (const p of TALENTOS_PENDENTES_DO_DONO) expect(TALENT_BY_ID.has(p.id), p.id).toBe(false);
+  it('PR7b: tal-pvp-05 e tal-com-05 foram REDESENHADOS e entram na árvore, com efeito ligado e dentro das linhas vermelhas', () => {
+    const torcida = TALENT_BY_ID.get('tal-pvp-05')!;
+    const balanca = TALENT_BY_ID.get('tal-com-05')!;
+    expect(torcida.effect).toEqual({ kind: 'cheerBoost', perRank: CHEER_STEP });
+    expect(balanca.effect).toEqual({ kind: 'respecOne' });
+    expect(isPickable(torcida) && isPickable(balanca)).toBe(true);
+    // 3 graus de torcida = exatamente o teto do núcleo (CHEER_SCALE_MAX): o talento nunca passa dele
+    expect(talentCheerScale(Array(3).fill('tal-pvp-05'), 20)).toBeCloseTo(CHEER_SCALE_MAX, 12);
   });
 
-  it('o Comércio nunca dá % de combate', () => {
-    for (const n of TALENT_TREE.filter((x) => x.path === 'comercio')) expect(n.effect.kind, n.id).not.toBe('combatBonus');
+  it('o Comércio nunca dá % de combate nem rendimento de torcida', () => {
+    for (const n of TALENT_TREE.filter((x) => x.path === 'comercio')) expect(['combatBonus', 'cheerBoost'], n.id).not.toContain(n.effect.kind);
+  });
+
+  it('o caminho PvP tem escolhas que importam: três canais de atributo e a torcida, e não cabem todos', () => {
+    const efeitos = TALENT_TREE.filter((n) => n.path === 'pvp' && isPickable(n)).map((n) => (n.effect.kind === 'combatBonus' ? `bonus:${n.effect.attr}` : n.effect.kind));
+    expect(efeitos.sort()).toEqual(['bonus:atk', 'bonus:def', 'bonus:spd', 'cheerBoost']);
+    const todo = TALENT_TREE.filter((n) => n.path === 'pvp' && isPickable(n)).reduce((s, n) => s + n.maxRank, 0);
+    expect(todo).toBeGreaterThan(TALENT_POINTS_MAX * 0.7); // o caminho sozinho já pede mais de 70% dos pontos do teto
   });
 });
 
@@ -200,5 +215,150 @@ describe('todo nó da árvore tem texto nas duas línguas (talentCopy.ts)', () =
     const { TALENT_COPY } = await import('./talentCopy');
     expect(Object.keys(TALENT_COPY).sort()).toEqual(TALENT_TREE.map((n) => n.id).sort());
     for (const [id, c] of Object.entries(TALENT_COPY)) for (const t of [c.namePt, c.nameEn, c.descPt, c.descEn]) expect(t.length, id).toBeGreaterThan(3);
+  });
+});
+
+describe('PR7b: o canal de PvP é POR ATRIBUTO, com UM teto de 5% na soma', () => {
+  const N = 60;
+  const niveis = [RULER_LEVELS[0], RULER_LEVELS[Math.floor(RULER_LEVELS.length / 2)], RULER_LEVELS[RULER_LEVELS.length - 1]];
+  /** Vantagem média de A sobre B: Σ tA / Σ tB − 1, HP×3, mesma semente (a régua do §2.25: razão das médias). */
+  const adv = (a: Combatant, b: Combatant) => {
+    let ta = 0, tb = 0;
+    for (let s = 1; s <= N; s++) {
+      const r = fight({ combatant: a, special: null }, { combatant: b, special: null }, { seed: s * 104729 + a.level, hpScale: 3 });
+      ta += r.timeA; tb += r.timeB;
+    }
+    return ta / tb - 1;
+  };
+
+  it('cada nó de PvP cai no SEU canal (ATK/DEF/SPD distintos)', () => {
+    expect(talentAttrBonus(Array(4).fill('tal-pvp-01'), 20)).toEqual({ atk: 4 * 0.004, def: 0, spd: 0 });
+    expect(talentAttrBonus(Array(4).fill('tal-pvp-02'), 20)).toEqual({ atk: 0, def: 4 * 0.004, spd: 0 });
+    expect(talentAttrBonus(Array(4).fill('tal-pvp-03'), 20)).toEqual({ atk: 0, def: 0, spd: 4 * 0.004 });
+    expect(talentAttrBonus(todosPve(), 20)).toEqual({ atk: 0, def: 0, spd: 0 });
+    expect(talentAttrBonus(todosPvp(), 5)).toEqual({ atk: 0, def: 0, spd: 0 }); // inválido para o Vínculo vale 0
+  });
+
+  it('a SOMA dos três canais passa pelo teto único: nunca mais que 5%, e o formato da build fica', () => {
+    const t = talentAttrBonus(todosPvp(), 20);
+    const c = combinedAttrBonus({ talent: t, equipment: { atk: 0.2 }, commerce: { def: 0.1 }, rebirth: { spd: 0.1 } });
+    expect(c.atk + c.def + c.spd).toBeCloseTo(COMBAT_BONUS_CAP, 12);
+    expect(c.atk / c.def).toBeCloseTo((0.016 + 0.2) / (0.016 + 0.1), 9); // a proporção das fontes se mantém
+    expect(combinedAttrBonus({ talent: { atk: 0.01 } })).toEqual({ atk: 0.01, def: 0, spd: 0 }); // abaixo do teto: intacto
+    expect(combinedAttrBonus({ talent: { atk: -1, def: NaN, spd: Infinity } })).toEqual({ atk: 0, def: 0, spd: 0 });
+  });
+
+  it('cada canal, no teto, vale ~5% na razão das médias (HP×3): nenhum atributo é atalho', () => {
+    for (const ch of ['atk', 'def', 'spd'] as const) {
+      let pior = -Infinity, melhor = Infinity;
+      for (const L of niveis) {
+        const base = combatantAt(L, REFERENCE_BUILDS.balanced);
+        const forte = combatantAt(L, REFERENCE_BUILDS.balanced, combinedAttrBonus({ talent: { [ch]: 0.2 } }));
+        const v = adv(forte, base) - adv(base, base);
+        pior = Math.max(pior, v); melhor = Math.min(melhor, v);
+      }
+      expect(pior, ch).toBeLessThanOrEqual(0.055);
+      expect(melhor, ch).toBeGreaterThan(0.035);
+    }
+  });
+
+  it('o canal MISTO (ATK+DEF+SPD), com todas as outras fontes fictícias, também fica ≤ 5,5%', () => {
+    const c = combinedAttrBonus({ talent: talentAttrBonus(todosPvp(), 20), equipment: { atk: 0.2, def: 0.2, spd: 0.2 }, commerce: { atk: 0.1 }, rebirth: { def: 0.1 } });
+    let pior = -Infinity;
+    for (const L of niveis) {
+      const base = combatantAt(L, REFERENCE_BUILDS.balanced);
+      pior = Math.max(pior, adv(combatantAt(L, REFERENCE_BUILDS.balanced, c), base) - adv(base, base));
+    }
+    expect(pior).toBeLessThanOrEqual(0.055);
+  });
+
+  it('PROVA DE VERMELHO: sem o teto na soma dos três canais, ATK+DEF+SPD passam de +20%', () => {
+    const cru = { atk: 0.07, def: 0.07, spd: 0.07 }; // cada canal "pequeno", a soma não
+    const L = niveis[1];
+    const base = combatantAt(L, REFERENCE_BUILDS.balanced);
+    expect(adv(combatantAt(L, REFERENCE_BUILDS.balanced, cru), base) - adv(base, base)).toBeGreaterThan(0.2);
+    const c = combinedAttrBonus({ talent: cru });
+    expect(adv(combatantAt(L, REFERENCE_BUILDS.balanced, c), base) - adv(base, base)).toBeLessThanOrEqual(0.055);
+  });
+
+  it('a conta é exata: DEF e SPD entram no stat sem tocar o motor', () => {
+    const b = combatantAt(20, REFERENCE_BUILDS.balanced);
+    const d = combatantAt(20, REFERENCE_BUILDS.balanced, { def: 0.05 });
+    const s = combatantAt(20, REFERENCE_BUILDS.balanced, { spd: 0.05 });
+    expect(hitsToKnockOut(b, d) / hitsToKnockOut(b, b)).toBeCloseTo(1.05, 12); // o rival precisa de 5% mais golpes
+    expect(attacksPerWindow(s.spd) / attacksPerWindow(b.spd)).toBeCloseTo(1.05, 12);
+    expect(combatantAt(20, REFERENCE_BUILDS.balanced, 0.05).bonus).toBe(0.05); // o escalar legado segue sendo o ATK
+  });
+});
+
+describe('PR7b: tal-pvp-05, a torcida do Duelo (redesenhado)', () => {
+  const TETO = Array(20).fill(16);
+  it('sem o nó vale 1; 3 graus = +15%, o teto do núcleo; inválido para o Vínculo vale 1', () => {
+    expect(talentCheerScale([], 20)).toBe(1);
+    expect(talentCheerScale(Array(2).fill('tal-pvp-05'), 20)).toBeCloseTo(1.1, 12);
+    expect(talentCheerScale(Array(3).fill('tal-pvp-05'), 20)).toBeCloseTo(1.15, 12);
+    expect(talentCheerScale(Array(3).fill('tal-pvp-05'), 2)).toBe(1);
+  });
+  it('só rende quando você torce: sem toques o talento não muda nada', () => {
+    const a = { combatant: combatantAt(10, REFERENCE_BUILDS.balanced), special: specialOf('direct') };
+    for (let s = 0; s < 40; s++) {
+      expect(simulatePvp({ me: { ...a, cheerScale: 1.15 }, opp: a, seed: s, taps: [] })).toEqual(simulatePvp({ me: a, opp: a, seed: s, taps: [] }));
+    }
+  });
+  it('dentro da régua: no teto de torcida o inimigo cai ≤ 5% mais cedo (medido ~1%) e o nó nunca é desvantagem', () => {
+    let t1 = 0, t2 = 0, perdeu = 0, ganhou = 0;
+    for (const L of RULER_LEVELS) for (const fam of ['direct', 'atkBuff', 'dot'] as const) for (let s = 0; s < 30; s++) {
+      const c = combatantAt(L, REFERENCE_BUILDS.balanced);
+      const me = { combatant: c, special: specialOf(fam) };
+      const opp = { combatant: c, special: specialOf('direct') };
+      const r1 = simulatePvp({ me, opp, seed: s * 31 + L, taps: TETO });
+      const r2 = simulatePvp({ me: { ...me, cheerScale: 1.15 }, opp, seed: s * 31 + L, taps: TETO });
+      t1 += r1.timeOpp; t2 += r2.timeOpp;
+      if (r1.winner === 'me' && r2.winner !== 'me') perdeu++;
+      if (r1.winner !== 'me' && r2.winner === 'me') ganhou++;
+    }
+    expect(t1 / t2 - 1).toBeLessThanOrEqual(0.05);
+    expect(t1 / t2 - 1).toBeGreaterThan(0);
+    expect(ganhou).toBeGreaterThan(perdeu);
+  });
+  it('PROVA DE VERMELHO: um multiplicador sem teto não passa; o núcleo corta em CHEER_SCALE_MAX', () => {
+    expect(cleanCheerScale(3)).toBe(CHEER_SCALE_MAX);
+    expect(cleanCheerScale(NaN)).toBe(1);
+    expect(cleanCheerScale(0.2)).toBe(1); // nunca piora a torcida de ninguém
+    const c = combatantAt(20, REFERENCE_BUILDS.balanced);
+    const lado = { combatant: c, special: specialOf('direct') };
+    let t15 = 0, t3 = 0;
+    for (let s = 0; s < 30; s++) {
+      t15 += fight(lado, lado, { seed: s, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(TETO, 0, 1.15) }).timeB;
+      t3 += fight(lado, lado, { seed: s, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(TETO, 0, 3) }).timeB;
+    }
+    expect(t3).toBe(t15); // ×3 vale o mesmo que ×1,15
+  });
+});
+
+describe('PR7b: tal-com-05, a Balança (refazer UM ponto)', () => {
+  const picks = ['tal-pvp-01', 'tal-pvp-01', 'tal-pve-01', 'tal-com-05'];
+  it('sem o nó não existe (e não cobra): a única saída é refazer tudo', () => {
+    expect(canRespecOne(['tal-pvp-01'])).toBe(false);
+    expect(applyRespecOne({ talentPicks: ['tal-pvp-01'], gamePoints: 999 }, 'tal-pvp-01')).toEqual({ ok: false, reason: 'locked', cost: RESPEC_COST_PER_POINT });
+  });
+  it('com o nó: tira o ÚLTIMO grau escolhido, cobra o preço de UM ponto em Bits e devolve só esse ponto', () => {
+    const r = applyRespecOne({ talentPicks: picks, gamePoints: 100, x: 1 }, 'tal-pvp-01');
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.cost).toBe(RESPEC_COST_PER_POINT);
+      expect(r.state.talentPicks).toEqual(['tal-pvp-01', 'tal-pve-01', 'tal-com-05']);
+      expect(r.state.gamePoints).toBe(100 - RESPEC_COST_PER_POINT);
+      expect(r.state.x).toBe(1);
+    }
+    expect(respecOneCost(picks)).toBeLessThan(respecCost(picks)); // um ponto sai mais barato que a árvore
+  });
+  it('a ampulheta do Comércio barateia, o preço nunca zera, e sem Bits ou sem o grau nada muda', () => {
+    const com = [...picks, ...Array(4).fill('tal-com-03')];
+    expect(respecOneCost(com)).toBeLessThan(RESPEC_COST_PER_POINT);
+    expect(respecOneCost(com)).toBeGreaterThan(0);
+    expect(applyRespecOne({ talentPicks: picks, gamePoints: 5 }, 'tal-pvp-01')).toEqual({ ok: false, reason: 'no-bits', cost: RESPEC_COST_PER_POINT });
+    expect(applyRespecOne({ talentPicks: picks, gamePoints: 100 }, 'tal-pvp-02')).toEqual({ ok: false, reason: 'not-picked', cost: RESPEC_COST_PER_POINT });
+    expect(applyRespecOne({ talentPicks: picks, gamePoints: NaN }, 'tal-pvp-01').ok).toBe(false);
   });
 });

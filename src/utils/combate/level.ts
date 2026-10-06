@@ -10,7 +10,8 @@
  */
 
 import { STAGE_LEVEL_CAPS } from '../../types/progression';
-import type { Combatant } from './curve';
+import { CURVE_K, type Combatant } from './curve';
+import { toAttrBonus, type AttrBonus } from './bonus';
 
 /**
  * Level ceiling per stage (6/13/21/30/40): owned by `types/progression.ts`,
@@ -129,12 +130,20 @@ export function distributePoints(level: number, weights: StatWeights, bounds: Sh
   return p;
 }
 
-/** Full combatant at a level for a branch. `bonus` must already be capped (see `bonus.ts`). */
-export function combatantAt(level: number, weights: StatWeights, bonus = 0, bounds: ShareBounds = SHARE_BOUNDS): Combatant {
+/**
+ * Full combatant at a level for a branch. `bonus` must already be capped (see `bonus.ts`): a number is the ATK channel
+ * (damage dealt, `Combatant.bonus`, kept as is); the three-channel form (PR7b, PvP) folds DEF and SPD into the stat
+ * itself, EXACTLY: the curve and the rhythm are linear in (1 + stat/K), so (1 + def'/K) = (1 + def/K)(1 + b) makes the
+ * foe need (1 + b) times more hits, and the same on SPD makes the attacks (1 + b) times more frequent. The engine does not change.
+ */
+export function combatantAt(level: number, weights: StatWeights, bonus: number | Partial<AttrBonus> = 0, bounds: ShareBounds = SHARE_BOUNDS): Combatant {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights, bounds);
-  return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  if (typeof bonus === 'number') return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  const ab = toAttrBonus(bonus);
+  const fold = (v: number, x: number) => (x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v);
+  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
 }
 
 /** Levels sampled by the ruler: first, middle and last of every stage (15 levels). */

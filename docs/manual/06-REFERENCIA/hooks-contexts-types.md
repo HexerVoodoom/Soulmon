@@ -231,6 +231,6 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Régua:** `src/utils/recommend.test.ts`, `src/utils/catalogLevel.test.ts`; a evidência de cada item do pool é conferida em `docs/CATALOGO-EVIDENCIAS.md`.
 
 ### `src/contexts/useTalentBonus.ts`
-**Dono de:** o bônus de talento do jogador para um escopo (`pvp`/`pve`), JÁ pelo canal único `combate/bonus.ts › combinedBonus` (teto de 5% somando todas as fontes). Sem Provider vale 0. Arena, Masmorra e Pesadelo leem `pve`; o treino do Torneio lê `pvp` (o duelo real é decidido no servidor, `_duel.js`).
-**Exports:** `useTalentBonus`.
+**Dono de:** o bônus de talento do jogador. `useTalentBonus('pve')`: Arena, Masmorra e Pesadelo, pelo canal único `combinedBonus` (teto de 5%). `usePvpTalents()` (PR7b): o canal de PvP POR ATRIBUTO (`combinedAttrBonus`, teto de 5% na soma dos três) e o `cheerScale` da torcida, que o treino do Torneio usa (o duelo real é decidido no servidor, `_duel.js`). Sem Provider vale 0 / 1.
+**Exports:** `useTalentBonus`, `usePvpTalents`, `PvpTalents`.
 **Régua:** `src/contexts/useTalentBonus.test.tsx`.

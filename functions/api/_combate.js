@@ -121,7 +121,10 @@ export function combatantAt(level, weights, bonus = 0) {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights);
-  return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  if (typeof bonus === 'number') return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  const ab = toAttrBonus(bonus);
+  const fold = (v, x) => (x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v);
+  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
 }
 
 // ── bonus.ts ─────────────────────────────────────────────────────────────────
@@ -133,6 +136,26 @@ export function combinedBonus(sources) {
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) sum += v;
   }
   return Math.min(sum, COMBAT_BONUS_CAP);
+}
+
+/** PR7b: o bonus de PvP por atributo (ATK/DEF/SPD), com UM teto de 5% para a soma dos tres canais. */
+export const NO_ATTR_BONUS = { atk: 0, def: 0, spd: 0 };
+const cleanN = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
+export function combinedAttrBonus(sources) {
+  const sum = { atk: 0, def: 0, spd: 0 };
+  for (const src of [sources?.talent, sources?.equipment, sources?.commerce, sources?.rebirth]) {
+    if (!src || typeof src !== 'object') continue;
+    sum.atk += cleanN(src.atk);
+    sum.def += cleanN(src.def);
+    sum.spd += cleanN(src.spd);
+  }
+  const total = sum.atk + sum.def + sum.spd;
+  const k = total > COMBAT_BONUS_CAP ? COMBAT_BONUS_CAP / total : 1;
+  return { atk: sum.atk * k, def: sum.def * k, spd: sum.spd * k };
+}
+export function toAttrBonus(b) {
+  if (typeof b === 'number') return { atk: cleanN(b), def: 0, spd: 0 };
+  return { atk: cleanN(b?.atk), def: cleanN(b?.def), spd: cleanN(b?.spd) };
 }
 
 // ── specials.ts ──────────────────────────────────────────────────────────────
@@ -151,8 +174,13 @@ export const CHEER = {
   tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 9, pvpEnergyPerDischarge: 2.5,
 };
 /** Marcas de toque (s) -> descargas. Toque alem do teto do balde e descartado; a cada `tapsFull` aceitos, 1 descarga. */
-export function cheerEvents(taps, side) {
+export const CHEER_SCALE_MAX = 1.15;
+export function cleanCheerScale(x) {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
+}
+export function cheerEvents(taps, side, scale = 1) {
   const out = [];
+  const k = cleanCheerScale(scale);
   const perBucket = new Map();
   let acc = 0;
   for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
@@ -161,7 +189,7 @@ export function cheerEvents(taps, side) {
     if (n >= CHEER.tapsCapPerBucket) continue;
     perBucket.set(b, n + 1);
     acc++;
-    if (acc % CHEER.tapsFull === 0) out.push({ t: tap, side });
+    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
   }
   return out;
 }
@@ -190,7 +218,7 @@ export function hitUnit(level, h0 = HIT_UNIT_H0) {
  * @param {{ combatant: any, special: any }} b
  * @param {{ seed: number, hpScale?: number, variance?: any, windowLevel?: number, phases?: number[], unitH0?: number | null,
  *   startHp?: number[], startEnergy?: number[], hitScale?: (who: 0 | 1, n: number) => number,
- *   cheer?: { t: number, side: 0 | 1 }[], stopAtFirstKo?: boolean }} opts
+ *   cheer?: { t: number, side: 0 | 1, scale?: number }[], stopAtFirstKo?: boolean }} opts
  * @returns {Generator<any, any, any>}
  */
 export function* fightSteps(a, b, opts) {
@@ -221,7 +249,7 @@ export function* fightSteps(a, b, opts) {
       t: ch.t,
       fn: () => {
         const f = F[ch.side];
-        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge;
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge * cleanCheerScale(ch.scale);
       },
     });
   }

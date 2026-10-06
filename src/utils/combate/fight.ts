@@ -22,7 +22,7 @@
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { REFERENCE_BUILDS, combatantAt } from './level';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
-import { CHEER, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
+import { CHEER, cleanCheerScale, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
 
 /** The balanced mirror of every level lasts this long (seconds). */
 export const MIRROR_SECONDS = 25;
@@ -65,6 +65,8 @@ export interface FightSide {
 export interface CheerEvent {
   readonly t: number;
   readonly side: 0 | 1;
+  /** PR7b: yield multiplier of this discharge (a talent); default 1, sanitised by `cleanCheerScale`. */
+  readonly scale?: number;
 }
 
 export interface FightOptions {
@@ -176,7 +178,7 @@ export function* fightSteps(
       t: ch.t,
       fn: () => {
         const f = F[ch.side];
-        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge;
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge * cleanCheerScale(ch.scale);
       },
     });
   }

@@ -35,10 +35,10 @@
  * não dá pontos nem Honra para ninguém.
  */
 import {
-  CHEER, MAX_LEVEL, PVP_HP_SCALE, cheerEvents, combinedBonus, fightSteps, soulCombatant, specialOf,
+  CHEER, MAX_LEVEL, PVP_HP_SCALE, cheerEvents, combinedAttrBonus, fightSteps, soulCombatant, specialOf,
 } from './_combate.js';
 import { bondLevelFor } from './_bond.js';
-import { talentBonus } from './_talents.js';
+import { talentAttrBonus, talentCheerScale } from './_talents.js';
 
 export { PVP_HP_SCALE };
 
@@ -71,10 +71,10 @@ export function bucketTapTimes(counts) {
 
 /**
  * Os eventos de descarga de uma torcida por baldes (é o `cheer` do `fight()`), higienizados.
- * @param {unknown} rawTaps @param {0 | 1} [side]
+ * @param {unknown} rawTaps @param {0 | 1} [side] @param {number} [scale] PR7b: rendimento da torcida (talento), 1 por padrao
  */
-export function duelCheerEvents(rawTaps, side = 0) {
-  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side);
+export function duelCheerEvents(rawTaps, side = 0, scale = 1) {
+  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side, scale);
 }
 
 /**
@@ -117,9 +117,10 @@ export function duelSide(save, opts = {}) {
   const state = save && typeof save === 'object' ? save : {};
   // O bônus entra pelo canal único `combinedBonus` (teto 5% somando todas as fontes). Talento (PR7): vale só
   // se o vetor do save é válido para o Vínculo derivado do próprio save (inválido = 0). Equipamento: 0 até o PR8.
-  const bonus = combinedBonus({
-    talent: talentBonus(state.talentPicks, bondLevelFor(state.totalXP), 'pvp'),
-    equipment: 0,
+  // PR7b: o canal é POR ATRIBUTO (ATK dano dado, DEF dano recebido, SPD ritmo); o teto de 5% é a SOMA dos três.
+  const bondLvl = bondLevelFor(state.totalXP);
+  const bonus = combinedAttrBonus({
+    talent: talentAttrBonus(state.talentPicks, bondLvl),
   });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === 'object' ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
@@ -130,7 +131,8 @@ export function duelSide(save, opts = {}) {
     ? (typeof familiaSalva === 'string' && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial])
     : 'direct';
   // `familia` também sai em `fx`: o CLIENTE deriva dela o nome do especial do oponente (regra fechada, nunca texto do save).
-  return { combatant, special: specialOf(family), fx: { basica, especial, familia: especial ? family : null } };
+  // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */
@@ -151,7 +153,7 @@ export function duelSeed(...parts) {
 
 /**
  * A luta inteira, PURA e determinística: `fight()` do núcleo com a vida × `PVP_HP_SCALE` e a torcida de `me`.
- * `me`/`opp` = `{ combatant, special }` (`duelSide`). Devolve os eventos (para animar), o vencedor
+ * `me`/`opp` = `{ combatant, special, cheerScale? }` (`duelSide`). Devolve os eventos (para animar), o vencedor
  * (`'me' | 'opp' | 'draw'`) e a fração de vida de cada lado no PRIMEIRO nocaute (o placar).
  * @returns {{ events: any[], winner: 'me' | 'opp' | 'draw', hpMe: number, hpOpp: number, timeMe: number, timeOpp: number }}
  */
@@ -159,7 +161,7 @@ export function simulateDuel({ me, opp, seed, taps }) {
   const g = fightSteps(
     { combatant: me.combatant, special: me.special },
     { combatant: opp.combatant, special: opp.special },
-    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0) },
+    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0, me.cheerScale) },
   );
   const events = [];
   let hpMe = null, hpOpp = null;

@@ -4,7 +4,7 @@ export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | '
 export interface Special { family: SpecialFamily; power: number }
 export interface StatWeights { atk: number; def: number; spd: number }
 export interface FightSide { combatant: Combatant; special: Special | null }
-export interface CheerEvent { t: number; side: 0 | 1 }
+export interface CheerEvent { t: number; side: 0 | 1; scale?: number }
 export interface VarianceConfig { rho: number; sigma: number; floor: number }
 export interface FightOptions {
   seed: number;
@@ -54,9 +54,12 @@ export declare function firstLevelOfStage(stage: number): number;
 export declare function stageBase(stage: number): number;
 export declare function autoHp(level: number): number;
 export declare function distributePoints(level: number, weights: StatWeights): StatWeights;
-export declare function combatantAt(level: number, weights: StatWeights, bonus?: number): Combatant;
+export declare function combatantAt(level: number, weights: StatWeights, bonus?: number | Partial<AttrBonus>): Combatant;
 export declare const COMBAT_BONUS_CAP: number;
 export declare function combinedBonus(sources: { talent?: number; equipment?: number; commerce?: number; rebirth?: number }): number;
+export interface AttrBonus { atk: number; def: number; spd: number }
+export declare function combinedAttrBonus(sources: { talent?: Partial<AttrBonus>; equipment?: Partial<AttrBonus>; commerce?: Partial<AttrBonus>; rebirth?: Partial<AttrBonus> }): AttrBonus;
+export declare function toAttrBonus(b: number | Partial<AttrBonus> | undefined): AttrBonus;
 export declare const SPECIAL_BUDGET_HITS: number;
 export declare const SPECIAL_FAMILIES: SpecialFamily[];
 export declare const SPECIAL_POWER: Record<SpecialFamily, number>;
@@ -64,7 +67,9 @@ export declare function specialOf(family: unknown): Special;
 export declare const ENERGY: { perDealt: number; perReceived: number; perSecond: number };
 export declare const ENERGY_TRIGGER: number;
 export declare const CHEER: { tapsFull: number; tapsCapPerBucket: number; bucketSeconds: number; energyPerDischarge: number; pvpEnergyPerDischarge: number };
-export declare function cheerEvents(taps: readonly number[], side: 0 | 1): CheerEvent[];
+export declare const CHEER_SCALE_MAX: number;
+export declare function cleanCheerScale(x: unknown): number;
+export declare function cheerEvents(taps: readonly number[], side: 0 | 1, scale?: number): CheerEvent[];
 export declare const MIRROR_SECONDS: number;
 export declare const HIT_UNIT_H0: number;
 export declare const PVP_HP_SCALE: number;
@@ -75,4 +80,4 @@ export declare function hitUnit(level: number, h0?: number): number;
 export declare function fightSteps(a: FightSide, b: FightSide, opts: FightOptions): Generator<FightEvent, FightResult, number | undefined>;
 export declare function fight(a: FightSide, b: FightSide, opts: FightOptions): FightResult;
 export declare function soulWeights(state: unknown): StatWeights;
-export declare function soulCombatant(state: unknown, opts?: { maxLevel?: number; bonus?: number }): Combatant;
+export declare function soulCombatant(state: unknown, opts?: { maxLevel?: number; bonus?: number | Partial<AttrBonus> }): Combatant;

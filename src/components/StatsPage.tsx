@@ -10,7 +10,7 @@
  *
  * O que ficou, e por quê:
  *
- *  · **Nível de Vínculo** (`utils/bond.ts`) é a ÚNICA leitura grande. Ele é o
+ *  · **Vínculo** (`utils/bond.ts`; nunca "nível", NARRATIVA §12) é a ÚNICA leitura grande. Ele é o
  *    dono legítimo do `totalXP`, que antes aparecia cru aqui e não governava
  *    nada (a evolução é por `perfectDays`). Um número solto sem dono é ruído;
  *    ligado ao Vínculo ele vira uma PALAVRA — o título ("Companheiro") — com
@@ -33,14 +33,14 @@
  *
  * Canvas Estatísticas (§27, identidade): cards SIS-03 (`.sm2-stats-card`) com
  * cabeçalho ícone 24 `muted` + Cinzel 16 (D-S3); o vínculo é a PALAVRA em
- * Cinzel 24 com "Level N" 12 `muted` e o `.meter` SIS-07 (D-S1); o cartão de
+ * Cinzel 24 com "Bond N" 12 `muted` e o `.meter` SIS-07 (D-S1); o cartão de
  * nascimento é o visor do reveal (D-S4); encontros e álbum em mini-visores 64²
  * com silhueta por `mask-image` (D-S5/6/7); a estação é calendário, com as
  * medalhas em `gold-ink` (D-S8); o emoji das listas é conteúdo, 20px pelado
  * (D-S9); nenhuma Silkscreen (D-S10); só o dígito no "0" (D-S11).
  *
  * **`hideMetrics` (Janela de Descanso)** chega aqui e esconde os NÚMEROS —
- * "12", "N days together", "Level N", o `progressbar`, "7 of 36", "2/11", as
+ * "12", "N days together", "Bond N", o `progressbar`, "7 of 36", "2/11", as
  * frações da estação, "done N×", a frase dos feitos — e **preserva as
  * recompensas**: a palavra do vínculo, o cartão de nascimento, as artes
  * vistas e vividas, as medalhas e as listas sem contagem.
@@ -283,7 +283,7 @@ export function StatsPage({
       {/* ─────────────── A leitura dominante: o Vínculo ─────────────── */}
       <section className="sm2-stats-card" style={{ gap: 4 }} aria-labelledby="sm2-bond-title">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <p className="sm2-stats-lab">{isPt ? 'Nível de vínculo' : 'Bond level'}</p>
+          <p className="sm2-stats-lab">{isPt ? 'Vínculo' : 'Bond'}</p>
           {/* I13 (02/10/2026): a frase de regra do vínculo mora atrás do "?". */}
           <InfoTip language={language} label={isPt ? 'Como funcionam as estatísticas' : 'How the stats work'} align="right" style={{ minHeight: 24 }}>
             <InfoTipSection title={isPt ? 'Vínculo' : 'Bond'}>
@@ -304,7 +304,7 @@ export function StatsPage({
         </h2>
         {!hideMetrics && (
           <p className="sm2-stats-s sm2-num">
-            {isPt ? `Nível ${bond.level}` : `Level ${bond.level}`}
+            {isPt ? `Vínculo ${bond.level}` : `Bond ${bond.level}`}
           </p>
         )}
 

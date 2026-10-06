@@ -4,6 +4,8 @@ import type { Combatant, FightEvent, Special } from './_combate.js';
 export interface DuelSide {
   combatant: Combatant;
   special: Special;
+  /** PR7b: rendimento da torcida (talento `tal-pvp-05`), 1 sem o nó. */
+  cheerScale?: number;
   fx: { basica: string | null; especial: string | null; familia?: string | null };
 }
 export type DuelWinner = 'me' | 'opp' | 'draw';
@@ -25,7 +27,7 @@ export declare const SPECIAL_FAMILY_IDS: string[];
 export declare const ESCOLA_FAMILY: Record<string, string>;
 export declare function sanitizeTaps(raw: unknown): number[];
 export declare function bucketTapTimes(counts: readonly number[]): number[];
-export declare function duelCheerEvents(rawTaps: unknown, side?: 0 | 1): { t: number; side: 0 | 1 }[];
+export declare function duelCheerEvents(rawTaps: unknown, side?: 0 | 1, scale?: number): { t: number; side: 0 | 1; scale?: number }[];
 export declare function maxLevelFor(firstSeen: unknown, now: number): number;
 export declare function fichaStageOf(evolutionStage: unknown): string;
 export declare function duelSide(save: unknown, opts?: { maxLevel?: number }): DuelSide;
