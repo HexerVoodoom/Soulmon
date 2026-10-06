@@ -1,38 +1,26 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { autoDefense, defenseRoll, jeitoDefesaBonus } from './autoDefesa';
 import {
-  ENERGY_MAX, ENERGY_DEALT, ENERGY_TAKEN, ENERGY_CHEER, CHEER_TAPS_FULL, CHEER_TAPS_CAP,
+  ENERGY_MAX, CHEER_TAPS_FULL, CHEER_TAPS_CAP,
   RING_MULT, RING_OTIMO_MS, RING_BOM_MS, RING_FROM, RING_TO, DODGE_REDUCE, DODGE_OTIMO_MS,
-  addEnergy, spendEnergy, strikeEnergy, energyFull, energyRatio, cheerTap, cheerRatio,
+  cheerTap, cheerRatio,
   ringSpec, ringScale, ringGrade, dodgeSpec, dodgeGrade,
 } from './energia';
-import { DODGE_REDUCE_V3, RING_MULT_V3 } from './combate/specials';
-import { DUEL_ENERGY_MAX, DUEL_ENERGY_DEALT, DUEL_ENERGY_TAKEN, DUEL_ENERGY_CHEER, DUEL_TAPS_FULL } from '../../functions/api/_duel.js';
+import { CHEER, DODGE_REDUCE_V3, ENERGY_TRIGGER, RING_MULT_V3 } from './combate/specials';
+import * as duelSrv from '../../functions/api/_duel.js';
+import * as combateSrv from '../../functions/api/_combate.js';
 
 afterEach(() => vi.restoreAllMocks());
 
 describe('energia — o modelo (uma barra por lutador; a barra de cheer despeja energia no pet)', () => {
-  it('as constantes são as do SERVIDOR (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito', () => {
-    expect(ENERGY_MAX).toBe(DUEL_ENERGY_MAX);
-    expect(ENERGY_DEALT).toBe(DUEL_ENERGY_DEALT);
-    expect(ENERGY_TAKEN).toBe(DUEL_ENERGY_TAKEN);
-    expect(ENERGY_CHEER).toBe(DUEL_ENERGY_CHEER);
-    expect(CHEER_TAPS_FULL).toBe(DUEL_TAPS_FULL);
+  it('as constantes são as do NÚCLEO e as do SERVIDOR (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito', () => {
+    expect(ENERGY_MAX).toBe(ENERGY_TRIGGER);
+    expect(ENERGY_MAX).toBe(combateSrv.ENERGY_TRIGGER);
+    expect(CHEER_TAPS_FULL).toBe(CHEER.tapsFull);
+    expect(CHEER_TAPS_FULL).toBe(duelSrv.DUEL_TAPS_FULL);
     expect(CHEER_TAPS_FULL).toBe(24); // lenta de propósito: ~8 s a 3 toques/s
+    expect(CHEER_TAPS_CAP).toBe(duelSrv.DUEL_TAPS_CAP);
     expect(CHEER_TAPS_CAP).toBeLessThan(CHEER_TAPS_FULL);
-  });
-
-  it('cada fator enche um tanto: o cheer pesa MAIS que um ataque dado ou sofrido; nunca passa do máximo', () => {
-    expect(addEnergy(0, 'dealt')).toBe(ENERGY_DEALT);
-    expect(addEnergy(0, 'taken')).toBe(ENERGY_TAKEN);
-    expect(addEnergy(0, 'cheer')).toBe(ENERGY_CHEER);
-    expect(ENERGY_CHEER).toBeGreaterThan(Math.max(ENERGY_DEALT, ENERGY_TAKEN));
-    expect(addEnergy(ENERGY_MAX - 1, 'cheer')).toBe(ENERGY_MAX);
-    expect(addEnergy(Number.NaN, 'dealt')).toBe(ENERGY_DEALT);
-    expect(energyFull(ENERGY_MAX)).toBe(true);
-    expect(energyFull(ENERGY_MAX - 1)).toBe(false);
-    expect(energyRatio(ENERGY_MAX / 2)).toBe(0.5);
-    expect(spendEnergy(ENERGY_MAX)).toBe(0);
   });
 
   it('a barra de cheer: 24 toques despejam energia e ela zera, ficando só o excedente', () => {
@@ -44,17 +32,6 @@ describe('energia — o modelo (uma barra por lutador; a barra de cheer despeja 
     expect(r.discharged).toBe(true);
     expect(r.meter).toBe(0);
     expect(cheerTap(5).meter).toBe(6); // toque normal só soma um
-  });
-
-  it('o modelo simples e legível: ataque dado + ataque sofrido + cheer enchem a MESMA barra até o especial', () => {
-    // 16 por ida-e-volta (9 + 7): a 7ª ida-e-volta enche sem cheer; cada despejo de cheer adianta ~2,25 delas
-    let sem = 0; let idas = 0;
-    while (!energyFull(sem)) { sem = addEnergy(addEnergy(sem, 'dealt'), 'taken'); idas++; }
-    expect(idas).toBe(7);
-    let com = 0; let idasCom = 0;
-    com = addEnergy(com, 'cheer');
-    while (!energyFull(com)) { com = addEnergy(addEnergy(com, 'dealt'), 'taken'); idasCom++; }
-    expect(idasCom).toBeLessThan(idas);
   });
 });
 

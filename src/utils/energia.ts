@@ -4,21 +4,20 @@
  *
  * ## O modelo (uma frase por peça)
  *
- *  · Cada lutador tem UMA barra de ENERGIA (0..`ENERGY_MAX`). Ela enche por três
- *    fatores: cada ataque DADO (`ENERGY_DEALT`), cada ataque SOFRIDO
- *    (`ENERGY_TAKEN`) e o CHEER (`ENERGY_CHEER`, só do pet do jogador).
+ *  · Cada lutador tem UMA barra de ENERGIA (0..`ENERGY_MAX`). Ela enche pelo núcleo
+ *    (`combate/specials.ts` › `ENERGY`): golpe DADO, golpe SOFRIDO e o tempo; e pelo CHEER
+ *    (só do pet do jogador).
  *  · A "barra de CHEER" é o medidor de TOQUES do jogador (`CHEER_TAPS_FULL`, lento de
- *    propósito). Ao encher, ela DESPEJA `ENERGY_CHEER` de energia no pet (um tanto
- *    maior que um ataque dado/sofrido) e zera; o excedente de toques fica. Na
- *    Masmorra o medidor PERSISTE entre os combates da run.
- *  · Energia cheia = a PRÓXIMA ação do dono é o ESPECIAL; ela zera a barra e o golpe de
- *    cast não rende `'dealt'` (0 logo depois do cast; sem excedente).
+ *    propósito). Ao encher, ela DESPEJA energia no pet (`CHEER.energyPerDischarge` na Arena,
+ *    `CHEER.pvpEnergyPerDischarge` no PvP) e zera; o excedente de toques fica. A Masmorra e o
+ *    Pesadelo NÃO têm torcida (contexto §2.19).
+ *  · Energia cheia = a PRÓXIMA ação do dono é o ESPECIAL; ela zera a barra (uma barra, um uso).
  *
  * ## Duas famílias de luta
  *
  *  · **PvP (duelo fantasma)** — servidor-autoritativo, SEM mecânica ativa: o especial
- *    sai direto. A regra é de `functions/api/_duel.js`; as constantes de energia vivem
- *    LÁ e são só reexportadas aqui (uma regra, um arquivo — footgun 9).
+ *    sai direto. Roda no MESMO núcleo v3 (`functions/api/_duel.js` + `_combate.js`, travado por
+ *    `combate.parity.test.js`); as constantes de energia vivem em `combate/specials.ts`.
  *  · **PvE (Pesadelo, Masmorra, Arena)** — mecânicas ATIVAS, clientes:
  *      - quando a energia do pet enche, o especial pede um ANEL que encolhe sobre o
  *        alvo: o toque no momento certo define o multiplicador (ruim / bom / ótimo);
@@ -30,43 +29,17 @@
  * Tudo aqui é PURO e determinístico: o "jeito" de cada anel/esquiva sai da semente da
  * luta (`defenseRoll`), nunca de `Math.random()`.
  */
-import {
-  DUEL_ENERGY_MAX, DUEL_ENERGY_DEALT, DUEL_ENERGY_TAKEN, DUEL_ENERGY_CHEER, DUEL_TAPS_FULL, DUEL_TAPS_CAP,
-} from '../../functions/api/_duel.js';
 import { defenseRoll } from './autoDefesa';
-import { DODGE_REDUCE_V3, RING_MULT_V3 } from './combate/specials';
+import { CHEER, ENERGY_TRIGGER, DODGE_REDUCE_V3, RING_MULT_V3 } from './combate/specials';
 
-// ── a barra de energia (as constantes são as do servidor) ─────────────────────
-export const ENERGY_MAX = DUEL_ENERGY_MAX;
-export const ENERGY_DEALT = DUEL_ENERGY_DEALT;
-export const ENERGY_TAKEN = DUEL_ENERGY_TAKEN;
-export const ENERGY_CHEER = DUEL_ENERGY_CHEER;
+// ── a barra de cheer (as constantes são as do NÚCLEO v3, `combate/specials.ts`) ─
+// PR5: o duelo deixou de ter as constantes dele (`DUEL_ENERGY_*`): o PvP roda no mesmo núcleo, então a barra de
+// energia é UMA só (`ENERGY_TRIGGER`) e os ganhos por golpe/tempo são do núcleo (`ENERGY`), não daqui.
+export const ENERGY_MAX = ENERGY_TRIGGER;
 /** Toques que enchem a barra de CHEER (lenta de propósito). */
-export const CHEER_TAPS_FULL = DUEL_TAPS_FULL;
-/** Toques contados por janela de golpe (teto anti-auto-clique; vale no PvP, e como régua no PvE). */
-export const CHEER_TAPS_CAP = DUEL_TAPS_CAP;
-
-export type EnergyKind = 'dealt' | 'taken' | 'cheer';
-const GAIN: Record<EnergyKind, number> = { dealt: ENERGY_DEALT, taken: ENERGY_TAKEN, cheer: ENERGY_CHEER };
-
-/** A energia depois de um fator; nunca passa de `ENERGY_MAX`. */
-export function addEnergy(energy: number, kind: EnergyKind): number {
-  return Math.min(ENERGY_MAX, Math.max(0, (Number.isFinite(energy) ? energy : 0) + GAIN[kind]));
-}
-export const energyFull = (energy: number): boolean => energy >= ENERGY_MAX;
-/** 0..1 para a barra. */
-export const energyRatio = (energy: number): number => Math.min(1, Math.max(0, energy) / ENERGY_MAX);
-/**
- * Gasta a barra no especial: SEMPRE volta a 0. Excedente não existe — `addEnergy` trava em
- * `ENERGY_MAX` (PR1b/B1: uma barra cheia = um especial).
- */
-export const spendEnergy = (_energy: number): number => 0;
-/**
- * A energia do ATOR depois do golpe dele. O golpe de cast (`special`) NÃO rende `'dealt'`:
- * a barra fica em 0 até a próxima ação de alguém (PR1b/B1; mesma regra em `_duel.js`).
- */
-export const strikeEnergy = (energy: number, special: boolean): number =>
-  special ? spendEnergy(energy) : addEnergy(energy, 'dealt');
+export const CHEER_TAPS_FULL = CHEER.tapsFull;
+/** Toques contados por balde de tempo (teto anti-auto-clique; vale no PvP e na Arena). */
+export const CHEER_TAPS_CAP = CHEER.tapsCapPerBucket;
 
 export interface CheerTap { meter: number; discharged: boolean }
 /**

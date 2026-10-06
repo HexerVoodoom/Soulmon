@@ -1,46 +1,33 @@
-/** Tipos do dono único do duelo fantasma (`_duel.js`) para o cliente TS. */
-export interface DuelStats { hp: number; atk: number }
-export interface DuelEvent {
-  actor: 'me' | 'opp';
-  dmg: number;
-  /** Só do dono da tela: 1 = o golpe foi o ESPECIAL, 0 = normal (legado do timing: a qualidade q). */
-  cheer: number | null;
-  /** O golpe foi o ESPECIAL (energia cheia) — de qualquer um dos dois lutadores. */
-  special: boolean;
+/** Tipos do dono único do duelo fantasma (`_duel.js`) para o cliente TS e os testes. */
+import type { Combatant, FightEvent, Special } from './_combate.js';
+
+export interface DuelSide {
+  combatant: Combatant;
+  special: Special;
+  fx: { basica: string | null; especial: string | null };
+}
+export type DuelWinner = 'me' | 'opp' | 'draw';
+export interface DuelResult {
+  events: FightEvent[];
+  winner: DuelWinner;
   hpMe: number;
   hpOpp: number;
-  /** Energia de cada lutador ANTES do golpe (já com o cheer despejado; a que dispara o especial). */
-  preMe: number;
-  preOpp: number;
-  /** Energia (0..DUEL_ENERGY_MAX) de cada lutador DEPOIS do golpe. */
-  energyMe: number;
-  energyOpp: number;
-  /** O medidor de cheer (toques acumulados, 0..DUEL_TAPS_FULL) depois do golpe. */
-  meter: number;
+  timeMe: number;
+  timeOpp: number;
 }
-export interface DuelResult { events: DuelEvent[]; won: boolean; hpMe: number; hpOpp: number }
-export declare const DUEL_MAX_TURNS: number;
+export declare const PVP_HP_SCALE: number;
 export declare const DUEL_PENDING_MS: number;
-export declare const DUEL_CHEER_STRIKES: number[];
-export declare const DUEL_CHEER_WINDOWS: number;
-export declare const DUEL_PERFECT_CHEER: number;
-export declare const DUEL_CHEER_GAIN: number;
-export declare const DUEL_PERFECT_MULT: number;
-export declare const TIMING_CHEER_ENABLED: boolean;
 export declare const DUEL_TAPS_FULL: number;
 export declare const DUEL_TAPS_CAP: number;
-export declare const DUEL_ENERGY_MAX: number;
-export declare const DUEL_ENERGY_DEALT: number;
-export declare const DUEL_ENERGY_TAKEN: number;
-export declare const DUEL_ENERGY_CHEER: number;
-export declare const DUEL_SPECIAL_MULT: number;
-export declare const DUEL_DMG_SPREAD: number;
-export declare const DUEL_HP_BASE: number;
-export declare const DUEL_HP_PER_STAGE: number;
+export declare const DUEL_CHEER_BUCKETS: number;
+export declare const DUEL_DAY_MS: number;
+export declare const ESCOLA_FAMILY: Record<string, string>;
 export declare function sanitizeTaps(raw: unknown): number[];
-export declare function cheerDischarges(taps: unknown): boolean[];
-export declare function duelStats(profile: { stage?: string; attrs?: Record<string, number> } | null | undefined): DuelStats;
+export declare function bucketTapTimes(counts: readonly number[]): number[];
+export declare function duelCheerEvents(rawTaps: unknown, side?: 0 | 1): { t: number; side: 0 | 1 }[];
+export declare function maxLevelFor(firstSeen: unknown, now: number): number;
+export declare function fichaStageOf(evolutionStage: unknown): string;
+export declare function duelSide(save: unknown, opts?: { maxLevel?: number }): DuelSide;
+export declare function duelCombatant(save: unknown, opts?: { maxLevel?: number }): Combatant;
 export declare function duelSeed(...parts: Array<string | number>): number;
-export declare function sanitizeCheers(raw: unknown): number[];
-export declare function cheerMultiplier(q: number): number;
-export declare function simulateDuel(args: { me: DuelStats; opp: DuelStats; seed: number; cheers: unknown }): DuelResult;
+export declare function simulateDuel(args: { me: Pick<DuelSide, 'combatant' | 'special'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult;

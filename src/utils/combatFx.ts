@@ -171,14 +171,6 @@ export function totalMs(kind: StageActionKind, reduced: boolean): number {
   return (reduced ? STAGE_TIMING.reduced : STAGE_TIMING[kind]).total;
 }
 
-/**
- * Passo da luta do DUELO FANTASMA (Torneio): tempo entre o começo de um golpe e
- * o do seguinte. Era 900 ms (12 golpes ≈ 10,6 s); com 1500 ms a luta dura ~17,5 s
- * e o especial (gauge de 16 toques a ~3 toques/s) sai por volta dos 10 s tocando.
- * Calibração e taxa de vitória: `REGISTRO-DE-DECISOES.md` §20.9.
- */
-export const DUEL_STEP_MS = 1700;
-
 /** `prefers-reduced-motion` (lido uma vez por cena): sem investida nem projétil, só o flash. */
 export function prefersReducedMotion(): boolean {
   try {
