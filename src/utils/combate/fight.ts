@@ -33,6 +33,12 @@ export const MIRROR_SECONDS = 25;
  */
 export const HIT_UNIT_H0 = 10;
 
+/**
+ * PvP (PR5): both HPs are multiplied by this so the duel lasts ~38 s (balanco-motores §4, measured 38.1-39.1 s).
+ * Mirrored in `functions/api/_combate.js` (`PVP_HP_SCALE`); the parity test pins both.
+ */
+export const PVP_HP_SCALE = 1.7;
+
 export const EPS = 1e-9;
 export const DRAW_EPS = 1e-6;
 const MAX_EVENTS = 200_000;

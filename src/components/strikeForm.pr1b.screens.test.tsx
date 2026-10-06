@@ -12,7 +12,8 @@ import { ArenaGame } from './ArenaGame';
 import { DungeonGame } from './DungeonGame';
 import { NightmareBattle } from './NightmareBattle';
 import { DuelScreen } from './DuelScreen';
-import { duelStats } from '../../functions/api/_duel.js';
+import { duelSide } from '../../functions/api/_duel.js';
+import { simulatePvp, type DuelSide } from '../utils/combate/duel';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { dungeonFoe, type DungeonEnemy } from '../utils/dungeon';
 import { SPECIAL_LABEL } from '../utils/combatFx';
@@ -63,12 +64,22 @@ const PVE: Record<string, (skills: Ficha | undefined, el: string) => void> = {
   },
 };
 
+/** A 1ª semente em que o SEU pet solta o especial antes do 1º nocaute (para ver a forma dele). */
+function sementeComEspecial(): number {
+  const s = duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide;
+  for (let seed = 1; seed < 2000; seed++) {
+    const ev = simulatePvp({ me: s, opp: s, seed, taps: [] }).events;
+    if (ev.slice(0, ev.findIndex(e => e.kind === 'ko')).some(e => e.kind === 'cast' && e.side === 0)) return seed;
+  }
+  throw new Error('nenhuma semente com o especial do dono');
+}
+
 /** As formas do SEU pet no Duelo: corre a luta (com torcida, para sair especial) e anota cada golpe seu. */
 function duelo(skills: Ficha | undefined, el: string) {
   vi.useFakeTimers();
-  const s = duelStats({ stage: 'rookie' });
+  const s = duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide;
   const onDone = vi.fn();
-  render(<DuelScreen me={s} opp={s} seed={123} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement={el}
+  render(<DuelScreen me={s} opp={s} seed={sementeComEspecial()} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement={el}
     petStage="rookie" skills={skills} oppElement="agua" onDone={onDone} onClose={() => {}} />);
   for (let i = 0; i < 400 && !onDone.mock.calls.length; i++) {
     act(() => { vi.advanceTimersByTime(300); });

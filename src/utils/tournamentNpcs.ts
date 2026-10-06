@@ -36,7 +36,9 @@ export const TOURNAMENT_NPCS: readonly TournamentNpc[] = [
   { id: 'npc-mare', namePt: 'Maré', nameEn: 'Tide', art: DUELO_OPONENTE_ART[4], portrait: portraitMare },
 ] as const;
 
-/** A ficha do desafiante a partir da do jogador: o mesmo estágio, ataque a 0,85× (treino para aprender a torcer). */
-export function npcAtk(atk: number): number {
-  return Math.round(atk * 0.85 * 10) / 10;
-}
+/**
+ * O desafiante NPC do treino no núcleo v3 (PR5, contexto §2.19): o espelho EQUILIBRADO 2 levels abaixo do jogador
+ * (`NPC_LEVEL_GAP`), sem sair do estágio dele. Substitui o `npcAtk` (ataque ×0,85 sobre a ficha do próprio pet).
+ * A faixa de aceite é a vitória do jogador entre 75% e 92% em cada estágio (`combate/duel.test.ts`).
+ */
+export { NPC_LEVEL_GAP, npcCombatant, npcSide } from './combate/duel';

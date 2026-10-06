@@ -15,21 +15,18 @@
  * torcer o golpe é o golpe-base, nunca menos.
  *
  * Esta é a conta do lado PvE (Pesadelo e Masmorra). O duelo do Torneio é
- * servidor-autoritativo e mora em `functions/api/_duel.js`; as constantes do
- * gauge (toques para encher, força do especial) são IMPORTADAS de lá — uma
- * regra, um arquivo (CLAUDE.md, footgun 9).
+ * servidor-autoritativo e mora em `functions/api/_duel.js` (núcleo v3, PR5); a
+ * barra de cheer dele é a de `utils/energia.ts` (`CHEER_TAPS_FULL`).
  *
  * A torcida por TIMING (barra/anel no momento certo) está desligada
- * (`TIMING_CHEER_ENABLED = false` em `_duel.js`) e nenhum caminho de UI a usa:
- * o código fica para reaproveitar em outro lugar depois.
+ * (`TIMING_CHEER_ENABLED = false`) e nenhum caminho de UI a usa.
  *
  * O Duelo da Arena (`ArenaGame`, contra NPCs) TAMBÉM usa o grito e a barra
  * (`TorcidaLayer`/`TorcidaGauge`), mas desde o PR3b o golpe de torcida acabou: a torcida despeja uma
  * DESCARGA de energia no núcleo (`cheerDrain` em `utils/combate/group.ts`, `CHEER.energyPerDischarge`).
  */
-import { TIMING_CHEER_ENABLED } from '../../functions/api/_duel.js';
-
-export { TIMING_CHEER_ENABLED };
+/** A torcida por TIMING está DESLIGADA (PR5: a constante saiu de `_duel.js`, que não tem mais o código dela). */
+export const TIMING_CHEER_ENABLED = false;
 
 /**
  * Toques que enchem o gauge no DUELO (Torneio fantasma e Duelo da Arena): o
