@@ -5,6 +5,22 @@ Padrão de referência: OWASP ASVS 4.0 (V4 controle de acesso, V5 validação, V
 
 Nota: não existe `functions/api/duel.js`. O "duel" é `_duel.js` + as ações `duelStart`/`match` de `community.js`. O nome do especial é testado em `duel.nome.test.js`.
 
+## STATUS DAS CORREÇÕES (PR13, branch `seguranca/pr13`, 06/10/2026)
+
+| Achado | Estado | Como |
+|---|---|---|
+| ALTO-1 corrida cota/semente | **CORRIGIDO no isolate; limite honesto declarado** | `community.js`: fila `withDuelLock` por conta em `duelStart`/`match` + duelo aberto válido = 409 (outro oponente) ou o MESMO duelo (mesmo oponente, idempotente). KV não tem CAS: rajada espalhada por isolates/colos diferentes ainda abre janela; fechar de verdade = Durable Object por conta (não provisionado). Teste `community.duel.race.test.js`. |
+| ALTO-2 fazenda de pontos/Honra | **CORRIGIDO** | `_honra.js` (constantes nomeadas): fator por diferença de level (carência 3, zero em 9) x fator por repetição do par/dia ([1, 0,5, 0,25, 0]); vale para quem desafia e para quem defende; derrota não muda. A resposta do `match` traz `gain` e `honorFactor`, e o app aplica o fator à Honra de VITÓRIA. Teste `community.farm.test.js` (A x B(level 1) 5x = 35 pts/dia, antes 100). |
+| ALTO-3 save gigante como oponente | **CORRIGIDO** | `loadDuelSide` ignora save acima de `DUEL_SAVE_MAX_CHARS` (1 milhão) ANTES do parse. Teste `community.opponents.poison.test.js` (espia `JSON.parse`). Não foi criado o registro `duel:<saveId>` pequeno (opção maior da auditoria). |
+| MÉDIO-1 família do especial | **ABERTO (decisão do dono inexequível como escrita)** | `familiaDoEspecial` depende de `seedKey` (identidade local, `identityKey`), `tendencia` (eixo do Oráculo) e das famílias dos estágios anteriores; NADA disso está no save na nuvem. O servidor não consegue recomputar a família. Todas as 7 famílias têm peso > 0 em toda escola: validar plausibilidade não restringe nada. Opções para o dono: (a) cliente sobe `seedKey`+`tendencia` no save (servidor recalcula, mas o cliente escolhe a seed: grindável); (b) seed do servidor (pid/`f`) adotada também pelo cliente (muda todos os especiais gerados; PR9 e o cache `soulmonSkills`); (c) aceitar e provar equilíbrio por matriz (a opção da auditoria). Nada foi alterado. |
+| MÉDIO-2 torcida ótima offline | ABERTO (risco aceito/documentado) | consequência do desenho; commit-reveal fica para decisão. |
+| MÉDIO-3 bitsOrigin/equipamento/câmbio só no cliente | ABERTO (limitação declarada, por decisão do dono) | teto único de 5% segue valendo. |
+| MÉDIO-4 `rebirth-reset` sem portão | **CORRIGIDO** | `entitlements.js`: exige tier pago (entitlement/admin) e `gateFor('renascimento', bondLevelFor(totalXP)).open`; 403 `not-paid` / `low-bond`. Teste `entitlements.rebirthReset.qa2.test.js`. |
+| MÉDIO-5 `maxLevelFor` sem `f` | **CORRIGIDO** | devolve 1 (piso). A 1ª gravação do `save.js` escreve `f = agora`, então save novo não fica preso (teste em `save.limits.test.js`); save antigo sem `f` fica no level 1 até a próxima gravação do app. Cenário B (contas dormentes) aceito. |
+| MÉDIO-6 corpo sem limite/sem rate limit em `save.js` | **CORRIGIDO** | `Content-Length` > 5 MB + 64 KB = 413 sem ler; texto medido antes do `JSON.parse`; teto em BYTES; `takeToken` por IP (120/min) e por conta (30/min). CAS (ADR-004) segue aberto. Teste `save.limits.test.js`. |
+| MÉDIO-7 desistência na virada de mês | ABERTO | `pending` ainda mora no rank da season; não resolvido (decisão de desenho). |
+| BAIXO B1..B5 | ABERTOS | B1 (`attrs` 1e999), B2 CORS, B3/B4 rate limit por isolate, B5 `soulTestAnswers` na nuvem (alpha-compliance): nenhum alterado. |
+
 ## Contagem
 
 | Severidade | Qtde |
