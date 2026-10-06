@@ -1,0 +1,17 @@
+{
+  "_nota": "Save anonimizado no formato anterior ao combate v3: NENHUM campo de level/XP do Soulmon. Montado a partir do formato de um save de campo (champion-harmony, 3 dias perfeitos desde a evolucao, 18 no total, uma Glitchtama ja usada). Nomes e ids de atividade removidos.",
+  "activities": [],
+  "tasks": [],
+  "lastResetDate": "Mon Jan 01 2024",
+  "evolutionStage": "champion-harmony",
+  "unlockedEvolutions": ["rookie", "champion-harmony"],
+  "perfectDays": 3,
+  "totalPerfectDays": 18,
+  "powerPoints": 4,
+  "harmonyPoints": 31,
+  "benevolencePoints": 9,
+  "healthPoints": 3,
+  "maxHealthPoints": 5,
+  "totalXP": 640,
+  "degeneratedByHP": false
+}
