@@ -28,13 +28,13 @@
  * Superfície nova nasce MUDA (R-NOVA, `docs/SOM.md`): nenhum som aqui.
  */
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { escolaSkillSegura, type EscolaSkillId } from '../utils/soulProfile/ficha/types';
+import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  fxElementId, impactMs, prefersReducedMotion, visualElementFor, fighterStrikeForm, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
+  fxElementId, impactMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   type StageActionKind, type StageStatus,
 } from '../utils/combatFx';
 import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
@@ -88,15 +88,20 @@ export interface DuelScreenProps {
 }
 
 const maxHpOf = (s: DuelSide) => Math.max(1, Math.round(s.combatant.hp * PVP_HP_SCALE));
-const escolaDe = (e: string | null | undefined): { escolaId: EscolaSkillId } | null => (e ? { escolaId: escolaSkillSegura(e) } : null);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
   me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', skills, oppElement, onDone, onClose,
 }: DuelScreenProps) {
-  const meEl = fxElementId(petElement);
-  const oppEl = fxElementId(oppElement ?? visualElementFor(oppName));
   const par = stageSkillsFor(skills, petStage);
+  // A identidade de combate (dono único): a SUA vem da ficha (sem ela, do `fx` que o servidor publicou do seu save); a do
+  // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
+  const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
+  const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? visualElementFor(oppName)), [opp.fx, oppElement, oppName]);
+  const meEl = fxElementId(meId.basico.elemento);
+  const oppEl = fxElementId(oppId.basico.elemento);
+  /** O elemento do golpe do lado no papel dado (o básico é o principal; o especial, o dele). */
+  const elementoDe = (side: 0 | 1, role: 'basica' | 'especial') => fxElementId((side === 0 ? meId : oppId)[role === 'especial' ? 'especial' : 'basico'].elemento);
   const maxMe = maxHpOf(me);
   const maxOpp = maxHpOf(opp);
 
@@ -151,13 +156,7 @@ export function DuelScreen({
   };
 
   /** A forma do golpe (investida × projétil) do lado `side` no papel dado: a ficha manda; sem ela, o elemento. */
-  const forma = (side: 0 | 1, role: 'basica' | 'especial') => {
-    const meu = side === 0;
-    const skill = meu
-      ? (role === 'especial' ? par?.especial : par?.basica) ?? escolaDe(role === 'especial' ? me.fx?.especial : me.fx?.basica)
-      : escolaDe(role === 'especial' ? opp.fx?.especial : opp.fx?.basica);
-    return fighterStrikeForm({ skill, element: meu ? meEl : oppEl }, role);
-  };
+  const forma = (side: 0 | 1, role: 'basica' | 'especial') => (side === 0 ? meId : oppId)[role === 'especial' ? 'especial' : 'basico'].forma;
 
   useEffect(() => {
     const reduced = reduzido.current;
@@ -178,7 +177,7 @@ export function DuelScreen({
     let adiado: FightEvent | null = null;
     const fire = (e: FightEvent, a: { kind: StageActionKind; strike?: ReturnType<typeof forma> }) => {
       const meu = e.side === 0;
-      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, element: meu ? meEl : oppEl });
+      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica') });
       busyUntil = clock.current + leadS(a.kind);
       emCurso = a.kind;
     };

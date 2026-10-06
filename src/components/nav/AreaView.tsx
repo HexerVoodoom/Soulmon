@@ -277,6 +277,7 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 evolutionStage={props.evolutionStage}
                 skills={props.skills}
+                petElement={props.petElement}
                 onStart={() => { setSheet(null); setDuelOpen(true); }}
               />
             )}
@@ -289,6 +290,7 @@ export function AreaView(props: AreaViewProps) {
               demoCharacterId={props.demoCharacterId}
               language={language}
               skills={props.skills}
+              petElement={props.petElement}
               onEarnPoints={props.onEarnPoints}
               onExit={() => setDuelOpen(false)}
             />

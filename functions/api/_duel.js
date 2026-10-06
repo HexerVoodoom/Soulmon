@@ -132,7 +132,44 @@ export function lexOf(especial, basica, familia) {
   return { n, f, el, elB };
 }
 
-const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' && own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : null);
+/** Espelho de `escolaSkillSegura` + `fighterIdentity` (src/utils/fighterIdentity.ts): escola de skill válida = ela mesma; texto que não é escola de skill (um `evocacao` antigo, lixo) = `conjuracao`; sem skill/sem texto = `null` (o cliente cai no elemento). */
+const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' ? (own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : 'conjuracao') : null);
+
+/** A lista FECHADA de elementos do app (17 base + 136 pares: `CLASS_ELEMENT_ORDER` + `DERIVED_ELEMENT_PAIRS`; travada por `fighterIdentity.parity.test.ts`). O elemento publicado em `fx` só sai se estiver aqui. */
+export const ELEMENTOS_FICHA = new Set([
+  'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz', 'vileza', 'morte', 'vida', 'vigor',
+  'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'vapor', 'lava', 'incendio', 'plasma', 'fogo_feiticeiro',
+  'fogo_negro', 'chama_solar', 'fogo_infernal', 'chama_azul', 'fenix', 'fervor', 'pantano', 'gelo',
+  'agua_viva', 'mare', 'abismo', 'prisma', 'acido', 'veneno', 'nascente', 'correnteza', 'areia', 'magnetismo',
+  'cristal', 'obsidiana', 'ouro_vivo', 'solo_profano', 'ossuario', 'flora', 'tita', 'tempestade', 'eter',
+  'murmurio', 'aurora', 'enxofre', 'miasma', 'alento', 'impeto', 'fluxo', 'trovao_negro', 'fulgor', 'tormento',
+  'galvanismo', 'sinapse', 'reflexo', 'ocultismo', 'runa', 'pacto', 'alma', 'essencia', 'encantamento',
+  'crepusculo', 'terror', 'espectro', 'parasita', 'assassinio', 'heresia', 'julgamento', 'santidade',
+  'bravura', 'praga', 'mutacao', 'carnificina', 'equilibrio', 'ceifa', 'vitalidade', 'forja', 'tempera', 'aco',
+  'esgrima', 'aco_voltaico', 'arsenal', 'lamina_oculta', 'lamina_radiante', 'serrilha', 'fio_funebre',
+  'lamina_viva', 'maestria', 'pira_eterna', 'erosao', 'fossil', 'aceleracao', 'instante', 'cronomancia',
+  'entropia', 'eon', 'ruina', 'ocaso', 'florescer', 'frenesi', 'contratempo', 'estrondo', 'sonar', 'terremoto',
+  'estampido', 'trovao', 'cantico', 'sussurro', 'harmonia', 'dissonancia', 'requiem', 'melodia', 'brado',
+  'cadencia', 'eco', 'fornalha_estelar', 'voragem', 'colapso', 'vacuo', 'magnetar', 'singularidade',
+  'buraco_negro', 'halo_gravitacional', 'jugo', 'implosao', 'ancora_vital', 'peso_descomunal', 'ariete',
+  'dilatacao', 'onda_de_choque', 'meteoro', 'cometa', 'asteroide', 'estratosfera', 'pulsar', 'portal', 'vazio',
+  'constelacao', 'devorador', 'nebulosa', 'semente_estelar', 'gigante_estelar', 'lamina_sideral', 'continuum',
+  'silencio_cosmico', 'dobra',
+]);
+
+/** Id de elemento da lista fechada (o cliente valida de novo contra a dele). */
+const idElemento = (id) => (typeof id === 'string' && ELEMENTOS_FICHA.has(id) ? id : null);
+
+/**
+ * Espelho de `elementoDoBasico` (src/utils/fighterIdentity.ts): o golpe BÁSICO usa o elemento PRINCIPAL do Soulmon
+ * (`elementoDominante`, base ou combinado); skills antigas, sem o campo, caem no elemento da básica. Derivado do `soulmonSkills`
+ * do save no servidor, nunca de campo do cliente.
+ * @param {any} skills
+ */
+export function elementoDoBasico(skills) {
+  const dom = skills && typeof skills === 'object' && skills.elementoDominante && typeof skills.elementoDominante === 'object' ? skills.elementoDominante.id : null;
+  return idElemento(dom) ?? idElemento(skills?.basica?.elementoId);
+}
 
 /**
  * A ficha de luta de um lado, derivada do SAVE. Só números e ids de uma lista fechada saem daqui:
@@ -164,7 +201,7 @@ export function duelSide(save, opts = {}) {
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */
