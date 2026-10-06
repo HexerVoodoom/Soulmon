@@ -3275,132 +3275,490 @@ async function handleGuild({ request, env }) {
 }
 __name(handleGuild, "handleGuild");
 
+// api/_soulXP.js
+var STAGE_ORDER = ["rookie", "champion", "ultimate", "mega", "ultra"];
+var STAGE_CAPS_EACH = [6, 7, 8, 9, 10];
+var STAGE_LEVEL_CAPS = STAGE_CAPS_EACH.reduce((acc, c) => [...acc, (acc[acc.length - 1] ?? 0) + c], []);
+var MAX_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
+var XP_PER_LEVEL = 100;
+var XP_FULL_DAY = 100;
+function safe(n) {
+  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : 0;
+}
+__name(safe, "safe");
+function stageIndexOf(stage) {
+  if (typeof stage !== "string") return 0;
+  const prefix = stage.split("-")[0];
+  const i = STAGE_ORDER.indexOf(prefix);
+  return i < 0 ? 0 : i;
+}
+__name(stageIndexOf, "stageIndexOf");
+function levelCapFor(stage) {
+  return STAGE_LEVEL_CAPS[stageIndexOf(stage)];
+}
+__name(levelCapFor, "levelCapFor");
+function soulXP(state) {
+  const s = stageIndexOf(state?.evolutionStage);
+  const firstLevel = s <= 0 ? 1 : STAGE_LEVEL_CAPS[s - 1] + 1;
+  return (firstLevel - 1) * XP_PER_LEVEL + Math.floor(safe(state?.perfectDays)) * XP_FULL_DAY;
+}
+__name(soulXP, "soulXP");
+function levelFor(xp) {
+  return Math.min(MAX_LEVEL, 1 + Math.floor(safe(xp) / XP_PER_LEVEL));
+}
+__name(levelFor, "levelFor");
+function soulLevel(state) {
+  return Math.min(levelFor(soulXP(state)), levelCapFor(state?.evolutionStage));
+}
+__name(soulLevel, "soulLevel");
+
+// api/_combate.js
+function mulberry32(seed) {
+  let a = seed | 0;
+  return () => {
+    a = a + 1831565813 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+__name(mulberry32, "mulberry32");
+function sideSeed(seed, side) {
+  return Math.imul(seed ^ 2654435769, 2246822507) + side * 1663821211 | 0;
+}
+__name(sideSeed, "sideSeed");
+var PHASE_SALT = 20973;
+function gaussian(r) {
+  return Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+}
+__name(gaussian, "gaussian");
+var VARIANCE = { rho: 0.9, sigma: 0.08, floor: 0.05 };
+function ar1Multiplier(r, cfg) {
+  let z = gaussian(r);
+  const k = Math.sqrt(1 - cfg.rho * cfg.rho);
+  return () => {
+    z = cfg.rho * z + k * gaussian(r);
+    return Math.max(cfg.floor, 1 + cfg.sigma * z);
+  };
+}
+__name(ar1Multiplier, "ar1Multiplier");
+var CURVE_K = 8;
+var BASE_ATTACKS_PER_WINDOW = 9;
+function hitsToKnockOut(attacker, defender) {
+  return defender.hp * (1 + defender.def / CURVE_K) / (1 + attacker.atk / CURVE_K) / (1 + attacker.bonus);
+}
+__name(hitsToKnockOut, "hitsToKnockOut");
+function attacksPerWindow(spd) {
+  return BASE_ATTACKS_PER_WINDOW * (1 + spd / CURVE_K) / (1 + 1 / CURVE_K);
+}
+__name(attacksPerWindow, "attacksPerWindow");
+var MAX_SHARE = 0.45;
+var MIN_SHARE = 0.15;
+var HP_BASE = 10;
+var HP_LEVEL_DIVISOR = 10;
+var STAGE_FACTOR = 1.5;
+var REFERENCE_BUILDS = {
+  atk: { atk: 1, def: 0, spd: 0 },
+  def: { atk: 0, def: 1, spd: 0 },
+  spd: { atk: 0, def: 0, spd: 1 },
+  balanced: { atk: 1 / 3, def: 1 / 3, spd: 1 / 3 }
+};
+function clampLevel(level) {
+  if (!Number.isFinite(level)) return 1;
+  return Math.min(MAX_LEVEL, Math.max(1, Math.floor(level)));
+}
+__name(clampLevel, "clampLevel");
+function stageOfLevel(level) {
+  const L = clampLevel(level);
+  return STAGE_LEVEL_CAPS.findIndex((cap) => L <= cap);
+}
+__name(stageOfLevel, "stageOfLevel");
+function stageBase(stage) {
+  return Math.ceil(STAGE_FACTOR ** stage);
+}
+__name(stageBase, "stageBase");
+function autoHp(level) {
+  const L = clampLevel(level);
+  return HP_BASE * STAGE_FACTOR ** stageOfLevel(L) * (1 + L / HP_LEVEL_DIVISOR);
+}
+__name(autoHp, "autoHp");
+var ORDER = ["atk", "spd", "def"];
+function cleanWeights(w) {
+  const c = /* @__PURE__ */ __name((x) => typeof x === "number" && Number.isFinite(x) && x > 0 ? x : 0, "c");
+  const atk = c(w?.atk), def = c(w?.def), spd = c(w?.spd);
+  const sum = atk + def + spd;
+  return sum > 0 ? { atk: atk / sum, def: def / sum, spd: spd / sum } : REFERENCE_BUILDS.balanced;
+}
+__name(cleanWeights, "cleanWeights");
+function distributePoints(level, weights) {
+  const L = clampLevel(level);
+  const w = cleanWeights(weights);
+  const cap = Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
+  const floor = Math.min(Math.floor(MIN_SHARE * L), Math.floor(L / 3));
+  const p = { atk: floor, def: floor, spd: floor };
+  for (let n = 3 * floor + 1; n <= L; n++) {
+    let best = null;
+    let bestNeed = -Infinity;
+    for (const a of ORDER) {
+      if (p[a] >= cap) continue;
+      const need = w[a] * n - p[a];
+      if (need > bestNeed + 1e-9) {
+        best = a;
+        bestNeed = need;
+      }
+    }
+    p[best]++;
+  }
+  return p;
+}
+__name(distributePoints, "distributePoints");
+function combatantAt(level, weights, bonus = 0) {
+  const L = clampLevel(level);
+  const b = stageBase(stageOfLevel(L));
+  const p = distributePoints(L, weights);
+  return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+}
+__name(combatantAt, "combatantAt");
+var COMBAT_BONUS_CAP = 0.05;
+function combinedBonus(sources) {
+  let sum = 0;
+  for (const v of [sources?.talent, sources?.equipment, sources?.commerce, sources?.rebirth]) {
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) sum += v;
+  }
+  return Math.min(sum, COMBAT_BONUS_CAP);
+}
+__name(combinedBonus, "combinedBonus");
+var SPECIAL_BUDGET_HITS = 3;
+var SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
+function specialOf(family) {
+  const f = typeof family === "string" && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : "direct";
+  return { family: f, power: SPECIAL_POWER[f] };
+}
+__name(specialOf, "specialOf");
+var ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
+var ENERGY_TRIGGER = 100;
+var CHEER = {
+  tapsFull: 24,
+  tapsCapPerBucket: 16,
+  bucketSeconds: 3,
+  energyPerDischarge: 9,
+  pvpEnergyPerDischarge: 2.5
+};
+function cheerEvents(taps, side) {
+  const out = [];
+  const perBucket = /* @__PURE__ */ new Map();
+  let acc = 0;
+  for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
+    const b = Math.floor(tap / CHEER.bucketSeconds);
+    const n = perBucket.get(b) ?? 0;
+    if (n >= CHEER.tapsCapPerBucket) continue;
+    perBucket.set(b, n + 1);
+    acc++;
+    if (acc % CHEER.tapsFull === 0) out.push({ t: tap, side });
+  }
+  return out;
+}
+__name(cheerEvents, "cheerEvents");
+var MIRROR_SECONDS = 25;
+var HIT_UNIT_H0 = 10;
+var PVP_HP_SCALE = 1.7;
+var EPS = 1e-9;
+var DRAW_EPS = 1e-6;
+var MAX_EVENTS = 2e5;
+function windowSeconds(level) {
+  const d = combatantAt(level, REFERENCE_BUILDS.balanced);
+  return MIRROR_SECONDS * attacksPerWindow(d.spd) / hitsToKnockOut(d, d);
+}
+__name(windowSeconds, "windowSeconds");
+function hitUnit(level, h0 = HIT_UNIT_H0) {
+  const bal = combatantAt(level, REFERENCE_BUILDS.balanced);
+  return hitsToKnockOut(bal, bal) / h0;
+}
+__name(hitUnit, "hitUnit");
+function* fightSteps(a, b, opts) {
+  const seed = opts.seed | 0;
+  const hpScale = opts.hpScale ?? 1;
+  const variance = opts.variance === void 0 ? VARIANCE : opts.variance;
+  const wl = opts.windowLevel ?? Math.max(a.combatant.level, b.combatant.level);
+  const win = windowSeconds(wl);
+  const u = opts.unitH0 === null ? 1 : hitUnit(wl, opts.unitH0 ?? HIT_UNIT_H0);
+  const interval = /* @__PURE__ */ __name((spd) => win / attacksPerWindow(spd) * u, "interval");
+  const phaseRng = mulberry32(seed ^ PHASE_SALT);
+  const drawn = [phaseRng(), phaseRng()];
+  const phases = opts.phases ?? drawn;
+  const mk = /* @__PURE__ */ __name((s, i) => {
+    const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
+    const r = mulberry32(sideSeed(seed, i + 1));
+    const mult = variance ? ar1Multiplier(r, variance) : () => 1;
+    return {
+      c,
+      sp: s.special,
+      mult,
+      hp: opts.startHp?.[i] ?? 1,
+      en: opts.startEnergy?.[i] ?? 0,
+      shield: 0,
+      next: interval(c.spd) * phases[i],
+      casts: 0,
+      dead: Infinity,
+      nAtk: 0,
+      nVuln: 0,
+      nSpd: 0,
+      nHit: 0
+    };
+  }, "mk");
+  const F = [mk(a, 0), mk(b, 1)];
+  const timed = [];
+  for (const ch of opts.cheer ?? []) {
+    timed.push({
+      t: ch.t,
+      fn: /* @__PURE__ */ __name(() => {
+        const f = F[ch.side];
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge;
+      }, "fn")
+    });
+  }
+  let t = 0;
+  let tPrev = 0;
+  const pending = [];
+  const ev = /* @__PURE__ */ __name((kind, side, frac, at) => ({ kind, t: at, side, frac, hp: [F[0].hp, F[1].hp], energy: [F[0].en, F[1].en] }), "ev");
+  const hitsOn = /* @__PURE__ */ __name((me, foe) => hitsToKnockOut(me.c, foe.c) / u, "hitsOn");
+  const gain = /* @__PURE__ */ __name((f, x, per) => {
+    if (f.sp && f.dead === Infinity) f.en += per * x;
+  }, "gain");
+  const hit = /* @__PURE__ */ __name((src, v, frac, kind) => {
+    if (v.dead < Infinity) return;
+    let amt = frac;
+    if (v.shield > EPS) {
+      const ab = Math.min(v.shield, amt);
+      v.shield -= ab;
+      amt -= ab;
+    }
+    v.hp -= amt;
+    gain(src, frac, ENERGY.perDealt);
+    gain(v, frac, ENERGY.perReceived);
+    pending.push(ev(kind, src === F[0] ? 0 : 1, frac, t));
+  }, "hit");
+  const cast = /* @__PURE__ */ __name((me, foe, t0, scale) => {
+    const sp = me.sp;
+    const E = SPECIAL_BUDGET_HITS * sp.power * scale;
+    const iv = interval(me.c.spd);
+    switch (sp.family) {
+      case "direct":
+        hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack");
+        break;
+      case "dot":
+        for (let k = 1; k <= 3; k++) {
+          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe), "tick"), "fn") });
+        }
+        break;
+      case "heal":
+        me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
+        break;
+      case "shield":
+        me.shield += E / hitsOn(foe, me);
+        break;
+      case "atkBuff":
+        me.nAtk += E;
+        break;
+      case "defDebuff":
+        foe.nVuln += E;
+        break;
+      case "spdBuff":
+        me.nSpd += E;
+        me.next = Math.min(me.next, t0 + iv / 2);
+        break;
+    }
+  }, "cast");
+  function* flush() {
+    while (pending.length) yield pending.shift();
+  }
+  __name(flush, "flush");
+  function* markDead() {
+    for (const i of [0, 1]) {
+      if (F[i].hp <= EPS && F[i].dead === Infinity) {
+        F[i].dead = t;
+        yield ev("ko", i, 0, t);
+      }
+    }
+  }
+  __name(markDead, "markDead");
+  function* tryCast(i, tt) {
+    const me = F[i];
+    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+      me.en = Math.max(0, me.en - ENERGY_TRIGGER);
+      me.casts++;
+      const m = yield ev("cast", i, 0, tt);
+      cast(me, F[1 - i], tt, m ?? 1);
+    }
+  }
+  __name(tryCast, "tryCast");
+  const finish = /* @__PURE__ */ __name(() => {
+    const timeA = F[0].dead, timeB = F[1].dead;
+    const winner = Math.abs(timeA - timeB) < DRAW_EPS ? "draw" : timeA > timeB ? "A" : "B";
+    return {
+      timeA,
+      timeB,
+      castsA: F[0].casts,
+      castsB: F[1].casts,
+      winner,
+      hpA: Math.max(0, F[0].hp),
+      hpB: Math.max(0, F[1].hp),
+      energyA: F[0].en,
+      energyB: F[1].en
+    };
+  }, "finish");
+  for (let g = 0; g < MAX_EVENTS; g++) {
+    let tt = Infinity;
+    for (const e of timed) if (e.t < tt) tt = e.t;
+    let tEn = Infinity;
+    for (const f of F) {
+      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+    }
+    t = Math.min(F[0].next, F[1].next, tt, tEn);
+    for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
+    tPrev = t;
+    for (let i = timed.length - 1; i >= 0; i--) {
+      if (timed[i].t - t < EPS) timed.splice(i, 1)[0].fn();
+    }
+    for (
+      const i of
+      /** @type {(0 | 1)[]} */
+      [0, 1]
+    ) {
+      const me = F[i];
+      const foe = F[1 - i];
+      if (me.next - t >= EPS) continue;
+      let mulN = 1;
+      if (me.nAtk > EPS) {
+        const x = Math.min(1, me.nAtk);
+        mulN += x;
+        me.nAtk -= x;
+      }
+      if (foe.nVuln > EPS) {
+        const x = Math.min(1, foe.nVuln);
+        mulN += x;
+        foe.nVuln -= x;
+      }
+      const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
+      me.nHit++;
+      hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack");
+      if (me.nSpd > EPS) {
+        const x = Math.min(1, me.nSpd);
+        me.nSpd -= x;
+        me.next = t + interval(me.c.spd) / (1 + x);
+      } else {
+        me.next = t + interval(me.c.spd);
+      }
+    }
+    yield* flush();
+    yield* markDead();
+    yield* tryCast(0, t);
+    yield* tryCast(1, t);
+    yield* flush();
+    yield* markDead();
+    for (const i of [0, 1]) {
+      if (F[i].dead < Infinity && F[1 - i].dead === Infinity && t > 10 * F[i].dead + 60) F[1 - i].dead = t;
+    }
+    const over = opts.stopAtFirstKo ? F[0].dead < Infinity || F[1].dead < Infinity : F[0].dead < Infinity && F[1].dead < Infinity;
+    if (over) return finish();
+  }
+  throw new Error(`combate: fight did not end within ${MAX_EVENTS} events (seed ${seed})`);
+}
+__name(fightSteps, "fightSteps");
+function safe2(n) {
+  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : 0;
+}
+__name(safe2, "safe");
+function soulWeights(state) {
+  return { atk: safe2(state?.powerPoints), spd: safe2(state?.harmonyPoints), def: safe2(state?.benevolencePoints) };
+}
+__name(soulWeights, "soulWeights");
+function soulCombatant(state, opts = {}) {
+  let level = soulLevel(state);
+  if (typeof opts.maxLevel === "number" && Number.isFinite(opts.maxLevel)) level = Math.min(level, Math.max(1, Math.floor(opts.maxLevel)));
+  return combatantAt(level, soulWeights(state), opts.bonus ?? 0);
+}
+__name(soulCombatant, "soulCombatant");
+
 // api/_duel.js
-var DUEL_MAX_TURNS = 26;
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
-var DUEL_CHEER_STRIKES = [1, 3, 5];
-var DUEL_CHEER_WINDOWS = DUEL_MAX_TURNS / 2;
-var DUEL_PERFECT_CHEER = 0.92;
-var DUEL_CHEER_GAIN = 0.25;
-var DUEL_PERFECT_MULT = 1.35;
-var TIMING_CHEER_ENABLED = false;
-var DUEL_TAPS_FULL = 24;
-var DUEL_TAPS_CAP = 16;
-var DUEL_ENERGY_MAX = 100;
-var DUEL_ENERGY_DEALT = 9;
-var DUEL_ENERGY_TAKEN = 7;
-var DUEL_ENERGY_CHEER = 36;
-var DUEL_SPECIAL_MULT = 2;
-var DUEL_DMG_SPREAD = 0.74;
+var DUEL_TAPS_FULL = CHEER.tapsFull;
+var DUEL_TAPS_CAP = CHEER.tapsCapPerBucket;
+var DUEL_CHEER_BUCKETS = Math.ceil(60 / CHEER.bucketSeconds);
+var DUEL_DAY_MS = 864e5;
 function sanitizeTaps(raw) {
   const arr = Array.isArray(raw) ? raw : [];
-  return Array.from({ length: DUEL_CHEER_WINDOWS }, (_, i) => {
+  return Array.from({ length: DUEL_CHEER_BUCKETS }, (_, i) => {
     const n = Math.floor(Number(arr[i]));
     return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
   });
 }
 __name(sanitizeTaps, "sanitizeTaps");
-var DUEL_HP_BASE = 140;
-var DUEL_HP_PER_STAGE = 12;
-var STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
-function stagePowerOf(stage) {
-  const key = String(stage || "").split("-")[0];
-  return Object.prototype.hasOwnProperty.call(STAGE_POWER, key) ? STAGE_POWER[key] : 1;
-}
-__name(stagePowerOf, "stagePowerOf");
-function duelStats(profile) {
-  const sp = stagePowerOf(profile?.stage);
-  const a = profile?.attrs || {};
-  const pos = /* @__PURE__ */ __name((v) => Number.isFinite(+v) ? Math.max(0, +v) : 0, "pos");
-  const attrSum = pos(a.power) + pos(a.harmony) + pos(a.benevolence);
-  return {
-    hp: DUEL_HP_BASE + sp * DUEL_HP_PER_STAGE,
-    atk: Math.round((10 + sp * 1.2 + Math.min(2, attrSum / 50)) * 10) / 10
-  };
-}
-__name(duelStats, "duelStats");
-function mulberry32(seed) {
-  let t = seed >>> 0;
-  return () => {
-    t = t + 1831565813 >>> 0;
-    let r = Math.imul(t ^ t >>> 15, 1 | t);
-    r = r + Math.imul(r ^ r >>> 7, 61 | r) ^ r;
-    return ((r ^ r >>> 14) >>> 0) / 4294967296;
-  };
-}
-__name(mulberry32, "mulberry32");
-function sanitizeCheers(raw) {
-  const arr = Array.isArray(raw) ? raw : [];
-  return DUEL_CHEER_STRIKES.map((_, i) => {
-    const q = Number(arr[i]);
-    return Number.isFinite(q) ? Math.min(1, Math.max(0, q)) : 0;
+function bucketTapTimes(counts) {
+  const out = [];
+  counts.forEach((n, b) => {
+    for (let k = 0; k < n; k++) out.push((b + 1) * CHEER.bucketSeconds);
   });
+  return out;
 }
-__name(sanitizeCheers, "sanitizeCheers");
-function cheerMultiplier(q) {
-  if (q >= DUEL_PERFECT_CHEER) return DUEL_PERFECT_MULT;
-  return 1 + DUEL_CHEER_GAIN * Math.min(1, Math.max(0, q));
+__name(bucketTapTimes, "bucketTapTimes");
+function duelCheerEvents(rawTaps, side = 0) {
+  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side);
 }
-__name(cheerMultiplier, "cheerMultiplier");
-function simulateDuel({ me, opp, seed, cheers }) {
-  const rng = mulberry32(seed);
-  const q = TIMING_CHEER_ENABLED ? sanitizeCheers(cheers) : null;
-  const taps = TIMING_CHEER_ENABLED ? null : sanitizeTaps(cheers);
-  let hpMe = me.hp, hpOpp = opp.hp;
-  let turn = me.atk > opp.atk ? "me" : me.atk < opp.atk ? "opp" : rng() < 0.5 ? "me" : "opp";
-  let myStrike = 0;
-  let enMe = 0, enOpp = 0, meter = 0;
+__name(duelCheerEvents, "duelCheerEvents");
+function maxLevelFor(firstSeen, now) {
+  if (typeof firstSeen !== "number" || !Number.isFinite(firstSeen) || firstSeen <= 0) return MAX_LEVEL;
+  return 1 + Math.max(0, Math.floor((now - firstSeen) / DUEL_DAY_MS));
+}
+__name(maxLevelFor, "maxLevelFor");
+var ESCOLA_FAMILY = {
+  combate_fisico: "direct",
+  longo_alcance: "dot",
+  conjuracao: "direct",
+  benca: "heal",
+  maldicao: "defDebuff",
+  evocacao: "atkBuff"
+};
+var FICHA_STAGES = ["rookie", "champion", "ultimate", "mega", "ultra"];
+var own = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
+function fichaStageOf(evolutionStage) {
+  const nivel = typeof evolutionStage === "string" ? evolutionStage.split("-")[0] : "";
+  return FICHA_STAGES.includes(nivel) ? nivel : "rookie";
+}
+__name(fichaStageOf, "fichaStageOf");
+var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" && own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : null, "escolaOf");
+function duelSide(save, opts = {}) {
+  const state = save && typeof save === "object" ? save : {};
+  const bonus = combinedBonus({ talent: 0, equipment: 0 });
+  const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
+  const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
+  const basica = escolaOf(skills?.basica);
+  const especial = escolaOf(skills?.especial);
+  const family = especial ? ESCOLA_FAMILY[especial] : "direct";
+  return { combatant, special: specialOf(family), fx: { basica, especial } };
+}
+__name(duelSide, "duelSide");
+function simulateDuel({ me, opp, seed, taps }) {
+  const g = fightSteps(
+    { combatant: me.combatant, special: me.special },
+    { combatant: opp.combatant, special: opp.special },
+    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0) }
+  );
   const events = [];
-  for (let t = 0; t < DUEL_MAX_TURNS && hpMe > 0 && hpOpp > 0; t++) {
-    const atk = turn === "me" ? me.atk : opp.atk;
-    let mult = 1 - DUEL_DMG_SPREAD + 2 * DUEL_DMG_SPREAD * rng();
-    let cheer = null;
-    let special = false;
-    if (turn === "me") {
-      if (q) {
-        const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
-        if (slot >= 0) {
-          cheer = q[slot];
-          mult *= cheerMultiplier(cheer);
-        }
-      } else {
-        meter += (taps ? taps[myStrike] : 0) ?? 0;
-        if (meter >= DUEL_TAPS_FULL) {
-          meter -= DUEL_TAPS_FULL;
-          enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_CHEER);
-        }
-        if (enMe >= DUEL_ENERGY_MAX) {
-          special = true;
-          enMe = 0;
-          mult *= DUEL_SPECIAL_MULT;
-        }
-        cheer = special ? 1 : 0;
-      }
-      myStrike++;
-    } else if (!q && enOpp >= DUEL_ENERGY_MAX) {
-      special = true;
-      enOpp = 0;
-      mult *= DUEL_SPECIAL_MULT;
+  let hpMe = null, hpOpp = null;
+  let r = g.next();
+  while (!r.done) {
+    const e = r.value;
+    events.push(e);
+    if (e.kind === "ko" && hpMe === null) {
+      hpMe = Math.max(0, Math.min(1, e.hp[0]));
+      hpOpp = Math.max(0, Math.min(1, e.hp[1]));
     }
-    const preMe = special && turn === "me" ? enMe + DUEL_ENERGY_MAX : enMe;
-    const preOpp = special && turn === "opp" ? enOpp + DUEL_ENERGY_MAX : enOpp;
-    const dmg = Math.max(1, Math.round(atk * mult));
-    if (turn === "me") hpOpp = Math.max(0, hpOpp - dmg);
-    else hpMe = Math.max(0, hpMe - dmg);
-    if (!q) {
-      if (turn === "me") {
-        if (!special) enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT);
-        enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_TAKEN);
-      } else {
-        if (!special) enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT);
-        enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_TAKEN);
-      }
-    }
-    events.push({ actor: turn, dmg, cheer, special, hpMe, hpOpp, preMe, preOpp, energyMe: enMe, energyOpp: enOpp, meter });
-    turn = turn === "me" ? "opp" : "me";
+    r = g.next(1);
   }
-  const won = hpOpp <= 0 ? true : hpMe <= 0 ? false : hpMe / me.hp >= hpOpp / opp.hp;
-  return { events, won, hpMe, hpOpp };
+  const res = r.value;
+  const winner = res.winner === "draw" ? "draw" : res.winner === "A" ? "me" : "opp";
+  return { events, winner, hpMe: hpMe ?? res.hpA, hpOpp: hpOpp ?? res.hpB, timeMe: res.timeA, timeOpp: res.timeB };
 }
 __name(simulateDuel, "simulateDuel");
 
@@ -3546,8 +3904,13 @@ async function handleCommunity({ request, env }) {
     if (auth.ok) return null;
     return json3(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }, "denyUnlessOwner");
-  const settleMatch = /* @__PURE__ */ __name(async ({ id: id2, oppSave, me, opp, myRank, won }) => {
+  const settleMatch = /* @__PURE__ */ __name(async ({ id: id2, oppSave, me, opp, myRank, outcome }) => {
     const season = currentSeason();
+    if (outcome === "draw") {
+      await putRank(env, season, id2, myRank);
+      return;
+    }
+    const won = outcome === "win";
     myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
     if (won) myRank.wins += 1;
     else myRank.losses += 1;
@@ -3571,9 +3934,28 @@ async function handleCommunity({ request, env }) {
     if (!pend) return false;
     myRank.pending = null;
     const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
-    await settleMatch({ id: id2, oppSave: pend.oppSave, me, opp, myRank, won: false });
+    await settleMatch({ id: id2, oppSave: pend.oppSave, me, opp, myRank, outcome: "loss" });
     return true;
   }, "forfeitPending");
+  const loadDuelSide = /* @__PURE__ */ __name(async (saveId) => {
+    if (!VALID_ID3.test(saveId || "")) return null;
+    try {
+      const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
+      if (!value) return null;
+      const state = JSON.parse(value);
+      if (!state || typeof state !== "object" || Array.isArray(state)) return null;
+      return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
+    } catch (err) {
+      console.warn("community: ficha de duelo indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
+      return null;
+    }
+  }, "loadDuelSide");
+  const loadDuelSides = /* @__PURE__ */ __name(async (mySave, oppSave) => {
+    const [meSide, oppSide] = await Promise.all([loadDuelSide(mySave), loadDuelSide(oppSave)]);
+    if (!meSide) return { res: json3({ error: "save unavailable" }, 409) };
+    if (!oppSide) return { res: json3({ error: "opponent unavailable" }, 404) };
+    return { me: meSide, opp: oppSide };
+  }, "loadDuelSides");
   if (action === "profile" && method === "POST") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
@@ -3684,7 +4066,7 @@ async function handleCommunity({ request, env }) {
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
-      pool.push({ profile: p, pub: await publicProfile(env, p) });
+      pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice("profile:".length) });
     }
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -3693,9 +4075,10 @@ async function handleCommunity({ request, env }) {
     const season = currentSeason();
     const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
-    const meProfile = id ? await getProfile(env, id) : null;
-    const opponents = pool.slice(0, 3).map(({ profile: p, pub }) => ({ ...pub, duel: duelStats(p) }));
-    return json3({ opponents, me: { duel: duelStats(meProfile) }, matchesLeft: Math.max(0, matchesLeft) });
+    const publicDuel = /* @__PURE__ */ __name((side) => side ? { level: side.combatant.level } : null, "publicDuel");
+    const meSide = id ? await loadDuelSide(id) : null;
+    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => ({ ...pub, duel: publicDuel(await loadDuelSide(saveId)) })));
+    return json3({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
   }
   const matchContext = /* @__PURE__ */ __name(async () => {
     const { opponentId } = body;
@@ -3719,7 +4102,9 @@ async function handleCommunity({ request, env }) {
   if (action === "duelStart" && method === "POST") {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
-    const { opponentId, oppSave, me, opp, myRank } = ctx;
+    const { opponentId, oppSave, me, myRank } = ctx;
+    const sides = await loadDuelSides(id, oppSave);
+    if (sides.res) return sides.res;
     await forfeitPending({ id, me, myRank });
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
       await putRank(env, currentSeason(), id, myRank);
@@ -3727,12 +4112,12 @@ async function handleCommunity({ request, env }) {
     }
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
     myRank.matchesToday += 1;
-    myRank.pending = { opp: opponentId, oppSave, seed, at: Date.now() };
+    myRank.pending = { opp: opponentId, oppSave, seed, at: Date.now(), sides: { me: sides.me, opp: sides.opp } };
     await putRank(env, currentSeason(), id, myRank);
     return json3({
       seed,
-      me: duelStats(me),
-      opp: duelStats(opp),
+      me: sides.me,
+      opp: sides.opp,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday
     });
   }
@@ -3740,17 +4125,17 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const meStats = duelStats(me);
-    const oppStats = duelStats(opp);
     const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage };
     const pend = myRank.pending;
     if (pend && pend.opp !== opponentId) await forfeitPending({ id, me, myRank });
     const open = myRank.pending && myRank.pending.opp === opponentId ? myRank.pending : null;
     if (open && (body.forfeit === true || Date.now() - (open.at || 0) > DUEL_PENDING_MS)) {
       myRank.pending = null;
-      await settleMatch({ id, oppSave, me, opp, myRank, won: false });
+      await settleMatch({ id, oppSave, me, opp, myRank, outcome: "loss" });
       return json3({
         won: false,
+        draw: false,
+        outcome: "loss",
         forfeit: true,
         myScore: 0,
         oppScore: 100,
@@ -3760,28 +4145,40 @@ async function handleCommunity({ request, env }) {
       });
     }
     let seed;
-    if (open) {
+    let sides;
+    if (open && open.sides?.me && open.sides?.opp) {
       seed = open.seed;
+      sides = open.sides;
       myRank.pending = null;
     } else {
-      if (body.forfeit === true) return json3({ error: "no open duel" }, 409);
-      if (myRank.matchesToday >= MATCHES_PER_DAY) {
-        return json3({ error: "daily limit", matchesLeft: 0 }, 429);
+      if (!open && body.forfeit === true) return json3({ error: "no open duel" }, 409);
+      const lidos = await loadDuelSides(id, oppSave);
+      if (lidos.res) return lidos.res;
+      sides = { me: lidos.me, opp: lidos.opp };
+      if (open) {
+        seed = open.seed;
+        myRank.pending = null;
+      } else {
+        if (myRank.matchesToday >= MATCHES_PER_DAY) {
+          return json3({ error: "daily limit", matchesLeft: 0 }, 429);
+        }
+        seed = crypto.getRandomValues(new Uint32Array(1))[0];
+        myRank.matchesToday += 1;
       }
-      seed = crypto.getRandomValues(new Uint32Array(1))[0];
-      myRank.matchesToday += 1;
     }
-    const duel = simulateDuel({ me: meStats, opp: oppStats, seed, cheers: body.cheers });
-    const won = duel.won;
-    await settleMatch({ id, oppSave, me, opp, myRank, won });
+    const duel = simulateDuel({ me: sides.me, opp: sides.opp, seed, taps: body.taps ?? body.cheers });
+    const outcome = duel.winner === "me" ? "win" : duel.winner === "opp" ? "loss" : "draw";
+    await settleMatch({ id, oppSave, me, opp, myRank, outcome });
     return json3({
-      won,
-      myScore: Math.round(100 * duel.hpMe / meStats.hp),
-      oppScore: Math.round(100 * duel.hpOpp / oppStats.hp),
+      won: outcome === "win",
+      draw: outcome === "draw",
+      outcome,
+      myScore: Math.round(100 * duel.hpMe),
+      oppScore: Math.round(100 * duel.hpOpp),
       points: myRank.points,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
-      duel: { events: duel.events, me: meStats, opp: oppStats }
+      duel: { events: duel.events, me: sides.me, opp: sides.opp }
     });
   }
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
@@ -4553,7 +4950,7 @@ var EVENT_SCHEMA = {
   guild_stage: { level: { min: 1, max: 5 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
-var MAX_EVENTS = 100;
+var MAX_EVENTS2 = 100;
 var MAX_DAY_SKEW_DAYS = 7;
 var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 var ID_RE = /^[0-9a-f]{32}$/;
@@ -4612,7 +5009,7 @@ function sanitizeBatch(body, today3 = serverDay()) {
     return { ok: false, reason: "id" };
   }
   if (!Array.isArray(body.events)) return { ok: false, reason: "events" };
-  if (body.events.length === 0 || body.events.length > MAX_EVENTS) {
+  if (body.events.length === 0 || body.events.length > MAX_EVENTS2) {
     return { ok: false, reason: "events" };
   }
   for (const key of Object.keys(body)) {
@@ -4943,6 +5340,14 @@ function clampOwnedFrames(raw) {
 __name(clampOwnedFrames, "clampOwnedFrames");
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
 var SAVE_TTL_SECONDS = 86400 * 365;
+function firstSeenMeta(metadata) {
+  const f = metadata && typeof metadata === "object" ? Number(
+    /** @type {any} */
+    metadata.f
+  ) : NaN;
+  return Number.isFinite(f) && f > 0 ? { f } : {};
+}
+__name(firstSeenMeta, "firstSeenMeta");
 var RENEW_AFTER_SECONDS = 86400 * 30;
 async function onRequestOptions11() {
   return new Response(null, { headers: CORS11 });
@@ -4985,7 +5390,8 @@ async function onRequest5({ request, env }) {
         if (aindaIgual) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS,
-            metadata: { t: Date.now() }
+            // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata) }
           });
         } else {
           console.info("save: renova\xE7\xE3o de TTL pulada, conte\xFAdo mudou entre leitura e renova\xE7\xE3o", { saveIdPrefix: saveId.slice(0, 8) });
@@ -5017,9 +5423,11 @@ async function onRequest5({ request, env }) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
     }
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
-      metadata: { t: Date.now() }
+      metadata: { t: Date.now(), f }
     });
     return Response.json({ ok: true }, { headers: CORS11 });
   }
@@ -5428,7 +5836,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-Y9etRV/functionsRoutes-0.9792051163494568.mjs
+// ../.wrangler/tmp/pages-SVDxyI/functionsRoutes-0.9826277397946691.mjs
 var routes = [
   {
     routePath: "/api/account",
