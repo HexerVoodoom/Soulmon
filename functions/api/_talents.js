@@ -2,31 +2,34 @@
  * Espelho de `src/utils/talents.ts` (Combate v3 / PR7), so a parte que o SERVIDOR usa: validar o
  * vetor `talentPicks` do save e dar a parcela de talento do canal de bonus do duelo.
  * Pages Functions nao importam de `src/`: o catalogo e copiado e travado por `talents.parity.test.js`.
- * Vetor invalido e DESCARTADO (`[]`), nunca corrigido; o servidor nunca confia no cliente.
+ * Malformado e DESCARTADO (`[]`); so violar pre-requisito poda (sanitize); o servidor nunca confia no cliente.
  */
 
 import { cleanCheerScale } from './_combate.js';
 
 export const TALENT_POINTS_MAX = 20;
 
+/** Pre-requisito: o no `id` com pelo menos `rank` graus (espelha `req` de `src/utils/talents.ts`). */
+const req = (id, rank) => ({ id, rank });
+
 /**
  * id -> grau maximo e efeito, so dos nos PEGAVEIS (os `pendente` nao se compram).
- * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'weeklyDiscount', scope?: 'pvp' | 'pve', attr?: 'atk' | 'def' | 'spd', perRank?: number }>>}
+ * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'weeklyDiscount', scope?: 'pvp' | 'pve', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
  */
 export const PICKABLE = {
   'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'atk', perRank: 0.004 },
-  'tal-pvp-02': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'def', perRank: 0.004 },
-  'tal-pvp-03': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'spd', perRank: 0.004 },
-  'tal-pvp-05': { maxRank: 3, kind: 'cheerBoost', perRank: 0.05 },
+  'tal-pvp-02': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'def', perRank: 0.004, requires: [req('tal-pvp-01', 2)] },
+  'tal-pvp-03': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'spd', perRank: 0.004, requires: [req('tal-pvp-01', 2)] },
+  'tal-pvp-05': { maxRank: 3, kind: 'cheerBoost', perRank: 0.05, requiresAny: [req('tal-pvp-02', 2), req('tal-pvp-03', 2)] },
   'tal-pve-01': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
-  'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
+  'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006, requires: [req('tal-pve-01', 2)] },
   'tal-com-01': { maxRank: 3, kind: 'equipPrice' },
-  'tal-com-02': { maxRank: 3, kind: 'fragmentGain' },
-  'tal-com-03': { maxRank: 4, kind: 'respecDiscount', perRank: 0.1 },
-  'tal-com-04': { maxRank: 3, kind: 'backpack' },
-  'tal-com-05': { maxRank: 1, kind: 'respecOne' },
-  'tal-com-06': { maxRank: 3, kind: 'missionBits' },
-  'tal-com-07': { maxRank: 1, kind: 'weeklyDiscount' },
+  'tal-com-02': { maxRank: 3, kind: 'fragmentGain', requires: [req('tal-com-01', 2)] },
+  'tal-com-03': { maxRank: 4, kind: 'respecDiscount', perRank: 0.1, requires: [req('tal-com-01', 2)] },
+  'tal-com-04': { maxRank: 3, kind: 'backpack', requires: [req('tal-com-02', 2)] },
+  'tal-com-05': { maxRank: 1, kind: 'respecOne', requires: [req('tal-com-03', 2)] },
+  'tal-com-06': { maxRank: 3, kind: 'missionBits', requires: [req('tal-com-02', 1)] },
+  'tal-com-07': { maxRank: 1, kind: 'weeklyDiscount', requires: [req('tal-com-04', 1), req('tal-com-05', 1)] },
 };
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -37,8 +40,22 @@ export function talentPointsFor(bondLevel) {
   return Math.min(TALENT_POINTS_MAX, lvl);
 }
 
-/** @param {unknown} raw @param {unknown} bondLevel @returns {raw is string[]} */
-export function isValidPicks(raw, bondLevel) {
+/** @param {{ id: string, rank: number }} r @param {Record<string, number>} ranks */
+const reqOk = (r, ranks) => (ranks[r.id] ?? 0) >= r.rank;
+
+/**
+ * Pre-requisitos do no atendidos? `requires` = TODOS; `requiresAny` = pelo menos UM (espelha `prereqsMet`).
+ * @param {string} id @param {Record<string, number>} ranks
+ */
+function prereqsMet(id, ranks) {
+  const n = PICKABLE[id];
+  if (n.requires && !n.requires.every((r) => reqOk(r, ranks))) return false;
+  if (n.requiresAny && !n.requiresAny.some((r) => reqOk(r, ranks))) return false;
+  return true;
+}
+
+/** Dados bem formados (ids pegaveis, grau maximo, pontos do Vinculo), sem olhar pre-requisito. @param {unknown} raw @param {unknown} bondLevel @returns {raw is string[]} */
+function isWellFormed(raw, bondLevel) {
   if (!Array.isArray(raw)) return false;
   if (raw.length > talentPointsFor(bondLevel)) return false;
   /** @type {Record<string, number>} */
@@ -52,11 +69,38 @@ export function isValidPicks(raw, bondLevel) {
 }
 
 /**
- * Descarta (nao corrige) o vetor invalido.
+ * Reproduz a compra na ordem em que os pre-requisitos vao sendo atendidos (ponto fixo): o que cabe e o que sobra.
+ * @param {string[]} picks
+ */
+function replay(picks) {
+  /** @type {string[]} */ const kept = [];
+  /** @type {Record<string, number>} */ const ranks = Object.create(null);
+  let rest = [...picks];
+  for (let moved = true; moved && rest.length > 0;) {
+    moved = false;
+    /** @type {string[]} */ const next = [];
+    for (const id of rest) {
+      if (prereqsMet(id, ranks)) { kept.push(id); ranks[id] = (ranks[id] ?? 0) + 1; moved = true; } else next.push(id);
+    }
+    rest = next;
+  }
+  return { kept, dropped: rest };
+}
+
+/** Vetor VALIDO: bem formado E com todos os pre-requisitos atendidos (§2.37). @param {unknown} raw @param {unknown} bondLevel @returns {raw is string[]} */
+export function isValidPicks(raw, bondLevel) {
+  return isWellFormed(raw, bondLevel) && replay(raw).dropped.length === 0;
+}
+
+/**
+ * Malformado (id inventado, grau/pontos a mais, tipo errado) e DESCARTADO (`[]`), nunca corrigido. Quem so viola PRE-REQUISITO
+ * (save de antes da arvore com ramos) fica com os graus que se conseguem comprar e perde os outros (os pontos voltam, sem cobrar respec).
  * @param {unknown} raw @param {unknown} bondLevel @returns {string[]}
  */
 export function sanitizeTalentPicks(raw, bondLevel) {
-  return isValidPicks(raw, bondLevel) ? [...raw] : [];
+  if (!isWellFormed(raw, bondLevel)) return [];
+  const { kept, dropped } = replay(raw);
+  return dropped.length === 0 ? [...raw] : kept;
 }
 
 /**
