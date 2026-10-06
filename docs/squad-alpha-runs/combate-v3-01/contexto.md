@@ -277,3 +277,10 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
   5. **Pesadelo não tem "andar alto"** (a onda é sempre a do andar 1): só a Masmorra recebeu portão. O "Arena" do dono = Duelo/Torneio (uma entrada `pvp` e uma `torneio`, mesmo 5, a tela do Torneio usa a `pvp`); a Arena PvE não tem portão.
   6. Estado "erro ao salvar pick" não existe: o pick é local-first e o servidor valida no sync (offline natural). Um pick que o servidor descartar volta a `[]` no próximo pull.
   7. O portão da Masmorra tem teste de leitura de fonte, não de render (a tela inteira pesa); a regra pura tem teste completo.
+
+## §2.25 Decisões do dono depois do PR7 (06/10/2026)
+- **Gates confirmados:** pvp 5, torneio 5, Masmorra camada 4+ exige 8, Renascimento 12. **Talentos confirmados:** teto de 20 pontos, respec 25 Bits/ponto com desconto da ampulheta do Comércio.
+- **Canal de PvP por atributo:** ATK/DEF/SPD distintos no Duelo, com o **TETO ÚNICO de 5%** somando talento + equipamento + Comércio + Renascimento, medido por razão das médias; o servidor valida.
+- **Redesenhar `tal-pvp-05` e `tal-com-05`** sem violar as linhas vermelhas (nada de vantagem comprada com dinheiro real; torcida fora da régua não; câmbio pago não), mantendo 3 caminhos com escolhas que importam; a arte existente fica (sem arte nova).
+- **StatsPage antiga:** "Nível de vínculo / Level N" vira "Vínculo N / Bond N" (NARRATIVA §12: "nível" vetado para a criatura; Vínculo = tempo de convívio).
+- **PR7b** (branch `combate-v3/pr7b`, worktree `E:\soulmon-pr7b`) implementa os três itens acima; **PR8** (equipamento e moeda) só depois do merge do PR7b, desbloqueado: 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), loja direta ou fragmentos SEM RNG, só com moeda GANHA; Créditos aceleram só o que NÃO é combate, teto +25% sobre o ganho grátis, nunca equipamento nem % de combate; bônus de equipamento pelo canal `combinedBonus` no teto único de 5% (percentual, não ponto plano); ECA Digital tratado como aplicável; a compra de Créditos atrás de verificação de idade fica como story pendente (a loja de Créditos NÃO entra neste PR).
