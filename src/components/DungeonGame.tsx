@@ -16,13 +16,12 @@ import {
   type DungeonEnemy,
 } from '../utils/dungeon';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
-import { CHEER_TAPS_FULL } from '../utils/energia';
 import { ENERGY_TRIGGER } from '../utils/combate/specials';
 import { mulberry32 } from '../utils/combate/rng';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
-import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { TorcidaLayer } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
@@ -47,16 +46,15 @@ import type { Language } from '../utils/i18n';
  *
  * ── A LUTA (04/10/2026, REGISTRO §20.10) ──────────────────────────────────────
  * A cena é a MESMA tela cheia do Duelo (`games/BattleStage.tsx`): o Soulmon grande embaixo à
- * esquerda, o inimigo em cima à direita, HP e ENERGIA em cima de cada um, o mascote da torcida no
- * canto.
+ * esquerda, o inimigo em cima à direita, HP e ENERGIA em cima de cada um. SEM torcida (contexto §2.19):
+ * o Soulmon vai sozinho.
  *
  * ── COMBATE v3 (PR4, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.18) ───────────────────────────
  * O MOTOR é o núcleo v3 (`utils/combate/`, `groupFightSteps` com 1 inimigo, igual ao 1v1): o pet é
  * `soulCombatant(estado)` (level e ramo → ATK/DEF/SPD/HP), o inimigo é RELATIVO ao level dele
  * (`dungeonFoe`, andar = base semanal + camada − 1) e o OFÍCIO da ficha entra por `jeitoParaPve`. As
  * regras de cada luta moram em `utils/dungeonFight.ts` (a MESMA que o balanço simula); o relógio da cena
- * é `games/useGroupBattle.ts`. O Soulmon golpeia e se defende sozinho (defesa automática); a barra de
- * CHEER (toques) enche devagar e despeja energia nele — e **a barra, a energia e o HP PERSISTEM entre os
+ * é `games/useGroupBattle.ts`. O Soulmon golpeia e se defende sozinho (defesa automática); **a energia e o HP PERSISTEM entre os
  * inimigos e as camadas da run** (a masmorra é contínua). Energia cheia = o ESPECIAL, com o ANEL (toque
  * na hora certa); quando o inimigo (o mega) solta o dele, dá para ESQUIVAR deslizando o dedo. Sem
  * `Math.random` na luta nem na onda: a semente da run (`newDefenseSeed`) decide tudo.
@@ -77,6 +75,9 @@ export const clearBonus = (floor: number) => Math.round((10 + 5 * (floor - 1)) *
 type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 
 /** O cartão de resultado sobre a cena (entre inimigos, camadas e no fim). */
+/** Sem torcida na Masmorra (contexto §2.19): o toque na cena não faz nada. */
+const noTap = (): void => {};
+
 const PANEL: CSSProperties = {
   position: 'absolute', left: 12, right: 12, zIndex: 7, boxSizing: 'border-box',
   bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 62px)',
@@ -319,7 +320,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: false,
   });
 
   // Advance to the next enemy; or clear the floor (heal), or complete the run.
@@ -349,7 +350,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       setPhase('floor-clear');
       return;
     }
-    enterEnemy(enemies, enemyIdx + 1); // a barra de cheer e a energia do pet PERSISTEM
+    enterEnemy(enemies, enemyIdx + 1); // a energia do pet PERSISTE
     setRewardMsg('');
     setPhase('fight');
   };
@@ -370,8 +371,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
 
-  /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a barra de cheer e a energia
-     seguem visíveis entre os inimigos (a masmorra é contínua). */
+  /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a energia
+     segue visível entre os inimigos (a masmorra é contínua). */
   if (inStage && enemy) {
     const fighting = phase === 'fight';
     // Entre o começo da luta nova e o 1º passo do relógio, o estado do hook ainda é o do inimigo anterior: a cena pinta o novo cheio.
@@ -380,11 +381,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const meHpFrac = fighting && pronto ? battle.hp : hpFrac;
     return (
       <TorcidaLayer
-        onTap={battle.cheer}
-        active={fighting && !pausado && battle.phase === 'idle'}
+        onTap={noTap}
+        active={false} /* sem torcida na Masmorra (contexto §2.19): a camada só leva o gesto da esquiva */
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
-        mascot
         swipeActive={fighting && battle.phase === 'dodge'}
         onSwipe={battle.swipe}
       >
@@ -425,7 +425,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             leave: exitLabel,
           } : undefined}
           onPauseChange={setPausado}
-          hud={<TorcidaGauge taps={battle.meter} onCheer={battle.cheer} isPt={isPt} disabled={!fighting} full={CHEER_TAPS_FULL} bare />}
         >
           {phase === 'enemy-down' && (
             <div role="status" style={PANEL}>
@@ -578,8 +577,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Seu Soulmon golpeia e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele — e ela fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
-                    : 'Your Soulmon strikes and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it — and it carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
+                    ? 'Seu Soulmon vai sozinho: golpeia e se defende, e a energia dele fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
+                    : 'Your Soulmon goes alone: it strikes and defends, and its energy carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
                 </span>
           </span>
         </InfoTip>

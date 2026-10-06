@@ -13,7 +13,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { NightmareBattle } from './NightmareBattle';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
-import { CHEER_TAPS_FULL, RING_MULT } from '../utils/energia';
+import { RING_MULT } from '../utils/energia';
 import type { DungeonEnemy } from '../utils/dungeon';
 import { REFERENCE_BUILDS, combatantAt } from '../utils/combate/level';
 import { specialOf } from '../utils/combate/specials';
@@ -75,9 +75,7 @@ function montar(wave: DungeonEnemy[], cbs: { onWin?: () => void; onLose?: () => 
 }
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 const entrar = () => fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
-const ratio = () => parseFloat(document.querySelector('[data-torcida-gauge]')!.getAttribute('data-torcida-ratio') ?? 'NaN');
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));
-const mascote = () => screen.getByRole('button', { name: 'Torcer pelo seu Soulmon' });
 /** Avança de 100 em 100 ms até a condição valer (ou `maxMs`). */
 async function ate(cond: () => boolean, maxMs = 60_000) {
   for (let t = 0; t < maxMs && !cond(); t += 100) await avancar(100);
@@ -94,15 +92,15 @@ describe('Pesadelo — convite', () => {
 });
 
 describe('Pesadelo — a luta em tela cheia', () => {
-  it('a luta é a CENA: tela cheia, lutadores grandes, HP e ENERGIA do pet, mascote, barra de cheer — sem texto explicativo; só quem tem especial mostra a energia', () => {
+  it('a luta é a CENA: tela cheia, lutadores grandes, HP e ENERGIA do pet, SEM mascote nem barra de torcida (§2.19) — sem texto explicativo; só quem tem especial mostra a energia', () => {
     vi.useFakeTimers();
     montar([inimigo()]);
     entrar();
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
     expect(document.querySelector('[data-stage-plate="me"] [data-stage-energy]')).not.toBeNull();
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).toBeNull(); // sem especial: sem barra
-    expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
-    expect(document.querySelector('[data-torcida-gauge]')).not.toBeNull();
+    expect(document.querySelector('[data-cheer-mascot]')).toBeNull();
+    expect(document.querySelector('[data-torcida-gauge]')).toBeNull();
     expect(document.querySelector('[data-timing-bar]')).toBeNull(); // a TimingBar segue desligada
     expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
     expect(screen.queryByText(/torça por ele/i)).toBeNull();
@@ -127,20 +125,15 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(screen.queryByText('Desviar!')).toBeNull();
   });
 
-  it('a barra de cheer é LENTA (24 toques) e, cheia, despeja UMA descarga no núcleo e zera', async () => {
+  it('sem torcida: nenhum botão de torcer, e tocar na cena não despeja nada no núcleo', async () => {
     vi.useFakeTimers();
     montar([inimigo({ hpMul: 6 })]);
     entrar();
     await avancar(10);
-    for (let i = 0; i < 12; i++) fireEvent.click(mascote()); // 12 por janela de 3 s da luta: abaixo do teto de 16
+    expect(screen.queryByRole('button', { name: /Torcer|Cheer/ })).toBeNull();
+    for (let i = 0; i < 60; i++) fireEvent.pointerDown(document.querySelector('[data-torcida-layer]')!);
     await avancar(3100);
-    for (let i = 0; i < CHEER_TAPS_FULL - 12 - 1; i++) fireEvent.click(mascote());
-    expect(ratio()).toBeLessThan(1);
     expect(H.cheerSeen).toBe(0);
-    fireEvent.click(mascote());
-    expect(ratio()).toBe(0);
-    await avancar(3000); // o núcleo recolhe a descarga no passo seguinte do relógio
-    expect(H.cheerSeen).toBe(1);
   });
 
   it('energia cheia: o ESPECIAL pede o ANEL (o relógio pausa); o toque na hora certa devolve o multiplicador ÓTIMO ao núcleo', async () => {
@@ -177,18 +170,14 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(document.querySelector('[data-battle-stage]')).toBeNull();
   });
 
-  it('dois inimigos: a barra de cheer e a energia SEGUEM do primeiro para o segundo', async () => {
+  it('dois inimigos: a energia SEGUE do primeiro para o segundo', async () => {
     vi.useFakeTimers();
     montar([inimigo({ hpMul: 0.2 }), inimigo({ hpMul: 8 })]);
     entrar();
     await avancar(10);
-    for (let i = 0; i < 10; i++) fireEvent.click(mascote());
-    const antes = ratio();
-    expect(antes).toBeGreaterThan(0.3);
     // o primeiro cai e o segundo entra (o núcleo é chamado de novo)
     expect(await ate(() => H.calls >= 2)).toBe(true);
     await avancar(100);
-    expect(ratio()).toBe(antes);
     expect(energia('me')).toBeGreaterThan(0); // a energia do pet atravessou a troca
   });
 
@@ -232,7 +221,7 @@ describe('Pesadelo — a luta em tela cheia', () => {
     vi.useFakeTimers();
     montar([inimigo()], { language: 'en-US' });
     fireEvent.click(screen.getByRole('button', { name: 'Stand in its way' }));
-    expect(screen.getByRole('button', { name: 'Cheer for your Soulmon' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Cheer for your Soulmon' })).toBeNull();
     const texto = document.body.textContent ?? '';
     for (const palavra of ['Torcer', 'Pesadelo', 'Seu Soulmon', 'Sair']) expect(texto.includes(palavra), palavra).toBe(false);
   });

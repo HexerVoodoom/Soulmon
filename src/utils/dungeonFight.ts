@@ -25,7 +25,7 @@ import type { FightSide } from './combate/fight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
-import { PVE_FAMILY_POWER, cheerEvents, specialOf, type SpecialFamily } from './combate/specials';
+import { PVE_FAMILY_POWER, specialOf, type SpecialFamily } from './combate/specials';
 import type { EscolaId } from './soulProfile/ficha/types';
 
 export type DungeonSkill = ArenaSkill;
@@ -112,9 +112,7 @@ const pickOdds = (r: () => number, p: readonly number[]): number => {
   return x < p[0] ? 0 : x < p[0] + p[1] ? 1 : 2;
 };
 
-/** `teto`: the player cheers at the cap (16 taps per 3 s) all the fight. Default: nobody cheers. */
-export type DungeonCheer = 'nenhum' | 'teto';
-const CHEER_CEILING_TAPS: readonly number[] = Array.from({ length: 30 * 16 }, (_, i) => (i * 3) / 16);
+/* No cheer (torcida) in the Dungeon or the Nightmare (contexto §2.19): the Soulmon goes alone. */
 
 /** One enemy of the sequence: its slot and the floor (dungeon level) it was built for. */
 export interface DungeonSlotRef {
@@ -128,7 +126,6 @@ export interface SequenceConfig {
   build: StatWeights;
   family: SpecialFamily;
   jeito?: JeitoNaMasmorra;
-  cheer?: DungeonCheer;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };
 }
@@ -156,7 +153,6 @@ export function playSequence(
     contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge,
   };
   const odds = ARENA_SKILL_ODDS[skill];
-  const cheer = cfg.cheer === 'teto' ? cheerEvents(CHEER_CEILING_TAPS, 0) : undefined;
   let hp = 1;
   let en = 0;
   const times: number[] = [];
@@ -165,7 +161,7 @@ export function playSequence(
     const fseed = dungeonFightSeed(seed, ref.floor, ref.slot);
     const f = dungeonFight(p, dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed);
     const rng = mulberry32((seed * 7919 + i) | 0);
-    const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale, cheer });
+    const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
     let step = g.next();
     while (!step.done) {
       const e: GroupEvent = step.value;

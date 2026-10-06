@@ -31,7 +31,6 @@ const DECLARED = {
   growth: { hp: 0.14, power: 0.11 },
   /** Floor of the median time per enemy (the story's 20 s). */
   durationFloor: 20,
-  cheer: 90,
 };
 
 const fam = (i: number): SpecialFamily => SPECIAL_FAMILIES[((i % 7) + 7) % 7];
@@ -177,31 +176,26 @@ describe('AC10. skill (P4): "does not act" × "plays well" ≤ 25pp, measured in
   });
 });
 
-describe('the cheer (torcida) at the ceiling stays outside the ruler: TTK ≤ ±25% and the skill gap with it ≤ 25pp', () => {
-  it(`CHEER.energyPerDischarge = ${DECLARED.cheer}: the biggest value that fits (Arena and Dungeon measured — contexto §2.18)`, () => {
-    expect(CHEER.energyPerDischarge).toBe(DECLARED.cheer);
+describe('PR4b (contexto §2.19): no cheer (torcida) in the Dungeon or the Nightmare — the Soulmon goes alone', () => {
+  const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
+  const semComentarios = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  it('the engine of the sequence has no cheer option', () => {
+    expect(semComentarios(ler('utils/dungeonFight.ts'))).not.toMatch(/cheer|DungeonCheer|CHEER/i);
+    // the simulation ignores a forged `cheer`: same result with and without the field
+    const c = cell(3);
+    const a = simulateDungeonRunV3(c, 3, 'media', 5);
+    const b = simulateDungeonRunV3({ ...c, cheer: 'teto' } as typeof c, 3, 'media', 5);
+    expect(b).toEqual(a);
   });
-  const ttk = (cheer: 'nenhum' | 'teto') => mean(Array.from({ length: 600 }, (_, s) => mean(simulateDungeonRunV3({ ...cell(s), cheer }, s, 'nenhuma', 3).timesByFloor.flat())));
-  it('TTK with the cheer at the ceiling vs nobody cheering', () => {
-    const r = ttk('teto') / ttk('nenhum') - 1;
-    console.log(`[cheer] Dungeon TTK at the ceiling: ${(100 * r).toFixed(1)}%`);
-    expect(Math.abs(r)).toBeLessThanOrEqual(0.25);
-  });
-  const share = (skill: DungeonSkill, cheer: 'nenhum' | 'teto') => {
-    let w = 0;
-    for (let s = 0; s < 1200; s++) w += simulateDungeonRunV3({ ...cell(s), cheer }, s, skill, 5).floorsCleared / 5;
-    return w / 1200;
-  };
-  it('with BOTH sides cheering at the ceiling, "does not act" × "plays well" stays ≤ 25pp (5 floors)', () => {
-    const gap = share('boa', 'teto') - share('nenhuma', 'teto');
-    console.log(`[cheer] skill gap with the cheer at the ceiling on both sides: ${(100 * gap).toFixed(1)}pp`);
-    expect(gap).toBeLessThanOrEqual(0.25);
-  });
-  it('FINDING (reported to the owner, not gated): cheering at the ceiling is itself an action — "plays well AND cheers" × "does nothing"', () => {
-    const strict = share('boa', 'teto') - share('nenhuma', 'nenhum');
-    console.log(`[cheer] strict gap (boa + teto × nenhuma, 5 floors): ${(100 * strict).toFixed(1)}pp`);
-    expect(strict).toBeGreaterThan(0);
-  });
+  for (const tela of ['components/DungeonGame.tsx', 'components/NightmareBattle.tsx']) {
+    it(`${tela}: no mascot, no gauge, no tap that cheers, and the hook runs with torcida: false`, () => {
+      const src = semComentarios(ler(tela));
+      expect(src).not.toMatch(/TorcidaGauge|battle\.cheer|battle\.meter|CHEER_TAPS_FULL/);
+      expect(src).not.toMatch(/\bmascot\b/);
+      expect(src).toMatch(/torcida:\s*false/);
+      expect(src).toMatch(/active=\{false\}/);
+    });
+  }
 });
 
 describe('AC7. no Math.random in the fight or in the wave; the same seed gives the same wave and the same fight', () => {

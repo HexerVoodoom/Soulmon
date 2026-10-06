@@ -80,6 +80,8 @@ export interface GroupBattleOptions {
   round: () => GroupRound;
   scene: () => GroupScene;
   onEnd: (r: GroupResult) => void;
+  /** `false` = sem torcida (Masmorra e Pesadelo, contexto §2.19): `cheer()` não faz nada e nenhuma descarga entra no núcleo. Padrão: `true`. */
+  torcida?: boolean;
 }
 
 const now = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -156,7 +158,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const setPhaseBoth = (p: GroupBattle['phase']) => { phaseRef.current = p; setPhase(p); };
 
   const cheer = useCallback(() => {
-    if (phaseRef.current !== 'idle') return;
+    if (phaseRef.current !== 'idle' || optsRef.current.torcida === false) return;
     const live = anchor.current.base + Math.max(0, wallClock() - anchor.current.wall) / 1000;
     const b = Math.floor(live / CHEER.bucketSeconds);
     const used = buckets.current.get(b) ?? 0;
