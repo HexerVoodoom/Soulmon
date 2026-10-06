@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
 import { BitsIcon } from '../ui/BitsIcon';
+import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
+import { areaMinBond, buildingLockLine } from '../../utils/gates';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
 import zonaMercado from '../../assets/soulmon/mapa/zona-mercado.png';
@@ -66,14 +69,22 @@ const AREA_POS: Record<AreaId, { left: string; top: string }> = {
   hall: { left: '81.5%', top: '69%' },
 };
 
-export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
+export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLevel }: {
   language: Language;
+  /** O Vínculo do usuário: a área só trava se TODOS os prédios dela travam (`areaMinBond`). Sem ele, nada trava. */
+  bondLevel?: number;
   onOpenArea: (id: AreaId) => void;
   bits: number;
   emblems: number;
   credits: number;
 }) {
   const isPt = language === 'pt-BR';
+  const [lockNote, setLockNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!lockNote) return;
+    const t = setTimeout(() => setLockNote(null), 5000);
+    return () => clearTimeout(t);
+  }, [lockNote]);
   return (
     <section
       aria-labelledby="sm-map-title"
@@ -151,13 +162,16 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
       {/* As 6 construções, posicionadas em % sobre o fundo. */}
       {AREAS.map(id => {
         const pos = AREA_POS[id];
+        const need = areaMinBond(id);
+        const locked = bondLevel !== undefined && bondLevel < need ? need : null;
         return (
           <button
             key={id}
             type="button"
             data-map-area={id}
-            onClick={() => onOpenArea(id)}
-            aria-label={areaLabel(id, isPt)}
+            onClick={() => (locked ? setLockNote(buildingLockLine(locked, language)) : onOpenArea(id))}
+            aria-label={locked ? `${areaLabel(id, isPt)}. ${lockLabel(locked, language)}` : areaLabel(id, isPt)}
+            data-map-locked={locked ?? undefined}
             style={{
               position: 'absolute',
               left: pos.left, top: pos.top,
@@ -171,8 +185,13 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
               src={AREA_ART[id]}
               alt=""
               aria-hidden="true"
-              style={{ width: '100%', filter: 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
+              style={{ width: '100%', filter: locked ? 'grayscale(1) brightness(.72) drop-shadow(0 6px 6px rgba(0,0,0,.55))' : 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
             />
+            {locked && (
+              <span style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+                <LockBadge minBond={locked} language={language} />
+              </span>
+            )}
             <span
               data-map-label
               style={{
@@ -198,6 +217,7 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
           </button>
         );
       })}
+      {lockNote && <LockNotice text={lockNote} />}
     </section>
   );
 }

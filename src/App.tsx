@@ -6013,6 +6013,7 @@ export default function App() {
             <MapPage
               language={language}
               onOpenArea={(id: AreaId) => goTo(areaView(id))}
+              bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
               bits={gameState.gamePoints ?? 0}
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
@@ -6034,6 +6035,7 @@ export default function App() {
                 area={area}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
+                bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 initialSheet={missionSheet ?? undefined}
                 onInitialSheetConsumed={handleMissionSheetConsumed}
                 onLayerChange={setAreaLayerOpen}
