@@ -140,12 +140,12 @@ describe('chips', () => {
   ];
 
   for (const [emoji, attr, pontos] of casos) {
-    it(`${attr}: +CHIP_BOOST no atributo, no acumulado da evolucao e 10x no XP`, () => {
+    it(`${attr}: +CHIP_BOOST so em pontos de tipo e no acumulado da evolucao, SEM XP`, () => {
       const prev = estado({ foodInventory: { [emoji]: 1 }, powerPoints: 4, harmonyPoints: 5, benevolencePoints: 6, totalXP: 70 });
       const { state } = applySpecialItem(prev, emoji, AGORA);
       expect(state[pontos]).toBe(prev[pontos] + CHIP_BOOST);
       expect(state.attributesSinceLastEvolution[attr]).toBe(CHIP_BOOST);
-      expect(state.totalXP).toBe(70 + CHIP_BOOST * 10);
+      expect(state.totalXP).toBe(70); // PR6: chip nao da XP/Vinculo
       // Os outros dois atributos ficam EXATAMENTE onde estavam — e o ramo da
       // arvore sai daqui, entao um ponto vazado escolheria outra evolucao.
       for (const [, outroAttr, outroPontos] of casos) {
@@ -176,7 +176,7 @@ describe('chips', () => {
     const dois = applySpecialItem(um.state, CHIP_EMOJI.benevolence, AGORA);
     expect(dois.refused).toBe('no-stock');
     expect(dois.state.benevolencePoints).toBe(CHIP_BOOST);
-    expect(dois.state.totalXP).toBe(CHIP_BOOST * 10);
+    expect(dois.state.totalXP).toBe(0);
   });
 
   it('acumula sobre o que ja havia, sem zerar o acumulado da evolucao', () => {

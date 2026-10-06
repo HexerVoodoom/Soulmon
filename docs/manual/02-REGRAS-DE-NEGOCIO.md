@@ -4103,7 +4103,10 @@ partida), `src/components/CreditsModal.tsx` (pacotes, anúncio, custo do reroll)
 
 **Em uma frase.** Um catálogo estático de consumíveis, cenários e decoração, com
 uma compra que debita, entrega e equipa na hora — e nada dela dá vantagem de
-jogo além dos três chips de atributo.
+jogo: os três chips de atributo só dão pontos de tipo (inclinam o caminho e a
+distribuição na evolução), sem XP, sem level e sem alterar o total de pontos de
+combate (combate v3, PR6; save antigo com +3 já somado fica como está — o
+combate lê o level e normaliza os pontos de tipo em fatias de 15% a 45%).
 
 **A regra.** O catálogo é dado puro em `src/utils/shop.ts`. Medido em
 09/09/2026 com `SHOP_ITEMS.length` / `.filter(...)`:
