@@ -280,6 +280,7 @@ export function DuelScreen({
         sceneElement={oppEl}
         specialLabel={specialLabel(isPt, par?.especial)}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia)}
+        isPt={isPt}
         me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER }]}
         action={acao}

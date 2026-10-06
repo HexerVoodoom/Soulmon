@@ -24,7 +24,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StageAction, StageHit } from './BattleStage';
-import { impactMs, type StageActionKind, type StrikeForm } from '../../utils/combatFx';
+import {
+  impactMs, castStatus, clearHolders, emptyStatusBoard, stageStatusOf, tickStatus,
+  type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
+} from '../../utils/combatFx';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
 import { groupFightSteps, type GroupEvent, type GroupOptions, type GroupResult } from '../../utils/combate/group';
 import type { FightSide } from '../../utils/combate/fight';
@@ -102,6 +105,8 @@ export interface GroupBattle {
   dodge: { spec: DodgeSpec; key: number } | null;
   petDodge: { id: number; dir: -1 | 1 } | null;
   charging: boolean;
+  /** Efeitos de status do pet e de cada inimigo (PR11): derivados dos eventos do núcleo, só para a cena desenhar. */
+  status: { me: StageStatus[]; foes: StageStatus[][] };
   cheer(): void;
   swipe(dir: -1 | 1): void;
   resolveRing(grade: RingGrade): void;
@@ -130,6 +135,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const [dodge, setDodge] = useState<GroupBattle['dodge']>(null);
   const [petDodge, setPetDodge] = useState<GroupBattle['petDodge']>(null);
   const [charging, setCharging] = useState(false);
+  const [status, setStatus] = useState<GroupBattle['status']>({ me: [], foes: [[]] });
   const [stateKey, setStateKey] = useState(-1);
 
   const mtr = useRef(0);
@@ -234,6 +240,25 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       setHp(hpNow); setFoesHp(foesNow); setPetEnergy(round.startEnergy); setFoeEnergy(fEn); setStateKey(optsRef.current.runKey);
       setAction(null); setHits([]); setRing(null); setDodge(null); setPetDodge(null); setCharging(false);
       setPhaseBoth('idle');
+      // PR11: o quadro de efeitos (0 = pet, 1+i = inimigo i). Vem SÓ dos eventos do núcleo; a tela não inventa status.
+      let board: StatusBoard = emptyStatusBoard(nFoes);
+      const publish = () => setStatus({ me: stageStatusOf(board[0]), foes: foes.map((_, i) => stageStatusOf(board[i + 1])) });
+      publish();
+      /** Gasta os efeitos que os golpes/ticks deste grupo de eventos gastam; quem caiu leva os seus embora. */
+      const spendStatus = (batch: GroupEvent[], hpPet: number, foesHpNow: readonly number[]) => {
+        for (const e of batch) if (e.kind === 'attack' || e.kind === 'tick') board = tickStatus(board, { kind: e.kind, who: e.who });
+        const down = [...(hpPet <= EPS ? [0] : []), ...foesHpNow.flatMap((h, i) => (h <= EPS ? [i + 1] : []))];
+        board = clearHolders(board, down);
+        publish();
+      };
+      /** O especial de `who` entrou em cena: a família dele deixa o efeito (o núcleo é quem diz qual família). */
+      const startStatus = (who: number, targets: readonly number[]) => {
+        const side = who === 0 ? player : foes[who - 1];
+        const sp = side?.special;
+        if (!sp) return;
+        board = castStatus(board, { caster: who, family: sp.family, power: sp.power, area: side.area === 'area', targets });
+        publish();
+      };
 
       const g = groupFightSteps(player, foes, {
         ...round.options,
@@ -282,6 +307,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         }
         hpNow = last.hp; foesNow = last.foesHp.slice();
         setHp(Math.max(0, hpNow)); setFoesHp(foesNow); setPetEnergy(last.energy); setFoeEnergy(fEn.slice());
+        spendStatus(batch, hpNow, foesNow);
         showHits(out);
       };
       const ringTagRef = { current: 'bom' as RingGrade };
@@ -317,6 +343,8 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             if (batch.length) apply(batch, true, null);
             else if (scene.personalTag) showHits([{ id: ++seq.current, side: 'me', foe: 0, value: 0, tag: scene.personalTag }]);
             else setPetEnergy(ev.energy);
+            // PR11: o efeito que a família do especial deixa — no foco único, ou em todos os vivos se a escola dele é em área
+            startStatus(0, player.area === 'area' ? foesNow.flatMap((h, i) => (h > EPS ? [i + 1] : [])) : [target + 1]);
             ev = pull();
             continue;
           }
@@ -342,6 +370,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           while (nx && nx.kind !== 'cast' && Math.abs(nx.t - ev.t) < EPS) { batch.push(nx); nx = pull(); }
           if (nx) queue.unshift(nx);
           if (batch.length) apply(batch, true, dodgeG);
+          startStatus(ev.who, [0]); // o inimigo mira o pet; cura/escudo/buff ficam nele mesmo
           ev = pull();
           continue;
         }
@@ -395,7 +424,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   }, [running, seed, reduced, opts.runKey]);
 
   return {
-    action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging,
+    action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,
     cheer, swipe, resolveRing, stateKey, clock: () => clockS.current,
   };
 }
