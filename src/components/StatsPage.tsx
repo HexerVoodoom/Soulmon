@@ -64,6 +64,7 @@ import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
 /* Combate v3 / PR7: a árvore de talentos (e a arte dela) só carrega quando a Estatística monta. */
 const TalentTreeCard = lazy(() => import('./TalentTreeCard'));
+const EquipmentCard = lazy(() => import('./EquipmentCard'));
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
 interface CompletedTask {
@@ -330,6 +331,13 @@ export function StatsPage({
       {!hideMetrics && (
         <Suspense fallback={null}>
           <TalentTreeCard language={language} />
+        </Suspense>
+      )}
+
+      {/* ─────────────── Equipamento (PR8b) ─────────────── */}
+      {!hideMetrics && (
+        <Suspense fallback={null}>
+          <EquipmentCard language={language} />
         </Suspense>
       )}
 

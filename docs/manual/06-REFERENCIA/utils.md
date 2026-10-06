@@ -2941,3 +2941,13 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio do câmbio Crédito→Bits (`paidLeft`) e o câmbio do dia. Equipamento só enxerga o Bit GANHO (`earnedBits`); o gasto que não é equipamento gasta o Bit pago primeiro; o câmbio do dia cabe em 25% do ganho grátis do dia (piso de referência de 100). Regra de cliente: o servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
 **Exports:** `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `earnedBits`, `noteFreeBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendBitsPaidFirst`.
 **Régua:** `src/utils/equipment.test.ts` (blocos 4 e 6).
+
+### `src/utils/equipArt.ts`
+**Dono de:** a arte do equipamento (PR8b), carregada SOB DEMANDA (`import.meta.glob` lazy) dos 13 ícones já instalados em `assets/soulmon/combate-v3/equip` (sem arte nova). Peça ausente = `null` e a tela cai no texto.
+**Exports:** `loadEquipArt(nome)`, `equipArtNames()`.
+**Régua:** `src/components/EquipmentCard.render.test.tsx`.
+
+### `src/utils/equipmentCopy.ts`
+**Dono de:** os TEXTOS do equipamento (EN/PT-BR; PR8b), fora do chunk de entrada porque só a `EquipmentCard` (`lazy`) os lê: nome dos slots e dos itens (lapidação crescente, nunca raridade), atributo de cada slot e o motivo neutro de cada recusa de compra.
+**Exports:** `SLOT_COPY`, `ATTR_COPY`, `itemName`, `refusalText`.
+**Régua:** `src/components/EquipmentCard.render.test.tsx`.

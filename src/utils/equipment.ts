@@ -32,6 +32,8 @@ export const TIER_PCT: readonly [number, number, number] = [0.005, 0.01, 0.015];
 /** Preço em Bits GANHOS e em fragmentos, por tier (DEFAULTS da squad: o dono não fixou preços finais). */
 export const TIER_BITS: readonly [number, number, number] = [400, 1200, 3000];
 export const TIER_FRAGMENTS: readonly [number, number, number] = [4, 12, 30];
+/** Fragmentos de uma run COMPLETA da Masmorra (os 5 andares), antes do Comércio (`fragmentGain`). Default da squad. */
+export const FRAGMENTS_PER_RUN = 5;
 /** Teto de fragmentos guardados (mais que o necessário para os 9 itens; limita save forjado). */
 export const FRAGMENTS_MAX = 999;
 
