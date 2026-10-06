@@ -1,0 +1,5 @@
+<<<<<<<< HEAD:dist/assets/MiniGlass-CaqzYYL7.js
+import{j as e}from"./index-BIITe7-M.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
+========
+import{j as e}from"./index-BV3ZlHdk.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
+>>>>>>>> b59023b (feat(combate-v3): PR14 integra a familia estavel do especial (familiasDaJornada) em skills e nomeEspecial):dist/assets/MiniGlass-BHu_mKXc.js

@@ -98,7 +98,7 @@ describe('varredura: escolas × elementos × famílias × estágios', () => {
     expect(n).toBe(TODAS_ESCOLAS.length * elementos.length * 7 * 5);
   });
 
-  it('jornada de 5 estágios: especiais distintos entre si, distintos da básica, 5 famílias diferentes', () => {
+  it('jornada de 5 estágios: especiais distintos entre si, distintos da básica, família estável (PR14), nome novo a cada estágio', () => {
     const elBase = [...CLASS_ELEMENT_ORDER];
     for (const escola of ESCOLAS) for (const el of elBase) for (let s = 0; s < 6; s++) {
       const fichas = Object.fromEntries(FICHA_STAGE_ORDER.map(st => [st, ficha(escola, { [el]: 4, agua: 1 })])) as Record<FichaStage, Ficha>;
@@ -108,7 +108,8 @@ describe('varredura: escolas × elementos × famílias × estágios', () => {
       const fams = FICHA_STAGE_ORDER.map(st => jornada[st].especial.familia);
       expect(new Set(nomesEn).size, nomesEn.join(' | ')).toBe(5);
       expect(new Set(nomesPt).size, nomesPt.join(' | ')).toBe(5);
-      expect(new Set(fams).size, fams.join(',')).toBe(5);
+      // PR14: perfil igual nos 5 estágios = a MESMA família (ela só troca com mudança forte de perfil); o nome é novo mesmo assim
+      expect(new Set(fams).size, fams.join(',')).toBe(1);
       for (const st of FICHA_STAGE_ORDER) {
         const { basica, especial } = jornada[st];
         expect(especial.nome.en).not.toBe(basica.nome.en);

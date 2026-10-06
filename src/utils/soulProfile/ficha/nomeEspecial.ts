@@ -89,14 +89,14 @@ export interface EntradaEspecial {
   tendencia?: string;
   seedKey: string;
   stage: string;
-  /** Famílias já usadas nos estágios anteriores desta jornada. */
-  familiasUsadas?: ReadonlySet<SpecialFamily>;
+  /** Família a EXCLUIR do sorteio (PR14: ao trocar de família, a que estava em vigor não conta como troca). */
+  excluir?: SpecialFamily;
 }
 
-/** A família do especial: sorteio PONDERADO e determinístico; evita repetir as já usadas na jornada. */
+/** O SORTEIO da família do especial: ponderado e determinístico. Quem decide QUANDO sortear é `familiasDaJornada` (PR14: família estável, troca rara). */
 export function familiaDoEspecial(e: EntradaEspecial): SpecialFamily {
   const rng = mulberry32(hashString(`${e.seedKey}|familia|${e.stage}`));
-  const livres = SPECIAL_FAMILIES.filter(f => !e.familiasUsadas?.has(f));
+  const livres = SPECIAL_FAMILIES.filter(f => f !== e.excluir);
   const candidatas = livres.length > 0 ? livres : SPECIAL_FAMILIES;
   const pesos = candidatas.map(f => {
     let p = PESO_FAMILIA_ESCOLA[e.escola][f];
