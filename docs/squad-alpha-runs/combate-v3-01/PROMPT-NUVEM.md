@@ -35,3 +35,10 @@ REGRAS DE TRABALHO:
 
 PENDÊNCIAS QUE SÓ O DONO RESOLVE (leve em modal quando surgirem): regerar ~12 peças de arte no Gemini (precisa da extensão Chrome e do Gemini logado; prompts em docs/ARTE-MELHORIAS-FUTURAS.md); confirmar a tabela BUILDING_GATES e os nomes novos do Laboratório; outros nós de talento "em breve"; loja de Créditos com verificação de idade só se um dia abrir 14+.
 ```
+
+## ATUALIZAÇÃO (07/10/2026, fim da sessão local)
+- BLOQUEIO REAL DO CI: o job "tsc + vitest" do GitHub Actions falha em ~2 s com "recent account payments have failed or your spending limit needs to be increased" (Billing do GitHub). Só o dono resolve. Sem isso nenhum PR mergeia com CI verde. Depois de resolvido: `gh run rerun` e merge --rebase. NÃO mergeie com CI quebrado sem autorização explícita do dono.
+- PR14 está pronto no PR #253 (branch combate-v3/pr14, rebaseado em d8b2d6af1): tsc/vitest local verdes (600 arquivos, 7539 testes), build ok. Falta só CI verde + merge. PR15a/b/c e PR17 NÃO começaram (dependem do merge do PR14). A taxa de troca de família ainda não foi medida (é do simulador do PR15a).
+- PR12b = PR #251 (aberto, verde local). PR16 = WIP em combate-v3/pr16 (4acd2529b). Tarefa A = feat/predios-por-vinculo (943ff595e). Tarefa B = feat/arvore-talentos (ad6d9d5bf). Tarefa C = feat/avatar-perfil-config (79fdc1858).
+- Na nuvem use `npm ci` por worktree; o node_modules compartilhado local ficou corrompido por remoção de worktree com junction.
+- Decisões abertas do dono: ver HANDOFF-ESTADO.md (parede do andar 5/32,4pp com equipamento; poda vs descarte de picks inválidos; alt text EN dos 123 avatares; tabela BUILDING_GATES e nomes do Laboratório).
