@@ -20,6 +20,7 @@ import {
 import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 import { awardBondXP } from './bond';
 import { playerDayKey } from './playerDay';
+import { noteFreeBits } from './bitsOrigin';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 
 /**
@@ -1215,6 +1216,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
        a contagem de tarefas (linha vermelha #16), e não tem teto próprio: o
        teto do dia completo é o próprio calendário. */
     gamePoints: (prev.gamePoints ?? 0) + (dayWasPerfect ? BITS_PER_COMPLETE_DAY : 0),
+    // PR8: o Bit do dia completo é Bit GANHO e soma ao ganho grátis do dia (base do teto de +25% do câmbio).
+    ...(dayWasPerfect ? { bitsOrigin: noteFreeBits(prev, BITS_PER_COMPLETE_DAY, playerDayKey(now, prev.playerDayTz)).bitsOrigin } : {}),
     /* WP4.16 — a estação passa a existir para o jogador.
        `seasons.ts` estava escrito, testado e SEM CONSUMIDOR: ninguém chamava
        `ensureSeasonProgress`, ninguém chamava `applySeasonMedal`, e por isso a

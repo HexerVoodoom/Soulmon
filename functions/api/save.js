@@ -14,6 +14,7 @@ import { kv, kvOrThrow } from './_kv.js';
 import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
+import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -233,6 +234,13 @@ export async function onRequest({ request, env }) {
     // corrigido. Limite honesto: `totalXP` tambem e escrito pelo cliente (ver `_bond.js`); o teto de 5% do canal
     // de bonus limita o que um XP forjado rende.
     if ('talentPicks' in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
+    // Equipamento (Combate v3 / PR8): item fora do catalogo, slot forjado e posse repetida sao DESCARTADOS peca a peca; os
+    // fragmentos sao clampados. O bonus do duelo e recalculado daqui (`_duel.js`) e o teto de 5% limita um save forjado.
+    if ('equipment' in state) state.equipment = sanitizeEquipment(state.equipment);
+    if ('bitsOrigin' in state) {
+      const o = sanitizeBitsOrigin(state.bitsOrigin);
+      if (o) state.bitsOrigin = o; else delete state.bitsOrigin;
+    }
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });

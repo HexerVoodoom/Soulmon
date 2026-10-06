@@ -1,5 +1,6 @@
 import { isGuildReward, type ShopItem } from './shop';
 import type { SlotId } from './petStage';
+import { spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 
 /**
  * A COMPRA na loja, aplicada sobre o `prev` — extraída do updater inline de
@@ -39,6 +40,8 @@ export type ShopBuyRefusal = 'no-funds' | 'already-owned' | 'not-for-sale';
 /** Fatia do GameState que uma compra lê e escreve. */
 export interface ShopBuyState {
   gamePoints?: number;
+  /** PR8: o gasto de Bits aqui NÃO é equipamento, então gasta o Bit pago (de Crédito) primeiro. */
+  bitsOrigin?: BitsOrigin;
   emblems?: number;
   foodInventory: Record<string, number>;
   ownedBackgrounds?: string[];
@@ -77,7 +80,7 @@ export function applyShopBuy<T extends ShopBuyState>(
   const paysWithEmblems = item.currency === 'emblems';
   const next: T = paysWithEmblems
     ? { ...prev, emblems: (prev.emblems ?? 0) - item.price }
-    : { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
+    : spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price }, item.price);
 
   if (item.kind === 'chip' || item.kind === 'heart') {
     // Consumível vai para a pastinha; o efeito é aplicado no USO

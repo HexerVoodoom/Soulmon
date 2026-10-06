@@ -4,6 +4,7 @@
  * (`copy.semFomo`): sem contagem que apressa. "Vínculo", nunca "nível".
  */
 import { PVP_STEP, PVE_STEP, RESPEC_STEP, CHEER_STEP } from './talents';
+import { PRICE_STEP, FRAGMENT_GAIN_STEP } from './equipment';
 
 export interface TalentCopy {
   readonly namePt: string;
@@ -41,8 +42,8 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
   'tal-pve-05': { namePt: 'Lua com olho', nameEn: 'Eyed moon', descPt: `Mais força contra o Pesadelo. ${SOON_ENGINE_PT}`, descEn: `More strength against the Nightmare. ${SOON_ENGINE_EN}` },
   'tal-pve-06': { namePt: 'Arco de luz', nameEn: 'Arc of light', descPt: `Escudo do especial mais forte. ${SOON_ENGINE_PT}`, descEn: `Stronger special shield. ${SOON_ENGINE_EN}` },
   'tal-pve-07': { namePt: 'Arco coroado', nameEn: 'Crowned arc', descPt: `Começa a luta com um escudo leve. ${SOON_ENGINE_PT}`, descEn: `Starts the fight with a light shield. ${SOON_ENGINE_EN}` },
-  'tal-com-01': { namePt: 'Etiqueta', nameEn: 'Price tag', descPt: 'Equipamento mais barato. Chega com o equipamento.', descEn: 'Cheaper equipment. Arrives with equipment.' },
-  'tal-com-02': { namePt: 'Fragmentos', nameEn: 'Fragments', descPt: 'Mais fragmentos. Chega com o equipamento.', descEn: 'More fragments. Arrives with equipment.' },
+  'tal-com-01': { namePt: 'Etiqueta', nameEn: 'Price tag', descPt: `Equipamento ${pct(PRICE_STEP, true)} mais barato em Bits por grau. É preço, não combate.`, descEn: `Equipment ${pct(PRICE_STEP, false)} cheaper in Bits per rank. It is price, not combat.` },
+  'tal-com-02': { namePt: 'Fragmentos', nameEn: 'Fragments', descPt: `${pct(FRAGMENT_GAIN_STEP, true)} mais fragmentos por grau, até +25%. É moeda ganha, não combate.`, descEn: `${pct(FRAGMENT_GAIN_STEP, false)} more fragments per rank, up to +25%. Earned currency, not combat.` },
   'tal-com-03': { namePt: 'Ampulheta de moeda', nameEn: 'Coin hourglass',
     descPt: `Refazer a árvore custa ${Math.round(RESPEC_STEP * 100)}% menos por grau. É preço, não combate.`,
     descEn: `Rebuilding the tree costs ${Math.round(RESPEC_STEP * 100)}% less per rank. It is price, not combat.` },

@@ -1920,6 +1920,14 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
   - Perdeu: "conveniência de câmbio" (encostava no teto de +25% dos Créditos).
 - **StatsPage:** "Nível de vínculo / Level N" virou "Vínculo N / Bond N" (NARRATIVA §12).
 
+### 24.4 PR8a — equipamento e procedência dos Bits (06/10/2026, decisões do dono, contexto §2.26)
+- **Equipamento:** 3 slots, um por atributo (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (+0,5% / +1% / +1,5% no atributo do slot; os três no tier 3 somam 4,5%). Aquisição por **loja direta (Bits GANHOS) ou fragmentos**, sem sorteio, sem caixa, sem chance (teste lê a fonte e reprova `Math.random`/`odds`/`pity`). Percentual, nunca ponto plano (o item plano de +1 ponto no L1 passa de 5%: prova de vermelho). Entra pelo canal único de 5% (PvP por atributo, fenda como soma); o servidor recalcula do save e descarta slot forjado.
+  - Perdeu: caixa/lootbox com pity (o dono decidiu: sem RNG); equipamento de ponto plano (estoura o teto com +1); equipamento comprável com Crédito (linha vermelha).
+- **Só moeda GANHA compra equipamento.** O saldo `gamePoints` segue sendo um número só; `bitsOrigin` guarda quanto dele veio de Crédito (`paidLeft`), e o equipamento só enxerga `saldo − paidLeft`. O gasto que não é equipamento (loja de cosméticos, respec) gasta o Bit pago primeiro. Save sem o campo: todo Bit é ganho. Limite honesto: é regra de cliente (o save é local-first); o servidor garante a forma e o teto de 5%.
+- **Câmbio de Créditos com teto de +25% do ganho grátis do dia** (`CREDIT_BITS_CAP_RATIO`), com piso de referência de 100 (um dia completo) para o dia sem ganho. O pacote que passa do teto NÃO é cobrado (conferido antes de gastar o Crédito) nem partido. Consequência: os pacotes de 100/250/600 Bits só cabem em dias de 400/1.000/2.400 Bits grátis (a loja de Créditos em si NÃO muda neste PR; a compra de Créditos atrás de verificação de idade segue como story pendente).
+- **Comércio** liga dois nós: `tal-com-01` (equipamento −4% em Bits por grau) e `tal-com-02` (+5% de fragmentos por grau, até o teto de +25%). Só preço e ganho de moeda; nenhum dá % de combate.
+  - Perdeu: Crédito comprando equipamento; Comércio dando bônus de combate.
+
 ### 24.2 PR7 — Vínculo como level do usuário: talentos e portões (06/10/2026)
 
 O que o PR7 implementou das decisões acima, e o que perdeu a disputa.
