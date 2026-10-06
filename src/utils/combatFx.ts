@@ -105,6 +105,10 @@ export const ELEMENT_STRIKE_FORM: Record<string, Record<SkillRole, StrikeForm>> 
   gravidade: { basica: 'melee', especial: 'ranged' },
   espaco: { basica: 'ranged', especial: 'ranged' },
   aco: { basica: 'melee', especial: 'melee' },
+  // Derivados que o corpus do bestiário traz como elemento de inimigo (06/10/2026).
+  lava: { basica: 'melee', especial: 'ranged' },
+  gelo: { basica: 'ranged', especial: 'ranged' },
+  veneno: { basica: 'melee', especial: 'ranged' },
   [FX_FALLBACK_ELEMENT]: { basica: 'melee', especial: 'ranged' },
 };
 export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 'ranged', especial: 'ranged' };

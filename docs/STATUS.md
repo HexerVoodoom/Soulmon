@@ -9,6 +9,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 06/10/2026 — Bestiário = corpus do Besti-rio- direto, sem allowlist (decisão do dono) — SEM MERGE
+>
+> - `scripts/sync-oracle-data.mjs` seção 2 lê o repo irmão (6.507 fichas elegíveis por qualidade);
+>   `pool.json` 3 MB, chunk próprio. Guards de PI do bundle ficam com UMA exceção (`pool-*.js`).
+>   `lava`/`gelo`/`veneno` entraram em `ELEMENT_STRIKE_FORM`. Registro: `REGISTRO-DE-DECISOES.md` (06/10/2026).
+> - ⚠️ Trade-offs medidos: 91% do corpus é variante procedural; 83% sem família; zero `marcial`.
+>   **Não mergear sem o dono reler isto**: o merge na `main` publica descrições oficiais de franquia.
+> - O `CLAUDE.md` ainda diz "só entradas originais" e "nada de terceiro entra no bundle" — divergência
+>   registrada aqui, a linha é do dono.
+
 > ## 06/10/2026 — Duelo mostra o elemento REAL do Soulmon (base ou combinado)
 >
 > - `DueloSheet` lia o elemento do golpe ESPECIAL, que herda o 2º colocado da ficha quando o topo é

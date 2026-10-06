@@ -36,20 +36,39 @@ const PROIBIDOS = [
  *  teórico em prova de conhecimento. */
 const TITULARES = /Game Freak|Wizards of the Coast|Giochi Preziosi|Marvel Comics/;
 
-function bundles(): string[] {
+/** ⚠️ DECISÃO DO DONO, 06/10/2026: o pool do bestiário passou a ser o corpus
+ *  do Besti-rio- sem allowlist de PI, então o CHUNK DO POOL carrega nome e
+ *  descrição de franquia por decisão. É a ÚNICA exceção: o guard continua
+ *  valendo para o bundle de entrada e para todo outro chunk (UI, sprites,
+ *  código), e `POOL_CHUNK` abaixo exige que a exceção seja um arquivo só,
+ *  carregado sob demanda — nunca o bundle inicial. Gatilho para rever:
+ *  reclamação de titular ou parecer de loja (Play). */
+const POOL_CHUNK = /^pool-[A-Za-z0-9_-]+\.js$/;
+
+function todos(): string[] {
   if (!existsSync(DIST)) return [];
   return readdirSync(DIST).filter(f => f.endsWith('.js')).map(f => join(DIST, f));
+}
+function bundles(): string[] {
+  return todos().filter(f => !POOL_CHUNK.test(f.split('/').pop()!));
 }
 
 describe('o `dist/` servido não carrega criatura de franquia', () => {
   const arquivos = bundles();
 
-  it('a varredura tem chão embaixo — o bundle existe e tem o pool dentro', () => {
+  it('a exceção é UM chunk do pool, sob demanda — o bundle de entrada não o contém', () => {
+    const pools = todos().filter(f => POOL_CHUNK.test(f.split('/').pop()!));
+    expect(pools.length, 'o pool deve ser um único chunk `pool-*.js`').toBe(1);
+    const entrada = todos().filter(f => /\/index-[^/]+\.js$/.test(f));
+    for (const f of entrada) {
+      expect(readFileSync(f, 'utf8').includes('Okapia johnstoni'), `${f} carrega o pool`).toBe(false);
+    }
+  });
+
+  it('a varredura tem chão embaixo — o bundle existe', () => {
     // Sem isto, um `dist/` ausente faria os casos abaixo passarem por vacuidade,
     // que é a forma preferida de um guard de bundle morrer em silêncio.
     expect(arquivos.length, 'rode `npm run build` antes').toBeGreaterThan(0);
-    const algum = arquivos.some(f => /Okapia johnstoni|Ambystoma mexicanum|Rafflesia/.test(readFileSync(f, 'utf8')));
-    expect(algum, 'o pool do bestiário não foi encontrado em dist/assets/*.js').toBe(true);
   });
 
   it('nenhum nome de criatura de franquia aparece', () => {
