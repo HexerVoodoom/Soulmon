@@ -4,6 +4,7 @@ import type { AreaId } from '../../navigation';
 import { lotArtBounds } from '../../utils/areaLotGeometry';
 import { MissionMark } from '../play/MissionMark';
 import type { MissionMark as MissionMarkKind } from '../../utils/travessiasSave';
+import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 
 /**
  * O MOLDE DE UMA ÁREA (minimal-ui F4) — reusado pelas 6 áreas do Mapa.
@@ -39,18 +40,22 @@ export interface AreaLot {
   width?: string;
   /** Marcador de missão sobre o lote (04/10/2026): "!" disponível, "?" em andamento. */
   mark?: MissionMarkKind;
+  /** Prédio trancado pelo Vínculo (`BUILDING_GATES`): arte cinza, cadeado e o Vínculo pedido. O toque ainda chega em `onOpen` (que mostra o aviso). */
+  locked?: { minBond: number };
 }
 
 /** Largura padrão de um lote, em % da cena (o molde F4). */
 export const LOT_WIDTH_DEFAULT = '38%';
 
-export function AreaScene({ areaId, language, lots, background, children }: {
+export function AreaScene({ areaId, language, lots, background, notice, children }: {
   areaId: AreaId;
   language: Language;
   lots: AreaLot[];
   /** Fundo pintado da área (9:16, `cover` centrado na TELA inteira — minimal-ui F5). Sem ele,
    *  o degradê de tokens do molde F4. */
   background?: string;
+  /** Aviso neutro de um prédio trancado (`buildingLockLine`), se houver. */
+  notice?: string | null;
   /** O `AreaSheet` aberto, se houver — filho para ficar no mesmo empilhamento da cena. */
   children?: ReactNode;
 }) {
@@ -87,7 +92,8 @@ export function AreaScene({ areaId, language, lots, background, children }: {
           type="button"
           data-area-lot={lot.id}
           onClick={lot.onOpen}
-          aria-label={lot.ariaLabel}
+          aria-label={lot.locked ? `${lot.label}. ${lockLabel(lot.locked.minBond, language)}` : lot.ariaLabel}
+          data-lot-locked={lot.locked ? lot.locked.minBond : undefined}
           style={{
             position: 'absolute',
             left: lot.left, top: lot.top,
@@ -109,7 +115,7 @@ export function AreaScene({ areaId, language, lots, background, children }: {
                 alt=""
                 aria-hidden="true"
                 data-area-lot-art
-                style={{ width: '100%', display: 'block', filter: 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
+                style={{ width: '100%', display: 'block', filter: lot.locked ? 'grayscale(1) brightness(.72) drop-shadow(0 6px 6px rgba(0,0,0,.55))' : 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
               />
               {(() => {
                 const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
@@ -136,7 +142,12 @@ export function AreaScene({ areaId, language, lots, background, children }: {
               boxShadow: '0 6px 6px rgba(0,0,0,.35)',
             }}
           />}
-          {lot.mark && (
+          {lot.locked && (
+            <span style={{ position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+              <LockBadge minBond={lot.locked.minBond} language={language} />
+            </span>
+          )}
+          {lot.mark && !lot.locked && (
             <span style={{ position: 'absolute', top: '-2%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
               <MissionMark kind={lot.mark} isPt={isPt} size={32} />
             </span>
@@ -173,6 +184,8 @@ export function AreaScene({ areaId, language, lots, background, children }: {
           {isPt ? 'Em breve, mais coisas por aqui.' : 'More things coming here soon.'}
         </p>
       )}
+
+      {notice && <LockNotice text={notice} />}
 
       {children}
     </div>
