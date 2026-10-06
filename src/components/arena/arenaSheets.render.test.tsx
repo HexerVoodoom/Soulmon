@@ -129,6 +129,21 @@ describe('Torneio — menu e treino', () => {
 });
 
 describe('Duelo', () => {
+  it('mostra o elemento REAL do Soulmon (combinado incluso), não o do golpe especial', () => {
+    const golpe = (tipo: 'basica' | 'especial', id: string, pt: string, en: string) => ({
+      tipo, nome: { pt: 'Golpe', en: 'Strike' }, descricao: { pt: '', en: '' },
+      elementoId: id, elementoNome: { pt, en }, escolaId: 'conjuracao', recursoId: 'mana',
+      area: { tipo: 'unico' }, custo: 'baixo',
+    });
+    const skills = { rookie: {
+      basica: golpe('basica', 'fogo', 'Fogo', 'Fire'),
+      especial: golpe('especial', 'agua', 'Água', 'Water'),
+      elementoDominante: { id: 'vapor', nome: { pt: 'Vapor', en: 'Steam' } },
+    } } as never;
+    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" skills={skills} onStart={() => {}} />);
+    expect(container.querySelector('[data-duelo-elemento]')!.textContent).toBe('Vapor');
+  });
+
   it('mostra a ficha padrão sem skills e o botão abre a luta', () => {
     const onStart = vi.fn();
     const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);

@@ -17,7 +17,7 @@ describe('B2 — fighterStrikeForm', () => {
   });
   it(`varredura ${ESCOLAS.length} escolas × ${ELEMENTOS.length} elementos: com ficha o resultado não depende do elemento`, () => {
     expect(ESCOLAS.length).toBe(6);
-    expect(ELEMENTOS.length).toBe(19);
+    expect(ELEMENTOS.length).toBe(22); // 17 base + aço + neutro + lava/gelo/veneno (corpus do bestiário, 06/10/2026)
     for (const escolaId of ESCOLAS) for (const role of ['basica', 'especial'] as const) {
       const set = new Set(ELEMENTOS.map(element => fighterStrikeForm({ skill: { escolaId }, element }, role)));
       expect([...set]).toEqual([SCHOOL_STRIKE_FORM[escolaId][role]]);

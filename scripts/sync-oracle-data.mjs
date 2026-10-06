@@ -6,8 +6,7 @@
 //     (profissões, talentos, criaturas capturáveis, famílias, escolas,
 //     recursos — o vocabulário que a distribuição de pontos usa)
 //   • bestiário     → src/utils/soulProfile/bestiary/pool.json
-//     (desde 28/09/2026 SÓ entradas originais curadas no próprio repo —
-//     scripts/bestiario-originais.mjs; o corpus do Besti-rio- não entra mais)
+//     (desde 06/10/2026 o corpus do Besti-rio- direto, sem allowlist de PI — ver a seção 2)
 //
 // Por que snapshot commitado e não dependência de git como no
 // teste-personalidade: o Soulmon builda para APK/Cloudflare com dist/
@@ -23,8 +22,6 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { entradaPermitida } from './bestiario-procedencia.mjs';
-import { montarPool } from './bestiario-originais.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_DIR = process.env.CLASS_SYSTEM_DIR ?? path.resolve(ROOT, '../Class-System');
@@ -62,6 +59,8 @@ function provenance(dir, ref) {
 // 1. Class-System — extrai o registro rodando tsx DENTRO do clone (o pacote é
 //    TypeScript puro; extrair lá evita depender do tsconfig dele aqui).
 // ---------------------------------------------------------------------------
+// SO_BESTIARIO=1 pula esta seção (quando só o Besti-rio- está clonado).
+if (!process.env.SO_BESTIARIO) {
 if (!existsSync(CLASS_DIR)) throw new Error(`Class-System não encontrado em ${CLASS_DIR}`);
 const extract = `
 import { PROFISSOES, TALENTOS, CRIATURAS, FAMILIAS, ESCOLAS, RECURSOS } from './src/index';
@@ -126,34 +125,75 @@ writeFileSync(path.join(fichaDir, 'classSystem.data.json'), JSON.stringify(class
 console.log(`class-system: ${Object.keys(classData.talentos).length} talentos · ${Object.keys(classData.profissoes).length} profissões · ${Object.keys(classData.criaturas).length} criaturas · ${Object.keys(classData.familias).length} famílias @ ${classOut._provenance.sha.slice(0, 8)}`);
 console.log(`  diais gen-2: divisor ${geracoes.divisorCascata['2']} · limiar ${geracoes.limiarDestravamento['2']} · custo direto ${geracoes.custoPontoAlocacao['2']} (base ${geracoes.custoPontoAlocacao['1']})`);
 
+}
+
 // ---------------------------------------------------------------------------
-// 2. Bestiário — SÓ ENTRADAS ORIGINAIS (decisão do dono, 28/09/2026).
+// 2. Bestiário — o CORPUS do repo Besti-rio-, direto, SEM allowlist de PI.
 //
-// ⚠️ Até 28/09/2026 este bloco lia o corpus do Besti-rio- (variantes,
-// enriched, faunaflora), amostrava 2.000 entradas, aplicava procedência,
-// curadoria, ponte de elementos e arquétipos — e o resultado eram 732
-// VARIANTES GERADAS de ~42 bases ('Titânico Cão de Fogo', 'Leão do Saara
-// Venenoso'…), nenhuma entrada limpa. O dono mandou desativar as geradas e
-// usar só as originais, com diversidade real de grupos. O pool agora é
-// montado por `scripts/bestiario-originais.mjs` (41 bases originais com
-// texto curado + o catálogo curado de `bestiario-catalogo-curado.mjs`), e
-// o corpus do Besti-rio- não entra mais — ele não tem fauna real além de
-// meia dúzia de mamíferos grandes (ver docs/BESTIARIO-PROCEDENCIA.md §14).
+// ⚠️ DECISÃO DO DONO, 06/10/2026: "sincronizar com o corpus inteiro, sem
+// allowlist que restrinja". Reverte a de 28/09/2026 (só entradas originais
+// curadas em `scripts/bestiario-originais.mjs`) e a de 27/09/2026 (allowlist
+// de `scripts/bestiario-procedencia.mjs`). Os dois scripts continuam no repo,
+// mas NÃO são mais chamados por aqui.
+//
+// O que ainda filtra é QUALIDADE, não procedência — o mesmo contrato de
+// elegibilidade que o próprio Besti-rio- exporta (`scripts/export-canonico.mjs`):
+// confiança 'alta', descrição real e elementos não-vazio. Entrada sem isso não
+// tem como ser pontuada contra a leitura. Para saltar até isso:
+// `BESTIARIO_TUDO=1`.
+//
+// A descrição é cortada em DESCRICAO_MAX caracteres: ela só alimenta o palpite
+// de família visual (`familyHintText`) e nunca é exibida; o corte segura o
+// bundle (corpus completo = ~12 MB) sem tirar o sinal.
+//
+// Uso:  BESTIARIO_DIR=/caminho/Besti-rio- node scripts/sync-oracle-data.mjs
 // ---------------------------------------------------------------------------
+const BEST_DIR = process.env.BESTIARIO_DIR ?? path.resolve(ROOT, '../Besti-rio-');
+const FONTES = ['variantes', 'enriched', 'faunaflora', 'pokemon', 'digimon', 'dnd'];
+if (!existsSync(BEST_DIR)) throw new Error(`Besti-rio- não encontrado em ${BEST_DIR} — use BESTIARIO_DIR.`);
 const bestDir = path.join(ROOT, 'src/utils/soulProfile/bestiary');
 mkdirSync(bestDir, { recursive: true });
-const criaturas = montarPool();
-for (const c of criaturas) {
-  if (!entradaPermitida(c)) throw new Error(`entrada reprovada pela procedência: ${c.nome}`);
+const corpus = [];
+for (const f of FONTES) {
+  const parsed = JSON.parse(readFileSync(path.join(BEST_DIR, 'src/registry/data', `${f}.json`), 'utf8'));
+  corpus.push(...(Array.isArray(parsed) ? parsed : Object.values(parsed)[0]));
 }
-const poolOut = {
-  _provenance: {
-    repo: 'HexerVoodoom/Soulmon', ref: 'scripts/bestiario-originais.mjs', sha: 'curado-no-repo',
-    syncedAt: new Date().toISOString().slice(0, 10),
-    fonte: 'scripts/bestiario-originais.mjs + scripts/bestiario-catalogo-curado.mjs (só entradas originais)',
-  },
-  criaturas,
-};
+// ⚠️ 06/10/2026 (2ª decisão do dono, no mesmo dia): "a lista completa menos as
+// procedurais". O corte de qualidade (confiança/elementos) caiu: 80% do corpus
+// não procedural vinha SEM elementos, então ele é enriquecido, não filtrado.
+// Procedural = origem "Geração Procedural" OU nome no padrão
+// "<Prefixo> <Espécie> de <Elemento>" (variantes mecânicas espécie × elemento).
+const PROCEDURAL_NOME = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+(.+?)\s+de\s+\S+$/;
+const ehProcedural = c => /Procedural/i.test(c.origem ?? '') || PROCEDURAL_NOME.test(c.nome ?? '');
+// Elementos, grupo e DESCRIÇÃO FÍSICA vêm de `scripts/data/bestiario-enriquecimento.json`
+// (feito ficha a ficha por agentes, validado por lote). A descrição oficial do
+// corpus NÃO entra no pool: era texto de terceiros, muitas vezes errado
+// (o "Cattiva" do Palworld vinha descrito como um filme italiano de 1991) e só
+// servia de palpite de família. A física nova a substitui.
+const enriq = JSON.parse(readFileSync(path.join(ROOT, 'scripts/data/bestiario-enriquecimento.json'), 'utf8')).fichas;
+const vistos = new Set();
+const criaturas = [];
+const semFicha = [];
+for (const c of corpus) {
+  if (ehProcedural(c) || vistos.has(c.nome)) continue;
+  vistos.add(c.nome);
+  const e = enriq[c.nome];
+  if (!e) { semFicha.push(c.nome); continue; }
+  criaturas.push({
+    nome: c.nome,
+    origem: c.origem,
+    descricao: e.aparencia,
+    elementos: e.elementos,
+    familia: e.grupo,
+    biologia: c.biologia ?? [],
+    bioma: c.bioma ?? [],
+    tamanho: c.tamanho,
+    hostilidade: c.hostilidade,
+    atributos: c.atributos ?? null,
+  });
+}
+if (semFicha.length) throw new Error(`${semFicha.length} criaturas sem ficha de enriquecimento (ex.: ${semFicha.slice(0, 3).join(', ')}) — rode o enriquecimento antes.`);
+const poolOut = { _provenance: provenance(BEST_DIR), criaturas };
 writeFileSync(path.join(bestDir, 'pool.json'), JSON.stringify(poolOut) + '\n');
 const fams = new Set(criaturas.map(c => c.familia));
-console.log(`pool: ${criaturas.length} criaturas originais · ${fams.size} famílias`);
+console.log(`pool: ${criaturas.length}/${corpus.length} criaturas (sem as procedurais) · ${fams.size} grupos @ ${poolOut._provenance.sha.slice(0, 8)}`);

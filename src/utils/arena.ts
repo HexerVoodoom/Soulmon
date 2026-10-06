@@ -267,6 +267,44 @@ const CLASS_NOUNS: Record<ArenaEnemyClass, Array<{ pt: string; en: string }>> = 
 };
 
 /**
+ * Sorteio ESTRATIFICADO por elemento: primeiro o elemento do inimigo, com chance
+ * igual entre os que existem no pool, depois uma criatura DENTRO dele.
+ *
+ * ⚠️ 06/10/2026: o sorteio era uniforme sobre o pool inteiro. Com o pool curado
+ * de 194 isso dava uma mistura de elementos razoavelmente plana; com o corpus de
+ * 7.386 (vida em 18% das criaturas, o dobro do esperado) o jogador de vigor
+ * passou a ter vantagem em 32% dos inimigos em vez de 21% e a taxa de vitória de
+ * vida/terra/gravidade caiu ~9pp enquanto a de vigor/luz/espaço subiu 6–11pp. O
+ * anel (`COUNTER_RING`) é simétrico POR CONSTRUÇÃO — cada elemento vence 2 e perde
+ * para 2 —, então com o elemento do inimigo sorteado de forma uniforme a Arena é
+ * justa para qualquer elemento do jogador. Estratifica-se pelo PRIMEIRO elemento
+ * base (é o que o inimigo usa para atacar); o segundo segue a distribuição do pool.
+ */
+const ENEMY_BUCKETS = new WeakMap<BestiaryCreature[], BestiaryCreature[][]>();
+
+function enemyBuckets(pool: BestiaryCreature[]): BestiaryCreature[][] {
+  let buckets = ENEMY_BUCKETS.get(pool);
+  if (!buckets) {
+    const byEl = new Map<string, BestiaryCreature[]>();
+    for (const c of pool) {
+      const el = c.elementos.find(e => BASE_SET.has(e)) ?? '';
+      if (!byEl.has(el)) byEl.set(el, []);
+      byEl.get(el)!.push(c);
+    }
+    buckets = [...byEl.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, l]) => l);
+    ENEMY_BUCKETS.set(pool, buckets);
+  }
+  return buckets;
+}
+
+function pickEnemyCreature(pool: BestiaryCreature[], rng: () => number): BestiaryCreature | null {
+  if (pool.length === 0) return null;
+  const buckets = enemyBuckets(pool);
+  const bucket = buckets[Math.floor(rng() * buckets.length)];
+  return bucket[Math.floor(rng() * bucket.length)];
+}
+
+/**
  * The flavour of the foes of one round (1-based): creature from the pool (element), generated name,
  * Bits. `rng` is the run's `mulberry32(seed)` stream — NEVER `Math.random`. The strength is not here:
  * it is `arenaFoe(level, cls, round)`.
@@ -280,7 +318,7 @@ export function buildArenaRound(
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   return comp.map(cls => {
     const shape = CLASS_FLAVOR[cls];
-    const creature = pool.length > 0 ? pool[Math.floor(rng() * pool.length)] : null;
+    const creature = pickEnemyCreature(pool, rng);
     const elements = (creature?.elementos ?? []).filter(e => BASE_SET.has(e)).slice(0, 2);
     if (elements.length === 0) {
       elements.push(CLASS_ELEMENT_ORDER[Math.floor(rng() * CLASS_ELEMENT_ORDER.length)]);

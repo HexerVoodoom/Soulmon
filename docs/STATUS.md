@@ -9,6 +9,41 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 06/10/2026 (noite) — Bestiário = 7.386 criaturas (corpus − procedurais), enriquecidas ficha a ficha — SEM MERGE
+>
+> - Pool novo: 7.386 criaturas, 23 grupos, todas com 1–3 elementos (os 17, `marcial` incluso) e **descrição física**
+>   (a oficial não entra mais). `scripts/data/bestiario-enriquecimento.json` + `sync-oracle-data.mjs` seção 2.
+> - **Arena corrigida (aprovado pelo dono):** sorteio de inimigo ESTRATIFICADO por elemento (`pickEnemyCreature`, `arena.ts`).
+>   Spread entre os 17 elementos do jogador: 34pp → **13,4pp** (antes do pool novo: 22pp). Teste novo: `arena.test.ts`.
+> - ⚠️ **Decisões que ficam com o dono:** (1) a Arena agora carrega um `pool.json` de **3 MB** (era ~100 KB) ao entrar — medir custo em aparelho fraco; `ArenaGame.torcida.render.test.tsx` falhou UMA vez sob carga (passa isolado 7/7), provável sensibilidade ao tempo de carga do pool; (2) `GRUPO_PESO`
+>   foi calibrado para o pool curado e não foi refeito; (3) `LINEAGE_PROXIMITY_WEIGHT` caiu de 3 para 1,1 (janela estreita);
+>   (4) o chunk do pool tem **3 MB** e nomes de franquia — merge na `main` publica isso em produção.
+> - Falha pré-existente: `tests/convertToWebp.test.ts` (PNG somente-leitura, efeito de rodar como root).
+
+> ## 06/10/2026 — Bestiário = corpus do Besti-rio- direto, sem allowlist (decisão do dono) — SEM MERGE
+>
+> - `scripts/sync-oracle-data.mjs` seção 2 lê o repo irmão (6.507 fichas elegíveis por qualidade);
+>   `pool.json` 3 MB, chunk próprio. Guards de PI do bundle ficam com UMA exceção (`pool-*.js`).
+>   `lava`/`gelo`/`veneno` entraram em `ELEMENT_STRIKE_FORM`. Registro: `REGISTRO-DE-DECISOES.md` (06/10/2026).
+> - ⚠️ Trade-offs medidos: 91% do corpus é variante procedural; 83% sem família; zero `marcial`.
+>   **Não mergear sem o dono reler isto**: o merge na `main` publica descrições oficiais de franquia.
+> - O `CLAUDE.md` ainda diz "só entradas originais" e "nada de terceiro entra no bundle" — divergência
+>   registrada aqui, a linha é do dono.
+
+> ## 06/10/2026 — Duelo mostra o elemento REAL do Soulmon (base ou combinado)
+>
+> - `DueloSheet` lia o elemento do golpe ESPECIAL, que herda o 2º colocado da ficha quando o topo é
+>   uma base — o "elemento do Soulmon" na tela podia não ser o dele. `StageSkills` ganhou
+>   `elementoDominante` (opcional; saves antigos caem no elemento do golpe), calculado em
+>   `buildStageSkills` como o de maior peso da ficha (base OU um dos 136 pares). Régua:
+>   `arenaSheets.render.test.tsx`.
+> - **Medido, não suposto:** o class-system do Soulmon tem 17 base + 136 pares = 153 (não ~200);
+>   triplas/quádruplas existem só no class-system de origem e no roster de chefes.
+> - **Pendente com o dono:** bestiário "direto do repo, sem curadoria" e o nome da criatura no prompt.
+>   O corpus do `Besti-rio-` tem ~14 mil fichas, a maioria de franquia (`BESTIARIO-PROCEDENCIA.md`).
+> - Falha pré-existente (reproduz sem esta mudança): teste de reescrita de PNG do build ("PNG intacto
+>   quando a reescrita falhou"), provável efeito de rodar como root neste sandbox.
+
 > ## 02/10/2026 (tarde) — Rodada 4: torcida no Duelo da Arena (H14) e PvP sem interruptor (H13)
 >
 > - **H14:** `ArenaGame` (PvE contra NPCs) ganhou a torcida por toques: o pet golpeia SOZINHO

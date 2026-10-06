@@ -36,6 +36,7 @@ export const EXCECOES: Readonly<Record<string, string>> = {
   'src/utils/branchMigration.ts': 'migração legada — dono único (emojis antigos como escape \\u{…})',
   'src/utils/branchMigration.test.ts': 'fixtures de save antigo',
   'functions/api/_branchLegacy.js': 'compat de LEITURA das chaves KV antigas (servidor)',
+  'src/utils/soulProfile/bestiary/pool.json': 'snapshot do corpus do Besti-rio- (dados de terceiros; "vírus" e "vacina" aparecem em descrições de criatura, não como caminho)',
   'src/utils/oracle.ts': 'um comentário-lápide mínimo registra os nomes antigos',
 };
 

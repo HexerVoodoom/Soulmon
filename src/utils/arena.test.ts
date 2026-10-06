@@ -119,3 +119,20 @@ describe('elementAdvantage — devolve -1, 0 ou 1 (era elementMultiplier)', () =
     }
   });
 });
+
+
+describe('sorteio estratificado por elemento (06/10/2026)', () => {
+  it('cada um dos 17 elementos aparece como 1º elemento do inimigo com frequência parecida, mesmo com o pool desigual', () => {
+    // O pool real tem `vida` em ~18% das criaturas; sem estratificar, quem enfrenta mais vida
+    // ganha ou perde ~9pp por causa do anel. Com o elemento sorteado primeiro, a chance é igual.
+    const rng = mulberry32(20261006);
+    const cont: Record<string, number> = {};
+    let total = 0;
+    for (let i = 0; i < 6000; i++) {
+      for (const e of buildArenaRound(1, 1, rng, POOL)) { cont[e.elements[0]] = (cont[e.elements[0]] ?? 0) + 1; total++; }
+    }
+    const fatias = CLASS_ELEMENT_ORDER.map(el => (cont[el] ?? 0) / total);
+    expect(Math.min(...fatias), JSON.stringify(cont)).toBeGreaterThanOrEqual(0.045);
+    expect(Math.max(...fatias), JSON.stringify(cont)).toBeLessThanOrEqual(0.075);
+  });
+});

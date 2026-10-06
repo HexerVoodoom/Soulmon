@@ -65,7 +65,17 @@ export interface StageSkill {
   poder?: number;
 }
 
-export interface StageSkills { basica: StageSkill; especial: StageSkill }
+export interface StageSkills {
+  basica: StageSkill;
+  especial: StageSkill;
+  /** O elemento REAL do Soulmon neste estágio — o de maior peso da ficha, base
+   *  OU combinado (par). É o que o jogador vê como "o elemento do meu Soulmon"
+   *  (ex.: o Duelo). Não é o elemento do golpe especial: quando o topo é uma
+   *  base, a especial herda o SEGUNDO colocado, e mostrar esse como "o
+   *  elemento" era errado. Opcional: skills salvas antes desta mudança não o
+   *  têm, e quem lê cai no elemento do golpe. */
+  elementoDominante?: { id: string; nome: SkillText };
+}
 
 /** Raio-base do class-system (`RAIO_MAXIMO_BASE`), em metros. */
 export const RAIO_AREA_BASE_METROS = 4;
@@ -238,7 +248,11 @@ export function buildStageSkills(
     };
   };
 
-  return { basica: montarBasica(), especial: montarEspecial() };
+  return {
+    basica: montarBasica(),
+    especial: montarEspecial(),
+    elementoDominante: { id: topGeral, nome: elementoNomeDe(topGeral) },
+  };
 }
 
 /** As skills de todos os estágios de uma vez (pipeline / persistência). */

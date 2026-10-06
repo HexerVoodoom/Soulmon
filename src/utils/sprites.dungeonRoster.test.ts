@@ -70,6 +70,10 @@ describe('nada de terceiro entra no bundle', () => {
     try {
       return readdirSync('dist/assets')
         .filter(f => f.endsWith('.js'))
+        // 06/10/2026 (decisão do dono): o chunk do pool do bestiário é o corpus
+        // do Besti-rio- sem allowlist de PI — única exceção. Ver
+        // `bestiary/bundleSemFranquia.contract.test.ts`, que prende a exceção a um chunk.
+        .filter(f => !/^pool-[A-Za-z0-9_-]+\.js$/.test(f))
         .map(f => join('dist/assets', f));
     } catch {
       return [];

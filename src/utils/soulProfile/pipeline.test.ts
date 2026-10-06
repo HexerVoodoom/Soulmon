@@ -96,8 +96,10 @@ describe('pipeline completo do oráculo', () => {
         const alvo = baseOf(bestiaryLineage[FICHA_STAGE_FOR[stage.stage]].creature.nome);
         expect(stage.imagePrompt.toLowerCase(), `a 1ª tentativa (${stage.stage}) leva a inspiração nomeada`)
           .toContain(alvo);
+        // A cláusula inteira, não só a palavra: com o corpus do bestiário sem allowlist,
+        // o nome pode ser uma palavra comum que o conceito também usa (ex.: "golem").
         expect(stage.imagePromptFallback.toLowerCase(), 'o FALLBACK tem de ficar limpo')
-          .not.toContain(alvo);
+          .not.toContain(`draw inspiration from ${alvo}`);
       }
     }
   });
@@ -312,7 +314,7 @@ describe('dados sincronizados dos repositórios', () => {
   it('snapshots carregam procedência (repo + SHA) — dado sem origem não entra', () => {
     expect(CLASS_DATA._provenance.repo).toContain('Class-System');
     expect(CLASS_DATA._provenance.sha).toMatch(/^[0-9a-f]{40}$/);
-    expect(BESTIARY_PROVENANCE.repo).toContain('Besti-rio');
+    expect(BESTIARY_PROVENANCE.repo).toMatch(/besti-rio/i);
     expect(BESTIARY_PROVENANCE.sha).toMatch(/^[0-9a-f]{40}$/);
   });
 
@@ -322,24 +324,16 @@ describe('dados sincronizados dos repositórios', () => {
     expect(Object.keys(CLASS_DATA.familias).length).toBeGreaterThanOrEqual(14);
   });
 
-  it('nenhuma criatura do pool vem de franquia protegida', () => {
-    /* ⚠️ **ESTE TESTE ESTAVA VERDE E ERA FALSO** (achado em 27/09/2026).
-       Ele afirmava exatamente a propriedade que o pool violava, usando a MESMA
-       lista de onze nomes que o `sync-oracle-data.mjs` usava — duas cópias do
-       mesmo regex furado, em dois arquivos. As duas erraram igual e nada ficou
-       vermelho, enquanto **1.101 das 1.718 entradas** eram de franquia: a
-       Pokédex Gen I inteira, Beholder, Mind Flayer, Displacer Beast, Murloc,
-       Deathwing, Zergling, Chocobo, Tonberry, Rathalos, Balrog, e dois X-Men
-       (a `Ciclope` do pool era o Scott Summers).
-
-       A causa-raiz não precisava de regex: `sync-oracle-data.mjs` LIA
-       `pokemon.json`, `digimon.json` e `dnd.json` de propósito e filtrava
-       depois por `origem`, que nesses arquivos vem "Geração Procedural".
-
-       Hoje o critério é de `scripts/bestiario-procedencia.mjs`, IMPORTADO —
-       não copiado — por este teste e pelo script. */
-    const sujas = BESTIARY_POOL.filter(c => !entradaPermitida(c));
-    expect(sujas.slice(0, 10).map(c => `${c.origem}: ${c.nome}`)).toEqual([]);
+  it('o pool é o corpus do Besti-rio- direto, sem allowlist de procedência', () => {
+    /* ⚠️ DECISÃO DO DONO, 06/10/2026: "sincronizar com o corpus inteiro, sem
+       allowlist que restrinja". Este caso afirmava o OPOSTO — que nenhuma
+       entrada do pool vinha de franquia protegida (`entradaPermitida`) — e foi
+       virado. O que ele protege agora é só que o pool continue sendo um
+       snapshot com origem declarada em cada entrada. O risco de PI foi posto
+       na mesa e aceito pelo dono; o gatilho para rever é reclamação de titular
+       ou parecer de loja. */
+    expect(BESTIARY_POOL.length).toBeGreaterThan(1000);
+    expect(BESTIARY_POOL.filter(c => !c.origem)).toEqual([]);
   });
 
   it('AUTOVERIFICAÇÃO: o critério ENXERGA o que a régua antiga deixava passar', () => {
