@@ -13,7 +13,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >
 > - Pool novo: 7.386 criaturas, 23 grupos, todas com 1–3 elementos (os 17, `marcial` incluso) e **descrição física**
 >   (a oficial não entra mais). `scripts/data/bestiario-enriquecimento.json` + `sync-oracle-data.mjs` seção 2.
-> - ⚠️ **Decisões que ficam com o dono:** (1) a **Arena ficou mais fácil** (taxa base 59,0%→68,6%); (2) `GRUPO_PESO`
+> - **Arena corrigida (aprovado pelo dono):** sorteio de inimigo ESTRATIFICADO por elemento (`pickEnemyCreature`, `arena.ts`).
+>   Spread entre os 17 elementos do jogador: 34pp → **13,4pp** (antes do pool novo: 22pp). Teste novo: `arena.test.ts`.
+> - ⚠️ **Decisões que ficam com o dono:** (1) a Arena agora carrega um `pool.json` de **3 MB** (era ~100 KB) ao entrar — medir custo em aparelho fraco; `ArenaGame.torcida.render.test.tsx` falhou UMA vez sob carga (passa isolado 7/7), provável sensibilidade ao tempo de carga do pool; (2) `GRUPO_PESO`
 >   foi calibrado para o pool curado e não foi refeito; (3) `LINEAGE_PROXIMITY_WEIGHT` caiu de 3 para 1,1 (janela estreita);
 >   (4) o chunk do pool tem **3 MB** e nomes de franquia — merge na `main` publica isso em produção.
 > - Falha pré-existente: `tests/convertToWebp.test.ts` (PNG somente-leitura, efeito de rodar como root).

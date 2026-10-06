@@ -392,6 +392,44 @@ const CLASS_NOUNS: Record<ArenaEnemyClass, Array<{ pt: string; en: string }>> = 
 function clamp01(x: number): number { return Math.min(1, Math.max(0, x)); }
 
 /**
+ * Sorteio ESTRATIFICADO por elemento: primeiro o elemento do inimigo, com chance
+ * igual entre os que existem no pool, depois uma criatura DENTRO dele.
+ *
+ * ⚠️ 06/10/2026: o sorteio era uniforme sobre o pool inteiro. Com o pool curado
+ * de 194 isso dava uma mistura de elementos razoavelmente plana; com o corpus de
+ * 7.386 (vida em 18% das criaturas, o dobro do esperado) o jogador de vigor
+ * passou a ter vantagem em 32% dos inimigos em vez de 21% e a taxa de vitória de
+ * vida/terra/gravidade caiu ~9pp enquanto a de vigor/luz/espaço subiu 6–11pp. O
+ * anel (`COUNTER_RING`) é simétrico POR CONSTRUÇÃO — cada elemento vence 2 e perde
+ * para 2 —, então com o elemento do inimigo sorteado de forma uniforme a Arena é
+ * justa para qualquer elemento do jogador. Estratifica-se pelo PRIMEIRO elemento
+ * base (é o que o inimigo usa para atacar); o segundo segue a distribuição do pool.
+ */
+const ENEMY_BUCKETS = new WeakMap<BestiaryCreature[], BestiaryCreature[][]>();
+
+function enemyBuckets(pool: BestiaryCreature[]): BestiaryCreature[][] {
+  let buckets = ENEMY_BUCKETS.get(pool);
+  if (!buckets) {
+    const byEl = new Map<string, BestiaryCreature[]>();
+    for (const c of pool) {
+      const el = c.elementos.find(e => BASE_SET.has(e)) ?? '';
+      if (!byEl.has(el)) byEl.set(el, []);
+      byEl.get(el)!.push(c);
+    }
+    buckets = [...byEl.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, l]) => l);
+    ENEMY_BUCKETS.set(pool, buckets);
+  }
+  return buckets;
+}
+
+function pickEnemyCreature(pool: BestiaryCreature[], rng: () => number): BestiaryCreature | null {
+  if (pool.length === 0) return null;
+  const buckets = enemyBuckets(pool);
+  const bucket = buckets[Math.floor(rng() * buckets.length)];
+  return bucket[Math.floor(rng() * bucket.length)];
+}
+
+/**
  * Build the enemies of one round (1-based). Stats DERIVE their shape from
  * the bestiary creature (atributos + hostilidade + tamanho, ±15%) but are
  * normalized to the round's curve; the displayed name is always generated.
@@ -411,7 +449,7 @@ export function buildArenaRound(
 
   return comp.map(cls => {
     const shape = CLASS_SHAPE[cls];
-    const creature = pool.length > 0 ? pool[Math.floor(rng() * pool.length)] : null;
+    const creature = pickEnemyCreature(pool, rng);
 
     const size = clamp01(SIZE_FACTOR[creature?.tamanho ?? ''] ?? 0.5);
     const forca = clamp01((creature?.atributos.forca ?? 5) / 10);

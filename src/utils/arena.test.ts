@@ -148,6 +148,22 @@ describe('simulação de balance — os coeficientes obedecem a este teste', () 
   });
 });
 
+describe('sorteio estratificado por elemento (06/10/2026)', () => {
+  it('cada um dos 17 elementos aparece como 1º elemento do inimigo com frequência parecida, mesmo com o pool desigual', () => {
+    // O pool real tem `vida` em ~18% das criaturas; sem estratificar, quem enfrenta mais vida
+    // ganha ou perde ~9pp por causa do anel. Com o elemento sorteado primeiro, a chance é igual.
+    const rng = mulberry32(20261006);
+    const cont: Record<string, number> = {};
+    let total = 0;
+    for (let i = 0; i < 6000; i++) {
+      for (const e of buildArenaRound(1, 1, rng, POOL)) { cont[e.elements[0]] = (cont[e.elements[0]] ?? 0) + 1; total++; }
+    }
+    const fatias = CLASS_ELEMENT_ORDER.map(el => (cont[el] ?? 0) / total);
+    expect(Math.min(...fatias), JSON.stringify(cont)).toBeGreaterThanOrEqual(0.045);
+    expect(Math.max(...fatias), JSON.stringify(cont)).toBeLessThanOrEqual(0.075);
+  });
+});
+
 // ── Torcida por toques no Duelo da Arena (H14, 02/10/2026) ──────────────────
 //
 // O pet golpeia sozinho (`autoAttack`) e a torcida só SOMA. A calibração é
@@ -220,13 +236,7 @@ describe('torcida por toques — a conta e a calibração', () => {
     // ganho que 4 toques/turno rendiam com o gauge de 8 (81,9% ≈ 82%).
     const ganho = media(taxas({ autoAttack: true, tapsPerTurn: 11 }))
       - media(taxas({ autoAttack: true }));
-    // ⚠️ Piso 0,20 → 0,18 em 06/10/2026: com o pool de 7.386 criaturas (corpus do
-    // Besti-rio-), os inimigos ficaram mais brandos — a taxa BASE subiu de 59,0%
-    // para 68,6% e o ganho cai por TETO (a taxa com torcida bate em ~87%), não
-    // porque a torcida valha menos. Medido: 18,6pp. O balanço da Arena com o pool
-    // novo é decisão do dono (STATUS 06/10/2026); afrouxar aqui só deixa a régua
-    // dizer a verdade em vez de mentir a favor do pool antigo.
-    expect(ganho).toBeGreaterThanOrEqual(0.18);
+    expect(ganho).toBeGreaterThanOrEqual(0.2);
     expect(ganho).toBeLessThanOrEqual(0.28);
     // E o gauge cheio ainda é o teto (16 toques por turno = especial todo turno).
     expect(TORCIDA_TAPS_FULL).toBe(16);
