@@ -109,7 +109,7 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('o mudo é global, não por som', () => {
   it('a reflexão encontra os caminhos de áudio (o teste não pode passar por lista vazia)', () => {
-    expect(CAMINHOS.length).toBe(8);
+    expect(CAMINHOS.length).toBe(11); // 8 + os 3 do combate (PR18: playAttack, playSpecial, playVictory)
   });
 
   it('MUDO: nenhum `play*` constrói AudioContext nem cria nó', () => {

@@ -58,7 +58,7 @@ vi.mock('../utils/arena', async importOriginal => {
   const real = await importOriginal<typeof import('../utils/arena')>();
   return { ...real, loadBestiaryPool: vi.fn(async () => POOL) };
 });
-vi.mock('../utils/sounds', () => ({ playTaskComplete: vi.fn(), playFeed: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playTaskComplete: vi.fn(), playFeed: vi.fn() }));
 vi.mock('../utils/sprites', () => ({
   getDungeonEnemySprite: () => ({ sprite: 'x.png', name: 'x', line: 'x' }),
   getSpriteForStage: () => 'pet.png',
@@ -88,7 +88,7 @@ async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onE
   await avancar(10);
 }
 const camada = () => document.querySelector('[data-torcida-layer]') as HTMLElement;
-const gauge = () => document.querySelector('[data-torcida-gauge]') as HTMLElement;
+const gauge = () => document.querySelector('[data-cheer-mascot]') as HTMLElement;
 const ratio = () => parseFloat(gauge().getAttribute('data-torcida-ratio') ?? 'NaN');
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));

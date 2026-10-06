@@ -32,7 +32,7 @@ vi.mock('./games/BattleStage', async (orig) => {
     },
   };
 });
-vi.mock('../utils/sounds', () => ({ playFeed: vi.fn(), playTaskComplete: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
 vi.mock('../utils/arena', async (orig) => {
   const m = await orig<typeof import('../utils/arena')>();
   return { ...m, loadBestiaryPool: async () => [{ nome: 'x', elementos: ['fogo'], atributos: { forca: 5, inteligencia: 5, velocidade: 5, magia: 5 }, tamanho: 'medio', hostilidade: 5 }] };

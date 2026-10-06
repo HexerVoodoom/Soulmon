@@ -20,6 +20,12 @@
  * aparece o balão "VAI!"/"CHEER!" junto dele — além do grito no ponto tocado, que
  * continua. Ele também é um BOTÃO (teclado e leitor de tela torcem por ele).
  * `prefers-reduced-motion`: sem pulo e sem o grito no ponto — só o balão pisca.
+ *
+ * ── SEM BARRINHA (PR18, 06/10/2026, pedido do dono) ─────────────────────────
+ * A barra de CHEER saiu das telas de combate: fica só o ÍCONE (este mascote, pequeno, no canto). Cada toque enche o
+ * ponto dele na barra de ENERGIA do pet (o trecho claro de `FighterBars`); quando completa a descarga, o motor soma a
+ * energia e o trecho vira preenchimento real. Mecânica e números intactos (`CHEER`, `energyPerDischarge`): é só UI.
+ * `TorcidaGauge` segue exportado só para o layout antigo (fora da cena de combate).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
@@ -43,6 +49,8 @@ const WORDS_EN = ['GO!', 'YEAH!', 'COME ON!', '✦', 'NICE!'];
 const BURST_MS = 700;
 /** Teto de efeitos ao mesmo tempo (toque rápido não pode encher o DOM). */
 const MAX_BURSTS = 12;
+/** O ícone da torcida é pequeno, num cantinho (PR18): 40px de arte; a área de toque do botão segue em 44. */
+const MASCOT_SIZE = 40;
 /** Quanto o mascote fica com os braços para cima depois de um toque. */
 const MASCOT_POSE_MS = 420;
 /** Quanto o dedo precisa andar na horizontal para contar como deslize (a esquiva do PvE). */
@@ -94,7 +102,7 @@ export function CheerMascot({ cheer, size = 60 }: { cheer: boolean; size?: numbe
   );
 }
 
-export function TorcidaLayer({ onTap, active = true, isPt, children, style, mascot = false, onSwipe, swipeActive = false }: {
+export function TorcidaLayer({ onTap, active = true, isPt, children, style, mascot = false, onSwipe, swipeActive = false, cheerRatio = 0 }: {
   /** Um toque de torcida. Chamado só quando `active`. */
   onTap: () => void;
   /** Fora da luta (convite, vitória, derrota) o toque não vale nada. */
@@ -110,6 +118,11 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
    */
   onSwipe?: (dir: -1 | 1) => void;
   swipeActive?: boolean;
+  /**
+   * PR18: quanto da descarga a torcida já encheu (0..1). SEM barra na tela — o ícone do canto é a única peça da torcida e
+   * o que ele encheu aparece na barra de ENERGIA do pet (`StageFighter.cheerPending`). Fica no `data-torcida-ratio` do ícone.
+   */
+  cheerRatio?: number;
 }) {
   const [bursts, setBursts] = useState<Burst[]>([]);
   /** Muda a cada toque: reinicia o pulo do mascote e o balão. `pose` = braços para cima. */
@@ -184,6 +197,7 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
         <div
           data-cheer-mascot
           data-cheer-pose={pose ? 'cheer' : 'idle'}
+          data-torcida-ratio={Math.min(1, Math.max(0, cheerRatio)).toFixed(2)}
           style={{ position: 'absolute', right: 6, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 2px)', zIndex: 6, pointerEvents: 'none' }}
         >
           {shout > 0 && (
@@ -199,7 +213,7 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
             style={{ pointerEvents: 'auto', background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', display: 'block' }}
           >
             <span key={`m${shout}`} className={shout > 0 ? 'sm-cheer-jump' : undefined} style={{ display: 'block' }}>
-              <CheerMascot cheer={pose} />
+              <CheerMascot cheer={pose} size={MASCOT_SIZE} />
             </span>
           </button>
         </div>

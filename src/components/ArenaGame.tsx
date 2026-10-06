@@ -30,7 +30,8 @@
  * não medalha).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { TorcidaLayer } from './games/TorcidaKit';
+import { playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
@@ -66,7 +67,7 @@ import {
   type BestiaryCreature,
 } from '../utils/arena';
 import { mulberry32 } from '../utils/combate/rng';
-import { ENERGY_TRIGGER } from '../utils/combate/specials';
+import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -234,8 +235,9 @@ export function ArenaGame({
       // Fôlego entre rodadas — a regra da simulação (`ROUND_CLEAR_HEAL`), e é ela que faz a run inteira ser possível.
       hpCarryRef.current = Math.min(1, res.hpLeft + ROUND_CLEAR_HEAL);
       energyCarryRef.current = res.energyLeft;
-      // C-1 (run `som-01`): a rodada limpa NÃO toca `playTaskComplete` — o feedback é visual (`rodada-limpa` + a cura de fôlego).
-      // ⚠️ PENDENCIA DE PRODUTO: som próprio da Arena é decisão dos revisores de corte; até lá, **nenhum som**.
+      // C-1 (run `som-01`): a rodada limpa NÃO toca `playTaskComplete`. PR18 (pedido do dono, 06/10/2026): ganhou o som
+      // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
+      playVictory();
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');
     } else {
@@ -284,6 +286,7 @@ export function ArenaGame({
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
         mascot
+        cheerRatio={pronto ? batalha.meter / CHEER_TAPS_FULL : 0}
         swipeActive={batalha.phase === 'dodge'}
         onSwipe={batalha.swipe}
       >
@@ -298,6 +301,8 @@ export function ArenaGame({
             element: fxElementId(basica?.elementoId ?? atributos.principal),
             energy: (pronto ? batalha.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? batalha.status.me : undefined,
+            // PR18: o trecho da barra de especial que a torcida em andamento já encheu (só UI; o motor soma na descarga).
+            cheerPending: pronto ? (batalha.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
           }}
           foes={inimigos.map((e, i) => {
             const max = Math.max(1, Math.round(foesLado[i].combatant.hp));
@@ -332,7 +337,6 @@ export function ArenaGame({
             leave: sair,
           }}
           onPauseChange={setPausado}
-          hud={<TorcidaGauge taps={pronto ? batalha.meter : 0} onCheer={batalha.cheer} isPt={isPt} full={CHEER_TAPS_FULL} bare />}
         >
           {/* Gancho de estado (sem texto): em que passo a luta está. */}
           <span hidden data-arena-fase={fase} />

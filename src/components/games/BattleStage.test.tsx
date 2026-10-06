@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { SPECIAL_INTRO_MS } from '../../utils/combatFx';
 import { BattleStage, BATTLE_LAYER_STYLE, stageLayout, type StageAction, type StageFighter } from './BattleStage';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -174,14 +175,14 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(document.querySelector('[data-stage-special]')?.textContent).toBe('SPECIAL!');
   });
 
-  it('N1 (PR1b): nome longo da skill no selo trunca com reticências, sem quebrar o layout', () => {
+  it('N1 (PR1b, PR18): nome longo da skill quebra em até 2 linhas e só então trunca com reticências, sem quebrar o layout', () => {
     const longo = 'Lâmina Ancestral do Crepúsculo Eterno das Sombras';
     render(<BattleStage {...baseProps} specialLabel={longo} action={{ id: 33, actor: 'me', foe: 0, kind: 'special', strike: 'ranged', element: 'fogo' }} />);
     const span = document.querySelector('[data-stage-special] span') as HTMLElement;
     expect(span.textContent).toBe(longo);
     expect(span.style.textOverflow).toBe('ellipsis');
     expect(span.style.overflow).toBe('hidden');
-    expect(span.style.whiteSpace).toBe('nowrap');
+    expect(span.style.webkitLineClamp || span.style.getPropertyValue('-webkit-line-clamp')).toBe('2');
     expect(span.style.maxWidth).not.toBe('');
   });
 
@@ -283,7 +284,7 @@ describe('BattleStage — o que a cena desenha', () => {
     const action: StageAction = { id: 8, actor: 'foe', foe: 0, kind: 'special', element: 'agua', castMs: 1200, impactMs: 2200, totalMs: 2700 };
     render(<BattleStage {...baseProps} action={action} />);
     const orb = document.querySelector('.sm-bs-fly') as HTMLElement;
-    expect(orb.style.getPropertyValue('--bs-delay')).toBe('1200ms'); // o projétil sai depois da carga
+    expect(orb.style.getPropertyValue('--bs-delay')).toBe(`${1200 + SPECIAL_INTRO_MS}ms`); // PR18: a cena do especial vem antes // o projétil sai depois da carga
     expect(orb.style.getPropertyValue('--bs-dur')).toBe('1000ms'); // e voa 1 s até chegar
     expect(srcsDe().some(s => /fx-agua-aura/.test(s))).toBe(true);
   });

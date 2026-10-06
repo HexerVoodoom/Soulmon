@@ -4919,3 +4919,9 @@ e `docsSemMentira.contract.test.ts`: 10/10 verdes.
 - Shell (`index.html`, manifesto `lang=en`, termos/privacidade EN primeiro com PT em `#pt`, strings padrão do Android em EN), servidor (plano de exclusão de conta), cidades/signos em EN, nomes renomeados (Akashai, Nautil, Astria, Zeph, Fanfare, Bobbi, Frostlands… — `REGISTRO-DE-DECISOES.md` §14.6) e guard novo `src/i18nAstJsx.contract.test.ts`.
 - Não feito de propósito: reordenar as ~1.340 ternárias `isPt ? … : …`; renomear ids PT persistidos no save (elementos/reinos/alinhamentos) — precisa de migração, ver `docs/reviews/2026-09-30-ingles-primeiro-nomes.md` §8 (depende do dono).
 - `tests/convertToWebp.test.ts` (arquivo somente-leitura) falha por rodar como root no sandbox; independe desta mudança.
+
+## 06/10/2026 — PR18: torcida sem barrinha, cena do especial e som do combate
+
+- **Torcida**: a barra de CHEER saiu das telas de combate (Arena, Duelo); fica o ícone pequeno no canto (`data-torcida-ratio`) e o que a torcida já encheu aparece como trecho claro na barra de ENERGIA do pet (`StageFighter.cheerPending`). Só UI: `CHEER`/`energyPerDischarge`, `arena.ts` e o motor intocados.
+- **Cena do especial** (`SpecialCutscene`, `SPECIAL_INTRO_MS` = 1000 em `utils/combatFx.ts`): nome grande no centro, fundo escurecido, quem conjura e a aura acima do véu; depois o golpe. É pausa de apresentação (o `useGroupBattle` espera antes do impacto/da janela de esquiva; o Duelo adianta a ação em `introMs`, o relógio dos eventos não muda). Movimento reduzido: o nome só aparece e some, a pausa fica.
+- **Som**: `playAttack`, `playSpecial`, `playVictory` (procedurais, `arcade`, offsets medidos); ver `docs/SOM.md` §3.1. **Pendente do dono**: gate humano de escuta.

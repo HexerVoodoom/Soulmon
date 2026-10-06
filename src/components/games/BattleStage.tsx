@@ -22,7 +22,8 @@
  *    confirmação quando sair perde progresso (`exitConfirm`);
  *  · o toque em qualquer lugar é da `TorcidaLayer` que envolve esta peça (o mascote da torcida mora lá);
  *  · `prefers-reduced-motion`: sem investida, projétil nem pulo — só o flash no alvo.
- * Superfície de combate nasce MUDA (R-NOVA, `docs/SOM.md`): nenhum som.
+ * Som (PR18, pedido do dono): o golpe básico, o especial e a vitória têm som próprio (`docs/SOM.md` §3.1) — o golpe e o
+ * especial são disparados AQUI (`playAttack`/`playSpecial`); a torcida e o resto seguem mudos (R-NOVA).
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -30,13 +31,14 @@ import { Icon } from '../ui/Icon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
-  fxFrame, impactMs, totalMs, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId, statusShort,
+  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId, statusShort,
   type StageActionKind, type StageStatus, type StrikeForm,
 } from '../../utils/combatFx';
 import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
+import { playAttack, playSpecial } from '../../utils/sounds';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
 export const BATTLE_LAYER_STYLE: CSSProperties = {
@@ -60,6 +62,12 @@ export interface StageFighter {
    * O MOTOR decide (`utils/combatFx.ts` `castStatus`/`tickStatus`); a cena só desenha. Ausente/vazio = sem camada.
    */
   status?: StageStatus[];
+  /**
+   * Só UI (PR18): a fração da barra de ENERGIA que a torcida em andamento já "pagou" (toques ainda não descarregados).
+   * Aparece como um trecho mais claro depois do preenchido — cada toque enche o ponto dele na barra de especial. Não
+   * soma energia nenhuma: quem soma é o motor, na descarga.
+   */
+  cheerPending?: number;
 }
 
 export interface StageAction {
@@ -142,7 +150,7 @@ export const strikeFormOf = (a: Pick<StageAction, 'kind' | 'strike'>): StrikeFor
 
 /** A investida do ESPECIAL físico só começa depois da carga (o círculo de cast): chega no instante do impacto. */
 const lungeDelay = (a: StageAction): number =>
-  a.kind === 'special' ? Math.max(0, (a.impactMs ?? impactMs('special', false)) - impactMs('melee', false)) : 0;
+  a.kind === 'special' ? introMs('special') + Math.max(0, (a.impactMs ?? impactMs('special', false)) - impactMs('melee', false)) : 0;
 
 /** O centro do corpo (onde o golpe sai e chega). */
 const bodyCenter = (s: Spot) => ({ x: s.x, y: s.y - s.size * 0.47 });
@@ -173,6 +181,13 @@ function useBox(ref: React.RefObject<HTMLDivElement | null>): { w: number; h: nu
 
 const SCRIM = 'color-mix(in srgb, var(--sm2-surface) 78%, transparent)';
 
+/** A fração (0..1) da barra de energia que a torcida em andamento ocupa, limitada ao que falta para encher. */
+function energyPendingOf(f: StageFighter): number {
+  const e = f.energy;
+  if (e === undefined || !(f.cheerPending && f.cheerPending > 0)) return 0;
+  return Math.max(0, Math.min(f.cheerPending, 1 - Math.min(1, Math.max(0, e))));
+}
+
 /**
  * As barras EM CIMA do lutador, coladas nele (indicando que são DELE): nome (+ HP numérico quando
  * `numeric`), a barra de HP e, logo abaixo, a de ENERGIA — cheia, ela pulsa (o especial é o próximo golpe).
@@ -180,6 +195,7 @@ const SCRIM = 'color-mix(in srgb, var(--sm2-surface) 78%, transparent)';
 function FighterBars({ fighter, spot, tone, numeric, barsH }: {
   fighter: StageFighter; spot: Spot; tone: 'cyan' | 'gold'; numeric: boolean; barsH: number;
 }) {
+  const pending = energyPendingOf(fighter);
   const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
   const energy = fighter.energy;
   const full = energy !== undefined && energy >= 0.999;
@@ -216,6 +232,7 @@ function FighterBars({ fighter, spot, tone, numeric, barsH }: {
           className={full ? 'sm-bs-energy sm-bs-energy-full' : 'sm-bs-energy'}
         >
           <i style={{ width: `${Math.round(Math.min(1, Math.max(0, energy)) * 100)}%` }} />
+          {pending > 0 && <b aria-hidden="true" data-stage-energy-pending style={{ width: `${Math.round(pending * 100)}%` }} />}
         </div>
       )}
     </div>
@@ -284,9 +301,9 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
 }
 
 /** Uma figura de FX centrada num ponto. `anim` = a classe; `delay`/`dur` em ms. */
-function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra }: {
+function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra, z = 4 }: {
   src: string | undefined; x: number; y: number; size: number; anim: string; delay: number; dur: number;
-  rot?: number; flipX?: boolean; extra?: CSSProperties;
+  rot?: number; flipX?: boolean; extra?: CSSProperties; z?: number;
 }) {
   if (!src) return null;
   return (
@@ -295,7 +312,7 @@ function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra }
       data-stage-fx={anim}
       className={anim}
       style={{
-        position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: 4, pointerEvents: 'none',
+        position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: z, pointerEvents: 'none',
         ['--bs-delay' as string]: `${delay}ms`, ['--bs-dur' as string]: `${dur}ms`,
         ...extra,
       } as CSSProperties}
@@ -311,28 +328,57 @@ function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra }
   );
 }
 
+/** Acima do véu da cena do especial e do diálogo de pausa: quem conjura e a aura ficam POR CIMA do fundo escurecido. */
+const Z_CUTSCENE_VEIL = 7;
+/** A aura, o círculo e a carga do especial: sobre o véu, mas ATRÁS de quem conjura (o pet não some dentro da própria aura). */
+const Z_CUTSCENE_AURA = 8;
+const Z_CUTSCENE_ACTOR = 9;
+const Z_CUTSCENE_NAME = 10;
+const Z_CONFIRM = 12;
+
 /**
- * O selo `SPECIAL!` na hora do especial (PvP e PvE): a fonte display do projeto, sobre o lutador que conjura.
- * Animação curta (`sm-bs-special`); com movimento reduzido só aparece e some (sem subir nem crescer).
+ * A CENA DO ESPECIAL (PR18, pedido do dono, 06/10/2026). Quando um especial entra, por `SPECIAL_INTRO_MS`:
+ *  · o fundo ESCURECE (o véu, `data-stage-cutscene`, z abaixo de quem conjura);
+ *  · o NOME do ataque aparece GRANDE no centro (`data-stage-special`, fonte display);
+ *  · quem conjura e os efeitos da carga (círculo, aura) ficam por cima do véu (z-index maior).
+ * Passada a introdução o nome some, o fundo volta e SÓ ENTÃO o golpe sai (os atrasos do `ActionFx`, da investida e do
+ * número de dano somam `introMs`). Movimento reduzido tira o movimento (o nome não cresce nem sobe, só aparece e
+ * some), nunca a pausa. O véu não captura toque (`pointerEvents: none`): a torcida segue valendo por baixo.
+ * A frase para o leitor de tela mora em `SpecialAnnounce` (região viva), não aqui (esta parte é `aria-hidden`).
  */
-function SpecialBanner({ action, layout, label }: { action: StageAction; layout: StageLayout; label: string }) {
-  const spot = action.actor === 'me' ? layout.me : (layout.foes[Math.min(action.foe, layout.foes.length - 1)] ?? layout.foes[0]);
-  const c = bodyCenter(spot);
-  const fs = Math.round(Math.max(20, Math.min(34, spot.size * 0.16)));
+function SpecialCutscene({ label }: { label: string }) {
   return (
-    <div
-      aria-hidden="true"
-      data-stage-special
-      className="sm-bs-special"
-      style={{
-        position: 'absolute', left: c.x, top: c.y - spot.size * 0.12, transform: 'translate(-50%, -50%)', zIndex: 6, pointerEvents: 'none',
-        fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: fs, letterSpacing: '.08em', whiteSpace: 'nowrap',
-        color: 'var(--sm2-gold-ink)', textShadow: '0 2px 0 var(--sm2-bg), 0 0 14px var(--sm2-gold-fill)',
-      }}
-    >
-      {/* N1 (PR1b): o nome próprio da skill pode ser longo — trunca, nunca quebra a cena. */}
-      <span style={{ display: 'block', maxWidth: 'min(86vw, 340px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-    </div>
+    <>
+      <div
+        aria-hidden="true"
+        data-stage-cutscene
+        className="sm-bs-cutdim"
+        style={{ position: 'absolute', inset: 0, zIndex: Z_CUTSCENE_VEIL, pointerEvents: 'none', backgroundColor: 'rgba(0,0,0,.72)', ['--bs-dur' as string]: `${SPECIAL_INTRO_MS}ms` } as CSSProperties}
+      />
+      <div
+        aria-hidden="true"
+        data-stage-special
+        className="sm-bs-cutname"
+        style={{
+          position: 'absolute', left: '50%', top: '34%', width: 'min(92vw, 380px)', transform: 'translate(-50%, -50%)', zIndex: Z_CUTSCENE_NAME, pointerEvents: 'none',
+          fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: label.length > 14 ? 'clamp(24px, 8vw, 40px)' : 'clamp(30px, 11vw, 56px)', lineHeight: 1.1, letterSpacing: '.08em', textAlign: 'center',
+          color: 'var(--sm2-gold-ink)', textShadow: '0 3px 0 var(--sm2-bg), 0 0 18px var(--sm2-gold-fill)',
+          ['--bs-dur' as string]: `${SPECIAL_INTRO_MS}ms`,
+        } as CSSProperties}
+      >
+        {/* N1 (PR1b): o nome próprio da skill pode ser longo — quebra em até 2 linhas e só então trunca; nunca quebra a cena. */}
+        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', overflowWrap: 'anywhere' }}>{label}</span>
+      </div>
+    </>
+  );
+}
+
+/** A frase do especial para o leitor de tela: região viva, sempre montada (só o texto muda), EN primeiro e PT-BR. */
+function SpecialAnnounce({ label, isPt }: { label: string | null; isPt: boolean }) {
+  return (
+    <p role="status" aria-live="polite" data-stage-announce className="sm2-sr-only" style={{ margin: 0 }}>
+      {label ? (isPt ? `Especial: ${label}` : `Special attack: ${label}`) : ''}
+    </p>
   );
 }
 
@@ -352,7 +398,7 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
       data-stage-cast-motion={reduced ? 'flash' : 'ring'}
       className={reduced ? 'sm-bs-pop' : 'sm-bs-circle'}
       style={{
-        position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: 3, pointerEvents: 'none',
+        position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: Z_CUTSCENE_AURA, pointerEvents: 'none',
         ['--bs-delay' as string]: '0ms', ['--bs-dur' as string]: `${dur}ms`,
       } as CSSProperties}
     >
@@ -493,6 +539,8 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
     ? combatShield(action.shield) ?? fxFrame(action.shield, 'defended')
     : fxFrame(el, 'impact');
   const big = action.kind === 'special';
+  /** PR18: a cena do especial vem ANTES — o golpe (e tudo que viaja até o alvo) só sai depois dela. */
+  const intro = introMs(action.kind);
   const form = strikeFormOf(action);
   const landSize = Math.round(toSpot.size * (blocked ? 0.9 : big ? 1.1 : 0.8));
   const flipX = action.actor === 'foe'; // o corte e o orb são desenhados "para a direita"
@@ -502,7 +550,7 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   // PR11: o círculo de cast do ESPECIAL vale nas duas modalidades (movimento reduzido: flash único); o básico não tem.
   if (big) {
     layers.push(
-      <CastCircle key="castcircle" x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10) + Math.round(meSpot.size * 0.12)} size={Math.round(150 * fxScale)} dur={Math.max(700, (action.impactMs ?? impactMs('special', reduced)) + 200)} reduced={reduced} />,
+      <CastCircle key="castcircle" x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10) + Math.round(meSpot.size * 0.12)} size={Math.round(150 * fxScale)} dur={Math.max(700, intro + (action.impactMs ?? impactMs('special', reduced)) + 200)} reduced={reduced} />,
     );
   }
   if (!reduced) {
@@ -510,29 +558,30 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
     if (big) {
       const cast = action.castMs ?? 900;
       layers.push(
-        <Fx key="cast" src={fxFrame(el, 'cast')} x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10)} size={Math.round(124 * fxScale)} anim="sm-bs-cast" delay={0} dur={cast} />,
-        <Fx key="aura" src={fxFrame(el, 'aura')} x={from.x} y={from.y} size={Math.round((action.actor === 'me' ? meSpot : foeSpot).size * 1.3)} anim="sm-bs-pop" delay={0} dur={Math.max(1000, action.castMs ?? 0)} />,
+        <Fx key="cast" src={fxFrame(el, 'cast')} x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10)} size={Math.round(124 * fxScale)} anim="sm-bs-cast" delay={0} dur={intro + cast} z={Z_CUTSCENE_AURA} />,
+        <Fx key="aura" src={fxFrame(el, 'aura')} x={from.x} y={from.y} size={Math.round((action.actor === 'me' ? meSpot : foeSpot).size * 1.3)} anim="sm-bs-pop" delay={0} dur={intro + Math.max(1000, action.castMs ?? 0)} z={Z_CUTSCENE_AURA} />,
       );
     }
     if (form === 'ranged') {
-      const flyDelay = action.castMs ?? (big ? 320 : 180);
+      const baseFly = action.castMs ?? (big ? 320 : 180);
+      const flyDelay = intro + baseFly;
       layers.push(
         <Fx
           key="orb" src={fxFrame(el, 'orb')} x={from.x} y={from.y} size={Math.round((big ? 88 : 60) * fxScale)}
-          anim="sm-bs-fly" delay={flyDelay} dur={Math.max(200, impact - flyDelay)} rot={ang}
+          anim="sm-bs-fly" delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={ang}
           extra={{ ['--dx' as string]: `${Math.round(dx)}px`, ['--dy' as string]: `${Math.round(dy)}px` } as CSSProperties}
         />,
       );
     } else {
       layers.push(
-        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? 1.2 : 0.95))} anim="sm-bs-pop" delay={Math.max(0, impact - 240)} dur={400} flipX={flipX} />,
+        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? 1.2 : 0.95))} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 240)} dur={400} flipX={flipX} />,
       );
     }
   }
   // A5 (rodada 7): o golpe FÍSICO (investida) é só o CORTE — sem o splash/"crash" do impacto. O splash é do dano à
   // distância/mágico (projétil, especial à distância). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
   if (reduced || blocked || form !== 'melee') layers.push(
-    <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={flipX && !blocked} />,
+    <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={flipX && !blocked} />,
   );
   return <>{layers}</>;
 }
@@ -643,10 +692,24 @@ export function BattleStage({
   const hitOn = (side: 'me' | number) => {
     if (!action || action.shield) return { key: 0, delay: 0 };
     const isTarget = side === 'me' ? action.actor === 'foe' : action.actor === 'me' && action.foe === side;
-    return isTarget && !reduced ? { key: action.id, delay: action.impactMs ?? impactMs(action.kind, false) } : { key: 0, delay: 0 };
+    return isTarget && !reduced ? { key: action.id, delay: introMs(action.kind) + (action.impactMs ?? impactMs(action.kind, false)) } : { key: 0, delay: 0 };
   };
 
   const hits = hit ? (Array.isArray(hit) ? hit : [hit]) : [];
+  /** PR18: os sons do golpe. O básico soa no IMPACTO; o especial sobe no fim da cena e estoura quando o golpe sai.
+      Só toca a partir de uma luta que o jogador abriu (D11); o gate de mudo e a R-EX moram em `sounds.ts`/`audioBus.ts`. */
+  const actionRef = useRef(action);
+  actionRef.current = action;
+  const actionId = action?.id;
+  useEffect(() => {
+    const a = actionRef.current;
+    if (!a) return undefined;
+    const special = a.kind === 'special';
+    const at = special ? Math.max(0, SPECIAL_INTRO_MS - 300) : (a.impactMs ?? impactMs(a.kind, reduced));
+    const id = window.setTimeout(() => { if (special) playSpecial(); else playAttack(); }, at);
+    return () => window.clearTimeout(id);
+  }, [actionId, reduced]);
+  const cutActor = action?.kind === 'special' ? action.actor : null;
   const meBody = bodyCenter(layout.me);
   const elementScene = combatSceneBg(sceneElement);
   const platformArt = combatShadow(elementScene ? sceneElement : null);
@@ -719,10 +782,10 @@ export function BattleStage({
           if (!s) return null;
           const ht = hitOn(i);
           return (
-            <Fighter key={`f${f.key}`} f={f} spot={s} flip zIndex={2} lunge={foeLunge(i)} hitKey={ht.key} hitDelay={ht.delay} charged={(f.energy ?? 0) >= 0.999} />
+            <Fighter key={`f${f.key}`} f={f} spot={s} flip zIndex={cutActor === 'foe' && action?.foe === i ? Z_CUTSCENE_ACTOR : 2} lunge={foeLunge(i)} hitKey={ht.key} hitDelay={ht.delay} charged={(f.energy ?? 0) >= 0.999} />
           );
         })}
-        <Fighter f={me} spot={layout.me} flip={false} zIndex={3} lunge={meLunge} hitKey={hitOn('me').key} hitDelay={hitOn('me').delay} charged={charging || (me.energy ?? 0) >= 0.999} />
+        <Fighter f={me} spot={layout.me} flip={false} zIndex={cutActor === 'me' ? Z_CUTSCENE_ACTOR : 3} lunge={meLunge} hitKey={hitOn('me').key} hitDelay={hitOn('me').delay} charged={charging || (me.energy ?? 0) >= 0.999} />
 
         {/* As barras EM CIMA de cada lutador: HP e, logo abaixo, energia. */}
         {foes.map((f, i) => {
@@ -741,7 +804,6 @@ export function BattleStage({
         {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} barsH={layout.barsH} isPt={isPt} reduced={reduced} />}
 
         {action && <ActionFx key={action.id} action={action} layout={layout} reduced={reduced} />}
-        {action?.kind === 'special' && <SpecialBanner key={`sp${action.id}`} action={action} layout={layout} label={bannerLabel(action, foes, specialLabel, foeSpecialLabel)} />}
         {charging && !action?.shield && (
           <div key="charge" aria-hidden="true" data-stage-charging className="sm-bs-charge" style={{ position: 'absolute', left: layout.me.x - layout.me.size * 0.7, top: meBody.y - layout.me.size * 0.7, width: layout.me.size * 1.4, height: layout.me.size * 1.4, zIndex: 2, pointerEvents: 'none', borderRadius: '50%' }} />
         )}
@@ -793,7 +855,10 @@ export function BattleStage({
         })}
       </div>
 
-      {/* A barra de CHEER no pé da cena (o mascote da torcida mora no canto, na `TorcidaLayer`). */}
+      {action?.kind === 'special' && <SpecialCutscene key={`sp${action.id}`} label={bannerLabel(action, foes, specialLabel, foeSpecialLabel)} />}
+      <SpecialAnnounce isPt={isPt} label={action?.kind === 'special' ? bannerLabel(action, foes, specialLabel, foeSpecialLabel) : null} />
+
+      {/* O HUD do pé da cena (já sem a barra de CHEER: o ícone da torcida mora no canto, na `TorcidaLayer`, e o que ele já encheu aparece na barra de ENERGIA). */}
       {hud && (
         <div
           data-stage-footer
@@ -824,7 +889,7 @@ export function BattleStage({
           aria-modal="true"
           aria-label={exitConfirm.title}
           data-stage-confirm
-          style={{ position: 'absolute', inset: 0, zIndex: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,.6)' }}
+          style={{ position: 'absolute', inset: 0, zIndex: Z_CONFIRM, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,.6)' }}
         >
           <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12, padding: 16, boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)' }}>
             <p style={{ ...sm2Text, margin: 0, fontWeight: 500, textAlign: 'center' }}>{exitConfirm.title}</p>

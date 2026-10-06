@@ -107,6 +107,10 @@ export const CATEGORIA_DO_SOM: Record<string, CategoriaSom> = {
   playShower: 'cuidado',
   playSleep: 'cuidado',
   playTaskComplete: 'conclusao',
+  // PR18 (06/10/2026): combate = minijogo → `arcade` (R-CAT: o EVENTO decide; ver o bloco em sounds.ts).
+  playAttack: 'arcade',
+  playSpecial: 'arcade',
+  playVictory: 'arcade',
 };
 
 /**
@@ -137,6 +141,11 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   playDegenerate: 4.975,
   playSleep: 8.025,
   playVisorTune: 0.037,
+  // PR18: medidos em Chromium (OfflineAudioContext + K-weighting BS.1770, LUFS-M máx. de janela 400 ms com zero-padding;
+  // o mesmo arnês reproduz playFeed −19,00 e playTaskComplete −22,00). Falta só o gate humano de escuta.
+  playAttack: 1.971,
+  playSpecial: -5.216,
+  playVictory: -6.776,
 };
 
 /** dB → linear. A conversão mora aqui porque o alvo mora aqui. */
