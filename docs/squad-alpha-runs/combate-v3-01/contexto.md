@@ -218,7 +218,7 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 
 ### §2.19 — o que o PR4b e o PR5 mediram (06/10/2026)
 - **PR4b mergeado:** #236, main 58ae6e5e. Masmorra e Pesadelo sem torcida (UI e motor; `useGroupBattle` ganha `torcida: false`, `simulateDungeonRunV3` perde `cheer`). **Arena `CHEER.energyPerDischarge` = 9** (o maior valor com a torcida SOZINHA, mesma habilidade, ≤ 25pp: `nenhuma` +24,8pp, `boa` +17,9pp; TTK −8,7%; E = 10 dá +25,3pp). Métrica e valor são o default declarado pela orquestração: a habilidade que não age é a que decide o teto. Arena `media`: run vencida 65,9% sem torcida e 86,3% com a torcida no teto.
-- **PR5 (#237):** PvP no núcleo, espelho `_combate.js` com paridade, save lido no servidor, S1 por `metadata.f`, torcida por balde, empate sem pontos, NPC 2 levels abaixo. Medições: `builder/balanco-motores.md` §9.
+- **PR5 mergeado: #237, main dd0d6cf6.** PvP no núcleo, espelho `_combate.js` com paridade, save lido no servidor, S1 por `metadata.f`, torcida por balde, empate sem pontos, NPC 2 levels abaixo. Medições: `builder/balanco-motores.md` §9.
 - **Calibrações que o dono não fixou (o PR escolheu; rever se discordar):**
   1. `CHEER.pvpEnergyPerDischarge` **3 → 2,5**: a descarga do balde cai no fim dele (é causal) e com 3 o teto dava 68,4%; 2,5 dá 64,5% (~65%, §2.13).
   2. `NPC_LEVEL_GAP = 2` com **piso no 1º level do estágio**: "2 levels abaixo" cruzando o estágio faz o jogador vencer 99,4% no champion (a faixa é 75–92%); com o piso fica 77,8–91,3%.
