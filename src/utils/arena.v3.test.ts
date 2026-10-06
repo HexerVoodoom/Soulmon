@@ -21,7 +21,7 @@ import { groupFightSteps } from './combate/group';
 import { areaDaEscola } from './soulProfile/ficha/skills';
 import { AREA_FAMILIES, CHEER, PVE_FAMILY_POWER, SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { DODGE_REDUCE, RING_MULT } from './energia';
-import type { EscolaId } from './soulProfile/ficha/types';
+import type { EscolaSkillId } from './soulProfile/ficha/types';
 
 // Simulações pesadas (muitas runs): a suíte inteira roda em paralelo e o padrão de 5 s estoura.
 vi.setConfig({ testTimeout: 180_000 });
@@ -150,7 +150,7 @@ describe('AC3. win by family × area', () => {
 describe('AC3b. the 6 archetypes (school → family, area, role shape): 40-80%, spread ≤ 20pp (the window of the old gate)', () => {
   it('rookie at Lv 6, balanced build, every school as basic and special', () => {
     const rates: Record<string, number> = {};
-    for (const escola of Object.keys(ROLE_SHAPE) as EscolaId[]) {
+    for (const escola of Object.keys(ROLE_SHAPE) as EscolaSkillId[]) {
       let w = 0;
       for (let i = 0; i < N; i++) {
         w += +simulateArenaRunV3({
@@ -264,7 +264,7 @@ describe('AC6. outside the ruler: ring, dodge, cheer at the ceiling and ROLE_SHA
     expect(Math.abs(r)).toBeLessThanOrEqual(0.25);
   });
   it('ROLE_SHAPE of every basic school', () => {
-    for (const escola of Object.keys(ROLE_SHAPE) as EscolaId[]) {
+    for (const escola of Object.keys(ROLE_SHAPE) as EscolaSkillId[]) {
       const r = ttk({ escolaBasica: escola }, 'nenhuma') / base - 1;
       console.log(`[AC6] ${escola}: ${(100 * r).toFixed(1)}%`);
       expect(Math.abs(r), escola).toBeLessThanOrEqual(0.25);
@@ -328,7 +328,7 @@ describe('AC8. determinism and the provisional family map', () => {
   });
   it('the default school → family map (fallback of a skill without `familia`, since PR9)', () => {
     expect(ESCOLA_FAMILY_PADRAO).toEqual({
-      combate_fisico: 'direct', longo_alcance: 'dot', conjuracao: 'direct', benca: 'heal', maldicao: 'defDebuff', evocacao: 'atkBuff',
+      combate_fisico: 'direct', longo_alcance: 'dot', conjuracao: 'direct', benca: 'heal', maldicao: 'defDebuff',
     });
   });
 });

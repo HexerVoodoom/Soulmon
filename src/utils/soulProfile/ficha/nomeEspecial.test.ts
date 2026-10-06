@@ -10,13 +10,13 @@ import {
 import { SPECIAL_FAMILIES } from '../../combate/specials';
 import { CLASS_ELEMENT_ORDER } from '../types';
 import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
-import { FICHA_STAGE_ORDER, type EscolaId, type Ficha, type FichaStage } from './types';
+import { FICHA_STAGE_ORDER, type EscolaId, type EscolaSkillId, type Ficha, type FichaStage } from './types';
 
-const ESCOLAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'];
-const TODAS_ESCOLAS: EscolaId[] = [...ESCOLAS, 'evocacao'];
+const ESCOLAS: EscolaSkillId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'];
+const TODAS_ESCOLAS = ESCOLAS;
 const AMOSTRA_PARES = DERIVED_ELEMENT_PAIRS.slice(0, 6).map(p => p.id);
 
-function ficha(escola: EscolaId, elementos: Record<string, number>): Ficha {
+function ficha(escola: EscolaSkillId, elementos: Record<string, number>): Ficha {
   return {
     nome: 'T', elementos, escolas: { [escola]: 5 }, recursos: { mana: 2 }, talentos: {}, profissoes: {},
     totals: { elementos: 0, escolas: 5, recursos: 2, talentos: 0, profissoes: 0 },
@@ -131,8 +131,8 @@ describe('varredura: escolas × elementos × famílias × estágios', () => {
   });
 });
 
-describe('alcance: toda família tem chance > 0 (amostra declarada: 400 seeds × 6 escolas)', () => {
-  it('as 7 famílias saem, e a evocação do dossiê deixa de ser um buraco: o peso dela é uniforme', () => {
+describe('alcance: toda família tem chance > 0 (amostra declarada: 400 seeds × 5 escolas)', () => {
+  it('as 7 famílias saem em alguma das 5 escolas de skill', () => {
     const vistas = new Set<string>();
     for (const escola of TODAS_ESCOLAS) for (let s = 0; s < 400; s++) {
       vistas.add(familiaDoEspecial({ escola, elementoId: 'fogo', seedKey: `s${s}`, stage: 'rookie' }));
@@ -145,7 +145,7 @@ describe('alcance: toda família tem chance > 0 (amostra declarada: 400 seeds ×
   });
 
   it('a escola e o elemento INCLINAM a família (não é sorteio cego)', () => {
-    const conta = (escola: EscolaId, elementoId: string) => {
+    const conta = (escola: EscolaSkillId, elementoId: string) => {
       const c: Record<string, number> = {};
       for (let s = 0; s < 600; s++) { const f = familiaDoEspecial({ escola, elementoId, seedKey: `k${s}`, stage: 'rookie' }); c[f] = (c[f] ?? 0) + 1; }
       return c;

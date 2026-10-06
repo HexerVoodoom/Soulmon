@@ -9,7 +9,7 @@ import { buildFichaESkills } from './fromInput';
 import { withRealPower } from './realSkillPower';
 import { areaDaEscola, ESCOLAS_DE_AREA, RAIO_AREA_BASE_METROS, type StageSkill } from './skills';
 import { buildSoulProfile } from '../profile';
-import { FICHA_STAGE_ORDER, type EscolaId } from './types';
+import { FICHA_STAGE_ORDER, type EscolaSkillId } from './types';
 import type { OracleInput } from '../../oracle';
 import type { Answers } from '../personality/types';
 
@@ -27,7 +27,7 @@ function makeInput(nome: string, date = '1991-03-12'): OracleInput {
   };
 }
 
-const TODAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao', 'evocacao'];
+const TODAS: EscolaSkillId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'];
 
 describe('Q-AREA: área por escola', () => {
   it('conjuração e longo alcance: círculo de 4 m; as outras: único', () => {

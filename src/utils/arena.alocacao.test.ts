@@ -20,7 +20,7 @@ import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { buildFicha, type ElementPlan } from './soulProfile/ficha/buildSheet';
 import type { OracleAxes } from './soulProfile/types';
-import type { EscolaId } from './soulProfile/ficha/types';
+import type { EscolaSkillId } from './soulProfile/ficha/types';
 import POOL_JSON from './soulProfile/bestiary/pool.json';
 
 const POOL = (POOL_JSON as { criaturas: unknown[] }).criaturas as never[];
@@ -54,7 +54,7 @@ function axesNeutros(): OracleAxes {
 }
 
 const EIXOS = axesNeutros();
-const ESCOLA: EscolaId = 'conjuracao';
+const ESCOLA: EscolaSkillId = 'conjuracao';
 
 // PR3b: o motor virou o do Combate v3 (grupo N × 1). A alocação entra na vantagem de ±1 golpe do
 // elemento (`arenaFoeWithElement`), e a janela abaixo é a MESMA de antes — nunca afrouxada (decisão #73).

@@ -109,7 +109,7 @@ direto. Hoje já existe precedente: `simulateArenaRun`/`simulateArenaRunEnergy` 
 paridade de tempo e mantém o teto de spread.
 
 Mapeamento escola → família (ponto de partida; o nome vem depois):
-`combate_fisico` → dano direto · `longo_alcance` → dano direto em 2 alvos · `conjuracao` → área · `evocacao` → DoT/eco ·
+`combate_fisico` → dano direto · `longo_alcance` → dano direto em 2 alvos · `conjuracao` → área · (`evocacao` saiu das escolas de skill no PR9b: é só captura de companheiro) ·
 `benca` → cura (ou escudo) · `maldicao` → debuff/maldição. O **elemento** e o **recurso** (`RecursoId`) podem trocar a
 família secundária (ex.: água + bênção → cura; sombra + maldição → DoT) — tabela no módulo dono, coberta por teste que
 varre todas as escolas × elementos (como o teste de tipo da R8).

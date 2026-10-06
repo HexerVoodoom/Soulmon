@@ -90,7 +90,7 @@ export function maxLevelFor(firstSeen, now) {
 
 /** Escola do especial -> família PADRÃO (espelho do `ESCOLA_FAMILY_PADRAO` de `src/utils/arena.ts`; travado por teste): só o fallback de uma skill sem `familia` válida. */
 export const ESCOLA_FAMILY = {
-  combate_fisico: 'direct', longo_alcance: 'dot', conjuracao: 'direct', benca: 'heal', maldicao: 'defDebuff', evocacao: 'atkBuff',
+  combate_fisico: 'direct', longo_alcance: 'dot', conjuracao: 'direct', benca: 'heal', maldicao: 'defDebuff',
 };
 /** As 7 famílias do núcleo (`SPECIAL_FAMILIES`); `familia` vinda do save só vale se estiver nesta lista fechada. */
 export const SPECIAL_FAMILY_IDS = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
@@ -101,6 +101,28 @@ const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 export function fichaStageOf(evolutionStage) {
   const nivel = typeof evolutionStage === 'string' ? evolutionStage.split('-')[0] : '';
   return FICHA_STAGES.includes(nivel) ? nivel : 'rookie';
+}
+
+/** Quantos substantivos cada família tem no léxico do cliente (`SUBSTANTIVOS_POR_FAMILIA` de `nomeEspecial.ts`; travado por teste de paridade). */
+export const LEXICO_POR_FAMILIA = 8;
+const ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
+
+/**
+ * O ID do nome do especial (PR9b): `{ n, f, el, elB }` = índice do substantivo no léxico da família + formato +
+ * ids dos elementos do especial e da básica. O servidor NUNCA publica texto do save: só inteiros dentro de faixa e ids
+ * de elemento no formato fechado; o cliente recompõe o nome pela mesma função do dono e só aceita elemento da lista
+ * dele. Sem `lex` válido (save antigo, família inválida, lixo) = `null`, e o cliente cai no nome por família.
+ * @param {any} especial @param {any} basica @param {string | null} familia
+ */
+export function lexOf(especial, basica, familia) {
+  const lex = especial && typeof especial === 'object' ? especial.lex : null;
+  if (!lex || typeof lex !== 'object' || !familia) return null;
+  const { n, f } = lex;
+  if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n >= LEXICO_POR_FAMILIA) return null;
+  if (f !== 0 && f !== 1 && f !== 2) return null;
+  const el = especial.elementoId, elB = basica && typeof basica === 'object' ? basica.elementoId : null;
+  if (typeof el !== 'string' || !ELEMENTO_ID.test(el) || typeof elB !== 'string' || !ELEMENTO_ID.test(elB)) return null;
+  return { n, f, el, elB };
 }
 
 const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' && own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : null);
@@ -130,9 +152,10 @@ export function duelSide(save, opts = {}) {
   const family = especial
     ? (typeof familiaSalva === 'string' && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial])
     : 'direct';
-  // `familia` também sai em `fx`: o CLIENTE deriva dela o nome do especial do oponente (regra fechada, nunca texto do save).
+  // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
+  const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */

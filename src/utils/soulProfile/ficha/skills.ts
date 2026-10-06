@@ -11,7 +11,7 @@
 //     melhor elemento BASE; a ESPECIAL usa o melhor elemento GERAL — quando
 //     a ficha ultra comprou um par (ex.: vapor), a especial é do par: o
 //     elemento avançado é literalmente a habilidade do topo da escada.
-//   • escola: a distribuída dominante da ficha (a evocação fixa não conta).
+//   • escola: a de skill dominante da ficha (a evocação é só captura: nunca é escola de skill).
 //   • recurso: o recurso da ficha; o CUSTO é qualitativo por desenho —
 //     básica = consumo baixo, usável com frequência; especial = consumo
 //     alto, rara — sem portar a fórmula de custo do motor (que depende de
@@ -23,15 +23,15 @@
 
 import { hashString, mulberry32, pick } from '../../oracle';
 import { CLASS_ELEMENT_ORDER } from '../types';
-import type { Ficha, FichaStage, EscolaId, RecursoId } from './types';
+import type { Ficha, FichaStage, EscolaSkillId, RecursoId } from './types';
+import { ESCOLAS_SKILL, escolaSkillSegura } from './types';
 import { cascataDosPares, CUSTO_PONTO_PAR } from './cascata';
-import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
-import { essenceLabel, baseElementLabel } from '../essenceLabels';
+import { elementoNomeDe } from './elementoNome';
 import { CLASS_DATA } from './buildSheet';
 import type { AreaConfig } from 'class-system';
 import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import { SCHOOL_STRIKE_FORM, type StrikeForm } from './strikeForm';
-import { familiaDoEspecial, nomeDoEspecial, descricaoDoEspecial, SUBSTANTIVOS_ESPECIAL } from './nomeEspecial';
+import { familiaDoEspecial, nomeEscolhidoDoEspecial, descricaoDoEspecial, SUBSTANTIVOS_ESPECIAL, type LexNome } from './nomeEspecial';
 
 export interface SkillText { pt: string; en: string }
 
@@ -43,7 +43,7 @@ export interface StageSkill {
   /** id do elemento (base ou par) — vocabulário do class-system. */
   elementoId: string;
   elementoNome: SkillText;
-  escolaId: EscolaId;
+  escolaId: EscolaSkillId;
   recursoId: RecursoId;
   /** Área do golpe (Q-AREA, contexto §2.16): POR ESCOLA — conjuração e longo alcance
    *  em círculo de 4 m (`RAIO_MAXIMO_BASE` do class-system), as outras de alvo único.
@@ -52,6 +52,9 @@ export interface StageSkill {
   /** PR9: a família do efeito (uma das 7 do núcleo de combate). A básica é sempre `direct`; a do especial
    *  muda a cada estágio. Ausente só em dado antigo: os consumidores caem em `familyOfEscola`. */
   familia?: SpecialFamily;
+  /** PR9b: o ID do nome do especial (índice do substantivo no léxico da família + formato). O servidor o publica
+   *  no duelo e o cliente do oponente recompõe o MESMO nome por regra — nunca o texto do save. Só no especial. */
+  lex?: LexNome;
   /** PR9: a forma do golpe (corpo a corpo ou à distância) — a tabela da escola, lida do dono único. */
   forma?: StrikeForm;
   /** Custo qualitativo por desenho: básica é frequente, especial é rara. */
@@ -81,26 +84,17 @@ export interface StageSkills {
 export const RAIO_AREA_BASE_METROS = 4;
 
 /** Q-AREA: escolas de área. As demais acertam um alvo só. */
-export const ESCOLAS_DE_AREA: readonly EscolaId[] = ['conjuracao', 'longo_alcance'];
+export const ESCOLAS_DE_AREA: readonly EscolaSkillId[] = ['conjuracao', 'longo_alcance'];
 
 /** A área de uma escola (função pura da escola — determinística por ficha/estágio). */
-export function areaDaEscola(escola: EscolaId): AreaConfig {
-  return ESCOLAS_DE_AREA.includes(escola) ? { tipo: 'circulo', raioMetros: RAIO_AREA_BASE_METROS } : { tipo: 'unico' };
+export function areaDaEscola(escola: EscolaSkillId): AreaConfig {
+  return ESCOLAS_DE_AREA.includes(escolaSkillSegura(escola)) ? { tipo: 'circulo', raioMetros: RAIO_AREA_BASE_METROS } : { tipo: 'unico' };
 }
 
-const PAR_NOME = new Map(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d]));
-
-export function elementoNomeDe(id: string): SkillText {
-  const par = PAR_NOME.get(id);
-  if (par) {
-    const candidate = { id: par.id, nome: par.nome, score: 0, componentes: par.componentes };
-    return { pt: essenceLabel(candidate, true), en: essenceLabel(candidate, false) };
-  }
-  return { pt: baseElementLabel(id, true), en: baseElementLabel(id, false) };
-}
+export { elementoNomeDe };
 
 /** Substantivos da BÁSICA por escola, sorteio determinístico. O ESPECIAL tem léxico, família e nome próprios em `nomeEspecial.ts` (PR9). */
-const NOMES: Record<EscolaId, {
+const NOMES: Record<EscolaSkillId, {
   basica: Array<{ pt: string; en: string }>;
 }> = {
   // SEIS por (escola, tipo), não dois: a jornada tem 5 estágios e o
@@ -127,10 +121,6 @@ const NOMES: Record<EscolaId, {
     basica: [{ pt: 'Marca de', en: 'Mark' }, { pt: 'Aflição de', en: 'Bane' }, { pt: 'Praga de', en: 'Blight' },
       { pt: 'Sussurro de', en: 'Whisper' }, { pt: 'Mordida de', en: 'Bite' }, { pt: 'Grilhão de', en: 'Shackle' }],
   },
-  evocacao: {
-    basica: [{ pt: 'Chamado de', en: 'Call' }, { pt: 'Eco de', en: 'Echo' }, { pt: 'Vulto de', en: 'Wisp' },
-      { pt: 'Aceno de', en: 'Beckon' }, { pt: 'Presságio de', en: 'Omen' }, { pt: 'Rastro de', en: 'Trail' }],
-  },
 };
 
 /** Descrição da BÁSICA (a do especial vem da família: `descricaoDoEspecial`). */
@@ -154,12 +144,10 @@ function rankElementos(ficha: Ficha): Array<{ id: string; peso: number }> {
   return ranked;
 }
 
-const DISTRIBUIDAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'];
-
-export function escolaDominante(ficha: Ficha): EscolaId {
-  let melhor: EscolaId = 'conjuracao';
+export function escolaDominante(ficha: Ficha): EscolaSkillId {
+  let melhor: EscolaSkillId = 'conjuracao';
   let melhorPts = -1;
-  for (const escola of DISTRIBUIDAS) {
+  for (const escola of ESCOLAS_SKILL) {
     const pts = ficha.escolas[escola] ?? 0;
     if (pts > melhorPts) { melhor = escola; melhorPts = pts; }
   }
@@ -236,7 +224,7 @@ export function buildStageSkills(
     );
     const familia = familiaDoEspecial({ escola, elementoId: elEspecial, tendencia, seedKey, stage, familiasUsadas });
     const evitar = new Set([...(usados ?? [])].filter(k => k.startsWith('esp:')).map(k => k.slice(4)));
-    const nome = nomeDoEspecial({ familia, elemento: b.elementoNome, elementoBasica: elementoNomeDe(elBasica), seedKey, stage }, evitar);
+    const { nome, lex } = nomeEscolhidoDoEspecial({ familia, elemento: b.elementoNome, elementoBasica: elementoNomeDe(elBasica), seedKey, stage }, evitar);
     usados?.add(`fam:${familia}`);
     // a chave do substantivo é o EN dele (o primeiro token que não é elemento): guardamos o nome inteiro EN
     for (const n of SUBSTANTIVOS_ESPECIAL[familia]) if (nome.en.includes(n.en)) usados?.add(`esp:${n.en}`);
@@ -245,6 +233,7 @@ export function buildStageSkills(
       nome,
       descricao: descricaoDoEspecial(familia, b.elementoNome, { pt: recursoNomePt, en: recursoNomeEn }),
       familia,
+      lex,
     };
   };
 

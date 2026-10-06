@@ -28,7 +28,7 @@
  * Superfície nova nasce MUDA (R-NOVA, `docs/SOM.md`): nenhum som aqui.
  */
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import type { EscolaId } from '../utils/soulProfile/ficha/types';
+import { escolaSkillSegura, type EscolaSkillId } from '../utils/soulProfile/ficha/types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
@@ -88,7 +88,7 @@ export interface DuelScreenProps {
 }
 
 const maxHpOf = (s: DuelSide) => Math.max(1, Math.round(s.combatant.hp * PVP_HP_SCALE));
-const escolaDe = (e: string | null | undefined): { escolaId: EscolaId } | null => (e ? { escolaId: e as EscolaId } : null);
+const escolaDe = (e: string | null | undefined): { escolaId: EscolaSkillId } | null => (e ? { escolaId: escolaSkillSegura(e) } : null);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
@@ -282,8 +282,8 @@ export function DuelScreen({
       <BattleStage
         scene={ARENA_SCENE.bg}
         sceneElement={oppEl}
-        specialLabel={specialLabel(isPt, par?.especial)}
-        foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia)}
+        specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
+        foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
         me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}

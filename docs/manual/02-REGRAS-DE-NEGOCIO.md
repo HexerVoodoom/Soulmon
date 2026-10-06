@@ -1782,6 +1782,8 @@ Régua nova: `soulProfile/alinhamentoElemento.test.ts` (mede que
 benevolencia+sombra é mais raro que poder+sombra e que benevolencia+luz, e
 que nenhum par some). Decisão em `REGISTRO-DE-DECISOES.md` §5.3.
 
+⚠️ **06/10/2026 — `evocacao` não é mais escola de SKILL (PR9b, decisão do dono).** Ela segue só como PONTOS da ficha (companheiro capturável e requisitos de talento do class-system); a skill, a forma do golpe, o papel da Arena e a família do especial usam as 5 escolas restantes (`EscolaSkillId`). Save/cache antigo com `escolaId: 'evocacao'` cai na escola padrão (`conjuracao`) e o cache é trocado quando a ficha recalcula; saves sem perfil no aparelho mantêm o especial antigo. No PvP o servidor publica o ID do nome do especial (família + índice do substantivo + formato + elementos) e o aparelho do oponente recompõe o MESMO nome que o dono vê — nunca texto do save (`functions/api/duel.nome.test.js`).
+
 ⚠️ **28/09/2026 — revisão do sistema de criação (3 loops, PR #131).** Dois
 consertos que o jogador vê: (1) o **companheiro capturável** (`ficha/capture.ts`
 › `selectCompanion`, mecânica real do class-system — Evocação + afinidade

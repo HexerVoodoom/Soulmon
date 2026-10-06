@@ -46,7 +46,7 @@ export interface DuelSide {
   /** PR7b (`tal-pvp-05`): rendimento da torcida deste lado (1 sem o talento; o servidor calcula e limita). */
   readonly cheerScale?: number;
   /** The schools of the basic and of the special strike (cosmetic: the form of the blow on screen). */
-  readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null };
+  readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null; /** PR9b: o ID do nome exato do especial (índice do substantivo, formato, elementos) — recomposto no aparelho, nunca texto do save. */ readonly lex?: { readonly n: number; readonly f: number; readonly el: string; readonly elB: string } | null };
 }
 
 export type DuelWinner = 'me' | 'opp' | 'draw';

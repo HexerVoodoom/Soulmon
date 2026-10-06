@@ -56,13 +56,15 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
 
   it('o golpe BÁSICO segue a tabela da escola (R8: combate físico e a mordida da maldição investem; o resto atira)', () => {
     for (const e of ['combate_fisico', 'maldicao'] as const) expect(strikeKindForSchool(e)).toBe('melee');
-    for (const e of ['longo_alcance', 'evocacao', 'conjuracao', 'benca'] as const) expect(strikeKindForSchool(e)).toBe('ranged');
+    for (const e of ['longo_alcance', 'conjuracao', 'benca'] as const) expect(strikeKindForSchool(e)).toBe('ranged');
     expect(strikeKindForSchool(undefined)).toBe('ranged');
   });
 
   it('R8: nenhuma skill sem kind — toda escola × papel (básica/especial) e todo elemento de inimigo tem forma', () => {
-    const escolas = Object.keys((classSystem as { escolas: Record<string, unknown> }).escolas);
-    expect(escolas.length).toBeGreaterThanOrEqual(6);
+    // PR9b: `evocacao` é escola do class-system (captura), mas não tem skill: a tabela cobre as 5 de skill e SÓ elas.
+    const escolas = Object.keys((classSystem as { escolas: Record<string, unknown> }).escolas).filter(e => e !== 'evocacao');
+    expect(escolas.length).toBe(5);
+    expect(Object.keys(SCHOOL_STRIKE_FORM).sort()).toEqual([...escolas].sort());
     for (const e of escolas) {
       for (const role of ['basica', 'especial'] as const) {
         const f = SCHOOL_STRIKE_FORM[e as keyof typeof SCHOOL_STRIKE_FORM]?.[role];
