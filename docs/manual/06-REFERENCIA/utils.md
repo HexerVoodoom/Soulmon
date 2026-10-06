@@ -86,45 +86,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Regra de negócio:** Aniversário de mês/ano da relação, contado a partir de `bornAt`. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/arena.ts`
-**Dono de:** Motor da Arena: contador elemental, dano, inimigos por bestiário e a simulação de balanceamento — sem tela consumidora (ver aviso). **Desde 04/10/2026 (REGISTRO §20.10)** também o modelo de ENERGIA do Duelo: `ARENA_ENERGY_ENABLED` (liga; o caminho antigo — carga em turnos + golpe de torcida ×1,35 — fica atrás dele, sem apagar), `ARENA_HP_SCALE` (1,9; `getArenaPlayerStats(stage, escola, hpScale)`) e `ARENA_FOE_HP_EXTRA` (0,9; `buildArenaRound(..., hpScale)`) — duelos mais longos —, e `simulateArenaRunEnergy(config, { skill, tapsPerTurn, ... })` (a corrida com energia, anel e esquiva; devolve também turnos, inimigos derrotados e a duração estimada).
+**Dono de:** o motor da Arena no **núcleo do Combate v3, em GRUPO (N × 1)** (PR3b, 06/10/2026, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.15–§2.17): o jogador é `soulCombatant(estado)` (level e ramo), o especial é `specialOf(família)` com a área da skill (`StageSkill.area`), os inimigos são RELATIVOS ao level dele (`arenaFoe`) e lutam ao mesmo tempo (`groupFightSteps`, `combate/group.ts`). O bestiário só dá o SABOR (nome gerado, elemento, sprite — nunca o `nome` do pool). Tudo puro e determinístico pela semente (um teste de fonte proíbe `Math.random` — `arena.semRandom.contract.test.ts`).
 **Exports:**
-- `BASE_ELEMENT_LABELS_EN` — EN labels for the 17 base elements (PT lives in BASE_ELEMENT_LABELS).
-- `function elementLabel(id: string, isPt: boolean): string` — Rótulo PT/EN de um elemento base a partir de `BASE_ELEMENT_LABELS`/`_EN`; sem entrada devolve o próprio id.
-- `COUNTERS` — tabela/dado de configuração (ver código; 6+ linhas).
-- `function countersElement(attacker: string, defender: string): boolean` — O atacante tem vantagem elemental sobre o defensor, segundo `COUNTERS`?
-- `ADVANTAGE_MULT` — `1.3`
-- `DISADVANTAGE_MULT` — `0.8`
-- `function elementMultiplier(attackEl: string, defenderEls: string[]): number` — Attack multiplier of one element vs a defender's element list. Advantage and disadvantage cancel out when both apply (mixed-element defender).
-- `function getArenaAttributes(ficha: Ficha): { principal: string; secundario: string }` — The two BASE elements that act as the player's arena attributes.
-- `ArenaPlayerStats` (interface) — campos: `hp`, `dmg`.
-- `function getArenaPlayerStats(stage: FichaStage, escolaBasica: EscolaId): ArenaPlayerStats` — HP e dano do jogador na Arena: `STAGE_BUDGET[stage]` escalado pelo formato de `ROLE_SHAPE[escolaBasica]`.
-- `SPECIAL_CHARGE_TURNS` — Turns of charge the special needs before it can fire.
-- `ArenaSpecialEffect` (interface) — campos: `mult`, `targets`, `echoMult`, `echoTurns`, `healFrac`, `weakenFrac`, `weakenTurns`.
-- `SPECIAL_EFFECTS` — Special-skill effect per school. The numbers were CALIBRATED by the balance simulation in arena.test.ts (win rate per archetype 40–80%, spread ≤ 20pp) — don't hand-tweak without re-running it.
-- `PERFECT_ACC` — `0.92`
-- `CRIT_MULT` — `1.5`
-- `function accuracyScale(acc: number): number` — Curva de precisão → multiplicador de dano (`0,25 + 0,75·acc²`).
-- `function playerHitDamage(dmg: number, acc: number, elementMult: number, skillMult = 1): number` — One basic (or per-target special) hit. `mult` = elemental multiplier.
-- `function enemyHitDamage( atk: number, defAcc: number, enemyEl: string, playerAttrs: { principal: string; secundario: string }, weakened: boolean): number` — Damage the player takes from one enemy attack. Defense accuracy shaves it off linearly (dungeon rule); the player's principal/secundário attributes reduce damage from elements they counter (×DISADVANTAGE_MULT) and take extra from elements that counter them (×ADVANTAGE_MULT).
-- `BestiaryCreature` (interface) — campos: `nome`, `elementos`, `atributos`, `tamanho`, `hostilidade`.
-- `function loadBestiaryPool(): Promise<BestiaryCreature[]>` — Dynamic import keeps the 2 000-creature pool (~104 KB gzip) out of the initial bundle — same pattern as the astronomy-engine in the oracle.
-- `ArenaEnemyClass` (type) — `'weak' | 'medium' | 'boss'`
-- `ArenaEnemy` (interface) — campos: `namePt`, `nameEn`, `elements`, `hp`, `maxHp`, `atk`, `speed`, `points`, `cls`, `tier`.
-- `ARENA_ROUNDS` — `5`
-- `function buildArenaRound( roundIdx: number, difficulty: number, rng: () => number, pool: BestiaryCreature[]): ArenaEnemy[]` — Build the enemies of one round (1-based). Stats DERIVE their shape from the bestiary creature (atributos + hostilidade + tamanho, ±15%) but are normalized to the round's curve; the displayed name is always generated.
-- `ROUND_CLEAR_HEAL` — HP fraction recovered when a round is cleared (dungeon-style breather).
-- `ArenaArchetypeConfig` (interface) — campos: `stage`, `escolaBasica`, `escolaEspecial`, `elementoBasica`, `elementoEspecial`, `attrs`.
-- `ArenaSimOptions` (interface) — campos: `difficulty`, `accMean`, `rng`, `pool`.
-- `ArenaSimResult` (interface) — campos: `won`, `roundsCleared`.
-- `function simulateArenaRun(config: ArenaArchetypeConfig, opts: ArenaSimOptions): ArenaSimResult` — Plays one full 5-round run with the same rules the UI uses: special needs SPECIAL_CHARGE_TURNS basic turns of charge, echo/heal/weaken effects apply, every living enemy attacks after the player's turn, accuracy is sampled around `accMean` (±0.25 uniform).
-- `DEFAULT_ARENA_ATTRIBUTES` — `{ principal: 'vigor', secundario: 'vigor' }`
-- `function buildDefaultArenaSkills(): StageSkills` — A sane generic rookie pair so the Arena opens for EVERY save (legacy included): physical-combat basic + special, vigor element.
-**Chamado por:** `src/components/ArenaGame.render.test.tsx`, `src/components/ArenaGame.tsx`
-**Régua:** `arena.test.ts`
-**Avisos do arquivo:**
-- ⚠️ SEM CONSUMIDOR — nenhuma tela chama nada daqui (verificado em 07/09/2026: `grep` por `utils/arena` em `src/`, `desktop/` e `functions/` devolve só o próprio arquivo e `arena.test.ts`).
-**Regra de negócio:** A Arena de combate PvE contra o bestiário — hoje sem nenhuma tela consumidora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
-
+- Elementos: `BASE_ELEMENT_LABELS_EN`, `elementLabel`, `COUNTERS`, `countersElement`, `elementAdvantage(atk, defs)` (−1 / 0 / 1: ±1 golpe exibido, `elementHits`), `getArenaAttributes(ficha)` (os dois elementos-base de defesa).
+- Inimigos: `ARENA_FOES` (weak 0,45/0,12 · medium 0,95/0,235 · boss 1,2/0,495 com especial `direct` de alvo único), `ARENA_ROUND_GROWTH` (hp 0,04 · power 0,13), `ARENA_ROUND_COMP` (1·2·1·3·1; a régua `combate/ruler.ts` lê ESTA composição), `ARENA_ROUNDS`, `ROUND_CLEAR_HEAL` (0,3), `arenaFoe(L, cls, r)`, `buildArenaRound(r, dificuldade, rng, pool)` (só o sabor + Bits), `loadBestiaryPool`, tipos `ArenaEnemy`, `BestiaryCreature`.
+- Jogador e rodada: `ROLE_SHAPE` (HP e golpe básico por escola básica; recalibrado no PR3b para ser neutro em vitória), `ESCOLA_FAMILY_PROVISORIO` + `familyOfEscola` (família do especial por escola, PROVISÓRIO até o PR9 — um teste reprova quando `StageSkill.familia` existir), `arenaPlayerSide`, `arenaPlayerHitScale`, `arenaFoeSides`/`arenaFoeWithElement` (o elemento move a vida do inimigo e o bônus dele em ±1 golpe), `arenaRoundSeed`, `arenaSpecialElementScale`, `arenaPlayerCastScale` (anel × `PVE_FAMILY_POWER.arena`), `arenaFoeCastScale` (1 − esquiva), `autoDefenseHitScale` (a defesa automática como `hitScale` do inimigo), `PERFECT_ACC`.
+- Simulação: `ArenaSkill` (`nenhuma`/`media`/`boa`), `ARENA_SKILL_ODDS`, `simulateArenaRunV3(cfg, seed, skill, areaEfficiency?)` (a run de 5 rodadas; `knobs` só para os RED dos gates), `ArenaRunConfig`, `ArenaRunResult`.
+- `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
+**Saiu no PR3b:** `STAGE_BUDGET`, `getArenaPlayerStats`, `SPECIAL_EFFECTS`, `SPECIAL_CHARGE_TURNS`, `playerHitDamage`, `enemyHitDamage`, `ADVANTAGE_MULT`/`DISADVANTAGE_MULT`, `simulateArenaRun`, `simulateArenaRunEnergy`, `ARENA_HP_SCALE`, `ARENA_FOE_HP_EXTRA`, `ARENA_TORCIDA_MULT`, `arenaTorcidaTurn`, `arenaTurnIsSpecial`, `CLASS_SHAPE`, `ARENA_ENERGY_ENABLED`, `ARENA_TIMING_ATTACK_ENABLED`, `ARENA_AUTO_ACC`.
+**Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
 ### `src/utils/audioBus.ts`
 **Dono de:** O BARRAMENTO DE ÁUDIO (run `som-01`, Fase 2): sub-mix por categoria, limitador e ducking, substituindo o `AudioContext`-por-chamada de `sounds.ts`.
 **Exports:**
@@ -752,7 +722,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/energia.ts`
 **Dono de:** a ENERGIA e as mecânicas ativas do PvE (04/10/2026, REGISTRO §20.10). **O modelo:** cada lutador tem UMA barra de energia (0–`ENERGY_MAX` = 100) que enche por ataque DADO (+9), ataque SOFRIDO (+7) e, só o pet do jogador, pelo CHEER (+36): a "barra de cheer" é o medidor de TOQUES (`CHEER_TAPS_FULL` = 24, lento) que, ao encher, despeja energia no pet e zera (o excedente fica). Energia cheia = o ESPECIAL no golpe seguinte. As constantes de energia são IMPORTADAS de `functions/api/_duel.js` (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito.
 **Exports:** `ENERGY_MAX`/`ENERGY_DEALT`/`ENERGY_TAKEN`/`ENERGY_CHEER`/`CHEER_TAPS_FULL`/`CHEER_TAPS_CAP` · `addEnergy(e, 'dealt' | 'taken' | 'cheer')`, `spendEnergy`, `energyFull`, `energyRatio` · `cheerTap(meter)` → `{ meter, discharged }`, `cheerRatio` · **PvE:** `PVE_HP_SCALE` (1,8), `PVE_FOE_HP_EXTRA` (1,1), `pveHp`, `pveFoeHp`, `PVE_SPECIAL_MULT` (3, o do dono), `PVE_FOE_SPECIAL_MULT` (2), `PVE_BASE_FRAC` (0,5), `pveStrikeDamage({ dmg, guard, special, ring })`, `pveFoeHitDamage({ atk, acc, perfect, reducaoDano, special, dodge })` (golpe normal bloqueado por defesa perfeita; o especial não é bloqueado de graça) · **O ANEL** (o especial do pet): `RingGrade` (`ruim` ×0,75 / `bom` ×1 / `otimo` ×1,35, `RING_MULT`), `ringSpec(seed, n)` (velocidade 1,5–2,1 s pela semente), `ringScale(t, spec)`, `ringGrade(tapMs, spec)` (ótimo ±120 ms, bom ±320 ms do instante em que o anel encosta no alvo; sem toque = ruim) · **A ESQUIVA** (o especial do inimigo): `DodgeGrade` (`nada` 0% / `bom` 50% / `otimo` 85% de redução, `DODGE_REDUCE`), `dodgeSpec(seed, n)` (carga de 1–1,5 s e voo de 1 s), `dodgeGrade(swipeMs, spec)` (só vale com o projétil no ar; os últimos 500 ms antes do impacto são ótimos).
-**Quem chama:** `games/usePveBattle.ts`, `DungeonGame`, `NightmareBattle`, `ArenaGame`, `utils/arena.ts` (`simulateArenaRunEnergy`), `TorcidaKit`.
+**Quem chama:** `games/usePveBattle.ts`, `games/useGroupBattle.ts`, `DungeonGame`, `NightmareBattle`, `ArenaGame`, `utils/arena.ts` (a tabela do anel e da esquiva), `TorcidaKit`.
 **Régua:** `src/utils/energia.test.ts` — o modelo, o anel e a esquiva (determinísticos pela semente), o dano e a simulação de **20.000 lutas** antes/depois (Masmorra 4 estágios, Pesadelo 2 níveis; a Arena a 18.000 runs).
 
 ### `src/utils/autoDefesa.ts`

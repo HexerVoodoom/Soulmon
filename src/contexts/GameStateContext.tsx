@@ -1685,3 +1685,12 @@ export function useGameState() {
   if (!ctx) throw new Error('useGameState must be used within GameStateProvider');
   return ctx;
 }
+
+/**
+ * Como `useGameState`, mas devolve `null` fora do provider em vez de lançar. Para o que lê o estado só
+ * para MELHORAR (o level da Arena) e precisa abrir também sem save (testes, demo): sem provider, o chamador
+ * cai no estágio.
+ */
+export function useGameStateOptional() {
+  return useContext(GameStateContext);
+}

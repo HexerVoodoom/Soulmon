@@ -10,7 +10,9 @@ import { fight, type FightSide } from './fight';
 import { foeSeed, groupFight, groupFightSteps, type GroupEvent } from './group';
 import { combatantAt, REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS } from './level';
 import { sideSeed } from './rng';
-import { areaDelta, RULER_GROUP_COMP, RULER_RING, RULER_DODGE } from './ruler';
+import { areaDelta } from './ruler';
+import { ARENA_ROUND_COMP } from '../arena';
+import { DODGE_REDUCE, RING_MULT } from '../energia';
 import { AREA_FAMILIES, DODGE_REDUCE_V3, RING_MULT_V3, SPECIAL_FAMILIES, specialOf } from './specials';
 
 const fam = (i: number) => SPECIAL_FAMILIES[((i % 7) + 7) % 7];
@@ -85,6 +87,17 @@ describe('result and end conditions', () => {
     const harmless = groupFight(none, [none], { seed: 3, hitScale: (who) => (who === 0 ? 0 : 1) });
     expect(harmless.winner).toBe('foes');
   });
+  it('PR3b: cheerDrain (the LIVE cheer of the scene) adds CHEER.energyPerDischarge per discharge, only to the player', () => {
+    const sp = { ...none, special: specialOf('direct') };
+    const off = groupFight(sp, [none], { seed: 8 });
+    let given = 0;
+    const on = groupFight(sp, [none], { seed: 8, cheerDrain: () => (given++ < 3 ? 1 : 0) });
+    expect(given).toBeGreaterThan(3);
+    expect(on.energyLeft).toBeGreaterThan(off.energyLeft - 1e-9);
+    // the same discharges as the offline list: 3 discharges = +9 energy, and nothing for a player without special
+    const noSp = groupFight(none, [none], { seed: 8, cheerDrain: () => 5 });
+    expect(noSp.energyLeft).toBe(0);
+  });
   it('is deterministic: same seed, same log', () => {
     const run = () => {
       const log: GroupEvent[] = [];
@@ -136,12 +149,12 @@ describe('area only touches the families that aim at the enemy', () => {
       }
     }
   });
-  it('the ruler uses the v3 skill tables (P4) and the declared Arena composition', () => {
-    expect([...RULER_RING]).toEqual([RING_MULT_V3.ruim, RING_MULT_V3.bom, RING_MULT_V3.otimo]);
-    expect([...RULER_RING]).toEqual([0.92, 1, 1.08]);
-    expect([...RULER_DODGE]).toEqual([DODGE_REDUCE_V3.nada, DODGE_REDUCE_V3.bom, DODGE_REDUCE_V3.otimo]);
-    expect([...RULER_DODGE]).toEqual([0, 0.2, 0.35]);
-    expect(RULER_GROUP_COMP.map((r) => r.length)).toEqual([1, 2, 1, 3, 1]);
+  it('the ruler plays the own run of the Arena: the v3 skill tables (P4, now in energia.ts) and the Arena composition', () => {
+    expect({ ...RING_MULT }).toEqual({ ...RING_MULT_V3 });
+    expect([RING_MULT.ruim, RING_MULT.bom, RING_MULT.otimo]).toEqual([0.92, 1, 1.08]);
+    expect({ ...DODGE_REDUCE }).toEqual({ ...DODGE_REDUCE_V3 });
+    expect([DODGE_REDUCE.nada, DODGE_REDUCE.bom, DODGE_REDUCE.otimo]).toEqual([0, 0.2, 0.35]);
+    expect(ARENA_ROUND_COMP.map((r) => r.length)).toEqual([1, 2, 1, 3, 1]);
   });
 });
 

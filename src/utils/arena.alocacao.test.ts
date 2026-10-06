@@ -12,12 +12,11 @@
 // de 40–80% / spread ≤20pp, **a alocação perde efeito de combate** — nunca
 // afrouxar a janela.
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-  getArenaAttributes, getArenaPlayerStats, simulateArenaRun,
-  type ArenaArchetypeConfig,
+  getArenaAttributes, arenaPlayerSide, simulateArenaRunV3, type ArenaPlayerCfg, type ArenaRunConfig,
 } from './arena';
-import { mulberry32 } from './oracle';
+import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { buildFicha, type ElementPlan } from './soulProfile/ficha/buildSheet';
 import type { OracleAxes } from './soulProfile/types';
@@ -25,6 +24,9 @@ import type { EscolaId } from './soulProfile/ficha/types';
 import POOL_JSON from './soulProfile/bestiary/pool.json';
 
 const POOL = (POOL_JSON as { criaturas: unknown[] }).criaturas as never[];
+
+// Simulações pesadas (muitas runs): a suíte inteira roda em paralelo e o padrão de 5 s estoura.
+vi.setConfig({ testTimeout: 180_000 });
 
 // Mesma amostra do `arena.test.ts`: 3000 runs, SE ~0,9pp contra uma régua com
 // 1pp de folga. Reduzir vira ruído e o teste passa por sorte.
@@ -54,32 +56,31 @@ function axesNeutros(): OracleAxes {
 const EIXOS = axesNeutros();
 const ESCOLA: EscolaId = 'conjuracao';
 
+// PR3b: o motor virou o do Combate v3 (grupo N × 1). A alocação entra na vantagem de ±1 golpe do
+// elemento (`arenaFoeWithElement`), e a janela abaixo é a MESMA de antes — nunca afrouxada (decisão #73).
 function taxaCom(attrs: { principal: string; secundario: string }): number {
-  const config: ArenaArchetypeConfig = {
-    stage: 'rookie',
-    escolaBasica: ESCOLA,
-    escolaEspecial: ESCOLA,
-    elementoBasica: 'vigor',
-    elementoEspecial: 'vigor',
-    attrs,
+  // rookie no teto do estágio (Lv 6), build equilibrado, conjuração (área), os elementos dos bichos sorteados do bestiário
+  const config: ArenaRunConfig = {
+    level: 6, build: REFERENCE_BUILDS.balanced, family: 'direct', area: 'area', escolaBasica: ESCOLA,
+    elements: { basica: 'vigor', especial: 'vigor', attrs }, pool: POOL as never[],
   };
-  const rng = mulberry32(SEED);
   let wins = 0;
   for (let i = 0; i < RUNS; i++) {
-    if (simulateArenaRun(config, { rng, pool: POOL, accMean: 0.7 }).won) wins++;
+    if (simulateArenaRunV3(config, SEED + i, 'media').won) wins++;
   }
   return wins / RUNS;
 }
 
 describe('WP4.22b — a alocação não compra vantagem de combate', () => {
-  it('(iii) mudar SÓ a alocação não muda getArenaPlayerStats', () => {
-    // O orçamento de poder é do estágio e da escola. Se algum dia a alocação
-    // encostar nele, esta é a régua que reprova.
-    const base = getArenaPlayerStats('rookie', ESCOLA);
+  it('(iii) mudar SÓ a alocação não muda o jogador da luta (arenaPlayerSide)', () => {
+    // O poder do jogador é do level, do ramo e da escola básica (`soulCombatant`, não a ficha). Se
+    // algum dia a alocação encostar nele, esta é a régua que reprova.
+    const cfg: ArenaPlayerCfg = { combatant: combatantAt(6, REFERENCE_BUILDS.balanced), family: 'direct', area: 'area', escolaBasica: ESCOLA };
+    const base = arenaPlayerSide(cfg);
     for (const el of CLASS_ELEMENT_ORDER) {
       const ficha = buildFicha('Kaelen', EIXOS, 'rookie', 'seed', undefined, { [el]: 5 } as ElementPlan);
       expect(ficha.elementos).toBeDefined();
-      expect(getArenaPlayerStats('rookie', ESCOLA)).toEqual(base);
+      expect(arenaPlayerSide({ ...cfg, elements: { basica: el, especial: el, attrs: getArenaAttributes(ficha) } })).toEqual(base);
     }
   });
 
@@ -129,6 +130,7 @@ describe('WP4.22b — a alocação não compra vantagem de combate', () => {
     const detalhe = JSON.stringify(
       Object.fromEntries(Object.entries(taxas).map(([k, v]) => [k, +v.toFixed(3)])),
     );
+    console.log(`[R-B] 17 alocações (motor v3): min ${min.toFixed(3)} · max ${max.toFixed(3)} · spread ${(100 * (max - min)).toFixed(1)}pp`);
     expect(min, `taxas: ${detalhe}`).toBeGreaterThanOrEqual(0.4);
     expect(max, `taxas: ${detalhe}`).toBeLessThanOrEqual(0.8);
     expect(max - min, `spread: ${detalhe}`).toBeLessThanOrEqual(0.2);

@@ -1,9 +1,9 @@
 /**
  * ⚠️ LEGADO (04/10/2026, REGISTRO §20.10): o gauge de torcida que virava UM golpe especial foi
  * SUBSTITUÍDO pela ENERGIA (`utils/energia.ts`): a "barra de cheer" enche devagar (`CHEER_TAPS_FULL` = 24)
- * e despeja energia no pet; energia cheia = especial. Este arquivo fica para o caminho antigo
- * (`ARENA_ENERGY_ENABLED = false` em `utils/arena.ts`) e para as constantes que os testes de
- * calibração antigos usam. Os números abaixo (`TORCIDA_TAPS_FULL` = 16, `TORCIDA_TAPS_CAP` = 20) são os
+ * e despeja energia no pet; energia cheia = especial. Este arquivo fica para o Pesadelo e a Masmorra
+ * (motor antigo, até o PR4) e para as constantes que os testes de calibração antigos usam. A Arena (PR3b) já não usa
+ * o gauge antigo: ela roda no núcleo v3 e a barra de cheer dela é a de `utils/energia.ts` (`cheerTap`). Os números abaixo (`TORCIDA_TAPS_FULL` = 16, `TORCIDA_TAPS_CAP` = 20) são os
  * do gauge antigo, que deixaram de acompanhar o servidor.
  *
  * TORCIDA — o pet golpeia sozinho, o dono TORCE tocando na tela.
@@ -23,10 +23,9 @@
  * (`TIMING_CHEER_ENABLED = false` em `_duel.js`) e nenhum caminho de UI a usa:
  * o código fica para reaproveitar em outro lugar depois.
  *
- * O Duelo da Arena (`ArenaGame`, contra NPCs) TAMBÉM usa o gauge e o grito
- * (`TorcidaLayer`/`TorcidaGauge`), mas a conta do golpe de torcida mora em
- * `utils/arena.ts` (`arenaTorcidaTurn`): ele tem a curva e a carga de especial
- * próprias, espelhadas em `simulateArenaRun` (H14, 02/10/2026).
+ * O Duelo da Arena (`ArenaGame`, contra NPCs) TAMBÉM usa o grito e a barra
+ * (`TorcidaLayer`/`TorcidaGauge`), mas desde o PR3b o golpe de torcida acabou: a torcida despeja uma
+ * DESCARGA de energia no núcleo (`cheerDrain` em `utils/combate/group.ts`, `CHEER.energyPerDischarge`).
  */
 import { TIMING_CHEER_ENABLED } from '../../functions/api/_duel.js';
 

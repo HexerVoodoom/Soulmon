@@ -42,6 +42,12 @@ export interface GroupOptions {
   readonly hitScale?: (who: number, n: number) => number;
   /** Cheer discharges of the player (`side` 0); other sides are ignored. */
   readonly cheer?: readonly { readonly t: number; readonly side: 0 | 1 }[];
+  /**
+   * LIVE cheer (PR3b): called once per step of the clock; returns how many discharges the
+   * player accumulated since the last call (each = CHEER.energyPerDischarge). The scene uses it
+   * because the taps happen DURING the fight; the offline `cheer` list is fixed up front.
+   */
+  readonly cheerDrain?: () => number;
   /** Efficiency of the area. Default AREA_EFFICIENCY (1); a knob for the ruler to price the alternatives (0.9, or full E per foe). */
   readonly areaEfficiency?: number;
 }
@@ -224,6 +230,10 @@ export function* groupFightSteps(
   for (let g = 0; g < MAX_EVENTS; g++) {
     let tt = Infinity;
     for (const e of timed) if (e.t < tt) tt = e.t;
+    if (opts.cheerDrain && pl.sp && pl.dead === Infinity) {
+      const n = Math.max(0, Math.floor(opts.cheerDrain()));
+      if (n > 0) pl.en += CHEER.energyPerDischarge * n;
+    }
     let tEn = Infinity;
     for (const f of all) {
       if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
