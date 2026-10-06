@@ -46,11 +46,11 @@ export interface VarianceConfig {
 }
 
 /**
- * Damage variance chosen in the spike's Pass 1 (variant `b-r0.9s15`): AR(1)
+ * Damage variance (PR3a: sigma 8% with the normalised hit, contexto 2.15 P1; PR1 had 15% with raw hits). AR(1)
  * per hit, rho 0.9, sigma 15%. It is the variant whose upset rate is the most
  * uniform across level bands while keeping DEF×DEF P95 under 40 s.
  */
-export const VARIANCE: VarianceConfig = { rho: 0.9, sigma: 0.15, floor: 0.05 };
+export const VARIANCE: VarianceConfig = { rho: 0.9, sigma: 0.08, floor: 0.05 };
 
 /**
  * Per-hit damage multiplier stream, AR(1): z' = rho·z + sqrt(1−rho²)·N(0,1),

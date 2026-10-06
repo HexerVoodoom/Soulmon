@@ -677,18 +677,27 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `CURVE_K` (const) — `8`. `BASE_ATTACKS_PER_WINDOW` (const) — `9`.
 - `Combatant` (interface) — campos: `level`, `atk`, `def`, `spd`, `hp`, `bonus`.
 - `hitsToKnockOut(attacker, defender)`, `displayHits(hits)`, `attacksPerWindow(spd)`.
+- `elementHits(adv)` — multiplicador de golpes do elemento no golpe normalizado: `1 − adv/10` (vantagem tira exatamente 1 golpe exibido; PR3a).
 **Chamado por:** `combate/level.ts`, `combate/fight.ts`, `combate/ruler.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gate 1: exemplos 10/9/11 do dono).
 
 ### `src/utils/combate/fight.ts`
 **Dono de:** O simulador puro e determinístico de uma luta v3 (seed → resultado): janela normalizada por level (espelho equilibrado = 25 s), energia e especiais, sorte AR(1) por golpe, tempo "fantasma" dos dois lados e empate como resultado válido.
 **Exports:**
-- `MIRROR_SECONDS` (const) — `25`.
-- `windowSeconds(level)`.
-- `FightSide`, `FightOptions` (`seed`, `hpScale`, `variance`, `windowLevel`, `phases`), `FightResult`, `FightWinner` (`'A' | 'B' | 'draw'`).
-- `fight(a, b, opts)`.
-**Chamado por:** `combate/ruler.ts`.
-**Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8).
+- `MIRROR_SECONDS` (const) — `25`. `HIT_UNIT_H0` (const) — `10`: o golpe normalizado vale ~1/10 do espelho de qualquer level (PR3a, §2.15 P1). `EPS`, `DRAW_EPS`.
+- `windowSeconds(level)`, `hitUnit(level)` (golpes da curva por golpe normalizado).
+- `FightSide` (`combatant`, `special`, `area?`), `FightOptions` (`seed`, `hpScale`, `variance`, `windowLevel`, `phases`, `unitH0` (`null` = golpe cru do PR1), `startHp`, `startEnergy`, `hitScale`, `cheer`, `stopAtFirstKo`), `CheerEvent`, `FightEvent` (`attack | cast | tick | ko`), `FightResult` (com `hpA/hpB/energyA/energyB`), `FightWinner` (`'A' | 'B' | 'draw'`).
+- `fightSteps(a, b, opts)` — o gerador: o `cast` pausa e recebe o multiplicador (anel/esquiva). `fight(a, b, opts)` — o driver que responde 1.
+**Chamado por:** `combate/ruler.ts`, `combate/group.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8) e `combate.v11.test.ts` (regressão 300/300, fightSteps ≡ fight, golpe normalizado, sorte por estágio, ganchos).
+
+### `src/utils/combate/group.ts`
+**Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo.
+**Exports:**
+- `GroupOptions`, `GroupEvent`, `GroupResult`, `GroupWinner` (`'player' | 'foes' | 'draw'`).
+- `foeSeed(seed, i)`, `groupFightSteps(player, foes, opts)` (gerador; o `cast` pausa), `groupFight(player, foes, opts, castMult?)`.
+**Chamado por:** `combate/ruler.ts` (`areaDelta`).
+**Régua:** `src/utils/combate/group.test.ts` (N=1 ≡ 1v1 em 300/300, área no 1v1, repasse do DoT, régua pareada).
 
 ### `src/utils/combate/level.ts`
 **Dono de:** Level, pontos e HP do Soulmon no combate v3: tetos por estágio derivados de `FORM_REQUIREMENTS.cap` (6/13/21/30/40), 1 ponto por level em ATK/DEF/SPD com teto 45% e piso 15% por atributo, base `ceil(1,5^s)`, HP automático `10·1,5^s·(1+L/10)`.
@@ -701,12 +710,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combate/combate.test.ts` (bloco `level` e gate 2).
 
 ### `src/utils/combate/rng.ts`
-**Dono de:** Toda a aleatoriedade de uma luta v3: `mulberry32` com seed por luta, stream por lado, Box–Muller e o multiplicador AR(1) (ρ 0,9, σ 15%, piso 0,05).
+**Dono de:** Toda a aleatoriedade de uma luta v3: `mulberry32` com seed por luta, stream por lado, Box–Muller e o multiplicador AR(1) (ρ 0,9, σ 8% desde o PR3a — era 15% com o golpe cru —, piso 0,05).
 **Exports:**
 - `Rng` (type), `VarianceConfig` (interface).
 - `mulberry32(seed)`, `sideSeed(seed, side)`, `gaussian(r)`, `ar1Multiplier(r, cfg)`.
 - `PHASE_SALT`, `VARIANCE` (const).
-**Chamado por:** `combate/fight.ts`.
+**Chamado por:** `combate/fight.ts`, `combate/group.ts`, `combate/ruler.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (vetor de conformidade `mulberry32(42)`, gates 7 e 8).
 
 ### `src/utils/combate/ruler.ts`
@@ -714,8 +723,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:**
 - `RULER_HP_SCALE`, `RULER_TOLERANCE`, `RULER_ROOKIE_BUFF_TOLERANCE` (const).
 - `rulerBounds(family, level)`, `rulerSeed(i, cell)`, `rulerBaseline(c, seeds, cell)`, `pairedDelta(c, special, seeds, cell, baseline?)`.
+- Régua área × único (PR3a): `areaDelta(family, runs, areaEfficiency?)` → `{ dWin, dTime, winSingle, winArea }`; `groupRun(...)`; `RULER_GROUP_COMP` (cópia declarada da composição da Arena até o PR3b), `RULER_GROUP_FOES`, `RULER_GROUP_GROWTH`, `RULER_GROUP_HEAL`, `RULER_RING`, `RULER_DODGE`.
 **Chamado por:** ninguém ainda (só a régua).
-**Régua:** `src/utils/combate/combate.test.ts` (gate 5 + prova de vermelho com dot ×1,5).
+**Régua:** `src/utils/combate/combate.test.ts` (gate 5 + prova de vermelho com dot ×1,5) e `group.test.ts` (AC7).
 
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
@@ -723,8 +733,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `SPECIAL_BUDGET_HITS` (const) — `3`. `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
 - `SpecialFamily` (type), `Special`, `EnergyRates` (interface).
 - `specialOf(family)`.
-**Chamado por:** `combate/fight.ts`, `combate/ruler.ts`.
-**Régua:** `src/utils/combate/combate.test.ts` (gate 5).
+- PR3a: `AREA_FAMILIES` (`direct`, `dot`, `defDebuff`: as que miram o inimigo), `AREA_EFFICIENCY` (1: o núcleo NÃO usa a eficiência 0,9 do class-system), `PVE_FAMILY_POWER` (`arena`/`dungeon`), `CHEER`, `cheerEvents(taps, side)`, `RING_MULT_V3`, `DODGE_REDUCE_V3` (tabelas de habilidade do motor v3; o `energia.ts` ao vivo mantém as antigas até o PR3b).
+**Chamado por:** `combate/fight.ts`, `combate/group.ts`, `combate/ruler.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (gate 5) e `combate.v11.test.ts`.
 
 ### `src/utils/combatFx.ts`
 **Dono de:** a ARTE e o RITMO das ações visuais da cena de combate (`games/BattleStage.tsx`, 02/10/2026, rodada 5/I10): qual figura de skill do elemento (`fx-<id>-<estado>`) entra em cada ação e quanto tempo dura. Não decide regra de jogo.
