@@ -128,9 +128,9 @@ describe('hooks: startHp, startEnergy, hitScale, cheer, stopAtFirstKo', () => {
     expect(t0).toBeLessThan(plain.t);
   });
   it('cheerEvents: 24 taps = 1 discharge, 16 taps per 3 s bucket accepted at most', () => {
-    // PR4 (contexto §2.18): the PvE yield was raised to 90 by the owner's decision (the biggest that keeps the TTK within ±25%);
+    // PR4b (contexto §2.19): the Arena yield is the biggest value where the cheer alone moves the run win rate ≤ 25pp (9);
     // the PvP yield (`fight()`) stays at the measured 3 — PR5 owns it.
-    expect(CHEER).toEqual({ tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 90, pvpEnergyPerDischarge: 3 });
+    expect(CHEER).toEqual({ tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 9, pvpEnergyPerDischarge: 3 });
     const fast = Array.from({ length: 100 }, (_, i) => i * 0.01); // 100 taps in 1 s → only 16 accepted
     expect(cheerEvents(fast, 0)).toHaveLength(0);
     const slow = Array.from({ length: 48 }, (_, i) => i * 0.5); // 6 per bucket → all accepted

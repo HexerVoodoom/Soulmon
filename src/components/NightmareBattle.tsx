@@ -24,7 +24,7 @@
  * ───────────────────────────────────────────────────────────────────────────
  * O convite, a vitória e a derrota são o diálogo de sempre; a LUTA é a tela cheia da
  * `BattleStage` (a mesma do Duelo e da Masmorra): o Soulmon grande, HP e ENERGIA em cima de cada
- * um, o mascote da torcida no canto, a barra de cheer no pé. Combate v3 (PR4, contexto §2.18): o MOTOR é o
+ * um. SEM torcida (contexto §2.19: o Soulmon vai sozinho). Combate v3 (PR4, contexto §2.18): o MOTOR é o
  * núcleo (`groupFightSteps` com 1 inimigo por vez, HP e energia carregados), com as regras da Masmorra
  * (`utils/dungeonFight.ts`), e o relógio da cena é `games/useGroupBattle.ts`. A onda é SEMPRE do andar 1
  * (`buildNightmareWave`). A `TimingBar` de esquiva saiu daqui (`TIMING_DODGE_ENABLED = false`).
@@ -44,12 +44,11 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameVisor, VisorSprite, VisorFx, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
 import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
 import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
-import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { TorcidaLayer } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { newDefenseSeed } from '../utils/autoDefesa';
-import { CHEER_TAPS_FULL } from '../utils/energia';
 import { ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { GroupResult } from '../utils/combate/group';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
@@ -97,6 +96,9 @@ export interface NightmareBattleProps {
 /* C1 (02/10/2026): o convite do pesadelo mostrava `dungeon-spirit.png` (bolha
    roxa com brilhos, uma bolinha roxa solta e franja clara). Agora é uma
    criatura que já existe no repo, com alfa limpo (binário, sem borda clara). */
+/** Sem torcida no Pesadelo (contexto §2.19): o toque na cena não faz nada. */
+const noTap = (): void => {};
+
 const INTRO_CREATURE = DUNGEON_LINE_SPRITES.ignar.champion;
 
 type Phase = 'intro' | 'fight' | 'won' | 'lost';
@@ -223,7 +225,7 @@ export function NightmareBattle({
     if (n >= waveRef.current.length) { win(); return; }
     idxRef.current = n;
     setIdx(n);
-    setFightKey(k => k + 1); // a energia e a barra de cheer seguem para o próximo
+    setFightKey(k => k + 1); // a energia segue para o próximo
   // O relógio chama sempre a versão mais nova (`optsRef` do hook); `win`/`lose` só leem props e refs.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rarity, onWin, onLose]);
@@ -231,7 +233,7 @@ export function NightmareBattle({
   const battle = useGroupBattle({
     running: open && phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: false,
   });
 
   if (!open) return null;
@@ -263,11 +265,10 @@ export function NightmareBattle({
     const meHpFrac = pronto ? battle.hp : hpFrac;
     return (
       <TorcidaLayer
-        onTap={battle.cheer}
-        active={!pausado && battle.phase === 'idle'}
+        onTap={noTap}
+        active={false} /* sem torcida no Pesadelo (contexto §2.19): a camada só leva o gesto da esquiva */
         isPt={isPt}
         style={{ ...BATTLE_LAYER_STYLE, zIndex: 220 }}
-        mascot
         swipeActive={battle.phase === 'dodge'}
         onSwipe={battle.swipe}
       >
@@ -307,7 +308,6 @@ export function NightmareBattle({
             leave: isPt ? 'Sair' : 'Leave',
           }}
           onPauseChange={setPausado}
-          hud={<TorcidaGauge taps={battle.meter} onCheer={battle.cheer} isPt={isPt} full={CHEER_TAPS_FULL} bare />}
         />
       </TorcidaLayer>
     );

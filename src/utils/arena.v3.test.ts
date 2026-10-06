@@ -19,7 +19,7 @@ import { combatantAt, REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS, sta
 import { areaDelta } from './combate/ruler';
 import { groupFightSteps } from './combate/group';
 import { areaDaEscola } from './soulProfile/ficha/skills';
-import { AREA_FAMILIES, PVE_FAMILY_POWER, SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
+import { AREA_FAMILIES, CHEER, PVE_FAMILY_POWER, SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { DODGE_REDUCE, RING_MULT } from './energia';
 import type { EscolaId } from './soulProfile/ficha/types';
 
@@ -213,11 +213,24 @@ describe('AC5. skill (P4): "does not act" × "plays well" ≤ 25pp', () => {
     console.log(`[AC5 RED] old tables: ${(100 * gap).toFixed(1)}pp`);
     expect(gap).toBeGreaterThan(0.25);
   });
-  it('PR4: with BOTH sides cheering at the ceiling (CHEER.energyPerDischarge = 90) the gap stays ≤ 25pp; the strict one (plays well AND cheers × does nothing) is a finding for the owner', () => {
-    const both = wins('boa', { cheer: 'teto' }) - wins('nenhuma', { cheer: 'teto' });
-    const strict = wins('boa', { cheer: 'teto' }) - wins('nenhuma');
-    console.log(`[AC5 cheer] gap with the cheer at the ceiling on both sides: ${(100 * both).toFixed(1)}pp · strict (boa + teto × nenhuma): ${(100 * strict).toFixed(1)}pp`);
-    expect(both).toBeLessThanOrEqual(0.25);
+  it('PR4b (contexto §2.19): the cheer ALONE (same skill, ceiling × nobody cheering) moves the run win rate ≤ 25pp, for the skill that does not act and for the one that plays well', () => {
+    expect(CHEER.energyPerDischarge).toBe(9);
+    const dN = wins('nenhuma', { cheer: 'teto' }) - wins('nenhuma');
+    const dB = wins('boa', { cheer: 'teto' }) - wins('boa');
+    console.log(`[AC5 cheer] cheer alone: nenhuma +${(100 * dN).toFixed(1)}pp · boa +${(100 * dB).toFixed(1)}pp (nenhuma ${pct(wins('nenhuma'))} → ${pct(wins('nenhuma', { cheer: 'teto' }))})`);
+    expect(dN).toBeLessThanOrEqual(0.25);
+    expect(dB).toBeLessThanOrEqual(0.25);
+    expect(dN).toBeGreaterThan(0); // the cheer still helps
+  });
+  it('RED: the PR4 yield (CHEER.energyPerDischarge = 90) lets the cheer alone win the run — far above 25pp', () => {
+    const knobs = CHEER as { energyPerDischarge: number };
+    const old = knobs.energyPerDischarge;
+    knobs.energyPerDischarge = 90;
+    try {
+      const d = wins('nenhuma', { cheer: 'teto' }) - wins('nenhuma');
+      console.log(`[AC5 cheer RED] energyPerDischarge = 90: cheer alone +${(100 * d).toFixed(1)}pp`);
+      expect(d).toBeGreaterThan(0.25);
+    } finally { knobs.energyPerDischarge = old; }
   });
   it('the energia.ts tables ARE the v3 ones (0.92/1/1.08 · 0/0.2/0.35) and the skill odds sum to 1', () => {
     expect({ ...RING_MULT }).toEqual({ ruim: 0.92, bom: 1, otimo: 1.08 });
