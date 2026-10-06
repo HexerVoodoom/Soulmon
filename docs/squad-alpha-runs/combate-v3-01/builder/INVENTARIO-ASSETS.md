@@ -262,3 +262,13 @@ O bloco **[SHEET]** entra em toda folha:
 
 **Lote 7 · F7.** Anexar `REF-kit-v12.png` + `src/assets/soulmon/molduras/loja-cristal.png` + `src/assets/soulmon/items/item-chip-power.png`.
 > A sprite sheet of 13 pixel-art creature equipment icons in a 4×4 grid (last three cells empty) [SHEET] Row 1: three empty slot silhouettes in dark teal outline: a faceted CORE gem socket, a curved CARAPACE plate, a TRAIL anklet ring. Rows 2–4: CORE, CARAPACE and TRAIL in three tiers each, showing visible craftsmanship growth (tier 1 plain copper, tier 2 polished copper with cyan inlay, tier 3 ornate with an electric blue crystal). Final cell: two small cyan shards that fit together (fragment). [STYLE] Square 1:1 full-bleed composition.
+
+## Instalação
+
+Estado em 06/10/2026. Arte em `src/assets/soulmon/combate-v3/<grupo>/<id>.png` (main: 62 peças do PR anterior + 18 PNGs deste PR, branch `arte/combate-v3-pendentes`).
+
+- **Instaladas como vieram (decisão do dono):** `st-buff-atk` (veio punho), `st-buff-spd` (pegada), `st-debuff-def` (coração rachado), `st-hot` (cruz + selo redondo), `oficio-combate_fisico` (soqueira), `fx-dot-loop` (cristal com patas; 6 quadros 128² + `-sheet.png` 3×2), `tal-pvp-01/02/03/06/07`, `tal-pve-06/07`.
+- **Já instaladas com ressalva:** `tal-pve-02`, `tal-pve-03`, `tal-com-03`, `tal-com-07`, `eq-nucleo-t1/t2` (quase iguais).
+- **Não gerada:** `fx-target-down` (nada a instalar).
+- **Não feito:** teste de 16 px em cinza sobre `#0B3A40` (obrigatório para `st-buff-atk` × `st-buff-spd` e `st-hot` × `st-cura`).
+- Melhorias e prompts corrigidos para regerar: `docs/ARTE-MELHORIAS-FUTURAS.md` no repo.
