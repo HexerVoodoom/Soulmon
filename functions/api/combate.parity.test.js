@@ -76,6 +76,20 @@ describe('as constantes do núcleo são as mesmas nos dois lados', () => {
     for (const c of casos) expect(srv.combinedBonus(c), JSON.stringify(c)).toBe(bonusApp.combinedBonus(c));
   });
 
+  it('PR7b: combinedAttrBonus, o combatente por atributo e a torcida com escala batem nos dois lados', () => {
+    const casos = [{}, { talent: { atk: 0.03 } }, { talent: { atk: 0.03, def: 0.02 }, equipment: { spd: 0.04 } }, { talent: { atk: -1, def: NaN, spd: Infinity } }, { commerce: { def: 0.2 }, rebirth: { atk: 0.2 } }, { talent: 5 }];
+    for (const c of casos) expect(srv.combinedAttrBonus(c), JSON.stringify(c)).toEqual(bonusApp.combinedAttrBonus(c));
+    for (const b of [{ atk: 0.01, def: 0.02, spd: 0.02 }, { def: 0.05 }, { spd: 0.05 }, {}, { atk: NaN }]) {
+      for (const L of [1, 7, 21, 40]) expect(srv.combatantAt(L, levelApp.REFERENCE_BUILDS.balanced, b), JSON.stringify([L, b])).toEqual(levelApp.combatantAt(L, levelApp.REFERENCE_BUILDS.balanced, b));
+    }
+    expect(srv.CHEER_SCALE_MAX).toBe(specialsApp.CHEER_SCALE_MAX);
+    for (const x of [1, 1.05, 1.15, 3, 0.2, NaN, undefined, '1.1']) {
+      expect(srv.cleanCheerScale(x)).toBe(specialsApp.cleanCheerScale(x));
+      expect(srv.cheerEvents([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], 0, x))
+        .toEqual(specialsApp.cheerEvents([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], 0, x));
+    }
+  });
+
   it('as 7 famílias do servidor são as do núcleo do app (PR9)', () => {
     expect(duelSrv.SPECIAL_FAMILY_IDS).toEqual([...specialsApp.SPECIAL_FAMILIES]);
   });

@@ -638,6 +638,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `COMBAT_BONUS_CAP` (const) — `0.05`.
 - `BonusSources` (interface) — campos opcionais: `talent`, `equipment`, `commerce`, `rebirth`.
 - `combinedBonus(sources)` — soma as fontes válidas (negativo/NaN/infinito contam 0) e aplica o teto.
+- `AttrBonus`, `NO_ATTR_BONUS`, `AttrBonusSources`, `combinedAttrBonus(sources)`, `toAttrBonus(b)` (PR7b) — o canal de PvP por atributo: soma por atributo e corta a SOMA dos três nos 5% (escala proporcional). `combatantAt` dobra DEF e SPD no próprio stat (exato), ATK fica em `Combatant.bonus`.
 **Chamado por:** ninguém ainda (núcleo do PR1 do combate v3; os motores entram nos PRs seguintes).
 **Régua:** `src/utils/combate/combate.test.ts` (gate 6 + prova de vermelho sem teto).
 
@@ -2905,8 +2906,8 @@ dominância populacional — por isso ±15%. Régua nova:
 **Regra de negócio:** nenhuma — é geometria de toque. Se a arte de um lote trocar, o teste informa os números novos de `LOT_ART_BOUNDS`.
 
 ### `src/utils/talents.ts`
-**Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor inválido é DESCARTADO inteiro, nunca corrigido. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. `tal-pvp-05` e `tal-com-05` (linha vermelha) não existem na árvore: pendência do dono.
-**Exports:** `TALENT_TREE`, `TALENT_BY_ID`, `TALENT_POINTS_MAX`, `TALENTOS_PENDENTES_DO_DONO`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `canPick`, `pickTalent`, `pointsLeft`, `talentBonus(picks, bondLevel, scope)`, `respecCost`, `respecDiscount`, `applyRespec`, `pickableTreeCost`, `fullTreeCost`.
+**Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor inválido é DESCARTADO inteiro, nunca corrigido. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. PR7b (§2.25): o canal de PvP é POR ATRIBUTO (`attr` ATK/DEF/SPD em `tal-pvp-01/02/03`; `talentAttrBonus`) com o MESMO teto de 5% na SOMA dos três (`combinedAttrBonus`); `tal-pvp-05` (Mão aberta, `cheerBoost`: +5% por grau no rendimento da torcida do Duelo, até `CHEER_SCALE_MAX`) e `tal-com-05` (Balança, `respecOne`: refazer UM ponto por vez, em Bits ganhos) foram REDESENHADOS dentro das linhas vermelhas e entram na árvore.
+**Exports:** `TALENT_TREE`, `TALENT_BY_ID`, `TALENT_POINTS_MAX`, `CHEER_STEP`, `AttrKey`, `talentAttrBonus`, `talentCheerScale`, `canRespecOne`, `respecOneCost`, `applyRespecOne`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `canPick`, `pickTalent`, `pointsLeft`, `talentBonus(picks, bondLevel, scope)`, `respecCost`, `respecDiscount`, `applyRespec`, `pickableTreeCost`, `fullTreeCost`.
 **Régua:** `src/utils/talents.test.ts` (régua de teto 5% por razão das médias), `functions/api/talents.parity.test.js`, bloco "PR7" de `src/copy.semFomo.contract.test.ts`.
 
 ### `src/utils/gates.ts`

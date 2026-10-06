@@ -5,19 +5,23 @@
  * Vetor invalido e DESCARTADO (`[]`), nunca corrigido; o servidor nunca confia no cliente.
  */
 
+import { cleanCheerScale } from './_combate.js';
+
 export const TALENT_POINTS_MAX = 20;
 
 /**
  * id -> grau maximo e efeito, so dos nos PEGAVEIS (os `pendente` nao se compram).
- * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount', scope?: 'pvp' | 'pve', perRank: number }>>}
+ * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne', scope?: 'pvp' | 'pve', attr?: 'atk' | 'def' | 'spd', perRank?: number }>>}
  */
 export const PICKABLE = {
-  'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', perRank: 0.004 },
-  'tal-pvp-02': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', perRank: 0.004 },
-  'tal-pvp-03': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', perRank: 0.004 },
+  'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'atk', perRank: 0.004 },
+  'tal-pvp-02': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'def', perRank: 0.004 },
+  'tal-pvp-03': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'spd', perRank: 0.004 },
+  'tal-pvp-05': { maxRank: 3, kind: 'cheerBoost', perRank: 0.05 },
   'tal-pve-01': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
   'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
   'tal-com-03': { maxRank: 4, kind: 'respecDiscount', perRank: 0.1 },
+  'tal-com-05': { maxRank: 1, kind: 'respecOne' },
 };
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -60,7 +64,33 @@ export function talentBonus(picks, bondLevel, scope) {
   let sum = 0;
   for (const id of picks) {
     const n = PICKABLE[id];
-    if (n.kind === 'combatBonus' && n.scope === scope) sum += n.perRank;
+    if (n.kind === 'combatBonus' && n.scope === scope) sum += n.perRank ?? 0;
   }
   return sum;
+}
+
+/**
+ * PvP por ATRIBUTO (PR7b): a parcela do talento em cada canal (fracoes). Invalido para o Vinculo = 0 nos tres.
+ * Quem soma e corta nos 5% (a SOMA dos tres canais) e `combinedAttrBonus` (`_combate.js`).
+ * @param {unknown} picks @param {unknown} bondLevel @returns {{ atk: number, def: number, spd: number }}
+ */
+export function talentAttrBonus(picks, bondLevel) {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!isValidPicks(picks, bondLevel)) return out;
+  for (const id of picks) {
+    const n = PICKABLE[id];
+    if (n.kind === 'combatBonus' && n.scope === 'pvp' && n.attr) out[n.attr] += n.perRank ?? 0;
+  }
+  return out;
+}
+
+/**
+ * Multiplicador do rendimento da torcida do Duelo (1 sem o no; limitado por `CHEER_SCALE_MAX`). Invalido = 1.
+ * @param {unknown} picks @param {unknown} bondLevel
+ */
+export function talentCheerScale(picks, bondLevel) {
+  if (!isValidPicks(picks, bondLevel)) return 1;
+  let sum = 0;
+  for (const id of /** @type {string[]} */ (picks)) if (PICKABLE[id].kind === 'cheerBoost') sum += PICKABLE[id].perRank ?? 0;
+  return cleanCheerScale(1 + sum);
 }

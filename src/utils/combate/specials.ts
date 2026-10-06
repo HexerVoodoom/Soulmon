@@ -93,11 +93,23 @@ export const CHEER = {
 } as const;
 
 /**
+ * PR7b (§2.25): the most a talent may scale the PvP cheer yield (1.15 = +15% of `pvpEnergyPerDischarge`). Mirrored in
+ * `_combate.js`; `talents.ts` keeps its steps inside it and `duel.test.ts` measures it inside the 5% ruler.
+ */
+export const CHEER_SCALE_MAX = 1.15;
+
+/** Dirty scale (NaN, < 1, > max) never lowers or explodes the yield. */
+export function cleanCheerScale(x: unknown): number {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
+}
+
+/**
  * Turns tap timestamps (seconds) into discharge events for `FightOptions.cheer`.
  * Taps beyond the per-bucket cap are dropped; every `tapsFull` accepted taps fire a discharge.
  */
-export function cheerEvents(taps: readonly number[], side: 0 | 1): { t: number; side: 0 | 1 }[] {
-  const out: { t: number; side: 0 | 1 }[] = [];
+export function cheerEvents(taps: readonly number[], side: 0 | 1, scale = 1): { t: number; side: 0 | 1; scale?: number }[] {
+  const out: { t: number; side: 0 | 1; scale?: number }[] = [];
+  const k = cleanCheerScale(scale);
   const perBucket = new Map<number, number>();
   let acc = 0;
   for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
@@ -106,7 +118,7 @@ export function cheerEvents(taps: readonly number[], side: 0 | 1): { t: number; 
     if (n >= CHEER.tapsCapPerBucket) continue;
     perBucket.set(b, n + 1);
     acc++;
-    if (acc % CHEER.tapsFull === 0) out.push({ t: tap, side });
+    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
   }
   return out;
 }

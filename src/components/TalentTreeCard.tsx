@@ -13,7 +13,7 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { bondLevelFor } from '../utils/bond';
 import {
   TALENT_TREE, ranksOf, talentPointsFor, pointsLeft, canPick, pickTalent, isPickable, respecCost, applyRespec,
-  sanitizeTalentPicks, TALENTOS_PENDENTES_DO_DONO, type TalentNode, type TalentPath,
+  sanitizeTalentPicks, canRespecOne, respecOneCost, applyRespecOne, type TalentNode, type TalentPath,
 } from '../utils/talents';
 import { loadTalentArt } from '../utils/talentArt';
 import { TALENT_COPY } from '../utils/talentCopy';
@@ -83,6 +83,23 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
     setAviso(isPt ? 'Árvore refeita. Os pontos voltaram todos.' : 'Tree rebuilt. All points are back.');
   };
 
+  const umPorVez = canRespecOne(picks);
+  const custoUm = respecOneCost(picks);
+  const tirarUm = (id: string) => {
+    const r = applyRespecOne({ talentPicks: picks, gamePoints: gameState.gamePoints ?? 0 }, id);
+    if (!r.ok) {
+      setAviso(r.reason === 'no-bits'
+        ? (isPt ? `Tirar um ponto custa ${r.cost} Bits. Você pode voltar quando tiver juntado.` : `Taking back one point costs ${r.cost} Bits. Come back whenever you have them.`)
+        : null);
+      return;
+    }
+    setGameState((prev) => {
+      const re = applyRespecOne({ talentPicks: sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)), gamePoints: prev.gamePoints ?? 0 }, id);
+      return re.ok ? { ...prev, talentPicks: re.state.talentPicks, gamePoints: re.state.gamePoints } : prev;
+    });
+    setAviso(isPt ? 'Um ponto voltou para você.' : 'One point is back with you.');
+  };
+
   const estado = picks.length === 0
     ? (isPt ? 'Árvore vazia. Cada Vínculo traz um ponto.' : 'Empty tree. Each Bond brings one point.')
     : livres === 0
@@ -113,6 +130,17 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
             aria-label={isPt ? `Pôr um ponto em ${nome}` : `Put a point into ${nome}`}
           >
             +1
+          </button>
+        )}
+        {pegavel && umPorVez && g > 0 && (
+          <button
+            type="button"
+            className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-ghost"
+            data-talent-respec-one={n.id}
+            onClick={() => tirarUm(n.id)}
+            aria-label={isPt ? `Tirar um ponto de ${nome} (${custoUm} Bits)` : `Take one point back from ${nome} (${custoUm} Bits)`}
+          >
+            −1
           </button>
         )}
       </li>
@@ -170,8 +198,6 @@ export default function TalentTreeCard({ language = 'pt-BR' }: { language?: stri
         )}
         {aviso && <p className="sm2-stats-s" role="status" data-talent-aviso>{aviso}</p>}
       </div>
-      {/* Pendência do dono (linha vermelha): fora da árvore até haver decisão. */}
-      <span hidden data-talentos-pendentes={TALENTOS_PENDENTES_DO_DONO.map((t) => t.id).join(',')} />
     </section>
   );
 }

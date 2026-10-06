@@ -102,3 +102,37 @@ describe('TalentTreeCard', () => {
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/Level|Nível/);
   });
 });
+
+describe('PR7b: os nós redesenhados na tela', () => {
+  it('Mão aberta (torcida) e Balança aparecem como compráveis, sem "em breve", e sem a palavra câmbio', () => {
+    abrir({ totalXP: xpForLevel(10) });
+    for (const id of ['tal-pvp-05', 'tal-com-05']) {
+      const n = document.querySelector(`[data-talent="${id}"]`)!;
+      expect(n.textContent).not.toMatch(/em breve/);
+      expect(n.querySelector('button')).not.toBeNull();
+    }
+    expect(document.querySelector('[data-talent="tal-pvp-05"]')!.textContent).toMatch(/Só vale quando você torce/);
+    expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/câmbio|cambio|exchange/i);
+  });
+
+  it('Balança: sem o nó não há botão de tirar um ponto; com o nó, tira UM ponto cobrando o preço de um ponto', () => {
+    abrir({ totalXP: xpForLevel(6), gamePoints: 100, talentPicks: ['tal-pvp-01', 'tal-pvp-01'] });
+    expect(document.querySelector('[data-talent-respec-one]')).toBeNull();
+    cleanup();
+    abrir({ totalXP: xpForLevel(6), gamePoints: 100, talentPicks: ['tal-pvp-01', 'tal-pvp-01', 'tal-com-05'] });
+    const tirar = document.querySelector<HTMLButtonElement>('[data-talent-respec-one="tal-pvp-01"]')!;
+    expect(tirar.getAttribute('aria-label')).toContain(`${RESPEC_COST_PER_POINT} Bits`);
+    act(() => { fireEvent.click(tirar); });
+    expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-05']);
+    expect(estado().bits).toBe(100 - RESPEC_COST_PER_POINT);
+    expect(document.querySelector('[data-talent-aviso]')!.textContent).toMatch(/voltou para você/);
+  });
+
+  it('Balança sem Bits: nada muda e o aviso é neutro', () => {
+    abrir({ totalXP: xpForLevel(6), gamePoints: 3, talentPicks: ['tal-pvp-01', 'tal-com-05'] });
+    act(() => { fireEvent.click(document.querySelector<HTMLButtonElement>('[data-talent-respec-one="tal-pvp-01"]')!); });
+    expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-05']);
+    expect(estado().bits).toBe(3);
+    expect(document.querySelector('[data-talent-aviso]')!.textContent).toMatch(/Você pode voltar quando tiver juntado/);
+  });
+});

@@ -8,7 +8,7 @@ import { renderHook, cleanup } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { installDomGlobals } from '../test/renderEnv';
 import { GameStateProvider } from './GameStateContext';
-import { useTalentBonus } from './useTalentBonus';
+import { useTalentBonus, usePvpTalents } from './useTalentBonus';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { xpForLevel } from '../utils/bond';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
@@ -38,7 +38,7 @@ describe('useTalentBonus', () => {
     const pve = renderHook(() => useTalentBonus('pve'), { wrapper }).result.current;
     expect(pve).toBeGreaterThan(0.04);
     expect(pve).toBeLessThanOrEqual(COMBAT_BONUS_CAP);
-    expect(renderHook(() => useTalentBonus('pvp'), { wrapper }).result.current).toBe(0);
+    expect(renderHook(() => usePvpTalents(), { wrapper }).result.current.bonus).toEqual({ atk: 0, def: 0, spd: 0 }); // PvE cheio não vale no Duelo
   });
   it('picks acima dos pontos do Vínculo (save hostil) valem 0', () => {
     const wrapper = com({ totalXP: 0, talentPicks: g('tal-pve-01', 4) });

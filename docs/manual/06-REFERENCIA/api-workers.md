@@ -418,7 +418,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 
 ### `functions/api/_talents.js`
 **Dono de:** o ESPELHO de `src/utils/talents.ts` no servidor (PR7): valida `talentPicks` no `save.js` (contra o Vínculo do próprio save) e dá a parcela de talento do canal de bônus do duelo (`_duel.js`). Vetor inválido é descartado.
-**Exports:** `TALENT_POINTS_MAX`, `PICKABLE`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `talentBonus`.
+**Exports:** `TALENT_POINTS_MAX`, `PICKABLE`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `talentBonus`, `talentAttrBonus` e `talentCheerScale` (PR7b: canal de PvP por atributo e rendimento da torcida do Duelo; `_duel.js › duelSide` os lê e devolve `cheerScale`).
 **Régua:** `functions/api/talents.parity.test.js`.
 
 ### `functions/api/_gates.js`

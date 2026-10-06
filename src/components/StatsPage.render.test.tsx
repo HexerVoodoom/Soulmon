@@ -35,13 +35,14 @@ const base = {
 };
 
 describe('StatsPage — canvas §27', () => {
-  it('o vínculo é a PALAVRA (Cinzel 24) com "Level N" e o medidor SIS-07', () => {
+  it('o vínculo é a PALAVRA (Cinzel 24) com "Bond N" e o medidor SIS-07', () => {
     const { container } = renderWithCss(<StatsPage {...base} />);
     const word = container.querySelector('#sm2-bond-title') as HTMLElement;
     expect(word.className).toContain('sm2-stats-word');
     // jsdom não resolve `var()`: a régua é a declaração da classe (`--sm2-text-xl` = 24).
     expect(getComputedStyle(word).fontSize).toBe('var(--sm2-text-xl)');
-    expect(container.textContent).toMatch(/Level \d/);
+    expect(container.textContent).toMatch(/Bond \d/);
+    expect(container.textContent).not.toMatch(/Level \d|Bond level/); // "nível" é vetado (NARRATIVA §12): é Vínculo
     const meter = screen.getByRole('progressbar');
     expect(meter.className).toContain('sm2-kit-meter');
     expect(meter.getAttribute('aria-valuenow')).not.toBeNull();
@@ -93,7 +94,7 @@ describe('StatsPage — canvas §27', () => {
     const n = container.querySelector('.sm2-stats-count .sm2-stats-word') as HTMLElement;
     expect(n.textContent).toBe('0');
     expect(container.textContent).toContain('Just met');
-    expect(container.textContent).toMatch(/Level \d/);
+    expect(container.textContent).toMatch(/Bond \d/);
     expect(container.textContent).not.toMatch(/0 of 36|0\/11|0\/0/);
     // Silhueta e vidro vazio: nenhum PNG no cartão sem sprite próprio (a única imagem é o ícone da passiva).
     expect(Array.from(container.querySelectorAll('img')).filter(i => !i.hasAttribute('data-pixel-icon'))).toHaveLength(0);
@@ -103,7 +104,7 @@ describe('StatsPage — canvas §27', () => {
     const { container } = renderWithCss(<StatsPage {...base} hideMetrics />);
     const texto = container.textContent ?? '';
     expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(texto).not.toMatch(/Level \d/);
+    expect(texto).not.toMatch(/Bond \d/);
     expect(texto).not.toContain('complete days');
     expect(texto).not.toContain('days together');
     expect(texto).not.toContain('of 36');

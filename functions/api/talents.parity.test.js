@@ -4,10 +4,11 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as srv from './_talents.js';
-import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, isPickable } from '../../src/utils/talents';
+import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, isPickable, talentAttrBonus, talentCheerScale } from '../../src/utils/talents';
 import { bondLevelFor, xpForLevel } from '../../src/utils/bond';
 import { onRequest } from './save.js';
-import { duelSide } from './_duel.js';
+import { duelSide, simulateDuel } from './_duel.js';
+import * as srv2 from './_combate.js';
 import { COMBAT_BONUS_CAP } from '../../src/utils/combate/bonus';
 
 describe('o catalogo do servidor e o do app sao o MESMO', () => {
@@ -19,7 +20,7 @@ describe('o catalogo do servidor e o do app sao o MESMO', () => {
       expect(s.maxRank, n.id).toBe(n.maxRank);
       expect(s.kind, n.id).toBe(n.effect.kind);
       expect(s.perRank, n.id).toBe(n.effect.perRank);
-      if (n.effect.kind === 'combatBonus') expect(s.scope, n.id).toBe(n.effect.scope);
+      if (n.effect.kind === 'combatBonus') { expect(s.scope, n.id).toBe(n.effect.scope); expect(s.attr, n.id).toBe(n.effect.attr); }
     }
   });
   it('mesmo teto de pontos e mesmos pontos por Vinculo', () => {
@@ -37,6 +38,9 @@ describe('o catalogo do servidor e o do app sao o MESMO', () => {
       expect(srv.isValidPicks(picks, lvl), JSON.stringify([picks, lvl])).toBe(isValidPicks(picks, lvl));
       expect(srv.sanitizeTalentPicks(picks, lvl)).toEqual(sanitizeTalentPicks(picks, lvl));
       for (const scope of ['pvp', 'pve']) expect(srv.talentBonus(picks, lvl, scope)).toBeCloseTo(talentBonus(picks, lvl, scope), 12);
+      const sa = srv.talentAttrBonus(picks, lvl), aa = talentAttrBonus(picks, lvl);
+      for (const k of ['atk', 'def', 'spd']) expect(sa[k], k).toBeCloseTo(aa[k], 12);
+      expect(srv.talentCheerScale(picks, lvl)).toBeCloseTo(talentCheerScale(picks, lvl), 12);
     }
   });
 });
@@ -76,9 +80,13 @@ describe('save.js valida talentPicks contra o Vinculo do proprio save', () => {
   });
   it('id inventado, no sem efeito ligado, grau a mais, tipo errado: descartado', async () => {
     const xp = xpForLevel(30);
-    for (const picks of [['tal-pvp-05'], ['tal-com-05'], ['tal-pvp-04'], ['x'], GRAUS('tal-pve-01', 5), [1], 'tal-pvp-01', { a: 1 }, null]) {
+    for (const picks of [['tal-pvp-04'], ['tal-pvp-05', 'tal-pvp-05', 'tal-pvp-05', 'tal-pvp-05'], ['tal-com-05', 'tal-com-05'], ['x'], GRAUS('tal-pve-01', 5), [1], 'tal-pvp-01', { a: 1 }, null]) {
       expect((await salva({ totalXP: xp, talentPicks: picks })).talentPicks, JSON.stringify(picks)).toEqual([]);
     }
+  });
+  it('PR7b: os nos redesenhados (torcida e balanca) sao validos, dentro do grau maximo', async () => {
+    const out = await salva({ totalXP: xpForLevel(20), talentPicks: [...GRAUS('tal-pvp-05', 3), 'tal-com-05'] });
+    expect(out.talentPicks).toEqual(['tal-pvp-05', 'tal-pvp-05', 'tal-pvp-05', 'tal-com-05']);
   });
   it('save sem o campo continua sem o campo (a contagem de campos nao muda no servidor)', async () => {
     expect('talentPicks' in (await salva({ totalXP: 5 }))).toBe(false);
@@ -89,21 +97,51 @@ describe('o duelo usa o talento pelo canal de bonus, DENTRO do teto', () => {
   const base = { evolutionStage: 'rookie', perfectDays: 3, powerPoints: 2, harmonyPoints: 2, benevolencePoints: 2 };
   const cheio = [...GRAUS('tal-pvp-01', 4), ...GRAUS('tal-pvp-02', 4), ...GRAUS('tal-pvp-03', 4)];
 
+  const b0 = duelSide(base).combatant;
+  /** O ganho de cada canal no combatente (PR7b): ATK = bonus; DEF/SPD entram no stat (exato: (1 + stat/K) * (1 + b)). */
+  const canais = (c) => ({ atk: c.bonus, def: (1 + c.def / 8) / (1 + b0.def / 8) - 1, spd: (1 + c.spd / 8) / (1 + b0.spd / 8) - 1 });
+  const soma = (c) => { const x = canais(c); return x.atk + x.def + x.spd; };
+
   it('sem talento o bonus e 0 (como antes do PR7)', () => {
     expect(duelSide(base).combatant.bonus).toBe(0);
-    expect(duelSide({ ...base, totalXP: xpForLevel(20) }).combatant.bonus).toBe(0);
+    expect(soma(duelSide({ ...base, totalXP: xpForLevel(20) }).combatant)).toBeCloseTo(0, 12);
+    expect(duelSide(base).cheerScale).toBe(1);
   });
-  it('PvP cheio no Vinculo certo vale o valor real, <= 5%', () => {
-    const b = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: cheio }).combatant.bonus;
-    expect(b).toBeGreaterThan(0.04);
-    expect(b).toBeLessThanOrEqual(COMBAT_BONUS_CAP);
+  it('PvP cheio no Vinculo certo: cada no no SEU canal (ATK/DEF/SPD distintos) e a SOMA <= 5%', () => {
+    const c = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: cheio }).combatant;
+    const x = canais(c);
+    for (const k of ['atk', 'def', 'spd']) expect(x[k], k).toBeCloseTo(0.016, 9);
+    expect(soma(c)).toBeGreaterThan(0.04);
+    expect(soma(c)).toBeLessThanOrEqual(COMBAT_BONUS_CAP + 1e-9);
+    const so = (id) => canais(duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: GRAUS(id, 4) }).combatant);
+    expect(so('tal-pvp-01').def).toBeCloseTo(0, 12);
+    expect(so('tal-pvp-02').atk).toBe(0);
+    expect(so('tal-pvp-03').def).toBeCloseTo(0, 12);
+    expect(so('tal-pvp-03').spd).toBeCloseTo(0.016, 9);
+  });
+  it('o teto e UM so: com tudo no maximo e a soma dos canais corta nos 5%, formato mantido', () => {
+    const sourceTalent = { atk: 0.2, def: 0.1, spd: 0.1 };
+    const c = srv2.combinedAttrBonus({ talent: sourceTalent, equipment: { atk: 0.2 } });
+    expect(c.atk + c.def + c.spd).toBeCloseTo(COMBAT_BONUS_CAP, 12);
   });
   it('talento de PvE nao conta no duelo', () => {
-    const b = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: [...GRAUS('tal-pve-01', 4)] }).combatant.bonus;
-    expect(b).toBe(0);
+    const c = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: [...GRAUS('tal-pve-01', 4)] }).combatant;
+    expect(soma(c)).toBeCloseTo(0, 12);
   });
   it('picks forjados (acima dos pontos do Vinculo do save) valem 0, mesmo que o save.js nao tenha passado por eles', () => {
-    expect(duelSide({ ...base, totalXP: 0, talentPicks: cheio }).combatant.bonus).toBe(0);
+    expect(soma(duelSide({ ...base, totalXP: 0, talentPicks: cheio }).combatant)).toBeCloseTo(0, 12);
+    expect(duelSide({ ...base, totalXP: 0, talentPicks: GRAUS('tal-pvp-05', 3) }).cheerScale).toBe(1);
     expect(bondLevelFor(0)).toBe(1);
+  });
+  it('a torcida (tal-pvp-05) vira cheerScale do lado, limitada pelo teto do nucleo; vale so quando ha toques', () => {
+    const s = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: GRAUS('tal-pvp-05', 3) });
+    expect(s.cheerScale).toBeCloseTo(1.15, 12);
+    expect(s.cheerScale).toBeLessThanOrEqual(srv2.CHEER_SCALE_MAX);
+    const lado = { combatant: s.combatant, special: s.special };
+    const sem = simulateDuel({ me: lado, opp: lado, seed: 7, taps: [] });
+    expect(simulateDuel({ me: { ...lado, cheerScale: s.cheerScale }, opp: lado, seed: 7, taps: [] })).toEqual(sem);
+    const t = Array(20).fill(16);
+    expect(simulateDuel({ me: { ...lado, cheerScale: s.cheerScale }, opp: lado, seed: 7, taps: t }).timeOpp)
+      .toBeLessThanOrEqual(simulateDuel({ me: lado, opp: lado, seed: 7, taps: t }).timeOpp);
   });
 });

@@ -15,18 +15,28 @@
  *  · Vetor inválido é DESCARTADO (volta a `[]`), nunca "corrigido": quem forja não escolhe o que sobra.
  *  · Os talentos sobrevivem à degeneração do Soulmon (o Vínculo nunca desce).
  *
- * FORA, à espera do dono (linha vermelha, NÃO implementados): `tal-pvp-05` (torcida +% / câmbio) e
- * `tal-com-05` (conveniência de câmbio). Ver `TALENTOS_PENDENTES_DO_DONO`.
+ * PR7b (§2.25, decisões do dono): o canal de PvP é POR ATRIBUTO (`attr`: ATK/DEF/SPD distintos), com o MESMO teto único
+ * de 5% somando os três canais e as quatro fontes (`combinedAttrBonus`). `tal-pvp-05` e `tal-com-05` foram REDESENHADOS dentro
+ * das linhas vermelhas: o primeiro é rendimento da TORCIDA no Duelo (ação do jogador, só o teu lado, dentro de
+ * `CHEER_SCALE_MAX`), o segundo é refazer UM ponto por vez (moeda GANHA, conveniência, nada de combate).
  *
  * Módulo PURO: sem React, sem relógio, sem localStorage. Os TEXTOS dos nós moram em `talentCopy.ts` (só a tela
  * os lê, atrás do `lazy`): este arquivo entra no chunk de entrada pelo `useTalentBonus`, e o orçamento de bytes pesa.
  */
 
+import { cleanCheerScale } from './combate/specials';
+import type { AttrBonus } from './combate/bonus';
+
 export type TalentPath = 'pvp' | 'pve' | 'comercio';
+export type AttrKey = 'atk' | 'def' | 'spd';
 
 export type TalentEffect =
   /** Soma `perRank × grau` ao canal de bônus de combate do `scope`. Só PvP no Duelo; só PvE nas lutas da fenda. */
-  | { readonly kind: 'combatBonus'; readonly scope: 'pvp' | 'pve'; readonly perRank: number }
+  | { readonly kind: 'combatBonus'; readonly scope: 'pvp' | 'pve'; readonly perRank: number; /** PvP: o canal (ATK/DEF/SPD). */ readonly attr?: AttrKey }
+  /** Soma `perRank × grau` ao rendimento da torcida do Duelo (1 + soma, até `CHEER_SCALE_MAX`). Só o seu lado, só quando você torce. */
+  | { readonly kind: 'cheerBoost'; readonly perRank: number }
+  /** Comércio: refazer UM ponto (o que você escolher) em vez da árvore toda. Só moeda GANHA (Bits). */
+  | { readonly kind: 'respecOne' }
   /** Reduz o custo do respec em `perRank × grau` (Comércio: só moeda). */
   | { readonly kind: 'respecDiscount'; readonly perRank: number }
   /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. */
@@ -48,14 +58,17 @@ export const TALENT_POINTS_MAX = 20;
 export const PVP_STEP = 0.004;
 export const PVE_STEP = 0.006;
 export const RESPEC_STEP = 0.1;
+/** Rendimento da torcida no Duelo por grau de `tal-pvp-05` (3 graus = +15% = `CHEER_SCALE_MAX`). */
+export const CHEER_STEP = 0.05;
 
 
 export const TALENT_TREE: readonly TalentNode[] = [
   // ── PvP ──────────────────────────────────────────────────────────────────
-  { id: 'tal-pvp-01', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP } },
-  { id: 'tal-pvp-02', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP } },
-  { id: 'tal-pvp-03', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP } },
+  { id: 'tal-pvp-01', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'atk' } },
+  { id: 'tal-pvp-02', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'def' } },
+  { id: 'tal-pvp-03', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'spd' } },
   { id: 'tal-pvp-04', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pvp-05', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'cheerBoost', perRank: CHEER_STEP } },
   { id: 'tal-pvp-06', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
   { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
   // ── PvE ──────────────────────────────────────────────────────────────────
@@ -71,14 +84,9 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' } },
   { id: 'tal-com-03', path: 'comercio', tier: 1, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP } },
   { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-05', path: 'comercio', tier: 2, maxRank: 1, effect: { kind: 'respecOne' } },
   { id: 'tal-com-06', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
   { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
-];
-
-/** Os dois talentos que tocam linha vermelha. NÃO existem na árvore até o dono decidir. */
-export const TALENTOS_PENDENTES_DO_DONO: readonly { id: string; motivo: string }[] = [
-  { id: 'tal-pvp-05', motivo: 'câmbio pago / torcida fora da régua: encosta em "Créditos não compram atributo"' },
-  { id: 'tal-com-05', motivo: 'torcida fora da régua de ±25%: encosta no teto de +25% dos Créditos' },
 ];
 
 export const TALENT_BY_ID: ReadonlyMap<string, TalentNode> = new Map(TALENT_TREE.map((n) => [n.id, n]));
@@ -167,6 +175,32 @@ export function talentBonus(picks: unknown, bondLevel: unknown, scope: 'pvp' | '
   return sum;
 }
 
+/**
+ * PvP por ATRIBUTO (PR7b): a parcela do talento em cada canal (ATK = dano dado, DEF = dano recebido, SPD = ritmo). FRAÇÕES.
+ * Inválido para o Vínculo vale 0 nos três. Quem soma com as outras fontes e corta nos 5% (a SOMA dos três canais) é
+ * `combate/bonus.ts › combinedAttrBonus`.
+ */
+export function talentAttrBonus(picks: unknown, bondLevel: unknown): AttrBonus {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!isValidPicks(picks, bondLevel)) return out;
+  for (const [id, rank] of ranksOf(picks)) {
+    const e = TALENT_BY_ID.get(id)!.effect;
+    if (e.kind === 'combatBonus' && e.scope === 'pvp' && e.attr) out[e.attr] += e.perRank * rank;
+  }
+  return out;
+}
+
+/** O multiplicador do rendimento da torcida no Duelo (1 sem o nó; até `CHEER_SCALE_MAX`). Inválido = 1. */
+export function talentCheerScale(picks: unknown, bondLevel: unknown): number {
+  if (!isValidPicks(picks, bondLevel)) return 1;
+  let sum = 0;
+  for (const [id, rank] of ranksOf(picks)) {
+    const e = TALENT_BY_ID.get(id)!.effect;
+    if (e.kind === 'cheerBoost') sum += e.perRank * rank;
+  }
+  return cleanCheerScale(1 + sum);
+}
+
 // ── Respec: SEMPRE pago, em moeda GANHA (Bits) ──────────────────────────────
 
 /** Bits por ponto gasto (default da squad; o dono não fixou o valor). */
@@ -203,4 +237,35 @@ export function applyRespec<T extends RespecState>(state: T): RespecResult<T> {
   const bits = typeof state.gamePoints === 'number' && Number.isFinite(state.gamePoints) ? state.gamePoints : 0;
   if (bits < cost) return { ok: false, reason: 'no-bits', cost };
   return { ok: true, cost, state: { ...state, talentPicks: [], gamePoints: bits - cost } };
+}
+
+// ── Respec de UM ponto (`tal-com-05`, Comércio): conveniência paga em moeda GANHA ───────────────
+
+/** O jogador tem o nó que deixa refazer um ponto só? */
+export function canRespecOne(picks: readonly string[]): boolean {
+  return picks.includes('tal-com-05');
+}
+
+/** Bits para refazer UM ponto: o preço de um ponto do respec, com a mesma ampulheta. Nunca 0 (e nunca de graça). */
+export function respecOneCost(picks: readonly string[]): number {
+  return Math.max(1, Math.ceil(RESPEC_COST_PER_POINT * (1 - respecDiscount(picks))));
+}
+
+export type RespecOneResult<T> =
+  | { ok: true; state: T; cost: number }
+  | { ok: false; reason: 'locked' | 'not-picked' | 'no-bits'; cost: number };
+
+/**
+ * Tira o ÚLTIMO grau de `id` pagando `respecOneCost` em Bits. Sem o nó `tal-com-05`, sem o grau ou sem Bits suficientes nada
+ * muda. O custo vem dos picks ANTES da retirada (a ampulheta vale até o fim da conta). Bits nunca ficam negativos.
+ */
+export function applyRespecOne<T extends RespecState>(state: T, id: string): RespecOneResult<T> {
+  const picks = Array.isArray(state.talentPicks) ? state.talentPicks : [];
+  const cost = respecOneCost(picks);
+  if (!canRespecOne(picks)) return { ok: false, reason: 'locked', cost };
+  const at = picks.lastIndexOf(id);
+  if (at < 0) return { ok: false, reason: 'not-picked', cost };
+  const bits = typeof state.gamePoints === 'number' && Number.isFinite(state.gamePoints) ? state.gamePoints : 0;
+  if (bits < cost) return { ok: false, reason: 'no-bits', cost };
+  return { ok: true, cost, state: { ...state, talentPicks: picks.filter((_, k) => k !== at), gamePoints: bits - cost } };
 }

@@ -1911,6 +1911,15 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
 11. **ROLE_SHAPE fica**, limitado a ±25%.
 12. **Classificação Livre, com acesso provável por menores: o ECA Digital (Lei 15.211/2025) é tratado como aplicável.** A análise jurídica foi feita pelos próprios agentes (alpha-compliance, com fontes primárias). **É análise interna por IA, NÃO é parecer de advogado.** Não bloqueia o PR8, porque o desenho não tem RNG pago nem Créditos→combate.
 
+### 24.3 PR7b — canal de PvP por atributo, dois talentos redesenhados, "Vínculo N" (06/10/2026, decisões do dono, contexto §2.25)
+- **Canal de PvP por atributo.** `tal-pvp-01/02/03` caem em ATK (dano dado), DEF (dano recebido) e SPD (ritmo). O teto continua UM: a SOMA dos três canais, de todas as fontes, nunca passa de 5% (`combinedAttrBonus`; acima disso os três escalam juntos, o formato da build fica). DEF e SPD entram no stat de forma exata ((1 + stat/K)(1 + b)), então o motor não mudou. O servidor (`_duel.js`) recalcula tudo do save. Medido (razão das médias, HP×3): cada canal no teto vale 5,03% (ATK), 4,89% (DEF), 5,01% (SPD): nenhum atributo é atalho.
+  - Perdeu: três nós dando o mesmo número num canal único (a escolha real era entre caminhos, não entre nós); teto de 5% POR canal (daria 15% no total).
+- **`tal-pvp-05` (Mão aberta) redesenhado:** +5% por grau (até +15%, `CHEER_SCALE_MAX`) no rendimento da torcida do Duelo. Ação do jogador (só rende quando ele toca), só o seu lado, só moeda de jogo, nada de câmbio. Medido no teto de torcida: o inimigo cai 0–1,0% mais cedo e a vitória sobe 0–3,6pp contra o espelho (≤ o 5% da régua).
+  - Perdeu: "câmbio pago / torcida fora da régua" (linha vermelha: dinheiro real nunca vira vantagem).
+- **`tal-com-05` (Balança) redesenhado:** refazer UM ponto à escolha, pelo preço de um ponto do respec (Bits ganhos, com a ampulheta). Só preço e conveniência.
+  - Perdeu: "conveniência de câmbio" (encostava no teto de +25% dos Créditos).
+- **StatsPage:** "Nível de vínculo / Level N" virou "Vínculo N / Bond N" (NARRATIVA §12).
+
 ### 24.2 PR7 — Vínculo como level do usuário: talentos e portões (06/10/2026)
 
 O que o PR7 implementou das decisões acima, e o que perdeu a disputa.
@@ -1920,5 +1929,5 @@ O que o PR7 implementou das decisões acima, e o que perdeu a disputa.
 - **§6 do `bond.ts` reescrito** ("escada de gates é grind"): uma tabela única `src/utils/gates.ts` (espelho `functions/api/_gates.js`, `gates.parity.test.js`) com Arena/PvP, Torneio, andares altos da Masmorra (a partir do 4; o andar 1 segue livre) e Renascimento. Valores são DEFAULTS da squad, o dono ainda os confirma.
   - Perdeu: gate único (Vínculo 5) e o gate de Masmorra por "sem gate de entrada".
 - **Renascimento = conta paga + Vínculo** (`rebirthGate.ts`, recusa `low-bond`): o dinheiro não compra Vínculo.
-- **Talentos** (`src/utils/talents.ts`, espelho `_talents.js`): persistido só `talentPicks: string[]` (um id por grau); pontos = Vínculo até 20; 3 caminhos; a árvore nunca fecha; vetor inválido é descartado inteiro no `save.js` e vale 0 no duelo; entra pelo canal `combinedBonus` (teto único de 5%). Respec sempre pago em Bits. Os dois talentos que tocam linha vermelha (`tal-pvp-05` câmbio/torcida, `tal-com-05`) NÃO foram implementados: pendência do dono.
+- **Talentos** (`src/utils/talents.ts`, espelho `_talents.js`): persistido só `talentPicks: string[]` (um id por grau); pontos = Vínculo até 20; 3 caminhos; a árvore nunca fecha; vetor inválido é descartado inteiro no `save.js` e vale 0 no duelo; entra pelo canal `combinedBonus` (teto único de 5%). Respec sempre pago em Bits. Os dois talentos que tocavam linha vermelha (`tal-pvp-05`, `tal-com-05`) foram redesenhados no PR7b (§24.3).
   - Perderam: talento só PvE com PvP normalizado; talento sem número.
