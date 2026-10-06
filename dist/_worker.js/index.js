@@ -3831,6 +3831,7 @@ var DUEL_PENDING_MS = 5 * 60 * 1e3;
 var DUEL_TAPS_FULL = CHEER.tapsFull;
 var DUEL_TAPS_CAP = CHEER.tapsCapPerBucket;
 var DUEL_CHEER_BUCKETS = Math.ceil(60 / CHEER.bucketSeconds);
+var DUEL_SAVE_MAX_CHARS = 1e6;
 var DUEL_DAY_MS = 864e5;
 function sanitizeTaps(raw) {
   const arr = Array.isArray(raw) ? raw : [];
@@ -3853,7 +3854,7 @@ function duelCheerEvents(rawTaps, side = 0, scale = 1) {
 }
 __name(duelCheerEvents, "duelCheerEvents");
 function maxLevelFor(firstSeen, now) {
-  if (typeof firstSeen !== "number" || !Number.isFinite(firstSeen) || firstSeen <= 0) return MAX_LEVEL;
+  if (typeof firstSeen !== "number" || !Number.isFinite(firstSeen) || firstSeen <= 0) return 1;
   return 1 + Math.max(0, Math.floor((now - firstSeen) / DUEL_DAY_MS));
 }
 __name(maxLevelFor, "maxLevelFor");
@@ -3928,6 +3929,30 @@ function simulateDuel({ me, opp, seed, taps }) {
 }
 __name(simulateDuel, "simulateDuel");
 
+// api/_honra.js
+var HONRA_PONTOS_VITORIA = 20;
+var HONRA_PONTOS_DEFESA = 10;
+var HONRA_LEVEL_CARENCIA = 3;
+var HONRA_LEVEL_QUEDA = 6;
+var HONRA_FATOR_POR_REPETICAO = [1, 0.5, 0.25, 0];
+function fatorPorLevel(levelVencedor, levelPerdedor) {
+  if (!Number.isFinite(levelVencedor) || !Number.isFinite(levelPerdedor)) return 1;
+  const dif = levelVencedor - levelPerdedor;
+  if (dif <= HONRA_LEVEL_CARENCIA) return 1;
+  return Math.max(0, 1 - (dif - HONRA_LEVEL_CARENCIA) / HONRA_LEVEL_QUEDA);
+}
+__name(fatorPorLevel, "fatorPorLevel");
+function fatorPorRepeticao(vitoriasAntes) {
+  const n = Number.isInteger(vitoriasAntes) && vitoriasAntes > 0 ? vitoriasAntes : 0;
+  return HONRA_FATOR_POR_REPETICAO[Math.min(n, HONRA_FATOR_POR_REPETICAO.length - 1)];
+}
+__name(fatorPorRepeticao, "fatorPorRepeticao");
+function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
+  const factor = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor)) * fatorPorRepeticao(vitoriasAntes);
+  return { gain: Math.round(base * factor), factor };
+}
+__name(ganhoDePontos, "ganhoDePontos");
+
 // api/community.js
 var CORS5 = {
   "Access-Control-Allow-Origin": "*",
@@ -3937,9 +3962,32 @@ var CORS5 = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var VALID_ID3 = /^[a-zA-Z0-9_-]{8,64}$/;
+var attrFinito = /* @__PURE__ */ __name((v) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}, "attrFinito");
 var MATCHES_PER_DAY = 5;
 var CLOSED_SEASON_TTL = 86400 * 400;
 var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
+var duelLocks = /* @__PURE__ */ new Map();
+async function withDuelLock(key, fn) {
+  const prev = duelLocks.get(key) || Promise.resolve();
+  let release = /* @__PURE__ */ __name(() => {
+  }, "release");
+  const gate = new Promise((r) => {
+    release = /* @__PURE__ */ __name(() => r(void 0), "release");
+  });
+  const tail = prev.then(() => gate);
+  duelLocks.set(key, tail);
+  await prev;
+  try {
+    return await fn();
+  } finally {
+    release();
+    if (duelLocks.get(key) === tail) duelLocks.delete(key);
+  }
+}
+__name(withDuelLock, "withDuelLock");
 var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
 var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
@@ -4070,37 +4118,52 @@ async function handleCommunity({ request, env }) {
     if (auth.ok) return null;
     return json3(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }, "denyUnlessOwner");
-  const settleMatch = /* @__PURE__ */ __name(async ({ id: id2, oppSave, me, opp, myRank, outcome }) => {
+  const settleMatch = /* @__PURE__ */ __name(async ({ id: id2, oppSave, me, opp, myRank, outcome, sides }) => {
     const season = currentSeason();
+    const nada = { gain: 0, factor: 1 };
     if (outcome === "draw") {
       await putRank(env, season, id2, myRank);
-      return;
+      return nada;
     }
     const won = outcome === "win";
-    myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
+    const lvMe = sides?.me?.combatant?.level, lvOpp = sides?.opp?.combatant?.level;
+    const pairs = myRank.pairs && typeof myRank.pairs === "object" ? myRank.pairs : myRank.pairs = {};
+    const par = oppSave ? pairs[oppSave] && typeof pairs[oppSave] === "object" ? pairs[oppSave] : pairs[oppSave] = { w: 0, l: 0 } : { w: 0, l: 0 };
+    let mine = nada;
+    if (won) {
+      mine = ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, par.w);
+      par.w += 1;
+    }
+    let theirs = nada;
+    if (!won && oppSave && opp) {
+      theirs = ganhoDePontos(HONRA_PONTOS_DEFESA, lvOpp, lvMe, par.l);
+      par.l += 1;
+    }
+    myRank.points = Math.max(0, myRank.points + (won ? mine.gain : -8));
     if (won) myRank.wins += 1;
     else myRank.losses += 1;
     await putRank(env, season, id2, myRank);
-    if (!oppSave || !opp) return;
+    if (!oppSave || !opp) return mine;
     const oppRank = await getRank(env, season, oppSave);
-    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
+    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : theirs.gain));
     if (won) oppRank.losses += 1;
     else oppRank.wins += 1;
     await putRank(env, season, oppSave, oppRank);
     if (won) {
-      me.lifetimePoints = (me.lifetimePoints || 0) + 20;
+      me.lifetimePoints = (me.lifetimePoints || 0) + mine.gain;
       await putProfile(env, id2, me);
     } else {
-      opp.lifetimePoints = (opp.lifetimePoints || 0) + 10;
+      opp.lifetimePoints = (opp.lifetimePoints || 0) + theirs.gain;
       await putProfile(env, oppSave, opp);
     }
+    return mine;
   }, "settleMatch");
   const forfeitPending = /* @__PURE__ */ __name(async ({ id: id2, me, myRank }) => {
     const pend = myRank.pending;
     if (!pend) return false;
     myRank.pending = null;
     const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
-    await settleMatch({ id: id2, oppSave: pend.oppSave, me, opp, myRank, outcome: "loss" });
+    await settleMatch({ id: id2, oppSave: pend.oppSave, me, opp, myRank, outcome: "loss", sides: pend.sides });
     return true;
   }, "forfeitPending");
   const loadDuelSide = /* @__PURE__ */ __name(async (saveId) => {
@@ -4108,6 +4171,10 @@ async function handleCommunity({ request, env }) {
     try {
       const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
       if (!value) return null;
+      if (typeof value !== "string" || value.length > DUEL_SAVE_MAX_CHARS) {
+        console.warn("community: save grande demais para ser oponente", { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
+        return null;
+      }
       const state = JSON.parse(value);
       if (!state || typeof state !== "object" || Array.isArray(state)) return null;
       return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
@@ -4154,7 +4221,7 @@ async function handleCommunity({ request, env }) {
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
-      attrs: body.attrs && typeof body.attrs === "object" ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 } : prev.attrs || { power: 0, harmony: 0, benevolence: 0 },
+      attrs: body.attrs && typeof body.attrs === "object" ? { power: attrFinito(body.attrs.power), harmony: attrFinito(body.attrs.harmony), benevolence: attrFinito(body.attrs.benevolence) } : prev.attrs || { power: 0, harmony: 0, benevolence: 0 },
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : prev.tasksDone || 0,
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
@@ -4262,13 +4329,20 @@ async function handleCommunity({ request, env }) {
     if (myRank.day !== today2()) {
       myRank.day = today2();
       myRank.matchesToday = 0;
+      myRank.pairs = {};
     }
     return { opponentId, oppSave, me, opp, myRank };
   }, "matchContext");
-  if (action === "duelStart" && method === "POST") {
+  if (action === "duelStart" && method === "POST") return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, myRank } = ctx;
+    const aberto = myRank.pending;
+    if (aberto && aberto.sides?.me && aberto.sides?.opp && Date.now() - (aberto.at || 0) <= DUEL_PENDING_MS) {
+      const left = Math.max(0, MATCHES_PER_DAY - myRank.matchesToday);
+      if (aberto.opp === opponentId) return json3({ seed: aberto.seed, me: aberto.sides.me, opp: aberto.sides.opp, matchesLeft: left });
+      return json3({ error: "duel open", matchesLeft: left, retryAfter: Math.max(1, Math.ceil((DUEL_PENDING_MS - (Date.now() - (aberto.at || 0))) / 1e3)) }, 409);
+    }
     const sides = await loadDuelSides(id, oppSave);
     if (sides.res) return sides.res;
     await forfeitPending({ id, me, myRank });
@@ -4286,8 +4360,8 @@ async function handleCommunity({ request, env }) {
       opp: sides.opp,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday
     });
-  }
-  if (action === "match" && method === "POST") {
+  });
+  if (action === "match" && method === "POST") return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
@@ -4297,7 +4371,7 @@ async function handleCommunity({ request, env }) {
     const open = myRank.pending && myRank.pending.opp === opponentId ? myRank.pending : null;
     if (open && (body.forfeit === true || Date.now() - (open.at || 0) > DUEL_PENDING_MS)) {
       myRank.pending = null;
-      await settleMatch({ id, oppSave, me, opp, myRank, outcome: "loss" });
+      await settleMatch({ id, oppSave, me, opp, myRank, outcome: "loss", sides: open.sides });
       return json3({
         won: false,
         draw: false,
@@ -4334,7 +4408,7 @@ async function handleCommunity({ request, env }) {
     }
     const duel = simulateDuel({ me: sides.me, opp: sides.opp, seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === "me" ? "win" : duel.winner === "opp" ? "loss" : "draw";
-    await settleMatch({ id, oppSave, me, opp, myRank, outcome });
+    const settled = await settleMatch({ id, oppSave, me, opp, myRank, outcome, sides });
     return json3({
       won: outcome === "win",
       draw: outcome === "draw",
@@ -4342,11 +4416,14 @@ async function handleCommunity({ request, env }) {
       myScore: Math.round(100 * duel.hpMe),
       oppScore: Math.round(100 * duel.hpOpp),
       points: myRank.points,
+      // PR13: o que a vitoria rendeu de fato e o fator (0..1) que o app aplica a Honra; derrota/empate = 0 e 1.
+      gain: settled.gain,
+      honorFactor: outcome === "win" ? settled.factor : 1,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
       duel: { events: duel.events, me: sides.me, opp: sides.opp }
     });
-  }
+  });
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
     const season = url.searchParams.get("season") || currentSeason();
     if (!/^\d{4}-\d{2}$/.test(season)) return json3({ error: "invalid season" }, 400);
@@ -4614,6 +4691,9 @@ async function onRequestPost3({ request, env }) {
     const r = state?.rebirth;
     const renasceu = !!r && typeof r === "object" && typeof r.at === "string" && r.at.length > 0 && typeof r.fromStage === "string" && r.fromStage.length > 0;
     if (!renasceu) return json4({ ok: false, reason: "rebirth-not-found" }, 409);
+    const tierAtual = admin ? "paid" : publicView(await readEntitlement(env, saveId)).tier;
+    if (tierAtual !== "paid") return json4({ ok: false, reason: "not-paid" }, 403);
+    if (!gateFor("renascimento", bondLevelFor(state?.totalXP)).open) return json4({ ok: false, reason: "low-bond" }, 403);
     const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
     return json4({ ok: true, jaFeito, ...view(ent) });
   }
@@ -5505,6 +5585,9 @@ function clampOwnedFrames(raw) {
 }
 __name(clampOwnedFrames, "clampOwnedFrames");
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
+var MAX_BODY_BYTES2 = MAX_STATE_BYTES + 64 * 1024;
+var SAVE_WRITE_RATE_IP = { limit: 120, windowMs: 6e4 };
+var SAVE_WRITE_RATE_ACCOUNT = { limit: 30, windowMs: 6e4 };
 var SAVE_TTL_SECONDS = 86400 * 365;
 function firstSeenMeta(metadata) {
   const f = metadata && typeof metadata === "object" ? Number(
@@ -5521,7 +5604,26 @@ async function onRequestOptions11() {
 __name(onRequestOptions11, "onRequestOptions");
 async function onRequest5({ request, env }) {
   const url = new URL(request.url);
-  const body = request.method === "POST" ? await request.json().catch(() => null) : null;
+  let body = null;
+  if (request.method === "POST") {
+    const ipGate = takeToken("save-write-ip", clientKey(request), SAVE_WRITE_RATE_IP);
+    if (!ipGate.ok) return tooManyRequests(ipGate.retryAfter, CORS11);
+    const declared = Number(request.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > MAX_BODY_BYTES2) {
+      console.warn("save: POST recusado antes de ler, corpo acima do teto", { bytes: declared });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
+    }
+    const text = await request.text().catch(() => "");
+    if (text.length > MAX_BODY_BYTES2) {
+      console.warn("save: POST recusado antes do parse, corpo acima do teto", { chars: text.length });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
+    }
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = null;
+    }
+  }
   const queryId = url.searchParams.get("id");
   const bodyId = typeof body?.id === "string" ? body.id : null;
   if (queryId && bodyId && queryId !== bodyId) {
@@ -5574,6 +5676,8 @@ async function onRequest5({ request, env }) {
     return Response.json({ found: true, state }, { headers: CORS11 });
   }
   if (request.method === "POST") {
+    const acctGate = takeToken("save-write", saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS11);
     const incoming = body?.state;
     if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
       console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveId, tipo: Array.isArray(incoming) ? "array" : typeof incoming });
@@ -5592,8 +5696,9 @@ async function onRequest5({ request, env }) {
       else delete state.bitsOrigin;
     }
     const serialized = JSON.stringify(state);
-    if (serialized.length > MAX_STATE_BYTES) {
-      console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
+    const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
+    if (bytes > MAX_STATE_BYTES) {
+      console.warn("save: POST recusado, state acima do teto", { saveId, bytes });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
     }
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
@@ -6009,7 +6114,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-FOm5j7/functionsRoutes-0.6073848025801881.mjs
+// ../.wrangler/tmp/pages-aBQps2/functionsRoutes-0.2772600607387553.mjs
 var routes = [
   {
     routePath: "/api/account",
