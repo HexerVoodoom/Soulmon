@@ -2896,3 +2896,17 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/components/nav/AreaScene.tsx`.
 **Régua:** `src/utils/areaLotGeometry.contract.test.ts` (mede o alfa dos PNG e reprova par de lotes cujos alvos se encostem), `src/components/nav/areaLotNpc.contract.test.tsx` (20 aberturas por lote, sempre o mesmo busto).
 **Regra de negócio:** nenhuma — é geometria de toque. Se a arte de um lote trocar, o teste informa os números novos de `LOT_ART_BOUNDS`.
+
+### `src/utils/talents.ts`
+**Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor inválido é DESCARTADO inteiro, nunca corrigido. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. `tal-pvp-05` e `tal-com-05` (linha vermelha) não existem na árvore: pendência do dono.
+**Exports:** `TALENT_TREE`, `TALENT_BY_ID`, `TALENT_POINTS_MAX`, `TALENTOS_PENDENTES_DO_DONO`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `canPick`, `pickTalent`, `pointsLeft`, `talentBonus(picks, bondLevel, scope)`, `respecCost`, `respecDiscount`, `applyRespec`, `pickableTreeCost`, `fullTreeCost`.
+**Régua:** `src/utils/talents.test.ts` (régua de teto 5% por razão das médias), `functions/api/talents.parity.test.js`, bloco "PR7" de `src/copy.semFomo.contract.test.ts`.
+
+### `src/utils/gates.ts`
+**Dono de:** a tabela ÚNICA de portões do Vínculo (Arena/PvP, Torneio, andares altos da Masmorra, Renascimento). Nenhum outro arquivo compara `bondLevel >= N` (teste de grep em `gates.test.ts`). O Vínculo nunca é pago.
+**Exports:** `GATES`, `GateFeature`, `gateFor`, `masmorraFloorOpen`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateLine` (copy neutra, `copy.semFomo`).
+**Régua:** `src/utils/gates.test.ts`, `functions/api/gates.parity.test.js`.
+
+### `src/utils/talentArt.ts`
+**Dono de:** o carregamento sob demanda (`import.meta.glob` lazy) da arte da árvore de talentos; peça ausente devolve `null` e a tela cai no fallback de texto.
+**Exports:** `loadTalentArt`, `talentArtNames`.

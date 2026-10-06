@@ -123,6 +123,7 @@ import {
 import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
+import { gateLine } from './utils/gates';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { memoryToShow, markMemoryShown } from './utils/memories';
@@ -5607,6 +5608,14 @@ export default function App() {
               {language === 'pt-BR'
                 ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
                 : "The pattern hasn't yet reached the edge of what this form can hold."}
+            </p>
+          )}
+          {/* Combate v3 / PR7: Renascimento = conta paga + Vínculo. Paga e no ápice, mas com o Vínculo ainda
+              abaixo do portão (`utils/gates.ts`): texto neutro com o Vínculo pedido, sem botão e sem compra
+              (o Vínculo nunca é pago). */}
+          {labTab === 'evolution' && rebirthRefusal(gameState) === 'low-bond' && !gameState.demoCharacterId && (
+            <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block data-rebirth-low-bond>
+              {gateLine('renascimento', bondLevelFor(gameState.totalXP ?? 0), language)}
             </p>
           )}
           {/* EVO-21: o registro — linha 12 `muted` com `egg` FILL 1 20; memória,

@@ -69,6 +69,7 @@ import { ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
+import { useTalentBonus } from '../contexts/useTalentBonus';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { fichaStageOf } from '../utils/soulProfile/ficha/stageSkillsFor';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
@@ -134,13 +135,14 @@ export function ArenaGame({
       : { evolutionStage }),
     [gs, evolutionStage],
   );
+  const bonusTalento = useTalentBonus('pve'); // canal único de bônus (teto 5%), PR7
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
-    combatant: soulCombatant(estado),
+    combatant: soulCombatant(estado, bonusTalento),
     family: familyOfSkill(especial),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     elements: { basica: basica?.elementoId ?? 'vigor', especial: especial?.elementoId ?? basica?.elementoId ?? 'vigor', attrs: atributos },
-  }), [estado, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, atributos]);
+  }), [estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);

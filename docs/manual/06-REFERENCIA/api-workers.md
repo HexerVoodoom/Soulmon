@@ -415,3 +415,13 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 - `sendWebPush(sub, payload, vapidJWK, vapidPublicKey, contact)` — monta o JWT VAPID (ES256), criptografa o payload (ECDH + HKDF + AES-GCM) e faz o POST ao endpoint da subscription, com `redirect:'manual'` (um 302 de host permitido não deve arrastar o JWT VAPID para fora da allowlist).
 **Chamado por:** `workers/push-scheduler.js`.
 **Régua:** `workers/vapid.parity.test.js`.
+
+### `functions/api/_talents.js`
+**Dono de:** o ESPELHO de `src/utils/talents.ts` no servidor (PR7): valida `talentPicks` no `save.js` (contra o Vínculo do próprio save) e dá a parcela de talento do canal de bônus do duelo (`_duel.js`). Vetor inválido é descartado.
+**Exports:** `TALENT_POINTS_MAX`, `PICKABLE`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `talentBonus`.
+**Régua:** `functions/api/talents.parity.test.js`.
+
+### `functions/api/_gates.js`
+**Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
+**Exports:** `GATES`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.
+**Régua:** `functions/api/gates.parity.test.js`.

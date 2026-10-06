@@ -209,7 +209,41 @@ describe('progresso dotado — save antigo já nasce em nível > 1', () => {
   });
 });
 
-describe('recompensas — 100% cosméticas (regra que não pode cair)', () => {
+/**
+ * INVARIANTE 3 REESCRITO (06/10/2026, Combate v3 / PR7, REGISTRO §24 itens 1 e 2).
+ * ANTES: "as recompensas do Vínculo são 100% cosméticas, nunca vantagem de combate" e "escada de gates é
+ * grind". AGORA: o Vínculo é o level do usuário (1 ponto de talento por Vínculo, portões em `gates.ts`).
+ * O que continua valendo, e é o que este bloco trava: o CATÁLOGO `BOND_REWARDS` segue cosmético, e a
+ * única vantagem de combate entra por talento, sob o teto único de 5%, sem nenhum caminho pago.
+ */
+describe('invariante 3 (reescrito): o catálogo de recompensas segue cosmético; a vantagem é só por talento, com teto', () => {
+  it('o Vínculo dá ponto de talento (efeito de jogo novo) e abre portões', async () => {
+    const { talentPointsFor } = await import('./talents');
+    const { gateFor } = await import('./gates');
+    expect(talentPointsFor(bondLevelFor(xpForLevel(6)))).toBe(6);
+    expect(gateFor('pvp', bondLevelFor(xpForLevel(5))).open).toBe(true);
+    expect(gateFor('pvp', bondLevelFor(xpForLevel(4))).open).toBe(false);
+  });
+
+  it('o ÚNICO efeito de combate do Vínculo é o talento, e ele nunca passa do teto único de 5%', async () => {
+    const { talentBonus, TALENT_TREE, isPickable } = await import('./talents');
+    const { COMBAT_BONUS_CAP } = await import('./combate/bonus');
+    const tudo = TALENT_TREE.filter(isPickable).flatMap((n) => Array(n.maxRank).fill(n.id) as string[]);
+    for (const scope of ['pvp', 'pve'] as const) {
+      expect(talentBonus(tudo.slice(0, 20), 1000, scope)).toBeLessThanOrEqual(COMBAT_BONUS_CAP);
+    }
+  });
+
+  it('nenhum caminho de compra com dinheiro real alcança talentos ou portões', async () => {
+    const { readFileSync } = await import('node:fs');
+    for (const f of ['./talents.ts', './gates.ts', '../../functions/api/_talents.js', '../../functions/api/_gates.js']) {
+      const src = readFileSync(new URL(f, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      expect(src, f).not.toMatch(/credits|creditos|accountTier|purchase|checkout/i);
+    }
+  });
+});
+
+describe('recompensas — o CATÁLOGO BOND_REWARDS segue 100% cosmético', () => {
   const ladder = bondRewardLadder();
 
   it('NENHUMA recompensa devolve moeda relevante, HP, energia ou perfectDay', () => {

@@ -1326,3 +1326,6 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `NpcSpeech`, `npcJaFalou`.
 **Chamado por:** `src/components/nav/AreaSheet.tsx`.
 **Régua:** `src/components/nav/NpcSpeech.render.test.tsx`.
+
+### `src/components/TalentTreeCard.tsx`
+**Dono de:** a tela da árvore de talentos do Vínculo (PR7), carregada `lazy` pela `StatsPage` com a arte sob demanda. Pontos, graus e respec vêm de `utils/talents.ts`; local-first (o servidor valida na sincronia). Estados: árvore vazia, pontos para gastar, todos gastos, respec sem Bits.

@@ -54,6 +54,8 @@ const FOMO: RegExp[] = [
   /limited[- ]time/i,
   /\bcorra\b(?! o m[áa]ximo)/i, // "corra o máximo que conseguir" é instrução do jogo de correr
   /\bhurry\b/i,
+  /\bfaltam? s[óo](?!\w)/i, // "faltam só 3!": contagem que apressa (gate/talento do Combate v3)
+  /\bonly \d+ (?:left|more|to go)\b/i,
 ];
 
 const EXTENSOES = /\.(ts|tsx|js|mjs|html|kt|xml)$/;
@@ -187,5 +189,41 @@ describe('combate v3 — o texto do level que desceu é neutro (semFomo)', () =>
   it('PROVA DE VERMELHO: uma string com perdeu / lost reprova', () => {
     expect(textoDeLevelSemPerda('Lv 6 · seu Soulmon perdeu um level')).not.toEqual([]);
     expect(textoDeLevelSemPerda('Lv 6 · your Soulmon lost a level')).not.toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// COMBATE V3 / PR7 — copy dos portões do Vínculo e dos talentos: neutra, com o Vínculo pedido, sem
+// contagem que apressa e sem tom de perda. "Vínculo N" / "Bond N" (o level do usuário; nunca "nível"
+// para a criatura, `NARRATIVA-E-UNIVERSO` §12 e a tabela do vocabulário).
+// ---------------------------------------------------------------------------
+import { gateLine, GATES, type GateFeature } from './utils/gates';
+import { TALENT_TREE } from './utils/talents';
+
+describe('combate v3 / PR7 — a copy de gate e de talento é semFomo', () => {
+  const portas = Object.keys(GATES) as GateFeature[];
+  const textosDeGate = ['en-US', 'pt-BR'].flatMap((lang) => portas.flatMap((f) => [1, 2, 4].map((lv) => gateLine(f, lv, lang))).filter(Boolean));
+  const textosDeTalento = TALENT_TREE.flatMap((n) => [n.namePt, n.nameEn, n.descPt, n.descEn]);
+
+  it('os textos existem (a varredura tem chão)', () => {
+    expect(textosDeGate.length).toBeGreaterThan(10);
+    expect(textosDeTalento.length).toBeGreaterThan(50);
+  });
+
+  it('nenhum texto de gate ou de talento tem FOMO ou tom de perda', () => {
+    for (const t of [...textosDeGate, ...textosDeTalento]) expect(textoDeLevelSemPerda(t), t).toEqual([]);
+  });
+
+  it('o gate diz o Vínculo pedido e nunca chama o level do usuário de "nível"', () => {
+    for (const t of textosDeGate) {
+      expect(t).toMatch(/V[íi]nculo \d+|Bond \d+/);
+      expect(t).not.toMatch(/n[íi]vel/i);
+    }
+  });
+
+  it('PROVA DE VERMELHO: "faltam só N!" e "only 2 left" reprovam', () => {
+    expect(textoDeLevelSemPerda('Faltam só 2 Vínculos para abrir!')).not.toEqual([]);
+    expect(textoDeLevelSemPerda('Only 2 more to go')).not.toEqual([]);
+    expect(textoDeLevelSemPerda('Última chance de abrir o Duelo')).not.toEqual([]);
   });
 });

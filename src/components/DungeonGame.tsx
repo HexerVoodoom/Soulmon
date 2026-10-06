@@ -29,6 +29,9 @@ import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dung
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
+import { useTalentBonus } from '../contexts/useTalentBonus';
+import { gateLine, masmorraFloorOpen } from '../utils/gates';
+import { bondLevelFor } from '../utils/bond';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 
@@ -150,12 +153,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     [gs, evolutionStage],
   );
   /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
+  const bonusTalento = useTalentBonus('pve'); // canal único de bônus (teto 5%), PR7
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
-    combatant: soulCombatant(estado),
+    combatant: soulCombatant(estado, bonusTalento),
     family: dungeonFamily(par?.especial),
     jeito,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [estado, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [estado, bonusTalento, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
@@ -356,7 +360,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   };
 
   // Descend to the next (harder) floor, carrying HP over.
+  // PR7: só os andares ALTOS têm portão pelo Vínculo (`utils/gates.ts`); o andar 1 e os baixos seguem livres.
+  // Sem provider (demo, testes) não há Vínculo para medir e nada fecha.
+  const proximoAndarAberto = !gs || masmorraFloorOpen(floor + 1, bondLevelFor(gs.totalXP ?? 0));
   const nextFloor = () => {
+    if (!proximoAndarAberto) return;
     const f = floor + 1;
     const list = waveOf(baseLevel + (f - 1), f);
     setFloor(f);
@@ -469,8 +477,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
               <p style={phaseLine}>{rewardMsg}</p>
+              {!proximoAndarAberto && gs && (
+                <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
+              )}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={nextFloor} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
+                <button type="button" onClick={nextFloor} disabled={!proximoAndarAberto} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap', ...(proximoAndarAberto ? {} : { opacity: 0.5, cursor: 'not-allowed' }) }}>
                   {isPt ? `Camada ${floor + 1}` : `Layer ${floor + 1}`}
                 </button>
                 <button type="button" onClick={exitRun} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>

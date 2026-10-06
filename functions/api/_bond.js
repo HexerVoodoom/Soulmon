@@ -1,4 +1,5 @@
 import { kvOrThrow } from './_kv.js';
+import { GATES } from './_gates.js';
 /**
  * A curva do Vínculo, do lado do SERVIDOR — e só a parte que o gate precisa.
  *
@@ -25,7 +26,7 @@ const STEP_BASE = 400;
 const STEP_GROWTH = 100;
 
 /** Nível mínimo para LIGAR o PvP. Espelho de `BOND_PVP_MIN_LEVEL`. */
-export const BOND_PVP_MIN_LEVEL = 5;
+export const BOND_PVP_MIN_LEVEL = GATES.pvp.minBond;
 
 /** @param {number} level */
 function stepFor(level) {
