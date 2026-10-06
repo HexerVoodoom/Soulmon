@@ -114,7 +114,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // entrada precisa do Vínculo como level: `talents.ts` (validação do `talentPicks` na hidratação e o bônus de talento
   // das lutas), `gates.ts` (a tabela de portões e a frase do Renascimento). A tela da árvore, a arte e os TEXTOS dos
   // nós (`talentCopy.ts`) ficam FORA, atrás de `lazy`/`import()`.
-  'index.js': 572_294,
+  // 06/10/2026 (combate v3 PR18): 572_294 → 581_827 (+1,3 KB sobre a main, que já estava a 6 B da folga) — os 3 sons de
+  // combate (`playAttack`/`playSpecial`/`playVictory`) em `sounds.ts` (dono único, não dá para `lazy`: o AC-4 lê esse
+  // arquivo) e as 3 linhas da política em `loudness.ts`. A CENA do especial vive no chunk da luta (`lazy`), fora daqui.
+  'index.js': 581_827,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
