@@ -5,7 +5,7 @@ import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
-import { playFeed } from '../utils/sounds';
+import { playVictory } from '../utils/sounds';
 import { DUNGEON_BITS_FACTOR } from '../utils/dungeon';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
@@ -333,7 +333,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   // Advance to the next enemy; or clear the floor (heal), or complete the run.
   const nextEnemy = () => {
     if (enemyIdx + 1 >= enemies.length) {
-      playFeed();
+      playVictory(); // PR18: vitória do andar (era `playFeed`, o som de COMER — R-CAT: o evento decide)
       addPoints(clearBonus(floor));
       // 🔗 #59b — o andar limpo. Antes do `if (floor >= MAX_FLOORS)` de
       // propósito: o 5º andar é um andar limpo E uma run completa, e a tabela

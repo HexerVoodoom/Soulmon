@@ -38,7 +38,7 @@ const correr = (onDone: ReturnType<typeof vi.fn>) => {
   for (let i = 0; i < 600 && !onDone.mock.calls.length; i++) { act(() => { vi.advanceTimersByTime(300); }); t += 300; }
   return t;
 };
-const gauge = () => document.querySelector('[data-torcida-gauge]') as HTMLElement;
+const gauge = () => document.querySelector('[data-cheer-mascot]') as HTMLElement;
 const ratio = () => parseFloat(gauge().getAttribute('data-torcida-ratio') ?? 'NaN');
 
 

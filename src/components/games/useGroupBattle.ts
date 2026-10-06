@@ -25,7 +25,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StageAction, StageHit } from './BattleStage';
 import {
-  impactMs, castStatus, clearHolders, emptyStatusBoard, stageStatusOf, tickStatus,
+  impactMs, introMs, castStatus, clearHolders, emptyStatusBoard, stageStatusOf, tickStatus,
   type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
 } from '../../utils/combatFx';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
@@ -339,7 +339,9 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             let nx = first;
             while (nx && nx.kind !== 'cast' && Math.abs(nx.t - ev.t) < EPS) { batch.push(nx); nx = pull(); }
             if (nx) queue.unshift(nx);
-            if (!(await wait(impactMs('special', reduced)))) return;
+            // PR18: a cena do especial (nome + fundo escuro) vem antes do golpe; é só pausa de apresentação (nenhum `pull`
+            // acontece nela, então a ordem e o resultado do motor não mudam).
+            if (!(await wait(introMs('special') + impactMs('special', reduced)))) return;
             if (batch.length) apply(batch, true, null);
             else if (scene.personalTag) showHits([{ id: ++seq.current, side: 'me', foe: 0, value: 0, tag: scene.personalTag }]);
             else setPetEnergy(ev.energy);
@@ -350,15 +352,18 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           }
           // o cast do INIMIGO: a esquiva
           const spec = dodgeSpec(seed, nDodge++);
-          dodgeAt.current = null;
-          dodgeStart.current = wallClock();
-          setDodge({ spec, key: ++seq.current });
-          setPhaseBoth('dodge');
+          // PR18: a cena do especial (nome grande + fundo escuro) abre ANTES de a janela da esquiva: a ação entra agora,
+          // o relógio da esquiva só começa quando a cena acaba (e a arte do golpe sai depois dela, no `BattleStage`).
           setAction({
             id: ++seq.current, actor: 'foe', foe: casterFoe, kind: 'special', strike: scene.foeKind(casterFoe, true), element: scene.foeElement(casterFoe),
             castMs: spec.castMs, impactMs: spec.impactMs, totalMs: spec.impactMs + 500,
           });
           if (hasSp[casterFoe]) { fEn[casterFoe] = Math.max(0, fEn[casterFoe] - ENERGY_TRIGGER); setFoeEnergy(fEn.slice()); }
+          if (!(await wait(introMs('special')))) return;
+          dodgeAt.current = null;
+          dodgeStart.current = wallClock();
+          setDodge({ spec, key: ++seq.current });
+          setPhaseBoth('dodge');
           const scaleFor = (d: DodgeGrade) => round.castScale({ who: ev!.who, ring: null, dodge: d, foesHp: ev!.foesHp });
           // a esquiva é decidida no fim da janela: o núcleo só recebe a nota depois
           if (!(await wait(spec.impactMs))) return;

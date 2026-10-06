@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ArenaGame } from './ArenaGame';
 import { CHEER_TAPS_FULL } from '../utils/energia';
+import { SPECIAL_INTRO_MS } from '../utils/combatFx';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 
 const H = vi.hoisted(() => ({
@@ -65,7 +66,7 @@ vi.mock('../utils/arena', async importOriginal => {
   const real = await importOriginal<typeof import('../utils/arena')>();
   return { ...real, loadBestiaryPool: vi.fn(async () => POOL) };
 });
-vi.mock('../utils/sounds', () => ({ playTaskComplete: vi.fn(), playFeed: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playTaskComplete: vi.fn(), playFeed: vi.fn() }));
 vi.mock('../utils/sprites', () => ({
   getDungeonEnemySprite: () => ({ sprite: 'x.png', name: 'x', line: 'x' }),
   getSpriteForStage: () => 'pet.png',
@@ -93,7 +94,7 @@ async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onE
   await avancar(10);
 }
 const camada = () => document.querySelector('[data-torcida-layer]') as HTMLElement;
-const gauge = () => document.querySelector('[data-torcida-gauge]') as HTMLElement;
+const gauge = () => document.querySelector('[data-cheer-mascot]') as HTMLElement;
 const ratio = () => parseFloat(gauge().getAttribute('data-torcida-ratio') ?? 'NaN');
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));
@@ -288,7 +289,7 @@ describe('Arena em grupo — o especial em ÁREA e o único', () => {
     expect(document.querySelectorAll('[data-stage-sprite="foe"]')).toHaveLength(3);
     await avancar(1500);
     fireEvent.pointerDown(document.body);
-    await avancar(1100); // o especial chega no alvo
+    await avancar(1100 + SPECIAL_INTRO_MS); // a cena do especial (PR18) e depois o especial chega no alvo
     return numeros().length;
   }
   it('conjuração (círculo de 4 m): o especial desenha o hit nos TRÊS alvos do evento', async () => {

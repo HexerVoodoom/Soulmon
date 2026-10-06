@@ -168,6 +168,20 @@ export const STAGE_TIMING = {
   reduced: { impact: 120, total: 700 },
 } as const;
 
+/**
+ * A CENA DO ESPECIAL (PR18, pedido do dono): antes do golpe do especial, o NOME do ataque aparece grande no centro,
+ * com o fundo escurecido, e quem conjura + a aura ficam POR CIMA do escuro. Passada a introdução o nome some, o
+ * fundo volta e SÓ ENTÃO o golpe sai. É só apresentação: estes ms são pausa na ENTRADA do especial (o motor não
+ * enxerga; nenhum evento muda de ordem nem de resultado). Vale também com movimento reduzido — ele reduz o
+ * MOVIMENTO (o nome só aparece e some), nunca a pausa.
+ */
+export const SPECIAL_INTRO_MS = 1000;
+
+/** A pausa de introdução de uma ação: só o especial tem. */
+export function introMs(kind: StageActionKind): number {
+  return kind === 'special' ? SPECIAL_INTRO_MS : 0;
+}
+
 export function impactMs(kind: StageActionKind, reduced: boolean): number {
   return (reduced ? STAGE_TIMING.reduced : STAGE_TIMING[kind]).impact;
 }

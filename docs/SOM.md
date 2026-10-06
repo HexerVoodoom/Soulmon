@@ -16,7 +16,7 @@
 
 | O quê | Arquivo |
 |---|---|
-| Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Os sons — **11 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) | `src/utils/trilha.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
@@ -96,6 +96,19 @@ há um teste (`footgun 9`) que reprova a cópia.
 Tolerância **±1,0 LU**; degrau **3,0 dB**, sem meio-degrau; teto **≤ −1 dBTP** em tudo.
 **Quem repete mais entra mais baixo.** Nível ≠ importância: se algo "deve soar como perda ou como
 conquista", isso é timbre/envelope/duração, não nível.
+
+### 3.1 O som do combate (PR18, pedido do dono, 06/10/2026)
+
+Três eventos novos, **todos `arcade`** (R-CAT: combate é minijogo e o golpe é o que mais repete; vitória de
+minijogo não é "concluir tarefa" nem "marco", como no C-11): `playAttack` (golpe básico, soa no IMPACTO),
+`playSpecial` (sobe e estoura; a subida cai no fim da cena do especial e o estouro quando o golpe sai) e
+`playVictory` (arpejo que segura a última nota). Chamadores: o golpe e o especial só em
+`components/games/BattleStage.tsx`; a vitória na Arena (a cada rodada limpa), no Duelo (só se a luta terminou a
+favor do pet — o resultado oficial é do servidor), na Masmorra (andar limpo) e no Pesadelo. `playFeed` (som de
+COMER) deixou de ser o "som de vitória" da Masmorra e do Pesadelo. Offsets **medidos** em Chromium
+(`OfflineAudioContext` + K-weighting BS.1770; o mesmo arnês reproduz `playFeed` −19,00 e `playTaskComplete` −22,00):
+**falta o gate humano de escuta** (S8). Continua valendo: som só em luta que o jogador abriu (D11), o gate de
+mudo e a R-EX moram em `sounds.ts`/`audioBus.ts`, e a torcida (`TorcidaKit`) segue muda.
 
 ## 4. Mudar ou acrescentar um som
 

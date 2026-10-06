@@ -34,7 +34,7 @@ vi.mock('../utils/arena', async importOriginal => {
   return { ...real, loadBestiaryPool: vi.fn(async () => POOL) };
 });
 
-vi.mock('../utils/sounds', () => ({ playTaskComplete: vi.fn(), playFeed: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playTaskComplete: vi.fn(), playFeed: vi.fn() }));
 vi.mock('../utils/sprites', () => ({
   getDungeonEnemySprite: () => ({ sprite: 'x.png', name: 'x', line: 'x' }),
   getSpriteForStage: () => 'pet.png',

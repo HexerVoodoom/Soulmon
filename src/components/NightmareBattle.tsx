@@ -58,7 +58,7 @@ import { useTalentBonus } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
-import { playFeed } from '../utils/sounds';
+import { playVictory } from '../utils/sounds';
 import {
   nightmareFlavor,
   nightmareName,
@@ -176,7 +176,7 @@ export function NightmareBattle({
   }, [open, wave]);
 
   const win = () => {
-    playFeed();
+    playVictory(); // PR18: vitória (era `playFeed`, o som de COMER — R-CAT: o evento decide)
     const got = nightmareRewards(rarity, true);
     setRewards(got);
     setPhase('won');

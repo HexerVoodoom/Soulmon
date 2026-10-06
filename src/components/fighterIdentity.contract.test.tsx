@@ -36,7 +36,7 @@ vi.mock('./games/BattleStage', async (orig) => {
   const m = await orig<typeof import('./games/BattleStage')>();
   return { ...m, BattleStage: (p: Parameters<typeof m.BattleStage>[0]) => { cenas.push({ action: (p.action ?? null) as never }); return m.BattleStage(p); } };
 });
-vi.mock('../utils/sounds', () => ({ playFeed: vi.fn(), playTaskComplete: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
 vi.mock('../utils/arena', async (orig) => {
   const m = await orig<typeof import('../utils/arena')>();
   return { ...m, loadBestiaryPool: () => new Promise(() => {}) };

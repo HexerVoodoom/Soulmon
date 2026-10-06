@@ -188,7 +188,9 @@ describe('o quadro de efeitos: aplicar, gastar, expirar', () => {
 });
 
 describe('R-NOVA — a superfície de status nasce MUDA (`docs/SOM.md`)', () => {
-  const fontes = ['utils/combatFx.ts', 'utils/combatV3Art.ts', 'components/games/BattleStage.tsx', 'components/games/useCombatV3Art.ts'];
+  // `BattleStage.tsx` saiu da lista no PR18 (pedido do dono, 06/10/2026): a cena passou a tocar o golpe e o especial
+  // (`playAttack`/`playSpecial`, `docs/SOM.md` §3.1) — travado por `cortes.contract.test.ts` (A-3). A camada de STATUS segue muda.
+  const fontes = ['utils/combatFx.ts', 'utils/combatV3Art.ts', 'components/games/useCombatV3Art.ts'];
   it('nenhum import do módulo de som entra nas peças desta story', () => {
     for (const f of fontes) {
       const src = readFileSync(resolve(process.cwd(), 'src', f), 'utf8');

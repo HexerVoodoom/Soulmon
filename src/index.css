@@ -5759,8 +5759,8 @@ select:focus-visible {
   /* Cena de combate (rodada 5, I10): sem investida, projétil nem pulso — só o flash no alvo. */
   .sm-bs-lunge, .sm-bs-fly, .sm-bs-cast, .sm-bs-hit { animation: none !important; }
   .sm-bs-fly, .sm-bs-cast { display: none !important; }
-  /* Selo SPECIAL! do especial (04/10/2026): sem subir nem crescer — só aparece e some (flash). */
-  .sm-bs-special { animation-name: sm-bs-flash !important; }
+  /* Cena do especial (PR18): o nome só aparece e some (sem crescer); o véu e a pausa continuam. */
+  .sm-bs-cutname { animation-name: sm-bs-cutdim !important; }
   .sm-bs-pop { animation-name: sm-bs-flash !important; }
   /* PR11: o loop de status para; o círculo de cast do especial vira o flash único; o selo de status só aparece. */
   .sm-bs-sheet, .sm-bs-stpop { animation: none !important; }
@@ -5769,7 +5769,7 @@ select:focus-visible {
   .sm-bs-bounce, .sm-cheer-jump, .sm-bs-dodge-hint, .sm-bs-charge, .sm-bs-energy-full > i { animation: none !important; }
   .sm-bs-charged { animation: none !important; filter: drop-shadow(0 0 10px var(--sm2-gold-fill)); }
   .sm-bs-charge { opacity: .6; }
-  .sm-bs-energy > i { transition: none !important; }
+  .sm-bs-energy > i, .sm-bs-energy > b { transition: none !important; }
   /* o balao do mascote so PISCA (sem subir nem crescer) */
   .sm-cheer-bubble { animation: sm-bs-flash 700ms linear 1 both !important; }
   .sm2-viewport { animation: none !important; }
@@ -8224,8 +8224,9 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-bs-ring { border: 4px solid var(--sm2-primary-ink); box-shadow: 0 0 10px color-mix(in srgb, var(--sm2-primary-fill) 60%, transparent); will-change: transform; }
 .sm-bs-ring[data-ring-hot="1"] { border-color: var(--sm2-gold-ink); box-shadow: 0 0 14px var(--sm2-gold-fill); }
 /* A barra de ENERGIA logo abaixo da de HP, EM CIMA do lutador. Cheia, pulsa: o especial e o proximo golpe. */
-.sm-bs-energy { height: 6px; box-sizing: border-box; overflow: hidden; border-radius: 3px; background-color: var(--sm2-surface-2); border: 1px solid var(--sm2-muted); }
-.sm-bs-energy > i { display: block; height: 100%; background-color: var(--sm2-ink); transition: width var(--sm2-dur-page) var(--sm2-ease); }
+.sm-bs-energy { display: flex; height: 6px; box-sizing: border-box; overflow: hidden; border-radius: 3px; background-color: var(--sm2-surface-2); border: 1px solid var(--sm2-muted); }
+.sm-bs-energy > b { display: block; flex: none; height: 100%; background-color: color-mix(in srgb, var(--sm2-gold-fill) 55%, transparent); transition: width var(--sm2-dur-page) var(--sm2-ease); }
+.sm-bs-energy > i { display: block; flex: none; height: 100%; background-color: var(--sm2-ink); transition: width var(--sm2-dur-page) var(--sm2-ease); }
 .sm-bs-energy-full > i { background-color: var(--sm2-gold-fill); animation: sm-bs-glow 800ms ease-in-out infinite; }
 /* O mascote da torcida (estilo Digimon 1): pula a cada toque, com o balao ao lado. */
 @keyframes sm-cheer-jump { 0% { transform: translateY(0) scale(1, 1); } 30% { transform: translateY(-14px) scale(.92, 1.1); } 60% { transform: translateY(0) scale(1.1, .9); } 100% { transform: translateY(0) scale(1, 1); } }
@@ -8243,17 +8244,19 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 }
 .sm2-celebrate-spark { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; opacity: 0; animation: sm2-celebrate-spark 1100ms ease-out 1 both; }
 
-/* SELO DO ESPECIAL (04/10/2026, rodada 8 — `SpecialBanner` em `components/games/BattleStage.tsx`): o "SPECIAL!" em fonte
-   display que sobe um pouco e estoura na hora do especial, PvP e PvE. Curto (~1,1 s). Com `prefers-reduced-motion` o bloco
-   canônico troca a animação pelo flash (sem movimento). */
-@keyframes sm-bs-special {
-  0% { opacity: 0; transform: translate(-50%, -30%) scale(.55); }
-  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.18); }
-  40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  80% { opacity: 1; transform: translate(-50%, -62%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -78%) scale(1.04); }
+/* CENA DO ESPECIAL (PR18, `SpecialCutscene` em `components/games/BattleStage.tsx`): o véu escuro e o NOME grande no
+   centro, por `SPECIAL_INTRO_MS` (a duração vem inline em `--bs-dur`). O golpe só sai depois (os atrasos somam a
+   introdução em JS). Com `prefers-reduced-motion` o nome não cresce nem sobe: só aparece e some (a pausa fica). */
+@keyframes sm-bs-cutdim { 0% { opacity: 0; } 14% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes sm-bs-cutname {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  16% { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
+  28% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
 }
-.sm-bs-special { animation: sm-bs-special 1100ms ease-out 0ms 1 both; }
+.sm-bs-cutdim { animation: sm-bs-cutdim var(--bs-dur, 1000ms) ease-out 0ms 1 both; }
+.sm-bs-cutname { animation: sm-bs-cutname var(--bs-dur, 1000ms) ease-out 0ms 1 both; }
 
 /* Botão Evoluir com a ARTE do dono (04/10/2026, `assets/icons/evoluir-btn.png`,
    468×137 = 3× de 156×46): a moldura é a imagem — sai a placa, o contorno de

@@ -25,16 +25,17 @@
  * (`cheerQuality`) e as constantes `CHEER_*` abaixo FICAM no arquivo, sem nenhum caminho de UI: reaproveitar
  * em outro lugar depois.
  *
- * Superfície nova nasce MUDA (R-NOVA, `docs/SOM.md`): nenhum som aqui.
+ * Som (PR18): o golpe/especial soam na cena (`BattleStage`); aqui só a vitória (`playVictory`, `docs/SOM.md` §3.1).
  */
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { TorcidaLayer } from './games/TorcidaKit';
+import { playVictory } from '../utils/sounds';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  fxElementId, impactMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
+  fxElementId, impactMs, introMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   type StageActionKind, type StageStatus,
 } from '../utils/combatFx';
 import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
@@ -160,7 +161,9 @@ export function DuelScreen({
 
   useEffect(() => {
     const reduced = reduzido.current;
-    const leadS = (k: StageActionKind) => impactMs(k, reduced) / 1000;
+    // PR18: o especial abre com a cena (nome + fundo escuro) ANTES do golpe: a ação começa `introMs` mais cedo, e o
+    // golpe (relógio dos eventos, intocado) chega no mesmo instante de sempre.
+    const leadS = (k: StageActionKind) => (impactMs(k, reduced) + introMs(k)) / 1000;
     /** O tipo da ação de um evento: o `cast` é o ESPECIAL; o `attack` do golpe do especial não abre ação própria. */
     const actionOf = (e: FightEvent): { kind: StageActionKind; strike?: ReturnType<typeof forma> } | null => {
       if (e.kind === 'cast') return { kind: 'special', strike: forma(e.side, 'especial') };
@@ -226,6 +229,8 @@ export function DuelScreen({
       if (ended.current) return;
       ended.current = true;
       setPhase('done');
+      // PR18: o som de vitória só quando a LUTA terminou a meu favor; o resultado oficial (vitória/derrota/empate) é do servidor.
+      if (sim.current.winner === 'me') playVictory();
       endTimer.current = window.setTimeout(() => {
         endTimer.current = null;
         const taps = [...closed.current, live.current].slice(0, DUEL_CHEER_BUCKETS);
@@ -277,14 +282,14 @@ export function DuelScreen({
   const cheering = phase === 'fight';
 
   return (
-    <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot>
+    <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
       <BattleStage
         scene={ARENA_SCENE.bg}
         sceneElement={oppEl}
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
-        me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me }}
+        me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}
@@ -298,7 +303,6 @@ export function DuelScreen({
         }}
         onPauseChange={setPausado}
         status={fimDaLuta ? (isPt ? 'Conferindo o resultado…' : 'Checking the result…') : undefined}
-        hud={<TorcidaGauge taps={barra} onCheer={cheer} isPt={isPt} disabled={!cheering} full={CHEER.tapsFull} bare />}
       />
     </TorcidaLayer>
   );

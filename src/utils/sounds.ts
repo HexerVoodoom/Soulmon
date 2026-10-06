@@ -1,7 +1,13 @@
 import { readFlag, writeFlag } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { tocarNa } from './audioBus';
-import { CATEGORIA_DO_SOM } from './loudness';
+import { CATEGORIA_DO_SOM, OFFSET_POR_SOM_DB, db2lin } from './loudness';
+
+/** Ganho-base dos sons de combate (o mesmo `beep` de 0,12) × a calibração medida do som. */
+const GANHO_BASE_COMBATE = 0.12;
+const GANHO_ATTACK = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttack);
+const GANHO_SPECIAL = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playSpecial);
+const GANHO_VICTORY = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playVictory);
 import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
 import { aoGestoSonoro } from './trilha';
 
@@ -172,6 +178,81 @@ export function playSleep(): void {
     beep(ctx, destino, 440, 0.21, 0.18, 'sine', 0.176237);
     beep(ctx, destino, 349, 0.44, 0.25, 'sine', 0.125884);
     return 0.69;
+  });
+}
+
+/* ── O SOM DO COMBATE (PR18, pedido do dono, 06/10/2026) ──────────────────
+   Três eventos novos, todos de **uma tela de combate** (Arena, Duelo, Masmorra,
+   Pesadelo): o golpe básico, o ESPECIAL e a VITÓRIA. R-NOVA: a superfície nasceu
+   muda e aqui o pedido é explícito — por isso entram na política (`loudness.ts`)
+   e na tabela de chamadores (`cortes.contract.test.ts`).
+
+   **A categoria vem do EVENTO (R-CAT), não do arquivo: as três são `arcade`** —
+   combate é minijogo, e golpe é o evento que MAIS repete (degrau mais baixo da
+   escada, e é o que o D-2 abaixa quando um som superior toca). Vencer o combate
+   também é `arcade`, pelo mesmo motivo do C-11: vitória de minijogo não é
+   "concluir tarefa" nem "marco".
+
+   Procedurais (zero byte de asset), no padrão dos outros: osciladores com
+   envelope de rampa, nunca `ctx.destination`. O golpe é um "soco" de square
+   que cai de tom + um tique agudo; o especial sobe (carga) e estoura em duas
+   notas; a vitória é um arpejo ascendente que SEGURA a última nota. Os ganhos
+   saem de `0,12 × db2lin(offset)` com o offset de `OFFSET_POR_SOM_DB`. */
+
+/** Golpe básico: um soco curto (square que cai de tom) com um tique agudo. */
+export function playAttack(): void {
+  play('playAttack', (ctx, destino) => {
+    const osc = ctx.createOscillator();
+    const vol = ctx.createGain();
+    osc.connect(vol);
+    vol.connect(destino);
+    osc.type = 'square';
+    const t = ctx.currentTime;
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.exponentialRampToValueAtTime(80, t + 0.1);
+    vol.gain.setValueAtTime(0, t);
+    vol.gain.linearRampToValueAtTime(GANHO_ATTACK, t + 0.005);
+    vol.gain.setValueAtTime(GANHO_ATTACK, t + 0.08);
+    vol.gain.linearRampToValueAtTime(0, t + 0.12);
+    osc.start(t);
+    osc.stop(t + 0.12);
+    beep(ctx, destino, 880, 0, 0.03, 'square', GANHO_ATTACK * 0.6);
+    return 0.12;
+  });
+}
+
+/** Especial: sobe (a carga que vira ataque) e estoura em duas notas. */
+export function playSpecial(): void {
+  play('playSpecial', (ctx, destino) => {
+    const osc = ctx.createOscillator();
+    const vol = ctx.createGain();
+    osc.connect(vol);
+    vol.connect(destino);
+    osc.type = 'sawtooth';
+    const t = ctx.currentTime;
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.exponentialRampToValueAtTime(1400, t + 0.3);
+    vol.gain.setValueAtTime(0, t);
+    vol.gain.linearRampToValueAtTime(GANHO_SPECIAL, t + 0.01);
+    vol.gain.setValueAtTime(GANHO_SPECIAL, t + 0.28);
+    vol.gain.linearRampToValueAtTime(0, t + 0.32);
+    osc.start(t);
+    osc.stop(t + 0.32);
+    beep(ctx, destino, 1175, 0.33, 0.1, 'square', GANHO_SPECIAL);
+    beep(ctx, destino, 1568, 0.43, 0.22, 'square', GANHO_SPECIAL);
+    return 0.65;
+  });
+}
+
+/** Vitória: arpejo ascendente (C–E–G–C) que segura a última nota, com a oitava em seno por baixo. */
+export function playVictory(): void {
+  play('playVictory', (ctx, destino) => {
+    beep(ctx, destino, 523, 0, 0.1, 'square', GANHO_VICTORY);
+    beep(ctx, destino, 659, 0.11, 0.1, 'square', GANHO_VICTORY);
+    beep(ctx, destino, 784, 0.22, 0.1, 'square', GANHO_VICTORY);
+    beep(ctx, destino, 1047, 0.33, 0.45, 'square', GANHO_VICTORY);
+    beep(ctx, destino, 523, 0.33, 0.45, 'sine', GANHO_VICTORY * 0.8);
+    return 0.78;
   });
 }
 
