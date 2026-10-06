@@ -242,3 +242,10 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
   3. **Q-FX1 e a escola `maldicao`:** hoje ela cai em `defDebuff` (`ESCOLA_FAMILY_PROVISORIO`) e mostra o selo de debuff, não o de maldição. Isso é a decisão do §2.13; se o dono quiser o selo de maldição nessa escola, é uma linha em `FAMILY_STATUS`/mapa por escola.
   4. As peças imperfeitas (`st-buff-atk`/`st-buff-spd` quase iguais, `st-hot` ≈ `st-cura`, `fx-dot` em ciano) distinguem-se pela FORMA em texto e pelo rótulo, não pela imagem; o teste de 16 px em escala de cinza do inventário não foi feito.
 - **Medido:** tsc app+server+desktop verdes; vitest completo 7215 passam (um timeout de `playArea.render.test` sob carga, passa isolado); prova de vermelho: tirar `spdBuff` de `FAMILY_STATUS` e esconder a forma do selo no modo reduzido reprovam os testes.
+
+## §2.20 PR6 — chips só dão pontos de tipo (06/10/2026, PR #238)
+- Dono: chips NÃO dão +3 de atributo; dão só pontos de tipo e só inclinam a distribuição/caminho. Chips já comprados e o legado +3 ficam; sem reembolso nem conversão.
+- Divergência story x dono, resolvida pela palavra do dono: a story pedia "chip não altera `powerPoints`", mas `powerPoints` JÁ É o ponto de tipo (escolhe o galho de evolução e os pesos de `soulWeights`). Mantido: chip soma `CHIP_BOOST` (3) em `powerPoints`/`attributesSinceLastEvolution`. Removido: o +30 de `totalXP` (Vínculo) que o chip dava. Total de combate = level e fatias 15–45% já neutralizam o legado: nada a mudar em `soulXP`/`combate/`.
+- Prova: `src/utils/chipsSoDistribuicao.test.ts` (level/XP/total iguais após o chip; varredura 640 combinações; legado de 40 chips; guard de fonte: nenhum arquivo de combate nem `_soulXP.js` lê chip/foodInventory/totalXP). Vermelho verificado revertendo `specialItemUse.ts`.
+- Não mexeu em economia de galhos (totais iguais; só a distribuição). Copy EN+PT "muda o caminho / lean your path", sem cobrança. Manual §47 atualizado.
+- Pergunta ao dono (sem decidir): tirar o +30 de Vínculo do chip é aceitável? (Comida segue dando XP de Vínculo.)
