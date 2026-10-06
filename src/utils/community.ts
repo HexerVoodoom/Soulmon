@@ -152,7 +152,7 @@ export const startDuel = (id: string, opponentId: string) =>
   call<{ seed: number; me: DuelSide; opp: DuelSide; matchesLeft: number }>('duelStart', { method: 'POST', body: { id, opponentId } });
 /** `taps` = toques dados em cada BALDE de 3 s da luta (o servidor higieniza e põe teto). `forfeit: true` = desistir do duelo aberto (conta como derrota). */
 export const playMatch = (id: string, opponentId: string, taps: number[] = [], forfeit = false) =>
-  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}) } });
+  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}) } });
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
