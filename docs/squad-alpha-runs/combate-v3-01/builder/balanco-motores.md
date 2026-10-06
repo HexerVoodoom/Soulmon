@@ -178,3 +178,21 @@ A cura rende pouco em grupo (o dano entra de vários lados) e muito na sequênci
 
 - N = 3200 (a amostragem do gate; 9 passa em 24,0pp com N = 9600 e em 24,8pp com N = 2400). A margem do 9 é fina (0,2pp na amostragem do gate): a mesma semente repete o mesmo número, mas qualquer mudança em `ARENA_FOES` ou nas tabelas de anel/esquiva pede nova medição.
 - Arena `media`: run vencida 65,9% sem torcida e 86,3% com torcida no teto (era 96,7% com 90).
+
+
+## 9. PvP no núcleo v3, com espelho no servidor — PR5 (06/10/2026, contexto §2.19)
+- **Fonte:** os gates que ficam no repo: `functions/api/_duel.v3.test.js` (S1, duração, mais fraco, torcida, empate), `src/utils/combate/duel.test.ts` (NPC do treino), `functions/api/combate.parity.test.js` (paridade). Medição avulsa: `_sim/cv3-medir/pr5/pvp.ts` e `npc.ts`.
+- **Decisões de calibração (o dono não fixou o número):** `CHEER.pvpEnergyPerDischarge` **3 → 2,5** e `NPC_LEVEL_GAP = 2` com **piso no estágio**.
+  - A torcida por BALDE faz a descarga cair no FIM do balde de 3 s (é causal: o cliente só sabe a contagem quando o balde fecha). Com 3 de energia isso dá 68,4% no teto, perto do limite de 70%; 2,5 dá **64,5%** (a meta do dono é ~65%, §2.13). 2 dá 60,6%.
+  - O NPC "2 levels abaixo" CRUZANDO o estágio (L7 contra L5) faz o jogador vencer 99,4% no champion; com o piso no 1º level do estágio fica 77,8–91,3% (RED sem o piso: 99,4%; gap 1: 63,3% no ultra).
+
+| Métrica | Meta | Medido |
+|---|---|---|
+| Paridade (log de eventos + vencedor) | igual nos dois lados | 8400 lutas (15 levels × 4 builds × 7 famílias × 10 sementes × com/sem torcida): 0 divergências; RED `VARIANCE.sigma` só no espelho derruba |
+| S1 | save forjado (level 40, dia 3) luta com level ≤ 4 | level 4; sem o teto vence 100% o par do dia 4, com o teto 53,5% |
+| Duração mediana por estágio | 35–42 s | rookie 38,8 · champion 39,1 · ultimate 38,5 · mega 38,1 s (P95 56,7–58,1) |
+| Mais fraco por 5% vence | 25–40% | 31,4% |
+| 1 Lv abaixo vence | 10–30% | 17,3% |
+| Torcida no teto × fantasma sem torcida | 55–70% (~65%); TTK < 25% | 64,3% · TTK ×0,985 (RED com 36 por descarga: 99,7%) |
+| NPC do treino, vitória do jogador | 75–92% por estágio | 89,8 · 91,3 · 88,8 · 83,5 · 77,8% (rookie..ultra) |
+| Empate | resultado válido | existe (0,3–0,7% das lutas); a rota devolve `draw: true`, sem pontos, vitória, derrota ou Honra |
