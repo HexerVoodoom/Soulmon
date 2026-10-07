@@ -3494,6 +3494,16 @@ var CHEER = {
   pvpEnergyPerDischarge: 2.5
 };
 var CHEER_SCALE_MAX = 1.15;
+var START_ENERGY_MAX = 9;
+var DOT_RESIST_MAX = 0.18;
+function cleanStartEnergy(x) {
+  return typeof x === "number" && Number.isFinite(x) ? Math.min(START_ENERGY_MAX, Math.max(0, x)) : 0;
+}
+__name(cleanStartEnergy, "cleanStartEnergy");
+function cleanDotResist(x) {
+  return typeof x === "number" && Number.isFinite(x) ? Math.min(DOT_RESIST_MAX, Math.max(0, x)) : 0;
+}
+__name(cleanDotResist, "cleanDotResist");
 function cleanCheerScale(x) {
   return typeof x === "number" && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
 }
@@ -3558,7 +3568,8 @@ function* fightSteps(a, b, opts) {
       nAtk: 0,
       nVuln: 0,
       nSpd: 0,
-      nHit: 0
+      nHit: 0,
+      dotResist: cleanDotResist(s.dotResist)
     };
   }, "mk");
   const F = [mk(a, 0), mk(b, 1)];
@@ -3603,7 +3614,7 @@ function* fightSteps(a, b, opts) {
         break;
       case "dot":
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe), "tick"), "fn") });
+          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), "tick"), "fn") });
         }
         break;
       case "heal":
@@ -3737,20 +3748,29 @@ __name(soulCombatant, "soulCombatant");
 
 // api/_talents.js
 var TALENT_POINTS_MAX = 20;
+var req = /* @__PURE__ */ __name((id, rank) => ({ id, rank }), "req");
 var PICKABLE = {
   "tal-pvp-01": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "atk", perRank: 4e-3 },
-  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "def", perRank: 4e-3 },
-  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "spd", perRank: 4e-3 },
-  "tal-pvp-05": { maxRank: 3, kind: "cheerBoost", perRank: 0.05 },
+  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "def", perRank: 4e-3, requires: [req("tal-pvp-01", 2)] },
+  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "spd", perRank: 4e-3, requires: [req("tal-pvp-01", 2)] },
+  "tal-pvp-04": { maxRank: 3, kind: "startEnergy", perRank: 3, requires: [req("tal-pvp-03", 2)] },
+  "tal-pvp-05": { maxRank: 3, kind: "cheerBoost", perRank: 0.05, requiresAny: [req("tal-pvp-02", 2), req("tal-pvp-03", 2)] },
+  "tal-pvp-06": { maxRank: 3, kind: "dotResist", perRank: 0.06, requires: [req("tal-pvp-02", 2)] },
+  "tal-pvp-07": { maxRank: 1, kind: "allAttr", perRank: 2e-3, requires: [req("tal-pvp-05", 3), req("tal-pvp-04", 1), req("tal-pvp-06", 1)] },
   "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
-  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
+  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3, requires: [req("tal-pve-01", 2)] },
+  "tal-pve-03": { maxRank: 3, kind: "healBoost", perRank: 5e-3, requires: [req("tal-pve-01", 2)] },
+  "tal-pve-04": { maxRank: 3, kind: "riftBits", perRank: 0.03, requires: [req("tal-pve-03", 1)] },
+  "tal-pve-05": { maxRank: 3, kind: "combatBonus", scope: "nightmare", perRank: 4e-3, requires: [req("tal-pve-03", 1)] },
+  "tal-pve-06": { maxRank: 3, kind: "combatBonus", scope: "pve", perRank: 4e-3, requires: [req("tal-pve-02", 2)] },
+  "tal-pve-07": { maxRank: 1, kind: "startShield", perRank: 0.01, requires: [req("tal-pve-05", 1), req("tal-pve-06", 1)] },
   "tal-com-01": { maxRank: 3, kind: "equipPrice" },
-  "tal-com-02": { maxRank: 3, kind: "fragmentGain" },
-  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1 },
-  "tal-com-04": { maxRank: 3, kind: "backpack" },
-  "tal-com-05": { maxRank: 1, kind: "respecOne" },
-  "tal-com-06": { maxRank: 3, kind: "missionBits" },
-  "tal-com-07": { maxRank: 1, kind: "weeklyDiscount" }
+  "tal-com-02": { maxRank: 3, kind: "fragmentGain", requires: [req("tal-com-01", 2)] },
+  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1, requires: [req("tal-com-01", 2)] },
+  "tal-com-04": { maxRank: 3, kind: "backpack", requires: [req("tal-com-02", 2)] },
+  "tal-com-05": { maxRank: 1, kind: "respecOne", requires: [req("tal-com-03", 2)] },
+  "tal-com-06": { maxRank: 3, kind: "missionBits", requires: [req("tal-com-02", 1)] },
+  "tal-com-07": { maxRank: 1, kind: "weeklyDiscount", requires: [req("tal-com-04", 1), req("tal-com-05", 1)] }
 };
 var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function talentPointsFor(bondLevel) {
@@ -3758,7 +3778,15 @@ function talentPointsFor(bondLevel) {
   return Math.min(TALENT_POINTS_MAX, lvl);
 }
 __name(talentPointsFor, "talentPointsFor");
-function isValidPicks(raw, bondLevel) {
+var reqOk = /* @__PURE__ */ __name((r, ranks) => (ranks[r.id] ?? 0) >= r.rank, "reqOk");
+function prereqsMet(id, ranks) {
+  const n = PICKABLE[id];
+  if (n.requires && !n.requires.every((r) => reqOk(r, ranks))) return false;
+  if (n.requiresAny && !n.requiresAny.some((r) => reqOk(r, ranks))) return false;
+  return true;
+}
+__name(prereqsMet, "prereqsMet");
+function isWellFormed(raw, bondLevel) {
   if (!Array.isArray(raw)) return false;
   if (raw.length > talentPointsFor(bondLevel)) return false;
   const counts = /* @__PURE__ */ Object.create(null);
@@ -3769,9 +3797,34 @@ function isValidPicks(raw, bondLevel) {
   }
   return true;
 }
+__name(isWellFormed, "isWellFormed");
+function replay(picks) {
+  const kept = [];
+  const ranks = /* @__PURE__ */ Object.create(null);
+  let rest = [...picks];
+  for (let moved = true; moved && rest.length > 0; ) {
+    moved = false;
+    const next = [];
+    for (const id of rest) {
+      if (prereqsMet(id, ranks)) {
+        kept.push(id);
+        ranks[id] = (ranks[id] ?? 0) + 1;
+        moved = true;
+      } else next.push(id);
+    }
+    rest = next;
+  }
+  return { kept, dropped: rest };
+}
+__name(replay, "replay");
+function isValidPicks(raw, bondLevel) {
+  return isWellFormed(raw, bondLevel) && replay(raw).dropped.length === 0;
+}
 __name(isValidPicks, "isValidPicks");
 function sanitizeTalentPicks(raw, bondLevel) {
-  return isValidPicks(raw, bondLevel) ? [...raw] : [];
+  if (!isWellFormed(raw, bondLevel)) return [];
+  const { kept, dropped } = replay(raw);
+  return dropped.length === 0 ? [...raw] : kept;
 }
 __name(sanitizeTalentPicks, "sanitizeTalentPicks");
 function talentAttrBonus(picks, bondLevel) {
@@ -3780,10 +3833,28 @@ function talentAttrBonus(picks, bondLevel) {
   for (const id of picks) {
     const n = PICKABLE[id];
     if (n.kind === "combatBonus" && n.scope === "pvp" && n.attr) out[n.attr] += n.perRank ?? 0;
+    if (n.kind === "allAttr") {
+      out.atk += n.perRank ?? 0;
+      out.def += n.perRank ?? 0;
+      out.spd += n.perRank ?? 0;
+    }
   }
   return out;
 }
 __name(talentAttrBonus, "talentAttrBonus");
+function sumKind(picks, bondLevel, kind, max) {
+  if (!isValidPicks(picks, bondLevel)) return 0;
+  let sum = 0;
+  for (
+    const id of
+    /** @type {string[]} */
+    picks
+  ) if (PICKABLE[id].kind === kind) sum += PICKABLE[id].perRank ?? 0;
+  return Math.min(max, sum);
+}
+__name(sumKind, "sumKind");
+var talentStartEnergy = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "startEnergy", START_ENERGY_MAX), "talentStartEnergy");
+var talentDotResist = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "dotResist", DOT_RESIST_MAX), "talentDotResist");
 function talentCheerScale(picks, bondLevel) {
   if (!isValidPicks(picks, bondLevel)) return 1;
   let sum = 0;
@@ -4087,14 +4158,14 @@ function duelSide(save, opts = {}) {
   const familiaSalva = skills?.especial?.familia;
   const family = especial ? typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial] : "direct";
   const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
 }
 __name(duelSide, "duelSide");
 function simulateDuel({ me, opp, seed, taps }) {
   const g = fightSteps(
-    { combatant: me.combatant, special: me.special },
-    { combatant: opp.combatant, special: opp.special },
-    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0, me.cheerScale) }
+    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
+    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
+    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) }
   );
   const events = [];
   let hpMe = null, hpOpp = null;
@@ -6299,7 +6370,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-Cz6SCB/functionsRoutes-0.2695347289194714.mjs
+// ../.wrangler/tmp/pages-peSyie/functionsRoutes-0.7613149666000023.mjs
 var routes = [
   {
     routePath: "/api/account",
