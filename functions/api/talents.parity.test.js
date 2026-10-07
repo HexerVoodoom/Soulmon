@@ -4,7 +4,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as srv from './_talents.js';
-import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, isPickable, talentAttrBonus, talentCheerScale } from '../../src/utils/talents';
+import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, isPickable, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../../src/utils/talents';
+import { simulatePvp } from '../../src/utils/combate/duel';
 import { bondLevelFor, xpForLevel } from '../../src/utils/bond';
 import { onRequest } from './save.js';
 import { duelSide, simulateDuel } from './_duel.js';
@@ -71,7 +72,12 @@ describe('vetores VALIDOS pelo grafo (compra em ordem) e vetores embaralhados da
       expect(srv.sanitizeTalentPicks(emb, lvl)).toEqual(sanitizeTalentPicks(emb, lvl));
       const extra = [...picks, ids[Math.floor(rnd() * ids.length)]];
       expect(srv.sanitizeTalentPicks(extra, lvl)).toEqual(sanitizeTalentPicks(extra, lvl));
-      expect(srv.talentBonus(picks, lvl, 'pvp')).toBeCloseTo(talentBonus(picks, lvl, 'pvp'), 12);
+      for (const sc of ['pvp', 'pve', 'nightmare']) expect(srv.talentBonus(picks, lvl, sc)).toBeCloseTo(talentBonus(picks, lvl, sc), 12);
+      const sa = srv.talentAttrBonus(picks, lvl), aa = talentAttrBonus(picks, lvl);
+      for (const k of ['atk', 'def', 'spd']) expect(sa[k], k).toBeCloseTo(aa[k], 12);
+      for (const [a, b] of [[srv.talentStartEnergy, talentStartEnergy], [srv.talentDotResist, talentDotResist], [srv.talentHealBoost, talentHealBoost], [srv.talentRiftBits, talentRiftBits], [srv.talentStartShield, talentStartShield]]) {
+        expect(a(picks, lvl)).toBeCloseTo(b(picks, lvl), 12);
+      }
     }
     expect(validos).toBeGreaterThan(1500);
   });
@@ -129,6 +135,29 @@ describe('save.js valida talentPicks contra o Vinculo do proprio save', () => {
   });
   it('save sem o campo continua sem o campo (a contagem de campos nao muda no servidor)', async () => {
     expect('talentPicks' in (await salva({ totalXP: 5 }))).toBe(false);
+  });
+});
+
+describe('Tarefa B: largada e resistencia (nos dois lados) batem entre o servidor e o cliente', () => {
+  const base = { evolutionStage: 'rookie', perfectDays: 3, powerPoints: 2, harmonyPoints: 2, benevolencePoints: 2 };
+  const faisca = [...GRAUS('tal-pvp-01', 2), ...GRAUS('tal-pvp-03', 2), ...GRAUS('tal-pvp-04', 3), ...GRAUS('tal-pvp-02', 2), ...GRAUS('tal-pvp-06', 3)];
+  it('duelSide entrega startEnergy/dotResist saneados (0 sem o no, teto com o no)', () => {
+    const sem = duelSide({ ...base, totalXP: xpForLevel(20) });
+    expect(sem.startEnergy).toBe(0); expect(sem.dotResist).toBe(0);
+    const com = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: faisca });
+    expect(com.startEnergy).toBe(srv.talentStartEnergy(faisca, 20)); expect(com.startEnergy).toBeGreaterThan(0);
+    expect(com.dotResist).toBeCloseTo(srv.talentDotResist(faisca, 20), 12); expect(com.dotResist).toBeGreaterThan(0);
+    expect(duelSide({ ...base, totalXP: 0, talentPicks: faisca }).startEnergy).toBe(0); // forjado acima do Vinculo
+  });
+  it('simulateDuel (servidor) == simulatePvp (cliente) com o no dos dois lados, em varias sementes', () => {
+    for (let seed = 1; seed <= 25; seed++) {
+      const me = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: faisca });
+      const opp = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: faisca });
+      const opp2 = { ...opp, special: srv2.specialOf('dot') };
+      const taps = Array(20).fill(seed % 17);
+      const { fx: _fx, ...cli } = simulatePvp({ me, opp: opp2, seed, taps }); // `fx` e so do cliente
+      expect(simulateDuel({ me, opp: opp2, seed, taps })).toEqual(cli);
+    }
   });
 });
 

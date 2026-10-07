@@ -22,7 +22,7 @@
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { REFERENCE_BUILDS, combatantAt } from './level';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
-import { CHEER, cleanCheerScale, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
+import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
 
 /** The balanced mirror of every level lasts this long (seconds). */
 export const MIRROR_SECONDS = 25;
@@ -60,6 +60,10 @@ export interface FightSide {
   readonly special: Special | null;
   /** Read only by `groupFight`: 'area' splits the special over every living foe. Default 'single'. */
   readonly area?: 'single' | 'area';
+  /** Tarefa B (`tal-pvp-06`): fraction of the DoT damage this side RECEIVES that never lands (capped by `cleanDotResist`). Default 0. */
+  readonly dotResist?: number;
+  /** Tarefa B (`tal-pve-07`): opening shield of this side, as a fraction of its HP (capped by `cleanStartShield`). Read by `groupFight`. */
+  readonly startShield?: number;
 }
 
 export interface CheerEvent {
@@ -161,6 +165,7 @@ interface Fighter {
   nVuln: number;
   nSpd: number;
   nHit: number;
+  dotResist: number;
 }
 
 interface Timed {
@@ -192,7 +197,7 @@ export function* fightSteps(
     const mult = variance ? ar1Multiplier(r, variance) : () => 1;
     return {
       c, sp: s.special, mult, hp: opts.startHp?.[i] ?? 1, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0,
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
     };
   };
   const F: [Fighter, Fighter] = [mk(a, 0), mk(b, 1)];
@@ -247,7 +252,7 @@ export function* fightSteps(
         break;
       case 'dot':
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe), 'tick') });
+          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick') });
         }
         break;
       case 'heal':

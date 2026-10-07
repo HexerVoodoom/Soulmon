@@ -66,12 +66,12 @@ describe('TalentTree', () => {
     expect(painel().textContent).toMatch(/Sem pontos livres/);
   });
 
-  it('nó sem efeito ligado aparece como "em breve" e não tem botão', () => {
+  it('nenhum nó é "em breve": os 21 têm efeito ligado e botão de +1 (decisão do dono, Tarefa B)', () => {
     abrir({ totalXP: xpForLevel(10) });
+    expect(document.querySelectorAll('button[data-state="soon"]').length).toBe(0);
     mais('tal-pvp-04');
-    expect(painel().textContent).toMatch(/em breve/);
-    expect(document.querySelector('[data-talent-buy]')).toBeNull();
-    expect(document.querySelector('button[data-talent="tal-pvp-04"]')!.getAttribute('data-state')).toBe('soon');
+    expect(painel().textContent).not.toMatch(/em breve/);
+    expect(document.querySelector('[data-talent-buy="tal-pvp-04"]')).not.toBeNull();
   });
 
   it('save hostil (picks acima dos pontos do Vínculo) é descartado na carga e a tela mostra a árvore vazia', () => {

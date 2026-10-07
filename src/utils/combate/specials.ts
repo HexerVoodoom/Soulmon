@@ -98,6 +98,25 @@ export const CHEER = {
  */
 export const CHEER_SCALE_MAX = 1.15;
 
+/**
+ * Tarefa B (§2.38): two PvP opening talents that the core honours. They are CAPPED here (the core is the owner of what it
+ * will accept) and mirrored in `_combate.js`: `tal-pvp-04` starts the fight with some special ENERGY (of 100), `tal-pvp-06`
+ * cuts the DoT damage a side RECEIVES. Neither touches the special itself (owner: talents do not modify the special).
+ */
+export const START_ENERGY_MAX = 9;
+export const DOT_RESIST_MAX = 0.18;
+export function cleanStartEnergy(x: unknown): number {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(START_ENERGY_MAX, Math.max(0, x)) : 0;
+}
+/** `tal-pve-07`: the most HP (as a fraction) a talent may hand a PvE fighter as an opening shield. */
+export const START_SHIELD_MAX = 0.01;
+export function cleanStartShield(x: unknown): number {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(START_SHIELD_MAX, Math.max(0, x)) : 0;
+}
+export function cleanDotResist(x: unknown): number {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(DOT_RESIST_MAX, Math.max(0, x)) : 0;
+}
+
 /** Dirty scale (NaN, < 1, > max) never lowers or explodes the yield. */
 export function cleanCheerScale(x: unknown): number {
   return typeof x === 'number' && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;

@@ -129,6 +129,6 @@ describe('4. a tela da Masmorra usa o canal por atributo; Arena e Pesadelo ficam
     expect(ler('components/DungeonGame.tsx')).toMatch(/useDungeonBonus\(\)/);
     expect(ler('components/DungeonGame.tsx')).not.toMatch(/useTalentBonus\(/);
     expect(ler('components/ArenaGame.tsx')).toMatch(/useTalentBonus\('pve'\)/);
-    expect(ler('components/NightmareBattle.tsx')).toMatch(/useTalentBonus\('pve'\)/);
+    expect(ler('components/NightmareBattle.tsx')).toMatch(/useTalentBonus\('nightmare'\)/); // Tarefa B: o Pesadelo soma tal-pve-05 (canal único de 5%)
   });
 });

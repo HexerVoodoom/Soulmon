@@ -30,7 +30,7 @@ import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dung
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
-import { useDungeonBonus } from '../contexts/useTalentBonus';
+import { useDungeonBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
 import { gateLine, masmorraFloorOpen } from '../utils/gates';
 import { bondLevelFor } from '../utils/bond';
 import type { LText } from '../utils/oracle';
@@ -155,12 +155,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   );
   /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
   const bonusTalento = useDungeonBonus(); // canal único de bônus (teto 5%): ATK/DEF/SPD (PR7 + PR12a)
+  const rift = useRiftTalents(); // Tarefa B: cura entre andares, Bits e escudo de largada (fora do canal de 5%: não são % de combate)
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: dungeonFamily(par?.especial),
     jeito,
+    startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [estado, bonusTalento, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
@@ -208,7 +210,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
 
   const addPoints = (pts: number) => {
-    onEarnPoints(pts);
+    onEarnPoints(riftBitsWith(pts, rift.riftBits)); // Bits ganhos: o talento soma por cima; o placar da run fica na base
     runScoreRef.current += pts;
   };
 
@@ -273,7 +275,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
      núcleo. A defesa perfeita não dá dano; o especial do inimigo (o mega) pode ser esquivado. */
   const rodadaDoNucleo = useCallback((): GroupRound => {
     const e = enemiesRef.current[enemyIdxRef.current];
-    const f = dungeonFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot));
+    const f = dungeonFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot), e.slot === 0); // o escudo de largada (`tal-pve-07`) é só do 1º da escada de cada andar
     return {
       player: f.player, foes: f.foes, seed: f.seed,
       startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
@@ -351,8 +353,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         return;
       }
       // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
-      const heal = Math.ceil(hpMax * pve.cura);
-      hpCarryRef.current = Math.min(1, hpCarryRef.current + pve.cura);
+      const cura = pve.cura + rift.healBoost; // Tarefa B (`tal-pve-03`): a cura entre andares sobe poucos pontos do HP máximo
+      const heal = Math.ceil(hpMax * cura);
+      hpCarryRef.current = Math.min(1, hpCarryRef.current + cura);
       setHpFrac(hpCarryRef.current);
       setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
       setPhase('floor-clear');

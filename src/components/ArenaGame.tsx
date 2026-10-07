@@ -71,7 +71,7 @@ import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
-import { useTalentBonus } from '../contexts/useTalentBonus';
+import { useTalentBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { fichaStageOf } from '../utils/soulProfile/ficha/stageSkillsFor';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
@@ -142,6 +142,9 @@ export function ArenaGame({
     [gs, evolutionStage],
   );
   const bonusTalento = useTalentBonus('pve'); // canal único de bônus (teto 5%), PR7
+  const rift = useRiftTalents(); // Tarefa B: escudo de largada e Bits (fora do canal de 5%)
+  const riftRef = useRef(rift);
+  riftRef.current = rift;
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: familyOfSkill(especial),
@@ -199,7 +202,7 @@ export function ArenaGame({
     const seed = runSeedRef.current;
     const els = inimigosRef.current.map(e => e.elements);
     return {
-      player: arenaPlayerSide(p),
+      player: { ...arenaPlayerSide(p), startShield: r === 0 ? riftRef.current.startShield : 0 }, // só na 1ª rodada
       foes: arenaFoeSides(p, r, els),
       seed: arenaRoundSeed(seed, r),
       startHp: hpCarryRef.current,
@@ -258,14 +261,14 @@ export function ArenaGame({
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      onEarnPoints?.(pontos);
+      onEarnPoints?.(riftBitsWith(pontos, rift.riftBits));
       setFase('venceu');
       return;
     }
     const n = rodada + 1;
     setRodada(n);
     montarRodada(n, pool);
-  }, [pool, rodada, pontos, onEarnPoints, montarRodada]);
+  }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBits]);
 
   const nomeDe = (e: ArenaEnemy) => (isPt ? e.namePt : e.nameEn);
   const sair = isPt ? 'Sair' : 'Leave';

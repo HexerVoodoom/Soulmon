@@ -24,15 +24,16 @@
  * os lê, atrás do `lazy`): este arquivo entra no chunk de entrada pelo `useTalentBonus`, e o orçamento de bytes pesa.
  */
 
-import { cleanCheerScale } from './combate/specials';
-import type { AttrBonus } from './combate/bonus';
+import { cleanCheerScale, START_ENERGY_MAX, DOT_RESIST_MAX } from './combate/specials';
+export { START_ENERGY_MAX, DOT_RESIST_MAX };
+import { COMBAT_BONUS_CAP, type AttrBonus } from './combate/bonus';
 
 export type TalentPath = 'pvp' | 'pve' | 'comercio';
 export type AttrKey = 'atk' | 'def' | 'spd';
 
 export type TalentEffect =
   /** Soma `perRank × grau` ao canal de bônus de combate do `scope`. Só PvP no Duelo; só PvE nas lutas da fenda. */
-  | { readonly kind: 'combatBonus'; readonly scope: 'pvp' | 'pve'; readonly perRank: number; /** PvP: o canal (ATK/DEF/SPD). */ readonly attr?: AttrKey }
+  | { readonly kind: 'combatBonus'; readonly scope: 'pvp' | 'pve' | 'nightmare'; readonly perRank: number; /** PvP: o canal (ATK/DEF/SPD). */ readonly attr?: AttrKey }
   /** Soma `perRank × grau` ao rendimento da torcida do Duelo (1 + soma, até `CHEER_SCALE_MAX`). Só o seu lado, só quando você torce. */
   | { readonly kind: 'cheerBoost'; readonly perRank: number }
   /** Comércio: refazer UM ponto (o que você escolher) em vez da árvore toda. Só moeda GANHA (Bits). */
@@ -49,7 +50,19 @@ export type TalentEffect =
   | { readonly kind: 'weeklyDiscount' }
   /** Reduz o custo do respec em `perRank × grau` (Comércio: só moeda). */
   | { readonly kind: 'respecDiscount'; readonly perRank: number }
-  /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. */
+  /** PvP (Tarefa B): a luta começa com `perRank × grau` de ENERGIA do especial (de 100). Largada, não força: até `START_ENERGY_MAX`. */
+  | { readonly kind: 'startEnergy'; readonly perRank: number }
+  /** PvP (Tarefa B): dano de efeito contínuo RECEBIDO cai `perRank × grau` (até `DOT_RESIST_MAX`). Só reduz o que o outro lado te faz. */
+  | { readonly kind: 'dotResist'; readonly perRank: number }
+  /** PvP (Tarefa B): `perRank` por grau nos TRÊS canais do Duelo, pelo canal único `combinedAttrBonus` (mesmo teto de 5%). */
+  | { readonly kind: 'allAttr'; readonly perRank: number }
+  /** PvE (Tarefa B): a cura entre andares da Masmorra sobe `perRank × grau` do HP máximo (até `HEAL_BOOST_MAX`). */
+  | { readonly kind: 'healBoost'; readonly perRank: number }
+  /** PvE (Tarefa B): `perRank × grau` a mais nos Bits GANHOS na fenda (Masmorra/Arena/Pesadelo), até `RIFT_BITS_MAX`. Sem fonte nova. */
+  | { readonly kind: 'riftBits'; readonly perRank: number }
+  /** PvE (Tarefa B): a luta da fenda começa com um escudo leve de `perRank × grau` do HP (até `START_SHIELD_MAX`). */
+  | { readonly kind: 'startShield'; readonly perRank: number }
+  /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. Hoje nenhum nó usa. */
   | { readonly kind: 'pendente' };
 
 /** Um pré-requisito: o nó `id` precisa estar com pelo menos `rank` graus. */
@@ -84,6 +97,18 @@ export const PVE_STEP = 0.006;
 export const RESPEC_STEP = 0.1;
 /** Rendimento da torcida no Duelo por grau de `tal-pvp-05` (3 graus = +15% = `CHEER_SCALE_MAX`). */
 export const CHEER_STEP = 0.05;
+/** Tarefa B (§2.38): passos e TETOS dos nós que entraram "em breve". Os tetos são lidos pelo espelho do servidor e pelo motor. */
+export const START_ENERGY_STEP = 3;
+export const DOT_RESIST_STEP = 0.06;
+export const CROWN_STEP = 0.002;
+export const HEAL_BOOST_STEP = 0.005;
+export const HEAL_BOOST_MAX = 0.015;
+export const RIFT_BITS_STEP = 0.03;
+export const RIFT_BITS_MAX = 0.09;
+export const START_SHIELD_STEP = 0.01;
+export const START_SHIELD_MAX = 0.01;
+export const NIGHTMARE_STEP = 0.004;
+export const ARC_STEP = 0.004;
 
 
 /** Atalho do pré-requisito: `req('tal-pvp-01', 2)` = o nó com pelo menos 2 graus. */
@@ -103,18 +128,18 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-pvp-01', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'atk' } },
   { id: 'tal-pvp-02', path: 'pvp', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'def' }, requires: [req('tal-pvp-01', 2)] },
   { id: 'tal-pvp-03', path: 'pvp', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP, attr: 'spd' }, requires: [req('tal-pvp-01', 2)] },
-  { id: 'tal-pvp-04', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pvp-03', 2)] },
+  { id: 'tal-pvp-04', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'startEnergy', perRank: START_ENERGY_STEP }, requires: [req('tal-pvp-03', 2)] },
   { id: 'tal-pvp-05', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'cheerBoost', perRank: CHEER_STEP }, requiresAny: [req('tal-pvp-02', 2), req('tal-pvp-03', 2)] },
-  { id: 'tal-pvp-06', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pvp-02', 2)] },
-  { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'pendente' }, requires: [req('tal-pvp-05', 3), req('tal-pvp-04', 1), req('tal-pvp-06', 1)] },
+  { id: 'tal-pvp-06', path: 'pvp', tier: 3, maxRank: 3, effect: { kind: 'dotResist', perRank: DOT_RESIST_STEP }, requires: [req('tal-pvp-02', 2)] },
+  { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'allAttr', perRank: CROWN_STEP }, requires: [req('tal-pvp-05', 3), req('tal-pvp-04', 1), req('tal-pvp-06', 1)] },
   // ── PvE ──────────────────────────────────────────────────────────────────
   { id: 'tal-pve-01', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
   { id: 'tal-pve-02', path: 'pve', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP }, requires: [req('tal-pve-01', 2)] },
-  { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-01', 2)] },
-  { id: 'tal-pve-04', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-03', 1)] },
-  { id: 'tal-pve-05', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-03', 1)] },
-  { id: 'tal-pve-06', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'pendente' }, requires: [req('tal-pve-02', 2)] },
-  { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'pendente' }, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
+  { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'healBoost', perRank: HEAL_BOOST_STEP }, requires: [req('tal-pve-01', 2)] },
+  { id: 'tal-pve-04', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'riftBits', perRank: RIFT_BITS_STEP }, requires: [req('tal-pve-03', 1)] },
+  { id: 'tal-pve-05', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'nightmare', perRank: NIGHTMARE_STEP }, requires: [req('tal-pve-03', 1)] },
+  { id: 'tal-pve-06', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'pve', perRank: ARC_STEP }, requires: [req('tal-pve-02', 2)] },
+  { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'startShield', perRank: START_SHIELD_STEP }, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
   // ── Comércio (só preço e ganho de moeda GANHA; nunca % de combate) ──────
   { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'equipPrice' } },
   { id: 'tal-com-02', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'fragmentGain' }, requires: [req('tal-com-01', 2)] },
@@ -248,14 +273,15 @@ export function pickTalent(picks: readonly string[], id: string, bondLevel: unkn
  * vale 0. É uma FRAÇÃO (0,05 = 5%). Quem a soma com equipamento/Comércio/Renascimento e corta nos 5%
  * é `combate/bonus.ts › combinedBonus`: nenhum consumidor soma por conta própria.
  */
-export function talentBonus(picks: unknown, bondLevel: unknown, scope: 'pvp' | 'pve'): number {
+export function talentBonus(picks: unknown, bondLevel: unknown, scope: 'pvp' | 'pve' | 'nightmare'): number {
   if (!isValidPicks(picks, bondLevel)) return 0;
   let sum = 0;
   for (const [id, rank] of ranksOf(picks)) {
     const e = TALENT_BY_ID.get(id)!.effect;
-    if (e.kind === 'combatBonus' && e.scope === scope) sum += e.perRank * rank;
+    // O Pesadelo é uma luta da fenda: o que vale na fenda vale nele, e `tal-pve-05` soma só nele.
+    if (e.kind === 'combatBonus' && (e.scope === scope || (scope === 'nightmare' && e.scope === 'pve'))) sum += e.perRank * rank;
   }
-  return sum;
+  return Math.min(sum, COMBAT_BONUS_CAP);
 }
 
 /**
@@ -269,9 +295,31 @@ export function talentAttrBonus(picks: unknown, bondLevel: unknown): AttrBonus {
   for (const [id, rank] of ranksOf(picks)) {
     const e = TALENT_BY_ID.get(id)!.effect;
     if (e.kind === 'combatBonus' && e.scope === 'pvp' && e.attr) out[e.attr] += e.perRank * rank;
+    if (e.kind === 'allAttr') { out.atk += e.perRank * rank; out.def += e.perRank * rank; out.spd += e.perRank * rank; }
   }
   return out;
 }
+
+/** Soma `perRank × grau` dos nós de um `kind` (inválido para o Vínculo = 0), com teto. */
+function sumKind(picks: unknown, bondLevel: unknown, kind: 'startEnergy' | 'dotResist' | 'healBoost' | 'riftBits' | 'startShield', max: number): number {
+  if (!isValidPicks(picks, bondLevel)) return 0;
+  let sum = 0;
+  for (const [id, rank] of ranksOf(picks)) {
+    const e = TALENT_BY_ID.get(id)!.effect;
+    if (e.kind === kind) sum += e.perRank * rank;
+  }
+  return Math.min(max, sum);
+}
+/** `tal-pvp-04`: energia (de 100) com que a luta do Duelo COMEÇA. */
+export const talentStartEnergy = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'startEnergy', START_ENERGY_MAX);
+/** `tal-pvp-06`: fração do dano de efeito contínuo recebido que NÃO chega. */
+export const talentDotResist = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'dotResist', DOT_RESIST_MAX);
+/** `tal-pve-03`: fração do HP máximo a mais na cura entre andares. */
+export const talentHealBoost = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'healBoost', HEAL_BOOST_MAX);
+/** `tal-pve-04`: fração a mais nos Bits ganhos na fenda. */
+export const talentRiftBits = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'riftBits', RIFT_BITS_MAX);
+/** `tal-pve-07`: fração do HP máximo em escudo no começo da luta da fenda. */
+export const talentStartShield = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'startShield', START_SHIELD_MAX);
 
 /** O multiplicador do rendimento da torcida no Duelo (1 sem o nó; até `CHEER_SCALE_MAX`). Inválido = 1. */
 export function talentCheerScale(picks: unknown, bondLevel: unknown): number {

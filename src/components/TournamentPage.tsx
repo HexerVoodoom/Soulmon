@@ -290,6 +290,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     const me: DuelSide = {
       combatant,
       cheerScale: talentosPvp.cheerScale,
+      startEnergy: talentosPvp.startEnergy,
+      dotResist: talentosPvp.dotResist,
       special: specialOf(familyOfSkill(par?.especial)),
       fx: fxDoLutador(par),
     };

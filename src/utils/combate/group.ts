@@ -21,7 +21,7 @@ import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { EPS, HIT_UNIT_H0, hitUnit, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
+  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -133,7 +133,7 @@ export function* groupFightSteps(
     const r = mulberry32(stream);
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
-      hp: hp0, en: en0, shield: 0, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
+      hp: hp0, en: en0, shield: cleanStartShield(s.startShield), next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
       nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0,
     };
   };
