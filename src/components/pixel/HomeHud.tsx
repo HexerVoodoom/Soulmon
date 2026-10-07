@@ -36,30 +36,6 @@ import type { ReactNode } from 'react';
  * // de mais nada: o teto de 5 é o limite.
  */
 import { Icon } from '../ui/Icon';
-/**
- * C1 — o MENU da Home é um hambúrguer simples: três tracinhos, pelado (regra
- * do dono: ícone nunca em caixa). Desenho em SVG com `currentColor`, para o
- * tom vir do botão que o envolve; decorativo (o botão carrega o nome).
- */
-export function MenuBars({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      data-menu-bars
-      aria-hidden="true"
-      focusable="false"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.4}
-      strokeLinecap="round"
-      style={{ display: 'block', color: 'var(--sm2-ink)' }}
-    >
-      <path d="M4 6.5h16M4 12h16M4 17.5h16" />
-    </svg>
-  );
-}
 import type { Language } from '../../utils/i18n';
 
 interface HomeHudProps {

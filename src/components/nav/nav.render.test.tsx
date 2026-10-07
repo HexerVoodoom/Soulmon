@@ -12,7 +12,7 @@
  *    glifo pelado; o ÚNICO anel é o do voltar das áreas (exceção D1).
  * 4. **Um `<h1>` por tela**: o topo da área só vira heading quando a página
  *    de baixo não tem o seu.
- * 5. **O menu da Home tem o que morava no sanduíche** (D6), nos dois idiomas.
+ * 5. **O avatar da Home substituiu o sanduíche** (Tarefa C): o que morava no menu foi para as Configurações.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent } from '@testing-library/react';
@@ -21,7 +21,8 @@ import { MapPage } from './MapPage';
 import { CornerLink } from './CornerLink';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 import { AreaTopBar } from './AreaTopBar';
-import { HomeMenuSheet } from './HomeMenuSheet';
+import { ProfileAvatarButton } from '../perfil/ProfileAvatarButton';
+import { MENU_SHOWS_RITUAL_TOOLS } from '../SettingsPage';
 import { AREAS } from '../../navigation';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -231,54 +232,22 @@ describe('AreaTopBar', () => {
   });
 });
 
-describe('HomeMenuSheet (D6)', () => {
-  const rows = (lang: 'en-US' | 'pt-BR') => {
-    const r = renderWithCss(
-      <HomeMenuSheet
-        open
-        onClose={() => {}}
-        language={lang}
-        onOpenPage={() => {}}
-        onOpenGuide={() => {}}
-        onOpenCredits={() => {}}
-        onResetOnboarding={() => {}}
-      />,
-    );
-    const out = Array.from(document.querySelectorAll('[data-menu-row] [data-menu-label]')).map(b => (b.textContent ?? '').trim());
-    r.unmount();
-    return out;
-  };
-
-  it('tudo que morava no sanduíche, nos dois idiomas — sem Oráculo e ritual (G1)', () => {
-    // G2 (02/10/2026): Estatísticas saíram do menu — moram no Laboratório.
-    expect(rows('en-US')).toEqual(['Settings', 'Guide', 'Credits']);
-    expect(rows('pt-BR')).toEqual(['Configurações', 'Guia', 'Créditos']);
+describe('Botão de avatar da Home (Tarefa C, substitui o sanduíche)', () => {
+  it('é UM botão de 44 com nome acessível PT/EN, sem barras de sanduíche, e abre a ação', () => {
+    const onClick = vi.fn();
+    const en = renderWithCss(<ProfileAvatarButton language="en-US" seed="s1" onClick={onClick} />);
+    const btn = en.container.querySelector('[data-profile-avatar-btn]') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Settings and profile');
+    expect(btn.style.width).toBe('44px');
+    expect(en.container.querySelector('[data-menu-bars]')).toBeNull();
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledOnce();
+    en.unmount();
+    const pt = renderWithCss(<ProfileAvatarButton language="pt-BR" seed="s1" onClick={() => {}} />);
+    expect(pt.container.querySelector('[data-profile-avatar-btn]')!.getAttribute('aria-label')).toBe('Configurações e perfil');
   });
 
-  it('cada linha fecha a folha e leva ao destino certo', () => {
-    const onClose = vi.fn();
-    const onOpenPage = vi.fn();
-    const onOpenGuide = vi.fn();
-    renderWithCss(
-      <HomeMenuSheet open onClose={onClose} language="en-US" onOpenPage={onOpenPage} onOpenGuide={onOpenGuide} />,
-    );
-    const btn = (t: string) => Array.from(document.querySelectorAll('[data-menu-row]')).find(b => b.textContent?.includes(t))!;
-    // G1: Oráculo oculto do menu (a página continua existindo).
-    expect(btn('Oracle')).toBeUndefined();
-    expect(btn('Stats')).toBeUndefined();
-    fireEvent.click(btn('Settings'));
-    expect(onOpenPage).toHaveBeenLastCalledWith('settings');
-    fireEvent.click(btn('Guide'));
-    expect(onOpenGuide).toHaveBeenCalledOnce();
-    expect(onClose).toHaveBeenCalledTimes(2);
-    // Sem os callbacks opcionais, as linhas deles não aparecem.
-    expect(btn('Credits')).toBeUndefined();
-  });
-
-  it('é diálogo modal nomeado (foco preso, Escape fecha — `ModalSheet`)', () => {
-    renderWithCss(<HomeMenuSheet open onClose={() => {}} language="pt-BR" onOpenPage={() => {}} onOpenGuide={() => {}} />);
-    const dlg = document.querySelector('[role="dialog"]')!;
-    expect(dlg.getAttribute('aria-modal')).toBe('true');
-    expect(dlg.getAttribute('aria-label')).toBe('Menu');
+  it('Oráculo e "Refazer o ritual" seguem ocultos (G1) — a flag mora nas Configurações', () => {
+    expect(MENU_SHOWS_RITUAL_TOOLS).toBe(false);
   });
 });

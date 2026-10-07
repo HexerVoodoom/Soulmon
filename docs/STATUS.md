@@ -1,5 +1,8 @@
 # Status do Soulmon — registro vivo
 
+> **07/10/2026 — Tarefa C (avatar do usuário), PR aberto sem merge.** O sanduíche e o `HomeMenuSheet` saíram; o canto superior esquerdo da Home é o avatar (NPC + moldura) e abre as Configurações, onde há Perfil › Editar perfil (e-mail "em breve", moldura, foto em grade com busca/domínio), Créditos em Ajuda e a flag `MENU_SHOWS_RITUAL_TOOLS` (Oráculo/Refazer o ritual, ocultos). Só IDs de lista fechada (`catalogo.json` × `_avatares.js`, `_frames.js`) vão ao save e ao perfil público. Alt/nome EN primeiro (`scripts/avatares-en.json`), PT-BR derivado do slug. Achado de passagem: `AvatarFrame` não tinha `maxWidth: 'none'` e o `img{max-width:100%}` global achatava a arte da moldura — corrigido.
+
+
 > Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
 
 Documento único de acompanhamento. **Se algo importante for decidido, descoberto

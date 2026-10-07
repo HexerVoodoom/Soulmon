@@ -49,7 +49,7 @@ export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
           draggable={false}
           width={F}
           height={F}
-          style={{ position: 'absolute', left: off, top: off, width: F, height: F, imageRendering: 'pixelated', pointerEvents: 'none' }}
+          style={{ position: 'absolute', left: off, top: off, width: F, height: F, maxWidth: 'none', imageRendering: 'pixelated', pointerEvents: 'none' }}
         />
         {comPlaca && (
           <span

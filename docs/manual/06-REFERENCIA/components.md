@@ -364,12 +364,18 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/CompanionHUD.tsx`.
 **Régua:** `src/components/home/statTips.test.ts`, `src/components/CompanionHUD.cta.test.tsx`.
 
-### `src/components/nav/HomeMenuSheet.tsx`
-**Dono de:** o menu só ícone da Home (D6) — folha (`ModalSheet`) com Configurações, Oráculo, Estatísticas, Guia, Créditos e Refazer o ritual. A Biblioteca mora no Hall (D4), não aqui.
-**Props principais:** `open`, `onClose`, `language`, `onOpenPage(MenuPageId)`, `onOpenGuide`, `onOpenCredits?`, `onResetOnboarding?`.
-**Exports:** `HomeMenuSheet(props)`.
-**Chamado por:** `src/App.tsx`.
+### `src/components/perfil/ProfileAvatarButton.tsx`
+**Dono de:** o botão do USUÁRIO no canto superior esquerdo da Home (Tarefa C, 07/10/2026) — a foto de perfil (NPC) com a moldura equipada, num alvo de 44 (avatar de 28 para a moldura, que transborda, caber na coluna de 48 do `HomeHud`). ⚰️ Substitui o sanduíche e o `HomeMenuSheet` (apagado): abre `page:settings`. O que morava no menu foi para as Configurações: Guia (já em Ajuda), Créditos (linha `onOpenCredits`) e Oráculo/Refazer o ritual (ocultos por `MENU_SHOWS_RITUAL_TOOLS = false`, hoje exportada de `SettingsPage.tsx`).
+**Props principais:** `avatarId?`, `frameId?`, `seed?`, `language`, `onClick`.
+**Exports:** `ProfileAvatarButton(props)`.
+**Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
 **Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/perfil/ProfileEditor.tsx`
+**Dono de:** a folha "Editar perfil" (Configurações › Perfil): e-mail desativado ("em breve"), moldura (`FrameSelector`, contexto de rank vivo via `getRank(undefined, saveId)`) e foto em grade com busca e filtro por domínio (miniaturas lazy, 64 px, cabe em 375 px). Só IDs de lista fechada saem daqui.
+**Exports:** `ProfileEditor(props)`.
+**Chamado por:** `src/components/SettingsPage.tsx`.
+**Régua:** `src/utils/avatar.test.ts`.
 
 ### `src/components/nav/MapPage.tsx`
 **Dono de:** a tela do Mapa (minimal-ui F1 + arte isométrica F3) — cena com as seis construções (`AREAS` de `src/navigation.ts`), cada uma um `<button>` com `aria-label` = `areaLabel` que chama `onOpenArea`, posicionada em % da cena; o saldo das 3 moedas num menu discreto no canto inferior direito, acima da arte (`zIndex` 2; até 24/09/2026 ficava no topo e a arte do "Jogos" o cobria), cada moeda numa **pílula** com a moldura `chip-moeda` do squad de arte em 9-slice (`CHIP_MOEDA_ART`/`CHIP_MOEDA_SLICE` de `assets/soulmon/icones-ui`, `border-image … fill` a 1/3 da arte: o miolo opaco segura o contraste sobre qualquer trecho da cena e as tampas não deformam quando o texto cresce) — moldura de TEXTO, não de ícone (formato e cor de `utils/currencies.ts`); o canto inferior esquerdo vinhetado para o `CornerLink glow` da Home. `<h1>` visualmente oculto (`#sm-map-title`).
@@ -1215,6 +1221,17 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Exports:** `BackArrow`.
 **Chamado por:** `src/components/SoulmonOnboarding.tsx` (um ponto de montagem para o onboarding inteiro, `temVolta`). Outras telas adotam ao migrar seus "Back" de texto.
 **Régua:** exercitado por `src/components/SoulmonOnboarding.funil.render.test.tsx` (`[data-back-arrow]` antes do título).
+
+### `src/components/ui/UserAvatar.tsx`
+**Dono de:** o ÍCONE DO USUÁRIO — a foto (NPC, recorte circular) com a moldura equipada (`AvatarFrame`); padrão determinístico por `seed`. Serve ao botão da Home, à linha de Perfil e ao editor.
+**Exports:** `UserAvatar(props)`.
+**Chamado por:** `perfil/ProfileAvatarButton.tsx` (lazy), `SettingsPage.tsx`, `perfil/ProfileEditor.tsx`.
+**Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/ui/AvatarImg.tsx`
+**Dono de:** a imagem do avatar CARREGADA SOB DEMANDA (`import.meta.glob` preguiçoso das miniaturas webp de `assets/avatares/`; cada uma vira mini-chunk). Id fora do catálogo cai no padrão.
+**Exports:** `AvatarImg(props)`, `AVATAR_THUMB_IDS`.
+**Chamado por:** `UserAvatar.tsx` (lazy), `perfil/ProfileEditor.tsx`.
 
 ### `src/components/ui/AvatarFrame.tsx`
 **Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com a ARTE da moldura (`FRAME_ART`, `utils/frames.ts`: canvas 192² com abertura de 96 centrada) desenhada por cima, a abertura em 94% do lado do avatar e o transbordo reservado na `margin`; id sem arte cai no anel CSS do `look`; `null` = sem moldura. Mestre/Grão-Mestre escrevem o `#N` (`plaque`) como texto vivo na plaquinha. `FrameSelector` lista "Sem moldura" + o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).

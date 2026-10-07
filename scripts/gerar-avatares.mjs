@@ -5,7 +5,11 @@
 // Fonte e SEMPRE o arquivo atual; rodar duas vezes sem mexer em nada reescreve bytes identicos (idempotente).
 import { readdir, writeFile, mkdir } from 'fs/promises';
 import { join, basename } from 'path';
+import { readFile } from 'fs/promises';
 import sharp from 'sharp';
+
+// Alt EN descritivo (EN primeiro, decisao do dono 07/10/2026): `scripts/avatares-en.json`, chaveado pelo slug.
+const EN = JSON.parse(await readFile('scripts/avatares-en.json', 'utf8'));
 
 const SRC = 'src/assets';
 const OUT = join(SRC, 'avatares');
@@ -15,7 +19,9 @@ const entradas = [];
 async function pngs(dir) {
   try { return (await readdir(dir)).filter(f => f.endsWith('.png')).sort(); } catch { return []; }
 }
-const slug = (arq, tira) => basename(arq, '.png').replace(/^npc-/, '').replace(tira, '');
+// Um id nao pode conter a palavra de uma area vetada fora do app (R-38, `travessias.contract.test.ts`): `passeio` -> `trilha`.
+const RENOME = { 'exploracao-passeio': 'exploracao-trilha' };
+const slug = (arq, tira) => { const n = basename(arq, '.png').replace(/^npc-/, '').replace(tira, ''); return RENOME[n] ?? n; };
 
 for (const f of await pngs(join(SRC, 'soulmon/npcs'))) entradas.push({ grupo: 'ativo', arq: join(SRC, 'soulmon/npcs', f), nome: slug(f, '') });
 for (const f of await pngs(join(SRC, 'soulmon/desafiantes'))) if (f.startsWith('npc-')) entradas.push({ grupo: 'ativo', arq: join(SRC, 'soulmon/desafiantes', f), nome: slug(f, '') });
@@ -32,7 +38,8 @@ for (const e of entradas) {
   if (vistos.has(id)) throw new Error(`id repetido: ${id}`);
   vistos.add(id);
   await sharp(e.arq).resize(LADO, LADO, { fit: 'cover' }).webp({ quality: 82, alphaQuality: 90 }).toFile(join(OUT, `${id}.webp`));
-  cat.push({ id, g: e.grupo, n: e.nome });
+  if (!EN[e.nome]) throw new Error(`falta alt EN para ${e.nome} em scripts/avatares-en.json`);
+  cat.push({ id, g: e.grupo, n: e.nome, en: EN[e.nome] });
 }
 await writeFile(join(OUT, 'catalogo.json'), JSON.stringify(cat) + '\n');
 await writeFile('functions/api/_avatares.js',
@@ -41,7 +48,7 @@ await writeFile('functions/api/_avatares.js',
 // src/assets/avatares/catalogo.json travada em src/utils/avatar.test.ts.
 export const AVATAR_IDS = new Set(${JSON.stringify(cat.map(c => c.id))});
 
-/** Id de avatar da lista fechada ou `null`. */
+/** Id de avatar da lista fechada ou \`null\`. */
 export function avatarIdOrNull(raw) {
   return typeof raw === 'string' && AVATAR_IDS.has(raw) ? raw : null;
 }
