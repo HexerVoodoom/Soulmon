@@ -1237,6 +1237,8 @@ Três blocos, cada um com condição própria e cada um em `Suspense` com
 
 ### 4.8 Estatísticas — Laboratório › Santuário do Vínculo (ex-Observatório) (`labTab === 'stats'`)
 
+> **Árvore de talentos (07/10/2026):** a árvore abre sempre a 100% (sem zoom, rolagem nativa). Tocar num nó abre um modal sobre ele: descrição, o que falta (texto), quantos pontos atribuir e Confirmar/Cancelar. Detalhe: `docs/manual/06-REFERENCIA/components.md` › `TalentTree.tsx`.
+
 **Chega por**: área Laboratório → lote Santuário do Vínculo (G2, 02/10/2026: não é mais página do menu da Home) · **Sai para**: os outros dois chips.
 
 Quatro cartões, cada um com condição literal dentro da `StatsPage`:
