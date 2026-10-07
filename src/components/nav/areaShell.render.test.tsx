@@ -197,6 +197,6 @@ describe('NPC 1,4x (pedido do dono, 29/09/2026)', () => {
     expect(frame.style.overflow).not.toBe('hidden');
     expect(NPC_PORTRAIT_ZOOM).toBeGreaterThanOrEqual(1.4);
     expect(NPC_PORTRAIT_ZOOM).toBeLessThanOrEqual(1.6);
-    expect(img.style.transform).toBe(`scale(${NPC_PORTRAIT_ZOOM})`);
+    expect(img.style.transform).toMatch(new RegExp(`scale\\(${NPC_PORTRAIT_ZOOM}\\)$`)); // sobe pela margem vazia da arte (translateY), sem cortar o topo
   });
 });
