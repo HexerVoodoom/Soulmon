@@ -51,7 +51,8 @@ export function upgradeRefusal(state: ForgeGameState, id: string): ForgeRefusal 
   if (level === 0) return 'not-owned';
   if (level >= FORGE_MAX_LEVEL) return 'max-level';
   const to = level + 1;
-  if (bondLevelFor(state.totalXP ?? 0) < LEVEL_MIN_BOND[to]) return 'bond';
+  const vinculo = bondLevelFor(state.totalXP ?? 0);
+  if (vinculo < LEVEL_MIN_BOND[to]) return 'bond';
   for (const c of upgradeCost(piece, to)) if (stockOf(state.buildingQuests, c.material) < c.n) return 'no-materials';
   return undefined;
 }

@@ -18,17 +18,17 @@ export const UPGRADE_COST = { 2: [1, 0], 3: [2, 1], 4: [3, 2], 5: [4, 3] };
 export const REDO_BITS = 150;
 export const REDO_FRAGMENTS = 3;
 
-/** id -> { slot, tier, building, mats }. */
+/** id -> { slot, tier }. O predio de origem e os materiais sao so do cliente (o servidor nao concede nem debita: valida a FORMA e o teto). */
 export const FORGE_PIECES = {
-  'eq-nucleo-t1': { slot: 'nucleo', tier: 1, building: 'exploracao.masmorra', mats: ['ore', 'gear'] },
-  'eq-nucleo-t2': { slot: 'nucleo', tier: 2, building: 'arena.duelo', mats: ['fang', 'ore'] },
-  'eq-nucleo-t3': { slot: 'nucleo', tier: 3, building: 'arena.torneio', mats: ['laurel', 'fang'] },
-  'eq-carapaca-t1': { slot: 'carapaca', tier: 1, building: 'exploracao.passeio', mats: ['pebble', 'moss'] },
-  'eq-carapaca-t2': { slot: 'carapaca', tier: 2, building: 'laboratorio.pet', mats: ['down', 'pebble'] },
-  'eq-carapaca-t3': { slot: 'carapaca', tier: 3, building: 'hall.guilda', mats: ['crest', 'down'] },
-  'eq-rastro-t1': { slot: 'rastro', tier: 1, building: 'jogos.salao', mats: ['spark', 'moss'] },
-  'eq-rastro-t2': { slot: 'rastro', tier: 2, building: 'exploracao.oficina', mats: ['gear', 'spark'] },
-  'eq-rastro-t3': { slot: 'rastro', tier: 3, building: 'arena.feira', mats: ['ribbon', 'gear'] },
+  'eq-nucleo-t1': { slot: 'nucleo', tier: 1 },
+  'eq-nucleo-t2': { slot: 'nucleo', tier: 2 },
+  'eq-nucleo-t3': { slot: 'nucleo', tier: 3 },
+  'eq-carapaca-t1': { slot: 'carapaca', tier: 1 },
+  'eq-carapaca-t2': { slot: 'carapaca', tier: 2 },
+  'eq-carapaca-t3': { slot: 'carapaca', tier: 3 },
+  'eq-rastro-t1': { slot: 'rastro', tier: 1 },
+  'eq-rastro-t2': { slot: 'rastro', tier: 2 },
+  'eq-rastro-t3': { slot: 'rastro', tier: 3 },
 };
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);

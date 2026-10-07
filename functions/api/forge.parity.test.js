@@ -23,7 +23,7 @@ describe('as tabelas do servidor e as do app sao as MESMAS', () => {
     expect(srv.REDO_FRAGMENTS).toBe(app.REDO_FRAGMENTS);
     expect(Object.keys(srv.FORGE_PIECES).sort()).toEqual(app.FORGE_PIECES.map((p) => p.id).sort());
     expect(Object.keys(srv.FORGE_PIECES).sort()).toEqual(EQUIP_CATALOG.map((i) => i.id).sort());
-    for (const p of app.FORGE_PIECES) expect(srv.FORGE_PIECES[p.id]).toEqual({ slot: p.slot, tier: p.tier, building: p.building, mats: [...p.mats] });
+    for (const p of app.FORGE_PIECES) expect(srv.FORGE_PIECES[p.id]).toEqual({ slot: p.slot, tier: p.tier });
   });
 
   it('sanear e o bonus batem em vetores gerados (inclusive lixo)', () => {
