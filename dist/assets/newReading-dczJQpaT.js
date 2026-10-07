@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:dist/assets/newReading-GTmjNEcg.js
-import{O as i}from"./oracle-BhsX88D3.js";import"./index-BIITe7-M.js";import"./vendor-DDxydHEc.js";function e(o){let n=2166136261;for(let t=0;t<o.length;t++)n^=o.charCodeAt(t),n=Math.imul(n,16777619)>>>0;return n>>>0}function m(o,n=0){const t=o??{},a=i.map(r=>`${r.id}=${t[r.id]??""}`).join("|");return e(`${a}#${Math.max(0,Math.floor(n))}`)%2**31}function u(o,n){const t=o??{},a=n??{};return i.some(r=>(t[r.id]??"")!==(a[r.id]??""))}export{u as answersChanged,m as readingSeed};
-========
-import{O as i}from"./oracle-BVRD7rrf.js";import"./index-BV3ZlHdk.js";import"./vendor-DDxydHEc.js";function e(o){let n=2166136261;for(let t=0;t<o.length;t++)n^=o.charCodeAt(t),n=Math.imul(n,16777619)>>>0;return n>>>0}function m(o,n=0){const t=o??{},a=i.map(r=>`${r.id}=${t[r.id]??""}`).join("|");return e(`${a}#${Math.max(0,Math.floor(n))}`)%2**31}function u(o,n){const t=o??{},a=n??{};return i.some(r=>(t[r.id]??"")!==(a[r.id]??""))}export{u as answersChanged,m as readingSeed};
->>>>>>>> b59023b (feat(combate-v3): PR14 integra a familia estavel do especial (familiasDaJornada) em skills e nomeEspecial):dist/assets/newReading-dczJQpaT.js

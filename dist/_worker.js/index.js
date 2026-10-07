@@ -6278,7 +6278,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-P2zLcd/functionsRoutes-0.28818136725951216.mjs
+// ../.wrangler/tmp/pages-kV7dok/functionsRoutes-0.6135891478891342.mjs
 var routes = [
   {
     routePath: "/api/account",
