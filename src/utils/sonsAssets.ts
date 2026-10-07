@@ -47,7 +47,7 @@ export interface AssetDeSom {
   origem: 'higgsfield/seed_audio' | 'higgsfield/sonilo_music';
   /** Onde está o prompt literal (não o texto — o texto fica fora do bundle). */
   promptRef: string;
-  geradoEm: '2026-09-21' | '2026-10-07';
+  geradoEm: '2026-09-21';
 }
 
 export const ASSETS_DE_SOM = {
@@ -115,16 +115,6 @@ export const CAMADAS_DA_TRILHA = {
     origem: 'higgsfield/sonilo_music',
     promptRef: 'squad-alpha-runs/som-01/prototyper/pacote-prompts.md §2.15',
     geradoEm: '2026-09-21',
-  },
-  procedural: {
-    url: '/sounds/trilha-soulmon-procedural.webm',
-    sha256: '8f2bc5b3e8fd412d33d95074c96dfced6455c1fedefd1b385b4d73cf43fed242',
-    bytes: 207110,
-    categoria: 'marco',
-    duracaoS: 28.8,
-    origem: 'higgsfield/seed_audio', // genérica, foi síntese procedural
-    promptRef: 'scripts/gerar-trilha.py (síntese de osciladores + ADSR)',
-    geradoEm: '2026-10-07',
   },
 } as const satisfies Record<string, AssetDeSom>;
 
