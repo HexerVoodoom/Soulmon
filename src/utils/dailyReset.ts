@@ -107,10 +107,6 @@ export function getNextEvolution(
   currentStage: string,
   branch: Attr,
   unlockedEvolutions: string[],
-  /** Dias perfeitos desde a última evolução — abre o caminho da PERMANÊNCIA
-   *  para o Ultra (`canReachUltra`, WP4.2/D6). Zero por omissão, então quem
-   *  não passa continua com a regra antiga: só a coleção das três megas. */
-  perfectDays = 0,
 ): string {
   branch = clampBranch(branch) as Attr;
   const level = getStageLevel(currentStage);
@@ -121,7 +117,7 @@ export function getNextEvolution(
     // A pergunta "existe destino?" é de `canReachUltra` (dono da árvore).
     // Aqui não se decide critério — se decidisse, seria a segunda cópia de uma
     // regra de evolução, que é como este projeto já se machucou antes.
-    if (canReachUltra({ unlockedEvolutions, perfectDays })) return 'ultra';
+    if (canReachUltra({ unlockedEvolutions })) return 'ultra';
     return currentStage;
   }
   return currentStage; // ultra — já no topo
@@ -1040,7 +1036,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     newCurrentBranch = branch;
     newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
 
-    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions, prev.perfectDays ?? 0);
+    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions);
     const naturalNext = newEvolutionStage;
 
     const newStageLevel = getStageLevel(newEvolutionStage);

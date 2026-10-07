@@ -182,11 +182,11 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Avisos do arquivo:** nenhum comentário de aviso formal além das notas de tolerância a dado sujo já citadas nos exports.
 
 ### `src/types/progression.ts`
-**Dono de:** a escada de evolução inteira — os 11 ids de forma, requisito diário por estágio, HP máximo por estágio, energia máxima, os dois caminhos para o Ultra, e se a evolução é manual.
+**Dono de:** a escada de evolução inteira — os 11 ids de forma, requisito diário por estágio, HP máximo por estágio, energia máxima, a regra do Ultra (as 10 formas prévias), e se a evolução é manual.
 **Exports:**
 - `FORM_REQUIREMENTS` — requisito diário (tarefas/hábitos) por estágio.
-- `ULTRA_PATIENCE_DAYS` — o segundo caminho para o Ultra (decisão D6, WP4.2): dias de paciência em vez de só perfectDays acumulados.
-- `canReachUltra(...)` — existe caminho para o Ultra a partir do mega? `perfectDays` contados desde a última evolução.
+- `ULTRA_PRIOR_FORMS` / `ultraFormsKnown(...)` — as 10 formas prévias do Ultra (derivadas dos galhos) e a contagem de coleção (07/10/2026; a paciência foi revogada).
+- `canReachUltra({ unlockedEvolutions })` — `true` só com as 10 formas prévias conhecidas.
 - `MAX_HP_BY_FORM` — HP máximo por NÍVEL de estágio (rookie/champion/ultimate=3 · mega=4 · ultra=5).
 - `EvolutionStage` — tipo do id de forma.
 - `MAX_STAGE_REQUIREMENT` — o maior requisito diário da escada (hoje 6, mega/ultra); todo outro teto do jogo deriva deste, nunca de um literal.

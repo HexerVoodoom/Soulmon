@@ -43,6 +43,6 @@ export function evolutionTarget(input: EvolutionTargetInput): EvolutionTarget {
   const branch = resolveBranch(input.points, input.reading, input.currentBranch);
   return {
     branch,
-    stage: getNextEvolution(input.evolutionStage, branch, input.unlockedEvolutions, input.perfectDays ?? 0),
+    stage: getNextEvolution(input.evolutionStage, branch, input.unlockedEvolutions),
   };
 }

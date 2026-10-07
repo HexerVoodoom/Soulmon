@@ -119,7 +119,7 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
 function vesperForms(input: SpriteTriggerInput, target: string): string[] {
   const leaders = branchLeaders(input.points);
   if (leaders.length < 2) return [target];
-  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions, input.perfectDays));
+  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions));
   // `ultra` não tem galho: os três líderes resolvem para a MESMA forma. Dedup
   // aqui evita três pedidos idênticos ao servidor pela mesma imagem.
   const unique = Array.from(new Set(forms.filter(f => f !== input.evolutionStage)));

@@ -21,13 +21,13 @@ describe('getNextEvolution', () => {
     expect(getNextEvolution('ultimate-harmony', 'benevolence', [])).toBe('mega-benevolence');
   });
 
-  it('mega → ultra only when all 3 megas are unlocked', () => {
-    const allMegas = ['mega-power', 'mega-harmony', 'mega-benevolence'];
+  it('mega → ultra only when all 10 prior forms are unlocked', () => {
+    const allMegas = ['rookie', ...['champion', 'ultimate', 'mega'].flatMap(n => ['power', 'harmony', 'benevolence'].map(b => `${n}-${b}`))];
     expect(getNextEvolution('mega-power', 'power', allMegas)).toBe('ultra');
     expect(getNextEvolution('mega-harmony', 'harmony', allMegas)).toBe('ultra');
   });
 
-  it('mega stays put when not all megas unlocked', () => {
+  it('mega stays put when not all prior forms unlocked', () => {
     expect(getNextEvolution('mega-power', 'power', ['mega-power'])).toBe('mega-power');
   });
 

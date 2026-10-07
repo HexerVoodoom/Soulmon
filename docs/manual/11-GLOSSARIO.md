@@ -301,7 +301,7 @@ Termos com **⚠️** têm uma armadilha de nome: o que o jogador lê e o que o 
 
 | Termo | O que é | Símbolo / dono no código | Onde se aprofunda |
 |---|---|---|---|
-| **Ultra** | O ápice da escada, acima do mega. Tem um segundo caminho por paciência, além dos dias completos — e a paciência é "o recurso que não cresce indefinidamente", que é o argumento que justifica o teto do Glitchtama. | `ULTRA_PATIENCE_DAYS`, `canReachUltra` em `src/types/progression.ts` | [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) |
+| **Ultra** | O ápice da escada, acima do mega. Só abre com as 10 formas prévias conhecidas (rookie + 3 galhos × champion/ultimate/mega) — coleção completa; o caminho por paciência foi revogado em 07/10/2026. | `ULTRA_PRIOR_FORMS`, `canReachUltra` em `src/types/progression.ts` | [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) |
 | **UnlockNudge** | O convite de compra dentro do app. **Nunca abre sozinho** e aparece em pontos declarados — ao bater o teto de criação do modo grátis e na página de Evolução de quem está no demo. | `UnlockAccountModal` em `src/components/UnlockAccountModal.tsx`; `unlockReasonCode` em `src/utils/telemetry.ts` | [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md) |
 
 ## V

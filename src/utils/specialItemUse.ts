@@ -47,7 +47,8 @@ export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap';
  *
  * O Glitchtama dá +1 `perfectDays`, que é a moeda que a escada de evolução
  * consome. Rookie→mega custa 14 dias perfeitos e o Ultra custa mais
- * `ULTRA_PATIENCE_DAYS` (45): **59 no total**. A masmorra declara, por escrito,
+ * 45 (a paciência do Ultra, revogada em 07/10/2026 — o teto segue pelo motivo
+ * original): **59 no total**. A masmorra declara, por escrito,
  * que não tem limite diário nem gate de entrada, e concluir os 5 andares
  * sempre dropa um Glitchtama — então 59 runs seguidas compravam a escada
  * inteira, e elas cabem num fim de semana.

@@ -3,7 +3,7 @@ import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import type { Language } from '../utils/i18n';
-import { FORM_REQUIREMENTS, ULTRA_PATIENCE_DAYS } from '../types/progression';
+import { FORM_REQUIREMENTS, ULTRA_PRIOR_FORMS } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 import {
   HABIT_MILESTONES,
@@ -91,15 +91,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               `Rookie→Champion needs ${R.rookie.required} complete days; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
             )}
           </p>
-          {/* WP4.2 — o requisito do Ultra nunca esteve no guia, e ele é o único
-              da árvore que não é só "dias completos". Enquanto o único caminho
-              era a coleção das três megas, a omissão escondia que o topo pedia
-              DUAS quedas deliberadas. Agora são dois caminhos e os dois são
-              ditos — com a permanência primeiro, que é a que não pede descer. */}
+          {/* O Ultra é a coleção completa (decisão do dono, 07/10/2026): as formas
+              prévias, cada uma alcançada ao menos uma vez. Número da constante. */}
           <p style={para}>
             {L(
-              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor, e nenhum pede que você degenere.`,
-              `The Ultra has two paths: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better, and neither asks you to degenerate.`,
+              `O Ultra reúne todas as formas que vieram antes: o rookie e os três galhos em champion, ultimate e mega — ${ULTRA_PRIOR_FORMS.length} formas, cada uma conhecida ao menos uma vez. Dias completos sozinhos não bastam.`,
+              `The Ultra gathers every form that came before: the rookie and the three branches in champion, ultimate and mega — ${ULTRA_PRIOR_FORMS.length} forms, each known at least once. Complete days alone are not enough.`,
             )}
           </p>
           {/* Renascimento: o degrau depois do topo. Fica logo abaixo do Ultra

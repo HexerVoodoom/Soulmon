@@ -36,7 +36,7 @@ import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type Spri
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
-import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_DAYS } from '../types/progression';
+import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ultraFormsKnown, ULTRA_PRIOR_FORMS } from '../types/progression';
 import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
@@ -229,12 +229,10 @@ export function EvolutionPath({
 
   const megaIds = ATTR_ORDER.map(a => `mega-${a}`);
   const areAllMegasUnlocked = megaIds.every(id => unlockedSet.has(id));
-  /* WP4.2 (decisão D6) — o Ultra deixou de exigir que o jogador machucasse a
-     criatura de propósito. São DOIS caminhos agora, e o cartão tem de mostrar
-     os dois: coleção (as três megas) ou permanência (`ULTRA_PATIENCE_DAYS` dias
-     perfeitos como mega). A regra é de `canReachUltra`, dona da árvore — aqui
-     não se decide critério nenhum. */
-  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, perfectDays });
+  /* 07/10/2026 (decisão do dono) — o Ultra é a COLEÇÃO COMPLETA: as 10 formas
+     prévias, cada uma alcançada ao menos uma vez. A regra é de `canReachUltra`,
+     dona da árvore — aqui não se decide critério nenhum. */
+  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions });
 
   const branchPath = getBranchPath(selectedBranch);
 
@@ -658,10 +656,10 @@ export function EvolutionPath({
     const isCurrent = stageId === currentStageId;
     const isUltra = evolution.stage === 'ultra';
     const ramoAttr: Attr | null = !isUltra && evolution.stage !== 'rookie' && evolution.branch ? ALIGN_TO_ATTR[evolution.branch] : null;
-    const isUltraMode = isUltra && !podeChegarAoUltra;
+    const isUltraMode = isUltra && !podeChegarAoUltra && !isCurrent && !unlockedSet.has(stageId);
     const isRevealed = revealed.has(stageId);
     // "Reached" (shown) = the current form, an already-unlocked form, the
-    // shared rookie trunk, or — for Ultra — once all 3 megas are unlocked.
+    // shared rookie trunk, or — for Ultra — once all the prior forms are known.
     // Everything else is a spoiler-hidden future form.
     const isReached =
       isCurrent
@@ -786,17 +784,13 @@ export function EvolutionPath({
           {/* O estado da ARTE desta forma (§2.2). */}
           {linhaDeEstado(stageId, estado, hidden)}
 
-          {/* WP4.2 — os DOIS caminhos, ditos no lugar onde a pergunta nasce.
-
-              Sem esta linha, quem olha o Ultra trancado conclui a mesma coisa
-              que antes: "preciso das três megas", ou seja, "preciso descer".
-              A ordem é deliberada — a PERMANÊNCIA vem primeiro, porque é o
-              caminho que não pede nenhum ato de descuido. */}
+          {/* O Ultra é a coleção: a dica diz quantas formas já são conhecidas, como
+              contagem de COLEÇÃO — nunca percentual, nunca "faltam N". */}
           {isUltraMode && (
             <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
               {isPt
-                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
-                : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
+                ? `O Ultra reúne todas as formas que vieram antes: o rookie e os três galhos, em champion, ultimate e mega. ${ultraFormsKnown(unlockedEvolutions)} de ${ULTRA_PRIOR_FORMS.length} formas conhecidas. Sem pressa — e nada de descer por obrigação.`
+                : `The Ultra gathers every form that came before: the rookie and the three branches, in champion, ultimate and mega. ${ultraFormsKnown(unlockedEvolutions)} of ${ULTRA_PRIOR_FORMS.length} forms known. No rush.`}
             </InfoTip>
           )}
 

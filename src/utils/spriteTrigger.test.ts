@@ -5,7 +5,7 @@
  * destes cair, alguém gastou dinheiro na forma errada, ou não gastou na certa.
  */
 import { describe, it, expect } from 'vitest';
-import { ULTRA_PATIENCE_DAYS } from '../types/progression';
+import { ULTRA_PRIOR_FORMS } from '../types/progression';
 import { spriteBatch, birthBatch, pointsToEvolve, targetFormId, type SpriteTriggerInput } from './spriteTrigger';
 import { emptySpriteLibrary, recordSprite, recordFailure, type SpriteLibrary } from './spriteLibrary';
 import { CARE_PATTERNS, type CareReading } from './carePattern';
@@ -71,7 +71,7 @@ describe('o lote é contra `required`, e dispara na ELEGIBILIDADE (`faltam <= 0`
     const megaReady = input({
       evolutionStage: 'mega-power',
       perfectDays: 6,
-      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
+      unlockedEvolutions: [...ULTRA_PRIOR_FORMS],
     });
     expect(spriteBatch(megaReady)).toEqual({ occasion: 'C', formIds: ['ultra'] });
   });
@@ -92,32 +92,20 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
     expect(t).toBe('champion-benevolence');
   });
 
-  /**
-   * ⚠️ Esta era a trava da regra ANTIGA, e ela mudou em 06/09/2026 (WP4.2 /
-   * decisão D6). O mega sem as três megas continua sem destino — mas só
-   * enquanto o segundo caminho não abriu.
-   *
-   * O caminho novo é `ULTRA_PATIENCE_DAYS` dias perfeitos como mega. Antes,
-   * chegar ao Ultra exigia descer e subir duas vezes, ou seja: o topo do jogo
-   * pedia que o jogador machucasse a criatura de propósito. A linha
-   * `perfectDays: 99` abaixo esperava `null` justamente porque a permanência
-   * não valia nada — hoje ela vale, e a forma passa a ser gerável.
-   */
-  it('mega sem as 3 megas E sem permanência não tem destino (estado DISTANTE)', () => {
-    const i = input({ evolutionStage: 'mega-power', perfectDays: 5, unlockedEvolutions: ['mega-power'] });
+  /** 07/10/2026: o Ultra pede as 10 formas prévias; paciência não vale mais. */
+  it('mega sem as 10 formas não tem destino, nem com muitos dias perfeitos', () => {
+    const i = input({ evolutionStage: 'mega-power', perfectDays: 99, unlockedEvolutions: ['mega-power'] });
     expect(targetFormId(i)).toBeNull();
     expect(spriteBatch(i)).toBeNull();
-    // Logo abaixo do corte também não: o caminho abre no número, não perto dele.
-    expect(targetFormId({ ...i, perfectDays: ULTRA_PATIENCE_DAYS - 1 })).toBeNull();
   });
 
-  it('mega com PERMANÊNCIA alcança o ultra sem nunca ter degenerado', () => {
+  it('mega com as 10 formas conhecidas alcança o ultra', () => {
     const i = input({
       evolutionStage: 'mega-power',
-      perfectDays: ULTRA_PATIENCE_DAYS,
-      unlockedEvolutions: ['mega-power'],
+      perfectDays: 0,
+      unlockedEvolutions: [...ULTRA_PRIOR_FORMS],
     });
-    expect(targetFormId(i), 'o segundo caminho para o Ultra sumiu').toBe('ultra');
+    expect(targetFormId(i)).toBe('ultra');
   });
 
   it('ultra é topo da árvore: nunca gera nada', () => {
@@ -178,7 +166,7 @@ describe('o lote cobre TODOS os líderes empatados (§4)', () => {
       evolutionStage: 'mega-power',
       perfectDays: 6,
       points: { power: 3, harmony: 3, benevolence: 3 },
-      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
+      unlockedEvolutions: [...ULTRA_PRIOR_FORMS],
     }));
     expect(b?.formIds).toEqual(['ultra']);
   });
