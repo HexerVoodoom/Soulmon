@@ -38,6 +38,7 @@ import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { fighterIdentity } from '../utils/fighterIdentity';
+import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
 import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -302,7 +303,7 @@ export function ArenaGame({
           isPt={isPt}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
-            element: fxElementId(basica?.elementoId ?? atributos.principal),
+            element: fxElementId(basica ? ident.basico.elemento : atributos.principal), // o que se VÊ = a identidade (par incluso); a vantagem segue em `elements` (base)
             energy: (pronto ? batalha.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? batalha.status.me : undefined,
             // PR18: o trecho da barra de especial que a torcida em andamento já encheu (só UI; o motor soma na descarga).
@@ -403,7 +404,7 @@ export function ArenaGame({
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             <StatTag label={isPt ? 'Vida' : 'HP'} value={hpMax} />
             <StatTag label={isPt ? 'Poder' : 'Power'} value={jogador.combatant.atk} />
-            <StatTag label={isPt ? 'Essência' : 'Essence'} value={elementLabel(atributos.principal, isPt)} />
+            <StatTag label={isPt ? 'Essência' : 'Essence'} value={basica ? (isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en) : elementLabel(atributos.principal, isPt)} />
           </div>
 
           {/* A ficha do jogador é o que torna a Arena DELE. Sem ela, o texto
