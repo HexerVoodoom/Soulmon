@@ -4,7 +4,7 @@
  *
  * Decisões do dono (§2.14 M3 e §2.26):
  *  · 3 slots, um por atributo: Núcleo → ATK, Carapaça → DEF, Rastro → SPD; 3 tiers por slot (9 itens).
- *  · ⚰️ 07/10/2026: a AQUISIÇÃO por loja (Bits/fragmentos) saiu da tela — peça por MISSÃO e níveis no Ferreiro (`forge.ts`). As funções
+ *  · ⚰️ 07/10/2026: a AQUISIÇÃO por loja (Bits/fragmentos) saiu da tela — peça por MISSÃO e níveis no Soulsmith (`forge.ts`). As funções
  *    de compra abaixo ficam como regra pura testada (e o legado `pct` por tier é só o piso de quem já comprou); nada na UI as chama.
  *    Sem sorteio, sem caixa, sem "chance".
  *  · Só moeda GANHA jogando: o Bit que veio de Crédito não compra equipamento (`bitsOrigin.ts › earnedBits`). Créditos aceleram

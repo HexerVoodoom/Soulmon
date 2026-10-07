@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * O Ferreiro na tela (07/10/2026): peças e níveis, materiais, aprimorar com a ESCOLHA entre duas opções, refazer a escolha com Bits ganhos,
+ * O Soulsmith na tela (07/10/2026): peças e níveis, materiais, aprimorar com a ESCOLHA entre duas opções, refazer a escolha com Bits ganhos,
  * motivos de recusa em texto, peça comprada antes (nível equivalente), equipar/tirar, sem Provider, EN e save hostil.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -56,20 +56,19 @@ describe('ForgeCard', () => {
 
   it('vazio: 3 slots vazios, 9 peças dizendo de qual missão vêm, nenhum botão de compra e texto sem sorteio nem cobrança', () => {
     abrir({ gamePoints: 5000 });
-    expect(document.querySelector('[data-equip-state]')!.textContent).toMatch(/Nenhuma peça ainda/);
-    for (const s of ['nucleo', 'carapaca', 'rastro']) expect(document.querySelector(`[data-equip-slot="${s}"]`)!.textContent).toMatch(/Slot vazio/);
+    expect(document.querySelector('[data-forge-stock]')).toBeNull();
+    expect(document.querySelector('[data-equip-state]')).toBeNull();
     expect(document.querySelectorAll('[data-forge-piece]')).toHaveLength(9);
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Vem da missão de/);
     expect(document.querySelectorAll('[data-forge-upgrade]')).toHaveLength(0);
     const t = document.querySelector('[data-forge-card]')!.textContent!;
-    expect(t).toMatch(/Sem sorteio/);
     expect(t).not.toMatch(/Comprar|chance|probabilidade|caixa|\bsorte\b|faltam só|corra|acaba/i);
     expect(estado().bits).toBe(5000);
   });
 
   it('aprimorar: o modal pede a ESCOLHA entre A e B, mostra o efeito em %, e confirmar debita os materiais e sobe o nível', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }));
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/nível 1\/5/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/Lv 1 → Lv 2/);
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Minério 3\/1/);
     click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
     const dlg = document.querySelector('[data-forge-dialog="upgrade"]')!;
@@ -82,8 +81,8 @@ describe('ForgeCard', () => {
     expect(estado().forge.levels['eq-nucleo-t1']).toBe(2);
     expect(estado().forge.picks['eq-nucleo-t1']).toEqual(['b']);
     expect(estado().mats.ore).toBe(2);
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/nível 2\/5/);
-    expect(document.querySelector('[data-equip-state]')!.textContent).toMatch(/defesa \+0,2%/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/Lv 2 → Lv 3/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,2%/);
   });
 
   it('Cancelar não gasta nada', () => {
@@ -129,18 +128,11 @@ describe('ForgeCard', () => {
     expect(estado().bits).toBe(1000);
   });
 
-  it('peça comprada antes do Ferreiro (sem registro) aparece no nível equivalente, sem perder nada', () => {
+  it('peça comprada antes do Soulsmith (sem registro) aparece no nível equivalente, sem perder nada', () => {
     abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t3'], equipped: { nucleo: 'eq-nucleo-t3' }, fragments: 0 } });
-    expect(peca('eq-nucleo-t3').textContent).toMatch(/nível 5\/5/);
+    expect(peca('eq-nucleo-t3').textContent).toMatch(/Lv 5 · Max/);
     expect(peca('eq-nucleo-t3').textContent).toMatch(/ataque \+1,5%/);
-    expect(peca('eq-nucleo-t3').textContent).toMatch(/No nível máximo/);
-  });
-
-  it('o bônus honesto: com talento, a soma em luta nunca passa do teto de 5%', () => {
-    abrir({ totalXP: xpForLevel(8), equipment: { owned: ['eq-nucleo-t3', 'eq-carapaca-t3', 'eq-rastro-t3'], equipped: { nucleo: 'eq-nucleo-t3', carapaca: 'eq-carapaca-t3', rastro: 'eq-rastro-t3' }, fragments: 0 } });
-    const t = document.querySelector('[data-equip-state]')!.textContent!;
-    expect(t).toMatch(/ataque \+1,5% · defesa \+1,5% · ritmo \+1,5%/);
-    expect(t).toMatch(/teto de 5%/);
+    expect(peca('eq-nucleo-t3').textContent).not.toMatch(/Upgrade/);
   });
 
   it('equipar troca a peça e tirar esvazia o slot (a peça continua possuída)', () => {
@@ -160,13 +152,13 @@ describe('ForgeCard', () => {
     expect(estado().forge.picks['eq-nucleo-t1']).toHaveLength(4);
   });
 
-  it('inglês: texto em EN primeiro, "Blacksmith", "level", nunca "Nível"', () => {
+  it('inglês: texto em EN primeiro, "Soulsmith", "Lv", nunca "Nível"', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 2 }) }), 'en-US');
     const t = document.querySelector('[data-forge-card]')!.textContent!;
-    expect(t).toMatch(/Blacksmith/);
-    expect(t).toMatch(/level 1\/5/);
+    expect(t).toMatch(/Soulsmith/);
+    expect(t).toMatch(/Lv 1 → Lv 2/);
     expect(t).toMatch(/Ore 2\/1/);
-    expect(t).not.toMatch(/Nível|nível|Vem da/);
+    expect(t).not.toMatch(/Nível|Vem da/);
     expect(itemName('rastro', 3, false)).toBe('Ornate Trail');
   });
 });

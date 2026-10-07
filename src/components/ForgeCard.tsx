@@ -1,5 +1,5 @@
 /**
- * O Ferreiro (Mallo): as peças de equipamento, o nível de cada uma e o aprimoramento com MATERIAIS dos prédios (carregado `lazy`,
+ * O Soulsmith (Mallo): as peças de equipamento, o nível de cada uma e o aprimoramento com MATERIAIS dos prédios (carregado `lazy`,
  * com a arte sob demanda). Decisão do dono (07/10/2026): o nível 1 vem da missão do prédio de origem; os níveis 2–5 se aprimoram aqui,
  * e a cada um a pessoa ESCOLHE entre duas opções (A = atributo do slot, B = o vizinho). A escolha é refazível com Bits GANHOS (ou
  * fragmentos). Todas as regras vêm de `utils/forge.ts` e `utils/forgeActions.ts`; a tela só mostra e chama os puros, e o mesmo
@@ -10,11 +10,11 @@
 import { useEffect, useState } from 'react';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { bondLevelFor } from '../utils/bond';
-import { sanitizeTalentPicks, talentAttrBonus } from '../utils/talents';
+import { sanitizeTalentPicks } from '../utils/talents';
 import {
-  EQUIP_SLOTS, sanitizeEquipment, equipAttrBonus, applyEquip, applyUnequip, backpackCapacity, backpackUsed, backpackHasRoom, type EquipSlot,
+  sanitizeEquipment, applyEquip, applyUnequip, backpackHasRoom, type EquipSlot,
 } from '../utils/equipment';
-import { combinedAttrBonus, COMBAT_BONUS_CAP } from '../utils/combate/bonus';
+import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { earnedBits } from '../utils/bitsOrigin';
 import { isoWeekKey } from '../utils/offerMoment';
 import { playerDayKey } from '../utils/playerDay';
@@ -67,13 +67,6 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
   const weekKey = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
   const view: ForgeGameState = { gamePoints: gameState.gamePoints, bitsOrigin: gameState.bitsOrigin, equipment: eq, forge: gameState.forge, buildingQuests: gameState.buildingQuests, totalXP: gameState.totalXP, talentPicks: picks, weekKey };
   const attrName = (a: 'atk' | 'def' | 'spd') => (isPt ? ATTR_COPY[a].pt : ATTR_COPY[a].en);
-  const bonus = equipAttrBonus(eq, gameState.forge);
-  const emLuta = combinedAttrBonus({ talent: talentAttrBonus(picks, bond), equipment: bonus });
-  const somaLuta = emLuta.atk + emLuta.def + emLuta.spd;
-  const linhaBonus = (['atk', 'def', 'spd'] as const).map((a) => `${attrName(a)} +${pct(bonus[a], isPt)}`).join(' · ');
-  const mochilaUsada = backpackUsed(eq);
-  const mochilaCap = backpackCapacity(picks);
-  const vazio = eq.owned.length === 0;
 
   // O `prev` do updater é quem decide (footgun 6): a tela só LÊ o `view` para mostrar o motivo.
   const prevView = (prev: typeof gameState): ForgeGameState => {
@@ -130,32 +123,45 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const b = pieceBonus(piece.id, level, escolhas);
     const recusa = possui ? upgradeRefusal(view, piece.id) : undefined;
     const to = level + 1;
+    const max = possui && level >= FORGE_MAX_LEVEL;
     const origem = nameOf(piece.building, lang);
+    const bonusAgora = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `${attrName(a)} +${pct(b[a], isPt)}`).join(' · ');
+    const custos = possui && !max ? custoTexto(piece, to) : [];
     return (
-      <li key={piece.id} data-forge-piece={piece.id} data-level={level} data-owned={possui || undefined} data-equipped={equipado || undefined}
-        style={{ display: 'grid', gap: 6, paddingBottom: 10 }}>
+      <li key={piece.id} className="sm2-stats-card" data-forge-piece={piece.id} data-level={level} data-owned={possui || undefined} data-equipped={equipado || undefined}
+        style={{ display: 'grid', gap: 8, margin: 0, padding: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Art nome={piece.id} size={40} />
           <span style={{ flex: 1, minWidth: 120 }}>
             <b style={{ fontWeight: 500 }}>{nome}</b>
-            {possui && <span className="sm2-num" data-forge-level> · {isPt ? `nível ${level}/${FORGE_MAX_LEVEL}` : `level ${level}/${FORGE_MAX_LEVEL}`}</span>}
             {equipado && <span className="sm2-stats-s"> · {isPt ? 'equipado' : 'equipped'}</span>}
-            <span className="sm2-stats-s" style={{ display: 'block' }}>
-              {possui
-                ? (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `${attrName(a)} +${pct(b[a], isPt)}`).join(' · ')
-                : (isPt ? `Vem da missão de ${origem}.` : `Comes from the ${origem} mission.`)}
-            </span>
+            <span className="sm2-stats-s" style={{ display: 'block' }}>{isPt ? SLOT_COPY[piece.slot].pt : SLOT_COPY[piece.slot].en}</span>
           </span>
           {possui && !equipado && (
             <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" onClick={() => equipar(piece.id)}
               aria-label={isPt ? `Equipar ${nome}` : `Equip ${nome}`}>{isPt ? 'Equipar' : 'Equip'}</button>
           )}
+          {equipado && (
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-equip-unequip={piece.slot} onClick={() => tirar(piece.slot)}
+              aria-label={isPt ? `Tirar ${nome} do slot` : `Take ${nome} off the slot`}>{isPt ? 'Tirar' : 'Take off'}</button>
+          )}
         </div>
-        {possui && level < FORGE_MAX_LEVEL && (
-          <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 4 }}>
+        {!possui && <span className="sm2-stats-s">{isPt ? `Vem da missão de ${origem}.` : `Comes from the ${origem} mission.`}</span>}
+        {possui && (
+          <div data-forge-levels>
+            <span className="sm2-num" data-forge-level style={{ fontWeight: 500 }}>
+              {max ? `Lv ${level} · Max` : `Lv ${level} → Lv ${to}`}
+            </span>
+            <span className="sm2-stats-s" style={{ display: 'block' }} data-forge-bonus>
+              {isPt ? 'Agora' : 'Now'}: {bonusAgora}
+              {!max && <> {' · '}{isPt ? 'Próximo' : 'Next'}: +{pct(LEVEL_PCT[to - 1], isPt)} {isPt ? 'no atributo que você escolher' : 'in the attribute you pick'}</>}
+            </span>
+          </div>
+        )}
+        {possui && !max && (
+          <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 6 }}>
             <span className="sm2-stats-s" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span>{isPt ? `Para o nível ${to}:` : `To level ${to}:`}</span>
-              {custoTexto(piece, to).map(({ m, n, have }) => (
+              {custos.map(({ m, n, have }) => (
                 <span key={m.id} data-forge-cost={m.id} data-enough={have >= n || undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   <span aria-hidden="true">{m.icon}</span>{isPt ? m.namePt : m.nameEn} {have}/{n}
                 </span>
@@ -164,14 +170,13 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
             <span style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" disabled={!!recusa} data-forge-upgrade-btn={piece.id}
                 onClick={() => abrir({ mode: 'upgrade', id: piece.id })}
-                aria-label={isPt ? `Aprimorar ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
-                {isPt ? 'Aprimorar' : 'Upgrade'}
+                aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
+                Upgrade
               </button>
               {recusa && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
             </span>
           </div>
         )}
-        {possui && level >= FORGE_MAX_LEVEL && <span className="sm2-stats-s">{isPt ? 'No nível máximo.' : 'At the top level.'}</span>}
         {possui && level >= 2 && (
           <details data-forge-choices={piece.id}>
             <summary className="sm2-stats-s" style={{ cursor: 'pointer' }}>{isPt ? 'Escolhas feitas' : 'Choices made'}</summary>
@@ -274,68 +279,12 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     );
   };
 
-  const comEstoque = MATERIALS.filter((m) => stockOf(gameState.buildingQuests, m.id) > 0);
-
   return (
-    <section className="sm2-stats-card" aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Art nome="fragmento" size={24} />
-        <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: 0 }}>{isPt ? 'Ferreiro' : 'Blacksmith'}</p>
-      </div>
-      <p className="sm2-stats-s">
-        {isPt
-          ? 'Cada peça chega como nível 1 pela missão de um prédio. Aqui você a aprimora com os materiais que as missões dão, e a cada nível escolhe entre dois ganhos. Sem sorteio, e nada disto se compra com dinheiro.'
-          : 'Each piece arrives at level 1 through a building’s mission. Here you upgrade it with the materials missions give, and at each level you choose between two gains. No draws, and none of it can be bought with money.'}
-      </p>
-      <p className="sm2-stats-s" data-equip-state aria-live="polite">
-        {vazio
-          ? (isPt ? 'Nenhuma peça ainda. A primeira vem da missão de um prédio, sem pressa.' : 'No pieces yet. The first comes from a building’s mission, no rush.')
-          : (isPt ? `Bônus das peças equipadas: ${linhaBonus}.` : `Equipped pieces: ${linhaBonus}.`)}
-        {!vazio && (isPt
-          ? ` Em luta, com talento, vale ${pct(somaLuta, true)} no total (teto de ${Math.round(COMBAT_BONUS_CAP * 100)}%).`
-          : ` In a fight, with talent, it adds up to ${pct(somaLuta, false)} in total (cap ${Math.round(COMBAT_BONUS_CAP * 100)}%).`)}
-      </p>
-      <div data-forge-stock>
-        <p className="sm2-stats-lab" style={{ margin: '8px 0 4px' }}>{isPt ? 'Materiais' : 'Materials'}</p>
-        {comEstoque.length === 0
-          ? <p className="sm2-stats-s">{isPt ? 'Nenhum material ainda. Cada prédio dá um por dia, na missão dele.' : 'No materials yet. Each building gives one a day through its mission.'}</p>
-          : (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              {comEstoque.map((m) => (
-                <li key={m.id} data-material={m.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>{m.icon}</span>
-                  <span className="sm2-stats-s">{isPt ? m.namePt : m.nameEn} {stockOf(gameState.buildingQuests, m.id)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-      </div>
-      <p className="sm2-stats-s" data-equip-backpack>
-        {isPt ? `Mochila (peças guardadas fora dos slots): ${mochilaUsada} de ${mochilaCap}.` : `Pack (pieces kept outside the slots): ${mochilaUsada} of ${mochilaCap}.`}
-      </p>
-      {EQUIP_SLOTS.map((slot) => {
-        const eqId = eq.equipped[slot];
-        const equipado = eqId ? FORGE_PIECES.find((p) => p.id === eqId) : undefined;
-        return (
-          <div key={slot} data-equip-slot={slot} style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Art nome={equipado ? equipado.id : `slot-${slot}`} size={32} />
-              <h3 style={{ margin: 0, fontWeight: 500 }}>{isPt ? SLOT_COPY[slot].pt : SLOT_COPY[slot].en}</h3>
-              <span className="sm2-stats-s">{isPt ? `(${SLOT_COPY[slot].attrPt})` : `(${SLOT_COPY[slot].attrEn})`}</span>
-              {equipado && (
-                <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-equip-unequip={slot} onClick={() => tirar(slot)}
-                  aria-label={isPt ? `Tirar ${itemName(slot, equipado.tier, true)} do slot` : `Take ${itemName(slot, equipado.tier, false)} off the slot`}>
-                  {isPt ? 'Tirar' : 'Take off'}
-                </button>
-              )}
-            </div>
-            {!equipado && <p className="sm2-stats-s" style={{ margin: '2px 0 6px' }}>{isPt ? 'Slot vazio.' : 'Empty slot.'}</p>}
-            <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'grid', gap: 10 }}>
-              {FORGE_PIECES.filter((p) => p.slot === slot).map(linha)}
-            </ul>
-          </div>
-        );
-      })}
+    <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>
+      <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
+        {FORGE_PIECES.map(linha)}
+      </ul>
       {aviso && <p className="sm2-stats-s" role="status" data-equip-aviso style={{ marginTop: 10 }}>{aviso}</p>}
       {modal()}
     </section>

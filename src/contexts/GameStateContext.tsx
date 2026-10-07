@@ -485,7 +485,7 @@ export interface GameState {
   /** 🛡️ EQUIPAMENTO (Combate v3 / PR8, `utils/equipment.ts`): posse, o que está em cada slot e os fragmentos. O bônus é derivado
    *  (percentual, canal único de 5%). Lixo é descartado peça a peça na carga e no servidor. Leitura: `?? EMPTY_EQUIPMENT`. */
   equipment?: EquipmentState;
-  /** 🔨 O FERREIRO (07/10/2026, `utils/forge.ts`): UM objeto — o nível 1..5 de cada peça e as escolhas A/B dos níveis 2..N. Peça possuída sem
+  /** 🔨 O SOULSMITH (07/10/2026, `utils/forge.ts`): UM objeto — o nível 1..5 de cada peça e as escolhas A/B dos níveis 2..N. Peça possuída sem
    *  registro vale o nível equivalente do tier (compra antiga, sem confisco). O bônus é derivado; materiais ficam em `buildingQuests`. */
   forge?: ForgeState;
   /** 💠 PROCEDÊNCIA dos Bits (PR8, `utils/bitsOrigin.ts`): quanto do saldo veio de Crédito e o câmbio do dia (teto de +25%).

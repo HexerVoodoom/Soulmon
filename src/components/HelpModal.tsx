@@ -78,8 +78,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Blacksmith in the Market. Pieces come from building missions (level 1) and are upgraded there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
-    descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Ferreiro, no Mercado. As peças vêm das missões dos prédios (nível 1) e se aprimoram lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
+    descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Soulsmith in the Market. Pieces come from building missions (level 1) and are upgraded there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
+    descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Soulsmith, no Mercado. As peças vêm das missões dos prédios (nível 1) e se aprimoram lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
   },
   {
     icon: '🥚', en: 'Rebirth', pt: 'Renascimento',

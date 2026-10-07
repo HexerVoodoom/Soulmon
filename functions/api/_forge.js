@@ -1,5 +1,5 @@
 /**
- * Espelho de `src/utils/forge.ts` (O Ferreiro, 07/10/2026), so a parte que o SERVIDOR usa: sanear o campo `forge` do save (peca fora
+ * Espelho de `src/utils/forge.ts` (O Soulsmith, 07/10/2026), so a parte que o SERVIDOR usa: sanear o campo `forge` do save (peca fora
  * da lista, nivel fora de 1..5, escolha que nao seja 'a'|'b' sao DESCARTADOS) e dar o bonus de UMA peca por atributo. Pages Functions
  * nao importam de `src/`: as tabelas sao copiadas e travadas por `forge.parity.test.js`. O servidor nunca confia no cliente: o bonus e
  * recalculado do save, cada peca vale no maximo `PIECE_MAX_PCT` (1,5%) e o teto UNICO de 5% (`combinedAttrBonus`) limita o conjunto.
@@ -59,7 +59,7 @@ export function sanitizeForge(raw) {
 }
 
 /**
- * Bonus (fracoes) de uma peca POSSUIDA: o nivel registrado, ou o equivalente do tier (peca comprada antes do Ferreiro).
+ * Bonus (fracoes) de uma peca POSSUIDA: o nivel registrado, ou o equivalente do tier (peca comprada antes do Soulsmith).
  * @param {string} id @param {unknown} forge @returns {{ atk: number, def: number, spd: number }}
  */
 export function ownedPieceBonus(id, forge) {

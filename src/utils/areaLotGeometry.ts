@@ -25,7 +25,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:decoracao': [0, 0.003, 1, 0.997],
   'mercado:background': [0.023, 0, 0.973, 1],
   'mercado:conquistas': [0.253, 0.027, 0.75, 0.973],
-  // O Ferreiro (07/10/2026): a oficina de lava do domínio Fogo.
+  // O Soulsmith (07/10/2026): a oficina de lava do domínio Fogo.
   'mercado:ferreiro': [0.04, 0.08, 0.963, 0.94],
   'arena:torneio': [0.073, 0, 0.927, 1],
   'arena:duelo': [0.167, 0, 0.833, 1],
