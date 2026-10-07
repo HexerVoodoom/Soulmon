@@ -2820,6 +2820,27 @@ function gateFor(feature, bondLevel) {
   return { open: lvl >= minBond, minBond, bondLevel: lvl };
 }
 __name(gateFor, "gateFor");
+var BUILDING_GATES = {
+  "mercado.itens": { minBond: 1 },
+  "mercado.conquistas": { minBond: 1 },
+  "mercado.decoracao": { minBond: 2 },
+  "mercado.background": { minBond: 3 },
+  "jogos.salao": { minBond: 1 },
+  "jogos.refugio": { minBond: 1 },
+  "jogos.mente": { minBond: 3 },
+  "exploracao.masmorra": { minBond: 2 },
+  "exploracao.caderno": { minBond: 2 },
+  "exploracao.oficina": { minBond: 3 },
+  "arena.duelo": { minBond: GATES.pvp.minBond },
+  "arena.torneio": { minBond: GATES.torneio.minBond },
+  "arena.feira": { minBond: GATES.pvp.minBond },
+  "laboratorio.evolucao": { minBond: 1 },
+  "laboratorio.pet": { minBond: 2 },
+  "laboratorio.stats": { minBond: 3 },
+  "hall.biblioteca": { minBond: 2 },
+  "hall.amigos": { minBond: 2 },
+  "hall.guilda": { minBond: 4 }
+};
 
 // api/_bond.js
 var EARLY_STEPS = [75, 125, 200, 300, 400];
@@ -6278,7 +6299,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-S733sk/functionsRoutes-0.20959774526581265.mjs
+// ../.wrangler/tmp/pages-zprSml/functionsRoutes-0.7036551333453465.mjs
 var routes = [
   {
     routePath: "/api/account",
