@@ -48,15 +48,17 @@ describe('lotes novos (29/09/2026)', () => {
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
       ['arena', 'duelo', 'Tuska'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
-      ['jogos', 'refugio', 'Bobbi'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Nino'],
-      ['hall', 'guilda', 'Bastia'], ['laboratorio', 'pet', 'Bento'], ['laboratorio', 'stats', 'Quill'],
+      ['jogos', 'refugio', 'Bobbi'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Trill'],
+      ['hall', 'guilda', 'Bastia'], ['laboratorio', 'pet', 'Faro'], ['laboratorio', 'stats', 'Oriel'],
       ['exploracao', 'passeio', 'Brume'],
     ];
     const artes = lotes.map(([a, l]) => lotNpcArt(a, l));
     expect(new Set(artes).size).toBe(lotes.length);
     for (const [a, l, nome] of lotes) {
       // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
-      const arquivo = a === 'hall' && l === 'guilda' ? 'npc-f-guarda' : `npc-${a}-${l}`;
+      // 07/10/2026: Amigos (Trill), Arquivo (Faro) e Santuário (Oriel) trocaram de busto a pedido do dono.
+      const TROCADOS: Record<string, string> = { 'hall:guilda': 'npc-f-guarda', 'hall:amigos': 'npc-f-barda', 'laboratorio:pet': 'npc-conta', 'laboratorio:stats': 'npc-f-sacerdotisa' };
+      const arquivo = TROCADOS[`${a}:${l}`] ?? `npc-${a}-${l}`;
       expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
       expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt(a, l));
       for (const lang of ['pt-BR', 'en-US'] as const) expect(lotNpcVoice(a, l, lang).name).toContain(nome);
@@ -66,9 +68,9 @@ describe('lotes novos (29/09/2026)', () => {
     expect(fs.readFileSync(path.join(dir, 'index.ts'), 'utf8')).not.toMatch(/PLACEHOLDER_NPC_ART|poring/i);
   });
 
-  it('o nome antigo do NPC do Arquivo (ex-Meu Soulmon) saiu: é Bento nos dois idiomas', () => {
-    expect(lotNpcVoice('laboratorio', 'pet', 'pt-BR').name).toMatch(/^Bento/);
-    expect(lotNpcVoice('laboratorio', 'pet', 'en-US').name).toMatch(/^Bento/);
+  it('o nome antigo do NPC do Arquivo (ex-Meu Soulmon) saiu: é Faro nos dois idiomas', () => {
+    expect(lotNpcVoice('laboratorio', 'pet', 'pt-BR').name).toMatch(/^Faro/);
+    expect(lotNpcVoice('laboratorio', 'pet', 'en-US').name).toMatch(/^Faro/);
   });
 
   it('os 6 NPCs de função têm arte própria e voz nos dois idiomas', () => {

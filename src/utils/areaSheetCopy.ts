@@ -56,9 +56,9 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '72%', top: '29%', width: '64%' },
   { id: 'background', labelPt: 'Background', labelEn: 'Background', ariaPt: 'Entrar na lojinha de Background', ariaEn: 'Enter the Background stall', left: '26%', top: '55%' },
   { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '72%', top: '55%', width: '42%' },
-  // ⚒️ 07/10/2026 (reforma dos lotes, pedido do dono): o Soulsmith — os EQUIPAMENTOS. Assenta no chão LIVRE do meio-baixo do Mercado
-  // (o fundo tinha só a metade de cima ocupada), centrado entre as duas colunas, com a base a ~83% da cena.
-  { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '50%', top: '83%', width: '50%' },
+  // ⚒️ 07/10/2026 (reforma dos lotes, pedido do dono): o Soulsmith — os EQUIPAMENTOS. Coluna da ESQUERDA, alinhada com Itens e Background, no chão livre de baixo;
+  // a direita de baixo fica livre para uma futura loja.
+  { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '26%', top: '81%', width: '44%' },
 ];
 
 // ⚔️ 01/10/2026 (H15, navegação do dono): o fundo da Arena tem DOIS tablados.
