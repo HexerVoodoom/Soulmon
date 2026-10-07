@@ -59,7 +59,7 @@ function Section({ title, mark, isPt, children }: { title: string; mark: QuestMa
       <h3 className="sm2-title" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', fontSize: 'var(--sm2-text-md)' }}>
         <span style={{ flex: 1 }}>{title}</span>
         {mark && <MissionMark kind={mark} size={24} isPt={isPt} />}
-        {mark && <span className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(mark, isPt)}</span>}
+        {mark && <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(mark, isPt)}</span>}
       </h3>
       {children}
     </section>

@@ -217,10 +217,10 @@ export function AreaView(props: AreaViewProps) {
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) onInitialSheetConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const marcas = questMarks({
-    passeio: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()),
+    passeio: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play?.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()),
     weekly: props.tournament?.weeklyMissions ?? [],
-    missionProgress: ownership.missionProgress ?? {},
-    ownedBackgrounds: ownership.ownedBackgrounds ?? [],
+    missionProgress: ownership?.missionProgress ?? {},
+    ownedBackgrounds: ownership?.ownedBackgrounds ?? [],
   });
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
