@@ -4456,12 +4456,22 @@ A missão reseta na virada do **dia do jogador** (`playerDayKey`); o estoque nun
 diminui. Estoque no teto (`MATERIAL_CAP`): o resgate vale e o excedente não entra.
 Resgate duplo não paga 2× (`claimBuildingQuest` reconfere sobre o `prev`).
 
-**Marcas.** "!" (disponível) e "?" (pronta) no lote do prédio, em tom dourado, o mesmo
-do Passeio (azul é só da missão semanal). No ícone do canto da Home só o "?" dos
-prédios conta. A folha de Missões ganha a seção **"Dos prédios" / "Buildings"** com a
-missão de cada prédio aberto, o botão de pegar e o inventário de materiais (número
-simples em tinta comum: material **não é moeda** e nunca usa o estilo de Bits,
-Emblemas ou Créditos).
+**Onde a missão vive (decisão do dono, 07/10/2026).** NUNCA dentro do prédio nem sobre o lote:
+sem marca "!"/"?" no lote, sem painel de missão na folha do prédio (a folha do Passeio só
+aponta para o menu; a aba "Missões" saiu do Torneio). Só no **menu de Missões da Home**, em
+duas seções: **Hoje / Today** (o Passeio + `LISTED_QUEST_BUILDINGS`, hoje só o Caderno:
+"Escrever no caderno") e **Esta semana / This week** (as semanais, em azul). Entrar no
+prédio continua CONTANDO a visita (`visitBuilding`); só a UI saiu. O material continua
+sendo pago pelo modelo, mas nenhuma tela de missão o lista (o Ferreiro o mostra sem lista).
+O ícone do canto da Home **some** quando não há missão a fazer nem a entregar; com missão,
+vale a regra de sempre ("?" vence "!", semanal em azul).
+
+**Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão **Concluir / Done**
+só abre após `STROLL_MIN_MINUTES` (30, `types/travessias.ts`, dono único), com a contagem
+no botão ("Done · 28:40"). O instante de partida é o `pickAt` que já mora no save
+(`crossings`, sincroniza com a nuvem; `null` = save antigo, sem espera). `markDone`
+reconfere a espera sobre o `prev` (`strollWaitMs`). O servidor não valida conclusão de
+Travessia, então não há espelho. Sem cobrança no texto.
 
 **Dono.** `src/utils/buildingQuests.ts` (tabela prédio→material, estado, regra, marcas,
 higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) · UI em

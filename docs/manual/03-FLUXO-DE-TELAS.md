@@ -1087,9 +1087,10 @@ type ShopSegment = 'shop' | 'tournament';
   `mercado/MercadoSheets.render.test.tsx`, `mercadoCatalog.test.ts`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
 - **Missão por prédio (07/10/2026).** Entrar num lote aberto (fora do Mercado) conta a
-  missão do dia dele (`AreaView` › `enter` → `onVisitBuilding`); o lote mostra "!"/"?".
-  A folha de Missões (`MissionsSheet`) tem a seção "Dos prédios"/"Buildings"
-  (`BuildingQuestList`, lazy) com o botão de pegar e os materiais. Ver
+  missão do dia dele (`AreaView` › `enter` → `onVisitBuilding`), mas o lote **não** leva marca
+  e a folha do prédio **não** tem painel de missão: a UI vive só no menu de Missões da Home
+  (`MissionsSheet`: seções "Hoje"/"Today" e "Esta semana"/"This week"; o ícone some sem
+  nada a fazer nem a entregar). Ver
   [§50-B](02-REGRAS-DE-NEGOCIO.md#50-b-missao-por-predio--materiais-decisao-do-dono-07102026).
 
 ### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)

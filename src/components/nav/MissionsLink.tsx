@@ -14,6 +14,7 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE
  * 44 é do botão, e o rótulo mora no `aria-label`/`title`.
  */
 export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick }: {
+  /** `null` = nada a fazer nem a entregar: o ícone SOME (não há porta para uma lista vazia). */
   mark: QuestMark;
   /** `blue` quando a marca vencedora é de missão semanal. */
   tone?: QuestTone;
@@ -22,6 +23,7 @@ export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick }:
   markLabel: string | null;
   onClick: () => void;
 }) {
+  if (mark === null) return null;
   return (
     <button
       type="button"
@@ -43,7 +45,7 @@ export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick }:
         filter: CORNER_GLOW,
       }}
     >
-      <span aria-hidden="true" style={{ ...CORNER_RING_STYLE, opacity: mark ? 1 : 0.6 }}>
+      <span aria-hidden="true" style={{ ...CORNER_RING_STYLE, opacity: 1 }}>
         {/* 04/10/2026 ("?") e 05/10/2026 ("!"): a arte de quest do dono. */}
         <QuestGlyph kind={mark === 'ready' ? 'ready' : 'available'} tone={mark ? tone : 'gold'} size={24} />
       </span>

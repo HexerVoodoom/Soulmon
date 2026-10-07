@@ -4,7 +4,7 @@ import type { Language } from '../../utils/i18n';
 import { HOME_REGION, MISSION_WINDOW_MS, type CrossingChallenge, type CrossingsState, type Region, type RegionId } from '../../types/travessias';
 import {
   activeChallenge, dailyOffer, doneToday, markDone,
-  openRegions, pickMission, regionById, setDestination,
+  openRegions, pickMission, regionById, setDestination, strollWaitMs,
   type DailyMission,
 } from '../../utils/travessias';
 import { travessiaTitle } from '../../utils/travessiaTitles';
@@ -188,6 +188,8 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
   const nome = isPt ? region.namePt : region.nameEn;
   const area = AREA_LABEL[challenge.area];
   const feito = doneToday(crossings, todayKey);
+  /* O passeio leva um tempo: o "Concluir" só abre depois de `STROLL_MIN_MINUTES`. */
+  const espera = feito ? 0 : strollWaitMs(crossings, now);
   /* O relógio de 24 h (M4): horas que restam, sem contagem regressiva ao vivo. */
   const horas = !feito && crossings.pickAt !== null
     ? Math.max(1, Math.ceil((crossings.pickAt + MISSION_WINDOW_MS - now) / 3_600_000))
@@ -238,9 +240,11 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
           </>
         ) : (
           <span data-travessia-tempo style={{ color: 'var(--sm2-muted)' }}>
-            {horas === null
-              ? (isPt ? 'Ainda não marcada.' : 'Not marked yet.')
-              : (isPt ? `Vale por mais ${horas} h.` : `${horas} h to go.`)}
+            {espera > 0
+              ? (isPt ? 'Um passeio leva um tempo. Vá com calma; o botão abre quando der.' : 'A stroll takes a little while. Take it easy; the button opens when it is time.')
+              : horas === null
+                ? (isPt ? 'Ainda não marcada.' : 'Not marked yet.')
+                : (isPt ? `Vale por mais ${horas} h.` : `${horas} h to go.`)}
           </span>
         )}
       </p>
@@ -248,14 +252,23 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
       <button
         type="button"
         data-travessia-fiz
-        disabled={feito}
+        disabled={feito || espera > 0}
         onClick={onFiz}
-        style={{ ...sm2Button('primary', feito), width: '100%' }}
+        style={{ ...sm2Button('primary', feito || espera > 0), width: '100%' }}
       >
-        {feito ? (isPt ? 'Feito hoje' : 'Done today') : (isPt ? 'Fiz' : 'I did it')}
+        {feito
+          ? (isPt ? 'Feito hoje' : 'Done today')
+          : `${isPt ? 'Concluir' : 'Done'}${espera > 0 ? ` · ${formatEspera(espera)}` : ''}`}
       </button>
     </div>
   );
+}
+
+/** Contagem do botão: `MM:SS` (arredonda para cima, nunca mostra 00:00 enquanto falta). */
+export function formatEspera(ms: number): string {
+  const total = Math.ceil(ms / 1000);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(Math.floor(total / 60))}:${p(total % 60)}`;
 }
 
 /** `AAAA-MM-DD` → "3 out" / "Oct 3" (o dia do jogador, sem fuso). */
@@ -322,12 +335,15 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   const [aberto, setAberto] = useState<string | null>(null);
   const [justDone, setJustDone] = useState(false);
   const [relogio, setRelogio] = useState(() => Date.now());
+  const now = nowProp ?? relogio;
+  // 1 s só enquanto o "Concluir" espera os 30 min; fora disso, 1 min (nada de ticker à toa).
+  const esperando = !doneToday(crossings, todayKey ?? fallbackDayKey()) && crossings.active !== null && strollWaitMs(crossings, now) > 0;
   useEffect(() => {
     if (nowProp !== undefined) return;
-    const t = window.setInterval(() => setRelogio(Date.now()), 60_000);
+    setRelogio(Date.now());
+    const t = window.setInterval(() => setRelogio(Date.now()), esperando ? 1000 : 60_000);
     return () => window.clearInterval(t);
-  }, [nowProp]);
-  const now = nowProp ?? relogio;
+  }, [nowProp, esperando]);
 
   const dia = todayKey ?? fallbackDayKey();
   const destino = crossings.destination ?? HOME_REGION;
@@ -335,8 +351,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   const ativa = activeChallenge(crossings, dia, now);
   const feitoHoje = doneToday(crossings, dia);
   const ofertas = useMemo(() => dailyOffer(dia, seed), [dia, seed]);
-  const pendentes = crossings.pending.map(regionById).filter((r): r is Region => !!r);
-  const nomeDe = (r: Region) => (isPt ? r.namePt : r.nameEn);
   // O destino só aparece quando há de fato o que escolher (mais de uma região
   // aberta) e nenhuma missão está de pé: com a casa sozinha era um "botão" sem
   // sentido (M1), e com missão escolhida a folha mostra só a missão (M2).
@@ -400,6 +414,7 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
             justDone={justDone}
             onFiz={() => {
               const t = Date.now();
+              if (strollWaitMs(crossings, t) > 0) return;
               onChange(c => markDone(c, dia, t));
               setJustDone(true);
             }}
@@ -425,22 +440,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
           <p data-marcos style={{ ...note, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>{isPt ? `Marcos de Aventura · ${crossings.score}` : `Adventure Milestones · ${crossings.score}`}</span>
           </p>
-        )}
-
-        {pendentes.length > 0 && (
-          <ul style={list}>
-            {pendentes.map((r, i) => (
-              <li key={r.id} data-travessia-pendente={r.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '6px 0' }}>
-                <span aria-hidden="true" style={icon}>🌄</span>
-                <p style={{ ...sm2Text, margin: 0 }}>
-                  <b style={{ fontWeight: 600 }}>{nomeDe(r)}</b>
-                  {i === 0
-                    ? (isPt ? ' — abre na próxima noite.' : ' — opens tomorrow night.')
-                    : (isPt ? ' — abre num passeio seguinte.' : ' — opens on a later stroll.')}
-                </p>
-              </li>
-            ))}
-          </ul>
         )}
 
         <Registro log={crossings.log} isPt={isPt} />

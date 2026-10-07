@@ -28,10 +28,15 @@
 // conta como paga), o material excedente simplesmente não entra. Nunca uma
 // recusa que faça a pessoa sentir que perdeu o dia.
 //
-// COR DAS MARCAS: "!" disponível e "?" pronta no lote do prédio, em tom `gold`
-// (o mesmo do Passeio e das Conquistas — `utils/questMarks.ts`; azul é só da
-// missão SEMANAL). No ícone do canto da Home, só o "?" dos prédios acende (um
-// "!" de 16 prédios quase sempre ligado deixaria de dizer algo).
+// ONDE A MISSÃO VIVE (decisão do dono, 07/10/2026): a UI de missão NUNCA fica
+// dentro do prédio nem no lote dele (sem marca "!"/"?" no lote, sem painel); só
+// no menu de Missões da Home. Entrar no prédio continua CONTANDO (`visitBuilding`),
+// e o menu lista apenas `LISTED_QUEST_BUILDINGS` (hoje o Caderno: "Escrever no
+// caderno"). O material continua no modelo (a missão paga 1), mas nenhuma tela de
+// missão o exibe — o Ferreiro o mostra sem lista.
+//
+// COR DAS MARCAS: "!" disponível e "?" pronta, em tom `gold` (o mesmo do Passeio
+// — `utils/questMarks.ts`; azul é só da missão SEMANAL), só no ícone do canto da Home.
 // ---------------------------------------------------------------------------
 
 import { BUILDING_GATES, buildingGateFor, type BuildingId } from './gates';
@@ -62,6 +67,9 @@ export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 
 /** Os prédios que dão missão: todos menos `mercado.*`. */
 export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.'));
+
+/** Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita. */
+export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = ['exploracao.caderno'];
 
 const BY_BUILDING = new Map(MATERIAL_IDS.map(id => [MATERIAL_BUILDING[id], id] as const));
 
@@ -121,10 +129,10 @@ export function claimBuildingQuest(s: BuildingQuestState | undefined, day: strin
   };
 }
 
-/** A marca do lote (`!` disponível, `?` pronta). Pago/trancado/Mercado: `null`. */
+/** A marca da missão listada (`!` disponível, `?` pronta). Vai ao ícone do canto da Home, nunca ao lote. Pago/trancado/Mercado/não listado: ausente. */
 export function buildingMarks(s: BuildingQuestState | undefined, day: string, bondLevel: unknown): Partial<Record<BuildingId, QuestMark>> {
   const out: Partial<Record<BuildingId, QuestMark>> = {};
-  for (const id of QUEST_BUILDINGS) {
+  for (const id of LISTED_QUEST_BUILDINGS) {
     const st = questStatus(s, day, id, bondLevel);
     if (st === 'available') out[id] = 'available';
     else if (st === 'ready') out[id] = 'ready';

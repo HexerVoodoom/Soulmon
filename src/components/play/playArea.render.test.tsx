@@ -223,45 +223,18 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 });
 
-describe('Exploração — o Passeio (30/09/2026)', () => {
-  it('o lote abre a folha do Passeio (lazy) com o destino em casa, e a escolha passa pela função pura do App', async () => {
-    const onChange = vi.fn();
-    function ComPasseio() {
-      const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = props({ language: 'en-US' });
-      const areaProps = {
-        area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
-        passeio: { crossings: CROSSINGS_EMPTY, onChange },
-        points: totalPoints, emblems: 0, credits: 0,
-        ownership: {} as AreaViewProps['ownership'], actions: {} as AreaViewProps['actions'],
-        onExchangeCredits: async () => false, tournament: {} as AreaViewProps['tournament'],
-        labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
-        guild: { saveId: 's', metaDoDiaCumprida: false },
-      } satisfies AreaViewProps;
-      return <AreaView {...areaProps} />;
-    }
-    const { container, getByRole } = renderWithCss(<ComPasseio />);
+describe('Exploração — o Passeio (07/10/2026: a missão saiu do prédio)', () => {
+  it('o lote não leva marca de missão e a folha só aponta para o menu de Missões da Home', async () => {
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ language: 'en-US' })} />);
     expect(container.querySelector('[data-area-lot="passeio"]')!.textContent).toContain('Stroll');
+    expect(container.querySelector('[data-mission-mark]')).toBeNull();
     fireEvent.click(container.querySelector('[data-area-lot="passeio"]')!);
-    await achar(container, '[data-passeio]');
+    await achar(container, '[data-passeio-pointer]');
     const folha = getByRole('dialog', { name: 'Stroll' });
-    // Rodada 7 (M1): só a casa aberta = nada para escolher, então o "destino" nem aparece.
-    expect(folha.querySelector('[data-passeio-destino]')).toBeNull();
-    // O Passeio tem NPC próprio desde 30/09/2026 (Brume, leva npcs-flare); a Masmorra segue com o Zeph.
+    expect(folha.querySelector('[data-passeio]')).toBeNull();
+    expect(folha.querySelector('[data-travessia-card]')).toBeNull();
+    expect(folha.querySelector('[data-mission-mark]')).toBeNull();
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brume');
-    // 04/10/2026: o lote leva o "!" (missões do dia para escolher) e a folha mostra as TRÊS do dia.
-    expect(container.querySelector('[data-area-lot="passeio"] [data-mission-mark="available"]')).toBeTruthy();
-    const cards = folha.querySelectorAll('[data-travessia-card]');
-    expect(cards.length).toBe(3);
-    // H12 (01/10/2026): as propostas são cards FECHADOS, com título — abrir um mostra o "Escolher esta".
-    expect(folha.querySelector('[data-travessia-escolher]')).toBeNull();
-    const abrir = cards[0].querySelector('[data-travessia-abrir]') as HTMLElement;
-    expect(abrir.getAttribute('aria-expanded')).toBe('false');
-    expect(abrir.textContent!.trim().length).toBeGreaterThan(0);
-    fireEvent.click(abrir);
-    fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
-    expect(onChange).toHaveBeenCalledTimes(1);
-    const f = onChange.mock.calls[0][0] as (c: unknown) => { active: unknown };
-    expect(f(CROSSINGS_EMPTY).active).not.toBeNull();
   });
 });
 

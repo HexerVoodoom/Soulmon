@@ -146,6 +146,15 @@ export const MISSIONS_OFFERED_PER_DAY = 3;
 /** Quanto tempo vale a missão escolhida: 24 h, sem troca (rodada 7, M4). */
 export const MISSION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * O passeio leva um tempo (pedido do dono, 07/10/2026): depois de PEGAR a missão,
+ * o "Concluir" só abre passados `STROLL_MIN_MINUTES`. O instante de partida é o
+ * `pickAt` que já mora no save (sincroniza com a nuvem; `null` = save antigo, sem
+ * espera). Dono único do número: ninguém mais escreve 30 nem 1800000.
+ */
+export const STROLL_MIN_MINUTES = 30;
+export const STROLL_MIN_MS = STROLL_MIN_MINUTES * 60 * 1000;
+
 /** Quantas entradas o registro guarda (as mais recentes). */
 export const LOG_MAX = 60;
 

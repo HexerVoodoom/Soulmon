@@ -13,7 +13,6 @@ import { TournamentPage } from '../TournamentPage';
 import { DueloSheet } from './DueloSheet';
 import { TOURNAMENT_ITEMS } from '../../utils/shop';
 import { TOURNAMENT_LADDER } from '../../utils/tournamentTiers';
-import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 
 const saveId = 'a'.repeat(32);
 const base = {
@@ -40,10 +39,10 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('Torneio', () => {
-  it('o menu é só de ícone (Desafiar · Missões · Loja), abre em Desafiar e a Faixa não é aba', () => {
+  it('o menu é só de ícone (Desafiar · Loja), abre em Desafiar e a Faixa não é aba', () => {
     renderWithCss(<TournamentPage {...base} shop={shop} />);
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.getAttribute('aria-label'))).toEqual(['Challenge', 'Missions', 'Shop']);
+    expect(tabs.map(t => t.getAttribute('aria-label'))).toEqual(['Challenge', 'Shop']);
     for (const t of tabs) expect((t.textContent ?? '').replace(/s/g, '')).not.toContain(t.getAttribute('aria-label')!);
     expect(screen.getByRole('tab', { name: 'Challenge' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.queryByRole('tab', { name: 'Tier' })).toBeNull();
@@ -66,19 +65,10 @@ describe('Torneio', () => {
     expect(screen.queryByRole('dialog', { name: 'Tournament tiers' })).toBeNull();
   });
 
-  it('as missões da semana aparecem e o resgate paga pelo id', () => {
-    const [m] = weeklyMissionsFor('2026-W39');
-    const onClaim = vi.fn();
-    renderWithCss(
-      <TournamentPage
-        {...base}
-        weeklyMissions={[{ mission: m, count: m.target, done: true, claimed: false }]}
-        onClaimWeekly={onClaim}
-      />,
-    );
-    fireEvent.click(screen.getByRole('tab', { name: 'Missions' }));
-    fireEvent.click(screen.getByRole('button', { name: `Claim ${m.emblems} Honor` }));
-    expect(onClaim).toHaveBeenCalledWith(m.id);
+  it('as missões da semana NÃO moram mais no Torneio (07/10/2026): só no menu de Missões da Home', () => {
+    renderWithCss(<TournamentPage {...base} shop={shop} />);
+    expect(screen.queryByRole('tab', { name: 'Missions' })).toBeNull();
+    expect(document.querySelector('[data-weekly-missions]')).toBeNull();
   });
 
   it('a loja de Emblemas: só os prêmios do Torneio, só Emblemas, só cosmético', () => {
@@ -103,14 +93,9 @@ describe('Torneio', () => {
 });
 
 describe('Torneio — menu e treino', () => {
-  it('Missões usa o "?" AZUL (missão semanal, 07/10/2026; arte de quest, não a exclamação nem o check) e o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box', async () => {
+  it('o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box, e o Torneio não leva marca de missão', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
-    const missoes = screen.getByRole('tab', { name: 'Missions' });
-    // 07/10/2026: as marcas semanais são azuis (máscara da arte de quest pelo token --sm2-primary-ink).
-    expect(missoes.querySelector('[data-mission-tone="blue"]')).not.toBeNull();
-    expect((missoes.querySelector('[data-quest-tone="blue"]') as HTMLElement).style.background).toContain('--sm2-primary-ink');
-    expect(missoes.textContent).not.toContain('exclamation');
-    expect(missoes.textContent).not.toContain('task_alt');
+    expect(container.querySelector('[data-mission-mark]')).toBeNull();
     const ind = await waitFor(() => {
       const el = container.querySelector('[data-tier-indicator]');
       expect(el).not.toBeNull();

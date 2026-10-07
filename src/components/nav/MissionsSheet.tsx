@@ -4,7 +4,7 @@ import type { CrossingsState } from '../../types/travessias';
 import { ModalSheet } from '../form/FormKit';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
 import type { BuildingQuestsProps } from './BuildingQuestList';
-import { questMarkLabel, strongestMark, type QuestMark } from '../../utils/questMarks';
+import { questMarkLabel, type QuestMark } from '../../utils/questMarks';
 import { MissionMark } from '../play/MissionMark';
 
 const WeeklyMissionList = lazy(() => import('../mercado/ShopShelf').then(m => ({ default: m.WeeklyMissionList })));
@@ -32,8 +32,8 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
   /** Permanentes (`getMissionProgress`). */
   missionProgress: Record<string, number>;
   /** A marca de cada seção (`questMarks`). */
-  marks: { passeio: QuestMark; torneio: QuestMark; conquistas: QuestMark; buildings?: Partial<Record<string, QuestMark>> };
-  /** Missão do dia de cada prédio + materiais (`utils/buildingQuests.ts`). Sem isto a seção não aparece. */
+  marks: { daily: QuestMark; torneio: QuestMark; conquistas: QuestMark };
+  /** As missões de prédio listadas no menu (`utils/buildingQuests.ts`). Fazem parte de "Hoje". */
   buildings?: BuildingQuestsProps;
 }) {
   const isPt = language === 'pt-BR';
@@ -41,17 +41,15 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
     <ModalSheet open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}>
       <div data-missions-sheet>
         <Suspense fallback={null}>
-          <Section title={isPt ? 'Do dia' : 'Today'} mark={marks.passeio} isPt={isPt}>
-            <PasseioSheet language={language} crossings={crossings} onChange={onChange} todayKey={todayKey} seed={seed} />
+          <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} isPt={isPt} id="daily">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <PasseioSheet language={language} crossings={crossings} onChange={onChange} todayKey={todayKey} seed={seed} />
+              {buildings && <BuildingQuestList language={language} {...buildings} />}
+            </div>
           </Section>
-          <Section title={isPt ? 'Da semana (Torneio)' : 'This week (Tournament)'} mark={marks.torneio} tone="blue" isPt={isPt}>
+          <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} tone="blue" isPt={isPt} id="weekly">
             <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
           </Section>
-          {buildings && (
-            <Section title={isPt ? 'Dos prédios' : 'Buildings'} mark={strongestMark(Object.values(marks.buildings ?? {}).map(m => m ?? null))} isPt={isPt}>
-              <BuildingQuestList language={language} {...buildings} />
-            </Section>
-          )}
           <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt}>
             <ConquistasSheet language={language} missionProgress={missionProgress} />
           </Section>
@@ -62,9 +60,9 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
 }
 
 /** Uma seção da lista, com a marca do lugar ao lado do título (`!` / `?`). */
-function Section({ title, mark, tone = 'gold', isPt, children }: { title: string; mark: QuestMark; tone?: 'blue' | 'gold'; isPt: boolean; children: React.ReactNode }) {
+function Section({ title, mark, tone = 'gold', isPt, id, children }: { id?: string; title: string; mark: QuestMark; tone?: 'blue' | 'gold'; isPt: boolean; children: React.ReactNode }) {
   return (
-    <section data-missions-section data-quest-mark={mark ?? 'none'} aria-label={title} style={{ marginBottom: 20 }}>
+    <section data-missions-section={id ?? 'other'} data-quest-mark={mark ?? 'none'} aria-label={title} style={{ marginBottom: 20 }}>
       <h3 className="sm2-title" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', fontSize: 'var(--sm2-text-md)' }}>
         <span style={{ flex: 1 }}>{title}</span>
         {mark && <MissionMark kind={mark} tone={tone} size={24} isPt={isPt} />}

@@ -8,7 +8,7 @@ const base = { passeio: null, weekly: [], missionProgress: cheio, ownedBackgroun
 
 describe('questMarks', () => {
   it('sem nada pendente, nenhuma marca', () => {
-    expect(questMarks(base)).toEqual({ corner: null, passeio: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {} });
+    expect(questMarks(base)).toEqual({ corner: null, passeio: null, daily: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {} });
   });
   it('permanente incompleta NÃO acende "!"; cumprida e cenário não comprado = "?"', () => {
     expect(questMarks({ ...base, missionProgress: zero, ownedBackgrounds: [] }).conquistas).toBeNull();
