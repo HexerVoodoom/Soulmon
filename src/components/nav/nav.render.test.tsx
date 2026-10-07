@@ -233,12 +233,13 @@ describe('AreaTopBar', () => {
 });
 
 describe('Botão de avatar da Home (Tarefa C, substitui o sanduíche)', () => {
-  it('é UM botão de 44 com nome acessível PT/EN, sem barras de sanduíche, e abre a ação', () => {
+  it('é UM botão de 56 (avatar de 42) com nome acessível PT/EN, sem barras de sanduíche, e abre a ação', () => {
     const onClick = vi.fn();
     const en = renderWithCss(<ProfileAvatarButton language="en-US" seed="s1" onClick={onClick} />);
     const btn = en.container.querySelector('[data-profile-avatar-btn]') as HTMLButtonElement;
     expect(btn.getAttribute('aria-label')).toBe('Settings and profile');
-    expect(btn.style.width).toBe('44px');
+    expect(btn.style.width).toBe('56px');
+    expect(btn.style.height).toBe('56px');
     expect(en.container.querySelector('[data-menu-bars]')).toBeNull();
     fireEvent.click(btn);
     expect(onClick).toHaveBeenCalledOnce();
