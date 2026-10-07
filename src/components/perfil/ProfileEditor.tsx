@@ -3,6 +3,8 @@ import { ModalSheet, Field, Segment, sm2Hint, sm2Text } from '../form/FormKit';
 import { FrameSelector } from '../ui/AvatarFrame';
 import { UserAvatar } from '../ui/UserAvatar';
 import { AvatarImg } from '../ui/AvatarImg';
+import { lineIconForStage } from '../../utils/lineIcons';
+import { getSpriteForStage } from '../../utils/sprites';
 import { getRank } from '../../utils/community';
 import { getTierStanding, resolveSeasonPlace } from '../../utils/tournamentTiers';
 import { resolveEquippedFrame, type FrameContext } from '../../utils/frames';
@@ -29,9 +31,9 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, previewSrc, onChangeAvatar, onChangeFrame }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
-  avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; previewSrc: string;
+  avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -58,7 +60,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>
 
         <h3 style={sec}>{isPt ? 'Moldura' : 'Frame'}</h3>
-        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={previewSrc} isPt={isPt} />
+        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} />
 
         <h3 style={sec}>{isPt ? 'Foto' : 'Picture'}</h3>
         <Field type="search" value={q} onChange={e => setQ(e.target.value)} aria-label={isPt ? 'Buscar foto' : 'Search pictures'} placeholder={isPt ? 'Buscar' : 'Search'} />

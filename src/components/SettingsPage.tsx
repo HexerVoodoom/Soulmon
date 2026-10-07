@@ -75,7 +75,7 @@ interface SettingsPageProps {
   /** Perfil (Tarefa C): foto + moldura. Sem isto o grupo "Perfil" não existe. */
   profile?: {
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
-    previewSrc: string; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
+    petStage: string; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -274,7 +274,7 @@ export function SettingsPage({
             avatarId={profile.avatarId}
             equippedFrame={profile.equippedFrame}
             ownedFrames={profile.ownedFrames}
-            previewSrc={profile.previewSrc}
+            petStage={profile.petStage}
             onChangeAvatar={profile.onChangeAvatar}
             onChangeFrame={profile.onChangeFrame}
           />
