@@ -355,7 +355,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/home/Mochila.tsx`
 **Dono de:** a MOCHILA da Home B (minimal-ui F2, 23/09/2026) — folha de baixo (`min-height` 56vh) com as abas "Comida e chips" / "Especiais" sobre o `foodInventory`. Uso por ARRASTO até o pet (pointer events: fantasma segue o dedo, a folha desce durante o arrasto, soltar sobre o alvo do carinho chama `onUse`); tocar sem arrastar só seleciona; o item selecionado (toque ou foco) mostra o botão "Usar"/"Use" — a alternativa acessível. Não decide regra: `onUse` é o `handleFeed` do App.
-**Props principais:** `open`, `onClose`, `foodInventory`, `language`, `onUse(emoji)`, `petTargetRef`, `onTargetChange?`, `petName?`.
+**Props principais:** `open`, `onClose`, `foodInventory`, `language`, `onUse(emoji)`, `petTargetRef`, `onTargetChange?`, `petName?`, `materials?`, `onGoToBuilding?(building)`, `demo?`.
+**Materiais (07/10/2026, pedido do dono):** na aba Especiais, a seção "Materials" lista os 16 de `MATERIALS` (`buildingQuestsCopy`, por import dinâmico) SEMPRE, com ×0 — regra específica do ingrediente-recurso; os outros especiais seguem só com estoque. Tocar no ícone (botão sem moldura, `aria-expanded`) abre o painel "Find more at <prédio>" com o botão "Go there"/"Ir lá": fecha a Mochila e chama `onGoToBuilding`; o App resolve por `buildingDestination` (`src/navigation.ts`: Caderno → menu de Missões; os demais → área + folha do lote via `initialSheet`). Esc e toque fora fecham só o painel. Na demo, prédio de `DEMO_BLOCKED_LOTS` mostra "Not available in the demo" sem botão. O ícone do botão da Mochila no `CompanionHUD` é `PixelIcon name="mochila"` (o glifo vetorial `backpack` saiu).
 **Exports:** `Mochila(props)`, `MochilaProps`, `mochilaTabs(inv)`, `pontoSobre(x, y, rect, folga?)`, `DRAG_THRESHOLD_PX`, `DROP_SLOP_PX`, `MochilaAba`.
 **Chamado por:** `src/components/CompanionHUD.tsx`.
 **Régua:** `src/components/home/Mochila.render.test.tsx`.
@@ -1382,6 +1383,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/TalentTree.render.test.tsx`.
 
 ### `src/components/ForgeCard.tsx`
+**Uma peça por tipo (07/10/2026, pedido do dono):** o card é UM por slot (3 no total: Núcleo/Carapaça/Rastro), mostrando a peça possuída (o tier mais alto) com o nome do tier ("Copper Carapace"/"Carapaça de cobre"…) já equipada, e o ÚNICO botão é Upgrade (+ "Refazer escolha" dentro de "Escolhas feitas"). Sem "Equip"/"Equipar" e sem "Tirar". Peça ainda não obtida: card informativo "Vem da missão de X", sem botão. `sanitizeEquipment` (cliente e `_equipment.js`) deixa só o tier mais alto por slot; `applyForgeGrant` de um tier maior SUBSTITUI a peça anterior e herda nível e escolhas.
 O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus, custo e saldo em chips, botão Upgrade; recusa em texto), modal de escolha A/B e Refazer escolha (Bits ganhos/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`. **Não existe "Tirar"/"Unequip"** (pedido do dono, 07/10/2026): as peças são partes da alma, aprimoradas; o selo diz "Parte da sua alma"/"Part of your soul" e `applyUnequip` foi apagada. O `Equip` só sobra para trocar entre tiers do mesmo slot.
 **Régua:** `src/components/ForgeCard.render.test.tsx`.
 

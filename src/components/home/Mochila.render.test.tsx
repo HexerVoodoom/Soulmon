@@ -189,25 +189,82 @@ describe('Mochila — dados e estados', () => {
   });
 });
 
-describe('Mochila - materiais (somente leitura)', () => {
-  it('mostra icone, nome (EN/PT) e quantidade na aba Especiais, sem botao de uso', async () => {
-    const { unmount } = montar({ language: 'en-US', materials: { spark: 3, moss: 0, gear: 12 } });
+describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toque abre o tooltip de onde conseguir)', () => {
+  const abrirEspeciais = async (over: Partial<Parameters<typeof Mochila>[0]> = {}) => {
+    const r = montar({ language: 'en-US', materials: { spark: 3, gear: 12 }, ...over });
     fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
     const sec = await screen.findByLabelText('Materials');
-    const spark = within(sec).getByLabelText('Spark × 3');
-    expect(spark.textContent).toContain('✨');
+    return { ...r, sec };
+  };
+
+  it('lista TODOS os 16 materiais do catálogo, mesmo com ×0, com ícone, nome e quantidade', async () => {
+    const { sec } = await abrirEspeciais();
+    expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
+    expect(within(sec).getByLabelText('Spark × 3').textContent).toContain('✨');
     expect(within(sec).getByLabelText('Gear × 12')).toBeTruthy();
-    expect(within(sec).queryByText('Moss')).toBeNull();
-    expect(within(sec).queryAllByRole('button')).toHaveLength(0);
-    unmount();
-    montar({ materials: { spark: 1 } });
-    fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
-    expect(await screen.findByLabelText('Faísca × 1')).toBeTruthy();
+    expect(within(sec).getByLabelText('Moss × 0')).toBeTruthy();
   });
-  it('sem material, a secao nao existe e o vazio de Especiais segue', () => {
-    montar({ foodInventory: { '🍎': 1 }, materials: {} });
-    fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
-    expect(document.querySelector('[data-mochila-materiais]')).toBeNull();
+
+  it('sem NENHUM material no save a seção continua inteira (×0) e o vazio dos outros especiais segue', async () => {
+    montar({ language: 'en-US', foodInventory: { '🍎': 1 }, materials: {} });
+    fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
+    const sec = await screen.findByLabelText('Materials');
+    expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
+    expect(within(sec).getByLabelText('Spark × 0')).toBeTruthy();
     expect(document.querySelector('[data-mochila-vazia]')).toBeTruthy();
+  });
+
+  it('as outras abas e itens especiais NÃO mudam: comida sem estoque continua fora', () => {
+    montar({ foodInventory: { '🍎': 1 }, materials: {} });
+    expect(document.querySelector('[data-material]')).toBeNull();
+  });
+
+  it('tocar no ícone abre o tooltip (aria-expanded) com ONDE conseguir; tocar de novo, Esc e toque fora fecham', async () => {
+    const { sec } = await abrirEspeciais();
+    const btn = within(sec).getByLabelText('Moss × 0');
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    const pop = document.querySelector('[data-material-pop="moss"]')!;
+    expect(pop.textContent).toMatch(/Find more at/);
+    expect(pop.textContent).not.toMatch(/corra|hurry|only|acaba/i);
+    fireEvent.click(btn);
+    expect(document.querySelector('[data-material-pop]')).toBeNull();
+    fireEvent.click(btn);
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(document.querySelector('[data-material-pop]')).toBeNull();
+    expect(document.querySelector('[data-mochila]')).toBeTruthy(); // Esc fechou só o tooltip, não a folha
+    fireEvent.click(btn);
+    fireEvent.pointerDown(document.body);
+    expect(document.querySelector('[data-material-pop]')).toBeNull();
+  });
+
+  it('"Go there" chama o callback com o PRÉDIO do material e fecha a mochila', async () => {
+    const onGo = vi.fn();
+    const onClose = vi.fn();
+    const { sec } = await abrirEspeciais({ onGoToBuilding: onGo, onClose });
+    fireEvent.click(within(sec).getByLabelText('Ore × 0'));
+    fireEvent.click(document.querySelector('[data-material-go]')!);
+    expect(onGo).toHaveBeenCalledTimes(1);
+    expect(onGo).toHaveBeenCalledWith('exploracao.masmorra');
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('PT: "Ir lá" e o texto em português', async () => {
+    montar({ materials: {}, onGoToBuilding: () => {} });
+    fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
+    fireEvent.click(await screen.findByLabelText('Faísca × 0'));
+    expect(document.querySelector('[data-material-go]')!.textContent).toBe('Ir lá');
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Você encontra mais em/);
+  });
+
+  it('demo: prédio social bloqueado não recebe o "Go there" e diz que não está disponível; os liberados seguem', async () => {
+    const onGo = vi.fn();
+    const { sec } = await abrirEspeciais({ demo: true, onGoToBuilding: onGo });
+    fireEvent.click(within(sec).getByLabelText('Fang × 0')); // Duelo (arena.duelo) — bloqueado na demo
+    expect(document.querySelector('[data-material-go]')).toBeNull();
+    expect(document.querySelector('[data-material-demo]')!.textContent).toMatch(/Not available in the demo/);
+    fireEvent.click(within(sec).getByLabelText('Ore × 0')); // Masmorra — liberada
+    expect(document.querySelector('[data-material-go]')).toBeTruthy();
   });
 });

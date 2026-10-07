@@ -12,9 +12,7 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { isDemoMode, demoRefusalText } from '../utils/demoMode';
 import { bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
-import {
-  sanitizeEquipment, applyEquip,
-} from '../utils/equipment';
+import { EQUIP_SLOTS, sanitizeEquipment } from '../utils/equipment';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { earnedBits } from '../utils/bitsOrigin';
 import { isoWeekKey } from '../utils/offerMoment';
@@ -130,8 +128,6 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     });
   };
 
-  const equipar = (id: string) => { setAviso(null); setGameState((prev) => applyEquip(prev, id)); };
-
   const custoTexto = (piece: ForgePiece, to: number) => upgradeCost(piece, to).map((c) => ({ m: matOf(c.material), n: c.n, have: stockOf(gameState.buildingQuests, c.material) }));
 
   const linha = (piece: ForgePiece) => {
@@ -173,10 +169,6 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
             <span className="sm2-stats-s" data-equipped-badge style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
               <span aria-hidden="true">✓ </span>{isPt ? 'Parte da sua alma' : 'Part of your soul'}
             </span>
-          )}
-          {possui && !equipado && (
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-equip-btn={piece.id} onClick={() => equipar(piece.id)}
-              aria-label={isPt ? `Equipar ${nome}` : `Equip ${nome}`}>{isPt ? 'Equipar' : 'Equip'}</button>
           )}
         </div>
         {!possui && <span className="sm2-stats-s">{isPt ? `Vem da missão de ${origem}.` : `Comes from the ${origem} mission.`}</span>}
@@ -316,7 +308,11 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>
       <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
-        {FORGE_PIECES.map(linha)}
+        {EQUIP_SLOTS.map((slot) => {
+          // UMA entrada por tipo: a peça possuída (o sanitizeEquipment deixa só a de tier mais alto) ou, sem peça, a de origem do tier 1.
+          const id = eq.equipped[slot];
+          return linha((id && FORGE_PIECES.find((p) => p.id === id)) || FORGE_PIECES.find((p) => p.slot === slot && p.tier === 1)!);
+        })}
       </ul>
       {aviso && <p className="sm2-stats-s" role="status" data-equip-aviso style={{ marginTop: 10 }}>{aviso}</p>}
       {modal()}

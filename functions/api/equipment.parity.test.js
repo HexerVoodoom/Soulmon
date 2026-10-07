@@ -77,9 +77,9 @@ describe('save.js saneia o equipamento e a procedencia dos Bits', () => {
     expect(out.equipment).toEqual({ owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: FRAGMENTS_MAX });
     expect((await salva({ equipment: 'tudo' })).equipment).toEqual({ owned: [], equipped: {}, fragments: 0 });
   });
-  it('Soulsmith: peca possuida esta sempre equipada (espelho do cliente), idempotente', async () => {
+  it('Soulsmith: uma peca por tipo (fica o tier mais alto), sempre equipada (espelho do cliente), idempotente', async () => {
     const out = await salva({ equipment: { owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-rastro-t1'], equipped: {}, fragments: 3 } });
-    expect(out.equipment).toEqual({ owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-rastro-t1'], equipped: { nucleo: 'eq-nucleo-t2', rastro: 'eq-rastro-t1' }, fragments: 3 });
+    expect(out.equipment).toEqual({ owned: ['eq-nucleo-t2', 'eq-rastro-t1'], equipped: { nucleo: 'eq-nucleo-t2', rastro: 'eq-rastro-t1' }, fragments: 3 });
   });
   it('procedencia: forma e clamp; sem `day` valido o registro e descartado; save sem os campos continua sem eles', async () => {
     expect((await salva({ bitsOrigin: { day: 'Mon Oct 05 2026', free: 5, fromCredits: 1, paidLeft: 1 } })).bitsOrigin).toEqual({ day: 'Mon Oct 05 2026', free: 5, fromCredits: 1, paidLeft: 1 });

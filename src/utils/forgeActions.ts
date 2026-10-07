@@ -129,9 +129,23 @@ export function applyForgeGrant<T extends ForgeGameState>(prev: T, building: Bui
   const eq = sanitizeEquipment(prev.equipment);
   if (eq.owned.includes(piece.id)) return prev;
   const f = sanitizeForge(prev.forge);
+  // Uma peça por tipo: se já existe uma do mesmo slot, a de tier MAIOR a SUBSTITUI (a antiga deixa de ser possuída) e herda o
+  // nível e as escolhas dela, para o aprimoramento já feito nunca se perder. Tier menor que o atual não entra.
+  const old = eq.owned.find((id) => PIECE_BY_ID.get(id)?.slot === piece.slot);
+  if (old && (PIECE_BY_ID.get(old)?.tier ?? 0) > piece.tier) return prev;
+  const levels = { ...f.levels };
+  const picks = { ...f.picks };
+  let level = 1;
+  if (old) {
+    level = pieceLevel(old, prev.forge, true);
+    if (Object.prototype.hasOwnProperty.call(f.picks, old)) picks[piece.id] = f.picks[old];
+    delete levels[old];
+    delete picks[old];
+  }
+  levels[piece.id] = level;
   return {
     ...prev,
-    equipment: { ...eq, owned: [...eq.owned, piece.id], equipped: eq.equipped[piece.slot] ? eq.equipped : { ...eq.equipped, [piece.slot]: piece.id } },
-    forge: { levels: { ...f.levels, [piece.id]: 1 }, picks: f.picks },
+    equipment: { ...eq, owned: [...eq.owned.filter((id) => id !== old), piece.id], equipped: { ...eq.equipped, [piece.slot]: piece.id } },
+    forge: { levels, picks },
   };
 }

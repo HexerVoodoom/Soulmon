@@ -9,7 +9,7 @@ import { resolve } from 'node:path';
 import {
   EQUIP_CATALOG, BACKPACK_BASE, MISSION_BITS_STEP, WEEKLY_DISCOUNT, COMMERCE_GAIN_CAP, PRICE_STEP, TIER_BITS,
   backpackCapacity, backpackUsed, backpackHasRoom, missionBitsGain, weeklyDiscountItem, weeklyDiscountFor,
-  equipBuyRefusal, applyEquipBuy, applyEquip, equipPrice, discounted, type EquipmentState,
+  equipBuyRefusal, applyEquipBuy, sanitizeEquipment, equipPrice, discounted, type EquipmentState,
 } from './equipment';
 import { TALENT_BY_ID, isPickable, sanitizeTalentPicks, talentBonus, talentAttrBonus, talentCheerScale } from './talents';
 import { TALENT_COPY } from './talentCopy';
@@ -52,31 +52,15 @@ describe('2. tal-com-04: a mochila', () => {
     expect(backpackCapacity(undefined)).toBe(BACKPACK_BASE);
     expect(EQUIP_CATALOG.length - 3).toBe(6);
   });
-  it('a peça que cai num slot vazio nunca ocupa a mochila; a que vai para a mochila ocupa 1', () => {
+  it('Soulsmith: UMA peça por tipo — a mochila de peças não ocupa mais nada (o tier mais alto fica, o resto deixa de ser possuído)', () => {
     expect(backpackUsed(eqOf({ nucleo: 'eq-nucleo-t1' }))).toBe(0);
-    expect(backpackUsed(eqOf({ nucleo: 'eq-nucleo-t1' }, ['eq-nucleo-t2', 'eq-nucleo-t3']))).toBe(2);
+    const antigo = eqOf(T1, EQUIP_CATALOG.filter((i) => !Object.values(T1).includes(i.id)).map((i) => i.id)); // as 9 do save antigo
+    expect(sanitizeEquipment(antigo).owned).toEqual(['eq-nucleo-t3', 'eq-carapaca-t3', 'eq-rastro-t3']);
+    expect(backpackUsed(antigo)).toBe(0);
   });
-  it('mochila cheia recusa a compra que iria para ela (Bits e fragmentos); a que cai no slot vazio passa; +1 espaço abre', () => {
-    const equipment: EquipmentState = { owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-nucleo-t3', 'eq-carapaca-t1', 'eq-carapaca-t2'], equipped: { nucleo: 'eq-nucleo-t1', carapaca: 'eq-carapaca-t1' }, fragments: 99 };
-    const base = { gamePoints: 99999, equipment };
-    expect(backpackUsed(equipment)).toBe(3);
-    expect(equipBuyRefusal(base, 'eq-carapaca-t3', 'bits')).toBe('backpack-full');
-    expect(equipBuyRefusal(base, 'eq-carapaca-t3', 'fragments')).toBe('backpack-full');
-    expect(equipBuyRefusal(base, 'eq-rastro-t3', 'bits')).toBeUndefined(); // slot vazio: equipa na hora, não ocupa mochila
-    expect(equipBuyRefusal({ ...base, talentPicks: ['tal-com-04'] }, 'eq-carapaca-t3', 'bits')).toBeUndefined(); // +1 espaço
-  });
-  it('save antigo acima da capacidade NADA perde: só não entra mais; trocar peça (equipar) é neutro', () => {
-    const antigo = eqOf(T1, EQUIP_CATALOG.filter((i) => !Object.values(T1).includes(i.id)).map((i) => i.id)); // as 9: 6 na mochila
-    expect(antigo.owned).toHaveLength(9);
-    expect(backpackUsed(antigo)).toBe(6);
-    const s = { equipment: antigo, talentPicks: [] as string[] };
-    const trocou = applyEquip(s, 'eq-nucleo-t3');
-    expect(trocou.equipment.owned).toHaveLength(9);
-    expect(backpackUsed(trocou.equipment)).toBe(6);
-  });
-  it('compra recusada não debita nada', () => {
-    const s = { gamePoints: 99999, equipment: eqOf(T1, ['eq-nucleo-t2', 'eq-carapaca-t2', 'eq-rastro-t2']), talentPicks: [] as string[] };
-    expect(applyEquipBuy(s, 'eq-nucleo-t3', 'bits')).toEqual({ ok: false, reason: 'backpack-full' });
+  it('comprar o tier maior de um slot ocupado nunca é recusado por mochila (a compra legada só substitui)', () => {
+    const equipment: EquipmentState = { owned: ['eq-nucleo-t1', 'eq-carapaca-t1'], equipped: { nucleo: 'eq-nucleo-t1', carapaca: 'eq-carapaca-t1' }, fragments: 99 };
+    expect(equipBuyRefusal({ gamePoints: 99999, equipment }, 'eq-carapaca-t3', 'bits')).toBeUndefined();
   });
 });
 

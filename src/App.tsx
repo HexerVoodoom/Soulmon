@@ -25,7 +25,7 @@ import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import {
-  type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
+  type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
@@ -738,6 +738,7 @@ export default function App() {
   /** O menu ícone da Home (D6). */
   /* Rodada 7 (M8): a lista de missões aberta pelo ícone da Home. */
   const [missionsOpen, setMissionsOpen] = useState(false);
+  const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
   const [celebrarMeta, setCelebrarMeta] = useState(false);
   const currentViewRef = useRef(currentView);
@@ -3423,6 +3424,17 @@ export default function App() {
     } catch { /* history indisponível (sandbox): a navegação segue sem ela */ }
     setCurrentView(v);
   }, [contarMissao]);
+
+  /* O "Ir lá" do material na Mochila. A missão que está no menu da Home (`LISTED_QUEST_BUILDINGS`, o Caderno) abre o menu de
+     Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
+     Vínculo/demo são decididos pelo próprio `AreaView`). One-shot: `pendingSheet` é limpo no consumo. */
+  const handleMaterialGoTo = useCallback((building: BuildingId) => {
+    const dest = buildingDestination(building);
+    if (!dest) return;
+    if (dest.kind === 'missions') { setMissionsOpen(true); return; }
+    setPendingSheet({ area: dest.area, lot: dest.lot });
+    goTo(areaView(dest.area));
+  }, [goTo]);
 
   const goBack = useCallback(() => {
     if (viewBack(currentViewRef.current) === null) return;
@@ -6207,6 +6219,8 @@ export default function App() {
                 area={area}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
+                initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
+                onInitialSheetConsumed={() => setPendingSheet(null)}
                 demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
@@ -6386,6 +6400,8 @@ export default function App() {
                 onCareEventComplete={handleCareEventComplete}
                 foodInventory={gameState.foodInventory}
                 materials={gameState.buildingQuests?.materials}
+                onGoToBuilding={handleMaterialGoTo}
+                demoMode={demo}
                 onFeed={handleFeed}
                 onShower={handleShower}
                 hasNewItems={newItemsReady}

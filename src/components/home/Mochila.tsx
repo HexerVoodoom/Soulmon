@@ -26,6 +26,8 @@ import { getFoodDesc, getFoodName } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip } from '../ui/InfoTip';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
+import type { BuildingId } from '../../utils/gates';
 
 /** Distância (px) que separa um TOQUE de um ARRASTO. Abaixo disto é toque, e
  *  toque nunca usa o item. */
@@ -79,6 +81,10 @@ export interface MochilaProps {
   /** Materiais de aprimoramento (`buildingQuests.materials`) — SOMENTE LEITURA,
    *  vistos na aba Especiais. Nomes e ícones vêm de `buildingQuestsCopy`. */
   materials?: Partial<Record<string, number>>;
+  /** O "Ir lá" do material: leva ao prédio/missão que o dá. O App fecha a Mochila e navega (`handleMaterialGoTo`). */
+  onGoToBuilding?: (building: BuildingId) => void;
+  /** DEMO LOCAL: o prédio social bloqueado na demo não recebe o "Ir lá". */
+  demo?: boolean;
 }
 
 interface Arrasto {
@@ -94,7 +100,7 @@ function coords(e: { clientX?: number; clientY?: number }): [number, number] {
 }
 
 export function Mochila({
-  open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials,
+  open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials, onGoToBuilding, demo,
 }: MochilaProps) {
   const isPt = language === 'pt-BR';
   const [aba, setAba] = useState<MochilaAba>('comida');
@@ -107,16 +113,41 @@ export function Mochila({
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
   // Dono único dos nomes/ícones: `buildingQuestsCopy` (fora da entrada, então
-  // carrega sob demanda — só quando há material para mostrar).
-  const [copia, setCopia] = useState<typeof import('../../utils/buildingQuestsCopy').MATERIALS | null>(null);
-  const temMaterial = Object.values(materials ?? {}).some(n => (n ?? 0) > 0);
+  // carrega sob demanda — só quando a aba Especiais abre). O nome do prédio vem
+  // do mesmo lugar que o Mapa lê (`nameOf`), também sob demanda.
+  type Copia = { materiais: typeof import('../../utils/buildingQuestsCopy').MATERIALS; nomeDoPredio: (id: BuildingId, l: Language) => string };
+  const [copia, setCopia] = useState<Copia | null>(null);
   useEffect(() => {
-    if (!open || !temMaterial || copia) return;
+    if (!open || aba !== 'especiais' || copia) return;
     let vivo = true;
-    void import('../../utils/buildingQuestsCopy').then(m => { if (vivo) setCopia(m.MATERIALS); }).catch(() => {});
+    void Promise.all([import('../../utils/buildingQuestsCopy'), import('../nav/BuildingQuestList')])
+      .then(([c, l]) => { if (vivo) setCopia({ materiais: c.MATERIALS, nomeDoPredio: l.nameOf }); }).catch(() => {});
     return () => { vivo = false; };
-  }, [open, temMaterial, copia]);
-  const listaMateriais = (copia ?? []).filter(m => (materials?.[m.id] ?? 0) > 0);
+  }, [open, aba, copia]);
+  /* REGRA ESPECÍFICA desta categoria (ingrediente-recurso, pedido do dono 07/10/2026): o material APARECE SEMPRE, com ×0 — é a
+     única forma de a pessoa descobrir ONDE conseguir. Os outros especiais seguem só com estoque (`mochilaTabs`). */
+  const listaMateriais = copia?.materiais ?? [];
+  const [matAberto, setMatAberto] = useState<string | null>(null);
+  const popRef = useRef<HTMLDivElement | null>(null);
+  // O tooltip fecha com Esc (sem fechar a folha) e com toque fora dele.
+  useEffect(() => {
+    if (!matAberto) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      setMatAberto(null);
+    };
+    const onDown = (e: Event) => {
+      const t = e.target as Element | null;
+      if (t?.closest?.('[data-material-pop], [data-material-btn]')) return;
+      setMatAberto(null);
+    };
+    window.addEventListener('keydown', onKey, true);
+    document.addEventListener('pointerdown', onDown, true);
+    return () => { window.removeEventListener('keydown', onKey, true); document.removeEventListener('pointerdown', onDown, true); };
+  }, [matAberto]);
+  useEffect(() => { if (!open || aba !== 'especiais') setMatAberto(null); }, [open, aba]);
 
   const abas = mochilaTabs(foodInventory);
   const lista = abas[aba];
@@ -249,7 +280,7 @@ export function Mochila({
           aria-labelledby={`sm3-aba-${aba}`}
           className="sm3-mochila-painel"
         >
-          {lista.length === 0 && !(aba === 'especiais' && temMaterial) ? (
+          {lista.length === 0 && aba !== 'especiais' ? (
             <p className="sm3-mochila-vazia" data-mochila-vazia>
               {aba === 'comida'
                 ? (isPt
@@ -291,6 +322,12 @@ export function Mochila({
             </div>
           )}
 
+          {aba === 'especiais' && lista.length === 0 && (
+            <p className="sm3-mochila-vazia" data-mochila-vazia>
+              {isPt ? 'Nenhum item especial ainda. Os especiais vêm da masmorra.' : 'No special items yet. Specials come from the dungeon.'}
+            </p>
+          )}
+
           {aba === 'especiais' && listaMateriais.length > 0 && (
             <section className="sm3-materiais" data-mochila-materiais aria-label={isPt ? 'Materiais' : 'Materials'}>
               <h3 className="sm3-materiais-titulo">{isPt ? 'Materiais' : 'Materials'}</h3>
@@ -298,15 +335,45 @@ export function Mochila({
                 {listaMateriais.map(m => {
                   const n = materials?.[m.id] ?? 0;
                   const nome = isPt ? m.namePt : m.nameEn;
+                  const aberto = matAberto === m.id;
                   return (
-                    <li key={m.id} data-material={m.id} aria-label={`${nome} × ${n}`}>
-                      <span aria-hidden="true" className="sm3-material-icone">{m.icon}</span>
-                      <span className="sm3-item-nome">{nome}</span>
-                      <small className="sm2-num">×{n}</small>
+                    <li key={m.id} data-material={m.id}>
+                      {/* Ícone PELADO: o botão não tem moldura nem fundo (regra "ícone nunca dentro de box"). */}
+                      <button type="button" className="sm3-material-btn" data-material-btn={m.id} aria-expanded={aberto}
+                        aria-controls={aberto ? 'sm3-material-pop' : undefined} aria-label={`${nome} × ${n}`}
+                        onClick={() => setMatAberto(aberto ? null : m.id)}>
+                        <span aria-hidden="true" className="sm3-material-icone">{m.icon}</span>
+                        <span className="sm3-item-nome">{nome}</span>
+                        <small className="sm2-num">×{n}</small>
+                      </button>
                     </li>
                   );
                 })}
               </ul>
+              {matAberto && copia && (() => {
+                const m = listaMateriais.find(x => x.id === matAberto)!;
+                const nome = isPt ? m.namePt : m.nameEn;
+                const lugar = copia.nomeDoPredio(m.building, language);
+                const [area, lote] = m.building.split('.');
+                const bloqueado = !!demo && isDemoBlockedLot(area, lote);
+                return (
+                  <div ref={popRef} id="sm3-material-pop" className="sm3-material-pop" data-material-pop={m.id} role="group" aria-label={nome}>
+                    <p className="sm3-material-pop-nome"><span aria-hidden="true">{m.icon}</span> {nome} <span className="sm2-num">×{materials?.[m.id] ?? 0}</span></p>
+                    <p className="sm3-material-pop-texto" data-material-where>
+                      {isPt ? `Você encontra mais em ${lugar}. A missão de lá rende um por dia, sem pressa.` : `Find more at ${lugar}. Its mission pays one a day, no rush.`}
+                    </p>
+                    {bloqueado
+                      ? <p className="sm3-material-pop-texto" data-material-demo>{demoRefusalText(isPt)}</p>
+                      : onGoToBuilding && (
+                        <button type="button" className="sm3-mochila-usar-btn" data-material-go={m.building}
+                          aria-label={isPt ? `Ir para ${lugar}` : `Go to ${lugar}`}
+                          onClick={() => { setMatAberto(null); onClose(); onGoToBuilding(m.building); }}>
+                          {isPt ? 'Ir lá' : 'Go there'}
+                        </button>
+                      )}
+                  </div>
+                );
+              })()}
             </section>
           )}
 
