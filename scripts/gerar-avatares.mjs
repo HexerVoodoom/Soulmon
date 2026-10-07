@@ -40,5 +40,10 @@ await writeFile('functions/api/_avatares.js',
 // O servidor guarda/devolve apenas ids desta lista; qualquer outra coisa vira null. Paridade com
 // src/assets/avatares/catalogo.json travada em src/utils/avatar.test.ts.
 export const AVATAR_IDS = new Set(${JSON.stringify(cat.map(c => c.id))});
+
+/** Id de avatar da lista fechada ou `null`. */
+export function avatarIdOrNull(raw) {
+  return typeof raw === 'string' && AVATAR_IDS.has(raw) ? raw : null;
+}
 `);
 console.log(`${cat.length} avatares`);

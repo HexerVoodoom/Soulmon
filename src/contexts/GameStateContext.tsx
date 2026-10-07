@@ -57,6 +57,7 @@ import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
+import { sanitizeAvatarId } from '../utils/avatar';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -485,6 +486,9 @@ export interface GameState {
   /** Id da moldura EQUIPADA (qualquer origem) ou `null` = sem moldura. Leitura: `?? null`; se deixou de valer (lugar de Mestre
    *  perdido), a tela desenha sem moldura (`resolveEquippedFrame`) e o id fica guardado. */
   equippedFrame?: string | null;
+  /** 🧑 FOTO DE PERFIL (Tarefa C, 06/10/2026): id de um NPC da lista fechada (`assets/avatares/catalogo.json`; `utils/avatar.ts`). Só o ID vai
+   *  para o save e o servidor (`functions/api/save.js` confere contra a lista). Ausente/`null` = o padrão determinístico do saveId. Leitura: `?? null`. */
+  avatarId?: string | null;
   /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
    *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
@@ -1305,6 +1309,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Molduras: lixo é descartado (`utils/frames.ts`), nunca derruba o load; save antigo entra vazio / sem moldura.
         ownedFrames: sanitizeOwnedFrames(loadedState.ownedFrames),
         equippedFrame: sanitizeEquippedFrame(loadedState.equippedFrame),
+        // Foto de perfil: só id bem formado (`utils/avatar.ts`); o catálogo é conferido na tela e no servidor.
+        avatarId: sanitizeAvatarId(loadedState.avatarId),
         // Talentos: vetor inválido para o Vínculo do save é DESCARTADO (`utils/talents.ts`), nunca corrigido.
         talentPicks: sanitizeTalentPicks(loadedState.talentPicks, bondLevelFor(num(loadedState.totalXP, 0))),
         // Equipamento e procedência dos Bits (PR8): lixo é descartado peça a peça (`utils/equipment.ts`, `utils/bitsOrigin.ts`).
@@ -1671,6 +1677,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // sugerido como padrão de quem nunca batizou nada.
         petName: soulmonDisplayName(gameState.soulmonMeta),
         stage: gameState.evolutionStage,
+        // Foto e moldura (só IDs de listas fechadas; `null` limpa no servidor).
+        avatarId: sanitizeAvatarId(gameState.avatarId),
+        frameId: sanitizeEquippedFrame(gameState.equippedFrame),
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
         // Sempre enviado (inclusive `false`): é assim que o servidor RETIRA ou

@@ -63,6 +63,9 @@ export interface PublicProfileInput {
   name: string;
   stage: string;
   petName?: string;
+  /** Foto (id de `assets/avatares/catalogo.json`) e moldura (id de `utils/frames.ts`); o servidor confere contra as listas fechadas. */
+  avatarId?: string | null;
+  frameId?: string | null;
   unlockedStages?: string[];
   pvpEnabled: boolean;
   /** TORC-5: `true` = a pessoa saiu da lista pública do Torneio (Configurações).
@@ -113,6 +116,7 @@ export const pushProfile = (p: PublicProfileInput) =>
  */
 export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string;
+  avatarId?: string | null; frameId?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
 }
 export const listPlayers = (search = '') =>
@@ -126,6 +130,7 @@ export const getPlayer = (id: string) =>
 
 export interface Opponent {
   id: string; name: string; petName: string; stage: string;
+  avatarId?: string | null; frameId?: string | null;
   /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
   duel?: { level: number } | null;
 }
@@ -139,7 +144,7 @@ export interface MatchResult {
   /** `won` + `draw` num campo só: 'win' | 'loss' | 'draw'. */
   outcome?: 'win' | 'loss' | 'draw';
   myScore: number; oppScore: number; points: number; matchesLeft: number;
-  opponent: { name: string; petName: string; stage: string };
+  opponent: { name: string; petName: string; stage: string; avatarId?: string | null; frameId?: string | null };
   /** A luta do SERVIDOR (autoritativa): os eventos do núcleo e a ficha dos dois lados. */
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
@@ -160,6 +165,7 @@ export const playMatch = (id: string, opponentId: string, taps: number[] = [], f
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
+  avatarId?: string | null; frameId?: string | null;
   points: number; wins: number; losses: number;
   /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
    *  `points` acima são da season e caem (derrota, ser sorteado, virada de
