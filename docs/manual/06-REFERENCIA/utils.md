@@ -2947,8 +2947,8 @@ dominância populacional — por isso ±15%. Régua nova:
 **Regra de negócio:** nenhuma — é geometria de toque. Se a arte de um lote trocar, o teste informa os números novos de `LOT_ART_BOUNDS`.
 
 ### `src/utils/talents.ts`
-**Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor inválido é DESCARTADO inteiro, nunca corrigido. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. PR7b (§2.25): o canal de PvP é POR ATRIBUTO (`attr` ATK/DEF/SPD em `tal-pvp-01/02/03`; `talentAttrBonus`) com o MESMO teto de 5% na SOMA dos três (`combinedAttrBonus`); `tal-pvp-05` (Mão aberta, `cheerBoost`: +5% por grau no rendimento da torcida do Duelo, até `CHEER_SCALE_MAX`) e `tal-com-05` (Balança, `respecOne`: refazer UM ponto por vez, em Bits ganhos) foram REDESENHADOS dentro das linhas vermelhas e entram na árvore.
-**Exports:** `TALENT_TREE`, `TALENT_BY_ID`, `TALENT_POINTS_MAX`, `CHEER_STEP`, `AttrKey`, `talentAttrBonus`, `talentCheerScale`, `canRespecOne`, `respecOneCost`, `applyRespecOne`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `canPick`, `pickTalent`, `pointsLeft`, `talentBonus(picks, bondLevel, scope)`, `respecCost`, `respecDiscount`, `applyRespec`, `pickableTreeCost`, `fullTreeCost`.
+**Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor malformado é DESCARTADO inteiro, nunca corrigido; já o que só viola PRÉ-REQUISITO (Tarefa B, `requires`/`requiresAny`, grafo em `talentLayout.ts`) é PODADO por replay (cliente e servidor), devolvendo os pontos. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. PR7b (§2.25): o canal de PvP é POR ATRIBUTO (`attr` ATK/DEF/SPD em `tal-pvp-01/02/03`; `talentAttrBonus`) com o MESMO teto de 5% na SOMA dos três (`combinedAttrBonus`); `tal-pvp-05` (Mão aberta, `cheerBoost`: +5% por grau no rendimento da torcida do Duelo, até `CHEER_SCALE_MAX`) e `tal-com-05` (Balança, `respecOne`: refazer UM ponto por vez, em Bits ganhos) foram REDESENHADOS dentro das linhas vermelhas e entram na árvore.
+**Exports:** `TALENT_TREE`, `TALENT_BY_ID`, `TALENT_POINTS_MAX`, `CHEER_STEP`, `AttrKey`, `talentAttrBonus`, `talentCheerScale`, `canRespecOne`, `respecOneCost`, `applyRespecOne`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `canPick`, `pickTalent`, `pointsLeft`, `talentBonus(picks, bondLevel, scope)`, `respecCost`, `respecDiscount`, `applyRespec`, `pickableTreeCost`, `fullTreeCost`, `prereqsMet`, `missingPrereqs`, `canTakeBack`, `ranksOf`.
 **Régua:** `src/utils/talents.test.ts` (régua de teto 5% por razão das médias), `functions/api/talents.parity.test.js`, bloco "PR7" de `src/copy.semFomo.contract.test.ts`.
 
 ### `src/utils/gates.ts`
@@ -2956,12 +2956,17 @@ dominância populacional — por isso ±15%. Régua nova:
 **Exports:** `GATES`, `GateFeature`, `gateFor`, `masmorraFloorOpen`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateLine` (copy neutra, `copy.semFomo`).
 **Régua:** `src/utils/gates.test.ts`, `functions/api/gates.parity.test.js`.
 
+### `src/utils/talentLayout.ts`
+**Dono de:** o DESENHO da árvore de talentos (Tarefa B, §2.37): posição de cada nó (hub, 3 braços a −90/30/150°, raios 120/230/340/450) e as ligações, lidas do grafo `requires`/`requiresAny` de `talents.ts`; vizinho por seta. Não decide regra. Fora do chunk de entrada (só o `TalentTree` lazy o importa).
+**Exports:** `LAYOUT_NODES`, `LAYOUT_EDGES`, `LAYOUT_BY_ID`, `BOARD`, `RINGS`, `NODE_SIZE`, `HUB`, `HUB_POINT`, `ARM_ANGLE`, `pointOf`, `neighborIn`.
+**Régua:** `src/utils/talentLayout.test.ts` (sem ciclo, alcançável, 20 pontos nunca fecham, pré-requisito de 1 e de 2 nós, save legado).
+
 ### `src/utils/talentArt.ts`
 **Dono de:** o carregamento sob demanda (`import.meta.glob` lazy) da arte da árvore de talentos; peça ausente devolve `null` e a tela cai no fallback de texto.
 **Exports:** `loadTalentArt`, `talentArtNames`.
 
 ### `src/utils/talentCopy.ts`
-**Dono de:** os TEXTOS (EN/PT-BR) dos nós da árvore de talentos, separados de `talents.ts` para ficar fora do chunk de entrada (só a `TalentTreeCard`, `lazy`, os lê). Neutro (`copy.semFomo`).
+**Dono de:** os TEXTOS (EN/PT-BR) dos nós da árvore de talentos, separados de `talents.ts` para ficar fora do chunk de entrada (só o `TalentTree`, `lazy`, os lê). Neutro (`copy.semFomo`).
 **Exports:** `TALENT_COPY`, `TalentCopy`.
 **Régua:** bloco "PR7" de `src/copy.semFomo.contract.test.ts` e `src/utils/talents.test.ts` (todo nó tem texto).
 

@@ -10,6 +10,7 @@ import { GameStateProvider, useGameState } from '../contexts/GameStateContext';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { xpForLevel } from '../utils/bond';
 import { RESPEC_COST_PER_POINT } from '../utils/talents';
+import TalentTree from './TalentTree';
 import TalentTreeCard from './TalentTreeCard';
 
 vi.mock('../utils/cloudSave', () => ({
@@ -29,17 +30,22 @@ const estado = () => JSON.parse(screen.getByTestId('estado').textContent!);
 
 function abrir(save: Record<string, unknown>, language = 'pt-BR') {
   localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], soulmonMeta: { baseName: 'Fagulha' }, ...save }));
-  render(<GameStateProvider><TalentTreeCard language={language} /><Espiao /></GameStateProvider>);
+  render(<GameStateProvider><TalentTree language={language} /><Espiao /></GameStateProvider>);
 }
 const estadoTxt = () => document.querySelector('[data-talent-state]')!.textContent!;
-const mais = (id: string) => document.querySelector<HTMLButtonElement>(`[data-talent="${id}"] button`)!;
+/** Seleciona o nó (o painel passa a ser dele) e devolve o botão +1 do painel. */
+const mais = (id: string) => {
+  act(() => { fireEvent.click(document.querySelector<HTMLButtonElement>(`button[data-talent="${id}"]`)!); });
+  return document.querySelector<HTMLButtonElement>(`[data-talent-buy="${id}"]`)!;
+};
+const painel = () => document.querySelector('[data-talent-panel]')!;
 
 beforeEach(() => { installDomGlobals(); localStorage.clear(); vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede')))); });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-describe('TalentTreeCard', () => {
+describe('TalentTree', () => {
   it('sem Provider não renderiza nada (demo, testes)', () => {
-    const { container } = render(<TalentTreeCard language="pt-BR" />);
+    const { container } = render(<TalentTree language="pt-BR" />);
     expect(container.innerHTML).toBe('');
   });
 
@@ -57,13 +63,15 @@ describe('TalentTreeCard', () => {
     expect(estadoTxt()).toMatch(/Todos os pontos estão gastos/);
     expect(mais('tal-pvp-02').disabled).toBe(true);
     expect(mais('tal-pvp-01').disabled).toBe(true);
+    expect(painel().textContent).toMatch(/Sem pontos livres/);
   });
 
   it('nó sem efeito ligado aparece como "em breve" e não tem botão', () => {
     abrir({ totalXP: xpForLevel(10) });
-    const n = document.querySelector('[data-talent="tal-pvp-04"]')!;
-    expect(n.textContent).toMatch(/em breve/);
-    expect(n.querySelector('button')).toBeNull();
+    mais('tal-pvp-04');
+    expect(painel().textContent).toMatch(/em breve/);
+    expect(document.querySelector('[data-talent-buy]')).toBeNull();
+    expect(document.querySelector('button[data-talent="tal-pvp-04"]')!.getAttribute('data-state')).toBe('soon');
   });
 
   it('save hostil (picks acima dos pontos do Vínculo) é descartado na carga e a tela mostra a árvore vazia', () => {
@@ -107,11 +115,12 @@ describe('PR7b: os nós redesenhados na tela', () => {
   it('Mão aberta (torcida) e Balança aparecem como compráveis, sem "em breve", e sem a palavra câmbio', () => {
     abrir({ totalXP: xpForLevel(10) });
     for (const id of ['tal-pvp-05', 'tal-com-05']) {
-      const n = document.querySelector(`[data-talent="${id}"]`)!;
-      expect(n.textContent).not.toMatch(/em breve/);
-      expect(n.querySelector('button')).not.toBeNull();
+      mais(id);
+      expect(painel().textContent).not.toMatch(/em breve/);
+      expect(document.querySelector(`[data-talent-buy="${id}"]`)).not.toBeNull();
     }
-    expect(document.querySelector('[data-talent="tal-pvp-05"]')!.textContent).toMatch(/Só vale quando você torce/);
+    mais('tal-pvp-05');
+    expect(painel().textContent).toMatch(/Só vale quando você torce/);
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/câmbio|cambio|exchange/i);
   });
 
@@ -119,20 +128,72 @@ describe('PR7b: os nós redesenhados na tela', () => {
     abrir({ totalXP: xpForLevel(6), gamePoints: 100, talentPicks: ['tal-pvp-01', 'tal-pvp-01'] });
     expect(document.querySelector('[data-talent-respec-one]')).toBeNull();
     cleanup();
-    abrir({ totalXP: xpForLevel(6), gamePoints: 100, talentPicks: ['tal-pvp-01', 'tal-pvp-01', 'tal-com-05'] });
+    abrir({ totalXP: xpForLevel(8), gamePoints: 100, talentPicks: ['tal-pvp-01', 'tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05'] });
+    mais('tal-pvp-01');
     const tirar = document.querySelector<HTMLButtonElement>('[data-talent-respec-one="tal-pvp-01"]')!;
-    expect(tirar.getAttribute('aria-label')).toContain(`${RESPEC_COST_PER_POINT} Bits`);
+    expect(tirar.getAttribute('aria-label')).toContain('20 Bits');
     act(() => { fireEvent.click(tirar); });
-    expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-05']);
-    expect(estado().bits).toBe(100 - RESPEC_COST_PER_POINT);
+    expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05']);
+    expect(estado().bits).toBe(100 - 20); // ampulheta (com-03 x2) = -20%
     expect(document.querySelector('[data-talent-aviso]')!.textContent).toMatch(/voltou para você/);
   });
 
   it('Balança sem Bits: nada muda e o aviso é neutro', () => {
-    abrir({ totalXP: xpForLevel(6), gamePoints: 3, talentPicks: ['tal-pvp-01', 'tal-com-05'] });
+    abrir({ totalXP: xpForLevel(8), gamePoints: 3, talentPicks: ['tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05'] });
+    mais('tal-pvp-01');
     act(() => { fireEvent.click(document.querySelector<HTMLButtonElement>('[data-talent-respec-one="tal-pvp-01"]')!); });
-    expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-05']);
+    expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05']);
     expect(estado().bits).toBe(3);
     expect(document.querySelector('[data-talent-aviso]')!.textContent).toMatch(/Você pode voltar quando tiver juntado/);
+  });
+});
+
+describe('Tarefa B: a árvore como árvore', () => {
+  it('nó trancado diz em TEXTO o que falta; comprar o pré-requisito destranca', () => {
+    abrir({ totalXP: xpForLevel(10) });
+    mais('tal-pvp-02');
+    expect(document.querySelector('[data-talent-buy="tal-pvp-02"]')).toHaveProperty('disabled', true);
+    expect(document.querySelector('[data-talent-missing]')!.textContent).toMatch(/Ponta de lança com 2 graus/);
+    mais('tal-pvp-01'); act(() => { fireEvent.click(mais('tal-pvp-01')); }); act(() => { fireEvent.click(mais('tal-pvp-01')); });
+    expect(document.querySelector('button[data-talent="tal-pvp-02"]')!.getAttribute('data-state')).toBe('available');
+    expect(mais('tal-pvp-02').disabled).toBe(false);
+  });
+  it('convergência (um OU outro) e dois pré-requisitos aparecem no texto, em EN também', () => {
+    abrir({ totalXP: xpForLevel(10) }, 'en-US');
+    mais('tal-pvp-05');
+    expect(document.querySelector('[data-talent-missing]')!.textContent).toMatch(/one of: .* or /);
+    mais('tal-pvp-07');
+    expect(document.querySelector('[data-talent-missing]')!.textContent).toMatch(/at rank 3 and .* and /);
+  });
+  it('as ligações existem e o estado delas segue os nós; todo nó é um botão com rótulo', () => {
+    abrir({ totalXP: xpForLevel(10), talentPicks: ['tal-pvp-01', 'tal-pvp-01'] });
+    expect(document.querySelector('[data-edge="hub>tal-pvp-01"]')!.getAttribute('data-edge-state')).toBe('bought');
+    expect(document.querySelector('[data-edge="tal-pvp-01>tal-pvp-02"]')!.getAttribute('data-edge-state')).toBe('open');
+    expect(document.querySelector('[data-edge="tal-pvp-02>tal-pvp-05"]')!.getAttribute('data-edge-state')).toBe('locked');
+    const nos = document.querySelectorAll('button[data-talent]');
+    expect(nos.length).toBe(21);
+    nos.forEach((b) => expect(b.getAttribute('aria-label')).toMatch(/\S/));
+  });
+  it('roving tabindex: um só nó na ordem do Tab, e as setas andam', () => {
+    abrir({ totalXP: 0 });
+    expect(document.querySelectorAll('button[data-talent][tabindex="0"]').length).toBe(1);
+    const a = document.querySelector<HTMLButtonElement>('button[data-talent="tal-pvp-01"]')!;
+    act(() => { a.focus(); fireEvent.keyDown(a, { key: 'ArrowUp' }); });
+    expect(document.querySelector('button[data-talent][tabindex="0"]')!.getAttribute('data-talent')).not.toBe('tal-pvp-01');
+  });
+  it('zoom + e −: muda o tamanho e trava nos extremos', () => {
+    abrir({ totalXP: 0 });
+    const mais_ = document.querySelector<HTMLButtonElement>('[data-talent-zoom="in"]')!;
+    for (let i = 0; i < 6; i++) act(() => { fireEvent.click(mais_); });
+    expect(mais_.disabled).toBe(true);
+  });
+  it('o resumo da StatsPage só monta a árvore ao abrir', async () => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], totalXP: 0 }));
+    render(<GameStateProvider><TalentTreeCard language="pt-BR" /></GameStateProvider>);
+    expect(document.querySelector('[data-talent-summary]')).not.toBeNull();
+    expect(document.querySelector('[data-talent-tree]')).toBeNull();
+    act(() => { fireEvent.click(document.querySelector('[data-talent-toggle]')!); });
+    await screen.findByRole('group', { name: 'Árvore de talentos' });
+    expect(document.querySelector('[data-talent-tree]')).not.toBeNull();
   });
 });

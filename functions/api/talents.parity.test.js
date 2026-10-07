@@ -12,6 +12,9 @@ import * as srv2 from './_combate.js';
 import { COMBAT_BONUS_CAP } from '../../src/utils/combate/bonus';
 
 describe('o catalogo do servidor e o do app sao o MESMO', () => {
+  it('pre-requisitos: so exigem nos que se compram (o servidor nao tem o no pendente)', () => {
+    for (const n of TALENT_TREE.filter(isPickable)) for (const r of [...(n.requires ?? []), ...(n.requiresAny ?? [])]) expect(srv.PICKABLE[r.id], `${n.id}->${r.id}`).toBeDefined();
+  });
   it('mesmos nos pegaveis, mesmo grau maximo, mesmo efeito', () => {
     const app = TALENT_TREE.filter(isPickable);
     expect(Object.keys(srv.PICKABLE).sort()).toEqual(app.map((n) => n.id).sort());
@@ -20,6 +23,8 @@ describe('o catalogo do servidor e o do app sao o MESMO', () => {
       expect(s.maxRank, n.id).toBe(n.maxRank);
       expect(s.kind, n.id).toBe(n.effect.kind);
       expect(s.perRank, n.id).toBe(n.effect.perRank);
+      expect(s.requires ?? [], n.id).toEqual(n.requires ?? []);
+      expect(s.requiresAny ?? [], n.id).toEqual(n.requiresAny ?? []);
       if (n.effect.kind === 'combatBonus') { expect(s.scope, n.id).toBe(n.effect.scope); expect(s.attr, n.id).toBe(n.effect.attr); }
     }
   });
@@ -42,6 +47,33 @@ describe('o catalogo do servidor e o do app sao o MESMO', () => {
       for (const k of ['atk', 'def', 'spd']) expect(sa[k], k).toBeCloseTo(aa[k], 12);
       expect(srv.talentCheerScale(picks, lvl)).toBeCloseTo(talentCheerScale(picks, lvl), 12);
     }
+  });
+});
+
+describe('vetores VALIDOS pelo grafo (compra em ordem) e vetores embaralhados dao a mesma decisao nos dois lados', () => {
+  it('2000 compras aleatorias respeitando o grafo; depois embaralhadas e com 1 grau a mais', () => {
+    const ids = Object.keys(srv.PICKABLE);
+    let s = 987654321;
+    const rnd = () => (s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 2 ** 32;
+    let validos = 0;
+    for (let i = 0; i < 2000; i++) {
+      const lvl = 1 + Math.floor(rnd() * 22);
+      let picks = [];
+      for (let k = 0; k < 40; k++) {
+        const id = ids[Math.floor(rnd() * ids.length)];
+        if (isValidPicks([...picks, id], lvl)) picks.push(id);
+      }
+      if (picks.length) validos++;
+      expect(srv.isValidPicks(picks, lvl)).toBe(true);
+      expect(srv.sanitizeTalentPicks(picks, lvl)).toEqual(picks);
+      const emb = [...picks].sort(() => rnd() - 0.5);
+      expect(srv.isValidPicks(emb, lvl)).toBe(isValidPicks(emb, lvl));
+      expect(srv.sanitizeTalentPicks(emb, lvl)).toEqual(sanitizeTalentPicks(emb, lvl));
+      const extra = [...picks, ids[Math.floor(rnd() * ids.length)]];
+      expect(srv.sanitizeTalentPicks(extra, lvl)).toEqual(sanitizeTalentPicks(extra, lvl));
+      expect(srv.talentBonus(picks, lvl, 'pvp')).toBeCloseTo(talentBonus(picks, lvl, 'pvp'), 12);
+    }
+    expect(validos).toBeGreaterThan(1500);
   });
 });
 
@@ -89,6 +121,11 @@ describe('save.js valida talentPicks contra o Vinculo do proprio save', () => {
   it('PR7b: os nos redesenhados (torcida e balanca) sao validos, dentro do grau maximo', async () => {
     const out = await salva({ totalXP: xpForLevel(20), talentPicks: TORCIDA_E_BALANCA });
     expect(out.talentPicks).toEqual(TORCIDA_E_BALANCA);
+  });
+  it('save legado que so viola pre-requisito: o servidor PODA (mantem o que compra); malformado continua descartado', async () => {
+    const out = await salva({ totalXP: xpForLevel(10), talentPicks: ['tal-pvp-02', 'tal-pvp-01', 'tal-pvp-01', 'tal-pve-02'] });
+    expect(out.talentPicks).toEqual(['tal-pvp-01', 'tal-pvp-01', 'tal-pvp-02']);
+    expect((await salva({ totalXP: xpForLevel(10), talentPicks: ['tal-pvp-01', 'lixo'] })).talentPicks).toEqual([]);
   });
   it('save sem o campo continua sem o campo (a contagem de campos nao muda no servidor)', async () => {
     expect('talentPicks' in (await salva({ totalXP: 5 }))).toBe(false);

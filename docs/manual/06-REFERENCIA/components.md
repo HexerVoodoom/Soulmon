@@ -1339,7 +1339,12 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/nav/NpcSpeech.render.test.tsx`.
 
 ### `src/components/TalentTreeCard.tsx`
-**Dono de:** a tela da árvore de talentos do Vínculo (PR7), carregada `lazy` pela `StatsPage` com a arte sob demanda. Pontos, graus e respec vêm de `utils/talents.ts`; local-first (o servidor valida na sincronia). Estados: árvore vazia, pontos para gastar, todos gastos, respec sem Bits. PR7b: com `tal-com-05` (Balança) cada nó comprado ganha "−1" (refazer UM ponto, preço de um ponto em Bits ganhos).
+**Dono de:** o RESUMO dos talentos na `StatsPage` (Tarefa B, §2.37): pontos gastos/livres e o botão "Abrir a árvore", que MONTA o `TalentTree` (`lazy`). Sem save (demo) não renderiza nada.
+**Régua:** `src/components/TalentTree.render.test.tsx` (bloco "Tarefa B").
+
+### `src/components/TalentTree.tsx`
+**Dono de:** a árvore de talentos DESENHADA como árvore (PR7 + Tarefa B): hub no centro, três caminhos que se bifurcam e se reencontram, nós como botões HTML sobre um SVG só de linhas, rolagem nativa + zoom +/−, painel do nó com o pré-requisito que falta EM TEXTO, setas/roving tabindex, `aria-label` por nó, movimento reduzido (CSS). Pontos, graus, pré-requisitos e respec vêm de `utils/talents.ts`; o desenho de `utils/talentLayout.ts`; local-first (o servidor valida na sincronia e poda o que viola pré-requisito). Com `tal-com-05` (Balança) o painel ganha "−1" (recusado se outro nó depende do grau).
+**Régua:** `src/components/TalentTree.render.test.tsx`.
 
 ### `src/components/EquipmentCard.tsx`
 **Dono de:** a tela do equipamento e da vitrine (PR8b), carregada `lazy` pela `StatsPage` junto com a arte sob demanda. Regras de `utils/equipment.ts` e `utils/bitsOrigin.ts`; local-first. Compra com Bits GANHOS ou fragmentos (sem sorteio), equipar/tirar, recusas neutras (Bits insuficientes, Bits vindos de Crédito, fragmentos insuficientes). Fragmentos vêm da run completa da Masmorra (`App.tsx › handleGlitchtama`).
