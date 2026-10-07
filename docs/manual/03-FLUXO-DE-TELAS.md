@@ -582,9 +582,10 @@ o assunto restante virou a constante exportada `SHOP_AND_CURRENCY_PRIMER`.
 A prioridade é **uma expressão só**, no `src/App.tsx` (`const interstitial`):
 
 ```ts
-const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare'
+const interstitial: 'welcomeTour' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare'
   | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
-  triageTasks ? 'triage'
+  welcomeTourOpen ? 'welcomeTour'
+    : triageTasks ? 'triage'
     : showDailyReport && gameState.lastDayReport ? 'dailyReport'
       : checkInPlanData ? 'checkIn'
         : grovePendente ? 'groveMilestone'
@@ -595,7 +596,7 @@ const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'd
                   : 'welcome';
 ```
 
-Ordem: **triagem → relatório diário → check-in → marco do Bosque (`groveMilestone`,
+Ordem: **tour do corvo (07/10/2026, §4.27) → triagem → relatório diário → check-in → marco do Bosque (`groveMilestone`,
 Guilda, 29/09/2026) → sonho → pesadelo → onboarding do catálogo → convite de nível
 do catálogo → welcome prompt**. (⚰️ esta lista omitia os dois do catálogo — ver o
 `const interstitial` do `App.tsx`; a régua é `filaDeAvisos.contract.test.ts`, que
@@ -2040,6 +2041,12 @@ mudo por `src/utils/audioBus.contract.test.ts`.
   reroll por `Math.random()` que o `termos.html` chamava de "sorteio pago": a
   semente passa a vir das respostas (`utils/newReading.ts`). **Sai para**:
   `onConfirm` (async; só fecha com `ok`) e `onClose`.
+
+### 4.27 O tour de boas-vindas do corvo <a id="tour-corvo"></a>
+
+- **Chega por**: o intersticial `welcomeTour`, **o primeiro da fila 1** (§3.1) — depois do ritual (`SoulmonOnboarding`) e do tutorial de 1ª tarefa (`GameTutorialFlow`), antes do check-in e do priming. Condição (`needsWelcomeTour`): flag local `STORAGE_KEYS.WELCOME_TOUR_SHOWN` (`soulmon-welcome-tour-shown`) ausente E nenhuma conclusão no save (`jaConcluiuAlgo`) — quem já joga não é interrompido. Roda igual na demo (flag local, sem XP). Replay: Configurações › Ajuda › "Replay tutorial" (`onReplayWelcomeTour`), sem gravar nada. Sem campo novo no save.
+- **Estados**: oito cartões, `WelcomeTour` (`RitualDialog` z-200). Parte 1 (básico): boas-vindas · hábitos e tarefas · por que importam (comida/energia, dia completo — meta inicial lida de `FORM_REQUIREMENTS.rookie.required`) · evolução manual · cuidado em uma frase. Parte 2 (mapa): Laboratório/Mercado/Arena · Jogos/Exploração/Hall · Missões (ícone do canto da Home) e Mochila (entre os cuidados). Os cartões do mapa são texto: o tour NÃO navega o app.
+- **Sai para**: "Let's go" no último = `finished`; "Skip" (sempre visível) ou Esc = `skipped`. Os dois gravam a MESMA flag, uma vez; pular nunca repete nem cobra. Texto só em EN por enquanto (`{ en }`, fallback para pt-BR). Muda (R-NOVA). Dono: `src/components/WelcomeTour.tsx`, `src/utils/welcomeTour.ts`.
 
 ### 4.25 Superfícies globais (montadas uma vez, cobrem tudo)
 

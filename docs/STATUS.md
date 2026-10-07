@@ -4952,3 +4952,8 @@ e `docsSemMentira.contract.test.ts`: 10/10 verdes.
 - **Torcida**: a barra de CHEER saiu das telas de combate (Arena, Duelo); fica o ícone pequeno no canto (`data-torcida-ratio`) e o que a torcida já encheu aparece como trecho claro na barra de ENERGIA do pet (`StageFighter.cheerPending`). Só UI: `CHEER`/`energyPerDischarge`, `arena.ts` e o motor intocados.
 - **Cena do especial** (`SpecialCutscene`, `SPECIAL_INTRO_MS` = 1000 em `utils/combatFx.ts`): nome grande no centro, fundo escurecido, quem conjura e a aura acima do véu; depois o golpe. É pausa de apresentação (o `useGroupBattle` espera antes do impacto/da janela de esquiva; o Duelo adianta a ação em `introMs`, o relógio dos eventos não muda). Movimento reduzido: o nome só aparece e some, a pausa fica.
 - **Som**: `playAttack`, `playSpecial`, `playVictory` (procedurais, `arcade`, offsets medidos); ver `docs/SOM.md` §3.1. **Pendente do dono**: gate humano de escuta.
+
+## 07/10/2026 — Tour de boas-vindas do corvo
+
+- `WelcomeTour` (EN apenas, por pedido do dono): 8 cartões com o corvo (arte `mascot-raven.png`, nome **Rook**) — o básico (tarefas, comida/energia, dia completo, evolução manual, cuidado) e o mapa (uma frase por área, Missões e Mochila). Intersticial **primeiro da fila** (antes de check-in e priming); flag local `soulmon-welcome-tour-shown` (sem campo novo no save, então sem mexer no fuzz2); visto OU pulado grava a mesma flag; replay em Configurações › Ajuda. Mudo e sem recompensa. Texto por `{ en }` — o PT-BR entra depois acrescentando `pt`.
+- **Depende do dono**: conferir o texto, o nome Rook e se o tour deve aparecer também para saves que já têm atividades mas nenhuma conclusão.

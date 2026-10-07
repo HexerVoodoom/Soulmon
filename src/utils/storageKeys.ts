@@ -115,6 +115,8 @@ export const STORAGE_KEYS = {
   // um número velho como se fosse novo. É órfão inofensivo: nada o lê.
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa
   TUTORIAL_COMPLETE: 'soulmon-tutorial-complete',
+  /** O tour do corvo (`utils/welcomeTour.ts`): visto ou pulado, uma vez por aparelho. */
+  WELCOME_TOUR_SHOWN: 'soulmon-welcome-tour-shown',
   // Login por link de e-mail: o Firebase exige reconfirmar o e-mail ao
   // completar o login, então ele fica guardado entre o envio e o retorno.
   PENDING_LOGIN_EMAIL: 'soulmon-pending-login-email',

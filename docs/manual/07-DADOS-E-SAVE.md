@@ -387,6 +387,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `GATE_DRAFT` | `soulmon-gate-draft` | Rascunho do trecho ANTES da escolha grátis/completo. | `gateDraft.ts` |
 | `SOULMON_PROFILE` | `soulmon-profile` | O perfil da alma gerado no onboarding (input + seed). **Mora só neste aparelho e NÃO vai à nuvem** — é por isso que `soulmonSkills`/`soulmonClassTitles` são cacheados no save. Contém nome, data, hora e local de nascimento. | `SoulmonOnboarding.tsx`, `PetPage.tsx`, `App.tsx`, `GameStateContext.tsx` (só o fuso, via `onboardingTimeZone`) |
 | `TUTORIAL_COMPLETE` | `soulmon-tutorial-complete` | O segundo onboarding (tutorial + 1ª tarefa) terminou. | `App.tsx` |
+| `WELCOME_TOUR_SHOWN` | `soulmon-welcome-tour-shown` | O tour do corvo (`WelcomeTour`) foi visto ou pulado neste aparelho (07/10/2026). Local, fora do save. | `App.tsx` |
 | `PENDING_LOGIN_EMAIL` | `soulmon-pending-login-email` | O e-mail entre o envio do link de login e o retorno (o Firebase exige reconfirmar). | `auth.ts` |
 | `SLEEP_STARTED_AT` | `soulmon-sleep-started-at` | ISO de quando o pet deitou — a "outra ponta" da noite, lida ao acordar para `recordNight` gravar deitar E acordar. | `App.tsx` |
 | `MORNING_DREAM_SHOWN` | `soulmon-morning-dream-shown` | Dia da última manhã em que o sonho foi mostrado. Um por manhã: o feedback de sono é SÓ de manhã e SÓ uma vez. | `App.tsx` |
