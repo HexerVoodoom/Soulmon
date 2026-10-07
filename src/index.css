@@ -8299,3 +8299,15 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm3-materiais-lista li { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-ink); }
 .sm3-material-icone { font-size: 28px; line-height: 32px; }
 .sm3-materiais-lista small { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
+
+/* Soulsmith (07/10/2026): celebração do aprimoramento — CSS procedural, sem asset; reduced-motion reduz o MOVIMENTO e mantém o selo. */
+@keyframes sm-forge-sweep { from { transform: translateX(-120%) skewX(-18deg); opacity: .9; } to { transform: translateX(260%) skewX(-18deg); opacity: 0; } }
+@keyframes sm-forge-spark { 0% { transform: translate(0,0) scale(.4); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } }
+@keyframes sm-forge-pulse { 0% { transform: scale(1); text-shadow: 0 0 0 transparent; } 40% { transform: scale(1.35); text-shadow: 0 0 12px var(--sm2-primary-ink, #6ee7f0); } 100% { transform: scale(1); text-shadow: 0 0 0 transparent; } }
+@keyframes sm-forge-seal { from { transform: translateY(6px) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+[data-forge-celebration] { position: relative; overflow: hidden; }
+.sm-forge-sweep { position: absolute; inset: 0 auto 0 0; width: 40%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: sm-forge-sweep 900ms ease-out 1 both; }
+.sm-forge-spark { position: absolute; left: 50%; bottom: 30%; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; background: var(--sm2-primary-ink, #6ee7f0); box-shadow: 0 0 8px var(--sm2-primary-ink, #6ee7f0); animation: sm-forge-spark 1100ms ease-out 1 both; }
+.sm-forge-pulse { display: inline-block; animation: sm-forge-pulse 700ms ease-out 1; }
+.sm-forge-seal { animation: sm-forge-seal 300ms ease-out 1 both; }
+@media (prefers-reduced-motion: reduce) { .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; } .sm-forge-sweep, .sm-forge-spark { display: none; } }

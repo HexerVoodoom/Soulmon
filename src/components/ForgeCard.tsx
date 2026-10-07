@@ -54,19 +54,6 @@ function prefersReducedMotion(): boolean {
   try { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
 }
 
-/** A celebração do aprimoramento: CSS procedural dentro deste chunk lazy (sem asset, sem som — superfície nova nasce muda). */
-const CELEBRATION_CSS = `
-@keyframes sm-forge-sweep { from { transform: translateX(-120%) skewX(-18deg); opacity: .9; } to { transform: translateX(260%) skewX(-18deg); opacity: 0; } }
-@keyframes sm-forge-spark { 0% { transform: translate(0,0) scale(.4); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } }
-@keyframes sm-forge-pulse { 0% { transform: scale(1); text-shadow: 0 0 0 transparent; } 40% { transform: scale(1.35); text-shadow: 0 0 12px var(--sm2-primary-ink, #6ee7f0); } 100% { transform: scale(1); text-shadow: 0 0 0 transparent; } }
-@keyframes sm-forge-seal { from { transform: translateY(6px) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
-[data-forge-celebration] { position: relative; overflow: hidden; }
-.sm-forge-sweep { position: absolute; inset: 0 auto 0 0; width: 40%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: sm-forge-sweep 900ms ease-out 1 both; }
-.sm-forge-spark { position: absolute; left: 50%; bottom: 30%; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; background: var(--sm2-primary-ink, #6ee7f0); box-shadow: 0 0 8px var(--sm2-primary-ink, #6ee7f0); animation: sm-forge-spark 1100ms ease-out 1 both; }
-.sm-forge-pulse { display: inline-block; animation: sm-forge-pulse 700ms ease-out 1; }
-.sm-forge-seal { animation: sm-forge-seal 300ms ease-out 1 both; }
-@media (prefers-reduced-motion: reduce) { .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; } .sm-forge-sweep, .sm-forge-spark { display: none; } }
-`;
 const SPARKS = Array.from({ length: 10 }, (_, i) => ({ dx: `${(i - 4.5) * 14}px`, dy: `${-50 - ((i * 37) % 40)}px`, delay: `${(i % 5) * 60}ms` }));
 
 /** O que a pessoa está decidindo agora: aprimorar a peça (próximo nível) ou refazer a escolha de um nível. */
@@ -336,7 +323,6 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
 
   return (
     <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>
-      <style>{CELEBRATION_CSS}</style>
       <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
         {FORGE_PIECES.map(linha)}
