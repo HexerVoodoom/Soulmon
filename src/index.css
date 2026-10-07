@@ -8271,7 +8271,6 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sm2-primary-ink) 45%, transparent));
 }
 
-/* Tarefa B: nós da árvore de talentos. A transição é só enfeite e some com movimento reduzido. */
-.sm-talent-node { transition: transform .15s ease, opacity .15s ease; }
-.sm-talent-node:hover { transform: scale(1.06); }
-@media (prefers-reduced-motion: reduce) { .sm-talent-node, .sm-talent-node:hover { transition: none; transform: none; } }
+/* Tarefa B: árvore de talentos. Sem transição de propósito: não há movimento a reduzir. */
+.sm-talent-node { cursor: pointer; }
+.sm-talent-scroll { scrollbar-width: thin; }
