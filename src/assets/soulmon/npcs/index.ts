@@ -46,13 +46,18 @@ import npcArenaFeira from './npc-arena-feira.png';
 import npcJogosMente from './npc-jogos-mente.png';
 import npcJogosRefugio from './npc-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
-import npcHallAmigos from './npc-hall-amigos.png';
 import npcFGuarda from './npc-f-guarda.png';
-import npcLaboratorioPet from './npc-laboratorio-pet.png';
-import npcLaboratorioStats from './npc-laboratorio-stats.png';
 import npcExploracaoPasseio from './npc-exploracao-passeio.png';
 import npcExploracaoOficina from './npc-exploracao-oficina.png';
 import npcExploracaoCaderno from './npc-exploracao-caderno.png';
+
+import npcFForjaFerreiro from './npc-f-forja.png';
+/**
+ * 🦎 O NPC do FERREIRO — ÚNICO ponto de troca (07/10/2026). O dono quer uma SALAMANDRA DE VIDRO industrial;
+ * essa arte ainda não existe. Provisório: a forjadora de lava (`npc-f-forja.png`, Scoria), a mais próxima.
+ * PENDENTE DO DONO: gerar `npc-mercado-ferreiro.png` (768², alfa real) e trocar o import abaixo.
+ */
+const FERREIRO_NPC_ART = npcFForjaFerreiro;
 
 /**
  * NPC por SUB-LOJA (minimal-ui F4/F5, decisão do dono 28/09/2026): cada lote
@@ -72,7 +77,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:decoracao': npcLojaDecoracao,
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcMercadoConquistas, // Medra
-  'mercado:ferreiro': npcFFerreiro, // Mallo (07/10/2026: o busto do ferreiro, já no bundle desde a leva femininas/banco; mesmo de EXTRA_NPC_ART.ferreiro)
+  'mercado:ferreiro': FERREIRO_NPC_ART,
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Tuska
   'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
@@ -87,10 +92,10 @@ export const LOT_NPC_ART: Record<string, string> = {
   'jogos:mente': npcJogosMente, // Tessela
   'jogos:refugio': npcJogosRefugio, // Bobbi
   'laboratorio:evolucao': npcLaboratorio,
-  'laboratorio:pet': npcLaboratorioPet, // Bento
-  'laboratorio:stats': npcLaboratorioStats, // Quill
+  'laboratorio:pet': npcConta, // Faro (07/10/2026: trocou o Bento, pedido do dono; o `npc-laboratorio-pet.png` ficou em disco)
+  'laboratorio:stats': npcFSacerdotisa, // Oriel (07/10/2026: trocou o Quill; `npc-laboratorio-stats.png` ficou em disco)
   'hall:biblioteca': npcHall,
-  'hall:amigos': npcHallAmigos, // Nino
+  'hall:amigos': npcFBarda, // Trill (07/10/2026: trocou o Nino; `npc-hall-amigos.png` ficou em disco)
   'hall:guilda': npcFGuarda, // Bastia (G3, 02/10/2026: trocou a Marla-árvore; mesmo busto de EXTRA_NPC_ART.guarda)
 };
 

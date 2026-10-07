@@ -181,10 +181,10 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'What is written here stays in the drawer. Only you open it.',
   },
   'hall:amigos': {
-    namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
+    namePt: 'Trill, a barda', nameEn: 'Trill, the bard', // 07/10/2026: busto trocado a pedido do dono (era Nino, o corvo carteiro)
     // H5 (01/10/2026): afirmava que um aceno TINHA chegado, com ou sem aceno (L10).
-    linePt: 'Quando chega um aceno, eu guardo na bolsa pra você.',
-    lineEn: 'When a wave arrives, I keep it in my bag for you.',
+    linePt: 'Quando chega um aceno, eu faço uma canção dele pra você.',
+    lineEn: 'When a wave arrives, I turn it into a song for you.',
   },
   'hall:guilda': {
     // G3 (02/10/2026): a Marla-árvore não agradou ao dono; o Salão passa a ser
@@ -196,13 +196,13 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   'laboratorio:pet': {
     // O nome antigo era de personagem de terceiro — a bíblia das áreas §1.3 A4 decidiu Bento.
-    namePt: 'Bento, o cuidador', nameEn: 'Bento, the keeper',
+    namePt: 'Faro, o arquivista', nameEn: 'Faro, the archivist', // 07/10/2026: busto trocado a pedido do dono (era Bento, a coruja-cervo)
     // H5 (01/10/2026): "pelagem" não vale para toda criatura (padrão, cobre — bíblia §5.1).
-    linePt: 'Olha como a luz assenta nele hoje.',
-    lineEn: 'Look how the light settles on it today.',
+    linePt: 'Tudo o que você guardou está em ordem. Pode olhar com calma.',
+    lineEn: 'Everything you kept is in order. Look at your own pace.',
   },
   'laboratorio:stats': {
-    namePt: 'Quill, a escriba', nameEn: 'Quill, the scribe',
+    namePt: 'Oriel, a guardiã do Vínculo', nameEn: 'Oriel, keeper of the Bond', // 07/10/2026: busto trocado a pedido do dono (era Quill, a escriba-louva-a-deus)
     linePt: 'Cada dia fica anotado aqui. É só para olhar.',
     lineEn: "Every day is written here. It's just to look at.",
   },

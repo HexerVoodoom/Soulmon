@@ -52,9 +52,9 @@ describe('H11 — a tabela lote → NPC é única e completa', () => {
     }
   });
 
-  it('o rótulo do NPC de um lote nunca é o de outro lote da MESMA área (Quill ≠ Vesca ≠ Bento)', () => {
+  it('o rótulo do NPC de um lote nunca é o de outro lote da MESMA área (Oriel ≠ Vesca ≠ Faro)', () => {
     const lab = ['evolucao', 'pet', 'stats'].map(l => lotNpcVoice('laboratorio', l, 'pt-BR').name);
-    expect(lab.map(n => n.split(',')[0])).toEqual(['Vesca', 'Bento', 'Quill']);
+    expect(lab.map(n => n.split(',')[0])).toEqual(['Vesca', 'Faro', 'Oriel']);
   });
 });
 
