@@ -188,3 +188,26 @@ describe('Mochila — dados e estados', () => {
     expect(container.querySelector('[data-mochila]')).toBeNull();
   });
 });
+
+describe('Mochila - materiais (somente leitura)', () => {
+  it('mostra icone, nome (EN/PT) e quantidade na aba Especiais, sem botao de uso', async () => {
+    const { unmount } = montar({ language: 'en-US', materials: { spark: 3, moss: 0, gear: 12 } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
+    const sec = await screen.findByLabelText('Materials');
+    const spark = within(sec).getByLabelText('Spark × 3');
+    expect(spark.textContent).toContain('✨');
+    expect(within(sec).getByLabelText('Gear × 12')).toBeTruthy();
+    expect(within(sec).queryByText('Moss')).toBeNull();
+    expect(within(sec).queryAllByRole('button')).toHaveLength(0);
+    unmount();
+    montar({ materials: { spark: 1 } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
+    expect(await screen.findByLabelText('Faísca × 1')).toBeTruthy();
+  });
+  it('sem material, a secao nao existe e o vazio de Especiais segue', () => {
+    montar({ foodInventory: { '🍎': 1 }, materials: {} });
+    fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
+    expect(document.querySelector('[data-mochila-materiais]')).toBeNull();
+    expect(document.querySelector('[data-mochila-vazia]')).toBeTruthy();
+  });
+});

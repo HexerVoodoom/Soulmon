@@ -8291,3 +8291,11 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 
 @keyframes sm-talent-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .sm-talent-backdrop > [role="dialog"] { animation: sm-talent-pop .16s ease-out; }
+
+/* Mochila > Especiais > Materiais: lista só de leitura (sem arrasto, sem "Usar"). */
+.sm3-materiais { margin-top: 14px; }
+.sm3-materiais-titulo { margin: 0 0 8px; font-size: var(--sm2-text-sm); font-weight: 600; color: var(--sm2-muted); }
+.sm3-materiais-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.sm3-materiais-lista li { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-ink); }
+.sm3-material-icone { font-size: 28px; line-height: 32px; }
+.sm3-materiais-lista small { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }

@@ -76,6 +76,9 @@ export interface MochilaProps {
   onTargetChange?: (over: boolean) => void;
   /** Nome do pet para a dica ("arraste até o Bito"). */
   petName?: string;
+  /** Materiais de aprimoramento (`buildingQuests.materials`) — SOMENTE LEITURA,
+   *  vistos na aba Especiais. Nomes e ícones vêm de `buildingQuestsCopy`. */
+  materials?: Partial<Record<string, number>>;
 }
 
 interface Arrasto {
@@ -91,7 +94,7 @@ function coords(e: { clientX?: number; clientY?: number }): [number, number] {
 }
 
 export function Mochila({
-  open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName,
+  open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials,
 }: MochilaProps) {
   const isPt = language === 'pt-BR';
   const [aba, setAba] = useState<MochilaAba>('comida');
@@ -102,6 +105,18 @@ export function Mochila({
   const engolirCliqueRef = useRef(false);
   const limparRef = useRef<(() => void) | null>(null);
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+
+  // Dono único dos nomes/ícones: `buildingQuestsCopy` (fora da entrada, então
+  // carrega sob demanda — só quando há material para mostrar).
+  const [copia, setCopia] = useState<typeof import('../../utils/buildingQuestsCopy').MATERIALS | null>(null);
+  const temMaterial = Object.values(materials ?? {}).some(n => (n ?? 0) > 0);
+  useEffect(() => {
+    if (!open || !temMaterial || copia) return;
+    let vivo = true;
+    void import('../../utils/buildingQuestsCopy').then(m => { if (vivo) setCopia(m.MATERIALS); }).catch(() => {});
+    return () => { vivo = false; };
+  }, [open, temMaterial, copia]);
+  const listaMateriais = (copia ?? []).filter(m => (materials?.[m.id] ?? 0) > 0);
 
   const abas = mochilaTabs(foodInventory);
   const lista = abas[aba];
@@ -234,7 +249,7 @@ export function Mochila({
           aria-labelledby={`sm3-aba-${aba}`}
           className="sm3-mochila-painel"
         >
-          {lista.length === 0 ? (
+          {lista.length === 0 && !(aba === 'especiais' && temMaterial) ? (
             <p className="sm3-mochila-vazia" data-mochila-vazia>
               {aba === 'comida'
                 ? (isPt
@@ -245,7 +260,7 @@ export function Mochila({
                   : 'No special items yet. Specials come from the dungeon.')}
             </p>
           ) : (
-            <div className="sm3-mochila-grade">
+            lista.length > 0 && <div className="sm3-mochila-grade">
               {lista.map(([emoji, n]) => {
                 const nome = getFoodName(emoji, language);
                 return (
@@ -274,6 +289,25 @@ export function Mochila({
                 );
               })}
             </div>
+          )}
+
+          {aba === 'especiais' && listaMateriais.length > 0 && (
+            <section className="sm3-materiais" data-mochila-materiais aria-label={isPt ? 'Materiais' : 'Materials'}>
+              <h3 className="sm3-materiais-titulo">{isPt ? 'Materiais' : 'Materials'}</h3>
+              <ul className="sm3-materiais-lista">
+                {listaMateriais.map(m => {
+                  const n = materials?.[m.id] ?? 0;
+                  const nome = isPt ? m.namePt : m.nameEn;
+                  return (
+                    <li key={m.id} data-material={m.id} aria-label={`${nome} × ${n}`}>
+                      <span aria-hidden="true" className="sm3-material-icone">{m.icon}</span>
+                      <span className="sm3-item-nome">{nome}</span>
+                      <small className="sm2-num">×{n}</small>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           )}
 
           {selecionadoVisivel && (

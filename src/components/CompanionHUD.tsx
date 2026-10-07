@@ -230,6 +230,8 @@ interface CompanionHUDProps {
   }) => void;
   language: Language;
   foodInventory?: Record<string, number>;
+  /** Materiais de aprimoramento, só leitura na Mochila. */
+  materials?: Partial<Record<string, number>>;
   onFeed?: (foodEmoji: string) => void;
   onShower?: () => void;
   /** A mochila abriu: o ponto de "item novo" do botão pode apagar. Quem guarda
@@ -299,6 +301,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   onCreateActivity,
   language,
   foodInventory = {},
+  materials,
   onFeed,
   onShower,
   onBackpackSeen,
@@ -1964,6 +1967,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             open={mochilaOpen}
             onClose={() => { setMochilaOpen(false); setPetIsTarget(false); }}
             foodInventory={foodInventory}
+            materials={materials}
             language={language}
             onUse={handleUseItem}
             petTargetRef={rubBtnRef}
