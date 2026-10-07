@@ -22,3 +22,16 @@ export function elementoNomeDe(id: string): TextoPar {
   }
   return { pt: baseElementLabel(id, true), en: baseElementLabel(id, false) };
 }
+
+/**
+ * A BASE DOMINANTE de um elemento (PR17, §2.35) — a base que decide a VANTAGEM elemental (a tabela `COUNTERS` só
+ * conhece as 17 bases). Base -> ela mesma. Par -> o componente de MAIOR peso na ficha (`pesos[id]`, pontos); no
+ * empate (ou sem pesos) vale o PRIMEIRO componente da receita (ordem fixa de `DERIVED_ELEMENT_PAIRS`). Id
+ * desconhecido -> ele mesmo. Dono unico: ninguem mais escolhe base de par.
+ */
+export function baseDominanteDoElemento(id: string, pesos?: Readonly<Record<string, number | undefined>>): string {
+  const par = PAR_NOME.get(id);
+  if (!par) return id;
+  const [a, b] = par.componentes;
+  return (pesos?.[b] ?? 0) > (pesos?.[a] ?? 0) ? b : a;
+}

@@ -1922,6 +1922,13 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
   - Perdeu: "conveniência de câmbio" (encostava no teto de +25% dos Créditos).
 - **StatsPage:** "Nível de vínculo / Level N" virou "Vínculo N / Bond N" (NARRATIVA §12).
 
+### 24.7 PR17 — o nome do golpe básico segue o par; a vantagem do par vem da base dominante (07/10/2026, contexto §2.35)
+- **Regra.** O NOME do básico usa o elemento dominante da ficha (base OU par, `elementoDominante`) — a mesma fonte do efeito visual (`fighterIdentity`). O `elementoId` da básica, que a Arena lê para a VANTAGEM, é sempre uma BASE: a própria, ou a **base dominante do par** (o componente de maior peso na ficha; empate = o primeiro da receita). Dono único: `baseDominanteDoElemento` (`soulProfile/ficha/elementoNome.ts`), chamado por `elementosDoStage`.
+- **Sem multiplicador novo, sem tocar no orçamento, em `arena.ts` nem nas constantes**: a vantagem continua ±1 golpe pela mesma tabela de 17 bases. O servidor (`_duel.js`) não deriva nome nem vantagem do básico, então não há espelho a mudar; ele já publica o elemento do par só para o efeito visual.
+- **Saves existentes** guardam o nome e o `elementoId` antigos; só a PRÓXIMA evolução usa a regra nova (mesmo critério do PR15).
+- Perdeu: manter o nome pela base (mostrava "Golpe de Fogo" com golpe de vapor); dar vantagem pelas DUAS bases do par (mudaria a paridade ±5%).
+- Gatilho de rever: se a régua de paridade ±5% sair da faixa.
+
 ### 24.5 PR8b — telas do equipamento, fragmentos e o câmbio visível (06/10/2026)
 - **`EquipmentCard`** (StatsPage, `lazy`, só com métricas visíveis): 3 slots, 9 itens com preço em Bits ganhos e em fragmentos, equipar/tirar; ícones = os 13 já instalados (sem arte nova). Recusas neutras; o texto diz que não há sorteio nem compra com dinheiro.
 - **Fragmentos:** a run COMPLETA da Masmorra (os 5 andares, `handleGlitchtama`) rende `FRAGMENTS_PER_RUN` = 5 (default da squad), +5% por grau de `tal-com-02` até +25%. Sem teto diário próprio (a run é o portão); o equipamento inteiro vale no máximo 4,5% e o teto de 5% é um só.
