@@ -1236,6 +1236,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `nightmares.test.ts`
 **Regra de negócio:** Combate a pesadelos: 1 por noite registrada, cura no máximo meio coração. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/notificationPermission.ts`
+**Dono de:** a decisão (PURA) de PEDIR a permissão de notificação (07/10/2026): cruza plataforma (APK × web), estado da permissão e gatilho (`first-open` × `toggle`) e devolve a ação — pedir o modal nativo, só registrar, orientar às configurações do sistema ou nada. Também lê/pede a permissão da plataforma (Capacitor `PushNotifications` no APK, `Notification` na web, que exige gesto) e abre as configurações de notificação do app. Quem pediu e foi negado nunca é cobrado de novo sozinho.
+**Exports:** `decidePermissionAction`, `platformForPermission`, `readPlatformPermission`, `requestPlatformPermission`, `openSystemNotificationSettings`, `settingsGuidance` e os tipos `PermissionPlatform`/`PermissionTrigger`/`PermissionAction`/`PermissionDecisionInput`.
+**Chamado por:** `src/App.tsx` (primeira abertura e toggle das Configurações).
+**Régua:** `src/utils/notificationPermission.test.ts`.
+
 ### `src/utils/notifications.ts`
 **Dono de:** Permissão, agendamento e disparo de notificações locais/push (Web Push e alarmes).
 **Exports:**
