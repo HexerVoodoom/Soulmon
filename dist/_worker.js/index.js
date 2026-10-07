@@ -3959,6 +3959,10 @@ function sanitizeEquipment(raw) {
   for (const slot of EQUIP_SLOTS) {
     const id = has3(eq, slot) ? eq[slot] : void 0;
     if (typeof id === "string" && owned.includes(id) && EQUIP[id].slot === slot) equipped[slot] = id;
+    if (!equipped[slot]) {
+      const best = owned.filter((o) => EQUIP[o].slot === slot).sort((a, b) => Number(b.slice(-1)) - Number(a.slice(-1)))[0];
+      if (best) equipped[slot] = best;
+    }
   }
   const f = typeof r.fragments === "number" && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
@@ -6700,7 +6704,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-zRraIY/functionsRoutes-0.7275377550421651.mjs
+// ../.wrangler/tmp/pages-3WxT5T/functionsRoutes-0.11878842904818132.mjs
 var routes = [
   {
     routePath: "/api/account",
