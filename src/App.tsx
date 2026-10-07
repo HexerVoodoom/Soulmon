@@ -38,7 +38,6 @@ import { emptyIncubation, incubationFor, incubationReady, isIncubating } from '.
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { getSpriteForStage } from './utils/sprites';
-import { lineIconForStage } from './utils/lineIcons';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -6776,7 +6775,7 @@ export default function App() {
                 avatarId: gameState.avatarId ?? null,
                 equippedFrame: gameState.equippedFrame ?? null,
                 ownedFrames: gameState.ownedFrames ?? [],
-                previewSrc: lineIconForStage(gameState.evolutionStage, 32) ?? getSpriteForStage(gameState.evolutionStage),
+                petStage: gameState.evolutionStage,
                 onChangeAvatar: (id) => setGameState(prev => prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }),
                 onChangeFrame: handleEquipFrame,
               }}
