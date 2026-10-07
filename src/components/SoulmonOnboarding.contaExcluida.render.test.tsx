@@ -9,7 +9,7 @@
  * ainda tinha o save) é lida UMA vez na montagem e anunciada pós-mount.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { screen, fireEvent, act } from '@testing-library/react';
+import { screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -32,6 +32,9 @@ vi.mock('../utils/cloudSave', async () => {
   return {
     ...real,
     checarContaExcluidaNoLogin: async (e: string) => { estado.chamadas.push(`checar:${e}`); return estado.excluida; },
+    // O real faz SHA-256 + fetch de rede: tempo ilimitado, e era ele que o
+    // `setTimeout(0)` de `entrar` não esperava sob carga. Aqui: conta sem save.
+    restaurarContaNoLogin: async () => 'sem-save' as const,
   };
 });
 
@@ -80,7 +83,7 @@ describe('lápide no login', () => {
     await montar();
     await entrar();
     // A3: depois do login vêm os termos; só então o "porquê".
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('Before we start')).toBeTruthy(), { timeout: 4000 });
     expect(screen.queryByText('What should we call you?')).toBeNull();
     ir('I am 18 or older');
     ir('I have read and agree to the Terms of Use and the Privacy Policy');
