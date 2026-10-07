@@ -6,6 +6,8 @@ import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions'
 import type { BuildingQuestsProps } from './BuildingQuestList';
 import { questMarkLabel, type QuestMark } from '../../utils/questMarks';
 import { MissionMark } from '../play/MissionMark';
+import { FirstDayCard } from '../FirstDayCard';
+import type { FirstDayProgress } from '../../utils/firstDay';
 
 const WeeklyMissionList = lazy(() => import('../mercado/ShopShelf').then(m => ({ default: m.WeeklyMissionList })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
@@ -18,7 +20,7 @@ const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ defa
  * feitas) dentro de uma folha modal. Uma regra só, dois lugares — nada daqui
  * escreve estado que o Passeio não escreva.
  */
-export function MissionsSheet({ open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks, buildings }: {
+export function MissionsSheet({ open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
   open: boolean;
   onClose: () => void;
   language: Language;
@@ -32,7 +34,9 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
   /** Permanentes (`getMissionProgress`). */
   missionProgress: Record<string, number>;
   /** A marca de cada seção (`questMarks`). */
-  marks: { daily: QuestMark; torneio: QuestMark; conquistas: QuestMark };
+  marks: { daily: QuestMark; torneio: QuestMark; conquistas: QuestMark; firstDay?: QuestMark };
+  /** O cartão do primeiro dia (os três gestos) — uma MISSÃO, por isso mora aqui e não na Home. `null`/ausente = não há (cumpriu ou o dia virou). */
+  firstDay?: FirstDayProgress | null;
   /** As missões de prédio listadas no menu (`utils/buildingQuests.ts`). Fazem parte de "Hoje". */
   buildings?: BuildingQuestsProps;
 }) {
@@ -41,6 +45,11 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
     <ModalSheet open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}>
       <div data-missions-sheet>
         <Suspense fallback={null}>
+          {firstDay && (
+            <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
+              <FirstDayCard progress={firstDay} language={language} />
+            </Section>
+          )}
           <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} isPt={isPt} id="daily">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <PasseioSheet language={language} crossings={crossings} onChange={onChange} todayKey={todayKey} seed={seed} />

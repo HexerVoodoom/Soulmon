@@ -42,9 +42,13 @@ export interface QuestMarkInput {
   ownedBackgrounds: readonly string[];
   /** A marca do dia de cada prédio (`buildingMarks`). Opcional: sem ela, nada de prédio acende. */
   buildings?: Partial<Record<BuildingId, QuestMark>>;
+  /** O cartão do PRIMEIRO DIA ainda está de pé (`shouldShowFirstDay`)? É uma missão: vive no menu de Missões, nunca na lista de tarefas. */
+  firstDay?: boolean;
 }
 
 export interface QuestMarks {
+  /** A seção "Primeiro dia" do menu: "!" enquanto os três gestos não foram feitos e o dia não virou. */
+  firstDay: QuestMark;
   /** O ícone de missões no canto da Home: todas as missões. */
   corner: QuestMark;
   /** O Passeio (missão do dia do menu da Home). */
@@ -80,11 +84,12 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   }));
   const buildings = input.buildings ?? {};
   const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
+  const firstDay: QuestMark = input.firstDay ? 'available' : null;
   const daily = strongestMark([passeio, predios]);
-  const corner = strongestMark([passeio, torneio, conquistas, predios]);
-  const fontes: [QuestMark, QuestTone][] = [[passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold']];
+  const corner = strongestMark([firstDay, passeio, torneio, conquistas, predios]);
+  const fontes: [QuestMark, QuestTone][] = [[firstDay, 'gold'], [passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold']];
   const cornerTone = fontes.find(([m]) => m === corner && corner !== null)?.[1] ?? 'gold';
-  return { corner, passeio, daily, torneio, conquistas, cornerTone, buildings };
+  return { corner, passeio, daily, torneio, conquistas, cornerTone, buildings, firstDay };
 }
 
 /** Rótulo acessível (EN primeiro, PT-BR depois). `null` quando não há marca. */

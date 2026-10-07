@@ -8,7 +8,7 @@ const base = { passeio: null, weekly: [], missionProgress: cheio, ownedBackgroun
 
 describe('questMarks', () => {
   it('sem nada pendente, nenhuma marca', () => {
-    expect(questMarks(base)).toEqual({ corner: null, passeio: null, daily: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {} });
+    expect(questMarks(base)).toEqual({ corner: null, passeio: null, daily: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {}, firstDay: null });
   });
   it('permanente incompleta NÃO acende "!"; cumprida e cenário não comprado = "?"', () => {
     expect(questMarks({ ...base, missionProgress: zero, ownedBackgrounds: [] }).conquistas).toBeNull();
@@ -44,5 +44,15 @@ describe('questMarks', () => {
     expect(questMarkLabel('ready', false)).toBe('Quest ready');
     expect(questMarkLabel('available', true)).toBe('Missão disponível');
     expect(questMarkLabel(null, true)).toBeNull();
+  });
+});
+
+describe('o primeiro dia é missão (07/10/2026)', () => {
+  it('"!" no ícone e na seção enquanto o cartão está de pé; nada quando não está', () => {
+    const on = questMarks({ ...base, firstDay: true });
+    expect(on.firstDay).toBe('available');
+    expect(on.corner).toBe('available');
+    expect(on.cornerTone).toBe('gold');
+    expect(questMarks({ ...base, firstDay: false }).corner).toBeNull();
   });
 });

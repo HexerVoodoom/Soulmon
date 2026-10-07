@@ -14,7 +14,7 @@ import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
-import { type SlotId, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
+import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { statTip, type StatTipKind } from './home/statTips';
@@ -1447,7 +1447,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{
                   position: 'absolute',
                   left: '50%',
-                  bottom: PET_GROUND_KEEP,
+                  bottom: PET_GROUND_KEEP + PET_LIFT,
                   transform: 'translateX(-50%)',
                   width: Math.round(PET_RENDER * 0.52),
                   height: Math.round(PET_RENDER * 0.12),
@@ -1467,7 +1467,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     position: 'absolute',
                     left: `calc(50% + ${Math.round(PET_RENDER * 0.22)}px)`,
-                    bottom: PET_GROUND_KEEP + Math.round(PET_RENDER * 0.28), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão
+                    bottom: PET_GROUND_KEEP + PET_LIFT + Math.round(PET_RENDER * 0.28), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão
                     lineHeight: 0,
                     pointerEvents: 'none',
                     zIndex: 1,
