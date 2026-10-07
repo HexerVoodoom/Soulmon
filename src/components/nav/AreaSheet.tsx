@@ -6,7 +6,7 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { NPC_MAX_WIDTH_PCT, NPC_PORTRAIT_ZOOM, NPC_PORTRAIT_ORIGIN, NPC_TOP_PAD_PX, measureNpcTopTrim, npcTopTrimCached } from './npcScale';
+import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX } from './npcScale';
 import { Icon } from '../ui/Icon';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
@@ -54,14 +54,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   const { slot, slotRef } = useModalInfoSlot();
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
-  const [trimed, setTrimed] = useState<{ src: string; t: number } | null>(null);
-  useEffect(() => {
-    if (!open || !npcKey || npcTopTrimCached(npcKey) !== undefined) return;
-    let live = true;
-    measureNpcTopTrim(npcKey).then(t => { if (live) setTrimed({ src: npcKey, t }); });
-    return () => { live = false; };
-  }, [open, npcKey]);
-
   if (!open) return null;
 
   const npcSrc = npcArt ?? lotNpcArt(areaId, lotId);
@@ -134,33 +126,26 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             display: 'flex', alignItems: 'flex-end', gap: 8,
             // O busto sobe até `NPC_TOP_PAD_PX` (07/10/2026): o ✕ flutua sobre
             // o canto vazio da arte em vez de reservar uma faixa de 60px.
-            padding: `calc(env(safe-area-inset-top, 0px) + ${NPC_TOP_PAD_PX}px) 12px 4px 12px`,
+            padding: `calc(env(safe-area-inset-top, 0px) + ${NPC_TOP_PAD_PX}px) 12px 0 12px`,
             boxSizing: 'border-box',
             overflow: 'hidden',
             pointerEvents: 'none',
           }}
         >
-          {/* O retrato tem zoom (`NPC_PORTRAIT_ZOOM`): a caixa mantém a pegada de antes; a arte cresce a partir do canto superior esquerdo. */}
-          <span
-            data-area-sheet-npc-frame
+          {/* Sem zoom, como antes de 07/10/2026: o <img> direto (a caixa vem da altura da zona); a base entra sob a folha só `NPC_BASE_UNDER_SHEET`. */}
+          <img
+            src={npcSrc}
+            alt=""
+            aria-hidden="true"
+            data-area-sheet-npc
             style={{
-              height: '100%', aspectRatio: '1 / 1', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
-              flex: 'none', display: 'block', pointerEvents: 'none',
+              height: '100%', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
+              flex: 'none', objectFit: 'contain', objectPosition: 'bottom',
+              transform: `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
+              pointerEvents: 'none',
+              filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
             }}
-          >
-            <img
-              src={npcSrc}
-              alt=""
-              aria-hidden="true"
-              data-area-sheet-npc
-              style={{
-                width: '100%', height: '100%', display: 'block', objectFit: 'contain', objectPosition: 'top',
-                transform: `translateY(${-100 * NPC_PORTRAIT_ZOOM * (npcTopTrimCached(npcSrc) ?? (trimed?.src === npcSrc ? trimed.t : 0))}%) scale(${NPC_PORTRAIT_ZOOM})`, transformOrigin: NPC_PORTRAIT_ORIGIN,
-                pointerEvents: 'none',
-                filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
-              }}
-            />
-          </span>
+          />
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
           <NpcSpeech name={npc.name} line={npc.line} speakerKey={lotId ? `${areaId}:${lotId}` : undefined} />
