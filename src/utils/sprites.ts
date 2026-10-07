@@ -74,6 +74,14 @@ import astraseRookie from '../assets/soulmon/lines/astrase-rookie.png';
 import astraseChampion from '../assets/soulmon/lines/astrase-champion.png';
 import astraseUltimate from '../assets/soulmon/lines/astrase-ultimate.png';
 import astraseMega from '../assets/soulmon/lines/astrase-mega.png';
+// Os 5 PERSONAGENS INICIAIS (07/10/2026, pedido do dono): UM sprite por criatura,
+// 512² (pixel art em grade grossa, alfa binário). A MESMA imagem serve a todos os
+// estágios por enquanto — a evolução visual vem depois (limitação declarada).
+import starterIndustrial from '../assets/soulmon/starters/industrial.png';
+import starterNascente from '../assets/soulmon/starters/nascente.png';
+import starterAlento from '../assets/soulmon/starters/alento.png';
+import starterVida from '../assets/soulmon/starters/vida.png';
+import starterMeteoro from '../assets/soulmon/starters/meteoro.png';
 
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   ignar: { rookie: ignarRookie, champion: ignarChampion, ultimate: ignarUltimate, mega: ignarMega },
@@ -110,6 +118,43 @@ export const DUNGEON_LINE_NAMES: Record<string, string> = {
   kaelen: 'Pyraka', orrin: 'Akashai', thalindra: 'Nimbrata',
   igni: 'Igni', nautilu: 'Nautil', astrase: 'Astria',
 };
+
+/**
+ * OS 5 INICIAIS — dono único de id, arte e NOME (07/10/2026).
+ *
+ * São os personagens oferecidos ao jogador (`PREMADE_CHARACTERS`, `monetization.ts`)
+ * e os únicos da demo local (`utils/demoMode.ts`). Ficam FORA de
+ * `DUNGEON_LINE_SPRITES` de propósito: aquele mapa é o roster da masmorra e do
+ * bestiário (9 linhas × 4 tiers, contadas por teste) e cinco criaturas de um
+ * sprite só não têm os 4 tiers.
+ *
+ * ⚠️ **Um sprite por criatura, o MESMO em todos os estágios (rookie→ultra).**
+ * Limitação declarada: a evolução visual vem depois. A mecânica de evolução não
+ * muda; só a pele repete.
+ *
+ * ⚠️ Nada de sufixo `-mon` nos nomes (`CLAUDE.md`, seção de arte) — a régua é
+ * `sprites.dungeonRoster.test.ts`. O `id` é o nome do arquivo de arte
+ * (`starters/<id>.png`) e vai para o save (`demoCharacterId`): não renomeie.
+ */
+export type StarterId = 'industrial' | 'nascente' | 'alento' | 'vida' | 'meteoro';
+export const STARTER_IDS: readonly StarterId[] = ['industrial', 'nascente', 'alento', 'vida', 'meteoro'];
+export const STARTER_SPRITES: Record<StarterId, string> = {
+  industrial: starterIndustrial, nascente: starterNascente, alento: starterAlento,
+  vida: starterVida, meteoro: starterMeteoro,
+};
+export const STARTER_NAMES: Record<StarterId, string> = {
+  industrial: 'Crato', nascente: 'Brooka', alento: 'Zefi', vida: 'Oaken', meteoro: 'Bolid',
+};
+export function isStarterId(id: unknown): id is StarterId {
+  return typeof id === 'string' && (STARTER_IDS as readonly string[]).includes(id);
+}
+
+/** Os 6 ids ANTIGOS de personagem pronto: seguem resolvendo sprite (save antigo), mas não são mais oferecidos. */
+export const LEGACY_PREMADE_IDS = ['kaelen', 'orrin', 'thalindra', 'igni', 'nautilu', 'astrase'] as const;
+export type LegacyPremadeId = typeof LEGACY_PREMADE_IDS[number];
+/** Todo `demoCharacterId` válido num save: os 5 novos + os 6 antigos. */
+export type DemoCharacterId = StarterId | LegacyPremadeId;
+export const DEMO_CHARACTER_IDS: readonly DemoCharacterId[] = [...STARTER_IDS, ...LEGACY_PREMADE_IDS];
 
 /** Sprite de inimigo de masmorra: sorteia uma das nossas linhas pelo tier
  *  (baby-i/ii caem no rookie da linha; mega cobre ultimate também).
@@ -188,6 +233,7 @@ export function resolveLineForStage(stage: string, demoCharacterId?: string): { 
   const level = getStageLevel(key);
   const tier = (level === 'ultra' ? 'mega' : level) as LineTier;
   if (demoCharacterId === CORVO_LINE) return null; // arte própria por forma (`corvoPet.ts`)
+  if (isStarterId(demoCharacterId)) return null; // arte própria, um sprite só (`STARTER_SPRITES`)
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) return { line: demoCharacterId, tier };
   if (SOULMON_SPRITES[key]) return null;
   const branch = getStageBranch(key);
@@ -200,6 +246,8 @@ export function getSpriteForStage(stage: string, demoCharacterId?: string, size?
   // O corvinho do administrador (`utils/corvoPet.ts`, dono único): uma arte
   // por forma. O 2º parâmetro é a LINHA de arte do save — `spriteLineOf`.
   if (demoCharacterId === CORVO_LINE) return corvoSpriteFor(key, size);
+  // Os 5 iniciais: o MESMO sprite em todos os estágios (limitação declarada).
+  if (isStarterId(demoCharacterId)) return STARTER_SPRITES[demoCharacterId];
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
   // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {

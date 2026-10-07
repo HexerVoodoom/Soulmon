@@ -12,6 +12,7 @@
 // `functions/api/saveId.parity.test.js` — three implementations, three deploy
 // cycles, one rule.
 import { authHeaders } from './auth';
+import { isDemoMode, type DemoCarrier } from './demoMode';
 import { migrateBranchIds } from './branchMigration';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal, writeFlag } from './safeStorage';
@@ -101,6 +102,10 @@ export interface CloudSaveFailure extends CloudSavePolicy {
   status: number;
 }
 export type CloudSaveOutcome = { ok: true } | CloudSaveFailure;
+
+/** DEMO LOCAL: o save fica só no aparelho. Recusa PARADA — não retentável, não avisa o jogador (não é falha, é a regra). */
+const RECUSA_DEMO: CloudSaveFailure = { ok: false, kind: 'client', status: 0, retentavel: false, avisaJogador: false };
+const ehDemo = (state: unknown): boolean => isDemoMode(state as DemoCarrier | null | undefined);
 
 function falha(status: number): CloudSaveFailure {
   const kind = classifyCloudSaveStatus(status);
@@ -205,6 +210,8 @@ export function __resetContaExcluida(): void { contaExcluidaTratada = false; }
  * recebe a CLASSE do erro (não mais um `false` mudo) para decidir.
  */
 export async function cloudSave(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
+  // DEMO LOCAL (`utils/demoMode.ts`): nada sai do aparelho — nem aqui, que é a porta de TODA gravação.
+  if (ehDemo(state)) return RECUSA_DEMO;
   try {
     const res = await fetch(`/api/save?id=${saveId}`, {
       method: 'POST',
@@ -308,6 +315,7 @@ export async function cloudSaveComRetry(
 ): Promise<CloudSaveOutcome> {
   const esperar = opts.esperar ?? esperaReal;
   const agora = opts.agora ?? Date.now;
+  if (ehDemo(state)) return RECUSA_DEMO;
 
   // QA1: número de ordem desta chamada para o `saveId`. Um retry que acorda
   // DEPOIS de uma chamada mais nova ter começado carrega estado VELHO, e o
@@ -639,6 +647,8 @@ export async function reconcileSaveId(
 ): Promise<ReconcileResult> {
   const norm = email.trim().toLowerCase();
   if (!norm) return { estado: 'sem-email' };
+  // DEMO LOCAL: não migra para conta nenhuma por acidente — nem lê, nem sobe, nem adota.
+  if (ehDemo(estadoLocal)) return { estado: 'sem-mudanca', saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? '' };
 
   const derivado = await emailToSaveId(norm);
   const atual = readLocal(STORAGE_KEYS.SAVE_ID);

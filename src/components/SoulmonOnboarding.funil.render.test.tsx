@@ -135,13 +135,13 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText('Your starting point')).toBeTruthy();
   });
 
-  it('EscolherPersonagem: os 6 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {
+  it('EscolherPersonagem: os 5 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {
     await atravessarPerguntasIniciais();
     fireEvent.click(btn('Start now — it’s free'));
     await atravessarRevealDemo();
     const cards = document.querySelectorAll('button[data-demo-char]');
     expect(cards.length).toBe(PREMADE_CHARACTERS.length);
-    expect(cards.length).toBe(6);
+    expect(cards.length).toBe(5);
     expect((cards[0].parentElement as HTMLElement).style.gridTemplateColumns).toContain('repeat(2');
     for (const c of cards) {
       const anel = c.querySelector('.sm2-viewport')!;

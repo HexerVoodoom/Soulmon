@@ -1127,6 +1127,10 @@ símbolo no código é **`legacySpriteForStage`** —
 `grep -rn "fallbackSpriteForStage" src/` devolve 4 ocorrências, **todas em
 comentário ou em teste**, nenhuma em declaração.
 
+### 8.1-A Os 5 personagens iniciais (07/10/2026)
+
+Arte própria em `src/assets/soulmon/starters/<id>.png` (512², alfa binário, só PNG no repo — o WebP sai no build): `industrial` (Crato), `nascente` (Brooka), `alento` (Zefi), `vida` (Oaken), `meteoro` (Bolid). **Um sprite por criatura, o MESMO em todos os estágios** — limitação declarada; a evolução visual vem depois. Dono de id, arte e nome: `STARTER_IDS`/`STARTER_SPRITES`/`STARTER_NAMES` (`src/utils/sprites.ts`); ficam FORA de `DUNGEON_LINE_SPRITES`. Tipos e regras da demo: `02-REGRAS-DE-NEGOCIO.md` §62. Nenhuma arte antiga saiu do disco.
+
 ### 8.2 As 9 linhas próprias (eram 6 até 15/09/2026)
 
 **Dono do sprite: `DUNGEON_LINE_SPRITES`. Dono do NOME: `DUNGEON_LINE_NAMES`, e

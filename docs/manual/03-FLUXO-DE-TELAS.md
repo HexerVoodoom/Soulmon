@@ -336,7 +336,8 @@ sequência inteira. **Os passos negativos existem para não renumerar o ritual**
 | `STRUGGLE_STEP` | −3 | "o que te atrapalha" (`soulStruggle`) | **sim**, idem |
 | `CHOICE_STEP` | −7 | grátis × completo | não |
 | `REVEAL_DEMO` | −4 | **novo em `a1181a5b` (20/09/2026)** — a leitura do caminho GRÁTIS: criatura em silhueta + descrição + oferta `UnlockNudge reason="reveal-demo"`; só renderiza com `demoReading` | é a própria escolha: "Continuar com um personagem demo" e o × "Agora não" levam os dois a `DEMO_PICK` |
-| `DEMO_PICK` | −1 | os **6** personagens pré-prontos (`PREMADE_CHARACTERS` em `utils/monetization.ts`: `kaelen`, `orrin`, `thalindra`, `igni`, `nautilu`, `astrase` — eram 3 até `c11dc49d`) | volta ao `REVEAL_DEMO` quando há `demoReading`; senão ao `CHOICE_STEP` |
+| `DEMO_LOCAL_PICK` | −13 | **novo em 07/10/2026** — a escolha dos mesmos 5 iniciais, aberta pelo botão **DEMO** do portão (`IDENTITY_STEP`); escolher chama `onStartDemo(id)` e o `App` abre o jogo sem login, Vínculo 5, só no aparelho (`02-REGRAS-DE-NEGOCIO.md` §62). Código de telemetria 37 (acima de `REGISTER`). O botão só existe quando há auth configurada (sem ela o portão nem aparece) | seta de voltar → portão |
+| `DEMO_PICK` | −1 | os **5** personagens iniciais (`PREMADE_CHARACTERS` em `utils/monetization.ts`: `industrial`, `nascente`, `alento`, `vida`, `meteoro` — eram 6 até 07/10/2026) | volta ao `REVEAL_DEMO` quando há `demoReading`; senão ao `CHOICE_STEP` |
 | `AGE_BLOCK` | −5 | muro de idade | saída única: `restartFromAgeBlock` |
 | `1` | 1 | nome completo | não |
 | `2` | 2 | data de nascimento (mapa astral **e** 18+) | não |

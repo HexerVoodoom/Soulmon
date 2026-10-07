@@ -6,73 +6,77 @@
 // pra dar pra testar o loop de recompensa fim-a-fim — troque por AdMob (ou
 // equivalente) quando a conta de anúncios existir; a assinatura já serve.
 import { FORM_REQUIREMENTS } from '../types/progression';
-import { getSpriteForStage, DUNGEON_LINE_NAMES } from './sprites';
+import { getSpriteForStage, STARTER_NAMES, type StarterId } from './sprites';
 import { STAGE_NAMES } from './oracle/base';
-import type { CreatureStage, StageId, AlignmentId } from './oracle';
+import type { CreatureStage, StageId, AlignmentId, ElementId } from './oracle';
 
 export type AccountTier = 'demo' | 'paid';
 
-// ── Personagens pré-prontos (modo demo) ─────────────────────────────────────
-// Reaproveita as 3 linhas Soulmon já ilustradas via Higgsfield — as únicas
-// com arte de verdade pronta hoje (ver utils/sprites.ts / libraryNpcs.ts).
-// Só têm sprite pra rookie/champion/ultimate/mega (sem variação por branch,
-// sem ultra) — por isso o modo demo evolui num caminho ÚNICO por nível
-// (sem escolha de Poder/Harmonia/Benevolência) e capa em Mega.
+// ── Personagens pré-prontos (os 5 iniciais) ─────────────────────────────────
+// Desde 07/10/2026 os pré-prontos oferecidos ao jogador são os 5 INICIAIS
+// (`STARTER_*` em `utils/sprites.ts`, dono de id, arte e nome). Os 6 antigos
+// (Pyraka, Akashai, Nimbrata, Igni, Nautil, Astria) NÃO são mais oferecidos, mas
+// seguem resolvendo sprite para save antigo (`LEGACY_PREMADE_IDS`) — eles
+// continuam existindo como linhas de masmorra e NPCs da Biblioteca.
+// Cada inicial tem UM sprite só, igual em todos os estágios (a evolução visual
+// vem depois); por isso o modo demo evolui num caminho ÚNICO e capa em Mega.
 export interface PremadeCharacter {
-  id: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
+  id: StarterId;
   name: string;
   bioPt: string;
   bioEn: string;
+  /** Elemento do vocabulário do ORÁCULO (`ElementId`) — o que a ficha/ritual enxerga. */
+  elementId: ElementId;
+  /** Essências do class-system (ids de `derivedElements.ts`): um par ou uma essência só. */
+  essence: readonly string[];
+  /** Rótulo de TIPO exibido (par PT/EN dos nomes de `derivedElements`/`essenceLabels`; há teste de igualdade). */
+  typePt: string;
+  typeEn: string;
 }
 
 /**
- * Os três personagens prontos do modo grátis.
+ * Os 5 personagens iniciais, na ordem da tela de escolha.
  *
- * ⚠️ **SEM SUFIXO `-mon`, e isto é regra, não gosto** (`CLAUDE.md`, seção de
- * arte). Eles se chamavam Pyrakamon, Akashaoimon e Nimbratamon até 08/09/2026 —
- * a sessão de QA achou a contradição entre o produto e a regra escrita, e o
- * dono decidiu que a regra vale para eles também. Prefixo somado a sufixo fixo
- * é exatamente o que soletra nome de franquia alheia (War + -mon = WarGreymon),
- * e o app já se chama Soulmon: repetir o sufixo na criatura não acrescenta
- * marca, só aproxima do que a regra existe para evitar.
- *
- * O `id` NÃO muda e não pode mudar: é ele que vai para o save
- * (`demoCharacterId`), que resolve o sprite (`getSpriteForStage`) e que nomeia
- * os arquivos de arte (`thalindra-mega.png`). Só o rótulo de exibição mudou —
- * e o jogador batiza a criatura dele no choco de qualquer jeito.
+ * Mapeamento pedido pelo dono (07/10/2026), em ids REAIS do class-system:
+ *  - Crato  (pilha de caixotes, "tartaruga") — domínio industrial: `aco` + `ariete`
+ *    (Aço + Aríete; o Aríete é gravidade+marcial). `ElementId`: `industrial`.
+ *  - Brooka (ave-lontra verde, "pato") — `nascente` + `melodia` (Nascente + Melodia
+ *    Vital). `ElementId`: `agua`.
+ *  - Zefi   (borboleta-coruja) — `alento` (Alento = ar+vida). `ElementId`: `ar`.
+ *  - Oaken  (árvore) — `vida` (elemento base Vida). `ElementId`: `planta`.
+ *  - Bolid  (criatura de fogo) — `meteoro` (Meteoro = espaço+fogo). `ElementId`: `fogo`.
+ * O NOME vem de `STARTER_NAMES` (dono único, nunca escrito à mão aqui).
  */
 export const PREMADE_CHARACTERS: PremadeCharacter[] = [
   {
-    id: 'kaelen', name: DUNGEON_LINE_NAMES.kaelen,
-    bioPt: 'Um espírito de chamas contidas, forjado em brasa e fúria silenciosa.',
-    bioEn: 'A spirit of contained flame, forged in ember and quiet fury.',
+    id: 'industrial', name: STARTER_NAMES.industrial, elementId: 'industrial', essence: ['aco', 'ariete'],
+    typePt: 'Aço + Aríete', typeEn: 'Steel + Battering Ram',
+    bioPt: 'Uma pilha de caixotes que anda devagar e nunca deixa nada cair.',
+    bioEn: 'A stack of crates that walks slowly and never drops a thing.',
   },
   {
-    id: 'orrin', name: DUNGEON_LINE_NAMES.orrin,
-    bioPt: 'Um guardião etéreo que carrega o eco de tempestades distantes.',
-    bioEn: 'An ethereal guardian carrying the echo of distant storms.',
+    id: 'nascente', name: STARTER_NAMES.nascente, elementId: 'agua', essence: ['nascente', 'melodia'],
+    typePt: 'Nascente + Melodia Vital', typeEn: 'Spring + Vital Melody',
+    bioPt: 'Uma ave de riacho que assobia a água para fora da pedra.',
+    bioEn: 'A brook bird that whistles water out of the stone.',
   },
   {
-    id: 'thalindra', name: DUNGEON_LINE_NAMES.thalindra,
-    bioPt: 'Uma presença dourada e serena, tecida a partir de luz calma.',
-    bioEn: 'A golden, serene presence woven from calm light.',
-  },
-  // As 3 linhas do oráculo com seed fixo (D1, 15/09/2026): a pré-seleção do
-  // free passa de 3 para 6 personagens prontos.
-  {
-    id: 'igni', name: DUNGEON_LINE_NAMES.igni,
-    bioPt: 'Um lagarto de brasa que carrega a fornalha nas costas.',
-    bioEn: 'An ember lizard carrying the furnace on its back.',
+    id: 'alento', name: STARTER_NAMES.alento, elementId: 'ar', essence: ['alento'],
+    typePt: 'Alento', typeEn: 'Breath',
+    bioPt: 'Uma criatura de asas de maré que respira junto com você.',
+    bioEn: 'A tide-winged creature that breathes along with you.',
   },
   {
-    id: 'nautilu', name: DUNGEON_LINE_NAMES.nautilu,
-    bioPt: 'Um peixe de maré calma que sonha com correntes distantes.',
-    bioEn: 'A calm-tide fish dreaming of distant currents.',
+    id: 'vida', name: STARTER_NAMES.vida, elementId: 'planta', essence: ['vida'],
+    typePt: 'Vida', typeEn: 'Life',
+    bioPt: 'Uma árvore pequena e paciente que cresce no seu ritmo.',
+    bioEn: 'A small, patient tree that grows at your pace.',
   },
   {
-    id: 'astrase', name: DUNGEON_LINE_NAMES.astrase,
-    bioPt: 'Uma coruja rosada que guarda uma luz mansa sob as asas.',
-    bioEn: 'A rosy owl keeping a gentle light beneath its wings.',
+    id: 'meteoro', name: STARTER_NAMES.meteoro, elementId: 'fogo', essence: ['meteoro'],
+    typePt: 'Meteoro', typeEn: 'Meteor',
+    bioPt: 'Uma brasa que veio do céu e ficou para aquecer.',
+    bioEn: 'An ember that fell from the sky and stayed to keep you warm.',
   },
 ];
 

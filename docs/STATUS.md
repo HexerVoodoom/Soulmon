@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 07/10/2026 — Os 5 personagens iniciais + a DEMO local (`feat/demo-local`, PR por abrir)
+>
+> - **Pedido do dono:** os 5 novos viram os pré-prontos oferecidos (Crato `industrial` aço+aríete, Brooka `nascente` nascente+melodia vital, Zefi `alento`, Oaken `vida`, Bolid `meteoro`) — nomes ORIGINAIS escolhidos pelo agente, **o dono deve conferir**. Um sprite por criatura, igual em todos os estágios (evolução visual depois). Os 6 antigos seguem resolvendo sprite em save antigo (`LEGACY_PREMADE_IDS`), só não são oferecidos.
+> - **Botão DEMO na home** (portão de identidade): abre o jogo sem login, escolha entre os 5, Vínculo 5 (`totalXP` = `xpForLevel(5)`, nunca `bondLevel`). Regras: salva só no aparelho, sem XP, sem compras, sem PvP — predicado único `isDemoMode` (`src/utils/demoMode.ts`), fiação travada por `demoMode.contract.test.ts`. Manual: `02-REGRAS-DE-NEGOCIO.md` §62.
+> - **Depende do dono:** (1) conferir os nomes/tipos/bios dos 5; (2) a demo pula Termos/18+ e as 26 perguntas — confirmar se quer o aceite antes da demo; (3) o botão só aparece com auth configurada (o portão não existe sem `VITE_FIREBASE_*`); (4) refazer talentos e a forja gastam Bits e foram tratados como "compra" (recusados na demo) — dizer se prefere liberar.
+
 > ## 07/10/2026 — Permissão de notificação na 1ª abertura + modal nativo no toggle
 >
 > - **Decisão do dono que REVOGA G6/WP1.5** ("nunca pedir permissão na abertura"): o pedido nativo agora acontece na primeira abertura, UMA vez (flag `NOTIFICATION_FIRST_OPEN_ASKED`, gravada ao pedir — negado não é cobrado). APK pede direto após o splash; web/PWA pede no PRIMEIRO `click` (o navegador exige gesto). Não é modal nosso: não tranca o onboarding nem entra na fila. O priming D2–D3 e o `WelcomePromptModal` seguem como segunda chance.

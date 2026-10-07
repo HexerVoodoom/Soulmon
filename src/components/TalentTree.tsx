@@ -11,6 +11,7 @@
  */
 import { useEffect, useRef, useState, useId } from 'react';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { isDemoMode, demoRefusalText } from '../utils/demoMode';
 import { bondLevelFor } from '../utils/bond';
 import {
   TALENT_TREE, TALENT_BY_ID, ranksOf, talentPointsFor, pointsLeft, canPick, pickTalent, isPickable, respecCost, applyRespec,
@@ -73,7 +74,10 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
   const graus = ranksOf(picks);
   const custo = respecCost(picks);
 
+  /* DEMO LOCAL (`utils/demoMode.ts`): refazer a árvore gasta Bits, e a demo não gasta Bits em nada. */
+  const demoRecusa = isDemoMode(gameState);
   const refazer = () => {
+    if (demoRecusa) { setConfirmando(false); setAviso(demoRefusalText(isPt)); return; }
     const r = applyRespec({ talentPicks: picks, gamePoints: gameState.gamePoints ?? 0 });
     if (!r.ok) {
       setAviso(r.reason === 'no-bits'
@@ -93,6 +97,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
   const umPorVez = canRespecOne(picks);
   const custoUm = respecOneCost(picks);
   const tirarUm = (id: string) => {
+    if (demoRecusa) { setAviso(demoRefusalText(isPt)); return; }
     const r = applyRespecOne({ talentPicks: picks, gamePoints: gameState.gamePoints ?? 0 }, id);
     if (!r.ok) {
       setAviso(r.reason === 'no-bits'

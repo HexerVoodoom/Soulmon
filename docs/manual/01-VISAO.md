@@ -348,7 +348,7 @@ o tier** — quem concede é o servidor, em `functions/api/_entitlements.js`
 
 | | Demo (grátis) | Pago |
 |---|---|---|
-| Criatura | uma das **seis** linhas prontas (`PREMADE_CHARACTERS`, `src/utils/monetization.ts`: `kaelen`/`orrin`/`thalindra` + `igni`/`nautilu`/`astrase` — as três do oráculo com seed fixo entraram em 15/09/2026, decisão D1 da SQUAD-ARTE; nome sempre de `DUNGEON_LINE_NAMES`). Desde 20/09/2026 o caminho grátis também responde as 6 perguntas e vê um reveal-demo em **silhueta** antes de escolher (`REVEAL_DEMO` → `DEMO_PICK`, REGISTRO 13.19) | criatura **gerada** pelo Oráculo, única |
+| Criatura | um dos **cinco** personagens iniciais (`PREMADE_CHARACTERS`, `src/utils/monetization.ts`: `industrial`/`nascente`/`alento`/`vida`/`meteoro` — Crato, Brooka, Zefi, Oaken, Bolid, desde 07/10/2026; nome sempre de `STARTER_NAMES`; os seis de antes seguem resolvendo sprite em save antigo). Há ainda a **demo local** (botão DEMO da home: sem login, só no aparelho, sem XP, compra nem PvP — `02-REGRAS-DE-NEGOCIO.md` §62). Desde 20/09/2026 o caminho grátis também responde as 6 perguntas e vê um reveal-demo em **silhueta** antes de escolher (`REVEAL_DEMO` → `DEMO_PICK`, REGISTRO 13.19) | criatura **gerada** pelo Oráculo, única |
 | Teto de atividades | `DEMO_ACTIVITY_TOTAL_CAP` = `FORM_REQUIREMENTS.rookie.cap` | o `cap` do estágio atual |
 | Renascimento | indisponível (`rebirthRefusal` → `'not-paid'`) | disponível, **uma vez só** |
 | Regras de jogo | **idênticas** | **idênticas** |

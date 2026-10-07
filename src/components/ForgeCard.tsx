@@ -9,6 +9,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { isDemoMode, demoRefusalText } from '../utils/demoMode';
 import { bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
 import {
@@ -111,6 +112,8 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
 
   const confirmar = (pay?: 'bits' | 'fragments') => {
     if (!dialog) return;
+    // DEMO LOCAL (`utils/demoMode.ts`): a forja gasta Bits/fragmentos — a demo não gasta nada.
+    if (isDemoMode(gameState)) { setDialog(null); setAviso(demoRefusalText(isPt)); return; }
     const d = dialog;
     const choice = escolha;
     setDialog(null);

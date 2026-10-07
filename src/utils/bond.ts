@@ -46,6 +46,7 @@
  * Módulo PURO: sem React, sem localStorage, sem `Date.now()`. Quem chama
  * passa o estado e recebe números de volta.
  */
+import { isDemoMode } from './demoMode';
 import { HABIT_TIER_BONUS } from '../types/taskModel';
 import { GATES, gateFor } from './gates';
 import type { HabitTier } from '../types/taskModel';
@@ -500,6 +501,8 @@ export interface BondDailyLedger {
 export interface BondState {
   totalXP: number;
   bondDaily?: BondDailyLedger;
+  /** Demo local (`utils/demoMode.ts`): sem XP, o nível fica fixo. */
+  demoLocal?: boolean;
 }
 
 /**
@@ -516,6 +519,9 @@ export interface BondState {
  *  · não persiste nível (invariante 4) — nível é sempre `bondLevelFor`.
  */
 export function awardBondXP<T extends BondState>(state: T, event: BondEvent, dayKey: string): T {
+  // DEMO LOCAL: não ganha XP — no-op que devolve a MESMA referência (sem toast,
+  // sem ledger). O Vínculo da demo é fixo no nível 5 (`demoStart.ts`).
+  if (isDemoMode(state)) return state;
   // Dia diferente = ledger novo. O que zera é o TETO, nunca o acumulado.
   const spent = state.bondDaily?.day === dayKey ? state.bondDaily.spent : {};
   const gain = applyBondXP(event, spent);

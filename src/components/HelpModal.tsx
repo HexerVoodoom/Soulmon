@@ -19,6 +19,7 @@ import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL } from '../utils/forge';
 import { DREAM_CATALOG } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
+import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
 
 /**
@@ -182,6 +183,12 @@ const TERMS: Term[] = [
     icon: '💠', en: 'Bits vs. 🎖️ Honor vs. 💎 Credits', pt: 'Bits vs. 🎖️ Honra vs. 💎 Créditos',
     descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament and buys cosmetics only. Credits are bought with real money.',
     descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio e compra só cosméticos. Créditos são comprados com dinheiro real.',
+  },
+  {
+    // DEMO LOCAL (`utils/demoMode.ts`): o nível vem da CONSTANTE.
+    icon: '🧪', en: 'Demo', pt: 'Demo',
+    descEn: `Try the game without an account at Bond ${DEMO_BOND_LEVEL}. Saved on this device only; no XP, no purchases, no PvP.`,
+    descPt: `Experimente o jogo sem conta, no Vínculo ${DEMO_BOND_LEVEL}. Salva só neste aparelho; sem XP, sem compras, sem PvP.`,
   },
   // A GUILDA (`docs/NARRATIVA-COPY-GUILDA.md` §11): a copy mora em `guildCopy.ts` (dono único) e os
   // números vêm das CONSTANTES de `guildRules.ts`. O `icon` é dado, nunca desenhado aqui.

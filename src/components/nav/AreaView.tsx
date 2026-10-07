@@ -7,6 +7,7 @@ import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, t
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
+import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
 import { sm2Hint } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
@@ -107,6 +108,8 @@ export interface AreaViewProps {
   initialSheet?: string;
   onInitialSheetConsumed?: () => void;
   language: Language;
+  /** DEMO LOCAL (`utils/demoMode.ts`): os prédios sociais (PvP, ranking, comunidade) ficam inertes. Derivado no `App` por `isDemoMode(gameState)`. */
+  demo?: boolean;
   /** O Vínculo do usuário (`bondLevelFor(totalXP)`): decide quais prédios abrem (`BUILDING_GATES`). Sem ele, nada é trancado. */
   bondLevel?: number;
   /** Missão por prédio: só o aviso de que se entrou nele (`utils/buildingQuests.ts`). A UI de missão vive no menu da Home, nunca no prédio. */
@@ -191,9 +194,14 @@ export function AreaView(props: AreaViewProps) {
   /** Entrar no prédio: abre a folha e conta a missão do dia dele (só chega aqui se o prédio abriu; `gated` troca o `onOpen` dos trancados). */
   const { onVisitBuilding } = props;
   const enter = (lotId: string) => { onVisitBuilding?.(`${area}.${lotId}` as BuildingId); setSheet(lotId); };
-  const initialLock = props.initialSheet ? lockOf(props.initialSheet) : null;
-  const [sheet, setSheet] = useState<string | null>(initialLock ? null : props.initialSheet ?? null);
-  const [lockNote, setLockNote] = useState<string | null>(initialLock ? buildingLockLine(initialLock.minBond, language) : null);
+  /** DEMO: o prédio é social e a demo não entra em PvP/ranking/comunidade. */
+  const demoBlocks = (lotId: string | null | undefined) => !!props.demo && !!lotId && isDemoBlockedLot(area, lotId);
+  const initialDemoBlocked = demoBlocks(props.initialSheet);
+  const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
+  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
+  const [lockNote, setLockNote] = useState<string | null>(
+    initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
+      : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
   useEffect(() => {
     if (!lockNote) return;
     const t = setTimeout(() => setLockNote(null), 5000);
@@ -201,6 +209,8 @@ export function AreaView(props: AreaViewProps) {
   }, [lockNote]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
+    // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
+    if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
     if (!g) return l;
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
@@ -212,7 +222,7 @@ export function AreaView(props: AreaViewProps) {
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
-  useEffect(() => { if (props.initialSheet) { if (!initialLock) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
