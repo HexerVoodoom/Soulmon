@@ -35,10 +35,10 @@
  * não dá pontos nem Honra para ninguém.
  */
 import {
-  CHEER, PVP_HP_SCALE, cheerEvents, combinedAttrBonus, fightSteps, soulCombatant, specialOf,
+  CHEER, PVP_HP_SCALE, cheerEvents, cleanStartEnergy, combinedAttrBonus, fightSteps, soulCombatant, specialOf,
 } from './_combate.js';
 import { bondLevelFor } from './_bond.js';
-import { talentAttrBonus, talentCheerScale } from './_talents.js';
+import { talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist } from './_talents.js';
 import { equipAttrBonus } from './_equipment.js';
 
 export { PVP_HP_SCALE };
@@ -201,7 +201,7 @@ export function duelSide(save, opts = {}) {
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */
@@ -228,9 +228,9 @@ export function duelSeed(...parts) {
  */
 export function simulateDuel({ me, opp, seed, taps }) {
   const g = fightSteps(
-    { combatant: me.combatant, special: me.special },
-    { combatant: opp.combatant, special: opp.special },
-    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(taps, 0, me.cheerScale) },
+    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
+    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
+    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) },
   );
   const events = [];
   let hpMe = null, hpOpp = null;

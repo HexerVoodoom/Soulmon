@@ -41,6 +41,8 @@ export interface DungeonPlayerCfg {
   contraTeto?: number;
   ring?: Readonly<Record<RingGrade, number>>;
   dodge?: Readonly<Record<DodgeGrade, number>>;
+  /** `tal-pve-07` (Tarefa B): opening shield, fraction of the player's HP. Absent = 0 (the gates' simulations never set it). */
+  startShield?: number;
 }
 
 /** The family of the special: the SPECIAL skill's own `familia` (PR9); without it, the default of its school. */
@@ -49,11 +51,12 @@ export const dungeonFamily = (skill: { familia?: SpecialFamily; escolaId?: Escol
 const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO_PADRAO, { contraTeto: p.contraTeto });
 
 /** The player side of the core: HP × the craft, the family's special (single target: there is one foe). */
-export function dungeonPlayerSide(p: DungeonPlayerCfg): FightSide {
+export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSide {
   return {
     combatant: { ...p.combatant, hp: p.combatant.hp * jeitoOf(p).hp },
     special: specialOf(p.family),
     area: 'single',
+    startShield: opening ? p.startShield : 0,
   };
 }
 
@@ -75,12 +78,12 @@ export const dungeonFightSeed = (runSeed: number, floor: number, slot: number): 
  * automatic defence (`defenseRoll`). The defence is perfect from `jeito.perfeito`; a perfect one arms the
  * counter-attack, which the next BASIC hit of the player collects.
  */
-export function dungeonFight(p: DungeonPlayerCfg, foe: FightSide, seed: number): DungeonFight {
+export function dungeonFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, opening = true): DungeonFight {
   const j = jeitoOf(p);
   const castMult = j.cast * PVE_FAMILY_POWER.dungeon[p.family];
   let pending = 0;
   return {
-    player: dungeonPlayerSide(p),
+    player: dungeonPlayerSide(p, opening),
     foes: [foe],
     seed,
     hitScale(who, n) {
@@ -129,6 +132,9 @@ export interface SequenceConfig {
   jeito?: JeitoNaMasmorra;
   /** PR12a: o bônus do jogador (já pelo teto de 5%): número = ATK; três canais = ATK/DEF/SPD. */
   bonus?: number | Partial<AttrBonus>;
+  /** Tarefa B: `tal-pve-07` (opening shield) and `tal-pve-03` (extra heal between floors). The gates never set them. */
+  startShield?: number;
+  healBoost?: number;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };
 }
@@ -153,7 +159,7 @@ export function playSequence(
 ): SequenceResult {
   const p: DungeonPlayerCfg = {
     combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito,
-    contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge,
+    contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge, startShield: cfg.startShield,
   };
   const odds = ARENA_SKILL_ODDS[skill];
   let hp = 1;
@@ -162,7 +168,7 @@ export function playSequence(
   for (let i = 0; i < refs.length; i++) {
     const ref = refs[i];
     const fseed = dungeonFightSeed(seed, ref.floor, ref.slot);
-    const f = dungeonFight(p, dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed);
+    const f = dungeonFight(p, dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
     const rng = mulberry32((seed * 7919 + i) | 0);
     const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
     let step = g.next();
@@ -205,7 +211,7 @@ export function simulateDungeonRunV3(
   cfg: SequenceConfig, seed: number, skill: DungeonSkill = 'media', floors = 5, startFloor = 1,
 ): DungeonRunResult {
   const cura = jeitoParaPve(cfg.jeito ?? JEITO_PADRAO).cura;
-  const r = playSequence(cfg, ladderRefs(floors, startFloor), seed, skill, (i) => (i % 6 === 5 ? cura : 0));
+  const r = playSequence(cfg, ladderRefs(floors, startFloor), seed, skill, (i) => (i % 6 === 5 ? cura + (cfg.healBoost ?? 0) : 0));
   const timesByFloor: number[][] = [];
   r.times.forEach((t, i) => { (timesByFloor[Math.floor(i / 6)] ??= []).push(t); });
   return { floorsCleared: Math.floor(r.fightsWon / 6), timesByFloor, won: r.won };

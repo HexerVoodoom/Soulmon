@@ -5,7 +5,12 @@
  * Malformado e DESCARTADO (`[]`); so violar pre-requisito poda (sanitize); o servidor nunca confia no cliente.
  */
 
-import { cleanCheerScale } from './_combate.js';
+import { cleanCheerScale, COMBAT_BONUS_CAP, START_ENERGY_MAX, DOT_RESIST_MAX } from './_combate.js';
+
+/** Tarefa B (§2.38): tetos dos nos que entraram "em breve" (espelham `src/utils/talents.ts`). */
+export const HEAL_BOOST_MAX = 0.015;
+export const RIFT_BITS_MAX = 0.09;
+export const START_SHIELD_MAX = 0.01;
 
 export const TALENT_POINTS_MAX = 20;
 
@@ -14,15 +19,23 @@ const req = (id, rank) => ({ id, rank });
 
 /**
  * id -> grau maximo e efeito, so dos nos PEGAVEIS (os `pendente` nao se compram).
- * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'weeklyDiscount', scope?: 'pvp' | 'pve', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
+ * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'weeklyDiscount' | 'startEnergy' | 'dotResist' | 'allAttr' | 'healBoost' | 'riftBits' | 'startShield', scope?: 'pvp' | 'pve' | 'nightmare', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
  */
 export const PICKABLE = {
   'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'atk', perRank: 0.004 },
   'tal-pvp-02': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'def', perRank: 0.004, requires: [req('tal-pvp-01', 2)] },
   'tal-pvp-03': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'spd', perRank: 0.004, requires: [req('tal-pvp-01', 2)] },
+  'tal-pvp-04': { maxRank: 3, kind: 'startEnergy', perRank: 3, requires: [req('tal-pvp-03', 2)] },
   'tal-pvp-05': { maxRank: 3, kind: 'cheerBoost', perRank: 0.05, requiresAny: [req('tal-pvp-02', 2), req('tal-pvp-03', 2)] },
+  'tal-pvp-06': { maxRank: 3, kind: 'dotResist', perRank: 0.06, requires: [req('tal-pvp-02', 2)] },
+  'tal-pvp-07': { maxRank: 1, kind: 'allAttr', perRank: 0.002, requires: [req('tal-pvp-05', 3), req('tal-pvp-04', 1), req('tal-pvp-06', 1)] },
   'tal-pve-01': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
   'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006, requires: [req('tal-pve-01', 2)] },
+  'tal-pve-03': { maxRank: 3, kind: 'healBoost', perRank: 0.005, requires: [req('tal-pve-01', 2)] },
+  'tal-pve-04': { maxRank: 3, kind: 'riftBits', perRank: 0.03, requires: [req('tal-pve-03', 1)] },
+  'tal-pve-05': { maxRank: 3, kind: 'combatBonus', scope: 'nightmare', perRank: 0.004, requires: [req('tal-pve-03', 1)] },
+  'tal-pve-06': { maxRank: 3, kind: 'combatBonus', scope: 'pve', perRank: 0.004, requires: [req('tal-pve-02', 2)] },
+  'tal-pve-07': { maxRank: 1, kind: 'startShield', perRank: 0.01, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
   'tal-com-01': { maxRank: 3, kind: 'equipPrice' },
   'tal-com-02': { maxRank: 3, kind: 'fragmentGain', requires: [req('tal-com-01', 2)] },
   'tal-com-03': { maxRank: 4, kind: 'respecDiscount', perRank: 0.1, requires: [req('tal-com-01', 2)] },
@@ -106,16 +119,16 @@ export function sanitizeTalentPicks(raw, bondLevel) {
 /**
  * Parcela do TALENTO no canal de bonus (fracao), para o escopo. Invalido para o Vinculo = 0.
  * Quem soma com as outras fontes e corta nos 5% e `combinedBonus` (`_combate.js`).
- * @param {unknown} picks @param {unknown} bondLevel @param {'pvp' | 'pve'} scope
+ * @param {unknown} picks @param {unknown} bondLevel @param {'pvp' | 'pve' | 'nightmare'} scope
  */
 export function talentBonus(picks, bondLevel, scope) {
   if (!isValidPicks(picks, bondLevel)) return 0;
   let sum = 0;
   for (const id of picks) {
     const n = PICKABLE[id];
-    if (n.kind === 'combatBonus' && n.scope === scope) sum += n.perRank ?? 0;
+    if (n.kind === 'combatBonus' && (n.scope === scope || (scope === 'nightmare' && n.scope === 'pve'))) sum += n.perRank ?? 0;
   }
-  return sum;
+  return Math.min(sum, COMBAT_BONUS_CAP);
 }
 
 /**
@@ -129,9 +142,28 @@ export function talentAttrBonus(picks, bondLevel) {
   for (const id of picks) {
     const n = PICKABLE[id];
     if (n.kind === 'combatBonus' && n.scope === 'pvp' && n.attr) out[n.attr] += n.perRank ?? 0;
+    if (n.kind === 'allAttr') { out.atk += n.perRank ?? 0; out.def += n.perRank ?? 0; out.spd += n.perRank ?? 0; }
   }
   return out;
 }
+
+/** @param {unknown} picks @param {unknown} bondLevel @param {string} kind @param {number} max */
+function sumKind(picks, bondLevel, kind, max) {
+  if (!isValidPicks(picks, bondLevel)) return 0;
+  let sum = 0;
+  for (const id of /** @type {string[]} */ (picks)) if (PICKABLE[id].kind === kind) sum += PICKABLE[id].perRank ?? 0;
+  return Math.min(max, sum);
+}
+/** `tal-pvp-04`: energia (de 100) com que o Duelo comeca. @param {unknown} picks @param {unknown} bondLevel */
+export const talentStartEnergy = (picks, bondLevel) => sumKind(picks, bondLevel, 'startEnergy', START_ENERGY_MAX);
+/** `tal-pvp-06`: fracao do dano contínuo recebido que nao chega. @param {unknown} picks @param {unknown} bondLevel */
+export const talentDotResist = (picks, bondLevel) => sumKind(picks, bondLevel, 'dotResist', DOT_RESIST_MAX);
+/** `tal-pve-03`. @param {unknown} picks @param {unknown} bondLevel */
+export const talentHealBoost = (picks, bondLevel) => sumKind(picks, bondLevel, 'healBoost', HEAL_BOOST_MAX);
+/** `tal-pve-04`. @param {unknown} picks @param {unknown} bondLevel */
+export const talentRiftBits = (picks, bondLevel) => sumKind(picks, bondLevel, 'riftBits', RIFT_BITS_MAX);
+/** `tal-pve-07`. @param {unknown} picks @param {unknown} bondLevel */
+export const talentStartShield = (picks, bondLevel) => sumKind(picks, bondLevel, 'startShield', START_SHIELD_MAX);
 
 /**
  * Multiplicador do rendimento da torcida do Duelo (1 sem o no; limitado por `CHEER_SCALE_MAX`). Invalido = 1.

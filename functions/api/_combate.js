@@ -175,6 +175,18 @@ export const CHEER = {
 };
 /** Marcas de toque (s) -> descargas. Toque alem do teto do balde e descartado; a cada `tapsFull` aceitos, 1 descarga. */
 export const CHEER_SCALE_MAX = 1.15;
+
+/** Tarefa B (§2.38): espelho de `START_ENERGY_MAX`/`DOT_RESIST_MAX` e dos limpadores de `combate/specials.ts`. */
+export const START_ENERGY_MAX = 9;
+export const DOT_RESIST_MAX = 0.18;
+/** @param {unknown} x */
+export function cleanStartEnergy(x) {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(START_ENERGY_MAX, Math.max(0, x)) : 0;
+}
+/** @param {unknown} x */
+export function cleanDotResist(x) {
+  return typeof x === 'number' && Number.isFinite(x) ? Math.min(DOT_RESIST_MAX, Math.max(0, x)) : 0;
+}
 export function cleanCheerScale(x) {
   return typeof x === 'number' && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
 }
@@ -214,8 +226,8 @@ export function hitUnit(level, h0 = HIT_UNIT_H0) {
 
 /**
  * Gerador da luta. `cast` PAUSA e recebe o multiplicador (no PvP sempre 1: nao ha anel nem esquiva).
- * @param {{ combatant: any, special: any }} a
- * @param {{ combatant: any, special: any }} b
+ * @param {{ combatant: any, special: any, dotResist?: number }} a
+ * @param {{ combatant: any, special: any, dotResist?: number }} b
  * @param {{ seed: number, hpScale?: number, variance?: any, windowLevel?: number, phases?: number[], unitH0?: number | null,
  *   startHp?: number[], startEnergy?: number[], hitScale?: (who: 0 | 1, n: number) => number,
  *   cheer?: { t: number, side: 0 | 1, scale?: number }[], stopAtFirstKo?: boolean }} opts
@@ -239,7 +251,7 @@ export function* fightSteps(a, b, opts) {
     const mult = variance ? ar1Multiplier(r, variance) : () => 1;
     return {
       c, sp: s.special, mult, hp: opts.startHp?.[i] ?? 1, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0,
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
     };
   };
   const F = [mk(a, 0), mk(b, 1)];
@@ -287,7 +299,7 @@ export function* fightSteps(a, b, opts) {
         break;
       case 'dot':
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe), 'tick') });
+          timed.push({ t: t0 + 0.25 * iv * k, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick') });
         }
         break;
       case 'heal':

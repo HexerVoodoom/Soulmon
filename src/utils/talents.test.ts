@@ -48,7 +48,7 @@ describe('1. pontos = level do Vínculo; vetor inválido é DESCARTADO', () => {
 
   it('id desconhecido, nó sem efeito ligado, grau a mais, tipo errado: tudo descartado', () => {
     expect(sanitizeTalentPicks(['tal-xxx-01'], 20)).toEqual([]);
-    expect(sanitizeTalentPicks(['tal-pvp-04'], 20)).toEqual([]); // `pendente`: não se compra
+    expect(sanitizeTalentPicks(['tal-pvp-04'], 20)).toEqual([]); // sem pré-requisito: podado
     expect(sanitizeTalentPicks(Array(5).fill('tal-pvp-01'), 20)).toEqual([]); // maxRank 4
     expect(sanitizeTalentPicks(['tal-pvp-01', 7], 20)).toEqual([]);
     expect(sanitizeTalentPicks('tal-pvp-01', 20)).toEqual([]);
@@ -74,7 +74,7 @@ describe('2. a árvore nunca fecha', () => {
     const maxPontos = talentPointsFor(BOND_MAX_LEVEL);
     expect(maxPontos).toBe(TALENT_POINTS_MAX);
     expect(pickableTreeCost()).toBeGreaterThan(maxPontos);
-    expect(fullTreeCost()).toBeGreaterThan(pickableTreeCost());
+    expect(fullTreeCost()).toBeGreaterThanOrEqual(pickableTreeCost()); // hoje todos os nós se compram (Tarefa B)
   });
 
   it('os três caminhos existem, cada um com algo comprável; todo id é de um dos 3 caminhos', () => {
@@ -106,7 +106,7 @@ describe('2. a árvore nunca fecha', () => {
 
   it('o caminho PvP tem escolhas que importam: três canais de atributo e a torcida, e não cabem todos', () => {
     const efeitos = TALENT_TREE.filter((n) => n.path === 'pvp' && isPickable(n)).map((n) => (n.effect.kind === 'combatBonus' ? `bonus:${n.effect.attr}` : n.effect.kind));
-    expect(efeitos.sort()).toEqual(['bonus:atk', 'bonus:def', 'bonus:spd', 'cheerBoost']);
+    expect(efeitos.sort()).toEqual(['allAttr', 'bonus:atk', 'bonus:def', 'bonus:spd', 'cheerBoost', 'dotResist', 'startEnergy']);
     const todo = TALENT_TREE.filter((n) => n.path === 'pvp' && isPickable(n)).reduce((s, n) => s + n.maxRank, 0);
     expect(todo).toBeGreaterThan(TALENT_POINTS_MAX * 0.7); // o caminho sozinho já pede mais de 70% dos pontos do teto
   });

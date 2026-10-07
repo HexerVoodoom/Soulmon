@@ -6,6 +6,8 @@ export interface DuelSide {
   special: Special;
   /** PR7b: rendimento da torcida (talento `tal-pvp-05`), 1 sem o nó. */
   cheerScale?: number;
+  startEnergy?: number;
+  dotResist?: number;
   fx: { basica: string | null; especial: string | null; familia?: string | null; elBasica?: string | null; elEspecial?: string | null };
 }
 export type DuelWinner = 'me' | 'opp' | 'draw';

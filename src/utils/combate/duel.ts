@@ -13,7 +13,7 @@
 import type { Combatant } from './curve';
 import { fightSteps, PVP_HP_SCALE, type FightEvent, type FightFxPair, type FightSide } from './fight';
 import { REFERENCE_BUILDS, combatantAt, firstLevelOfStage, stageOfLevel } from './level';
-import { CHEER, cheerEvents, specialOf, type Special } from './specials';
+import { CHEER, cheerEvents, cleanStartEnergy, specialOf, type Special } from './specials';
 
 /** Cheer buckets of a duel: 60 s / 3 s = 20. A tap after that does not count. */
 export const DUEL_CHEER_BUCKETS = Math.ceil(60 / CHEER.bucketSeconds);
@@ -45,6 +45,10 @@ export interface DuelSide {
   readonly special: Special;
   /** PR7b (`tal-pvp-05`): rendimento da torcida deste lado (1 sem o talento; o servidor calcula e limita). */
   readonly cheerScale?: number;
+  /** Tarefa B (`tal-pvp-04`): energy (of 100) this side opens the fight with. */
+  readonly startEnergy?: number;
+  /** Tarefa B (`tal-pvp-06`): fraction of the DoT damage this side receives that never lands. */
+  readonly dotResist?: number;
   /** The schools of the basic and of the special strike (cosmetic: the form of the blow on screen). */
   readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null; /** PR9b: o ID do nome exato do especial (índice do substantivo, formato, elementos) — recomposto no aparelho, nunca texto do save. */ readonly lex?: { readonly n: number; readonly f: number; readonly el: string; readonly elB: string } | null; /** Identidade de combate: o elemento do golpe BÁSICO (o principal do Soulmon) e o do ESPECIAL, derivados do save no servidor. */ readonly elBasica?: string | null; readonly elEspecial?: string | null };
 }
@@ -64,11 +68,11 @@ export interface DuelResult {
 }
 
 /** The whole fight, pure and deterministic; the same function the server runs (`simulateDuel` of `_duel.js`). */
-export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult {
-  const a: FightSide = { combatant: args.me.combatant, special: args.me.special };
-  const b: FightSide = { combatant: args.opp.combatant, special: args.opp.special };
+export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist'>; seed: number; taps?: unknown }): DuelResult {
+  const a: FightSide = { combatant: args.me.combatant, special: args.me.special, dotResist: args.me.dotResist };
+  const b: FightSide = { combatant: args.opp.combatant, special: args.opp.special, dotResist: args.opp.dotResist };
   const fx: FightFxPair[] = [];
-  const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale), fxTrace: fx });
+  const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(args.me.startEnergy), cleanStartEnergy(args.opp.startEnergy)], cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale), fxTrace: fx });
   const events: FightEvent[] = [];
   let hpMe: number | null = null;
   let hpOpp: number | null = null;

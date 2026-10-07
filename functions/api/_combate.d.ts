@@ -3,7 +3,7 @@ export interface Combatant { level: number; atk: number; def: number; spd: numbe
 export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | 'defDebuff' | 'spdBuff';
 export interface Special { family: SpecialFamily; power: number }
 export interface StatWeights { atk: number; def: number; spd: number }
-export interface FightSide { combatant: Combatant; special: Special | null }
+export interface FightSide { combatant: Combatant; special: Special | null; dotResist?: number }
 export interface CheerEvent { t: number; side: 0 | 1; scale?: number }
 export interface VarianceConfig { rho: number; sigma: number; floor: number }
 export interface FightOptions {
@@ -69,6 +69,10 @@ export declare const ENERGY_TRIGGER: number;
 export declare const CHEER: { tapsFull: number; tapsCapPerBucket: number; bucketSeconds: number; energyPerDischarge: number; pvpEnergyPerDischarge: number };
 export declare const CHEER_SCALE_MAX: number;
 export declare function cleanCheerScale(x: unknown): number;
+export declare const START_ENERGY_MAX: number;
+export declare const DOT_RESIST_MAX: number;
+export declare function cleanStartEnergy(x: unknown): number;
+export declare function cleanDotResist(x: unknown): number;
 export declare function cheerEvents(taps: readonly number[], side: 0 | 1, scale?: number): CheerEvent[];
 export declare const MIRROR_SECONDS: number;
 export declare const HIT_UNIT_H0: number;
