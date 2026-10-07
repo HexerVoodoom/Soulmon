@@ -63,7 +63,7 @@ function TelaDeAbertura({ onStart }: { onStart: () => void }) {
       <img src={introPoster} alt="Soulmon" className="sm2-splash-video" draggable={false} />
       <span className="sm2-viewport-glass" aria-hidden="true" />
       <span className="sm2-splash-tap" aria-hidden="true">
-        <span className="sm2-splash-pix">{label}</span>
+        <span className="sm2-splash-pix" style={{ color: 'var(--sm2-primary-ink)', textShadow: '0 1px 3px var(--sm2-viewport-bg), 0 0 8px var(--sm2-viewport-bg)' }}>{label}</span>
       </span>
     </div>
   );
