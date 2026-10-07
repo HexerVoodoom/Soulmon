@@ -5,7 +5,7 @@ import { lotNpcVoice, areaNpcVoice } from '../../utils/areaNpcVoice';
 import fs from 'node:fs';
 import path from 'node:path';
 import { lotNpcArt, AREA_NPC_ART, FUNCTION_NPC_ART } from '../../assets/soulmon/npcs';
-import npcArenaDuelo from '../../assets/soulmon/npcs/npc-arena-duelo.png';
+import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
 import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
@@ -36,8 +36,8 @@ describe('lotes novos (29/09/2026)', () => {
   it('o rinoceronte é o NPC do Duelo, com voz própria nos dois idiomas', () => {
     expect(lotNpcArt('arena', 'duelo')).toBe(npcArenaDuelo);
     expect(lotNpcArt('arena', 'duelo')).not.toBe(AREA_NPC_ART.arena);
-    expect(lotNpcVoice('arena', 'duelo', 'pt-BR').name).toContain('Tuska');
-    expect(lotNpcVoice('arena', 'duelo', 'en-US').name).toContain('Tuska');
+    expect(lotNpcVoice('arena', 'duelo', 'pt-BR').name).toContain('Naia');
+    expect(lotNpcVoice('arena', 'duelo', 'en-US').name).toContain('Naia');
   });
 
   it('lote sem voz própria cai na voz da área; o Torneio segue com o Vultrak', () => {
@@ -47,9 +47,9 @@ describe('lotes novos (29/09/2026)', () => {
 
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
-      ['arena', 'duelo', 'Tuska'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
-      ['jogos', 'refugio', 'Bobbi'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Trill'],
-      ['hall', 'guilda', 'Bastia'], ['laboratorio', 'pet', 'Faro'], ['laboratorio', 'stats', 'Oriel'],
+      ['arena', 'duelo', 'Naia'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
+      ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Ramo'],
+      ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Brume'],
     ];
     const artes = lotes.map(([a, l]) => lotNpcArt(a, l));
@@ -57,7 +57,7 @@ describe('lotes novos (29/09/2026)', () => {
     for (const [a, l, nome] of lotes) {
       // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
       // 07/10/2026: Amigos (Trill), Arquivo (Faro) e Santuário (Oriel) trocaram de busto a pedido do dono.
-      const TROCADOS: Record<string, string> = { 'hall:guilda': 'npc-f-guarda', 'hall:amigos': 'npc-f-barda', 'laboratorio:pet': 'npc-conta', 'laboratorio:stats': 'npc-f-sacerdotisa' };
+      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'jogos:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:amigos': 'npc-hall-guilda', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
       const arquivo = TROCADOS[`${a}:${l}`] ?? `npc-${a}-${l}`;
       expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
       expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt(a, l));
@@ -68,9 +68,9 @@ describe('lotes novos (29/09/2026)', () => {
     expect(fs.readFileSync(path.join(dir, 'index.ts'), 'utf8')).not.toMatch(/PLACEHOLDER_NPC_ART|poring/i);
   });
 
-  it('o nome antigo do NPC do Arquivo (ex-Meu Soulmon) saiu: é Faro nos dois idiomas', () => {
-    expect(lotNpcVoice('laboratorio', 'pet', 'pt-BR').name).toMatch(/^Faro/);
-    expect(lotNpcVoice('laboratorio', 'pet', 'en-US').name).toMatch(/^Faro/);
+  it('o nome antigo do NPC do Arquivo (ex-Meu Soulmon) saiu: é Tinta nos dois idiomas', () => {
+    expect(lotNpcVoice('laboratorio', 'pet', 'pt-BR').name).toMatch(/^Tinta/);
+    expect(lotNpcVoice('laboratorio', 'pet', 'en-US').name).toMatch(/^Tinta/);
   });
 
   it('os 6 NPCs de função têm arte própria e voz nos dois idiomas', () => {

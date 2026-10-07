@@ -33,8 +33,9 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'exploracao:masmorra': [0.23, 0, 0.767, 1],
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).
-  'exploracao:oficina': [0.027, 0.07, 0.973, 0.973],
-  'exploracao:caderno': [0.123, 0.027, 0.88, 0.973],
+  // 07/10/2026 (escolha do dono): Oficina = santuário Akasha (torre estreita), Caderno = santuário do Pântano, Amigos = abrigo da Terra — bbox do alfa > 20.
+  'exploracao:oficina': [0.307, 0.027, 0.703, 0.983],
+  'exploracao:caderno': [0.13, 0.027, 0.867, 0.983],
   'jogos:salao': [0.017, 0, 0.98, 1],
   'jogos:mente': [0.227, 0.12, 0.773, 0.973],
   'jogos:refugio': [0.147, 0.12, 0.857, 0.973],
@@ -42,7 +43,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'laboratorio:pet': [0.227, 0.217, 0.773, 0.973],
   'laboratorio:stats': [0.247, 0.12, 0.757, 0.973],
   'hall:biblioteca': [0.027, 0.03, 0.973, 0.973],
-  'hall:amigos': [0.123, 0.34, 0.88, 0.973],
+  'hall:amigos': [0.04, 0.117, 0.96, 0.943],
   'hall:guilda': [0.057, 0.037, 0.943, 0.97],
 };
 

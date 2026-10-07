@@ -373,6 +373,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/perfil/BondXpBar.tsx`
+**Dono de:** a barra de XP do Vínculo (o level do usuário) nas Configurações › Perfil: nível atual, `into / need XP` até o próximo e uma `progressbar` acessível (`aria-valuetext`). Tudo DERIVADO de `bondProgress(totalXP)` (nunca persistido); no nível máximo (`BOND_MAX_LEVEL`) a barra fica cheia e diz "Max"/"Nível máximo". Só descreve — sem meta, sem cobrança.
+**Props principais:** `totalXP`, `language`.
+**Exports:** `BondXpBar(props)`.
+**Chamado por:** `src/components/SettingsPage.tsx`.
+**Régua:** `src/components/perfil/perfilNivel.render.test.tsx`.
+
 ### `src/components/perfil/ProfileEditor.tsx`
 **Dono de:** a folha "Editar perfil" (Configurações › Perfil): e-mail desativado ("em breve"), moldura (`FrameSelector`, contexto de rank vivo via `getRank(undefined, saveId)`) e foto em grade com busca e filtro por domínio (miniaturas lazy, 64 px, cabe em 375 px). Só IDs de lista fechada saem daqui.
 **Exports:** `ProfileEditor(props)`.
