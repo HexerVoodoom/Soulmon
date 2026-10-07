@@ -152,7 +152,7 @@ describe('PR12b: mochila e peça da semana na tela', () => {
     expect(aviso()).not.toMatch(/corra|acaba|última/i);
   });
   it('com Bolsa com alça o espaço abre; com Moeda coroada a peça da semana mostra o preço com desconto e o rótulo calmo', () => {
-    abrir({ gamePoints: 99999, totalXP: vinculo, talentPicks: ['tal-com-07'] });
+    abrir({ gamePoints: 99999, totalXP: xpForLevel(10), talentPicks: ['tal-com-01', 'tal-com-01', 'tal-com-02', 'tal-com-02', 'tal-com-04', 'tal-com-03', 'tal-com-03', 'tal-com-05', 'tal-com-07'] });
     const marcada = document.querySelectorAll('[data-equip-weekly]');
     expect(marcada).toHaveLength(1);
     expect(marcada[0].textContent).toMatch(/desconto desta semana/);

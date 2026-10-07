@@ -18,6 +18,10 @@ import { isoWeekKey } from './offerMoment';
 import { xpForLevel } from './bond';
 
 const rep = (id: string, n: number) => Array<string>(n).fill(id);
+/** Tarefa B: a mochila/Bits de missão/desconto abrem só depois dos pré-requisitos do grafo. */
+const ATE_02 = [...rep('tal-com-01', 2), ...rep('tal-com-02', 2)];
+const COM06 = [...ATE_02, ...rep('tal-com-06', 3)];
+const COM07 = [...ATE_02, 'tal-com-04', ...rep('tal-com-03', 2), 'tal-com-05', 'tal-com-07'];
 const eqOf = (equipped: Record<string, string>, extra: string[] = []): EquipmentState => ({ owned: [...Object.values(equipped), ...extra], equipped, fragments: 0 });
 const T1 = { nucleo: 'eq-nucleo-t1', carapaca: 'eq-carapaca-t1', rastro: 'eq-rastro-t1' };
 
@@ -96,7 +100,7 @@ describe('3. tal-com-06: Bits do dia completo (a mesma fonte, sem fonte nova)', 
   const ontem = new Date('2026-09-22T12:00:00');
   const habito = { id: 'h1', category: 'Health', emoji: '🏃', weekDays: [0, 1, 2, 3, 4, 5, 6], steps: [], completedToday: true, lastCompletedDate: ontem.toDateString() };
   const estado = (extra: Record<string, unknown>) => ({
-    activities: [habito], tasks: [] as unknown[], healthPoints: 3, maxHealthPoints: 3, energyPoints: 10, perfectDays: 0, totalXP: xpForLevel(3),
+    activities: [habito], tasks: [] as unknown[], healthPoints: 3, maxHealthPoints: 3, energyPoints: 10, perfectDays: 0, totalXP: xpForLevel(8),
     powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, gamePoints: 500, evolutionStage: 'rookie', unlockedEvolutions: ['rookie'],
     currentBranch: 'harmony' as const, maxActivityCap: 6, lastResetDate: ontem.toDateString(),
     lastDayReport: { date: new Date('2026-09-21T12:00:00').toDateString(), saveDay: 90 }, restDaysLeft: 0, restWeekKey: restWeekKeyFor(ontem), ...extra,
@@ -104,12 +108,12 @@ describe('3. tal-com-06: Bits do dia completo (a mesma fonte, sem fonte nova)', 
   const now = new Date('2026-09-23T12:00:00');
   it('o dia completo paga 100 sem o nó e 115 com 3 graus; o incompleto não paga; o Bit extra é Bit GANHO e conta no ganho grátis', () => {
     const sem = computeDailyReset(estado({}), { now }) as Record<string, any>;
-    const com = computeDailyReset(estado({ talentPicks: rep('tal-com-06', 3) }), { now }) as Record<string, any>;
+    const com = computeDailyReset(estado({ talentPicks: COM06 }), { now }) as Record<string, any>;
     expect(sem.gamePoints).toBe(500 + BITS_PER_COMPLETE_DAY);
     expect(com.gamePoints).toBe(500 + 115);
     expect(com.bitsOrigin.free).toBe(115);
     expect(com.bitsOrigin.paidLeft ?? 0).toBe(0);
-    const ruim = computeDailyReset(estado({ talentPicks: rep('tal-com-06', 3), activities: [{ ...habito, completedToday: false, lastCompletedDate: undefined }] }), { now }) as Record<string, any>;
+    const ruim = computeDailyReset(estado({ talentPicks: COM06, activities: [{ ...habito, completedToday: false, lastCompletedDate: undefined }] }), { now }) as Record<string, any>;
     expect(ruim.gamePoints).toBe(500);
   });
   it('picks inválidos para o Vínculo (graus a mais) valem zero', () => {
@@ -177,8 +181,8 @@ describe('5. sem sorteio, sem pressa, sem dinheiro', () => {
     }
   });
   it('sanitizeTalentPicks aceita os novos ids e respeita o grau máximo', () => {
-    expect(sanitizeTalentPicks([...rep('tal-com-04', 3), 'tal-com-06', 'tal-com-07'], 20)).toHaveLength(5);
-    expect(sanitizeTalentPicks(rep('tal-com-07', 2), 20)).toEqual([]);
-    expect(sanitizeTalentPicks(rep('tal-com-04', 4), 20)).toEqual([]);
+    expect(sanitizeTalentPicks([...ATE_02, ...rep('tal-com-04', 3), 'tal-com-06', ...rep('tal-com-03', 2), 'tal-com-05', 'tal-com-07'], 20)).toHaveLength(12);
+    expect(sanitizeTalentPicks([...COM07, 'tal-com-07'], 20)).toEqual([]);
+    expect(sanitizeTalentPicks([...ATE_02, ...rep('tal-com-04', 4)], 20)).toEqual([]);
   });
 });
