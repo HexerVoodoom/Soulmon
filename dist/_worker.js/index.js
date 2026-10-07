@@ -5984,6 +5984,63 @@ async function onRequest4({ request, env }) {
 }
 __name(onRequest4, "onRequest");
 
+// api/_buildingQuests.js
+var MATERIAL_CAP = 99;
+var MATERIAL_IDS = [
+  "spark",
+  "moss",
+  "prism",
+  "pebble",
+  "ore",
+  "ink",
+  "gear",
+  "fang",
+  "laurel",
+  "ribbon",
+  "essence",
+  "down",
+  "cipher",
+  "page",
+  "keepsake",
+  "crest"
+];
+var BUILDING_RE = /^(jogos|exploracao|arena|laboratorio|hall)\.[a-z]{1,24}$/;
+var MAX_LIST = 20;
+var has3 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function ids(v) {
+  const out = [];
+  if (Array.isArray(v)) {
+    for (const x of v) {
+      if (out.length >= MAX_LIST) break;
+      if (typeof x === "string" && BUILDING_RE.test(x) && !out.includes(x)) out.push(x);
+    }
+  }
+  return out;
+}
+__name(ids, "ids");
+function sanitizeBuildingQuests(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof r.day !== "string" || r.day.length === 0 || r.day.length > 40) return void 0;
+  const m = r.materials && typeof r.materials === "object" && !Array.isArray(r.materials) ? (
+    /** @type {Record<string, unknown>} */
+    r.materials
+  ) : {};
+  const materials = {};
+  for (const id of MATERIAL_IDS) {
+    const v = has3(m, id) ? m[id] : void 0;
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) materials[id] = Math.min(MATERIAL_CAP, Math.floor(v));
+  }
+  const visited = ids(r.visited);
+  const claimed = ids(r.claimed);
+  for (const c of claimed) if (!visited.includes(c)) visited.push(c);
+  return { day: r.day, visited, claimed, materials };
+}
+__name(sanitizeBuildingQuests, "sanitizeBuildingQuests");
+
 // api/save.js
 var CORS11 = {
   "Access-Control-Allow-Origin": "*",
@@ -6135,6 +6192,11 @@ async function onRequest5({ request, env }) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o;
       else delete state.bitsOrigin;
+    }
+    if ("buildingQuests" in state) {
+      const q = sanitizeBuildingQuests(state.buildingQuests);
+      if (q) state.buildingQuests = q;
+      else delete state.buildingQuests;
     }
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
     if ("fichaJornada" in state) {
@@ -6569,7 +6631,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-wLRRS1/functionsRoutes-0.8182220788604018.mjs
+// ../.wrangler/tmp/pages-LNplVj/functionsRoutes-0.11645402610950528.mjs
 var routes = [
   {
     routePath: "/api/account",
