@@ -5739,6 +5739,7 @@ select:focus-visible {
      colado no fim do arquivo faz o teste medir o bloco errado e desarmar em
      silêncio. Há guard travando esta sentinela — não a remova, e não abra
      bloco novo: acrescente a regra AQUI. */
+  .sm-talent-backdrop > [role="dialog"] { animation: none !important; }
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
@@ -8290,4 +8291,3 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 
 @keyframes sm-talent-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .sm-talent-backdrop > [role="dialog"] { animation: sm-talent-pop .16s ease-out; }
-@media (prefers-reduced-motion: reduce) { .sm-talent-backdrop > [role="dialog"] { animation: none; } }
