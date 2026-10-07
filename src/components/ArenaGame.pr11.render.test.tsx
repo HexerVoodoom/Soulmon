@@ -122,7 +122,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 
 describe('Arena — FX de status e cast (PR11)', () => {
-  for (const [escola, kind, rotulo] of [['atkBuff', 'buff', /^Ataque em alta, 3 turnos$/], ['benca', 'cura', /^Cura, 1 turno$/]] as const) {
+  for (const [escola, kind, rotulo] of [['atkBuff', 'buff', /^Ataque em alta, 5 turnos$/], ['benca', 'cura', /^Cura, 1 turno$/]] as const) {
     it(`o especial da escola ${escola} mostra o círculo de cast e deixa o efeito "${kind}" no pet (turnos do orçamento)`, async () => {
       H.startEnergy = [100];
       await entrar({ escola });
@@ -165,6 +165,6 @@ describe('Arena — FX de status e cast (PR11)', () => {
     await avancar(Number(noAnel()?.getAttribute('data-ring-target')));
     fireEvent.pointerDown(document.body);
     expect(await ate(() => document.querySelector('[data-stage-status="buff"]') !== null, 3000)).toBe(true);
-    expect(document.querySelector('[data-stage-status="buff"]')!.getAttribute('aria-label')).toBe('Attack up, 3 turns left');
+    expect(document.querySelector('[data-stage-status="buff"]')!.getAttribute('aria-label')).toBe('Attack up, 5 turns left');
   });
 });

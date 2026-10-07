@@ -151,7 +151,9 @@ describe('o duelo (`_duel.js`) é o do cliente (`combate/duel.ts`)', () => {
       const taps = s % 3 === 0 ? undefined : s % 3 === 1 ? TETO : Array.from({ length: 30 }, (_, i) => (i * 5 + s) % 20);
       const a = duelApp.simulatePvp({ me, opp, seed: s * 97 + 5, taps });
       const b = duelSrv.simulateDuel({ me, opp, seed: s * 97 + 5, taps });
-      expect(b).toEqual(a);
+      // `fx` (contadores reais dos selos) é só do cliente; o servidor não o conhece.
+      const { fx: _fx, ...aSemFx } = a;
+      expect(b).toEqual(aSemFx);
     }
   });
 

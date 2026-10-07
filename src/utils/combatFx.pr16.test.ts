@@ -19,7 +19,7 @@ const side = (family: SpecialFamily, build: 'atk' | 'def' | 'spd' | 'balanced' =
   combatant: combatantAt(L, REFERENCE_BUILDS[build]), special: specialOf(family),
 });
 const ZERO = { nAtk: 0, nVuln: 0, nSpd: 0, shield: 0, shieldHits: 0, dot: 0 };
-type Ev = { kind: string; side: 0 | 1 };
+type Ev = { kind: 'attack' | 'cast' | 'tick' | 'ko'; side: 0 | 1 };
 
 /** Joga a luta 1v1 respondendo `scale` a cada cast; devolve eventos + rastro real. */
 function play1v1(a: FightSide, b: FightSide, seed: number, scale = 1, trace = true) {
