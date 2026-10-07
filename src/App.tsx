@@ -124,7 +124,6 @@ import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
-import { FirstDayCard } from './components/FirstDayCard';
 import { TermsUpdateBanner } from './components/TermsUpdateBanner';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
@@ -5403,14 +5402,17 @@ export default function App() {
   }, [gameState.weeklyMissions, gameState.playerDayTz]);
 
   /** As marcas "!" / "?" de todo local de missão (`utils/questMarks.ts`, dono da regra). */
+  /** O cartão do primeiro dia ainda está de pé? (uma missão: menu de Missões, nunca a lista de tarefas) */
+  const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
   const marcasDeMissao = useMemo(() => questMarks({
+    firstDay: primeiroDiaAtivo,
     passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
@@ -6493,7 +6495,12 @@ export default function App() {
 
                 const avisos: { key: string; node: ReactNode }[] = [];
 
-                /* ── 0. PRIMEIRO DIA ──────────────────────────────────────
+                /* ── 0. (PRIMEIRO DIA SAIU DAQUI, 07/10/2026) ─────────────
+                   O cartão dos três gestos é uma MISSÃO: vive no menu de
+                   Missões (`MissionsSheet`, seção "Primeiro dia", com a marca
+                   "!" do ícone da Home), nunca na lista de tarefas. Missão não
+                   aparece em tarefa nem em prédio.
+                   Histórico da posição: ──────────────────────────────────
                    Entra na fila em PRIMEIRO porque é o mais perecível de
                    todos: ele morre na virada, completo ou não. Um cartão que
                    tem um dia de vida não pode ceder a vez para outro que
@@ -6501,15 +6508,6 @@ export default function App() {
                    ⚠️ Ele e o priming abaixo eram dois `&&` SOLTOS acima do
                    HUD — furando a fila logo abaixo do comentário que manda
                    entrar nela (auditoria de 06/09/2026). */
-                if (shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz))) {
-                  avisos.push({
-                    key: 'firstDay',
-                    node: (
-                      <FirstDayCard progress={gameState.firstDay!} language={language} />
-                    ),
-                  });
-                }
-
                 /* ── 0b. CONVITE AO REFÚGIO ───────────────────────────────
                    Logo depois do primeiro dia e ANTES do HP: num dia difícil,
                    o primeiro cartão não pode ser coração perdido (parecer do
@@ -7078,6 +7076,7 @@ export default function App() {
         onClaimWeekly={resgatarMissao}
         missionProgress={missionProgress}
         marks={marcasDeMissao}
+        firstDay={primeiroDiaAtivo ? gameState.firstDay : null}
         buildings={{
           state: gameState.buildingQuests,
           day: playerDayKey(new Date(), gameState.playerDayTz),

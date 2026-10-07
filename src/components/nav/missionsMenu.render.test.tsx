@@ -57,3 +57,27 @@ describe('MissionsLink', () => {
     expect(container.querySelector('[data-missions-link]')).not.toBeNull();
   });
 });
+
+describe('o primeiro dia é missão (07/10/2026): vive no menu, não na Home', () => {
+  it('a seção "First day" aparece com o cartão e a marca "!"; sem o progresso, some', async () => {
+    const fd = { day: '2026-10-07', done: [] as never[] };
+    const props = {
+      open: true, onClose: () => {}, crossings: CROSSINGS_EMPTY, onChange: vi.fn(),
+      todayKey: '2026-10-07', seed: 's', weekly: [], onClaimWeekly: vi.fn(), missionProgress: {},
+    };
+    const { rerender } = render(
+      <MissionsSheet {...props} language="en-US"
+        marks={{ daily: null, torneio: null, conquistas: null, firstDay: 'available' }} firstDay={fd} />,
+    );
+    await waitFor(() => expect(document.querySelector('[data-missions-section="first-day"]')).not.toBeNull());
+    const sec = document.querySelector('[data-missions-section="first-day"]')!;
+    expect(sec.getAttribute('aria-label')).toBe('First day');
+    expect(sec.getAttribute('data-quest-mark')).toBe('available');
+    expect(sec.textContent).toContain('You two just met');
+    rerender(
+      <MissionsSheet {...props} language="pt-BR"
+        marks={{ daily: null, torneio: null, conquistas: null }} firstDay={null} />,
+    );
+    expect(document.querySelector('[data-missions-section="first-day"]')).toBeNull();
+  });
+});

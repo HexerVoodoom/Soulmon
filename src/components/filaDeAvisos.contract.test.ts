@@ -34,18 +34,22 @@ describe('nada monta por cima da fila de intersticiais', () => {
 });
 
 describe('o slot de avisos não tem cartão solto', () => {
-  it('o cartão do primeiro dia e o priming entram pela fila', () => {
-    expect(app).toContain("key: 'firstDay',");
-    expect(app).toContain("key: 'priming',");
-    // Nenhum dos dois pode voltar a renderizar fora do `avisos.push`: o teste
-    // exige que a condição apareça UMA vez, dentro do `if` da fila.
+  it('o cartão do primeiro dia SAIU da fila (é missão: vive no menu de Missões); o priming segue nela', () => {
+    // 07/10/2026 (dono): "missão é só na área de missões". O primeiro dia é uma missão de
+    // três gestos — `MissionsSheet`, seção "Primeiro dia", com a marca "!" do ícone da Home.
+    expect(app).not.toContain("key: 'firstDay',");
+    expect(app).not.toContain('<FirstDayCard');
     expect((app.match(/shouldShowFirstDay\(/g) ?? []).length).toBe(1);
+    expect(app).toContain('firstDay={primeiroDiaAtivo ? gameState.firstDay : null}');
+    const sheet = readFileSync('src/components/nav/MissionsSheet.tsx', 'utf8');
+    expect(sheet).toContain('<FirstDayCard');
+    expect(sheet).toContain('id="first-day"');
+    expect(app).toContain("key: 'priming',");
     expect((app.match(/if \(mostrarPrimingDePush\) avisos\.push/g) ?? []).length).toBe(1);
   });
 
   it('o CONVITE AO REFÚGIO entra na fila, uma vez, depois do primeiro dia e ANTES do HP (parecer do psicólogo, 30/09/2026)', () => {
     // Num dia difícil o primeiro cartão não pode ser coração perdido.
-    expect(app.indexOf("key: 'firstDay',")).toBeLessThan(app.indexOf("key: 'refugio',"));
     expect(app.indexOf("key: 'refugio',")).toBeLessThan(app.indexOf("key: 'hp',"));
     expect(app.match(/if \(shouldInviteRefuge\(/g) ?? []).toHaveLength(1);
   });

@@ -116,6 +116,19 @@ export const SLOT_ORDER: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right
 // ── Mobília base: o berço ────────────────────────────────────────────────────
 
 /**
+ * QUANTO O PET SOBE no palco, em px (07/10/2026, dono: "o Soulmon está muito
+ * baixo, tem que subir um pouquinho"). Medido a 390×844: a borda de baixo da
+ * caixa do sprite caía em y=305 enquanto a linha do chão DESENHADA do cenário
+ * está em y≈250 e a faixa de HP/energia (o "0/4") começa em y≈274 — os pés
+ * passavam do chão e o sprite cobria o contador. Com 44 a caixa termina em
+ * y≈261, rente ao topo dos botões de ação (262), e os pés visíveis (98% da
+ * caixa) ficam em ≈259. Vale para TODO sprite do roster, não só os iniciais.
+ * Tudo que se ancora nos pés (sombra, mochila do passeio, alvo da evolução,
+ * efeitos) lê `PET_TOP_OFFSET` ou soma esta constante — nunca o número.
+ */
+export const PET_LIFT = 44;
+
+/**
  * Deslocamento vertical do PET dentro da área, em px a partir de `top: 50%`.
  * É o topo da caixa do sprite (152×152, com a arte contida e centrada nela).
  *
@@ -126,7 +139,7 @@ export const SLOT_ORDER: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right
  * colocaria a mobília num chão que não existe mais. Enquanto a conta do palco
  * não for refeita, berço e pet dividem ESTA origem — uma só, declarada aqui.
  */
-export const PET_TOP_OFFSET = -38;
+export const PET_TOP_OFFSET = -38 - PET_LIFT;
 
 /** Lado da caixa do sprite do pet, em px (a arte é contida e centrada nela). */
 export const PET_BOX = 152;

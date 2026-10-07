@@ -531,7 +531,7 @@ o assunto restante virou a constante exportada `SHOP_AND_CURRENCY_PRIMER`.
 
 ### 2.5 `FirstDayCard`
 
-- **Chega por**: entra na **fila de avisos** da Home, em primeiro lugar.
+- **Chega por**: desde 07/10/2026 NÃO é mais um aviso da Home — é uma **missão**, e missão vive no menu de Missões: `MissionsSheet`, seção "Primeiro dia" (`id="first-day"`), com a marca "!" no ícone de missões da Home (`questMarks().firstDay`). Nunca na lista de tarefas.
 - **Sai para**: some sozinho na virada — não tem botão de fechar.
 - **Aparece quando**:
 
@@ -545,8 +545,9 @@ o assunto restante virou a constante exportada `SHOP_AND_CURRENCY_PRIMER`.
   concluir uma atividade — cada um com uma dica. **Não dá prêmio, não abre modal
   e não cobra.**
 - **Dono**: `src/components/FirstDayCard.tsx`.
-- **Régua**: `src/components/filaDeAvisos.contract.test.ts` (exige que
-  `shouldShowFirstDay(` apareça **uma vez só**, dentro do `avisos.push`) +
+- **Régua**: `src/components/filaDeAvisos.contract.test.ts` (exige que o cartão
+  NÃO volte à fila, que `shouldShowFirstDay(` apareça **uma vez só** no `App` e
+  que o `MissionsSheet` o monte) +
   `FirstDayCard.render.test.tsx`.
 
 ### 2.6 `WelcomePromptModal`
@@ -623,7 +624,7 @@ ordem literal dos `push`, com a chave de cada um:
 
 | # | `key` | Condição (do código) | Componente |
 |---|---|---|---|
-| 0 | `'firstDay'` | `shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz))` | `FirstDayCard` |
+| ~~0~~ | ~~`'firstDay'`~~ | saiu da fila em 07/10/2026: é missão, vive no menu de Missões (§2.5) | — |
 | 0b | `'refugio'` | `shouldInviteRefuge(gameState.refugeInvite, moodFor(gameState.moodLog, playerDayKey(agoraA, gameState.playerDayTz)), playerDayIso(agoraA, gameState.playerDayTz))` (`utils/refugio/convite.ts`; humor de hoje em `REFUGE_INVITE_MOODS` = 1–2, intervalo `REFUGE_INVITE_GAP_DAYS` = 3, silêncio por `REFUGE_INVITE_SILENCE_DAYS` = 7 após `REFUGE_INVITE_DISMISSALS_TO_SILENCE` = 2 recusas) — entra **depois do `firstDay` e ANTES do `hp`** (comentário do código: num dia difícil o primeiro cartão não pode ser coração perdido). Nada paga, nada conta | `RefugeInviteCard` (`data-refugio-convite`): "Um respiro?" / "A breather?"; **`onShown`** roda ao MONTAR (`handleRefugeShown` → `markRefugeShown`; escondido no "+N" não gasta a vez); "Respirar com o Soulmon" → `handleRefugeAccept` (`acceptRefugeInvite` + `setRefugeLaunch(true)`) e `goTo(areaView('jogos'))` — a área Jogos monta com `initialGame='respiracao'` (one-shot, `onInitialGameConsumed` → `handleRefugeLaunchConsumed`); "Hoje não" / "Not today" → `handleRefugeDismiss` (`dismissRefugeInvite`) |
 | 1 | `'hp'` | `gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < hpSafeToday && !hpBannerDismissed` | bloco `sm2-notice-warn` inline |
 | 2 | `'incubacao'` | `incubandoAgora` (`useMemo` no `App.tsx`: a forma de `evolutionTarget(...)` é diferente de `gameState.evolutionStage` **e** `isIncubating(gameState.incubation, proxima, agoraParaIncubacao)`) — WP4.29, D-G8c, incubação de 30 min na elegibilidade | bloco `sm2-notice` inline com `Icon egg` dourado: "A próxima forma está tomando corpo. Leva um tempo — volte quando quiser, ela espera por você." — **sem contagem nem hora** (R-I); some sozinho |
