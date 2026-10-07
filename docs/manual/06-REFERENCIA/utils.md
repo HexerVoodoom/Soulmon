@@ -2083,6 +2083,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/utils/soulProfile/ficha/comportamento.test.ts`.
 **Régua:** `src/utils/soulProfile/ficha/comportamento.test.ts`
 
+### `src/utils/fichaJornada.ts` e `src/utils/soulProfile/ficha/jornadaRefresh.ts` (PR15b)
+
+**Papel:** liga o núcleo do comportamento (`comportamento.ts`) ao jogo. `fichaJornada.ts` é o dono do REGISTRO `GameState.fichaJornada` (módulo leve, importado estático pelo `App.tsx`): `registrarEstagio` grava a janela `attributesSinceLastEvolution` sob o estágio que NASCE, uma vez e imutável (reevoluir devolve a mesma referência — anti-reroll); `sanitizeFichaJornada` higieniza no load; `completarEstagios` preenche o espelho derivado (plano, família). `jornadaRefresh.ts` (import dinâmico) refaz os caches da ficha (skills com poder real, classes, companheiro, manifestação) a partir do registro depois da evolução. A derivação em si é `buildFichaESkills(input, seedKey, jornada?)` em `ficha/fromInput.ts`: sem registro a ficha é a de antes, bit a bit.
+
+**Régua:** `src/utils/fichaJornada.test.ts`
+
 ### `src/utils/soulProfile/ficha/nomeEspecial.ts`
 **Dono de:** A família do efeito e o nome próprio do ESPECIAL de cada estágio (PR9), por regra determinística: sem IA e sem rede, o perfil não sai do aparelho. Cada estágio gera um NOME novo; a família é estável (PR14).
 **Exports:**
