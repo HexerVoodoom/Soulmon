@@ -45,6 +45,7 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
           sheet={ANIM_ART.poopPlop}
           size={FX_PX}
           durationMs={450}
+          hold
           style={{ position: 'absolute', left: 0, top: 0 }}
         />
       </div>

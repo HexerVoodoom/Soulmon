@@ -9,11 +9,14 @@ import type { AnimSheet } from '../../utils/animArt';
  * reduzido — `.sm-sheet`). `size` é o lado desenhado; a tira é escalada
  * inteira, com `pixelated`.
  */
-export function SpriteAnim({ sheet, size = 32, durationMs = 480, loop = false, style, className }: {
+export function SpriteAnim({ sheet, size = 32, durationMs = 480, loop = false, hold = false, style, className }: {
   sheet: AnimSheet;
   size?: number;
   durationMs?: number;
   loop?: boolean;
+  /** Para no ÚLTIMO quadro e fica (adereço assentado, ex.: o cocô). Sem isto a
+   *  tira de uma passada termina em `-sheet-w` (fora da imagem) e o efeito some. */
+  hold?: boolean;
   style?: CSSProperties;
   className?: string;
 }) {
@@ -31,7 +34,9 @@ export function SpriteAnim({ sheet, size = 32, durationMs = 480, loop = false, s
         imageRendering: 'pixelated',
         ['--sm-sheet-frames' as string]: String(sheet.frames),
         ['--sm-sheet-w' as string]: `${size * sheet.frames}px`,
-        animation: `sm-sheet ${durationMs}ms steps(${sheet.frames}, end) ${loop ? 'infinite' : 'forwards'}`,
+        animation: hold && !loop
+          ? `sm-sheet-hold ${durationMs}ms steps(${Math.max(1, sheet.frames - 1)}, end) forwards`
+          : `sm-sheet ${durationMs}ms steps(${sheet.frames}, end) ${loop ? 'infinite' : 'forwards'}`,
         ...style,
       } as CSSProperties}
     />

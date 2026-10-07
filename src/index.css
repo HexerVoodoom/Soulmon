@@ -3854,6 +3854,12 @@ html {
   to { background-position-x: calc(-1 * var(--sm-sheet-w)); }
 }
 
+/* Variante que PARA no último quadro (`hold`): o destino é a célula N-1, nunca a
+   borda `-sheet-w` (vazio). Usada pelo cocô, que tem de ficar até o banho. */
+@keyframes sm-sheet-hold {
+  to { background-position-x: calc(-1 * var(--sm-sheet-w) + var(--sm-sheet-w) / var(--sm-sheet-frames)); }
+}
+
 @keyframes pet-munch {
   0%   { transform: scaleY(1) scaleX(1); }
   25%  { transform: scaleY(0.85) scaleX(1.1); }
