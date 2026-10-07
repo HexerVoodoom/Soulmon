@@ -35,7 +35,6 @@
 // ---------------------------------------------------------------------------
 
 import { BUILDING_GATES, buildingGateFor, type BuildingId } from './gates';
-import { hashString } from './oracle/base';
 import type { QuestMark } from './questMarks';
 
 export type MaterialId =
@@ -50,46 +49,23 @@ export const MATERIAL_CAP = 99;
 /** Material pago por missão resgatada. */
 export const MATERIAL_PER_QUEST = 1;
 
-export interface MaterialDef {
-  id: MaterialId;
-  /** O prédio dono: o único que paga este material. */
-  building: BuildingId;
-  nameEn: string;
-  namePt: string;
-  /** Emoji pelado (ícone nunca dentro de box). Nenhum coincide com 🪙/🎖️/💎. */
-  icon: string;
-}
+/** O prédio dono de cada material: o único que o paga. Nomes e ícones moram em `buildingQuestsCopy.ts` (só a folha lazy os lê). */
+export const MATERIAL_BUILDING: Readonly<Record<MaterialId, BuildingId>> = {
+  spark: 'jogos.salao', moss: 'jogos.refugio', prism: 'jogos.mente',
+  pebble: 'exploracao.passeio', ore: 'exploracao.masmorra', ink: 'exploracao.caderno', gear: 'exploracao.oficina',
+  fang: 'arena.duelo', laurel: 'arena.torneio', ribbon: 'arena.feira',
+  essence: 'laboratorio.evolucao', down: 'laboratorio.pet', cipher: 'laboratorio.stats',
+  page: 'hall.biblioteca', keepsake: 'hall.amigos', crest: 'hall.guilda',
+};
 
-/** 1 material por prédio fora do Mercado. A ordem é a do Mapa. */
-export const MATERIALS: readonly MaterialDef[] = [
-  { id: 'spark', building: 'jogos.salao', nameEn: 'Spark', namePt: 'Faísca', icon: '✨' },
-  { id: 'moss', building: 'jogos.refugio', nameEn: 'Moss', namePt: 'Musgo', icon: '🌿' },
-  { id: 'prism', building: 'jogos.mente', nameEn: 'Prism', namePt: 'Prisma', icon: '🔷' },
-  { id: 'pebble', building: 'exploracao.passeio', nameEn: 'Pebble', namePt: 'Seixo', icon: '🗿' },
-  { id: 'ore', building: 'exploracao.masmorra', nameEn: 'Ore', namePt: 'Minério', icon: '⛏️' },
-  { id: 'ink', building: 'exploracao.caderno', nameEn: 'Ink', namePt: 'Tinta', icon: '🖋️' },
-  { id: 'gear', building: 'exploracao.oficina', nameEn: 'Gear', namePt: 'Engrenagem', icon: '⚙️' },
-  { id: 'fang', building: 'arena.duelo', nameEn: 'Fang', namePt: 'Presa', icon: '🦷' },
-  { id: 'laurel', building: 'arena.torneio', nameEn: 'Laurel', namePt: 'Louro', icon: '🍃' },
-  { id: 'ribbon', building: 'arena.feira', nameEn: 'Ribbon', namePt: 'Fita', icon: '🎀' },
-  { id: 'essence', building: 'laboratorio.evolucao', nameEn: 'Essence', namePt: 'Essência', icon: '🧬' },
-  { id: 'down', building: 'laboratorio.pet', nameEn: 'Down', namePt: 'Penugem', icon: '☁️' },
-  { id: 'cipher', building: 'laboratorio.stats', nameEn: 'Cipher', namePt: 'Cifra', icon: '🔣' },
-  { id: 'page', building: 'hall.biblioteca', nameEn: 'Page', namePt: 'Página', icon: '📜' },
-  { id: 'keepsake', building: 'hall.amigos', nameEn: 'Keepsake', namePt: 'Lembrança', icon: '🎁' },
-  { id: 'crest', building: 'hall.guilda', nameEn: 'Crest', namePt: 'Brasão', icon: '🛡️' },
-];
-
-export const MATERIAL_IDS: readonly MaterialId[] = MATERIALS.map(m => m.id);
+export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 
 /** Os prédios que dão missão: todos menos `mercado.*`. */
 export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.'));
 
-const BY_BUILDING = new Map(MATERIALS.map(m => [m.building, m]));
-const BY_ID = new Map(MATERIALS.map(m => [m.id, m]));
+const BY_BUILDING = new Map(MATERIAL_IDS.map(id => [MATERIAL_BUILDING[id], id] as const));
 
-export function materialOf(building: BuildingId): MaterialDef | undefined { return BY_BUILDING.get(building); }
-export function materialDef(id: MaterialId): MaterialDef | undefined { return BY_ID.get(id); }
+export function materialOf(building: BuildingId): MaterialId | undefined { return BY_BUILDING.get(building); }
 export function isQuestBuilding(id: unknown): id is BuildingId {
   return typeof id === 'string' && (QUEST_BUILDINGS as readonly string[]).includes(id);
 }
@@ -102,22 +78,6 @@ export interface BuildingQuestState {
 }
 
 export type BuildingQuestStatus = 'locked' | 'available' | 'ready' | 'claimed';
-
-/** Três redações por prédio: só TEXTO, o gatilho é o mesmo (entrar). EN primeiro. */
-const FLAVOR: Record<string, readonly [string, string][]> = {
-  default: [
-    ['Step inside and look around', 'Entre e dê uma olhada'],
-    ['Drop by for a moment', 'Passe por aqui um instante'],
-    ['Visit and take a breath', 'Visite e respire um pouco'],
-  ],
-};
-
-/** O texto do dia deste prédio — determinístico por `day` + id (nunca muda a cada abertura). */
-export function questText(day: string, id: BuildingId, isPt: boolean): string {
-  const pool = FLAVOR[id] ?? FLAVOR.default;
-  const pair = pool[hashString(`building-quest:${day}:${id}`) % pool.length];
-  return isPt ? pair[1] : pair[0];
-}
 
 /** Zera `visited`/`claimed` no dia novo; o estoque passa. Mesmo dia devolve a MESMA referência. */
 export function forDay(s: BuildingQuestState | undefined, day: string): BuildingQuestState {
@@ -153,11 +113,11 @@ export function claimBuildingQuest(s: BuildingQuestState | undefined, day: strin
   const mat = materialOf(id);
   if (!mat) return { state: s, paid: null };
   const cur = forDay(s, day);
-  const had = cur.materials[mat.id] ?? 0;
+  const had = cur.materials[mat] ?? 0;
   const next = Math.min(MATERIAL_CAP, had + MATERIAL_PER_QUEST);
   return {
-    state: { ...cur, claimed: [...cur.claimed, id], materials: { ...cur.materials, [mat.id]: next } },
-    paid: mat.id,
+    state: { ...cur, claimed: [...cur.claimed, id], materials: { ...cur.materials, [mat]: next } },
+    paid: mat,
   };
 }
 
