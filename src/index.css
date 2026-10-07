@@ -8301,6 +8301,12 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm3-materiais-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .sm3-materiais-lista li { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-ink); }
 .sm3-material-icone { font-size: 28px; line-height: 32px; }
+.sm3-material-btn { all: unset; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sm3-material-btn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: 6px; }
+.sm3-material-btn[aria-expanded="true"] .sm3-item-nome { text-decoration: underline; text-underline-offset: 3px; }
+.sm3-material-pop { position: sticky; bottom: 8px; z-index: 2; margin-top: 10px; padding: 10px 12px; display: grid; gap: 6px; justify-items: start; border: 1px solid var(--sm2-line, currentColor); border-radius: 10px; background: var(--sm2-surface, transparent); }
+.sm3-material-pop-nome { margin: 0; font-weight: 600; font-size: var(--sm2-text-sm); color: var(--sm2-ink); }
+.sm3-material-pop-texto { margin: 0; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
 .sm3-materiais-lista small { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
 
 /* Soulsmith (07/10/2026): celebração do aprimoramento — CSS procedural, sem asset; reduced-motion reduz o MOVIMENTO e mantém o selo. */

@@ -17,6 +17,8 @@
  */
 
 /** As seis áreas do Mapa, na ordem de leitura do Mapa. */
+import { LISTED_QUEST_BUILDINGS } from './utils/buildingQuests';
+
 export const AREAS = ['mercado', 'jogos', 'arena', 'exploracao', 'laboratorio', 'hall'] as const;
 export type AreaId = typeof AREAS[number];
 
@@ -25,6 +27,19 @@ export const MENU_PAGES = ['settings', 'oracle'] as const;
 export type MenuPageId = typeof MENU_PAGES[number];
 
 export type ViewType = 'home' | 'map' | `area:${AreaId}` | `page:${MenuPageId}`;
+
+/**
+ * O destino do "Ir lá" de um material na Mochila (`Mochila` → `App.handleMaterialGoTo`). A missão que o menu da Home lista
+ * (`LISTED_QUEST_BUILDINGS`, o Caderno) mora SÓ no menu de Missões; qualquer outro prédio leva à área dele com a folha do lote
+ * aberta (a visita conta como sempre; Vínculo e demo quem decide é o `AreaView`). `null` = prédio que não existe no mapa.
+ */
+export type BuildingDestination = { kind: 'missions' } | { kind: 'lot'; area: AreaId; lot: string };
+export function buildingDestination(building: string): BuildingDestination | null {
+  if ((LISTED_QUEST_BUILDINGS as readonly string[]).includes(building)) return { kind: 'missions' };
+  const [area, lot] = building.split('.');
+  if (!lot || !(AREAS as readonly string[]).includes(area)) return null;
+  return { kind: 'lot', area: area as AreaId, lot };
+}
 
 export function areaView(id: AreaId): ViewType {
   return `area:${id}`;

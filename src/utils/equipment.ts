@@ -74,22 +74,21 @@ const own = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k)
 export function sanitizeEquipment(raw: unknown): EquipmentState {
   if (!raw || typeof raw !== 'object') return EMPTY_EQUIPMENT;
   const r = raw as Record<string, unknown>;
-  const owned: string[] = [];
+  const seen: string[] = [];
   if (Array.isArray(r.owned)) {
-    for (const id of r.owned) if (typeof id === 'string' && EQUIP_BY_ID.has(id) && !owned.includes(id)) owned.push(id);
+    for (const id of r.owned) if (typeof id === 'string' && EQUIP_BY_ID.has(id) && !seen.includes(id)) seen.push(id);
   }
+  // Soulsmith (07/10/2026): UMA peça por TIPO, que melhora de nível. Se o save tem dois tiers do mesmo slot (compra antiga), fica o
+  // MAIS ALTO e o resto deixa de ser possuído. Idempotente. A peça possuída está sempre equipada: não existe "Equipar" nem "Tirar".
+  const best: Partial<Record<EquipSlot, string>> = {};
+  for (const id of seen) {
+    const it = EQUIP_BY_ID.get(id)!;
+    const cur = best[it.slot];
+    if (!cur || EQUIP_BY_ID.get(cur)!.tier < it.tier) best[it.slot] = id;
+  }
+  const owned = seen.filter((id) => best[EQUIP_BY_ID.get(id)!.slot] === id);
   const equipped: Partial<Record<EquipSlot, string>> = {};
-  const eq = r.equipped && typeof r.equipped === 'object' ? (r.equipped as Record<string, unknown>) : {};
-  for (const slot of EQUIP_SLOTS) {
-    const id = own(eq, slot) ? eq[slot] : undefined;
-    if (typeof id === 'string' && owned.includes(id) && EQUIP_BY_ID.get(id)!.slot === slot) equipped[slot] = id;
-    // Soulsmith (07/10/2026): são partes da alma — peça possuída está SEMPRE equipada. Slot com posse e sem equipada (save antigo
-    // que tinha "Tirado") volta ao tier mais alto possuído. Idempotente; nada é perdido nem somado.
-    if (!equipped[slot]) {
-      const best = owned.filter((o) => EQUIP_BY_ID.get(o)!.slot === slot).sort((a, b) => EQUIP_BY_ID.get(b)!.tier - EQUIP_BY_ID.get(a)!.tier)[0];
-      if (best) equipped[slot] = best;
-    }
-  }
+  for (const slot of EQUIP_SLOTS) if (best[slot]) equipped[slot] = best[slot];
   const f = typeof r.fragments === 'number' && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
 }
@@ -262,14 +261,6 @@ export function applyEquipBuy<T extends EquipBuyState>(prev: T, id: string, pay:
   };
   const state = pay === 'bits' ? { ...prev, gamePoints: (prev.gamePoints ?? 0) - price, equipment: next } : { ...prev, equipment: next };
   return { ok: true, state: state as T, price };
-}
-
-/** Põe em foco, no slot dele, um item POSSUÍDO (troca o anterior, que continua possuído; o slot nunca fica vazio). Não possuído = o mesmo estado. */
-export function applyEquip<T extends { equipment?: EquipmentState }>(prev: T, id: string): T {
-  const eq = sanitizeEquipment(prev.equipment);
-  const item = EQUIP_BY_ID.get(id);
-  if (!item || !eq.owned.includes(id) || eq.equipped[item.slot] === id) return prev;
-  return { ...prev, equipment: { ...eq, equipped: { ...eq.equipped, [item.slot]: id } } };
 }
 
 /** Soma fragmentos GANHOS (já com o Comércio, `fragmentGain`), até `FRAGMENTS_MAX`. */

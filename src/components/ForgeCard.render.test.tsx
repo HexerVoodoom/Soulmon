@@ -54,12 +54,13 @@ describe('ForgeCard', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('vazio: 3 slots vazios, 9 peças dizendo de qual missão vêm, nenhum botão de compra e texto sem sorteio nem cobrança', () => {
+  it('vazio: UMA entrada por tipo (3), cada uma dizendo de qual missão vem, nenhum botão de compra e texto sem sorteio nem cobrança', () => {
     abrir({ gamePoints: 5000 });
     expect(document.querySelector('[data-forge-stock]')).toBeNull();
     expect(document.querySelector('[data-equip-state]')).toBeNull();
-    expect(document.querySelectorAll('[data-forge-piece]')).toHaveLength(9);
+    expect(document.querySelectorAll('[data-forge-piece]')).toHaveLength(3);
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Vem da missão de/);
+    expect(document.querySelectorAll('[data-forge-card] button')).toHaveLength(0); // peça ainda não obtida: card informativo, sem botão
     expect(document.querySelectorAll('[data-forge-upgrade]')).toHaveLength(0);
     const t = document.querySelector('[data-forge-card]')!.textContent!;
     expect(t).not.toMatch(/Comprar|chance|probabilidade|caixa|\bsorte\b|faltam só|corra|acaba/i);
@@ -85,14 +86,18 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,2%/);
   });
 
-  it('peça possuída aparece como parte da alma; não existe Tirar; não possuída: sem botão e diz de onde vem', () => {
+  it('peça possuída: UM botão só (Upgrade), sem Equipar nem Tirar; o nome acompanha o tier da peça', () => {
     abrir(nivel1(), 'en-US');
     expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')!.textContent).toMatch(/Part of your soul/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/Copper Core/);
     expect(document.querySelector('[data-equip-unequip]')).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Unequip|Tirar/);
+    expect(document.body.textContent).not.toMatch(/Unequip|Tirar|\bEquip\b|Equipar/);
     expect(document.querySelector('[data-equip-btn]')).toBeNull();
-    expect(peca('eq-nucleo-t2').querySelector('button')).toBeNull();
-    expect(peca('eq-nucleo-t2').textContent).toMatch(/Comes from/);
+    const botoes = Array.from(peca('eq-nucleo-t1').querySelectorAll('button'));
+    expect(botoes).toHaveLength(1);
+    expect(botoes[0].textContent).toBe('Upgrade');
+    expect(peca('eq-carapaca-t1').querySelector('button')).toBeNull();
+    expect(peca('eq-carapaca-t1').textContent).toMatch(/Comes from/);
     expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);
   });
 
@@ -178,12 +183,13 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t3').textContent).not.toMatch(/Upgrade/);
   });
 
-  it('equipar troca a peça do slot e o slot nunca esvazia (a peça continua possuída)', () => {
+  it('save com dois tiers do mesmo tipo: UM card, no tier mais alto, sem Equipar (migração: fica o mais alto)', () => {
     abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1', 'eq-nucleo-t2'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 } });
-    click(Array.from(peca('eq-nucleo-t2').querySelectorAll('button')).find((b) => /Equipar/.test(b.getAttribute('aria-label') ?? ''))!);
+    expect(document.querySelectorAll('[data-forge-piece]')).toHaveLength(3);
+    expect(estado().eq.owned).toEqual(['eq-nucleo-t2']);
     expect(estado().eq.equipped.nucleo).toBe('eq-nucleo-t2');
-    expect(document.querySelector('[data-equip-unequip]')).toBeNull();
-    expect(estado().eq.owned).toEqual(['eq-nucleo-t1', 'eq-nucleo-t2']);
+    expect(peca('eq-nucleo-t2').textContent).toMatch(/Núcleo polido/);
+    expect(document.querySelector('[data-equip-btn]')).toBeNull();
   });
 
   it('save hostil (slot forjado, nível absurdo) é descartado na carga', () => {

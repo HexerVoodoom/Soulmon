@@ -270,11 +270,6 @@ const BOWL_FOOT = 'M8.6 20.4h6.8';
 const BOX_LID =
   'M4.2 4h15.6a1 1 0 0 1 1 1v2.4a1 1 0 0 1-1 1H4.2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z';
 const BOX_BODY = 'M5.6 11.6h12.8v6.8a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2Z';
-/* Mochila (backpack): corpo arredondado, alça no topo, bolso frontal. Leitura
-   imediata a 24px; o `inventory_2` (caixa) não dizia "mochila". */
-const PACK_BODY = 'M7.4 8.2h9.2a2.4 2.4 0 0 1 2.4 2.4v7.8a2.2 2.2 0 0 1-2.2 2.2H7.2A2.2 2.2 0 0 1 5 18.4v-7.8a2.4 2.4 0 0 1 2.4-2.4Z';
-const PACK_HANDLE = 'M9.4 8.2V6.6a2.6 2.6 0 0 1 5.2 0v1.6';
-const PACK_POCKET = 'M8.6 14.6h6.8v3.4a1 1 0 0 1-1 1H9.6a1 1 0 0 1-1-1Z';
 const BOX_LATCH = 'M9.6 11.6a2.4 2.4 0 0 0 4.8 0';
 
 /**
@@ -572,11 +567,6 @@ const GLYPHS: Record<string, GlyphDef> = {
     outline: <><path d={BOX_LID} /><path d={BOX_BODY} /><path d={BOX_LATCH} /></>,
     solid: <><path d={BOX_LID} /><path d={BOX_BODY} /></>,
     holes: <>{areaHole(`${BOX_LATCH}Z`)}{strokeHole(BOX_LATCH)}</>,
-  },
-  backpack: {
-    outline: <><path d={PACK_BODY} /><path d={PACK_HANDLE} /><path d={PACK_POCKET} /></>,
-    solid: <path d={PACK_BODY} />,
-    holes: <>{areaHole(`${PACK_POCKET}Z`)}{strokeHole(PACK_POCKET)}</>,
   },
   shower: {
     outline: <><path d={SHOWER_DOME} /><path d={SHOWER_RIM} /><path d={SHOWER_RAIN} /></>,

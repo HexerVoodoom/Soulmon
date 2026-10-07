@@ -8,7 +8,7 @@ import * as require_equipment from './equipment';
 import {
   EQUIP_CATALOG, EQUIP_BY_ID, EQUIP_SLOTS, SLOT_ATTR, TIER_PCT, TIER_BITS, TIER_FRAGMENTS, FRAGMENTS_MAX, EMPTY_EQUIPMENT,
   sanitizeEquipment, equipAttrBonus, equipScalar, equipPriceDiscount, fragmentGain, discounted, equipBuyRefusal, applyEquipBuy,
-  applyEquip, addFragments, spendBits, equipPrice, COMMERCE_GAIN_CAP, PRICE_STEP,
+  addFragments, spendBits, equipPrice, COMMERCE_GAIN_CAP, PRICE_STEP,
   type EquipmentState,
 } from './equipment';
 import {
@@ -206,7 +206,7 @@ describe('4. só moeda GANHA compra equipamento; Crédito acelera só o que não
     expect(applyEquipBuy({ gamePoints: 0, equipment: { owned: ['eq-nucleo-t1'], equipped: {}, fragments: 0 } }, 'eq-nucleo-t1', 'bits').ok).toBe(false);
   });
 
-  it('fragmentos: compram sem tocar nos Bits; a troca de peça mantém a anterior possuída', () => {
+  it('fragmentos: compram sem tocar nos Bits; um tier maior no mesmo slot substitui o anterior', () => {
     const s: EState = { gamePoints: 7, equipment: { owned: [], equipped: {}, fragments: 10 } };
     const r = applyEquipBuy(s, 'eq-rastro-t1', 'fragments');
     expect(r.ok).toBe(true);
@@ -215,11 +215,11 @@ describe('4. só moeda GANHA compra equipamento; Crédito acelera só o que não
       expect(r.state.equipment!.fragments).toBe(10 - TIER_FRAGMENTS[0]);
       const r2 = applyEquipBuy({ ...r.state, equipment: { ...r.state.equipment!, fragments: 99 } } as EState, 'eq-rastro-t2', 'fragments');
       expect(r2.ok && r2.state.equipment!.equipped.rastro).toBe('eq-rastro-t1'); // slot ocupado: não troca sozinho
-      const trocado = applyEquip(r2.ok ? r2.state : r.state, 'eq-rastro-t2');
-      expect(trocado.equipment!.equipped.rastro).toBe('eq-rastro-t2');
-      expect(trocado.equipment!.owned).toContain('eq-rastro-t1');
+      // Soulsmith: uma peça por tipo — comprar um tier maior em slot ocupado deixa só o mais alto (sanitize).
+      const unico = sanitizeEquipment(r2.ok ? r2.state.equipment : r.state.equipment);
+      expect(unico.owned.filter((id) => id.startsWith('eq-rastro')).length).toBe(1);
+      expect(unico.equipped.rastro).toBe('eq-rastro-t2');
       expect('applyUnequip' in (require_equipment ?? {})).toBe(false); // não existe desequipar
-      expect(applyEquip(trocado, 'eq-nucleo-t3')).toBe(trocado); // não possuído: nada muda
     }
   });
 
@@ -227,10 +227,10 @@ describe('4. só moeda GANHA compra equipamento; Crédito acelera só o que não
     const velho = { owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-rastro-t1'], equipped: {}, fragments: 7 };
     const n = sanitizeEquipment(velho);
     expect(n.equipped).toEqual({ nucleo: 'eq-nucleo-t2', rastro: 'eq-rastro-t1' });
-    expect(n.owned).toEqual(velho.owned);
+    expect(n.owned).toEqual(['eq-nucleo-t2', 'eq-rastro-t1']); // uma peça por tipo: fica o tier mais alto
     expect(n.fragments).toBe(7);
     expect(sanitizeEquipment(n)).toEqual(n);
-    expect(sanitizeEquipment({ owned: ['eq-nucleo-t1', 'eq-nucleo-t2'], equipped: { nucleo: 'eq-nucleo-t1' } }).equipped).toEqual({ nucleo: 'eq-nucleo-t1' });
+    expect(sanitizeEquipment({ owned: ['eq-nucleo-t1', 'eq-nucleo-t2'], equipped: { nucleo: 'eq-nucleo-t1' } }).equipped).toEqual({ nucleo: 'eq-nucleo-t2' });
   });
 
   it('addFragments soma, respeita o teto e ignora lixo', () => {

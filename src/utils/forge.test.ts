@@ -108,9 +108,23 @@ describe('concessão por missão', () => {
     expect(a.equipment!.equipped.nucleo).toBe('eq-nucleo-t1');
     expect(a.forge!.levels['eq-nucleo-t1']).toBe(1);
     expect(applyForgeGrant(a, 'exploracao.masmorra')).toBe(a);
-    const b = applyForgeGrant(a, 'arena.duelo'); // 2ª peça do mesmo slot: possuída, o slot continua com a primeira
-    expect(b.equipment!.owned).toEqual(['eq-nucleo-t1', 'eq-nucleo-t2']);
-    expect(b.equipment!.equipped.nucleo).toBe('eq-nucleo-t1');
+    const b = applyForgeGrant(a, 'arena.duelo'); // 2ª peça do mesmo slot: SUBSTITUI a primeira (uma peça por tipo)
+    expect(b.equipment!.owned).toEqual(['eq-nucleo-t2']);
+    expect(b.equipment!.equipped.nucleo).toBe('eq-nucleo-t2');
+    expect(b.forge!.levels['eq-nucleo-t1']).toBeUndefined();
+  });
+  it('o tier maior herda nível e escolhas da peça que substitui (o aprimoramento nunca se perde); tier menor não entra', () => {
+    const forjada: ForgeGameState = {
+      equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
+      forge: { levels: { 'eq-nucleo-t1': 3 }, picks: { 'eq-nucleo-t1': ['b', 'a'] } },
+    };
+    const r = applyForgeGrant(forjada, 'arena.duelo');
+    expect(r.equipment!.owned).toEqual(['eq-nucleo-t2']);
+    expect(r.forge!.levels).toEqual({ 'eq-nucleo-t2': 3 });
+    expect(r.forge!.picks).toEqual({ 'eq-nucleo-t2': ['b', 'a'] });
+    expect(sum(ownedPieceBonus('eq-nucleo-t2', r.forge))).toBeCloseTo(LEVEL_PCT[0] + LEVEL_PCT[1] + LEVEL_PCT[2], 12);
+    expect(applyForgeGrant(r, 'exploracao.masmorra')).toBe(r); // o t1 não volta por cima do t2
+    expect(applyForgeGrant(r, 'arena.duelo')).toBe(r); // idempotente
   });
   it('prédio sem peça (Salão de outro, Mercado) não concede nada; quem já tinha a peça comprada não ganha de novo', () => {
     const s: ForgeGameState = {};
@@ -119,9 +133,9 @@ describe('concessão por missão', () => {
     const antigo: ForgeGameState = { equipment: eqOwn('eq-nucleo-t1') };
     expect(applyForgeGrant(antigo, 'exploracao.masmorra')).toBe(antigo);
   });
-  it('a mochila cheia nunca recusa o prêmio da missão', () => {
-    const cheio: ForgeGameState = { equipment: { owned: ['eq-nucleo-t2', 'eq-nucleo-t3', 'eq-carapaca-t2', 'eq-carapaca-t3', 'eq-rastro-t2'], equipped: { nucleo: 'eq-nucleo-t2', carapaca: 'eq-carapaca-t2', rastro: 'eq-rastro-t2' }, fragments: 0 } };
-    expect(applyForgeGrant(cheio, 'exploracao.masmorra').equipment!.owned).toHaveLength(6);
+  it('o prêmio da missão sempre chega: peça de outro tipo entra, e a de um slot cheio com tier maior substitui', () => {
+    const s: ForgeGameState = { equipment: { owned: ['eq-nucleo-t2', 'eq-carapaca-t2', 'eq-rastro-t2'], equipped: { nucleo: 'eq-nucleo-t2', carapaca: 'eq-carapaca-t2', rastro: 'eq-rastro-t2' }, fragments: 0 } };
+    expect(applyForgeGrant(s, 'arena.torneio').equipment!.owned).toEqual(['eq-carapaca-t2', 'eq-rastro-t2', 'eq-nucleo-t3']);
   });
 });
 

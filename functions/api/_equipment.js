@@ -29,22 +29,21 @@ export function sanitizeEquipment(raw) {
   if (!raw || typeof raw !== 'object') return { owned: [], equipped: {}, fragments: 0 };
   const r = /** @type {Record<string, unknown>} */ (raw);
   /** @type {string[]} */
-  const owned = [];
+  const seen = [];
   if (Array.isArray(r.owned)) {
-    for (const id of r.owned) if (typeof id === 'string' && has(EQUIP, id) && !owned.includes(id)) owned.push(id);
+    for (const id of r.owned) if (typeof id === 'string' && has(EQUIP, id) && !seen.includes(id)) seen.push(id);
   }
+  // Espelho do cliente: UMA peca por tipo (fica o tier mais alto) e ela esta sempre equipada.
+  /** @type {Record<string, string>} */
+  const best = {};
+  for (const id of seen) {
+    const slot = EQUIP[id].slot;
+    if (!best[slot] || Number(best[slot].slice(-1)) < Number(id.slice(-1))) best[slot] = id;
+  }
+  const owned = seen.filter((id) => best[EQUIP[id].slot] === id);
   /** @type {Record<string, string>} */
   const equipped = {};
-  const eq = r.equipped && typeof r.equipped === 'object' ? /** @type {Record<string, unknown>} */ (r.equipped) : {};
-  for (const slot of EQUIP_SLOTS) {
-    const id = has(eq, slot) ? eq[slot] : undefined;
-    if (typeof id === 'string' && owned.includes(id) && EQUIP[id].slot === slot) equipped[slot] = id;
-    // Espelho do cliente: peca possuida esta SEMPRE equipada (slot sem equipada volta ao tier mais alto possuido).
-    if (!equipped[slot]) {
-      const best = owned.filter((o) => EQUIP[o].slot === slot).sort((a, b) => Number(b.slice(-1)) - Number(a.slice(-1)))[0];
-      if (best) equipped[slot] = best;
-    }
-  }
+  for (const slot of EQUIP_SLOTS) if (best[slot]) equipped[slot] = best[slot];
   const f = typeof r.fragments === 'number' && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
 }

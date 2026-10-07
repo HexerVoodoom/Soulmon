@@ -233,6 +233,10 @@ interface CompanionHUDProps {
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */
   materials?: Partial<Record<string, number>>;
+  /** O "Ir lá" do material na Mochila (o App navega). */
+  onGoToBuilding?: (building: import('../utils/gates').BuildingId) => void;
+  /** DEMO LOCAL: repassado à Mochila para o "Ir lá" respeitar os prédios bloqueados. */
+  demoMode?: boolean;
   onFeed?: (foodEmoji: string) => void;
   onShower?: () => void;
   /** A mochila abriu: o ponto de "item novo" do botão pode apagar. Quem guarda
@@ -303,6 +307,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   language,
   foodInventory = {},
   materials,
+  onGoToBuilding,
+  demoMode,
   onFeed,
   onShower,
   onBackpackSeen,
@@ -1904,8 +1910,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
-            {/* F1 (01/10/2026): a MOCHILA aprovada na rodada 3, não o saquinho. */}
-            <Icon name="backpack" size={24} tone="viewport" />
+            {/* 07/10/2026 (pedido do dono): o glifo vetorial `backpack` saiu — a MOCHILA é a arte pixel aprovada na rodada 3 (`UI_ICON_ART.mochila`), a mesma linguagem do dormir e do banho ao lado. */}
+            <PixelIcon name="mochila" size={24} />
           </button>
           <button
             type="button"
@@ -1969,6 +1975,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             onClose={() => { setMochilaOpen(false); setPetIsTarget(false); }}
             foodInventory={foodInventory}
             materials={materials}
+            onGoToBuilding={onGoToBuilding}
+            demo={demoMode}
             language={language}
             onUse={handleUseItem}
             petTargetRef={rubBtnRef}
