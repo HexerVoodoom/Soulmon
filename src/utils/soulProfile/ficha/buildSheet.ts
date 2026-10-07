@@ -315,9 +315,10 @@ function allocateElementos(
   shares: Record<ElementoBaseId, number>,
   orcamento: number,
   plano?: ElementPlan,
+  fracao: number = ALLOC_FRACTION,
 ): Partial<Record<string, number>> {
   const pesos = sanitizePlan(plano);
-  const manualOrc = pesos ? Math.floor(orcamento * ALLOC_FRACTION) : 0;
+  const manualOrc = pesos ? Math.floor(orcamento * fracao) : 0;
   const autoOrc = orcamento - manualOrc;
   const manualBases = pesos
     ? apportion(pesos, CLASS_ELEMENT_ORDER, manualOrc)
@@ -382,6 +383,9 @@ export function buildFicha(
   seedKey: string = nome,
   boost?: RebirthBoost,
   plano?: ElementPlan,
+  /** PR15: fatia do orçamento de elementos que o `plano` redistribui. Sem ela, `ALLOC_FRACTION` (o renascido);
+   *  o COMPORTAMENTO passa `PESO_COMPORTAMENTO` (`comportamento.ts`). Só muda a DIREÇÃO, nunca o orçamento. */
+  fracaoPlano?: number,
 ): Ficha {
   const budget = budgetForStage(stage, boost);
 
@@ -396,6 +400,7 @@ export function buildFicha(
     focoShares,
     Math.round(ELEMENT_ORCAMENTO_BY_STAGE[stage] * (boost?.multiplier ?? 1)),
     plano,
+    typeof fracaoPlano === 'number' && Number.isFinite(fracaoPlano) ? Math.min(1, Math.max(0, fracaoPlano)) : ALLOC_FRACTION,
   );
 
   const DISTRIBUTED_ESCOLAS = ESCOLAS_TODAS;

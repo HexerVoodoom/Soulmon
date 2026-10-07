@@ -156,7 +156,7 @@ export function escolaDominante(ficha: Ficha): EscolaSkillId {
 }
 
 /** Os elementos da básica e do especial de UMA ficha (o topo base, o topo geral, e o do especial). */
-function elementosDoStage(ficha: Ficha) {
+export function elementosDoStage(ficha: Ficha) {
   const ranked = rankElementos(ficha);
   const topBase = ranked.find(r => BASE_SET.has(r.id))?.id ?? CLASS_ELEMENT_ORDER[0];
   const topGeral = ranked[0]?.id ?? topBase;
