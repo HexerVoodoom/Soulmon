@@ -104,7 +104,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
             // H11 (02/10/2026): a caixa do botão (quadrado inteiro, com alfa) NÃO recebe toque —
             // só o que é opaco no sprite (`data-area-lot-hit`) e o rótulo. Sem isso, o alfa de um
-            // prédio grande roubava o toque do vizinho (Observatório × Árvore da Evolução).
+            // prédio grande roubava o toque do vizinho (Santuário do Vínculo × Centro de Evolução).
             pointerEvents: 'none',
           }}
         >

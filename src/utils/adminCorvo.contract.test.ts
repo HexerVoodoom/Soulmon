@@ -49,7 +49,7 @@ describe('arte do pet resolve pela linha do save em todo ponto que desenha', () 
   });
 
   it.each([
-    ['src/components/PetPage.tsx', /getSpriteForStage\([^)]*demoCharacterId\)/],
+    ['src/components/PetPage.tsx', /getSpriteForStage\(.*demoCharacterId\)/],
     ['src/components/EvolutionPath.tsx', /getSpriteForStage\(currentStageId, demoCharacterId\)/],
     ['src/components/CompanionHUD.tsx', /getSpriteForStage\(evolutionStage, demoCharacterId\)/],
     ['src/components/EvolutionCeremony.tsx', /getSpriteForStage\(toStage, demoCharacterId\)/],

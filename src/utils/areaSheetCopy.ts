@@ -80,19 +80,19 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // ~73% (centro ~79%), então o Salão da Guilda desce de 72% para 78%. O `top` é o
 // pé do lote (`translate(-50%, -80%)` no `AreaScene`).
 // 🔭 01/10/2026 (H16/H17, navegação do dono): prédios MAIORES. No Laboratório o
-// Observatório fica significativamente maior que os vizinhos, e os dois de cima
+// Santuário do Vínculo (ex-Observatório) fica significativamente maior que os vizinhos, e os dois de cima
 // crescem um pouco e descem para assentar no hexágono. No Hall os três crescem.
 // 🗺️ 04/10/2026 (H18, fundos refeitos — `entrada-dono/05-bg-*`, GPT Image 2): plataformas NOVAS.
 // Medidas no fundo final renderizado em `cover` a 390×844 (o `left` é % da TELA, não da imagem:
 // o `cover` corta ~11% de cada lado, então a plataforma em 26% da imagem cai em ~22% da tela).
 // Hall: dois losangos em cima (centro ~22/37 e ~78/37 na tela) e um grande embaixo (~50/66).
-// Laboratório: o hexágono GRANDE subiu (centro ~50/41, o Observatório) e os dois menores desceram
+// Laboratório: o hexágono GRANDE subiu (centro ~50/41, o Santuário do Vínculo) e os dois menores desceram
 // (~22/66 e ~78/66). O `top` é o pé do prédio, um pouco à frente do centro da plataforma. Prévia:
 // `E:/Soulmon-assets/out/instalacao-20261004/areas/prancha-01-hall-lab-lotes.png`.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '22%', top: '70%', width: '44%' },
-  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '78%', top: '70%', width: '50%' },
-  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '43%', width: '62%' },
+  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '22%', top: '70%', width: '44%' },
+  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '78%', top: '70%', width: '50%' },
+  { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '43%', width: '62%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [

@@ -80,7 +80,7 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     for (const p of ['evolution', 'pet', 'library']) {
       expect(APP, p).not.toMatch(new RegExp(`pane === '${p}'[^\\n]*!area`));
     }
-    // G2 (02/10/2026): Estatísticas NÃO é mais página do menu da Home — só o Observatório.
+    // G2 (02/10/2026): Estatísticas NÃO é mais página do menu da Home — só o Santuário do Vínculo.
     expect(APP).not.toContain("pane === 'stats' && !area");
   });
 });

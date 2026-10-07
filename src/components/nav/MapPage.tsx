@@ -4,7 +4,7 @@ import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
 import { BitsIcon } from '../ui/BitsIcon';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
-import { areaMinBond, buildingLockLine } from '../../utils/gates';
+import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
 import zonaMercado from '../../assets/soulmon/mapa/zona-mercado.png';
@@ -162,8 +162,7 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
       {/* As 6 construções, posicionadas em % sobre o fundo. */}
       {AREAS.map(id => {
         const pos = AREA_POS[id];
-        const need = areaMinBond(id);
-        const locked = bondLevel !== undefined && bondLevel < need ? need : null;
+        const locked = areaLockedAt(id, bondLevel);
         return (
           <button
             key={id}

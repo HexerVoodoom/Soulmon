@@ -122,7 +122,7 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
   Configurações (`page:settings`), Oráculo (`page:oracle`, oculto), Guia
   (`GuideModal`), Créditos (`CreditsModal`, só se a prop existir) e "Refazer o
   ritual" (só se a prop existir). ⚠️ **Estatísticas saiu do menu em 02/10/2026
-  (G2)**: moram só no Laboratório, no lote Observatório (`labTab` `stats`).
+  (G2)**: moram só no Laboratório, no lote Santuário do Vínculo (ex-Observatório) (`labTab` `stats`).
 - **Mapa** (`'map'`, `src/components/nav/MapPage.tsx`): cena isométrica com as
   6 construções (cada uma um `<button>` que chama `goTo(areaView(id))`), o
   saldo das 3 moedas no canto inferior **direito** (⚠️ ficava no topo até
@@ -1234,9 +1234,9 @@ Três blocos, cada um com condição própria e cada um em `Suspense` com
   propósito (o contrário do Dex).
 - **Régua**: `AdventureDiary.render.test.tsx`.
 
-### 4.8 Estatísticas — Laboratório › Observatório (`labTab === 'stats'`)
+### 4.8 Estatísticas — Laboratório › Santuário do Vínculo (ex-Observatório) (`labTab === 'stats'`)
 
-**Chega por**: área Laboratório → lote Observatório (G2, 02/10/2026: não é mais página do menu da Home) · **Sai para**: os outros dois chips.
+**Chega por**: área Laboratório → lote Santuário do Vínculo (G2, 02/10/2026: não é mais página do menu da Home) · **Sai para**: os outros dois chips.
 
 Quatro cartões, cada um com condição literal dentro da `StatsPage`:
 
@@ -2245,3 +2245,7 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 | 12 | "uma **run = 5 andares**", "Concluir os 5 andares", "bônus de andar" | `CLAUDE.md` (linha ⚔️ Masmorra) e linha ⭐ ("os 5 andares da masmorra") | desde `84ae4937` (21/09/2026) o jogador lê **descida** e **camada** ("Camada N de 5", "Descer", "Descer de novo", "As 5 camadas ficaram para trás"); `run`/`floor`/`MAX_FLOORS` continuam sendo os nomes de código — vocabulário, não mecânica — §4.14 |
 | 13 | "Recusa = pet fala que está cheio (sem toast)" e a tabela 🫶 sem dizer o que acontece ao usar 💗 com a vida cheia | `CLAUDE.md` (linhas 🍎 e 🫶) | continua sem toast; mas a frase de comida cheia vem de `PET_VOICE_LINES.full` (`petVoice.ts`), não do `CompanionHUD`, e a vida cheia ao usar 💗 fala `steady` ("Tô firme. Guarda essa."), ⚰️ não mais o canal do teto de carinho (`healCapSignal`) — §4.2, §4.2b |
 | 14 | "`CoopPanel`: montado dentro da página [Biblioteca]" e "`LibraryPage` (abas Todos / Amigos / Coop)" | `03 §4.22` (antes de 29/09/2026) e `02 §56` | a aba é inalcançável (`hallContent` passa `view`); a Guilda mora em `GuildSheet` (Salão no Hall, Feira na Arena), e o comentário do `CoopPanel.tsx` é um reexport de uma linha (L1-conformidade #28) |
+
+### Prédios por Vínculo e renome do Laboratório (Tarefa A, 07/10/2026)
+
+Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/gates.ts`, espelho em `functions/api/_gates.js`, paridade em `gates.parity.test.js`; números só lá, decisão do dono, confirmada em 07/10/2026 (ajuste só em `gates.ts`)). Trancado = arte cinza + cadeado SVG com "Vínculo N"/"Bond N" (`components/ui/LockBadge.tsx`) e aviso neutro ao tocar. A área do Mapa só trava se todos os seus prédios travam (`areaLockedAt`). Sempre livres: `BUILDINGS_ALWAYS_OPEN`. Laboratório (ids internos `evolucao`/`pet`/`stats` intactos): Centro de Evolução / Evolution Center, Arquivo / Archive (sem a seção de formas anteriores), Santuário do Vínculo / Bond Sanctum.

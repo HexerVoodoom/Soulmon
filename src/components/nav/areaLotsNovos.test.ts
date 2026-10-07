@@ -14,7 +14,7 @@ describe('lotes novos (29/09/2026)', () => {
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats']);
   });
 
-  it('H15/H16/H17 (01/10/2026): Torneio e Duelo no mesmo tablado e a Feira no outro; Observatório bem maior; Hall maior', () => {
+  it('H15/H16/H17 (01/10/2026): Torneio e Duelo no mesmo tablado e a Feira no outro; Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
     expect(pct(arena.torneio.left)).toBeLessThan(50);
@@ -65,7 +65,7 @@ describe('lotes novos (29/09/2026)', () => {
     expect(fs.readFileSync(path.join(dir, 'index.ts'), 'utf8')).not.toMatch(/PLACEHOLDER_NPC_ART|poring/i);
   });
 
-  it('o nome antigo do NPC do Meu Soulmon saiu: é Bento nos dois idiomas', () => {
+  it('o nome antigo do NPC do Arquivo (ex-Meu Soulmon) saiu: é Bento nos dois idiomas', () => {
     expect(lotNpcVoice('laboratorio', 'pet', 'pt-BR').name).toMatch(/^Bento/);
     expect(lotNpcVoice('laboratorio', 'pet', 'en-US').name).toMatch(/^Bento/);
   });

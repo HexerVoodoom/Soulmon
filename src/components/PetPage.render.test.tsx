@@ -100,15 +100,11 @@ describe('a heroína no vidro 192²', () => {
     expect(document.querySelector('[data-hero]')).toBeTruthy();
   });
 
-  it('forma anterior num vidro 80² sem anel com o sprite a 64 (D-P9)', () => {
-    montar();
-    const sprite = document.querySelector<HTMLElement>('[data-form-sprite="rookie"]')!;
-    expect(sprite.style.width).toBe('64px');
-    const vidro = sprite.closest<HTMLElement>('[data-mini-glass]')!;
-    expect(vidro.style.width).toBe('80px');
-    expect(vidro.classList.contains('sm2-viewport-screen')).toBe(true);
-    // sem anel: não está dentro de um `.sm2-viewport`
-    expect(vidro.closest('.sm2-viewport')).toBeNull();
+  it('Arquivo: sem a seção "Quem seu Soulmon já foi" (formas anteriores saíram, Tarefa A)', () => {
+    const { container } = montar();
+    expect(container.querySelector('[data-form-sprite]')).toBeNull();
+    expect(container.textContent ?? '').not.toMatch(/Quem seu Soulmon já foi|Who they used to be/);
+    expect(document.querySelector('[data-hero]')).toBeTruthy();
   });
 
   it('habilidades: básica com o raio de status em pixel (04/10/2026), especial com `auto_awesome`, sem el-*.png', () => {

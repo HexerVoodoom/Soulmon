@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { GATES, gateFor, gateLine, masmorraFloorOpen, MASMORRA_ALTO_A_PARTIR_DO_ANDAR, type GateFeature } from './gates';
+import { BUILDING_GATES, BUILDINGS_ALWAYS_OPEN, buildingGateFor, areaMinBond, buildingLockLine, type BuildingId, GATES, gateFor, gateLine, masmorraFloorOpen, MASMORRA_ALTO_A_PARTIR_DO_ANDAR, type GateFeature } from './gates';
 import { BOND_PVP_MIN_LEVEL, meetsPvpBond, xpForLevel } from './bond';
 import { rebirthRefusal } from './rebirthGate';
 
@@ -119,5 +119,40 @@ describe('uma tabela só: ninguém compara o Vínculo com um número de portão'
     expect(SOLTO.test('if (bondLevel >= 5) return;')).toBe(true);
     expect(SOLTO.test('if (bondLevelFor(xp) < MIN) x();')).toBe(true);
     expect(SOLTO.test("if (gateFor('pvp', bondLevel).open) x();")).toBe(false);
+  });
+});
+
+describe('prédios por Vínculo (Tarefa A)', () => {
+  const IDS = Object.keys(BUILDING_GATES) as BuildingId[];
+  it('cada prédio abre exatamente no seu Vínculo', () => {
+    for (const id of IDS) {
+      const min = BUILDING_GATES[id].minBond;
+      expect(buildingGateFor(id, min - 1).open, `${id} ${min - 1}`).toBe(min <= 1);
+      expect(buildingGateFor(id, min).open, id).toBe(true);
+      expect(buildingGateFor(id, min + 30).open).toBe(true);
+    }
+  });
+  it('lixo cai em Vínculo 1', () => {
+    for (const l of [NaN, null, undefined, 'x', -3]) expect(buildingGateFor('hall.guilda', l).bondLevel).toBe(1);
+  });
+  it('sempre livres: mínimo 1 e abertos no Vínculo 1', () => {
+    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio']);
+    for (const id of BUILDINGS_ALWAYS_OPEN) {
+      expect(BUILDING_GATES[id].minBond).toBe(1);
+      expect(buildingGateFor(id, 1).open).toBe(true);
+    }
+  });
+  it('Arena/Feira/Torneio leem a tabela de portões (um número só)', () => {
+    expect(BUILDING_GATES['arena.duelo'].minBond).toBe(GATES.pvp.minBond);
+    expect(BUILDING_GATES['arena.feira'].minBond).toBe(GATES.pvp.minBond);
+    expect(BUILDING_GATES['arena.torneio'].minBond).toBe(GATES.torneio.minBond);
+  });
+  it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {
+    expect(areaMinBond('arena')).toBe(GATES.pvp.minBond);
+    expect(areaMinBond('hall')).toBe(2);
+    expect(areaMinBond('mercado')).toBe(1);
+    expect(buildingLockLine(4, 'en-US')).toBe('Opens at Bond 4. It grows with what you already do here.');
+    expect(buildingLockLine(4, 'pt-BR')).toContain('Vínculo 4');
+    expect(buildingLockLine(4, 'pt-BR')).not.toMatch(/faltam|falta|!/);
   });
 });

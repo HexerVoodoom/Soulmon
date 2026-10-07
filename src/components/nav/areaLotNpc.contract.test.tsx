@@ -3,7 +3,7 @@
  * H11 (02/10/2026) — O NPC de um lote é FIXO: exatamente um por lote, o mesmo em
  * qualquer abertura, em todas as áreas.
  *
- * O bug do dono: "Laboratório › Árvore da Evolução às vezes mostra o Quill, às
+ * O bug do dono: "Laboratório › Centro de Evolução (ex-Árvore da Evolução) às vezes mostra o Quill, às
  * vezes a Vesca". Não havia sorteio: a caixa quadrada (com alfa) do Observatório
  * cobria o pé da Árvore da Evolução, e o toque ali abria o OUTRO lote
  * (`areaLotGeometry.contract.test.ts` trava a geometria). Este arquivo trava o
