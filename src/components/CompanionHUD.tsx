@@ -1910,8 +1910,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
-            {/* 07/10/2026 (pedido do dono): o glifo vetorial `backpack` saiu — a MOCHILA é o glifo SVG `bag` (a arte pixel e o `backpack` foram rejeitados pelo dono). */}
-            <Icon name="bag" size={24} tone="viewport" />
+            {/* 07/10/2026 (pedido do dono): a MOCHILA é um asset PNG (pixel art, `UI_ICON_ART.itens`, o saquinho), não glifo vetorial. A arte `mochila` (32²) segue só no passeio, ao pé do pet. */}
+            <PixelIcon name="itens" size={24} />
           </button>
           <button
             type="button"

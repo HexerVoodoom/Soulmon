@@ -270,7 +270,7 @@ const BOWL_FOOT = 'M8.6 20.4h6.8';
 const BOX_LID =
   'M4.2 4h15.6a1 1 0 0 1 1 1v2.4a1 1 0 0 1-1 1H4.2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z';
 const BOX_BODY = 'M5.6 11.6h12.8v6.8a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2Z';
-/* Bolsa (bag): a MOCHILA da Home (07/10/2026, pedido do dono: SVG genérico, outro que não o backpack nem a arte pixel). */
+/* Bolsa (bag): glifo sem uso na Home desde 07/10/2026 (a mochila agora é PNG, `UI_ICON_ART.itens`). */
 const BAG_BODY = 'M5.5 8.5h13l1.2 10.4a1.6 1.6 0 0 1-1.6 1.8H5.9a1.6 1.6 0 0 1-1.6-1.8Z';
 const BAG_HANDLE = 'M9 11V7a3 3 0 0 1 6 0v4';
 const BOX_LATCH = 'M9.6 11.6a2.4 2.4 0 0 0 4.8 0';
