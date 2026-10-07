@@ -5,6 +5,7 @@ import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
+import { Icon } from './ui/Icon';
 import { UI_ICON_ART } from '../assets/soulmon/icones-ui';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
@@ -1904,7 +1905,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
             {/* F1 (01/10/2026): a MOCHILA aprovada na rodada 3, não o saquinho. */}
-            <PixelIcon name="mochila" size={24} />
+            <Icon name="backpack" size={24} tone="viewport" />
           </button>
           <button
             type="button"
