@@ -1935,6 +1935,13 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
 - **Comércio** liga dois nós: `tal-com-01` (equipamento −4% em Bits por grau) e `tal-com-02` (+5% de fragmentos por grau, até o teto de +25%). Só preço e ganho de moeda; nenhum dá % de combate.
   - Perdeu: Crédito comprando equipamento; Comércio dando bônus de combate.
 
+### 24.4 Tarefa B — árvore de talentos com pré-requisitos (07/10/2026, decisão do dono, contexto §2.37)
+
+- **Pré-requisitos no grafo** (`requires` ALL-OF, `requiresAny` ANY-OF em `src/utils/talents.ts`, espelho `_talents.js`, desenho em `talentLayout.ts`): centro, 3 caminhos, bifurcação e reencontro. Só se acrescentou o que abre cada nó; ids, graus e efeitos não mudaram.
+- **O que só viola pré-requisito é PODADO, não descartado** (decisão do dono): cliente e servidor mantêm os graus que se compram (replay em ponto fixo) e os pontos dos outros VOLTAM, sem cobrar respec. **Vetor malformado** (id inventado, grau/ponto a mais, tipo errado) segue DESCARTADO inteiro.
+  - Perdeu: descartar o vetor inteiro também por pré-requisito (castigaria o save de antes dos ramos por um dado que a pessoa não jogou).
+  - Gatilho de rever: se alguém achar forma de ganhar poder podando; hoje o que sobra é sempre um vetor válido dentro dos pontos.
+
 ### 24.2 PR7 — Vínculo como level do usuário: talentos e portões (06/10/2026)
 
 O que o PR7 implementou das decisões acima, e o que perdeu a disputa.

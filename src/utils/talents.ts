@@ -218,7 +218,7 @@ export function isValidPicks(raw: unknown, bondLevel: unknown): raw is string[] 
 }
 
 /**
- * Dado malformado (id inventado, grau a mais, pontos a mais, tipo errado) é DESCARTADO (`[]`), nunca corrigido: quem forja não
+ * (Decisão do dono, 07/10/2026, REGISTRO §24.4: podar, não descartar, o que só viola pré-requisito.) Dado malformado (id inventado, grau a mais, pontos a mais, tipo errado) é DESCARTADO (`[]`), nunca corrigido: quem forja não
  * escolhe o que sobra. Já o que só viola PRÉ-REQUISITO (§2.37: o caso de um save de antes da árvore com ramos) fica com os graus que
  * se conseguem comprar na ordem do vetor e perde os outros: os pontos deles VOLTAM (`pointsLeft`), sem cobrar respec. Nada se ganha
  * forjando, porque o que sobra é sempre um vetor válido de no máximo os pontos do Vínculo.
