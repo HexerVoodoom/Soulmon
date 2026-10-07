@@ -421,6 +421,11 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `TALENT_POINTS_MAX`, `PICKABLE`, `talentPointsFor`, `isValidPicks`, `sanitizeTalentPicks`, `talentBonus`, `talentAttrBonus` e `talentCheerScale` (PR7b: canal de PvP por atributo e rendimento da torcida do Duelo; `_duel.js › duelSide` os lê e devolve `cheerScale`).
 **Régua:** `functions/api/talents.parity.test.js`.
 
+### `functions/api/_fichaJornada.js`
+**Dono de:** o ESPELHO no servidor da parte pura do registro `fichaJornada` (PR15c): sanea a forma, recalcula o `plano` dos `galhos` (o enviado é ignorado), faz cumprir a imutabilidade por estágio contra o save gravado e dá a família gravada que o duelo lê (`_duel.js › duelSide`: vale mais que o cache editável `soulmonSkills`, e só na lista fechada). Não recalcula a família (depende de seed e Oráculo fora do save — risco aceito, REGISTRO §2.33). Nunca rejeita o save.
+**Exports:** `PESO_COMPORTAMENTO`, `MIN_AMOSTRA`, `GALHO_MAX`, `ESTAGIOS_COM_JANELA`, `FAMILIAS_VALIDAS`, `GALHO_PARA_ELEMENTO`, `cleanGalhos`, `cleanAt`, `planoDoComportamento`, `sanitizeFichaJornada`, `enforceImmutableFicha`, `fichaJornadaFamilia`.
+**Régua:** `functions/api/fichaJornada.parity.test.js`.
+
 ### `functions/api/_equipment.js`
 **Dono de:** o ESPELHO de `src/utils/equipment.ts` no servidor (PR8): sanea o campo `equipment` e o registro `bitsOrigin` do save (`save.js`) e dá a parcela de equipamento por atributo do canal de bônus do duelo (`_duel.js › duelSide`). Slot forjado é descartado; o teto de 5% limita um save forjado.
 **Exports:** `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `FRAGMENTS_MAX`, `EQUIP`, `sanitizeEquipment`, `equipAttrBonus`, `sanitizeBitsOrigin`.

@@ -40,6 +40,7 @@ import {
 import { bondLevelFor } from './_bond.js';
 import { talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist } from './_talents.js';
 import { equipAttrBonus } from './_equipment.js';
+import { fichaJornadaFamilia } from './_fichaJornada.js';
 
 export { PVP_HP_SCALE };
 
@@ -195,8 +196,11 @@ export function duelSide(save, opts = {}) {
   const basica = escolaOf(skills?.basica);
   const especial = escolaOf(skills?.especial);
   const familiaSalva = skills?.especial?.familia;
+  // PR15c: a familia GRAVADA em `fichaJornada` (saneada e imutavel no `save.js`) tem precedencia sobre o cache `soulmonSkills`,
+  // que e editavel. So vale na lista fechada; rookie nao tem registro e cai no cache como antes.
+  const gravada = fichaJornadaFamilia(state.fichaJornada, fichaStageOf(state.evolutionStage));
   const family = especial
-    ? (typeof familiaSalva === 'string' && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial])
+    ? (gravada ?? (typeof familiaSalva === 'string' && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]))
     : 'direct';
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
