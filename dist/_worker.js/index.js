@@ -3921,6 +3921,155 @@ function sanitizeBitsOrigin(raw) {
 }
 __name(sanitizeBitsOrigin, "sanitizeBitsOrigin");
 
+// api/_fichaJornada.js
+var MIN_AMOSTRA = 30;
+var GALHO_MAX = 1e5;
+var ESTAGIOS_COM_JANELA = ["champion", "ultimate", "mega", "ultra"];
+var FAMILIAS_VALIDAS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
+var GALHOS = [["poder", "power"], ["harmonia", "harmony"], ["benevolencia", "benevolence"]];
+var GALHO_PARA_ELEMENTO = {
+  poder: {
+    fogo: 0.26,
+    vileza: 0.1,
+    eletricidade: 0.1,
+    marcial: 0.1,
+    morte: 0.08,
+    vigor: 0.08,
+    terra: 0.06,
+    arcano: 0.05,
+    sombra: 0.05,
+    gravidade: 0.04,
+    ar: 0.03,
+    som: 0.03,
+    vida: 0.02
+  },
+  harmonia: {
+    arcano: 0.2,
+    ar: 0.15,
+    agua: 0.12,
+    luz: 0.1,
+    tempo: 0.08,
+    som: 0.08,
+    espaco: 0.08,
+    marcial: 0.05,
+    eletricidade: 0.04,
+    sombra: 0.04,
+    vida: 0.02,
+    terra: 0.02,
+    morte: 0.02
+  },
+  benevolencia: {
+    vida: 0.28,
+    terra: 0.22,
+    vigor: 0.16,
+    agua: 0.1,
+    luz: 0.1,
+    gravidade: 0.06,
+    sombra: 0.03,
+    arcano: 0.03,
+    marcial: 0.02
+  }
+};
+var MESES2 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function pts(v) {
+  return typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.min(v, GALHO_MAX) : 0;
+}
+__name(pts, "pts");
+function cleanGalhos(g) {
+  const o = g && typeof g === "object" ? g : {};
+  return { power: pts(o.power), harmony: pts(o.harmony), benevolence: pts(o.benevolence) };
+}
+__name(cleanGalhos, "cleanGalhos");
+function planoDoComportamento(janela) {
+  const b = GALHOS.map(([, k]) => janela && typeof janela === "object" ? typeof janela[k] === "number" && Number.isFinite(janela[k]) && janela[k] > 0 ? janela[k] : 0 : 0);
+  const total = b.reduce((a, x) => a + x, 0);
+  if (total < MIN_AMOSTRA) return null;
+  const fatias = b.map((x) => x / total);
+  const plano = {};
+  const els = new Set(GALHOS.flatMap(([g]) => Object.keys(GALHO_PARA_ELEMENTO[g])));
+  for (const el of els) {
+    let p = 0;
+    GALHOS.forEach(([g], i) => {
+      p += fatias[i] * (GALHO_PARA_ELEMENTO[g][el] ?? 0);
+    });
+    if (p > 0) plano[el] = p;
+  }
+  return plano;
+}
+__name(planoDoComportamento, "planoDoComportamento");
+function cleanAt(at, agora = Date.now()) {
+  if (typeof at !== "string") return "";
+  const s = at.trim();
+  let y;
+  let m;
+  let d;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) {
+    y = +iso[1];
+    m = +iso[2];
+    d = +iso[3];
+  } else {
+    const nat = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
+    if (!nat) return "";
+    m = MESES2.indexOf(nat[1]) + 1;
+    d = +nat[2];
+    y = +nat[3];
+  }
+  const anoMax = new Date(agora).getUTCFullYear() + 1;
+  return m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2024 && y <= anoMax ? s : "";
+}
+__name(cleanAt, "cleanAt");
+var own = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
+function sanitizeFichaJornada(raw, agora = Date.now()) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const est = (
+    /** @type {any} */
+    raw.estagios
+  );
+  if (!est || typeof est !== "object" || Array.isArray(est)) return void 0;
+  const estagios = {};
+  for (const stage of ESTAGIOS_COM_JANELA) {
+    if (!own(est, stage)) continue;
+    const e = est[stage];
+    if (!e || typeof e !== "object" || Array.isArray(e)) continue;
+    const galhos = cleanGalhos(e.galhos);
+    const out = { galhos, at: cleanAt(e.at, agora) };
+    const plano = planoDoComportamento(galhos);
+    if (plano) out.plano = plano;
+    if (typeof e.familia === "string" && FAMILIAS_VALIDAS.includes(e.familia)) out.familia = e.familia;
+    estagios[stage] = out;
+  }
+  return Object.keys(estagios).length > 0 ? { v: 1, estagios } : void 0;
+}
+__name(sanitizeFichaJornada, "sanitizeFichaJornada");
+function enforceImmutableFicha(incoming, stored, agora = Date.now()) {
+  const novo = sanitizeFichaJornada(incoming, agora);
+  const antigo = sanitizeFichaJornada(stored, agora);
+  if (!novo || !antigo) return { ficha: novo, mexeu: [] };
+  const mexeu = [];
+  const estagios = { ...novo.estagios };
+  for (const stage of ESTAGIOS_COM_JANELA) {
+    const a = antigo.estagios[stage];
+    if (!a) continue;
+    const n = estagios[stage];
+    if (n && (n.at !== a.at || n.galhos.power !== a.galhos.power || n.galhos.harmony !== a.galhos.harmony || n.galhos.benevolence !== a.galhos.benevolence || a.familia && n.familia !== a.familia)) mexeu.push(stage);
+    const familia = a.familia ?? n?.familia;
+    estagios[stage] = { ...a, ...familia ? { familia } : {} };
+  }
+  return { ficha: { v: 1, estagios }, mexeu };
+}
+__name(enforceImmutableFicha, "enforceImmutableFicha");
+function fichaJornadaFamilia(ficha, stage) {
+  if (!ESTAGIOS_COM_JANELA.includes(stage) || !ficha || typeof ficha !== "object") return null;
+  const est = (
+    /** @type {any} */
+    ficha.estagios
+  );
+  const f = est && typeof est === "object" && own(est, stage) ? est[stage]?.familia : null;
+  return typeof f === "string" && FAMILIAS_VALIDAS.includes(f) ? f : null;
+}
+__name(fichaJornadaFamilia, "fichaJornadaFamilia");
+
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
 var DUEL_TAPS_FULL = CHEER.tapsFull;
@@ -3962,7 +4111,7 @@ var ESCOLA_FAMILY = {
 };
 var SPECIAL_FAMILY_IDS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
 var FICHA_STAGES = ["rookie", "champion", "ultimate", "mega", "ultra"];
-var own = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
+var own2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
 function fichaStageOf(evolutionStage) {
   const nivel = typeof evolutionStage === "string" ? evolutionStage.split("-")[0] : "";
   return FICHA_STAGES.includes(nivel) ? nivel : "rookie";
@@ -3981,7 +4130,7 @@ function lexOf(especial, basica, familia) {
   return { n, f, el, elB };
 }
 __name(lexOf, "lexOf");
-var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" ? own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : "conjuracao" : null, "escolaOf");
+var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" ? own2(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : "conjuracao" : null, "escolaOf");
 var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
   "fogo",
   "agua",
@@ -4156,7 +4305,8 @@ function duelSide(save, opts = {}) {
   const basica = escolaOf(skills?.basica);
   const especial = escolaOf(skills?.especial);
   const familiaSalva = skills?.especial?.familia;
-  const family = especial ? typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial] : "direct";
+  const gravada = fichaJornadaFamilia(state.fichaJornada, fichaStageOf(state.evolutionStage));
+  const family = especial ? gravada ?? (typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]) : "direct";
   const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
   return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
 }
@@ -5951,13 +6101,27 @@ async function onRequest5({ request, env }) {
       if (o) state.bitsOrigin = o;
       else delete state.bitsOrigin;
     }
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if ("fichaJornada" in state) {
+      let guardado;
+      if (typeof prev?.value === "string" && prev.value.includes('"fichaJornada"')) {
+        try {
+          guardado = JSON.parse(prev.value).fichaJornada;
+        } catch {
+          guardado = void 0;
+        }
+      }
+      const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
+      if (mexeu.length) console.warn("save: estagio da fichaJornada ja gravado, mantido o do servidor", { saveId, estagios: mexeu });
+      if (ficha) state.fichaJornada = ficha;
+      else delete state.fichaJornada;
+    }
     const serialized = JSON.stringify(state);
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
     if (bytes > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
     }
-    const prev = await kvOrThrow(env).getWithMetadata(saveId);
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
@@ -6370,7 +6534,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-peSyie/functionsRoutes-0.7613149666000023.mjs
+// ../.wrangler/tmp/pages-5ieIFC/functionsRoutes-0.39804075019666185.mjs
 var routes = [
   {
     routePath: "/api/account",
