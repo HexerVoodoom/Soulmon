@@ -1910,8 +1910,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
-            {/* 07/10/2026 (pedido do dono): a MOCHILA é um asset PNG (pixel art, `UI_ICON_ART.itens`, o saquinho), não glifo vetorial. A arte `mochila` (32²) segue só no passeio, ao pé do pet. */}
-            <PixelIcon name="itens" size={24} />
+            {/* 07/10/2026 (pedido do dono): a MOCHILA é um asset PNG (pixel art `UI_ICON_ART.mochila`, com a aba turquesa recolorida para marrom), não glifo vetorial. A mesma arte aparece no passeio, ao pé do pet. */}
+            <PixelIcon name="mochila" size={24} />
           </button>
           <button
             type="button"
