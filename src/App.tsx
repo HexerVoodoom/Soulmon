@@ -94,7 +94,11 @@ import { soulLevel, soulLevelLine } from './utils/soulXP';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
-import { requestNotificationPermission, showNotification } from './utils/notifications';
+import { showNotification } from './utils/notifications';
+import {
+  decidePermissionAction, platformForPermission, readPlatformPermission,
+  requestPlatformPermission, openSystemNotificationSettings, settingsGuidance,
+} from './utils/notificationPermission';
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
 import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
@@ -1185,6 +1189,39 @@ export default function App() {
       && readFlagState(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'absent') return;
     writeFlag(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled, { silent: true });
   }, [notificationsEnabled]);
+
+  // PRIMEIRA ABERTURA (pedido do dono, 07/10/2026): o pedido nativo de
+  // permissão de notificação, UMA vez só (flag gravada ao PEDIR — negado não
+  // é cobrado de novo). Espera o splash terminar; não é modal nosso, então não
+  // tranca onboarding nem entra na fila de intersticiais. APK: pede direto.
+  // Web: o navegador exige gesto (`click` ativa; `pointerdown` de toque não), então o pedido vai no PRIMEIRO TOQUE.
+  useEffect(() => {
+    if (showIntro) return;
+    if (readFlag(STORAGE_KEYS.NOTIFICATION_FIRST_OPEN_ASKED)) return;
+    let cancelled = false;
+    const platform = platformForPermission();
+    const run = async () => {
+      const action = decidePermissionAction({
+        platform, state: await readPlatformPermission(), trigger: 'first-open', firstOpenAsked: false,
+      });
+      if (cancelled) return;
+      if (action === 'none') {
+        // Já negada ou sem suporte: nada a pedir, e nunca mais tentar daqui.
+        writeFlag(STORAGE_KEYS.NOTIFICATION_FIRST_OPEN_ASKED, true, { silent: true });
+        return;
+      }
+      writeFlag(STORAGE_KEYS.NOTIFICATION_FIRST_OPEN_ASKED, true, { silent: true });
+      const granted = action === 'register'
+        || (await requestPlatformPermission()) === 'granted';
+      // Só liga a preferência para quem NÃO escolheu nada nesta sessão.
+      if (granted && !notifTouchedRef.current) setNotificationsEnabled(true);
+    };
+    if (platform === 'native') { void run(); return () => { cancelled = true; }; }
+    const onGesture = () => { removeGesture(); void run(); };
+    const removeGesture = () => window.removeEventListener('click', onGesture, true);
+    window.addEventListener('click', onGesture, { capture: true, once: true });
+    return () => { cancelled = true; removeGesture(); };
+  }, [showIntro]);
 
   // ─────────────────────────────────────────────────────────── B-R1
   //
@@ -5392,27 +5429,34 @@ export default function App() {
   }, []);
 
   // Handle toggle notifications
+  // Pedido do dono (07/10/2026): ao LIGAR, sempre o pedido NATIVO da plataforma
+  // (decisor puro em `utils/notificationPermission.ts`). No web o pedido tem de
+  // nascer dentro do gesto — por isso nenhum `await` de outra coisa antes dele.
   const handleToggleNotifications = async () => {
     notifTouchedRef.current = true;
     if (!notificationsEnabled) {
-      // Request permission when enabling.
-      // NOTE: requestNotificationPermission is imported statically (not via dynamic
-      // import) so the browser permission prompt stays inside the user-gesture and
-      // actually shows up. A dynamic import here loses the user-activation context.
-      const granted = await requestNotificationPermission();
+      const platform = platformForPermission();
+      const action = decidePermissionAction({
+        platform, state: await readPlatformPermission(), trigger: 'toggle',
+        firstOpenAsked: readFlag(STORAGE_KEYS.NOTIFICATION_FIRST_OPEN_ASKED),
+      });
+      let granted = action === 'register';
+      if (action === 'request') granted = (await requestPlatformPermission()) === 'granted';
       if (granted) {
         setNotificationsEnabled(true);
       } else {
-        // User denied permission - guide them to browser settings
-        toast.warning(
-          language === 'pt-BR' ? '🔔 Permissão Negada' : '🔔 Permission Denied',
-          {
-            description: language === 'pt-BR'
-              ? 'Clique no cadeado 🔒 na barra de endereço → Notificações → Permitir, depois recarregue.'
-              : 'Click the lock 🔒 in the address bar → Notifications → Allow, then reload the page.',
-            duration: 8000,
-          }
-        );
+        // Negada e o sistema não pergunta mais: o caminho, em texto curto.
+        const g = settingsGuidance(platform, language === 'pt-BR');
+        toast.warning(g.title, {
+          description: g.description,
+          duration: 8000,
+          ...(platform === 'native' ? {
+            action: {
+              label: language === 'pt-BR' ? 'Abrir ajustes' : 'Open settings',
+              onClick: () => { void openSystemNotificationSettings(); },
+            },
+          } : {}),
+        });
       }
     } else {
       // Disable notifications

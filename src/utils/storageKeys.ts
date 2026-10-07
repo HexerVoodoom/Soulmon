@@ -27,6 +27,8 @@ export const STORAGE_KEYS = {
   EGG_TYPE: 'soulmon-egg-type',
   FIRST_TASK_POPUP_SHOWN: 'soulmon-first-task-popup-shown',
   NOTIFICATIONS_ENABLED: 'soulmon-notifications-enabled',
+  /** O pedido de permissão da PRIMEIRA abertura já foi feito (uma vez só). */
+  NOTIFICATION_FIRST_OPEN_ASKED: 'soulmon-notification-first-open-asked',
   PWA_INSTALL_DISMISSED: 'soulmon-pwa-install-dismissed',
   NOTIFICATION_PROMPT_DISMISSED: 'soulmon-notification-prompt-dismissed',
   /** WP1.5 — QUANDO o primeiro convite foi dispensado (epoch ms). A chave

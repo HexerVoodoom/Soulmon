@@ -11,6 +11,8 @@ export interface SoulmonAlarmPlugin {
   canScheduleExact(): Promise<{ exact: boolean }>;
   /** Abre a tela do sistema. Só chamar em resposta a um gesto do usuário. */
   openExactAlarmSettings(): Promise<void>;
+  /** Abre as notificações do app nas configurações do sistema. Só por gesto. */
+  openNotificationSettings(): Promise<void>;
 }
 
 export const SoulmonAlarm = registerPlugin<SoulmonAlarmPlugin>('SoulmonAlarm', {
@@ -19,5 +21,6 @@ export const SoulmonAlarm = registerPlugin<SoulmonAlarmPlugin>('SoulmonAlarm', {
     async cancelAlarm() {},
     async canScheduleExact() { return { exact: true }; },
     async openExactAlarmSettings() {},
+    async openNotificationSettings() {},
   },
 });
