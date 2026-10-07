@@ -86,6 +86,25 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
+      # Chave de DEPURACAO fixa (dono, 07/10/2026): sem ela, cada build gera uma
+      # `~/.android/debug.keystore` nova no runner, o SHA-1 muda a cada APK e o
+      # Firebase (login com Google) recusa o app ("Could not sign in right now").
+      # O secret `ANDROID_DEBUG_KEYSTORE_BASE64` e o debug.keystore do dono em
+      # base64 (SHA-1 BC:AE:E2:D8:..., ja cadastrado no Firebase). Sem o secret,
+      # o build segue com a chave efemera de sempre. So vale para DEBUG: a
+      # keystore de release e outra (ver o bloco mais abaixo).
+      - name: Restore fixed debug keystore
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$DEBUG_KEYSTORE_BASE64" ]; then
+            echo "Sem ANDROID_DEBUG_KEYSTORE_BASE64: usando a chave de debug efemera do runner."
+          else
+            mkdir -p "$HOME/.android"
+            printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$HOME/.android/debug.keystore"
+            echo "Chave de debug fixa restaurada."
+          fi
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
