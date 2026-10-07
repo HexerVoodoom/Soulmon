@@ -19,6 +19,9 @@ import type { Combatant } from './combate/curve';
 
 const PVP_IDS = ['tal-pvp-01', 'tal-pvp-02', 'tal-pvp-03'];
 const todosPvp = () => PVP_IDS.flatMap((id) => Array(TALENT_BY_ID.get(id)!.maxRank).fill(id) as string[]);
+/** Pré-requisitos do grafo (PR B1): a torcida pede ATK 2 + DEF 2; a Balança pede Comércio 01 x2 + 03 x2. */
+const ATE_TORCIDA = ['tal-pvp-01', 'tal-pvp-01', 'tal-pvp-02', 'tal-pvp-02'];
+const torcidaCom = (n: number) => [...ATE_TORCIDA, ...Array(n).fill('tal-pvp-05')] as string[];
 const todosPve = () => ['tal-pve-01', 'tal-pve-02'].flatMap((id) => Array(TALENT_BY_ID.get(id)!.maxRank).fill(id) as string[]);
 
 describe('1. pontos = level do Vínculo; vetor inválido é DESCARTADO', () => {
@@ -94,7 +97,7 @@ describe('2. a árvore nunca fecha', () => {
     expect(balanca.effect).toEqual({ kind: 'respecOne' });
     expect(isPickable(torcida) && isPickable(balanca)).toBe(true);
     // 3 graus de torcida = exatamente o teto do núcleo (CHEER_SCALE_MAX): o talento nunca passa dele
-    expect(talentCheerScale(Array(3).fill('tal-pvp-05'), 20)).toBeCloseTo(CHEER_SCALE_MAX, 12);
+    expect(talentCheerScale(torcidaCom(3), 20)).toBeCloseTo(CHEER_SCALE_MAX, 12);
   });
 
   it('o Comércio nunca dá % de combate nem rendimento de torcida', () => {
@@ -232,9 +235,12 @@ describe('PR7b: o canal de PvP é POR ATRIBUTO, com UM teto de 5% na soma', () =
   };
 
   it('cada nó de PvP cai no SEU canal (ATK/DEF/SPD distintos)', () => {
-    expect(talentAttrBonus(Array(4).fill('tal-pvp-01'), 20)).toEqual({ atk: 4 * 0.004, def: 0, spd: 0 });
-    expect(talentAttrBonus(Array(4).fill('tal-pvp-02'), 20)).toEqual({ atk: 0, def: 4 * 0.004, spd: 0 });
-    expect(talentAttrBonus(Array(4).fill('tal-pvp-03'), 20)).toEqual({ atk: 0, def: 0, spd: 4 * 0.004 });
+    const um = Array(4).fill('tal-pvp-01') as string[];
+    expect(talentAttrBonus(um, 20)).toEqual({ atk: 4 * 0.004, def: 0, spd: 0 });
+    expect(talentAttrBonus([...um, ...Array(4).fill('tal-pvp-02')], 20)).toEqual({ atk: 4 * 0.004, def: 4 * 0.004, spd: 0 });
+    expect(talentAttrBonus([...um, ...Array(4).fill('tal-pvp-03')], 20)).toEqual({ atk: 4 * 0.004, def: 0, spd: 4 * 0.004 });
+    // sem o pré-requisito o nó não vale nada: DEF sozinho é vetor inválido
+    expect(talentAttrBonus(Array(4).fill('tal-pvp-02'), 20)).toEqual({ atk: 0, def: 0, spd: 0 });
     expect(talentAttrBonus(todosPve(), 20)).toEqual({ atk: 0, def: 0, spd: 0 });
     expect(talentAttrBonus(todosPvp(), 5)).toEqual({ atk: 0, def: 0, spd: 0 }); // inválido para o Vínculo vale 0
   });
@@ -295,9 +301,9 @@ describe('PR7b: tal-pvp-05, a torcida do Duelo (redesenhado)', () => {
   const TETO = Array(20).fill(16);
   it('sem o nó vale 1; 3 graus = +15%, o teto do núcleo; inválido para o Vínculo vale 1', () => {
     expect(talentCheerScale([], 20)).toBe(1);
-    expect(talentCheerScale(Array(2).fill('tal-pvp-05'), 20)).toBeCloseTo(1.1, 12);
-    expect(talentCheerScale(Array(3).fill('tal-pvp-05'), 20)).toBeCloseTo(1.15, 12);
-    expect(talentCheerScale(Array(3).fill('tal-pvp-05'), 2)).toBe(1);
+    expect(talentCheerScale(torcidaCom(2), 20)).toBeCloseTo(1.1, 12);
+    expect(talentCheerScale(torcidaCom(3), 20)).toBeCloseTo(1.15, 12);
+    expect(talentCheerScale(torcidaCom(3), 2)).toBe(1);
   });
   it('só rende quando você torce: sem toques o talento não muda nada', () => {
     const a = { combatant: combatantAt(10, REFERENCE_BUILDS.balanced), special: specialOf('direct') };
@@ -337,7 +343,7 @@ describe('PR7b: tal-pvp-05, a torcida do Duelo (redesenhado)', () => {
 });
 
 describe('PR7b: tal-com-05, a Balança (refazer UM ponto)', () => {
-  const picks = ['tal-pvp-01', 'tal-pvp-01', 'tal-pve-01', 'tal-com-05'];
+  const picks = ['tal-pvp-01', 'tal-pvp-01', 'tal-pve-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05'];
   it('sem o nó não existe (e não cobra): a única saída é refazer tudo', () => {
     expect(canRespecOne(['tal-pvp-01'])).toBe(false);
     expect(applyRespecOne({ talentPicks: ['tal-pvp-01'], gamePoints: 999 }, 'tal-pvp-01')).toEqual({ ok: false, reason: 'locked', cost: RESPEC_COST_PER_POINT });
@@ -346,19 +352,19 @@ describe('PR7b: tal-com-05, a Balança (refazer UM ponto)', () => {
     const r = applyRespecOne({ talentPicks: picks, gamePoints: 100, x: 1 }, 'tal-pvp-01');
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.cost).toBe(RESPEC_COST_PER_POINT);
-      expect(r.state.talentPicks).toEqual(['tal-pvp-01', 'tal-pve-01', 'tal-com-05']);
-      expect(r.state.gamePoints).toBe(100 - RESPEC_COST_PER_POINT);
+      expect(r.cost).toBe(respecOneCost(picks)); // a ampulheta (com-03 x2) já barateia
+      expect(r.state.talentPicks).toEqual(['tal-pvp-01', 'tal-pve-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05']);
+      expect(r.state.gamePoints).toBe(100 - respecOneCost(picks));
       expect(r.state.x).toBe(1);
     }
     expect(respecOneCost(picks)).toBeLessThan(respecCost(picks)); // um ponto sai mais barato que a árvore
   });
   it('a ampulheta do Comércio barateia, o preço nunca zera, e sem Bits ou sem o grau nada muda', () => {
-    const com = [...picks, ...Array(4).fill('tal-com-03')];
+    const com = [...picks, ...Array(2).fill('tal-com-03')];
     expect(respecOneCost(com)).toBeLessThan(RESPEC_COST_PER_POINT);
     expect(respecOneCost(com)).toBeGreaterThan(0);
-    expect(applyRespecOne({ talentPicks: picks, gamePoints: 5 }, 'tal-pvp-01')).toEqual({ ok: false, reason: 'no-bits', cost: RESPEC_COST_PER_POINT });
-    expect(applyRespecOne({ talentPicks: picks, gamePoints: 100 }, 'tal-pvp-02')).toEqual({ ok: false, reason: 'not-picked', cost: RESPEC_COST_PER_POINT });
+    expect(applyRespecOne({ talentPicks: picks, gamePoints: 5 }, 'tal-pvp-01')).toEqual({ ok: false, reason: 'no-bits', cost: respecOneCost(picks) });
+    expect(applyRespecOne({ talentPicks: picks, gamePoints: 100 }, 'tal-pvp-02')).toEqual({ ok: false, reason: 'not-picked', cost: respecOneCost(picks) });
     expect(applyRespecOne({ talentPicks: picks, gamePoints: NaN }, 'tal-pvp-01').ok).toBe(false);
   });
 });

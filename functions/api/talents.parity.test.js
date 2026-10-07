@@ -63,14 +63,16 @@ async function salva(state) {
   return JSON.parse(env.DIGIAPP_SAVES.store.get(ID));
 }
 const GRAUS = (id, n) => Array(n).fill(id);
+const ATE_TORCIDA = [...GRAUS('tal-pvp-01', 2), ...GRAUS('tal-pvp-02', 2)];
+const TORCIDA_E_BALANCA = [...ATE_TORCIDA, ...GRAUS('tal-pvp-05', 3), ...GRAUS('tal-com-01', 2), ...GRAUS('tal-com-03', 2), 'tal-com-05'];
 
 describe('save.js valida talentPicks contra o Vinculo do proprio save', () => {
   it('picks validos para o Vinculo passam intactos', async () => {
-    const out = await salva({ totalXP: xpForLevel(6), talentPicks: [...GRAUS('tal-pvp-01', 4), 'tal-pve-01', 'tal-pve-02'] });
+    const out = await salva({ totalXP: xpForLevel(6), talentPicks: [...GRAUS('tal-pvp-01', 3), 'tal-pve-01', 'tal-pve-01', 'tal-pve-02'] });
     expect(out.talentPicks).toHaveLength(6);
   });
   it('1 pick a mais que os pontos do level: o vetor INTEIRO e descartado (nao corrigido)', async () => {
-    const out = await salva({ totalXP: xpForLevel(5), talentPicks: [...GRAUS('tal-pvp-01', 4), 'tal-pve-01', 'tal-pve-02'] });
+    const out = await salva({ totalXP: xpForLevel(5), talentPicks: [...GRAUS('tal-pvp-01', 3), 'tal-pve-01', 'tal-pve-01', 'tal-pve-02'] });
     expect(out.talentPicks).toEqual([]);
   });
   it('XP forjado ausente/lixo = Vinculo 1: so cabe 1 ponto', async () => {
@@ -85,8 +87,8 @@ describe('save.js valida talentPicks contra o Vinculo do proprio save', () => {
     }
   });
   it('PR7b: os nos redesenhados (torcida e balanca) sao validos, dentro do grau maximo', async () => {
-    const out = await salva({ totalXP: xpForLevel(20), talentPicks: [...GRAUS('tal-pvp-05', 3), 'tal-com-05'] });
-    expect(out.talentPicks).toEqual(['tal-pvp-05', 'tal-pvp-05', 'tal-pvp-05', 'tal-com-05']);
+    const out = await salva({ totalXP: xpForLevel(20), talentPicks: TORCIDA_E_BALANCA });
+    expect(out.talentPicks).toEqual(TORCIDA_E_BALANCA);
   });
   it('save sem o campo continua sem o campo (a contagem de campos nao muda no servidor)', async () => {
     expect('talentPicks' in (await salva({ totalXP: 5 }))).toBe(false);
@@ -113,9 +115,10 @@ describe('o duelo usa o talento pelo canal de bonus, DENTRO do teto', () => {
     for (const k of ['atk', 'def', 'spd']) expect(x[k], k).toBeCloseTo(0.016, 9);
     expect(soma(c)).toBeGreaterThan(0.04);
     expect(soma(c)).toBeLessThanOrEqual(COMBAT_BONUS_CAP + 1e-9);
-    const so = (id) => canais(duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: GRAUS(id, 4) }).combatant);
+    const so = (id) => canais(duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: id === 'tal-pvp-01' ? GRAUS(id, 4) : [...GRAUS('tal-pvp-01', 2), ...GRAUS(id, 4)] }).combatant);
     expect(so('tal-pvp-01').def).toBeCloseTo(0, 12);
-    expect(so('tal-pvp-02').atk).toBe(0);
+    expect(so('tal-pvp-02').def).toBeCloseTo(0.016, 9);
+    expect(so('tal-pvp-02').spd).toBeCloseTo(0, 12);
     expect(so('tal-pvp-03').def).toBeCloseTo(0, 12);
     expect(so('tal-pvp-03').spd).toBeCloseTo(0.016, 9);
   });
@@ -134,7 +137,7 @@ describe('o duelo usa o talento pelo canal de bonus, DENTRO do teto', () => {
     expect(bondLevelFor(0)).toBe(1);
   });
   it('a torcida (tal-pvp-05) vira cheerScale do lado, limitada pelo teto do nucleo; vale so quando ha toques', () => {
-    const s = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: GRAUS('tal-pvp-05', 3) });
+    const s = duelSide({ ...base, totalXP: xpForLevel(20), talentPicks: [...ATE_TORCIDA, ...GRAUS('tal-pvp-05', 3)] });
     expect(s.cheerScale).toBeCloseTo(1.15, 12);
     expect(s.cheerScale).toBeLessThanOrEqual(srv2.CHEER_SCALE_MAX);
     const lado = { combatant: s.combatant, special: s.special };
