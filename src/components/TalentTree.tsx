@@ -55,6 +55,15 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
   const [sel, setSel] = useState<string>(TALENT_TREE[0].id);
   const [zoomIdx, setZoomIdx] = useState(1);
   const boardRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // O hub fica no meio da janela de rolagem ao abrir e a cada zoom (o tabuleiro é maior que a tela).
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const z = ZOOMS[zoomIdx];
+    el.scrollLeft = HUB_POINT.x * z - el.clientWidth / 2;
+    el.scrollTop = HUB_POINT.y * z - el.clientHeight / 2;
+  }, [zoomIdx, !!ctx]);
   if (!ctx) return null; // sem save (demo, testes): não há o que gastar
   const isPt = language === 'pt-BR';
   const { gameState, setGameState } = ctx;
@@ -187,7 +196,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
           onClick={() => setZoomIdx((z) => Math.min(ZOOMS.length - 1, z + 1))} aria-label={isPt ? 'Aproximar' : 'Zoom in'}>+</button>
       </div>
 
-      <div className="sm-talent-scroll" tabIndex={-1} style={{ overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>
+      <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} style={{ overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>
         <div style={{ width: BOARD.width * zoom, height: BOARD.height * zoom, position: 'relative' }}>
           <div ref={boardRef} role="group" aria-label={isPt ? 'Árvore de talentos' : 'Talent tree'}
             style={{ position: 'absolute', left: 0, top: 0, width: BOARD.width, height: BOARD.height, transform: `scale(${zoom})`, transformOrigin: '0 0' }}>
