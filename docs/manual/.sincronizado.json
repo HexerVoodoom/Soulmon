@@ -1,6 +1,6 @@
 {
-  "sha": "e3d55bb82483890366c1f85ea6fe8ab1dfc694ae",
-  "data": "01/10/2026",
-  "por": "doc-mantenedor (/manter-docs auto, sessão: delta bcfe7ca6..e3d55bb8 — PRs #189–#197, rodada 3 de arte)",
+  "sha": "e71061b8d69e7a017a67f742fc6b513f85e5529b",
+  "data": "07/10/2026",
+  "por": "doc-mantenedor (/manter-docs, sessão: delta e3d55bb8..e71061b8 — Combate v3 PR1–PR18, prédios por Vínculo, missões na Home, avatar/perfil)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
