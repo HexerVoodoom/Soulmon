@@ -40,8 +40,10 @@ export function ProfileAvatarButton({ avatarId, frameId, seed, level, language, 
           aria-hidden="true"
           style={{
             position: 'absolute', right: -6, bottom: -8, zIndex: 1, pointerEvents: 'none',
-            padding: '1px 5px', borderRadius: 8, fontSize: 11, lineHeight: '14px', fontWeight: 700,
-            background: 'var(--sm2-surface-2)', color: 'var(--sm2-primary-ink)', boxShadow: '0 0 0 1px var(--sm2-line)',
+            padding: '1px 3px', fontSize: 11, lineHeight: '14px', fontWeight: 700,
+            // Contorno FINO (1px, pedido do dono 07/10/2026): só o bastante para ler sobre a foto.
+            background: 'transparent', color: 'var(--sm2-primary-ink)',
+            textShadow: '1px 0 0 var(--sm2-surface), -1px 0 0 var(--sm2-surface), 0 1px 0 var(--sm2-surface), 0 -1px 0 var(--sm2-surface)',
           }}
         >{language === 'pt-BR' ? 'Nv' : 'Lv'} {level}</span>
       )}

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
@@ -6,7 +6,7 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { NPC_MAX_WIDTH_PCT, NPC_PORTRAIT_ZOOM, NPC_PORTRAIT_ORIGIN } from './npcScale';
+import { NPC_MAX_WIDTH_PCT, NPC_PORTRAIT_ZOOM, NPC_PORTRAIT_ORIGIN, NPC_TOP_PAD_PX, measureNpcTopTrim, npcTopTrimCached } from './npcScale';
 import { Icon } from '../ui/Icon';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
@@ -53,6 +53,14 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   // `inert`, Escape e o foco DEVOLVIDO ao lote que abriu, nunca ao `<body>`.
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   const { slot, slotRef } = useModalInfoSlot();
+  const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
+  const [trimed, setTrimed] = useState<{ src: string; t: number } | null>(null);
+  useEffect(() => {
+    if (!open || !npcKey || npcTopTrimCached(npcKey) !== undefined) return;
+    let live = true;
+    measureNpcTopTrim(npcKey).then(t => { if (live) setTrimed({ src: npcKey, t }); });
+    return () => { live = false; };
+  }, [open, npcKey]);
 
   if (!open) return null;
 
@@ -124,9 +132,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             zIndex: 0,
             position: 'relative',
             display: 'flex', alignItems: 'flex-end', gap: 8,
-            // O topo reserva a faixa do ✕ (44 + 12 de margem + 4): o NPC
-            // começa ABAIXO dele, nunca atrás.
-            padding: 'calc(env(safe-area-inset-top, 0px) + 60px) 12px 4px 12px',
+            // O busto sobe até `NPC_TOP_PAD_PX` (07/10/2026): o ✕ flutua sobre
+            // o canto vazio da arte em vez de reservar uma faixa de 60px.
+            padding: `calc(env(safe-area-inset-top, 0px) + ${NPC_TOP_PAD_PX}px) 12px 4px 12px`,
             boxSizing: 'border-box',
             overflow: 'hidden',
             pointerEvents: 'none',
@@ -146,8 +154,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               aria-hidden="true"
               data-area-sheet-npc
               style={{
-                width: '100%', height: '100%', display: 'block', objectFit: 'contain', objectPosition: 'bottom',
-                transform: `scale(${NPC_PORTRAIT_ZOOM})`, transformOrigin: NPC_PORTRAIT_ORIGIN,
+                width: '100%', height: '100%', display: 'block', objectFit: 'contain', objectPosition: 'top',
+                transform: `translateY(${-100 * NPC_PORTRAIT_ZOOM * (npcTopTrimCached(npcSrc) ?? (trimed?.src === npcSrc ? trimed.t : 0))}%) scale(${NPC_PORTRAIT_ZOOM})`, transformOrigin: NPC_PORTRAIT_ORIGIN,
                 pointerEvents: 'none',
                 filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
               }}

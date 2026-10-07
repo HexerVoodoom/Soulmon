@@ -271,55 +271,6 @@ export function formatEspera(ms: number): string {
   return `${p(Math.floor(total / 60))}:${p(total % 60)}`;
 }
 
-/** `AAAA-MM-DD` → "3 out" / "Oct 3" (o dia do jogador, sem fuso). */
-function diaCurto(day: string, isPt: boolean): string {
-  const [y, m, d] = day.split('-').map(Number);
-  if (!y || !m || !d) return day;
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-}
-
-/**
- * O REGISTRO das missões feitas (rodada 7, M6): um diário, não um placar — dia,
- * título e cenário, as mais recentes primeiro. Sem total, sem sequência.
- */
-function Registro({ log, isPt }: { log: CrossingsState['log']; isPt: boolean }) {
-  const [aberto, setAberto] = useState(false);
-  if (log.length === 0) return null;
-  const itens = [...log].reverse();
-  return (
-    <div data-travessias-registro style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <hr style={divider} />
-      <button
-        type="button"
-        data-registro-abrir
-        aria-expanded={aberto}
-        aria-controls="sm2-registro-lista"
-        onClick={() => setAberto(v => !v)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8, width: '100%', minHeight: 44, padding: 0,
-          background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
-        }}
-      >
-        <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Registro' : 'Logbook'}</p>
-        <Icon name={aberto ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
-      </button>
-      {aberto && (
-        <ul id="sm2-registro-lista" style={{ ...list, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {itens.map((e, i) => {
-            const titulo = travessiaTitle(e.challenge, isPt) ?? e.challenge;
-            return (
-              <li key={`${e.day}-${e.challenge}-${i}`} data-registro-item={e.challenge} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{titulo}</span>
-                <span style={{ ...note, flexShrink: 0 }}>{diaCurto(e.day, isPt)}</span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp }: {
   language: Language;
   crossings: CrossingsState;
@@ -441,8 +392,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
             <span>{isPt ? `Marcos de Aventura · ${crossings.score}` : `Adventure Milestones · ${crossings.score}`}</span>
           </p>
         )}
-
-        <Registro log={crossings.log} isPt={isPt} />
 
         <p data-travessias-seguranca style={{ ...note, fontSize: 'var(--sm2-text-xs)' }}>
           {isPt
