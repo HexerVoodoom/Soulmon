@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { arenaLots, hallLots, laboratorioLots } from '../../utils/areaSheetCopy';
+import { arenaLots, hallLots, laboratorioLots, mercadoLots } from '../../utils/areaSheetCopy';
+import { BUILDING_GATES } from '../../utils/gates';
 import { lotNpcVoice, areaNpcVoice } from '../../utils/areaNpcVoice';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -98,3 +99,19 @@ describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
     }
   });
 });
+
+describe('o Ferreiro (07/10/2026): lote do Mercado para os equipamentos', () => {
+  it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Mallo', () => {
+    expect(mercadoLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Blacksmith');
+    expect(mercadoLots('pt-BR').find(l => l.id === 'ferreiro')?.label).toBe('Ferreiro');
+    expect(BUILDING_GATES['mercado.ferreiro'].minBond).toBe(2);
+    expect(lotNpcVoice('mercado', 'ferreiro', 'en-US').name).toContain('Mallo');
+    expect(lotNpcVoice('mercado', 'ferreiro', 'pt-BR').name).toContain('Mallo');
+  });
+  it('a folha do lote abre a EquipmentCard, e as Estatísticas não a montam mais', () => {
+    const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');
+    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && <EquipmentCard/);
+    expect(lerSrc('../StatsPage.tsx')).not.toMatch(/<EquipmentCard/);
+  });
+});
+

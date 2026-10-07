@@ -16,6 +16,8 @@ import loteDecoracao from './lote-loja-decoracao.png';
 import loteBackground from './lote-loja-background.png';
 import loteFeira from './lote-arena-feira.png';
 import loteMercadoConquistas from './lote-mercado-conquistas.png';
+// ⚒️ 07/10/2026: o Ferreiro — a oficina de lava do domínio Fogo (`dominios/fogo/predios/lote-fogo-oficina`). Pedido de arte PRÓPRIA em `docs/ARTE-MELHORIAS-FUTURAS.md`.
+import loteFerreiro from './lote-mercado-ferreiro.png';
 import loteTorneio from './lote-arena-torneio.png';
 import loteDuelo from './lote-arena-duelo.png';
 
@@ -29,6 +31,7 @@ export const MERCADO_LOT_ART = {
   background: loteBackground,
   // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
   conquistas: loteMercadoConquistas,
+  ferreiro: loteFerreiro,
 } as const;
 
 // `feira` (01/10/2026, leva lotes-v2 `lote-arena-feira`, versão limpa): a tenda-cúpula listrada própria.
@@ -49,9 +52,13 @@ import lotePasseio from './lote-exploracao-passeio.png';
 // e do Caderno (casinha-tinteiro com pena, NPC Sépia) — `entrada-dono/lote-exploracao-*` (GPT Image 2.5
 // Flare, alfa real), mesmo pós dos lotes-v2 (300², alfa binário). Até aqui emprestavam o Observatório e a
 // Biblioteca. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
-import loteOficina from './lote-exploracao-oficina.png';
-import loteCaderno from './lote-exploracao-caderno.png';
-import loteMente from './lote-jogos-mente.png';
+import loteOficina from './lote-exploracao-oficina-deserto.png';
+import loteCaderno from './lote-exploracao-caderno-campina.png';
+// 🎨 07/10/2026 (reforma dos lotes): prédios de DOMÍNIO (`../../dominios/<dom>/predios`, arte própria já no repo) copiados
+// para cá — o contrato de geometria lê só esta pasta. Trocaram os quatro lotes teal-sobre-teal (Mente, Oficina, Caderno e
+// os do Hall); as artes antigas ficam em disco, sem import (`lote-jogos-mente`, `lote-exploracao-oficina`/`caderno`,
+// `lote-hall-amigos`/`guilda`), para voltar se o dono quiser.
+import loteMente from './lote-jogos-mente-akasha.png';
 import loteRefugio from './lote-jogos-refugio.png';
 
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
@@ -85,8 +92,8 @@ import loteEvolucao from './lote-laboratorio-evolucao.png';
 import lotePet from './lote-laboratorio-pet.png';
 import loteStats from './lote-laboratorio-stats.png';
 import loteBiblioteca from './lote-hall-biblioteca.png';
-import loteAmigos from './lote-hall-amigos.png';
-import loteGuilda from './lote-hall-guilda.png';
+import loteAmigos from './lote-hall-amigos-campina.png';
+import loteGuilda from './lote-hall-guilda-luz.png';
 
 export const LABORATORIO_LOT_ART = {
   evolucao: loteEvolucao,

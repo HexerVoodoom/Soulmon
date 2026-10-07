@@ -35,6 +35,7 @@ export const BUILDING_GATES = {
   'mercado.conquistas': { minBond: 1 },
   'mercado.decoracao': { minBond: 2 },
   'mercado.background': { minBond: 3 },
+  'mercado.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },
   'jogos.refugio': { minBond: 1 },
   'jogos.mente': { minBond: 3 },

@@ -5121,7 +5121,7 @@ vindo do servidor).
 
 **O que NÃO faz.** Nenhum caminho pago dá talento, ponto, portão ou equipamento; não há sorteio pago; a torcida não vale Crédito; nada disto cobra o jogador (`copy.semFomo`).
 
-**Dono.** `src/utils/combate/` (motor), `src/utils/talents.ts`, `src/utils/equipment.ts`, `src/utils/bitsOrigin.ts`, `src/utils/gates.ts`, `src/utils/arena.ts`, `functions/api/_combate.js`, `_duel.js`, `_talents.js`, `_equipment.js`, `_gates.js`. **Onde a UI mostra:** StatsPage (talentos, `EquipmentCard`, "Vínculo N"), Arena, Duelo, aba de Créditos.
+**Dono.** `src/utils/combate/` (motor), `src/utils/talents.ts`, `src/utils/equipment.ts`, `src/utils/bitsOrigin.ts`, `src/utils/gates.ts`, `src/utils/arena.ts`, `functions/api/_combate.js`, `_duel.js`, `_talents.js`, `_equipment.js`, `_gates.js`. **Onde a UI mostra:** StatsPage (talentos, "Vínculo N"), Ferreiro do Mercado (`EquipmentCard`, desde 07/10/2026), Arena, Duelo, aba de Créditos.
 
 ---
 

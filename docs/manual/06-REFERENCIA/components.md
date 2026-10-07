@@ -1368,5 +1368,5 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/TalentTree.render.test.tsx`.
 
 ### `src/components/EquipmentCard.tsx`
-**Dono de:** a tela do equipamento e da vitrine (PR8b), carregada `lazy` pela `StatsPage` junto com a arte sob demanda. Regras de `utils/equipment.ts` e `utils/bitsOrigin.ts`; local-first. Compra com Bits GANHOS ou fragmentos (sem sorteio), equipar/tirar, recusas neutras (Bits insuficientes, Bits vindos de Crédito, fragmentos insuficientes). Fragmentos vêm da run completa da Masmorra (`App.tsx › handleGlitchtama`).
+**Dono de:** a tela do equipamento e da vitrine (PR8b), carregada `lazy` pelo `AreaView` no lote **Ferreiro** do Mercado (`mercado.ferreiro`; saiu da `StatsPage` em 07/10/2026), com a arte sob demanda. Regras de `utils/equipment.ts` e `utils/bitsOrigin.ts`; local-first. Compra com Bits GANHOS ou fragmentos (sem sorteio), equipar/tirar, recusas neutras (Bits insuficientes, Bits vindos de Crédito, fragmentos insuficientes). Fragmentos vêm da run completa da Masmorra (`App.tsx › handleGlitchtama`).
 **Régua:** `src/components/EquipmentCard.render.test.tsx`.
