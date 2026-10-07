@@ -261,6 +261,8 @@ export function buildAllStageSkills(
   fichaByStage: Record<FichaStage, Ficha>,
   seedKey: string,
   tendencia?: string,
+  /** PR15b: os galhos (fatias) que moldaram cada estágio, quando o comportamento pesou. Sem eles o perfil não informa galho. */
+  galhosByStage?: Partial<Record<FichaStage, PerfilEstagio['galhos']>>,
 ): Record<FichaStage, StageSkills> {
   const saida = {} as Record<FichaStage, StageSkills>;
   const usados = new Set<string>();
@@ -270,7 +272,7 @@ export function buildAllStageSkills(
     seedKey, tendencia, stages,
     escolas: stages.map(st => escolaDominante(fichaByStage[st])),
     elementosEspecial: stages.map(st => elementosDoStage(fichaByStage[st]).elEspecial),
-    perfis: stages.map(st => perfilDaFicha(fichaByStage[st])),
+    perfis: stages.map(st => perfilDaFicha(fichaByStage[st], galhosByStage?.[st])),
   });
   stages.forEach((stage, i) => {
     saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey, usados, tendencia, jornada[i].familia);

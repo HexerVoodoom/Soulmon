@@ -55,6 +55,8 @@ interface PetPageProps {
   achievements?: readonly AchievementId[];
   /** Skills já persistidas no save (vêm da nuvem). */
   savedSkills?: Record<FichaStage, StageSkills>;
+  /** PR15b: o comportamento gravado por estágio; a derivação local usa o MESMO registro que o save. */
+  fichaJornada?: import('../utils/fichaJornada').FichaJornada;
   /** Chamado quando a página recomputa as skills a partir do perfil local —
    *  é assim que o cache do save se preenche sozinho, sem tocar nos pontos de
    *  criação/reroll/upgrade. */
@@ -195,7 +197,7 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 export function PetPage({
   stages,
   dominantElement, achievements = [], unlockedEvolutions, currentStageId, demoCharacterId, petName,
-  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed,
+  savedSkills, fichaJornada, onSkillsComputed, savedClassTitles, onClassTitlesComputed,
   savedCompanheiro, onCompanheiroComputed, language = 'pt-BR', headingLevel = 1,
 }: PetPageProps) {
   const isPt = language === 'pt-BR';
@@ -228,7 +230,7 @@ export function PetPage({
           import('../utils/soulProfile/ficha/fromInput'),
           import('../utils/soulProfile/identity'),
         ]);
-        const { fichaByStage, stageSkills, dominantElement } = buildFichaESkills(saved, identityKey(saved));
+        const { fichaByStage, stageSkills, dominantElement } = buildFichaESkills(saved, identityKey(saved), fichaJornada);
         if (!vivo) return;
         setSkills(stageSkills);
         // guarda no save: o perfil do oráculo vive só no localStorage e não
@@ -284,7 +286,7 @@ export function PetPage({
       }
     })();
     return () => { vivo = false; };
-  }, [onSkillsComputed, onClassTitlesComputed, onCompanheiroComputed]);
+    }, [onSkillsComputed, onClassTitlesComputed, onCompanheiroComputed, fichaJornada]);
 
   // Só as formas JÁ desbloqueadas, em ordem de estágio — nunca as futuras.
   const formas = useMemo(() => {

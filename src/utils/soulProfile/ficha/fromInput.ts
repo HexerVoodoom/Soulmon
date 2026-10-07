@@ -12,7 +12,10 @@
 
 import type { OracleInput } from '../../oracle';
 import { applyRitualAnswers } from '../ritualAnswers';
-import { buildFicha } from './buildSheet';
+import { buildFicha, type ElementPlan } from './buildSheet';
+import { planoDoComportamento, fatiasDaJanela, PESO_COMPORTAMENTO } from './comportamento';
+import type { FichaJornada } from '../../fichaJornada';
+import type { PerfilEstagio } from './estabilidadeFamilia';
 import { buildAllStageSkills, type StageSkills } from './skills';
 import { FICHA_STAGE_ORDER, type Ficha, type FichaStage } from './types';
 
@@ -30,6 +33,8 @@ export interface FichaESkills {
    *  OPOSTOS pra mesma criatura no estágio rookie (o mais visto de todos).
    *  Ver `elementoBaseDominante` em `classTitle.ts`. */
   dominantElement: string;
+  /** PR15b: o plano de elementos que o comportamento deu a cada estágio (só os que têm registro com amostra). */
+  planoByStage: Partial<Record<FichaStage, ElementPlan>>;
 }
 
 /**
@@ -39,14 +44,28 @@ export interface FichaESkills {
 export function buildFichaESkills(
   input: OracleInput,
   seedKey: string,
+  /** PR15b: o registro gravado no save (`GameState.fichaJornada`). Sem ele (ou sem o estágio nele) a ficha é a de
+   *  sempre; com ele, cada estágio vivido usa o comportamento GRAVADO — nunca o atual (anti-reroll). */
+  jornada?: FichaJornada | null,
 ): FichaESkills {
   const oracleAxes = applyRitualAnswers(input.soulProfile!.oracle, input.answers, input.soulProfile!.psychometric.answeredCount > 0 ? 'longo' : 'curto');
+  const planoByStage: Partial<Record<FichaStage, ElementPlan>> = {};
+  const galhosByStage: Partial<Record<FichaStage, PerfilEstagio['galhos']>> = {};
+  for (const stage of FICHA_STAGE_ORDER) {
+    const g = jornada?.estagios?.[stage]?.galhos;
+    const plano = g ? planoDoComportamento(g) : null;
+    if (plano && g) { planoByStage[stage] = plano; galhosByStage[stage] = fatiasDaJanela(g) ?? undefined; }
+  }
   const fichaByStage = Object.fromEntries(
-    FICHA_STAGE_ORDER.map(stage => [stage, buildFicha(input.fullName, oracleAxes, stage, seedKey)]),
+    FICHA_STAGE_ORDER.map(stage => {
+      const plano = planoByStage[stage];
+      return [stage, buildFicha(input.fullName, oracleAxes, stage, seedKey, undefined, plano, plano ? PESO_COMPORTAMENTO : undefined)];
+    }),
   ) as Record<FichaStage, Ficha>;
   return {
     fichaByStage,
-    stageSkills: buildAllStageSkills(fichaByStage, seedKey, oracleAxes.dominantElement),
+    stageSkills: buildAllStageSkills(fichaByStage, seedKey, oracleAxes.dominantElement, galhosByStage),
     dominantElement: oracleAxes.dominantElement,
+    planoByStage,
   };
 }

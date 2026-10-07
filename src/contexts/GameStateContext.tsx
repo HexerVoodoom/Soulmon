@@ -1,3 +1,4 @@
+import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
@@ -308,6 +309,10 @@ export interface GameState {
    *  na nuvem: num aparelho novo a página do Pet perdia metade do conteúdo
    *  em silêncio. Determinísticas — recomputáveis, mas não a partir de nada. */
   soulmonSkills?: Record<FichaStage, StageSkills>;
+  /** PR15b: a janela de comportamento (o que se fez no estágio ANTERIOR) gravada na evolução, por estágio que nasceu.
+   *  Imutável depois de gravada (anti-reroll ao degenerar/reevoluir). Ausente = save de antes do PR15: nada muda até
+   *  a próxima evolução. Dono: `utils/fichaJornada.ts`; derivação: `soulProfile/ficha/fromInput.ts`. */
+  fichaJornada?: FichaJornada;
   /** A classe de cada estágio — arquétipo REAL do class-system (emergido da
    *  ficha, nunca escolhido), mesmo motivo de cache que `soulmonSkills`. */
   soulmonClassTitles?: Record<FichaStage, ClassTitle>;
@@ -1216,6 +1221,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const v = loadedState.soulmonSkills;
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonSkills'] : undefined;
         })(),
+        fichaJornada: sanitizeFichaJornada(loadedState.fichaJornada),
         soulmonClassTitles: (() => {
           const v = loadedState.soulmonClassTitles;
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonClassTitles'] : undefined;

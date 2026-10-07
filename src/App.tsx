@@ -61,7 +61,8 @@ import { initialNotificationsEnabled, readSystemNotificationPermission } from '.
 import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
-import { skillsTemFamilia } from './utils/soulProfile/ficha/stageSkillsFor';
+import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageSkillsFor';
+import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -3004,6 +3005,11 @@ export default function App() {
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         perfectDays: 0,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
+        fichaJornada: registrarEstagio(
+          prev.fichaJornada, fichaStageOf(newEvolutionStage), prev.attributesSinceLastEvolution,
+          playerDayKey(new Date(), prev.playerDayTz),
+        ),
         unlockedEvolutions: prev.unlockedEvolutions.includes(newEvolutionStage)
           ? prev.unlockedEvolutions
           : [...prev.unlockedEvolutions, newEvolutionStage],
@@ -3775,6 +3781,7 @@ export default function App() {
       currentBranch: 'harmony',
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
+      fichaJornada: undefined,
       soulmonMeta: {
         seed: result.seed,
         baseName: result.creature.baseName,
@@ -3862,6 +3869,7 @@ export default function App() {
         currentBranch: 'harmony',
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
+        fichaJornada: undefined,
         soulmonMeta: {
           seed: result.seed,
           baseName: result.creature.baseName,
@@ -3926,6 +3934,7 @@ export default function App() {
          WP1.16 chegar aqui sem `bornAt`, ele continua sem: inferir a data de
          outra coisa seria inventar. */
       soulmonStages: result.creature.stages,
+      fichaJornada: undefined,
       /* Adota o desenho do reveal, exatamente como o nascimento faz. Sem isto
          o acervo de quem acabou de comprar (que nasce VAZIO — o demo nunca
          gera sprite) pediria a forma inicial de novo e entregaria outro bicho.
@@ -3999,6 +4008,36 @@ export default function App() {
     return () => { vivo = false; };
   }, [manifestacaoPronta, setGameState]);
   const manifestacaoAtual = gameState.soulmonManifestacao?.[getStageLevel(gameState.evolutionStage) as keyof Manifestacao];
+
+  /* PR15b: depois de uma evolução registrada, os caches da ficha (skills, classes, companheiro, manifestação) são
+     refeitos com o comportamento GRAVADO e o registro ganha o espelho derivado (plano + família). O gatilho é
+     "há estágio gravado sem família": completo o registro, o efeito se cala. Sem perfil local (demo, corvo,
+     aparelho novo) não há o que calcular e nada muda. Import dinâmico — o motor da ficha fica fora do bundle inicial. */
+  const jornadaAtual = gameState.fichaJornada;
+  const jornadaPendente = ESTAGIOS_COM_JANELA.some(st => {
+    const e = gameState.fichaJornada?.estagios?.[st];
+    return !!e && !e.familia;
+  });
+  useEffect(() => {
+    if (!jornadaPendente) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    const jornada = jornadaAtual;
+    if (!jornada) return;
+    let vivo = true;
+    import('./utils/soulProfile/ficha/jornadaRefresh').then(({ recalcularCaches }) => recalcularCaches(saved, jornada)).then(r => {
+      if (!vivo) return;
+      setGameState(prev => (prev.fichaJornada !== jornada ? prev : {
+        ...prev,
+        fichaJornada: completarEstagios(prev.fichaJornada, r.derivado),
+        soulmonSkills: r.skills as GameState['soulmonSkills'],
+        soulmonClassTitles: r.classTitles as GameState['soulmonClassTitles'],
+        soulmonManifestacao: r.manifestacao,
+        ...(r.companheiro ? { soulmonCompanheiro: r.companheiro } : {}),
+      }));
+    }).catch(() => { /* perfil corrompido: a ficha segue no cache que já está no save */ });
+    return () => { vivo = false; };
+  }, [jornadaPendente, jornadaAtual, setGameState]);
 
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
@@ -5142,6 +5181,7 @@ export default function App() {
       maxHealthPoints: getMaxHPForStage('rookie'),
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       soulmonStages: data.oracleResult.creature.stages,
+      fichaJornada: undefined,
       /* WP1.1 — ADOTA o desenho que a pessoa acabou de ver no reveal.
          Sem isto o acervo geraria a forma inicial de novo, e a criatura que
          entra no jogo seria OUTRA — a cerimônia teria mostrado um bicho que
@@ -5669,6 +5709,7 @@ export default function App() {
               demoCharacterId={petLine}
               petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
               savedSkills={gameState.soulmonSkills}
+              fichaJornada={gameState.fichaJornada}
               onSkillsComputed={handleSkillsComputed}
               savedClassTitles={gameState.soulmonClassTitles}
               onClassTitlesComputed={handleClassTitlesComputed}
