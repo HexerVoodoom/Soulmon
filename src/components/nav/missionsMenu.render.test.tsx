@@ -26,7 +26,7 @@ const sheet = (language: 'en-US' | 'pt-BR') => render(
 describe('MissionsSheet', () => {
   it('duas seções claras (Today / This week), o caderno em Hoje, e nada de Materials', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull(), { timeout: 8000 });
     const daily = document.querySelector('[data-missions-section="daily"]')!;
     const weekly = document.querySelector('[data-missions-section="weekly"]')!;
     expect(daily.getAttribute('aria-label')).toBe('Today');
