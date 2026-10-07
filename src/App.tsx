@@ -6103,7 +6103,6 @@ export default function App() {
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
-                buildingMarks={marcasDeMissao.buildings}
                 onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
                 language={language}
@@ -6144,8 +6143,6 @@ export default function App() {
                   onMatchPlayed: won => setGameState(prev => awardBondXP(
                     prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
                   )),
-                  weeklyMissions: missoesDaSemana,
-                  onClaimWeekly: resgatarMissao,
                 }}
                 evolutionStage={gameState.evolutionStage}
                 demoCharacterId={petLine}
@@ -6188,7 +6185,6 @@ export default function App() {
                    `hallContent`, montados antes do `return`). */
                 /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
                    ÚNICO caminho de escrita (função pura sobre `prev`). */
-                passeio={{ crossings, onChange: handleCrossings, seed: saveId }}
                 caderno={{ entries: gameState.caderno ?? [], onChange: handleCaderno }}
                 labTab={labTab}
                 onLabTab={setLabTab}

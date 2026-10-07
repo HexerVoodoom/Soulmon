@@ -78,21 +78,29 @@ describe('missão do dia', () => {
 });
 
 describe('marcas', () => {
-  it('lote: ! disponível, ? pronta, nada depois de pago; Mercado nunca', () => {
-    expect(buildingMarks(undefined, D1, MAXB)['exploracao.masmorra']).toBe('available');
-    const v = visitBuilding(undefined, D1, 'exploracao.masmorra', MAXB);
-    expect(buildingMarks(v, D1, MAXB)['exploracao.masmorra']).toBe('ready');
-    const c = claimBuildingQuest(v, D1, 'exploracao.masmorra', MAXB).state;
-    expect(buildingMarks(c, D1, MAXB)['exploracao.masmorra']).toBeUndefined();
-    expect(Object.keys(buildingMarks(undefined, D1, MAXB)).some(k => k.startsWith('mercado.'))).toBe(false);
+  it('só a missão LISTADA no menu (Caderno) tem marca: ! disponível, ? pronta, nada depois de paga; Mercado nunca', () => {
+    expect(buildingMarks(undefined, D1, MAXB)['exploracao.caderno']).toBe('available');
+    const v = visitBuilding(undefined, D1, 'exploracao.caderno', MAXB);
+    expect(buildingMarks(v, D1, MAXB)['exploracao.caderno']).toBe('ready');
+    const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB).state;
+    expect(buildingMarks(c, D1, MAXB)['exploracao.caderno']).toBeUndefined();
+    expect(Object.keys(buildingMarks(undefined, D1, MAXB))).toEqual(['exploracao.caderno']);
   });
-  it('canto: só o ? dos prédios acende, em dourado', () => {
-    const base = { passeio: null, weekly: [], missionProgress: {}, ownedBackgrounds: [] };
-    expect(questMarks({ ...base, buildings: buildingMarks(undefined, D1, MAXB) }).corner).toBeNull();
+  it('visitar prédio não listado continua contando, mas não acende nada', () => {
     const v = visitBuilding(undefined, D1, 'arena.duelo', MAXB);
+    expect(v?.visited).toContain('arena.duelo');
+    expect(buildingMarks(v, D1, MAXB)['arena.duelo']).toBeUndefined();
+  });
+  it('canto: a missão listada acende em dourado; sem nada a fazer nem a entregar, some', () => {
+    const base = { passeio: null, weekly: [], missionProgress: {}, ownedBackgrounds: [] };
+    const v = visitBuilding(undefined, D1, 'exploracao.caderno', MAXB);
+    const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB).state;
+    expect(questMarks({ ...base, buildings: buildingMarks(c, D1, MAXB) }).corner).toBeNull();
+    expect(questMarks({ ...base, buildings: buildingMarks(undefined, D1, MAXB) }).corner).toBe('available');
     const m = questMarks({ ...base, buildings: buildingMarks(v, D1, MAXB) });
     expect(m.corner).toBe('ready');
     expect(m.cornerTone).toBe('gold');
+    expect(m.daily).toBe('ready');
   });
 });
 

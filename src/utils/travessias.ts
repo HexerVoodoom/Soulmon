@@ -24,6 +24,7 @@
 import {
   HOME_REGION, LOG_MAX, MARCO_THRESHOLDS, MISSIONS_OFFERED_PER_DAY, PASSEIO_REGION_FIND_CHANCE, REGIONS_OPENED_PER_DAY,
   type CrossingChallenge, type CrossingsState, type Region, type RegionFind, type RegionId,
+  STROLL_MIN_MS,
 } from '../types/travessias';
 import { REGIONS } from '../data/travessiasCatalog';
 import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
@@ -137,6 +138,15 @@ export const marcosAbertos = (s: CrossingsState): number => MARCO_THRESHOLDS.fil
 export const dropCrossing = (s: CrossingsState): CrossingsState =>
   s.active === null ? s : { ...s, active: null, pickDay: null, pickAt: null };
 
+/**
+ * Quanto falta (ms) para o "Concluir" abrir. 0 = pode concluir. Sem `pickAt`
+ * (save antigo, ou missão já feita) ou sem `now`: não há espera.
+ */
+export function strollWaitMs(s: CrossingsState, now?: number): number {
+  if (s.pickAt === null || now === undefined) return 0;
+  return Math.max(0, s.pickAt + STROLL_MIN_MS - now);
+}
+
 /** O "Fiz" de hoje já foi dado (`dayKey` é o dia do jogador)? */
 export const doneToday = (s: CrossingsState, dayKey: string): boolean => s.doneDay === dayKey;
 
@@ -163,6 +173,8 @@ export function crossingYield(s: CrossingsState, region: RegionId): 'abre' | 'gu
  */
 export function markDone(s: CrossingsState, dayKey: string, now?: number): CrossingsState {
   if (!s.active || s.doneDay === dayKey) return s;
+  // O passeio leva um tempo: antes de `STROLL_MIN_MS` desde a escolha, nada muda (a recusa é reconferida aqui, sobre o `prev`).
+  if (strollWaitMs(s, now) > 0) return s;
   // A escolhida que já se foi não conta (save antigo, sem dia, passa). Com `now`,
   // a de ontem ainda vale se está dentro das 24 h (rodada 7, M4).
   if (s.pickDay !== null && !missionLive(s, dayKey, now)) return s;

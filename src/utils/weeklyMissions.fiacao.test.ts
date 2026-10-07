@@ -51,11 +51,9 @@ describe('as missões semanais estão plugadas', () => {
   });
 
   it('a lista chega à tela', () => {
-    // Chega ao Torneio pelo objeto `tournament` do `AreaView` (minimal-ui F5).
-    expect(app).toMatch(/weeklyMissions[:=] ?\{?missoesDaSemana/);
-    expect(app).toMatch(/onClaimWeekly[:=] ?\{?resgatarMissao/);
-    // No segmento do Torneio: é onde os Emblemas são gastos, e a missão é de
-    // onde eles vêm — a torneira e o ralo na mesma tela.
-    expect(torneio).toMatch(/tab === 'missions' && \(\s*<WeeklyMissionList[^>]*weeklyMissions=\{weeklyMissions/);
+    // 07/10/2026: a lista saiu do Torneio (a UI de missão vive só no menu da Home) e chega ao `MissionsSheet`.
+    expect(app).toMatch(/weekly=\{missoesDaSemana\}/);
+    expect(app).toMatch(/onClaimWeekly=\{resgatarMissao\}/);
+    expect(torneio).not.toMatch(/WeeklyMissionList/);
   });
 });

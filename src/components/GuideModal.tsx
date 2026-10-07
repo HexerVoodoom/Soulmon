@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { STROLL_MIN_MINUTES } from '../types/travessias';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
@@ -282,8 +283,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Travessias são opcionais: algo que você faz na sua vida, fora do app, sempre com uma versão pequena para fazer em casa. Ficam esperando o tempo que for, e trocar ou deixar pra lá não custa nada. Quando você conta que fez, a névoa de uma região se abre no passeio da noite seguinte.',
-              'Crossings are optional: something you do in your own life, outside the app, always with a small version you can do at home. They wait as long as you like, and swapping or letting one go costs nothing. Once you say you did it, the mist over a region clears on the next night\'s stroll.',
+              'Travessias são opcionais: algo que você faz na sua vida, fora do app, sempre com uma versão pequena para fazer em casa. As missões do passeio ficam no menu de Missões da Home, não dentro dos prédios. Ficam esperando o tempo que for, e deixar pra lá não custa nada. Um passeio leva um tempo: depois de pegar a missão, o botão Concluir abre em ' + STROLL_MIN_MINUTES + ' minutos. Quando você conta que fez, a névoa de uma região se abre no passeio da noite seguinte.',
+              'Crossings are optional: something you do in your own life, outside the app, always with a small version you can do at home. Stroll missions live in the Missions menu on Home, not inside the buildings. They wait as long as you like, and letting one go costs nothing. A stroll takes a little while: once you pick a mission, the Done button opens after ' + STROLL_MIN_MINUTES + ' minutes. Once you say you did it, the mist over a region clears on the next night\'s stroll.',
             )}
           </p>
           <p style={para}>

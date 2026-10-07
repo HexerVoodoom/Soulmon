@@ -17,9 +17,6 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
-import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
-import { missionMark } from '../../utils/travessiasSave';
-import { questMarks, strongestMark, type QuestMark } from '../../utils/questMarks';
 import type { CadernoEntry } from '../../utils/cadernoSave';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import {
@@ -60,7 +57,6 @@ const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.Refugio
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
 const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
-const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const DungeonGame = lazy(() => loadDungeonGame().then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
 const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
@@ -113,8 +109,7 @@ export interface AreaViewProps {
   language: Language;
   /** O Vínculo do usuário (`bondLevelFor(totalXP)`): decide quais prédios abrem (`BUILDING_GATES`). Sem ele, nada é trancado. */
   bondLevel?: number;
-  /** Missão por prédio (07/10/2026): a marca "!"/"?" de cada lote e o aviso de que se entrou nele (`utils/buildingQuests.ts`). */
-  buildingMarks?: Partial<Record<BuildingId, QuestMark>>;
+  /** Missão por prédio: só o aviso de que se entrou nele (`utils/buildingQuests.ts`). A UI de missão vive no menu da Home, nunca no prédio. */
   onVisitBuilding?: (id: BuildingId) => void;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
@@ -148,12 +143,6 @@ export interface AreaViewProps {
   caderno?: {
     entries: CadernoEntry[];
     onChange: (f: (c: CadernoEntry[]) => CadernoEntry[]) => void;
-  };
-  passeio?: {
-    crossings: CrossingsState;
-    onChange: (f: (c: CrossingsState) => CrossingsState) => void;
-    /** A semente do sorteio das missões do dia (o id do save). */
-    seed?: string;
   };
   /** Laboratório (F5, ex-PR #117): a aba ativa (estado do `App`, porque ela
    *  também decide o `pane`) e o conteúdo já montado — Evolução/Soulmon/Stats
@@ -202,8 +191,6 @@ export function AreaView(props: AreaViewProps) {
   /** Entrar no prédio: abre a folha e conta a missão do dia dele (só chega aqui se o prédio abriu; `gated` troca o `onOpen` dos trancados). */
   const { onVisitBuilding } = props;
   const enter = (lotId: string) => { onVisitBuilding?.(`${area}.${lotId}` as BuildingId); setSheet(lotId); };
-  /** A marca do lote: a mais urgente entre a que ele já tinha (Passeio, Torneio, Conquistas) e a missão do dia do prédio. */
-  const markOf = (lotId: string, base?: QuestMark): QuestMark => strongestMark([base ?? null, props.buildingMarks?.[`${area}.${lotId}` as BuildingId] ?? null]);
   const initialLock = props.initialSheet ? lockOf(props.initialSheet) : null;
   const [sheet, setSheet] = useState<string | null>(initialLock ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(initialLock ? buildingLockLine(initialLock.minBond, language) : null);
@@ -226,12 +213,6 @@ export function AreaView(props: AreaViewProps) {
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) { if (!initialLock) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const marcas = questMarks({
-    passeio: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play?.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()),
-    weekly: props.tournament?.weeklyMissions ?? [],
-    missionProgress: ownership?.missionProgress ?? {},
-    ownedBackgrounds: ownership?.ownedBackgrounds ?? [],
-  });
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
@@ -257,7 +238,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.mercado}
-        lots={gated(lots.map(l => ({ ...l, ...(l.id === 'conquistas' ? { mark: marcas.conquistas } : {}), art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet
@@ -303,7 +284,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={gated(lots.map(l => ({ ...l, mark: markOf(l.id, l.id === 'torneio' ? marcas.torneio : null), art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
@@ -348,10 +329,8 @@ export function AreaView(props: AreaViewProps) {
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
         ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => enter(l.id),
-        // "!" / "?" sobre o Passeio (`utils/questMarks.ts`): missão do dia disponível, ou a do prédio.
-        mark: markOf(l.id, l.id === 'passeio' ? marcas.passeio : null),
       }))
-      : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id), mark: markOf(l.id) })));
+      : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
     const todayKey = play.todayKey ?? new Date().toISOString().slice(0, 10);
@@ -367,13 +346,11 @@ export function AreaView(props: AreaViewProps) {
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
-              <PasseioSheet
-                language={language}
-                crossings={props.passeio?.crossings ?? CROSSINGS_EMPTY}
-                onChange={props.passeio?.onChange ?? (() => {})}
-                todayKey={play.todayKey}
-                seed={props.passeio?.seed}
-              />
+              <p data-passeio-pointer style={{ margin: 0 }}>
+                {language === 'pt-BR'
+                  ? 'Aqui o Soulmon sai para passear. As missões de passeio ficam no menu de Missões, na Home.'
+                  : 'This is where the Soulmon heads out for a stroll. Stroll missions live in the Missions menu on Home.'}
+              </p>
             )}
             {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
@@ -462,7 +439,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={LABORATORIO_BG}
-        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], mark: markOf(l.id), onOpen: () => { props.onLabTab(tabOf[l.id]); enter(l.id); } } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { props.onLabTab(tabOf[l.id]); enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
@@ -479,7 +456,7 @@ export function AreaView(props: AreaViewProps) {
       areaId={area}
       language={language}
       background={HALL_BG}
-      lots={gated(lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], mark: markOf(l.id), onOpen: () => enter(l.id) } satisfies AreaLot)))}
+      lots={gated(lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
       notice={lockNote}
     >
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>

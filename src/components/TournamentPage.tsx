@@ -59,11 +59,8 @@ import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils
 import { availableFrames, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { TOURNAMENT_NPCS, npcSide, type TournamentNpc } from '../utils/tournamentNpcs';
 import { tournamentShopItems } from '../utils/mercadoCatalog';
-import type { WeeklyMission, WeeklyMissionId } from '../utils/weeklyMissions';
-import { questMarks } from '../utils/questMarks';
-import { MissionMark } from './play/MissionMark';
 import {
-  CurrencyBalance, ShopShelf, ShopStatus, WeeklyMissionList, useShopFlash,
+  CurrencyBalance, ShopShelf, ShopStatus, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './mercado/ShopShelf';
 import { getSpriteForStage } from '../utils/sprites';
@@ -125,10 +122,6 @@ interface TournamentPageProps {
    *  derrota rende XP igual (menos que a vitória, mas rende), e deduzir o
    *  resultado a partir do número de Emblemas seria regra copiada. */
   onMatchPlayed: (won: boolean) => void;
-  /** WP4.7 — as 3 missões da semana + progresso, prontas (moram no save). */
-  weeklyMissions?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
-  /** Paga os Emblemas de uma missão pronta. Idempotente do outro lado. */
-  onClaimWeekly?: (id: WeeklyMissionId) => void;
   /** A loja de Emblemas (minimal-ui F5: mora no Torneio, na Arena). A
    *  compra continua sendo do `handleShopBuy`; aqui só a prateleira. */
   shop?: { ownership: ShopOwnership; actions: ShopActions };
@@ -136,8 +129,8 @@ interface TournamentPageProps {
    *  da folha, `AreaSheet`). `undefined` = sem folha em volta, o indicador vai
    *  inline no topo; `null` = a folha ainda não entregou o encaixe (espera). */
   headSlot?: HTMLElement | null;
-  /** Aba inicial (a missão semanal da Home abre direto em `'missions'`). */
-  initialTab?: 'arena' | 'missions' | 'shop';
+  /** Aba inicial. As missões da semana NÃO moram mais aqui: vivem no menu de Missões da Home. */
+  initialTab?: 'arena' | 'shop';
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -204,7 +197,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot, initialTab }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, shop, headSlot, initialTab }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -262,9 +255,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
-  const [tab, setTab] = useState<'arena' | 'missions' | 'shop'>(initialTab ?? 'arena');
-  /** "!" / "?" na aba Missões (`utils/questMarks.ts`); sem missão pendente o glifo esmaece. */
-  const marcaSemanal = questMarks({ passeio: null, weekly: weeklyMissions ?? [], missionProgress: {}, ownedBackgrounds: [] }).torneio;
+  const [tab, setTab] = useState<'arena' | 'shop'>(initialTab ?? 'arena');
   /** A folha das faixas (antiga aba "Faixa") — abre pelo indicador do título. */
   const [tiersOpen, setTiersOpen] = useState(false);
   const { flash, say } = useShopFlash();
@@ -406,7 +397,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
    *  e `storefront` (loja) — estes dois com desenho próprio em `NavGlyphs`. */
   const TABS = [
     { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge', icon: 'swords', tone: 'inherit' as const },
-    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions', icon: 'question', tone: 'gold' as const },
     ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop', icon: 'storefront', tone: 'inherit' as const }] : []),
   ];
 
@@ -597,10 +587,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               onClick={() => setTab(t.key)}
               className={on ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
             >
-              {/* 04/10/2026: a aba Missões usa a arte de quest do dono (`QUEST_ART`). */}
-              {t.key === 'missions'
-                ? <MissionMark kind={marcaSemanal ?? 'ready'} tone="blue" size={24} isPt={isPt} style={marcaSemanal ? undefined : { opacity: 0.6 }} />
-                : <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />}
+              <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />
             </button>
           );
         })}
@@ -965,13 +952,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             isPt={isPt}
           />
         </RitualDialog>
-      )}
-
-      {/* ─── AS MISSÕES DA SEMANA ──────────────────────────────────────────
-          Pagas em Emblemas, e por isso moram aqui: a torneira e o ralo na
-          mesma folha. Nenhuma premia CONTAGEM DE TAREFAS (há teste). */}
-      {tab === 'missions' && (
-        <WeeklyMissionList language={lang} weeklyMissions={weeklyMissions ?? []} onClaimWeekly={onClaimWeekly} />
       )}
 
       {/* ─── A LOJA DE EMBLEMAS ────────────────────────────────────────────

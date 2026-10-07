@@ -18,10 +18,9 @@
 // (um "!" quase sempre ligado deixava de dizer algo). O canto herda o tom da
 // marca vencedora (ready antes de available; empate: Passeio, Torneio, Conquistas).
 //
-// PRÉDIOS (07/10/2026, `utils/buildingQuests.ts`): a missão do dia de cada prédio fora do
-// Mercado acende "!" (disponível) e "?" (pronta) NO LOTE, em tom dourado (`gold`, o mesmo do
-// Passeio). No ícone do canto só o "?" dos prédios conta: 16 "!" quase sempre ligados
-// deixariam de dizer algo (a mesma razão das permanentes).
+// PRÉDIOS (07/10/2026, `utils/buildingQuests.ts`): só as missões LISTADAS no menu da Home
+// (hoje o Caderno) contam, e só no ícone do canto — nunca no lote (nenhuma marca de missão
+// vive dentro de prédio nem sobre lote). O canto SOME quando não há nada a fazer nem a entregar.
 // Sem tom de cobrança: é uma marca parada, sem número, som nem contagem.
 // ---------------------------------------------------------------------------
 
@@ -48,15 +47,17 @@ export interface QuestMarkInput {
 export interface QuestMarks {
   /** O ícone de missões no canto da Home: todas as missões. */
   corner: QuestMark;
-  /** O lote do Passeio (missão do dia). */
+  /** O Passeio (missão do dia do menu da Home). */
   passeio: QuestMark;
-  /** O Torneio (aba Missões, missões da semana). */
+  /** A seção "Hoje" do menu: o Passeio + as missões de prédio listadas. */
+  daily: QuestMark;
+  /** A seção "Esta semana" do menu (missões da semana, azuis). */
   torneio: QuestMark;
-  /** As Conquistas do Mercado (missões permanentes). */
+  /** As Conquistas (missões permanentes). */
   conquistas: QuestMark;
   /** O tom do ícone do canto (o da marca que venceu). */
   cornerTone: QuestTone;
-  /** A marca de cada prédio com missão do dia (o lote do prédio). */
+  /** A marca de cada missão de prédio listada no menu (nunca desenhada no lote). */
   buildings: Partial<Record<BuildingId, QuestMark>>;
 }
 
@@ -78,12 +79,12 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
     return done && !input.ownedBackgrounds.includes(m.bgReward) ? 'ready' : null;
   }));
   const buildings = input.buildings ?? {};
-  // Só o "?" dos prédios chega ao canto (ver o cabeçalho).
-  const prediosProntos: QuestMark = Object.values(buildings).includes('ready') ? 'ready' : null;
-  const corner = strongestMark([passeio, torneio, conquistas, prediosProntos]);
-  const fontes: [QuestMark, QuestTone][] = [[passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [prediosProntos, 'gold']];
+  const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
+  const daily = strongestMark([passeio, predios]);
+  const corner = strongestMark([passeio, torneio, conquistas, predios]);
+  const fontes: [QuestMark, QuestTone][] = [[passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold']];
   const cornerTone = fontes.find(([m]) => m === corner && corner !== null)?.[1] ?? 'gold';
-  return { corner, passeio, torneio, conquistas, cornerTone, buildings };
+  return { corner, passeio, daily, torneio, conquistas, cornerTone, buildings };
 }
 
 /** Rótulo acessível (EN primeiro, PT-BR depois). `null` quando não há marca. */
