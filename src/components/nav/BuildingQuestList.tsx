@@ -2,10 +2,8 @@ import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { arenaLots, laboratorioLots, hallLots } from '../../utils/areaSheetCopy';
-import {
-  QUEST_BUILDINGS, MATERIALS, MATERIAL_CAP, materialOf, questStatus, questText, stockOf,
-  type BuildingQuestState,
-} from '../../utils/buildingQuests';
+import { QUEST_BUILDINGS, MATERIAL_CAP, materialOf, questStatus, stockOf, type BuildingQuestState } from '../../utils/buildingQuests';
+import { MATERIALS, questText } from '../../utils/buildingQuestsCopy';
 import { sm2Button } from '../form/FormKit';
 import { MissionMark } from '../play/MissionMark';
 
@@ -42,7 +40,7 @@ export function BuildingQuestList({ language, state, day, bondLevel, onClaim }: 
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
         {open.map(id => {
           const st = questStatus(state, day, id, bondLevel);
-          const mat = materialOf(id)!;
+          const mat = MATERIALS.find(m => m.id === materialOf(id))!;
           return (
             <li key={id} data-building-quest={id} data-status={st} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>{mat.icon}</span>

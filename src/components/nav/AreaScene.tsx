@@ -148,7 +148,8 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             </span>
           )}
           {lot.mark && !lot.locked && (
-            <span style={{ position: 'absolute', top: '-2%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+            // Preso ao TOPO DA ARTE (não da caixa do lote): o lote mais alto da cena (ex.: a Masmorra) tinha a marca fora da tela.
+            <span style={{ position: 'absolute', top: `${(lotArtBounds(areaId, lot.id)?.[1] ?? 0) * 100}%`, left: '50%', transform: 'translate(-50%, 60%)', pointerEvents: 'none' }}>
               <MissionMark kind={lot.mark} isPt={isPt} size={32} />
             </span>
           )}

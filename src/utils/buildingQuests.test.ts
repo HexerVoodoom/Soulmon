@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  MATERIALS, MATERIAL_IDS, MATERIAL_CAP, QUEST_BUILDINGS, forDay, questStatus, visitBuilding, claimBuildingQuest,
-  buildingMarks, questText, sanitizeBuildingQuests, stockOf, type BuildingQuestState,
+  MATERIAL_IDS, MATERIAL_CAP, QUEST_BUILDINGS, forDay, questStatus, visitBuilding, claimBuildingQuest,
+  buildingMarks, sanitizeBuildingQuests, stockOf, type BuildingQuestState,
 } from './buildingQuests';
+import { MATERIALS, questText } from './buildingQuestsCopy';
 import { BUILDING_GATES, type BuildingId } from './gates';
 import { questMarks } from './questMarks';
 

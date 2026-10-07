@@ -120,7 +120,11 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 07/10/2026 (combate v3 PR15b/Tarefa A/Tarefa B): 581_827 → 590_424 (+8,6 KB; a main já estava a 587_822) — `fichaJornada`
   // e o refresh no `App`, a tabela de portões por prédio e o cadeado (Tarefa A) e, na Tarefa B, os efeitos dos oito nós de talento
   // (`talents.ts`, lidos pelas lutas) e o layout da árvore. A TELA da árvore e os textos dos nós ficam atrás de `lazy`.
-  'index.js': 590_424,
+  // 07/10/2026 (missão por prédio): 590_424 → 599_121 (+2,8 KB sobre a main, que estava a 596_281) — o núcleo `buildingQuests.ts`
+  // (estado, resgate idempotente, marcas e a higienização do load, que não dá para `lazy`), a fiação mínima no `App`/`AreaView`
+  // e o campo no `questMarks`. Nomes, ícones e textos dos 16 materiais (`buildingQuestsCopy.ts`) e a lista (`BuildingQuestList`)
+  // ficam atrás de import dinâmico, fora da entrada.
+  'index.js': 599_121,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
