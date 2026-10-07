@@ -103,11 +103,12 @@ describe('Torneio', () => {
 });
 
 describe('Torneio — menu e treino', () => {
-  it('Missões usa o "?" amarelo (A2; arte de quest desde 04/10/2026; não a exclamação nem o check) e o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box', async () => {
+  it('Missões usa o "?" AZUL (missão semanal, 07/10/2026; arte de quest, não a exclamação nem o check) e o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
     const missoes = screen.getByRole('tab', { name: 'Missions' });
-    // 04/10/2026: o "?" amarelo é a arte de quest do dono (pixel), não mais o glifo.
-    expect((missoes.querySelector('img[data-pixel-icon]') as HTMLImageElement).getAttribute('src')).toMatch(/quest/);
+    // 07/10/2026: as marcas semanais são azuis (máscara da arte de quest pelo token --sm2-primary-ink).
+    expect(missoes.querySelector('[data-mission-tone="blue"]')).not.toBeNull();
+    expect((missoes.querySelector('[data-quest-tone="blue"]') as HTMLElement).style.background).toContain('--sm2-primary-ink');
     expect(missoes.textContent).not.toContain('exclamation');
     expect(missoes.textContent).not.toContain('task_alt');
     const ind = await waitFor(() => {

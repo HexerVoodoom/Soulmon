@@ -6917,6 +6917,7 @@ export default function App() {
       {currentView === 'home' && (
         <MissionsLink
           mark={marcasDeMissao.corner}
+          tone={marcasDeMissao.cornerTone}
           markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
           label={language === 'pt-BR' ? 'Missões' : 'Missions'}
           onClick={() => setMissionsOpen(true)}

@@ -1133,7 +1133,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/questMarks.ts`
 **Dono de:** a regra PURA das marcas "!" (disponível/em andamento) e "?" (pronta) de todo local de missão: ícone do canto da Home, lote do Passeio, Torneio, Conquistas do Mercado. "Pronta" é derivada do estado (semanal cumprida e não paga; permanente cumprida com o cenário não comprado) — sem campo no save. Com as duas, vale o "?".
-**Exports:** `QuestMark`, `QuestMarkInput`, `QuestMarks` (tipos), `questMarks(input)`, `strongestMark(marks)`, `questMarkLabel(mark, isPt)`.
+**Exports:** `QuestMark`, `QuestTone`, `QuestMarkInput`, `QuestMarks` (tipos; `cornerTone` = tom da marca vencedora; semanal = `blue`, resto `gold`; permanentes só "?" quando prontas — 07/10/2026), `questMarks(input)`, `strongestMark(marks)`, `questMarkLabel(mark, isPt)`.
 **Chamado por:** `src/App.tsx`, `src/components/nav/AreaView.tsx`, `src/components/TournamentPage.tsx`, `src/components/play/MissionMark.tsx`.
 **Régua:** `src/utils/questMarks.test.ts`.
 
@@ -2464,9 +2464,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Exports:**
 - `function armarTemaNoPrimeiroGesto(): void` · `function ligarTema(): void` · `function desligarTema(): void` — gesto; os dois últimos persistem a chave.
 - `function pausarTema(motivo?)` · `function retomarTema(motivo?)` · `function temaPausado(): boolean` — E0 (um `Set` de motivos).
+- `function iniciarTemaNoGesto(): void` · `function temaIniciado(): boolean` — o gesto da tela de abertura do `IntroScreen` (07/10/2026): idempotente, respeita preferência/mudo/aba.
 - `function temaPreferido(): boolean` · `function temaTocando(): boolean` · `function escolherFormato(probe): number`.
 - `type MotivoDePausa` · `function esquecerTema(): void` — só para teste.
-**Chamado por:** `src/main.tsx` (`armarTemaNoPrimeiroGesto`), `src/utils/trilha.ts` (repasse de pausa/retomada; `ligarTrilha` desliga o tema), `src/components/SettingsPage.tsx` (switch "Música-tema/Theme music").
+**Chamado por:** `src/main.tsx` (`armarTemaNoPrimeiroGesto`), `src/components/IntroScreen.tsx` (`iniciarTemaNoGesto`, `temaIniciado`, `temaPreferido`), `src/utils/trilha.ts` (repasse de pausa/retomada; `ligarTrilha` desliga o tema), `src/components/SettingsPage.tsx` (switch "Música-tema/Theme music").
 **Depende de:** `audioBus.ts` (`garantirBarramento`), `sonsAssets.ts` (`TEMA_DO_JOGO`), `sounds.ts` (`isMuted`), `safeStorage.ts`, `storageKeys.ts`.
 **Régua:** `src/utils/tema.test.ts`, `sonsAssets.contract.test.ts`, `settingsSom.render.test.tsx`.
 

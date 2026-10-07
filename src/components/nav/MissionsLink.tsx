@@ -1,6 +1,5 @@
-import { PixelIcon } from '../ui/PixelIcon';
-import { QUEST_ART, QUEST_EXCLAMACAO_ART } from '../../assets/soulmon/icones-ui';
-import type { QuestMark } from '../../utils/questMarks';
+import { QuestGlyph } from '../play/MissionMark';
+import type { QuestMark, QuestTone } from '../../utils/questMarks';
 import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
 
 /**
@@ -14,8 +13,10 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE
  * Ícone pelado dentro do anel (a mesma exceção D1 do `CornerLink`); o alvo de
  * 44 é do botão, e o rótulo mora no `aria-label`/`title`.
  */
-export function MissionsLink({ mark, label, markLabel, onClick }: {
+export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick }: {
   mark: QuestMark;
+  /** `blue` quando a marca vencedora é de missão semanal. */
+  tone?: QuestTone;
   label: string;
   /** `questMarkLabel(mark, isPt)` — o estado falado ao leitor de tela. */
   markLabel: string | null;
@@ -29,6 +30,7 @@ export function MissionsLink({ mark, label, markLabel, onClick }: {
       title={markLabel ? `${label}, ${markLabel}` : label}
       data-missions-link
       data-mission-mark-home={mark ?? 'none'}
+      data-mission-tone={mark ? tone : 'gold'}
       className="sm2-corner-link"
       style={{
         position: 'fixed',
@@ -43,7 +45,7 @@ export function MissionsLink({ mark, label, markLabel, onClick }: {
     >
       <span aria-hidden="true" style={{ ...CORNER_RING_STYLE, opacity: mark ? 1 : 0.6 }}>
         {/* 04/10/2026 ("?") e 05/10/2026 ("!"): a arte de quest do dono. */}
-        <PixelIcon src={mark === 'ready' ? QUEST_ART : QUEST_EXCLAMACAO_ART} size={24} />
+        <QuestGlyph kind={mark === 'ready' ? 'ready' : 'available'} tone={mark ? tone : 'gold'} size={24} />
       </span>
     </button>
   );

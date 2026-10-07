@@ -11,6 +11,12 @@
 // "Pronta" é DERIVADA do estado atual, sem campo novo no save:
 //   - semanal: cumprida e ainda não paga (`claimed` é o "resgatada" que já existe);
 //   - permanente: cumprida e o cenário que ela libera ainda não foi comprado.
+//
+// COR (decisão do dono, 07/10/2026: "Missão semanal fica com ! e ? azul"): as
+// marcas das missões SEMANAIS são AZUIS (`tone: 'blue'`); Passeio e conquistas
+// seguem amarelas. As permanentes só acendem "?" quando PRONTAS — nunca "!"
+// (um "!" quase sempre ligado deixava de dizer algo). O canto herda o tom da
+// marca vencedora (ready antes de available; empate: Passeio, Torneio, Conquistas).
 // Sem tom de cobrança: é uma marca parada, sem número, som nem contagem.
 // ---------------------------------------------------------------------------
 
@@ -18,6 +24,8 @@ import { MISSIONS } from './missions';
 import type { MissionMark } from './travessiasSave';
 
 export type QuestMark = 'ready' | 'available' | null;
+/** Tom da marca: `blue` = missão semanal (token `--sm2-primary-ink`); `gold` = o resto. */
+export type QuestTone = 'blue' | 'gold';
 
 export interface QuestMarkInput {
   /** `missionMark` do Passeio: `null` = a missão do dia já foi feita. */
@@ -38,6 +46,8 @@ export interface QuestMarks {
   torneio: QuestMark;
   /** As Conquistas do Mercado (missões permanentes). */
   conquistas: QuestMark;
+  /** O tom do ícone do canto (o da marca que venceu). */
+  cornerTone: QuestTone;
 }
 
 /** A marca mais urgente de um conjunto: "?" vence "!". */
@@ -52,12 +62,15 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   const torneio = strongestMark(
     input.weekly.filter(w => !w.claimed).map((w): QuestMark => (w.done ? 'ready' : 'available')),
   );
+  // Permanente: só "?" (pronta e cenário ainda não comprado); em andamento não acende nada.
   const conquistas = strongestMark(MISSIONS.map((m): QuestMark => {
     const done = (input.missionProgress[m.id] ?? 0) >= m.target;
-    if (!done) return 'available';
-    return input.ownedBackgrounds.includes(m.bgReward) ? null : 'ready';
+    return done && !input.ownedBackgrounds.includes(m.bgReward) ? 'ready' : null;
   }));
-  return { corner: strongestMark([passeio, torneio, conquistas]), passeio, torneio, conquistas };
+  const corner = strongestMark([passeio, torneio, conquistas]);
+  const fontes: [QuestMark, QuestTone][] = [[passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold']];
+  const cornerTone = fontes.find(([m]) => m === corner && corner !== null)?.[1] ?? 'gold';
+  return { corner, passeio, torneio, conquistas, cornerTone };
 }
 
 /** Rótulo acessível (EN primeiro, PT-BR depois). `null` quando não há marca. */

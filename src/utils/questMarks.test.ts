@@ -8,10 +8,10 @@ const base = { passeio: null, weekly: [], missionProgress: cheio, ownedBackgroun
 
 describe('questMarks', () => {
   it('sem nada pendente, nenhuma marca', () => {
-    expect(questMarks(base)).toEqual({ corner: null, passeio: null, torneio: null, conquistas: null });
+    expect(questMarks(base)).toEqual({ corner: null, passeio: null, torneio: null, conquistas: null, cornerTone: 'gold' });
   });
-  it('permanente incompleta = "!"; cumprida e cenário não comprado = "?"', () => {
-    expect(questMarks({ ...base, missionProgress: zero }).conquistas).toBe('available');
+  it('permanente incompleta NÃO acende "!"; cumprida e cenário não comprado = "?"', () => {
+    expect(questMarks({ ...base, missionProgress: zero, ownedBackgrounds: [] }).conquistas).toBeNull();
     expect(questMarks({ ...base, ownedBackgrounds: [] }).conquistas).toBe('ready');
   });
   it('semanal: andando "!", cumprida e não paga "?", paga some', () => {
@@ -27,6 +27,17 @@ describe('questMarks', () => {
     const r = questMarks({ ...base, passeio: 'available', weekly: [{ done: true, claimed: false }] });
     expect(r.corner).toBe('ready');
     expect(r.passeio).toBe('available');
+  });
+  it('tom: semanal é azul, o resto amarelo; o canto herda o da marca vencedora', () => {
+    expect(questMarks({ ...base, weekly: [{ done: false, claimed: false }] }).cornerTone).toBe('blue');
+    expect(questMarks({ ...base, passeio: 'available' }).cornerTone).toBe('gold');
+    // "?" amarelo (conquista pronta) vence o "!" azul da semana.
+    const r = questMarks({ ...base, ownedBackgrounds: [], weekly: [{ done: false, claimed: false }] });
+    expect(r.corner).toBe('ready');
+    expect(r.cornerTone).toBe('gold');
+    // "?" azul (semanal pronta) vence o "!" amarelo do Passeio.
+    const b = questMarks({ ...base, passeio: 'available', weekly: [{ done: true, claimed: false }] });
+    expect(b.cornerTone).toBe('blue');
   });
   it('strongestMark e rótulos EN+PT', () => {
     expect(strongestMark([null, 'available', 'ready'])).toBe('ready');

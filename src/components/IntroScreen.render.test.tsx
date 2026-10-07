@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss as render, computed } from '../test/renderEnv';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { IntroScreen } from './IntroScreen';
+
+const nav = navigator as unknown as { userActivation?: unknown };
+/** Já houve gesto na sessão: a tela de abertura é pulada (os testes do vídeo partem daqui). */
+const comAtivacao = (ativo: boolean) => Object.defineProperty(navigator, 'userActivation', { configurable: true, value: ativo ? { hasBeenActive: true } : undefined });
+beforeEach(() => { comAtivacao(true); localStorage.clear(); });
+afterEach(() => { delete nav.userActivation; });
 
 /**
  * A intro pelo canvas Onboarding-funil (ONB-03/04, DECISÕES §23, X4):
@@ -91,5 +97,59 @@ describe('IntroScreen — sem a tela de play cinza', () => {
     } finally {
       HTMLMediaElement.prototype.play = orig;
     }
+  });
+});
+
+/**
+ * 07/10/2026 (S17) — o tema toca DURANTE a intro. O navegador só libera áudio num
+ * gesto, então vem UMA tela de abertura (o pôster da marca + "Tap to start") antes
+ * do vídeo; o toque inicia o tema e a intro. Pulada se não há o que liberar.
+ */
+describe('IntroScreen — tela de abertura (tema na intro)', () => {
+  it('sem gesto prévio: mostra a marca + "Tap to start", sem vídeo e sem som antes do toque', () => {
+    comAtivacao(false);
+    render(<IntroScreen onFinish={() => {}} />);
+    const alvo = screen.getByRole('button', { name: 'Tap to start' });
+    expect(alvo.classList.contains('sm2-splash')).toBe(true);
+    expect(alvo.querySelector('video')).toBeNull();
+    expect((alvo.querySelector('img') as HTMLImageElement).getAttribute('src')).toMatch(/intro-poster.*\.webp$/);
+    expect(alvo.style.background).toBe('');
+  });
+
+  it('o par PT-BR existe, com o inglês primeiro', () => {
+    const src = readFileSync(join(__dirname, 'IntroScreen.tsx'), 'utf8');
+    expect(src).toMatch(/isPt \? 'Toque para começar' : 'Tap to start'/);
+  });
+
+  it('o toque inicia a intro (vídeo muted monta) e pede o tema uma vez', async () => {
+    comAtivacao(false);
+    const tema = await import('../utils/tema');
+    const espia = vi.spyOn(tema, 'iniciarTemaNoGesto').mockImplementation(() => {});
+    render(<IntroScreen onFinish={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tap to start' }));
+    expect(espia).toHaveBeenCalledTimes(1);
+    const v = document.querySelector('video') as HTMLVideoElement;
+    expect(v.muted).toBe(true);
+    expect(screen.getByRole('button', { name: 'Skip intro' })).toBeTruthy();
+    espia.mockRestore();
+  });
+
+  it('Enter também inicia (teclado)', () => {
+    comAtivacao(false);
+    render(<IntroScreen onFinish={() => {}} />);
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Tap to start' }), { key: 'Enter' });
+    expect(document.querySelector('video')).not.toBeNull();
+  });
+
+  it('já houve gesto, tema desligado ou app mudo: pula a abertura e vai direto à intro', () => {
+    comAtivacao(true);
+    const a = render(<IntroScreen onFinish={() => {}} />);
+    expect(screen.queryByRole('button', { name: 'Tap to start' })).toBeNull();
+    expect(document.querySelector('video')).not.toBeNull();
+    a.unmount();
+    comAtivacao(false);
+    localStorage.setItem('soulmon-sound-theme-off', 'true');
+    render(<IntroScreen onFinish={() => {}} />);
+    expect(document.querySelector('video')).not.toBeNull();
   });
 });
