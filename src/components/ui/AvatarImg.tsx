@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { defaultAvatarId } from '../../utils/avatar';
+import { AVATAR_PORTRAIT_ZOOM, AVATAR_PORTRAIT_ORIGIN } from '../nav/npcScale';
 
 /**
  * A imagem do avatar, CARREGADA SOB DEMANDA. As miniaturas (`assets/avatares/<id>.webp`, 128 px) entram por
@@ -24,7 +25,7 @@ export function AvatarImg({ id, size, alt }: { id: string; size: number; alt: st
     return () => { vivo = false; };
   }, [real]);
   return url
-    ? <img src={url} alt={alt} width={size} height={size} draggable={false} style={{ width: size, height: size, objectFit: 'cover', display: 'block' }} />
+    ? <img src={url} alt={alt} width={size} height={size} draggable={false} style={{ width: size, height: size, objectFit: 'cover', display: 'block', transform: `scale(${AVATAR_PORTRAIT_ZOOM})`, transformOrigin: AVATAR_PORTRAIT_ORIGIN }} />
     : <span role="img" aria-label={alt} style={{ width: size, height: size, display: 'block', background: 'var(--sm2-surface-2)' }} />;
 }
 

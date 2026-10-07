@@ -189,9 +189,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/nav/npcScale.ts`
-**Dono de:** a escala do NPC na folha do lote — `NPC_SCALE = 1.4` (pedido do dono, 29/09/2026), sobre o teto de largura anterior de 46% (`NPC_BASE_MAX_WIDTH_PCT`); a altura segue limitada pela zona de 1/3 da tela.
-**Exports:** `NPC_SCALE`, `NPC_BASE_MAX_WIDTH_PCT`, `NPC_MAX_WIDTH_PCT`.
-**Chamado por:** `src/components/nav/AreaSheet.tsx`.
+**Dono de:** a escala do NPC na folha do lote — `NPC_SCALE = 1.4` (pedido do dono, 29/09/2026), sobre o teto de largura anterior de 46% (`NPC_BASE_MAX_WIDTH_PCT`); a altura segue limitada pela zona de 1/3 da tela. E o ZOOM dos retratos (07/10/2026, pedido do dono): `NPC_PORTRAIT_ZOOM` 1,4 com origem `NPC_PORTRAIT_ORIGIN` no canto superior esquerdo (a arte cresce sem recorte em linha reta; a zona recorta embaixo, sob a folha) e `AVATAR_PORTRAIT_ZOOM` 1,3 nas miniaturas de avatar (`AvatarImg`, já recortadas em círculo).
+**Exports:** `NPC_SCALE`, `NPC_BASE_MAX_WIDTH_PCT`, `NPC_MAX_WIDTH_PCT`, `NPC_PORTRAIT_ZOOM`, `NPC_PORTRAIT_ORIGIN`, `AVATAR_PORTRAIT_ZOOM`, `AVATAR_PORTRAIT_ORIGIN`.
+**Chamado por:** `src/components/nav/AreaSheet.tsx`, `src/components/ui/AvatarImg.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
 ### `src/components/nav/sheetKit.ts`
@@ -367,7 +367,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/home/statTips.test.ts`, `src/components/CompanionHUD.cta.test.tsx`.
 
 ### `src/components/perfil/ProfileAvatarButton.tsx`
-**Dono de:** o botão do USUÁRIO no canto superior esquerdo da Home (Tarefa C, 07/10/2026) — a foto de perfil (NPC) com a moldura equipada, num alvo de 56 (avatar de 42, +50% em 07/10/2026; a moldura transborda e a coluna `leading` do `HomeHud` acompanha em 56). ⚰️ Substitui o sanduíche e o `HomeMenuSheet` (apagado): abre `page:settings`. O que morava no menu foi para as Configurações: Guia (já em Ajuda), Créditos (linha `onOpenCredits`) e Oráculo/Refazer o ritual (ocultos por `MENU_SHOWS_RITUAL_TOOLS = false`, hoje exportada de `SettingsPage.tsx`).
+**Dono de:** o botão do USUÁRIO no canto superior esquerdo da Home (Tarefa C, 07/10/2026) — a foto de perfil (NPC) com a moldura equipada, num alvo de 44 no fluxo (coluna de 48 do `HomeHud`, como antes) com o avatar de 42 (+50% em 07/10/2026) SOBREPOSTO em `absolute` e `z-index` 20 — não empurra o pet nem o nome. ⚰️ Substitui o sanduíche e o `HomeMenuSheet` (apagado): abre `page:settings`. O que morava no menu foi para as Configurações: Guia (já em Ajuda), Créditos (linha `onOpenCredits`) e Oráculo/Refazer o ritual (ocultos por `MENU_SHOWS_RITUAL_TOOLS = false`, hoje exportada de `SettingsPage.tsx`).
 **Props principais:** `avatarId?`, `frameId?`, `seed?`, `language`, `onClick`.
 **Exports:** `ProfileAvatarButton(props)`.
 **Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
