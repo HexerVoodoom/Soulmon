@@ -5755,6 +5755,8 @@ select:focus-visible {
   .sm2-celebrate { display: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }
+  /* Tour do corvo: o corvo fica parado, os cartões esperam o toque do mesmo jeito. */
+  .sm-corvo-bob { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
   .sm2-grove-bob { animation: none !important; }
   /* Feira da Guilda: o FX do fenômeno fica parado. */
@@ -6334,6 +6336,14 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 .sm-milestone-pop { animation: sm-milestone-pop .45s ease-out both; }
+
+/* Tour de boas-vindas (`WelcomeTour`): o corvo balança de leve, parado quando
+   o movimento é reduzido — a regra mora no bloco canônico. */
+@keyframes sm-corvo-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.sm-corvo-bob { animation: sm-corvo-bob 2.4s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    KIT VETOR — `components/pixel/PixelKit.tsx` sobre `--sm2-*` (16/09/2026)

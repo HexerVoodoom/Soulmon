@@ -16,6 +16,7 @@ import {
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
+import { needsWelcomeTour } from './utils/welcomeTour';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
@@ -671,6 +672,7 @@ const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
 const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
+const WelcomeTour = lazy(() => import('./components/WelcomeTour').then(m => ({ default: m.WelcomeTour })));
 const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
 const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
 const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
@@ -1833,8 +1835,38 @@ export default function App() {
     writeFlag(STORAGE_KEYS.REST_SETUP_SHOWN, true, { silent: true });
     setRestSetupShown(true);
   }, []);
-  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
-    triageTasks ? 'triage'
+  /**
+   * "O jogador já concluiu ALGUMA coisa, algum dia?"
+   *
+   * Derivado do estado que já existe, sem campo novo: `activityStats` guarda
+   * `completionCount` acumulado por hábito (nunca zerado), `completedTasks`
+   * guarda as tarefas avulsas e `activityLog` guarda as conclusões recorrentes.
+   * Usado pelo card de BRINCAR — ver o comentário no ponto de render.
+   */
+  const jaConcluiuAlgo = useMemo(
+    () => (gameState.completedTasks?.length ?? 0) > 0
+      || (gameState.activityLog?.length ?? 0) > 0
+      || Object.values(gameState.activityStats ?? {}).some(s => (s?.completionCount ?? 0) > 0),
+    [gameState.completedTasks, gameState.activityLog, gameState.activityStats],
+  );
+  /* O TOUR DO CORVO (`components/WelcomeTour`, 07/10/2026): vem PRIMEIRO na fila —
+     é o cartão de boas-vindas, antes do check-in e do priming. Uma vez por aparelho
+     (visto OU pulado grava a mesma marca) e só para quem ainda não concluiu nada;
+     o replay de Configurações o chama de novo sem gravar nada. Funciona na demo. */
+  const [welcomeTourShown, setWelcomeTourShown] = useState(() => readFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN));
+  const [welcomeTourReplay, setWelcomeTourReplay] = useState(false);
+  const welcomeTourOpen = welcomeTourReplay || needsWelcomeTour({ shown: welcomeTourShown, jaConcluiuAlgo });
+  const handleWelcomeTourDone = useCallback(() => {
+    if (!welcomeTourReplay) {
+      writeFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN, true, { silent: true });
+      setWelcomeTourShown(true);
+    }
+    setWelcomeTourReplay(false);
+  }, [welcomeTourReplay]);
+  const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
+  const interstitial: 'welcomeTour' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
+    welcomeTourOpen ? 'welcomeTour'
+    : triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
           : grovePendente ? 'groveMilestone'
@@ -1884,20 +1916,6 @@ export default function App() {
     diaCompletoAntes.current = diaCompletoHoje;
   }, [diaCompletoHoje]);
 
-  /**
-   * "O jogador já concluiu ALGUMA coisa, algum dia?"
-   *
-   * Derivado do estado que já existe, sem campo novo: `activityStats` guarda
-   * `completionCount` acumulado por hábito (nunca zerado), `completedTasks`
-   * guarda as tarefas avulsas e `activityLog` guarda as conclusões recorrentes.
-   * Usado pelo card de BRINCAR — ver o comentário no ponto de render.
-   */
-  const jaConcluiuAlgo = useMemo(
-    () => (gameState.completedTasks?.length ?? 0) > 0
-      || (gameState.activityLog?.length ?? 0) > 0
-      || Object.values(gameState.activityStats ?? {}).some(s => (s?.completionCount ?? 0) > 0),
-    [gameState.completedTasks, gameState.activityLog, gameState.activityStats],
-  );
 
   const t = useTranslation(language);
 
@@ -6944,6 +6962,7 @@ export default function App() {
                 writeLocal(STORAGE_KEYS.LANGUAGE, lang, { silent: true });
               }}
               onOpenGuide={() => setGuideModalOpen(true)}
+              onReplayWelcomeTour={handleReplayWelcomeTour}
               onOpenGlossary={() => setShowHelpModal(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
@@ -7360,6 +7379,11 @@ export default function App() {
         totalRequired={dailyGoalFor(gameState, new Date().getDay(), new Date().toDateString())}
       />
       {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
+      {interstitial === 'welcomeTour' && (
+        <Suspense fallback={null}>
+          <WelcomeTour language={language} onDone={handleWelcomeTourDone} />
+        </Suspense>
+      )}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DailyReportModal

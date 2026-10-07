@@ -2918,6 +2918,15 @@ dominância populacional — por isso ±15%. Régua nova:
 - ⚠️ NENHUMA missão semanal premia CONTAGEM DE TAREFAS — proibição escrita do `CLAUDE.md`, é a mais fácil de furar sem perceber.
 **Regra de negócio:** Nenhuma missão semanal premia contagem de tarefas — proibição escrita. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/welcomeTour.ts`
+**Dono de:** o roteiro do tour do corvo e a regra de entrada (07/10/2026). Puro.
+**Exports:**
+- `TOUR_GUIDE_NAME` ("Rook") · `TOUR_STEPS` (8 passos: 5 do básico, 3 do mapa; cada texto é `{ en }`, `pt` ainda não existe) · `TOUR_STARTING_GOAL` (= `FORM_REQUIREMENTS.rookie.required`, nunca número à mão).
+- `tourText(t, language)` — devolve `pt` só se existir; hoje cai no inglês. `needsWelcomeTour({ shown, jaConcluiuAlgo })` — nunca visto neste aparelho E sem conclusão no save.
+**Chamado por:** `src/components/WelcomeTour.tsx`, `src/App.tsx`.
+**Régua:** `src/components/WelcomeTour.render.test.tsx`.
+**Regra de negócio:** nenhuma — apresenta as regras de [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (dia completo, evolução manual) sem decidir nenhuma.
+
 ### `src/utils/welcomeBack.ts`
 **Dono de:** A fala de boas-vindas ao retorno, por faixa de dias de ausência.
 **Exports:**

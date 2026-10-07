@@ -105,10 +105,10 @@ describe('o slot de avisos não tem cartão solto', () => {
 });
 
 describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guilda, B1)', () => {
-  const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1400);
+  const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1700);
 
   it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
-    const ordem = ["'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
+    const ordem = ["'welcomeTour'", "'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
     // na UNIÃO de tipos (uma vez, na ordem declarada)
     const uniao = interstitial.slice(0, interstitial.search(/=\r?\n/));
     const posUniao = ordem.map(o => uniao.indexOf(o));
@@ -188,9 +188,9 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   /** Os nomes na ordem em que a cadeia ternária os decide (o último é o `: 'welcome'`). */
   const ordem = [...expr.matchAll(/\?\s*'(\w+)'|:\s*'(welcome)'/g)].map(m => m[1] ?? m[2]);
 
-  it('a expressão existe e a ordem é: triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
+  it('a expressão existe e a ordem é: TOUR DO CORVO → triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
     expect(ini).toBeGreaterThan(0);
-    expect(ordem).toEqual(['triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {
@@ -208,5 +208,25 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
 
   it('o tipo declarado da fila também lista `groveMilestone` (a expressão e o tipo não divergem)', () => {
     expect(expr.slice(0, expr.indexOf('=')).includes("'groveMilestone'")).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// O TOUR DO CORVO (07/10/2026): intersticial NOVO, PRIMEIRO da fila — o cartão de boas-vindas vem
+// antes do check-in e do priming. Montagem única, uma vez por aparelho, replay sem marca nova.
+// ---------------------------------------------------------------------------
+describe('o tour do corvo tem POSIÇÃO na fila e monta UMA vez', () => {
+  it('é o primeiro intersticial, montado num único ponto', () => {
+    expect(app).toContain("welcomeTourOpen ? 'welcomeTour'");
+    expect((app.match(/interstitial === 'welcomeTour'/g) ?? [])).toHaveLength(1);
+    expect((app.match(/<WelcomeTour /g) ?? [])).toHaveLength(1);
+  });
+  it('visto OU pulado grava a mesma flag; o replay não grava nada', () => {
+    expect((app.match(/writeFlag\(STORAGE_KEYS\.WELCOME_TOUR_SHOWN/g) ?? [])).toHaveLength(1);
+    expect(app).toContain('if (!welcomeTourReplay) {');
+  });
+  it('não toca em som nem em XP', () => {
+    const src = readFileSync('src/components/WelcomeTour.tsx', 'utf8');
+    expect(src).not.toMatch(/sounds|audioBus|play[A-Z]\w+\(|gamePoints|totalXP/);
   });
 });
