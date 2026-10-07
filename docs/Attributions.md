@@ -93,7 +93,7 @@ aberto no benchmark de agosto/2026 (`docs/PLANO-EVOLUCAO.md`) e foi fechado.*
 
 ## Áudio
 
-**Desde 21/09/2026: cinco arquivos de áudio gerados por IA em `public/sounds/`** (S16, decisão
+**Desde 21/09/2026: cinco arquivos de áudio em `public/sounds/`** (S16, decisão
 do dono em `REGISTRO-DE-DECISOES.md` §6.1 — instalados **sem** o A/B cego ter rodado, "só pra ter
 pronto"). Os outros cinco sons continuam **sintetizados em runtime** (`src/utils/sounds.ts`), e os
 três eventos com arquivo mantêm o procedural como fallback. Régua executável, nas duas direções
