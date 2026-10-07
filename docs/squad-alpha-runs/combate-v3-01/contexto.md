@@ -360,3 +360,9 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 
 ## §2.33 Família no servidor: risco aceito (07/10/2026, dono)
 - Resposta à dúvida do MÉDIO-1 do PR13 (§2.29): **aceitar o risco** — as famílias são calibradas ±5% entre si e o servidor valida a lista fechada (`SPECIAL_FAMILY_IDS`). O PR15c grava e valida `fichaJornada` (plano recalculado dos galhos gravados) para fechar melhor.
+
+### §2.36–§2.39 (07/10/2026, sessão na nuvem)
+- §2.36 Prédios por Vínculo: tabela `BUILDING_GATES` e nomes Centro de Evolução/Arquivo/Santuário do Vínculo CONFIRMADOS pelo dono (#257).
+- §2.37 Talentos: servidor/cliente podam pré-requisito violado e descartam malformado; TODOS os nós previstos ativos (#260); pve-06/pvp-07 sem mexer no especial (canal de 5%).
+- §2.38 Perfil: avatar no canto substitui o sanduíche; alt EN primeiro (#264).
+- §2.39 Missões: só no ícone do canto; "!" disponível, "?" pronta, "?" vence (#262). Combate: torcida só ícone, cena do especial com nome grande e fundo escurecido, sons de ataque/especial/vitória (#254).
