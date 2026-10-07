@@ -84,6 +84,11 @@ export const STORAGE_KEYS = {
    *  Aqui a polaridade é invertida de propósito: a chave guarda LIGADA, então
    *  `readFlag` sem a chave devolve `false` e a trilha nasce DESLIGADA. */
   SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',
+  /** A música-TEMA ("Stone Hall Decay"), decisão do dono de 07/10/2026 — revoga o
+   *  "nasce desligada" (S2) SÓ para ela. Polaridade como a do mudo: a chave guarda
+   *  DESLIGADA, então `readFlag` sem a chave devolve `false` e o tema nasce LIGADO.
+   *  Ele continua só começando por gesto (D11): ligado ≠ tocando. */
+  SOUND_THEME_OFF: 'soulmon-sound-theme-off',
   FCM_TOKEN: 'soulmon-fcm-token',
   LAST_CLOUD_SYNC: 'soulmon-last-cloud-sync',
   ORACLE_FORM: 'soulmon-oracle-form',

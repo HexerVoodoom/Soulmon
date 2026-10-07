@@ -8274,3 +8274,16 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 /* Tarefa B: árvore de talentos. Sem transição de propósito: não há movimento a reduzir. */
 .sm-talent-node { cursor: pointer; }
 .sm-talent-scroll { scrollbar-width: thin; }
+
+/* INTRO sem o play cinza (07/10/2026). O WebView do Android desenha um pôster
+   padrão — o triângulo de play cinza — quando o <video> não tem `poster`, e o
+   Chrome/Safari desenham o botão nativo de iniciar quando o autoplay é recusado.
+   O pôster agora é o 1º quadro da marca (IntroScreen); aqui o fundo do próprio
+   elemento é a cor desse quadro (nunca cinza/preto) e os controles nativos,
+   incluindo o overlay de play, nunca existem. */
+.sm2-splash-video { background-color: #0f2a34; }
+.sm2-splash-video::-webkit-media-controls,
+.sm2-splash-video::-webkit-media-controls-panel,
+.sm2-splash-video::-webkit-media-controls-overlay-play-button,
+.sm2-splash-video::-webkit-media-controls-start-playback-button,
+.sm2-splash-video::-webkit-media-controls-play-button { display: none !important; -webkit-appearance: none; opacity: 0; pointer-events: none; }

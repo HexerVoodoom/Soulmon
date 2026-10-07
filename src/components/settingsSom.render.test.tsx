@@ -17,6 +17,7 @@ import { renderWithCss } from '../test/renderEnv';
 import { SettingsPage } from './SettingsPage';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { esquecerTrilha, trilhaPreferida } from '../utils/trilha';
+import { temaPreferido } from '../utils/tema';
 
 /** `matchMedia` não existe no jsdom (InstallPrompt/ThemeProvider chamam no 1º efeito). */
 function installMatchMedia() {
@@ -74,12 +75,34 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
   });
 
   it.each([
-    ['pt-BR', /^Sons/, /^Trilha/],
-    ['en-US', /^Sound effects/, /^Music/],
-  ] as const)('%s: as duas chaves existem, com rótulo no idioma', (language, sons, trilha) => {
+    ['pt-BR', /^Sons/, /^Trilha/, /^Música-tema/],
+    ['en-US', /^Sound effects/, /^Ambient loop/, /^Theme music/],
+  ] as const)('%s: as três chaves existem, com rótulo no idioma', (language, sons, trilha, tema) => {
     montar(language);
     expect(switchDe(sons)).toBeTruthy();
     expect(switchDe(trilha)).toBeTruthy();
+    expect(switchDe(tema)).toBeTruthy();
+  });
+
+  it('S17: a música-tema nasce LIGADA (decisão do dono, 07/10/2026), persiste e desliga/religa por toque', () => {
+    montar('en-US');
+    const sw = switchDe(/^Theme music/);
+    expect(temaPreferido()).toBe(true);
+    expect(sw.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(sw);
+    expect(temaPreferido()).toBe(false);
+    fireEvent.click(sw);
+    expect(temaPreferido()).toBe(true);
+  });
+
+  it('S17: música é uma por vez — ligar a trilha desliga o tema, e ligar o tema desliga a trilha', () => {
+    montar('en-US');
+    fireEvent.click(switchDe(/^Ambient loop/));
+    expect(trilhaPreferida()).toBe(true);
+    expect(temaPreferido()).toBe(false);
+    fireEvent.click(switchDe(/^Theme music/));
+    expect(temaPreferido()).toBe(true);
+    expect(trilhaPreferida()).toBe(false);
   });
 
   it('tocar em "Sons" chama o dono do mudo (o App), e o estado refletido é `!soundMuted`', () => {

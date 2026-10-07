@@ -5,7 +5,7 @@
 > pasta está no **`.gitignore`**, ou seja, **não vai para o git**. Por isso este arquivo
 > existe: é a parte que precisa sobreviver. Se você precisar de detalhe que não está aqui,
 > ele está lá, na máquina de quem rodou o run.
-> **Origem:** run `som-01` (Fases 0 a 3, 08–09/09/2026). As decisões canônicas são **S1..S16** ⚠️ (dizia S1..S13 até 21/09/2026, e ficou para trás quando o S16 entrou; não existe S14)
+> **Origem:** run `som-01` (Fases 0 a 3, 08–09/09/2026). As decisões canônicas são **S1..S17** ⚠️ (dizia S1..S13 até 21/09/2026, e ficou para trás quando o S16 entrou; não existe S14)
 > em `docs/REGISTRO-DE-DECISOES.md` §6.1 — este documento não decide nada, só orienta.
 > ⚠️ Este arquivo foi escrito na Fase 5, **antes** da Fase 3 e das decisões S11–S13: as
 > seções 2, 2.1 e 5 foram **corrigidas em 09/09/2026** contra o código e contra os
@@ -18,6 +18,7 @@
 |---|---|
 | Os sons — **11 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
+| A **música-TEMA** "Stone Hall Decay" (S17, 07/10/2026): `<audio>` em streaming → `busTema`, nasce LIGADA mas só começa no 1º gesto da sessão, 2 formatos por `canPlayType`, 30 s de silêncio entre voltas | `src/utils/tema.ts` + `TEMA_DO_JOGO` em `sonsAssets.ts` |
 | A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) | `src/utils/trilha.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
 | Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |
@@ -36,7 +37,7 @@ há um teste (`footgun 9`) que reprova a cópia.
    público" é punido por qualquer som não solicitado, e o app tem de funcionar **100% mudo** —
    som nunca é o único canal de nada. A fronteira da D11 é o **pacote inteiro**: ela mora no
    chamador tanto quanto em `sounds.ts`.
-2. **S2 — a trilha nasce desligada** e só começa por gesto. *Porque* autoplay viola a D11 por
+2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. Música é uma por vez: ligar uma desliga a outra.) *Porque* autoplay viola a D11 por
    extensão: música contínua não é presença nem confirmação de ação.
 3. **S3 — ≤ −16 LUFS integrado e true peak ≤ −1 dBTP** (ITU-R BS.1770 / EBU R 128). *Porque* é o
    único alvo com norma citada; a alternativa em dBFS mistura régua de pico com régua de
@@ -215,3 +216,19 @@ Do **engenheiro de áudio** — **as três fechadas em 21/09/2026**, no arnês l
 
 Detalhe completo, com saídas coladas e proveniência de cada número:
 `squad-alpha-runs/som-01/maintainer/runbook-som.md` (não versionado).
+
+## 9. A música-tema (S17, 07/10/2026)
+
+- **Onde:** `src/utils/tema.ts` (comportamento), `TEMA_DO_JOGO` em `src/utils/sonsAssets.ts` (manifesto: hash, bytes,
+  formatos, pausa e fade), `busTema` em `audioBus.ts`, switch "Música-tema/Theme music" em `SettingsPage`.
+- **Gesto:** `armarTemaNoPrimeiroGesto()` (no `main.tsx`) só instala ouvintes (`pointerup`/`touchend`/`keydown`/`click`).
+  Se o motor recusar o `play()`, rearma e o próximo gesto tenta — **nunca** autoplay cego. A intro é `muted` (guard em
+  `IntroScreen.render.test.tsx`), então não há briga de áudio com o vídeo.
+- **Pausas:** `pausarTrilha`/`retomarTrilha` repassam os motivos (`sono`/`descanso`/`mudo`) ao tema; `document.hidden` pausa o
+  elemento. O mudo global (`isMuted`) impede o início.
+- **Loudness:** o arquivo foi mestrado no ALVO DA TRILHA de `loudness.ts` (LUFS-S mediano medido com o filtro `ebur128` do
+  ffmpeg, BS.1770, nos dois formatos: −28,0 / −28,1; integrado −28,2; true peak −15 dBFS) e toca a ganho 1. Nenhum número
+  de alvo foi copiado para `tema.ts`/`sonsAssets.ts` (há guard). Se soar baixo, mude a POLÍTICA e remasterize — nunca um ganho no código.
+- **Bytes:** ≤ 2,5 MB por formato, fora do S6 de 300 KB (que vale para SFX e camadas), fora do `PRECACHE_URLS`; o `sw.js` não
+  intercepta `Range` nem `/sounds/tema-`.
+- **Pendências do dono:** termos comerciais do plano Suno (`docs/Attributions.md`) e a escuta (S8).

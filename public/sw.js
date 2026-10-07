@@ -1,6 +1,6 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v186';
+const CACHE_VERSION = 'v187';
 const STATIC_CACHE = `soulmon-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `soulmon-runtime-${CACHE_VERSION}`;
 
@@ -78,6 +78,12 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET and cross-origin requests
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Música-tema (S17): 2,4 MB em streaming. Um `<audio>` pede por faixa de bytes
+  // (`Range` → 206), e `cache.put` de 206 lança ou grava um pedaço sob a chave do
+  // arquivo inteiro. O SW não toca nesses pedidos — o navegador cuida do Range e
+  // do cache HTTP. (E ela nunca entra em PRECACHE_URLS: só baixa após o gesto.)
+  if (request.headers.get('range') || url.pathname.startsWith('/sounds/tema-')) return;
 
   // Never cache API calls (e.g. /api/save) — a cached cloud save could be
   // served stale offline and overwrite fresher local state.

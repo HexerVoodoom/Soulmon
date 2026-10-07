@@ -28,6 +28,7 @@ import { definirTrilhaLigada, garantirBarramento, trilhaLigada } from './audioBu
 import { carregarAsset, CAMADAS_DA_TRILHA, type CamadaDaTrilha } from './sonsAssets';
 import { db2lin, TRIM_TRILHA_POR_CAMADAS_DB } from './loudness';
 import { isMuted } from './sounds';
+import { desligarTema, esquecerTema, pausarTema, retomarTema, temaPreferido } from './tema';
 
 let fontes: AudioBufferSourceNode[] = [];
 let trim: GainNode | null = null;
@@ -99,6 +100,8 @@ function ligarCicloDeVida(): void {
 
 /** Gesto do jogador: liga (persiste a chave) e começa a tocar. */
 export function ligarTrilha(): void {
+  // A música é UMA por vez: escolher a trilha por gesto desliga o tema (S17, 07/10/2026).
+  desligarTema();
   definirTrilhaLigada(true);
   ligadaNestaSessao = true;
   ligarCicloDeVida();
@@ -114,6 +117,7 @@ export function desligarTrilha(): void {
 
 /** Gancho do App: dormir / janela de descanso / mudo global (E0). Um motivo por chamada. */
 export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
+  pausarTema(motivo); // o tema obedece aos mesmos motivos (S17)
   pausas.add(motivo);
   parar();
 }
@@ -122,6 +126,7 @@ export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
  *  tinha ligado por gesto nesta sessão. Acordar não religa a trilha de quem
  *  está no mudo; desligar o mudo não acorda a trilha de quem está dormindo. */
 export function retomarTrilha(motivo: MotivoDePausa = 'sono'): void {
+  retomarTema(motivo);
   pausas.delete(motivo);
   if (!pausada() && ligadaNestaSessao) void comecar();
 }
@@ -140,7 +145,8 @@ let primeiroGestoVisto = false;
 export function aoGestoSonoro(): void {
   if (primeiroGestoVisto) return;
   primeiroGestoVisto = true;
-  if (trilhaLigada() && !ligadaNestaSessao) ligarTrilha();
+  // Com o tema ligado ele é a música da sessão (S17); a trilha só vem se o tema saiu.
+  if (trilhaLigada() && !temaPreferido() && !ligadaNestaSessao) ligarTrilha();
 }
 
 /** A preferência persistida (a trilha só TOCA depois de `ligarTrilha()`). */
@@ -159,6 +165,7 @@ export function camadasTocando(): number {
 
 /** Só para teste. */
 export function esquecerTrilha(): void {
+  esquecerTema();
   parar();
   ligadaNestaSessao = false;
   pausas.clear();
