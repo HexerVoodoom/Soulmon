@@ -270,6 +270,9 @@ const BOWL_FOOT = 'M8.6 20.4h6.8';
 const BOX_LID =
   'M4.2 4h15.6a1 1 0 0 1 1 1v2.4a1 1 0 0 1-1 1H4.2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z';
 const BOX_BODY = 'M5.6 11.6h12.8v6.8a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2Z';
+/* Bolsa (bag): a MOCHILA da Home (07/10/2026, pedido do dono: SVG genérico, outro que não o backpack nem a arte pixel). */
+const BAG_BODY = 'M5.5 8.5h13l1.2 10.4a1.6 1.6 0 0 1-1.6 1.8H5.9a1.6 1.6 0 0 1-1.6-1.8Z';
+const BAG_HANDLE = 'M9 11V7a3 3 0 0 1 6 0v4';
 const BOX_LATCH = 'M9.6 11.6a2.4 2.4 0 0 0 4.8 0';
 
 /**
@@ -562,6 +565,10 @@ const GLYPHS: Record<string, GlyphDef> = {
        ele volta o "cabeça e ombros" que este desenho existe para evitar). */
     outline: <><path d={BOWL} /><path d={BOWL_FOOT} /><path d={BOWL_STEAM} /></>,
     solid: <path d={BOWL} />,
+  },
+  bag: {
+    outline: <><path d={BAG_BODY} /><path d={BAG_HANDLE} /></>,
+    solid: <path d={BAG_BODY} />,
   },
   inventory_2: {
     outline: <><path d={BOX_LID} /><path d={BOX_BODY} /><path d={BOX_LATCH} /></>,
