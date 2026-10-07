@@ -6222,6 +6222,7 @@ export default function App() {
                     avatarId={gameState.avatarId}
                     frameId={gameState.equippedFrame}
                     seed={saveId}
+                    level={bondLevelFor(gameState.totalXP ?? 0)}
                     language={language}
                     onClick={() => goTo('page:settings')}
                   />
@@ -6812,6 +6813,7 @@ export default function App() {
                 equippedFrame: gameState.equippedFrame ?? null,
                 ownedFrames: gameState.ownedFrames ?? [],
                 petStage: gameState.evolutionStage,
+                totalXP: gameState.totalXP ?? 0,
                 onChangeAvatar: (id) => setGameState(prev => prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }),
                 onChangeFrame: handleEquipFrame,
               }}

@@ -18,6 +18,7 @@ import { desligarTema, ligarTema, temaPreferido } from '../utils/tema';
 import { APP_VERSION, FeedbackRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { UserAvatar } from './ui/UserAvatar';
+import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
 
 /**
@@ -76,7 +77,7 @@ interface SettingsPageProps {
   /** Perfil (Tarefa C): foto + moldura. Sem isto o grupo "Perfil" não existe. */
   profile?: {
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
-    petStage: string; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
+    petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -256,7 +257,7 @@ export function SettingsPage({
 
       {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
       {profile && (
-        <Group title={isPt ? 'Perfil' : 'Profile'}>
+        <GroupCard title={isPt ? 'Perfil' : 'Profile'}>
           <button
             type="button"
             data-edit-profile
@@ -280,7 +281,8 @@ export function SettingsPage({
             onChangeAvatar={profile.onChangeAvatar}
             onChangeFrame={profile.onChangeFrame}
           />
-        </Group>
+          <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />
+        </GroupCard>
       )}
 
       {/* ── SUA CONTA — a única ação dominante da página mora aqui ────────── */}

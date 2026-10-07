@@ -11,10 +11,11 @@ const UserAvatar = lazy(() => import('../ui/UserAvatar').then(m => ({ default: m
  * o conjunto é posicionado em `absolute`, centrado no botão (6px mais baixo, para a moldura alta não cortar na borda do aparelho) e acima do pet e do nome (z-index), então não ocupa
  * altura nem largura a mais — o pet e o nome ficam onde estavam. O alvo de toque é o conjunto inteiro (transborda).
  */
-export function ProfileAvatarButton({ avatarId, frameId, seed, language, onClick }: {
-  avatarId?: string | null; frameId?: string | null; seed?: string | null; language: Language; onClick: () => void;
+export function ProfileAvatarButton({ avatarId, frameId, seed, level, language, onClick }: {
+  level?: number; avatarId?: string | null; frameId?: string | null; seed?: string | null; language: Language; onClick: () => void;
 }) {
-  const label = language === 'pt-BR' ? 'Configurações e perfil' : 'Settings and profile';
+  const base = language === 'pt-BR' ? 'Configurações e perfil' : 'Settings and profile';
+  const label = level != null ? `${base}, ${language === 'pt-BR' ? 'nível' : 'level'} ${level}` : base;
   return (
     <button
       type="button"
@@ -33,6 +34,17 @@ export function ProfileAvatarButton({ avatarId, frameId, seed, language, onClick
         <UserAvatar avatarId={avatarId} frameId={frameId} seed={seed} size={42} />
       </Suspense>
       </span>
+      {level != null && (
+        <span
+          data-profile-level
+          aria-hidden="true"
+          style={{
+            position: 'absolute', right: -6, bottom: -8, zIndex: 1, pointerEvents: 'none',
+            padding: '1px 5px', borderRadius: 8, fontSize: 11, lineHeight: '14px', fontWeight: 700,
+            background: 'var(--sm2-surface-2)', color: 'var(--sm2-primary-ink)', boxShadow: '0 0 0 1px var(--sm2-line)',
+          }}
+        >{language === 'pt-BR' ? 'Nv' : 'Lv'} {level}</span>
+      )}
     </button>
   );
 }
