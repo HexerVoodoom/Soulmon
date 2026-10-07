@@ -3947,23 +3947,18 @@ function sanitizeEquipment(raw) {
     /** @type {Record<string, unknown>} */
     raw
   );
-  const owned = [];
+  const seen = [];
   if (Array.isArray(r.owned)) {
-    for (const id of r.owned) if (typeof id === "string" && has3(EQUIP, id) && !owned.includes(id)) owned.push(id);
+    for (const id of r.owned) if (typeof id === "string" && has3(EQUIP, id) && !seen.includes(id)) seen.push(id);
   }
+  const best = {};
+  for (const id of seen) {
+    const slot = EQUIP[id].slot;
+    if (!best[slot] || Number(best[slot].slice(-1)) < Number(id.slice(-1))) best[slot] = id;
+  }
+  const owned = seen.filter((id) => best[EQUIP[id].slot] === id);
   const equipped = {};
-  const eq = r.equipped && typeof r.equipped === "object" ? (
-    /** @type {Record<string, unknown>} */
-    r.equipped
-  ) : {};
-  for (const slot of EQUIP_SLOTS) {
-    const id = has3(eq, slot) ? eq[slot] : void 0;
-    if (typeof id === "string" && owned.includes(id) && EQUIP[id].slot === slot) equipped[slot] = id;
-    if (!equipped[slot]) {
-      const best = owned.filter((o) => EQUIP[o].slot === slot).sort((a, b) => Number(b.slice(-1)) - Number(a.slice(-1)))[0];
-      if (best) equipped[slot] = best;
-    }
-  }
+  for (const slot of EQUIP_SLOTS) if (best[slot]) equipped[slot] = best[slot];
   const f = typeof r.fragments === "number" && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
 }
@@ -6704,7 +6699,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-3WxT5T/functionsRoutes-0.11878842904818132.mjs
+// ../.wrangler/tmp/pages-cnFjk7/functionsRoutes-0.2838805227711758.mjs
 var routes = [
   {
     routePath: "/api/account",
