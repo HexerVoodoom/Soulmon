@@ -366,3 +366,4 @@ Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: c
 - §2.37 Talentos: servidor/cliente podam pré-requisito violado e descartam malformado; TODOS os nós previstos ativos (#260); pve-06/pvp-07 sem mexer no especial (canal de 5%).
 - §2.38 Perfil: avatar no canto substitui o sanduíche; alt EN primeiro (#264).
 - §2.39 Missões: só no ícone do canto; "!" disponível, "?" pronta, "?" vence (#262). Combate: torcida só ícone, cena do especial com nome grande e fundo escurecido, sons de ataque/especial/vitória (#254).
+- §2.40 (07/10/2026, modal do dono): taxa de troca de família ACEITA como está (agregada 15,09%; "alternante" 75% por construção); pve-06/pvp-07 ficam como bônus de atributo (talentos não mexem no especial); cura entre andares 1,5% e escudo 1% MANTIDOS; chip de elemento do básico passa a mostrar o PAR (vantagem segue na base dominante); gate humano de escuta dos 3 sons (S8) é do dono.
