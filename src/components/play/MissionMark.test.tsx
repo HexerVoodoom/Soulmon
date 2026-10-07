@@ -10,10 +10,14 @@ describe('MissionMark — "!" e "?" são a arte de quest do dono (05/10/2026)', 
     const imgA = a.container.querySelector('img[data-pixel-icon]') as HTMLImageElement;
     expect(imgA.getAttribute('src')).toBe(QUEST_EXCLAMACAO_ART);
     expect(a.container.textContent).not.toContain('exclamation');
-    expect(a.container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Missões do dia');
+    expect(a.container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Missão disponível');
     a.unmount();
     const p = render(<MissionMark kind="progress" isPt={false} />);
     expect((p.container.querySelector('img[data-pixel-icon]') as HTMLImageElement).getAttribute('src')).toBe(QUEST_ART);
+    p.unmount();
+    const r = render(<MissionMark kind="ready" isPt={false} />);
+    expect((r.container.querySelector('img[data-pixel-icon]') as HTMLImageElement).getAttribute('src')).toBe(QUEST_ART);
+    expect(r.container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Quest ready');
     expect(QUEST_ART).not.toBe(QUEST_EXCLAMACAO_ART);
   });
 });

@@ -1,7 +1,10 @@
 import type { CSSProperties } from 'react';
 import { PixelIcon } from '../ui/PixelIcon';
 import { QUEST_ART, QUEST_EXCLAMACAO_ART } from '../../assets/soulmon/icones-ui';
-import type { MissionMark as Kind } from '../../utils/travessiasSave';
+import { questMarkLabel } from '../../utils/questMarks';
+
+/** `ready` = "?" (pronta), `available` = "!", `progress` = "?" dentro da folha do Passeio. */
+type Kind = 'available' | 'progress' | 'ready';
 
 /**
  * O MARCADOR DE MISSÃO (04/10/2026, pedido do dono — como o World of Warcraft):
@@ -13,18 +16,18 @@ import type { MissionMark as Kind } from '../../utils/travessiasSave';
  * de hoje foi feita ou quando a camada de Travessias está escondida.
  */
 export function MissionMark({ kind, size = 24, isPt, style }: {
-  kind: Exclude<Kind, null>; size?: number; isPt: boolean; style?: CSSProperties;
+  kind: Kind; size?: number; isPt: boolean; style?: CSSProperties;
 }) {
-  const label = kind === 'available'
-    ? (isPt ? 'Missões do dia' : 'Missions of the day')
-    : (isPt ? 'Missão em andamento' : 'Mission in progress');
+  const label = kind === 'progress'
+    ? (isPt ? 'Missão em andamento' : 'Mission in progress')
+    : questMarkLabel(kind, isPt) ?? '';
   return (
     <span
       data-mission-mark={kind}
       style={{ display: 'inline-flex', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.7))', ...style }}
     >
       <span role="img" aria-label={label} style={{ display: 'inline-flex' }}>
-        <PixelIcon src={kind === 'progress' ? QUEST_ART : QUEST_EXCLAMACAO_ART} size={size} />
+        <PixelIcon src={kind === 'available' ? QUEST_EXCLAMACAO_ART : QUEST_ART} size={size} />
       </span>
     </span>
   );

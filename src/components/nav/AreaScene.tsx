@@ -3,7 +3,7 @@ import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
 import { lotArtBounds } from '../../utils/areaLotGeometry';
 import { MissionMark } from '../play/MissionMark';
-import type { MissionMark as MissionMarkKind } from '../../utils/travessiasSave';
+import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 
 /**
@@ -38,7 +38,7 @@ export interface AreaLot {
   /** Largura do lote em % da cena (01/10/2026, H16 — o Observatório é maior que
    *  os vizinhos). Sem ela, o padrão do molde, `LOT_WIDTH_DEFAULT`. */
   width?: string;
-  /** Marcador de missão sobre o lote (04/10/2026): "!" disponível, "?" em andamento. */
+  /** Marcador de missão sobre o lote (04/10/2026): "!" disponível, "?" pronta (`utils/questMarks.ts`). */
   mark?: MissionMarkKind;
   /** Prédio trancado pelo Vínculo (`BUILDING_GATES`): arte cinza, cadeado e o Vínculo pedido. O toque ainda chega em `onOpen` (que mostra o aviso). */
   locked?: { minBond: number };
