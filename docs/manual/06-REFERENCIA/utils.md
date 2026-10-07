@@ -2459,6 +2459,17 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/contexts/GameStateContext.tsx` (load), `src/App.tsx`, `src/utils/travessias.ts` (reexporta).
 **Régua:** `src/utils/travessias.test.ts` (inclui `REGION_IDS` = ids do catálogo).
 
+### `src/utils/tema.ts`
+**Dono de:** a música-TEMA "Stone Hall Decay" (S17, decisão do dono de 07/10/2026): um `<audio>` em streaming ligado por `createMediaElementSource` ao `busTema` do `audioBus` (sob o `duckGeral`). A preferência NASCE ligada (`STORAGE_KEYS.SOUND_THEME_OFF` guarda o desligado); o som só COMEÇA no primeiro gesto da sessão (`pointerup`/`touchend`/`keydown`/`click`, ouvintes instalados por `armarTemaNoPrimeiroGesto()` no `main.tsx`) — nunca autoplay cego (D11); `play()` recusado rearma. Para por motivo (`sono`/`descanso`/`mudo`, repassados por `pausarTrilha`/`retomarTrilha`) e em `document.hidden`; `isMuted()` impede o início. Formato por `canPlayType` (WebM/Opus, depois M4A) com uma troca em caso de erro; ao acabar, descansa `TEMA_DO_JOGO.pausaEntreVoltasS` (30 s) e volta com fade-in. Não declara alvo de loudness (o arquivo foi mestrado no alvo da trilha de `loudness.ts`).
+**Exports:**
+- `function armarTemaNoPrimeiroGesto(): void` · `function ligarTema(): void` · `function desligarTema(): void` — gesto; os dois últimos persistem a chave.
+- `function pausarTema(motivo?)` · `function retomarTema(motivo?)` · `function temaPausado(): boolean` — E0 (um `Set` de motivos).
+- `function temaPreferido(): boolean` · `function temaTocando(): boolean` · `function escolherFormato(probe): number`.
+- `type MotivoDePausa` · `function esquecerTema(): void` — só para teste.
+**Chamado por:** `src/main.tsx` (`armarTemaNoPrimeiroGesto`), `src/utils/trilha.ts` (repasse de pausa/retomada; `ligarTrilha` desliga o tema), `src/components/SettingsPage.tsx` (switch "Música-tema/Theme music").
+**Depende de:** `audioBus.ts` (`garantirBarramento`), `sonsAssets.ts` (`TEMA_DO_JOGO`), `sounds.ts` (`isMuted`), `safeStorage.ts`, `storageKeys.ts`.
+**Régua:** `src/utils/tema.test.ts`, `sonsAssets.contract.test.ts`, `settingsSom.render.test.tsx`.
+
 ### `src/utils/trilha.ts`
 **Dono de:** A trilha — as DUAS camadas de `CAMADAS_DA_TRILHA` (`base` + `ritmo`) em loop no `busTrilha`, tocando juntas num estado só (desde `8a930657`, 21/09/2026). `comecar()` pede o barramento por `garantirBarramento`, carrega as camadas por `carregarAsset`, cria UM ganho de trim = `db2lin(TRIM_TRILHA_POR_CAMADAS_DB[n])` para o NÚMERO de camadas que chegaram (só as prontas tocam), e dá `start` no mesmo instante (`t0`) para todas — o início comum é o que as mantém em fase compasso a compasso; `loopStart` 0, `loopEnd` = `min(duracaoS, buf.duration)` = 28,8 s, o ponto exato de 12 compassos, dentro do 1 s de cauda do arquivo. Nasce desligada (S2); liga e desliga por gesto (switch "Trilha/Music" da `SettingsPage`, grupo "Som", desde `980bc84c` — ⚰️ o mesmo par vivia no `SettingsModal`, sem gatilho vivo, apagado em `4a8b8049`, #37); `aoGestoSonoro` faz o primeiro `play*` da sessão ligá-la se a preferência persistida estiver ligada (o gesto é o consentimento, sem autoplay no carregamento); E0: o `audioBus` já suspende o contexto com `document.hidden`, e ao voltar a trilha retoma só se foi ligada por gesto nesta sessão; `pausarTrilha`/`retomarTrilha` são os ganchos do `App` para dormir e mudo global; `isMuted()` também barra `comecar()`. Não decide estado E1–E6 (S13 congelada — condição (1) satisfeita, (2) depende do dono).
 **Exports:**

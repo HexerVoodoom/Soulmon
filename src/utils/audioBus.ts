@@ -17,6 +17,7 @@
  *     fonte → bus da categoria → bus SFX → duckGeral → master → limitador → saída
  *                     ↑ Arcade passa antes pelo duckArcade (D-2)
  *     camadas da trilha → bus Trilha → duckGeral ↑
+ *     música-tema (<audio>) → bus Tema → duckGeral ↑
  *     Marco → master  (NÃO passa pelo duckGeral: ele é quem duca — D-1)
  *
  * ## As quatro restrições que este arquivo não pode quebrar
@@ -268,6 +269,8 @@ interface Barramento {
   master: GainNode;
   busSfx: GainNode;
   busTrilha: GainNode;
+  /** A música-TEMA do jogo (07/10/2026): sempre aberto (0 dB); a chave dela mora em `utils/tema.ts`. */
+  busTema: GainNode;
   duckGeral: GainNode;
   duckArcade: GainNode;
   busCategoria: Record<CategoriaSom, GainNode>;
@@ -324,6 +327,13 @@ function montar(ctx: AudioContext): Barramento {
   busTrilha.gain.value = trilhaLigada() ? 1 : 0;
   busTrilha.connect(duckGeral);
 
+  // Música-tema: bus PRÓPRIO, em 0 dB, no mesmo degrau da trilha (abaixo dos SFX,
+  // sob o D-1). O arquivo já sai mestrado no alvo da trilha (`loudness.ts`), então
+  // nenhum ganho de nível entra aqui; ligar/desligar é do `utils/tema.ts`.
+  const busTema = ctx.createGain();
+  busTema.gain.value = 1;
+  busTema.connect(duckGeral);
+
   const duckArcade = ctx.createGain();
   duckArcade.gain.value = 1;
   duckArcade.connect(busSfx);
@@ -338,7 +348,7 @@ function montar(ctx: AudioContext): Barramento {
     busCategoria[c] = g;
   }
 
-  return { ctx, master, busSfx, busTrilha, duckGeral, duckArcade, busCategoria };
+  return { ctx, master, busSfx, busTrilha, busTema, duckGeral, duckArcade, busCategoria };
 }
 
 /** A aba dormiu: suspende o contexto em vez de fechá-lo (ver restrição 4). */

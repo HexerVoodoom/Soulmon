@@ -109,6 +109,20 @@ três eventos com arquivo mantêm o procedural como fallback. Régua executável
 | `public/sounds/trilha-base.webm` · `2122e7ed4d330a117eb27b067781a2fcbd90ce1113d800d2839a3702acd10688` | trilha, camada `base` (E1) | Higgsfield CLI · `sonilo_music`, job `49823588` | idem | `pacote-prompts.md` §2.14 | 21/09/2026 | idem | idem |
 | `public/sounds/trilha-ritmo.webm` · `6182a9f6ed468a77cfb3c65a6224907b8f7abdce3ce1c7d84df0745a16e175f8` | trilha, camada `ritmo` | Higgsfield CLI · `sonilo_music`, job `6072e49c` | idem | `pacote-prompts.md` §2.15 | 21/09/2026 | idem | idem |
 
+### A música-tema (07/10/2026) — **termos pendentes do dono**
+
+| Arquivo · SHA-256 | Evento | Origem | Pós-processamento |
+|---|---|---|---|
+| `public/sounds/tema-stone-hall-decay.webm` · `bd26b3196e56e329d31246eaf65b209eabce35988f591866b373971eec745de6` | música-tema "Stone Hall Decay" (`utils/tema.ts`) | **Fornecida pelo dono, gerada no Suno** (id interno da faixa `a1ea27dd-745f-489f-92e1-cc3c81385b71`, 3m40, 07/10/2026; arquivo original `Stone_Hall_Decay.m4a`, 3 946 099 bytes, SHA-256 `3b692b053b617f94a9f8a6b6ae885340f767b501a87937096176447635918226`) | ffmpeg: ganho único para o alvo da trilha de `utils/loudness.ts` (LUFS-S mediano −28,0), Opus 72 kbps estéreo, sem metadados |
+| `public/sounds/tema-stone-hall-decay.m4a` · `46142dcb042f334fbed67a6b4d767b8f59ec38425b30ae7c35f99d4dab116c53` | idem (formato de reserva p/ Safari/iOS) | idem | idem, AAC-LC 88 kbps |
+
+⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno: o
+que vale para uso comercial depende do **plano da conta do dono no momento da geração** (e esse
+plano não foi informado). **Verificar os termos comerciais do plano Suno antes de publicar o app
+na loja** e anotar aqui a versão dos termos e o plano. Como em todo áudio gerado por IA, o guard
+(`sonsAssets.contract.test.ts`) prova procedência (hash ↔ arquivo ↔ esta linha), nunca originalidade
+nem licença; a escuta é do dono (S8). Decisão: `REGISTRO-DE-DECISOES.md` §6.1, S17.
+
 Pós-processamento (corte, 48 kHz, crista, normalização ao alvo da categoria) por
 `squad-alpha-runs/som-01/prototyper/pos-processar.mjs` (SFX) e `E:/Soulmon-assets/som-01/mestre-trilha.mjs`
 (trilha: mono, 12 compassos a 100 BPM, crossfade de loop, −28 LUFS-S); codificação **WebM/Opus 48 kbps

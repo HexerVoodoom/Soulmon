@@ -64,7 +64,7 @@ function instalarAudioFalso() {
 
   /** Cada `GainNode` ganha um apelido pela ORDEM de criação, que é a do grafo. */
   const APELIDOS = [
-    'master', 'duckGeral', 'busSfx', 'busTrilha', 'duckArcade',
+    'master', 'duckGeral', 'busSfx', 'busTrilha', 'busTema', 'duckArcade',
     'marco', 'presenca', 'degeneracao', 'sintonia', 'cuidado', 'conclusao', 'transacao', 'arcade',
   ];
 
@@ -173,6 +173,9 @@ describe('UM AudioContext, não um por som', () => {
     tocarNa('cuidado', umaFonte());
     expect(audio.destinoDe('busSfx')).toContain('duckGeral');
     expect(audio.destinoDe('busTrilha')).toContain('duckGeral');
+    // S17: a música-tema tem bus próprio, sob o duckGeral (o D-1 a abaixa) e aberto em 0 dB.
+    expect(audio.destinoDe('busTema')).toContain('duckGeral');
+    expect(barramentoAtual()!.busTema.gain.value).toBe(1);
     expect(audio.destinoDe('duckGeral')).toContain('master');
     expect(audio.destinoDe('duckArcade')).toContain('busSfx');
     expect(audio.destinoDe('arcade'), 'o Arcade tem de passar pelo duckArcade, senão o D-2 não alcança ninguém').toContain('duckArcade');

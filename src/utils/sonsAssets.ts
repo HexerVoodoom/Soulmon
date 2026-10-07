@@ -198,3 +198,60 @@ export function tocarBuffer(ctx: BaseAudioContext, destino: AudioNode, buf: Audi
   src.start(ctx.currentTime);
   return buf.duration;
 }
+
+/**
+ * A MÚSICA-TEMA DO JOGO — "Stone Hall Decay" (decisão do dono, 07/10/2026,
+ * `docs/REGISTRO-DE-DECISOES.md` §6.1, S17).
+ *
+ * É a música que o dono gerou no Suno e pediu como tema. Ela é DIFERENTE dos
+ * assets acima em três pontos, e cada um tem teste (`sonsAssets.contract.test.ts`):
+ * - **Fora do S6 de 300 KB**: são 3,9 MB de origem (≈2,4 MB por formato depois de
+ *   transcodada), e o S6 foi escrito para SFX/camadas. O orçamento dela é o
+ *   próprio: ≤ 2,5 MB POR FORMATO, **zero no bundle inicial** (nada importa o
+ *   arquivo; ele sai da rede só depois do primeiro gesto) e fora do pré-cache.
+ * - **Dois formatos, um por suporte** (`canPlayType`): Opus em WebM (Chrome,
+ *   Android WebView, Firefox) e AAC em M4A (Safari/iOS). Ambos saem do MESMO
+ *   mestre, no mesmo ganho — o alvo de loudness é o da trilha, de
+ *   `utils/loudness.ts` (dono único); este arquivo não declara alvo nenhum.
+ * - **Streaming, não buffer**: 3m40 decodificados seriam ~70 MB de PCM na RAM de
+ *   um celular. Toca num `<audio>` ligado ao `busTema` (`utils/tema.ts`).
+ * Procedência (S9): a origem é "gerada no Suno pelo dono"; os TERMOS COMERCIAIS
+ * do plano Suno dele ainda não foram verificados — pendência do dono, escrita em
+ * `docs/Attributions.md`. O guard prova procedência, nunca originalidade nem licença.
+ */
+export interface FormatoDoTema {
+  url: string;
+  /** Valor para `canPlayType`. */
+  mime: string;
+  sha256: string;
+  bytes: number;
+}
+
+export const TEMA_DO_JOGO = {
+  nome: 'Stone Hall Decay',
+  /** Duração do mestre, em segundos (o mesmo nos dois formatos, ±1 frame). */
+  duracaoS: 219.84,
+  /** Silêncio entre o fim da faixa (que já termina em fade) e a volta, em segundos. */
+  pausaEntreVoltasS: 30,
+  /** Fade-in de cada volta, em segundos — o fim é o fade da própria faixa. */
+  fadeInS: 2,
+  origem: 'suno/fornecida-pelo-dono',
+  geradoEm: '2026-10-07',
+  formatos: [
+    {
+      url: '/sounds/tema-stone-hall-decay.webm',
+      mime: 'audio/webm; codecs="opus"',
+      sha256: 'bd26b3196e56e329d31246eaf65b209eabce35988f591866b373971eec745de6',
+      bytes: 2365535,
+    },
+    {
+      url: '/sounds/tema-stone-hall-decay.m4a',
+      mime: 'audio/mp4; codecs="mp4a.40.2"',
+      sha256: '46142dcb042f334fbed67a6b4d767b8f59ec38425b30ae7c35f99d4dab116c53',
+      bytes: 2469685,
+    },
+  ],
+} as const satisfies {
+  nome: string; duracaoS: number; pausaEntreVoltasS: number; fadeInS: number;
+  origem: string; geradoEm: string; formatos: readonly FormatoDoTema[];
+};

@@ -14,12 +14,17 @@
   import { GameStateProvider } from './contexts/GameStateContext';
   import { ThemeProvider } from './contexts/ThemeContext';
   import { migrateLegacyStorageKeys } from './utils/storageKeys';
+  import { armarTemaNoPrimeiroGesto } from './utils/tema';
 
   // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
   // inicializador do próprio estado, então uma migração que rodasse depois
   // chegaria tarde. Copia as chaves `digiapp-*` para os nomes novos, uma vez,
   // sem apagar nada — ver o cabeçalho de `migrateLegacyStorageKeys`.
   migrateLegacyStorageKeys();
+
+  // A música-TEMA (S17, 07/10/2026): só instala ouvintes de gesto. Nada toca nem
+  // é baixado até o primeiro toque/clique/tecla da sessão — D11, sem autoplay cego.
+  armarTemaNoPrimeiroGesto();
 
   createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>

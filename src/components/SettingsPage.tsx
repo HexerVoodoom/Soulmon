@@ -14,6 +14,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
+import { desligarTema, ligarTema, temaPreferido } from '../utils/tema';
 import { APP_VERSION, FeedbackRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { UserAvatar } from './ui/UserAvatar';
@@ -210,6 +211,7 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [trilha, setTrilha] = useState(() => trilhaPreferida());
+  const [tema, setTema] = useState(() => temaPreferido());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
 
@@ -423,12 +425,26 @@ export function SettingsPage({
               : 'They confirm what you did. Never play on their own.'}
           />
           <SwitchRow
+            checked={tema}
+            onToggle={() => {
+              // A música é uma por vez: ligar o tema desliga a trilha (e o inverso mora em `ligarTrilha`).
+              if (tema) { desligarTema(); } else { desligarTrilha(); setTrilha(false); ligarTema(); }
+              setTema(!tema);
+            }}
+            label={isPt ? 'Música-tema' : 'Theme music'}
+            language={language}
+            infoLabel={isPt ? 'Sobre a música-tema' : 'About the theme music'}
+            info={soundMuted
+              ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, the music stays silent.')
+              : (isPt ? 'Começa no seu primeiro toque ao abrir o jogo. Para sozinha quando o app sai de vista.' : 'Starts on your first tap after the game opens. Stops by itself when the app is out of view.')}
+          />
+          <SwitchRow
             checked={trilha}
             onToggle={() => {
-              if (trilha) desligarTrilha(); else ligarTrilha();
+              if (trilha) desligarTrilha(); else { ligarTrilha(); setTema(false); }
               setTrilha(!trilha);
             }}
-            label={isPt ? 'Trilha' : 'Music'}
+            label={isPt ? 'Trilha' : 'Ambient loop'}
             language={language}
             infoLabel={isPt ? 'Sobre a trilha' : 'About the music'}
             info={soundMuted

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import introVideo from '../assets/brand/intro.mp4';
+import introPoster from '../assets/brand/intro-poster.webp';
 import { resolveLanguage } from '../utils/i18n';
 import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -23,6 +24,10 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
   const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const [leaving, setLeaving] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
+  /* O navegador recusou o autoplay (ou o WebView o adiou): em vez do botão de
+     play CINZA nativo, a tela mostra o PÔSTER da marca e o convite é nosso. */
+  const [blocked, setBlocked] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -35,7 +40,16 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
 
   // Toque/tecla em qualquer lugar: pula direto pro app, com o mesmo fade de
   // saída (400ms) que o fim natural do vídeo já usa.
-  const skip = () => scheduleFinish(400);
+  const skip = () => {
+    // Autoplay recusado: o primeiro toque é o gesto que o libera — toca o vídeo em vez de pular.
+    const v = videoRef.current;
+    if (blocked && v) {
+      setBlocked(false);
+      v.play().catch(() => scheduleFinish(400));
+      return;
+    }
+    scheduleFinish(400);
+  };
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); skip(); }
   };
@@ -50,6 +64,14 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onFinish]);
+
+  // Autoplay mudo costuma passar; se não passar, o `play()` rejeita e é aqui que sabemos.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || typeof v.play !== 'function') return;
+    const p = v.play();
+    if (p && typeof p.catch === 'function') p.catch(() => setBlocked(true));
+  }, []);
 
   const skipLabel = isPt ? 'Pular introdução' : 'Skip intro';
   /* ONB-04 (erro) é o mesmo quadro SEM alvo — sai sozinho (fidelidade ao
@@ -72,10 +94,19 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
     >
       {!videoFailed ? (
         <video
+          ref={videoRef}
           src={introVideo}
+          /* PÔSTER = o 1º quadro do próprio vídeo (a marca). Sem ele o WebView do
+             Android desenha o pôster PADRÃO dele — o triângulo de play cinza que
+             aparecia entre o ícone e a intro enquanto o vídeo baixava. */
+          poster={introPoster}
           autoPlay
           muted
           playsInline
+          preload="auto"
+          disablePictureInPicture
+          disableRemotePlayback
+          controlsList="nodownload nofullscreen noremoteplayback"
           className="sm2-splash-video"
           onLoadedMetadata={e => {
             const dur = e.currentTarget.duration;
@@ -93,7 +124,9 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
       <span className="sm2-viewport-glass" aria-hidden="true" />
       {!videoFailed && (
         <span className="sm2-splash-tap" aria-hidden="true">
-          <span className="sm2-splash-pix">{isPt ? 'Toque para pular' : 'Tap to skip'}</span>
+          <span className="sm2-splash-pix">
+            {blocked ? (isPt ? 'Toque para começar' : 'Tap to start') : (isPt ? 'Toque para pular' : 'Tap to skip')}
+          </span>
         </span>
       )}
     </div>

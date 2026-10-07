@@ -1,5 +1,13 @@
 # Status do Soulmon — registro vivo
 
+> ## 07/10/2026 — Música-tema + intro sem play cinza + logo como ícone (`feat/tema-intro-logo`, PR por abrir)
+>
+> - **Tema (S17):** "Stone Hall Decay" (Suno, do dono) toca no PRIMEIRO gesto da sessão (nunca autoplay cego); nasce LIGADO, só ela revoga a S2.
+>   `src/utils/tema.ts` + `TEMA_DO_JOGO` + `busTema`; Configurações › Som › "Música-tema". Registro §6.1 S17, `docs/SOM.md` §9.
+> - **Intro:** o "play cinza" era o pôster padrão do WebView do Android (o `<video>` não tinha `poster`) — pôster agora é o 1º quadro da marca.
+> - **Logo:** ícones/favicons/splash/og:image regenerados do wordmark definitivo (`scripts/gerar-icones-logo.sh`). **Mexeu em `android/` → APK novo.**
+> - **Depende do dono:** termos comerciais do plano Suno (`docs/Attributions.md`); escutar o tema (S8) — o alvo da trilha (−28 LUFS-S) pode soar baixo.
+
 > **07/10/2026 — manual sincronizado com `e71061b8` (delta `e3d55bb8..e71061b8`, 374 commits: Combate v3 PR1–PR18, prédios por Vínculo, missões na Home, avatar/perfil).** Docs tocados: 02 (§55-B: ficha que reage ao comportamento PR14/15, selos/Maldição PR16, básico e par PR17, torcida só ícone/cena do especial/sons PR18, árvore de talentos com os oito nós, prédios por Vínculo), 03 (menu sanduíche removido), 04 (§9.1 os três sons `arcade`), 06-REFERENCIA (components, utils, api-workers, hooks-contexts-types: exports novos e ⚰️ `HomeMenuSheet`). A maior parte do combate v3 já tinha entrado no manual junto com cada PR; esta rodada fechou o que faltava (medido por exports). Divergências novas: nenhuma entre `CLAUDE.md` e o manual; pendência herdada: cabeçalhos de 01/05/07/08/09/11/12 e `desktop.md`/`plugins-constants.md` seguem com data anterior (o delta deles não mudou o conteúdo).
 
 > **07/10/2026 — Tarefa C (avatar do usuário), PR aberto sem merge.** O sanduíche e o `HomeMenuSheet` saíram; o canto superior esquerdo da Home é o avatar (NPC + moldura) e abre as Configurações, onde há Perfil › Editar perfil (e-mail "em breve", moldura, foto em grade com busca/domínio), Créditos em Ajuda e a flag `MENU_SHOWS_RITUAL_TOOLS` (Oráculo/Refazer o ritual, ocultos). Só IDs de lista fechada (`catalogo.json` × `_avatares.js`, `_frames.js`) vão ao save e ao perfil público. Alt/nome EN primeiro (`scripts/avatares-en.json`), PT-BR derivado do slug. Achado de passagem: `AvatarFrame` não tinha `maxWidth: 'none'` e o `img{max-width:100%}` global achatava a arte da moldura — corrigido.
