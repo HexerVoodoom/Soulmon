@@ -3028,3 +3028,13 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** os TEXTOS do equipamento (EN/PT-BR; PR8b), fora do chunk de entrada porque só a `EquipmentCard` (`lazy`) os lê: nome dos slots e dos itens (lapidação crescente, nunca raridade), atributo de cada slot e o motivo neutro de cada recusa de compra.
 **Exports:** `SLOT_COPY`, `ATTR_COPY`, `itemName`, `refusalText`.
 **Régua:** `src/components/EquipmentCard.render.test.tsx`.
+
+
+## `src/utils/buildingQuests.ts` (07/10/2026)
+
+Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forDay`, `questStatus`,
+`visitBuilding`, `claimBuildingQuest` (idempotente, reconfere sobre o `prev`), `buildingMarks`,
+`questText` (determinístico por dia + prédio), `stockOf`, `sanitizeBuildingQuests`. Constantes:
+`MATERIALS` (1 por prédio), `MATERIAL_CAP`, `MATERIAL_PER_QUEST`, `QUEST_BUILDINGS`. `questMarks.ts`
+ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
+(`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).

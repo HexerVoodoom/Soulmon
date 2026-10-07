@@ -1086,6 +1086,11 @@ type ShopSegment = 'shop' | 'tournament';
 - **Dono**: `src/components/mercado/MercadoSheets.tsx` · **Régua**:
   `mercado/MercadoSheets.render.test.tsx`, `mercadoCatalog.test.ts`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
+- **Missão por prédio (07/10/2026).** Entrar num lote aberto (fora do Mercado) conta a
+  missão do dia dele (`AreaView` › `enter` → `onVisitBuilding`); o lote mostra "!"/"?".
+  A folha de Missões (`MissionsSheet`) tem a seção "Dos prédios"/"Buildings"
+  (`BuildingQuestList`, lazy) com o botão de pegar e os materiais. Ver
+  [§50-B](02-REGRAS-DE-NEGOCIO.md#50-b-missao-por-predio--materiais-decisao-do-dono-07102026).
 
 ### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)
 
