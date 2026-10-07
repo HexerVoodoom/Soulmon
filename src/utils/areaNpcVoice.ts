@@ -125,6 +125,13 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Cada placa do meu casco lembra um trecho atravessado.',
     lineEn: 'Each plate on my shell remembers a stretch crossed.',
   },
+  // ⚒️ 07/10/2026: o Ferreiro do Mercado — Mallo (o busto/nome do banco `EXTRA_NPC_VOICE.ferreiro`). Fala descreve o ofício, sem
+  // preço, sem pressa e sem prometer efeito (L1..L12 da bíblia): o equipamento é do companheiro, a forja só dá forma.
+  'mercado:ferreiro': {
+    namePt: 'Mallo, o ferreiro', nameEn: 'Mallo, the blacksmith',
+    linePt: 'Cada peça sai da forja do tamanho de quem vai usar. Fique à vontade para olhar.',
+    lineEn: 'Every piece leaves the forge sized for whoever will wear it. Feel free to look.',
+  },
   'arena:duelo': {
     namePt: 'Tuska, o campeão', nameEn: 'Tuska, the champion',
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',

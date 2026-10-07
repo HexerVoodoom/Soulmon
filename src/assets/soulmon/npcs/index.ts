@@ -72,6 +72,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:decoracao': npcLojaDecoracao,
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcMercadoConquistas, // Medra
+  'mercado:ferreiro': npcFFerreiro, // Mallo (07/10/2026: o busto do ferreiro, já no bundle desde a leva femininas/banco; mesmo de EXTRA_NPC_ART.ferreiro)
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Tuska
   'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)

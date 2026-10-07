@@ -77,7 +77,7 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 
 /** Os prédios (lotes) das seis áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam). */
 export type BuildingId =
-  | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background'
+  | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
   | 'jogos.salao' | 'jogos.refugio' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio' | 'arena.feira'
   | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina'
@@ -99,6 +99,9 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'mercado.conquistas': { minBond: 1 },
   'mercado.decoracao': { minBond: 2 },
   'mercado.background': { minBond: 3 },
+  // O Ferreiro (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
+  // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
+  'mercado.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },
   'jogos.refugio': { minBond: 1 },
   'jogos.mente': { minBond: 3 },

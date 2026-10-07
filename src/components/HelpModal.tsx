@@ -77,8 +77,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Three paths and three slots in Stats. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength, and equipment is bought with Bits you earned, never drawn.`,
-    descPt: `Três caminhos e três espaços em Estatísticas. Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força, e o equipamento se compra com Bits ganhos, nunca sorteado.`,
+    descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Blacksmith in the Market. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength, and equipment is bought with Bits you earned, never drawn.`,
+    descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Ferreiro, no Mercado. Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força, e o equipamento se compra com Bits ganhos, nunca sorteado.`,
   },
   {
     icon: '🥚', en: 'Rebirth', pt: 'Renascimento',
