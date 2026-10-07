@@ -856,9 +856,6 @@ export default function App() {
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   /** O convite ao Refúgio foi aceito: a área Jogos monta já com a respiração aberta (one-shot). */
   const [refugeLaunch, setRefugeLaunch] = useState(false);
-  /** Missão da Home → o lugar dela: a folha do lote a abrir (one-shot) e a aba do Torneio. */
-  const [missionSheet, setMissionSheet] = useState<string | null>(null);
-  const [tournamentTab, setTournamentTab] = useState(false);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
@@ -3457,9 +3454,6 @@ export default function App() {
     setRefugeLaunch(true);
   }, [setGameState]);
   const handleRefugeLaunchConsumed = useCallback(() => setRefugeLaunch(false), []);
-  // A aba Missões do Torneio vale só para esta visita (o Torneio monta depois da folha, lazy).
-  const handleMissionSheetConsumed = useCallback(() => setMissionSheet(null), []);
-  useEffect(() => { if (areaOf(currentView) !== 'arena') setTournamentTab(false); }, [currentView]);
 
   const handleDinoScore = useCallback((score: number) => {
     setGameState(prev => (score > (prev.dinoBest ?? 0) ? { ...prev, dinoBest: score } : prev));
@@ -6076,8 +6070,6 @@ export default function App() {
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
-                initialSheet={missionSheet ?? undefined}
-                onInitialSheetConsumed={handleMissionSheetConsumed}
                 onLayerChange={setAreaLayerOpen}
                 language={language}
                 ownership={{
@@ -6095,7 +6087,6 @@ export default function App() {
                 accountTier={gameState.accountTier}
                 onUnlock={() => setUnlockReason('shop')}
                 tournament={{
-                  initialTab: tournamentTab ? 'missions' : undefined,
                   saveId,
                   ocultoDaLista: gameState.hideFromPublicList === true,
                   petStage: gameState.evolutionStage,
