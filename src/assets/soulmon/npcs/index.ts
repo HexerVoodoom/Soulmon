@@ -41,15 +41,19 @@ export const STALL_NPC_ART = {
   background: npcLojaBackground,
 } as const;
 
-import npcArenaDuelo from './npc-arena-duelo.png';
+import npcArenaDuelo from './npc-extra-arena-duelo.png';
 import npcArenaFeira from './npc-arena-feira.png';
 import npcJogosMente from './npc-jogos-mente.png';
-import npcJogosRefugio from './npc-jogos-refugio.png';
+import npcJogosRefugio from './npc-oceano-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
 import npcFGuarda from './npc-f-guarda.png';
 import npcExploracaoPasseio from './npc-exploracao-passeio.png';
-import npcExploracaoOficina from './npc-exploracao-oficina.png';
-import npcExploracaoCaderno from './npc-exploracao-caderno.png';
+import npcExploracaoOficina from './npc-luz-exploracao-oficina.png';
+import npcExploracaoCaderno from './npc-akasha-exploracao-caderno.png';
+import npcLaboratorioPet from './npc-agua-laboratorio-pet.png';
+import npcLaboratorioStats from './npc-agua-laboratorio-stats.png';
+import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
+import npcHallGuilda from './npc-hall-guilda.png';
 
 import npcFForjaFerreiro from './npc-f-forja.png';
 /**
@@ -79,24 +83,24 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:conquistas': npcMercadoConquistas, // Medra
   'mercado:ferreiro': FERREIRO_NPC_ART,
   'arena:torneio': npcArena,
-  'arena:duelo': npcArenaDuelo, // Tuska
+  'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
   'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume
   // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram
   // os da Kova e da Selene. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
-  'exploracao:oficina': npcExploracaoOficina, // Tique (grilo-besouro artesão)
-  'exploracao:caderno': npcExploracaoCaderno, // Sépia (lula-coruja escriba)
+  'exploracao:oficina': npcExploracaoOficina, // Lume (vagalume do coro; 07/10/2026 trocou o Tique)
+  'exploracao:caderno': npcExploracaoCaderno, // Opala (geleia-fantasma arquivista; 07/10/2026 trocou a Sépia)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela
-  'jogos:refugio': npcJogosRefugio, // Bobbi
+  'jogos:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
   'laboratorio:evolucao': npcLaboratorio,
-  'laboratorio:pet': npcConta, // Faro (07/10/2026: trocou o Bento, pedido do dono; o `npc-laboratorio-pet.png` ficou em disco)
-  'laboratorio:stats': npcFSacerdotisa, // Oriel (07/10/2026: trocou o Quill; `npc-laboratorio-stats.png` ficou em disco)
+  'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro — o busto `npc-conta` segue como NPC de função)
+  'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
   'hall:biblioteca': npcHall,
-  'hall:amigos': npcFBarda, // Trill (07/10/2026: trocou o Nino; `npc-hall-amigos.png` ficou em disco)
-  'hall:guilda': npcFGuarda, // Bastia (G3, 02/10/2026: trocou a Marla-árvore; mesmo busto de EXTRA_NPC_ART.guarda)
+  'hall:amigos': npcHallGuilda, // Ramo (carvalho do Círculo; 07/10/2026 trocou a Trill — `npc-f-barda` segue em EXTRA_NPC_ART)
+  'hall:guilda': npcHallGuildaLuz, // Aurea (leoa solar; 07/10/2026 trocou a Bastia — `npc-f-guarda` segue em EXTRA_NPC_ART)
 };
 
 import npcOnboarding from './npc-onboarding.png';

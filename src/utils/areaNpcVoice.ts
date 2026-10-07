@@ -133,7 +133,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
   },
   'arena:duelo': {
-    namePt: 'Tuska, o campeão', nameEn: 'Tuska, the champion',
+    namePt: 'Naia, a pescadora', nameEn: 'Naia, the net-fisher', // 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte)
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
     lineEn: 'One duel, one round at a time. Come on.',
   },
@@ -156,9 +156,9 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: "This puzzle waits. Its pieces aren't going anywhere.",
   },
   'jogos:refugio': {
-    namePt: 'Bobbi, o soprador de bolhas', nameEn: 'Bobbi, the bubble-blower',
-    linePt: 'Aqui não se conta nada. Só bolhas subindo.',
-    lineEn: 'Nothing to count here. Just bubbles going up.',
+    namePt: 'Marim, o mensageiro da maré', nameEn: 'Marim, the tide courier', // 07/10/2026: busto trocado a pedido do dono (era Bobbi, o soprador de bolhas)
+    linePt: 'Aqui nada precisa ser entregue. Só a maré indo e vindo.',
+    lineEn: 'Nothing needs delivering here. Just the tide coming and going.',
   },
   // 🧭 O Passeio: Brume (nome novo aprovado pelo dono em 30/09/2026, espírito
   // do charco). Convite, nunca cobrança — e nenhuma palavra sobre o que as
@@ -171,38 +171,37 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // 🛠️ 04/10/2026 (pedido do dono): os dois prédios da clareira de baixo. Falas sem cobrança, sem
   // número e sem prometer efeito (a Oficina descreve; o Caderno guarda e cala).
   'exploracao:oficina': {
-    namePt: 'Tique, a relojoeira', nameEn: 'Tique, the clockmaker',
-    linePt: 'O tempo anda no seu passo. Aqui só ajudo a medir.',
-    lineEn: 'Time keeps your pace. All I do here is help you measure it.',
+    namePt: 'Lume, o vagalume do coro', nameEn: 'Lume, the choir firefly', // 07/10/2026: busto trocado a pedido do dono (era Tique, a relojoeira)
+    linePt: 'Cada luz acende no seu tempo. Eu só marco o ritmo.',
+    lineEn: 'Each light glows in its own time. I only keep the beat.',
   },
   'exploracao:caderno': {
-    namePt: 'Sépia, a copista', nameEn: 'Sépia, the scribe',
-    linePt: 'O que se escreve aqui fica na gaveta. Só você abre.',
-    lineEn: 'What is written here stays in the drawer. Only you open it.',
+    namePt: 'Opala, a arquivista das páginas', nameEn: 'Opala, keeper of the pages', // 07/10/2026: busto trocado a pedido do dono (era Sépia, a copista)
+    linePt: 'O que se escreve aqui fica guardado. Só você abre.',
+    lineEn: 'What is written here stays kept. Only you open it.',
   },
   'hall:amigos': {
-    namePt: 'Trill, a barda', nameEn: 'Trill, the bard', // 07/10/2026: busto trocado a pedido do dono (era Nino, o corvo carteiro)
-    // H5 (01/10/2026): afirmava que um aceno TINHA chegado, com ou sem aceno (L10).
-    linePt: 'Quando chega um aceno, eu faço uma canção dele pra você.',
-    lineEn: 'When a wave arrives, I turn it into a song for you.',
+    namePt: 'Ramo, o carvalho do Círculo', nameEn: 'Ramo, the oak of the Circle', // 07/10/2026: busto trocado a pedido do dono (era Trill, a barda)
+    linePt: 'Tem sombra para todo mundo debaixo de mim.',
+    lineEn: 'There is shade for everyone under me.',
   },
   'hall:guilda': {
     // G3 (02/10/2026): a Marla-árvore não agradou ao dono; o Salão passa a ser
     // da Bastia (busto `npc-f-guarda`, mesma de `EXTRA_NPC_VOICE.guarda`) — a
     // guardiã serena do portão, que dá a ideia de lugar seguro e sem pressa.
-    namePt: 'Bastia, a guardiã do Salão', nameEn: 'Bastia, keeper of the Hall',
+    namePt: 'Aurea, a sacerdotisa do Salão', nameEn: 'Aurea, priestess of the Hall', // 07/10/2026: busto trocado a pedido do dono (era Bastia; ela segue em EXTRA_NPC_VOICE.guarda)
     linePt: GUILD_COPY['guild.npc.hall'][0],
     lineEn: GUILD_COPY['guild.npc.hall'][1],
   },
   'laboratorio:pet': {
     // O nome antigo era de personagem de terceiro — a bíblia das áreas §1.3 A4 decidiu Bento.
-    namePt: 'Faro, o arquivista', nameEn: 'Faro, the archivist', // 07/10/2026: busto trocado a pedido do dono (era Bento, a coruja-cervo)
+    namePt: 'Tinta, a escriba do Arquivo', nameEn: 'Tinta, scribe of the Archive', // 07/10/2026: busto trocado a pedido do dono (era Faro; Faro segue como NPC de função `conta`)
     // H5 (01/10/2026): "pelagem" não vale para toda criatura (padrão, cobre — bíblia §5.1).
     linePt: 'Tudo o que você guardou está em ordem. Pode olhar com calma.',
     lineEn: 'Everything you kept is in order. Look at your own pace.',
   },
   'laboratorio:stats': {
-    namePt: 'Oriel, a guardiã do Vínculo', nameEn: 'Oriel, keeper of the Bond', // 07/10/2026: busto trocado a pedido do dono (era Quill, a escriba-louva-a-deus)
+    namePt: 'Sumi, o guardião do Vínculo', nameEn: 'Sumi, keeper of the Bond', // 07/10/2026: busto trocado a pedido do dono (era Oriel; ela segue em EXTRA_NPC_VOICE.sacerdotisa)
     linePt: 'Cada dia fica anotado aqui. É só para olhar.',
     lineEn: "Every day is written here. It's just to look at.",
   },
