@@ -15,6 +15,8 @@ import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '.
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
 import { APP_VERSION, FeedbackRow } from './FeedbackLink';
+import { ProfileEditor } from './perfil/ProfileEditor';
+import { UserAvatar } from './ui/UserAvatar';
 import { GmPanel, type GmActions } from './GmPanel';
 
 /**
@@ -30,6 +32,12 @@ import { GmPanel, type GmActions } from './GmPanel';
  * avançado (código de recuperação, restauração manual) vive atrás de uma
  * revelação. Toda linha de configuração é alvo de toque inteiro.
  */
+/**
+ * G1 (navegação do dono, 01/10/2026): "Oráculo" e "Refazer o ritual" ficam OCULTOS, não apagados. Moraram no menu
+ * da Home (que saiu em 07/10/2026, Tarefa C); a flag veio junto. Para reabrir, vire-a (`nav.render.test.tsx` trava o estado).
+ */
+export const MENU_SHOWS_RITUAL_TOOLS = false;
+
 interface SettingsPageProps {
   /** Mudo global (S-som). Sem estes dois, o jogador não alcança o mudo — esta
    *  página é o ÚNICO caminho. ⚰️ 21/09/2026: o `SettingsModal` ("Ajustes
@@ -64,6 +72,15 @@ interface SettingsPageProps {
   /** Ações do painel de GM. O painel só aparece quando `useAdmin()` é true
    *  (flag vinda do servidor, `utils/adminFlag.ts`) — passar isto não basta. */
   gm?: GmActions;
+  /** Perfil (Tarefa C): foto + moldura. Sem isto o grupo "Perfil" não existe. */
+  profile?: {
+    saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
+    previewSrc: string; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
+  };
+  /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
+  onOpenCredits?: () => void;
+  onOpenOracle?: () => void;
+  onResetOnboarding?: () => void;
 }
 
 /**
@@ -186,7 +203,12 @@ export function SettingsPage({
   onRestoreFromCloud,
   onLoginWithEmail,
   gm,
+  profile,
+  onOpenCredits,
+  onOpenOracle,
+  onResetOnboarding,
 }: SettingsPageProps) {
+  const [profileOpen, setProfileOpen] = useState(false);
   const [trilha, setTrilha] = useState(() => trilhaPreferida());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
@@ -229,6 +251,35 @@ export function SettingsPage({
   return (
     <>
       <InstallPrompt language={language} />
+
+      {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
+      {profile && (
+        <Group title={isPt ? 'Perfil' : 'Profile'}>
+          <button
+            type="button"
+            data-edit-profile
+            onClick={() => setProfileOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
+          >
+            <UserAvatar avatarId={profile.avatarId} frameId={profile.equippedFrame} seed={profile.saveId} size={32} />
+            <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar perfil' : 'Edit profile'}</span>
+            <Icon name="chevron_right" size={24} tone="muted" />
+          </button>
+          <ProfileEditor
+            open={profileOpen}
+            onClose={() => setProfileOpen(false)}
+            language={language}
+            saveId={profile.saveId}
+            email={profile.email}
+            avatarId={profile.avatarId}
+            equippedFrame={profile.equippedFrame}
+            ownedFrames={profile.ownedFrames}
+            previewSrc={profile.previewSrc}
+            onChangeAvatar={profile.onChangeAvatar}
+            onChangeFrame={profile.onChangeFrame}
+          />
+        </Group>
+      )}
 
       {/* ── SUA CONTA — a única ação dominante da página mora aqui ────────── */}
       <Group title={isPt ? 'Sua conta' : 'Your account'}>
@@ -440,6 +491,9 @@ export function SettingsPage({
       <Group title={isPt ? 'Ajuda' : 'Help'}>
         <ActionRow label={t.settings.openGuide} onClick={onOpenGuide} />
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
+        {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
+        {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
+        {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && <ActionRow label={isPt ? 'Refazer o ritual' : 'Redo the ritual'} onClick={onResetOnboarding} />}
         {/* A4/A5 (QA rodada 2): os Termos não tinham link dentro do app, e a
             Política abria sempre a versão PT. Em EN os dois apontam para a
             âncora `#en` (mesma tabela do `TermsUpdateBanner`). */}

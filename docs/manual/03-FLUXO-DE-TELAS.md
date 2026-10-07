@@ -117,8 +117,7 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
 ### 1.2 Home, Mapa e o menu ícone
 
 - **Home** (`'home'`): um único link para o Mapa, `CornerLink icon="mapa"` no
-  canto **SUPERIOR direito** ("Mapa"/"Map"; B2, 02/10/2026 — era o inferior). O header (`HomeHud`) é `[menu ☰] [logo + nome do Soulmon] [Mapa]`: o menu ícone, agora à ESQUERDA onde ficava o logo,
-  abre o `HomeMenuSheet` (decisão D6), com as linhas (`MenuRow`); a Home mostra só o NOME do Soulmon (B1) — o título do Vínculo ("Companheiro") não é desenhado nela:
+  canto **SUPERIOR direito** ("Mapa"/"Map"; B2, 02/10/2026 — era o inferior). O header (`HomeHud`) é `[avatar do usuário] [nome do Soulmon] [Mapa]`: desde 07/10/2026 (Tarefa C) o botão de avatar (`ProfileAvatarButton`: foto NPC + moldura) abre `page:settings` e ⚰️ substituiu o sanduíche/`HomeMenuSheet`, cujas linhas viraram: Configurações (`page:settings`, a própria porta), Guia e Créditos em Configurações › Ajuda, Oráculo e "Refazer o ritual" ocultos (`MENU_SHOWS_RITUAL_TOOLS`, em `SettingsPage`); Configurações › Perfil › Editar perfil abre o `ProfileEditor`; a Home mostra só o NOME do Soulmon (B1) — o título do Vínculo ("Companheiro") não é desenhado nela:
   Configurações (`page:settings`), Oráculo (`page:oracle`, oculto), Guia
   (`GuideModal`), Créditos (`CreditsModal`, só se a prop existir) e "Refazer o
   ritual" (só se a prop existir). ⚠️ **Estatísticas saiu do menu em 02/10/2026
@@ -202,7 +201,7 @@ helpers `getFoodName`/`getFoodDesc`).
     │  ▲                               │  ▲                          │  (AreaTopBar voltar → Mapa)
     │  └──────── CornerLink home ──────┘  └──────────────────────────┘
     │                                        área ─lote─▶ AreaSheet ─▶ jogo por cima (onExit volta)
-    ├── menu ícone ▸ HomeMenuSheet ▸ page:settings · page:oracle · page:stats (voltar → Home)
+    ├── avatar ▸ page:settings (Perfil › Editar perfil; Ajuda › Créditos) (voltar → Home)
     │                               · Guia · Créditos · Refazer o ritual (modais)
     ├── FILA 1: intersticiais (um por vez, tela cheia)
     │     triage → dailyReport → checkIn → dream → nightmare → welcome
@@ -660,7 +659,7 @@ desde `592e2c14`).
 
 **Chega por**: valor inicial de `currentView`; `CornerLink icon="home"` do Mapa
 (`goBack`) e o voltar de qualquer página do menu (§1.1) · **Sai para**:
-`CornerLink icon="mapa"` → `goTo('map')`, ou o menu ícone (`HomeMenuSheet`,
+`CornerLink icon="mapa"` → `goTo('map')`, ou o avatar do canto (`ProfileAvatarButton`,
 §1.2). ⚠️ Desde a minimal-ui F2 a Home segue a abordagem B (faixa de cenário
 com o pet grande, HP/EN, 3 cuidados — mochila, lua/sol, banho —, lista do dia
 com botão +, `ChatBox` sempre aberto); onde o texto abaixo descreve o deck de
@@ -1315,7 +1314,7 @@ continuam com `BirthCard.render.test.tsx`, `BestiaryCard.render.test.tsx` e
 ### 4.9 `OraclePage` — `currentView === 'oracle'`, inalcançável (até a minimal-ui F1)
 
 > ⚠️ **Mudou em 23/09/2026 (minimal-ui F1, decisão D6)**: o Oráculo é linha do
-> menu ícone da Home (`HomeMenuSheet` → `goTo('page:oracle')`), e portanto
+> menu ícone da Home (⚰️ o menu da Home saiu; a flag `MENU_SHOWS_RITUAL_TOOLS` vive em `SettingsPage`), e portanto
 > **alcançável**. As medições abaixo são o registro de antes.
 
 - **Aparece quando**: `{pane === 'oracle' && (…)}` (`pane = paneFor(currentView, labTab)`, com `currentView === 'page:oracle'`; ⚰️ antes `{currentView === 'oracle' && (…)}`).
@@ -1902,7 +1901,7 @@ Três blocos, com condições literais:
 **Chega por**: **`SettingsPage` → `ActionRow` "Personalidade" / "Personality" →
 `setShowAISettings(true)`**, no mesmo grupo que tem o switch "Conversa com IA" /
 "AI chat". E a `SettingsPage` chega-se pela linha "Configurações" do menu ícone
-da Home (`HomeMenuSheet` → `goTo('page:settings')`; ⚰️ antes, o menu
+da Home (botão de avatar → `goTo('page:settings')`; ⚰️ antes, o menu
 sanduíche da `BottomNav`) · **Sai para**:
 `onClose={() => setShowAISettings(false)}`; "Salvar" / "Save" faz
 `onSave(settings)` e fecha no mesmo gesto.
@@ -2239,7 +2238,7 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 | 4 | "sem elas o botão de microfone **não é desenhado**" | `CLAUDE.md` | o `<button>` continua montado; com `micDisponivel === false` ele vira o botão de enviar, com `aria-disabled` quando não há texto |
 | 5 | ⚰️ "a cerimônia de marco… some sozinha em 2,5s" | comentário do `src/App.tsx` | **fechada em `4f5d2aac`** (20/09/2026): o comentário passou a dizer "não pede nada além do gesto"; o componente segue sem `setTimeout`, `zIndex: 300` |
 | 6 | "`ArenaGame` é código morto" | `docs/INVENTARIO-TELAS.md` §6.3 (19/08/2026) | foi o segundo card da `ActivitiesPage`; desde a minimal-ui F5 é o lote Duelo da área Arena (`DueloSheet` → `ArenaGame`) |
-| 7 | "`OraclePage` é alcançável pelo atalho de dono (segurar o mascote)" — o atalho segue morto, mas desde a minimal-ui F1 o Oráculo é linha do menu da Home (§4.9) | `SoulmonOnboarding.tsx` (comentário) e `docs/INVENTARIO-TELAS.md` §5.13 | `startOracleDebugHold`/`cancelOracleDebugHold` **não têm chamador** — a intro que os usava foi apagada. ⚰️ "`OraclePage` e `PixelizerCard` são inalcançáveis" valeu até a F1; hoje os dois chegam pelo menu da Home (`HomeMenuSheet` → `goTo('page:oracle')`) |
+| 7 | "`OraclePage` é alcançável pelo atalho de dono (segurar o mascote)" — o atalho segue morto, mas desde a minimal-ui F1 o Oráculo é linha do menu da Home (§4.9) | `SoulmonOnboarding.tsx` (comentário) e `docs/INVENTARIO-TELAS.md` §5.13 | `startOracleDebugHold`/`cancelOracleDebugHold` **não têm chamador** — a intro que os usava foi apagada. ⚰️ "`OraclePage` e `PixelizerCard` são inalcançáveis" valeu até a F1; hoje os dois chegam pelo menu da Home (⚰️ o menu da Home saiu; a flag `MENU_SHOWS_RITUAL_TOOLS` vive em `SettingsPage`) |
 | 8 | ⚰️ frase do widget e nome do dia | `WidgetRenderer.kt` | **fechada em `6affd501`** (20/09/2026): a escada é só em inglês por decisão (REGISTRO 13.18) e o topo diz "Complete day!" (P5) — §5.1 |
 | 9 | comentário do slot de avisos numera "1. HP" duas vezes | `src/App.tsx` | a ordem executada é a dos `push`: firstDay → refugio → hp → incubacao → semanal → triagem → priming → recomeco → carga → termos (8 desde 21/09/2026, 9 desde a incubação `8be8f9c5`; o `refugio` entra em 30/09/2026) |
 | 10 | "Brincar" é um card na Home (`PlayCard`), e a IIFE do `PlayCard` no `App.tsx` é consumidora de `playLog` | `CLAUDE.md` (linha 🧮, "**brincar** `playLog` (`utils/petNeeds.ts` + a IIFE do `PlayCard` no `App.tsx`)") | o `PlayCard` não é montado desde `f5ead7c0`; Brincar é a célula `play` do deck do `CompanionHUD`, alimentada por `playDeck` (`useMemo` no `App.tsx`) — §4.2, §4.14. `src/components/PlayCard.tsx` segue no repo sem consumidor |

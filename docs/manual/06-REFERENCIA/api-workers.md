@@ -426,6 +426,16 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `PESO_COMPORTAMENTO`, `MIN_AMOSTRA`, `GALHO_MAX`, `ESTAGIOS_COM_JANELA`, `FAMILIAS_VALIDAS`, `GALHO_PARA_ELEMENTO`, `cleanGalhos`, `cleanAt`, `planoDoComportamento`, `sanitizeFichaJornada`, `enforceImmutableFicha`, `fichaJornadaFamilia`.
 **Régua:** `functions/api/fichaJornada.parity.test.js`.
 
+### `functions/api/_avatares.js`
+**Dono de:** a LISTA FECHADA de avatares de perfil (Tarefa C) — GERADO por `scripts/gerar-avatares.mjs` (não editar à mão). `AVATAR_IDS` (123 ids) e `avatarIdOrNull`: o servidor só guarda/devolve id desta lista (`save.js › avatarId`, `community.js › profile`, `publicProfile`, `match.opponent`, linhas de rank); o resto vira `null`.
+**Exports:** `AVATAR_IDS`, `avatarIdOrNull`.
+**Régua:** `src/utils/avatar.test.ts` (paridade com `catalogo.json`), `functions/api/avatarPerfil.save.test.js`.
+
+### `functions/api/_frames.js`
+**Dono de:** o espelho, no servidor, dos ids de moldura de `src/utils/frames.ts` (`FRAME_IDS`, `frameIdOrNull`): `equippedFrame` do save e `frameId` do perfil público só valem se o id estiver no catálogo.
+**Exports:** `FRAME_IDS`, `frameIdOrNull`.
+**Régua:** `src/utils/avatar.test.ts` (paridade com `FRAMES`), `functions/api/avatarPerfil.save.test.js`.
+
 ### `functions/api/_equipment.js`
 **Dono de:** o ESPELHO de `src/utils/equipment.ts` no servidor (PR8): sanea o campo `equipment` e o registro `bitsOrigin` do save (`save.js`) e dá a parcela de equipamento por atributo do canal de bônus do duelo (`_duel.js › duelSide`). Slot forjado é descartado; o teto de 5% limita um save forjado.
 **Exports:** `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `FRAGMENTS_MAX`, `EQUIP`, `sanitizeEquipment`, `equipAttrBonus`, `sanitizeBitsOrigin`.

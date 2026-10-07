@@ -20,14 +20,14 @@ import { questMarks, questMarkLabel } from './utils/questMarks';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
-import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
+import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import {
   type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
 import { CompanionHUD } from './components/CompanionHUD';
-import { HomeHud, MenuBars } from './components/pixel/HomeHud';
+import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
 import { CATEGORY_ICONS } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -38,6 +38,8 @@ import { emptyIncubation, incubationFor, incubationReady, isIncubating } from '.
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { getSpriteForStage } from './utils/sprites';
+import { lineIconForStage } from './utils/lineIcons';
+import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
@@ -726,7 +728,6 @@ export default function App() {
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
   /** O menu ícone da Home (D6). */
-  const [homeMenuOpen, setHomeMenuOpen] = useState(false);
   /* Rodada 7 (M8): a lista de missões aberta pelo ícone da Home. */
   const [missionsOpen, setMissionsOpen] = useState(false);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
@@ -6183,23 +6184,13 @@ export default function App() {
                    alvo de 44 no botão, divulgação com `aria-expanded`. */
                 petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
                 leading={(
-                  <button
-                    type="button"
-                    onClick={() => setHomeMenuOpen(true)}
-                    aria-label={language === 'pt-BR' ? 'Menu' : 'Menu'}
-                    aria-expanded={homeMenuOpen}
-                    title={language === 'pt-BR' ? 'Menu' : 'Menu'}
-                    data-home-menu-btn
-                    className="sm2-corner-link"
-                    style={{
-                      width: 44, height: 44, flex: '0 0 44px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-                    }}
-                  >
-                    {/* C1 (01/10/2026): hambúrguer simples — três tracinhos. */}
-                    <MenuBars size={28} />
-                  </button>
+                  <ProfileAvatarButton
+                    avatarId={gameState.avatarId}
+                    frameId={gameState.equippedFrame}
+                    seed={saveId}
+                    language={language}
+                    onClick={() => goTo('page:settings')}
+                  />
                 )}
               />
 
@@ -6779,6 +6770,19 @@ export default function App() {
               showInPublicList={gameState.hideFromPublicList !== true}
               onToggleShowInPublicList={() => setGameState(prev => ({ ...prev, hideFromPublicList: prev.hideFromPublicList !== true }))}
               gm={isAdmin ? gmActions : undefined}
+              profile={{
+                saveId,
+                email: readLocal(STORAGE_KEYS.USER_EMAIL),
+                avatarId: gameState.avatarId ?? null,
+                equippedFrame: gameState.equippedFrame ?? null,
+                ownedFrames: gameState.ownedFrames ?? [],
+                previewSrc: lineIconForStage(gameState.evolutionStage, 32) ?? getSpriteForStage(gameState.evolutionStage),
+                onChangeAvatar: (id) => setGameState(prev => prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }),
+                onChangeFrame: handleEquipFrame,
+              }}
+              onOpenCredits={openCredits}
+              onOpenOracle={() => goTo('page:oracle')}
+              onResetOnboarding={handleResetOnboarding}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               language={language}
@@ -6945,15 +6949,6 @@ export default function App() {
           ring
         />
       )}
-      <HomeMenuSheet
-        open={homeMenuOpen}
-        onClose={() => setHomeMenuOpen(false)}
-        language={language}
-        onOpenPage={(p) => goTo(`page:${p}`)}
-        onOpenGuide={() => setGuideModalOpen(true)}
-        onOpenCredits={openCredits}
-        onResetOnboarding={handleResetOnboarding}
-      />
 
       {/* P4 — a tela de antes/depois. Nunca monta sozinha: só por gesto no
           convite acima, e aplicar exige confirmação dentro dela. */}
