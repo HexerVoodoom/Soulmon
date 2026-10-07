@@ -16,6 +16,8 @@ import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
+import { frameIdOrNull } from './_frames.js';
+import { avatarIdOrNull } from './_avatares.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 
 const CORS = {
@@ -56,15 +58,14 @@ function clampCaderno(raw) {
 
 /**
  * Molduras de avatar (R8, 04/10/2026) — COSMÉTICA. O servidor só garante a FORMA: `equippedFrame` é um id
- * no formato ou `null`; `ownedFrames` é uma lista de ids no formato, sem repetição, com teto. Nunca valida
+ * do catálogo fechado (`_frames.js`) ou `null`; `ownedFrames` é uma lista de ids no formato, sem repetição, com teto. Nunca valida
  * se o jogador "merece" a moldura (rank/loja/conquista são do cliente e não dão poder algum) e nada daqui
  * entra em economia. Mesmos formato e teto de `src/utils/frames.ts` (há teste de paridade).
  */
 const FRAME_ID_RE = /^[a-z0-9-]{1,40}$/;
 const FRAMES_MAX_OWNED = 200;
-function clampFrameId(raw) {
-  return typeof raw === 'string' && FRAME_ID_RE.test(raw) ? raw : null;
-}
+/** Perfil (Tarefa C): a moldura EQUIPADA e a foto so valem se estiverem nas LISTAS FECHADAS (`_frames.js`, `_avatares.js`). */
+
 function clampOwnedFrames(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
@@ -257,7 +258,8 @@ export async function onRequest({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
-    if ('equippedFrame' in state) state.equippedFrame = clampFrameId(state.equippedFrame);
+    if ('equippedFrame' in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);
+    if ('avatarId' in state) state.avatarId = avatarIdOrNull(state.avatarId);
     if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
     // Talentos (Combate v3 / PR7): o vetor e VALIDADO contra o Vinculo do proprio save (`totalXP` -> `bondLevelFor`,
     // o teto de pontos = level). Invalido (id desconhecido, grau a mais, pontos a mais) e DESCARTADO, nunca
