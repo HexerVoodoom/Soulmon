@@ -14,6 +14,17 @@ export interface NotificationPermissionState {
   prompt: boolean;
 }
 
+/** A API `Notification` existe e está concedida? O WebView do APK NÃO tem
+ *  `Notification` (identificador inexistente => ReferenceError), então todo
+ *  leitor de `Notification.permission` passa por aqui. Nunca lança. */
+const webNotificationGranted = (): boolean => {
+  try {
+    return typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted';
+  } catch {
+    return false;
+  }
+};
+
 export const checkNotificationPermission = (): NotificationPermissionState => {
   if (!('Notification' in window)) {
     return { granted: false, denied: true, prompt: false };
@@ -41,8 +52,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 // Show a notification — prefers SW showNotification (works in background),
 // falls back to new Notification() when SW is not yet active.
 export const showNotification = (title: string, options?: NotificationOptions): void => {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
+  if (!webNotificationGranted()) return;
 
   const opts: NotificationOptions = {
     // Os mesmos do `public/sw.js`: ícone grande = mini-visor redondo com a
@@ -145,7 +155,7 @@ export const subscribeToPush = async (
   saveId?: string | null
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
-  if (Notification.permission !== 'granted') return false;
+  if (!webNotificationGranted()) return false;
 
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -319,7 +329,9 @@ export const checkAndShowNotifications = (
   _userName = 'Trainer',
   _language: 'pt-BR' | 'en-US' = 'en-US'
 ) => {
-  if (Notification.permission !== 'granted') return;
+  // No APK (WebView sem `Notification`) isto lançava ReferenceError dentro de
+  // um efeito do NotificationManager e derrubava o app no ErrorBoundary.
+  if (!webNotificationGranted()) return;
 
   const now = new Date();
   const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
