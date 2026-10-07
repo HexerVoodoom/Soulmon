@@ -3868,15 +3868,79 @@ function talentCheerScale(picks, bondLevel) {
 }
 __name(talentCheerScale, "talentCheerScale");
 
+// api/_forge.js
+var FORGE_MAX_LEVEL = 5;
+var LEVEL_PCT = [3e-3, 2e-3, 3e-3, 3e-3, 4e-3];
+var PRIMARY_ATTR = { nucleo: "atk", carapaca: "def", rastro: "spd" };
+var ALT_ATTR = { nucleo: "def", carapaca: "spd", rastro: "atk" };
+var LEGACY_LEVEL = [2, 4, 5];
+var FORGE_PIECES = {
+  "eq-nucleo-t1": { slot: "nucleo", tier: 1 },
+  "eq-nucleo-t2": { slot: "nucleo", tier: 2 },
+  "eq-nucleo-t3": { slot: "nucleo", tier: 3 },
+  "eq-carapaca-t1": { slot: "carapaca", tier: 1 },
+  "eq-carapaca-t2": { slot: "carapaca", tier: 2 },
+  "eq-carapaca-t3": { slot: "carapaca", tier: 3 },
+  "eq-rastro-t1": { slot: "rastro", tier: 1 },
+  "eq-rastro-t2": { slot: "rastro", tier: 2 },
+  "eq-rastro-t3": { slot: "rastro", tier: 3 }
+};
+var has2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function sanitizeForge(raw) {
+  const empty = { levels: {}, picks: {} };
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return empty;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const lv = r.levels && typeof r.levels === "object" && !Array.isArray(r.levels) ? (
+    /** @type {Record<string, unknown>} */
+    r.levels
+  ) : {};
+  const pk = r.picks && typeof r.picks === "object" && !Array.isArray(r.picks) ? (
+    /** @type {Record<string, unknown>} */
+    r.picks
+  ) : {};
+  const levels = {};
+  const picks = {};
+  for (const id of Object.keys(FORGE_PIECES)) {
+    const v = has2(lv, id) ? lv[id] : void 0;
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    const level = Math.min(FORGE_MAX_LEVEL, Math.max(1, Math.floor(v)));
+    levels[id] = level;
+    const arr = has2(pk, id) && Array.isArray(pk[id]) ? (
+      /** @type {unknown[]} */
+      pk[id]
+    ) : [];
+    const list = [];
+    for (let i = 0; i < level - 1; i++) list.push(arr[i] === "b" ? "b" : "a");
+    if (list.includes("b")) picks[id] = list;
+  }
+  return Object.keys(levels).length === 0 ? empty : { levels, picks };
+}
+__name(sanitizeForge, "sanitizeForge");
+function ownedPieceBonus(id, forge) {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!has2(FORGE_PIECES, id)) return out;
+  const piece = FORGE_PIECES[id];
+  const f = sanitizeForge(forge);
+  const level = has2(f.levels, id) ? f.levels[id] : LEGACY_LEVEL[piece.tier - 1];
+  const saved = has2(f.picks, id) ? f.picks[id] : [];
+  const main = PRIMARY_ATTR[piece.slot];
+  out[main] += LEVEL_PCT[0];
+  for (let k = 2; k <= Math.min(FORGE_MAX_LEVEL, level); k++) out[saved[k - 2] === "b" ? ALT_ATTR[piece.slot] : main] += LEVEL_PCT[k - 1];
+  return out;
+}
+__name(ownedPieceBonus, "ownedPieceBonus");
+
 // api/_equipment.js
 var EQUIP_SLOTS = ["nucleo", "carapaca", "rastro"];
-var SLOT_ATTR = { nucleo: "atk", carapaca: "def", rastro: "spd" };
 var TIER_PCT = [5e-3, 0.01, 0.015];
 var FRAGMENTS_MAX = 999;
 var EQUIP = Object.fromEntries(
   EQUIP_SLOTS.flatMap((slot) => [1, 2, 3].map((tier) => [`eq-${slot}-t${tier}`, { slot, pct: TIER_PCT[tier - 1] }]))
 );
-var has2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+var has3 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function sanitizeEquipment(raw) {
   if (!raw || typeof raw !== "object") return { owned: [], equipped: {}, fragments: 0 };
   const r = (
@@ -3885,7 +3949,7 @@ function sanitizeEquipment(raw) {
   );
   const owned = [];
   if (Array.isArray(r.owned)) {
-    for (const id of r.owned) if (typeof id === "string" && has2(EQUIP, id) && !owned.includes(id)) owned.push(id);
+    for (const id of r.owned) if (typeof id === "string" && has3(EQUIP, id) && !owned.includes(id)) owned.push(id);
   }
   const equipped = {};
   const eq = r.equipped && typeof r.equipped === "object" ? (
@@ -3893,19 +3957,23 @@ function sanitizeEquipment(raw) {
     r.equipped
   ) : {};
   for (const slot of EQUIP_SLOTS) {
-    const id = has2(eq, slot) ? eq[slot] : void 0;
+    const id = has3(eq, slot) ? eq[slot] : void 0;
     if (typeof id === "string" && owned.includes(id) && EQUIP[id].slot === slot) equipped[slot] = id;
   }
   const f = typeof r.fragments === "number" && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
 }
 __name(sanitizeEquipment, "sanitizeEquipment");
-function equipAttrBonus(raw) {
+function equipAttrBonus(raw, forge) {
   const eq = sanitizeEquipment(raw);
   const out = { atk: 0, def: 0, spd: 0 };
   for (const slot of EQUIP_SLOTS) {
     const id = eq.equipped[slot];
-    if (id) out[SLOT_ATTR[slot]] += EQUIP[id].pct;
+    if (!id) continue;
+    const b = ownedPieceBonus(id, forge);
+    out.atk += b.atk;
+    out.def += b.def;
+    out.spd += b.spd;
   }
   return out;
 }
@@ -4299,7 +4367,7 @@ function duelSide(save, opts = {}) {
   const bonus = combinedAttrBonus({
     talent: talentAttrBonus(state.talentPicks, bondLvl),
     // PR8: equipamento por slot (Nucleo ATK, Carapaca DEF, Rastro SPD), percentual, saneado do save; o teto de 5% e a SOMA dos tres.
-    equipment: equipAttrBonus(state.equipment)
+    equipment: equipAttrBonus(state.equipment, state.forge)
   });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
@@ -6006,7 +6074,7 @@ var MATERIAL_IDS = [
 ];
 var BUILDING_RE = /^(jogos|exploracao|arena|laboratorio|hall)\.[a-z]{1,24}$/;
 var MAX_LIST = 20;
-var has3 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+var has4 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function ids(v) {
   const out = [];
   if (Array.isArray(v)) {
@@ -6031,7 +6099,7 @@ function sanitizeBuildingQuests(raw) {
   ) : {};
   const materials = {};
   for (const id of MATERIAL_IDS) {
-    const v = has3(m, id) ? m[id] : void 0;
+    const v = has4(m, id) ? m[id] : void 0;
     if (typeof v === "number" && Number.isFinite(v) && v > 0) materials[id] = Math.min(MATERIAL_CAP, Math.floor(v));
   }
   const visited = ids(r.visited);
@@ -6188,6 +6256,7 @@ async function onRequest5({ request, env }) {
     if ("ownedFrames" in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
     if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     if ("equipment" in state) state.equipment = sanitizeEquipment(state.equipment);
+    if ("forge" in state) state.forge = sanitizeForge(state.forge);
     if ("bitsOrigin" in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o;
@@ -6631,7 +6700,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-LNplVj/functionsRoutes-0.11645402610950528.mjs
+// ../.wrangler/tmp/pages-K5OLXR/functionsRoutes-0.4220542901663191.mjs
 var routes = [
   {
     routePath: "/api/account",
