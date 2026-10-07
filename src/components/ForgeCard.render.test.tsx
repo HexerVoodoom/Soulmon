@@ -85,6 +85,45 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,2%/);
   });
 
+  it('peça possuída e equipada: selo Equipado + botão Tirar visível; desequipada: botão Equipar; não possuída: sem botão e diz de onde vem', () => {
+    abrir(nivel1(), 'en-US');
+    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')!.textContent).toMatch(/Equipped/);
+    expect(q('[data-equip-unequip="nucleo"]').textContent).toBe('Unequip');
+    expect(peca('eq-nucleo-t2').querySelector('button')).toBeNull();
+    expect(peca('eq-nucleo-t2').textContent).toMatch(/Comes from/);
+    click(q('[data-equip-unequip="nucleo"]'));
+    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')).toBeNull();
+    click(q('[data-equip-btn="eq-nucleo-t1"]'));
+    expect(estado().eq.equipped.nucleo).toBe('eq-nucleo-t1');
+    expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);
+  });
+
+  it('celebração: não aparece ao abrir nem ao cancelar; aparece após o upgrade confirmado, com movimento', () => {
+    abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }), 'en-US');
+    expect(document.querySelector('[data-forge-seal]')).toBeNull();
+    click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
+    click(q('[data-forge-cancel]'));
+    expect(document.querySelector('[data-forge-seal]')).toBeNull();
+    click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
+    click(q('[data-forge-confirm]'));
+    const seal = document.querySelector('[data-forge-seal]')!;
+    expect(seal.textContent).toMatch(/Upgraded!.*Lv 2/);
+    expect(peca('eq-nucleo-t1').getAttribute('data-motion')).toBe('full');
+    expect(document.querySelectorAll('[data-forge-fx="spark"]').length).toBeGreaterThan(0);
+    expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);
+  });
+
+  it('celebração com movimento reduzido: mantém o selo textual e tira as faíscas', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: /reduce/.test(query), media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }));
+    window.matchMedia = (globalThis as unknown as { matchMedia: typeof window.matchMedia }).matchMedia;
+    abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }), 'pt-BR');
+    click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
+    click(q('[data-forge-confirm]'));
+    expect(document.querySelector('[data-forge-seal]')!.textContent).toMatch(/Aprimorado!.*Nv 2/);
+    expect(peca('eq-nucleo-t1').getAttribute('data-motion')).toBe('reduced');
+    expect(document.querySelector('[data-forge-fx]')).toBeNull();
+  });
+
   it('Cancelar não gasta nada', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }));
     click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));

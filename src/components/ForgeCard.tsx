@@ -7,7 +7,7 @@
  *
  * O bônus mostrado é HONESTO: o que as peças dão por atributo e o que vale em luta depois do teto único de 5% somado ao talento.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
@@ -49,6 +49,26 @@ function Art({ nome, size }: { nome: string; size: number }) {
 const pct = (f: number, isPt: boolean) => `${(f * 100).toFixed(1).replace(/\.0$/, '').replace('.', isPt ? ',' : '.')}%`;
 const matOf = (id: string) => MATERIALS.find((m) => m.id === id)!;
 
+/** O movimento reduzido liga o modo sem faíscas nem varredura; o selo textual fica (reduzir movimento nunca corta a pausa). */
+function prefersReducedMotion(): boolean {
+  try { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
+}
+
+/** A celebração do aprimoramento: CSS procedural dentro deste chunk lazy (sem asset, sem som — superfície nova nasce muda). */
+const CELEBRATION_CSS = `
+@keyframes sm-forge-sweep { from { transform: translateX(-120%) skewX(-18deg); opacity: .9; } to { transform: translateX(260%) skewX(-18deg); opacity: 0; } }
+@keyframes sm-forge-spark { 0% { transform: translate(0,0) scale(.4); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } }
+@keyframes sm-forge-pulse { 0% { transform: scale(1); text-shadow: 0 0 0 transparent; } 40% { transform: scale(1.35); text-shadow: 0 0 12px var(--sm2-primary-ink, #6ee7f0); } 100% { transform: scale(1); text-shadow: 0 0 0 transparent; } }
+@keyframes sm-forge-seal { from { transform: translateY(6px) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+[data-forge-celebration] { position: relative; overflow: hidden; }
+.sm-forge-sweep { position: absolute; inset: 0 auto 0 0; width: 40%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: sm-forge-sweep 900ms ease-out 1 both; }
+.sm-forge-spark { position: absolute; left: 50%; bottom: 30%; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; background: var(--sm2-primary-ink, #6ee7f0); box-shadow: 0 0 8px var(--sm2-primary-ink, #6ee7f0); animation: sm-forge-spark 1100ms ease-out 1 both; }
+.sm-forge-pulse { display: inline-block; animation: sm-forge-pulse 700ms ease-out 1; }
+.sm-forge-seal { animation: sm-forge-seal 300ms ease-out 1 both; }
+@media (prefers-reduced-motion: reduce) { .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; } .sm-forge-sweep, .sm-forge-spark { display: none; } }
+`;
+const SPARKS = Array.from({ length: 10 }, (_, i) => ({ dx: `${(i - 4.5) * 14}px`, dy: `${-50 - ((i * 37) % 40)}px`, delay: `${(i % 5) * 60}ms` }));
+
 /** O que a pessoa está decidindo agora: aprimorar a peça (próximo nível) ou refazer a escolha de um nível. */
 type Dialog = { mode: 'upgrade'; id: string } | { mode: 'redo'; id: string; level: number };
 
@@ -57,6 +77,22 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
   const [aviso, setAviso] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [escolha, setEscolha] = useState<ForgeChoice>('a');
+  const [celebra, setCelebra] = useState<{ id: string; to: number; key: number } | null>(null);
+  const pend = useRef<{ id: string; from: number } | null>(null);
+  const forgeNow = ctx?.gameState.forge;
+  const equipNow = ctx?.gameState.equipment;
+  // A celebração só nasce quando o nível SUBIU de fato no save (upgrade confirmado), nunca ao abrir nem numa recusa.
+  useEffect(() => {
+    const p = pend.current;
+    if (!p) return;
+    const to = levelNow({ forge: forgeNow, equipment: equipNow }, p.id);
+    if (to > p.from) { pend.current = null; setCelebra((c) => ({ id: p.id, to, key: (c?.key ?? 0) + 1 })); }
+  }, [forgeNow, equipNow]);
+  useEffect(() => {
+    if (!celebra) return;
+    const t = setTimeout(() => setCelebra(null), 3200);
+    return () => clearTimeout(t);
+  }, [celebra]);
   if (!ctx) return null; // sem save (demo, testes): não há o que forjar
   const isPt = language === 'pt-BR';
   const lang = language as Language;
@@ -80,6 +116,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
 
   const abrir = (d: Dialog) => {
     setAviso(null);
+    pend.current = null;
     if (d.mode === 'upgrade') setEscolha('a');
     else setEscolha(pieceChoices(d.id, levelNow(view, d.id), gameState.forge)[d.level - 2] === 'a' ? 'b' : 'a');
     setDialog(d);
@@ -91,6 +128,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const choice = escolha;
     setDialog(null);
     setAviso(null);
+    if (d.mode === 'upgrade') pend.current = { id: d.id, from: levelNow(view, d.id) };
     setGameState((prev) => {
       const v = prevView(prev);
       if (d.mode === 'upgrade') {
@@ -127,23 +165,40 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const origem = nameOf(piece.building, lang);
     const bonusAgora = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `${attrName(a)} +${pct(b[a], isPt)}`).join(' · ');
     const custos = possui && !max ? custoTexto(piece, to) : [];
+    const festa = celebra && celebra.id === piece.id ? celebra : null;
+    const reduzido = festa ? prefersReducedMotion() : false;
     return (
-      <li key={piece.id} className="sm2-stats-card" data-forge-piece={piece.id} data-level={level} data-owned={possui || undefined} data-equipped={equipado || undefined}
+      <li key={piece.id} className="sm2-stats-card" data-forge-celebration={festa ? '' : undefined} data-motion={festa ? (reduzido ? 'reduced' : 'full') : undefined} data-forge-piece={piece.id} data-level={level} data-owned={possui || undefined} data-equipped={equipado || undefined}
         style={{ display: 'grid', gap: 8, margin: 0, padding: 12 }}>
+        {festa && !reduzido && (
+          <>
+            <span className="sm-forge-sweep" aria-hidden="true" data-forge-fx="sweep" />
+            {SPARKS.map((sp, i) => <span key={i} className="sm-forge-spark" aria-hidden="true" data-forge-fx="spark" style={{ ['--dx' as string]: sp.dx, ['--dy' as string]: sp.dy, animationDelay: sp.delay }} />)}
+          </>
+        )}
+        {festa && (
+          <span role="status" className="sm-forge-seal sm2-num" data-forge-seal style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
+            ✦ {isPt ? 'Aprimorado!' : 'Upgraded!'} <span key={festa.key} className="sm-forge-pulse" data-forge-level-pulse>{isPt ? `Nv ${festa.to}` : `Lv ${festa.to}`}</span>
+          </span>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Art nome={piece.id} size={40} />
           <span style={{ flex: 1, minWidth: 120 }}>
             <b style={{ fontWeight: 500 }}>{nome}</b>
-            {equipado && <span className="sm2-stats-s"> · {isPt ? 'equipado' : 'equipped'}</span>}
             <span className="sm2-stats-s" style={{ display: 'block' }}>{isPt ? SLOT_COPY[piece.slot].pt : SLOT_COPY[piece.slot].en}</span>
           </span>
+          {equipado && (
+            <span className="sm2-stats-s" data-equipped-badge style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
+              <span aria-hidden="true">✓ </span>{isPt ? 'Equipado' : 'Equipped'}
+            </span>
+          )}
           {possui && !equipado && (
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" onClick={() => equipar(piece.id)}
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-equip-btn={piece.id} onClick={() => equipar(piece.id)}
               aria-label={isPt ? `Equipar ${nome}` : `Equip ${nome}`}>{isPt ? 'Equipar' : 'Equip'}</button>
           )}
           {equipado && (
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-equip-unequip={piece.slot} onClick={() => tirar(piece.slot)}
-              aria-label={isPt ? `Tirar ${nome} do slot` : `Take ${nome} off the slot`}>{isPt ? 'Tirar' : 'Take off'}</button>
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-equip-unequip={piece.slot} onClick={() => tirar(piece.slot)}
+              aria-label={isPt ? `Tirar ${nome} do slot` : `Take ${nome} off the slot`}>{isPt ? 'Tirar' : 'Unequip'}</button>
           )}
         </div>
         {!possui && <span className="sm2-stats-s">{isPt ? `Vem da missão de ${origem}.` : `Comes from the ${origem} mission.`}</span>}
@@ -281,6 +336,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
 
   return (
     <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>
+      <style>{CELEBRATION_CSS}</style>
       <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
         {FORGE_PIECES.map(linha)}
