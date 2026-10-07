@@ -18,6 +18,7 @@ import { resolve } from 'node:path';
 import { ArenaGame } from './ArenaGame';
 import { ARENA_ROUNDS, ESCOLA_FAMILY_PADRAO } from '../utils/arena';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
+import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
 
 /** Uma criatura só, determinística: o que varia nos testes é a ESCOLA e a
  *  precisão, nunca o sorteio do bestiário. */
@@ -208,5 +209,25 @@ describe('os dois idiomas', () => {
     for (const palavra of ['rounds', 'hearts', 'Enter the']) {
       expect(texto.includes(palavra), `"${palavra}" vazou para a tela em português`).toBe(false);
     }
+  });
+});
+
+describe('o chip de Essência mostra o elemento da IDENTIDADE (par incluso); a vantagem segue na base', () => {
+  const chip = () => screen.getByText('Essência').parentElement?.textContent ?? '';
+  it('par dominante: o chip mostra o PAR (o mesmo do nome do básico), não a base do elementoId', async () => {
+    const sk = skillsCom('benca');
+    (sk.rookie as unknown as { elementoDominante: unknown }).elementoDominante = { id: 'vapor', nome: elementoNomeDe('vapor') };
+    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={sk} onExit={() => {}} />);
+    await screen.findByRole('button', { name: /Entrar na Arena/i });
+    expect(chip()).toContain(elementoNomeDe('vapor').pt);
+    expect(chip()).not.toContain('Água');
+    expect(sk.rookie!.basica.elementoId).toBe('agua'); // a vantagem (Arena/COUNTERS) não mudou
+  });
+  it('base dominante: igual a antes (a própria base)', async () => {
+    const sk = skillsCom('benca');
+    (sk.rookie as unknown as { elementoDominante: unknown }).elementoDominante = { id: 'agua', nome: elementoNomeDe('agua') };
+    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={sk} onExit={() => {}} />);
+    await screen.findByRole('button', { name: /Entrar na Arena/i });
+    expect(chip()).toContain('Água');
   });
 });
