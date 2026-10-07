@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
-import { NPC_SCALE, NPC_MAX_WIDTH_PCT, NPC_BASE_MAX_WIDTH_PCT, NPC_PORTRAIT_ZOOM } from './npcScale';
+import { NPC_SCALE, NPC_MAX_WIDTH_PCT, NPC_BASE_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET } from './npcScale';
 
 const lot = (onOpen: () => void): AreaLot[] => [{
   id: 'exemplo', label: 'Itens', left: '50%', top: '38%', ariaLabel: 'Itens', onOpen,
@@ -186,17 +186,18 @@ describe('NPC 1,4x (pedido do dono, 29/09/2026)', () => {
   });
   it('a folha aplica NPC_MAX_WIDTH_PCT no <img> do NPC', () => {
     const { container } = renderWithCss(<Cenario open />);
-    const frame = container.querySelector('[data-area-sheet-npc-frame]') as HTMLElement;
-    expect(frame.style.maxWidth).toBe(`${NPC_MAX_WIDTH_PCT}%`);
-    expect(frame.style.height).toBe('100%');
-  });
-  it('o retrato tem zoom e a caixa mantém a pegada (NPC_PORTRAIT_ZOOM)', () => {
-    const { container } = renderWithCss(<Cenario open />);
-    const frame = container.querySelector('[data-area-sheet-npc-frame]') as HTMLElement;
     const img = container.querySelector('[data-area-sheet-npc]') as HTMLElement;
-    expect(frame.style.overflow).not.toBe('hidden');
-    expect(NPC_PORTRAIT_ZOOM).toBeGreaterThanOrEqual(1.4);
-    expect(NPC_PORTRAIT_ZOOM).toBeLessThanOrEqual(1.6);
-    expect(img.style.transform).toMatch(new RegExp(`scale\\(${NPC_PORTRAIT_ZOOM}\\)$`)); // sobe pela margem vazia da arte (translateY), sem cortar o topo
+    expect(img.style.maxWidth).toBe(`${NPC_MAX_WIDTH_PCT}%`);
+    expect(img.style.height).toBe('100%');
+  });
+  it('o retrato NÃO tem zoom: só desce NPC_BASE_UNDER_SHEET sob a folha', async () => {
+    const mod = await import('./npcScale');
+    expect('NPC_PORTRAIT_ZOOM' in mod).toBe(false);
+    expect(NPC_BASE_UNDER_SHEET).toBeGreaterThan(0);
+    expect(NPC_BASE_UNDER_SHEET).toBeLessThanOrEqual(0.08);
+    const { container } = renderWithCss(<Cenario open />);
+    const img = container.querySelector('[data-area-sheet-npc]') as HTMLElement;
+    expect(img.style.transform).not.toMatch(/scale/);
+    expect(img.style.transform).toBe(`translateY(${100 * NPC_BASE_UNDER_SHEET}%)`);
   });
 });
