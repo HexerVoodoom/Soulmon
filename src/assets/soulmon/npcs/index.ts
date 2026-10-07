@@ -55,11 +55,10 @@ import npcLaboratorioStats from './npc-agua-laboratorio-stats.png';
 import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
 import npcHallGuilda from './npc-hall-guilda.png';
 
-import npcFForjaFerreiro from './npc-f-forja.png';
+import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
 /**
- * 🦎 O NPC do FERREIRO — ÚNICO ponto de troca (07/10/2026). O dono quer uma SALAMANDRA DE VIDRO industrial;
- * essa arte ainda não existe. Provisório: a forjadora de lava (`npc-f-forja.png`, Scoria), a mais próxima.
- * PENDENTE DO DONO: gerar `npc-mercado-ferreiro.png` (768², alfa real) e trocar o import abaixo.
+ * 🦎 O NPC do SOULSMITH — ÚNICO ponto de troca (07/10/2026). Escolha do dono: o espírito-do-forno vidraceiro
+ * (`dominios/industrial/npcs/npc-industrial-espirito-forno-vidraceiro`, a 'salamandra de vidro industrial').
  */
 const FERREIRO_NPC_ART = npcFForjaFerreiro;
 

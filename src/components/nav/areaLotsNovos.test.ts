@@ -103,12 +103,12 @@ describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
 });
 
 describe('o Ferreiro (07/10/2026): lote do Mercado para os equipamentos', () => {
-  it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Mallo', () => {
+  it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Vitra', () => {
     expect(mercadoLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect(mercadoLots('pt-BR').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect(BUILDING_GATES['mercado.ferreiro'].minBond).toBe(2);
-    expect(lotNpcVoice('mercado', 'ferreiro', 'en-US').name).toContain('Mallo');
-    expect(lotNpcVoice('mercado', 'ferreiro', 'pt-BR').name).toContain('Mallo');
+    expect(lotNpcVoice('mercado', 'ferreiro', 'en-US').name).toContain('Vitra');
+    expect(lotNpcVoice('mercado', 'ferreiro', 'pt-BR').name).toContain('Vitra');
   });
   it('a folha do lote abre a ForgeCard, e as Estatísticas não a montam mais', () => {
     const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');
