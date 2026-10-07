@@ -74,8 +74,12 @@ describe('save.js saneia o equipamento e a procedencia dos Bits', () => {
   });
   it('slot forjado, item inventado e fragmentos absurdos sao descartados peca a peca', async () => {
     const out = await salva({ equipment: { owned: ['eq-nucleo-t1', 'eq-zzz'], equipped: { rastro: 'eq-nucleo-t1', nucleo: 'eq-carapaca-t3' }, fragments: 1e12 } });
-    expect(out.equipment).toEqual({ owned: ['eq-nucleo-t1'], equipped: {}, fragments: FRAGMENTS_MAX });
+    expect(out.equipment).toEqual({ owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: FRAGMENTS_MAX });
     expect((await salva({ equipment: 'tudo' })).equipment).toEqual({ owned: [], equipped: {}, fragments: 0 });
+  });
+  it('Soulsmith: peca possuida esta sempre equipada (espelho do cliente), idempotente', async () => {
+    const out = await salva({ equipment: { owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-rastro-t1'], equipped: {}, fragments: 3 } });
+    expect(out.equipment).toEqual({ owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-rastro-t1'], equipped: { nucleo: 'eq-nucleo-t2', rastro: 'eq-rastro-t1' }, fragments: 3 });
   });
   it('procedencia: forma e clamp; sem `day` valido o registro e descartado; save sem os campos continua sem eles', async () => {
     expect((await salva({ bitsOrigin: { day: 'Mon Oct 05 2026', free: 5, fromCredits: 1, paidLeft: 1 } })).bitsOrigin).toEqual({ day: 'Mon Oct 05 2026', free: 5, fromCredits: 1, paidLeft: 1 });
@@ -101,8 +105,10 @@ describe('o duelo usa o equipamento pelo canal de bonus POR ATRIBUTO, no teto un
     expect(so('rastro', 'eq-rastro-t2').atk).toBe(0);
   });
   it('slot forjado vale 0; sem equipamento vale 0', () => {
+    // slot forjado nao vale no rastro; a peca possuida fica no SEU slot (nucleo) — so ATK, nunca SPD
     const c = canais(duelSide({ ...base, equipment: { owned: ['eq-nucleo-t3'], equipped: { rastro: 'eq-nucleo-t3' }, fragments: 0 } }).combatant);
-    expect(c.atk + c.def + c.spd).toBeCloseTo(0, 12);
+    expect(c.spd).toBeCloseTo(0, 12);
+    expect(c.def).toBeCloseTo(0, 12);
     expect(duelSide(base).combatant).toEqual(b0);
   });
   it('equipamento cheio + talento cheio: a SOMA dos tres canais corta nos 5%', () => {

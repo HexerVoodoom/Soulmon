@@ -83,6 +83,12 @@ export function sanitizeEquipment(raw: unknown): EquipmentState {
   for (const slot of EQUIP_SLOTS) {
     const id = own(eq, slot) ? eq[slot] : undefined;
     if (typeof id === 'string' && owned.includes(id) && EQUIP_BY_ID.get(id)!.slot === slot) equipped[slot] = id;
+    // Soulsmith (07/10/2026): são partes da alma — peça possuída está SEMPRE equipada. Slot com posse e sem equipada (save antigo
+    // que tinha "Tirado") volta ao tier mais alto possuído. Idempotente; nada é perdido nem somado.
+    if (!equipped[slot]) {
+      const best = owned.filter((o) => EQUIP_BY_ID.get(o)!.slot === slot).sort((a, b) => EQUIP_BY_ID.get(b)!.tier - EQUIP_BY_ID.get(a)!.tier)[0];
+      if (best) equipped[slot] = best;
+    }
   }
   const f = typeof r.fragments === 'number' && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
@@ -258,22 +264,12 @@ export function applyEquipBuy<T extends EquipBuyState>(prev: T, id: string, pay:
   return { ok: true, state: state as T, price };
 }
 
-/** Equipa um item POSSUÍDO no slot dele (troca o anterior, que continua possuído). Não possuído = o mesmo estado. */
+/** Põe em foco, no slot dele, um item POSSUÍDO (troca o anterior, que continua possuído; o slot nunca fica vazio). Não possuído = o mesmo estado. */
 export function applyEquip<T extends { equipment?: EquipmentState }>(prev: T, id: string): T {
   const eq = sanitizeEquipment(prev.equipment);
   const item = EQUIP_BY_ID.get(id);
   if (!item || !eq.owned.includes(id) || eq.equipped[item.slot] === id) return prev;
   return { ...prev, equipment: { ...eq, equipped: { ...eq.equipped, [item.slot]: id } } };
-}
-
-/** Tira o item do slot (continua possuído e vai para a mochila; mochila cheia = o mesmo estado). */
-export function applyUnequip<T extends { equipment?: EquipmentState; talentPicks?: string[] }>(prev: T, slot: EquipSlot): T {
-  const eq = sanitizeEquipment(prev.equipment);
-  if (!eq.equipped[slot]) return prev;
-  if (!backpackHasRoom(eq, prev.talentPicks)) return prev;
-  const equipped = { ...eq.equipped };
-  delete equipped[slot];
-  return { ...prev, equipment: { ...eq, equipped } };
 }
 
 /** Soma fragmentos GANHOS (já com o Comércio, `fragmentGain`), até `FRAGMENTS_MAX`. */

@@ -85,17 +85,21 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,2%/);
   });
 
-  it('peça possuída e equipada: selo Equipado + botão Tirar visível; desequipada: botão Equipar; não possuída: sem botão e diz de onde vem', () => {
+  it('peça possuída aparece como parte da alma; não existe Tirar; não possuída: sem botão e diz de onde vem', () => {
     abrir(nivel1(), 'en-US');
-    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')!.textContent).toMatch(/Equipped/);
-    expect(q('[data-equip-unequip="nucleo"]').textContent).toBe('Unequip');
+    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')!.textContent).toMatch(/Part of your soul/);
+    expect(document.querySelector('[data-equip-unequip]')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Unequip|Tirar/);
+    expect(document.querySelector('[data-equip-btn]')).toBeNull();
     expect(peca('eq-nucleo-t2').querySelector('button')).toBeNull();
     expect(peca('eq-nucleo-t2').textContent).toMatch(/Comes from/);
-    click(q('[data-equip-unequip="nucleo"]'));
-    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')).toBeNull();
-    click(q('[data-equip-btn="eq-nucleo-t1"]'));
-    expect(estado().eq.equipped.nucleo).toBe('eq-nucleo-t1');
     expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);
+  });
+
+  it('save antigo com peça possuída e "tirada" volta equipada na carga', () => {
+    abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: {}, fragments: 0 } });
+    expect(estado().eq.equipped.nucleo).toBe('eq-nucleo-t1');
+    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')).not.toBeNull();
   });
 
   it('celebração: não aparece ao abrir nem ao cancelar; aparece após o upgrade confirmado, com movimento', () => {
@@ -174,18 +178,17 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t3').textContent).not.toMatch(/Upgrade/);
   });
 
-  it('equipar troca a peça e tirar esvazia o slot (a peça continua possuída)', () => {
+  it('equipar troca a peça do slot e o slot nunca esvazia (a peça continua possuída)', () => {
     abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1', 'eq-nucleo-t2'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 } });
     click(Array.from(peca('eq-nucleo-t2').querySelectorAll('button')).find((b) => /Equipar/.test(b.getAttribute('aria-label') ?? ''))!);
     expect(estado().eq.equipped.nucleo).toBe('eq-nucleo-t2');
-    click(q('[data-equip-unequip="nucleo"]'));
-    expect(estado().eq.equipped).toEqual({});
+    expect(document.querySelector('[data-equip-unequip]')).toBeNull();
     expect(estado().eq.owned).toEqual(['eq-nucleo-t1', 'eq-nucleo-t2']);
   });
 
   it('save hostil (slot forjado, nível absurdo) é descartado na carga', () => {
     abrir({ equipment: { owned: ['eq-nucleo-t1'], equipped: { rastro: 'eq-nucleo-t1' }, fragments: 1e12 }, forge: { levels: { 'eq-nucleo-t1': 99, 'eq-xxx': 3 }, picks: { 'eq-nucleo-t1': ['b', 'b', 'b', 'b', 'b', 'b'] } } });
-    expect(estado().eq.equipped).toEqual({});
+    expect(estado().eq.equipped).toEqual({ nucleo: 'eq-nucleo-t1' });
     expect(estado().eq.fragments).toBe(999);
     expect(estado().forge.levels).toEqual({ 'eq-nucleo-t1': 5 });
     expect(estado().forge.picks['eq-nucleo-t1']).toHaveLength(4);

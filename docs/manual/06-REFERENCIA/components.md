@@ -1382,7 +1382,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/TalentTree.render.test.tsx`.
 
 ### `src/components/ForgeCard.tsx`
-O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus, custo e saldo em chips, botão Upgrade; recusa em texto), modal de escolha A/B e Refazer escolha (Bits ganhos/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`.
+O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus, custo e saldo em chips, botão Upgrade; recusa em texto), modal de escolha A/B e Refazer escolha (Bits ganhos/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`. **Não existe "Tirar"/"Unequip"** (pedido do dono, 07/10/2026): as peças são partes da alma, aprimoradas; o selo diz "Parte da sua alma"/"Part of your soul" e `applyUnequip` foi apagada. O `Equip` só sobra para trocar entre tiers do mesmo slot.
 **Régua:** `src/components/ForgeCard.render.test.tsx`.
 
 
