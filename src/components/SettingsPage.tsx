@@ -81,6 +81,8 @@ interface SettingsPageProps {
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
+  /** DEMO LOCAL (`utils/demoMode.ts`): troca "Sua conta"/"Seus dados" pelo cartão da demo, com a saída. */
+  demo?: { onLeave: () => void };
   onOpenOracle?: () => void;
   onResetOnboarding?: () => void;
 }
@@ -207,6 +209,7 @@ export function SettingsPage({
   gm,
   profile,
   onOpenCredits,
+  demo,
   onOpenOracle,
   onResetOnboarding,
 }: SettingsPageProps) {
@@ -285,6 +288,21 @@ export function SettingsPage({
         </GroupCard>
       )}
 
+      {/* ── DEMO LOCAL (07/10/2026, `utils/demoMode.ts`) — no lugar de "Sua conta" e
+             "Seus dados": a demo não tem conta, nuvem nem dados no servidor. A única
+             saída é SAIR da demo (apaga o save local e volta ao portão). ─────── */}
+      {demo && (
+        <Group title="Demo">
+          <p data-demo-settings style={{ ...sm2Text, margin: 0 }}>
+            {isPt
+              ? 'Você está na demo: Vínculo nível 5, salva só neste aparelho. Sem XP, sem compras e sem PvP.'
+              : 'You are in the demo: Bond level 5, saved on this device only. No XP, no purchases and no PvP.'}
+          </p>
+          <ActionRow label={isPt ? 'Sair da demo' : 'Leave the demo'} onClick={demo.onLeave} />
+        </Group>
+      )}
+      {!demo && (
+      <>
       {/* ── SUA CONTA — a única ação dominante da página mora aqui ────────── */}
       <Group title={isPt ? 'Sua conta' : 'Your account'}>
         {/* G4 (01/10/2026): o campo de e-mail + "Entrar" saiu — o login é o
@@ -386,6 +404,8 @@ export function SettingsPage({
           />
         )}
       </Group>
+      </>
+      )}
 
       {/* ── PAINEL DE GM — só existe para `useAdmin()` (o próprio GmPanel
              confere; ver utils/adminFlag.ts). */}

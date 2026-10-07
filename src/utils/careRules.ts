@@ -1,4 +1,5 @@
 import type { ActivityCategory } from '../types/attributes';
+import { isDemoMode } from './demoMode';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { getMaxEnergyForStage, MAX_STAGE_REQUIREMENT } from '../types/progression';
@@ -36,6 +37,8 @@ export interface CareState {
    *  parâmetro novo, para o app de desktop herdar o efeito sem uma segunda
    *  implementação — é o mesmo motivo pelo qual este arquivo existe. */
   petPassive?: string;
+  /** Demo local (`utils/demoMode.ts`): comer não rende XP de Vínculo. */
+  demoLocal?: boolean;
 }
 
 /**
@@ -123,7 +126,8 @@ export function feedFood<T extends CareState>(
       powerPoints: state.powerPoints + attrs.power,
       harmonyPoints: state.harmonyPoints + attrs.harmony,
       benevolencePoints: state.benevolencePoints + attrs.benevolence,
-      totalXP: state.totalXP + (attrs.power + attrs.harmony + attrs.benevolence) * 10,
+      // DEMO LOCAL: o nível fica fixo — comer rende atributo, não XP de Vínculo.
+      totalXP: isDemoMode(state) ? state.totalXP : state.totalXP + (attrs.power + attrs.harmony + attrs.benevolence) * 10,
       attributesSinceLastEvolution: {
         power: (state.attributesSinceLastEvolution?.power ?? 0) + attrs.power,
         harmony: (state.attributesSinceLastEvolution?.harmony ?? 0) + attrs.harmony,

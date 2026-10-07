@@ -34,6 +34,8 @@ import { cityLabel, type City } from '../utils/soulProfile/cities';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
+import type { StarterId } from '../utils/sprites';
+import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
@@ -196,7 +198,7 @@ export type OnboardingCompleteData = {
     }
   | {
       mode: 'demo';
-      demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
+      demoCharacterId: StarterId;
       /** WP1.12 — tonalidade escolhida. Cosmética; 0 = arte original.
        *  ⚰️ B10 (01/10/2026): a escolha de tonalidade SAIU do onboarding; o
        *  campo fica no tipo só para save/consumidor antigo — ninguém o envia. */
@@ -228,6 +230,12 @@ interface SoulmonOnboardingProps {
   /** A1 (02/10/2026): avisa o App quando a pessoa escolhe o idioma na entrada,
    *  para o resto do app abrir no mesmo idioma sem recarregar. */
   onLanguageChange?: (lang: Language) => void;
+  /**
+   * DEMO LOCAL (07/10/2026, `utils/demoMode.ts`): o botão DEMO do portão abre a
+   * escolha dos 5 iniciais e, ao escolher, chama isto — o `App` monta o save da
+   * demo (Vínculo 5, só no aparelho). Ausente = o portão não mostra o botão.
+   */
+  onStartDemo?: (characterId: StarterId) => void;
 }
 
 /**
@@ -280,7 +288,7 @@ export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
@@ -411,6 +419,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // a telemetria ganhou folga para eles (`NEGATIVE_STEP_BASE`).
   const STRENGTH_STEP = -11;
   const STARTER_STEP = -12;
+  // DEMO LOCAL: a escolha dos 5 iniciais aberta pelo botão DEMO do portão (código de telemetria 37, acima de REGISTER).
+  const DEMO_LOCAL_PICK = -13;
   /** A ordem do onboarding ANTES da escolha grátis/próprio — é o trecho que o
    *  rascunho do portão (`gateDraft.ts`) sabe retomar. */
   const QUIZ_STEPS = ORACLE_QUESTIONS.map((_, i) => QUIZ_START + i);
@@ -479,7 +489,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   useEffect(() => () => {
     if (redeGoogleRef.current !== null) clearTimeout(redeGoogleRef.current);
   }, []);
-  const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase' | null>(null);
+  const [demoCharacterId, setDemoCharacterId] = useState<StarterId | null>(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
   /** A caixa de consentimento vive FORA do texto legal: é elemento de UI
@@ -1015,6 +1025,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // 13.19: da escolha do personagem volta-se ao reveal demo (a leitura
     // continua lá).
     if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
+    // A escolha da DEMO volta ao portão (a demo não tem estado a desfazer).
+    if (step === DEMO_LOCAL_PICK) { setStep(IDENTITY_STEP); return; }
     // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
     // personagem — o passo anterior na numeração é o REVEAL, que só existe
     // no caminho do oráculo e renderizaria vazio.
@@ -1433,11 +1445,44 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   /** Onde a seta de voltar existe (B6). Espelha os ramos de `back()`. */
   const temVolta = !oracleDebugOpen && (
-    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK].includes(step)
+    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK, DEMO_LOCAL_PICK].includes(step)
     || (step >= 1 && step < FAVORITE_STEP)
     || (step >= QUIZ_START && step < QUIZ_END)
     || (step >= DEEP_START && step < DEEP_END)
     || (step === REGISTER && !!demoChar)
+  );
+
+  /** A grade dos 5 iniciais (nome, TIPO e bio) — a mesma nas duas escolhas (cadastro grátis e DEMO). */
+  const starterGrid = (onPick: (id: StarterId) => void) => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+      {PREMADE_CHARACTERS.map(c => {
+        const bio = isPt ? c.bioPt : c.bioEn;
+        const tipo = isPt ? c.typePt : c.typeEn;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            data-demo-char={c.id}
+            aria-label={`${c.name} — ${tipo}. ${bio}`}
+            onClick={() => onPick(c.id)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              padding: 8, cursor: 'pointer', textAlign: 'center',
+              borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)',
+              backgroundColor: 'var(--sm2-surface)', color: 'var(--sm2-ink)',
+            }}
+          >
+            <Viewport width={64} height={64} scale={2} breathing={false} style={{ borderRadius: 'var(--sm2-radius-md)' }}>
+              <img src={getDemoSprite(c.id, 'rookie')} alt="" width={128} height={128}
+                style={{ width: 128, height: 128, display: 'block', imageRendering: 'pixelated' }} />
+            </Viewport>
+            <span style={{ ...sm2Text, fontWeight: 500, lineHeight: 1.2, marginTop: 4 }}>{c.name}</span>
+            <span style={{ ...sm2Label, lineHeight: 1.3 }}>{tipo}</span>
+            <span style={{ ...sm2Hint, lineHeight: 1.35 }}>{bio}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 
   if (idiomaPendente) {
@@ -1606,6 +1651,28 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {authOcupado ? <Spinner size={24} /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
             </button>
           </StepShell>
+          )}
+          {/* DEMO LOCAL (07/10/2026): a porta SEM conta. Peso de `outline` — a segunda
+              escolha do portão, sem dourado e sem empurrão. Abre a escolha dos 5
+              iniciais; o resto da regra (Vínculo 5, só no aparelho, sem XP/compra/PvP)
+              é do `utils/demoMode.ts`, e a tela a diz em uma linha antes do toque. */}
+          {onStartDemo && (
+            <div style={{ marginTop: mostrarAuth ? 12 : 24 }}>
+              <button
+                type="button"
+                data-demo-button
+                style={{ ...sm2Button('outline'), width: '100%' }}
+                onClick={() => setStep(DEMO_LOCAL_PICK)}
+                aria-label={isPt ? 'DEMO — experimentar sem conta' : 'DEMO — try it without an account'}
+              >
+                DEMO
+              </button>
+              <p style={{ ...sm2Hint, textAlign: 'center', marginTop: 8 }}>
+                {isPt
+                  ? 'Experimente sem conta. Fica salvo só neste aparelho.'
+                  : 'Try it without an account. Saved on this device only.'}
+              </p>
+            </div>
           )}
           </>
         )}
@@ -1806,33 +1873,24 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <h2 className="sm2-title" style={{ ...tituloOnboarding, marginBottom: 12 }}>
               {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-              {PREMADE_CHARACTERS.map(c => {
-                const bio = isPt ? c.bioPt : c.bioEn;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    data-demo-char={c.id}
-                    aria-label={`${c.name} — ${bio}`}
-                    onClick={() => { track('demo_pick'); setDemoCharacterId(c.id); setStep(REGISTER); }}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                      padding: 8, cursor: 'pointer', textAlign: 'center',
-                      borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)',
-                      backgroundColor: 'var(--sm2-surface)', color: 'var(--sm2-ink)',
-                    }}
-                  >
-                    <Viewport width={64} height={64} scale={2} breathing={false} style={{ borderRadius: 'var(--sm2-radius-md)' }}>
-                      <img src={getDemoSprite(c.id, 'rookie')} alt="" width={128} height={128}
-                        style={{ width: 128, height: 128, display: 'block', imageRendering: 'pixelated' }} />
-                    </Viewport>
-                    <span style={{ ...sm2Text, fontWeight: 500, lineHeight: 1.2, marginTop: 4 }}>{c.name}</span>
-                    <span style={{ ...sm2Hint, lineHeight: 1.35 }}>{bio}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {starterGrid(id => { track('demo_pick'); setDemoCharacterId(id); setStep(REGISTER); })}
+          </div>
+        )}
+
+        {/* DEMO_LOCAL_PICK — os MESMOS 5 iniciais, aberta pelo botão DEMO do portão.
+            Escolher um já abre o jogo (`onStartDemo`): sem cadastro, sem nome, sem
+            perguntas — é uma demo. */}
+        {step === DEMO_LOCAL_PICK && onStartDemo && (
+          <div style={{ paddingTop: 20 }} data-demo-pick>
+            <h2 className="sm2-title" style={{ ...tituloOnboarding, marginBottom: 4 }}>
+              {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
+            </h2>
+            <p style={{ ...sm2Hint, marginBottom: 12 }}>
+              {isPt
+                ? `Demo: Vínculo nível ${DEMO_BOND_LEVEL}, salva só neste aparelho. Sem XP, sem compras e sem PvP.`
+                : `Demo: Bond level ${DEMO_BOND_LEVEL}, saved on this device only. No XP, no purchases and no PvP.`}
+            </p>
+            {starterGrid(id => onStartDemo(id))}
           </div>
         )}
 

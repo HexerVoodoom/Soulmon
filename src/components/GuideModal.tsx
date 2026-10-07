@@ -26,6 +26,7 @@ import { guildText } from '../utils/guildCopy';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS } from '../utils/forge';
 import { GATES } from '../utils/gates';
+import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
 
@@ -301,6 +302,19 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       id: 'guild',
       title: guildText(language, 'guild.guide.titulo'),
       body: <p style={para}>{guildText(language, 'guild.guide.corpo')}</p>,
+    },
+    {
+      // A DEMO (`utils/demoMode.ts`): o número vem da CONSTANTE, e a regra é dita inteira e sem culpa.
+      id: 'demo',
+      title: L('A demo', 'The demo'),
+      body: (
+        <p style={para}>
+          {L(
+            `O botão DEMO abre o jogo sem conta, com um dos cinco Soulmon iniciais no Vínculo nível ${DEMO_BOND_LEVEL}. A demo salva só neste aparelho; não ganha XP (o Vínculo fica fixo), não faz compras e não entra no PvP (Torneio, Duelo, Biblioteca e Guilda ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
+            `The DEMO button opens the game without an account, with one of the five starter Soulmon at Bond level ${DEMO_BOND_LEVEL}. The demo saves on this device only; it earns no XP (Bond stays fixed), makes no purchases and does not enter PvP (Tournament, Duel, Library and Guild stay closed). To get an account, leave the demo in Settings.`,
+          )}
+        </p>
+      ),
     },
     {
       id: 'more',

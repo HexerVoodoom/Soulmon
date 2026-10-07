@@ -6,6 +6,8 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
 import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
 import { pushProfile } from '../utils/community';
+import { DEMO_CHARACTER_IDS, type DemoCharacterId } from '../utils/sprites';
+import { isDemoMode } from '../utils/demoMode';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
@@ -600,7 +602,11 @@ export interface GameState {
    *  jamais renasceu (nunca inferido de estágio nem de nada). */
   rebirth?: import('../utils/rebirth').RebirthRecord | null;
   /** Modo demo: qual personagem pré-pronto foi escolhido (utils/monetization.ts). */
-  demoCharacterId?: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
+  demoCharacterId?: DemoCharacterId;
+  /** DEMO LOCAL (07/10/2026, `utils/demoMode.ts` — dono único do predicado `isDemoMode`):
+   *  save que nunca sai do aparelho, sem XP, sem compra, sem PvP. NÃO é `accountTier:'demo'`
+   *  (esse é o plano grátis, com conta). Só `demoStart.buildDemoPatch` grava `true`. */
+  demoLocal?: boolean;
   /** Créditos (moeda premium, dinheiro real) — reroll de personagem, cura
    *  instantânea de coração, itens/cenários da loja. */
   credits?: number;
@@ -1299,7 +1305,10 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // pode ter saído dele. O que importa no load é a PRESENÇA — é ela
         // que trava a segunda vez.
         rebirth: (loadedState.rebirth as GameState['rebirth']) ?? undefined,
-        demoCharacterId: (['kaelen', 'orrin', 'thalindra', 'igni', 'nautilu', 'astrase'] as const).find(id => id === loadedState.demoCharacterId),
+        // Os 5 iniciais + os 6 ANTIGOS (save antigo continua renderizando).
+        demoCharacterId: DEMO_CHARACTER_IDS.find(id => id === loadedState.demoCharacterId),
+        // Só `true` literal sobrevive; qualquer outra coisa é "não é demo".
+        demoLocal: loadedState.demoLocal === true ? true : undefined,
         credits: num(loadedState.credits, 0),
         // Sistema de missões: contadores LIFETIME. `Math.max(prev ?? 0, x)` e a
         // aritmética de incremento em `App.tsx` transformam um valor não-numérico
@@ -1607,6 +1616,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       isFirstRender.current = false;
       return;
     }
+
+    // DEMO LOCAL (`utils/demoMode.ts`): salva SÓ no aparelho. Sem POST, sem
+    // `saveId` gerado e sem perfil publicado — a demo não tem conta nem nuvem.
+    if (isDemoMode(gameState)) return;
 
     // Generate save ID on first use
     let saveId = readLocal(STORAGE_KEYS.SAVE_ID);

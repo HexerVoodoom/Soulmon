@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { DUNGEON_LINE_SPRITES, DUNGEON_LINE_NAMES, getDungeonEnemySprite } from './sprites';
 import { PREMADE_CHARACTERS } from './monetization';
+import { STARTER_IDS, STARTER_NAMES } from './sprites';
 import { LIBRARY_NPCS } from './libraryNpcs';
 
 /**
@@ -137,9 +138,10 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
     // Se alguém reintroduzir a string à mão em vez de ler `DUNGEON_LINE_NAMES`,
     // o nome pode divergir sem nada ficar vermelho — foi assim que os três
     // acabaram escritos em três arquivos. Este caso amarra os três.
+    // 07/10/2026: os pré-prontos são os 5 INICIAIS, e o dono do nome deles é
+    // `STARTER_NAMES` (os 6 antigos seguem em `DUNGEON_LINE_NAMES`, como linhas da masmorra).
     expect(PREMADE_CHARACTERS.map(c => c.name))
-      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra,
-        DUNGEON_LINE_NAMES.igni, DUNGEON_LINE_NAMES.nautilu, DUNGEON_LINE_NAMES.astrase]);
+      .toEqual(STARTER_IDS.map(id => STARTER_NAMES[id]));
     expect(LIBRARY_NPCS.map(n => n.petName))
       .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra]);
     for (const c of PREMADE_CHARACTERS) expect(proibido(c.name)).toBe(false);

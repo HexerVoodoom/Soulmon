@@ -16,6 +16,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
+import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { UnlockAccountModal } from './UnlockAccountModal';
 import {
   pendingTelemetry, resetTelemetryForTest, TELEMETRY_FUNNEL, onboardingStepCode,
@@ -138,7 +139,7 @@ describe('fiação da telemetria — onboarding', () => {
     expect(only('demo_pick')).toHaveLength(0);
     expect(only('unlock_view').map(r => r.p?.reason)).toEqual([TELEMETRY_UNLOCK_REASON.revealDemo]);
 
-    fireEvent.click(screen.getByText('Pyraka').closest('button')!);
+    fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     expect(only('demo_pick')).toHaveLength(1);
     vi.useRealTimers();
   });

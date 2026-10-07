@@ -58,6 +58,9 @@ import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from '.
 import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { isDemoMode, demoRefusalText } from './utils/demoMode';
+import { buildDemoPatch, leaveDemo } from './utils/demoStart';
+import type { StarterId } from './utils/sprites';
 import {
   readFlag, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
@@ -1335,7 +1338,19 @@ export default function App() {
   // por toque do usuário; `upgradeRitual` é o ritual do oráculo que roda
   // DEPOIS da compra, para quem entrou pelo caminho grátis e agora tem direito
   // à criatura própria.
-  const [unlockReason, setUnlockReason] = useState<UnlockReason | null>(null);
+  const [unlockReason, setUnlockReasonRaw] = useState<UnlockReason | null>(null);
+  /* DEMO LOCAL (`utils/demoMode.ts`, dono único do predicado): a demo não compra
+     nada — nem desbloqueio de conta, nem Créditos. `demo` é derivado do save, e
+     `refuseDemo` é a recusa CURTA e sem culpa, no idioma atual. Toda porta de
+     compra do App passa por aqui; a régua `demoMode.contract.test.ts` confere. */
+  const demo = isDemoMode(gameState);
+  const refuseDemo = useCallback(() => {
+    toast(demoRefusalText(language === 'pt-BR'));
+  }, [language]);
+  const setUnlockReason = useCallback((reason: UnlockReason | null) => {
+    if (reason && demo) { refuseDemo(); return; }
+    setUnlockReasonRaw(reason);
+  }, [demo, refuseDemo]);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
   // J1 (rodada 7): o chunk das áreas (e a folha de jogar) sobe em tempo ocioso — o toque não espera a rede.
@@ -1349,6 +1364,7 @@ export default function App() {
   const jaEngajou = (gameState.completedTasks?.length ?? 0) >= 5;
   useEffect(() => {
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
+    if (demo) return;                                  // demo: sem conta a proteger (utils/demoMode.ts)
     if (readLocal(STORAGE_KEYS.USER_EMAIL)) return;   // já protegido
     // Um pedido por semana, no máximo: insistir todo dia vira ruído.
     const last = readNumber(STORAGE_KEYS.PROTECT_PROMPT_AT, 0);
@@ -1363,7 +1379,7 @@ export default function App() {
       setProtectPrompt(jaEvoluiu ? 'evolution' : 'streak');
     }, 15_000);
     return () => window.clearTimeout(t);
-  }, [hasCompletedOnboarding, hasCompletedTutorial, jaEvoluiu, jaEngajou]);
+  }, [hasCompletedOnboarding, hasCompletedTutorial, jaEvoluiu, jaEngajou, demo]);
 
   const dismissProtectPrompt = useCallback(() => {
     // So adia o proximo pedido; falhar faz o pedido voltar antes. Silencioso.
@@ -2370,7 +2386,10 @@ export default function App() {
 
   /** Abre o modal de Créditos (linha do menu da nav). Identidade estável em
    *  vez de lambda inline na prop — mesma disciplina do CompanionHUD. */
-  const openCredits = useCallback(() => setCreditsOpen(true), []);
+  const openCredits = useCallback(() => {
+    if (demo) { refuseDemo(); return; }
+    setCreditsOpen(true);
+  }, [demo, refuseDemo]);
 
   const handleEditActivity = useCallback((activityId: string) => {
     setEditingActivity(activityId);
@@ -3624,6 +3643,7 @@ export default function App() {
    * existe — ver utils/currencies.ts.
    */
   const handleExchangeCredits = useCallback(async (creditos: number): Promise<boolean> => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
     const pack = BITS_EXCHANGE.find(p => p.credits === creditos);
     if (!pack) return false;
     // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. Conferido ANTES de gastar o Crédito (dinheiro real):
@@ -3648,11 +3668,13 @@ export default function App() {
     });
     toast(language === 'pt-BR' ? `+${pack.bits} Bits!` : `+${pack.bits} Bits!`);
     return true;
-  }, [language, setGameState, gameState]);
+  }, [language, setGameState, gameState, refuseDemo]);
 
   const handleShopBuy = useCallback((itemId: string): boolean => {
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return false;
+    // DEMO LOCAL: a loja é só de vitrine — comprar com Bits fica desligado, sem culpa.
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
     if (!isShopItemUnlocked(item, missionProgress)) return false;
     // A recusa lida AQUI decide o retorno do botão e o som — efeito colateral
     // não entra em updater (footgun 6). Ela NÃO é mais a única: `applyShopBuy`
@@ -3672,7 +3694,7 @@ export default function App() {
     // `gameState` inteiro: a recusa externa lê saldo em DUAS moedas e as duas
     // listas de posse, e `gameState.emblems` estava faltando na lista antiga —
     // a compra em Emblemas decidia sobre um saldo velho.
-  }, [gameState, missionProgress]);
+  }, [gameState, missionProgress, refuseDemo]);
 
   /** Emblemas ganhos: UM caminho só, o do Torneio E o do resgate da Feira (a mesma moeda). */
   const earnEmblems = useCallback((amount: number) => {
@@ -3720,18 +3742,21 @@ export default function App() {
   }, []);
 
   const handleWatchAd = useCallback(async (): Promise<boolean> => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
     const ent = await claimAdReward();
     if (!ent) return false;
     syncEntitlement(ent);
     return true;
-  }, [syncEntitlement]);
+  }, [syncEntitlement, gameState, refuseDemo]);
 
   const handleBuyCreditPack = useCallback(async (pack: CreditPack): Promise<boolean> => {
+    // DEMO LOCAL: nenhuma compra de dinheiro real — a recusa vem ANTES de tocar o billing.
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
     const result = await purchase(pack.id);
     if (!result.ok) return false;
     syncEntitlement(result.ent);
     return true;
-  }, [syncEntitlement]);
+  }, [syncEntitlement, gameState, refuseDemo]);
 
   /* ⚰️ D7 + D15 (06/09/2026) — a CURA INSTANTÂNEA por Créditos foi REMOVIDA,
      junto com `utils/instantHeal.ts` e o coraçãozinho na loja de Bits.
@@ -5066,6 +5091,40 @@ export default function App() {
     if (mudo) trackSoundOff();
   }, [soundMuted]);
 
+  /**
+   * DEMO LOCAL (07/10/2026) — o botão DEMO do portão. Monta o save da demo
+   * (`buildDemoPatch`: personagem escolhido entre os 5 iniciais, Vínculo 5 por
+   * `totalXP`, 3 atividades de cuidado) e abre o jogo SEM login. O updater é PURO
+   * (footgun 6): os carimbos de "onboarding concluído" saem fora dele. Sem e-mail,
+   * sem `saveId` de conta, sem nuvem — `isDemoMode` cobre o resto.
+   */
+  const handleStartDemo = useCallback((characterId: StarterId) => {
+    const now = new Date();
+    const isPt = language === 'pt-BR';
+    const patch = buildDemoPatch(characterId, { isPt, dayKey: playerDayKey(now, gameState.playerDayTz), now });
+    if (!patch) return;
+    writeLocal(STORAGE_KEYS.EGG_TYPE, 'ignar');
+    writeLocal(STORAGE_KEYS.USER_NAME, isPt ? 'Visitante' : 'Guest');
+    writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
+    writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
+    setUserName(isPt ? 'Visitante' : 'Guest');
+    setGameState(prev => ({
+      ...prev,
+      ...patch,
+      eggType: 'ignar',
+      maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
+      petPassive: rollPetPassive(),
+      firstDay: emptyFirstDay(playerDayKey(now, prev.playerDayTz)),
+      // O catálogo de metas não abre em cima da demo: ela já nasce com atividades.
+      ...(markCatalogOnboardingSeen({}, now) as Record<string, unknown>),
+    }));
+    setHasCompletedTutorial(true);
+    setHasCompletedOnboarding(true);
+  }, [language, gameState.playerDayTz, setGameState]);
+
+  /** Sai da demo: apaga o save local e volta ao portão (`utils/demoStart.ts`). */
+  const handleLeaveDemo = useCallback(() => { leaveDemo(); }, []);
+
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
     /* O ponto de partida (B4) é resolvido ANTES de qualquer `await`, e o
        tutorial é dado como feito NO MESMO lote em que o onboarding é dado
@@ -5485,7 +5544,7 @@ export default function App() {
     return (
       <>
         {selo}
-        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} /></Suspense>
+        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} /></Suspense>
       </>
     );
   }
@@ -5618,7 +5677,7 @@ export default function App() {
               um personagem de demonstração (as 3 linhas iguais) é exatamente
               quem entende o que a própria árvore significa. Só aqui e no
               limite de criação — em nenhum outro lugar do jogo. */}
-          {labTab === 'evolution' && gameState.demoCharacterId && (
+          {labTab === 'evolution' && gameState.demoCharacterId && !demo && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge
                 language={language}
@@ -5714,7 +5773,7 @@ export default function App() {
               antes de olhar o estágio. E só quando o convite do demo (o
               primeiro bloco da página) não está montado: dois convites iguais
               na mesma tela é cobrança, não convite. */}
-          {labTab === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (
+          {labTab === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && !demo && (
             <div style={{ marginTop: 16 }} data-rebirth-block>
               <UnlockNudge
                 language={language}
@@ -6146,6 +6205,7 @@ export default function App() {
                 area={area}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
+                demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
@@ -6220,6 +6280,7 @@ export default function App() {
                      (dois toques no mesmo lote do React leriam o mesmo saldo e
                      comprariam duas vezes com o dinheiro de uma). */
                   onSpendBits: (pts) => {
+                    if (demo) { refuseDemo(); return false; }
                     if ((gameState.gamePoints ?? 0) < pts) return false;
                     setGameState(prev => spendBits(prev, pts));
                     return true;
@@ -6857,7 +6918,8 @@ export default function App() {
                 onChangeAvatar: (id) => setGameState(prev => prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }),
                 onChangeFrame: handleEquipFrame,
               }}
-              onOpenCredits={openCredits}
+              onOpenCredits={demo ? undefined : openCredits}
+              demo={demo ? { onLeave: handleLeaveDemo } : undefined}
               onOpenOracle={() => goTo('page:oracle')}
               onResetOnboarding={handleResetOnboarding}
               useAI={useAI}
@@ -7120,7 +7182,7 @@ export default function App() {
           /* O convite de compra so faz sentido para quem PODE comprar, e so
              quando o teto que morde e o do modo gratis. Um pagante no teto do
              estagio dele nao esta encontrando uma fronteira de monetizacao. */
-          capIsDemoBoundary={gameState.accountTier === 'demo'}
+          capIsDemoBoundary={gameState.accountTier === 'demo' && !demo}
           onUnlock={() => { setCreateModalOpen(false); setUnlockReason('task-limit'); }}
           onSaveTask={(data) => {
             // Esforço, "quando" e idade vêm do modal e são gravados — sem eles
@@ -7340,7 +7402,7 @@ export default function App() {
               soulGoal: gameState.soulGoal ?? null,
             };
           })()}
-          showOffer={mostraOfertaNoRelatorio}
+          showOffer={mostraOfertaNoRelatorio && !demo}
           /* A semana já foi carimbada ao MOSTRAR (13.11) — aqui só abre. */
           onOpenOffer={() => setUnlockReason('report')}
           /* R4 / D-H7 — a criatura na peça do retorno. */

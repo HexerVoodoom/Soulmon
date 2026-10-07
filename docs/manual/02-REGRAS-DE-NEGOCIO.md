@@ -1885,11 +1885,11 @@ funil, reordenar vira P0) e §5.4 (reroll com semente derivada, contra a Lei
   É uma criatura nova, não uma repintura.
 - **Perfil de antes da troca de motor** (sem `soulProfile`) roda o caminho
   legado inteiro — é o que mantém o reroll de quem jogou antes.
-- **Conta grátis** não gera criatura: escolhe um dos **seis** personagens
-  prontos (`PREMADE_CHARACTERS`, `src/utils/monetization.ts` — `kaelen`/`orrin`/
-  `thalindra` e, desde 15/09/2026 (D1 da SQUAD-ARTE), `igni`/`nautilu`/`astrase`,
-  as três linhas do oráculo com seed fixo; o nome vem sempre de
-  `DUNGEON_LINE_NAMES`) em `DEMO_PICK` e recebe `demoCharacterId`. Desde
+- **Conta grátis** não gera criatura: escolhe um dos **cinco** personagens
+  iniciais (`PREMADE_CHARACTERS`, `src/utils/monetization.ts` — desde 07/10/2026
+  `industrial`/`nascente`/`alento`/`vida`/`meteoro`, ver §62; os seis de antes
+  (`kaelen`… `astrase`) deixaram de ser oferecidos mas seguem resolvendo sprite
+  em save antigo; o nome vem sempre de `STARTER_NAMES`) em `DEMO_PICK` e recebe `demoCharacterId`. Desde
   20/09/2026 (REGISTRO 13.19) ela **responde as 6 perguntas** e, antes de
   escolher, vê o `REVEAL_DEMO` (`SoulmonOnboarding.tsx`): leitura por
   `generateOracle` só das 6 respostas, criatura de uma linha pronta em
@@ -5923,3 +5923,39 @@ de conserto silencioso.
 **Não faz.** Não conta sequência, não lembra, não cobra, não analisa nem diagnostica o texto, não pede permissão de notificação.
 
 **Régua.** `functions/api/save.caderno.test.js`, `utils/cadernoSensivel.contract.test.ts`, `utils/focoTimer.test.ts`, `utils/cadernoLocal.test.ts`, `components/play/OficinaCaderno.render.test.tsx`, `utils/areaLotGeometry.contract.test.ts`, `components/nav/areaLotNpc.contract.test.tsx`.
+
+<a id="demo-local"></a>
+## 62. 🧪 A demo local e os 5 personagens iniciais (07/10/2026)
+
+**O que é.** O botão **DEMO** da home (o portão de identidade, `IDENTITY_STEP`) abre o jogo **sem login**, com um dos **5 personagens iniciais** escolhido numa tela simples (nome, tipo e arte) e com **Vínculo nível 5** (`DEMO_BOND_LEVEL`; o `totalXP` gravado é o mínimo do nível 5, `xpForLevel(5)` — o nível **nunca** é gravado, é sempre `bondLevelFor(totalXP)`). Pedido do dono, em texto: *"ela salva localmente em cache apenas, não ganha XP, não faz compras e não entra em PvP"*. Dono do **predicado**: `isDemoMode(state)` em `src/utils/demoMode.ts`; dono do save que a demo monta: `src/utils/demoStart.ts` (`buildDemoPatch`).
+
+⚠️ **Não é o plano grátis.** `accountTier: 'demo'` é a conta grátis (login, nuvem, XP, compra à mão). A demo local grava `accountTier: 'demo'` (nunca `'paid'`) **e** `demoLocal: true`; só o segundo campo é o predicado.
+
+**Os 5 iniciais** (`PREMADE_CHARACTERS`, `src/utils/monetization.ts`; id, arte e nome em `src/utils/sprites.ts` — `STARTER_IDS`/`STARTER_SPRITES`/`STARTER_NAMES`; arte em `src/assets/soulmon/starters/<id>.png`, 512², alfa binário):
+
+| id | Nome | Tipo (PT / EN) | Essências (`derivedElements.ts`) | `ElementId` do oráculo |
+|---|---|---|---|---|
+| `industrial` | Crato | Aço + Aríete / Steel + Battering Ram | `aco` + `ariete` | `industrial` |
+| `nascente` | Brooka | Nascente + Melodia Vital / Spring + Vital Melody | `nascente` + `melodia` | `agua` |
+| `alento` | Zefi | Alento / Breath | `alento` | `ar` |
+| `vida` | Oaken | Vida / Life | `vida` (elemento base) | `planta` |
+| `meteoro` | Bolid | Meteoro / Meteor | `meteoro` | `fogo` |
+
+⚠️ **Um sprite por criatura, o MESMO em todos os estágios (rookie→ultra)** — limitação declarada: a evolução visual vem depois (a mecânica de evolução não muda). Os 6 ids **antigos** (`kaelen`/`orrin`/`thalindra`/`igni`/`nautilu`/`astrase`) **não são mais oferecidos**, mas seguem em `LEGACY_PREMADE_IDS`: `hydrateSave` os aceita e `getSpriteForStage` os resolve como sempre (continuam sendo linhas da masmorra e NPCs da Biblioteca). Os iniciais ficam **fora** de `DUNGEON_LINE_SPRITES` (9 linhas × 4 tiers, contadas por teste).
+
+**As quatro regras** (todas lêem `isDemoMode`; a fiação é travada por `src/utils/demoMode.contract.test.ts`):
+
+| Regra | Onde |
+|---|---|
+| **Salva só no aparelho** | `GameStateContext` (o efeito de salvar para antes do POST e não gera `saveId`), `cloudSave.ts` (`cloudSave`, `cloudSaveComRetry` e `reconcileSaveId` recusam), aviso de "proteger o save" some, Configurações troca "Sua conta"/"Seus dados" pelo cartão da demo. O servidor já recusa sem conta (`authorizeSaveAccess`: token de e-mail ≠ `saveId` aleatório → 401/403). |
+| **Não ganha XP** | `awardBondXP` devolve a **mesma referência** (no-op, sem ledger, sem toast); `feedFood` não soma XP de Vínculo (atributo sobe normalmente). O nível fica fixo em 5. |
+| **Não faz compras** | `handleShopBuy`, `handleExchangeCredits`, `handleBuyCreditPack`, `handleWatchAd`, `onSpendBits` (sumidouro da masmorra), refazer a árvore de talentos e a forja recusam com "Not available in the demo." / "Não disponível na demo."; `setUnlockReason`/`openCredits` não abrem `UnlockAccountModal`/`CreditsModal`; os `UnlockNudge` do Laboratório, do relatório diário e do teto de criação não montam. A loja é só vitrine. Ganhar Bits (minijogos, masmorra) segue valendo — é local. |
+| **Não entra em PvP** | `AreaView` torna inertes os seis prédios sociais (`DEMO_BLOCKED_LOTS`: Arena — Torneio/Duelo/Feira; Hall — Biblioteca/Círculo de Amigos/Salão da Guilda): o toque mostra a recusa na faixa de aviso do mapa (o mesmo canal do cadeado do Vínculo); abrir por `initialSheet` também não entra. |
+
+**Sair da demo.** Configurações → "Sair da demo" (`leaveDemo`): apaga o save local, o `saveId` e os carimbos de onboarding e recarrega no portão. **Não existe "converter a demo em conta"** — misturaria um save sem identidade com uma identidade.
+
+**Tom.** A recusa é uma linha, sem culpa; a tela de escolha diz a regra antes do toque ("Demo: Bond level 5, saved on this device only. No XP, no purchases and no PvP."). `GuideModal` (capítulo `demo`) e `HelpModal` (termo `Demo`) leem `DEMO_BOND_LEVEL`.
+
+**Não faz.** Não grava e-mail, não consulta a nuvem, não pede termos nem as 26 perguntas (a demo pula o onboarding — *o dono deve conferir se quer o aceite dos Termos/18+ antes da demo*), não entra em ranking.
+
+**Régua.** `utils/demoMode.test.ts`, `utils/demoMode.contract.test.ts`, `components/nav/AreaView.demo.render.test.tsx`, `components/SoulmonOnboarding.demoLocal.render.test.tsx`, `contexts/GameStateContext.demoLocal.test.tsx`.
