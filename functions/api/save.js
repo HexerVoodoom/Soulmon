@@ -15,6 +15,7 @@ import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
+import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 
 const CORS = {
@@ -270,6 +271,21 @@ export async function onRequest({ request, env }) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o; else delete state.bitsOrigin;
     }
+    // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    // Ficha da jornada (Combate v3 / PR15c): a FORMA e saneada (estagio valido, galhos finitos e com teto, `at` plausivel,
+    // `familia` na lista fechada, `plano` recalculado dos galhos) e um estagio JA gravado no servidor nao e sobrescrito.
+    // So parseia o gravado quando o campo existe nele (save de 5 MB nao e relido a toa). NUNCA recusa o save: o que nao
+    // tem forma vira ausente e o resto do estado segue. Sem o campo no que chegou, nada muda (reset/renascimento o apagam).
+    if ('fichaJornada' in state) {
+      let guardado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"fichaJornada"')) {
+        try { guardado = JSON.parse(prev.value).fichaJornada; } catch { guardado = undefined; }
+      }
+      const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
+      if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveId, estagios: mexeu });
+      if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
+    }
     const serialized = JSON.stringify(state);
     // BYTES, nao caracteres (PR13): UTF-8 chega a 3 bytes por caractere. So mede de verdade quando o pior caso poderia estourar.
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
@@ -280,7 +296,6 @@ export async function onRequest({ request, env }) {
     // `f` = a data da 1ª gravação deste save, em ms (teto S1 do duelo, `_duel.js` › `maxLevelFor`). É o ÚNICO
     // relógio que o cliente não toca: o servidor a escreve e a preserva em toda gravação seguinte. Save sem `f`
     // (gravado antes desta regra) recebe `f = agora` aqui. NADA vai para o state: a contagem de campos não muda.
-    const prev = await kvOrThrow(env).getWithMetadata(saveId);
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
