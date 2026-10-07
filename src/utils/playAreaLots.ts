@@ -70,7 +70,7 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
   { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '31%', top: '36%', width: '46%' },
   { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '69%', top: '39%', width: '52%' },
-  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '50%', top: '76%', width: '64%' },
+  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '50%', top: '82%', width: '64%' },
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {
