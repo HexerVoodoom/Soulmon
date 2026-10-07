@@ -27,6 +27,8 @@ export function gateFor(feature, bondLevel) {
 /**
  * Espelho de `BUILDING_GATES` (Tarefa A, predios por Vinculo). O servidor NAO decide abrir predio: as acoes
  * (duelo/torneio/renascimento) ja tem o portao acima. Fica aqui so para a paridade travar a tabela.
+ * O predio de Exploracao sempre livre (Vinculo 1) NAO e espelhado: o servidor nao cita esse nome (R-38,
+ * o contrato R-38 varre `functions/`); a paridade o descarta do lado do app.
  */
 export const BUILDING_GATES = {
   'mercado.itens': { minBond: 1 },
@@ -36,7 +38,6 @@ export const BUILDING_GATES = {
   'jogos.salao': { minBond: 1 },
   'jogos.refugio': { minBond: 1 },
   'jogos.mente': { minBond: 3 },
-  'exploracao.passeio': { minBond: 1 },
   'exploracao.masmorra': { minBond: 2 },
   'exploracao.caderno': { minBond: 2 },
   'exploracao.oficina': { minBond: 3 },

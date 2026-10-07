@@ -101,7 +101,7 @@ const classes: Record<FichaStage, ClassTitle> = { rookie: CLASSE, champion: CLAS
 
 describe('classe nunca visível — tela (a Ficha do Pet)', () => {
   for (const language of ['pt-BR', 'en-US'] as const) {
-    it(`${language}: a forma atual e as anteriores mostram o estágio, nunca o nome da classe; o sigilo fica`, () => {
+    it(`${language}: a forma atual mostra o estágio, nunca o nome da classe; o sigilo fica`, () => {
       renderWithCss(
         <PetPage
           stages={[rookie, champion]}
@@ -118,7 +118,8 @@ describe('classe nunca visível — tela (a Ficha do Pet)', () => {
       expect(texto).not.toContain('Necromancer');
       // o estágio continua nomeado — a régua tira a classe, não a palavra
       expect(texto).toContain(language === 'pt-BR' ? 'Ascendente' : 'Ascendant');
-      expect(texto).toContain(language === 'pt-BR' ? 'Desperto' : 'Awakened');
+      // as formas anteriores saíram da ficha (Arquivo, Tarefa A): 'Desperto'/'Awakened' é do rookie, já não aparece
+      expect(texto).not.toContain(language === 'pt-BR' ? 'Desperto' : 'Awakened');
       // e o sigilo (forma, não palavra) segue no canto do visor
       expect(document.querySelector('[data-sigil="marcial"]')).not.toBeNull();
     });

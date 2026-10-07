@@ -7,7 +7,7 @@
  * esquerdo); cada área do Mapa abre a sua tela, com o voltar para o Mapa.
  *
  * As páginas do menu da Home (D6: Configurações, Oráculo; as Estatísticas saíram
- * em 02/10/2026 — G2 — e vivem só no Laboratório, no Observatório) são
+ * em 02/10/2026 — G2 — e vivem só no Laboratório, no Santuário do Vínculo) são
  * `page:*` — voltam para a Home, não para o Mapa, porque é de lá que saem.
  *
  * O grafo de "voltar" mora AQUI, numa função pura (`viewBack`), e não espalhado

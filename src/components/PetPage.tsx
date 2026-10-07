@@ -41,7 +41,6 @@ import { sigilArt } from '../utils/sigilArt';
 import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, ACHIEVEMENT_HOW, achievementShortName, type AchievementId } from '../utils/achievements';
 import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
-import { MiniGlass } from './ui/MiniGlass';
 import { Icon } from './ui/Icon';
 import { PixelIcon } from './ui/PixelIcon';
 import { STATUS_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
@@ -301,7 +300,6 @@ export function PetPage({
   // lista desbloqueada (save antigo), cai na última alcançada — a tela nunca
   // fica sem protagonista.
   const atual = formas.find(f => creatureFormId(f) === currentStageId) ?? formas[formas.length - 1] ?? null;
-  const anteriores = formas.filter(f => f !== atual).reverse();
 
   const nome = petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon');
   const classeAtual = atual ? classTitles?.[getStageLevel(creatureFormId(atual)) as FichaStage] : undefined;
@@ -489,45 +487,6 @@ export function PetPage({
               ? 'Assentou perto do seu Soulmon e ficou. Não foi escolhido — veio por afinidade.'
               : 'It settled near your Soulmon and stayed. Not chosen — it came by affinity.'}
           </p>
-        </section>
-      )}
-
-      {/* ─────────── As formas anteriores ─────────── */}
-      {anteriores.length > 0 && (
-        <section>
-          <h2 style={{ ...h2Style, marginBottom: 12 }}>
-            {isPt ? 'Quem seu Soulmon já foi' : 'Who they used to be'}
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {anteriores.map(form => {
-              const formId = creatureFormId(form);
-              return (
-                <article key={formId} style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  {/* A forma anterior num vidro 80² sem anel, sprite 256² a 64
-                      (0,25× — D-P9, miniatura sempre em vidro, D-H7); antes era um
-                      <img 48> solto no card (achado 7). */}
-                  <MiniGlass size={80}>
-                    <img
-                      // a linha demo vale para TODAS as formas da jornada: passar o id só na
-                      // forma atual desenhava um bicho na atual e o placeholder genérico
-                      // nas anteriores — duas criaturas diferentes na mesma "jornada"
-                      src={getSpriteForStage(formId, demoCharacterId)}
-                      alt=""
-                      data-form-sprite={formId}
-                      style={{ width: 64, height: 64, display: 'block', imageRendering: 'pixelated' }}
-                    />
-                  </MiniGlass>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{form.name}</p>
-                    <p style={{ ...sm2Hint, marginTop: 2 }}>
-                      {L(form.stageName)}
-                    </p>
-                    <p style={{ ...sm2Hint, marginTop: 6 }}>{L(form.description)}</p>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
         </section>
       )}
     </div>

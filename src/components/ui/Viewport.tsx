@@ -85,7 +85,7 @@ export interface ViewportProps {
    * sem reflexo — só a MEDIDA (`width*scale`) e o conteúdo, sobre o fundo da
    * página, como a criatura da Home. A escala inteira continua valendo (a
    * caixa mede o mesmo e o sprite não muda de tamanho). O padrão segue sendo o
-   * aparelho completo: só o Laboratório (Árvore, Meu Soulmon, Observatório) pede.
+   * aparelho completo: só o Laboratório (Centro de Evolução, Arquivo, Santuário do Vínculo) pede.
    */
   bare?: boolean;
 }

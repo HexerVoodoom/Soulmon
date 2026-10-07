@@ -85,7 +85,7 @@ export type BuildingId =
   | 'hall.biblioteca' | 'hall.amigos' | 'hall.guilda';
 
 /**
- * A tabela ÚNICA de qual Vínculo abre cada prédio (DEFAULTS DA SQUAD — o dono ajusta só aqui; o servidor
+ * A tabela ÚNICA de qual Vínculo abre cada prédio (DECISÃO DO DONO, confirmada em 07/10/2026 — ajuste só aqui; o servidor
  * espelha em `functions/api/_gates.js`, travado por `gates.parity.test.js`). Nenhum outro arquivo guarda um
  * número de prédio.
  *
@@ -132,6 +132,13 @@ export function areaMinBond(area: string): number {
   let min = Infinity;
   for (const id of Object.keys(BUILDING_GATES) as BuildingId[]) if (id.startsWith(`${area}.`)) min = Math.min(min, BUILDING_GATES[id].minBond);
   return Number.isFinite(min) ? min : 1;
+}
+
+/** O Vínculo que falta para abrir a ÁREA no Mapa, ou `null` se ela abre (ou se não há `bondLevel`). */
+export function areaLockedAt(area: string, bondLevel: unknown): number | null {
+  if (bondLevel === undefined) return null;
+  const need = areaMinBond(area);
+  return levelOf(bondLevel) >= need ? null : need;
 }
 
 /** Aviso NEUTRO ao tocar um prédio trancado (sem cobrança, sem contagem, sem urgência). */

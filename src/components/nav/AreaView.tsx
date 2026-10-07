@@ -432,7 +432,7 @@ export function AreaView(props: AreaViewProps) {
   }
 
   // Laboratório e Hall (29/09/2026): como nas lojas, o mapa aberto tem uma
-  // construção por parte — Árvore da Evolução / Meu Soulmon / Observatório no
+  // construção por parte — Centro de Evolução / Arquivo / Santuário do Vínculo no
   // Laboratório; Biblioteca / Círculo de Amigos / Salão da Guilda no Hall. As
   // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
   if (area === 'laboratorio') {
