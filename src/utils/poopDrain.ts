@@ -309,3 +309,29 @@ export function cleanPoop<T extends CleanPoopState>(
     },
   };
 }
+
+// ── O COCÔ NA TELA É DERIVADO DO SAVE ──────────────────────────────────────
+//
+// O `careEvent` do `App.tsx` é estado de React: some a cada recarga, aba
+// revivida ou save adotado da nuvem. Já `poopEventsShown` sem
+// `poopEventsCompleted` e o relógio `poopPenaltyClockAt` vivem no save. Sem
+// esta derivação o cocô SUMIA da tela enquanto o dreno de −1 coração/6h seguia
+// correndo: a pessoa pagava por uma sujeira que não via nem podia limpar.
+// Fonte da verdade = o save; a tela só espelha.
+
+/** O cocô sujo que deve estar na tela (o primeiro, por índice), ou `null`.
+ *  `requestTime` é o horário agendado — a mesma chave de `cleanPoop({at})`. */
+export function pendingPoopEvent(state: {
+  poopEventsScheduled?: number[];
+  poopEventsShown?: number[];
+  poopEventsCompleted?: number[];
+}): { requestTime: number } | null {
+  const scheduled = state.poopEventsScheduled ?? [];
+  const cleaned = state.poopEventsCompleted ?? [];
+  for (const i of state.poopEventsShown ?? []) {
+    if (cleaned.includes(i)) continue;
+    const t = scheduled[i];
+    if (typeof t === 'number') return { requestTime: t };
+  }
+  return null;
+}

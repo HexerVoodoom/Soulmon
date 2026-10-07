@@ -91,7 +91,7 @@ import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
-import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
+import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -3048,6 +3048,18 @@ export default function App() {
     setCareEvent(null);
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
+
+  // O cocô na tela espelha o SAVE (`pendingPoopEvent`): recarga, aba revivida
+  // ou save da nuvem adotado não podem fazê-lo sumir enquanto o dreno corre; e
+  // banho dado em outro aparelho/overlay o tira daqui.
+  useEffect(() => {
+    const pend = pendingPoopEvent(gameState);
+    if (pend) {
+      if (!careEvent) setCareEvent({ type: 'poop', requestTime: pend.requestTime, showSprite: true });
+    } else if (careEvent?.type === 'poop') {
+      setCareEvent(null);
+    }
+  }, [gameState.poopEventsScheduled, gameState.poopEventsShown, gameState.poopEventsCompleted, careEvent]);
 
   // Consume one food item → energy + attribute points (NOT HP; HP is only healed
   // via "carinho"). Limited to 5 feedings per rolling hour; once full, the pet
