@@ -3,11 +3,13 @@ import type { Language } from '../../utils/i18n';
 import type { CrossingsState } from '../../types/travessias';
 import { ModalSheet } from '../form/FormKit';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
-import { questMarkLabel, type QuestMark } from '../../utils/questMarks';
+import type { BuildingQuestsProps } from './BuildingQuestList';
+import { questMarkLabel, strongestMark, type QuestMark } from '../../utils/questMarks';
 import { MissionMark } from '../play/MissionMark';
 
 const WeeklyMissionList = lazy(() => import('../mercado/ShopShelf').then(m => ({ default: m.WeeklyMissionList })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
+const BuildingQuestList = lazy(() => import('./BuildingQuestList').then(m => ({ default: m.BuildingQuestList })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 
 /**
@@ -16,7 +18,7 @@ const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ defa
  * feitas) dentro de uma folha modal. Uma regra só, dois lugares — nada daqui
  * escreve estado que o Passeio não escreva.
  */
-export function MissionsSheet({ open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks }: {
+export function MissionsSheet({ open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks, buildings }: {
   open: boolean;
   onClose: () => void;
   language: Language;
@@ -30,7 +32,9 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
   /** Permanentes (`getMissionProgress`). */
   missionProgress: Record<string, number>;
   /** A marca de cada seção (`questMarks`). */
-  marks: { passeio: QuestMark; torneio: QuestMark; conquistas: QuestMark };
+  marks: { passeio: QuestMark; torneio: QuestMark; conquistas: QuestMark; buildings?: Partial<Record<string, QuestMark>> };
+  /** Missão do dia de cada prédio + materiais (`utils/buildingQuests.ts`). Sem isto a seção não aparece. */
+  buildings?: BuildingQuestsProps;
 }) {
   const isPt = language === 'pt-BR';
   return (
@@ -43,6 +47,11 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
           <Section title={isPt ? 'Da semana (Torneio)' : 'This week (Tournament)'} mark={marks.torneio} tone="blue" isPt={isPt}>
             <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
           </Section>
+          {buildings && (
+            <Section title={isPt ? 'Dos prédios' : 'Buildings'} mark={strongestMark(Object.values(marks.buildings ?? {}).map(m => m ?? null))} isPt={isPt}>
+              <BuildingQuestList language={language} {...buildings} />
+            </Section>
+          )}
           <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt}>
             <ConquistasSheet language={language} missionProgress={missionProgress} />
           </Section>

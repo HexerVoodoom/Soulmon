@@ -19,7 +19,7 @@ import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import { missionMark } from '../../utils/travessiasSave';
-import { questMarks } from '../../utils/questMarks';
+import { questMarks, strongestMark, type QuestMark } from '../../utils/questMarks';
 import type { CadernoEntry } from '../../utils/cadernoSave';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import {
@@ -113,6 +113,9 @@ export interface AreaViewProps {
   language: Language;
   /** O Vínculo do usuário (`bondLevelFor(totalXP)`): decide quais prédios abrem (`BUILDING_GATES`). Sem ele, nada é trancado. */
   bondLevel?: number;
+  /** Missão por prédio (07/10/2026): a marca "!"/"?" de cada lote e o aviso de que se entrou nele (`utils/buildingQuests.ts`). */
+  buildingMarks?: Partial<Record<BuildingId, QuestMark>>;
+  onVisitBuilding?: (id: BuildingId) => void;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
@@ -196,6 +199,11 @@ export function AreaView(props: AreaViewProps) {
     const g = buildingGateFor(`${area}.${lotId}` as BuildingId, props.bondLevel);
     return g.open ? null : g;
   };
+  /** Entrar no prédio: abre a folha e conta a missão do dia dele (só chega aqui se o prédio abriu; `gated` troca o `onOpen` dos trancados). */
+  const { onVisitBuilding } = props;
+  const enter = (lotId: string) => { onVisitBuilding?.(`${area}.${lotId}` as BuildingId); setSheet(lotId); };
+  /** A marca do lote: a mais urgente entre a que ele já tinha (Passeio, Torneio, Conquistas) e a missão do dia do prédio. */
+  const markOf = (lotId: string, base?: QuestMark): QuestMark => strongestMark([base ?? null, props.buildingMarks?.[`${area}.${lotId}` as BuildingId] ?? null]);
   const initialLock = props.initialSheet ? lockOf(props.initialSheet) : null;
   const [sheet, setSheet] = useState<string | null>(initialLock ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(initialLock ? buildingLockLine(initialLock.minBond, language) : null);
@@ -217,7 +225,7 @@ export function AreaView(props: AreaViewProps) {
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
-  useEffect(() => { if (props.initialSheet) onInitialSheetConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (props.initialSheet) { if (!initialLock) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const marcas = questMarks({
     passeio: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play?.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()),
     weekly: props.tournament?.weeklyMissions ?? [],
@@ -295,7 +303,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={gated(lots.map(l => ({ ...l, ...(l.id === 'torneio' ? { mark: marcas.torneio } : {}), art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, mark: markOf(l.id, l.id === 'torneio' ? marcas.torneio : null), art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
@@ -339,11 +347,11 @@ export function AreaView(props: AreaViewProps) {
     const exitGame = () => setGame(null);
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
-        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => setSheet(l.id),
-        // "!" / "?" sobre o Passeio (`utils/questMarks.ts`): missão do dia disponível.
-        ...(l.id === 'passeio' ? { mark: marcas.passeio } : {}),
+        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => enter(l.id),
+        // "!" / "?" sobre o Passeio (`utils/questMarks.ts`): missão do dia disponível, ou a do prédio.
+        mark: markOf(l.id, l.id === 'passeio' ? marcas.passeio : null),
       }))
-      : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => setSheet(l.id) })));
+      : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id), mark: markOf(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
     const todayKey = play.todayKey ?? new Date().toISOString().slice(0, 10);
@@ -454,7 +462,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={LABORATORIO_BG}
-        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { props.onLabTab(tabOf[l.id]); setSheet(l.id); } } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], mark: markOf(l.id), onOpen: () => { props.onLabTab(tabOf[l.id]); enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
@@ -471,7 +479,7 @@ export function AreaView(props: AreaViewProps) {
       areaId={area}
       language={language}
       background={HALL_BG}
-      lots={gated(lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
+      lots={gated(lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], mark: markOf(l.id), onOpen: () => enter(l.id) } satisfies AreaLot)))}
       notice={lockNote}
     >
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>

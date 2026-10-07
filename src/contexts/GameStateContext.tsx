@@ -45,6 +45,7 @@ import { sanitizeRefugeInvite, type RefugeInviteState } from '../utils/refugio/c
 import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
+import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
 import {
   readLocal,
   writeLocal,
@@ -417,6 +418,9 @@ export interface GameState {
   /** WP4.7 — progresso das 3 missões da semana (`utils/weeklyMissions.ts`).
    *  Semana nova zera sozinha na leitura (`forWeek`), então não há migração. */
   weeklyMissions?: WeeklyMissionProgress;
+  /** Missão por prédio + materiais (07/10/2026, `utils/buildingQuests.ts`): UM objeto — o dia do jogador, os prédios
+   *  visitados/resgatados hoje e o estoque de materiais (0..99). Dia novo zera a parte diária na leitura. */
+  buildingQuests?: BuildingQuestState;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
@@ -1172,6 +1176,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             claimed: Array.isArray(w.claimed) ? (w.claimed.filter(x => typeof x === 'string') as WeeklyMissionProgress['claimed']) : [],
           };
         })(),
+        buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)
         // passa a ligado — migração segura: o que de fato publica o perfil é o

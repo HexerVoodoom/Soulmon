@@ -17,6 +17,8 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { questMarks, questMarkLabel } from './utils/questMarks';
+import { buildingMarks, visitBuilding, claimBuildingQuest } from './utils/buildingQuests';
+import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
@@ -5297,8 +5299,25 @@ export default function App() {
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+    buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [crossings, gameState.playerDayTz, gameState.ownedBackgrounds, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+
+  /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
+  const visitarPredio = useCallback((id: BuildingId) => {
+    setGameState(prev => {
+      const next = visitBuilding(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), id, bondLevelFor(prev.totalXP ?? 0));
+      return next === prev.buildingQuests ? prev : { ...prev, buildingQuests: next };
+    });
+  }, []);
+
+  /** Resgata o material do prédio. Idempotente: a recusa é reconferida sobre o `prev` (resgate duplo não paga 2×). */
+  const resgatarPredio = useCallback((id: BuildingId) => {
+    setGameState(prev => {
+      const { state, paid } = claimBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), id, bondLevelFor(prev.totalXP ?? 0));
+      return paid === null ? prev : { ...prev, buildingQuests: state };
+    });
+  }, []);
 
   /** Paga os Emblemas de uma missão pronta. `claimWeekly` é idempotente e
    *  devolve 0 se já estava paga — pagar duas vezes é bug de economia. */
@@ -6070,6 +6089,8 @@ export default function App() {
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
+                buildingMarks={marcasDeMissao.buildings}
+                onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
                 language={language}
                 ownership={{
@@ -6938,6 +6959,12 @@ export default function App() {
         onClaimWeekly={resgatarMissao}
         missionProgress={missionProgress}
         marks={marcasDeMissao}
+        buildings={{
+          state: gameState.buildingQuests,
+          day: playerDayKey(new Date(), gameState.playerDayTz),
+          bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+          onClaim: resgatarPredio,
+        }}
       /></Suspense>}
       {currentView === 'map' && (
         <CornerLink

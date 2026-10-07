@@ -4443,6 +4443,31 @@ lista quando o app reabre.
 do Torneio (Arena; minimal-ui F5, 24/09/2026 — ⚰️ era o topo do segmento Torneio da
 `ShopModal`) — onde a moeda é gasta, a torneira e o ralo na mesma folha.
 
+### 50-B. Missão por prédio + materiais (decisão do dono, 07/10/2026)
+
+**A regra.** Todo prédio do Mapa, **exceto os `mercado.*`**, dá **1 missão por dia**, e
+ela paga **1 material próprio daquele prédio** (Masmorra → Minério). Os materiais
+servirão depois para aprimorar equipamentos (outro módulo; aqui só nascem a missão, o
+material e o inventário). O prédio só dá a missão se o Vínculo mínimo dele abriu
+(`buildingGateFor`, tabela `BUILDING_GATES`). O gatilho é **presença** — entrar no
+prédio —, nunca contagem de tarefas. A redação do dia é determinística por dia do
+jogador + id do prédio (`questText`), como as semanais são por `weekKey`: sem sorteio.
+A missão reseta na virada do **dia do jogador** (`playerDayKey`); o estoque nunca
+diminui. Estoque no teto (`MATERIAL_CAP`): o resgate vale e o excedente não entra.
+Resgate duplo não paga 2× (`claimBuildingQuest` reconfere sobre o `prev`).
+
+**Marcas.** "!" (disponível) e "?" (pronta) no lote do prédio, em tom dourado, o mesmo
+do Passeio (azul é só da missão semanal). No ícone do canto da Home só o "?" dos
+prédios conta. A folha de Missões ganha a seção **"Dos prédios" / "Buildings"** com a
+missão de cada prédio aberto, o botão de pegar e o inventário de materiais (número
+simples em tinta comum: material **não é moeda** e nunca usa o estilo de Bits,
+Emblemas ou Créditos).
+
+**Dono.** `src/utils/buildingQuests.ts` (tabela prédio→material, estado, regra, marcas,
+higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) · UI em
+`src/components/nav/BuildingQuestList.tsx` (lazy) · servidor `functions/api/_buildingQuests.js`.
+**Régua.** `src/utils/buildingQuests.test.ts` e `functions/api/buildingQuests.parity.test.js`.
+
 ---
 
 <a id="masmorra"></a>

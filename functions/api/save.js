@@ -15,6 +15,7 @@ import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
+import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
@@ -272,6 +273,12 @@ export async function onRequest({ request, env }) {
     if ('bitsOrigin' in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o; else delete state.bitsOrigin;
+    }
+    // Missao por predio + materiais (07/10/2026): lista fechada de materiais, estoque clampado 0..99, ids de predio so no
+    // formato `<area>.<lote>` fora do Mercado. Sem forma = ausente (nunca recusa o save).
+    if ('buildingQuests' in state) {
+      const q = sanitizeBuildingQuests(state.buildingQuests);
+      if (q) state.buildingQuests = q; else delete state.buildingQuests;
     }
     // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
     const prev = await kvOrThrow(env).getWithMetadata(saveId);

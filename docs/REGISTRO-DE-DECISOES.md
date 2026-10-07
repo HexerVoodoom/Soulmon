@@ -1992,3 +1992,13 @@ Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-
 11. **Teto S1 do duelo:** 1 level por dia de servidor desde a 1ª gravação (`metadata.f` do KV), só no duelo, sem reescrever o save.
 
 **Medições na `main` com o #232 (06/10/2026, `7c76eaf9`).** Régua do repositório (N = 3200, `arena.v3.test.ts`, `dungeon.v3.test.ts`, `combate/`): duração mediana da Arena R1–R5 21,8/19,7/20,9/27,6/24,3 s; vitória por build 64,0–68,6% (4,6pp), por estágio 58,0–70,9%; células família × área 60,3–72,3% (12,1pp, meta ≤ 20pp); habilidade 23,6pp (meta ≤ 25pp); torcida sozinha +24,8pp; escolas 63,4–71,3% (7,9pp). Essa régua monta o inimigo pelo espelho `arenaFoe`, então NÃO enxerga o sorteio do bestiário; por isso foi feita uma varredura extra com o pool real e elementos (N = 1600 por ponto, `buildArenaRound` + `simulateArenaRunV3`): por elemento do jogador 60,1–67,5% (7,4pp), por família 56,9–63,3% (6,4pp), por escola 61,9–71,1% (9,2pp), torcida sozinha +25,0pp (`nenhuma`) e +18,2pp (`boa`). A torcida da Arena em E = 9 está na margem da meta (≤ 25pp): o ruído de N = 1600 é de ±2pp.
+
+
+## 25. Missão por prédio + materiais por prédio (decisão do dono, 07/10/2026)
+
+**Decisão.** "Todo prédio, exceto os de Mercado, deve dar 1 missão por dia." A missão paga **1 material próprio do prédio** (Masmorra → Minério); os materiais são o recurso do futuro Ferreiro/aprimoramento de equipamento. Sem dinheiro real, sem sorteio, sem premiar contagem de tarefas.
+
+**Como ficou.** Gatilho = presença (entrar no prédio aberto pelo Vínculo, `BUILDING_GATES`); texto do dia determinístico por `playerDayKey` + id; reseta na virada do dia do jogador; estoque por material com teto (`MATERIAL_CAP`); um único campo novo no save (`buildingQuests`). Marcas "!"/"?" no lote em dourado (azul continua sendo da semanal); no canto da Home só o "?". Dono: `src/utils/buildingQuests.ts`; espelho de forma no servidor.
+
+- **Perderam:** missão que exige "N tarefas"; sorteio diário; material comprável ou trocável por moeda; "!" de prédio no canto da Home (16 marcas quase sempre acesas deixariam de dizer algo).
+- **Gatilho para rever:** quando o aprimoramento entrar, decidir se o gatilho de algum prédio passa de "entrar" para uma ação do prédio (cuidado: nunca contagem de tarefas); se o estoque sobrar no teto, o ajuste é o teto, não o ralo em moeda.
