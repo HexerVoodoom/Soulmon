@@ -4359,6 +4359,35 @@ function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
 }
 __name(ganhoDePontos, "ganhoDePontos");
 
+// api/_avatares.js
+var AVATAR_IDS = /* @__PURE__ */ new Set(["ativo-arena-duelo", "ativo-arena-feira", "ativo-arena", "ativo-config", "ativo-conta", "ativo-cuidados", "ativo-exploracao-caderno", "ativo-exploracao-oficina", "ativo-exploracao-trilha", "ativo-exploracao", "ativo-f-arqueira", "ativo-f-barda", "ativo-f-cacadora", "ativo-f-cura", "ativo-f-feras", "ativo-f-ferreira", "ativo-f-ferreiro", "ativo-f-forja", "ativo-f-guarda", "ativo-f-lua", "ativo-f-mercenaria", "ativo-f-navegadora", "ativo-f-sacerdotisa", "ativo-f-treino", "ativo-f-venenos", "ativo-hall-amigos", "ativo-hall-guilda", "ativo-hall", "ativo-jogos-mente", "ativo-jogos-refugio", "ativo-jogos", "ativo-laboratorio-pet", "ativo-laboratorio-stats", "ativo-laboratorio", "ativo-loja-background", "ativo-loja-decoracao", "ativo-loja-itens", "ativo-mercado-conquistas", "ativo-mercado", "ativo-onboarding", "ativo-oraculo", "ativo-sono", "ativo-desafiante-espina", "ativo-desafiante-mare", "ativo-desafiante-quartzo", "agua-enguia-escriba", "agua-geleia-barqueira", "agua-koi-dragao-sabio", "agua-ostra-mercadora", "akasha-baleia-estrela-arauto", "akasha-garca-veu-guia", "akasha-geleia-fantasma-arquivista", "akasha-mariposa-escriba-de-luz", "ar-arraia-nuvem-mercadora", "ar-cegonha-morcego-meteorologista", "ar-coruja-papagaio-mensageiro", "ar-sprite-vento-espirito", "campina-abelha-apicultora", "campina-coelho-bardo", "campina-espantalho-golem-vigia", "campina-ovelha-nuvem-tecela", "cavernas-aranha-cristal-guia", "cavernas-lesma-estalactite", "cavernas-morcego-sabio-eco", "cavernas-toupeira-lapidaria", "deserto-escaravelho-caravaneiro", "deserto-fenec-esfinge-vidente", "deserto-golem-cacto-guarda", "deserto-verme-areia-mercador", "floresta-cervo-espirito-guardiao", "floresta-esquilo-correio", "floresta-javali-casca", "floresta-raposa-druida", "fogo-fenix-filhote-curandeiro", "fogo-golem-obsidiana", "fogo-raposa-brasa-mensageira", "fogo-salamandra-cozinheira", "gelo-geleia-congelada-confeiteira", "gelo-lebre-neve-arquivista", "gelo-mamute-pequeno-carregador", "gelo-raposa-gelo-cacadora", "industrial-aranha-tecela", "industrial-caranguejo-argila-pedreiro", "industrial-castor-engenheiro", "industrial-espirito-forno-vidraceiro", "luz-cervo-lanterna", "luz-geleia-pomba", "luz-leoa-solar-sacerdotisa", "luz-vagalume-coro", "oceano-cavalo-marinho-mensageiro", "oceano-nautilo-estudioso", "oceano-peixe-pescador-lampiao", "oceano-tartaruga-marinha-anciao", "pantano-crocodilo-barqueiro", "pantano-garca-lanterna", "pantano-geleia-turfa-curandeira", "pantano-sapo-erbolario", "picos-aguia-lagarto-batedora", "picos-cabra-pedra-monge", "picos-carneiro-trovao-arauto", "picos-espirito-tempestade-aprendiz", "planta-geleia-musgo-enfermeira", "planta-louva-deus-florista", "planta-planta-carnivora-cozinheira", "planta-urso-arvore-jardineiro", "sombra-corvo-morcego-negociante", "sombra-espectro-tinta-gentil", "sombra-gato-sombra-cartografo", "sombra-mariposa-arquivista", "terra-besouro-rinoceronte-guarda", "terra-golem-argila-oleiro", "terra-tartaruga-pedra-anciao", "terra-texugo-toupeira-mineiro", "extra-aranha-fiandeira-a", "extra-aranha-fiandeira-b", "extra-dragao-cogumelo", "extra-ferreira-coelho-robo-a", "extra-ferreira-coelho-robo-b", "extra-ferreira-eletrica", "extra-filhote-de-mel", "extra-lanterna-fantasma", "extra-medusa-pescadora-a", "extra-medusa-pescadora-b"]);
+function avatarIdOrNull(raw) {
+  return typeof raw === "string" && AVATAR_IDS.has(raw) ? raw : null;
+}
+__name(avatarIdOrNull, "avatarIdOrNull");
+
+// api/_frames.js
+var FRAME_IDS = /* @__PURE__ */ new Set([
+  "rank-madeira",
+  "rank-bronze",
+  "rank-prata",
+  "rank-ouro",
+  "rank-platina",
+  "rank-diamante",
+  "rank-mestre",
+  "rank-grao-mestre",
+  "loja-folhagem",
+  "loja-cristal",
+  "loja-brasa",
+  "conquista-constancia",
+  "evento-lua-colheita",
+  "evento-primeira-season"
+]);
+function frameIdOrNull(raw) {
+  return typeof raw === "string" && FRAME_IDS.has(raw) ? raw : null;
+}
+__name(frameIdOrNull, "frameIdOrNull");
+
 // api/community.js
 var CORS5 = {
   "Access-Control-Allow-Origin": "*",
@@ -4423,6 +4452,8 @@ async function publicProfile(env, p, extra = {}) {
     name: p.name,
     petName: p.petName,
     stage: p.stage,
+    avatarId: avatarIdOrNull(p.avatarId),
+    frameId: frameIdOrNull(p.frameId),
     unlockedStages: p.unlockedStages,
     pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
@@ -4624,6 +4655,10 @@ async function handleCommunity({ request, env }) {
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
       stage: typeof body.stage === "string" && ID_ESTAGIO.test(body.stage) ? body.stage : ID_ESTAGIO.test(String(prev.stage ?? "")) ? prev.stage : "rookie",
       petName: petNameOk(body.petName) ? body.petName.slice(0, 32) : prevPet,
+      // Foto e moldura (Tarefa C): so IDs das listas fechadas. Ausencia herda o gravado (cliente antigo nao apaga);
+      // `null` explicito limpa (volta ao padrao do NPC / sem moldura).
+      avatarId: "avatarId" in body ? avatarIdOrNull(body.avatarId) : avatarIdOrNull(prev.avatarId),
+      frameId: "frameId" in body ? frameIdOrNull(body.frameId) : frameIdOrNull(prev.frameId),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
@@ -4771,7 +4806,7 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage };
+    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId) };
     const pend = myRank.pending;
     if (pend && pend.opp !== opponentId) await forfeitPending({ id, me, myRank });
     const open = myRank.pending && myRank.pending.opp === opponentId ? myRank.pending : null;
@@ -4862,6 +4897,8 @@ async function handleCommunity({ request, env }) {
         name: p?.name || "An\xF4nimo",
         petName: p?.petName || "",
         stage: p?.stage || "rookie",
+        avatarId: avatarIdOrNull(p?.avatarId),
+        frameId: frameIdOrNull(p?.frameId),
         points: rec.points,
         wins: rec.wins,
         losses: rec.losses,
@@ -5976,10 +6013,6 @@ function clampCaderno(raw) {
 __name(clampCaderno, "clampCaderno");
 var FRAME_ID_RE = /^[a-z0-9-]{1,40}$/;
 var FRAMES_MAX_OWNED = 200;
-function clampFrameId(raw) {
-  return typeof raw === "string" && FRAME_ID_RE.test(raw) ? raw : null;
-}
-__name(clampFrameId, "clampFrameId");
 function clampOwnedFrames(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
@@ -6092,7 +6125,8 @@ async function onRequest5({ request, env }) {
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     if ("caderno" in state) state.caderno = clampCaderno(state.caderno);
-    if ("equippedFrame" in state) state.equippedFrame = clampFrameId(state.equippedFrame);
+    if ("equippedFrame" in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);
+    if ("avatarId" in state) state.avatarId = avatarIdOrNull(state.avatarId);
     if ("ownedFrames" in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
     if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     if ("equipment" in state) state.equipment = sanitizeEquipment(state.equipment);
@@ -6534,7 +6568,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-mG67T8/functionsRoutes-0.1662878609699674.mjs
+// ../.wrangler/tmp/pages-DlpqAz/functionsRoutes-0.008077948505676336.mjs
 var routes = [
   {
     routePath: "/api/account",
