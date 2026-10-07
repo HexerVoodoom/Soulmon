@@ -6281,6 +6281,7 @@ export default function App() {
                 careEvent={careEvent}
                 onCareEventComplete={handleCareEventComplete}
                 foodInventory={gameState.foodInventory}
+                materials={gameState.buildingQuests?.materials}
                 onFeed={handleFeed}
                 onShower={handleShower}
                 hasNewItems={newItemsReady}
