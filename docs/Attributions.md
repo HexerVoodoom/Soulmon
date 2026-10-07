@@ -93,9 +93,9 @@ aberto no benchmark de agosto/2026 (`docs/PLANO-EVOLUCAO.md`) e foi fechado.*
 
 ## Áudio
 
-**Desde 21/09/2026: cinco arquivos de áudio gerados por IA em `public/sounds/`** (S16, decisão
-do dono em `REGISTRO-DE-DECISOES.md` §6.1 — instalados **sem** o A/B cego ter rodado, "só pra ter
-pronto"). Os outros cinco sons continuam **sintetizados em runtime** (`src/utils/sounds.ts`), e os
+**Desde 21/09/2026: seis arquivos de áudio em `public/sounds/`** (S16, decisão
+do dono em `REGISTRO-DE-DECISOES.md` §6.1): cinco gerados por IA instalados **sem** o A/B cego ter rodado ("só pra ter
+pronto"), mais um de síntese procedural em Python (07/10/2026). Os outros cinco sons continuam **sintetizados em runtime** (`src/utils/sounds.ts`), e os
 três eventos com arquivo mantêm o procedural como fallback. Régua executável, nas duas direções
 (manifesto ↔ arquivo ↔ esta tabela): `src/utils/sonsAssets.contract.test.ts`.
 
@@ -108,6 +108,7 @@ três eventos com arquivo mantêm o procedural como fallback. Régua executável
 | `public/sounds/task-complete.webm` · `798225a0dd836866b886506fa8d697fcda87e7eaafd30a783724211bff2d9520` | `playTaskComplete` (Conclusão) | idem, job `852e6808` | idem | `pacote-prompts.md` §2.7 | 21/09/2026 | idem | idem |
 | `public/sounds/trilha-base.webm` · `2122e7ed4d330a117eb27b067781a2fcbd90ce1113d800d2839a3702acd10688` | trilha, camada `base` (E1) | Higgsfield CLI · `sonilo_music`, job `49823588` | idem | `pacote-prompts.md` §2.14 | 21/09/2026 | idem | idem |
 | `public/sounds/trilha-ritmo.webm` · `6182a9f6ed468a77cfb3c65a6224907b8f7abdce3ce1c7d84df0745a16e175f8` | trilha, camada `ritmo` | Higgsfield CLI · `sonilo_music`, job `6072e49c` | idem | `pacote-prompts.md` §2.15 | 21/09/2026 | idem | idem |
+| `public/sounds/trilha-soulmon-procedural.webm` · `8f2bc5b3e8fd412d33d95074c96dfced6455c1fedefd1b385b4d73cf43fed242` | trilha, camada `procedural` (síntese alternativa) | síntese procedural (Python 3 + NumPy/SciPy) · osciladores + ADSR + vibrato | N/A (síntese matemática, sem IA) | `scripts/gerar-trilha.py` — progressão harmônica (Cm-Gm-Bb-F), melody contraponto com inspiração Pokémon/Digimon/Chrono Cross/FFIX, loop 12 compassos a 100 BPM | 07/10/2026 | N/A | N/A (obra derivada do Soulmon) |
 
 Pós-processamento (corte, 48 kHz, crista, normalização ao alvo da categoria) por
 `squad-alpha-runs/som-01/prototyper/pos-processar.mjs` (SFX) e `E:/Soulmon-assets/som-01/mestre-trilha.mjs`
