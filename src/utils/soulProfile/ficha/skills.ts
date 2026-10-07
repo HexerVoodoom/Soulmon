@@ -26,7 +26,7 @@ import { CLASS_ELEMENT_ORDER } from '../types';
 import type { Ficha, FichaStage, EscolaSkillId, RecursoId } from './types';
 import { ESCOLAS_SKILL, escolaSkillSegura } from './types';
 import { cascataDosPares, CUSTO_PONTO_PAR } from './cascata';
-import { elementoNomeDe } from './elementoNome';
+import { elementoNomeDe, baseDominanteDoElemento } from './elementoNome';
 import { CLASS_DATA } from './buildSheet';
 import type { AreaConfig } from 'class-system';
 import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
@@ -160,8 +160,9 @@ export function elementosDoStage(ficha: Ficha) {
   const ranked = rankElementos(ficha);
   const topBase = ranked.find(r => BASE_SET.has(r.id))?.id ?? CLASS_ELEMENT_ORDER[0];
   const topGeral = ranked[0]?.id ?? topBase;
-  // básica fala a língua de todo dia (base); especial, a mais avançada.
-  const elBasica = topBase;
+  // PR17 (§2.35): o NOME da básica segue o elemento dominante (base ou par: `topGeral`), mas o `elementoId` da
+  // básica — o que a Arena lê para a VANTAGEM — é sempre uma BASE: a própria, ou a base dominante do par.
+  const elBasica = baseDominanteDoElemento(topGeral, ficha.elementos);
   const elEspecial = topGeral !== topBase ? topGeral
     : (ranked.find(r => r.id !== topBase)?.id ?? topBase);
   return { topBase, topGeral, elBasica, elEspecial };
@@ -218,7 +219,7 @@ export function buildStageSkills(
 
   const montarBasica = (): StageSkill => {
     const b = base('basica', elBasica);
-    const el = b.elementoNome;
+    const el = elementoNomeDe(topGeral); // o nome segue o elemento dominante (par incluso)
     // evita repetir o mesmo substantivo em estágios diferentes: a ficha escala mantendo a identidade.
     const banco = NOMES[escola].basica;
     const livres = usados ? banco.filter(n => !usados.has(n.pt)) : banco;
