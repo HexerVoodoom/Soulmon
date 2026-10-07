@@ -43,7 +43,7 @@ function NpcSpeechInner({ name, line, speakerKey }: { name: string; line: string
       data-area-sheet-npc-line
       onClick={done ? undefined : e => { e.stopPropagation(); setSkip(true); }}
       style={{
-        flex: 1, minWidth: 0,
+        flex: 1, minWidth: 0, position: 'relative', zIndex: 1,
         margin: '0 0 8px',
         padding: '10px 12px',
         background: 'rgba(15,42,41,.96)',

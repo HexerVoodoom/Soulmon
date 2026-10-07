@@ -6,7 +6,7 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { NPC_MAX_WIDTH_PCT } from './npcScale';
+import { NPC_MAX_WIDTH_PCT, NPC_PORTRAIT_ZOOM, NPC_PORTRAIT_ORIGIN } from './npcScale';
 import { Icon } from '../ui/Icon';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
@@ -132,18 +132,27 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             pointerEvents: 'none',
           }}
         >
-          <img
-            src={npcSrc}
-            alt=""
-            aria-hidden="true"
-            data-area-sheet-npc
+          {/* O retrato tem zoom (`NPC_PORTRAIT_ZOOM`): a caixa mantém a pegada de antes; a arte cresce a partir do canto superior esquerdo. */}
+          <span
+            data-area-sheet-npc-frame
             style={{
-              height: '100%', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
-              flex: 'none', objectFit: 'contain', objectPosition: 'bottom',
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
+              height: '100%', aspectRatio: '1 / 1', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
+              flex: 'none', display: 'block', pointerEvents: 'none',
             }}
-          />
+          >
+            <img
+              src={npcSrc}
+              alt=""
+              aria-hidden="true"
+              data-area-sheet-npc
+              style={{
+                width: '100%', height: '100%', display: 'block', objectFit: 'contain', objectPosition: 'bottom',
+                transform: `scale(${NPC_PORTRAIT_ZOOM})`, transformOrigin: NPC_PORTRAIT_ORIGIN,
+                pointerEvents: 'none',
+                filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
+              }}
+            />
+          </span>
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
           <NpcSpeech name={npc.name} line={npc.line} speakerKey={lotId ? `${areaId}:${lotId}` : undefined} />

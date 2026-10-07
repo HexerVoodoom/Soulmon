@@ -73,7 +73,7 @@ interface HomeHudProps {
 
 /** Largura das duas pontas do header (menu à esquerda, Mapa à direita): iguais,
  *  para o nome ficar centrado de verdade. */
-const HUD_SIDE_W = 56;
+const HUD_SIDE_W = 48;
 
 export function HomeHud({ language = 'en-US', focusSealed = false, leading, trailing, petName }: HomeHudProps) {
   return (
@@ -98,7 +98,7 @@ export function HomeHud({ language = 'en-US', focusSealed = false, leading, trai
           e virar `<h1>` não muda um pixel (`.sm2-hud-wordmark` traz família,
           tamanho e cor — Cinzel 20, caixa alta; a margem do `h1` é zerada
           aqui). */}
-      <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 56 }}>
+      <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
         {/* B2/H5 (02/10/2026): [menu] [nome do Soulmon] [Mapa] — sem logo. As duas
             pontas têm a MESMA largura, para o centro ser o centro de verdade. */}
         <div data-hud-leading style={{ flex: `0 0 ${HUD_SIDE_W}px`, display: 'flex', justifyContent: 'flex-start' }}>
