@@ -8287,3 +8287,7 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm2-splash-video::-webkit-media-controls-overlay-play-button,
 .sm2-splash-video::-webkit-media-controls-start-playback-button,
 .sm2-splash-video::-webkit-media-controls-play-button { display: none !important; -webkit-appearance: none; opacity: 0; pointer-events: none; }
+
+@keyframes sm-talent-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.sm-talent-backdrop > [role="dialog"] { animation: sm-talent-pop .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .sm-talent-backdrop > [role="dialog"] { animation: none; } }

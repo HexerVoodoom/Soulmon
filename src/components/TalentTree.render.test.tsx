@@ -33,10 +33,18 @@ function abrir(save: Record<string, unknown>, language = 'pt-BR') {
   render(<GameStateProvider><TalentTree language={language} /><Espiao /></GameStateProvider>);
 }
 const estadoTxt = () => document.querySelector('[data-talent-state]')!.textContent!;
-/** Seleciona o nó (o painel passa a ser dele) e devolve o botão +1 do painel. */
-const mais = (id: string) => {
+/** Abre o modal do nó. */
+const abrirNo = (id: string) => {
+  if (document.querySelector('[role="dialog"]')) act(() => { fireEvent.click(document.querySelector('[data-talent-cancel]')!); });
   act(() => { fireEvent.click(document.querySelector<HTMLButtonElement>(`button[data-talent="${id}"]`)!); });
-  return document.querySelector<HTMLButtonElement>(`[data-talent-buy="${id}"]`)!;
+};
+const confirmar = () => act(() => { fireEvent.click(document.querySelector('[data-talent-confirm]')!); });
+const confirmBtn = () => document.querySelector<HTMLButtonElement>('[data-talent-confirm]')!;
+/** Abre o nó, sobe o stepper `n` vezes e confirma. */
+const atribuir = (id: string, n: number) => {
+  abrirNo(id);
+  for (let i = 0; i < n; i++) act(() => { fireEvent.click(document.querySelector('[data-talent-step="up"]')!); });
+  confirmar();
 };
 const painel = () => document.querySelector('[data-talent-panel]')!;
 
@@ -58,20 +66,21 @@ describe('TalentTree', () => {
 
   it('gastar o ponto: o pick vale na hora, o botão trava e a tela diz "todos gastos"', () => {
     abrir({ totalXP: 0 });
-    act(() => { fireEvent.click(mais('tal-pvp-01')); });
+    atribuir('tal-pvp-01', 1);
     expect(estado().picks).toEqual(['tal-pvp-01']);
     expect(estadoTxt()).toMatch(/Todos os pontos estão gastos/);
-    expect(mais('tal-pvp-02').disabled).toBe(true);
-    expect(mais('tal-pvp-01').disabled).toBe(true);
+    expect(document.querySelector('[role="dialog"]')).toBeNull(); // confirmar fecha
+    abrirNo('tal-pvp-01');
+    expect(confirmBtn().disabled).toBe(true);
     expect(painel().textContent).toMatch(/Sem pontos livres/);
   });
 
   it('nenhum nó é "em breve": os 21 têm efeito ligado e botão de +1 (decisão do dono, Tarefa B)', () => {
     abrir({ totalXP: xpForLevel(10) });
     expect(document.querySelectorAll('button[data-state="soon"]').length).toBe(0);
-    mais('tal-pvp-04');
+    abrirNo('tal-pvp-04');
     expect(painel().textContent).not.toMatch(/em breve/);
-    expect(document.querySelector('[data-talent-buy="tal-pvp-04"]')).not.toBeNull();
+    expect(document.querySelector('[data-talent-step="up"]')).not.toBeNull();
   });
 
   it('save hostil (picks acima dos pontos do Vínculo) é descartado na carga e a tela mostra a árvore vazia', () => {
@@ -115,11 +124,11 @@ describe('PR7b: os nós redesenhados na tela', () => {
   it('Mão aberta (torcida) e Balança aparecem como compráveis, sem "em breve", e sem a palavra câmbio', () => {
     abrir({ totalXP: xpForLevel(10) });
     for (const id of ['tal-pvp-05', 'tal-com-05']) {
-      mais(id);
+      abrirNo(id);
       expect(painel().textContent).not.toMatch(/em breve/);
-      expect(document.querySelector(`[data-talent-buy="${id}"]`)).not.toBeNull();
+      expect(document.querySelector('[data-talent-step="up"]')).not.toBeNull();
     }
-    mais('tal-pvp-05');
+    abrirNo('tal-pvp-05');
     expect(painel().textContent).toMatch(/Só vale quando você torce/);
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/câmbio|cambio|exchange/i);
   });
@@ -129,7 +138,7 @@ describe('PR7b: os nós redesenhados na tela', () => {
     expect(document.querySelector('[data-talent-respec-one]')).toBeNull();
     cleanup();
     abrir({ totalXP: xpForLevel(8), gamePoints: 100, talentPicks: ['tal-pvp-01', 'tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05'] });
-    mais('tal-pvp-01');
+    abrirNo('tal-pvp-01');
     const tirar = document.querySelector<HTMLButtonElement>('[data-talent-respec-one="tal-pvp-01"]')!;
     expect(tirar.getAttribute('aria-label')).toContain('20 Bits');
     act(() => { fireEvent.click(tirar); });
@@ -140,7 +149,7 @@ describe('PR7b: os nós redesenhados na tela', () => {
 
   it('Balança sem Bits: nada muda e o aviso é neutro', () => {
     abrir({ totalXP: xpForLevel(8), gamePoints: 3, talentPicks: ['tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05'] });
-    mais('tal-pvp-01');
+    abrirNo('tal-pvp-01');
     act(() => { fireEvent.click(document.querySelector<HTMLButtonElement>('[data-talent-respec-one="tal-pvp-01"]')!); });
     expect(estado().picks).toEqual(['tal-pvp-01', 'tal-com-01', 'tal-com-01', 'tal-com-03', 'tal-com-03', 'tal-com-05']);
     expect(estado().bits).toBe(3);
@@ -151,18 +160,20 @@ describe('PR7b: os nós redesenhados na tela', () => {
 describe('Tarefa B: a árvore como árvore', () => {
   it('nó trancado diz em TEXTO o que falta; comprar o pré-requisito destranca', () => {
     abrir({ totalXP: xpForLevel(10) });
-    mais('tal-pvp-02');
-    expect(document.querySelector('[data-talent-buy="tal-pvp-02"]')).toHaveProperty('disabled', true);
+    abrirNo('tal-pvp-02');
+    expect(document.querySelector('[data-talent-step="up"]')).toHaveProperty('disabled', true);
+    expect(confirmBtn().disabled).toBe(true);
     expect(document.querySelector('[data-talent-missing]')!.textContent).toMatch(/Ponta de lança com 2 graus/);
-    mais('tal-pvp-01'); act(() => { fireEvent.click(mais('tal-pvp-01')); }); act(() => { fireEvent.click(mais('tal-pvp-01')); });
+    atribuir('tal-pvp-01', 2);
     expect(document.querySelector('button[data-talent="tal-pvp-02"]')!.getAttribute('data-state')).toBe('available');
-    expect(mais('tal-pvp-02').disabled).toBe(false);
+    abrirNo('tal-pvp-02');
+    expect(document.querySelector<HTMLButtonElement>('[data-talent-step="up"]')!.disabled).toBe(false);
   });
   it('convergência (um OU outro) e dois pré-requisitos aparecem no texto, em EN também', () => {
     abrir({ totalXP: xpForLevel(10) }, 'en-US');
-    mais('tal-pvp-05');
+    abrirNo('tal-pvp-05');
     expect(document.querySelector('[data-talent-missing]')!.textContent).toMatch(/one of: .* or /);
-    mais('tal-pvp-07');
+    abrirNo('tal-pvp-07');
     expect(document.querySelector('[data-talent-missing]')!.textContent).toMatch(/at rank 3 and .* and /);
   });
   it('as ligações existem e o estado delas segue os nós; todo nó é um botão com rótulo', () => {
@@ -181,11 +192,39 @@ describe('Tarefa B: a árvore como árvore', () => {
     act(() => { a.focus(); fireEvent.keyDown(a, { key: 'ArrowUp' }); });
     expect(document.querySelector('button[data-talent][tabindex="0"]')!.getAttribute('data-talent')).not.toBe('tal-pvp-01');
   });
-  it('zoom + e −: muda o tamanho e trava nos extremos', () => {
+  it('sem controles de zoom nem escala: a árvore fica a 100%', () => {
     abrir({ totalXP: 0 });
-    const mais_ = document.querySelector<HTMLButtonElement>('[data-talent-zoom="in"]')!;
-    for (let i = 0; i < 6; i++) act(() => { fireEvent.click(mais_); });
-    expect(mais_.disabled).toBe(true);
+    expect(document.querySelector('[data-talent-zoom]')).toBeNull();
+    expect(document.querySelector('[data-talent-tree] [style*="scale("]')).toBeNull();
+  });
+  it('tocar no nó abre o modal acessível; Cancelar e Esc não mudam nada e devolvem o foco ao nó', () => {
+    abrir({ totalXP: xpForLevel(3) });
+    abrirNo('tal-pvp-01');
+    const d = document.querySelector('[role="dialog"]')!;
+    expect(d.getAttribute('aria-modal')).toBe('true');
+    expect(d.getAttribute('aria-labelledby')).toBeTruthy();
+    act(() => { fireEvent.click(document.querySelector('[data-talent-step="up"]')!); });
+    expect(document.querySelector('[data-talent-preview]')!.textContent).toMatch(/Grau 0\/\d → 1\/\d/);
+    act(() => { fireEvent.click(document.querySelector('[data-talent-cancel]')!); });
+    expect(estado().picks).toEqual([]);
+    abrirNo('tal-pvp-01');
+    act(() => { fireEvent.keyDown(document.querySelector('[data-talent-backdrop]')!, { key: 'Escape' }); });
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(estado().picks).toEqual([]);
+  });
+  it('toque fora cancela; o stepper vai de 0 ao espaço (grau máximo e pontos livres) e Confirmar aplica N pontos', () => {
+    abrir({ totalXP: xpForLevel(10) });
+    abrirNo('tal-pvp-01');
+    expect(confirmBtn().disabled).toBe(true); // nada mudou
+    for (let i = 0; i < 9; i++) act(() => { fireEvent.click(document.querySelector('[data-talent-step="up"]')!); });
+    const max = Number(document.querySelector('[data-talent-qty]')!.textContent);
+    expect(max).toBeGreaterThan(1);
+    expect(max).toBeLessThanOrEqual(4);
+    confirmar();
+    expect(estado().picks).toEqual(Array(max).fill('tal-pvp-01'));
+    abrirNo('tal-pvp-01');
+    act(() => { fireEvent.click(document.querySelector('[data-talent-backdrop]')!); });
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
   it('o resumo da StatsPage só monta a árvore ao abrir', async () => {
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], totalXP: 0 }));
