@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
-import { GAIN_ART } from '../utils/gainArt';
+import { EvolutionLight } from './EvolutionLight';
 import { ANIM_ART } from '../utils/animArt';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { usePrefersReducedMotion } from './ui/Viewport';
@@ -200,13 +200,7 @@ export function EvolutionCeremony({
             {/* O burst a 3× atrás da criatura: os raios passam 80 px além
                 dela e o centro ciano aparece nas frestas (X1). Só ao concluir. */}
             {done && (
-              <img
-                src={GAIN_ART.evolutionBurst}
-                alt=""
-                data-cer-burst
-                className="sm-visor-swap"
-                style={{ ...pixel, width: BURST, height: BURST, left: '50%', top: '50%', margin: `-${BURST / 2}px 0 0 -${BURST / 2}px` }}
-              />
+              <EvolutionLight size={BURST} />
             )}
             {/* Sprite: branco durante a intercalação, cor ao concluir. */}
             <img

@@ -1286,7 +1286,7 @@ export function EvolutionPath({
                 data-attr-leader={lider === b ? 'sim' : undefined}
               >
                 <AttrGlyph attr={b} />
-                {L(ATTR_LABEL[b])}
+                <span data-attr-name={b} style={{ fontSize: 'var(--sm2-text-xs)' }}>{L(ATTR_LABEL[b])}</span>
                 {/* I4: a progressão em NÚMERO, dentro da pílula. */}
                 <span className="sm2-num" data-attr-points={b} style={{ fontWeight: 600 }}>{pontosDe(b)}</span>
               </button>
