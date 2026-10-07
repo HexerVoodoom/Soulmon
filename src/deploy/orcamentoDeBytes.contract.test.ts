@@ -117,7 +117,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 06/10/2026 (combate v3 PR18): 572_294 → 581_827 (+1,3 KB sobre a main, que já estava a 6 B da folga) — os 3 sons de
   // combate (`playAttack`/`playSpecial`/`playVictory`) em `sounds.ts` (dono único, não dá para `lazy`: o AC-4 lê esse
   // arquivo) e as 3 linhas da política em `loudness.ts`. A CENA do especial vive no chunk da luta (`lazy`), fora daqui.
-  'index.js': 581_827,
+  // 07/10/2026 (combate v3 PR15b/Tarefa A/Tarefa B): 581_827 → 590_424 (+8,6 KB; a main já estava a 587_822) — `fichaJornada`
+  // e o refresh no `App`, a tabela de portões por prédio e o cadeado (Tarefa A) e, na Tarefa B, os efeitos dos oito nós de talento
+  // (`talents.ts`, lidos pelas lutas) e o layout da árvore. A TELA da árvore e os textos dos nós ficam atrás de `lazy`.
+  'index.js': 590_424,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
