@@ -42,7 +42,7 @@ class FakeAudio {
 
 import {
   armarTemaNoPrimeiroGesto, desligarTema, esquecerTema, ligarTema, pausarTema, retomarTema,
-  temaPausado, temaPreferido, temaTocando, escolherFormato,
+  temaPausado, temaPreferido, temaTocando, escolherFormato, iniciarTemaNoGesto, temaIniciado,
 } from './tema';
 import { TEMA_DO_JOGO } from './sonsAssets';
 import { STORAGE_KEYS } from './storageKeys';
@@ -105,6 +105,32 @@ describe('S17 — nasce ligado, mas NADA acontece antes do gesto (D11)', () => {
     armarTemaNoPrimeiroGesto();
     gesto();
     expect(estado.busConexoes).toBeGreaterThanOrEqual(2); // elemento→fade, fade→busTema
+  });
+});
+
+describe('S17 (07/10/2026) — a tela de abertura inicia o tema por gesto, antes da intro', () => {
+  it('iniciarTemaNoGesto começa o tema (um <audio>, um play) e é idempotente com o ouvinte armado', () => {
+    armarTemaNoPrimeiroGesto();
+    expect(temaIniciado()).toBe(false);
+    gesto('pointerup');           // o ouvinte do main.tsx chega primeiro…
+    iniciarTemaNoGesto();         // …e o handler do toque chega depois
+    iniciarTemaNoGesto();
+    expect(temaIniciado()).toBe(true);
+    expect(fakes.length).toBe(1);
+    expect(fakes[0].tocou).toBe(1);
+  });
+  it('sem o ouvinte armado o gesto da abertura sozinho começa o tema', () => {
+    iniciarTemaNoGesto();
+    expect(fakes.length).toBe(1);
+    expect(temaTocando()).toBe(true);
+  });
+  it('preferência desligada, mudo ou aba escondida: a abertura não toca nada', () => {
+    localStorage.setItem(STORAGE_KEYS.SOUND_THEME_OFF, 'true');
+    iniciarTemaNoGesto();
+    expect(fakes.length).toBe(0);
+    localStorage.clear(); estado.muted = true;
+    iniciarTemaNoGesto();
+    expect(temaTocando()).toBe(false);
   });
 });
 
@@ -245,5 +271,13 @@ describe('fiação (lê o FONTE, como os outros guards de call-site)', () => {
 
   it('a intro é muda (o vídeo não briga com o tema)', () => {
     expect(ler('src', 'components', 'IntroScreen.tsx')).toMatch(/<video[\s\S]*?\bmuted\b[\s\S]*?\/>/);
+  });
+
+  it('a tela de abertura só chama o tema DENTRO do handler do toque (D11 no chamador, nunca em efeito)', () => {
+    const src = ler('src', 'components', 'IntroScreen.tsx');
+    expect(src.match(/iniciarTemaNoGesto\(\)/g)).toHaveLength(1);
+    expect(src).toMatch(/onStart=\{\(\) => \{ iniciarTemaNoGesto\(\);/);
+    const semComentarios = src.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(semComentarios).not.toMatch(/useEffect\([^)]*iniciarTemaNoGesto/);
   });
 });

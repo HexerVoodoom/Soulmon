@@ -21,3 +21,14 @@ describe('MissionMark — "!" e "?" são a arte de quest do dono (05/10/2026)', 
     expect(QUEST_ART).not.toBe(QUEST_EXCLAMACAO_ART);
   });
 });
+
+describe('MissionMark — tom azul das missões semanais (07/10/2026)', () => {
+  it('tone="blue" pinta pelo token --sm2-primary-ink, sem cor escrita à mão, e mantém o rótulo', () => {
+    const r = render(<MissionMark kind="available" tone="blue" isPt={false} />);
+    const g = r.container.querySelector('[data-quest-tone="blue"]') as HTMLElement;
+    expect(g).not.toBeNull();
+    expect(g.style.background).toContain('var(--sm2-primary-ink)');
+    expect(r.container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Quest available');
+    expect(r.container.querySelector('img[data-pixel-icon]')).toBeNull();
+  });
+});

@@ -228,6 +228,24 @@ function instalarOuvintes(): void {
   armado = true;
 }
 
+/** A sessão já ligou o tema (o 1º gesto veio e a preferência estava ligada)? */
+export function temaIniciado(): boolean {
+  return ligadaNestaSessao;
+}
+
+/**
+ * O gesto da TELA DE ABERTURA (07/10/2026, decisão do dono: tema DURANTE a intro).
+ * Chamado de dentro do handler do toque — síncrono até o `play()`, como o iOS exige.
+ * Idempotente (o ouvinte armado no `main.tsx` pode ter chegado antes, no `pointerup`)
+ * e sem efeito se a preferência está desligada. Mudo/pausa/aba escondida seguem
+ * valendo dentro de `comecar`.
+ */
+export function iniciarTemaNoGesto(): void {
+  if (!temaPreferido()) return;
+  desarmar();
+  if (ligadaNestaSessao) comecar(); else iniciarSessao();
+}
+
 /** Gesto do jogador nas Configurações: liga (persiste) e começa. */
 export function ligarTema(): void {
   writeFlag(STORAGE_KEYS.SOUND_THEME_OFF, false, { silent: true });

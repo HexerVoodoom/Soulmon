@@ -40,7 +40,7 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
           <Section title={isPt ? 'Do dia' : 'Today'} mark={marks.passeio} isPt={isPt}>
             <PasseioSheet language={language} crossings={crossings} onChange={onChange} todayKey={todayKey} seed={seed} />
           </Section>
-          <Section title={isPt ? 'Da semana (Torneio)' : 'This week (Tournament)'} mark={marks.torneio} isPt={isPt}>
+          <Section title={isPt ? 'Da semana (Torneio)' : 'This week (Tournament)'} mark={marks.torneio} tone="blue" isPt={isPt}>
             <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
           </Section>
           <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt}>
@@ -53,12 +53,12 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
 }
 
 /** Uma seção da lista, com a marca do lugar ao lado do título (`!` / `?`). */
-function Section({ title, mark, isPt, children }: { title: string; mark: QuestMark; isPt: boolean; children: React.ReactNode }) {
+function Section({ title, mark, tone = 'gold', isPt, children }: { title: string; mark: QuestMark; tone?: 'blue' | 'gold'; isPt: boolean; children: React.ReactNode }) {
   return (
     <section data-missions-section data-quest-mark={mark ?? 'none'} aria-label={title} style={{ marginBottom: 20 }}>
       <h3 className="sm2-title" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', fontSize: 'var(--sm2-text-md)' }}>
         <span style={{ flex: 1 }}>{title}</span>
-        {mark && <MissionMark kind={mark} size={24} isPt={isPt} />}
+        {mark && <MissionMark kind={mark} tone={tone} size={24} isPt={isPt} />}
         {mark && <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(mark, isPt)}</span>}
       </h3>
       {children}

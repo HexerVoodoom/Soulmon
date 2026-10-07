@@ -599,7 +599,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             >
               {/* 04/10/2026: a aba Missões usa a arte de quest do dono (`QUEST_ART`). */}
               {t.key === 'missions'
-                ? <MissionMark kind={marcaSemanal ?? 'ready'} size={24} isPt={isPt} style={marcaSemanal ? undefined : { opacity: 0.6 }} />
+                ? <MissionMark kind={marcaSemanal ?? 'ready'} tone="blue" size={24} isPt={isPt} style={marcaSemanal ? undefined : { opacity: 0.6 }} />
                 : <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />}
             </button>
           );

@@ -5,6 +5,8 @@ import introPoster from '../assets/brand/intro-poster.webp';
 import { resolveLanguage } from '../utils/i18n';
 import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { iniciarTemaNoGesto, temaIniciado, temaPreferido } from '../utils/tema';
+import { isMuted } from '../utils/sounds';
 
 /**
  * A INTRO é a continuação do boot (canvas Onboarding-funil ONB-03/04,
@@ -20,7 +22,54 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
  * era ícone em box) + "SOULMON" em Silkscreen 20, e sai sozinho em 1,5 s.
  * Os literais `#0b0d16` e o gradiente Tailwind saíram: tudo é token.
  */
+/**
+ * TELA DE ABERTURA (07/10/2026, decisão do dono, S17: o tema toca DURANTE a intro).
+ * O navegador/WebView só libera áudio depois de um gesto, e a intro é muda e curta
+ * demais para esperar um: antes dela vem UM quadro da marca (o próprio pôster do
+ * vídeo, sem salto de imagem) com "Tap to start". O toque inicia o tema (gesto real)
+ * e a intro. Pulada quando não há o que liberar: o jogador já interagiu (ativação
+ * do navegador — cobre também o autoplay com som liberado), o tema está desligado
+ * ou o app está mudo. Sem cobrança, sem play cinza nativo, sem som antes do toque.
+ */
+function precisaDeAbertura(): boolean {
+  try {
+    if (typeof navigator !== 'undefined' && (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive) return false;
+    return temaPreferido() && !isMuted() && !temaIniciado();
+  } catch {
+    return false;
+  }
+}
+
 export function IntroScreen({ onFinish }: { onFinish: () => void }) {
+  const [iniciada, setIniciada] = useState(() => !precisaDeAbertura());
+  if (!iniciada) return <TelaDeAbertura onStart={() => { iniciarTemaNoGesto(); setIniciada(true); }} />;
+  return <IntroVideo onFinish={onFinish} />;
+}
+
+function TelaDeAbertura({ onStart }: { onStart: () => void }) {
+  const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+  const label = isPt ? 'Toque para começar' : 'Tap to start';
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      onClick={onStart}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStart(); } }}
+      className="sm2-visor sm2-splash"
+      data-testid="intro-open"
+      style={{ zIndex: 500 }}
+    >
+      <img src={introPoster} alt="Soulmon" className="sm2-splash-video" draggable={false} />
+      <span className="sm2-viewport-glass" aria-hidden="true" />
+      <span className="sm2-splash-tap" aria-hidden="true">
+        <span className="sm2-splash-pix">{label}</span>
+      </span>
+    </div>
+  );
+}
+
+function IntroVideo({ onFinish }: { onFinish: () => void }) {
   const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const [leaving, setLeaving] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);

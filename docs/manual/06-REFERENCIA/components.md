@@ -298,7 +298,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/play/MissionMark.tsx`
 **Dono de:** o marcador de missão à la World of Warcraft (04/10/2026): "!" (`exclamation`, tom gold) = missões do dia disponíveis, "?" (`question`, tom primary) = missão escolhida em andamento. Glifos autorais pelados (sem box), parados, com `label` PT/EN.
-**Exports:** `MissionMark({ kind, size?, isPt, style? })`.
+**Exports:** `MissionMark({ kind, size?, isPt, style?, tone? })`, `QuestGlyph({ kind, tone?, size })`. `tone: 'blue'` (missões semanais, 07/10/2026) pinta a arte como máscara com o token `--sm2-primary-ink`; `'gold'` (padrão) é a arte original.
 **Chamado por:** `src/components/play/PasseioSheet.tsx`, `src/components/nav/AreaScene.tsx` (campo `mark` do lote).
 **Régua:** `src/components/play/PasseioSheet.render.test.tsx`, `src/components/play/playArea.render.test.tsx`.
 
@@ -319,7 +319,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/nav/MissionsLink.tsx`
 **Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
-**Props principais:** `mark: QuestMark` (de `questMarks().corner`), `markLabel`, `label`, `onClick`.
+**Props principais:** `mark: QuestMark` (de `questMarks().corner`), `tone?` (`questMarks().cornerTone`; azul quando a marca vencedora é semanal), `markLabel`, `label`, `onClick`.
 **Exports:** `MissionsLink(props)`.
 **Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
 **Régua:** `src/styles/iconScale.contract.test.ts` (glifo 24).
@@ -706,9 +706,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Dono de:** a splash screen do cold start — toca o vídeo de marca e cai no gate de onboarding/app principal.
 **Props principais:** `{ onFinish: () => void }` (tipo inline, sem interface nomeada).
 **Exports:** `IntroScreen(props)`.
-**Estado/efeitos relevantes:** `useState` (`leaving`, `videoFailed`); `useRef` (`doneTimerRef`, `leaveTimerRef`); `useEffect` agenda `scheduleFinish(1500)` como fallback, substituído pela duração real do vídeo quando conhecida; toque/clique pula direto com o mesmo fade de 400ms.
+**Estado/efeitos relevantes:** tela de abertura (07/10/2026, S17: `TelaDeAbertura`, pôster + "Tap to start", toque → `iniciarTemaNoGesto()` + vídeo; pulada por `precisaDeAbertura()`); `useState` (`leaving`, `videoFailed`); `useRef` (`doneTimerRef`, `leaveTimerRef`); `useEffect` agenda `scheduleFinish(1500)` como fallback, substituído pela duração real do vídeo quando conhecida; toque/clique pula direto com o mesmo fade de 400ms.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/IntroScreen'" src`, 09/09/2026).
-**Régua:** nenhuma (`find src/components -maxdepth 1 -name 'IntroScreen.*test.ts*'` vazio, 09/09/2026).
+**Régua:** `src/components/IntroScreen.render.test.tsx`.
 **Avisos do arquivo:** puramente cosmético, self-dismiss via `onFinish`; cai para o wordmark raven/gradiente se o vídeo falhar (WebView antiga sem suporte ao formato).
 
 ### `src/components/ItemsWindow.tsx`

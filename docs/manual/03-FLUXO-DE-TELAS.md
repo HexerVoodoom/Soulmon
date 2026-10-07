@@ -170,7 +170,7 @@ null` e `language: Language` (agora obrigatória):
 ("!" = missão do dia por fazer ou em andamento; nada depois do "Fiz"). **Marcas de missão
 (07/10/2026, `utils/questMarks.ts`):** o card de missões saiu da Home; todas as missões moram na
 folha do ícone do canto direito, e cada local (ícone, Passeio, Torneio, Conquistas) mostra "!"
-com missão disponível e "?" com missão pronta — com as duas, só o "?". Dentro da folha: os destinos, e em Travessias os 3 cards do dia (postal da
+com missão disponível e "?" com missão pronta — com as duas, só o "?". **Cor (07/10/2026, dono: "Missão semanal fica com ! e ? azul"):** as marcas das missões SEMANAIS (aba Missões do Torneio, seção "Da semana") são azuis (token `--sm2-primary-ink`); Passeio e Conquistas seguem amarelas; as permanentes só acendem "?" quando prontas (nunca "!"); o ícone do canto herda o tom da marca vencedora. Dentro da folha: os destinos, e em Travessias os 3 cards do dia (postal da
 região, título, área) — tocar abre o ato, a versão pequena e "Escolher esta"; escolhida, vira o
 card da missão com "Fiz" e "Recuar". Depois do "Fiz": "esta noite o Soulmon viaja para
 <região>" e, no relatório do dia seguinte, a historinha da viagem. O total ("Marcos de
@@ -295,7 +295,7 @@ cima de um app já carregado. Corrigido em 27/08/2026 (comentário em `main.tsx`
 
 ### 2.2 `IntroScreen` — o vídeo de marca
 
-- **Chega por**: `showIntro` nasce `true` (`useState(true)`).
+- **Chega por**: `showIntro` nasce `true` (`useState(true)`). **Tela de abertura (07/10/2026, S17):** antes do vídeo, o `IntroScreen` mostra o pôster da marca + "Tap to start"/"Toque para começar" (`role=button`, toque/Enter/Espaço); o toque inicia a música-tema por gesto real e monta o vídeo. Pulada se o jogador já interagiu (`userActivation.hasBeenActive`), o tema está desligado ou o app mudo.
 - **Sai para**: `onFinish` → `setShowIntro(false)`.
 - **Aparece quando**:
 
