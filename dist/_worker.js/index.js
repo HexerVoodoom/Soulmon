@@ -2825,6 +2825,7 @@ var BUILDING_GATES = {
   "mercado.conquistas": { minBond: 1 },
   "mercado.decoracao": { minBond: 2 },
   "mercado.background": { minBond: 3 },
+  "mercado.ferreiro": { minBond: 2 },
   "jogos.salao": { minBond: 1 },
   "jogos.refugio": { minBond: 1 },
   "jogos.mente": { minBond: 3 },
@@ -6568,7 +6569,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-SQCdcB/functionsRoutes-0.8269401286188205.mjs
+// ../.wrangler/tmp/pages-wLRRS1/functionsRoutes-0.8182220788604018.mjs
 var routes = [
   {
     routePath: "/api/account",
