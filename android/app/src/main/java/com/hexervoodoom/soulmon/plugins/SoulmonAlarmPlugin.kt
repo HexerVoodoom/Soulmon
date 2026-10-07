@@ -48,6 +48,20 @@ class SoulmonAlarmPlugin : Plugin() {
         call.resolve()
     }
 
+    /**
+     * Abre a tela de notificações DESTE app nas configurações do sistema. É a
+     * saída de quem negou o pedido nativo duas vezes (o Android 13+ deixa de
+     * mostrar o diálogo) — só por gesto do usuário.
+     */
+    @PluginMethod
+    fun openNotificationSettings(call: PluginCall) {
+        val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        try { (activity ?: context).startActivity(intent) } catch (_: Exception) { }
+        call.resolve()
+    }
+
     @PluginMethod
     fun cancelAlarm(call: PluginCall) {
         val id = call.getString("id") ?: run { call.reject("Missing id"); return }

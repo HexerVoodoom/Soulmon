@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 07/10/2026 — Permissão de notificação na 1ª abertura + modal nativo no toggle
+>
+> - **Decisão do dono que REVOGA G6/WP1.5** ("nunca pedir permissão na abertura"): o pedido nativo agora acontece na primeira abertura, UMA vez (flag `NOTIFICATION_FIRST_OPEN_ASKED`, gravada ao pedir — negado não é cobrado). APK pede direto após o splash; web/PWA pede no PRIMEIRO `click` (o navegador exige gesto). Não é modal nosso: não tranca o onboarding nem entra na fila. O priming D2–D3 e o `WelcomePromptModal` seguem como segunda chance.
+> - **Toggle (Configurações):** ao ligar, sempre o pedido nativo (`default`), só registra (`granted`) ou orienta às configurações (`denied`; no APK, botão "Open settings" via `SoulmonAlarm.openNotificationSettings`). Bug achado: no APK o toggle usava `Notification` (inexistente no WebView) e sempre caía em "Permission Denied".
+> - Dono único: `src/utils/notificationPermission.ts` (decisor puro, `notificationPermission.test.ts`). **Mexeu em `android/` (Kotlin) → APK novo.**
+> - **Depende do dono:** testar no aparelho (Android 13+: diálogo na 1ª abertura; negar 2× e ligar o toggle → botão de ajustes; Android 12−: sem diálogo, já concedido).
+
 > ## 07/10/2026 — Música-tema + intro sem play cinza + logo como ícone (`feat/tema-intro-logo`, PR por abrir)
 >
 > - **Tema (S17):** "Stone Hall Decay" (Suno, do dono) toca no PRIMEIRO gesto da sessão (nunca autoplay cego); nasce LIGADO, só ela revoga a S2.
