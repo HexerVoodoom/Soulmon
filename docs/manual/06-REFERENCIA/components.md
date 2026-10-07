@@ -367,7 +367,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/home/statTips.test.ts`, `src/components/CompanionHUD.cta.test.tsx`.
 
 ### `src/components/perfil/ProfileAvatarButton.tsx`
-**Dono de:** o botão do USUÁRIO no canto superior esquerdo da Home (Tarefa C, 07/10/2026) — a foto de perfil (NPC) com a moldura equipada, num alvo de 44 (avatar de 28 para a moldura, que transborda, caber na coluna de 48 do `HomeHud`). ⚰️ Substitui o sanduíche e o `HomeMenuSheet` (apagado): abre `page:settings`. O que morava no menu foi para as Configurações: Guia (já em Ajuda), Créditos (linha `onOpenCredits`) e Oráculo/Refazer o ritual (ocultos por `MENU_SHOWS_RITUAL_TOOLS = false`, hoje exportada de `SettingsPage.tsx`).
+**Dono de:** o botão do USUÁRIO no canto superior esquerdo da Home (Tarefa C, 07/10/2026) — a foto de perfil (NPC) com a moldura equipada, num alvo de 56 (avatar de 42, +50% em 07/10/2026; a moldura transborda e a coluna `leading` do `HomeHud` acompanha em 56). ⚰️ Substitui o sanduíche e o `HomeMenuSheet` (apagado): abre `page:settings`. O que morava no menu foi para as Configurações: Guia (já em Ajuda), Créditos (linha `onOpenCredits`) e Oráculo/Refazer o ritual (ocultos por `MENU_SHOWS_RITUAL_TOOLS = false`, hoje exportada de `SettingsPage.tsx`).
 **Props principais:** `avatarId?`, `frameId?`, `seed?`, `language`, `onClick`.
 **Exports:** `ProfileAvatarButton(props)`.
 **Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
