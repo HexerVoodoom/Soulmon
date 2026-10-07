@@ -103,12 +103,18 @@ jobs:
             mkdir -p "$HOME/.android"
             printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$HOME/.android/debug.keystore"
             echo "Chave de debug fixa restaurada."
+            echo "DEBUG_KEYSTORE_RESTORED=1" >> "$GITHUB_ENV"
             keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android 2>&1 | grep -E "SHA1|SHA256|Alias name|Keystore type" || echo "keytool nao conseguiu ler a keystore restaurada"
           fi
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          if [ -f "$HOME/.android/debug.keystore" ] && [ -n "$DEBUG_KEYSTORE_RESTORED" ]; then
+            ./gradlew assembleDebug --no-daemon -PDEBUG_STORE_FILE="$HOME/.android/debug.keystore"
+          else
+            ./gradlew assembleDebug --no-daemon
+          fi
 
       - name: Print APK signing certificate
         run: |
