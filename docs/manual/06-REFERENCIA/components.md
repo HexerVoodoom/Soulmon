@@ -1367,9 +1367,9 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Dono de:** a árvore de talentos DESENHADA como árvore (PR7 + Tarefa B): hub no centro, três caminhos que se bifurcam e se reencontram, nós como botões HTML sobre um SVG só de linhas, sempre a 100% (sem zoom; rolagem nativa, hub centralizado ao abrir), e tocar num nó abre um MODAL (`role=dialog`, `aria-modal`, foco preso e devolvido ao nó, Esc/toque fora cancelam) com descrição, o pré-requisito que falta EM TEXTO, stepper de pontos a atribuir (0 até o espaço = grau máximo, pontos livres e pré-requisitos) e Confirmar/Cancelar (Confirmar aplica N× `pickTalent`), setas/roving tabindex, `aria-label` por nó, movimento reduzido (CSS). Pontos, graus, pré-requisitos e respec vêm de `utils/talents.ts`; o desenho de `utils/talentLayout.ts`; local-first (o servidor valida na sincronia e poda o que viola pré-requisito). Com `tal-com-05` (Balança) o modal ganha "Tirar um ponto" (recusado se outro nó depende do grau).
 **Régua:** `src/components/TalentTree.render.test.tsx`.
 
-### `src/components/EquipmentCard.tsx`
-**Dono de:** a tela do equipamento e da vitrine (PR8b), carregada `lazy` pelo `AreaView` no lote **Ferreiro** do Mercado (`mercado.ferreiro`; saiu da `StatsPage` em 07/10/2026), com a arte sob demanda. Regras de `utils/equipment.ts` e `utils/bitsOrigin.ts`; local-first. Compra com Bits GANHOS ou fragmentos (sem sorteio), equipar/tirar, recusas neutras (Bits insuficientes, Bits vindos de Crédito, fragmentos insuficientes). Fragmentos vêm da run completa da Masmorra (`App.tsx › handleGlitchtama`).
-**Régua:** `src/components/EquipmentCard.render.test.tsx`.
+### `src/components/ForgeCard.tsx`
+O Ferreiro (07/10/2026, lazy): materiais, 3 slots, 9 peças com nível, Aprimorar (custo e saldo; recusa em texto), modal de escolha A/B e Refazer escolha (Bits ganhos/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`.
+**Régua:** `src/components/ForgeCard.render.test.tsx`.
 
 
 ## `src/components/nav/BuildingQuestList.tsx` (07/10/2026)

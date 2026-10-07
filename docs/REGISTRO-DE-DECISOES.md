@@ -2002,3 +2002,15 @@ Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-
 
 - **Perderam:** missão que exige "N tarefas"; sorteio diário; material comprável ou trocável por moeda; "!" de prédio no canto da Home (16 marcas quase sempre acesas deixariam de dizer algo).
 - **Gatilho para rever:** quando o aprimoramento entrar, decidir se o gatilho de algum prédio passa de "entrar" para uma ação do prédio (cuidado: nunca contagem de tarefas); se o estoque sobrar no teto, o ajuste é o teto, não o ralo em moeda.
+
+## 26. Equipamento por missão + aprimoramento no Ferreiro (decisão do dono, 07/10/2026)
+
+**Decisão.** "Os itens de equipamento são aprimorados, um após o outro. O usuário GANHA os itens de NÍVEL 1 em missão conforme os locais liberam. Depois ele APRIMORA no Ferreiro com RECURSOS (os materiais por prédio). Ao aprimorar ele ESCOLHE dentre opções que dão um ou outro bônus." Nível 1 a 5; 2 opções (A = atributo do slot, B = o vizinho) por nível; escolha refazível pagando Bits GANHOS (ou fragmentos), nunca Créditos nem `paidLeft`.
+
+**Como ficou** (`src/utils/forge.ts`, `forgeActions.ts`, espelho `functions/api/_forge.js`, campo único `forge` no save). Cada uma das 9 peças tem UM prédio de origem e é concedida no **1º resgate da missão do prédio** (o mesmo ponto único que paga o material; escolhido em vez de "cumprir a missão do dia" por ser UM gatilho). Níveis 2–5: materiais (o do prédio de origem + um de apoio, 1/2/3/4 e 0/1/2/3) e Vínculo mínimo 2/3/4/5. Ganho por nível 0,3 / 0,2 / 0,3 / 0,3 / 0,4%: uma peça no 5 vale no máximo 1,5% (30% do teto); três peças 4,5%; o teto de 5% segue UM, somado a talento pelo `combinedAttrBonus`. Quem já comprou a peça a mantém, DERIVADA na leitura (nível equivalente 2/4/5 = 0,5/1,1/1,5%, nunca menos que valia; sem reembolso, sem confisco).
+
+**O que mudou desde a compra por Bits (§24.4 PR8a/§24.5 PR8b).** O dono quis que o equipamento fosse conquista de presença e escolha, não de farm de Bits, e os materiais por prédio (§25) deram o recurso. As garantias que ficam: sem sorteio, sem dinheiro real, teto único de 5%, só Bit ganho.
+
+- **Perderam:** comprar peça por Bits/fragmentos (⚰️ a UI saiu; `applyEquipBuy` e preços ficam como regra pura testada, sem chamador); sorteio; Créditos acelerando equipamento; multiplicador próprio por peça.
+- **Efeitos colaterais a decidir (dono):** fragmentos agora só pagam "refazer" (3); `tal-com-01` (Etiqueta) e a peça da semana (`tal-com-07`) passaram a descontar o REFAZER, não mais a compra; a mochila não recusa prêmio de missão.
+- **Gatilho para rever:** se faltar/sobrar material (o total para as 9 peças no 5 é 90 de origem + 54 de apoio, ~1/dia por prédio), ajustar `UPGRADE_COST`, nunca o teto.

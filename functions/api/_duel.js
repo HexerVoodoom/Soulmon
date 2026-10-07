@@ -189,7 +189,7 @@ export function duelSide(save, opts = {}) {
   const bonus = combinedAttrBonus({
     talent: talentAttrBonus(state.talentPicks, bondLvl),
     // PR8: equipamento por slot (Nucleo ATK, Carapaca DEF, Rastro SPD), percentual, saneado do save; o teto de 5% e a SOMA dos tres.
-    equipment: equipAttrBonus(state.equipment),
+    equipment: equipAttrBonus(state.equipment, state.forge),
   });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
   const skills = state.soulmonSkills && typeof state.soulmonSkills === 'object' ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;

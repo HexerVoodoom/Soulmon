@@ -94,10 +94,10 @@ describe('o duelo usa o equipamento pelo canal de bonus POR ATRIBUTO, no teto un
 
   it('cada slot no seu canal', () => {
     const so = (slot, id) => canais(duelSide({ ...base, equipment: { owned: [id], equipped: { [slot]: id }, fragments: 0 } }).combatant);
-    expect(so('nucleo', 'eq-nucleo-t2').atk).toBeCloseTo(0.01, 9);
+    expect(so('nucleo', 'eq-nucleo-t2').atk).toBeCloseTo(0.011, 9);
     expect(so('nucleo', 'eq-nucleo-t2').def).toBeCloseTo(0, 12);
-    expect(so('carapaca', 'eq-carapaca-t2').def).toBeCloseTo(0.01, 9);
-    expect(so('rastro', 'eq-rastro-t2').spd).toBeCloseTo(0.01, 9);
+    expect(so('carapaca', 'eq-carapaca-t2').def).toBeCloseTo(0.011, 9);
+    expect(so('rastro', 'eq-rastro-t2').spd).toBeCloseTo(0.011, 9);
     expect(so('rastro', 'eq-rastro-t2').atk).toBe(0);
   });
   it('slot forjado vale 0; sem equipamento vale 0', () => {

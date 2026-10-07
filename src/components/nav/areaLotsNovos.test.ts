@@ -108,10 +108,10 @@ describe('o Ferreiro (07/10/2026): lote do Mercado para os equipamentos', () => 
     expect(lotNpcVoice('mercado', 'ferreiro', 'en-US').name).toContain('Mallo');
     expect(lotNpcVoice('mercado', 'ferreiro', 'pt-BR').name).toContain('Mallo');
   });
-  it('a folha do lote abre a EquipmentCard, e as Estatísticas não a montam mais', () => {
+  it('a folha do lote abre a ForgeCard, e as Estatísticas não a montam mais', () => {
     const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');
-    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && <EquipmentCard/);
-    expect(lerSrc('../StatsPage.tsx')).not.toMatch(/<EquipmentCard/);
+    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && <ForgeCard/);
+    expect(lerSrc('../StatsPage.tsx')).not.toMatch(/<ForgeCard/);
   });
 });
 

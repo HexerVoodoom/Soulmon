@@ -3044,3 +3044,12 @@ ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functio
 Nomes EN/PT, ícones (emoji pelado, nenhum igual aos de Bits/Emblemas/Créditos) e as redações do dia dos 16 materiais
 (`MATERIALS`, `questText`, determinístico por dia + prédio). Só a folha lazy `BuildingQuestList` importa daqui, para não pesar a
 entrada; a regra e a tabela prédio→material (`MATERIAL_BUILDING`) moram em `buildingQuests.ts`.
+
+## `src/utils/forge.ts` (07/10/2026)
+Folha pura do Ferreiro: `FORGE_PIECES` (peça → prédio → 2 materiais), `LEVEL_PCT`, `UPGRADE_COST`, `LEVEL_MIN_BOND`, `sanitizeForge`, `pieceLevel`/`pieceBonus`/`ownedPieceBonus` (bônus por atributo; quem soma e corta é `combinedAttrBonus`). Espelho: `functions/api/_forge.js`.
+
+## `src/utils/forgeActions.ts` (07/10/2026)
+Updaters puros e idempotentes: `applyForgeGrant` (1º resgate da missão do prédio), `upgradeRefusal`/`applyUpgrade`, `redoRefusal`/`applyRedo`.
+
+## `src/utils/forgeCopy.ts` (07/10/2026)
+Textos das recusas do Ferreiro (EN/PT); só a tela lazy os lê.

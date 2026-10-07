@@ -23,6 +23,7 @@ import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { DREAM_CATALOG } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
+import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS } from '../utils/forge';
 import { GATES } from '../utils/gates';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
@@ -337,8 +338,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Talentos e equipamento somam, no máximo, ${Math.round(COMBAT_BONUS_CAP * 100)}% de força em qualquer luta, e o equipamento só se compra com Bits que você ganhou jogando, sem sorteio. Créditos aceleram só o que não é combate, em até +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% sobre o ritmo grátis.`,
-              `Talents and equipment add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength in any fight, and equipment is bought only with Bits you earned by playing, with no draws. Credits speed up only what is not combat, by up to +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% over the free pace.`,
+              `Talentos e equipamento somam, no máximo, ${Math.round(COMBAT_BONUS_CAP * 100)}% de força em qualquer luta. Cada peça de equipamento chega no nível 1 pela missão de um prédio e se aprimora no Ferreiro até o nível ${FORGE_MAX_LEVEL}, com os materiais das missões; a cada nível você escolhe entre dois ganhos (refazer a escolha custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%. Sem sorteio. Créditos aceleram só o que não é combate, em até +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% sobre o ritmo grátis.`,
+              `Talents and equipment add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength in any fight. Each equipment piece arrives at level 1 through a building mission and is upgraded at the Blacksmith up to level ${FORGE_MAX_LEVEL}, with the materials missions give; at each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%. No draws. Credits speed up only what is not combat, by up to +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% over the free pace.`,
             )}
           </p>
           <p style={para}>

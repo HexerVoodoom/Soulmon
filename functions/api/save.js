@@ -15,6 +15,7 @@ import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
+import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { frameIdOrNull } from './_frames.js';
@@ -270,6 +271,7 @@ export async function onRequest({ request, env }) {
     // Equipamento (Combate v3 / PR8): item fora do catalogo, slot forjado e posse repetida sao DESCARTADOS peca a peca; os
     // fragmentos sao clampados. O bonus do duelo e recalculado daqui (`_duel.js`) e o teto de 5% limita um save forjado.
     if ('equipment' in state) state.equipment = sanitizeEquipment(state.equipment);
+    if ('forge' in state) state.forge = sanitizeForge(state.forge);
     if ('bitsOrigin' in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o; else delete state.bitsOrigin;

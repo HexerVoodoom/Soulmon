@@ -4,7 +4,9 @@
  *
  * Decisões do dono (§2.14 M3 e §2.26):
  *  · 3 slots, um por atributo: Núcleo → ATK, Carapaça → DEF, Rastro → SPD; 3 tiers por slot (9 itens).
- *  · Aquisição por LOJA DIRETA (Bits) ou FRAGMENTOS: sem sorteio, sem caixa, sem "chance". O tier é lapidação, nunca sorte.
+ *  · ⚰️ 07/10/2026: a AQUISIÇÃO por loja (Bits/fragmentos) saiu da tela — peça por MISSÃO e níveis no Ferreiro (`forge.ts`). As funções
+ *    de compra abaixo ficam como regra pura testada (e o legado `pct` por tier é só o piso de quem já comprou); nada na UI as chama.
+ *    Sem sorteio, sem caixa, sem "chance".
  *  · Só moeda GANHA jogando: o Bit que veio de Crédito não compra equipamento (`bitsOrigin.ts › earnedBits`). Créditos aceleram
  *    só o que não é combate; nunca equipamento nem % de combate.
  *  · O bônus é PERCENTUAL (um ponto plano no L1 vale +11,1% e estoura o teto) e entra no canal único de 5% (`combate/bonus.ts`):
@@ -20,6 +22,7 @@
 import { earnedBits, spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 import { combinedAttrBonus, type AttrBonus } from './combate/bonus';
 import { ranksOf } from './talents';
+import { ownedPieceBonus } from './forge';
 
 export type EquipSlot = 'nucleo' | 'carapaca' | 'rastro';
 export type EquipAttr = 'atk' | 'def' | 'spd';
@@ -89,12 +92,15 @@ export function sanitizeEquipment(raw: unknown): EquipmentState {
  * O bônus POR ATRIBUTO do que está equipado (frações). Já saneado: um slot forjado vale 0. É o que entra em
  * `combinedAttrBonus({ equipment })` (PvP).
  */
-export function equipAttrBonus(raw: unknown): AttrBonus {
+export function equipAttrBonus(raw: unknown, forge?: unknown): AttrBonus {
   const eq = sanitizeEquipment(raw);
   const out = { atk: 0, def: 0, spd: 0 };
   for (const slot of EQUIP_SLOTS) {
     const id = eq.equipped[slot];
-    if (id) out[SLOT_ATTR[slot]] += EQUIP_BY_ID.get(id)!.pct;
+    if (!id) continue;
+    // Ferreiro (07/10/2026): o valor da peça vem do NÍVEL e das escolhas (`forge.ts`); sem `forge`, vale o nível equivalente do tier.
+    const b = ownedPieceBonus(id, forge);
+    out.atk += b.atk; out.def += b.def; out.spd += b.spd;
   }
   return out;
 }
@@ -105,13 +111,13 @@ export function equipAttrBonus(raw: unknown): AttrBonus {
  * (`combatantAt`) já aplica DEF (o inimigo precisa de mais golpes) e SPD (o golpe sai mais cedo), sem mudar o motor.
  * Arena e Pesadelo seguem no canal escalar (`equipScalar`): não mudam.
  */
-export function dungeonAttrBonus(talentPve: number, raw: unknown): AttrBonus {
-  return combinedAttrBonus({ talent: { atk: talentPve }, equipment: equipAttrBonus(raw) });
+export function dungeonAttrBonus(talentPve: number, raw: unknown, forge?: unknown): AttrBonus {
+  return combinedAttrBonus({ talent: { atk: talentPve }, equipment: equipAttrBonus(raw, forge) });
 }
 
 /** O mesmo bônus como UM número (a soma dos três): é a parcela de equipamento do canal da fenda (`combinedBonus`). */
-export function equipScalar(raw: unknown): number {
-  const b = equipAttrBonus(raw);
+export function equipScalar(raw: unknown, forge?: unknown): number {
+  const b = equipAttrBonus(raw, forge);
   return b.atk + b.def + b.spd;
 }
 

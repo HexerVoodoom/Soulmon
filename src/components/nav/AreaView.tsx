@@ -45,7 +45,7 @@ import {
 const MercadoStallSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.MercadoStallSheet })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 // ⚒️ O Ferreiro (07/10/2026): abre a tela de equipamento do Combate v3 (PR8b), que saiu das Estatísticas. Lazy — a arte dos itens é sob demanda.
-const EquipmentCard = lazy(() => import('../EquipmentCard'));
+const ForgeCard = lazy(() => import('../ForgeCard'));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
 const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default: m.DueloSheet })));
@@ -288,7 +288,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} />
             )}
-            {open?.id === 'ferreiro' && <EquipmentCard language={language} />}
+            {open?.id === 'ferreiro' && <ForgeCard language={language} />}
           </Suspense>
         </AreaSheet>
       </AreaScene>

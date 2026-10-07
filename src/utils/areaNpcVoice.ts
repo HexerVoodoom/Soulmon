@@ -129,8 +129,8 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // preço, sem pressa e sem prometer efeito (L1..L12 da bíblia): o equipamento é do companheiro, a forja só dá forma.
   'mercado:ferreiro': {
     namePt: 'Mallo, o ferreiro', nameEn: 'Mallo, the blacksmith',
-    linePt: 'Cada peça sai da forja do tamanho de quem vai usar. Fique à vontade para olhar.',
-    lineEn: 'Every piece leaves the forge sized for whoever will wear it. Feel free to look.',
+    linePt: 'A peça chega crua e melhora com o material que você traz. Escolha o lado que quiser reforçar, sem pressa.',
+    lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
   },
   'arena:duelo': {
     namePt: 'Tuska, o campeão', nameEn: 'Tuska, the champion',

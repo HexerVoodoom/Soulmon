@@ -5144,6 +5144,8 @@ vindo do servidor).
 
 **Régua** (medida em 06/10/2026 sobre a `main` com o #232; `npx vitest run src/utils/arena.v3.test.ts src/utils/dungeon.v3.test.ts`, N = 3200): Arena, duração mediana R1–R5 de 19,7 a 27,6 s; vitória por build 64,0–68,6% (spread 4,6pp); 14 células família × área 60,3–72,3% (12,1pp); habilidade `nenhuma` 48,4% × `boa` 72,0% (23,6pp); torcida sozinha no teto +24,8pp (`nenhuma`) e +17,9pp (`boa`). Masmorra: andares limpos 83,5–89,6% (6,1pp). Detalhe e alternativas descartadas: REGISTRO §24.6.
 
+- **Ferreiro: equipamento por missão e aprimoramento (07/10/2026, REGISTRO §26).** Dono `src/utils/forge.ts` (tabelas, bônus por nível) + `forgeActions.ts` (conceder, aprimorar, refazer; updaters puros e idempotentes); espelho `functions/api/_forge.js`. A peça de nível 1 vem do 1º resgate da missão do prédio de origem; níveis 2–5 custam materiais por prédio e Vínculo 2/3/4/5; cada nível escolhe A (atributo do slot) ou B (vizinho); refazer = 150 Bits ganhos (ou 3 fragmentos). Uma peça no 5 = no máximo 1,5%; o teto único de 5% é o de sempre. A compra por Bits saiu da tela. Peça comprada antes vale o nível equivalente.
+
 **O que NÃO faz.** Nenhum caminho pago dá talento, ponto, portão ou equipamento; não há sorteio pago; a torcida não vale Crédito; nada disto cobra o jogador (`copy.semFomo`).
 
 **Dono.** `src/utils/combate/` (motor), `src/utils/talents.ts`, `src/utils/equipment.ts`, `src/utils/bitsOrigin.ts`, `src/utils/gates.ts`, `src/utils/arena.ts`, `functions/api/_combate.js`, `_duel.js`, `_talents.js`, `_equipment.js`, `_gates.js`. **Onde a UI mostra:** StatsPage (talentos, "Vínculo N"), Ferreiro do Mercado (`EquipmentCard`, desde 07/10/2026), Arena, Duelo, aba de Créditos.
