@@ -60,6 +60,8 @@ import { availableFrames, resolveEquippedFrame, type FrameContext } from '../uti
 import { TOURNAMENT_NPCS, npcSide, type TournamentNpc } from '../utils/tournamentNpcs';
 import { tournamentShopItems } from '../utils/mercadoCatalog';
 import type { WeeklyMission, WeeklyMissionId } from '../utils/weeklyMissions';
+import { questMarks } from '../utils/questMarks';
+import { MissionMark } from './play/MissionMark';
 import {
   CurrencyBalance, ShopShelf, ShopStatus, WeeklyMissionList, useShopFlash,
   type ShopActions, type ShopOwnership,
@@ -79,10 +81,9 @@ import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { visualElementFor } from '../utils/combatFx';
 import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
-import { QUEST_ART, TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
+import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
-import { PixelIcon } from './ui/PixelIcon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
@@ -262,6 +263,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
   const [tab, setTab] = useState<'arena' | 'missions' | 'shop'>(initialTab ?? 'arena');
+  /** "!" / "?" na aba Missões (`utils/questMarks.ts`); sem missão pendente o glifo esmaece. */
+  const marcaSemanal = questMarks({ passeio: null, weekly: weeklyMissions ?? [], missionProgress: {}, ownedBackgrounds: [] }).torneio;
   /** A folha das faixas (antiga aba "Faixa") — abre pelo indicador do título. */
   const [tiersOpen, setTiersOpen] = useState(false);
   const { flash, say } = useShopFlash();
@@ -596,7 +599,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             >
               {/* 04/10/2026: a aba Missões usa a arte de quest do dono (`QUEST_ART`). */}
               {t.key === 'missions'
-                ? <PixelIcon src={QUEST_ART} size={24} />
+                ? <MissionMark kind={marcaSemanal ?? 'ready'} size={24} isPt={isPt} style={marcaSemanal ? undefined : { opacity: 0.6 }} />
                 : <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />}
             </button>
           );

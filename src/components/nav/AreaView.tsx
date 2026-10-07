@@ -19,6 +19,7 @@ import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import { missionMark } from '../../utils/travessiasSave';
+import { questMarks } from '../../utils/questMarks';
 import type { CadernoEntry } from '../../utils/cadernoSave';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import {
@@ -215,6 +216,12 @@ export function AreaView(props: AreaViewProps) {
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) onInitialSheetConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const marcas = questMarks({
+    passeio: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()),
+    weekly: props.tournament?.weeklyMissions ?? [],
+    missionProgress: ownership.missionProgress ?? {},
+    ownedBackgrounds: ownership.ownedBackgrounds ?? [],
+  });
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
@@ -240,7 +247,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.mercado}
-        lots={gated(lots.map(l => ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, ...(l.id === 'conquistas' ? { mark: marcas.conquistas } : {}), art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet
@@ -285,7 +292,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, ...(l.id === 'torneio' ? { mark: marcas.torneio } : {}), art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
@@ -330,8 +337,8 @@ export function AreaView(props: AreaViewProps) {
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
         ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => setSheet(l.id),
-        // "!" / "?" sobre o Passeio (04/10/2026): missão do dia disponível / em andamento.
-        ...(l.id === 'passeio' ? { mark: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()) } : {}),
+        // "!" / "?" sobre o Passeio (`utils/questMarks.ts`): missão do dia disponível.
+        ...(l.id === 'passeio' ? { mark: marcas.passeio } : {}),
       }))
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => setSheet(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;

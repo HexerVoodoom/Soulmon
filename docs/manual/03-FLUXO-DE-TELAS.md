@@ -167,9 +167,11 @@ null` e `language: Language` (agora obrigatória):
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
 | `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Bastia — [§4.26](#guilda-tela)) |
 
-**Passeio — missões do dia (04/10/2026).** O lote do Passeio leva um marcador de missão
-("!" = há três missões do dia para escolher; "?" = uma escolhida, esperando o "Fiz"; nada
-depois do "Fiz"). Dentro da folha: os destinos, e em Travessias os 3 cards do dia (postal da
+**Passeio — missões do dia (04/10/2026).** O lote do Passeio leva a marca de missão
+("!" = missão do dia por fazer ou em andamento; nada depois do "Fiz"). **Marcas de missão
+(07/10/2026, `utils/questMarks.ts`):** o card de missões saiu da Home; todas as missões moram na
+folha do ícone do canto direito, e cada local (ícone, Passeio, Torneio, Conquistas) mostra "!"
+com missão disponível e "?" com missão pronta — com as duas, só o "?". Dentro da folha: os destinos, e em Travessias os 3 cards do dia (postal da
 região, título, área) — tocar abre o ato, a versão pequena e "Escolher esta"; escolhida, vira o
 card da missão com "Fiz" e "Recuar". Depois do "Fiz": "esta noite o Soulmon viaja para
 <região>" e, no relatório do dia seguinte, a historinha da viagem. O total ("Marcos de

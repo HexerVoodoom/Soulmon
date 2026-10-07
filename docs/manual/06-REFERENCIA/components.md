@@ -317,19 +317,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/nav/MissionsLink.tsx`
-**Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest amarelo (`gold`): "!" com missões para escolher, "?" com uma escolhida ou já feita. Parado, sem número e sem som.
-**Props principais:** `mark: MissionMark` (de `missionMark`), `label`, `onClick`.
+**Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
+**Props principais:** `mark: QuestMark` (de `questMarks().corner`), `markLabel`, `label`, `onClick`.
 **Exports:** `MissionsLink(props)`.
 **Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
 **Régua:** `src/styles/iconScale.contract.test.ts` (glifo 24).
 
-### `src/components/home/HomeMissionsCard.tsx`
-**Dono de:** o card de missões na Home (carregado por `React.lazy`); só exibe o que `homeMissions` calcula e abre a folha de Missões.
-**Exports:** `default HomeMissions({ language, input, onOpen })`, `HomeMissionsCard({ language, daily, weekly, onOpen })`.
-**Chamado por:** `src/App.tsx`.
-
 ### `src/components/nav/MissionsSheet.tsx`
-**Dono de:** a lista de missões aberta pelo ícone da Home — a MESMA folha do Passeio (`PasseioSheet`, lazy) dentro de um `ModalSheet`. Regra única, dois lugares: nada daqui escreve estado que o Passeio não escreva.
+**Dono de:** a lista de missões aberta pelo ícone da Home — a MESMA folha do Passeio (`PasseioSheet`, lazy) dentro de um `ModalSheet`, mais as missões da semana (`WeeklyMissionList`, com o resgate) e as Conquistas (`ConquistasSheet`) — TODAS as missões num lugar só; o card de missões saiu da Home (07/10/2026). Cada seção leva a marca do seu local. Nada daqui escreve estado que o Passeio/Torneio não escrevam.
 **Props principais:** `open`, `onClose`, `language`, `crossings`, `onChange` (função pura sobre `prev`), `todayKey`, `seed`.
 **Exports:** `MissionsSheet(props)`.
 **Chamado por:** `src/App.tsx`.

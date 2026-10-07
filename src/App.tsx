@@ -16,7 +16,7 @@ import {
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
-import type { HomeMission } from './utils/homeMissions';
+import { questMarks, questMarkLabel } from './utils/questMarks';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
@@ -528,7 +528,6 @@ function PostponeNudgeSheet({
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
-const HomeMissions = lazy(() => import('./components/home/HomeMissionsCard'));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
@@ -5298,14 +5297,14 @@ export default function App() {
     });
   }, [gameState.weeklyMissions, gameState.playerDayTz]);
 
-  /** Missão da Home → DIRETO ao lugar dela (ajuste do dono, 05/10/2026). */
-  const abrirMissaoDaHome = useCallback((m: HomeMission) => {
-    const lote = m.kind === 'passeio' ? 'passeio' : m.kind === 'semanal' ? 'torneio' : null;
-    if (!lote) return document.getElementById('lista-do-dia')?.scrollIntoView({ behavior: 'smooth' });
-    setMissionSheet(lote);
-    setTournamentTab(lote === 'torneio');
-    goTo(areaView(lote === 'passeio' ? 'exploracao' : 'arena'));
-  }, [goTo]);
+  /** As marcas "!" / "?" de todo local de missão (`utils/questMarks.ts`, dono da regra). */
+  const marcasDeMissao = useMemo(() => questMarks({
+    passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
+    weekly: missoesDaSemana,
+    missionProgress,
+    ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [crossings, gameState.playerDayTz, gameState.ownedBackgrounds, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Paga os Emblemas de uma missão pronta. `claimWeekly` é idempotente e
    *  devolve 0 se já estava paga — pagar duas vezes é bug de economia. */
@@ -6683,22 +6682,8 @@ export default function App() {
                   conclusão (`jaConcluiuAlgo`) — célula inerte, não card
                   ausente. */}
 
-              {/* ── MISSÕES (ajuste do dono, 05/10/2026): card fixo no topo da
-                  lista, diárias primeiro e semanais do Torneio depois. Tocar leva
-                  ao lugar da missão. Nada novo é pago (`utils/homeMissions.ts`). */}
-              <Suspense fallback={null}>
-              <HomeMissions
-                language={language}
-                input={{
-                  passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
-                  meta: { done: dailyDone, goal: dailyTotal },
-                  tasks: gameState.tasks ?? [],
-                  weekly: missoesDaSemana,
-                  now: new Date(),
-                }}
-                onOpen={abrirMissaoDaHome}
-              />
-              </Suspense>
+              {/* MISSÕES saíram da Home (07/10/2026): moram só no ícone do canto
+                  direito (`MissionsLink` → `MissionsSheet`), com "!"/"?". */}
               <div id="lista-do-dia" aria-hidden="true" />
 
               {/* ── A LISTA DO DIA (canvas Atividades, §20) ─────────────────
@@ -6937,7 +6922,8 @@ export default function App() {
       )}
       {currentView === 'home' && (
         <MissionsLink
-          mark={missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now())}
+          mark={marcasDeMissao.corner}
+          markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
           label={language === 'pt-BR' ? 'Missões' : 'Missions'}
           onClick={() => setMissionsOpen(true)}
         />
@@ -6953,6 +6939,10 @@ export default function App() {
         onChange={handleCrossings}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
         seed={saveId}
+        weekly={missoesDaSemana}
+        onClaimWeekly={resgatarMissao}
+        missionProgress={missionProgress}
+        marks={marcasDeMissao}
       /></Suspense>}
       {currentView === 'map' && (
         <CornerLink
