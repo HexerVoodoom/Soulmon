@@ -3038,3 +3038,9 @@ Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forD
 `MATERIALS` (1 por prédio), `MATERIAL_CAP`, `MATERIAL_PER_QUEST`, `QUEST_BUILDINGS`. `questMarks.ts`
 ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
 (`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).
+
+## `src/utils/buildingQuestsCopy.ts` (07/10/2026)
+
+Nomes EN/PT, ícones (emoji pelado, nenhum igual aos de Bits/Emblemas/Créditos) e as redações do dia dos 16 materiais
+(`MATERIALS`, `questText`, determinístico por dia + prédio). Só a folha lazy `BuildingQuestList` importa daqui, para não pesar a
+entrada; a regra e a tabela prédio→material (`MATERIAL_BUILDING`) moram em `buildingQuests.ts`.
