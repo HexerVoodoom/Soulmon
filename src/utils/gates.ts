@@ -99,7 +99,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'mercado.conquistas': { minBond: 1 },
   'mercado.decoracao': { minBond: 2 },
   'mercado.background': { minBond: 3 },
-  // O Ferreiro (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
+  // O Soulsmith (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
   // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
   'mercado.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },

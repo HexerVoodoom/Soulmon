@@ -1,5 +1,5 @@
 /**
- * PARIDADE do Ferreiro entre o app (`src/utils/forge.ts`) e o servidor (`_forge.js`), a validacao do campo `forge` no `save.js` e o canal
+ * PARIDADE do Soulsmith entre o app (`src/utils/forge.ts`) e o servidor (`_forge.js`), a validacao do campo `forge` no `save.js` e o canal
  * de bonus do duelo (07/10/2026). Mudou tabela ou formula de um lado, mude os dois.
  */
 import { describe, it, expect } from 'vitest';

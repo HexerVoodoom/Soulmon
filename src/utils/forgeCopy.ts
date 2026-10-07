@@ -1,5 +1,5 @@
 /**
- * O FERREIRO — os TEXTOS (EN primeiro, PT-BR depois), separados de `forge.ts` porque só a `ForgeCard` (`lazy`) os lê e o orçamento
+ * O SOULSMITH — os TEXTOS (EN primeiro, PT-BR depois), separados de `forge.ts` porque só a `ForgeCard` (`lazy`) os lê e o orçamento
  * de bytes pesa no chunk de entrada. Vocabulário da NARRATIVA: "Vínculo" para a criatura, "nível" só da PEÇA; sem cobrança, sem pressa,
  * sem palavra de sorte (`copy.semFomo`).
  */

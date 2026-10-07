@@ -1368,7 +1368,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/TalentTree.render.test.tsx`.
 
 ### `src/components/ForgeCard.tsx`
-O Ferreiro (07/10/2026, lazy): materiais, 3 slots, 9 peças com nível, Aprimorar (custo e saldo; recusa em texto), modal de escolha A/B e Refazer escolha (Bits ganhos/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`.
+O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus, custo e saldo em chips, botão Upgrade; recusa em texto), modal de escolha A/B e Refazer escolha (Bits ganhos/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`.
 **Régua:** `src/components/ForgeCard.render.test.tsx`.
 
 

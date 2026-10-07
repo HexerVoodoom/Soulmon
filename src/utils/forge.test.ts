@@ -1,5 +1,5 @@
 /**
- * O Ferreiro (07/10/2026): tabelas, bônus por nível, migração sem confisco, concessão por missão, aprimoramento e refazer a escolha.
+ * O Soulsmith (07/10/2026): tabelas, bônus por nível, migração sem confisco, concessão por missão, aprimoramento e refazer a escolha.
  * Puro: sem React. A fiação com a tela está em `ForgeCard.render.test.tsx`; a paridade com o servidor, em `forge.parity.test.js`.
  */
 import { describe, it, expect } from 'vitest';
@@ -80,7 +80,7 @@ describe('as tabelas', () => {
   });
 });
 
-describe('migração sem confisco (peça comprada antes do Ferreiro)', () => {
+describe('migração sem confisco (peça comprada antes do Soulsmith)', () => {
   it('cada tier mantém ao menos o que valia (0,5/1,0/1,5%), derivado na leitura, sem gravar nada', () => {
     FORGE_PIECES.forEach((p) => {
       const b = ownedPieceBonus(p.id, undefined);

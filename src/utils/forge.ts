@@ -1,12 +1,12 @@
 /**
- * O FERREIRO — equipamento por MISSÃO e APRIMORAMENTO (decisão do dono, 07/10/2026). Dono único das tabelas e do bônus por nível;
+ * O SOULSMITH — equipamento por MISSÃO e APRIMORAMENTO (decisão do dono, 07/10/2026). Dono único das tabelas e do bônus por nível;
  * espelho no servidor: `functions/api/_forge.js`, travado por `forge.parity.test.js`.
  *
  * A regra (o que MUDOU desde a compra por Bits, REGISTRO §24 nova linha):
  *  · NÍVEL 1 vem de MISSÃO: cada peça tem UM prédio de origem (`FORGE_PIECES[].building`) e é concedida ao resgatar a missão
  *    daquele prédio pela 1ª vez — o resgate já exige o prédio aberto por Vínculo (`buildingQuests.ts › claimBuildingQuest`).
  *    Escolhido o resgate (e não "cumprir a missão do dia") porque é o MESMO ponto único que já paga o material: um gatilho só.
- *  · NÍVEIS 2–5 vêm do APRIMORAMENTO no Ferreiro, pagos com MATERIAIS (os de prédio, `buildingQuests.materials`). Cada nível pede
+ *  · NÍVEIS 2–5 vêm do APRIMORAMENTO no Soulsmith, pagos com MATERIAIS (os de prédio, `buildingQuests.materials`). Cada nível pede
  *    1–2 materiais e quantidades crescentes (`UPGRADE_COST`); cada nível exige um Vínculo mínimo (`LEVEL_MIN_BOND`).
  *  · A cada aprimoramento a pessoa ESCOLHE entre 2 opções (A = atributo do slot, B = o atributo vizinho, `ALT_ATTR`). A escolha é
  *    REFAZÍVEL pagando Bits GANHOS (nunca Créditos, nunca `paidLeft`) ou fragmentos da Masmorra; o material não volta.
@@ -111,7 +111,7 @@ export function sanitizeForge(raw: unknown): ForgeState {
   return Object.keys(levels).length === 0 ? EMPTY_FORGE : { levels, picks };
 }
 
-/** O nível da peça: 0 se não é possuída; o registro, ou o nível equivalente do tier (peça comprada antes do Ferreiro). */
+/** O nível da peça: 0 se não é possuída; o registro, ou o nível equivalente do tier (peça comprada antes do Soulsmith). */
 export function pieceLevel(id: string, forge: unknown, owned: boolean): number {
   const piece = PIECE_BY_ID.get(id);
   if (!piece || !owned) return 0;

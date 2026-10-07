@@ -125,10 +125,10 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Cada placa do meu casco lembra um trecho atravessado.',
     lineEn: 'Each plate on my shell remembers a stretch crossed.',
   },
-  // ⚒️ 07/10/2026: o Ferreiro do Mercado — Mallo (o busto/nome do banco `EXTRA_NPC_VOICE.ferreiro`). Fala descreve o ofício, sem
+  // ⚒️ 07/10/2026: o Soulsmith do Mercado — Mallo (o busto/nome do banco `EXTRA_NPC_VOICE.ferreiro`). Fala descreve o ofício, sem
   // preço, sem pressa e sem prometer efeito (L1..L12 da bíblia): o equipamento é do companheiro, a forja só dá forma.
   'mercado:ferreiro': {
-    namePt: 'Mallo, o ferreiro', nameEn: 'Mallo, the blacksmith',
+    namePt: 'Mallo, o Soulsmith', nameEn: 'Mallo, the Soulsmith',
     linePt: 'A peça chega crua e melhora com o material que você traz. Escolha o lado que quiser reforçar, sem pressa.',
     lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
   },

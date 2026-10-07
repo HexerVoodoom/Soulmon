@@ -1,5 +1,5 @@
 /**
- * O FERREIRO — as AÇÕES puras (conceder, aprimorar, refazer a escolha). Rodam DENTRO de um updater do `setGameState` (footgun 6):
+ * O SOULSMITH — as AÇÕES puras (conceder, aprimorar, refazer a escolha). Rodam DENTRO de um updater do `setGameState` (footgun 6):
  * cada uma reconfere a recusa sobre o `prev` que recebe e devolve a MESMA referência quando não muda nada (idempotente: dois toques
  * no mesmo lote não pagam duas vezes). As tabelas e o bônus moram em `forge.ts`; o canal único de 5% é `combate/bonus.ts`.
  *
