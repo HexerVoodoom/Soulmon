@@ -1,5 +1,5 @@
 /**
- * O Soulsmith (Mallo): as peças de equipamento, o nível de cada uma e o aprimoramento com MATERIAIS dos prédios (carregado `lazy`,
+ * O Soulsmith (Vitra): as peças de equipamento, o nível de cada uma e o aprimoramento com MATERIAIS dos prédios (carregado `lazy`,
  * com a arte sob demanda). Decisão do dono (07/10/2026): o nível 1 vem da missão do prédio de origem; os níveis 2–5 se aprimoram aqui,
  * e a cada um a pessoa ESCOLHE entre duas opções (A = atributo do slot, B = o vizinho). A escolha é refazível com Bits GANHOS (ou
  * fragmentos). Todas as regras vêm de `utils/forge.ts` e `utils/forgeActions.ts`; a tela só mostra e chama os puros, e o mesmo
