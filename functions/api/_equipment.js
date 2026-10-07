@@ -39,6 +39,11 @@ export function sanitizeEquipment(raw) {
   for (const slot of EQUIP_SLOTS) {
     const id = has(eq, slot) ? eq[slot] : undefined;
     if (typeof id === 'string' && owned.includes(id) && EQUIP[id].slot === slot) equipped[slot] = id;
+    // Espelho do cliente: peca possuida esta SEMPRE equipada (slot sem equipada volta ao tier mais alto possuido).
+    if (!equipped[slot]) {
+      const best = owned.filter((o) => EQUIP[o].slot === slot).sort((a, b) => Number(b.slice(-1)) - Number(a.slice(-1)))[0];
+      if (best) equipped[slot] = best;
+    }
   }
   const f = typeof r.fragments === 'number' && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
   return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };

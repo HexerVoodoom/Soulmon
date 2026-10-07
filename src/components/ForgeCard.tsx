@@ -13,7 +13,7 @@ import { isDemoMode, demoRefusalText } from '../utils/demoMode';
 import { bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
 import {
-  sanitizeEquipment, applyEquip, applyUnequip, backpackHasRoom, type EquipSlot,
+  sanitizeEquipment, applyEquip,
 } from '../utils/equipment';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { earnedBits } from '../utils/bitsOrigin';
@@ -131,14 +131,6 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
   };
 
   const equipar = (id: string) => { setAviso(null); setGameState((prev) => applyEquip(prev, id)); };
-  const tirar = (slot: EquipSlot) => {
-    setAviso(null);
-    setGameState((prev) => {
-      const r = applyUnequip({ equipment: prev.equipment, talentPicks: sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)) }, slot);
-      return r.equipment === prev.equipment ? prev : { ...prev, equipment: r.equipment };
-    });
-    if (!backpackHasRoom(eq, picks)) setAviso(isPt ? 'A mochila está cheia. Equipar uma peça no lugar de outra não ocupa espaço novo.' : 'The pack is full. Equipping a piece in place of another takes no new room.');
-  };
 
   const custoTexto = (piece: ForgePiece, to: number) => upgradeCost(piece, to).map((c) => ({ m: matOf(c.material), n: c.n, have: stockOf(gameState.buildingQuests, c.material) }));
 
@@ -179,16 +171,12 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
           </span>
           {equipado && (
             <span className="sm2-stats-s" data-equipped-badge style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
-              <span aria-hidden="true">✓ </span>{isPt ? 'Equipado' : 'Equipped'}
+              <span aria-hidden="true">✓ </span>{isPt ? 'Parte da sua alma' : 'Part of your soul'}
             </span>
           )}
           {possui && !equipado && (
             <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-equip-btn={piece.id} onClick={() => equipar(piece.id)}
               aria-label={isPt ? `Equipar ${nome}` : `Equip ${nome}`}>{isPt ? 'Equipar' : 'Equip'}</button>
-          )}
-          {equipado && (
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-equip-unequip={piece.slot} onClick={() => tirar(piece.slot)}
-              aria-label={isPt ? `Tirar ${nome} do slot` : `Take ${nome} off the slot`}>{isPt ? 'Tirar' : 'Unequip'}</button>
           )}
         </div>
         {!possui && <span className="sm2-stats-s">{isPt ? `Vem da missão de ${origem}.` : `Comes from the ${origem} mission.`}</span>}

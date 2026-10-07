@@ -4,10 +4,11 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import * as require_equipment from './equipment';
 import {
   EQUIP_CATALOG, EQUIP_BY_ID, EQUIP_SLOTS, SLOT_ATTR, TIER_PCT, TIER_BITS, TIER_FRAGMENTS, FRAGMENTS_MAX, EMPTY_EQUIPMENT,
   sanitizeEquipment, equipAttrBonus, equipScalar, equipPriceDiscount, fragmentGain, discounted, equipBuyRefusal, applyEquipBuy,
-  applyEquip, applyUnequip, addFragments, spendBits, equipPrice, COMMERCE_GAIN_CAP, PRICE_STEP,
+  applyEquip, addFragments, spendBits, equipPrice, COMMERCE_GAIN_CAP, PRICE_STEP,
   type EquipmentState,
 } from './equipment';
 import {
@@ -141,7 +142,7 @@ describe('3. o save: posse e slot saneados, peça a peça', () => {
       fragments: 1e12,
     });
     expect(r.owned).toEqual(['eq-nucleo-t1', 'eq-rastro-t2']);
-    expect(r.equipped).toEqual({ rastro: 'eq-rastro-t2' }); // nucleo forjado (item do Rastro) e carapaca (não possuída) caíram
+    expect(r.equipped).toEqual({ nucleo: 'eq-nucleo-t1', rastro: 'eq-rastro-t2' }); // nucleo forjado (item do Rastro) e carapaca (não possuída) caíram
     expect(r.fragments).toBe(FRAGMENTS_MAX);
     for (const lixo of [null, undefined, 3, 'x', [], { owned: 'eq-nucleo-t1' }, { fragments: NaN }, { fragments: -5 }]) {
       expect(sanitizeEquipment(lixo), JSON.stringify(lixo)).toEqual(expect.objectContaining({ fragments: 0 }));
@@ -217,9 +218,19 @@ describe('4. só moeda GANHA compra equipamento; Crédito acelera só o que não
       const trocado = applyEquip(r2.ok ? r2.state : r.state, 'eq-rastro-t2');
       expect(trocado.equipment!.equipped.rastro).toBe('eq-rastro-t2');
       expect(trocado.equipment!.owned).toContain('eq-rastro-t1');
-      expect(applyUnequip(trocado, 'rastro').equipment!.equipped).toEqual({});
+      expect('applyUnequip' in (require_equipment ?? {})).toBe(false); // não existe desequipar
       expect(applyEquip(trocado, 'eq-nucleo-t3')).toBe(trocado); // não possuído: nada muda
     }
+  });
+
+  it('Soulsmith: peça possuída está sempre equipada; save antigo com slot "tirado" é normalizado (idempotente, sem perder peça)', () => {
+    const velho = { owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-rastro-t1'], equipped: {}, fragments: 7 };
+    const n = sanitizeEquipment(velho);
+    expect(n.equipped).toEqual({ nucleo: 'eq-nucleo-t2', rastro: 'eq-rastro-t1' });
+    expect(n.owned).toEqual(velho.owned);
+    expect(n.fragments).toBe(7);
+    expect(sanitizeEquipment(n)).toEqual(n);
+    expect(sanitizeEquipment({ owned: ['eq-nucleo-t1', 'eq-nucleo-t2'], equipped: { nucleo: 'eq-nucleo-t1' } }).equipped).toEqual({ nucleo: 'eq-nucleo-t1' });
   });
 
   it('addFragments soma, respeita o teto e ignora lixo', () => {

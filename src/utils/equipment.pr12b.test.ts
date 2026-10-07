@@ -9,7 +9,7 @@ import { resolve } from 'node:path';
 import {
   EQUIP_CATALOG, BACKPACK_BASE, MISSION_BITS_STEP, WEEKLY_DISCOUNT, COMMERCE_GAIN_CAP, PRICE_STEP, TIER_BITS,
   backpackCapacity, backpackUsed, backpackHasRoom, missionBitsGain, weeklyDiscountItem, weeklyDiscountFor,
-  equipBuyRefusal, applyEquipBuy, applyEquip, applyUnequip, equipPrice, discounted, type EquipmentState,
+  equipBuyRefusal, applyEquipBuy, applyEquip, equipPrice, discounted, type EquipmentState,
 } from './equipment';
 import { TALENT_BY_ID, isPickable, sanitizeTalentPicks, talentBonus, talentAttrBonus, talentCheerScale } from './talents';
 import { TALENT_COPY } from './talentCopy';
@@ -73,15 +73,6 @@ describe('2. tal-com-04: a mochila', () => {
     const trocou = applyEquip(s, 'eq-nucleo-t3');
     expect(trocou.equipment.owned).toHaveLength(9);
     expect(backpackUsed(trocou.equipment)).toBe(6);
-    expect(applyUnequip(s, 'nucleo')).toBe(s); // tirar não cabe (cheia): o mesmo estado
-    expect(applyUnequip({ ...s, talentPicks: rep('tal-com-04', 3) }, 'nucleo')).toEqual({ ...s, talentPicks: rep('tal-com-04', 3) });
-  });
-  it('tirar do slot vai para a mochila quando cabe', () => {
-    const s = { equipment: eqOf({ nucleo: 'eq-nucleo-t1' }), talentPicks: [] as string[] };
-    const r = applyUnequip(s, 'nucleo');
-    expect(r.equipment!.equipped).toEqual({});
-    expect(backpackUsed(r.equipment)).toBe(1);
-    expect(backpackHasRoom(r.equipment, [])).toBe(true);
   });
   it('compra recusada não debita nada', () => {
     const s = { gamePoints: 99999, equipment: eqOf(T1, ['eq-nucleo-t2', 'eq-carapaca-t2', 'eq-rastro-t2']), talentPicks: [] as string[] };
