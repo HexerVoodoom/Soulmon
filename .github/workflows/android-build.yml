@@ -67,6 +67,12 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          # O default da action (`tools platform-tools`) pede o pacote legado
+          # `tools`, que o sdkmanager 16.0 do runner nao encontra mais ->
+          # "Failed to find package 'tools'" e exit 1. O Gradle baixa o que
+          # precisar (platforms/build-tools) sozinho.
+          packages: ''
 
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses || true
