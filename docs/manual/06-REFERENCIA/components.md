@@ -609,6 +609,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'EvolutionCeremony.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** o botão de saída é "Seguimos juntos"/"We keep going together" desde `84ae4937` (21/09/2026, copy §3.2) — a MESMA saída relacional do `MilestoneCeremony`. ⚠️ o `CLAUDE.md` (seção "DUAS FILAS") registra que esta cerimônia (z-500) chegou a abrir junto do `EvolveTaskModal`, que reaparecia por baixo cobrando "crie mais atividades" quando ela fechava — achado na auditoria de 06/09/2026, corrigido pela fila de intersticiais declarada no `App.tsx`.
 
+### `src/components/EvolutionLight.tsx`
+**Dono de:** a luz PROCEDURAL da cerimônia de evolução (07/10/2026, no lugar do PNG `gain-evolution-burst`): canvas 2D com raios em duas camadas que giram e pulsam, halo que respira, flash de entrada com easing e partículas subindo, cores lidas do tema do visor (`--sm2-viewport-ink`, `--sm2-primary-fill`), teto de ~60 fps. Sem asset; em `prefers-reduced-motion` a cerimônia nem o monta (fica o quadro parado antes → depois).
+**Props principais:** `size`.
+**Exports:** `EvolutionLight({ size })`.
+**Chamado por:** `src/components/EvolutionCeremony.tsx`.
+**Régua:** `src/components/EvolutionCeremony.render.test.tsx`.
+
 ### `src/components/EvolutionPath.tsx`
 **Dono de:** a página de Evolução — a árvore por galho, o cadeado `evolutionLocked`, a cerimônia manual, o spoiler-guard de formas futuras e o desempate por ritmo de cuidado.
 **Props principais:** `EvolutionPathProps` (arquivo de 1179 linhas — `wc -l src/components/EvolutionPath.tsx`, 10/09/2026, corrigido de "1180" por doc-verificador; props cobrem estágio atual, galhos, `unlockedEvolutions`, sprites por forma, idioma e os callbacks de evolução/cadeado — ver o corpo a partir da interface). **`incubating?`** (WP4.29, `8be8f9c5`/`355959b4`, D-G8c): com a barra cheia e a forma incubando o toque NÃO evolui (`evoluiNoToque` exige `!incubating`), a frase vira "A próxima forma está tomando corpo. Leva um tempo — volte quando quiser, ela espera por você." (vem antes do cadeado) e o rótulo do visor diz o mesmo em vez de prometer um gesto que o `handleEvolve` recusaria.
