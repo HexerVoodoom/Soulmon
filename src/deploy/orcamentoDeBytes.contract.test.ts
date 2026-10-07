@@ -124,7 +124,11 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // (estado, resgate idempotente, marcas e a higienização do load, que não dá para `lazy`), a fiação mínima no `App`/`AreaView`
   // e o campo no `questMarks`. Nomes, ícones e textos dos 16 materiais (`buildingQuestsCopy.ts`) e a lista (`BuildingQuestList`)
   // ficam atrás de import dinâmico, fora da entrada.
-  'index.js': 599_121,
+  // 07/10/2026 (rodada de ajustes do dono): 599_121 → 607_559 (+8,2 KB) — a decisão pura de permissão de notificação e a fiação
+  // da primeira abertura/toggle no `App` (`notificationPermission.ts`), o menu de missões em Hoje/Esta semana, o selo de nível e
+  // o `CompanionHUD`/Mochila com materiais, o `pendingPoopEvent` e o glifo `backpack`. A luz da evolução (`EvolutionLight`,
+  // canvas) e a tela do Soulsmith ficam atrás de `lazy`; o PNG do sun burst saiu.
+  'index.js': 607_559,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
