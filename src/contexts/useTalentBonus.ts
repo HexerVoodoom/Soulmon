@@ -15,8 +15,9 @@ export function useTalentBonus(scope: 'pve' | 'nightmare'): number {
   const xp = ctx?.gameState.totalXP;
   const picks = ctx?.gameState.talentPicks;
   const equipment = ctx?.gameState.equipment;
+  const forge = ctx?.gameState.forge;
   // PR8: o equipamento entra aqui (a soma dos três slots), pelo MESMO canal e no MESMO teto de 5% do talento.
-  return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment) }), [picks, xp, scope, equipment]);
+  return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment, forge) }), [picks, xp, scope, equipment, forge]);
 }
 
 /** PR12a (§2.28 B) — o bônus do jogador na MASMORRA: talento de PvE no ATK + equipamento em ATK/DEF/SPD, um teto de 5% na soma. */
@@ -25,7 +26,8 @@ export function useDungeonBonus(): AttrBonus {
   const xp = ctx?.gameState.totalXP;
   const picks = ctx?.gameState.talentPicks;
   const equipment = ctx?.gameState.equipment;
-  return useMemo(() => dungeonAttrBonus(talentBonus(picks, bondLevelFor(xp ?? 0), 'pve'), equipment), [picks, xp, equipment]);
+  const forge = ctx?.gameState.forge;
+  return useMemo(() => dungeonAttrBonus(talentBonus(picks, bondLevelFor(xp ?? 0), 'pve'), equipment, forge), [picks, xp, equipment, forge]);
 }
 
 export interface PvpTalents {
@@ -44,11 +46,12 @@ export function usePvpTalents(): PvpTalents {
   const xp = ctx?.gameState.totalXP;
   const picks = ctx?.gameState.talentPicks;
   const equipment = ctx?.gameState.equipment;
+  const forge = ctx?.gameState.forge;
   return useMemo(() => {
     const bond = bondLevelFor(xp ?? 0);
     // PR8: talento + equipamento por atributo, UM teto de 5% na soma dos três canais (o servidor recalcula o mesmo, `_duel.js`).
-    return { bonus: combinedAttrBonus({ talent: talentAttrBonus(picks, bond), equipment: equipAttrBonus(equipment) }), cheerScale: talentCheerScale(picks, bond), startEnergy: talentStartEnergy(picks, bond), dotResist: talentDotResist(picks, bond) };
-  }, [picks, xp, equipment]);
+    return { bonus: combinedAttrBonus({ talent: talentAttrBonus(picks, bond), equipment: equipAttrBonus(equipment, forge) }), cheerScale: talentCheerScale(picks, bond), startEnergy: talentStartEnergy(picks, bond), dotResist: talentDotResist(picks, bond) };
+  }, [picks, xp, equipment, forge]);
 }
 
 export { NO_ATTR_BONUS };

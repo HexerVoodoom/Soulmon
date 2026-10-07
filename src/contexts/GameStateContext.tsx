@@ -23,6 +23,7 @@ import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
 import { sanitizeEquipment, type EquipmentState } from '../utils/equipment';
+import { sanitizeForge, type ForgeState } from '../utils/forge';
 import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, type AchievementId } from '../utils/achievements';
 import {
@@ -484,6 +485,9 @@ export interface GameState {
   /** 🛡️ EQUIPAMENTO (Combate v3 / PR8, `utils/equipment.ts`): posse, o que está em cada slot e os fragmentos. O bônus é derivado
    *  (percentual, canal único de 5%). Lixo é descartado peça a peça na carga e no servidor. Leitura: `?? EMPTY_EQUIPMENT`. */
   equipment?: EquipmentState;
+  /** 🔨 O FERREIRO (07/10/2026, `utils/forge.ts`): UM objeto — o nível 1..5 de cada peça e as escolhas A/B dos níveis 2..N. Peça possuída sem
+   *  registro vale o nível equivalente do tier (compra antiga, sem confisco). O bônus é derivado; materiais ficam em `buildingQuests`. */
+  forge?: ForgeState;
   /** 💠 PROCEDÊNCIA dos Bits (PR8, `utils/bitsOrigin.ts`): quanto do saldo veio de Crédito e o câmbio do dia (teto de +25%).
    *  Sem o campo todo Bit conta como ganho. */
   bitsOrigin?: BitsOrigin;
@@ -1320,6 +1324,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         talentPicks: sanitizeTalentPicks(loadedState.talentPicks, bondLevelFor(num(loadedState.totalXP, 0))),
         // Equipamento e procedência dos Bits (PR8): lixo é descartado peça a peça (`utils/equipment.ts`, `utils/bitsOrigin.ts`).
         equipment: sanitizeEquipment(loadedState.equipment),
+        forge: sanitizeForge(loadedState.forge),
         bitsOrigin: sanitizeBitsOrigin(loadedState.bitsOrigin),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo

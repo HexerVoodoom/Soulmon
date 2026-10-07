@@ -7,6 +7,8 @@
  * garante a FORMA e o teto, nao a procedencia dos Bits.
  */
 
+import { ownedPieceBonus } from './_forge.js';
+
 export const EQUIP_SLOTS = ['nucleo', 'carapaca', 'rastro'];
 export const SLOT_ATTR = { nucleo: 'atk', carapaca: 'def', rastro: 'spd' };
 export const TIER_PCT = [0.005, 0.01, 0.015];
@@ -44,14 +46,17 @@ export function sanitizeEquipment(raw) {
 
 /**
  * Parcela do EQUIPAMENTO por atributo (fracoes). Slot forjado vale 0. Quem soma e corta nos 5% e `combinedAttrBonus`.
- * @param {unknown} raw @returns {{ atk: number, def: number, spd: number }}
+ * Desde o Ferreiro (07/10/2026) o valor da peca vem do NIVEL e das escolhas (`forge`, `_forge.js`), nao do tier.
+ * @param {unknown} raw @param {unknown} [forge] @returns {{ atk: number, def: number, spd: number }}
  */
-export function equipAttrBonus(raw) {
+export function equipAttrBonus(raw, forge) {
   const eq = sanitizeEquipment(raw);
   const out = { atk: 0, def: 0, spd: 0 };
   for (const slot of EQUIP_SLOTS) {
     const id = eq.equipped[slot];
-    if (id) out[SLOT_ATTR[slot]] += EQUIP[id].pct;
+    if (!id) continue;
+    const b = ownedPieceBonus(id, forge);
+    out.atk += b.atk; out.def += b.def; out.spd += b.spd;
   }
   return out;
 }

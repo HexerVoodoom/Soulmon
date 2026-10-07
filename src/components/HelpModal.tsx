@@ -16,6 +16,7 @@ import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { GATES } from '../utils/gates';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
+import { FORGE_MAX_LEVEL } from '../utils/forge';
 import { DREAM_CATALOG } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
@@ -77,8 +78,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Blacksmith in the Market. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength, and equipment is bought with Bits you earned, never drawn.`,
-    descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Ferreiro, no Mercado. Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força, e o equipamento se compra com Bits ganhos, nunca sorteado.`,
+    descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Blacksmith in the Market. Pieces come from building missions (level 1) and are upgraded there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
+    descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Ferreiro, no Mercado. As peças vêm das missões dos prédios (nível 1) e se aprimoram lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
   },
   {
     icon: '🥚', en: 'Rebirth', pt: 'Renascimento',

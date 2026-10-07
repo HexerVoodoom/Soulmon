@@ -18,6 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest } from './utils/buildingQuests';
+import { applyForgeGrant } from './utils/forgeActions';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
@@ -5315,7 +5316,8 @@ export default function App() {
   const resgatarPredio = useCallback((id: BuildingId) => {
     setGameState(prev => {
       const { state, paid } = claimBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), id, bondLevelFor(prev.totalXP ?? 0));
-      return paid === null ? prev : { ...prev, buildingQuests: state };
+      // O Ferreiro (07/10/2026): o 1º resgate do prédio concede a peça de nível 1 dele (`utils/forge.ts`); idempotente.
+      return paid === null ? prev : applyForgeGrant({ ...prev, buildingQuests: state }, id);
     });
   }, []);
 

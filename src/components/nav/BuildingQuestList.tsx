@@ -16,7 +16,7 @@ export interface BuildingQuestsProps {
 }
 
 /** O nome do prédio, do mesmo lugar que o Mapa lê (um dono por rótulo). */
-function nameOf(id: BuildingId, language: Language): string {
+export function nameOf(id: BuildingId, language: Language): string {
   const [area, lot] = id.split('.');
   const lots = area === 'exploracao' ? exploracaoLots(language)
     : area === 'jogos' ? jogosLots(language)

@@ -52,9 +52,11 @@ describe('1. o catálogo: 3 slots, um por atributo, 3 tiers, percentual', () => 
 
   it('cada slot cai no canal do SEU atributo', () => {
     const so = (id: string, slot: string) => equipAttrBonus({ owned: [id], equipped: { [slot]: id }, fragments: 0 });
-    expect(so('eq-nucleo-t2', 'nucleo')).toEqual({ atk: 0.01, def: 0, spd: 0 });
-    expect(so('eq-carapaca-t1', 'carapaca')).toEqual({ atk: 0, def: 0.005, spd: 0 });
-    expect(so('eq-rastro-t3', 'rastro')).toEqual({ atk: 0, def: 0, spd: 0.015 });
+    // Ferreiro (07/10/2026): peça possuída sem registro vale o nível equivalente do tier (2/4/5 = 0,5/1,1/1,5%): nunca menos que antes.
+    const near = (a: { atk: number; def: number; spd: number }, b: { atk: number; def: number; spd: number }) => { for (const k of ['atk', 'def', 'spd'] as const) expect(a[k]).toBeCloseTo(b[k], 12); };
+    near(so('eq-nucleo-t2', 'nucleo'), { atk: 0.011, def: 0, spd: 0 });
+    near(so('eq-carapaca-t1', 'carapaca'), { atk: 0, def: 0.005, spd: 0 });
+    near(so('eq-rastro-t3', 'rastro'), { atk: 0, def: 0, spd: 0.015 });
   });
 
   it('sem sorteio: nenhum arquivo de equipamento/procedência lê Math.random nem chance', () => {
