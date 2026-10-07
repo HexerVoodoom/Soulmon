@@ -132,6 +132,32 @@ export interface FamiliaDaJornada {
   trocou: boolean;
 }
 
+/** O que o sorteio da família precisa saber do estágio (a regra é a de `familiaDoEspecial`). */
+export interface BaseFamilia {
+  escola: EscolaSkillId;
+  /** Elemento do ESPECIAL do estágio (só pesa no sorteio, nunca na decisão de trocar). */
+  elementoId: string;
+  tendencia?: string;
+  seedKey: string;
+  stage: string;
+}
+
+/**
+ * PR15a: a família do estágio SEGUINTE a partir do par (anterior, atual) — sem recalcular a jornada inteira.
+ * `anterior` nulo = primeiro estágio (sorteio da seed). Senão: a família em vigor se mantém, salvo
+ * `perfilMudouForte` — aí novo sorteio que exclui a que estava em vigor. Pura e idempotente.
+ */
+export function proximaFamilia(
+  anterior: SpecialFamily | null,
+  perfilAnterior: PerfilEstagio | null,
+  perfilAtual: PerfilEstagio,
+  base: BaseFamilia,
+): FamiliaDaJornada {
+  if (!anterior || !perfilAnterior) return { familia: familiaDoEspecial(base), trocou: false };
+  if (!perfilMudouForte(perfilAnterior, perfilAtual)) return { familia: anterior, trocou: false };
+  return { familia: familiaDoEspecial({ ...base, excluir: anterior }), trocou: true };
+}
+
 /**
  * A família de CADA estágio. Estágio 1 = sorteio da seed do onboarding (como no PR9, sem lista de usadas).
  * Estágios seguintes: família do anterior, salvo mudança forte de perfil — aí novo sorteio ponderado que
@@ -140,11 +166,8 @@ export interface FamiliaDaJornada {
 export function familiasDaJornada(e: EntradaJornada): FamiliaDaJornada[] {
   const saida: FamiliaDaJornada[] = [];
   for (let i = 0; i < e.stages.length; i++) {
-    const base = { escola: e.escolas[i], elementoId: e.elementosEspecial[i], tendencia: e.tendencia, seedKey: e.seedKey, stage: e.stages[i] };
-    if (i === 0) { saida.push({ familia: familiaDoEspecial(base), trocou: false }); continue; }
-    const atual = saida[i - 1].familia;
-    if (!perfilMudouForte(e.perfis[i - 1], e.perfis[i])) { saida.push({ familia: atual, trocou: false }); continue; }
-    saida.push({ familia: familiaDoEspecial({ ...base, excluir: atual }), trocou: true });
+    const base: BaseFamilia = { escola: e.escolas[i], elementoId: e.elementosEspecial[i], tendencia: e.tendencia, seedKey: e.seedKey, stage: e.stages[i] };
+    saida.push(proximaFamilia(i === 0 ? null : saida[i - 1].familia, i === 0 ? null : e.perfis[i - 1], e.perfis[i], base));
   }
   return saida;
 }
