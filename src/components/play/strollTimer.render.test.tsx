@@ -48,35 +48,34 @@ describe('PasseioSheet — contagem no botão', () => {
     expect(formatEspera(1)).toBe('00:01');
   });
 
-  it('mostra "Done · 28:40", fica desabilitado e abre aos 30 min (relógio falso)', () => {
+  it('só APONTA enquanto o relógio corre (sem botão) e nasce o "Claim" aos 30 min (relógio falso)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0 + 80_000); // 1:20 depois de pegar → faltam 28:40
     const onChange = vi.fn();
     const { container } = render(
       <PasseioSheet language="en-US" crossings={pegada()} onChange={onChange} todayKey={DAY} seed="seed" />,
     );
-    const btn = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
-    expect(btn.textContent).toBe('Done · 28:40');
-    expect(btn.disabled).toBe(true);
-    fireEvent.click(btn);
-    expect(onChange).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-travessia-fiz]')).toBeNull();
     // sem cobrança: nenhuma palavra de pressa
     expect(container.querySelector('[data-travessia-tempo]')!.textContent).not.toMatch(/hurry|late|behind|must|only/i);
 
     act(() => { vi.advanceTimersByTime(28 * 60_000 + 40_000); });
-    expect(btn.textContent).toBe('Done');
+    const btn = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(btn.textContent).toBe('Claim');
     expect(btn.disabled).toBe(false);
     fireEvent.click(btn);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('PT-BR: "Concluir · MM:SS"', () => {
+  it('PT-BR: sem botão antes do tempo; "Resgatar" depois', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0 + 60_000);
     const { container } = render(
       <PasseioSheet language="pt-BR" crossings={pegada()} onChange={() => {}} todayKey={DAY} seed="seed" />,
     );
-    expect((container.querySelector('[data-travessia-fiz]') as HTMLElement).textContent).toBe('Concluir · 29:00');
+    expect(container.querySelector('[data-travessia-fiz]')).toBeNull();
+    act(() => { vi.advanceTimersByTime(30 * 60_000); });
+    expect((container.querySelector('[data-travessia-fiz]') as HTMLElement).textContent).toBe('Resgatar');
   });
 
   it('não existe mais a linha "abre amanhã" na folha', () => {

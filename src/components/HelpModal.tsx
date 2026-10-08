@@ -78,6 +78,11 @@ const TERMS: Term[] = [
     descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do seu Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
   },
   {
+    icon: '❗', en: 'Daily & weekly missions', pt: 'Missões diárias e semanais',
+    descEn: 'Two doors on Home: daily missions and weekly missions. A mission only points at what to do. When you really do it, the line turns ready (a ?) and you tap Claim to receive the reward. Nothing counts tasks, and nothing is owed.',
+    descPt: 'Duas portas na Home: missões diárias e missões semanais. A missão só aponta o que fazer. Quando você faz de verdade, a linha fica pronta (um ?) e você toca em Resgatar para receber. Nada conta tarefas, e nada é cobrado.',
+  },
+  {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
     descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Soulsmith in the Market. Pieces come from building missions (level 1) and are parts of your soul, refined there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
     descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Soulsmith, no Mercado. As peças vêm das missões dos prédios (nível 1) e são partes da sua alma, aprimoradas lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,

@@ -28,7 +28,7 @@ export function nameOf(id: BuildingId, language: Language): string {
 
 /**
  * As missões de prédio do dia que o menu da Home lista (`LISTED_QUEST_BUILDINGS`, hoje o Caderno:
- * "Escrever no caderno"), com o botão de dar como feita. SEM lista de materiais: o material
+ * "Escrever no caderno"), a linha só APONTA; a ação real (guardar um registro) a deixa pronta e o "Resgatar" paga. SEM lista de materiais: o material
  * continua sendo pago pelo modelo, mas nenhuma tela de missão o mostra. Só vive no menu da Home,
  * nunca dentro do prédio. Sem cobrança: quem não escreveu não perde nada.
  */
@@ -44,15 +44,15 @@ export function BuildingQuestList({ language, state, day, bondLevel, onClaim }: 
           <li key={id} data-building-quest={id} data-status={st} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>📓</span>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="sm2-title" style={{ display: 'block', fontSize: 'var(--sm2-text-md)' }}>{questText(day, id, isPt)}</span>
+              <span className="sm2-title" style={{ display: 'block', fontSize: 'var(--sm2-text-md)', color: st === 'claimed' ? 'var(--sm2-muted)' : undefined }}>{questText(day, id, isPt)}</span>
             </span>
             {(st === 'available' || st === 'ready') && <MissionMark kind={st === 'ready' ? 'ready' : 'available'} size={24} isPt={isPt} />}
             {st === 'ready' && (
               <button type="button" style={sm2Button('primary', false, 'sm')} data-claim={id} onClick={() => onClaim(id)}>
-                {isPt ? 'Feito' : 'Done'}
+                {isPt ? 'Resgatar' : 'Claim'}
               </button>
             )}
-            {st === 'claimed' && <span style={{ fontSize: 'var(--sm2-text-sm)' }}>{isPt ? 'Feito hoje' : 'Done today'}</span>}
+            {st === 'claimed' && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{isPt ? 'Resgatada' : 'Claimed'}</span>}
           </li>
         );
       })}

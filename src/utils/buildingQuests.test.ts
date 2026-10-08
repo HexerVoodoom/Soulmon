@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  MATERIAL_IDS, MATERIAL_CAP, QUEST_BUILDINGS, forDay, questStatus, visitBuilding, claimBuildingQuest,
+  MATERIAL_IDS, MATERIAL_CAP, QUEST_BUILDINGS, forDay, questStatus, visitBuilding, completeBuildingQuest, claimBuildingQuest,
   buildingMarks, sanitizeBuildingQuests, stockOf, type BuildingQuestState,
 } from './buildingQuests';
 import { MATERIALS, questText } from './buildingQuestsCopy';
@@ -77,10 +77,28 @@ describe('missão do dia', () => {
   });
 });
 
+describe('a missão só APONTA: a ação real conclui, entrar não (07/10/2026)', () => {
+  it('entrar no Caderno NÃO conclui; guardar um registro (completeBuildingQuest) deixa pronta; resgatar paga 1×', () => {
+    expect(visitBuilding(undefined, D1, 'exploracao.caderno', MAXB)).toBeUndefined();
+    const v = completeBuildingQuest(undefined, D1, 'exploracao.caderno', MAXB);
+    expect(questStatus(v, D1, 'exploracao.caderno', MAXB)).toBe('ready');
+    expect(completeBuildingQuest(v, D1, 'exploracao.caderno', MAXB)).toBe(v); // idempotente no dia
+    const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB);
+    expect(c.paid).toBe('ink');
+    expect(claimBuildingQuest(c.state, D1, 'exploracao.caderno', MAXB).paid).toBeNull();
+    expect(completeBuildingQuest(c.state, D1, 'exploracao.caderno', MAXB)).toBe(c.state); // pago não reabre no dia
+    expect(questStatus(c.state, D2, 'exploracao.caderno', MAXB)).toBe('available'); // dia novo
+  });
+  it('o texto aponta, curto e imperativo, EN e PT', () => {
+    expect(questText(D1, 'exploracao.caderno', false)).toBe('Write an entry in your journal');
+    expect(questText(D1, 'exploracao.caderno', true)).toBe('Faça um registro no journaling');
+  });
+});
+
 describe('marcas', () => {
   it('só a missão LISTADA no menu (Caderno) tem marca: ! disponível, ? pronta, nada depois de paga; Mercado nunca', () => {
     expect(buildingMarks(undefined, D1, MAXB)['exploracao.caderno']).toBe('available');
-    const v = visitBuilding(undefined, D1, 'exploracao.caderno', MAXB);
+    const v = completeBuildingQuest(undefined, D1, 'exploracao.caderno', MAXB);
     expect(buildingMarks(v, D1, MAXB)['exploracao.caderno']).toBe('ready');
     const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB).state;
     expect(buildingMarks(c, D1, MAXB)['exploracao.caderno']).toBeUndefined();
@@ -93,7 +111,7 @@ describe('marcas', () => {
   });
   it('canto: a missão listada acende em dourado; sem nada a fazer nem a entregar, some', () => {
     const base = { passeio: null, weekly: [], missionProgress: {}, ownedBackgrounds: [] };
-    const v = visitBuilding(undefined, D1, 'exploracao.caderno', MAXB);
+    const v = completeBuildingQuest(undefined, D1, 'exploracao.caderno', MAXB);
     const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB).state;
     expect(questMarks({ ...base, buildings: buildingMarks(c, D1, MAXB) }).corner).toBeNull();
     expect(questMarks({ ...base, buildings: buildingMarks(undefined, D1, MAXB) }).corner).toBe('available');
@@ -122,5 +140,8 @@ describe('fiação', () => {
     const i = app.indexOf('const resgatarPredio');
     expect(app.slice(i, i + 500)).toContain('claimBuildingQuest(prev.buildingQuests');
     expect(app).toContain('onVisitBuilding={visitarPredio}');
+    // o evento REAL do journaling: guardar um registro novo conclui, no mesmo updater do Caderno
+    const j = app.indexOf('const handleCaderno');
+    expect(app.slice(j, j + 900)).toContain("completeBuildingQuest(prev.buildingQuests");
   });
 });

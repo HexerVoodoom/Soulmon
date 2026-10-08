@@ -40,7 +40,7 @@ const FLAVOR: Record<string, readonly [string, string][]> = {
 
 /** O texto do dia deste prédio — determinístico por `day` + id (nunca muda a cada abertura). */
 export function questText(day: string, id: BuildingId, isPt: boolean): string {
-  if (id === 'exploracao.caderno') return isPt ? 'Escrever no caderno' : 'Write in the journal';
+  if (id === 'exploracao.caderno') return isPt ? 'Faça um registro no journaling' : 'Write an entry in your journal';
   const pool = FLAVOR[id] ?? FLAVOR.default;
   const pair = pool[hashString(`building-quest:${day}:${id}`) % pool.length];
   return isPt ? pair[1] : pair[0];
