@@ -4977,3 +4977,9 @@ e `docsSemMentira.contract.test.ts`: 10/10 verdes.
 
 - `WelcomeTour` (EN apenas, por pedido do dono): 8 cartões com o corvo (arte `mascot-raven.png`, nome **Rook**) — o básico (tarefas, comida/energia, dia completo, evolução manual, cuidado) e o mapa (uma frase por área, Missões e Mochila). Intersticial **primeiro da fila** (antes de check-in e priming); flag local `soulmon-welcome-tour-shown` (sem campo novo no save, então sem mexer no fuzz2); visto OU pulado grava a mesma flag; replay em Configurações › Ajuda. Mudo e sem recompensa. Texto por `{ en }` — o PT-BR entra depois acrescentando `pt`.
 - **Depende do dono**: conferir o texto, o nome Rook e se o tour deve aparecer também para saves que já têm atividades mas nenhuma conclusão.
+
+## 08/10/2026 — Oficina do Foco: "só o pomodoro funciona"
+
+- **Causa**: o timer (25/5 e 50/10) sempre funcionou; o que parecia quebrado eram os 7 cards de técnica, `<li>` sem nenhum handler — na reforma dos lotes a explicação saiu do `InfoTip` de cada card para o "i" do cabeçalho e os cards viraram placas que não respondem. Não houve regressão de props/gate/lazy (verificado no navegador, 390×844).
+- **Correção**: cards viraram botões (`aria-expanded`): abrem a explicação com fonte e evidência; Pomodoro e Blocos de foco escolhem o ritmo do timer; as outras cinco mostram "Guia" e dizem que não têm timer nem registro. Teste por card e por ritmo em `OficinaCaderno.render.test.tsx`.
+- **Prevista, não implementada**: ferramenta interativa para Se-então, Esvaziar a cabeça, Regra dos 2 minutos, Eisenhower e O sapo primeiro (o plano as define só como técnicas descritas; registrar uso seria regra de jogo nova). **Depende do dono**: querer alguma delas como ferramenta (e com que registro).
