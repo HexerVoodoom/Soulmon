@@ -59,6 +59,47 @@ describe('Oficina do Foco', () => {
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_TIMER)).toBeNull();
   });
 
+  it('50/10: o segmento e o card "Blocos de foco" escolhem o ritmo, o timer conta 50:00 e a pausa é de 10', () => {
+    const { container } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA }));
+    fireEvent.click(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-btn]')!);
+    expect(q(container, '[data-oficina-clock]')!.textContent).toBe('50:00');
+    fireEvent.click(q(container, '[data-oficina-tecnica="pomodoro"] [data-oficina-tecnica-btn]')!);
+    expect(q(container, '[data-oficina-clock]')!.textContent).toBe('25:00');
+    fireEvent.click(Array.from(container.querySelectorAll('[role="radio"]')).find(b => b.textContent === '50 / 10')!);
+    fireEvent.click(q(container, '[data-oficina-start]')!);
+    act(() => { vi.advanceTimersByTime(60_000); });
+    expect(q(container, '[data-oficina-clock]')!.textContent).toBe('49:00');
+    act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 51, 0)); vi.advanceTimersByTime(1000); });
+    fireEvent.click(q(container, '[data-oficina-foquei]')!);
+    expect(q(container, '[data-oficina-clock]')!.textContent).toBe('10:00');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_SESSIONS)!)[DIA].n).toBe(1);
+  });
+
+  it('com um timer em curso, tocar num card não troca o ritmo (só abre a explicação)', () => {
+    const { container } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA }));
+    fireEvent.click(q(container, '[data-oficina-start]')!);
+    fireEvent.click(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-btn]')!);
+    expect(q(container, '[data-oficina-clock]')!.textContent).toBe('25:00');
+    expect(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-corpo]')).not.toBeNull();
+  });
+
+  it.each(FOCO_TECNICAS.map(t => [t.id, t] as const))('card "%s": responde ao toque (abre a explicação com a fonte e fecha ao tocar de novo)', (id, t) => {
+    const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    const btn = q(container, `[data-oficina-tecnica="${id}"] [data-oficina-tecnica-btn]`)!;
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    expect(q(container, '[data-oficina-tecnica-corpo]')).toBeNull();
+    fireEvent.click(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    const corpo = q(container, `[data-oficina-tecnica="${id}"] [data-oficina-tecnica-corpo]`)!;
+    expect(corpo.textContent).toContain(t.howPt.slice(0, 40));
+    expect(corpo.textContent).toContain(t.fonte);
+    // Sem timer: diz com honestidade que é um guia (sem registro nem recompensa).
+    expect(!!q(corpo, '[data-oficina-tecnica-guia]')).toBe(!t.timer);
+    expect(q(container, `[data-oficina-tecnica="${id}"] [data-oficina-tecnica-kind]`)!.getAttribute('data-oficina-tecnica-kind')).toBe(t.timer ? 'timer' : 'guia');
+    fireEvent.click(btn);
+    expect(q(container, '[data-oficina-tecnica-corpo]')).toBeNull();
+  });
+
   it('reabrir a folha com um timer salvo retoma de onde o relógio está', () => {
     const a = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
     fireEvent.click(q(a.container, '[data-oficina-start]')!);

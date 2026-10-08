@@ -52,6 +52,8 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
   const [mode, setMode] = useState<FocoModeId>('p25');
   const [timer, setTimer] = useState<FocoTimer | null>(() => { const t = loadTimer(); return t ? settle(t, Date.now()) : null; });
   const [days, setDays] = useState(() => loadSessions());
+  /** Qual card está aberto (a explicação sai atrás do toque, nunca corrida na tela). */
+  const [openId, setOpenId] = useState<string | null>(null);
   const now = useNow(timer?.status === 'running');
 
   const copy = useCallback((phase: 'focus' | 'break') => ({
@@ -170,15 +172,49 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
 
       <p style={sectionHead}>{isPt ? 'Técnicas' : 'Techniques'}</p>
       <ul style={sheetCardList} data-oficina-tecnicas>
-        {FOCO_TECNICAS.map(t => (
-          <li key={t.id} data-oficina-tecnica={t.id} style={{ ...sheetCard, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Icon name={t.icon} size={24} tone="primary" />
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-              <span style={sheetCardTitle}>{isPt ? t.namePt : t.nameEn}</span>
-              <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? t.linePt : t.lineEn}</span>
-            </span>
-          </li>
-        ))}
+        {FOCO_TECNICAS.map(t => {
+          const aberto = openId === t.id;
+          const modeOf: FocoModeId | null = t.id === 'pomodoro' ? 'p25' : t.id === 'blocos' ? 'p50' : null;
+          const ativo = modeOf !== null && !timer && mode === modeOf;
+          return (
+            <li key={t.id} data-oficina-tecnica={t.id} style={{ ...sheetCard, padding: 0 }}>
+              <button
+                type="button"
+                data-oficina-tecnica-btn
+                aria-expanded={aberto}
+                onClick={() => { setOpenId(aberto ? null : t.id); if (modeOf && !timer) setMode(modeOf); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+                  padding: 'var(--sm2-space-3, 12px)', background: 'none', border: 0, color: 'inherit',
+                  font: 'inherit', cursor: 'pointer', minHeight: 44,
+                }}
+              >
+                <Icon name={t.icon} size={24} tone="primary" />
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                  <span style={sheetCardTitle}>{isPt ? t.namePt : t.nameEn}</span>
+                  <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? t.linePt : t.lineEn}</span>
+                </span>
+                <span data-oficina-tecnica-kind={t.timer ? 'timer' : 'guia'} style={{ ...sm2Hint, margin: 0, whiteSpace: 'nowrap', color: ativo ? 'var(--sm2-primary-ink)' : undefined }}>
+                  {t.timer ? (ativo ? (isPt ? 'No timer' : 'On the timer') : (isPt ? 'Usa o timer' : 'Uses the timer')) : (isPt ? 'Guia' : 'Guide')}
+                </span>
+              </button>
+              {aberto && (
+                <div data-oficina-tecnica-corpo style={{ ...sm2Text, padding: '0 var(--sm2-space-3, 12px) var(--sm2-space-3, 12px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span>
+                    <strong>{isPt ? EVIDENCIA_LABEL[t.evidencia].pt : EVIDENCIA_LABEL[t.evidencia].en}.</strong>{' '}
+                    {isPt ? t.howPt : t.howEn}
+                  </span>
+                  <em style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Fonte: ' : 'Source: '}{t.fonte}</em>
+                  {!t.timer && (
+                    <span data-oficina-tecnica-guia style={{ ...sm2Hint, margin: 0 }}>
+                      {isPt ? 'É um guia para fazer por conta própria: não tem timer nem registro aqui.' : 'A guide to try on your own: there is no timer or log for it here.'}
+                    </span>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

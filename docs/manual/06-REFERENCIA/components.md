@@ -287,7 +287,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/play/OficinaSheet.tsx`
 **Dono de:** a folha da Oficina do Foco na Exploração (04/10/2026, [PLANO-OFICINA-FOCO](../../PLANO-OFICINA-FOCO.md)): o timer de foco real (25/5 e 50/10; iniciar, pausar, continuar, cancelar; ao fim, "Foquei" ou "Agora não") e os cards das técnicas de `FOCO_TECNICAS`, com a explicação, a evidência e a fonte atrás de `InfoTip`.
-**Exports:** `OficinaSheet({ language, todayKey? })`. O relógio relê `Date.now()` (`useNow`: 1 s + `visibilitychange`); a regra mora em `utils/focoTimer`. Sem Bits/XP, sem placar: só "Hoje: N focos" local.
+**Exports:** `OficinaSheet({ language, todayKey? })`. O relógio relê `Date.now()` (`useNow`: 1 s + `visibilitychange`); a regra mora em `utils/focoTimer`. Sem Bits/XP, sem placar: só "Hoje: N focos" local. Cards das técnicas = `button` com `aria-expanded` (`data-oficina-tecnica-btn`/`-corpo`); Pomodoro/Blocos escolhem o ritmo (só sem timer em curso), as outras cinco são "Guia" (`data-oficina-tecnica-kind`).
 
 ### `src/components/play/CadernoSheet.tsx`
 **Dono de:** a folha do Caderno (04/10/2026): a missão de journaling com quatro formatos (3 coisas boas, gratidão, o que aprendi, escrita livre), lista das anotações com apagar uma / apagar tudo (confirmado) e a linha de apoio (`SupportNote`) quando o rascunho casa com o léxico de sofrimento (`needsBridge`). Sensível: as entradas vêm do save (`GameState.caderno`) e a folha escreve por funções puras de `utils/cadernoSave` entregues ao `App` (`handleCaderno`).
