@@ -69,7 +69,7 @@ function faixaDoBalao(texto: HTMLElement): HTMLElement {
 }
 
 describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
-  it('BLOQUEADOR: com "Evoluir" na tela, o balão continua no TOPO, longe do rodapé', () => {
+  it('BLOQUEADOR: com "Evoluir" no ALTO, o balão fica na BASE da caixa — as faixas não se cruzam', () => {
     renderWithCss(<CompanionHUD {...base} canEvolve onEvolveRequest={() => {}} />);
     fireEvent.click(screen.getByAltText('rookie'));
 
@@ -77,23 +77,33 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
 
     // B3 (02/10/2026): "Evoluir" é CENTRALIZADO no ALTO da área do pet
-    // (`top`, `left: 50%`) e o balão DESCE para baixo dele — as duas faixas
-    // continuam sem cruzar: o topo do balão é maior que o fim do botão (56).
+    // (`top`, `left: 50%`). 08/10/2026 (pedido do dono): o balão foi para a
+    // BASE da caixa (`bottom`), então as duas faixas não se cruzam por
+    // construção: uma ancora no topo, a outra no rodapé.
     expect(btn.style.left).toBe('50%');
     expect(btn.style.bottom).toBe('');
-    expect(faixa.style.bottom).toBe('');
+    expect(faixa.style.top).toBe('');
+    expect(parseFloat(faixa.style.bottom)).toBeGreaterThanOrEqual(BUBBLE_GAP);
     expect(parseFloat(btn.style.top)).toBeGreaterThanOrEqual(0);
-    expect(parseFloat(faixa.style.top)).toBeGreaterThanOrEqual(parseFloat(btn.style.top) + 56);
     // alvo ≥ 44 e rótulo acessível
     expect(parseFloat(btn.style.minHeight)).toBeGreaterThanOrEqual(44);
     expect(btn.getAttribute('aria-label')).toBe('Evoluir');
   });
 
-  it('sem CTA na tela o balão continua no MESMO topo (a posição não depende do botão)', () => {
+  it('sem CTA na tela o balão fica na MESMA base (a posição não depende do botão)', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
     const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
-    expect(faixa.style.top).toBe(`${BUBBLE_GAP}px`);
+    expect(faixa.style.top).toBe('');
+    expect(faixa.style.bottom).toBe(`${BUBBLE_GAP + 8}px`);
+  });
+
+  it('a caixa de fala tem 30% de opacidade no fundo e o texto a 100%', () => {
+    renderWithCss(<CompanionHUD {...base} />);
+    fireEvent.click(screen.getByAltText('rookie'));
+    const texto = screen.getByText(FALA_ENERGIZED);
+    expect(texto.parentElement!.style.background).toContain('30%');
+    expect(texto.style.opacity).toBe('');
   });
 
   it('a faixa de largura total do balão não intercepta toque; a caixa de fala sim', () => {

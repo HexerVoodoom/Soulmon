@@ -29,7 +29,6 @@ import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
-import { SM2_SHADOW_CARD } from './form/FormKit';
 import { Mochila } from './home/Mochila';
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
@@ -115,6 +114,8 @@ const PET_BOTTOM_IN_STAGE =
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
 const BUBBLE_GAP = 6;
+/** Fundo da caixa de fala: `--sm2-surface` a 30% de opacidade (pedido do dono, 08/10/2026); o texto segue a 100%. */
+const BUBBLE_BG = 'color-mix(in srgb, var(--sm2-surface) 30%, transparent)';
 /* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
    dono): a composição não desce mais sob a fala; o balão é overlay. */
 /* FX do `animArt` DENTRO do vidro a 2× (célula 64 → 128 CSS, D-H4): mesma
@@ -420,8 +421,6 @@ export const CompanionHUD = memo(function CompanionHUD({
      cima; o `ref` continua para quem mede a caixa de fala. */
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const stageDrop = 0;
-  /* B3: com o "Evoluir" centralizado no alto, o balão desce abaixo dele. */
-  const bubbleTop = canEvolve && !isSleeping ? BUBBLE_GAP + EVOLVE_BTN_H + 16 : BUBBLE_GAP;
   /* C13 — qual dica de leitura está aberta (coração ou energia). Fecha com
      novo toque no mesmo ícone, toque na própria dica, toque fora ou Esc. */
   const [statAberto, setStatAberto] = useState<StatTipKind | null>(null);
@@ -1725,8 +1724,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           /* B3 (02/10/2026): CENTRALIZADO no ALTO da área do pet, com
              acabamento próprio (`EvolveButton`: moldura pixel dupla + brilho
              pulsante; arte do dono opcional em `assets/icons/evoluir-btn.png`).
-             O balão de fala desce abaixo dele quando os dois existem (ver
-             `bubbleTop`) — as faixas continuam sem se cruzar por construção. */
+             A fala fica na BASE da caixa (08/10/2026), então as faixas continuam sem se cruzar por construção. */
           <EvolveButton
             language={language === 'pt-BR' ? 'pt-BR' : 'en-US'}
             onClick={onEvolveRequest}
@@ -1753,7 +1751,8 @@ export const CompanionHUD = memo(function CompanionHUD({
           <div
             className="absolute left-0 right-0"
             style={{
-              top: bubbleTop,
+              /* 08/10/2026 (pedido do dono): a fala volta para a BASE da caixa do pet (era o topo, 27/08), com o fundo a 30%. */
+              bottom: BUBBLE_GAP + 8,
               zIndex: 45,
               padding: '0 10px',
               /* A faixa é só posicionamento — ela cobre a largura inteira do
@@ -1775,10 +1774,9 @@ export const CompanionHUD = memo(function CompanionHUD({
                    1,3 → 1 linha = 36px, 2 linhas = 54px (é isso que decide
                    quanto a criatura desce, X2). Sem `backdrop-filter`: blur
                    sobre fundo animado recompõe a região a cada frame. */
-                background: 'var(--sm2-surface)',
+                background: BUBBLE_BG,
                 borderRadius: 'var(--sm2-radius-md)',
                 padding: '6px 12px',
-                boxShadow: SM2_SHADOW_CARD,
               }}
             >
               <p
@@ -1789,19 +1787,21 @@ export const CompanionHUD = memo(function CompanionHUD({
                   fontSize: 'var(--sm2-text-sm)',
                   lineHeight: 1.3,
                   color: 'var(--sm2-ink)',
+                  /* A caixa tem só 30% de opacidade; o texto fica a 100% e ganha um contorno suave para ler sobre qualquer cenário. */
+                  textShadow: '0 1px 2px var(--sm2-bg)',
                 }}
               >
                 {bubbleText}
               </p>
-              {/* Rabinho apontando para BAIXO, na direção do pet. */}
+              {/* Rabinho apontando para CIMA, na direção do pet (a fala agora fica embaixo dele). */}
               <span
                 className="absolute"
                 style={{
-                  bottom: -8, left: '50%', transform: 'translateX(-50%)',
+                  top: -8, left: '50%', transform: 'translateX(-50%)',
                   width: 0, height: 0,
                   borderLeft: '8px solid transparent',
                   borderRight: '8px solid transparent',
-                  borderTop: '8px solid var(--sm2-surface)',
+                  borderBottom: `8px solid ${BUBBLE_BG}`,
                 }}
               />
             </div>
