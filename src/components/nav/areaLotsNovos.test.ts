@@ -48,7 +48,7 @@ describe('lotes novos (29/09/2026)', () => {
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
       ['arena', 'duelo', 'Naia'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
-      ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Ramo'],
+      ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Brume'],
     ];
@@ -57,7 +57,7 @@ describe('lotes novos (29/09/2026)', () => {
     for (const [a, l, nome] of lotes) {
       // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
       // 07/10/2026: Amigos (Trill), Arquivo (Faro) e Santuário (Oriel) trocaram de busto a pedido do dono.
-      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'jogos:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:amigos': 'npc-hall-guilda', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
+      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'jogos:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:amigos': 'npc-extra-filhote-de-mel', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
       const arquivo = TROCADOS[`${a}:${l}`] ?? `npc-${a}-${l}`;
       expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
       expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt(a, l));
