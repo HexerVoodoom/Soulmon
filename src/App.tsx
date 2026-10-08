@@ -5652,14 +5652,6 @@ export default function App() {
                 soulGoal: gameState.soulGoal ?? null,
                 bornAt: gameState.bornAt ?? null,
               } : null}
-              bestiary={gameState.bestiary ?? []}
-              /* WP4.6/WP4.10 — o álbum das formas: as onze da árvore, com a
-                 arte que já existe e a data de quando cada uma chegou. */
-              album={(gameState.soulmonStages ?? []).map(st => {
-                const id = st.branch ? `${st.stage}-${st.branch}` : st.stage;
-                return { id, name: st.name, spriteUrl: displaySprite(spriteAcervo, id)?.url ?? (petIsCorvo ? getSpriteForStage(creatureFormId(st), petLine) : null) };
-              })}
-              formReachedAt={gameState.formReachedAt}
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
               language={language}

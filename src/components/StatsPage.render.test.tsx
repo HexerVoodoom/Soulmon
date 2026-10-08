@@ -26,11 +26,6 @@ const base = {
   petPassive: 'sortudo',
   daysTogether: 34,
   birth: { spriteUrl: 'https://cdn/igni.png', name: 'Pixel', soulGoal: 'sleep earlier', bornAt: '2026-09-03' },
-  bestiary: ['ignar-rookie', 'ignar-champion', 'lumel-rookie'],
-  album: [
-    { id: 'rookie', name: 'Sprout', spriteUrl: 'https://cdn/a.png' },
-    { id: 'champion-harmony', name: 'Ember', spriteUrl: 'https://cdn/b.png' },
-  ],
   journey: { unlockedEvolutions: ['rookie'], dungeonRunsCompleted: 2 },
 };
 
@@ -68,16 +63,14 @@ describe('StatsPage — canvas §27', () => {
     expect(img.getAttribute('alt')).toBe('');
   });
 
-  it('encontros em mini-visores 64² (3 of 36) e álbum com silhueta por máscara', () => {
+  it('o Santuário NÃO tem "Encounters" nem "Forms lived" (saíram em 07/10/2026, pedido do dono)', () => {
     const { container } = renderWithCss(<StatsPage {...base} />);
-    expect(container.textContent).toContain('3 of 36');
-    expect(container.textContent).toContain('1/2');
-    expect(container.querySelectorAll('[data-mini-glass]').length).toBe(36 + 2);
-    expect(container.querySelectorAll('[data-silhouette]').length).toBe(33 + 1);
-    expect(container.textContent).toContain('???');
+    expect(container.textContent).not.toMatch(/Encounters|Forms lived|Forms reached/);
+    expect(container.querySelectorAll('[data-silhouette]').length).toBe(0);
+    expect(container.querySelectorAll('[data-mini-glass]').length).toBe(0);
   });
 
-  it('só o dígito no "0" (D-S11) e o vazio sem "0 of 36" / "0/11"', () => {
+  it('só o dígito no "0" (D-S11) e o vazio sem "0/0"', () => {
     const { container } = renderWithCss(
       <StatsPage
         completedTasks={[]}
@@ -87,8 +80,6 @@ describe('StatsPage — canvas §27', () => {
         streakDays={0}
         petPassive="guloso"
         birth={{ spriteUrl: null, name: 'Pixel', bornAt: '2026-09-03' }}
-        bestiary={[]}
-        album={[]}
       />,
     );
     const n = container.querySelector('.sm2-stats-count .sm2-stats-word') as HTMLElement;
@@ -107,15 +98,12 @@ describe('StatsPage — canvas §27', () => {
     expect(texto).not.toMatch(/Bond \d/);
     expect(texto).not.toContain('complete days');
     expect(texto).not.toContain('days together');
-    expect(texto).not.toContain('of 36');
-    expect(texto).not.toContain('1/2');
     expect(texto).not.toMatch(/done \d+×/);
     expect(texto).not.toContain('You two also');
-    // Recompensas preservadas.
+    // Recompensas preservadas (as artes do cartão de nascimento).
     expect(texto).toContain('Pixel');
     expect(texto).toContain('Born');
     expect(texto).toContain('Alongar');
-    expect(container.querySelectorAll('[data-mini-glass]').length).toBe(36 + 2);
     expect(container.querySelectorAll('.sm2-stats-birth [role="img"]')).toHaveLength(1);
   });
 

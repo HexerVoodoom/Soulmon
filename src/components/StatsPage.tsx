@@ -52,8 +52,6 @@ import { getPassive } from '../utils/passives';
 import { PixelIcon } from './ui/PixelIcon';
 import { PASSIVE_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { BirthCard } from './BirthCard';
-import { FormAlbum } from './FormAlbum';
-import { BestiaryCard } from './BestiaryCard';
 import type { CarePattern } from '../utils/carePattern';
 import {
   seasonProgress, seasonLabel, seasonMedalStatus,
@@ -125,14 +123,6 @@ export interface StatsPageProps {
     soulGoal?: string | null;
     bornAt?: string | null;
   } | null;
-  /** WP4.6 — as onze formas da árvore, para o álbum. Ausente = a linha de
-   *  texto antiga continua valendo (save sem árvore gerada). */
-  album?: Array<{ id: string; name: string; spriteUrl?: string | null }>;
-  /** WP4.10 — quando cada forma foi alcançada. */
-  formReachedAt?: Record<string, string>;
-  /** WP4.6(b) — chaves `linha-tier` já enfrentadas na masmorra (`bestiary`).
-   *  Só cresce; a tela mostra silhueta para o que ainda não apareceu. */
-  bestiary?: readonly string[];
   /** Estado da estação (`utils/seasons.ts`) + contadores para os três caminhos. */
   season?: {
     state?: SeasonProgressState;
@@ -188,9 +178,6 @@ export function StatsPage({
   journey,
   daysTogether,
   birth,
-  album,
-  formReachedAt,
-  bestiary,
   season,
   hideMetrics = false,
 }: StatsPageProps) {
@@ -255,13 +242,6 @@ export function StatsPage({
     const n = journey!.dinoBest!;
     feitos.push(isPt ? `e marcaram ${n} na Corrida` : `and scored ${n} on the Obstacle Run`);
   }
-
-  const formNames = (journey?.unlockedEvolutions ?? []).map(id => {
-    const form = journey?.soulmonStages?.find(
-      st => (st.branch ? `${st.stage}-${st.branch}` : st.stage) === id,
-    );
-    return form?.name ?? id;
-  });
 
   /** Traço/ritmo (D-S2): ícone Material 24 pelado em `primary-ink` + nome 14/500 + frase 14. */
   /* 04/10/2026 (decisão do dono): a passiva com arte própria (`PASSIVE_ICON_ART`, pixel) usa a arte;
@@ -396,30 +376,9 @@ export function StatsPage({
           />
         )}
 
-        {/* WP4.6(b) — os ENCONTROS. Condição PRÓPRIA, não aninhada no álbum:
-            o álbum depende de `soulmonStages`, que o jogador GRÁTIS não tem —
-            e ele é justamente quem mais roda masmorra. */}
-        {(bestiary?.length ?? 0) > 0 && (
-          <BestiaryCard encountered={bestiary ?? []} language={language} hideMetrics={hideMetrics} />
-        )}
-
-        {/* WP4.6 — O ÁLBUM substitui a LINHA DE TEXTO. */}
-        {album && album.length > 0 && (
-          <FormAlbum
-            forms={album}
-            reached={journey?.unlockedEvolutions ?? []}
-            reachedAt={formReachedAt}
-            language={language}
-            hideMetrics={hideMetrics}
-          />
-        )}
-
-        {!album && formNames.length > 0 && (
-          <p className="sm2-stats-t">
-            {isPt ? 'Formas já alcançadas: ' : 'Forms reached so far: '}
-            <span style={{ color: 'var(--sm2-primary-ink)' }}>{formNames.join(' · ')}</span>
-          </p>
-        )}
+        {/* ⚰️ 07/10/2026 (dono): "Encounters" (bestiário) e "Forms lived" (álbum) saíram do
+            Santuário do Vínculo. `bestiary`/`formReachedAt` seguem no save (masmorra e
+            cerimônia de evolução); `BestiaryCard`/`FormAlbum` foram apagados. */}
 
         {!hideMetrics && feitos.length > 0 && (
           <p className="sm2-stats-s sm2-num">
