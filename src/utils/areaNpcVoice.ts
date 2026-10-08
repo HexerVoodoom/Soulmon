@@ -181,9 +181,9 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'What is written here stays kept. Only you open it.',
   },
   'hall:amigos': {
-    namePt: 'Ramo, o carvalho do Círculo', nameEn: 'Ramo, the oak of the Circle', // 07/10/2026: busto trocado a pedido do dono (era Trill, a barda)
-    linePt: 'Tem sombra para todo mundo debaixo de mim.',
-    lineEn: 'There is shade for everyone under me.',
+    namePt: 'Zumi, o filhote de mel', nameEn: 'Zumi, the honey cub', // 07/10/2026: busto trocado a pedido do dono (era Ramo, o carvalho; antes Trill, a barda)
+    linePt: 'Cada um traz um pouco de doçura para o Círculo.',
+    lineEn: 'Everyone brings a little sweetness to the Circle.',
   },
   'hall:guilda': {
     // G3 (02/10/2026): a Marla-árvore não agradou ao dono; o Salão passa a ser

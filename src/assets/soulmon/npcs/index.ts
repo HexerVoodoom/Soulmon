@@ -53,7 +53,7 @@ import npcExploracaoCaderno from './npc-akasha-exploracao-caderno.png';
 import npcLaboratorioPet from './npc-agua-laboratorio-pet.png';
 import npcLaboratorioStats from './npc-agua-laboratorio-stats.png';
 import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
-import npcHallGuilda from './npc-hall-guilda.png';
+import npcHallAmigosMel from './npc-extra-filhote-de-mel.png';
 
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
 /**
@@ -98,7 +98,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro — o busto `npc-conta` segue como NPC de função)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
   'hall:biblioteca': npcHall,
-  'hall:amigos': npcHallGuilda, // Ramo (carvalho do Círculo; 07/10/2026 trocou a Trill — `npc-f-barda` segue em EXTRA_NPC_ART)
+  'hall:amigos': npcHallAmigosMel, // Zumi (filhote de mel; 07/10/2026 trocou o Ramo, o carvalho — `npc-hall-guilda.png` segue em disco)
   'hall:guilda': npcHallGuildaLuz, // Aurea (leoa solar; 07/10/2026 trocou a Bastia — `npc-f-guarda` segue em EXTRA_NPC_ART)
 };
 
