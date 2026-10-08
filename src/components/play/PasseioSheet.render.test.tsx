@@ -127,16 +127,19 @@ describe('rodada 7 (M1–M4, M7) — escolhida, só a missão; sem Recuar, sem E
   });
 });
 
-describe('rodada 7 (M5, M6) — celebração (sem registro na aba)', () => {
-  it('o "Fiz" solta a celebração (decorativa, aria-hidden); a aba NÃO tem registro/logbook', () => {
+describe('rodada 7 (M5, M6) — celebração e registro', () => {
+  it('o "Fiz" solta a celebração (decorativa, aria-hidden); o registro lista a missão feita', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA }));
     expect(container.querySelector('[data-celebration]')).toBeNull();
     expect(container.querySelector('[data-travessias-registro]')).toBeNull();
     fireEvent.click(container.querySelector('[data-travessia-fiz]')!);
     const fx = container.querySelector('[data-celebration]')!;
     expect(fx.getAttribute('aria-hidden')).toBe('true');
-    expect(container.querySelector('[data-registro-abrir]')).toBeNull();
-    expect(container.textContent).not.toMatch(/Logbook|Registro/);
+    const abrir = container.querySelector('[data-registro-abrir]') as HTMLElement;
+    expect(abrir.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(abrir);
+    const item = container.querySelector(`[data-registro-item="${C1.id}"]`)!;
+    expect(item.textContent).toContain(travessiaTitle(C1.id, true)!);
   });
 });
 

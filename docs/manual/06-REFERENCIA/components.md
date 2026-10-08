@@ -274,7 +274,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
 **Régua:** `src/components/play/playArea.render.test.tsx`.
 
+### `src/components/nav/StrollQuestLine.tsx` (08/10/2026)
+**Dono de:** a LINHA "Take a stroll" / "Faça um passeio" do menu de Missões (`MissionsSheet kind="daily"`): `point` ("!", só texto) · `ready` ("?" + Claim/Resgatar) · `claimed`. Não monta `PasseioSheet`, sem timer. **Props:** `{ language, crossings, todayKey, onClaim }`. O Claim chama `claimStroll` (`utils/travessiasSave.ts`), que só grava o recibo `crossings.claimDay`.
+**Régua:** `src/components/nav/missionsMenu.render.test.tsx`, `src/utils/travessias.test.ts`.
+
 ### `src/components/play/PasseioSheet.tsx`
+**Desde 08/10/2026** montada SÓ pela folha do lote Passeio (`AreaView` › prop `passeio`); o menu de Missões não a monta mais. O botão do card é "Done · mm:ss" (desabilitado nos 30 min) → "Done" → "Done today".
 **Dono de:** a folha do Passeio na Exploração (30/09/2026): para onde o Soulmon vai hoje (postais das regiões abertas, casa inclusa) e, se não escondida, as Travessias — a ativa (texto pleno + versão pequena, "Fiz" / "Recuar"; ⚰️ "Trocar" entre os mesmos 3 e o modal das 21 saíram em 04/10/2026), os "Fiz" guardados ("abre no passeio da próxima noite", sem contagem) e, sem ativa, as regiões em névoa (tocar mostra as 3 propostas). Linha de segurança discreta (parecer 04 R-9) e o link "Esconder/Mostrar Travessias". Nunca mostra número de regiões, total, percentual, prazo, prêmio nem a palavra "desafio"/"challenge". Muda, sem push nem badge (R-NOVA). Nenhuma regra nasce aqui: cada toque entrega ao `App` uma função pura de `utils/travessias`.
 **Exports:** `PasseioSheet({ language, crossings, onChange(f), todayKey? })`. Redesenhada em 02/10/2026 (F1–F5): a tela mostra só a Travessia em uso (card com postal da região, glifo da área, título, ato, linha "No mapa" vinda de `crossingYield`, estado de hoje), com "Fiz" (uma vez por dia, `markDone(c, dia)`), "Ver todas e trocar" (abre `ModalSheet` com as 21) e "Recuar" (`dropCrossing`); ⚰️ "Deixar pra lá" e a lista de regiões em névoa na tela principal.
 **Missões do dia (04/10/2026):** props novas `seed?` (id do save); sem escolha mostra as 3 de `dailyOffer(dia, seed)` (cards fechados, "Escolher esta" → `pickMission`) com o "!" (`MissionMark`); escolhida vira o card com "?"; depois do "Fiz" diz para onde o Soulmon viaja; `data-marcos` ("Marcos de Aventura · N", só com N ≥ 1) com `InfoTip`. Explicações atrás de `InfoTip`.

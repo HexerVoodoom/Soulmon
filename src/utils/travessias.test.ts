@@ -564,3 +564,34 @@ describe('a viagem da noite e os postais dos Marcos (04/10/2026)', () => {
     expect(achados).toEqual(MARCO_POSTAIS.map(m => m.id));
   });
 });
+
+describe('a linha "Take a stroll" do menu (07/10/2026): o Resgatar é só recibo', () => {
+  const D = '2026-10-07';
+  const feita: CrossingsState = { ...CROSSINGS_EMPTY, active: { region: 'floresta', challenge: 'x' }, doneDay: D, score: 1 };
+  it('point -> ready -> claimed, por dia do jogador', async () => {
+    const { strollLineState, claimStroll } = await import('./travessiasSave');
+    expect(strollLineState(CROSSINGS_EMPTY, D)).toBe('point');
+    expect(strollLineState(feita, D)).toBe('ready');
+    expect(strollLineState(feita, '2026-10-08')).toBe('point');
+    expect(strollLineState(claimStroll(feita, D), D)).toBe('claimed');
+    expect(strollLineState(claimStroll(feita, D), '2026-10-08')).toBe('point');
+  });
+  it('idempotente e sem pagar de novo: a 2ª chamada devolve o MESMO objeto e nada além do recibo muda', async () => {
+    const { claimStroll } = await import('./travessiasSave');
+    const c = claimStroll(feita, D);
+    expect(claimStroll(c, D)).toBe(c);
+    expect(c.score).toBe(feita.score);
+    expect(c.pending).toBe(feita.pending);
+    expect(c.log).toBe(feita.log);
+    expect({ ...c, claimDay: undefined }).toEqual({ ...feita, claimDay: undefined });
+  });
+  it('sem passeio concluído hoje o Resgatar não faz nada', async () => {
+    const { claimStroll } = await import('./travessiasSave');
+    expect(claimStroll(CROSSINGS_EMPTY, D)).toBe(CROSSINGS_EMPTY);
+  });
+  it('o recibo sobrevive à higienização do save', async () => {
+    const { normalizeCrossings } = await import('./travessiasSave');
+    expect(normalizeCrossings({ ...feita, claimDay: D }).claimDay).toBe(D);
+    expect(normalizeCrossings({ ...feita, claimDay: 'lixo' }).claimDay).toBeNull();
+  });
+});

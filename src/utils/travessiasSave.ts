@@ -103,6 +103,7 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
   return {
     opened, active, pending, destination, hidden: r.hidden === true,
     doneDay: asDayKey(r.doneDay), pickDay, pickAt, log: log.slice(-LOG_MAX), score, trip,
+    claimDay: asDayKey(r.claimDay),
   };
 }
 
@@ -151,4 +152,29 @@ export const crossingsTouchMap = (c: CrossingsState): boolean =>
 export function strollWaitMs(s: CrossingsState, now?: number): number {
   if (s.pickAt === null || now === undefined) return 0;
   return Math.max(0, s.pickAt + STROLL_MIN_MS - now);
+}
+
+/**
+ * A LINHA "Faça um passeio" do menu de Missões da Home (07/10/2026). O Passeio
+ * inteiro (propostas, card, relógio de 30 min, "Concluir") vive no NPC; o menu só
+ * mostra a linha:
+ *  - `point`   = ainda não concluído hoje no NPC ("!"; a linha só APONTA);
+ *  - `ready`   = concluído hoje no NPC e ainda sem resgate ("?" + Resgatar);
+ *  - `claimed` = resgatado hoje.
+ * `dayKey` é o dia do jogador (`AAAA-MM-DD`).
+ */
+export type StrollLineState = 'point' | 'ready' | 'claimed';
+export function strollLineState(c: CrossingsState, dayKey: string): StrollLineState {
+  if (c.doneDay !== dayKey) return 'point';
+  return c.claimDay === dayKey ? 'claimed' : 'ready';
+}
+
+/**
+ * O Resgatar da linha. Idempotente por dia do jogador e PURO sobre `prev`
+ * (footgun 6): só vale com o passeio concluído hoje, e a 2ª chamada devolve o MESMO
+ * objeto. Não paga nada — o pagamento já saiu no `markDone` (ver `claimDay`).
+ */
+export function claimStroll(c: CrossingsState, dayKey: string): CrossingsState {
+  if (strollLineState(c, dayKey) !== 'ready') return c;
+  return { ...c, claimDay: dayKey };
 }

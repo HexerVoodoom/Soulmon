@@ -1,5 +1,17 @@
 # Status do Soulmon — registro vivo
 
+> ## 08/10/2026 — "Stroll fica com o NPC": o Passeio volta INTEIRO ao lote; a Home só lista a linha "Take a stroll"
+>
+> - **Pedido do dono (ênfase dele):** "Stroll fica com o NPC! A Home só tem a missão 'faça um stroll', mas o stroll deve ficar TODO ali, EXATAMENTE como era."
+> - **Voltou ao lote `exploracao:passeio` (NPC Brume):** a folha `PasseioSheet` inteira (`AreaView` › prop `passeio`, lazy), com as três propostas do dia, a escolha da região/destino, o card da missão escolhida, o **Registro/Logbook** (tirado em `2ccf3d91a`) e a linha "abre amanhã/opens tomorrow night" das regiões guardadas (tirada em `c7898c621`). O texto que apontava para a Home saiu.
+> - **Mantido o que o dono pediu depois:** o relógio de 30 min (`STROLL_MIN_MINUTES`) — o botão volta a ser **"Done · mm:ss"** (EN) / **"Concluir · mm:ss"** (PT), desabilitado até acabar, depois "Done"/"Concluir" e, feito, "Done today"/"Feito hoje". O "Claim" que o card do Passeio tinha desde `9f9be52a5` passou para a LINHA da Home (era o mesmo botão em dois lugares).
+> - **Na Home (`MissionsSheet kind="daily"`, seção Hoje):** o Passeio é SÓ uma linha, `StrollQuestLine`: "Take a stroll" / "Faça um passeio" — aponta ("!"), pronta ("?" + **Claim/Resgatar**, única ação) quando o passeio foi concluído no NPC hoje, resgatada. Sem `PasseioSheet`, sem propostas, sem card, sem timer na linha.
+> - **Sem pagar duas vezes:** o pagamento do Passeio (Marcos, região guardada, viagem da noite) continua no `markDone`, no NPC. O Claim da linha é só um RECIBO: grava `crossings.claimDay` (dia do jogador, `claimStroll`, idempotente — a 2ª chamada devolve o mesmo objeto, nada mais muda). Campo novo `claimDay` no save (higienizado em `normalizeCrossings`; save antigo = `null`).
+> - **Marcas:** `questMarks` — "!" até concluir no NPC, "?" (`passeioReady` = `strollLineState === 'ready'`) até resgatar, nada depois; o ícone diário da Home continua refletindo isso. Sem marca sobre o lote.
+> - **Regra "missões só no menu" ganhou UMA exceção:** o Passeio (a experiência é do prédio). Caderno/journaling, semanais, Primeiro dia seguem só no menu.
+> - **Bundle:** `App.tsx` importa só `travessiasSave` (estático); `PasseioSheet`/`travessias.ts` seguem lazy (`AreaView`).
+> - **Depende do dono:** nada novo.
+
 > ## 07/10/2026 — Missões: dois acessos (Diárias / Semanais) e "a missão só APONTA, depois RESGATA"
 >
 > - **Pedido do dono:** diárias e semanais separadas, cada uma com seu acesso; a missão só diz o que fazer ("Faça um registro no journaling") e, cumprida, o jogador toca em **Resgatar**.

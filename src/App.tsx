@@ -46,8 +46,7 @@ import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
-import { crossingsTouchMap, missionMark } from './utils/travessiasSave';
-import { strollWaitMs } from './utils/travessiasSave';
+import { crossingsTouchMap, missionMark, strollLineState, claimStroll } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { sanitizeEquippedFrame } from './utils/frames';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
@@ -4448,6 +4447,15 @@ export default function App() {
     });
   }, [setGameState]);
 
+  /** O Resgatar da linha "Take a stroll": só o recibo do dia (`claimStroll`), nada se paga de novo — o passeio já pagou no "Concluir" do NPC. */
+  const resgatarPasseio = useCallback(() => {
+    setGameState(prev => {
+      const c0 = prev.crossings ?? CROSSINGS_EMPTY;
+      const c1 = claimStroll(c0, playerDayIso(new Date(), prev.playerDayTz));
+      return c1 === c0 ? prev : { ...prev, crossings: c1 };
+    });
+  }, [setGameState]);
+
   /** O Caderno muda a lista por uma função PURA sobre `prev` (footgun 6). */
   const handleCaderno = useCallback((f: (c: CadernoEntry[]) => CadernoEntry[]) => {
     setGameState(prev => {
@@ -5446,24 +5454,18 @@ export default function App() {
   /** As marcas "!" / "?" de todo local de missão (`utils/questMarks.ts`, dono da regra). */
   /** O cartão do primeiro dia ainda está de pé? (uma missão: menu de Missões, nunca a lista de tarefas) */
   const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
-  /* O "?" do Passeio acende quando o relógio de 30 min acaba, sem esperar outro re-render. */
-  const [passeioTick, setPasseioTick] = useState(0);
-  useEffect(() => {
-    const falta = crossings.active ? strollWaitMs(crossings, Date.now()) : 0;
-    if (falta <= 0) return;
-    const t = window.setTimeout(() => setPasseioTick(n => n + 1), falta + 50);
-    return () => window.clearTimeout(t);
-  }, [crossings, passeioTick]);
+  /* A linha "Take a stroll" do menu: "!" até o Passeio ser concluído NO NPC, "?" (Resgatar) depois, nada quando resgatada. */
+  const diaDoPasseio = playerDayIso(new Date(), gameState.playerDayTz);
   const marcasDeMissao = useMemo(() => questMarks({
     firstDay: primeiroDiaAtivo,
     passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
-    passeioReady: strollWaitMs(crossings, Date.now()) === 0 && missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()) === 'progress',
+    passeioReady: strollLineState(crossings, diaDoPasseio) === 'ready',
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [passeioTick, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
@@ -6337,6 +6339,7 @@ export default function App() {
                    `hallContent`, montados antes do `return`). */
                 /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
                    ÚNICO caminho de escrita (função pura sobre `prev`). */
+                passeio={{ crossings, onChange: handleCrossings, seed: saveId }}
                 caderno={{ entries: gameState.caderno ?? [], onChange: handleCaderno }}
                 labTab={labTab}
                 onLabTab={setLabTab}
@@ -7130,9 +7133,8 @@ export default function App() {
         onClose={fecharMissoes}
         language={language}
         crossings={crossings}
-        onChange={handleCrossings}
+        onClaimStroll={resgatarPasseio}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
-        seed={saveId}
         weekly={missoesDaSemana}
         onClaimWeekly={resgatarMissao}
         missionProgress={missionProgress}

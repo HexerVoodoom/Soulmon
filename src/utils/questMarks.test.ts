@@ -70,8 +70,10 @@ describe('dois acessos separados (07/10/2026): diário e semanal têm marcas ind
     expect(c.weeklyCorner).toBe('ready');
     expect(c.weeklyTone).toBe('gold');
   });
-  it('Passeio com o relógio cumprido é "?" (pronta) no acesso diário', () => {
-    expect(questMarks({ ...base, passeio: 'progress', passeioReady: true }).dailyCorner).toBe('ready');
-    expect(questMarks({ ...base, passeio: null, passeioReady: true }).dailyCorner).toBeNull();
+  it('Passeio concluído no NPC e ainda sem Resgatar é "?" (pronta) no acesso diário; resgatado, nada', () => {
+    expect(questMarks({ ...base, passeio: null, passeioReady: true }).dailyCorner).toBe('ready');
+    expect(questMarks({ ...base, passeio: null, passeioReady: true }).passeio).toBe('ready');
+    expect(questMarks({ ...base, passeio: null, passeioReady: false }).dailyCorner).toBeNull();
+    expect(questMarks({ ...base, passeio: 'progress' }).dailyCorner).toBe('available');
   });
 });

@@ -103,6 +103,14 @@ export interface CrossingsState {
    */
   doneDay: string | null;
   /**
+   * O dia (`AAAA-MM-DD`) em que a linha "Faça um passeio" do menu de Missões foi
+   * RESGATADA (07/10/2026). Só um RECIBO: o pagamento do passeio (Marcos, região
+   * guardada, viagem da noite) acontece no `markDone`, no NPC; o Claim da linha
+   * não paga nada de novo — grava o dia e pronto, então tocar duas vezes não
+   * rende duas vezes. Ausente = nunca resgatou (save antigo).
+   */
+  claimDay: string | null;
+  /**
    * O dia (`AAAA-MM-DD`) em que `active` foi escolhida (04/10/2026, missões
    * diárias): a ativa vale PARA AQUELE DIA — no dia seguinte saem três
    * propostas novas. null = save antigo, sem dia (a folha trata como "sem
@@ -159,6 +167,6 @@ export const STROLL_MIN_MS = STROLL_MIN_MINUTES * 60 * 1000;
 export const LOG_MAX = 60;
 
 export const CROSSINGS_EMPTY: CrossingsState = {
-  opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null,
+  opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null, claimDay: null,
   pickDay: null, pickAt: null, log: [], score: 0, trip: null,
 };
