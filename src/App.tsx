@@ -47,7 +47,7 @@ import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap, missionMark } from './utils/travessiasSave';
-import { strollWaitMs } from './utils/travessias';
+import { strollWaitMs } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { sanitizeEquippedFrame } from './utils/frames';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';

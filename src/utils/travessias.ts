@@ -24,13 +24,12 @@
 import {
   HOME_REGION, LOG_MAX, MARCO_THRESHOLDS, MISSIONS_OFFERED_PER_DAY, PASSEIO_REGION_FIND_CHANCE, REGIONS_OPENED_PER_DAY,
   type CrossingChallenge, type CrossingsState, type Region, type RegionFind, type RegionId,
-  STROLL_MIN_MS,
 } from '../types/travessias';
 import { REGIONS } from '../data/travessiasCatalog';
 import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { adventureOfDay, findById, type AdventureEntry, type AdventureFind } from './adventure';
 import { hashString, mulberry32 } from './oracle/base';
-import { missionLive } from './travessiasSave';
+import { missionLive, strollWaitMs } from './travessiasSave';
 
 export { normalizeCrossings, REGION_IDS, isRegionId, crossingsTouchMap, missionMark, missionLive, type MissionMark } from './travessiasSave';
 
@@ -138,14 +137,7 @@ export const marcosAbertos = (s: CrossingsState): number => MARCO_THRESHOLDS.fil
 export const dropCrossing = (s: CrossingsState): CrossingsState =>
   s.active === null ? s : { ...s, active: null, pickDay: null, pickAt: null };
 
-/**
- * Quanto falta (ms) para o "Concluir" abrir. 0 = pode concluir. Sem `pickAt`
- * (save antigo, ou missão já feita) ou sem `now`: não há espera.
- */
-export function strollWaitMs(s: CrossingsState, now?: number): number {
-  if (s.pickAt === null || now === undefined) return 0;
-  return Math.max(0, s.pickAt + STROLL_MIN_MS - now);
-}
+export { strollWaitMs } from './travessiasSave';
 
 /** O "Fiz" de hoje já foi dado (`dayKey` é o dia do jogador)? */
 export const doneToday = (s: CrossingsState, dayKey: string): boolean => s.doneDay === dayKey;
