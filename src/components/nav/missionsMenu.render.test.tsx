@@ -7,7 +7,8 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { MissionsLink } from './MissionsLink';
-import { CROSSINGS_EMPTY } from '../../types/travessias';
+import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
+import { claimStroll } from '../../utils/travessiasSave';
 import { completeBuildingQuest, claimBuildingQuest, type BuildingQuestState } from '../../utils/buildingQuests';
 import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 
@@ -17,8 +18,8 @@ const [m] = weeklyMissionsFor('2026-W41');
 const sheet = (language: 'en-US' | 'pt-BR', kind: 'daily' | 'weekly' = 'daily', state?: BuildingQuestState) => render(
   <MissionsSheet
     kind={kind}
-    open onClose={() => {}} language={language} crossings={CROSSINGS_EMPTY} onChange={vi.fn()}
-    todayKey="2026-10-07" seed="s"
+    open onClose={() => {}} language={language} crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
+    todayKey="2026-10-07"
     weekly={[{ mission: m, count: 0, done: false, claimed: false }]} onClaimWeekly={vi.fn()}
     missionProgress={{}} marks={{ daily: 'available', torneio: 'available', conquistas: null }}
     buildings={{ state, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn() }}
@@ -26,14 +27,17 @@ const sheet = (language: 'en-US' | 'pt-BR', kind: 'daily' | 'weekly' = 'daily', 
 );
 
 describe('MissionsSheet — dois acessos', () => {
-  it('Daily: só Hoje (Passeio + journaling); a semana e as conquistas NÃO estão aqui', async () => {
+  it('Daily: só Hoje (linha do passeio + journaling); a semana e as conquistas NÃO estão aqui', async () => {
     sheet('en-US', 'daily');
     await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull(), { timeout: 8000 });
     const daily = document.querySelector('[data-missions-section="daily"]')!;
     expect(daily.getAttribute('aria-label')).toBe('Today');
     expect(document.querySelector('[data-missions-sheet]')!.getAttribute('data-missions-sheet')).toBe('daily');
     expect(daily.querySelector('[data-building-quest="exploracao.caderno"]')!.textContent).toContain('Write an entry in your journal');
-    expect(daily.querySelector('[data-travessias]')).not.toBeNull();
+    expect(daily.querySelector('[data-stroll-line]')!.textContent).toContain('Take a stroll');
+    expect(daily.querySelector('[data-travessias]')).toBeNull();
+    expect(daily.querySelector('[data-travessia-card]')).toBeNull();
+    expect(daily.querySelector('[data-travessia-fiz]')).toBeNull();
     expect(document.querySelector('[data-missions-section="weekly"]')).toBeNull();
     expect(document.querySelector('[data-missions-section="achievements"]')).toBeNull();
     expect(document.querySelectorAll('[data-building-quest]').length).toBe(1);
@@ -75,8 +79,8 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
     const pronta = completeBuildingQuest(undefined, D, 'exploracao.caderno', 99);
     const onClaim = vi.fn();
     const mk = (state: BuildingQuestState | undefined) => (
-      <MissionsSheet kind="daily" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onChange={vi.fn()}
-        todayKey={D} seed="s" weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }}
+      <MissionsSheet kind="daily" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
+        todayKey={D} weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }}
         buildings={{ state, day: D, bondLevel: 99, onClaim }} />
     );
     const { rerender } = render(mk(pronta));
@@ -93,6 +97,49 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
     expect(li2.getAttribute('data-status')).toBe('claimed');
     expect(li2.querySelector('button')).toBeNull();
     expect(li2.textContent).toContain('Claimed');
+  });
+});
+
+describe('a linha "Take a stroll": aponta, pronta, Claim, resgatada (a experiência vive no NPC)', () => {
+  const D = '2026-10-07';
+  const mk = (crossings: CrossingsState, onClaimStroll = vi.fn(), language: 'en-US' | 'pt-BR' = 'en-US') => (
+    <MissionsSheet kind="daily" open onClose={() => {}} language={language} crossings={crossings} onClaimStroll={onClaimStroll}
+      todayKey={D} weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }} />
+  );
+  const feita: CrossingsState = { ...CROSSINGS_EMPTY, active: { region: 'floresta', challenge: 'x' }, doneDay: D };
+  it('aponta: só texto + "!", sem botão, sem propostas, sem timer; o PasseioSheet nem é montado', async () => {
+    render(mk(CROSSINGS_EMPTY));
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')).not.toBeNull());
+    const li = document.querySelector('[data-stroll-line]')!;
+    expect(li.getAttribute('data-status')).toBe('point');
+    expect(li.textContent).toContain('Take a stroll');
+    expect(li.querySelector('button')).toBeNull();
+    expect(li.querySelector('[data-mission-mark="available"]')).not.toBeNull();
+    expect(document.querySelector('[data-travessias], [data-travessia-card], [data-travessia-ativa]')).toBeNull();
+  });
+  it('pronta: "?" e "Claim" como única ação; o clique chama o resgate; resgatada fica discreta', async () => {
+    const onClaim = vi.fn();
+    const { rerender } = render(mk(feita, onClaim));
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')).not.toBeNull());
+    const li = document.querySelector('[data-stroll-line]')!;
+    expect(li.getAttribute('data-status')).toBe('ready');
+    expect(li.querySelector('[data-mission-mark="ready"]')).not.toBeNull();
+    const btns = li.querySelectorAll('button');
+    expect(btns.length).toBe(1);
+    expect(btns[0].textContent).toBe('Claim');
+    fireEvent.click(btns[0]);
+    expect(onClaim).toHaveBeenCalledTimes(1);
+    rerender(mk(claimStroll(feita, D), onClaim));
+    const li2 = document.querySelector('[data-stroll-line]')!;
+    expect(li2.getAttribute('data-status')).toBe('claimed');
+    expect(li2.querySelector('button')).toBeNull();
+    expect(li2.textContent).toContain('Claimed');
+  });
+  it('PT-BR', async () => {
+    const { rerender } = render(mk(CROSSINGS_EMPTY, vi.fn(), 'pt-BR'));
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')!.textContent).toContain('Faça um passeio'));
+    rerender(mk(feita, vi.fn(), 'pt-BR'));
+    expect(document.querySelector('[data-stroll-line] button')!.textContent).toBe('Resgatar');
   });
 });
 
@@ -130,8 +177,8 @@ describe('o primeiro dia é missão (07/10/2026): vive no menu, não na Home', (
   it('a seção "First day" aparece com o cartão e a marca "!"; sem o progresso, some', async () => {
     const fd = { day: '2026-10-07', done: [] as never[] };
     const props = {
-      open: true, onClose: () => {}, crossings: CROSSINGS_EMPTY, onChange: vi.fn(),
-      todayKey: '2026-10-07', seed: 's', weekly: [], onClaimWeekly: vi.fn(), missionProgress: {},
+      open: true, onClose: () => {}, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(),
+      todayKey: '2026-10-07', weekly: [], onClaimWeekly: vi.fn(), missionProgress: {},
     };
     const { rerender } = render(
       <MissionsSheet kind="daily" {...props} language="en-US"

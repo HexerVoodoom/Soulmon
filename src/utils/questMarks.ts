@@ -42,7 +42,7 @@ export interface QuestMarkInput {
   ownedBackgrounds: readonly string[];
   /** A marca do dia de cada prédio (`buildingMarks`). Opcional: sem ela, nada de prédio acende. */
   buildings?: Partial<Record<BuildingId, QuestMark>>;
-  /** O Passeio está PRONTO para resgatar (o relógio de 30 min acabou, ainda não resgatado)? Vence o "!" do Passeio. */
+  /** A linha "Faça um passeio" está PRONTA para resgatar (concluído no NPC hoje, ainda sem Resgatar)? Vence o "!" do Passeio. */
   passeioReady?: boolean;
   /** O cartão do PRIMEIRO DIA ainda está de pé (`shouldShowFirstDay`)? É uma missão: vive no menu de Missões, nunca na lista de tarefas. */
   firstDay?: boolean;
@@ -81,7 +81,7 @@ export function strongestMark(marks: readonly QuestMark[]): QuestMark {
 }
 
 export function questMarks(input: QuestMarkInput): QuestMarks {
-  const passeio: QuestMark = input.passeio ? (input.passeioReady ? 'ready' : 'available') : null;
+  const passeio: QuestMark = input.passeioReady ? 'ready' : input.passeio ? 'available' : null;
   const torneio = strongestMark(
     input.weekly.filter(w => !w.claimed).map((w): QuestMark => (w.done ? 'ready' : 'available')),
   );

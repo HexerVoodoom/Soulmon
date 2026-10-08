@@ -11,7 +11,8 @@
  * dublês que só registram as props — o que se testa aqui é a fiação, não a
  * jogabilidade (que tem teste próprio).
  */
-import { CROSSINGS_EMPTY } from '../../types/travessias';
+import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
@@ -81,8 +82,8 @@ function props(over: Partial<PlayProps> = {}): PlayProps {
   };
 }
 
-function PlayAreaView(p: PlayProps) {
-  const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = p;
+function PlayAreaView(p: PlayProps & { passeio?: AreaViewProps['passeio'] }) {
+  const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, passeio, ...play } = p;
   const areaProps = {
     area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
     points: totalPoints, emblems: 0, credits: 0,
@@ -92,6 +93,7 @@ function PlayAreaView(p: PlayProps) {
     tournament: {} as AreaViewProps['tournament'],
     labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
     guild: { saveId: 's', metaDoDiaCumprida: false },
+    passeio,
   } satisfies AreaViewProps;
   return <AreaView {...areaProps} />;
 }
@@ -223,18 +225,29 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 });
 
-describe('Exploração — o Passeio (07/10/2026: a missão saiu do prédio)', () => {
-  it('o lote não leva marca de missão e a folha só aponta para o menu de Missões da Home', async () => {
-    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ language: 'en-US' })} />);
-    expect(container.querySelector('[data-area-lot="passeio"]')!.textContent).toContain('Stroll');
-    expect(container.querySelector('[data-mission-mark]')).toBeNull();
+describe('Exploração — o Passeio fica com o NPC (07/10/2026: "Stroll fica com o NPC")', () => {
+  const DIA = '2026-10-07';
+  function Viva({ language = 'en-US' as 'en-US' | 'pt-BR' }) {
+    const [c, set] = useState<CrossingsState>(CROSSINGS_EMPTY);
+    return <PlayAreaView {...props({ language, todayKey: DIA } as Partial<PlayProps>)} passeio={{ crossings: c, onChange: f => set(f), seed: 'seed' }} />;
+  }
+  it('a folha do lote traz o Passeio INTEIRO (três propostas, escolha) com Brume falando; sem texto que aponta para a Home', async () => {
+    const { container, getByRole } = renderWithCss(<Viva />);
     fireEvent.click(container.querySelector('[data-area-lot="passeio"]')!);
-    await achar(container, '[data-passeio-pointer]');
+    await achar(container, '[data-travessia-card]');
     const folha = getByRole('dialog', { name: 'Stroll' });
-    expect(folha.querySelector('[data-passeio]')).toBeNull();
-    expect(folha.querySelector('[data-travessia-card]')).toBeNull();
-    expect(folha.querySelector('[data-mission-mark]')).toBeNull();
+    expect(folha.querySelectorAll('[data-travessia-card]').length).toBe(3);
+    expect(folha.querySelector('[data-passeio-pointer]')).toBeNull();
+    expect(folha.textContent).not.toMatch(/Missions menu|menu de Missões/);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brume');
+    // escolher uma proposta mostra o card da missão com o botão de concluir travado pelo relógio
+    fireEvent.click(folha.querySelector('[data-travessia-card] [data-travessia-abrir]')!);
+    fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
+    const ativa = await achar(container, '[data-travessia-ativa]');
+    expect(ativa).toBeTruthy();
+    const btn = folha.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.textContent).toMatch(/^Done · \d\d:\d\d$/);
   });
 });
 

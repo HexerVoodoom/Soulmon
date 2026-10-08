@@ -18,6 +18,7 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
+import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import {
@@ -57,6 +58,7 @@ const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteShee
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
 const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
+const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
 const DungeonGame = lazy(() => loadDungeonGame().then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
@@ -141,7 +143,14 @@ export interface AreaViewProps {
   /** Exploração + Jogos (F5). */
   play: PlayHandlers;
   /** 🧭 Passeio + Travessias (30/09/2026): o estado do save e o único caminho de
-   *  escrita — uma função PURA de `utils/travessias` aplicada sobre `prev` no `App`. */
+   *  escrita — uma função PURA de `utils/travessias` aplicada sobre `prev` no `App`.
+   *  O Passeio vive INTEIRO no lote (NPC Brume); a Home só lista a linha "Take a stroll" (07/10/2026). */
+  passeio?: {
+    crossings: CrossingsState;
+    onChange: (f: (c: CrossingsState) => CrossingsState) => void;
+    /** A semente do sorteio das missões do dia (o id do save). */
+    seed?: string;
+  };
   /** 📓 Caderno (04/10/2026): as anotações (do save) e o único caminho de escrita. */
   caderno?: {
     entries: CadernoEntry[];
@@ -356,11 +365,13 @@ export function AreaView(props: AreaViewProps) {
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
-              <p data-passeio-pointer style={{ margin: 0 }}>
-                {language === 'pt-BR'
-                  ? 'Aqui o Soulmon sai para passear. As missões de passeio ficam no menu de Missões, na Home.'
-                  : 'This is where the Soulmon heads out for a stroll. Stroll missions live in the Missions menu on Home.'}
-              </p>
+              <PasseioSheet
+                language={language}
+                crossings={props.passeio?.crossings ?? CROSSINGS_EMPTY}
+                onChange={props.passeio?.onChange ?? (() => {})}
+                todayKey={play.todayKey}
+                seed={props.passeio?.seed}
+              />
             )}
             {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}

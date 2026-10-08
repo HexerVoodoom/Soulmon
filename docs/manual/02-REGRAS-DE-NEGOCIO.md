@@ -4468,9 +4468,20 @@ entra a recompensa. O evento do journaling é **guardar um registro novo no Cade
 (`visitBuilding` ignora os prédios listados). O material continua pago pelo modelo, sem lista.
 Cada ícone **some** quando não há nada a fazer nem a entregar ("?" vence "!", semanal em azul).
 
-**Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão **Resgatar / Claim**
-só nasce após `STROLL_MIN_MINUTES` (30, `types/travessias.ts`, dono único); antes disso a
-folha só aponta (sem botão) e o "?" do ícone diário acende ao fim do relógio. O instante de partida é o `pickAt` que já mora no save
+**EXCEÇÃO: o Passeio fica com o NPC (decisão do dono, 08/10/2026, "Stroll fica com o NPC").**
+A experiência inteira do Passeio — as três propostas, a escolha de região/destino, o card da
+missão, o Registro/Logbook, "abre amanhã" — vive na folha do lote `exploracao:passeio`
+(`PasseioSheet`, NPC Brume), exatamente como era. A Home só lista a LINHA **"Take a stroll" /
+"Faça um passeio"** (`StrollQuestLine`, seção Hoje): aponta ("!"), fica pronta ("?" + **Claim /
+Resgatar**, única ação) quando o passeio foi concluído no NPC hoje, e resgatada. **O Claim é só
+RECIBO**: o pagamento (Marcos, região guardada, viagem da noite) sai no `markDone` do NPC; o
+Claim grava `crossings.claimDay` (`claimStroll`, idempotente por dia do jogador — a 2ª chamada
+devolve o mesmo objeto) e não paga nada de novo. As OUTRAS missões (Caderno, semanais, Primeiro
+dia) continuam só no menu.
+
+**Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão do card no NPC
+(**"Done · mm:ss" / "Concluir · mm:ss"**, desabilitado) só abre após `STROLL_MIN_MINUTES` (30,
+`types/travessias.ts`, dono único); a linha da Home só aponta até o "Concluir" acontecer. O instante de partida é o `pickAt` que já mora no save
 (`crossings`, sincroniza com a nuvem; `null` = save antigo, sem espera). `markDone`
 reconfere a espera sobre o `prev` (`strollWaitMs`). O servidor não valida conclusão de
 Travessia, então não há espelho. Sem cobrança no texto.

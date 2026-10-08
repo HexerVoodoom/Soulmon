@@ -48,40 +48,54 @@ describe('PasseioSheet — contagem no botão', () => {
     expect(formatEspera(1)).toBe('00:01');
   });
 
-  it('só APONTA enquanto o relógio corre (sem botão) e nasce o "Claim" aos 30 min (relógio falso)', () => {
+  it('o botão "Done · mm:ss" fica desabilitado enquanto o relógio corre e abre aos 30 min (relógio falso)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0 + 80_000); // 1:20 depois de pegar → faltam 28:40
     const onChange = vi.fn();
     const { container } = render(
       <PasseioSheet language="en-US" crossings={pegada()} onChange={onChange} todayKey={DAY} seed="seed" />,
     );
-    expect(container.querySelector('[data-travessia-fiz]')).toBeNull();
+    const btn = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.textContent).toBe('Done · 28:40');
+    fireEvent.click(btn);
+    expect(onChange).not.toHaveBeenCalled();
     // sem cobrança: nenhuma palavra de pressa
     expect(container.querySelector('[data-travessia-tempo]')!.textContent).not.toMatch(/hurry|late|behind|must|only/i);
 
     act(() => { vi.advanceTimersByTime(28 * 60_000 + 40_000); });
-    const btn = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
-    expect(btn.textContent).toBe('Claim');
-    expect(btn.disabled).toBe(false);
-    fireEvent.click(btn);
+    const aberto = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(aberto.textContent).toBe('Done');
+    expect(aberto.disabled).toBe(false);
+    fireEvent.click(aberto);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('PT-BR: sem botão antes do tempo; "Resgatar" depois', () => {
+  it('PT-BR: "Concluir · mm:ss" antes; "Concluir" depois', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0 + 60_000);
     const { container } = render(
       <PasseioSheet language="pt-BR" crossings={pegada()} onChange={() => {}} todayKey={DAY} seed="seed" />,
     );
-    expect(container.querySelector('[data-travessia-fiz]')).toBeNull();
+    const btn = () => container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(btn().textContent).toBe('Concluir · 29:00');
+    expect(btn().disabled).toBe(true);
     act(() => { vi.advanceTimersByTime(30 * 60_000); });
-    expect((container.querySelector('[data-travessia-fiz]') as HTMLElement).textContent).toBe('Resgatar');
+    expect(btn().textContent).toBe('Concluir');
   });
 
-  it('não existe mais a linha "abre amanhã" na folha', () => {
+  it('o card concluído mostra "Done today" e o botão trava', () => {
+    const feito = markDone(pegada(), DAY, T0 + STROLL_MIN_MS);
+    const { container } = render(<PasseioSheet language="en-US" crossings={feito} onChange={() => {}} todayKey={DAY} seed="seed" now={T0 + STROLL_MIN_MS} />);
+    const btn = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(btn.textContent).toBe('Done today');
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('o lote traz de volta a linha "abre amanhã" das regiões guardadas e o registro', () => {
     const c = { ...CROSSINGS_EMPTY, pending: ['floresta' as const] };
     const { container } = render(<PasseioSheet language="en-US" crossings={c} onChange={() => {}} todayKey={DAY} seed="seed" now={T0} />);
-    expect(container.textContent).not.toMatch(/opens tomorrow/i);
-    expect(container.querySelector('[data-travessia-pendente]')).toBeNull();
+    expect(container.textContent).toMatch(/opens tomorrow/i);
+    expect(container.querySelector('[data-travessia-pendente]')).not.toBeNull();
   });
 });

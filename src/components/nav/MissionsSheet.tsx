@@ -6,30 +6,29 @@ import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions'
 import type { BuildingQuestsProps } from './BuildingQuestList';
 import { questMarkLabel, type QuestMark } from '../../utils/questMarks';
 import { MissionMark } from '../play/MissionMark';
+import { StrollQuestLine } from './StrollQuestLine';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
 const WeeklyMissionList = lazy(() => import('../mercado/ShopShelf').then(m => ({ default: m.WeeklyMissionList })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 const BuildingQuestList = lazy(() => import('./BuildingQuestList').then(m => ({ default: m.BuildingQuestList })));
-const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 
 /**
- * A LISTA DE MISSÕES, aberta pelo ícone da Home (rodada 7, M8): a MESMA folha do
- * Passeio (as três do dia, a escolhida com o relógio de 24 h, o registro das
- * feitas) dentro de uma folha modal. Uma regra só, dois lugares — nada daqui
- * escreve estado que o Passeio não escreva.
+ * A LISTA DE MISSÕES, aberta pelos ícones da Home. O Passeio é a EXCEÇÃO (07/10/2026,
+ * "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
+ * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ kind, open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
+export function MissionsSheet({ kind, open, onClose, language, crossings, onClaimStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
   /** Qual acesso abriu esta folha (07/10/2026): `daily` = Primeiro dia + Hoje; `weekly` = Esta semana + Conquistas. */
   kind: 'daily' | 'weekly';
   open: boolean;
   onClose: () => void;
   language: Language;
   crossings: CrossingsState;
-  onChange: (f: (c: CrossingsState) => CrossingsState) => void;
+  /** O Resgatar da linha do passeio (só o recibo do dia; o pagamento é do "Concluir" no NPC). */
+  onClaimStroll: () => void;
   todayKey: string;
-  seed: string;
   /** As missões da semana e o resgate dos Emblemas (o mesmo do Torneio). */
   weekly: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
   onClaimWeekly: (id: WeeklyMissionId) => void;
@@ -55,7 +54,7 @@ export function MissionsSheet({ kind, open, onClose, language, crossings, onChan
           )}
           {daily && <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} isPt={isPt} id="daily">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <PasseioSheet language={language} crossings={crossings} onChange={onChange} todayKey={todayKey} seed={seed} />
+              <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} />
               {buildings && <BuildingQuestList language={language} {...buildings} />}
             </div>
           </Section>}

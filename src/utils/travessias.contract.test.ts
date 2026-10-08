@@ -165,7 +165,8 @@ describe('(d) o formato: nada distingue a versão pequena, nada paga, o save só
     // 04/10/2026 (missões diárias): + pickDay (dia da escolha), score (Marcos de Aventura, pedido do dono)
     // e trip (dia + região da viagem da noite). Nenhum texto livre.
     // Rodada 7 (M4, M6): + pickAt (instante da escolha, a janela de 24 h) e log (o registro: dia + região + id).
-    const CAMPOS = ['active', 'destination', 'doneDay', 'hidden', 'log', 'opened', 'pending', 'pickAt', 'pickDay', 'score', 'trip'].sort();
+    // 07/10/2026: + claimDay (o dia do recibo da linha "Take a stroll" do menu; só um dia).
+    const CAMPOS = ['active', 'claimDay', 'destination', 'doneDay', 'hidden', 'log', 'opened', 'pending', 'pickAt', 'pickDay', 'score', 'trip'].sort();
     expect(campos(corpo('CrossingsState')).sort()).toEqual(CAMPOS);
     expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(CAMPOS);
   });

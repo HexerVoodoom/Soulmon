@@ -211,7 +211,7 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         <RegionPostal region={region} width={64} height={52} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
           <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {!feito && <MissionMark kind={espera === 0 ? 'ready' : 'progress'} isPt={isPt} size={20} />}
+            {!feito && <MissionMark kind="progress" isPt={isPt} size={20} />}
             {isPt ? `Sua missão de hoje · ${nome}` : `Your mission today · ${nome}`}
           </p>
           <p data-travessia-titulo style={{ ...sheetCardTitle, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -241,7 +241,7 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         ) : (
           <span data-travessia-tempo style={{ color: 'var(--sm2-muted)' }}>
             {espera > 0
-              ? (isPt ? 'Um passeio leva um tempo. Vá com calma; o Resgatar aparece quando der.' : 'A stroll takes a little while. Take it easy; Claim shows up when it is time.')
+              ? (isPt ? 'Um passeio leva um tempo. Vá com calma; o botão abre quando der.' : 'A stroll takes a little while. Take it easy; the button opens when it is time.')
               : horas === null
                 ? (isPt ? 'Ainda não marcada.' : 'Not marked yet.')
                 : (isPt ? `Vale por mais ${horas} h.` : `${horas} h to go.`)}
@@ -249,18 +249,18 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         )}
       </p>
 
-      {/* A missão só APONTA; o botão nasce quando a ação está cumprida (o relógio de 30 min acabou): ação → pronta → Resgatar. */}
-      {(feito || espera === 0) && (
-        <button
-          type="button"
-          data-travessia-fiz
-          disabled={feito}
-          onClick={onFiz}
-          style={{ ...sm2Button('primary', feito), width: '100%' }}
-        >
-          {feito ? (isPt ? 'Resgatada' : 'Claimed') : (isPt ? 'Resgatar' : 'Claim')}
-        </button>
-      )}
+      {/* O "Concluir" é feito AQUI, no NPC (a Home só lista a linha "Take a stroll"); abre depois dos 30 min, com a contagem no botão. */}
+      <button
+        type="button"
+        data-travessia-fiz
+        disabled={feito || espera > 0}
+        onClick={onFiz}
+        style={{ ...sm2Button('primary', feito || espera > 0), width: '100%' }}
+      >
+        {feito
+          ? (isPt ? 'Feito hoje' : 'Done today')
+          : `${isPt ? 'Concluir' : 'Done'}${espera > 0 ? ` · ${formatEspera(espera)}` : ''}`}
+      </button>
     </div>
   );
 }
@@ -270,6 +270,55 @@ export function formatEspera(ms: number): string {
   const total = Math.ceil(ms / 1000);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${p(Math.floor(total / 60))}:${p(total % 60)}`;
+}
+
+/** `AAAA-MM-DD` → "3 out" / "Oct 3" (o dia do jogador, sem fuso). */
+function diaCurto(day: string, isPt: boolean): string {
+  const [y, m, d] = day.split('-').map(Number);
+  if (!y || !m || !d) return day;
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+}
+
+/**
+ * O REGISTRO das missões feitas (rodada 7, M6): um diário, não um placar — dia,
+ * título e cenário, as mais recentes primeiro. Sem total, sem sequência.
+ */
+function Registro({ log, isPt }: { log: CrossingsState['log']; isPt: boolean }) {
+  const [aberto, setAberto] = useState(false);
+  if (log.length === 0) return null;
+  const itens = [...log].reverse();
+  return (
+    <div data-travessias-registro style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <hr style={divider} />
+      <button
+        type="button"
+        data-registro-abrir
+        aria-expanded={aberto}
+        aria-controls="sm2-registro-lista"
+        onClick={() => setAberto(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, width: '100%', minHeight: 44, padding: 0,
+          background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Registro' : 'Logbook'}</p>
+        <Icon name={aberto ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
+      </button>
+      {aberto && (
+        <ul id="sm2-registro-lista" style={{ ...list, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {itens.map((e, i) => {
+            const titulo = travessiaTitle(e.challenge, isPt) ?? e.challenge;
+            return (
+              <li key={`${e.day}-${e.challenge}-${i}`} data-registro-item={e.challenge} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{titulo}</span>
+                <span style={{ ...note, flexShrink: 0 }}>{diaCurto(e.day, isPt)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp }: {
@@ -302,6 +351,8 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   const abertas = openRegions(crossings);
   const ativa = activeChallenge(crossings, dia, now);
   const feitoHoje = doneToday(crossings, dia);
+  const pendentes = crossings.pending.map(regionById).filter((r): r is Region => !!r);
+  const nomeDe = (r: Region) => (isPt ? r.namePt : r.nameEn);
   const ofertas = useMemo(() => dailyOffer(dia, seed), [dia, seed]);
   // O destino só aparece quando há de fato o que escolher (mais de uma região
   // aberta) e nenhuma missão está de pé: com a casa sozinha era um "botão" sem
@@ -393,6 +444,24 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
             <span>{isPt ? `Marcos de Aventura · ${crossings.score}` : `Adventure Milestones · ${crossings.score}`}</span>
           </p>
         )}
+
+        {pendentes.length > 0 && (
+          <ul style={list}>
+            {pendentes.map((r, i) => (
+              <li key={r.id} data-travessia-pendente={r.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '6px 0' }}>
+                <span aria-hidden="true" style={icon}>🌄</span>
+                <p style={{ ...sm2Text, margin: 0 }}>
+                  <b style={{ fontWeight: 600 }}>{nomeDe(r)}</b>
+                  {i === 0
+                    ? (isPt ? ' — abre na próxima noite.' : ' — opens tomorrow night.')
+                    : (isPt ? ' — abre num passeio seguinte.' : ' — opens on a later stroll.')}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <Registro log={crossings.log} isPt={isPt} />
 
         <p data-travessias-seguranca style={{ ...note, fontSize: 'var(--sm2-text-xs)' }}>
           {isPt
