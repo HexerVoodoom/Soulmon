@@ -1257,9 +1257,7 @@ Quatro cartões, cada um com condição literal dentro da `StatsPage`:
 | Cartão | Aparece quando | Observação |
 |---|---|---|
 | `BirthCard` | `{birth && (…)}` — o `App.tsx` monta `birth` sob `gameState.bornAt \|\| gameState.soulmonMeta?.baseName \|\| gameState.demoCharacterId` | **Demo**: `displaySprite` lê o acervo, que o demo nunca preenche, então há fallback `getSpriteForStage('rookie', gameState.demoCharacterId)` |
-| `BestiaryCard` | `{(bestiary?.length ?? 0) > 0 && (…)}` | **condição PRÓPRIA, não aninhada no álbum** — o álbum depende de `soulmonStages`, que o jogador grátis não tem |
-| `FormAlbum` | `{album && album.length > 0 && (…)}` | silhueta para o não alcançado, com `reachedAt` |
-| linha de texto legada | `{!album && formNames.length > 0 && (…)}` | ⚰️ o que o álbum substituiu, mantido para save sem `album` |
+| ⚰️ `BestiaryCard`, `FormAlbum` e a linha "Formas já alcançadas" | — | **Saíram do Santuário do Vínculo em 07/10/2026 (pedido do dono: "Encounters e Forms lived podem sair")**. `bestiary` e `formReachedAt` seguem no save (masmorra, cerimônia de evolução); só a tela saiu. |
 
 `MemoriesCard` **não mora aqui** — ele é montado dentro do `DailyReportModal`
 (§4.16).
@@ -1273,7 +1271,6 @@ as artes do bestiário e do álbum, as medalhas e as listas sem contagem. O
 `BirthCard` é o **mesmo** do reveal (§2.3).
 
 **Régua**: `StatsPage.render.test.tsx` (novo — cobre `hideMetrics`),
-`BestiaryCard.render.test.tsx`, `FormAlbum.render.test.tsx`,
 `BirthCard.render.test.tsx`, `MemoriesCard.render.test.tsx`.
 
 ### 4.8a Estatísticas — a primeira vez / o vazio (medido em 13/09/2026, a pedido do inventário de wireframes)
@@ -1320,8 +1317,7 @@ próxima conclusão"), nunca da falta; é a mesma trava de forma que proíbe o
 **Régua**: `StatsPage.render.test.tsx` — existe desde `05808e27` (20/09/2026).
 ⚰️ Até 13/09/2026 **nenhum teste montava a `StatsPage`**; hoje
 `ls src/components | grep -i 'StatsPage.*test'` devolve o arquivo. Os cartões
-continuam com `BirthCard.render.test.tsx`, `BestiaryCard.render.test.tsx` e
-`FormAlbum.render.test.tsx`. A linha "Nível 0" e o `progressbar` da tabela acima
+continuam com `BirthCard.render.test.tsx` (os de `BestiaryCard`/`FormAlbum` saíram com os componentes). A linha "Nível 0" e o `progressbar` da tabela acima
 **somem** com `hideMetrics` (§4.8).
 
 ### 4.9 `OraclePage` — `currentView === 'oracle'`, inalcançável (até a minimal-ui F1)

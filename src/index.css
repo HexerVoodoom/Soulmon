@@ -7199,7 +7199,6 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   color: var(--sm2-ink);
 }
 /* O cartão contínuo: o bloco seguinte da jornada abre com topo tracejado, sem separador. */
-.sm2-stats-cont { border-top: 1px dashed var(--sm2-muted); padding-top: var(--sm2-space-2); }
 .sm2-stats-ch { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 24px; }
 .sm2-stats-h3 {
   flex: 1; min-width: 0; margin: 0;

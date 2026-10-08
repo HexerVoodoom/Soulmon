@@ -3900,8 +3900,7 @@ frase de reencontro menciona o que ficou por fazer.
 
 **Onde a UI mostra.** `src/components/MemoriesCard.tsx`, dentro do
 `src/components/DailyReportModal.tsx` · `src/components/BirthCard.tsx` e o "N
-dias juntos" na página de **Estatísticas** · `src/components/FormAlbum.tsx`, que
-lê `collectedAt` para datar cada forma · a fala de aniversário sai como toast do
+dias juntos" na página de **Estatísticas** · ⚰️ `FormAlbum.tsx` (apagado em 07/10/2026; a data de cada forma segue em `formReachedAt`) · a fala de aniversário sai como toast do
 `src/App.tsx` e a de reencontro pelo `speak` do
 `src/components/CompanionHUD.tsx`.
 
@@ -4629,7 +4628,7 @@ apresenta cada arte — coleção, nunca placar.
 `handleDungeonEnemyDefeated(enemy.stage)` no `src/App.tsx`. Só cresce: o updater
 só acrescenta quando a chave ainda não está lá.
 
-A grade de `src/components/BestiaryCard.tsx` é
+⚰️ **07/10/2026: a seção "Encontros"/"Encounters" e o `BestiaryCard.tsx` saíram da tela (pedido do dono); o dado `bestiary` segue gravado pela masmorra.** A grade que existia era
 `Object.keys(DUNGEON_LINE_SPRITES)` × `TIERS`, onde `TIERS` são os **quatro**
 tiers que têm arte própria (`rookie`, `champion`, `ultimate`, `mega`) — baby-i e
 baby-ii reusam a arte de rookie, e repetir a mesma imagem duas vezes seria uma
@@ -4640,12 +4639,11 @@ você ainda não viu"; vazio não diz nada, e coleção só é coleção quando 
 falta é visível. A contagem é `achados de total` — de COLEÇÃO, e só cresce.
 Mesma régua do `dexProgress` dos sonhos ([§41](#sonhos)).
 
-**Dono.** `src/components/BestiaryCard.tsx` (a leitura e a grade) ·
+**Dono.** ⚰️ `BestiaryCard.tsx` (apagado) ·
 `src/utils/dungeon.ts` → `enemyKey` (a chave) · `src/utils/sprites.ts` →
 `DUNGEON_LINE_SPRITES` / `DUNGEON_LINE_NAMES` (as linhas e os nomes, dono único).
 
-**Régua.** `src/components/BestiaryCard.render.test.tsx`,
-`src/utils/sprites.dungeonRoster.test.ts`.
+**Régua.** `src/utils/sprites.dungeonRoster.test.ts`.
 
 **Decisão.** WP4.6(b). O campo `bestiary` era gravado no save de TODO jogador
 desde 06/09/2026 e **lido por ninguém** — até 36 strings crescendo no KV de
@@ -4667,8 +4665,8 @@ menos óbvio que ele está mudo.
 **O que NÃO faz.** Não mostra percentual. Não mostra "faltam N". Não ordena
 linhas por quantidade. Não some quando a coleção fica completa.
 
-**Onde a UI mostra.** `src/components/StatsPage.tsx`, seção "Encontros" /
-"Encounters", desenhada por `src/components/BestiaryCard.tsx`.
+**Onde a UI mostra.** nenhuma desde 07/10/2026 (a seção "Encontros" /
+"Encounters" de `StatsPage.tsx` saiu).
 
 ---
 

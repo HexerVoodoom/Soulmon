@@ -13,7 +13,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Orquestração:** [`src/App.tsx`](#srcapptsx) · [`src/main.tsx`](#srcmaintsx) · [`ErrorBoundary.tsx`](#srccomponentserrorboundarytsx) · [`ContentModals.tsx`](#srccomponentscontentmodalstsx) · ⚰️ [`BottomNav.tsx`](#srccomponentsbottomnavtsx) · [`nav/CornerLink.tsx`](#srccomponentsnavcornerlinktsx) · [`nav/MapPage.tsx`](#srccomponentsnavmappagetsx) · [`nav/AreaTopBar.tsx`](#srccomponentsnavareatopbartsx) · ⚰️ `nav/HomeMenuSheet.tsx` (apagado em `0671982f`, 07/10/2026: o botão de avatar leva às Configurações) · [`IntroScreen.tsx`](#srccomponentsintroscreentsx)
 - **Home e pet:** [`CompanionHUD.tsx`](#srccomponentscompanionhudtsx) · [`CareSystem.tsx`](#srccomponentscaresystemtsx) · [`ChatBox.tsx`](#srccomponentschatboxtsx) · [`PetPage.tsx`](#srccomponentspetpagetsx) · [`PetStageDecor.tsx`](#srccomponentspetstagedecortsx) · [`PlayCard.tsx`](#srccomponentsplaycardtsx) · [`GamePopups.tsx`](#srccomponentsgamepopupstsx) · [`FirstTaskCompletedPopup.tsx`](#srccomponentsfirsttaskcompletedpopuptsx) · [`nestArt.ts`](#srccomponentsnestartts) · [`evolution/SoulNode.tsx`](#srccomponentsevolutionsoulnodetsx) · [`evolution/nodeArt.tsx`](#srccomponentsevolutionnodearttsx) · [`RestWindowCard.tsx`](#srccomponentsrestwindowcardtsx) · [`DreamDex.tsx`](#srccomponentsdreamdextsx) · [`AdventureDiary.tsx`](#srccomponentsadventurediarytsx) · [`MorningDream.tsx`](#srccomponentsmorningdreamtsx) · [`NightmareBattle.tsx`](#srccomponentsnightmarebattletsx) · [`StepsCard.tsx`](#srccomponentsstepscardtsx) · [`StepRow.tsx`](#srccomponentssteprowtsx)
 - **Atividades e tarefas:** [`DailyRituals.tsx`](#srccomponentsdailyritualstsx) · [`CreateModal.tsx`](#srccomponentscreatemodaltsx) · [`EditModal.tsx`](#srccomponentseditmodaltsx) · [`TaskEditModal.tsx`](#srccomponentstaskeditmodaltsx) · [`TaskMeta.tsx`](#srccomponentstaskmetatsx) · [`TriagePile.tsx`](#srccomponentstriagepiletsx) · [`QuickAddBar.tsx`](#srccomponentsquickaddbartsx) · [`EvolveTaskModal.tsx`](#srccomponentsevolvetaskmodaltsx) · [`HabitConstancy.tsx`](#srccomponentshabitconstancytsx) · [`MilestoneCeremony.tsx`](#srccomponentsmilestoneceremonytsx) · [`MorningCheckIn.tsx`](#srccomponentsmorningcheckintsx) · [`WeeklyReportCard.tsx`](#srccomponentsweeklyreportcardtsx) · [`FirstDayCard.tsx`](#srccomponentsfirstdaycardtsx)
-- **Evolução:** [`EvolutionPath.tsx`](#srccomponentsevolutionpathtsx) · [`EvolutionCeremony.tsx`](#srccomponentsevolutionceremonytsx) · [`EvoTrail.tsx`](#srccomponentsevotrailtsx) · [`FormAlbum.tsx`](#srccomponentsformalbumtsx) · [`BestiaryCard.tsx`](#srccomponentsbestiarycardtsx) · [`RebirthModal.tsx`](#srccomponentsrebirthmodaltsx)
+- **Evolução:** [`EvolutionPath.tsx`](#srccomponentsevolutionpathtsx) · [`EvolutionCeremony.tsx`](#srccomponentsevolutionceremonytsx) · [`EvoTrail.tsx`](#srccomponentsevotrailtsx) · [`BestiaryCard.tsx`](#srccomponentsbestiarycardtsx) · [`RebirthModal.tsx`](#srccomponentsrebirthmodaltsx)
 - **Jogos:** [`DungeonGame.tsx`](#srccomponentsdungeongametsx) · [`ArenaGame.tsx`](#srccomponentsarenagametsx) · [`DinoGame.tsx`](#srccomponentsdinogametsx) · [`RPSGame.tsx`](#srccomponentsrpsgametsx) · [`pixel/TimingBar.tsx`](#srccomponentspixeltimingbartsx) · [`games/GameKit.tsx`](#srccomponentsgamesgamekittsx)
 - **Loja e economia:** [`mercado/MercadoSheets.tsx`](#srccomponentsmercadomercadosheetstsx) · [`mercado/ShopShelf.tsx`](#srccomponentsmercadoshopshelftsx) · [`home/Mochila.tsx`](#srccomponentshomemochilatsx) · [`ItemsWindow.tsx`](#srccomponentsitemswindowtsx) · [`CreditsModal.tsx`](#srccomponentscreditsmodaltsx) · [`UnlockAccountModal.tsx`](#srccomponentsunlockaccountmodaltsx)
 - **Rituais e relatórios:** [`DailyReportModal.tsx`](#srccomponentsdailyreportmodaltsx) · [`MemoriesCard.tsx`](#srccomponentsmemoriescardtsx) · [`BalanceWeekModal.tsx`](#srccomponentsbalanceweekmodaltsx) · [`ProtectProgressModal.tsx`](#srccomponentsprotectprogressmodaltsx) · [`StatsPage.tsx`](#srccomponentsstatspagetsx) · [`BirthCard.tsx`](#srccomponentsbirthcardtsx)
@@ -118,14 +118,6 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/BalanceWeekModal.render.test.tsx`.
 **Avisos do arquivo:** não é um planejador — é proposta pronta, aceita ou recusada; antes/depois mostrado antes de qualquer escrita; "Agora não" é saída de primeira classe; muda QUAIS dias, nunca QUANTOS; quando a carga não cabe em `7 × teto`, a tela diz explicitamente que não resolve, em vez de prometer alívio que não vem.
 
-### `src/components/BestiaryCard.tsx`
-**Dono de:** cartão "Os Encontros" — o bestiário coletado na masmorra, na aba Estatísticas, com silhueta para o que ainda não apareceu.
-**Props principais:** `encountered: readonly string[]` (chaves `linha-tier` do save, só cresce), `language`.
-**Exports:** `BestiaryCard(props)` · `default`.
-**Estado/efeitos relevantes:** nenhum — apresentação pura sobre `encountered`; usa `DUNGEON_LINE_SPRITES`/`DUNGEON_LINE_NAMES` de `src/utils/sprites.ts`.
-**Chamado por:** `src/components/StatsPage.tsx` (`grep -rl "from '.*/BestiaryCard'" src`, 09/09/2026).
-**Régua:** `src/components/BestiaryCard.render.test.tsx`.
-**Avisos do arquivo:** ⚠️ `bestiary` era escrito no save de todo jogador desde 06/09/2026 e lido por ninguém — este cartão é o consumidor; não coletado = silhueta (nunca espaço vazio); contagem é de COLEÇÃO e só cresce, nunca percentual nem "faltam N".
 
 ### `src/components/BirthCard.tsx`
 **Dono de:** o Cartão de Nascimento — mesma peça no reveal do onboarding e nas Estatísticas (a lembrança).
@@ -653,14 +645,6 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'FirstTaskCompletedPopup.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** uma frase e um botão — sem segunda frase explicativa (roubaria a comemoração) e sem X próprio (o `ModalSheet` já traz um acessível).
 
-### `src/components/FormAlbum.tsx`
-**Dono de:** o álbum das formas vividas (WP4.6/WP4.10) — cada forma alcançada com arte e data, o resto como silhueta.
-**Props principais:** `AlbumForm` (interface exportada: `id`, `name`, `spriteUrl?`) · `FormAlbumProps` — `forms: readonly AlbumForm[]`, `reached: readonly string[]` (`unlockedEvolutions`), `reachedAt?: Record<string,string>` (WP4.10), `language`, `hideMetrics?` (novo, padrão `false` — mesma bandeira de "esconder números" da Janela de Descanso).
-**Exports:** `AlbumForm` (interface) · `FormAlbum(props)` · `default`.
-**Estado/efeitos relevantes:** nenhum — apresentação pura; usa `collectedAt` de `src/utils/collectionDates.ts` para a data da primeira vez.
-**Chamado por:** `src/components/StatsPage.tsx` (`grep -rl "from '.*/FormAlbum'" src`, 09/09/2026).
-**Régua:** `src/components/FormAlbum.render.test.tsx`.
-**Avisos do arquivo:** ausência é convite, nunca dívida — forma não alcançada é silhueta, sem "faltam N"; data é a PRIMEIRA vez e some quando não existe (save antigo sem data não é inventada); contagem de completude é de COLEÇÃO, só cresce.
 
 ### `src/components/GamePopups.tsx`
 **Dono de:** wrapper que hospeda os popups de minijogo/marco — hoje só encaminha para `FirstTaskCompletedPopup`.
@@ -953,7 +937,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Dono de:** a página de Estatísticas — deixou de ser uma parede de números; só o Nível de Vínculo é leitura grande.
 **Props principais:** `CompletedTask`, `ActivityStats` (interfaces internas) · `StatsPageProps` — dados de progresso, formas desbloqueadas, jornada (kills, runs, recorde da Corrida — `dinoBest`; a linha diz "marcaram N na Corrida"/"on the Obstacle Run" desde 30/09/2026), histórico de conclusões.
 **Exports:** `StatsPageProps` (interface) · `StatsPage(props)`.
-**Estado/efeitos relevantes:** 3 ocorrências de `useMemo` (`grep -c`, 09/09/2026); renderiza `BirthCard`, `FormAlbum`, `BestiaryCard`; usa `getPassive` (`src/utils/passives.ts`).
+**Estado/efeitos relevantes:** 3 ocorrências de `useMemo` (`grep -c`, 09/09/2026); renderiza `BirthCard` (⚰️ `FormAlbum`/`BestiaryCard` apagados em 07/10/2026); usa `getPassive` (`src/utils/passives.ts`).
 **Chamado por:** `grep -rl "from '.*/StatsPage'" src` vazio; consumo real em `src/App.tsx` via `lazy(() => import('./components/StatsPage'))` (09/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'StatsPage.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** era 13 números simultâneos (XP cru, Bits, 3 atributos, 5 contadores, 3 tabelas) — a pergunta "o usuário decide algo com este número?" respondia "não" na maioria; atributos (Poder/Harmonia/Benevolência) SAÍRAM daqui, moram na página de Evolução; jornada virou FRASE, não grade de caixas.
