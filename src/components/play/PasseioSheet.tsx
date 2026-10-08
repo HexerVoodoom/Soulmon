@@ -211,7 +211,7 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         <RegionPostal region={region} width={64} height={52} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
           <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {!feito && <MissionMark kind="progress" isPt={isPt} size={20} />}
+            {!feito && <MissionMark kind={espera === 0 ? 'ready' : 'progress'} isPt={isPt} size={20} />}
             {isPt ? `Sua missão de hoje · ${nome}` : `Your mission today · ${nome}`}
           </p>
           <p data-travessia-titulo style={{ ...sheetCardTitle, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -241,7 +241,7 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         ) : (
           <span data-travessia-tempo style={{ color: 'var(--sm2-muted)' }}>
             {espera > 0
-              ? (isPt ? 'Um passeio leva um tempo. Vá com calma; o botão abre quando der.' : 'A stroll takes a little while. Take it easy; the button opens when it is time.')
+              ? (isPt ? 'Um passeio leva um tempo. Vá com calma; o Resgatar aparece quando der.' : 'A stroll takes a little while. Take it easy; Claim shows up when it is time.')
               : horas === null
                 ? (isPt ? 'Ainda não marcada.' : 'Not marked yet.')
                 : (isPt ? `Vale por mais ${horas} h.` : `${horas} h to go.`)}
@@ -249,17 +249,18 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         )}
       </p>
 
-      <button
-        type="button"
-        data-travessia-fiz
-        disabled={feito || espera > 0}
-        onClick={onFiz}
-        style={{ ...sm2Button('primary', feito || espera > 0), width: '100%' }}
-      >
-        {feito
-          ? (isPt ? 'Feito hoje' : 'Done today')
-          : `${isPt ? 'Concluir' : 'Done'}${espera > 0 ? ` · ${formatEspera(espera)}` : ''}`}
-      </button>
+      {/* A missão só APONTA; o botão nasce quando a ação está cumprida (o relógio de 30 min acabou): ação → pronta → Resgatar. */}
+      {(feito || espera === 0) && (
+        <button
+          type="button"
+          data-travessia-fiz
+          disabled={feito}
+          onClick={onFiz}
+          style={{ ...sm2Button('primary', feito), width: '100%' }}
+        >
+          {feito ? (isPt ? 'Resgatada' : 'Claimed') : (isPt ? 'Resgatar' : 'Claim')}
+        </button>
+      )}
     </div>
   );
 }

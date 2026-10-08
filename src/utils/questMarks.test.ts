@@ -8,7 +8,7 @@ const base = { passeio: null, weekly: [], missionProgress: cheio, ownedBackgroun
 
 describe('questMarks', () => {
   it('sem nada pendente, nenhuma marca', () => {
-    expect(questMarks(base)).toEqual({ corner: null, passeio: null, daily: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {}, firstDay: null });
+    expect(questMarks(base)).toEqual({ corner: null, passeio: null, daily: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {}, firstDay: null, dailyCorner: null, weeklyCorner: null, weeklyTone: 'gold' });
   });
   it('permanente incompleta NÃO acende "!"; cumprida e cenário não comprado = "?"', () => {
     expect(questMarks({ ...base, missionProgress: zero, ownedBackgrounds: [] }).conquistas).toBeNull();
@@ -54,5 +54,24 @@ describe('o primeiro dia é missão (07/10/2026)', () => {
     expect(on.corner).toBe('available');
     expect(on.cornerTone).toBe('gold');
     expect(questMarks({ ...base, firstDay: false }).corner).toBeNull();
+  });
+});
+
+describe('dois acessos separados (07/10/2026): diário e semanal têm marcas independentes', () => {
+  it('a marca diária só reflete as diárias; a semanal só as semanais (azul) e as conquistas', () => {
+    const d = questMarks({ ...base, passeio: 'available' });
+    expect(d.dailyCorner).toBe('available');
+    expect(d.weeklyCorner).toBeNull();
+    const w = questMarks({ ...base, weekly: [{ done: true, claimed: false }] });
+    expect(w.weeklyCorner).toBe('ready');
+    expect(w.weeklyTone).toBe('blue');
+    expect(w.dailyCorner).toBeNull();
+    const c = questMarks({ ...base, ownedBackgrounds: [] });
+    expect(c.weeklyCorner).toBe('ready');
+    expect(c.weeklyTone).toBe('gold');
+  });
+  it('Passeio com o relógio cumprido é "?" (pronta) no acesso diário', () => {
+    expect(questMarks({ ...base, passeio: 'progress', passeioReady: true }).dailyCorner).toBe('ready');
+    expect(questMarks({ ...base, passeio: null, passeioReady: true }).dailyCorner).toBeNull();
   });
 });

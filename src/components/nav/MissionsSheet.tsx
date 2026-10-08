@@ -20,7 +20,9 @@ const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ defa
  * feitas) dentro de uma folha modal. Uma regra só, dois lugares — nada daqui
  * escreve estado que o Passeio não escreva.
  */
-export function MissionsSheet({ open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
+export function MissionsSheet({ kind, open, onClose, language, crossings, onChange, todayKey, seed, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
+  /** Qual acesso abriu esta folha (07/10/2026): `daily` = Primeiro dia + Hoje; `weekly` = Esta semana + Conquistas. */
+  kind: 'daily' | 'weekly';
   open: boolean;
   onClose: () => void;
   language: Language;
@@ -41,27 +43,33 @@ export function MissionsSheet({ open, onClose, language, crossings, onChange, to
   buildings?: BuildingQuestsProps;
 }) {
   const isPt = language === 'pt-BR';
+  const daily = kind === 'daily';
   return (
-    <ModalSheet open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}>
-      <div data-missions-sheet>
+    <ModalSheet open={open} title={daily ? (isPt ? 'Missões diárias' : 'Daily missions') : (isPt ? 'Missões semanais' : 'Weekly missions')} onClose={onClose} language={language}>
+      <div data-missions-sheet={kind}>
         <Suspense fallback={null}>
-          {firstDay && (
+          {daily && firstDay && (
             <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
               <FirstDayCard progress={firstDay} language={language} />
             </Section>
           )}
-          <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} isPt={isPt} id="daily">
+          {daily && <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} isPt={isPt} id="daily">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <PasseioSheet language={language} crossings={crossings} onChange={onChange} todayKey={todayKey} seed={seed} />
               {buildings && <BuildingQuestList language={language} {...buildings} />}
             </div>
-          </Section>
-          <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} tone="blue" isPt={isPt} id="weekly">
-            <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
-          </Section>
-          <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt}>
-            <ConquistasSheet language={language} missionProgress={missionProgress} />
-          </Section>
+          </Section>}
+          {!daily && (
+            <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} tone="blue" isPt={isPt} id="weekly">
+              <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
+            </Section>
+          )}
+          {/* Conquistas (permanentes) moram na folha SEMANAL: são o "longo prazo" das missões e não pertencem ao dia. */}
+          {!daily && (
+            <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt} id="achievements">
+              <ConquistasSheet language={language} missionProgress={missionProgress} />
+            </Section>
+          )}
         </Suspense>
       </div>
     </ModalSheet>

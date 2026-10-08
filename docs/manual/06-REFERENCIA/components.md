@@ -311,14 +311,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/nav/MissionsLink.tsx`
 **Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
-**Props principais:** `mark: QuestMark` (de `questMarks().corner`), `tone?` (`questMarks().cornerTone`; azul quando a marca vencedora é semanal), `markLabel`, `label`, `onClick`.
+**Props principais:** `kind` (`daily`|`weekly`, um ícone por acesso), `row` (linha da pilha), `mark: QuestMark` (de `questMarks().dailyCorner`/`weeklyCorner`), `tone?` (`weeklyTone`), `markLabel`, `label`, `onClick`.
 **Exports:** `MissionsLink(props)`.
 **Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
 **Régua:** `src/styles/iconScale.contract.test.ts` (glifo 24).
 
 ### `src/components/nav/MissionsSheet.tsx`
 **Dono de:** a lista de missões aberta pelo ícone da Home — a MESMA folha do Passeio (`PasseioSheet`, lazy) dentro de um `ModalSheet`, mais as missões da semana (`WeeklyMissionList`, com o resgate) e as Conquistas (`ConquistasSheet`) — TODAS as missões num lugar só; o card de missões saiu da Home (07/10/2026). Cada seção leva a marca do seu local. Nada daqui escreve estado que o Passeio/Torneio não escrevam.
-**Props principais:** `open`, `onClose`, `language`, `crossings`, `onChange` (função pura sobre `prev`), `todayKey`, `seed`.
+**Props principais:** `kind` (`daily`: Primeiro dia + Hoje; `weekly`: Esta semana + Conquistas), `open`, `onClose`, `language`, `crossings`, `onChange` (função pura sobre `prev`), `todayKey`, `seed`.
 **Exports:** `MissionsSheet(props)`.
 **Chamado por:** `src/App.tsx`.
 

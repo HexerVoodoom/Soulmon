@@ -1089,11 +1089,10 @@ type ShopSegment = 'shop' | 'tournament';
 - **Dono**: `src/components/mercado/MercadoSheets.tsx` · **Régua**:
   `mercado/MercadoSheets.render.test.tsx`, `mercadoCatalog.test.ts`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
-- **Missão por prédio (07/10/2026).** Entrar num lote aberto (fora do Mercado) conta a
-  missão do dia dele (`AreaView` › `enter` → `onVisitBuilding`), mas o lote **não** leva marca
+- **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (a ação real, guardar um registro no Caderno, é que conclui); o lote **não** leva marca
   e a folha do prédio **não** tem painel de missão: a UI vive só no menu de Missões da Home
-  (`MissionsSheet`: seções "Hoje"/"Today" e "Esta semana"/"This week"; o ícone some sem
-  nada a fazer nem a entregar). Ver
+  (`MissionsSheet kind="daily"`: "Primeiro dia" + "Hoje"/"Today"; `kind="weekly"`: "Esta semana"/"This week" + Conquistas — dois ícones na Home, cada um some sem
+  nada a fazer nem a entregar; linha aponta, pronta, Resgatar). Ver
   [§50-B](02-REGRAS-DE-NEGOCIO.md#50-b-missao-por-predio--materiais-decisao-do-dono-07102026).
 
 ### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)

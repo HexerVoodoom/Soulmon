@@ -104,8 +104,23 @@ export function questStatus(s: BuildingQuestState | undefined, day: string, id: 
 /**
  * Entrar no prédio. Idempotente e sem efeito colateral: sem mudança devolve o
  * MESMO `s` (inclusive `undefined`), para o chamador não gravar à toa.
+ *
+ * ⚠️ Desde 07/10/2026 (pedido do dono: "a missão só APONTA; conclui quando a ação
+ * acontece") entrar NÃO conclui a missão LISTADA (`LISTED_QUEST_BUILDINGS`): ela
+ * só fica pronta por `completeBuildingQuest`, quando a ação real acontece (o
+ * Caderno: guardar um registro). Prédio não listado segue contando a presença.
  */
 export function visitBuilding(s: BuildingQuestState | undefined, day: string, id: BuildingId, bondLevel: unknown): BuildingQuestState | undefined {
+  if (LISTED_QUEST_BUILDINGS.includes(id)) return s;
+  return completeBuildingQuest(s, day, id, bondLevel);
+}
+
+/**
+ * A AÇÃO real da missão aconteceu (Caderno: um registro foi guardado): a missão fica
+ * "pronta", à espera do "Resgatar". Idempotente por dia do jogador (1×/dia): fora de
+ * `available` devolve o MESMO `s`.
+ */
+export function completeBuildingQuest(s: BuildingQuestState | undefined, day: string, id: BuildingId, bondLevel: unknown): BuildingQuestState | undefined {
   if (questStatus(s, day, id, bondLevel) !== 'available') return s;
   const cur = forDay(s, day);
   return { ...cur, visited: [...cur.visited, id] };

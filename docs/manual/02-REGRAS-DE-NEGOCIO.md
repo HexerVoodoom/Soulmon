@@ -4456,18 +4456,21 @@ diminui. Estoque no teto (`MATERIAL_CAP`): o resgate vale e o excedente não ent
 Resgate duplo não paga 2× (`claimBuildingQuest` reconfere sobre o `prev`).
 
 **Onde a missão vive (decisão do dono, 07/10/2026).** NUNCA dentro do prédio nem sobre o lote:
-sem marca "!"/"?" no lote, sem painel de missão na folha do prédio (a folha do Passeio só
-aponta para o menu; a aba "Missões" saiu do Torneio). Só no **menu de Missões da Home**, em
-duas seções: **Hoje / Today** (o Passeio + `LISTED_QUEST_BUILDINGS`, hoje só o Caderno:
-"Escrever no caderno") e **Esta semana / This week** (as semanais, em azul). Entrar no
-prédio continua CONTANDO a visita (`visitBuilding`); só a UI saiu. O material continua
-sendo pago pelo modelo, mas nenhuma tela de missão o lista (o Ferreiro o mostra sem lista).
-O ícone do canto da Home **some** quando não há missão a fazer nem a entregar; com missão,
-vale a regra de sempre ("?" vence "!", semanal em azul).
+sem marca "!"/"?" no lote, sem painel de missão na folha do prédio. Só na Home, em **dois
+acessos separados** (cada um com seu ícone pelado no canto, sua folha `MissionsSheet kind=`
+e suas marcas): **Diárias / Daily** (Primeiro dia + o Passeio + `LISTED_QUEST_BUILDINGS`, hoje o
+Caderno) e **Semanais / Weekly** (Esta semana, em azul, + as Conquistas permanentes).
+**A missão só APONTA, e depois RESGATA:** a linha diz o que fazer em uma frase ("Write an
+entry in your journal" / "Faça um registro no journaling"), sem botão; quando a AÇÃO real
+acontece a linha fica pronta ("?") com **Claim / Resgatar** como única ação, e só então
+entra a recompensa. O evento do journaling é **guardar um registro novo no Caderno**
+(`handleCaderno` → `completeBuildingQuest`, 1×/dia do jogador); **entrar no prédio não conclui**
+(`visitBuilding` ignora os prédios listados). O material continua pago pelo modelo, sem lista.
+Cada ícone **some** quando não há nada a fazer nem a entregar ("?" vence "!", semanal em azul).
 
-**Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão **Concluir / Done**
-só abre após `STROLL_MIN_MINUTES` (30, `types/travessias.ts`, dono único), com a contagem
-no botão ("Done · 28:40"). O instante de partida é o `pickAt` que já mora no save
+**Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão **Resgatar / Claim**
+só nasce após `STROLL_MIN_MINUTES` (30, `types/travessias.ts`, dono único); antes disso a
+folha só aponta (sem botão) e o "?" do ícone diário acende ao fim do relógio. O instante de partida é o `pickAt` que já mora no save
 (`crossings`, sincroniza com a nuvem; `null` = save antigo, sem espera). `markDone`
 reconfere a espera sobre o `prev` (`strollWaitMs`). O servidor não valida conclusão de
 Travessia, então não há espelho. Sem cobrança no texto.

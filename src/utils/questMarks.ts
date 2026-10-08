@@ -42,6 +42,8 @@ export interface QuestMarkInput {
   ownedBackgrounds: readonly string[];
   /** A marca do dia de cada prédio (`buildingMarks`). Opcional: sem ela, nada de prédio acende. */
   buildings?: Partial<Record<BuildingId, QuestMark>>;
+  /** O Passeio está PRONTO para resgatar (o relógio de 30 min acabou, ainda não resgatado)? Vence o "!" do Passeio. */
+  passeioReady?: boolean;
   /** O cartão do PRIMEIRO DIA ainda está de pé (`shouldShowFirstDay`)? É uma missão: vive no menu de Missões, nunca na lista de tarefas. */
   firstDay?: boolean;
 }
@@ -59,6 +61,12 @@ export interface QuestMarks {
   torneio: QuestMark;
   /** As Conquistas (missões permanentes). */
   conquistas: QuestMark;
+  /** O acesso DIÁRIO da Home (07/10/2026): Primeiro dia + Passeio + missões de prédio listadas. Sempre dourado. */
+  dailyCorner: QuestMark;
+  /** O acesso SEMANAL da Home: as missões da semana (azuis) + as Conquistas (douradas, moram na folha semanal). */
+  weeklyCorner: QuestMark;
+  /** O tom do acesso semanal (o da marca que venceu: "?" de Conquista é dourado, o resto azul). */
+  weeklyTone: QuestTone;
   /** O tom do ícone do canto (o da marca que venceu). */
   cornerTone: QuestTone;
   /** A marca de cada missão de prédio listada no menu (nunca desenhada no lote). */
@@ -73,7 +81,7 @@ export function strongestMark(marks: readonly QuestMark[]): QuestMark {
 }
 
 export function questMarks(input: QuestMarkInput): QuestMarks {
-  const passeio: QuestMark = input.passeio ? 'available' : null;
+  const passeio: QuestMark = input.passeio ? (input.passeioReady ? 'ready' : 'available') : null;
   const torneio = strongestMark(
     input.weekly.filter(w => !w.claimed).map((w): QuestMark => (w.done ? 'ready' : 'available')),
   );
@@ -89,7 +97,10 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   const corner = strongestMark([firstDay, passeio, torneio, conquistas, predios]);
   const fontes: [QuestMark, QuestTone][] = [[firstDay, 'gold'], [passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold']];
   const cornerTone = fontes.find(([m]) => m === corner && corner !== null)?.[1] ?? 'gold';
-  return { corner, passeio, daily, torneio, conquistas, cornerTone, buildings, firstDay };
+  const dailyCorner = strongestMark([firstDay, passeio, predios]);
+  const weeklyCorner = strongestMark([torneio, conquistas]);
+  const weeklyTone: QuestTone = torneio === weeklyCorner && weeklyCorner !== null ? 'blue' : 'gold';
+  return { corner, passeio, daily, torneio, conquistas, cornerTone, buildings, firstDay, dailyCorner, weeklyCorner, weeklyTone };
 }
 
 /** Rótulo acessível (EN primeiro, PT-BR depois). `null` quando não há marca. */

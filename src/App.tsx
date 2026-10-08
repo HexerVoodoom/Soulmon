@@ -18,7 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { needsWelcomeTour } from './utils/welcomeTour';
 import { questMarks, questMarkLabel } from './utils/questMarks';
-import { buildingMarks, visitBuilding, claimBuildingQuest } from './utils/buildingQuests';
+import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
@@ -47,6 +47,7 @@ import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap, missionMark } from './utils/travessiasSave';
+import { strollWaitMs } from './utils/travessias';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { sanitizeEquippedFrame } from './utils/frames';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
@@ -739,7 +740,11 @@ export default function App() {
   const area = areaOf(currentView);
   /** O menu ícone da Home (D6). */
   /* Rodada 7 (M8): a lista de missões aberta pelo ícone da Home. */
-  const [missionsOpen, setMissionsOpen] = useState(false);
+  /** Os DOIS acessos de missão da Home (07/10/2026): a folha diária e a semanal, cada uma com a sua porta. */
+  const [missionsOpen, setMissionsOpen] = useState<null | 'daily' | 'weekly'>(null);
+  const abrirMissoesDiarias = useCallback(() => setMissionsOpen('daily'), []);
+  const abrirMissoesSemanais = useCallback(() => setMissionsOpen('weekly'), []);
+  const fecharMissoes = useCallback(() => setMissionsOpen(null), []);
   const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
   const [celebrarMeta, setCelebrarMeta] = useState(false);
@@ -3449,7 +3454,7 @@ export default function App() {
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
     const dest = buildingDestination(building);
     if (!dest) return;
-    if (dest.kind === 'missions') { setMissionsOpen(true); return; }
+    if (dest.kind === 'missions') { setMissionsOpen('daily'); return; }
     setPendingSheet({ area: dest.area, lot: dest.lot });
     goTo(areaView(dest.area));
   }, [goTo]);
@@ -4448,7 +4453,14 @@ export default function App() {
     setGameState(prev => {
       const c0 = prev.caderno ?? [];
       const c1 = f(c0);
-      return c1 === c0 ? prev : { ...prev, caderno: c1 };
+      if (c1 === c0) return prev;
+      // O EVENTO REAL da missão do journaling (07/10/2026): um registro NOVO guardado. Mesmo updater, PURO sobre `prev`;
+      // idempotente por dia do jogador (`completeBuildingQuest` só age em `available`).
+      const novo = c1.some(e => !c0.some(o => o.id === e.id));
+      const bq = novo
+        ? completeBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), 'exploracao.caderno', bondLevelFor(prev.totalXP ?? 0))
+        : prev.buildingQuests;
+      return bq === prev.buildingQuests ? { ...prev, caderno: c1 } : { ...prev, caderno: c1, buildingQuests: bq };
     });
   }, [setGameState]);
 
@@ -5434,15 +5446,24 @@ export default function App() {
   /** As marcas "!" / "?" de todo local de missão (`utils/questMarks.ts`, dono da regra). */
   /** O cartão do primeiro dia ainda está de pé? (uma missão: menu de Missões, nunca a lista de tarefas) */
   const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
+  /* O "?" do Passeio acende quando o relógio de 30 min acaba, sem esperar outro re-render. */
+  const [passeioTick, setPasseioTick] = useState(0);
+  useEffect(() => {
+    const falta = crossings.active ? strollWaitMs(crossings, Date.now()) : 0;
+    if (falta <= 0) return;
+    const t = window.setTimeout(() => setPasseioTick(n => n + 1), falta + 50);
+    return () => window.clearTimeout(t);
+  }, [crossings, passeioTick]);
   const marcasDeMissao = useMemo(() => questMarks({
     firstDay: primeiroDiaAtivo,
     passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
+    passeioReady: strollWaitMs(crossings, Date.now()) === 0 && missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()) === 'progress',
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [passeioTick, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
@@ -7081,19 +7102,32 @@ export default function App() {
       )}
       {currentView === 'home' && (
         <MissionsLink
-          mark={marcasDeMissao.corner}
-          tone={marcasDeMissao.cornerTone}
-          markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
-          label={language === 'pt-BR' ? 'Missões' : 'Missions'}
-          onClick={() => setMissionsOpen(true)}
+          kind="daily"
+          mark={marcasDeMissao.dailyCorner}
+          tone="gold"
+          markLabel={questMarkLabel(marcasDeMissao.dailyCorner, language === 'pt-BR')}
+          label={language === 'pt-BR' ? 'Missões diárias' : 'Daily missions'}
+          onClick={abrirMissoesDiarias}
+        />
+      )}
+      {currentView === 'home' && (
+        <MissionsLink
+          kind="weekly"
+          row={marcasDeMissao.dailyCorner === null ? 1 : 2}
+          mark={marcasDeMissao.weeklyCorner}
+          tone={marcasDeMissao.weeklyTone}
+          markLabel={questMarkLabel(marcasDeMissao.weeklyCorner, language === 'pt-BR')}
+          label={language === 'pt-BR' ? 'Missões semanais' : 'Weekly missions'}
+          onClick={abrirMissoesSemanais}
         />
       )}
       {currentView === 'home' && celebrarMeta && (
         <Celebration fixed onDone={() => setCelebrarMeta(false)} />
       )}
       {missionsOpen && <Suspense fallback={null}><MissionsSheet
-        open={missionsOpen}
-        onClose={() => setMissionsOpen(false)}
+        kind={missionsOpen}
+        open
+        onClose={fecharMissoes}
         language={language}
         crossings={crossings}
         onChange={handleCrossings}

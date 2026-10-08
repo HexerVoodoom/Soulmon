@@ -1,5 +1,13 @@
 # Status do Soulmon — registro vivo
 
+> ## 07/10/2026 — Missões: dois acessos (Diárias / Semanais) e "a missão só APONTA, depois RESGATA"
+>
+> - **Pedido do dono:** diárias e semanais separadas, cada uma com seu acesso; a missão só diz o que fazer ("Faça um registro no journaling") e, cumprida, o jogador toca em **Resgatar**.
+> - **Dois ícones na Home** (`MissionsLink kind="daily"|"weekly"`, `row` empilha abaixo do Mapa, ícone pelado): o diário (dourado) = Primeiro dia + Passeio + Caderno; o semanal (azul, ou dourado se a vencedora for Conquista) = Esta semana + Conquistas. `questMarks` ganhou `dailyCorner`/`weeklyCorner`/`weeklyTone` (o resto segue compatível). Cada um SOME sozinho. `MissionsSheet` ganhou a prop `kind`. **Conquistas ficam na folha semanal** (seção "Achievements").
+> - **Evento real do journaling:** guardar um registro NOVO no Caderno (`handleCaderno` no `App.tsx` → `completeBuildingQuest`, mesmo updater, idempotente por `playerDayKey`). **Entrar no prédio NÃO conclui mais** a missão listada (`visitBuilding` ignora `LISTED_QUEST_BUILDINGS`). Texto: "Write an entry in your journal" / "Faça um registro no journaling".
+> - **Padrão ação, pronta, Resgatar, resgatada:** linha sem botão enquanto aponta; "Claim"/"Resgatar" é a única ação quando pronta; resgatada fica apagada. O Passeio segue o mesmo padrão: sem botão durante os 30 min, depois "Claim"/"Resgatar" (`markDone`), e o "?" do canto acende sozinho ao fim do relógio. Recompensas e valores intocados; sem campo novo no save (sem mudança em fuzz2 nem no espelho do servidor).
+> - **Depende do dono:** nada novo. Limite: na demo o Caderno segue bloqueado onde já era.
+
 > ## 07/10/2026 — Os 5 personagens iniciais + a DEMO local (`feat/demo-local`, PR por abrir)
 >
 > - **Pedido do dono:** os 5 novos viram os pré-prontos oferecidos (Crato `industrial` aço+aríete, Brooka `nascente` nascente+melodia vital, Zefi `alento`, Oaken `vida`, Bolid `meteoro`) — nomes ORIGINAIS escolhidos pelo agente, **o dono deve conferir**. Um sprite por criatura, igual em todos os estágios (evolução visual depois). Os 6 antigos seguem resolvendo sprite em save antigo (`LEGACY_PREMADE_IDS`), só não são oferecidos.
