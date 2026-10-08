@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
+>
+> - **Balão:** `BUBBLE_BOTTOM = 100` (`CompanionHUD.tsx`), a partir da base do contêiner do pet (que inclui ~66px de rodapé de corações/energia; era `BUBBLE_GAP + 8` = 14): ~34px acima do chão da cena, sobre o corpo, na metade de baixo; o Evoluir segue no topo.
+> - **`XpGainDisplay`** (lazy no `App.tsx`): "+N EXP" entra pela esquerda, 1 s no centro, sai pela direita. Detecção por comparação de `totalXP` num efeito (`utils/xpGain.ts`), não por evento do `awardBondXP` (que roda em updater: footgun 6). Não mostra: 1ª leitura/hidratação, delta ≤ 0, salto > `XP_GAIN_DISPLAY_CAP` (adoção de nuvem/migração) e demo. Coalesce em 400 ms; fila de um por vez. Fora das duas filas de avisos; sem som; sem campo no save.
+> - **Depende do dono:** nada novo.
+
 > ## 08/10/2026 — "Stroll fica com o NPC": o Passeio volta INTEIRO ao lote; a Home só lista a linha "Take a stroll"
 >
 > - **Pedido do dono (ênfase dele):** "Stroll fica com o NPC! A Home só tem a missão 'faça um stroll', mas o stroll deve ficar TODO ali, EXATAMENTE como era."

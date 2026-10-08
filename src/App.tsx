@@ -539,6 +539,7 @@ function PostponeNudgeSheet({
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
+const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
@@ -7684,6 +7685,7 @@ export default function App() {
         />
         </Suspense>
       )}
+      <Suspense fallback={null}><XpGainDisplay totalXP={gameState.totalXP} language={language} demo={isDemoMode(gameState)} /></Suspense>
       <Toaster richColors position="top-right" />
     </div>
   );

@@ -114,6 +114,8 @@ const PET_BOTTOM_IN_STAGE =
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
 const BUBBLE_GAP = 6;
+/** Distância da BASE do contêiner do pet até o pé do balão (pedido do dono, 08/10/2026: "mais pra cima"). O contêiner inclui ~66px de rodapé (corações/energia) abaixo da janela da cena, então 100 = ~34px acima do chão da cena: sobre o corpo, na metade de baixo; o Evoluir fica no topo. */
+const BUBBLE_BOTTOM = 100;
 /** Fundo da caixa de fala: `--sm2-surface` a 30% de opacidade (pedido do dono, 08/10/2026); o texto segue a 100%. */
 const BUBBLE_BG = 'color-mix(in srgb, var(--sm2-surface) 30%, transparent)';
 /* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
@@ -1752,7 +1754,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             className="absolute left-0 right-0"
             style={{
               /* 08/10/2026 (pedido do dono): a fala volta para a BASE da caixa do pet (era o topo, 27/08), com o fundo a 30%. */
-              bottom: BUBBLE_GAP + 8,
+              bottom: BUBBLE_BOTTOM,
               zIndex: 45,
               padding: '0 10px',
               /* A faixa é só posicionamento — ela cobre a largura inteira do
