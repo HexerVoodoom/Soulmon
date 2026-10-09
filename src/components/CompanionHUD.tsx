@@ -113,11 +113,9 @@ const PET_BOTTOM_IN_STAGE =
    antiga, e continua necessário: a faixa de largura total do balão é
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
-const BUBBLE_GAP = 6;
-/** Distância da BASE do contêiner do pet até o pé do balão (pedido do dono, 08/10/2026: "mais pra cima"). O contêiner inclui ~66px de rodapé (corações/energia) abaixo da janela da cena, então 100 = ~34px acima do chão da cena: sobre o corpo, na metade de baixo; o Evoluir fica no topo. */
-const BUBBLE_BOTTOM = 100;
 /** Fundo da caixa de fala: `--sm2-surface` a 30% de opacidade (pedido do dono, 08/10/2026); o texto segue a 100%. */
 const BUBBLE_BG = 'color-mix(in srgb, var(--sm2-surface) 30%, transparent)';
+const BUBBLE_GAP = 6;
 /* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
    dono): a composição não desce mais sob a fala; o balão é overlay. */
 /* FX do `animArt` DENTRO do vidro a 2× (célula 64 → 128 CSS, D-H4): mesma
@@ -416,12 +414,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   /* F4 (01/10/2026): no banho o balão mostra o CHUVEIRINHO aprovado (o mesmo do
      botão de banho), não as mãozinhas do abraço — que ficam para a comida. */
   const [balloonKind, setBalloonKind] = useState<'hug' | 'bath'>('hug');
-  /* C5 (navegação do dono, 01/10/2026): o balão é OVERLAY e não empurra
-     nada. Até aqui a composição DESCIA 22/40px quando a fala aparecia (X2 do
-     canvas Home) — o dono leu isso como "a área do pet muda ao tocar no
-     Soulmon". A altura da faixa é fixa (`--sm3-cena-h`) e o balão flutua por
-     cima; o `ref` continua para quem mede a caixa de fala. */
-  const bubbleRef = useRef<HTMLDivElement | null>(null);
   const stageDrop = 0;
   /* C13 — qual dica de leitura está aberta (coração ou energia). Fecha com
      novo toque no mesmo ícone, toque na própria dica, toque fora ou Esc. */
@@ -1197,6 +1189,21 @@ export const CompanionHUD = memo(function CompanionHUD({
           (`VisorBar` sobre a placa de D-H3), uma vez só. */}
       <div className="relative">
       <div style={{ position: 'relative', zIndex: 1 }}>
+        {showBubble && (
+          <div data-pet-bubble-row style={{ position: 'relative', zIndex: 45, padding: '0 10px 10px', pointerEvents: 'none' }}>
+            <div
+              data-pet-bubble
+              className="relative pointer-events-auto"
+              onClick={handleBubbleClick}
+              style={{ cursor: 'pointer', position: 'relative', width: 'fit-content', maxWidth: 'min(100%, 460px)', background: BUBBLE_BG, borderRadius: 'var(--sm2-radius-md)', padding: '8px 12px' }}
+            >
+              <p className="break-words" style={{ margin: 0, fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)', textAlign: 'left', textShadow: '0 1px 2px var(--sm2-bg)' }}>
+                {bubbleText}
+              </p>
+              <span aria-hidden="true" className="absolute" style={{ bottom: -7, left: 22, width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: `7px solid ${BUBBLE_BG}` }} />
+            </div>
+          </div>
+        )}
         <div className="sm2-home-pet">
         {/* A janela do palco: ancora os CONTROLES que ficam por cima da tela
             (evoluir, balão, alvo do carinho) e é a caixa que dá a largura
@@ -1733,81 +1740,6 @@ export const CompanionHUD = memo(function CompanionHUD({
             reducedMotion={reducedMotion}
             style={{ position: 'absolute', zIndex: 30, left: '50%', top: BUBBLE_GAP, transform: 'translateX(-50%)' }}
           />
-        )}
-
-        {/* Balão de fala. Saiu do monospace a 0,68rem (≈11px, abaixo do piso
-            absoluto de 12px da escala) para Rubik 14px em tokens `--sm2-*`: é o
-            PET falando com a pessoa, texto de leitura, não voz de aparelho —
-            Silkscreen aqui seria a fonte errada e o branco chapado de antes
-            ignorava o tema.
-
-            27/08/2026 (pedido do dono): mudou de baixo (deitava em cima do
-            corpo do pet, que também ocupa a base do palco) para o TOPO da
-            janela — o pet é centrado/base, então o topo é o único trecho da
-            tela que nunca tem sprite embaixo dela. O rabinho virou de
-            "aponta pra cima" (quando falava PARA o pet vindo de baixo) para
-            "aponta pra baixo" (agora fala DE CIMA, e o pet está abaixo). O
-            fundo ganhou transparência (era `--sm2-surface` opaco) pelo mesmo
-            pedido. */}
-        {showBubble && (
-          <div
-            className="absolute left-0 right-0"
-            style={{
-              /* 08/10/2026 (pedido do dono): a fala volta para a BASE da caixa do pet (era o topo, 27/08), com o fundo a 30%. */
-              bottom: BUBBLE_BOTTOM,
-              zIndex: 45,
-              padding: '0 10px',
-              /* A faixa é só posicionamento — ela cobre a largura inteira do
-                 palco e não pode interceptar toque nenhum. Quem recebe clique
-                 é a caixa de fala, logo abaixo. */
-              pointerEvents: 'none',
-            }}
-          >
-            <div
-              ref={bubbleRef}
-              data-pet-bubble
-              className="relative pointer-events-auto"
-              onClick={handleBubbleClick}
-              style={{
-                cursor: 'pointer',
-                /* Overlay de HUD, não card (canvas Home, D-H5 / R6): SEM
-                   borda (era `--sm2-line` a 1,3:1 sobre o vidro — invisível),
-                   `--sm2-surface` sólida, raio `md`, padding 6/12, entrelinha
-                   1,3 → 1 linha = 36px, 2 linhas = 54px (é isso que decide
-                   quanto a criatura desce, X2). Sem `backdrop-filter`: blur
-                   sobre fundo animado recompõe a região a cada frame. */
-                background: BUBBLE_BG,
-                borderRadius: 'var(--sm2-radius-md)',
-                padding: '6px 12px',
-              }}
-            >
-              <p
-                className="text-center break-words"
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--sm2-font-text)',
-                  fontSize: 'var(--sm2-text-sm)',
-                  lineHeight: 1.3,
-                  color: 'var(--sm2-ink)',
-                  /* A caixa tem só 30% de opacidade; o texto fica a 100% e ganha um contorno suave para ler sobre qualquer cenário. */
-                  textShadow: '0 1px 2px var(--sm2-bg)',
-                }}
-              >
-                {bubbleText}
-              </p>
-              {/* Rabinho apontando para CIMA, na direção do pet (a fala agora fica embaixo dele). */}
-              <span
-                className="absolute"
-                style={{
-                  top: -8, left: '50%', transform: 'translateX(-50%)',
-                  width: 0, height: 0,
-                  borderLeft: '8px solid transparent',
-                  borderRight: '8px solid transparent',
-                  borderBottom: `8px solid ${BUBBLE_BG}`,
-                }}
-              />
-            </div>
-          </div>
         )}
 
         {/* O "+1" do mock: sobe do pet quando o App ACEITOU a comida (vem por

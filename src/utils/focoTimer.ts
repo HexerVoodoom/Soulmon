@@ -4,7 +4,8 @@
  * Regras (`docs/PLANO-OFICINA-FOCO.md` §5):
  *  · O tempo é um TIMESTAMP (`endAt`), nunca um contador que soma ticks: a tela só relê o
  *    relógio. Aba em segundo plano, folha fechada ou app suspenso não desviam a conta.
- *  · Tudo mora SÓ no aparelho (`STORAGE_KEYS.FOCO_*`), fora do save em nuvem.
+ *  · Timer e contagem de focos moram SÓ no aparelho (`STORAGE_KEYS.FOCO_*`). As recompensas da
+ *    expedição são aplicadas pela regra em `focusExpedition.ts` ao save/inventário do jogador.
  *  · Nada aqui paga Bits, XP, Emblema ou Vínculo, e não há total público, sequência ou placar:
  *    só "hoje: N focos", para a própria pessoa, e dias antigos somem (`KEEP_DAYS`).
  *  · O aviso de fim usa a notificação local SÓ se a permissão já estava concedida (esta tela
@@ -28,6 +29,10 @@ export const LONG_BREAK_EVERY = 4;
 export const KEEP_DAYS = 14;
 
 export interface FocoTimer {
+  /** Idempotency key: completing/reloading the same focus phase cannot pay twice. */
+  phaseId: string;
+  expeditionId?: string;
+  sessionId?: string;
   mode: FocoModeId;
   phase: FocoPhase;
   /** `running` conta contra `endAt`; `paused` guarda `leftMs`; `ended` já chegou a zero. */
@@ -48,7 +53,12 @@ export function normalizeTimer(raw: unknown): FocoTimer | null {
   if (r.status !== 'running' && r.status !== 'paused' && r.status !== 'ended') return null;
   const total = Number(r.totalMs);
   if (!Number.isFinite(total) || total <= 0 || total > MAX_MS) return null;
-  const base = { mode: r.mode, phase: r.phase, totalMs: Math.round(total) } as const;
+  const base = {
+    mode: r.mode, phase: r.phase, totalMs: Math.round(total),
+    phaseId: typeof r.phaseId === 'string' && /^[\w:-]{1,120}$/.test(r.phaseId) ? r.phaseId : `legacy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    ...(typeof r.expeditionId === 'string' ? { expeditionId: r.expeditionId } : {}),
+    ...(typeof r.sessionId === 'string' ? { sessionId: r.sessionId } : {}),
+  } as const;
   if (r.status === 'running') {
     const end = Number(r.endAt);
     if (!Number.isFinite(end) || end <= 0) return null;
@@ -62,11 +72,15 @@ export function normalizeTimer(raw: unknown): FocoTimer | null {
   return { ...base, status: 'ended', endAt: null, leftMs: 0 };
 }
 
-export const startPhase = (mode: FocoModeId, phase: FocoPhase, now: number, long = false): FocoTimer => {
+export const startPhase = (mode: FocoModeId, phase: FocoPhase, now: number, long = false, expedition?: { expeditionId: string; sessionId: string }): FocoTimer => {
   const m = FOCO_MODES[mode];
   const min = phase === 'focus' ? m.focusMin : long ? m.longMin : m.breakMin;
   const totalMs = min * 60_000;
-  return { mode, phase, status: 'running', totalMs, endAt: now + totalMs, leftMs: null };
+  return {
+    mode, phase, status: 'running', totalMs, endAt: now + totalMs, leftMs: null,
+    phaseId: `${phase}-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    ...(expedition ? { expeditionId: expedition.expeditionId, sessionId: expedition.sessionId } : {}),
+  };
 };
 
 export const remainingMs = (t: FocoTimer, now: number): number => {

@@ -20,6 +20,8 @@ import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
+import type { FocusLootRequest } from '../../utils/focusExpedition';
+import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadEcoGame, loadBolhasGame,
@@ -87,8 +89,9 @@ export interface PlayHandlers {
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
-  focusTasks?: Array<{ id: string; name: string; completed: boolean }>;
+  focusTasks?: Array<{ id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
+  onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;
@@ -376,7 +379,7 @@ export function AreaView(props: AreaViewProps) {
                 seed={props.passeio?.seed}
               />
             )}
-            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} />}
+            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}

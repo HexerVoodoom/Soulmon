@@ -2456,6 +2456,9 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
 **Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS`, `FOCO_VIBRATE` — só do aparelho, fora do save. `isVibrateOn`/`setVibrateOn`: a vibração ao fim é LIGADA por padrão (interruptor em Configurações).
 
+### `src/utils/focusExpedition.ts`
+**Dono de:** seis ambientes Pomodoro, quatro materiais possíveis por ambiente, sorteio de comida, chance progressiva do item extra e ledger diário (teto combinado de oito itens). `applyFocusLoot` é idempotente por evento, soma materiais ao estoque de `buildingQuests` e comidas ao inventário normal; `sanitizeFocusLoot` limita a forma do campo persistido. A paridade e o clamp do servidor ficam em `functions/api/_focusLoot.js`.
+
 ### `src/utils/cadernoSave.ts`
 **Dono de:** o dado do Caderno (04/10/2026), a parte PURA (sem rede): `CadernoEntry`, tetos `MAX_CHARS` (2000) e `MAX_ENTRIES` (120), `normalizeEntries` (load do `GameState.caderno`), `addEntry`, `removeEntry`, `mergeEntries`, `formatoDoDia` e a migração da chave legada (`loadLegacyEntries`/`clearLegacy`, `soulmon-caderno`). Dado SENSÍVEL: nunca em IA/telemetria (`cadernoSensivel.contract.test.ts`). Paridade de tetos com `functions/api/save.js` (`clampCaderno`).
 

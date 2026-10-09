@@ -20,6 +20,7 @@ import { needsWelcomeTour } from './utils/welcomeTour';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
+import { applyFocusLoot, rollFocusLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
@@ -6169,7 +6170,11 @@ export default function App() {
           /* Gutter 16 na Home (canvas Home, P1) — TEM de casar com o
              `margin-inline: -16px` do `.sm-pet-sticky` (index.css). As outras
              views seguem em 24. */
-          className={pane === 'main' ? 'flex-1 min-h-0 overflow-hidden flex flex-col px-4' : 'flex-1 overflow-y-auto px-6'}
+          className={pane === 'main'
+            ? 'flex-1 min-h-0 overflow-hidden flex flex-col px-4'
+            : pane === 'map'
+              ? 'flex-1 min-h-0 overflow-hidden p-0'
+              : 'flex-1 overflow-y-auto px-6'}
           style={{
             position: 'relative', zIndex: 1,
             /* RODADA 4: o `pt-3` virou TOKEN porque a área fixa do pet precisa
@@ -6178,7 +6183,7 @@ export default function App() {
                12px em que a lista aparecia rolando ACIMA do pet (visto em
                screenshot, 412×700) — e divergiriam na primeira vez que alguém
                mexesse num deles. */
-            paddingTop: 'var(--sm-scroll-pt)',
+            paddingTop: pane === 'map' ? 0 : 'var(--sm-scroll-pt)',
             /* B5: `--sm-chatdock-h` (altura real do dock) + 16px de folga,
                no lugar do `100px` mágico. Ver o token no index.css. */
             /* `--sm-corner-h`: a faixa do link de canto (Mapa na Home, Home
@@ -6189,7 +6194,7 @@ export default function App() {
             /* H7 (02/10/2026): na Home o `<main>` NÃO rola — header e área do pet
                ficam fixos e só a lista (`data-home-scroll`) tem `overflow-y`.
                A folga do dock mora no scroller, não aqui. */
-            paddingBottom: pane === 'main'
+            paddingBottom: pane === 'main' || pane === 'map'
               ? 0
               : 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
@@ -6334,8 +6339,17 @@ export default function App() {
                      Malha, que moram no save. A regra é de `utils/mente/revisao`;
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
-                  focusTasks: gameState.tasks.map(({ id, name, completed }) => ({ id, name, completed })),
+                  focusTasks: gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
                   onCompleteFocusTask: handleToggleTask,
+                  onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
+                    const roll = rollFocusLoot(request.environment, completedCycles);
+                    const preview = applyFocusLoot(gameState, request, roll);
+                    if (preview.accepted) setGameState(prev => {
+                      const committed = applyFocusLoot(prev, request, roll);
+                      return committed.accepted ? { ...prev, ...committed.state } : prev;
+                    });
+                    return { accepted: preview.accepted, items: preview.items, chancePercent: roll.chancePercent };
+                  },
                   review: gameState.review,
                   minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),
                   onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),

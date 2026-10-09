@@ -171,7 +171,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
             </span>
           )}
         </div>
-        {!possui && <span className="sm2-stats-s">{isPt ? `Vem da missão de ${origem}.` : `Comes from the ${origem} mission.`}</span>}
+        {!possui && <span className="sm2-stats-s" data-forge-upgrade-locked>{isPt ? `Vem da missão de ${origem}. Conclua e resgate a missão para liberar os aprimoramentos.` : `Comes from the ${origem} mission. Complete and claim it to unlock upgrades.`}</span>}
         {possui && (
           <div data-forge-levels>
             <span className="sm2-num" data-forge-level style={{ fontWeight: 500 }}>

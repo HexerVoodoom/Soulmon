@@ -17,6 +17,7 @@ import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
+import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
@@ -281,6 +282,10 @@ export async function onRequest({ request, env }) {
     if ('buildingQuests' in state) {
       const q = sanitizeBuildingQuests(state.buildingQuests);
       if (q) state.buildingQuests = q; else delete state.buildingQuests;
+    }
+    if ('focusLoot' in state) {
+      const q = sanitizeFocusLoot(state.focusLoot);
+      if (q) state.focusLoot = q; else delete state.focusLoot;
     }
     // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
     const prev = await kvOrThrow(env).getWithMetadata(saveId);

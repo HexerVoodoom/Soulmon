@@ -63,16 +63,16 @@ Os números e o ano (1, 3, 4) foram conferidos por busca em 04/10/2026; Ericsson
 
 ## 4. Economia (d)
 
-**Zero.** Nem Bits, nem XP, nem selo, nem "ato" de hábito: o design de hábitos não tem regra para atividade
-fora-do-app registrada pelo app, e inventá-la é decisão de jogo. A única "recompensa" é narrativa (a fala do NPC).
-O registro de sessões de foco é local, do dia, sem total público, sem placar, sem sequência.
+**Sem moedas, XP, selo ou "ato" de hábito.** A expansão de 09/10/2026 adiciona apenas itens de jogo: ao confirmar um foco concluído, 1 item é sorteado igualmente entre os quatro materiais do ambiente e uma quinta opção de comida aleatória (20% cada opção). O próximo item extra tem chance inicial de 5%, +5 pontos percentuais por ciclo foco+pausa concluído, teto de 25%; no máximo 1 extra por foco. Teto diário combinado: 8 itens. Materiais entram em `buildingQuests.materials`, comidas em `foodInventory`; o `focusLoot` no save guarda dia, quantidade e recibos de eventos, para impedir repetição do mesmo timer. O ledger tem forma e teto saneados pelo servidor, mas a concessão segue o modelo client-save; não é uma fonte anti-cheat autoritativa. Os registros "Foquei" continuam locais, sem placar ou total público.
 
 ## 5. O timer (Fase 1)
 
 Modos 25/5 e 50/10, estado persistido (`soulmon-foco-timer`) com **`endAt` em timestamp** (nunca contador
 cumulativo): o relógio da tela só relê `Date.now()`, então sobrevive a aba em segundo plano e a fechar a folha.
-Ao fim: aviso na tela + notificação local **só se a permissão já está concedida** (o app nunca a pede aqui) +
-vibração curta. A pessoa marca "Foquei" (registro local do dia) ou dispensa; sem ela, nada conta.
+Para iniciar é preciso ter salvo uma sessão com um dos seis ambientes. Ao fim do foco: aviso na tela + notificação local
+**só se a permissão já está concedida** (o app nunca a pede aqui) + vibração curta. Ao tocar "Foquei", grava uma
+sessão local e credita o item garantido, com eventual extra, no save; ao concluir a pausa, o ciclo aumenta a chance
+do próximo extra. Cancelar/dispensar não paga; itens alcançam o teto de oito por dia.
 
 ## 6. Decisões do dono (respondidas em 04/10/2026)
 
@@ -84,3 +84,7 @@ Nome "Caderno / Journal": ok. Sem recompensa nenhuma. **Caderno no save na nuvem
 - O planejamento da sessão começa com uma checklist local, temporária e opcional para preparar o foco: organizar a estação, beber água, comer se estiver com fome, usar o banheiro e silenciar notificações. Não são tarefas canônicas nem geram progresso/recompensa.
 - Depois de um timer de foco terminar, a tarefa canônica selecionada pode ser concluída por **“Concluí a tarefa”**, usando o handler compartilhado do jogo. Marcar “Foquei” continua sendo uma ação separada; só ela grava uma sessão de foco.
 - O alerta de fim já tinha vibração curta por padrão e notificação se a permissão já existia. O app não toca um alarme automático: a regra D11/S4 do `docs/SOM.md` proíbe som fora de gesto, e a notificação/vibração/aviso visual já oferecem canais de aviso sem autoplay.
+
+## 8. Expedição Pomodoro (09/10/2026)
+
+O Soulmon acompanha o foco a um destes ambientes: Floresta, Costa, Caverna, Jardim, Oficina ou Observatório. Cada cenário tem quatro materiais possíveis, reaproveitados do catálogo de `buildingQuests`; o pool acrescenta uma quinta opção, comida, e sorteia uma comida das categorias normais quando ela sai. Cada opção do pool tem peso igual. Item garantido é pago ao confirmar "Foquei" após o timer; cada ciclo completo foco+pausa sobe a chance do único extra possível daquele foco, sem passar de 25%. O teto diário conta materiais e comidas juntos. O stock usa inventários já existentes; não se criam tipos de material, moeda nem energia.

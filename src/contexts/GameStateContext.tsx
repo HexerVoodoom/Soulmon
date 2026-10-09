@@ -49,6 +49,7 @@ import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
+import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import {
   readLocal,
   writeLocal,
@@ -424,6 +425,8 @@ export interface GameState {
   /** Missão por prédio + materiais (07/10/2026, `utils/buildingQuests.ts`): UM objeto — o dia do jogador, os prédios
    *  visitados/resgatados hoje e o estoque de materiais (0..99). Dia novo zera a parte diária na leitura. */
   buildingQuests?: BuildingQuestState;
+  /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
+  focusLoot?: FocusLootLedger;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
@@ -1187,6 +1190,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           };
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
+        focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)
         // passa a ligado — migração segura: o que de fato publica o perfil é o

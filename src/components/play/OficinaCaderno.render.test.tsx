@@ -19,10 +19,23 @@ beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(ne
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 const q = (c: HTMLElement, s: string) => c.querySelector(s) as HTMLElement | null;
+function planejarSessao(container: HTMLElement, mode: 'p25' | 'p50' = 'p25', environment = 'forest') {
+  fireEvent.change(container.querySelector('[data-oficina-plano] input')!, { target: { value: 'Sessão de teste' } });
+  fireEvent.click(container.querySelector('[data-oficina-plano] footer button:last-child')!);
+  fireEvent.click(q(container, `[data-focus-environment="${environment}"]`)!);
+  if (mode === 'p50') fireEvent.click(Array.from(container.querySelectorAll('[role="radio"]')).find(b => b.textContent === '50 / 10')!);
+  for (let i = 0; i < 6; i++) fireEvent.click(container.querySelector('[data-oficina-plano] footer button:last-child')!);
+  fireEvent.click(q(container, '[data-oficina-save-session]')!);
+}
+function iniciarSessao(container: HTMLElement, mode: 'p25' | 'p50' = 'p25', environment = 'forest') {
+  planejarSessao(container, mode, environment);
+  fireEvent.click(q(container, '[data-oficina-session-pomodoro]')!);
+}
 
 describe('Oficina do Foco', () => {
   it('uma card por técnica, em lista de cards separados; explicação atrás de InfoTip (nunca corrida na tela)', () => {
-    const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    const { container, getByRole } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    fireEvent.click(getByRole('tab', { name: 'Guias' }));
     expect(container.querySelectorAll('[data-oficina-tecnica]').length).toBe(FOCO_TECNICAS.length);
     expect(FOCO_TECNICAS.length).toBeGreaterThanOrEqual(5);
     expect(FOCO_TECNICAS.length).toBeLessThanOrEqual(7);
@@ -33,7 +46,7 @@ describe('Oficina do Foco', () => {
   it('iniciar 25/5, o relógio segue o horário de verdade, termina, "Foquei" registra e abre a pausa', () => {
     const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
     expect(q(container, '[data-oficina-clock]')!.textContent).toBe('25:00');
-    fireEvent.click(q(container, '[data-oficina-start]')!);
+    iniciarSessao(container);
     act(() => { vi.advanceTimersByTime(60_000); });
     expect(q(container, '[data-oficina-clock]')!.textContent).toBe('24:00');
     // Salto de relógio (aba em segundo plano): sem ticks intermediários.
@@ -48,7 +61,7 @@ describe('Oficina do Foco', () => {
 
   it('pausar congela o relógio; cancelar volta ao início e limpa o storage do timer', () => {
     const { container } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA }));
-    fireEvent.click(q(container, '[data-oficina-start]')!);
+    iniciarSessao(container);
     act(() => { vi.advanceTimersByTime(30_000); });
     fireEvent.click(q(container, '[data-oficina-pause]')!);
     act(() => { vi.advanceTimersByTime(600_000); });
@@ -59,14 +72,10 @@ describe('Oficina do Foco', () => {
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_TIMER)).toBeNull();
   });
 
-  it('50/10: o segmento e o card "Blocos de foco" escolhem o ritmo, o timer conta 50:00 e a pausa é de 10', () => {
+  it('50/10: a sessão escolhe o ritmo, o timer conta 50:00 e a pausa é de 10', () => {
     const { container } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA }));
-    fireEvent.click(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-btn]')!);
+    iniciarSessao(container, 'p50');
     expect(q(container, '[data-oficina-clock]')!.textContent).toBe('50:00');
-    fireEvent.click(q(container, '[data-oficina-tecnica="pomodoro"] [data-oficina-tecnica-btn]')!);
-    expect(q(container, '[data-oficina-clock]')!.textContent).toBe('25:00');
-    fireEvent.click(Array.from(container.querySelectorAll('[role="radio"]')).find(b => b.textContent === '50 / 10')!);
-    fireEvent.click(q(container, '[data-oficina-start]')!);
     act(() => { vi.advanceTimersByTime(60_000); });
     expect(q(container, '[data-oficina-clock]')!.textContent).toBe('49:00');
     act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 51, 0)); vi.advanceTimersByTime(1000); });
@@ -75,9 +84,29 @@ describe('Oficina do Foco', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_SESSIONS)!)[DIA].n).toBe(1);
   });
 
+  it('cada foco concluído envia o Soulmon ao cenário escolhido e os ciclos completos aumentam a chance seguinte', () => {
+    const onFocusReward = vi.fn().mockReturnValue({ accepted: true, chancePercent: 5, items: [{ kind: 'material', id: 'moss', icon: '🌿', namePt: 'Musgo', nameEn: 'Moss' }] });
+    const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA, onFocusReward }));
+    planejarSessao(container, 'p25', 'shore');
+    fireEvent.click(q(container, '[data-oficina-session-pomodoro]')!);
+    act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 26, 0)); vi.advanceTimersByTime(1000); });
+    fireEvent.click(q(container, '[data-oficina-foquei]')!);
+    expect(onFocusReward.mock.calls[0][0]).toMatchObject({ environment: 'shore', day: DIA });
+    expect(onFocusReward.mock.calls[0][1]).toBe(0);
+    expect(q(container, '[data-oficina-loot]')!.textContent).toContain('Musgo');
+    act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 31, 0)); vi.advanceTimersByTime(1000); });
+    fireEvent.click(q(container, '[data-oficina-ok]')!);
+    expect(container.querySelector('[data-oficina-session-details]')).toBeNull();
+    fireEvent.click(q(container, '[data-oficina-session-pomodoro]')!);
+    act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 57, 0)); vi.advanceTimersByTime(1000); });
+    fireEvent.click(q(container, '[data-oficina-foquei]')!);
+    expect(onFocusReward.mock.calls[1][1]).toBe(1);
+  });
+
   it('com um timer em curso, tocar num card não troca o ritmo (só abre a explicação)', () => {
-    const { container } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA }));
-    fireEvent.click(q(container, '[data-oficina-start]')!);
+    const { container, getByRole } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA }));
+    iniciarSessao(container);
+    fireEvent.click(getByRole('tab', { name: 'Guides' }));
     fireEvent.click(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-btn]')!);
     expect(q(container, '[data-oficina-clock]')!.textContent).toBe('25:00');
     expect(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-corpo]')).not.toBeNull();
@@ -95,44 +124,85 @@ describe('Oficina do Foco', () => {
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOPS)).toBeNull();
   });
 
-  it('ao concluir um Pomodoro, o botão conclui a tarefa real selecionada pelo handler compartilhado', () => {
+  it('o fim do Pomodoro não conclui a tarefa antes da sessão; a conclusão só fica no card final', () => {
     const onCompleteTask = vi.fn();
     const { container } = render(createElement(OficinaSheet, {
       language: 'pt-BR', todayKey: DIA,
       tasks: [{ id: 't1', name: 'Enviar proposta', completed: false }], onCompleteTask,
     }));
+    fireEvent.change(container.querySelector('[data-oficina-plano] input')!, { target: { value: 'Proposta' } });
     fireEvent.click(Array.from(container.querySelectorAll('button')).find(b => b.textContent === 'Próxima etapa')!);
+    fireEvent.click(q(container, '[data-focus-environment="forest"]')!);
     fireEvent.change(container.querySelector('[data-oficina-plano] select')!, { target: { value: 't1' } });
-    fireEvent.click(q(container, '[data-oficina-start]')!);
+    for (let i = 0; i < 6; i++) fireEvent.click(container.querySelector('[data-oficina-plano] footer button:last-child')!);
+    fireEvent.click(q(container, '[data-oficina-save-session]')!);
+    fireEvent.click(q(container, '[data-oficina-session-pomodoro]')!);
     act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 26, 0)); vi.advanceTimersByTime(1000); });
-    const complete = q(container, '[data-oficina-task-complete]')!;
-    expect(complete.textContent).toBe('Concluí a tarefa');
-    fireEvent.click(complete);
-    expect(onCompleteTask).toHaveBeenCalledWith('t1');
+    expect(q(container, '[data-oficina-task-complete]')).toBeNull();
+    expect(onCompleteTask).not.toHaveBeenCalled();
   });
 
-  it('planeja uma sessão reordenável, conclui tarefa canônica pelo handler compartilhado e guarda só nome/data', () => {
+  it('separa a sequência de guias; a sequência é linear, sem setas de reordenação', () => {
+    const { container, getByRole, getByText } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    expect(container.querySelector('[data-oficina-plano]')!.textContent).toContain('Etapa 1 de 8');
+    expect(container.querySelector('[aria-label="Mover etapa para trás"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Mover etapa para frente"]')).toBeNull();
+    fireEvent.click(getByRole('tab', { name: 'Guias' }));
+    expect(container.querySelector('[data-oficina-guias]')).not.toBeNull();
+    expect(container.querySelector('[data-oficina-plano]')).toBeNull();
+    fireEvent.click(getByRole('tab', { name: 'Sessão' }));
+    expect(container.querySelector('[data-oficina-plano]')).not.toBeNull();
+    expect(getByText('Próxima etapa')).toBeTruthy();
+  });
+
+  it('mantém uma sessão salva em um card expansível, mostra subtópicos, permite editar/excluir e só conclui no final', () => {
     const onCompleteTask = vi.fn();
     const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, {
-      language: 'pt-BR', todayKey: DIA, tasks: [{ id: 't1', name: 'Enviar proposta', completed: false }], onCompleteTask,
+      language: 'pt-BR', todayKey: DIA,
+      tasks: [{ id: 't1', name: 'Enviar proposta', completed: false, steps: [{ id: 's1', label: 'Revisar valores', completed: false }] }], onCompleteTask,
     }));
     fireEvent.change(getByLabelText('Nome da sessão'), { target: { value: 'Fechar proposta' } });
-    fireEvent.click(getByLabelText('Mover etapa para frente'));
     fireEvent.click(getByText('Próxima etapa'));
+    fireEvent.click(q(container, '[data-focus-environment="forest"]')!);
     fireEvent.click(getByText('Próxima etapa'));
-    expect(container.querySelector('[data-oficina-plano]')!.textContent).toContain('O sapo primeiro');
     fireEvent.change(container.querySelector('[data-oficina-plano] select')!, { target: { value: 't1' } });
-    fireEvent.click(getByText('Concluir tarefa: Enviar proposta'));
-    expect(onCompleteTask).toHaveBeenCalledWith('t1');
-    for (let i = 0; i < 4; i++) fireEvent.click(getByText('Próxima etapa'));
+    expect(container.querySelector('[data-oficina-plano] [data-oficina-task-complete]')).toBeNull();
+    for (let i = 0; i < 5; i++) fireEvent.click(getByText('Próxima etapa'));
+    expect(container.querySelector('[data-oficina-review]')!.textContent).toContain('Enviar proposta');
+    expect(container.querySelector('[data-oficina-review]')!.textContent).toContain('Revisar valores');
     fireEvent.click(getByText('Salvar sessão'));
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOPS)!);
-    expect(saved[0]).toEqual({ name: 'Fechar proposta', day: DIA, completed: 1 });
-    expect(JSON.stringify(saved)).not.toContain('Enviar proposta');
+    expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Fechar proposta');
+    expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Enviar proposta');
+    expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Revisar valores');
+    fireEvent.click(getByText('Expandir sessão'));
+    expect(container.querySelector('[data-oficina-session-details]')).not.toBeNull();
+    expect(container.querySelector('[data-oficina-session-task-list]')!.textContent).toContain('Revisar valores');
+    expect(container.querySelector('[data-oficina-session-details]')!.textContent).toContain('Pomodoro 25/5');
+    fireEvent.click(getByText('Editar sessão'));
+    expect(container.querySelector('[data-oficina-plano]')).not.toBeNull();
+    fireEvent.click(getByText('Cancelar'));
+    expect(container.querySelector('[data-oficina-sessao-salva]')).not.toBeNull();
+    fireEvent.click(getByText('Concluir sessão'));
+    expect(onCompleteTask).toHaveBeenCalledWith('t1');
+    expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Sessão concluída');
+    expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOP_PLAN)).not.toBeNull();
+  });
+
+  it('Brain Dump tem nome e cronômetro próprios; If-Then sugere uma recompensa e a última etapa é revisão', () => {
+    const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    fireEvent.change(getByLabelText('Nome da sessão'), { target: { value: 'Estudar' } });
+    for (let i = 0; i < 5; i++) fireEvent.click(getByText('Próxima etapa'));
+    expect(container.querySelectorAll('[data-oficina-if-then] input')[1].getAttribute('placeholder')).toContain('jogar videogame');
+    fireEvent.click(getByText('Próxima etapa'));
+    expect(container.querySelector('[data-oficina-brain-dump]')!.textContent).toContain('Brain Dump');
+    fireEvent.click(getByText('Próxima etapa'));
+    expect(container.querySelector('[data-oficina-review]')).not.toBeNull();
+    expect(container.textContent).not.toContain('temporary for this session');
   });
 
   it.each(FOCO_TECNICAS.map(t => [t.id, t] as const))('card "%s": responde ao toque (abre a explicação com a fonte e fecha ao tocar de novo)', (id, t) => {
-    const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    const { container, getByRole } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    fireEvent.click(getByRole('tab', { name: 'Guias' }));
     const btn = q(container, `[data-oficina-tecnica="${id}"] [data-oficina-tecnica-btn]`)!;
     expect(btn.getAttribute('aria-expanded')).toBe('false');
     expect(q(container, '[data-oficina-tecnica-corpo]')).toBeNull();
@@ -150,7 +220,7 @@ describe('Oficina do Foco', () => {
 
   it('reabrir a folha com um timer salvo retoma de onde o relógio está', () => {
     const a = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
-    fireEvent.click(q(a.container, '[data-oficina-start]')!);
+    iniciarSessao(a.container);
     a.unmount();
     act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 10, 0)); });
     const b = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
@@ -189,6 +259,23 @@ describe('Caderno', () => {
     const { container } = render(createElement(Viva, { inicial: base }));
     fireEvent.click(q(container, '[data-caderno-apagar="a"]')!);
     expect(ultimo.map(e => e.id)).toEqual(['b']);
+  });
+
+  it('anotações antigas ficam acessíveis em Ver todas e o filtro por dia mostra só a data escolhida', () => {
+    const base = [
+      { id: 'a', day: '2026-10-04', formato: 'livre', text: 'anotação de hoje', at: 4 },
+      { id: 'b', day: '2026-10-03', formato: 'livre', text: 'anotação de ontem', at: 3 },
+      { id: 'c', day: '2026-10-02', formato: 'livre', text: 'anotação antiga', at: 2 },
+      { id: 'd', day: '2026-10-01', formato: 'livre', text: 'anotação mais antiga', at: 1 },
+    ] as CadernoEntry[];
+    const { container, getByRole } = render(createElement(Viva, { inicial: base }));
+    expect(container.querySelectorAll('[data-caderno-entrada]')).toHaveLength(3);
+    fireEvent.click(getByRole('button', { name: 'Ver todas' }));
+    expect(container.querySelectorAll('[data-caderno-entrada]')).toHaveLength(4);
+    fireEvent.change(getByRole('combobox', { name: 'Filtrar por dia' }), { target: { value: '2026-10-02' } });
+    expect(container.querySelectorAll('[data-caderno-entrada]')).toHaveLength(1);
+    expect(container.querySelector('[data-caderno-entrada]')!.textContent).toContain('anotação antiga');
+    expect(container.textContent).not.toContain('anotação mais antiga');
   });
 
   it('texto que sugere sofrimento mostra a linha de apoio (CVV 188), sem bloquear o guardar', () => {
