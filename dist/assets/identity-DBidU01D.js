@@ -1,0 +1,1 @@
+import{n as i}from"./oracle-9D6je8FH.js";import"./index-ZS3IjMC9.js";import"./vendor-D3F3s8fL.js";function m(r){return[i(r.fullName),r.birthDate,r.birthTime,r.birthPlace.trim().toLowerCase(),JSON.stringify(r.soulProfile?.psychometric.traitPoints??{}),JSON.stringify(r.answers??{})].join("|")}export{m as identityKey};
