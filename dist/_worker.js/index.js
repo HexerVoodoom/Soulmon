@@ -6108,6 +6108,22 @@ function sanitizeBuildingQuests(raw) {
 }
 __name(sanitizeBuildingQuests, "sanitizeBuildingQuests");
 
+// api/_focusLoot.js
+var FOCUS_LOOT_DAILY_CAP = 8;
+function sanitizeFocusLoot(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof r.day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r.day)) return void 0;
+  const items = typeof r.items === "number" && Number.isFinite(r.items) ? Math.floor(r.items) : -1;
+  if (items < 0 || items > FOCUS_LOOT_DAILY_CAP || !Array.isArray(r.claims)) return void 0;
+  const claims = [...new Set(r.claims.filter((id) => typeof id === "string" && /^[\w:-]{1,120}$/.test(id)))].slice(0, FOCUS_LOOT_DAILY_CAP);
+  return { day: r.day, items, claims };
+}
+__name(sanitizeFocusLoot, "sanitizeFocusLoot");
+
 // api/save.js
 var CORS11 = {
   "Access-Control-Allow-Origin": "*",
@@ -6265,6 +6281,11 @@ async function onRequest5({ request, env }) {
       const q = sanitizeBuildingQuests(state.buildingQuests);
       if (q) state.buildingQuests = q;
       else delete state.buildingQuests;
+    }
+    if ("focusLoot" in state) {
+      const q = sanitizeFocusLoot(state.focusLoot);
+      if (q) state.focusLoot = q;
+      else delete state.focusLoot;
     }
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
     if ("fichaJornada" in state) {
@@ -6699,7 +6720,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-9fAkyp/functionsRoutes-0.3007629020797238.mjs
+// ../.wrangler/tmp/pages-HdzLcR/functionsRoutes-0.7995240863600108.mjs
 var routes = [
   {
     routePath: "/api/account",
