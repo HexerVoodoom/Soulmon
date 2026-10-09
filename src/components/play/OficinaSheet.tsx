@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
-import { Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import { EVIDENCIA_LABEL, FOCO_TECNICAS } from '../../data/focoTecnicas';
+import { readJson, writeJson } from '../../utils/safeStorage';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
 import {
   FOCO_MODES, armEndNotice, disarmEndNotice, formatClock, isLongBreak, loadSessions, loadTimer, pause,
   recordSession, remainingMs, resume, saveSessions, saveTimer, sessionsToday, settle, startPhase,
@@ -46,7 +48,26 @@ function useNow(active: boolean): number {
   return now;
 }
 
-export function OficinaSheet({ language, todayKey }: { language: Language; todayKey?: string }) {
+type WorkshopRecord = { name: string; day: string; completed: number };
+const readWorkshopHistory = (): WorkshopRecord[] => {
+  const rows = readJson<WorkshopRecord[]>(STORAGE_KEYS.FOCO_WORKSHOPS, []);
+  return Array.isArray(rows) ? rows.filter(r => typeof r?.name === 'string' && typeof r?.day === 'string' && Number.isFinite(r?.completed)).slice(0, 20) : [];
+};
+
+const PRE_FOCUS_CHECKLIST = [
+  { id: 'station', pt: 'Organizar a estação de trabalho', en: 'Set up the work station' },
+  { id: 'water', pt: 'Beber água', en: 'Get some water' },
+  { id: 'food', pt: 'Comer algo, se estiver com fome', en: 'Eat something, if hungry' },
+  { id: 'bathroom', pt: 'Ir ao banheiro', en: 'Use the bathroom' },
+  { id: 'notifications', pt: 'Silenciar notificações', en: 'Mute notifications' },
+] as const;
+
+export function OficinaSheet({ language, todayKey, tasks, onCompleteTask }: {
+  language: Language; todayKey?: string; tasks?: Array<{ id: string; name: string; completed: boolean }>;
+  onCompleteTask?: (taskId: string) => void;
+}) {
+  tasks ??= [];
+  onCompleteTask ??= () => {};
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
   const [mode, setMode] = useState<FocoModeId>('p25');
@@ -54,7 +75,18 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
   const [days, setDays] = useState(() => loadSessions());
   /** Qual card está aberto (a explicação sai atrás do toque, nunca corrida na tela). */
   const [openId, setOpenId] = useState<string | null>(null);
-  const now = useNow(timer?.status === 'running');
+  const [sessionName, setSessionName] = useState('');
+  const [stepIndex, setStepIndex] = useState(0);
+  const [selectedTask, setSelectedTask] = useState('');
+  const [dump, setDump] = useState('');
+  const [ifThen, setIfThen] = useState({ cue: '', action: '' });
+  const [quadrant, setQuadrant] = useState<Record<string, string>>({});
+  const [history, setHistory] = useState(readWorkshopHistory);
+  const [completedInSession, setCompletedInSession] = useState(0);
+  const [planningSteps, setPlanningSteps] = useState<Array<'preparar' | 'pomodoro' | 'dois-minutos' | 'sapo' | 'eisenhower' | 'se-entao' | 'esvaziar' | 'blocos'>>(['preparar', 'pomodoro', 'dois-minutos', 'sapo', 'eisenhower', 'se-entao', 'esvaziar', 'blocos']);
+  const [prepChecked, setPrepChecked] = useState<Record<string, boolean>>({});
+  const [dumpEnd, setDumpEnd] = useState<number | null>(null);
+  const now = useNow(timer?.status === 'running' || dumpEnd !== null);
 
   const copy = useCallback((phase: 'focus' | 'break') => ({
     title: phase === 'focus' ? (isPt ? 'Foco concluído' : 'Focus done') : (isPt ? 'Pausa concluída' : 'Break done'),
@@ -82,6 +114,26 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
   };
 
   const hoje = sessionsToday(days, day);
+  const activeStep = planningSteps[stepIndex];
+  const selected = tasks.find(t => t.id === selectedTask && !t.completed);
+  const finishSession = () => {
+    const name = sessionName.trim().slice(0, 60);
+    if (name) {
+      const next = [{ name, day, completed: completedInSession }, ...history].slice(0, 20);
+      setHistory(next); writeJson(STORAGE_KEYS.FOCO_WORKSHOPS, next);
+    }
+    setStepIndex(0); setSessionName(''); setDump(''); setIfThen({ cue: '', action: '' }); setQuadrant({}); setPrepChecked({});
+    setPlanningSteps(['preparar', 'pomodoro', 'dois-minutos', 'sapo', 'eisenhower', 'se-entao', 'esvaziar', 'blocos']); setDumpEnd(null); setCompletedInSession(0);
+  };
+  const completeSelectedTask = () => {
+    if (!selected) return;
+    onCompleteTask(selected.id);
+    setCompletedInSession(n => n + 1);
+    setSelectedTask('');
+  };
+  const activeStepName = activeStep === 'preparar'
+    ? (isPt ? 'Preparar o foco' : 'Prepare to focus')
+    : (FOCO_TECNICAS.find(t => t.id === activeStep)?.[isPt ? 'namePt' : 'nameEn'] ?? '');
   const left = timer ? remainingMs(timer, now) : FOCO_MODES[mode].focusMin * 60_000;
   const ended = timer?.status === 'ended';
   const label = timer
@@ -95,8 +147,8 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
         <ModalInfo language={language} align="right" label={isPt ? 'Como funciona a Oficina' : 'How the Workshop works'}>
           <InfoTipSection title={isPt ? 'Timer de foco' : 'Focus timer'}>
             {isPt
-              ? 'O relógio segue o horário de verdade: pode trocar de aba ou fechar esta folha que ele continua. Ao fim, o app avisa na tela, vibra de leve e, só se você já permitiu notificações, avisa também fora do app. Marcar “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits.'
-              : 'The clock follows real time: you can switch tabs or close this sheet and it keeps going. At the end the app tells you on screen, buzzes lightly and, only if you already allowed notifications, also outside the app. Marking “I focused” keeps a note of the day on this device only: no scoreboard, no streak, no Bits.'}
+              ? 'O relógio segue o horário de verdade: pode trocar de aba ou fechar esta folha que ele continua. Ao fim, o app avisa na tela e vibra de leve; se você já permitiu notificações, avisa também fora do app. O app não toca um alarme sonoro automático. Marcar “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits.'
+              : 'The clock follows real time: you can switch tabs or close this sheet and it keeps going. At the end the app tells you on screen and buzzes lightly; if you already allowed notifications, it also alerts you outside the app. The app does not play an automatic alarm sound. Marking “I focused” keeps a note of the day on this device only: no scoreboard, no streak, no Bits.'}
           </InfoTipSection>
           {FOCO_TECNICAS.map((t, i) => (
             <InfoTipSection key={t.id} title={isPt ? t.namePt : t.nameEn} last={i === FOCO_TECNICAS.length - 1}>
@@ -152,6 +204,11 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
               {isPt ? 'Foquei' : 'I focused'}
             </button>
           )}
+          {ended && timer?.phase === 'focus' && selected && (
+            <button type="button" data-oficina-task-complete onClick={completeSelectedTask} style={{ ...sm2Button('primary'), flex: 1 }}>
+              {isPt ? 'Concluí a tarefa' : 'I completed the task'}
+            </button>
+          )}
           {ended && timer?.phase === 'break' && (
             <button type="button" data-oficina-ok onClick={() => apply(null)} style={{ ...sm2Button('primary'), flex: 1 }}>
               {isPt ? 'Pronto' : 'Done'}
@@ -171,6 +228,41 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
       </div>
 
       <p style={sectionHead}>{isPt ? 'Técnicas' : 'Techniques'}</p>
+      <section data-oficina-plano style={{ ...sheetCard, alignItems: 'stretch', gap: 10 }}>
+        <p style={{ ...sectionHead, margin: 0 }}>{isPt ? 'Planejar uma sessão' : 'Plan a session'}</p>
+        <label style={{ ...sm2Text, display: 'grid', gap: 4 }}>{isPt ? 'Nome da sessão' : 'Session name'}<Field value={sessionName} onChange={e => setSessionName(e.target.value)} placeholder={isPt ? 'Ex.: fechar apresentação' : 'e.g. finish presentation'} maxLength={60} /></label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><p style={{ ...sm2Hint, flex: 1, margin: 0 }}>{isPt ? `Etapa ${stepIndex + 1} de ${planningSteps.length}: ${activeStepName}` : `Step ${stepIndex + 1} of ${planningSteps.length}: ${activeStepName}`}</p>
+          <button type="button" aria-label={isPt ? 'Mover etapa para trás' : 'Move step earlier'} style={sm2Button('quiet')} disabled={stepIndex === 0} onClick={() => { setPlanningSteps(s => { const n = [...s]; [n[stepIndex - 1], n[stepIndex]] = [n[stepIndex], n[stepIndex - 1]]; return n; }); setStepIndex(i => i - 1); }}>↑</button>
+          <button type="button" aria-label={isPt ? 'Mover etapa para frente' : 'Move step later'} style={sm2Button('quiet')} disabled={stepIndex === planningSteps.length - 1} onClick={() => { setPlanningSteps(s => { const n = [...s]; [n[stepIndex], n[stepIndex + 1]] = [n[stepIndex + 1], n[stepIndex]]; return n; }); setStepIndex(i => i + 1); }}>↓</button>
+        </div>
+        {['dois-minutos', 'sapo', 'eisenhower', 'pomodoro', 'blocos'].includes(activeStep) && <label style={{ ...sm2Text, display: 'grid', gap: 4 }}>
+          {isPt ? 'Escolha uma tarefa' : 'Choose a task'}
+          <select value={selectedTask} onChange={e => setSelectedTask(e.target.value)} style={{ minHeight: 44, color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-border)', borderRadius: 8 }}>
+            <option value="">{isPt ? 'Selecionar…' : 'Select…'}</option>
+            {tasks.filter(t => !t.completed).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </label>}
+        {activeStep === 'preparar' && <div data-oficina-preparo style={{ display: 'grid', gap: 8 }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Pequenas necessidades que podem interromper o foco. Marque só o que fizer sentido; esta lista é temporária e não conta como tarefa.' : 'Small needs that can interrupt focus. Check only what makes sense; this list is temporary and does not count as tasks.'}</p>
+          {PRE_FOCUS_CHECKLIST.map(item => <label key={item.id} style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, minHeight: 40 }}>
+            <input type="checkbox" checked={!!prepChecked[item.id]} onChange={e => setPrepChecked(prev => ({ ...prev, [item.id]: e.target.checked }))} />
+            {isPt ? item.pt : item.en}
+          </label>)}
+        </div>}
+        {activeStep === 'eisenhower' && selected && <label style={{ ...sm2Text, display: 'grid', gap: 4 }}>{isPt ? 'Quadrante' : 'Quadrant'}
+          <select value={quadrant[selected.id] ?? ''} onChange={e => setQuadrant(q => ({ ...q, [selected.id]: e.target.value }))} style={{ minHeight: 44, color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-border)', borderRadius: 8 }}>
+            <option value="">{isPt ? 'Escolher…' : 'Choose…'}</option><option value="do">{isPt ? 'Importante e urgente — fazer' : 'Important and urgent — do'}</option><option value="schedule">{isPt ? 'Importante — agendar' : 'Important — schedule'}</option><option value="delegate">{isPt ? 'Urgente — delegar' : 'Urgent — delegate'}</option><option value="drop">{isPt ? 'Nenhum — deixar de lado' : 'Neither — drop'}</option>
+          </select>
+        </label>}
+        {activeStep === 'se-entao' && <div style={{ display: 'grid', gap: 8 }}><label style={{ ...sm2Text }}>{isPt ? 'Se…' : 'If…'}<Field value={ifThen.cue} onChange={e => setIfThen(v => ({ ...v, cue: e.target.value }))} /></label><label style={{ ...sm2Text }}>{isPt ? 'Então…' : 'Then…'}<Field value={ifThen.action} onChange={e => setIfThen(v => ({ ...v, action: e.target.value }))} /></label></div>}
+        {activeStep === 'esvaziar' && <><label style={{ ...sm2Text, display: 'grid', gap: 4 }}>{isPt ? 'Anotações (temporárias nesta sessão)' : 'Notes (temporary for this session)'}<textarea value={dump} onChange={e => setDump(e.target.value)} rows={4} maxLength={2000} style={{ color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-border)', borderRadius: 8, padding: 8 }} /></label><p role="timer" style={{ ...sm2Hint, margin: 0 }}>{dumpEnd ? formatClock(Math.max(0, dumpEnd - now)) : '05:00'}</p><button type="button" style={sm2Button('outline')} onClick={() => setDumpEnd(Date.now() + 5 * 60_000)}>{dumpEnd ? (isPt ? 'Reiniciar 5 minutos' : 'Restart 5 minutes') : (isPt ? 'Iniciar 5 minutos' : 'Start 5 minutes')}</button></>}
+        {['dois-minutos', 'sapo'].includes(activeStep) && selected && <button type="button" style={sm2Button('outline')} onClick={completeSelectedTask}>{isPt ? `Concluir tarefa: ${selected.name}` : `Complete task: ${selected.name}`}</button>}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" style={sm2Button('outline')} onClick={() => setStepIndex(i => (i + 1) % planningSteps.length)}>{isPt ? 'Pular etapa' : 'Skip step'}</button>
+          <button type="button" style={sm2Button('primary')} onClick={() => stepIndex + 1 === planningSteps.length ? finishSession() : setStepIndex(i => i + 1)}>{stepIndex + 1 === planningSteps.length ? (isPt ? 'Salvar sessão' : 'Save session') : (isPt ? 'Próxima etapa' : 'Next step')}</button>
+        </div>
+        {history.length > 0 && <div><p style={{ ...sectionHead, margin: '4px 0' }}>{isPt ? 'Sessões recentes (só neste aparelho)' : 'Recent sessions (this device only)'}</p>{history.slice(0, 5).map((item, i) => <p key={`${item.day}-${i}`} style={{ ...sm2Hint, margin: '3px 0' }}>{item.day} · {item.name} · {item.completed} {isPt ? 'tarefas' : 'tasks'}</p>)}</div>}
+      </section>
       <ul style={sheetCardList} data-oficina-tecnicas>
         {FOCO_TECNICAS.map(t => {
           const aberto = openId === t.id;

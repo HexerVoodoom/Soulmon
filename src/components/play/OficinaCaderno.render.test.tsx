@@ -83,6 +83,54 @@ describe('Oficina do Foco', () => {
     expect(q(container, '[data-oficina-tecnica="blocos"] [data-oficina-tecnica-corpo]')).not.toBeNull();
   });
 
+  it('preparo do foco é uma checklist temporária de ambiente/necessidades, sem gravar item no histórico', () => {
+    const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
+    const preparo = q(container, '[data-oficina-preparo]')!;
+    expect(preparo.textContent).toContain('Organizar a estação de trabalho');
+    expect(preparo.textContent).toContain('Beber água');
+    expect(preparo.textContent).toContain('Comer algo');
+    expect(preparo.textContent).toContain('Ir ao banheiro');
+    expect(preparo.querySelectorAll('input[type="checkbox"]')).toHaveLength(5);
+    fireEvent.click(preparo.querySelector('input[type="checkbox"]')!);
+    expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOPS)).toBeNull();
+  });
+
+  it('ao concluir um Pomodoro, o botão conclui a tarefa real selecionada pelo handler compartilhado', () => {
+    const onCompleteTask = vi.fn();
+    const { container } = render(createElement(OficinaSheet, {
+      language: 'pt-BR', todayKey: DIA,
+      tasks: [{ id: 't1', name: 'Enviar proposta', completed: false }], onCompleteTask,
+    }));
+    fireEvent.click(Array.from(container.querySelectorAll('button')).find(b => b.textContent === 'Próxima etapa')!);
+    fireEvent.change(container.querySelector('[data-oficina-plano] select')!, { target: { value: 't1' } });
+    fireEvent.click(q(container, '[data-oficina-start]')!);
+    act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 26, 0)); vi.advanceTimersByTime(1000); });
+    const complete = q(container, '[data-oficina-task-complete]')!;
+    expect(complete.textContent).toBe('Concluí a tarefa');
+    fireEvent.click(complete);
+    expect(onCompleteTask).toHaveBeenCalledWith('t1');
+  });
+
+  it('planeja uma sessão reordenável, conclui tarefa canônica pelo handler compartilhado e guarda só nome/data', () => {
+    const onCompleteTask = vi.fn();
+    const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, {
+      language: 'pt-BR', todayKey: DIA, tasks: [{ id: 't1', name: 'Enviar proposta', completed: false }], onCompleteTask,
+    }));
+    fireEvent.change(getByLabelText('Nome da sessão'), { target: { value: 'Fechar proposta' } });
+    fireEvent.click(getByLabelText('Mover etapa para frente'));
+    fireEvent.click(getByText('Próxima etapa'));
+    fireEvent.click(getByText('Próxima etapa'));
+    expect(container.querySelector('[data-oficina-plano]')!.textContent).toContain('O sapo primeiro');
+    fireEvent.change(container.querySelector('[data-oficina-plano] select')!, { target: { value: 't1' } });
+    fireEvent.click(getByText('Concluir tarefa: Enviar proposta'));
+    expect(onCompleteTask).toHaveBeenCalledWith('t1');
+    for (let i = 0; i < 4; i++) fireEvent.click(getByText('Próxima etapa'));
+    fireEvent.click(getByText('Salvar sessão'));
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOPS)!);
+    expect(saved[0]).toEqual({ name: 'Fechar proposta', day: DIA, completed: 1 });
+    expect(JSON.stringify(saved)).not.toContain('Enviar proposta');
+  });
+
   it.each(FOCO_TECNICAS.map(t => [t.id, t] as const))('card "%s": responde ao toque (abre a explicação com a fonte e fecha ao tocar de novo)', (id, t) => {
     const { container } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
     const btn = q(container, `[data-oficina-tecnica="${id}"] [data-oficina-tecnica-btn]`)!;

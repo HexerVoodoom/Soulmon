@@ -115,8 +115,8 @@ export function DueloSheet({ language, evolutionStage, skills, petElement, onSta
             )}
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `${ARENA_ROUNDS} rodadas contra criaturas do bestiário · vencer rende Bits · perder não custa nada`
-                : `${ARENA_ROUNDS} rounds against bestiary creatures · winning earns Bits · losing costs nothing`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; os adversários acompanham o nível do seu Soulmon. Vencer rende Bits; perder não custa nada. O Torneio é o modo social ranqueado.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; opponents scale to your Soulmon's level. Wins earn Bits; losses cost nothing. The Tournament is the ranked social mode.`}
             </span>
           </span>
         </ModalInfo>

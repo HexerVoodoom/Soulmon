@@ -11,19 +11,13 @@ import { demoTintFilter } from '../utils/sprites';
 import { suggestTasksResult, type SuggestedTask } from '../utils/taskSuggestions';
 
 // ---------------------------------------------------------------------------
-// GameTutorialFlow — segundo onboarding: depois que o Soulmon nasce (ritual
-// do oráculo), antes de entrar no jogo de verdade. São DUAS telas, e nenhuma
-// a mais: (1) a promessa central, (2) a criação OBRIGATÓRIA da 1ª atividade —
-// o jogador digita seu objetivo + escolhe tags de área da vida, e um pool de
-// tarefas sugeridas por IA (mesma API do chat do pet —
-// functions/api/suggest-tasks.js) aparece pra ele escolher o que adicionar.
+// GameTutorialFlow — três blocos curtos: (1) nascimento, (2) objetivo e áreas,
+// (3) uma sugestão escolhida como tarefa avulsa ou hábito recorrente.
 // Precisa sair daqui com >=1 tarefa, pra home nunca nascer vazia.
 //
-// Por que só duas: o dia 1 tinha ~12 telas antes de o usuário tocar em nada
-// (splash + 4 do onboarding demo + 6 páginas de conceito aqui + criação +
-// WelcomePromptModal), contra ~6 do benchmark do gênero (Finch). As 5 páginas
-// de conceito que saíram (HP, comida/energia, dia perfeito, cocô/banho/sono,
-// loja/moedas) cobravam teoria antes de qualquer contato — e 4 delas já
+// O tutorial mantém o dia 1 enxuto: as 5 páginas de conceito que saíram
+// (HP, comida/energia, dia perfeito, cocô/banho/sono, loja/moedas) cobravam
+// teoria antes de qualquer contato — e 4 delas já
 // estavam ditas, melhor e com os NÚMEROS vindos das constantes, no
 // `GuideModal` (seções 1, 2 e 6) e no glossário do `HelpModal`. Ver
 // `docs/PLANO-PRODUTO.md`, Parte 0 ("Correção da correção").
@@ -39,16 +33,12 @@ import { suggestTasksResult, type SuggestedTask } from '../utils/taskSuggestions
 //  · chips e sugestões em VETOR (`FormKit.Chip`, cards SIS-03 com
 //    `check_circle`/`radio_button_unchecked` como estado — D-O14; os
 //    `PixelChoiceChip`/`.sm-px-*`/`.sm-card`/`.sm-btn` eram pixel fora do visor);
-//  · a sugestão além do teto é INERTE POR FORMA (tracejado 1px `muted` +
-//    tinta `muted` + `aria-disabled`), nunca `opacity: .5` (D-O15);
-//  · o teto do estágio anunciado em `role=status` (muda sob o dedo — D-A4),
-//    em `gold-ink` sem moldura;
+//  · uma única sugestão fica selecionada por vez; o teto do estágio só limita
+//    hábitos recorrentes, não tarefas avulsas;
 //  · "Suggest tasks with AI" VIVO com o objetivo no campo (X1): só desliga
 //    com o campo vazio E nenhuma área;
 //  · o aviso de que o objetivo vai para a IA (O6), 12 `muted`.
-// O QUE NÃO MUDOU: o fluxo, o teto (`maxActivities`), o fallback local e o
-// próprio objetivo como 1ª linha selecionável (`customKey` — achado para o
-// lead, mantido no código).
+// O fluxo mantém o fallback local e a ação explícita antes de enviar texto à IA.
 // ---------------------------------------------------------------------------
 
 interface TutorialPage {
@@ -123,12 +113,11 @@ const SPIN_CSS = `
 
 interface GameTutorialFlowProps {
   language: Language;
-  /** Teto de atividades do estágio atual (types/progression.ts FORM_REQUIREMENTS) — a
-   *  criação obrigatória da 1ª tarefa não pode ultrapassar o mesmo limite do CreateModal normal. */
+  /** Teto de hábitos do estágio atual (types/progression.ts FORM_REQUIREMENTS). */
   maxActivities: number;
   /** Atividades que o jogador já tem (normalmente 0 aqui — só por segurança). */
   existingActivitiesCount?: number;
-  onComplete: (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => void;
+  onComplete: (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }) => void;
   /** WP1.4 — o que a pessoa escreveu no onboarding. Usado SÓ no aparelho, por
    *  palavra-chave (`utils/goalToCategory.ts`), para pôr a área de vida que
    *  ela descreveu na frente da lista — e, desde o canvas (O3), como o valor
@@ -148,7 +137,8 @@ export function GameTutorialFlow({
   spriteUrl, petName, demoTint,
 }: GameTutorialFlowProps) {
   const isPt = language === 'pt-BR';
-  const TASK_STEP = PAGES.length;
+  const GOAL_STEP = PAGES.length;
+  const PICK_STEP = GOAL_STEP + 1;
   const [step, setStep] = useState(0);
 
   // O3: o objetivo escrito no onboarding chega já no campo (editável). Quem
@@ -161,7 +151,8 @@ export function GameTutorialFlow({
   const [searched, setSearched] = useState(false);
   /** E1 (QA rodada 2): "não veio nada" ≠ "sem rede/quebrou". */
   const [falhaIa, setFalhaIa] = useState<'offline' | 'error' | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<string | null>(null);
+  const [kind, setKind] = useState<'task' | 'habit'>('task');
 
   const toggleCat = (cat: ActivityCategory) => {
     setSelectedCats(prev => {
@@ -183,28 +174,9 @@ export function GameTutorialFlow({
     [soulGoal, soulStruggle],
   );
 
-  const customCategory = selectedCats.size > 0 ? [...selectedCats][0] : 'Wellness';
-  const customKey = 'custom:' + goalText.trim();
-
   // Contagem "de verdade" — só o que existe agora na tela (evita contar
   // seleções antigas de uma geração anterior que já não aparecem mais).
-  const effectiveCount = (selected.has(customKey) && goalText.trim() ? 1 : 0)
-    + suggestions.filter(s => selected.has(s.name)).length;
   const remaining = Math.max(0, maxActivities - existingActivitiesCount);
-  const atCap = effectiveCount >= remaining;
-
-  const toggleSelected = (key: string, alreadyCounted: boolean) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        if (!alreadyCounted && atCap) return prev; // teto do estágio atingido
-        next.add(key);
-      }
-      return next;
-    });
-  };
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -219,28 +191,25 @@ export function GameTutorialFlow({
     // íntegro com o backend morto. O MOTIVO (`falhaIa`) é mostrado à parte.
     setSuggestions(result.length > 0 ? result : fallbackTasks([...selectedCats], isPt));
     setLoading(false);
-    // Reseta seleção a cada nova geração — evita "vazamento" de seleções de
-    // uma rodada anterior que não existem mais nesta lista.
-    setSelected(goalText.trim() ? new Set([customKey]) : new Set());
+    // A primeira recomendação vem pré-selecionada como tarefa avulsa. O
+    // usuário pode trocá-la ou escolher hábito explicitamente no próximo bloco.
+    const primeira = result.length > 0 ? result[0] : fallbackTasks([...selectedCats], isPt)[0];
+    setSelected(primeira?.name ?? null);
+    setKind('task');
   };
 
-  const canFinish = effectiveCount > 0;
+  const canFinish = selected !== null && (kind === 'task' || remaining > 0);
 
   const handleFinish = () => {
-    const activities: Array<{ name: string; category: ActivityCategory; emoji: string }> = [];
-    if (selected.has(customKey) && goalText.trim()) {
-      activities.push({ name: goalText.trim().slice(0, 60), category: customCategory, emoji: CATEGORY_ICONS[customCategory] });
-    }
-    suggestions.forEach(s => {
-      if (selected.has(s.name)) activities.push({ name: s.name, category: s.category, emoji: s.emoji });
-    });
-    onComplete(activities.slice(0, remaining));
+    if (!selected || !canFinish) return;
+    const item = suggestions.find(s => s.name === selected);
+    if (item) onComplete({ ...item, kind });
   };
 
   /**
-   * Pontinhos de progresso (S4): 8px, aceso = `primary-fill`, apagado = anel
-   * 2px `muted`. O denominador inclui a criação da 1ª atividade
-   * (`TASK_STEP + 1`), e não só as páginas de conceito — a barra do
+   * Pontinhos de progresso: três blocos reais, incluindo a escolha da atividade.
+   * 8px, aceso = `primary-fill`, apagado = anel 2px `muted`. O denominador
+   * inclui a criação da primeira atividade — a barra do
    * `SoulmonOnboarding` já foi corrigida uma vez pelo mesmo motivo: barra que
    * enche antes do fim do fluxo mente sobre quanto falta.
    */
@@ -248,12 +217,12 @@ export function GameTutorialFlow({
     <div
       role="progressbar"
       aria-valuemin={1}
-      aria-valuemax={TASK_STEP + 1}
+      aria-valuemax={PICK_STEP + 1}
       aria-valuenow={step + 1}
-      aria-label={isPt ? `Passo ${step + 1} de ${TASK_STEP + 1}` : `Step ${step + 1} of ${TASK_STEP + 1}`}
+      aria-label={isPt ? `Etapa ${step + 1} de ${PICK_STEP + 1}` : `Step ${step + 1} of ${PICK_STEP + 1}`}
       style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 8 }}
     >
-      {Array.from({ length: TASK_STEP + 1 }, (_, i) => (
+      {Array.from({ length: PICK_STEP + 1 }, (_, i) => (
         <span key={i} data-dot={i <= step ? 'on' : 'off'} style={{
           width: 8, height: 8, borderRadius: '50%', boxSizing: 'border-box',
           border: `2px solid ${i <= step ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
@@ -271,12 +240,12 @@ export function GameTutorialFlow({
 
   /** Card de sugestão SIS-03 (44): estado pelo glifo, seleção por `primary-soft` + anel. */
   const sugestao = (key: string, texto: string, isSel: boolean, ariaLabel?: string) => {
-    const inerte = !isSel && atCap;
+    const inerte = false;
     return (
       <button
         key={key}
         type="button"
-        onClick={() => { if (!inerte) toggleSelected(key, isSel); }}
+        onClick={() => setSelected(key)}
         aria-pressed={isSel}
         aria-disabled={inerte || undefined}
         aria-label={ariaLabel}
@@ -317,7 +286,7 @@ export function GameTutorialFlow({
     }}>
       <style>{SPIN_CSS}</style>
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 16px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
-        {step < TASK_STEP ? (
+        {step === 0 ? (
           <>
             {dots}
             {/* A promessa: a criatura que acabou de nascer, no vidro (D-O13),
@@ -348,7 +317,7 @@ export function GameTutorialFlow({
               <button
                 type="button"
                 style={{ ...sm2Button('primary'), width: '100%' }}
-                onClick={() => setStep(TASK_STEP)}
+                onClick={() => setStep(GOAL_STEP)}
               >
                 {isPt ? 'Começar' : "Let's start"}
               </button>
@@ -357,14 +326,16 @@ export function GameTutorialFlow({
         ) : (
           <>
             {dots}
-            {/* Passo obrigatório: criar a 1ª tarefa */}
+            {/* Bloco 2: objetivo e áreas; o envio à IA só ocorre após toque explícito. */}
             {/* I3: voltar = seta no canto superior ESQUERDO, acima do título. */}
-            <BackArrow onClick={() => setStep(TASK_STEP - 1)} language={isPt ? 'pt-BR' : 'en-US'} />
+              <BackArrow onClick={() => setStep(step === PICK_STEP ? GOAL_STEP : 0)} language={isPt ? 'pt-BR' : 'en-US'} />
             <h2 className="sm2-title" style={sm2TitleStyle}>
-              {isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
+              {step === GOAL_STEP
+                ? (isPt ? 'Qual é o seu objetivo?' : "What's your goal?")
+                : (isPt ? 'Escolha sua primeira atividade' : 'Choose your first activity')}
             </h2>
 
-            <textarea
+            {step === GOAL_STEP && <textarea
               value={goalText}
               onChange={e => setGoalText(e.target.value)}
               onFocus={() => setAreaFoco(true)}
@@ -385,9 +356,9 @@ export function GameTutorialFlow({
                 lineHeight: 'var(--sm2-leading-body)',
                 color: 'var(--sm2-ink)',
               }}
-            />
+            />}
 
-            <div>
+            {step === GOAL_STEP && <div>
               <span style={sm2Label} id="tut-areas-label">{isPt ? 'Áreas da vida (opcional)' : 'Life areas (optional)'}</span>
               <div role="group" aria-labelledby="tut-areas-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {categoriasOrdenadas.map(cat => (
@@ -401,11 +372,11 @@ export function GameTutorialFlow({
                   </Chip>
                 ))}
               </div>
-            </div>
+            </div>}
 
             {/* VIVO com o objetivo no campo (X1): só desliga com o campo vazio E
                 nenhuma área. Depois de responder vira `outline` (já respondeu). */}
-            <button
+            {step === GOAL_STEP && <button
               type="button"
               style={{ ...sm2Button(searched && !loading ? 'outline' : 'primary', loading || (!goalText.trim() && selectedCats.size === 0)), width: '100%' }}
               onClick={handleGenerate}
@@ -416,7 +387,7 @@ export function GameTutorialFlow({
               {loading
                 ? <span data-sm-spin="" aria-hidden="true" style={{ display: 'inline-flex', animation: 'tutspin 1.1s linear infinite' }}><Icon name="sync" size={24} /></span>
                 : (isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI')}
-            </button>
+            </button>}
             {/* O aviso da IA (O6 + compliance #2, 21/09/2026): o campo nasce
                 pré-preenchido com o `soulGoal` do onboarding — que a política
                 diz não passar por IA — então o aviso tem que dizer que ESTE
@@ -425,15 +396,14 @@ export function GameTutorialFlow({
             {/* A10 (QA rodada 2): o aviso sumia depois da 1ª busca, mas o
                 botão continua vivo e o texto continua saindo a cada toque.
                 Fica enquanto o botão puder ser tocado. */}
-            {(goalText.trim() || selectedCats.size > 0) && !loading && (
+            {step === GOAL_STEP && (goalText.trim() || selectedCats.size > 0) && !loading && (
               <p style={{ ...sm2Hint, textAlign: 'center' }} data-ai-hint>
                 {isPt ? 'Este texto vai para o provedor de IA se você pedir sugestões.' : 'This text goes to the AI provider if you ask for suggestions.'}
               </p>
             )}
 
-            {searched && !loading && (
+            {searched && !loading && step === GOAL_STEP && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {goalText.trim() && sugestao(customKey, goalText.trim(), selected.has(customKey))}
                 {/* E1: falha com nome. As sugestões locais vêm mesmo assim. */}
                 {falhaIa && (
                   <p role="status" style={{ ...sm2Hint, textAlign: 'center', margin: '8px 0' }} data-ai-failure={falhaIa}>
@@ -448,30 +418,30 @@ export function GameTutorialFlow({
                       ? 'Não veio sugestão da IA agora — sem problema, use seu objetivo acima ou digite de novo.'
                       : 'No AI suggestions came back — no worries, use your goal above or try again.'}
                   </p>
-                ) : suggestions.map(s => sugestao(s.name, s.name, selected.has(s.name), `${s.name} · ${categoryLabel(s.category, isPt)}`))}
-                {/* O teto muda sob o dedo: `role=status` (D-A4), `gold-ink` sem moldura. */}
-                <p role="status" aria-live="polite" style={{ ...sm2Hint, textAlign: 'center', color: 'var(--sm2-gold-ink)', minHeight: atCap ? undefined : 0 }}>
-                  {atCap
-                    ? (isPt
-                      ? `Limite de ${remaining} atividades do estágio atingido — desmarque algo pra trocar.`
-                      : `Stage limit of ${remaining} activities reached — unselect something to swap.`)
-                    : ''}
-                </p>
+                ) : suggestions.map(s => sugestao(s.name, s.name, selected === s.name, `${s.name} · ${categoryLabel(s.category, isPt)}`))}
               </div>
             )}
 
-            <div style={{ flex: 1 }} />
-
-            <button
-              type="button"
-              style={{ ...sm2Button('primary', !canFinish), width: '100%' }}
-              disabled={!canFinish}
-              onClick={handleFinish}
-            >
-              {canFinish
-                ? (isPt ? `Adicionar ${effectiveCount} e começar` : `Add ${effectiveCount} and start`)
-                : (isPt ? 'Selecione pelo menos 1 tarefa' : 'Select at least 1 task')}
-            </button>
+            {step === GOAL_STEP ? (
+              <button type="button" style={{ ...sm2Button('primary', !searched || loading || !selected), width: '100%' }} disabled={!searched || loading || !selected} onClick={() => setStep(PICK_STEP)}>
+                {isPt ? 'Escolher uma sugestão' : 'Choose a suggestion'}
+              </button>
+            ) : (
+              <>
+                <h2 className="sm2-title" style={sm2TitleStyle}>{isPt ? 'Como você quer acompanhar?' : 'How would you like to track it?'}</h2>
+                <p data-selected-activity style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{selected}</p>
+                <p style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Tarefa é feita uma vez. Hábito volta nos dias escolhidos.' : 'A task is done once. A habit repeats on chosen days.'}</p>
+                <div role="group" aria-label={isPt ? 'Tipo de atividade' : 'Activity type'} style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" aria-pressed={kind === 'task'} onClick={() => setKind('task')} style={{ ...sm2Button(kind === 'task' ? 'primary' : 'outline'), flex: 1 }}>{isPt ? 'Tarefa única' : 'One-time task'}</button>
+                  <button type="button" aria-pressed={kind === 'habit'} onClick={() => setKind('habit')} style={{ ...sm2Button(kind === 'habit' ? 'primary' : 'outline'), flex: 1 }}>{isPt ? 'Hábito recorrente' : 'Recurring habit'}</button>
+                </div>
+                {kind === 'habit' && remaining === 0 && <p role="status" style={sm2Hint}>{isPt ? 'O limite de hábitos deste estágio foi atingido; escolha tarefa única.' : 'This stage’s habit limit is reached; choose a one-time task.'}</p>}
+                <div style={{ flex: 1 }} />
+                <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%' }} disabled={!canFinish} onClick={handleFinish}>
+                  {isPt ? 'Começar' : 'Start'}
+                </button>
+              </>
+            )}
           </>
         )}
       </div>

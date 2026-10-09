@@ -164,7 +164,7 @@ null` e `language: Language` (agora obrigatória):
 | `mercado` | Mercado / Market | Itens, Decoração, Background (abas por moeda, `MercadoSheets` + `utils/mercadoCatalog.ts`) · Conquistas |
 | `jogos` | Jogos / Games | **três prédios** (30/09/2026; ⚰️ o lote único `ppt`): **Salão de Jogos** (`salao`, `SalaoSheet`: Corrida com obstáculos → `DinoGame` (⚰️ "Corrida do Dino" / "Dino Runner", renomeada em 30/09/2026 por decisão do dono; EN "Obstacle Run"; o id `dino`, a pasta `dino/` e as chaves de save não mudaram) e Pedra-papel-tesoura → `RPSGame`) · **Ateliê da Mente** (`mente`, `MenteSheet`: cinco linhas → `EcoGame`, `BolhasGame mode="foco"`, `TrocaGame`, `PicrossGame`, `RevisaoGame`, em `components/mente/`) · **Refúgio** (`refugio`, `RefugioSheet`: Respirar → `RespiracaoGame` em `components/refugio/`, Bolhas calmas → `BolhasGame mode="calma"` de `components/mente/`) — §4.14 |
 | `arena` | Arena | Torneio (`TournamentPage`, com a loja de Honra — a moeda `emblems`, rótulo "Honra"/"Honor" desde 30/09/2026, `REGISTRO-DE-DECISOES.md` §17; ⚠️ reverte a D3 de 23/09/2026, que mantinha "Emblemas"; só o rótulo mudou, o campo `emblems` e `EMBLEMS_PER_WIN` ficam, e os emblemas de CONQUISTA da Ficha não mudaram de nome) · Duelo (`DueloSheet` → `ArenaGame`) · **Feira** (`GuildSheet room="feira"`, NPC Fanfare — [§4.26](#guilda-tela); ⚰️ o lote `guilda` da Arena virou a Feira) |
-| `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`; ⚰️ a Corrida com obstáculos (antes "do Dino") saiu para o Salão de Jogos) · **Passeio / Stroll** (`passeio`, desde `3532ccf5`, clareira da direita; NPC Brume, `exploracao:passeio`; prédio próprio — a ilha flutuante com arco de raízes, `lote-exploracao-passeio`, desde a leva `lotes-v2` de 30/09/2026; ⚰️ o placeholder da galeria de cenários e o nome Zeph): folha `PasseioSheet` (lazy; **desde 08/10/2026 a experiência inteira do Passeio mora AQUI, no NPC Brume** — a Home só lista a linha "Take a stroll", ver §50-B do 02) — postais das regiões abertas para escolher o destino (casa inclusa) e, se não escondidas, as Travessias (a ativa com "Fiz" / "Trocar" / "Deixar pra lá", os "Fiz" guardados, as regiões em névoa sem número) e o link "Esconder/Mostrar Travessias"; sem jogo em tela cheia. Com destino ≠ casa, a Home mostra 🎒 nas costas do pet (`CompanionHUD` › `walkingTo`, sem bloquear gesto). Regra: [02 §43](02-REGRAS-DE-NEGOCIO.md#aventura) · **Oficina do Foco** (`oficina`, clareira de baixo à esquerda; NPC Tique; folha `OficinaSheet`: timer 25/5 e 50/10 + 7 técnicas em cards tocáveis — abrem a explicação; Pomodoro e Blocos também escolhem o ritmo, as outras cinco são guias) e **Caderno / Journal** (`caderno`, clareira de baixo à direita; NPC Sépia; folha `CadernoSheet`: journaling sensível, no save na nuvem do titular), desde 04/10/2026; arte e bustos provisórios. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
+| `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`; ⚰️ a Corrida com obstáculos (antes "do Dino") saiu para o Salão de Jogos) · **Passeio / Stroll** (`passeio`, desde `3532ccf5`, clareira da direita; NPC Brume, `exploracao:passeio`; prédio próprio — a ilha flutuante com arco de raízes, `lote-exploracao-passeio`, desde a leva `lotes-v2` de 30/09/2026; ⚰️ o placeholder da galeria de cenários e o nome Zeph): folha `PasseioSheet` (lazy; **desde 08/10/2026 a experiência inteira do Passeio mora AQUI, no NPC Brume** — a Home só lista a linha "Take a stroll", ver §50-B do 02) — postais das regiões abertas para escolher o destino (casa inclusa) e, se não escondidas, as Travessias (a ativa com "Fiz" / "Trocar" / "Deixar pra lá", os "Fiz" guardados, as regiões em névoa sem número) e o link "Esconder/Mostrar Travessias"; sem jogo em tela cheia. Com destino ≠ casa, a Home mostra 🎒 nas costas do pet (`CompanionHUD` › `walkingTo`, sem bloquear gesto). Regra: [02 §43](02-REGRAS-DE-NEGOCIO.md#aventura) · **Oficina do Foco** (`oficina`, clareira de baixo à esquerda; NPC Tique; folha `OficinaSheet`: timer 25/5 e 50/10, checklist temporária de preparo antes do foco, conclusão canônica de tarefa após o timer e 7 técnicas em cards tocáveis — abrem a explicação; Pomodoro e Blocos também escolhem o ritmo, as outras cinco são guias) e **Caderno / Journal** (`caderno`, clareira de baixo à direita; NPC Sépia; folha `CadernoSheet`: journaling sensível, no save na nuvem do titular), desde 04/10/2026; arte e bustos provisórios. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
 | `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Bastia — [§4.26](#guilda-tela)) |
 
@@ -492,13 +492,15 @@ grátis é atravessado nos testes por `src/test/ritualDemo`).
 ### 2.4 `GameTutorialFlow` — o segundo onboarding
 
 - **Chega por**: o portão `if (!hasCompletedTutorial)`, depois do onboarding.
-- **Sai para**: `onComplete(activities.slice(0, remaining))` →
-  `handleCompleteTutorial`.
+- **Sai para**: `onComplete(item)` → `handleCompleteTutorial`; `kind` mantém a
+  distinção entre tarefa pontual e hábito recorrente.
 - **Aparece quando**: `!hasCompletedTutorial`.
-- **O que se vê/faz**: `PAGES.length` = **1** tela de conceito ("Seu Soulmon
-  nasceu!" / "Your Soulmon is born!") e depois `TASK_STEP` — a criação
-  **obrigatória** da primeira atividade. O jogador digita o objetivo, escolhe
-  áreas de vida (`CATEGORIES`, 8) e recebe sugestões da API.
+- **O que se vê/faz**: três etapas com três pontos: (1) nascimento (uma tela de
+  conceito), (2) objetivo + áreas da vida (`CATEGORIES`, 8) e pedido explícito
+  de sugestões à API, (3) escolher uma sugestão e decidir entre tarefa única
+  ou hábito recorrente. A primeira sugestão vem selecionada como tarefa; hábito
+  só é salvo como recorrente após escolha explícita. O texto continua com aviso
+  claro antes de sair do aparelho para a IA. Não há tela de confirmação extra.
 - **Estados**: **erro/offline** — `fallbackTasks` devolve até 4 tarefas locais
   de dois minutos (`FALLBACK_BY_CATEGORY`); **desde `592e2c14` a falha tem
   nome** (E1, QA Rodada 2): `suggestTasksResult` distingue `offline`
@@ -523,7 +525,9 @@ grátis é atravessado nos testes por `src/test/ritualDemo`).
   o dono decidir declarar × cortar (#42). A fronteira tem dono:
   `src/ia.camposEnviados.contract.test.ts`.
 - **Dono**: `src/components/GameTutorialFlow.tsx`.
-- **Régua**: `src/components/GameTutorialFlow.render.test.tsx` (desde `5513b5b6`, 20/09/2026; ⚰️ "nenhuma") e `textoBilingue.contract.test.ts` para o texto bilíngue.
+- **Régua**: `src/components/GameTutorialFlow.render.test.tsx` (etapas, escolha
+  de tipo, fallback e consentimento) e `textoBilingue.contract.test.ts` para o
+  texto bilíngue.
 
 ⚰️ As **5 páginas de conceito** (HP, comida/energia, dia perfeito, cocô/banho/sono,
 loja/moedas) **não existem mais** — quatro estavam ditas melhor no `GuideModal`, e
@@ -1522,6 +1526,17 @@ nasceu em `84ae4937`, 21/09/2026 — eram cinco):
 | `RespiracaoGame` · `BolhasGame` (`mode="calma"`) | **Refúgio** (`RefugioSheet` → `onStart('respiracao' \| 'bolhas-calmas')`; ou o convite da fila 2, §3.2 `'refugio'`, que abre a respiração direto) | `onExit` | **não recebem `onEarnPoints`**: não pagam, não pontuam; vidro `REFUGIO_SCENE` e a bolha da respiração é o sprite `MINI_FX.bolhaRespiro` a 144 px (3×); rodapé `SupportNote` (aviso de ajuda, `tel:188` em PT) sempre visível na folha | `refugio/*.tsx` |
 | `NightmareBattle` | **fila de intersticiais** | `onWin={handleNightmareWin}` / `onLose`/`onClose` = `closeNightmare`; desde `6fe6c73a` é um `RitualDialog` (trap, Escape, devolução de foco) | perder não custa nada, e a tela diz isso | `NightmareBattle.tsx` |
 | ⚰️ `PlayCard` | **não é mais montado** (`f5ead7c0`, 16/09/2026) — Brincar é a célula `play` do deck do `CompanionHUD` (§4.2) | — | `available` / `canPlay` / `playedToday` (`playDeck` no `App.tsx`) | `PlayCard.tsx` segue no repo sem consumidor |
+
+**Diferenciar Arena e Torneio (09/10/2026):** o Torneio é disputa social com
+ranking de temporada (`TournamentPage`); o Duelo da Arena é PvE solo, com cinco
+rodadas contra inimigos ajustados automaticamente ao nível do Soulmon
+(`arenaFoeSides`). A escolha entre essas atividades existe nos dois lotes da
+área Arena. A Arena ainda não oferece controle manual de dificuldade; seus
+parâmetros continuam no balanceamento medido. A Corrida com obstáculos ganhou
+uma opção visual de Pesadelo: o pet vira silhueta com olhos brilhantes; a
+física, pontuação e Bits continuam iguais. O consumível Premium com estrela não
+foi criado nesta fatia porque o catálogo e as regras de recompensa ainda não
+definem um SKU Premium; não classificar itens comuns como Premium.
 
 **Os três prédios de Jogos (30/09/2026)** — `AreaView` monta `SalaoSheet`,
 `MenteSheet` ou `RefugioSheet` conforme `open?.id` (`'salao'`/`'mente'`/`'refugio'`)

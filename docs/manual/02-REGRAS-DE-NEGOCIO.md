@@ -5934,6 +5934,8 @@ de conserto silencioso.
 
 **Não faz.** Não conta sequência, não lembra, não cobra, não analisa nem diagnostica o texto, não pede permissão de notificação.
 
+**Atualização de 09/10/2026:** a Oficina inicia o planejamento pela checklist opcional e temporária de preparo (estação de trabalho, água, comida, banheiro e notificações). Não são tarefas canônicas nem ficam salvas. Quando o timer de foco termina, se uma tarefa canônica foi escolhida, aparece **“Concluí a tarefa”** e a conclusão passa pelo handler compartilhado da Home. O alerta continua sendo visual + vibração opcional + notificação já autorizada; nenhum som automático foi adicionado.
+
 **Régua.** `functions/api/save.caderno.test.js`, `utils/cadernoSensivel.contract.test.ts`, `utils/focoTimer.test.ts`, `utils/cadernoLocal.test.ts`, `components/play/OficinaCaderno.render.test.tsx`, `utils/areaLotGeometry.contract.test.ts`, `components/nav/areaLotNpc.contract.test.tsx`.
 
 <a id="demo-local"></a>

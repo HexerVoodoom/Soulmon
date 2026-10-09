@@ -78,3 +78,9 @@ vibração curta. A pessoa marca "Foquei" (registro local do dia) ou dispensa; s
 
 Nome "Caderno / Journal": ok. Sem recompensa nenhuma. **Caderno no save na nuvem** (acima). Vibração ao fim do foco
 **ligada por padrão**, com interruptor em Configurações › Seus dados. Bustos provisórios Tique/Sépia ficam.
+
+## 7. Acréscimos implementados em 09/10/2026
+
+- O planejamento da sessão começa com uma checklist local, temporária e opcional para preparar o foco: organizar a estação, beber água, comer se estiver com fome, usar o banheiro e silenciar notificações. Não são tarefas canônicas nem geram progresso/recompensa.
+- Depois de um timer de foco terminar, a tarefa canônica selecionada pode ser concluída por **“Concluí a tarefa”**, usando o handler compartilhado do jogo. Marcar “Foquei” continua sendo uma ação separada; só ela grava uma sessão de foco.
+- O alerta de fim já tinha vibração curta por padrão e notificação se a permissão já existia. O app não toca um alarme automático: a regra D11/S4 do `docs/SOM.md` proíbe som fora de gesto, e a notificação/vibração/aviso visual já oferecem canais de aviso sem autoplay.

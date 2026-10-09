@@ -86,6 +86,9 @@ export interface PlayHandlers {
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
+  /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
+  focusTasks?: Array<{ id: string; name: string; completed: boolean }>;
+  onCompleteFocusTask?: (taskId: string) => void;
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;
@@ -373,7 +376,7 @@ export function AreaView(props: AreaViewProps) {
                 seed={props.passeio?.seed}
               />
             )}
-            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} />}
+            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}

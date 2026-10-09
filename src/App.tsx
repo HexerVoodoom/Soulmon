@@ -766,6 +766,8 @@ export default function App() {
 
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createInitialKind, setCreateInitialKind] = useState<'task' | 'habit'>('habit');
+  const [createChoiceOpen, setCreateChoiceOpen] = useState(false);
   // F4 do catálogo: o CTA de "+" abre o NAVEGADOR primeiro (docs/PLANO-CATALOGO-ATIVIDADES.md
   // §5); "Algo que não está aqui?" dentro dele é que abre o `CreateModal`
   // legado (inalterado) para criar do zero/tarefa avulsa.
@@ -2984,7 +2986,7 @@ export default function App() {
    * o caminho de criação (e com ele o nudge do teto, ATIV-18).
    */
   const handleAddNewActivity = useCallback(() => {
-    setCatalogBrowserOpen(true);
+    setCreateChoiceOpen(true);
   }, []);
 
   /**
@@ -5371,25 +5373,34 @@ export default function App() {
     }));
   };
 
-  // Segundo onboarding (GameTutorialFlow): tarefas escolhidas na criação
-  // obrigatória da 1ª tarefa. Chega SEMPRE com >=1 item (o componente não
-  // deixa terminar sem selecionar nada).
-  const handleCompleteTutorial = (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => {
+  // Segundo onboarding (GameTutorialFlow): uma atividade de entrada, com
+  // semântica escolhida explicitamente (tarefa avulsa ou hábito recorrente).
+  const handleCompleteTutorial = (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }) => {
     writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
     setHasCompletedTutorial(true);
-    const newActivities: Activity[] = activities.map((item, i) => ({
-      id: `${Date.now() + i}`,
+    if (item.kind === 'task') {
+      const task: Task = {
+        id: `tutorial-${Date.now()}`,
+        name: item.name,
+        category: item.category,
+        emoji: item.emoji,
+        completed: false,
+        status: 'open',
+        effort: 1,
+        createdAt: new Date().toISOString(),
+      };
+      commitTaskCreate(task, TELEMETRY_CREATE_PATH.tutorial);
+      return;
+    }
+    const habit: Activity = {
+      id: `tutorial-${Date.now()}`,
       name: item.name,
       category: item.category,
       emoji: item.emoji,
       steps: [],
       weekDays: [0, 1, 2, 3, 4, 5, 6],
-    }));
-    // O lote do tutorial tambem passa pelo portao — e o portao corta o que nao
-    // couber, em vez de gravar por cima do teto. O `GameTutorialFlow` ja recebe
-    // `maxActivities` com o teto EFETIVO, entao na pratica nao ha corte: as
-    // duas reguas sao a mesma, e essa e a questao.
-    commitHabitCreate(newActivities, TELEMETRY_CREATE_PATH.tutorial);
+    };
+    commitHabitCreate([habit], TELEMETRY_CREATE_PATH.tutorial);
   };
 
 
@@ -6322,6 +6333,8 @@ export default function App() {
                      Malha, que moram no save. A regra é de `utils/mente/revisao`;
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
+                  focusTasks: gameState.tasks.map(({ id, name, completed }) => ({ id, name, completed })),
+                  onCompleteFocusTask: handleToggleTask,
                   review: gameState.review,
                   minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),
                   onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),
@@ -7230,13 +7243,30 @@ export default function App() {
           commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
           setCatalogBrowserOpen(false);
         }}
-        onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateModalOpen(true); }}
+        onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateInitialKind('habit'); setCreateModalOpen(true); }}
       />
       </Suspense>
+
+      <ModalSheet
+        open={createChoiceOpen}
+        title={language === 'pt-BR' ? 'O que vamos criar?' : 'What would you like to create?'}
+        language={language}
+        onClose={() => setCreateChoiceOpen(false)}
+      >
+        <div style={{ display: 'grid', gap: 10 }}>
+          <button type="button" style={sm2Button('primary')} onClick={() => {
+            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
+          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
+          <button type="button" style={sm2Button('outline')} onClick={() => {
+            setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
+          }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+        </div>
+      </ModalSheet>
 
       {createModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
           isOpen={createModalOpen}
+          initialKind={createInitialKind}
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
           activitiesCount={gameState.activities.length}

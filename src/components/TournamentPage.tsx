@@ -431,6 +431,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const infoTip = (
     <InfoTip language={lang} label={isPt ? 'Sobre o Torneio' : 'About the Tournament'} align="right">
       <span data-torneio-info>
+        <InfoTipSection title={isPt ? 'Torneio e Arena' : 'Tournament and Arena'}>
+          {isPt
+            ? 'O Torneio é a disputa social com ranking por temporada. Para lutar contra criaturas do bestiário em uma partida solo, entre no Duelo da Arena; os adversários acompanham o nível do seu Soulmon.'
+            : 'The Tournament is the social, season-ranked competition. For a solo fight against bestiary creatures, enter the Arena Duel; opponents scale to your Soulmon’s level.'}
+        </InfoTipSection>
         <InfoTipSection title={isPt ? 'Faixas' : 'Tiers'}>
           {isPt
             ? 'Sua faixa vem dos pontos que você acumulou e só sobe: Madeira, Bronze (100), Prata (300), Ouro (700), Platina (1100) e Diamante (1500). Mestre é o top 100 da season e Grão-Mestre o top 20: o ícone mostra o #N, a sua posição (no Grão-Mestre, o #N é o seu nível). Esses dois lugares são da season — se você sair do top, volta à faixa que seus pontos dão.'

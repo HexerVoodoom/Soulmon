@@ -36,6 +36,8 @@ import type { Effort, HabitAnchor, Schedule } from '../types/taskModel';
 
 interface CreateModalProps {
   isOpen: boolean;
+  /** Tipo inicial escolhido no atalho “+”; continua alterável no formulário. */
+  initialKind?: 'task' | 'habit';
   onClose: () => void;
   onSaveTask: (data: {
     name: string;
@@ -393,12 +395,12 @@ export function EffortFields({
   );
 }
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, capIsDemoBoundary = false, onUnlock }: CreateModalProps) {
+export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, capIsDemoBoundary = false, onUnlock }: CreateModalProps) {
   const isPt = language === 'pt-BR';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
   const t = useTranslation(language);
 
-  const [isSingleExecution, setIsSingleExecution] = useState(false);
+  const [isSingleExecution, setIsSingleExecution] = useState(initialKind === 'task');
   // Captura rápida: uma linha vira o formulário inteiro. Não é enfeite — se
   // cadastrar custa três telas, a pessoa para de cadastrar, e um app de tarefas
   // onde ninguém cadastra não é usado errado, é desinstalado.
@@ -501,14 +503,12 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
     if (parsed.schedule) {
       setIsSingleExecution(false);
       sched.applySchedule(parsed.schedule);
-    } else {
+    } else if (parsed.date) {
       setIsSingleExecution(true);
       // Data solta é "quando pretendo fazer", não prazo: é o que traz a tarefa
       // para o Hoje. Quem quiser prazo marca o prazo, que é outra decisão.
-      if (parsed.date) {
-        setHasStart(true);
-        setStartDate(parsed.date);
-      }
+      setHasStart(true);
+      setStartDate(parsed.date);
     }
     if (parsed.time) handleCustomTimeChange(parsed.time);
     setQuickTokens(parsed.tokens);
@@ -573,7 +573,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
   return (
     <ModalSheet
       open={isOpen}
-      title={isPt ? 'Nova atividade' : t.createModal.newActivity}
+      title={isPt ? (isSingleExecution ? 'Nova tarefa' : 'Novo hábito') : (isSingleExecution ? 'New task' : 'New habit')}
       onClose={onClose}
       language={language}
       footer={footer}
