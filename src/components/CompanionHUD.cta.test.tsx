@@ -55,6 +55,8 @@ const base = {
 
 /** Gêmeo de `BUBBLE_GAP` no `CompanionHUD.tsx` (não exportado). */
 const BUBBLE_GAP = 6;
+/** Gêmeo de `BUBBLE_BOTTOM`. */
+const BUBBLE_BOTTOM = 100;
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
@@ -95,7 +97,7 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     fireEvent.click(screen.getByAltText('rookie'));
     const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
     expect(faixa.style.top).toBe('');
-    expect(faixa.style.bottom).toBe(`${BUBBLE_GAP + 8}px`);
+    expect(faixa.style.bottom).toBe(`${BUBBLE_BOTTOM}px`);
   });
 
   it('a caixa de fala tem 30% de opacidade no fundo e o texto a 100%', () => {
