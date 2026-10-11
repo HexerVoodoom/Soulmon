@@ -429,6 +429,20 @@
   <em>Settings → Your data</em>: turning statistics off also turns this off.
 </p>
 
+<h2>6d. Abuse prevention (IP address, hashed)</h2>
+<p>
+  To stop one person from creating many accounts to drain shared limits, our server
+  computes a <strong>one-way keyed hash</strong> (HMAC with a secret key) of the IP
+  address of a request when an <strong>account is created</strong> and when a
+  <strong>creature image is generated</strong>. <strong>The IP address itself is never
+  stored</strong>; only the hash goes into a daily counter (how many new accounts / images
+  came from that connection today), which <strong>erases itself after 30 days</strong>.
+  It is not shared with anyone and is not used for advertising or profiling. Legal basis:
+  legitimate interest in preventing abuse and keeping the service available
+  (LGPD art. 7, IX). We also keep, for the same reason, the count of images already
+  drawn for your e-mail (numbers only), even after the account is deleted.
+</p>
+
 <h2>7. Minimum age</h2>
 <p>
   Soulmon is intended for people aged <strong>18 or older</strong>. It is not
@@ -449,7 +463,10 @@
   public profile, your nickname, your ranking entries, group gifts,
   <strong>your place in the cooperative group</strong> (you leave the group
   automatically; a group left empty disappears along with its code), the usage
-  record of your paid account (AI counters and the like) and the notification
+  record of your paid account (AI counters and the like — <strong>except</strong> the
+  count of creature images already drawn for this e-mail, which stays so that deleting
+  and re-creating the account does not reopen image generation; it is only numbers,
+  see 6d) and the notification
   subscriptions the server can link to your account. The app also unsubscribes
   <strong>this device</strong> from notifications right away; if you use Soulmon
   on more than one device, turn notifications off on each of them.
@@ -927,6 +944,20 @@
   dados</em>: desligar as estatísticas desliga isto também.
 </p>
 
+<h2>6d. Prevenção de abuso (endereço IP, em hash)</h2>
+<p>
+  Para impedir que uma pessoa crie muitas contas para esgotar limites que são de
+  todos, o nosso servidor calcula um <strong>resumo criptográfico de mão única com
+  chave secreta</strong> (HMAC) do endereço IP da requisição quando uma <strong>conta é
+  criada</strong> e quando uma <strong>imagem da criatura é gerada</strong>. <strong>O
+  endereço IP em si nunca é guardado</strong>; só o resumo entra num contador diário
+  (quantas contas novas / imagens saíram daquela conexão hoje), que <strong>se apaga
+  sozinho em 30 dias</strong>. Não é compartilhado com ninguém e não é usado para
+  publicidade nem perfil. Base legal: legítimo interesse em prevenir abuso e manter o
+  serviço disponível (LGPD art. 7º, IX). Pelo mesmo motivo guardamos a contagem de
+  imagens já desenhadas para o seu e-mail (só números), mesmo depois da exclusão da conta.
+</p>
+
 <h2>7. Idade mínima</h2>
 <p>
   O Soulmon é destinado a <strong>maiores de 18 anos</strong>. Não é direcionado
@@ -948,7 +979,9 @@
   o seu perfil público, o seu apelido, as posições nos rankings, os presentes do
   grupo, <strong>a sua vaga no grupo cooperativo</strong> (você sai do grupo
   automaticamente; um grupo que fica vazio some junto com o código), o registro
-  de uso da sua conta paga (contadores de IA e afins) e as
+  de uso da sua conta paga (contadores de IA e afins — <strong>exceto</strong> a
+  contagem de imagens da criatura já desenhadas para este e-mail, que fica para que
+  excluir e recriar a conta não reabra a geração de imagem; são só números, ver 6d) e as
   inscrições de notificação que o servidor consegue ligar à sua conta. O app
   também desfaz a inscrição de notificações <strong>deste aparelho</strong> na
   mesma hora; se você usa o Soulmon em mais de um aparelho, desligue as

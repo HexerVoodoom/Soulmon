@@ -519,3 +519,18 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Dono de:** os interruptores do beta — `flagOn`, `isBillingDisabled` (`env.BILLING_DISABLED`), `isChatDisabled` (`env.CHAT_DISABLED`), `BILLING_DISABLED_MESSAGE`, `CHAT_DISABLED_MESSAGE`. Valor que liga: `1`/`true`/`yes`/`on`/`sim`.
 **Chamado por:** `functions/api/billing.js` (`recusaSeLojaFechada`: 503 `billing-disabled` para comprovante que ainda não é da conta, antes do claim e do acknowledge; restaurar passa), `functions/api/chat.js` (503 `chat-disabled` antes de provedor e cota), `functions/api/config.js` (`billingDisabled`, `chatDisabled`).
 **Régua:** `functions/api/killSwitch.test.js`, `functions/api/config.test.js`. **Operação:** [`docs/BETA-CONTINGENCIA.md`](../../BETA-CONTINGENCIA.md) §0.
+
+### `functions/api/_betaAccess.js` (release/beta-1, 11/10/2026)
+**Dono de:** o acesso do beta fechado — `parseBetaEmails`, `betaRuleApplies`, `betaAllows`, `betaGate`, `BETA_CLOSED_MESSAGE`. `BETA_EMAILS` (secret, e-mails normalizados) e `BETA_CLOSED` (flag). Flag ligada: fora da lista não acessa save, IA nem compra (403 `beta-closed`); flag desligada: só IA exige a lista (se houver). Fail-closed sem e-mail verificado.
+**Chamado por:** `_aiGuard.js` (IA), `save.js`, `billing.js`. **Régua:** `functions/api/betaAccess.test.js`.
+
+### `functions/api/_ipHash.js` (release/beta-1, 11/10/2026)
+**Dono de:** antiabuso por HASH de IP — `ipHash` (HMAC-SHA256 com `IP_HASH_SALT`, 16 hex; o IP nunca é gravado), `takeIpQuota` (contadores `iph:<tipo>:<hash>:<dia>`, TTL 30 dias), `IP_LIMITS` (3 contas novas e 4 sprites por ip-hash/dia). Sem `IP_HASH_SALT`, nada é calculado.
+**Chamado por:** `save.js` (1ª gravação), `generate-sprite.js`. **Régua:** `functions/api/betaAccess.test.js`. **Política:** `privacidade.html` §6d.
+
+### `functions/api/_adminAlert.js` (release/beta-1, 11/10/2026)
+**Dono de:** o alerta ao dono por push FCM — `alertAdmin` (1×/tipo/dia, chave `alert:<dia>:<tipo>`; `ADMIN_PUSH_TARGET` + `FIREBASE_SERVICE_ACCOUNT`, senão só log) e `cruzouLimiar` (80 %).
+**Chamado por:** `_aiGuard.js` (teto global cruzando 80 %). **Régua:** `functions/api/betaAccess.test.js`.
+
+### `functions/api/top-ai.js` (release/beta-1, 11/10/2026)
+**Rota:** `GET /api/top-ai?day=AAAA-MM-DD`, com `X-Metrics-Key` = `METRICS_ADMIN_KEY` (404 sem a variável). Top 20 por bucket (`chat`, `sprite`, `transcribe`, `suggest`) com saveId truncado em 8 e marca de ≥ 80 % da cota. **Script:** `node scripts/top-consumidores.mjs`. **Régua:** `tests/topConsumidores.test.ts`.

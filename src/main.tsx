@@ -17,6 +17,7 @@
   import { armarTemaNoPrimeiroGesto } from './utils/tema';
   import { iniciarMusica } from './utils/musica';
   import { installGlobalCrashHandlers } from './utils/crashReport';
+  import { BetaClosedGate } from './components/BetaClosedGate';
 
   // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
   // inicializador do próprio estado, então uma migração que rodasse depois
@@ -38,7 +39,10 @@
     <ErrorBoundary>
       <ThemeProvider>
         <GameStateProvider>
-          <App />
+          {/* Beta fechado (release/beta-1): 403 `beta-closed` troca o app pela tela própria. */}
+          <BetaClosedGate>
+            <App />
+          </BetaClosedGate>
         </GameStateProvider>
       </ThemeProvider>
     </ErrorBoundary>

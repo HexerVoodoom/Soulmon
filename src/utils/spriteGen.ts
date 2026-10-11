@@ -5,6 +5,27 @@ import { pixelizeBuffer } from './pixelizer';
 import { isSafeSpriteUrl } from './spriteLibrary';
 import { aiFetch } from './aiClient';
 import { classifyCloudSaveStatus, CLOUD_SAVE_POLICY } from './cloudSave';
+import { toast } from 'sonner';
+import { readLocal } from './safeStorage';
+import { STORAGE_KEYS } from './storageKeys';
+
+/**
+ * Recusas que a PESSOA precisa entender (release/beta-1: "mensagem clara na UI"):
+ * o ateliê desligado (`SPRITE_DISABLED`), a forma que já teve a sua vez, o teto da
+ * vida, o limite do dia e o limite por conexão. Um aviso calmo por código por
+ * sessão — a arte de reserva continua aparecendo, nada quebra.
+ */
+const RECUSAS_COM_AVISO = new Set(['sprite-disabled', 'sprite-form-cap', 'sprite-lifetime-cap', 'ai-daily-limit', 'ip-sprite-limit']);
+const avisadas = new Set<string>();
+export function avisarRecusaDeSprite(code: unknown, message: { 'pt-BR': string; en: string } | undefined): boolean {
+  if (typeof code !== 'string' || !RECUSAS_COM_AVISO.has(code) || !message || avisadas.has(code)) return false;
+  avisadas.add(code);
+  const en = String(readLocal(STORAGE_KEYS.LANGUAGE) ?? '').startsWith('en');
+  toast(en ? message.en : message['pt-BR']);
+  return true;
+}
+/** Só para teste. */
+export function _resetAvisosDeSprite(): void { avisadas.clear(); }
 
 export interface SpriteGenOptions {
   grid?: number;          // lado do grid final (default 16)
@@ -179,6 +200,7 @@ export async function requestSprite(
     });
   }
   if (!res.ok) {
+    avisarRecusaDeSprite(body.error, body.message);
     throw new SpriteGenError(
       reasonFor(res.status, body.error),
       res.status,

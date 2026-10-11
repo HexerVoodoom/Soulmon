@@ -22,12 +22,19 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 vi.mock('./_auth.js', async orig => ({
   ...(await orig()),
-  verifyIdToken: vi.fn(async token => (token === 'token-valido' ? { email: 'a@b.c' } : null)),
+  // `token-valido-<x>` = outra conta (`<x>@b.c`): os laços abaixo usam contas
+  // distintas para o teto POR MINUTO por conta (release/beta-1) não ser o alvo.
+  verifyIdToken: vi.fn(async token => (token === 'token-valido' ? { email: 'a@b.c' } : token?.startsWith('token-valido-') ? { email: `${token.slice(13)}@b.c` } : null)),
 }));
 import { onRequestPost, onRequestOptions } from './transcribe.js';
 
 const PROJECT = 'evvcdsnijxbyctipfnkt';
-const ENV = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'jwt-do-servidor', FIREBASE_PROJECT_ID: 'soulmon-app' };
+function kvFalso() {
+  const m = new Map();
+  return { get: async k => m.get(k) ?? null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); } };
+}
+// KV desde a release/beta-1: a transcrição passa pelo `_aiGuard` (cota 10/conta/dia, 100/dia).
+const ENV = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'jwt-do-servidor', FIREBASE_PROJECT_ID: 'soulmon-app', get DIGIAPP_SAVES() { return kvFalso(); } };
 
 /** IP próprio por caso: o balde do teto vive no isolate e é compartilhado. */
 let n = 0;
@@ -128,7 +135,7 @@ describe('o que entra', () => {
   it('os tipos que um MediaRecorder produz PASSAM — senão o caso acima seria vácuo', async () => {
     stubUpstream(ok({ text: 'oi' }));
     for (const tipo of ['audio/webm', 'audio/webm;codecs=opus', 'audio/ogg', 'audio/mp4', 'audio/wav']) {
-      const r = await onRequestPost({ request: pedido({ tipo }), env: ENV });
+      const r = await onRequestPost({ request: pedido({ tipo, token: `token-valido-${tipo.replace(/\W/g, '')}` }), env: ENV });
       expect(r.status, tipo).toBe(200);
     }
   });
@@ -160,7 +167,7 @@ describe('🔴 o teto por IP — transcrição é a chamada mais cara do projeto
     stubUpstream(ok({ text: 'oi' }));
     const ip = '198.51.100.201';
     let ultimo;
-    for (let i = 0; i < 7; i++) ultimo = await onRequestPost({ request: pedido({ ip }), env: ENV });
+    for (let i = 0; i < 7; i++) ultimo = await onRequestPost({ request: pedido({ ip, token: `token-valido-ip${i}` }), env: ENV });
     expect(ultimo.status).toBe(429);
     expect(ultimo.headers.get('Retry-After')).toBeTruthy();
     expect(chamadas.length).toBe(6);
@@ -169,7 +176,7 @@ describe('🔴 o teto por IP — transcrição é a chamada mais cara do projeto
   it('o teto vem ANTES de tudo — nem lê o corpo, nem confere configuração', async () => {
     stubUpstream(ok({ text: 'oi' }));
     const ip = '198.51.100.202';
-    for (let i = 0; i < 6; i++) await onRequestPost({ request: pedido({ ip }), env: ENV });
+    for (let i = 0; i < 6; i++) await onRequestPost({ request: pedido({ ip, token: `token-valido-ipb${i}` }), env: ENV });
     // Mesmo com a configuração AUSENTE, o 7º leva 429 e não 503: quem está em
     // laço não descobre nada sobre o nosso ambiente.
     const r = await onRequestPost({ request: pedido({ ip }), env: {} });
@@ -259,13 +266,17 @@ describe('🔴 a rota NÃO grava o áudio', () => {
     expect(semComentarios).toContain('supabase.co');
   });
 
-  it('a rota não recebe binding de KV nenhum para poder gravar', async () => {
-    stubUpstream(ok({ text: 'oi' }));
-    // Passa um `env` com KV disponível; a resposta tem que ser idêntica.
-    const kv = { put: vi.fn(), get: vi.fn() };
+  // Desde a release/beta-1 a rota grava CONTADORES de cota (`ai:transcribe:*`)
+  // — números, nunca o áudio nem o texto. É isso que este caso trava agora.
+  it('na KV só entram contadores `ai:transcribe:*` (números) — nunca áudio nem texto', async () => {
+    stubUpstream(ok({ text: 'segredo falado' }));
+    const kv = { put: vi.fn(), get: vi.fn(async () => null) };
     const r = await onRequestPost({ request: pedido(), env: { ...ENV, DIGIAPP_SAVES: kv } });
     expect(r.status).toBe(200);
-    expect(kv.put).not.toHaveBeenCalled();
+    for (const [k, v] of kv.put.mock.calls) {
+      expect(k).toMatch(/^ai:transcribe:/);
+      expect(String(v)).toMatch(/^\d+$/);
+    }
   });
 });
 
@@ -298,5 +309,40 @@ describe('🔴 auditoria de lançamento — a rota não é mais anônima', () =>
     const r = await onRequestPost({ request: pedido(), env: semAuth });
     expect(r.status).toBe(503);
     expect(chamadas).toEqual([]);
+  });
+});
+
+describe('cota da transcrição (release/beta-1, abuso-e-custo V4.5 / Q4)', () => {
+  it('a 11ª do dia na mesma conta é 429 ai-daily-limit e NÃO chama o provedor', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const env = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'k', FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: kvFalso() };
+    const { resetRateLimits } = await import('./_rateLimit.js');
+    for (let i = 0; i < 10; i++) {
+      resetRateLimits(); // isola o teto POR MINUTO; aqui o alvo é o diário
+      expect((await onRequestPost({ request: pedido(), env })).status).toBe(200);
+    }
+    resetRateLimits();
+    const r = await onRequestPost({ request: pedido(), env });
+    expect(r.status).toBe(429);
+    expect((await r.json()).error).toBe('ai-daily-limit');
+    expect(chamadas).toHaveLength(10);
+  });
+
+  it('a 5ª no mesmo minuto é 429 ai-rate-limit', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const env = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'k', FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: kvFalso() };
+    for (let i = 0; i < 4; i++) expect((await onRequestPost({ request: pedido(), env })).status).toBe(200);
+    const r = await onRequestPost({ request: pedido(), env });
+    expect(r.status).toBe(429);
+    expect((await r.json()).error).toBe('ai-rate-limit');
+  });
+
+  it('provedor fora devolve a unidade (não queima a cota do dia)', async () => {
+    stubUpstream(() => new Response('x', { status: 500 }));
+    const store = kvFalso();
+    const env = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'k', FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: store };
+    expect((await onRequestPost({ request: pedido(), env })).status).toBe(502);
+    const hoje = new Date().toISOString().slice(0, 10);
+    expect(await store.get(`ai:transcribe:@all:${hoje}`)).toBe('0');
   });
 });

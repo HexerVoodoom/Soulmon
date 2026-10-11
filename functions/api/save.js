@@ -9,6 +9,8 @@
 
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
+import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
+import { takeIpQuota } from './_ipHash.js';
 import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { gateTombstone } from './_accountTombstone.js';
@@ -199,6 +201,12 @@ export async function onRequest({ request, env }) {
     return Response.json({ error: 'account-deleted', deletedAt: tombstone.at }, { status: 410, headers: CORS });
   }
 
+  // BETA FECHADO (`_betaAccess.js`): com `BETA_CLOSED`, quem não está em
+  // `BETA_EMAILS` loga mas não lê nem grava save — o app mostra a tela "beta fechado".
+  if (betaGate(env, auth, 'core')) {
+    return Response.json({ error: 'beta-closed', message: BETA_CLOSED_MESSAGE }, { status: 403, headers: CORS });
+  }
+
   if (request.method === 'GET') {
     const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS });
@@ -312,6 +320,15 @@ export async function onRequest({ request, env }) {
     // `f` = a data da 1ª gravação deste save, em ms (teto S1 do duelo, `_duel.js` › `maxLevelFor`). É o ÚNICO
     // relógio que o cliente não toca: o servidor a escreve e a preserva em toda gravação seguinte. Save sem `f`
     // (gravado antes desta regra) recebe `f = agora` aqui. NADA vai para o state: a contagem de campos não muda.
+    // CONTA NOVA (1ª gravação deste saveId): limite de contas novas por
+    // ip-hash/dia (`_ipHash.js`; sem `IP_HASH_SALT` não vale e nada é gravado).
+    if (prev?.value == null) {
+      const porIp = await takeIpQuota(env, request, 'newAccount');
+      if (!porIp.ok) {
+        console.warn('save: conta nova recusada pelo limite por ip-hash');
+        return Response.json({ error: porIp.reason }, { status: 429, headers: CORS });
+      }
+    }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,

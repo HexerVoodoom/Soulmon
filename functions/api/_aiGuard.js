@@ -261,6 +261,7 @@ function formUsed(ent, formId) {
  * @param {string|undefined} saveId  vem do corpo da requisição
  * @param {number} units  quantas gerações esta chamada vai custar (a recusa de
  *   conteúdo refaz o pedido com `promptFallback` e por isso custa 2).
+ * @param {{ ok: boolean, email?: string } | null} [preAuth]  autorização já feita pela rota (ver abaixo).
  * @param {string|null|undefined} formId  a forma da árvore que está sendo
  *   desenhada. Quando vem, o teto POR FORMA (`perFormLifetime`) vale — e é ele
  *   o disjuntor de loop de retentativa numa forma só. Quando NÃO vem, os outros
@@ -282,7 +283,7 @@ function formUsed(ent, formId) {
  *   estar escrita para valer contra concorrência), e o chamador a DEVOLVE quando
  *   a geração não aconteceu. Ver `makeRelease` — recusa de conteúdo não devolve.
  */
-export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
+export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null, preAuth = null) {
   if (!kv(env)) return refuse(500, 'storage-not-bound');
 
   const limits = AI_LIMITS[bucket];
@@ -293,9 +294,16 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   }
 
   // Quando o login estiver ligado, isto amarra a chamada à conta de verdade.
-  const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) {
-    return { ok: false, status: authStatus(auth), reason: auth.reason };
+  // `preAuth`: a rota JÁ verificou o token e derivou o saveId do e-mail dele
+  // (transcrição) — não reverifica. Só aceito com `ok: true` e `email`.
+  /** @type {{ ok: boolean, email?: string }} */
+  let auth;
+  if (preAuth && preAuth.ok === true && preAuth.email) {
+    auth = preAuth;
+  } else {
+    const a = await authorizeSaveAccess(request, env, saveId);
+    if (!a.ok) return { ok: false, status: authStatus(a), reason: a.reason };
+    auth = a;
   }
 
   // Beta fechado / allowlist de IA (`_betaAccess.js`): depois da autorização
@@ -488,7 +496,7 @@ function makeRelease(env, ctx) {
  * Rajada por conta (`perMinute`, memória do isolate — amortecedor, o diário é o
  * teto). Chamado pela ROTA antes de `guardAiRequest` (chat, transcrição), para o
  * portão continuar testável em laço sem relógio.
- * @returns {null | { ok: false, status: 429, reason: 'ai-rate-limit', message?: object }}
+ * @returns {null | { ok: false, status: number, reason: string, message?: object }}
  */
 export function perMinuteGate(bucket, saveId) {
   const lim = AI_LIMITS[bucket]?.perMinute;

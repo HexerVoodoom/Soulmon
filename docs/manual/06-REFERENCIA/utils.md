@@ -3271,3 +3271,7 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Exports:** `applySubscriptionClaim`, `subscriptionClaimRefusal`, `SubscriptionClaimRefusal`, `SubscriptionClaimState`.
 **Chamado por:** `src/App.tsx` (`handleClaimSubscription`).
 **Régua:** `src/utils/subscriptionShop.test.ts`.
+
+### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
+**Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
+**Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.

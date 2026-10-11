@@ -11,6 +11,7 @@
 // keys even while the raw storage is shared. Locked, behaviourally, by
 // `functions/api/saveId.parity.test.js` — three implementations, three deploy
 // cycles, one rule.
+import { detectBetaClosed } from './betaClosed';
 import { authHeaders } from './auth';
 import { isDemoMode, type DemoCarrier } from './demoMode';
 import { migrateBranchIds } from './branchMigration';
@@ -219,6 +220,7 @@ export async function cloudSave(saveId: string, state: unknown): Promise<CloudSa
       body: JSON.stringify({ state }),
     });
     if (!res.ok) {
+      await detectBetaClosed(res);
       console.warn('cloudSave: servidor recusou o save', {
         status: res.status,
         classe: classifyCloudSaveStatus(res.status),
@@ -367,7 +369,7 @@ export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
     if (res.status === 410) return { estado: 'excluida', excluidaEm: await lerDeletedAt(res) };
-    if (!res.ok) return { estado: 'indeterminado' };
+    if (!res.ok) { await detectBetaClosed(res); return { estado: 'indeterminado' }; }
     const data = await res.json();
     return data.found ? { estado: 'encontrado', state: data.state } : { estado: 'vazio' };
   } catch {

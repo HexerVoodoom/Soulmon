@@ -1482,3 +1482,6 @@ O cartão de confirmação das ações propostas pelo chat ("Criar hábito “Be
 **Exports:** `SubscriptionShelf(props)`.
 **Chamado por:** `src/components/mercado/MercadoSheets.tsx`.
 **Régua:** `src/components/SubscriptionSection.render.test.tsx`.
+
+### `src/components/BetaClosedGate.tsx` (release/beta-1, 11/10/2026)
+Envolve o `<App />` em `main.tsx`: com o veredito `beta-closed` (`utils/betaClosed.ts`) troca o app inteiro pela `BetaClosedScreen` — logo, mascote, texto PT/EN (`BETA_CLOSED_COPY`), sem save, IA nem compra. **Régua:** `src/utils/betaClosed.render.test.tsx`.

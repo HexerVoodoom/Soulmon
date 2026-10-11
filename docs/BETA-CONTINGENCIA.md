@@ -83,6 +83,68 @@ apague o que tiver mais de 14 dias depois do beta. Rode **antes do dia 0** e dep
 (Agendador de Tarefas do Windows: `node scripts\backup-saves.mjs` com pasta inicial
 `D:\Soulmon\repo`). Restaurar: §2.2. Testes: `tests/backupSaves.test.ts`.
 
+### 0.4 `CRASH_DISABLED` e a regra de Rate Limiting em `/api/crash*` `[DONO]`
+
+`/api/crash` é anônimo. Desde a `release/beta-1` a repetição da mesma falha conta na memória
+e grava no máximo 1×/hora por assinatura, com teto diário de escritas por isolate
+(`functions/api/crash.js`). Se mesmo assim houver flood: `npx wrangler secret put CRASH_DISABLED`
+(1) — a rota aceita e descarta (202), sem tocar a KV.
+
+**Regra do painel (a única garantia GLOBAL):** Cloudflare → o domínio/Workers → **Security →
+WAF → Rate limiting rules → Create rule**: nome `crash-por-ip`; *If incoming requests match*
+`URI Path` *starts with* `/api/crash`; *With the same characteristics* `IP`; *When rate exceeds*
+**5 requests per 1 minute**; *Then* **Block** por 10 minutos. Salvar e **Deploy**. (O plano
+gratuito permite 1 regra; com Workers Paid, a regra continua sendo de WAF — confira o limite
+de regras do seu plano.) Verificação: 6 `curl.exe -X POST .../api/crash` seguidos → o 6º volta 429.
+
+### 0.5 `SPRITE_DISABLED` — fecha o ateliê de imagens `[DONO]`
+
+`npx wrangler secret put SPRITE_DISABLED` (1): `/api/generate-sprite` responde 503
+`sprite-disabled` antes de cota e provedor; o app mostra "O ateliê do Oráculo está fechado por
+enquanto" e fica na arte de reserva. Regras de imagem desta release: **uma geração por forma,
+nunca regenera** (a mesma forma devolve a arte do cache), vitalício 15, 6/dia por conta, **40/dia
+e 800/mês no total** (Higgsfield), 4 gerações por ip-hash/dia; **Gemini Image desligado**
+(religar só com `SPRITE_GEMINI_IMAGE=1` e uma chave de OUTRO projeto Google — senão o chat sai do
+gratuito); renascer NÃO gera de novo. Os contadores sobrevivem à exclusão de conta.
+
+### 0.6 Beta fechado: `BETA_CLOSED` + `BETA_EMAILS` `[DONO]`
+
+```powershell
+npx wrangler secret put BETA_EMAILS     # ana@gmail.com,bia@gmail.com,...  (o mesmo e-mail com que cada um loga)
+npx wrangler secret put BETA_CLOSED     # 1
+```
+
+Com `BETA_CLOSED` ligado, quem não está na lista loga mas vê a tela **"O Soulmon está em teste
+fechado"** (PT/EN, com logo e mascote) e não acessa save, IA nem compra (403 `beta-closed`).
+Com a flag desligada e a lista preenchida, **só a IA** exige a lista. Comparação normalizada
+(minúsculas, sem espaço); **ponto e `+tag` do Gmail contam como outro e-mail**. Para incluir
+alguém: `secret put BETA_EMAILS` de novo com a lista inteira (vale na hora).
+
+### 0.7 Antiabuso por hash de IP: `IP_HASH_SALT` `[DONO]`
+
+`npx wrangler secret put IP_HASH_SALT` com um valor aleatório longo
+(`[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Max 256 }))`). Sem ele os
+limites por IP (3 contas novas e 4 sprites por ip-hash/dia) não valem e nada é calculado.
+O IP nunca é gravado; o hash vive 30 dias (`privacidade.html` §6d). **Não troque o sal no meio
+do beta** (os contadores do dia recomeçam, sem dano).
+
+### 0.8 Alertas: push ao dono, Cloudflare e Google Cloud `[DONO]`
+
+1. **Push no seu celular** quando um teto global de IA passa de 80 %: `npx wrangler secret put
+   ADMIN_PUSH_TARGET` (o token FCM do SEU aparelho — o app grava em `fcm:*` ao ligar as
+   notificações; peça à squad para achar o seu) e `npx wrangler secret put FIREBASE_SERVICE_ACCOUNT`
+   na **raiz** (o mesmo JSON do `workers/`). Sem os dois, o alerta vai só para o log (`wrangler tail`).
+   No máximo 1 push por tipo por dia.
+2. **Top consumidores:** `$env:METRICS_ADMIN_KEY = "<valor>"; node scripts/top-consumidores.mjs`
+   (saveId truncado; `*` = ≥ 80 % da cota diária).
+3. **Cloudflare (uso):** dash.cloudflare.com → **Notifications → Add** → *Workers* → **"Usage
+   Based Billing"** / alertas de uso de Workers e KV → e-mail para você. Com Workers Paid
+   (US$ 5/mês), configure o aviso de uso acima do incluído.
+4. **Google Cloud, orçamento de US$ 1:** console.cloud.google.com → **Faturamento → Orçamentos e
+   alertas → Criar orçamento** → escopo: o(s) projeto(s) das chaves Gemini/Firebase → valor
+   **US$ 1** → limites **50 %, 90 %, 100 %** → e-mail para você → Concluir. O chat usa o gratuito:
+   **qualquer cobrança é sinal de erro** (alguém ligou billing ou o Gemini Image).
+
 ## Severidade e relógio
 
 | Nível | Exemplo | Resposta |
@@ -546,6 +608,9 @@ guardam). O que resolve é **rotacionar**, não reescrever histórico.
 | Compra não concede | `npx wrangler tail soulmon --format pretty` |
 | Compra nova dando problema em massa | `npx wrangler secret put BILLING_DISABLED` (1) — §0.1 |
 | Chat respondendo mal / cota estourando | `npx wrangler secret put CHAT_DISABLED` (1) — §0.2 |
+| Flood em /api/crash | `npx wrangler secret put CRASH_DISABLED` (1) — §0.4 |
+| Imagens gastando demais | `npx wrangler secret put SPRITE_DISABLED` (1) — §0.5 |
+| Gente de fora usando o beta | `BETA_CLOSED` + `BETA_EMAILS` — §0.6 |
 | Backup antes de mexer em save | `node scripts/backup-saves.mjs` — §0.3 |
 | Binding derrubou compras | `npx wrangler secret delete PLAY_REQUIRE_ACCOUNT_BINDING` |
 | Push spam | `crons = []` em `workers/wrangler.toml` + `npx wrangler deploy -c wrangler.toml` |

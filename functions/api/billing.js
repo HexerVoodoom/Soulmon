@@ -34,6 +34,7 @@
 
 import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner } from './_entitlements.js';
 import { isBillingDisabled, BILLING_DISABLED_MESSAGE } from './_killSwitch.js';
+import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import {
   verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase,
@@ -100,6 +101,8 @@ export async function onRequestPost({ request, env }) {
   // Impede creditar a compra numa conta que não é a de quem está comprando.
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json({ error: auth.reason }, authStatus(auth));
+  // Beta fechado: fora da lista não compra (nem restaura) — `_betaAccess.js`.
+  if (betaGate(env, auth, 'core')) return json({ ok: false, reason: 'beta-closed', message: BETA_CLOSED_MESSAGE }, 403);
 
   // ASSINATURA (SKU `kind:'subscription'`): outro recurso da Google, outro
   // efeito (vigência da vitrine, nunca tier/Créditos). Ramo à parte de propósito.
