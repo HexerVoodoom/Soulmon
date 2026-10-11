@@ -46,14 +46,14 @@ describe('upgrade com as 20 do teste já no save', () => {
     rascunhoUpgrade();
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} mode="upgrade" onRevealed={() => {}} />);
     await responderUltima();
-    expect(screen.getByText(/Question 1 of 20/)).toBeTruthy();
+    expect(screen.getByText(/How much does this match you\?|Pick the one that sounds more like you|What would you do\?|How often\?/)).toBeTruthy();
   });
 
   it('com as 20 salvas, o teste é pulado: vai à geração', async () => {
     rascunhoUpgrade();
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} mode="upgrade" onRevealed={() => {}} savedTestAnswers={VINTE} />);
     await responderUltima();
-    expect(screen.queryByText(/of 20/)).toBeNull();
+    expect(screen.queryByText(/Question \d+ of/)).toBeNull();
     expect(document.querySelector('.sm2-ora-wait')).toBeTruthy();
   });
 });

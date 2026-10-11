@@ -3117,3 +3117,12 @@ Updaters puros e idempotentes: `applyForgeGrant` (1º resgate da missão do pré
 
 ## `src/utils/forgeCopy.ts` (07/10/2026)
 Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
+
+### `src/utils/firstTaskSuggestion.ts`
+**Dono de:** a PRIMEIRA TAREFA do onboarding (11/10/2026, REGISTRO §27) — sugestão pela 1ª área escolhida e o rascunho que sai do passo "Seu ponto de partida".
+**Exports:**
+- `suggestFirstTask(areas, isPt)` — `FirstTaskDraft` (`name`, `category`, `emoji`) da 1ª área; sem área, frase genérica.
+- `firstTaskFrom(text, areas, isPt)` — o texto da pessoa (máx. 80) vence a sugestão; vazio devolve `null` (sem tarefa).
+- `FirstTaskDraft` — o tipo.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx` (campo da tarefa → `OnboardingCompleteData.firstTask`); `src/App.tsx` (`handleCompleteOnboarding` grava em `tasks`, esforço 1).
+**Régua:** `src/utils/firstTaskSuggestion.test.ts`.

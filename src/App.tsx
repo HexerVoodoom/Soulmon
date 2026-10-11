@@ -5223,7 +5223,7 @@ export default function App() {
        o app ali ou se a adoção de um save da nuvem recarregasse a página. */
     // Os ids vêm da própria UI do catálogo; a marca NÃO espera o carregamento
     // (o catálogo é `import()`) — resolver os itens fica para mais abaixo.
-    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0) {
+    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0 || data.firstTask) {
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
       setHasCompletedTutorial(true);
     }
@@ -5292,6 +5292,20 @@ export default function App() {
       .filter((c): c is NonNullable<typeof c> => !!c);
     const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
+    // 11/10/2026: a primeira TAREFA do onboarding (esforço 1, sem prazo — o
+    // motor de tarefas a trata como qualquer outra; nada de recompensa extra).
+    const firstTasks: Task[] = data.firstTask
+      ? [{
+          id: `onb-${Date.now().toString(36)}`,
+          name: data.firstTask.name,
+          category: data.firstTask.category,
+          emoji: data.firstTask.emoji,
+          completed: false,
+          effort: 1,
+          status: 'open',
+          createdAt: new Date().toISOString(),
+        }]
+      : [];
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
     // save nos DOIS caminhos; quem lê é a personalidade do Soulmon.
     const onboardingProfile = onboardingProfileFrom(data.catalogChoice);
@@ -5308,7 +5322,7 @@ export default function App() {
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
-        tasks: [],
+        tasks: firstTasks,
         eggType: 'ignar',
         evolutionStage: 'rookie',
         unlockedEvolutions: ['rookie'],
@@ -5365,7 +5379,7 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       activities: newActivities,
-      tasks: [],
+      tasks: firstTasks,
       eggType: genericLine,
       evolutionStage: 'rookie',
       unlockedEvolutions: ['rookie'],

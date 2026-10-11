@@ -146,7 +146,7 @@ export function scoreProfile(answers: Answers): PersonalityProfile {
     const clarity = Math.round(Math.abs(score - 50) * 2);
     code += pole;
     axes[axis] = { axis, score, pole, clarity };
-    // The 20-item short form carries each axis with a single forced-choice
+    // The short form carries each axis with a single forced-choice
     // item, so clarity is always 100 here — there's no partial vote to split.
     // `weakAxes` stays wired up (and threshold kept) for when a longer form
     // adds more than one item per axis; at this length it will always be empty.
@@ -217,12 +217,16 @@ export function computeValidity(answers: Answers): ValidityIndices {
     inconsistency = Math.round((meanGap / 4) * 100);
   }
 
-  if (acquiescence >= 75)
+  // Sem itens invertidos (banco de 14, 11/10/2026) a média crua mede o
+  // conteúdo, não o estilo de resposta: só se julga aquiescência com chaveamento
+  // balanceado.
+  const balanced = responded.some((r) => !r.item.positive) && responded.some((r) => r.item.positive);
+  if (balanced && acquiescence >= 75)
     flags.push({
       pt: "Tendência forte a concordar com quase tudo (viés de aquiescência).",
       en: "Strong tendency to agree with almost everything (acquiescence bias).",
     });
-  if (acquiescence <= 25)
+  if (balanced && acquiescence <= 25)
     flags.push({
       pt: "Tendência forte a discordar de quase tudo.",
       en: "Strong tendency to disagree with almost everything.",
@@ -243,7 +247,8 @@ export function computeValidity(answers: Answers): ValidityIndices {
       en: "Almost every answer at the midpoint — the profile ends up poorly discriminated.",
     });
 
-  const trustworthy = inconsistency < 50 && acquiescence > 25 && acquiescence < 75 && midpointResponding < 60;
+  const trustworthy =
+    inconsistency < 50 && (!balanced || (acquiescence > 25 && acquiescence < 75)) && midpointResponding < 60;
 
   return {
     acquiescence,

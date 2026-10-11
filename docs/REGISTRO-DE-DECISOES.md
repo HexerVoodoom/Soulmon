@@ -2015,3 +2015,20 @@ Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-
 - **Perderam:** comprar peça por Bits/fragmentos (⚰️ a UI saiu; `applyEquipBuy` e preços ficam como regra pura testada, sem chamador); sorteio; Créditos acelerando equipamento; multiplicador próprio por peça.
 - **Efeitos colaterais a decidir (dono):** fragmentos agora só pagam "refazer" (3); `tal-com-01` (Etiqueta) e a peça da semana (`tal-com-07`) passaram a descontar o REFAZER, não mais a compra; a mochila não recusa prêmio de missão.
 - **Gatilho para rever:** se faltar/sobrar material (o total para as 9 peças no 5 é 90 de origem + 54 de apoio, ~1/dia por prédio), ajustar `UPGRADE_COST`, nunca o teto.
+
+
+## 27. Onboarding enxuto: três pontos, teste de 14 itens e a primeira tarefa (decisão do dono, 11/10/2026)
+
+**Decisão (ditado).** "O onboarding está longo. Tem pergunta de confirmação meio redundante, só pra verificar consistência; enxugue o máximo possível. A contagem está errada: primeiro conta 6, depois 20, depois tem outras perguntas. São TRÊS blocos. Prefiro três PONTOS de evolução em vez de uma barrinha que enche. Principalmente o segundo bloco é onde dá para reduzir. Crie pelo menos uma TAREFA para o usuário, com sugestão preenchida e editável."
+
+**Como ficou.**
+1. **Progresso = 3 pontos** (bloco 1 = as 6 do ritual · bloco 2 = o teste longo · bloco 3 = metas + ponto de partida), `role=progressbar` com `aria-valuetext` "Parte N de 3", sem N/M em tela nenhuma (o "Pergunta N de M" dos hints também saiu). Fora dos blocos (conta, nome, escolha, nascimento, geração, reveal) não há pontos. Movimento reduzido: a transição do ponto mora no bloco canônico do `index.css`.
+2. **Teste longo: 20 → 14 itens.** Saíram os 6 itens-espelho (o segundo, invertido, de cada par `consistencyPair` Likert/frequência: O-ima-2, C-org-2, E-soc-2, A-coo-2, N-ans-2, H-sin-2). Ficam 6 Likert (um por fator) + 4 escolhas forçadas (um por eixo junguiano) + 4 cenários (cobrem os 6 fatores). Total do funil antes da meta: 6+20 = 26 → 6+14 = 20 perguntas.
+3. **Primeira tarefa.** O passo "Seu ponto de partida" ganhou um campo com UMA tarefa sugerida pela 1ª área escolhida (`src/utils/firstTaskSuggestion.ts`), editável e esvaziável. Entra em `tasks` com esforço 1, sem prazo, `open`; sem recompensa extra (esforço 1 pesa 1 na meta, como um hábito). Os hábitos continuam sendo as sugestões do catálogo.
+
+**Custo assumido (psicometria).** Sem pares, o índice de inconsistência fica 0 e o de aquiescência deixa de valer (o banco não é mais balanceado em chaveamento); `computeValidity` só julga aquiescência com itens dos dois sentidos. Esses índices só alimentavam um aviso na `OraclePage` (ferramenta de criação, fora da navegação), nunca o jogador nem a criatura. O limite do teste "separação entre protocolos" caiu de 30 para 20 pontos (um item Likert por fator). A simulação de cobertura (17/17 elementos, 65/65 talentos, 11/11 profissões, 32/32 criaturas) e a calibração de `axes.ts` seguem verdes sem refazer os coeficientes — a leitura de eixos usa `traitPoints` por fator, que os cenários e o item restante continuam alimentando.
+
+- **Perderam:** manter o espelho invertido "para verificar consistência" (valia só o aviso interno); contagem numérica por bloco; barra contínua.
+- **Alternativa não feita:** cortar também cenários/escolhas forçadas (4 eixos junguianos dependem de 1 item cada; os cenários são o único canal da Honestidade-Humildade além de 1 item).
+- **Gatilho para rever:** se a leitura do Oráculo parecer genérica nos reveals, voltar um item por fator ANTES de mexer nos coeficientes.
+- **Pendências:** "GOAL/STRUGGLE puláveis" (CLAUDE.md) já não vale desde 01/10/2026 (B3: todas obrigatórias, ≥1 de 1–3) — mantido como está no código; o botão "Criar o meu" da aba Hábitos do app continua criando hábito (não foi tocado).

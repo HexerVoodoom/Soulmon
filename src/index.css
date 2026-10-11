@@ -5853,7 +5853,7 @@ select:focus-visible {
   .sm2-kit-spin { animation: none !important; }
   .sm2-kit-btn, .sm2-kit-tab, .sm2-kit-chip, .sm2-kit-check-box,
   .sm2-kit-switch-track, .sm2-kit-switch-knob, .sm2-kit-meter-fill,
-  .sm2-kit-segbar-seg { transition: none !important; }
+  .sm2-kit-segbar-seg, .sm2-ora-dot { transition: none !important; }
   /* Soulsmith (07/10/2026): a celebração perde o MOVIMENTO; o selo textual fica. */
   .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; }
   .sm-forge-sweep, .sm-forge-spark { display: none; }
@@ -7497,6 +7497,21 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    A regra de movimento reduzido mora no bloco canônico (sentinela). */
 .sm2-ora-meter { height: 8px; margin-bottom: var(--sm2-space-4); }
 .sm2-ora-meter .sm2-kit-meter-fill { border-radius: 2px; }
+/* 11/10/2026 — TRÊS PONTOS, um por bloco de perguntas (substituem a barra com
+   contagem). Anel 2px `muted` quando falta; cheio `primary-fill` quando é o
+   bloco atual ou já passou; o atual leva um anel externo para não depender só
+   de cor. Movimento reduzido: a transição vive no bloco canônico. */
+.sm2-ora-dots { display: flex; gap: 12px; justify-content: center; margin-bottom: var(--sm2-space-4); }
+.sm2-ora-dot {
+  width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box;
+  border: 2px solid var(--sm2-muted); background: transparent;
+  transition: background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.sm2-ora-dot[data-dot="done"] { border-color: var(--sm2-primary-fill); background: var(--sm2-primary-fill); }
+.sm2-ora-dot[data-dot="now"] {
+  border-color: var(--sm2-primary-fill); background: var(--sm2-primary-fill);
+  box-shadow: 0 0 0 3px var(--sm2-bg), 0 0 0 5px var(--sm2-primary-fill);
+}
 /* o voltar: ícone pelado, alvo 44, tinta `ink`; foco visível em anel */
 .sm2-ora-back {
   display: inline-flex; align-items: center; justify-content: center; flex: none;

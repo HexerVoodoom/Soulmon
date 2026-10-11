@@ -69,13 +69,14 @@ describe('oráculo: leitura nova (perfil de alma)', () => {
 
     // Sem preferências e sem descrição, `combineAxis` é identidade normalizada:
     // a ordem dos eixos tem que ser a MESMA que o motor novo entregou.
-    const byScore = <K extends string>(order: K[], scores: Record<K, number>) =>
-      [...order].sort((a, b) => scores[b] - scores[a]);
-
-    expect(byScore(ELEMENT_ORDER, result.elementScores)[0]).toBe(axes.dominantElement);
-    expect(byScore(ROLE_ORDER, result.roleScores)[0]).toBe(axes.dominantRole);
-    expect(byScore(ALIGNMENT_ORDER, result.alignmentScores)[0]).toBe(axes.dominantAlignment);
-    expect(byScore(REALM_ORDER, result.realmScores)[0]).toBe(axes.dominantRealm);
+    // Com o teste de 14 itens (11/10/2026) um protocolo sintético pode EMPATAR
+    // no topo; o desempate é do motor, então o que se exige é que o dominante
+    // entregue tenha a pontuação máxima, não a mesma posição na ordem fixa.
+    const top = <K extends string>(scores: Record<K, number>) => Math.max(...Object.values<number>(scores));
+    expect(result.elementScores[axes.dominantElement]).toBe(top(result.elementScores));
+    expect(result.roleScores[axes.dominantRole]).toBe(top(result.roleScores));
+    expect(result.alignmentScores[axes.dominantAlignment]).toBe(top(result.alignmentScores));
+    expect(result.realmScores[axes.dominantRealm]).toBe(top(result.realmScores));
   });
 
   it('o Ascendente vem do mapa REAL quando a hora é conhecida', () => {
