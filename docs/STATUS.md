@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Guilda de lançamento, PR1: Torneio ranqueado × Arena livre (`claude/guilda-lancamento`)
+>
+> - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
+> - **Linhas velhas no `CLAUDE.md` (não editei, a pedido):** a linha do 🎪 Rodada do Torneio segue certa; a do ⚔️ Masmorra não é tocada. A linha "Arena" do 🛒/Combate não descreve a escolha de adversários — acrescentar quando o dono quiser.
+> - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §27.
+
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >
 > - **Balão:** `BUBBLE_BOTTOM = 100` (`CompanionHUD.tsx`), a partir da base do contêiner do pet (que inclui ~66px de rodapé de corações/energia; era `BUBBLE_GAP + 8` = 14): ~34px acima do chão da cena, sobre o corpo, na metade de baixo; o Evoluir segue no topo.

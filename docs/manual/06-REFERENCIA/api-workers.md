@@ -447,6 +447,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor` no `match`).
 **Régua:** `functions/api/community.farm.test.js`.
 
+### `functions/api/_rankedPick.js`
+**Dono de:** o SORTEIO RANQUEADO do Torneio (guilda-lancamento PR1, 11/10/2026): `opponents` devolve 3 oponentes aleatórios dentre os `RANKED_WINDOW` (6) mais próximos de `lifetimePoints` de quem pede — a mesma medida da faixa. O jogador não escolhe (isso é a Arena livre); o número nunca sai na resposta.
+**Exports:** `RANKED_WINDOW`, `RANKED_PICKS`, `pickRankedOpponents`.
+**Chamado por:** `community.js › opponents`.
+**Régua:** `functions/api/rankedPick.test.js`.
+
 ### `functions/api/_gates.js`
 **Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
 **Exports:** `GATES`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.

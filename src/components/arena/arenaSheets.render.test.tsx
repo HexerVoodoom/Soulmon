@@ -51,7 +51,7 @@ describe('Torneio', () => {
   it('explica que o Torneio é ranqueado/social e a Arena é o duelo PvE escalado', () => {
     renderWithCss(<TournamentPage {...base} shop={shop} />);
     fireEvent.click(screen.getByRole('button', { name: 'About the Tournament' }));
-    expect(document.querySelector('[data-torneio-info]')!.textContent).toMatch(/season-ranked competition/i);
+    expect(document.querySelector('[data-torneio-info]')!.textContent).toMatch(/RANKED mode.*server draws opponents.*you don.t choose.*Open Arena/is);
   });
 
   it('a faixa vira indicador do título; tocar abre a folha com as cinco faixas e a atual marcada', async () => {
@@ -146,19 +146,30 @@ describe('Duelo', () => {
     expect(container.textContent).not.toContain('perder não custa nada');
     fireEvent.click(screen.getByRole('button', { name: /O que são elemento, poder e golpes/ }));
     expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain('perder não custa nada');
-    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toMatch(/adversários acompanham o nível/);
-    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toMatch(/modo social ranqueado/);
+    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toMatch(/você ESCOLHE os adversários.*poder parecido/);
+    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toMatch(/modo ranqueado.*sorteia/);
     // A7: o "?" saiu da luta, então a explicação de COMO lutar (torcer, anel, esquiva) mora aqui, no InfoTip único.
     const como = document.querySelector('[data-duelo-como-lutar]')!.textContent!;
     expect(como).toMatch(/torcer/);
     expect(como).toMatch(/anel/);
     expect(como).toMatch(/esquivar/);
-    fireEvent.click(screen.getByRole('button', { name: 'Começar duelo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lutar' }));
     expect(onStart).toHaveBeenCalledOnce();
+  });
+
+  it('ARENA = você escolhe: três desafios de poder parecido, e a semente do escolhido vai para a luta', async () => {
+    const onStart = vi.fn();
+    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
+    await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(3));
+    expect(container.querySelector('[data-arena-escolha]')!.textContent).toMatch(/Você escolhe contra quem lutar/);
+    fireEvent.click(container.querySelector('[data-arena-card="2"]')!);
+    expect(container.querySelector('[data-arena-card="2"]')!.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Lutar' }));
+    expect(typeof onStart.mock.calls[0][0]).toBe('number');
   });
 
   it('em inglês, também', () => {
     renderWithCss(<DueloSheet language="en-US" evolutionStage="rookie" onStart={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Start duel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Fight' })).toBeTruthy();
   });
 });

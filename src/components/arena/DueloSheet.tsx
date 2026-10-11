@@ -1,6 +1,8 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { ARENA_ROUNDS } from '../../utils/arena';
+import { ARENA_ROUNDS, ARENA_ROUND_COMP, buildArenaRound, elementLabel, loadBestiaryPool, type ArenaEnemy } from '../../utils/arena';
+import { mulberry32 } from '../../utils/combate/rng';
+import { newDefenseSeed } from '../../utils/autoDefesa';
 import { soulCombatant } from '../../utils/soulXP';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { elementIcon } from '../../utils/elementIconArt';
@@ -41,6 +43,66 @@ const boxValue: CSSProperties = {
   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 };
 
+const SEED_MIX = 0x9e3779b1;
+const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRound>[3]): ArenaEnemy[] =>
+  buildArenaRound(n, 1, mulberry32((seed ^ Math.imul(n, SEED_MIX)) | 0), pool);
+
+/**
+ * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). Três desafios de poder PARECIDO com o seu
+ * (os adversários da Arena são sempre relativos ao level — `arenaFoe`), e o jogador seleciona contra quais
+ * vai lutar. A semente do card é a da run: a `ArenaGame` luta exatamente o que o card mostrou. O Torneio é
+ * o oposto, de propósito: lá o servidor sorteia pela faixa (`functions/api/_rankedPick.js`).
+ */
+function EscolhaDeAdversarios({ isPt, onPick }: { isPt: boolean; onPick: (seed: number) => void }) {
+  const seeds = useMemo(() => [newDefenseSeed(), newDefenseSeed(), newDefenseSeed()], []);
+  const [pool, setPool] = useState<Awaited<ReturnType<typeof loadBestiaryPool>> | null>(null);
+  const [chosen, setChosen] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    loadBestiaryPool().then(p => { if (alive) setPool(p); }).catch(() => { /* sem pool: o botão ainda abre uma luta sorteada */ });
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => { onPick(seeds[chosen]); }, [chosen, seeds, onPick]);
+  if (!pool) return null;
+  return (
+    <div data-arena-escolha role="radiogroup" aria-label={isPt ? 'Escolha seus adversários' : 'Choose your opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={{ ...sm2Hint, margin: 0 }}>
+        {isPt ? 'Você escolhe contra quem lutar — todos de poder parecido com o seu.' : 'You choose who to fight — all of power similar to yours.'}
+      </p>
+      {seeds.map((seed, i) => {
+        const first = roundFoes(seed, 1, pool);
+        const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
+        const boss = roundFoes(seed, ARENA_ROUNDS, pool)[Math.max(0, bossIdx)];
+        const els = [...new Set(first.map(f => f.elements[0]))];
+        const on = chosen === i;
+        return (
+          <button
+            key={seed} type="button" role="radio" aria-checked={on} data-arena-card={i}
+            onClick={() => setChosen(i)}
+            style={{ ...box, flex: 'none', textAlign: 'left', cursor: 'pointer', borderColor: on ? 'var(--sm2-primary)' : 'var(--sm2-line)', borderWidth: on ? 2 : 1, borderStyle: 'solid', width: '100%' }}
+          >
+            <span style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {els.slice(0, 3).map(e => {
+                const a = elementIcon(e);
+                return a ? <img key={e} src={a} alt="" width={28} height={28} style={{ width: 28, height: 28, imageRendering: 'pixelated' }} /> : null;
+              })}
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ ...sm2Text, display: 'block', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {els.map(e => elementLabel(e, isPt)).join(' · ')}
+              </span>
+              <span style={{ ...sm2Hint, display: 'block' }}>
+                {isPt ? 'Chefe: ' : 'Boss: '}{boss ? (isPt ? boss.namePt : boss.nameEn) : '—'}
+              </span>
+            </span>
+            {on && <Icon name="check" size={24} tone="primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function fichaStageOf(evolutionStage: string): FichaStage {
   const nivel = getStageLevel(evolutionStage);
   return (['rookie', 'champion', 'ultimate', 'mega', 'ultra'].includes(nivel) ? nivel : 'rookie') as FichaStage;
@@ -52,7 +114,8 @@ export function DueloSheet({ language, evolutionStage, skills, petElement, onSta
   skills?: Partial<Record<FichaStage, StageSkills>>;
   /** Fallback da identidade sem ficha (o dominante do oráculo), igual nas telas de luta. */
   petElement?: string;
-  onStart: () => void;
+  /** Chamado com a semente do desafio ESCOLHIDO (sem ela, a Arena sorteia). */
+  onStart: (seed?: number) => void;
 }) {
   const isPt = language === 'pt-BR';
   const stage = fichaStageOf(evolutionStage);
@@ -68,6 +131,7 @@ export function DueloSheet({ language, evolutionStage, skills, petElement, onSta
     ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
     : { evolutionStage }).atk;
   const golpes = [t(par?.basica?.nome), t(par?.especial?.nome)].filter(Boolean) as string[];
+  const [pickedSeed, setPickedSeed] = useState<number | undefined>(undefined);
   const golpesTxt = golpes.length ? golpes.join(' · ') : (isPt ? 'Golpe básico' : 'Basic strike');
 
   return (
@@ -115,14 +179,15 @@ export function DueloSheet({ language, evolutionStage, skills, petElement, onSta
             )}
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; os adversários acompanham o nível do seu Soulmon. Vencer rende Bits; perder não custa nada. O Torneio é o modo social ranqueado.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; opponents scale to your Soulmon's level. Wins earn Bits; losses cost nothing. The Tournament is the ranked social mode.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, sempre de poder parecido com o seu (acompanham o nível do seu Soulmon). Vencer rende Bits; perder não custa nada. O Torneio é o modo ranqueado: lá o servidor sorteia os oponentes pela sua faixa.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, always of power similar to yours (they scale to your Soulmon's level). Wins earn Bits; losses cost nothing. The Tournament is the ranked mode: there the server draws opponents for you by your tier.`}
             </span>
           </span>
         </ModalInfo>
       </div>
-      <button type="button" data-duelo-start onClick={onStart} style={{ ...sm2Button('primary'), width: '100%' }}>
-        {isPt ? 'Começar duelo' : 'Start duel'}
+      <EscolhaDeAdversarios isPt={isPt} onPick={setPickedSeed} />
+      <button type="button" data-duelo-start onClick={() => onStart(pickedSeed)} style={{ ...sm2Button('primary'), width: '100%' }}>
+        {isPt ? 'Lutar' : 'Fight'}
       </button>
     </div>
   );

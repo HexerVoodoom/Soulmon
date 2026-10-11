@@ -231,6 +231,8 @@ export function AreaView(props: AreaViewProps) {
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
   const [duelOpen, setDuelOpen] = useState(false);
+  /** A semente do desafio escolhido na Arena (`DueloSheet`). */
+  const [duelSeed, setDuelSeed] = useState<number | undefined>(undefined);
   /** O encaixe do canto do título da folha do Torneio (o indicador da faixa entra por portal). */
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
@@ -326,7 +328,7 @@ export function AreaView(props: AreaViewProps) {
                 evolutionStage={props.evolutionStage}
                 skills={props.skills}
                 petElement={props.petElement}
-                onStart={() => { setSheet(null); setDuelOpen(true); }}
+                onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
             )}
           </Suspense>
@@ -334,6 +336,7 @@ export function AreaView(props: AreaViewProps) {
         {duelOpen && (
           <Suspense fallback={<SheetLoading language={language} />}>
             <ArenaGame
+              seed={duelSeed}
               evolutionStage={props.evolutionStage}
               demoCharacterId={props.demoCharacterId}
               language={language}

@@ -2014,3 +2014,12 @@ Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-
 - **Perderam:** comprar peça por Bits/fragmentos (⚰️ a UI saiu; `applyEquipBuy` e preços ficam como regra pura testada, sem chamador); sorteio; Créditos acelerando equipamento; multiplicador próprio por peça.
 - **Efeitos colaterais a decidir (dono):** fragmentos agora só pagam "refazer" (3); `tal-com-01` (Etiqueta) e a peça da semana (`tal-com-07`) passaram a descontar o REFAZER, não mais a compra; a mochila não recusa prêmio de missão.
 - **Gatilho para rever:** se faltar/sobrar material (o total para as 9 peças no 5 é 90 de origem + 54 de apoio, ~1/dia por prédio), ajustar `UPGRADE_COST`, nunca o teto.
+
+## 27. Lançamento da Guilda (ditado do dono, 11/10/2026) — Arena × Torneio e o resto da fila
+
+**Decisão (PR1).** "Torneio = RANQUEADO: obedece ao ranking e o inimigo é ALEATÓRIO com base no seu rank. Arena = você SELECIONA inimigos de poder semelhante ao seu."
+
+**Como ficou.** *Torneio:* `opponents` (servidor) sorteia 3 dentre os 6 mais próximos de `lifetimePoints` (a medida da faixa) — `functions/api/_rankedPick.js`; o jogador não escolhe, o número não sai na resposta, as faixas continuam antes do ranking (CLAUDE.md 🎪). *Arena livre* (lote `duelo`, id mantido): a folha mostra 3 desafios de poder parecido (todo inimigo da Arena é relativo ao level — `arenaFoe`), o jogador escolhe um e a SEMENTE do card é a da run (`ArenaGame` prop `seed`): luta exatamente o que o card mostrou; a revanche sorteia outra. Rótulo do lote: "Arena livre / Open Arena".
+
+- **Perdeu:** o Torneio sortear 3 aleatórios do pool inteiro, sem olhar para a faixa; a Arena abrir direto numa run sorteada.
+- **Gatilho para rever:** pool pequeno (poucos jogadores) faz a janela de 6 virar "todo mundo" — correto por construção; se houver mais de ~300 perfis, a varredura de `profile:` (já limitada a 300) passa a ser o gargalo, não o critério.
