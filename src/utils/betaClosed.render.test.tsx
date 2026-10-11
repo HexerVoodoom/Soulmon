@@ -39,7 +39,7 @@ describe('beta fechado no app', () => {
     expect(screen.getByText('app de verdade')).toBeTruthy();
     await act(async () => { await detectBetaClosed(res(403, { error: 'beta-closed' })); });
     expect(screen.queryByText('app de verdade')).toBeNull();
-    expect(screen.getByRole('heading', { name: 'O Soulmon está em teste fechado' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'O Soulmon está em teste fechado' })).toBeTruthy(); // tela lazy
     expect(document.querySelector('[data-beta-closed] img[alt="Soulmon"]')).toBeTruthy();
   });
 
@@ -47,7 +47,7 @@ describe('beta fechado no app', () => {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
     await detectBetaClosed(res(403, { error: 'beta-closed' }));
     render(<BetaClosedGate><p>app</p></BetaClosedGate>);
-    expect(screen.getByRole('heading', { name: 'Soulmon is in a closed test' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Soulmon is in a closed test' })).toBeTruthy();
   });
 });
 
@@ -69,7 +69,7 @@ describe('C1: a tela mostra o e-mail da sessão e deixa trocar de conta', () => 
     render(<BetaClosedGate><p>app</p></BetaClosedGate>);
     await vi.waitFor(() => expect(document.querySelector('[data-beta-email]')!.textContent).toContain('a.na@gmail.com'));
     expect(document.body.textContent).toMatch(/peça ao Mateus para incluir este e-mail/);
-    expect(screen.getByRole('button', { name: 'Trocar de conta' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Trocar de conta' })).toBeTruthy();
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, '{"petName":"Rascunho"}');
     localStorage.setItem(STORAGE_KEYS.SAVE_ID, 'b'.repeat(32));
     await trocarContaBetaFechado(recarregar);
@@ -84,7 +84,7 @@ describe('C1: a tela mostra o e-mail da sessão e deixa trocar de conta', () => 
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
     await detectBetaClosed(res(403, { error: 'beta-closed' }));
     render(<BetaClosedGate><p>app</p></BetaClosedGate>);
-    expect(screen.getByRole('button', { name: 'Switch account' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Switch account' })).toBeTruthy();
     expect(document.body.textContent).toMatch(/ask Mateus to add this e-mail/);
   });
 });

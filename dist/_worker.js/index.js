@@ -364,6 +364,65 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
 }
 __name(auditRefunds, "auditRefunds");
 
+// api/_killSwitch.js
+var LIGADO = /^(1|true|yes|on|sim)$/i;
+function flagOn(value) {
+  return typeof value === "string" ? LIGADO.test(value.trim()) : value === true || value === 1;
+}
+__name(flagOn, "flagOn");
+var isBillingDisabled = /* @__PURE__ */ __name((env) => flagOn(env?.BILLING_DISABLED), "isBillingDisabled");
+var isChatDisabled = /* @__PURE__ */ __name((env) => flagOn(env?.CHAT_DISABLED), "isChatDisabled");
+var BILLING_DISABLED_MESSAGE = {
+  pt: "A lojinha est\xE1 fechada por um tempinho enquanto ajeitamos umas coisas. Nada foi cobrado \u2014 tente de novo mais tarde.",
+  en: "The shop is closed for a little while as we tidy things up. Nothing was charged \u2014 please try again later."
+};
+var CHAT_DISABLED_MESSAGE = {
+  pt: "Estou descansando a cabe\xE7a por um tempinho \u2014 sigo por aqui com as respostas simples.",
+  en: "I'm resting my head for a little while \u2014 I'm still here with simple replies."
+};
+
+// api/_betaAccess.js
+var normalizeEmail = /* @__PURE__ */ __name((email) => String(email ?? "").trim().toLowerCase(), "normalizeEmail");
+function canonBetaEmail(email) {
+  const e = normalizeEmail(email);
+  const at = e.lastIndexOf("@");
+  if (at < 1) return e;
+  let local = e.slice(0, at);
+  let domain = e.slice(at + 1);
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    local = local.split("+")[0].replace(/\./g, "");
+    domain = "gmail.com";
+  }
+  return `${local}@${domain}`;
+}
+__name(canonBetaEmail, "canonBetaEmail");
+function parseBetaEmails(raw) {
+  return [...new Set(String(raw ?? "").split(/[,;\s]+/).map(canonBetaEmail).filter((e) => e.includes("@")))];
+}
+__name(parseBetaEmails, "parseBetaEmails");
+var isBetaClosed = /* @__PURE__ */ __name((env) => flagOn(env?.BETA_CLOSED), "isBetaClosed");
+function betaRuleApplies(env, tipo) {
+  if (isBetaClosed(env)) return true;
+  return tipo === "ai" && parseBetaEmails(env?.BETA_EMAILS).length > 0;
+}
+__name(betaRuleApplies, "betaRuleApplies");
+function betaAllows(env, email) {
+  const e = canonBetaEmail(email);
+  if (!e || !e.includes("@")) return false;
+  return parseBetaEmails(env?.BETA_EMAILS).includes(e);
+}
+__name(betaAllows, "betaAllows");
+function betaGate(env, auth, tipo) {
+  if (!betaRuleApplies(env, tipo)) return null;
+  if (betaAllows(env, auth?.email)) return null;
+  return { status: 403, reason: "beta-closed" };
+}
+__name(betaGate, "betaGate");
+var BETA_CLOSED_MESSAGE = {
+  pt: "O Soulmon est\xE1 em teste fechado e esta conta ainda n\xE3o est\xE1 na lista. Se voc\xEA recebeu um convite, entre com o mesmo e-mail do convite.",
+  en: "Soulmon is in a closed test and this account is not on the list yet. If you got an invite, sign in with the same e-mail it was sent to."
+};
+
 // api/_accountTombstone.js
 var TOMBSTONE_PREFIX = "del:done:";
 var TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -495,7 +554,7 @@ async function verifyIdToken(idToken, projectId) {
     );
     if (!ok) return null;
     return {
-      email: normalizeEmail(payload.email),
+      email: normalizeEmail2(payload.email),
       authTime: typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time) ? payload.auth_time : 0
     };
   } catch {
@@ -503,17 +562,17 @@ async function verifyIdToken(idToken, projectId) {
   }
 }
 __name(verifyIdToken, "verifyIdToken");
-function normalizeEmail(email) {
+function normalizeEmail2(email) {
   return String(email ?? "").trim().toLowerCase();
 }
-__name(normalizeEmail, "normalizeEmail");
+__name(normalizeEmail2, "normalizeEmail");
 function bearerToken(request) {
   const auth = request?.headers?.get?.("Authorization") || "";
   return auth.startsWith("Bearer ") ? auth.slice(7) : null;
 }
 __name(bearerToken, "bearerToken");
 async function emailToSaveId(email) {
-  const data = new TextEncoder().encode(`soulmon:${normalizeEmail(email)}`);
+  const data = new TextEncoder().encode(`soulmon:${normalizeEmail2(email)}`);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
@@ -523,6 +582,7 @@ async function authorizeSaveAccess(request, env, saveId) {
   if (!projectId) {
     const tombstone2 = await gateTombstone(env, saveId, 0);
     if (tombstone2.deleted) return { ok: false, enforced: false, status: 410, reason: "account-deleted", deletedAt: tombstone2.at };
+    if (betaGate(env, null, "core")) return { ok: false, enforced: false, status: 403, reason: "beta-closed" };
     return { ok: true, enforced: false, tombstone: tombstone2 };
   }
   const auth = request.headers.get("Authorization") || "";
@@ -533,6 +593,7 @@ async function authorizeSaveAccess(request, env, saveId) {
   if (expected !== saveId) return { ok: false, enforced: true, status: 403, reason: "forbidden" };
   const tombstone = await gateTombstone(env, saveId, claims.authTime);
   if (tombstone.deleted) return { ok: false, enforced: true, status: 410, reason: "account-deleted", deletedAt: tombstone.at };
+  if (betaGate(env, { email: claims.email }, "core")) return { ok: false, enforced: true, status: 403, reason: "beta-closed" };
   return { ok: true, enforced: true, email: claims.email, authTime: claims.authTime, tombstone };
 }
 __name(authorizeSaveAccess, "authorizeSaveAccess");
@@ -2086,52 +2147,6 @@ async function onRequest({ request, env }) {
 }
 __name(onRequest, "onRequest");
 
-// api/_killSwitch.js
-var LIGADO = /^(1|true|yes|on|sim)$/i;
-function flagOn(value) {
-  return typeof value === "string" ? LIGADO.test(value.trim()) : value === true || value === 1;
-}
-__name(flagOn, "flagOn");
-var isBillingDisabled = /* @__PURE__ */ __name((env) => flagOn(env?.BILLING_DISABLED), "isBillingDisabled");
-var isChatDisabled = /* @__PURE__ */ __name((env) => flagOn(env?.CHAT_DISABLED), "isChatDisabled");
-var BILLING_DISABLED_MESSAGE = {
-  pt: "A lojinha est\xE1 fechada por um tempinho enquanto ajeitamos umas coisas. Nada foi cobrado \u2014 tente de novo mais tarde.",
-  en: "The shop is closed for a little while as we tidy things up. Nothing was charged \u2014 please try again later."
-};
-var CHAT_DISABLED_MESSAGE = {
-  pt: "Estou descansando a cabe\xE7a por um tempinho \u2014 sigo por aqui com as respostas simples.",
-  en: "I'm resting my head for a little while \u2014 I'm still here with simple replies."
-};
-
-// api/_betaAccess.js
-var normalizeEmail2 = /* @__PURE__ */ __name((email) => String(email ?? "").trim().toLowerCase(), "normalizeEmail");
-function parseBetaEmails(raw) {
-  return [...new Set(String(raw ?? "").split(/[,;\s]+/).map(normalizeEmail2).filter((e) => e.includes("@")))];
-}
-__name(parseBetaEmails, "parseBetaEmails");
-var isBetaClosed = /* @__PURE__ */ __name((env) => flagOn(env?.BETA_CLOSED), "isBetaClosed");
-function betaRuleApplies(env, tipo) {
-  if (isBetaClosed(env)) return true;
-  return tipo === "ai" && parseBetaEmails(env?.BETA_EMAILS).length > 0;
-}
-__name(betaRuleApplies, "betaRuleApplies");
-function betaAllows(env, email) {
-  const e = normalizeEmail2(email);
-  if (!e) return false;
-  return parseBetaEmails(env?.BETA_EMAILS).includes(e);
-}
-__name(betaAllows, "betaAllows");
-function betaGate(env, auth, tipo) {
-  if (!betaRuleApplies(env, tipo)) return null;
-  if (betaAllows(env, auth?.email)) return null;
-  return { status: 403, reason: "beta-closed" };
-}
-__name(betaGate, "betaGate");
-var BETA_CLOSED_MESSAGE = {
-  pt: "O Soulmon est\xE1 em teste fechado e esta conta ainda n\xE3o est\xE1 na lista. Se voc\xEA recebeu um convite, entre com o mesmo e-mail do convite.",
-  en: "Soulmon is in a closed test and this account is not on the list yet. If you got an invite, sign in with the same e-mail it was sent to."
-};
-
 // api/_billing.js
 var SUBSCRIPTION_SKU = "soulmon_cosmetic_quarterly";
 var PRODUCTS = {
@@ -2223,7 +2238,7 @@ async function verifyPlayPurchase(env, { productId, purchaseToken, saveId }) {
     }
     purchase = await res.json();
   } catch (err) {
-    console.error("billing verify error (play):", err);
+    console.error("billing verify error (play):", String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (purchase.purchaseState !== 0) {
@@ -2261,7 +2276,7 @@ async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
     if (purchase.purchaseState === 0) return false;
     return null;
   } catch (err) {
-    console.error("refund check error (play):", err);
+    console.error("refund check error (play):", String(err?.message ?? err).slice(0, 120));
     return null;
   }
 }
@@ -2423,7 +2438,7 @@ async function verifySteamOwnership(env, { ticket }) {
   try {
     auth = await authenticateSteamTicket(cfg, ticket);
   } catch (err) {
-    console.error("billing verify error (steam ticket):", err);
+    console.error("billing verify error (steam ticket):", String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!auth.ok) return auth;
@@ -2436,7 +2451,7 @@ async function verifySteamOwnership(env, { ticket }) {
     const data = await res.json().catch(() => null);
     owns = data?.appownership?.ownsapp === true;
   } catch (err) {
-    console.error("billing verify error (steam ownership):", err);
+    console.error("billing verify error (steam ownership):", String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!owns) return { ok: false, reason: "not-purchased" };
@@ -2458,7 +2473,7 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
   try {
     auth = await authenticateSteamTicket(cfg, ticket);
   } catch (err) {
-    console.error("billing verify error (steam ticket):", err);
+    console.error("billing verify error (steam ticket):", String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!auth.ok) return { ok: false, reason: auth.reason };
@@ -2470,7 +2485,7 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
     const data = await res.json().catch(() => null);
     params = data?.response?.params;
   } catch (err) {
-    console.error("billing verify error (steam txn):", err);
+    console.error("billing verify error (steam txn):", String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!params) return { ok: false, reason: "invalid-purchase" };
@@ -2503,7 +2518,7 @@ async function isSteamOwnershipVoided(env, { orderId }) {
     if (owns === false) return true;
     return null;
   } catch (err) {
-    console.error("refund check error (steam ownership):", err);
+    console.error("refund check error (steam ownership):", String(err?.message ?? err).slice(0, 120));
     return null;
   }
 }
@@ -2522,7 +2537,7 @@ async function isSteamPurchaseVoided(env, { orderId }) {
     if (status === "Succeeded") return false;
     return ["Refunded", "PartialRefund", "Chargeback", "Failed"].includes(status);
   } catch (err) {
-    console.error("refund check error (steam):", err);
+    console.error("refund check error (steam):", String(err?.message ?? err).slice(0, 120));
     return null;
   }
 }
@@ -2569,7 +2584,7 @@ async function onRequestPost({ request, env }) {
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json2({ error: "Invalid save ID" }, 400);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json2({ error: auth.reason }, authStatus(auth));
+  if (!auth.ok) return json2(auth.reason === "beta-closed" ? { ok: false, error: auth.reason, reason: auth.reason, message: BETA_CLOSED_MESSAGE } : { error: auth.reason }, authStatus(auth));
   if (betaGate(env, auth, "core")) return json2({ ok: false, reason: "beta-closed", message: BETA_CLOSED_MESSAGE }, 403);
   if (provider === "play" && PRODUCTS[body?.productId]?.kind === "subscription") {
     return handleSubscription(env, saveId, body);
@@ -2673,12 +2688,12 @@ var ADMIN_SPRITE_MONTHLY_CAP = 40;
 var ADMIN_CREDITS_DISPLAY = 999999;
 function parseAdminEmails(raw) {
   if (typeof raw !== "string") return /* @__PURE__ */ new Set();
-  return new Set(raw.split(/[\s,;]+/).map(normalizeEmail).filter((e) => e.includes("@")));
+  return new Set(raw.split(/[\s,;]+/).map(normalizeEmail2).filter((e) => e.includes("@")));
 }
 __name(parseAdminEmails, "parseAdminEmails");
 function isAdminEmail(env, email) {
   if (typeof email !== "string" || !email) return false;
-  return parseAdminEmails(env?.ADMIN_EMAILS).has(normalizeEmail(email));
+  return parseAdminEmails(env?.ADMIN_EMAILS).has(normalizeEmail2(email));
 }
 __name(isAdminEmail, "isAdminEmail");
 async function verifiedAdmin(env, request, saveId) {
@@ -2919,6 +2934,7 @@ var AI_LIMITS = {
   suggest: { perAccount: 30, global: 3e3 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
   //
+  // HISTÓRICO (o valor vigente é 15, ver a nota da release/beta-1 abaixo).
   // 26 vitalício: o 20 anterior foi calibrado contra "14 gerações por save", que
   // é a árvore ERRADA. `ultra` exige as TRÊS megas (`dailyReset.ts:86-88`), então
   // o caminho completo percorre as 11 formas distintas que existem
@@ -5727,29 +5743,29 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
 }
 __name(vistaDaGuilda, "vistaDaGuilda");
 async function handleGuild({ request, env }) {
-  const json10 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
-  if (!kv(env)) return json10({ error: "Storage not bound" }, 500);
+  const json11 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
+  if (!kv(env)) return json11({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const pedida = url.searchParams.get("action") ?? "";
   const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
   const action = alias ? COOP_ALIASES[pedida] : pedida;
   const method = request.method;
-  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json10({ error: "unknown action" }, 400);
+  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json11({ error: "unknown action" }, 400);
   const body = method === "POST" ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get("id");
   const chave = alias ? "group" : "guild";
-  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json10({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
-  const vista = /* @__PURE__ */ __name((v) => json10({ [chave]: v }), "vista");
+  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json11({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
+  const vista = /* @__PURE__ */ __name((v) => json11({ [chave]: v }), "vista");
   const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
     const cartoes = await lerCartoes(env, g);
     const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
     return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
   }, "montar");
   const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
-  if (!VALID_ID3.test(id || "")) return json10({ error: "invalid id" }, 400);
+  if (!VALID_ID3.test(id || "")) return json11({ error: "invalid id" }, 400);
   const auth = await authorizeSaveAccess(request, env, id);
   if (!auth.ok) {
-    return json10(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+    return json11(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }
   const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
   if (!dia.ok) return erro("invalid day", 400);
@@ -5866,13 +5882,13 @@ async function handleGuild({ request, env }) {
   if (action === "guildWar") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
-    return json10({ war: await estadoDaGuerra(env, g.id) });
+    return json11({ war: await estadoDaGuerra(env, g.id) });
   }
   if (action === "guildWarSeek") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
     const r = await buscarGuerra(env, g, id, hoje, (gid) => lerGrupo(env, gid));
-    return json10({ state: r.state, war: { waiting: r.waiting, last: r.last } });
+    return json11({ state: r.state, war: { waiting: r.waiting, last: r.last } });
   }
   if (action === "guildDonate") {
     const g = await grupoDe(env, id, semana);
@@ -5881,7 +5897,7 @@ async function handleGuild({ request, env }) {
     if (r.invalid) return erro("invalid bits", 400);
     if (r.accepted === 0) return erro("daily limit", 429);
     await cartao(g);
-    return json10({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+    return json11({ accepted: r.accepted, guild: await montar(g, id, hoje) });
   }
   if (action === "guildSlot") {
     const g = await grupoDe(env, id, semana);
@@ -5911,7 +5927,7 @@ async function handleGuild({ request, env }) {
     await marcarParticipacao(env, g.id, id, semana, hoje);
     await somarPontos(env, g.id, id, "missao", pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
-    return json10({ landed: true, [chave]: await montar(g, id, hoje) });
+    return json11({ landed: true, [chave]: await montar(g, id, hoje) });
   }
   if (action === "guildRewards" || action === "guildClaim") {
     const g = await grupoDe(env, id, semana);
@@ -5948,7 +5964,7 @@ async function handleGuild({ request, env }) {
           if (liberados.some((s) => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
         }
       }
-      return json10({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+      return json11({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
     }
     const w = String(body.week ?? "");
     if (!candidatas.includes(w)) return erro("invalid week", 400);
@@ -5976,11 +5992,11 @@ async function handleGuild({ request, env }) {
       trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
     }
     if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
-    return json10({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
+    return json11({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
   }
   if (action === "guildLeave") {
     await coopLeave(env, id);
-    return json10({ ok: true });
+    return json11({ ok: true });
   }
   if (action === "guildRename" || action === "guildNewCode") {
     const g = await grupoDe(env, id, semana);
@@ -6003,7 +6019,7 @@ async function handleGuild({ request, env }) {
     }
     return vista(await montar(rolarSemana(fresco, semana), id, hoje));
   }
-  return json10({ error: "unknown action" }, 400);
+  return json11({ error: "unknown action" }, 400);
 }
 __name(handleGuild, "handleGuild");
 
@@ -7493,10 +7509,14 @@ async function onRequestDelete({ request, env }) {
 }
 __name(onRequestDelete, "onRequestDelete");
 async function saveIdAutorizado(request, env, saveId) {
-  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) return { saveId: null };
+  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) {
+    return isBetaClosed(env) ? { saveId: null, status: 403, reason: "beta-closed" } : { saveId: null };
+  }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (auth.ok) return { saveId };
-  if (auth.reason === "account-deleted") return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  if (auth.reason === "account-deleted" || auth.reason === "beta-closed" || isBetaClosed(env)) {
+    return { saveId: null, status: auth.reason === "account-deleted" ? authStatus(auth) : 403, reason: auth.reason === "account-deleted" ? auth.reason : "beta-closed" };
+  }
   console.warn("[fcm-subscribe] saveId sem prova de posse, inscri\xE7\xE3o gravada sem conta", { reason: auth.reason });
   return { saveId: null };
 }
@@ -8272,7 +8292,8 @@ async function onRequest6({ request, env }) {
     if (auth.reason === "account-deleted") {
       console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
     }
-    return Response.json(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, { status: authStatus(auth), headers: CORS11 });
+    const corpo = auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : auth.reason === "beta-closed" ? { error: auth.reason, message: BETA_CLOSED_MESSAGE } : { error: auth.reason };
+    return Response.json(corpo, { status: authStatus(auth), headers: CORS11 });
   }
   const tombstone = auth.tombstone ?? await gateTombstone(env, saveId, auth.authTime);
   if (tombstone.deleted) {
@@ -8380,6 +8401,36 @@ async function onRequest6({ request, env }) {
 }
 __name(onRequest6, "onRequest");
 
+// api/sprite-admin.js
+var json8 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
+async function onRequestPost7({ request, env }) {
+  if (!env?.METRICS_ADMIN_KEY) return json8({ error: "Not found" }, 404);
+  const gate = takeToken("sprite-admin", clientKey(request), { limit: 20, windowMs: 6e4 });
+  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json8({ error: "Unauthorized" }, 401);
+  if (new URL(request.url).searchParams.get("action") !== "release-form") return json8({ error: "Unknown action" }, 400);
+  const body = await request.json().catch(() => null);
+  const id = body?.id;
+  const formId = body?.formId;
+  if (typeof id !== "string" || !VALID_ID.test(id)) return json8({ error: "invalid-save-id" }, 400);
+  if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) return json8({ error: "invalid-form-id" }, 400);
+  if (!kv(env)) return json8({ error: "Unavailable" }, 503);
+  const store = kvOrThrow(env);
+  const antigo = legacyFormIdOf(formId);
+  await store.delete(`sprite:img:${id}:${formId}`);
+  if (antigo) await store.delete(`sprite:img:${id}:${antigo}`);
+  const ent = await readEntitlement(env, id);
+  const forms = { ...ent.aiForms || {} };
+  const antes = (Number(forms[formId]) || 0) + (antigo ? Number(forms[antigo]) || 0 : 0);
+  if (antigo) delete forms[antigo];
+  forms[formId] = Math.max(0, antes - 1);
+  ent.aiForms = forms;
+  await writeEntitlement(env, id, ent);
+  console.log(JSON.stringify({ event: "sprite.admin.release-form", saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
+  return json8({ ok: true, formId, antes, depois: forms[formId] });
+}
+__name(onRequestPost7, "onRequestPost");
+
 // api/sprite-image.js
 var IMMUTABLE = "public, max-age=31536000, immutable";
 var TOKEN = /^[0-9a-f]{32}$/;
@@ -8467,7 +8518,7 @@ async function onRequestOptions12() {
   return new Response(null, { status: 204, headers: CORS12 });
 }
 __name(onRequestOptions12, "onRequestOptions");
-async function onRequestPost7({ request, env }) {
+async function onRequestPost8({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
   let body;
@@ -8550,7 +8601,7 @@ async function onRequestPost7({ request, env }) {
     headers: { "Content-Type": "application/json", ...CORS12 }
   });
 }
-__name(onRequestPost7, "onRequestPost");
+__name(onRequestPost8, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
@@ -8580,10 +8631,14 @@ async function onRequestDelete2({ request, env }) {
 }
 __name(onRequestDelete2, "onRequestDelete");
 async function saveIdAutorizado2(request, env, saveId) {
-  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) return { saveId: null };
+  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) {
+    return isBetaClosed(env) ? { saveId: null, status: 403, reason: "beta-closed" } : { saveId: null };
+  }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (auth.ok) return { saveId };
-  if (auth.reason === "account-deleted") return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  if (auth.reason === "account-deleted" || auth.reason === "beta-closed" || isBetaClosed(env)) {
+    return { saveId: null, status: auth.reason === "account-deleted" ? authStatus(auth) : 403, reason: auth.reason === "account-deleted" ? auth.reason : "beta-closed" };
+  }
   console.warn("[subscribe] saveId sem prova de posse, inscri\xE7\xE3o gravada sem conta", { reason: auth.reason });
   return { saveId: null };
 }
@@ -8609,7 +8664,7 @@ async function onRequestOptions13() {
   return new Response(null, { headers: CORS13 });
 }
 __name(onRequestOptions13, "onRequestOptions");
-async function onRequestPost8({ request, env }) {
+async function onRequestPost9({ request, env }) {
   try {
     const body = await request.json();
     const goalMin = minimizeForAi((body.goalText || "").toString().trim(), 300);
@@ -8682,26 +8737,26 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     return Response.json({ error: "Internal error" }, { status: 500, headers: CORS13 });
   }
 }
-__name(onRequestPost8, "onRequestPost");
+__name(onRequestPost9, "onRequestPost");
 
 // api/top-ai.js
 var BUCKETS = ["chat", "sprite", "transcribe", "suggest"];
 var TOP_N = 20;
 var DAY_RE2 = /^\d{4}-\d{2}-\d{2}$/;
-var json8 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
+var json9 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
 function ranking(bucket, entradas, limites = AI_LIMITS) {
   const teto = limites[bucket]?.perAccountByTier?.paid ?? limites[bucket]?.perAccount ?? 0;
   return entradas.filter((e) => e.saveId && !e.saveId.startsWith("@")).map((e) => ({ bucket, saveIdPrefix: e.saveId.slice(0, 8), n: e.n, acima80: teto > 0 && e.n >= teto * 0.8 })).sort((a, b) => b.n - a.n).slice(0, TOP_N);
 }
 __name(ranking, "ranking");
 async function onRequestGet6({ request, env }) {
-  if (!env?.METRICS_ADMIN_KEY) return json8({ error: "Not found" }, 404);
+  if (!env?.METRICS_ADMIN_KEY) return json9({ error: "Not found" }, 404);
   const gate = takeToken("top-ai", clientKey(request), { limit: 30, windowMs: 6e4 });
   if (!gate.ok) return tooManyRequests(gate.retryAfter);
-  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json8({ error: "Unauthorized" }, 401);
+  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json9({ error: "Unauthorized" }, 401);
   const day2 = new URL(request.url).searchParams.get("day") ?? serverDay();
-  if (!DAY_RE2.test(day2)) return json8({ error: "Invalid day" }, 400);
-  if (!kv(env)) return json8({ error: "Unavailable" }, 503);
+  if (!DAY_RE2.test(day2)) return json9({ error: "Invalid day" }, 400);
+  if (!kv(env)) return json9({ error: "Unavailable" }, 503);
   const store = kvOrThrow(env);
   const out = {};
   for (const bucket of BUCKETS) {
@@ -8714,7 +8769,7 @@ async function onRequestGet6({ request, env }) {
     }
     out[bucket] = ranking(bucket, entradas);
   }
-  return json8({ ok: true, day: day2, top: out });
+  return json9({ ok: true, day: day2, top: out });
 }
 __name(onRequestGet6, "onRequestGet");
 
@@ -8724,7 +8779,7 @@ var CORS14 = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-var json9 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS14 }), "json");
+var json10 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS14 }), "json");
 var LIMITE = { limit: 6, windowMs: 6e4 };
 var MAX_BYTES = 4 * 1024 * 1024;
 var TIPOS = /^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a)(;.*)?$/i;
@@ -8733,7 +8788,7 @@ async function onRequestOptions14() {
   return new Response(null, { headers: CORS14 });
 }
 __name(onRequestOptions14, "onRequestOptions");
-async function onRequestPost9({ request, env }) {
+async function onRequestPost10({ request, env }) {
   const gate = takeToken("transcribe", clientKey(request), LIMITE);
   if (!gate.ok) {
     console.warn("[transcribe] rate limited", { retryAfter: gate.retryAfter });
@@ -8742,40 +8797,40 @@ async function onRequestPost9({ request, env }) {
   const projectId = env.SUPABASE_PROJECT_ID;
   const anonKey = env.SUPABASE_ANON_KEY;
   if (!projectId || !anonKey) {
-    return json9({ error: "transcribe-not-configured" }, 503);
+    return json10({ error: "transcribe-not-configured" }, 503);
   }
   if (!/^[a-z0-9]{16,40}$/.test(projectId)) {
     console.error("[transcribe] SUPABASE_PROJECT_ID fora do formato esperado");
-    return json9({ error: "transcribe-not-configured" }, 503);
+    return json10({ error: "transcribe-not-configured" }, 503);
   }
-  if (!env.FIREBASE_PROJECT_ID) return json9({ error: "auth-unavailable" }, 503);
+  if (!env.FIREBASE_PROJECT_ID) return json10({ error: "auth-unavailable" }, 503);
   let claims = null;
   try {
     claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
   } catch {
-    return json9({ error: "auth-unavailable" }, 503);
+    return json10({ error: "auth-unavailable" }, 503);
   }
-  if (!claims) return json9({ error: "unauthenticated" }, 401);
+  if (!claims) return json10({ error: "unauthenticated" }, 401);
   let form;
   try {
     form = await request.formData();
   } catch {
-    return json9({ error: "invalid-form" }, 400);
+    return json10({ error: "invalid-form" }, 400);
   }
   const audio = form.get("audio");
   if (!audio || typeof audio === "string") {
-    return json9({ error: "missing-audio" }, 400);
+    return json10({ error: "missing-audio" }, 400);
   }
-  if (audio.size === 0) return json9({ error: "empty-audio" }, 400);
-  if (audio.size > MAX_BYTES) return json9({ error: "audio-too-large" }, 413);
-  if (!TIPOS.test(audio.type || "")) return json9({ error: "unsupported-audio-type" }, 415);
+  if (audio.size === 0) return json10({ error: "empty-audio" }, 400);
+  if (audio.size > MAX_BYTES) return json10({ error: "audio-too-large" }, 413);
+  if (!TIPOS.test(audio.type || "")) return json10({ error: "unsupported-audio-type" }, 415);
   const bruto = String(form.get("language") ?? "").slice(0, 5).split("-")[0].toLowerCase();
   const language = IDIOMAS.has(bruto) ? bruto : "en";
   const saveId = await emailToSaveId(claims.email);
   const rajada = perMinuteGate("transcribe", saveId);
-  if (rajada) return json9({ error: rajada.reason, message: rajada.message }, 429);
+  if (rajada) return json10({ error: rajada.reason, message: rajada.message }, 429);
   const cota = await guardAiRequest(request, env, "transcribe", saveId, 1, null, { ok: true, email: claims.email });
-  if (!cota.ok) return json9({ error: cota.reason, ...cota.message ? { message: cota.message } : {} }, cota.status);
+  if (!cota.ok) return json10({ error: cota.reason, ...cota.message ? { message: cota.message } : {} }, cota.status);
   const repasse = new FormData();
   repasse.append("audio", audio, "recording.webm");
   repasse.append("language", language);
@@ -8795,22 +8850,22 @@ async function onRequestPost9({ request, env }) {
   } catch (err) {
     console.error("[transcribe] falha ao falar com o provedor:", err?.name);
     await cota.release("provedor de transcri\xE7\xE3o indispon\xEDvel");
-    return json9({ error: "transcribe-unavailable" }, 502);
+    return json10({ error: "transcribe-unavailable" }, 502);
   }
   if (!upstream.ok) {
     console.error("[transcribe] provedor respondeu", upstream.status);
     await cota.release(`provedor respondeu ${upstream.status}`);
-    return json9({ error: "transcribe-failed" }, 502);
+    return json10({ error: "transcribe-failed" }, 502);
   }
   let dados;
   try {
     dados = await upstream.json();
   } catch {
-    return json9({ error: "transcribe-failed" }, 502);
+    return json10({ error: "transcribe-failed" }, 502);
   }
-  return json9({ text: String(dados?.text ?? "").slice(0, 2e3) });
+  return json10({ text: String(dados?.text ?? "").slice(0, 2e3) });
 }
-__name(onRequestPost9, "onRequestPost");
+__name(onRequestPost10, "onRequestPost");
 
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.hexervoodoom.soulmon";
@@ -8834,7 +8889,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-beRzka/functionsRoutes-0.26615927047046006.mjs
+// ../.wrangler/tmp/pages-5iihtL/functionsRoutes-0.6413566499455149.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -8991,6 +9046,13 @@ var routes = [
     modules: [onRequestOptions11]
   },
   {
+    routePath: "/api/sprite-admin",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost7]
+  },
+  {
     routePath: "/api/sprite-image",
     mountPath: "/api",
     method: "GET",
@@ -9016,7 +9078,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost7]
+    modules: [onRequestPost8]
   },
   {
     routePath: "/api/suggest-tasks",
@@ -9030,7 +9092,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost8]
+    modules: [onRequestPost9]
   },
   {
     routePath: "/api/top-ai",
@@ -9051,7 +9113,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost9]
+    modules: [onRequestPost10]
   },
   {
     routePath: "/.well-known/assetlinks.json",

@@ -149,7 +149,14 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // analisar:entrada` (ver docs/manual/12-COMO-MANTER.md §4).
   // PAGO em 11/10/2026 (PR #294, sobre a main de 650_631): 650_631 → 616_035 (−34,6 KB) com os 3 cortes acima (a
   // medida do PR sozinho, sobre a main antiga, foi 632_532 → 599_676). Medido com `vite build` limpo da árvore mesclada.
-  'index.js': 616_035,
+  // 11/10/2026 (release/beta-1, PR #315): 616_035 → 639_560 (+23,5 KB; a `main` de origem já estava em 620_345).
+  // Os 5 PRs do beta + controles: o cliente do chat agente que o `App` usa na hora (`chatActions` para criar
+  // hábito/tarefa confirmados, `chatBehavior` — 5,3 KB), a assinatura cosmética (`subscription`, `subscriptionShop`,
+  // `priceLabel`), o `crashReport` instalado antes do render (tem que estar na entrada para pegar o crash de boot),
+  // a pose do sprite, o kill-switch de compra (`useStoreOpen`) e o portão do beta fechado (`betaClosed`;
+  // a TELA já é `lazy`). Medido com `npm run analisar:entrada` em build limpo. Crescimento JUSTIFICADO, não
+  // perdoado — candidatos a pagar: `chatActions`/`chatBehavior` atrás de `import()` no `handleChatCreate`.
+  'index.js': 639_560,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
