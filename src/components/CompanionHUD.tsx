@@ -1392,8 +1392,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 /* O botão "Evoluir" mora em `top: 10` no centro do palco: com o
                    balão a -78px do meio os dois se sobrepunham e o 🤗 ficava
                    ESCONDIDO atrás do botão (visto no screenshot da rodada 3).
-                   Quando o botão está na tela, o balão desce. */
-                style={{ left: `${position}%`, top: canEvolve && !isSleeping ? 'calc(50% - 46px)' : 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
+                   11/10/2026 (dono): a -78px o balão do BANHO ficava ~35px acima do topo
+                   visível do palco (250px, `overflow: hidden`) e só aparecia um pedaço
+                   cortado. A -46px ele cabe dentro do palco, logo acima da cabeça do pet,
+                   COM ou SEM o botão "Evoluir" — o mesmo valor serve aos dois casos. */
+                style={{ left: `${position}%`, top: 'calc(50% - 46px)', transform: 'translateX(-50%)' }}
               >
                 <div className="relative bg-white rounded-full px-2 py-0.5 shadow text-lg leading-none">
                   <img src={balloonKind === 'bath' ? UI_ICON_ART.banho : FX_ART['🤗']} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle' }} />
@@ -1514,7 +1517,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     position: 'absolute',
                     left: `calc(50% + ${Math.round(PET_RENDER * 0.22)}px)`,
-                    bottom: PET_GROUND_KEEP + PET_LIFT + Math.round(PET_RENDER * 0.28), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão
+                    bottom: Math.round(PET_RENDER * 0.3), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão. 11/10/2026 (dono): `bottom` é relativo à caixa do sprite (cujo fundo JÁ é o pé do pet) — somar `PET_GROUND_KEEP + PET_LIFT` jogava a mochila ~100px para CIMA do pet, flutuando junto à janela do cenário.
                     lineHeight: 0,
                     pointerEvents: 'none',
                     zIndex: 1,

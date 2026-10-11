@@ -130,7 +130,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
           {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
               vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
           <InfoTipSection title={isPt ? 'Pode cair' : 'Possible drops'} last>
-            <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18 }}>
+            <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
               <DropItem
                 label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
                 value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
