@@ -16,12 +16,17 @@
   import { migrateLegacyStorageKeys } from './utils/storageKeys';
   import { armarTemaNoPrimeiroGesto } from './utils/tema';
   import { iniciarMusica } from './utils/musica';
+  import { installGlobalCrashHandlers } from './utils/crashReport';
 
   // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
   // inicializador do próprio estado, então uma migração que rodasse depois
   // chegaria tarde. Copia as chaves `digiapp-*` para os nomes novos, uma vez,
   // sem apagar nada — ver o cabeçalho de `migrateLegacyStorageKeys`.
   migrateLegacyStorageKeys();
+
+  // Diagnóstico de falhas (error + unhandledrejection) para /api/crash: leve, sem
+  // SDK de terceiro, sem conteúdo do usuário. Antes do render, para pegar o crash de boot.
+  installGlobalCrashHandlers();
 
   // A música-TEMA (S17, 07/10/2026): só instala ouvintes de gesto. Nada toca nem
   // é baixado até o primeiro toque/clique/tecla da sessão — D11, sem autoplay cego.

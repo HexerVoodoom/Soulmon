@@ -119,7 +119,7 @@ surpreendido pela ficha da loja:
 |---|---|---|
 | `INTERNET` | Save na nuvem, login, chat | Não (normal) |
 | `POST_NOTIFICATIONS` | Lembretes | Sim — diálogo do sistema |
-| `SCHEDULE_EXACT_ALARM` | Lembrete na hora certa | Sim |
+| ~~`SCHEDULE_EXACT_ALARM`~~ | **Removida** (beta-play-01): lembrete usa alarme inexato (`setAndAllowWhileIdle`), tolera alguns minutos de janela e não precisa de permissão restrita | — |
 | `RECEIVE_BOOT_COMPLETED` | Reagendar lembretes após reiniciar | Não (normal) |
 | **`ACTIVITY_RECOGNITION`** | **Contador de passos** — ver 2.6 | **Sim, e exige declaração** |
 | **`RECORD_AUDIO`** | **Recado falado no chat** — ver 2.4 | **Sim, e exige declaração** |
@@ -186,7 +186,7 @@ lado certo para errar.
 |---|---|---|
 | Localização aproximada ou precisa | ❌ Não | Nenhuma permissão de localização. `ACTIVITY_RECOGNITION` **não** é localização: ela dá acesso ao contador de passos, não a onde você esteve |
 | **IDs do dispositivo ou outros IDs** | ✅ **Sim** | **Token do FCM** (app Android, `functions/api/fcm-subscribe.js`, chaves `fcm:*`) e **endpoint do Web Push** (PWA/navegador, `functions/api/subscribe.js`, chaves `push:*`). Finalidade: **funcionalidades do app** (entregar lembretes). **Opcional** — só existe com as notificações ligadas e é apagado ao desligá-las ou ao excluir a conta. O registro carrega o **`saveId` (identificador da conta = hash do e-mail)** — **não o e-mail** — justamente para a exclusão de conta conseguir achá-lo e apagá-lo (`functions/api/account.js` › `deletePushSubscriptions`). Não compartilhado (o FCM é o transporte, não um destinatário). O identificador das métricas continua **fora** desta linha: é gerado no aparelho, aleatório, e o servidor o descarta antes de gravar (`functions/api/metrics.js`) |
-| Registros de erro / diagnóstico | ❌ Não | Não há Crashlytics, Sentry ou similar |
+| **Registros de falhas / diagnóstico** | ✅ **Sim (desde `beta-play-01`)** | **Diagnóstico de falhas — NÃO vinculado ao usuário, NÃO compartilhado.** Quando o app trava (`ErrorBoundary`, `window.onerror`, `unhandledrejection`) manda UM relatório mínimo a `/api/crash` (nosso próprio Worker, **sem SDK de terceiro**): tipo, mensagem técnica do erro (≤200 caracteres, com e-mail/URL/token/ids removidos), stack (≤800), versão do app, caminho da tela (sem query nem ids) e `apk`/`web`. **Nunca**: conteúdo do usuário, `saveId`, e-mail, IP, user agent. Gravado agrupado por assinatura (contador, sem registro por pessoa) com **TTL de 14 dias** (apaga sozinho). Finalidade: **análise / estabilidade do app**. Segue o mesmo opt-out das estatísticas (`isTelemetryEnabled`). Na ficha: *Registros de falhas* e *Diagnóstico* = coletado; vinculado = não; compartilhado = não; criptografado em trânsito = sim; exclusão: some em 14 dias. Código: `src/utils/crashReport.ts`, `functions/api/crash.js`; leitura do dono: `node scripts/crash-report.mjs` |
 
 > **Por que "sim" (decisão do dono, 21/09/2026 — pergunta #21 do QA geral).**
 > Até essa data este documento dizia "não" e argumentava que o token do FCM
