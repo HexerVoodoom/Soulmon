@@ -63,6 +63,7 @@ import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { isDemoMode, demoRefusalText } from './utils/demoMode';
+import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo } from './utils/demoStart';
 import type { StarterId } from './utils/sprites';
 import {
@@ -1253,6 +1254,7 @@ export default function App() {
   // Web: o navegador exige gesto (`click` ativa; `pointerdown` de toque não), então o pedido vai no PRIMEIRO TOQUE.
   useEffect(() => {
     if (showIntro) return;
+    if (isEmbedMode()) return; // /embed: iframe de outra origem, o pedido seria negado em silêncio
     if (readFlag(STORAGE_KEYS.NOTIFICATION_FIRST_OPEN_ASKED)) return;
     let cancelled = false;
     const platform = platformForPermission();

@@ -89,6 +89,11 @@ self.addEventListener('fetch', (event) => {
   // served stale offline and overwrite fresher local state.
   if (url.pathname.startsWith('/api/')) return;
 
+  // /embed (utils/embedMode.ts): a página é servida com cabeçalhos PRÓPRIOS (frame-ancestors
+  // liberado só para o portfólio). Nunca passa pelo SW: um index.html vindo do cache ou
+  // gravado de outra rota carregaria X-Frame-Options: DENY e o iframe ficaria em branco.
+  if (request.mode === 'navigate' && url.pathname === '/embed') return;
+
   // Navigation: network-first with offline fallback
   if (request.mode === 'navigate') {
     event.respondWith(
