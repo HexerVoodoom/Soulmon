@@ -140,7 +140,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // REGISTRADO: a sessão `claude/velocidade-dev` tem a meta de baixar este número com lazy/manualChunks.
   'index.js': 637_910,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
-  'index.css': 164_043,          // 150 KB — 1,5× o teto
+  // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
+  // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
+  'index.css': 172_242,
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
 };
