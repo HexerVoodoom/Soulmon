@@ -174,7 +174,9 @@ const corvoAdocao = () => import('./utils/corvoAdocao');
 import { createEntitlementSync } from './utils/entitlementSync';
 import { subscribeAuthState } from './utils/auth';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
-import { purchase } from './utils/playBilling';
+import { purchase, reconcileSubscription } from './utils/playBilling';
+import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
+import { applySubscriptionClaim } from './utils/subscriptionShop';
 
 /* ⚰️ `EVOLVE_SEGMENTS` (7/9/11/14/999) saiu em 06/09/2026, junto com
    `digivolutionSegments`/`digivolutionSegmentsNeeded` do `GameState`.
@@ -1496,6 +1498,8 @@ export default function App() {
         // Admin/GM: SÓ da resposta do servidor, só em memória (`utils/adminFlag.ts`).
         // Falha de rede / sem saveId = não-admin.
         setAdminFlag(adminFromEntitlement(ent));
+        // Vitrine da assinatura (D10): vem do servidor, fica numa store fora do save e só a vitrine lê.
+        setSubscriptionFromEntitlement(ent);
         if (!ent) return;
         setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
           ? prev
@@ -3824,6 +3828,27 @@ export default function App() {
     toast(language === 'pt-BR' ? `+${pack.bits} Bits!` : `+${pack.bits} Bits!`);
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
+
+  // Assinatura cosmética (D10): a vigência fica numa store fora do GameState e SÓ abre a vitrine do trimestre.
+  const subscription = useSubscriptionStatus();
+  useEffect(() => {
+    // Reabertura do app / reinstalação / aviso perdido: reconcilia com a Play e o servidor (silencioso).
+    if (!saveId) return;
+    let off = false;
+    reconcileSubscription(SUBSCRIPTION_SKU).then(ent => { if (!off) setSubscriptionFromEntitlement(ent); });
+    return () => { off = true; };
+  }, [saveId]);
+
+  /** Resgate (de graça) de um item do trimestre. Nunca gasta moeda; posse permanente depois (utils/subscriptionShop.ts). */
+  const handleClaimSubscription = useCallback((itemId: string): boolean => {
+    const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return false;
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    if (!isShopItemUnlocked(item, missionProgress, subscription.active)) return false;
+    if (applySubscriptionClaim(gameState, item, subscription.active).refused) return false;
+    setGameState(prev => applySubscriptionClaim(prev, item, subscription.active).state);
+    return true;
+  }, [gameState, missionProgress, subscription.active, refuseDemo]);
 
   const handleShopBuy = useCallback((itemId: string): boolean => {
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
@@ -6478,8 +6503,9 @@ export default function App() {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   missionProgress,
+                  subscriptionActive: subscription.active,
                 }}
-                actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture }}
+                actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
                 points={gameState.gamePoints ?? 0}
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}

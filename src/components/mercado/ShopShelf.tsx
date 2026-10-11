@@ -190,9 +190,14 @@ export interface ShopOwnership {
   equippedDecor: Partial<Record<SlotId, string>>;
   /** Progresso por missão (utils/missions.ts) — decide o cadeado. */
   missionProgress: Record<string, number>;
+  /** A vitrine do trimestre da assinatura está aberta? (`utils/subscription.ts`.)
+   *  Só a `SubscriptionShelf` lê isto — a prateleira de Bits nunca. */
+  subscriptionActive?: boolean;
 }
 
 export interface ShopActions {
+  /** Resgata (de graça) um item do trimestre da assinatura. Quem decide é o `App.tsx`. */
+  onClaimSubscription?: (itemId: string) => boolean;
   /** A compra. Quem decide é o `handleShopBuy` do `App.tsx`; devolve false na recusa. */
   onBuy: (itemId: string) => boolean;
   onEquip: (id: string | null) => void;
@@ -262,7 +267,8 @@ export function ShopShelf({
 
   /** Missão que destrava o item + progresso, na LINHA do item. */
   const lockLine = (item: ShopItem): string => {
-    const m = MISSIONS.find(x => x.id === item.unlock?.missionId);
+    const missionId = item.unlock?.kind === 'mission' ? item.unlock.missionId : undefined;
+    const m = MISSIONS.find(x => x.id === missionId);
     if (!m) return '';
     const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
     /* WP4.12 (achado E4) — ZERO NÃO É PROGRESSO, é a ausência dele. */
