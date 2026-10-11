@@ -4427,6 +4427,26 @@ function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
 }
 __name(ganhoDePontos, "ganhoDePontos");
 
+// api/_rankedPick.js
+var RANKED_WINDOW = 6;
+var RANKED_PICKS = 3;
+function pickRankedOpponents(pool, myPoints, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
+  const me = Number.isFinite(myPoints) ? myPoints : 0;
+  const tagged = pool.map((item) => ({
+    item,
+    d: Math.abs((Number.isFinite(item.lifetime) ? item.lifetime : 0) - me),
+    tie: rng()
+  }));
+  tagged.sort((a, b) => a.d - b.d || a.tie - b.tie);
+  const near = tagged.slice(0, Math.max(n, window)).map((t) => t.item);
+  for (let i = near.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [near[i], near[j]] = [near[j], near[i]];
+  }
+  return near.slice(0, n);
+}
+__name(pickRankedOpponents, "pickRankedOpponents");
+
 // api/_avatares.js
 var AVATAR_IDS = /* @__PURE__ */ new Set(["ativo-arena-duelo", "ativo-arena-feira", "ativo-arena", "ativo-config", "ativo-conta", "ativo-cuidados", "ativo-exploracao-caderno", "ativo-exploracao-oficina", "ativo-exploracao-trilha", "ativo-exploracao", "ativo-f-arqueira", "ativo-f-barda", "ativo-f-cacadora", "ativo-f-cura", "ativo-f-feras", "ativo-f-ferreira", "ativo-f-ferreiro", "ativo-f-forja", "ativo-f-guarda", "ativo-f-lua", "ativo-f-mercenaria", "ativo-f-navegadora", "ativo-f-sacerdotisa", "ativo-f-treino", "ativo-f-venenos", "ativo-hall-amigos", "ativo-hall-guilda", "ativo-hall", "ativo-jogos-mente", "ativo-jogos-refugio", "ativo-jogos", "ativo-laboratorio-pet", "ativo-laboratorio-stats", "ativo-laboratorio", "ativo-loja-background", "ativo-loja-decoracao", "ativo-loja-itens", "ativo-mercado-conquistas", "ativo-mercado", "ativo-onboarding", "ativo-oraculo", "ativo-sono", "ativo-desafiante-espina", "ativo-desafiante-mare", "ativo-desafiante-quartzo", "agua-enguia-escriba", "agua-geleia-barqueira", "agua-koi-dragao-sabio", "agua-ostra-mercadora", "akasha-baleia-estrela-arauto", "akasha-garca-veu-guia", "akasha-geleia-fantasma-arquivista", "akasha-mariposa-escriba-de-luz", "ar-arraia-nuvem-mercadora", "ar-cegonha-morcego-meteorologista", "ar-coruja-papagaio-mensageiro", "ar-sprite-vento-espirito", "campina-abelha-apicultora", "campina-coelho-bardo", "campina-espantalho-golem-vigia", "campina-ovelha-nuvem-tecela", "cavernas-aranha-cristal-guia", "cavernas-lesma-estalactite", "cavernas-morcego-sabio-eco", "cavernas-toupeira-lapidaria", "deserto-escaravelho-caravaneiro", "deserto-fenec-esfinge-vidente", "deserto-golem-cacto-guarda", "deserto-verme-areia-mercador", "floresta-cervo-espirito-guardiao", "floresta-esquilo-correio", "floresta-javali-casca", "floresta-raposa-druida", "fogo-fenix-filhote-curandeiro", "fogo-golem-obsidiana", "fogo-raposa-brasa-mensageira", "fogo-salamandra-cozinheira", "gelo-geleia-congelada-confeiteira", "gelo-lebre-neve-arquivista", "gelo-mamute-pequeno-carregador", "gelo-raposa-gelo-cacadora", "industrial-aranha-tecela", "industrial-caranguejo-argila-pedreiro", "industrial-castor-engenheiro", "industrial-espirito-forno-vidraceiro", "luz-cervo-lanterna", "luz-geleia-pomba", "luz-leoa-solar-sacerdotisa", "luz-vagalume-coro", "oceano-cavalo-marinho-mensageiro", "oceano-nautilo-estudioso", "oceano-peixe-pescador-lampiao", "oceano-tartaruga-marinha-anciao", "pantano-crocodilo-barqueiro", "pantano-garca-lanterna", "pantano-geleia-turfa-curandeira", "pantano-sapo-erbolario", "picos-aguia-lagarto-batedora", "picos-cabra-pedra-monge", "picos-carneiro-trovao-arauto", "picos-espirito-tempestade-aprendiz", "planta-geleia-musgo-enfermeira", "planta-louva-deus-florista", "planta-planta-carnivora-cozinheira", "planta-urso-arvore-jardineiro", "sombra-corvo-morcego-negociante", "sombra-espectro-tinta-gentil", "sombra-gato-sombra-cartografo", "sombra-mariposa-arquivista", "terra-besouro-rinoceronte-guarda", "terra-golem-argila-oleiro", "terra-tartaruga-pedra-anciao", "terra-texugo-toupeira-mineiro", "extra-aranha-fiandeira-a", "extra-aranha-fiandeira-b", "extra-dragao-cogumelo", "extra-ferreira-coelho-robo-a", "extra-ferreira-coelho-robo-b", "extra-ferreira-eletrica", "extra-filhote-de-mel", "extra-lanterna-fantasma", "extra-medusa-pescadora-a", "extra-medusa-pescadora-b"]);
 function avatarIdOrNull(raw) {
@@ -4810,10 +4830,19 @@ async function handleCommunity({ request, env }) {
       if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
       pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice("profile:".length) });
     }
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
+    const meProfileRaw = me ? await kvOrThrow(env).get(`profile:${me}`) : null;
+    const myPoints = meProfileRaw ? JSON.parse(meProfileRaw).lifetimePoints ?? 0 : 0;
+    const sorted = pickRankedOpponents(
+      pool.map((e) => ({ ...e, lifetime: e.profile.lifetimePoints ?? 0 })),
+      myPoints,
+      () => {
+        const b = new Uint32Array(1);
+        crypto.getRandomValues(b);
+        return b[0] / 4294967296;
+      }
+    );
+    pool.length = 0;
+    pool.push(...sorted);
     const season = currentSeason();
     const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
@@ -5516,13 +5545,40 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   throw err;
 }
 __name(generateWithProviders, "generateWithProviders");
+var MAX_PROMPT_CHARS = 12e3;
+var MAX_REFERENCE_URLS = 4;
+var SPRITE_TOKEN2 = /^[0-9a-f]{32}$/;
+function referenciasSeguras(request, referenceImageUrls) {
+  if (!Array.isArray(referenceImageUrls)) return void 0;
+  const origem = new URL(request.url).origin;
+  const ok = [];
+  for (const raw of referenceImageUrls.slice(0, MAX_REFERENCE_URLS)) {
+    if (typeof raw !== "string" || raw.length > 512) continue;
+    let u;
+    try {
+      u = new URL(raw);
+    } catch {
+      continue;
+    }
+    if (u.protocol !== "https:" || u.origin !== origem) continue;
+    if (u.pathname !== "/api/sprite-image") continue;
+    if (!SPRITE_TOKEN2.test(u.searchParams.get("k") || "")) continue;
+    ok.push(u.toString());
+  }
+  return ok.length ? ok : void 0;
+}
+__name(referenciasSeguras, "referenciasSeguras");
 async function onRequestPost5({ request, env }) {
   let lock = null;
   try {
-    const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
+    const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = await request.json();
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "prompt required" }, { status: 400, headers: CORS9 });
     }
+    if (prompt.length > MAX_PROMPT_CHARS || promptFallback != null && (typeof promptFallback !== "string" || promptFallback.length > MAX_PROMPT_CHARS)) {
+      return Response.json({ error: "prompt too long" }, { status: 400, headers: CORS9 });
+    }
+    const referenceImageUrls = referenciasSeguras(request, refsCruas);
     const tier = await requirePaidTier(env, id);
     const tierOk = tier.ok || tier.status === 402 && (await verifiedAdmin(env, request, id)).admin;
     if (!tierOk) {
@@ -6623,7 +6679,7 @@ __name(onRequestPost7, "onRequestPost");
 var CORS14 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var json6 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS14 }), "json");
 var LIMITE = { limit: 6, windowMs: 6e4 };
@@ -6649,6 +6705,14 @@ async function onRequestPost8({ request, env }) {
     console.error("[transcribe] SUPABASE_PROJECT_ID fora do formato esperado");
     return json6({ error: "transcribe-not-configured" }, 503);
   }
+  if (!env.FIREBASE_PROJECT_ID) return json6({ error: "auth-unavailable" }, 503);
+  let claims = null;
+  try {
+    claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
+  } catch {
+    return json6({ error: "auth-unavailable" }, 503);
+  }
+  if (!claims) return json6({ error: "unauthenticated" }, 401);
   let form;
   try {
     form = await request.formData();
@@ -6720,7 +6784,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-vfbUIg/functionsRoutes-0.7587276376228622.mjs
+// ../.wrangler/tmp/pages-JmLSzD/functionsRoutes-0.4557105121264895.mjs
 var routes = [
   {
     routePath: "/api/account",
