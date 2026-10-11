@@ -49,7 +49,7 @@ describe('hábito semanal: o check é de HOJE (A)', () => {
       activities: [habito({ name: 'Drink 2 L of water', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] } })],
     });
     expect(screen.getByText('This week: 1 of 7')).toBeTruthy();
-    expect(screen.getByText('The check counts today only')).toBeTruthy();
+    expect(screen.getByText('This check is for today')).toBeTruthy();
     expect(screen.getByRole('checkbox', { name: /Mark as done today: Drink 2 L of water/ })).toBeTruthy();
   });
 
