@@ -1,5 +1,13 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Ajustes: Passeio (UI bugada), prédio do Caderno, ícones do Salão de Jogos
+>
+> - **Passeio — causa do "UI horrível":** o lote do Passeio tem `left 76% + width 56%` = 104% da cena. Abrir a folha e devolver o foco ao lote rolava o contêiner `AreaScene` (`overflow: hidden` ainda rola por foco) **16px** para a esquerda, e a folha inteira ia junto: texto colado na borda esquerda, cortado à direita, ✕ fora do lugar. Corrigido na `AreaScene` (`onScroll` zera `scrollLeft/Top`) — vale para toda área. Travado em `areaShell.render.test.tsx`.
+> - **Card da missão em uso** (`PasseioSheet` › `CardAtivo`): o título dividia a linha com o glifo da área e a legenda "Making" caía embaixo do glifo (desalinhada); o "?" boiava acima. Agora: título sozinho, legenda com glifo + área, "?" à direita. A região guardada usava o emoji 🌄 → ícone do sistema (`flag`). Testes em `PasseioSheet.render.test.tsx`. O fluxo (escolher → 30 min → Concluir → Claim na Home) foi percorrido no Playwright 390×844 e funciona; o NPC já estava sem zoom (`1dbc381`).
+> - **Caderno (Journal):** o santuário do Pântano (verde-escuro sobre clareira verde-escura) sai; entra o chalé `lote-exploracao-caderno-campina.png`, que já estava em disco — amarelo-quente, o prédio que mais contrasta com o fundo da Exploração. Bounds/lote recalculados (`areaLotGeometry`, `playAreaLots` width 40%). **Decisão do dono:** a `-campina` foi uma das artes recusadas na "reforma" de 07/10 (vinha como `Mente/Oficina/Amigos`); se não gostar, as outras candidatas estão em disco e o pedido de arte nova está em `docs/ASSETS-A-GERAR.md`.
+> - **Salão de Jogos:** Corrida com obstáculos e Pedra-papel-tesoura ganham ícone (`icons/games/icon-game-dino.png` e `icon-game-rps.png`, que estavam sem uso), pelados, ao lado do título.
+> - **Depende do dono:** confirmar a arte do Caderno (acima).
+
 > ## 11/10/2026 — Guilda de lançamento, PR1: Torneio ranqueado × Arena livre (`claude/guilda-lancamento`)
 >
 > - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).

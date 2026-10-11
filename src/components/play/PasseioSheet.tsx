@@ -57,7 +57,6 @@ const sectionHead: CSSProperties = {
 const note: CSSProperties = { ...sm2Hint, margin: 0 };
 const divider: CSSProperties = { border: 0, borderTop: '1px solid var(--sm2-line)', margin: '4px 0', width: '100%' };
 const list: CSSProperties = { listStyle: 'none', margin: 0, padding: 0 };
-const icon: CSSProperties = { fontSize: 24, lineHeight: 1, flexShrink: 0 };
 
 type Update = (f: (c: CrossingsState) => CrossingsState) => void;
 
@@ -210,16 +209,18 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <RegionPostal region={region} width={64} height={52} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
-          <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {!feito && <MissionMark kind="progress" isPt={isPt} size={20} />}
+          <p style={{ ...sm2Hint, margin: 0 }}>
             {isPt ? `Sua missão de hoje · ${nome}` : `Your mission today · ${nome}`}
           </p>
-          <p data-travessia-titulo style={{ ...sheetCardTitle, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AreaGlyph area={challenge.area} challengeId={challenge.id} />
-            <span>{titulo ?? (isPt ? challenge.textPt : challenge.textEn)}</span>
+          <p data-travessia-titulo style={sheetCardTitle}>
+            {titulo ?? (isPt ? challenge.textPt : challenge.textEn)}
           </p>
-          <p style={note}>{isPt ? area.pt : area.en}</p>
+          <p style={{ ...note, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AreaGlyph area={challenge.area} challengeId={challenge.id} size={24} />
+            {isPt ? area.pt : area.en}
+          </p>
         </div>
+        {!feito && <MissionMark kind="progress" isPt={isPt} size={24} />}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -449,7 +450,7 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
           <ul style={list}>
             {pendentes.map((r, i) => (
               <li key={r.id} data-travessia-pendente={r.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '6px 0' }}>
-                <span aria-hidden="true" style={icon}>🌄</span>
+                <Icon name="flag" size={24} tone="muted" />
                 <p style={{ ...sm2Text, margin: 0 }}>
                   <b style={{ fontWeight: 600 }}>{nomeDe(r)}</b>
                   {i === 0
