@@ -223,7 +223,12 @@ export function ChatBox({
       }, { signal: controller.signal });
 
       if (!response.ok) {
-        if (import.meta.env.DEV) console.error('AI API error:', await response.text());
+        /* 429 = cota do dia (`_aiGuard`) ou os provedores gratuitos no limite
+           (`ai-busy`). Não é falha: o próprio Soulmon diz que está cansado. */
+        if (response.status === 429) {
+          return isPt ? 'Tô cansadinho agora… tenta de novo daqui a pouco?' : "I'm a little tired right now… try again in a bit?";
+        }
+        if (import.meta.env.DEV) console.error('AI API error:', await response.clone().text().catch(() => ''));
         /* 500 'AI not configured' = o servidor está sem chave: estado permanente,
            não instabilidade. Mensagem clara, e o chat local segue funcionando. */
         /* 503 'chat-disabled' = kill-switch `CHAT_DISABLED` do dono (BETA-CONTINGENCIA §0):

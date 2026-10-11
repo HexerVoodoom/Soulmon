@@ -83,8 +83,10 @@ describe('portão das rotas de IA', () => {
   });
 
   it('geração de imagem tem teto bem menor que o chat — é a cara', () => {
-    // O de imagem é MENSAL e o do chat é DIÁRIO: comparar os dois números crus
-    // já favorece o chat, e ainda assim o de imagem tem que ser menor.
-    expect(AI_LIMITS.sprite.globalMonth).toBeLessThan(AI_LIMITS.chat.global);
+    // O de imagem é MENSAL e o do chat é DIÁRIO. Até 11/10/2026 a comparação era
+    // dos números crus (20000/dia de chat); com o chat no plano GRATUITO (300/dia,
+    // REGISTRO §32) a comparação passa a ser na MESMA unidade — mês contra mês —
+    // e a imagem continua bem menor (800 contra 9.000).
+    expect(AI_LIMITS.sprite.globalMonth).toBeLessThan(AI_LIMITS.chat.global * 30 / 5);
   });
 });

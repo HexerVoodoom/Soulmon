@@ -238,9 +238,9 @@ describe('provedor: Groq com fallback para Gemini, num adaptador só', () => {
 
   it('modelo padrão tem tool use; CHAT_MODEL troca sem deploy', async () => {
     const a = await pedir('oi', groqTools('oi', undefined));
-    expect(JSON.parse(a.espiao.mock.calls[0][1].body).model).toBe('llama-3.3-70b-versatile');
-    const b = await pedir('oi', groqTools('oi', undefined), {}, fakeEnv({ CHAT_MODEL: 'openai/gpt-oss-120b' }));
-    expect(JSON.parse(b.espiao.mock.calls[0][1].body).model).toBe('openai/gpt-oss-120b');
+    expect(JSON.parse(a.espiao.mock.calls[0][1].body).model).toBe('openai/gpt-oss-120b');
+    const b = await pedir('oi', groqTools('oi', undefined), {}, fakeEnv({ CHAT_MODEL: 'llama-3.3-70b-versatile' }));
+    expect(JSON.parse(b.espiao.mock.calls[0][1].body).model).toBe('llama-3.3-70b-versatile');
   });
 
   it('log de falha do provedor não carrega o corpo da resposta', async () => {

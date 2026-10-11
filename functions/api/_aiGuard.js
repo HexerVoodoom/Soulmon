@@ -86,7 +86,12 @@ export const AI_LIMITS = {
   // cauda do chat era pago igual por quem nunca pagou. Demo 30 / paid 120 até
   // o dono responder; o `perAccount` continua sendo o teto de quem não tem
   // tier conhecido (fail-closed no lado barato).
-  chat: { perAccount: 120, perAccountByTier: { demo: 30, paid: 120 }, global: 20000 },
+  // CUSTO ZERO (dono, 11/10/2026, REGISTRO §32): o chat roda só no plano
+  // GRATUITO do Groq (gpt-oss-120b: 1.000 RPD / 200K TPD ≈ 105 chamadas/dia de
+  // ~1.900 tokens) + Gemini gratuito de reserva (~250 RPD). Teto global 300/dia
+  // fica abaixo da soma (~355); por conta 15 (demo) / 20 (pago) — 15 testadores ×
+  // 15 = 225 cabe com folga. Se o beta crescer, este é o número a refazer.
+  chat: { perAccount: 15, perAccountByTier: { demo: 15, paid: 20 }, global: 300 },
   suggest: { perAccount: 30, global: 3000 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
   //

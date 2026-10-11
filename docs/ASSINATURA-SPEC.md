@@ -99,11 +99,12 @@ dono faz: criar a assinatura no Console, as permissões da conta de serviço, o
 Pub/Sub, as duas variáveis `RTDN_*`, a migração `0003` no D1 e aprovar os trechos
 jurídicos — passo a passo em `docs/BILLING-SETUP.md` §8.
 
-Decisões que ficaram com o dono (a implementação adotou o lado conservador):
+Decisões do dono:
 
 - **Reembolso (R8):** reembolso de assinatura fecha a vitrine futura e bloqueia
   novos resgates, mas **não retira** o que já foi resgatado. Abre o abuso "assinar →
-  resgatar → reembolsar"; no beta (licença de teste) o impacto é zero.
+  resgatar → reembolsar"; no beta (licença de teste) o impacto é zero. **Aprovado pelo dono em
+  11/10/2026** (`REGISTRO-DE-DECISOES.md` §33).
 - **Oferta/trial (R6):** compra feita por uma oferta do plano é **recusada**
   (`offer-not-allowed`). O Console não deve ter oferta alguma neste plano.
 - **Arte:** o conjunto de 2026-Q4 reusa a arte de cenários/decorações existentes

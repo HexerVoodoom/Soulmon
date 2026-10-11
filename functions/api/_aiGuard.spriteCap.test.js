@@ -200,7 +200,9 @@ describe('chat e suggest: o mesmo buraco de agregado?', () => {
     // suggest rodam em llama-3.1-8b (fração de centavo por chamada), então o
     // teto diário deles é um disjuntor, não um orçamento. Se o modelo ficar
     // caro, este teste é o lembrete de refazer a conta.
-    expect(AI_LIMITS.chat.global).toBe(20000);
+    // 300/dia desde 11/10/2026: o teto global do chat agora é o ORÇAMENTO do plano
+    // gratuito Groq + Gemini (REGISTRO §32), não mais um disjuntor de custo.
+    expect(AI_LIMITS.chat.global).toBe(300);
     expect(AI_LIMITS.suggest.global).toBe(3000);
     expect(AI_LIMITS.chat.perAccountLifetime).toBeUndefined();
     expect(AI_LIMITS.suggest.perAccountLifetime).toBeUndefined();

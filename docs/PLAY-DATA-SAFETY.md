@@ -301,7 +301,7 @@ apps instalados, dados de pagamento, documentos.
 | O que o jogador vê | Como é gerado | Onde no código | Revisão humana? |
 |---|---|---|---|
 | **Sprite da criatura** (as 11 formas do jogador pago; os personagens de demonstração foram gerados antes e revisados) | Higgsfield (modelo Soul), fallback Gemini `gemini-2.5-flash-image` | `functions/api/generate-sprite.js`, prompts em `src/utils/oracle.ts` | Não, no caminho pago (gerado sob demanda por conta) |
-| **Chat da criatura** (texto e, com microfone, transcrição do recado) | Groq `llama-3.3-70b-versatile` (var `CHAT_MODEL`), reserva Gemini `gemini-2.5-flash`, personalidade via `aiSettings` | `functions/api/chat.js` (cláusula SAFETY), `src/utils/chatSafety.ts` (ponte local, lista curada) | Não — em tempo real |
+| **Chat da criatura** (texto e, com microfone, transcrição do recado) | Groq `openai/gpt-oss-120b` (var `CHAT_MODEL`), reserva Gemini `gemini-2.5-flash`, personalidade via `aiSettings` | `functions/api/chat.js` (cláusula SAFETY), `src/utils/chatSafety.ts` (ponte local, lista curada) | Não — em tempo real |
 | **Sons** — 3 eventos (`evolve`, `degenerate`, `task-complete`) + 2 camadas da trilha | Higgsfield CLI `seed_audio` / `sonilo_music` | `public/sounds/`, manifesto em `src/utils/sonsAssets.ts` | Sim — gerados uma vez, ouvidos e instalados (S16) |
 | Arte estática do app (cenários, decoração, sonhos, aventuras, FX, ícones dentro do visor) | Gemini (navegador) e Higgsfield (`gpt_image_2`, `nano_banana_pro`) | `src/assets/`, mapas `src/utils/*Art.ts` | Sim — gerada uma vez, curada e instalada |
 

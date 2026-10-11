@@ -19,7 +19,7 @@
 > `server.errorPath`, crash reporting próprio em `/api/crash` (diagnóstico **não
 > vinculado** à conta) e **remoção** de `SCHEDULE_EXACT_ALARM` (feita em #311: alarme inexato
 > `setAndAllowWhileIdle`; o manifesto mesclado não a tem); (c) chat agente com Groq
-> (`GROQ_API_KEY`, modelo pela var `CHAT_MODEL`, padrão `llama-3.3-70b-versatile`) e
+> (`GROQ_API_KEY`, modelo pela var `CHAT_MODEL`, padrão `openai/gpt-oss-120b`, plano GRATUITO) e
 > fallback Gemini (`GEMINI_API_KEY`).
 
 ## Legenda
@@ -439,7 +439,9 @@ npx wrangler secret list
 ```
 
 Chat agente: `GROQ_API_KEY` (principal) e `GEMINI_API_KEY` (fallback) como secrets;
-`CHAT_MODEL` é **var** opcional (padrão `llama-3.3-70b-versatile`; ex. `openai/gpt-oss-120b`).
+`CHAT_MODEL` é **var** opcional (padrão `openai/gpt-oss-120b`). **Custo zero:** a `GROQ_API_KEY` vem de uma org Groq
+no plano **Free** e a `GEMINI_API_KEY` de um projeto do AI Studio **sem faturamento** — não ative billing em nenhum dos
+dois. Limites e cota: `docs/CHAT-SOULMON.md` §5.
 Kill-switches do beta (vars, sem segredo): `BILLING_DISABLED` e `CHAT_DISABLED` — ver
 [`BETA-CONTINGENCIA.md`](BETA-CONTINGENCIA.md) §0.
 

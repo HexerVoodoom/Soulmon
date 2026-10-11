@@ -5,15 +5,23 @@
 // formato de volta: `{ ok, text, toolCalls, provider }`. Trocar de provedor ou
 // de modelo não toca em regra de produto.
 //
-// MODELO (verificado em console.groq.com/docs/models e /docs/tool-use em
-// 11/10/2026): `llama-3.3-70b-versatile` é de produção e aceita tool use e
-// chamadas paralelas. O `llama-3.1-8b-instant` também lista tool use, mas errava
-// o formato com frequência — e uma ação malformada aqui vira cartão quebrado.
-// ⚠️ Isto SOBE o custo por mensagem frente à decisão provisória #55 ("não sobe do
-// 8b"): foi decisão EXPLÍCITA do dono em 11/10/2026 (registrada em
-// REGISTRO-DE-DECISOES). Os tetos de `_aiGuard.js` seguem valendo. Troca sem
-// deploy: var `CHAT_MODEL` (ex.: `openai/gpt-oss-120b`, mais barato e também com
-// tool use; é modelo de raciocínio, então teste antes).
+// CUSTO ZERO (decisão do dono, 11/10/2026, REGISTRO §32): só o plano GRATUITO
+// do Groq, com o gratuito do Gemini de reserva. Nada aqui exige billing pago.
+//
+// MODELO PADRÃO = `openai/gpt-oss-120b`. Fonte: console.groq.com/docs/rate-limits
+// (lido em 11/10/2026): gpt-oss-120b 30 RPM · 1.000 RPD · 8K TPM · 200K TPD. O
+// `llama-3.3-70b-versatile` NÃO aparece nessa tabela; fontes de terceiros
+// (2026) dão 30 RPM · 1.000 RPD · 12K TPM · 100K TPD no gratuito — METADE dos
+// tokens/dia. Com ~1.900 tokens por chamada (prompt + ferramentas + fatos +
+// resposta) isso é ~105 chamadas/dia no 120b contra ~52 no 70b. Os dois são de
+// produção com tool use (console.groq.com/docs/models). O 8b errava o formato de
+// ferramenta. `reasoning_effort: 'low'` porque o gpt-oss é de raciocínio e o
+// raciocínio conta no TPD. Troca sem deploy: var `CHAT_MODEL`.
+//
+// LIMITE: 429 do Groq cai no Gemini gratuito (`gemini-2.5-flash`; ~10 RPM /
+// ~250 RPD segundo guias de jan/2026 — o Google manda conferir no AI Studio).
+// Se os dois limitarem, `callChatModel` devolve 429 e `chat.js` responde a frase
+// cansada do Soulmon (`AI_BUSY_MESSAGE`), nunca erro.
 //
 // LOG: só status e nome do provedor. Corpo de erro do provedor pode ecoar o
 // prompt (texto da pessoa) e NUNCA vai para o log.
@@ -24,7 +32,7 @@
  * @typedef {{ ok: true, provider: string, text: string, toolCalls: any[] } | { ok: false, status: number }} LlmResult
  */
 
-export const GROQ_MODEL_DEFAULT = 'llama-3.3-70b-versatile';
+export const GROQ_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 export const GEMINI_MODEL = 'gemini-2.5-flash';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const TIMEOUT_MS = 10000;
@@ -54,6 +62,10 @@ async function callGroq(env, req, withTools) {
     max_tokens: maxTokens,
     temperature,
   };
+  // gpt-oss raciocina antes de responder; `low` gasta menos do TPD gratuito.
+  // O raciocínio conta dentro de `max_tokens`: sem folga, uma resposta de 120
+  // tokens podia sair VAZIA (tudo gasto pensando). +300 de folga.
+  if (/^openai\/gpt-oss/.test(body.model)) { body.reasoning_effort = 'low'; body.max_tokens = maxTokens + 300; }
   if (withTools && tools?.length) { body.tools = tools; body.tool_choice = 'auto'; body.parallel_tool_calls = false; }
   const res = await timedFetch(GROQ_URL, {
     method: 'POST',

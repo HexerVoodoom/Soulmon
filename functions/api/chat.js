@@ -1,5 +1,11 @@
 import { guardAiRequest } from './_aiGuard.js';
 import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
+
+/** Os dois provedores gratuitos no limite (429): a fala cansada do Soulmon. */
+export const AI_BUSY_MESSAGE = {
+  pt: 'Tô cansadinho agora… tenta de novo daqui a pouco?',
+  en: "I'm a little tired right now… try again in a bit?",
+};
 import { minimizeForAi, redactionCount } from './_redact.js';
 import { callChatModel, hasChatProvider } from './_llm.js';
 import { TOOLS, sanitizeToolCalls } from './_chatActions.js';
@@ -650,6 +656,10 @@ export async function onRequestPost({ request, env }) {
 
     if (!result.ok) {
       await gate.release(`provedor de IA respondeu ${result.status}`);
+      // Groq E Gemini no limite do plano gratuito: não é erro, é cansaço.
+      if (result.status === 429) {
+        return Response.json({ error: 'ai-busy', response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS });
+      }
       return Response.json({ error: 'AI service error' }, { status: 500, headers: CORS });
     }
 

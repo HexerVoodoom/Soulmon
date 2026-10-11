@@ -34,29 +34,30 @@ async function esgotar(env) {
   return { ok, ultimo: null };
 }
 
-describe('cota de chat por tier (provisório #55)', () => {
-  it('a tabela declara demo 30 / paid 120, e `perAccount` continua sendo o teto de quem não tem tier', () => {
-    expect(AI_LIMITS.chat.perAccountByTier).toEqual({ demo: 30, paid: 120 });
-    expect(AI_LIMITS.chat.perAccount).toBe(120);
+// Valores refeitos em 11/10/2026: custo ZERO no plano gratuito (REGISTRO §32).
+describe('cota de chat por tier (provisório #55 → free tier §32)', () => {
+  it('a tabela declara demo 15 / paid 20, e `perAccount` continua sendo o teto de quem não tem tier', () => {
+    expect(AI_LIMITS.chat.perAccountByTier).toEqual({ demo: 15, paid: 20 });
+    expect(AI_LIMITS.chat.perAccount).toBe(15);
   });
 
-  it('demo: 30 chamadas passam, a 31ª é 429 ai-daily-limit', async () => {
+  it('demo: 15 chamadas passam, a 16ª é 429 ai-daily-limit', async () => {
     const env = fakeEnv({ tier: 'demo', credits: 0 });
     const { ok, ultimo } = await esgotar(env);
-    expect(ok).toBe(30);
+    expect(ok).toBe(15);
     expect(ultimo).toMatchObject({ ok: false, status: 429, reason: 'ai-daily-limit' });
   });
 
-  it('paid: 120 chamadas passam, a 121ª é 429', async () => {
+  it('paid: 20 chamadas passam, a 21ª é 429', async () => {
     const env = fakeEnv({ tier: 'paid', credits: 0, orderDetails: [{ orderId: 'o', grantTier: 'paid' }] });
     const { ok, ultimo } = await esgotar(env);
-    expect(ok).toBe(120);
+    expect(ok).toBe(20);
     expect(ultimo).toMatchObject({ ok: false, status: 429 });
   });
 
-  it('conta sem entitlement gravado é demo (readEntitlement devolve demo) → 30', async () => {
+  it('conta sem entitlement gravado é demo (readEntitlement devolve demo) → 15', async () => {
     const env = fakeEnv(null);
-    expect((await esgotar(env)).ok).toBe(30);
+    expect((await esgotar(env)).ok).toBe(15);
   });
 
   it('o entitlement é lido UMA vez por chamada e NÃO é reescrito pelo chat', async () => {

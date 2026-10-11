@@ -5,7 +5,7 @@
 > - **Dono:** `docs/ASSINATURA-SPEC.md` (agora "implementado") · `functions/api/_billing.js` (`purchases.subscriptionsv2`, cadeia `linkedPurchaseToken`, acknowledge no servidor) · `rtdn.js` + `_pubsubAuth.js` (Pub/Sub push com OIDC, idempotente por `messageId`) · `migrations/0003_rtdn_messages.sql` · `BillingPlugin.kt` (SUBS) · `src/utils/subscription*.ts`.
 > - **Regras travadas por teste:** `subUntil` só destrava a vitrine (guard com allowlist: `src/security/subscriptionBoundary.contract.test.ts`); só `bg`/`furniture`; nunca em `SHOP_ITEMS`; sem trial (oferta é recusada), sem Créditos, sem cuidado; entregue nunca é retirado.
 > - **Correção da spec:** o escopo da service account é o MESMO (`androidpublisher`); muda o endpoint e a permissão no Console.
-> - **Depende do dono:** criar a assinatura no Console (sem oferta), permissões da conta de serviço, tópico Pub/Sub + push autenticado, `RTDN_AUDIENCE`/`RTDN_PUSH_SA_EMAIL`, `wrangler d1 migrations apply` (0003), aprovar os rascunhos de `termos.html`/`privacidade.html` (estão em comentário), decidir a política de reembolso da assinatura (R8) — tudo em `docs/BILLING-SETUP.md` §8.
+> - **Depende do dono:** criar a assinatura no Console (sem oferta), permissões da conta de serviço, tópico Pub/Sub + push autenticado, `RTDN_AUDIENCE`/`RTDN_PUSH_SA_EMAIL`, `wrangler d1 migrations apply` (0003), aprovar os rascunhos de `termos.html`/`privacidade.html` (estão em comentário) — tudo em `docs/BILLING-SETUP.md` §8.
 > - **Arte:** o conjunto de 2026-Q4 reusa arte existente (`artAliases.ts`); a leva própria troca o alias.
 
 > ## 11/10/2026 — Masmorra idle de retorno: energia por camada, profundidade até 999, Level Up restaura (REGISTRO §31)
