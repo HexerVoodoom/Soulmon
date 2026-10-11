@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Guilda de lançamento, PR5: as sombras do Pesadelo (`claude/guilda-lancamento`)
+>
+> - **O que muda:** no Pesadelo da Corrida com obstáculos os obstáculos são **sombras de Solmons específicos** — silhueta preta, só os olhos de luz (`utils/nightmareShadows.ts`, `drawShadowObstacle` no `DinoGame`). **Placeholder agora**: o sprite da própria linha pintado de preto em tempo de desenho, preso à caixa de colisão, virado para o pet, com dois olhos acesos. **Colisão, placar e recompensas não mudam.** Conferido com Playwright 390×844.
+> - **Arte:** o **pacote de pedido** está em `docs/ASSETS-A-GERAR.md` §17 (12 slots drop-in `dino-shadow-{1..4}{,b,c}`, 128² alfa, regras de cor "só os olhos acendem", prompts = oráculo + sufixo de sombra, checklist do conferente). Higgsfield/CLI não estavam disponíveis. Instalar = preencher `SHADOW_ART` + `CACHE_VERSION`.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** nenhuma sobre a Corrida; o `docs/INVENTARIO-ASSETS.md` ganha 12 linhas quando a leva entrar.
+> - **Depende do dono:** gerar a arte (§17) e escolher se os 12 Solmons da tabela são os certos.
+
 > ## 11/10/2026 — Guilda de lançamento, PR4: a GUERRA 4×4 (`claude/guilda-lancamento`)
 >
 > - **O que é:** "você + 3 aliados contra 4 inimigos", **pareada por tamanho** (2 com 2, 3 com 3, 4 com 4; guilda de 5+ escala 4). Qualquer membro procura (`guildWarSeek`); o **servidor** monta os esquadrões a partir dos SAVES (`loadDuelSide`, mesmo teto S1 do duelo), pareia pela fila `coopWarQ:<size>`, resolve cada confronto com o **combate v3** (`simulateDuel`, mais forte contra mais forte, semente do servidor) e grava o resultado nas duas guildas. Assíncrono: a 1ª guilda espera na fila, a 2ª resolve na hora. Uma guerra por guilda por dia.

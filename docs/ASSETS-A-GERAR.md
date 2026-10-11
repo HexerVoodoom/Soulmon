@@ -435,3 +435,65 @@ Se o dono quiser arte própria, o pedido de geração (lote `arte-gerador famili
 - **Prédio isométrico 300², alfa real**, no mesmo pós dos `lotes-v2`: um estúdio de escrita (casinha-tinteiro com pena / escrivaninha à janela / pergaminhos), **telhado e paredes em tons QUENTES** (ocre, âmbar, madeira clara, marfim) com detalhe turquesa pequeno para manter a paleta do Soulmon.
 - **Contraste é o critério:** a clareira de baixo da Exploração é verde-teal escura (`bg-exploracao.png`); o prédio não pode ter verde/teal dominante nem valor escuro. Conferir sobre o fundo (folha de contato) antes de instalar.
 - Sem texto, sem personagem, base assentada em chão de terra batida (sem tablado), chão a 74%.
+
+## 17. Sombras do Pesadelo — Solmons como obstáculos (pedido do dono, 11/10/2026)
+
+No **Pesadelo** da Corrida com obstáculos (`DinoGame.tsx`, modo "Nightmare: shadow"), os obstáculos viram **sombras de Solmons específicos: silhueta preta, só os olhos de luz**. Visual apenas — física, caixa de colisão (`OBSTACLE_TIERS` › `hit`/`top`), placar e recompensas não mudam. Higgsfield/CLI de arte **não estava disponível** nesta sessão: hoje roda um **placeholder** (o sprite da própria linha pintado de preto em tempo de desenho + dois olhos acesos — `src/utils/nightmareShadows.ts`). Este é o **pedido de geração** para a `squad-arte` (`arte-gerador familia=criatura`, 12 ativos × ~3 seeds ≈ 36 imagens, estimativa).
+
+### 17.1 Entrega (drop-in)
+
+| | |
+|---|---|
+| Destino | `src/assets/soulmon/dino/dino-shadow-<id>.png` (ids abaixo) + registrar em `SHADOW_ART` (`src/utils/nightmareShadows.ts`) — **o placeholder some sozinho** quando o id aparece ali |
+| Formato | PNG **128×128**, **alfa real** (sem xadrez assado), alfa binário (pixel art), mesma célula e mesmas proporções de `dino-obstacle-*` |
+| Caixa opaca | **igual à do obstáculo que a sombra substitui** (coluna `hit`/`top` da tabela): a forma tem de caber nela — o que se vê é o que acerta. Conferir sobre a folha de contato com a caixa desenhada |
+| Orientação | a criatura **encara a ESQUERDA** (o obstáculo vem da direita, de frente para o pet) — o placeholder espelha em código; a arte real já sai virada |
+
+### 17.2 Regras de cor (a parte que torna a arte "sombra")
+
+- **Corpo: preto quase puro** `#05080C`, **sem nenhum detalhe interno claro** (sem boca, sem dentes, sem marcas). Contorno externo de **1 px** em roxo-azulado escuro `#3B2A7A` só para separar do fundo escuro do Pesadelo (é o mesmo halo `#763bff` que o pet-sombra usa).
+- **Os ÚNICOS pixels claros são os olhos**: dois blocos de 2–3 px em turquesa-claro `#A9FBFF` com 1 px de brilho `#5EE7FF` ao redor. **Nada além dos olhos acende.** Sem magenta, sem rosa, sem vermelho, sem roxo claro.
+- A silhueta mantém o **gesto reconhecível da criatura** (orelhas, cauda, asas, chifres) — é "a sombra DESTE Solmon", não um blob.
+
+### 17.3 Os 12 slots (um Solmon por slot)
+
+| id | substitui | criatura (linha · estágio) | pose / forma pedida | `hit` · `top` (frações de 128) |
+|---|---|---|---|---|
+| `dino-shadow-1` | `dino-obstacle-1` | Lumel · rookie | agachada, orelhas baixas, corpo largo | [4,124] · 1 |
+| `dino-shadow-1b` | `dino-obstacle-1b` | Serah · rookie | **só a metade de baixo** da célula: rastejando rente ao chão | [1,127] · 65 |
+| `dino-shadow-1c` | `dino-obstacle-1c` | Igni · rookie | sentada, cauda enrolada à frente | [6,122] · 1 |
+| `dino-shadow-2` | `dino-obstacle-2` | Ignar · champion | em quatro apoios, ombros altos | [6,121] · 1 |
+| `dino-shadow-2b` | `dino-obstacle-2b` | Pyraka (`kaelen`) · champion | baixa e comprida (corpo alongado) | [1,127] · 15 |
+| `dino-shadow-2c` | `dino-obstacle-2c` | Nautil (`nautilu`) · champion | casca/concha arredondada, tentáculos curtos | [1,127] · 4 |
+| `dino-shadow-3` | `dino-obstacle-3` | Akashai (`orrin`) · ultimate | **coluna alta e estreita** (de pé, esguia) | [40,88] · 1 |
+| `dino-shadow-3b` | `dino-obstacle-3b` | Nimbrata (`thalindra`) · ultimate | coluna alta, capa/cauda caindo reta | [38,89] · 1 |
+| `dino-shadow-3c` | `dino-obstacle-3c` | Astria (`astrase`) · ultimate | coluna alta, halo reduzido a contorno | [41,86] · 1 |
+| `dino-shadow-4` | `dino-obstacle-4` | Lumel · mega | **voadora**, asas abertas, na metade de cima | [1,127] · 38 |
+| `dino-shadow-4b` | `dino-obstacle-4b` | Serah · mega | voadora baixa (metade de baixo da célula) | [1,127] · 66 |
+| `dino-shadow-4c` | `dino-obstacle-4c` | Astria · mega | voadora média, asas em arco | [1,127] · 45 |
+
+### 17.4 Prompts (consistência com o estilo)
+
+**Regra do projeto (não violar):** o **corpo da criatura vem do oráculo** — gerar com `generateOracleWithFamilies` → `composeSpritePrompts` (forma e linha da tabela acima, semente fixa por slot), **nas duas variantes** (`imagePrompt` e `imagePromptFallback`, a recusa do provedor degrada sozinha) e **mantendo a cláusula `Do not copy any existing franchise character`**. Escrever o prompt de criatura à mão está proibido. O que o **pacote** acrescenta é o **sufixo de sombra**, igual para os 12 (cole depois do prompt do oráculo):
+
+```
+SHADOW TREATMENT (override all colors above): render ONLY the creature's silhouette as a flat solid near-black fill #05080C,
+with absolutely no interior detail, no highlights, no shading, no mouth, no teeth, no markings. A 1-pixel dark
+blue-violet outline #3B2A7A around the outside edge only. The ONLY light pixels in the whole image are the two eyes:
+two small 2-3 pixel blocks of pale cyan #A9FBFF, each with a 1-pixel cyan glow #5EE7FF around it. Nothing else glows.
+Pixel art, crisp hard edges, no anti-aliasing, no gradients, no blur, no text, transparent background,
+128x128, the creature faces LEFT, feet/ground contact at the bottom edge unless it is a flying pose.
+No magenta, pink, red or light purple anywhere.
+```
+
+Sufixo de pose por linha da tabela: `POSE: <pose / forma pedida>; keep the silhouette inside the box: <hit> of 128 horizontally, top margin <top>/128.`
+
+**Negative (todos):** `interior detail, shading, highlights, colored body, glowing body, glowing mouth, extra glowing parts, red, magenta, pink, light purple, text, watermark, border, frame, checkerboard, photographic`.
+
+### 17.5 Conferência (`arte-conferente`, bloqueante)
+
+1. Alfa real, 128², alfa binário. 2. **Único pixel claro = os olhos** (varredura: nenhum pixel com luminância > limiar fora das duas caixas dos olhos). 3. Silhueta **dentro da caixa de colisão** da tabela (sobrepor `hit`/`top`). 4. Sobre o fundo do Pesadelo (`minigame-dino`) a forma **lê** com o halo. 5. Legível a **44–56 px** de lado (o tamanho em jogo). 6. Sem magenta/rosa/vermelho/roxo claro. 7. Folha de contato para o checkpoint do dono.
+
+### 17.6 Depois de instalar
+
+Acrescentar os 12 ids em `SHADOW_ART` e **bump `CACHE_VERSION`** em `public/sw.js` (abrir o arquivo e somar 1). O teste `nightmareShadows.test.ts` hoje exige `SHADOW_ART` vazio ("até a leva entrar") — trocar por "todo id declarado tem PNG" junto da instalação.

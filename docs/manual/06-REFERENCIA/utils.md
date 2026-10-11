@@ -926,6 +926,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
 
+### `src/utils/nightmareShadows.ts`
+**Dono de:** as SOMBRAS DO PESADELO (PR5): os 12 slots (4 degraus × 3 variantes) → Solmon próprio (linha · estágio), o encaixe da arte real (`SHADOW_ART`, vazio até a leva de `docs/ASSETS-A-GERAR.md` §17 entrar) e a geometria do placeholder preso à caixa de colisão. Só visual: a colisão do `DinoGame` não muda.
+**Exports:** `SHADOW_SLOTS`, `SHADOW_ART`, `shadowSource`, `shadowRect`, `shadowEyes`, `ShadowSlot`, `ShadowSource`, `ShadowRect`.
+**Chamado por:** `src/components/DinoGame.tsx` (`drawShadowObstacle`).
+**Régua:** `src/utils/nightmareShadows.test.ts`.
+
 ### `src/utils/guildHouse.ts`
 **Dono de:** a regra do ITEM NA CASA DA GUILDA (guilda-lancamento PR2): item posto no slot sai de `ownedFurniture` e de `equippedDecor` e vive em `guildDonatedItem`; tirar (ou perder a guilda) o devolve.
 **Exports:** `applyGuildSlot` (pura e idempotente: mesmo slot, mesma referência), `donatableItems`, `GuildHouseSaveSlice`.
