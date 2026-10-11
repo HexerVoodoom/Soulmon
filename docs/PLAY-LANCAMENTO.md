@@ -20,8 +20,22 @@
 > **Regra que vale para tudo aqui:** nada afirmado sobre política do Google sem
 > fonte no repo. Onde a fonte é o próprio console, está `[a confirmar no Play Console]`.
 >
-> **Atualizado em:** 21/09/2026 (QA geral, etapa 4). Estado do que já está feito:
-> `docs/STATUS.md` §3.2.
+> **Atualizado em:** 21/09/2026 (QA geral, etapa 4); **corrigido em 11/10/2026** (run `beta-play-01`, contradições C1-C12 do dossiê).
+> Estado do que já está feito: `docs/STATUS.md` §3.2.
+>
+> ## Para o BETA FECHADO use [`BETA-FECHADO-RUNBOOK.md`](BETA-FECHADO-RUNBOOK.md)
+>
+> Este arquivo descreve **teste interno -> produção** e **não cobre a trilha de teste
+> fechado 12 testadores x 14 dias** (C3). A ordem do beta, o build local sem GitHub
+> Actions, a assinatura trimestral e o RTDN estão no runbook; contingências em
+> [`BETA-CONTINGENCIA.md`](BETA-CONTINGENCIA.md). Aqui ficam as tabelas de campos (ficha,
+> declarações, produtos) e o passo de **produção** (§D.12), que só vale depois do beta.
+>
+> **Correções de 11/10/2026 neste arquivo** (a fonte de verdade é sempre o arquivo/estado real):
+> `google-services.json` **já é do `soulmon-app`** (C1); estado dos secrets é de 22/09 e
+> deve ser relido com `wrangler secret list` (C2); o Actions segue parado, então AAB é
+> **local** (C4/C9); o preço dos 4 SKUs **ainda não foi confirmado pelo dono** (C12); o
+> `versionCode` de partida é o do `build.gradle` e **sobe +1 a cada upload** (C9).
 
 ---
 
@@ -92,6 +106,13 @@ para subir. O resto pode ser em paralelo.
 
 Fonte: o comentário "COMO LIGAR (dono)" dentro de `.github/workflows/android-build.yml`.
 
+> ⚠️ **11/10/2026 — §B inteiro está superado para o beta.** O GitHub Actions está parado por
+> cobrança desde 16/09: não há `android-build.yml` produzindo AAB. O AAB é gerado **local**
+> (`HANDOFF-LOCAL-SEM-ACTIONS.md` §2; passo a passo em `BETA-FECHADO-RUNBOOK.md` Fases 1 e 3),
+> com o `keytool` do JBR do Android Studio, keystore em `E:\soulmon-secrets\` e senhas por
+> variável `ORG_GRADLE_PROJECT_*`. **Pule B.2 e B.3** (secrets do GitHub) e B.4. O que segue em B.1 é o
+> mesmo comando, mantido por referência.
+
 ### B.1 Gerar a keystore na SUA máquina `[dono digita segredo]`
 
 ```
@@ -161,8 +182,10 @@ URL: `https://console.firebase.google.com/project/soulmon-app/settings/general`
 
 ### C.2 Trocar o arquivo no repo
 
-- Substituir `android/app/google-services.json` (hoje é do projeto `digiapp-88296`,
-  com clients `com.digiapp.app` e `com.digipartner.digiapp` — review 15 §B). O arquivo
+- ✅ **FEITO (conferido em 11/10/2026, corrige C1):** `android/app/google-services.json` **já é do
+  projeto `soulmon-app`**, pacote `com.hexervoodoom.soulmon`. O que falta é só cadastrar os SHA da
+  chave de App Signing e de upload (depois do 1º upload — `BETA-FECHADO-RUNBOOK.md` Fase 5) e, se o
+  arquivo mudar, rebuild. (O texto histórico abaixo falava do projeto `digiapp-88296`.) O arquivo
   **não é segredo** (a API key ali é restrita por pacote — manual 08 §2.6) e **é
   commitado**. Você pode colar o arquivo na pasta e pedir para a squad commitar, ou
   commitar você.
@@ -275,11 +298,16 @@ Google com dados bancários e fiscais. **Só você.** Sem isso, D.7 não abre.
 
 | ID do produto | Nome (en-US / pt-BR) | Tipo | Preço sugerido |
 |---|---|---|---|
-| `soulmon.unlock.full` | Full unlock / Desbloqueio completo | **Não consumível** (produto gerenciado, compra única) | R$ 29,90 |
+| `soulmon.unlock.full` | Full unlock / Desbloqueio completo | **Não consumível** (produto gerenciado, compra única) | R$ 29,90 (**sugestão — o dono ainda não confirmou os preços, C12**) |
 | `soulmon.credits.60` | 60 credits / 60 Créditos | Consumível | R$ 4,90 |
 | `soulmon.credits.150` | 150 credits / 150 Créditos | Consumível | R$ 9,90 |
 | `soulmon.credits.400` | 400 credits / 400 Créditos | Consumível | R$ 19,90 |
 
+> **Assinatura (11/10/2026):** além dos 4 produtos acima existe o SKU de **assinatura**
+> `soulmon_cosmetic_quarterly` (R$ 9,90 a cada 3 meses, **sem trial**, base plan trimestral). Ela é criada em
+> *Monetizar -> Produtos -> Assinaturas*, **não** em "Produtos no app": ver `BETA-FECHADO-RUNBOOK.md`
+> Fase 6.3 e `docs/ASSINATURA-SPEC.md`.
+>
 > "Consumível" na Play é uma propriedade de **como o app trata** a compra
 > (`BillingPlugin.kt` consome os pacotes de crédito); no console os quatro são
 > "produtos no app" — não use assinatura para nenhum `[a confirmar no Play Console
@@ -306,12 +334,19 @@ Fonte: `BILLING-SETUP.md` §2.
    → **Ativar** a *Google Play Android Developer API*.
 4. De volta ao Play Console, **Usuários e permissões → Convidar novo usuário** com o
    e-mail da conta de serviço → permissão do app: **Ver dados financeiros** (é o que
-   `purchases.products.get` exige) + "Gerenciar pedidos e assinaturas" se pedir.
+   `purchases.products.get` exige) + **Gerenciar pedidos e assinaturas** (necessário para a
+   assinatura: `purchases.subscriptionsv2` e o acknowledge). O **escopo de OAuth é o mesmo**
+   (`androidpublisher`) para compra única e assinatura — a nota antiga "outro escopo" estava errada.
 
 **Feito quando:** o e-mail `play-billing-verify@soulmon-app.iam.gserviceaccount.com`
 aparece na lista de usuários com acesso ao app Soulmon. A propagação leva horas —
 até lá `/api/billing` responde 502 `verification-failed` (esperado). O JSON vai para
 o Cloudflare em §E.5.
+
+> ⚠️ **C3 (11/10/2026):** o roteiro abaixo (D.9 interno -> D.12 produção) **não inclui o teste fechado**
+> que o beta exige. Para a conta pessoal nova: teste interno para provar billing/SHA, depois
+> **teste fechado com 12+ testadores por 14 dias** e só então a candidatura à produção —
+> `BETA-FECHADO-RUNBOOK.md` Fases 4, 8, 9 e 10. D.12 abaixo só vale depois disso.
 
 ### D.9 Teste interno — subir o AAB `[dono digita segredo]` (upload do arquivo é seu) `[submissão: confirmar]`
 
@@ -365,6 +400,9 @@ D.11 testado. E **só depois** de aprovado e no ar: §E.6.
 
 ## E. Cloudflare — secrets, worker de push, D1
 
+> ⚠️ **Estado de 22/09/2026 (19 dias antes de 11/10) — não é o estado de hoje (C2).** Releia com
+> `npx wrangler secret list` (raiz e `workers/`) antes de agir; nenhum doc posterior prova mudança.
+>
 > **Fatos do ar medidos em 22/09/2026** (QA Rodada 2, `docs/reviews/2026-09-22-qa-rodada-2/05-operador-governanca-r2.md` §1.1 — `npx wrangler secret list`, `deployments list`, `d1 migrations list`, `curl`):
 > - raiz: **definidos** `GROQ_API_KEY`, `HF_API_KEY`, `HF_SECRET`, `METRICS_ADMIN_KEY` (✅ E.1 — `/api/metrics` → 401), `SEASON_ADMIN_KEY` + var `FIREBASE_PROJECT_ID`; **ausentes** `ENTITLEMENTS_ADMIN_KEY` (grant → 404; #67), `COURTESY_MAX_ACCOUNTS` (padrão 25), `GEMINI_API_KEY`, e os da Play/Steam (esperado até §E.5);
 > - worker de push: **deployado** 21/09 12:57Z (✅ E.2 deploy); `SEASON_ADMIN_KEY` e `VAPID_JWK` **definidos**; **`FIREBASE_SERVICE_ACCOUNT` ausente** (→ §C.3; FCM do APK não envia; #66);

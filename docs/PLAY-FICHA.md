@@ -13,7 +13,7 @@
 > **Quem cola é o dono** (decisão #16). O passo a passo do console, com a ordem e o
 > critério de "feito", está em [`PLAY-LANCAMENTO.md`](PLAY-LANCAMENTO.md) §C.
 >
-> **Atualizado em:** 22/09/2026 (QA rodada 1 — fecho, título EN, claims "igual"/"faltou", UGC, §5, D.7). Antes de colar, confira: o nome "dia completo"
+> **Atualizado em:** 11/10/2026 (run `beta-play-01`: assinatura em "o que é grátis" PT/EN, IARC com assinatura, guilda/guerra/doação) · antes: 22/09/2026 (QA rodada 1 — fecho, título EN, claims "igual"/"faltou", UGC, §5, D.7). Antes de colar, confira: o nome "dia completo"
 > (`CLAUDE.md` › Regras do jogo ⭐), o Torneio ainda ligado (`functions/api/community.js`
 > › `match`), e a lista de permissões de `docs/PLAY-DATA-SAFETY.md` §2.4.
 
@@ -86,7 +86,7 @@ Soulmon: Nasce das Respostas
 Uma criatura que nasce das suas respostas e muda de forma com o seu dia.
 ```
 
-### 1.3 Descrição longa — máx. 4.000 · **3.376**
+### 1.3 Descrição longa — máx. 4.000 · **3.842**
 
 ```
 Ele nasce das suas respostas. E muda de forma com o que você faz.
@@ -118,7 +118,7 @@ Não há veredito aqui. O Soulmon não te dá nota, perdoa um dia sem marcar por
 
 • As fendas: cinco camadas, seis encontros por camada, com achados raros.
 • Torneio de fim de semana, contra outros jogadores, em faixas que medem você contra você mesmo antes de qualquer ranking.
-• Grupo cooperativo por código de convite: quem apareceu hoje, e só isso.
+• Guilda por código de convite: quem apareceu hoje, o fio do dia, o Bosque que cresce junto e, entre guildas, a feira e a guerra. Dá para doar Bits a quem joga com você. Sem mensagens livres entre jogadores.
 • Janela de descanso e 30 cenas de sono colecionáveis — premiam deitar no horário, nunca dormir "bem".
 • Loja de cenários e decoração com a moeda que você ganha jogando.
 
@@ -134,6 +134,8 @@ Não há veredito aqui. O Soulmon não te dá nota, perdoa um dia sem marcar por
 ★ O QUE É GRÁTIS E O QUE NÃO É
 
 Você começa com uma das criaturas de demonstração, sem pagar nada. Um único desbloqueio, pago uma vez, gera a criatura só sua a partir do Oráculo. Créditos, opcionais, pagam uma nova leitura das suas respostas — determinística, nunca sorteio. Nada do que se compra muda a regra de mudança de forma: ela vem do seu dia, não do seu cartão.
+
+Opcional: uma assinatura trimestral, cobrada a cada 3 meses pelo preço mostrado na Google Play e renovada automaticamente, libera a vitrine de cenários e decoração do trimestre. É só visual, não dá vantagem de jogo, e o que você já resgatou continua seu se cancelar. Cancele quando quiser em Play Store > Pagamentos e assinaturas.
 
 ★ SOBRE A IA
 
@@ -174,7 +176,7 @@ Soulmon: Born of Your Answers
 A creature born from your answers. It takes new forms as your days do.
 ```
 
-### 2.3 Full description — max 4,000 · **3,338**
+### 2.3 Full description — max 4,000 · **3,824**
 
 ```
 It is born from your answers. And it takes new forms from what you do.
@@ -206,7 +208,7 @@ There is no verdict here. Soulmon doesn't grade you, forgives one unmarked day a
 
 • The rifts: five layers, six encounters per layer, with rare finds.
 • Weekend tournament against other players, in tiers that measure you against yourself before any ranking.
-• Co-op group by invite code: who showed up today, and nothing more.
+• Guild by invite code: who showed up today, the day's thread, the Grove that grows together and, between guilds, the fair and the war. You can gift Bits to people you play with. No free-text messages between players.
 • Rest window and 30 collectible sleep scenes — they reward going to bed on time, never sleeping "well".
 • A shop of scenes and decoration with the currency you earn by playing.
 
@@ -222,6 +224,8 @@ There is no verdict here. Soulmon doesn't grade you, forgives one unmarked day a
 ★ WHAT IS FREE AND WHAT ISN'T
 
 You start with one of the demo creatures, at no cost. A single one-time unlock generates the creature that is only yours, from the Oracle. Optional credits pay for a new reading of your answers — deterministic, never a draw. Nothing you buy changes how forms change: that comes from your day, not your card.
+
+Optional: a quarterly subscription, billed every 3 months at the price shown in Google Play and renewed automatically, unlocks the quarter's shop of scenes and decoration. It is cosmetic only, gives no gameplay advantage, and what you already claimed stays yours if you cancel. Cancel any time in Play Store > Payments & subscriptions.
 
 ★ ABOUT THE AI
 
@@ -256,7 +260,8 @@ a frase correspondente sai da ficha **antes** do próximo envio.
 | "Num dia sem o bastante" recua para uma forma que se sustenta com menos; nada se apaga | degeneração por HP 0 (`CLAUDE.md` › ❤️); `applyFreshStart` nunca toca `perfectDays`/marcos | frase-modelo da bíblia §13 ✅. ⚠️ Dizia "Se você se afasta" até 22/09/2026 (QA R2 A2): afastar-se é o que NÃO custa (`ABSENCE_FORGIVENESS_DAYS` = 2), e L4 proíbe atribuir causa — a causa real é o dia sem o bastante |
 | Fendas: 5 camadas × 6 encontros | `MAX_FLOORS` em `src/components/DungeonGame.tsx`; `LADDER_TIERS` | `CLAUDE.md` › ⚔️ |
 | Torneio de fim de semana, faixas antes do ranking | `src/utils/tournamentSeason.ts`, `tournamentTiers.ts`; `functions/api/community.js` › `match`, `rank` | **se o PvP for desligado, a linha sai** |
-| Grupo cooperativo por código: "apareceu hoje" | `functions/api/community.js` › `coopCreate`/`coopJoin`/`coopCheckin` | `docs/PLANO-COOP.md` |
+| Guilda por código: "apareceu hoje", fio do dia, Bosque, feira, guerra entre guildas; doação de Bits | `functions/api/community.js` › `coopCreate`/`coopJoin`/`coopCheckin` e rotas de guilda; `docs/PLANO-GUILDA.md`; `STATUS.md` (PR1-PR5, 11/10/2026) | a guerra só pareia se houver 2+ guildas na fila (TTL 2 dias): no beta pequeno aparece "esperando". **Sem mensagem livre entre jogadores.** Se a guilda sair do build, a linha sai da ficha |
+| Assinatura trimestral opcional, só visual, cancela na Play, o resgatado fica | `functions/api/_billing.js` › `PRODUCTS` (`soulmon_cosmetic_quarterly`, `grantTier:null`, `grantCredits:0`); `docs/ASSINATURA-SPEC.md` (D10) | **sem período de teste** (nunca escrever "grátis por X dias"); preço R$ 9,90 por 3 meses é o do Console, a ficha usa "o preço mostrado na Play" para não divergir por moeda. `[conferir no PR da assinatura]` |
 | Janela de descanso + 30 cenas de sono | `src/utils/restWindow.ts` › `DREAM_CATALOG`, `DEFAULT_REST_WINDOW` | premia deitar, nunca dormir bem (`CLAUDE.md` › 🛏️) |
 | Loja com moeda do jogo | `src/utils/shop.ts`; Bits = `gamePoints` | `CLAUDE.md` › 💠 🛒 |
 | Lembretes calam se o dia fechou | `functions/api/_pushTargets.js`; `workers/push-scheduler.js` | `CLAUDE.md` › Arquitetura › Push |
@@ -290,11 +295,11 @@ configuração de hoje (mesma regra de `PLAY-DATA-SAFETY.md` §2.4).
 | Linguagem imprópria | **Não no conteúdo do app**; o chat é gerado por IA em tempo real com cláusula de segurança, sem moderação humana — declarar em "interação" abaixo | `functions/api/chat.js` › SAFETY |
 | Drogas, álcool, tabaco | Não | — |
 | Jogo de azar / apostas simuladas | **Não** — a Nova Leitura é determinística sobre as respostas; nenhum `Math.random` no caminho pago | `src/utils/newReading.ts`; STATUS §3.1 ✅ |
-| Compras digitais | **Sim** — 1 não consumível + 3 consumíveis via Play Billing | `functions/api/_billing.js` › `PRODUCTS` |
-| Os usuários podem interagir entre si | **Sim, limitado**: diretório público de jogadores (apelido + forma), Torneio assíncrono (sem chat), presentes de moeda entre amigos, grupo cooperativo com "apareci hoje". **Não há mensagens entre usuários.** | `functions/api/community.js` › `players`, `match`, `gift`, `coop*` |
+| Compras digitais | **Sim** — 1 não consumível + 3 consumíveis + **1 assinatura** (`soulmon_cosmetic_quarterly`, cosmética, trimestral, renova automaticamente) via Play Billing. Se o questionário perguntar por "compras de itens aleatórios" (caixas): **Não** | `functions/api/_billing.js` › `PRODUCTS`; `docs/ASSINATURA-SPEC.md` |
+| Os usuários podem interagir entre si | **Sim, limitado**: diretório público de jogadores (apelido + forma), Torneio assíncrono (sem chat), presentes de moeda e **doação de Bits** entre amigos/guilda, **guilda** por código (fio do dia, Bosque, feira, **guerra entre guildas**, sombras do pesadelo). **Não há mensagens livres entre usuários.** | `functions/api/community.js` › `players`, `match`, `gift`, `coop*`; funções de guilda (`guild*`) |
 | Compartilha localização | Não | nenhuma permissão de localização (`PLAY-DATA-SAFETY.md` §2.7) |
 | Compartilha informações pessoais com terceiros (via interação) | Só o apelido escolhido, e só se o jogador entrar no diretório | `community.directoryConsent.test.js` |
-| Conteúdo gerado pelo usuário visível a outros | **Apelido, nome da criatura e o nome do grupo cooperativo** (escrito por quem cria o grupo, visto por quem entra pelo código) — texto livre curto; sem moderação prévia | `community.js` › `profile`, `coopCreate` (nome do grupo); política §2 "Grupo cooperativo" |
+| Conteúdo gerado pelo usuário visível a outros | **Apelido, nome da criatura e o nome da guilda/grupo** (escrito por quem cria, visto por quem entra pelo código) — texto livre curto; sem moderação prévia | `community.js` › `profile`, `coopCreate` (nome do grupo); política §2 "Grupo cooperativo" |
 | Chat sem moderação humana | **Sim, com IA** (não entre usuários) — declarar aqui **e** na seção de IA (§5) | `chat.js`; `docs/PLAY-DATA-SAFETY.md` §3b |
 | Anúncios | Não | — |
 | Acesso à câmera/microfone | **Microfone** (recado falado, opcional) | `RECORD_AUDIO` no manifesto; `PLAY-DATA-SAFETY.md` §2.4 |

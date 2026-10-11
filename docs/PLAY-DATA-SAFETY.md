@@ -11,7 +11,7 @@
 > dado pessoal". Cada linha abaixo aponta para o código que a sustenta, então dá
 > para reconferir em vez de acreditar.
 >
-> **Atualizado em:** 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
+> **Atualizado em:** 11/10/2026 (run `beta-play-01`: §2.2 assinatura, §2.4b permissões do manifesto mesclado, §2.5b guilda/guerra/doação/refeições, §2.7 diagnóstico de falhas) · antes: 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
 > essa data — a fonte viva é `public/privacidade.html` e o inventário de eventos
 > em `functions/api/metrics.js`.
 
@@ -69,8 +69,12 @@ usuário escolhe.
 
 | Tipo do Google | Coletado? | Finalidade | Onde |
 |---|---|---|---|
-| **Histórico de compras** | ✅ Sim | Funcionalidades do app (manter o desbloqueio válido e restaurável) | `functions/api/billing.js`, D1 `soulmon-billing` |
+| **Histórico de compras** | ✅ Sim | Funcionalidades do app (manter o desbloqueio válido e restaurável; **a vigência da assinatura cosmética trimestral**) | `functions/api/billing.js`, `_billing.js`, D1 `soulmon-billing` |
 | Dados de pagamento (cartão etc.) | ❌ Não | — | Quem processa é o Google Play; o app **nunca** vê dado de pagamento |
+
+**Assinatura cosmética trimestral** (`soulmon_cosmetic_quarterly`, R$ 9,90 a cada 3 meses, sem período de teste; entra no beta de 11/10/2026). O que o servidor guarda por conta: o **token da compra**, o token vinculado (`linkedPurchaseToken`, quando há troca/reassinatura) e a **data de vigência** (`subUntil`, lida da Play, nunca do cliente). **Não guarda** estado de pagamento, preço, país nem mudança de preço. É a mesma categoria **Histórico de compras** (coletado, não compartilhado, funcionalidades do app, obrigatório para quem assina). O Google nos envia notificações em tempo real (RTDN) sobre a assinatura; elas não carregam dado pessoal além do token, que passa por `_redact.js` nos logs. Especificação: `docs/ASSINATURA-SPEC.md`.
+
+> Na **exclusão de conta**, o token e a vigência da assinatura saem junto do entitlement; o registro `ord:<orderId>` (fiscal, 5 anos, sem identificador de pessoa) segue como já declarado em §1. **[Conferir no PR da assinatura se `account.js` apaga o `subToken`.]**
 
 ### 2.3 Mensagens
 
@@ -111,21 +115,35 @@ usuário escolhe.
 **Declarado na política:** seção **2c** (PT) / **2c** (EN), com destino,
 retenção ("não guardamos o áudio") e como revogar.
 
-**As permissões que o app REALMENTE declara** (conferidas em
-`android/app/src/main/AndroidManifest.xml`, 08/09/2026), para você não ser
-surpreendido pela ficha da loja:
+### 2.4b As permissões que o app REALMENTE tem (manifesto MESCLADO)
 
-| Permissão | Para quê | Aparece na ficha? |
-|---|---|---|
-| `INTERNET` | Save na nuvem, login, chat | Não (normal) |
-| `POST_NOTIFICATIONS` | Lembretes | Sim — diálogo do sistema |
-| `SCHEDULE_EXACT_ALARM` | Lembrete na hora certa | Sim |
-| `RECEIVE_BOOT_COMPLETED` | Reagendar lembretes após reiniciar | Não (normal) |
-| **`ACTIVITY_RECOGNITION`** | **Contador de passos** — ver 2.6 | **Sim, e exige declaração** |
-| **`RECORD_AUDIO`** | **Recado falado no chat** — ver 2.4 | **Sim, e exige declaração** |
+> Medido em 11/10/2026 no `merged_manifests/release/AndroidManifest.xml` do build de
+> `ac5841a33` (QA `beta-play-01`). O manifesto-fonte (`android/app/src/main/AndroidManifest.xml`)
+> declara só 6; o **manifesto mesclado** — o que a Play enxerga no AAB — tem **13**,
+> porque as bibliotecas (Play Billing, Firebase/FCM, Capacitor, plugins) acrescentam as
+> suas. A ficha tem de bater com o mesclado.
+>
+> Reconferir a cada AAB: `Select-String -Path android\app\build\intermediates\merged_manifests\release\AndroidManifest.xml -Pattern "uses-permission"`
 
-> Se o manifesto ganhar uma permissão nova, esta tabela mente e a declaração
-> enviada ao Play fica falsa. Confira antes de cada envio.
+| Permissão (mesclada) | De onde vem | Para quê | Perigosa / exige declaração? | Aparece como dado na ficha? |
+|---|---|---|---|---|
+| `INTERNET` | app | Save na nuvem, login, chat (o app carrega do Worker) | Não (normal) | Não |
+| `ACCESS_NETWORK_STATE` | Firebase / Capacitor | Saber se há rede (tela de erro de rede) | Não (normal) | Não |
+| `POST_NOTIFICATIONS` | app | Lembretes | Sim — diálogo do sistema (Android 13+) | Não coleta por si; o token vai em "IDs" (§2.7) |
+| `SCHEDULE_EXACT_ALARM` | app | Lembrete na hora certa | **Exige declaração de uso de alarme exato na Play Console.** ⚠️ A branch de correções do beta avalia trocar por alarme inexato/remover (pergunta do compliance). **Se for removida do manifesto, apague esta linha e a declaração; se ficar, preencha o formulário de alarmes exatos com "lembretes ao usuário"** | Não |
+| `RECEIVE_BOOT_COMPLETED` | app | Reagendar lembretes após reiniciar | Não (normal) | Não |
+| `WAKE_LOCK` | Firebase Messaging / WorkManager | Manter o aparelho acordado o tempo de entregar uma notificação | Não (normal) | Não |
+| `FOREGROUND_SERVICE` | Capacitor / plugins | Serviço de curta duração de plugin (notificações / passos) | Não perigosa; Android 14 exige tipo de serviço declarado se for usado **[confirmar no merged qual serviço usa]** | Não |
+| `com.google.android.c2dm.permission.RECEIVE` | Firebase Cloud Messaging | Receber o push do FCM | Não (normal) | O token do FCM vai em "IDs do dispositivo" (§2.7) |
+| `com.google.android.providers.gsf.permission.READ_GSERVICES` | Firebase / Play Services | Ler configuração dos Serviços do Google (FCM) | Não (normal) | Não |
+| `com.android.vending.BILLING` | Play Billing Library | Compras e assinatura no app | Não (normal) | "Histórico de compras" (§2.2) |
+| `com.hexervoodoom.soulmon.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | Receivers dinâmicos não exportados (proteção interna do app) | Interna (assinatura do pacote) | Não |
+| **`ACTIVITY_RECOGNITION`** | app | **Contador de passos** — ver 2.6 | **Perigosa; declarar e justificar** | Sim — "Informações de exercícios físicos" |
+| **`RECORD_AUDIO`** | app | **Recado falado no chat** — ver 2.4 | **Perigosa; declarar e justificar** | Sim — "Gravações de voz ou som" |
+
+> Se o manifesto ganhar uma permissão nova (ou uma biblioteca nova a trouxer), esta tabela
+> mente e a declaração enviada ao Play fica falsa. **Confira o mesclado antes de cada envio.**
+> Por isso o Data Safety não pode ser preenchido pelo manifesto-fonte.
 
 ### 2.5 Atividade no app
 
@@ -139,6 +157,24 @@ surpreendido pela ficha da loja:
 > eventos está na seção 4 da política, e há teste conferindo essa lista contra o
 > código). Ainda assim declare "Interações no app: sim" — o Google pergunta se
 > você coleta, não se você identifica.
+
+### 2.5b Guilda, guerra, doação e lembretes das refeições (adicionado em 11/10/2026)
+
+> Estas funções entraram depois da versão de 22/09/2026 deste formulário e a política
+> publicada (`privacidade.html`, 12 menções a guilda) **já as cobria**: o formulário é
+> que estava atrasado. Mesmos tipos do Google de antes; **nenhum tipo novo**, só mais
+> usos dos já declarados.
+
+| Função | O que sai do aparelho / fica no servidor | Tipo do Google (já declarado) | Compartilhado? |
+|---|---|---|---|
+| **Guilda** (criar, entrar por código, "fio do dia", Bosque, feira, sombras do pesadelo) | nome da guilda (texto livre curto, escrito por quem cria; visto por quem entra pelo código), apelido e forma do jogador, adesão, progresso agregado do Bosque; o servidor lê/escreve no KV a cada ação | "Nome de usuário" (§2.1) e "Outras ações geradas pelo usuário" (§2.5). O **nome da guilda** é conteúdo gerado pelo usuário visível a outros (`PLAY-FICHA.md` §4) | Não (fica entre jogadores do mesmo código; não vai a terceiros) |
+| **Guerra** (fila de pareamento entre guildas, 1 por dia, recompensa em seiva) | entrada na fila (guilda + TTL de 2 dias), resultado da rodada | "Outras ações geradas pelo usuário" | Não |
+| **Doação de Bits** entre amigos/guilda | quantidade e quem doou para quem **dentro do jogo**; moeda do jogo, sem dinheiro | "Outras ações geradas pelo usuário" | Não |
+| **Lembretes das refeições** (opt-in, desligado por padrão) | três horários de refeição, deslocamento de fuso e janela de descanso, **guardados junto à inscrição de push** (nada é enviado com a chave desligada); apagados ao desligar ou excluir a conta | "IDs do dispositivo ou outros IDs" (§2.7) e "Outras ações geradas pelo usuário" | Não |
+| **Telemetria nova** `guild_*` e `meal_ritual` | só que o evento aconteceu, com contadores mínimos (ex.: tamanho da roda); **nunca nome, código, hora do dia nem quantidade** | "Interações no app" (§2.5), opcional (desligável) | Não |
+
+Moderação: não há mensagem livre entre usuários. O único texto visível a terceiros é o
+apelido, o nome da criatura e o **nome da guilda**; denúncia por e-mail de contato.
 
 ### 2.6 Saúde e bem-estar
 
@@ -186,7 +222,7 @@ lado certo para errar.
 |---|---|---|
 | Localização aproximada ou precisa | ❌ Não | Nenhuma permissão de localização. `ACTIVITY_RECOGNITION` **não** é localização: ela dá acesso ao contador de passos, não a onde você esteve |
 | **IDs do dispositivo ou outros IDs** | ✅ **Sim** | **Token do FCM** (app Android, `functions/api/fcm-subscribe.js`, chaves `fcm:*`) e **endpoint do Web Push** (PWA/navegador, `functions/api/subscribe.js`, chaves `push:*`). Finalidade: **funcionalidades do app** (entregar lembretes). **Opcional** — só existe com as notificações ligadas e é apagado ao desligá-las ou ao excluir a conta. O registro carrega o **`saveId` (identificador da conta = hash do e-mail)** — **não o e-mail** — justamente para a exclusão de conta conseguir achá-lo e apagá-lo (`functions/api/account.js` › `deletePushSubscriptions`). Não compartilhado (o FCM é o transporte, não um destinatário). O identificador das métricas continua **fora** desta linha: é gerado no aparelho, aleatório, e o servidor o descarta antes de gravar (`functions/api/metrics.js`) |
-| Registros de erro / diagnóstico | ❌ Não | Não há Crashlytics, Sentry ou similar |
+| **Registros de falhas (crash logs) e Diagnóstico** | ✅ **Sim** (desde o beta de 11/10/2026) | **Crash reporting próprio**: o app envia ao nosso Worker (`POST /api/crash`) o tipo da falha, a mensagem/pilha do erro, a tela/rota, a versão do app e do Android e o modelo do aparelho, quando o app trava ou o `ErrorBoundary` captura um erro. **Não é vinculado à conta**: o registro **não leva `saveId`, e-mail nem token**; é redigido por `_redact.js` antes de gravar e expira sozinho **[conferir TTL no PR de crash reporting]**. **Não compartilhado** com terceiros (não há Crashlytics/Sentry: o destino é o nosso KV). Finalidade: **Análise** (corrigir travamentos). Obrigatório/opcional: **[conferir no PR se há opt-out em Configurações -> Seus dados]**; se não houver, declarar **obrigatório** |
 
 > **Por que "sim" (decisão do dono, 21/09/2026 — pergunta #21 do QA geral).**
 > Até essa data este documento dizia "não" e argumentava que o token do FCM
@@ -226,9 +262,11 @@ lado certo para errar.
 - **Informações de exercícios físicos** *(passos — opcional)* ← **não esqueça**
 - **Informações de saúde** *(humor + texto livre — ver 2.6)*
 - **IDs do dispositivo ou outros IDs** *(token FCM / endpoint Web Push — opcional; ver 2.7, decisão de 21/09/2026)*
+- **Registros de falhas / Diagnóstico** *(crash reporting próprio, **não vinculado à conta**, não compartilhado — ver 2.7)*
+- **Histórico de compras** inclui a **assinatura trimestral** (token + vigência — ver 2.2)
 
 **Não coletado:** localização, contatos, fotos, vídeo, arquivos,
-calendário, ID de publicidade, diagnóstico, histórico de pesquisa,
+calendário, ID de publicidade, histórico de pesquisa,
 apps instalados, dados de pagamento, documentos.
 
 > ⚠️ **`áudio` saiu desta lista em 09/09/2026, e o motivo importa.** A tabela do
@@ -328,7 +366,7 @@ suspensão nessa área.
 
 Gatilhos concretos para revisitar este arquivo:
 
-- entrar qualquer provedor novo de IA, análise ou crash;
+- entrar qualquer provedor novo de IA, análise ou crash (o crash reporting próprio de 11/10/2026 já está em 2.7; trocá-lo por Crashlytics/Sentry muda "compartilhado" para sim);
 - o contador de passos passar a usar **Health Connect** em vez do sensor do
   aparelho — aí muda de categoria e passa a exigir conta verificada e política
   dedicada;
