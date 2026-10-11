@@ -1,5 +1,6 @@
 // Cloudflare Worker — Scheduled push notifications for Soulmon
-// Cron triggers: 10h, 16h + 22h (goodnight) — BRT (UTC-3)
+// Cron triggers: 10h, 16h + 22h (goodnight) — BRT (UTC-3) — e, para quem LIGOU o
+// ritmo das refeições, uma passada a cada 30 min (`MEAL_TICK_CRON`).
 //
 // ⚠️ O TEXTO e as HORAS não moram aqui: são de `functions/api/_pushCopy.js`,
 // que é o dono único das três árvores (cliente, worker, cron). Este arquivo é
@@ -21,7 +22,10 @@
 import { sendWebPush } from './webpush.js';
 import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
-import { pushCopy } from '../functions/api/_pushCopy.js';
+import { pushCopy, mealInviteCopy, mealPushKind } from '../functions/api/_pushCopy.js';
+import {
+  MEAL_KEYS, MEAL_TICK_CRON, mealAtTick, localMinutes, inRestArc,
+} from '../functions/api/_mealRhythm.js';
 import { ehTokenFcm } from '../functions/api/_pushIdentity.js';
 
 const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo';
@@ -138,9 +142,153 @@ async function closeSeasonIfDue(date, env) {
   }
 }
 
+/**
+ * O ritmo das refeições SUBSTITUI os convites genéricos de 10h e 16h para quem
+ * o ligou (e, com janela de descanso, o "boa noite" das 22h, que o lembrete de
+ * deitar já faz): somar seria a quarta, a quinta visita ao app. O teto de
+ * `PUSH_DAILY_CAP` é estrutural — são estes três ceder-a-vez e mais nada — e o
+ * teste `workers/mealRhythm.parity.test.js` varre as 48 passadas do dia.
+ */
+export function cedeAoRitmo(sub, brtHour) {
+  if (!sub?.meals) return false;
+  if (brtHour === 10 || brtHour === 16) return true;
+  if (brtHour === 22 && Array.isArray(sub.meals.rest)) return true;
+  return false;
+}
+
+/** Dia local da inscrição (`YYYY-MM-DD`) — semente do convite do dia. */
+function dayKeyLocal(date, tz) {
+  return new Date(date.getTime() + tz * 60_000).toISOString().slice(0, 10);
+}
+
+/**
+ * A notificação de refeição DESTA inscrição neste instante, ou `null`.
+ * `null` quando: não ligou o ritmo, não é hora de refeição para ela, a hora cai
+ * na janela de descanso dela, ou é o dia do nascimento (D0 nunca recebe push).
+ */
+export function mealNotifFor(sub, date) {
+  const m = sub?.meals;
+  if (!m || !Array.isArray(m.t) || !Number.isInteger(m.tz)) return null;
+  const times = {};
+  MEAL_KEYS.forEach((k, i) => {
+    const h = Math.floor(m.t[i] / 60), mm = m.t[i] % 60;
+    times[k] = `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  });
+  const local = localMinutes(date, m.tz);
+  const meal = mealAtTick(local, times);
+  if (!meal) return null;
+  if (inRestArc(m.t[MEAL_KEYS.indexOf(meal)], m.rest)) return null;
+  if (ageDaysOf(sub, date) === 0) return null;
+  const kind = mealPushKind(meal, dayKeyLocal(date, m.tz));
+  return mealInviteCopy(meal, kind, sub.petName, sub.language);
+}
+
+async function entregar(env, label, notifFor, { lazyFcm = false } = {}) {
+  const webPushCounts = { sent: 0, failed: 0, removed: 0 };
+  const fcmCounts = { sent: 0, failed: 0, removed: 0 };
+
+  // ── Web Push (browsers / installed PWA) ──────────────────────────────
+  let vapidJWK;
+  try {
+    vapidJWK = JSON.parse(env.VAPID_JWK);
+  } catch {
+    console.error('VAPID_JWK not configured or invalid JSON — skipping Web Push');
+    vapidJWK = null;
+  }
+
+  if (vapidJWK) {
+    await drainPrefix(env, 'push:', async (sub, name) => {
+      // Revalidação na SAÍDA: as linhas gravadas antes da allowlist entrar em
+      // functions/api/subscribe.js continuam no KV com TTL de um ano. Sem
+      // isto, elas seguiriam sendo alvo de fetch a cada disparo do cron.
+      if (!isAllowedPushEndpoint(sub.endpoint)) {
+        await env.PUSH_SUBSCRIPTIONS.delete(name);
+        return 'removed';
+      }
+      const notif = notifFor(sub);
+      if (!notif) return 'skipped';
+      const result = await sendWebPush(
+        { endpoint: sub.endpoint, keys: sub.keys },
+        notif,
+        vapidJWK,
+        VAPID_PUBLIC_KEY,
+        CONTACT,
+      );
+      if (result.status === 410 || result.status === 404) {
+        await env.PUSH_SUBSCRIPTIONS.delete(name);
+        return 'removed';
+      }
+      return result.ok ? 'sent' : 'failed';
+    }, webPushCounts);
+  }
+
+  // ── FCM (native Android app) ──────────────────────────────────────────
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
+  } catch {
+    console.error('FIREBASE_SERVICE_ACCOUNT not configured or invalid JSON — skipping FCM');
+    serviceAccount = null;
+  }
+
+  if (serviceAccount) {
+    // Nas passadas de hora fixa o token é mintado ANTES de olhar a KV: OAuth
+    // fora do ar tem de estourar o disparo (não silencioso), com o Web Push já
+    // enviado. Já a passada de 30 min das refeições roda 48×/dia e na maioria
+    // delas ninguém tem o que receber — ali mintar à toa é custo puro, e o erro
+    // aparece na primeira entrega real.
+    let accessToken = lazyFcm ? undefined : await getFcmAccessToken(serviceAccount);
+    await drainPrefix(env, 'fcm:', async (sub, name) => {
+      // Revalidação na SAÍDA, do mesmo jeito que o Web Push faz com a
+      // allowlist de endpoint: as linhas gravadas antes de
+      // `functions/api/fcm-subscribe.js` validar o token continuam na KV com
+      // TTL de um ano. Um token torto devolve `INVALID_ARGUMENT` para
+      // SEMPRE, e `INVALID_ARGUMENT` não era caso de remoção — a linha ficava
+      // sendo tentada 3×/dia por um ano inteiro, gastando cota de FCM e
+      // poluindo o contador de falhas que é o único sinal de saúde do canal.
+      if (!ehTokenFcm(sub.token)) {
+        await env.PUSH_SUBSCRIPTIONS.delete(name);
+        return 'removed';
+      }
+      const notif = notifFor(sub);
+      if (!notif) return 'skipped';
+      accessToken ??= await getFcmAccessToken(serviceAccount);
+      const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
+      if (result.ok) return 'sent';
+      // `NOT_FOUND` é o irmão de `UNREGISTERED` na v1 do FCM: o registro não
+      // existe mais do lado do Google. Os dois são permanentes e por TOKEN.
+      //
+      // ⚠️ `INVALID_ARGUMENT` NÃO entra nesta lista de propósito. Ele também
+      // sai quando o defeito é NOSSO (payload malformado por um deploy ruim),
+      // e aí apagar significaria apagar TODAS as inscrições de uma vez. O
+      // token torto — que é o caso legítimo dele — já foi removido acima, por
+      // exame do próprio token, sem depender do que o Google respondeu.
+      if (result.error === 'UNREGISTERED' || result.error === 'NOT_FOUND') {
+        await env.PUSH_SUBSCRIPTIONS.delete(name);
+        return 'removed';
+      }
+      return 'failed';
+    }, fcmCounts);
+  }
+
+  console.log(
+    `[${label}] Push scheduler done — ` +
+    `webpush: sent ${webPushCounts.sent}, failed ${webPushCounts.failed}, removed ${webPushCounts.removed} · ` +
+    `fcm: sent ${fcmCounts.sent}, failed ${fcmCounts.failed}, removed ${fcmCounts.removed}`,
+  );
+}
+
 export default {
   async scheduled(event, env) {
     const date = new Date(event.scheduledTime);
+
+    // A passada de 30 min do RITMO DAS REFEIÇÕES. Só mexe em quem ligou (a
+    // inscrição tem `meals`); o resto sai como 'skipped' sem custo de envio.
+    if (event.cron === MEAL_TICK_CRON) {
+      await entregar(env, `meal tick ${date.toISOString()}`, sub => mealNotifFor(sub, date), { lazyFcm: true });
+      return;
+    }
+
     const brtHour = (date.getUTCHours() - 3 + 24) % 24;
 
     // ⚠️ ANTES do `return` de hora sem notificação declarada: o fechamento da
@@ -157,91 +305,7 @@ export default {
       return;
     }
 
-    const webPushCounts = { sent: 0, failed: 0, removed: 0 };
-    const fcmCounts = { sent: 0, failed: 0, removed: 0 };
-
-    // ── Web Push (browsers / installed PWA) ──────────────────────────────
-    let vapidJWK;
-    try {
-      vapidJWK = JSON.parse(env.VAPID_JWK);
-    } catch {
-      console.error('VAPID_JWK not configured or invalid JSON — skipping Web Push');
-      vapidJWK = null;
-    }
-
-    if (vapidJWK) {
-      await drainPrefix(env, 'push:', async (sub, name) => {
-        // Revalidação na SAÍDA: as linhas gravadas antes da allowlist entrar em
-        // functions/api/subscribe.js continuam no KV com TTL de um ano. Sem
-        // isto, elas seguiriam sendo alvo de fetch a cada disparo do cron.
-        if (!isAllowedPushEndpoint(sub.endpoint)) {
-          await env.PUSH_SUBSCRIPTIONS.delete(name);
-          return 'removed';
-        }
-        const notif = pushCopy(brtHour, sub.petName, sub.language, ageDaysOf(sub, date));
-        if (!notif) return 'skipped';
-        const result = await sendWebPush(
-          { endpoint: sub.endpoint, keys: sub.keys },
-          notif,
-          vapidJWK,
-          VAPID_PUBLIC_KEY,
-          CONTACT,
-        );
-        if (result.status === 410 || result.status === 404) {
-          await env.PUSH_SUBSCRIPTIONS.delete(name);
-          return 'removed';
-        }
-        return result.ok ? 'sent' : 'failed';
-      }, webPushCounts);
-    }
-
-    // ── FCM (native Android app) ──────────────────────────────────────────
-    let serviceAccount;
-    try {
-      serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
-    } catch {
-      console.error('FIREBASE_SERVICE_ACCOUNT not configured or invalid JSON — skipping FCM');
-      serviceAccount = null;
-    }
-
-    if (serviceAccount) {
-      const accessToken = await getFcmAccessToken(serviceAccount);
-      await drainPrefix(env, 'fcm:', async (sub, name) => {
-        // Revalidação na SAÍDA, do mesmo jeito que o Web Push faz com a
-        // allowlist de endpoint: as linhas gravadas antes de
-        // `functions/api/fcm-subscribe.js` validar o token continuam na KV com
-        // TTL de um ano. Um token torto devolve `INVALID_ARGUMENT` para
-        // SEMPRE, e `INVALID_ARGUMENT` não era caso de remoção — a linha ficava
-        // sendo tentada 3×/dia por um ano inteiro, gastando cota de FCM e
-        // poluindo o contador de falhas que é o único sinal de saúde do canal.
-        if (!ehTokenFcm(sub.token)) {
-          await env.PUSH_SUBSCRIPTIONS.delete(name);
-          return 'removed';
-        }
-        const notif = pushCopy(brtHour, sub.petName, sub.language, ageDaysOf(sub, date));
-        if (!notif) return 'skipped';
-        const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
-        if (result.ok) return 'sent';
-        // `NOT_FOUND` é o irmão de `UNREGISTERED` na v1 do FCM: o registro não
-        // existe mais do lado do Google. Os dois são permanentes e por TOKEN.
-        //
-        // ⚠️ `INVALID_ARGUMENT` NÃO entra nesta lista de propósito. Ele também
-        // sai quando o defeito é NOSSO (payload malformado por um deploy ruim),
-        // e aí apagar significaria apagar TODAS as inscrições de uma vez. O
-        // token torto — que é o caso legítimo dele — já foi removido acima, por
-        // exame do próprio token, sem depender do que o Google respondeu.
-        if (result.error === 'UNREGISTERED' || result.error === 'NOT_FOUND') {
-          await env.PUSH_SUBSCRIPTIONS.delete(name);
-          return 'removed';
-        }
-        return 'failed';
-      }, fcmCounts);
-    }
-
-    console.log(
-      `[BRT ${brtHour}h] Push scheduler done — ` +
-      `webpush: sent ${webPushCounts.sent}, failed ${webPushCounts.failed}, removed ${webPushCounts.removed} · ` +
-      `fcm: sent ${fcmCounts.sent}, failed ${fcmCounts.failed}, removed ${fcmCounts.removed}`,
-    );
+    await entregar(env, `BRT ${brtHour}h`, sub =>
+      cedeAoRitmo(sub, brtHour) ? null : pushCopy(brtHour, sub.petName, sub.language, ageDaysOf(sub, date)));
   },
 };

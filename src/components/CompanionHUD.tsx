@@ -172,6 +172,8 @@ interface CompanionHUDProps {
    *  um contador que só cresce, e o `kind` diz QUAL frase. As frases vivem em
    *  `utils/petVoice.ts` (o teste de tom varre lá, não aqui). */
   speakSignal?: { n: number; kind: PetVoiceKind };
+  /** Ritmo das refeições: o cartão da Home pede para abrir a mochila (bump). */
+  openBackpackSignal?: number;
   /** WP3.3 — o nome do pet. B1 (02/10/2026): NÃO é mais desenhado sob o pet
    *  (mora no header da Home, `HomeHud`); só rotula a Mochila. */
   petDisplayName?: string;
@@ -283,6 +285,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   fullSignal = 0,
   healCapSignal = 0,
   speakSignal,
+  openBackpackSignal = 0,
   hauntedWatching = false,
   walkingTo = null,
   daysAway = 0,
@@ -936,6 +939,12 @@ export const CompanionHUD = memo(function CompanionHUD({
     setMochilaOpen(true);
     onBackpackSeen?.();
   };
+  // O cartão da refeição ("Abrir a mochila") abre a mesma mochila do deck.
+  useEffect(() => {
+    if (!openBackpackSignal) return;
+    setMochilaOpen(true);
+    onBackpackSeen?.();
+  }, [openBackpackSignal]);
 
   /* Brincar pelo deck. Célula inerte nem chega aqui (o botão não chama). Sem
      energia = a criatura recusa NO BALÃO — os dois toasts 🎈 do `handlePlay`

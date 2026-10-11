@@ -17,6 +17,7 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { needsWelcomeTour } from './utils/welcomeTour';
+import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
@@ -93,6 +94,8 @@ import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
+import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
+import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
@@ -540,6 +543,7 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
+const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
@@ -676,6 +680,7 @@ const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
 const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
 const WelcomeTour = lazy(() => import('./components/WelcomeTour').then(m => ({ default: m.WelcomeTour })));
+const BuildingIntro = lazy(() => import('./components/BuildingIntro').then(m => ({ default: m.BuildingIntro })));
 const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
 const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
 const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
@@ -915,6 +920,35 @@ export default function App() {
       return next === prev.firstDay ? prev : { ...prev, firstDay: next };
     });
   }, []);
+
+  /* RITMO DAS REFEIÇÕES — qualquer gesto de cuidado (comer, banho, carinho,
+     concluir algo, "dizer oi") atende a janela de refeição aberta, se houver.
+     `markMealDone` é PURA e idempotente (devolve a mesma referência sem janela
+     aberta), então entra direto no updater (footgun 6). NÃO concede nada: o
+     que cada gesto rende continua sendo dele, sob o teto dele. */
+  const isSleepingRefeicao = useRef(isSleeping);
+  isSleepingRefeicao.current = isSleeping;
+  const atenderRefeicao = useCallback((kind: MealInviteKind) => {
+    setGameState(prev => markMealDone(prev, new Date(), kind, isSleepingRefeicao.current));
+  }, []);
+
+  /* Telemetria do ritmo: dispara quando uma janela PASSA a constar como
+     atendida NESTA sessão (comparando com o render anterior) — fora do updater
+     (footgun 6) e sem reagir a save adotado da nuvem (a referência inicial é
+     a do primeiro render). Só vai se a telemetria já tem consentimento: `track`
+     é o mesmo funil de sempre. */
+  const refeicoesAtendidasRef = useRef<string>(`${gameState.mealRitual?.day}|${gameState.mealRitual?.done.join(',')}`);
+  useEffect(() => {
+    const rec = gameState.mealRitual;
+    const chave = `${rec?.day}|${rec?.done.join(',')}`;
+    if (chave === refeicoesAtendidasRef.current) return;
+    const [diaAnterior, anterior = ''] = refeicoesAtendidasRef.current.split('|');
+    refeicoesAtendidasRef.current = chave;
+    const novas = rec ? rec.done.filter(m => rec.day !== diaAnterior || !anterior.split(',').includes(m)) : [];
+    if (novas.length === 1 && rec?.lastKind) {
+      track('meal_ritual', { meal: MEAL_KEYS.indexOf(novas[0]), kind: MEAL_KIND_CODE[rec.lastKind] });
+    }
+  }, [gameState.mealRitual]);
 
   const falar = useCallback((kind: PetVoiceKind) => {
     setSpeakSignal(prev => ({ n: (prev?.n ?? 0) + 1, kind }));
@@ -1873,8 +1907,22 @@ export default function App() {
     setWelcomeTourReplay(false);
   }, [welcomeTourReplay]);
   const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
-  const interstitial: 'welcomeTour' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
+  /* A APRESENTAÇÃO DO PRÉDIO NOVO (`components/BuildingIntro`, 08/10/2026): quando o Vínculo abre um prédio, o NPC dele se
+     apresenta. Segundo da fila, logo depois do tour — e DEPOIS do display de Level Up (`utils/buildingIntro.ts` ›
+     `BUILDING_INTRO_AFTER`). Um por vez: o pendente é "aberto no Vínculo e ainda não visto", sempre o primeiro da ordem.
+     Só numa tela calma (Home ou Mapa), nunca por cima de um jogo.
+     TODO(LevelUpOverlay): o display de Level Up (outro run, intersticial que sobrepõe e só sai ao toque) ainda não está na
+     main. Quando entrar, `levelUpOpen` passa a ser o estado dele — enquanto estiver aberto a apresentação espera; o encaixe
+     e a espera já estão declarados e testados (`buildingIntroReady`). */
+  const levelUpOpen = false;
+  const pendingIntros = useMemo(
+    () => (gameState.buildingIntrosSeen === undefined ? [] : pendingBuildingIntros(gameState.buildingIntrosSeen, bondLevelFor(gameState.totalXP ?? 0))),
+    [gameState.buildingIntrosSeen, gameState.totalXP],
+  );
+  const buildingIntroOpen = buildingIntroReady({ pending: pendingIntros, levelUpOpen, calmView: currentView === 'home' || currentView === 'map' });
+  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
     welcomeTourOpen ? 'welcomeTour'
+    : buildingIntroOpen ? 'buildingIntro'
     : triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
@@ -2727,6 +2775,7 @@ export default function App() {
           const assombrada = isHaunted(task, new Date());
           falar(assombrada ? 'haunted' : rolledRareCheer(Math.random()) ? 'rare' : 'task');
           marcarGestoDoDia('task');
+          atenderRefeicao('tenSeconds');
         });
       });
     }
@@ -3254,6 +3303,7 @@ export default function App() {
     // WP1.3 — só a comida COMUM conta o gesto: o item especial (coraçãozinho,
     // chip) sai por outro caminho e não é o que se está ensinando aqui.
     marcarGestoDoDia('feed');
+    atenderRefeicao('snack');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
@@ -3264,7 +3314,8 @@ export default function App() {
       handleCareEventComplete();
     }
     falar('shower');
-  }, [careEvent, handleCareEventComplete, falar]);
+    atenderRefeicao(careEvent?.type === 'poop' ? 'poop' : 'tenSeconds');
+  }, [careEvent, handleCareEventComplete, falar, atenderRefeicao]);
 
   // ── ADMIN / GM (29/09/2026) ────────────────────────────────────────────────
   // `useAdmin()` vem SÓ da resposta do servidor nesta abertura
@@ -3493,6 +3544,21 @@ export default function App() {
     setPendingSheet({ area: dest.area, lot: dest.lot });
     goTo(areaView(dest.area));
   }, [goTo]);
+
+  /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
+     lote aberta — direto, sem passar por `buildingDestination`, que mandaria o Caderno ao menu de Missões. */
+  const markIntroSeen = useCallback((id: BuildingId) => {
+    setGameState(prev => {
+      const seen = markBuildingIntroSeen(prev.buildingIntrosSeen, id);
+      return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen as string[] };
+    });
+  }, [setGameState]);
+  const handleBuildingIntroGo = useCallback((id: BuildingId) => {
+    markIntroSeen(id);
+    const [area, lot] = id.split('.');
+    setPendingSheet({ area: area as AreaId, lot });
+    goTo(areaView(area as AreaId));
+  }, [markIntroSeen, goTo]);
 
   const goBack = useCallback(() => {
     if (viewBack(currentViewRef.current) === null) return;
@@ -5068,6 +5134,8 @@ export default function App() {
   // no localStorage, PWA + APK davam 2 corações/dia ao mesmo jogador.
   // Bumped when rubbing can't heal because today's cap was reached → pet comments.
   const [healCapSignal, setHealCapSignal] = useState(0);
+  /** Ritmo das refeições: o cartão pede a mochila aberta (bump). */
+  const [backpackSignal, setBackpackSignal] = useState(0);
 
   const handlePet = useCallback(() => {
     // Regra em utils/careRules.ts, compartilhada com o app de desktop. A
@@ -5107,6 +5175,8 @@ export default function App() {
       rubFalouRef.current = true;
       falar('rub');
     }
+    marcarGestoDoDia('pet');
+    atenderRefeicao('pet');
     // O teto é reconferido sobre o `prev` — quem manda é a regra pura, sobre o
     // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
@@ -6531,6 +6601,7 @@ export default function App() {
                 isSleeping={isSleeping}
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
+                openBackpackSignal={backpackSignal}
                 speakSignal={speakSignal}
                 /* WP3.10 — o traço de nascimento chega à VOZ. Ele existia só
                    como efeito de regra e uma linha em Estatísticas: dois pets
@@ -6836,6 +6907,57 @@ export default function App() {
                 // (PRINCÍPIOS §2: aviso é texto; âmbar = convite). É AVISO,
                 // NUNCA BLOQUEIO: a lista inteira continua viva. Última da
                 // fila — é o mais adiável de todos os avisos.
+                /* ── 5b. RITMO DAS REFEIÇÕES ─────────────────────────────
+                   Convite do pet nas três janelas do dia (depois do café, do
+                   almoço e do jantar): UMA coisa pequena, que o jogo já tem.
+                   Posição declarada: depois do recomeço e antes da carga — é
+                   um convite, e convite cede a vez a tudo o que descreve o
+                   DIA. Não cobra: não olha meta, HP nem constância (ver
+                   `utils/mealRhythm.ts`); "Agora não" dispensa a janela, e ela
+                   fecha sozinha em 2 h. Dormindo ou na janela de descanso,
+                   nada abre. */
+                {
+                  const refeicaoA = openInvite(agoraA, {
+                    settings: gameState.mealRhythm,
+                    record: gameState.mealRitual,
+                    restWindow: gameState.rest?.window ?? null,
+                    isSleeping,
+                    playerDayTz: gameState.playerDayTz,
+                  });
+                  if (refeicaoA) {
+                    const comumNaPastinha = Object.keys(gameState.foodInventory).some(
+                      e => !SPECIAL_ITEMS[e] && (gameState.foodInventory[e] ?? 0) > 0,
+                    );
+                    const kindA = pickMicroAction({
+                      poopPending: pendingPoopEvent(gameState) !== null,
+                      // Só convida a comer se comer SERVE: comida comum na pastinha,
+                      // vaga na janela horária e energia com espaço.
+                      canFeed: comumNaPastinha
+                        && feedTimesFor(gameState.careCaps, agoraA.getTime()).length < FOOD_LIMIT_PER_HOUR
+                        && gameState.energyPoints < getMaxEnergyForStage(gameState.evolutionStage),
+                    }, `${playerDayKey(agoraA, gameState.playerDayTz)}|${refeicaoA}`);
+                    avisos.push({
+                      key: 'refeicao',
+                      node: (
+                        <Suspense fallback={null}>
+                          <MealInviteCard
+                            language={language}
+                            petName={getCurrentStageName()}
+                            meal={refeicaoA}
+                            kind={kindA}
+                            onAct={kind => {
+                              if (kind === 'snack') setBackpackSignal(n => n + 1);
+                              else if (kind === 'poop') handleShower();
+                              else { falar(kind === 'pet' ? 'rub' : 'cheer'); atenderRefeicao(kind); }
+                            }}
+                            onSkip={() => setGameState(prev => skipMeal(prev, refeicaoA, new Date()))}
+                          />
+                        </Suspense>
+                      ),
+                    });
+                  }
+                }
+
                 if (isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))) avisos.push({
                   key: 'carga',
                   node: (
@@ -7070,6 +7192,8 @@ export default function App() {
               onOpenGlossary={() => setShowHelpModal(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
+              mealRhythm={gameState.mealRhythm}
+              onChangeMealRhythm={next => setGameState(prev => ({ ...prev, mealRhythm: next }))}
               onRestoreFromCloud={async (id) => {
                 const { cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
                 const state = await cloudLoad(id);
@@ -7489,6 +7613,7 @@ export default function App() {
            mecânica manda. `sleepReminderAt` existia, com teste, e nunca tinha
            sido chamado por ninguém. */
         restWindow={gameState.rest?.window ?? null}
+        mealRhythm={gameState.mealRhythm}
         isSleeping={isSleeping}
         /* #23 — a inscrição de push leva o `saveId` para que apagar a conta
            alcance o push no servidor; muda no login e o manager reenvia. */
@@ -7516,6 +7641,11 @@ export default function App() {
       {interstitial === 'welcomeTour' && (
         <Suspense fallback={null}>
           <WelcomeTour language={language} onDone={handleWelcomeTourDone} />
+        </Suspense>
+      )}
+      {interstitial === 'buildingIntro' && pendingIntros[0] && (
+        <Suspense fallback={null}>
+          <BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]} language={language} onGo={handleBuildingIntroGo} onLater={markIntroSeen} />
         </Suspense>
       )}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (

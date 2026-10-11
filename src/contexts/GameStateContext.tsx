@@ -45,10 +45,12 @@ import { soulmonDisplayName } from '../utils/petName';
 import { normalizeFirstDay } from '../utils/firstDay';
 import { sanitizeReview, type ReviewState } from '../utils/mente/revisao';
 import { sanitizeRefugeInvite, type RefugeInviteState } from '../utils/refugio/convite';
+import { sanitizeMealRhythm, sanitizeMealRitual, type MealRhythmSettings, type MealRitualRecord } from '../utils/mealRhythm';
 import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
+import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import {
   readLocal,
@@ -437,6 +439,10 @@ export interface GameState {
   /** Missão por prédio + materiais (07/10/2026, `utils/buildingQuests.ts`): UM objeto — o dia do jogador, os prédios
    *  visitados/resgatados hoje e o estoque de materiais (0..99). Dia novo zera a parte diária na leitura. */
   buildingQuests?: BuildingQuestState;
+  /** Apresentações de prédio já vistas (08/10/2026, `utils/buildingIntro.ts`): ids `<área>.<lote>`. O NPC se apresenta UMA vez por
+   *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
+   *  save existente nunca re-dispara apresentação do que o jogador já usa. */
+  buildingIntrosSeen?: string[];
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
@@ -479,6 +485,13 @@ export interface GameState {
   /** 🫧 Convite ao Refúgio (30/09/2026): só DATAS e a contagem de dispensas —
    *  nunca o humor que o disparou (dado sensível). Dono: `utils/refugio/convite.ts`. */
   refugeInvite?: RefugeInviteState;
+  /** 🍽️ Ritmo das refeições (`utils/mealRhythm.ts`): horários locais das três
+   *  janelas e os dois interruptores (cartão no app: ligado; push: DESLIGADO,
+   *  opt-in). Mora no save para viajar entre aparelhos. Lixo → padrão. */
+  mealRhythm?: MealRhythmSettings;
+  /** 🍽️ Quais janelas de HOJE já foram atendidas/dispensadas. Do DIA do jogador
+   *  e se esvazia na virada — sem histórico, sem sequência, sem contador. */
+  mealRitual?: MealRitualRecord;
   /** 🧭 Passeio e Travessias (30/09/2026, `docs/REGISTRO-DE-DECISOES.md` §5.6):
    *  regiões abertas, a Travessia escolhida, os "Fiz" guardados, o destino do
    *  Passeio e o interruptor. Só ids, enum e `dayKey` — nada de texto livre,
@@ -1216,6 +1229,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           };
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
+        buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)
@@ -1350,6 +1364,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // derruba o load; save sem o campo entra vazio.
         review: sanitizeReview(loadedState.review),
         refugeInvite: sanitizeRefugeInvite(loadedState.refugeInvite),
+        // Ritmo das refeições: lixo vira o padrão (push DESLIGADO), nunca derruba o load.
+        mealRhythm: sanitizeMealRhythm(loadedState.mealRhythm),
+        mealRitual: sanitizeMealRitual(loadedState.mealRitual),
         // Travessias: lixo é descartado pelo dono (`normalizeCrossings`), nunca derruba o load.
         crossings: normalizeCrossings(loadedState.crossings),
         // Caderno: lixo é descartado, teto de 120 × 2000 (`normalizeEntries`); nunca derruba o load.
@@ -1472,6 +1489,7 @@ function freshGameState(): GameState {
       // ele nao termina. Decisao do dono em 07/09/2026.
       healthPoints: getMaxHPForStage('rookie'),
       maxHealthPoints: getMaxHPForStage('rookie'),
+      buildingIntrosSeen: seedBuildingIntrosSeen(1),
       energyPoints: 0,
       perfectDays: 0,
       totalXP: 0,

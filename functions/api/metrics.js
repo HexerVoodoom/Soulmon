@@ -139,6 +139,8 @@ export const EVENT_SCHEMA = {
   guild_thread: { kind: { min: 0, max: 1 } },
   guild_raid: { outcome: { min: 0, max: 2 } },
   guild_stage: { level: { min: 1, max: 5 } },
+  // Ritmo das refeições — ESPELHO de src/utils/telemetry.ts (há teste de paridade).
+  meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } },
 };
 
 /**
@@ -505,6 +507,15 @@ export function applyAggregate(agg, events) {
     }
     if (record.e === 'sound_off' && p) {
       bump(`sound_off.age_${p.age}`);
+    }
+
+    /* Ritmo das refeições — a pergunta é UMA: o convite é atendido, e por qual
+       micro-ação? Só contagem por (refeição, ação); nunca a hora do dia, nunca
+       quantas janelas passaram sem resposta. Existe para DETECTAR DANO (o
+       convite virou ruído?), nunca para pontuar nem para disparar reengajamento. */
+    if (record.e === 'meal_ritual' && p) {
+      bump(`meal_ritual.meal_${p.meal}`);
+      bump(`meal_ritual.kind_${p.kind}`);
     }
 
     if (record.e === 'week_active') {

@@ -63,6 +63,10 @@ export function AreaScene({ areaId, language, lots, background, notice, children
   return (
     <div
       data-area-scene={areaId}
+      /* A cena NÃO rola (nem por foco): um lote cujo botão passa da borda (o Passeio, `left 76% + width 56%` = 104%) fazia
+         o foco (abrir a folha, devolver o foco ao lote) empurrar a cena 16px para a esquerda — a folha inteira saía
+         junto: sem margem à esquerda, cortada à direita, ✕ fora do lugar. `overflow: hidden` ainda é um scroll container. */
+      onScroll={e => { const el = e.currentTarget; if (el.scrollLeft !== 0) el.scrollLeft = 0; if (el.scrollTop !== 0) el.scrollTop = 0; }}
       style={{
         /* FUNDO FULL SCREEN (pedido do dono, 29/09/2026): a cena é `fixed` a `inset: 0` — cobre a tela
            INTEIRA, por trás do topo (safe-area + `AreaTopBar`) e do rodapé, de borda a borda. O `<main>`

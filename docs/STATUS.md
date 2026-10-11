@@ -25,11 +25,37 @@
 > - **Conclusão real:** o check da lista chama `handleToggleTask` (prop `onCompleteFocusTask`); a Home nunca é reordenada. "Concluir sessão" antes concluía todas as tarefas; **não conclui mais nenhuma**.
 > - **Recompensa extra:** `onPlanReward` → `rollPlanLoot` + `applyFocusLoot` com recibo `plan:<id>`: 1 item, 1×/sessão, máx. 2/dia (`FOCUS_PLAN_DAILY_CAP`), dentro do teto de 8. Sem campo novo no save (fuzz2 intocado).
 > - **Depende do dono:** rever o teto de 2 sessões premiadas/dia e a exigência de ≥1 tarefa na lista para concluir.
+> ## 11/10/2026 — O NPC apresenta o prédio novo ao subir o Vínculo (`claude/npc-apresenta-predio`)
+>
+> - **Pedido do dono:** "sempre que um PRÉDIO NOVO é liberado ao subir de nível, o NPC aparece e se apresenta e introduz o novo prédio."
+> - **Regra:** `utils/buildingIntro.ts` (pura) deriva TUDO de `BUILDING_GATES` (`utils/gates.ts`) — nenhum número de prédio novo; `buildingIntro.test.ts` reprova divergência. Pendente = aberto no Vínculo E fora de `buildingIntrosSeen` (campo novo no save, `fuzz2`: 113 campos); vários de uma vez = fila, um por vez.
+> - **Save velho não re-dispara:** campo ausente/lixo é semeado com o que já está aberto no Vínculo da carga (`hydrateSave`). Jogador novo (Vínculo 1) só vê o que abrir depois.
+> - **Tela:** `BuildingIntro` (lazy, intersticial **segundo da fila**, depois do tour): NPC do lote (busto + nome de `LOT_NPC_VOICE`), 3 balões em 1ª pessoa (copy dos 21 prédios em `buildingIntroCopy.ts`, EN + PT-BR, leis L1..L12), "Ir lá/Go there" abre a folha do lote, "Depois/Later" e Esc só marcam visto; nada fecha sozinho; mudo; `.sm-npc-intro` no bloco canônico de movimento reduzido. Só em Home/Mapa.
+> - ⚠️ **TODO (encaixe com o Level Up):** o `LevelUpOverlay` (outro run) não estava na main. O ponto está declarado e testado: `levelUpOpen` no `App.tsx` (hoje `false`) + `buildingIntroReady` — quando o overlay entrar, ligar `levelUpOpen` ao estado dele; a apresentação então espera ele sair.
+> - **Depende do dono:** nada novo.
+
+> ## 11/10/2026 — Ritmo das refeições: três janelas por dia (café/almoço/jantar), convite e nunca cobrança (`claude/ritmo-refeicoes`)
+>
+> - **Pedido do dono:** incentivos para entrar depois das refeições, 3×/dia, por cocô, comida ou qualquer micro-ação. Decisão e alternativas que perderam: `REGISTRO-DE-DECISOES.md` §28.
+> - **Entrou:** (a) horário/janela/teto em `functions/api/_mealRhythm.js` (dono único: cliente, worker, inscrição) e copy em `_pushCopy.js` (`mealInviteCopy`, EN primeiro, uma tag `meal-<refeição>` por refeição); (b) `src/utils/mealRhythm.ts` + cartão `MealInviteCard` (lazy) no slot de avisos da Home e linhas `MealRhythmRows` nas Configurações (cartão ligado, lembretes DESLIGADOS, 3 horários); campos `mealRhythm` e `mealRitual` no save; (c) cocô alinhado ao pós-refeição SEM mudar a regra (só a distribuição dentro de 07h/10h–15h e +8–10 h); (d) worker: cron `*/30` + `mealNotifFor`, os convites de 10h/16h cedem a quem ligou, teto `PUSH_DAILY_CAP` provado com 48 passadas × 5 fusos; APK: alarmes locais com a mesma tag do FCM; (e) telemetria `meal_ritual` (política de privacidade nos dois idiomas); (f) Guia, Glossário, REGISTRO §28, perguntas ao dono.
+> - **Não entrou, de propósito:** XP/Bits/Emblemas/energia pelo convite (a recompensa é a reação do bicho — pergunta ao dono); push de cocô; texto de "fome" como necessidade.
+> - **Deploy manual necessário:** `wrangler deploy` em `workers/` (novo cron `*/30 * * * *` + `mealNotifFor`). Sem isso o push das refeições não sai — o cartão no app funciona sozinho. Nenhum arquivo Kotlin mudou (o APK usa o `SoulmonAlarm` que já existe).
+> - **Ambientais já vermelhos na `main` antes desta rodada (não são desta):** `orcamentoDeBytes` (dist), `docsManual (a)` (`ledger/bypass.md` sem entrada no MAPA), `iconInventory`/`iconScale` (`OficinaSheet`), `CompanionHUD.cta` (2), `convertToWebp`. O `fuzz2` (112 campos esperando 111) foi corrigido aqui (agora 114 com os dois campos novos).
+> - **Depende do dono:** `PERGUNTAS-DO-DONO.md` › "Ritmo das refeições".
+
+> ## 11/10/2026 — Ajustes: Passeio (UI bugada), prédio do Caderno, ícones do Salão de Jogos
+>
+> - **Passeio — causa do "UI horrível":** o lote do Passeio tem `left 76% + width 56%` = 104% da cena. Abrir a folha e devolver o foco ao lote rolava o contêiner `AreaScene` (`overflow: hidden` ainda rola por foco) **16px** para a esquerda, e a folha inteira ia junto: texto colado na borda esquerda, cortado à direita, ✕ fora do lugar. Corrigido na `AreaScene` (`onScroll` zera `scrollLeft/Top`) — vale para toda área. Travado em `areaShell.render.test.tsx`.
+> - **Card da missão em uso** (`PasseioSheet` › `CardAtivo`): o título dividia a linha com o glifo da área e a legenda "Making" caía embaixo do glifo (desalinhada); o "?" boiava acima. Agora: título sozinho, legenda com glifo + área, "?" à direita. A região guardada usava o emoji 🌄 → ícone do sistema (`flag`). Testes em `PasseioSheet.render.test.tsx`. O fluxo (escolher → 30 min → Concluir → Claim na Home) foi percorrido no Playwright 390×844 e funciona; o NPC já estava sem zoom (`1dbc381`).
+> - **Caderno (Journal):** o santuário do Pântano (verde-escuro sobre clareira verde-escura) sai; entra o chalé `lote-exploracao-caderno-campina.png`, que já estava em disco — amarelo-quente, o prédio que mais contrasta com o fundo da Exploração. Bounds/lote recalculados (`areaLotGeometry`, `playAreaLots` width 40%). **Decisão do dono:** a `-campina` foi uma das artes recusadas na "reforma" de 07/10 (vinha como `Mente/Oficina/Amigos`); se não gostar, as outras candidatas estão em disco e o pedido de arte nova está em `docs/ASSETS-A-GERAR.md`.
+> - **Salão de Jogos:** Corrida com obstáculos e Pedra-papel-tesoura ganham ícone (`icons/games/icon-game-dino.png` e `icon-game-rps.png`, que estavam sem uso), pelados, ao lado do título.
+> - **Depende do dono:** confirmar a arte do Caderno (acima).
+
 > ## 11/10/2026 — Guilda de lançamento, PR1: Torneio ranqueado × Arena livre (`claude/guilda-lancamento`)
 >
 > - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
 > - **Linhas velhas no `CLAUDE.md` (não editei, a pedido):** a linha do 🎪 Rodada do Torneio segue certa; a do ⚔️ Masmorra não é tocada. A linha "Arena" do 🛒/Combate não descreve a escolha de adversários — acrescentar quando o dono quiser.
-> - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §27.
+> - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §28.
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >

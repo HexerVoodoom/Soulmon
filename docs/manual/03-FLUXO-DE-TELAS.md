@@ -588,9 +588,10 @@ o assunto restante virou a constante exportada `SHOP_AND_CURRENCY_PRIMER`.
 A prioridade é **uma expressão só**, no `src/App.tsx` (`const interstitial`):
 
 ```ts
-const interstitial: 'welcomeTour' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare'
+const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare'
   | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
   welcomeTourOpen ? 'welcomeTour'
+    : buildingIntroOpen ? 'buildingIntro'
     : triageTasks ? 'triage'
     : showDailyReport && gameState.lastDayReport ? 'dailyReport'
       : checkInPlanData ? 'checkIn'
@@ -602,7 +603,7 @@ const interstitial: 'welcomeTour' | 'triage' | 'dailyReport' | 'checkIn' | 'grov
                   : 'welcome';
 ```
 
-Ordem: **tour do corvo (07/10/2026, §4.27) → triagem → relatório diário → check-in → marco do Bosque (`groveMilestone`,
+Ordem: **tour do corvo (07/10/2026, §4.27) → apresentação do prédio novo (08/10/2026, §4.28) → triagem → relatório diário → check-in → marco do Bosque (`groveMilestone`,
 Guilda, 29/09/2026) → sonho → pesadelo → onboarding do catálogo → convite de nível
 do catálogo → welcome prompt**. (⚰️ esta lista omitia os dois do catálogo — ver o
 `const interstitial` do `App.tsx`; a régua é `filaDeAvisos.contract.test.ts`, que
@@ -2059,6 +2060,14 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 - **Chega por**: o intersticial `welcomeTour`, **o primeiro da fila 1** (§3.1) — depois do ritual (`SoulmonOnboarding`) e do tutorial de 1ª tarefa (`GameTutorialFlow`), antes do check-in e do priming. Condição (`needsWelcomeTour`): flag local `STORAGE_KEYS.WELCOME_TOUR_SHOWN` (`soulmon-welcome-tour-shown`) ausente E nenhuma conclusão no save (`jaConcluiuAlgo`) — quem já joga não é interrompido. Roda igual na demo (flag local, sem XP). Replay: Configurações › Ajuda › "Replay tutorial" (`onReplayWelcomeTour`), sem gravar nada. Sem campo novo no save.
 - **Estados**: oito cartões, `WelcomeTour` (`RitualDialog` z-200). Parte 1 (básico): boas-vindas · hábitos e tarefas · por que importam (comida/energia, dia completo — meta inicial lida de `FORM_REQUIREMENTS.rookie.required`) · evolução manual · cuidado em uma frase. Parte 2 (mapa): Laboratório/Mercado/Arena · Jogos/Exploração/Hall · Missões (ícone do canto da Home) e Mochila (entre os cuidados). Os cartões do mapa são texto: o tour NÃO navega o app.
 - **Sai para**: "Let's go" no último = `finished`; "Skip" (sempre visível) ou Esc = `skipped`. Os dois gravam a MESMA flag, uma vez; pular nunca repete nem cobra. Texto só em EN por enquanto (`{ en }`, fallback para pt-BR). Muda (R-NOVA). Dono: `src/components/WelcomeTour.tsx`, `src/utils/welcomeTour.ts`.
+
+### 4.28 O NPC apresenta o prédio novo <a id="npc-apresenta-predio"></a>
+
+- **Chega por**: o intersticial `buildingIntro`, **o segundo da fila 1** (§3.1), logo depois do tour. Condição (`buildingIntroReady`): há prédio PENDENTE (aberto no Vínculo atual E fora de `buildingIntrosSeen`), nenhum display de Level Up aberto (`levelUpOpen` — hoje `false`, ⚠️ TODO: ligar ao `LevelUpOverlay` quando ele entrar na main; a espera já é regra e está testada) e a tela é a Home ou o Mapa (nunca por cima de um jogo).
+- **Fonte única**: a tabela prédio→Vínculo é `BUILDING_GATES` (`utils/gates.ts`), a MESMA que tranca o lote no Mapa; `utils/buildingIntro.ts` deriva dela (nenhum número próprio) e `buildingIntro.test.ts` reprova divergência. Vários prédios abertos juntos viram fila, um por vez, do Vínculo mais cedo ao mais tarde (`BUILDING_INTRO_ORDER`).
+- **Save**: `buildingIntrosSeen?: string[]` (ids `<área>.<lote>`). Campo ausente/lixo na carga é **semeado** com tudo que já está aberto no Vínculo daquela carga (`sanitizeBuildingIntrosSeen`, no `hydrateSave`): save existente nunca re-dispara apresentação de prédio que o jogador já usa; jogador novo (Vínculo 1) só vê o que abrir depois.
+- **Estados**: `BuildingIntro` (`RitualDialog` z-200): título = nome do prédio; o NPC do lote (busto de `lotNpcArt`, nome de `LOT_NPC_VOICE`) fala **três balões** em primeira pessoa — quem é · o que se faz ali · convite —, um por toque em "Next/Próximo"; texto em `utils/buildingIntroCopy.ts` (EN base + PT-BR, os 21 prédios), escrito sob L1..L12.
+- **Sai para**: "Go there/Ir lá" (último balão) grava o visto e abre a ÁREA com a folha do lote aberta (`pendingSheet`, direto — não passa por `buildingDestination`, que mandaria o Caderno ao menu de Missões); "Later/Depois" (todo passo) e Esc gravam o MESMO visto. Nada fecha sozinho; a apresentação nunca volta. Muda e sem recompensa (R-NOVA); movimento reduzido para a ENTRADA do busto (`.sm-npc-intro`, bloco canônico) e mantém a pausa. Dono: `src/components/BuildingIntro.tsx`, `src/utils/buildingIntro.ts`.
 
 ### 4.25 Superfícies globais (montadas uma vez, cobrem tudo)
 

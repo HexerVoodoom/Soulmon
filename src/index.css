@@ -5789,6 +5789,8 @@ select:focus-visible {
   .sm-oficina-bar { transition: none !important; }
   /* Tour do corvo: o corvo fica parado, os cartões esperam o toque do mesmo jeito. */
   .sm-corvo-bob { animation: none !important; }
+  /* Apresentação do prédio novo: o busto do NPC aparece parado; os balões esperam o toque do mesmo jeito. */
+  .sm-npc-intro { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
   .sm2-grove-bob { animation: none !important; }
   /* Feira da Guilda: o FX do fenômeno fica parado. */
@@ -6376,6 +6378,14 @@ body {
   50% { transform: translateY(-3px); }
 }
 .sm-corvo-bob { animation: sm-corvo-bob 2.4s ease-in-out infinite; }
+
+/* Apresentação do prédio novo (`BuildingIntro`): o busto do NPC sobe e aparece de uma vez, uma só entrada.
+   Parado quando o movimento é reduzido — a regra mora no bloco canônico. */
+@keyframes sm-npc-intro {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.sm-npc-intro { animation: sm-npc-intro .35s ease-out both; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    KIT VETOR — `components/pixel/PixelKit.tsx` sobre `--sm2-*` (16/09/2026)

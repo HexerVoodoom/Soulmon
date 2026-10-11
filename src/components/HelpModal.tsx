@@ -21,6 +21,7 @@ import { DREAM_CATALOG } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
+import { MEAL_WINDOW_MIN, PUSH_DAILY_CAP } from '../utils/mealRhythm';
 
 /**
  * GLOSSÁRIO — o que a palavra na tela quer dizer
@@ -86,6 +87,11 @@ const TERMS: Term[] = [
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
     descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Soulsmith in the Market. Pieces come from building missions (level 1) and are parts of your soul, refined there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
     descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Soulsmith, no Mercado. As peças vêm das missões dos prédios (nível 1) e são partes da sua alma, aprimoradas lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
+  },
+  {
+    icon: '🍽️', en: 'Meal check-ins', pt: 'Convites das refeições',
+    descEn: `After breakfast, lunch and dinner your Soulmon may ask for one small thing — a pat, a rinse, a snack — for ${MEAL_WINDOW_MIN / 60} hours. No points, no count; skipping is free. Reminders are off until you turn them on in Settings (up to ${PUSH_DAILY_CAP} a day, never in your rest window).`,
+    descPt: `Depois do café, do almoço e do jantar, seu Soulmon pode pedir uma coisa pequena — um carinho, um banho, uma comidinha — por ${MEAL_WINDOW_MIN / 60} horas. Sem pontos, sem contagem; pular não custa nada. Os lembretes ficam desligados até você ligar nas Configurações (no máximo ${PUSH_DAILY_CAP} por dia, nunca na sua janela de descanso).`,
   },
   {
     icon: '🥚', en: 'Rebirth', pt: 'Renascimento',
