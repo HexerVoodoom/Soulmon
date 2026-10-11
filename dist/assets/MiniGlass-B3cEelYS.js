@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:dist/assets/MiniGlass-Jloylcth.js
-import{j as e}from"./index-CcR_7H_P.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
-========
-import{j as e}from"./index-C226M14s.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
->>>>>>>> 26e4a9fab (feat(embed): /embed serves the local demo for the portfolio iframe):dist/assets/MiniGlass-B3cEelYS.js
