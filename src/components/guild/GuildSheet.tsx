@@ -52,6 +52,7 @@ import {
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
 import { donatableItems } from '../../utils/guildHouse';
+import { isMissionAway, type GuildMissionState } from '../../utils/guildMission';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
 import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
@@ -111,6 +112,8 @@ interface GuildSheetProps {
     onSpend: (bits: number) => void;
     onSlot: (item: string | null) => void;
   };
+  /** A MISSÃO (PR3, ex-Feira): o estado da ida do Solmon (no save) e o gesto de mandá-lo. */
+  missao?: { state: GuildMissionState | null; onSend: () => void };
 }
 
 /** A Clareira SEM roda: o chão de partida, sem membro, sem estágio nem slot marcado (plano §5). */
@@ -130,7 +133,7 @@ type Load =
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -204,6 +207,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     // Cenário do Bosque só com a confirmação do servidor (`mine.groveScenes`) — ficam com quem sai (G12).
     if (load.guild?.mine.groveScenes) onScenesRef.current?.(groveSceneIds(load.guild.bosque.stageIndex));
   }, [load]);
+
+  // A MISSÃO voltou (o App encerrou a ida): relê a vista para mostrar o fenômeno já atualizado.
+  const missaoAtiva = !!missao?.state;
+  const missaoAntes = useRef(missaoAtiva);
+  useEffect(() => {
+    if (missaoAntes.current && !missaoAtiva) void carregar(true);
+    missaoAntes.current = missaoAtiva;
+  }, [missaoAtiva, carregar]);
 
   // A CASA: o save acompanha o slot que o SERVIDOR diz (item em uso na guilda não vale no cenário pessoal).
   // Sem roda, o slot acabou e o item volta. Idempotente — pode rodar a cada vista.
@@ -621,6 +632,20 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             />
           )}
 
+          {g.raid && (
+            <SalaFeira
+              guild={g}
+              t={t}
+              language={language}
+              ocupado={ocupado}
+              reducedMotion={reducedMotion}
+              resgate={null}
+              resgateAberto={!!(rewards?.pending[0] || colhido)}
+              onRodada={() => undefined}
+              missao={missao ?? { state: null, onSend: () => undefined }}
+            />
+          )}
+
           <SalaRoda
             guild={g}
             t={t}
@@ -1002,9 +1027,11 @@ function SalaMural({ guild, t, language, marcos }: {
  * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
  * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
  */
-function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada }: {
+function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
   resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
+  /** No Salão (PR3) a rodada é a MISSÃO: mandar o Solmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
+  missao?: GuildSheetProps['missao'];
 }) {
   const raid = guild.raid;
   // Telemetria de leitura (1 = viu dissipada, 2 = viu recuou): uma vez por semana e estado.
@@ -1042,9 +1069,10 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           Honra) saiu da sala e mora atrás do "?" ao lado do nome do fenômeno. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <h3 className="sm2-grove-stage" data-feira-fenomeno style={{ margin: 0 }}>{nome}</h3>
-        <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona a Feira' : 'How the Fair works'} align="right" style={{ marginRight: -8 }}>
-          <span data-feira-legenda style={{ display: 'block' }}>{t('guild.feira.legenda')}</span>
-          <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>
+        <InfoTip language={language} label={missao ? (language === 'pt-BR' ? 'Como funciona a missão' : 'How the mission works') : (language === 'pt-BR' ? 'Como funciona a Feira' : 'How the Fair works')} align="right" style={{ marginRight: -8 }}>
+          {missao && <span data-missao-regra style={{ display: 'block' }}>{t('guild.missao.regra')}</span>}
+          <span data-feira-legenda style={{ display: 'block', marginTop: missao ? 6 : 0 }}>{t('guild.feira.legenda')}</span>
+          {!missao && <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>}
           <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
@@ -1055,7 +1083,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
         </p>
       )}
-      {!dissipada && (
+      {!dissipada && !missao && (
         <button
           type="button"
           data-feira-rodada
@@ -1070,6 +1098,25 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
+      {!dissipada && missao && (() => {
+        const fora = isMissionAway(missao.state, Date.now());
+        const hora = missao.state ? new Date(missao.state.returnAt).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+        if (fora) return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora })}</p>;
+        if (raid.hitToday) return <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-feita>{t('guild.missao.feita')}</p>;
+        return (
+          <button
+            type="button"
+            data-missao-mandar
+            disabled={ocupado || !!missao.state}
+            aria-disabled={ocupado || missao.state ? true : undefined}
+            onClick={missao.onSend}
+            className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
+          >
+            <Icon name="search" size={20} />
+            {t('guild.missao.mandar')}
+          </button>
+        );
+      })()}
     </section>
   );
 }

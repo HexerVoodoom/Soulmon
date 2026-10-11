@@ -65,6 +65,12 @@ export const GUILD_COPY = {
   'guild.casa.slot.nenhum': ['Você não tem itens livres para pôr.', 'You have no free items to place.'],
   'guild.casa.slot.ok': ['Seu item está na casa.', 'Your item is in the house.'],
   'guild.casa.slot.volta': ['Seu item voltou para você.', 'Your item came back to you.'],
+  // ── A MISSÃO (guilda-lancamento PR3): o antigo circo/Feira vira investigação do Solmon ──
+  'guild.missao.titulo': ['Missão', 'Mission'],
+  'guild.missao.mandar': ['Mandar investigar', 'Send to investigate'],
+  'guild.missao.fora': ['Seu Soulmon foi investigar. Volta às {hora}.', 'Your Soulmon went to investigate. Back at {hora}.'],
+  'guild.missao.feita': ['Hoje a roda já ouviu a sua parte.', 'The circle has already heard your part today.'],
+  'guild.missao.regra': ['Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia.', 'Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day.'],
   'guild.lote.hall.label': ['Salão da Guilda', 'Guild Hall'],
   'guild.lote.hall.aria': ['Entrar no Salão da Guilda', 'Enter the Guild Hall'],
   'guild.lote.feira.label': ['Feira', 'Fair'],

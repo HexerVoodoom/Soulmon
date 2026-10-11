@@ -26,6 +26,18 @@ export const CASA_BITS_POR_PONTO = 10;
 export const CASA_BITS_POR_DIA = 200;
 /** Menor doação aceita (múltiplo de `CASA_BITS_POR_PONTO`). */
 export const CASA_BITS_MIN = 10;
+/**
+ * Seiva de UMA missão: cresce com o LEVEL do Solmon (`stagePower` 1..5) e com o tamanho da roda ativa
+ * (pedido do dono: "mais membros e mais level = mais pontos"). 4 → 17; sempre inteiro, ≥ 1.
+ * @param {number} power `stagePower` do estágio (1..5)
+ * @param {number} ativos membros ativos da roda (1..12)
+ */
+export function pontosDeMissao(power, ativos) {
+  const p = Math.min(5, Math.max(1, Math.floor(Number(power) || 1)));
+  const n = Math.min(12, Math.max(1, Math.floor(Number(ativos) || 1)));
+  return Math.max(1, Math.round(4 * (1 + 0.25 * (p - 1)) * (1 + 0.1 * (n - 1))));
+}
+
 /** Teto de pontos por fonte e dia, para missão/guerra (o chamador já limita por dia; defesa em profundidade). */
 export const CASA_PTS_FONTE_DIA_MAX = 60;
 

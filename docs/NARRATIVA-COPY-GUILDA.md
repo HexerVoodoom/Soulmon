@@ -268,6 +268,16 @@
 | `guild.help.casa.termo` | Casa | House | HelpModal, glossário | L12 |
 | `guild.help.casa.def` | A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário. | The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene. | HelpModal, glossário | L12 |
 
+## 13. A Missão (guilda-lancamento PR3, 11/10/2026)
+
+| chave | PT-BR | EN | onde usa | lei |
+|---|---|---|---|---|
+| `guild.missao.titulo` | Missão | Mission | GuildSheet, título da seção (a antiga Feira) | L12 |
+| `guild.missao.mandar` | Mandar investigar | Send to investigate | botão que manda o Solmon | L12 |
+| `guild.missao.fora` | Seu Soulmon foi investigar. Volta às {hora}. | Your Soulmon went to investigate. Back at {hora}. | estado "fora" (horário, nunca contagem regressiva) | L12 |
+| `guild.missao.feita` | Hoje a roda já ouviu a sua parte. | The circle has already heard your part today. | missão de hoje já voltou (sem cobrança) | L12 |
+| `guild.missao.regra` | Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia. | Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day. | atrás do "?" da seção | L10, L12 |
+
 **Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 

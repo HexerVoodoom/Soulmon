@@ -555,7 +555,10 @@ describe('salas: a Feira e o Salão não se misturam', () => {
     expect(screen.queryByText(PT('guild.sair.botao'))).toBeNull();
     cleanup();
     await montar({ room: 'salao' });
-    expect(document.querySelector('[data-guild-room="feira"]')).toBeNull();
+    // PR3: no Salão a Feira é a MISSÃO (mesma sala `feira`, com o botão de mandar o Solmon).
+    expect(document.querySelector('[data-guild-room="feira"]')).toBeTruthy();
+    expect(document.querySelector('[data-missao-mandar]')).toBeTruthy();
+    expect(document.querySelector('[data-feira-rodada]')).toBeNull();
     expect(document.querySelector('[data-guild-room="bosque"]')).toBeTruthy();
   });
 
@@ -578,31 +581,12 @@ describe('o lote Feira da Arena abre a sala Feira, e o voltar fecha a folha cert
     <AreaView {...({ area: 'arena', language: 'pt-BR', guild: { saveId: 'save-12345678', metaDoDiaCumprida: true }, tournament: {}, ownership: {}, actions: {} } as unknown as AreaViewProps)} />
   );
 
-  it('o lote `feira` da Arena (e só ele) abre a Feira; não existe mais o lote `guilda` na Arena', async () => {
+  it('PR3: a Arena não tem mais lote `feira` nem `guilda` — a Feira virou a Missão do Salão', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista());
     const r = renderWithCss(arena());
     expect(r.container.querySelector('[data-area-lot="guilda"]')).toBeNull();
-    const lote = r.container.querySelector('[data-area-lot="feira"]') as HTMLElement;
-    expect(lote.getAttribute('aria-label')).toBe(PT('guild.lote.feira.aria'));
-    fireEvent.click(lote);
-    await waitFor(() => expect(visor()).toBeTruthy());
-    expect(document.querySelector('[data-guild-room-open="feira"]')).toBeTruthy();
-    expect(document.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain(PT('guild.npc.feira'));
-    expect(document.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Fanfare');
-  });
-
-  it('o voltar do Android fecha a Feira e devolve o foco ao lote', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista());
-    const r = renderWithCss(arena());
-    const lote = r.container.querySelector('[data-area-lot="feira"]') as HTMLElement;
-    lote.focus();
-    fireEvent.click(lote);
-    await waitFor(() => expect(visor()).toBeTruthy());
-    let consumiu = false;
-    await act(async () => { consumiu = closeTopBackLayer(); });
-    expect(consumiu).toBe(true);
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(document.activeElement).toBe(lote);
+    expect(r.container.querySelector('[data-area-lot="feira"]')).toBeNull();
+    expect(r.container.querySelector('[data-area-lot="torneio"]')).not.toBeNull();
   });
 });
 

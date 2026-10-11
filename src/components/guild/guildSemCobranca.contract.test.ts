@@ -146,7 +146,7 @@ describe('copy do Bosque, dos gestos, do marco e do Mural', () => {
   it('os placeholders permitidos são só {n} (vagas/membros), {estagio}, {data} e {gesto} — nunca de pessoa ou de quantidade de quem veio', () => {
     for (const [k, [pt, en]] of entradas) {
       for (const txt of [pt, en]) {
-        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas', 'bits'], `${k}: {${m[1]}}`).toContain(m[1]);
+        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas', 'bits', 'hora'], `${k}: {${m[1]}}`).toContain(m[1]);
       }
     }
     // {estagio} é NOME de estágio; nenhuma chave de estágio/gesto/marco/mural leva {n}
@@ -328,14 +328,10 @@ describe('copy da Feira e do glossário (B2)', () => {
     expect(pt).toContain('bosque segue como estava');
   });
 
-  it('a fala do NPC da Feira é a do documento, e a Feira tem o NPC Fanfare (o Salão é da Aurea desde 07/10/2026)', async () => {
+  it('a fala `guild.npc.feira` segue na copy (PR3: sem lote na Arena; o Salão é da Aurea)', async () => {
     const { lotNpcVoice } = await import('../../utils/areaNpcVoice');
-    for (const [lang, i] of [['pt-BR', 0], ['en-US', 1]] as const) {
-      const v = lotNpcVoice('arena', 'feira', lang);
-      expect(v.name).toBe('Fanfare');
-      expect(v.line).toBe(GUILD_COPY['guild.npc.feira'][i]);
-      expect(lotNpcVoice('hall', 'guilda', lang).name).toMatch(/Aurea/);
-    }
+    expect(GUILD_COPY['guild.npc.feira'][0].length).toBeGreaterThan(10);
+    for (const lang of ['pt-BR', 'en-US'] as const) expect(lotNpcVoice('hall', 'guilda', lang).name).toMatch(/Aurea/);
   });
 
   it('o glossário e o guia leem a copy da tabela e as CONSTANTES (nenhum número escrito à mão)', () => {

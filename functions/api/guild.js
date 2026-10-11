@@ -46,9 +46,9 @@ import {
   ultimoDiaDaSemana, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
   idOpacoDoMembro, lerCartoes, renovarCartao, fiosDosCartoes, checkinsDoCartao, gestosDoCartao, fioDoCartao, golpesDoCartao,
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
-  marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado,
+  marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado, membrosAtivos,
 } from './_coop.js';
-import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa } from './_casa.js';
+import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -464,7 +464,8 @@ export async function handleGuild({ request, env }) {
     if (semana < semanaDoDia(new Date().toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro('raid closed', 409);
     const antes = await lerGolpes(env, g.id, semana, id);
     if (antes.days.includes(hoje)) return erro('daily limit', 429);
-    const feira = await resolverFeira(env, g, semana, hoje, await lerCartoes(env, g));
+    const cartoesDaRoda = await lerCartoes(env, g);
+    const feira = await resolverFeira(env, g, semana, hoje, cartoesDaRoda);
     if (feira.cleared) return erro('raid closed', 409);
     const perfil = await getProfile(env, id);
     const dano = raidDamageFor(stagePower(perfil?.stage));
@@ -475,6 +476,9 @@ export async function handleGuild({ request, env }) {
     );
     // A-1: o direito ao resgate mora com a PESSOA, não com a guilda.
     await marcarParticipacao(env, g.id, id, semana, hoje);
+    // A MISSÃO também rega a CASA (PR3): seiva que cresce com o level do Solmon e com o tamanho da roda ativa.
+    // Escreve só a chave pessoal da casa; o servidor decide o valor (o cliente nunca manda pontos).
+    await somarPontos(env, g.id, id, 'missao', pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
     return json({ landed: true, [chave]: await montar(g, id, hoje) });
   }

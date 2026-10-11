@@ -90,3 +90,28 @@ describe('a casa da guilda', () => {
     expect(normalizarCasa({ pts: { doacao: -3, missao: 'x' }, slot: '!!' })).toEqual({ v: 1, day: null, bitsToday: 0, pts: { doacao: 0, missao: 0, guerra: 0 }, slot: null });
   });
 });
+
+describe('a missão rega a casa', () => {
+  it('pontosDeMissao cresce com o level e com a roda, é inteiro e fica entre 4 e 17', async () => {
+    const { pontosDeMissao } = await import('./_casa.js');
+    expect(pontosDeMissao(1, 1)).toBe(4);
+    expect(pontosDeMissao(5, 12)).toBe(17);
+    for (let p = 1; p < 5; p++) expect(pontosDeMissao(p + 1, 4)).toBeGreaterThan(pontosDeMissao(p, 4));
+    for (let n = 1; n < 12; n++) expect(pontosDeMissao(3, n + 1)).toBeGreaterThanOrEqual(pontosDeMissao(3, n));
+    expect(Number.isInteger(pontosDeMissao(2.7, 5.5))).toBe(true);
+    expect(pontosDeMissao(NaN, NaN)).toBe(4);
+  });
+  it('voltar da missão (guildRaidHit) soma seiva na casa, uma vez por dia', async () => {
+    const { e } = await setup();
+    // Chega no estágio 1 com 40 pontos: 10 missões não cabem em 1 dia, então injeta 36 por fonte direta e fecha com a missão real.
+    const g = await vista(e, A);
+    const { somarPontos } = await import('./_casa.js');
+    await somarPontos(e, g.id, B, 'missao', 36);
+    await call(e, 'guildCheckin', { body: { id: B } });
+    expect((await vista(e, A)).casa.nivel).toBe('fagulha');
+    const r = await call(e, 'guildRaidHit', { body: { id: A } });
+    expect(r.status).toBe(200);
+    expect((await vista(e, A)).casa.nivel).toBe('haste');
+    expect((await call(e, 'guildRaidHit', { body: { id: A } })).status).toBe(429);
+  });
+});
