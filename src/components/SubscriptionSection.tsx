@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import type { Language } from '../utils/i18n';
-import { isBillingAvailable, getSubscriptionOffer, purchaseSubscription, type SubscriptionOffer } from '../utils/playBilling';
+import { isBillingAvailable, getSubscriptionOffer, purchaseSubscription, useStoreOpen, billingDisabledMessage, type SubscriptionOffer } from '../utils/playBilling';
 import {
   SUBSCRIPTION_SKU, manageSubscriptionUrl, subscriptionDisclosure,
   setSubscriptionFromEntitlement, useSubscriptionStatus,
@@ -23,6 +23,9 @@ export function SubscriptionSection({ language }: { language: Language }) {
   const isPt = language === 'pt-BR';
   const status = useSubscriptionStatus();
   const available = isBillingAvailable();
+  /** Kill-switch `BILLING_DISABLED`: esconde o "Assinar"; gerenciar continua. */
+  const lojaAberta = useStoreOpen();
+  const lojaFechada = available && lojaAberta === false;
   /** `undefined` = ainda consultando; `null` = a Play não deu preço. */
   const [offer, setOffer] = useState<SubscriptionOffer | null | undefined>(available ? undefined : null);
   const [busy, setBusy] = useState(false);
@@ -99,7 +102,11 @@ export function SubscriptionSection({ language }: { language: Language }) {
         </p>
       )}
 
-      {available && !status.active && disclosure && (
+      {lojaFechada && !status.active && (
+        <p data-subscription-closed style={{ ...sm2Hint, margin: 0 }}>{billingDisabledMessage(isPt)}</p>
+      )}
+
+      {available && !lojaFechada && !status.active && disclosure && (
         <>
           <div data-subscription-disclosure style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {disclosure.map(line => <p key={line} style={{ ...sm2Hint, margin: 0 }}>{line}</p>)}

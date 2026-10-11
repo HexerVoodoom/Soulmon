@@ -11,9 +11,11 @@ vi.mock('../utils/playBilling', () => ({
   isBillingAvailable: vi.fn(() => true),
   getSubscriptionOffer: vi.fn(async () => ({ price: 'R$ 9,90', period: 'P3M' })),
   purchaseSubscription: vi.fn(),
+  useStoreOpen: vi.fn(() => true),
+  billingDisabledMessage: (isPt: boolean) => (isPt ? 'A lojinha está fechada por um tempinho' : 'The shop is closed for a little while'),
 }));
 
-import { isBillingAvailable, getSubscriptionOffer, purchaseSubscription } from '../utils/playBilling';
+import { isBillingAvailable, getSubscriptionOffer, purchaseSubscription, useStoreOpen } from '../utils/playBilling';
 import { SubscriptionSection } from './SubscriptionSection';
 import { MercadoStallSheet } from './mercado/MercadoSheets';
 import { SUBSCRIPTION_ITEMS } from '../utils/shop';
@@ -24,6 +26,18 @@ beforeEach(() => {
   vi.mocked(isBillingAvailable).mockReturnValue(true);
   vi.mocked(getSubscriptionOffer).mockResolvedValue({ price: 'R$ 9,90', period: 'P3M' });
   vi.mocked(purchaseSubscription).mockReset();
+  vi.mocked(useStoreOpen).mockReturnValue(true);
+});
+
+describe('kill-switch BILLING_DISABLED na tela da assinatura', () => {
+  it('loja fechada: o "Assinar" SOME, a mensagem amigável aparece e "Gerenciar" continua', async () => {
+    vi.mocked(useStoreOpen).mockReturnValue(false);
+    renderWithCss(<SubscriptionSection language="pt-BR" />);
+    await waitFor(() => expect(document.querySelector('[data-subscription-closed]')).toBeTruthy());
+    expect(document.querySelector('[data-subscription-closed]')!.textContent).toMatch(/lojinha está fechada/);
+    expect(document.querySelector('[data-subscription-subscribe]')).toBeNull();
+    expect(document.querySelector('[data-subscription-manage]')).toBeTruthy();
+  });
 });
 
 describe('Configurações — SubscriptionSection', () => {

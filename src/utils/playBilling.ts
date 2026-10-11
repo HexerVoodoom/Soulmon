@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { fetchServerConfig } from './serverConfig';
 import { verifyPurchase, type Entitlement } from './entitlements';
 import { readLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
@@ -80,6 +82,38 @@ export function isBillingAvailable(): boolean {
   return getPlugin() !== null;
 }
 
+/**
+ * KILL-SWITCH `BILLING_DISABLED` (BETA-CONTINGENCIA §0). `isBillingAvailable`
+ * continua dizendo só "há plugin" — RESTAURAR precisa funcionar com a loja
+ * fechada. Compra NOVA consulta `/api/config` antes de abrir a Play: com a loja
+ * fechada nada é cobrado. O servidor recusa de novo (`billing-disabled`) por
+ * garantia. Só consulta a rede quando há plugin (app Android).
+ */
+export async function isStoreOpen(): Promise<boolean> {
+  if (!getPlugin()) return false;
+  const { billingDisabled } = await fetchServerConfig();
+  return !billingDisabled;
+}
+
+/** Texto amigável da loja fechada (mesmo do servidor, `_killSwitch.js`). */
+export function billingDisabledMessage(isPt: boolean): string {
+  return isPt
+    ? 'A lojinha está fechada por um tempinho enquanto ajeitamos umas coisas. Nada foi cobrado — tente de novo mais tarde.'
+    : 'The shop is closed for a little while as we tidy things up. Nothing was charged — please try again later.';
+}
+
+/** Hook para ESCONDER botões de compra nova. `null` = ainda consultando. */
+export function useStoreOpen(): boolean | null {
+  const [open, setOpen] = useState<boolean | null>(() => (getPlugin() ? null : false));
+  useEffect(() => {
+    if (!getPlugin()) return;
+    let vivo = true;
+    void isStoreOpen().then(o => { if (vivo) setOpen(o); });
+    return () => { vivo = false; };
+  }, []);
+  return open;
+}
+
 export type PurchaseResult =
   | { ok: true; ent: Entitlement }
   | { ok: false; reason: 'unavailable' | 'cancelled' | 'invalid-purchase' | 'billing-not-configured' | string };
@@ -91,6 +125,7 @@ export type PurchaseResult =
 export async function purchase(productId: string): Promise<PurchaseResult> {
   const plugin = getPlugin();
   if (!plugin) return { ok: false, reason: 'unavailable' };
+  if (!(await isStoreOpen())) return { ok: false, reason: 'billing-disabled' };
 
   let purchaseToken: string;
   try {
@@ -241,6 +276,7 @@ export async function getSubscriptionOffer(productId: string): Promise<Subscript
 export async function purchaseSubscription(productId: string): Promise<PurchaseResult> {
   const plugin = getPlugin();
   if (!plugin) return { ok: false, reason: 'unavailable' };
+  if (!(await isStoreOpen())) return { ok: false, reason: 'billing-disabled' };
 
   let purchaseToken: string;
   try {

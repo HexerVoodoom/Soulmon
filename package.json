@@ -52,6 +52,7 @@
     "test:shard": "vitest run --shard",
     "gates": "node scripts/gates.mjs",
     "gate:fuso": "node scripts/gate-fuso.mjs",
+    "backup:saves": "node scripts/backup-saves.mjs",
     "analisar:entrada": "node scripts/analisar-entrada.mjs"
   }
 }

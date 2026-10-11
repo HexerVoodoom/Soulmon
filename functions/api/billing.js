@@ -32,7 +32,8 @@
 //   Steam: STEAM_PUBLISHER_KEY, STEAM_APP_ID
 // Sem eles a rota da loja em questão responde 503 e NUNCA concede nada.
 
-import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder } from './_entitlements.js';
+import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner } from './_entitlements.js';
+import { isBillingDisabled, BILLING_DISABLED_MESSAGE } from './_killSwitch.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import {
   verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase,
@@ -49,6 +50,21 @@ const CORS = {
 };
 
 const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
+
+/**
+ * Kill-switch `BILLING_DISABLED` (`_killSwitch.js`): com a var ligada, só passa
+ * comprovante que JÁ é desta conta (restaurar / reconciliar / renovar). Pedido
+ * novo ou de outra conta → 503 `billing-disabled`, ANTES do claim e do
+ * reconhecimento — a Play estorna o não reconhecido em 3 dias.
+ * @returns {Promise<Response|null>} resposta de recusa, ou `null` para seguir.
+ */
+async function recusaSeLojaFechada(env, saveId, orderId) {
+  if (!isBillingDisabled(env)) return null;
+  const dono = orderId ? await lookupOrderOwner(env, orderId) : null;
+  if (dono && dono === saveId) return null;
+  console.log(JSON.stringify({ event: 'billing.killswitch.refused', saveIdPrefix: String(saveId).slice(0, 8) }));
+  return json({ ok: false, reason: 'billing-disabled', message: BILLING_DISABLED_MESSAGE }, 503);
+}
 
 /** Falha de verificação → status HTTP. 402 = "a loja não confirmou o pagamento". */
 const STATUS_BY_REASON = {
@@ -121,6 +137,9 @@ export async function onRequestPost({ request, env }) {
   // Um comprovante vale para UMA conta, em qualquer loja. Sem isto, tanto o
   // "restaurar compras" da Play quanto a posse do app na Steam poderiam ser
   // resgatados em quantas contas o jogador quisesse (ver claimOrder).
+  const fechada = await recusaSeLojaFechada(env, saveId, result.orderId);
+  if (fechada) return fechada;
+
   const claim = await claimOrder(env, saveId, result.orderId);
   if (!claim.ok) {
     return json({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
@@ -161,6 +180,9 @@ async function handleSubscription(env, saveId, body) {
     console.log(JSON.stringify({ event: 'billing.sub.refused', saveIdPrefix: String(saveId).slice(0, 8), reason: result.reason }));
     return json({ ok: false, reason: result.reason, status: result.status }, STATUS_BY_REASON[result.reason] ?? 402);
   }
+
+  const fechada = await recusaSeLojaFechada(env, saveId, result.orderId);
+  if (fechada) return fechada;
 
   // A chave é a RAIZ da cadeia linkedPurchaseToken: renovação, reassinatura e
   // troca de plano caem no mesmo claim, e a 2ª conta recebe 409.

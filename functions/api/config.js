@@ -7,6 +7,8 @@
 // ou pedir login onde ele nem está configurado, ou deixar o campo de e-mail
 // livre depois que o servidor já exige token, entregando um 403 sem explicação.
 
+import { isBillingDisabled, isChatDisabled } from './_killSwitch.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -26,6 +28,10 @@ export async function onRequestGet({ env }) {
     // funcionar — botão que existe e falha é pior que botão que não existe.
     // As duas variáveis são conferidas juntas porque a rota exige as duas.
     transcribeAvailable: !!(env.SUPABASE_PROJECT_ID && env.SUPABASE_ANON_KEY),
+    // Kill-switches do beta (`_killSwitch.js`, BETA-CONTINGENCIA §0): a UI
+    // esconde compra / IA do chat. Quem GARANTE é o servidor, não este campo.
+    billingDisabled: isBillingDisabled(env),
+    chatDisabled: isChatDisabled(env),
   }, {
     headers: { ...CORS, 'Cache-Control': 'public, max-age=300' },
   });

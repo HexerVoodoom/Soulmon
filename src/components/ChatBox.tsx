@@ -226,7 +226,11 @@ export function ChatBox({
         if (import.meta.env.DEV) console.error('AI API error:', await response.text());
         /* 500 'AI not configured' = o servidor está sem chave: estado permanente,
            não instabilidade. Mensagem clara, e o chat local segue funcionando. */
-        const naoLigado = response.status === 500 && (await response.clone().json().catch(() => null))?.error === 'AI not configured';
+        /* 503 'chat-disabled' = kill-switch `CHAT_DISABLED` do dono (BETA-CONTINGENCIA §0):
+           também é "desligado de propósito", não falha — mesma mensagem calma. */
+        const erro = (await response.clone().json().catch(() => null))?.error;
+        const naoLigado = (response.status === 500 && erro === 'AI not configured')
+          || (response.status === 503 && erro === 'chat-disabled');
         toast.warning(naoLigado
           ? (isPt ? 'O chat inteligente não está ligado agora — respostas simples continuam.' : 'Smart chat is not switched on right now — simple replies still work.')
           : (isPt ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses'));

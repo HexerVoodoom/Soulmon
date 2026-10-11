@@ -7,7 +7,7 @@ import {
   CREDIT_PACKS, type CreditPack, ADS_ENABLED, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
 } from '../utils/monetization';
 import { fetchEntitlement } from '../utils/entitlements';
-import { isBillingAvailable } from '../utils/playBilling';
+import { isBillingAvailable, useStoreOpen, billingDisabledMessage } from '../utils/playBilling';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -79,7 +79,11 @@ export function CreditsModal({
     return () => { cancelled = true; };
   }, [credits]);
 
-  const billingAvailable = isBillingAvailable();
+  /* Kill-switch `BILLING_DISABLED`: com a loja fechada os pacotes SOMEM (não
+     ficam cinza) e a linha de status explica. `null` = consultando → desabilitado. */
+  const lojaAberta = useStoreOpen();
+  const billingAvailable = isBillingAvailable() && lojaAberta === true;
+  const lojaFechada = isBillingAvailable() && lojaAberta === false;
   const canAffordReroll = credits >= REROLL_COST_CREDITS;
 
   const flash = (text: string, ok: boolean) => {
@@ -169,6 +173,8 @@ export function CreditsModal({
       >
         {message?.text ?? (billingAvailable
           ? ''
+          : lojaFechada ? billingDisabledMessage(isPt)
+          : lojaAberta === null && isBillingAvailable() ? ''
           : (isPt ? 'Compras só no app Android (Google Play).' : 'Purchases are only available in the Android app (Google Play).'))}
       </p>
 
@@ -193,7 +199,7 @@ export function CreditsModal({
         />
       )}
 
-      {CREDIT_PACKS.map(pack => (
+      {!lojaFechada && CREDIT_PACKS.map(pack => (
         <Row
           key={pack.id}
           credit

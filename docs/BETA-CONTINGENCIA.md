@@ -19,9 +19,69 @@
 > - Não existe backup automático do KV (`SOULMON_SAVES`). O KV da Cloudflare **não
 >   versiona**. O que existe é: o save local do aparelho, a exportação em Configurações ->
 >   Seus dados, e o snapshot que o §2 manda **você instalar antes do beta**.
-> - Não existe flag única "desliga a compra". O jeito de desligar é descrito no §3.
+> - Há **kill-switches únicos** desde a `release/beta-1`: `BILLING_DISABLED` (compras) e
+>   `CHAT_DISABLED` (IA do chat) — §0. Backup do KV: `scripts/backup-saves.mjs` (§0.3).
 > - Estimativas de cota gratuita da Cloudflare/Firebase abaixo são de memória: **[a
 >   confirmar no painel]** antes de confiar.
+
+## 0. Interruptores e backup (release/beta-1)
+
+Todos são **segredos do Worker usados como interruptor** (`wrangler secret put`): valem na
+hora, sem deploy, e sobrevivem ao próximo deploy (uma `var` no `wrangler.jsonc` seria
+sobrescrita a cada push). Valor que liga: `1`, `true`, `yes`, `on` ou `sim`; qualquer outro
+(ou apagar) desliga. Código: `functions/api/_killSwitch.js`; testes:
+`functions/api/killSwitch.test.js`, `src/utils/playBilling.killSwitch.test.ts`,
+`src/components/ChatBox.killSwitch.render.test.tsx`, `SubscriptionSection.render.test.tsx`.
+
+### 0.1 `BILLING_DISABLED` — fecha a loja `[DONO]`
+
+```powershell
+npx wrangler secret put BILLING_DISABLED      # digite 1 no prompt
+npx wrangler secret delete BILLING_DISABLED   # reabre
+```
+
+O que acontece:
+- **Servidor** (`/api/billing`): compra **nova** (comprovante que ainda não é desta conta) →
+  `503 { reason: "billing-disabled", message: { pt, en } }`, **antes** do claim e do
+  reconhecimento — a Play estorna sozinha em 3 dias o que ninguém reconheceu.
+  **Restaurar / reconciliar** o que a conta já tem continua funcionando (inclusive a
+  assinatura). RTDN segue normal.
+- **App** (`/api/config` → `billingDisabled`): somem os botões de pacote de Créditos,
+  "Desbloquear" e "Assinar", com a mensagem "A lojinha está fechada por um tempinho… Nada
+  foi cobrado". "Restaurar compras" e "Gerenciar assinatura" continuam. A compra nova nem
+  abre a janela da Play. O `/api/config` tem cache de 5 min na borda: o app pode levar
+  até 5 min para esconder; o servidor recusa desde o primeiro segundo. No onboarding o
+  botão de desbloqueio continua visível e responde com a mesma mensagem amigável.
+- Diferença para o "último recurso" do §3 (apagar `GOOGLE_PLAY_SERVICE_ACCOUNT`): aquele
+  bloqueia também restaurar; este não. **Use este primeiro.**
+
+### 0.2 `CHAT_DISABLED` — desliga a IA do chat `[DONO]`
+
+```powershell
+npx wrangler secret put CHAT_DISABLED         # digite 1
+npx wrangler secret delete CHAT_DISABLED
+```
+
+`/api/chat` responde `503 chat-disabled` antes de gastar cota da Groq/Gemini; o app mostra
+"O chat inteligente não está ligado agora — respostas simples continuam" e o pet responde
+localmente. Use para: resposta imprópria do modelo, custo/cota estourando, provedor fora,
+ação proposta errada em massa. Trocar só o modelo (sem desligar): var `CHAT_MODEL`.
+
+### 0.3 Backup do KV de saves `[DONO roda; precisa de wrangler login]`
+
+```powershell
+npx wrangler login
+node scripts/backup-saves.mjs                          # SOULMON_SAVES -> E:\soulmon-backups\SOULMON_SAVES-<data>.json
+node scripts/backup-saves.mjs --dry-run                # só conta as chaves
+node scripts/backup-saves.mjs --binding DIGIAPP_SAVES  # namespace legado, se precisar
+```
+
+Só lê o KV remoto (lista + `kv bulk get` em lotes de 100). O arquivo já sai no formato de
+`wrangler kv bulk put` (`[{ key, value, expiration? }]`), com TTL preservado. **Tem dado
+pessoal de todos os testadores**: fica em `E:\`, nunca no repo nem em nuvem pública;
+apague o que tiver mais de 14 dias depois do beta. Rode **antes do dia 0** e depois 1x/dia
+(Agendador de Tarefas do Windows: `node scripts\backup-saves.mjs` com pasta inicial
+`D:\Soulmon\repo`). Restaurar: §2.2. Testes: `tests/backupSaves.test.ts`.
 
 ## Severidade e relógio
 
@@ -112,22 +172,9 @@ reduzido; ou erro 5xx em `/api/save`; ou a migração de campos novos (gauge de 
 
 ### 2.0 Prevenção (faça ANTES do dia 0 do relógio)
 
-Snapshot diário do KV, rodando na sua máquina (Agendador de Tarefas do Windows ou à
-mão), para `E:\soulmon-backups\`:
-
-```powershell
-$dir = "E:\soulmon-backups\$(Get-Date -Format yyyy-MM-dd_HH)"; New-Item -ItemType Directory -Force $dir | Out-Null
-$ns = "20b3ba78a3e84265b5e2d4cd0d411d43"    # SOULMON_SAVES (wrangler.jsonc)
-$keys = npx wrangler kv key list --namespace-id $ns --remote | ConvertFrom-Json
-foreach ($k in $keys) {
-  if ($k.name -match '^(ord:|del:|coop|push:|fcm:)') { continue }      # só saves; ajuste o filtro às chaves reais
-  npx wrangler kv key get $k.name --namespace-id $ns --remote | Out-File -Encoding utf8 "$dir\$($k.name -replace '[^\w\.-]','_').json"
-}
-```
-
-Com 15 testadores são ~15 chaves de save: segundos. Confira **uma vez** que o filtro pega
-os saves (`$keys | Select-Object -First 10 name`) — a chave de save é o `saveId` (hash do
-e-mail). Guarde 7 dias.
+Backup diário do KV com `node scripts/backup-saves.mjs` (§0.3), para `E:\soulmon-backups\`.
+A chave de save é o próprio `saveId` (hash do e-mail, sem prefixo); o arquivo também traz
+`ent:`, `ord:`, `del:`… — filtre na restauração. Guarde 7 dias.
 
 ### 2.1 Diagnóstico
 
@@ -142,13 +189,14 @@ e-mail). Guarde 7 dias.
 
 ### 2.2 Restauração
 
-Fonte, em ordem de preferência: (1) exportação do próprio testador; (2) snapshot de
-§2.0; (3) save local do aparelho.
+Fonte, em ordem de preferência: (1) exportação do próprio testador; (2) backup de
+§0.3; (3) save local do aparelho.
 
 ```powershell
-# validar JSON antes de gravar
-Get-Content E:\soulmon-backups\2026-10-20_09\<saveId>.json -Raw | ConvertFrom-Json | Out-Null
-npx wrangler kv key put <saveId> --path E:\soulmon-backups\2026-10-20_09\<saveId>.json --namespace-id 20b3ba78a3e84265b5e2d4cd0d411d43 --remote
+# extrair SÓ a chave da pessoa do backup (validando o JSON) e gravar
+$bk = Get-Content E:\soulmon-backups\SOULMON_SAVES-2026-10-20T09-00-00Z.json -Raw | ConvertFrom-Json
+ConvertTo-Json -InputObject @($bk | Where-Object key -eq '<saveId>') -Depth 2 | Out-File -Encoding utf8 E:\soulmon-backups\restaurar.json
+npx wrangler kv bulk put E:\soulmon-backups\restaurar.json --binding SOULMON_SAVES --remote
 ```
 
 O `put` perde os *metadados* do KV (`firstSeen`, usado em TTL/renovação). Efeito pequeno
@@ -192,6 +240,9 @@ que o Gmail do testador está em **Configurações -> Teste de licença**.
 ```powershell
 npx wrangler secret delete PLAY_REQUIRE_ACCOUNT_BINDING
 ```
+
+**Fechar a loja (primeiro recurso): `BILLING_DISABLED` — §0.1.** Recusa compra nova e
+mantém restaurar.
 
 **Desligar as compras de vez (último recurso):**
 1. Play Console -> Monetizar -> Produtos -> **Desativar** os produtos (a folha da Play
@@ -493,6 +544,9 @@ guardam). O que resolve é **rotacionar**, não reescrever histórico.
 | Tela branca para todos | `npx wrangler rollback` |
 | Save errado de 1 pessoa | `npx wrangler kv key get <saveId> --namespace-id 20b3ba78a3e84265b5e2d4cd0d411d43 --remote` |
 | Compra não concede | `npx wrangler tail soulmon --format pretty` |
+| Compra nova dando problema em massa | `npx wrangler secret put BILLING_DISABLED` (1) — §0.1 |
+| Chat respondendo mal / cota estourando | `npx wrangler secret put CHAT_DISABLED` (1) — §0.2 |
+| Backup antes de mexer em save | `node scripts/backup-saves.mjs` — §0.3 |
 | Binding derrubou compras | `npx wrangler secret delete PLAY_REQUIRE_ACCOUNT_BINDING` |
 | Push spam | `crons = []` em `workers/wrangler.toml` + `npx wrangler deploy -c wrangler.toml` |
 | Gente saindo do teste | `BETA-TESTADORES.md` §2 (convite) |

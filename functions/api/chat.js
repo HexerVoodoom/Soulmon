@@ -1,4 +1,5 @@
 import { guardAiRequest } from './_aiGuard.js';
+import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
 import { minimizeForAi, redactionCount } from './_redact.js';
 import { callChatModel, hasChatProvider } from './_llm.js';
 import { TOOLS, sanitizeToolCalls } from './_chatActions.js';
@@ -575,6 +576,8 @@ export async function onRequestPost({ request, env }) {
     // requisição queimar cota contra um endpoint que nunca ia funcionar. Mesma
     // ordenação que `generate-sprite.js` já usa (direito antes de volume).
     // Groq OU Gemini: basta um provedor (ver `_llm.js`).
+    // Kill-switch `CHAT_DISABLED` (`_killSwitch.js`): antes de qualquer cota.
+    if (isChatDisabled(env)) return Response.json({ error: 'chat-disabled', message: CHAT_DISABLED_MESSAGE }, { status: 503, headers: CORS });
     if (!hasChatProvider(env)) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });
 
     // Sem portão, esta rota gasta a nossa cota do Groq para qualquer um com um
