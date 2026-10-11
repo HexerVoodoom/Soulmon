@@ -10,9 +10,21 @@ describe('questMarks', () => {
   it('sem nada pendente, nenhuma marca', () => {
     expect(questMarks(base)).toEqual({ corner: null, passeio: null, daily: null, torneio: null, conquistas: null, cornerTone: 'gold', buildings: {}, firstDay: null, dailyCorner: null, weeklyCorner: null, weeklyTone: 'gold' });
   });
-  it('permanente incompleta NÃO acende "!"; cumprida e cenário não comprado = "?"', () => {
+  it('conquista (permanente) NUNCA acende: não há nada a ENTREGAR nela, só a compra do cenário', () => {
     expect(questMarks({ ...base, missionProgress: zero, ownedBackgrounds: [] }).conquistas).toBeNull();
-    expect(questMarks({ ...base, ownedBackgrounds: [] }).conquistas).toBe('ready');
+    const pronta = questMarks({ ...base, ownedBackgrounds: [] });
+    expect(pronta.conquistas).toBeNull();
+    expect(pronta.corner).toBeNull();
+    expect(pronta.weeklyCorner).toBeNull();
+  });
+  it('"?" só com algo resgatável: nada a entregar sem marca; entregável marca; depois de resgatar some', () => {
+    expect(questMarks({ ...base, weekly: [{ done: false, claimed: false }] }).corner).not.toBe('ready');
+    expect(questMarks({ ...base, weekly: [{ done: true, claimed: false }] }).corner).toBe('ready');
+    expect(questMarks({ ...base, weekly: [{ done: true, claimed: true }] }).corner).toBeNull();
+    expect(questMarks({ ...base, passeioReady: true }).corner).toBe('ready');
+    expect(questMarks({ ...base, passeioReady: false }).corner).toBeNull();
+    expect(questMarks({ ...base, buildings: { 'exploracao.caderno': 'ready' } }).corner).toBe('ready');
+    expect(questMarks({ ...base, buildings: {} }).corner).toBeNull();
   });
   it('semanal: andando "!", cumprida e não paga "?", paga some', () => {
     expect(questMarks({ ...base, weekly: [{ done: false, claimed: false }] }).torneio).toBe('available');
@@ -31,8 +43,8 @@ describe('questMarks', () => {
   it('tom: semanal é azul, o resto amarelo; o canto herda o da marca vencedora', () => {
     expect(questMarks({ ...base, weekly: [{ done: false, claimed: false }] }).cornerTone).toBe('blue');
     expect(questMarks({ ...base, passeio: 'available' }).cornerTone).toBe('gold');
-    // "?" amarelo (conquista pronta) vence o "!" azul da semana.
-    const r = questMarks({ ...base, ownedBackgrounds: [], weekly: [{ done: false, claimed: false }] });
+    // "?" amarelo (Passeio pronto) vence o "!" azul da semana.
+    const r = questMarks({ ...base, passeioReady: true, weekly: [{ done: false, claimed: false }] });
     expect(r.corner).toBe('ready');
     expect(r.cornerTone).toBe('gold');
     // "?" azul (semanal pronta) vence o "!" amarelo do Passeio.
@@ -67,8 +79,7 @@ describe('dois acessos separados (07/10/2026): diário e semanal têm marcas ind
     expect(w.weeklyTone).toBe('blue');
     expect(w.dailyCorner).toBeNull();
     const c = questMarks({ ...base, ownedBackgrounds: [] });
-    expect(c.weeklyCorner).toBe('ready');
-    expect(c.weeklyTone).toBe('gold');
+    expect(c.weeklyCorner).toBeNull();
   });
   it('Passeio concluído no NPC e ainda sem Resgatar é "?" (pronta) no acesso diário; resgatado, nada', () => {
     expect(questMarks({ ...base, passeio: null, passeioReady: true }).dailyCorner).toBe('ready');

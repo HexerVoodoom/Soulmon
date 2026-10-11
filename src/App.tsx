@@ -2256,6 +2256,7 @@ export default function App() {
       playTaskComplete();
       if (justFinishedActivity) {
         queueTaskGains(justFinishedActivity.category);
+        marcarGestoDoDia('task');
         // ↩️ #57 — a última etapa FECHA o hábito, então ela também abre a
         // janela de desfazer. Sem isto, hábito com etapas seria a metade do
         // app onde o toque errado continua sem volta.
@@ -2377,6 +2378,8 @@ export default function App() {
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
     if (activity) queueTaskGains(activity.category);
+    // Primeiro dia: concluir um hábito também é "concluir uma atividade".
+    if (activity) marcarGestoDoDia('task');
 
     // ↩️ #57 — a janela de 5 s. `gameState` aqui é o estado ANTES do updater
     // acima (o React só o troca no próximo render), que é exatamente a foto
@@ -5052,6 +5055,10 @@ export default function App() {
     // `rubDecision` lê o `petPassive` do ESTADO, e não de um parâmetro que quem
     // chama possa esquecer — foi assim que o Traço Carinhoso ficou desligado na
     // prática, barrado em 1,0 enquanto o CLAUDE.md declarava 1,5 (X-6).
+    // O GESTO do primeiro dia é o carinho em si, não a cura: pet com vida cheia
+    // (`already-full`, o caso de TODO pet novo) recusa a cura e antes nunca
+    // marcava o gesto.
+    marcarGestoDoDia('pet');
     const refused = rubDecision(gameState, today);
     if (refused) {
       // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
@@ -5071,7 +5078,6 @@ export default function App() {
       rubFalouRef.current = true;
       falar('rub');
     }
-    marcarGestoDoDia('pet');
     // O teto é reconferido sobre o `prev` — quem manda é a regra pura, sobre o
     // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
@@ -7264,17 +7270,17 @@ export default function App() {
 
       <ModalSheet
         open={createChoiceOpen}
-        title={language === 'pt-BR' ? 'O que vamos criar?' : 'What would you like to create?'}
+        title={language === 'pt-BR' ? 'Novo hábito ou nova tarefa?' : 'New habit or new task?'}
         language={language}
         onClose={() => setCreateChoiceOpen(false)}
       >
         <div style={{ display: 'grid', gap: 10 }}>
-          <button type="button" style={sm2Button('primary')} onClick={() => {
-            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
-          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
-          <button type="button" style={sm2Button('outline')} onClick={() => {
+          <button type="button" data-create-choice="habit" style={sm2Button('primary')} onClick={() => {
             setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
           }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+          <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
+            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
+          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
         </div>
       </ModalSheet>
 

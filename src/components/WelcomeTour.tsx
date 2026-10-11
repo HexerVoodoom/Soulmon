@@ -3,7 +3,7 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { RitualDialog, ritualLabel, ritualTitle } from './ritual/RitualKit';
 import { sm2Button, sm2Text } from './form/FormKit';
 import { NpcSpeech } from './nav/NpcSpeech';
-import { TOUR_GUIDE_NAME, TOUR_STEPS, tourText } from '../utils/welcomeTour';
+import { tourGuideName, TOUR_STEPS, tourText } from '../utils/welcomeTour';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -60,7 +60,7 @@ export function WelcomeTour({ language, onDone }: { language: Language; onDone: 
             data-wt-raven
             style={{ flex: 'none', objectFit: 'contain', display: 'block' }}
           />
-          <NpcSpeech name={TOUR_GUIDE_NAME} line={t(step.speech)} speakerKey={`tour:${step.id}`} />
+          <NpcSpeech name={tourGuideName(language)} line={t(step.speech)} speakerKey={`tour:${step.id}`} />
         </div>
 
         <p id="wt-title" style={ritualTitle}>{t(step.title)}</p>

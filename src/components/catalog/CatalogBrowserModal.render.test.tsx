@@ -40,7 +40,7 @@ describe('CatalogBrowserModal', () => {
     renderWithCss(
       <CatalogBrowserModal isOpen language="pt-BR" onClose={vi.fn()} onAdd={vi.fn()} onCreateFromScratch={onCreateFromScratch} />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /algo que não está aqui/i }));
+    fireEvent.click(screen.getByRole('button', { name: /criar o meu próprio hábito/i }));
     expect(onCreateFromScratch).toHaveBeenCalledTimes(1);
   });
 

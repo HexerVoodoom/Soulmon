@@ -5058,3 +5058,11 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - **Persistência e limites:** `focusLoot` guarda dia, contador e ids de evento no save da conta; timer e progresso de ciclo da sessão continuam locais. O cliente deduplica o evento; `save.js` e `GameStateContext` saneiam e limitam o formato a oito. Isso não é uma garantia anti-cheat autoritativa: o endpoint de save ainda aceita o estado do jogo escrito pelo cliente.
 - **Verificação:** `npm run typecheck` passou; suíte focada passou: 6 arquivos, 98 testes (regras, paridade do sanitizador servidor/cliente, integração com `save.js`, timer, Oficina e persistência de save). `git diff --check` sem erros. Não foi feita validação manual em dispositivo móvel.
 - **Preservar:** alteração local pendente em `src/assets/soulmon/bosses/boss-arauto-do-fim-full.png`; nenhum commit/push.
+
+### 11/10/2026 — lote do dono (missões iniciais, "?", abas, +, XP, pets)
+- Primeiro dia: carinho marcava só se a cura acontecesse (pet novo está com vida cheia e recusa) e concluir HÁBITO não marcava "atividade"; ambos ligados (`firstDay.gestos.contract.test.ts`).
+- "?" de missão só com algo resgatável: Conquistas (sem "Resgatar") nunca acendem (`questMarks.ts`).
+- Corvo do tour: "Mysterious Soulmon" / "Solmon misterioso" (`tourGuideName`).
+- XP visível antes de concluir (tarefa/hábito) em `DailyRituals`; carinho e missões NÃO têm evento de XP (regra, não bug).
+- "+" abre "Novo hábito / Nova tarefa"; Home com abas Hoje/Semanal (só lista, não pontuação).
+- Pets andavam de costas: `artFacesLeft` (`utils/sprites.ts`) para linhas de perfil esquerdo (igni, nautilu, kaelen, corvo).
