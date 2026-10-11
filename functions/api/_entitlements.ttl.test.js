@@ -124,7 +124,7 @@ describe('retenção — `ord:`', () => {
 });
 
 describe('[NÃO PODE MUDAR] o teto vitalício dentro da janela', () => {
-  it('26 gerações continuam sendo 26 — TTL não é desconto de cota', async () => {
+  it('o teto vitalício (perAccountLifetime) continua inteiro — TTL não é desconto de cota', async () => {
     const env = fakeEnv();
     const save = 'abcdefgh12345678';
     const req = () => new Request('https://soulmon.test/api/generate-sprite', { method: 'POST' });
@@ -147,7 +147,7 @@ describe('[NÃO PODE MUDAR] o teto vitalício dentro da janela', () => {
     const req = () => new Request('https://soulmon.test/api/generate-sprite', { method: 'POST' });
     await guardAiRequest(req(), env, 'sprite', save, 1, 'rookie');
     const primeiro = env._quantosPuts(ENT_PREFIX + save);
-    await guardAiRequest(req(), env, 'sprite', save, 1, 'rookie');
+    await guardAiRequest(req(), env, 'sprite', save, 1, 'ultra'); // outra forma: 1 por forma desde 11/10
     expect(env._quantosPuts(ENT_PREFIX + save)).toBe(primeiro + 1);
     for (const p of env._puts.filter(p => p.key === ENT_PREFIX + save)) {
       expect(p.ttl).toBe(CINCO_ANOS);
@@ -208,7 +208,7 @@ describe('[NÃO PODE MUDAR] exclusão de conta e o `ord:`', () => {
     await accountRoute({ request: post(`action=delete-confirm&id=${ID}`, { confirmToken }), env });
     const ent = JSON.parse(env._store.get(ENT_PREFIX + ID));
     expect(ent.tier).toBe('paid');               // o direito pago sobrevive
-    expect(ent.aiLifetime).toEqual({});          // o USO some, como já era
+    expect(ent.aiLifetime.sprite).toBeGreaterThanOrEqual(0); // antiabuso: o contador de sprite sobrevive (11/10/2026)
     expect(env._ttlDe(ENT_PREFIX + ID)).toBe(CINCO_ANOS);
   });
 });

@@ -23,7 +23,7 @@ function fakeEnv() {
   const store = new Map();
   store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid' }));
   const env = {
-    GEMINI_API_KEY: 'k',
+    GEMINI_API_KEY: 'k', SPRITE_GEMINI_IMAGE: '1' /* o mock do provedor é o caminho Gemini; em produção ele fica desligado */,
     DIGIAPP_SAVES: {
       get: async k => (store.has(k) ? store.get(k) : null),
       put: async (k, v) => { store.set(k, v); },
@@ -144,7 +144,9 @@ describe('X-1: recusa de conteúdo NÃO é devolvida — o provedor foi chamado 
     expect(res.status).toBe(200);
     expect((await res.json()).usedFallbackPrompt).toBe(true);
     expect(vitalicio(env), 'uma recusa custa duas imagens').toBe(2);
-    expect(naForma(env)).toBe(2);
+    // Na FORMA conta 1 desde 11/10/2026 (uma geração por forma; a refeitura por
+    // recusa não saiu imagem nova, só cobrança — fica no vitalício).
+    expect(naForma(env)).toBe(1);
   });
 
   it('recusa + refeitura que morre em 500 custa 1: a recusa fica, o extra volta', async () => {

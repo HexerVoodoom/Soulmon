@@ -64,14 +64,17 @@ const lerEnt = e => JSON.parse(e.DIGIAPP_SAVES.store.get(ENT_PREFIX + ID));
 beforeEach(() => { autorizado = true; });
 
 describe('#62 — renascer zera o teto vitalício de sprite', () => {
-  it('zera `aiLifetime.sprite` quando o save carrega um renascimento', async () => {
+  // ⚰️ #62 revertido pelo dono em 11/10/2026 ("o usuário NÃO pode ficar
+  // regerando o Soulmon"): renascer marca a vez, mas NÃO zera mais o contador.
+  it('com renascimento: 200 e marca a vez, mas NÃO zera `aiLifetime.sprite` (decisão 11/10)', async () => {
     const e = env();
     const res = await chamar(e);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.jaFeito).toBe(false);
-    expect(lerEnt(e).aiLifetime.sprite).toBe(0);
+    expect(lerEnt(e).aiLifetime.sprite).toBe(20);
+    expect(lerEnt(e)[REBIRTH_SPRITE_RESET_FIELD]).toBeGreaterThan(0);
   });
 
   it('não toca em NADA além do contador de sprite', async () => {

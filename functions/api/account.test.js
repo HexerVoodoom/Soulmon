@@ -173,7 +173,10 @@ describe('account.js — exclusão', () => {
     const ent = JSON.parse(s.get(`ent:${ID}`));
     expect(ent.tier).toBe('paid');                 // o direito pago sobrevive
     expect(ent.consumedOrders).toEqual(['GPA.1234']);
-    expect(ent.aiLifetime).toEqual({});            // uso some
+    // Desde 11/10/2026 o contador de SPRITE sobrevive (antiabuso V1.2: excluir e
+    // relogar não devolve gerações); o resto do uso some.
+    expect(ent.aiLifetime).toEqual({ sprite: 3 });
+    expect(ent.aiForms).toEqual({});
     expect(ent.adCount).toBe(0);
     expect(ent.accountDeletedAt).toBeGreaterThan(0);
   });

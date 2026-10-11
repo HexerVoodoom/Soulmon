@@ -1,4 +1,4 @@
-import { guardAiRequest } from './_aiGuard.js';
+import { guardAiRequest, perMinuteGate } from './_aiGuard.js';
 import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
 
 /** Os dois provedores gratuitos no limite (429): a fala cansada do Soulmon. */
@@ -588,6 +588,8 @@ export async function onRequestPost({ request, env }) {
 
     // Sem portão, esta rota gasta a nossa cota do Groq para qualquer um com um
     // `curl`. Ver functions/api/_aiGuard.js.
+    const rajada = perMinuteGate('chat', body.id);
+    if (rajada) return Response.json({ error: rajada.reason, response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS });
     const gate = await guardAiRequest(request, env, 'chat', body.id);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 

@@ -16,7 +16,7 @@ const SAVE = 'abcdefgh12345678';
 function fakeEnv({ tier, kv = true, quebrado = false } = {}) {
   const store = new Map();
   if (tier) store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier }));
-  const env = { GEMINI_API_KEY: 'k' };
+  const env = { GEMINI_API_KEY: 'k', SPRITE_GEMINI_IMAGE: '1' /* o mock do provedor é o caminho Gemini; em produção ele fica desligado */ };
   if (kv) {
     env.DIGIAPP_SAVES = {
       get: async k => {
@@ -31,7 +31,7 @@ function fakeEnv({ tier, kv = true, quebrado = false } = {}) {
   return env;
 }
 
-const req = (body = { prompt: 'um bicho fofo', id: SAVE }) =>
+const req = (body = { prompt: 'um bicho fofo', id: SAVE, formId: 'rookie' }) =>
   new Request('https://soulmon.test/api/generate-sprite', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -81,7 +81,7 @@ describe('generate-sprite: só quem paga gera', () => {
   });
 
   it('o cliente NÃO decide o tier: accountTier no corpo é ignorado', async () => {
-    const body = { prompt: 'p', id: SAVE, accountTier: 'paid', tier: 'paid', credits: 999 };
+    const body = { prompt: 'p', id: SAVE, formId: 'rookie', accountTier: 'paid', tier: 'paid', credits: 999 };
     const res = await onRequestPost({ request: req(body), env: fakeEnv({ tier: 'demo' }) });
     expect(res.status).toBe(402);
     expect(chamadasDeIA).toEqual([]);

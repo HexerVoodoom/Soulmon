@@ -70,9 +70,11 @@ describe('chat no plano gratuito', () => {
     expect((await res.json()).error).toBe('ai-busy');
   });
 
-  it('(d) cota cabe no gratuito: 15 testadores no teto pago ≤ teto global ≤ Groq (~105/dia) + Gemini (~250/dia)', () => {
-    const { perAccountByTier, global } = AI_LIMITS.chat;
-    expect(15 * perAccountByTier.paid).toBeLessThanOrEqual(global);
+  it('(d) cota cabe no gratuito: global 250 ≤ Groq (~105/dia) + Gemini (~250/dia); 15 testadores × demo cabem', () => {
+    const { perAccountByTier, global, perMinute } = AI_LIMITS.chat;
+    expect(global).toBe(250);
+    expect(15 * perAccountByTier.demo).toBeLessThanOrEqual(global);
     expect(global).toBeLessThanOrEqual(105 + 250);
+    expect(perMinute).toBe(4);
   });
 });

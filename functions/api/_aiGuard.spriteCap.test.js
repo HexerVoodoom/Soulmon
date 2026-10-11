@@ -39,16 +39,15 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('sprite: os três tetos', () => {
-  it('os números são os aprovados — 6/dia, 26 vitalício, 3 por forma, 800/mês', () => {
-    // 26 e não 20: o 20 foi calibrado contra "14 gerações por save", a árvore
-    // errada. `ultra` exige as 3 megas, o caminho completo passa pelas 11 formas
-    // que existem, e cada uma pode custar 2 (recusa de conteúdo refaz o pedido).
-    // 11 × 2 + 4 de folga = 26.
+  it('os números são os aprovados — 6/dia, 15 vitalício, 1 por forma, 800/mês e 40/dia global', () => {
+    // Decisão do dono (11/10/2026): "o usuário NÃO pode ficar regerando o
+    // Soulmon". UMA geração por forma; vitalício = 11 formas + 4 de folga para
+    // a refeitura por recusa de conteúdo (que não conta na forma). Teto global
+    // DIÁRIO de 40 (Higgsfield) volta, ao lado do mensal — não no lugar dele.
     expect(AI_LIMITS.sprite).toEqual({
-      perAccount: 6, perAccountLifetime: 26, perFormLifetime: 3, globalMonth: 800,
+      perAccount: 6, perAccountLifetime: 15, perFormLifetime: 1, globalMonth: 800, globalDay: 40,
     });
-    expect(AI_LIMITS.sprite.perAccountLifetime).toBe(2 * 11 + 4);
-    // O teto diário global sumiu de propósito: era ele que valia R$ 1.212/mês.
+    expect(AI_LIMITS.sprite.perAccountLifetime).toBe(11 + 4);
     expect(AI_LIMITS.sprite.global).toBeUndefined();
   });
 
@@ -61,7 +60,7 @@ describe('sprite: os três tetos', () => {
   it('teto VITALÍCIO atravessa a virada do dia — 26 no total, e aí 402 para sempre', async () => {
     const env = fakeEnv();
     let feitas = 0;
-    // 6 por dia durante 5 dias = 30 tentativas, mas só 26 podem passar.
+    // 6 por dia durante 5 dias = 30 tentativas, mas só 15 podem passar.
     for (let d = 0; d < 5; d++) {
       vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
       for (let i = 0; i < 6; i++) {
@@ -70,7 +69,7 @@ describe('sprite: os três tetos', () => {
         else expect(r).toMatchObject({ status: 402, reason: 'sprite-lifetime-cap' });
       }
     }
-    expect(feitas).toBe(26);
+    expect(feitas).toBe(15);
 
     // Um dia novo NÃO devolve nada: é vitalício, não diário.
     vi.setSystemTime(new Date('2026-09-01T12:00:00Z'));
@@ -103,18 +102,33 @@ describe('sprite: os três tetos', () => {
     expect((await gerar(env, 'outraconta99xx')).ok).toBe(true);
   });
 
-  it('teto GLOBAL é MENSAL: a 801ª do mês é 503, com saveId novo a cada chamada', async () => {
-    const env = fakeEnv();
+  // 800 no mês a 40/dia = 20 dias: o laço anda o relógio a cada 40.
+  const encherMes = async env => {
     for (let i = 0; i < 800; i++) {
+      vi.setSystemTime(new Date(`2026-08-${String(1 + Math.floor(i / 40)).padStart(2, '0')}T12:00:00Z`));
       expect((await gerar(env, `conta${String(i).padStart(9, '0')}`)).ok).toBe(true);
     }
+    vi.setSystemTime(new Date('2026-08-25T12:00:00Z'));
+  };
+
+  it('teto GLOBAL é MENSAL: a 801ª do mês é 503, com saveId novo a cada chamada', async () => {
+    const env = fakeEnv();
+    await encherMes(env);
     expect(await gerar(env, 'maisumaconta12'))
       .toMatchObject({ ok: false, status: 503, reason: 'ai-monthly-budget-reached' });
   });
 
+  it('teto GLOBAL DIÁRIO: a 41ª do dia é 503 ai-daily-budget-reached', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 40; i++) expect((await gerar(env, `dia${String(i).padStart(11, '0')}`)).ok).toBe(true);
+    expect(await gerar(env, 'maisumaconta12')).toMatchObject({ ok: false, status: 503, reason: 'ai-daily-budget-reached' });
+    vi.setSystemTime(new Date('2026-08-11T12:00:00Z'));
+    expect((await gerar(env, 'maisumaconta12')).ok).toBe(true);
+  });
+
   it('a VIRADA DE MÊS abre a cota de novo — e a do mês anterior continua cheia', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 800; i++) await gerar(env, `conta${String(i).padStart(9, '0')}`);
+    await encherMes(env);
     expect((await gerar(env, 'zzconta000001')).status).toBe(503);
 
     vi.setSystemTime(new Date('2026-09-01T00:05:00Z'));
@@ -202,7 +216,8 @@ describe('chat e suggest: o mesmo buraco de agregado?', () => {
     // caro, este teste é o lembrete de refazer a conta.
     // 300/dia desde 11/10/2026: o teto global do chat agora é o ORÇAMENTO do plano
     // gratuito Groq + Gemini (REGISTRO §32), não mais um disjuntor de custo.
-    expect(AI_LIMITS.chat.global).toBe(300);
+    // 250 desde a release/beta-1 (cabe no gratuito somado com folga).
+    expect(AI_LIMITS.chat.global).toBe(250);
     expect(AI_LIMITS.suggest.global).toBe(3000);
     expect(AI_LIMITS.chat.perAccountLifetime).toBeUndefined();
     expect(AI_LIMITS.suggest.perAccountLifetime).toBeUndefined();
@@ -226,9 +241,9 @@ describe('sprite: teto por forma', () => {
     guardAiRequest(req(), env, 'sprite', save, 1, formId);
   const entDe = env => JSON.parse(env._store.get(ENT_PREFIX + SAVE));
 
-  it('a forma A esgota em 3 e a forma B continua gerando — o galho que falhou não leva a árvore', async () => {
+  it('a forma A esgota em 1 (uma geração por forma) e a forma B continua gerando', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) expect((await gerarForma(env, 'mega-power')).ok).toBe(true);
+    expect((await gerarForma(env, 'mega-power')).ok).toBe(true);
 
     const bloqueada = await gerarForma(env, 'mega-power');
     expect(bloqueada).toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
@@ -236,12 +251,12 @@ describe('sprite: teto por forma', () => {
     // A 4ª de `mega-power` recusa, mas `mega-harmony` e `ultra` seguem inteiras.
     expect((await gerarForma(env, 'mega-harmony')).ok).toBe(true);
     expect((await gerarForma(env, 'ultra')).ok).toBe(true);
-    expect(entDe(env).aiForms).toEqual({ 'mega-power': 3, 'mega-harmony': 1, ultra: 1 });
+    expect(entDe(env).aiForms).toEqual({ 'mega-power': 1, 'mega-harmony': 1, ultra: 1 });
   });
 
   it('o teto por forma PERSISTE entre dias — teto que o reset devolve é teto nenhum', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'champion-benevolence');
+    await gerarForma(env, 'champion-benevolence');
 
     // Dia novo (a cota diária volta) e MÊS novo (a global volta). A forma, não.
     vi.setSystemTime(new Date('2026-09-14T09:00:00Z'));
@@ -249,20 +264,20 @@ describe('sprite: teto por forma', () => {
       .toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
     // E o contador continua no `ent:`, que não tem TTL.
     for (const k of [...env._store.keys()]) if (k.startsWith('ai:')) env._store.delete(k);
-    expect(entDe(env).aiForms['champion-benevolence']).toBe(3);
+    expect(entDe(env).aiForms['champion-benevolence']).toBe(1);
     expect(await gerarForma(env, 'champion-benevolence')).toMatchObject({ status: 409 });
   });
 
   it('o teto por forma de uma conta não vaza para outra', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'rookie');
+    await gerarForma(env, 'rookie');
     expect((await gerarForma(env, 'rookie')).status).toBe(409);
     expect((await gerarForma(env, 'rookie', 'outraconta99xx')).ok).toBe(true);
   });
 
   it('recusa por forma NÃO consome cota diária, mensal nem vitalícia', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'ultimate-harmony');
+    await gerarForma(env, 'ultimate-harmony');
     const diaria = env._store.get(`ai:sprite:${SAVE}:2026-08-10`);
     const mensal = env._store.get('ai:sprite:@all:2026-08');
     const vital = entDe(env).aiLifetime.sprite;
@@ -282,14 +297,14 @@ describe('sprite: teto por forma', () => {
     expect(env._store.size).toBe(0);
   });
 
-  it('sem `formId` o teto por forma não aplica — mas o vitalício de 26 continua', async () => {
+  it('sem `formId` no PORTÃO o teto por forma não aplica — mas o vitalício de 15 continua (a ROTA exige formId)', async () => {
     const env = fakeEnv();
     let feitas = 0;
     for (let d = 0; d < 5; d++) {
       vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
       for (let i = 0; i < 6; i++) if ((await gerar(env)).ok) feitas++;
     }
-    expect(feitas).toBe(26);
+    expect(feitas).toBe(15);
     expect(entDe(env).aiForms).toEqual({});
   });
 
@@ -304,7 +319,7 @@ describe('sprite: teto por forma', () => {
     expect(forma.en).toMatch(/other form/i);
 
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'mega-benevolence');
+    await gerarForma(env, 'mega-benevolence');
     const r = await gerarForma(env, 'mega-benevolence');
     expect(r.message['pt-BR']).toBe(forma['pt-BR']);
     expect(r.message.en).toBe(forma.en);
@@ -313,11 +328,14 @@ describe('sprite: teto por forma', () => {
   it('renomeio de 29/09/2026: o contador gravado com o id ANTIGO continua valendo e é dobrado na chave nova', async () => {
     const env = fakeEnv();
     const antigo = 'mega-' + 'vir' + 'us';
-    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { [antigo]: 2 } }));
-    expect((await gerarForma(env, 'mega-power')).ok).toBe(true);
-    // 2 (antigo) + 1 = 3, tudo na chave nova; a antiga sai para não contar duas vezes
-    expect(entDe(env).aiForms).toEqual({ 'mega-power': 3 });
+    // Gravado com o id antigo = a forma JÁ foi gerada: com 1 por forma, recusa.
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { [antigo]: 1 } }));
     expect(await gerarForma(env, 'mega-power')).toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
+    // Sem antigo, a nova sai uma vez e é dobrada só na chave nova.
+    const env2 = fakeEnv();
+    env2._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { [antigo]: 0 } }));
+    expect((await gerarForma(env2, 'mega-power')).ok).toBe(true);
+    expect(entDe(env2).aiForms).toEqual({ 'mega-power': 1 });
   });
 
   it('contador por forma ILEGÍVEL recusa (fail-closed), não vale zero', async () => {

@@ -694,7 +694,13 @@ async function handleDeleteConfirm(env, saveId, body) {
       consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter(o => !ehSteam(o)),
       orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter(o => !ehSteam(o?.orderId)),
       auditedAt: ent.auditedAt,
-      aiLifetime: {},
+      // ANTIABUSO (dono, 11/10/2026; `abuso-e-custo` V1.2): os contadores de
+      // geração de sprite SOBREVIVEM à exclusão — excluir e relogar (mesmo
+      // e-mail normalizado → mesmo saveId) não devolve gerações. Não é perfil:
+      // são números, como o resto do que fica aqui.
+      aiLifetime: { sprite: Number(ent.aiLifetime?.sprite) || 0 },
+      aiForms: ent.aiForms && typeof ent.aiForms === 'object' ? ent.aiForms : {},
+      ...(ent.rebirthSpriteResetAt ? { rebirthSpriteResetAt: ent.rebirthSpriteResetAt } : {}),
       adDate: '1970-01-01',
       adCount: 0,
       accountDeletedAt: Date.now(),

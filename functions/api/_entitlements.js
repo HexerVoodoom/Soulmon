@@ -231,8 +231,12 @@ export async function resetSpriteLifetimeOnRebirth(env, saveId) {
   if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
     return { ent, jaFeito: true, anterior: 0 };
   }
+  // ⚰️ release/beta-1 (dono, 11/10/2026): "o usuário NÃO pode ficar regerando
+  // o Soulmon". O renascimento NÃO zera mais o vitalício: as formas já geradas
+  // reusam a arte do cache (`sprite:img:<saveId>:<formId>`) e as que nunca foram
+  // geradas ainda podem sair UMA vez cada (dentro do vitalício). A marca segue
+  // gravada para a rota continuar idempotente.
   const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
-  ent.aiLifetime = { ...(ent.aiLifetime || {}), sprite: 0 };
   ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
   await writeEntitlement(env, saveId, ent);
   return { ent, jaFeito: false, anterior };
