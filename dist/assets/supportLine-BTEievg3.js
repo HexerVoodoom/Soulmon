@@ -1,0 +1,1 @@
+const a="https://findahelpline.com";function e(n){return n?"Encontrar uma linha de apoio":"Find a helpline"}function o(n){return n?"No Brasil: CVV, 188 (24h, gratuito).":"US/Canada: 988. UK/IE: 116 123."}const i="tel:188";function s(n){return n?"Isto não substitui ajuda profissional.":"This does not replace professional help."}export{i as H,e as a,a as b,o as h,s as n};
