@@ -1447,6 +1447,12 @@ não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onV
 **Chamado por:** `src/App.tsx` (lazy).
 **Régua:** `src/components/filaDeAvisos.contract.test.ts`, `src/utils/mealRhythm.contract.test.ts`.
 
+### `src/components/SpritePoseRows.tsx`
+**Dono de:** as duas linhas da pose do Soulmon em Configurações > Aparência — "Virar Soulmon" / "Flip Soulmon" (`flipX`) e "Soulmon voando" / "Soulmon flying" (`altitude`). Só desenha; escreve por `applySpritePose`.
+**Exports:** `SpritePoseRows({ language, pose })`.
+**Chamado por:** `src/components/SettingsPage.tsx`.
+**Régua:** `src/components/SpritePoseRows.render.test.tsx`.
+
 ### `src/components/MealRhythmRows.tsx`
 **Dono de:** as linhas do ritmo das refeições nas Configurações — interruptor do cartão no app, interruptor do lembrete (exige notificações ligadas; diz por quê) e os três `<select>` de horário (só oferece o que `normalizeMealTimes` aceita).
 **Exports:** `MealRhythmRows({ language, settings, notificationsEnabled, onChange })`.

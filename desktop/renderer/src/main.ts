@@ -4,6 +4,7 @@
 // menu (ver menu.ts/menu.html) num processo separado.
 import './style.css';
 import { petSprite, facesLeft } from './sprites';
+import { mirrorSprite } from '../../../src/utils/spritePose';
 import { loadState, type DesktopState } from './state';
 import { idlePhrase } from './phrases';
 // Glifos pixel a 1× (32) no lugar dos emoji do sistema (canvas Fora do app,
@@ -55,6 +56,7 @@ function applyPetVisual() {
   petImg.src = petSprite(state.stage, state.demoCharacterId);
   petImg.alt = state.stageName;
   pet.classList.toggle('sleeping', state.sleeping);
+  pet.classList.toggle('air', state.spritePose.altitude === 'air');
 }
 
 function tick(ts: number) {
@@ -76,11 +78,10 @@ function tick(ts: number) {
   }
 
   pet.style.transform = `translateX(${x}px)`;
-  // A maioria dos sprites do jogo olha para a DIREITA; os de
-  // LEFT_FACING_STAGES são a exceção. Espelha só quando a direção do
-  // movimento discorda da orientação natural do sprite.
-  const natural: -1 | 1 = facesLeft(state.stage) ? -1 : 1;
-  petImg.style.transform = dir === natural ? '' : 'scaleX(-1)';
+  // A arte olha para a DIREITA ou, em algumas linhas, para a ESQUERDA (`facesLeft` = o
+  // `artFacesLeft` do app); `flipX` (Configurações do app) inverte essa "frente". Espelha
+  // só quando a direção do movimento discorda de para onde o desenho olha.
+  petImg.style.transform = mirrorSprite(dir === -1, facesLeft(state.stage, state.demoCharacterId), state.spritePose.flipX) ? 'scaleX(-1)' : '';
   pet.classList.toggle('walking', walking && !state.sleeping);
 
   positionBubble();

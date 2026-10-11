@@ -6623,6 +6623,7 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 eggType={gameState.eggType}
                 demoCharacterId={petLine}
+                spritePose={gameState.spritePose}
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
                 ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
@@ -7284,6 +7285,7 @@ export default function App() {
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
               mealRhythm={gameState.mealRhythm}
+              spritePose={gameState.spritePose}
               onChangeMealRhythm={next => setGameState(prev => ({ ...prev, mealRhythm: next }))}
               onRestoreFromCloud={async (id) => {
                 const { cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');

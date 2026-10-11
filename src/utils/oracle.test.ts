@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { SPRITE_FACING_PROMPT } from './spritePose';
 import {
   normalizeName, reduceNumber, computeNumerology, westernSunSign,
   approximateAscendant, computeChinese, computeVedic,
@@ -233,6 +234,10 @@ describe('generateOracle', () => {
       // O pedido de originalidade vale nas DUAS: citar inspiração não é licença
       // para devolver personagem registrado.
       expect(s.imagePrompt).toContain('Do not copy any existing franchise character');
+      // DIREÇÃO (11/10/2026): a frase que trava para onde o bicho olha (a mesma que o render
+      // espera: arte virada à DIREITA) vai nas DUAS variantes — sem ela o sprite saía de costas.
+      expect(s.imagePrompt).toContain(SPRITE_FACING_PROMPT);
+      expect(s.imagePromptFallback).toContain(SPRITE_FACING_PROMPT);
       expect(s.imagePromptFallback).toContain('Do not copy any existing franchise character');
       // Fora as referências, os dois prompts pedem exatamente a mesma criatura.
       expect(s.imagePromptFallback).toContain(`transparent background: ${s.imagePrompt.split('transparent background: ')[1]}`.trim());
