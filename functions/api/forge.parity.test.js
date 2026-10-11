@@ -12,6 +12,8 @@ import { COMBAT_BONUS_CAP } from '../../src/utils/combate/bonus';
 describe('as tabelas do servidor e as do app sao as MESMAS', () => {
   it('constantes, pecas, predios e materiais', () => {
     expect(srv.FORGE_MAX_LEVEL).toBe(app.FORGE_MAX_LEVEL);
+    expect(srv.FORGE_SCHEMA).toBe(app.FORGE_SCHEMA);
+    expect(srv.OLD_LEVEL_TO_NEW).toEqual([...app.OLD_LEVEL_TO_NEW]);
     expect(srv.LEVEL_PCT).toEqual([...app.LEVEL_PCT]);
     expect(srv.PIECE_MAX_PCT).toBe(app.PIECE_MAX_PCT);
     expect(srv.PRIMARY_ATTR).toEqual(app.PRIMARY_ATTR);
@@ -36,11 +38,11 @@ describe('as tabelas do servidor e as do app sao as MESMAS', () => {
       for (let j = 0; j < 6; j++) {
         const id = pick();
         if (typeof id === 'string') {
-          levels[id] = [1, 2, 3, 4, 5, 0, 9, -1, NaN, 'x', 2.7][Math.floor(rnd() * 11)];
-          picks[id] = Array.from({ length: Math.floor(rnd() * 6) }, () => ['a', 'b', 'z', 3][Math.floor(rnd() * 4)]);
+          levels[id] = [1, 2, 3, 4, 5, 0, 9, -1, NaN, 'x', 2.7, 8, 11, 15, 16, 99][Math.floor(rnd() * 16)];
+          picks[id] = Array.from({ length: Math.floor(rnd() * 16) }, () => ['a', 'b', 'z', 3][Math.floor(rnd() * 4)]);
         }
       }
-      const forge = rnd() < 0.1 ? [null, 3, 'x', []][Math.floor(rnd() * 4)] : { levels, picks };
+      const forge = rnd() < 0.1 ? [null, 3, 'x', []][Math.floor(rnd() * 4)] : (rnd() < 0.5 ? { v: 2, levels, picks } : { levels, picks }); // com e sem `v` (esquema antigo convertido)
       expect(srv.sanitizeForge(forge), JSON.stringify(forge)).toEqual(app.sanitizeForge(forge));
       const equipped = { nucleo: pick(), carapaca: pick(), rastro: pick() };
       const raw = { owned: Array.from({ length: 6 }, pick), equipped, fragments: 0 };

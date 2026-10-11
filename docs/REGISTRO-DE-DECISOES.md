@@ -2015,6 +2015,16 @@ Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-
 - **Efeitos colaterais a decidir (dono):** fragmentos agora só pagam "refazer" (3); `tal-com-01` (Etiqueta) e a peça da semana (`tal-com-07`) passaram a descontar o REFAZER, não mais a compra; a mochila não recusa prêmio de missão.
 - **Gatilho para rever:** se faltar/sobrar material (o total para as 9 peças no 5 é 90 de origem + 54 de apoio, ~1/dia por prédio), ajustar `UPGRADE_COST`, nunca o teto.
 
+### 26.1 Soulsmith: 15 níveis e custos maiores; as duas opções apresentadas como IGUAIS (decisão do dono, 11/10/2026)
+
+**Decisão.** "Está fácil de upar. Aumente a quantidade de níveis e os custos; tem de levar tempo para colocar tudo no máximo. Mesmo depois do nível ultra o jogador ainda não terá todos os itens no máximo." E: "melhore a descrição do upgrade: mais direta; hoje parece que há um upgrade 'correto' para a categoria e um alternativo — apresente as DUAS opções como iguais (ex.: mais dano OU mais velocidade)." O nome da peça "cobre" **fica** (decisão do dono).
+
+**Como ficou.** 5 → **15 níveis**, cada um 0,1 % (o teto por peça continua 1,5 %; três peças, 4,5 %; teto único de 5 % intacto). Custo total por peça 98 do material do prédio + 56 de apoio (eram 10 + 6): como cada prédio paga 1 material/dia, as três peças fecham em ~100 dias de uso diário (**passa do Ultra, 59 dias**; ~134 com 3 de 4 dias; ~198 com metade). Simulado em `forge.tempo.test.ts`, documentado em `BALANCO-SOULSMITH.md`. Vínculo exigido por nível sobe até 10 (não é o que segura o ritmo). Migração sem confisco: registro sem `v: 2` vira o nível novo de mesmo bônus (1→3, 2→5, 3→8, 4→11, 5→15). Na tela, o modal mostra **"Mais dano · +0,1 %" e "Mais defesa · +0,1 %"** (nome do ganho + efeito em palavras), lado a lado com o mesmo peso visual — sem "A/B", sem "o atributo do próprio slot / o vizinho". Mecanicamente a opção A ainda é o atributo do slot (o nível 1 é fixo nele), mas a tela não a trata como a "certa".
+
+- **Perdeu:** os 5 níveis de 0,2–0,4 % (subir de nível era barato: 10 materiais ≈ 10 dias); a copy "A = atributo do slot / B = o vizinho".
+- **Não entrou (alternativa):** custo em **Bits** a cada aprimoramento — seria mais um ralo contra o teto diário de 150 Bits dos minijogos; fica como opção.
+- **Gatilho para rever:** o dono achar longo/curto demais → ajustar `UPGRADE_COST` (nunca o teto) e rodar a simulação; ou a Oficina do Foco render mais material por ciclo (a linha "foco" da tabela é a primeira a encurtar).
+
 
 ## 28. Ritmo das refeições: três janelas por dia, convite e nunca cobrança (pedido do dono, 11/10/2026)
 

@@ -12,7 +12,7 @@ import { earnedBits, type BitsOrigin } from './bitsOrigin';
 import { bondLevelFor } from './bond';
 import type { BuildingId } from './gates';
 import {
-  FORGE_MAX_LEVEL, LEVEL_MIN_BOND, PIECE_BY_BUILDING, PIECE_BY_ID, REDO_BITS, REDO_FRAGMENTS, UPGRADE_COST, pieceChoices, pieceLevel, sanitizeForge,
+  FORGE_MAX_LEVEL, FORGE_SCHEMA, LEVEL_MIN_BOND, PIECE_BY_BUILDING, PIECE_BY_ID, REDO_BITS, REDO_FRAGMENTS, UPGRADE_COST, pieceChoices, pieceLevel, sanitizeForge,
   type ForgeChoice, type ForgePiece, type ForgeState,
 } from './forge';
 
@@ -31,9 +31,9 @@ export interface ForgeGameState {
 export type ForgeRefusal = 'unknown' | 'not-owned' | 'max-level' | 'bond' | 'no-materials' | 'bad-choice' | 'bad-level' | 'same' | 'no-funds' | 'not-earned' | 'no-fragments';
 export type RedoPay = 'bits' | 'fragments';
 
-/** O custo em materiais do aprimoramento PARA o nível `to` (2..5): lista de [material, quantidade], sem as quantidades zero. */
+/** O custo em materiais do aprimoramento PARA o nível `to` (2..15): lista de [material, quantidade], sem as quantidades zero. */
 export function upgradeCost(piece: ForgePiece, to: number): { material: MaterialId; n: number }[] {
-  const c = UPGRADE_COST[to as 2 | 3 | 4 | 5];
+  const c = UPGRADE_COST[to];
   if (!c) return [];
   return piece.mats.map((material, i) => ({ material, n: c[i] })).filter((x) => x.n > 0);
 }
@@ -76,7 +76,7 @@ export function applyUpgrade<T extends ForgeGameState>(prev: T, id: string, choi
   }
   const f = sanitizeForge(prev.forge);
   const picks = [...pieceChoices(id, level, prev.forge), choice];
-  const forge: ForgeState = { levels: { ...f.levels, [id]: to }, picks: { ...f.picks, [id]: picks } };
+  const forge: ForgeState = { v: FORGE_SCHEMA, levels: { ...f.levels, [id]: to }, picks: { ...f.picks, [id]: picks } };
   return { ok: true, state: { ...prev, buildingQuests: { ...bq, materials }, forge } };
 }
 
@@ -109,7 +109,7 @@ export function applyRedo<T extends ForgeGameState>(prev: T, id: string, level: 
   const f = sanitizeForge(prev.forge);
   const picks = pieceChoices(id, now, prev.forge);
   picks[level - 2] = choice;
-  const forge: ForgeState = { levels: { ...f.levels, [id]: now }, picks: { ...f.picks, [id]: picks } };
+  const forge: ForgeState = { v: FORGE_SCHEMA, levels: { ...f.levels, [id]: now }, picks: { ...f.picks, [id]: picks } };
   if (pay === 'fragments') {
     const eq = sanitizeEquipment(prev.equipment);
     return { ok: true, price: REDO_FRAGMENTS, state: { ...prev, forge, equipment: { ...eq, fragments: eq.fragments - REDO_FRAGMENTS } } };
@@ -146,6 +146,6 @@ export function applyForgeGrant<T extends ForgeGameState>(prev: T, building: Bui
   return {
     ...prev,
     equipment: { ...eq, owned: [...eq.owned.filter((id) => id !== old), piece.id], equipped: { ...eq.equipped, [piece.slot]: piece.id } },
-    forge: { levels, picks },
+    forge: { v: FORGE_SCHEMA, levels, picks },
   };
 }
