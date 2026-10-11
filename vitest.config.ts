@@ -1,3 +1,4 @@
+import { availableParallelism } from 'node:os';
 import { defineConfig } from 'vitest/config';
 import viteConfig from './vite.config';
 // O NÚMERO do orçamento mora em `vitest.budget.mjs` porque tem dois leitores:
@@ -98,6 +99,17 @@ export default defineConfig({
     // um guard de relógio ficaria vermelho a ~5,5 s numa máquina carregada sem
     // que nada tivesse piorado no código. Seria trocar um flake por outro.
     testTimeout: TEST_TIMEOUT_MS,
+    // O hook (beforeAll/afterEach…) tinha o default de 10 s, abaixo do piso de
+    // 15 s dos testes: sob carga o hook de um teste de render estourava antes do
+    // teste que ele prepara. Mesmo dono (`vitest.budget.mjs`), mesmo número.
+    hookTimeout: TEST_TIMEOUT_MS,
+    // WORKERS = TODOS OS NÚCLEOS (medido em 11/10/2026, 4 CPUs, suíte inteira,
+    // mesmas 8 falhas herdadas nos dois lados): o default do Vitest (núcleos − 1)
+    // deixava um núcleo parado — 8m56 → 6m54 de parede (−23%) só por usá-lo.
+    // Em máquina compartilhada (várias sessões em paralelo) a contenção pesa mais
+    // que o ganho: `VITEST_MAX_WORKERS=2 npx vitest run`. NÃO ligar `isolate:false`:
+    // medido, 24m57 e 479 testes vermelhos (estado vaza entre arquivos jsdom).
+    maxWorkers: Number(process.env.VITEST_MAX_WORKERS) || availableParallelism(),
     include: [
       'src/**/*.test.ts', 'src/**/*.test.tsx', 'functions/**/*.test.js', 'workers/**/*.test.js',
       // O renderer do desktop tem cópias de regras do app (derivação do
