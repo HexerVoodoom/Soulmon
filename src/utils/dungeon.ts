@@ -1,11 +1,14 @@
 // ⚔️ Dungeon logic — an ascending ladder of enemies (baby-i → mega), each random
 // within its tier and each stronger than the last. Clearing the whole ladder
 // advances the "dungeon level" (wave): enemies then deal MORE damage and take
-// LESS. That level persists and resets WEEKLY (`weekKey`), and the run keeps a
-// score ranking (`DUNGEON_BEST`) and rare heart drops. Kept out of the
-// component so the rules are testable.
+// LESS. Since 11/10/2026 (REGISTRO §31) the depth goes to layer 999, each layer
+// costs Home ENERGY (`utils/dungeonIdle.ts`), and the old weekly base is gone:
+// the descent starts at the last milestone cleared. The run keeps a score
+// ranking (`DUNGEON_BEST`) and rare heart drops. Kept out of the component so
+// the rules are testable.
 //
-// Runs are unlimited (no per-day cap) and there is no entry gate. Losing takes
+// Runs are unlimited (no per-day cap) and there is no entry gate besides the
+// energy each layer spends — never a heart, never Bits. Losing takes
 // no heart at all: what is at stake is the run itself — floor bonus, Glitchtama
 // and score. The game never charges the bar that stands for the care the player
 // took of themselves; it used to, and that locked out of the content exactly
@@ -168,108 +171,11 @@ export function buildDungeonWave(
   });
 }
 
-// ── Dungeon base level (persists; resets weekly) ────────────────────────────
-function weekKey(d = new Date()): string {
-  // Simple year+week bucket — good enough for a weekly reset boundary.
-  const onejan = new Date(d.getFullYear(), 0, 1);
-  const days = Math.floor((d.getTime() - onejan.getTime()) / 86400000);
-  const week = Math.floor((days + onejan.getDay()) / 7);
-  return `${d.getFullYear()}-W${week}`;
-}
-
-/** Base dungeon level (floor 1's difficulty). Resets to 1 each week. */
-export function getDungeonDifficulty(): number {
-  const week = weekKey();
-  const rec = readJson<{ week?: string; level?: unknown } | null>(
-    STORAGE_KEYS.DUNGEON_DIFFICULTY, null);
-  if (rec?.week === week && typeof rec.level === 'number') return rec.level;
-  writeJson(STORAGE_KEYS.DUNGEON_DIFFICULTY, { week, level: 1 });
-  return 1;
-}
-
-/**
- * WP4.5 — O SUMIDOURO RECORRENTE DE BITS: descer mais fundo.
- *
- * Até aqui os Bits só tinham compras ÚNICAS (decoração, cenários), então quem
- * joga muito acumula uma moeda que não compra mais nada — e moeda que não
- * compra nada deixa de ser recompensa.
- *
- * O sumidouro escolhido é o único que o `CLAUDE.md` já declara legítimo:
- * **custo de ENTRADA em Bits, nunca cobrar da barra que representa o cuidado
- * que a pessoa teve consigo mesma**. Comprar um nível de base começa a run
- * mais fundo (mais Bits por andar, e o andar 1 deixa de ser trivial para quem
- * já subiu). Ele é RECORRENTE de graça, sem inventar mecânica nova: a base
- * reseta toda semana, então a compra é semanal por construção.
- *
- * O preço sobe com o nível para o sumidouro acompanhar quem farma mais — e
- * porque o valor do que se compra também sobe (o bônus de andar é escalado).
- */
-/** Era 40; acompanha o `DUNGEON_BITS_FACTOR` (30/09/2026) para o sumidouro manter o peso relativo. */
-export const DEEP_START_BASE_COST = Math.round(40 * DUNGEON_BITS_FACTOR);
-
-export function deepStartCost(currentLevel: number): number {
-  const n = Math.max(1, Math.floor(currentLevel));
-  return DEEP_START_BASE_COST * n;
-}
-
-/**
- * Teto do que se pode comprar. Sem ele, alguém com Bits suficientes começaria
- * numa base impossível e perderia a run no primeiro inimigo — o que não é
- * desafio, é dinheiro queimado por uma tela que deixou.
- */
-export const DEEP_START_MAX_LEVEL = 5;
-
-/**
- * 02/10/2026 (E2, dono): "Descer mais fundo" SÓ libera um nível que a pessoa JÁ
- * ALCANÇOU antes. Não dá para pular pagando — o Bit compra a volta ao ponto
- * conquistado (depois do reset semanal), nunca o ponto que ainda não se jogou.
- * `reachedLevel` é o nível mais fundo que a pessoa já cumpriu (ver
- * `getDungeonReached`/`recordDungeonReached`, gravado ao CONCLUIR uma descida).
- *
- * É regra PURA e mora aqui, não na tela: o botão desabilitado é só leitura
- * desta função, e `buyDeepStart` recusa o mesmo que `canBuyDeepStart`.
- */
-export function canBuyDeepStart(currentLevel: number, bits: number, reachedLevel: number): boolean {
-  if (currentLevel >= DEEP_START_MAX_LEVEL) return false;
-  if (currentLevel >= reachedLevel) return false; // só até onde já chegou
-  return bits >= deepStartCost(currentLevel);
-}
-
-/**
- * O nível que a compra entrega, ou `null` se a regra recusa. Sempre UM nível
- * por vez e nunca acima do alcançado: o resultado é `currentLevel + 1`, que por
- * `canBuyDeepStart` é no máximo `reachedLevel`.
- */
-export function buyDeepStart(currentLevel: number, bits: number, reachedLevel: number): number | null {
-  return canBuyDeepStart(currentLevel, bits, reachedLevel) ? currentLevel + 1 : null;
-}
-
-/** Raise the persisted base level to at least `level` (called on run completion). */
-export function setDungeonDifficultyAtLeast(level: number): number {
-  const next = Math.max(getDungeonDifficulty(), level);
-  // Progresso de verdade (a base semanal da masmorra): perder isso rebaixa a
-  // dificuldade conquistada, então a falha AVISA.
-  writeJson(STORAGE_KEYS.DUNGEON_DIFFICULTY, { week: weekKey(), level: next });
-  return next;
-}
-
-/**
- * O nível mais fundo que a pessoa já cumpriu (persiste; NÃO reseta na semana —
- * é o que o reset semanal da base deixa para trás e que "Descer mais fundo"
- * devolve). Nunca menor que a base atual: quem já estava numa base conquistada
- * antes desta chave existir não perde o que tinha.
- */
-export function getDungeonReached(): number {
-  const stored = readNumber(STORAGE_KEYS.DUNGEON_REACHED, 1);
-  return Math.max(1, Math.floor(stored), getDungeonDifficulty());
-}
-
-/** Registra um nível CUMPRIDO (nunca chamado numa compra). Só sobe. */
-export function recordDungeonReached(level: number): number {
-  const next = Math.max(getDungeonReached(), Math.floor(level));
-  writeLocal(STORAGE_KEYS.DUNGEON_REACHED, String(next));
-  return next;
-}
+// ── ⚰️ A base semanal e o "Descer mais fundo" (WP4.5/E2) saíram em 11/10/2026 (REGISTRO §31) ─────────────
+// A descida agora começa no PONTO DE RETORNO (`startLayerFor`, o último marco já limpo — `utils/dungeonIdle.ts`),
+// de graça: o custo de descer passou a ser ENERGIA por camada. Pagar Bits para voltar ao ponto conquistado
+// virou redundante, e a base que subia a cada marco empurraria a parede para CIMA a cada descida da semana.
+// As chaves `DUNGEON_DIFFICULTY`/`DUNGEON_REACHED` ficam em `storageKeys.ts` só para a limpeza não deixar lixo.
 
 // ── Best score (ranking) ─────────────────────────────────────────────────────
 export function getDungeonBest(): number {

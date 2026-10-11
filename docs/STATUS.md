@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Masmorra idle de retorno: energia por camada, profundidade até 999, Level Up restaura (REGISTRO §31)
+>
+> - **Dono:** `utils/dungeonIdle.ts` — 1 energia (a da Home) por camada; zona de conforto por Lv (`comfortLayers`) sem mexer no combate v3; teto `dungeonLayerCap` (22/101/269/558/999 nos topos de estágio; 3 com o portão do Vínculo fechado); ponto de retorno pelo recorde `dungeonDepthRecord` (campo novo, fuzz2 122); marcos de profundidade dão fragmentos do Soulsmith.
+> - **Saiu:** base semanal da masmorra e o "Descer mais fundo" pago (o retorno ao marco virou grátis; o custo é energia).
+> - **Level Up** (`applyLevelUpCelebrated`) enche energia + HP da masmorra 1× por celebração; corações não. Home: a dica da energia diz para que serve.
+> - **Depende do dono:** curva da zona, Lv (força) vs Vínculo no teto, sumidouro de Bits a menos, cosmético por marco. CLAUDE.md velho na linha ⚔️ Masmorra (base semanal, 5 andares, sem gate) e na ⚡ Energia (não cita o gasto).
 > ## 11/10/2026 — Guilda de lançamento, fecho: respostas do dono em modal (`claude/guilda-lancamento`)
 >
 > - **Feira re-hospedada no Hall (decidido):** o prédio `arena.feira` virou **`hall.feira`** (gate, material `ribbon`, peça `eq-rastro-t3` do Ferreiro, missão do prédio, apresentação do NPC, espelho `functions/api/_gates.js`) e o lote saiu da Arena: agora é o lote `feira` do **Hall**, dividindo a plataforma de baixo com o Salão (como Torneio e Duelo na Arena). **Save antigo:** `arena.feira` em `buildingQuests` (`visited`/`claimed`) e em `buildingIntrosSeen` é lido como `hall.feira` (nada perdido). A arte do lote e do NPC Fanfare mantêm os nomes de arquivo da leva (`lote-arena-feira`, `npc-arena-feira`).

@@ -78,7 +78,7 @@ const RespiracaoGame = lazy(() => loadRespiracaoGame().then(m => ({ default: m.R
  *  a Masmorra não tem gate de entrada, nem limite diário, nem cobra coração
  *  ao perder — quem decide isso são `utils/dungeon` e a `DungeonGame`. */
 export interface PlayHandlers {
-  onDungeonEnter: () => { ok: true; level: number; best: number };
+  onDungeonEnter: () => { ok: true; level?: number; best: number };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
   onGlitchtama: () => void;

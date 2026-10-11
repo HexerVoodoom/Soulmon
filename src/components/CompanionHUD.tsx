@@ -1843,6 +1843,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   <p className="sm3-stat-tip-title">{tip.title}</p>
                   <p><b>{tip.upLabel}</b> {tip.up}</p>
                   <p><b>{tip.downLabel}</b> {tip.down}</p>
+                  {tip.use && <p data-stat-tip-use><b>{tip.useLabel}</b> {tip.use}</p>}
                 </div>
               );
             })()}

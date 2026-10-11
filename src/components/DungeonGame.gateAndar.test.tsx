@@ -16,7 +16,8 @@ describe('DungeonGame — o portão dos andares altos está ligado na tela', () 
     expect(src).toMatch(/gateLine\('masmorraAlto'/);
   });
   it('portão fechado encerra a descida (endDescent selado) em vez de entrar no andar', () => {
-    expect(src).toMatch(/if \(!floorOpen\(floor \+ 1\)\) \{ endDescent\('sealed'\); return; \}/);
+    // REGISTRO §31: fechado pelo Vínculo = 'sealed' (com o gateLine); além do teto do Lv = 'deep'. Nos dois, a descida termina.
+    expect(src).toMatch(/if \(!floorOpen\(floor \+ 1\)\) \{ endDescent\(.*'deep' : 'sealed'\); return; \}/);
   });
   it('sem Provider (demo, testes) nada fecha: o portão só vale com o Vínculo do save', () => {
     expect(src).toMatch(/!gs \|\| masmorraFloorOpen/);

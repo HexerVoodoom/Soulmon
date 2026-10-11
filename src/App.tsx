@@ -98,7 +98,7 @@ import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
 import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
-import { levelUpPending, levelUpBaseline } from './utils/levelUp';
+import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
@@ -112,7 +112,7 @@ import {
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
 import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
-import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
+import { getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { heartDropBonus, rollPetPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
@@ -1925,7 +1925,7 @@ export default function App() {
     setGameState(prev => (prev.lastCelebratedLevel !== undefined ? prev : { ...prev, lastCelebratedLevel: levelUpBaseline(prev.totalXP) }));
   }, [levelUpDemo, gameState.lastCelebratedLevel, setGameState]);
   const handleLevelUpDone = useCallback((celebrated: number) => {
-    setGameState(prev => ({ ...prev, lastCelebratedLevel: Math.max(prev.lastCelebratedLevel ?? 0, celebrated) }));
+    setGameState(prev => applyLevelUpCelebrated(prev, celebrated)); // registra o nível E restaura energia + HP da masmorra (1× por celebração)
   }, [setGameState]);
   /* A APRESENTAÇÃO DO PRÉDIO NOVO (`components/BuildingIntro`, 08/10/2026): quando o Vínculo abre um prédio, o NPC dele se
      apresenta. Segundo da fila, logo depois do tour — e DEPOIS do display de Level Up (`utils/buildingIntro.ts` ›
@@ -3490,8 +3490,9 @@ export default function App() {
   // teve consigo mesmo. O que está em jogo aqui é a própria run: perder custa os
   // bônus de andar, o Glitchtama e o placar. Se farmar Bits virar problema, a
   // alavanca é um custo de ENTRADA em Bits — não o retorno do custo em corações.
-  const handleDungeonEnter = useCallback((): { ok: true; level: number; best: number } => {
-    return { ok: true, level: getDungeonDifficulty(), best: getDungeonBest() };
+  const handleDungeonEnter = useCallback((): { ok: true; level?: number; best: number } => {
+    // A base semanal saiu (REGISTRO §31): a descida começa no ponto de retorno (`startLayerFor`), e a energia é o custo.
+    return { ok: true, best: getDungeonBest() };
   }, []);
 
   // Perder encerra a run e não toca no HP. (A contabilidade de placar/dificuldade

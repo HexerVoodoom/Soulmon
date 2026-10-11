@@ -29,7 +29,7 @@ import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
-import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR } from '../utils/dungeonIdle';
+import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
 interface GuideModalProps {
@@ -176,8 +176,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              `As barras de energia são o dobro da meta diária do estágio (Rookie: ${getMaxEnergyForStage('rookie')}). Ela enche só comendo e zera todo dia — e não decide mais o dia completo.`,
-              `Energy bars are twice your stage’s daily goal (Rookie: ${getMaxEnergyForStage('rookie')}). It fills only by feeding and resets daily — and no longer decides the complete day.`,
+              `As barras de energia são o dobro da meta diária do estágio (Rookie: ${getMaxEnergyForStage('rookie')}). Ela enche só comendo e zera todo dia — e não decide mais o dia completo. Ela serve para descer a Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER}, e subir de nível enche de novo.`,
+              `Energy bars are twice your stage’s daily goal (Rookie: ${getMaxEnergyForStage('rookie')}). It fills only by feeding and resets daily — and no longer decides the complete day. It is what the Dungeon runs on: each layer spends ${DUNGEON_ENERGY_PER_LAYER}, and leveling up refills it.`,
             )}
           </p>
           <p style={para}>
@@ -357,8 +357,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, sem fim, até o HP acabar. O HP não enche entre descidas — volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo. Limpar a camada ${DUNGEON_MILESTONE_FLOOR} é um marco: rende o item 🌀 (veja Itens).`,
-              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, endlessly, until the HP runs out. HP does not refill between descents — it comes back over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even with the app closed) and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down again. Clearing layer ${DUNGEON_MILESTONE_FLOOR} is a milestone: it earns the 🌀 item (see Items).`,
+              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home); a descida para quando a energia ou o HP acabam. O HP não enche entre descidas — volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo. A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco: a próxima descida começa dali, e o primeiro marco de cada descida rende o item 🌀 (veja Itens). Quanto mais Lv o Soulmon tem — dias completos e evolução —, mais fundo ele chega; bater uma profundidade nova (5, 10, 25, 50…) rende fragmentos do Soulsmith. Subir de nível enche a energia e o HP.`,
+              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer spends ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy); the descent stops when energy or HP runs out. HP does not refill between descents — it comes back over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even with the app closed) and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down again. Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns the 🌀 item (see Items). The higher your Soulmon's Lv — complete days and evolution — the deeper it reaches; a new depth (5, 10, 25, 50…) earns Soulsmith fragments. Leveling up refills energy and HP.`,
             )}
           </p>
           <p style={para}>

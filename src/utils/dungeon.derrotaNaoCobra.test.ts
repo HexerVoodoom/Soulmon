@@ -38,13 +38,12 @@ describe('masmorra — perder não cobra coração (WP4.20)', () => {
     }
   });
 
-  it('o cabeçalho diz o que o arquivo faz: reset semanal, sem limite, sem gate', () => {
+  it('o cabeçalho diz o que o arquivo faz: sem limite, sem gate além da energia por camada (REGISTRO §31)', () => {
     const fonte = ler('src/utils/dungeon.ts');
-    expect(fonte).toContain('resets WEEKLY');
-    expect(fonte).toMatch(/no per-day cap.*no entry gate/s);
-    // E a função que ele descreve continua sendo semanal de verdade.
-    expect(fonte).toMatch(/function weekKey/);
+    expect(fonte).toMatch(/no per-day cap.*no entry gate besides the\s*\/\/\s*energy each layer spends — never a heart, never Bits/s);
+    // A base semanal saiu (11/10/2026): nada de reset mensal voltando no lugar dela.
     expect(fonte).not.toMatch(/function monthKey/);
+    expect(fonte).not.toMatch(/function weekKey/);
   });
 
   it('`handleDungeonLose` continua sem tocar em coração nenhum', () => {

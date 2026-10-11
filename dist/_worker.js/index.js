@@ -3003,13 +3003,13 @@ var BUILDING_GATES = {
   "exploracao.oficina": { minBond: 3 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
   "arena.torneio": { minBond: GATES.torneio.minBond },
-  "arena.feira": { minBond: GATES.pvp.minBond },
   "laboratorio.evolucao": { minBond: 1 },
   "laboratorio.pet": { minBond: 2 },
   "laboratorio.stats": { minBond: 3 },
   "hall.biblioteca": { minBond: 2 },
   "hall.amigos": { minBond: 2 },
-  "hall.guilda": { minBond: 4 }
+  "hall.guilda": { minBond: 4 },
+  "hall.feira": { minBond: GATES.pvp.minBond }
 };
 
 // api/_bond.js
@@ -7144,7 +7144,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-EyN9BY/functionsRoutes-0.5222625961318457.mjs
+// ../.wrangler/tmp/pages-7gyBPm/functionsRoutes-0.5738809882380902.mjs
 var routes = [
   {
     routePath: "/api/account",
