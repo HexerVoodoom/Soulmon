@@ -150,7 +150,7 @@ export async function verifyPlayPurchase(env, { productId, purchaseToken, saveId
     }
     purchase = await res.json();
   } catch (err) {
-    console.error('billing verify error (play):', err);
+    console.error('billing verify error (play):', String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: 'verification-failed' };
   }
 
@@ -224,7 +224,7 @@ export async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
     if (purchase.purchaseState === 0) return false;
     return null;
   } catch (err) {
-    console.error('refund check error (play):', err);
+    console.error('refund check error (play):', String(err?.message ?? err).slice(0, 120));
     return null;
   }
 }
@@ -502,7 +502,7 @@ export async function verifySteamOwnership(env, { ticket }) {
   try {
     auth = await authenticateSteamTicket(cfg, ticket);
   } catch (err) {
-    console.error('billing verify error (steam ticket):', err);
+    console.error('billing verify error (steam ticket):', String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: 'verification-failed' };
   }
   if (!auth.ok) return auth;
@@ -520,7 +520,7 @@ export async function verifySteamOwnership(env, { ticket }) {
     const data = await res.json().catch(() => null);
     owns = data?.appownership?.ownsapp === true;
   } catch (err) {
-    console.error('billing verify error (steam ownership):', err);
+    console.error('billing verify error (steam ownership):', String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: 'verification-failed' };
   }
   if (!owns) return { ok: false, reason: 'not-purchased' };
@@ -571,7 +571,7 @@ export async function verifySteamPurchase(env, { orderId, ticket }) {
   try {
     auth = await authenticateSteamTicket(cfg, ticket);
   } catch (err) {
-    console.error('billing verify error (steam ticket):', err);
+    console.error('billing verify error (steam ticket):', String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: 'verification-failed' };
   }
   if (!auth.ok) return { ok: false, reason: auth.reason };
@@ -585,7 +585,7 @@ export async function verifySteamPurchase(env, { orderId, ticket }) {
     const data = await res.json().catch(() => null);
     params = data?.response?.params;
   } catch (err) {
-    console.error('billing verify error (steam txn):', err);
+    console.error('billing verify error (steam txn):', String(err?.message ?? err).slice(0, 120));
     return { ok: false, reason: 'verification-failed' };
   }
   if (!params) return { ok: false, reason: 'invalid-purchase' };
@@ -640,7 +640,7 @@ export async function isSteamOwnershipVoided(env, { orderId }) {
     if (owns === false) return true;
     return null;
   } catch (err) {
-    console.error('refund check error (steam ownership):', err);
+    console.error('refund check error (steam ownership):', String(err?.message ?? err).slice(0, 120));
     return null;
   }
 }
@@ -669,7 +669,7 @@ export async function isSteamPurchaseVoided(env, { orderId }) {
     if (status === 'Succeeded') return false;
     return ['Refunded', 'PartialRefund', 'Chargeback', 'Failed'].includes(status);
   } catch (err) {
-    console.error('refund check error (steam):', err);
+    console.error('refund check error (steam):', String(err?.message ?? err).slice(0, 120));
     return null;
   }
 }

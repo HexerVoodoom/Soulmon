@@ -105,9 +105,11 @@ export interface SpriteLibrary {
   tunedUnseen: string[];
 }
 
-/** Teto de tentativas por forma — espelha `AI_LIMITS.sprite.perFormLifetime`
- *  (`functions/api/_aiGuard.js`). O servidor é a autoridade; isto é o
- *  disjuntor local que evita gastar uma chamada que já se sabe recusada. */
+/** Teto LOCAL de tentativas que FALHARAM por forma. Até a release/beta-1
+ *  espelhava `AI_LIMITS.sprite.perFormLifetime` (3); hoje o servidor permite
+ *  UMA geração por forma (`perFormLifetime: 1`, REGISTRO §34) e devolve a
+ *  unidade nas falhas transitórias — então isto conta falhas, não gerações.
+ *  O servidor é a autoridade; isto é o disjuntor local de loop de falha. */
 export const SPRITE_FORM_ATTEMPT_CAP = 3;
 /** Botão manual: 3 por forma, vitalício (`custo-geracao-sprite.md` §6). */
 export const SPRITE_MANUAL_RETRY_CAP = 3;

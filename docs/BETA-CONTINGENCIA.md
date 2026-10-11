@@ -107,6 +107,19 @@ e 800/mês no total** (Higgsfield), 4 gerações por ip-hash/dia; **Gemini Image
 (religar só com `SPRITE_GEMINI_IMAGE=1` e uma chave de OUTRO projeto Google — senão o chat sai do
 gratuito); renascer NÃO gera de novo. Os contadores sobrevivem à exclusão de conta.
 
+**Desenho saiu feio e a pessoa não pode regerar** (gate adversarial C2): o dono libera UMA
+nova geração daquela forma, caso a caso. O vitalício não volta e a geração nova obedece aos
+tetos de sempre.
+
+```powershell
+$env:METRICS_ADMIN_KEY = "<valor>"
+node scripts/liberar-forma.mjs <saveId> <formId>    # formId: rookie, champion-power, ..., ultra
+```
+
+O `saveId` aparece truncado no `top-consumidores`. O inteiro é o hash do e-mail: a squad
+calcula com `emailToSaveId` a partir do e-mail que o testador informar. A rota é
+`POST /api/sprite-admin?action=release-form`, com a mesma chave e comparação de tempo constante.
+
 ### 0.6 Beta fechado: `BETA_CLOSED` + `BETA_EMAILS` `[DONO]`
 
 ```powershell
@@ -117,7 +130,7 @@ npx wrangler secret put BETA_CLOSED     # 1
 Com `BETA_CLOSED` ligado, quem não está na lista loga mas vê a tela **"O Soulmon está em teste
 fechado"** (PT/EN, com logo e mascote) e não acessa save, IA nem compra (403 `beta-closed`).
 Com a flag desligada e a lista preenchida, **só a IA** exige a lista. Comparação normalizada
-(minúsculas, sem espaço); **ponto e `+tag` do Gmail contam como outro e-mail**. Para incluir
+(minúsculas, sem espaço). **No Gmail (`gmail.com`/`googlemail.com`) pontos e `+tag` são ignorados**; nos outros domínios o endereço precisa ser idêntico. A trava vale em TODA rota por conta: save, compra, IA, comunidade, guilda, entitlements e push. Exportar e excluir a conta continuam abertos, por serem direito do titular. A tela mostra o e-mail com que a pessoa entrou e tem **Trocar de conta**. Para incluir
 alguém: `secret put BETA_EMAILS` de novo com a lista inteira (vale na hora).
 
 ### 0.7 Antiabuso por hash de IP: `IP_HASH_SALT` `[DONO]`

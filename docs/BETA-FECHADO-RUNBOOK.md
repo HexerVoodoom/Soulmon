@@ -38,7 +38,7 @@ Convenções: tudo em `E:\` (nunca `C:\`); comandos em PowerShell, na raiz do re
 ## Visão geral da ordem (e por que é esta)
 
 ```
-FASE 0  Portões locais + merge das 2 branches + migração D1        (evita subir AAB com bug conhecido)
+FASE 0  Ler o PR #315 + migração D1 + backup de saves -> merge     (evita subir AAB com bug conhecido)
 FASE 1  Keystore de upload                                          (sem ela não há AAB assinado)
 FASE 2  Criar o app no Play Console + ficha/Data Safety/IARC/IA     (pode andar em paralelo com a 3)
 FASE 3  Build local do AAB (assinado)
@@ -47,6 +47,7 @@ FASE 5  Firebase (SHA) + restrição da API key + google-services     (só depoi
 FASE 6  Perfil de pagamentos + produtos (INAPP + assinatura)        (só abrem depois do 1º upload)
 FASE 7  Service account + secrets do Worker + RTDN + worker de push
 FASE 8  Teste de compra no INTERNO -> liga PLAY_REQUIRE_ACCOUNT_BINDING
+FASE 8B Controles do beta: BETA_EMAILS (dono + revisor + testadores) -> sal de IP -> alertas -> BETA_CLOSED por último
 FASE 9  Trilha de TESTE FECHADO + Google Group + opt-in + revisão
 FASE 10 O relógio dos 14 dias + operação diária
 ```
@@ -62,20 +63,18 @@ custa o relógio inteiro se você precisar trocar de AAB e perder testadores.
 
 ### 0.1 Fechar o código do beta `[DONO decide; squad executa]`
 
-O contexto do run manda esperar guilda, masmorra e pesadelo fecharem (o STATUS de 11/10
-já os marca fechados). Antes de cortar o release:
+**Já feito pela squad em 11/10/2026:** a `release/beta-1` existe (worktree da squad em
+`E:/soulmon-beta-rel`) e incorpora os 5 PRs (#311, #312, #313, #314, #310) mais os
+controles do beta. Ela está aberta como **PR #315** para a `main`, **sem merge**. Durante
+os 14 dias, a release só aceita correção, nunca feature.
 
-1. As duas branches (assinatura trimestral; fuso + erro de rede + crash + alarme) estão
-   mescladas na `main`.
-2. Cortar o branch de release e **não aceitar mais feature nele** durante os 14 dias, só
-   correção:
+O que resta para você:
 
-```powershell
-cd D:\Soulmon\repo
-git fetch origin
-git checkout main; git pull --ff-only
-git checkout -b release/beta-1
-```
+1. Ler o PR #315 (o corpo resume tudo) e conferir a saída real dos testes em
+   `product/beta-play-01/sweeper/test-run.log`.
+2. Fazer **0.3 (migração + backup) ANTES** de mergear o #315. O push na `main` publica o
+   Worker sozinho em cerca de 2 minutos.
+3. Mergear o #315 (botão *Merge* no GitHub) só depois de 0.3.
 
 ### 0.2 Portão local (o CI está parado por cobrança desde 16/09) `[SQUAD pode fazer]`
 
@@ -94,8 +93,19 @@ $env:TZ = "America/Sao_Paulo"; npx vitest run src/utils/taskSteps.rule.test.ts; 
 
 ### 0.3 Migração D1 remota `[DONO]` (precisa de `wrangler login`)
 
-**Faça ANTES do merge da branch da assinatura**, porque o push na `main` publica o Worker
-sozinho (~2 min) e o código novo vai esperar a tabela. A migração deve ser só aditiva
+**Faça ANTES do merge do PR #315**, porque o push na `main` publica o Worker sozinho
+(~2 min) e o código novo espera a tabela. Sem a tabela `rtdn_messages` o RTDN continua
+correto, porque a dedupe degrada e não quebra (teste A4 em `functions/api/rtdn.test.js`),
+mas **a migração é obrigatória antes do merge** por regra deste runbook.
+
+**Também ANTES do merge: backup dos saves.** O código novo muda as regras de gravação
+(beta fechado, limite por IP):
+
+```powershell
+npx wrangler login
+node scripts/backup-saves.mjs          # -> E:\soulmon-backups\SOULMON_SAVES-<data>.json (só leitura do KV)
+```
+ A migração deve ser só aditiva
 (`CREATE`/`ADD COLUMN`) — confira o arquivo novo em `migrations/` antes de aplicar.
 **Nova nesta release: `migrations/0003_rtdn_messages.sql`** — só `CREATE TABLE IF NOT EXISTS
 rtdn_messages` (idempotência do RTDN); `order_claims` não muda. Reverter = `DROP TABLE`
@@ -194,7 +204,7 @@ Cada "Enviar" é confirmação sua. Fonte de texto (não reescreva, cole):
 | Público-alvo 18+, anúncios "não" | `PLAY-FICHA.md` §0 |
 | Segurança de dados | [`PLAY-DATA-SAFETY.md`](PLAY-DATA-SAFETY.md) §3 (resumo) e tabela de permissões §2.4b |
 | Recursos de IA generativa | `PLAY-FICHA.md` §5 |
-| Acesso ao app (instruções para o revisor) | **[DONO]** crie uma conta de e-mail/senha só para o revisor (Firebase Auth) e cole as instruções; a squad não digita a senha |
+| Acesso ao app (instruções para o revisor) | **[DONO]** crie uma conta de e-mail/senha só para o revisor (Firebase Auth) e cole as instruções; a squad não digita a senha. **O e-mail do revisor precisa estar em `BETA_EMAILS` ANTES de submeter** (Fase 8B). Sem isso, o revisor vê a tela "beta fechado" e a revisão é rejeitada |
 
 > Gráficos (ícone 512, feature graphic 1024x500, screenshots) são obrigatórios na ficha
 > **de produção**. Para as trilhas de teste o Console pode deixar enviar sem eles
@@ -435,6 +445,9 @@ Na raiz do repo (valor sempre no prompt, nunca na linha):
 ```powershell
 npx wrangler secret put GOOGLE_PLAY_SERVICE_ACCOUNT   # JSON inteiro em UMA linha; abra o .json, copie, cole no prompt
 npx wrangler secret put ANDROID_PACKAGE_NAME          # com.hexervoodoom.soulmon
+npx wrangler secret put FIREBASE_SERVICE_ACCOUNT      # o MESMO JSON do workers/ (7.4), agora também na RAIZ: push de alerta ao dono
+npx wrangler secret put GROQ_API_KEY                  # org Groq no plano FREE
+npx wrangler secret put GEMINI_API_KEY                # projeto do AI Studio SEM faturamento (só o gratuito do chat)
 npx wrangler secret list
 ```
 
@@ -544,6 +557,52 @@ PLAY_REQUIRE_ACCOUNT_BINDING`) e veja `BETA-CONTINGENCIA.md` §3.
 
 ---
 
+## FASE 8B — Controles do beta `[DONO]` (antes da Fase 9)
+
+Todos são `wrangler secret put` na raiz do repo. Valem na hora, sem deploy. Detalhes e o
+que cada um faz estão em [`BETA-CONTINGENCIA.md`](BETA-CONTINGENCIA.md) §0.
+
+**A ordem importa.** Se `BETA_CLOSED` for ligado antes da lista estar completa, você e o
+revisor do Google ficam trancados para fora.
+
+1. **`BETA_EMAILS`** — e-mails separados por vírgula. Coloque **primeiro** o SEU e-mail,
+   depois a **conta do revisor** (a de e-mail/senha da Fase 2.2) e por último os
+   testadores (o e-mail EXATO com que cada um vai logar, ver `BETA-TESTADORES.md`). No Gmail,
+   pontos e `+tag` não importam; nos outros domínios o endereço precisa ser idêntico.
+   ```powershell
+   npx wrangler secret put BETA_EMAILS     # voce@gmail.com,revisor@...,testador1@gmail.com,...
+   ```
+2. **`IP_HASH_SALT`** — gere o valor e cole no prompt:
+   ```powershell
+   $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
+   npx wrangler secret put IP_HASH_SALT
+   ```
+3. **`ADMIN_PUSH_TARGET`** (token FCM do seu aparelho) e **`FIREBASE_SERVICE_ACCOUNT`** na
+   raiz (já citado no 7.2). Servem para o push de alerta quando um uso passa de 80 %.
+4. **Interruptores de emergência.** Todos ficam **desligados por padrão** (ausentes) e só se
+   ligam quando algo der errado:
+   - `BILLING_DISABLED`: fecha a loja para compra nova; restaurar continua funcionando.
+   - `CHAT_DISABLED`: desliga a IA do chat; o pet responde localmente.
+   - `SPRITE_DISABLED`: fecha o ateliê de imagens; fica a arte de reserva.
+   - `CRASH_DISABLED`: `/api/crash` aceita e descarta.
+5. **Regra de Rate Limiting** em `/api/crash*`: 5 por minuto por IP, bloqueio de 10 minutos
+   (passo a passo em `BETA-CONTINGENCIA.md` §0.4).
+6. **`BETA_CLOSED` POR ÚLTIMO:**
+   ```powershell
+   npx wrangler secret put BETA_CLOSED     # true
+   ```
+
+**Verificação** (a squad pode rodar a 1ª):
+- E-mail fora da lista recebe `403 beta-closed` em `/api/save`. Logue no app web com um
+  Gmail que não está na lista: aparece a tela "O Soulmon está em teste fechado" com o
+  e-mail mostrado. Sem login, `curl.exe -i "https://soulmon.mateus-sprnd.workers.dev/api/save?id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"`
+  responde 403 ou 401.
+- A **conta do revisor** loga numa **instalação limpa** (aparelho ou perfil de navegador
+  novo) e vê o app normal, não a tela fechada.
+- O seu e-mail também entra normalmente.
+
+---
+
 ## FASE 9 — Trilha de TESTE FECHADO
 
 > Só comece com o app provado nas fases 4-8. O relógio dos 14 dias corre daqui.
@@ -567,6 +626,8 @@ tiver testadores). **Salvar.**
 
 Aba **Versões -> Criar nova versão**: **reaproveitar o AAB** já no teste interno (botão
 "Adicionar da biblioteca") ou subir um novo com `versionCode` maior. Notas: PT e EN.
+**Antes de submeter:** confirme que o e-mail da conta do revisor (Fase 2.2) está em
+`BETA_EMAILS` e que ela entra numa instalação limpa (Fase 8B, verificação).
 **Revisar -> Iniciar lançamento para teste fechado** `[submissão: confirmar]`.
 
 **Verificação:** a faixa mostra *Em análise* e depois *Disponível para testadores*. A

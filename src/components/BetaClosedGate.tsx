@@ -2,30 +2,41 @@
  * Tela "beta fechado" (release/beta-1). Quando o servidor diz `403 beta-closed`
  * (`utils/betaClosed.ts`), o app inteiro dá lugar a esta tela com a identidade
  * do Soulmon — sem save, IA nem compra. Voz: acolhe, não cobra. PT e EN.
- * O idioma vem da preferência gravada (`soulmon-language`); sem ela, PT-BR.
+ *
+ * Gate adversarial C1: a causa mais comum é o testador entrar com OUTRO e-mail
+ * (outro Gmail, digitado diferente). Por isso a tela MOSTRA o e-mail da sessão,
+ * diz o que fazer ("peça ao Mateus para incluir este e-mail") e oferece
+ * "Trocar de conta". O idioma vem da preferência gravada; sem ela, PT-BR.
  */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import logoUrl from '../assets/brand/final/logo-wordmark.png';
 import mascoteUrl from '../assets/brand/final/mascote.png';
-import { useBetaClosed } from '../utils/betaClosed';
+import { useBetaClosed, trocarContaBetaFechado } from '../utils/betaClosed';
 import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
 export const BETA_CLOSED_COPY = {
   pt: {
     title: 'O Soulmon está em teste fechado',
-    body: 'Esta conta ainda não está na lista de quem testa agora. Se você recebeu um convite, saia e entre com o mesmo e-mail do convite.',
+    as: 'Você entrou como',
+    noEmail: 'Não conseguimos ver com qual e-mail você entrou.',
+    body: 'Este e-mail ainda não está na lista de quem testa agora. Se você foi convidado, peça ao Mateus para incluir este e-mail — ou troque para a conta com que recebeu o convite.',
     soon: 'Quando abrir para todo mundo, seu Soulmon vai estar esperando.',
+    switch: 'Trocar de conta',
   },
   en: {
     title: 'Soulmon is in a closed test',
-    body: 'This account is not on the testers list yet. If you got an invite, sign out and sign in with the same e-mail it was sent to.',
+    as: 'You signed in as',
+    noEmail: "We couldn't see which e-mail you signed in with.",
+    body: 'This e-mail is not on the testers list yet. If you were invited, ask Mateus to add this e-mail — or switch to the account the invite was sent to.',
     soon: 'When it opens to everyone, your Soulmon will be waiting.',
+    switch: 'Switch account',
   },
 } as const;
 
-export function BetaClosedScreen({ language }: { language: 'pt' | 'en' }) {
+export function BetaClosedScreen({ language, email, onSwitch }: { language: 'pt' | 'en'; email: string | null; onSwitch: () => void }) {
   const c = BETA_CLOSED_COPY[language];
+  const [saindo, setSaindo] = useState(false);
   return (
     <main
       data-beta-closed
@@ -39,7 +50,22 @@ export function BetaClosedScreen({ language }: { language: 'pt' | 'en' }) {
       <img src={logoUrl} alt="Soulmon" style={{ width: 180, height: 'auto' }} />
       <img src={mascoteUrl} alt="" aria-hidden="true" style={{ width: 96, height: 96, imageRendering: 'pixelated' }} />
       <h1 id="beta-fechado-titulo" style={{ fontSize: 20, margin: 0 }}>{c.title}</h1>
+      <p data-beta-email style={{ maxWidth: 360, margin: 0 }}>
+        {email ? <>{c.as} <strong style={{ wordBreak: 'break-all' }}>{email}</strong></> : c.noEmail}
+      </p>
       <p style={{ maxWidth: 360, margin: 0, color: 'var(--sm2-muted, #9dbcb4)' }}>{c.body}</p>
+      <button
+        type="button"
+        data-beta-switch
+        disabled={saindo}
+        onClick={() => { setSaindo(true); onSwitch(); }}
+        style={{
+          minHeight: 44, padding: '10px 20px', borderRadius: 12, border: 'none', fontWeight: 700, cursor: 'pointer',
+          background: 'var(--sm2-primary-fill, #5ff3e0)', color: 'var(--sm2-on-primary, #04211f)',
+        }}
+      >
+        {c.switch}
+      </button>
       <p style={{ maxWidth: 360, margin: 0, color: 'var(--sm2-muted, #9dbcb4)' }}>{c.soon}</p>
     </main>
   );
@@ -47,7 +73,14 @@ export function BetaClosedScreen({ language }: { language: 'pt' | 'en' }) {
 
 export function BetaClosedGate({ children }: { children: ReactNode }) {
   const fechado = useBetaClosed();
+  const [email, setEmail] = useState<string | null>(() => readLocal(STORAGE_KEYS.USER_EMAIL));
+  useEffect(() => {
+    if (!fechado) return;
+    let vivo = true;
+    void import('../utils/auth').then(m => m.getCurrentEmail()).then(e => { if (vivo && e) setEmail(e); }).catch(() => {});
+    return () => { vivo = false; };
+  }, [fechado]);
   if (!fechado) return <>{children}</>;
   const lang = String(readLocal(STORAGE_KEYS.LANGUAGE) ?? '').startsWith('en') ? 'en' : 'pt';
-  return <BetaClosedScreen language={lang} />;
+  return <BetaClosedScreen language={lang} email={email} onSwitch={() => { void trocarContaBetaFechado(); }} />;
 }

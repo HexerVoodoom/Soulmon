@@ -103,6 +103,7 @@ export const AI_LIMITS = {
   suggest: { perAccount: 30, global: 3000 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
   //
+  // HISTÓRICO (o valor vigente é 15, ver a nota da release/beta-1 abaixo).
   // 26 vitalício: o 20 anterior foi calibrado contra "14 gerações por save", que
   // é a árvore ERRADA. `ultra` exige as TRÊS megas (`dailyReset.ts:86-88`), então
   // o caminho completo percorre as 11 formas distintas que existem

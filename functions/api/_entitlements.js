@@ -197,7 +197,7 @@ export async function writeEntitlement(env, saveId, ent) {
  * Marca (epoch ms) de que o RENASCIMENTO já zerou o teto vitalício de sprite
  * desta conta. Existe para o reset ser **uma vez só**, do mesmo jeito que o
  * renascimento é um por save — sem ela, quem descobrisse a rota teria
- * geração de sprite infinita a R$ 0,10 cada (o teto vitalício é 26).
+ * geração de sprite infinita a R$ 0,10 cada (o teto vitalício era 26; desde a release/beta-1 é 15 e o renascimento não zera mais, REGISTRO §34).
  */
 export const REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt';
 

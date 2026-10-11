@@ -22,9 +22,29 @@ import { flagOn } from './_killSwitch.js';
  *  substituem por dublê); paridade travada em `betaAccess.test.js`. */
 export const normalizeEmail = email => String(email ?? '').trim().toLowerCase();
 
-/** Lista normalizada, sem vazios. */
+/**
+ * Forma CANÔNICA só para comparar com a lista do beta (gate adversarial C1):
+ * trim + minúsculas e, no Gmail (`gmail.com`/`googlemail.com`), sem pontos e sem
+ * `+tag` no nome — o Google entrega os dois no mesmo endereço, e um testador que
+ * loga com `a.na+x@gmail.com` não pode ficar trancado fora por isso. NÃO muda o
+ * saveId (que segue `normalizeEmail`): é só a régua da allowlist.
+ */
+export function canonBetaEmail(email) {
+  const e = normalizeEmail(email);
+  const at = e.lastIndexOf('@');
+  if (at < 1) return e;
+  let local = e.slice(0, at);
+  let domain = e.slice(at + 1);
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    local = local.split('+')[0].replace(/\./g, '');
+    domain = 'gmail.com';
+  }
+  return `${local}@${domain}`;
+}
+
+/** Lista canônica, sem vazios. */
 export function parseBetaEmails(raw) {
-  return [...new Set(String(raw ?? '').split(/[,;\s]+/).map(normalizeEmail).filter(e => e.includes('@')))];
+  return [...new Set(String(raw ?? '').split(/[,;\s]+/).map(canonBetaEmail).filter(e => e.includes('@')))];
 }
 
 export const isBetaClosed = env => flagOn(env?.BETA_CLOSED);
@@ -40,8 +60,8 @@ export function betaRuleApplies(env, tipo) {
 
 /** O e-mail (já verificado pelo token) está na lista? */
 export function betaAllows(env, email) {
-  const e = normalizeEmail(email);
-  if (!e) return false;
+  const e = canonBetaEmail(email);
+  if (!e || !e.includes('@')) return false;
   return parseBetaEmails(env?.BETA_EMAILS).includes(e);
 }
 

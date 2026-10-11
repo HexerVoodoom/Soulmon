@@ -2635,7 +2635,7 @@ dominância populacional — por isso ±15%. Régua nova:
 - `SpriteFormFailure` (interface) — campos: `attempts`, `manual`, `kind`, `terminal`, `lastAt`.
 - `PendingTune` (interface) — A oferta de adoção da forma ATUAL (§2.3.1). Expira em uma virada de dia.
 - `SpriteLibrary` (interface) — campos: `sprites`, `failures`, `pendingTune`, `reverted`, `tunedUnseen`.
-- `SPRITE_FORM_ATTEMPT_CAP` — Teto de tentativas por forma — espelha `AI_LIMITS.sprite.perFormLifetime` (`functions/api/_aiGuard.js`). O servidor é a autoridade; isto é o disjuntor local que evita gastar uma chamada que já se sabe recusada.
+- `SPRITE_FORM_ATTEMPT_CAP` — Teto de tentativas por forma — disjuntor LOCAL de falhas por forma (3); desde a release/beta-1 o servidor permite UMA geração por forma (`perFormLifetime: 1`) e devolve a unidade em falha transitória, então estas tentativas contam falhas, não gerações. O servidor é a autoridade; isto é o disjuntor local que evita gastar uma chamada que já se sabe recusada.
 - `SPRITE_MANUAL_RETRY_CAP` — Botão manual: 3 por forma, vitalício (`custo-geracao-sprite.md` §6).
 - `SPRITE_MANUAL_COOLDOWN_MS` — Cooldown do botão manual, em ms (idem §6).
 - `function isSafeSpriteUrl(url: unknown): url is string` — A URL pode virar `<img src>`? Guarda ÚNICA — `normalizeSpriteLibrary`, `recordSprite` e `spriteGen.loadImage` compartilham esta função em vez de cada um ter o seu dicionário de esquema, que é o mesmo motivo pelo qual `SpriteFailKind` empresta os nomes de `cloudSave.ts`: duas (…)

@@ -342,3 +342,17 @@ Título: **Soulmon Beta — como foi?**
 **Para o formulário do Google Play** (candidatura à produção, RUNBOOK 10.6) a squad
 resume desta pesquisa: nº de testadores, como foram recrutados, principais achados e o que
 foi corrigido. Guarde o resumo em `E:\soulmon-beta\resumo-final.md` (não no repo).
+
+## Acesso fechado: o e-mail EXATO de login (release/beta-1)
+
+O beta é **fechado por lista** (`BETA_EMAILS`, `BETA-FECHADO-RUNBOOK.md` Fase 8B). No convite,
+peça a cada testador **o e-mail EXATO com que ele vai entrar no Soulmon**: o da conta Google
+do celular onde vai instalar, ou o e-mail do login por e-mail/senha. Não sirva de um e-mail
+"de contato" qualquer.
+
+- No Gmail, pontos e `+tag` não importam (`ana.maria@gmail.com` = `anamaria@gmail.com`).
+- Em outros domínios o endereço tem que ser idêntico.
+- Se a pessoa entrar com outro e-mail, o app mostra "O Soulmon está em teste fechado" com o
+  e-mail usado e um botão **Trocar de conta**. Basta o dono incluir aquele e-mail na lista
+  (`secret put BETA_EMAILS` com a lista inteira) ou a pessoa trocar de conta.
+- A **conta do revisor** do Google também entra na lista, antes da submissão.

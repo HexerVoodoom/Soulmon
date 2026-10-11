@@ -100,7 +100,7 @@ export async function onRequestPost({ request, env }) {
 
   // Impede creditar a compra numa conta que não é a de quem está comprando.
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json({ error: auth.reason }, authStatus(auth));
+  if (!auth.ok) return json(auth.reason === 'beta-closed' ? { ok: false, error: auth.reason, reason: auth.reason, message: BETA_CLOSED_MESSAGE } : { error: auth.reason }, authStatus(auth));
   // Beta fechado: fora da lista não compra (nem restaura) — `_betaAccess.js`.
   if (betaGate(env, auth, 'core')) return json({ ok: false, reason: 'beta-closed', message: BETA_CLOSED_MESSAGE }, 403);
 

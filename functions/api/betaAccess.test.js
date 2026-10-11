@@ -26,11 +26,16 @@ describe('allowlist BETA_EMAILS', () => {
   it('a régua local é a MESMA do saveId (`_auth.normalizeEmail`) — paridade', () => {
     for (const e of [' A@B.C ', 'x.y+tag@gmail.com', 'ÁÉ@x.com', '', null]) expect(normLocal(e)).toBe(normalizeEmail(e));
   });
-  it('ponto e +tag do Gmail são OUTRA conta (mesma regra do Firebase/saveId)', () => {
-    const env = { BETA_EMAILS: 'ana@gmail.com' };
-    expect(betaAllows(env, 'ANA@gmail.com ')).toBe(true);
-    expect(betaAllows(env, 'a.na@gmail.com')).toBe(false);
-    expect(betaAllows(env, 'ana+x@gmail.com')).toBe(false);
+  // Gate adversarial C1: no GMAIL ponto e +tag são o MESMO endereço para a lista
+  // (o saveId não muda — segue `normalizeEmail`). Fora do Gmail, não.
+  it('C1: Gmail sem ponto e sem +tag (gmail.com = googlemail.com); outros domínios literais', () => {
+    const env = { BETA_EMAILS: 'Ana.Maria@gmail.com, beto@empresa.com' };
+    expect(betaAllows(env, 'ANA@gmail.com ')).toBe(false);
+    expect(betaAllows(env, 'anamaria@gmail.com')).toBe(true);
+    expect(betaAllows(env, 'a.n.a.maria+beta@googlemail.com')).toBe(true);
+    expect(betaAllows(env, 'beto@empresa.com')).toBe(true);
+    expect(betaAllows(env, 'b.eto@empresa.com')).toBe(false);
+    expect(betaAllows(env, 'beto+x@empresa.com')).toBe(false);
   });
   it('flag off e lista vazia: aberto; flag off e lista: só IA; flag on: tudo', () => {
     expect(betaRuleApplies({}, 'ai')).toBe(false);

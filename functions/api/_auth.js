@@ -11,6 +11,7 @@
 //
 // Referência: https://firebase.google.com/docs/auth/admin/verify-id-tokens
 
+import { betaGate } from './_betaAccess.js';
 import { gateTombstone } from './_accountTombstone.js';
 
 const JWK_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
@@ -176,13 +177,15 @@ export async function emailToSaveId(email) {
  * @returns {Promise<{ ok: true, enforced: boolean, email?: string, authTime?: number,
  *                     tombstone: { deleted: boolean, reopened: boolean, at?: number } }
  *                 | { ok: false, enforced: boolean, status: 401 | 403 | 410,
- *                     reason: 'unauthenticated' | 'forbidden' | 'account-deleted', deletedAt?: number }>}
+ *                     reason: 'unauthenticated' | 'forbidden' | 'account-deleted' | 'beta-closed', deletedAt?: number }>}
  */
 export async function authorizeSaveAccess(request, env, saveId) {
   const projectId = env.FIREBASE_PROJECT_ID;
   if (!projectId) {
     const tombstone = await gateTombstone(env, saveId, 0);
     if (tombstone.deleted) return { ok: false, enforced: false, status: 410, reason: 'account-deleted', deletedAt: tombstone.at };
+    // Sem login não há e-mail: com o beta fechado, ninguém prova estar na lista (fail-closed).
+    if (betaGate(env, null, 'core')) return { ok: false, enforced: false, status: 403, reason: 'beta-closed' };
     return { ok: true, enforced: false, tombstone };
   }
 
@@ -196,6 +199,12 @@ export async function authorizeSaveAccess(request, env, saveId) {
 
   const tombstone = await gateTombstone(env, saveId, claims.authTime);
   if (tombstone.deleted) return { ok: false, enforced: true, status: 410, reason: 'account-deleted', deletedAt: tombstone.at };
+
+  // BETA FECHADO (gate adversarial S1): toda rota que age "em nome de saveId"
+  // passa por aqui — save, comunidade, guilda, entitlements, push, compra. Com
+  // `BETA_CLOSED`, fora de `BETA_EMAILS` é 403 `beta-closed`. `account.js`
+  // (exportar/excluir) usa `requireVerifiedOwner` e fica FORA: direito do titular.
+  if (betaGate(env, { email: claims.email }, 'core')) return { ok: false, enforced: true, status: 403, reason: 'beta-closed' };
 
   return { ok: true, enforced: true, email: claims.email, authTime: claims.authTime, tombstone };
 }

@@ -180,7 +180,10 @@ export async function onRequest({ request, env }) {
     if (auth.reason === 'account-deleted') {
       console.warn('save: recusado, conta apagada (lápide)', { saveIdPrefix: saveId.slice(0, 8), method: request.method });
     }
-    return Response.json(auth.reason === 'account-deleted' ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, { status: authStatus(auth), headers: CORS });
+    const corpo = auth.reason === 'account-deleted' ? { error: auth.reason, deletedAt: auth.deletedAt }
+      : auth.reason === 'beta-closed' ? { error: auth.reason, message: BETA_CLOSED_MESSAGE }
+      : { error: auth.reason };
+    return Response.json(corpo, { status: authStatus(auth), headers: CORS });
   }
 
   // CONTA APAGADA → 410, em GET e POST, DEPOIS da autorização (quem não é o

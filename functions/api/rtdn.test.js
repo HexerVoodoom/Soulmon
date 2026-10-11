@@ -292,6 +292,30 @@ describe('idempotência por messageId', () => {
     expect(rows.has('d1-1')).toBe(true);
   });
 
+  // Gate adversarial A4: deploy ANTES da migração 0003 (order_claims existe, rtdn_messages não).
+  it('A4: D1 SEM a tabela rtdn_messages (0003 não aplicada): o aviso é processado (200) e só a dedupe degrada', async () => {
+    const DB = {
+      prepare(sql) {
+        if (/rtdn_messages/.test(sql)) throw new Error('D1_ERROR: no such table: rtdn_messages');
+        let args = [];
+        const api = { bind: (...a) => { args = a; return api; }, run: async () => ({}), first: async () => (/FROM order_claims/.test(sql) ? { save_id: ID } : null) };
+        void args;
+        return api;
+      },
+    };
+    const e = env({ DB });
+    await applySubscriptionState(e, ID, { rootHash: await sha256Hex(TOKEN), until: Date.parse(FUTURE), state: 'SUBSCRIPTION_STATE_ACTIVE', entitled: true });
+    const g = googleStub({ [TOKEN]: subResource({ subscriptionState: 'SUBSCRIPTION_STATE_EXPIRED' }) });
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const r1 = await push(e, subNote(13, 'a4-1'));
+    expect(r1.status).toBe(200);
+    // o efeito aconteceu (a Google disse EXPIRED → vitrine fecha)
+    expect(JSON.parse(e.DIGIAPP_SAVES.store.get(`ent:${ID}`)).sub.state).toBe('SUBSCRIPTION_STATE_EXPIRED');
+    // sem a tabela a reentrega reconsulta (custa quota, nunca efeito errado)
+    expect((await push(e, subNote(13, 'a4-1'))).status).toBe(200);
+    expect(g.calls.gets).toBe(2);
+  });
+
   it('D1 quebrado: o erro real vira 500 para o Pub/Sub tentar de novo (nunca engole o efeito)', async () => {
     const DB = { prepare: () => { throw new Error('no such table: rtdn_messages'); } };
     const e = env({ DB });
