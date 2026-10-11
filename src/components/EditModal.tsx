@@ -126,6 +126,7 @@ export function EditModal({
   return (
     <ModalSheet
       open={isOpen}
+      dismissOnBackdrop={false} /* formulário com texto digitado */
       title={isPt ? 'Editar atividade' : 'Edit activity'}
       onClose={onClose}
       language={language}

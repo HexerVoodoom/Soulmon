@@ -603,6 +603,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   return (
     <ModalSheet
       open={isOpen}
+      dismissOnBackdrop={false} /* formulário com texto digitado */
       title={isPt ? (isSingleExecution ? 'Nova tarefa' : 'Novo hábito') : (isSingleExecution ? 'New task' : 'New habit')}
       onClose={onClose}
       language={language}

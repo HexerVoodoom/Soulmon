@@ -125,6 +125,7 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
   return (
     <ModalSheet
       open
+      dismissOnBackdrop={false} /* confirmação destrutiva: só fecha pelo botão */
       onClose={onClose}
       language={language}
       title={isPt ? 'Renascimento' : 'Rebirth'}
