@@ -270,7 +270,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
         </div>
         <div data-oficina-step={active.id} style={{ display: 'grid', gap: 10 }}>
           <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Icon name={active.icon} size={22} tone="primary" />
+            <Icon name={active.icon} size={24} tone="primary" />
             <h3 style={{ ...sheetCardTitle, flex: 1, margin: 0 }}>{isPt ? active.pt : active.en}</h3>
             <ModalInfo language={language} align="right" label={isPt ? `Sobre ${active.pt}` : `About ${active.en}`}>
               <InfoTipSection title={isPt ? active.pt : active.en}>{isPt ? active.infoPt : active.infoEn}</InfoTipSection>
@@ -320,8 +320,8 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
               const name = task?.name ?? session?.taskNames[id] ?? '';
               return <li key={id} style={{ ...sm2Text, display: 'grid', gap: 4 }}><strong>{name}</strong>{task?.steps?.length ? <ul style={{ margin: 0, paddingInlineStart: 20 }}>{task.steps.map(step => <li key={step.id}>{step.label}</li>)}</ul> : null}</li>;
             })}</ul>
-            {draft.ifThen.cue || draft.ifThen.action ? <p style={{ ...sm2Hint, margin: 0 }} data-oficina-review-ifthen><Icon name="flag" size={16} tone="primary" /> {draft.ifThen.cue} → {draft.ifThen.action}</p> : null}
-            {draft.dump.trim() ? <p style={{ ...sm2Hint, margin: 0 }} data-oficina-review-dump><Icon name="psychology" size={16} tone="primary" /> {draft.dump}</p> : null}
+            {draft.ifThen.cue || draft.ifThen.action ? <p style={{ ...sm2Hint, margin: 0 }} data-oficina-review-ifthen><Icon name="flag" size={20} tone="primary" /> {draft.ifThen.cue} → {draft.ifThen.action}</p> : null}
+            {draft.dump.trim() ? <p style={{ ...sm2Hint, margin: 0 }} data-oficina-review-dump><Icon name="psychology" size={20} tone="primary" /> {draft.dump}</p> : null}
             <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Item garantido por foco concluído. Chance de item extra: começa em ${FOCUS_EXTRA_BASE_CHANCE * 100}% e cresce ${FOCUS_EXTRA_CHANCE_PER_CYCLE * 100}% por ciclo foco + pausa, até ${FOCUS_EXTRA_MAX_CHANCE * 100}%. Limite: ${FOCUS_LOOT_DAILY_CAP} itens por dia.` : `One guaranteed item per completed focus. Extra-item chance starts at ${FOCUS_EXTRA_BASE_CHANCE * 100}% and grows by ${FOCUS_EXTRA_CHANCE_PER_CYCLE * 100}% per focus + break cycle, up to ${FOCUS_EXTRA_MAX_CHANCE * 100}%. Daily limit: ${FOCUS_LOOT_DAILY_CAP} items.`}</p>
             <button type="button" data-oficina-save-session style={{ ...sm2Button('primary'), justifySelf: 'end' }} disabled={!draft.name.trim() || !isFocusEnvironmentId(draft.environment)} onClick={saveSession}>{isPt ? 'Salvar sessão' : 'Save session'}</button>
           </div>}
@@ -335,7 +335,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
 
       {tab === 'session' && !editing && session && <article data-oficina-sessao-salva style={{ ...sheetCard, alignItems: 'stretch', gap: 10 }}>
         <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Icon name={session.status === 'completed' ? 'task_alt' : 'event_note'} size={22} tone="primary" />
+          <Icon name={session.status === 'completed' ? 'task_alt' : 'event_note'} size={24} tone="primary" />
           <div style={{ flex: 1, minWidth: 0 }}><h3 style={{ ...sheetCardTitle, margin: 0 }}>{session.name}</h3><p style={{ ...sm2Hint, margin: 0 }}>{session.day} · {session.status === 'completed' ? (isPt ? 'Sessão concluída' : 'Session complete') : (isPt ? 'Sessão pronta' : 'Session ready')}</p></div>
           <button type="button" aria-expanded={expanded} onClick={() => setExpanded(v => !v)} style={softLink}>{expanded ? (isPt ? 'Ocultar detalhes' : 'Hide details') : (isPt ? 'Expandir sessão' : 'Expand session')}</button>
         </header>
@@ -350,8 +350,8 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
           <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Ritmo: ${session.mode === 'p25' ? 'Pomodoro 25/5' : 'Blocos de foco 50/10'}` : `Rhythm: ${session.mode === 'p25' ? 'Pomodoro 25/5' : 'Focus blocks 50/10'}`}</p>
           {isFocusEnvironmentId(session.environment) && <p data-oficina-session-environment style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Expedição: ' : 'Expedition: '}{FOCUS_ENVIRONMENTS.find(item => item.id === session.environment)?.pt}/{FOCUS_ENVIRONMENTS.find(item => item.id === session.environment)?.en}</p>}
           <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Ciclos completos: ${session.completedCycles} · próximo bônus ${focusExtraChance(session.completedCycles)}%` : `Completed cycles: ${session.completedCycles} · next bonus ${focusExtraChance(session.completedCycles)}%`}</p>
-          {session.ifThen.cue || session.ifThen.action ? <p style={{ ...sm2Hint, margin: 0 }}><Icon name="flag" size={16} tone="primary" /> {session.ifThen.cue} → {session.ifThen.action}</p> : null}
-          {session.dump.trim() ? <p style={{ ...sm2Hint, margin: 0 }}><Icon name="psychology" size={16} tone="primary" /> {session.dump}</p> : null}
+          {session.ifThen.cue || session.ifThen.action ? <p style={{ ...sm2Hint, margin: 0 }}><Icon name="flag" size={20} tone="primary" /> {session.ifThen.cue} → {session.ifThen.action}</p> : null}
+          {session.dump.trim() ? <p style={{ ...sm2Hint, margin: 0 }}><Icon name="psychology" size={20} tone="primary" /> {session.dump}</p> : null}
           {session.quadrant && <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Matriz: ${session.quadrant}` : `Matrix: ${session.quadrant}`}</p>}
         </div>}
         {confirmDelete && <p role="alert" style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Excluir esta sessão?' : 'Delete this session?'}</p>}
