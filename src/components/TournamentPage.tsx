@@ -433,8 +433,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       <span data-torneio-info>
         <InfoTipSection title={isPt ? 'Torneio e Arena' : 'Tournament and Arena'}>
           {isPt
-            ? 'O Torneio é a disputa social com ranking por temporada. Para lutar contra criaturas do bestiário em uma partida solo, entre no Duelo da Arena; os adversários acompanham o nível do seu Soulmon.'
-            : 'The Tournament is the social, season-ranked competition. For a solo fight against bestiary creatures, enter the Arena Duel; opponents scale to your Soulmon’s level.'}
+            ? 'O Torneio é o modo RANQUEADO: o servidor sorteia os oponentes perto da sua faixa — você não escolhe. Para escolher contra quem lutar (criaturas do bestiário, de poder parecido com o seu), entre na Arena livre.'
+            : 'The Tournament is the RANKED mode: the server draws opponents near your tier — you don’t choose. To pick who you fight (bestiary creatures of power similar to yours), enter the Open Arena.'}
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Faixas' : 'Tiers'}>
           {isPt
@@ -644,6 +644,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
       {tab === 'arena' && pvpAberto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p data-torneio-ranqueado style={{ ...sm2Hint, margin: 0 }}>
+            {isPt ? 'Ranqueado: os oponentes são sorteados perto da sua faixa.' : 'Ranked: opponents are drawn near your tier.'}
+          </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0' }}>
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0 }}>
               {matchesLeft === null

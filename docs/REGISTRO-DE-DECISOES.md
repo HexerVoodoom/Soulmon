@@ -2032,3 +2032,11 @@ Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-
 - **Alternativa não feita:** cortar também cenários/escolhas forçadas (4 eixos junguianos dependem de 1 item cada; os cenários são o único canal da Honestidade-Humildade além de 1 item).
 - **Gatilho para rever:** se a leitura do Oráculo parecer genérica nos reveals, voltar um item por fator ANTES de mexer nos coeficientes.
 - **Pendências:** "GOAL/STRUGGLE puláveis" (CLAUDE.md) já não vale desde 01/10/2026 (B3: todas obrigatórias, ≥1 de 1–3) — mantido como está no código; o botão "Criar o meu" da aba Hábitos do app continua criando hábito (não foi tocado).
+## 27. Lançamento da Guilda (ditado do dono, 11/10/2026) — Arena × Torneio e o resto da fila
+
+**Decisão (PR1).** "Torneio = RANQUEADO: obedece ao ranking e o inimigo é ALEATÓRIO com base no seu rank. Arena = você SELECIONA inimigos de poder semelhante ao seu."
+
+**Como ficou.** *Torneio:* `opponents` (servidor) sorteia 3 dentre os 6 mais próximos de `lifetimePoints` (a medida da faixa) — `functions/api/_rankedPick.js`; o jogador não escolhe, o número não sai na resposta, as faixas continuam antes do ranking (CLAUDE.md 🎪). *Arena livre* (lote `duelo`, id mantido): a folha mostra 3 desafios de poder parecido (todo inimigo da Arena é relativo ao level — `arenaFoe`), o jogador escolhe um e a SEMENTE do card é a da run (`ArenaGame` prop `seed`): luta exatamente o que o card mostrou; a revanche sorteia outra. Rótulo do lote: "Arena livre / Open Arena".
+
+- **Perdeu:** o Torneio sortear 3 aleatórios do pool inteiro, sem olhar para a faixa; a Arena abrir direto numa run sorteada.
+- **Gatilho para rever:** pool pequeno (poucos jogadores) faz a janela de 6 virar "todo mundo" — correto por construção; se houver mais de ~300 perfis, a varredura de `profile:` (já limitada a 300) passa a ser o gargalo, não o critério.

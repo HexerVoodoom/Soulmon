@@ -95,12 +95,15 @@ export interface ArenaGameProps {
   petElement?: string;
   /** Atributos de arena (`getArenaAttributes(ficha)`), quando conhecidos. */
   attrs?: { principal: string; secundario: string };
+  /** A SEMENTE da primeira run, escolhida na folha da Arena (`DueloSheet`): o jogador SELECIONA os adversários
+   *  (Arena) — o Torneio é o que sorteia. Sem ela (ou na revanche) a semente é nova. */
+  seed?: number;
   onEarnPoints?: (points: number) => void;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, onEarnPoints, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onExit,
 }: ArenaGameProps) {
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
@@ -116,7 +119,9 @@ export function ArenaGame({
   const reduzido = useRef(prefersReducedMotion());
 
   /** A SEMENTE da run: o sabor das rodadas, o sorteio da defesa, do anel e da esquiva. Nunca `Math.random`. */
-  const runSeedRef = useRef(newDefenseSeed());
+  const runSeedRef = useRef(chosenSeed ?? newDefenseSeed());
+  /** A semente escolhida vale para a PRIMEIRA luta; a revanche sorteia outra. */
+  const chosenSeedRef = useRef(chosenSeed);
   const [seedLuta, setSeedLuta] = useState(() => runSeedRef.current);
   /** Muda a cada rodada: reinicia o relógio da cena. */
   const [fightKey, setFightKey] = useState(0);
@@ -187,7 +192,8 @@ export function ArenaGame({
 
   const comecar = useCallback(() => {
     if (!pool) return;
-    runSeedRef.current = newDefenseSeed();
+    runSeedRef.current = chosenSeedRef.current ?? newDefenseSeed();
+    chosenSeedRef.current = undefined;
     setSeedLuta(runSeedRef.current);
     hpCarryRef.current = 1;
     energyCarryRef.current = 0;
