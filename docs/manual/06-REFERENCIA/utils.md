@@ -2460,6 +2460,7 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/sounds.ts`
 **Dono de:** Os 8 sons do app, todos sintetizados, sem `AudioContext` por chamada. ⚰️ "Zero asset" valeu até 21/09/2026: desde a S16 os três eventos longos (`playEvolve`, `playDegenerate`, `playTaskComplete`) passam pela função privada `playComAsset` — `prepararAssets` + `assetPronto`/`tocarBuffer` de `sonsAssets.ts`, com o procedural como fallback quando o buffer ainda não decodificou; os cinco curtos são só síntese. A função privada `play` é o gate de mudo e, desde 21/09/2026, chama `aoGestoSonoro` (`trilha.ts`) antes de `tocarNa` — o primeiro gesto sonoro da sessão é o que liga a trilha persistida.
 **Exports:**
+- `playLevelUp()` — o stinger do level up do Vínculo (11/10/2026, pedido do dono): arpejo ascendente C5–G5–C6 em `square` com a oitava em seno por baixo, a última nota segura; categoria `marco` (R-CAT: subir de nível é raro e voluntário), offset +1,893 dB medido em Chromium (o mesmo arnês que reproduz `playTaskComplete`); único chamador `LevelUpOverlay` (D11 no chamador: aba visível + áudio já liberado por gesto). Falta o gate humano de escuta (S8).
 - `playAttack()` · `playSpecial()` · `playVictory()` — os três sons do combate v3 (PR18, 06/10/2026, só sintetizados; sem asset): golpe básico (soco curto de `square` que cai de tom + tique), especial (sobe e estoura em duas notas) e vitória (arpejo C–E–G–C com a oitava em seno). Todos `arcade` (R-CAT). `playAttack`/`playSpecial` só em `games/BattleStage.tsx`; `playVictory` em `ArenaGame` (rodada limpa), `DuelScreen` (só se o pet venceu; o oficial é do servidor), `DungeonGame` (andar limpo) e `NightmareBattle`. Offsets medidos, falta o gate humano de escuta (S8); o nível de cada um vem do `OFFSET_POR_SOM_DB`, nunca de alvo escrito à mão (R-CAT/R-NOVA).
 - `function isMuted(): boolean` — O mudo está ligado (flag persistida)? Também lido por `trilha.ts` (o mudo global cala a trilha).
 - `function setMuted(v: boolean): void` — Liga/desliga o mudo (persistência silenciosa — não gasta o aviso único de storage).
@@ -3112,8 +3113,18 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/gates.ts`
 **Dono de:** a tabela ÚNICA de portões do Vínculo (Arena/PvP, Torneio, andares altos da Masmorra, Renascimento). Nenhum outro arquivo compara `bondLevel >= N` (teste de grep em `gates.test.ts`). O Vínculo nunca é pago.
-**Exports:** `GATES`, `GateFeature`, `gateFor`, `masmorraFloorOpen`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateLine` (copy neutra, `copy.semFomo`).
+**Exports:** `GATES`, `GateFeature`, `gateFor`, `masmorraFloorOpen`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateLine` (copy neutra, `copy.semFomo`), `gatesOpenedBetween` (portões que abrem ao ir de um Vínculo a outro — o display de level up) e `gateName`.
 **Régua:** `src/utils/gates.test.ts`, `functions/api/gates.parity.test.js`.
+
+### `src/utils/levelUp.ts`
+**Dono de:** a regra do display de LEVEL UP (11/10/2026), funções PURAS. O nível nunca vai ao save (`bondLevelFor(totalXP)`); o save guarda só `lastCelebratedLevel` (o último nível que a pessoa JÁ VIU). O evento é a diferença entre os dois — por isso sobrevive a fechar o app, e vários níveis de uma vez viram UM `{from,to}`. Save sem o campo recebe a linha de base (o nível de agora) em vez de celebrar o passado; demo não celebra.
+**Exports:** `levelUpPending`, `levelUpBaseline`, `sanitizeCelebratedLevel`, `levelUpGains` (ponto de talento via `talentPointsFor`, recompensas via `bondRewardFor`, portões via `gatesOpenedBetween` — nada calculado aqui), `MAX_REWARDS_SHOWN`, `LevelUpEvent`, `LevelUpGains`.
+**Chamado por:** `src/App.tsx` (fila de intersticiais), `src/contexts/GameStateContext.tsx` (higiene do campo), `src/components/LevelUpOverlay.tsx`.
+**Régua:** `src/utils/levelUp.test.ts`.
+
+### `src/utils/levelUpArt.ts`
+**Dono de:** a fronteira de troca da arte OPCIONAL do level up (`src/assets/soulmon/levelup/levelup-{banner,burst,frame}.png`, via `import.meta.glob` eager); sem o PNG devolve `undefined` e o overlay desenha tudo de forma procedural. Pacote de geração: `docs/ASSETS-A-GERAR.md` §16 e `src/assets/soulmon/levelup/INSTALAR.md`.
+**Exports:** `levelUpArt`, `LevelUpSlot`.
 
 ### `src/utils/talentLayout.ts`
 **Dono de:** o DESENHO da árvore de talentos (Tarefa B, §2.37): posição de cada nó (hub, 3 braços a −90/30/150°, raios 120/230/340/450) e as ligações, lidas do grafo `requires`/`requiresAny` de `talents.ts`; vizinho por seta. Não decide regra. Fora do chunk de entrada (só o `TalentTree` lazy o importa).

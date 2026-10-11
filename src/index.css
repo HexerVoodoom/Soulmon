@@ -5863,6 +5863,8 @@ select:focus-visible {
   /* Soulsmith (07/10/2026): a celebração perde o MOVIMENTO; o selo textual fica. */
   .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; }
   .sm-forge-sweep, .sm-forge-spark { display: none; }
+  /* Level up (11/10/2026): o número, o banner, o pet, o burst e a dica ficam PARADOS — o display continua esperando o toque. */
+  .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-hint { animation: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -8430,3 +8432,15 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 }
 /* Oficina do Foco (10/10/2026): barra de etapas do planejamento. Sem movimento: regra no bloco canônico de movimento reduzido. */
 .sm-oficina-bar { transition: width 180ms ease; }
+/* LEVEL UP (`LevelUpOverlay`, 11/10/2026): o número entra de grande para o lugar, o banner cai e o pet salta uma vez;
+   a dica de toque respira. Movimento reduzido: tudo parado (regra no bloco canônico) — a pausa fica. */
+@keyframes sm-lvup-num { 0% { transform: scale(2.2); opacity: 0; } 55% { transform: scale(.92); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes sm-lvup-banner { 0% { transform: translateY(-24px) scale(.8); opacity: 0; } 60% { transform: translateY(3px) scale(1.04); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes sm-lvup-pet { 0% { transform: translateY(14px) scale(.8); opacity: 0; } 55% { transform: translateY(-10px) scale(1.06); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes sm-lvup-burst { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes sm-lvup-hint { 0%, 100% { opacity: .5; } 50% { opacity: .95; } }
+.sm-lvup-num { display: inline-block; animation: sm-lvup-num .7s cubic-bezier(.2,.9,.3,1.2) both; }
+.sm-lvup-banner { animation: sm-lvup-banner .55s ease-out both; }
+.sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }
+.sm-lvup-burst { animation: sm-lvup-burst 24s linear infinite; }
+.sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }

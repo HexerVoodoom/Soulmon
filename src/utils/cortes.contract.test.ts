@@ -251,6 +251,8 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
       playAttackRanged: ['components/games/BattleStage.tsx'],
       playSpecial: ['components/games/BattleStage.tsx'],
       playVictory: ['components/ArenaGame.tsx', 'components/DuelScreen.tsx', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx'],
+      // 11/10/2026 (pedido do dono): level up do Vínculo — `marco`, só no overlay (D11 no chamador).
+      playLevelUp: ['components/LevelUpOverlay.tsx'],
       playShower: ['components/CompanionHUD.tsx'],
       playSleep: ['App.tsx'],
       playEvolve: ['App.tsx'],

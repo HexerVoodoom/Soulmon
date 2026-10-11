@@ -42,6 +42,15 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/XpGainDisplay.render.test.tsx`.
 **Avisos do arquivo:** fora das duas filas de avisos; sem som (R-NOVA); sem campo no save; não mostra hidratação, delta ≤ 0, salto > `XP_GAIN_DISPLAY_CAP` (adoção/migração) nem demo.
 
+### `src/components/LevelUpOverlay.tsx`
+**Dono de:** o display de LEVEL UP do Vínculo (pedido do dono, 11/10/2026): sobrepõe a tela, escurece o fundo (`rgba(2,10,12,.88)`) e SÓ SAI AO TOQUE — sem timer de saída. A palavra "LEVEL UP", o pet (128), o número grande (que "sobe" de `from` a `to`) e a luz moram dentro de um VIDRO do visor (regra-mãe: pixel só no visor); fora dele, "Lv A → Lv B" (quando sobem vários níveis), a lista do que veio (ponto de talento, recompensas do Vínculo, portões abertos) e "Tap to continue"/"Toque para continuar".
+**Props principais:** `event` (`{from,to}` de `levelUpPending`), `language`, `spriteUrl?`, `onDone(celebrated)`.
+**Exports:** `LevelUpOverlay(props)`, `ARM_MS` (450 ms em que o toque é ignorado — o gesto que causou a subida não pode fechá-lo).
+**Estado/efeitos relevantes:** `useDialogA11y` (trap, Escape = o mesmo gesto); luz = `EvolutionLight` (canvas da cerimônia de evolução) só fora de movimento reduzido; arte opcional (banner/burst/moldura) por `utils/levelUpArt.ts` com fallback procedural; som `playLevelUp` só com aba visível E `barramentoAtual()?.ctx.state === 'running'` (D11 no chamador — a abertura do app nasce muda).
+**Chamado por:** `src/App.tsx` (`lazy`; intersticial `'levelUp'`, depois de `groveMilestone` e antes de `dream`; z-index 300).
+**Régua:** `src/components/LevelUpOverlay.render.test.tsx` · `src/components/filaDeAvisos.contract.test.ts` (posição e montagem única).
+**Avisos do arquivo:** movimento reduzido reduz o MOVIMENTO, nunca a pausa (regra no bloco canônico do `index.css`); nunca "faltam N"; demo local não celebra.
+
 ### `src/components/AccountDataSection.tsx`
 **Dono de:** seção "Seus dados" nas Configurações — exportar (levar embora) e apagar a conta, consumindo `functions/api/account.js`.
 **Props principais:** `AccountDataSectionProps` — `language`, `saveId?` (injeção de teste; produção lê do localStorage), `authAvailable?` (injeção de teste).

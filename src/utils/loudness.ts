@@ -153,6 +153,9 @@ export const CATEGORIA_DO_SOM: Record<string, CategoriaSom> = {
   playAttackRanged: 'arcade', // 11/10/2026: o golpe à distância — mesmo evento, mesma categoria (R-CAT)
   playSpecial: 'arcade',
   playVictory: 'arcade',
+  // 11/10/2026 (pedido do dono, LEVEL UP): subir de Vínculo é MARCO — raro, voluntário (vem de um gesto) e sem
+  // vizinho de repetição (R-CAT: o EVENTO decide, não o arquivo). Mesma categoria de `playEvolve`.
+  playLevelUp: 'marco',
 };
 
 /**
@@ -189,6 +192,10 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   playAttackRanged: 1.651, // 11/10/2026: mesmo arnês (reproduz playAttack em 1,971): LUFS-M do som a 0,12 = −26,649
   playSpecial: -5.216,
   playVictory: -6.776,
+  // 11/10/2026: -16,0 (alvo de `marco`) - (-17,893 LUFS-M do recorte a ganho 0,12), medido em Chromium
+  // (OfflineAudioContext + K-weighting BS.1770, o MESMO arnês que reproduz playTaskComplete -22,00). Pico -11,5 dBFS.
+  // Falta o gate humano de escuta (S8).
+  playLevelUp: 1.893,
 };
 
 /** dB → linear. A conversão mora aqui porque o alvo mora aqui. */

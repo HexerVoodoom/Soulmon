@@ -82,6 +82,7 @@ describe('AUTOVERIFICAÇÃO', () => {
     expect(campos).toContain('guildDonatedItem');
     expect(campos).toContain('buildingIntrosSeen');
     expect(campos).toContain('demoLocal');
+    expect(campos).toContain('lastCelebratedLevel');
     expect(campos).toContain('forge');
     expect(campos).toContain('mealRhythm');
     expect(campos).toContain('mealRitual');
