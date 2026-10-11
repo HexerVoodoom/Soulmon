@@ -68,9 +68,9 @@ describe('missões do dia (04/10/2026) — a tela mostra as TRÊS e se escolhe U
     expect(card.textContent).toContain(travessiaTitle(C1.id, true)!);
     expect(card.textContent).toContain(C1.textPt);
     expect(card.querySelector('[data-travessia-postal]')).toBeTruthy();
-    expect(card.querySelector(`[data-travessia-area="${C1.area}"]`)).toBeTruthy();
-    expect(card.querySelector(`[data-travessia-icone="${C1.id}"] img[data-pixel-icon]`)).toBeTruthy();
-    expect(card.querySelector('[data-mission-mark="progress"]')).toBeTruthy();
+    // 11/10/2026 (dono): o card da tarefa não tem ícone — nem o da área, nem o "?" de andamento.
+    expect(card.querySelector(`[data-travessia-area="${C1.area}"]`)).toBeNull();
+    expect(card.querySelector('[data-mission-mark="progress"]')).toBeNull();
     expect(container.querySelector('[data-mission-mark="available"]')).toBeNull();
   });
 
@@ -191,7 +191,7 @@ describe('o card da missão em uso (11/10/2026) — cabeçalho legível, sem emo
     const card = container.querySelector('[data-travessia-ativa]')!;
     const destino = card.querySelector('[data-passeio-destino-card]') as HTMLElement;
     expect(destino.textContent).toMatch(/Destino de hoje à noite/);
-    expect(destino.querySelector('img, svg, .sm2-icon')).toBeTruthy();
+    expect(destino.querySelector('[data-travessia-postal]')).toBeTruthy();
     const faca = card.querySelector('[data-passeio-faca]') as HTMLElement;
     expect(faca.textContent).toMatch(/Faça isto hoje, para o Soulmon fazer o passeio à noite/);
     expect(faca.querySelector('img, svg, .sm2-icon, [data-travessia-glifo], [data-mission-mark]')).toBeNull();

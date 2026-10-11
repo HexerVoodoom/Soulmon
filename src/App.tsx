@@ -3553,6 +3553,14 @@ export default function App() {
     goTo(areaView(dest.area));
   }, [goTo]);
 
+  /* "Faça um passeio" no menu de Missões leva ao PRÉDIO do Passeio (pedido do dono, 11/10/2026):
+     fecha o menu e abre a área com a folha do lote aberta, como o "Ir lá" da Mochila. */
+  const irAoPasseio = useCallback(() => {
+    setMissionsOpen(null);
+    setPendingSheet({ area: 'exploracao', lot: 'passeio' });
+    goTo(areaView('exploracao'));
+  }, [goTo]);
+
   /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
      lote aberta — direto, sem passar por `buildingDestination`, que mandaria o Caderno ao menu de Missões. */
   const markIntroSeen = useCallback((id: BuildingId) => {
@@ -7439,6 +7447,7 @@ export default function App() {
         language={language}
         crossings={crossings}
         onClaimStroll={resgatarPasseio}
+        onGoStroll={irAoPasseio}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
         weekly={missoesDaSemana}
         onClaimWeekly={resgatarMissao}

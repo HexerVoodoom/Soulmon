@@ -19,7 +19,7 @@ const BuildingQuestList = lazy(() => import('./BuildingQuestList').then(m => ({ 
  * "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ kind, open, onClose, language, crossings, onClaimStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
+export function MissionsSheet({ kind, open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
   /** Qual acesso abriu esta folha (07/10/2026): `daily` = Primeiro dia + Hoje; `weekly` = Esta semana + Conquistas. */
   kind: 'daily' | 'weekly';
   open: boolean;
@@ -28,6 +28,8 @@ export function MissionsSheet({ kind, open, onClose, language, crossings, onClai
   crossings: CrossingsState;
   /** O Resgatar da linha do passeio (só o recibo do dia; o pagamento é do "Concluir" no NPC). */
   onClaimStroll: () => void;
+  /** Leva ao prédio do Passeio (a folha do lote aberta). */
+  onGoStroll?: () => void;
   todayKey: string;
   /** As missões da semana e o resgate dos Emblemas (o mesmo do Torneio). */
   weekly: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
@@ -52,9 +54,9 @@ export function MissionsSheet({ kind, open, onClose, language, crossings, onClai
               <FirstDayCard progress={firstDay} language={language} />
             </Section>
           )}
-          {daily && <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} isPt={isPt} id="daily">
+          {daily && <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} />
+              <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} onGo={onGoStroll} />
               {buildings && <BuildingQuestList language={language} {...buildings} />}
             </div>
           </Section>}
@@ -76,13 +78,14 @@ export function MissionsSheet({ kind, open, onClose, language, crossings, onClai
 }
 
 /** Uma seção da lista, com a marca do lugar ao lado do título (`!` / `?`). */
-function Section({ title, mark, tone = 'gold', isPt, id, children }: { id?: string; title: string; mark: QuestMark; tone?: 'blue' | 'gold'; isPt: boolean; children: React.ReactNode }) {
+/* `glyph={false}`: o "!" não vai na frente do título ("Hoje") — fica só na linha da missão (pedido do dono, 11/10/2026). */
+function Section({ title, mark, glyph = true, tone = 'gold', isPt, id, children }: { id?: string; glyph?: boolean; title: string; mark: QuestMark; tone?: 'blue' | 'gold'; isPt: boolean; children: React.ReactNode }) {
   return (
     <section data-missions-section={id ?? 'other'} data-quest-mark={mark ?? 'none'} aria-label={title} style={{ marginBottom: 20 }}>
       <h3 className="sm2-title" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', fontSize: 'var(--sm2-text-md)' }}>
         <span style={{ flex: 1 }}>{title}</span>
-        {mark && <MissionMark kind={mark} tone={tone} size={24} isPt={isPt} />}
-        {mark && <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(mark, isPt)}</span>}
+        {mark && glyph && <MissionMark kind={mark} tone={tone} size={24} isPt={isPt} />}
+        {mark && glyph && <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(mark, isPt)}</span>}
       </h3>
       {children}
     </section>
