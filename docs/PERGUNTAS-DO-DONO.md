@@ -464,3 +464,22 @@ Implementado na branch `feat/r8-torneio` com a recomendação do lead; detalhe e
 4. **Os convites de 10h/16h e o aviso das 20h saem para quem liga os lembretes das refeições** (para não somar visitas). Se preferir somar (até 6 pushes/dia), é mudar `PUSH_DAILY_CAP` e a regra `cedeAoRitmo` — não recomendo.
 5. **Padrão do cartão no app: ligado; lembretes: desligados.** Quer o cartão desligado também até a pessoa ativar?
 6. **Custo da passada de 30 min** (48 listas do KV por dia, uma por passada, mesmo com poucas inscrições): aceitável hoje; aviso para quando crescer.
+
+## Rodada de lançamento (11/10/2026) — decisões abertas dos relatórios dos agentes
+
+Todas têm o provisório já aplicado no código; nada está parado esperando resposta.
+
+| # | Pergunta | Provisório aplicado | Se mudar |
+|---|---|---|---|
+| L1 | **Teto da comida premium** (`🍎★`, ≥ 3 subitens): 1 drop/dia, 3/semana, uso 1/dia, +5 de energia. Está bom? | `PREMIUM_DROPS_PER_DAY` 1 · `PREMIUM_DROPS_PER_WEEK` 3 · `PREMIUM_USES_PER_DAY` 1 · `PREMIUM_ENERGY` 5 (`utils/premiumFood.ts`) | trocar as constantes; o save guarda só contadores |
+| L2 | **Work com perfil de Harmonia?** O catálogo de atividades põe a categoria Work no caminho de Harmonia; Poder seria o esperado de "trabalho". | Harmonia | uma linha no catálogo; saves antigos não migram atributo já ganho |
+| L3 | **Teto retroativo de peso para tarefas com subitens**: `effortWithSteps` limita o peso pelo número de subitens, inclusive em tarefas já criadas (uma tarefa de esforço 3 com 2 subitens passa a pesar menos). Manter retroativo ou só para as novas? | Retroativo (a conta é pura, derivada na leitura) | guardar o peso no momento da criação |
+| L4 | **Constantes da masmorra idle**: 4 h para regenerar o HP inteiro, piso de 25% para entrar, 4 s entre lutas. | `DUNGEON_HP_REGEN_FULL_HOURS` 4 · `DUNGEON_MIN_HP_TO_ENTER_PCT` 25 · `DUNGEON_AUTO_FIGHT_MS` 4000 | só constantes |
+| L5 | **Gauge 30/45/60/60 e energia ×2; crédito só na virada** (quem enche hoje evolui amanhã). | `FORM_REQUIREMENTS[…].gauge`, `ENERGY_HEADROOM` 2 | constantes; crédito imediato exige mexer em `computeDailyReset` e nos caminhos de marcar/desmarcar |
+| L6 | **"Dia completo" virou selo** cosmético (Bits/XP/missões), sem peso na evolução. Confirmar que o nome "completo" e o selo ficam. | Selo | voltar a ser critério reabre o REGISTRO §30 |
+| L7 | **Remoção do "?" das Conquistas** (sem "Resgatar", nunca acende). Confirmar. | Removido (`questMarks.ts`) | recolocar o marcador |
+| L8 | **XP do Vínculo não aparece no modo demo** (sem XP, sem compras, sem PvP). | Oculto | exibir sem gravar |
+| L9 | **Arte de "Mysterious Soulmon"** (o corvo Rook do tour): usa `mascot-raven.png` com rótulo provisório. Gerar arte própria? | `mascot-raven.png` | pedido de geração em `ASSETS-A-GERAR.md` |
+| L10 | **Faixa da Arena derivada**: a música da Arena é uma variante derivada da trilha (equilíbrio percussão × camadas estimado offline). Ouvir (S8) ou pedir faixa própria. | Derivada (`utils/trilhaArena.ts`) | pedido de geração em `docs/SOM.md` §10.3 |
+| L11 | **S17 emendada**: as preferências de música-tema e trilha agora CONVIVEM, alternadas por superfície com crossfade, nunca juntas. A trilha continua nascendo desligada. Confirmar a emenda. | Emendada (SOM §10, `utils/musica.ts`) | voltar a "uma por vez" |
+

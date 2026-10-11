@@ -1,6 +1,6 @@
 {
-  "sha": "e71061b8d69e7a017a67f742fc6b513f85e5529b",
-  "data": "07/10/2026",
-  "por": "doc-mantenedor (/manter-docs, sessão: delta e3d55bb8..e71061b8 — Combate v3 PR1–PR18, prédios por Vínculo, missões na Home, avatar/perfil)",
+  "sha": "f3acead1c58297f2dac5ba8c8477da89066fc9b7",
+  "data": "11/10/2026",
+  "por": "doc-mantenedor (/manter-docs, rodada final de lançamento: delta e71061b8..f3acead1 — gauge, energia x2, comida premium, masmorra idle, refeições, Level Up, guilda, Soulsmith, onboarding)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }

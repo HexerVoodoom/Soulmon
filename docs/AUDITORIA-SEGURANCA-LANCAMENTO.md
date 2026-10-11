@@ -8,6 +8,13 @@ fechados estão em `docs/STATUS.md` §1 — aqui só o que esta rodada mediu.
 
 Regra usada: só entra como achado o que tem caminho de exploração real.
 
+> **Atualização de 11/10/2026 (manter-docs, `f3acead1`):** as correções abaixo
+> já estão na `main` (PR #292) e nenhum commit posterior tocou `functions/api/`
+> de forma que mude o que foi medido — `transcribe`, `generate-sprite`, `subscribe`,
+> `fcm-subscribe`, `metrics`, `save`, `guild`, `community` seguem como descritos.
+> O que continua dependendo do painel/dono (Rate Limiting do Cloudflare, host do
+> Higgsfield) está em [`LANCAMENTO-CHECKLIST.md`](LANCAMENTO-CHECKLIST.md).
+
 ## Corrigido nesta rodada
 
 ### ALTO — `/api/transcribe` era anônima (proxy gratuito de transcrição)
