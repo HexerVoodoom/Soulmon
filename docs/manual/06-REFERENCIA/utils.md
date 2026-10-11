@@ -920,6 +920,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/groveLocal.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Avisos do arquivo:** falha de storage tem fallback em memória do módulo (marco e recibo não repetem na mesma execução).
 
+### `src/utils/guildHouse.ts`
+**Dono de:** a regra do ITEM NA CASA DA GUILDA (guilda-lancamento PR2): item posto no slot sai de `ownedFurniture` e de `equippedDecor` e vive em `guildDonatedItem`; tirar (ou perder a guilda) o devolve.
+**Exports:** `applyGuildSlot` (pura e idempotente: mesmo slot, mesma referência), `donatableItems`, `GuildHouseSaveSlice`.
+**Chamado por:** `src/App.tsx` (`handleGuildSlot`), `src/components/guild/GuildSheet.tsx` (`SalaCasa`).
+**Régua:** `src/utils/guildHouse.test.ts`.
+
 ### `src/utils/groveStage.ts`
 **Dono de:** o PALCO do Bosque (`PLANO-GUILDA.md` §6, WPG-11) — parte PURA de quem aparece no visor e onde. **De 5 a 12 membros só a SUA criatura** (a fileira com lacunas de uma roda de 12 é a sala de aula que LV-G2 veta); **até 4, todos, em ordem de chegada** do servidor, sem estado de presença; **nunca estágio, linha ou HP alheio** (LV-G10): a criatura dos outros é uma das nossas linhas por hash do id opaco (o mesmo membro renderiza sempre a mesma criatura).
 **Exports:** `OWN_RENDER` (128) · `OTHER_RENDER` (64) · `GroveCreature` (interface) · `spriteForMember(key)` · `spreadX(sizes)` (distribuição em % pelo vão, pés na mesma linha) · `groveCreatures(guild)`.

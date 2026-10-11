@@ -153,7 +153,8 @@ import {
 } from './utils/weeklyMissions';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
-import { noteFreeBits, creditExchangeRoom, applyCreditExchange } from './utils/bitsOrigin';
+import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
+import { applyGuildSlot } from './utils/guildHouse';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -3817,6 +3818,19 @@ export default function App() {
     setGameState(prev => grantGuildScenes(prev, ids));
   }, [setGameState]);
 
+  /** CASA DA GUILDA: desconta SÓ o que o servidor aceitou (nunca o pedido) — Bit pago primeiro, como todo gasto fora do equipamento. */
+  const handleGuildSpend = useCallback((bits: number) => {
+    setGameState(prev => {
+      const n = Math.min(Math.max(0, Math.floor(bits)), prev.gamePoints ?? 0);
+      return n > 0 ? spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - n }, n) : prev;
+    });
+  }, [setGameState]);
+
+  /** CASA DA GUILDA: o save segue o slot que o servidor diz (`applyGuildSlot`, idempotente). */
+  const handleGuildSlot = useCallback((item: string | null) => {
+    setGameState(prev => applyGuildSlot(prev, item));
+  }, [setGameState]);
+
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
@@ -6442,7 +6456,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings') }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot } }}
               />
             </Suspense>
           )}

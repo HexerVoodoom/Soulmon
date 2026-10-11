@@ -21,6 +21,8 @@
 //                                            404 nothing to claim · 400 invalid week
 //                                            409 already claimed + { receipt, claimed:{…o resgate JÁ registrado} }
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
+//   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
+//   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
@@ -46,6 +48,7 @@ import {
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
   marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado,
 } from './_coop.js';
+import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa } from './_casa.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -78,6 +81,8 @@ export const GUILD_ACTIONS = Object.freeze({
   guildRaidHit: 'POST',
   guildRewards: 'GET',
   guildClaim: 'POST',
+  guildDonate: 'POST',
+  guildSlot: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -212,6 +217,18 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     // de tipos, em lote, sem quem nem quantos.
     gestures: size < GESTO_TIPO_MIN_MEMBROS ? [] : GUILD_GESTURES.filter(k => recebidos.has(k)),
     gestureReceived: recebidos.size > 0 ? true : null,
+    // A CASA (PR2): só estágio, `perto` e os slots de item. Nunca pontos, limiares nem doação por pessoa.
+    casa: {
+      ...(({ stage, stageIndex, perto }) => ({ nivel: stage, nivelIndex: stageIndex, perto }))(casaStageFor(totalDaCasa(g, cartoes))),
+      slots: g.members.flatMap((m, i) => {
+        const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
+        return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];
+      }),
+      mine: (() => {
+        const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
+        return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_BITS_POR_DIA };
+      })(),
+    },
     raid: {
       weekKey: semana,
       phenomenon: fenomenoDaSemana(semana),
@@ -396,6 +413,28 @@ export async function handleGuild({ request, env }) {
     const ja = await lerGestos(env, g.id, id, hoje);
     if (ja.includes(kind)) return erro('daily limit', 429);
     await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+
+  if (action === 'guildDonate') {
+    // Doação de Bits para a CASA. O servidor decide quanto cabe no teto do dia e
+    // devolve `accepted`: o cliente só desconta isso. Escreve SÓ a chave pessoal.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const r = await doarBits(env, g.id, id, hoje, body.bits);
+    if (r.invalid) return erro('invalid bits', 400);
+    if (r.accepted === 0) return erro('daily limit', 429);
+    await cartao(g);
+    return json({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+  }
+
+  if (action === 'guildSlot') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    if (body.item !== null && typeof body.item !== 'string') return erro('invalid item', 400);
+    const novo = await definirSlot(env, g.id, id, body.item);
+    if (novo === undefined) return erro('invalid item', 400);
     await cartao(g);
     return vista(await montar(g, id, hoje));
   }

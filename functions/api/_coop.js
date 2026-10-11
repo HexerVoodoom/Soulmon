@@ -15,6 +15,7 @@
 import { VALID_ID } from './_entitlements.js';
 import { kvOrThrow } from './_kv.js';
 import { minimizeForAi, redactionCount } from './_redact.js';
+import { lerCasa, recolherCasaDeQuemSai } from './_casa.js';
 
 /** Teto da Guilda (D-G1: o coop EVOLUI para guilda de até 12). Era 4. */
 export const COOP_MAX_MEMBERS = 12;
@@ -369,6 +370,8 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
+  // A CASA nunca encolhe: os pontos de quem sai viram `casaLegado` (aplicado abaixo, na releitura).
+  const casaDeQuemSai = await recolherCasaDeQuemSai(env, lido.id, saveId);
   // Os golpes (`coopHit`, com o saveId NA CHAVE) saem com a pessoa em TODA
   // saída, não só na exclusão (M5, L2-backend): o dano de quem saiu já não
   // conta para a Feira (a soma é dos membros atuais). O DIREITO ao resgate não
@@ -384,6 +387,7 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   // para o intervalo entre este `get` e o `put`/`delete`.
   const g = (await lerGrupo(env, lido.id)) ?? lido;
   g.members = (g.members || []).filter(m => m !== saveId);
+  if (casaDeQuemSai > 0) g.casaLegado = Math.floor(Number(g.casaLegado) || 0) + casaDeQuemSai;
   if (g.checkins) delete g.checkins[saveId];
   if (g.desde) delete g.desde[saveId];
   if (fio) {
@@ -412,7 +416,7 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
     const ultima = await lerGrupo(env, g.id);
     const outros = (ultima?.members || []).filter(m => m !== saveId);
     if (outros.length > 0) {
-      const vivo = { ...ultima, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
       await gravarGrupo(env, vivo);
       return { left: true, groupId: g.id, remaining: outros.length };
     }
@@ -877,11 +881,12 @@ const parse = raw => { try { return raw ? JSON.parse(raw) : null; } catch { retu
 export async function montarCartao(env, gid, save, now = new Date()) {
   const semanas = semanasDoCartao(now);
   const kvs = kvOrThrow(env);
-  const [ck, fio, gest, perfil, ...hits] = await Promise.all([
+  const [ck, fio, gest, perfil, casa, ...hits] = await Promise.all([
     kvs.get(coopCkKey(gid, save)).then(parse),
     lerFio(env, gid, save),
     kvs.get(coopGestKey(gid, save)).then(parse),
     kvs.get(`profile:${save}`).then(parse),
+    lerCasa(env, gid, save),
     ...semanas.map(w => lerGolpes(env, gid, w, save)),
   ]);
   return {
@@ -891,6 +896,7 @@ export async function montarCartao(env, gid, save, now = new Date()) {
     fio,
     gest: gest && typeof gest === 'object' ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,
     hits: Object.fromEntries(semanas.map((w, i) => [w, { days: hits[i].days, dmg: hits[i].dmg }])),
+    casa,
   };
 }
 

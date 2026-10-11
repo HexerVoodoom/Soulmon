@@ -58,3 +58,16 @@ export const GUILD_TIDE_WEEKS = 6;
 /** Os quatro fenômenos, em rotação semanal (`raid.phenomenon`). Tempo da Malha, nunca adversário com gente. */
 export const RAID_PHENOMENA = ['nevoa', 'mare', 'estatica', 'enxame'] as const;
 export type RaidPhenomenon = (typeof RAID_PHENOMENA)[number];
+
+/**
+ * A CASA DA GUILDA (guilda-lancamento PR2). Espelhos de `functions/api/_casa.js` — existem para a COPY
+ * e para os botões de doação; o servidor decide quanto aceita (`accepted`). Nunca há pontos nem limiares
+ * no cliente: ele só recebe o NÍVEL e um binário `perto`.
+ */
+export const CASA_STAGES = ['fagulha', 'haste', 'latao', 'flores', 'cristais', 'aurora'] as const;
+export type CasaStageId = (typeof CASA_STAGES)[number];
+export const CASA_BITS_POR_PONTO = 10;
+export const CASA_BITS_POR_DIA = 200;
+export const CASA_BITS_MIN = 10;
+/** Doações oferecidas (Bits, múltiplos de `CASA_BITS_POR_PONTO`). */
+export const CASA_DOACOES = [50, 100] as const;
