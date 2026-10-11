@@ -577,14 +577,14 @@ describe('o lote Feira da Arena abre a sala Feira, e o voltar fecha a folha cert
     if (original) Object.defineProperty(HTMLElement.prototype, 'offsetParent', original);
     else delete (HTMLElement.prototype as { offsetParent?: unknown }).offsetParent;
   });
-  const arena = () => (
-    <AreaView {...({ area: 'arena', language: 'pt-BR', guild: { saveId: 'save-12345678', metaDoDiaCumprida: true }, tournament: {}, ownership: {}, actions: {} } as unknown as AreaViewProps)} />
+  const arena = () => ( // (o nome ficou: a Feira morava na Arena até 11/10/2026; hoje é o lote `feira` do Hall)
+    <AreaView {...({ area: 'hall', language: 'pt-BR', guild: { saveId: 'save-12345678', metaDoDiaCumprida: true }, tournament: {}, ownership: {}, actions: {} } as unknown as AreaViewProps)} />
   );
 
-  it('o lote `feira` da Arena (e só ele) abre a Feira; não existe mais o lote `guilda` na Arena', async () => {
+  it('o lote `feira` do Hall abre a Feira (ao lado do lote `guilda`, que abre o Salão)', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista());
     const r = renderWithCss(arena());
-    expect(r.container.querySelector('[data-area-lot="guilda"]')).toBeNull();
+    expect(r.container.querySelector('[data-area-lot="guilda"]')).not.toBeNull();
     const lote = r.container.querySelector('[data-area-lot="feira"]') as HTMLElement;
     expect(lote.getAttribute('aria-label')).toBe(PT('guild.lote.feira.aria'));
     fireEvent.click(lote);
