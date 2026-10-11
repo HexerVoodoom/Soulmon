@@ -22,7 +22,11 @@ import { APP_VERSION } from '../components/FeedbackLink';
 const ROOT = path.resolve(__dirname, '../..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
-const SEMVER = /^\d+\.\d+\.\d+$/;
+// SemVer 2.0 inclui pré-release (`-beta1`): o beta fechado (release/beta-1) sai
+// como `1.2.0-beta1`, decisão do dono. O núcleo X.Y.Z continua obrigatório e
+// build metadata (`+...`) continua recusado — o contrato de versão ÚNICA (abaixo)
+// não muda.
+const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/;
 
 describe('versão única', () => {
   const pkg = JSON.parse(read('package.json')) as { version: string };
