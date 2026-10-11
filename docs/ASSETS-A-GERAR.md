@@ -497,3 +497,51 @@ Sufixo de pose por linha da tabela: `POSE: <pose / forma pedida>; keep the silho
 ### 17.6 Depois de instalar
 
 Acrescentar os 12 ids em `SHADOW_ART` e **bump `CACHE_VERSION`** em `public/sw.js` (abrir o arquivo e somar 1). O teste `nightmareShadows.test.ts` hoje exige `SHADOW_ART` vazio ("até a leva entrar") — trocar por "todo id declarado tem PNG" junto da instalação.
+## 16. Level up do Vínculo — pedido do dono em 11/10/2026
+
+O display de LEVEL UP (`src/components/LevelUpOverlay.tsx`) funciona **hoje sem arte nova**: a palavra
+é texto na voz do aparelho (Silkscreen), a luz é o canvas da cerimônia de evolução, e o chevron triplo
+`fx/gain-levelup.png` (96², F2, **já instalado** — gate "Existe?": não regerar) ao lado do número. Os
+**três slots abaixo são opcionais**: instalar o PNG em `src/assets/soulmon/levelup/` liga o slot sozinho
+(`utils/levelUpArt.ts`, glob eager) — nenhuma linha de código muda; o arquivo ausente ou que falha ao
+carregar cai no procedural. Tudo mora **DENTRO do vidro** do visor (regra-mãe; artboard = o vidro 340×340
+do overlay, `data-lvup-glass`), nunca solto sobre o véu escuro. **Bloqueio: crédito/assinatura do
+Higgsfield (do dono)** — não há CLI nem credencial neste ambiente; pacote pronto para o `arte-gerador`
+(`familia=fx`, lote de 3 peças) rodar quando houver crédito. Pasta de entrega: `_gemini_out/fx-<AAAAMMDD>-levelup/`.
+Instalação, destino e conferência: `src/assets/soulmon/levelup/INSTALAR.md`.
+
+| id | peça | arquivo final | nativo (exibido) | fundo / alfa | uso |
+|---|---|---|---|---|---|
+| LU1 | palavra **LEVEL UP** | `levelup-banner.png` | 512×128 (exibido a 256 = 0,5×) | alfa real (gerar sobre `#00FF00`, recortar por chroma-key) | topo do vidro, acima do pet |
+| LU2 | burst de raios | `levelup-burst.png` | 680×680 (exibido a 340 = 0,5×) | alfa real (idem) | atrás de tudo no vidro; gira devagar (24 s) — tem de ser simétrico por rotação, SEM texto |
+| LU3 | moldura do número | `levelup-frame.png` | 320×128 (exibido ~160×64 = 0,5×, esticado `fill`) | alfa real (idem) | atrás do "LV 12"; miolo vazio e liso (o número em cima é texto); bordas simples e **repetíveis** (a peça é esticada) |
+
+**Regras que o conferente reprova:** paleta do app — petróleo `#0E2E2E`/`#123232`, ciano `#6EFFFB`,
+tinta `#E9F5F2`, cobre `#C98B4B`/`#8A5A2B`, ouro `#D9A05B`, contorno quase-preto `#061414`;
+**nenhum magenta, roxo, violeta nem rosa** (`r > g+40 && b > g+40` = 0); pixel chapado com borda
+aliased, **sem blur, sem brilho suave, sem sombra projetada, sem gradiente, sem pixel semitransparente**
+(o brilho é feito de pixels duros); sem chão (não é cenário, não há linha de 74%); sem criatura, sem
+personagem de terceiro, sem marca de franquia.
+
+**Blocos de estilo** — colar o [SPRITE] da §1 e acrescentar a linha da peça. Peça única: fundo
+**verde chapado `#00FF00`** (nunca pedir "transparent PNG"); recortar com `chroma-key.mjs` e conferir o
+alfa real (sem xadrez assado).
+
+**LU1 — banner (texto é o ASSUNTO; é a ÚNICA peça do pacote em que "no text" não vale):**
+```
+[SPRITE] A single horizontal pixel-art title banner, canvas 512x128, reading exactly the two words "LEVEL UP" in chunky 16-bit block letters (every letter clearly legible, evenly spaced, no extra characters, no other words). Letters in aged gold #D9A05B with a lighter top edge #F0C987 and copper-bronze #8A5A2B underside shading, each letter outlined 2px near-black #061414; a thin carved copper rule above and below the word, with tiny circuit-trace notches at both ends. Flat colors, hard aliased edges. Background SOLID PURE GREEN #00FF00 only, nothing else behind it. NO glow, NO gradient, NO drop shadow, NO purple, NO pink, NO magenta.
+```
+**LU2 — burst:**
+```
+[SPRITE] A single radial burst of light rays, canvas 680x680, perfectly symmetrical around the exact center, 12 long tapering pixel-art rays alternating neon cyan #6EFFFB and pale ink #E9F5F2, with 12 shorter rays of aged gold #D9A05B between them; the center is empty (a clean 140px circle left EMPTY for a creature to sit on) and the ray tips fade by breaking into a few separated single pixels, never by transparency. Hard aliased edges, 1px near-black #061414 outline only on the longest rays. No text, no letters, no creature, no ground. Background SOLID PURE GREEN #00FF00 only. NO soft glow, NO gradient, NO blur, NO purple, NO pink, NO magenta.
+```
+**LU3 — moldura do número:**
+```
+[SPRITE] A single horizontal pixel-art plaque frame, canvas 320x128, an EMPTY rounded-rectangle frame made of carved teal stone #123232 with an aged copper-bronze #C98B4B border 6px thick, small cyan #6EFFFB circuit-trace notches at the four corners and two tiny leaf tips curling over the top edge; the INSIDE is a flat empty dark teal #0E2E2E rectangle with no content (numbers are drawn later). Hard aliased edges, 1px near-black #061414 outline. No text, no numbers, no creature. Background SOLID PURE GREEN #00FF00 only. NO glow, NO gradient, NO drop shadow, NO purple, NO pink, NO magenta.
+```
+**Aceite (arte-conferente):** alfa real; palavra legível e grafada `LEVEL UP` (LU1 — IA erra letra:
+reprovou, regera; o procedural cobre o intervalo); LU2 simétrico por rotação de 30° e miolo vazio;
+LU3 com miolo liso; folha de contato no vidro de 340² com o sprite do pet a 128 no centro; dono vê o
+recorte antes de instalar. **Decisão do dono em aberto:** o banner é em inglês ("LEVEL UP") nos dois
+idiomas — termo universal de jogo, mas a regra do idioma pede o par PT; se quiser "NOVO NÍVEL" no PT,
+é uma 4ª peça (LU1-PT) e uma linha em `LevelUpOverlay`.

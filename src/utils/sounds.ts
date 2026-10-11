@@ -9,6 +9,7 @@ const GANHO_ATTACK = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttack);
 const GANHO_ATTACK_RANGED = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttackRanged);
 const GANHO_SPECIAL = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playSpecial);
 const GANHO_VICTORY = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playVictory);
+const GANHO_LEVELUP = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playLevelUp);
 import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
 import { aoGestoSonoro } from './trilha';
 
@@ -286,6 +287,22 @@ export function playVictory(): void {
     beep(ctx, destino, 1047, 0.33, 0.45, 'square', GANHO_VICTORY);
     beep(ctx, destino, 523, 0.33, 0.45, 'sine', GANHO_VICTORY * 0.8);
     return 0.78;
+  });
+}
+
+/* ── O SOM DO LEVEL UP (pedido do dono, 11/10/2026) ───────────────────────
+   Subir de Vínculo é um MARCO (categoria `marco`, por `CATEGORIA_DO_SOM` — o EVENTO decide, R-CAT).
+   Stinger curto e ascendente no motivo da paleta (arpejo de `square` + oitava em seno por baixo, como a
+   vitória e a conclusão): três notas C5–G5–C6, a última SEGURA. Procedural, zero byte de asset.
+   **D11 mora no CHAMADOR** (`LevelUpOverlay`): só toca se a aba está visível e o áudio JÁ foi liberado
+   por um gesto da sessão — o level up que chega na abertura do app (evento pendente) nasce mudo. */
+export function playLevelUp(): void {
+  play('playLevelUp', (ctx, destino) => {
+    beep(ctx, destino, 523, 0, 0.09, 'square', GANHO_LEVELUP);
+    beep(ctx, destino, 784, 0.1, 0.09, 'square', GANHO_LEVELUP);
+    beep(ctx, destino, 1047, 0.2, 0.55, 'square', GANHO_LEVELUP);
+    beep(ctx, destino, 523, 0.2, 0.55, 'sine', GANHO_LEVELUP * 0.8);
+    return 0.75;
   });
 }
 

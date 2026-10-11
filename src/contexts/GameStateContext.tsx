@@ -24,6 +24,7 @@ import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibra
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
+import { sanitizeCelebratedLevel } from '../utils/levelUp';
 import { sanitizeTalentPicks } from '../utils/talents';
 import { sanitizeEquipment, type EquipmentState } from '../utils/equipment';
 import { sanitizeForge, type ForgeState } from '../utils/forge';
@@ -444,6 +445,10 @@ export interface GameState {
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
    *  save existente nunca re-dispara apresentação do que o jogador já usa. */
   buildingIntrosSeen?: string[];
+  /** O último nível do Vínculo CELEBRADO (display de level up, 11/10/2026, `utils/levelUp.ts`). O nível em si
+   *  nunca vai ao save (`bondLevelFor(totalXP)`); este campo só diz até onde a pessoa JÁ VIU a celebração —
+   *  assim o evento sobrevive a fechar o app. Ausente = save anterior: a linha de base é o nível de agora. */
+  lastCelebratedLevel?: number;
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
@@ -1236,6 +1241,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
+        lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)

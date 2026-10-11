@@ -55,12 +55,24 @@ export function masmorraFloorOpen(floor: number, bondLevel: unknown): boolean {
   return floor < MASMORRA_ALTO_A_PARTIR_DO_ANDAR || gateFor('masmorraAlto', bondLevel).open;
 }
 
+/** Os portões de recurso que ABREM ao ir do Vínculo `from` (já celebrado) ao `to` — para o display de level up. */
+export function gatesOpenedBetween(from: unknown, to: unknown): GateFeature[] {
+  const a = levelOf(from);
+  const b = levelOf(to);
+  return (Object.keys(GATES) as GateFeature[]).filter((f) => GATES[f].minBond > a && GATES[f].minBond <= b);
+}
+
 const NOME: Record<GateFeature, { pt: string; en: string }> = {
   pvp: { pt: 'O Duelo', en: 'The Duel' },
   torneio: { pt: 'O Torneio', en: 'The Tournament' },
   masmorraAlto: { pt: 'Os andares mais fundos da Masmorra', en: 'The deepest Dungeon floors' },
   renascimento: { pt: 'O Renascimento', en: 'Rebirth' },
 };
+
+/** O nome do portão no idioma (para listas de "o que abriu"). */
+export function gateName(feature: GateFeature, language: string): string {
+  return language === 'pt-BR' ? NOME[feature].pt : NOME[feature].en;
+}
 
 /** Texto de um portão FECHADO: neutro, com o Vínculo pedido e o atual. Aberto = string vazia. */
 export function gateLine(feature: GateFeature, bondLevel: unknown, language: string): string {

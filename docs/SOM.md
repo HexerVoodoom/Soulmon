@@ -17,6 +17,7 @@
 | O quê | Arquivo |
 |---|---|
 | Os sons — **12 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 4 do combate, abaixo: `playAttack`, `playAttackRanged`, `playSpecial`, `playVictory`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Os sons — **12 símbolos** (`playLevelUp` desde 11/10/2026, §3.2; `playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **música-TEMA** "Stone Hall Decay" (S17, 07/10/2026): `<audio>` em streaming → `busTema`, nasce LIGADA mas só começa no 1º gesto da sessão, 2 formatos por `canPlayType`, 30 s de silêncio entre voltas | `src/utils/tema.ts` + `TEMA_DO_JOGO` em `sonsAssets.ts` |
 | A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) + a **faixa da Arena** (derivada, §10) | `src/utils/trilha.ts` + `src/utils/trilhaArena.ts` |
@@ -111,6 +112,16 @@ COMER) deixou de ser o "som de vitória" da Masmorra e do Pesadelo. Offsets **me
 (`OfflineAudioContext` + K-weighting BS.1770; o mesmo arnês reproduz `playFeed` −19,00 e `playTaskComplete` −22,00):
 **falta o gate humano de escuta** (S8). Continua valendo: som só em luta que o jogador abriu (D11), o gate de
 mudo e a R-EX moram em `sounds.ts`/`audioBus.ts`, e a torcida (`TorcidaKit`) segue muda.
+
+### 3.2 O som do level up (pedido do dono, 11/10/2026)
+
+`playLevelUp` — stinger de 3 notas ascendentes (C5–G5–C6 em `square`, oitava em seno por baixo, a última segura),
+**categoria `marco`** (R-CAT: subir de Vínculo é raro e voluntário, mesmo perfil de repetição de `playEvolve`; a
+categoria vem do EVENTO, não do arquivo). Offset **+1,893 dB**, medido em Chromium (`OfflineAudioContext` +
+K-weighting BS.1770; o mesmo arnês reproduz `playTaskComplete` −22,00): −17,893 LUFS-M a ganho 0,12 → alvo −16,0;
+pico ≈ −11,5 dBFS. **Único chamador: `components/LevelUpOverlay.tsx`**, e a **D11 mora lá**: só toca com a aba visível
+e com o áudio JÁ liberado por um gesto da sessão (`barramentoAtual()?.ctx.state === 'running'`) — o level up que
+aparece na abertura do app (evento pendente de uma sessão anterior) nasce mudo. Falta o gate humano de escuta (S8).
 
 ## 4. Mudar ou acrescentar um som
 

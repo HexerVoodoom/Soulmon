@@ -109,6 +109,14 @@
 > - **Decisões que o dono deve rever:** S17 foi EMENDADA (tema e trilha agora convivem, uma por superfície); a regra "trilha abaixo do Arcade" foi relaxada para "no máximo Conclusão (−22), −25 em combate"; cada especial alonga a luta exibida do Duelo ≈ 3,3 s (a simulação e o resultado não mudam).
 > - **Depende do dono:** escuta (S8) de TUDO acima — o nível novo, a faixa da Arena (rascunho: o equilíbrio percussão × camadas é estimativa medida offline) e o par soco/disparo. Se quiser uma faixa de Arena de verdade: pedido de geração em `docs/SOM.md` §10.3 / relatório.
 > - **Não conferido em tela:** o ouvido (sem áudio no sandbox) e o Visor do Duelo em browser real (cobertos por testes de relógio falso).
+> ## 11/10/2026 — Display de LEVEL UP do Vínculo (intersticial, toque para sair, som `marco`)
+>
+> - **Pedido do dono:** um display que sobrepõe a tela, escurece o fundo e só sai ao TOQUE, com som e animação.
+> - **`LevelUpOverlay`** (lazy no `App.tsx`; intersticial `'levelUp'` entre `groveMilestone` e `dream`; z 300; `filaDeAvisos.contract` atualizado). Vários níveis de uma vez = UM display "Lv A → Lv B" com o final grande; mostra ponto de talento (1/nível até o teto), recompensas do `BOND_REWARDS` e portões abertos (`gatesOpenedBetween`, novo em `gates.ts`). Sem auto-dismiss; toque nos primeiros 450 ms ignorado; movimento reduzido reduz o movimento, nunca a pausa (bloco canônico do `index.css`).
+> - **Evento não se perde:** campo novo `lastCelebratedLevel` no save (higienizado em `hydrateSave`; fuzz2 sobe de 112 para 113 campos). O nível segue derivado (`bondLevelFor(totalXP)`); save sem o campo recebe a linha de base (nível de agora), sem celebrar o passado; demo não celebra. Dono: `utils/levelUp.ts`.
+> - **Som:** `playLevelUp` (`marco`, offset +1,893 dB medido em Chromium), único chamador o overlay, D11 no chamador (aba visível + áudio já liberado; abertura do app nasce muda). `docs/SOM.md` §3.2.
+> - **Arte:** funciona hoje sem PNG (texto Silkscreen + `EvolutionLight` + chevron `fx/gain-levelup.png` já instalado). Pacote Higgsfield pronto — `docs/ASSETS-A-GERAR.md` §16 (LU1 banner, LU2 burst, LU3 moldura) + `src/assets/soulmon/levelup/INSTALAR.md`. Nada gerado.
+> - **Depende do dono:** crédito do Higgsfield; escuta do som (S8); banner só em inglês nos dois idiomas (ou pedir LU1-PT); categoria `marco` do som (revisar se achar que repete demais).
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >

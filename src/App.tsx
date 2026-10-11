@@ -97,6 +97,7 @@ import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
 import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
+import { levelUpPending, levelUpBaseline } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
@@ -547,6 +548,7 @@ function PostponeNudgeSheet({
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
+const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
@@ -1909,26 +1911,37 @@ export default function App() {
     setWelcomeTourReplay(false);
   }, [welcomeTourReplay]);
   const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
+  /* LEVEL UP (11/10/2026): o nível é DERIVADO (`bondLevelFor(totalXP)`); o save guarda só o último
+     CELEBRADO. Save sem o campo recebe a linha de base (o nível de agora, sem celebrar o passado).
+     Demo local não ganha XP e não celebra. */
+  const levelUpDemo = isDemoMode(gameState);
+  const levelUpEvent = levelUpPending(gameState.totalXP, gameState.lastCelebratedLevel, levelUpDemo);
+  useEffect(() => {
+    if (levelUpDemo || gameState.lastCelebratedLevel !== undefined) return;
+    setGameState(prev => (prev.lastCelebratedLevel !== undefined ? prev : { ...prev, lastCelebratedLevel: levelUpBaseline(prev.totalXP) }));
+  }, [levelUpDemo, gameState.lastCelebratedLevel, setGameState]);
+  const handleLevelUpDone = useCallback((celebrated: number) => {
+    setGameState(prev => ({ ...prev, lastCelebratedLevel: Math.max(prev.lastCelebratedLevel ?? 0, celebrated) }));
+  }, [setGameState]);
   /* A APRESENTAÇÃO DO PRÉDIO NOVO (`components/BuildingIntro`, 08/10/2026): quando o Vínculo abre um prédio, o NPC dele se
      apresenta. Segundo da fila, logo depois do tour — e DEPOIS do display de Level Up (`utils/buildingIntro.ts` ›
      `BUILDING_INTRO_AFTER`). Um por vez: o pendente é "aberto no Vínculo e ainda não visto", sempre o primeiro da ordem.
      Só numa tela calma (Home ou Mapa), nunca por cima de um jogo.
-     TODO(LevelUpOverlay): o display de Level Up (outro run, intersticial que sobrepõe e só sai ao toque) ainda não está na
-     main. Quando entrar, `levelUpOpen` passa a ser o estado dele — enquanto estiver aberto a apresentação espera; o encaixe
-     e a espera já estão declarados e testados (`buildingIntroReady`). */
-  const levelUpOpen = false;
+     O Level Up (`LevelUpOverlay`) está na fila: enquanto ele estiver pendente/aberto a apresentação espera. */
+  const levelUpOpen = Boolean(levelUpEvent);
   const pendingIntros = useMemo(
     () => (gameState.buildingIntrosSeen === undefined ? [] : pendingBuildingIntros(gameState.buildingIntrosSeen, bondLevelFor(gameState.totalXP ?? 0))),
     [gameState.buildingIntrosSeen, gameState.totalXP],
   );
   const buildingIntroOpen = buildingIntroReady({ pending: pendingIntros, levelUpOpen, calmView: currentView === 'home' || currentView === 'map' });
-  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
+  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'levelUp' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
     welcomeTourOpen ? 'welcomeTour'
     : buildingIntroOpen ? 'buildingIntro'
     : triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
           : grovePendente ? 'groveMilestone'
+          : levelUpEvent ? 'levelUp'
           : morningDream ? 'dream'
             : nightmareOpen ? 'nightmare'
               : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
@@ -7702,6 +7715,12 @@ export default function App() {
       {interstitial === 'buildingIntro' && pendingIntros[0] && (
         <Suspense fallback={null}>
           <BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]} language={language} onGo={handleBuildingIntroGo} onLater={markIntroSeen} />
+        </Suspense>
+      )}
+      {/* LEVEL UP — intersticial: depois do marco do Bosque, antes do sonho. z 300, só sai ao toque. */}
+      {interstitial === 'levelUp' && levelUpEvent && (
+        <Suspense fallback={null}>
+          <LevelUpOverlay event={levelUpEvent} language={language} spriteUrl={minhaCriaturaUrl} onDone={handleLevelUpDone} />
         </Suspense>
       )}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
