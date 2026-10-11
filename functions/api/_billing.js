@@ -342,6 +342,8 @@ export async function resolveSubscriptionRoot(env, purchaseToken, firstSub) {
 /**
  * Lê o recurso da Google e devolve o que importa — função PURA (testável sem rede).
  *
+ * @param {any} sub
+ * @param {{ saveId?: string, now?: number }} [opts]
  * @returns {{ ok: true, entitled: boolean, state: string, until: number, test: boolean, ackPending: boolean }
  *          | { ok: false, reason: string }}
  */

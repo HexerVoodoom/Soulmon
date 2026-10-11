@@ -16,6 +16,12 @@
 //        { id, orderId }                          → créditos (microtransação)
 //        { id, ticket }                           → tier pago (posse do app)
 //
+//   POST /api/billing?action=verify   { id, productId: 'soulmon_cosmetic_quarterly', purchaseToken }
+//        → ASSINATURA cosmética (D10): verifica em `purchases.subscriptionsv2`, vínculo de conta
+//          sempre exigido, claim da raiz da cadeia linkedPurchaseToken, vigência = a da Google,
+//          acknowledge no servidor. Responde { ok, tier, credits, adsLeft, subActive, subUntil }.
+//          Os avisos em tempo real chegam em /api/rtdn (rtdn.js). Nunca concede tier nem Créditos.
+//
 // `consumeToken` só volta para produtos CONSUMÍVEIS da Play (pacotes de
 // crédito): o app precisa chamar consumeAsync() depois, senão o jogador não
 // consegue comprar o mesmo pacote de novo. O desbloqueio completo é uma compra
