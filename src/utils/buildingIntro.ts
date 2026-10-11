@@ -79,7 +79,8 @@ export function seedBuildingIntrosSeen(bondLevel: unknown): BuildingId[] {
 export function sanitizeBuildingIntrosSeen(raw: unknown, bondLevel: unknown): BuildingId[] {
   if (!Array.isArray(raw)) return seedBuildingIntrosSeen(bondLevel);
   const out: BuildingId[] = [];
-  for (const x of raw) if (isBuildingId(x) && !out.includes(x)) out.push(x);
+  // `arena.feira` virou `hall.feira` (11/10/2026): quem já viu a apresentação não a vê de novo.
+  for (const raw0 of raw) { const x = raw0 === 'arena.feira' ? 'hall.feira' : raw0; if (isBuildingId(x) && !out.includes(x)) out.push(x); }
   return out;
 }
 

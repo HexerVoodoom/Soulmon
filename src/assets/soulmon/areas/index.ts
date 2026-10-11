@@ -34,8 +34,7 @@ export const MERCADO_LOT_ART = {
   ferreiro: loteFerreiro,
 } as const;
 
-// `feira` (01/10/2026, leva lotes-v2 `lote-arena-feira`, versão limpa): a tenda-cúpula listrada própria.
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, feira: loteFeira } as const;
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber
@@ -110,4 +109,7 @@ export const HALL_LOT_ART = {
   biblioteca: loteBiblioteca,
   amigos: loteAmigos,
   guilda: loteGuilda,
+  // `feira` (01/10/2026, leva lotes-v2 `lote-arena-feira`, a tenda-cúpula listrada própria): mudou da Arena para o Hall em 11/10/2026
+  // (a Feira é a Missão da guilda). O arquivo mantém o nome da leva.
+  feira: loteFeira,
 } as const;

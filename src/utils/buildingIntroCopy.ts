@@ -78,7 +78,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'The ranked Tournament and the Open Arena both happen on this ground.', pt: 'O Torneio ranqueado e a Arena livre acontecem neste chão.' },
     invite: { en: 'There is always someone here to meet.', pt: 'Sempre tem alguém por aqui para encontrar.' },
   },
-  'arena.feira': {
+  'hall.feira': {
     place: { en: 'Fair', pt: 'Feira' },
     hello: { en: "I'm {name}, and this is the Fair.", pt: 'Eu sou {name}, e esta é a Feira.' },
     what: { en: 'A ring of friends gathers under the lanterns, and every stall is a small song.', pt: 'Uma roda de amigos se junta sob as lanternas, e cada barraca é uma canção pequena.' },

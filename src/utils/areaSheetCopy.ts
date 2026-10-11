@@ -33,9 +33,9 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  * ainda não chegou em F5 não aparece aqui e segue no lote de exemplo acima.
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro';
-export type ArenaLotId = 'torneio' | 'duelo' | 'feira';
+export type ArenaLotId = 'torneio' | 'duelo';
 export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats';
-export type HallLotId = 'biblioteca' | 'amigos' | 'guilda';
+export type HallLotId = 'biblioteca' | 'amigos' | 'guilda' | 'feira';
 
 interface AreaLotSpec<K extends string> {
   id: K;
@@ -70,9 +70,8 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '19%', top: '49%', width: '40%' },
   { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '50%', top: '56%', width: '40%' },
-  // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4, WPG-10): abre a sala Feira do
-  // `GuildSheet`. O Salão (Bosque/Roda/Mural) continua sendo o lote `guilda` do Hall.
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '78%', top: '40%', width: '36%' },
+  // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
+  // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];
 
 // Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções
@@ -103,7 +102,9 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
   { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '22%', top: '40%', width: '44%' },
   { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '78%', top: '40%', width: '40%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '73%', width: '58%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '34%', top: '73%', width: '44%' },
+  // 11/10/2026: a Feira (Missão da guilda) divide a plataforma de baixo com o Salão — um em cada metade, como Torneio e Duelo na Arena.
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '73%', top: '73%', width: '34%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {
