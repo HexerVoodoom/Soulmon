@@ -129,16 +129,12 @@ class BillingPlugin : Plugin() {
         val token = call.getString("purchaseToken") ?: run { call.reject("Missing purchaseToken"); return }
         connect { ready ->
             if (!ready) { call.reject("billing-unavailable"); return@connect }
-            val params = QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
-            billingClient?.queryPurchasesAsync(params) { result, purchases ->
-                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-                    call.reject("query-failed-${result.responseCode}")
-                    return@queryPurchasesAsync
-                }
-                val purchase = purchases.firstOrNull { it.purchaseToken == token }
-                if (purchase == null) { call.reject("not-owned"); return@queryPurchasesAsync }
+            // O token pode ser de produto único (INAPP) ou de assinatura (SUBS):
+            // procura nos dois, INAPP primeiro (o caminho que sempre existiu).
+            findOwned(token, listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS)) { found, error ->
+                if (error != null) { call.reject(error); return@findOwned }
+                val purchase = found
+                if (purchase == null) { call.reject("not-owned"); return@findOwned }
                 acknowledgeIfNeeded(purchase) { ack ->
                     if (ack == null || ack.responseCode == BillingClient.BillingResponseCode.OK) call.resolve()
                     else call.reject("acknowledge-failed-${ack.responseCode}")
@@ -146,6 +142,41 @@ class BillingPlugin : Plugin() {
             }
         }
     }
+
+    /**
+     * Procura a compra do `token` em cada tipo, na ordem dada. Chama `onDone`
+     * uma vez: (compra, null) achou, (null, null) em nenhum, (null, "query-failed-N") erro.
+     */
+    private fun findOwned(token: String, types: List<String>, onDone: (Purchase?, String?) -> Unit) {
+        val client = billingClient
+        if (client == null) { onDone(null, "billing-unavailable"); return }
+        if (types.isEmpty()) { onDone(null, null); return }
+        val params = QueryPurchasesParams.newBuilder().setProductType(types.first()).build()
+        client.queryPurchasesAsync(params) { result, purchases ->
+            if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                onDone(null, "query-failed-${result.responseCode}")
+                return@queryPurchasesAsync
+            }
+            val hit = purchases.firstOrNull { it.purchaseToken == token }
+            if (hit != null) onDone(hit, null) else findOwned(token, types.drop(1), onDone)
+        }
+    }
+
+    /** `productType` vindo do JS: "subs" = assinatura; qualquer outra coisa (ou nada) = produto único, como sempre foi. */
+    private fun productTypeOf(call: PluginCall): String =
+        if (call.getString("productType") == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP
+
+    /**
+     * A oferta BASE da assinatura: sem `offerId` (oferta promocional / teste
+     * grátis) e com UMA fase, paga. D10 (docs/ASSINATURA-SPEC.md): SEM trial —
+     * o app nunca escolhe uma oferta com fase grátis, mesmo que o Console
+     * tenha uma por engano (o servidor também recusa; defesa em duas camadas).
+     */
+    private fun baseOffer(details: ProductDetails): ProductDetails.SubscriptionOfferDetails? =
+        details.subscriptionOfferDetails?.firstOrNull { offer ->
+            val phases = offer.pricingPhases.pricingPhaseList
+            offer.offerId == null && phases.size == 1 && phases[0].priceAmountMicros > 0
+        }
 
     @PluginMethod
     fun purchase(call: PluginCall) {
@@ -164,6 +195,7 @@ class BillingPlugin : Plugin() {
          * APK com esta linha estar publicado recusaria toda compra.
          */
         val saveId = call.getString("saveId")
+        val productType = productTypeOf(call)
         val activity = activity ?: run { call.reject("no-activity"); return }
 
         connect { ready ->
@@ -174,7 +206,7 @@ class BillingPlugin : Plugin() {
                 .setProductList(listOf(
                     QueryProductDetailsParams.Product.newBuilder()
                         .setProductId(productId)
-                        .setProductType(BillingClient.ProductType.INAPP)
+                        .setProductType(productType)
                         .build(),
                 ))
                 .build()
@@ -198,12 +230,20 @@ class BillingPlugin : Plugin() {
                     return@queryProductDetailsAsync
                 }
 
+                // Assinatura exige o offerToken de UMA oferta. Escolhemos a base,
+                // sem fase grátis (ver baseOffer); sem ela, não abre o fluxo.
+                val detailsParams = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details)
+                if (productType == BillingClient.ProductType.SUBS) {
+                    val offer = baseOffer(details) ?: run {
+                        android.util.Log.w("BillingPlugin", "no-base-offer productId=$productId")
+                        call.reject("no-base-offer")
+                        return@queryProductDetailsAsync
+                    }
+                    detailsParams.setOfferToken(offer.offerToken)
+                }
+
                 val flowParams = BillingFlowParams.newBuilder()
-                    .setProductDetailsParamsList(listOf(
-                        BillingFlowParams.ProductDetailsParams.newBuilder()
-                            .setProductDetails(details)
-                            .build(),
-                    ))
+                    .setProductDetailsParamsList(listOf(detailsParams.build()))
                     .also { builder ->
                         // WP0.6 — só quando o cliente mandou. O Play recusa id
                         // vazio, e um `saveId` ausente não pode virar recusa de
@@ -234,6 +274,7 @@ class BillingPlugin : Plugin() {
     @PluginMethod
     fun getLocalizedPrice(call: PluginCall) {
         val productId = call.getString("productId") ?: run { call.reject("Missing productId"); return }
+        val productType = productTypeOf(call)
         connect { ready ->
             if (!ready) { call.resolve(JSObject().put("formattedPrice", "")); return@connect }
             val client = billingClient ?: run {
@@ -243,15 +284,25 @@ class BillingPlugin : Plugin() {
                 .setProductList(listOf(
                     QueryProductDetailsParams.Product.newBuilder()
                         .setProductId(productId)
-                        .setProductType(BillingClient.ProductType.INAPP)
+                        .setProductType(productType)
                         .build(),
                 ))
                 .build()
             client.queryProductDetailsAsync(queryParams) { result, queryResult: QueryProductDetailsResult ->
-                val preco = if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    queryResult.productDetailsList.firstOrNull()?.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
-                } else ""
-                call.resolve(JSObject().put("formattedPrice", preco))
+                val out = JSObject()
+                val details = if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    queryResult.productDetailsList.firstOrNull()
+                } else null
+                if (productType == BillingClient.ProductType.SUBS) {
+                    // Assinatura: o preço e o PERÍODO da oferta base (ex.: "P3M"), para a
+                    // divulgação pré-compra mostrar o que a Play de fato vai cobrar.
+                    val phase = details?.let { baseOffer(it) }?.pricingPhases?.pricingPhaseList?.firstOrNull()
+                    out.put("formattedPrice", phase?.formattedPrice ?: "")
+                    out.put("billingPeriod", phase?.billingPeriod ?: "")
+                } else {
+                    out.put("formattedPrice", details?.oneTimePurchaseOfferDetails?.formattedPrice ?: "")
+                }
+                call.resolve(out)
             }
         }
     }
@@ -269,13 +320,18 @@ class BillingPlugin : Plugin() {
         }
     }
 
-    /** Compras ativas da conta Google — base do "restaurar compras". */
+    /**
+     * Compras ativas da conta Google — base do "restaurar compras" e, com
+     * `productType: "subs"`, da reconciliação da assinatura na abertura do app
+     * (`queryPurchasesAsync(SUBS)`). Sem o parâmetro, é o INAPP de sempre.
+     */
     @PluginMethod
     fun getPurchases(call: PluginCall) {
+        val productType = productTypeOf(call)
         connect { ready ->
             if (!ready) { call.reject("billing-unavailable"); return@connect }
             val params = QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP)
+                .setProductType(productType)
                 .build()
             billingClient?.queryPurchasesAsync(params) { result, purchases ->
                 if (result.responseCode != BillingClient.BillingResponseCode.OK) {
