@@ -188,6 +188,8 @@ export interface AreaViewProps {
     onLogin?: () => void;
     /** A Casa da guilda (PR2): carteira, inventário e o que mudou. Ver `GuildSheet` › `casa`. */
     casa?: ComponentProps<typeof GuildSheetT>['casa'];
+    /** A Missão (PR3): estado da ida do Solmon e o gesto de mandá-lo. */
+    missao?: ComponentProps<typeof GuildSheetT>['missao'];
   };
 }
 
@@ -321,9 +323,6 @@ export function AreaView(props: AreaViewProps) {
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} skills={props.skills} shop={{ ownership, actions }} headSlot={tournamentHead} />
-            )}
-            {open?.id === 'feira' && (
-              <GuildSheet room="feira" language={language} {...props.guild} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet

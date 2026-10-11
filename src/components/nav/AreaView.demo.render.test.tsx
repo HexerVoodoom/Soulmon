@@ -40,7 +40,7 @@ async function toque(el: HTMLElement) {
 }
 
 describe('AreaView na demo', () => {
-  for (const [area, ids] of [['arena', ['torneio', 'duelo', 'feira']], ['hall', ['biblioteca', 'amigos', 'guilda']]] as const) {
+  for (const [area, ids] of [['arena', ['torneio', 'duelo']], ['hall', ['biblioteca', 'amigos', 'guilda']]] as const) {
     for (const id of ids) {
       it(`${area}.${id}: toque inerte, sem folha, com a recusa curta`, async () => {
         const { container } = renderWithCss(<AreaView {...base(area, { demo: true })} />);

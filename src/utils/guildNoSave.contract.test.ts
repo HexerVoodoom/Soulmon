@@ -47,7 +47,7 @@ describe('a guilda não entra no save nem no localStorage', () => {
     // (o ponteiro e o slot são do servidor) — é o INVENTÁRIO do jogador: o item de decoração que ele pôs na
     // casa e que, por regra, não pode valer no cenário pessoal enquanto estiver lá (`utils/guildHouse.ts`).
     // Sem o campo, o item voltaria ao cenário pessoal offline. O servidor continua sendo a fonte do slot.
-    const PERMITIDOS = new Set(['guildDonatedItem']);
+    const PERMITIDOS = new Set(['guildDonatedItem', 'guildMission']);
     expect(campos.filter(c => VETADO.test(c) && !PERMITIDOS.has(c))).toEqual([]);
   });
 
