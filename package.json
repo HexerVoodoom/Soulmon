@@ -50,6 +50,7 @@
     "test:fast": "vitest run --changed origin/main --passWithNoTests",
     "test:shard": "vitest run --shard",
     "gates": "node scripts/gates.mjs",
+    "gate:fuso": "node scripts/gate-fuso.mjs",
     "analisar:entrada": "node scripts/analisar-entrada.mjs"
   }
 }

@@ -51,6 +51,7 @@ import type { Schedule } from '../types/taskModel';
 import type { HabitRhythm } from './habitRhythm';
 import type { RestState } from './restWindow';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
+import { parseDayKeyLocal } from './dayKeyParse';
 
 export { MAX_DAILY_FOCUS };
 
@@ -492,8 +493,8 @@ export function stackingSuggestion(
     // "às terças" da frase. Sem conclusão nenhuma, o hábito não pode ser âncora.
     const counts = new Map<number, number>();
     for (const key of rhythm.done) {
-      const d = new Date(key);
-      if (Number.isNaN(d.getTime())) continue;
+      const d = parseDayKeyLocal(key);
+      if (!d) continue;
       counts.set(d.getDay(), (counts.get(d.getDay()) ?? 0) + 1);
     }
     let day = -1;
