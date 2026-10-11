@@ -11,9 +11,12 @@
 //    `hpAgora(state, now)`: regenera por TIMESTAMP (nunca por tick), inclusive com o app fechado.
 //  - Regenerar é recuperação, não punição: nunca custa coração nem Bits, e não compra vantagem de combate.
 //
-// Mora FORA de `dungeon.ts` de propósito e NÃO importa nada: o Guia/Ajuda leem as constantes daqui, e importar
+// Mora FORA de `dungeon.ts` de propósito e só importa dois módulos SEM dependências (`types/progression`, `gates`): o Guia/Ajuda leem as constantes daqui, e importar
 // `dungeon.ts` arrastaria sprites e o núcleo de combate para o chunk de entrada (`orcamentoDeBytes.contract.test.ts`).
 // (`DUNGEON_FIGHTS_PER_FLOOR` = `LADDER_TIERS.length`: a igualdade é travada em `dungeonIdle.test.ts`.)
+
+import { STAGE_LEVEL_CAPS } from '../types/progression';
+import { MASMORRA_ALTO_A_PARTIR_DO_ANDAR, masmorraFloorOpen } from './gates';
 
 /** Pausa entre o fim de uma luta e o começo da próxima (ritmo visível do idle). Ajustável pelo dono. */
 export const DUNGEON_AUTO_FIGHT_MS = 4000;
@@ -86,4 +89,123 @@ export function formatarEspera(ms: number, pt: boolean): string {
   const m = min % 60;
   if (h === 0) return pt ? `${m} min` : `${m}m`;
   return pt ? `${h} h ${String(m).padStart(2, '0')} min` : `${h}h ${String(m).padStart(2, '0')}m`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔋 ENERGIA, PROFUNDIDADE ATÉ 999 E RECOMPENSAS (decisão do dono, 11/10/2026 — REGISTRO §31).
+//
+// A masmorra virou o recurso IDLE de retorno. Três regras, todas puras e com dono aqui:
+//  1. CADA CAMADA (a "fase") GASTA ENERGIA — a MESMA energia da Home (enche comendo, zera na virada; máximo
+//     `getMaxEnergyForStage`, requisito × 2). Não existe uma segunda energia. Sem energia a descida para com
+//     uma frase calma; nunca custa coração nem Bits.
+//  2. A PROFUNDIDADE vai de 1 a `DUNGEON_MAX_LAYER` (999). O inimigo continua RELATIVO ao level (combate v3,
+//     `dungeonFoe` intocado, `DUNGEON_FLOOR_GROWTH` intocado): o que muda com a força do Soulmon é a ZONA DE
+//     CONFORTO (`comfortLayers`) — as camadas até ela lutam na dificuldade do andar 1; daí para baixo a
+//     dificuldade sobe como sempre subiu, e a parede medida (andar efetivo ~5–6) cai `comfortLayers(L)` camadas
+//     mais fundo. Quem fez tarefas e hábitos com constância tem Lv mais alto (dias completos + estágio), e por
+//     isso desce mais. O TETO declarado é `dungeonLayerCap` (zona + margem, e o portão do Vínculo de `gates.ts`).
+//  3. O RECORDE (`dungeonDepthRecord` no save) é o ponto de retorno: cada descida começa no último marco de
+//     `DUNGEON_MILESTONE_FLOOR` camadas já limpo (`startLayerFor`). Bater um marco de profundidade pela 1ª vez
+//     (`DUNGEON_DEPTH_MARKS`) rende fragmentos do Soulsmith — material, nunca Bits e nunca equipamento sorteado.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Energia gasta ao COMEÇAR cada camada (a 1ª inclusive). Leve (~2 de energia/dia) = 2 camadas; médio (3–4) = 3–4; intenso até o máximo do estágio (8–12). */
+export const DUNGEON_ENERGY_PER_LAYER = 1;
+
+/** A camada mais funda que existe. */
+export const DUNGEON_MAX_LAYER = 999;
+
+/** Camadas além da zona de conforto que o teto do Lv deixa tentar: a parede medida cai entre +4 e +6 (média 5,35). */
+export const DUNGEON_CAP_MARGIN = 6;
+
+/** O Lv mais alto do combate (ultra no topo): é nele que a zona de conforto chega à camada 999. */
+const TOP_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
+
+const int = (n: unknown, d = 0): number => (typeof n === 'number' && Number.isFinite(n) ? Math.floor(n) : d);
+
+/**
+ * Quantas camadas um Soulmon de Lv `level` atravessa na dificuldade do andar 1. Curva QUADRÁTICA (o começo é
+ * curto e o fim é longo): Lv 1 → 0 · Lv 6 → 16 · Lv 13 → 95 · Lv 21 → 263 · Lv 30 → 552 · Lv 40 → 999.
+ */
+export function comfortLayers(level: number): number {
+  const L = Math.min(TOP_LEVEL, Math.max(1, int(level, 1)));
+  return Math.round(DUNGEON_MAX_LAYER * ((L - 1) / (TOP_LEVEL - 1)) ** 2);
+}
+
+/** O "andar" que o núcleo de combate enxerga (`dungeonFoe`/`buildDungeonWave`) para a camada `layer`. */
+export function effectiveFloor(layer: number, level: number): number {
+  return 1 + Math.max(0, Math.max(1, int(layer, 1)) - 1 - comfortLayers(level));
+}
+
+/**
+ * O TETO de camadas do Lv (e do Vínculo): `min(999, zona + margem)`, e enquanto o portão `masmorraAlto` estiver
+ * fechado, a última camada antes dele. É o que a tela promete: "com mais Lv, mais fundo".
+ */
+export function dungeonLayerCap(level: number, bondLevel: number): number {
+  const byLevel = Math.min(DUNGEON_MAX_LAYER, comfortLayers(level) + DUNGEON_CAP_MARGIN);
+  return masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, bondLevel)
+    ? byLevel
+    : Math.min(byLevel, MASMORRA_ALTO_A_PARTIR_DO_ANDAR - 1);
+}
+
+/** Higieniza o recorde vindo do save/nuvem: inteiro em [0, 999]. */
+export function sanitizeDepthRecord(raw: unknown): number {
+  return Math.min(DUNGEON_MAX_LAYER, Math.max(0, int(raw, 0)));
+}
+
+/** Onde a descida começa: logo depois do último marco (múltiplo de `DUNGEON_MILESTONE_FLOOR`) já limpo, sem passar do teto. */
+export function startLayerFor(record: number, cap: number): number {
+  const lim = Math.min(sanitizeDepthRecord(record), Math.max(1, int(cap, 1)) - 1);
+  return 1 + DUNGEON_MILESTONE_FLOOR * Math.floor(Math.max(0, lim) / DUNGEON_MILESTONE_FLOOR);
+}
+
+/** A camada `layer` é um marco da descida (o item 🌀 1× por descida, no primeiro)? */
+export function isMilestoneLayer(layer: number): boolean {
+  return int(layer) > 0 && int(layer) % DUNGEON_MILESTONE_FLOOR === 0;
+}
+
+/** Dá para pagar a próxima camada? */
+export function canPayLayer(energy: unknown): boolean {
+  return int(energy) >= DUNGEON_ENERGY_PER_LAYER;
+}
+
+/** Quantas camadas a energia de agora paga. */
+export function layersAffordable(energy: unknown): number {
+  return Math.max(0, Math.floor(int(energy) / DUNGEON_ENERGY_PER_LAYER));
+}
+
+/** Gasta a energia de UMA camada. Sem energia devolve a MESMA referência (o updater não muda nada). */
+export function spendLayerEnergy<T extends { energyPoints: number }>(prev: T): T {
+  if (!canPayLayer(prev.energyPoints)) return prev;
+  return { ...prev, energyPoints: int(prev.energyPoints) - DUNGEON_ENERGY_PER_LAYER };
+}
+
+/** Os marcos de PROFUNDIDADE (recorde, 1× na vida) e os fragmentos do Soulsmith de cada um. Material, nunca Bits. */
+export const DUNGEON_DEPTH_MARKS: readonly { readonly layer: number; readonly fragments: number }[] = [
+  { layer: 5, fragments: 5 },
+  { layer: 10, fragments: 10 },
+  { layer: 25, fragments: 15 },
+  { layer: 50, fragments: 20 },
+  { layer: 100, fragments: 30 },
+  { layer: 250, fragments: 40 },
+  { layer: 500, fragments: 50 },
+  { layer: 999, fragments: 100 },
+];
+
+/** Os marcos que um recorde novo cruza (`oldRecord` < marco ≤ `newRecord`). Recorde que não sobe = nenhum. */
+export function depthMarksCrossed(oldRecord: number, newRecord: number) {
+  const a = sanitizeDepthRecord(oldRecord);
+  const b = sanitizeDepthRecord(newRecord);
+  return DUNGEON_DEPTH_MARKS.filter(m => m.layer > a && m.layer <= b);
+}
+
+/**
+ * Registra uma camada LIMPA no save: sobe o recorde (nunca desce) e devolve os marcos cruzados. Idempotente:
+ * a mesma camada de novo não cruza nada.
+ */
+export function recordLayerCleared<T extends { dungeonDepthRecord?: number }>(prev: T, layer: number): { next: T; marks: ReturnType<typeof depthMarksCrossed> } {
+  const old = sanitizeDepthRecord(prev.dungeonDepthRecord);
+  const nova = Math.max(old, sanitizeDepthRecord(layer));
+  if (nova === old) return { next: prev, marks: [] };
+  return { next: { ...prev, dungeonDepthRecord: nova }, marks: depthMarksCrossed(old, nova) };
 }

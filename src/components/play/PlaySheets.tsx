@@ -2,9 +2,10 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
-import { DUNGEON_MILESTONE_FLOOR } from '../../utils/dungeonIdle';
+import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
-import { getDungeonBest, getDungeonDifficulty, HEART_DROP_CHANCE } from '../../utils/dungeon';
+import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
 import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
@@ -113,9 +114,9 @@ function DropRow({ label, value }: { label: string; value: string }) {
 // ── Masmorra ────────────────────────────────────────────────────────────────
 export function MasmorraSheet({ language, onStart, bitsToday }: { language: Language; onStart: () => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
-  // Lidos UMA vez ao abrir a folha, pelos mesmos donos que a `DungeonGame`
-  // usa (a dificuldade vira a semana sozinha dentro de `getDungeonDifficulty`).
-  const [level] = useState(() => getDungeonDifficulty());
+  // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
+  const gs = useGameStateOptional()?.gameState;
+  const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
 
   return (
@@ -126,11 +127,13 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         <p style={sectionHead}>{isPt ? 'Descida automática, sem fim' : 'Automatic descent, no end'}</p>
         {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
         <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
-          {isPt ? 'As lutas vêm sozinhas e o HP volta com o tempo. Perder custa só a descida — nunca os seus corações.' : 'Fights run on their own and HP comes back over time. Losing only costs the descent — never your hearts.'}
+          {isPt
+            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que enche comendo), até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
+            : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, filled by feeding), down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
         </ModalInfo>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={isPt ? `Camada ${level}` : `Layer ${level}`} label={isPt ? 'dificuldade da semana' : "this week's difficulty"} />
+        <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />
         <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
       </div>
       <p style={sectionHead}>{isPt ? 'Pode cair' : 'Possible drops'}</p>
@@ -144,8 +147,12 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
           value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
         />
         <DropRow
-          label={isPt ? `Glitchtama ao limpar o andar ${DUNGEON_MILESTONE_FLOOR}` : `Glitchtama for clearing floor ${DUNGEON_MILESTONE_FLOOR}`}
+          label={isPt ? `Glitchtama no primeiro marco (a cada ${DUNGEON_MILESTONE_FLOOR} camadas) da descida` : `Glitchtama at the descent's first milestone (every ${DUNGEON_MILESTONE_FLOOR} layers)`}
           value="1"
+        />
+        <DropRow
+          label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
+          value="5→100"
         />
       </ul>
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}

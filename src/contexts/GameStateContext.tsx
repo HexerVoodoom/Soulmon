@@ -410,6 +410,9 @@ export interface GameState {
    *  NUNCA se lê direto — `hpAgora(state, now)` (`utils/dungeonIdle.ts`) soma a regeneração por timestamp.
    *  Ausente = cheio. Não compra vantagem (só limita a descida), então é do cliente como Emblemas/placar. */
   dungeonHp?: { frac: number; at: number };
+  /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
+   *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
+  dungeonDepthRecord?: number;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1206,6 +1209,10 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           return typeof d.frac === 'number' && Number.isFinite(d.frac) && typeof d.at === 'number' && Number.isFinite(d.at)
             ? { frac: Math.min(1, Math.max(0, d.frac)), at: Math.max(0, d.at) } : undefined;
         })(),
+        // Recorde de profundidade da masmorra: inteiro em [0, 999]; ausente = 0. Mesma regra de `sanitizeDepthRecord`
+        // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
+        dungeonDepthRecord: typeof loadedState.dungeonDepthRecord === 'number' && Number.isFinite(loadedState.dungeonDepthRecord)
+          ? Math.min(999, Math.max(0, Math.floor(loadedState.dungeonDepthRecord))) : undefined,
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'

@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Masmorra idle de retorno: energia por camada, profundidade até 999, Level Up restaura (REGISTRO §31)
+>
+> - **Dono:** `utils/dungeonIdle.ts` — 1 energia (a da Home) por camada; zona de conforto por Lv (`comfortLayers`) sem mexer no combate v3; teto `dungeonLayerCap` (22/101/269/558/999 nos topos de estágio; 3 com o portão do Vínculo fechado); ponto de retorno pelo recorde `dungeonDepthRecord` (campo novo, fuzz2 122); marcos de profundidade dão fragmentos do Soulsmith.
+> - **Saiu:** base semanal da masmorra e o "Descer mais fundo" pago (o retorno ao marco virou grátis; o custo é energia).
+> - **Level Up** (`applyLevelUpCelebrated`) enche energia + HP da masmorra 1× por celebração; corações não. Home: a dica da energia diz para que serve.
+> - **Depende do dono:** curva da zona, Lv (força) vs Vínculo no teto, sumidouro de Bits a menos, cosmético por marco. CLAUDE.md velho na linha ⚔️ Masmorra (base semanal, 5 andares, sem gate) e na ⚡ Energia (não cita o gasto).
 > ## 11/10/2026 — Manual sincronizado com `f3acead1` (rodada final de lançamento)
 >
 > - **Docs tocados (delta `e71061b8..f3acead1`, 114 commits):** `02-REGRAS-DE-NEGOCIO.md` (§63 nova + D41–D46), `07-DADOS-E-SAVE.md` (§2.12-B, 13 campos novos do save), `03`/`05`/`06-REFERENCIA/*`/`08`/`10` (carimbo e passagens tocadas), `00-MAPA.md` (docs novos). Módulos novos já tinham entrada; `docsManual.contract` verde.

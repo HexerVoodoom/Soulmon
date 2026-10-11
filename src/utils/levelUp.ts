@@ -17,6 +17,7 @@
 import { BOND_MAX_LEVEL, bondLevelFor, bondRewardFor, type BondReward } from './bond';
 import { gatesOpenedBetween, type GateFeature } from './gates';
 import { talentPointsFor } from './talents';
+import { getMaxEnergyForStage } from '../types/progression';
 
 export interface LevelUpEvent {
   /** O último nível celebrado (o que a pessoa já viu). */
@@ -74,5 +75,31 @@ export function levelUpGains(from: number, to: number): LevelUpGains {
     talentPoints: Math.max(0, talentPointsFor(to) - talentPointsFor(from)),
     rewards,
     gates: gatesOpenedBetween(from, to),
+  };
+}
+
+/**
+ * 🔋 SUBIR DE NÍVEL RESTAURA (decisão do dono, 11/10/2026 — REGISTRO §31): ao REGISTRAR o nível celebrado,
+ * a energia volta ao máximo do estágio (`getMaxEnergyForStage`, nunca acima — é o teto de cuidado ⚡) e o
+ * HP da masmorra volta a cheio (`dungeonHp` ausente = cheio, `utils/dungeonIdle.ts`). Os corações (HP de
+ * cuidado) NÃO entram: a cura deles tem teto próprio (carinho/coraçãozinho).
+ *
+ * UMA restauração por celebração: vários níveis de uma vez são UM display e UM enchimento. Idempotente — a
+ * 2ª chamada com o mesmo nível devolve a MESMA referência. Save sem linha de base (`lastCelebratedLevel`
+ * ausente) não restaura: a linha de base não é um level up. Não há laço de exploit: o XP da masmorra tem o
+ * teto diário de `bond.ts` (`BOND_DAILY_CAP.dungeon`) e cada nível custa mais XP que o anterior.
+ */
+export function applyLevelUpCelebrated<T extends {
+  lastCelebratedLevel?: number; energyPoints: number; evolutionStage: string; dungeonHp?: { frac: number; at: number };
+}>(prev: T, celebrated: number): T {
+  const before = prev.lastCelebratedLevel;
+  const next = Math.max(before ?? 0, Math.floor(Number.isFinite(celebrated) ? celebrated : 0));
+  if (next === before) return prev;
+  if (before === undefined || next <= before) return { ...prev, lastCelebratedLevel: next };
+  return {
+    ...prev,
+    lastCelebratedLevel: next,
+    energyPoints: Math.max(prev.energyPoints ?? 0, getMaxEnergyForStage(prev.evolutionStage)),
+    dungeonHp: undefined,
   };
 }

@@ -10,15 +10,16 @@ import { DUNGEON_BITS_FACTOR } from '../utils/dungeon';
 import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
   hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
+  DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, effectiveFloor, dungeonLayerCap, startLayerFor, isMilestoneLayer,
+  canPayLayer, layersAffordable, spendLayerEnergy, recordLayerCleared, sanitizeDepthRecord,
 } from '../utils/dungeonIdle';
+import { getMaxEnergyForStage } from '../types/progression';
+import { addFragments } from '../utils/equipment';
 import { MINIGAME_BITS_PER_DAY, minigameBitsToday } from '../utils/currencies';
 import { playerDayKey } from '../utils/playerDay';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
-  buildDungeonWave, getDungeonDifficulty, getDungeonBest,
-  setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
-  deepStartCost, canBuyDeepStart, buyDeepStart, DEEP_START_MAX_LEVEL,
-  getDungeonReached, recordDungeonReached,
+  buildDungeonWave, getDungeonBest, recordDungeonScore, LADDER_TIERS,
   type DungeonEnemy,
 } from '../utils/dungeon';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
@@ -119,7 +120,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   profissaoNome?: LText | null;
   language: Language;
   /** Inicia a run. Sem gate: a masmorra não cobra da barra de cuidado. */
-  onEnter: () => { ok: true; level: number; best: number };
+  onEnter: () => { ok: true; level?: number; best: number };
   /** Perder encerra a run — não custa HP. */
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
@@ -187,11 +188,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const [rewardMsg, setRewardMsg] = useState('');
   /** O coraçãozinho caiu neste inimigo (JOGO-10) — vira glifo, não emoji na string. */
   const [gotHeart, setGotHeart] = useState(false);
-  const [baseLevel, setBaseLevel] = useState(() => getDungeonDifficulty());
-  /** E2: o nível mais fundo já cumprido — o teto do "Descer mais fundo". */
-  const [reachedLevel, setReachedLevel] = useState(() => getDungeonReached());
   /** E1: o texto longo do lobby mora atrás do "?". */
   const [floor, setFloor] = useState(1);
+  /** Camada onde a descida começou (o ponto de retorno). */
+  const [startLayer, setStartLayer] = useState(1);
   const [best, setBest] = useState(() => getDungeonBest());
   const [runScore, setRunScore] = useState(0);
   // 5 scenes drawn per run from the classic pool + the shop backdrops.
@@ -211,8 +211,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O jogador apertou "Pausar": a luta e o relógio entre lutas esperam até "Retomar". */
   const [pausadoManual, setPausadoManual] = useState(false);
   const pausado = pausadoConfirm || pausadoManual;
-  /** Por que a descida acabou: HP zerado, ou o portão do Vínculo fechou o próximo andar alto. */
-  const [endReason, setEndReason] = useState<'hp' | 'sealed'>('hp');
+  /** Por que a descida acabou: HP zerado, energia acabou, o portão do Vínculo fechou, ou o teto de camadas do Lv. */
+  const [endReason, setEndReason] = useState<'hp' | 'sealed' | 'energy' | 'deep'>('hp');
+  /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, contado aqui e mostrado no fim. */
+  const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0 });
+  const [resumo, setResumo] = useState(resumoRef.current);
   /** O marco do andar 5 já foi pago NESTA descida (idempotência: uma vez por descida). */
   const milestoneRef = useRef(false);
   const [milestoneNow, setMilestoneNow] = useState(false);
@@ -233,8 +236,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
 
   const addPoints = (pts: number) => {
-    onEarnPoints(riftBitsWith(pts, rift.riftBits)); // Bits ganhos: o talento soma por cima; o placar da run fica na base
+    const ganhos = riftBitsWith(pts, rift.riftBits);
+    onEarnPoints(ganhos); // Bits ganhos: o talento soma por cima; o placar da run fica na base (o funil aplica o teto diário)
     runScoreRef.current += pts;
+    resumoRef.current.bits += ganhos;
   };
 
   // Record the run score, then leave the dungeon.
@@ -251,9 +256,47 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setFightKey(k => k + 1);
   };
 
-  /** A onda de um andar: o sabor sai da semente da run e do andar (`mulberry32(seed ^ andar)`). */
-  const waveOf = (level: number, f: number) =>
-    buildDungeonWave(level, evolutionStage, mulberry32((runSeedRef.current ^ Math.imul(f, 0x9e3779b1)) | 0), nivelJogador);
+  /** A onda de uma CAMADA: a força é a do andar EFETIVO (`effectiveFloor`: a zona de conforto do Lv luta no andar 1);
+      o sabor e a semente da luta saem da camada de verdade, para duas camadas da zona não repetirem a mesma luta. */
+  const waveOf = (layer: number) =>
+    buildDungeonWave(effectiveFloor(layer, nivelJogador), evolutionStage, mulberry32((runSeedRef.current ^ Math.imul(layer, 0x9e3779b1)) | 0), nivelJogador)
+      .map(e => ({ ...e, floor: layer }));
+
+  /* 🔋 ENERGIA, TETO E RECORDE (REGISTRO §31). Sem provider (demo, testes) não há save: nada é cobrado nem fecha. */
+  const bond = gs ? bondLevelFor(gs.totalXP ?? 0) : 1;
+  const capCamadas = gs ? dungeonLayerCap(nivelJogador, bond) : Number.POSITIVE_INFINITY;
+  const recorde = sanitizeDepthRecord(gs?.dungeonDepthRecord);
+  const energia = gs ? gs.energyPoints ?? 0 : Number.POSITIVE_INFINITY;
+  const energiaMax = getMaxEnergyForStage(evolutionStage);
+  const temEnergia = !gs || canPayLayer(energia);
+  const inicio = gs ? startLayerFor(recorde, capCamadas) : 1;
+  /** A energia é lida do save no instante do gasto (o updater decide; aqui só se espelha o que ele fez). */
+  const energiaRef = useRef(energia);
+  energiaRef.current = energia;
+  /** Gasta a energia de UMA camada. Devolve se deu (sem provider, sempre). */
+  const pagarCamada = (): boolean => {
+    if (!ctx) return true;
+    if (!canPayLayer(energiaRef.current)) return false;
+    energiaRef.current -= DUNGEON_ENERGY_PER_LAYER;
+    ctx.setGameState(prev => spendLayerEnergy(prev));
+    resumoRef.current.energy += DUNGEON_ENERGY_PER_LAYER;
+    return true;
+  };
+  /** Registra a camada LIMPA: recorde (só sobe) e os fragmentos dos marcos de profundidade (1× na vida). */
+  const registrarCamada = (layer: number) => {
+    if (!ctx) return;
+    const { marks } = recordLayerCleared({ dungeonDepthRecord: recordeRef.current }, layer);
+    recordeRef.current = Math.max(recordeRef.current, layer);
+    resumoRef.current.recordTo = Math.max(resumoRef.current.recordTo, layer);
+    const frag = marks.reduce((a, m) => a + m.fragments, 0);
+    resumoRef.current.fragments += frag;
+    ctx.setGameState(prev => {
+      const r = recordLayerCleared(prev, layer);
+      const ganho = r.marks.reduce((a, m) => a + m.fragments, 0);
+      return ganho > 0 ? addFragments(r.next, ganho) : r.next;
+    });
+  };
+  const recordeRef = useRef(recorde);
 
   /** Grava o HP da descida no save (fração do máximo + instante). Só o cliente: não compra vantagem. */
   const salvarHp = (frac: number) => {
@@ -266,14 +309,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const startRun = () => {
     const now = Date.now();
     if (!podeDescer(hpState, now)) return;
+    resumoRef.current = { layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: recorde, recordTo: recorde };
+    recordeRef.current = recorde;
+    if (!pagarCamada()) return; // a 1ª camada também custa energia; sem ela o botão nem acende
     const res = onEnter();
     runSeedRef.current = newDefenseSeed();
     setSeedLuta(runSeedRef.current);
-    const list = waveOf(res.level, 1);
+    const list = waveOf(inicio);
     setRunScenes(buildRunScenes());
-    setBaseLevel(res.level);
     setBest(res.best);
-    setFloor(1);
+    setStartLayer(inicio);
+    setFloor(inicio);
     setEnemies(list);
     hpCarryRef.current = hpAgora(hpState, now); // o HP NÃO enche: sai do que o save e o relógio dizem
     energyCarryRef.current = 0;
@@ -299,7 +345,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     if (!e) return;
     onEnemyDefeated(e.stage);
     addPoints(e.points);
-    setGotHeart(onHeartDrop());
+    resumoRef.current.enemies += 1;
+    const caiuCoracao = onHeartDrop();
+    if (caiuCoracao) resumoRef.current.hearts += 1;
+    setGotHeart(caiuCoracao);
     setRewardMsg(`+${e.points} Bits`);
     if (enemyIdxRef.current + 1 >= enemiesRef.current.length) clearFloor();
     else setPhase('enemy-down');
@@ -314,11 +363,12 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     recordDungeonScore(runScoreRef.current);
     setBest(getDungeonBest());
     setRunScore(runScoreRef.current);
-    if (floor >= DUNGEON_MILESTONE_FLOOR && !milestoneRef.current) {
-      milestoneRef.current = true; // idempotente: uma vez por descida, mesmo que o andar seja relido
+    resumoRef.current.layers += 1;
+    registrarCamada(floor); // recorde + marcos de profundidade (fragmentos, 1× na vida)
+    if (isMilestoneLayer(floor) && !milestoneRef.current) {
+      milestoneRef.current = true; // idempotente: um Glitchtama por descida, no primeiro marco limpo
       setMilestoneNow(true);
-      setDungeonDifficultyAtLeast(baseLevel + 1); // marco → a próxima descida é mais difícil
-      setReachedLevel(recordDungeonReached(baseLevel + 1)); // E2: nível CUMPRIDO (é o teto do "Descer mais fundo")
+      resumoRef.current.glitchtama += 1;
       onGlitchtama();                             // marco → 🌀 Glitchtama (1 uso/dia: `specialItemUse.ts`)
     } else {
       setMilestoneNow(false);
@@ -331,14 +381,18 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     salvarHp(hpCarryRef.current);
     setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
     // PR7: os andares ALTOS têm portão pelo Vínculo. Fechado, a descida termina aqui — sem cobrança.
-    if (!floorOpen(floor + 1)) { endDescent('sealed'); return; }
+    if (!floorOpen(floor + 1)) { endDescent(gs && floor + 1 > capCamadas && masmorraFloorOpen(floor + 1, bond) ? 'deep' : 'sealed'); return; }
+    // 🔋 A próxima camada custa energia: sem ela, a descida para aqui com uma frase calma (nunca cobrança).
+    if (!temEnergiaAgora()) { endDescent('energy'); return; }
     setPhase('floor-clear');
   };
 
   /** Sem provider (demo, testes) não há Vínculo para medir e nada fecha. */
-  const floorOpen = (f: number) => !gs || masmorraFloorOpen(f, bondLevelFor(gs.totalXP ?? 0));
+  const floorOpen = (f: number) => !gs || masmorraFloorOpen(f, bondLevelFor(gs.totalXP ?? 0)) && f <= capCamadas;
+  const temEnergiaAgora = () => !ctx || canPayLayer(energiaRef.current);
 
-  const endDescent = (why: 'hp' | 'sealed') => {
+  const endDescent = (why: 'hp' | 'sealed' | 'energy' | 'deep') => {
+    setResumo({ ...resumoRef.current });
     recordDungeonScore(runScoreRef.current);
     setBest(getDungeonBest());
     setRunScore(runScoreRef.current);
@@ -418,7 +472,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       setPhase('fight');
     } else if (phase === 'floor-clear') {
       const f = floor + 1;
-      const list = waveOf(baseLevel + (f - 1), f);
+      if (!pagarCamada()) { endDescent('energy'); return; } // a energia pode ter mudado entre o fim do andar e agora
+      const list = waveOf(f);
       setFloor(f);
       setEnemies(list);
       enterEnemy(list, 0);
@@ -584,11 +639,30 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p style={phaseTitle}>
                 {endReason === 'sealed'
                   ? (isPt ? 'O caminho para baixo está lacrado por ora.' : 'The way further down is sealed for now.')
-                  : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
+                  : endReason === 'energy'
+                    ? (isPt ? 'A energia desta descida acabou. Ele volta à superfície.' : 'The energy for this descent ran out. He heads back up.')
+                    : endReason === 'deep'
+                      ? (isPt ? 'Mais fundo que isso, ele ainda não alcança.' : 'Deeper than this is still out of his reach.')
+                      : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
               </p>
               {endReason === 'sealed' && gs && (
                 <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
               )}
+              {endReason === 'energy' && (
+                <p style={phaseLine} data-dungeon-no-energy>
+                  {isPt
+                    ? 'Volte mais tarde: cada atividade concluída vira comida, e a comida enche a energia.'
+                    : 'Come back later: each activity you finish becomes food, and food fills the energy.'}
+                </p>
+              )}
+              {endReason === 'deep' && (
+                <p style={phaseLine} data-dungeon-deep>
+                  {isPt
+                    ? `O Lv dele chega até a camada ${capCamadas}. O Lv cresce com os seus dias completos e a evolução.`
+                    : `His Lv reaches down to layer ${capCamadas}. Lv grows with your complete days and evolution.`}
+                </p>
+              )}
+              <DungeonSummary isPt={isPt} resumo={resumo} capBits={capBits} />
               <p className="sm2-num" style={phaseLine}>
                 {isPt ? `Camada ${floor} · ${scoreLine}` : `Layer ${floor} · ${scoreLine}`}
               </p>
@@ -599,7 +673,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </p>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
-                {espera === 0 && (
+                {espera === 0 && temEnergia && (
                   <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
                     {isPt ? 'Descer de novo' : 'Go down again'}
                   </button>
@@ -637,8 +711,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
       {/* Lobby */}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-        <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
-        <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
+        <StatTag label={isPt ? 'Mais fundo' : 'Deepest'} value={recorde} />
+        <StatTag label={isPt ? 'Energia' : 'Energy'} value={gs ? `${energia}/${energiaMax}` : '—'} />
         <StatTag label="HP" value={`${Math.round(hpLobby * 100)}%`} />
         {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê.
             I13: agora é o `InfoTip` padrão (antes era um "?" próprio). */}
@@ -646,8 +720,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           <span data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span>
                   {isPt
-                    ? `A descida é automática: as lutas vêm sozinhas, uma após a outra, e a cada ${ladderLen} lutas você desce uma camada — sem fim, até o HP acabar. O HP não enche entre descidas: ele volta com o tempo, até com o app fechado (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio; precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer). Limpar a camada ${DUNGEON_MILESTONE_FLOOR} é um marco: rende um Glitchtama e sobe a dificuldade (reset semanal). Pode pausar ou sair quando quiser. Nunca custa seus corações.`
-                    : `The descent is automatic: fights come one after another on their own, and every ${ladderLen} fights you go down a layer — endlessly, until the HP runs out. HP does not refill between descents: it comes back over time, even with the app closed (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full; you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down). Clearing layer ${DUNGEON_MILESTONE_FLOOR} is a milestone: it earns a Glitchtama and raises the difficulty (weekly reset). Pause or leave whenever you like. It never costs your hearts.`}
+                    ? `A descida é automática: as lutas vêm sozinhas, e a cada ${ladderLen} lutas você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia — a mesma da Home, que enche quando ele come o que você ganha concluindo atividades. O HP volta com o tempo, até com o app fechado (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio; precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer). Cada ${DUNGEON_MILESTONE_FLOOR} camadas são um marco: a descida seguinte começa dali, e o primeiro marco de cada descida rende um Glitchtama. Quanto mais Lv, mais fundo ele vai. Subir de nível enche a energia e o HP. Nunca custa seus corações.`
+                    : `The descent is automatic: fights come one after another on their own, and every ${ladderLen} fights you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy — the same energy as Home, which fills when he eats what you earn by finishing activities. HP comes back over time, even with the app closed (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full; you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns a Glitchtama. The higher his Lv, the deeper he goes. Leveling up refills energy and HP. It never costs your hearts.`}
                 </span>
                 <span>
                   {isPt
@@ -671,7 +745,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         </p>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-        <button type="button" onClick={startRun} disabled={espera > 0} style={{ ...sm2Button('primary', espera > 0), width: '100%', maxWidth: 320 }}>
+        {/* Antes de descer, o que a descida vai custar e até onde ela vai (REGISTRO §31): fatos, sem cobrança. */}
+        {gs && (
+          <p style={phaseLine} data-dungeon-plan className="sm2-num">
+            {isPt
+              ? `Começa na camada ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} de energia por camada · dá para ${layersAffordable(energia)} agora · o Lv ${nivelJogador} chega até a ${capCamadas}`
+              : `Starts at layer ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} energy per layer · enough for ${layersAffordable(energia)} now · Lv ${nivelJogador} reaches layer ${capCamadas}`}
+          </p>
+        )}
+        <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia} style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
           {isPt ? 'Descer' : 'Go down'}
         </button>
@@ -681,42 +763,39 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}
           </p>
         )}
-
-        {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
-            Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava
-            moeda que não compra nada — e moeda que não compra nada deixa de
-            ser recompensa. Este é o único sumidouro que o CLAUDE.md declara
-            legítimo: custo de ENTRADA, nunca cobrar da barra de cuidado.
-            Recorrente sem mecânica nova, porque a base reseta toda semana.
-            Some ao chegar no teto: oferta que não pode ser aceita é ruído.
-            Aposta opcional = `outline`, sem placa cheia (canvas Lobby). */}
-        {onSpendBits && baseLevel < Math.min(DEEP_START_MAX_LEVEL, reachedLevel) && (
-          <>
-            <button
-              type="button"
-              disabled={!canBuyDeepStart(baseLevel, bits, reachedLevel)}
-              onClick={() => {
-                const next = buyDeepStart(baseLevel, bits, reachedLevel);
-                if (next === null) return;
-                if (!onSpendBits(deepStartCost(baseLevel))) return;
-                setBaseLevel(setDungeonDifficultyAtLeast(next));
-              }}
-              style={{ ...sm2Button('outline', !canBuyDeepStart(baseLevel, bits, reachedLevel)), width: '100%', maxWidth: 320 }}
-            >
-              {isPt
-                ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
-                : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
-            </button>
-            <p style={phaseLine}>
-              {canBuyDeepStart(baseLevel, bits, reachedLevel)
-                ? (isPt
-                  ? `Volta a um nível que você já alcançou (até o ${reachedLevel}). Vale até o reset da semana.`
-                  : `Returns you to a level you already reached (up to ${reachedLevel}). Lasts until the weekly reset.`)
-                : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
-            </p>
-          </>
+        {/* Sem energia: um convite, nunca cobrança. A energia volta comendo (cada atividade concluída vira comida). */}
+        {!temEnergia && (
+          <p style={phaseLine} role="status" data-dungeon-no-energy>
+            {isPt
+              ? 'Sem energia por agora. Conclua algo do seu dia, dê a comida a ele e volte para descer.'
+              : 'No energy for now. Finish something from your day, feed him, and come back to go down.'}
+          </p>
         )}
       </div>
     </GameRoot>
+  );
+}
+
+/** O RESUMO da descida (REGISTRO §31): o que ela rendeu, em linhas de fato — sem placar de cobrança. */
+function DungeonSummary({ isPt, resumo, capBits }: {
+  isPt: boolean; capBits: boolean;
+  resumo: { layers: number; enemies: number; bits: number; hearts: number; glitchtama: number; fragments: number; energy: number; recordFrom: number; recordTo: number };
+}) {
+  const linhas: string[] = [
+    isPt ? `Camadas limpas: ${resumo.layers}` : `Layers cleared: ${resumo.layers}`,
+    isPt ? `Criaturas que pararam de insistir: ${resumo.enemies}` : `Creatures that stopped holding: ${resumo.enemies}`,
+    capBits
+      ? (isPt ? `Bits: ${resumo.bits} (o teto diário de Bits já foi atingido)` : `Bits: ${resumo.bits} (the daily Bits cap was already reached)`)
+      : `Bits: ${resumo.bits}`,
+  ];
+  if (resumo.hearts > 0) linhas.push(isPt ? `Coraçãozinho: +${resumo.hearts} (mochila)` : `Little heart: +${resumo.hearts} (Backpack)`);
+  if (resumo.glitchtama > 0) linhas.push(isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
+  if (resumo.fragments > 0) linhas.push(isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
+  if (resumo.recordTo > resumo.recordFrom) linhas.push(isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`);
+  if (resumo.energy > 0) linhas.push(isPt ? `Energia usada: ${resumo.energy}` : `Energy used: ${resumo.energy}`);
+  return (
+    <ul data-dungeon-summary aria-label={isPt ? 'Resumo da descida' : 'Descent summary'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {linhas.map(l => <li key={l} className="sm2-num" style={phaseLine}>{l}</li>)}
+    </ul>
   );
 }

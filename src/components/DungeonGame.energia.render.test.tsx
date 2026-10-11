@@ -1,0 +1,86 @@
+// @vitest-environment jsdom
+/**
+ * A masmorra gasta a ENERGIA da Home por camada (REGISTRO §31): o lobby mostra o custo, o ponto de retorno e o
+ * teto do Lv; sem energia o botão não acende e a frase é um convite; ao acabar a energia a descida para com o
+ * RESUMO das recompensas, grava o recorde no save e nunca toca nos corações.
+ */
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { screen, fireEvent, act, cleanup } from '@testing-library/react';
+import { renderWithCss } from '../test/renderEnv';
+import { DungeonGame } from './DungeonGame';
+import { GameStateProvider } from '../contexts/GameStateContext';
+import { STORAGE_KEYS } from '../utils/storageKeys';
+
+vi.mock('../utils/combate/group', async importOriginal => {
+  const real = await importOriginal<typeof import('../utils/combate/group')>();
+  return {
+    ...real,
+    groupFightSteps: function* (player: never, foes: never, opts: never) {
+      const fracos = (foes as unknown as Array<{ combatant: { hp: number } }>).map(f => ({ ...f, combatant: { ...f.combatant, hp: f.combatant.hp * 0.05 } }));
+      const g = real.groupFightSteps(player, fracos as never, opts);
+      let r = g.next();
+      while (!r.done) { const ans: number | undefined = yield r.value; r = g.next(ans); }
+      return r.value;
+    },
+  };
+});
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
+beforeEach(() => { vi.spyOn(Math, 'random').mockReturnValue(0.3); localStorage.clear(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); localStorage.clear(); });
+
+const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
+const salvo = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.GAME_STATE) ?? '{}');
+
+function montar(save: Record<string, unknown>, language: 'en-US' | 'pt-BR' = 'en-US') {
+  localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(save));
+  return renderWithCss(
+    <GameStateProvider>
+      <DungeonGame
+        evolutionStage="rookie" language={language} petElement="fogo"
+        onEnter={() => ({ ok: true, best: 0 })} onLose={() => {}} onHeartDrop={() => false}
+        onGlitchtama={() => {}} onEnemyDefeated={() => {}} onEarnPoints={() => {}} onExit={() => {}}
+      />
+    </GameStateProvider>,
+  );
+}
+
+describe('Masmorra — energia por camada', () => {
+  it('lobby: mostra energia, custo, ponto de retorno e o teto do Lv (EN)', () => {
+    montar({ energyPoints: 3, dungeonDepthRecord: 7, totalXP: 5000, perfectDays: 5 }); // Vínculo ≥ 8 (portão aberto) e Lv 6
+    const plano = document.querySelector('[data-dungeon-plan]')!.textContent!;
+    expect(plano).toMatch(/Starts at layer 6/);
+    expect(plano).toMatch(/1 energy per layer/);
+    expect(plano).toMatch(/enough for 3 now/);
+    expect(plano).toMatch(/Lv 6 reaches layer 22/);
+    expect(screen.getByText('Deepest')).toBeTruthy();
+    expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('sem energia: o botão não acende e a frase é convite, nunca cobrança (PT)', () => {
+    montar({ energyPoints: 0 }, 'pt-BR');
+    expect((screen.getByRole('button', { name: 'Descer' }) as HTMLButtonElement).disabled).toBe(true);
+    const aviso = document.querySelector('[data-dungeon-no-energy]')!.textContent!;
+    expect(aviso).toMatch(/Conclua algo do seu dia/);
+    expect(aviso).not.toMatch(/precisa|deve|falhou|culpa/i);
+  });
+
+  it('com 1 de energia: desce UMA camada, para com o resumo, grava o recorde e gasta a energia — corações intactos', async () => {
+    vi.useFakeTimers();
+    montar({ energyPoints: 1, healthPoints: 2 });
+    fireEvent.click(screen.getByRole('button', { name: 'Go down' }));
+    for (let t = 0; t < 600_000 && !document.querySelector('[data-dungeon-ended]'); t += 1000) await avancar(1000);
+    const fim = document.querySelector('[data-dungeon-ended]')!;
+    expect(fim.getAttribute('data-dungeon-ended')).toBe('energy');
+    const resumo = fim.querySelector('[data-dungeon-summary]')!.textContent!;
+    expect(resumo).toMatch(/Layers cleared: 1/);
+    expect(resumo).toMatch(/Creatures that stopped holding: 6/);
+    expect(resumo).toMatch(/Deepest so far: layer 1/);
+    expect(resumo).toMatch(/Energy used: 1/);
+    expect(fim.textContent).toMatch(/Your hearts are untouched/);
+    expect(screen.queryByRole('button', { name: 'Go down again' })).toBeNull(); // sem energia, não oferece descer de novo
+    const s = salvo();
+    expect(s.energyPoints).toBe(0);
+    expect(s.dungeonDepthRecord).toBe(1);
+    expect(s.healthPoints).toBe(2);
+  }, 60_000);
+});

@@ -30,7 +30,8 @@ async function ateCair(limiteMs = 120_000) {
 }
 
 function montar(opts: { save?: Record<string, unknown>; language?: 'pt-BR' | 'en-US'; onEnemyDefeated?: () => void } = {}) {
-  if (opts.save) localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(opts.save));
+  // REGISTRO §31: cada camada gasta energia da Home — o save de teste começa com energia (sobrescrevível).
+  localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ energyPoints: 12, ...(opts.save ?? {}) }));
   return renderWithCss(
     <GameStateProvider>
       <DungeonGame

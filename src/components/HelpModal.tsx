@@ -14,6 +14,7 @@ import {
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { GATES } from '../utils/gates';
+import { DUNGEON_ENERGY_PER_LAYER } from '../utils/dungeonIdle';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL } from '../utils/forge';
@@ -69,8 +70,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar. Fills only by feeding (up to ${FOOD_LIMIT_PER_HOUR}/hour), holds twice the daily goal and resets each day.`,
-    descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora), guarda o dobro da meta do dia e zera todo dia.`,
+    descEn: `The side bar. Fills only by feeding (up to ${FOOD_LIMIT_PER_HOUR}/hour), holds twice the daily goal and resets each day. It is the Dungeon's fuel: each layer spends ${DUNGEON_ENERGY_PER_LAYER}, and leveling up refills it.`,
+    descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora), guarda o dobro da meta do dia e zera todo dia. É o combustível da Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER}, e subir de nível enche de novo.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
@@ -131,8 +132,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from the layer-5 milestone of the automatic dungeon descent. Using it adds one day’s worth of steps to the evolution path — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro do marco da camada 5 da descida automática da masmorra. Usar soma um dia de passos ao caminho da evolução — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from the first milestone (every 5 layers) of each automatic dungeon descent. Using it adds one day’s worth of steps to the evolution path — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da masmorra. Usar soma um dia de passos ao caminho da evolução — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.

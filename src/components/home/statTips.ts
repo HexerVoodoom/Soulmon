@@ -16,6 +16,7 @@
  */
 import { MAX_HEARTS_LOST_PER_DAY, WEEKLY_RELIEF_HEARTS } from '../../utils/dailyReset';
 import { RUB_HEAL_DAILY_CAP } from '../../utils/careRules';
+import { DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
 
 export type StatTipKind = 'hp' | 'energy';
 
@@ -25,6 +26,9 @@ export interface StatTip {
   down: string;
   upLabel: string;
   downLabel: string;
+  /** Para que serve (11/10/2026, REGISTRO §31: a energia era explicada só pelo como sobe/desce). Ausente = não há linha. */
+  use?: string;
+  useLabel?: string;
 }
 
 /** Meio coração em texto, no idioma (0,5 / 0.5 → "½"). */
@@ -56,7 +60,11 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
       ? 'comendo: cada atividade concluída rende uma comida na mochila.'
       : 'by eating: each finished activity gives one food in the backpack.',
     down: isPt
-      ? 'recomeça do zero a cada dia.'
-      : 'starts again from zero each day.',
+      ? `recomeça do zero a cada dia, e cada camada da Masmorra gasta ${DUNGEON_ENERGY_PER_LAYER}.`
+      : `starts again from zero each day, and each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,
+    useLabel: isPt ? 'Serve para' : 'Used for',
+    use: isPt
+      ? `descer a Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada, e a descida segue enquanto houver energia. Subir de nível enche de novo.`
+      : `going down the Dungeon: ${DUNGEON_ENERGY_PER_LAYER} per layer, and the descent goes on while there is energy. Leveling up fills it again.`,
   };
 }

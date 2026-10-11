@@ -274,7 +274,9 @@ describe('o level up tem POSIÇÃO na fila e monta UMA vez', () => {
   });
   it('o evento é DERIVADO (levelUpPending) e o save guarda só o último celebrado, gravado ao tocar', () => {
     expect(app).toContain('levelUpPending(gameState.totalXP, gameState.lastCelebratedLevel, levelUpDemo)');
-    expect((app.match(/lastCelebratedLevel: Math\.max\(/g) ?? [])).toHaveLength(1);
+    // REGISTRO §31: a gravação mudou para a função pura `applyLevelUpCelebrated` (que também restaura energia/HP), chamada UMA vez.
+    expect((app.match(/applyLevelUpCelebrated\(prev, celebrated\)/g) ?? [])).toHaveLength(1);
+    expect(app).not.toMatch(/lastCelebratedLevel: Math\.max\(/);
     expect(app).toContain('onDone={handleLevelUpDone}');
   });
   it('o overlay fica ACIMA da fila, sem timer de saída', () => {
