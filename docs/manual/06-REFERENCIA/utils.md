@@ -853,6 +853,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma (`ls src/utils/entitlements*.test.ts` vazio).
 **Regra de negócio:** O servidor é a única autoridade sobre Créditos e tier de conta. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/evolutionGauge.ts`
+**Dono de:** o GAUGE DE EVOLUÇÃO (decisão do dono, 11/10/2026) — o critério de evolução que substituiu `perfectDays`. Peso de esforço (hábito = 1, tarefa = effort 1–3), creditado na virada (`computeDailyReset`) com teto diário = `FORM_REQUIREMENTS[estágio].required`, nunca decresce por dia ruim, zera ao evoluir. Meta por estágio = `FORM_REQUIREMENTS[…].gauge` (30/45/60/60; no mega sem as três megas, `ULTRA_PATIENCE_POINTS` = 270). Migração de save: `perfectDays` → mesma fração da barra (arredonda para cima). A queda usa `degeneratedEvolutionPoints` (em `dailyReset.ts`).
+**Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `dayItemGaugeGain`, `gaugeView`, `GaugeView`.
+**Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
+**Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
+
 ### `src/utils/evolutionTarget.ts`
 **Dono de:** Fonte ÚNICA da forma-destino da evolução manual — antes existiam três derivações divergentes no `App.tsx`.
 **Exports:**

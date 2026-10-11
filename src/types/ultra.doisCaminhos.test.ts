@@ -19,27 +19,27 @@
  * quebra.
  */
 import { describe, it, expect } from 'vitest';
-import { canReachUltra, ULTRA_PATIENCE_DAYS, FORM_REQUIREMENTS } from './progression';
+import { canReachUltra, ULTRA_PATIENCE_DAYS, ULTRA_PATIENCE_POINTS, FORM_REQUIREMENTS } from './progression';
 import { getNextEvolution } from '../utils/dailyReset';
 
 const TRES_MEGAS = ['mega-power', 'mega-harmony', 'mega-benevolence'];
 
 describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
   it('coleção: as três megas continuam abrindo o topo', () => {
-    expect(canReachUltra({ unlockedEvolutions: TRES_MEGAS, perfectDays: 0 })).toBe(true);
+    expect(canReachUltra({ unlockedEvolutions: TRES_MEGAS, evolutionPoints: 0 })).toBe(true);
   });
 
   it('permanência: dias perfeitos como mega abrem o topo SEM nenhuma mega extra', () => {
-    expect(canReachUltra({ unlockedEvolutions: ['mega-power'], perfectDays: ULTRA_PATIENCE_DAYS }))
+    expect(canReachUltra({ unlockedEvolutions: ['mega-power'], evolutionPoints: ULTRA_PATIENCE_POINTS }))
       .toBe(true);
     // E sem NENHUMA forma registrada — o caminho não depende da coleção.
-    expect(canReachUltra({ perfectDays: ULTRA_PATIENCE_DAYS })).toBe(true);
+    expect(canReachUltra({ evolutionPoints: ULTRA_PATIENCE_POINTS })).toBe(true);
   });
 
   it('abaixo do corte, nenhum caminho — a porta abre no número, não perto dele', () => {
-    expect(canReachUltra({ unlockedEvolutions: ['mega-power'], perfectDays: ULTRA_PATIENCE_DAYS - 1 }))
+    expect(canReachUltra({ unlockedEvolutions: ['mega-power'], evolutionPoints: ULTRA_PATIENCE_POINTS - 1 }))
       .toBe(false);
-    expect(canReachUltra({ unlockedEvolutions: ['mega-power', 'mega-harmony'], perfectDays: 0 }))
+    expect(canReachUltra({ unlockedEvolutions: ['mega-power', 'mega-harmony'], evolutionPoints: 0 }))
       .toBe(false);
   });
 
@@ -48,7 +48,7 @@ describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
   });
 
   it('a árvore respeita os dois: mega + permanência devolve `ultra`', () => {
-    expect(getNextEvolution('mega-power', 'power', ['mega-power'], ULTRA_PATIENCE_DAYS)).toBe('ultra');
+    expect(getNextEvolution('mega-power', 'power', ['mega-power'], ULTRA_PATIENCE_POINTS)).toBe('ultra');
     expect(getNextEvolution('mega-power', 'power', TRES_MEGAS, 0)).toBe('ultra');
     // Sem nenhum dos dois, o mega continua sendo o próprio destino ("distante").
     expect(getNextEvolution('mega-power', 'power', ['mega-power'], 3)).toBe('mega-power');
@@ -68,7 +68,7 @@ describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
     // A trava conceitual do pacote: existe pelo menos um caminho alcançável a
     // partir de UMA linha só de evolução, sem nunca ter descido.
     const soUmGalho = ['rookie', 'champion-power', 'ultimate-power', 'mega-power'];
-    expect(canReachUltra({ unlockedEvolutions: soUmGalho, perfectDays: ULTRA_PATIENCE_DAYS }))
+    expect(canReachUltra({ unlockedEvolutions: soUmGalho, evolutionPoints: ULTRA_PATIENCE_POINTS }))
       .toBe(true);
   });
 });

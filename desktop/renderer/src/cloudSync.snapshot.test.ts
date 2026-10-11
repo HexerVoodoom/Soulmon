@@ -72,7 +72,7 @@ describe('save da nuvem → o que o overlay mostra', () => {
     expect(r.snapshot.hearts).toBe(2.5);
     expect(r.snapshot.maxHearts).toBe(4);   // número CRU: mega tem 4 corações
     expect(r.snapshot.energy).toBe(3);
-    expect(r.snapshot.maxEnergy).toBe(6);   // mega exige 6 tarefas = 6 barras
+    expect(r.snapshot.maxEnergy).toBe(12);   // mega exige 6 tarefas = 6 barras
   });
 
   it('rookie recém-nascido aparece como 3/3 corações e 0/4 de energia', async () => {
@@ -82,7 +82,7 @@ describe('save da nuvem → o que o overlay mostra', () => {
     expect(r.snapshot.hearts).toBe(3);
     expect(r.snapshot.maxHearts).toBe(3);
     expect(r.snapshot.energy).toBe(0);
-    expect(r.snapshot.maxEnergy).toBe(4);
+    expect(r.snapshot.maxEnergy).toBe(8);
   });
 
   it('champion e ultimate mostram 3 corações e 5 barras', async () => {
@@ -91,7 +91,7 @@ describe('save da nuvem → o que o overlay mostra', () => {
       const r = await fetchRemoteSnapshot(EMAIL);
       if (!r.ok) throw new Error('esperava snapshot');
       expect(r.snapshot.maxHearts, stage).toBe(3);
-      expect(r.snapshot.maxEnergy, stage).toBe(5);
+      expect(r.snapshot.maxEnergy, stage).toBe(10);
     }
   });
 
@@ -100,7 +100,7 @@ describe('save da nuvem → o que o overlay mostra', () => {
     const r = await fetchRemoteSnapshot(EMAIL);
     if (!r.ok) throw new Error('esperava snapshot');
     expect(r.snapshot.maxHearts).toBe(5);
-    expect(r.snapshot.maxEnergy).toBe(6);
+    expect(r.snapshot.maxEnergy).toBe(12);
   });
 
   it('estágio desconhecido (save de outra versão) é tratado como rookie, não some', async () => {
@@ -109,7 +109,7 @@ describe('save da nuvem → o que o overlay mostra', () => {
     if (!r.ok) throw new Error('esperava snapshot');
     expect(r.snapshot.stage).toBe('lenda-suprema'); // o id cru é preservado
     expect(r.snapshot.maxHearts).toBe(3);           // mas a régua é a de rookie
-    expect(r.snapshot.maxEnergy).toBe(4);
+    expect(r.snapshot.maxEnergy).toBe(8);
   });
 
   it('save SEM estágio nenhum vira rookie com nome de exibição padrão', async () => {
@@ -620,7 +620,7 @@ describe('pushCareAction: o que a regra recebe e o que volta para a tela', () =>
     expect(r.snapshot.hearts).toBe(2);
     expect(r.snapshot.maxHearts).toBe(4);
     expect(r.snapshot.energy).toBe(1);
-    expect(r.snapshot.maxEnergy).toBe(6);
+    expect(r.snapshot.maxEnergy).toBe(12);
     expect(r.snapshot.foodInventory).toEqual({ '🍎': 1 });
   });
 
@@ -660,7 +660,7 @@ describe('pushCareAction: o que a regra recebe e o que volta para a tela', () =>
     expect(r.snapshot.hearts).toBe(1);
     expect(r.snapshot.energy).toBe(0);
     expect(r.snapshot.maxHearts).toBe(3);
-    expect(r.snapshot.maxEnergy).toBe(4);
+    expect(r.snapshot.maxEnergy).toBe(8);
   });
 
   it('personagem de demo e nome da forma aparecem no snapshot da escrita', async () => {

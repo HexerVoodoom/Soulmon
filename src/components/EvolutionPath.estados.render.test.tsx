@@ -42,8 +42,8 @@ const base = {
   currentStageId: 'rookie',
   currentBranch: 'harmony' as const,
   powerPoints: 1, harmonyPoints: 3, benevolencePoints: 0,
-  perfectDays: 2,
-  gateDays: 10,
+  evolutionPoints: 2,
+  gaugeGoal: 30,
   stages,
   unlockedEvolutions: ['rookie'],
   language: 'pt-BR' as const,
@@ -99,7 +99,7 @@ describe('§2.2 — cada forma diz em que estado a arte dela está', () => {
         {...base}
         // `required` do rookie é 4 → `faltam === 1` é a véspera. O gatilho lê
         // `required`, nunca `daysToEvolve` (§3.1).
-        perfectDays={3}
+        evolutionPoints={27}
         spriteLibrary={falhou()}
         onRetrySprite={() => {}}
       />,

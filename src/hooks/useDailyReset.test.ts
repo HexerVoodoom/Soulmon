@@ -109,10 +109,10 @@ describe('performDailyReset — proportional HP loss', () => {
     expect(result.healthPoints).toBe(3);
   });
 
-  it('tasks met but energy NOT full → day is not perfect', () => {
+  it('tasks met but energy NOT full → still a complete day (energy left the criterion, 11/10/2026)', () => {
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
     const result = runReset({ ...baseState(), tasks, energyPoints: 1 });
-    expect(result.lastDayWasPerfect).toBe(false);
+    expect(result.lastDayWasPerfect).toBe(true);
     // No heart loss either — tasks were all done
     expect(result.healthPoints).toBe(3);
   });
@@ -293,15 +293,15 @@ describe('computeDailyReset — totalPerfectDays (contador vitalício das missõ
   });
 });
 
-describe('getMaxEnergyForStage — energy bars = task requirement', () => {
-  it('matches the stage requirement for each form', () => {
-    expect(getMaxEnergyForStage('rookie')).toBe(FORM_REQUIREMENTS.rookie.required);           // 4
-    expect(getMaxEnergyForStage('champion-power')).toBe(FORM_REQUIREMENTS.champion.required);  // 5
-    expect(getMaxEnergyForStage('ultra')).toBe(FORM_REQUIREMENTS.ultra.required);               // 8
+describe('getMaxEnergyForStage — energy bars = task requirement × ENERGY_HEADROOM (11/10/2026)', () => {
+  it('matches the stage requirement × headroom for each form', () => {
+    expect(getMaxEnergyForStage('rookie')).toBe(FORM_REQUIREMENTS.rookie.required * 2);           // 8
+    expect(getMaxEnergyForStage('champion-power')).toBe(FORM_REQUIREMENTS.champion.required * 2);  // 10
+    expect(getMaxEnergyForStage('ultra')).toBe(FORM_REQUIREMENTS.ultra.required * 2);               // 12
   });
 
-  it('can differ from the stage max HP (rookie: 4 energy bars, 3 hearts)', () => {
-    expect(getMaxEnergyForStage('rookie')).toBe(4);
+  it('can differ from the stage max HP (rookie: 8 energy bars, 3 hearts)', () => {
+    expect(getMaxEnergyForStage('rookie')).toBe(8);
     expect(MAX_HP_BY_FORM.rookie).toBe(3);
   });
 });
@@ -830,11 +830,11 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
     expect(r.healthPoints).toBe(4); // e não perdeu coração nenhum
   });
 
-  it('AUTOVERIFICAÇÃO: quem fez a meta e NÃO comeu continua sem dia perfeito', () => {
-    // Sem este caso, a energia teria virado decoração — bastaria fazer as
-    // tarefas e o "cuidar do bicho" sairia da conta.
+  it('⚡ 11/10/2026: quem fez a meta e NÃO comeu TEM o dia completo (energia saiu do critério)', () => {
+    // A energia virou combustível da masmorra (decisão do dono); o dia completo
+    // é o selo do dia e depende só do peso feito.
     const r = runReset(megaNoSabado(2, 0), DOMINGO);
-    expect(r.lastDayWasPerfect).toBe(false);
+    expect(r.lastDayWasPerfect).toBe(true);
     expect(r.lastDayReport.energyWasFull).toBe(false);
   });
 
@@ -843,7 +843,7 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
     expect(r.lastDayWasPerfect).toBe(false);
   });
 
-  it('num dia cheio nada afrouxou: mega com 6 itens ainda precisa de 6 de energia', () => {
+  it('num dia cheio a meta de PESO não afrouxou: mega com 6 itens fecha o dia com qualquer energia', () => {
     const seisItens = (energia: number) => ({
       ...baseState(),
       evolutionStage: 'mega-harmony',
@@ -852,7 +852,7 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
       tasks: Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, completed: true })),
       energyPoints: energia,
     });
-    expect(runReset(seisItens(5)).lastDayWasPerfect).toBe(false);
+    expect(runReset(seisItens(0)).lastDayWasPerfect).toBe(true);
     expect(runReset(seisItens(FORM_REQUIREMENTS.mega.required)).lastDayWasPerfect).toBe(true);
   });
 

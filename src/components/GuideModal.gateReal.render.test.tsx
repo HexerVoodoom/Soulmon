@@ -37,35 +37,31 @@ function textoDoCapitulo(pt: boolean): string {
 }
 
 describe('GuideModal — o guia cita o gate real (WP4.17)', () => {
-  it('o número de Rookie→Champion é o MESMO que os portões de evolução leem', () => {
+  // 🧬 11/10/2026 (decisão do dono): o gate é o GAUGE (`FORM_REQUIREMENTS[…].gauge`),
+  // com teto diário `required`. O guia tem de citar os dois, das constantes.
+  it('o número de Rookie→Champion é o MESMO que os portões de evolução leem (gauge)', () => {
     for (const pt of [true, false]) {
       const texto = textoDoCapitulo(pt);
       const casou = pt
-        ? /Rookie→Champion pede (\d+) dias completos/.exec(texto)
-        : /Rookie→Champion needs (\d+) complete days/.exec(texto);
+        ? /Rookie→Champion pede (\d+) passos/.exec(texto)
+        : /Rookie→Champion takes (\d+) steps/.exec(texto);
       expect(casou, `frase da escada não encontrada (${pt ? 'PT' : 'EN'}): ${texto}`).toBeTruthy();
-      expect(Number(casou![1])).toBe(FORM_REQUIREMENTS.rookie.required);
+      expect(Number(casou![1])).toBe(FORM_REQUIREMENTS.rookie.gauge);
       document.body.innerHTML = '';
     }
   });
 
-  it('a escada inteira do guia bate com `required`, e nenhum `daysToEvolve` sobra na frase', () => {
+  it('a escada inteira do guia bate com `gauge` e o teto diário `required`', () => {
     const texto = textoDoCapitulo(true);
-    const numeros = (texto.match(/Rookie→Champion pede .*?Mega→Ultra \d+/) ?? [''])[0]
+    const numeros = (texto.match(/Rookie→Champion pede .*?Ultimate→Mega \d+ \(até \d+\/dia\)/) ?? [''])[0]
       .match(/\d+/g)?.map(Number) ?? [];
     expect(numeros).toEqual([
-      FORM_REQUIREMENTS.rookie.required,
-      FORM_REQUIREMENTS.champion.required,
-      FORM_REQUIREMENTS.ultimate.required,
-      FORM_REQUIREMENTS.mega.required,
+      FORM_REQUIREMENTS.rookie.gauge, FORM_REQUIREMENTS.rookie.required,
+      FORM_REQUIREMENTS.champion.gauge, FORM_REQUIREMENTS.champion.required,
+      FORM_REQUIREMENTS.ultimate.gauge, FORM_REQUIREMENTS.ultimate.required,
     ]);
-    // A escada antiga não pode sobreviver em lugar nenhum da frase. Os valores
-    // vão LITERAIS aqui porque o campo que os continha (`daysToEvolve`) foi
-    // apagado pelo WP4.1 — é a lápide dele, e é de propósito que ela não
-    // referencie mais nenhum símbolo vivo.
-    for (const morto of [10, 20, 30, 40]) {
-      expect(numeros, `${morto} é \`daysToEvolve\`, não o gate`).not.toContain(morto);
-    }
+    // O dia completo não é mais critério: a frase não pode voltar a pedir dias.
+    expect(texto).not.toMatch(/pede \d+ dias completos/);
   });
 
   it('`daysToEvolve` não é lido por NENHUM ponto de UI (o comando de aceite do WP4.17)', () => {

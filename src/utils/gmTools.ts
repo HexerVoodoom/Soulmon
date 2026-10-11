@@ -22,6 +22,7 @@
  * (`missionPerfectDays` é um contador separado, só da missão).
  */
 import { MAX_HP_BY_FORM, getMaxEnergyForStage, getStageLevel } from '../types/progression';
+import { dailyGaugeCap } from './evolutionGauge';
 import { PET_BACKGROUNDS } from './backgrounds';
 import { ALL_SHOP_ITEMS } from './shop';
 import { MISSIONS } from './missions';
@@ -165,11 +166,13 @@ export function gmFillCare<T extends GmCareState>(prev: T): T {
 
 /** Soma N a `perfectDays` e `totalPerfectDays`. Não idempotente por natureza
  *  (é um incremento pedido); N fora de 1..30 é recusado. */
-export function gmAddPerfectDays<T extends { perfectDays: number; totalPerfectDays?: number }>(prev: T, n: number): T {
+export function gmAddPerfectDays<T extends { perfectDays: number; totalPerfectDays?: number; evolutionPoints?: number; evolutionStage?: string }>(prev: T, n: number): T {
   if (!Number.isInteger(n) || n < 1 || n > 30) return prev;
   return {
     ...prev,
     perfectDays: (prev.perfectDays ?? 0) + n,
     totalPerfectDays: (prev.totalPerfectDays ?? 0) + n,
+    // 🧬 N dias de teto diário no gauge de evolução (o critério desde 11/10/2026).
+    evolutionPoints: (prev.evolutionPoints ?? 0) + n * dailyGaugeCap(prev.evolutionStage ?? 'rookie'),
   };
 }

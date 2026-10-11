@@ -1,4 +1,5 @@
 import { CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, type Attr } from './shop';
+import { dayItemGaugeGain } from './evolutionGauge';
 import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { getMaxEnergyForStage } from '../types/progression';
 import {
@@ -91,6 +92,8 @@ export interface SpecialItemState {
   maxHealthPoints: number;
   foodInventory: Record<string, number>;
   perfectDays: number;
+  /** 🧬 Gauge de evolução (`utils/evolutionGauge.ts`) — o 🌀 soma um dia de teto. */
+  evolutionPoints?: number;
   totalPerfectDays?: number;
   /** Dias completos vitalícios PARA AS MISSÕES — real + 🌀 (decisão #41/#60). */
   missionPerfectDays?: number;
@@ -213,6 +216,10 @@ export function applySpecialItem<T extends SpecialItemState>(
         ...prev,
         foodInventory,
         perfectDays: prev.perfectDays + 1,
+        // 🧬 11/10/2026: o 🌀 empurra o GAUGE de evolução em um dia de teto do
+        // estágio (`dayItemGaugeGain`) — o mesmo que um dia de meta
+        // cumprida rende, e continua 1 por dia do jogador (teto acima).
+        evolutionPoints: (prev.evolutionPoints ?? 0) + dayItemGaugeGain(prev.evolutionStage ?? 'rookie'),
         // #41/#60: o vitalício REAL não é tocado — só o da missão.
         missionPerfectDays: (prev.missionPerfectDays ?? prev.totalPerfectDays ?? 0) + 1,
         glitchtamaUse: {

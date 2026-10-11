@@ -72,11 +72,11 @@ describe('FORM_REQUIREMENTS consistency', () => {
   // qualquer um muda o jogo em silêncio.
   it('a TABELA é o contrato: os números exatos, não só a ordem entre eles', () => {
     expect(FORM_REQUIREMENTS).toEqual({
-      rookie:   { required: 4, cap: 6 },
-      champion: { required: 5, cap: 7 },
-      ultimate: { required: 5, cap: 8 },
-      mega:     { required: 6, cap: 9 },
-      ultra:    { required: 6, cap: 10 },
+      rookie:   { required: 4, cap: 6, gauge: 30 },
+      champion: { required: 5, cap: 7, gauge: 45 },
+      ultimate: { required: 5, cap: 8, gauge: 60 },
+      mega:     { required: 6, cap: 9, gauge: 60 },
+      ultra:    { required: 6, cap: 10, gauge: 0 },
     });
   });
 
@@ -93,9 +93,13 @@ describe('FORM_REQUIREMENTS consistency', () => {
    * Se a evolução precisar escalar por semanas, mude `required` ou quem o
    * compara. **Não acrescente um segundo número a esta tabela.**
    */
+  // 🧬 11/10/2026 (decisão do dono): `gauge` É o gate de evolução — ele não é
+  // um segundo número AO LADO do gate, ele SUBSTITUIU `required` nesse papel
+  // (que ficou só como meta diária e teto diário do gauge). Continua proibido
+  // um terceiro.
   it('nenhum número de evolução paralelo volta para a tabela', () => {
     for (const level of order) {
-      expect(Object.keys(FORM_REQUIREMENTS[level]).sort()).toEqual(['cap', 'required']);
+      expect(Object.keys(FORM_REQUIREMENTS[level]).sort()).toEqual(['cap', 'gauge', 'required']);
     }
   });
 
@@ -217,9 +221,9 @@ describe('não existe segundo número de evolução (D5 / WP4.1)', () => {
     expect(ctx, 'o campo morto voltou ao GameState').not.toContain('digivolutionSegmentsNeeded');
   });
 
-  it('quem decide a evolução manual continua sendo `required`', () => {
+  it('quem decide a evolução manual é o GAUGE (`gaugeFull`, 11/10/2026)', () => {
     const app = ler('src/App.tsx');
     const corpo = app.slice(app.indexOf('const handleEvolve = useCallback'));
-    expect(corpo.slice(0, 600)).toMatch(/FORM_REQUIREMENTS\[getStageLevel\(prev\.evolutionStage\)\]\.required/);
+    expect(corpo.slice(0, 600)).toMatch(/gaugeFull\(prev\.evolutionPoints, prev\.evolutionStage, prev\.unlockedEvolutions\)/);
   });
 });

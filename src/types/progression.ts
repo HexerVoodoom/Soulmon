@@ -23,12 +23,19 @@
 // de escalar por semanas em vez de dias (que é o que o Vital Bracelet faz, e o
 // que a opção (a) do WP4.1 propunha), o lugar de fazer isso é MUDAR `required`
 // ou o que o compara — nunca acrescentar um segundo número ao lado dele.
+//
+// 🧬 `gauge` (11/10/2026, decisão do dono): o GAUGE DE EVOLUÇÃO substituiu o
+// "dia completo" como critério de evolução. É o PESO DE ESFORÇO (hábito = 1,
+// tarefa = effort 1–3) acumulado no estágio, creditado na virada com teto
+// diário = `required` do estágio. Dono da regra: `utils/evolutionGauge.ts`.
+// `required` continua sendo a meta diária e o teto diário do gauge; o
+// número de barras de energia é `getMaxEnergyForStage` (com folga, ver lá).
 export const FORM_REQUIREMENTS = {
-  rookie: { required: 4, cap: 6 },
-  champion: { required: 5, cap: 7 },
-  ultimate: { required: 5, cap: 8 },
-  mega: { required: 6, cap: 9 },
-  ultra: { required: 6, cap: 10 },
+  rookie: { required: 4, cap: 6, gauge: 30 },
+  champion: { required: 5, cap: 7, gauge: 45 },
+  ultimate: { required: 5, cap: 8, gauge: 60 },
+  mega: { required: 6, cap: 9, gauge: 60 },
+  ultra: { required: 6, cap: 10, gauge: 0 },
 } as const;
 
 /**
@@ -67,18 +74,28 @@ export const FORM_REQUIREMENTS = {
 export const ULTRA_PATIENCE_DAYS = 45;
 
 /**
- * Existe caminho para o Ultra a partir do mega? `perfectDays` são os
- * acumulados DESDE a última evolução (o contador zera ao evoluir).
+ * 🧬 O caminho da permanência em PONTOS DO GAUGE (11/10/2026): os mesmos 45
+ * dias, agora como 45 dias de teto diário do mega. Derivado — não escreva 270.
+ */
+export const ULTRA_PATIENCE_POINTS: number = ULTRA_PATIENCE_DAYS * FORM_REQUIREMENTS.mega.required;
+
+/** As três megas já foram conhecidas? (o caminho da coleção) */
+export function hasMegaCollection(unlockedEvolutions?: readonly string[]): boolean {
+  const desbloqueadas = unlockedEvolutions ?? [];
+  return (['power', 'harmony', 'benevolence'] as const)
+    .every(a => desbloqueadas.includes(`mega-${a}`));
+}
+
+/**
+ * Existe caminho para o Ultra a partir do mega? `evolutionPoints` são os
+ * pontos do gauge acumulados DESDE a última evolução (zeram ao evoluir).
  */
 export function canReachUltra(input: {
   unlockedEvolutions?: readonly string[];
-  perfectDays?: number;
+  evolutionPoints?: number;
 }): boolean {
-  const desbloqueadas = input.unlockedEvolutions ?? [];
-  const colecao = (['power', 'harmony', 'benevolence'] as const)
-    .every(a => desbloqueadas.includes(`mega-${a}`));
-  const permanencia = (input.perfectDays ?? 0) >= ULTRA_PATIENCE_DAYS;
-  return colecao || permanencia;
+  return hasMegaCollection(input.unlockedEvolutions)
+    || (input.evolutionPoints ?? 0) >= ULTRA_PATIENCE_POINTS;
 }
 
 // HP máximo por nível (corações)
@@ -181,10 +198,18 @@ export function getStageBranch(stage: string): 'power' | 'harmony' | 'benevolenc
   return branch === 'power' || branch === 'harmony' || branch === 'benevolence' ? branch : null;
 }
 
-// Energy bars for a stage = the number of daily tasks required to earn an
-// evolution point at that stage (so rookie's 4-task requirement shows 4 bars).
+/**
+ * ⚡ Folga da energia (11/10/2026, decisão do dono). A energia deixou de ser
+ * critério do dia completo e passa a ser o combustível da masmorra (próxima
+ * rodada); o máximo é o requisito diário × esta folga, para que um dia cheio
+ * caiba inteiro e sobre espaço sem precisar comer fora do que se ganha
+ * concluindo tarefas. Orçamento em `docs/REGISTRO-DE-DECISOES.md` §30.
+ */
+export const ENERGY_HEADROOM = 2;
+
+// Barras de energia do estágio = requisito diário × ENERGY_HEADROOM (8/10/10/12/12).
 export function getMaxEnergyForStage(stage: string): number {
-  return FORM_REQUIREMENTS[getStageLevel(stage)].required;
+  return FORM_REQUIREMENTS[getStageLevel(stage)].required * ENERGY_HEADROOM;
 }
 
 // A árvore do Soulmon nasce direto Rookie — todo nível já permite escolher

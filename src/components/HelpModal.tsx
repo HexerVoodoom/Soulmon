@@ -69,8 +69,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar. Fills only by feeding (up to ${FOOD_LIMIT_PER_HOUR}/hour) and resets each day.`,
-    descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora) e zera todo dia.`,
+    descEn: `The side bar. Fills only by feeding (up to ${FOOD_LIMIT_PER_HOUR}/hour), holds twice the daily goal and resets each day.`,
+    descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora), guarda o dobro da meta do dia e zera todo dia.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
@@ -102,9 +102,14 @@ const TERMS: Term[] = [
     // P5: o glossário é uma das duas superfícies que a convenção do CLAUDE.md
     // manda atualizar junto com regra de jogo (a outra é o `GuideModal`, que
     // foi atualizado). Esta entrada ficou para trás.
+    icon: '🧬', en: 'Path to the next form', pt: 'Caminho até a próxima forma',
+    descEn: 'The evolution bar. Every habit or task you finish is a step (bigger tasks count more), up to your stage’s daily goal per day. It fills at the turn of the day, never goes back, and when full the next form opens.',
+    descPt: 'A barra de evolução. Todo hábito ou tarefa concluída é um passo (tarefas maiores valem mais), até a meta diária do estágio por dia. Entra na virada do dia, nunca volta para trás, e cheia abre a próxima forma.',
+  },
+  {
     icon: '📊', en: 'Complete Day', pt: 'Dia Completo',
-    descEn: 'Daily goal met plus full energy. It is the currency of evolution, and it only accumulates.',
-    descPt: 'Meta do dia cumprida mais energia cheia. É a moeda da evolução, e só acumula.',
+    descEn: 'The whole daily goal done. A seal for the day that pays Bits — it no longer decides evolution (the path does).',
+    descPt: 'A meta do dia inteira feita. Um selo do dia que rende Bits — não decide mais a evolução (quem decide é o caminho).',
   },
   {
     icon: '👊', en: 'Power / 🎶 Harmony / 🤲 Benevolence', pt: 'Poder / 🎶 Harmonia / 🤲 Benevolência',
@@ -121,13 +126,13 @@ const TERMS: Term[] = [
   },
   {
     icon: '🔒', en: 'Evolution padlock', pt: 'Cadeado de evolução',
-    descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — complete days keep counting.',
-    descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — os dias completos seguem contando.',
+    descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — the path keeps adding up.',
+    descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — o caminho segue somando.',
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from the layer-5 milestone of the automatic dungeon descent. Using it grants one complete day — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro do marco da camada 5 da descida automática da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from the layer-5 milestone of the automatic dungeon descent. Using it adds one day’s worth of steps to the evolution path — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro do marco da camada 5 da descida automática da masmorra. Usar soma um dia de passos ao caminho da evolução — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.

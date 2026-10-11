@@ -78,9 +78,9 @@ describe('alimentar', () => {
   });
 
   it('energia para no número de barras do estágio', () => {
-    // rookie exige 4 tarefas → 4 barras.
-    const r = feedFood(estado({ energyPoints: 4, foodInventory: { '🍎': 5 } }), '🍎', [], 0);
-    expect(r.state.energyPoints).toBe(4);
+    // rookie exige 4 tarefas → 8 barras (× ENERGY_HEADROOM, 11/10/2026).
+    const r = feedFood(estado({ energyPoints: 8, foodInventory: { '🍎': 5 } }), '🍎', [], 0);
+    expect(r.state.energyPoints).toBe(8);
   });
 
   it('feedsLeft reflete a janela', () => {
@@ -350,7 +350,7 @@ describe('teto de comida × requisito do estágio', () => {
     expect(abaixo).toEqual([]);
   });
 
-  it('mega que fecha as 6 tarefas numa sessão só consegue encher a energia', () => {
+  it('mega que fecha as 6 tarefas numa sessão só consegue dar as 6 comidas (a energia do dia inteiro)', () => {
     const agora = Date.now();
     let st = estado({
       evolutionStage: 'mega-harmony',           // 6 barras de energia
@@ -365,7 +365,8 @@ describe('teto de comida × requisito do estágio', () => {
       st = r.state;
       times = r.feedTimes;
     }
-    expect(st.energyPoints).toBe(getMaxEnergyForStage('mega-harmony'));
+    expect(st.energyPoints).toBe(FORM_REQUIREMENTS.mega.required);
+    expect(getMaxEnergyForStage('mega-harmony')).toBeGreaterThanOrEqual(FORM_REQUIREMENTS.mega.required);
   });
 
   it('AUTOVERIFICAÇÃO: o teto continua existindo — a comida seguinte é recusada', () => {

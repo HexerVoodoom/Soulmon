@@ -233,7 +233,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
     // `library` entra de propósito: quando um lote grava um sprite, a
     // reconciliação roda de novo e pega o PRÓXIMO lote devendo — que é como
     // "duas vésperas acumuladas viram dois lotes em sequência".
-  }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.perfectDays, newborn, executarLote]);
+  }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.evolutionPoints, newborn, executarLote]);
 
   return { generating, tunedAnnouncement, clearAnnouncement, tune, retry };
 }

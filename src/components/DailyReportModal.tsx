@@ -164,8 +164,9 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   if (welcome) {
     rows.push({ label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', tone: 'hi' });
     // 13.7 — posse pode mostrar zero, mas aqui o zero não é posse: some (R4).
-    if (report.perfectDays > 0) {
-      rows.push({ label: isPt ? 'Dias completos guardados' : 'Complete days saved', value: `${report.perfectDays}`, tone: 'hi' });
+    // 🧬 11/10/2026: o que fica guardado é o CAMINHO (gauge), não dias.
+    if ((report.evolutionPoints ?? 0) > 0) {
+      rows.push({ label: isPt ? 'Caminho guardado' : 'Path kept', value: `${report.evolutionPoints}`, tone: 'hi' });
     }
   } else {
     // R5 — feitos = 0: "not logged" quando houve cobrança (é o referente do
@@ -181,7 +182,11 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
       rows.push({ label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks", value: isPt ? 'sem registro' : 'not logged', tone: 'soft' });
     }
     rows.push({ label: isPt ? 'Corações' : 'Hearts', value: heartsValue, tone: report.heartsLost > 0 ? 'soft' : 'hi' });
-    rows.push({ label: isPt ? 'Dias completos' : 'Complete days', value: `${report.perfectDays}`, tone: report.wasPerfect ? 'hi' : undefined });
+    // 🧬 11/10/2026 (decisão do dono): a linha da evolução é o gauge — quanto
+    // o caminho andou ontem. Zero some (R4): um dia sem passo não vira linha.
+    if ((report.gaugeGain ?? 0) > 0) {
+      rows.push({ label: isPt ? 'Caminho da evolução' : 'Evolution path', value: `+${report.gaugeGain}`, tone: 'hi' });
+    }
   }
 
   // Coração partido + vermelho + fundo rosa era uma composição de LUTO para um
