@@ -327,7 +327,7 @@ export function DailyRituals({
           {isPt ? `Semana: ${chip.done} de ${chip.target}` : `This week: ${chip.done} of ${chip.target}`}
         </span>
         <span className="sm2-ritual-sub" data-today-only>
-          {isPt ? 'O check vale só para hoje' : 'The check counts today only'}
+          {isPt ? 'O check vale só para hoje' : 'This check is for today'}
         </span>
       </span>
     );

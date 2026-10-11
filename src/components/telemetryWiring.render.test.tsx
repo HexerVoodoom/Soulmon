@@ -59,7 +59,7 @@ describe('fiação da telemetria — onboarding', () => {
     ));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    // NOME + as 6 do ritual + os 20 itens + metas (B1/B4 e o pedido de
+    // NOME + as 6 do ritual + os 14 itens + metas (B1/B4 e o pedido de
     // 01/10/2026: todas as perguntas obrigatórias, antes da escolha)
     await atravessarPerguntasIniciais();
 
@@ -73,7 +73,7 @@ describe('fiação da telemetria — onboarding', () => {
     // ritual seguem 6..11 e o teste 13..32 — só passaram a vir antes da
     // escolha (e por isso com funil `unknown`).
     const ritual = Array.from({ length: 6 }, (_, i) => onboardingStepCode(6 + i));
-    const teste = Array.from({ length: 20 }, (_, i) => onboardingStepCode(13 + i));
+    const teste = Array.from({ length: 14 }, (_, i) => onboardingStepCode(13 + i));
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
       onboardingStepCode(-6), onboardingStepCode(-9), onboardingStepCode(-10), ...ritual, ...teste,
       onboardingStepCode(-2), onboardingStepCode(-3),

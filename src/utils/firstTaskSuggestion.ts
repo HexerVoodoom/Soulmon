@@ -25,7 +25,7 @@ type Bilingual = { en: string; pt: string };
 
 const BY_AREA: Record<LifeArea, { name: Bilingual; category: ActivityCategory; emoji: string }> = {
   sono: { name: { en: "Set tonight's bedtime alarm", pt: 'Programar o despertador de hoje à noite' }, category: 'Wellness', emoji: '🌙' },
-  corpo: { name: { en: 'Book a check-up or a class', pt: 'Marcar uma consulta ou uma aula' }, category: 'Health', emoji: '🩺' },
+  corpo: { name: { en: 'Book a check-up or a class', pt: 'Marcar uma consulta ou uma aula' }, category: 'Health', emoji: '🏥' },
   mente: { name: { en: 'Write down what is on my mind', pt: 'Anotar o que está na minha cabeça' }, category: 'Wellness', emoji: '📝' },
   foco: { name: { en: 'Clear my desk for 10 minutes', pt: 'Arrumar minha mesa por 10 minutos' }, category: 'Work', emoji: '🧹' },
   aprendizado: { name: { en: 'Pick the next thing I want to learn', pt: 'Escolher a próxima coisa que quero aprender' }, category: 'Study', emoji: '📚' },
