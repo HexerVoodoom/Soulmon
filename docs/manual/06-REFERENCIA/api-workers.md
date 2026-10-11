@@ -514,3 +514,8 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `verifyPubsubPush(request, env)` (RS256 contra o JWKS da Google; confere `iss`, `aud`, `email`, `email_verified`, `exp`/`iat`; nunca lança), `pubsubAuthConfigured(env)`, `_resetPubsubJwksCache()`.
 **Chamado por:** `functions/api/rtdn.js`.
 **Régua:** `functions/api/rtdn.test.js`.
+
+### `functions/api/_killSwitch.js` (release/beta-1, 11/10/2026)
+**Dono de:** os interruptores do beta — `flagOn`, `isBillingDisabled` (`env.BILLING_DISABLED`), `isChatDisabled` (`env.CHAT_DISABLED`), `BILLING_DISABLED_MESSAGE`, `CHAT_DISABLED_MESSAGE`. Valor que liga: `1`/`true`/`yes`/`on`/`sim`.
+**Chamado por:** `functions/api/billing.js` (`recusaSeLojaFechada`: 503 `billing-disabled` para comprovante que ainda não é da conta, antes do claim e do acknowledge; restaurar passa), `functions/api/chat.js` (503 `chat-disabled` antes de provedor e cota), `functions/api/config.js` (`billingDisabled`, `chatDisabled`).
+**Régua:** `functions/api/killSwitch.test.js`, `functions/api/config.test.js`. **Operação:** [`docs/BETA-CONTINGENCIA.md`](../../BETA-CONTINGENCIA.md) §0.
