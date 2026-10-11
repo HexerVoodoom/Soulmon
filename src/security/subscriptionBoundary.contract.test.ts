@@ -200,11 +200,27 @@ describe('documentação e textos jurídicos', () => {
     ]) expect(doc, s).toContain(s);
   });
 
-  it('termos e privacidade: trechos da assinatura marcados como rascunho a aprovar pelo dono', () => {
+  // Até 11/10/2026 este teste exigia que os trechos ficassem EM COMENTÁRIO
+  // (rascunho). O dono decidiu publicá-los para o beta (REGISTRO, DEPENDE-DE-VOCE
+  // D2b): agora o contrato é o inverso — publicados, fora de comentário, PT e EN,
+  // sem marcador de decisão pendente, e com a versão dos termos/privacidade subida.
+  it('termos e privacidade: trechos da assinatura PUBLICADOS (fora de comentário), PT+EN, sem pendência', () => {
+    const semComentario = (h: string) => h.replace(/<!--[\s\S]*?-->/g, '');
+    const termos = semComentario(read('public/termos.html'));
+    expect(termos).toMatch(/<h2>4b\. Subscription/);
+    expect(termos).toMatch(/<h2>4b\. Assinatura/);
+    const priv = semComentario(read('public/privacidade.html'));
+    expect(priv).toMatch(/<h2>6b\. Subscription/);
+    expect(priv).toMatch(/<h2>6b\. Assinatura/);
+    expect(priv).toMatch(/<h2>6c\. Crash diagnostics/);
+    expect(priv).toMatch(/<h2>6c\. Diagnóstico de falhas/);
     for (const f of ['public/termos.html', 'public/privacidade.html']) {
       const html = read(f);
-      expect(html, f).toMatch(/<!--[\s\S]*RASCUNHO — dono aprova[\s\S]*-->/);
-      expect(html, f).toMatch(/assinatura/i);
+      expect(html, f).not.toMatch(/RASCUNHO — dono aprova/);
+      expect(html, f).not.toMatch(/\[dono decide/);
     }
+    const consent = read('src/utils/consent.ts');
+    expect(consent).toMatch(/TERMS_VERSION = '2026-10-11'/);
+    expect(consent).toMatch(/PRIVACY_VERSION = '2026-10-11'/);
   });
 });
