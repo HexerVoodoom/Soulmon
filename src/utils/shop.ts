@@ -14,8 +14,13 @@ export type Attr = 'power' | 'harmony' | 'benevolence';
  * Purchase gate. Locked items still show in the shop — darkened, with a
  * padlock; tapping them reveals HOW to unlock:
  * - 'mission': buyable after the mission (utils/missions.ts) is complete.
+ * - 'subscription': claimable (free) while the quarterly cosmetic subscription is
+ *   active (docs/ASSINATURA-SPEC.md, D10). Same mould as 'mission': the item shows
+ *   darkened and says why — it never disappears in silence. `quarter` names the set.
  */
-export type UnlockReq = { kind: 'mission'; missionId: string };
+export type UnlockReq =
+  | { kind: 'mission'; missionId: string }
+  | { kind: 'subscription'; quarter: string };
 
 export interface ShopItem {
   id: string;
@@ -465,4 +470,50 @@ export const GUILD_ITEMS: ShopItem[] = [
 /** É uma conquista da Guilda? Nunca comprável, venha de onde vier. */
 export const isGuildReward = (item: Pick<ShopItem, 'id'>): boolean => GUILD_ITEMS.some(g => g.id === item.id);
 
-export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS];
+/**
+ * CONJUNTO COSMÉTICO DO TRIMESTRE da assinatura (`docs/ASSINATURA-SPEC.md`, D10).
+ *
+ * REGRAS QUE NÃO PODEM CAIR (há teste travando cada uma):
+ *  · só `bg` e `furniture` — cosmético, como a aba Torneio;
+ *  · NUNCA em `SHOP_ITEMS`/`TOURNAMENT_ITEMS` com preço (anti double-dip: o mesmo
+ *    item não se vende em duas portas). `price` aqui é 0 e a única porta é o
+ *    RESGATE (`applySubscriptionClaim`), liberado por `unlock.kind === 'subscription'`;
+ *  · resgatou, é posse permanente: nada retira o item de `ownedBackgrounds`/
+ *    `ownedFurniture` quando a assinatura acaba;
+ *  · nada de Créditos, de cuidado, de atributo. Só enfeite.
+ *
+ * Arte: por ora REUSA a de cenários/decorações existentes (`artAliases.ts`,
+ * alias de id com outro nome); a leva de arte própria troca o alias por PNG.
+ */
+export const SUBSCRIPTION_QUARTER = '2026-Q4';
+const SUB_UNLOCK: UnlockReq = { kind: 'subscription', quarter: SUBSCRIPTION_QUARTER };
+export const SUBSCRIPTION_ITEMS: ShopItem[] = [
+  { id: 'bg-sub-2026q4-lago', kind: 'bg', icon: '🏮',
+    namePt: 'Lago das Lanternas', nameEn: 'Lantern Lake',
+    descPt: 'Do trimestre — um lago ao entardecer, com lanternas na margem', descEn: 'Of the quarter — a lake at dusk, lanterns along the shore',
+    price: 0, unlock: SUB_UNLOCK },
+  { id: 'bg-sub-2026q4-loft', kind: 'bg', icon: '🪟',
+    namePt: 'Sótão da Lareira', nameEn: 'Hearth Loft',
+    descPt: 'Do trimestre — um sótão quentinho para a época mais fria', descEn: 'Of the quarter — a warm loft for the coldest season',
+    price: 0, unlock: SUB_UNLOCK },
+  { id: 'furn-sub-2026q4-lanterna', kind: 'furniture', icon: '🏮',
+    slot: 'floor-right', fits: 'any',
+    namePt: 'Lanterna da Estação', nameEn: 'Season Lantern',
+    descPt: 'Do trimestre — ocupa o canto direito, combina com qualquer cenário', descEn: 'Of the quarter — takes the right corner, fits any scene',
+    price: 0, unlock: SUB_UNLOCK },
+  { id: 'furn-sub-2026q4-guirlanda', kind: 'furniture', icon: '🎏',
+    slot: 'wall', fits: 'any',
+    namePt: 'Guirlanda do Trimestre', nameEn: 'Quarter Garland',
+    descPt: 'Do trimestre — pendurada acima do pet, em qualquer cenário', descEn: 'Of the quarter — hangs above the pet, in any scene',
+    price: 0, unlock: SUB_UNLOCK },
+  { id: 'furn-sub-2026q4-sino', kind: 'furniture', icon: '🎐',
+    slot: 'wall', fits: 'any',
+    namePt: 'Sino de Vento da Estação', nameEn: 'Season Wind Chime',
+    descPt: 'Do trimestre — pendurado acima do pet, em qualquer cenário', descEn: 'Of the quarter — hangs above the pet, in any scene',
+    price: 0, unlock: SUB_UNLOCK },
+];
+
+/** É item da assinatura? Nunca comprável com moeda, venha de onde vier. */
+export const isSubscriptionReward = (item: Pick<ShopItem, 'id'>): boolean => SUBSCRIPTION_ITEMS.some(s => s.id === item.id);
+
+export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...SUBSCRIPTION_ITEMS];

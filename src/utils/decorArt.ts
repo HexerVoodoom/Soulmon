@@ -2,6 +2,7 @@
 // docs/BRIEF-ARTE-DECORACAO.md). Cada PNG foi desenhado EXATAMENTE para a
 // caixa do slot que ocupa (DECOR_SLOTS em utils/petStage.ts) — nada aqui
 // redimensiona de forma não-uniforme, só encaixa.
+import { DECOR_ART_ALIASES } from './artAliases';
 import furnSofa from '../assets/decor/furn-sofa.png';
 import furnChair from '../assets/decor/furn-chair.png';
 import furnBooks from '../assets/decor/furn-books.png';
@@ -78,3 +79,8 @@ export const DECOR_ART: Record<string, string> = {
   'furn-wind-chime': furnWindChime,
   'furn-clock': furnClock,
 };
+
+// Decorações novas que usam a arte de outra por ora (`artAliases.ts`): outro id, mesma imagem.
+for (const [id, from] of Object.entries(DECOR_ART_ALIASES)) {
+  if (DECOR_ART[from]) DECOR_ART[id] = DECOR_ART[from];
+}
