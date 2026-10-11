@@ -7975,7 +7975,8 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    (`top: 74%` = GROUND_Y, posto inline) e a "batida" de 2 quadros do idle —
    `steps()` dentro do visor, e só ali (manual 04 §6.3). O texto do estágio, o
    fio e os gestos ficam FORA do vidro, em tokens `--sm2-*`. */
-.sm2-grove-screen, .sm2-casa-screen { display: block; width: 100%; box-sizing: border-box; }
+.sm2-grove-screen { display: block; width: 100%; box-sizing: border-box; }
+.sm2-casa-screen { display: block; width: 100%; box-sizing: border-box; }
 @keyframes sm2-casa-glow { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
 .sm2-casa-glow { animation: sm2-casa-glow 2.4s steps(3, jump-none) infinite; }
 .sm2-grove-creature { position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
