@@ -11,10 +11,11 @@ import { readFileSync } from 'node:fs';
 // em `node` alcança o Gradle — quem prova o compile continua sendo só o CI
 // (`android-build.yml`), e este teste não substitui isso.
 //
-// PL-9 — ALARME EXATO SEM PERMISSÃO NÃO PODE VIRAR SILÊNCIO.
-// Android 14+ com target ≥ 33 não pré-concede SCHEDULE_EXACT_ALARM; sem o
-// gate `canScheduleExactAlarms()` o setExact* lança SecurityException e o JS
-// engole (`.catch(() => {})`) — nenhum lembrete de tarefa tocava no APK.
+// PL-9 — LEMBRETE NÃO PRECISA DE ALARME EXATO (beta-play-01).
+// Android 14+ com target ≥ 33 não pré-concede SCHEDULE_EXACT_ALARM; setExact*
+// lançava SecurityException e o JS engolia (`.catch(() => {})`). A permissão é
+// restrita na Play (despertador/calendário) e um lembrete tolera minutos de
+// janela, então ela saiu: alarme inexato, sem permissão e sem convite na UI.
 // ---------------------------------------------------------------------------
 const gradle = readFileSync('android/app/build.gradle', 'utf8');
 const billing = readFileSync(
@@ -59,25 +60,23 @@ describe('PL-8 › Play Billing Library ≥ 8', () => {
   });
 });
 
-describe('PL-9 › alarme exato com gate e fallback', () => {
+describe('PL-9 › lembrete com alarme INEXATO, sem SCHEDULE_EXACT_ALARM', () => {
   const codigoAlarm = semComentarios(alarm);
 
-  it('setExactAndAllowWhileIdle só atrás de canScheduleExactAlarms()', () => {
-    expect(codigoAlarm).toMatch(/canScheduleExactAlarms\(\)/);
-    expect(codigoAlarm).toMatch(/setAndAllowWhileIdle\(/);
-    expect(codigoAlarm).toMatch(/if \(canExact\(alarmManager\)\) \{\s*alarmManager\.setExactAndAllowWhileIdle/);
+  it('o app não declara SCHEDULE_EXACT_ALARM nem reage à mudança dela', () => {
+    expect(semComentarios(manifest)).not.toMatch(/SCHEDULE_EXACT_ALARM/);
+    expect(semComentarios(boot)).not.toMatch(/EXACT_ALARM/);
   });
 
-  it('a mudança da permissão reagenda (receiver + manifesto)', () => {
-    expect(semComentarios(boot)).toMatch(/ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED/);
-    expect(manifest).toMatch(/android\.app\.action\.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED/);
+  it('agenda só com setAndAllowWhileIdle (inexato, acorda em Doze) e nunca setExact*', () => {
+    expect(codigoAlarm).toMatch(/alarmManager\.setAndAllowWhileIdle\(AlarmManager\.RTC_WAKEUP/);
+    expect(codigoAlarm).not.toMatch(/setExact|setAlarmClock|canScheduleExactAlarms/);
   });
 
-  it('o JS pode perguntar e convidar, com no-op web', () => {
+  it('o JS não tem mais convite de "Alarmes e lembretes"; segue o atalho de notificações', () => {
     const ts = readFileSync('src/plugins/SoulmonAlarmPlugin.ts', 'utf8');
-    expect(ts).toMatch(/canScheduleExact\(\)/);
-    expect(ts).toMatch(/openExactAlarmSettings\(\)/);
-    expect(codigoAlarm).toMatch(/fun canScheduleExact\(/);
-    expect(codigoAlarm).toMatch(/fun openExactAlarmSettings\(/);
+    expect(ts).not.toMatch(/Exact/);
+    expect(ts).toMatch(/openNotificationSettings\(\)/);
+    expect(codigoAlarm).toMatch(/fun openNotificationSettings\(/);
   });
 });

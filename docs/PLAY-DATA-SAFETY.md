@@ -119,7 +119,7 @@ surpreendido pela ficha da loja:
 |---|---|---|
 | `INTERNET` | Save na nuvem, login, chat | Não (normal) |
 | `POST_NOTIFICATIONS` | Lembretes | Sim — diálogo do sistema |
-| `SCHEDULE_EXACT_ALARM` | Lembrete na hora certa | Sim |
+| ~~`SCHEDULE_EXACT_ALARM`~~ | **Removida** (beta-play-01): lembrete usa alarme inexato (`setAndAllowWhileIdle`), tolera alguns minutos de janela e não precisa de permissão restrita | — |
 | `RECEIVE_BOOT_COMPLETED` | Reagendar lembretes após reiniciar | Não (normal) |
 | **`ACTIVITY_RECOGNITION`** | **Contador de passos** — ver 2.6 | **Sim, e exige declaração** |
 | **`RECORD_AUDIO`** | **Recado falado no chat** — ver 2.4 | **Sim, e exige declaração** |
