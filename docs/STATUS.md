@@ -164,7 +164,7 @@
 
 > ## 11/10/2026 — `/embed`: a demo local embutida no portfólio (`feat/embed-demo`, SEM deploy)
 > 
-> - `/embed` (SPA fallback, mesmo deploy) abre direto na escolha dos 5 iniciais da DEMO, sem portão de login (`src/utils/embedMode.ts`, dono do predicado; sem pedido de notificação). `public/_headers`: só `/embed` destaca `X-Frame-Options`/CSP herdados e re-declara a CSP com `frame-ancestors https://mateus-sperandio.pages.dev https://*.mateus-sperandio.pages.dev`; o resto segue DENY/'none' (`csp.test.ts`). `sw.js` (v190) não intercepta a navegação `/embed`. Falta o dono aprovar o deploy.
+> - `/embed` (SPA fallback, mesmo deploy; só embutível por mateus-sperandio.mateus-sprnd.workers.dev e mateus-sperandio.pages.dev) abre direto na escolha dos 5 iniciais da DEMO, sem portão de login (`src/utils/embedMode.ts`, dono do predicado; sem pedido de notificação). `public/_headers`: só `/embed` destaca `X-Frame-Options`/CSP herdados e re-declara a CSP com `frame-ancestors https://mateus-sperandio.pages.dev https://*.mateus-sperandio.pages.dev`; o resto segue DENY/'none' (`csp.test.ts`). `sw.js` (v190) não intercepta a navegação `/embed`. Falta o dono aprovar o deploy.
 
 > ## 07/10/2026 — Missões: dois acessos (Diárias / Semanais) e "a missão só APONTA, depois RESGATA"
 >
