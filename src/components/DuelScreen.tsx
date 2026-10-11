@@ -36,8 +36,9 @@ import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
-  type StageActionKind, type StageStatus,
+  specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
 } from '../utils/combatFx';
+import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
 import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { DUEL_CHEER_BUCKETS, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
@@ -88,6 +89,12 @@ export interface DuelScreenProps {
   onClose: () => void;
 }
 
+/** Especiais soltos no MESMO instante (o espelho) saem um de cada vez na exibição: ver `serializarEspeciais`. Só apresentação. */
+const emSerie = (r: DuelResult): DuelResult => {
+  const v = serializarEspeciais(r.events, r.fx);
+  return { ...r, events: v.events, fx: v.fx };
+};
+
 const maxHpOf = (s: DuelSide) => Math.max(1, Math.round(s.combatant.hp * PVP_HP_SCALE));
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
@@ -127,7 +134,7 @@ export function DuelScreen({
   const closed = useRef<number[]>([]);
   /** Toques do balde ABERTO (o que o relógio está vivendo agora). */
   const live = useRef(0);
-  const sim = useRef<DuelResult>(simulatePvp({ me, opp, seed, taps: [] }));
+  const sim = useRef<DuelResult>(emSerie(simulatePvp({ me, opp, seed, taps: [] })));
   /** Quantos eventos já COMEÇARAM a ação e quantos já CHEGARAM (HP, energia e número). */
   const started = useRef(0);
   const applied = useRef(0);
@@ -171,27 +178,21 @@ export function DuelScreen({
       return null;
     };
 
-    /* A cena tem UM `action`: dois golpes que se sobrepõem se atropelam. Regras (ver o `useGroupBattle`): o golpe
-       básico novo CORTA um básico em curso; um ESPECIAL em curso nunca é cortado por um básico (o número do básico
-       chega no instante dele, só a investida/o projétil é pulada); e um especial que chega com outro especial em
-       curso (os dois soltaram no mesmo instante, no espelho) ESPERA o impacto do primeiro. */
-    let busyUntil = 0; // relógio da luta (s) em que a ação em curso chega ao impacto
-    let emCurso: StageActionKind | null = null;
-    let adiado: FightEvent | null = null;
+    /* A cena tem UM `action`: dois golpes que se sobrepõem se atropelam. Regras: o golpe básico novo CORTA um básico em
+       curso; e o ESPECIAL é uma BARREIRA de tempo de cena (`utils/specialGate.ts`, 11/10/2026, pedido do dono): ao chegar
+       ao `cast` o relógio PARA — nenhum golpe, de nenhum dos dois lados, começa nem chega — durante a cena + o trajeto,
+       o golpe do especial é aplicado, e o relógio segue parado pela cauda do efeito antes de RETOMAR. Dois especiais
+       próximos viram dois em sequência (o 2º espera o seu instante no relógio recuado): nunca um atrapalhando o outro.
+       É só encenação: os eventos do núcleo e o resultado são os mesmos. */
+    const cfgPortao: ConfigDoPortao = { leadMs: specialLeadMs(reduced), tailMs: specialTailMs(reduced), respiroS: impactMs('ranged', reduced) / 1000 };
+    let portao: Portao | null = null;
     const fire = (e: FightEvent, a: { kind: StageActionKind; strike?: ReturnType<typeof forma> }) => {
       const meu = e.side === 0;
       setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica') });
-      busyUntil = clock.current + leadS(a.kind);
-      emCurso = a.kind;
     };
     const start = (e: FightEvent) => {
       const a = actionOf(e);
-      if (!a) return;
-      if (clock.current < busyUntil - 1e-9 && emCurso === 'special') {
-        if (a.kind === 'special') adiado = adiado ?? e;
-        return;
-      }
-      fire(e, a);
+      if (a) fire(e, a);
     };
 
     const apply = (e: FightEvent) => {
@@ -216,7 +217,7 @@ export function DuelScreen({
       const tinha = live.current > 0;
       live.current = 0;
       if (!tinha) return;
-      const nova = simulatePvp({ me, opp, seed, taps: closed.current });
+      const nova = emSerie(simulatePvp({ me, opp, seed, taps: closed.current }));
       const velha = sim.current.events;
       // As ações JÁ COMEÇADAS (olhar um pouco à frente) têm de continuar valendo; se a descarga mudou algo
       // que já começou, recomeça a partir do que já chegou (raro: o cast adiantado pela energia nova).
@@ -248,24 +249,39 @@ export function DuelScreen({
       const dt = Math.min(MAX_STEP_S, Math.max(0, (t0 - last) / 1000));
       last = t0;
       if (ended.current || pausadoRef.current) return;
-      clock.current += dt;
+      if (portao) {
+        // O portão do especial: o relógio da luta NÃO anda (nenhum golpe de ninguém começa nem chega).
+        const passo = avancarPortao(portao, dt * 1000, clock.current, cfgPortao);
+        portao = passo.portao;
+        clock.current = passo.relogioS;
+      } else {
+        clock.current += dt;
+      }
       while (clock.current >= (closed.current.length + 1) * CHEER.bucketSeconds && closed.current.length < DUEL_CHEER_BUCKETS) fecharBalde();
       const evs = sim.current.events;
-      if (adiado && clock.current >= busyUntil) {
-        const a = actionOf(adiado);
-        if (a) fire(adiado, a);
-        adiado = null;
-      }
-      // a ação de um golpe COMEÇA `lead` antes do instante dele
-      while (started.current < evs.length) {
+      // a ação de um golpe COMEÇA `lead` antes do instante dele; o ESPECIAL não tem antecedência: é a barreira
+      while (!bloqueiaComecar(portao) && started.current < evs.length) {
         const e = evs[started.current];
         const a = actionOf(e);
+        if (a?.kind === 'special') {
+          if (e.t > clock.current) break;
+          fire(e, a);
+          const f = fecharPortao(started.current, e.t, clock.current, cfgPortao);
+          portao = f.portao;
+          clock.current = f.relogioS;
+          started.current++;
+          break;
+        }
         const lead = a ? leadS(a.kind) : 0;
         if (e.t - lead > clock.current) break;
         start(e);
         started.current++;
       }
-      while (applied.current < evs.length && evs[applied.current].t <= clock.current) {
+      // Um `cast` que ainda não passou pela barreira (o 2º especial do espelho) não se aplica: a cena dele vem antes.
+      while (
+        applied.current < evs.length && evs[applied.current].t <= clock.current && !bloqueiaAplicar(portao, applied.current)
+        && !(evs[applied.current].kind === 'cast' && applied.current >= started.current)
+      ) {
         const e = evs[applied.current];
         applied.current++;
         if (started.current < applied.current) started.current = applied.current;

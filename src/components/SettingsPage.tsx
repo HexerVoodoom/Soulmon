@@ -15,6 +15,7 @@ import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '.
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
 import { desligarTema, ligarTema, temaPreferido } from '../utils/tema';
+import { reavaliarMusica } from '../utils/musica';
 import { APP_VERSION, FeedbackRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { UserAvatar } from './ui/UserAvatar';
@@ -459,9 +460,11 @@ export function SettingsPage({
           <SwitchRow
             checked={tema}
             onToggle={() => {
-              // A música é uma por vez: ligar o tema desliga a trilha (e o inverso mora em `ligarTrilha`).
-              if (tema) { desligarTema(); } else { desligarTrilha(); setTrilha(false); ligarTema(); }
+              // Desde 11/10/2026 as duas preferências convivem (tema na Home, trilha na masmorra/arena): o diretor
+              // garante que nunca soam juntas e faz o crossfade. O toque É o gesto que liga.
+              if (tema) { desligarTema(); } else { ligarTema(); }
               setTema(!tema);
+              reavaliarMusica();
             }}
             label={isPt ? 'Música-tema' : 'Theme music'}
             language={language}
@@ -473,15 +476,16 @@ export function SettingsPage({
           <SwitchRow
             checked={trilha}
             onToggle={() => {
-              if (trilha) desligarTrilha(); else { ligarTrilha(); setTema(false); }
+              if (trilha) desligarTrilha(); else ligarTrilha();
               setTrilha(!trilha);
+              reavaliarMusica();
             }}
-            label={isPt ? 'Trilha' : 'Ambient loop'}
+            label={isPt ? 'Música de masmorra e arena' : 'Dungeon & arena music'}
             language={language}
-            infoLabel={isPt ? 'Sobre a trilha' : 'About the music'}
+            infoLabel={isPt ? 'Sobre a música de masmorra e arena' : 'About the dungeon and arena music'}
             info={soundMuted
-              ? (isPt ? 'Com os sons desligados, a trilha fica em silêncio.' : 'With sound off, music stays silent.')
-              : (isPt ? 'Duas camadas calmas, em loop. Para sozinha quando o app sai de vista.' : 'Two calm looping layers. Stops by itself when the app is out of view.')}
+              ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, music stays silent.')
+              : (isPt ? 'O loop calmo toca na masmorra e a Arena tem a sua própria faixa. Só começam quando você abre o jogo. Param sozinhas quando o app sai de vista.' : 'The calm loop plays in the dungeon and the Arena has its own track. They start only when you open a game and stop by themselves when the app is out of view.')}
           />
         </Group>
       )}

@@ -31,12 +31,14 @@ vi.mock('./audioBus', () => {
   let ligada = false;
   return {
     garantirBarramento: () => ({ ctx, busTrilha: gain() }),
+    retomarContexto: () => {},
     definirTrilhaLigada: (v: boolean) => { ligada = v; },
     trilhaLigada: () => ligada,
   };
 });
 vi.mock('./sonsAssets', () => ({
   CAMADAS_DA_TRILHA: { base: { duracaoS: 10 }, ritmo: { duracaoS: 10 } },
+  CROSSFADE_MUSICA_S: 1.2, RAZAO_DA_ARENA: 1.2, BPM_DA_TRILHA: 100, COMPASSOS_DA_TRILHA: 12,
   carregarAsset: async () => ({ duration: 11 }),
 }));
 vi.mock('./sounds', () => ({ isMuted: () => false }));

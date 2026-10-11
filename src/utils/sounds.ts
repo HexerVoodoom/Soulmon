@@ -6,6 +6,7 @@ import { CATEGORIA_DO_SOM, OFFSET_POR_SOM_DB, db2lin } from './loudness';
 /** Ganho-base dos sons de combate (o mesmo `beep` de 0,12) × a calibração medida do som. */
 const GANHO_BASE_COMBATE = 0.12;
 const GANHO_ATTACK = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttack);
+const GANHO_ATTACK_RANGED = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttackRanged);
 const GANHO_SPECIAL = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playSpecial);
 const GANHO_VICTORY = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playVictory);
 import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
@@ -218,6 +219,38 @@ export function playAttack(): void {
     osc.stop(t + 0.12);
     beep(ctx, destino, 880, 0, 0.03, 'square', GANHO_ATTACK * 0.6);
     return 0.12;
+  });
+}
+
+/**
+ * Golpe À DISTÂNCIA (`ranged`) — o par do `playAttack` (11/10/2026, pedido do dono: "diferença de som entre ataque
+ * FÍSICO e ataque RANGED"). O físico é o SOCO: grave que cai de tom, square, seco. O à distância é o DISPARO: agudo
+ * que cai de tom e SOLTA (triangle, mais longo, com um segundo parcial uma oitava acima que desce mais devagar) — a
+ * mesma família de timbre do jogo, mas lido como "algo saiu e voou", não como "algo bateu". Mesma categoria
+ * (`arcade`, R-CAT: o EVENTO é golpe de combate nos dois), offset próprio medido. Quem escolhe qual dos dois
+ * soa é o TIPO do ataque do combatente (`strikeFormOf` no `BattleStage`), nunca o som.
+ */
+export function playAttackRanged(): void {
+  play('playAttackRanged', (ctx, destino) => {
+    const t = ctx.currentTime;
+    const voz = (tipo: OscillatorType, de: number, para: number, dur: number, g: number) => {
+      const osc = ctx.createOscillator();
+      const vol = ctx.createGain();
+      osc.connect(vol);
+      vol.connect(destino);
+      osc.type = tipo;
+      osc.frequency.setValueAtTime(de, t);
+      osc.frequency.exponentialRampToValueAtTime(para, t + dur);
+      vol.gain.setValueAtTime(0, t);
+      vol.gain.linearRampToValueAtTime(g, t + 0.006);
+      vol.gain.setValueAtTime(g, t + dur * 0.55);
+      vol.gain.linearRampToValueAtTime(0, t + dur);
+      osc.start(t);
+      osc.stop(t + dur);
+    };
+    voz('triangle', 1300, 260, 0.2, GANHO_ATTACK_RANGED);
+    voz('sine', 2600, 700, 0.14, GANHO_ATTACK_RANGED * 0.5);
+    return 0.2;
   });
 }
 

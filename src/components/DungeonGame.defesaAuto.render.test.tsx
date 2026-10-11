@@ -36,7 +36,7 @@ vi.mock('../utils/combate/group', async importOriginal => {
     },
   };
 });
-vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
 beforeEach(() => {
   vi.spyOn(Math, 'random').mockReturnValue(0.3);
   Object.assign(H, { calls: 0, cheerSeen: 0, hpStart: [], enStart: [] });

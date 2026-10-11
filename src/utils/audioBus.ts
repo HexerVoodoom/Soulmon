@@ -348,16 +348,49 @@ function montar(ctx: AudioContext): Barramento {
     busCategoria[c] = g;
   }
 
+  // `suspended`/`interrupted` com a aba VISÍVEL e sem ninguém ter pedido: retoma (ver `retomarContexto`).
+  try {
+    ctx.addEventListener?.('statechange', () => {
+      const st = ctx.state as string;
+      if (st === 'suspended' || st === 'interrupted') retomarContexto();
+    });
+  } catch { /* motor sem EventTarget no contexto */ }
+
   return { ctx, master, busSfx, busTrilha, busTema, duckGeral, duckArcade, busCategoria };
 }
 
-/** A aba dormiu: suspende o contexto em vez de fechá-lo (ver restrição 4). */
+/**
+ * **Retomada do contexto (auditoria da música, 11/10/2026).** O contexto é suspenso com a aba
+ * oculta (restrição 4) e o navegador também o suspende sozinho (iOS `interrupted` numa chamada,
+ * Chrome ao perder o foco de áudio, APK voltando do segundo plano). Quem lia "a música às vezes
+ * não toca" encontrava sempre o mesmo estado: fontes ainda ligadas, `ctx.state === 'suspended'`,
+ * e NINGUÉM mandando `resume()` — a trilha só chamava `resume` ao COMEÇAR, e voltar para a aba
+ * não começa nada. Aqui é o dono único dessa retomada.
+ *
+ * D11 intacta: só existe contexto depois de um gesto (`obterBarramento` é chamado de dentro de
+ * `tocarNa`/`ligarTrilha`/gesto do tema), e `resume()` sem gesto, num motor que o exige, apenas
+ * fica pendente — não toca nada que o jogador não tenha ligado. Aba oculta nunca retoma.
+ */
+export function retomarContexto(): void {
+  const b = barramento;
+  if (!b || abaOculta()) return;
+  const st = b.ctx.state as string;
+  if (st === 'running' || st === 'closed') return;
+  try { void b.ctx.resume?.()?.catch?.(() => { /* sem gesto: o próximo gesto tenta */ }); } catch { /* motor sem resume */ }
+}
+
+/** A aba dormiu: suspende o contexto em vez de fechá-lo (ver restrição 4); ao voltar, retoma. */
 function aoTrocarVisibilidade(): void {
   if (!barramento) return;
   if (typeof document !== 'undefined' && document.hidden) {
     try { void barramento.ctx.suspend?.(); } catch { /* motor sem suspend */ }
+    return;
   }
+  retomarContexto();
 }
+
+/** Voltou do bfcache / do segundo plano do APK / ganhou o foco: o contexto pode ter ficado `suspended`. */
+function aoVoltar(): void { retomarContexto(); }
 
 /** O app está sendo fechado: aí sim o contexto morre, e o cache com ele. */
 function aoSair(): void {
@@ -376,8 +409,12 @@ function ligarCicloDeVida(): void {
   if (cicloLigado) return;
   if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
   document.addEventListener('visibilitychange', aoTrocarVisibilidade);
+  // O `resume` do Capacitor (Android) chega como evento do documento; `pageshow`/`focus` cobrem bfcache e foco.
+  document.addEventListener('resume', aoVoltar);
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('pagehide', aoSair);
+    window.addEventListener('pageshow', aoVoltar);
+    window.addEventListener('focus', aoVoltar);
   }
   cicloLigado = true;
 }

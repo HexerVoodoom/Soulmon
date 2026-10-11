@@ -1,5 +1,5 @@
 /**
- * A TRILHA — duas camadas em fase, em loop, no `busTrilha`. Nasce desligada (S2).
+ * A TRILHA — as duas camadas em fase, em loop, no `busTrilha`. Nasce desligada (S2).
  *
  * Existem DUAS camadas (`base` + `ritmo`, `CAMADAS_DA_TRILHA`), tocando juntas
  * num estado só: a máquina E0–E6 da S13 continua CONGELADA (a condição (2) —
@@ -20,66 +20,199 @@
  *   global também cala a trilha — som nunca é o único canal de nada e o app
  *   funciona 100% mudo —, mas o inverso não vale.
  *
- * Loudness: o arquivo saiu do pós-processamento no alvo da trilha
- * (`ALVO_TRILHA_LUFS_S`, dono `utils/loudness.ts`), então toca a ganho 1.
- * D-1 (Marco abaixa a trilha ao piso) já mora no `audioBus`.
+ * ## Faixas por superfície (11/10/2026, pedido do dono)
+ * O motor toca UMA faixa por vez, escolhida pelo diretor de música (`musica.ts`) via `pedirFaixa`:
+ * `loop` (as duas camadas, na Home quando o tema está desligado), `masmorra` (as mesmas camadas, em combate) e
+ * `arena` (DERIVADA: as camadas a `RAZAO_DA_ARENA` + a percussão procedural de `trilhaArena.ts`). Trocar de faixa
+ * é CROSSFADE (`CROSSFADE_MUSICA_S`), nunca corte; nenhuma faixa nasce tocando (S2 + D11).
+ *
+ * ## Retomada (auditoria de 11/10/2026)
+ * Achados e conserto, cada um com teste em `trilha.retomada.test.ts`:
+ *  1. voltar para a aba/APK deixava o contexto `suspended` com as fontes ligadas e ninguém mandava `resume()` —
+ *     `comecar()` devolvia `true` ANTES de chegar ao `resume`. Agora a retomada é do `audioBus` (`retomarContexto`)
+ *     e a trilha a chama também ao voltar;
+ *  2. o `resume()` só era chamado DEPOIS do `await` da carga dos arquivos — fora da pilha do gesto, e o Safari/iOS
+ *     o recusa. Agora ele sai SÍNCRONO, antes de qualquer `await`;
+ *  3. `pagehide` fecha o contexto e `pageshow` (bfcache) trazia a trilha de volta presa a um contexto morto,
+ *     "tocando" (fontes ligadas) em silêncio para sempre. Agora a voz guarda o contexto em que nasceu e é refeita
+ *     se ele não é mais o vigente;
+ *  4. `busTrilha` nascia em 0 quando o storage falhava (janela privada) e `ligarTrilha()` não conseguia persistir:
+ *     tocava em silêncio. Quem toca com consentimento abre o bus.
+ *
+ * Loudness: o arquivo saiu do pós-processamento no alvo de MASTERIZAÇÃO (`ALVO_MASTERIZACAO_MUSICA_LUFS_S`); o
+ * ganho de reprodução é a DIFERENÇA para o alvo vigente (`GANHO_MUSICA_DB`, dono `utils/loudness.ts`) — nenhum
+ * número de loudness é escrito aqui. D-1 (Marco abaixa a trilha ao piso) já mora no `audioBus`.
  */
-import { definirTrilhaLigada, garantirBarramento, trilhaLigada } from './audioBus';
-import { carregarAsset, CAMADAS_DA_TRILHA, type CamadaDaTrilha } from './sonsAssets';
-import { db2lin, TRIM_TRILHA_POR_CAMADAS_DB } from './loudness';
+import { definirTrilhaLigada, garantirBarramento, retomarContexto, trilhaLigada } from './audioBus';
+import { carregarAsset, CAMADAS_DA_TRILHA, CROSSFADE_MUSICA_S, RAZAO_DA_ARENA, type CamadaDaTrilha } from './sonsAssets';
+import {
+  db2lin, GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB, TRIM_FAIXA_ARENA_DB, TRIM_TRILHA_POR_CAMADAS_DB,
+} from './loudness';
 import { isMuted } from './sounds';
-import { desligarTema, esquecerTema, pausarTema, retomarTema, temaPreferido } from './tema';
+import { esquecerTema, pausarTema, retomarTema } from './tema';
+import { sintetizarPercussaoDaArena } from './trilhaArena';
 
-let fontes: AudioBufferSourceNode[] = [];
-let trim: GainNode | null = null;
+/** As faixas que este motor sabe tocar. O DIRETOR (`musica.ts`) decide qual, por superfície. */
+export type FaixaDaTrilha = 'loop' | 'masmorra' | 'arena';
+
+/** Em combate a música desce (o golpe, que mais repete, não pode ser coberto): ver `loudness.ts`. */
+const EM_COMBATE: Record<FaixaDaTrilha, boolean> = { loop: false, masmorra: true, arena: true };
+const usaPercussao = (f: FaixaDaTrilha): boolean => f === 'arena';
+const razaoDe = (f: FaixaDaTrilha): number => (f === 'arena' ? RAZAO_DA_ARENA : 1);
+
+/** Uma música em andamento: as fontes, o ganho que a fade e o contexto em que nasceu. */
+interface Voz {
+  ctx: AudioContext;
+  faixa: FaixaDaTrilha;
+  fontes: AudioBufferSourceNode[];
+  trim: GainNode;
+}
+
+let voz: Voz | null = null;
+const saindo = new Set<Voz>();
 let ligadaNestaSessao = false;
+/** O que o diretor pediu. Padrão `loop` = o comportamento de antes do roteamento (nenhum diretor instalado). */
+let faixaPedida: FaixaDaTrilha | null = 'loop';
+let tokenCarga = 0;
 /** E0 — por que a trilha está parada. Vazio = livre para tocar. */
 export type MotivoDePausa = 'sono' | 'descanso' | 'mudo';
 const pausas = new Set<MotivoDePausa>();
 const pausada = (): boolean => pausas.size > 0;
 let cicloLigado = false;
+let bufferPercussao: { taxa: number; buf: AudioBuffer } | null = null;
 
-function parar(): void {
-  for (const f of fontes) {
+/** Ganho (linear) final da voz: trim por nº de camadas + ganho de reprodução + combate + trim da faixa. */
+function ganhoDaVoz(faixa: FaixaDaTrilha, camadas: 1 | 2): number {
+  const db = TRIM_TRILHA_POR_CAMADAS_DB[camadas] + GANHO_MUSICA_DB
+    + (EM_COMBATE[faixa] ? OFFSET_MUSICA_EM_COMBATE_DB : 0)
+    + (faixa === 'arena' ? TRIM_FAIXA_ARENA_DB : 0);
+  return db2lin(db);
+}
+
+/** Rampa linear defensiva (o motor falso dos testes não tem automação). */
+function rampa(p: AudioParam, de: number, para: number, ctx: BaseAudioContext, s: number): void {
+  try {
+    const t = ctx.currentTime;
+    p.cancelScheduledValues?.(t);
+    p.setValueAtTime?.(de, t);
+    if (p.linearRampToValueAtTime) p.linearRampToValueAtTime(para, t + s);
+    else p.value = para;
+  } catch { p.value = para; }
+}
+
+function descartar(v: Voz): void {
+  for (const f of v.fontes) {
     try { f.stop(); } catch { /* já parou */ }
     try { f.disconnect(); } catch { /* nó solto */ }
   }
-  fontes = [];
-  if (trim) { try { trim.disconnect(); } catch { /* nó solto */ } trim = null; }
+  try { v.trim.disconnect(); } catch { /* nó solto */ }
+  saindo.delete(v);
+}
+
+/** Tira a voz de cena: com `fadeS` > 0 ela desce em rampa e só então para (crossfade); sem, na hora. */
+function parar(fadeS = 0): void {
+  const v = voz;
+  voz = null;
+  tokenCarga++;
+  if (!v) return;
+  if (fadeS <= 0) { descartar(v); return; }
+  saindo.add(v);
+  try {
+    rampa(v.trim.gain, v.trim.gain.value, 0, v.ctx, fadeS);
+    const fim = v.ctx.currentTime + fadeS + 0.05;
+    for (const f of v.fontes) { try { f.stop(fim); } catch { /* já parou */ } }
+  } catch { /* sem automação: o descarte abaixo basta */ }
+  setTimeout(() => descartar(v), fadeS * 1000 + 120);
+}
+
+function percussao(ctx: BaseAudioContext): AudioBuffer | null {
+  try {
+    if (bufferPercussao && bufferPercussao.taxa === ctx.sampleRate) return bufferPercussao.buf;
+    const dados = sintetizarPercussaoDaArena(ctx.sampleRate);
+    const buf = ctx.createBuffer(1, dados.length, ctx.sampleRate);
+    buf.copyToChannel(dados, 0);
+    bufferPercussao = { taxa: ctx.sampleRate, buf };
+    return buf;
+  } catch { return null; }
 }
 
 async function comecar(): Promise<boolean> {
-  if (fontes.length || pausada() || isMuted()) return fontes.length > 0;
+  const faixa = faixaPedida;
+  if (!faixa || pausada() || isMuted() || !ligadaNestaSessao) return false;
   const b = garantirBarramento();
   if (!b) return false;
+
+  if (voz) {
+    if (voz.ctx !== b.ctx || (b.ctx.state as string) === 'closed') {
+      // Contexto morto (pagehide → pageshow do bfcache): a voz "toca" em silêncio. Refaz do zero.
+      descartar(voz);
+      voz = null;
+    } else {
+      // Mesma faixa → só garante o contexto vivo (voltar de aba/APK). Outra faixa do MESMO material → o ganho
+      // desliza (sem recomeçar a música); material diferente → crossfade para a voz nova, abaixo.
+      if (b.ctx.state === 'suspended') void b.ctx.resume?.();
+      if (voz.faixa === faixa) return true;
+      if (usaPercussao(voz.faixa) === usaPercussao(faixa)) {
+        const g = ganhoDaVoz(faixa, Math.min(voz.fontes.length, 2) as 1 | 2);
+        rampa(voz.trim.gain, voz.trim.gain.value, g, voz.ctx, CROSSFADE_MUSICA_S);
+        voz.faixa = faixa;
+        return true;
+      }
+      parar(CROSSFADE_MUSICA_S);
+    }
+  }
+
+  // O `resume` sai AQUI, síncrono, ainda na pilha do gesto: depois do `await` abaixo o Safari/iOS o recusa.
+  if (b.ctx.state === 'suspended') void b.ctx.resume?.();
+  const meu = ++tokenCarga;
   const nomes = Object.keys(CAMADAS_DA_TRILHA) as CamadaDaTrilha[];
   const bufs = await Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n])));
   // Só as camadas que chegaram tocam; o trim é o do NÚMERO que toca (medido, `loudness.ts`).
   const prontas = nomes.filter((_, i) => bufs[i] !== null);
-  if (prontas.length === 0 || fontes.length || pausada() || !ligadaNestaSessao) return false;
+  if (meu !== tokenCarga || prontas.length === 0 || voz || pausada() || !ligadaNestaSessao || faixaPedida !== faixa) return false;
   try {
     if (b.ctx.state === 'suspended') void b.ctx.resume?.();
+    // Quem toca com consentimento abre o bus: com o storage falhando (janela privada) a flag não persiste e o
+    // `busTrilha` nasceria em 0 — tocava em silêncio. O gesto que ligou é a verdade desta sessão.
+    b.busTrilha.gain.value = 1;
     const g = b.ctx.createGain();
     const n = Math.min(prontas.length, 2) as 1 | 2;
-    g.gain.value = db2lin(TRIM_TRILHA_POR_CAMADAS_DB[n]);
+    const alvo = ganhoDaVoz(faixa, n);
+    g.gain.value = 0;
     g.connect(b.busTrilha);
     // Mesmo instante de início para todas: as camadas foram mestradas no mesmo BPM e no mesmo
     // ponto de loop, e é o início comum que as mantém em fase compasso a compasso.
     const t0 = b.ctx.currentTime + 0.02;
+    const razao = razaoDe(faixa);
+    const fontes: AudioBufferSourceNode[] = [];
     for (const nome of prontas) {
       const buf = bufs[nomes.indexOf(nome)] as AudioBuffer;
       const src = b.ctx.createBufferSource();
       src.buffer = buf;
       src.loop = true;
       // O arquivo carrega 1 s de cauda (a cabeça do loop repetida) porque o codec perde a ponta;
-      // o loop fecha no ponto exato do manifesto, dentro de áudio válido.
+      // o loop fecha no ponto exato do manifesto, dentro de áudio válido. Os pontos são em segundos do BUFFER:
+      // a razão de reprodução não os muda.
       src.loopStart = 0;
       src.loopEnd = Math.min(CAMADAS_DA_TRILHA[nome].duracaoS, buf.duration);
+      if (razao !== 1 && src.playbackRate) src.playbackRate.value = razao;
       src.connect(g);
       src.start(t0);
       fontes.push(src);
     }
-    trim = g;
+    if (usaPercussao(faixa)) {
+      const p = percussao(b.ctx);
+      if (p) {
+        const src = b.ctx.createBufferSource();
+        src.buffer = p;
+        src.loop = true;
+        src.connect(g);
+        src.start(t0);
+        fontes.push(src);
+      }
+    }
+    rampa(g.gain, 0, alvo, b.ctx, CROSSFADE_MUSICA_S);
+    voz = { ctx: b.ctx, faixa, fontes, trim: g };
     return true;
   } catch {
     parar();
@@ -89,19 +222,28 @@ async function comecar(): Promise<boolean> {
 
 function aoTrocarVisibilidade(): void {
   if (typeof document === 'undefined') return;
-  if (!document.hidden && ligadaNestaSessao && !pausada()) void comecar();
+  if (document.hidden) return;
+  // Voltou: o contexto pode ter ficado `suspended` com as fontes ligadas (achado 1 da auditoria) e a voz pode
+  // ter ficado presa a um contexto fechado (achado 3). `comecar` cobre os dois.
+  retomarContexto();
+  if (ligadaNestaSessao && !pausada()) void comecar();
 }
 
 function ligarCicloDeVida(): void {
   if (cicloLigado || typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
   document.addEventListener('visibilitychange', aoTrocarVisibilidade);
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('pageshow', aoTrocarVisibilidade);
+  }
   cicloLigado = true;
 }
 
-/** Gesto do jogador: liga (persiste a chave) e começa a tocar. */
+/**
+ * Gesto do jogador (Configurações): liga a PREFERÊNCIA e dá o consentimento desta sessão. Quem decide se a trilha
+ * toca agora é a faixa que o diretor pediu (`pedirFaixa`): com o tema tocando na Home, ligar a trilha não a coloca
+ * por cima dele — ela entra na masmorra e na arena. Sem diretor (testes), `loop` é o padrão e toca na hora.
+ */
 export function ligarTrilha(): void {
-  // A música é UMA por vez: escolher a trilha por gesto desliga o tema (S17, 07/10/2026).
-  desligarTema();
   definirTrilhaLigada(true);
   ligadaNestaSessao = true;
   ligarCicloDeVida();
@@ -112,14 +254,39 @@ export function ligarTrilha(): void {
 export function desligarTrilha(): void {
   definirTrilhaLigada(false);
   ligadaNestaSessao = false;
-  parar();
+  parar(CROSSFADE_MUSICA_S);
+}
+
+/**
+ * O DIRETOR (`musica.ts`) pede a faixa da superfície atual (`null` = a trilha não toca agora). Trocar é crossfade.
+ * Não dá consentimento: só toca se o jogador já ligou a trilha por gesto nesta sessão (`ligarTrilha`/`consentir`).
+ */
+export function pedirFaixa(f: FaixaDaTrilha | null): void {
+  if (faixaPedida === f) { if (f && ligadaNestaSessao && !pausada()) void comecar(); return; }
+  faixaPedida = f;
+  if (!f) { parar(CROSSFADE_MUSICA_S); return; }
+  if (ligadaNestaSessao && !pausada()) void comecar();
+}
+
+export function faixaPedidaAgora(): FaixaDaTrilha | null {
+  return faixaPedida;
+}
+
+/**
+ * O jogador ABRIU uma superfície de combate (toque na Masmorra/Arena) com a trilha ligada nas Configurações: isso
+ * é o gesto da S2 para esta sessão, o mesmo papel que o primeiro gesto sonoro já tinha (`aoGestoSonoro`).
+ */
+export function consentirNestaSessao(): void {
+  if (!trilhaLigada()) return;
+  ligadaNestaSessao = true;
+  ligarCicloDeVida();
 }
 
 /** Gancho do App: dormir / janela de descanso / mudo global (E0). Um motivo por chamada. */
 export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
   pausarTema(motivo); // o tema obedece aos mesmos motivos (S17)
   pausas.add(motivo);
-  parar();
+  parar(); // dormir não é troca de cena: corta (a rampa de 150 ms do tema basta)
 }
 
 /** Fim de UMA pausa: só retoma se nenhum outro motivo segue vivo E o jogador
@@ -139,14 +306,14 @@ export function trilhaPausada(): boolean {
 let primeiroGestoVisto = false;
 /**
  * Chamado pelo `play()` de `sounds.ts` a cada gesto sonoro: no PRIMEIRO da
- * sessão, se a preferência persistida está ligada, a trilha começa — é o
- * "gesto explícito" da S2 numa sessão nova, sem autoplay no carregamento.
+ * sessão, se a preferência persistida está ligada, a trilha ganha o consentimento — é o
+ * "gesto explícito" da S2 numa sessão nova, sem autoplay no carregamento. (Desde 11/10/2026 o tema ligado NÃO
+ * a impede: as duas convivem, uma por superfície, e quem escolhe é o diretor.)
  */
 export function aoGestoSonoro(): void {
   if (primeiroGestoVisto) return;
   primeiroGestoVisto = true;
-  // Com o tema ligado ele é a música da sessão (S17); a trilha só vem se o tema saiu.
-  if (trilhaLigada() && !temaPreferido() && !ligadaNestaSessao) ligarTrilha();
+  if (trilhaLigada() && !ligadaNestaSessao) ligarTrilha();
 }
 
 /** A preferência persistida (a trilha só TOCA depois de `ligarTrilha()`). */
@@ -155,19 +322,27 @@ export function trilhaPreferida(): boolean {
 }
 
 export function trilhaTocando(): boolean {
-  return fontes.length > 0;
+  return voz !== null && voz.fontes.length > 0;
 }
 
-/** Quantas camadas estão tocando agora (0, 1 ou 2). */
+/** Quantas fontes da voz atual estão tocando (as camadas; a Arena soma a percussão). */
 export function camadasTocando(): number {
-  return fontes.length;
+  return voz ? voz.fontes.length : 0;
+}
+
+/** A faixa que está de fato soando (e não a pedida), ou `null`. */
+export function faixaTocando(): FaixaDaTrilha | null {
+  return voz ? voz.faixa : null;
 }
 
 /** Só para teste. */
 export function esquecerTrilha(): void {
   esquecerTema();
   parar();
+  for (const v of [...saindo]) descartar(v);
   ligadaNestaSessao = false;
+  faixaPedida = 'loop';
   pausas.clear();
   primeiroGestoVisto = false;
+  bufferPercussao = null;
 }

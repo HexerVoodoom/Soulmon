@@ -5803,6 +5803,9 @@ select:focus-visible {
   /* Cena de combate (rodada 5, I10): sem investida, projétil nem pulso — só o flash no alvo. */
   .sm-bs-lunge, .sm-bs-fly, .sm-bs-cast, .sm-bs-hit { animation: none !important; }
   .sm-bs-fly, .sm-bs-cast { display: none !important; }
+  /* Especial maior (11/10/2026): a esfera grande some como a comum; o corte/impacto grande vira o flash único (sem crescer). */
+  .sm-bs-fly.sm-bs-big { display: none !important; }
+  .sm-bs-pop.sm-bs-big { animation-name: sm-bs-flash !important; }
   /* Cena do especial (PR18): o nome só aparece e some (sem crescer); o véu e a pausa continuam. */
   .sm-bs-cutname { animation-name: sm-bs-cutdim !important; }
   .sm-bs-pop { animation-name: sm-bs-flash !important; }
@@ -8242,6 +8245,23 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 }
 .sm-bs-pop { animation: sm-bs-pop var(--bs-dur, 520ms) ease-out var(--bs-delay, 0ms) 1 both; }
 @keyframes sm-bs-flash { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* O ESPECIAL faz o efeito CRESCER (11/10/2026, pedido do dono): a esfera da skill à distância e o corte da skill física
+   saem maiores (o TAMANHO base é do `BattleStage`: `ORB_PX_SPECIAL`/`SLASH_SCALE_SPECIAL`) e ainda ganham fôlego no
+   trajeto/na batida. Mesma arte, só maior. `.sm-bs-big` marca a figura do especial; movimento reduzido: bloco canônico. */
+@keyframes sm-bs-fly-big {
+  0% { opacity: 0; transform: translate(0, 0) scale(.6); }
+  14% { opacity: 1; transform: translate(calc(var(--dx) * .08), calc(var(--dy) * .08)) scale(1.1); }
+  96% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1.28); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.45); }
+}
+.sm-bs-fly.sm-bs-big { animation-name: sm-bs-fly-big; }
+@keyframes sm-bs-pop-big {
+  0% { opacity: 0; transform: scale(.4); }
+  22% { opacity: 1; transform: scale(1.22); }
+  70% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.sm-bs-pop.sm-bs-big { animation-name: sm-bs-pop-big; }
 @keyframes sm-bs-cast {
   0% { opacity: 0; transform: scale(.5) rotate(0deg); }
   30% { opacity: 1; transform: scale(1) rotate(30deg); }

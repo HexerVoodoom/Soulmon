@@ -247,6 +247,8 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
       // PR18 (06/10/2026, pedido do dono): som de combate. O golpe/especial moram na CENA (`BattleStage`); a vitória, nas
       // quatro telas de luta. O Dungeon e o Pesadelo trocaram `playFeed` (som de COMER) por `playVictory`: R-CAT.
       playAttack: ['components/games/BattleStage.tsx'],
+      // 11/10/2026 (pedido do dono): o golpe À DISTÂNCIA tem som próprio; a CENA escolhe pelo tipo do ataque.
+      playAttackRanged: ['components/games/BattleStage.tsx'],
       playSpecial: ['components/games/BattleStage.tsx'],
       playVictory: ['components/ArenaGame.tsx', 'components/DuelScreen.tsx', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx'],
       playShower: ['components/CompanionHUD.tsx'],
