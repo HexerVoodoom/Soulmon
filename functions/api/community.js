@@ -47,6 +47,7 @@ import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
+import { pickRankedOpponents } from './_rankedPick.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { frameIdOrNull } from './_frames.js';
 const CORS = {
@@ -625,11 +626,16 @@ async function handleCommunity({ request, env }) {
       if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
       pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice('profile:'.length) });
     }
-    // embaralha e devolve até 3
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
+    // TORNEIO = ranqueado: o servidor sorteia (aleatório) dentre quem está perto da faixa de quem pede
+    // (`lifetimePoints`, a medida da faixa). Sem `id` (consulta anônima) cai no sorteio por proximidade de 0.
+    const meProfileRaw = me ? await kvOrThrow(env).get(`profile:${me}`) : null;
+    const myPoints = meProfileRaw ? (JSON.parse(meProfileRaw).lifetimePoints ?? 0) : 0;
+    const sorted = pickRankedOpponents(
+      pool.map(e => ({ ...e, lifetime: e.profile.lifetimePoints ?? 0 })),
+      myPoints,
+      () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; },
+    );
+    pool.length = 0; pool.push(...sorted);
     const season = currentSeason();
     const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank

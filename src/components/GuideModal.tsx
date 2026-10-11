@@ -341,6 +341,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
+              'Torneio e Arena são diferentes: o Torneio é RANQUEADO — o servidor sorteia seus oponentes perto da sua faixa, você não escolhe. Na Arena livre VOCÊ escolhe contra quem lutar, sempre de poder parecido com o seu.',
+              'Tournament and Arena are different: the Tournament is RANKED — the server draws your opponents near your tier and you don’t choose. In the Open Arena YOU choose who to fight, always of power similar to yours.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
               'Nos duelos (Torneio e Arena) os pets lutam sozinhos. Você torce tocando em qualquer lugar da tela: o gauge cheio vira um golpe especial. Torcer só ajuda; não torcer não atrapalha.',
               'In duels (Tournament and Arena) the pets fight on their own. You cheer by tapping anywhere on the screen: a full gauge becomes a special strike. Cheering only helps; skipping never hurts.',
             )}

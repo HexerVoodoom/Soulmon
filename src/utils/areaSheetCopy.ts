@@ -61,13 +61,15 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '26%', top: '81%', width: '44%' },
 ];
 
+// ⚔️ 11/10/2026 (guilda-lancamento PR1): TORNEIO = ranqueado (o servidor sorteia o oponente pela sua
+// faixa); ARENA LIVRE (id `duelo`, mantido: telemetria/testes) = você ESCOLHE contra quem lutar.
 // ⚔️ 01/10/2026 (H15, navegação do dono): o fundo da Arena tem DOIS tablados.
 // Torneio e Duelo — os dois de luta — dividem o tablado da esquerda (cabem dois
 // por espaço, um em cada metade da diagonal), e a Feira fica sozinha no da
 // direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '19%', top: '49%', width: '40%' },
-  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '50%', top: '56%', width: '40%' },
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '50%', top: '56%', width: '40%' },
   // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4, WPG-10): abre a sala Feira do
   // `GuildSheet`. O Salão (Bosque/Roda/Mural) continua sendo o lote `guilda` do Hall.
   { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '78%', top: '40%', width: '36%' },

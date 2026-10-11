@@ -86,7 +86,7 @@ export function areaHint(id: AreaId, isPt: boolean): string {
   switch (id) {
     case 'mercado': return isPt ? 'Itens, decoração e fundos' : 'Items, decor and backgrounds';
     case 'jogos': return isPt ? 'Jogos livres, mente e refúgio' : 'Free play, mind and refuge';
-    case 'arena': return isPt ? 'Torneio da semana' : "This week's tournament";
+    case 'arena': return isPt ? 'Torneio ranqueado e Arena livre' : 'Ranked Tournament and Open Arena';
     case 'exploracao': return isPt ? 'Masmorra, Passeio, Oficina e Caderno' : 'Dungeon, Stroll, Workshop and Journal';
     case 'laboratorio': return isPt ? 'Evolução do seu Soulmon' : "Your Soulmon's evolution";
     case 'hall': return isPt ? 'Biblioteca e outros jogadores' : 'Library and other players';
