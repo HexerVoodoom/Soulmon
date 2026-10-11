@@ -15,6 +15,11 @@ import { PICROSS_MAX_BITS } from '../../utils/mente/picross';
 import { SupportNote } from '../refugio/SupportNote';
 import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
+import { PixelIcon } from '../ui/PixelIcon';
+// 11/10/2026 (pedido do dono): os dois jogos do Salão ganham o ÍCONE próprio — arte nossa que já estava no repo
+// (`icons/games`, 128², alfa real): o velociraptor da Corrida e a tesoura do Pedra-papel-tesoura. Pelados, sem moldura.
+import iconCorrida from '../../assets/soulmon/icons/games/icon-game-dino.png';
+import iconPpt from '../../assets/soulmon/icons/games/icon-game-rps.png';
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -231,11 +236,17 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
       </div>
       <ul style={sheetCardList}>
         <li style={sheetCard}>
-          <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
+          </div>
           <DinoSheet language={language} onStart={() => onStart('dino')} />
         </li>
         <li style={sheetCard}>
-          <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconPpt} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
+          </div>
           <PptSheet language={language} onStart={() => onStart('ppt')} />
         </li>
       </ul>

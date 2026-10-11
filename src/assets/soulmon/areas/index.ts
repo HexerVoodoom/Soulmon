@@ -54,7 +54,10 @@ import lotePasseio from './lote-exploracao-passeio.png';
 // Biblioteca. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
 // 🏞️ 07/10/2026 (escolha do dono): Oficina = santuário do domínio Akasha, Caderno = santuário do Pântano (cópias de `dominios/*/predios`, alfa real).
 import loteOficina from './lote-exploracao-oficina-akasha.png';
-import loteCaderno from './lote-exploracao-caderno-pantano.png';
+// 🏡 11/10/2026 (pedido do dono: "o prédio do jornal é massa mas muito misturado com o background"): o Caderno troca o santuário do
+// Pântano (verde-escuro sobre a clareira verde-escura) pelo chalé de sapé `-campina`, que já estava em disco — amarelo-quente
+// sobre o fundo teal, é o prédio que mais SE DESTACA da Exploração (medido sobre o fundo; folha de contato na PR). O Pântano fica em disco.
+import loteCaderno from './lote-exploracao-caderno-campina.png';
 // 🎨 07/10/2026: o dono NÃO gostou da reforma e Mente/Oficina/Caderno/Amigos voltaram à arte original (as `-akasha`/`-deserto`/`-campina` ficam em disco, sem import). Nota antiga da reforma: prédios de DOMÍNIO (`../../dominios/<dom>/predios`, arte própria já no repo) copiados
 // para cá — o contrato de geometria lê só esta pasta. Trocaram os quatro lotes teal-sobre-teal (Mente, Oficina, Caderno e
 // os do Hall); as artes antigas ficam em disco, sem import (`lote-jogos-mente`, `lote-exploracao-oficina`/`caderno`,

@@ -425,3 +425,13 @@ ainda usam arte emprestada (`src/assets/soulmon/areas/index.ts` › `JOGOS_LOT_A
 O Salão de Jogos usa `lote-jogos-ppt.png`, que já era dele.
 ✅ **30/09/2026**: os dois prédios e os NPCs (`jogos:mente` Tessela, `jogos:refugio` Bobbi) foram
 instalados (§8 I12/I13).
+
+## 16. Prédio do Caderno (Journal) — pedido de 11/10/2026
+
+O dono achou o prédio do Caderno "massa, mas muito misturado com o background" (santuário do Pântano, verde-escuro sobre a clareira verde-escura da Exploração). **Troca provisória** com arte que já existia: o chalé `lote-exploracao-caderno-campina.png` (amarelo-quente). Higgsfield não esteve disponível nesta sessão.
+
+Se o dono quiser arte própria, o pedido de geração (lote `arte-gerador familia=cenario`, destino `src/assets/soulmon/areas/lote-exploracao-caderno.png`):
+
+- **Prédio isométrico 300², alfa real**, no mesmo pós dos `lotes-v2`: um estúdio de escrita (casinha-tinteiro com pena / escrivaninha à janela / pergaminhos), **telhado e paredes em tons QUENTES** (ocre, âmbar, madeira clara, marfim) com detalhe turquesa pequeno para manter a paleta do Soulmon.
+- **Contraste é o critério:** a clareira de baixo da Exploração é verde-teal escura (`bg-exploracao.png`); o prédio não pode ter verde/teal dominante nem valor escuro. Conferir sobre o fundo (folha de contato) antes de instalar.
+- Sem texto, sem personagem, base assentada em chão de terra batida (sem tablado), chão a 74%.
