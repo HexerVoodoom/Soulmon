@@ -31,7 +31,7 @@
 
 <div id="en-doc" lang="en">
 <h1 id="en">Privacy Policy — Soulmon</h1>
-<p class="sub">Last updated: October 4, 2026</p>
+<p class="sub">Last updated: October 11, 2026</p>
 
 <p class="lang">
   <a href="#pt">Versão em português abaixo ↓</a> ·
@@ -398,6 +398,51 @@
 </table>
 <p>We do not sell your data and do not use it for targeted advertising.</p>
 
+<h2>6b. Subscription (Google Play Billing)</h2>
+<p>
+  If you subscribe to the scenery and decor subscription, Google Play processes the
+  payment — <strong>we never receive your card or payment details</strong>. Our server
+  asks Google Play whether the subscription is valid and stores only: a
+  <strong>code derived from the purchase</strong> (a one-way hash of the purchase token,
+  not the token itself), the <strong>end date of the current period</strong> and the
+  <strong>state</strong> (active, canceled, expired), linked to your account through the
+  same pseudonymous identifier as the rest of your data. We use this only to open and
+  close the quarter's cosmetic set. Purchase tokens never appear in our logs in full.
+  Google Play also sends us real-time notifications about the subscription (renewal,
+  cancellation, refund); they carry only the purchase token. The subscription data is
+  kept while your account exists and is <strong>erased when you delete your
+  account</strong>; the link between that purchase and your account follows the same
+  rule as the other purchase receipts above.
+</p>
+
+<h2>6c. Crash diagnostics</h2>
+<p>
+  When the app crashes, it sends <strong>one minimal report</strong> to our own server
+  (no third-party crash SDK): the error type, the technical error message (up to 200
+  characters, with e-mails, links, tokens and ids removed), the technical stack (up to
+  800 characters), the app version, the screen path (without ids) and whether it is the
+  Android app or the web. It <strong>never</strong> includes your content, your account
+  identifier, your e-mail, your IP address or your device's user agent, so it is
+  <strong>not linked to you</strong>. Reports are grouped by type of failure (a counter,
+  not a record per person) and <strong>erase themselves after 14 days</strong>. Purpose:
+  finding and fixing crashes. It follows the same switch as the usage statistics in
+  <em>Settings → Your data</em>: turning statistics off also turns this off.
+</p>
+
+<h2>6d. Abuse prevention (IP address, hashed)</h2>
+<p>
+  To stop one person from creating many accounts to drain shared limits, our server
+  computes a <strong>one-way keyed hash</strong> (HMAC with a secret key) of the IP
+  address of a request when an <strong>account is created</strong> and when a
+  <strong>creature image is generated</strong>. <strong>The IP address itself is never
+  stored</strong>; only the hash goes into a daily counter (how many new accounts / images
+  came from that connection today), which <strong>erases itself after 30 days</strong>.
+  It is not shared with anyone and is not used for advertising or profiling. Legal basis:
+  legitimate interest in preventing abuse and keeping the service available
+  (LGPD art. 7, IX). We also keep, for the same reason, the count of images already
+  drawn for your e-mail (numbers only), even after the account is deleted.
+</p>
+
 <h2>7. Minimum age</h2>
 <p>
   Soulmon is intended for people aged <strong>18 or older</strong>. It is not
@@ -418,7 +463,10 @@
   public profile, your nickname, your ranking entries, group gifts,
   <strong>your place in the cooperative group</strong> (you leave the group
   automatically; a group left empty disappears along with its code), the usage
-  record of your paid account (AI counters and the like) and the notification
+  record of your paid account (AI counters and the like — <strong>except</strong> the
+  count of creature images already drawn for this e-mail, which stays so that deleting
+  and re-creating the account does not reopen image generation; it is only numbers,
+  see 6d) and the notification
   subscriptions the server can link to your account. The app also unsubscribes
   <strong>this device</strong> from notifications right away; if you use Soulmon
   on more than one device, turn notifications off on each of them.
@@ -474,7 +522,7 @@
 
 <div id="pt" lang="pt-BR">
 <h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 4 de outubro de 2026</p>
+<p class="sub">Última atualização: 11 de outubro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version ↑</a> ·
@@ -864,6 +912,52 @@
   Não vendemos seus dados e não os usamos para publicidade direcionada.
 </p>
 
+<h2>6b. Assinatura (Google Play Billing)</h2>
+<p>
+  Se você assinar a assinatura de cenários e decoração, o pagamento é processado pela
+  Google Play — <strong>nós nunca recebemos os dados do seu cartão ou da sua forma de
+  pagamento</strong>. Nosso servidor pergunta à Google Play se a assinatura está válida
+  e guarda apenas: um <strong>código derivado da compra</strong> (um resumo
+  criptográfico de mão única do token da compra, não o token em si), a <strong>data de
+  fim do período atual</strong> e o <strong>estado</strong> (ativa, cancelada, vencida),
+  ligados à sua conta pelo mesmo identificador pseudônimo do resto dos seus dados. Usamos
+  isso só para abrir e fechar o conjunto cosmético do trimestre. O token da compra nunca
+  aparece inteiro nos nossos registros (logs). A Google Play também nos manda avisos em
+  tempo real sobre a assinatura (renovação, cancelamento, reembolso), que carregam só o
+  token da compra. Os dados da assinatura ficam enquanto a sua conta existir e são
+  <strong>apagados quando você exclui a conta</strong>; o vínculo dessa compra com a sua
+  conta segue a mesma regra dos demais comprovantes de compra acima.
+</p>
+
+<h2>6c. Diagnóstico de falhas</h2>
+<p>
+  Quando o app trava, ele manda <strong>um relatório mínimo</strong> ao nosso próprio
+  servidor (sem SDK de terceiros para falhas): o tipo do erro, a mensagem técnica do erro
+  (até 200 caracteres, com e-mails, links, tokens e identificadores removidos), a pilha
+  técnica (até 800 caracteres), a versão do app, o caminho da tela (sem identificadores)
+  e se é o app Android ou a web. <strong>Nunca</strong> vai junto o seu conteúdo, o
+  identificador da sua conta, o seu e-mail, o seu endereço IP nem o identificador do seu
+  navegador/aparelho — por isso <strong>não fica ligado a você</strong>. Os relatórios
+  são agrupados por tipo de falha (um contador, não um registro por pessoa) e
+  <strong>se apagam sozinhos em 14 dias</strong>. Finalidade: achar e corrigir
+  travamentos. Segue a mesma chave das estatísticas de uso em <em>Configurações → Seus
+  dados</em>: desligar as estatísticas desliga isto também.
+</p>
+
+<h2>6d. Prevenção de abuso (endereço IP, em hash)</h2>
+<p>
+  Para impedir que uma pessoa crie muitas contas para esgotar limites que são de
+  todos, o nosso servidor calcula um <strong>resumo criptográfico de mão única com
+  chave secreta</strong> (HMAC) do endereço IP da requisição quando uma <strong>conta é
+  criada</strong> e quando uma <strong>imagem da criatura é gerada</strong>. <strong>O
+  endereço IP em si nunca é guardado</strong>; só o resumo entra num contador diário
+  (quantas contas novas / imagens saíram daquela conexão hoje), que <strong>se apaga
+  sozinho em 30 dias</strong>. Não é compartilhado com ninguém e não é usado para
+  publicidade nem perfil. Base legal: legítimo interesse em prevenir abuso e manter o
+  serviço disponível (LGPD art. 7º, IX). Pelo mesmo motivo guardamos a contagem de
+  imagens já desenhadas para o seu e-mail (só números), mesmo depois da exclusão da conta.
+</p>
+
 <h2>7. Idade mínima</h2>
 <p>
   O Soulmon é destinado a <strong>maiores de 18 anos</strong>. Não é direcionado
@@ -885,7 +979,9 @@
   o seu perfil público, o seu apelido, as posições nos rankings, os presentes do
   grupo, <strong>a sua vaga no grupo cooperativo</strong> (você sai do grupo
   automaticamente; um grupo que fica vazio some junto com o código), o registro
-  de uso da sua conta paga (contadores de IA e afins) e as
+  de uso da sua conta paga (contadores de IA e afins — <strong>exceto</strong> a
+  contagem de imagens da criatura já desenhadas para este e-mail, que fica para que
+  excluir e recriar a conta não reabra a geração de imagem; são só números, ver 6d) e as
   inscrições de notificação que o servidor consegue ligar à sua conta. O app
   também desfaz a inscrição de notificações <strong>deste aparelho</strong> na
   mesma hora; se você usa o Soulmon em mais de um aparelho, desligue as
