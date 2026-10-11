@@ -312,7 +312,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // login. Os seletores inline do portão e dos termos saíram. O modal é sempre
   // em inglês (o idioma-padrão antes da escolha).
   const [idiomaPendente, setIdiomaPendente] = useState(
-    () => !isUpgrade && readLocal(STORAGE_KEYS.LANGUAGE) === null,
+    () => !isUpgrade && !isEmbedMode() && readLocal(STORAGE_KEYS.LANGUAGE) === null, // /embed: sem seletor, inglês (resolveLanguage)
   );
   const escolherInicial = (l: Language) => {
     escolherIdioma(l);
