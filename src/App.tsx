@@ -17,6 +17,7 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { needsWelcomeTour } from './utils/welcomeTour';
+import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
@@ -675,6 +676,7 @@ const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
 const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
 const WelcomeTour = lazy(() => import('./components/WelcomeTour').then(m => ({ default: m.WelcomeTour })));
+const BuildingIntro = lazy(() => import('./components/BuildingIntro').then(m => ({ default: m.BuildingIntro })));
 const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
 const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
 const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
@@ -1872,8 +1874,22 @@ export default function App() {
     setWelcomeTourReplay(false);
   }, [welcomeTourReplay]);
   const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
-  const interstitial: 'welcomeTour' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
+  /* A APRESENTAÇÃO DO PRÉDIO NOVO (`components/BuildingIntro`, 08/10/2026): quando o Vínculo abre um prédio, o NPC dele se
+     apresenta. Segundo da fila, logo depois do tour — e DEPOIS do display de Level Up (`utils/buildingIntro.ts` ›
+     `BUILDING_INTRO_AFTER`). Um por vez: o pendente é "aberto no Vínculo e ainda não visto", sempre o primeiro da ordem.
+     Só numa tela calma (Home ou Mapa), nunca por cima de um jogo.
+     TODO(LevelUpOverlay): o display de Level Up (outro run, intersticial que sobrepõe e só sai ao toque) ainda não está na
+     main. Quando entrar, `levelUpOpen` passa a ser o estado dele — enquanto estiver aberto a apresentação espera; o encaixe
+     e a espera já estão declarados e testados (`buildingIntroReady`). */
+  const levelUpOpen = false;
+  const pendingIntros = useMemo(
+    () => (gameState.buildingIntrosSeen === undefined ? [] : pendingBuildingIntros(gameState.buildingIntrosSeen, bondLevelFor(gameState.totalXP ?? 0))),
+    [gameState.buildingIntrosSeen, gameState.totalXP],
+  );
+  const buildingIntroOpen = buildingIntroReady({ pending: pendingIntros, levelUpOpen, calmView: currentView === 'home' || currentView === 'map' });
+  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
     welcomeTourOpen ? 'welcomeTour'
+    : buildingIntroOpen ? 'buildingIntro'
     : triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
@@ -3461,6 +3477,21 @@ export default function App() {
     setPendingSheet({ area: dest.area, lot: dest.lot });
     goTo(areaView(dest.area));
   }, [goTo]);
+
+  /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
+     lote aberta — direto, sem passar por `buildingDestination`, que mandaria o Caderno ao menu de Missões. */
+  const markIntroSeen = useCallback((id: BuildingId) => {
+    setGameState(prev => {
+      const seen = markBuildingIntroSeen(prev.buildingIntrosSeen, id);
+      return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen as string[] };
+    });
+  }, [setGameState]);
+  const handleBuildingIntroGo = useCallback((id: BuildingId) => {
+    markIntroSeen(id);
+    const [area, lot] = id.split('.');
+    setPendingSheet({ area: area as AreaId, lot });
+    goTo(areaView(area as AreaId));
+  }, [markIntroSeen, goTo]);
 
   const goBack = useCallback(() => {
     if (viewBack(currentViewRef.current) === null) return;
@@ -7455,6 +7486,11 @@ export default function App() {
       {interstitial === 'welcomeTour' && (
         <Suspense fallback={null}>
           <WelcomeTour language={language} onDone={handleWelcomeTourDone} />
+        </Suspense>
+      )}
+      {interstitial === 'buildingIntro' && pendingIntros[0] && (
+        <Suspense fallback={null}>
+          <BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]} language={language} onGo={handleBuildingIntroGo} onLater={markIntroSeen} />
         </Suspense>
       )}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
