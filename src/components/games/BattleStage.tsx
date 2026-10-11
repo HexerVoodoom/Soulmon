@@ -38,7 +38,7 @@ import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
-import { playAttack, playSpecial } from '../../utils/sounds';
+import { playAttack, playAttackRanged, playSpecial } from '../../utils/sounds';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
 export const BATTLE_LAYER_STYLE: CSSProperties = {
@@ -151,6 +151,16 @@ export const strikeFormOf = (a: Pick<StageAction, 'kind' | 'strike'>): StrikeFor
 /** A investida do ESPECIAL físico só começa depois da carga (o círculo de cast): chega no instante do impacto. */
 const lungeDelay = (a: StageAction): number =>
   a.kind === 'special' ? introMs('special') + Math.max(0, (a.impactMs ?? impactMs('special', false)) - impactMs('melee', false)) : 0;
+
+/**
+ * O TAMANHO do efeito (11/10/2026, pedido do dono): no ESPECIAL a esfera da skill à distância e o corte da skill
+ * física saem MAIORES que no golpe básico — a mesma arte, em escala. Os números moram aqui (um lugar só) e o
+ * `fxScale` de cada tela multiplica os dois; a animação ainda cresce no trajeto (`.sm-bs-big` no `index.css`).
+ */
+export const ORB_PX = 60;
+export const ORB_PX_SPECIAL = 150;
+export const SLASH_SCALE = 0.95;
+export const SLASH_SCALE_SPECIAL = 1.75;
 
 /** O centro do corpo (onde o golpe sai e chega). */
 const bodyCenter = (s: Spot) => ({ x: s.x, y: s.y - s.size * 0.47 });
@@ -301,16 +311,17 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
 }
 
 /** Uma figura de FX centrada num ponto. `anim` = a classe; `delay`/`dur` em ms. */
-function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra, z = 4 }: {
+function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra, z = 4, big = false }: {
   src: string | undefined; x: number; y: number; size: number; anim: string; delay: number; dur: number;
-  rot?: number; flipX?: boolean; extra?: CSSProperties; z?: number;
+  rot?: number; flipX?: boolean; extra?: CSSProperties; z?: number; big?: boolean;
 }) {
   if (!src) return null;
   return (
     <div
       aria-hidden="true"
       data-stage-fx={anim}
-      className={anim}
+      data-stage-fx-big={big ? '1' : undefined}
+      className={big ? `${anim} sm-bs-big` : anim}
       style={{
         position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: z, pointerEvents: 'none',
         ['--bs-delay' as string]: `${delay}ms`, ['--bs-dur' as string]: `${dur}ms`,
@@ -567,14 +578,14 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
       const flyDelay = intro + baseFly;
       layers.push(
         <Fx
-          key="orb" src={fxFrame(el, 'orb')} x={from.x} y={from.y} size={Math.round((big ? 88 : 60) * fxScale)}
-          anim="sm-bs-fly" delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={ang}
+          key="orb" src={fxFrame(el, 'orb')} x={from.x} y={from.y} size={Math.round((big ? ORB_PX_SPECIAL : ORB_PX) * fxScale)}
+          anim="sm-bs-fly" big={big} delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={ang}
           extra={{ ['--dx' as string]: `${Math.round(dx)}px`, ['--dy' as string]: `${Math.round(dy)}px` } as CSSProperties}
         />,
       );
     } else {
       layers.push(
-        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? 1.2 : 0.95))} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 240)} dur={400} flipX={flipX} />,
+        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? SLASH_SCALE_SPECIAL : SLASH_SCALE))} anim="sm-bs-pop" big={big} delay={intro + Math.max(0, impact - 240)} dur={big ? 520 : 400} flipX={flipX} />,
       );
     }
   }
@@ -706,7 +717,9 @@ export function BattleStage({
     if (!a) return undefined;
     const special = a.kind === 'special';
     const at = special ? Math.max(0, SPECIAL_INTRO_MS - 300) : (a.impactMs ?? impactMs(a.kind, reduced));
-    const id = window.setTimeout(() => { if (special) playSpecial(); else playAttack(); }, at);
+    // 11/10/2026: o som do golpe básico acompanha o TIPO do ataque (físico = soco, à distância = disparo).
+    const ranged = strikeFormOf(a) === 'ranged';
+    const id = window.setTimeout(() => { if (special) playSpecial(); else if (ranged) playAttackRanged(); else playAttack(); }, at);
     return () => window.clearTimeout(id);
   }, [actionId, reduced]);
   const cutActor = action?.kind === 'special' ? action.actor : null;

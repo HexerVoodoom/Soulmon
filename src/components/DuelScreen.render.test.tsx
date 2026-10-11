@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { DuelScreen, cheerQuality } from './DuelScreen';
+import { specialLeadMs, specialTailMs, impactMs } from '../utils/combatFx';
 import { simulatePvp, DUEL_CHEER_BUCKETS, type DuelSide } from '../utils/combate/duel';
 import { PVP_HP_SCALE } from '../utils/combate/fight';
 import { CHEER } from '../utils/combate/specials';
@@ -74,7 +75,11 @@ describe('DuelScreen — a cena em tela cheia', () => {
     const gasto = correr(onDone) + 300;
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(gasto).toBeGreaterThan(duracao - 600);
-    expect(gasto).toBeLessThan(duracao + 3500);
+    // 11/10/2026: cada especial PARA a luta (cena + batida + cauda, e o relógio retoma recuado): é tempo de cena a mais,
+    // não de simulação. O resto (a pausa final) segue na folga de antes.
+    const casts = sim.events.filter(e => e.kind === 'cast' && e.t * 1000 <= duracao).length;
+    const porEspecial = specialLeadMs(false) + specialTailMs(false) + impactMs('ranged', false);
+    expect(gasto).toBeLessThan(duracao + 3500 + casts * porEspecial);
     expect(gasto / 1000).toBeGreaterThan(20);
     expect(gasto / 1000).toBeLessThan(90);
   });

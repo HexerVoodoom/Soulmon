@@ -120,6 +120,19 @@ export const CAMADAS_DA_TRILHA = {
 
 export type CamadaDaTrilha = keyof typeof CAMADAS_DA_TRILHA;
 
+/**
+ * Fatos MUSICAIS das duas camadas (não são alvo de loudness): 100 BPM, 12 compassos de 4 tempos
+ * (60/100 × 4 × 12 = 28,8 s = `duracaoS` — há teste). A faixa da ARENA (11/10/2026) é DERIVADA delas: as
+ * mesmas camadas tocadas a `RAZAO_DA_ARENA` (100 → 120 BPM, o loop cai para 24 s = 12 compassos de 2 s) mais
+ * uma percussão procedural (`trilhaArena.ts`) que fecha no mesmo ponto. Nenhum arquivo novo.
+ */
+export const BPM_DA_TRILHA = 100;
+export const COMPASSOS_DA_TRILHA = 12;
+export const RAZAO_DA_ARENA = 1.2;
+
+/** Duração do crossfade entre músicas ao trocar de superfície (casa ↔ masmorra ↔ arena), em segundos. */
+export const CROSSFADE_MUSICA_S = 1.2;
+
 /** Compatibilidade: a primeira camada. */
 export const TRILHA_BASE: AssetDeSom = CAMADAS_DA_TRILHA.base;
 

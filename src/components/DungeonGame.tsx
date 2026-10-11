@@ -30,6 +30,7 @@ import { fighterIdentity } from '../utils/fighterIdentity';
 import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
+import { entrarNaSuperficie } from '../utils/musica';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
@@ -145,6 +146,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onSpendBits?: (pts: number) => boolean;
   onExit: () => void;
 }) {
+  // Música (11/10/2026): na masmorra toca o LOOP (se a música de masmorra e arena está ligada). Abrir o jogo é o gesto do jogador.
+  useEffect(() => entrarNaSuperficie('masmorra'), []);
+
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
   const jeito = jeitoDaProfissao(profissao);
