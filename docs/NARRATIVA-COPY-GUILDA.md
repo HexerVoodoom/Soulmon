@@ -281,6 +281,27 @@
 | `guild.help.missao.termo` | Missão | Mission | HelpModal, glossário | L12 |
 | `guild.help.missao.def` | Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa. | Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house. | HelpModal, glossário | L12 |
 
+## 14. A Guerra (guilda-lancamento PR4, 11/10/2026)
+
+| chave | PT-BR | EN | onde usa | lei |
+|---|---|---|---|---|
+| `guild.guerra.titulo` | Guerra de guilda | Guild war | GuildSheet, título da seção | L12 |
+| `guild.guerra.regra` | Seu esquadrão — você e até três aliados — enfrenta o de outra guilda do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia. | Your squad — you and up to three allies — faces another guild’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day. | atrás do "?" da seção | L10, L12 |
+| `guild.guerra.buscar` | Procurar uma guilda rival | Look for a rival guild | botão que busca a guilda do mesmo tamanho | L12 |
+| `guild.guerra.esperando` | Seu esquadrão espera uma guilda do mesmo tamanho. O resultado chega sozinho. | Your squad is waiting for a guild of the same size. The result arrives on its own. | estado "na fila" | L12 |
+| `guild.guerra.pequena` | Para a guerra são precisas ao menos duas pessoas com ficha de luta. | A war needs at least two people with a fighter sheet. | guilda pequena demais (constatação, sem culpa) | LV-G2 |
+| `guild.guerra.hoje` | Hoje a guerra já aconteceu. | Today’s war has already happened. | uma guerra por dia | LV-G7 |
+| `guild.guerra.resultado.win` | A roda venceu a guerra contra {nome}. | The circle won the war against {nome}. | resultado | L12 |
+| `guild.guerra.resultado.draw` | A guerra contra {nome} terminou empatada. | The war against {nome} ended in a draw. | resultado | L12 |
+| `guild.guerra.resultado.loss` | Desta vez a guerra contra {nome} foi deles. A casa recebeu a seiva do mesmo jeito. | This time the war against {nome} went their way. The house got its sap all the same. | resultado (sem culpa; perder nunca rende zero) | LV-G6, L12 |
+| `guild.guerra.duelo.win` | Confronto vencido | Bout won | rótulo acessível de cada marca | — |
+| `guild.guerra.duelo.draw` | Confronto empatado | Bout drawn | idem | — |
+| `guild.guerra.duelo.loss` | Confronto do outro lado | Bout went the other way | idem | — |
+| `guild.aria.guerra` | Um esquadrão da roda diante do esquadrão de uma guilda rival | A squad from the circle facing a rival guild’s squad | nome acessível do visor da guerra | — |
+
+| `guild.help.guerra.termo` | Guerra de guilda | Guild war | HelpModal, glossário | L12 |
+| `guild.help.guerra.def` | Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outra guilda do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não. | Once a day the circle’s squad, up to four people, faces another guild’s squad of the same size. The server settles it, and the house gets sap win or not. | HelpModal, glossário | L12 |
+
 **Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 

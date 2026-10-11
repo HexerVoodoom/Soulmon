@@ -39,7 +39,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot,
+  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, getGuildWar, seekGuildWar,
+  type GuildWar,
   GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
@@ -71,6 +72,7 @@ import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { GroveVisor } from './GroveVisor';
 import { CasaVisor } from './CasaVisor';
+import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
 import type { Language } from '../../utils/i18n';
 
@@ -152,6 +154,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   const [colhido, setColhido] = useState<{ n: number; trophy: boolean } | null>(null);
   const [colherErro, setColherErro] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
+  /** A guerra da guilda (PR4). `null` = ainda não perguntado / indisponível (a sala só aparece com o estado). */
+  const [war, setWar] = useState<GuildWar | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
@@ -215,6 +219,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     if (missaoAntes.current && !missaoAtiva) void carregar(true);
     missaoAntes.current = missaoAtiva;
   }, [missaoAtiva, carregar]);
+
+  // A GUERRA: pergunta ao abrir o Salão (2 leituras no servidor, fora da vista principal). Falha é SILÊNCIO: a sala some.
+  const guildaId = load.status === 'ready' ? load.guild?.id ?? null : null;
+  useEffect(() => {
+    if (!guildaId || room === 'feira') { setWar(null); return; }
+    let vivoLocal = true;
+    getGuildWar(saveId, tz.current).then(w => { if (vivoLocal && vivo.current) setWar(w); }).catch(() => { if (vivoLocal) setWar(null); });
+    return () => { vivoLocal = false; };
+  }, [guildaId, saveId, room]);
 
   // A CASA: o save acompanha o slot que o SERVIDOR diz (item em uso na guilda não vale no cenário pessoal).
   // Sem roda, o slot acabou e o item volta. Idempotente — pode rodar a cada vista.
@@ -647,6 +660,29 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             />
           )}
 
+          {war && (
+            <SalaGuerra
+              guild={g}
+              t={t}
+              language={language}
+              war={war}
+              hoje={load.day}
+              ocupado={ocupado}
+              mySprite={mySprite || getSpriteForStage('rookie')}
+              reducedMotion={reducedMotion}
+              onBuscar={() => {
+                if (busy.current) return;
+                busy.current = true;
+                setOcupado(true);
+                setAviso(null);
+                seekGuildWar(saveId, tz.current)
+                  .then(r => { if (vivo.current) { setWar(r.war); if (r.state === 'done') { void carregar(true); setAnuncio(t(`guild.guerra.resultado.${r.war.last?.outcome ?? 'draw'}`, { nome: r.war.last?.enemy ?? '' })); } } })
+                  .catch(e => { if (vivo.current) setAviso(GUILD_ERROR_KEY[kindOf(e)]); })
+                  .finally(() => { busy.current = false; if (vivo.current) setOcupado(false); });
+              }}
+            />
+          )}
+
           <SalaRoda
             guild={g}
             t={t}
@@ -813,6 +849,55 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
         </button>
       )}
       {agregado && <p className="sm2-lib-s" style={{ margin: 0 }} data-guild-agregado>{t('guild.bosque.agregado.um')}</p>}
+    </section>
+  );
+}
+
+/**
+ * A GUERRA 4×4 (PR4): o visor do esquadrão contra silhuetas, o botão de procurar (pareia POR TAMANHO) e o
+ * último resultado — como marcas por confronto, nunca números. Perder não custa nada e a casa recebe a seiva.
+ */
+function SalaGuerra({ guild, t, language, war, hoje, ocupado, mySprite, reducedMotion, onBuscar }: {
+  guild: GuildView; t: T; language: Language; war: GuildWar; /** O dia do jogador (a âncora do save). */ hoje: string; ocupado: boolean; mySprite: string; reducedMotion: boolean; onBuscar: () => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const jaHoje = war.last?.day === hoje;
+  const enemyCount = war.waiting?.size ?? war.last?.size ?? Math.min(4, Math.max(2, guild.size));
+  const pequena = guild.size < 2;
+  const ICONE = { win: 'check_circle', draw: 'do_not_disturb_on', loss: 'radio_button_unchecked' } as const;
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.guerra.titulo')} data-guild-room="guerra">
+      <GuerraVisor guild={guild} mySprite={mySprite} enemyCount={enemyCount} reducedMotion={reducedMotion} label={t('guild.aria.guerra')} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <h3 className="sm2-grove-stage" style={{ margin: 0 }}>{t('guild.guerra.titulo')}</h3>
+        <InfoTip language={language} label={isPt ? 'Como funciona a guerra' : 'How the war works'} align="right" style={{ marginRight: -8 }}>{t('guild.guerra.regra')}</InfoTip>
+      </div>
+      {war.last && (
+        <>
+          <ul className="sm2-grove-recv" data-guerra-duelos style={{ display: 'flex', justifyContent: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
+            {war.last.duels.map((d, i) => (
+              <li key={i} aria-label={t(`guild.guerra.duelo.${d}`)} data-guerra-duelo={d}>
+                <Icon name={ICONE[d]} size={24} tone={d === 'win' ? 'primary' : 'muted'} fill={d === 'win' ? 1 : 0} />
+              </li>
+            ))}
+          </ul>
+          <p className="sm2-stats-t" style={{ margin: 0 }} data-guerra-resultado={war.last.outcome}>
+            {t(`guild.guerra.resultado.${war.last.outcome}`, { nome: war.last.enemy })}
+          </p>
+        </>
+      )}
+      {war.waiting ? (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-esperando>{t('guild.guerra.esperando')}</p>
+      ) : jaHoje ? (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-hoje>{t('guild.guerra.hoje')}</p>
+      ) : pequena ? (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-pequena>{t('guild.guerra.pequena')}</p>
+      ) : (
+        <button type="button" data-guerra-buscar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={onBuscar} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+          <Icon name={ocupado ? 'sync' : 'swords'} size={20} className={ocupado ? 'animate-spin' : undefined} />
+          {t('guild.guerra.buscar')}
+        </button>
+      )}
     </section>
   );
 }
