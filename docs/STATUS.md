@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Gauge de evolução substitui o "dia completo"; energia ×2 (decisão do dono)
+>
+> - **Novo dono:** `src/utils/evolutionGauge.ts` — peso de esforço creditado na virada, teto diário = `required`, nunca decresce, zera ao evoluir. Metas `FORM_REQUIREMENTS[…].gauge` 30/45/60/60 (270 = permanência do Ultra). Campo novo no save `evolutionPoints` (migra de `perfectDays` na hidratação, idempotente; fuzz2 → 120).
+> - **Energia:** `getMaxEnergyForStage` = `required × ENERGY_HEADROOM` (8/10/10/12/12) e saiu do dia completo (que vira selo do dia: Bits/XP/missões). 🌀 soma um dia de teto ao gauge (1/dia).
+> - **UI:** gauge compacto na Home (`EvolutionGaugeMini`, lazy) e barra + "mais N passos" + o que desbloqueia na Evolução; Guia, Glossário, relatório diário, modal de evolução e tour atualizados (EN+PT).
+> - **Depende do dono:** os números (30/45/60, ×2) e o crédito só na virada (quem enche hoje evolui amanhã). Ver REGISTRO §30. CLAUDE.md tem linhas velhas (⭐, ⚡, ❤️, 🌀, Cadeado).
 > ## 08/10/2026 — Masmorra vira DESCIDA IDLE (lutas automáticas, HP persistente, andares infinitos)
 >
 > - **Pedido do dono (modal respondido):** sem botão de próximo oponente; o HP não enche entre descidas e **recupera com o tempo** (por timestamp, até com o app fechado); a cada 6 lutas desce 1 andar, **sem teto**, até o HP acabar; lutas automáticas com pausar/sair.

@@ -56,6 +56,7 @@ import { IntroScreen } from './components/IntroScreen';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
+import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements } from './utils/achievements';
@@ -83,7 +84,7 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -546,6 +547,7 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
+const EvolutionGaugeMini = lazy(() => import('./components/EvolutionGaugeMini').then(m => ({ default: m.EvolutionGaugeMini })));
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
@@ -833,13 +835,13 @@ export default function App() {
       currentBranch: gameState.currentBranch,
       evolutionStage: gameState.evolutionStage,
       unlockedEvolutions: gameState.unlockedEvolutions,
-      perfectDays: gameState.perfectDays,
+      evolutionPoints: gameState.evolutionPoints,
     });
     if (proxima === gameState.evolutionStage) return false;
     return isIncubating(gameState.incubation, proxima, agoraParaIncubacao);
   }, [gameState.incubation, gameState.powerPoints, gameState.harmonyPoints, gameState.benevolencePoints,
       gameState.currentBranch, gameState.evolutionStage, gameState.unlockedEvolutions,
-      gameState.perfectDays, carePatternReading, agoraParaIncubacao]);
+      gameState.evolutionPoints, carePatternReading, agoraParaIncubacao]);
 
   //    2. A escrita. Roda quando o jogador fica APTO, e de propósito **não
   //       olha o acervo de sprites**: `spriteBatch` devolve `null` para conta
@@ -852,7 +854,7 @@ export default function App() {
       const novo = incubationFor(
         {
           evolutionStage: prev.evolutionStage,
-          perfectDays: prev.perfectDays,
+          evolutionPoints: prev.evolutionPoints,
           points: { power: prev.powerPoints, harmony: prev.harmonyPoints, benevolence: prev.benevolencePoints },
           reading: carePatternReading,
           currentBranch: prev.currentBranch,
@@ -865,7 +867,7 @@ export default function App() {
       // muda — é isso que impede este efeito de virar spam de cloud save.
       return novo === prev.incubation ? prev : { ...prev, incubation: novo };
     });
-  }, [gameState.evolutionStage, gameState.perfectDays, gameState.powerPoints,
+  }, [gameState.evolutionStage, gameState.evolutionPoints, gameState.powerPoints,
       gameState.harmonyPoints, gameState.benevolencePoints, gameState.currentBranch,
       carePatternReading, setGameState]);
 
@@ -994,7 +996,7 @@ export default function App() {
       evolutionStage: gameState.evolutionStage,
       currentBranch: gameState.currentBranch,
       unlockedEvolutions: gameState.unlockedEvolutions,
-      perfectDays: gameState.perfectDays,
+      evolutionPoints: gameState.evolutionPoints,
       points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
       reading: carePatternReading,
     },
@@ -1971,7 +1973,6 @@ export default function App() {
     registered: registeredForDay(gameState as any, new Date().getDay(), new Date().toDateString()),
     goal: dailyTotal,
     done: dailyDone,
-    energy: gameState.energyPoints ?? 0,
   });
   /* M5 (R8-i, 04/10/2026): a celebração é do DIA COMPLETO (⭐: peso feito ≥ meta inteira,
      ≥1 cadastrada, energia ≥ meta) — não mais da meta de coração. UMA vez por dia do
@@ -3101,7 +3102,7 @@ export default function App() {
    * empate poder/benevolência com leitura confiável anunciava `ultimate-harmony` e
    * gravava `ultimate-power`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
-  const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, degeneratedByHP } = gameState;
+  const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, degeneratedByHP } = gameState;
   const handleEvolveRequest = useCallback(() => {
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
@@ -3109,22 +3110,22 @@ export default function App() {
       currentBranch,
       evolutionStage,
       unlockedEvolutions,
-      perfectDays,
+      evolutionPoints,
     });
     // #59 — a cerimônia não abre na mesma abertura da queda: ela tocaria POR
     // causa de uma queda, e o `handleEvolve` do outro lado recusaria de
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, carePatternReading, degeneratedByHP]);
+  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
       // Evolution padlock (Evolution page): while locked, never evolve.
       if (prev.evolutionLocked) return prev;
-      // Evolução manual: só evolui com a barra de dias perfeitos cheia.
-      const req = FORM_REQUIREMENTS[getStageLevel(prev.evolutionStage)].required;
-      if (prev.perfectDays < req) return prev;
+      // Evolução manual: só evolui com o GAUGE de evolução cheio (11/10/2026;
+      // a regra é de `utils/evolutionGauge.ts`, aqui só se delega).
+      if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions)) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
       // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
       // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
@@ -3150,7 +3151,7 @@ export default function App() {
         currentBranch: prev.currentBranch,
         evolutionStage: prev.evolutionStage,
         unlockedEvolutions: prev.unlockedEvolutions,
-        perfectDays: prev.perfectDays,
+        evolutionPoints: prev.evolutionPoints,
       });
       // INCUBAÇÃO (D-G8c): ficar apto abre a espera; o gesto só completa depois
       // dela. Reconferida sobre o `prev` pelo mesmo motivo do `podeEvoluirDepoisDaQueda`
@@ -3172,6 +3173,7 @@ export default function App() {
         healthPoints: newHP,
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         perfectDays: 0,
+        evolutionPoints: 0,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
         fichaJornada: registrarEstagio(
@@ -4047,6 +4049,7 @@ export default function App() {
       maxHealthPoints: getMaxHPForStage('rookie'),
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       perfectDays: 0,
+      evolutionPoints: 0,
       powerPoints: 0,
       harmonyPoints: 0,
       benevolencePoints: 0,
@@ -5267,6 +5270,7 @@ export default function App() {
          prometia "recuperação mais fácil que o descuido" e a linha entregava o
          oposto exato. Não reescreva a expressão aqui — chame a função. */
       const newPerfectDays = degeneratedPerfectDays(prev.perfectDays, newStageLevel);
+      const newEvolutionPoints = degeneratedEvolutionPoints(prev.evolutionPoints ?? 0, newStageLevel);
 
       return {
         ...prev,
@@ -5274,6 +5278,7 @@ export default function App() {
         healthPoints: newHP,
         maxHealthPoints: newHP,
         perfectDays: newPerfectDays,
+        evolutionPoints: newEvolutionPoints,
         degeneratedByHP: false,
         // Reset recent branch window — next evolution reflects habits going forward
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
@@ -5945,9 +5950,10 @@ export default function App() {
               powerPoints={gameState.powerPoints}
               harmonyPoints={gameState.harmonyPoints}
               benevolencePoints={gameState.benevolencePoints}
-              perfectDays={gameState.perfectDays}
+              evolutionPoints={gameState.evolutionPoints ?? 0}
+              todayGauge={gaugeContribution(dailyDone, gameState.evolutionStage)}
               incubating={incubandoAgora}
-              gateDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
+              gaugeGoal={gaugeGoalFor(gameState.evolutionStage, gameState.unlockedEvolutions)}
               onDegenerate={handleDegenerate}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}
@@ -6632,8 +6638,7 @@ export default function App() {
                 perfectDays={gameState.perfectDays}
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
-                  const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
-                  if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
+                  if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.
                   if (!podeEvoluirDepoisDaQueda(gameState)) return false;
@@ -6646,7 +6651,7 @@ export default function App() {
                     currentBranch: gameState.currentBranch,
                     evolutionStage: gameState.evolutionStage,
                     unlockedEvolutions: gameState.unlockedEvolutions,
-                    perfectDays: gameState.perfectDays,
+                    evolutionPoints: gameState.evolutionPoints,
                   });
                   if (next === gameState.evolutionStage) return false;
                   // INCUBAÇÃO (D-G8c) — mesma função que o `handleEvolve`
@@ -6723,6 +6728,20 @@ export default function App() {
                   paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)',
                 }}
               >
+              {/* 🧬 O gauge de evolução compacto (11/10/2026). Não é aviso:
+                  é medidor permanente, como os corações — por isso fica FORA
+                  do slot de avisos e não disputa a fila. */}
+              {(
+                <Suspense fallback={null}>
+                  <EvolutionGaugeMini
+                    language={language}
+                    evolutionPoints={gameState.evolutionPoints ?? 0}
+                    evolutionStage={gameState.evolutionStage}
+                    unlockedEvolutions={gameState.unlockedEvolutions}
+                    todayWeight={dailyDone}
+                  />
+                </Suspense>
+              )}
               {/* minimal-ui F2 (abordagem B): o SLOT DO DIA mora logo abaixo da
                   faixa do pet — a ordem da tela é marca → cena → avisos → lista.
                   A fila e a prioridade não mudaram (filaDeAvisos.contract). */}

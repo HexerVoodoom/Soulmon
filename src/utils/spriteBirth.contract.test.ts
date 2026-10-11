@@ -30,7 +30,7 @@ const entrada = (library: ReturnType<typeof emptySpriteLibrary>): SpriteTriggerI
   evolutionStage: 'rookie',
   currentBranch: 'harmony',
   unlockedEvolutions: [],
-  perfectDays: 0,
+  evolutionPoints: 0,
   points: { power: 5, harmony: 1, benevolence: 1 },
   reading: leituraSemConfianca,
   library,

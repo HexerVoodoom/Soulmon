@@ -28,9 +28,9 @@ export interface EvolutionTargetInput {
   currentBranch: Branch;
   evolutionStage: string;
   unlockedEvolutions: string[];
-  /** Dias perfeitos desde a última evolução — abre o caminho da PERMANÊNCIA
-   *  para o Ultra (WP4.2/D6). Sem ele, vale só a coleção das três megas. */
-  perfectDays?: number;
+  /** Pontos do gauge de evolução desde a última evolução — abrem o caminho
+   *  da PERMANÊNCIA para o Ultra (WP4.2/D6). Sem eles, só a coleção. */
+  evolutionPoints?: number;
 }
 
 export interface EvolutionTarget {
@@ -43,6 +43,6 @@ export function evolutionTarget(input: EvolutionTargetInput): EvolutionTarget {
   const branch = resolveBranch(input.points, input.reading, input.currentBranch);
   return {
     branch,
-    stage: getNextEvolution(input.evolutionStage, branch, input.unlockedEvolutions, input.perfectDays ?? 0),
+    stage: getNextEvolution(input.evolutionStage, branch, input.unlockedEvolutions, input.evolutionPoints ?? 0),
   };
 }

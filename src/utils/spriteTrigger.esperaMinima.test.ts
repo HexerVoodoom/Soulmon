@@ -22,7 +22,7 @@ const reading: CareReading = {
 function apto(over: Partial<Parameters<typeof incubationFor>[0]> = {}) {
   return {
     evolutionStage: 'rookie',
-    perfectDays: 4,            // rookie exige 4 → apto
+    evolutionPoints: 30,       // gauge do rookie = 30 → apto
     points: { power: 9, harmony: 0, benevolence: 0 },
     reading,
     currentBranch: 'power' as const,
@@ -36,7 +36,7 @@ const maisTarde = (ms: number) => new Date(T0.getTime() + ms);
 
 describe('a incubação abre na ELEGIBILIDADE, não na véspera', () => {
   it('a um ponto de distância não abre relógio nenhum', () => {
-    const inc = incubationFor(apto({ perfectDays: 3 }), undefined, T0);
+    const inc = incubationFor(apto({ evolutionPoints: 29 }), undefined, T0);
     expect(Object.keys(inc.since)).toHaveLength(0);
   });
 
@@ -77,7 +77,7 @@ describe('R-L: degenerar dentro da janela NÃO cobra um segundo relógio', () =>
   it('cair e re-subir para a mesma forma reaproveita o `since` que já corria', () => {
     const inc = incubationFor(apto(), undefined, T0);
     // O jogador degenera 10 min depois: deixa de estar apto.
-    const caiu = incubationFor(apto({ perfectDays: 0 }), inc, maisTarde(10 * 60_000));
+    const caiu = incubationFor(apto({ evolutionPoints: 0 }), inc, maisTarde(10 * 60_000));
     // Volta a ficar apto 5 min depois disso.
     const voltou = incubationFor(apto(), caiu, maisTarde(15 * 60_000));
     expect(voltou.since['champion-power']).toBe(T0.toISOString());
@@ -87,7 +87,7 @@ describe('R-L: degenerar dentro da janela NÃO cobra um segundo relógio', () =>
 
   it('o HP não cobra tempo sobre progresso: a queda não apaga registro nenhum', () => {
     const inc = incubationFor(apto(), undefined, T0);
-    const caiu = incubationFor(apto({ perfectDays: 0 }), inc, maisTarde(60_000));
+    const caiu = incubationFor(apto({ evolutionPoints: 0 }), inc, maisTarde(60_000));
     expect(caiu.since['champion-power']).toBe(T0.toISOString());
   });
 });
@@ -123,7 +123,7 @@ describe('idempotência (footgun 6) e `isIncubating`', () => {
 
   it('não-apto com estado vazio devolve a mesma referência', () => {
     const vazio = emptyIncubation();
-    expect(incubationFor(apto({ perfectDays: 0 }), vazio, T0)).toBe(vazio);
+    expect(incubationFor(apto({ evolutionPoints: 0 }), vazio, T0)).toBe(vazio);
   });
 
   it('`isIncubating` responde false sem forma, sem registro e depois da espera', () => {

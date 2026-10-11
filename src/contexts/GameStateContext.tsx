@@ -3,6 +3,7 @@ import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
+import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
 import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
@@ -217,6 +218,10 @@ export interface GameState {
   /** Version B: energy/satiety gauge — fills only by feeding, caps at maxHealthPoints */
   energyPoints: number;
   perfectDays: number;
+  /** 🧬 Gauge de evolução: PESO DE ESFORÇO creditado no estágio atual (teto
+   *  diário, nunca decresce, zera ao evoluir). Dono: `utils/evolutionGauge.ts`.
+   *  Save sem o campo migra de `perfectDays` na hidratação. */
+  evolutionPoints: number;
   totalXP: number;
   /** 🔗 Vínculo — as recompensas COSMÉTICAS da escada (`utils/bond.ts`) já
    *  entregues. É a única coisa que a escada persiste: o NÍVEL nunca vai para
@@ -239,7 +244,7 @@ export interface GameState {
      nunca desenhava. A chave continua no `localStorage` de quem já jogou; ela
      é órfã inofensiva, e está registrada aqui para ninguém reaproveitar o nome
      achando que herda um número vivo. O gate de evolução é
-     `FORM_REQUIREMENTS[…].required` × `perfectDays`. */
+     o gauge (`evolutionPoints` × `gaugeGoalFor`, desde 11/10/2026). */
   poopEventsScheduled: number[];
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
@@ -564,6 +569,9 @@ export interface GameState {
     wasPerfect: boolean;
     energyWasFull?: boolean;
     perfectDays: number;
+    /** 🧬 Pontos que a virada creditou no gauge e o total depois dela. */
+    gaugeGain?: number;
+    evolutionPoints?: number;
     degenerated: boolean;
     /** Voltou depois de ≥ABSENCE_FORGIVENESS_DAYS fora: relatório em modo acolhida. */
     welcomeBack?: boolean;
@@ -1098,6 +1106,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           ? loadedState.evolutionStage : 'rookie',
         energyPoints: num(loadedState.energyPoints, 0),
         perfectDays: num(loadedState.perfectDays, 0),
+        evolutionPoints: hydrateEvolutionPoints(loadedState),
         lastDayWasPerfect: loadedState.lastDayWasPerfect === true,
         // Índices de evento: só números finitos. Um `'x'` aqui vira `NaN` em
         // toda comparação de agendamento e o cocô nunca mais aparece.
@@ -1506,6 +1515,7 @@ function freshGameState(): GameState {
       buildingIntrosSeen: seedBuildingIntrosSeen(1),
       energyPoints: 0,
       perfectDays: 0,
+      evolutionPoints: 0,
       totalXP: 0,
       bondRewardsClaimed: [],
       bondDaily: { day: '', spent: {} },

@@ -104,7 +104,7 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
     // E o efeito que importa: a forma-alvo da vida nova NÃO está liberada de graça.
     expect(incubationReady(state.incubation, 'champion-power', NOW)).toBe(true);
     const comRelogio = incubationFor(
-      { evolutionStage: 'rookie', perfectDays: 4,
+      { evolutionStage: 'rookie', evolutionPoints: 30,
         points: { power: 9, harmony: 0, benevolence: 0 }, reading: LEITURA,
         currentBranch: 'power', unlockedEvolutions: [] },
       state.incubation, NOW,

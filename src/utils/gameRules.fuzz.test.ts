@@ -213,11 +213,18 @@ describe('computeDailyReset — invariantes sobre estado gerado', () => {
 
   it('o relatório do dia é internamente coerente (done ≤ total, required ≤ total)', () => {
     const fails = varrer(3000, 6000, (s, now, seed) => {
-      const { done, total, required, wasPerfect, energyWasFull } = computeDailyReset(s, { now }).lastDayReport;
+      const out = computeDailyReset(s, { now });
+      const { done, total, required, wasPerfect } = out.lastDayReport;
       const bad: string[] = [];
+      // 🧬 11/10/2026: a energia saiu do critério do dia completo. No lugar,
+      // o invariante do GAUGE: a virada nunca credita mais que o teto diário
+      // e, sem queda de estágio, nunca devolve menos do que recebeu.
+      const antes = typeof s.evolutionPoints === 'number' ? s.evolutionPoints : 0;
+      const ganho = out.lastDayReport.gaugeGain ?? 0;
+      if (ganho < 0 || ganho > 6) bad.push(`seed ${seed}: gauge creditou ${ganho} (fora de 0..teto)`);
+      if (!out.degeneratedByHP && out.evolutionPoints < antes) bad.push(`seed ${seed}: gauge DESCEU ${antes} → ${out.evolutionPoints}`);
       if (done > total) bad.push(`seed ${seed}: relatório diz ${done} feitas de ${total} cadastradas`);
       if (required > total) bad.push(`seed ${seed}: meta ${required} acima do total cadastrado ${total}`);
-      if (wasPerfect && !energyWasFull) bad.push(`seed ${seed}: dia perfeito sem energia cheia`);
       if (wasPerfect && done < required) bad.push(`seed ${seed}: dia perfeito com ${done} < meta ${required}`);
       if (wasPerfect && total === 0) bad.push(`seed ${seed}: dia perfeito sem nada cadastrado`);
       return bad;

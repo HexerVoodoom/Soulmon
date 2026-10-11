@@ -35,7 +35,7 @@
 import { branchLeaders, type AttrPoints, type CareReading } from './carePattern';
 import { getNextEvolution } from './dailyReset';
 import { evolutionTarget, type Branch } from './evolutionTarget';
-import { FORM_REQUIREMENTS, getStageLevel } from '../types/progression';
+import { gaugeGoalFor } from './evolutionGauge';
 import { hasSprite, isAccountCapped, isFormCapped, type SpriteLibrary } from './spriteLibrary';
 
 /** `'B'` fica no tipo como LÁPIDE: nenhum caminho o produz desde o D-G8c. Ele
@@ -47,8 +47,8 @@ export interface SpriteTriggerInput {
   evolutionStage: string;
   currentBranch: Branch;
   unlockedEvolutions: string[];
-  /** `perfectDays` acumulados desde a última evolução. */
-  perfectDays: number;
+  /** Pontos do gauge de evolução desde a última evolução (`utils/evolutionGauge.ts`). */
+  evolutionPoints?: number;
   points: AttrPoints;
   reading: CareReading;
   library: SpriteLibrary;
@@ -61,9 +61,11 @@ export interface SpriteBatch {
 }
 
 /** Quantos pontos faltam para a evolução ficar disponível (§3.1). */
-export function pointsToEvolve(evolutionStage: string, perfectDays: number): number {
-  const level = getStageLevel(evolutionStage);
-  return FORM_REQUIREMENTS[level].required - perfectDays;
+export function pointsToEvolve(evolutionStage: string, evolutionPoints: number, unlockedEvolutions?: readonly string[]): number {
+  // 🧬 11/10/2026: pontos do GAUGE, não mais dias completos. A meta é de
+  // `gaugeGoalFor` (dona). No topo (ultra) a meta é 0 e nada é gerado: o
+  // `targetFormId` devolve null de qualquer jeito.
+  return gaugeGoalFor(evolutionStage, unlockedEvolutions) - (evolutionPoints ?? 0);
 }
 
 /** A forma-destino, pela fonte única. `null` quando não há para onde ir. */
@@ -74,7 +76,7 @@ export function targetFormId(input: SpriteTriggerInput): string | null {
     currentBranch: input.currentBranch,
     evolutionStage: input.evolutionStage,
     unlockedEvolutions: input.unlockedEvolutions,
-    perfectDays: input.perfectDays,
+    evolutionPoints: input.evolutionPoints,
   });
   // `getNextEvolution` devolve o PRÓPRIO estágio quando não há destino (mega sem
   // as 3 megas, e o ultra). Isso é o estado `DISTANTE`, e ele não gera nada.
@@ -92,7 +94,7 @@ export function targetFormId(input: SpriteTriggerInput): string | null {
 export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
   if (isAccountCapped(input.library)) return null;
 
-  const faltam = pointsToEvolve(input.evolutionStage, input.perfectDays);
+  const faltam = pointsToEvolve(input.evolutionStage, input.evolutionPoints ?? 0, input.unlockedEvolutions);
 
   if (faltam <= 0) {
     const target = targetFormId(input);
@@ -119,7 +121,7 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
 function vesperForms(input: SpriteTriggerInput, target: string): string[] {
   const leaders = branchLeaders(input.points);
   if (leaders.length < 2) return [target];
-  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions, input.perfectDays));
+  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions, input.evolutionPoints ?? 0));
   // `ultra` não tem galho: os três líderes resolvem para a MESMA forma. Dedup
   // aqui evita três pedidos idênticos ao servidor pela mesma imagem.
   const unique = Array.from(new Set(forms.filter(f => f !== input.evolutionStage)));
@@ -234,12 +236,12 @@ export function emptyIncubation(): Incubation {
  * cobrar um segundo relógio (R-L). O mapa é pequeno e limitado pelas 11 formas.
  */
 export function incubationFor(
-  input: Pick<SpriteTriggerInput, 'evolutionStage' | 'perfectDays' | 'points' | 'reading' | 'currentBranch' | 'unlockedEvolutions'>,
+  input: Pick<SpriteTriggerInput, 'evolutionStage' | 'evolutionPoints' | 'points' | 'reading' | 'currentBranch' | 'unlockedEvolutions'>,
   prev: Incubation | undefined,
   now: Date,
 ): Incubation {
   const atual = prev ?? emptyIncubation();
-  if (pointsToEvolve(input.evolutionStage, input.perfectDays) > 0) return atual;
+  if (pointsToEvolve(input.evolutionStage, input.evolutionPoints ?? 0, input.unlockedEvolutions) > 0) return atual;
 
   const target = targetFormId({ ...input, library: NO_LIBRARY });
   if (!target) return atual;

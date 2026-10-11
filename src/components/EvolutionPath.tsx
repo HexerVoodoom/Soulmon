@@ -36,7 +36,8 @@ import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type Spri
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
-import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_DAYS } from '../types/progression';
+import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_POINTS } from '../types/progression';
+import { dailyGaugeCap } from '../utils/evolutionGauge';
 import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
@@ -79,13 +80,17 @@ interface EvolutionPathProps {
   powerPoints: number;
   harmonyPoints: number;
   benevolencePoints: number;
-  perfectDays: number;
+  /** 🧬 Pontos do gauge de evolução já creditados (`utils/evolutionGauge.ts`). */
+  evolutionPoints: number;
+  /** Prévia de HOJE (já no teto diário): entra no gauge na próxima virada. */
+  todayGauge?: number;
   /** WP4.29 — a forma seguinte está incubando (D-G8c). Com a barra cheia e a
    *  incubação correndo, o toque NÃO evolui: a página tem de dizer por quê,
    *  senão repete o defeito que o `MANUAL_EVOLUTION` já custou uma vez — barra
    *  cheia, nada acontece, lê como defeito. */
   incubating?: boolean;
-  gateDays: number;
+  /** Pontos para encher o gauge do estágio (`gaugeGoalFor`). 0 no topo. */
+  gaugeGoal: number;
   onDegenerate?: (targetStageId: string) => void;
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
@@ -181,9 +186,10 @@ export function EvolutionPath({
   powerPoints,
   harmonyPoints,
   benevolencePoints,
-  perfectDays,
+  evolutionPoints,
+  todayGauge = 0,
   incubating = false,
-  gateDays,
+  gaugeGoal,
   onDegenerate,
   stages,
   demoCharacterId,
@@ -234,7 +240,7 @@ export function EvolutionPath({
      os dois: coleção (as três megas) ou permanência (`ULTRA_PATIENCE_DAYS` dias
      perfeitos como mega). A regra é de `canReachUltra`, dona da árvore — aqui
      não se decide critério nenhum. */
-  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, perfectDays });
+  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, evolutionPoints });
 
   const branchPath = getBranchPath(selectedBranch);
 
@@ -305,7 +311,7 @@ export function EvolutionPath({
   const online = useIsOnline();
   const estadoAtual = cardState(acervo, currentStageId, {
     generating: gerando,
-    imminent: pointsToEvolve(currentStageId, perfectDays) <= 1,
+    imminent: pointsToEvolve(currentStageId, evolutionPoints, unlockedEvolutions) <= dailyGaugeCap(currentStageId),
     reachable: true,
     online,
     // X-3: o selo `NOVO` existia na copy e em `cardState`, mas era INALCANÇÁVEL
@@ -415,10 +421,13 @@ export function EvolutionPath({
   // ── O progresso, em PALAVRAS. `Math.max(0, …)` porque `perfectDays` pode
   //    passar do requisito enquanto a evolução está travada — e "faltam -2"
   //    seria um jeito criativo de dizer "pronto". ──
-  const faltam = Math.max(0, gateDays - perfectDays);
+  const faltam = Math.max(0, gaugeGoal - evolutionPoints);
   const prontoParaEvoluir = faltam === 0;
-  const ratio = gateDays > 0
-    ? Math.min(1, perfectDays / gateDays)
+  const ratio = gaugeGoal > 0
+    ? Math.min(1, evolutionPoints / gaugeGoal)
+    : 1;
+  const ratioComHoje = gaugeGoal > 0
+    ? Math.min(1, (evolutionPoints + todayGauge) / gaugeGoal)
     : 1;
   const fraseProgresso = prontoParaEvoluir && incubating
     /* INCUBAÇÃO (D-G8c). Vem ANTES do cadeado porque é o estado mais recente:
@@ -448,8 +457,10 @@ export function EvolutionPath({
         // "Faltam 4 dias completos" — a renomeação passou pelo COMENTÁRIO e
         // não pela string, no mesmo arquivo. É a frase que responde "quanto
         // falta para meu bicho evoluir", ou seja, a mais lida da página.
-        ? `Falta${faltam === 1 ? '' : 'm'} ${faltam} dia${faltam === 1 ? '' : 's'} completo${faltam === 1 ? '' : 's'}.`
-        : `${faltam} complete day${faltam === 1 ? '' : 's'} to go.`);
+        // 🧬 11/10/2026: o gauge mede PASSOS (peso de esforço), não dias.
+        // Descreve o caminho, nunca cobra: sem "só", sem prazo.
+        ? `Mais ${faltam} passo${faltam === 1 ? '' : 's'} de caminho até a próxima forma.`
+        : `${faltam} more step${faltam === 1 ? '' : 's'} of path to the next form.`);
 
   /* O TOQUE no visor (V2): com a barra cheia e o cadeado aberto, evolui; nos
      outros casos alterna o cadeado. O rótulo diz qual dos dois vai acontecer
@@ -509,7 +520,7 @@ export function EvolutionPath({
          comunicar. Continua saindo de `pointsToEvolve`, que é o dono da conta
          contra `required`; hoje `gateDays` traz o mesmo número, mas quem manda
          é a função, não a prop (§3.1). */
-      imminent: (isCurrent || isForecast) && pointsToEvolve(currentStageId, perfectDays) <= 1,
+      imminent: (isCurrent || isForecast) && pointsToEvolve(currentStageId, evolutionPoints, unlockedEvolutions) <= dailyGaugeCap(currentStageId),
       reachable: teveOcasiao(stageId, isCurrent, isForecast),
       online,
       unseen: acervo.tunedUnseen.includes(stageId),
@@ -795,8 +806,8 @@ export function EvolutionPath({
           {isUltraMode && (
             <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
               {isPt
-                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
-                : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
+                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
+                : `Two paths reach this form: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
             </InfoTip>
           )}
 
@@ -1033,14 +1044,37 @@ export function EvolutionPath({
             data-evo-meter
             role="progressbar"
             aria-valuemin={0}
-            aria-valuemax={gateDays}
-            aria-valuenow={Math.min(perfectDays, gateDays)}
-            aria-label={isPt ? 'Progresso até a próxima evolução' : 'Progress to the next evolution'}
-            style={{ height: 12, ['--sm2-kit-tone' as string]: 'var(--sm2-primary-fill)' } as CSSProperties}
+            aria-valuemax={gaugeGoal}
+            aria-valuenow={Math.min(evolutionPoints, gaugeGoal)}
+            aria-label={isPt ? 'Caminho até a próxima forma' : 'Path to the next form'}
+            style={{ height: 12, position: 'relative', ['--sm2-kit-tone' as string]: 'var(--sm2-primary-fill)' } as CSSProperties}
           >
-            <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(ratio * 100)}%` }} />
+            {/* A prévia de hoje: mais clara, atrás do creditado. Entra na virada. */}
+            {ratioComHoje > ratio && (
+              <div
+                data-evo-meter-today
+                aria-hidden="true"
+                style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.round(ratioComHoje * 100)}%`, background: 'var(--sm2-primary-soft)' }}
+              />
+            )}
+            <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(ratio * 100)}%`, position: 'relative' }} />
           </div>
+          {gaugeGoal > 0 && (
+            <p data-evo-gauge-count style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
+              {`${Math.min(evolutionPoints, gaugeGoal)} / ${gaugeGoal}`}
+              {todayGauge > 0 && !prontoParaEvoluir
+                ? (isPt ? ` · +${todayGauge} de hoje entram amanhã` : ` · +${todayGauge} from today join tomorrow`)
+                : ''}
+            </p>
+          )}
           <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{fraseProgresso}</p>
+          {!prontoParaEvoluir && gaugeGoal > 0 && (
+            <p data-evo-gauge-unlock style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
+              {isPt
+                ? 'Cada hábito ou tarefa concluída é um passo (tarefas maiores valem mais, até a meta do dia). Cheio, a próxima forma abre — e nada aqui volta para trás.'
+                : 'Every habit or task you finish is a step (bigger tasks count more, up to the day’s goal). When it fills, the next form opens — and nothing here ever goes back.'}
+            </p>
+          )}
         </div>
 
         {/* O cadeado fala a língua da SELEÇÃO, não a do bloqueio (D-E4):
@@ -1077,8 +1111,8 @@ export function EvolutionPath({
                 para decidir, L10); o que saiu é "nos dias difíceis", a única
                 metade que avaliava o dia. */}
             {isPt
-              ? 'Os dias completos continuam somando, mas a evolução está segurada. Segurar a forma não protege os corações.'
-              : 'Complete days keep adding up, but evolution is on hold. Holding the form doesn’t shield the hearts.'}
+              ? 'O caminho continua somando, mas a evolução está segurada. Segurar a forma não protege os corações.'
+              : 'The path keeps adding up, but evolution is on hold. Holding the form doesn’t shield the hearts.'}
           </p>
         )}
 

@@ -21,7 +21,7 @@ interface EvolveTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateTask: () => void;
-  /** Tasks needed per day to guarantee an evolution point (complete day). */
+  /** Daily goal of the stage = the most a day adds to the evolution gauge. */
   requiredTasks: number;
   /** Tasks currently registered by the user. */
   registeredTasks: number;
@@ -57,8 +57,10 @@ export function EvolveTaskModal({
     : `Your partner evolved into ${stageName}!`;
 
   const goal = isPt
-    ? `Nesta nova fase, complete ${tarefas(requiredTasks, true)} por dia (com energia cheia) para garantir um ponto de evolução — o dia completo.`
-    : `In this new stage, complete ${tarefas(requiredTasks, false)} per day (with full energy) to guarantee an evolution point — a complete day.`;
+    // 🧬 11/10/2026: a evolução é o gauge — cada conclusão é um passo, até a
+    // meta diária do estágio por dia. Energia não entra mais.
+    ? `Nesta nova fase, cada hábito ou tarefa concluída anda o caminho até a próxima forma — até ${tarefas(requiredTasks, true)} por dia contam.`
+    : `In this new stage, every habit or task you finish walks the path to the next form — up to ${tarefas(requiredTasks, false)} a day count.`;
 
   const statusOk = isPt
     ? `Você já tem ${tarefas(registeredTasks, true)} cadastrada${registeredTasks === 1 ? '' : 's'}. Continue assim!`

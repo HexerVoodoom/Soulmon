@@ -1435,6 +1435,12 @@ Seção "Dos prédios"/"Buildings" da `MissionsSheet` (import dinâmico): a miss
 aberto, o botão de pegar o material e o inventário. Recebe `{state, day, bondLevel, onClaim}`;
 não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onVisitBuilding`.
 
+### `src/components/EvolutionGaugeMini.tsx`
+**Dono de:** o gauge de evolução COMPACTO da Home (11/10/2026): rótulo, `pontos/meta`, a prévia de hoje (mais clara, "+N hoje") e a barra. Só descreve — a regra é de `utils/evolutionGauge.ts`. Medidor permanente, fora do slot de avisos. Lazy.
+**Exports:** `EvolutionGaugeMini({ language, evolutionPoints, evolutionStage, unlockedEvolutions, todayWeight })`.
+**Chamado por:** `src/App.tsx` (lazy, topo do `data-home-scroll`).
+**Régua:** `src/components/EvolutionGaugeMini.render.test.tsx`.
+
 ### `src/components/MealInviteCard.tsx`
 **Dono de:** o cartão do convite da refeição no slot de avisos da Home (posição `refeicao`: depois do recomeço, antes da carga). Texto de `mealInviteCopy` (a MESMA fonte do push); um botão de ação e "Agora não" (dispensa a janela). Lazy.
 **Exports:** `MealInviteCard({ language, petName, meal, kind, onAct, onSkip })`.

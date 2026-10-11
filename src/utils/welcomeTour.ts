@@ -71,7 +71,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'evolution', part: 1,
     title: { en: 'Evolution' },
-    speech: { en: 'Complete days add up toward evolution, and they only ever add. When your Soulmon is ready, you pick the moment: open Evolution and tap it. A slow day just goes slowly.' },
+    speech: { en: 'Every habit or task you finish is a step on the path to the next form, and the path only ever adds. When it fills, you pick the moment: open Evolution and tap your Soulmon. A slow day just goes slowly.' },
   },
   {
     id: 'care', part: 1,

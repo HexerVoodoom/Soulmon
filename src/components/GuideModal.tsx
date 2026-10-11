@@ -4,7 +4,7 @@ import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import type { Language } from '../utils/i18n';
-import { FORM_REQUIREMENTS, ULTRA_PATIENCE_DAYS } from '../types/progression';
+import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, getMaxEnergyForStage } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 import {
   HABIT_MILESTONES,
@@ -80,8 +80,10 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              'Dia completo = você cumpriu a meta do dia e a energia do seu Soulmon fechou cheia. A meta é o que você cadastrou, até o requisito do estágio.',
-              'A complete day = you met your daily goal and its energy ended full. The goal is what you registered, capped at your stage requirement.',
+              // 🧬 11/10/2026 (decisão do dono): o critério de evolução é o
+              // GAUGE (`utils/evolutionGauge.ts`), não mais o dia completo.
+              'Cada forma tem uma barra: o caminho até a próxima. Todo hábito ou tarefa concluída é um passo — tarefas maiores valem mais (1 a 3) — e o dia soma no máximo a meta diária do estágio. A barra entra na virada do dia e nunca volta para trás.',
+              'Each form has a bar: the path to the next one. Every habit or task you finish is a step — bigger tasks count more (1 to 3) — and a day adds at most your stage’s daily goal. The bar fills at the turn of the day and never goes back.',
             )}
           </p>
           <p style={para}>
@@ -92,8 +94,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               // regra consulta — e prometia uma escada 2,5× mais longa que a
               // real. Quem lia o guia achava que estava a 6 dias de evoluir
               // quando o botão já estava aceso.
-              `Rookie→Champion pede ${R.rookie.required} dias completos; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
-              `Rookie→Champion needs ${R.rookie.required} complete days; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
+              `Rookie→Champion pede ${R.rookie.gauge} passos (até ${R.rookie.required} por dia); Champion→Ultimate ${R.champion.gauge} (até ${R.champion.required}/dia); Ultimate→Mega ${R.ultimate.gauge} (até ${R.ultimate.required}/dia).`,
+              `Rookie→Champion takes ${R.rookie.gauge} steps (up to ${R.rookie.required} a day); Champion→Ultimate ${R.champion.gauge} (up to ${R.champion.required}/day); Ultimate→Mega ${R.ultimate.gauge} (up to ${R.ultimate.required}/day).`,
             )}
           </p>
           {/* WP4.2 — o requisito do Ultra nunca esteve no guia, e ele é o único
@@ -103,8 +105,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               ditos — com a permanência primeiro, que é a que não pede descer. */}
           <p style={para}>
             {L(
-              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor, e nenhum pede que você degenere.`,
-              `The Ultra has two paths: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better, and neither asks you to degenerate.`,
+              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos (aí bastam ${R.mega.gauge}). Nenhum é melhor, e nenhum pede que você degenere.`,
+              `The Ultra has two paths: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches (then ${R.mega.gauge} is enough). Neither is better, and neither asks you to degenerate.`,
             )}
           </p>
           {/* Renascimento: o degrau depois do topo. Fica logo abaixo do Ultra
@@ -118,14 +120,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
                  exclusivo de quem comprou, e a página de Evolução não mostrava
                  nada para quem não podia — o guia criava a expectativa e a tela
                  entregava silêncio. */
-              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e dias completos continuam intactos. Acontece uma vez só.',
-              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and complete days stay intact. It happens only once.',
+              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e o caminho andado continuam intactos. Acontece uma vez só.',
+              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and the path walked stay intact. It happens only once.',
             )}
           </p>
           <p style={para}>
             {L(
-              'Dias completos só acumulam. A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
-              'Complete days only accumulate. Evolution is yours to trigger: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
+              'O caminho só acumula — um dia fraco soma pouco, nunca tira. Dia completo (a meta do dia inteira) é um selo do dia: rende Bits, mas não é mais o que faz evoluir. A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
+              'The path only accumulates — a light day adds a little, never takes away. A complete day (the whole daily goal) is a seal for the day: it pays Bits, but it is no longer what makes it evolve. Evolution is yours to trigger: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
             )}
           </p>
           <p style={para}>
@@ -174,8 +176,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              `As barras de energia são o requisito do estágio (Rookie: ${R.rookie.required}). Ela enche só comendo e zera todo dia.`,
-              `Energy bars equal your stage requirement (Rookie: ${R.rookie.required}). It fills only by feeding and resets daily.`,
+              `As barras de energia são o dobro da meta diária do estágio (Rookie: ${getMaxEnergyForStage('rookie')}). Ela enche só comendo e zera todo dia — e não decide mais o dia completo.`,
+              `Energy bars are twice your stage’s daily goal (Rookie: ${getMaxEnergyForStage('rookie')}). It fills only by feeding and resets daily — and no longer decides the complete day.`,
             )}
           </p>
           <p style={para}>

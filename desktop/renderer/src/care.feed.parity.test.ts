@@ -96,14 +96,14 @@ describe('o teto de energia do overlay passa a ser o do JOGO, nao um cache', () 
     const atrasado = { stage: 'mega-harmony', energy: 4, maxEnergy: 4, foodInventory: { '🍎': 1 }, feedTimes: [] };
     expect(legado({ ...atrasado }, '🍎', AGORA).energy).toBe(4);            // preso no teto de rookie
     expect(localFeed(atrasado, '🍎', AGORA).energy).toBe(5);                // o teto do estagio real
-    expect(getMaxEnergyForStage('mega-harmony')).toBe(6);
+    expect(getMaxEnergyForStage('mega-harmony')).toBe(12); // 6 × ENERGY_HEADROOM (11/10/2026)
   });
 
   it('nao ha campo de teto para o chamador passar errado', () => {
     // O tipo `LocalFeedState` nao tem `maxEnergy` — o teto entra pelo `stage`.
-    const r = localFeed({ stage: 'mega-harmony', energy: 5, foodInventory: { '🍎': 1 }, feedTimes: [] }, '🍎', AGORA);
+    const r = localFeed({ stage: 'mega-harmony', energy: 11, foodInventory: { '🍎': 1 }, feedTimes: [] }, '🍎', AGORA);
     expect(r.energy).toBe(getMaxEnergyForStage('mega-harmony'));
-    expect(r.energy).toBe(6);
+    expect(r.energy).toBe(12);
   });
 });
 

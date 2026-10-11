@@ -25,6 +25,7 @@ import { sanitizeTalentPicks } from './talents';
 import { missionBitsGain } from './equipment';
 import { playerDayKey } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
+import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 
 /**
@@ -109,10 +110,10 @@ export function getNextEvolution(
   currentStage: string,
   branch: Attr,
   unlockedEvolutions: string[],
-  /** Dias perfeitos desde a última evolução — abre o caminho da PERMANÊNCIA
-   *  para o Ultra (`canReachUltra`, WP4.2/D6). Zero por omissão, então quem
-   *  não passa continua com a regra antiga: só a coleção das três megas. */
-  perfectDays = 0,
+  /** Pontos do gauge desde a última evolução — abrem o caminho da PERMANÊNCIA
+   *  para o Ultra (`canReachUltra`, WP4.2/D6; em pontos desde 11/10/2026).
+   *  Zero por omissão: só a coleção das três megas. */
+  evolutionPoints = 0,
 ): string {
   branch = clampBranch(branch) as Attr;
   const level = getStageLevel(currentStage);
@@ -123,7 +124,7 @@ export function getNextEvolution(
     // A pergunta "existe destino?" é de `canReachUltra` (dono da árvore).
     // Aqui não se decide critério — se decidisse, seria a segunda cópia de uma
     // regra de evolução, que é como este projeto já se machucou antes.
-    if (canReachUltra({ unlockedEvolutions, perfectDays })) return 'ultra';
+    if (canReachUltra({ unlockedEvolutions, evolutionPoints })) return 'ultra';
     return currentStage;
   }
   return currentStage; // ultra — já no topo
@@ -319,6 +320,21 @@ export function degeneratedPerfectDays(
     Math.floor(FORM_REQUIREMENTS[newStageLevel].required / 2),
     previousPerfectDays - DEGENERATION_PERFECT_DAYS_COST,
   );
+}
+
+/**
+ * 🧬 A mesma queda, no GAUGE DE EVOLUÇÃO (11/10/2026): piso = metade do gauge
+ * do estágio novo; custo = `DEGENERATION_PERFECT_DAYS_COST` dias de teto
+ * diário do estágio novo. Dois chamadores (virada e `handleDegenerate`), uma
+ * expressão.
+ */
+export function degeneratedEvolutionPoints(
+  previousPoints: number,
+  newStageLevel: EvolutionStage,
+): number {
+  const { required, gauge } = FORM_REQUIREMENTS[newStageLevel];
+  const prev = typeof previousPoints === 'number' && Number.isFinite(previousPoints) ? previousPoints : 0;
+  return Math.max(Math.floor(gauge / 2), prev - DEGENERATION_PERFECT_DAYS_COST * required);
 }
 
 /**
@@ -616,8 +632,11 @@ function countsForGoal(t: any): boolean {
  * (minimal-ui F2). Duas cópias desta conta divergiriam em silêncio — foi o que
  * aconteceu com o `isDayPerfect` que dormia no `useProgressTracking`.
  */
-export function completeDayReached(p: { registered: number; goal: number; done: number; energy: number }): boolean {
-  return p.registered > 0 && p.done >= p.goal && p.energy >= p.goal;
+export function completeDayReached(p: { registered: number; goal: number; done: number }): boolean {
+  // ⚡ 11/10/2026 (decisão do dono): a energia SAIU do critério — ela virou
+  // combustível da masmorra, e o dia completo virou só o selo do dia. Quem
+  // decide evolução é o gauge (`utils/evolutionGauge.ts`).
+  return p.registered > 0 && p.done >= p.goal;
 }
 
 /**
@@ -898,7 +917,10 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // (min) e energia contra o requisito cru — a Fase 1 do fix de
   // `tasksCompletedOn` repetida no outro eixo.
   const energyWasFull = (prev.energyPoints ?? 0) >= dailyGoal;
-  const dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal, done: dailyDone, energy: prev.energyPoints ?? 0 });
+  const dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal, done: dailyDone });
+  // 🧬 O gauge de evolução credita o PESO feito ontem, com teto diário do
+  // estágio (`utils/evolutionGauge.ts`). Nunca decresce aqui.
+  const gaugeGain = gaugeContribution(dailyDone, prev.evolutionStage);
   // PR12b (`tal-com-06`): os Bits do dia completo com o Comércio. Picks inválidos para o Vínculo valem zero.
   const dayBits = missionBitsGain(BITS_PER_COMPLETE_DAY, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)));
 
@@ -927,6 +949,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
+  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage);
   let newEvolutionStage = prev.evolutionStage;
   const finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
@@ -1024,8 +1047,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // Evolução. O cadeado na página de Evolução bloqueia por completo: os dias
   // perfeitos seguem acumulando e a evolução acontece na virada seguinte ao
   // destravar.
-  if (!MANUAL_EVOLUTION && !prev.evolutionLocked && newPerfectDays >= requirements.required) {
+  if (!MANUAL_EVOLUTION && !prev.evolutionLocked && gaugeFull(newEvolutionPoints, prev.evolutionStage, prev.unlockedEvolutions)) {
     newPerfectDays = 0;
+    newEvolutionPoints = 0;
 
     // Branch = atributo dominante RECENTE (não o total histórico), pra que o
     // hábito atual do jogador ainda mande no rumo da evolução.
@@ -1042,7 +1066,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     newCurrentBranch = branch;
     newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
 
-    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions, prev.perfectDays ?? 0);
+    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions, prev.evolutionPoints ?? 0);
     const naturalNext = newEvolutionStage;
 
     const newStageLevel = getStageLevel(newEvolutionStage);
@@ -1083,6 +1107,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       // MANUAL (`handleDegenerate`, App.tsx) precisa da mesma — e enquanto ela
       // estava duplicada os dois divergiram.
       newPerfectDays = degeneratedPerfectDays(prev.perfectDays, degeneratedLevel);
+      newEvolutionPoints = degeneratedEvolutionPoints(newEvolutionPoints, degeneratedLevel);
       newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
     } else {
       // RAIZ da árvore (rookie): não existe forma abaixo, então `getPreviousForm`
@@ -1195,6 +1220,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     healthPoints: Math.min(newHP, newMaxHP),
     maxHealthPoints: newMaxHP,
     perfectDays: newPerfectDays,
+    evolutionPoints: newEvolutionPoints,
     lastResetDate: now.toDateString(),
     evolutionStage: newEvolutionStage,
     poopEventsScheduled: [],
@@ -1270,6 +1296,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       wasPerfect: dayWasPerfect,
       energyWasFull,
       perfectDays: newPerfectDays,
+      /** 🧬 Quanto o gauge recebeu nesta virada e onde ele ficou. */
+      gaugeGain,
+      evolutionPoints: newEvolutionPoints,
       degenerated: wasDegeneratedByHP,
       // Modo boas-vindas: a UI deve receber quem voltou sem nenhuma cobrança.
       welcomeBack: wasAway,
