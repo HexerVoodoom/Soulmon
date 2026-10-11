@@ -38,6 +38,32 @@
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { METRICS_KEY_HEADER, secretEquals, dayRange, serverDay } from './metrics.js';
+import { flagOn } from './_killSwitch.js';
+
+// ---------------------------------------------------------------------------
+// ESCRITAS NA KV (release/beta-1, `abuso-e-custo.md` V4.1): um `curl` em loop
+// aqui gastava 1 escrita por relatório repetido. Agora:
+//   · repetição da MESMA assinatura conta na MEMÓRIA do isolate e só vai à KV
+//     no máximo 1×/hora por assinatura (`FLUSH_EVERY_MS`), somando o acumulado;
+//   · teto diário de escritas de crash por isolate (`MAX_CRASH_WRITES_PER_DAY`);
+//     acima dele o relatório é aceito e descartado (200 `sampled:false`);
+//   · `CRASH_DISABLED` (var/secret) desliga a gravação inteira (202);
+//   · o teto GLOBAL de verdade é a regra de Rate Limiting do painel da Cloudflare
+//     em `/api/crash*` (BETA-CONTINGENCIA §0.4) — memória de isolate é amortecedor.
+// ---------------------------------------------------------------------------
+export const FLUSH_EVERY_MS = 60 * 60 * 1000;
+export const MAX_CRASH_WRITES_PER_DAY = 100;
+/** @type {Map<string, { pending: number, flushedAt: number }>} */
+const memoria = new Map();
+let escritas = { day: '', n: 0, cheio: false };
+/** Só para teste: esquece o estado em memória do isolate. */
+export function resetCrashMemory() { memoria.clear(); escritas = { day: '', n: 0, cheio: false }; }
+function podeEscrever(day, quantas) {
+  if (escritas.day !== day) escritas = { day, n: 0, cheio: false };
+  if (escritas.n + quantas > MAX_CRASH_WRITES_PER_DAY) return false;
+  escritas.n += quantas;
+  return true;
+}
 
 export const CRASH_PREFIX = 'crash:';
 /** 14 dias. Mínimo de TTL da KV é 60s; isto é bem acima. */
@@ -139,6 +165,8 @@ const json = (obj, status = 200) =>
 const hourNow = () => new Date().toISOString().slice(0, 13);
 
 async function receive({ request, env }) {
+  // Kill-switch: aceita e descarta, sem tocar a KV (o app não deve tentar de novo).
+  if (flagOn(env?.CRASH_DISABLED)) return json({ ok: true, disabled: true }, 202);
   const gate = takeToken('crash', clientKey(request), RATE);
   if (!gate.ok) return tooManyRequests(gate.retryAfter);
 
@@ -154,25 +182,39 @@ async function receive({ request, env }) {
   const sig = await signatureOf(report);
   const key = `${CRASH_PREFIX}${day}:${sig}`;
   const store = kvOrThrow(env);
+  const agora = Date.now();
+
+  // Repetição recente: só memória (nenhuma operação na KV).
+  const m = memoria.get(key);
+  if (m && agora - m.flushedAt < FLUSH_EVERY_MS) {
+    m.pending++;
+    return json({ ok: true });
+  }
 
   try {
     const existing = await store.get(key, { type: 'json' });
+    const acumulado = (m?.pending ?? 0) + 1;
     if (existing && typeof existing === 'object') {
-      existing.n = (Number.isFinite(existing.n) ? existing.n : 0) + 1;
+      if (!podeEscrever(day, 1)) { if (m) m.pending++; return json({ ok: true, sampled: false }); }
+      existing.n = (Number.isFinite(existing.n) ? existing.n : 0) + acumulado;
       existing.last = hourNow();
       existing.vers = Array.isArray(existing.vers) ? existing.vers : [];
       if (!existing.vers.includes(report.ver) && existing.vers.length < 5) existing.vers.push(report.ver);
       await store.put(key, JSON.stringify(existing), { expirationTtl: CRASH_TTL_SECONDS });
+      memoria.set(key, { pending: 0, flushedAt: agora });
       return json({ ok: true });
     }
-    // Assinatura nova: respeita o teto diário (amostragem do lado do servidor).
+    // Assinatura nova: respeita o teto diário de assinaturas e o de escritas.
+    if (escritas.day === day && escritas.cheio) return json({ ok: true, sampled: false });
     const listed = await store.list({ prefix: `${CRASH_PREFIX}${day}:`, limit: MAX_SIGNATURES_PER_DAY + 1 });
-    if (listed.keys.length >= MAX_SIGNATURES_PER_DAY) return json({ ok: true, sampled: false });
+    if (listed.keys.length >= MAX_SIGNATURES_PER_DAY) { podeEscrever(day, 0); escritas.cheio = true; return json({ ok: true, sampled: false }); }
+    if (!podeEscrever(day, 1)) return json({ ok: true, sampled: false });
     await store.put(
       key,
-      JSON.stringify({ ...report, n: 1, first: hourNow(), last: hourNow(), vers: [report.ver] }),
+      JSON.stringify({ ...report, n: acumulado, first: hourNow(), last: hourNow(), vers: [report.ver] }),
       { expirationTtl: CRASH_TTL_SECONDS },
     );
+    memoria.set(key, { pending: 0, flushedAt: agora });
     return json({ ok: true });
   } catch {
     return json({ error: 'Unavailable' }, 503);
@@ -201,7 +243,9 @@ export async function onRequestGet({ request, env }) {
       const sig = k.name.slice(k.name.lastIndexOf(':') + 1);
       if (!SIG_RE.test(sig)) continue;
       const value = await store.get(k.name, { type: 'json' }).catch(() => null);
-      if (value && typeof value === 'object') crashes.push({ day, sig, ...value });
+      // Soma o que ESTE isolate ainda guarda em memória (ainda não foi à KV).
+      const pend = memoria.get(k.name)?.pending ?? 0;
+      if (value && typeof value === 'object') crashes.push({ day, sig, ...value, n: (Number(value.n) || 0) + pend });
     }
   }
   crashes.sort((a, b) => (b.n ?? 0) - (a.n ?? 0));

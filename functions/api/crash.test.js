@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  onRequest, scrub, scrubRoute, sanitizeReport, signatureOf,
+  onRequest, resetCrashMemory, MAX_CRASH_WRITES_PER_DAY, scrub, scrubRoute, sanitizeReport, signatureOf,
   CRASH_PREFIX, CRASH_TTL_SECONDS, MAX_BODY_BYTES, MAX_MSG, MAX_STACK, MAX_SIGNATURES_PER_DAY,
 } from './crash.js';
 import { resetRateLimits } from './_rateLimit.js';
@@ -31,7 +31,7 @@ const post = (body, ip = '1.1.1.1') => new Request('https://s/api/crash', {
   headers: { 'CF-Connecting-IP': ip },
 });
 
-beforeEach(() => resetRateLimits());
+beforeEach(() => { resetRateLimits(); resetCrashMemory(); });
 
 describe('scrub: sem PII na mensagem e no stack', () => {
   it('tira e-mail, token, URL com query, ids longos e números longos', () => {
@@ -81,8 +81,10 @@ describe('POST /api/crash', () => {
     expect(key.startsWith(`${CRASH_PREFIX}${serverDay()}:`)).toBe(true);
     expect(kv.ttls.get(key)).toBe(CRASH_TTL_SECONDS);
     const v = JSON.parse(raw);
-    expect(v.n).toBe(2);
-    expect(v.vers).toEqual(['1.1.4', '1.1.5']);
+    // A 2ª ocorrência na mesma hora fica na MEMÓRIA do isolate (V4.1: no máx.
+    // 1 escrita/hora por assinatura); a leitura soma (teste Q2 abaixo).
+    expect(v.n).toBe(1);
+    expect(v.vers).toEqual(['1.1.4']);
     // nada de identidade no que foi gravado
     expect(Object.keys(v).sort()).toEqual(['first', 'kind', 'last', 'msg', 'n', 'plat', 'route', 'stack', 'vers', 'ver'].sort());
     expect(raw).not.toMatch(/1\.1\.1\.1/);
@@ -151,5 +153,46 @@ describe('GET /api/crash (leitura do dono)', () => {
   it('janela inválida: 400', async () => {
     const env = { SOULMON_SAVES: fakeKV(), METRICS_ADMIN_KEY: 'segredo' };
     expect((await onRequest({ request: get({ 'X-Metrics-Key': 'segredo' }, '?from=2020-01-01&to=2026-01-01'), env })).status).toBe(400);
+  });
+});
+
+describe('custo de escrita (abuso-e-custo V4.1, Q2)', () => {
+  const contador = () => {
+    const kv = fakeKV();
+    let puts = 0, lists = 0;
+    const put = kv.put, list = kv.list;
+    kv.put = async (...a) => { puts++; return put(...a); };
+    kv.list = async (...a) => { lists++; return list(...a); };
+    return { kv, n: () => ({ puts, lists }) };
+  };
+
+  it('Q2: 101 relatórios da MESMA assinatura (IPs diferentes) → ≤ 2 put e 1 list; o n lido soma a memória', async () => {
+    const { kv, n } = contador();
+    const env = { SOULMON_SAVES: kv, METRICS_ADMIN_KEY: 'segredo' };
+    for (let i = 0; i < 101; i++) {
+      const r = await onRequest({ request: post(valido(), `10.0.${i >> 8}.${i & 255}`), env });
+      expect(r.status).toBe(200);
+    }
+    expect(n().puts).toBeLessThanOrEqual(2);
+    expect(n().lists).toBe(1);
+    const j = await (await onRequest({ request: new Request('https://s/api/crash', { headers: { 'X-Metrics-Key': 'segredo', 'CF-Connecting-IP': '9.9.9.9' } }), env })).json();
+    expect(j.crashes[0].n).toBe(101);
+  });
+
+  it('teto diário de escritas por isolate: acima dele aceita e descarta', async () => {
+    const { kv, n } = contador();
+    const env = { SOULMON_SAVES: kv };
+    for (let i = 0; i < MAX_CRASH_WRITES_PER_DAY + 20; i++) {
+      await onRequest({ request: post(valido({ msg: `falha ${i}` }), `11.0.${i >> 8}.${i & 255}`), env });
+    }
+    expect(n().puts).toBeLessThanOrEqual(MAX_CRASH_WRITES_PER_DAY);
+  });
+
+  it('CRASH_DISABLED: 202 sem nenhuma operação na KV', async () => {
+    const { kv, n } = contador();
+    const r = await onRequest({ request: post(valido()), env: { SOULMON_SAVES: kv, CRASH_DISABLED: '1' } });
+    expect(r.status).toBe(202);
+    expect(n()).toEqual({ puts: 0, lists: 0 });
+    expect(kv.store.size).toBe(0);
   });
 });
