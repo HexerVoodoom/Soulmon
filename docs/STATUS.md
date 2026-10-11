@@ -1,5 +1,30 @@
 # Status do Soulmon — registro vivo
 
+> ## 08/10/2026 — Masmorra vira DESCIDA IDLE (lutas automáticas, HP persistente, andares infinitos)
+>
+> - **Pedido do dono (modal respondido):** sem botão de próximo oponente; o HP não enche entre descidas e **recupera com o tempo** (por timestamp, até com o app fechado); a cada 6 lutas desce 1 andar, **sem teto**, até o HP acabar; lutas automáticas com pausar/sair.
+> - **Dono único:** `src/utils/dungeonIdle.ts` — `DUNGEON_AUTO_FIGHT_MS` 4000 · `DUNGEON_HP_REGEN_FULL_HOURS` 4 · `DUNGEON_MIN_HP_TO_ENTER_PCT` 25 · `DUNGEON_MILESTONE_FLOOR` 5 · `hpAgora(state, now)` pura. Campo novo no save: `dungeonHp?: { frac, at }` (hidratado/higienizado em `hydrateSave`, fuzz2 → 98 campos). Motor de combate, servidor e `*.parity.test.js` **intocados** (o HP persistente é só cliente e não compra vantagem).
+> - **Recompensas:** o "concluir os 5 andares" virou o MARCO "limpou a camada 5", 1× por descida (Glitchtama com o teto de 1 uso/dia, `setDungeonDifficultyAtLeast`, `dungeonRunsCompleted`); camadas 6+ não pagam de novo. Placar `DUNGEON_BEST` segue sendo a soma de Bits-base da descida. **Teto diário de Bits (150) já existia** no funil `creditMinigameBits` e foi mantido; a tela avisa "Daily Bits cap reached" sem parar a descida. Coraçãozinho 5%/inimigo, máx 2/dia: igual.
+> - **Cura do andar mantida** (~25%, ofício + talento `healBoost`): é cura DENTRO da descida; removê-la deslocaria a parede calibrada e mataria um talento. O que saiu foi o enchimento ENTRE descidas.
+> - **Copy:** "Recuperando…/Recovering…" (a bíblia veta "descansar" sobre a criatura — desvio consciente do "Resting" pedido). Portão do Vínculo (andar ≥ 4, Vínculo 8) agora encerra a descida ("lacrado por ora") em vez de desabilitar um botão.
+> - **Depende do dono:** ajustar as 3 constantes; confirmar a cura do andar e o marco "limpar" (vs. "chegar").
+> ## 11/10/2026 — Auditoria de segurança de lançamento (`docs/AUDITORIA-SEGURANCA-LANCAMENTO.md`)
+>
+> - **Corrigido:** `/api/transcribe` deixou de ser anônima (ID token Firebase verificado, fail-closed; `ChatBox` manda `authHeaders`). `/api/generate-sprite`: `referenceImageUrls` só aceita a nossa `/api/sprite-image?k=` da mesma origem (o resto é descartado — era SSRF de terceiro via Higgsfield) e `prompt`/`promptFallback` têm teto `MAX_PROMPT_CHARS` (12000). `@capacitor/android|core|cli` 8.4.0 → **8.4.3** (GHSA-rvm3-566m-v7fv, crítico no `npm audit`).
+> - **Depende do dono:** fixar o HOST do CDN do Higgsfield quando a assinatura gerar a 1ª imagem; Rate Limiting no painel Cloudflare para `/api/*` caras (o balde atual é por isolate); APK novo na Play para o patch do Capacitor; manter `FIREBASE_PROJECT_ID` setado.
+> ## 11/10/2026 — Hábito "só de hoje", subitens com peso fixo, Pagar contas e comida premium
+>
+> - **A. Hábito semanal**: o check da linha é de HOJE ("Marcar como feito hoje") e o progresso da semana é um chip à parte ("Semana: 1 de 3", diário "N de 7") com o aviso "O check vale só para hoje". Só exibição: `weekChip` em `habitRhythm.ts`; constância, escudo e pontuação intactos.
+> - **B. Work/Trabalho**: já existia (tipo, CreateModal/EditModal/useItemForm, catálogo na área `financas`). Travado por teste: soma 4 como as demais (1/2/1, pende a Harmonia). Nada de número novo.
+> - **C. Finanças**: SEM categoria nova (exigiria números do dono); vive em `Work`. Atalho "Pagar contas" no CreateModal (`data/taskPresets.ts`): o usuário marca as contas, vira TAREFA com subitens, repete a cada 30 dias da CONCLUSÃO (`repeatEveryDays`; a próxima nasce `someday` + `wakeOn`, acorda na virada). Peso: `effortWithSteps` em `taskModel.ts` (teto `min(3, nº de subitens)` com ≥2; piso sugerido idêntico na criação) — vale em `registeredForDay`/virada/check-in/progresso/`completeTask` (`taskEffort`).
+> - **D. Comida premium** (`utils/premiumFood.ts`): 1 por tarefa com ≥3 subitens TODOS feitos; tetos 1/dia e 3/semana (dia do jogador); uso +5 de energia (nunca acima das barras; recusa com energia cheia; 1 uso/dia). Campo novo no save: `premiumFood`. Estrelinha em CSS (`.sm3-item-arte[data-premium]`).
+> - Decisões abertas para o dono: ver relatório da sessão (premium em hábito com etapas? tetos 1/3? Work = Harmonia?).
+> ## 10/10/2026 — Oficina do Foco: a sessão em ETAPAS interativas (branch local do worktree, sem push)
+>
+> - **Pedido do dono:** as técnicas deixam de ser só guia. Etapas puláveis (preparar → ritmo → 2 minutos com picker → Eisenhower com ordem ao vivo → sapo → se-então → brain dump com tempo) terminam numa **lista organizada** e na ativação do Pomodoro. Regra pura em `utils/focoSessao.ts` (+ teste); UI `components/play/OficinaPlano.tsx` (viaja no chunk lazy da Oficina, fora da entrada).
+> - **Conclusão real:** o check da lista chama `handleToggleTask` (prop `onCompleteFocusTask`); a Home nunca é reordenada. "Concluir sessão" antes concluía todas as tarefas; **não conclui mais nenhuma**.
+> - **Recompensa extra:** `onPlanReward` → `rollPlanLoot` + `applyFocusLoot` com recibo `plan:<id>`: 1 item, 1×/sessão, máx. 2/dia (`FOCUS_PLAN_DAILY_CAP`), dentro do teto de 8. Sem campo novo no save (fuzz2 intocado).
+> - **Depende do dono:** rever o teto de 2 sessões premiadas/dia e a exigência de ≥1 tarefa na lista para concluir.
 > ## 11/10/2026 — Guilda de lançamento, PR5: as sombras do Pesadelo (`claude/guilda-lancamento`)
 >
 > - **O que muda:** no Pesadelo da Corrida com obstáculos os obstáculos são **sombras de Solmons específicos** — silhueta preta, só os olhos de luz (`utils/nightmareShadows.ts`, `drawShadowObstacle` no `DinoGame`). **Placeholder agora**: o sprite da própria linha pintado de preto em tempo de desenho, preso à caixa de colisão, virado para o pet, com dois olhos acesos. **Colisão, placar e recompensas não mudam.** Conferido com Playwright 390×844.
@@ -5124,3 +5149,11 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - **Persistência e limites:** `focusLoot` guarda dia, contador e ids de evento no save da conta; timer e progresso de ciclo da sessão continuam locais. O cliente deduplica o evento; `save.js` e `GameStateContext` saneiam e limitam o formato a oito. Isso não é uma garantia anti-cheat autoritativa: o endpoint de save ainda aceita o estado do jogo escrito pelo cliente.
 - **Verificação:** `npm run typecheck` passou; suíte focada passou: 6 arquivos, 98 testes (regras, paridade do sanitizador servidor/cliente, integração com `save.js`, timer, Oficina e persistência de save). `git diff --check` sem erros. Não foi feita validação manual em dispositivo móvel.
 - **Preservar:** alteração local pendente em `src/assets/soulmon/bosses/boss-arauto-do-fim-full.png`; nenhum commit/push.
+
+### 11/10/2026 — lote do dono (missões iniciais, "?", abas, +, XP, pets)
+- Primeiro dia: carinho marcava só se a cura acontecesse (pet novo está com vida cheia e recusa) e concluir HÁBITO não marcava "atividade"; ambos ligados (`firstDay.gestos.contract.test.ts`).
+- "?" de missão só com algo resgatável: Conquistas (sem "Resgatar") nunca acendem (`questMarks.ts`).
+- Corvo do tour: "Mysterious Soulmon" / "Solmon misterioso" (`tourGuideName`).
+- XP visível antes de concluir (tarefa/hábito) em `DailyRituals`; carinho e missões NÃO têm evento de XP (regra, não bug).
+- "+" abre "Novo hábito / Nova tarefa"; Home com abas Hoje/Semanal (só lista, não pontuação).
+- Pets andavam de costas: `artFacesLeft` (`utils/sprites.ts`) para linhas de perfil esquerdo (igni, nautilu, kaelen, corvo).

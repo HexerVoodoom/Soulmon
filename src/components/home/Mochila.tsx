@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
+import { isPremiumKey } from '../../utils/premiumFood';
 import { ITEM_ART } from '../../utils/itemArt';
 import { getFoodDesc, getFoodName } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
@@ -50,11 +51,11 @@ export function mochilaTabs(inv: Record<string, number>): Record<MochilaAba, Arr
   for (const [emoji, n] of Object.entries(inv)) {
     if (!(n > 0)) continue;
     const esp = SPECIAL_ITEMS[emoji];
-    if (esp && esp.kind !== 'chip') especiais.push([emoji, n]);
+    if (esp && esp.kind !== 'chip' && esp.kind !== 'premium') especiais.push([emoji, n]);
     else comida.push([emoji, n]);
   }
   // Comida comum antes dos chips; dentro de cada grupo, o maior estoque antes.
-  const peso = (e: string) => (SPECIAL_ITEMS[e]?.kind === 'chip' ? 1 : 0);
+  const peso = (e: string) => (SPECIAL_ITEMS[e]?.kind === 'chip' ? 2 : SPECIAL_ITEMS[e]?.kind === 'premium' ? 1 : 0);
   comida.sort((a, b) => peso(a[0]) - peso(b[0]) || b[1] - a[1]);
   especiais.sort((a, b) => b[1] - a[1]);
   return { comida, especiais };
@@ -311,7 +312,7 @@ export function Mochila({
                       setSelecionado(emoji);
                     }}
                   >
-                    <span className="sm3-item-arte" aria-hidden="true">
+                    <span className="sm3-item-arte" aria-hidden="true" data-premium={isPremiumKey(emoji) || undefined}>
                       {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={32} height={32} draggable={false} />}
                     </span>
                     <span className="sm3-item-nome">{nome}</span>

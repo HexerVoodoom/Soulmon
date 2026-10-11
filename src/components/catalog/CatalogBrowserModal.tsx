@@ -158,7 +158,7 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
 
           <button type="button" onClick={onCreateFromScratch} style={{ ...sm2Button('outline'), width: '100%' }}>
             <Icon name="add" size={20} fill={0} tone="inherit" />
-            {isPt ? 'Algo que não está aqui?' : "Something not here?"}
+            {isPt ? 'Criar o meu próprio hábito' : 'Create my own habit'}
           </button>
         </div>
       )}

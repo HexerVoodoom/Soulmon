@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import {
@@ -21,7 +21,8 @@ import { UnlockNudge } from './UnlockAccountModal';
 import { sm2Tag } from './TaskMeta';
 import { minimumViableHint } from '../utils/taskSuggestions';
 import { parseQuickAdd, quickAddHint, type QuickAddResult } from '../utils/quickAdd';
-import type { Effort, HabitAnchor, Schedule } from '../types/taskModel';
+import { suggestedEffortForSteps, type Effort, type HabitAnchor, type Schedule } from '../types/taskModel';
+import { TASK_PRESETS, presetSteps, type TaskPreset } from '../data/taskPresets';
 
 /**
  * ONDA 5 — o formulário de criação sobre as primitivas limpas de
@@ -50,6 +51,8 @@ interface CreateModalProps {
     effort?: Effort;
     /** Quando pretendo fazer (Things 3). Só isto traz a tarefa para o Hoje. */
     startDate?: string;
+    /** Repete a cada N dias contados da CONCLUSÃO (preset "Pagar contas"). */
+    repeatEveryDays?: number;
     status?: 'open';
     createdAt?: string;
     lastTouchedAt?: string;
@@ -413,7 +416,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   const {
     name, setName,
     category, setCategory,
-    steps,
+    steps, setSteps,
     effort, setEffort,
     hasStart, setHasStart,
     startDate, setStartDate,
@@ -433,6 +436,32 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   } = useItemForm({ isOpen });
 
   const sched = useHabitSchedule({ isOpen });
+
+  // Preset de tarefa com subitens ("Pagar contas"): só preenche o formulário.
+  const [presetOpen, setPresetOpen] = useState(false);
+  const [presetSel, setPresetSel] = useState<string[]>([]);
+  const [repeatEvery, setRepeatEvery] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    if (isOpen) return;
+    setPresetOpen(false); setPresetSel([]); setRepeatEvery(undefined);
+  }, [isOpen]);
+  const openPreset = (preset: TaskPreset) => {
+    setPresetSel(preset.items.filter(i => i.defaultOn).map(i => i.id));
+    setPresetOpen(true);
+  };
+  const applyPreset = (preset: TaskPreset) => {
+    const picked = presetSteps(preset, presetSel, isPt);
+    if (picked.length === 0) return;
+    setIsSingleExecution(true);
+    setName(isPt ? preset.name.pt : preset.name.en);
+    setCategory(preset.category);
+    setSteps(picked);
+    // Piso sugerido: a lista nasce pesando como as mesmas tarefas soltas (teto 3).
+    setEffort(suggestedEffortForSteps(picked.length));
+    setRepeatEvery(preset.repeatEveryDays);
+    setPresetOpen(false);
+    setShowForm(true);
+  };
 
   // Nudge de tarefa mínima (utils/taskSuggestions.ts): o gargalo do modelo de
   // Fogg é Habilidade, não Motivação.
@@ -458,6 +487,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         alarm: buildAlarm(),
         effort,
         startDate: buildStartDate(),
+        repeatEveryDays: repeatEvery,
         status: 'open',
         createdAt: nowIso,
         lastTouchedAt: nowIso,
@@ -592,6 +622,60 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           placeholder={quickAddHint(isPt ? 'pt-BR' : 'en')}
         />
         <HintTip language={language} label={isPt ? 'Sobre a captura rápida' : 'About quick add'}>{txt.quickHelp}</HintTip>
+      </div>
+
+      {/* PRESETS: atalho que preenche o formulário (a pessoa ainda revisa). */}
+      <div data-task-presets>
+        {TASK_PRESETS.map(preset => (
+          <div key={preset.id}>
+            <button
+              type="button"
+              onClick={() => (presetOpen ? setPresetOpen(false) : openPreset(preset))}
+              aria-expanded={presetOpen}
+              style={{ ...sm2Button('quiet', false, 'sm'), padding: '0 8px' }}
+            >
+              <span aria-hidden="true">{preset.emoji}</span>
+              {isPt ? `Atalho: ${preset.name.pt}` : `Shortcut: ${preset.name.en}`}
+            </button>
+            {presetOpen && (
+              <div role="group" aria-label={isPt ? 'Quais contas?' : 'Which bills?'} style={{ marginTop: 6 }}>
+                <p style={sm2Hint}>
+                  {isPt
+                    ? 'Marque as que valem para você. Cada uma vira um subitem; repete todo mês, depois que você concluir.'
+                    : 'Tick the ones that apply. Each becomes a step; it repeats monthly, after you finish.'}
+                </p>
+                {preset.items.map(item => (
+                  <CheckRow
+                    key={item.id}
+                    checked={presetSel.includes(item.id)}
+                    onChange={(v) => setPresetSel(sel => v ? [...sel, item.id] : sel.filter(x => x !== item.id))}
+                  >
+                    {isPt ? item.pt : item.en}
+                  </CheckRow>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  disabled={presetSel.length === 0}
+                  style={{ ...sm2Button('outline', presetSel.length === 0, 'sm'), marginTop: 8 }}
+                >
+                  {isPt ? 'Usar estas contas' : 'Use these bills'}
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        {repeatEvery && (
+          <p style={sm2Hint} data-repeat-note>
+            {isPt
+              ? `Repete a cada ${repeatEvery} dias depois de concluída — a próxima fica guardada, sem pesar no seu dia.`
+              : `Repeats ${repeatEvery} days after you finish — the next one waits aside, weighing nothing on your day.`}
+            {' '}
+            <button type="button" onClick={() => setRepeatEvery(undefined)} style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px' }}>
+              {isPt ? 'Não repetir' : "Don't repeat"}
+            </button>
+          </p>
+        )}
       </div>
 
       {/* O que foi entendido. Só aparece com o formulário fechado — com ele

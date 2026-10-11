@@ -241,6 +241,25 @@ export function resolveLineForStage(stage: string, demoCharacterId?: string): { 
   return { line: LEGACY_LINES[hashId(key) % LEGACY_LINES.length], tier };
 }
 
+/**
+ * PARA ONDE A ARTE OLHA (11/10/2026, "os pets andam de costas"). Dono único.
+ *
+ * A regra antiga ("toda arte nossa olha para a DIREITA") era falsa para parte do
+ * acervo — conferido sprite a sprite: estas linhas são desenhadas olhando para a
+ * ESQUERDA, e o espelhamento do passeio (`scaleX(-1)` ao ir para a esquerda) as
+ * fazia andar de costas. O resto (linhas de frente, `ignar`, a árvore do Soulmon,
+ * `nascente`) olha para a direita ou de frente, e segue sem mudança. Arte gerada
+ * pelo jogador (acervo) não declara lado: tratada como direita.
+ * Linha NOVA com arte de perfil: declare aqui, senão anda de costas.
+ */
+export const LEFT_FACING_LINES: ReadonlySet<string> = new Set(['igni', 'nautilu', 'kaelen', CORVO_LINE]);
+
+export function artFacesLeft(stage: string, demoCharacterId?: string): boolean {
+  if (demoCharacterId === CORVO_LINE) return true;
+  const r = resolveLineForStage(stage, demoCharacterId);
+  return !!r && LEFT_FACING_LINES.has(r.line);
+}
+
 export function getSpriteForStage(stage: string, demoCharacterId?: string, size?: 256): string {
   const key = stage.toLowerCase();
   // O corvinho do administrador (`utils/corvoPet.ts`, dono único): uma arte

@@ -29,6 +29,7 @@ import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
+import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR } from '../utils/dungeonIdle';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
 interface GuideModalProps {
@@ -225,6 +226,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
+              'Tarefa com subitens (como "Pagar contas") pesa pelo esforço que você escolheu, nunca pelo número de subitens: cada subitem feito avança a barra, e o peso nunca passa do que as mesmas tarefas soltas pesariam (máximo 3). Fechar TODOS os subitens de uma tarefa com 3 ou mais rende uma comida premium (★): 5 de energia em vez de 1, no máximo uma por dia e três por semana, sem passar do máximo do dia. O check de um hábito vale só para o dia de hoje; o "N de M" ao lado é só o resumo da semana.',
+              'A task with steps (like "Pay bills") weighs by the effort you picked, never by how many steps it has: each finished step advances the bar, and the weight never exceeds what the same loose tasks would (max 3). Finishing ALL steps of a task with 3 or more earns a premium food (★): 5 energy instead of 1, at most one a day and three a week, never above the day\'s max. A habit\'s check counts for for that day; the "N of M" beside it is just the week\'s summary.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
               `Toda tarefa tem um esforço: Rápida (1), Média (2) ou Projeto (3). A meta soma esforço, não itens — um Projeto vale três Rápidas. Passando de ${OVERCOMMIT_EFFORT} pontos no dia, o pet avisa. É aviso, nunca bloqueio.`,
               `Every task has an effort: Quick (1), Medium (2) or Project (3). The goal adds up effort, not items — one Project is worth three Quick ones. Past ${OVERCOMMIT_EFFORT} points in a day your pet says so. A heads-up, never a block.`,
             )}
@@ -344,6 +351,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             {L(
               'Masmorra e Torneio nunca cobram corações. Perder custa só a run.',
               'Dungeon and Tournament never cost hearts. Losing only costs the run.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, sem fim, até o HP acabar. O HP não enche entre descidas — volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo. Limpar a camada ${DUNGEON_MILESTONE_FLOOR} é um marco: rende o item 🌀 (veja Itens).`,
+              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, endlessly, until the HP runs out. HP does not refill between descents — it comes back over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even with the app closed) and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down again. Clearing layer ${DUNGEON_MILESTONE_FLOOR} is a milestone: it earns the 🌀 item (see Items).`,
             )}
           </p>
           <p style={para}>

@@ -22,6 +22,10 @@ export type FocusLootRoll = { primary: FocusLootItem; extra?: FocusLootItem; cha
 export type FocusLootRequest = { day: string; environment: FocusEnvironmentId; sessionId: string; eventId: string };
 
 export const FOCUS_LOOT_DAILY_CAP = 8;
+/** Concluir o PROCESSO de planejamento (Oficina, 10/10/2026): 1 item, no máximo 2 por dia, dentro do teto de 8.
+ *  O recibo é `plan:<sessionId>` — uma sessão paga uma vez. Nunca olha contagem de tarefas. */
+export const FOCUS_PLAN_DAILY_CAP = 2;
+export const FOCUS_PLAN_EVENT_PREFIX = 'plan:';
 export const FOCUS_EXTRA_BASE_CHANCE = 0.05;
 export const FOCUS_EXTRA_CHANCE_PER_CYCLE = 0.05;
 export const FOCUS_EXTRA_MAX_CHANCE = 0.25;
@@ -68,6 +72,12 @@ export function rollFocusLoot(environmentId: FocusEnvironmentId, completedCycles
   return { primary: pick(), ...(random() < chance ? { extra: pick() } : {}), chancePercent: Math.round(chance * 100) };
 }
 
+/** O prêmio de concluir uma sessão: só o item garantido (sem extra), mesmo pool do ambiente. */
+export function rollPlanLoot(environmentId: FocusEnvironmentId, random: () => number = Math.random): FocusLootRoll {
+  const { primary } = rollFocusLoot(environmentId, 0, random);
+  return { primary, chancePercent: 0 };
+}
+
 export function sanitizeFocusLoot(raw: unknown): FocusLootLedger | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
   const r = raw as Record<string, unknown>;
@@ -85,6 +95,7 @@ export function applyFocusLoot(state: FocusLootState, request: FocusLootRequest,
   const current = state.focusLoot?.day === request.day ? sanitizeFocusLoot(state.focusLoot) : undefined;
   const ledger = current ?? { day: request.day, items: 0, claims: [] };
   if (ledger.claims.includes(request.eventId) || ledger.items >= FOCUS_LOOT_DAILY_CAP) return { state, accepted: false, items: [] };
+  if (request.eventId.startsWith(FOCUS_PLAN_EVENT_PREFIX) && ledger.claims.filter(c => c.startsWith(FOCUS_PLAN_EVENT_PREFIX)).length >= FOCUS_PLAN_DAILY_CAP) return { state, accepted: false, items: [] };
   const remaining = FOCUS_LOOT_DAILY_CAP - ledger.items;
   const allowedMaterials = FOCUS_ENVIRONMENTS.find(environment => environment.id === request.environment)?.materials as readonly MaterialId[];
   const items = [roll.primary, ...(roll.extra ? [roll.extra] : [])].slice(0, remaining).map(item => {

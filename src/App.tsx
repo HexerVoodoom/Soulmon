@@ -21,7 +21,7 @@ import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
-import { applyFocusLoot, rollFocusLoot, type FocusLootRequest } from './utils/focusExpedition';
+import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
@@ -216,8 +216,9 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
-  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted,
+  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
+import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
@@ -2306,6 +2307,7 @@ export default function App() {
       playTaskComplete();
       if (justFinishedActivity) {
         queueTaskGains(justFinishedActivity.category);
+        marcarGestoDoDia('task');
         // ↩️ #57 — a última etapa FECHA o hábito, então ela também abre a
         // janela de desfazer. Sem isto, hábito com etapas seria a metade do
         // app onde o toque errado continua sem volta.
@@ -2427,6 +2429,8 @@ export default function App() {
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
     if (activity) queueTaskGains(activity.category);
+    // Primeiro dia: concluir um hábito também é "concluir uma atividade".
+    if (activity) marcarGestoDoDia('task');
 
     // ↩️ #57 — a janela de 5 s. `gameState` aqui é o estado ANTES do updater
     // acima (o React só o troca no próximo render), que é exatamente a foto
@@ -2730,8 +2734,10 @@ export default function App() {
       // (e a virada do dia a reabria).
       adiarConclusaoDeTarefa(() => {
         let concluiu = false;
+        let ganhouPremium = false;
         setGameState(prev => {
           const feito = completeTask(prev, taskId) ?? prev;
+          ganhouPremium = Object.keys(feito.foodInventory).some(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
           // 🔗 Vínculo: a tarefa rende XP pelo PESO DE ESFORÇO dela (`effortOf`),
           // nunca por contagem de itens — é a mesma unidade da meta do dia. Se
           // rendesse por item, cadastrar cinco triviais valeria mais que encarar
@@ -2755,6 +2761,11 @@ export default function App() {
         queueMicrotask(() => {
           if (!concluiu) return;
           queueTaskGains(task.category);
+          if (ganhouPremium) {
+            toast(language === 'pt-BR'
+              ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
+              : '⭐ Every step done! You earned a premium food.');
+          }
           // A assombrada tem fala PRÓPRIA, e é de alívio. Concluir a que
           // estava te olhando não pode soar igual a concluir qualquer uma —
           // é a peça que transforma a pilha de culpa em recompensa.
@@ -2770,6 +2781,18 @@ export default function App() {
         });
       });
     }
+  };
+
+  // Subitem de TAREFA: avança a barra da linha. O último fecha a tarefa pelo
+  // caminho de sempre (comida, Vínculo, premium) — nada é pago aqui.
+  const handleToggleTaskStep = (taskId: string, stepId: string) => {
+    const task = gameState.tasks.find(t => t.id === taskId);
+    const step = task?.steps?.find(s => s.id === stepId);
+    if (!task || task.completed || !step || step.completed) return;
+    const fechaTudo = (task.steps ?? []).every(s => s.completed || s.id === stepId);
+    playTaskComplete();
+    setGameState(prev => ({ ...prev, tasks: completeTaskStep(prev.tasks, taskId, stepId) }));
+    if (fechaTudo) handleToggleTask(taskId);
   };
 
   /**
@@ -3217,6 +3240,12 @@ export default function App() {
       const agora = new Date();
       const refused = specialRefusal(gameState, foodEmoji, agora);
       if (refused === 'no-stock') return;
+      if (refused === 'daily-cap' && special.kind === 'premium') {
+        toast(language === 'pt-BR'
+          ? '⭐ Uma comida premium por dia. Ela te espera amanhã.'
+          : "⭐ One premium food a day. It'll wait for you tomorrow.");
+        return;
+      }
       if (refused === 'daily-cap') {
         // O item VOLTA para a pastinha e vale amanhã — por isso a mensagem diz
         // o que fazer, e não o que foi negado. Nada de toast de erro: o teto do
@@ -3247,6 +3276,9 @@ export default function App() {
 
       if (special.kind === 'glitchtama') {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
+      }
+      if (special.kind === 'premium') {
+        toast(language === 'pt-BR' ? '⭐ Comida premium! +5 de energia' : '⭐ Premium food! +5 energy');
       }
       return;
     }
@@ -5175,6 +5207,10 @@ export default function App() {
     // `rubDecision` lê o `petPassive` do ESTADO, e não de um parâmetro que quem
     // chama possa esquecer — foi assim que o Traço Carinhoso ficou desligado na
     // prática, barrado em 1,0 enquanto o CLAUDE.md declarava 1,5 (X-6).
+    // O GESTO do primeiro dia é o carinho em si, não a cura: pet com vida cheia
+    // (`already-full`, o caso de TODO pet novo) recusa a cura e antes nunca
+    // marcava o gesto.
+    marcarGestoDoDia('pet');
     const refused = rubDecision(gameState, today);
     if (refused) {
       // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
@@ -5312,7 +5348,7 @@ export default function App() {
        o app ali ou se a adoção de um save da nuvem recarregasse a página. */
     // Os ids vêm da própria UI do catálogo; a marca NÃO espera o carregamento
     // (o catálogo é `import()`) — resolver os itens fica para mais abaixo.
-    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0) {
+    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0 || data.firstTask) {
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
       setHasCompletedTutorial(true);
     }
@@ -5381,6 +5417,20 @@ export default function App() {
       .filter((c): c is NonNullable<typeof c> => !!c);
     const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
+    // 11/10/2026: a primeira TAREFA do onboarding (esforço 1, sem prazo — o
+    // motor de tarefas a trata como qualquer outra; nada de recompensa extra).
+    const firstTasks: Task[] = data.firstTask
+      ? [{
+          id: `onb-${Date.now().toString(36)}`,
+          name: data.firstTask.name,
+          category: data.firstTask.category,
+          emoji: data.firstTask.emoji,
+          completed: false,
+          effort: 1,
+          status: 'open',
+          createdAt: new Date().toISOString(),
+        }]
+      : [];
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
     // save nos DOIS caminhos; quem lê é a personalidade do Soulmon.
     const onboardingProfile = onboardingProfileFrom(data.catalogChoice);
@@ -5397,7 +5447,7 @@ export default function App() {
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
-        tasks: [],
+        tasks: firstTasks,
         eggType: 'ignar',
         evolutionStage: 'rookie',
         unlockedEvolutions: ['rookie'],
@@ -5454,7 +5504,7 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       activities: newActivities,
-      tasks: [],
+      tasks: firstTasks,
       eggType: genericLine,
       evolutionStage: 'rookie',
       unlockedEvolutions: ['rookie'],
@@ -6474,6 +6524,16 @@ export default function App() {
                     });
                     return { accepted: preview.accepted, items: preview.items, chancePercent: roll.chancePercent };
                   },
+                  /* Concluir o PROCESSO da Oficina: 1 item, teto de 2/dia dentro do de 8 — a regra é de `applyFocusLoot`. */
+                  onPlanReward: (request: FocusLootRequest) => {
+                    const roll = rollPlanLoot(request.environment);
+                    const preview = applyFocusLoot(gameState, request, roll);
+                    if (preview.accepted) setGameState(prev => {
+                      const committed = applyFocusLoot(prev, request, roll);
+                      return committed.accepted ? { ...prev, ...committed.state } : prev;
+                    });
+                    return { accepted: preview.accepted, items: preview.items, chancePercent: 0 };
+                  },
                   review: gameState.review,
                   minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),
                   onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),
@@ -7123,6 +7183,7 @@ export default function App() {
                     expanded={expandedRituals}
                     onExpand={handleExpandRitual}
                     onToggleTask={handleToggleTask}
+                    onToggleTaskStep={handleToggleTaskStep}
                     onEditTask={handleEditTask}
                     onPostponeNudge={handlePostponeNudge}
                     onEditActivity={handleEditActivity}
@@ -7443,17 +7504,17 @@ export default function App() {
 
       <ModalSheet
         open={createChoiceOpen}
-        title={language === 'pt-BR' ? 'O que vamos criar?' : 'What would you like to create?'}
+        title={language === 'pt-BR' ? 'Novo hábito ou nova tarefa?' : 'New habit or new task?'}
         language={language}
         onClose={() => setCreateChoiceOpen(false)}
       >
         <div style={{ display: 'grid', gap: 10 }}>
-          <button type="button" style={sm2Button('primary')} onClick={() => {
-            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
-          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
-          <button type="button" style={sm2Button('outline')} onClick={() => {
+          <button type="button" data-create-choice="habit" style={sm2Button('primary')} onClick={() => {
             setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
           }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+          <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
+            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
+          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
         </div>
       </ModalSheet>
 
@@ -7485,6 +7546,7 @@ export default function App() {
               steps: data.steps,
               effort: data.effort,
               startDate: data.startDate,
+              ...(data.repeatEveryDays ? { repeatEveryDays: data.repeatEveryDays } : {}),
               status: data.status ?? 'open',
               createdAt: data.createdAt ?? new Date().toISOString(),
               lastTouchedAt: data.lastTouchedAt ?? new Date().toISOString(),

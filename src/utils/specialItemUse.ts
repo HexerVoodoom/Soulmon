@@ -1,5 +1,10 @@
 import { CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, type Attr } from './shop';
-import { playerDayKey, type PlayerDayAnchor } from './playerDay';
+import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
+import { getMaxEnergyForStage } from '../types/progression';
+import {
+  PREMIUM_ENERGY, PREMIUM_USES_PER_DAY, premiumUsedToday, premiumDroppedToday, premiumDroppedThisWeek,
+  weekMondayOf, type PremiumRecord,
+} from './premiumFood';
 
 /**
  * O USO de um item especial da pastinha — glitchtama, coraçãozinho, chip.
@@ -95,6 +100,10 @@ export interface SpecialItemState {
   totalXP: number;
   attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
   glitchtamaUse?: GlitchtamaUse;
+  /** Comida premium: energia e estágio (teto das barras) + registro de tetos. */
+  energyPoints?: number;
+  evolutionStage?: string;
+  premiumFood?: PremiumRecord;
   playerDayTz?: PlayerDayAnchor;
 }
 
@@ -125,6 +134,12 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
   // pastinha intacto e vale amanhã. Recusar depois de consumir seria a família
   // de bug do X-6 ao contrário — gastar para não receber nada.
   if (special.kind === 'glitchtama' && glitchtamaUsedToday(state, now) >= GLITCHTAMA_PER_DAY) return 'daily-cap';
+  // Comida premium: energia cheia recusa (o item volta), e há 1 uso por dia.
+  // Energia é limitada pela META DO DIA — o item não fura as barras do estágio.
+  if (special.kind === 'premium') {
+    if (premiumUsedToday(state, now) >= PREMIUM_USES_PER_DAY) return 'daily-cap';
+    if ((state.energyPoints ?? 0) >= getMaxEnergyForStage((state.evolutionStage ?? 'rookie') as Parameters<typeof getMaxEnergyForStage>[0])) return 'already-full';
+  }
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
   if (special.kind === 'heart' && state.healthPoints >= state.maxHealthPoints) return 'already-full';
@@ -203,6 +218,27 @@ export function applySpecialItem<T extends SpecialItemState>(
         glitchtamaUse: {
           day: playerDayKey(now, prev.playerDayTz),
           used: glitchtamaUsedToday(prev, now) + 1,
+        },
+      },
+    };
+  }
+
+  if (special.kind === 'premium') {
+    // +5 de energia em vez de +1, sempre dentro das barras do estágio. Não dá
+    // atributo nem XP (a comida comum dá): é só a perna de energia do dia.
+    const max = getMaxEnergyForStage((prev.evolutionStage ?? 'rookie') as Parameters<typeof getMaxEnergyForStage>[0]);
+    const day = playerDayIso(now, prev.playerDayTz);
+    return {
+      state: {
+        ...prev,
+        foodInventory,
+        energyPoints: Math.min(max, (prev.energyPoints ?? 0) + PREMIUM_ENERGY),
+        premiumFood: {
+          day,
+          dropped: premiumDroppedToday(prev, now),
+          used: premiumUsedToday(prev, now) + 1,
+          week: weekMondayOf(day),
+          weekDropped: premiumDroppedThisWeek(prev, now),
         },
       },
     };

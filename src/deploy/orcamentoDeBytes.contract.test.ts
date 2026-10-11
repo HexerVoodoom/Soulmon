@@ -128,9 +128,21 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // da primeira abertura/toggle no `App` (`notificationPermission.ts`), o menu de missões em Hoje/Esta semana, o selo de nível e
   // o `CompanionHUD`/Mochila com materiais, o `pendingPoopEvent` e o glifo `backpack`. A luz da evolução (`EvolutionLight`,
   // canvas) e a tela do Soulsmith ficam atrás de `lazy`; o PNG do sun burst saiu.
-  'index.js': 607_559,
+  // 11/10/2026: 607_559 → 621_108 (+13,5 KB). A `main` já estava ACIMA da folga antes da descida idle da masmorra: o
+  // `dist/` commitado da `main` (b9bd2b1e6 + 89e0e7b71) tem a entrada em 622_856 B. Veio da Oficina de foco e das
+  // expedições (`focusExpedition.ts` — `sanitizeFocusLoot` é lido pelo `GameStateContext` na hidratação e `rollFocusLoot`/
+  // `applyFocusLoot` pelo `App`, então não dá para `lazy` sem partir a hidratação), do campo `focusLoot`/materiais no save e
+  // da fiação do `AreaView`. A descida idle da masmorra NÃO engordou a entrada de propósito: `DungeonGame`, `dungeonIdle`,
+  // `dungeonFight`, `dungeonScenes`, `PlaySheets` e `OficinaSheet` são chunks próprios, e `hydrateSave` sanitiza o `dungeonHp`
+  // inline. Crescimento JUSTIFICADO, não perdoado — medido com `ls -l dist/assets/index-*.js` em build limpo.
+  // 11/10/2026 (onda de lançamento): 621_108 → 637_910 (+16,4 KB) — onboarding de 3 blocos, comida premium e subitens,
+  // sessão de foco (App), Level Up (fila + som), ritmo das refeições e apresentação de prédio (outras sessões). Débito
+  // REGISTRADO: a sessão `claude/velocidade-dev` tem a meta de baixar este número com lazy/manualChunks.
+  'index.js': 637_910,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
-  'index.css': 164_043,          // 150 KB — 1,5× o teto
+  // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
+  // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
+  'index.css': 172_242,
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
 };

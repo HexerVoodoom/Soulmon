@@ -3,7 +3,7 @@
  * QA Rodada 2 (22/09/2026) — extensão do fuzz de `hydrateSave`.
  *
  * O arquivo irmão (`GameStateContext.hydrate.fuzz.test.tsx`) cobre formas
- * hostis ESCOLHIDAS À MÃO. Este varre os 97 campos declarados em `GameState`
+ * hostis ESCOLHIDAS À MÃO. Este varre os 98 campos declarados em `GameState`
  * com o MESMO conjunto de valores hostis, sem escolher — para pegar o campo
  * que ninguém lembrou (a regra do arquivo é "todo campo tem linha em
  * `hydrateSave`"; o `...loadedState` no topo deixa passar o que não tem).
@@ -37,7 +37,7 @@ function montar() {
   return JSON.parse(screen.getByTestId('estado').textContent!);
 }
 
-/** Os 97 campos, lidos do PRÓPRIO tipo — a lista não é copiada à mão. */
+/** Os 98 campos, lidos do PRÓPRIO tipo — a lista não é copiada à mão. */
 function camposDeGameState(): string[] {
   const src = readFileSync(resolve(__dirname, 'GameStateContext.tsx'), 'utf8');
   const bloco = /export interface GameState \{([\s\S]*?)\n\}/.exec(src)?.[1] ?? '';
@@ -77,7 +77,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe('AUTOVERIFICAÇÃO', () => {
   it('a lista de campos veio do tipo e tem os 117 (+ `guildMission`, 11/10/2026, missão da guilda; + `guildDonatedItem`, 11/10/2026, casa da guilda; + `buildingIntrosSeen`, 08/10/2026, apresentação do prédio; + `crossings`, 30/09/2026; + `onboardingProfile` e `soulTestAnswers`, 01/10/2026; + `hideFromPublicList`, 02/10/2026; + `caderno`, 04/10/2026; + `ownedFrames` e `equippedFrame`, 04/10/2026; + `talentPicks`, 06/10/2026, Combate v3 PR7; + `equipment` e `bitsOrigin`, 06/10/2026, Combate v3 PR8; + `fichaJornada`, 07/10/2026, Combate v3 PR15b); + `avatarId`, 07/10/2026, Tarefa C; + `buildingQuests`, 07/10/2026, missao por predio; + `forge`, 07/10/2026, Ferreiro; + `demoLocal`, 07/10/2026, demo local; + `mealRhythm` e `mealRitual`, 11/10/2026, ritmo das refeições)', () => {
     const campos = camposDeGameState();
-    expect(campos.length).toBe(117);
+    expect(campos.length).toBe(119); // + premiumFood e lastCelebratedLevel (11/10/2026, onda de lançamento)
     expect(campos).toContain('guildMission');
     expect(campos).toContain('guildDonatedItem');
     expect(campos).toContain('buildingIntrosSeen');
@@ -100,7 +100,7 @@ describe('AUTOVERIFICAÇÃO', () => {
   });
 });
 
-describe('cada um dos 97 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam', () => {
+describe('cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam', () => {
   for (const campo of camposDeGameState()) {
     it(campo, () => {
       for (const [nome, valor] of HOSTIS) {

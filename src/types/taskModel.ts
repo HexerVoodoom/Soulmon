@@ -121,6 +121,46 @@ export function normalizeEffort(value: unknown): Effort {
 }
 
 /**
+ * PESO DE UMA TAREFA COM SUBITENS (etapas) — a regra, num lugar só.
+ *
+ * Uma tarefa com vários subitens ("Pagar contas": água, luz, gás…) NÃO pode
+ * pesar mais que a soma ingênua das mesmas tarefas soltas — senão cadastrar a
+ * lista inflaria a meta do dia — e não deve pesar menos do que ela vale, senão
+ * a lista seria a forma "barata" de fugir da meta. A regra:
+ *
+ *  · o peso da tarefa-mãe é o `effort` 1–3 escolhido, INDEPENDENTE do nº de
+ *    subitens: cada subitem concluído avança a barra da linha, mas NUNCA
+ *    multiplica a meta;
+ *  · TETO: com ≥2 subitens o esforço não passa de `min(3, nº de subitens)` —
+ *    nunca passa do que N tarefas rápidas soltas pesariam (1 cada) nem do teto
+ *    de um projeto (3);
+ *  · PISO sugerido (só na criação, `suggestedEffortForSteps`): `min(3, N)` — a
+ *    lista de 2 nasce pesando 2, como "pagar água" + "pagar luz" separadas.
+ *
+ * Com 0 ou 1 subitem nada muda (uma "lista" de 1 é a própria tarefa).
+ */
+export const STEPS_EFFORT_CAP: Effort = 3;
+
+export function suggestedEffortForSteps(stepCount: number): Effort {
+  const n = Math.max(1, Math.floor(stepCount || 0));
+  return Math.min(STEPS_EFFORT_CAP, n) as Effort;
+}
+
+export function effortWithSteps(effort: unknown, stepCount: number): Effort {
+  const declared = normalizeEffort(effort);
+  if (!(stepCount >= 2)) return declared;
+  return Math.min(declared, suggestedEffortForSteps(stepCount)) as Effort;
+}
+
+/** O peso de uma tarefa VIVA (esforço + teto dos subitens) — o único jeito de lê-lo. */
+export function taskEffort(t: { effort?: unknown; steps?: ArrayLike<unknown> } | null | undefined): Effort {
+  return effortWithSteps(t?.effort, t?.steps?.length ?? 0);
+}
+
+/** Quantos subitens uma tarefa precisa ter para a conclusão total render a comida premium. */
+export const MIN_STEPS_FOR_PREMIUM = 3;
+
+/**
  * Estado de uma tarefa pontual.
  *
  *  - `open`    — na lista, viva.

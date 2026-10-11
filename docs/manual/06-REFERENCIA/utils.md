@@ -10,7 +10,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ## Índice por família
 
-**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
+**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
 **Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
@@ -811,6 +811,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ Até 06/09/2026 o cabeçalho afirmava reset mensal, limite diário de jogo e gate de HP na entrada — os três eram falsos (e `handleDungeonLose` já era um callback vazio). Número de balanceamento aqui muda Masmorra, Pesadelo e Arena ao mesmo tempo, e nenhum dos três avisa.
 **Regra de negócio:** A Masmorra não cobra coração e não tem gate de entrada nem limite diário. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/dungeonIdle.ts`
+
+**Dono de:** a descida idle da Masmorra (08/10/2026) — constantes `DUNGEON_AUTO_FIGHT_MS` (4000), `DUNGEON_FIGHTS_PER_FLOOR` (6), `DUNGEON_MILESTONE_FLOOR` (5), `DUNGEON_HP_REGEN_FULL_HOURS` (4), `DUNGEON_MIN_HP_TO_ENTER_PCT` (25). **Exports:** `hpAgora(state, now)` (HP por timestamp, nunca > 1), `gravarHp`, `podeDescer`, `msAteDescer`, `posicaoDaLuta`, `formatarEspera`, `sanitizeDungeonHp`. Puro, sem imports. Régua: `dungeonIdle.test.ts`.
 
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.
@@ -2474,8 +2478,11 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
 **Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS`, `FOCO_VIBRATE` — só do aparelho, fora do save. `isVibrateOn`/`setVibrateOn`: a vibração ao fim é LIGADA por padrão (interruptor em Configurações).
 
+### `src/utils/focoSessao.ts`
+**Dono de:** a máquina de estados PURA da sessão da Oficina (10/10/2026): `STEP_ORDER` (ordem das etapas), `toggleTwoMin`/`setQuadrant`/`setFrog`, `matrixOrder`, `buildPlan` (a lista organizada: dois minutos → sapo → quadrantes; "deixar de lado" sai), `startDump`/`dumpRemaining` (brain dump por timestamp), `saveSession`/`markDone`/`completeSession`/`canCompleteSession` (exige plano, nunca contagem de tarefas), `normalizeSession`/`normalizeHistory`/`recordDone`. Só LÊ `{id,name,completed}` das tarefas: nunca muda a ordem da Home. **Chaves:** `FOCO_WORKSHOP_PLAN` (sessão atual) e `FOCO_WORKSHOPS` (registro mínimo das concluídas) — aparelho, fora do save. **Régua:** `focoSessao.test.ts`.
+
 ### `src/utils/focusExpedition.ts`
-**Dono de:** seis ambientes Pomodoro, quatro materiais possíveis por ambiente, sorteio de comida, chance progressiva do item extra e ledger diário (teto combinado de oito itens). `applyFocusLoot` é idempotente por evento, soma materiais ao estoque de `buildingQuests` e comidas ao inventário normal; `sanitizeFocusLoot` limita a forma do campo persistido. A paridade e o clamp do servidor ficam em `functions/api/_focusLoot.js`.
+**Dono de:** (+ `rollPlanLoot`/`FOCUS_PLAN_DAILY_CAP` = 2: concluir uma sessão rende 1 item, recibo `plan:<id>`, dentro do teto de 8) seis ambientes Pomodoro, quatro materiais possíveis por ambiente, sorteio de comida, chance progressiva do item extra e ledger diário (teto combinado de oito itens). `applyFocusLoot` é idempotente por evento, soma materiais ao estoque de `buildingQuests` e comidas ao inventário normal; `sanitizeFocusLoot` limita a forma do campo persistido. A paridade e o clamp do servidor ficam em `functions/api/_focusLoot.js`.
 
 ### `src/utils/cadernoSave.ts`
 **Dono de:** o dado do Caderno (04/10/2026), a parte PURA (sem rede): `CadernoEntry`, tetos `MAX_CHARS` (2000) e `MAX_ENTRIES` (120), `normalizeEntries` (load do `GameState.caderno`), `addEntry`, `removeEntry`, `mergeEntries`, `formatoDoDia` e a migração da chave legada (`loadLegacyEntries`/`clearLegacy`, `soulmon-caderno`). Dado SENSÍVEL: nunca em IA/telemetria (`cadernoSensivel.contract.test.ts`). Paridade de tetos com `functions/api/save.js` (`clampCaderno`).
@@ -2533,6 +2540,19 @@ dominância populacional — por isso ±15%. Régua nova:
 - `function esquecerTrilha(): void` — só para teste.
 **Chamado por:** `src/App.tsx` (`pausarTrilha`/`retomarTrilha` nos efeitos de `isSleeping` e da janela de descanso e em `handleToggleSound`), `src/components/SettingsPage.tsx` (`ligarTrilha`/`desligarTrilha`/`trilhaPreferida`; ⚰️ o `SettingsModal.tsx` que também os chamava foi apagado em `4a8b8049`), `src/utils/sounds.ts` (`aoGestoSonoro`)
 **Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); `src/utils/trilha.e0.test.ts` (5, desde `592e2c14` — dormir para/acordar retoma; pet já dormindo, o 1º gesto não religa; desligar o mudo dormindo não acorda; janela de descanso é motivo próprio; retomar sem gesto na sessão não toca; ⚰️ "nenhuma para E0" até `a6c1cd8a`); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
+
+### `src/utils/premiumFood.ts`
+**Dono de:** A COMIDA PREMIUM (chave de inventário `emoji + ★`, números, tetos por dia/semana, drop determinístico) — dono único; o USO mora em `specialItemUse.ts` e o drop em `careRules.completeTask`.
+**Exports:**
+- `PREMIUM_SUFFIX`, `PREMIUM_ENERGY` (5), `PREMIUM_DROPS_PER_DAY` (1), `PREMIUM_DROPS_PER_WEEK` (3), `PREMIUM_USES_PER_DAY` (1) — as constantes; energia sempre limitada pelas barras do estágio.
+- `premiumKey`, `isPremiumKey`, `premiumBase` — a chave de inventário e o inverso.
+- `PremiumRecord` (interface) — o registro `premiumFood` no SAVE (`day`, `dropped`, `used`, `week`, `weekDropped`), em ISO do DIA DO JOGADOR.
+- `function weekMondayOf(dayKey: string): string`, `premiumDroppedToday`, `premiumUsedToday`, `premiumDroppedThisWeek` — leituras idempotentes sob a virada.
+- `function premiumDropFor(state, task, now): boolean` — ≥ `MIN_STEPS_FOR_PREMIUM` (3) subitens, todos feitos, tetos livres.
+- `function withPremiumDrop(state, categoryFoodEmoji, now)` — PURA: soma 1 no inventário e grava o registro.
+- `PREMIUM_SPECIAL_ITEMS` — uma entrada de `SPECIAL_ITEMS` por comida de categoria ("Maçã premium" / "Premium Apple").
+**Chamado por:** `src/utils/careRules.ts`, `src/utils/specialItemUse.ts`, `src/utils/shop.ts`, `src/utils/itemArt.ts`, `src/App.tsx`, `src/components/home/Mochila.tsx`
+**Régua:** `taskSteps.rule.test.ts`, `subitens.render.test.tsx`
 
 ### `src/utils/specialItemUse.ts`
 **Dono de:** O USO de item especial (glitchtama, coraçãozinho, chip) aplicado ao `prev` — dono único, distinto de `careUpdaters.ts`.
@@ -3132,6 +3152,14 @@ Updaters puros e idempotentes: `applyForgeGrant` (1º resgate da missão do pré
 ## `src/utils/forgeCopy.ts` (07/10/2026)
 Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 
+### `src/utils/firstTaskSuggestion.ts`
+**Dono de:** a PRIMEIRA TAREFA do onboarding (11/10/2026, REGISTRO §27) — sugestão pela 1ª área escolhida e o rascunho que sai do passo "Seu ponto de partida".
+**Exports:**
+- `suggestFirstTask(areas, isPt)` — `FirstTaskDraft` (`name`, `category`, `emoji`) da 1ª área; sem área, frase genérica.
+- `firstTaskFrom(text, areas, isPt)` — o texto da pessoa (máx. 80) vence a sugestão; vazio devolve `null` (sem tarefa).
+- `FirstTaskDraft` — o tipo.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx` (campo da tarefa → `OnboardingCompleteData.firstTask`); `src/App.tsx` (`handleCompleteOnboarding` grava em `tasks`, esforço 1).
+**Régua:** `src/utils/firstTaskSuggestion.test.ts`.
 ### `src/utils/mealRhythm.ts`
 **Dono de:** o RITMO DAS REFEIÇÕES no cliente (11/10/2026) — configuração (`mealRhythm` no save: cartão no app ligado, push DESLIGADO/opt-in, 3 horários locais), o registro do dia (`mealRitual`: janelas atendidas/dispensadas hoje, sem histórico nem sequência), a escolha da micro-ação e o alinhamento do horário SORTEADO do cocô ao pós-refeição. Funções PURAS. O horário/janela/teto vêm do dono único `functions/api/_mealRhythm.js`; nada aqui lê meta, HP, energia, Bits nem XP (régua `mealRhythm.contract.test.ts`).
 **Exports:**

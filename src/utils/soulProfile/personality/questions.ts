@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Banco de itens do teste de personalidade — 20 itens.
+// Banco de itens do teste de personalidade — 14 itens (eram 20 até 11/10/2026).
 //
 // Portado de `teste-personalidade/src/lib/personality/questions.ts`. A única
 // mudança estrutural é a que o Soulmon exige de TODO texto de UI: cada
@@ -16,10 +16,12 @@
 //   "íntegro" — distinção que importa quando a saída alimenta algo parecido
 //   com alinhamento de criatura.
 //
-// - **Chaveamento balanceado, mesmo curto.** Os 2 itens Likert de cada fator
-//   são um direto e um invertido, marcados como par de consistência. É o que
-//   torna os índices de aquiescência e de inconsistência possíveis — cortar
-//   isso teria cortado esses índices junto.
+// - **Sem itens-espelho (11/10/2026, pedido do dono: "pergunta de confirmação
+//   meio redundante, só pra verificar consistência"). ** Cada fator tem UM item
+//   Likert; o invertido que só repetia a pergunta saiu. Custo assumido: sem
+//   par, o índice de inconsistência fica em 0 e o de aquiescência deixa de
+//   valer (o banco não é mais balanceado) — ambos só alimentavam um aviso na
+//   OraclePage (ferramenta de criação), nunca o jogador nem a criatura.
 //
 // - **Formatos misturados.** Concordância Likert, escolha forçada (ipsativa)
 //   para os 4 eixos junguianos, e 4 cenários situacionais escolhidos para que
@@ -37,108 +39,54 @@ const likert: LikertItem[] = [
   // Abertura
   {
     id: "O-ima-1", kind: "likert", dimension: "openness", facet: "imaginação", positive: true,
-    consistencyPair: "O-ima",
     text: {
       pt: "Passo bastante tempo imaginando cenários e possibilidades que ainda não existem.",
       en: "I spend a good deal of time imagining scenarios and possibilities that don't exist yet.",
-    },
-  },
-  {
-    id: "O-ima-2", kind: "likert", dimension: "openness", facet: "imaginação", positive: false,
-    consistencyPair: "O-ima",
-    text: {
-      pt: "Prefiro lidar com o que é concreto a ficar divagando sobre hipóteses.",
-      en: "I'd rather deal with what's concrete than dwell on hypotheticals.",
     },
   },
 
   // Conscienciosidade
   {
     id: "C-org-1", kind: "likert", dimension: "conscientiousness", facet: "organização", positive: true,
-    consistencyPair: "C-org",
     text: {
       pt: "Gosto que minhas coisas e meus compromissos estejam em ordem.",
       en: "I like my things and my commitments to be in order.",
-    },
-  },
-  {
-    id: "C-org-2", kind: "frequency", dimension: "conscientiousness", facet: "organização", positive: false,
-    consistencyPair: "C-org",
-    text: {
-      pt: "Com que frequência você perde algo por não lembrar onde guardou?",
-      en: "How often do you lose something because you can't remember where you put it?",
     },
   },
 
   // Extroversão
   {
     id: "E-soc-1", kind: "likert", dimension: "extraversion", facet: "sociabilidade", positive: true,
-    consistencyPair: "E-soc",
     text: {
       pt: "Estar com bastante gente me deixa mais animado, não mais cansado.",
       en: "Being around a lot of people leaves me energized, not drained.",
-    },
-  },
-  {
-    id: "E-soc-2", kind: "likert", dimension: "extraversion", facet: "sociabilidade", positive: false,
-    consistencyPair: "E-soc",
-    text: {
-      pt: "Depois de muito convívio social, preciso de um tempo sozinho para me recuperar.",
-      en: "After a lot of socializing, I need time alone to recover.",
     },
   },
 
   // Amabilidade
   {
     id: "A-coo-1", kind: "likert", dimension: "agreeableness", facet: "cooperação", positive: true,
-    consistencyPair: "A-coo",
     text: {
       pt: "Prefiro ceder um pouco a transformar uma divergência em briga.",
       en: "I'd rather give a little ground than turn a disagreement into a fight.",
-    },
-  },
-  {
-    id: "A-coo-2", kind: "frequency", dimension: "agreeableness", facet: "cooperação", positive: false,
-    consistencyPair: "A-coo",
-    text: {
-      pt: "Com que frequência você entra em discussões acaloradas para defender seu ponto?",
-      en: "How often do you get into heated arguments to defend your point?",
     },
   },
 
   // Neuroticismo
   {
     id: "N-ans-1", kind: "frequency", dimension: "neuroticism", facet: "ansiedade", positive: true,
-    consistencyPair: "N-ans",
     text: {
       pt: "Com que frequência você se preocupa com coisas que talvez nem aconteçam?",
       en: "How often do you worry about things that may never happen?",
-    },
-  },
-  {
-    id: "N-ans-2", kind: "likert", dimension: "neuroticism", facet: "ansiedade", positive: false,
-    consistencyPair: "N-ans",
-    text: {
-      pt: "Encaro situações incertas com bastante tranquilidade.",
-      en: "I face uncertain situations pretty calmly.",
     },
   },
 
   // Honestidade-Humildade
   {
     id: "H-sin-1", kind: "likert", dimension: "honestyHumility", facet: "sinceridade", positive: true,
-    consistencyPair: "H-sin",
     text: {
       pt: "Não me sinto confortável em manipular alguém, mesmo que fosse dar certo.",
       en: "I'm not comfortable manipulating someone, even if it would work.",
-    },
-  },
-  {
-    id: "H-sin-2", kind: "likert", dimension: "honestyHumility", facet: "sinceridade", positive: false,
-    consistencyPair: "H-sin",
-    text: {
-      pt: "Se bajular alguém for o caminho mais fácil para conseguir o que quero, eu bajulo.",
-      en: "If flattering someone is the easiest way to get what I want, I flatter them.",
     },
   },
 ];

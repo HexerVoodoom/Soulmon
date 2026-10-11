@@ -24,7 +24,6 @@
 // Sem tom de cobrança: é uma marca parada, sem número, som nem contagem.
 // ---------------------------------------------------------------------------
 
-import { MISSIONS } from './missions';
 import type { MissionMark } from './travessiasSave';
 import type { BuildingId } from './gates';
 
@@ -85,11 +84,11 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   const torneio = strongestMark(
     input.weekly.filter(w => !w.claimed).map((w): QuestMark => (w.done ? 'ready' : 'available')),
   );
-  // Permanente: só "?" (pronta e cenário ainda não comprado); em andamento não acende nada.
-  const conquistas = strongestMark(MISSIONS.map((m): QuestMark => {
-    const done = (input.missionProgress[m.id] ?? 0) >= m.target;
-    return done && !input.ownedBackgrounds.includes(m.bgReward) ? 'ready' : null;
-  }));
+  // Permanente (11/10/2026, pedido do dono): "a interrogação só aparece quando há missão
+  // para ENTREGAR". Conquista cumprida não tem "Resgatar" na folha (só libera a COMPRA do
+  // cenário na loja), então o "?" levava a uma lista sem nada a entregar. Fica sempre nula;
+  // `missionProgress`/`ownedBackgrounds` seguem na entrada por compatibilidade.
+  const conquistas: QuestMark = null;
   const buildings = input.buildings ?? {};
   const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
   const firstDay: QuestMark = input.firstDay ? 'available' : null;

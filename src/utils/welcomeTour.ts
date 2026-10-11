@@ -21,6 +21,11 @@ import type { Language } from './i18n';
 
 /** O corvo ainda não tem nome; “Mysterious Soulmon” é o rótulo temporário escolhido. */
 export const TOUR_GUIDE_NAME = 'Mysterious Soulmon';
+/** PT-BR do rótulo (11/10/2026, pedido do dono): sem nome próprio inventado. */
+export const TOUR_GUIDE_NAME_PT = 'Solmon misterioso';
+export function tourGuideName(language: Language): string {
+  return language === 'pt-BR' ? TOUR_GUIDE_NAME_PT : TOUR_GUIDE_NAME;
+}
 
 export interface LocalizedText { en: string; pt?: string }
 

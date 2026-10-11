@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -7,6 +7,12 @@ import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phas
 import { getSpriteForStage } from '../utils/sprites';
 import { playVictory } from '../utils/sounds';
 import { DUNGEON_BITS_FACTOR } from '../utils/dungeon';
+import {
+  DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
+  hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
+} from '../utils/dungeonIdle';
+import { MINIGAME_BITS_PER_DAY, minigameBitsToday } from '../utils/currencies';
+import { playerDayKey } from '../utils/playerDay';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
@@ -37,16 +43,20 @@ import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 
 /**
- * Dungeon minigame — a battle across up to 5 FLOORS, in the full-screen `BattleStage`.
+ * Dungeon minigame — an AUTOMATIC, endless descent, in the full-screen `BattleStage`.
  *
- * A run is up to 5 floors; each floor is a fixed ladder of 6 RANDOM wild creatures
- * climbing the tiers (baby-i → baby-ii → rookie → champion → ultimate → mega).
- * Floor difficulty = base level + (floor-1), so floor 1 suits a rookie, floor 2
- * a champion, floor 3 an ultimate… — a couple floors above the pet is brutal.
- * Each floor has its own retro scene (Tamagotchi/VHS/synthwave/CRT/glitch).
- * Clearing all 5 floors COMPLETES the run and raises the base level (next run is
- * harder); the base level resets WEEKLY. Player HP carries between floors with a
- * small heal on each clear.
+ * ── A DESCIDA IDLE (08/10/2026, decisão do dono; constantes em `utils/dungeonIdle.ts`) ─────────────
+ * Ao tocar em "Descer" as lutas encadeiam SOZINHAS (uma a cada `DUNGEON_AUTO_FIGHT_MS`); não há botão de
+ * "próximo oponente" nem de "próximo andar". Cada andar é uma escada de 6 criaturas (baby-i → mega); a cada
+ * 6 lutas desce-se um andar, SEM teto (a dificuldade de `dungeonFoe`/`DUNGEON_FLOOR_GROWTH` é o que a
+ * encerra). O HP NÃO enche entre descidas: persiste no save (`dungeonHp`, lido por `hpAgora`) e regenera com
+ * o tempo, inclusive com o app fechado. Limpar o andar `DUNGEON_MILESTONE_FLOOR` (5) é um MARCO (uma vez por
+ * descida): Glitchtama + sobe a base semanal. A descida acaba quando o HP zera (ou quando o portão do
+ * Vínculo fecha o próximo andar alto); perder não custa coração nem Bits. Pausar/Sair ficam sempre à mão.
+ *
+ * Floor difficulty = base level + (floor-1). Each floor has its own retro scene. The base level resets
+ * WEEKLY. A pequena cura ao limpar um andar (`curaAndar` do ofício + talento) SEGUE valendo — é cura
+ * DENTRO da descida (a parede calibrada do combate v3 a pressupõe), não o enchimento entre descidas que saiu.
  *
  * ── A LUTA (04/10/2026, REGISTRO §20.10) ──────────────────────────────────────
  * A cena é a MESMA tela cheia do Duelo (`games/BattleStage.tsx`): o Soulmon grande embaixo à
@@ -70,13 +80,12 @@ import type { Language } from '../utils/i18n';
  * nunca corações). Coraçõezinhos (raramente) dropam; o placar alimenta o ranking.
  */
 
-export const MAX_FLOORS = 5;
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
 // decisão do dono que trouxe a run completa para perto do teto diário.
 export const clearBonus = (floor: number) => Math.round((10 + 5 * (floor - 1)) * DUNGEON_BITS_FACTOR);
 
-type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
+type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'ended';
 
 /** O cartão de resultado sobre a cena (entre inimigos, camadas e no fim). */
 /** Sem torcida na Masmorra (contexto §2.19): o toque na cena não faz nada. */
@@ -194,7 +203,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const energyCarryRef = useRef(0);
   const [hpFrac, setHpFrac] = useState(1);
   /** A confirmação de sair está aberta: a luta espera. */
-  const [pausado, setPausado] = useState(false);
+  const [pausadoConfirm, setPausado] = useState(false);
+  /** O jogador apertou "Pausar": a luta e o relógio entre lutas esperam até "Retomar". */
+  const [pausadoManual, setPausadoManual] = useState(false);
+  const pausado = pausadoConfirm || pausadoManual;
+  /** Por que a descida acabou: HP zerado, ou o portão do Vínculo fechou o próximo andar alto. */
+  const [endReason, setEndReason] = useState<'hp' | 'sealed'>('hp');
+  /** O marco do andar 5 já foi pago NESTA descida (idempotência: uma vez por descida). */
+  const milestoneRef = useRef(false);
+  const [milestoneNow, setMilestoneNow] = useState(false);
+  /** Relógio de PAREDE só para repintar a contagem do lobby; a conta é `hpAgora(estado, agora)`, nunca acumulada. */
+  const [agora, setAgora] = useState(() => Date.now());
   const reduzido = useRef(prefersReducedMotion());
   const enemiesRef = useRef<DungeonEnemy[]>([]);
   const enemyIdxRef = useRef(0);
@@ -202,7 +221,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const ladderLen = LADDER_TIERS.length;
-  const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
+  const scene = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
   const petEl = fxElementId(ident.basico.elemento);
@@ -232,8 +251,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const waveOf = (level: number, f: number) =>
     buildDungeonWave(level, evolutionStage, mulberry32((runSeedRef.current ^ Math.imul(f, 0x9e3779b1)) | 0), nivelJogador);
 
-  // Começa a run no andar 1 (level = base persistida). Sem gate de entrada.
+  /** Grava o HP da descida no save (fração do máximo + instante). Só o cliente: não compra vantagem. */
+  const salvarHp = (frac: number) => {
+    ctx?.setGameState(prev => ({ ...prev, dungeonHp: gravarHp(frac, Date.now()) }));
+  };
+  /** O estado de onde sai o HP de agora (sem provider — demo, testes —: cheio). */
+  const hpState = { dungeonHp: gs?.dungeonHp };
+
+  // Começa a descida no andar 1 (level = base persistida). O piso de HP é o único portão — e não custa nada.
   const startRun = () => {
+    const now = Date.now();
+    if (!podeDescer(hpState, now)) return;
     const res = onEnter();
     runSeedRef.current = newDefenseSeed();
     setSeedLuta(runSeedRef.current);
@@ -243,14 +271,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setBest(res.best);
     setFloor(1);
     setEnemies(list);
-    hpCarryRef.current = 1; // run nova: o HP e a energia começam do zero
+    hpCarryRef.current = hpAgora(hpState, now); // o HP NÃO enche: sai do que o save e o relógio dizem
     energyCarryRef.current = 0;
-    setHpFrac(1);
+    setHpFrac(hpCarryRef.current);
     enterEnemy(list, 0);
     runScoreRef.current = 0;
     setRunScore(0);
     setRewardMsg('');
     setGotHeart(false);
+    milestoneRef.current = false;
+    setMilestoneNow(false);
+    setPausadoManual(false);
     setPhase('fight');
   };
 
@@ -266,7 +297,51 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     addPoints(e.points);
     setGotHeart(onHeartDrop());
     setRewardMsg(`+${e.points} Bits`);
-    setPhase('enemy-down');
+    if (enemyIdxRef.current + 1 >= enemiesRef.current.length) clearFloor();
+    else setPhase('enemy-down');
+  };
+
+  /** O andar limpo (os 6 da escada): bônus, Vínculo, o MARCO (1×/descida), a cura do ofício — e o portão do próximo. */
+  const clearFloor = () => {
+    playVictory(); // PR18: vitória do andar (era `playFeed`, o som de COMER — R-CAT: o evento decide)
+    addPoints(clearBonus(floor));
+    // 🔗 #59b — o andar limpo; o teto diário de `bond.ts` é quem limita.
+    onFloorCleared?.();
+    recordDungeonScore(runScoreRef.current);
+    setBest(getDungeonBest());
+    setRunScore(runScoreRef.current);
+    if (floor >= DUNGEON_MILESTONE_FLOOR && !milestoneRef.current) {
+      milestoneRef.current = true; // idempotente: uma vez por descida, mesmo que o andar seja relido
+      setMilestoneNow(true);
+      setDungeonDifficultyAtLeast(baseLevel + 1); // marco → a próxima descida é mais difícil
+      setReachedLevel(recordDungeonReached(baseLevel + 1)); // E2: nível CUMPRIDO (é o teto do "Descer mais fundo")
+      onGlitchtama();                             // marco → 🌀 Glitchtama (1 uso/dia: `specialItemUse.ts`)
+    } else {
+      setMilestoneNow(false);
+    }
+    // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
+    const cura = pve.cura + rift.healBoost; // Tarefa B (`tal-pve-03`): a cura entre andares sobe poucos pontos do HP máximo
+    const heal = Math.ceil(hpMax * cura);
+    hpCarryRef.current = Math.min(1, hpCarryRef.current + cura);
+    setHpFrac(hpCarryRef.current);
+    salvarHp(hpCarryRef.current);
+    setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
+    // PR7: os andares ALTOS têm portão pelo Vínculo. Fechado, a descida termina aqui — sem cobrança.
+    if (!floorOpen(floor + 1)) { endDescent('sealed'); return; }
+    setPhase('floor-clear');
+  };
+
+  /** Sem provider (demo, testes) não há Vínculo para medir e nada fecha. */
+  const floorOpen = (f: number) => !gs || masmorraFloorOpen(f, bondLevelFor(gs.totalXP ?? 0));
+
+  const endDescent = (why: 'hp' | 'sealed') => {
+    recordDungeonScore(runScoreRef.current);
+    setBest(getDungeonBest());
+    setRunScore(runScoreRef.current);
+    setEndReason(why);
+    setAgora(Date.now());
+    setPausadoManual(false);
+    setPhase('ended');
   };
 
   /* A luta é o núcleo v3 (`utils/combate/`, `groupFightSteps` com 1 inimigo): o `dungeonFight` monta o
@@ -301,31 +376,29 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     };
   }, [ident, par, isPt, lang]);
 
-  const aoFimDaLuta = useCallback((res: GroupResult) => {
+  const aoFimImpl = (res: GroupResult) => {
     if (res.winner === 'player') {
       hpCarryRef.current = res.hpLeft;
       energyCarryRef.current = res.energyLeft;
       setHpFrac(res.hpLeft);
+      salvarHp(res.hpLeft); // o HP persiste a cada luta: fechar a tela agora não o perde
       defeatEnemy();
       return;
     }
-    // Derrota ou empate (o empate conta como derrota, sem custo).
-    // C-6 (run `som-01`): sem som de degeneracao. Perder a run nao custa
-    // coracao nenhum, de proposito — sonorizar como perda estrutural inverte
-    // a regra escrita. O fim de partida ja e mostrado em tela.
-    // Não custa coração nenhum: `handleDungeonLose` é um callback vazio, de
-    // propósito. O que se perde ao cair é a RUN — bônus de andar, Glitchtama
-    // e placar. (WP4.20: este comentário afirmava um custo de um coração, e
-    // era falso desde que o handler ficou vazio.)
+    // Derrota ou empate (o empate conta como derrota, sem custo): o HP zerou e a descida acaba.
+    // C-6 (run `som-01`): sem som de degeneracao. Perder a descida nao custa coracao nem Bits —
+    // `handleDungeonLose` é um callback vazio, de propósito. O HP volta com o TEMPO (`hpAgora`).
     onLose();
-    const newBest = recordDungeonScore(runScoreRef.current);
-    setBest(newBest);
-    setRunScore(runScoreRef.current);
+    hpCarryRef.current = 0;
+    salvarHp(0);
     setHpFrac(0);
-    setPhase('lost');
-  // O relógio chama sempre a versão mais nova (`optsRef` do hook); `defeatEnemy` só lê refs e props do render.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onLose, onEnemyDefeated, onEarnPoints, onHeartDrop]);
+    endDescent('hp');
+  };
+  /* O fim da luta é lido por um PROXY estável sobre a versão do render mais novo: `clearFloor` lê andar, base e
+     talentos, e um `useCallback` com deps fixas os congelaria no andar 1 (a descida não tem mais teto de andares). */
+  const aoFimRef = useRef(aoFimImpl);
+  aoFimRef.current = aoFimImpl;
+  const aoFimDaLuta = useCallback((res: GroupResult) => aoFimRef.current(res), []);
 
   const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
@@ -333,56 +406,45 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: false,
   });
 
-  // Advance to the next enemy; or clear the floor (heal), or complete the run.
-  const nextEnemy = () => {
-    if (enemyIdx + 1 >= enemies.length) {
-      playVictory(); // PR18: vitória do andar (era `playFeed`, o som de COMER — R-CAT: o evento decide)
-      addPoints(clearBonus(floor));
-      // 🔗 #59b — o andar limpo. Antes do `if (floor >= MAX_FLOORS)` de
-      // propósito: o 5º andar é um andar limpo E uma run completa, e a tabela
-      // do §55 paga os dois (o teto diário de `bond.ts` é quem limita).
-      onFloorCleared?.();
-      recordDungeonScore(runScoreRef.current);
-      setBest(getDungeonBest());
-      setRunScore(runScoreRef.current);
-      if (floor >= MAX_FLOORS) {
-        setDungeonDifficultyAtLeast(baseLevel + 1); // run complete → next run harder
-        setReachedLevel(recordDungeonReached(baseLevel + 1)); // E2: nível CUMPRIDO (é o teto do "Descer mais fundo")
-        onGlitchtama();                             // full clear → 🌀 Glitchtama
-        setPhase('run-complete');
-        return;
-      }
-      // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
-      const cura = pve.cura + rift.healBoost; // Tarefa B (`tal-pve-03`): a cura entre andares sobe poucos pontos do HP máximo
-      const heal = Math.ceil(hpMax * cura);
-      hpCarryRef.current = Math.min(1, hpCarryRef.current + cura);
-      setHpFrac(hpCarryRef.current);
-      setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
-      setPhase('floor-clear');
-      return;
+  // O próximo passo da descida, SEM toque: outro inimigo do andar, ou o andar de baixo (sem teto).
+  const avancar = () => {
+    if (phase === 'enemy-down') {
+      enterEnemy(enemies, enemyIdx + 1); // a energia do pet PERSISTE
+      setRewardMsg('');
+      setPhase('fight');
+    } else if (phase === 'floor-clear') {
+      const f = floor + 1;
+      const list = waveOf(baseLevel + (f - 1), f);
+      setFloor(f);
+      setEnemies(list);
+      enterEnemy(list, 0);
+      setRewardMsg('');
+      setMilestoneNow(false);
+      setPhase('fight');
     }
-    enterEnemy(enemies, enemyIdx + 1); // a energia do pet PERSISTE
-    setRewardMsg('');
-    setPhase('fight');
   };
+  const avancarRef = useRef(avancar);
+  avancarRef.current = avancar;
+  // O relógio entre lutas: uma a cada `DUNGEON_AUTO_FIGHT_MS`; pausar (ou a confirmação de sair) o segura.
+  useEffect(() => {
+    if ((phase !== 'enemy-down' && phase !== 'floor-clear') || pausado) return;
+    const t = setTimeout(() => avancarRef.current(), DUNGEON_AUTO_FIGHT_MS);
+    return () => clearTimeout(t);
+  }, [phase, pausado, fightKey, floor]);
 
-  // Descend to the next (harder) floor, carrying HP over.
-  // PR7: só os andares ALTOS têm portão pelo Vínculo (`utils/gates.ts`); o andar 1 e os baixos seguem livres.
-  // Sem provider (demo, testes) não há Vínculo para medir e nada fecha.
-  const proximoAndarAberto = !gs || masmorraFloorOpen(floor + 1, bondLevelFor(gs.totalXP ?? 0));
-  const nextFloor = () => {
-    if (!proximoAndarAberto) return;
-    const f = floor + 1;
-    const list = waveOf(baseLevel + (f - 1), f);
-    setFloor(f);
-    setEnemies(list);
-    enterEnemy(list, 0);
-    setRewardMsg('');
-    setPhase('fight');
-  };
+  // No lobby, repinta a contagem de recuperação (o valor vem de `hpAgora`, nunca é acumulado aqui).
+  useEffect(() => {
+    if (phase !== 'intro' && phase !== 'ended') return;
+    const t = setInterval(() => setAgora(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, [phase]);
 
   const inStage = enemies.length > 0 && phase !== 'intro';
   const sceneName = isPt ? scene.namePt : scene.nameEn;
+  const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= MINIGAME_BITS_PER_DAY;
+  /** Quanto falta para o HP chegar ao piso de entrada (0 = já pode descer). */
+  const espera = msAteDescer(hpState, agora);
+  const hpLobby = hpAgora(hpState, agora);
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
 
@@ -390,6 +452,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
      segue visível entre os inimigos (a masmorra é contínua). */
   if (inStage && enemy) {
     const fighting = phase === 'fight';
+    const ended = phase === 'ended';
     // Entre o começo da luta nova e o 1º passo do relógio, o estado do hook ainda é o do inimigo anterior: a cena pinta o novo cheio.
     const pronto = battle.stateKey === fightKey;
     const foeHpFrac = pronto ? (battle.foesHp[0] ?? 1) : 1;
@@ -433,18 +496,30 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
             dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
           }}
-          /* Copy §4: "camada/layer" é o termo canônico (§12); os números vêm de `MAX_FLOORS`, nunca à mão. */
-          title={`${isPt ? 'Camada' : 'Layer'} ${floor}/${MAX_FLOORS}`}
+          /* Copy §4: "camada/layer" é o termo canônico (§12). Sem "/N": a descida não tem fim de andares. */
+          title={`${isPt ? 'Camada' : 'Layer'} ${floor}`}
           badge={<span className="sm2-num" style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', textShadow: '0 1px 2px rgba(0,0,0,.8)' }} aria-label={`${sceneName} · ${isPt ? 'inimigo' : 'enemy'} ${enemyIdx + 1}/${ladderLen}`}>{enemyIdx + 1}/{ladderLen}</span>}
           closeLabel={exitLabel}
           onClose={exitRun}
-          exitConfirm={fighting ? {
+          exitConfirm={!ended ? {
             title: isPt ? 'Sair da descida? O placar até aqui fica.' : 'Leave the descent? Your score so far stays.',
             stay: isPt ? 'Continuar' : 'Keep going',
             leave: exitLabel,
           } : undefined}
           onPauseChange={setPausado}
         >
+          {/* Os controles da descida: SEMPRE à mão (Pausar/Retomar; o Sair é o X da cena). A linha viva é o placar do
+              andar para o leitor de tela (`aria-live`): só muda quando o ANDAR muda. Sem botão de "próximo". */}
+          {!ended && (
+            <div data-dungeon-controls style={{ position: 'absolute', left: 12, right: 12, zIndex: 8, boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 8px)' }}>
+              <button type="button" data-dungeon-pause aria-pressed={pausadoManual} onClick={() => setPausadoManual(v => !v)} style={{ ...sm2Button('outline'), flexShrink: 0, padding: '0 12px' }}>
+                {pausadoManual ? (isPt ? 'Retomar' : 'Resume') : (isPt ? 'Pausar' : 'Pause')}
+              </button>
+              <p data-dungeon-floor-live aria-live="polite" className="sm2-num" style={{ ...phaseLine, margin: 0, textAlign: 'right', flex: 1, minWidth: 0 }}>
+                {isPt ? `Camada ${floor}` : `Layer ${floor}`}{pausadoManual ? (isPt ? ' · em pausa' : ' · paused') : ''}
+              </p>
+            </div>
+          )}
           {phase === 'enemy-down' && (
             <div role="status" style={PANEL}>
               {/* Copy §4 (§5.12, L3): vencer é PASSAR, não matar — nenhuma
@@ -469,13 +544,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   </>
                 )}
               </p>
-              <button type="button" onClick={nextEnemy} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
-                {enemyIdx + 1 >= enemies.length
-                  ? (floor >= MAX_FLOORS
-                      ? (isPt ? `Concluir descida (+${clearBonus(floor)} Bits + Glitchtama)` : `Finish descent (+${clearBonus(floor)} Bits + Glitchtama)`)
-                      : (isPt ? `Limpar camada (+${clearBonus(floor)} Bits)` : `Clear layer (+${clearBonus(floor)} Bits)`))
-                  : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name}` : `Challenge ${enemies[enemyIdx + 1].name}`)}
-              </button>
+              {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
             </div>
           )}
           {phase === 'floor-clear' && (
@@ -483,71 +552,54 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p style={phaseTitle}>{isPt ? `Camada ${floor} limpa.` : `Layer ${floor} cleared.`}</p>
               {/* Copy §4: dá sentido ao escalonamento de tier (`LADDER_TIERS`)
                   sem falar em dificuldade como mérito. */}
-              <p style={phaseLine}>{isPt ? 'Esta camada é mais antiga. A fauna também.' : 'This layer is older. So is what lives in it.'}</p>
+              <p style={phaseLine}>{isPt ? 'A próxima camada é mais antiga. A fauna também.' : 'The next layer is older. So is what lives in it.'}</p>
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
-              <p style={phaseLine}>{rewardMsg}</p>
-              {!proximoAndarAberto && gs && (
+              <p style={phaseLine}>{rewardMsg} · <span className="sm2-num">+{clearBonus(floor)} Bits</span></p>
+              {/* O MARCO do andar 5 (uma vez por descida). Copy §4, o nó (§7, L4): o nome `Glitchtama` FICA
+                  (`EXCECOES` da régua). "Usar" é o verbo da mochila. Fato, nunca "você dominou a masmorra" (L12). */}
+              {milestoneNow && (
+                <div data-dungeon-milestone>
+                  <p style={phaseLine}>{isPt ? `Marco: a camada ${DUNGEON_MILESTONE_FLOOR} ficou para trás. Da fenda ele trouxe fragmentos que ainda não assentaram.` : `Milestone: layer ${DUNGEON_MILESTONE_FLOOR} is behind you. From the rift he brought fragments that haven't settled yet.`}</p>
+                  <p style={phaseLine}>
+                    {isPt
+                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (mochila)'
+                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Backpack)'}
+                  </p>
+                  <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
+                </div>
+              )}
+              {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
+            </div>
+          )}
+          {phase === 'ended' && (
+            <div role="status" style={PANEL} data-dungeon-ended={endReason}>
+              {/* Fim de descida SEM vereditos: não é derrota nem cobrança, é o HP que acabou — e ele volta com o tempo.
+                  Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
+                  vocabulário da criatura que acaba) — o verbo é RECUPERAR. */}
+              <p style={phaseTitle}>
+                {endReason === 'sealed'
+                  ? (isPt ? 'O caminho para baixo está lacrado por ora.' : 'The way further down is sealed for now.')
+                  : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
+              </p>
+              {endReason === 'sealed' && gs && (
                 <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
               )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={nextFloor} disabled={!proximoAndarAberto} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap', ...(proximoAndarAberto ? {} : { opacity: 0.5, cursor: 'not-allowed' }) }}>
-                  {isPt ? `Camada ${floor + 1}` : `Layer ${floor + 1}`}
-                </button>
-                <button type="button" onClick={exitRun} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
-                  {isPt ? 'Sair c/ placar' : 'Bank & exit'}
-                </button>
-              </div>
-            </div>
-          )}
-          {phase === 'run-complete' && (
-            <div role="status" style={PANEL}>
-              {/* Nenhuma cor de prêmio: o que é ganho fala pela frase (D-J8). */}
-              {/* Copy §4: fato, nunca "você dominou a masmorra" (L12). O
-                  número vem de `MAX_FLOORS`. */}
-              <p style={phaseTitle}>{isPt ? `As ${MAX_FLOORS} camadas ficaram para trás.` : `All ${MAX_FLOORS} layers are behind you.`}</p>
-              <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
-              {/* Copy §4, "o que se traz" (§7, §12): cobre Bits e fagulha-coração. */}
-              <p style={phaseLine}>{isPt ? 'Da fenda ele trouxe fragmentos que ainda não assentaram.' : "From the rift he brought fragments that haven't settled yet."}</p>
-              {/* Copy §4, o nó (§7, L4): a P5 foi decidida pelo dono em
-                  21/09/2026 — o nome `Glitchtama` FICA (`EXCECOES` da régua),
-                  então a frase entra com ele. "Usar" é o verbo da mochila (ex-pastinha). */}
-              <p style={phaseLine}>
-                {isPt
-                  ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (mochila)'
-                  : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Backpack)'}
-              </p>
-              <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                  {isPt ? 'Descer de novo' : 'Go down again'}
-                </button>
-                <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                  {exitLabel}
-                </button>
-              </div>
-            </div>
-          )}
-          {phase === 'lost' && (
-            <div role="status" style={PANEL}>
-              {/* A derrota sem visor de derrota e sem cor de perda: o que estava
-                  em jogo era a run; os corações ficam, e a tela diz (JOGO-09). */}
-              {/* Copy §4 (L5, §7): "Voltar sem terminar não custa nada do que
-                  é seu; custa a descida" — perda SÓ sobre coisa apostada de
-                  propósito. A 2ª linha mantém o fato dos corações. */}
-              <p style={phaseTitle}>
-                {isPt ? 'Você subiu. A descida ficou pelo caminho — e só ela.' : 'You went back up. The descent stayed behind — and only it.'}
-              </p>
-              <p style={phaseLine}>
-                {isPt ? 'Seus corações continuam intactos.' : 'Your hearts are untouched.'}
-              </p>
               <p className="sm2-num" style={phaseLine}>
                 {isPt ? `Camada ${floor} · ${scoreLine}` : `Layer ${floor} · ${scoreLine}`}
               </p>
+              <p style={phaseLine}>{isPt ? 'Seus corações continuam intactos.' : 'Your hearts are untouched.'}</p>
+              {espera > 0 && (
+                <p style={phaseLine} data-dungeon-recovering>
+                  {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}
+                </p>
+              )}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                  {isPt ? 'Jogar de novo' : 'Play again'}
-                </button>
+                {espera === 0 && (
+                  <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                    {isPt ? 'Descer de novo' : 'Go down again'}
+                  </button>
+                )}
                 <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
                   {exitLabel}
                 </button>
@@ -564,7 +616,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       <GameHeader
         run={false}
         title={isPt ? 'Masmorra' : 'Dungeon'}
-        sub={isPt ? `Camada ${floor} de ${MAX_FLOORS}` : `Layer ${floor} of ${MAX_FLOORS}`}
+        sub={isPt ? 'Descida automática' : 'Automatic descent'}
         closeLabel={exitLabel}
         onClose={exitRun}
       />
@@ -583,14 +635,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
         <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
         <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
+        <StatTag label="HP" value={`${Math.round(hpLobby * 100)}%`} />
         {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê.
             I13: agora é o `InfoTip` padrão (antes era um "?" próprio). */}
         <InfoTip language={language} label={isPt ? 'Como funciona a descida' : 'How the descent works'} align="right">
           <span data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span>
                   {isPt
-                    ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
-                    : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
+                    ? `A descida é automática: as lutas vêm sozinhas, uma após a outra, e a cada ${ladderLen} lutas você desce uma camada — sem fim, até o HP acabar. O HP não enche entre descidas: ele volta com o tempo, até com o app fechado (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio; precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer). Limpar a camada ${DUNGEON_MILESTONE_FLOOR} é um marco: rende um Glitchtama e sobe a dificuldade (reset semanal). Pode pausar ou sair quando quiser. Nunca custa seus corações.`
+                    : `The descent is automatic: fights come one after another on their own, and every ${ladderLen} fights you go down a layer — endlessly, until the HP runs out. HP does not refill between descents: it comes back over time, even with the app closed (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full; you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down). Clearing layer ${DUNGEON_MILESTONE_FLOOR} is a milestone: it earns a Glitchtama and raises the difficulty (weekly reset). Pause or leave whenever you like. It never costs your hearts.`}
                 </span>
                 <span>
                   {isPt
@@ -614,10 +667,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         </p>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-        <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320 }}>
+        <button type="button" onClick={startRun} disabled={espera > 0} style={{ ...sm2Button('primary', espera > 0), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
           {isPt ? 'Descer' : 'Go down'}
         </button>
+        {/* Abaixo do piso: recuperação, não punição — sem culpa, sem coração, sem Bits. Verbo RECUPERAR (a bíblia veta "descansar" sobre a criatura). */}
+        {espera > 0 && (
+          <p style={phaseLine} role="status" data-dungeon-recovering>
+            {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}
+          </p>
+        )}
 
         {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
             Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava

@@ -88,3 +88,13 @@ Nome "Caderno / Journal": ok. Sem recompensa nenhuma. **Caderno no save na nuvem
 ## 8. Expedição Pomodoro (09/10/2026)
 
 O Soulmon acompanha o foco a um destes ambientes: Floresta, Costa, Caverna, Jardim, Oficina ou Observatório. Cada cenário tem quatro materiais possíveis, reaproveitados do catálogo de `buildingQuests`; o pool acrescenta uma quinta opção, comida, e sorteia uma comida das categorias normais quando ela sai. Cada opção do pool tem peso igual. Item garantido é pago ao confirmar "Foquei" após o timer; cada ciclo completo foco+pausa sobe a chance do único extra possível daquele foco, sem passar de 25%. O teto diário conta materiais e comidas juntos. O stock usa inventários já existentes; não se criam tipos de material, moeda nem energia.
+
+## 9. A sessão em etapas, interativa (10/10/2026)
+
+Pedido do dono: as técnicas deixam de ser só guia e viram ETAPAS que montam a lista da sessão, na ordem: preparar → ritmo/ambiente (Pomodoro) → regra dos 2 minutos (picker tocável entre as tarefas dele, até 5) → Eisenhower (classifica; a ordem sai ao vivo: fazer, agendar, delegar; deixar de lado sai) → sapo (a mais difícil) → se-então → brain dump com TEMPO (3/5/10 min) → **lista organizada** (2 min, sapo, quadrantes) + ativar o Pomodoro. Cada etapa tem Pular. Regra: `utils/focoSessao.ts` (pura); UI: `OficinaPlano.tsx`.
+
+- **Planejar não mexe na Home.** A máquina só lê `{id,name,completed}`; a ordem da Home nunca muda. Marcar uma tarefa na lista da sessão chama o `handleToggleTask` do App (a MESMA conclusão: XP, meta, itens). "Concluir sessão" NÃO conclui tarefa nenhuma (antes concluía todas as da sessão).
+- **Várias sessões por dia**, cada uma com nome. Registro mínimo local das concluídas (`FOCO_WORKSHOPS`, 20 últimas; sem total/placar/sequência).
+- **Recompensa extra pequena:** concluir uma sessão com plano rende 1 item (sem extra) do ambiente escolhido, máx. 2 por dia (`FOCUS_PLAN_DAILY_CAP`), dentro do teto de 8; recibo `plan:<sessionId>` (uma vez por sessão) no `focusLoot` que já existe no save — nenhum campo novo. Não olha contagem de tarefas.
+- Decisão para o dono rever: o teto de 2 sessões premiadas por dia e o requisito de ter ao menos 1 item na lista.
+

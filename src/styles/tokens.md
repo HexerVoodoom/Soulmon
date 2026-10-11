@@ -305,23 +305,25 @@ curl -s -A "$UA" -o public/fonts/material-symbols-rounded.woff2 "$(grep -o 'http
 Ao trocar o arquivo, **suba o `CACHE_VERSION` de `public/sw.js`** — senão
 quem já tem o app instalado fica com a fonte velha e o ícone novo não aparece.
 
-**Inventário atual (102 — a linha dizia 102 com 100 nomes; contados de novo em 16/09/2026):**
+**Inventário atual (107 — contados de novo em 11/10/2026; +5 da Oficina: checklist, priority_high, grid_view, fact_check, event_note):**
 
-`accessibility_new, add, archive, arrow_back, arrow_forward, auto_awesome,
-bedtime, bolt, calendar_month, casino, chat_bubble, check, check_circle,
-chevron_left, chevron_right, cleaning_services, close, cloud_done,
-cloud_off, content_copy, dark_mode, delete, diamond, do_not_disturb_on,
-download, drag_indicator, eco, edit, egg, emoji_events, event_repeat,
-expand_less, expand_more, favorite, filter_list, flag, groups, help, home,
+`accessibility_new, add, archive, arrow_back, arrow_forward,
+auto_awesome, bedtime, bolt, calendar_month, casino, chat_bubble, check,
+check_circle, checklist, chevron_left, chevron_right, cleaning_services,
+close, cloud_done, cloud_off, content_copy, dark_mode, delete, diamond,
+do_not_disturb_on, download, drag_indicator, eco, edit, egg,
+emoji_events, event_note, event_repeat, expand_less, expand_more,
+fact_check, favorite, filter_list, flag, grid_view, groups, help, home,
 info, inventory_2, leaderboard, light_mode, link, local_fire_department,
 lock, lock_open, logout, menu, mic, military_tech, mood, more_horiz,
 nightlight, paid, palette, pan_tool, park, pause, pending, person, pets,
-play_arrow, psychology, radio_button_unchecked, refresh, replay,
-restaurant, schedule, search, send, sentiment_satisfied, settings, share,
-shopping_bag, shower, sort, spa, star, stop_circle, storefront, swords,
-sync, task_alt, timer, today, touch_app, toys, translate, trending_up,
-tune, undo, upload, visibility, visibility_off, volume_off, volume_up,
-volunteer_activism, warning, water_drop, wb_sunny, wifi_off`
+play_arrow, priority_high, psychology, radio_button_unchecked, refresh,
+replay, restaurant, schedule, search, send, sentiment_satisfied,
+settings, share, shopping_bag, shower, sort, spa, star, stop_circle,
+storefront, swords, sync, task_alt, timer, today, touch_app, toys,
+translate, trending_up, tune, undo, upload, visibility, visibility_off,
+volume_off, volume_up, volunteer_activism, warning, water_drop,
+wb_sunny, wifi_off`
 
 > `toys` (Brincar, 5ª célula do deck) e `groups` (Biblioteca, no menu da nav)
 > entraram pelo canvas Home (P6, decisão do dono em 16/09/2026; o crítico

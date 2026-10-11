@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FOCUS_ENVIRONMENTS, FOCUS_EXTRA_BASE_CHANCE, FOCUS_EXTRA_CHANCE_PER_CYCLE,
   FOCUS_EXTRA_MAX_CHANCE, FOCUS_LOOT_DAILY_CAP, applyFocusLoot, focusExtraChance,
-  rollFocusLoot, sanitizeFocusLoot, type FocusLootRoll, type FocusLootState,
+  rollFocusLoot, rollPlanLoot, FOCUS_PLAN_DAILY_CAP, sanitizeFocusLoot, type FocusLootRoll, type FocusLootState,
 } from './focusExpedition';
 
 describe('recompensas da expedição Pomodoro', () => {
@@ -52,5 +52,24 @@ describe('recompensas da expedição Pomodoro', () => {
     const granted = applyFocusLoot(full, { day: '2026-10-09', environment: 'forest', sessionId: 's', eventId: 'at-cap' }, drop);
     expect(granted.items[0].kind).toBe('food');
     expect(granted.state.foodInventory[granted.items[0].id]).toBe(1);
+  });
+
+  it('concluir o processo da sessão: 1 item sem extra, 1 vez por sessão e no máximo FOCUS_PLAN_DAILY_CAP por dia', () => {
+    const roll = rollPlanLoot('forest', () => 0);
+    expect(roll.extra).toBeUndefined();
+    let state: FocusLootState = { foodInventory: {} };
+    const day = '2026-10-10';
+    const claim = (id: string) => applyFocusLoot(state, { day, environment: 'forest', sessionId: id, eventId: `plan:${id}` }, roll);
+    for (let i = 0; i < FOCUS_PLAN_DAILY_CAP; i++) {
+      const r = claim(`s${i}`);
+      expect(r.accepted).toBe(true);
+      expect(r.items).toHaveLength(1);
+      state = r.state;
+    }
+    expect(claim('s0').accepted).toBe(false);
+    expect(claim('outra').accepted).toBe(false);
+    // O teto de 8 itens do dia continua valendo e os focos comuns não são bloqueados pelo teto das sessões.
+    const foco = applyFocusLoot(state, { day, environment: 'forest', sessionId: 'x', eventId: 'x:phase' }, rollFocusLoot('forest', 0, () => 0));
+    expect(foco.accepted).toBe(true);
   });
 });

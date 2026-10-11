@@ -103,6 +103,16 @@
         subscription is yours. Turning notifications off deletes it too.</td>
   </tr>
   <tr>
+    <td>Meal reminders (only if you turn <em>Meal reminders</em> on in Settings &mdash; it starts off)</td>
+    <td>Stored with the notification subscription: your three meal times, your
+        time zone offset and, if you set one, your rest window, so the server can
+        send each reminder at your local time and never inside your rest window.
+        <strong>None of it is sent while the switch is off</strong>, and turning
+        it off (or notifications off) stops sending it and deletes it from the
+        subscription. The times stay in your save so they follow you between
+        devices.</td>
+  </tr>
+  <tr>
     <td>Your creature's birth date (only if you turn notifications on)</td>
     <td>Stored with the notification subscription, as a day/month/year, so the
         messages of the first two days talk about them instead of talking about
@@ -280,6 +290,7 @@
   <tr><td><code>guild_thread</code></td><td>That you firmed your strand for the day (<code>kind</code>), at most once a day. <strong>Never what you did, never how much.</strong></td></tr>
   <tr><td><code>guild_raid</code></td><td>Fair: that you took your round, or saw the phenomenon come apart or retreat (<code>outcome</code>, 0 to 2). Never the damage.</td></tr>
   <tr><td><code>guild_stage</code></td><td>That your device saw a new stage of the Grove (<code>level</code>, 1 to 5), once each.</td></tr>
+  <tr><td><code>meal_ritual</code></td><td>That a meal check-in window (after breakfast, lunch or dinner) was answered by any care gesture: which meal (<code>meal</code>: 0 = breakfast, 1 = lunch, 2 = dinner) and which small action closed it (<code>kind</code>: 0 = food, 1 = rinse, 2 = pat, 3 = hello). Only that it happened &mdash; never the time of day, never how many windows you skipped.</td></tr>
   <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>
@@ -542,6 +553,16 @@
              são apagados pelo próprio aparelho (DELETE /api/subscribe). --></td>
   </tr>
   <tr>
+    <td>Lembretes das refeições (só se você ligar <em>Lembretes das refeições</em> nas Configurações &mdash; ele começa desligado)</td>
+    <td>Guardados junto da inscrição de notificação: os seus três horários de
+        refeição, o deslocamento do seu fuso e, se você tiver uma, a sua janela
+        de descanso &mdash; para o servidor mandar cada lembrete na sua hora
+        local e nunca dentro da janela de descanso. <strong>Nada disso é enviado
+        com a chave desligada</strong>, e desligá-la (ou desligar as
+        notificações) para de enviar e apaga da inscrição. Os horários ficam no
+        seu save para acompanharem você entre aparelhos.</td>
+  </tr>
+  <tr>
     <td>Data de nascimento da sua criatura (só se você ligar as notificações)</td>
     <td>Guardada junto da inscrição de notificação, no formato dia/mês/ano, para
         as mensagens dos dois primeiros dias falarem dela em vez de falarem de
@@ -730,6 +751,7 @@
   <tr><td><code>guild_thread</code></td><td>Que você firmou o seu fio do dia (<code>kind</code>), no máximo uma vez por dia. <strong>Nunca o que você fez, nunca quanto.</strong></td></tr>
   <tr><td><code>guild_raid</code></td><td>Feira: que você deu a sua rodada, ou que viu o fenômeno se desfazer ou recuar (<code>outcome</code>, 0 a 2). Nunca o dano.</td></tr>
   <tr><td><code>guild_stage</code></td><td>Que o seu aparelho viu um estágio novo do Bosque (<code>level</code>, 1 a 5), uma vez cada.</td></tr>
+  <tr><td><code>meal_ritual</code></td><td>Que uma janela de refeição (depois do café, do almoço ou do jantar) foi atendida por algum gesto de cuidado: qual refeição (<code>meal</code>: 0 = café, 1 = almoço, 2 = jantar) e qual ação pequena a fechou (<code>kind</code>: 0 = comida, 1 = banho, 2 = carinho, 3 = oi). Só que aconteceu &mdash; nunca a hora do dia, nunca quantas janelas você deixou passar.</td></tr>
   <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>

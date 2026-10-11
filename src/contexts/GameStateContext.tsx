@@ -174,6 +174,12 @@ export interface Task {
   lastTouchedAt?: string;
   /** dayKey em que esta tarefa é um dos 3 focos do dia. */
   focusDate?: string;
+  /** Repete a cada N dias CONTADOS DA CONCLUSÃO (o `every!` do Todoist): ao
+   *  concluir nasce a próxima, guardada (`someday` + `wakeOn`) até a data —
+   *  nunca acumula atrasadas. Ex.: "Pagar contas" = 30. */
+  repeatEveryDays?: number;
+  /** `YYYY-MM-DD` em que uma tarefa guardada pela repetição volta a `open`. */
+  wakeOn?: string;
 }
 
 export interface CompletedTask {
@@ -385,10 +391,16 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
+  premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
   minigameBits?: { day: string; earned: number };
+  /** O HP do jogador na Masmorra (descida idle, 08/10/2026): fração do máximo + instante da medida.
+   *  NUNCA se lê direto — `hpAgora(state, now)` (`utils/dungeonIdle.ts`) soma a regeneração por timestamp.
+   *  Ausente = cheio. Não compra vantagem (só limita a descida), então é do cliente como Emblemas/placar. */
+  dungeonHp?: { frac: number; at: number };
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1157,11 +1169,25 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
+        premiumFood: (() => {
+          const p = obj<unknown>(loadedState.premiumFood);
+          return typeof p.day === 'string' && typeof p.week === 'string'
+            ? { day: p.day, dropped: num(p.dropped, 0), used: num(p.used, 0), week: p.week, weekDropped: num(p.weekDropped, 0) }
+            : undefined;
+        })(),
         // Teto diário de Bits de minijogo (#61/#63). Mesmo argumento do
         // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
         minigameBits: (() => {
           const m = obj<unknown>(loadedState.minigameBits);
           return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0) } : undefined;
+        })(),
+        // HP da descida idle: lixo/ausente → `undefined` (cheio). Mesma regra de `sanitizeDungeonHp`
+        // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
+        dungeonHp: (() => {
+          const d = obj<unknown>(loadedState.dungeonHp);
+          return typeof d.frac === 'number' && Number.isFinite(d.frac) && typeof d.at === 'number' && Number.isFinite(d.at)
+            ? { frac: Math.min(1, Math.max(0, d.frac)), at: Math.max(0, d.at) } : undefined;
         })(),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
