@@ -750,6 +750,107 @@ function redactionCount(redactions) {
 }
 __name(redactionCount, "redactionCount");
 
+// api/_casa.js
+var CASA_TTL = 86400 * 120;
+var CASA_BITS_POR_PONTO = 10;
+var CASA_BITS_POR_DIA = 200;
+var CASA_BITS_MIN = 10;
+function pontosDeMissao(power, ativos) {
+  const p = Math.min(5, Math.max(1, Math.floor(Number(power) || 1)));
+  const n = Math.min(12, Math.max(1, Math.floor(Number(ativos) || 1)));
+  return Math.max(1, Math.round(4 * (1 + 0.25 * (p - 1)) * (1 + 0.1 * (n - 1))));
+}
+__name(pontosDeMissao, "pontosDeMissao");
+var CASA_PTS_FONTE_DIA_MAX = 60;
+var CASA_STAGES = Object.freeze(["fagulha", "haste", "latao", "flores", "cristais", "aurora"]);
+var CASA_THRESHOLDS = Object.freeze([0, 40, 120, 280, 520, 900]);
+var CASA_PERTO_FRACAO = 0.2;
+var CASA_FONTES = Object.freeze(["doacao", "missao", "guerra"]);
+var CASA_ITEM_RE = /^[a-z0-9][a-z0-9_-]{1,39}$/;
+var coopCasaKey = /* @__PURE__ */ __name((gid, save) => `coopCasa:${gid}:${save}`, "coopCasaKey");
+var int0 = /* @__PURE__ */ __name((n) => Number.isFinite(n) && n > 0 ? Math.floor(n) : 0, "int0");
+function normalizarCasa(r) {
+  const p = r && typeof r.pts === "object" && r.pts ? r.pts : {};
+  return {
+    v: 1,
+    day: typeof r?.day === "string" ? r.day : null,
+    bitsToday: int0(r?.bitsToday),
+    pts: { doacao: int0(p.doacao), missao: int0(p.missao), guerra: int0(p.guerra) },
+    slot: typeof r?.slot === "string" && CASA_ITEM_RE.test(r.slot) ? r.slot : null
+  };
+}
+__name(normalizarCasa, "normalizarCasa");
+var pontosDaCasa = /* @__PURE__ */ __name((c) => c ? c.pts.doacao + c.pts.missao + c.pts.guerra : 0, "pontosDaCasa");
+async function lerCasa(env, gid, save) {
+  const raw = await kvOrThrow(env).get(coopCasaKey(gid, save));
+  try {
+    return normalizarCasa(raw ? JSON.parse(raw) : null);
+  } catch {
+    return normalizarCasa(null);
+  }
+}
+__name(lerCasa, "lerCasa");
+async function gravarCasa(env, gid, save, c) {
+  await kvOrThrow(env).put(coopCasaKey(gid, save), JSON.stringify(c), { expirationTtl: CASA_TTL });
+  return c;
+}
+__name(gravarCasa, "gravarCasa");
+function casaStageFor(total) {
+  const t = int0(total);
+  let i = 0;
+  for (let k = 0; k < CASA_THRESHOLDS.length; k++) if (t >= CASA_THRESHOLDS[k]) i = k;
+  const prox = CASA_THRESHOLDS[i + 1];
+  const perto = prox !== void 0 && (t - CASA_THRESHOLDS[i]) / (prox - CASA_THRESHOLDS[i]) >= 1 - CASA_PERTO_FRACAO;
+  return { stage: CASA_STAGES[i], stageIndex: i, perto };
+}
+__name(casaStageFor, "casaStageFor");
+async function doarBits(env, gid, save, day2, bits) {
+  const pedido = int0(bits);
+  const quer = pedido - pedido % CASA_BITS_POR_PONTO;
+  if (quer < CASA_BITS_MIN) return { accepted: 0, capped: false, invalid: true };
+  const c = await lerCasa(env, gid, save);
+  const hoje = c.day === day2 ? c.bitsToday : 0;
+  const resta = Math.max(0, CASA_BITS_POR_DIA - hoje);
+  const aceito = Math.min(quer, resta - resta % CASA_BITS_POR_PONTO);
+  if (aceito < CASA_BITS_MIN) return { accepted: 0, capped: true };
+  c.day = day2;
+  c.bitsToday = hoje + aceito;
+  c.pts.doacao += aceito / CASA_BITS_POR_PONTO;
+  await gravarCasa(env, gid, save, c);
+  return { accepted: aceito, capped: aceito < quer };
+}
+__name(doarBits, "doarBits");
+async function somarPontos(env, gid, save, fonte, pts2) {
+  if (!CASA_FONTES.includes(fonte) || fonte === "doacao") return 0;
+  const n = Math.min(int0(pts2), CASA_PTS_FONTE_DIA_MAX);
+  if (n <= 0) return 0;
+  const c = await lerCasa(env, gid, save);
+  c.pts[fonte] += n;
+  await gravarCasa(env, gid, save, c);
+  return n;
+}
+__name(somarPontos, "somarPontos");
+async function definirSlot(env, gid, save, item) {
+  if (item !== null && !(typeof item === "string" && CASA_ITEM_RE.test(item))) return void 0;
+  const c = await lerCasa(env, gid, save);
+  c.slot = item;
+  await gravarCasa(env, gid, save, c);
+  return c.slot;
+}
+__name(definirSlot, "definirSlot");
+async function recolherCasaDeQuemSai(env, gid, save) {
+  const c = await lerCasa(env, gid, save);
+  await kvOrThrow(env).delete(coopCasaKey(gid, save));
+  return pontosDaCasa(c);
+}
+__name(recolherCasaDeQuemSai, "recolherCasaDeQuemSai");
+function totalDaCasa(g, cartoes) {
+  let t = int0(g.casaLegado);
+  for (const m of g.members) t += pontosDaCasa(cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : null);
+  return t;
+}
+__name(totalDaCasa, "totalDaCasa");
+
 // api/_coop.js
 var COOP_MAX_MEMBERS = 12;
 var PRESENCA_NOMINAL_MAX = 4;
@@ -937,10 +1038,12 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
   await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
+  const casaDeQuemSai = await recolherCasaDeQuemSai(env, lido.id, saveId);
   const semanas = [0, 1, 2, 3].map((k) => semanaDe(new Date(now.getTime() - k * 7 * 864e5)));
   await Promise.all(semanas.map((w) => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
   const g = await lerGrupo(env, lido.id) ?? lido;
   g.members = (g.members || []).filter((m) => m !== saveId);
+  if (casaDeQuemSai > 0) g.casaLegado = Math.floor(Number(g.casaLegado) || 0) + casaDeQuemSai;
   if (g.checkins) delete g.checkins[saveId];
   if (g.desde) delete g.desde[saveId];
   if (fio) {
@@ -962,7 +1065,7 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
     const ultima = await lerGrupo(env, g.id);
     const outros = (ultima?.members || []).filter((m) => m !== saveId);
     if (outros.length > 0) {
-      const vivo = { ...ultima, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
       await gravarGrupo(env, vivo);
       return { left: true, groupId: g.id, remaining: outros.length };
     }
@@ -1299,11 +1402,12 @@ var parse = /* @__PURE__ */ __name((raw) => {
 async function montarCartao(env, gid, save, now = /* @__PURE__ */ new Date()) {
   const semanas = semanasDoCartao(now);
   const kvs = kvOrThrow(env);
-  const [ck, fio, gest, perfil, ...hits] = await Promise.all([
+  const [ck, fio, gest, perfil, casa, ...hits] = await Promise.all([
     kvs.get(coopCkKey(gid, save)).then(parse),
     lerFio(env, gid, save),
     kvs.get(coopGestKey(gid, save)).then(parse),
     kvs.get(`profile:${save}`).then(parse),
+    lerCasa(env, gid, save),
     ...semanas.map((w) => lerGolpes(env, gid, w, save))
   ]);
   return {
@@ -1312,7 +1416,8 @@ async function montarCartao(env, gid, save, now = /* @__PURE__ */ new Date()) {
     ck: ck && typeof ck === "object" ? { weekKey: ck.weekKey, days: Array.isArray(ck.days) ? ck.days : [] } : null,
     fio,
     gest: gest && typeof gest === "object" ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,
-    hits: Object.fromEntries(semanas.map((w, i) => [w, { days: hits[i].days, dmg: hits[i].dmg }]))
+    hits: Object.fromEntries(semanas.map((w, i) => [w, { days: hits[i].days, dmg: hits[i].dmg }])),
+    casa
   };
 }
 __name(montarCartao, "montarCartao");
@@ -2986,395 +3091,6 @@ async function putProfile(env, id, profile) {
 }
 __name(putProfile, "putProfile");
 
-// api/guild.js
-var CORS4 = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization"
-};
-var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
-var GUILD_LIGHT = { limit: 60, windowMs: 6e4 };
-var COOP_ALIASES = Object.freeze({
-  coop: "guild",
-  coopCreate: "guildCreate",
-  coopJoin: "guildJoin",
-  coopCheckin: "guildCheckin",
-  coopLeave: "guildLeave"
-});
-var GUILD_ACTIONS = Object.freeze({
-  guild: "GET",
-  guildCreate: "POST",
-  guildJoin: "POST",
-  guildCheckin: "POST",
-  guildThread: "POST",
-  guildGesture: "POST",
-  guildRaidHit: "POST",
-  guildRewards: "GET",
-  guildClaim: "POST",
-  guildLeave: "POST",
-  guildRename: "POST",
-  guildNewCode: "POST"
-});
-var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
-async function onRequestOptions4() {
-  return new Response(null, { headers: CORS4 });
-}
-__name(onRequestOptions4, "onRequestOptions");
-async function onRequest2(context) {
-  const gate = takeToken("guild", clientKey(context.request), limiteDaGuilda());
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
-  return handleGuild(context);
-}
-__name(onRequest2, "onRequest");
-async function reciboDoResgate(save, week) {
-  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-guild-claim|${save}|${week}`)));
-  return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
-}
-__name(reciboDoResgate, "reciboDoResgate");
-var GESTO_TIPO_MIN_MEMBROS = 3;
-function semanaAindaAberta(week, agora = /* @__PURE__ */ new Date()) {
-  const hojeUtc = agora.toISOString().slice(0, 10);
-  if (semanaDoDia(hojeUtc) === week) return true;
-  const fim = ultimoDiaDaSemana(diaDeNum(numDia(hojeUtc) - 7));
-  if (semanaDoDia(fim) !== week) return false;
-  return agora.getTime() < Date.parse(`${fim}T00:00:00Z`) + 36 * 3600 * 1e3;
-}
-__name(semanaAindaAberta, "semanaAindaAberta");
-var anfitriaoDe = /* @__PURE__ */ __name((g) => g.hostSave ?? g.members[0] ?? null, "anfitriaoDe");
-async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), cartoesProntos = null) {
-  const semana = semanaDoDia(hoje);
-  const size = g.members.length;
-  const nominal = size <= PRESENCA_NOMINAL_MAX;
-  const cartoes = await lerCartoes(env, g, /* @__PURE__ */ new Date(), cartoesProntos ?? {});
-  const cart = g.members.map((m) => cartoes[m]);
-  const dias = cart.map((c, i) => {
-    const proprios = checkinsDoCartao(c, semana);
-    return proprios.length > 0 ? proprios : g.checkins?.[g.members[i]] || [];
-  });
-  const fios = cart.map(fioDoCartao);
-  const firmou = fios.map((f) => !!f?.days?.includes(hoje));
-  const veio = dias.map((d, i) => d.includes(hoje) || firmou[i]);
-  const membros = await Promise.all(g.members.map(async (m, i) => {
-    const memberId = await idOpacoDoMembro(env, g.id, m);
-    return {
-      id: memberId,
-      memberId,
-      name: cart[i]?.name ?? null,
-      euMesmo: m === euSave,
-      ...nominal && veio[i] ? { apareceuHoje: true } : {}
-    };
-  }));
-  const eu = g.members.indexOf(euSave);
-  const { stage, stageIndex, perto } = bosqueStageFor(g.bosqueProgress);
-  const bloom = tamanhoDaFloracao(Number(g.bosqueProgress ?? 0) - Number(g.tideBase ?? 0));
-  const gestos = cart.map((c) => gestosDoCartao(c, hoje));
-  const recebidos = new Set(gestos.flatMap((k, i) => g.members[i] === euSave ? [] : k));
-  const meuFio = eu >= 0 ? fios[eu] : null;
-  const feira = await resolverFeira(env, g, semana, hoje, cartoes);
-  const anterior = semanaAnterior(hoje);
-  const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)), cartoes);
-  const meusGolpes = eu >= 0 ? golpesDoCartao(cart[eu], semana) ?? await lerGolpes(env, g.id, semana, euSave) : { days: [] };
-  return {
-    id: g.id,
-    name: g.name,
-    weekKey: semana,
-    code: g.code,
-    isHost: anfitriaoDe(g) === euSave,
-    size,
-    full: size >= COOP_MAX_MEMBERS,
-    members: membros,
-    presence: nominal ? membros.map((m) => ({ memberId: m.memberId, ...m.apareceuHoje ? { cameToday: true } : {} })) : null,
-    // B-2: "o bosque recebeu fios hoje" — só FIO firmado, nunca check-in.
-    threadedToday: !nominal && firmou.some(Boolean) ? true : null,
-    // M-1: também no `mine` as marcas só existem quando `true` (o cliente lê
-    // `=== true`); "não veio"/"não firmou" é a ausência da chave.
-    mine: {
-      ...eu >= 0 && veio[eu] ? { cameToday: true } : {},
-      ...eu >= 0 && firmou[eu] ? { threadToday: true } : {},
-      // Cenários de estágio só depois de 7 dias DISTINTOS de fio (LV-G9).
-      // M-2: o fio já traz os dias herdados de guildas anteriores (sair não zera).
-      ...(meuFio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS ? { groveScenes: true } : {},
-      gesturesSent: eu >= 0 ? GUILD_GESTURES.filter((k) => gestos[eu].includes(k)) : []
-    },
-    bosque: {
-      stage,
-      stageIndex,
-      perto,
-      tide: { key: g.tideKey ?? null, size: bloom },
-      ornaments: (Array.isArray(g.ornaments) ? g.ornaments : []).map((o) => ({ tide: o.tide, size: o.size, day: o.day }))
-    },
-    // B5 (L2-backend): com ≤2 membros o "anônimo" é quem sobrou. O TIPO não
-    // sai (dizer "luz" contaria o gesto exato de uma pessoa conhecida); sai só
-    // o agregado `gestureReceived`, que é `true` ou `null`. Com 3+ sai a lista
-    // de tipos, em lote, sem quem nem quantos.
-    gestures: size < GESTO_TIPO_MIN_MEMBROS ? [] : GUILD_GESTURES.filter((k) => recebidos.has(k)),
-    gestureReceived: recebidos.size > 0 ? true : null,
-    raid: {
-      weekKey: semana,
-      phenomenon: fenomenoDaSemana(semana),
-      // A semana corrente só pode estar 'aberta' ou 'dissipada': "recuou" é o
-      // desfecho de uma semana que TERMINOU, e sai em `lastWeek`.
-      state: feira.cleared ? "dissipada" : "aberta",
-      ferido: !feira.cleared && feira.dmg * 2 >= feira.hp,
-      lastWeek: passada.cleared ? "dissipada" : passada.hitters.length > 0 ? "recuou" : null,
-      mine: meusGolpes.days.includes(hoje) ? { hitToday: true } : {}
-    }
-    // M-3 (L3-conformidade): `progress`/`target` NÃO trafegam mais, em nenhum
-    // tamanho nem pelos aliases `coop*` — o cliente já os descartava
-    // (`sanitizeGuildView`) e era um número semanal que zera na virada.
-  };
-}
-__name(vistaDaGuilda, "vistaDaGuilda");
-async function handleGuild({ request, env }) {
-  const json7 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
-  if (!kv(env)) return json7({ error: "Storage not bound" }, 500);
-  const url = new URL(request.url);
-  const pedida = url.searchParams.get("action") ?? "";
-  const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
-  const action = alias ? COOP_ALIASES[pedida] : pedida;
-  const method = request.method;
-  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json7({ error: "unknown action" }, 400);
-  const body = method === "POST" ? await request.json().catch(() => ({})) : {};
-  const id = body.id || url.searchParams.get("id");
-  const chave = alias ? "group" : "guild";
-  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json7({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
-  const vista = /* @__PURE__ */ __name((v) => json7({ [chave]: v }), "vista");
-  const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
-    const cartoes = await lerCartoes(env, g);
-    const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
-    return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
-  }, "montar");
-  const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
-  if (!VALID_ID2.test(id || "")) return json7({ error: "invalid id" }, 400);
-  const auth = await authorizeSaveAccess(request, env, id);
-  if (!auth.ok) {
-    return json7(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
-  }
-  const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
-  if (!dia.ok) return erro("invalid day", 400);
-  const hoje = dia.day;
-  const semana = semanaDoDia(hoje);
-  if (action === "guild") {
-    const g = await grupoDe(env, id, semana);
-    return vista(g ? await montar(g, id, hoje) : null);
-  }
-  if (action === "guildCreate") {
-    const ja = await grupoDe(env, id, semana);
-    if (ja) return erro("already in a {g}", 409, { [chave]: await montar(ja, id, hoje) });
-    const nome = sanitizarNomeDeGuilda(body.name);
-    if (!nome) return erro("invalid name", 400);
-    const codigo = await sortearCodigoLivre(env);
-    if (!codigo) return erro("try again", 503);
-    const g = {
-      id: newPid(),
-      name: nome,
-      code: codigo,
-      createdAt: Date.now(),
-      members: [id],
-      hostSave: id,
-      weekKey: semana,
-      checkins: {},
-      desde: { [id]: hoje },
-      bosqueProgress: 0,
-      progressDay: diaDeNum(numDia(hoje) - 1)
-    };
-    await gravarGrupo(env, g, { novosMembros: [id], codigoNovo: true });
-    const vencedor = await kvOrThrow(env).get(coopOfKey(id));
-    if (vencedor !== g.id) {
-      await kvOrThrow(env).delete(coopKey(g.id));
-      await kvOrThrow(env).delete(coopCodeKey(g.code));
-      const outro = await grupoDe(env, id, semana);
-      return erro("already in a {g}", 409, { [chave]: outro ? await montar(outro, id, hoje) : null });
-    }
-    await cartao(g);
-    return vista(await montar(g, id, hoje));
-  }
-  if (action === "guildJoin") {
-    if (await grupoDe(env, id, semana)) return erro("already in a {g}", 409);
-    const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
-    const lido = groupId ? await lerGrupo(env, groupId) : null;
-    if (!lido) return erro("invalid code", 404);
-    const host = anfitriaoDe(lido);
-    if (host && host !== id && await kvOrThrow(env).get(coopOfKey(host)) !== lido.id) {
-      await kvOrThrow(env).delete(coopKey(lido.id));
-      await kvOrThrow(env).delete(coopCodeKey(code));
-      return erro("invalid code", 404);
-    }
-    const g = await lerGrupo(env, lido.id) ?? lido;
-    rolarSemana(g, semana);
-    if (g.members.includes(id)) return vista(await montar(g, id, hoje));
-    if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
-    g.members.push(id);
-    g.desde = { ...g.desde || {}, [id]: hoje };
-    await gravarGrupo(env, g, { novosMembros: [id] });
-    let confirmado = await lerGrupo(env, g.id);
-    if (confirmado && !confirmado.members.includes(id)) {
-      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kvOrThrow(env).delete(coopOfKey(id));
-        return erro("{g} full", 409);
-      }
-      confirmado.members.push(id);
-      confirmado.desde = { ...confirmado.desde || {}, [id]: hoje };
-      await gravarGrupo(env, confirmado, { novosMembros: [id] });
-      confirmado = await lerGrupo(env, g.id);
-    }
-    if (!confirmado || !confirmado.members.includes(id)) {
-      await kvOrThrow(env).delete(coopOfKey(id));
-      return erro("join collision", 409);
-    }
-    await cartao(confirmado);
-    return vista(await montar(rolarSemana(confirmado, semana), id, hoje));
-  }
-  if (action === "guildCheckin") {
-    const g = await grupoDe(env, id, semana);
-    if (!g) return erro("no {g}", 404);
-    const proprios = await lerCheckins(env, g.id, id, semana);
-    const meus = proprios.length > 0 ? proprios : g.checkins?.[id] || [];
-    if (!meus.includes(hoje)) {
-      await gravarCheckins(env, g.id, id, [...meus, hoje], semana);
-      await cartao(g);
-      await renovarPrazos(env, g.id);
-    }
-    return vista(await montar(g, id, hoje));
-  }
-  if (action === "guildThread") {
-    const g = await grupoDe(env, id, semana);
-    if (!g) return erro("no {g}", 404);
-    if ((body.kind ?? "fio") !== "fio") return erro("invalid kind", 400);
-    if (body.goal !== void 0 && !metaDoFioCumprida(body.goal)) return erro("goal not met", 400);
-    const antes = await lerFio(env, g.id, id);
-    const depois = !antes && fioInicialHerdado(await lerDiasCarregados(env, id), hoje) || firmarFio(antes, hoje);
-    if (!antes || !antes.days.includes(hoje)) {
-      await gravarFio(env, g, id, depois);
-      await cartao(g);
-    }
-    return vista(await montar(g, id, hoje));
-  }
-  if (action === "guildGesture") {
-    const g = await grupoDe(env, id, semana);
-    if (!g) return erro("no {g}", 404);
-    const kind = String(body.kind ?? "");
-    if (!GUILD_GESTURES.includes(kind)) return erro("invalid kind", 400);
-    const ja = await lerGestos(env, g.id, id, hoje);
-    if (ja.includes(kind)) return erro("daily limit", 429);
-    await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
-    await cartao(g);
-    return vista(await montar(g, id, hoje));
-  }
-  if (action === "guildRaidHit") {
-    const g = await grupoDe(env, id, semana);
-    if (!g) return erro("no {g}", 404);
-    if (semana < semanaDoDia((/* @__PURE__ */ new Date()).toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro("raid closed", 409);
-    const antes = await lerGolpes(env, g.id, semana, id);
-    if (antes.days.includes(hoje)) return erro("daily limit", 429);
-    const feira = await resolverFeira(env, g, semana, hoje, await lerCartoes(env, g));
-    if (feira.cleared) return erro("raid closed", 409);
-    const perfil = await getProfile(env, id);
-    const dano = raidDamageFor(stagePower(perfil?.stage));
-    await kvOrThrow(env).put(
-      coopHitKey(g.id, semana, id),
-      JSON.stringify({ week: semana, days: [...antes.days, hoje], dmg: antes.dmg + dano }),
-      { expirationTtl: COOP_HIT_TTL }
-    );
-    await marcarParticipacao(env, g.id, id, semana, hoje);
-    await cartao(g);
-    return json7({ landed: true, [chave]: await montar(g, id, hoje) });
-  }
-  if (action === "guildRewards" || action === "guildClaim") {
-    const g = await grupoDe(env, id, semana);
-    const candidatas = [semana, semanaAnterior(hoje), semanaAnterior(diaDeNum(numDia(hoje) - 7))];
-    const direito = /* @__PURE__ */ __name(async (w2) => {
-      let part = await lerParticipacao(env, id, w2);
-      if (!part && g) {
-        const meus = await lerGolpes(env, g.id, w2, id);
-        if (meus.days.length > 0) part = { gid: g.id, day: meus.days[0] };
-      }
-      if (!part) return null;
-      const ref = w2 === semana ? hoje : ultimoDiaDaSemana(part.day);
-      let cleared;
-      const grupo = g && g.id === part.gid ? g : await lerGrupo(env, part.gid);
-      if (grupo) cleared = (await resolverFeira(env, grupo, w2, ref)).cleared;
-      else cleared = !!await lerRaidOk(env, part.gid, w2);
-      if (w2 === semana && !cleared) return null;
-      return { week: w2, outcome: cleared ? "dissipada" : "recuou", emblems: cleared ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR };
-    }, "direito");
-    const conchas = /* @__PURE__ */ __name(async () => (await lerConjunto(env, coopShellKey(id))).length, "conchas");
-    if (action === "guildRewards") {
-      const pending = [];
-      for (const w2 of candidatas) {
-        if (await kvOrThrow(env).get(coopClaimKey(id, w2))) continue;
-        const d2 = await direito(w2);
-        if (d2) pending.push(d2);
-      }
-      let scenes = await lerConjunto(env, coopScenesKey(id));
-      if (g) {
-        const atual = await atualizarBosque(env, g, hoje);
-        const fio = await lerFio(env, g.id, id);
-        if ((fio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS) {
-          const liberados = cenariosAte(bosqueStageFor(atual.bosqueProgress).stageIndex);
-          if (liberados.some((s) => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
-        }
-      }
-      return json7({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
-    }
-    const w = String(body.week ?? "");
-    if (!candidatas.includes(w)) return erro("invalid week", 400);
-    const recibo = await reciboDoResgate(id, w);
-    const jaResgatado = /* @__PURE__ */ __name(async () => {
-      const r = JSON.parse(await kvOrThrow(env).get(coopClaimKey(id, w)) ?? "null");
-      if (!r) return null;
-      const outcome = r.kind === "dissipada" ? "dissipada" : "recuou";
-      const emblems = r.emblems === RAID_EMBLEMS || r.emblems === RAID_EMBLEMS_FLOOR ? r.emblems : outcome === "dissipada" ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR;
-      const trophy2 = r.trophy === true;
-      return { week: w, outcome, emblems, trophy: trophy2, trophyId: trophy2 ? RAID_TROPHY_ID : null, receipt: recibo };
-    }, "jaResgatado");
-    const conflito = /* @__PURE__ */ __name(async () => erro("already claimed", 409, { receipt: recibo, claimed: await jaResgatado() }), "conflito");
-    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return conflito();
-    const d = await direito(w);
-    if (!d) return erro("nothing to claim", 404);
-    const selo = newPid();
-    await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo, receipt: recibo }), { expirationTtl: COOP_CLAIM_TTL });
-    const gravado = JSON.parse(await kvOrThrow(env).get(coopClaimKey(id, w)) ?? "{}");
-    if (gravado.selo !== selo) return conflito();
-    let trophy = false;
-    if (d.outcome === "dissipada") {
-      const antes = await conchas();
-      const depois = (await unirConjunto(env, coopShellKey(id), [w])).length;
-      trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
-    }
-    if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
-    return json7({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
-  }
-  if (action === "guildLeave") {
-    await coopLeave(env, id);
-    return json7({ ok: true });
-  }
-  if (action === "guildRename" || action === "guildNewCode") {
-    const g = await grupoDe(env, id, semana);
-    if (!g) return erro("no {g}", 404);
-    if (anfitriaoDe(g) !== id) return erro("not host", 403);
-    const fresco = await lerGrupo(env, g.id) ?? g;
-    if (!fresco.hostSave) fresco.hostSave = anfitriaoDe(fresco);
-    if (action === "guildRename") {
-      const nome = sanitizarNomeDeGuilda(body.name);
-      if (!nome) return erro("invalid name", 400);
-      fresco.name = nome;
-      await gravarGrupo(env, fresco);
-    } else {
-      const novo = await sortearCodigoLivre(env);
-      if (!novo) return erro("try again", 503);
-      const velho = fresco.code;
-      fresco.code = novo;
-      await gravarGrupo(env, fresco, { codigoNovo: true });
-      if (velho && velho !== novo) await kvOrThrow(env).delete(coopCodeKey(velho));
-    }
-    return vista(await montar(rolarSemana(fresco, semana), id, hoje));
-  }
-  return json7({ error: "unknown action" }, 400);
-}
-__name(handleGuild, "handleGuild");
-
 // api/_soulXP.js
 var STAGE_ORDER = ["rookie", "champion", "ultimate", "mega", "ultra"];
 var STAGE_CAPS_EACH = [6, 7, 8, 9, 10];
@@ -3823,11 +3539,11 @@ var PICKABLE = {
   "tal-pvp-06": { maxRank: 3, kind: "dotResist", perRank: 0.06, requires: [req("tal-pvp-02", 2)] },
   "tal-pvp-07": { maxRank: 1, kind: "allAttr", perRank: 2e-3, requires: [req("tal-pvp-05", 3), req("tal-pvp-04", 1), req("tal-pvp-06", 1)] },
   "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
-  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3, requires: [req("tal-pve-01", 2)] },
+  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", attr: "def", perRank: 6e-3, requires: [req("tal-pve-01", 2)] },
   "tal-pve-03": { maxRank: 3, kind: "healBoost", perRank: 5e-3, requires: [req("tal-pve-01", 2)] },
   "tal-pve-04": { maxRank: 3, kind: "riftBits", perRank: 0.03, requires: [req("tal-pve-03", 1)] },
   "tal-pve-05": { maxRank: 3, kind: "combatBonus", scope: "nightmare", perRank: 4e-3, requires: [req("tal-pve-03", 1)] },
-  "tal-pve-06": { maxRank: 3, kind: "combatBonus", scope: "pve", perRank: 4e-3, requires: [req("tal-pve-02", 2)] },
+  "tal-pve-06": { maxRank: 3, kind: "combatBonus", scope: "pve", attr: "spd", perRank: 4e-3, requires: [req("tal-pve-02", 2)] },
   "tal-pve-07": { maxRank: 1, kind: "startShield", perRank: 0.01, requires: [req("tal-pve-05", 1), req("tal-pve-06", 1)] },
   "tal-com-01": { maxRank: 3, kind: "equipPrice" },
   "tal-com-02": { maxRank: 3, kind: "fragmentGain", requires: [req("tal-com-01", 2)] },
@@ -3933,11 +3649,14 @@ function talentCheerScale(picks, bondLevel) {
 __name(talentCheerScale, "talentCheerScale");
 
 // api/_forge.js
-var FORGE_MAX_LEVEL = 5;
-var LEVEL_PCT = [3e-3, 2e-3, 3e-3, 3e-3, 4e-3];
+var FORGE_MAX_LEVEL = 15;
+var FORGE_SCHEMA = 2;
+var LEVEL_PCT = Array.from({ length: FORGE_MAX_LEVEL }, () => 1e-3);
 var PRIMARY_ATTR = { nucleo: "atk", carapaca: "def", rastro: "spd" };
 var ALT_ATTR = { nucleo: "def", carapaca: "spd", rastro: "atk" };
-var LEGACY_LEVEL = [2, 4, 5];
+var LEGACY_LEVEL = [5, 11, 15];
+var OLD_LEVEL_TO_NEW = [3, 5, 8, 11, 15];
+var OLD_LEVEL_SPAN = [3, 2, 3, 3, 4];
 var FORGE_PIECES = {
   "eq-nucleo-t1": { slot: "nucleo", tier: 1 },
   "eq-nucleo-t2": { slot: "nucleo", tier: 2 },
@@ -3957,6 +3676,7 @@ function sanitizeForge(raw) {
     /** @type {Record<string, unknown>} */
     raw
   );
+  const legacy = r.v !== FORGE_SCHEMA;
   const lv = r.levels && typeof r.levels === "object" && !Array.isArray(r.levels) ? (
     /** @type {Record<string, unknown>} */
     r.levels
@@ -3970,17 +3690,29 @@ function sanitizeForge(raw) {
   for (const id of Object.keys(FORGE_PIECES)) {
     const v = has2(lv, id) ? lv[id] : void 0;
     if (typeof v !== "number" || !Number.isFinite(v)) continue;
-    const level = Math.min(FORGE_MAX_LEVEL, Math.max(1, Math.floor(v)));
-    levels[id] = level;
     const arr = has2(pk, id) && Array.isArray(pk[id]) ? (
       /** @type {unknown[]} */
       pk[id]
     ) : [];
+    if (legacy) {
+      const old = Math.min(OLD_LEVEL_TO_NEW.length, Math.max(1, Math.floor(v)));
+      const list2 = [];
+      for (let k = 1; k <= old; k++) {
+        const c = k >= 2 && arr[k - 2] === "b" ? "b" : "a";
+        const span = OLD_LEVEL_SPAN[k - 1] - (k === 1 ? 1 : 0);
+        for (let i = 0; i < span; i++) list2.push(c);
+      }
+      levels[id] = OLD_LEVEL_TO_NEW[old - 1];
+      if (list2.includes("b")) picks[id] = list2;
+      continue;
+    }
+    const level = Math.min(FORGE_MAX_LEVEL, Math.max(1, Math.floor(v)));
+    levels[id] = level;
     const list = [];
     for (let i = 0; i < level - 1; i++) list.push(arr[i] === "b" ? "b" : "a");
     if (list.includes("b")) picks[id] = list;
   }
-  return Object.keys(levels).length === 0 ? empty : { levels, picks };
+  return Object.keys(levels).length === 0 ? empty : { v: FORGE_SCHEMA, levels, picks };
 }
 __name(sanitizeForge, "sanitizeForge");
 function ownedPieceBonus(id, forge) {
@@ -3993,6 +3725,9 @@ function ownedPieceBonus(id, forge) {
   const main = PRIMARY_ATTR[piece.slot];
   out[main] += LEVEL_PCT[0];
   for (let k = 2; k <= Math.min(FORGE_MAX_LEVEL, level); k++) out[saved[k - 2] === "b" ? ALT_ATTR[piece.slot] : main] += LEVEL_PCT[k - 1];
+  out.atk = Math.round(out.atk * 1e9) / 1e9;
+  out.def = Math.round(out.def * 1e9) / 1e9;
+  out.spd = Math.round(out.spd * 1e9) / 1e9;
   return out;
 }
 __name(ownedPieceBonus, "ownedPieceBonus");
@@ -4443,6 +4178,16 @@ function duelSide(save, opts = {}) {
   return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
 }
 __name(duelSide, "duelSide");
+function duelSeed(...parts) {
+  let h = 2166136261;
+  const s = parts.join("|");
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+__name(duelSeed, "duelSeed");
 function simulateDuel({ me, opp, seed, taps }) {
   const g = fightSteps(
     { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
@@ -4466,6 +4211,561 @@ function simulateDuel({ me, opp, seed, taps }) {
   return { events, winner, hpMe: hpMe ?? res.hpA, hpOpp: hpOpp ?? res.hpB, timeMe: res.timeA, timeOpp: res.timeB };
 }
 __name(simulateDuel, "simulateDuel");
+
+// api/_duelLoad.js
+var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
+async function loadDuelSide(env, saveId) {
+  if (!VALID_ID2.test(saveId || "")) return null;
+  try {
+    const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
+    if (!value) return null;
+    if (typeof value !== "string" || value.length > DUEL_SAVE_MAX_CHARS) {
+      console.warn("duel: save grande demais para lutar", { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
+      return null;
+    }
+    const state = JSON.parse(value);
+    if (!state || typeof state !== "object" || Array.isArray(state)) return null;
+    return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
+  } catch (err) {
+    console.warn("duel: ficha indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
+    return null;
+  }
+}
+__name(loadDuelSide, "loadDuelSide");
+
+// api/_guerra.js
+var WAR_MIN = 2;
+var WAR_MAX = 4;
+var WAR_PTS = Object.freeze({ win: 24, draw: 12, loss: 8 });
+var WAR_QUEUE_TTL = 86400 * 2;
+var WAR_RES_TTL = 86400 * 30;
+var coopWarQKey = /* @__PURE__ */ __name((size) => `coopWarQ:${size}`, "coopWarQKey");
+var coopWarWaitKey = /* @__PURE__ */ __name((gid) => `coopWarWait:${gid}`, "coopWarWaitKey");
+var coopWarResKey = /* @__PURE__ */ __name((gid) => `coopWarRes:${gid}`, "coopWarResKey");
+var parse2 = /* @__PURE__ */ __name((raw) => {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, "parse");
+async function montarEsquadrao(env, g, requester) {
+  const ordem = [requester, ...g.members.filter((m) => m !== requester)];
+  const lados = await Promise.all(ordem.map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })));
+  return lados.filter((x) => x.side).slice(0, WAR_MAX);
+}
+__name(montarEsquadrao, "montarEsquadrao");
+var porNivel = /* @__PURE__ */ __name((lados) => lados.map((x, i) => ({ ...x, i })).sort((a, b) => b.side.combatant.level - a.side.combatant.level || a.i - b.i), "porNivel");
+function resolverGuerra(A, B, sementeBase) {
+  const a = porNivel(A), b = porNivel(B);
+  const n = Math.min(a.length, b.length);
+  const duels = [];
+  let aWins = 0, bWins = 0;
+  for (let i = 0; i < n; i++) {
+    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed: duelSeed(sementeBase, i), taps: [] });
+    if (r.winner === "me") {
+      aWins++;
+      duels.push("a");
+    } else if (r.winner === "opp") {
+      bWins++;
+      duels.push("b");
+    } else duels.push("draw");
+  }
+  return { aWins, bWins, duels };
+}
+__name(resolverGuerra, "resolverGuerra");
+var resultadoDe = /* @__PURE__ */ __name((meus, deles) => meus > deles ? "win" : meus < deles ? "loss" : "draw", "resultadoDe");
+var duelosDe = /* @__PURE__ */ __name((duels, lado) => duels.map((d) => d === "draw" ? "draw" : d === lado ? "win" : "loss"), "duelosDe");
+async function estadoDaGuerra(env, gid) {
+  const [res, wait] = await Promise.all([
+    kvOrThrow(env).get(coopWarResKey(gid)).then(parse2),
+    kvOrThrow(env).get(coopWarWaitKey(gid)).then(parse2)
+  ]);
+  const last = res && typeof res === "object" && typeof res.day === "string" && ["win", "draw", "loss"].includes(res.outcome) ? { day: res.day, outcome: res.outcome, duels: (Array.isArray(res.duels) ? res.duels : []).filter((d) => ["win", "draw", "loss"].includes(d)).slice(0, WAR_MAX), size: Math.min(WAR_MAX, Math.max(0, Number(res.size) || 0)), enemy: typeof res.enemy === "string" ? res.enemy.slice(0, 24) : "" } : null;
+  const waiting = wait && Number.isInteger(wait.size) && wait.size >= WAR_MIN && wait.size <= WAR_MAX ? { size: wait.size } : null;
+  return { waiting, last };
+}
+__name(estadoDaGuerra, "estadoDaGuerra");
+async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
+  const kvs = kvOrThrow(env);
+  const antes = await estadoDaGuerra(env, g.id);
+  if (antes.last?.day === hoje) return { state: "already", ...antes };
+  if (antes.waiting) return { state: "waiting", ...antes };
+  const meus = await montarEsquadrao(env, g, requester);
+  if (meus.length < WAR_MIN) return { state: "small", ...antes };
+  const size = meus.length;
+  const fila = parse2(await kvs.get(coopWarQKey(size)));
+  const rival = fila && typeof fila.gid === "string" && fila.gid !== g.id && Array.isArray(fila.roster) ? await lerGrupo2(fila.gid) : null;
+  if (!rival) {
+    await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x) => x.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
+    await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
+    return { state: "waiting", waiting: { size }, last: antes.last };
+  }
+  await kvs.delete(coopWarQKey(size));
+  const deles = (await Promise.all(fila.roster.filter((m) => rival.members.includes(m)).map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })))).filter((x) => x.side).slice(0, WAR_MAX);
+  if (deles.length < WAR_MIN) {
+    await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x) => x.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
+    await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
+    return { state: "waiting", waiting: { size }, last: antes.last };
+  }
+  const n = Math.min(meus.length, deles.length);
+  const A = meus.slice(0, n), B = deles.slice(0, n);
+  const { aWins, bWins, duels } = resolverGuerra(A, B, `guerra|${g.id}|${rival.id}|${hoje}`);
+  const meu = resultadoDe(aWins, bWins);
+  const dele = resultadoDe(bWins, aWins);
+  const grava = /* @__PURE__ */ __name((gid, outcome, d, lado, nomeInimigo) => kvs.put(
+    coopWarResKey(gid),
+    JSON.stringify({ day: hoje, outcome, duels: duelosDe(d, lado), size: n, enemy: nomeInimigo }),
+    { expirationTtl: WAR_RES_TTL }
+  ), "grava");
+  await Promise.all([
+    grava(g.id, meu, duels, "a", rival.name),
+    grava(rival.id, dele, duels, "b", g.name),
+    kvs.delete(coopWarWaitKey(rival.id)),
+    kvs.delete(coopWarWaitKey(g.id)),
+    // A seiva da casa vai para os dois esquadrões (cada um na casa da própria guilda; perder nunca rende zero).
+    ...A.map((x) => somarPontos(env, g.id, x.save, "guerra", WAR_PTS[meu])),
+    ...B.map((x) => somarPontos(env, rival.id, x.save, "guerra", WAR_PTS[dele]))
+  ]);
+  return { state: "done", waiting: null, last: { day: hoje, outcome: meu, duels: duelosDe(duels, "a"), size: n, enemy: rival.name } };
+}
+__name(buscarGuerra, "buscarGuerra");
+
+// api/guild.js
+var CORS4 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+var VALID_ID3 = /^[a-zA-Z0-9_-]{8,64}$/;
+var GUILD_LIGHT = { limit: 60, windowMs: 6e4 };
+var COOP_ALIASES = Object.freeze({
+  coop: "guild",
+  coopCreate: "guildCreate",
+  coopJoin: "guildJoin",
+  coopCheckin: "guildCheckin",
+  coopLeave: "guildLeave"
+});
+var GUILD_ACTIONS = Object.freeze({
+  guild: "GET",
+  guildCreate: "POST",
+  guildJoin: "POST",
+  guildCheckin: "POST",
+  guildThread: "POST",
+  guildGesture: "POST",
+  guildRaidHit: "POST",
+  guildRewards: "GET",
+  guildClaim: "POST",
+  guildWar: "GET",
+  guildWarSeek: "POST",
+  guildDonate: "POST",
+  guildSlot: "POST",
+  guildLeave: "POST",
+  guildRename: "POST",
+  guildNewCode: "POST"
+});
+var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
+async function onRequestOptions4() {
+  return new Response(null, { headers: CORS4 });
+}
+__name(onRequestOptions4, "onRequestOptions");
+async function onRequest2(context) {
+  const gate = takeToken("guild", clientKey(context.request), limiteDaGuilda());
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  return handleGuild(context);
+}
+__name(onRequest2, "onRequest");
+async function reciboDoResgate(save, week) {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-guild-claim|${save}|${week}`)));
+  return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(reciboDoResgate, "reciboDoResgate");
+var GESTO_TIPO_MIN_MEMBROS = 3;
+function semanaAindaAberta(week, agora = /* @__PURE__ */ new Date()) {
+  const hojeUtc = agora.toISOString().slice(0, 10);
+  if (semanaDoDia(hojeUtc) === week) return true;
+  const fim = ultimoDiaDaSemana(diaDeNum(numDia(hojeUtc) - 7));
+  if (semanaDoDia(fim) !== week) return false;
+  return agora.getTime() < Date.parse(`${fim}T00:00:00Z`) + 36 * 3600 * 1e3;
+}
+__name(semanaAindaAberta, "semanaAindaAberta");
+var anfitriaoDe = /* @__PURE__ */ __name((g) => g.hostSave ?? g.members[0] ?? null, "anfitriaoDe");
+async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), cartoesProntos = null) {
+  const semana = semanaDoDia(hoje);
+  const size = g.members.length;
+  const nominal = size <= PRESENCA_NOMINAL_MAX;
+  const cartoes = await lerCartoes(env, g, /* @__PURE__ */ new Date(), cartoesProntos ?? {});
+  const cart = g.members.map((m) => cartoes[m]);
+  const dias = cart.map((c, i) => {
+    const proprios = checkinsDoCartao(c, semana);
+    return proprios.length > 0 ? proprios : g.checkins?.[g.members[i]] || [];
+  });
+  const fios = cart.map(fioDoCartao);
+  const firmou = fios.map((f) => !!f?.days?.includes(hoje));
+  const veio = dias.map((d, i) => d.includes(hoje) || firmou[i]);
+  const membros = await Promise.all(g.members.map(async (m, i) => {
+    const memberId = await idOpacoDoMembro(env, g.id, m);
+    return {
+      id: memberId,
+      memberId,
+      name: cart[i]?.name ?? null,
+      euMesmo: m === euSave,
+      ...nominal && veio[i] ? { apareceuHoje: true } : {}
+    };
+  }));
+  const eu = g.members.indexOf(euSave);
+  const { stage, stageIndex, perto } = bosqueStageFor(g.bosqueProgress);
+  const bloom = tamanhoDaFloracao(Number(g.bosqueProgress ?? 0) - Number(g.tideBase ?? 0));
+  const gestos = cart.map((c) => gestosDoCartao(c, hoje));
+  const recebidos = new Set(gestos.flatMap((k, i) => g.members[i] === euSave ? [] : k));
+  const meuFio = eu >= 0 ? fios[eu] : null;
+  const feira = await resolverFeira(env, g, semana, hoje, cartoes);
+  const anterior = semanaAnterior(hoje);
+  const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)), cartoes);
+  const meusGolpes = eu >= 0 ? golpesDoCartao(cart[eu], semana) ?? await lerGolpes(env, g.id, semana, euSave) : { days: [] };
+  return {
+    id: g.id,
+    name: g.name,
+    weekKey: semana,
+    code: g.code,
+    isHost: anfitriaoDe(g) === euSave,
+    size,
+    full: size >= COOP_MAX_MEMBERS,
+    members: membros,
+    presence: nominal ? membros.map((m) => ({ memberId: m.memberId, ...m.apareceuHoje ? { cameToday: true } : {} })) : null,
+    // B-2: "o bosque recebeu fios hoje" — só FIO firmado, nunca check-in.
+    threadedToday: !nominal && firmou.some(Boolean) ? true : null,
+    // M-1: também no `mine` as marcas só existem quando `true` (o cliente lê
+    // `=== true`); "não veio"/"não firmou" é a ausência da chave.
+    mine: {
+      ...eu >= 0 && veio[eu] ? { cameToday: true } : {},
+      ...eu >= 0 && firmou[eu] ? { threadToday: true } : {},
+      // Cenários de estágio só depois de 7 dias DISTINTOS de fio (LV-G9).
+      // M-2: o fio já traz os dias herdados de guildas anteriores (sair não zera).
+      ...(meuFio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS ? { groveScenes: true } : {},
+      gesturesSent: eu >= 0 ? GUILD_GESTURES.filter((k) => gestos[eu].includes(k)) : []
+    },
+    bosque: {
+      stage,
+      stageIndex,
+      perto,
+      tide: { key: g.tideKey ?? null, size: bloom },
+      ornaments: (Array.isArray(g.ornaments) ? g.ornaments : []).map((o) => ({ tide: o.tide, size: o.size, day: o.day }))
+    },
+    // B5 (L2-backend): com ≤2 membros o "anônimo" é quem sobrou. O TIPO não
+    // sai (dizer "luz" contaria o gesto exato de uma pessoa conhecida); sai só
+    // o agregado `gestureReceived`, que é `true` ou `null`. Com 3+ sai a lista
+    // de tipos, em lote, sem quem nem quantos.
+    gestures: size < GESTO_TIPO_MIN_MEMBROS ? [] : GUILD_GESTURES.filter((k) => recebidos.has(k)),
+    gestureReceived: recebidos.size > 0 ? true : null,
+    // A CASA (PR2): só estágio, `perto` e os slots de item. Nunca pontos, limiares nem doação por pessoa.
+    casa: {
+      ...(({ stage: stage2, stageIndex: stageIndex2, perto: perto2 }) => ({ nivel: stage2, nivelIndex: stageIndex2, perto: perto2 }))(casaStageFor(totalDaCasa(g, cartoes))),
+      slots: g.members.flatMap((m, i) => {
+        const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
+        return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];
+      }),
+      mine: (() => {
+        const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
+        return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_BITS_POR_DIA };
+      })()
+    },
+    raid: {
+      weekKey: semana,
+      phenomenon: fenomenoDaSemana(semana),
+      // A semana corrente só pode estar 'aberta' ou 'dissipada': "recuou" é o
+      // desfecho de uma semana que TERMINOU, e sai em `lastWeek`.
+      state: feira.cleared ? "dissipada" : "aberta",
+      ferido: !feira.cleared && feira.dmg * 2 >= feira.hp,
+      lastWeek: passada.cleared ? "dissipada" : passada.hitters.length > 0 ? "recuou" : null,
+      mine: meusGolpes.days.includes(hoje) ? { hitToday: true } : {}
+    }
+    // M-3 (L3-conformidade): `progress`/`target` NÃO trafegam mais, em nenhum
+    // tamanho nem pelos aliases `coop*` — o cliente já os descartava
+    // (`sanitizeGuildView`) e era um número semanal que zera na virada.
+  };
+}
+__name(vistaDaGuilda, "vistaDaGuilda");
+async function handleGuild({ request, env }) {
+  const json7 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
+  if (!kv(env)) return json7({ error: "Storage not bound" }, 500);
+  const url = new URL(request.url);
+  const pedida = url.searchParams.get("action") ?? "";
+  const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
+  const action = alias ? COOP_ALIASES[pedida] : pedida;
+  const method = request.method;
+  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json7({ error: "unknown action" }, 400);
+  const body = method === "POST" ? await request.json().catch(() => ({})) : {};
+  const id = body.id || url.searchParams.get("id");
+  const chave = alias ? "group" : "guild";
+  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json7({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
+  const vista = /* @__PURE__ */ __name((v) => json7({ [chave]: v }), "vista");
+  const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
+    const cartoes = await lerCartoes(env, g);
+    const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
+    return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
+  }, "montar");
+  const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
+  if (!VALID_ID3.test(id || "")) return json7({ error: "invalid id" }, 400);
+  const auth = await authorizeSaveAccess(request, env, id);
+  if (!auth.ok) {
+    return json7(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+  }
+  const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
+  if (!dia.ok) return erro("invalid day", 400);
+  const hoje = dia.day;
+  const semana = semanaDoDia(hoje);
+  if (action === "guild") {
+    const g = await grupoDe(env, id, semana);
+    return vista(g ? await montar(g, id, hoje) : null);
+  }
+  if (action === "guildCreate") {
+    const ja = await grupoDe(env, id, semana);
+    if (ja) return erro("already in a {g}", 409, { [chave]: await montar(ja, id, hoje) });
+    const nome = sanitizarNomeDeGuilda(body.name);
+    if (!nome) return erro("invalid name", 400);
+    const codigo = await sortearCodigoLivre(env);
+    if (!codigo) return erro("try again", 503);
+    const g = {
+      id: newPid(),
+      name: nome,
+      code: codigo,
+      createdAt: Date.now(),
+      members: [id],
+      hostSave: id,
+      weekKey: semana,
+      checkins: {},
+      desde: { [id]: hoje },
+      bosqueProgress: 0,
+      progressDay: diaDeNum(numDia(hoje) - 1)
+    };
+    await gravarGrupo(env, g, { novosMembros: [id], codigoNovo: true });
+    const vencedor = await kvOrThrow(env).get(coopOfKey(id));
+    if (vencedor !== g.id) {
+      await kvOrThrow(env).delete(coopKey(g.id));
+      await kvOrThrow(env).delete(coopCodeKey(g.code));
+      const outro = await grupoDe(env, id, semana);
+      return erro("already in a {g}", 409, { [chave]: outro ? await montar(outro, id, hoje) : null });
+    }
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildJoin") {
+    if (await grupoDe(env, id, semana)) return erro("already in a {g}", 409);
+    const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
+    const lido = groupId ? await lerGrupo(env, groupId) : null;
+    if (!lido) return erro("invalid code", 404);
+    const host = anfitriaoDe(lido);
+    if (host && host !== id && await kvOrThrow(env).get(coopOfKey(host)) !== lido.id) {
+      await kvOrThrow(env).delete(coopKey(lido.id));
+      await kvOrThrow(env).delete(coopCodeKey(code));
+      return erro("invalid code", 404);
+    }
+    const g = await lerGrupo(env, lido.id) ?? lido;
+    rolarSemana(g, semana);
+    if (g.members.includes(id)) return vista(await montar(g, id, hoje));
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
+    g.members.push(id);
+    g.desde = { ...g.desde || {}, [id]: hoje };
+    await gravarGrupo(env, g, { novosMembros: [id] });
+    let confirmado = await lerGrupo(env, g.id);
+    if (confirmado && !confirmado.members.includes(id)) {
+      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
+        await kvOrThrow(env).delete(coopOfKey(id));
+        return erro("{g} full", 409);
+      }
+      confirmado.members.push(id);
+      confirmado.desde = { ...confirmado.desde || {}, [id]: hoje };
+      await gravarGrupo(env, confirmado, { novosMembros: [id] });
+      confirmado = await lerGrupo(env, g.id);
+    }
+    if (!confirmado || !confirmado.members.includes(id)) {
+      await kvOrThrow(env).delete(coopOfKey(id));
+      return erro("join collision", 409);
+    }
+    await cartao(confirmado);
+    return vista(await montar(rolarSemana(confirmado, semana), id, hoje));
+  }
+  if (action === "guildCheckin") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const proprios = await lerCheckins(env, g.id, id, semana);
+    const meus = proprios.length > 0 ? proprios : g.checkins?.[id] || [];
+    if (!meus.includes(hoje)) {
+      await gravarCheckins(env, g.id, id, [...meus, hoje], semana);
+      await cartao(g);
+      await renovarPrazos(env, g.id);
+    }
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildThread") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if ((body.kind ?? "fio") !== "fio") return erro("invalid kind", 400);
+    if (body.goal !== void 0 && !metaDoFioCumprida(body.goal)) return erro("goal not met", 400);
+    const antes = await lerFio(env, g.id, id);
+    const depois = !antes && fioInicialHerdado(await lerDiasCarregados(env, id), hoje) || firmarFio(antes, hoje);
+    if (!antes || !antes.days.includes(hoje)) {
+      await gravarFio(env, g, id, depois);
+      await cartao(g);
+    }
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildGesture") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const kind = String(body.kind ?? "");
+    if (!GUILD_GESTURES.includes(kind)) return erro("invalid kind", 400);
+    const ja = await lerGestos(env, g.id, id, hoje);
+    if (ja.includes(kind)) return erro("daily limit", 429);
+    await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildWar") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    return json7({ war: await estadoDaGuerra(env, g.id) });
+  }
+  if (action === "guildWarSeek") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const r = await buscarGuerra(env, g, id, hoje, (gid) => lerGrupo(env, gid));
+    return json7({ state: r.state, war: { waiting: r.waiting, last: r.last } });
+  }
+  if (action === "guildDonate") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const r = await doarBits(env, g.id, id, hoje, body.bits);
+    if (r.invalid) return erro("invalid bits", 400);
+    if (r.accepted === 0) return erro("daily limit", 429);
+    await cartao(g);
+    return json7({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+  }
+  if (action === "guildSlot") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if (body.item !== null && typeof body.item !== "string") return erro("invalid item", 400);
+    const novo = await definirSlot(env, g.id, id, body.item);
+    if (novo === void 0) return erro("invalid item", 400);
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildRaidHit") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if (semana < semanaDoDia((/* @__PURE__ */ new Date()).toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro("raid closed", 409);
+    const antes = await lerGolpes(env, g.id, semana, id);
+    if (antes.days.includes(hoje)) return erro("daily limit", 429);
+    const cartoesDaRoda = await lerCartoes(env, g);
+    const feira = await resolverFeira(env, g, semana, hoje, cartoesDaRoda);
+    if (feira.cleared) return erro("raid closed", 409);
+    const perfil = await getProfile(env, id);
+    const dano = raidDamageFor(stagePower(perfil?.stage));
+    await kvOrThrow(env).put(
+      coopHitKey(g.id, semana, id),
+      JSON.stringify({ week: semana, days: [...antes.days, hoje], dmg: antes.dmg + dano }),
+      { expirationTtl: COOP_HIT_TTL }
+    );
+    await marcarParticipacao(env, g.id, id, semana, hoje);
+    await somarPontos(env, g.id, id, "missao", pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
+    await cartao(g);
+    return json7({ landed: true, [chave]: await montar(g, id, hoje) });
+  }
+  if (action === "guildRewards" || action === "guildClaim") {
+    const g = await grupoDe(env, id, semana);
+    const candidatas = [semana, semanaAnterior(hoje), semanaAnterior(diaDeNum(numDia(hoje) - 7))];
+    const direito = /* @__PURE__ */ __name(async (w2) => {
+      let part = await lerParticipacao(env, id, w2);
+      if (!part && g) {
+        const meus = await lerGolpes(env, g.id, w2, id);
+        if (meus.days.length > 0) part = { gid: g.id, day: meus.days[0] };
+      }
+      if (!part) return null;
+      const ref = w2 === semana ? hoje : ultimoDiaDaSemana(part.day);
+      let cleared;
+      const grupo = g && g.id === part.gid ? g : await lerGrupo(env, part.gid);
+      if (grupo) cleared = (await resolverFeira(env, grupo, w2, ref)).cleared;
+      else cleared = !!await lerRaidOk(env, part.gid, w2);
+      if (w2 === semana && !cleared) return null;
+      return { week: w2, outcome: cleared ? "dissipada" : "recuou", emblems: cleared ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR };
+    }, "direito");
+    const conchas = /* @__PURE__ */ __name(async () => (await lerConjunto(env, coopShellKey(id))).length, "conchas");
+    if (action === "guildRewards") {
+      const pending = [];
+      for (const w2 of candidatas) {
+        if (await kvOrThrow(env).get(coopClaimKey(id, w2))) continue;
+        const d2 = await direito(w2);
+        if (d2) pending.push(d2);
+      }
+      let scenes = await lerConjunto(env, coopScenesKey(id));
+      if (g) {
+        const atual = await atualizarBosque(env, g, hoje);
+        const fio = await lerFio(env, g.id, id);
+        if ((fio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS) {
+          const liberados = cenariosAte(bosqueStageFor(atual.bosqueProgress).stageIndex);
+          if (liberados.some((s) => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
+        }
+      }
+      return json7({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+    }
+    const w = String(body.week ?? "");
+    if (!candidatas.includes(w)) return erro("invalid week", 400);
+    const recibo = await reciboDoResgate(id, w);
+    const jaResgatado = /* @__PURE__ */ __name(async () => {
+      const r = JSON.parse(await kvOrThrow(env).get(coopClaimKey(id, w)) ?? "null");
+      if (!r) return null;
+      const outcome = r.kind === "dissipada" ? "dissipada" : "recuou";
+      const emblems = r.emblems === RAID_EMBLEMS || r.emblems === RAID_EMBLEMS_FLOOR ? r.emblems : outcome === "dissipada" ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR;
+      const trophy2 = r.trophy === true;
+      return { week: w, outcome, emblems, trophy: trophy2, trophyId: trophy2 ? RAID_TROPHY_ID : null, receipt: recibo };
+    }, "jaResgatado");
+    const conflito = /* @__PURE__ */ __name(async () => erro("already claimed", 409, { receipt: recibo, claimed: await jaResgatado() }), "conflito");
+    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return conflito();
+    const d = await direito(w);
+    if (!d) return erro("nothing to claim", 404);
+    const selo = newPid();
+    await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo, receipt: recibo }), { expirationTtl: COOP_CLAIM_TTL });
+    const gravado = JSON.parse(await kvOrThrow(env).get(coopClaimKey(id, w)) ?? "{}");
+    if (gravado.selo !== selo) return conflito();
+    let trophy = false;
+    if (d.outcome === "dissipada") {
+      const antes = await conchas();
+      const depois = (await unirConjunto(env, coopShellKey(id), [w])).length;
+      trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
+    }
+    if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
+    return json7({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
+  }
+  if (action === "guildLeave") {
+    await coopLeave(env, id);
+    return json7({ ok: true });
+  }
+  if (action === "guildRename" || action === "guildNewCode") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if (anfitriaoDe(g) !== id) return erro("not host", 403);
+    const fresco = await lerGrupo(env, g.id) ?? g;
+    if (!fresco.hostSave) fresco.hostSave = anfitriaoDe(fresco);
+    if (action === "guildRename") {
+      const nome = sanitizarNomeDeGuilda(body.name);
+      if (!nome) return erro("invalid name", 400);
+      fresco.name = nome;
+      await gravarGrupo(env, fresco);
+    } else {
+      const novo = await sortearCodigoLivre(env);
+      if (!novo) return erro("try again", 503);
+      const velho = fresco.code;
+      fresco.code = novo;
+      await gravarGrupo(env, fresco, { codigoNovo: true });
+      if (velho && velho !== novo) await kvOrThrow(env).delete(coopCodeKey(velho));
+    }
+    return vista(await montar(rolarSemana(fresco, semana), id, hoje));
+  }
+  return json7({ error: "unknown action" }, 400);
+}
+__name(handleGuild, "handleGuild");
 
 // api/_honra.js
 var HONRA_PONTOS_VITORIA = 20;
@@ -4548,7 +4848,7 @@ var CORS5 = {
   // Ver comentário igual em save.js: sem isto o preflight cross-origin morre.
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-var VALID_ID3 = /^[a-zA-Z0-9_-]{8,64}$/;
+var VALID_ID4 = /^[a-zA-Z0-9_-]{8,64}$/;
 var attrFinito = /* @__PURE__ */ __name((v) => {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : 0;
@@ -4584,7 +4884,7 @@ var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOStri
 var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
 var PID_PLACEHOLDER = "0".repeat(32);
 async function saveIdForPublicId(env, pid) {
-  if (!VALID_ID3.test(pid || "")) return null;
+  if (!VALID_ID4.test(pid || "")) return null;
   const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
   const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
   if (!saveId || pid === legado) return null;
@@ -4702,7 +5002,7 @@ async function handleCommunity({ request, env }) {
   }
   const id = body.id || url.searchParams.get("id");
   const denyUnlessOwner = /* @__PURE__ */ __name(async (actorId) => {
-    if (!VALID_ID3.test(actorId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID4.test(actorId || "")) return json3({ error: "invalid id" }, 400);
     const auth = await authorizeSaveAccess(request, env, actorId);
     if (auth.ok) return null;
     return json3(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
@@ -4755,25 +5055,9 @@ async function handleCommunity({ request, env }) {
     await settleMatch({ id: id2, oppSave: pend.oppSave, me, opp, myRank, outcome: "loss", sides: pend.sides });
     return true;
   }, "forfeitPending");
-  const loadDuelSide = /* @__PURE__ */ __name(async (saveId) => {
-    if (!VALID_ID3.test(saveId || "")) return null;
-    try {
-      const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
-      if (!value) return null;
-      if (typeof value !== "string" || value.length > DUEL_SAVE_MAX_CHARS) {
-        console.warn("community: save grande demais para ser oponente", { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
-        return null;
-      }
-      const state = JSON.parse(value);
-      if (!state || typeof state !== "object" || Array.isArray(state)) return null;
-      return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
-    } catch (err) {
-      console.warn("community: ficha de duelo indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
-      return null;
-    }
-  }, "loadDuelSide");
+  const loadDuelSide2 = /* @__PURE__ */ __name((saveId) => loadDuelSide(env, saveId), "loadDuelSide");
   const loadDuelSides = /* @__PURE__ */ __name(async (mySave, oppSave) => {
-    const [meSide, oppSide] = await Promise.all([loadDuelSide(mySave), loadDuelSide(oppSave)]);
+    const [meSide, oppSide] = await Promise.all([loadDuelSide2(mySave), loadDuelSide2(oppSave)]);
     if (!meSide) return { res: json3({ error: "save unavailable" }, 409) };
     if (!oppSide) return { res: json3({ error: "opponent unavailable" }, 404) };
     return { me: meSide, opp: oppSide };
@@ -4911,13 +5195,13 @@ async function handleCommunity({ request, env }) {
     const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
     const publicDuel = /* @__PURE__ */ __name((side) => side ? { level: side.combatant.level } : null, "publicDuel");
-    const meSide = id ? await loadDuelSide(id) : null;
-    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => ({ ...pub, duel: publicDuel(await loadDuelSide(saveId)) })));
+    const meSide = id ? await loadDuelSide2(id) : null;
+    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => ({ ...pub, duel: publicDuel(await loadDuelSide2(saveId)) })));
     return json3({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
   }
   const matchContext = /* @__PURE__ */ __name(async () => {
     const { opponentId } = body;
-    if (!VALID_ID3.test(id || "") || !VALID_ID3.test(opponentId || "")) return { res: json3({ error: "invalid id" }, 400) };
+    if (!VALID_ID4.test(id || "") || !VALID_ID4.test(opponentId || "")) return { res: json3({ error: "invalid id" }, 400) };
     const denied = await denyUnlessOwner(id);
     if (denied) return { res: denied };
     const oppSave = await saveIdForPublicId(env, opponentId);
@@ -5117,7 +5401,7 @@ async function handleCommunity({ request, env }) {
   }
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
-    if (!VALID_ID3.test(id || "") || !VALID_ID3.test(friendId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID4.test(id || "") || !VALID_ID4.test(friendId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const friendSave = await saveIdForPublicId(env, friendId);
@@ -5138,7 +5422,7 @@ async function handleCommunity({ request, env }) {
   }
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
-    if (!VALID_ID3.test(id || "") || !VALID_ID3.test(friendId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID4.test(id || "") || !VALID_ID4.test(friendId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const friendSave = await saveIdForPublicId(env, friendId);
@@ -6860,7 +7144,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-CqSfPC/functionsRoutes-0.8843071105362732.mjs
+// ../.wrangler/tmp/pages-ZvndD7/functionsRoutes-0.5068818103598411.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -7187,7 +7471,7 @@ function lexer(str) {
   return tokens;
 }
 __name(lexer, "lexer");
-function parse2(str, options) {
+function parse3(str, options) {
   if (options === void 0) {
     options = {};
   }
@@ -7286,7 +7570,7 @@ function parse2(str, options) {
   }
   return result;
 }
-__name(parse2, "parse");
+__name(parse3, "parse");
 function match(str, options) {
   var keys = [];
   var re = pathToRegexp(str, keys, options);
@@ -7361,7 +7645,7 @@ function arrayToRegexp(paths, keys, options) {
 }
 __name(arrayToRegexp, "arrayToRegexp");
 function stringToRegexp(path, keys, options) {
-  return tokensToRegexp(parse2(path, options), keys, options);
+  return tokensToRegexp(parse3(path, options), keys, options);
 }
 __name(stringToRegexp, "stringToRegexp");
 function tokensToRegexp(tokens, keys, options) {
