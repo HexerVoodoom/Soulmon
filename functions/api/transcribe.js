@@ -41,11 +41,12 @@
  * app. Botão que existe e falha é pior que botão que não existe.
  */
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import { bearerToken, verifyIdToken } from './_auth.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 const json = (corpo, status = 200) => Response.json(corpo, { status, headers: CORS });
@@ -97,6 +98,22 @@ export async function onRequestPost({ request, env }) {
     console.error('[transcribe] SUPABASE_PROJECT_ID fora do formato esperado');
     return json({ error: 'transcribe-not-configured' }, 503);
   }
+
+  // QUEM (auditoria de lançamento, 11/10/2026). Até aqui a rota era ANÔNIMA:
+  // o único freio era o balde por IP, que vive na memória do isolate (cada
+  // isolate tem o seu, e trocar de IP zera). Qualquer um na internet usava a
+  // nossa conta de transcrição como serviço gratuito. Exigir um ID token do
+  // Firebase VERIFICADO amarra o custo a uma conta real. FAIL-CLOSED, como
+  // `requireVerifiedOwner`: sem `FIREBASE_PROJECT_ID` não há como saber quem
+  // é, e a dúvida nega numa rota que custa dinheiro por segundo de áudio.
+  if (!env.FIREBASE_PROJECT_ID) return json({ error: 'auth-unavailable' }, 503);
+  let claims = null;
+  try {
+    claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
+  } catch {
+    return json({ error: 'auth-unavailable' }, 503);
+  }
+  if (!claims) return json({ error: 'unauthenticated' }, 401);
 
   let form;
   try {

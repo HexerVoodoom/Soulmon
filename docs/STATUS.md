@@ -8,6 +8,10 @@
 > - **Cura do andar mantida** (~25%, ofício + talento `healBoost`): é cura DENTRO da descida; removê-la deslocaria a parede calibrada e mataria um talento. O que saiu foi o enchimento ENTRE descidas.
 > - **Copy:** "Recuperando…/Recovering…" (a bíblia veta "descansar" sobre a criatura — desvio consciente do "Resting" pedido). Portão do Vínculo (andar ≥ 4, Vínculo 8) agora encerra a descida ("lacrado por ora") em vez de desabilitar um botão.
 > - **Depende do dono:** ajustar as 3 constantes; confirmar a cura do andar e o marco "limpar" (vs. "chegar").
+> ## 11/10/2026 — Auditoria de segurança de lançamento (`docs/AUDITORIA-SEGURANCA-LANCAMENTO.md`)
+>
+> - **Corrigido:** `/api/transcribe` deixou de ser anônima (ID token Firebase verificado, fail-closed; `ChatBox` manda `authHeaders`). `/api/generate-sprite`: `referenceImageUrls` só aceita a nossa `/api/sprite-image?k=` da mesma origem (o resto é descartado — era SSRF de terceiro via Higgsfield) e `prompt`/`promptFallback` têm teto `MAX_PROMPT_CHARS` (12000). `@capacitor/android|core|cli` 8.4.0 → **8.4.3** (GHSA-rvm3-566m-v7fv, crítico no `npm audit`).
+> - **Depende do dono:** fixar o HOST do CDN do Higgsfield quando a assinatura gerar a 1ª imagem; Rate Limiting no painel Cloudflare para `/api/*` caras (o balde atual é por isolate); APK novo na Play para o patch do Capacitor; manter `FIREBASE_PROJECT_ID` setado.
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >

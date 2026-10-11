@@ -20,16 +20,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+vi.mock('./_auth.js', async orig => ({
+  ...(await orig()),
+  verifyIdToken: vi.fn(async token => (token === 'token-valido' ? { email: 'a@b.c' } : null)),
+}));
 import { onRequestPost, onRequestOptions } from './transcribe.js';
 
 const PROJECT = 'evvcdsnijxbyctipfnkt';
-const ENV = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'jwt-do-servidor' };
+const ENV = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'jwt-do-servidor', FIREBASE_PROJECT_ID: 'soulmon-app' };
 
 /** IP próprio por caso: o balde do teto vive no isolate e é compartilhado. */
 let n = 0;
 const ipNovo = () => `203.0.113.${(n = (n + 1) % 250) + 1}`;
 
-function pedido({ audio, tipo = 'audio/webm;codecs=opus', language = 'pt-BR', ip = ipNovo(), bytes = 2048 } = {}) {
+function pedido({ audio, tipo = 'audio/webm;codecs=opus', language = 'pt-BR', ip = ipNovo(), bytes = 2048, token = 'token-valido' } = {}) {
   const form = new FormData();
   if (audio !== null) {
     form.append('audio', audio ?? new Blob([new Uint8Array(bytes)], { type: tipo }), 'recording.webm');
@@ -37,7 +41,7 @@ function pedido({ audio, tipo = 'audio/webm;codecs=opus', language = 'pt-BR', ip
   if (language !== null) form.append('language', language);
   return new Request('https://soulmon.app/api/transcribe', {
     method: 'POST',
-    headers: { 'CF-Connecting-IP': ip },
+    headers: { 'CF-Connecting-IP': ip, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: form,
   });
 }
@@ -144,7 +148,7 @@ describe('o que entra', () => {
     stubUpstream(ok({ text: '' }));
     const req = new Request('https://soulmon.app/api/transcribe', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ipNovo() },
+      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ipNovo(), Authorization: 'Bearer token-valido' },
       body: '{"nao":"e form"}',
     });
     expect((await onRequestPost({ request: req, env: ENV })).status).toBe(400);
@@ -272,5 +276,27 @@ describe('CORS', () => {
     expect(pre.headers.get('Access-Control-Allow-Origin')).toBe('*');
     const ruim = await onRequestPost({ request: pedido({ audio: null }), env: ENV });
     expect(ruim.headers.get('Access-Control-Allow-Origin')).toBe('*');
+  });
+});
+
+describe('🔴 auditoria de lançamento — a rota não é mais anônima', () => {
+  it('sem token é 401 e NÃO chama o provedor', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const r = await onRequestPost({ request: pedido({ token: null }), env: ENV });
+    expect(r.status).toBe(401);
+    expect(chamadas).toEqual([]);
+  });
+  it('token inválido é 401 e NÃO chama o provedor', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const r = await onRequestPost({ request: pedido({ token: 'forjado' }), env: ENV });
+    expect(r.status).toBe(401);
+    expect(chamadas).toEqual([]);
+  });
+  it('sem FIREBASE_PROJECT_ID é fail-closed (503), nunca aberta', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const { FIREBASE_PROJECT_ID: _omit, ...semAuth } = ENV;
+    const r = await onRequestPost({ request: pedido(), env: semAuth });
+    expect(r.status).toBe(503);
+    expect(chamadas).toEqual([]);
   });
 });
