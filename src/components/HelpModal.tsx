@@ -85,8 +85,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Talents (three paths) live in Stats; the three equipment slots are at the Soulsmith in the Market. Pieces come from building missions (level 1) and are parts of your soul, refined there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
-    descPt: `Os talentos (três caminhos) ficam em Estatísticas; os três espaços de equipamento, no Soulsmith, no Mercado. As peças vêm das missões dos prédios (nível 1) e são partes da sua alma, aprimoradas lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
+    descEn: `Talents (three paths) live in the Bond Sanctum — open the tree to see what it gives now, already added to your equipment; the three equipment slots are at the Soulsmith in the Market. Pieces come from building missions (level 1) and are parts of your soul, refined there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
+    descPt: `Os talentos (três caminhos) ficam no Santuário do Vínculo — abra a árvore para ver o que ela dá agora, já somado ao equipamento; os três espaços de equipamento, no Soulsmith, no Mercado. As peças vêm das missões dos prédios (nível 1) e são partes da sua alma, aprimoradas lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
   },
   {
     icon: '🍽️', en: 'Meal check-ins', pt: 'Convites das refeições',
@@ -221,6 +221,9 @@ function guildTerms(): Term[] {
     par('🌳', 'guild.help.bosque.termo', 'guild.help.bosque.def'),
     par('🌳', 'guild.help.fio.termo', 'guild.help.fio.def'),
     par('🌳', 'guild.help.feira.termo', 'guild.help.feira.def', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }),
+    par('🌳', 'guild.help.casa.termo', 'guild.help.casa.def'),
+    par('🌳', 'guild.help.missao.termo', 'guild.help.missao.def'),
+    par('🌳', 'guild.help.guerra.termo', 'guild.help.guerra.def'),
     par('🌳', 'guild.help.mare.termo', 'guild.help.mare.def', { semanas: GUILD_TIDE_WEEKS }),
     par('🌳', 'guild.help.concha.termo', 'guild.help.concha.def', { n: RAID_TROPHY_EVERY }),
   ];

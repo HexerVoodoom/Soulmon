@@ -43,7 +43,12 @@ describe('a guilda não entra no save nem no localStorage', () => {
   it('a interface GameState existe e não tem campo de guilda', () => {
     const campos = membrosDe(src('src/contexts/GameStateContext.tsx'), 'GameState');
     expect(campos.length).toBeGreaterThan(50); // o guard enxerga o alvo
-    expect(campos.filter(c => VETADO.test(c))).toEqual([]);
+    // EXCEÇÃO ÚNICA, decidida na Casa da guilda (PR2, 11/10/2026): `guildDonatedItem` NÃO é estado da guilda
+    // (o ponteiro e o slot são do servidor) — é o INVENTÁRIO do jogador: o item de decoração que ele pôs na
+    // casa e que, por regra, não pode valer no cenário pessoal enquanto estiver lá (`utils/guildHouse.ts`).
+    // Sem o campo, o item voltaria ao cenário pessoal offline. O servidor continua sendo a fonte do slot.
+    const PERMITIDOS = new Set(['guildDonatedItem', 'guildMission']);
+    expect(campos.filter(c => VETADO.test(c) && !PERMITIDOS.has(c))).toEqual([]);
   });
 
   it('storageKeys.ts: exatamente as duas chaves de conveniência (last-stage e claimed), com esses nomes', () => {

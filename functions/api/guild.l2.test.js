@@ -238,16 +238,17 @@ describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
  * As leituras incluem 1 da lápide de exclusão (`authorizeSaveAccess`).
  */
 export const ORCAMENTO = {
-  criar: { get: 15, put: 5 },
-  entrar: { get: 27, put: 3 },
+  // +1 leitura (11/10, casa da guilda): o cartão do membro resume também `coopCasa:<gid>:<save>`.
+  criar: { get: 16, put: 5 },
+  entrar: { get: 28, put: 3 },
   // +1 leitura (29/09, M-2): o PRIMEIRO fio numa guilda lê `coopDias` para
   // herdar os dias distintos; os fios seguintes não leem.
-  fio: { get: 25, put: 2 },
-  checkin: { get: 25, put: 2 },
+  fio: { get: 26, put: 2 },
+  checkin: { get: 26, put: 2 },
   // +1 escrita (29/09, A-1): `coopPart:<save>:<week>`, o direito ao resgate
   // guardado com a PESSOA para sobreviver à saída.
-  golpe: { get: 38, put: 3 },
-  gesto: { get: 24, put: 2 },
+  golpe: { get: 40, put: 4 },
+  gesto: { get: 25, put: 2 },
   vista12: { get: 17, put: 0 },
 };
 

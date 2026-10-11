@@ -5793,6 +5793,7 @@ select:focus-visible {
   .sm-npc-intro { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
   .sm2-grove-bob { animation: none !important; }
+  .sm2-casa-glow { animation: none !important; }
   /* Feira da Guilda: o FX do fenômeno fica parado. */
   .sm2-fair-fx { animation: none !important; }
   /* Duelo fantasma: o número do golpe aparece sem voar. */
@@ -7992,6 +7993,9 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    `steps()` dentro do visor, e só ali (manual 04 §6.3). O texto do estágio, o
    fio e os gestos ficam FORA do vidro, em tokens `--sm2-*`. */
 .sm2-grove-screen { display: block; width: 100%; box-sizing: border-box; }
+.sm2-casa-screen { display: block; width: 100%; box-sizing: border-box; }
+@keyframes sm2-casa-glow { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
+.sm2-casa-glow { animation: sm2-casa-glow 2.4s steps(3, jump-none) infinite; }
 .sm2-grove-creature { position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
 @keyframes sm2-grove-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; }

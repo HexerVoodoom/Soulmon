@@ -16,11 +16,13 @@ import { bondLevelFor } from '../utils/bond';
 import {
   TALENT_TREE, TALENT_BY_ID, ranksOf, talentPointsFor, pointsLeft, canPick, pickTalent, isPickable, respecCost, applyRespec,
   sanitizeTalentPicks, canRespecOne, respecOneCost, applyRespecOne, prereqsMet, missingPrereqs, canTakeBack, type TalentNode, type TalentPath, type TalentReq,
+  talentAttrBonus, talentPveAttrBonus, talentBonus, talentStartEnergy, talentCheerScale, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield,
 } from '../utils/talents';
+import { combinedAttrBonus, combinedBonus } from '../utils/combate/bonus';
 import { LAYOUT_NODES, LAYOUT_EDGES, BOARD, NODE_SIZE, HUB, HUB_POINT, ARM_ANGLE, pointOf, neighborIn } from '../utils/talentLayout';
 import { loadTalentArt } from '../utils/talentArt';
-import { spendBits } from '../utils/equipment';
-import { TALENT_COPY } from '../utils/talentCopy';
+import { spendBits, equipAttrBonus, equipScalar } from '../utils/equipment';
+import { TALENT_COPY, talentEffectLine } from '../utils/talentCopy';
 
 const PATHS: readonly { id: TalentPath; art: string; root: string; pt: string; en: string; hintPt: string; hintEn: string }[] = [
   { id: 'pvp', art: 'talent-path-pvp', root: 'talent-root-pvp', pt: 'Duelo', en: 'Duel', hintPt: 'Vale só nos Duelos e no Torneio.', hintEn: 'Counts only in Duels and the Tournament.' },
@@ -118,6 +120,42 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
       ? (isPt ? 'Todos os pontos estão gastos.' : 'All points are spent.')
       : (isPt ? `${livres} ${livres === 1 ? 'ponto' : 'pontos'} para gastar.` : `${livres} ${livres === 1 ? 'point' : 'points'} to spend.`);
 
+  /**
+   * "O QUE A SUA ÁRVORE DÁ AGORA" (11/10/2026): o bônus que de fato vale em cada lugar, JÁ somado ao equipamento e cortado no teto
+   * único de 5% — os mesmos canais que o Duelo (`usePvpTalents`) e a Masmorra (`useDungeonBonus`) usam. Só leitura: nenhuma regra nasce aqui.
+   */
+  const pctTxt = (f: number) => `${(f * 100).toFixed(1).replace(/\.0$/, '').replace('.', isPt ? ',' : '.')}%`;
+  const eq = gameState.equipment;
+  const fg = gameState.forge;
+  const duelo = combinedAttrBonus({ talent: talentAttrBonus(picks, bond), equipment: equipAttrBonus(eq, fg) });
+  const masmorra = combinedAttrBonus({ talent: talentPveAttrBonus(picks, bond), equipment: equipAttrBonus(eq, fg) });
+  const arena = combinedBonus({ talent: talentBonus(picks, bond, 'pve'), equipment: equipScalar(eq, fg) });
+  const pesadelo = combinedBonus({ talent: talentBonus(picks, bond, 'nightmare'), equipment: equipScalar(eq, fg) });
+  const canais = (b: { atk: number; def: number; spd: number }) =>
+    (isPt ? `dano +${pctTxt(b.atk)} · defesa +${pctTxt(b.def)} · ritmo +${pctTxt(b.spd)}` : `damage +${pctTxt(b.atk)} · defense +${pctTxt(b.def)} · rhythm +${pctTxt(b.spd)}`);
+  const extras = (xs: Array<string | null>) => xs.filter((x): x is string => !!x).join(' · ');
+  const largada = talentStartEnergy(picks, bond), torcida = talentCheerScale(picks, bond) - 1, brasa = talentDotResist(picks, bond);
+  const cura = talentHealBoost(picks, bond), bitsFenda = talentRiftBits(picks, bond), escudo = talentStartShield(picks, bond);
+  const AGORA: Array<{ id: TalentPath; label: string; linhas: string[] }> = [
+    { id: 'pvp', label: isPt ? 'Duelo e Torneio' : 'Duel & Tournament', linhas: [
+      canais(duelo),
+      extras([
+        largada > 0 ? (isPt ? `largada +${largada} de energia` : `+${largada} starting energy`) : null,
+        torcida > 0.0005 ? (isPt ? `torcida +${pctTxt(torcida)}` : `cheer +${pctTxt(torcida)}`) : null,
+        brasa > 0 ? (isPt ? `${pctTxt(brasa)} menos dano contínuo` : `${pctTxt(brasa)} less over-time damage`) : null,
+      ]),
+    ] },
+    { id: 'pve', label: isPt ? 'Fenda' : 'Rift', linhas: [
+      (isPt ? 'Masmorra: ' : 'Dungeon: ') + canais(masmorra),
+      (isPt ? `Arena +${pctTxt(arena)} · Pesadelo +${pctTxt(pesadelo)} (um bônus só)` : `Arena +${pctTxt(arena)} · Nightmare +${pctTxt(pesadelo)} (one bonus)`),
+      extras([
+        cura > 0 ? (isPt ? `cura +${pctTxt(cura)} do HP` : `heal +${pctTxt(cura)} of HP`) : null,
+        bitsFenda > 0 ? (isPt ? `Bits +${pctTxt(bitsFenda)}` : `Bits +${pctTxt(bitsFenda)}`) : null,
+        escudo > 0 ? (isPt ? `escudo ${pctTxt(escudo)} do HP` : `shield ${pctTxt(escudo)} of HP`) : null,
+      ]),
+    ] },
+  ];
+
   const nome = (id: string) => {
     const t = TALENT_COPY[id];
     return t ? (isPt ? t.namePt : t.nameEn) : id;
@@ -206,6 +244,22 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
           : 'Points never cover everything, so pick a path. Talent, equipment and Trade together cap combat bonus at 5%. None of it can be bought with real money.'}
       </p>
 
+      <ul data-talent-now aria-label={isPt ? 'O que a sua árvore dá agora' : 'What your tree gives now'} style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
+        {AGORA.map((a) => {
+          const p = PATHS.find((x) => x.id === a.id)!;
+          return (
+            <li key={a.id} data-talent-now-path={a.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <Art nome={p.root} size={24} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span className="sm2-stats-s" style={{ margin: 0 }}>
+                <b style={{ fontWeight: 600 }}>{a.label}</b>
+                {a.linhas.filter(Boolean).map((l, i) => <span key={i} style={{ display: 'block' }}>{l}</span>)}
+              </span>
+            </li>
+          );
+        })}
+        <li className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Já somado ao equipamento. Em cada lugar, o total para em 5%.' : 'Already added to your equipment. In each place the total stops at 5%.'}</li>
+      </ul>
+
       <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} style={{ overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>
         <div style={{ width: BOARD.width, height: BOARD.height, position: 'relative' }}>
           <div ref={boardRef} role="group" aria-label={isPt ? 'Árvore de talentos' : 'Talent tree'}
@@ -273,6 +327,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
       {aberto && (
         <TalentModal
           isPt={isPt} id={node.id} name={nome(node.id)} desc={txt ? (isPt ? txt.descPt : txt.descEn) : ''}
+          effect={talentEffectLine(node.id, g, isPt)}
           pickable={isPickable(node)} rank={g} maxRank={node.maxRank} stateLabel={STATE_LABEL[nodeState][isPt ? 0 : 1]}
           falta={falta} espaco={espaco} qtd={Math.min(qtd, espaco)} setQtd={setQtd} livres={livres}
           semPonto={semPonto} onConfirm={confirmar} onCancel={fechar}
@@ -309,7 +364,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
 }
 
 interface ModalProps {
-  isPt: boolean; id: string; name: string; desc: string; pickable: boolean; rank: number; maxRank: number; stateLabel: string;
+  isPt: boolean; id: string; name: string; desc: string; effect: string | null; pickable: boolean; rank: number; maxRank: number; stateLabel: string;
   falta: string | null; espaco: number; qtd: number; setQtd: (n: number) => void; livres: number; semPonto: boolean;
   onConfirm: () => void; onCancel: () => void; takeBack: { can: boolean; cost: number; run: () => void } | null;
 }
@@ -344,6 +399,7 @@ function TalentModal(p: ModalProps) {
           <span className="sm2-stats-s">{p.stateLabel}</span>
         </div>
         <p className="sm2-stats-s" style={{ margin: 0 }}>{p.desc}</p>
+        {p.effect && <p className="sm2-stats-s sm2-num" data-talent-effect style={{ margin: 0, fontWeight: 500 }}>{p.effect}</p>}
         {p.falta && <p className="sm2-stats-s" data-talent-missing role="status" style={{ margin: 0 }}>{p.falta}</p>}
         {p.pickable && (
           <div data-talent-assign style={{ display: 'grid', gap: 6 }}>

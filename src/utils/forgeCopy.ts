@@ -20,3 +20,14 @@ export function forgeRefusalText(r: ForgeRefusal, isPt: boolean, level = 0): str
     default: return isPt ? 'Isto não está disponível agora.' : 'That is not available right now.';
   }
 }
+
+/**
+ * O que CADA atributo faz em luta, em palavras diretas (11/10/2026, pedido do dono: "apresente as DUAS opções como iguais — mais dano OU
+ * mais velocidade —, sem 'esta seria a correta para este item'"). Nenhum atributo é "o certo" para a peça: as duas opções de um nível
+ * valem o MESMO e a diferença é só onde a peça ajuda. `short` é o nome do ganho; `effect` diz o efeito sem número (o número vem de fora).
+ */
+export const ATTR_EFFECT: Readonly<Record<'atk' | 'def' | 'spd', { readonly shortEn: string; readonly shortPt: string; readonly effectEn: string; readonly effectPt: string }>> = {
+  atk: { shortEn: 'More damage', shortPt: 'Mais dano', effectEn: 'Your Soulmon hits a little harder.', effectPt: 'O seu Soulmon bate um pouco mais forte.' },
+  def: { shortEn: 'More defense', shortPt: 'Mais defesa', effectEn: 'Your Soulmon takes a little less damage.', effectPt: 'O seu Soulmon recebe um pouco menos de dano.' },
+  spd: { shortEn: 'More speed', shortPt: 'Mais velocidade', effectEn: 'Your Soulmon attacks a little faster.', effectPt: 'O seu Soulmon ataca um pouco mais rápido.' },
+};

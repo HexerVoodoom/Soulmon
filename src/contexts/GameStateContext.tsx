@@ -1,3 +1,4 @@
+import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
@@ -458,6 +459,11 @@ export interface GameState {
    * antigos são migrados no load — ver `migrateDecor`.
    */
   equippedDecor?: Partial<Record<SlotId, string>>;
+  /** Item de decoração que a pessoa pôs na CASA DA GUILDA (um por pessoa). Enquanto está lá NÃO está em
+   *  `ownedFurniture` nem em `equippedDecor` (`utils/guildHouse.ts`). O servidor é a fonte (`casa.mine.slot`). */
+  guildDonatedItem?: string | null;
+  /** MISSÃO da guilda (PR3): o Solmon foi investigar e some da Home até `returnAt` (`utils/guildMission.ts`). */
+  guildMission?: { day: string; returnAt: number } | null;
   /** @deprecated Só sobrevive para migrar saves antigos. Use `equippedDecor`. */
   equippedFurniture?: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
@@ -1256,6 +1262,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // um array ou um número passaria. O palco indexa por espaço e espera id
         // de item (string) em cada um.
         equippedDecor: hydrateDecor(migrateDecor(loadedState)),
+        guildMission: normalizeGuildMission(loadedState.guildMission),
+        guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
         // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo
         // continua sem consentimento registrado — e continua jogando.
@@ -1525,6 +1533,8 @@ function freshGameState(): GameState {
       equippedBackground: null,
       ownedFurniture: [],
       equippedDecor: {},
+      guildDonatedItem: null,
+      guildMission: null,
       soulGoal: '',
       soulStruggle: '',
       consent: undefined,

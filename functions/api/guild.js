@@ -21,6 +21,10 @@
 //                                            404 nothing to claim · 400 invalid week
 //                                            409 already claimed + { receipt, claimed:{…o resgate JÁ registrado} }
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
+//   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
+//   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
+//   GET  guildWar     ?id=&dayKey=         → { war: { waiting: {size}|null, last: {day,outcome,duels[],size,enemy}|null } }   404 no guild
+//   POST guildWarSeek {id, dayKey}         → { state: 'small'|'already'|'waiting'|'done', war }   404 no guild   (a GUERRA: `_guerra.js`)
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
@@ -44,8 +48,10 @@ import {
   ultimoDiaDaSemana, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
   idOpacoDoMembro, lerCartoes, renovarCartao, fiosDosCartoes, checkinsDoCartao, gestosDoCartao, fioDoCartao, golpesDoCartao,
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
-  marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado,
+  marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado, membrosAtivos,
 } from './_coop.js';
+import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
+import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -78,6 +84,10 @@ export const GUILD_ACTIONS = Object.freeze({
   guildRaidHit: 'POST',
   guildRewards: 'GET',
   guildClaim: 'POST',
+  guildWar: 'GET',
+  guildWarSeek: 'POST',
+  guildDonate: 'POST',
+  guildSlot: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -212,6 +222,18 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     // de tipos, em lote, sem quem nem quantos.
     gestures: size < GESTO_TIPO_MIN_MEMBROS ? [] : GUILD_GESTURES.filter(k => recebidos.has(k)),
     gestureReceived: recebidos.size > 0 ? true : null,
+    // A CASA (PR2): só estágio, `perto` e os slots de item. Nunca pontos, limiares nem doação por pessoa.
+    casa: {
+      ...(({ stage, stageIndex, perto }) => ({ nivel: stage, nivelIndex: stageIndex, perto }))(casaStageFor(totalDaCasa(g, cartoes))),
+      slots: g.members.flatMap((m, i) => {
+        const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
+        return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];
+      }),
+      mine: (() => {
+        const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
+        return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_BITS_POR_DIA };
+      })(),
+    },
     raid: {
       weekKey: semana,
       phenomenon: fenomenoDaSemana(semana),
@@ -400,6 +422,43 @@ export async function handleGuild({ request, env }) {
     return vista(await montar(g, id, hoje));
   }
 
+  if (action === 'guildWar') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    return json({ war: await estadoDaGuerra(env, g.id) });
+  }
+
+  if (action === 'guildWarSeek') {
+    // GUERRA 4×4 (PR4): o servidor monta os esquadrões a partir dos SAVES, pareia por tamanho e resolve com o
+    // combate v3. Qualquer membro pode procurar; uma guerra por guilda por dia do jogador. Nada do corpo decide a luta.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const r = await buscarGuerra(env, g, id, hoje, gid => lerGrupo(env, gid));
+    return json({ state: r.state, war: { waiting: r.waiting, last: r.last } });
+  }
+
+  if (action === 'guildDonate') {
+    // Doação de Bits para a CASA. O servidor decide quanto cabe no teto do dia e
+    // devolve `accepted`: o cliente só desconta isso. Escreve SÓ a chave pessoal.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const r = await doarBits(env, g.id, id, hoje, body.bits);
+    if (r.invalid) return erro('invalid bits', 400);
+    if (r.accepted === 0) return erro('daily limit', 429);
+    await cartao(g);
+    return json({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+  }
+
+  if (action === 'guildSlot') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    if (body.item !== null && typeof body.item !== 'string') return erro('invalid item', 400);
+    const novo = await definirSlot(env, g.id, id, body.item);
+    if (novo === undefined) return erro('invalid item', 400);
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+
   if (action === 'guildRaidHit') {
     // A FEIRA (WPG-4). Um golpe por pessoa por dia do jogador, a qualquer hora
     // da semana ISO inteira (G11). NÃO exige fio nem meta (a rodada é gesto),
@@ -425,7 +484,8 @@ export async function handleGuild({ request, env }) {
     if (semana < semanaDoDia(new Date().toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro('raid closed', 409);
     const antes = await lerGolpes(env, g.id, semana, id);
     if (antes.days.includes(hoje)) return erro('daily limit', 429);
-    const feira = await resolverFeira(env, g, semana, hoje, await lerCartoes(env, g));
+    const cartoesDaRoda = await lerCartoes(env, g);
+    const feira = await resolverFeira(env, g, semana, hoje, cartoesDaRoda);
     if (feira.cleared) return erro('raid closed', 409);
     const perfil = await getProfile(env, id);
     const dano = raidDamageFor(stagePower(perfil?.stage));
@@ -436,6 +496,9 @@ export async function handleGuild({ request, env }) {
     );
     // A-1: o direito ao resgate mora com a PESSOA, não com a guilda.
     await marcarParticipacao(env, g.id, id, semana, hoje);
+    // A MISSÃO também rega a CASA (PR3): seiva que cresce com o level do Solmon e com o tamanho da roda ativa.
+    // Escreve só a chave pessoal da casa; o servidor decide o valor (o cliente nunca manda pontos).
+    await somarPontos(env, g.id, id, 'missao', pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
     return json({ landed: true, [chave]: await montar(g, id, hoje) });
   }

@@ -48,6 +48,7 @@ import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHA
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { pickRankedOpponents } from './_rankedPick.js';
+import { loadDuelSide as loadDuelSideShared } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { frameIdOrNull } from './_frames.js';
 const CORS = {
@@ -408,26 +409,7 @@ async function handleCommunity({ request, env }) {
      (`profile.stage`/`profile.attrs` são do cliente) nem aceita level, stats ou família do corpo. O level é
      derivado de `evolutionStage` + `perfectDays` e LIMITADO pelo teto S1: no máximo 1 level por dia de servidor
      desde a 1ª gravação do save (`metadata.f`, escrita só pelo `save.js`). Save ausente/ilegível = `null`. */
-  const loadDuelSide = async (saveId) => {
-    if (!VALID_ID.test(saveId || '')) return null;
-    try {
-      const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
-      if (!value) return null;
-      // PR13 (ALTO-3): save acima do teto = "este lado nao luta", ANTES do parse. Um save de 5 MB (o teto da gravacao) parseado
-      // a cada listagem de oponentes estoura a CPU do worker, e `catch` nao pega estouro de CPU.
-      if (typeof value !== 'string' || value.length > DUEL_SAVE_MAX_CHARS) {
-        console.warn('community: save grande demais para ser oponente', { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
-        return null;
-      }
-      const state = JSON.parse(value);
-      if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
-      return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
-    } catch (err) {
-      // Falha parcial: um save ilegível ou um KV que engasgou vira "este lado não luta agora", nunca um 500 na lista inteira.
-      console.warn('community: ficha de duelo indisponível', { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
-      return null;
-    }
-  };
+  const loadDuelSide = (saveId) => loadDuelSideShared(env, saveId);
 
   /* Os dois lados de uma partida. `{ res }` = a Response de erro (409: o save do próprio jogador some; 404: o do
      oponente some), devolvida ANTES de qualquer partida ser gasta. */

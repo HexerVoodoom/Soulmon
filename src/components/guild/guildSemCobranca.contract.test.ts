@@ -146,7 +146,7 @@ describe('copy do Bosque, dos gestos, do marco e do Mural', () => {
   it('os placeholders permitidos são só {n} (vagas/membros), {estagio}, {data} e {gesto} — nunca de pessoa ou de quantidade de quem veio', () => {
     for (const [k, [pt, en]] of entradas) {
       for (const txt of [pt, en]) {
-        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas'], `${k}: {${m[1]}}`).toContain(m[1]);
+        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas', 'bits', 'hora'], `${k}: {${m[1]}}`).toContain(m[1]);
       }
     }
     // {estagio} é NOME de estágio; nenhuma chave de estágio/gesto/marco/mural leva {n}

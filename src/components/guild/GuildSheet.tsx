@@ -39,7 +39,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildRewards, claimGuildReward,
+  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, getGuildWar, seekGuildWar,
+  type GuildWar,
   GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
@@ -49,8 +50,12 @@ import {
 } from '../../utils/guildCopy';
 import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GUILD_GESTURES, GROVE_STAGES,
-  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, normalizeGuildCode, type GuildGesture,
+  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
+import { donatableItems } from '../../utils/guildHouse';
+import { isMissionAway, type GuildMissionState } from '../../utils/guildMission';
+import { ALL_SHOP_ITEMS } from '../../utils/shop';
+import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
 import {
   observeGuildView, readGroveLocal, permanenceBand, formatDayLabel, groveSceneIds, setGuildSheetOpen, trackGuildStageOnce,
@@ -66,6 +71,8 @@ import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { GroveVisor } from './GroveVisor';
+import { CasaVisor } from './CasaVisor';
+import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
 import type { Language } from '../../utils/i18n';
 
@@ -94,6 +101,21 @@ interface GuildSheetProps {
   onUnlock?: () => void;
   /** Leva à tela de entrar na conta (Configurações). Sem ele, o 401 fica só com o texto e "tentar de novo". */
   onLogin?: () => void;
+  /**
+   * A CASA (PR2): a ponte com o save. A folha não lê `GameState`; o App passa a carteira e o inventário e
+   * recebe o que mudou. `onSpend` recebe SÓ o que o servidor aceitou; `onSlot` reconcilia o save ao slot que
+   * o servidor diz (idempotente — `applyGuildSlot`), inclusive `null` quando a pessoa não tem mais guilda.
+   */
+  casa?: {
+    bits: number;
+    ownedFurniture: string[];
+    equippedDecor: Record<string, string | undefined>;
+    donatedItem: string | null;
+    onSpend: (bits: number) => void;
+    onSlot: (item: string | null) => void;
+  };
+  /** A MISSÃO (PR3, ex-Feira): o estado da ida do Solmon (no save) e o gesto de mandá-lo. */
+  missao?: { state: GuildMissionState | null; onSend: () => void };
 }
 
 /** A Clareira SEM roda: o chão de partida, sem membro, sem estágio nem slot marcado (plano §5). */
@@ -113,7 +135,7 @@ type Load =
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -132,6 +154,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   const [colhido, setColhido] = useState<{ n: number; trophy: boolean } | null>(null);
   const [colherErro, setColherErro] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
+  /** A guerra da guilda (PR4). `null` = ainda não perguntado / indisponível (a sala só aparece com o estado). */
+  const [war, setWar] = useState<GuildWar | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
@@ -186,6 +210,32 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     trackGuildStageOnce(obs?.firstSeenStage);
     // Cenário do Bosque só com a confirmação do servidor (`mine.groveScenes`) — ficam com quem sai (G12).
     if (load.guild?.mine.groveScenes) onScenesRef.current?.(groveSceneIds(load.guild.bosque.stageIndex));
+  }, [load]);
+
+  // A MISSÃO voltou (o App encerrou a ida): relê a vista para mostrar o fenômeno já atualizado.
+  const missaoAtiva = !!missao?.state;
+  const missaoAntes = useRef(missaoAtiva);
+  useEffect(() => {
+    if (missaoAntes.current && !missaoAtiva) void carregar(true);
+    missaoAntes.current = missaoAtiva;
+  }, [missaoAtiva, carregar]);
+
+  // A GUERRA: pergunta ao abrir o Salão (2 leituras no servidor, fora da vista principal). Falha é SILÊNCIO: a sala some.
+  const guildaId = load.status === 'ready' ? load.guild?.id ?? null : null;
+  useEffect(() => {
+    if (!guildaId || room === 'feira') { setWar(null); return; }
+    let vivoLocal = true;
+    getGuildWar(saveId, tz.current).then(w => { if (vivoLocal && vivo.current) setWar(w); }).catch(() => { if (vivoLocal) setWar(null); });
+    return () => { vivoLocal = false; };
+  }, [guildaId, saveId, room]);
+
+  // A CASA: o save acompanha o slot que o SERVIDOR diz (item em uso na guilda não vale no cenário pessoal).
+  // Sem roda, o slot acabou e o item volta. Idempotente — pode rodar a cada vista.
+  const casaRef = useRef(casa);
+  casaRef.current = casa;
+  useEffect(() => {
+    if (load.status !== 'ready') return;
+    casaRef.current?.onSlot(load.guild ? (load.guild.casa?.mine.slot ?? null) : null);
   }, [load]);
 
   // O RESGATE: pergunta ao abrir (Salão e Feira) e de novo quando o estado da Feira muda (a rodada
@@ -500,6 +550,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
           reducedMotion={reducedMotion}
           resgate={resgate}
           resgateAberto={!!(rewards?.pending[0] || colhido)}
+          missao={missao}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
             anunciar: 'guild.feira.rodada.feita',
             depois: () => track('guild_raid', { outcome: 0 }),
@@ -574,6 +625,63 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
               depois: () => track('guild_thread', { kind: 0 }),
             })}
           />
+
+          {g.casa && (
+            <SalaCasa
+              guild={g}
+              t={t}
+              language={language}
+              ocupado={ocupado}
+              casa={casa}
+              onDoar={(bits) => void agir(async () => {
+                const r = await donateToGuild(saveId, bits, tz.current);
+                if (r.accepted > 0) casaRef.current?.onSpend(r.accepted);
+                return r.guild;
+              }, { anunciar: 'guild.casa.doar.ok' })}
+              onSlot={(item) => void agir(async () => {
+                const v = await setGuildSlot(saveId, item, tz.current);
+                casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
+                return v;
+              }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
+            />
+          )}
+
+          {g.raid && (
+            <SalaFeira
+              guild={g}
+              t={t}
+              language={language}
+              ocupado={ocupado}
+              reducedMotion={reducedMotion}
+              resgate={null}
+              resgateAberto={!!(rewards?.pending[0] || colhido)}
+              onRodada={() => undefined}
+              missao={missao ?? { state: null, onSend: () => undefined }}
+            />
+          )}
+
+          {war && (
+            <SalaGuerra
+              guild={g}
+              t={t}
+              language={language}
+              war={war}
+              hoje={load.day}
+              ocupado={ocupado}
+              mySprite={mySprite || getSpriteForStage('rookie')}
+              reducedMotion={reducedMotion}
+              onBuscar={() => {
+                if (busy.current) return;
+                busy.current = true;
+                setOcupado(true);
+                setAviso(null);
+                seekGuildWar(saveId, tz.current)
+                  .then(r => { if (vivo.current) { setWar(r.war); if (r.state === 'done') { void carregar(true); setAnuncio(t(`guild.guerra.resultado.${r.war.last?.outcome ?? 'draw'}`, { nome: r.war.last?.enemy ?? '' })); } } })
+                  .catch(e => { if (vivo.current) setAviso(GUILD_ERROR_KEY[kindOf(e)]); })
+                  .finally(() => { busy.current = false; if (vivo.current) setOcupado(false); });
+              }}
+            />
+          )}
 
           <SalaRoda
             guild={g}
@@ -683,12 +791,21 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
   const proximo = perto && stageIndex < GROVE_STAGES.length ? groveStageName(language, GROVE_STAGES[stageIndex]) : null;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
-      <GroveVisor
-        guild={guild}
-        mySprite={mySprite}
-        reducedMotion={reducedMotion}
-        label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
-      />
+      {guild.casa ? (
+        <CasaVisor
+          guild={guild}
+          mySprite={mySprite}
+          reducedMotion={reducedMotion}
+          label={t('guild.aria.casa', { estagio: casaStageName(t, guild.casa.nivel) })}
+        />
+      ) : (
+        <GroveVisor
+          guild={guild}
+          mySprite={mySprite}
+          reducedMotion={reducedMotion}
+          label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
+        />
+      )}
       {/* O que CHEGOU vem colado ao visor, no topo da folha (QA L3 M3/B7): antes ficava a 550 px, abaixo
           da dobra, e com o mesmo estilo de uma linha de membro — lia-se como gente. Só o tipo, em lote,
           sem quem e sem quantos; sem nada quando não veio nenhum. */}
@@ -732,6 +849,150 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
         </button>
       )}
       {agregado && <p className="sm2-lib-s" style={{ margin: 0 }} data-guild-agregado>{t('guild.bosque.agregado.um')}</p>}
+    </section>
+  );
+}
+
+/**
+ * A GUERRA 4×4 (PR4): o visor do esquadrão contra silhuetas, o botão de procurar (pareia POR TAMANHO) e o
+ * último resultado — como marcas por confronto, nunca números. Perder não custa nada e a casa recebe a seiva.
+ */
+function SalaGuerra({ guild, t, language, war, hoje, ocupado, mySprite, reducedMotion, onBuscar }: {
+  guild: GuildView; t: T; language: Language; war: GuildWar; /** O dia do jogador (a âncora do save). */ hoje: string; ocupado: boolean; mySprite: string; reducedMotion: boolean; onBuscar: () => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const jaHoje = war.last?.day === hoje;
+  const enemyCount = war.waiting?.size ?? war.last?.size ?? Math.min(4, Math.max(2, guild.size));
+  const pequena = guild.size < 2;
+  const ICONE = { win: 'check_circle', draw: 'do_not_disturb_on', loss: 'radio_button_unchecked' } as const;
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.guerra.titulo')} data-guild-room="guerra">
+      <GuerraVisor guild={guild} mySprite={mySprite} enemyCount={enemyCount} reducedMotion={reducedMotion} label={t('guild.aria.guerra')} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <h3 className="sm2-grove-stage" style={{ margin: 0 }}>{t('guild.guerra.titulo')}</h3>
+        <InfoTip language={language} label={isPt ? 'Como funciona a guerra' : 'How the war works'} align="right" style={{ marginRight: -8 }}>{t('guild.guerra.regra')}</InfoTip>
+      </div>
+      {war.last && (
+        <>
+          <ul className="sm2-grove-recv" data-guerra-duelos style={{ display: 'flex', justifyContent: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
+            {war.last.duels.map((d, i) => (
+              <li key={i} aria-label={t(`guild.guerra.duelo.${d}`)} data-guerra-duelo={d}>
+                <Icon name={ICONE[d]} size={24} tone={d === 'win' ? 'primary' : 'muted'} fill={d === 'win' ? 1 : 0} />
+              </li>
+            ))}
+          </ul>
+          <p className="sm2-stats-t" style={{ margin: 0 }} data-guerra-resultado={war.last.outcome}>
+            {t(`guild.guerra.resultado.${war.last.outcome}`, { nome: war.last.enemy })}
+          </p>
+        </>
+      )}
+      {war.waiting ? (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-esperando>{t('guild.guerra.esperando')}</p>
+      ) : jaHoje ? (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-hoje>{t('guild.guerra.hoje')}</p>
+      ) : pequena ? (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-pequena>{t('guild.guerra.pequena')}</p>
+      ) : (
+        <button type="button" data-guerra-buscar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={onBuscar} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+          <Icon name={ocupado ? 'sync' : 'swords'} size={20} className={ocupado ? 'animate-spin' : undefined} />
+          {t('guild.guerra.buscar')}
+        </button>
+      )}
+    </section>
+  );
+}
+
+const casaStageName = (t: T, nivel: CasaStageId): string => t(`guild.casa.nivel.${nivel}`);
+
+/**
+ * A CASA (PR2): o nome do estágio, a linha, `perto` (binário), a doação de Bits e o SEU cantinho.
+ * Nada aqui tem número por pessoa: a doação mostra só os botões e a constatação ("a casa recebeu o que
+ * você trouxe"); o teto do dia é "é o bastante", nunca contagem. O visor mora no topo do Bosque.
+ */
+function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
+  guild: GuildView; t: T; language: Language; ocupado: boolean;
+  casa: GuildSheetProps['casa']; onDoar: (bits: number) => void; onSlot: (item: string | null) => void;
+}) {
+  const c = guild.casa!;
+  const isPt = language === 'pt-BR';
+  const [lista, setLista] = useState(false);
+  const proximo = c.perto && c.nivelIndex < CASA_STAGES.length - 1 ? casaStageName(t, CASA_STAGES[c.nivelIndex + 1]) : null;
+  const nome = (id: string) => { const it = ALL_SHOP_ITEMS.find(x => x.id === id); return it ? (isPt ? it.namePt : it.nameEn) : id; };
+  const bits = casa?.bits ?? 0;
+  const livres = casa ? donatableItems({ ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor as never }) : [];
+  const meu = c.mine.slot;
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.casa.titulo')} data-guild-room="casa">
+      <h3 className="sm2-grove-stage" data-casa-nivel>{casaStageName(t, c.nivel)}</h3>
+      <p className="sm2-grove-line">{t(`guild.casa.linha.${c.nivel}`)}</p>
+      {proximo && <p className="sm2-grove-line" data-casa-perto>{t('guild.casa.perto', { estagio: proximo })}</p>}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <InfoTip language={language} label={isPt ? 'Como a casa cresce' : 'How the house grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
+      </div>
+
+      {casa && (
+        <>
+          <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.casa.doar.titulo')}</p>
+          {c.mine.capReached ? (
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-teto>{t('guild.casa.doar.teto')}</p>
+          ) : bits < CASA_BITS_MIN ? (
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-sem-bits>{t('guild.casa.doar.semBits')}</p>
+          ) : (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {CASA_DOACOES.map(d => (
+                <button
+                  key={d}
+                  type="button"
+                  data-casa-doar={d}
+                  disabled={ocupado || bits < d}
+                  aria-disabled={ocupado || bits < d ? true : undefined}
+                  onClick={() => onDoar(d)}
+                  className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn"
+                >
+                  <Icon name="diamond" size={20} />
+                  {t('guild.casa.doar.botao', { bits: d })}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.casa.slot.titulo')}</p>
+          {meu ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-casa-meu-slot>
+              {DECOR_ART[meu] && <img src={DECOR_ART[meu]} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'pixelated' }} />}
+              <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, margin: 0 }}>{nome(meu)}</span>
+              <button type="button" data-casa-tirar disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={() => onSlot(null)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+                <Icon name="undo" size={20} />
+                {t('guild.casa.slot.tirar')}
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.casa.slot.vazio')}</p>
+              {livres.length === 0 ? (
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-sem-itens>{t('guild.casa.slot.nenhum')}</p>
+              ) : !lista ? (
+                <button type="button" data-casa-escolher disabled={ocupado} onClick={() => setLista(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn">
+                  <Icon name="inventory_2" size={20} />
+                  {t('guild.casa.slot.escolher')}
+                </button>
+              ) : (
+                <ul className="sm2-grove-list" data-casa-itens>
+                  {livres.map(id => (
+                    <li key={id}>
+                      <button type="button" data-casa-item={id} disabled={ocupado} onClick={() => { setLista(false); onSlot(id); }} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                        {DECOR_ART[id] && <img src={DECOR_ART[id]} alt="" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
+                        {nome(id)}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.casa.slot.aviso')}</p>
+            </>
+          )}
+        </>
+      )}
     </section>
   );
 }
@@ -852,9 +1113,11 @@ function SalaMural({ guild, t, language, marcos }: {
  * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
  * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
  */
-function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada }: {
+function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
   resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
+  /** No Salão (PR3) a rodada é a MISSÃO: mandar o Solmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
+  missao?: GuildSheetProps['missao'];
 }) {
   const raid = guild.raid;
   // Telemetria de leitura (1 = viu dissipada, 2 = viu recuou): uma vez por semana e estado.
@@ -892,9 +1155,10 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           Honra) saiu da sala e mora atrás do "?" ao lado do nome do fenômeno. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <h3 className="sm2-grove-stage" data-feira-fenomeno style={{ margin: 0 }}>{nome}</h3>
-        <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona a Feira' : 'How the Fair works'} align="right" style={{ marginRight: -8 }}>
-          <span data-feira-legenda style={{ display: 'block' }}>{t('guild.feira.legenda')}</span>
-          <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>
+        <InfoTip language={language} label={missao ? (language === 'pt-BR' ? 'Como funciona a missão' : 'How the mission works') : (language === 'pt-BR' ? 'Como funciona a Feira' : 'How the Fair works')} align="right" style={{ marginRight: -8 }}>
+          {missao && <span data-missao-regra style={{ display: 'block' }}>{t('guild.missao.regra')}</span>}
+          <span data-feira-legenda style={{ display: 'block', marginTop: missao ? 6 : 0 }}>{t('guild.feira.legenda')}</span>
+          {!missao && <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>}
           <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
@@ -905,7 +1169,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
         </p>
       )}
-      {!dissipada && (
+      {!dissipada && !missao && (
         <button
           type="button"
           data-feira-rodada
@@ -920,6 +1184,25 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
+      {!dissipada && missao && (() => {
+        const fora = isMissionAway(missao.state, Date.now());
+        const hora = missao.state ? new Date(missao.state.returnAt).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+        if (fora) return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora })}</p>;
+        if (raid.hitToday) return <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-feita>{t('guild.missao.feita')}</p>;
+        return (
+          <button
+            type="button"
+            data-missao-mandar
+            disabled={ocupado || !!missao.state}
+            aria-disabled={ocupado || missao.state ? true : undefined}
+            onClick={missao.onSend}
+            className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
+          >
+            <Icon name="search" size={20} />
+            {t('guild.missao.mandar')}
+          </button>
+        );
+      })()}
     </section>
   );
 }

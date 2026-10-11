@@ -6,8 +6,8 @@ import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
-  GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA,
-  type GroveStageId, type GuildGesture, type TideSize, type RaidPhenomenon,
+  GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
+  type CasaStageId, type GroveStageId, type GuildGesture, type TideSize, type RaidPhenomenon,
 } from './guildRules';
 
 const BASE = '/api/community';
@@ -269,6 +269,48 @@ export interface GuildView {
   gestureReceived: boolean;
   /** A Feira desta semana. `null` = o servidor não a mandou (não se desenha nada). */
   raid: GuildRaid | null;
+  /** A CASA da guilda (PR2). `null` = o servidor não a mandou (versão antiga): a sala não se desenha. */
+  casa: GuildCasa | null;
+}
+
+/**
+ * A casa como o cliente a conhece: o NÍVEL, um binário `perto` e os slots de item. **Nenhum ponto,
+ * limiar, "faltam N" nem doação por pessoa** — o tipo não tem onde carregar isso (LV-G1). O slot diz
+ * QUAL item, nunca quanto a pessoa doou.
+ */
+export interface GuildCasa {
+  nivel: CasaStageId;
+  /** 0..5 = a ordem de `CASA_STAGES`. */
+  nivelIndex: number;
+  perto: boolean;
+  slots: Array<{ memberId: string; item: string; euMesmo: boolean }>;
+  mine: {
+    /** O item que EU pus na casa, ou `null`. */
+    slot: string | null;
+    /** O teto de doação de hoje já foi atingido (só de quem pergunta). */
+    capReached: boolean;
+  };
+}
+
+/** Dado não confiável: só o que casa com as listas fechadas passa. */
+function sanitizeCasa(raw: unknown): GuildCasa | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const x = raw as Record<string, unknown>;
+  const idx = typeof x.nivelIndex === 'number' && Number.isInteger(x.nivelIndex) ? Math.min(CASA_STAGES.length - 1, Math.max(0, x.nivelIndex)) : null;
+  if (idx === null) return null;
+  const mine = (x.mine && typeof x.mine === 'object' ? x.mine : {}) as Record<string, unknown>;
+  const itemOk = (v: unknown): v is string => typeof v === 'string' && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v);
+  const slots = (Array.isArray(x.slots) ? x.slots : []).flatMap(o => {
+    const r = (o && typeof o === 'object' ? o : {}) as Record<string, unknown>;
+    return itemOk(r.item) && typeof r.memberId === 'string' ? [{ memberId: str(r.memberId, 40), item: r.item, euMesmo: r.euMesmo === true }] : [];
+  }).slice(0, 12);
+  return {
+    nivel: CASA_STAGES[idx],
+    nivelIndex: idx,
+    perto: x.perto === true && idx < CASA_STAGES.length - 1,
+    slots,
+    mine: { slot: itemOk(mine.slot) ? mine.slot : null, capReached: mine.capReached === true },
+  };
 }
 
 /**
@@ -384,6 +426,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     gestures: gestos(r.gestures),
     gestureReceived: r.gestureReceived === true,
     raid: sanitizeRaid(r.raid),
+    casa: sanitizeCasa(r.casa),
   };
 }
 
@@ -520,6 +563,59 @@ export const newGuildCode = (id: string, tz?: PlayerDayAnchor) =>
  */
 export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<{ landed?: boolean; guild: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);
+
+/**
+ * Doar Bits à CASA. O servidor decide quanto cabe no teto do dia e devolve `accepted`: o chamador
+ * desconta SÓ isso da carteira (nunca o pedido). 429 `dailyLimit` = o teto de hoje já foi atingido.
+ */
+export const donateToGuild = (id: string, bits: number, tz?: PlayerDayAnchor) =>
+  guildCall<{ accepted?: number; guild: unknown }>('guildDonate', { method: 'POST', body: { id, dayKey: dia(tz), bits } })
+    .then(r => ({ accepted: typeof r.accepted === 'number' && r.accepted > 0 ? Math.floor(r.accepted) : 0, guild: viewOf(r) }));
+
+/** Põe (ou tira, com `null`) o item do SEU slot na casa. Um item por pessoa. */
+export const setGuildSlot = (id: string, item: string | null, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildSlot', { method: 'POST', body: { id, dayKey: dia(tz), item } }).then(viewOf);
+
+/**
+ * A GUERRA de guilda 4×4 (PR4): o estado como o cliente o conhece. Só o desfecho por confronto e o nome (já higienizado)
+ * da guilda rival — nunca saveId, estágio, HP nem dano de ninguém (o tipo não tem onde carregar).
+ */
+export type WarOutcome = 'win' | 'draw' | 'loss';
+export interface GuildWar {
+  /** Entrou na fila do tamanho `size` (esperando uma guilda do MESMO tamanho). */
+  waiting: { size: number } | null;
+  last: { day: string; outcome: WarOutcome; duels: WarOutcome[]; size: number; enemy: string } | null;
+}
+export type WarSeekState = 'small' | 'already' | 'waiting' | 'done';
+
+export function sanitizeWar(raw: unknown): GuildWar {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const ok = (v: unknown): v is WarOutcome => v === 'win' || v === 'draw' || v === 'loss';
+  const w = (r.waiting && typeof r.waiting === 'object' ? r.waiting : null) as Record<string, unknown> | null;
+  const l = (r.last && typeof r.last === 'object' ? r.last : null) as Record<string, unknown> | null;
+  return {
+    waiting: w && typeof w.size === 'number' && Number.isInteger(w.size) && w.size >= 2 && w.size <= 4 ? { size: w.size } : null,
+    last: l && ok(l.outcome) && typeof l.day === 'string'
+      ? {
+        day: str(l.day, 20), outcome: l.outcome,
+        duels: (Array.isArray(l.duels) ? l.duels : []).filter(ok).slice(0, 4),
+        size: typeof l.size === 'number' ? Math.min(4, Math.max(0, Math.floor(l.size))) : 0,
+        enemy: str(l.enemy, 24),
+      }
+      : null,
+  };
+}
+
+/** O estado da guerra da SUA guilda (2 leituras no servidor; não vem na vista principal). */
+export const getGuildWar = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ war: unknown }>('guildWar', { params: { id, dayKey: dia(tz) } }).then(r => sanitizeWar(r.war));
+
+/** Procurar uma guilda rival do MESMO tamanho. O servidor monta os esquadrões, pareia e resolve; o corpo não decide nada. */
+export const seekGuildWar = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ state?: unknown; war: unknown }>('guildWarSeek', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(r => ({
+    state: (['small', 'already', 'waiting', 'done'] as const).find(x => x === r.state) ?? 'waiting',
+    war: sanitizeWar(r.war),
+  }));
 
 /** O que há para colher: semanas com direito (`pending`), os cenários já liberados e a peça da maré. */
 export interface GuildRewards {

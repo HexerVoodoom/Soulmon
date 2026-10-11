@@ -924,6 +924,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/groveLocal.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Avisos do arquivo:** falha de storage tem fallback em memória do módulo (marco e recibo não repetem na mesma execução).
 
+### `src/utils/guildMission.ts`
+**Dono de:** a MISSÃO da guilda no aparelho (PR3): a ida do Solmon (`GuildMissionState`, `GUILD_MISSION_MINUTES` = 30), quando ele está fora da Home e quando é hora de voltar. A trava real (1 volta por dia do jogador) e o valor da rodada são do servidor (`guildRaidHit`).
+**Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `isMissionDue`, `msUntilReturn`.
+**Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
+**Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
+
+### `src/utils/nightmareShadows.ts`
+**Dono de:** as SOMBRAS DO PESADELO (PR5): os 12 slots (4 degraus × 3 variantes) → Solmon próprio (linha · estágio), o encaixe da arte real (`SHADOW_ART`, vazio até a leva de `docs/ASSETS-A-GERAR.md` §17 entrar) e a geometria do placeholder preso à caixa de colisão. Só visual: a colisão do `DinoGame` não muda.
+**Exports:** `SHADOW_SLOTS`, `SHADOW_ART`, `shadowSource`, `shadowRect`, `shadowEyes`, `ShadowSlot`, `ShadowSource`, `ShadowRect`.
+**Chamado por:** `src/components/DinoGame.tsx` (`drawShadowObstacle`).
+**Régua:** `src/utils/nightmareShadows.test.ts`.
+
+### `src/utils/guildHouse.ts`
+**Dono de:** a regra do ITEM NA CASA DA GUILDA (guilda-lancamento PR2): item posto no slot sai de `ownedFurniture` e de `equippedDecor` e vive em `guildDonatedItem`; tirar (ou perder a guilda) o devolve.
+**Exports:** `applyGuildSlot` (pura e idempotente: mesmo slot, mesma referência), `donatableItems`, `GuildHouseSaveSlice`.
+**Chamado por:** `src/App.tsx` (`handleGuildSlot`), `src/components/guild/GuildSheet.tsx` (`SalaCasa`).
+**Régua:** `src/utils/guildHouse.test.ts`.
+
 ### `src/utils/groveStage.ts`
 **Dono de:** o PALCO do Bosque (`PLANO-GUILDA.md` §6, WPG-11) — parte PURA de quem aparece no visor e onde. **De 5 a 12 membros só a SUA criatura** (a fileira com lacunas de uma roda de 12 é a sala de aula que LV-G2 veta); **até 4, todos, em ordem de chegada** do servidor, sem estado de presença; **nunca estágio, linha ou HP alheio** (LV-G10): a criatura dos outros é uma das nossas linhas por hash do id opaco (o mesmo membro renderiza sempre a mesma criatura).
 **Exports:** `OWN_RENDER` (128) · `OTHER_RENDER` (64) · `GroveCreature` (interface) · `spriteForMember(key)` · `spreadX(sizes)` (distribuição em % pelo vão, pés na mesma linha) · `groveCreatures(guild)`.

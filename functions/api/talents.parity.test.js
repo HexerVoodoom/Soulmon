@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as srv from './_talents.js';
-import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, isPickable, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../../src/utils/talents';
+import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, talentPveAttrBonus, isPickable, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../../src/utils/talents';
 import { simulatePvp } from '../../src/utils/combate/duel';
 import { bondLevelFor, xpForLevel } from '../../src/utils/bond';
 import { onRequest } from './save.js';
@@ -46,6 +46,8 @@ describe('o catalogo do servidor e o do app sao o MESMO', () => {
       for (const scope of ['pvp', 'pve']) expect(srv.talentBonus(picks, lvl, scope)).toBeCloseTo(talentBonus(picks, lvl, scope), 12);
       const sa = srv.talentAttrBonus(picks, lvl), aa = talentAttrBonus(picks, lvl);
       for (const k of ['atk', 'def', 'spd']) expect(sa[k], k).toBeCloseTo(aa[k], 12);
+      const sp = srv.talentPveAttrBonus(picks, lvl), ap = talentPveAttrBonus(picks, lvl); // PvE por atributo (11/10/2026)
+      for (const k of ['atk', 'def', 'spd']) expect(sp[k], `pve ${k}`).toBeCloseTo(ap[k], 12);
       expect(srv.talentCheerScale(picks, lvl)).toBeCloseTo(talentCheerScale(picks, lvl), 12);
     }
   });

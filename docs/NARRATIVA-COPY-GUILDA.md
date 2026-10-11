@@ -231,7 +231,78 @@
 | `guild.guide.titulo` | A Guilda | The Guild | GuideModal, seção nova | §12 |
 | `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
 
-**Total: 165 chaves** (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
+## 12. A Casa (guilda-lancamento PR2, 11/10/2026)
+
+| chave | PT-BR | EN | onde usa | lei |
+|---|---|---|---|---|
+| `guild.casa.titulo` | Casa | House | GuildSheet, título da seção | L12 |
+| `guild.aria.casa` | A casa da roda: {estagio} | The circle’s house: {estagio} | nome acessível do visor da casa | — |
+| `guild.casa.nivel.fagulha` | Fagulha | Spark | nome do primeiro estágio da casa | L10 |
+| `guild.casa.nivel.haste` | Haste | Rod | nome do 2º estágio | L10 |
+| `guild.casa.nivel.latao` | Folhas de latão | Brass leaves | nome do 3º estágio | L10 |
+| `guild.casa.nivel.flores` | Flores | Blooms | nome do 4º estágio | L10 |
+| `guild.casa.nivel.cristais` | Cristais | Crystals | nome do 5º estágio | L10 |
+| `guild.casa.nivel.aurora` | Aurora | Dawn | nome do último estágio | L10 |
+| `guild.casa.linha.fagulha` | Uma faísca no centro, esperando. | A spark at the center, waiting. | linha sóbria sob o nome do estágio | L10 |
+| `guild.casa.linha.haste` | Uma haste de metal sobe do chão. | A metal rod rises from the ground. | idem | L10 |
+| `guild.casa.linha.latao` | A árvore abriu folhas de latão. | The tree opened brass leaves. | idem | L10 |
+| `guild.casa.linha.flores` | Nasceram flores entre as engrenagens. | Flowers grew between the gears. | idem | L10 |
+| `guild.casa.linha.cristais` | Cristais brotam ao redor do coração da casa. | Crystals sprout around the heart of the house. | idem | L10 |
+| `guild.casa.linha.aurora` | Tudo na casa brilha. | Everything in the house glows. | idem | L10 |
+| `guild.casa.perto` | A casa está perto de virar {estagio}. | The house is close to becoming {estagio}. | GuildSheet, binário `perto` (sem número) | LV-G1 |
+| `guild.casa.regra` | A roda cuida da casa junto: Bits trazidos, missões e guerras fazem a árvore crescer. Ela só cresce. | The circle tends the house together: Bits brought, missions and wars make the tree grow. It only grows. | atrás do "?" da sala | L10, L12 |
+| `guild.casa.doar.titulo` | Trazer Bits | Bring Bits | título do bloco de doação | L12 |
+| `guild.casa.doar.botao` | Trazer {bits} Bits | Bring {bits} Bits | botão de doação (número vem de `CASA_DOACOES`) | L12 |
+| `guild.casa.doar.ok` | A casa recebeu o que você trouxe. | The house received what you brought. | constatação depois de doar (o que o servidor aceitou) | L12 |
+| `guild.casa.doar.teto` | Por hoje, é o bastante. A casa agradece. | That’s enough for today. The house is grateful. | teto diário atingido (sem culpa) | LV-G7 |
+| `guild.casa.doar.semBits` | Você não tem Bits para trazer agora. | You have no Bits to bring right now. | carteira abaixo da menor doação | — |
+| `guild.casa.slot.titulo` | Seu cantinho na casa | Your corner of the house | título do slot pessoal | L12 |
+| `guild.casa.slot.vazio` | Um item seu pode morar aqui. | An item of yours can live here. | slot vazio (só o do próprio jogador é desenhado) | LV-G2 |
+| `guild.casa.slot.escolher` | Pôr um item | Place an item | botão que abre a lista de itens | — |
+| `guild.casa.slot.tirar` | Levar de volta | Take it back | tira o item da casa | LV-G5 |
+| `guild.casa.slot.aviso` | Enquanto estiver na casa, o item não aparece no seu cenário. | While it’s in the house, the item doesn’t show in your own scene. | aviso da regra (item em uso na guilda não vale no pessoal) | — |
+| `guild.casa.slot.nenhum` | Você não tem itens livres para pôr. | You have no free items to place. | lista vazia | — |
+| `guild.casa.slot.ok` | Seu item está na casa. | Your item is in the house. | constatação | L12 |
+| `guild.casa.slot.volta` | Seu item voltou para você. | Your item came back to you. | constatação | L12 |
+
+| `guild.help.casa.termo` | Casa | House | HelpModal, glossário | L12 |
+| `guild.help.casa.def` | A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário. | The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene. | HelpModal, glossário | L12 |
+
+## 13. A Missão (guilda-lancamento PR3, 11/10/2026)
+
+| chave | PT-BR | EN | onde usa | lei |
+|---|---|---|---|---|
+| `guild.missao.titulo` | Missão | Mission | GuildSheet, título da seção (a antiga Feira) | L12 |
+| `guild.missao.mandar` | Mandar investigar | Send to investigate | botão que manda o Solmon | L12 |
+| `guild.missao.fora` | Seu Soulmon foi investigar. Volta às {hora}. | Your Soulmon went to investigate. Back at {hora}. | estado "fora" (horário, nunca contagem regressiva) | L12 |
+| `guild.missao.feita` | Hoje a roda já ouviu a sua parte. | The circle has already heard your part today. | missão de hoje já voltou (sem cobrança) | L12 |
+| `guild.missao.regra` | Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia. | Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day. | atrás do "?" da seção | L10, L12 |
+
+| `guild.help.missao.termo` | Missão | Mission | HelpModal, glossário | L12 |
+| `guild.help.missao.def` | Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa. | Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house. | HelpModal, glossário | L12 |
+
+## 14. A Guerra (guilda-lancamento PR4, 11/10/2026)
+
+| chave | PT-BR | EN | onde usa | lei |
+|---|---|---|---|---|
+| `guild.guerra.titulo` | Guerra de guilda | Guild war | GuildSheet, título da seção | L12 |
+| `guild.guerra.regra` | Seu esquadrão — você e até três aliados — enfrenta o de outra guilda do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia. | Your squad — you and up to three allies — faces another guild’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day. | atrás do "?" da seção | L10, L12 |
+| `guild.guerra.buscar` | Procurar uma guilda rival | Look for a rival guild | botão que busca a guilda do mesmo tamanho | L12 |
+| `guild.guerra.esperando` | Seu esquadrão espera uma guilda do mesmo tamanho. O resultado chega sozinho. | Your squad is waiting for a guild of the same size. The result arrives on its own. | estado "na fila" | L12 |
+| `guild.guerra.pequena` | Para a guerra são precisas ao menos duas pessoas com ficha de luta. | A war needs at least two people with a fighter sheet. | guilda pequena demais (constatação, sem culpa) | LV-G2 |
+| `guild.guerra.hoje` | Hoje a guerra já aconteceu. | Today’s war has already happened. | uma guerra por dia | LV-G7 |
+| `guild.guerra.resultado.win` | A roda venceu a guerra contra {nome}. | The circle won the war against {nome}. | resultado | L12 |
+| `guild.guerra.resultado.draw` | A guerra contra {nome} terminou empatada. | The war against {nome} ended in a draw. | resultado | L12 |
+| `guild.guerra.resultado.loss` | Desta vez a guerra contra {nome} foi deles. A casa recebeu a seiva do mesmo jeito. | This time the war against {nome} went their way. The house got its sap all the same. | resultado (sem culpa; perder nunca rende zero) | LV-G6, L12 |
+| `guild.guerra.duelo.win` | Confronto vencido | Bout won | rótulo acessível de cada marca | — |
+| `guild.guerra.duelo.draw` | Confronto empatado | Bout drawn | idem | — |
+| `guild.guerra.duelo.loss` | Confronto do outro lado | Bout went the other way | idem | — |
+| `guild.aria.guerra` | Um esquadrão da roda diante do esquadrão de uma guilda rival | A squad from the circle facing a rival guild’s squad | nome acessível do visor da guerra | — |
+
+| `guild.help.guerra.termo` | Guerra de guilda | Guild war | HelpModal, glossário | L12 |
+| `guild.help.guerra.def` | Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outra guilda do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não. | Once a day the circle’s squad, up to four people, faces another guild’s squad of the same size. The server settles it, and the house gets sap win or not. | HelpModal, glossário | L12 |
+
+**Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 
 ## Recusas (o que NÃO foi escrito, e por quê)

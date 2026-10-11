@@ -157,6 +157,43 @@ describe('PR7b: os nós redesenhados na tela', () => {
   });
 });
 
+describe('legibilidade (11/10/2026): "o que a sua árvore dá agora" e a linha Agora / No grau máximo', () => {
+  it('o resumo mostra, por lugar, o que de fato vale (já com o equipamento e o teto) — vazio é tudo 0, com graus acompanha', () => {
+    abrir({ totalXP: xpForLevel(20), talentPicks: ['tal-pvp-01', 'tal-pvp-01', 'tal-pve-01', 'tal-pve-01', 'tal-pve-02', 'tal-pve-02'] });
+    const ul = document.querySelector('[data-talent-now]')!;
+    const duelo = ul.querySelector('[data-talent-now-path="pvp"]')!.textContent!;
+    const fenda = ul.querySelector('[data-talent-now-path="pve"]')!.textContent!;
+    expect(duelo).toMatch(/Duelo e Torneio/);
+    expect(duelo).toMatch(/dano \+0,8% · defesa \+0% · ritmo \+0%/);
+    expect(fenda).toMatch(/Masmorra: dano \+1,2% · defesa \+1,2% · ritmo \+0%/); // 02 é DEFESA de verdade na Masmorra
+    expect(fenda).toMatch(/Arena \+2,4% · Pesadelo \+2,4% \(um bônus só\)/);
+    expect(ul.textContent).toMatch(/Já somado ao equipamento\. Em cada lugar, o total para em 5%\./);
+  });
+
+  it('EN: o mesmo resumo em inglês, sem "challenge"/PT', () => {
+    abrir({ totalXP: xpForLevel(20), talentPicks: ['tal-pvp-01'] }, 'en-US');
+    const t = document.querySelector('[data-talent-now]')!.textContent!;
+    expect(t).toMatch(/Duel & Tournament/); expect(t).toMatch(/damage \+0\.4%/); expect(t).toMatch(/Dungeon:/);
+    expect(t).not.toMatch(/Duelo|Fenda|Masmorra/);
+  });
+
+  it('o modal do nó traz a linha Agora / No grau máximo no grau atual, e muda quando o grau sobe', () => {
+    abrir({ totalXP: xpForLevel(20), talentPicks: ['tal-pve-01', 'tal-pve-01'] });
+    abrirNo('tal-pve-02');
+    expect(painel().querySelector('[data-talent-effect]')!.textContent).toBe('Agora: nada ainda · No grau máximo: +2,4% de defesa.');
+    act(() => { fireEvent.click(document.querySelector('[data-talent-cancel]')!); });
+    atribuir('tal-pve-02', 2);
+    abrirNo('tal-pve-02');
+    expect(painel().querySelector('[data-talent-effect]')!.textContent).toBe('Agora: +1,2% de defesa · No grau máximo: +2,4% de defesa.');
+  });
+
+  it('nó do Comércio não tem a linha (o número já está na descrição e não é combate)', () => {
+    abrir({ totalXP: xpForLevel(20) });
+    abrirNo('tal-com-01');
+    expect(painel().querySelector('[data-talent-effect]')).toBeNull();
+  });
+});
+
 describe('Tarefa B: a árvore como árvore', () => {
   it('nó trancado diz em TEXTO o que falta; comprar o pré-requisito destranca', () => {
     abrir({ totalXP: xpForLevel(10) });

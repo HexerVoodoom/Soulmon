@@ -205,6 +205,8 @@ interface CompanionHUDProps {
    *  (≠ casa), já no idioma. Vira um marcador pequeno e SEM TEXTO perto do pet —
    *  diegético, sem bloquear gesto nenhum de cuidado. `null` = em casa. */
   walkingTo?: string | null;
+  /** 🔎 MISSÃO da guilda (PR3): o Solmon foi investigar e SOME do palco até voltar. Sem texto de cobrança — só a ausência e uma lupa. */
+  missionAway?: boolean;
   equippedBackground?: string | null; // shop backdrop id for the pet box
   /** Decoração equipada por espaço do palco (utils/petStage.ts). */
   equippedDecor?: Partial<Record<SlotId, string>>;
@@ -288,6 +290,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   openBackpackSignal = 0,
   hauntedWatching = false,
   walkingTo = null,
+  missionAway = false,
   daysAway = 0,
   petPassive,
   talento = null,
@@ -1503,10 +1506,20 @@ export const CompanionHUD = memo(function CompanionHUD({
                   <img src={UI_ICON_ART.mochila} alt="" aria-hidden="true" draggable={false} width={20} height={20} style={{ display: 'block', imageRendering: 'pixelated' }} />
                 </span>
               )}
+              {missionAway && (
+                <span
+                  role="img"
+                  data-pet-missao
+                  aria-label={language === 'pt-BR' ? 'Seu Soulmon saiu para investigar' : 'Your Soulmon went to investigate'}
+                  style={{ position: 'absolute', left: '50%', bottom: PET_GROUND_KEEP + PET_LIFT + Math.round(PET_RENDER * 0.1), transform: 'translateX(-50%)', lineHeight: 0, pointerEvents: 'none', zIndex: 1 }}
+                >
+                  <Icon name="search" size={32} tone="muted" />
+                </span>
+              )}
               {sprite ? (
                 <img
                   src={sprite}
-                  alt={currentStage}
+                  alt={missionAway ? '' : currentStage}
                   /* A OUTRA METADE DA SINTONIA (`spec-geracao-incremental.md`
                      §2.1 e §2.3.1). A varredura de 400 ms já passava por cima
                      deste sprite; a spec sempre pediu o PAR — "scanline de
@@ -1540,6 +1553,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
+                    visibility: missionAway ? 'hidden' : undefined,
                     /* `isBlinking` entra AQUI, em JS — nunca via `animation`
                        CSS separada tocando `filter` (ver a nota grande em
                        `getCompanionFilter` e em `sm2-pet-blink`, index.css).

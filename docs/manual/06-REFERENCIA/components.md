@@ -253,6 +253,18 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (intersticial `groveMilestone`, depois de relatório e check-in e antes do sonho).
 **Régua:** `src/components/guild/GroveMilestoneCeremony.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila).
 
+### `src/components/guild/CasaVisor.tsx`
+**Dono de:** o visor da CASA DA GUILDA (guilda-lancamento PR2): SVG de arestas retas por cima do cenário `bg-guild-<estágio>` — árvore mecânica com cristal central que ganha ramos, folhas de latão, flores e cristais conforme `casa.nivelIndex` (0..5), até quatro criaturas na linha do chão e um pedestal por item posto. Posições fixas por índice; movimento reduzido para o brilho (`.sm2-casa-glow`).
+**Exports:** `CasaVisor(props)`, `CASA_VISOR_HEIGHT` (176).
+**Chamado por:** `guild/GuildSheet.tsx` (`SalaBosque`, quando a vista traz `casa`).
+**Régua:** `guild/GuildSheet.casa.render.test.tsx`.
+
+### `src/components/guild/GuerraVisor.tsx`
+**Dono de:** o visor da GUERRA de guilda (PR4): o esquadrão da roda (até 4) de um lado e, do outro, silhuetas pálidas do esquadrão rival (a mesma quantidade) sobre o cenário `bg-arena-spotlight`. Os rivais são só silhueta de propósito: o servidor nunca manda estágio, linha nem nome de pessoa de outra guilda (LV-G10).
+**Exports:** `GuerraVisor(props)`, `GUERRA_VISOR_HEIGHT` (176).
+**Chamado por:** `guild/GuildSheet.tsx` (`SalaGuerra`).
+**Régua:** `guild/GuildSheet.casa.render.test.tsx` (bloco "a Guerra no Salão").
+
 ### `src/components/guild/GroveVisor.tsx`
 **Dono de:** o visor do Bosque (`PLANO-GUILDA.md` §6, WPG-11) — o cenário `bg-guild-<estágio>` de `PET_BACKGROUNDS` — arte pintada 1200×648 desde 30/09/2026 (fundos-v2; ⚰️ era gradiente), assentada com `center bottom / auto 100% no-repeat` e `image-rendering: pixelated` — e as criaturas na linha do chão (`GROUND_Y`), decididas por `utils/groveStage.ts` (5–12 membros → só a sua; ≤ 4 → todos, em ordem de chegada). Pixel art só dentro do vidro; estágio, linha e fio ficam fora dele.
 **Props principais:** `guild: Pick<GuildView, 'size' | 'members' | 'bosque'>`, `mySprite`, `reducedMotion`, `label?`.

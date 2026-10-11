@@ -25,6 +25,53 @@
 > - **Conclusão real:** o check da lista chama `handleToggleTask` (prop `onCompleteFocusTask`); a Home nunca é reordenada. "Concluir sessão" antes concluía todas as tarefas; **não conclui mais nenhuma**.
 > - **Recompensa extra:** `onPlanReward` → `rollPlanLoot` + `applyFocusLoot` com recibo `plan:<id>`: 1 item, 1×/sessão, máx. 2/dia (`FOCUS_PLAN_DAILY_CAP`), dentro do teto de 8. Sem campo novo no save (fuzz2 intocado).
 > - **Depende do dono:** rever o teto de 2 sessões premiadas/dia e a exigência de ≥1 tarefa na lista para concluir.
+> ## 11/10/2026 — Guilda de lançamento, PR5: as sombras do Pesadelo (`claude/guilda-lancamento`)
+>
+> - **O que muda:** no Pesadelo da Corrida com obstáculos os obstáculos são **sombras de Solmons específicos** — silhueta preta, só os olhos de luz (`utils/nightmareShadows.ts`, `drawShadowObstacle` no `DinoGame`). **Placeholder agora**: o sprite da própria linha pintado de preto em tempo de desenho, preso à caixa de colisão, virado para o pet, com dois olhos acesos. **Colisão, placar e recompensas não mudam.** Conferido com Playwright 390×844.
+> - **Arte:** o **pacote de pedido** está em `docs/ASSETS-A-GERAR.md` §17 (12 slots drop-in `dino-shadow-{1..4}{,b,c}`, 128² alfa, regras de cor "só os olhos acendem", prompts = oráculo + sufixo de sombra, checklist do conferente). Higgsfield/CLI não estavam disponíveis. Instalar = preencher `SHADOW_ART` + `CACHE_VERSION`.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** nenhuma sobre a Corrida; o `docs/INVENTARIO-ASSETS.md` ganha 12 linhas quando a leva entrar.
+> - **Depende do dono:** gerar a arte (§17) e escolher se os 12 Solmons da tabela são os certos.
+
+> ## 11/10/2026 — Guilda de lançamento, PR4: a GUERRA 4×4 (`claude/guilda-lancamento`)
+>
+> - **O que é:** "você + 3 aliados contra 4 inimigos", **pareada por tamanho** (2 com 2, 3 com 3, 4 com 4; guilda de 5+ escala 4). Qualquer membro procura (`guildWarSeek`); o **servidor** monta os esquadrões a partir dos SAVES (`loadDuelSide`, mesmo teto S1 do duelo), pareia pela fila `coopWarQ:<size>`, resolve cada confronto com o **combate v3** (`simulateDuel`, mais forte contra mais forte, semente do servidor) e grava o resultado nas duas guildas. Assíncrono: a 1ª guilda espera na fila, a 2ª resolve na hora. Uma guerra por guilda por dia.
+> - **Casa:** o resultado rega a casa das duas guildas (`guerra`: 24 vitória / 12 empate / 8 derrota — perder nunca rende zero). Sem dinheiro real, sem vantagem paga: a ficha vem do save.
+> - **UI:** seção "Guerra de guilda" no Salão (`SalaGuerra`/`GuerraVisor`: esquadrão × silhuetas, botão, marcas por confronto, a frase do resultado; nada de número). **Rivais só silhueta**: o servidor não manda estágio/linha/nome de pessoa de outra guilda.
+> - **Anti-abuso/segurança:** auth em cada endpoint (`guild.js`), rate limit leve, o corpo não decide nada, a resposta não vaza saveId (teste), 1 guerra/dia/guilda, a guilda não luta contra si, fila com TTL de 2 dias. `loadDuelSide` saiu de `community.js` para `_duelLoad.js` (dono único).
+> - **Decisão do dono revertida:** `PLANO-GUILDA.md` D-G4 ("sem confronto guilda × guilda") — o ditado de 11/10/2026 a substitui; o plano e o `CLAUDE.md` seguem dizendo o contrário.
+> - **Depende do dono:** guerra com recompensa além da seiva (Emblemas?); guerra por semana em vez de por dia; escolher quem vai para o esquadrão (hoje: quem pediu + os mais antigos com ficha).
+
+> ## 11/10/2026 — Guilda de lançamento, PR3: o circo vira MISSÃO da guilda (`claude/guilda-lancamento`)
+>
+> - **O que muda:** a Feira (raid semanal, o "circo") vira uma investigação: o jogador **manda o Solmon** (`GuildSheet` › `SalaFeira` com `missao`), ele **some da Home** por 30 min (`missionAway` no `CompanionHUD`, lupa muda no lugar; `GameState.guildMission`), e ao voltar o App registra a rodada (`guildRaidHit`, o servidor sorteia o valor) e rega a **casa** com seiva que cresce com o level do Solmon e o tamanho da roda ativa (`pontosDeMissao`: 4 → 17). Sem rede, o pet volta para casa do mesmo jeito e o registro espera. A missão está no **Salão do Hall** (cena do fenômeno + estado visível: aberto/ferido/dissipado) e no lote antigo da Arena.
+> - **NÃO removi o lote `feira` da Arena** (o pedido era "mover"): ele está amarrado à economia de prédios — material `ribbon`, peça `eq-rastro-t3` do Ferreiro, missão do prédio e gate `arena.feira`. Tirar o lote orfanaria isso. **Depende do dono:** re-hospedar esse prédio em `hall.guilda` (e redistribuir o material) para então fechar o lote da Arena.
+> - **Anti-abuso:** o relógio da ida é do cliente (como o Passeio); a trava real é 1 volta/dia (429) no servidor, que também decide o valor. Nada de dinheiro real.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** a linha 🎪 do Torneio não cita a missão; o parágrafo "Palco do pet" não prevê pet ausente.
+> ## 11/10/2026 — Talentos: as "skills" da árvore ficam legíveis e distintas por caminho
+>
+> - **Pedido do dono:** "a árvore de talentos está legal, mas as SKILLS não estão legais; melhore." A árvore (grafo, ids, graus, custo) **não muda**; os `talentPicks` salvos seguem valendo.
+> - **Achado:** na Fenda, `Garra da fenda`, `Muro da fenda` e `Arco de luz` eram o MESMO efeito (ataque) com nomes diferentes. Agora são ATAQUE, DEFESA e RITMO (`attr` em `TALENT_TREE`, `talentPveAttrBonus`, espelho `_talents.js` + paridade): canais próprios na Masmorra (mesma via do equipamento); Arena e Pesadelo seguem lendo o total como um número só (regra (e) do combate v3). Soma dos canais = total de antes; teto único de 5% intacto.
+> - **Legível:** copy com o efeito em palavras antes do número; linha "Agora / No grau máximo" no modal de cada nó (`talentEffectLine`, com segundos de espera/ % do HP); bloco "O que a sua árvore dá agora" (já somado ao equipamento e cortado nos 5%) acima do tabuleiro.
+> - **Magnitudes não mudaram:** dobrar cura/escudo da Masmorra mede +0,70 andar e quebra o gate (< 0,4) de `talents.efeitos.test.ts`. Decisão registrada em REGISTRO §29 (com o que ficou de fora: efeitos de combate novos exigem mexer no motor, no espelho `_combate.js`/`_duel.js` e nas réguas).
+> - **Linhas velhas no CLAUDE.md (não editado):** a linha do combate v3 "Masmorra lê o equipamento por atributo… Arena e Pesadelo só pela soma" vale agora também para o talento de PvE — vale citar `talentPveAttrBonus` ali.
+> - **Depende do dono:** dizer se "skills" era o NÓ da árvore (feito) ou os golpes/habilidades da criatura (ficha do class-system, outra frente).
+
+> ## 11/10/2026 — Soulsmith: 15 níveis, custos maiores, opções apresentadas como IGUAIS
+>
+> - **Pedido do dono:** "está fácil de upar… tem de levar tempo; mesmo depois do nível ultra o jogador ainda não terá todos os itens no máximo" + "apresente as DUAS opções como iguais (mais dano OU mais velocidade)". O nome "cobre" fica.
+> - **Regra (REGISTRO §26.1, `docs/BALANCO-SOULSMITH.md`):** 5 → **15 níveis** de 0,1 % (teto por peça 1,5 % e teto único de 5 % intactos); custo total por peça 98 + 56 materiais (eram 10 + 6); Vínculo até 10. Simulação dia a dia com as funções reais (`forge.tempo.test.ts`): **todo dia ≈ 100 dias** (o Ultra é 59), 3 de 4 dias ≈ 134, metade ≈ 198; a Oficina do Foco encurta mas não passa. Só Bits ganhos/materiais, sem sorteio.
+> - **Migração sem confisco:** registro `forge` sem `v: 2` = esquema de 5 níveis, convertido na leitura para o nível novo de MESMO bônus (1→3, 2→5, 3→8, 4→11, 5→15), no cliente (`sanitizeForge`) e no servidor (`_forge.js`, paridade com vetores com e sem `v`). Todo escritor (`forgeActions`) grava `v: 2`.
+> - **Tela:** o modal de aprimorar mostra "Mais dano · +0,1 %" / "Mais defesa · +0,1 %" (ou "Mais velocidade") com o efeito em palavras, mesmo peso visual, sem "A/B" nem "o atributo do próprio slot"; a linha "Próximo" diz "de ataque ou de defesa, à sua escolha". `ATTR_EFFECT` em `forgeCopy.ts`.
+> - **Linhas velhas no CLAUDE.md (não editado):** nenhuma cita os 5 níveis do Soulsmith.
+> - **Depende do dono:** achar o ritmo (100 dias) longo/curto — ajusta `UPGRADE_COST`, não o teto; custo em Bits no aprimoramento ficou de fora de propósito.
+
+> ## 11/10/2026 — Guilda de lançamento, PR2: a CASA da guilda (`claude/guilda-lancamento`)
+>
+> - **O que é:** cenário que evolui (Fagulha → Haste → Folhas de latão → Flores → Cristais → Aurora): árvore mecânica com cristal central (`CasaVisor`, SVG no Visor sobre o `bg-guild-*`), até 4 Solmons, um pedestal por item posto. **Doação de Bits** (`guildDonate`, teto 200/dia por pessoa, o servidor diz o `accepted` e o app desconta só isso, Bit pago primeiro) e **um item por membro** (`guildSlot`): o item sai de `ownedFurniture`/`equippedDecor` (`utils/guildHouse.ts`) — não vale no cenário pessoal enquanto estiver na casa; sair da guilda o devolve.
+> - **Servidor:** `functions/api/_casa.js` (chave pessoal `coopCasa:<gid>:<save>`, entra no cartão do membro; pontos de quem sai viram `casaLegado` — a casa nunca encolhe). Fontes de seiva: `doacao`, `missao`, `guerra` (as duas últimas entram nos PRs seguintes via `somarPontos`). Auth e rate limit herdados de `guild.js`. Orçamento de KV subiu 1 leitura por ação (`guild.l2.test.js`).
+> - **Linha vermelha tocada (ver REGISTRO §27):** "contribuição por pessoa" — a vista NÃO devolve pontos, limiares, "faltam N" nem doação por pessoa; só nível, `perto` binário e os itens nos slots. `guildDonatedItem` entrou no `GameState` (exceção única em `guildNoSave.contract.test.ts`: é inventário, não ponteiro de guilda). fuzz2 sobe para 113 campos.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** a tabela 🛒 Loja/Guilda não cita a Casa; `PLANO-GUILDA.md` §3 "O que NUNCA acontece" (contribuição por pessoa) tem agora uma exceção declarada para Bits doados.
+> - **Depende do dono:** unificar a Casa com o Bosque (hoje são dois progressos: dias-de-guilda × seiva).
 > ## 11/10/2026 — O NPC apresenta o prédio novo ao subir o Vínculo (`claude/npc-apresenta-predio`)
 >
 > - **Pedido do dono:** "sempre que um PRÉDIO NOVO é liberado ao subir de nível, o NPC aparece e se apresenta e introduz o novo prédio."

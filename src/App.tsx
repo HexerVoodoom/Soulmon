@@ -153,7 +153,9 @@ import {
 } from './utils/weeklyMissions';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
-import { noteFreeBits, creditExchangeRoom, applyCreditExchange } from './utils/bitsOrigin';
+import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
+import { applyGuildSlot } from './utils/guildHouse';
+import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -3849,6 +3851,59 @@ export default function App() {
     setGameState(prev => grantGuildScenes(prev, ids));
   }, [setGameState]);
 
+  /** CASA DA GUILDA: desconta SÓ o que o servidor aceitou (nunca o pedido) — Bit pago primeiro, como todo gasto fora do equipamento. */
+  const handleGuildSpend = useCallback((bits: number) => {
+    setGameState(prev => {
+      const n = Math.min(Math.max(0, Math.floor(bits)), prev.gamePoints ?? 0);
+      return n > 0 ? spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - n }, n) : prev;
+    });
+  }, [setGameState]);
+
+  /** CASA DA GUILDA: o save segue o slot que o servidor diz (`applyGuildSlot`, idempotente). */
+  const handleGuildSlot = useCallback((item: string | null) => {
+    setGameState(prev => applyGuildSlot(prev, item));
+  }, [setGameState]);
+
+  /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
+  const handleGuildMissionSend = useCallback(() => {
+    setGameState(prev => {
+      if (prev.guildMission) return prev;
+      return { ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) };
+    });
+  }, [setGameState]);
+
+  // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Solmon aparece de novo.
+  // Sem rede, o registro espera (nova tentativa a cada minuto e ao voltar ao app) — mas o pet já está em casa.
+  // Qualquer outra resposta (limite do dia, fenômeno dissipado, sem guilda, sem login) encerra a missão em silêncio.
+  const guildMission = gameState.guildMission ?? null;
+  const [, voltouDaMissao] = useState(0); // re-render na hora da volta: o pet reaparece mesmo se o registro estiver esperando a rede
+  useEffect(() => {
+    if (!guildMission || !saveId) return;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let busy = false;
+    const encerrar = () => setGameState(prev => (prev.guildMission ? { ...prev, guildMission: null } : prev));
+    const tentar = async () => {
+      if (!alive || busy || Date.now() < guildMission.returnAt) return;
+      voltouDaMissao(n => n + 1);
+      busy = true;
+      try {
+        const { hitGuildRaid } = await import('./utils/community');
+        await hitGuildRaid(saveId, gameState.playerDayTz);
+        if (alive) encerrar();
+      } catch (e) {
+        const kind = (e as { kind?: string } | null)?.kind;
+        if (!alive) return;
+        if (kind === 'unavailable' || kind === 'server' || kind === 'rateLimit') timer = setTimeout(() => { busy = false; void tentar(); }, 60_000);
+        else encerrar();
+      } finally { busy = false; }
+    };
+    timer = setTimeout(() => void tentar(), msUntilReturn(guildMission, Date.now()));
+    const aoVoltar = () => { if (!document.hidden) void tentar(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => { alive = false; if (timer) clearTimeout(timer); document.removeEventListener('visibilitychange', aoVoltar); };
+  }, [guildMission, saveId, gameState.playerDayTz, setGameState]);
+
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
@@ -6502,7 +6557,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings') }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend } }}
               />
             </Suspense>
           )}
@@ -6625,6 +6680,7 @@ export default function App() {
                    destino — um marcador sem texto perto do pet, que não bloqueia
                    gesto nenhum. Nunca vai ao widget, ao desktop nem ao push. */
                 walkingTo={passeandoEm}
+                missionAway={isMissionAway(guildMission, Date.now())}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
