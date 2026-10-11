@@ -398,6 +398,28 @@
 </table>
 <p>We do not sell your data and do not use it for targeted advertising.</p>
 
+<!--
+  RASCUNHO — dono aprova. NÃO publicado: este trecho está em comentário de propósito.
+  Para publicar, o dono revisa (base legal, retenção e encarregado são decisões dele),
+  remove o comentário e sobe PRIVACY_VERSION em src/utils/consent.ts.
+  Também precisa entrar na Data Safety (docs/PLAY-DATA-SAFETY.md §2.2) e no quadro de
+  terceiros (seção 6) como "Google Play (assinaturas)". Fonte: docs/ASSINATURA-SPEC.md,
+  threat-model R9: o servidor guarda só token + vigência, sem preço, país ou forma de pagamento.
+
+<h2>6b. Subscription (Google Play Billing)</h2>
+<p>
+  If you subscribe to the scenery and decor subscription, Google Play processes the
+  payment — <strong>we never receive your card or payment details</strong>. Our server
+  asks Google Play whether the subscription is valid and stores only: the
+  <strong>purchase token</strong>, the <strong>end date of the current period</strong>
+  and the <strong>state</strong> (active, canceled, expired), linked to your account
+  through the same pseudonymous identifier as the rest of your data. We use this only
+  to open and close the quarter's cosmetic set. Tokens never appear in our logs in full.
+  [dono decide: retention of the token — proposal: until 90 days after the subscription
+  ends; the end date stays as long as the account exists.]
+</p>
+-->
+
 <h2>7. Minimum age</h2>
 <p>
   Soulmon is intended for people aged <strong>18 or older</strong>. It is not
@@ -863,6 +885,29 @@
 <p>
   Não vendemos seus dados e não os usamos para publicidade direcionada.
 </p>
+
+<!--
+  RASCUNHO — dono aprova. NÃO publicado: este trecho está em comentário de propósito.
+  Para publicar, o dono revisa (base legal, retenção e encarregado são decisões dele),
+  remove o comentário e sobe PRIVACY_VERSION em src/utils/consent.ts.
+  Também precisa entrar na Data Safety (docs/PLAY-DATA-SAFETY.md §2.2) e no quadro de
+  terceiros (seção 6) como "Google Play (assinaturas)". Fonte: docs/ASSINATURA-SPEC.md,
+  threat-model R9: o servidor guarda só token + vigência, sem preço, país ou forma de pagamento.
+
+<h2>6b. Assinatura (Google Play Billing)</h2>
+<p>
+  Se você assinar a assinatura de cenários e decoração, o pagamento é processado pela
+  Google Play — <strong>nós nunca recebemos os dados do seu cartão ou da sua forma de
+  pagamento</strong>. Nosso servidor pergunta à Google Play se a assinatura está válida
+  e guarda apenas: o <strong>código da compra</strong> (token), a <strong>data de fim do
+  período atual</strong> e o <strong>estado</strong> (ativa, cancelada, vencida),
+  ligados à sua conta pelo mesmo identificador pseudônimo do resto dos seus dados. Usamos
+  isso só para abrir e fechar o conjunto cosmético do trimestre. O token nunca aparece
+  inteiro nos nossos registros (logs).
+  [dono decide: retenção do token — proposta: até 90 dias depois de a assinatura
+  terminar; a data de fim fica enquanto a conta existir.]
+</p>
+-->
 
 <h2>7. Idade mínima</h2>
 <p>

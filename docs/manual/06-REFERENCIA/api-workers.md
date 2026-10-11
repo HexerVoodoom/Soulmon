@@ -481,3 +481,17 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.
 **Chamado por:** `workers/push-scheduler.js`, `functions/api/_pushCopy.js`, `functions/api/_pushIdentity.js`, `src/utils/mealRhythm.ts`.
 **Régua:** `workers/mealRhythm.parity.test.js` (varre as 48 passadas do dia com o worker real e prova o teto).
+
+
+### `functions/api/rtdn.js` (11/10/2026)
+
+**Rota:** `POST /api/rtdn` — Pub/Sub push das notificações em tempo real da Google Play (RTDN). Autentica o JWT OIDC do Pub/Sub (`_pubsubAuth.js`); o payload nunca é confiado: só aponta um `purchaseToken`, e o servidor reconsulta `purchases.subscriptionsv2`, reconhece a assinatura e abre/fecha a vitrine (`ent.sub`). Idempotente por `messageId` (D1 `rtdn_messages` ou KV). Nunca escreve tier nem Créditos.
+**Variáveis:** `RTDN_AUDIENCE`, `RTDN_PUSH_SA_EMAIL`, `ANDROID_PACKAGE_NAME`, `GOOGLE_PLAY_SERVICE_ACCOUNT`.
+**Respostas:** 401 sem JWT válido · 503 sem configuração · 2xx tratada/nada a fazer · 5xx para o Pub/Sub tentar de novo.
+**Régua:** `functions/api/rtdn.test.js`.
+
+### `functions/api/_pubsubAuth.js` (11/10/2026)
+
+**Exports:** `verifyPubsubPush(request, env)` (RS256 contra o JWKS da Google; confere `iss`, `aud`, `email`, `email_verified`, `exp`/`iat`; nunca lança), `pubsubAuthConfigured(env)`, `_resetPubsubJwksCache()`.
+**Chamado por:** `functions/api/rtdn.js`.
+**Régua:** `functions/api/rtdn.test.js`.

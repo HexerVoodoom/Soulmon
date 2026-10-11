@@ -69,7 +69,7 @@ usuário escolhe.
 
 | Tipo do Google | Coletado? | Finalidade | Onde |
 |---|---|---|---|
-| **Histórico de compras** | ✅ Sim | Funcionalidades do app (manter o desbloqueio válido e restaurável) | `functions/api/billing.js`, D1 `soulmon-billing` |
+| **Histórico de compras** | ✅ Sim | Funcionalidades do app (manter o desbloqueio válido e restaurável; **assinatura cosmética:** guardamos só o token da compra, a data de fim do período e o estado, sem preço, país nem forma de pagamento) | `functions/api/billing.js`, `functions/api/rtdn.js`, D1 `soulmon-billing` |
 | Dados de pagamento (cartão etc.) | ❌ Não | — | Quem processa é o Google Play; o app **nunca** vê dado de pagamento |
 
 ### 2.3 Mensagens

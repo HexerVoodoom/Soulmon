@@ -263,7 +263,7 @@ a frase correspondente sai da ficha **antes** do próximo envio.
 | Relatório do dia/semana + humor opcional | `DailyReportModal`; `src/utils/mood.ts` | humor nunca alimenta pontuação |
 | Sem anúncios | `ADMOB_SSV_ENABLED` ausente; UI esconde a opção | `docs/BILLING-SETUP.md` §4b |
 | PT e EN; navegador e Android, mesmo save | `src/utils/i18n.ts` › `resolveLanguage`; `functions/api/save.js` | o APK carrega a URL de produção |
-| Demo grátis; 1 desbloqueio; créditos = nova leitura determinística | `functions/api/_billing.js` › `PRODUCTS`; `src/utils/newReading.ts` | `docs/BILLING-SETUP.md` §1; STATUS §3.1 ✅ (não é loot box) |
+| Demo grátis; 1 desbloqueio; créditos = nova leitura determinística; assinatura opcional = só cenários e decoração do trimestre (sem Créditos, sem vantagem de cuidado; o resgatado fica seu para sempre) | `functions/api/_billing.js` › `PRODUCTS`; `src/utils/newReading.ts` | `docs/BILLING-SETUP.md` §1; STATUS §3.1 ✅ (não é loot box) |
 
 **Vocabulário conferido** (vetados que NÃO aparecem): tamer, domador, treinador,
 digievolução, mundo digital, digimon, avatar, parceiro/partner, dex. Termos de
@@ -290,7 +290,7 @@ configuração de hoje (mesma regra de `PLAY-DATA-SAFETY.md` §2.4).
 | Linguagem imprópria | **Não no conteúdo do app**; o chat é gerado por IA em tempo real com cláusula de segurança, sem moderação humana — declarar em "interação" abaixo | `functions/api/chat.js` › SAFETY |
 | Drogas, álcool, tabaco | Não | — |
 | Jogo de azar / apostas simuladas | **Não** — a Nova Leitura é determinística sobre as respostas; nenhum `Math.random` no caminho pago | `src/utils/newReading.ts`; STATUS §3.1 ✅ |
-| Compras digitais | **Sim** — 1 não consumível + 3 consumíveis via Play Billing | `functions/api/_billing.js` › `PRODUCTS` |
+| Compras digitais | **Sim** — 1 não consumível + 3 consumíveis + **1 assinatura** (cosmética, trimestral, renovação automática, sem teste grátis) via Play Billing | `functions/api/_billing.js` › `PRODUCTS`; `docs/ASSINATURA-SPEC.md` |
 | Os usuários podem interagir entre si | **Sim, limitado**: diretório público de jogadores (apelido + forma), Torneio assíncrono (sem chat), presentes de moeda entre amigos, grupo cooperativo com "apareci hoje". **Não há mensagens entre usuários.** | `functions/api/community.js` › `players`, `match`, `gift`, `coop*` |
 | Compartilha localização | Não | nenhuma permissão de localização (`PLAY-DATA-SAFETY.md` §2.7) |
 | Compartilha informações pessoais com terceiros (via interação) | Só o apelido escolhido, e só se o jogador entrar no diretório | `community.directoryConsent.test.js` |

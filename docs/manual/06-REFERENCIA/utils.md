@@ -3213,3 +3213,25 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx`, `src/hooks/useCareSystem.ts`, `src/components/NotificationManager.tsx`, `src/components/MealRhythmRows.tsx`, `src/components/MealInviteCard.tsx`, `src/components/GuideModal.tsx`, `src/components/HelpModal.tsx`, `src/contexts/GameStateContext.tsx`.
 **Régua:** `src/utils/mealRhythm.test.ts`, `src/utils/mealRhythm.contract.test.ts`, `workers/mealRhythm.parity.test.js`.
 **Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (notificações) · decisão no `REGISTRO-DE-DECISOES.md` (ritmo das refeições).
+
+
+## `src/utils/artAliases.ts` (11/10/2026)
+
+**Dono de:** a tabela de ARTE EMPRESTADA — ids novos que, por ora, usam a pintura/arte de um item existente (o conjunto do trimestre da assinatura). Dado puro; quem aplica é o fim de `backgrounds.ts` e de `decorArt.ts`.
+**Exports:** `BG_ART_ALIASES` (cenário novo → `{ from, namePt, nameEn }`), `DECOR_ART_ALIASES` (decoração nova → id de origem).
+**Chamado por:** `src/utils/backgrounds.ts`, `src/utils/decorArt.ts`.
+**Régua:** `src/utils/subscriptionShop.test.ts` (cada item resolve arte) e `src/assets/artMaps.contract.test.ts` (miniatura 1:1 — as duas miniaturas do trimestre são cópias das de origem).
+
+## `src/utils/subscription.ts` (11/10/2026)
+
+**Dono de:** o lado do cliente da assinatura cosmética trimestral (D10, `docs/ASSINATURA-SPEC.md`) — o SKU `soulmon_cosmetic_quarterly`, a store da vigência FORA do GameState (`useSyncExternalStore`), o link oficial de "Gerenciar assinatura" e o texto da divulgação pré-compra (PT/EN).
+**Exports:** `SUBSCRIPTION_SKU`, `ANDROID_PACKAGE`, `manageSubscriptionUrl`, `getSubscriptionStatus`, `setSubscriptionFromEntitlement`, `useSubscriptionStatus`, `periodPhrase`, `subscriptionDisclosure`, `_resetSubscriptionStatus`.
+**Chamado por:** `src/App.tsx`, `src/components/SubscriptionSection.tsx`.
+**Régua:** `src/utils/subscription.test.ts`; fronteira em `src/security/subscriptionBoundary.contract.test.ts`.
+
+## `src/utils/subscriptionShop.ts` (11/10/2026)
+
+**Dono de:** o RESGATE de graça de um item do trimestre — a única porta desses itens. Puro sobre o `prev`; nunca remove item (posse permanente).
+**Exports:** `applySubscriptionClaim`, `subscriptionClaimRefusal`, `SubscriptionClaimRefusal`, `SubscriptionClaimState`.
+**Chamado por:** `src/App.tsx` (`handleClaimSubscription`).
+**Régua:** `src/utils/subscriptionShop.test.ts`.
