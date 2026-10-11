@@ -8458,3 +8458,13 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }
 .sm-lvup-burst { animation: sm-lvup-burst 24s linear infinite; }
 .sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }
+
+/* Cartão de confirmação das ações propostas pelo chat (ChatActionCard). */
+.sm2-chat-action-btn {
+  min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--sm2-line); background: transparent; color: var(--sm2-ink);
+  font: inherit;
+}
+.sm2-chat-action-btn:disabled { opacity: .5; cursor: default; }
+.sm2-chat-action-primary { background: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); }
+.sm2-chat-action-card { box-shadow: 0 6px 20px rgba(0, 0, 0, .18); }

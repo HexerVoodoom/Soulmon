@@ -85,6 +85,25 @@ export function applySpritePose(patch: Partial<SpritePose>): Partial<SpritePose>
   return clean;
 }
 
+// ── leitura ─────────────────────────────────────────────────────────────────
+
+type Reader = () => unknown;
+let reader: Reader | null = null;
+
+/** O provider liga a leitura do estado atual aqui; devolve o desfazer. */
+export function registerSpritePoseReader(r: Reader): () => void {
+  reader = r;
+  return () => { if (reader === r) reader = null; };
+}
+
+/**
+ * Pose ATUAL (sanitizada) — quem precisa alternar (`flip_soulmon` do chat) lê
+ * aqui antes de chamar `applySpritePose`. Sem provider montado → padrão.
+ */
+export function getSpritePose(): SpritePose {
+  return sanitizeSpritePose(reader ? reader() : undefined);
+}
+
 /** Fusão pura usada pelo writer do provider: `prev` pode ser lixo do save. */
 export function mergeSpritePose(prev: unknown, patch: Partial<SpritePose>): SpritePose {
   return { ...sanitizeSpritePose(prev), ...patch };

@@ -235,11 +235,11 @@ interface CompanionHUDProps {
   onCareEventComplete?: () => void;
   useAI: boolean;
   aiSettings?: any;
-  onCreateActivity?: (activity: {
-    name: string;
-    category: string;
-    points: { power: number; harmony: number; benevolence: number };
-  }) => void;
+  /** Criação proposta pelo chat, já CONFIRMADA pela pessoa no cartão. Devolve
+   *  `'cap'` quando o teto do plano recusou (o cartão avisa, sem culpa). */
+  onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap';
+  /** Resumo agregado do comportamento recente (só é lido quando a pessoa pergunta). */
+  getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary;
   language: Language;
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */
@@ -317,7 +317,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   onCareEventComplete,
   useAI,
   aiSettings,
-  onCreateActivity,
+  onChatCreate,
+  getBehavior,
   language,
   foodInventory = {},
   materials,
@@ -1198,7 +1199,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         useAI={useAI}
         onSendMessage={handleChatMessage}
         aiSettings={aiSettings}
-        onCreateActivity={onCreateActivity}
+        onChatCreate={onChatCreate}
+        getBehavior={getBehavior}
         chatContext={chatContext}
         language={language}
       />

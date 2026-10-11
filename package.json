@@ -36,6 +36,7 @@
   "scripts": {
     "sync:oracle-data": "node scripts/sync-oracle-data.mjs",
     "vendor:class-system": "node scripts/vendor-class-system.mjs",
+    "gen:chat-kb": "node scripts/gen-chat-knowledge.mjs",
     "gen:cascata-fixtures": "node scripts/gen-cascata-fixtures.mjs",
     "dev": "vite",
     "booklet:pdf": "node scripts/booklet-pdf.mjs",

@@ -1,6 +1,6 @@
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
-import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, type SpritePose } from '../utils/spritePose';
+import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
@@ -1822,6 +1822,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => registerSpritePoseWriter(patch =>
     setGameState(prev => ({ ...prev, spritePose: mergeSpritePose(prev.spritePose, patch) })),
   ), []);
+  // Leitura da pose atual (o chat alterna `flipX` a partir dela). Ref = sem re-registro a cada render.
+  const spritePoseRef = useRef<unknown>(gameState.spritePose);
+  spritePoseRef.current = gameState.spritePose;
+  useEffect(() => registerSpritePoseReader(() => spritePoseRef.current), []);
 
   const value = useMemo(() => ({ gameState, setGameState }), [gameState]);
 

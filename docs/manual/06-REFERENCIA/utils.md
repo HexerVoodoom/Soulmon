@@ -2664,8 +2664,8 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/spritePose.ts`
 **Dono de:** a pose do sprite — `SpritePose = { flipX, altitude: 'ground' | 'air' }`, a sanitização (lixo -> chão, sem espelho), a conta do espelho do passeio (`mirrorSprite`, em que `flipX` inverte a "frente" da arte), a frase de direção do prompt de geração (`SPRITE_FACING_PROMPT`: arte virada à DIREITA) e o ÚNICO ponto de escrita, `applySpritePose(patch)`. Vale na home e no overlay do desktop; combate fica de fora (o palco fixa os lados).
-**Exports:** `SpritePose`, `SpriteAltitude`, `DEFAULT_SPRITE_POSE`, `SPRITE_FACING_PROMPT`, `AIR_LIFT_PX`, `sanitizeSpritePose`, `mirrorSprite`, `applySpritePose`, `registerSpritePoseWriter`, `mergeSpritePose`.
-**Chamado por:** `src/contexts/GameStateContext.tsx` (campo `spritePose`, writer), `src/components/SpritePoseRows.tsx`, `src/components/CompanionHUD.tsx`, `src/utils/oracle/motor.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/cloudSync.ts`.
+**Exports:** `SpritePose`, `SpriteAltitude`, `DEFAULT_SPRITE_POSE`, `SPRITE_FACING_PROMPT`, `AIR_LIFT_PX`, `sanitizeSpritePose`, `mirrorSprite`, `applySpritePose`, `registerSpritePoseWriter`, `registerSpritePoseReader`, `getSpritePose`, `mergeSpritePose`.
+**Chamado por:** `src/contexts/GameStateContext.tsx` (campo `spritePose`, writer), `src/components/SpritePoseRows.tsx`, `src/components/CompanionHUD.tsx`, `src/components/ChatBox.tsx` (ações `flip_soulmon`/`fly`/`land`, via `getSpritePose` + `applySpritePose`), `src/utils/oracle/motor.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/cloudSync.ts`.
 **Régua:** `src/utils/spritePose.test.ts`, `src/contexts/GameStateContext.spritePose.test.tsx`, `src/utils/spritePose.desktop.contract.test.ts`.
 
 ### `src/utils/spriteRunner.ts`
@@ -3232,3 +3232,20 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 ### `src/utils/dayKeyParse.ts`
 **Dono de:** ler uma chave de dia como dia LOCAL. `parseDayKeyLocal(key)` aceita `YYYY-MM-DD` (que `new Date(str)` leria como UTC e, no Brasil, daria o dia anterior — F1 do beta-play-01) e a forma de `toDateString`; ilegível → `null`.
 **Quem usa:** `habitRhythm.dayKeyToDate`, `dailyReset` (`activitiesForWeekDay`, `soParaCoracao`), `rituals`. Regressão em 5 fusos: `utils/dayKeyFuso.regression.test.ts`; gate: `npm run gate:fuso`.
+
+### Chat agente (11/10/2026) — `src/utils/chatActions.ts`, `src/utils/chatBehavior.ts`, `src/utils/spritePose.ts`
+
+**`src/utils/chatActions.ts`** — a 2ª validação (cliente) das ações propostas pelo chat e a construção de `Activity`/`Task` a partir delas.
+**Exports:** `parseChatAction`, `parseChatActions`, `describeAction`, `renameAction`, `buildHabit`, `buildTask`, `isCreateAction`, `MAX_CHAT_ACTIONS`.
+**Chamado por:** `src/components/ChatBox.tsx`, `src/components/ChatActionCard.tsx`, `src/App.tsx` (`handleChatCreate`).
+**Régua:** `src/utils/chatActions.test.ts`, `functions/api/chatActions.parity.test.js` (paridade com `_chatActions.js`).
+**Regra:** [`docs/CHAT-SOULMON.md`](../../CHAT-SOULMON.md).
+
+**`src/utils/chatBehavior.ts`** — o resumo AGREGADO do comportamento (só inteiros e categorias fixas) enviado quando a pessoa pergunta como está indo.
+**Exports:** `buildBehaviorSummary`, `FEEDBACK_ASK`, `BehaviorSummary`.
+**Chamado por:** `src/App.tsx` (`getChatBehavior`), `src/components/ChatBox.tsx`.
+**Régua:** `src/utils/chatActions.test.ts` (nenhum texto livre sai), `functions/api/chat.actions.test.js` (`sanitizeBehavior`).
+
+**`src/utils/spritePose.ts`** — pose do sprite (`flipX`, `altitude`); dono único (ver a seção própria). O chat lê `getSpritePose` (leitor ligado pelo `GameStateProvider` via `registerSpritePoseReader`) e escreve só por `applySpritePose`.
+**Exports usados:** `getSpritePose`, `applySpritePose`.
+**Chamado por:** `src/components/ChatBox.tsx`.

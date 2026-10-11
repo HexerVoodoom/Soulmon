@@ -490,3 +490,13 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Grava/lê:** `kv(env)`, chave `crash:<YYYY-MM-DD>:<assinatura>` = `{ kind, msg, stack, ver, route, plat, n, first, last, vers }`, com `expirationTtl` de 14 dias.
 **Erros:** `400` corpo grande/inválido/fora da allowlist · `429` · `503` sem KV · `404`/`401` na leitura · `405`.
 **Cliente:** `src/utils/crashReport.ts`. **Leitura:** `node scripts/crash-report.mjs`. **Data Safety:** `docs/PLAY-DATA-SAFETY.md` §2.7.
+
+### Chat agente (11/10/2026) — `functions/api/_chatActions.js`, `_chatKnowledge.js`, `_chatKnowledge.data.js`, `_llm.js`
+
+**`functions/api/_chatActions.js`** — definição das ferramentas (`TOOLS`) e o schema fechado das ações (`validateToolCall`, `sanitizeToolCalls`, `MAX_ACTIONS`). O modelo só propõe; nada grava.
+**`functions/api/_chatKnowledge.js`** — busca BM25 sobre a base curada (`searchKnowledge`, `knowledgeBlock`, `MIN_SCORE`).
+**`functions/api/_chatKnowledge.data.js`** — GERADO por `scripts/gen-chat-knowledge.mjs` a partir de `docs/manual/` (`npm run gen:chat-kb`); não edite à mão.
+**`functions/api/_llm.js`** — adaptador único Groq (principal, tool calling) com fallback Gemini (`callChatModel`, `chatModel`, `hasChatProvider`).
+**Chamado por:** `functions/api/chat.js`.
+**Régua:** `functions/api/chat.actions.test.js`, `functions/api/chatKnowledge.stale.test.js`, `functions/api/chatActions.parity.test.js`.
+**Regra:** [`docs/CHAT-SOULMON.md`](../../CHAT-SOULMON.md).
