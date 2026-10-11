@@ -19,7 +19,7 @@ function mount() {
   );
 }
 
-const mensal = { id: 'a3', name: 'Trocar filtro', category: 'home', emoji: '🔧', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6], schedule: { kind: 'everyNDays', n: 30, from: 'schedule' } } as unknown as Activity;
+const mensal = { id: 'a3', name: 'Trocar filtro', category: 'home', emoji: 'x', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6], schedule: { kind: 'everyNDays', n: 30, from: 'schedule' } } as unknown as Activity;
 
 describe('Lista única (sem abas)', () => {
   it('não há abas Hoje/Weekly nem chip duplicado', () => {

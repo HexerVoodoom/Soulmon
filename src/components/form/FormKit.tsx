@@ -397,7 +397,7 @@ export function ModalSheet({
    *  explicando TUDO que há nela (várias seções curtas dentro do mesmo tooltip). */
   info?: { label: string; content: ReactNode };
   /** Clicar/tocar FORA da folha (no véu) fecha — o padrão de todo modal (pedido do dono,
-   *  11/10/2026). Por padrão é `true`, exceto quando `closeSide="end"` (o fechar encerra uma
+   *  11/10/2026). Por padrão é `true`, exceto quando o fechar vai à direita (`closeSide` end; o fechar encerra uma
    *  atividade em andamento). Passe `false` só em folha que bloqueia DE PROPÓSITO: confirmação
    *  destrutiva e formulário com texto digitado (um toque fora não pode perder o que a pessoa
    *  escreveu). A lista vive em `docs/BETA-AJUSTES-UI.md`. */
