@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { GROVE_STAGES, GUILD_GESTURES, GUILD_MAX_MEMBERS, GUILD_PRESENCE_NOMINAL_MAX, GUILD_NAME_MAX, GUILD_CODE_LENGTH, normalizeGuildCode,
+  CASA_STAGES, CASA_BITS_POR_PONTO, CASA_BITS_POR_DIA, CASA_BITS_MIN, CASA_DOACOES,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID, GUILD_TIDE_WEEKS, RAID_PHENOMENA } from './guildRules';
 
 const coop = fs.readFileSync(path.resolve(__dirname, '../../functions/api/_coop.js'), 'utf8');
@@ -43,5 +44,16 @@ describe('guildRules × functions/api/_coop.js', () => {
     expect(RAID_TROPHY_ID).toBe(/RAID_TROPHY_ID = '([^']+)'/.exec(coop)?.[1]);
     const guild = fs.readFileSync(path.resolve(__dirname, '../../functions/api/guild.js'), 'utf8') + coop;
     for (const f of RAID_PHENOMENA) expect(guild).toContain(`'${f}'`);
+  });
+
+  it('a Casa: estágios e números de doação batem com `_casa.js`', () => {
+    const casa = fs.readFileSync(path.resolve(__dirname, '../../functions/api/_casa.js'), 'utf8');
+    const n = (nome: string) => Number(new RegExp(`export const ${nome} = (\\d+);`).exec(casa)?.[1]);
+    const ids = [...(/CASA_STAGES = Object\.freeze\(\[([^\]]+)\]\)/.exec(casa)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(m => m[1]);
+    expect([...CASA_STAGES]).toEqual(ids);
+    expect(CASA_BITS_POR_PONTO).toBe(n('CASA_BITS_POR_PONTO'));
+    expect(CASA_BITS_POR_DIA).toBe(n('CASA_BITS_POR_DIA'));
+    expect(CASA_BITS_MIN).toBe(n('CASA_BITS_MIN'));
+    for (const d of CASA_DOACOES) { expect(d % CASA_BITS_POR_PONTO).toBe(0); expect(d).toBeGreaterThanOrEqual(CASA_BITS_MIN); }
   });
 });

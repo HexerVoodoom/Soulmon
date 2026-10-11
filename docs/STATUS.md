@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Guilda de lançamento, PR2: a CASA da guilda (`claude/guilda-lancamento`)
+>
+> - **O que é:** cenário que evolui (Fagulha → Haste → Folhas de latão → Flores → Cristais → Aurora): árvore mecânica com cristal central (`CasaVisor`, SVG no Visor sobre o `bg-guild-*`), até 4 Solmons, um pedestal por item posto. **Doação de Bits** (`guildDonate`, teto 200/dia por pessoa, o servidor diz o `accepted` e o app desconta só isso, Bit pago primeiro) e **um item por membro** (`guildSlot`): o item sai de `ownedFurniture`/`equippedDecor` (`utils/guildHouse.ts`) — não vale no cenário pessoal enquanto estiver na casa; sair da guilda o devolve.
+> - **Servidor:** `functions/api/_casa.js` (chave pessoal `coopCasa:<gid>:<save>`, entra no cartão do membro; pontos de quem sai viram `casaLegado` — a casa nunca encolhe). Fontes de seiva: `doacao`, `missao`, `guerra` (as duas últimas entram nos PRs seguintes via `somarPontos`). Auth e rate limit herdados de `guild.js`. Orçamento de KV subiu 1 leitura por ação (`guild.l2.test.js`).
+> - **Linha vermelha tocada (ver REGISTRO §27):** "contribuição por pessoa" — a vista NÃO devolve pontos, limiares, "faltam N" nem doação por pessoa; só nível, `perto` binário e os itens nos slots. `guildDonatedItem` entrou no `GameState` (exceção única em `guildNoSave.contract.test.ts`: é inventário, não ponteiro de guilda). fuzz2 sobe para 113 campos.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** a tabela 🛒 Loja/Guilda não cita a Casa; `PLANO-GUILDA.md` §3 "O que NUNCA acontece" (contribuição por pessoa) tem agora uma exceção declarada para Bits doados.
+> - **Depende do dono:** unificar a Casa com o Bosque (hoje são dois progressos: dias-de-guilda × seiva).
 > ## 11/10/2026 — O NPC apresenta o prédio novo ao subir o Vínculo (`claude/npc-apresenta-predio`)
 >
 > - **Pedido do dono:** "sempre que um PRÉDIO NOVO é liberado ao subir de nível, o NPC aparece e se apresenta e introduz o novo prédio."

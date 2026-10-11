@@ -447,6 +447,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor` no `match`).
 **Régua:** `functions/api/community.farm.test.js`.
 
+### `functions/api/_casa.js`
+**Dono de:** a CASA DA GUILDA no servidor (PR2): seiva por fonte (`doacao`/`missao`/`guerra`), doação de Bits com teto diário (`CASA_BITS_POR_DIA`), slot de item por membro e o estágio derivado na leitura (`casaStageFor`). Chave pessoal `coopCasa:<gid>:<save>`; os pontos de quem sai viram `casaLegado` (a casa nunca encolhe). A vista nunca devolve pontos nem limiares.
+**Exports:** `CASA_*` (constantes), `coopCasaKey`, `normalizarCasa`, `pontosDaCasa`, `lerCasa`, `casaStageFor`, `doarBits`, `somarPontos`, `definirSlot`, `recolherCasaDeQuemSai`, `totalDaCasa`.
+**Chamado por:** `guild.js` (`guildDonate`, `guildSlot`, vista), `_coop.js` (cartão e `coopLeave`).
+**Régua:** `functions/api/guild.casa.test.js`, `src/utils/guildRules.parity.test.ts`.
+
 ### `functions/api/_rankedPick.js`
 **Dono de:** o SORTEIO RANQUEADO do Torneio (guilda-lancamento PR1, 11/10/2026): `opponents` devolve 3 oponentes aleatórios dentre os `RANKED_WINDOW` (6) mais próximos de `lifetimePoints` de quem pede — a mesma medida da faixa. O jogador não escolhe (isso é a Arena livre); o número nunca sai na resposta.
 **Exports:** `RANKED_WINDOW`, `RANKED_PICKS`, `pickRankedOpponents`.

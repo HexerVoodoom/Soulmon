@@ -216,6 +216,7 @@ function guildTerms(): Term[] {
     par('🌳', 'guild.help.bosque.termo', 'guild.help.bosque.def'),
     par('🌳', 'guild.help.fio.termo', 'guild.help.fio.def'),
     par('🌳', 'guild.help.feira.termo', 'guild.help.feira.def', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }),
+    par('🌳', 'guild.help.casa.termo', 'guild.help.casa.def'),
     par('🌳', 'guild.help.mare.termo', 'guild.help.mare.def', { semanas: GUILD_TIDE_WEEKS }),
     par('🌳', 'guild.help.concha.termo', 'guild.help.concha.def', { n: RAID_TROPHY_EVERY }),
   ];

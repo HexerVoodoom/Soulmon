@@ -39,7 +39,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildRewards, claimGuildReward,
+  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot,
   GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
@@ -49,8 +49,11 @@ import {
 } from '../../utils/guildCopy';
 import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GUILD_GESTURES, GROVE_STAGES,
-  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, normalizeGuildCode, type GuildGesture,
+  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
+import { donatableItems } from '../../utils/guildHouse';
+import { ALL_SHOP_ITEMS } from '../../utils/shop';
+import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
 import {
   observeGuildView, readGroveLocal, permanenceBand, formatDayLabel, groveSceneIds, setGuildSheetOpen, trackGuildStageOnce,
@@ -66,6 +69,7 @@ import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { GroveVisor } from './GroveVisor';
+import { CasaVisor } from './CasaVisor';
 import { FeiraVisor } from './FeiraVisor';
 import type { Language } from '../../utils/i18n';
 
@@ -94,6 +98,19 @@ interface GuildSheetProps {
   onUnlock?: () => void;
   /** Leva à tela de entrar na conta (Configurações). Sem ele, o 401 fica só com o texto e "tentar de novo". */
   onLogin?: () => void;
+  /**
+   * A CASA (PR2): a ponte com o save. A folha não lê `GameState`; o App passa a carteira e o inventário e
+   * recebe o que mudou. `onSpend` recebe SÓ o que o servidor aceitou; `onSlot` reconcilia o save ao slot que
+   * o servidor diz (idempotente — `applyGuildSlot`), inclusive `null` quando a pessoa não tem mais guilda.
+   */
+  casa?: {
+    bits: number;
+    ownedFurniture: string[];
+    equippedDecor: Record<string, string | undefined>;
+    donatedItem: string | null;
+    onSpend: (bits: number) => void;
+    onSlot: (item: string | null) => void;
+  };
 }
 
 /** A Clareira SEM roda: o chão de partida, sem membro, sem estágio nem slot marcado (plano §5). */
@@ -113,7 +130,7 @@ type Load =
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -186,6 +203,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     trackGuildStageOnce(obs?.firstSeenStage);
     // Cenário do Bosque só com a confirmação do servidor (`mine.groveScenes`) — ficam com quem sai (G12).
     if (load.guild?.mine.groveScenes) onScenesRef.current?.(groveSceneIds(load.guild.bosque.stageIndex));
+  }, [load]);
+
+  // A CASA: o save acompanha o slot que o SERVIDOR diz (item em uso na guilda não vale no cenário pessoal).
+  // Sem roda, o slot acabou e o item volta. Idempotente — pode rodar a cada vista.
+  const casaRef = useRef(casa);
+  casaRef.current = casa;
+  useEffect(() => {
+    if (load.status !== 'ready') return;
+    casaRef.current?.onSlot(load.guild ? (load.guild.casa?.mine.slot ?? null) : null);
   }, [load]);
 
   // O RESGATE: pergunta ao abrir (Salão e Feira) e de novo quando o estado da Feira muda (a rodada
@@ -575,6 +601,26 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             })}
           />
 
+          {g.casa && (
+            <SalaCasa
+              guild={g}
+              t={t}
+              language={language}
+              ocupado={ocupado}
+              casa={casa}
+              onDoar={(bits) => void agir(async () => {
+                const r = await donateToGuild(saveId, bits, tz.current);
+                if (r.accepted > 0) casaRef.current?.onSpend(r.accepted);
+                return r.guild;
+              }, { anunciar: 'guild.casa.doar.ok' })}
+              onSlot={(item) => void agir(async () => {
+                const v = await setGuildSlot(saveId, item, tz.current);
+                casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
+                return v;
+              }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
+            />
+          )}
+
           <SalaRoda
             guild={g}
             t={t}
@@ -683,12 +729,21 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
   const proximo = perto && stageIndex < GROVE_STAGES.length ? groveStageName(language, GROVE_STAGES[stageIndex]) : null;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
-      <GroveVisor
-        guild={guild}
-        mySprite={mySprite}
-        reducedMotion={reducedMotion}
-        label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
-      />
+      {guild.casa ? (
+        <CasaVisor
+          guild={guild}
+          mySprite={mySprite}
+          reducedMotion={reducedMotion}
+          label={t('guild.aria.casa', { estagio: casaStageName(t, guild.casa.nivel) })}
+        />
+      ) : (
+        <GroveVisor
+          guild={guild}
+          mySprite={mySprite}
+          reducedMotion={reducedMotion}
+          label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
+        />
+      )}
       {/* O que CHEGOU vem colado ao visor, no topo da folha (QA L3 M3/B7): antes ficava a 550 px, abaixo
           da dobra, e com o mesmo estilo de uma linha de membro — lia-se como gente. Só o tipo, em lote,
           sem quem e sem quantos; sem nada quando não veio nenhum. */}
@@ -732,6 +787,101 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
         </button>
       )}
       {agregado && <p className="sm2-lib-s" style={{ margin: 0 }} data-guild-agregado>{t('guild.bosque.agregado.um')}</p>}
+    </section>
+  );
+}
+
+const casaStageName = (t: T, nivel: CasaStageId): string => t(`guild.casa.nivel.${nivel}`);
+
+/**
+ * A CASA (PR2): o nome do estágio, a linha, `perto` (binário), a doação de Bits e o SEU cantinho.
+ * Nada aqui tem número por pessoa: a doação mostra só os botões e a constatação ("a casa recebeu o que
+ * você trouxe"); o teto do dia é "é o bastante", nunca contagem. O visor mora no topo do Bosque.
+ */
+function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
+  guild: GuildView; t: T; language: Language; ocupado: boolean;
+  casa: GuildSheetProps['casa']; onDoar: (bits: number) => void; onSlot: (item: string | null) => void;
+}) {
+  const c = guild.casa!;
+  const isPt = language === 'pt-BR';
+  const [lista, setLista] = useState(false);
+  const proximo = c.perto && c.nivelIndex < CASA_STAGES.length - 1 ? casaStageName(t, CASA_STAGES[c.nivelIndex + 1]) : null;
+  const nome = (id: string) => { const it = ALL_SHOP_ITEMS.find(x => x.id === id); return it ? (isPt ? it.namePt : it.nameEn) : id; };
+  const bits = casa?.bits ?? 0;
+  const livres = casa ? donatableItems({ ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor as never }) : [];
+  const meu = c.mine.slot;
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.casa.titulo')} data-guild-room="casa">
+      <h3 className="sm2-grove-stage" data-casa-nivel>{casaStageName(t, c.nivel)}</h3>
+      <p className="sm2-grove-line">{t(`guild.casa.linha.${c.nivel}`)}</p>
+      {proximo && <p className="sm2-grove-line" data-casa-perto>{t('guild.casa.perto', { estagio: proximo })}</p>}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <InfoTip language={language} label={isPt ? 'Como a casa cresce' : 'How the house grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
+      </div>
+
+      {casa && (
+        <>
+          <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.casa.doar.titulo')}</p>
+          {c.mine.capReached ? (
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-teto>{t('guild.casa.doar.teto')}</p>
+          ) : bits < CASA_BITS_MIN ? (
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-sem-bits>{t('guild.casa.doar.semBits')}</p>
+          ) : (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {CASA_DOACOES.map(d => (
+                <button
+                  key={d}
+                  type="button"
+                  data-casa-doar={d}
+                  disabled={ocupado || bits < d}
+                  aria-disabled={ocupado || bits < d ? true : undefined}
+                  onClick={() => onDoar(d)}
+                  className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn"
+                >
+                  <Icon name="diamond" size={20} />
+                  {t('guild.casa.doar.botao', { bits: d })}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.casa.slot.titulo')}</p>
+          {meu ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-casa-meu-slot>
+              {DECOR_ART[meu] && <img src={DECOR_ART[meu]} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'pixelated' }} />}
+              <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, margin: 0 }}>{nome(meu)}</span>
+              <button type="button" data-casa-tirar disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={() => onSlot(null)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+                <Icon name="undo" size={20} />
+                {t('guild.casa.slot.tirar')}
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.casa.slot.vazio')}</p>
+              {livres.length === 0 ? (
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-sem-itens>{t('guild.casa.slot.nenhum')}</p>
+              ) : !lista ? (
+                <button type="button" data-casa-escolher disabled={ocupado} onClick={() => setLista(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn">
+                  <Icon name="inventory_2" size={20} />
+                  {t('guild.casa.slot.escolher')}
+                </button>
+              ) : (
+                <ul className="sm2-grove-list" data-casa-itens>
+                  {livres.map(id => (
+                    <li key={id}>
+                      <button type="button" data-casa-item={id} disabled={ocupado} onClick={() => { setLista(false); onSlot(id); }} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                        {DECOR_ART[id] && <img src={DECOR_ART[id]} alt="" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
+                        {nome(id)}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.casa.slot.aviso')}</p>
+            </>
+          )}
+        </>
+      )}
     </section>
   );
 }

@@ -231,7 +231,44 @@
 | `guild.guide.titulo` | A Guilda | The Guild | GuideModal, seção nova | §12 |
 | `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
 
-**Total: 165 chaves** (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
+## 12. A Casa (guilda-lancamento PR2, 11/10/2026)
+
+| chave | PT-BR | EN | onde usa | lei |
+|---|---|---|---|---|
+| `guild.casa.titulo` | Casa | House | GuildSheet, título da seção | L12 |
+| `guild.aria.casa` | A casa da roda: {estagio} | The circle’s house: {estagio} | nome acessível do visor da casa | — |
+| `guild.casa.nivel.fagulha` | Fagulha | Spark | nome do primeiro estágio da casa | L10 |
+| `guild.casa.nivel.haste` | Haste | Rod | nome do 2º estágio | L10 |
+| `guild.casa.nivel.latao` | Folhas de latão | Brass leaves | nome do 3º estágio | L10 |
+| `guild.casa.nivel.flores` | Flores | Blooms | nome do 4º estágio | L10 |
+| `guild.casa.nivel.cristais` | Cristais | Crystals | nome do 5º estágio | L10 |
+| `guild.casa.nivel.aurora` | Aurora | Dawn | nome do último estágio | L10 |
+| `guild.casa.linha.fagulha` | Uma faísca no centro, esperando. | A spark at the center, waiting. | linha sóbria sob o nome do estágio | L10 |
+| `guild.casa.linha.haste` | Uma haste de metal sobe do chão. | A metal rod rises from the ground. | idem | L10 |
+| `guild.casa.linha.latao` | A árvore abriu folhas de latão. | The tree opened brass leaves. | idem | L10 |
+| `guild.casa.linha.flores` | Nasceram flores entre as engrenagens. | Flowers grew between the gears. | idem | L10 |
+| `guild.casa.linha.cristais` | Cristais brotam ao redor do coração da casa. | Crystals sprout around the heart of the house. | idem | L10 |
+| `guild.casa.linha.aurora` | Tudo na casa brilha. | Everything in the house glows. | idem | L10 |
+| `guild.casa.perto` | A casa está perto de virar {estagio}. | The house is close to becoming {estagio}. | GuildSheet, binário `perto` (sem número) | LV-G1 |
+| `guild.casa.regra` | A roda cuida da casa junto: Bits trazidos, missões e guerras fazem a árvore crescer. Ela só cresce. | The circle tends the house together: Bits brought, missions and wars make the tree grow. It only grows. | atrás do "?" da sala | L10, L12 |
+| `guild.casa.doar.titulo` | Trazer Bits | Bring Bits | título do bloco de doação | L12 |
+| `guild.casa.doar.botao` | Trazer {bits} Bits | Bring {bits} Bits | botão de doação (número vem de `CASA_DOACOES`) | L12 |
+| `guild.casa.doar.ok` | A casa recebeu o que você trouxe. | The house received what you brought. | constatação depois de doar (o que o servidor aceitou) | L12 |
+| `guild.casa.doar.teto` | Por hoje, é o bastante. A casa agradece. | That’s enough for today. The house is grateful. | teto diário atingido (sem culpa) | LV-G7 |
+| `guild.casa.doar.semBits` | Você não tem Bits para trazer agora. | You have no Bits to bring right now. | carteira abaixo da menor doação | — |
+| `guild.casa.slot.titulo` | Seu cantinho na casa | Your corner of the house | título do slot pessoal | L12 |
+| `guild.casa.slot.vazio` | Um item seu pode morar aqui. | An item of yours can live here. | slot vazio (só o do próprio jogador é desenhado) | LV-G2 |
+| `guild.casa.slot.escolher` | Pôr um item | Place an item | botão que abre a lista de itens | — |
+| `guild.casa.slot.tirar` | Levar de volta | Take it back | tira o item da casa | LV-G5 |
+| `guild.casa.slot.aviso` | Enquanto estiver na casa, o item não aparece no seu cenário. | While it’s in the house, the item doesn’t show in your own scene. | aviso da regra (item em uso na guilda não vale no pessoal) | — |
+| `guild.casa.slot.nenhum` | Você não tem itens livres para pôr. | You have no free items to place. | lista vazia | — |
+| `guild.casa.slot.ok` | Seu item está na casa. | Your item is in the house. | constatação | L12 |
+| `guild.casa.slot.volta` | Seu item voltou para você. | Your item came back to you. | constatação | L12 |
+
+| `guild.help.casa.termo` | Casa | House | HelpModal, glossário | L12 |
+| `guild.help.casa.def` | A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário. | The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene. | HelpModal, glossário | L12 |
+
+**Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 
 ## Recusas (o que NÃO foi escrito, e por quê)

@@ -14,6 +14,7 @@ import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
+import type { GuildSheet as GuildSheetT } from '../guild/GuildSheet';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
@@ -185,6 +186,8 @@ export interface AreaViewProps {
     accountTier?: 'demo' | 'paid';
     onUnlock?: () => void;
     onLogin?: () => void;
+    /** A Casa da guilda (PR2): carteira, inventário e o que mudou. Ver `GuildSheet` › `casa`. */
+    casa?: ComponentProps<typeof GuildSheetT>['casa'];
   };
 }
 
