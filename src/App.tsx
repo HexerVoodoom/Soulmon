@@ -708,6 +708,8 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
+import { buildHabit, buildTask, type CreateAction } from './utils/chatActions';
+import { buildBehaviorSummary } from './utils/chatBehavior';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 // minimal-ui F5 — a `ActivitiesPage` (hub de cartões) saiu: Masmorra e Corrida
@@ -2557,46 +2559,29 @@ export default function App() {
     setEditingActivity(null);
   }, []);
 
-  const handleAICreateActivity = useCallback((activity: {
-    name: string;
-    category: string;
-    points: { power: number; harmony: number; benevolence: number };
-  }) => {
-    if (import.meta.env.DEV) console.log('AI creating activity:', activity);
-
-    const category = AI_CATEGORY_MAP[activity.category] || 'Study';
-    const emoji = CATEGORY_EMOJIS[category] || '✨';
-
-    // Create auto-generated steps based on category and points
-    const steps: Step[] = [
-      {
-        id: `${Date.now()}-1`,
-        label: `Complete ${activity.name}`,
-        completed: false
-      }
-    ];
-
-    // Create the activity with custom points. `schedule` nasce junto de
-    // `weekDays` (os dois dizendo a mesma coisa): um hábito criado pela IA sem
-    // o campo novo cairia no `normalizeSchedule` de save antigo — funciona,
-    // mas a lista mostraria "todo dia" sem que ninguém tenha decidido isso.
-    const newActivity: Activity = {
-      id: Date.now().toString(),
-      name: activity.name,
-      category,
-      emoji,
-      steps,
-      weekDays: [0, 1, 2, 3, 4, 5, 6], // Available all days by default
-      schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
-    };
-
-    // Criar pela IA nao e um privilegio: o portao vale igual (D-12).
-    const criadas = commitHabitCreate([newActivity], TELEMETRY_CREATE_PATH.ai_chat);
-
-    if (import.meta.env.DEV) {
-      console.log(criadas ? 'Activity created successfully:' : 'Activity refused by cap:', newActivity);
+  /**
+   * Criação PROPOSTA pelo chat e CONFIRMADA no cartão (`ChatActionCard`).
+   *
+   * Reusa os MESMOS portões da UI (`commitHabitCreate` / `commitTaskCreate`):
+   * teto do demo, teto de estágio e telemetria valem igual — criar pela IA não
+   * é um privilégio (D-12). O modelo nunca chega aqui sem o toque da pessoa, e
+   * a ação já passou por `parseChatAction` (servidor E cliente).
+   * Substitui o `handleAICreateActivity` antigo, que criava SEM confirmação.
+   */
+  const handleChatCreate = useCallback((action: CreateAction): 'ok' | 'cap' => {
+    if (action.type === 'create_habit') {
+      const habit = buildHabit(action, CATEGORY_ICONS[action.habit.category], weekDaysForSchedule);
+      return commitHabitCreate([habit], TELEMETRY_CREATE_PATH.ai_chat) > 0 ? 'ok' : 'cap';
     }
-  }, [commitHabitCreate]);
+    const task = buildTask(action, CATEGORY_ICONS[action.task.category]);
+    return commitTaskCreate(task, TELEMETRY_CREATE_PATH.ai_chat, 'topo') ? 'ok' : 'cap';
+  }, [commitHabitCreate, commitTaskCreate]);
+
+  /** Lido só quando a pessoa pergunta "como estou indo?" (ver `chatBehavior.ts`). */
+  const getChatBehavior = useCallback(
+    () => buildBehaviorSummary(gameState),
+    [gameState],
+  );
 
   /**
    * Salva uma tarefa vinda do `TaskEditModal` (criação e edição).
@@ -6712,7 +6697,8 @@ export default function App() {
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
                 aiSettings={chatPersonality}
-                onCreateActivity={handleAICreateActivity}
+                onChatCreate={handleChatCreate}
+                getBehavior={getChatBehavior}
                 language={language}
                 evolutionFlash={evolutionFlash}
                 feedAnim={feedAnim}

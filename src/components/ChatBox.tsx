@@ -8,6 +8,11 @@ import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
 import { type Language } from '../utils/i18n';
 import { detectMessageCategory } from '../utils/chatKeywords';
+import { ChatActionCard } from './ChatActionCard';
+import { parseChatActions, isCreateAction, type CreateAction } from '../utils/chatActions';
+import { FEEDBACK_ASK, type BehaviorSummary } from '../utils/chatBehavior';
+import { applySpritePose, getSpritePose } from '../utils/spritePose';
+import { readLocal, writeLocal } from '../utils/safeStorage';
 
 interface ChatBoxProps {
   petName: string;
@@ -30,12 +35,15 @@ interface ChatBoxProps {
     /** Humor do dia normalizado para 0..4 (a `MoodValue` é 1..5). */
     moodToday?: number;
   };
-  onCreateActivity?: (activity: {
-    name: string;
-    category: string;
-    points: { power: number; harmony: number; benevolence: number };
-  }) => void;
+  /** Criação proposta pelo chat e CONFIRMADA no cartão. `'cap'` = o teto do plano recusou. */
+  onChatCreate?: (action: CreateAction) => 'ok' | 'cap';
+  /** Resumo agregado do comportamento recente. Lido SÓ quando a pessoa pergunta
+   *  como está indo (ou no feedback proativo opt-in) — nunca a cada mensagem. */
+  getBehavior?: () => BehaviorSummary;
 }
+
+/** Chave do dia do último feedback proativo. Só local; nada vai ao servidor. */
+const FEEDBACK_DAY_KEY = 'soulmon-chat-feedback-day';
 
 export function ChatBox({
   petName,
@@ -45,7 +53,8 @@ export function ChatBox({
   useAI,
   onSendMessage,
   aiSettings,
-  onCreateActivity,
+  onChatCreate,
+  getBehavior,
   chatContext,
   language = 'en-US',
 }: ChatBoxProps) {
@@ -61,6 +70,9 @@ export function ChatBox({
   const lembrar = (papel: 'user' | 'assistant', texto: string) =>
     setHistory(prev => [...prev, { role: papel, content: texto }].slice(-6));
   const [isLoading, setIsLoading] = useState(false);
+  /* Propostas do modelo aguardando o toque da pessoa. Só vive em memória: fechou
+     o app, a proposta some — nada é criado por omissão. */
+  const [pending, setPending] = useState<CreateAction[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   /* No TOPO de propósito: `isPt` é lido pelos handlers de erro logo abaixo
      (microfone, transcrição, IA). Declarado no fim do componente, como estava,
@@ -193,7 +205,7 @@ export function ChatBox({
   // AI-powered response using Groq API
   const getAIResponse = async (userMessage: string): Promise<string> => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
     try {
       const response = await aiFetch('/api/chat', {
         message: userMessage,
@@ -205,19 +217,37 @@ export function ChatBox({
         aiSettings,
         context: chatContext,
         history,
+        actions: true,
+        // Só vai quando a pessoa PERGUNTA como está indo (minimização).
+        behavior: getBehavior && FEEDBACK_ASK.test(userMessage) ? getBehavior() : undefined,
       }, { signal: controller.signal });
 
       if (!response.ok) {
         if (import.meta.env.DEV) console.error('AI API error:', await response.text());
-        toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
+        /* 500 'AI not configured' = o servidor está sem chave: estado permanente,
+           não instabilidade. Mensagem clara, e o chat local segue funcionando. */
+        const naoLigado = response.status === 500 && (await response.clone().json().catch(() => null))?.error === 'AI not configured';
+        toast.warning(naoLigado
+          ? (isPt ? 'O chat inteligente não está ligado agora — respostas simples continuam.' : 'Smart chat is not switched on right now — simple replies still work.')
+          : (isPt ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses'));
         return getPetResponse(userMessage);
       }
 
       const data = await response.json();
 
-      if (data.action && data.action.type === 'create_activity' && onCreateActivity) {
-        if (import.meta.env.DEV) console.log('Creating activity:', data.action.activity);
-        onCreateActivity(data.action.activity);
+      /* AÇÕES PROPOSTAS. Revalidadas aqui (a rede não é confiável, nem a nossa).
+         Criar → vira CARTÃO e espera o toque; nada é gravado agora. Pose
+         (virar/voar/pousar) é cosmética e reversível: aplica direto, com "Desfazer". */
+      const acoes = parseChatActions(data?.actions);
+      const criar = acoes.filter(isCreateAction);
+      if (criar.length && onChatCreate) setPending(criar);
+      for (const a of acoes) {
+        if (isCreateAction(a)) continue;
+        const antes = getSpritePose();
+        applySpritePose(a.type === 'flip_soulmon' ? { flipX: !antes.flipX } : { altitude: a.type === 'fly' ? 'air' : 'ground' });
+        toast(isPt ? 'Pronto.' : 'Done.', {
+          action: { label: isPt ? 'Desfazer' : 'Undo', onClick: () => { applySpritePose(antes); } },
+        });
       }
 
       // Resposta sem texto (corpo {}, vazio, não-string): vira a resposta local
@@ -237,6 +267,39 @@ export function ChatBox({
     } finally {
       clearTimeout(timeout);
     }
+  };
+
+  /* A pessoa tocou em "Criar": só aqui a proposta vira dado, pelo portão único
+     do App. Teto do plano recusou → aviso sem culpa e o cartão fica. */
+  const confirmarCriacao = (acao: CreateAction) => {
+    const r = onChatCreate?.(acao);
+    if (r === 'ok') {
+      setPending(prev => prev.slice(1));
+      toast.success(isPt ? 'Criado.' : 'Created.');
+    } else {
+      toast.warning(isPt
+        ? 'Não coube no seu plano agora. Dá para trocar por algo que já existe.'
+        : "That doesn't fit your plan right now. You can swap it for something you already have.");
+    }
+  };
+
+  /* FEEDBACK PROATIVO — opt-in (Configurações do chat), no máximo 1x por dia, e
+     SÓ quando a pessoa chega ao campo: nunca push, nunca notificação (o lembrete
+     das 21h saiu por ser cobrança). Sem resposta de IA, não mostra nada. */
+  const feedbackProativo = async () => {
+    if (!useAI || !getBehavior || !(aiSettings as { proactiveFeedback?: boolean } | undefined)?.proactiveFeedback) return;
+    const hoje = new Date().toDateString();
+    if (readLocal(FEEDBACK_DAY_KEY) === hoje) return;
+    writeLocal(FEEDBACK_DAY_KEY, hoje); // marca ANTES: falha de rede não vira insistência
+    try {
+      const r = await aiFetch('/api/chat', {
+        mode: 'feedback', petName, mood, evolutionStage, dominantBranch, language, aiSettings, context: chatContext,
+        behavior: getBehavior(),
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (typeof d?.response === 'string' && d.response.trim()) onSendMessage(d.response);
+    } catch { /* silencioso: é um extra */ }
   };
 
   const handleSendMessage = async () => {
@@ -493,6 +556,15 @@ export function ChatBox({
           cursor `_` piscando à esquerda do campo. É um `<label>`: tocar em
           qualquer ponto da barra foca o campo. O `>` e o `_` são desenho
           (`aria-hidden`); o nome acessível do campo continua sendo o dele. */}
+      {pending.length > 0 && onChatCreate && (
+        <ChatActionCard
+          key={JSON.stringify(pending[0])}
+          action={pending[0]}
+          isPt={isPt}
+          onConfirm={confirmarCriacao}
+          onDismiss={() => setPending(prev => prev.slice(1))}
+        />
+      )}
       <label className={`sm3-term${focado || inputValue ? ' sm3-term-digitando' : ''}`} data-terminal>
         <span className="sm3-term-prompt" aria-hidden="true">&gt;</span>
         {!(focado || inputValue) && (
@@ -503,7 +575,7 @@ export function ChatBox({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => { setIsInputReadOnly(false); void garantirConfig(); }}
+          onFocus={() => { setIsInputReadOnly(false); void garantirConfig(); void feedbackProativo(); }}
           onBlur={() => setIsInputReadOnly(true)}
           readOnly={isInputReadOnly}
           /* NOME ACESSÍVEL. O `>_` é desenho, não rótulo — um leitor de tela

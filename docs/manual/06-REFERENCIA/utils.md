@@ -3213,3 +3213,20 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx`, `src/hooks/useCareSystem.ts`, `src/components/NotificationManager.tsx`, `src/components/MealRhythmRows.tsx`, `src/components/MealInviteCard.tsx`, `src/components/GuideModal.tsx`, `src/components/HelpModal.tsx`, `src/contexts/GameStateContext.tsx`.
 **Régua:** `src/utils/mealRhythm.test.ts`, `src/utils/mealRhythm.contract.test.ts`, `workers/mealRhythm.parity.test.js`.
 **Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (notificações) · decisão no `REGISTRO-DE-DECISOES.md` (ritmo das refeições).
+
+### Chat agente (11/10/2026) — `src/utils/chatActions.ts`, `src/utils/chatBehavior.ts`, `src/utils/spritePose.ts`
+
+**`src/utils/chatActions.ts`** — a 2ª validação (cliente) das ações propostas pelo chat e a construção de `Activity`/`Task` a partir delas.
+**Exports:** `parseChatAction`, `parseChatActions`, `describeAction`, `renameAction`, `buildHabit`, `buildTask`, `isCreateAction`, `MAX_CHAT_ACTIONS`.
+**Chamado por:** `src/components/ChatBox.tsx`, `src/components/ChatActionCard.tsx`, `src/App.tsx` (`handleChatCreate`).
+**Régua:** `src/utils/chatActions.test.ts`, `functions/api/chatActions.parity.test.js` (paridade com `_chatActions.js`).
+**Regra:** [`docs/CHAT-SOULMON.md`](../../CHAT-SOULMON.md).
+
+**`src/utils/chatBehavior.ts`** — o resumo AGREGADO do comportamento (só inteiros e categorias fixas) enviado quando a pessoa pergunta como está indo.
+**Exports:** `buildBehaviorSummary`, `FEEDBACK_ASK`, `BehaviorSummary`.
+**Chamado por:** `src/App.tsx` (`getChatBehavior`), `src/components/ChatBox.tsx`.
+**Régua:** `src/utils/chatActions.test.ts` (nenhum texto livre sai), `functions/api/chat.actions.test.js` (`sanitizeBehavior`).
+
+**`src/utils/spritePose.ts`** — pose do sprite (`flipX`, `altitude`). Assinatura mínima; a implementação é da branch `feat/sprite-pose`.
+**Exports:** `SpritePose`, `getSpritePose`, `applySpritePose`.
+**Chamado por:** `src/components/ChatBox.tsx`.

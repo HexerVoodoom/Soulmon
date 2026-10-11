@@ -24,6 +24,10 @@ interface AISettings {
   motivationStyle: 'encouraging' | 'challenging' | 'supportive' | 'balanced';
   customKeywords: string;
   temperature: number;
+  /** Opt-in (padrão: desligado). Ao tocar no campo do chat, no máximo 1x por dia,
+   *  o Soulmon comenta o jeito dos seus últimos dias. Manda um RESUMO em números
+   *  (nada digitado) ao provedor de IA — por isso nunca vem ligado. */
+  proactiveFeedback?: boolean;
 }
 
 interface AISettingsModalProps {
@@ -155,6 +159,15 @@ export function AISettingsModal({
             </Chip>
           ))}
         </ChipGroup>
+
+        <SwitchRow
+          checked={!!s.proactiveFeedback}
+          onToggle={() => setS({ ...s, proactiveFeedback: !s.proactiveFeedback })}
+          label={isPt ? 'Comentário do dia' : 'Daily comment'}
+          hint={isPt
+            ? 'Uma vez por dia, ao abrir o chat, seu Soulmon comenta seus últimos dias. Envia só números agregados (nada do que você escreveu).'
+            : 'Once a day, when you open the chat, your Soulmon comments on your last days. Sends only aggregate numbers (nothing you wrote).'}
+        />
 
         <div>
           <label htmlFor="ai-custom" style={{ ...sm2Hint, display: 'block', marginBottom: 8 }}>

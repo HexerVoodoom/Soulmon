@@ -323,7 +323,7 @@ em `docs/Attributions.md`.
 | Onde está avisado ao usuário? | Configurações › Sobre (aviso curto PT/EN — texto exato e o que entra em 22/09 em `PLAY-DATA-SAFETY.md` §3b item 2) · `public/termos.html` §8 (versão 2026-09-21) · `public/privacidade.html` §2b |
 
 Também vale para o **formulário de Segurança de Dados**: `PLAY-DATA-SAFETY.md` §2.3
-já declara "Outras mensagens no app" → Groq (chat com contexto, sugestões, Decompor)
+já declara "Outras mensagens no app" → Groq e, de reserva, Google Gemini (chat com contexto, ações propostas, resumo agregado, sugestões, Decompor)
 **e** Higgsfield/Gemini (descrição da criatura como prompt de imagem). Transcreva de lá.
 
 ---

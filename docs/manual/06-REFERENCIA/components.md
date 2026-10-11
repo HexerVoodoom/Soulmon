@@ -1452,3 +1452,10 @@ não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onV
 **Exports:** `MealRhythmRows({ language, settings, notificationsEnabled, onChange })`.
 **Chamado por:** `src/components/SettingsPage.tsx`.
 **Régua:** `src/utils/mealRhythm.contract.test.ts`.
+
+### `src/components/ChatActionCard.tsx`
+
+O cartão de confirmação das ações propostas pelo chat ("Criar hábito “Beber água” — todo dia às 09:00? [Criar] [Editar] [Agora não]"). Editar troca só o nome.
+**Exports:** `ChatActionCard({ action, isPt, onConfirm, onDismiss })`.
+**Chamado por:** `src/components/ChatBox.tsx`.
+**Régua:** `src/components/ChatActionCard.render.test.tsx`.

@@ -481,3 +481,13 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.
 **Chamado por:** `workers/push-scheduler.js`, `functions/api/_pushCopy.js`, `functions/api/_pushIdentity.js`, `src/utils/mealRhythm.ts`.
 **Régua:** `workers/mealRhythm.parity.test.js` (varre as 48 passadas do dia com o worker real e prova o teto).
+
+### Chat agente (11/10/2026) — `functions/api/_chatActions.js`, `_chatKnowledge.js`, `_chatKnowledge.data.js`, `_llm.js`
+
+**`functions/api/_chatActions.js`** — definição das ferramentas (`TOOLS`) e o schema fechado das ações (`validateToolCall`, `sanitizeToolCalls`, `MAX_ACTIONS`). O modelo só propõe; nada grava.
+**`functions/api/_chatKnowledge.js`** — busca BM25 sobre a base curada (`searchKnowledge`, `knowledgeBlock`, `MIN_SCORE`).
+**`functions/api/_chatKnowledge.data.js`** — GERADO por `scripts/gen-chat-knowledge.mjs` a partir de `docs/manual/` (`npm run gen:chat-kb`); não edite à mão.
+**`functions/api/_llm.js`** — adaptador único Groq (principal, tool calling) com fallback Gemini (`callChatModel`, `chatModel`, `hasChatProvider`).
+**Chamado por:** `functions/api/chat.js`.
+**Régua:** `functions/api/chat.actions.test.js`, `functions/api/chatKnowledge.stale.test.js`, `functions/api/chatActions.parity.test.js`.
+**Regra:** [`docs/CHAT-SOULMON.md`](../../CHAT-SOULMON.md).

@@ -76,7 +76,7 @@ usuário escolhe.
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
-| **Outras mensagens no app** — chat da criatura (mensagem + 3 últimas trocas; nome/estágio/galho/humor da criatura; vida/energia/vínculo/dias fora em números; humor do dia se marcado; `customKeywords` e ajustes de tom), objetivo digitado em "sugerir tarefas" (no tutorial, pré-preenchido com `soulGoal`) e nome da tarefa em "Decompor" | ✅ Sim | ✅ Sim — **Groq** (provedor de IA, EUA) | Funcionalidades do app (a criatura responder; sugerir e decompor tarefas) | Opcional | `functions/api/chat.js` (`buildSystemPrompt`, `CONTEXT_SCHEMA`, `CHAT_MEMORY_TURNS`), `functions/api/suggest-tasks.js`, `src/App.tsx` › `runDecompose`, `GameTutorialFlow.tsx` › `useState(soulGoal)` — **declarado, não cortado** (decisão provisória do coordenador, QA rodada 1, 21/09/2026); política §2b/§6 |
+| **Outras mensagens no app** — chat da criatura (mensagem + 3 últimas trocas; **resumo agregado do comportamento recente, só quando a pessoa pergunta "como estou indo?" ou liga o "Comentário do dia" — apenas contagens e categorias fixas, nenhum nome de hábito/tarefa nem texto digitado, `functions/api/chat.js` › `sanitizeBehavior`**; nome/estágio/galho/humor da criatura; vida/energia/vínculo/dias fora em números; humor do dia se marcado; `customKeywords` e ajustes de tom), objetivo digitado em "sugerir tarefas" (no tutorial, pré-preenchido com `soulGoal`) e nome da tarefa em "Decompor" | ✅ Sim | ✅ Sim — **Groq** (provedor de IA, EUA) e, só quando o Groq falha, **Google Gemini** (reserva do chat, texto) | Funcionalidades do app (a criatura responder, **criar tarefas/hábitos por conversa**, **tirar dúvida do jogo**, **comentar o ritmo dos dias**; sugerir e decompor tarefas) | Opcional | `functions/api/chat.js` (`buildSystemPrompt`, `CONTEXT_SCHEMA`, `CHAT_MEMORY_TURNS`), `functions/api/suggest-tasks.js`, `src/App.tsx` › `runDecompose`, `GameTutorialFlow.tsx` › `useState(soulGoal)` — **declarado, não cortado** (decisão provisória do coordenador, QA rodada 1, 21/09/2026); política §2b/§6 |
 | **Outras mensagens no app** — descrição da criatura para gerar a imagem (inclui o campo opcional "criatura favorita" e a escolha do Renascimento, texto livre) | ✅ Sim | ✅ Sim — **Higgsfield** e **Google Gemini** (geração de imagem) | Funcionalidades do app (desenhar a criatura) | Opcional (só quem gera/regenera o sprite) | `functions/api/generate-sprite.js` (`generateHiggsfield`, `generateGemini`); política §6 declara |
 
 > **Não esconda isto.** É o item mais fácil de esquecer e o mais caro: o texto
@@ -215,7 +215,7 @@ lado certo para errar.
 
 **Coletado e compartilhado:**
 - E-mail → Firebase (Google)
-- Outras mensagens no app → Groq (chat com contexto, sugestões de tarefa, nome da tarefa em "Decompor") e Higgsfield + Google Gemini (descrição da criatura para a imagem)
+- Outras mensagens no app → Groq, reserva Google Gemini (chat com contexto, ações propostas, resumo agregado de comportamento, sugestões de tarefa, nome da tarefa em "Decompor") e Higgsfield + Google Gemini (descrição da criatura para a imagem)
 - **Gravações de voz ou som** → Supabase (repasse) + Groq Whisper, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
 
 **Coletado, não compartilhado:**
@@ -260,7 +260,7 @@ apps instalados, dados de pagamento, documentos.
 | O que o jogador vê | Como é gerado | Onde no código | Revisão humana? |
 |---|---|---|---|
 | **Sprite da criatura** (as 11 formas do jogador pago; os personagens de demonstração foram gerados antes e revisados) | Higgsfield (modelo Soul), fallback Gemini `gemini-2.5-flash-image` | `functions/api/generate-sprite.js`, prompts em `src/utils/oracle.ts` | Não, no caminho pago (gerado sob demanda por conta) |
-| **Chat da criatura** (texto e, com microfone, transcrição do recado) | Groq `llama-3.1-8b-instant`, personalidade via `aiSettings` | `functions/api/chat.js` (cláusula SAFETY), `src/utils/chatSafety.ts` (ponte local, lista curada) | Não — em tempo real |
+| **Chat da criatura** (texto e, com microfone, transcrição do recado) | Groq `llama-3.3-70b-versatile` (var `CHAT_MODEL`), reserva Gemini `gemini-2.5-flash`, personalidade via `aiSettings` | `functions/api/chat.js` (cláusula SAFETY), `src/utils/chatSafety.ts` (ponte local, lista curada) | Não — em tempo real |
 | **Sons** — 3 eventos (`evolve`, `degenerate`, `task-complete`) + 2 camadas da trilha | Higgsfield CLI `seed_audio` / `sonilo_music` | `public/sounds/`, manifesto em `src/utils/sonsAssets.ts` | Sim — gerados uma vez, ouvidos e instalados (S16) |
 | Arte estática do app (cenários, decoração, sonhos, aventuras, FX, ícones dentro do visor) | Gemini (navegador) e Higgsfield (`gpt_image_2`, `nano_banana_pro`) | `src/assets/`, mapas `src/utils/*Art.ts` | Sim — gerada uma vez, curada e instalada |
 
@@ -273,8 +273,8 @@ apps instalados, dados de pagamento, documentos.
    texto curto PT/EN. **Texto real, desde 22/09/2026** (compliance #6 / design
    C1 da rodada 1; até 21/09 dizia só "imagem e falas são geradas por IA", sem
    "sem revisão humana", sem "não é emergência" e sem os sons):
-   > PT: "A imagem da sua criatura, as falas do chat e alguns sons (evolução, regressão e conclusão de tarefa) são gerados por IA (Higgsfield e Gemini para a imagem, Groq para a conversa), sem revisão humana. O chat não é um serviço de emergência."
-   > EN: "Your creature’s image, the chat lines and some sounds (evolution, regression and task completion) are AI-generated (Higgsfield and Gemini for the image, Groq for the conversation), with no human review. The chat is not an emergency service."
+   > PT: "A imagem da sua criatura, as falas do chat e alguns sons (evolução, regressão e conclusão de tarefa) são gerados por IA (Higgsfield e Gemini para a imagem, Groq para a conversa, com Gemini de reserva), sem revisão humana. O chat não é um serviço de emergência."
+   > EN: "Your creature’s image, the chat lines and some sounds (evolution, regression and task completion) are AI-generated (Higgsfield and Gemini for the image, Groq with Gemini as backup for the conversation), with no human review. The chat is not an emergency service."
 
    É esta a frase que a ficha pode citar. Régua:
    `src/components/SettingsPage.sobre.render.test.tsx`.
