@@ -139,7 +139,7 @@ describe('Concha da Maré: conquista, nunca compra', () => {
   it('NÃO é vendável por caminho nenhum: destravada de mentira, sem saldo ou com saldo, a compra é recusada', () => {
     const item = ALL_SHOP_ITEMS.find(i => i.id === RAID_TROPHY_ID)!;
     expect(isShopItemUnlocked(item, {})).toBe(false);
-    expect(isShopItemUnlocked(item, { [item.unlock!.missionId]: 999 })).toBe(false);
+    expect(isShopItemUnlocked(item, { [(item.unlock as { missionId: string }).missionId]: 999 })).toBe(false);
     const rico = { gamePoints: 9999, emblems: 9999, foodInventory: {}, ownedFurniture: [] as string[] };
     expect(shopBuyRefusal(rico, item)).toBe('not-for-sale');
     const r = applyShopBuy(rico, item);

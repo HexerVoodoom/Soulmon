@@ -9,6 +9,7 @@
 // não o inverso. `setting` diz que tipo de decoração faz sentido ali e `slots`
 // diz quais espaços aquele cenário oferece (nem todo cenário tem parede).
 import { type SlotId, type StageSetting } from './petStage';
+import { BG_ART_ALIASES } from './artAliases';
 import bgMatrixImg from '../assets/backgrounds/bg-matrix.png';
 import bgOceanImg from '../assets/backgrounds/bg-ocean.png';
 import bgGameboyImg from '../assets/backgrounds/bg-gameboy.png';
@@ -362,6 +363,12 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
 };
+
+// Cenários novos que usam a pintura de outro por ora (`artAliases.ts`): outro id, outro nome, mesma arte.
+for (const [id, a] of Object.entries(BG_ART_ALIASES)) {
+  const src = PET_BACKGROUNDS[a.from];
+  if (src) PET_BACKGROUNDS[id] = { ...src, namePt: a.namePt, nameEn: a.nameEn };
+}
 
 /**
  * O cenário equipado é ESCURO? Decide qual `anim-sleep-z` a Home usa (R2-4,

@@ -21,6 +21,13 @@ export interface Entitlement {
    *  só aceita `=== true`. Nunca vai para o save nem para o localStorage
    *  (`utils/adminFlag.ts`). */
   admin: boolean;
+  /** Assinatura cosmética (D10): a vitrine do trimestre está aberta? Vem SÓ do
+   *  servidor (que perguntou à Google) e só destrava a vitrine — nunca regra de
+   *  jogo (guard: src/security/subscriptionBoundary.contract.test.ts). Ausente
+   *  = conta que nunca assinou. */
+  subActive?: boolean;
+  /** Fim do período atual (epoch ms), como a Google informou. Só para a UI dizer a data. */
+  subUntil?: number;
 }
 
 /** Normaliza a resposta do GET: `admin` só é true com o literal `true`. */
@@ -33,6 +40,8 @@ export function sanitizeEntitlement(raw: unknown): Entitlement | null {
     adsLeft: typeof r.adsLeft === 'number' && Number.isFinite(r.adsLeft) ? r.adsLeft : 0,
     ...(typeof r.adsEnabled === 'boolean' ? { adsEnabled: r.adsEnabled } : {}),
     admin: r.admin === true,
+    ...(typeof r.subActive === 'boolean' ? { subActive: r.subActive } : {}),
+    ...(typeof r.subUntil === 'number' && Number.isFinite(r.subUntil) && r.subUntil > 0 ? { subUntil: r.subUntil } : {}),
   };
 }
 
@@ -183,7 +192,7 @@ export async function verifyPurchase(productId: string, purchaseToken: string): 
     }
     return {
       ok: true,
-      ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true },
+      ent: sanitizeEntitlement(data) ?? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true },
       consumeToken: data.consumeToken,
     };
   } catch {

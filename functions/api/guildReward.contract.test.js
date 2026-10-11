@@ -171,6 +171,7 @@ describe('3. catálogo — Concha e cenários fora de venda; Emblemas só cosmé
   it('nenhum SKU de dinheiro real concede algo da Guilda', () => {
     const txt = JSON.stringify({ PRODUCTS, STEAM_ITEMS });
     expect(txt).not.toMatch(/guild|guilda|emblem|concha|trophy|bg-guild/i);
-    for (const p of Object.values(PRODUCTS)) expect(Object.keys(p).sort()).toEqual(['consumable', 'grantCredits', 'grantTier']);
+    // `kind` só existe na assinatura (grantTier null, grantCredits 0: não concede nada de jogo — billing.subscription.test.js).
+    for (const p of Object.values(PRODUCTS)) expect(Object.keys(p).filter(k => k !== 'kind').sort()).toEqual(['consumable', 'grantCredits', 'grantTier']);
   });
 });

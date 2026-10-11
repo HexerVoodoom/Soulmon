@@ -26,16 +26,17 @@ import { STORAGE_KEYS } from './storageKeys';
 /** Forma mínima que o plugin nativo precisa expor para esta ponte funcionar. */
 interface BillingPlugin {
   /** WP0.6 — `saveId` amarra a compra à conta do jogo (obfuscatedAccountId). */
-  purchase(options: { productId: string; saveId?: string }): Promise<{ purchaseToken: string }>;
-  /** WP5.8 — preço do Play já formatado na moeda do país da conta. */
-  getLocalizedPrice?(options: { productId: string }): Promise<{ formattedPrice: string }>;
+  purchase(options: { productId: string; saveId?: string; productType?: 'subs' }): Promise<{ purchaseToken: string }>;
+  /** WP5.8 — preço do Play já formatado na moeda do país da conta. Para
+   *  `productType:'subs'` devolve também o período da oferta base (ISO 8601, ex. `P3M`). */
+  getLocalizedPrice?(options: { productId: string; productType?: 'subs' }): Promise<{ formattedPrice: string; billingPeriod?: string }>;
   consume(options: { purchaseToken: string }): Promise<void>;
   /** Reconhece a compra (não consumível) — SÓ depois do verify do servidor
    *  (QA rodada 2, 01-seguranca §8). Plugin antigo sem o método: o servidor
    *  já concedeu; a Play estorna em 3 dias e o restore reverifica. */
   acknowledge?(options: { purchaseToken: string }): Promise<void>;
   /** Compras não consumidas/não consumíveis da conta — usado no "restaurar compras". */
-  getPurchases?(): Promise<{ purchases: Array<{ productId: string; purchaseToken: string }> }>;
+  getPurchases?(options?: { productType?: 'subs' }): Promise<{ purchases: Array<{ productId: string; purchaseToken: string }> }>;
 }
 
 /**
@@ -200,5 +201,86 @@ export async function restorePurchases(): Promise<RestoreResult> {
   } catch (err) {
     if (import.meta.env.DEV) console.warn('[billing] restore failed:', err);
     return { ok: false, reason: 'error' };
+  }
+}
+
+// ─────────────────────────────────────────────── Assinatura cosmética (D10) ──
+//
+// Mesmo desenho do vitalício: o plugin abre o fluxo e devolve o token; o
+// SERVIDOR pergunta à Google (`subscriptionsv2`), reconhece e grava a vigência.
+// Aqui nada decide vigência: a resposta do servidor é o que a UI mostra.
+// Docs: docs/ASSINATURA-SPEC.md.
+
+/** O que a Play vai cobrar pela assinatura, já na moeda de quem olha. */
+export interface SubscriptionOffer {
+  /** `formattedPrice` do ProductDetails (ex. "R$ 9,90"). */
+  price: string;
+  /** Período da oferta base, ISO 8601 (ex. "P3M"). */
+  period: string;
+}
+
+/**
+ * Preço e período REAIS da oferta base. `null` = não deu para saber (web, plugin
+ * antigo, Play fora, produto ainda não criado no Console) — a UI então NÃO oferece
+ * a compra: preço escrito à mão numa tela de compra seria lido como promessa.
+ */
+export async function getSubscriptionOffer(productId: string): Promise<SubscriptionOffer | null> {
+  const plugin = getPlugin();
+  if (!plugin || typeof plugin.getLocalizedPrice !== 'function') return null;
+  try {
+    const r = await plugin.getLocalizedPrice({ productId, productType: 'subs' });
+    const price = typeof r?.formattedPrice === 'string' ? r.formattedPrice.trim() : '';
+    const period = typeof r?.billingPeriod === 'string' ? r.billingPeriod.trim() : '';
+    return price && period ? { price, period } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Assina. `ok:true` só depois do servidor confirmar com a Google. */
+export async function purchaseSubscription(productId: string): Promise<PurchaseResult> {
+  const plugin = getPlugin();
+  if (!plugin) return { ok: false, reason: 'unavailable' };
+
+  let purchaseToken: string;
+  try {
+    const result = await plugin.purchase({ productId, productType: 'subs', saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? undefined });
+    purchaseToken = result?.purchaseToken;
+    if (!purchaseToken) return { ok: false, reason: 'cancelled' };
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[billing] subscription aborted:', err);
+    // `pending` (pagamento em análise) e `no-base-offer` não são "cancelei".
+    const msg = String((err as { message?: unknown })?.message ?? err);
+    return { ok: false, reason: msg === 'pending' || msg === 'no-base-offer' ? msg : 'cancelled' };
+  }
+
+  const verified = await verificarComReenvio(productId, purchaseToken);
+  if (!verified.ok) return { ok: false, reason: verified.reason };
+  // O servidor já reconheceu; reconhecer aqui também é só cinto e suspensório (idempotente).
+  await fecharNaPlay(plugin, purchaseToken);
+  return { ok: true, ent: verified.ent };
+}
+
+/**
+ * Reconcilia a assinatura na abertura do app: `queryPurchases(SUBS)` → servidor.
+ * É o que reabre a vitrine depois de reinstalar, trocar de aparelho ou perder um
+ * aviso do RTDN. Silencioso: falha não incomoda ninguém, a vigência no servidor
+ * não muda por causa dela.
+ */
+export async function reconcileSubscription(productId: string): Promise<Entitlement | null> {
+  const plugin = getPlugin();
+  if (!plugin?.getPurchases) return null;
+  try {
+    const { purchases } = await plugin.getPurchases({ productType: 'subs' });
+    let latest: Entitlement | null = null;
+    for (const p of purchases ?? []) {
+      if (p.productId !== productId) continue;
+      const verified = await verifyPurchase(p.productId, p.purchaseToken);
+      if (verified.ok) { latest = verified.ent; await fecharNaPlay(plugin, p.purchaseToken); }
+    }
+    return latest;
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[billing] subscription reconcile failed:', err);
+    return null;
   }
 }

@@ -16,6 +16,12 @@
 //        { id, orderId }                          → créditos (microtransação)
 //        { id, ticket }                           → tier pago (posse do app)
 //
+//   POST /api/billing?action=verify   { id, productId: 'soulmon_cosmetic_quarterly', purchaseToken }
+//        → ASSINATURA cosmética (D10): verifica em `purchases.subscriptionsv2`, vínculo de conta
+//          sempre exigido, claim da raiz da cadeia linkedPurchaseToken, vigência = a da Google,
+//          acknowledge no servidor. Responde { ok, tier, credits, adsLeft, subActive, subUntil }.
+//          Os avisos em tempo real chegam em /api/rtdn (rtdn.js). Nunca concede tier nem Créditos.
+//
 // `consumeToken` só volta para produtos CONSUMÍVEIS da Play (pacotes de
 // crédito): o app precisa chamar consumeAsync() depois, senão o jogador não
 // consegue comprar o mesmo pacote de novo. O desbloqueio completo é uma compra
@@ -26,9 +32,12 @@
 //   Steam: STEAM_PUBLISHER_KEY, STEAM_APP_ID
 // Sem eles a rota da loja em questão responde 503 e NUNCA concede nada.
 
-import { VALID_ID, publicView, applyVerifiedPurchase, claimOrder } from './_entitlements.js';
+import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
-import { verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase } from './_billing.js';
+import {
+  verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase,
+  verifyPlaySubscription, acknowledgePlaySubscription, PRODUCTS, maskToken, sha256Hex,
+} from './_billing.js';
 import { kv } from './_kv.js';
 
 export { PRODUCTS } from './_billing.js';
@@ -75,6 +84,12 @@ export async function onRequestPost({ request, env }) {
   // Impede creditar a compra numa conta que não é a de quem está comprando.
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json({ error: auth.reason }, authStatus(auth));
+
+  // ASSINATURA (SKU `kind:'subscription'`): outro recurso da Google, outro
+  // efeito (vigência da vitrine, nunca tier/Créditos). Ramo à parte de propósito.
+  if (provider === 'play' && PRODUCTS[body?.productId]?.kind === 'subscription') {
+    return handleSubscription(env, saveId, body);
+  }
 
   let result;
   if (provider === 'play') {
@@ -132,4 +147,41 @@ export async function onRequestPost({ request, env }) {
     // recomprados. Na Steam quem fecha a transação é o FinalizeTxn do cliente.
     consumeToken: provider === 'play' && result.product.consumable ? body.purchaseToken : undefined,
   });
+}
+
+/**
+ * Assinatura cosmética: verifica NA GOOGLE (`subscriptionsv2`), reivindica a
+ * cadeia (um comprovante, uma conta), grava a vigência que a Google informou e
+ * reconhece no servidor. Nada do corpo da requisição além do `purchaseToken`
+ * é lido — vigência forjada pelo cliente é ignorada por construção.
+ */
+async function handleSubscription(env, saveId, body) {
+  const result = await verifyPlaySubscription(env, { purchaseToken: body?.purchaseToken, saveId });
+  if (!result.ok) {
+    console.log(JSON.stringify({ event: 'billing.sub.refused', saveIdPrefix: String(saveId).slice(0, 8), reason: result.reason }));
+    return json({ ok: false, reason: result.reason, status: result.status }, STATUS_BY_REASON[result.reason] ?? 402);
+  }
+
+  // A chave é a RAIZ da cadeia linkedPurchaseToken: renovação, reassinatura e
+  // troca de plano caem no mesmo claim, e a 2ª conta recebe 409.
+  const claim = await claimOrder(env, saveId, result.orderId);
+  if (!claim.ok) return json({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
+
+  const s = result.subscription;
+  const { ent, changed } = await applySubscriptionState(env, saveId, {
+    rootHash: await sha256Hex(s.rootToken),
+    until: s.until,
+    state: s.state,
+    entitled: s.entitled,
+    test: s.test,
+  });
+
+  // Reconhecer DEPOIS de conceder (a Play estorna em 3 dias o que ninguém reconhece).
+  const acked = await acknowledgePlaySubscription(env, { purchaseToken: body.purchaseToken, ackPending: s.ackPending });
+  console.log(JSON.stringify({
+    event: 'billing.sub.verified', saveIdPrefix: String(saveId).slice(0, 8),
+    token: maskToken(body.purchaseToken), state: s.state, test: s.test, acked,
+  }));
+
+  return json({ ok: true, duplicate: !changed, ...publicView(ent) });
 }

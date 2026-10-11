@@ -466,6 +466,10 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   nunca decide tier/créditos, e **um comprovante de compra vale para uma conta
   só** (`claimOrder`). As duas regras têm testes; se algum cair, alguém ganha
   benefício sem pagar. Ver `docs/BILLING-SETUP.md`.
+  **Assinatura cosmética trimestral** (D10, `docs/ASSINATURA-SPEC.md`, 11/10/2026): a vigência (`ent.sub.until`)
+  vem SÓ da Google (`subscriptionsv2`) e **só destrava a vitrine do trimestre** (`bg`/`furniture`, `unlock.kind:'subscription'`,
+  fora de `SHOP_ITEMS`); regra de jogo nunca a lê (guard `src/security/subscriptionBoundary.contract.test.ts`, com allowlist).
+  Sem trial, sem Créditos, sem cuidado; item resgatado nunca é retirado. RTDN em `functions/api/rtdn.js`.
 - **Palco do pet** (`src/utils/petStage.ts` + `docs/PALCO-E-DECORACAO.md`): o box
   do pet é uma COMPOSIÇÃO, não um canto onde jogar ícones. Linha do chão única
   (`GROUND_Y` = 74%, exatamente onde os pés do sprite caem) e 5 espaços de

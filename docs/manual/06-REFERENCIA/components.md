@@ -1465,3 +1465,20 @@ O cartão de confirmação das ações propostas pelo chat ("Criar hábito “Be
 **Exports:** `ChatActionCard({ action, isPt, onConfirm, onDismiss })`.
 **Chamado por:** `src/components/ChatBox.tsx`.
 **Régua:** `src/components/ChatActionCard.render.test.tsx`.
+
+
+## `src/components/SubscriptionSection.tsx` (11/10/2026)
+
+**Dono de:** a assinatura cosmética trimestral dentro de "Sua conta" (Configurações): divulgação pré-compra (preço localizado da Play, "a cada 3 meses", renova sozinha, como cancelar), "Assinar" e "Gerenciar assinatura" (link da Central de assinaturas da Play).
+**Props principais:** `language`.
+**Exports:** `SubscriptionSection(props)`.
+**Chamado por:** `src/components/SettingsPage.tsx`.
+**Régua:** `src/components/SubscriptionSection.render.test.tsx`.
+
+## `src/components/mercado/SubscriptionShelf.tsx` (11/10/2026)
+
+**Dono de:** a vitrine "Do trimestre" nas lojinhas Background e Decoração — item escurecido com o porquê sem assinatura, "Resgatar" (de graça) com ela, "Equipar" para sempre depois de resgatado.
+**Props principais:** `language`, `kind` (`bg`/`furniture`), `ownership`, `actions` (`onClaimSubscription`, `onEquip`, `onEquipFurniture`).
+**Exports:** `SubscriptionShelf(props)`.
+**Chamado por:** `src/components/mercado/MercadoSheets.tsx`.
+**Régua:** `src/components/SubscriptionSection.render.test.tsx`.

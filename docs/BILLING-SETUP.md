@@ -383,3 +383,133 @@ Na Steam o equivalente é o **session ticket**, e ele é obrigatório nos dois
 caminhos (posse do app e microtransação). A microtransação também confere que o
 `steamid` da transação é o da sessão — sem isso, um `orderid` adivinhado
 creditaria a compra de outro jogador.
+
+---
+
+## 8. Assinatura cosmética trimestral — passo a passo do Console e do Worker
+
+Decisão do dono **D10** (`docs/ASSINATURA-SPEC.md`): cosmético trimestral, **sem
+free trial**, sem Créditos, sem benefício de cuidado, e o que foi entregue nunca é
+retirado. O código está implementado; esta seção é só o que fica **fora** dele.
+
+```
+app → Play (assina) → purchaseToken
+   → POST /api/billing?action=verify { productId: soulmon_cosmetic_quarterly }
+      → servidor: GET purchases.subscriptionsv2 (a verdade é da Google)
+      → vínculo obfuscatedExternalAccountId == saveId (SEMPRE exigido)
+      → claim da RAIZ da cadeia linkedPurchaseToken em order_claims (409 se de outra conta)
+      → ent.sub.until = expiryTime que a Google devolveu (o cliente não escreve vigência)
+      → acknowledge no servidor
+Google → Pub/Sub → POST /api/rtdn (OIDC) → reconsulta a Google → renova/fecha a vitrine
+```
+
+### 8.1 Criar a assinatura no Play Console
+
+1. **Monetizar → Produtos → Assinaturas → Criar assinatura.**
+2. **ID do produto: `soulmon_cosmetic_quarterly`** (exatamente; é o `SUBSCRIPTION_SKU`).
+   Nome: "Assinatura de cenários e decoração".
+3. **Adicionar plano básico** (*base plan*): renovação automática, período de
+   cobrança **3 meses** (trimestral), preço **R$ 9,90**. Defina os preços por país
+   (a Play converte; o app mostra o preço localizado do próprio ProductDetails).
+4. **NÃO crie ofertas.** Nada de *free trial*, preço introdutório ou promoção neste
+   plano: o servidor **recusa** compra feita por oferta (`offer-not-allowed`) e o
+   app só oferece o plano básico. Se criar por engano e alguém pagar por ela, essa
+   pessoa fica sem a vitrine até você remover a oferta e ela reabrir o app.
+5. **Período de carência (*grace period*)**: pode ligar (recomendado 3 a 7 dias). O
+   servidor mantém a vitrine aberta durante a carência. *Account hold*: o servidor
+   fecha a vitrine (o que já foi resgatado continua da pessoa).
+6. **Reassinatura após expirar** (opção da Play, ligada por padrão): pode deixar. Gera
+   um token novo ligado ao antigo (`linkedPurchaseToken`); o servidor trata a cadeia
+   como UMA assinatura de UMA conta.
+7. Ative o plano básico. Confirme: *preço R$ 9,90 / 3 meses, sem oferta*.
+
+### 8.2 Permissões da conta de serviço
+
+É a **mesma** conta de serviço e o **mesmo escopo** (`androidpublisher`) do vitalício —
+a primeira versão da spec D10 dizia "outro escopo", e estava errada. O que muda é o
+endpoint (`purchases.subscriptionsv2`) e a permissão no Console:
+
+1. **Play Console → Usuários e permissões** → convidar o e-mail da conta de serviço
+   (se ainda não estiver) com, no mínimo, em **Permissões do app (Soulmon)**:
+   - **Ver informações financeiras, como pedidos e respostas de pesquisas de
+     cancelamento** (ler a assinatura);
+   - **Gerenciar pedidos e assinaturas** (necessária para o *acknowledge*).
+2. Habilite a **Google Play Android Developer API** no projeto do Cloud (já feito
+   para o vitalício).
+3. A propagação pode levar horas: até lá o verify responde 502/`verification-failed`
+   (esperado, e nada é concedido).
+
+### 8.3 RTDN — Pub/Sub
+
+O RTDN é o que fecha/renova a vitrine em tempo real. Sem ele a assinatura **funciona**
+(o app reconcilia na abertura via `queryPurchases(SUBS)` e a vigência acaba sozinha no
+`expiryTime`), só demora mais para refletir renovação e reembolso.
+
+1. **Cloud Console → Pub/Sub → Tópicos → Criar tópico** (ex. `play-rtdn`), no mesmo
+   projeto da conta de serviço.
+2. No tópico, **Permissões → Adicionar principal**
+   `google-play-developer-notifications@system.gserviceaccount.com` com o papel
+   **Publicador do Pub/Sub** (`roles/pubsub.publisher`).
+3. Crie (ou reaproveite) uma **conta de serviço de push**, ex.
+   `pubsub-push@<projeto>.iam.gserviceaccount.com`. Ela não precisa de papel algum;
+   só assina o JWT de cada entrega.
+4. **Pub/Sub → Assinaturas → Criar assinatura** no tópico:
+   - Tipo de entrega: **Push**;
+   - URL do endpoint: `https://soulmon.mateus-sprnd.workers.dev/api/rtdn`;
+   - **Ativar autenticação**: conta de serviço = a do passo 3; **Público-alvo
+     (*audience*) = a URL exata do endpoint** (a mesma string);
+   - Prazo de confirmação: 30 s; política de nova tentativa: **recuo exponencial**
+     (mín. 10 s, máx. 600 s); retenção de mensagens: 7 dias.
+5. Variáveis no Cloudflare (**Production e Preview**, *Encrypt* não é necessário —
+   não são segredo, mas ficam fora do repositório):
+
+   | Variável | Valor |
+   |---|---|
+   | `RTDN_AUDIENCE` | A URL do endpoint, **igual** ao *audience* do passo 4 |
+   | `RTDN_PUSH_SA_EMAIL` | O e-mail da conta de serviço de push do passo 3 |
+
+   (`ANDROID_PACKAGE_NAME` e `GOOGLE_PLAY_SERVICE_ACCOUNT` são as de sempre.) Sem as
+   duas `RTDN_*` o endpoint responde 503 e não aceita nada (fail-closed).
+6. **Play Console → Monetizar → Configuração de monetização → Notificações em tempo
+   real do desenvolvedor**: informe o tópico (`projects/<projeto>/topics/play-rtdn`),
+   tipo **Notificações de assinaturas e produtos**, e use **Enviar notificação de
+   teste**. Ela deve aparecer nos logs do Worker como `rtdn.test` e a assinatura
+   Pub/Sub deve mostrar a entrega com 2xx.
+
+### 8.4 Banco (D1)
+
+Aplique a migração nova (cria a tabela de idempotência do RTDN):
+
+```bash
+npx wrangler d1 migrations list  soulmon-billing --remote
+npx wrangler d1 migrations apply soulmon-billing --remote   # aplica 0003_rtdn_messages.sql
+```
+
+Sem o D1 (ou sem a migração) o RTDN continua correto — só reprocessa reentregas (cada
+uma custa uma consulta à Google). A trava de unicidade da assinatura usa a tabela
+`order_claims` que já existe (chave `play:sub:<sha256 da raiz da cadeia>`).
+
+### 8.5 Testar (licença de teste)
+
+- Play Console → **Testes de licença**: adicione os e-mails dos testadores. Assinatura
+  de teste **renova rápido** (um mês vira ~5 min; trimestral, poucos minutos) e cancela
+  sozinha após alguns ciclos; o servidor marca `test: true` no estado.
+- Verificações (cole a saída no PR/STATUS): assinar → vitrine abre (Mercado → Background
+  e Decoração, seção "Do trimestre"); resgatar um item; cancelar na Central de assinaturas
+  → vitrine continua até o fim do período; deixar expirar → vitrine fecha **e o item
+  resgatado continua equipável**; assinar com a conta B o token da conta A → 409.
+- Reconhecimento: a assinatura **não** pode ser estornada após 3 dias (se for, o *acknowledge*
+  falhou — veja os logs `billing.sub.verified ... acked:false`).
+
+### 8.6 Checklist da assinatura
+
+- [ ] Assinatura `soulmon_cosmetic_quarterly` criada, plano básico trimestral R$ 9,90, **sem oferta/trial**
+- [ ] Conta de serviço com *ver informações financeiras* + *gerenciar pedidos e assinaturas*
+- [ ] Tópico Pub/Sub + permissão `pubsub.publisher` para `google-play-developer-notifications@system.gserviceaccount.com`
+- [ ] Assinatura push autenticada apontando para `/api/rtdn`
+- [ ] `RTDN_AUDIENCE` e `RTDN_PUSH_SA_EMAIL` no Cloudflare
+- [ ] `PLAY_REQUIRE_ACCOUNT_BINDING=true` (o vitalício; a assinatura exige o vínculo sempre)
+- [ ] `wrangler d1 migrations apply` (0003)
+- [ ] Notificação de teste do Console chegou (`rtdn.test`)
+- [ ] Trechos de assinatura em `termos.html` e `privacidade.html` revisados e **aprovados pelo dono** (hoje rascunho)
+- [ ] IARC (compras), Data Safety (compras) e PLAY-FICHA citam a assinatura

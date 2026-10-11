@@ -8,6 +8,7 @@ import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { isVibrateOn, setVibrateOn } from '../utils/focoTimer';
 import { AccountSection } from './AccountSection';
+import { SubscriptionSection } from './SubscriptionSection';
 import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -325,6 +326,10 @@ export function SettingsPage({
             Google do portão. Quem está sem sessão ganha o botão do Google
             DENTRO da `AccountSection`, que é quem sabe se há sessão. */}
         <AccountSection language={language} onSignedIn={onLoginWithEmail} />
+
+        {/* Assinatura cosmética trimestral (D10): divulgação pré-compra, "Assinar" e
+            "Gerenciar assinatura". Só enfeite — não toca em Créditos nem em cuidado. */}
+        <SubscriptionSection language={language} />
 
         {/* AGRUPAR E ESCONDER (régua nº 3): o código de recuperação é a saída
             de emergência de quem não usa e-mail. Antes ocupava um terço da

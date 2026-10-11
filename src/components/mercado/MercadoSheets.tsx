@@ -12,6 +12,7 @@ import { MiniGlass } from '../ui/MiniGlass';
 import type { CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
+import { SubscriptionShelf } from './SubscriptionShelf';
 import {
   CreditExchange, CurrencyBalance, DecorRuleLine, ShopShelf, ShopStatus, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
@@ -97,6 +98,16 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           Vazio é silêncio — a seção nem desenha o título. */}
       {cur !== 'credits' && (stall === 'background' || stall === 'decoracao') && (
         <GuildOwnedShelf
+          language={language}
+          kind={stall === 'background' ? 'bg' : 'furniture'}
+          ownership={props}
+          actions={props}
+        />
+      )}
+      {/* O conjunto do trimestre da assinatura: sempre visível (escurecido com o porquê
+          quando a vitrine está fechada), de graça no resgate, posse permanente depois. */}
+      {cur === 'bits' && (stall === 'background' || stall === 'decoracao') && (
+        <SubscriptionShelf
           language={language}
           kind={stall === 'background' ? 'bg' : 'furniture'}
           ownership={props}
