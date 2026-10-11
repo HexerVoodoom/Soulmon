@@ -37,17 +37,19 @@ describe('Emblemas: o Torneio e a Feira passam pelo MESMO caminho', () => {
 });
 
 describe('o lote e o NPC da Feira', () => {
-  it('PR3 (11/10/2026): a Arena tem só Torneio e Arena livre; a Feira virou a MISSÃO, dentro do Salão do Hall', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo']);
+  it('a Arena tem Torneio, Duelo e FEIRA; o Salão é o lote `guilda` do Hall — dois lotes, duas salas', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'feira']);
     expect(hallLots('pt-BR').map(l => l.id)).toContain('guilda');
+    expect(arenaLots('pt-BR').find(l => l.id === 'feira')!.label).toBe('Feira');
+    expect(arenaLots('en-US').find(l => l.id === 'feira')!.label).toBe('Fair');
     const av = ler('components/nav/AreaView.tsx');
-    expect(av).not.toMatch(/room="feira"/);
+    expect(av).toMatch(/open\?\.id === 'feira'[\s\S]{0,80}room="feira"/);
     expect(av).toMatch(/open\?\.id === 'guilda'[\s\S]{0,80}room="salao"/);
-    expect(ler('components/guild/GuildSheet.tsx')).toMatch(/<SalaFeira[\s\S]{0,400}missao=\{missao/);
   });
 
-  it('PR3: o busto do Fanfare segue no repo sem lote (`arena:feira` saiu das tabelas) e os ids da leva de arte estão declarados', () => {
-    expect(ler('assets/soulmon/npcs/index.ts')).not.toContain("'arena:feira'");
+  it('a Feira tem o busto do Fanfare registrado em `arena:feira` (Marla saiu da Arena) e os ids da leva de arte estão declarados', () => {
+    expect(lotNpcArt('arena', 'feira')).toBe(npcArenaFeira);
+    expect(lotNpcArt('arena', 'feira')).not.toBe(lotNpcArt('hall', 'guilda'));
     expect(npcArenaFeira).toContain(FAIR_ART_IDS.npc);
     expect(ler('assets/soulmon/npcs/index.ts')).not.toContain("'arena:guilda'");
     expect(ler('utils/areaNpcVoice.ts')).not.toContain("'arena:guilda'");

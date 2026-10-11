@@ -328,10 +328,14 @@ describe('copy da Feira e do glossário (B2)', () => {
     expect(pt).toContain('bosque segue como estava');
   });
 
-  it('a fala `guild.npc.feira` segue na copy (PR3: sem lote na Arena; o Salão é da Aurea)', async () => {
+  it('a fala do NPC da Feira é a do documento, e a Feira tem o NPC Fanfare (o Salão é da Aurea desde 07/10/2026)', async () => {
     const { lotNpcVoice } = await import('../../utils/areaNpcVoice');
-    expect(GUILD_COPY['guild.npc.feira'][0].length).toBeGreaterThan(10);
-    for (const lang of ['pt-BR', 'en-US'] as const) expect(lotNpcVoice('hall', 'guilda', lang).name).toMatch(/Aurea/);
+    for (const [lang, i] of [['pt-BR', 0], ['en-US', 1]] as const) {
+      const v = lotNpcVoice('arena', 'feira', lang);
+      expect(v.name).toBe('Fanfare');
+      expect(v.line).toBe(GUILD_COPY['guild.npc.feira'][i]);
+      expect(lotNpcVoice('hall', 'guilda', lang).name).toMatch(/Aurea/);
+    }
   });
 
   it('o glossário e o guia leem a copy da tabela e as CONSTANTES (nenhum número escrito à mão)', () => {

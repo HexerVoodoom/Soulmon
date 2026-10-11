@@ -278,6 +278,9 @@
 | `guild.missao.feita` | Hoje a roda já ouviu a sua parte. | The circle has already heard your part today. | missão de hoje já voltou (sem cobrança) | L12 |
 | `guild.missao.regra` | Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia. | Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day. | atrás do "?" da seção | L10, L12 |
 
+| `guild.help.missao.termo` | Missão | Mission | HelpModal, glossário | L12 |
+| `guild.help.missao.def` | Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa. | Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house. | HelpModal, glossário | L12 |
+
 **Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 

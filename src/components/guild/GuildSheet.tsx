@@ -537,6 +537,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
           reducedMotion={reducedMotion}
           resgate={resgate}
           resgateAberto={!!(rewards?.pending[0] || colhido)}
+          missao={missao}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
             anunciar: 'guild.feira.rodada.feita',
             depois: () => track('guild_raid', { outcome: 0 }),

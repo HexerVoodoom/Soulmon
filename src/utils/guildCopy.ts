@@ -227,6 +227,8 @@ export const GUILD_COPY = {
   'guild.help.feira.def': ['Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} de Honra; se ele voltar à névoa, {piso}. A Feira não mexe no bosque.', 'Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Honor; if it goes back to the mist, {piso}. The Fair never touches the grove.'],
   'guild.help.casa.termo': ['Casa', 'House'],
   'guild.help.casa.def': ['A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário.', 'The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene.'],
+  'guild.help.missao.termo': ['Missão', 'Mission'],
+  'guild.help.missao.def': ['Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa.', 'Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house.'],
   'guild.help.mare.termo': ['Maré', 'Tide'],
   'guild.help.mare.def': ['Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque.', 'A tide lasts {semanas} weeks. When it turns, what settled stays in the grove.'],
   'guild.guide.titulo': ['A Guilda', 'The Guild'],

@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Guilda de lançamento, PR3: o circo vira MISSÃO da guilda (`claude/guilda-lancamento`)
+>
+> - **O que muda:** a Feira (raid semanal, o "circo") vira uma investigação: o jogador **manda o Solmon** (`GuildSheet` › `SalaFeira` com `missao`), ele **some da Home** por 30 min (`missionAway` no `CompanionHUD`, lupa muda no lugar; `GameState.guildMission`), e ao voltar o App registra a rodada (`guildRaidHit`, o servidor sorteia o valor) e rega a **casa** com seiva que cresce com o level do Solmon e o tamanho da roda ativa (`pontosDeMissao`: 4 → 17). Sem rede, o pet volta para casa do mesmo jeito e o registro espera. A missão está no **Salão do Hall** (cena do fenômeno + estado visível: aberto/ferido/dissipado) e no lote antigo da Arena.
+> - **NÃO removi o lote `feira` da Arena** (o pedido era "mover"): ele está amarrado à economia de prédios — material `ribbon`, peça `eq-rastro-t3` do Ferreiro, missão do prédio e gate `arena.feira`. Tirar o lote orfanaria isso. **Depende do dono:** re-hospedar esse prédio em `hall.guilda` (e redistribuir o material) para então fechar o lote da Arena.
+> - **Anti-abuso:** o relógio da ida é do cliente (como o Passeio); a trava real é 1 volta/dia (429) no servidor, que também decide o valor. Nada de dinheiro real.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** a linha 🎪 do Torneio não cita a missão; o parágrafo "Palco do pet" não prevê pet ausente.
 > ## 11/10/2026 — Talentos: as "skills" da árvore ficam legíveis e distintas por caminho
 >
 > - **Pedido do dono:** "a árvore de talentos está legal, mas as SKILLS não estão legais; melhore." A árvore (grafo, ids, graus, custo) **não muda**; os `talentPicks` salvos seguem valendo.

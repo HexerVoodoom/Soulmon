@@ -9,17 +9,18 @@ import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
 import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
-  it('Arena tem Torneio e Arena livre (a Feira virou missão da guilda, PR3); Hall tem Biblioteca, Círculo de Amigos e Salão da Guilda', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo']);
+  it('Arena tem Torneio, Duelo e Feira; Hall tem Biblioteca, Círculo de Amigos e Salão da Guilda', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'feira']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['biblioteca', 'amigos', 'guilda']);
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats']);
   });
 
-  it('H15/H16/H17 (01/10/2026): Torneio e Duelo no mesmo tablado (a Feira saiu em 11/10, PR3); Santuário do Vínculo bem maior; Hall maior', () => {
+  it('H15/H16/H17 (01/10/2026): Torneio e Duelo no mesmo tablado e a Feira no outro; Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
     expect(pct(arena.torneio.left)).toBeLessThan(50);
     expect(pct(arena.duelo.left)).toBeLessThanOrEqual(50);
+    expect(pct(arena.feira.left)).toBeGreaterThan(60);
     // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — no mesmo tablado, mas bem visiveis.
     expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(40);
     expect(pct((arena.duelo as { width?: string }).width)).toBeGreaterThanOrEqual(40);
@@ -46,7 +47,7 @@ describe('lotes novos (29/09/2026)', () => {
 
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
-      ['arena', 'duelo', 'Naia'], ['jogos', 'mente', 'Tessela'],
+      ['arena', 'duelo', 'Naia'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
       ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Brume'],

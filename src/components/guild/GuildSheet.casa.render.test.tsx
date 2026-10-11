@@ -86,3 +86,27 @@ describe('a Casa da guilda no Salão', () => {
     await waitFor(() => expect(onSlot).toHaveBeenCalledWith(null));
   });
 });
+
+describe('a Missão no Salão', () => {
+  const raid = { weekKey: '2026-W41', phenomenon: 'mare', state: 'aberta', ferido: false, lastWeek: null, mine: {} };
+  const comRaid = (casa: unknown) => ({ ...vista(casa), raid });
+  const subir = (state: { day: string; returnAt: number } | null, onSend = vi.fn()) => ({ state, onSend });
+
+  it('sem ida: botão "Mandar investigar"; tocar chama onSend (e NÃO a rodada de um toque)', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
+    const onSend = vi.fn();
+    const { container } = render(<GuildSheet {...base} missao={subir(null, onSend)} />);
+    await waitFor(() => expect(container.querySelector('[data-missao-mandar]')).not.toBeNull());
+    expect(container.querySelector('[data-feira-rodada]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-missao-mandar]')!);
+    expect(onSend).toHaveBeenCalledOnce();
+  });
+
+  it('com o Solmon fora: diz a HORA da volta (nunca contagem) e não oferece mandar de novo', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
+    const { container } = render(<GuildSheet {...base} missao={subir({ day: '2026-10-11', returnAt: Date.now() + 20 * 60_000 })} />);
+    await waitFor(() => expect(container.querySelector('[data-missao-fora]')).not.toBeNull());
+    expect(container.querySelector('[data-missao-mandar]')).toBeNull();
+    expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}/);
+  });
+});
