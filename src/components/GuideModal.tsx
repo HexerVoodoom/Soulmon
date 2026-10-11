@@ -219,6 +219,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
+              'Tarefa com subitens (como "Pagar contas") pesa pelo esforço que você escolheu, nunca pelo número de subitens: cada subitem feito avança a barra, e o peso nunca passa do que as mesmas tarefas soltas pesariam (máximo 3). Fechar TODOS os subitens de uma tarefa com 3 ou mais rende uma comida premium (★): 5 de energia em vez de 1, no máximo uma por dia e três por semana, sem passar do máximo do dia. O check de um hábito vale só para o dia de hoje; o "N de M" ao lado é só o resumo da semana.',
+              'A task with steps (like "Pay bills") weighs by the effort you picked, never by how many steps it has: each finished step advances the bar, and the weight never exceeds what the same loose tasks would (max 3). Finishing ALL steps of a task with 3 or more earns a premium food (★): 5 energy instead of 1, at most one a day and three a week, never above the day\'s max. A habit\'s check counts for today only; the "N of M" beside it is just the week\'s summary.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
               `Toda tarefa tem um esforço: Rápida (1), Média (2) ou Projeto (3). A meta soma esforço, não itens — um Projeto vale três Rápidas. Passando de ${OVERCOMMIT_EFFORT} pontos no dia, o pet avisa. É aviso, nunca bloqueio.`,
               `Every task has an effort: Quick (1), Medium (2) or Project (3). The goal adds up effort, not items — one Project is worth three Quick ones. Past ${OVERCOMMIT_EFFORT} points in a day your pet says so. A heads-up, never a block.`,
             )}

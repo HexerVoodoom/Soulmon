@@ -211,8 +211,9 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
-  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted,
+  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
+import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
@@ -2683,8 +2684,10 @@ export default function App() {
       // (e a virada do dia a reabria).
       adiarConclusaoDeTarefa(() => {
         let concluiu = false;
+        let ganhouPremium = false;
         setGameState(prev => {
           const feito = completeTask(prev, taskId) ?? prev;
+          ganhouPremium = Object.keys(feito.foodInventory).some(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
           // 🔗 Vínculo: a tarefa rende XP pelo PESO DE ESFORÇO dela (`effortOf`),
           // nunca por contagem de itens — é a mesma unidade da meta do dia. Se
           // rendesse por item, cadastrar cinco triviais valeria mais que encarar
@@ -2708,6 +2711,11 @@ export default function App() {
         queueMicrotask(() => {
           if (!concluiu) return;
           queueTaskGains(task.category);
+          if (ganhouPremium) {
+            toast(language === 'pt-BR'
+              ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
+              : '⭐ Every step done! You earned a premium food.');
+          }
           // A assombrada tem fala PRÓPRIA, e é de alívio. Concluir a que
           // estava te olhando não pode soar igual a concluir qualquer uma —
           // é a peça que transforma a pilha de culpa em recompensa.
@@ -2722,6 +2730,18 @@ export default function App() {
         });
       });
     }
+  };
+
+  // Subitem de TAREFA: avança a barra da linha. O último fecha a tarefa pelo
+  // caminho de sempre (comida, Vínculo, premium) — nada é pago aqui.
+  const handleToggleTaskStep = (taskId: string, stepId: string) => {
+    const task = gameState.tasks.find(t => t.id === taskId);
+    const step = task?.steps?.find(s => s.id === stepId);
+    if (!task || task.completed || !step || step.completed) return;
+    const fechaTudo = (task.steps ?? []).every(s => s.completed || s.id === stepId);
+    playTaskComplete();
+    setGameState(prev => ({ ...prev, tasks: completeTaskStep(prev.tasks, taskId, stepId) }));
+    if (fechaTudo) handleToggleTask(taskId);
   };
 
   /**
@@ -3169,6 +3189,12 @@ export default function App() {
       const agora = new Date();
       const refused = specialRefusal(gameState, foodEmoji, agora);
       if (refused === 'no-stock') return;
+      if (refused === 'daily-cap' && special.kind === 'premium') {
+        toast(language === 'pt-BR'
+          ? '⭐ Uma comida premium por dia. Ela te espera amanhã.'
+          : "⭐ One premium food a day. It'll wait for you tomorrow.");
+        return;
+      }
       if (refused === 'daily-cap') {
         // O item VOLTA para a pastinha e vale amanhã — por isso a mensagem diz
         // o que fazer, e não o que foi negado. Nada de toast de erro: o teto do
@@ -3199,6 +3225,9 @@ export default function App() {
 
       if (special.kind === 'glitchtama') {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
+      }
+      if (special.kind === 'premium') {
+        toast(language === 'pt-BR' ? '⭐ Comida premium! +5 de energia' : '⭐ Premium food! +5 energy');
       }
       return;
     }
@@ -6952,6 +6981,7 @@ export default function App() {
                     expanded={expandedRituals}
                     onExpand={handleExpandRitual}
                     onToggleTask={handleToggleTask}
+                    onToggleTaskStep={handleToggleTaskStep}
                     onEditTask={handleEditTask}
                     onPostponeNudge={handlePostponeNudge}
                     onEditActivity={handleEditActivity}
@@ -7312,6 +7342,7 @@ export default function App() {
               steps: data.steps,
               effort: data.effort,
               startDate: data.startDate,
+              ...(data.repeatEveryDays ? { repeatEveryDays: data.repeatEveryDays } : {}),
               status: data.status ?? 'open',
               createdAt: data.createdAt ?? new Date().toISOString(),
               lastTouchedAt: data.lastTouchedAt ?? new Date().toISOString(),

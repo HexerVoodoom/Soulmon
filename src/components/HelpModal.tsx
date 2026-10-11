@@ -155,6 +155,11 @@ const TERMS: Term[] = [
     descPt: `Rápida (1), Média (2), Projeto (3). A meta soma esforço, não itens; passando de ${OVERCOMMIT_EFFORT} no dia é aviso, nunca bloqueio.`,
   },
   {
+    icon: '⭐', en: 'Premium food', pt: 'Comida premium',
+    descEn: 'Earned by finishing every step of a task with 3 or more steps. Gives 5 energy instead of 1 (never above the day\'s max). One a day, three a week.',
+    descPt: 'Vem de fechar todos os subitens de uma tarefa com 3 ou mais. Dá 5 de energia em vez de 1 (nunca acima do máximo do dia). Uma por dia, três por semana.',
+  },
+  {
     icon: '🎯', en: 'Today\'s focus', pt: 'Foco do dia',
     descEn: `Up to ${MAX_DAILY_FOCUS} tasks chosen at check-in. Completing all ${MAX_DAILY_FOCUS} earns the day's seal.`,
     descPt: `Até ${MAX_DAILY_FOCUS} tarefas escolhidas no check-in. Completar as ${MAX_DAILY_FOCUS} rende o selo do dia.`,

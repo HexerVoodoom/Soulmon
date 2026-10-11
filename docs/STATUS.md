@@ -12,6 +12,13 @@
 >
 > - **Corrigido:** `/api/transcribe` deixou de ser anônima (ID token Firebase verificado, fail-closed; `ChatBox` manda `authHeaders`). `/api/generate-sprite`: `referenceImageUrls` só aceita a nossa `/api/sprite-image?k=` da mesma origem (o resto é descartado — era SSRF de terceiro via Higgsfield) e `prompt`/`promptFallback` têm teto `MAX_PROMPT_CHARS` (12000). `@capacitor/android|core|cli` 8.4.0 → **8.4.3** (GHSA-rvm3-566m-v7fv, crítico no `npm audit`).
 > - **Depende do dono:** fixar o HOST do CDN do Higgsfield quando a assinatura gerar a 1ª imagem; Rate Limiting no painel Cloudflare para `/api/*` caras (o balde atual é por isolate); APK novo na Play para o patch do Capacitor; manter `FIREBASE_PROJECT_ID` setado.
+> ## 11/10/2026 — Hábito "só de hoje", subitens com peso fixo, Pagar contas e comida premium
+>
+> - **A. Hábito semanal**: o check da linha é de HOJE ("Marcar como feito hoje") e o progresso da semana é um chip à parte ("Semana: 1 de 3", diário "N de 7") com o aviso "O check vale só para hoje". Só exibição: `weekChip` em `habitRhythm.ts`; constância, escudo e pontuação intactos.
+> - **B. Work/Trabalho**: já existia (tipo, CreateModal/EditModal/useItemForm, catálogo na área `financas`). Travado por teste: soma 4 como as demais (1/2/1, pende a Harmonia). Nada de número novo.
+> - **C. Finanças**: SEM categoria nova (exigiria números do dono); vive em `Work`. Atalho "Pagar contas" no CreateModal (`data/taskPresets.ts`): o usuário marca as contas, vira TAREFA com subitens, repete a cada 30 dias da CONCLUSÃO (`repeatEveryDays`; a próxima nasce `someday` + `wakeOn`, acorda na virada). Peso: `effortWithSteps` em `taskModel.ts` (teto `min(3, nº de subitens)` com ≥2; piso sugerido idêntico na criação) — vale em `registeredForDay`/virada/check-in/progresso/`completeTask` (`taskEffort`).
+> - **D. Comida premium** (`utils/premiumFood.ts`): 1 por tarefa com ≥3 subitens TODOS feitos; tetos 1/dia e 3/semana (dia do jogador); uso +5 de energia (nunca acima das barras; recusa com energia cheia; 1 uso/dia). Campo novo no save: `premiumFood`. Estrelinha em CSS (`.sm3-item-arte[data-premium]`).
+> - Decisões abertas para o dono: ver relatório da sessão (premium em hábito com etapas? tetos 1/3? Work = Harmonia?).
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >

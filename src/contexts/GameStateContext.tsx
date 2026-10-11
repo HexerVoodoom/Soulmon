@@ -171,6 +171,12 @@ export interface Task {
   lastTouchedAt?: string;
   /** dayKey em que esta tarefa é um dos 3 focos do dia. */
   focusDate?: string;
+  /** Repete a cada N dias CONTADOS DA CONCLUSÃO (o `every!` do Todoist): ao
+   *  concluir nasce a próxima, guardada (`someday` + `wakeOn`) até a data —
+   *  nunca acumula atrasadas. Ex.: "Pagar contas" = 30. */
+  repeatEveryDays?: number;
+  /** `YYYY-MM-DD` em que uma tarefa guardada pela repetição volta a `open`. */
+  wakeOn?: string;
 }
 
 export interface CompletedTask {
@@ -382,6 +388,8 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
+  premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
@@ -1141,6 +1149,13 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         glitchtamaUse: (() => {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
+        })(),
+        // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
+        premiumFood: (() => {
+          const p = obj<unknown>(loadedState.premiumFood);
+          return typeof p.day === 'string' && typeof p.week === 'string'
+            ? { day: p.day, dropped: num(p.dropped, 0), used: num(p.used, 0), week: p.week, weekDropped: num(p.weekDropped, 0) }
+            : undefined;
         })(),
         // Teto diário de Bits de minijogo (#61/#63). Mesmo argumento do
         // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
