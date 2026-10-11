@@ -144,7 +144,7 @@ describe('prédios por Vínculo (Tarefa A)', () => {
   });
   it('Arena/Feira/Torneio leem a tabela de portões (um número só)', () => {
     expect(BUILDING_GATES['arena.duelo'].minBond).toBe(GATES.pvp.minBond);
-    expect(BUILDING_GATES['arena.feira'].minBond).toBe(GATES.pvp.minBond);
+    expect(BUILDING_GATES['hall.feira'].minBond).toBe(GATES.pvp.minBond);
     expect(BUILDING_GATES['arena.torneio'].minBond).toBe(GATES.torneio.minBond);
   });
   it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {

@@ -91,10 +91,10 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 export type BuildingId =
   | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
   | 'jogos.salao' | 'jogos.refugio' | 'jogos.mente'
-  | 'arena.duelo' | 'arena.torneio' | 'arena.feira'
+  | 'arena.duelo' | 'arena.torneio'
   | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats'
-  | 'hall.biblioteca' | 'hall.amigos' | 'hall.guilda';
+  | 'hall.biblioteca' | 'hall.amigos' | 'hall.guilda' | 'hall.feira';
 
 /**
  * A tabela ÚNICA de qual Vínculo abre cada prédio (DECISÃO DO DONO, confirmada em 07/10/2026 — ajuste só aqui; o servidor
@@ -123,13 +123,14 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.feira': { minBond: GATES.pvp.minBond },
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },
   'hall.biblioteca': { minBond: 2 },
   'hall.amigos': { minBond: 2 },
   'hall.guilda': { minBond: 4 },
+  // A Feira (a Missão da guilda) mudou da Arena para o Hall em 11/10/2026 — o id e o Vínculo são os de antes.
+  'hall.feira': { minBond: GATES.pvp.minBond },
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */

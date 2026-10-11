@@ -6,6 +6,14 @@
 > - **Saiu:** base semanal da masmorra e o "Descer mais fundo" pago (o retorno ao marco virou grátis; o custo é energia).
 > - **Level Up** (`applyLevelUpCelebrated`) enche energia + HP da masmorra 1× por celebração; corações não. Home: a dica da energia diz para que serve.
 > - **Depende do dono:** curva da zona, Lv (força) vs Vínculo no teto, sumidouro de Bits a menos, cosmético por marco. CLAUDE.md velho na linha ⚔️ Masmorra (base semanal, 5 andares, sem gate) e na ⚡ Energia (não cita o gasto).
+> ## 11/10/2026 — Guilda de lançamento, fecho: respostas do dono em modal (`claude/guilda-lancamento`)
+>
+> - **Feira re-hospedada no Hall (decidido):** o prédio `arena.feira` virou **`hall.feira`** (gate, material `ribbon`, peça `eq-rastro-t3` do Ferreiro, missão do prédio, apresentação do NPC, espelho `functions/api/_gates.js`) e o lote saiu da Arena: agora é o lote `feira` do **Hall**, dividindo a plataforma de baixo com o Salão (como Torneio e Duelo na Arena). **Save antigo:** `arena.feira` em `buildingQuests` (`visited`/`claimed`) e em `buildingIntrosSeen` é lido como `hall.feira` (nada perdido). A arte do lote e do NPC Fanfare mantêm os nomes de arquivo da leva (`lote-arena-feira`, `npc-arena-feira`).
+> - **Decisões confirmadas:** o "circo" era a Feira · a doação de Bits fica como está (a tela nunca mostra quantia) · Casa e Bosque **seguem separados** · a guerra rende só seiva, 1/dia · as sombras do Pesadelo usam os 12 Solmons do pacote.
+> - **`CLAUDE.md` e `PLANO-GUILDA.md` atualizados** (a pedido): Torneio × Arena, uma linha para Casa/Missão/Guerra e outra para as Sombras; no plano, D-G4 ⚰️ e a exceção da doação na lista do "NUNCA".
+> - **Higiene:** o symlink `node_modules` estava VERSIONADO na `main` (veio no #292) e transformava o `node_modules` de qualquer branch nova num link circular; saiu do índice e `.gitignore` ganhou `node_modules` (sem barra).
+> - **Depende do dono:** gerar a arte das sombras (`ASSETS-A-GERAR.md` §17) quando a ferramenta de arte estiver disponível.
+
 > ## 11/10/2026 — Manual sincronizado com `f3acead1` (rodada final de lançamento)
 >
 > - **Docs tocados (delta `e71061b8..f3acead1`, 114 commits):** `02-REGRAS-DE-NEGOCIO.md` (§63 nova + D41–D46), `07-DADOS-E-SAVE.md` (§2.12-B, 13 campos novos do save), `03`/`05`/`06-REFERENCIA/*`/`08`/`10` (carimbo e passagens tocadas), `00-MAPA.md` (docs novos). Módulos novos já tinham entrada; `docsManual.contract` verde.

@@ -58,7 +58,7 @@ export const MATERIAL_PER_QUEST = 1;
 export const MATERIAL_BUILDING: Readonly<Record<MaterialId, BuildingId>> = {
   spark: 'jogos.salao', moss: 'jogos.refugio', prism: 'jogos.mente',
   pebble: 'exploracao.passeio', ore: 'exploracao.masmorra', ink: 'exploracao.caderno', gear: 'exploracao.oficina',
-  fang: 'arena.duelo', laurel: 'arena.torneio', ribbon: 'arena.feira',
+  fang: 'arena.duelo', laurel: 'arena.torneio', ribbon: 'hall.feira',
   essence: 'laboratorio.evolucao', down: 'laboratorio.pet', cipher: 'laboratorio.stats',
   page: 'hall.biblioteca', keepsake: 'hall.amigos', crest: 'hall.guilda',
 };
@@ -171,7 +171,8 @@ export function sanitizeBuildingQuests(raw: unknown): BuildingQuestState | undef
   if (typeof r.day !== 'string' || r.day.length === 0 || r.day.length > 40) return undefined;
   const ids = (v: unknown): BuildingId[] => {
     const out: BuildingId[] = [];
-    if (Array.isArray(v)) for (const x of v) if (isQuestBuilding(x) && !out.includes(x)) out.push(x);
+    // `arena.feira` virou `hall.feira` (11/10/2026): o save antigo ainda o cita.
+    if (Array.isArray(v)) for (const raw of v) { const x = raw === 'arena.feira' ? 'hall.feira' : raw; if (isQuestBuilding(x) && !out.includes(x)) out.push(x); }
     return out;
   };
   const m = r.materials && typeof r.materials === 'object' && !Array.isArray(r.materials) ? r.materials as Record<string, unknown> : {};

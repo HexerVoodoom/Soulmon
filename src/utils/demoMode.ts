@@ -42,8 +42,8 @@ export function isDemoMode(state: DemoCarrier | null | undefined): boolean {
  * lista: `AreaView` a lê daqui, e a régua de fiação confere os dois lados.
  */
 export const DEMO_BLOCKED_LOTS: Readonly<Record<string, readonly string[]>> = {
-  arena: ['torneio', 'duelo', 'feira'],
-  hall: ['biblioteca', 'amigos', 'guilda'],
+  arena: ['torneio', 'duelo'],
+  hall: ['biblioteca', 'amigos', 'guilda', 'feira'],
 };
 
 /** Este prédio é bloqueado na demo? */
