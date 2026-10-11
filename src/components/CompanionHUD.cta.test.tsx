@@ -140,31 +140,32 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
    controle de PRIMEIRA CLASSE — mora na MOCHILA, que é um dos três cuidados da
    faixa —, e cada guarda abaixo é o mesmo de antes, sobre a superfície nova. */
 describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
-  it('a faixa tem o botão Mochila (PT/EN) e ele abre a mochila com a comida', () => {
+  it('a faixa tem o botão Mochila (PT/EN) e ele abre a mochila com a comida', async () => {
     const en = renderWithCss(<CompanionHUD {...base} language="en-US" foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
     expect(screen.getByRole('button', { name: 'Backpack' })).toBeTruthy();
     en.unmount();
 
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
-    expect(screen.getByRole('dialog', { name: 'Mochila' })).toBeTruthy();
+    // A folha é `lazy` (fora do chunk de entrada): na 1ª abertura o chunk chega assíncrono.
+    expect(await screen.findByRole('dialog', { name: 'Mochila' })).toBeTruthy();
     // PL-5 (21/09/2026): o nome acessível segue o idioma.
     expect(screen.getByRole('button', { name: 'Maçã × 2' })).toBeTruthy();
   });
 
-  it('PL-5: o nome do alimento na mochila é o MESMO da pastinha, por idioma (getFoodName)', () => {
+  it('PL-5: o nome do alimento na mochila é o MESMO da pastinha, por idioma (getFoodName)', async () => {
     const en = renderWithCss(<CompanionHUD {...base} language="en-US" foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Backpack' }));
-    expect(screen.getByRole('button', { name: 'Apple × 2' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Apple × 2' })).toBeTruthy();
     en.unmount();
   });
 
-  it('usar a comida chama `onFeed` — a REGRA continua no App, não aqui', () => {
+  it('usar a comida chama `onFeed` — a REGRA continua no App, não aqui', async () => {
     const onFeed = vi.fn();
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={onFeed} />);
     fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
     // Tocar no item SÓ seleciona (decisão 3 do dono: item se usa arrastando).
-    fireEvent.click(screen.getByRole('button', { name: 'Maçã × 2' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Maçã × 2' }));
     expect(onFeed).not.toHaveBeenCalled();
     // A alternativa acessível: o botão "Usar" do item selecionado.
     fireEvent.click(screen.getByRole('button', { name: 'Usar Maçã' }));
@@ -173,10 +174,10 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     expect(screen.queryByRole('dialog', { name: 'Mochila' })).toBeNull();
   });
 
-  it('consumível especial NÃO se mistura com a comida: coraçãozinho e Glitchtama moram em Especiais', () => {
+  it('consumível especial NÃO se mistura com a comida: coraçãozinho e Glitchtama moram em Especiais', async () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 1, '💗': 3, '🌀': 1 }} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
-    const folha = screen.getByRole('dialog', { name: 'Mochila' });
+    const folha = await screen.findByRole('dialog', { name: 'Mochila' });
     // Pelo NOME ACESSÍVEL do botão (a arte é <img>, utils/itemArt.ts).
     expect(within(folha).queryByRole('button', { name: /Coração|Heart/ })).toBeNull();
     expect(within(folha).queryByRole('button', { name: /Glitchtama/ })).toBeNull();
@@ -186,10 +187,10 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     expect(within(folha).queryByRole('button', { name: 'Maçã × 1' })).toBeNull();
   });
 
-  it('ESTADO VAZIO: sem comida a mochila explica como conseguir, não some', () => {
+  it('ESTADO VAZIO: sem comida a mochila explica como conseguir, não some', async () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{}} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
-    expect(screen.getByText(/Complete tarefas pra ganhar comida/)).toBeTruthy();
+    expect(await screen.findByText(/Complete tarefas pra ganhar comida/)).toBeTruthy();
   });
 
   it('os três cuidados da faixa: mochila, dormir/acordar e banho — e nada de deck', () => {

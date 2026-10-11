@@ -116,7 +116,9 @@ import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { evolutionTarget } from './utils/evolutionTarget';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
-import { getGifts, getPendingTrophies } from './utils/community';
+// Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
+const getGifts = (...a: Parameters<typeof import('./utils/community').getGifts>) => import('./utils/community').then(m => m.getGifts(...a));
+const getPendingTrophies = (...a: Parameters<typeof import('./utils/community').getPendingTrophies>) => import('./utils/community').then(m => m.getPendingTrophies(...a));
 import {
   PREMADE_CHARACTERS, getDemoCreatureStages, canCreateActivity, activityCapFor,
   REROLL_COST_CREDITS,

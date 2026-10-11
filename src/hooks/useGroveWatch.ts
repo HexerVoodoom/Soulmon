@@ -18,7 +18,8 @@
  *    consulta ao voltar ao app, e este hook fica quieto (`isGuildSheetOpen`).
  */
 import { useEffect, useRef, useState } from 'react';
-import { getGuild } from '../utils/community';
+// Dinâmico: o cliente da Guilda não mora no chunk de entrada (`entradaEnxuta.contract`).
+const getGuild = async (...a: Parameters<typeof import('../utils/community').getGuild>) => (await import('../utils/community')).getGuild(...a);
 import { playerDayKey, type PlayerDayAnchor } from '../utils/playerDay';
 import {
   GROVE_EVENT, groveSceneIds, isGuildSheetOpen, observeGuildView, readGroveLocal, trackGuildStageOnce, type GroveLocal,

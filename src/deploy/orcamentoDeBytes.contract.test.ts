@@ -128,7 +128,14 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // da primeira abertura/toggle no `App` (`notificationPermission.ts`), o menu de missões em Hoje/Esta semana, o selo de nível e
   // o `CompanionHUD`/Mochila com materiais, o `pendingPoopEvent` e o glifo `backpack`. A luz da evolução (`EvolutionLight`,
   // canvas) e a tela do Soulsmith ficam atrás de `lazy`; o PNG do sun burst saiu.
-  'index.js': 607_559,
+  // PAGO EM PARTE em 11/10/2026 (velocidade-dev): 632_532 → 599_676 (−32,9 KB; a main
+  // chegou a 621_108 e estourava a folga da linha acima). Saíram do chunk de entrada por
+  // import()/React.lazy: o cliente de Torneio/Guilda (`utils/community`, ~8,5 KB — App,
+  // GameStateContext e `useGroveWatch` o chamam só em efeito/`.then`), o terminal do chat
+  // (`ChatBox`, ~10 KB) e a folha da Mochila (~8 KB, montada na 1ª abertura). Quem impede a
+  // volta: as 3 sentinelas novas de `entradaEnxuta.contract.test.ts`. Medir: `npm run
+  // analisar:entrada` (ver docs/manual/12-COMO-MANTER.md §4).
+  'index.js': 599_676,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)

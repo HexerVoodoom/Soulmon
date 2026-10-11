@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
@@ -23,13 +23,16 @@ import { statTip, type StatTipKind } from './home/statTips';
  *  pré-possuído por todo save (`utils/shop.ts`, preço 0). */
 export const DEFAULT_PET_BACKGROUND = 'bg-room';
 import { CareSystem, CareEvent } from './CareSystem';
-import { ChatBox } from './ChatBox';
+// ChatBox e Mochila fora do chunk de entrada (`entradaEnxuta.contract`): o chat é
+// o terminal do rodapé (aparece um instante depois do palco) e a Mochila só abre
+// por gesto — montada na primeira abertura, ver `mochilaMontada`.
+const ChatBox = lazy(() => import('./ChatBox').then(m => ({ default: m.ChatBox })));
 import { Language } from '../utils/i18n';
 import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
-import { Mochila } from './home/Mochila';
+const Mochila = lazy(() => import('./home/Mochila').then(m => ({ default: m.Mochila })));
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
    Os PNGs das linhas (`src/assets/soulmon/lines/*`) são 256×256 (53 arquivos)
@@ -450,6 +453,8 @@ export const CompanionHUD = memo(function CompanionHUD({
      que junta a folha de Alimentar e a pastinha de Itens. A regra continua
      inteira no `onFeed` (`handleFeed` do App). */
   const [mochilaOpen, setMochilaOpen] = useState(false);
+  const [mochilaMontada, setMochilaMontada] = useState(false);
+  useEffect(() => { if (mochilaOpen) setMochilaMontada(true); }, [mochilaOpen]);
   /** O item está sendo arrastado SOBRE o pet — o alvo acende. */
   const [petIsTarget, setPetIsTarget] = useState(false);
   /** O "+1" que sobe do pet quando ele come (mock aprovado). */
@@ -1174,6 +1179,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   const chatDock = (
     <div className="sm-chat-fixed sm3-dock">
+      <Suspense fallback={null}>
       <ChatBox
         petName={currentStage}
         mood={companionMood}
@@ -1186,6 +1192,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         chatContext={chatContext}
         language={language}
       />
+      </Suspense>
     </div>
   );
 
@@ -1926,7 +1933,8 @@ export const CompanionHUD = memo(function CompanionHUD({
           `.sm-pet-sticky` (z 5) ela ficaria presa sob o dock de chat. Sem
           `document` (SSR) fica onde está. */}
       {(() => {
-        const folha = (
+        const folha = !mochilaMontada ? null : (
+          <Suspense fallback={null}>
           <Mochila
             open={mochilaOpen}
             onClose={() => { setMochilaOpen(false); setPetIsTarget(false); }}
@@ -1940,6 +1948,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             onTargetChange={setPetIsTarget}
             petName={petDisplayName || currentStage}
           />
+          </Suspense>
         );
         return typeof document !== 'undefined' ? createPortal(folha, document.body) : folha;
       })()}
