@@ -42,7 +42,7 @@ const click = (el: Element) => act(() => { fireEvent.click(el); });
 const bq = (materials: Record<string, number>) => ({ day: 'Mon Oct 05 2026', visited: [], claimed: [], materials });
 const nivel1 = (extra: Record<string, unknown> = {}) => ({
   totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
-  forge: { levels: { 'eq-nucleo-t1': 1 }, picks: {} }, ...extra,
+  forge: { v: 2, levels: { 'eq-nucleo-t1': 1 }, picks: {} }, ...extra,
 });
 
 beforeEach(() => { installDomGlobals(); localStorage.clear(); vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede')))); });
@@ -71,20 +71,29 @@ describe('ForgeCard', () => {
   it('aprimorar: o modal pede a ESCOLHA entre A e B, mostra o efeito em %, e confirmar debita os materiais e sobe o nível', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }));
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Lv 1 → Lv 2/);
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/Minério 3\/1/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/Minério 3\/2/);
     click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
     const dlg = document.querySelector('[data-forge-dialog="upgrade"]')!;
-    expect(dlg.textContent).toMatch(/A · ataque \+0,2%/);
-    expect(dlg.textContent).toMatch(/B · defesa \+0,2%/);
+    // As DUAS opções são IGUAIS (11/10/2026): nome do ganho + efeito em palavras, o mesmo valor, e nada de "A/B" nem "a correta".
+    expect(dlg.textContent).toMatch(/Mais dano · \+0,1%/);
+    expect(dlg.textContent).toMatch(/Mais defesa · \+0,1%/);
+    expect(dlg.textContent).toMatch(/As duas opções valem o mesmo/);
+    expect(dlg.textContent).not.toMatch(/\bA ·|\bB ·|do próprio slot|vizinho|neighbour|slot’s own/);
+    const opcoes = [...dlg.querySelectorAll('[data-forge-option]')] as HTMLElement[];
+    expect(opcoes.map(o => o.getAttribute('data-forge-attr'))).toEqual(['atk', 'def']);
+    // Mesmo peso visual: as duas ocupam a mesma caixa; só a ESCOLHIDA ganha contorno.
+    expect(opcoes[0].style.padding).toBe(opcoes[1].style.padding);
     expect(dlg.textContent).toMatch(/param em 5%/);
     click(dlg.querySelector('[data-forge-option="b"] input')!);
     click(q('[data-forge-confirm]'));
     expect(document.querySelector('[data-forge-dialog]')).toBeNull();
     expect(estado().forge.levels['eq-nucleo-t1']).toBe(2);
     expect(estado().forge.picks['eq-nucleo-t1']).toEqual(['b']);
-    expect(estado().mats.ore).toBe(2);
+    expect(estado().mats.ore).toBe(1);
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Lv 2 → Lv 3/);
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,2%/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,1%/);
+    // A linha "Próximo" também apresenta as duas como iguais, sem dizer qual é a "do slot".
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/Próximo: \+0,1% de ataque ou de defesa, à sua escolha/);
   });
 
   it('peça possuída: UM botão só (Upgrade), sem Equipar nem Tirar; o nome acompanha o tier da peça', () => {
@@ -158,7 +167,7 @@ describe('ForgeCard', () => {
   });
 
   it('refazer a escolha com Bits GANHOS: confirma, troca A↔B, debita e os materiais ficam', () => {
-    abrir(nivel1({ gamePoints: 1000, buildingQuests: bq({ ore: 1 }), forge: { levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
+    abrir(nivel1({ gamePoints: 1000, buildingQuests: bq({ ore: 1 }), forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
     const dlg = document.querySelector('[data-forge-dialog="redo"]')!;
     expect(dlg.textContent).toMatch(new RegExp(`${REDO_BITS} Bits ganhos`));
@@ -170,7 +179,7 @@ describe('ForgeCard', () => {
   });
 
   it('refazer com Bits que vieram de Crédito: o botão fica desabilitado e o texto explica sem culpa', () => {
-    abrir(nivel1({ gamePoints: 1000, bitsOrigin: { day: 'Mon Oct 05 2026', free: 0, fromCredits: 900, paidLeft: 900 }, forge: { levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
+    abrir(nivel1({ gamePoints: 1000, bitsOrigin: { day: 'Mon Oct 05 2026', free: 0, fromCredits: 900, paidLeft: 900 }, forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
     expect(q('[data-forge-confirm]').disabled).toBe(true);
     expect(document.querySelector('[data-forge-redo-note]')!.textContent).toMatch(/servem para outras coisas/);
@@ -179,7 +188,7 @@ describe('ForgeCard', () => {
 
   it('peça comprada antes do Soulsmith (sem registro) aparece no nível equivalente, sem perder nada', () => {
     abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t3'], equipped: { nucleo: 'eq-nucleo-t3' }, fragments: 0 } });
-    expect(peca('eq-nucleo-t3').textContent).toMatch(/Lv 5 · Max/);
+    expect(peca('eq-nucleo-t3').textContent).toMatch(/Lv 15 · Max/);
     expect(peca('eq-nucleo-t3').textContent).toMatch(/ataque \+1,5%/);
     expect(peca('eq-nucleo-t3').textContent).not.toMatch(/Upgrade/);
   });
@@ -194,11 +203,11 @@ describe('ForgeCard', () => {
   });
 
   it('save hostil (slot forjado, nível absurdo) é descartado na carga', () => {
-    abrir({ equipment: { owned: ['eq-nucleo-t1'], equipped: { rastro: 'eq-nucleo-t1' }, fragments: 1e12 }, forge: { levels: { 'eq-nucleo-t1': 99, 'eq-xxx': 3 }, picks: { 'eq-nucleo-t1': ['b', 'b', 'b', 'b', 'b', 'b'] } } });
+    abrir({ equipment: { owned: ['eq-nucleo-t1'], equipped: { rastro: 'eq-nucleo-t1' }, fragments: 1e12 }, forge: { v: 2, levels: { 'eq-nucleo-t1': 99, 'eq-xxx': 3 }, picks: { 'eq-nucleo-t1': ['b', 'b', 'b', 'b', 'b', 'b'] } } });
     expect(estado().eq.equipped).toEqual({ nucleo: 'eq-nucleo-t1' });
     expect(estado().eq.fragments).toBe(999);
-    expect(estado().forge.levels).toEqual({ 'eq-nucleo-t1': 5 });
-    expect(estado().forge.picks['eq-nucleo-t1']).toHaveLength(4);
+    expect(estado().forge.levels).toEqual({ 'eq-nucleo-t1': 15 });
+    expect(estado().forge.picks['eq-nucleo-t1']).toHaveLength(14);
   });
 
   it('inglês: texto em EN primeiro, "Soulsmith", "Lv", nunca "Nível"', () => {
@@ -206,9 +215,22 @@ describe('ForgeCard', () => {
     const t = document.querySelector('[data-forge-card]')!.textContent!;
     expect(t).toMatch(/Soulsmith/);
     expect(t).toMatch(/Lv 1 → Lv 2/);
-    expect(t).toMatch(/Ore 2\/1/);
+    expect(t).toMatch(/Ore 2\/2/);
     expect(t).not.toMatch(/Nível|Vem da/);
     expect(itemName('rastro', 3, false)).toBe('Ornate Trail');
+  });
+});
+
+describe('o modal de aprimorar em inglês (11/10/2026)', () => {
+  it('as duas opções são iguais e diretas: "More damage" OR "More defense", sem A/B', () => {
+    abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }), 'en-US');
+    click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
+    const t = document.querySelector('[data-forge-dialog="upgrade"]')!.textContent!;
+    expect(t).toMatch(/More damage · \+0\.1%/);
+    expect(t).toMatch(/More defense · \+0\.1%/);
+    expect(t).toMatch(/Both options are worth the same/);
+    expect(t).toMatch(/Your Soulmon hits a little harder/);
+    expect(t).not.toMatch(/\bA ·|\bB ·|neighbouring|slot’s own/);
   });
 });
 

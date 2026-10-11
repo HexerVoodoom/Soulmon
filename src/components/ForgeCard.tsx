@@ -23,7 +23,7 @@ import {
   ALT_ATTR, FORGE_MAX_LEVEL, FORGE_PIECES, LEVEL_PCT, PRIMARY_ATTR, REDO_FRAGMENTS, pieceBonus, pieceChoices, type ForgeChoice, type ForgePiece,
 } from '../utils/forge';
 import { applyRedo, applyUpgrade, levelNow, redoBitsPrice, redoRefusal, upgradeCost, upgradeRefusal, type ForgeGameState } from '../utils/forgeActions';
-import { forgeRefusalText } from '../utils/forgeCopy';
+import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
 import { nameOf } from './nav/BuildingQuestList';
@@ -179,7 +179,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
             </span>
             <span className="sm2-stats-s" style={{ display: 'block' }} data-forge-bonus>
               {isPt ? 'Agora' : 'Now'}: {bonusAgora}
-              {!max && <> {' · '}{isPt ? 'Próximo' : 'Next'}: +{pct(LEVEL_PCT[to - 1], isPt)} {isPt ? 'no atributo que você escolher' : 'in the attribute you pick'}</>}
+              {!max && <> {' · '}{isPt ? 'Próximo' : 'Next'}: +{pct(LEVEL_PCT[to - 1], isPt)} {isPt ? `de ${attrName(PRIMARY_ATTR[piece.slot])} ou de ${attrName(ALT_ATTR[piece.slot])}, à sua escolha` : `${attrName(PRIMARY_ATTR[piece.slot])} or ${attrName(ALT_ATTR[piece.slot])}, your pick`}</>}
             </span>
           </div>
         )}
@@ -249,21 +249,25 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
               : (isPt ? `Refazer a escolha do nível ${alvo}` : `Redo the level ${alvo} choice`)}
           </h3>
           <p className="sm2-stats-s" style={{ margin: 0 }}>
-            {isPt ? 'Escolha um dos dois ganhos. Os dois valem o mesmo; muda onde a peça ajuda.' : 'Pick one of two gains. Both are worth the same; it changes where the piece helps.'}
+            {isPt ? 'Escolha o que este nível dá. As duas opções valem o mesmo.' : 'Pick what this level gives. Both options are worth the same.'}
           </p>
-          <div role="radiogroup" style={{ display: 'grid', gap: 8 }}>
-            {opcoes.map(({ c, attr }) => (
-              <label key={c} data-forge-option={c} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 10px', border: '1px solid currentColor', borderRadius: 8, opacity: escolha === c ? 1 : 0.8 }}>
-                <input type="radio" name="forge-choice" checked={escolha === c} onChange={() => setEscolha(c)} />
-                <span>
-                  <b style={{ fontWeight: 500 }}>{c === 'a' ? 'A' : 'B'} · {attrName(attr)} +{pct(LEVEL_PCT[alvo - 1], isPt)}</b>
-                  <span className="sm2-stats-s" style={{ display: 'block' }}>
-                    {c === 'a' ? (isPt ? 'O atributo do próprio slot.' : 'The slot’s own attribute.') : (isPt ? 'O atributo vizinho.' : 'The neighbouring attribute.')}
-                    {atual === c ? (isPt ? ' Escolha atual.' : ' Current choice.') : ''}
+          <div role="radiogroup" aria-label={isPt ? 'O que este nível dá' : 'What this level gives'} style={{ display: 'grid', gap: 8 }}>
+            {opcoes.map(({ c, attr }) => {
+              const fx = ATTR_EFFECT[attr];
+              return (
+                <label key={c} data-forge-option={c} data-forge-attr={attr} data-selected={escolha === c || undefined}
+                  style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 12px', border: `${escolha === c ? 2 : 1}px solid ${escolha === c ? 'var(--sm2-primary-ink)' : 'var(--sm2-line)'}`, borderRadius: 'var(--sm2-radius-md)', background: escolha === c ? 'var(--sm2-primary-soft)' : 'transparent', cursor: 'pointer' }}>
+                  <input type="radio" name="forge-choice" checked={escolha === c} onChange={() => setEscolha(c)} />
+                  <span>
+                    <b style={{ fontWeight: 600 }}>{isPt ? fx.shortPt : fx.shortEn} · +{pct(LEVEL_PCT[alvo - 1], isPt)}</b>
+                    <span className="sm2-stats-s" style={{ display: 'block' }}>
+                      {isPt ? fx.effectPt : fx.effectEn}
+                      {atual === c ? (isPt ? ' Escolha atual.' : ' Current choice.') : ''}
+                    </span>
                   </span>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </div>
           <p className="sm2-stats-s" style={{ margin: 0 }}>
             {isPt ? `Em luta, talento e equipamento juntos param em ${Math.round(COMBAT_BONUS_CAP * 100)}%.` : `In a fight, talent and equipment together stop at ${Math.round(COMBAT_BONUS_CAP * 100)}%.`}

@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Soulsmith: 15 níveis, custos maiores, opções apresentadas como IGUAIS
+>
+> - **Pedido do dono:** "está fácil de upar… tem de levar tempo; mesmo depois do nível ultra o jogador ainda não terá todos os itens no máximo" + "apresente as DUAS opções como iguais (mais dano OU mais velocidade)". O nome "cobre" fica.
+> - **Regra (REGISTRO §26.1, `docs/BALANCO-SOULSMITH.md`):** 5 → **15 níveis** de 0,1 % (teto por peça 1,5 % e teto único de 5 % intactos); custo total por peça 98 + 56 materiais (eram 10 + 6); Vínculo até 10. Simulação dia a dia com as funções reais (`forge.tempo.test.ts`): **todo dia ≈ 100 dias** (o Ultra é 59), 3 de 4 dias ≈ 134, metade ≈ 198; a Oficina do Foco encurta mas não passa. Só Bits ganhos/materiais, sem sorteio.
+> - **Migração sem confisco:** registro `forge` sem `v: 2` = esquema de 5 níveis, convertido na leitura para o nível novo de MESMO bônus (1→3, 2→5, 3→8, 4→11, 5→15), no cliente (`sanitizeForge`) e no servidor (`_forge.js`, paridade com vetores com e sem `v`). Todo escritor (`forgeActions`) grava `v: 2`.
+> - **Tela:** o modal de aprimorar mostra "Mais dano · +0,1 %" / "Mais defesa · +0,1 %" (ou "Mais velocidade") com o efeito em palavras, mesmo peso visual, sem "A/B" nem "o atributo do próprio slot"; a linha "Próximo" diz "de ataque ou de defesa, à sua escolha". `ATTR_EFFECT` em `forgeCopy.ts`.
+> - **Linhas velhas no CLAUDE.md (não editado):** nenhuma cita os 5 níveis do Soulsmith.
+> - **Depende do dono:** achar o ritmo (100 dias) longo/curto — ajusta `UPGRADE_COST`, não o teto; custo em Bits no aprimoramento ficou de fora de propósito.
+
 > ## 11/10/2026 — Guilda de lançamento, PR2: a CASA da guilda (`claude/guilda-lancamento`)
 >
 > - **O que é:** cenário que evolui (Fagulha → Haste → Folhas de latão → Flores → Cristais → Aurora): árvore mecânica com cristal central (`CasaVisor`, SVG no Visor sobre o `bg-guild-*`), até 4 Solmons, um pedestal por item posto. **Doação de Bits** (`guildDonate`, teto 200/dia por pessoa, o servidor diz o `accepted` e o app desconta só isso, Bit pago primeiro) e **um item por membro** (`guildSlot`): o item sai de `ownedFurniture`/`equippedDecor` (`utils/guildHouse.ts`) — não vale no cenário pessoal enquanto estiver na casa; sair da guilda o devolve.
