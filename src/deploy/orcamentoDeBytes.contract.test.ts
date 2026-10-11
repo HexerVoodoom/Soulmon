@@ -140,7 +140,16 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // REGISTRADO: a sessão `claude/velocidade-dev` tem a meta de baixar este número com lazy/manualChunks.
   // 11/10/2026 (Level Up + áudio): 637_910 → 650_631 (+12,4 KB) — fila do Level Up e `levelUp.ts`/`playLevelUp`, o diretor de
   // música (`musica.ts`), a serialização dos especiais e o gate do Duelo entram no App. Débito REGISTRADO (PR #294 tenta baixar).
-  'index.js': 650_631,
+  // PAGO EM PARTE em 11/10/2026 (velocidade-dev): 632_532 → 599_676 (−32,9 KB; a main
+  // chegou a 621_108 e estourava a folga da linha acima). Saíram do chunk de entrada por
+  // import()/React.lazy: o cliente de Torneio/Guilda (`utils/community`, ~8,5 KB — App,
+  // GameStateContext e `useGroveWatch` o chamam só em efeito/`.then`), o terminal do chat
+  // (`ChatBox`, ~10 KB) e a folha da Mochila (~8 KB, montada na 1ª abertura). Quem impede a
+  // volta: as 3 sentinelas novas de `entradaEnxuta.contract.test.ts`. Medir: `npm run
+  // analisar:entrada` (ver docs/manual/12-COMO-MANTER.md §4).
+  // PAGO em 11/10/2026 (PR #294, sobre a main de 650_631): 650_631 → 616_035 (−34,6 KB) com os 3 cortes acima (a
+  // medida do PR sozinho, sobre a main antiga, foi 632_532 → 599_676). Medido com `vite build` limpo da árvore mesclada.
+  'index.js': 616_035,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

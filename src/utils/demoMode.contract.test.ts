@@ -156,7 +156,13 @@ describe('2. ponto novo sem o predicado reprova', () => {
     };
     // Só import de VALOR conta: `import type` não executa nada (fairArt, groveLocal, groveStage, guildCopy e
     // libraryNpcs só pegam tipos do cliente HTTP).
-    const importadores = FONTES.filter(f => /^import\s+(?!type\b)[^;]*?from\s+'[^']*\/community'/m.test(lerFonte(f)));
+    // Conta TAMBÉM o `import('…/community')` dinâmico: desde 11/10/2026 o chunk de entrada carrega o cliente
+    // sob demanda (App, GameStateContext e useGroveWatch), e um guard cego a isso deixaria de ver exatamente
+    // quem saiu do import estático.
+    const importadores = FONTES.filter(f => {
+      const src = lerFonte(f);
+      return /^import\s+(?!type\b)[^;]*?from\s+'[^']*\/community'/m.test(src) || /import\(\s*'[^']*\/community'\s*\)/.test(src);
+    });
     expect(importadores.length).toBeGreaterThanOrEqual(5);
     const novos = importadores.filter(f => !(f in CONHECIDOS) && !usaPredicado(f));
     expect(novos, `fala com a comunidade sem estar ligado à demo: ${novos.join(', ')}`).toEqual([]);

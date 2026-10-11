@@ -23,6 +23,12 @@ const SENTINELAS: ReadonlyArray<readonly [string, string]> = [
   ['src/utils/attackFxArt.ts', 'fx-fogo-cast'], // nome do PNG, entra no glob
   ['src/data/activityCatalog.ts', 'Log a difficult thought'],
   ['src/utils/oracle.ts', 'Where do you imagine yourself living?'],
+  // 11/10/2026 (velocidade-dev): o cliente de Torneio/Guilda, o terminal do chat e
+  // a folha da Mochila saíram da entrada (−32,9 KB). O Torneio chama `/api/community`,
+  // a Guilda `/api/guild`; o chat é montado `lazy` no `CompanionHUD`.
+  ['src/utils/community.ts', "/api/guild"],
+  ['src/components/ChatBox.tsx', 'O recado falado não está disponível agora.'],
+  ['src/components/home/Mochila.tsx', 'Complete tarefas pra ganhar comida'],
 ];
 
 describe('bundle — chunk de entrada enxuto', () => {

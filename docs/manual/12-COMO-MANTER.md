@@ -89,6 +89,32 @@ O `portoes` para no primeiro vermelho. Se um passo do `.github/workflows/ci.yml`
 muda-se também o `scripts/portoes.mjs` (o cabeçalho do script diz isso) — o manual não
 copia a lista de passos, aponta.
 
+### O laço rápido: `npm run gates` (11/10/2026)
+
+A suíte inteira leva ~9 min em 4 CPUs (637 arquivos, ~8000 testes — medido em 11/10/2026),
+então ela é o portão de FECHAMENTO, não o de cada edição. Para o laço interno:
+
+```bash
+npm run gates                  # scripts/gates.mjs: os 3 tsc EM PARALELO + só os testes alterados desde origin/main
+npm run gates -- --so-tipos    # só os 3 tsc
+npm run gates -- --base=HEAD~1 # outra base para o "alterado"
+npm run test:fast              # só `vitest run --changed origin/main`
+npm run test:shard -- 2/4      # a fatia 2 de 4 da suíte (é o que o CI roda, em 4 jobs)
+npm run analisar:entrada       # bytes do chunk de entrada por fonte (exige `vite build --sourcemap --outDir <tmp>`)
+```
+
+`--changed` segue o grafo de imports: um teste que só LÊ um `.md` ou o `dist/` não entra
+quando o `.md`/`dist/` muda — para isso existe o `npm run portoes`. O `gates` não substitui
+nem o `portoes` nem o CI; ele troca minutos por segundos na pergunta "quebrei o que toquei?".
+
+No CI (`.github/workflows/ci.yml`) os mesmos gates rodam em jobs paralelos — `vendor`, `tipos`
+(3 `tsc`) e `testes` (4 shards) — e o job agregador `tsc + vitest` mantém o NOME do check
+antigo. Os motivos de cada gate continuam no histórico do arquivo; nada foi removido.
+
+O que foi MEDIDO e NÃO ajudou (não repita): `--no-isolate` (24m57 de parede contra 8m56 e 479
+testes vermelhos — estado vaza entre arquivos jsdom) e `experimental.fsModuleCache` (sem ganho:
+o custo dos testes de render está na renderização, não na transformação).
+
 ## 5. O guard ficou vermelho — o que cada item quer
 
 `src/docsManual.contract.test.ts` tem cinco travas. O que segue descreve **o que o teste

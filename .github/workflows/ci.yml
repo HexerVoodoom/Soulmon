@@ -37,105 +37,33 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# ── PARALELISMO (11/10/2026) ───────────────────────────────────────────────
+# Antes: UM job em série (vendor → tsc ×3 → vitest inteiro, ~9 min só de vitest
+# em 4 CPUs). Agora: os mesmos gates, em jobs paralelos —
+#   • `tipos`    : os 3 `tsc` (app, overlay, servidor) em paralelo, 1 job cada;
+#   • `vendor`   : integridade do bundle do Class-System;
+#   • `testes`   : `vitest run --shard=N/4`, 4 runners (4 × 4 CPUs);
+#   • `gate`     : agregador com o NOME ANTIGO ("tsc + vitest"), para que a
+#                  proteção de branch / quem espera esse check continue valendo.
+# NENHUM gate foi removido ou afrouxado: o `gate` só passa se TODOS passarem
+# (`needs` + `if: always()` + conferência explícita do resultado de cada um).
+# Motivos que continuam valendo (históricos, ver `git log -p` deste arquivo):
+#  • `npm ci` e não `npm install` — falha se o lock dessincronizar;
+#  • o `tsc -p desktop/tsconfig.json` existe porque o overlay IMPORTA de
+#    `src/utils/` e `desktop-build.yml` filtra por `paths` (não pega careRules);
+#  • `tsc -p tsconfig.server.json` cobre dinheiro/auth (`functions/`, `workers/`);
+#  • o vendor é lido do BLOB do git, não do disco (CRLF no Windows muda o hash);
+#  • não rodamos `npm run build` aqui: o `android-build.yml` já o roda na main.
+# Cache: `actions/setup-node` com `cache: npm` guarda o download do npm. Não se
+# acrescentou `actions/cache` (cache de node_modules/.vite) porque o SHA da
+# action não pôde ser conferido para a regra de "ações presas por SHA" (S-6).
 jobs:
-  gate:
-    name: tsc + vitest
+  vendor:
+    name: integridade do vendor
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 10
     steps:
-      # ACOES PRESAS POR SHA (S-6 da auditoria). Tag movel (`@v4`) e reapontavel
-      # pelo dono da action; o SHA nao e. As duas aqui sao do proprio GitHub —
-      # risco menor que o das actions de terceiro do `android-build.yml`, mas o
-      # repo passa a ter UMA regra so em vez de duas.
-      # O comentario com a versao ao lado do SHA e OBRIGATORIO: sem ele ninguem
-      # sabe o que esta preso nem como subir. Para atualizar:
-      #   curl -s https://api.github.com/repos/<owner>/<repo>/git/ref/tags/<tag>
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      # `node_modules/` JÁ NÃO É MAIS VERSIONADO — o commit `6e7aa3cd` tirou os
-      # 19.035 arquivos do rastreamento. Medido agora: `git ls-files node_modules
-      # | wc -l` -> 0. O texto anterior aqui dizia o contrário e virou mentira no
-      # dia daquele commit; está corrigido em vez de apagado porque o MOTIVO da
-      # escolha continua valendo e é o que interessa a quem lê.
-      #
-      # `npm ci` (e não `npm install`) segue sendo a escolha, agora por um motivo
-      # só, o mais forte dos dois: ele instala EXATAMENTE o que o
-      # `package-lock.json` manda e falha se o lock estiver dessincronizado do
-      # `package.json`, em vez de consertar em silêncio. É a única forma de este
-      # gate falar sobre o lockfile. Mesmo comando de `android-build.yml`.
-      # (Não commitamos nada de volta; o runner é descartável.)
-
-      # ── Repos irmãos: por que NÃO há mais step de token aqui ───────────────
-      #
-      # Até esta rodada existia aqui um step "Configurar acesso aos repos
-      # irmãos" que reescrevia `git+ssh` para HTTPS com `SIBLING_REPOS_TOKEN`,
-      # justificado por um texto longo dizendo que `class-system` resolvia por
-      # `git+ssh://git@github.com/HexerVoodoom/Class-System.git` em
-      # `package-lock.json:5502`. ESSE TEXTO DEIXOU DE SER VERDADE quando o
-      # `vendor/` entrou (ADR-002 §1): a dependência de git saiu do
-      # `package.json` e do `package-lock.json`, e o motor passou a ser um
-      # artefato COMMITADO em `vendor/class-system/index.js` — conferido pelo
-      # step de integridade logo abaixo.
-      #
-      # MEDIDO nesta máquina antes de apagar (não é dedução):
-      #   grep -c "class-system" package-lock.json          -> 0
-      #   grep -cE 'git\+ssh|git\+https|"resolved": "git' package-lock.json         -> 0
-      #   grep -cE 'git\+ssh|git\+https|"resolved": "git' desktop/package-lock.json -> 0
-      # Ou seja: NENHUMA dependência dos dois lockfiles resolve por git. O
-      # `npm ci` abaixo fala só com o registry (e com `npm.jsr.io`, via
-      # `.npmrc`). O `url.<x>.insteadOf` reescreve remoto de GIT — não tem o que
-      # reescrever, e o step era um no-op caro de ler.
-      #
-      # E o Besti-rio-? Ele TAMBÉM não passa por aqui. Quem clona os dois repos
-      # irmãos é o `sync-irmaos.yml`, uma vez por semana, e ele NÃO depende de
-      # `insteadOf`: monta a URL HTTPS autenticada na mão
-      # (`https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/...`, steps
-      # "Clonar os repos irmãos"). Logo o secret continua existindo e continua
-      # tendo dono — só que o dono é o `sync-irmaos.yml`, não este arquivo.
-      #
-      # O QUE ISTO CUSTA, declarado: se um dia voltar uma dependência de git no
-      # lock, o `npm ci` vai tentar SSH e falhar em repo privado. O conserto NÃO
-      # é ressuscitar este step — é não voltar a ter dependência de git (a
-      # decisão do ADR-002 §1). Se voltar mesmo assim, o step está no histórico.
-      - name: Install dependencies (npm ci — instala exatamente o lockfile)
-        run: npm ci
-
-      # ── ESTE STEP SUBSTITUI UM GATE QUE ESTAVA MORTO ─────────────────────
-      #
-      # O que estava aqui ate agora exigia `node_modules/class-system/package.json`
-      # e falhava com "class-system NAO instalou". Ele nao podia passar NUNCA:
-      # a dependencia de git saiu do `package.json` e do `package-lock.json`
-      # quando o `vendor/` entrou (ADR-002 §1, `docs/STATUS.md`). Conferido nesta
-      # maquina, e o comando esta colado no relatorio:
-      #   grep -c "class-system" package-lock.json  ->  0
-      #   grep -n  "class-system" package.json      ->  so o script `vendor:class-system`
-      #   ls node_modules/class-system              ->  No such file or directory
-      # Ou seja: `npm ci` instala exatamente o lock, o lock nao tem `class-system`,
-      # o arquivo nunca existe, o step sempre da exit 1 — e derruba junto os
-      # `tsc` e o `vitest` que vem DEPOIS dele, que sao o motivo de o workflow
-      # existir. Gate que sempre reprova e gate que alguem desliga.
-      #
-      # O QUE ENTRA NO LUGAR, e por que e a verificacao que importa hoje:
-      # o motor do Class-System agora entra como ARTEFATO COMMITADO em
-      # `vendor/class-system/index.js`, com procedencia declarada em
-      # `_provenance.json` (repo, ref, sha do commit irmao, bytes e sha256 do
-      # bundle). Nada no repo conferia esse sha256 — procedencia que ninguem
-      # recalcula e procedencia decorativa. Este step recalcula.
-      #
-      # 🔴 LE O BLOB DO GIT (`git show HEAD:...`), NAO O ARQUIVO DO DISCO.
-      # `core.autocrlf` transforma LF em CRLF no checkout do Windows e o arquivo
-      # do disco da OUTRO hash (medido: 232533 bytes no disco contra 226978 no
-      # blob, sha256 completamente diferente). Quem escrever isto lendo o disco
-      # cria um teste que reprova sozinho e vai ser desligado na semana seguinte.
-      # No runner ubuntu o disco bate — justamente por isso o erro passaria aqui
-      # e so apareceria na maquina do dono. Ler o blob e correto nos dois.
       - name: Integridade do vendor (sha256 do blob x _provenance.json)
         run: |
           node -e '
@@ -154,83 +82,63 @@ jobs:
             console.log("OK: o vendor commitado e exatamente o que o script gerou.");
           '
 
-      # `tsc --noEmit` cobre SÓ `src/` (`tsconfig.json > include`).
-      # O typecheck de `desktop/` é o step logo abaixo — leia o comentário dele
-      # antes de concluir que é duplicata do `desktop-build.yml`.
-      - name: Typecheck do app (npx tsc --noEmit — só src/)
-        run: npx tsc --noEmit
-
-      # ── O BURACO QUE ESTE STEP FECHA (medido, não suposto) ────────────────
-      #
-      # O `desktop/renderer` DEIXOU de reimplementar as regras de cuidado e
-      # passou a IMPORTAR do app (`desktop/renderer/src/care.ts:20-28` puxa
-      # `src/utils/careUpdaters`, `careRules`, `playerDay`, `restWindow`;
-      # `menu.ts`, `state.ts`, `sprites.ts` e os testes puxam mais). Isso é o
-      # conserto certo do footgun 9 — e, de quebra, criou um acoplamento novo:
-      # mudar assinatura em `src/utils/careRules.ts` agora pode quebrar o
-      # overlay.
-      #
-      # O que JÁ estava coberto, e por isso NÃO se repete aqui:
-      #  • os TESTES do desktop rodam no `npx vitest run` da raiz desde sempre —
-      #    `vitest.config.ts > include` lista `desktop/renderer/**/*.test.ts`.
-      #    Medido: `npx vitest run desktop/renderer` = 6 arquivos, 113 testes.
-      #    Ou seja: "não existe CI do desktop" era exagero. O buraco era menor.
-      #  • o BUILD do Electron (`desktop-build.yml`) é caro (windows-latest,
-      #    `npm install` próprio, electron-builder, publica Release) e não tem o
-      #    que fazer num PR. Continua onde está.
-      #
-      # O que faltava, e é EXATAMENTE isto: `tsc -p desktop/tsconfig.json`.
-      # Ele só rodava em `desktop-build.yml:30`, que dispara em `push: main` E
-      # com filtro de `paths` (`desktop/**`, `src/utils/sprites.ts`,
-      # `src/assets/**`). `src/utils/careRules.ts` NÃO está nessa lista — logo
-      # um commit que quebrasse a assinatura importada por `care.ts` não
-      # acendia nem no PR nem no push da main. Era invisível dos dois lados.
-      #
-      # POR QUE É BARATO: `desktop/tsconfig.json` só inclui
-      # `renderer/**/*.ts`, e a única dependência externa desses arquivos é
-      # `vitest` (`types: ["vite/client"]`), que já veio no `npm ci` da raiz.
-      # NÃO precisa de `npm install` dentro de `desktop/` — verificado com
-      # `desktop/node_modules` INEXISTENTE na máquina: resolve tudo pela raiz.
-      # Medido local: 2,4s. Sem segredo, roda em fork e em PR de fora.
-      #
-      # NOTA sobre versão: aqui roda o TypeScript da raiz (6.0.3); o
-      # `desktop-build.yml` roda o do `desktop/package.json` (^5.6.3). A
-      # divergência é aceita de propósito — este gate é o mais NOVO, então
-      # falha aqui e passa lá significa código que vai quebrar quando o desktop
-      # subir de versão. O contrário (passa aqui, falha lá) seria o problema, e
-      # o build da main continua sendo a rede para isso.
-      #
-      # A mensagem de erro é explícita porque quem abre o PR provavelmente mexeu
-      # em `src/utils/` e não faz ideia de que o overlay depende disso.
-      - name: Typecheck do overlay desktop (desktop/tsconfig.json)
+  tipos:
+    name: tsc (${{ matrix.alvo }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - alvo: app (src/)
+            cmd: npx tsc --noEmit
+          - alvo: overlay desktop
+            cmd: npx tsc -p desktop/tsconfig.json --noEmit
+          - alvo: servidor (functions/ + workers/)
+            cmd: npx tsc -p tsconfig.server.json --noEmit
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Typecheck
         run: |
-          if ! npx tsc -p desktop/tsconfig.json --noEmit; then
-            echo "::error::O typecheck do OVERLAY DESKTOP quebrou. Ele importa regras de src/utils/ (careRules, careUpdaters, playerDay, restWindow, sprites, cloudSave, types/progression) via desktop/renderer/src/. Se voce mudou assinatura/tipo em src/utils/, atualize tambem desktop/renderer/src/. Reproduza local com: npx tsc -p desktop/tsconfig.json --noEmit"
+          if ! ${{ matrix.cmd }}; then
+            echo "::error::Typecheck '${{ matrix.alvo }}' quebrou. Reproduza local com: ${{ matrix.cmd }}. (Overlay: ele importa regras de src/utils/ via desktop/renderer/src/ — se mudou assinatura/tipo lá, atualize também o overlay.)"
             exit 1
           fi
 
-      # Servidor: `functions/` e `workers/` são JS e NÃO entravam em typecheck
-      # nenhum — inclusive `_entitlements.js`/`_billing.js` (dinheiro) e
-      # `_auth.js` (autorização), onde a auditoria do run 01 achou defeito real.
-      # `tsconfig.server.json` liga `checkJs` e tipa pelo JSDoc que já existia.
-      # FORA, de propósito e declarado lá: `scripts/` (ferramenta de build, 4
-      # erros abertos), `**/*.test.js` e `desktop/`.
-      - name: Typecheck do servidor (functions/ + workers/)
-        run: npx tsc -p tsconfig.server.json --noEmit
+  testes:
+    name: vitest (shard ${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Testes (npx vitest run --shard)
+        run: npx vitest run --shard=${{ matrix.shard }}/4
 
-      - name: Testes (npx vitest run)
-        run: npx vitest run
-
-      # NÃO rodamos `npm run build` aqui de propósito, e o motivo não é tempo:
-      # é duplicação. `npm run build` = `vite build` + conversão de ~80 PNG→WebP
-      # + `wrangler pages functions build`, e o `android-build.yml:25` JÁ roda
-      # esse mesmo comando em TODO push na `main` — o caminho por onde o código
-      # realmente entra em produção aqui. Somar um segundo build na main custaria
-      # minuto de Actions para reprovar as mesmas coisas duas vezes.
-      #
-      # O buraco que sobra é honesto e está declarado: em PULL REQUEST o build
-      # não roda (o android-build só dispara em push). Quebra que só aparece no
-      # `vite build` — import quebrado que o `tsc` tolera, asset faltando,
-      # `wrangler` — passa neste gate e só acende no push da main.
-      # Se o fluxo passar a ser de PR de verdade, o conserto é acrescentar
-      # `npm run build` num job à parte, não afrouxar este.
+  gate:
+    name: tsc + vitest
+    if: always()
+    needs: [vendor, tipos, testes]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Todos os gates passaram?
+        run: |
+          echo "vendor=${{ needs.vendor.result }} tipos=${{ needs.tipos.result }} testes=${{ needs.testes.result }}"
+          if [ "${{ needs.vendor.result }}" != "success" ] || [ "${{ needs.tipos.result }}" != "success" ] || [ "${{ needs.testes.result }}" != "success" ]; then
+            echo "::error::Algum gate falhou ou foi cancelado (veja os jobs acima)."
+            exit 1
+          fi

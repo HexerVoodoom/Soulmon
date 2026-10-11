@@ -7,7 +7,10 @@ import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
 import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
-import { pushProfile } from '../utils/community';
+// `community.ts` (cliente do Torneio/Guilda) só serve DEPOIS do primeiro paint e
+// só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
+type PushProfileArg = Parameters<typeof import('../utils/community').pushProfile>[0];
+const pushProfile = (p: PushProfileArg) => import('../utils/community').then(m => m.pushProfile(p));
 import { DEMO_CHARACTER_IDS, type DemoCharacterId } from '../utils/sprites';
 import { isDemoMode } from '../utils/demoMode';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
