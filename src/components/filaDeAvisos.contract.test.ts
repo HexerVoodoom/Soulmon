@@ -248,8 +248,7 @@ describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez
     expect(app).toContain('<BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]}');
   });
   it('espera o Level Up sair e só aparece em tela calma (Home/Mapa); o encaixe está declarado', () => {
-    expect(app).toContain('const levelUpOpen = false;');
-    expect(app).toContain('TODO(LevelUpOverlay)');
+    expect(app).toContain('const levelUpOpen = Boolean(levelUpEvent);');
     expect(app).toContain("calmView: currentView === 'home' || currentView === 'map'");
   });
   it('"Depois" e "Ir lá" gravam o mesmo visto, dentro de um updater puro; "Ir lá" abre a folha do lote', () => {
@@ -259,7 +258,10 @@ describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez
   });
   it('save sem o campo não dispara nada (undefined → sem pendente)', () => {
     expect(app).toContain('gameState.buildingIntrosSeen === undefined ? []');
+  });
+});
 
+// ---------------------------------------------------------------------------
 // O LEVEL UP (11/10/2026): intersticial NOVO, entre o marco do Bosque e o sonho. Monta UMA vez, só quando é a
 // vez dele, lazy; a saída é o toque (nada de timer) e z 300 fica acima da fila (200).
 // ---------------------------------------------------------------------------
