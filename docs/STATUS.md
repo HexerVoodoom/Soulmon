@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Manual sincronizado com `f3acead1` (rodada final de lançamento)
+>
+> - **Docs tocados (delta `e71061b8..f3acead1`, 114 commits):** `02-REGRAS-DE-NEGOCIO.md` (§63 nova + D41–D46), `07-DADOS-E-SAVE.md` (§2.12-B, 13 campos novos do save), `03`/`05`/`06-REFERENCIA/*`/`08`/`10` (carimbo e passagens tocadas), `00-MAPA.md` (docs novos). Módulos novos já tinham entrada; `docsManual.contract` verde.
+> - **Divergências novas (D41–D46):** `CLAUDE.md` descrevia o dia completo/energia/comida/masmorra/rebirth/prontos/GOAL-STRUGGLE como antes de 11/10 — **fechadas na mesma rodada** (linhas do `CLAUDE.md` editadas, mínimo).
+> - **Decisões abertas consolidadas** em [`PERGUNTAS-DO-DONO.md`](PERGUNTAS-DO-DONO.md) (seção "Rodada de lançamento 11/10/2026") e o que depende do dono em [`LANCAMENTO-CHECKLIST.md`](LANCAMENTO-CHECKLIST.md). [`AUDITORIA-SEGURANCA-LANCAMENTO.md`](AUDITORIA-SEGURANCA-LANCAMENTO.md) reconferida: nada novo.
+>
 > ## 11/10/2026 — Gauge de evolução substitui o "dia completo"; energia ×2 (decisão do dono)
 >
 > - **Novo dono:** `src/utils/evolutionGauge.ts` — peso de esforço creditado na virada, teto diário = `required`, nunca decresce, zera ao evoluir. Metas `FORM_REQUIREMENTS[…].gauge` 30/45/60/60 (270 = permanência do Ultra). Campo novo no save `evolutionPoints` (migra de `perfectDays` na hidratação, idempotente; fuzz2 → 120).
