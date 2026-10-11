@@ -45,6 +45,11 @@ import { join } from 'node:path';
 import {
   ALVO_LUFS_M,
   ALVO_TRILHA_LUFS_S,
+  ALVO_MASTERIZACAO_MUSICA_LUFS_S,
+  GANHO_MUSICA_DB,
+  OFFSET_MUSICA_EM_COMBATE_DB,
+  TRIM_FAIXA_ARENA_DB,
+  TRIM_TRILHA_POR_CAMADAS_DB,
   CATEGORIA_DO_SOM,
   DEGRAU_DB,
   OFFSET_MAX_DB,
@@ -170,9 +175,30 @@ describe('a escada: teto S3, ordem e degrau derivado', () => {
     expect([...ORDEM_DA_ESCADA].sort()).toEqual(Object.keys(ALVO_LUFS_M).sort());
   });
 
-  it('a trilha fica ABAIXO do último degrau de SFX: ela é contínua e não pode disputar', () => {
-    const piso = ALVO_LUFS_M[ORDEM_DA_ESCADA[ORDEM_DA_ESCADA.length - 1]];
-    expect(ALVO_TRILHA_LUFS_S).toBeLessThan(piso);
+  it('a música fica no MÁXIMO no degrau de Conclusão (relaxado de "abaixo do Arcade" a pedido do dono, 11/10/2026)', () => {
+    expect(ALVO_TRILHA_LUFS_S).toBeLessThanOrEqual(ALVO_LUFS_M.conclusao);
+    expect(ALVO_TRILHA_LUFS_S).toBeLessThanOrEqual(TETO_LUFS_INTEGRADO);
+  });
+
+  it('em combate a música desce ao degrau do Arcade: o golpe (o que mais repete) não é coberto', () => {
+    expect(ALVO_TRILHA_LUFS_S + OFFSET_MUSICA_EM_COMBATE_DB).toBeLessThanOrEqual(ALVO_LUFS_M.arcade);
+  });
+
+  it('o ganho de reprodução da música é DERIVADO (alvo − masterização) e cabe no teto de true peak', () => {
+    expect(GANHO_MUSICA_DB).toBeCloseTo(ALVO_TRILHA_LUFS_S - ALVO_MASTERIZACAO_MUSICA_LUFS_S, 12);
+    expect(GANHO_MUSICA_DB).toBeGreaterThan(0); // o pedido foi "mais alto"
+    // picos medidos (ffmpeg, 11/10/2026) ANTES de qualquer ganho: tema −15 dBFS; soma das camadas −14,1; arena (com a percussão) −5,2.
+    // Com o trim e o ganho de reprodução, cada voz tem de ficar ≤ teto S3 (o limitador do master é rede, não plano).
+    expect(-15 + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(-14.1 + TRIM_TRILHA_POR_CAMADAS_DB[2] + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(-5.2 + TRIM_TRILHA_POR_CAMADAS_DB[2] + TRIM_FAIXA_ARENA_DB + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+  });
+
+  it('a trilha toca no MESMO nível da música-tema: o trim leva a soma ao nível de masterização (o antigo −2,024 deixava −4,6 dB abaixo)', () => {
+    // medido: soma das 2 camadas sem trim = −30,6 LUFS-S mediano; com o trim vigente tem de dar a referência (±0,1)
+    expect(-30.6 + TRIM_TRILHA_POR_CAMADAS_DB[2]).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
+    // arena sem trim = −24,8
+    expect(-24.8 + TRIM_TRILHA_POR_CAMADAS_DB[2] + TRIM_FAIXA_ARENA_DB).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
   });
 
   it('o teto de true peak é o do S3, e a tolerância é a do §3.4', () => {
@@ -189,9 +215,14 @@ describe('a escada: teto S3, ordem e degrau derivado', () => {
 /* ── Dono único: nenhum número da escada escrito à mão fora daqui ────────── */
 
 describe('footgun 9: a política não é copiada em lugar nenhum', () => {
-  const alvos = [...new Set(Object.values(ALVO_LUFS_M)), ALVO_TRILHA_LUFS_S];
+  const alvos = [...new Set(Object.values(ALVO_LUFS_M)), ALVO_TRILHA_LUFS_S, ALVO_MASTERIZACAO_MUSICA_LUFS_S, OFFSET_MUSICA_EM_COMBATE_DB, TRIM_FAIXA_ARENA_DB];
 
-  it.each([['sounds.ts', FONTE_SOUNDS], ['audioBus.ts', FONTE_BUS]])(
+  it.each([
+    ['sounds.ts', FONTE_SOUNDS], ['audioBus.ts', FONTE_BUS],
+    // 11/10/2026: os módulos de MÚSICA (ganho de reprodução, combate, faixa da Arena) importam da política, nunca a repetem.
+    ['trilha.ts', join(__dirname, 'trilha.ts')], ['tema.ts', join(__dirname, 'tema.ts')],
+    ['musica.ts', join(__dirname, 'musica.ts')], ['trilhaArena.ts', join(__dirname, 'trilhaArena.ts')],
+  ])(
     '%s não redeclara alvo da escada',
     (nome, caminho) => {
       // Só o CÓDIGO: os comentários citam os números de propósito, e é assim

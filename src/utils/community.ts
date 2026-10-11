@@ -576,6 +576,47 @@ export const donateToGuild = (id: string, bits: number, tz?: PlayerDayAnchor) =>
 export const setGuildSlot = (id: string, item: string | null, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildSlot', { method: 'POST', body: { id, dayKey: dia(tz), item } }).then(viewOf);
 
+/**
+ * A GUERRA de guilda 4×4 (PR4): o estado como o cliente o conhece. Só o desfecho por confronto e o nome (já higienizado)
+ * da guilda rival — nunca saveId, estágio, HP nem dano de ninguém (o tipo não tem onde carregar).
+ */
+export type WarOutcome = 'win' | 'draw' | 'loss';
+export interface GuildWar {
+  /** Entrou na fila do tamanho `size` (esperando uma guilda do MESMO tamanho). */
+  waiting: { size: number } | null;
+  last: { day: string; outcome: WarOutcome; duels: WarOutcome[]; size: number; enemy: string } | null;
+}
+export type WarSeekState = 'small' | 'already' | 'waiting' | 'done';
+
+export function sanitizeWar(raw: unknown): GuildWar {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const ok = (v: unknown): v is WarOutcome => v === 'win' || v === 'draw' || v === 'loss';
+  const w = (r.waiting && typeof r.waiting === 'object' ? r.waiting : null) as Record<string, unknown> | null;
+  const l = (r.last && typeof r.last === 'object' ? r.last : null) as Record<string, unknown> | null;
+  return {
+    waiting: w && typeof w.size === 'number' && Number.isInteger(w.size) && w.size >= 2 && w.size <= 4 ? { size: w.size } : null,
+    last: l && ok(l.outcome) && typeof l.day === 'string'
+      ? {
+        day: str(l.day, 20), outcome: l.outcome,
+        duels: (Array.isArray(l.duels) ? l.duels : []).filter(ok).slice(0, 4),
+        size: typeof l.size === 'number' ? Math.min(4, Math.max(0, Math.floor(l.size))) : 0,
+        enemy: str(l.enemy, 24),
+      }
+      : null,
+  };
+}
+
+/** O estado da guerra da SUA guilda (2 leituras no servidor; não vem na vista principal). */
+export const getGuildWar = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ war: unknown }>('guildWar', { params: { id, dayKey: dia(tz) } }).then(r => sanitizeWar(r.war));
+
+/** Procurar uma guilda rival do MESMO tamanho. O servidor monta os esquadrões, pareia e resolve; o corpo não decide nada. */
+export const seekGuildWar = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ state?: unknown; war: unknown }>('guildWarSeek', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(r => ({
+    state: (['small', 'already', 'waiting', 'done'] as const).find(x => x === r.state) ?? 'waiting',
+    war: sanitizeWar(r.war),
+  }));
+
 /** O que há para colher: semanas com direito (`pending`), os cenários já liberados e a peça da maré. */
 export interface GuildRewards {
   pending: Array<{ week: string; outcome: 'dissipada' | 'recuou'; emblems: number }>;

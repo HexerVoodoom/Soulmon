@@ -51,16 +51,19 @@ describe('ritual — o passo como aparelho (D-Q1…D-Q3)', () => {
   beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
   afterEach(() => { vi.useRealTimers(); });
 
-  it('D-Q1: a barra é o `.meter` SIS-07 (kit) a 8px, `role=progressbar` "Ritual progress"', () => {
-    writeOracleDraft(rascunho(1));
+  it('11/10/2026: o progresso são TRÊS PONTOS (um por bloco), `role=progressbar` com valuetext, sem N/M', () => {
+    writeOracleDraft(rascunho(6));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     const bar = screen.getByRole('progressbar', { name: 'Ritual progress' });
-    expect(bar.className).toContain('sm2-kit-meter');
-    expect(bar.className).toContain('sm2-ora-meter');
-    expect(bar.querySelector('.sm2-kit-meter-fill')).toBeTruthy();
-    // sem estilo inline de trilho: a peça é a do kit, não um `div` próprio
-    expect(bar.style.height).toBe('');
-    expect(Number(bar.getAttribute('aria-valuenow'))).toBeGreaterThan(0);
+    expect(bar.className).toContain('sm2-ora-dots');
+    const dots = bar.querySelectorAll('.sm2-ora-dot');
+    expect(dots.length).toBe(3);
+    expect(Array.from(dots).map(d => d.getAttribute('data-dot'))).toEqual(['now', 'next', 'next']);
+    expect(bar.getAttribute('aria-valuenow')).toBe('1');
+    expect(bar.getAttribute('aria-valuemax')).toBe('3');
+    expect(bar.getAttribute('aria-valuetext')).toBe('Part 1 of 3');
+    expect(bar.querySelector('.sm2-kit-meter-fill')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
 
   it('D-Q2: o voltar é `arrow_back` 24 pelado num alvo 44 com o rótulo só no nome acessível; "Continue" sem seta e inerte por SUPERFÍCIE', () => {
@@ -133,7 +136,7 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     expect(on.style.color).toBe('var(--sm2-primary-ink)');
     expect(document.body.innerHTML).not.toContain('var(--sm2-on-primary)');
     // a dica é de ORIGEM (o hint da pergunta), abaixo das opções
-    expect(document.body.textContent).toContain('Question 1 of 6');
+    expect(document.body.textContent).toContain('Pick the one that sounds most like you.');
   });
 
   // ⚰️ Este teste afirmava que o voltar da 1ª pergunta ia para "Qual sua
@@ -158,19 +161,19 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     fireEvent.click(document.querySelector('button[aria-pressed]')!);
     act(() => { vi.advanceTimersByTime(200); });
     expect(screen.queryByText('Want to sharpen the reading?')).toBeNull();
-    expect(document.body.textContent).toContain(`Question 1 of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
 
   it('o teste de 20 itens usa o MESMO aparelho tonal, com voltar pelado do 1º item (→ 6ª do ritual)', () => {
     writeOracleDraft(rascunho(DEEP_START));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    expect(document.body.textContent).toContain(`Question 1 of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     const opts = [...document.querySelectorAll('button[aria-pressed]')] as HTMLButtonElement[];
     expect(opts.length).toBeGreaterThanOrEqual(2);
     for (const o of opts) expect(o.style.border).toBe('1px solid var(--sm2-muted)');
     expect(btn('Back').className).toContain('sm2-ora-back');
     fireEvent.click(btn('Back'));
-    expect(document.body.textContent).toContain(`Question ${ORACLE_QUESTIONS.length} of ${ORACLE_QUESTIONS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
 
   it('a tela 12 (rascunho antigo parado na bifurcação, ou erro de geração) tem UM primário e nunca gera com pergunta faltando', () => {
@@ -183,7 +186,7 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     expect(document.body.innerHTML).not.toContain('danger');
     // o rascunho não tem as 26 respostas: o toque leva à primeira pendente
     fireEvent.click(revelar);
-    expect(document.body.textContent).toContain(`Question 1 of ${ORACLE_QUESTIONS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
 });
 
@@ -214,8 +217,8 @@ describe('Gerando — a espera é ritual (D-Q6, D-Q11, R1, R3)', () => {
     expect(status.querySelector('.sm2-ora-spin .sm2-icon')?.textContent).toBe('sync');
     expect(status.querySelector('[data-sm-spin]')).toBeNull();
     expect(document.querySelector('img[src*="mascot-raven"]')).toBeNull();
-    // a barra segue viva na espera (GENERATING < lastStep)
-    expect(screen.getByRole('progressbar', { name: 'Ritual progress' })).toBeTruthy();
+    // fora dos três blocos não há pontos
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
   it('o pulso do casulo é por transform em steps(2) e para em reduced-motion; o sync idem (CSS)', async () => {
@@ -294,7 +297,7 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
     await esperarRevealDemo();
   }
 
-  it('o grátis vê a leitura das 6 com a criatura em SILHUETA (mask-image), sem Born, com "You said…"; a barra a 94 %', async () => {
+  it('o grátis vê a leitura das 6 com a criatura em SILHUETA (mask-image), sem Born, com "You said…"', async () => {
     await ateOReveal();
     const card = screen.getByRole('region', { name: 'Birth card' });
     const sil = card.querySelector('[data-silhouette]') as HTMLElement;
@@ -304,10 +307,8 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
     expect(card.querySelector('[role="img"]')?.getAttribute('aria-label')).toMatch(/, silhouette$/);
     expect(card.textContent).not.toContain('Born');
     expect(card.textContent).toContain('You said');
-    // A barra mede a ORDEM do caminho grátis (01/10/2026): nome + 6 + 20 +
-    // 4 metas/ponto de partida + escolha = 32 telas antes; o reveal demo é a
-    // 33ª de 35 (depois dele, personagem e batismo) → 94 %.
-    expect(screen.getByRole('progressbar', { name: 'Ritual progress' }).getAttribute('aria-valuenow')).toBe('94');
+    // fora dos três blocos o reveal não mostra pontos
+    expect(screen.queryByRole('progressbar')).toBeNull();
     expect(localStorage.getItem('soulmon-oracle-draft')).toBeNull();
   });
 
@@ -345,11 +346,11 @@ describe('Upgrade — o mesmo ritual sem intro e sem cadastro', () => {
   beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
   afterEach(() => { vi.useRealTimers(); });
 
-  it('abre no passo 1 com a barra a 3 %, o voltar pelado sai do ritual (onCancel)', () => {
+  it('abre no passo 1 sem pontos, o voltar pelado sai do ritual (onCancel)', () => {
     const cancel = vi.fn();
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} mode="upgrade" onRevealed={() => {}} onCancel={cancel} />);
     expect(screen.getByText('What is your full name?')).toBeTruthy();
-    expect(screen.getByRole('progressbar', { name: 'Ritual progress' }).getAttribute('aria-valuenow')).toBe('3');
+    expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByText('Before we start')).toBeNull();
     const back = btn('Back');
     expect(back.className).toContain('sm2-ora-back');

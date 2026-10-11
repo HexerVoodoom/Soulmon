@@ -8,13 +8,15 @@ import { fileURLToPath } from 'node:url';
 
 describe('DungeonGame — o portão dos andares altos está ligado na tela', () => {
   const src = readFileSync(fileURLToPath(new URL('./DungeonGame.tsx', import.meta.url)), 'utf8');
-  it('o botão de descer depende de masmorraFloorOpen, e o texto do portão vem de gateLine', () => {
-    expect(src).toMatch(/masmorraFloorOpen\(floor \+ 1/);
-    expect(src).toMatch(/disabled=\{!proximoAndarAberto\}/);
+  // Descida idle (08/10/2026): não há botão de "próximo andar"; o portão é checado ao limpar o andar e,
+  // fechado, a descida TERMINA ali (sem cobrança), com o texto do portão vindo de gateLine.
+  it('ao limpar o andar o portão do seguinte é consultado em masmorraFloorOpen, e o texto vem de gateLine', () => {
+    expect(src).toMatch(/floorOpen\(floor \+ 1\)/);
+    expect(src).toMatch(/masmorraFloorOpen\(f, bondLevelFor/);
     expect(src).toMatch(/gateLine\('masmorraAlto'/);
   });
-  it('nextFloor recusa quando fechado (defesa além do disabled)', () => {
-    expect(src).toMatch(/if \(!proximoAndarAberto\) return;/);
+  it('portão fechado encerra a descida (endDescent selado) em vez de entrar no andar', () => {
+    expect(src).toMatch(/if \(!floorOpen\(floor \+ 1\)\) \{ endDescent\('sealed'\); return; \}/);
   });
   it('sem Provider (demo, testes) nada fecha: o portão só vale com o Vínculo do save', () => {
     expect(src).toMatch(/!gs \|\| masmorraFloorOpen/);

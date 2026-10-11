@@ -435,3 +435,113 @@ Se o dono quiser arte própria, o pedido de geração (lote `arte-gerador famili
 - **Prédio isométrico 300², alfa real**, no mesmo pós dos `lotes-v2`: um estúdio de escrita (casinha-tinteiro com pena / escrivaninha à janela / pergaminhos), **telhado e paredes em tons QUENTES** (ocre, âmbar, madeira clara, marfim) com detalhe turquesa pequeno para manter a paleta do Soulmon.
 - **Contraste é o critério:** a clareira de baixo da Exploração é verde-teal escura (`bg-exploracao.png`); o prédio não pode ter verde/teal dominante nem valor escuro. Conferir sobre o fundo (folha de contato) antes de instalar.
 - Sem texto, sem personagem, base assentada em chão de terra batida (sem tablado), chão a 74%.
+
+## 17. Sombras do Pesadelo — Solmons como obstáculos (pedido do dono, 11/10/2026)
+
+No **Pesadelo** da Corrida com obstáculos (`DinoGame.tsx`, modo "Nightmare: shadow"), os obstáculos viram **sombras de Solmons específicos: silhueta preta, só os olhos de luz**. Visual apenas — física, caixa de colisão (`OBSTACLE_TIERS` › `hit`/`top`), placar e recompensas não mudam. Higgsfield/CLI de arte **não estava disponível** nesta sessão: hoje roda um **placeholder** (o sprite da própria linha pintado de preto em tempo de desenho + dois olhos acesos — `src/utils/nightmareShadows.ts`). Este é o **pedido de geração** para a `squad-arte` (`arte-gerador familia=criatura`, 12 ativos × ~3 seeds ≈ 36 imagens, estimativa).
+
+### 17.1 Entrega (drop-in)
+
+| | |
+|---|---|
+| Destino | `src/assets/soulmon/dino/dino-shadow-<id>.png` (ids abaixo) + registrar em `SHADOW_ART` (`src/utils/nightmareShadows.ts`) — **o placeholder some sozinho** quando o id aparece ali |
+| Formato | PNG **128×128**, **alfa real** (sem xadrez assado), alfa binário (pixel art), mesma célula e mesmas proporções de `dino-obstacle-*` |
+| Caixa opaca | **igual à do obstáculo que a sombra substitui** (coluna `hit`/`top` da tabela): a forma tem de caber nela — o que se vê é o que acerta. Conferir sobre a folha de contato com a caixa desenhada |
+| Orientação | a criatura **encara a ESQUERDA** (o obstáculo vem da direita, de frente para o pet) — o placeholder espelha em código; a arte real já sai virada |
+
+### 17.2 Regras de cor (a parte que torna a arte "sombra")
+
+- **Corpo: preto quase puro** `#05080C`, **sem nenhum detalhe interno claro** (sem boca, sem dentes, sem marcas). Contorno externo de **1 px** em roxo-azulado escuro `#3B2A7A` só para separar do fundo escuro do Pesadelo (é o mesmo halo `#763bff` que o pet-sombra usa).
+- **Os ÚNICOS pixels claros são os olhos**: dois blocos de 2–3 px em turquesa-claro `#A9FBFF` com 1 px de brilho `#5EE7FF` ao redor. **Nada além dos olhos acende.** Sem magenta, sem rosa, sem vermelho, sem roxo claro.
+- A silhueta mantém o **gesto reconhecível da criatura** (orelhas, cauda, asas, chifres) — é "a sombra DESTE Solmon", não um blob.
+
+### 17.3 Os 12 slots (um Solmon por slot)
+
+| id | substitui | criatura (linha · estágio) | pose / forma pedida | `hit` · `top` (frações de 128) |
+|---|---|---|---|---|
+| `dino-shadow-1` | `dino-obstacle-1` | Lumel · rookie | agachada, orelhas baixas, corpo largo | [4,124] · 1 |
+| `dino-shadow-1b` | `dino-obstacle-1b` | Serah · rookie | **só a metade de baixo** da célula: rastejando rente ao chão | [1,127] · 65 |
+| `dino-shadow-1c` | `dino-obstacle-1c` | Igni · rookie | sentada, cauda enrolada à frente | [6,122] · 1 |
+| `dino-shadow-2` | `dino-obstacle-2` | Ignar · champion | em quatro apoios, ombros altos | [6,121] · 1 |
+| `dino-shadow-2b` | `dino-obstacle-2b` | Pyraka (`kaelen`) · champion | baixa e comprida (corpo alongado) | [1,127] · 15 |
+| `dino-shadow-2c` | `dino-obstacle-2c` | Nautil (`nautilu`) · champion | casca/concha arredondada, tentáculos curtos | [1,127] · 4 |
+| `dino-shadow-3` | `dino-obstacle-3` | Akashai (`orrin`) · ultimate | **coluna alta e estreita** (de pé, esguia) | [40,88] · 1 |
+| `dino-shadow-3b` | `dino-obstacle-3b` | Nimbrata (`thalindra`) · ultimate | coluna alta, capa/cauda caindo reta | [38,89] · 1 |
+| `dino-shadow-3c` | `dino-obstacle-3c` | Astria (`astrase`) · ultimate | coluna alta, halo reduzido a contorno | [41,86] · 1 |
+| `dino-shadow-4` | `dino-obstacle-4` | Lumel · mega | **voadora**, asas abertas, na metade de cima | [1,127] · 38 |
+| `dino-shadow-4b` | `dino-obstacle-4b` | Serah · mega | voadora baixa (metade de baixo da célula) | [1,127] · 66 |
+| `dino-shadow-4c` | `dino-obstacle-4c` | Astria · mega | voadora média, asas em arco | [1,127] · 45 |
+
+### 17.4 Prompts (consistência com o estilo)
+
+**Regra do projeto (não violar):** o **corpo da criatura vem do oráculo** — gerar com `generateOracleWithFamilies` → `composeSpritePrompts` (forma e linha da tabela acima, semente fixa por slot), **nas duas variantes** (`imagePrompt` e `imagePromptFallback`, a recusa do provedor degrada sozinha) e **mantendo a cláusula `Do not copy any existing franchise character`**. Escrever o prompt de criatura à mão está proibido. O que o **pacote** acrescenta é o **sufixo de sombra**, igual para os 12 (cole depois do prompt do oráculo):
+
+```
+SHADOW TREATMENT (override all colors above): render ONLY the creature's silhouette as a flat solid near-black fill #05080C,
+with absolutely no interior detail, no highlights, no shading, no mouth, no teeth, no markings. A 1-pixel dark
+blue-violet outline #3B2A7A around the outside edge only. The ONLY light pixels in the whole image are the two eyes:
+two small 2-3 pixel blocks of pale cyan #A9FBFF, each with a 1-pixel cyan glow #5EE7FF around it. Nothing else glows.
+Pixel art, crisp hard edges, no anti-aliasing, no gradients, no blur, no text, transparent background,
+128x128, the creature faces LEFT, feet/ground contact at the bottom edge unless it is a flying pose.
+No magenta, pink, red or light purple anywhere.
+```
+
+Sufixo de pose por linha da tabela: `POSE: <pose / forma pedida>; keep the silhouette inside the box: <hit> of 128 horizontally, top margin <top>/128.`
+
+**Negative (todos):** `interior detail, shading, highlights, colored body, glowing body, glowing mouth, extra glowing parts, red, magenta, pink, light purple, text, watermark, border, frame, checkerboard, photographic`.
+
+### 17.5 Conferência (`arte-conferente`, bloqueante)
+
+1. Alfa real, 128², alfa binário. 2. **Único pixel claro = os olhos** (varredura: nenhum pixel com luminância > limiar fora das duas caixas dos olhos). 3. Silhueta **dentro da caixa de colisão** da tabela (sobrepor `hit`/`top`). 4. Sobre o fundo do Pesadelo (`minigame-dino`) a forma **lê** com o halo. 5. Legível a **44–56 px** de lado (o tamanho em jogo). 6. Sem magenta/rosa/vermelho/roxo claro. 7. Folha de contato para o checkpoint do dono.
+
+### 17.6 Depois de instalar
+
+Acrescentar os 12 ids em `SHADOW_ART` e **bump `CACHE_VERSION`** em `public/sw.js` (abrir o arquivo e somar 1). O teste `nightmareShadows.test.ts` hoje exige `SHADOW_ART` vazio ("até a leva entrar") — trocar por "todo id declarado tem PNG" junto da instalação.
+## 16. Level up do Vínculo — pedido do dono em 11/10/2026
+
+O display de LEVEL UP (`src/components/LevelUpOverlay.tsx`) funciona **hoje sem arte nova**: a palavra
+é texto na voz do aparelho (Silkscreen), a luz é o canvas da cerimônia de evolução, e o chevron triplo
+`fx/gain-levelup.png` (96², F2, **já instalado** — gate "Existe?": não regerar) ao lado do número. Os
+**três slots abaixo são opcionais**: instalar o PNG em `src/assets/soulmon/levelup/` liga o slot sozinho
+(`utils/levelUpArt.ts`, glob eager) — nenhuma linha de código muda; o arquivo ausente ou que falha ao
+carregar cai no procedural. Tudo mora **DENTRO do vidro** do visor (regra-mãe; artboard = o vidro 340×340
+do overlay, `data-lvup-glass`), nunca solto sobre o véu escuro. **Bloqueio: crédito/assinatura do
+Higgsfield (do dono)** — não há CLI nem credencial neste ambiente; pacote pronto para o `arte-gerador`
+(`familia=fx`, lote de 3 peças) rodar quando houver crédito. Pasta de entrega: `_gemini_out/fx-<AAAAMMDD>-levelup/`.
+Instalação, destino e conferência: `src/assets/soulmon/levelup/INSTALAR.md`.
+
+| id | peça | arquivo final | nativo (exibido) | fundo / alfa | uso |
+|---|---|---|---|---|---|
+| LU1 | palavra **LEVEL UP** | `levelup-banner.png` | 512×128 (exibido a 256 = 0,5×) | alfa real (gerar sobre `#00FF00`, recortar por chroma-key) | topo do vidro, acima do pet |
+| LU2 | burst de raios | `levelup-burst.png` | 680×680 (exibido a 340 = 0,5×) | alfa real (idem) | atrás de tudo no vidro; gira devagar (24 s) — tem de ser simétrico por rotação, SEM texto |
+| LU3 | moldura do número | `levelup-frame.png` | 320×128 (exibido ~160×64 = 0,5×, esticado `fill`) | alfa real (idem) | atrás do "LV 12"; miolo vazio e liso (o número em cima é texto); bordas simples e **repetíveis** (a peça é esticada) |
+
+**Regras que o conferente reprova:** paleta do app — petróleo `#0E2E2E`/`#123232`, ciano `#6EFFFB`,
+tinta `#E9F5F2`, cobre `#C98B4B`/`#8A5A2B`, ouro `#D9A05B`, contorno quase-preto `#061414`;
+**nenhum magenta, roxo, violeta nem rosa** (`r > g+40 && b > g+40` = 0); pixel chapado com borda
+aliased, **sem blur, sem brilho suave, sem sombra projetada, sem gradiente, sem pixel semitransparente**
+(o brilho é feito de pixels duros); sem chão (não é cenário, não há linha de 74%); sem criatura, sem
+personagem de terceiro, sem marca de franquia.
+
+**Blocos de estilo** — colar o [SPRITE] da §1 e acrescentar a linha da peça. Peça única: fundo
+**verde chapado `#00FF00`** (nunca pedir "transparent PNG"); recortar com `chroma-key.mjs` e conferir o
+alfa real (sem xadrez assado).
+
+**LU1 — banner (texto é o ASSUNTO; é a ÚNICA peça do pacote em que "no text" não vale):**
+```
+[SPRITE] A single horizontal pixel-art title banner, canvas 512x128, reading exactly the two words "LEVEL UP" in chunky 16-bit block letters (every letter clearly legible, evenly spaced, no extra characters, no other words). Letters in aged gold #D9A05B with a lighter top edge #F0C987 and copper-bronze #8A5A2B underside shading, each letter outlined 2px near-black #061414; a thin carved copper rule above and below the word, with tiny circuit-trace notches at both ends. Flat colors, hard aliased edges. Background SOLID PURE GREEN #00FF00 only, nothing else behind it. NO glow, NO gradient, NO drop shadow, NO purple, NO pink, NO magenta.
+```
+**LU2 — burst:**
+```
+[SPRITE] A single radial burst of light rays, canvas 680x680, perfectly symmetrical around the exact center, 12 long tapering pixel-art rays alternating neon cyan #6EFFFB and pale ink #E9F5F2, with 12 shorter rays of aged gold #D9A05B between them; the center is empty (a clean 140px circle left EMPTY for a creature to sit on) and the ray tips fade by breaking into a few separated single pixels, never by transparency. Hard aliased edges, 1px near-black #061414 outline only on the longest rays. No text, no letters, no creature, no ground. Background SOLID PURE GREEN #00FF00 only. NO soft glow, NO gradient, NO blur, NO purple, NO pink, NO magenta.
+```
+**LU3 — moldura do número:**
+```
+[SPRITE] A single horizontal pixel-art plaque frame, canvas 320x128, an EMPTY rounded-rectangle frame made of carved teal stone #123232 with an aged copper-bronze #C98B4B border 6px thick, small cyan #6EFFFB circuit-trace notches at the four corners and two tiny leaf tips curling over the top edge; the INSIDE is a flat empty dark teal #0E2E2E rectangle with no content (numbers are drawn later). Hard aliased edges, 1px near-black #061414 outline. No text, no numbers, no creature. Background SOLID PURE GREEN #00FF00 only. NO glow, NO gradient, NO drop shadow, NO purple, NO pink, NO magenta.
+```
+**Aceite (arte-conferente):** alfa real; palavra legível e grafada `LEVEL UP` (LU1 — IA erra letra:
+reprovou, regera; o procedural cobre o intervalo); LU2 simétrico por rotação de 30° e miolo vazio;
+LU3 com miolo liso; folha de contato no vidro de 340² com o sprite do pet a 128 no centro; dono vê o
+recorte antes de instalar. **Decisão do dono em aberto:** o banner é em inglês ("LEVEL UP") nos dois
+idiomas — termo universal de jogo, mas a regra do idioma pede o par PT; se quiser "NOVO NÍVEL" no PT,
+é uma 4ª peça (LU1-PT) e uma linha em `LevelUpOverlay`.

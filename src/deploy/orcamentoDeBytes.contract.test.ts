@@ -128,6 +128,18 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // da primeira abertura/toggle no `App` (`notificationPermission.ts`), o menu de missões em Hoje/Esta semana, o selo de nível e
   // o `CompanionHUD`/Mochila com materiais, o `pendingPoopEvent` e o glifo `backpack`. A luz da evolução (`EvolutionLight`,
   // canvas) e a tela do Soulsmith ficam atrás de `lazy`; o PNG do sun burst saiu.
+  // 11/10/2026: 607_559 → 621_108 (+13,5 KB). A `main` já estava ACIMA da folga antes da descida idle da masmorra: o
+  // `dist/` commitado da `main` (b9bd2b1e6 + 89e0e7b71) tem a entrada em 622_856 B. Veio da Oficina de foco e das
+  // expedições (`focusExpedition.ts` — `sanitizeFocusLoot` é lido pelo `GameStateContext` na hidratação e `rollFocusLoot`/
+  // `applyFocusLoot` pelo `App`, então não dá para `lazy` sem partir a hidratação), do campo `focusLoot`/materiais no save e
+  // da fiação do `AreaView`. A descida idle da masmorra NÃO engordou a entrada de propósito: `DungeonGame`, `dungeonIdle`,
+  // `dungeonFight`, `dungeonScenes`, `PlaySheets` e `OficinaSheet` são chunks próprios, e `hydrateSave` sanitiza o `dungeonHp`
+  // inline. Crescimento JUSTIFICADO, não perdoado — medido com `ls -l dist/assets/index-*.js` em build limpo.
+  // 11/10/2026 (onda de lançamento): 621_108 → 637_910 (+16,4 KB) — onboarding de 3 blocos, comida premium e subitens,
+  // sessão de foco (App), Level Up (fila + som), ritmo das refeições e apresentação de prédio (outras sessões). Débito
+  // REGISTRADO: a sessão `claude/velocidade-dev` tem a meta de baixar este número com lazy/manualChunks.
+  // 11/10/2026 (Level Up + áudio): 637_910 → 650_631 (+12,4 KB) — fila do Level Up e `levelUp.ts`/`playLevelUp`, o diretor de
+  // música (`musica.ts`), a serialização dos especiais e o gate do Duelo entram no App. Débito REGISTRADO (PR #294 tenta baixar).
   // PAGO EM PARTE em 11/10/2026 (velocidade-dev): 632_532 → 599_676 (−32,9 KB; a main
   // chegou a 621_108 e estourava a folga da linha acima). Saíram do chunk de entrada por
   // import()/React.lazy: o cliente de Torneio/Guilda (`utils/community`, ~8,5 KB — App,
@@ -135,9 +147,13 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // (`ChatBox`, ~10 KB) e a folha da Mochila (~8 KB, montada na 1ª abertura). Quem impede a
   // volta: as 3 sentinelas novas de `entradaEnxuta.contract.test.ts`. Medir: `npm run
   // analisar:entrada` (ver docs/manual/12-COMO-MANTER.md §4).
-  'index.js': 599_676,
+  // PAGO em 11/10/2026 (PR #294, sobre a main de 650_631): 650_631 → 616_035 (−34,6 KB) com os 3 cortes acima (a
+  // medida do PR sozinho, sobre a main antiga, foi 632_532 → 599_676). Medido com `vite build` limpo da árvore mesclada.
+  'index.js': 616_035,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
-  'index.css': 164_043,          // 150 KB — 1,5× o teto
+  // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
+  // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
+  'index.css': 172_242,
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
 };

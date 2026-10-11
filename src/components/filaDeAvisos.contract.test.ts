@@ -108,7 +108,7 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
   const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1700);
 
   it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
-    const ordem = ["'welcomeTour'", "'buildingIntro'", "'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
+    const ordem = ["'welcomeTour'", "'buildingIntro'", "'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'levelUp'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
     // na UNIÃO de tipos (uma vez, na ordem declarada)
     const uniao = interstitial.slice(0, interstitial.search(/=\r?\n/));
     const posUniao = ordem.map(o => uniao.indexOf(o));
@@ -188,9 +188,9 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   /** Os nomes na ordem em que a cadeia ternária os decide (o último é o `: 'welcome'`). */
   const ordem = [...expr.matchAll(/\?\s*'(\w+)'|:\s*'(welcome)'/g)].map(m => m[1] ?? m[2]);
 
-  it('a expressão existe e a ordem é: TOUR DO CORVO → PRÉDIO NOVO → triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
+  it('a expressão existe e a ordem é: TOUR DO CORVO → PRÉDIO NOVO → triagem → relatório → check-in → MARCO → LEVEL UP → sonho → pesadelo → catálogo → boas-vindas', () => {
     expect(ini).toBeGreaterThan(0);
-    expect(ordem).toEqual(['welcomeTour', 'buildingIntro', 'triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
+    expect(ordem).toEqual(['welcomeTour', 'buildingIntro', 'triage', 'dailyReport', 'checkIn', 'groveMilestone', 'levelUp', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {
@@ -248,8 +248,7 @@ describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez
     expect(app).toContain('<BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]}');
   });
   it('espera o Level Up sair e só aparece em tela calma (Home/Mapa); o encaixe está declarado', () => {
-    expect(app).toContain('const levelUpOpen = false;');
-    expect(app).toContain('TODO(LevelUpOverlay)');
+    expect(app).toContain('const levelUpOpen = Boolean(levelUpEvent);');
     expect(app).toContain("calmView: currentView === 'home' || currentView === 'map'");
   });
   it('"Depois" e "Ir lá" gravam o mesmo visto, dentro de um updater puro; "Ir lá" abre a folha do lote', () => {
@@ -259,5 +258,28 @@ describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez
   });
   it('save sem o campo não dispara nada (undefined → sem pendente)', () => {
     expect(app).toContain('gameState.buildingIntrosSeen === undefined ? []');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// O LEVEL UP (11/10/2026): intersticial NOVO, entre o marco do Bosque e o sonho. Monta UMA vez, só quando é a
+// vez dele, lazy; a saída é o toque (nada de timer) e z 300 fica acima da fila (200).
+// ---------------------------------------------------------------------------
+describe('o level up tem POSIÇÃO na fila e monta UMA vez', () => {
+  it('é intersticial: depois do marco do Bosque, antes do sonho', () => {
+    expect(app).toMatch(/grovePendente\s*\?\s*'groveMilestone'\s*:\s*levelUpEvent\s*\?\s*'levelUp'\s*:\s*morningDream\s*\?\s*'dream'/);
+    expect((app.match(/interstitial === 'levelUp'/g) ?? [])).toHaveLength(1);
+    expect((app.match(/<LevelUpOverlay /g) ?? [])).toHaveLength(1);
+    expect(app).toContain("const LevelUpOverlay = lazy(");
+  });
+  it('o evento é DERIVADO (levelUpPending) e o save guarda só o último celebrado, gravado ao tocar', () => {
+    expect(app).toContain('levelUpPending(gameState.totalXP, gameState.lastCelebratedLevel, levelUpDemo)');
+    expect((app.match(/lastCelebratedLevel: Math\.max\(/g) ?? [])).toHaveLength(1);
+    expect(app).toContain('onDone={handleLevelUpDone}');
+  });
+  it('o overlay fica ACIMA da fila, sem timer de saída', () => {
+    const src = readFileSync('src/components/LevelUpOverlay.tsx', 'utf8');
+    expect(src).toContain('zIndex: 300');
+    expect(src).not.toMatch(/setTimeout\([^)]*(finish|onDone)|setInterval\([^)]*(finish|onDone)/);
   });
 });

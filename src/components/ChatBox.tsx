@@ -400,8 +400,11 @@ export function ChatBox({
          teto por IP e limite de tamanho, e dispensa abrir `connect-src` para
          `*.supabase.co` (o que deixaria QUALQUER projeto Supabase ser destino
          de exfiltracao). Ver o cabecalho de `functions/api/transcribe.js`. */
+      /* Desde 11/10/2026 a rota exige o ID token (deixou de ser anônima). */
+      const { authHeaders } = await import('../utils/auth');
       const response = await fetch('/api/transcribe', {
         method: 'POST',
+        headers: await authHeaders(),
         body: formData,
         signal: controller.signal,
       });

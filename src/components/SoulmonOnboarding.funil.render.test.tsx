@@ -60,7 +60,7 @@ describe('funil grátis — identidade do canvas', () => {
 
   it('01/10/2026: depois do nome vêm as 6 do ritual e os 20 itens, TODOS obrigatórios, sem bifurcação, com seta de voltar', async () => {
     responderNome();
-    expect(document.body.textContent).toContain(`Question 1 of ${ORACLE_QUESTIONS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     expect(document.querySelector('[data-back-arrow]')).toBeTruthy();
     // voltar da 1ª pergunta devolve o nome, preenchido
     fireEvent.click(btn('Back'));
@@ -70,15 +70,15 @@ describe('funil grátis — identidade do canvas', () => {
     // sem "Quer afinar a leitura?": da 6ª do ritual vai-se direto ao 1º item
     expect(screen.queryByText('Want to sharpen the reading?')).toBeNull();
     expect(screen.queryByText(/Reveal my Soulmon now/)).toBeNull();
-    expect(document.body.textContent).toContain(`Question 1 of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     expect(document.querySelector('[data-back-arrow]')).toBeTruthy();
     fireEvent.click(btn('Back'));
-    expect(document.body.textContent).toContain(`Question ${ORACLE_QUESTIONS.length} of ${ORACLE_QUESTIONS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     await responderPerguntas(1 + SOUL_TEST_ITEMS.length);
     expect(screen.getByText('What do you want to improve?')).toBeTruthy();
     // e das metas volta-se ao último item do teste
     fireEvent.click(btn('Back'));
-    expect(document.body.textContent).toContain(`Question ${SOUL_TEST_ITEMS.length} of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
 
   it('B2/B3/B5: metas objetivas, ≥1 obrigatório, sem "prefiro não responder"; seta de voltar no topo', async () => {
@@ -122,6 +122,27 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText('Keep at least one.')).toBeTruthy();
     fireEvent.click(btn('Continue'));
     expect(screen.getByText('Your starting point')).toBeTruthy();
+  });
+
+  it('11/10/2026: o ponto de partida traz UMA tarefa sugerida, editável e esvaziável; hábitos seguem como sugestões', async () => {
+    await ateAsMetas();
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(screen.getByRole('group').querySelector('button')!);
+      fireEvent.click(btn('Continue'));
+    }
+    const campo = document.querySelector('[data-first-task] input') as HTMLInputElement;
+    expect(campo.value.length).toBeGreaterThan(5);
+    expect(screen.getByText('One task to finish (optional)')).toBeTruthy();
+    // bloco 3 de 3 nos pontos
+    const bar = screen.getByRole('progressbar', { name: 'Ritual progress' });
+    expect(bar.getAttribute('aria-valuetext')).toBe('Part 3 of 3');
+    fireEvent.change(campo, { target: { value: 'Call the dentist' } });
+    expect(campo.value).toBe('Call the dentist');
+    fireEvent.change(campo, { target: { value: '' } });
+    expect(campo.value).toBe('');
+    // esvaziar não trava o avanço: a tarefa é opcional
+    fireEvent.click(btn('Continue'));
+    expect(screen.queryByText('Your starting point')).toBeNull();
   });
 
   it('B7 Escolha: grátis primário, "Get your own Soulmon" outline (sem dourado), voltar pela seta', async () => {
@@ -209,14 +230,14 @@ describe('01/10/2026 — fechar no meio e voltar de onde parou', () => {
     passarPortao();
     responderNome('Ana Lua');
     await responderPerguntas(ORACLE_QUESTIONS.length + 5);
-    expect(document.body.textContent).toContain(`Question 6 of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     primeira.unmount();
 
     // remonta do zero (o app foi fechado); sem auth configurada, o aceite
     // guardado + o passo gravado bastam para retomar
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-    expect(document.body.textContent).toContain(`Question 6 of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     expect(screen.queryByText('Before we start')).toBeNull();
     // voltar mostra a resposta anterior marcada
     fireEvent.click(btn('Back'));

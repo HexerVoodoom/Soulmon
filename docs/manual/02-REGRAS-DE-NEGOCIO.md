@@ -4496,13 +4496,41 @@ higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) 
 <a id="masmorra"></a>
 ## 51. ⚔️ Masmorra
 
-**Em uma frase.** Uma run de cinco andares contra seis inimigos cada, sem limite
-diário e sem porta de entrada — e perder **não custa um único coração**.
+**Em uma frase.** Uma **descida automática e sem fim**: as lutas encadeiam sozinhas, a
+cada 6 desce-se uma camada, e o que a encerra é o HP — que não enche entre descidas e
+volta com o tempo. Sem limite diário, sem porta de entrada além do piso de HP, e perder
+**não custa um único coração nem Bits**.
 
-**A regra.** Uma run = `MAX_FLOORS` (5) andares, e a constante mora em
-`src/components/DungeonGame.tsx`. Cada andar é uma escada fixa de **6** inimigos
-subindo `LADDER_TIERS` em ordem: `baby-i → baby-ii → rookie → champion →
-ultimate → mega`.
+> **08/10/2026 — DESCIDA IDLE (decisão do dono, `REGISTRO-DE-DECISOES.md` §5.6, linha "Masmorra vira DESCIDA IDLE").** Dono único das constantes e
+> das contas puras: **`src/utils/dungeonIdle.ts`** (função PURA, `now` por parâmetro, sem imports — o Guia lê dali).
+> ⚰️ Saíram: o botão "Desafiar <inimigo>", o "Camada N+1"/"Sair c/ placar" entre andares, o cartão `run-complete`,
+> a constante `MAX_FLOORS` (5) e o enchimento do HP a cada run.
+>
+> | Constante | Valor | Papel |
+> |---|---|---|
+> | `DUNGEON_AUTO_FIGHT_MS` | 4000 | pausa entre o fim de uma luta e o começo da próxima (ritmo visível) |
+> | `DUNGEON_FIGHTS_PER_FLOOR` | 6 | lutas por andar (= `LADDER_TIERS.length`, travado em teste) |
+> | `DUNGEON_MILESTONE_FLOOR` | 5 | o MARCO: limpar este andar, 1× por descida |
+> | `DUNGEON_HP_REGEN_FULL_HOURS` | 4 | horas de HP zero a cheio, por TIMESTAMP, até com o app fechado |
+> | `DUNGEON_MIN_HP_TO_ENTER_PCT` | 25 | piso de HP para ENTRAR (evita o laço de morte imediata; pior espera = 1 h) |
+>
+> **O HP.** `GameState.dungeonHp?: { frac, at }` (fração do máximo + epoch ms; ausente = cheio). Nunca se lê direto:
+> `hpAgora(state, now) = min(1, frac + (now − at) / 4 h)`. A descida grava `{frac, at: agora}` ao fim de cada luta
+> ganha, depois da cura do andar e em 0 ao zerar; a regeneração DENTRO da descida (segundos) é ignorada, de propósito.
+> Fechar a tela perde só a luta em curso: o HP persistido da última luta vale. **Cliente apenas** — não compra vantagem,
+> só limita a descida (mesma regra do placar/Emblemas). Abaixo do piso o lobby mostra "Recuperando… pode descer de novo em
+> 1 h 05 min" / "Recovering… ready to go down again in 1h 05m" (**verbo RECUPERAR**: a bíblia §5.12 veta "descansar" sobre
+> a criatura) e o botão fica desabilitado; nada de coração, nada de Bits, nada de culpa.
+>
+> **O laço.** Fim de luta ganha → painel do inimigo (`enemy-down`) → após `DUNGEON_AUTO_FIGHT_MS` a próxima luta, sem
+> toque. 6ª luta ganha = andar limpo (`floor-clear`: bônus, Vínculo, marco, cura) → a camada de baixo. **Pausar/Retomar**
+> (e a confirmação do X) seguram o relógio; o X sai (o placar fica). A linha "Camada N" é `aria-live="polite"`. HP zero
+> (derrota ou empate) → `ended`/"ficou sem fôlego". O portão do Vínculo (`masmorraFloorOpen`, andares ≥ 4 exigem Vínculo 8)
+> agora é checado ao limpar um andar: fechado, a descida termina em `ended`/"lacrado por ora" com o `gateLine`.
+>
+> **O MARCO** (era "concluir os 5 andares"): ao limpar o andar 5 — **uma vez por descida** (`milestoneRef`) — pagam
+> `onGlitchtama` (🌀, 1 uso/dia, `specialItemUse.ts` intocado, **nenhuma fonte nova de `perfectDays`**),
+> `setDungeonDifficultyAtLeast(base + 1)`, `recordDungeonReached` e `dungeonRunsCompleted` (missões "runs"). Os andares 6, 7… NÃO pagam de novo.
 
 `buildDungeonWave(level, petStage, rng, playerLevel)` (`src/utils/dungeon.ts`) monta a onda. A
 dificuldade do andar F é `base + (F − 1)`. **Combate v3 (PR4, 06/10/2026): o inimigo é
@@ -4518,9 +4546,13 @@ o jogador é o `soulCombatant` do level, e a Arena e o Pesadelo leem o mesmo nú
 
 **Recompensas.** Bits por inimigo (`enemy.points`) + bônus de andar
 `clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
-uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício); o HP do jogador **carrega** entre andares. Limpar
-os 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base
-(`setDungeonDifficultyAtLeast(base + 1)`).
+uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício + o talento `healBoost`) — cura DENTRO da descida, mantida de
+propósito: a parede calibrada do combate v3 a pressupõe e o ofício/talento dependem dela; o HP do jogador **carrega** entre
+andares. O marco do andar 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
+**Teto diário de Bits:** inalterado — o funil único `handleEarnGamePoints` → `creditMinigameBits` (`MINIGAME_BITS_PER_DAY` =
+150, `minigameBits` no save) limita a descida infinita; ao bater, a tela diz "Teto diário de Bits atingido — a descida segue,
+só sem Bits." e nada pára. Simulação (`dungeonIdle.test.ts`, 200 descidas, ruler de 15 levels): a dificuldade derruba o
+jogador em média no andar 5,35 (máx 6), a descida dura no máximo ~21 min e o que pagaria sem teto fica em ≤ 131 Bits.
 
 **A base persiste e reseta toda SEMANA** — `STORAGE_KEYS.DUNGEON_DIFFICULTY`,
 gravado como `{week, level}` com `weekKey()` local. O placar é
@@ -5930,7 +5962,7 @@ de conserto silencioso.
 
 **O que é.** Dois lotes da Exploração, sem relação com a economia: a **Oficina do Foco** (timer de foco + técnicas de gestão de tempo e produtividade) e o **Caderno** (journaling). Decisão e alternativas em [REGISTRO §22](../REGISTRO-DE-DECISOES.md); plano e fontes em [PLANO-OFICINA-FOCO](../PLANO-OFICINA-FOCO.md).
 
-**Regras.** (1) Sem Bits, XP, Emblema, Vínculo nem progresso em `perfectDays`. Um Pomodoro escolhido numa sessão salva envia o Soulmon a um dos seis ambientes. Ao confirmar um foco concluído com "Foquei", concede um item garantido: sorteio entre os quatro materiais do ambiente (20% cada) e uma opção de comida (20%; tipo de comida aleatório). A chance de um segundo item começa em 5%, sobe 5 pontos percentuais por ciclo completo foco+pausa até 25%; no máximo um extra por foco. O teto conjunto de materiais+comidas é oito itens por dia do jogador. Materiais entram em `buildingQuests.materials`; comidas entram em `foodInventory`; `focusLoot` registra o contador diário e eventos já pagos. O servidor higieniza o formato e limita o contador a oito, mas a concessão de jogo continua no modelo cliente-save existente (não é endpoint autoritativo anti-cheat). O plano e a sequência de ciclos ficam no aparelho. (2) Timer por timestamp (`endAt`) em `utils/focoTimer.ts`: 25/5 e 50/10; pausa longa de 15 depois de cada 4 focos do dia no 25/5; ao fim, aviso na tela, vibração curta e notificação local só com permissão JÁ concedida. (3) "Foquei" soma 1 ao dia local (`FOCO_SESSIONS`, 14 dias, teto 99/dia); sem total público, sequência ou placar. (4) As técnicas têm explicação com fonte e evidência; a aba discreta separa Guias do fluxo. O planejamento é linear e pulável; Brain Dump é temporário, Se-então tem sugestões, e Pomodoro/Blocos escolhem o ritmo. A revisão salva uma sessão por vez em `FOCO_WORKSHOP_PLAN`; é possível cancelar/excluir e editar. O card expandido lista tarefas canônicas/subtópicos, inicia Pomodoro e conclui tarefas pelo handler compartilhado — nunca há conclusão de tarefa nas etapas intermediárias. Após concluir a sessão, pode-se planejar outra. O texto do Brain Dump não persiste. (5) Caderno: **dado sensível no save na nuvem do titular** (`GameState.caderno`, 120 entradas × 2000 caracteres, sanitizado no load e clampado em `save.js`), apagável por entrada e por inteiro, exportado e apagado com a conta; nunca entra em IA/chat/telemetria/perfil público (`cadernoSensivel.contract.test.ts`); `needsBridge` (o léxico do chat) mostra a linha de apoio no aparelho, sem bloquear; as anotações da 1ª versão (`soulmon-caderno`, só aparelho) migram uma vez para o save. A lista oferece "Ver todas" e filtro por dia; os registros permanecem no save do titular. (6) Vibração ao fim do foco: ligada por padrão, interruptor em Configurações › Seus dados (`soulmon-foco-vibrate`). `PRIVACY_VERSION` = `2026-10-04` (§2 de `privacidade.html` declara o Caderno).
+**Regras.** (1) Sem Bits, XP, Emblema, Vínculo nem progresso em `perfectDays`. Um Pomodoro escolhido numa sessão salva envia o Soulmon a um dos seis ambientes. Ao confirmar um foco concluído com "Foquei", concede um item garantido: sorteio entre os quatro materiais do ambiente (20% cada) e uma opção de comida (20%; tipo de comida aleatório). A chance de um segundo item começa em 5%, sobe 5 pontos percentuais por ciclo completo foco+pausa até 25%; no máximo um extra por foco. O teto conjunto de materiais+comidas é oito itens por dia do jogador. Materiais entram em `buildingQuests.materials`; comidas entram em `foodInventory`; `focusLoot` registra o contador diário e eventos já pagos. O servidor higieniza o formato e limita o contador a oito, mas a concessão de jogo continua no modelo cliente-save existente (não é endpoint autoritativo anti-cheat). O plano e a sequência de ciclos ficam no aparelho. (2) Timer por timestamp (`endAt`) em `utils/focoTimer.ts`: 25/5 e 50/10; pausa longa de 15 depois de cada 4 focos do dia no 25/5; ao fim, aviso na tela, vibração curta e notificação local só com permissão JÁ concedida. (3) "Foquei" soma 1 ao dia local (`FOCO_SESSIONS`, 14 dias, teto 99/dia); sem total público, sequência ou placar. (4) As técnicas têm explicação com fonte e evidência; a aba discreta separa Guias do fluxo. O planejamento é em ETAPAS puláveis (10/10/2026; `utils/focoSessao.ts`, UI `OficinaPlano`): preparar → ritmo/ambiente → regra dos 2 minutos (picker, até 5) → Eisenhower (ordem ao vivo) → sapo → se-então (com sugestões) → brain dump com tempo (3/5/10 min) → lista organizada (2 min, sapo, quadrantes). A sessão salva (`FOCO_WORKSHOP_PLAN`) é essa lista com um check por tarefa: o check chama o handler real de concluir do App (mesma conclusão da Home); planejar e "Concluir sessão" nunca concluem nem reordenam tarefa. Várias sessões por dia, nomeadas; registro mínimo das concluídas em `FOCO_WORKSHOPS`. Concluir uma sessão com plano rende 1 item pequeno (`rollPlanLoot`, recibo `plan:<id>`, máx. 2/dia dentro do teto de 8), nunca por contagem de tarefas. O texto do Brain Dump fica só na sessão local do aparelho. (5) Caderno: **dado sensível no save na nuvem do titular** (`GameState.caderno`, 120 entradas × 2000 caracteres, sanitizado no load e clampado em `save.js`), apagável por entrada e por inteiro, exportado e apagado com a conta; nunca entra em IA/chat/telemetria/perfil público (`cadernoSensivel.contract.test.ts`); `needsBridge` (o léxico do chat) mostra a linha de apoio no aparelho, sem bloquear; as anotações da 1ª versão (`soulmon-caderno`, só aparelho) migram uma vez para o save. A lista oferece "Ver todas" e filtro por dia; os registros permanecem no save do titular. (6) Vibração ao fim do foco: ligada por padrão, interruptor em Configurações › Seus dados (`soulmon-foco-vibrate`). `PRIVACY_VERSION` = `2026-10-04` (§2 de `privacidade.html` declara o Caderno).
 
 **Não faz.** Não conta sequência, não lembra, não cobra, não analisa nem diagnostica o texto, não pede permissão de notificação.
 

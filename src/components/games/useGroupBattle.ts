@@ -21,11 +21,13 @@
  * Determinismo: o sorteio do anel e da esquiva sai da SEMENTE (`ringSpec`/`dodgeSpec`), a defesa
  * automática é a `hitScale` da rodada (também da semente) — nunca `Math.random` (um teste de grep trava).
  * Movimento reduzido: sem investida/projétil (a cena cuida) e o anel segue desenhado por JS.
+ * ESPECIAIS EM SÉRIE (11/10/2026): o `cast` já pausa o relógio da luta; depois da batida o hook espera a CAUDA do efeito
+ * (`specialTailMs`) antes do próximo golpe de QUALQUER lado — dois especiais próximos nunca se atropelam, e nada do núcleo muda.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StageAction, StageHit } from './BattleStage';
 import {
-  impactMs, introMs, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
+  impactMs, introMs, specialTailMs, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
   type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
 } from '../../utils/combatFx';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
@@ -359,6 +361,9 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             else setPetEnergy(ev.energy);
             // PR11: o efeito que a família do especial deixa — no foco único, ou em todos os vivos se a escola dele é em área
             startStatus(0, player.area === 'area' ? foesNow.flatMap((h, i) => (h > EPS ? [i + 1] : [])) : [target + 1], (batch.length ? batch[batch.length - 1] : ev).fx);
+            // 11/10/2026: UM especial de cada vez — o efeito termina de aparecer ANTES de qualquer golpe (de qualquer lado)
+            // começar; o relógio da luta segue parado (`wait` não o avança), então nada é pulado: só retomado depois.
+            if (!(await wait(specialTailMs(reduced)))) return;
             ev = pull();
             continue;
           }
@@ -388,6 +393,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           if (nx) queue.unshift(nx);
           if (batch.length) apply(batch, true, dodgeG);
           startStatus(ev.who, [0], (batch.length ? batch[batch.length - 1] : ev).fx); // o inimigo mira o pet; cura/escudo/buff ficam nele mesmo
+          if (!(await wait(specialTailMs(reduced)))) return; // UM especial de cada vez (ver o do pet, acima)
           ev = pull();
           continue;
         }

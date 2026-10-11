@@ -43,18 +43,18 @@ export function itemPrompt(item: Item): LText {
 }
 
 /** Dica curta de COMO responder — muda com o formato. */
-export function itemHint(item: Item, index: number, total: number, isPt: boolean): string {
-  const counter = isPt ? `Pergunta ${index + 1} de ${total}` : `Question ${index + 1} of ${total}`;
+export function itemHint(item: Item, _index: number, _total: number, isPt: boolean): string {
+  // Sem "Pergunta N de M" (11/10/2026): o progresso são os 3 pontos do onboarding.
   if (item.kind === 'forced-choice') {
-    return `${counter} · ${isPt ? 'escolha a que mais parece com você' : 'pick the one that sounds more like you'}`;
+    return isPt ? 'Escolha a que mais parece com você' : 'Pick the one that sounds more like you';
   }
   if (item.kind === 'scenario') {
-    return `${counter} · ${isPt ? 'o que você faria?' : 'what would you do?'}`;
+    return isPt ? 'O que você faria?' : 'What would you do?';
   }
   if (item.kind === 'frequency') {
-    return `${counter} · ${isPt ? 'com que frequência?' : 'how often?'}`;
+    return isPt ? 'Com que frequência?' : 'How often?';
   }
-  return `${counter} · ${isPt ? 'o quanto isso combina com você?' : 'how much does this match you?'}`;
+  return isPt ? 'O quanto isso combina com você?' : 'How much does this match you?';
 }
 
 interface SoulTestItemProps {

@@ -23,19 +23,17 @@ function buildAnswers(
   return answers;
 }
 
-test("item bank is keying-balanced within every facet", () => {
-  const byFacet = new Map<string, { positive: number; negative: number }>();
+test("item bank has exactly one Likert item per trait (no mirror items)", () => {
+  // 11/10/2026: the reversed twin that only re-asked each question was cut
+  // (owner: "pergunta de confirmação meio redundante"). One facet per trait.
+  const byFacet = new Map<string, number>();
   for (const item of likertItems) {
     const key = `${item.dimension}:${item.facet}`;
-    const acc = byFacet.get(key) ?? { positive: 0, negative: 0 };
-    if (item.positive) acc.positive++;
-    else acc.negative++;
-    byFacet.set(key, acc);
+    byFacet.set(key, (byFacet.get(key) ?? 0) + 1);
   }
   assert.equal(byFacet.size, 6, `expected exactly 6 facets (one per trait), got ${byFacet.size}`);
-  for (const [facet, counts] of byFacet) {
-    assert.equal(counts.positive, counts.negative, `${facet} is not keying-balanced`);
-  }
+  for (const [facet, n] of byFacet) assert.equal(n, 1, `${facet} has ${n} items`);
+  assert.equal(items.length, 14);
 });
 
 test("every trait dimension is covered by at least one facet", () => {
@@ -87,17 +85,13 @@ test("scenario weights stay inside the 0-4 scale and cover declared dimensions",
   }
 });
 
-test("agreeing with everything lands well short of the ceiling", () => {
-  // This is the payoff of balanced keying: a yea-sayer cannot max out a
-  // trait's Likert pair. At only 20 items, a single strongly-loaded scenario
-  // option can still push a factor score higher than the Likert items alone
-  // would (extraversion's default scenario answer is its most assertive
-  // option) — so this checks "clearly below ceiling", not "near the middle".
-  const answers = buildAnswers(() => 5);
-  const profile = scoreProfile(answers);
+test("scores stay inside the scale for an all-agree protocol", () => {
+  // Without reversed items acquiescence can no longer be separated from
+  // content, so this only checks the scale holds.
+  const profile = scoreProfile(buildAnswers(() => 5));
   for (const dim of TRAIT_DIMENSIONS) {
     const score = profile.traits[dim].score;
-    assert.ok(score <= 75, `${dim} = ${score} for an all-agree protocol`);
+    assert.ok(score >= 0 && score <= 100, `${dim} = ${score}`);
   }
 });
 
@@ -124,12 +118,12 @@ test("trait scores separate widely between keyed-high and keyed-low protocols", 
   // direction, so factor scores are not expected to pin at 0/100. Holding the
   // scenario answer constant between the two protocols isolates what this
   // test actually checks: that the Likert + forced-choice channel alone
-  // drives a large separation, regardless of which scenario option was picked.
+  // drives a clear separation (>= 20 points; was 30 with the 2-item facets), regardless of which scenario option was picked.
   const high = scoreProfile(buildAnswers((item) => (item.positive ? 5 : 1), "a", "a"));
   const low = scoreProfile(buildAnswers((item) => (item.positive ? 1 : 5), "b", "a"));
   for (const dim of TRAIT_DIMENSIONS) {
     const gap = high.traits[dim].score - low.traits[dim].score;
-    assert.ok(gap >= 30, `${dim} separated by only ${gap} points`);
+    assert.ok(gap >= 20, `${dim} separated by only ${gap} points`);
   }
 });
 
@@ -164,7 +158,7 @@ test("with one forced-choice item per axis, clarity is always maximal", () => {
   // The short form has exactly one item per Jungian axis, so there is no
   // partial vote to split — every axis is either a clean A or a clean B,
   // never a 50/50 read. `weakAxes` is therefore always empty at this length;
-  // that's a known limitation of the 20-item form, not a bug.
+  // that's a known limitation of the short form, not a bug.
   const allA = scoreProfile(buildAnswers(() => 3, "a"));
   const allB = scoreProfile(buildAnswers(() => 3, "b"));
   for (const axis of JUNG_AXES) {
@@ -174,11 +168,11 @@ test("with one forced-choice item per axis, clarity is always maximal", () => {
   assert.deepEqual(allB.jung.weakAxes, []);
 });
 
-test("validity flags a yea-sayer", () => {
+test("validity does not judge acquiescence without reversed items", () => {
   const v = computeValidity(buildAnswers(() => 5));
-  assert.ok(v.acquiescence >= 90);
-  assert.equal(v.trustworthy, false);
-  assert.ok(v.flags.some((f) => f.pt.includes("aquiescência") && f.en.includes("acquiescence")));
+  assert.equal(v.trustworthy, true);
+  assert.equal(v.inconsistency, 0);
+  assert.ok(!v.flags.some((f) => f.en.includes("acquiescence")));
 });
 
 test("validity flags a straight-liner on the midpoint", () => {
@@ -192,12 +186,6 @@ test("validity accepts a coherent protocol", () => {
   assert.equal(v.inconsistency, 0);
   assert.equal(v.trustworthy, true);
   assert.deepEqual(v.flags, []);
-});
-
-test("validity detects contradictory answers on consistency pairs", () => {
-  // Answer 5 to every item, ignoring keying: paired items then disagree maximally.
-  const v = computeValidity(buildAnswers(() => 5));
-  assert.ok(v.inconsistency >= 90, `inconsistency = ${v.inconsistency}`);
 });
 
 test("partial answers are scored without throwing and report progress", () => {

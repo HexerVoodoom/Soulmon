@@ -21,7 +21,7 @@ import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
-import { applyFocusLoot, rollFocusLoot, type FocusLootRequest } from './utils/focusExpedition';
+import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
@@ -97,6 +97,7 @@ import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
 import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
+import { levelUpPending, levelUpBaseline } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
@@ -218,8 +219,9 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
-  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted,
+  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
+import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
@@ -548,6 +550,7 @@ function PostponeNudgeSheet({
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
+const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
@@ -1910,26 +1913,37 @@ export default function App() {
     setWelcomeTourReplay(false);
   }, [welcomeTourReplay]);
   const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
+  /* LEVEL UP (11/10/2026): o nível é DERIVADO (`bondLevelFor(totalXP)`); o save guarda só o último
+     CELEBRADO. Save sem o campo recebe a linha de base (o nível de agora, sem celebrar o passado).
+     Demo local não ganha XP e não celebra. */
+  const levelUpDemo = isDemoMode(gameState);
+  const levelUpEvent = levelUpPending(gameState.totalXP, gameState.lastCelebratedLevel, levelUpDemo);
+  useEffect(() => {
+    if (levelUpDemo || gameState.lastCelebratedLevel !== undefined) return;
+    setGameState(prev => (prev.lastCelebratedLevel !== undefined ? prev : { ...prev, lastCelebratedLevel: levelUpBaseline(prev.totalXP) }));
+  }, [levelUpDemo, gameState.lastCelebratedLevel, setGameState]);
+  const handleLevelUpDone = useCallback((celebrated: number) => {
+    setGameState(prev => ({ ...prev, lastCelebratedLevel: Math.max(prev.lastCelebratedLevel ?? 0, celebrated) }));
+  }, [setGameState]);
   /* A APRESENTAÇÃO DO PRÉDIO NOVO (`components/BuildingIntro`, 08/10/2026): quando o Vínculo abre um prédio, o NPC dele se
      apresenta. Segundo da fila, logo depois do tour — e DEPOIS do display de Level Up (`utils/buildingIntro.ts` ›
      `BUILDING_INTRO_AFTER`). Um por vez: o pendente é "aberto no Vínculo e ainda não visto", sempre o primeiro da ordem.
      Só numa tela calma (Home ou Mapa), nunca por cima de um jogo.
-     TODO(LevelUpOverlay): o display de Level Up (outro run, intersticial que sobrepõe e só sai ao toque) ainda não está na
-     main. Quando entrar, `levelUpOpen` passa a ser o estado dele — enquanto estiver aberto a apresentação espera; o encaixe
-     e a espera já estão declarados e testados (`buildingIntroReady`). */
-  const levelUpOpen = false;
+     O Level Up (`LevelUpOverlay`) está na fila: enquanto ele estiver pendente/aberto a apresentação espera. */
+  const levelUpOpen = Boolean(levelUpEvent);
   const pendingIntros = useMemo(
     () => (gameState.buildingIntrosSeen === undefined ? [] : pendingBuildingIntros(gameState.buildingIntrosSeen, bondLevelFor(gameState.totalXP ?? 0))),
     [gameState.buildingIntrosSeen, gameState.totalXP],
   );
   const buildingIntroOpen = buildingIntroReady({ pending: pendingIntros, levelUpOpen, calmView: currentView === 'home' || currentView === 'map' });
-  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
+  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'levelUp' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
     welcomeTourOpen ? 'welcomeTour'
     : buildingIntroOpen ? 'buildingIntro'
     : triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
           : grovePendente ? 'groveMilestone'
+          : levelUpEvent ? 'levelUp'
           : morningDream ? 'dream'
             : nightmareOpen ? 'nightmare'
               : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
@@ -2308,6 +2322,7 @@ export default function App() {
       playTaskComplete();
       if (justFinishedActivity) {
         queueTaskGains(justFinishedActivity.category);
+        marcarGestoDoDia('task');
         // ↩️ #57 — a última etapa FECHA o hábito, então ela também abre a
         // janela de desfazer. Sem isto, hábito com etapas seria a metade do
         // app onde o toque errado continua sem volta.
@@ -2429,6 +2444,8 @@ export default function App() {
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
     if (activity) queueTaskGains(activity.category);
+    // Primeiro dia: concluir um hábito também é "concluir uma atividade".
+    if (activity) marcarGestoDoDia('task');
 
     // ↩️ #57 — a janela de 5 s. `gameState` aqui é o estado ANTES do updater
     // acima (o React só o troca no próximo render), que é exatamente a foto
@@ -2732,8 +2749,10 @@ export default function App() {
       // (e a virada do dia a reabria).
       adiarConclusaoDeTarefa(() => {
         let concluiu = false;
+        let ganhouPremium = false;
         setGameState(prev => {
           const feito = completeTask(prev, taskId) ?? prev;
+          ganhouPremium = Object.keys(feito.foodInventory).some(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
           // 🔗 Vínculo: a tarefa rende XP pelo PESO DE ESFORÇO dela (`effortOf`),
           // nunca por contagem de itens — é a mesma unidade da meta do dia. Se
           // rendesse por item, cadastrar cinco triviais valeria mais que encarar
@@ -2757,6 +2776,11 @@ export default function App() {
         queueMicrotask(() => {
           if (!concluiu) return;
           queueTaskGains(task.category);
+          if (ganhouPremium) {
+            toast(language === 'pt-BR'
+              ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
+              : '⭐ Every step done! You earned a premium food.');
+          }
           // A assombrada tem fala PRÓPRIA, e é de alívio. Concluir a que
           // estava te olhando não pode soar igual a concluir qualquer uma —
           // é a peça que transforma a pilha de culpa em recompensa.
@@ -2772,6 +2796,18 @@ export default function App() {
         });
       });
     }
+  };
+
+  // Subitem de TAREFA: avança a barra da linha. O último fecha a tarefa pelo
+  // caminho de sempre (comida, Vínculo, premium) — nada é pago aqui.
+  const handleToggleTaskStep = (taskId: string, stepId: string) => {
+    const task = gameState.tasks.find(t => t.id === taskId);
+    const step = task?.steps?.find(s => s.id === stepId);
+    if (!task || task.completed || !step || step.completed) return;
+    const fechaTudo = (task.steps ?? []).every(s => s.completed || s.id === stepId);
+    playTaskComplete();
+    setGameState(prev => ({ ...prev, tasks: completeTaskStep(prev.tasks, taskId, stepId) }));
+    if (fechaTudo) handleToggleTask(taskId);
   };
 
   /**
@@ -3219,6 +3255,12 @@ export default function App() {
       const agora = new Date();
       const refused = specialRefusal(gameState, foodEmoji, agora);
       if (refused === 'no-stock') return;
+      if (refused === 'daily-cap' && special.kind === 'premium') {
+        toast(language === 'pt-BR'
+          ? '⭐ Uma comida premium por dia. Ela te espera amanhã.'
+          : "⭐ One premium food a day. It'll wait for you tomorrow.");
+        return;
+      }
       if (refused === 'daily-cap') {
         // O item VOLTA para a pastinha e vale amanhã — por isso a mensagem diz
         // o que fazer, e não o que foi negado. Nada de toast de erro: o teto do
@@ -3249,6 +3291,9 @@ export default function App() {
 
       if (special.kind === 'glitchtama') {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
+      }
+      if (special.kind === 'premium') {
+        toast(language === 'pt-BR' ? '⭐ Comida premium! +5 de energia' : '⭐ Premium food! +5 energy');
       }
       return;
     }
@@ -5177,6 +5222,10 @@ export default function App() {
     // `rubDecision` lê o `petPassive` do ESTADO, e não de um parâmetro que quem
     // chama possa esquecer — foi assim que o Traço Carinhoso ficou desligado na
     // prática, barrado em 1,0 enquanto o CLAUDE.md declarava 1,5 (X-6).
+    // O GESTO do primeiro dia é o carinho em si, não a cura: pet com vida cheia
+    // (`already-full`, o caso de TODO pet novo) recusa a cura e antes nunca
+    // marcava o gesto.
+    marcarGestoDoDia('pet');
     const refused = rubDecision(gameState, today);
     if (refused) {
       // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
@@ -5314,7 +5363,7 @@ export default function App() {
        o app ali ou se a adoção de um save da nuvem recarregasse a página. */
     // Os ids vêm da própria UI do catálogo; a marca NÃO espera o carregamento
     // (o catálogo é `import()`) — resolver os itens fica para mais abaixo.
-    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0) {
+    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0 || data.firstTask) {
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
       setHasCompletedTutorial(true);
     }
@@ -5383,6 +5432,20 @@ export default function App() {
       .filter((c): c is NonNullable<typeof c> => !!c);
     const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
+    // 11/10/2026: a primeira TAREFA do onboarding (esforço 1, sem prazo — o
+    // motor de tarefas a trata como qualquer outra; nada de recompensa extra).
+    const firstTasks: Task[] = data.firstTask
+      ? [{
+          id: `onb-${Date.now().toString(36)}`,
+          name: data.firstTask.name,
+          category: data.firstTask.category,
+          emoji: data.firstTask.emoji,
+          completed: false,
+          effort: 1,
+          status: 'open',
+          createdAt: new Date().toISOString(),
+        }]
+      : [];
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
     // save nos DOIS caminhos; quem lê é a personalidade do Soulmon.
     const onboardingProfile = onboardingProfileFrom(data.catalogChoice);
@@ -5399,7 +5462,7 @@ export default function App() {
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
-        tasks: [],
+        tasks: firstTasks,
         eggType: 'ignar',
         evolutionStage: 'rookie',
         unlockedEvolutions: ['rookie'],
@@ -5456,7 +5519,7 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       activities: newActivities,
-      tasks: [],
+      tasks: firstTasks,
       eggType: genericLine,
       evolutionStage: 'rookie',
       unlockedEvolutions: ['rookie'],
@@ -6476,6 +6539,16 @@ export default function App() {
                     });
                     return { accepted: preview.accepted, items: preview.items, chancePercent: roll.chancePercent };
                   },
+                  /* Concluir o PROCESSO da Oficina: 1 item, teto de 2/dia dentro do de 8 — a regra é de `applyFocusLoot`. */
+                  onPlanReward: (request: FocusLootRequest) => {
+                    const roll = rollPlanLoot(request.environment);
+                    const preview = applyFocusLoot(gameState, request, roll);
+                    if (preview.accepted) setGameState(prev => {
+                      const committed = applyFocusLoot(prev, request, roll);
+                      return committed.accepted ? { ...prev, ...committed.state } : prev;
+                    });
+                    return { accepted: preview.accepted, items: preview.items, chancePercent: 0 };
+                  },
                   review: gameState.review,
                   minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),
                   onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),
@@ -7125,6 +7198,7 @@ export default function App() {
                     expanded={expandedRituals}
                     onExpand={handleExpandRitual}
                     onToggleTask={handleToggleTask}
+                    onToggleTaskStep={handleToggleTaskStep}
                     onEditTask={handleEditTask}
                     onPostponeNudge={handlePostponeNudge}
                     onEditActivity={handleEditActivity}
@@ -7445,17 +7519,17 @@ export default function App() {
 
       <ModalSheet
         open={createChoiceOpen}
-        title={language === 'pt-BR' ? 'O que vamos criar?' : 'What would you like to create?'}
+        title={language === 'pt-BR' ? 'Novo hábito ou nova tarefa?' : 'New habit or new task?'}
         language={language}
         onClose={() => setCreateChoiceOpen(false)}
       >
         <div style={{ display: 'grid', gap: 10 }}>
-          <button type="button" style={sm2Button('primary')} onClick={() => {
-            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
-          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
-          <button type="button" style={sm2Button('outline')} onClick={() => {
+          <button type="button" data-create-choice="habit" style={sm2Button('primary')} onClick={() => {
             setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
           }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+          <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
+            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
+          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
         </div>
       </ModalSheet>
 
@@ -7487,6 +7561,7 @@ export default function App() {
               steps: data.steps,
               effort: data.effort,
               startDate: data.startDate,
+              ...(data.repeatEveryDays ? { repeatEveryDays: data.repeatEveryDays } : {}),
               status: data.status ?? 'open',
               createdAt: data.createdAt ?? new Date().toISOString(),
               lastTouchedAt: data.lastTouchedAt ?? new Date().toISOString(),
@@ -7642,6 +7717,12 @@ export default function App() {
       {interstitial === 'buildingIntro' && pendingIntros[0] && (
         <Suspense fallback={null}>
           <BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]} language={language} onGo={handleBuildingIntroGo} onLater={markIntroSeen} />
+        </Suspense>
+      )}
+      {/* LEVEL UP — intersticial: depois do marco do Bosque, antes do sonho. z 300, só sai ao toque. */}
+      {interstitial === 'levelUp' && levelUpEvent && (
+        <Suspense fallback={null}>
+          <LevelUpOverlay event={levelUpEvent} language={language} spriteUrl={minhaCriaturaUrl} onDone={handleLevelUpDone} />
         </Suspense>
       )}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (

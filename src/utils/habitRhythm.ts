@@ -232,6 +232,32 @@ export function weeklyProgress(
   return { done, target: s.kind === 'timesPerWeek' ? s.target : 0 };
 }
 
+/**
+ * O chip de progresso da SEMANA de um hábito — SÓ EXIBIÇÃO.
+ *
+ * O check da linha vale para HOJE; este número é o contexto semanal, e a UI os
+ * mostra separados para ninguém ler "1 de 3" como "o check de hoje conta 1/3".
+ * Não decide nada (constância, escudo, pontuação seguem em `constancy`/
+ * `applyMissedDay`): só conta os dias FEITOS na semana corrente (a mesma
+ * semana de domingo de `weeklyProgress`) contra o alvo.
+ *
+ *  · `timesPerWeek` → alvo = `target` ("1 de 3");
+ *  · `weekdays`     → alvo = nº de dias da recorrência ("2 de 7" para diário);
+ *  · `everyNDays`   → `null` (não há semana nesse formato).
+ */
+export function weekChip(
+  rhythm: HabitRhythm | undefined,
+  schedule: Schedule,
+  now: Date,
+): { done: number; target: number } | null {
+  const s = normalizeSchedule({ schedule });
+  if (s.kind === 'everyNDays') return null;
+  const target = s.kind === 'timesPerWeek' ? s.target : new Set(s.days).size;
+  if (target <= 0) return null;
+  const done = rhythm ? weeklyProgress(rhythm, schedule, now).done : 0;
+  return { done: Math.min(done, target), target };
+}
+
 // ---------------------------------------------------------------------------
 // O DONO ÚNICO DA PERGUNTA "ESTE HÁBITO CONTA NESTE DIA?"
 //

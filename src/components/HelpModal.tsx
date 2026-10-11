@@ -126,8 +126,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from clearing all 5 dungeon floors. Using it grants one complete day — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from the layer-5 milestone of the automatic dungeon descent. Using it grants one complete day — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro do marco da camada 5 da descida automática da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.
@@ -159,6 +159,11 @@ const TERMS: Term[] = [
     icon: '🏋️', en: 'Effort', pt: 'Esforço',
     descEn: `Quick (1), Medium (2), Project (3). The goal adds up effort, not items; past ${OVERCOMMIT_EFFORT} in a day it's a heads-up, never a block.`,
     descPt: `Rápida (1), Média (2), Projeto (3). A meta soma esforço, não itens; passando de ${OVERCOMMIT_EFFORT} no dia é aviso, nunca bloqueio.`,
+  },
+  {
+    icon: '⭐', en: 'Premium food', pt: 'Comida premium',
+    descEn: 'Earned by finishing every step of a task with 3 or more steps. Gives 5 energy instead of 1 (never above the day\'s max). One a day, three a week.',
+    descPt: 'Vem de fechar todos os subitens de uma tarefa com 3 ou mais. Dá 5 de energia em vez de 1 (nunca acima do máximo do dia). Uma por dia, três por semana.',
   },
   {
     icon: '🎯', en: 'Today\'s focus', pt: 'Foco do dia',
@@ -218,6 +223,7 @@ function guildTerms(): Term[] {
     par('🌳', 'guild.help.feira.termo', 'guild.help.feira.def', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }),
     par('🌳', 'guild.help.casa.termo', 'guild.help.casa.def'),
     par('🌳', 'guild.help.missao.termo', 'guild.help.missao.def'),
+    par('🌳', 'guild.help.guerra.termo', 'guild.help.guerra.def'),
     par('🌳', 'guild.help.mare.termo', 'guild.help.mare.def', { semanas: GUILD_TIDE_WEEKS }),
     par('🌳', 'guild.help.concha.termo', 'guild.help.concha.def', { n: RAID_TROPHY_EVERY }),
   ];

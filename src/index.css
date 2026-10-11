@@ -5785,6 +5785,8 @@ select:focus-visible {
   .sm2-celebrate { display: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }
+  /* Oficina do Foco: a barra de etapas muda de largura sem deslizar. */
+  .sm-oficina-bar { transition: none !important; }
   /* Tour do corvo: o corvo fica parado, os cartões esperam o toque do mesmo jeito. */
   .sm-corvo-bob { animation: none !important; }
   /* Apresentação do prédio novo: o busto do NPC aparece parado; os balões esperam o toque do mesmo jeito. */
@@ -5801,6 +5803,9 @@ select:focus-visible {
   /* Cena de combate (rodada 5, I10): sem investida, projétil nem pulso — só o flash no alvo. */
   .sm-bs-lunge, .sm-bs-fly, .sm-bs-cast, .sm-bs-hit { animation: none !important; }
   .sm-bs-fly, .sm-bs-cast { display: none !important; }
+  /* Especial maior (11/10/2026): a esfera grande some como a comum; o corte/impacto grande vira o flash único (sem crescer). */
+  .sm-bs-fly.sm-bs-big { display: none !important; }
+  .sm-bs-pop.sm-bs-big { animation-name: sm-bs-flash !important; }
   /* Cena do especial (PR18): o nome só aparece e some (sem crescer); o véu e a pausa continuam. */
   .sm-bs-cutname { animation-name: sm-bs-cutdim !important; }
   .sm-bs-pop { animation-name: sm-bs-flash !important; }
@@ -5854,10 +5859,12 @@ select:focus-visible {
   .sm2-kit-spin { animation: none !important; }
   .sm2-kit-btn, .sm2-kit-tab, .sm2-kit-chip, .sm2-kit-check-box,
   .sm2-kit-switch-track, .sm2-kit-switch-knob, .sm2-kit-meter-fill,
-  .sm2-kit-segbar-seg { transition: none !important; }
+  .sm2-kit-segbar-seg, .sm2-ora-dot { transition: none !important; }
   /* Soulsmith (07/10/2026): a celebração perde o MOVIMENTO; o selo textual fica. */
   .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; }
   .sm-forge-sweep, .sm-forge-spark { display: none; }
+  /* Level up (11/10/2026): o número, o banner, o pet, o burst e a dica ficam PARADOS — o display continua esperando o toque. */
+  .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-hint { animation: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -7506,6 +7513,21 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    A regra de movimento reduzido mora no bloco canônico (sentinela). */
 .sm2-ora-meter { height: 8px; margin-bottom: var(--sm2-space-4); }
 .sm2-ora-meter .sm2-kit-meter-fill { border-radius: 2px; }
+/* 11/10/2026 — TRÊS PONTOS, um por bloco de perguntas (substituem a barra com
+   contagem). Anel 2px `muted` quando falta; cheio `primary-fill` quando é o
+   bloco atual ou já passou; o atual leva um anel externo para não depender só
+   de cor. Movimento reduzido: a transição vive no bloco canônico. */
+.sm2-ora-dots { display: flex; gap: 12px; justify-content: center; margin-bottom: var(--sm2-space-4); }
+.sm2-ora-dot {
+  width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box;
+  border: 2px solid var(--sm2-muted); background: transparent;
+  transition: background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.sm2-ora-dot[data-dot="done"] { border-color: var(--sm2-primary-fill); background: var(--sm2-primary-fill); }
+.sm2-ora-dot[data-dot="now"] {
+  border-color: var(--sm2-primary-fill); background: var(--sm2-primary-fill);
+  box-shadow: 0 0 0 3px var(--sm2-bg), 0 0 0 5px var(--sm2-primary-fill);
+}
 /* o voltar: ícone pelado, alvo 44, tinta `ink`; foco visível em anel */
 .sm2-ora-back {
   display: inline-flex; align-items: center; justify-content: center; flex: none;
@@ -8225,6 +8247,23 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 }
 .sm-bs-pop { animation: sm-bs-pop var(--bs-dur, 520ms) ease-out var(--bs-delay, 0ms) 1 both; }
 @keyframes sm-bs-flash { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* O ESPECIAL faz o efeito CRESCER (11/10/2026, pedido do dono): a esfera da skill à distância e o corte da skill física
+   saem maiores (o TAMANHO base é do `BattleStage`: `ORB_PX_SPECIAL`/`SLASH_SCALE_SPECIAL`) e ainda ganham fôlego no
+   trajeto/na batida. Mesma arte, só maior. `.sm-bs-big` marca a figura do especial; movimento reduzido: bloco canônico. */
+@keyframes sm-bs-fly-big {
+  0% { opacity: 0; transform: translate(0, 0) scale(.6); }
+  14% { opacity: 1; transform: translate(calc(var(--dx) * .08), calc(var(--dy) * .08)) scale(1.1); }
+  96% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1.28); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.45); }
+}
+.sm-bs-fly.sm-bs-big { animation-name: sm-bs-fly-big; }
+@keyframes sm-bs-pop-big {
+  0% { opacity: 0; transform: scale(.4); }
+  22% { opacity: 1; transform: scale(1.22); }
+  70% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.sm-bs-pop.sm-bs-big { animation-name: sm-bs-pop-big; }
 @keyframes sm-bs-cast {
   0% { opacity: 0; transform: scale(.5) rotate(0deg); }
   30% { opacity: 1; transform: scale(1) rotate(30deg); }
@@ -8378,3 +8417,30 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-forge-spark { position: absolute; left: 50%; bottom: 30%; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; background: var(--sm2-primary-ink, #6ee7f0); box-shadow: 0 0 8px var(--sm2-primary-ink, #6ee7f0); animation: sm-forge-spark 1100ms ease-out 1 both; }
 .sm-forge-pulse { display: inline-block; animation: sm-forge-pulse 700ms ease-out 1; }
 .sm-forge-seal { animation: sm-forge-seal 300ms ease-out 1 both; }
+
+/* Comida premium (utils/premiumFood.ts): a arte da comida de base + uma
+   estrelinha discreta no canto superior direito. So CSS: a estrela e marca,
+   nao icone interativo, e nao tem animacao. */
+.sm3-item-arte[data-premium] { position: relative; }
+.sm3-item-arte[data-premium]::after {
+  content: '\2605';
+  position: absolute; top: -4px; right: -5px;
+  font-size: 12px; line-height: 1;
+  color: var(--sm2-gold-ink, #f2c200);
+  text-shadow: 0 0 2px var(--sm2-bg, #071413);
+  pointer-events: none;
+}
+/* Oficina do Foco (10/10/2026): barra de etapas do planejamento. Sem movimento: regra no bloco canônico de movimento reduzido. */
+.sm-oficina-bar { transition: width 180ms ease; }
+/* LEVEL UP (`LevelUpOverlay`, 11/10/2026): o número entra de grande para o lugar, o banner cai e o pet salta uma vez;
+   a dica de toque respira. Movimento reduzido: tudo parado (regra no bloco canônico) — a pausa fica. */
+@keyframes sm-lvup-num { 0% { transform: scale(2.2); opacity: 0; } 55% { transform: scale(.92); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes sm-lvup-banner { 0% { transform: translateY(-24px) scale(.8); opacity: 0; } 60% { transform: translateY(3px) scale(1.04); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes sm-lvup-pet { 0% { transform: translateY(14px) scale(.8); opacity: 0; } 55% { transform: translateY(-10px) scale(1.06); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes sm-lvup-burst { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes sm-lvup-hint { 0%, 100% { opacity: .5; } 50% { opacity: .95; } }
+.sm-lvup-num { display: inline-block; animation: sm-lvup-num .7s cubic-bezier(.2,.9,.3,1.2) both; }
+.sm-lvup-banner { animation: sm-lvup-banner .55s ease-out both; }
+.sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }
+.sm-lvup-burst { animation: sm-lvup-burst 24s linear infinite; }
+.sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }

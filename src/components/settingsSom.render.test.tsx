@@ -75,8 +75,8 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
   });
 
   it.each([
-    ['pt-BR', /^Sons/, /^Trilha/, /^Música-tema/],
-    ['en-US', /^Sound effects/, /^Ambient loop/, /^Theme music/],
+    ['pt-BR', /^Sons/, /^Música de masmorra e arena/, /^Música-tema/],
+    ['en-US', /^Sound effects/, /^Dungeon & arena music/, /^Theme music/],
   ] as const)('%s: as três chaves existem, com rótulo no idioma', (language, sons, trilha, tema) => {
     montar(language);
     expect(switchDe(sons)).toBeTruthy();
@@ -95,14 +95,14 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
     expect(temaPreferido()).toBe(true);
   });
 
-  it('S17: música é uma por vez — ligar a trilha desliga o tema, e ligar o tema desliga a trilha', () => {
+  it('S17 emendada (11/10/2026): as duas preferências CONVIVEM — tema na Home, música de masmorra e arena nas lutas', () => {
     montar('en-US');
-    fireEvent.click(switchDe(/^Ambient loop/));
+    fireEvent.click(switchDe(/^Dungeon & arena music/));
     expect(trilhaPreferida()).toBe(true);
-    expect(temaPreferido()).toBe(false);
+    expect(temaPreferido()).toBe(true); // antes: ligar a trilha desligava o tema; agora o diretor alterna por superfície
     fireEvent.click(switchDe(/^Theme music/));
-    expect(temaPreferido()).toBe(true);
-    expect(trilhaPreferida()).toBe(false);
+    expect(temaPreferido()).toBe(false);
+    expect(trilhaPreferida()).toBe(true);
   });
 
   it('tocar em "Sons" chama o dono do mudo (o App), e o estado refletido é `!soundMuted`', () => {
@@ -114,9 +114,9 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
     expect(onToggleSound).toHaveBeenCalledTimes(1);
   });
 
-  it('tocar em "Trilha" liga a chave PRÓPRIA (S2: nasce desligada; o toque é o gesto) e desliga de novo', () => {
+  it('tocar em "Música de masmorra e arena" liga a chave PRÓPRIA (S2: nasce desligada; o toque é o gesto) e desliga de novo', () => {
     montar('pt-BR');
-    const sw = switchDe(/^Trilha/);
+    const sw = switchDe(/^Música de masmorra e arena/);
     expect(trilhaPreferida()).toBe(false);
     expect(sw.getAttribute('aria-checked')).toBe('false');
     fireEvent.click(sw);

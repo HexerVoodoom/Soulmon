@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, act } from '@testing-library/react';
 
-const som = vi.hoisted(() => ({ playAttack: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn() }));
+const som = vi.hoisted(() => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn() }));
 vi.mock('../utils/sounds', () => som);
 
 import { BattleStage, type StageAction, type StageFighter } from './games/BattleStage';
@@ -147,9 +147,11 @@ describe('(c) sons nos eventos', () => {
     vi.useFakeTimers();
     render(<BattleStage {...base} action={{ id: 1, actor: 'me', foe: 0, kind: 'ranged', element: 'fogo' }} />);
     act(() => { vi.advanceTimersByTime(impactMs('ranged', false) - 10); });
-    expect(som.playAttack).not.toHaveBeenCalled();
+    expect(som.playAttackRanged).not.toHaveBeenCalled();
     act(() => { vi.advanceTimersByTime(20); });
-    expect(som.playAttack).toHaveBeenCalledTimes(1);
+    // 11/10/2026: o golpe À DISTÂNCIA tem o som dele (o físico segue em `playAttack`: ver BattleStage.golpeTipo.test.tsx)
+    expect(som.playAttackRanged).toHaveBeenCalledTimes(1);
+    expect(som.playAttack).not.toHaveBeenCalled();
     expect(som.playSpecial).not.toHaveBeenCalled();
     cleanup();
     vi.clearAllMocks();
@@ -206,7 +208,7 @@ describe('Duelo — a cena vem ANTES do golpe e a vitória soa; o motor não mud
     const b = JSON.stringify(simulatePvp({ me: lado(), opp: lado(), seed, taps: [] }).events);
     expect(a).toBe(b);
     expect(som.playSpecial).toHaveBeenCalled();
-    expect(som.playAttack).toHaveBeenCalled();
+    expect(som.playAttack.mock.calls.length + som.playAttackRanged.mock.calls.length).toBeGreaterThan(0);
   });
 
   it('a vitória soa uma vez, só quando a luta termina a favor do pet', () => {

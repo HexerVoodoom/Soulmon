@@ -22,6 +22,8 @@ import itemChipHarmony from '../assets/soulmon/items/item-chip-harmony.png';
 import itemChipBenevolence from '../assets/soulmon/items/item-chip-benevolence.png';
 import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
+import { FOOD_BY_CATEGORY } from '../constants/labels';
+import { premiumKey } from './premiumFood';
 
 /** Chave = emoji-identidade do item (FOOD_BY_CATEGORY / SPECIAL_ITEMS). */
 export const ITEM_ART: Record<string, string> = {
@@ -41,3 +43,9 @@ export const ITEM_ART: Record<string, string> = {
   '💗': itemHeart,
   '🌀': itemGlitchtama,
 };
+
+// Comida PREMIUM (`utils/premiumFood.ts`): a MESMA arte da comida de base — a
+// diferença é a estrelinha que a Mochila desenha por cima (`.sm-premium-star`).
+for (const f of Object.values(FOOD_BY_CATEGORY)) {
+  if (ITEM_ART[f.emoji]) ITEM_ART[premiumKey(f.emoji)] = ITEM_ART[f.emoji];
+}

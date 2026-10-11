@@ -36,6 +36,7 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
+import { entrarNaSuperficie } from '../utils/musica';
 import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
@@ -105,6 +106,8 @@ export interface ArenaGameProps {
 export function ArenaGame({
   evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onExit,
 }: ArenaGameProps) {
+  // Música (11/10/2026): na Arena toca a faixa PRÓPRIA dela (se a música de masmorra e arena está ligada).
+  useEffect(() => entrarNaSuperficie('arena'), []);
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
   const stage = fichaStageOf(evolutionStage);

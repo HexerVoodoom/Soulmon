@@ -17,6 +17,7 @@
  * QA Rodada 2 (22/09/2026). Autoverificação: um id inventado tem de devolver
  * `undefined` — se devolvesse arte, o mapa estaria mentindo.
  */
+import { premiumKey } from '../utils/premiumFood';
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -102,6 +103,7 @@ describe('itens — comidas e especiais ↔ ITEM_ART', () => {
   it('(a) toda comida de FOOD_BY_CATEGORY e todo especial tem arte', () => {
     const emojis = [
       ...Object.values(FOOD_BY_CATEGORY).map(f => f.emoji),
+      ...Object.values(FOOD_BY_CATEGORY).map(f => premiumKey(f.emoji)), // comida premium (★) reusa a arte da base
       ...Object.values(CHIP_EMOJI), HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI,
     ];
     const sem = emojis.filter(e => !ITEM_ART[e]);
@@ -110,6 +112,7 @@ describe('itens — comidas e especiais ↔ ITEM_ART', () => {
   it('(b) nenhuma arte de item sem item', () => {
     const conhecidos = new Set([
       ...Object.values(FOOD_BY_CATEGORY).map(f => f.emoji),
+      ...Object.values(FOOD_BY_CATEGORY).map(f => premiumKey(f.emoji)), // comida premium (★) reusa a arte da base
       ...Object.values(CHIP_EMOJI), HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI,
     ]);
     const orfaos = Object.keys(ITEM_ART).filter(k => !conhecidos.has(k));

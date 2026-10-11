@@ -4,7 +4,9 @@ import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { getMaxEnergyForStage, MAX_STAGE_REQUIREMENT } from '../types/progression';
 import { GULOSO_BONUS_ATTR, hasPassive, rubDailyCap } from './passives';
-import { isHaunted as isHauntedTask } from './taskTriage';
+import { isHaunted as isHauntedTask, effortOf, nextOccurrence } from './taskTriage';
+import { premiumDropFor, withPremiumDrop, type PremiumRecord } from './premiumFood';
+import type { PlayerDayAnchor } from './playerDay';
 import type { TaskStatus } from '../types/taskModel';
 
 // Regras de cuidado como funções PURAS.
@@ -261,7 +263,12 @@ export interface TaskState extends CareState {
     id: string; name: string; category: ActivityCategory; emoji: string; completed?: boolean;
     effort?: 1 | 2 | 3; status?: TaskStatus; deadline?: { date: string; time: string };
     createdAt?: string; lastTouchedAt?: string;
+    steps?: Array<{ id: string; label: string; completed: boolean }>;
+    repeatEveryDays?: number; wakeOn?: string; startDate?: string; focusDate?: string; postponedCount?: number;
   }>;
+  /** Teto da comida premium (`utils/premiumFood.ts`); ausente em save antigo. */
+  premiumFood?: PremiumRecord;
+  playerDayTz?: PlayerDayAnchor;
   completedTasks: Array<{
     id: string; name: string; category: ActivityCategory; emoji: string; completedAt: string;
     effort?: 1 | 2 | 3; wasHaunted?: boolean;
@@ -308,12 +315,17 @@ export function completeTask<T extends TaskState>(state: T, taskId: string, now 
   // ainda existe. Depois desta função ela sai de `tasks` para sempre, e tanto a
   // meta ponderada do dia quanto o bônus de alívio precisam do dado — quem
   // recalculasse depois estaria lendo uma tarefa que não existe mais.
-  const effort = task.effort === 2 || task.effort === 3 ? task.effort : 1;
+  // Subitens não multiplicam a meta (`effortWithSteps`): o MESMO peso da lista.
+  const effort = effortOf(task);
   const wasHaunted = isHauntedTask(task, now);
 
-  return {
+  const base: T = {
     ...state,
-    tasks: state.tasks.filter(t => t.id !== taskId),
+    tasks: [
+      ...state.tasks.filter(t => t.id !== taskId),
+      // Tarefa que se repete: a próxima nasce guardada (ver `nextOccurrence`).
+      ...(nextOccurrence(task, now) ? [nextOccurrence(task, now)!] : []),
+    ],
     completedTasks: [
       ...state.completedTasks,
       {
@@ -332,4 +344,10 @@ export function completeTask<T extends TaskState>(state: T, taskId: string, now 
     },
     foodInventory: foodForCompletedTask(state.foodInventory, task.category),
   };
+
+  // Todos os subitens de uma tarefa com ≥3 → comida premium da categoria
+  // (tetos por dia/semana em `premiumFood.ts`). Fechar só a tarefa, sem os
+  // subitens, continua rendendo só a comida comum.
+  const food = FOOD_BY_CATEGORY[task.category];
+  return food && premiumDropFor(state, task, now) ? withPremiumDrop(base, food.emoji, now) : base;
 }

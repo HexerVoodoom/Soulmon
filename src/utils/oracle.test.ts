@@ -213,6 +213,9 @@ describe('generateOracle', () => {
       expect(s.name.length).toBeGreaterThan(2);
       expect(s.description.pt.length).toBeGreaterThan(20);
       expect(s.description.en.length).toBeGreaterThan(20);
+      // Teto do servidor (`MAX_PROMPT_CHARS` = 12000, generate-sprite.js).
+      expect(s.imagePrompt.length).toBeLessThan(12000);
+      expect(s.imagePromptFallback.length).toBeLessThan(12000);
       // Template validado empiricamente: prompt CURTO estilo v-pet, sem fundo,
       // sem outline/shading/anti-aliasing (frases longas geram sprites piores —
       // ver composeSpritePrompt).

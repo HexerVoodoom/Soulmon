@@ -16,10 +16,12 @@
 
 | O quê | Arquivo |
 |---|---|
-| Os sons — **11 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Os sons — **12 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 4 do combate, abaixo: `playAttack`, `playAttackRanged`, `playSpecial`, `playVictory`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Os sons — **12 símbolos** (`playLevelUp` desde 11/10/2026, §3.2; `playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **música-TEMA** "Stone Hall Decay" (S17, 07/10/2026): `<audio>` em streaming → `busTema`, nasce LIGADA mas só começa no 1º gesto da sessão, 2 formatos por `canPlayType`, 30 s de silêncio entre voltas | `src/utils/tema.ts` + `TEMA_DO_JOGO` em `sonsAssets.ts` |
-| A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) | `src/utils/trilha.ts` |
+| A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) + a **faixa da Arena** (derivada, §10) | `src/utils/trilha.ts` + `src/utils/trilhaArena.ts` |
+| O **diretor de música** (§10): home = tema, masmorra = loop, arena = faixa própria; crossfade | `src/utils/musica.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
 | Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |
 | Trava da **R-NOVA** — os sons cortados não podem voltar por superfície nova | `src/utils/cortes.contract.test.ts` |
@@ -37,7 +39,7 @@ há um teste (`footgun 9`) que reprova a cópia.
    público" é punido por qualquer som não solicitado, e o app tem de funcionar **100% mudo** —
    som nunca é o único canal de nada. A fronteira da D11 é o **pacote inteiro**: ela mora no
    chamador tanto quanto em `sounds.ts`.
-2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. Música é uma por vez: ligar uma desliga a outra.) *Porque* autoplay viola a D11 por
+2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. Música é uma por vez — ⚠️ **emendado em 11/10/2026 (§10):** as duas preferências agora CONVIVEM, o diretor alterna por superfície com crossfade e nunca soam juntas.) *Porque* autoplay viola a D11 por
    extensão: música contínua não é presença nem confirmação de ação.
 3. **S3 — ≤ −16 LUFS integrado e true peak ≤ −1 dBTP** (ITU-R BS.1770 / EBU R 128). *Porque* é o
    único alvo com norma citada; a alternativa em dBFS mistura régua de pico com régua de
@@ -92,7 +94,7 @@ há um teste (`footgun 9`) que reprova a cópia.
 | Sintonia · Cuidado | **−19,0** |
 | Conclusão · Transação | **−22,0** |
 | Arcade | **−25,0** |
-| Trilha (E1–E5) | **−28,0 LUFS-S**, e ≤ −16 LUFS integrado |
+| Música (trilha, tema e faixa da Arena) | **−22,0 LUFS-S** (era −28,0 até 11/10/2026, §10), **−25,0 em combate**, e ≤ −16 LUFS integrado |
 
 Tolerância **±1,0 LU**; degrau **3,0 dB**, sem meio-degrau; teto **≤ −1 dBTP** em tudo.
 **Quem repete mais entra mais baixo.** Nível ≠ importância: se algo "deve soar como perda ou como
@@ -100,7 +102,7 @@ conquista", isso é timbre/envelope/duração, não nível.
 
 ### 3.1 O som do combate (PR18, pedido do dono, 06/10/2026)
 
-Três eventos novos, **todos `arcade`** (R-CAT: combate é minijogo e o golpe é o que mais repete; vitória de
+Três eventos novos (e, desde 11/10/2026, um quarto: `playAttackRanged`, o golpe À DISTÂNCIA — §10), **todos `arcade`** (R-CAT: combate é minijogo e o golpe é o que mais repete; vitória de
 minijogo não é "concluir tarefa" nem "marco", como no C-11): `playAttack` (golpe básico, soa no IMPACTO),
 `playSpecial` (sobe e estoura; a subida cai no fim da cena do especial e o estouro quando o golpe sai) e
 `playVictory` (arpejo que segura a última nota). Chamadores: o golpe e o especial só em
@@ -110,6 +112,16 @@ COMER) deixou de ser o "som de vitória" da Masmorra e do Pesadelo. Offsets **me
 (`OfflineAudioContext` + K-weighting BS.1770; o mesmo arnês reproduz `playFeed` −19,00 e `playTaskComplete` −22,00):
 **falta o gate humano de escuta** (S8). Continua valendo: som só em luta que o jogador abriu (D11), o gate de
 mudo e a R-EX moram em `sounds.ts`/`audioBus.ts`, e a torcida (`TorcidaKit`) segue muda.
+
+### 3.2 O som do level up (pedido do dono, 11/10/2026)
+
+`playLevelUp` — stinger de 3 notas ascendentes (C5–G5–C6 em `square`, oitava em seno por baixo, a última segura),
+**categoria `marco`** (R-CAT: subir de Vínculo é raro e voluntário, mesmo perfil de repetição de `playEvolve`; a
+categoria vem do EVENTO, não do arquivo). Offset **+1,893 dB**, medido em Chromium (`OfflineAudioContext` +
+K-weighting BS.1770; o mesmo arnês reproduz `playTaskComplete` −22,00): −17,893 LUFS-M a ganho 0,12 → alvo −16,0;
+pico ≈ −11,5 dBFS. **Único chamador: `components/LevelUpOverlay.tsx`**, e a **D11 mora lá**: só toca com a aba visível
+e com o áudio JÁ liberado por um gesto da sessão (`barramentoAtual()?.ctx.state === 'running'`) — o level up que
+aparece na abertura do app (evento pendente de uma sessão anterior) nasce mudo. Falta o gate humano de escuta (S8).
 
 ## 4. Mudar ou acrescentar um som
 
@@ -231,8 +243,75 @@ Detalhe completo, com saídas coladas e proveniência de cada número:
 - **Pausas:** `pausarTrilha`/`retomarTrilha` repassam os motivos (`sono`/`descanso`/`mudo`) ao tema; `document.hidden` pausa o
   elemento. O mudo global (`isMuted`) impede o início.
 - **Loudness:** o arquivo foi mestrado no ALVO DA TRILHA de `loudness.ts` (LUFS-S mediano medido com o filtro `ebur128` do
-  ffmpeg, BS.1770, nos dois formatos: −28,0 / −28,1; integrado −28,2; true peak −15 dBFS) e toca a ganho 1. Nenhum número
-  de alvo foi copiado para `tema.ts`/`sonsAssets.ts` (há guard). Se soar baixo, mude a POLÍTICA e remasterize — nunca um ganho no código.
+  ffmpeg, BS.1770, nos dois formatos: −28,0 / −28,1; integrado −28,2; true peak −15 dBFS). Nenhum número
+  de alvo foi copiado para `tema.ts`/`sonsAssets.ts` (há guard). ⚠️ Desde 11/10/2026 ele NÃO toca mais a ganho 1: o ganho de
+  reprodução é a diferença entre o alvo vigente e o de masterização (`GANHO_MUSICA_DB`, §10) — um número da POLÍTICA, aplicado
+  no nó de fade; remasterizar o arquivo continua sendo o jeito de mudar o que ele É.
 - **Bytes:** ≤ 2,5 MB por formato, fora do S6 de 300 KB (que vale para SFX e camadas), fora do `PRECACHE_URLS`; o `sw.js` não
   intercepta `Range` nem `/sounds/tema-`.
 - **Pendências do dono:** termos comerciais do plano Suno (`docs/Attributions.md`) e a escuta (S8).
+
+## 10. Auditoria da música, volume, rotas por superfície e golpe físico × à distância (11/10/2026, ditado do dono)
+
+Seis pedidos num ditado só. O que cada um virou, onde mora e o que o trava:
+
+**10.1 "Música às vezes parece que não toca."** Auditoria de `trilha.ts`/`tema.ts`/`audioBus.ts`. Quatro defeitos reais (cada um com
+teste em `trilha.retomada.test.ts`, `tema.cena.test.ts`, `audioBus.retomada.test.ts`):
+1. **Contexto preso em `suspended`.** O `audioBus` suspende o contexto com a aba oculta e o navegador também o suspende (iOS
+   `interrupted`, foco de áudio, APK voltando do segundo plano), mas NINGUÉM mandava `resume()` ao voltar: a trilha só o chamava ao
+   COMEÇAR, e voltar para a aba não começa nada (`comecar()` devolvia `true` antes do `resume`). Hoje `retomarContexto()` (dono único,
+   `audioBus.ts`) roda em `visibilitychange` (visível), `pageshow`, `focus`, no evento `resume` do Capacitor e em `statechange`; aba
+   oculta NUNCA retoma (D11).
+2. **`resume()` fora da pilha do gesto.** A trilha só o chamava DEPOIS do `await` da carga dos arquivos; o Safari/iOS o recusa. Agora
+   sai síncrono, antes de qualquer `await`.
+3. **Contexto fechado (`pagehide` → bfcache).** A voz/o `<audio>` ficavam presos a um grafo morto, "tocando" em silêncio para sempre.
+   A voz da trilha guarda o contexto em que nasceu e é refeita; o tema refaz o `<audio>` (um `MediaElementSource` só vale uma vez).
+4. **`busTrilha` em 0 com storage falhando** (janela privada): a flag não persistia e a trilha tocava mudo. Quem toca com consentimento
+   abre o bus.
+Não achado (conferido): o ducking D-1/D-2 volta (a liberação é agendada na mesma chamada que o abaixa e o contexto suspenso só congela
+a linha do tempo); o interruptor e o `AudioContext` não brigam (o toggle persiste a preferência, o consentimento é por sessão).
+
+**10.2 "A música está muito baixa."** Dois fatores, os dois da POLÍTICA (`loudness.ts`, nenhum número em outro arquivo — há guard):
+- **O alvo subiu de −28 para −22 LUFS-S** (`ALVO_TRILHA_LUFS_S`) e o ganho de reprodução é DERIVADO: `GANHO_MUSICA_DB` = alvo − nível
+  de masterização dos arquivos (`ALVO_MASTERIZACAO_MUSICA_LUFS_S`, −28) = **+6 dB**, aplicado no nó de fade/trim de cada música. A regra
+  antiga ("a trilha fica abaixo do último degrau de SFX") foi relaxada para "no máximo no degrau de Conclusão (−22)"; **em combate**
+  (masmorra, arena) a música desce `OFFSET_MUSICA_EM_COMBATE_DB` (−3) para o degrau do Arcade (−25), o golpe que mais repete não é coberto.
+- **Achado de medição: a trilha tocava 4,6 dB MAIS BAIXA que o tema.** O `TRIM_TRILHA_POR_CAMADAS_DB` antigo (`{1: 0, 2: −2,024}`) vinha de
+  um arnês que anunciava a soma em "−28 LUFS-S"; medida sobre o `.webm` servido, com a MESMA estatística do tema (LUFS-S mediano,
+  `ebur128` do ffmpeg), a soma dava **−32,6** (integrado −31,5, que bate com o "−31,46" do registro antigo). Remedido (base sozinha
+  −32,1; ritmo −33,5; soma sem trim −30,6; picos −19,2/−16,6/−14,1 dBFS): trim novo **{1: +4,8, 2: +2,6}**. Picos finais ≤ teto S3.
+- Resultado: tema e loop no mesmo nível (−22 em casa, −25 em combate); a trilha ficou ≈ +10,6 dB mais alta que antes, o tema +6 dB.
+  **Falta a escuta do dono (S8)** — o número é de medição, não de ouvido.
+
+**10.3 Rotas por superfície** (`musica.ts`): casa = **tema**; masmorra = **loop** (as duas camadas, em combate); arena = **faixa própria**.
+- **Faixa da Arena = DERIVADA, zero asset novo.** As duas camadas a `RAZAO_DA_ARENA` (1,2× → 100→120 BPM; o loop cai de 28,8 para 24 s,
+  12 compassos de 2 s) + uma PERCUSSÃO procedural (`trilhaArena.ts`: bumbo nos tempos 1/3 + contratempo, caixa nos 2/4, chimbal em
+  colcheias, virada no 4º compasso de cada 4) sintetizada num buffer de um loop inteiro, que começa no mesmo instante e fecha no mesmo
+  ponto (em fase, sem relógio). Sem melodia de propósito: um `AudioBufferSourceNode` não faz time-stretch, então as camadas mudam de
+  tom ao acelerar, e uma linha melódica nova poderia brigar com a tonalidade delas. Trim medido `TRIM_FAIXA_ARENA_DB` (−5,8 sobre o das
+  camadas: a percussão deixa a mistura 5,8 dB mais alta). **Rascunho de ouvido: precisa da escuta do dono.**
+- **Crossfade** de `CROSSFADE_MUSICA_S` (1,2 s) entre as músicas: o tema ganha o motivo de pausa `cena` (desce e pára, volta de onde
+  parou) enquanto a de combate sobe; entre `loop` e `masmorra` (mesmo material) só o ganho desliza.
+- **Nasce desligada, só por gesto.** O tema segue nascendo ligado (S17); as faixas de combate são o interruptor **"Música de masmorra e
+  arena" / "Dungeon & arena music"** (Configurações › Som, `SOUND_TRACK_ENABLED`, NASCE DESLIGADO). Abrir a masmorra/arena é um gesto do
+  jogador (`consentirNestaSessao`), mas só vale com o interruptor ligado. Sem ele, o tema segue tocando em combate (mais baixo).
+- **S17 emendada:** "música é uma por vez: ligar uma desliga a outra" virou "as duas preferências convivem; o diretor nunca as deixa
+  soar juntas". Quem ligou só o loop (tema desligado) o mantém na Home (legado).
+
+**10.4 Golpe físico × à distância.** `playAttackRanged` (disparo: triangle agudo que cai de tom + parcial uma oitava acima; o físico
+`playAttack` segue o soco grave). **Mesma categoria `arcade`** (R-CAT: o EVENTO é golpe de combate nos dois), offset próprio **1,651 dB**
+medido no arnês que reproduz `playAttack` em 1,971 (Chromium + K-weighting, LUFS-M). Quem escolhe é o TIPO do ataque do combatente
+(`strikeFormOf` no `BattleStage`, único ponto que dispara o som do golpe — Masmorra, Arena, Duelo, Torneio, Pesadelo herdam). O especial
+segue com `playSpecial`. Falta o gate humano de escuta (S8), como no resto do combate.
+
+**10.5 FX maior no especial** (`BattleStage` + `index.css`): a esfera da skill à distância sai a `ORB_PX_SPECIAL` (150, era 88; o básico 60) e
+o corte da física a `SLASH_SCALE_SPECIAL` (1,75, era 1,2; o básico 0,95), mesma arte, e as animações `.sm-bs-big` ainda crescem no trajeto/na
+batida. Movimento reduzido no bloco canônico (esfera some como a comum; corte vira o flash único).
+
+**10.6 Especiais em série** (`specialGate.ts`, `DuelScreen`, `useGroupBattle`): encenação pura, nada do núcleo/servidor muda. No Duelo
+(relógio de parede), ao chegar ao `cast` o relógio PARA — nenhum golpe de nenhum lado começa nem chega — pela cena + trajeto (`specialLeadMs`),
+o golpe do especial é aplicado, o relógio segue parado pela cauda do efeito (`specialTailMs`) e RETOMA recuado (`impactMs('ranged')`) para o
+próximo golpe ter a animação inteira. Dois especiais no MESMO instante (espelho) saem como `cast A, golpe A, cast B, golpe B`
+(`serializarEspeciais`, retratos refeitos por deltas: a vida não regride). Na Arena/Masmorra/Pesadelo o `cast` já pausava o relógio; o que
+faltava era esperar a cauda antes do golpe seguinte (antes ele CORTAVA o efeito). Efeito colateral declarado: cada especial alonga a luta
+EXIBIDA em ≈ lead + cauda + respiro (≈ 3,3 s); a simulação e o resultado são os mesmos.

@@ -8,6 +8,7 @@ import { getSpriteForStage } from '../utils/sprites';
 // Gemini, com autorização explícita do dono, até chegar a versão com alfa real.
 import logoUrl from '../assets/brand/final/logo-wordmark.png';
 import { recommendStarterSet } from '../utils/recommend';
+import { suggestFirstTask, firstTaskFrom, type FirstTaskDraft } from '../utils/firstTaskSuggestion';
 import { ACTIVITY_CATALOG } from '../data/activityCatalog';
 import {
   LIFE_AREAS, LIFE_AREA_LABEL, STRUGGLE_LABEL, STRENGTH_LABEL,
@@ -79,7 +80,7 @@ const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.Ora
 //   · `Suspense fallback={null}` do atalho de debug virou `ScreenSkeleton`.
 //
 // O QUE NÃO MUDOU, de propósito: o FLUXO. O ritual continua com as 6 perguntas
-// e o teste longo continua com os 20 itens — são regra de PRODUTO, não roupa.
+// e o teste longo tem 14 itens desde 11/10/2026 (eram 20; os comentários abaixo que falam em "20 itens"/"26 perguntas" são do desenho anterior — ver REGISTRO §27); são regra de PRODUTO, não roupa.
 // A barra de progresso mantém o denominador corrigido (inclui o tutorial que
 // vem depois) e o desconto do bloco de 20 para quem recusa o teste.
 // ---------------------------------------------------------------------------
@@ -174,6 +175,9 @@ export type OnboardingCompleteData = {
    * modo 'upgrade' e o rascunho do ritual pago antigo não carregam isto; quem
    * consome (`App.tsx`) só acrescenta atividades quando `itemIds` não é vazio.
    */
+  /** 11/10/2026: a PRIMEIRA TAREFA (editável; `undefined` = a pessoa esvaziou o
+   *  campo). Esforço 1; o `App.tsx` a grava em `tasks`. */
+  firstTask?: FirstTaskDraft;
   catalogChoice?: {
     areas: LifeArea[];
     struggles: StruggleId[];
@@ -555,6 +559,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     [areas, struggles, strengths],
   );
   const starterKept = starterSet.filter(i => !starterOff.includes(i.id));
+  // A tarefa sugerida acompanha a 1ª área; enquanto a pessoa não digitou nada
+  // (`null`) o campo mostra a sugestão. Campo apagado de propósito = sem tarefa.
+  const [firstTaskText, setFirstTaskText] = useState<string | null>(null);
+  const firstTaskValue = firstTaskText ?? suggestFirstTask(areas, isPt).name;
   const labelsOf = <K extends string>(ids: K[], table: Record<K, { pt: string; en: string }>) =>
     ids.map(id => (isPt ? table[id].pt : table[id].en)).join(', ');
   const soulGoal = areas.length > 0
@@ -631,21 +639,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  o pet nunca fica sem nome por causa de um campo em branco. */
   const petNameFinal = petNameValue.trim() || registerDisplayName;
 
-  // A BARRA mede o caminho na ORDEM em que a pessoa anda — e a ordem não é
-  // mais a numérica: no onboarding as 26 perguntas (6..32) vêm ANTES da
-  // escolha, e os dados de nascimento (1..4) só depois dela, no caminho pago.
-  // Antes da escolha conta-se a cauda do caminho pago (a mais longa): quem
-  // escolhe o grátis vê a barra pular para a frente, nunca para trás.
-  // ⚰️ O denominador incluía o tutorial que vinha depois do onboarding; com o
-  // ponto de partida entregando atividades, ele não abre mais (ver `App.tsx`).
-  const sequencia = isUpgrade
-    ? [...RITUAL_PAGO, ...QUIZ_STEPS, ...DEEP_STEPS, GENERATING, REVEAL]
-    : [...PRE_ESCOLHA, ...(flow === 'demo'
-      ? [REVEAL_DEMO, DEMO_PICK, REGISTER]
-      : [...RITUAL_PAGO, GENERATING, REVEAL])];
-  // A tela de "tentar de novo" da geração mede como a própria geração.
-  const posicao = sequencia.indexOf(step === REFINE_OFFER ? GENERATING : step);
-  const progress = posicao < 0 ? 0 : (posicao + 1) / sequencia.length;
+  // O PROGRESSO são TRÊS PONTOS, um por bloco de perguntas (11/10/2026, pedido
+  // do dono: "a contagem está errada: primeiro conta 6, depois 20, depois tem
+  // outras perguntas"). Bloco 1 = as perguntas do ritual · 2 = o teste longo ·
+  // 3 = metas + ponto de partida. Sem N/M: o número era o que mentia. Fora dos
+  // blocos (conta, nome, escolha, nascimento, geração, reveal) não há pontos.
+  const bloco: 0 | 1 | 2 | 3 =
+    isUpgrade ? 0
+      : step >= QUIZ_START && step < QUIZ_END ? 1
+        : step >= DEEP_START && step < DEEP_END ? 2
+          : [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP].includes(step) ? 3
+            : 0;
 
   /** Um passo está respondido? B1/B4/B5 + 01/10/2026 — tudo obrigatório,
    *  sem "pular" e sem "prefiro não dizer". Serve ao "Continuar" E à
@@ -1302,6 +1306,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // seguinte retomar um portao que esta pessoa ja atravessou.
     clearGateDraft();
     const catalogChoice = { areas, struggles, strengths, itemIds: starterKept.map(i => i.id) };
+    const firstTask = firstTaskFrom(firstTaskValue, areas, isPt) ?? undefined;
     if (flow === 'demo' && demoCharacterId) {
       await onComplete({
         mode: 'demo',
@@ -1311,6 +1316,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         demoCharacterId,
         initialActivities: [],
         catalogChoice,
+        firstTask,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
@@ -1329,6 +1335,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         revealSprite: revealSprite ?? undefined,
         initialActivities: [],
         catalogChoice,
+        firstTask,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
@@ -1556,22 +1563,23 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             novo, a geração, os reveals), a seta não aparece. */}
         {temVolta && <BackArrow onClick={back} language={isPt ? 'pt-BR' : 'en-US'} />}
 
-        {/* Barra de progresso: mede a POSIÇÃO na ordem do caminho
-            (`sequencia`), do nome à criatura — 01/10/2026. */}
-        {/* Canvas Onboarding-oráculo D-Q1: a barra é o `.meter` SIS-07 a 8px —
-            trilho `surface-2` + anel `muted` 1px + água `primary-fill` (o
-            trilho sobre `bg` sozinho lia 1,2:1; o anel é o que faz a barra
-            existir). Era um `div` 6px com fronteira `line`. */}
-        {posicao >= 0 && (
+        {/* Três pontos, um por bloco (ver `bloco`). `role=progressbar` com
+            valuetext falado — leitor de tela diz "bloco 2 de 3", sem contar
+            perguntas. Os pontos não animam por JS; a transição de cor mora no
+            bloco canônico de movimento reduzido. */}
+        {bloco > 0 && (
           <div
             role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(progress * 100)}
+            aria-valuemin={1}
+            aria-valuemax={3}
+            aria-valuenow={bloco}
+            aria-valuetext={isPt ? `Parte ${bloco} de 3` : `Part ${bloco} of 3`}
             aria-label={isPt ? 'Progresso do ritual' : 'Ritual progress'}
-            className="sm2-kit-meter sm2-ora-meter"
+            className="sm2-ora-dots"
           >
-            <div className="sm2-kit-meter-fill" style={{ width: `${progress * 100}%` }} />
+            {[1, 2, 3].map(n => (
+              <span key={n} className="sm2-ora-dot" data-dot={n < bloco ? 'done' : n === bloco ? 'now' : 'next'} />
+            ))}
           </div>
         )}
 
@@ -1814,6 +1822,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === STARTER_STEP && (
           <StepShell title={isPt ? 'Seu ponto de partida' : 'Your starting point'}
             hint={isPt ? 'Fique com o que quiser começar.' : 'Keep what you want to start with.'}>
+            <p style={{ ...sm2Hint, margin: '0 0 8px' }}>{isPt ? 'Hábitos para repetir' : 'Habits to repeat'}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {starterSet.map(item => (
                 <div key={item.id} data-starter-item={item.id}>
@@ -1826,6 +1835,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   <p style={{ ...sm2Hint, margin: '0 0 8px 34px' }}>{isPt ? item.why.pt : item.why.en}</p>
                 </div>
               ))}
+            </div>
+            {/* A TAREFA (11/10/2026): hábito é para repetir, tarefa é para
+                terminar. Já vem preenchida, a pessoa reescreve ou esvazia. */}
+            <div data-first-task style={{ marginTop: 16 }}>
+              <label htmlFor="sm-first-task" style={{ ...sm2Hint, display: 'block', margin: '0 0 6px' }}>
+                {isPt ? 'Uma tarefa para terminar (opcional)' : 'One task to finish (optional)'}
+              </label>
+              <Field id="sm-first-task" type="text" value={firstTaskValue} maxLength={80}
+                onChange={e => setFirstTaskText(e.target.value)}
+                placeholder={isPt ? 'Escreva a sua, ou deixe vazio' : 'Write your own, or leave it empty'} />
             </div>
             <button type="button" style={{ ...sm2Button('primary', !canAdvance()), width: '100%', marginTop: 20 }}
               onClick={next} aria-disabled={!canAdvance() || undefined}>
@@ -1976,9 +1995,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           const q = ORACLE_QUESTIONS[step - QUIZ_START];
           return (
             <StepShell title={L(q.text)}
-              hint={isPt
-                ? `Pergunta ${step - QUIZ_START + 1} de ${ORACLE_QUESTIONS.length}`
-                : `Question ${step - QUIZ_START + 1} of ${ORACLE_QUESTIONS.length}`}>
+              hint={isPt ? 'Escolha a que mais parece com você.' : 'Pick the one that sounds most like you.'}>
               <div>
                 {q.options.map(opt => {
                   const selected = answers[q.id] === opt.id;

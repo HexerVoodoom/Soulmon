@@ -5,6 +5,7 @@ import { heartLossCap } from './passives';
 import {
   normalizeSchedule,
   normalizeEffort,
+  taskEffort,
   HABIT_WEIGHT,
   type Schedule,
 } from '../types/taskModel';
@@ -17,6 +18,7 @@ import {
   earnShield,
   type HabitRhythm,
 } from './habitRhythm';
+import { wakeDueTasks } from './taskTriage';
 import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 import { awardBondXP, bondLevelFor } from './bond';
 import { sanitizeTalentPicks } from './talents';
@@ -638,7 +640,7 @@ export function deveCelebrarDiaCompleto(p: { antes: boolean; agora: boolean; ult
 export function registeredForDay(state: DailyGoalState, weekDay: number, dayKey?: string): number {
   return activitiesForWeekDay(state, weekDay, dayKey)
     .reduce((s: number, a: any) => s + habitWeightOf(a), 0)
-    + state.tasks.filter(countsForGoal).reduce((s, t: any) => s + normalizeEffort(t?.effort), 0)
+    + state.tasks.filter(countsForGoal).reduce((s, t: any) => s + taskEffort(t), 0)
     + (dayKey ? tasksCompletedOn(state as any, dayKey) : 0);
 }
 
@@ -871,7 +873,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // 1 — o jogador faria 100% do que se comprometeu e a virada cobraria coração.
   dailyDone += prev.tasks
     .filter((t: any) => t.completed && countsForGoal(t))
-    .reduce((s: number, t: any) => s + normalizeEffort(t?.effort), 0)
+    .reduce((s: number, t: any) => s + taskEffort(t), 0)
     + tasksCompletedOn(prev as any, yesterdayString);
 
   // Meta do dia = min(cadastradas, requisito do estágio). Cumprir o que você
@@ -1166,7 +1168,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     completedToday: false,
   }));
 
-  const resetTasks = prev.tasks.map((task: any) => ({ ...task, completed: false }));
+  const resetTasks = wakeDueTasks(prev.tasks.map((task: any) => ({ ...task, completed: false })), now);
 
   const finalStageLevel = getStageLevel(newEvolutionStage);
   const newMaxHP = MAX_HP_BY_FORM[finalStageLevel];

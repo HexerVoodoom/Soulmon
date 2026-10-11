@@ -44,6 +44,7 @@
 import {
   Effort,
   normalizeEffort,
+  effortWithSteps,
   TaskStatus,
   POSTPONE_NUDGE_AT,
   HAUNTED_AFTER_DAYS,
@@ -81,6 +82,8 @@ export interface TriageTask {
   /** `{ date: 'YYYY-MM-DD', time: 'HH:MM' }` — o formato dos `<input>` do app. */
   deadline?: { date: string; time: string };
   effort?: Effort;
+  /** Só o tamanho importa aqui (`effortWithSteps`). */
+  steps?: ReadonlyArray<{ completed?: boolean }>;
   status?: TaskStatus;
   /** Quando pretendo COMEÇAR (o "When" do Things 3), não quando vence. */
   startDate?: string;
@@ -176,7 +179,8 @@ export function isActive(task: TriageTask): boolean {
 
 /** Esforço da tarefa, com o padrão de save antigo (1 = rápida). */
 export function effortOf(task: TriageTask): Effort {
-  return normalizeEffort(task.effort);
+  // Subitens avançam a barra, nunca multiplicam a meta (`effortWithSteps`).
+  return effortWithSteps(task.effort, task.steps?.length ?? 0);
 }
 
 /**
@@ -507,4 +511,82 @@ export function triageQueue<T extends TriageTask>(tasks: T[], now: Date): T[] {
       if (sa !== sb) return sb - sa;
       return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
     });
+}
+
+// ---------------------------------------------------------------------------
+// Subitens (etapas) de uma TAREFA
+// ---------------------------------------------------------------------------
+
+/** Todos os subitens feitos (e há pelo menos um)? */
+export function allStepsDone(task: { steps?: ReadonlyArray<{ completed?: boolean }> }): boolean {
+  const steps = task.steps ?? [];
+  return steps.length > 0 && steps.every(s => s.completed === true);
+}
+
+/**
+ * Marca UM subitem como feito. Pura e idempotente: marcar de novo devolve a
+ * MESMA referência (footgun 6 — updater roda 2× no StrictMode). Subitem feito
+ * não desmarca (mesmo contrato das etapas de hábito). Não conclui a tarefa:
+ * quem fecha é o caminho de conclusão de sempre, que paga comida e Vínculo.
+ */
+export function completeTaskStep<T extends { id: string; steps?: Array<{ id: string; completed: boolean }> }>(
+  tasks: T[],
+  taskId: string,
+  stepId: string,
+): T[] {
+  const task = tasks.find(t => t.id === taskId);
+  const step = task?.steps?.find(s => s.id === stepId);
+  if (!task || !step || step.completed) return tasks;
+  return tasks.map(t => t.id === taskId
+    ? { ...t, steps: t.steps!.map(s => s.id === stepId ? { ...s, completed: true } : s) }
+    : t);
+}
+
+// ---------------------------------------------------------------------------
+// Tarefa que se repete (a cada N dias da CONCLUSÃO)
+// ---------------------------------------------------------------------------
+
+function localDayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * A próxima ocorrência de uma tarefa que se repete, ou `null`. Nasce GUARDADA
+ * (`someday` + `wakeOn`): fora da meta, sem envelhecer, sem assombrar — a conta
+ * do mês que vem não pode pesar no dia de hoje. Subitens voltam desmarcados.
+ * Contada da CONCLUSÃO: sumir por meses devolve UMA ocorrência, nunca várias.
+ */
+export function nextOccurrence<T extends TriageTask & {
+  repeatEveryDays?: number; createdAt?: string; steps?: Array<{ id: string; label: string; completed: boolean }>;
+}>(task: T, now: Date): T | null {
+  const n = Math.floor(Number(task.repeatEveryDays));
+  if (!(n >= 1)) return null;
+  const wake = new Date(now.getFullYear(), now.getMonth(), now.getDate() + n);
+  const wakeOn = localDayKey(wake);
+  return {
+    ...task,
+    id: `${String(task.id).replace(/~r\d{8}$/, '')}~r${wakeOn.replace(/-/g, '')}`,
+    completed: false,
+    status: 'someday',
+    wakeOn,
+    postponedCount: 0,
+    createdAt: now.toISOString(),
+    lastTouchedAt: now.toISOString(),
+    startDate: undefined,
+    focusDate: undefined,
+    steps: task.steps?.map(s => ({ ...s, completed: false })),
+  };
+}
+
+/** Acorda as tarefas guardadas pela repetição cuja data chegou. Idempotente. */
+export function wakeDueTasks<T extends { status?: TaskStatus; wakeOn?: string; createdAt?: string; lastTouchedAt?: string }>(
+  tasks: T[], now: Date,
+): T[] {
+  const hoje = localDayKey(now);
+  if (!tasks.some(t => t.wakeOn && t.status === 'someday' && t.wakeOn <= hoje)) return tasks;
+  return tasks.map(t => {
+    if (!(t.wakeOn && t.status === 'someday' && t.wakeOn <= hoje)) return t;
+    const { wakeOn: _w, ...resto } = t;
+    return { ...resto, status: 'open' as TaskStatus, createdAt: now.toISOString(), lastTouchedAt: now.toISOString() } as T;
+  });
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
-import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
+import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
@@ -905,10 +905,12 @@ export const CompanionHUD = memo(function CompanionHUD({
   }, [varrendoSintonia]);
 
 
-  // Sprites da nossa arte são desenhados olhando pra DIREITA — a única regra
-  // de flip que restou é virar quando o pet anda pra esquerda. (Antes havia
-  // exceções por espécie, todas de sprites emprestados que saíram do bundle.)
-  const getHorizontalFlip = () => (direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)');
+  // O espelho depende de para onde a ARTE olha (`artFacesLeft`, `utils/sprites.ts`):
+  // a maioria olha pra DIREITA (vira ao andar pra esquerda), mas algumas linhas
+  // são desenhadas olhando pra ESQUERDA e viram ao andar pra direita — senão
+  // andam de costas. Sprite próprio (acervo) não declara lado: direita.
+  const arteOlhaEsquerda = !(ownSpriteUrl && ownSpriteUrl !== spriteQuebrado) && artFacesLeft(evolutionStage, demoCharacterId);
+  const getHorizontalFlip = () => ((direction === 'left') !== arteOlhaEsquerda ? 'scaleX(-1)' : 'scaleX(1)');
 
   /* Respiração: 3% (≈2 device px num sprite de 128 = 1 pixel de origem).
      Os 10% de antes eram um salto, não uma respiração. */

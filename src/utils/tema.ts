@@ -28,19 +28,31 @@
  * Presença, não alarme: ele nunca emenda no próprio rabo como um loop seco.
  */
 import { garantirBarramento } from './audioBus';
-import { TEMA_DO_JOGO, type FormatoDoTema } from './sonsAssets';
+import { CROSSFADE_MUSICA_S, TEMA_DO_JOGO, type FormatoDoTema } from './sonsAssets';
+import { db2lin, GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB } from './loudness';
 import { isMuted } from './sounds';
 import { readFlag, writeFlag } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 
 /** Mesmos motivos da trilha (`trilha.ts`): quem pausa por um não libera o outro. */
 export type MotivoDePausa = 'sono' | 'descanso' | 'mudo';
+/**
+ * Mais um motivo, só do tema: `cena` = o diretor de música (`musica.ts`) pôs outra faixa no lugar dele (a trilha na
+ * masmorra, a faixa da Arena). É um motivo como os outros — o tema volta de onde parou quando a cena sai — mas com
+ * crossfade em vez de corte, e sem nada a ver com o sono/mudo (um não libera o outro).
+ */
+export type MotivoDoTema = MotivoDePausa | 'cena';
 
-const pausas = new Set<MotivoDePausa>();
+const pausas = new Set<MotivoDoTema>();
 const pausada = (): boolean => pausas.size > 0;
 
 let el: HTMLAudioElement | null = null;
 let fade: GainNode | null = null;
+/** O contexto em que o `<audio>` foi ligado ao grafo: se o barramento for refeito (pagehide → bfcache), o elemento é refeito. */
+let ctxDoElemento: AudioContext | null = null;
+let emCombate = false;
+/** Fade-in da PRÓXIMA retomada (sem recomeço): curto, e longo (crossfade) quando quem volta é a cena. */
+let fadeDeRetomadaS = 0.4;
 let ligadaNestaSessao = false;
 let tocando = false;
 let formatoIdx = 0;
@@ -64,6 +76,26 @@ export function escolherFormato(probe: Pick<HTMLAudioElement, 'canPlayType'>): n
     if (probe.canPlayType(fm[i].mime) !== '') return i;
   }
   return 0;
+}
+
+/** O ganho de reprodução do tema (linear): `GANHO_MUSICA_DB` da política, e em combate desce `OFFSET_MUSICA_EM_COMBATE_DB`. */
+function alvoDoFade(): number {
+  return db2lin(GANHO_MUSICA_DB + (emCombate ? OFFSET_MUSICA_EM_COMBATE_DB : 0));
+}
+
+/** O diretor avisa que a superfície atual é de combate (o tema continua, mais baixo, se a trilha de combate está desligada). */
+export function definirTemaEmCombate(on: boolean): void {
+  if (emCombate === on) return;
+  emCombate = on;
+  if (!el || !fade || !tocando) return;
+  try {
+    const b = garantirBarramento();
+    if (!b) return;
+    const agora = b.ctx.currentTime;
+    fade.gain.cancelScheduledValues?.(agora);
+    fade.gain.setValueAtTime?.(fade.gain.value, agora);
+    fade.gain.linearRampToValueAtTime?.(alvoDoFade(), agora + CROSSFADE_MUSICA_S);
+  } catch { /* sem rampa: o próximo início usa o alvo novo */ }
 }
 
 function limparTimer(): void {
@@ -91,9 +123,16 @@ function aoFalhar(): void {
 }
 
 function criarElemento(): boolean {
+  const b0 = garantirBarramento();
+  if (el && b0 && ctxDoElemento && ctxDoElemento !== b0.ctx) {
+    // O contexto foi refeito (pagehide fechou o antigo; o bfcache trouxe a página de volta): o `<audio>` está preso
+    // a um grafo morto — `createMediaElementSource` só vale UMA vez por elemento, então o elemento é refeito.
+    try { el.pause(); } catch { /* já parou */ }
+    el = null; fade = null; ctxDoElemento = null; tocando = false;
+  }
   if (el) return true;
   if (typeof Audio === 'undefined') return false;
-  const b = garantirBarramento();
+  const b = b0;
   if (!b) return false;
   try {
     const a = new Audio();
@@ -111,10 +150,12 @@ function criarElemento(): boolean {
     a.addEventListener('error', aoFalhar);
     el = a;
     fade = g;
+    ctxDoElemento = b.ctx;
     return true;
   } catch {
     el = null;
     fade = null;
+    ctxDoElemento = null;
     return false;
   }
 }
@@ -139,7 +180,8 @@ function comecar(): boolean {
     const agora = b.ctx.currentTime;
     fade.gain.cancelScheduledValues(agora);
     fade.gain.setValueAtTime(0, agora);
-    fade.gain.linearRampToValueAtTime(1, agora + (recomeco ? TEMA_DO_JOGO.fadeInS : 0.4));
+    fade.gain.linearRampToValueAtTime(alvoDoFade(), agora + (recomeco ? TEMA_DO_JOGO.fadeInS : fadeDeRetomadaS));
+    fadeDeRetomadaS = 0.4;
     const p = el.play();
     tocando = true;
     if (p && typeof p.catch === 'function') {
@@ -157,7 +199,7 @@ function comecar(): boolean {
   }
 }
 
-function parar(): void {
+function parar(fadeS = 0.15): void {
   limparTimer();
   tocando = false;
   if (!el) return;
@@ -169,10 +211,10 @@ function parar(): void {
       const agora = b.ctx.currentTime;
       fade.gain.cancelScheduledValues(agora);
       fade.gain.setValueAtTime(fade.gain.value, agora);
-      fade.gain.linearRampToValueAtTime(0, agora + 0.15);
+      fade.gain.linearRampToValueAtTime(0, agora + fadeS);
     }
   } catch { /* sem rampa: o pause abaixo basta */ }
-  setTimeout(() => { if (meu === tokenParada) { try { a.pause(); } catch { /* já parou */ } } }, 170);
+  setTimeout(() => { if (meu === tokenParada) { try { a.pause(); } catch { /* já parou */ } } }, Math.round(fadeS * 1000) + 20);
 }
 
 function aoTrocarVisibilidade(): void {
@@ -262,14 +304,15 @@ export function desligarTema(): void {
 }
 
 /** Gancho único do App (via `pausarTrilha`): sono / descanso / mudo. Um motivo por chamada. */
-export function pausarTema(motivo: MotivoDePausa = 'sono'): void {
+export function pausarTema(motivo: MotivoDoTema = 'sono'): void {
   pausas.add(motivo);
-  parar();
+  parar(motivo === 'cena' ? CROSSFADE_MUSICA_S : undefined); // troca de cena = crossfade; dormir/mudo = rampa curta
 }
 
 /** Fim de UMA pausa: só retoma se nenhum outro motivo segue vivo e o gesto já veio. */
-export function retomarTema(motivo: MotivoDePausa = 'sono'): void {
+export function retomarTema(motivo: MotivoDoTema = 'sono'): void {
   pausas.delete(motivo);
+  if (motivo === 'cena') fadeDeRetomadaS = CROSSFADE_MUSICA_S;
   if (!pausada() && ligadaNestaSessao) comecar();
 }
 
@@ -289,6 +332,8 @@ export function esquecerTema(): void {
   try { el?.pause(); } catch { /* ignorado */ }
   el = null;
   fade = null;
+  ctxDoElemento = null;
+  emCombate = false;
   ligadaNestaSessao = false;
   tocando = false;
   formatoIdx = 0;

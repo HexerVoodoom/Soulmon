@@ -15,6 +15,10 @@
  * clique do ÚNICO CTA que faz o jogo avançar, por até 5 segundos, sem que nada
  * parecesse errado na tela.
  *
+ * NOTA (#291, 08/10/2026): o balão hoje é uma linha NO FLUXO acima do palco
+ * (`data-pet-bubble-row`), fora da caixa do "Evoluir"; o parágrafo abaixo é
+ * histórico. A regra (não se cruzam; posição não depende do CTA) segue valendo.
+ *
  * O CONSERTO DEFINITIVO (27/08/2026, pedido do dono): o balão saiu do rodapé
  * de vez e foi ANCORADO NO TOPO da janela do palco (`top: BUBBLE_GAP`, fixo,
  * nunca mais `bottom`). "Evoluir" continua no rodapé. As duas faixas não
@@ -53,51 +57,48 @@ const base = {
   maxEnergyPoints: 4,
 };
 
-/** Gêmeo de `BUBBLE_GAP` no `CompanionHUD.tsx` (não exportado). */
-const BUBBLE_GAP = 6;
-/** Gêmeo de `BUBBLE_BOTTOM`. */
-const BUBBLE_BOTTOM = 100;
-
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
 });
 afterEach(() => { vi.unstubAllGlobals(); });
 
-/** A faixa de largura total que carrega o balão (o pai da caixa de fala). */
-function faixaDoBalao(texto: HTMLElement): HTMLElement {
-  // <p> → caixa da fala → faixa
-  const caixa = texto.parentElement!;
-  return caixa.parentElement as HTMLElement;
+/** A linha do balão (`data-pet-bubble-row`): vive NO FLUXO, acima da janela do pet. */
+function linhaDoBalao(): HTMLElement {
+  return document.querySelector<HTMLElement>('[data-pet-bubble-row]')!;
 }
 
 describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
-  it('BLOQUEADOR: com "Evoluir" no ALTO, o balão fica na BASE da caixa — as faixas não se cruzam', () => {
+  it('BLOQUEADOR: com "Evoluir" no ALTO do palco, o balão está FORA do palco (no fluxo) — as faixas não se cruzam', () => {
     renderWithCss(<CompanionHUD {...base} canEvolve onEvolveRequest={() => {}} />);
     fireEvent.click(screen.getByAltText('rookie'));
 
     const btn = screen.getByRole('button', { name: 'Evoluir' });
-    const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
+    const linha = linhaDoBalao();
 
     // B3 (02/10/2026): "Evoluir" é CENTRALIZADO no ALTO da área do pet
-    // (`top`, `left: 50%`). 08/10/2026 (pedido do dono): o balão foi para a
-    // BASE da caixa (`bottom`), então as duas faixas não se cruzam por
-    // construção: uma ancora no topo, a outra no rodapé.
+    // (`top`, `left: 50%`). #291 (08/10/2026): o balão saiu de dentro do
+    // palco e virou uma linha NO FLUXO acima dele (`position: relative`, sem
+    // `top`/`bottom`), então as duas faixas não se cruzam por construção.
     expect(btn.style.left).toBe('50%');
     expect(btn.style.bottom).toBe('');
-    expect(faixa.style.top).toBe('');
-    expect(parseFloat(faixa.style.bottom)).toBeGreaterThanOrEqual(BUBBLE_GAP);
     expect(parseFloat(btn.style.top)).toBeGreaterThanOrEqual(0);
+    expect(linha.style.position).toBe('relative');
+    expect(linha.style.top).toBe('');
+    expect(linha.style.bottom).toBe('');
+    expect(linha.contains(btn)).toBe(false);
+    expect(linha.style.pointerEvents).toBe('none');
     // alvo ≥ 44 e rótulo acessível
     expect(parseFloat(btn.style.minHeight)).toBeGreaterThanOrEqual(44);
     expect(btn.getAttribute('aria-label')).toBe('Evoluir');
   });
 
-  it('sem CTA na tela o balão fica na MESMA base (a posição não depende do botão)', () => {
+  it('sem CTA na tela o balão fica na MESMA posição (a posição não depende do botão)', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
-    const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
-    expect(faixa.style.top).toBe('');
-    expect(faixa.style.bottom).toBe(`${BUBBLE_BOTTOM}px`);
+    const linha = linhaDoBalao();
+    expect(linha.style.position).toBe('relative');
+    expect(linha.style.top).toBe('');
+    expect(linha.style.bottom).toBe('');
   });
 
   it('a caixa de fala tem 30% de opacidade no fundo e o texto a 100%', () => {
@@ -112,9 +113,9 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
     const texto = screen.getByText(FALA_ENERGIZED);
-    const faixa = faixaDoBalao(texto);
-    // A faixa cobre o palco inteiro na horizontal: se ela capturar ponteiro,
-    // qualquer controle embaixo dela morre — foi assim que o bug aconteceu.
+    const faixa = linhaDoBalao();
+    // A linha cobre a largura inteira: se ela capturar ponteiro, qualquer
+    // controle embaixo dela morre — foi assim que o bug aconteceu.
     expect(faixa.style.pointerEvents).toBe('none');
     expect(texto.parentElement!.className).toContain('pointer-events-auto');
   });

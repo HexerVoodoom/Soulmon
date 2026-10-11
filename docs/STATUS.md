@@ -1,5 +1,46 @@
 # Status do Soulmon — registro vivo
 
+> ## 08/10/2026 — Masmorra vira DESCIDA IDLE (lutas automáticas, HP persistente, andares infinitos)
+>
+> - **Pedido do dono (modal respondido):** sem botão de próximo oponente; o HP não enche entre descidas e **recupera com o tempo** (por timestamp, até com o app fechado); a cada 6 lutas desce 1 andar, **sem teto**, até o HP acabar; lutas automáticas com pausar/sair.
+> - **Dono único:** `src/utils/dungeonIdle.ts` — `DUNGEON_AUTO_FIGHT_MS` 4000 · `DUNGEON_HP_REGEN_FULL_HOURS` 4 · `DUNGEON_MIN_HP_TO_ENTER_PCT` 25 · `DUNGEON_MILESTONE_FLOOR` 5 · `hpAgora(state, now)` pura. Campo novo no save: `dungeonHp?: { frac, at }` (hidratado/higienizado em `hydrateSave`, fuzz2 → 98 campos). Motor de combate, servidor e `*.parity.test.js` **intocados** (o HP persistente é só cliente e não compra vantagem).
+> - **Recompensas:** o "concluir os 5 andares" virou o MARCO "limpou a camada 5", 1× por descida (Glitchtama com o teto de 1 uso/dia, `setDungeonDifficultyAtLeast`, `dungeonRunsCompleted`); camadas 6+ não pagam de novo. Placar `DUNGEON_BEST` segue sendo a soma de Bits-base da descida. **Teto diário de Bits (150) já existia** no funil `creditMinigameBits` e foi mantido; a tela avisa "Daily Bits cap reached" sem parar a descida. Coraçãozinho 5%/inimigo, máx 2/dia: igual.
+> - **Cura do andar mantida** (~25%, ofício + talento `healBoost`): é cura DENTRO da descida; removê-la deslocaria a parede calibrada e mataria um talento. O que saiu foi o enchimento ENTRE descidas.
+> - **Copy:** "Recuperando…/Recovering…" (a bíblia veta "descansar" sobre a criatura — desvio consciente do "Resting" pedido). Portão do Vínculo (andar ≥ 4, Vínculo 8) agora encerra a descida ("lacrado por ora") em vez de desabilitar um botão.
+> - **Depende do dono:** ajustar as 3 constantes; confirmar a cura do andar e o marco "limpar" (vs. "chegar").
+> ## 11/10/2026 — Auditoria de segurança de lançamento (`docs/AUDITORIA-SEGURANCA-LANCAMENTO.md`)
+>
+> - **Corrigido:** `/api/transcribe` deixou de ser anônima (ID token Firebase verificado, fail-closed; `ChatBox` manda `authHeaders`). `/api/generate-sprite`: `referenceImageUrls` só aceita a nossa `/api/sprite-image?k=` da mesma origem (o resto é descartado — era SSRF de terceiro via Higgsfield) e `prompt`/`promptFallback` têm teto `MAX_PROMPT_CHARS` (12000). `@capacitor/android|core|cli` 8.4.0 → **8.4.3** (GHSA-rvm3-566m-v7fv, crítico no `npm audit`).
+> - **Depende do dono:** fixar o HOST do CDN do Higgsfield quando a assinatura gerar a 1ª imagem; Rate Limiting no painel Cloudflare para `/api/*` caras (o balde atual é por isolate); APK novo na Play para o patch do Capacitor; manter `FIREBASE_PROJECT_ID` setado.
+> ## 11/10/2026 — Hábito "só de hoje", subitens com peso fixo, Pagar contas e comida premium
+>
+> - **A. Hábito semanal**: o check da linha é de HOJE ("Marcar como feito hoje") e o progresso da semana é um chip à parte ("Semana: 1 de 3", diário "N de 7") com o aviso "O check vale só para hoje". Só exibição: `weekChip` em `habitRhythm.ts`; constância, escudo e pontuação intactos.
+> - **B. Work/Trabalho**: já existia (tipo, CreateModal/EditModal/useItemForm, catálogo na área `financas`). Travado por teste: soma 4 como as demais (1/2/1, pende a Harmonia). Nada de número novo.
+> - **C. Finanças**: SEM categoria nova (exigiria números do dono); vive em `Work`. Atalho "Pagar contas" no CreateModal (`data/taskPresets.ts`): o usuário marca as contas, vira TAREFA com subitens, repete a cada 30 dias da CONCLUSÃO (`repeatEveryDays`; a próxima nasce `someday` + `wakeOn`, acorda na virada). Peso: `effortWithSteps` em `taskModel.ts` (teto `min(3, nº de subitens)` com ≥2; piso sugerido idêntico na criação) — vale em `registeredForDay`/virada/check-in/progresso/`completeTask` (`taskEffort`).
+> - **D. Comida premium** (`utils/premiumFood.ts`): 1 por tarefa com ≥3 subitens TODOS feitos; tetos 1/dia e 3/semana (dia do jogador); uso +5 de energia (nunca acima das barras; recusa com energia cheia; 1 uso/dia). Campo novo no save: `premiumFood`. Estrelinha em CSS (`.sm3-item-arte[data-premium]`).
+> - Decisões abertas para o dono: ver relatório da sessão (premium em hábito com etapas? tetos 1/3? Work = Harmonia?).
+> ## 10/10/2026 — Oficina do Foco: a sessão em ETAPAS interativas (branch local do worktree, sem push)
+>
+> - **Pedido do dono:** as técnicas deixam de ser só guia. Etapas puláveis (preparar → ritmo → 2 minutos com picker → Eisenhower com ordem ao vivo → sapo → se-então → brain dump com tempo) terminam numa **lista organizada** e na ativação do Pomodoro. Regra pura em `utils/focoSessao.ts` (+ teste); UI `components/play/OficinaPlano.tsx` (viaja no chunk lazy da Oficina, fora da entrada).
+> - **Conclusão real:** o check da lista chama `handleToggleTask` (prop `onCompleteFocusTask`); a Home nunca é reordenada. "Concluir sessão" antes concluía todas as tarefas; **não conclui mais nenhuma**.
+> - **Recompensa extra:** `onPlanReward` → `rollPlanLoot` + `applyFocusLoot` com recibo `plan:<id>`: 1 item, 1×/sessão, máx. 2/dia (`FOCUS_PLAN_DAILY_CAP`), dentro do teto de 8. Sem campo novo no save (fuzz2 intocado).
+> - **Depende do dono:** rever o teto de 2 sessões premiadas/dia e a exigência de ≥1 tarefa na lista para concluir.
+> ## 11/10/2026 — Guilda de lançamento, PR5: as sombras do Pesadelo (`claude/guilda-lancamento`)
+>
+> - **O que muda:** no Pesadelo da Corrida com obstáculos os obstáculos são **sombras de Solmons específicos** — silhueta preta, só os olhos de luz (`utils/nightmareShadows.ts`, `drawShadowObstacle` no `DinoGame`). **Placeholder agora**: o sprite da própria linha pintado de preto em tempo de desenho, preso à caixa de colisão, virado para o pet, com dois olhos acesos. **Colisão, placar e recompensas não mudam.** Conferido com Playwright 390×844.
+> - **Arte:** o **pacote de pedido** está em `docs/ASSETS-A-GERAR.md` §17 (12 slots drop-in `dino-shadow-{1..4}{,b,c}`, 128² alfa, regras de cor "só os olhos acendem", prompts = oráculo + sufixo de sombra, checklist do conferente). Higgsfield/CLI não estavam disponíveis. Instalar = preencher `SHADOW_ART` + `CACHE_VERSION`.
+> - **Linhas velhas no `CLAUDE.md` (não editado):** nenhuma sobre a Corrida; o `docs/INVENTARIO-ASSETS.md` ganha 12 linhas quando a leva entrar.
+> - **Depende do dono:** gerar a arte (§17) e escolher se os 12 Solmons da tabela são os certos.
+
+> ## 11/10/2026 — Guilda de lançamento, PR4: a GUERRA 4×4 (`claude/guilda-lancamento`)
+>
+> - **O que é:** "você + 3 aliados contra 4 inimigos", **pareada por tamanho** (2 com 2, 3 com 3, 4 com 4; guilda de 5+ escala 4). Qualquer membro procura (`guildWarSeek`); o **servidor** monta os esquadrões a partir dos SAVES (`loadDuelSide`, mesmo teto S1 do duelo), pareia pela fila `coopWarQ:<size>`, resolve cada confronto com o **combate v3** (`simulateDuel`, mais forte contra mais forte, semente do servidor) e grava o resultado nas duas guildas. Assíncrono: a 1ª guilda espera na fila, a 2ª resolve na hora. Uma guerra por guilda por dia.
+> - **Casa:** o resultado rega a casa das duas guildas (`guerra`: 24 vitória / 12 empate / 8 derrota — perder nunca rende zero). Sem dinheiro real, sem vantagem paga: a ficha vem do save.
+> - **UI:** seção "Guerra de guilda" no Salão (`SalaGuerra`/`GuerraVisor`: esquadrão × silhuetas, botão, marcas por confronto, a frase do resultado; nada de número). **Rivais só silhueta**: o servidor não manda estágio/linha/nome de pessoa de outra guilda.
+> - **Anti-abuso/segurança:** auth em cada endpoint (`guild.js`), rate limit leve, o corpo não decide nada, a resposta não vaza saveId (teste), 1 guerra/dia/guilda, a guilda não luta contra si, fila com TTL de 2 dias. `loadDuelSide` saiu de `community.js` para `_duelLoad.js` (dono único).
+> - **Decisão do dono revertida:** `PLANO-GUILDA.md` D-G4 ("sem confronto guilda × guilda") — o ditado de 11/10/2026 a substitui; o plano e o `CLAUDE.md` seguem dizendo o contrário.
+> - **Depende do dono:** guerra com recompensa além da seiva (Emblemas?); guerra por semana em vez de por dia; escolher quem vai para o esquadrão (hoje: quem pediu + os mais antigos com ficha).
+
 > ## 11/10/2026 — Guilda de lançamento, PR3: o circo vira MISSÃO da guilda (`claude/guilda-lancamento`)
 >
 > - **O que muda:** a Feira (raid semanal, o "circo") vira uma investigação: o jogador **manda o Solmon** (`GuildSheet` › `SalaFeira` com `missao`), ele **some da Home** por 30 min (`missionAway` no `CompanionHUD`, lupa muda no lugar; `GameState.guildMission`), e ao voltar o App registra a rodada (`guildRaidHit`, o servidor sorteia o valor) e rega a **casa** com seiva que cresce com o level do Solmon e o tamanho da roda ativa (`pontosDeMissao`: 4 → 17). Sem rede, o pet volta para casa do mesmo jeito e o registro espera. A missão está no **Salão do Hall** (cena do fenômeno + estado visível: aberto/ferido/dissipado) e no lote antigo da Arena.
@@ -62,6 +103,20 @@
 > - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
 > - **Linhas velhas no `CLAUDE.md` (não editei, a pedido):** a linha do 🎪 Rodada do Torneio segue certa; a do ⚔️ Masmorra não é tocada. A linha "Arena" do 🛒/Combate não descreve a escolha de adversários — acrescentar quando o dono quiser.
 > - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §28.
+> ## 11/10/2026 — Música: auditoria, volume, rotas por superfície; golpe físico × à distância; FX maior e especiais em série
+>
+> - **Ditado do dono (6 pedidos), detalhe em `docs/SOM.md` §10.** (1) *Música às vezes não toca*: 4 defeitos de retomada achados e consertados (contexto preso em `suspended` ao voltar para a aba/APK — `retomarContexto` agora no `audioBus`; `resume()` fora da pilha do gesto; voz presa a contexto fechado no bfcache; `busTrilha` em 0 com storage falhando). (2) *Muito baixa*: alvo da música −28 → −22 LUFS-S (`GANHO_MUSICA_DB` +6 dB derivado, em `loudness.ts`; −25 em combate) **e** achado de medição: a trilha tocava 4,6 dB abaixo do tema (trim antigo vinha de uma estatística diferente) — trim refeito `{1: +4,8, 2: +2,6}`. (3) *Rotas*: home = tema, masmorra = loop, arena = faixa DERIVADA (camadas a 1,2× + percussão procedural, zero asset novo), crossfade de 1,2 s, `musica.ts` é o diretor; interruptor novo "Música de masmorra e arena" (nasce desligado). (4) `playAttackRanged` (categoria `arcade`, offset 1,651 medido) escolhido pelo tipo do ataque no `BattleStage`. (5) Esfera/corte do especial maiores (`ORB_PX_SPECIAL`/`SLASH_SCALE_SPECIAL` + `.sm-bs-big`). (6) Especiais em série: `specialGate.ts` (Duelo: o relógio para na cena do especial) + cauda esperada no `useGroupBattle`.
+> - **Decisões que o dono deve rever:** S17 foi EMENDADA (tema e trilha agora convivem, uma por superfície); a regra "trilha abaixo do Arcade" foi relaxada para "no máximo Conclusão (−22), −25 em combate"; cada especial alonga a luta exibida do Duelo ≈ 3,3 s (a simulação e o resultado não mudam).
+> - **Depende do dono:** escuta (S8) de TUDO acima — o nível novo, a faixa da Arena (rascunho: o equilíbrio percussão × camadas é estimativa medida offline) e o par soco/disparo. Se quiser uma faixa de Arena de verdade: pedido de geração em `docs/SOM.md` §10.3 / relatório.
+> - **Não conferido em tela:** o ouvido (sem áudio no sandbox) e o Visor do Duelo em browser real (cobertos por testes de relógio falso).
+> ## 11/10/2026 — Display de LEVEL UP do Vínculo (intersticial, toque para sair, som `marco`)
+>
+> - **Pedido do dono:** um display que sobrepõe a tela, escurece o fundo e só sai ao TOQUE, com som e animação.
+> - **`LevelUpOverlay`** (lazy no `App.tsx`; intersticial `'levelUp'` entre `groveMilestone` e `dream`; z 300; `filaDeAvisos.contract` atualizado). Vários níveis de uma vez = UM display "Lv A → Lv B" com o final grande; mostra ponto de talento (1/nível até o teto), recompensas do `BOND_REWARDS` e portões abertos (`gatesOpenedBetween`, novo em `gates.ts`). Sem auto-dismiss; toque nos primeiros 450 ms ignorado; movimento reduzido reduz o movimento, nunca a pausa (bloco canônico do `index.css`).
+> - **Evento não se perde:** campo novo `lastCelebratedLevel` no save (higienizado em `hydrateSave`; fuzz2 sobe de 112 para 113 campos). O nível segue derivado (`bondLevelFor(totalXP)`); save sem o campo recebe a linha de base (nível de agora), sem celebrar o passado; demo não celebra. Dono: `utils/levelUp.ts`.
+> - **Som:** `playLevelUp` (`marco`, offset +1,893 dB medido em Chromium), único chamador o overlay, D11 no chamador (aba visível + áudio já liberado; abertura do app nasce muda). `docs/SOM.md` §3.2.
+> - **Arte:** funciona hoje sem PNG (texto Silkscreen + `EvolutionLight` + chevron `fx/gain-levelup.png` já instalado). Pacote Higgsfield pronto — `docs/ASSETS-A-GERAR.md` §16 (LU1 banner, LU2 burst, LU3 moldura) + `src/assets/soulmon/levelup/INSTALAR.md`. Nada gerado.
+> - **Depende do dono:** crédito do Higgsfield; escuta do som (S8); banner só em inglês nos dois idiomas (ou pedir LU1-PT); categoria `marco` do som (revisar se achar que repete demais).
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >
@@ -5108,3 +5163,11 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - **Persistência e limites:** `focusLoot` guarda dia, contador e ids de evento no save da conta; timer e progresso de ciclo da sessão continuam locais. O cliente deduplica o evento; `save.js` e `GameStateContext` saneiam e limitam o formato a oito. Isso não é uma garantia anti-cheat autoritativa: o endpoint de save ainda aceita o estado do jogo escrito pelo cliente.
 - **Verificação:** `npm run typecheck` passou; suíte focada passou: 6 arquivos, 98 testes (regras, paridade do sanitizador servidor/cliente, integração com `save.js`, timer, Oficina e persistência de save). `git diff --check` sem erros. Não foi feita validação manual em dispositivo móvel.
 - **Preservar:** alteração local pendente em `src/assets/soulmon/bosses/boss-arauto-do-fim-full.png`; nenhum commit/push.
+
+### 11/10/2026 — lote do dono (missões iniciais, "?", abas, +, XP, pets)
+- Primeiro dia: carinho marcava só se a cura acontecesse (pet novo está com vida cheia e recusa) e concluir HÁBITO não marcava "atividade"; ambos ligados (`firstDay.gestos.contract.test.ts`).
+- "?" de missão só com algo resgatável: Conquistas (sem "Resgatar") nunca acendem (`questMarks.ts`).
+- Corvo do tour: "Mysterious Soulmon" / "Solmon misterioso" (`tourGuideName`).
+- XP visível antes de concluir (tarefa/hábito) em `DailyRituals`; carinho e missões NÃO têm evento de XP (regra, não bug).
+- "+" abre "Novo hábito / Nova tarefa"; Home com abas Hoje/Semanal (só lista, não pontuação).
+- Pets andavam de costas: `artFacesLeft` (`utils/sprites.ts`) para linhas de perfil esquerdo (igni, nautilu, kaelen, corvo).

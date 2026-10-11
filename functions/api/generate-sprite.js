@@ -356,13 +356,51 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   throw err;
 }
 
+/** Teto de tamanho do prompt (auditoria de lançamento, 11/10/2026). O prompt
+ *  vem do CLIENTE e era repassado sem limite ao provedor pago; os prompts
+ *  compostos pelo `oracle.ts` ficam muito abaixo disto. */
+export const MAX_PROMPT_CHARS = 12000;
+const MAX_REFERENCE_URLS = 4;
+const SPRITE_TOKEN = /^[0-9a-f]{32}$/;
+
+/**
+ * Só aceita como referência do image2image a URL de sprite que NÓS
+ * republicamos (`/api/sprite-image?k=<token>` na mesma origem). Antes, o
+ * cliente mandava qualquer string e ela ia crua para o Higgsfield, que a
+ * BUSCA: um jogador pago podia fazer o provedor baixar URL arbitrária em nome
+ * da nossa conta (SSRF de terceiro) e injetar imagem de terceiro no pipeline.
+ * Referência inválida é DESCARTADA (cai no text2image), nunca recusa a geração.
+ */
+export function referenciasSeguras(request, referenceImageUrls) {
+  if (!Array.isArray(referenceImageUrls)) return undefined;
+  const origem = new URL(request.url).origin;
+  const ok = [];
+  for (const raw of referenceImageUrls.slice(0, MAX_REFERENCE_URLS)) {
+    if (typeof raw !== 'string' || raw.length > 512) continue;
+    let u;
+    try { u = new URL(raw); } catch { continue; }
+    if (u.protocol !== 'https:' || u.origin !== origem) continue;
+    if (u.pathname !== '/api/sprite-image') continue;
+    if (!SPRITE_TOKEN.test(u.searchParams.get('k') || '')) continue;
+    ok.push(u.toString());
+  }
+  return ok.length ? ok : undefined;
+}
+
 export async function onRequestPost({ request, env }) {
   let lock = null;
   try {
-    const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
+    const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = await request.json();
     if (!prompt || typeof prompt !== 'string') {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
     }
+    if (
+      prompt.length > MAX_PROMPT_CHARS ||
+      (promptFallback != null && (typeof promptFallback !== 'string' || promptFallback.length > MAX_PROMPT_CHARS))
+    ) {
+      return Response.json({ error: 'prompt too long' }, { status: 400, headers: CORS });
+    }
+    const referenceImageUrls = referenciasSeguras(request, refsCruas);
 
     // DOIS portões, nesta ordem, e ambos ANTES de qualquer chamada de IA.
     //

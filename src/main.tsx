@@ -15,6 +15,7 @@
   import { ThemeProvider } from './contexts/ThemeContext';
   import { migrateLegacyStorageKeys } from './utils/storageKeys';
   import { armarTemaNoPrimeiroGesto } from './utils/tema';
+  import { iniciarMusica } from './utils/musica';
 
   // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
   // inicializador do próprio estado, então uma migração que rodasse depois
@@ -25,6 +26,8 @@
   // A música-TEMA (S17, 07/10/2026): só instala ouvintes de gesto. Nada toca nem
   // é baixado até o primeiro toque/clique/tecla da sessão — D11, sem autoplay cego.
   armarTemaNoPrimeiroGesto();
+  // O diretor de música (11/10/2026): só DECIDE a faixa da Home; nada toca antes do gesto.
+  iniciarMusica();
 
   createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>

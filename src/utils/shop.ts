@@ -2,6 +2,7 @@
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
 import type { SlotId, DecorFit } from './petStage';
 import { GUILD_COPY_CORE } from './guildCopyCore';
+import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -59,7 +60,7 @@ export const HEART_ITEM_EMOJI = '💗';
 // Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart' | 'glitchtama';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'premium';
   attr?: Attr;
   namePt: string;
   nameEn: string;
@@ -97,6 +98,8 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
     descPt: `Usar cura ${HEART_HEAL} coração`, descEn: `Use to heal ${HEART_HEAL} heart`,
   },
+  // Comida premium (uma por comida de categoria) — dono: `utils/premiumFood.ts`.
+  ...PREMIUM_SPECIAL_ITEMS,
 };
 
 export function isSpecialItem(emoji: string): boolean {

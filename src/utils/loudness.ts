@@ -66,20 +66,61 @@ export const ALVO_LUFS_M: Record<CategoriaSom, number> = {
   arcade: -25.0,
 };
 
-/** §4.1 — alvo da trilha, em LUFS-S (janela curta de 3 s, EBU Tech 3341). */
-export const ALVO_TRILHA_LUFS_S = -28.0;
+/**
+ * O nível em que os ARQUIVOS de música foram mestrados (trilha de duas camadas e
+ * música-tema, medido em LUFS-S): é um fato sobre o arquivo, não uma escolha — só
+ * muda se o arquivo for remasterizado. NÃO é o alvo de reprodução (abaixo).
+ */
+export const ALVO_MASTERIZACAO_MUSICA_LUFS_S = -28.0;
 
 /**
- * Trim da trilha por NÚMERO de camadas tocando ao mesmo tempo, em dB — o
- * `trimEstadoDb` do arnês (`gate-loudness.mjs` A-5), medido e não calculado.
- * Cada camada sai do mestre no alvo SOZINHA (`mestre-trilha.mjs`); a soma de
- * duas sobe, e é este trim, aplicado igual às duas, que devolve a soma ao
- * `ALVO_TRILHA_LUFS_S`. Medido em 21/09/2026 sobre `base` + `ritmo`
- * (`E:/Soulmon-assets/som-01/mix-camadas.mjs`): soma −28,00 LUFS-S,
- * −15,86 dBTP, −31,46 LUFS integrado. Camada nova = medir de novo, nunca
- * derivar de 1/√n.
+ * §4.1 — alvo da MÚSICA (trilha, tema e a faixa da Arena) na reprodução, em LUFS-S
+ * (janela curta de 3 s, EBU Tech 3341).
+ *
+ * ⚠️ **Subiu de −28 para −22 em 11/10/2026 (pedido do dono: "a música está muito baixa").**
+ * A regra antiga era "a trilha fica ABAIXO do último degrau de SFX (Arcade, −25)"; ela foi
+ * relaxada para "NO MÁXIMO no degrau de Conclusão (−22)", e é por isso que a música em
+ * combate desce de volta (`OFFSET_MUSICA_EM_COMBATE_DB`). A diferença entre este alvo e o
+ * de masterização vira o ganho de reprodução (`GANHO_MUSICA_DB`), aplicado no nó de fade
+ * de cada música — nunca um literal em `tema.ts`/`trilha.ts`.
  */
-export const TRIM_TRILHA_POR_CAMADAS_DB: Record<1 | 2, number> = { 1: 0, 2: -2.024 };
+export const ALVO_TRILHA_LUFS_S = -22.0;
+
+/** Ganho de reprodução da música: alvo − masterização. DERIVADO, nunca digitado. */
+export const GANHO_MUSICA_DB = ALVO_TRILHA_LUFS_S - ALVO_MASTERIZACAO_MUSICA_LUFS_S;
+
+/**
+ * Em combate (Masmorra, Arena) a música desce este tanto, para o degrau mais baixo dos SFX
+ * (Arcade, o golpe, que repete mais) não ser coberto por ela. O resultado
+ * (`ALVO_TRILHA_LUFS_S + OFFSET`) fica no degrau do Arcade — há teste.
+ */
+export const OFFSET_MUSICA_EM_COMBATE_DB = -3.0;
+
+/**
+ * Trim da faixa derivada da ARENA (as duas camadas a 1,2× + a percussão procedural de `trilhaArena.ts`), em dB SOBRE o
+ * `TRIM_TRILHA_POR_CAMADAS_DB[2]` (a percussão passa pelo mesmo nó de ganho que as camadas). Medido em 11/10/2026 com o
+ * mesmo ffmpeg/`ebur128` (camadas aceleradas por `asetrate`, o equivalente do `playbackRate`, + a percussão sintetizada
+ * pelo próprio `trilhaArena.ts`): a mistura SEM trim dá **−24,8** LUFS-S mediano (pico −5,2 dBFS) — a percussão a
+ * deixa 5,8 dB mais alta que as camadas sozinhas; levá-la à referência de −28 pede **−3,2 dB** no total, ou seja,
+ * `−3,2 − 2,6 = −5,8` sobre o trim das duas camadas. É medição offline e o nível relativo percussão/camadas é rascunho
+ * até a escuta do dono (S8).
+ */
+export const TRIM_FAIXA_ARENA_DB = -5.8;
+
+/**
+ * Trim da trilha por NÚMERO de camadas tocando ao mesmo tempo, em dB: o que leva a SOMA ao nível de masterização
+ * (`ALVO_MASTERIZACAO_MUSICA_LUFS_S`), medido com a MESMA estatística da música-tema — LUFS-S mediano do filtro
+ * `ebur128` do ffmpeg, BS.1770, sobre o arquivo `.webm` que o app serve.
+ *
+ * ⚠️ **Corrigido em 11/10/2026 (auditoria "a música está muito baixa").** Os valores antigos (`{1: 0, 2: −2,024}`)
+ * vinham de `mix-camadas.mjs`, que anunciava a soma em "−28,00 LUFS-S" — mas medida sobre o arquivo servido, com a
+ * estatística do tema, a soma das duas camadas com aquele trim dá **−32,6** (mediano; integrado −31,5, que bate com o
+ * "−31,46" do próprio registro antigo): a trilha tocava **4,6 dB abaixo** do que a política dizia e do que o tema
+ * toca. Medido hoje: `base` sozinha −32,1 · `ritmo` sozinha −33,5 · soma SEM trim −30,6. Trim = referência (−28) menos
+ * o mediano sem trim: 2 camadas **+2,6 dB**; 1 camada (média das duas sozinhas, −32,8) **+4,8 dB**. Pico da soma sem trim:
+ * −14,1 dBFS; com este trim e o `GANHO_MUSICA_DB`, −5,5 dBFS (≤ teto S3 com folga). Camada nova = medir de novo.
+ */
+export const TRIM_TRILHA_POR_CAMADAS_DB: Record<1 | 2, number> = { 1: 4.8, 2: 2.6 };
 
 /**
  * A ordem da escada, do mais alto ao mais baixo. Existe como declaração
@@ -109,8 +150,12 @@ export const CATEGORIA_DO_SOM: Record<string, CategoriaSom> = {
   playTaskComplete: 'conclusao',
   // PR18 (06/10/2026): combate = minijogo → `arcade` (R-CAT: o EVENTO decide; ver o bloco em sounds.ts).
   playAttack: 'arcade',
+  playAttackRanged: 'arcade', // 11/10/2026: o golpe à distância — mesmo evento, mesma categoria (R-CAT)
   playSpecial: 'arcade',
   playVictory: 'arcade',
+  // 11/10/2026 (pedido do dono, LEVEL UP): subir de Vínculo é MARCO — raro, voluntário (vem de um gesto) e sem
+  // vizinho de repetição (R-CAT: o EVENTO decide, não o arquivo). Mesma categoria de `playEvolve`.
+  playLevelUp: 'marco',
 };
 
 /**
@@ -144,8 +189,13 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   // PR18: medidos em Chromium (OfflineAudioContext + K-weighting BS.1770, LUFS-M máx. de janela 400 ms com zero-padding;
   // o mesmo arnês reproduz playFeed −19,00 e playTaskComplete −22,00). Falta só o gate humano de escuta.
   playAttack: 1.971,
+  playAttackRanged: 1.651, // 11/10/2026: mesmo arnês (reproduz playAttack em 1,971): LUFS-M do som a 0,12 = −26,649
   playSpecial: -5.216,
   playVictory: -6.776,
+  // 11/10/2026: -16,0 (alvo de `marco`) - (-17,893 LUFS-M do recorte a ganho 0,12), medido em Chromium
+  // (OfflineAudioContext + K-weighting BS.1770, o MESMO arnês que reproduz playTaskComplete -22,00). Pico -11,5 dBFS.
+  // Falta o gate humano de escuta (S8).
+  playLevelUp: 1.893,
 };
 
 /** dB → linear. A conversão mora aqui porque o alvo mora aqui. */

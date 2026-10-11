@@ -20,21 +20,21 @@
  *  · Ordem: tarefas ativas, hábitos devidos hoje, hábitos fora do dia,
  *    concluídas de hoje por último.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Language } from '../utils/i18n';
 import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext';
 import type { ActivityCategory } from '../types/attributes';
 import { normalizeSchedule } from '../types/taskModel';
 import { categoryLabel } from '../types/category-icons';
 import { isActive, isHaunted } from '../utils/taskTriage';
-import type { HabitRhythm } from '../utils/habitRhythm';
+import { weeklyProgress, type HabitRhythm } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
 import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
-import { TaskMeta } from './TaskMeta';
+import { TaskMeta, sm2Tag } from './TaskMeta';
 import { StepRow } from './StepRow';
 import { bondXP } from '../utils/bond';
-import { habitTier, milestoneReached } from '../utils/habitRhythm';
+import { habitTier, milestoneReached, weekChip } from '../utils/habitRhythm';
 import { HABIT_WEIGHT } from '../types/taskModel';
 import { effortOf } from '../utils/taskTriage';
 
@@ -91,6 +91,8 @@ export interface DailyRitualsProps {
   expanded: Record<string, boolean>;
   onExpand: (activityId: string) => void;
   onToggleTask: (taskId: string) => void;
+  /** Subitem de uma tarefa (o último fecha a tarefa — quem fecha é o App). */
+  onToggleTaskStep?: (taskId: string, stepId: string) => void;
   onEditTask: (taskId: string) => void;
   onPostponeNudge: (taskId: string) => void;
   onEditActivity: (activityId: string) => void;
@@ -108,11 +110,15 @@ export interface DailyRitualsProps {
 
 export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, language, now,
-  expanded, onExpand, onToggleTask, onEditTask, onPostponeNudge,
+  expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
   variant = 'panel', dayComplete = false,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
+  /* Home em abas (11/10/2026): "Hoje" = o que é do dia; "Semanal" = o que se mede
+     por semana (`timesPerWeek`). Só muda QUAL lista aparece — o contador N/M, a
+     meta e o dia completo seguem contando tudo, como antes. */
+  const [aba, setAba] = useState<'today' | 'weekly'>('today');
   const today = now.getDay(); // 0 = domingo, 6 = sábado
   const todayString = now.toDateString();
   const diasCurtos = isPt
@@ -130,6 +136,9 @@ export function DailyRituals({
   const feitasHoje = completedTasks
     .filter(c => new Date(c.completedAt).toDateString() === todayString && !idsVivos.has(c.id));
 
+  const ehSemanal = (a: Activity) => normalizeSchedule(a as Parameters<typeof normalizeSchedule>[0]).kind === 'timesPerWeek';
+  const comAbas = variant === 'home';
+  const naAbaSemanal = comAbas && aba === 'weekly';
   const atividades = [
     ...activities.filter(a => a.weekDays?.includes(today)),
     ...activities.filter(a => !a.weekDays?.includes(today)),
@@ -140,7 +149,12 @@ export function DailyRituals({
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),
     xpEarned: (() => {
-      const after = Math.max(0, habitRhythms?.[activity.id]?.totalDone ?? 0);
+      const feito = activity.steps.length > 0
+        ? activity.steps.every(s => s.completed)
+        : !!(activity.completedToday && activity.lastCompletedDate === todayString);
+      // Já feito: `totalDone` já contém a conclusão de hoje. Por fazer: a PRÉVIA
+      // conta a que está para acontecer (+1), a mesma conta do `withHabitCompletion`.
+      const after = Math.max(0, (habitRhythms?.[activity.id]?.totalDone ?? 0) + (feito ? 0 : 1));
       const base = bondXP({ kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after) });
       const milestone = milestoneReached(Math.max(0, after - 1), after);
       return base + (milestone ? bondXP({ kind: 'habitMilestone', days: after }) : 0);
@@ -172,7 +186,31 @@ export function DailyRituals({
         variant={variant}
         dayComplete={dayComplete}
       >
-        {tarefas.map(task => (
+        {comAbas && (
+          <div role="tablist" aria-label={isPt ? 'Visão da lista' : 'List view'} data-home-tabs style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+            {(['today', 'weekly'] as const).map(k => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={aba === k}
+                data-home-tab={k}
+                onClick={() => setAba(k)}
+                style={{ ...sm2Button(aba === k ? 'primary' : 'quiet', false, 'sm'), flex: 1 }}
+              >
+                {k === 'today' ? (isPt ? 'Hoje' : 'Today') : (isPt ? 'Semanal' : 'Weekly')}
+              </button>
+            ))}
+          </div>
+        )}
+        {naAbaSemanal && atividades.filter(a => ehSemanal(a)).length === 0 && (
+          <p data-home-weekly-empty style={{ margin: 0, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>
+            {isPt
+              ? 'Nada medido por semana ainda. Um hábito de "N vezes por semana" aparece aqui.'
+              : 'Nothing measured by the week yet. A "times per week" habit shows up here.'}
+          </p>
+        )}
+        {(naAbaSemanal ? [] : tarefas).map(task => (
           <RitualRow
             key={task.id}
             flipKey={`t:${task.id}`}
@@ -180,14 +218,17 @@ export function DailyRituals({
             name={task.name}
             subtitle={`${task.category
             ? categoryLabel(task.category as ActivityCategory, isPt)
-              : (isPt ? 'Tarefa avulsa' : 'One-off task')}${task.completed ? ` · +${bondXP({ kind: 'completion', weight: effortOf(task) })} ${isPt ? 'XP base' : 'base XP'}` : ''}`}
-            value={task.completed ? 1 : 0}
-            max={1}
+              : (isPt ? 'Tarefa avulsa' : 'One-off task')}${(task.steps?.length ?? 0) > 0 ? ` · ${stepsLabel((task.steps ?? []).filter(st => st.completed).length, task.steps?.length ?? 0, isPt)}` : ''}${` · +${bondXP({ kind: 'completion', weight: effortOf(task) })} ${isPt ? 'XP base' : 'base XP'}`}`}
+            value={task.completed ? (task.steps?.length ?? 1) : (task.steps ?? []).filter(st => st.completed).length}
+            max={Math.max(1, task.steps?.length ?? 1)}
             done={task.completed}
             haunted={isHaunted(task, now)}
             onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
             onEdit={() => onEditTask(task.id)}
             language={language}
+            expandable={(task.steps?.length ?? 0) > 0 && !!onToggleTaskStep}
+            expanded={!!expanded[task.id]}
+            onExpand={() => onExpand(task.id)}
             toggleLabelPt={`${task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}: ${task.name}`}
             toggleLabelEn={`${task.completed ? 'Task completed' : 'Mark task as completed'}: ${task.name}`}
             below={(
@@ -195,14 +236,25 @@ export function DailyRituals({
                  honesto, nunca acusação (TaskMeta.tsx). */
               <TaskMeta task={task} now={now} language={language} onPostponeNudge={onPostponeNudge} />
             )}
-          />
+          >
+            {(task.steps ?? []).map(step => (
+              <StepRow
+                key={step.id}
+                id={step.id}
+                label={step.label}
+                completed={step.completed}
+                onToggle={(stepId) => onToggleTaskStep?.(task.id, stepId)}
+                language={language}
+              />
+            ))}
+          </RitualRow>
         ))}
 
-        {atividades.filter(a => !a.isComplete).map(activity => renderHabit(activity))}
+        {atividades.filter(a => !a.isComplete && (!comAbas || ehSemanal(a) === naAbaSemanal)).map(activity => renderHabit(activity))}
 
         {/* Concluídas de hoje, no fim: hábitos feitos e tarefas do histórico. */}
-        {atividades.filter(a => a.isComplete).map(activity => renderHabit(activity))}
-        {feitasHoje.map(c => (
+        {atividades.filter(a => a.isComplete && (!comAbas || ehSemanal(a) === naAbaSemanal)).map(activity => renderHabit(activity))}
+        {(naAbaSemanal ? [] : feitasHoje).map(c => (
           <RitualRow
             key={`done-${c.id}-${c.completedAt}`}
             flipKey={`t:${c.id}`}
@@ -247,7 +299,9 @@ export function DailyRituals({
                 <span style={{ fontSize: 'var(--sm2-text-xs)', lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-muted)' }}>
                   {t.status === 'dropped'
                     ? (isPt ? 'deixada pra lá' : 'let go')
-                    : (isPt ? 'algum dia' : 'someday')}
+                    : t.wakeOn
+                      ? (isPt ? `volta em ${t.wakeOn.split('-').reverse().join('/')}` : `back on ${t.wakeOn}`)
+                      : (isPt ? 'algum dia' : 'someday')}
                 </span>
                 <button
                   type="button"
@@ -264,14 +318,35 @@ export function DailyRituals({
     </>
   );
 
+  function renderWeekChip(activity: Activity & { disponivelHoje: boolean }): ReactNode {
+    const chip = weekChip(habitRhythms?.[activity.id], normalizeSchedule(activity as Parameters<typeof normalizeSchedule>[0]), now);
+    if (!chip) return null;
+    return (
+      <span data-week-chip style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={sm2Tag}>
+          {isPt ? `Semana: ${chip.done} de ${chip.target}` : `This week: ${chip.done} of ${chip.target}`}
+        </span>
+        <span className="sm2-ritual-sub" data-today-only>
+          {isPt ? 'O check vale só para hoje' : 'This check is for today'}
+        </span>
+      </span>
+    );
+  }
+
   function renderHabit(activity: Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number }): ReactNode {
     const etapas = activity.steps ?? [];
     const feitasEtapas = etapas.filter(s => s.completed).length;
     const freq = frequencyLabel(activity, isPt, diasCurtos);
-    const xp = activity.isComplete ? ` · +${activity.xpEarned} ${isPt ? 'XP base' : 'base XP'}` : '';
+    // Prévia ANTES de concluir (11/10/2026, pedido do dono): o valor aparece sempre;
+    // hábito fora do dia não é devido, então não promete nada.
+    const xp = activity.isComplete || activity.disponivelHoje ? ` · +${activity.xpEarned} ${isPt ? 'XP base' : 'base XP'}` : '';
+    const semana = ehSemanal(activity) && habitRhythms?.[activity.id]
+      ? weeklyProgress(habitRhythms[activity.id], (activity as { schedule?: never }).schedule as never, now)
+      : null;
+    const progSemana = semana && semana.target > 0 ? ` · ${semana.done}/${semana.target} ${isPt ? 'na semana' : 'this week'}` : '';
     const subtitulo = etapas.length > 0
-      ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${xp}`
-      : `${freq}${xp}`;
+      ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${progSemana}${xp}`
+      : `${freq}${progSemana}${xp}`;
     return (
       <RitualRow
         key={activity.id}
@@ -289,8 +364,11 @@ export function DailyRituals({
         onExpand={() => onExpand(activity.id)}
         onToggle={etapas.length > 0 ? undefined : () => onToggleActivity(activity.id)}
         language={language}
-        toggleLabelPt={`${activity.isComplete ? 'Atividade concluída' : 'Marcar atividade como concluída'}: ${activity.name}`}
-        toggleLabelEn={`${activity.isComplete ? 'Activity completed' : 'Mark activity as completed'}: ${activity.name}`}
+        /* O check é de HOJE, e o rótulo diz isso; o progresso da semana é um
+           chip À PARTE (só exibição — não mexe em constância nem pontuação). */
+        toggleLabelPt={`${activity.isComplete ? 'Hoje concluído' : 'Marcar como feito hoje'}: ${activity.name}`}
+        toggleLabelEn={`${activity.isComplete ? 'Done today' : 'Mark as done today'}: ${activity.name}`}
+        below={renderWeekChip(activity)}
         /* D2+D3 (navegação do dono, 01/10/2026): a janela de 7 tracejada +
            a bolinha/folha de maturidade (`HabitConstancy compact`) SAIU da
            linha — o dono leu a folha como "botão de editar" e o tracejado

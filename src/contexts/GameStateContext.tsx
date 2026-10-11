@@ -27,6 +27,7 @@ import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibra
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
+import { sanitizeCelebratedLevel } from '../utils/levelUp';
 import { sanitizeTalentPicks } from '../utils/talents';
 import { sanitizeEquipment, type EquipmentState } from '../utils/equipment';
 import { sanitizeForge, type ForgeState } from '../utils/forge';
@@ -177,6 +178,12 @@ export interface Task {
   lastTouchedAt?: string;
   /** dayKey em que esta tarefa é um dos 3 focos do dia. */
   focusDate?: string;
+  /** Repete a cada N dias CONTADOS DA CONCLUSÃO (o `every!` do Todoist): ao
+   *  concluir nasce a próxima, guardada (`someday` + `wakeOn`) até a data —
+   *  nunca acumula atrasadas. Ex.: "Pagar contas" = 30. */
+  repeatEveryDays?: number;
+  /** `YYYY-MM-DD` em que uma tarefa guardada pela repetição volta a `open`. */
+  wakeOn?: string;
 }
 
 export interface CompletedTask {
@@ -388,10 +395,16 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
+  premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
   minigameBits?: { day: string; earned: number };
+  /** O HP do jogador na Masmorra (descida idle, 08/10/2026): fração do máximo + instante da medida.
+   *  NUNCA se lê direto — `hpAgora(state, now)` (`utils/dungeonIdle.ts`) soma a regeneração por timestamp.
+   *  Ausente = cheio. Não compra vantagem (só limita a descida), então é do cliente como Emblemas/placar. */
+  dungeonHp?: { frac: number; at: number };
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -435,6 +448,10 @@ export interface GameState {
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
    *  save existente nunca re-dispara apresentação do que o jogador já usa. */
   buildingIntrosSeen?: string[];
+  /** O último nível do Vínculo CELEBRADO (display de level up, 11/10/2026, `utils/levelUp.ts`). O nível em si
+   *  nunca vai ao save (`bondLevelFor(totalXP)`); este campo só diz até onde a pessoa JÁ VIU a celebração —
+   *  assim o evento sobrevive a fechar o app. Ausente = save anterior: a linha de base é o nível de agora. */
+  lastCelebratedLevel?: number;
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
@@ -1160,11 +1177,25 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
+        premiumFood: (() => {
+          const p = obj<unknown>(loadedState.premiumFood);
+          return typeof p.day === 'string' && typeof p.week === 'string'
+            ? { day: p.day, dropped: num(p.dropped, 0), used: num(p.used, 0), week: p.week, weekDropped: num(p.weekDropped, 0) }
+            : undefined;
+        })(),
         // Teto diário de Bits de minijogo (#61/#63). Mesmo argumento do
         // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
         minigameBits: (() => {
           const m = obj<unknown>(loadedState.minigameBits);
           return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0) } : undefined;
+        })(),
+        // HP da descida idle: lixo/ausente → `undefined` (cheio). Mesma regra de `sanitizeDungeonHp`
+        // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
+        dungeonHp: (() => {
+          const d = obj<unknown>(loadedState.dungeonHp);
+          return typeof d.frac === 'number' && Number.isFinite(d.frac) && typeof d.at === 'number' && Number.isFinite(d.at)
+            ? { frac: Math.min(1, Math.max(0, d.frac)), at: Math.max(0, d.at) } : undefined;
         })(),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
@@ -1213,6 +1244,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
+        lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { activitiesForWeekDay, dailyGoalFor, habitWeightOf, tasksCompletedOn } from '../utils/dailyReset';
-import { normalizeEffort } from '../types/taskModel';
+import { normalizeEffort, taskEffort } from '../types/taskModel';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 
 interface Step {
@@ -129,7 +129,7 @@ export function doneWeightFor(
   // duas saídas honestas do backlog e não viram cobrança nova.
   peso += state.tasks
     .filter(t => t.completed && (t.status ?? 'open') === 'open')
-    .reduce((s, t) => s + normalizeEffort(t.effort), 0);
+    .reduce((s, t) => s + taskEffort(t), 0);
   peso += tasksCompletedOn(state as any, dayKey);
 
   return peso;

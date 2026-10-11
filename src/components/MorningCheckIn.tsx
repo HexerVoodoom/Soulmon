@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
-import { MAX_DAILY_FOCUS, normalizeEffort, type HabitTier } from '../types/taskModel';
+import { MAX_DAILY_FOCUS, taskEffort, normalizeEffort, type HabitTier } from '../types/taskModel';
 import { tinyOfferIntro } from '../utils/tinyOffer';
 import { isOvercommitted } from '../utils/taskTriage';
 import { Icon } from './ui/Icon';
@@ -165,7 +165,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
 
   const focusEffort = candidates
     .filter(t => selected.includes(t.id))
-    .reduce((sum, t) => sum + normalizeEffort(t.effort), 0);
+    .reduce((sum, t) => sum + taskEffort(t), 0);
 
   /* V2 / STATUS c — a linha de carga continua lendo `plan.plannedEffort`
      (hábitos + tarefas já datadas para hoje). Somar o foco escolhido aqui
@@ -351,7 +351,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
             {candidates.map(t => {
               const active = selected.includes(t.id);
               const full = !active && selected.length >= MAX_DAILY_FOCUS;
-              const effort = normalizeEffort(t.effort);
+              const effort = taskEffort(t);
               const name = t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task');
               // O esforço é a PALAVRA na tela e no rótulo — quem não vê a
               // tela escolhe foco sabendo o peso. `full` (limite de 3) é

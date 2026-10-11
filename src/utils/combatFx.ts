@@ -178,6 +178,19 @@ export const STAGE_TIMING = {
  */
 export const SPECIAL_INTRO_MS = 1000;
 
+/**
+ * A JANELA de um especial em cena (11/10/2026, pedido do dono: "enquanto rola um especial, PARE os ataques dos dois
+ * e retome depois; especiais são usados UM DE CADA VEZ"). `lead` = da largada à batida (a cena do nome + o trajeto);
+ * `tail` = o que sobra do efeito depois da batida (o impacto, a dissolução). Os dois são só ENCENAÇÃO: nenhum
+ * evento do núcleo muda de ordem, de instante de simulação nem de resultado, e o servidor nem os enxerga.
+ */
+export function specialLeadMs(reduced: boolean): number {
+  return SPECIAL_INTRO_MS + impactMs('special', reduced);
+}
+export function specialTailMs(reduced: boolean): number {
+  return Math.max(0, totalMs('special', reduced) - impactMs('special', reduced));
+}
+
 /** A pausa de introdução de uma ação: só o especial tem. */
 export function introMs(kind: StageActionKind): number {
   return kind === 'special' ? SPECIAL_INTRO_MS : 0;
