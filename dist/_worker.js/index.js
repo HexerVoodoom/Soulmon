@@ -506,6 +506,51 @@ async function requireVerifiedOwner(request, env, saveId) {
 }
 __name(requireVerifiedOwner, "requireVerifiedOwner");
 
+// api/_mealRhythm.js
+var MEAL_KEYS = ["breakfast", "lunch", "dinner"];
+var MEAL_STEP_MIN = 30;
+var MEAL_MIN_GAP_MIN = 180;
+var DEFAULT_MEAL_TIMES = { breakfast: "09:00", lunch: "13:30", dinner: "20:00" };
+var MEAL_RANGE_MIN = {
+  breakfast: [6 * 60, 11 * 60],
+  lunch: [11 * 60 + 30, 15 * 60 + 30],
+  dinner: [17 * 60, 22 * 60]
+};
+var MIN_PER_DAY = 1440;
+function parseHHMM(hhmm) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm ?? "").trim());
+  if (!m) return NaN;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h < 0 || h > 23 || min < 0 || min > 59) return NaN;
+  return h * 60 + min;
+}
+__name(parseHHMM, "parseHHMM");
+function formatHHMM(minutes) {
+  const m = (Math.round(minutes) % MIN_PER_DAY + MIN_PER_DAY) % MIN_PER_DAY;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+__name(formatHHMM, "formatHHMM");
+function snap(min) {
+  return Math.round(min / MEAL_STEP_MIN) * MEAL_STEP_MIN;
+}
+__name(snap, "snap");
+function normalizeMealTimes(input) {
+  const out = {};
+  for (const key of MEAL_KEYS) {
+    const [lo, hi] = MEAL_RANGE_MIN[key];
+    const raw = parseHHMM(input && typeof input === "object" ? input[key] : void 0);
+    const snapped = Number.isNaN(raw) ? NaN : snap(raw);
+    out[key] = Number.isNaN(snapped) || snapped < lo || snapped > hi ? DEFAULT_MEAL_TIMES[key] : formatHHMM(snapped);
+  }
+  const mins = MEAL_KEYS.map((k) => parseHHMM(out[k]));
+  for (let i = 1; i < mins.length; i++) {
+    if (mins[i] - mins[i - 1] < MEAL_MIN_GAP_MIN) return { ...DEFAULT_MEAL_TIMES };
+  }
+  return out;
+}
+__name(normalizeMealTimes, "normalizeMealTimes");
+
 // api/_pushIdentity.js
 function nomeDePet(v) {
   return String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 24) || "Soulmon";
@@ -519,6 +564,25 @@ function dataDeNascimento(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(v ?? "")) ? v : void 0;
 }
 __name(dataDeNascimento, "dataDeNascimento");
+function refeicoesDeInscricao(v) {
+  if (!v || typeof v !== "object" || !Array.isArray(v.t) || v.t.length !== 3) return void 0;
+  const t = v.t;
+  if (!t.every((n) => Number.isInteger(n) && n >= 0 && n < 1440)) return void 0;
+  const tz = v.tz;
+  if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return void 0;
+  const times = {};
+  MEAL_KEYS.forEach((k, i) => {
+    times[k] = formatHHMM(t[i]);
+  });
+  const canon = normalizeMealTimes(times);
+  if (MEAL_KEYS.some((k) => canon[k] !== times[k])) return void 0;
+  let rest;
+  if (Array.isArray(v.rest) && v.rest.length === 2 && v.rest.every((n) => Number.isInteger(n) && n >= 0 && n < 1440) && v.rest[0] !== v.rest[1]) {
+    rest = [v.rest[0], v.rest[1]];
+  }
+  return { t: [...t], tz, ...rest ? { rest } : {} };
+}
+__name(refeicoesDeInscricao, "refeicoesDeInscricao");
 function ehTokenFcm(v) {
   return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
 }
@@ -5284,7 +5348,7 @@ async function onRequestPost4({ request, env }) {
   if (limited) return limited;
   const body = await corpoDe(request);
   if (!body) return json5({ error: "Invalid JSON" }, 400);
-  const { token, petName, language, bornAt, saveId } = body;
+  const { token, petName, language, bornAt, saveId, meals } = body;
   if (!token) return json5({ error: "Missing token" }, 400);
   if (!ehTokenFcm(token)) return json5({ error: "Invalid token" }, 400);
   const dono = await saveIdAutorizado(request, env, saveId);
@@ -5294,6 +5358,8 @@ async function onRequestPost4({ request, env }) {
     petName: nomeDePet(petName),
     language: idiomaDePush(language),
     bornAt: dataDeNascimento(bornAt),
+    // Ritmo das refeições — OPT-IN (ver `refeicoesDeInscricao`): inválido é descartado.
+    ...refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {},
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
@@ -5760,7 +5826,9 @@ var EVENT_SCHEMA = {
   guild_leave: { size: { min: 0, max: 11 }, weeks: { min: 0, max: 3 } },
   guild_thread: { kind: { min: 0, max: 1 } },
   guild_raid: { outcome: { min: 0, max: 2 } },
-  guild_stage: { level: { min: 1, max: 5 } }
+  guild_stage: { level: { min: 1, max: 5 } },
+  // Ritmo das refeições — ESPELHO de src/utils/telemetry.ts (há teste de paridade).
+  meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
 var MAX_EVENTS2 = 100;
@@ -5936,6 +6004,10 @@ function applyAggregate(agg, events) {
     }
     if (record.e === "sound_off" && p) {
       bump(`sound_off.age_${p.age}`);
+    }
+    if (record.e === "meal_ritual" && p) {
+      bump(`meal_ritual.meal_${p.meal}`);
+      bump(`meal_ritual.kind_${p.kind}`);
     }
     if (record.e === "week_active") {
       bump(`week_active.goal_days.${p.goal_days}`);
@@ -6474,7 +6546,7 @@ async function onRequestPost6({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
-  const { endpoint, keys, petName, language, bornAt, saveId } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -6522,6 +6594,10 @@ async function onRequestPost6({ request, env }) {
     // então qualquer outra coisa já caía em inglês — mas gravar a string crua
     // guardava texto de cliente sem teto num registro de um ano.
     language: idiomaDePush(language),
+    /* Ritmo das refeições — OPT-IN. Só existe se a pessoa ligou o aviso nas
+       Configurações; inválido é descartado e a inscrição segue sem ele. Ver
+       `refeicoesDeInscricao` e `_mealRhythm.js`. */
+    ...refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {},
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que
@@ -6784,7 +6860,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-zOzMS7/functionsRoutes-0.6422211088934802.mjs
+// ../.wrangler/tmp/pages-CqSfPC/functionsRoutes-0.8843071105362732.mjs
 var routes = [
   {
     routePath: "/api/account",
