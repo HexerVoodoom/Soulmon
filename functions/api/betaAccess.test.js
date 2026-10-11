@@ -87,7 +87,7 @@ describe('hash de IP (HMAC, TTL 30 dias)', () => {
 });
 
 describe('alerta ao dono (80 % / disjuntor)', () => {
-  it('cruzouLimiar só dispara na travessia', () => {
+  it('cruzouLimiar só dispara quando cruza a linha', () => {
     expect(cruzouLimiar(199, 200, 250)).toBe(true);
     expect(cruzouLimiar(200, 201, 250)).toBe(false);
     expect(cruzouLimiar(10, 11, 250)).toBe(false);
