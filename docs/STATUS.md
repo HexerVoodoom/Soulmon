@@ -9,6 +9,12 @@
 > - **Copy:** "Recuperando…/Recovering…" (a bíblia veta "descansar" sobre a criatura — desvio consciente do "Resting" pedido). Portão do Vínculo (andar ≥ 4, Vínculo 8) agora encerra a descida ("lacrado por ora") em vez de desabilitar um botão.
 > - **Depende do dono:** ajustar as 3 constantes; confirmar a cura do andar e o marco "limpar" (vs. "chegar").
 
+> ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
+>
+> - **Balão:** `BUBBLE_BOTTOM = 100` (`CompanionHUD.tsx`), a partir da base do contêiner do pet (que inclui ~66px de rodapé de corações/energia; era `BUBBLE_GAP + 8` = 14): ~34px acima do chão da cena, sobre o corpo, na metade de baixo; o Evoluir segue no topo.
+> - **`XpGainDisplay`** (lazy no `App.tsx`): "+N EXP" entra pela esquerda, 1 s no centro, sai pela direita. Detecção por comparação de `totalXP` num efeito (`utils/xpGain.ts`), não por evento do `awardBondXP` (que roda em updater: footgun 6). Não mostra: 1ª leitura/hidratação, delta ≤ 0, salto > `XP_GAIN_DISPLAY_CAP` (adoção de nuvem/migração) e demo. Coalesce em 400 ms; fila de um por vez. Fora das duas filas de avisos; sem som; sem campo no save.
+> - **Depende do dono:** nada novo.
+
 > ## 08/10/2026 — "Stroll fica com o NPC": o Passeio volta INTEIRO ao lote; a Home só lista a linha "Take a stroll"
 >
 > - **Pedido do dono (ênfase dele):** "Stroll fica com o NPC! A Home só tem a missão 'faça um stroll', mas o stroll deve ficar TODO ali, EXATAMENTE como era."
@@ -4984,11 +4990,67 @@ e `docsSemMentira.contract.test.ts`: 10/10 verdes.
 
 ## 07/10/2026 — Tour de boas-vindas do corvo
 
-- `WelcomeTour` (EN apenas, por pedido do dono): 8 cartões com o corvo (arte `mascot-raven.png`, nome **Rook**) — o básico (tarefas, comida/energia, dia completo, evolução manual, cuidado) e o mapa (uma frase por área, Missões e Mochila). Intersticial **primeiro da fila** (antes de check-in e priming); flag local `soulmon-welcome-tour-shown` (sem campo novo no save, então sem mexer no fuzz2); visto OU pulado grava a mesma flag; replay em Configurações › Ajuda. Mudo e sem recompensa. Texto por `{ en }` — o PT-BR entra depois acrescentando `pt`.
-- **Depende do dono**: conferir o texto, o nome Rook e se o tour deve aparecer também para saves que já têm atividades mas nenhuma conclusão.
+- `WelcomeTour` (EN apenas): 8 cartões com a criatura (arte `mascot-raven.png`, rótulo provisório **Mysterious Soulmon**) — o básico (tarefas, comida/energia, dia completo, evolução manual, cuidado) e o mapa (uma frase por área, Missões e Mochila). Intersticial **primeiro da fila** (antes de check-in e priming); flag local `soulmon-welcome-tour-shown` (sem campo novo no save, então sem mexer no fuzz2); visto OU pulado grava a mesma flag; replay em Configurações › Ajuda. Mudo e sem recompensa. Texto por `{ en }` — o PT-BR entra depois acrescentando `pt`.
+- **Depende do dono**: conferir o texto e se o tour deve aparecer também para saves que já têm atividades mas nenhuma conclusão.
 
 ## 08/10/2026 — Oficina do Foco: "só o pomodoro funciona"
 
 - **Causa**: o timer (25/5 e 50/10) sempre funcionou; o que parecia quebrado eram os 7 cards de técnica, `<li>` sem nenhum handler — na reforma dos lotes a explicação saiu do `InfoTip` de cada card para o "i" do cabeçalho e os cards viraram placas que não respondem. Não houve regressão de props/gate/lazy (verificado no navegador, 390×844).
 - **Correção**: cards viraram botões (`aria-expanded`): abrem a explicação com fonte e evidência; Pomodoro e Blocos de foco escolhem o ritmo do timer; as outras cinco mostram "Guia" e dizem que não têm timer nem registro. Teste por card e por ritmo em `OficinaCaderno.render.test.tsx`.
 - **Prevista, não implementada**: ferramenta interativa para Se-então, Esvaziar a cabeça, Regra dos 2 minutos, Eisenhower e O sapo primeiro (o plano as define só como técnicas descritas; registrar uso seria regra de jogo nova). **Depende do dono**: querer alguma delas como ferramenta (e com que registro).
+
+## 09/10/2026 — Lote rápido de lançamento + Oficina interativa (fatia)
+
+- `+` agora pergunta primeiro **Nova tarefa / Novo hábito**; tarefa abre o formulário já no tipo avulso, enquanto hábito preserva o catálogo de sugestões e o atalho para criação manual.
+- Tour usa o rótulo provisório **Mysterious Soulmon**, sem dar nome próprio à criatura.
+- Home mostra o XP-base ao lado de tarefas e hábitos concluídos, calculado pelas regras já existentes (incluindo tier e marcos de hábito); nenhuma recompensa foi alterada. O ledger atual aplica teto diário sem guardar a concessão por atividade, então a interface identifica o valor como base e não promete que esse total exato foi creditado. O marcador de missão continua governado por `questMarks` (indisponível = sem marcador, pronta para resgate = `?`), coberto pelos testes existentes.
+- Oficina: fluxo sugerido editável/reordenável e pulável; seleção de tarefas reais; conclusão chama o mesmo handler canônico do jogo; matriz, Se-então e Brain Dump temporário com timer de 5 min; nome e histórico curto da sessão ficam somente no aparelho. Sem bônus de XP/itens — regra econômica da Oficina permanece inalterada. Texto do Brain Dump não é persistido.
+- **Não incluído neste lote**: correção inicial das missões de pet/alimentar/tarefa (ordem atual já é pet/tarefa/alimentar em `FIRST_DAY_GESTURES`, mas falta reproduzir o caso relatado), mudanças de som/volume, contraste da banca de jornal, direção do sprite e revisão visual dos ícones do Salão. Esses itens precisam de reprodução/inspeção visual específica; não foram declarados resolvidos.
+- Verificação: `npm run typecheck` passou; 61 testes focados passaram (Oficina, catálogo de criação, tour e indicadores de missão). `Could not parse CSS stylesheet` aparece como aviso de teste já emitido no ambiente; os testes terminaram verdes.
+
+## 09/10/2026 — Lotes escolhidos 0, 6 e 2
+
+### 0 — Inventário consolidado (para evitar retrabalho)
+
+| Pedido do usuário | Estado confirmado no código/repositório | Situação nesta rodada |
+|---|---|---|
+| `+` escolher Nova tarefa ou Novo hábito | Formulário de tarefa avulsa e catálogo/atalho de hábito já separados | Já implementado antes; mantido |
+| Nome provisório do corvo | Tour usa **Mysterious Soulmon** | Já implementado antes; mantido |
+| XP por atividade | Home mostra o XP-base sem prometer crédito exato após o teto diário do ledger | Já implementado antes; mantido |
+| Oficina interativa | Técnicas, timer, seleção de tarefas, sessão/histórico local e conclusão canônica já têm fatia implementada; sem bônus econômico | Já implementado antes; mantido |
+| Torneio versus Arena | São lotes distintos; Torneio social/rankeado, Arena PvE com cinco rodadas e inimigos ajustados ao nível | Copy de distinção adicionada; **dificuldade manual selecionável ainda não existe** |
+| Pesadelo na Corrida com obstáculos | A corrida existente era apenas normal; agora oferece aparência de sombra com olhos brilhantes | Visual implementado como opção; física e recompensas não mudam |
+| Consumível Premium com estrela | `SPECIAL_ITEMS` não define SKU Premium nem fonte de recompensa própria | **Bloqueado por dependência de produto/economia**; não reclassificar item comum |
+| Onboarding curto em três blocos | Antes havia nascimento + objetivo/sugestões na mesma tela; sugestões eram gravadas como hábitos diários | Implementadas três etapas, sugestão inicial e escolha explícita entre tarefa avulsa e hábito recorrente |
+
+### 6 e 2 — Alterações desta rodada
+
+- Arena informa que é PvE solo, com adversários escalados ao nível do Soulmon; Torneio informa que é social e ranqueado por temporada. O motor e as recompensas da Arena não foram alterados.
+- A Corrida permite alternar para o visual de Pesadelo (silhueta/olhos luminosos). É só aparência: colisão, velocidade, score, Bits e recordes seguem iguais.
+- O onboarding passou a ter três pontos/etapas: nascimento; objetivo e áreas; escolha da sugestão e tipo. A tarefa é o padrão; hábito diário exige opção explícita e continua passando por `commitHabitCreate`.
+- A sugestão à IA continua dependente de ação explícita, com o aviso de que o texto sai do aparelho; não foi removida nenhuma confirmação legal de idade/termos.
+- Oficina do Foco: timer já tinha aviso visual, vibração curta por padrão e notificação apenas se previamente autorizada. Não adicionado som automático: a política D11/S4 (`docs/SOM.md`) proíbe playback sem gesto. Ao terminar o foco, a tarefa escolhida agora pode ser concluída pelo handler canônico; “Foquei” permanece separado e registra só a sessão.
+- Planejamento da Oficina começa com checklist efêmera opcional: estação de trabalho, água, comida se houver fome, banheiro e notificações. É lembrete de preparo, não tarefa canônica; não persiste, não pontua e não altera a economia.
+
+### Pendências não abrangidas por 0, 6 e 2
+
+QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior para deixar o item 1 em espera). Permanecem no plano original: reproduzir/corrigir missões iniciais e o indicador de resgate; melhorar árvore de talentos; confirmar música e volume; consumível Premium e economia; atividades Finance/Pay Bills; guilda e guerra de guildas; energia/dungeon e recuperação; progressão Soulsmith; efeitos e sons de combate; Focus Workshop completo; categorias Work/Finance e tarefas semanais; onboarding de outras confirmações; direção do sprite, contraste do jornal e ícones de minijogos. Cada item deve ser revalidado contra o código antes de começar, pois esta tabela distingue pedido de implementação comprovada.
+
+- **Verificação desta rodada**: 104 testes focados passaram, incluindo o fluxo da Oficina, vibração do timer, escolha do tipo no onboarding, Arena/Torneio e seletor do visual Pesadelo; `docsSemMentira.contract.test.ts` passou. A renderização de pixel/canvas do visual Pesadelo não foi validada em navegador nesta rodada. O guard `docsManual.contract.test.ts` falhou por 36 documentos já existentes sem entrada no índice `00-MAPA.md` (nenhum deles foi criado nesta rodada). Avisos `Could not parse CSS stylesheet` são emitidos no ambiente de teste.
+
+## 09/10/2026 — Oficina, Caderno e ajustes de tela
+
+- **Implementado:** Focus Workshop agora tem fluxo linear de oito etapas, aba separada e discreta de Guias, Brain Dump temporário com timer, sugestões em Se-então e revisão antes de salvar. Há uma única sessão planejada por vez; card salvo expansível mantém tasks/subtasks, Pomodoro, editar, excluir e concluir via handler canônico. Após concluir, fica disponível nova sessão. `FOCO_WORKSHOP_PLAN` fica em armazenamento local.
+- **Implementado:** Caderno mostra três registros inicialmente, permite Ver todas e filtrar por dia. A persistência continua sendo `GameState.caderno` no save do usuário (já existente), não uma nova camada.
+- **Implementado:** balão do mascote foi retirado do overlay do cenário e agora fica em fluxo normal abaixo da área de nome/avatar; alinhado à esquerda e cresce com o texto. O Soulsmith explica que é preciso concluir e resgatar a missão antes de desbloquear upgrades; a regra de item não adquirido continua sem botão de aprimoramento.
+- **Implementado/testado:** mapa principal sem padding, com viewport limitada e sem scroll próprio (`MapPage.layout.render.test.tsx`). Oficina, Caderno e mapa: testes de render passaram; `CompanionHUD.render.test.tsx` cobre o novo fluxo normal do balão. `ForgeCard.render.test.tsx` cobre a nova orientação de aquisição. `npm run typecheck` passou.
+- **Ainda não confirmado visualmente:** o relato do fundo de missão/videogame não pôde ser reproduzido numa sessão de navegador. Os visores de jogo já usam cenas `center/cover`, sem repetição; identificar qual missão/asset específico precisa da conferência visual. A explicação nova do Soulsmith também não confirma por si só se a conta observada já resgatou a peça.
+- **Preservar:** alteração local pendente em `src/assets/soulmon/bosses/boss-arauto-do-fim-full.png` (não relacionada; não sobrescrita nem staged). Nenhum commit ou push foi feito.
+
+## 09/10/2026 — Recompensas de expedição no Pomodoro
+
+- **Confirmado:** a notificação local continua condicionada à permissão previamente concedida; o alarme vibra ao fim conforme a preferência já existente. Não há playback sonoro automático.
+- **Implementado:** cada sessão salva precisa selecionar um entre seis ambientes (Floresta, Costa, Caverna, Jardim, Oficina, Observatório), cada um com quatro materiais existentes. Ao confirmar um foco encerrado com “Foquei”, o sorteio concede um item: cada um dos quatro materiais tem peso igual à opção de comida (20%; a comida sorteada é aleatória entre categorias). Um ciclo foco+pausa concluído aumenta a chance de 5% em 5 pontos até 25%, para no máximo um extra por foco. Materiais e comidas compartilham teto de oito itens/dia do jogador; estoques existentes recebem os itens.
+- **Persistência e limites:** `focusLoot` guarda dia, contador e ids de evento no save da conta; timer e progresso de ciclo da sessão continuam locais. O cliente deduplica o evento; `save.js` e `GameStateContext` saneiam e limitam o formato a oito. Isso não é uma garantia anti-cheat autoritativa: o endpoint de save ainda aceita o estado do jogo escrito pelo cliente.
+- **Verificação:** `npm run typecheck` passou; suíte focada passou: 6 arquivos, 98 testes (regras, paridade do sanitizador servidor/cliente, integração com `save.js`, timer, Oficina e persistência de save). `git diff --check` sem erros. Não foi feita validação manual em dispositivo móvel.
+- **Preservar:** alteração local pendente em `src/assets/soulmon/bosses/boss-arauto-do-fim-full.png`; nenhum commit/push.

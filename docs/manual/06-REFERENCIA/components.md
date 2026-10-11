@@ -33,6 +33,15 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/settingsTelemetry.render.test.tsx` (cobre a superfície de configurações, incluindo este modal).
 **Avisos do arquivo:** número que o usuário não usa para decidir vira palavra (Previsível/Equilibrado/Criativo), não `0.85` — régua nº 2 do cabeçalho; instruções livres e criatividade são avançado, atrás de "Mais opções" — régua nº 3; uma ação dominante (Salvar).
 
+### `src/components/XpGainDisplay.tsx`
+**Dono de:** o display transitório "+N EXP" do ganho de XP do Vínculo (entra pela esquerda, 1 s no centro, sai pela direita).
+**Props principais:** `totalXP`, `language`, `demo?`.
+**Exports:** `XpGainDisplay(props)`.
+**Estado/efeitos relevantes:** compara `totalXP` anterior × atual num efeito (pura leitura, StrictMode-safe) via `xpGainBetween` (`src/utils/xpGain.ts`); coalesce em `XP_COALESCE_MS` (400 ms), fila de um por vez, 1,7 s por display.
+**Chamado por:** `src/App.tsx` (`lazy`, `Suspense fallback={null}`, antes do `Toaster`).
+**Régua:** `src/components/XpGainDisplay.render.test.tsx`.
+**Avisos do arquivo:** fora das duas filas de avisos; sem som (R-NOVA); sem campo no save; não mostra hidratação, delta ≤ 0, salto > `XP_GAIN_DISPLAY_CAP` (adoção/migração) nem demo.
+
 ### `src/components/AccountDataSection.tsx`
 **Dono de:** seção "Seus dados" nas Configurações — exportar (levar embora) e apagar a conta, consumindo `functions/api/account.js`.
 **Props principais:** `AccountDataSectionProps` — `language`, `saveId?` (injeção de teste; produção lê do localStorage), `authAvailable?` (injeção de teste).

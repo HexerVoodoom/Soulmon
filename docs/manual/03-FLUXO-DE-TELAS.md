@@ -159,12 +159,14 @@ null` e `language: Language` (agora obrigatória):
 
 **Mapa interno (29–30/09/2026, pedidos do dono).** (1) **Ícone de mapa no voltar:** o `AreaTopBar` das áreas recebe `icon='map'` (desde 30/09/2026 o ícone ILUSTRADO `PixelIcon name="mapa"` a 32px — o mesmo do `CornerLink` da Home —, ⚰️ o glifo `map` da `NavGlyphs`) — o ícone diz o DESTINO; Pet/Biblioteca/menu da Home seguem com `arrow_back` (voltam à Home), ainda pelo `NavGlyph`. (2) **Fundo full screen:** a `AreaScene` é `position: fixed; inset: 0; zIndex: 0` — o fundo pintado cobre a tela inteira, atrás do topo (safe-area) e do rodapé; lote e clareira usam a mesma caixa (a correspondência `left/top` em % não escorrega em nenhuma proporção). O topo sobe com `overScene` (tinta clara fixa `#E9F5F2` + degradê escuro sob ele, sem box no ícone) e nada rola. (3) **Topo escondido sob camada:** com folha (`AreaSheet`), jogo ou duelo abertos o `AreaView` avisa por `onLayerChange`, o `App` guarda `areaLayerOpen` e passa `covered` — o topo fica `visibility:hidden` (R1: não compete com o ✕ da camada). (4) **NPC 1,4×:** `src/components/nav/npcScale.ts` › `NPC_SCALE = 1.4` sobre o teto de largura de 46% (`NPC_MAX_WIDTH_PCT` = 64,4%); a ALTURA segue presa à zona de 1/3 da tela, então em tela baixa o ganho fica abaixo de 1,4×; o balão ficou 13px e não passa do topo em viewport baixa (R2).
 
+**Viewport do Mapa principal (09/10/2026).** A página do Mapa ocupa o espaço disponível do `main` sem padding próprio, com altura flexível e `overflow:hidden`; o `main` zera padding e limita o scroll só quando `pane === 'map'`. O teste `MapPage.layout.render.test.tsx` verifica que o mapa não introduz margem nem scroll.
+
 | Área (`AreaId`) | Rótulo PT / EN | Lotes → o que a folha abre |
 |---|---|---|
 | `mercado` | Mercado / Market | Itens, Decoração, Background (abas por moeda, `MercadoSheets` + `utils/mercadoCatalog.ts`) · Conquistas |
 | `jogos` | Jogos / Games | **três prédios** (30/09/2026; ⚰️ o lote único `ppt`): **Salão de Jogos** (`salao`, `SalaoSheet`: Corrida com obstáculos → `DinoGame` (⚰️ "Corrida do Dino" / "Dino Runner", renomeada em 30/09/2026 por decisão do dono; EN "Obstacle Run"; o id `dino`, a pasta `dino/` e as chaves de save não mudaram) e Pedra-papel-tesoura → `RPSGame`) · **Ateliê da Mente** (`mente`, `MenteSheet`: cinco linhas → `EcoGame`, `BolhasGame mode="foco"`, `TrocaGame`, `PicrossGame`, `RevisaoGame`, em `components/mente/`) · **Refúgio** (`refugio`, `RefugioSheet`: Respirar → `RespiracaoGame` em `components/refugio/`, Bolhas calmas → `BolhasGame mode="calma"` de `components/mente/`) — §4.14 |
 | `arena` | Arena | Torneio (`TournamentPage`, com a loja de Honra — a moeda `emblems`, rótulo "Honra"/"Honor" desde 30/09/2026, `REGISTRO-DE-DECISOES.md` §17; ⚠️ reverte a D3 de 23/09/2026, que mantinha "Emblemas"; só o rótulo mudou, o campo `emblems` e `EMBLEMS_PER_WIN` ficam, e os emblemas de CONQUISTA da Ficha não mudaram de nome) · Duelo (`DueloSheet` → `ArenaGame`) · **Feira** (`GuildSheet room="feira"`, NPC Fanfare — [§4.26](#guilda-tela); ⚰️ o lote `guilda` da Arena virou a Feira) |
-| `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`; ⚰️ a Corrida com obstáculos (antes "do Dino") saiu para o Salão de Jogos) · **Passeio / Stroll** (`passeio`, desde `3532ccf5`, clareira da direita; NPC Brume, `exploracao:passeio`; prédio próprio — a ilha flutuante com arco de raízes, `lote-exploracao-passeio`, desde a leva `lotes-v2` de 30/09/2026; ⚰️ o placeholder da galeria de cenários e o nome Zeph): folha `PasseioSheet` (lazy; **desde 08/10/2026 a experiência inteira do Passeio mora AQUI, no NPC Brume** — a Home só lista a linha "Take a stroll", ver §50-B do 02) — postais das regiões abertas para escolher o destino (casa inclusa) e, se não escondidas, as Travessias (a ativa com "Fiz" / "Trocar" / "Deixar pra lá", os "Fiz" guardados, as regiões em névoa sem número) e o link "Esconder/Mostrar Travessias"; sem jogo em tela cheia. Com destino ≠ casa, a Home mostra 🎒 nas costas do pet (`CompanionHUD` › `walkingTo`, sem bloquear gesto). Regra: [02 §43](02-REGRAS-DE-NEGOCIO.md#aventura) · **Oficina do Foco** (`oficina`, clareira de baixo à esquerda; NPC Tique; folha `OficinaSheet`: timer 25/5 e 50/10 + 7 técnicas em cards tocáveis — abrem a explicação; Pomodoro e Blocos também escolhem o ritmo, as outras cinco são guias) e **Caderno / Journal** (`caderno`, clareira de baixo à direita; NPC Sépia; folha `CadernoSheet`: journaling sensível, no save na nuvem do titular), desde 04/10/2026; arte e bustos provisórios. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
+| `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`; ⚰️ a Corrida com obstáculos (antes "do Dino") saiu para o Salão de Jogos) · **Passeio / Stroll** (`passeio`, desde `3532ccf5`, clareira da direita; NPC Brume, `exploracao:passeio`; prédio próprio — a ilha flutuante com arco de raízes, `lote-exploracao-passeio`, desde a leva `lotes-v2` de 30/09/2026; ⚰️ o placeholder da galeria de cenários e o nome Zeph): folha `PasseioSheet` (lazy; **desde 08/10/2026 a experiência inteira do Passeio mora AQUI, no NPC Brume** — a Home só lista a linha "Take a stroll", ver §50-B do 02) — postais das regiões abertas para escolher o destino (casa inclusa) e, se não escondidas, as Travessias (a ativa com "Fiz" / "Trocar" / "Deixar pra lá", os "Fiz" guardados, as regiões em névoa sem número) e o link "Esconder/Mostrar Travessias"; sem jogo em tela cheia. Com destino ≠ casa, a Home mostra 🎒 nas costas do pet (`CompanionHUD` › `walkingTo`, sem bloquear gesto). Regra: [02 §43](02-REGRAS-DE-NEGOCIO.md#aventura) · **Oficina do Foco** (`oficina`, clareira de baixo à esquerda; NPC Tique; folha `OficinaSheet`: timer 25/5 e 50/10, checklist temporária de preparo antes do foco, conclusão canônica de tarefa após o timer e 7 técnicas em cards tocáveis — abrem a explicação; Pomodoro e Blocos também escolhem o ritmo, as outras cinco são guias) e **Caderno / Journal** (`caderno`, clareira de baixo à direita; NPC Sépia; folha `CadernoSheet`: journaling sensível, no save na nuvem do titular), desde 04/10/2026; arte e bustos provisórios. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
 | `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Bastia — [§4.26](#guilda-tela)) |
 
@@ -492,13 +494,15 @@ grátis é atravessado nos testes por `src/test/ritualDemo`).
 ### 2.4 `GameTutorialFlow` — o segundo onboarding
 
 - **Chega por**: o portão `if (!hasCompletedTutorial)`, depois do onboarding.
-- **Sai para**: `onComplete(activities.slice(0, remaining))` →
-  `handleCompleteTutorial`.
+- **Sai para**: `onComplete(item)` → `handleCompleteTutorial`; `kind` mantém a
+  distinção entre tarefa pontual e hábito recorrente.
 - **Aparece quando**: `!hasCompletedTutorial`.
-- **O que se vê/faz**: `PAGES.length` = **1** tela de conceito ("Seu Soulmon
-  nasceu!" / "Your Soulmon is born!") e depois `TASK_STEP` — a criação
-  **obrigatória** da primeira atividade. O jogador digita o objetivo, escolhe
-  áreas de vida (`CATEGORIES`, 8) e recebe sugestões da API.
+- **O que se vê/faz**: três etapas com três pontos: (1) nascimento (uma tela de
+  conceito), (2) objetivo + áreas da vida (`CATEGORIES`, 8) e pedido explícito
+  de sugestões à API, (3) escolher uma sugestão e decidir entre tarefa única
+  ou hábito recorrente. A primeira sugestão vem selecionada como tarefa; hábito
+  só é salvo como recorrente após escolha explícita. O texto continua com aviso
+  claro antes de sair do aparelho para a IA. Não há tela de confirmação extra.
 - **Estados**: **erro/offline** — `fallbackTasks` devolve até 4 tarefas locais
   de dois minutos (`FALLBACK_BY_CATEGORY`); **desde `592e2c14` a falha tem
   nome** (E1, QA Rodada 2): `suggestTasksResult` distingue `offline`
@@ -523,7 +527,9 @@ grátis é atravessado nos testes por `src/test/ritualDemo`).
   o dono decidir declarar × cortar (#42). A fronteira tem dono:
   `src/ia.camposEnviados.contract.test.ts`.
 - **Dono**: `src/components/GameTutorialFlow.tsx`.
-- **Régua**: `src/components/GameTutorialFlow.render.test.tsx` (desde `5513b5b6`, 20/09/2026; ⚰️ "nenhuma") e `textoBilingue.contract.test.ts` para o texto bilíngue.
+- **Régua**: `src/components/GameTutorialFlow.render.test.tsx` (etapas, escolha
+  de tipo, fallback e consentimento) e `textoBilingue.contract.test.ts` para o
+  texto bilíngue.
 
 ⚰️ As **5 páginas de conceito** (HP, comida/energia, dia perfeito, cocô/banho/sono,
 loja/moedas) **não existem mais** — quatro estavam ditas melhor no `GuideModal`, e
@@ -1523,6 +1529,17 @@ nasceu em `84ae4937`, 21/09/2026 — eram cinco):
 | `NightmareBattle` | **fila de intersticiais** | `onWin={handleNightmareWin}` / `onLose`/`onClose` = `closeNightmare`; desde `6fe6c73a` é um `RitualDialog` (trap, Escape, devolução de foco) | perder não custa nada, e a tela diz isso | `NightmareBattle.tsx` |
 | ⚰️ `PlayCard` | **não é mais montado** (`f5ead7c0`, 16/09/2026) — Brincar é a célula `play` do deck do `CompanionHUD` (§4.2) | — | `available` / `canPlay` / `playedToday` (`playDeck` no `App.tsx`) | `PlayCard.tsx` segue no repo sem consumidor |
 
+**Diferenciar Arena e Torneio (09/10/2026):** o Torneio é disputa social com
+ranking de temporada (`TournamentPage`); o Duelo da Arena é PvE solo, com cinco
+rodadas contra inimigos ajustados automaticamente ao nível do Soulmon
+(`arenaFoeSides`). A escolha entre essas atividades existe nos dois lotes da
+área Arena. A Arena ainda não oferece controle manual de dificuldade; seus
+parâmetros continuam no balanceamento medido. A Corrida com obstáculos ganhou
+uma opção visual de Pesadelo: o pet vira silhueta com olhos brilhantes; a
+física, pontuação e Bits continuam iguais. O consumível Premium com estrela não
+foi criado nesta fatia porque o catálogo e as regras de recompensa ainda não
+definem um SKU Premium; não classificar itens comuns como Premium.
+
 **Os três prédios de Jogos (30/09/2026)** — `AreaView` monta `SalaoSheet`,
 `MenteSheet` ou `RefugioSheet` conforme `open?.id` (`'salao'`/`'mente'`/`'refugio'`)
 e o jogo por cima quando `game` é setado (`start`); cada linha de jogo do Ateliê e do Refúgio é uma porta
@@ -2051,6 +2068,7 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 | `OfflineSeal` | montado na raiz do `App`, sempre — e desde `592e2c14` também nas três telas ANTES da Home (onboarding, tutorial, upgrade: `const selo = <OfflineSeal language={language} topOffset={8} />` antes do `Suspense`; ⚰️ o portão ficava sem selo, E1) | acende pelos eventos `online`/`offline`; **não bloqueia nada** | `ui/OfflineSeal` |
 | "Pular para o conteúdo" | primeiro nó focável do documento | `<a href="#conteudo">` para o `<main tabIndex={-1}>` | `App.tsx` |
 | região `aria-live` do visor | sempre, fora da tela | anuncia `spriteText('tuned', language)` quando `visorAnunciou` | `App.tsx` |
+| `XpGainDisplay` | todo ganho de XP do Vínculo (08/10/2026): "+N EXP" entra pela esquerda (0,35 s), para 1 s no centro e sai pela direita; `role="status"` "Gained N XP"/"Ganhou N XP"; `pointer-events: none`, z-index 90; **não é intersticial nem aviso da Home — fora das duas filas**; sem som; movimento reduzido tira o deslize e mantém a pausa. Não aparece na hidratação, em delta ≤ 0, em salto de adoção/migração (> `XP_GAIN_DISPLAY_CAP`) nem na demo | `XpGainDisplay.tsx` (lazy no `App.tsx`), detector em `utils/xpGain.ts` |
 | `Toaster` (sonner) | último nó do `App` | avisos de uma linha | `ui/sonner.tsx` |
 | `UndoToast` | 5 s depois de MARCAR um hábito como feito (Home e lista de atividades), montado por `toast.custom` de `ofereceDesfazer` (`App.tsx`) com `duration = UNDO_WINDOW_MS` | "«nome» — marcado como feito" + botão **Desfazer**, que reverte a conclusão inteira e fecha o toast (decisão do dono **#57**, 22/09/2026 — [02 §24-A](02-REGRAS-DE-NEGOCIO.md#desfazer)). É o ÚNICO toast do app que o usuário precisa **acionar**, e por isso o único com marcação própria: `role="status"` (anuncia sem roubar o foco — `alert` interromperia, e isto é uma oferta, não um erro) e alvo de **44×44** no botão. O `sonner` 2.0.3 não põe `role` nenhum no `<li>` e o botão de ação dele tem ~24px de alvo | `UndoToast.tsx` |
 | `NotificationManager` | sempre | agenda os pushes locais — §5.3 | `NotificationManager.tsx` |
@@ -2265,4 +2283,4 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 
 Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/gates.ts`, espelho em `functions/api/_gates.js`, paridade em `gates.parity.test.js`; números só lá, decisão do dono, confirmada em 07/10/2026 (ajuste só em `gates.ts`)). Trancado = arte cinza + cadeado SVG com "Vínculo N"/"Bond N" (`components/ui/LockBadge.tsx`) e aviso neutro ao tocar. A área do Mapa só trava se todos os seus prédios travam (`areaLockedAt`). Sempre livres: `BUILDINGS_ALWAYS_OPEN`. Laboratório (ids internos `evolucao`/`pet`/`stats` intactos): Centro de Evolução / Evolution Center, Arquivo / Archive (sem a seção de formas anteriores), Santuário do Vínculo / Bond Sanctum.
 
-**O Soulsmith (07/10/2026, aprimoramento).** O lote `mercado.ferreiro` abre a `ForgeCard` (`src/components/ForgeCard.tsx`, lazy): sem texto introdutório nem painel de materiais — só UMA entrada por tipo de peça (3 cards; o nome acompanha o tier da peça possuída, já equipada, sem Equipar nem Tirar; peça ainda não obtida = card informativo da missão, sem botão), cada uma em seu card com "Lv N → Lv N+1" (ou "Max", sem botão), bônus atual e próximo, os custos como chips e o botão Upgrade (desabilitado com o motivo em texto), modal de ESCOLHA A/B com Confirmar/Cancelar e "Refazer escolha" (confirmação, Bits ganhos ou fragmentos). Reforma de apresentação (07/10/2026): regra intacta. **Mochila → Especiais (07/10/2026):** a seção Materiais lista os 16 materiais sempre (×0 incluso); tocar no ícone abre um painel "onde conseguir mais" com "Go there"/"Ir lá", que fecha a Mochila e leva ao prédio (Caderno: menu de Missões; os outros: área + folha do lote).
+**O Soulsmith (07/10/2026, aprimoramento).** O lote `mercado.ferreiro` abre a `ForgeCard` (`src/components/ForgeCard.tsx`, lazy): sem texto introdutório nem painel de materiais — só UMA entrada por tipo de peça (3 cards; o nome acompanha o tier da peça possuída, já equipada, sem Equipar nem Tirar; peça ainda não obtida = card informativo da missão, sem botão e com orientação para concluir/resgatar a missão para liberar upgrades), cada uma em seu card com "Lv N → Lv N+1" (ou "Max", sem botão), bônus atual e próximo, os custos como chips e o botão Upgrade (desabilitado com o motivo em texto), modal de ESCOLHA A/B com Confirmar/Cancelar e "Refazer escolha" (confirmação, Bits ganhos ou fragmentos). Reforma de apresentação (07/10/2026): regra intacta. **Mochila → Especiais (07/10/2026):** a seção Materiais lista os 16 materiais sempre (×0 incluso); tocar no ícone abre um painel "onde conseguir mais" com "Go there"/"Ir lá", que fecha a Mochila e leva ao prédio (Caderno: menu de Missões; os outros: área + folha do lote).

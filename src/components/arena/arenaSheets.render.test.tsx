@@ -48,6 +48,12 @@ describe('Torneio', () => {
     expect(screen.queryByRole('tab', { name: 'Tier' })).toBeNull();
   });
 
+  it('explica que o Torneio é ranqueado/social e a Arena é o duelo PvE escalado', () => {
+    renderWithCss(<TournamentPage {...base} shop={shop} />);
+    fireEvent.click(screen.getByRole('button', { name: 'About the Tournament' }));
+    expect(document.querySelector('[data-torneio-info]')!.textContent).toMatch(/season-ranked competition/i);
+  });
+
   it('a faixa vira indicador do título; tocar abre a folha com as cinco faixas e a atual marcada', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
     const ind = await waitFor(() => {
@@ -140,6 +146,8 @@ describe('Duelo', () => {
     expect(container.textContent).not.toContain('perder não custa nada');
     fireEvent.click(screen.getByRole('button', { name: /O que são elemento, poder e golpes/ }));
     expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain('perder não custa nada');
+    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toMatch(/adversários acompanham o nível/);
+    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toMatch(/modo social ranqueado/);
     // A7: o "?" saiu da luta, então a explicação de COMO lutar (torcer, anel, esquiva) mora aqui, no InfoTip único.
     const como = document.querySelector('[data-duelo-como-lutar]')!.textContent!;
     expect(como).toMatch(/torcer/);

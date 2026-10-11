@@ -20,6 +20,7 @@ import { needsWelcomeTour } from './utils/welcomeTour';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
+import { applyFocusLoot, rollFocusLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
@@ -539,6 +540,7 @@ function PostponeNudgeSheet({
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
+const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
@@ -766,6 +768,8 @@ export default function App() {
 
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createInitialKind, setCreateInitialKind] = useState<'task' | 'habit'>('habit');
+  const [createChoiceOpen, setCreateChoiceOpen] = useState(false);
   // F4 do catálogo: o CTA de "+" abre o NAVEGADOR primeiro (docs/PLANO-CATALOGO-ATIVIDADES.md
   // §5); "Algo que não está aqui?" dentro dele é que abre o `CreateModal`
   // legado (inalterado) para criar do zero/tarefa avulsa.
@@ -2984,7 +2988,7 @@ export default function App() {
    * o caminho de criação (e com ele o nudge do teto, ATIV-18).
    */
   const handleAddNewActivity = useCallback(() => {
-    setCatalogBrowserOpen(true);
+    setCreateChoiceOpen(true);
   }, []);
 
   /**
@@ -5371,25 +5375,34 @@ export default function App() {
     }));
   };
 
-  // Segundo onboarding (GameTutorialFlow): tarefas escolhidas na criação
-  // obrigatória da 1ª tarefa. Chega SEMPRE com >=1 item (o componente não
-  // deixa terminar sem selecionar nada).
-  const handleCompleteTutorial = (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => {
+  // Segundo onboarding (GameTutorialFlow): uma atividade de entrada, com
+  // semântica escolhida explicitamente (tarefa avulsa ou hábito recorrente).
+  const handleCompleteTutorial = (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }) => {
     writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
     setHasCompletedTutorial(true);
-    const newActivities: Activity[] = activities.map((item, i) => ({
-      id: `${Date.now() + i}`,
+    if (item.kind === 'task') {
+      const task: Task = {
+        id: `tutorial-${Date.now()}`,
+        name: item.name,
+        category: item.category,
+        emoji: item.emoji,
+        completed: false,
+        status: 'open',
+        effort: 1,
+        createdAt: new Date().toISOString(),
+      };
+      commitTaskCreate(task, TELEMETRY_CREATE_PATH.tutorial);
+      return;
+    }
+    const habit: Activity = {
+      id: `tutorial-${Date.now()}`,
       name: item.name,
       category: item.category,
       emoji: item.emoji,
       steps: [],
       weekDays: [0, 1, 2, 3, 4, 5, 6],
-    }));
-    // O lote do tutorial tambem passa pelo portao — e o portao corta o que nao
-    // couber, em vez de gravar por cima do teto. O `GameTutorialFlow` ja recebe
-    // `maxActivities` com o teto EFETIVO, entao na pratica nao ha corte: as
-    // duas reguas sao a mesma, e essa e a questao.
-    commitHabitCreate(newActivities, TELEMETRY_CREATE_PATH.tutorial);
+    };
+    commitHabitCreate([habit], TELEMETRY_CREATE_PATH.tutorial);
   };
 
 
@@ -6157,7 +6170,11 @@ export default function App() {
           /* Gutter 16 na Home (canvas Home, P1) — TEM de casar com o
              `margin-inline: -16px` do `.sm-pet-sticky` (index.css). As outras
              views seguem em 24. */
-          className={pane === 'main' ? 'flex-1 min-h-0 overflow-hidden flex flex-col px-4' : 'flex-1 overflow-y-auto px-6'}
+          className={pane === 'main'
+            ? 'flex-1 min-h-0 overflow-hidden flex flex-col px-4'
+            : pane === 'map'
+              ? 'flex-1 min-h-0 overflow-hidden p-0'
+              : 'flex-1 overflow-y-auto px-6'}
           style={{
             position: 'relative', zIndex: 1,
             /* RODADA 4: o `pt-3` virou TOKEN porque a área fixa do pet precisa
@@ -6166,7 +6183,7 @@ export default function App() {
                12px em que a lista aparecia rolando ACIMA do pet (visto em
                screenshot, 412×700) — e divergiriam na primeira vez que alguém
                mexesse num deles. */
-            paddingTop: 'var(--sm-scroll-pt)',
+            paddingTop: pane === 'map' ? 0 : 'var(--sm-scroll-pt)',
             /* B5: `--sm-chatdock-h` (altura real do dock) + 16px de folga,
                no lugar do `100px` mágico. Ver o token no index.css. */
             /* `--sm-corner-h`: a faixa do link de canto (Mapa na Home, Home
@@ -6177,7 +6194,7 @@ export default function App() {
             /* H7 (02/10/2026): na Home o `<main>` NÃO rola — header e área do pet
                ficam fixos e só a lista (`data-home-scroll`) tem `overflow-y`.
                A folga do dock mora no scroller, não aqui. */
-            paddingBottom: pane === 'main'
+            paddingBottom: pane === 'main' || pane === 'map'
               ? 0
               : 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
@@ -6322,6 +6339,17 @@ export default function App() {
                      Malha, que moram no save. A regra é de `utils/mente/revisao`;
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
+                  focusTasks: gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
+                  onCompleteFocusTask: handleToggleTask,
+                  onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
+                    const roll = rollFocusLoot(request.environment, completedCycles);
+                    const preview = applyFocusLoot(gameState, request, roll);
+                    if (preview.accepted) setGameState(prev => {
+                      const committed = applyFocusLoot(prev, request, roll);
+                      return committed.accepted ? { ...prev, ...committed.state } : prev;
+                    });
+                    return { accepted: preview.accepted, items: preview.items, chancePercent: roll.chancePercent };
+                  },
                   review: gameState.review,
                   minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),
                   onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),
@@ -7230,13 +7258,30 @@ export default function App() {
           commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
           setCatalogBrowserOpen(false);
         }}
-        onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateModalOpen(true); }}
+        onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateInitialKind('habit'); setCreateModalOpen(true); }}
       />
       </Suspense>
+
+      <ModalSheet
+        open={createChoiceOpen}
+        title={language === 'pt-BR' ? 'O que vamos criar?' : 'What would you like to create?'}
+        language={language}
+        onClose={() => setCreateChoiceOpen(false)}
+      >
+        <div style={{ display: 'grid', gap: 10 }}>
+          <button type="button" style={sm2Button('primary')} onClick={() => {
+            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
+          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
+          <button type="button" style={sm2Button('outline')} onClick={() => {
+            setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
+          }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+        </div>
+      </ModalSheet>
 
       {createModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
           isOpen={createModalOpen}
+          initialKind={createInitialKind}
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
           activitiesCount={gameState.activities.length}
@@ -7684,6 +7729,7 @@ export default function App() {
         />
         </Suspense>
       )}
+      <Suspense fallback={null}><XpGainDisplay totalXP={gameState.totalXP} language={language} demo={isDemoMode(gameState)} /></Suspense>
       <Toaster richColors position="top-right" />
     </div>
   );

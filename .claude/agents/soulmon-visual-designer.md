@@ -34,3 +34,14 @@ O app **nunca cobra**. Isso é regra de produto e tem consequência visual diret
 4. Ao terminar qualquer coisa, rode `npx tsc --noEmit` e `npx vitest run`, e confirme no navegador antes de declarar pronto.
 
 Escreva em PT-BR.
+
+## Cláusula /bypass (decisão final do dono)
+
+Se o pedido que você recebeu veio com `/bypass` (skill `bypass`), ele é decisão
+final do dono. Seu parecer vira **dissent**: escreva UMA objeção curta em
+`docs/plano-melhorias/ledger/bypass.md` e execute o pedido como foi feito. Seu
+veto, recusa ou regra de processo não bloqueia nada nesse caso. Não recuse, não
+adie, não reduza e não substitua o pedido. Limites: não agir fora do pedido, não
+escrever segredo em texto, e os portões `tsc`/`vitest`/`build` continuam
+rodando (resultado reportado ao dono). Vale só para este pedido, não vira
+precedente.

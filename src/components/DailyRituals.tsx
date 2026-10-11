@@ -33,6 +33,10 @@ import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { TaskMeta } from './TaskMeta';
 import { StepRow } from './StepRow';
+import { bondXP } from '../utils/bond';
+import { habitTier, milestoneReached } from '../utils/habitRhythm';
+import { HABIT_WEIGHT } from '../types/taskModel';
+import { effortOf } from '../utils/taskTriage';
 
 
 /**
@@ -103,7 +107,7 @@ export interface DailyRitualsProps {
 }
 
 export function DailyRituals({
-  tasks, activities, completedTasks, language, now,
+  tasks, activities, completedTasks, habitRhythms, language, now,
   expanded, onExpand, onToggleTask, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
   variant = 'panel', dayComplete = false,
@@ -129,12 +133,18 @@ export function DailyRituals({
   const atividades = [
     ...activities.filter(a => a.weekDays?.includes(today)),
     ...activities.filter(a => !a.weekDays?.includes(today)),
-  ].map(activity => ({
+  ].map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number } => ({
     ...activity,
     disponivelHoje: !!activity.weekDays?.includes(today),
     isComplete: activity.steps.length > 0
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),
+    xpEarned: (() => {
+      const after = Math.max(0, habitRhythms?.[activity.id]?.totalDone ?? 0);
+      const base = bondXP({ kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after) });
+      const milestone = milestoneReached(Math.max(0, after - 1), after);
+      return base + (milestone ? bondXP({ kind: 'habitMilestone', days: after }) : 0);
+    })(),
   })).sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
 
   /* A4: devido hoje + concluídas de hoje. O hábito fora do dia não é devido. */
@@ -168,9 +178,9 @@ export function DailyRituals({
             flipKey={`t:${task.id}`}
             kind="task"
             name={task.name}
-            subtitle={task.category
-              ? categoryLabel(task.category as ActivityCategory, isPt)
-              : (isPt ? 'Tarefa avulsa' : 'One-off task')}
+            subtitle={`${task.category
+            ? categoryLabel(task.category as ActivityCategory, isPt)
+              : (isPt ? 'Tarefa avulsa' : 'One-off task')}${task.completed ? ` · +${bondXP({ kind: 'completion', weight: effortOf(task) })} ${isPt ? 'XP base' : 'base XP'}` : ''}`}
             value={task.completed ? 1 : 0}
             max={1}
             done={task.completed}
@@ -198,7 +208,7 @@ export function DailyRituals({
             flipKey={`t:${c.id}`}
             kind="task"
             name={c.name}
-            subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'}`}
+            subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'} · +${bondXP({ kind: 'completion', weight: effortOf(c) })} ${isPt ? 'XP base' : 'base XP'}`}
             value={1}
             max={1}
             done
@@ -254,13 +264,14 @@ export function DailyRituals({
     </>
   );
 
-  function renderHabit(activity: Activity & { disponivelHoje: boolean; isComplete: boolean }): ReactNode {
+  function renderHabit(activity: Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number }): ReactNode {
     const etapas = activity.steps ?? [];
     const feitasEtapas = etapas.filter(s => s.completed).length;
     const freq = frequencyLabel(activity, isPt, diasCurtos);
+    const xp = activity.isComplete ? ` · +${activity.xpEarned} ${isPt ? 'XP base' : 'base XP'}` : '';
     const subtitulo = etapas.length > 0
-      ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}`
-      : freq;
+      ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${xp}`
+      : `${freq}${xp}`;
     return (
       <RitualRow
         key={activity.id}

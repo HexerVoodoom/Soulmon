@@ -19,8 +19,8 @@ import { FORM_REQUIREMENTS } from '../types/progression';
 import { areaLabel } from '../navigation';
 import type { Language } from './i18n';
 
-/** O nome do guia. Original e curto; `mascot-raven.png` é a arte. */
-export const TOUR_GUIDE_NAME = 'Rook';
+/** O corvo ainda não tem nome; “Mysterious Soulmon” é o rótulo temporário escolhido. */
+export const TOUR_GUIDE_NAME = 'Mysterious Soulmon';
 
 export interface LocalizedText { en: string; pt?: string }
 

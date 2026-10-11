@@ -47,8 +47,9 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     const vidro = hero.querySelector('.sm2-viewport-screen') as HTMLElement;
     expect(vidro.style.width).toBe('192px');
     expect((vidro.querySelector('img[data-hero]') as HTMLImageElement).style.width).toBe('128px');
-    expect(screen.getByRole('progressbar', { name: 'Step 1 of 2' })).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Step 1 of 3' })).toBeTruthy();
     expect(document.querySelectorAll('[data-dot="on"]').length).toBe(1);
+    expect(document.querySelectorAll('[data-dot]').length).toBe(3);
     expect(document.querySelector('.sm-card, .sm-btn, .sm-px-field, .sm-px-choice, .sm2-kit-chip')).toBeNull();
     expect(variante(btn("Let's start"))).toBe('primary');
   });
@@ -68,7 +69,8 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     expect(ia.disabled).toBe(false);
     expect(variante(ia)).toBe('primary');
     expect(screen.getByText('This text goes to the AI provider if you ask for suggestions.')).toBeTruthy();
-    expect(btn('Select at least 1 task').disabled).toBe(true);
+    expect(screen.getByRole('progressbar', { name: 'Step 2 of 3' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Select at least 1 task' })).toBeNull();
   });
 
   it('Tarefa sem objetivo e sem área: só aí a IA desliga; a área liga de volta', () => {
@@ -79,7 +81,7 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     expect(btn('Suggest tasks with AI').disabled).toBe(false);
   });
 
-  it('Sugestões: cards com check_circle/radio, a além do teto INERTE POR FORMA (tracejado, sem opacity), teto em role=status', async () => {
+  it('Sugestões viram a terceira etapa; primeira sugestão pré-selecionada é tarefa avulsa, hábito é escolha explícita', async () => {
     sugestoes = [
       { name: 'Read 5 pages of the textbook', category: 'Study', emoji: '📚' },
       { name: 'Set up the desk for tomorrow', category: 'Study', emoji: '📚' },
@@ -90,30 +92,17 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     await act(async () => { fireEvent.click(btn('Suggest tasks with AI')); });
     // Já respondeu: o botão vira outline.
     expect(variante(btn('Suggest tasks with AI'))).toBe('outline');
-    // O objetivo é a 1ª linha, já selecionada (customKey) — 1 de 2.
     const cards = document.querySelectorAll('button[data-suggestion]');
-    expect(cards.length).toBe(4);
+    expect(cards.length).toBe(3);
     expect(cards[0].getAttribute('data-suggestion')).toBe('on');
     expect(cards[0].getAttribute('aria-pressed')).toBe('true');
-    // Seleciona a 2ª → teto de 2 atingido.
-    fireEvent.click(cards[1]);
-    const inertes = document.querySelectorAll('button[data-suggestion="inert"]');
-    expect(inertes.length).toBe(2);
-    for (const i of inertes) {
-      const el = i as HTMLElement;
-      expect(el.getAttribute('aria-disabled')).toBe('true');
-      expect(el.getAttribute('style')).toContain('1px dashed var(--sm2-muted)');
-      expect(el.style.opacity).toBe('');
-      expect(el.style.color).toBe('var(--sm2-muted)');
-    }
-    const status = screen.getByRole('status');
-    expect(status.textContent).toContain('Stage limit of 2 activities reached');
-    expect(status.style.color).toBe('var(--sm2-gold-ink)');
-    expect(status.style.border).toBe('');
-    // Tocar na inerte não seleciona.
-    fireEvent.click(inertes[0]);
-    expect(document.querySelectorAll('button[data-suggestion="on"]').length).toBe(2);
-    expect(btn('Add 2 and start').disabled).toBe(false);
+    fireEvent.click(btn('Choose a suggestion'));
+    expect(screen.getByRole('progressbar', { name: 'Step 3 of 3' })).toBeTruthy();
+    expect(screen.getByText('Read 5 pages of the textbook')).toBeTruthy();
+    expect(btn('One-time task').getAttribute('aria-pressed')).toBe('true');
+    expect(btn('Recurring habit').getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(btn('Recurring habit'));
+    expect(btn('Recurring habit').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('E1 (QA rodada 2): OFFLINE tem texto próprio, diferente de "não veio sugestão" — e as locais vêm mesmo assim', async () => {
@@ -160,17 +149,15 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     expect(screen.getByText('This text goes to the AI provider if you ask for suggestions.')).toBeTruthy();
   });
 
-  it('Erro: a IA devolve vazio → 4 tarefas locais de dois minutos, nenhuma selecionada sem objetivo, primário inerte até ≥1', async () => {
+  it('Erro: fallback local sugere uma tarefa avulsa e mantém hábito como alternativa explícita', async () => {
     const onComplete = montar({ soulGoal: '' });
     fireEvent.click(btn("Let's start"));
     fireEvent.click(screen.getByRole('button', { name: 'Health' }));
     await act(async () => { fireEvent.click(btn('Suggest tasks with AI')); });
-    const cards = document.querySelectorAll('button[data-suggestion]');
-    expect(cards.length).toBe(1);
-    expect(document.querySelectorAll('button[data-suggestion="on"]').length).toBe(0);
-    expect(btn('Select at least 1 task').disabled).toBe(true);
-    fireEvent.click(cards[0]);
-    fireEvent.click(btn('Add 1 and start'));
-    expect(onComplete).toHaveBeenCalledWith([expect.objectContaining({ name: 'Drink a glass of water', category: 'Health' })]);
+    expect(document.querySelectorAll('button[data-suggestion]')).toHaveLength(1);
+    expect(document.querySelectorAll('button[data-suggestion="on"]')).toHaveLength(1);
+    fireEvent.click(btn('Choose a suggestion'));
+    fireEvent.click(btn('Start'));
+    expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ name: 'Drink a glass of water', category: 'Health', kind: 'task' }));
   });
 });

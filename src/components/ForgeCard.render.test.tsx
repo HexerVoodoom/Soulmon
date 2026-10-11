@@ -60,6 +60,7 @@ describe('ForgeCard', () => {
     expect(document.querySelector('[data-equip-state]')).toBeNull();
     expect(document.querySelectorAll('[data-forge-piece]')).toHaveLength(3);
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Vem da missão de/);
+    expect(peca('eq-nucleo-t1').querySelector('[data-forge-upgrade-locked]')?.textContent).toMatch(/resgate a missão para liberar os aprimoramentos/);
     expect(document.querySelectorAll('[data-forge-card] button')).toHaveLength(0); // peça ainda não obtida: card informativo, sem botão
     expect(document.querySelectorAll('[data-forge-upgrade]')).toHaveLength(0);
     const t = document.querySelector('[data-forge-card]')!.textContent!;

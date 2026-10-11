@@ -5737,6 +5737,34 @@ select:focus-visible {
    a respiração do anel são exatamente o movimento contínuo que a WCAG 2.3.3
    manda desligar — e depender de um `*` distante é como o guard se perde numa
    refatoração. */
+/* "+N EXP" (XpGainDisplay): entra pela esquerda (0,35 s), para 1 s no centro, sai pela direita (0,35 s). Só transform/opacity. Total 1,7 s = XP_DISPLAY_TOTAL_MS. */
+.sm-xp-gain {
+  position: fixed;
+  top: 38%;
+  left: 50%;
+  z-index: 90;
+  pointer-events: none;
+  font-family: Silkscreen, ui-monospace, monospace;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--sm2-gold-ink, var(--sm2-primary-ink));
+  text-shadow: 0 2px 0 var(--sm2-bg), 0 0 12px var(--sm2-bg);
+  animation: sm-xp-gain 1700ms linear 1 both;
+  will-change: transform, opacity;
+}
+@keyframes sm-xp-gain {
+  0% { transform: translateX(-100vw) translateX(-50%); opacity: 0; animation-timing-function: ease-out; }
+  20.6% { transform: translateX(-50%); opacity: 1; }
+  79.4% { transform: translateX(-50%); opacity: 1; animation-timing-function: ease-in; }
+  100% { transform: translateX(100vw) translateX(-50%); opacity: 0; }
+}
+@keyframes sm-xp-gain-still {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
@@ -5745,6 +5773,8 @@ select:focus-visible {
      colado no fim do arquivo faz o teste medir o bloco errado e desarmar em
      silêncio. Há guard travando esta sentinela — não a remova, e não abra
      bloco novo: acrescente a regra AQUI. */
+  /* "+N EXP": sem deslize — aparece parado no centro, a pausa de 1 s fica. */
+  .sm-xp-gain { animation-name: sm-xp-gain-still !important; transform: translateX(-50%) !important; }
   .sm-talent-backdrop > [role="dialog"] { animation: none !important; }
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */

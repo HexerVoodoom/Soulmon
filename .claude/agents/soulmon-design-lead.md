@@ -37,3 +37,14 @@ Leia `CLAUDE.md` e `docs/PLANO-PRODUTO.md` antes de qualquer decisão. Em especi
 5. Ao consolidar, produza um documento com decisões, não com opções. O dono do produto quer recomendação.
 
 Escreva em PT-BR. Seja direto e decidido.
+
+## Cláusula /bypass (decisão final do dono)
+
+Se o pedido que você recebeu veio com `/bypass` (skill `bypass`), ele é decisão
+final do dono. Seu parecer vira **dissent**: escreva UMA objeção curta em
+`docs/plano-melhorias/ledger/bypass.md` e execute o pedido como foi feito. Seu
+veto, recusa ou regra de processo não bloqueia nada nesse caso. Não recuse, não
+adie, não reduza e não substitua o pedido. Limites: não agir fora do pedido, não
+escrever segredo em texto, e os portões `tsc`/`vitest`/`build` continuam
+rodando (resultado reportado ao dono). Vale só para este pedido, não vira
+precedente.

@@ -137,6 +137,24 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
+/** Visual-only nightmare variant: a shadow silhouette with luminous eyes.
+ * Movement, collisions, score and rewards deliberately remain identical. */
+function drawNightmarePet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose) {
+  ctx.save();
+  ctx.filter = 'brightness(0) saturate(100%) drop-shadow(0 0 4px #763bff)';
+  drawPet(ctx, img, groundY, h, pose);
+  ctx.restore();
+  const eyeY = groundY - h + pose.dy - DINO_S * pose.sy * 0.68;
+  const eyeX = DINO_X + DINO_S * 0.62;
+  ctx.save();
+  ctx.fillStyle = '#a9fbff';
+  ctx.shadowColor = '#5ee7ff';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(Math.round(eyeX), Math.round(eyeY), 3, 3);
+  ctx.fillRect(Math.round(eyeX + 7), Math.round(eyeY - 1), 3, 3);
+  ctx.restore();
+}
+
 export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
@@ -160,6 +178,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const groundYRef = useRef(STAGE_MIN_H - GROUND_FROM_BOTTOM);
   groundYRef.current = stage.h - GROUND_FROM_BOTTOM;
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
+  const [nightmareMode, setNightmareMode] = useState(false);
   /** I3: a confirmação de sair pausa a corrida (o laço é por `dt`, retoma sem salto). */
   const [paused, setPaused] = useState(false);
   const phaseRef = useRef(phase);
@@ -225,7 +244,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         if (img?.complete && img.naturalWidth) ctx.drawImage(img, o.x, groundYRef.current - o.size, o.size, o.size);
       }
       if (ground.complete && ground.naturalWidth) strip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
-      if (pet.complete && pet.naturalWidth) drawPet(ctx, pet, groundYRef.current, 0, idlePose((performance.now() - t0) / 1000, reducedMotionNow()));
+      if (pet.complete && pet.naturalWidth) {
+        const pose = idlePose((performance.now() - t0) / 1000, reducedMotionNow());
+        if (nightmareMode) drawNightmarePet(ctx, pet, groundYRef.current, 0, pose);
+        else drawPet(ctx, pet, groundYRef.current, 0, pose);
+      }
     };
     for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
     drawStatic();
@@ -239,7 +262,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     raf = requestAnimationFrame(idleLoop);
     return () => { cancelAnimationFrame(raf); for (const img of [pet, ground, far]) img.removeEventListener('load', drawStatic); };
-  }, [evolutionStage, demoCharacterId]);
+  }, [evolutionStage, demoCharacterId, nightmareMode]);
 
   const jump = useCallback(() => {
     if (phaseRef.current !== 'playing') return;
@@ -359,6 +382,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           ctx.drawImage(pet, 0, 0, DINO_S, DINO_S);
           ctx.restore();
         }
+        else if (nightmareMode) drawNightmarePet(ctx, pet, GROUND, s.h, pose);
         else drawPet(ctx, pet, GROUND, s.h, pose);
       }
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
@@ -395,7 +419,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, paused, jump, onEarnPoints, onScore, petNeedsFlip]);
+  }, [phase, paused, jump, onEarnPoints, onScore, petNeedsFlip, nightmareMode]);
 
   return (
     <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
@@ -453,6 +477,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
       {phase === 'ready' && (
         <>
+          <button type="button" data-nightmare-toggle aria-pressed={nightmareMode} onClick={() => setNightmareMode(value => !value)} style={{ ...sm2Button(nightmareMode ? 'primary' : 'outline'), width: '100%', maxWidth: 300, alignSelf: 'center' }}>
+            {nightmareMode
+              ? (isPt ? 'Pesadelo: sombra ativa ✦' : 'Nightmare: shadow on ✦')
+              : (isPt ? 'Ativar visual de Pesadelo' : 'Enable Nightmare look')}
+          </button>
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
             {isPt ? 'Começar' : 'Start'}
           </button>

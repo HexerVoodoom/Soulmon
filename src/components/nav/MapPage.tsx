@@ -91,9 +91,8 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
       data-map-page
       style={{
         position: 'relative',
-        margin: 'calc(var(--sm2-space-4) * -1)',
-        width: 'calc(100% + var(--sm2-space-4) * 2)',
-        minHeight: 'calc(100dvh - 2px)',
+        width: '100%', height: '100%', minHeight: 0,
+        margin: 0,
         overflow: 'hidden',
         borderRadius: 0,
       }}

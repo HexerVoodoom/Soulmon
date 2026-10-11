@@ -152,6 +152,18 @@ describe('CompanionHUD', () => {
     expect(visor.contains(balao)).toBe(false);
   });
 
+  it('o balão fica no fluxo abaixo do cabeçalho e não sobrepõe os controles do pet', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    fireEvent.click(screen.getByAltText('rookie'));
+    const bubble = container.querySelector<HTMLElement>('[data-pet-bubble]')!;
+    const row = container.querySelector<HTMLElement>('[data-pet-bubble-row]')!;
+    expect(bubble).toBeTruthy();
+    expect(row.style.position).toBe('relative');
+    expect(bubble.style.position).toBe('relative');
+    expect(row.compareDocumentPosition(container.querySelector('.sm2-home-pet')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bubble.querySelector('p')!.style.textAlign).toBe('left');
+  });
+
   it('o sprite é renderizado em escala INTEIRA (2:1 ou 3:1), nunca fracionária', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
