@@ -46,6 +46,7 @@ bancário.
 |---|---|---|---|
 | D1 | **Preço dos 4 SKUs** (`soulmon.unlock.full`, `credits.60/150/400`) | folha da Play mostra o preço; `FULL_UNLOCK_PRICE_LABEL_USD` (US$ 6.99) tem que bater com os Termos (C12) | sugestão R$ 29,90 / 4,90 / 9,90 / 19,90 |
 | D2 | **Reembolso da assinatura**: fecha a vitrine futura, não retira o já entregue (R8 do threat model) | abre abuso assinar -> resgatar -> reembolsar; no beta (licença de teste) o impacto é zero | ✅ **decidido em 11/10/2026**: fecha a vitrine, não retira (REGISTRO §33) |
+| D2b | **Revisão jurídica** de `termos.html` §4b (assinatura) e `privacidade.html` §6b (assinatura) e §6c (diagnóstico de falhas) | publicados em 11/10/2026 para o beta por decisão sua, a partir dos rascunhos da squad; o jurídico é seu | revisar **antes de pedir produção**; mudança relevante sobe `TERMS_VERSION`/`PRIVACY_VERSION` (`src/utils/consent.ts`) |
 | D3 | **Padrão de verificação** (MASVS-L1 + ASVS-L1 nas rotas de dinheiro/auth) | norteia as checagens de segurança | assumido L1 |
 | D4 | **Data de início (D0)** e **lista de testadores** | sem eles não há relógio | — |
 | D5 | **`SCHEDULE_EXACT_ALARM`**: trocar por alarme inexato ou manter com declaração | permissão que gera declaração extra na Play | a branch de correções propõe remover |

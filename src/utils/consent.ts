@@ -31,8 +31,8 @@ export const MIN_AGE_YEARS = 18;
  * seja, toda prova de consentimento apontava para um texto que não era o
  * publicado.
  */
-export const TERMS_VERSION = '2026-09-30'; // §8: as Travessias são opcionais (parecer de menores R-9, MIS-15)
-export const PRIVACY_VERSION = '2026-10-04'; // §2: o Caderno (anotações no save na nuvem, dado sensível); antes, 10-02: lista pública do Torneio
+export const TERMS_VERSION = '2026-10-11'; // §4b: assinatura cosmética trimestral publicada (beta-play-01); antes, 09-30: §8: as Travessias são opcionais (parecer de menores R-9, MIS-15)
+export const PRIVACY_VERSION = '2026-10-11'; // §6b assinatura + §6c diagnóstico de falhas publicados (beta-play-01); antes, 10-04: §2: o Caderno (anotações no save na nuvem, dado sensível); antes, 10-02: lista pública do Torneio
 
 export interface ConsentRecord {
   /** ISO de quando o usuário marcou a caixa. */
