@@ -1048,6 +1048,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'WeeklyReportCard.*test.ts*'` vazio, 09/09/2026); a regra "sem veredito" vem de `src/utils/rituals.ts`.
 **Avisos do arquivo:** tudo aqui é DESCRIÇÃO, nunca veredito; `suggestion` é `null` sem dados suficientes e esse silêncio é a metade importante; nenhum número deste cartão pode diminuir por castigo.
 
+### `src/components/BuildingIntro.tsx`
+**Dono de:** a apresentação do prédio novo (08/10/2026): `RitualDialog` z-200 com o busto do NPC do lote, o balão `NpcSpeech` e três balões em sequência (quem é · o que se faz ali · convite); "Next", "Later" (todo passo) e "Go there" (último).
+**Props principais:** `id` (`BuildingId`), `language`, `onGo(id)`, `onLater(id)`.
+**Exports:** `BuildingIntro(props)` (nomeado e default).
+**Chamado por:** `src/App.tsx` (intersticial `buildingIntro`, o SEGUNDO da fila, com `key` do prédio — sem ela o 2º NPC nasceria no último balão do 1º).
+**Régua:** `src/components/BuildingIntro.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila, montagem única, espera do Level Up).
+**Avisos do arquivo:** só fecha por gesto (sem timer); muda e sem recompensa (R-NOVA); `.sm-npc-intro` para no bloco canônico de movimento reduzido.
+
 ### `src/components/WelcomeTour.tsx`
 **Dono de:** o tour de boas-vindas do corvo (07/10/2026): oito cartões em `RitualDialog` (z-200, `useDialogA11y` — Esc pula) com o `mascot-raven.png`, o balão `NpcSpeech` (falante "Rook") e, nos passos do mapa, uma lista de uma frase por área. "Skip" e "Next"/"Back" sempre visíveis; muda e sem recompensa (R-NOVA).
 **Props principais:** `language`, `onDone(how: 'finished' | 'skipped')`.

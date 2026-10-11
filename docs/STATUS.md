@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — O NPC apresenta o prédio novo ao subir o Vínculo (`claude/npc-apresenta-predio`)
+>
+> - **Pedido do dono:** "sempre que um PRÉDIO NOVO é liberado ao subir de nível, o NPC aparece e se apresenta e introduz o novo prédio."
+> - **Regra:** `utils/buildingIntro.ts` (pura) deriva TUDO de `BUILDING_GATES` (`utils/gates.ts`) — nenhum número de prédio novo; `buildingIntro.test.ts` reprova divergência. Pendente = aberto no Vínculo E fora de `buildingIntrosSeen` (campo novo no save, `fuzz2`: 113 campos); vários de uma vez = fila, um por vez.
+> - **Save velho não re-dispara:** campo ausente/lixo é semeado com o que já está aberto no Vínculo da carga (`hydrateSave`). Jogador novo (Vínculo 1) só vê o que abrir depois.
+> - **Tela:** `BuildingIntro` (lazy, intersticial **segundo da fila**, depois do tour): NPC do lote (busto + nome de `LOT_NPC_VOICE`), 3 balões em 1ª pessoa (copy dos 21 prédios em `buildingIntroCopy.ts`, EN + PT-BR, leis L1..L12), "Ir lá/Go there" abre a folha do lote, "Depois/Later" e Esc só marcam visto; nada fecha sozinho; mudo; `.sm-npc-intro` no bloco canônico de movimento reduzido. Só em Home/Mapa.
+> - ⚠️ **TODO (encaixe com o Level Up):** o `LevelUpOverlay` (outro run) não estava na main. O ponto está declarado e testado: `levelUpOpen` no `App.tsx` (hoje `false`) + `buildingIntroReady` — quando o overlay entrar, ligar `levelUpOpen` ao estado dele; a apresentação então espera ele sair.
+> - **Depende do dono:** nada novo.
+
 > ## 11/10/2026 — Ritmo das refeições: três janelas por dia (café/almoço/jantar), convite e nunca cobrança (`claude/ritmo-refeicoes`)
 >
 > - **Pedido do dono:** incentivos para entrar depois das refeições, 3×/dia, por cocô, comida ou qualquer micro-ação. Decisão e alternativas que perderam: `REGISTRO-DE-DECISOES.md` §28.

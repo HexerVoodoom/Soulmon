@@ -108,7 +108,7 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
   const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1700);
 
   it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
-    const ordem = ["'welcomeTour'", "'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
+    const ordem = ["'welcomeTour'", "'buildingIntro'", "'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
     // na UNIÃO de tipos (uma vez, na ordem declarada)
     const uniao = interstitial.slice(0, interstitial.search(/=\r?\n/));
     const posUniao = ordem.map(o => uniao.indexOf(o));
@@ -188,9 +188,9 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   /** Os nomes na ordem em que a cadeia ternária os decide (o último é o `: 'welcome'`). */
   const ordem = [...expr.matchAll(/\?\s*'(\w+)'|:\s*'(welcome)'/g)].map(m => m[1] ?? m[2]);
 
-  it('a expressão existe e a ordem é: TOUR DO CORVO → triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
+  it('a expressão existe e a ordem é: TOUR DO CORVO → PRÉDIO NOVO → triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
     expect(ini).toBeGreaterThan(0);
-    expect(ordem).toEqual(['welcomeTour', 'triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
+    expect(ordem).toEqual(['welcomeTour', 'buildingIntro', 'triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {
@@ -228,5 +228,36 @@ describe('o tour do corvo tem POSIÇÃO na fila e monta UMA vez', () => {
   it('não toca em som nem em XP', () => {
     const src = readFileSync('src/components/WelcomeTour.tsx', 'utf8');
     expect(src).not.toMatch(/sounds|audioBus|play[A-Z]\w+\(|gamePoints|totalXP/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A APRESENTAÇÃO DO PRÉDIO NOVO (08/10/2026): intersticial NOVO, SEGUNDO da fila (depois do tour). O display de
+// Level Up (`LevelUpOverlay`, outro run) sobrepõe e sai ao toque; a apresentação espera ele — o ponto de encaixe é
+// `levelUpOpen` + `buildingIntroReady`. TODO no PR: ligar `levelUpOpen` ao estado do overlay quando ele estiver na main.
+// ---------------------------------------------------------------------------
+describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez', () => {
+  it('é o segundo intersticial, montado num único ponto, só com um pendente real', () => {
+    expect(app).toContain("welcomeTourOpen ? 'welcomeTour'\n    : buildingIntroOpen ? 'buildingIntro'");
+    expect((app.match(/interstitial === 'buildingIntro'/g) ?? [])).toHaveLength(1);
+    expect((app.match(/<BuildingIntro /g) ?? [])).toHaveLength(1);
+    expect(app).toContain("{interstitial === 'buildingIntro' && pendingIntros[0] && (");
+  });
+  it('UM por vez: monta sempre o primeiro pendente, com a key do prédio', () => {
+    // a `key` é o que zera os balões ao trocar de prédio (sem ela o 2º NPC nasceria no último balão do 1º)
+    expect(app).toContain('<BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]}');
+  });
+  it('espera o Level Up sair e só aparece em tela calma (Home/Mapa); o encaixe está declarado', () => {
+    expect(app).toContain('const levelUpOpen = false;');
+    expect(app).toContain('TODO(LevelUpOverlay)');
+    expect(app).toContain("calmView: currentView === 'home' || currentView === 'map'");
+  });
+  it('"Depois" e "Ir lá" gravam o mesmo visto, dentro de um updater puro; "Ir lá" abre a folha do lote', () => {
+    expect((app.match(/markBuildingIntroSeen\(/g) ?? [])).toHaveLength(1);
+    expect(app).toContain('onGo={handleBuildingIntroGo} onLater={markIntroSeen}');
+    expect(app).toContain('setPendingSheet({ area: area as AreaId, lot });');
+  });
+  it('save sem o campo não dispara nada (undefined → sem pendente)', () => {
+    expect(app).toContain('gameState.buildingIntrosSeen === undefined ? []');
   });
 });

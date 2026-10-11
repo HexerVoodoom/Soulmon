@@ -50,6 +50,7 @@ import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
+import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import {
   readLocal,
@@ -426,6 +427,10 @@ export interface GameState {
   /** Missão por prédio + materiais (07/10/2026, `utils/buildingQuests.ts`): UM objeto — o dia do jogador, os prédios
    *  visitados/resgatados hoje e o estoque de materiais (0..99). Dia novo zera a parte diária na leitura. */
   buildingQuests?: BuildingQuestState;
+  /** Apresentações de prédio já vistas (08/10/2026, `utils/buildingIntro.ts`): ids `<área>.<lote>`. O NPC se apresenta UMA vez por
+   *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
+   *  save existente nunca re-dispara apresentação do que o jogador já usa. */
+  buildingIntrosSeen?: string[];
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
@@ -1198,6 +1203,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           };
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
+        buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)
@@ -1457,6 +1463,7 @@ function freshGameState(): GameState {
       // ele nao termina. Decisao do dono em 07/09/2026.
       healthPoints: getMaxHPForStage('rookie'),
       maxHealthPoints: getMaxHPForStage('rookie'),
+      buildingIntrosSeen: seedBuildingIntrosSeen(1),
       energyPoints: 0,
       perfectDays: 0,
       totalXP: 0,

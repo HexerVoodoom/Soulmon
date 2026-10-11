@@ -2921,6 +2921,22 @@ dominância populacional — por isso ±15%. Régua nova:
 - ⚠️ NENHUMA missão semanal premia CONTAGEM DE TAREFAS — proibição escrita do `CLAUDE.md`, é a mais fácil de furar sem perceber.
 **Regra de negócio:** Nenhuma missão semanal premia contagem de tarefas — proibição escrita. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/buildingIntro.ts`
+**Dono de:** a regra da apresentação do prédio novo (08/10/2026). Puro.
+**Exports:**
+- `BUILDING_INTRO_ORDER` (todos os prédios, por Vínculo e depois pela ordem do Mapa; derivada de `BUILDING_GATES`, sem número próprio) · `isBuildingId` · `buildingsUnlockedBetween(prev, cur)` (os que cruzam `(prev, cur]`; Vínculo que não sobe devolve `[]`).
+- `seedBuildingIntrosSeen(bond)` / `sanitizeBuildingIntrosSeen(raw, bond)` (campo ausente ou lixo = semeado com o que já está aberto: save existente não re-dispara) · `pendingBuildingIntros(seen, bond)` (a fila) · `markBuildingIntroSeen(seen, id)` (idempotente, mesma referência).
+- `BUILDING_INTRO_AFTER` (`'levelUp'`: posição declarada) · `buildingIntroReady({ pending, levelUpOpen, calmView })`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx` (`hydrateSave`, `freshGameState`), `src/utils/buildingIntroCopy.ts` (tipos).
+**Régua:** `src/utils/buildingIntro.test.ts`, `src/components/filaDeAvisos.contract.test.ts`, `src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx`.
+**Regra de negócio:** nenhuma de jogo — só apresenta o que o Vínculo (`utils/gates.ts`) já abre; nada cobra, nada conta.
+
+### `src/utils/buildingIntroCopy.ts`
+**Dono de:** a copy dos três balões de cada prédio (21, EN base + PT-BR) e o nome do prédio. O nome do NPC NÃO mora aqui: vem de `LOT_NPC_VOICE` (`areaNpcVoice.ts`).
+**Exports:** `BUILDING_INTRO_COPY` · `buildingNpcFirstName(id, language)` · `buildingIntroView(id, language)` (`{ npcName, place, lines[3] }`) · `BuildingIntroView`.
+**Chamado por:** `src/components/BuildingIntro.tsx`.
+**Régua:** `src/utils/buildingIntro.test.ts` (todo prédio com NPC e busto, balões curtos, sem cobrança, sem número, sem "subir de nível"), `src/narrativa.contract.test.ts`.
+
 ### `src/utils/welcomeTour.ts`
 **Dono de:** o roteiro do tour do corvo e a regra de entrada (07/10/2026). Puro.
 **Exports:**
