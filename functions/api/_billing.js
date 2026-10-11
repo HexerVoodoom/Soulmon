@@ -17,12 +17,20 @@
 // rota responde 503 e **não concede nada**. Nunca conceder benefício sem
 // conseguir verificar de verdade.
 
+/** SKU da assinatura cosmética trimestral — id do produto de assinatura no Play Console. */
+export const SUBSCRIPTION_SKU = 'soulmon_cosmetic_quarterly';
+
 /**
  * O que cada SKU concede. Os ids precisam bater EXATAMENTE com os produtos
  * criados no Google Play Console. Preço e moeda são definidos lá (não aqui) —
  * a loja é a fonte da verdade do valor cobrado.
  */
 export const PRODUCTS = {
+  // ASSINATURA COSMÉTICA TRIMESTRAL (D10, docs/ASSINATURA-SPEC.md). Não concede
+  // tier nem Créditos: o que ela abre é a vitrine do trimestre (bg/furniture), e
+  // isso vive em `ent.sub.until`, que só a Google escreve. `grantTier:null` e
+  // `grantCredits:0` são travados por teste de catálogo.
+  [SUBSCRIPTION_SKU]: { kind: 'subscription', grantTier: null, grantCredits: 0, consumable: false },
   'soulmon.unlock.full': { grantTier: 'paid', grantCredits: 0, consumable: false },
   'soulmon.credits.60': { grantTier: null, grantCredits: 60, consumable: true },
   'soulmon.credits.150': { grantTier: null, grantCredits: 150, consumable: true },
@@ -218,6 +226,201 @@ export async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
   } catch (err) {
     console.error('refund check error (play):', err);
     return null;
+  }
+}
+
+// ───────────────────────────────────────────────────── Google Play: assinatura ──
+//
+// Assinatura NÃO usa `purchases.products`: o recurso é `purchases.subscriptionsv2`
+// (mesmo escopo `androidpublisher` e mesma conta de serviço — a spec D10 dizia
+// "outro escopo", e estava errada; muda o endpoint e a permissão no Console).
+//
+// Disciplina (docs/ASSINATURA-SPEC.md, threat-model R1..R10):
+//  · a vigência (`until`) é o `expiryTime` que a GOOGLE devolve — nenhum campo do
+//    corpo da requisição escreve vigência;
+//  · o vínculo com a conta (`obfuscatedExternalAccountId`) é SEMPRE exigido, sem
+//    a flag de compatibilidade que o vitalício tem: código novo, sem app antigo;
+//  · a chave de unicidade é a RAIZ da cadeia `linkedPurchaseToken`, não o
+//    `orderId` de cada renovação — senão toda renovação abriria um claim novo
+//    e uma reassinatura/troca de plano abriria uma 2ª conta;
+//  · falha de rede/Google = `verification-failed`: nada é concedido nem retirado
+//    na dúvida (fail-closed para conceder, conservador para retirar).
+
+const ANDROID_PUBLISHER_APPS = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
+
+/** Estados em que a pessoa TEM direito à vitrine. `CANCELED` = não renova, mas o pago vai até `expiryTime`. */
+export const SUB_ENTITLED_STATES = new Set([
+  'SUBSCRIPTION_STATE_ACTIVE',
+  'SUBSCRIPTION_STATE_IN_GRACE_PERIOD',
+  'SUBSCRIPTION_STATE_CANCELED',
+]);
+
+/** Quantos elos da cadeia `linkedPurchaseToken` seguimos até a raiz. */
+export const SUB_CHAIN_MAX_HOPS = 5;
+
+/** `sha256` hex — a chave da cadeia em `order_claims` não guarda o token cru. */
+export async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(String(text)));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Token mascarado para log (R9): nunca o valor inteiro. */
+export function maskToken(token) {
+  const t = String(token ?? '');
+  return t.length <= 8 ? '***' : `${t.slice(0, 4)}...${t.slice(-2)}(${t.length})`;
+}
+
+/** `play:sub:<sha256 da RAIZ da cadeia>` — a chave única em `order_claims`/`ord:`. */
+export async function subscriptionOrderId(rootToken) {
+  return `play:sub:${await sha256Hex(rootToken)}`;
+}
+
+function playSubConfig(env) {
+  const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+  const packageName = env.ANDROID_PACKAGE_NAME;
+  if (!rawAccount || !packageName) return { error: 'billing-not-configured' };
+  try {
+    return { serviceAccount: JSON.parse(rawAccount), packageName };
+  } catch {
+    return { error: 'billing-misconfigured' };
+  }
+}
+
+/**
+ * GET `purchases.subscriptionsv2/tokens/{token}`.
+ *
+ * @returns {Promise<{ ok: true, sub: any }
+ *                 | { ok: false, reason: string, status?: number }>}
+ */
+export async function fetchSubscriptionV2(env, purchaseToken) {
+  const cfg = playSubConfig(env);
+  if (cfg.error) return { ok: false, reason: cfg.error };
+  if (!purchaseToken || typeof purchaseToken !== 'string') return { ok: false, reason: 'missing-token' };
+  try {
+    const token = await getAccessToken(cfg.serviceAccount);
+    const res = await fetch(
+      `${ANDROID_PUBLISHER_APPS}/${encodeURIComponent(cfg.packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    // 400/404/410 = a Google não conhece (mais) esse token. 5xx/429 = problema DELA.
+    if (res.status === 400 || res.status === 404 || res.status === 410) {
+      return { ok: false, reason: 'invalid-purchase', status: res.status };
+    }
+    if (!res.ok) return { ok: false, reason: 'verification-failed', status: res.status };
+    const sub = await res.json().catch(() => null);
+    if (!sub || typeof sub !== 'object') return { ok: false, reason: 'verification-failed' };
+    return { ok: true, sub };
+  } catch (err) {
+    console.error('billing verify error (play sub):', String(err?.message ?? err).slice(0, 120));
+    return { ok: false, reason: 'verification-failed' };
+  }
+}
+
+/**
+ * Sobe a cadeia `linkedPurchaseToken` até a raiz (no máx. `SUB_CHAIN_MAX_HOPS`).
+ * Erro TRANSITÓRIO num elo aborta (não adivinha raiz: duas raízes diferentes
+ * para a mesma cadeia abririam dois claims). 404/410 num elo antigo = a Google
+ * esqueceu; aquele token É a raiz.
+ *
+ * @returns {Promise<{ ok: true, rootToken: string } | { ok: false, reason: string }>}
+ */
+export async function resolveSubscriptionRoot(env, purchaseToken, firstSub) {
+  let token = purchaseToken;
+  let sub = firstSub;
+  for (let hop = 0; hop < SUB_CHAIN_MAX_HOPS; hop++) {
+    const linked = sub?.linkedPurchaseToken;
+    if (!linked || typeof linked !== 'string' || linked === token) return { ok: true, rootToken: token };
+    const up = await fetchSubscriptionV2(env, linked);
+    if (up.ok) { token = linked; sub = up.sub; continue; }
+    if (up.reason === 'invalid-purchase') return { ok: true, rootToken: linked };
+    return { ok: false, reason: up.reason };
+  }
+  // Cadeia anormalmente longa: recusa em vez de truncar a raiz.
+  return { ok: false, reason: 'verification-failed' };
+}
+
+/**
+ * Lê o recurso da Google e devolve o que importa — função PURA (testável sem rede).
+ *
+ * @returns {{ ok: true, entitled: boolean, state: string, until: number, test: boolean, ackPending: boolean }
+ *          | { ok: false, reason: string }}
+ */
+export function interpretSubscription(sub, { saveId, now = Date.now() } = {}) {
+  const items = Array.isArray(sub?.lineItems) ? sub.lineItems.filter(li => li?.productId === SUBSCRIPTION_SKU) : [];
+  if (items.length === 0) return { ok: false, reason: 'unknown-product' };
+
+  // R6 — SEM trial. Oferta = fase promocional/grátis que o Console não deveria ter.
+  // Não concedemos "a mais" por ela (ver BILLING-SETUP: não crie ofertas).
+  if (items.some(li => li?.offerDetails?.offerId)) return { ok: false, reason: 'offer-not-allowed' };
+
+  const bound = sub?.externalAccountIdentifiers?.obfuscatedExternalAccountId;
+  if (!bound || !saveId || String(bound) !== String(saveId)) return { ok: false, reason: 'account-mismatch' };
+
+  const state = String(sub?.subscriptionState ?? '');
+  const expiries = items.map(li => Date.parse(li?.expiryTime)).filter(Number.isFinite);
+  const expiry = expiries.length ? Math.max(...expiries) : 0;
+  const entitled = SUB_ENTITLED_STATES.has(state) && expiry > now;
+  return {
+    ok: true,
+    entitled,
+    state,
+    until: entitled ? expiry : Math.min(expiry, now),
+    test: !!sub?.testPurchase,
+    ackPending: sub?.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING',
+  };
+}
+
+/**
+ * Verifica uma assinatura vinda do app. Só devolve `ok:true` se a Google diz que
+ * está VIGENTE, do nosso SKU e DESTA conta.
+ *
+ * @returns {Promise<{ ok: true, orderId: string, product: any, subscription: any }
+ *                 | { ok: false, reason: string, status?: number }>}
+ */
+export async function verifyPlaySubscription(env, { purchaseToken, saveId }) {
+  const got = await fetchSubscriptionV2(env, purchaseToken);
+  if (!got.ok) return got;
+
+  const read = interpretSubscription(got.sub, { saveId });
+  if (!read.ok) return read;
+  if (!read.entitled) return { ok: false, reason: 'not-active' };
+
+  const root = await resolveSubscriptionRoot(env, purchaseToken, got.sub);
+  if (!root.ok) return root;
+
+  return {
+    ok: true,
+    orderId: await subscriptionOrderId(root.rootToken),
+    product: PRODUCTS[SUBSCRIPTION_SKU],
+    subscription: { ...read, rootToken: root.rootToken },
+  };
+}
+
+/**
+ * Reconhece a assinatura NO SERVIDOR (a Play estorna em 3 dias o que ninguém
+ * reconheceu; app fechado entre o verify e o ack é o caso real). Idempotente:
+ * só chama se a Google diz `PENDING`, e o ack repetido não é erro.
+ * Falha aqui NÃO desfaz nada — o cliente e o RTDN reconciliam.
+ *
+ * @returns {Promise<boolean>} true = reconhecida ou já estava.
+ */
+export async function acknowledgePlaySubscription(env, { purchaseToken, ackPending = true }) {
+  if (!ackPending) return true;
+  const cfg = playSubConfig(env);
+  if (cfg.error) return false;
+  try {
+    const token = await getAccessToken(cfg.serviceAccount);
+    const res = await fetch(
+      `${ANDROID_PUBLISHER_APPS}/${encodeURIComponent(cfg.packageName)}/purchases/subscriptions/${encodeURIComponent(SUBSCRIPTION_SKU)}/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`,
+      { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' },
+    );
+    // 400 "already acknowledged" é o estado desejado.
+    if (res.ok || res.status === 400) return true;
+    console.error('billing ack error (play sub):', res.status, maskToken(purchaseToken));
+    return false;
+  } catch (err) {
+    console.error('billing ack error (play sub):', String(err?.message ?? err).slice(0, 120), maskToken(purchaseToken));
+    return false;
   }
 }
 
