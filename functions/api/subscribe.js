@@ -6,7 +6,7 @@ import { VALID_ID } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
-  nomeDePet, idiomaDePush, dataDeNascimento, gravarSeMudou, LIMITE_INSCRICAO,
+  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, gravarSeMudou, LIMITE_INSCRICAO,
   desindexarInscricao,
 } from './_pushIdentity.js';
 
@@ -50,7 +50,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, petName, language, bornAt, saveId } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -113,6 +113,10 @@ export async function onRequestPost({ request, env }) {
     // então qualquer outra coisa já caía em inglês — mas gravar a string crua
     // guardava texto de cliente sem teto num registro de um ano.
     language: idiomaDePush(language),
+    /* Ritmo das refeições — OPT-IN. Só existe se a pessoa ligou o aviso nas
+       Configurações; inválido é descartado e a inscrição segue sem ele. Ver
+       `refeicoesDeInscricao` e `_mealRhythm.js`. */
+    ...(refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {}),
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que

@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Ritmo das refeições: três janelas por dia (café/almoço/jantar), convite e nunca cobrança (`claude/ritmo-refeicoes`)
+>
+> - **Pedido do dono:** incentivos para entrar depois das refeições, 3×/dia, por cocô, comida ou qualquer micro-ação. Decisão e alternativas que perderam: `REGISTRO-DE-DECISOES.md` §28.
+> - **Entrou:** (a) horário/janela/teto em `functions/api/_mealRhythm.js` (dono único: cliente, worker, inscrição) e copy em `_pushCopy.js` (`mealInviteCopy`, EN primeiro, uma tag `meal-<refeição>` por refeição); (b) `src/utils/mealRhythm.ts` + cartão `MealInviteCard` (lazy) no slot de avisos da Home e linhas `MealRhythmRows` nas Configurações (cartão ligado, lembretes DESLIGADOS, 3 horários); campos `mealRhythm` e `mealRitual` no save; (c) cocô alinhado ao pós-refeição SEM mudar a regra (só a distribuição dentro de 07h/10h–15h e +8–10 h); (d) worker: cron `*/30` + `mealNotifFor`, os convites de 10h/16h cedem a quem ligou, teto `PUSH_DAILY_CAP` provado com 48 passadas × 5 fusos; APK: alarmes locais com a mesma tag do FCM; (e) telemetria `meal_ritual` (política de privacidade nos dois idiomas); (f) Guia, Glossário, REGISTRO §28, perguntas ao dono.
+> - **Não entrou, de propósito:** XP/Bits/Emblemas/energia pelo convite (a recompensa é a reação do bicho — pergunta ao dono); push de cocô; texto de "fome" como necessidade.
+> - **Deploy manual necessário:** `wrangler deploy` em `workers/` (novo cron `*/30 * * * *` + `mealNotifFor`). Sem isso o push das refeições não sai — o cartão no app funciona sozinho. Nenhum arquivo Kotlin mudou (o APK usa o `SoulmonAlarm` que já existe).
+> - **Ambientais já vermelhos na `main` antes desta rodada (não são desta):** `orcamentoDeBytes` (dist), `docsManual (a)` (`ledger/bypass.md` sem entrada no MAPA), `iconInventory`/`iconScale` (`OficinaSheet`), `CompanionHUD.cta` (2), `convertToWebp`. O `fuzz2` (112 campos esperando 111) foi corrigido aqui (agora 114 com os dois campos novos).
+> - **Depende do dono:** `PERGUNTAS-DO-DONO.md` › "Ritmo das refeições".
+
 > ## 11/10/2026 — Ajustes: Passeio (UI bugada), prédio do Caderno, ícones do Salão de Jogos
 >
 > - **Passeio — causa do "UI horrível":** o lote do Passeio tem `left 76% + width 56%` = 104% da cena. Abrir a folha e devolver o foco ao lote rolava o contêiner `AreaScene` (`overflow: hidden` ainda rola por foco) **16px** para a esquerda, e a folha inteira ia junto: texto colado na borda esquerda, cortado à direita, ✕ fora do lugar. Corrigido na `AreaScene` (`onScroll` zera `scrollLeft/Top`) — vale para toda área. Travado em `areaShell.render.test.tsx`.
@@ -12,7 +21,7 @@
 >
 > - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
 > - **Linhas velhas no `CLAUDE.md` (não editei, a pedido):** a linha do 🎪 Rodada do Torneio segue certa; a do ⚔️ Masmorra não é tocada. A linha "Arena" do 🛒/Combate não descreve a escolha de adversários — acrescentar quando o dono quiser.
-> - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §27.
+> - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §28.
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >

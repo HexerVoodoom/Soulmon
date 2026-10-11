@@ -37,3 +37,20 @@ export declare function eveningCopy(
   language: string,
   hpBaixo: boolean,
 ): PushCopy;
+
+export type MealInviteKind = 'snack' | 'poop' | 'pet' | 'tenSeconds';
+export declare const MEAL_INVITE_KINDS: readonly MealInviteKind[];
+/** Os tipos que um PUSH pode sortear — o worker não sabe se há cocô na tela. */
+export declare const MEAL_PUSH_KINDS: readonly MealInviteKind[];
+export declare const MEAL_PUSH_TAGS: readonly string[];
+
+/** Convite de refeição (push E cartão do app): UMA fonte de texto. */
+export declare function mealInviteCopy(
+  meal: 'breakfast' | 'lunch' | 'dinner',
+  kind: MealInviteKind,
+  petName: string,
+  language: string,
+): PushCopy;
+
+/** O tipo que o push daquele dia/refeição sorteia (determinístico). */
+export declare function mealPushKind(meal: 'breakfast' | 'lunch' | 'dinner', dayKey: string): MealInviteKind;

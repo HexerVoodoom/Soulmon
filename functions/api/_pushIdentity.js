@@ -13,6 +13,8 @@
 // Tudo que as duas rotas têm em comum mora AQUI. O que é específico de cada
 // canal (o formato do endpoint, o formato do token) fica em cada uma.
 
+import { MEAL_KEYS, formatHHMM, normalizeMealTimes } from './_mealRhythm.js';
+
 /**
  * TETO DE 24, o mesmo do resto do projeto: o campo do app tem `maxLength={24}`
  * e o apelido do perfil é cortado em 24 no `community.js`. Sem isto o campo era
@@ -39,6 +41,35 @@ export function idiomaDePush(v) {
  */
 export function dataDeNascimento(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(v ?? '')) ? v : undefined;
+}
+
+/**
+ * O RITMO DAS REFEIÇÕES na inscrição (opt-in): `{ t: [min, min, min], tz, rest? }`.
+ *
+ * Só entra se for INTEIRO válido — horários na grade de 30 min, dentro da faixa
+ * de cada refeição, ordenados com a distância mínima (tudo isso é
+ * `normalizeMealTimes`, o dono; aqui só se exige que a normalização não mude
+ * nada), fuso em múltiplos de 15 min entre -12h e +14h, janela de descanso em
+ * minutos. Qualquer defeito DESCARTA o campo inteiro: a inscrição continua
+ * valendo e o push das refeições simplesmente não existe para ela — a falha é
+ * silêncio, nunca um push em hora errada. Ausente = a pessoa não ligou.
+ */
+export function refeicoesDeInscricao(v) {
+  if (!v || typeof v !== 'object' || !Array.isArray(v.t) || v.t.length !== 3) return undefined;
+  const t = v.t;
+  if (!t.every(n => Number.isInteger(n) && n >= 0 && n < 1440)) return undefined;
+  const tz = v.tz;
+  if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return undefined;
+  const times = {};
+  MEAL_KEYS.forEach((k, i) => { times[k] = formatHHMM(t[i]); });
+  const canon = normalizeMealTimes(times);
+  if (MEAL_KEYS.some(k => canon[k] !== times[k])) return undefined;
+  let rest;
+  if (Array.isArray(v.rest) && v.rest.length === 2
+      && v.rest.every(n => Number.isInteger(n) && n >= 0 && n < 1440) && v.rest[0] !== v.rest[1]) {
+    rest = [v.rest[0], v.rest[1]];
+  }
+  return { t: [...t], tz, ...(rest ? { rest } : {}) };
 }
 
 /**
