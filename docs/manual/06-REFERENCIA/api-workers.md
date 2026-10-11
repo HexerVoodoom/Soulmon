@@ -481,3 +481,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.
 **Chamado por:** `workers/push-scheduler.js`, `functions/api/_pushCopy.js`, `functions/api/_pushIdentity.js`, `src/utils/mealRhythm.ts`.
 **Régua:** `workers/mealRhythm.parity.test.js` (varre as 48 passadas do dia com o worker real e prova o teto).
+
+### `functions/api/crash.js`
+**Rota:** `/api/crash` · **Métodos:** `POST` (relatório de falha), `GET` (leitura do dono) — via `onRequest`/`onRequestGet`.
+**Dono de:** o diagnóstico de falhas do beta, sem SDK de terceiro. `sanitizeReport` é allowlist (`kind`, `msg`, `stack`, `ver`, `route`, `plat`); campo extra derruba o relatório. O servidor re-limpa com `scrub` (não confia no cliente). Agrupa por assinatura (`signatureOf`: SHA-256 de kind+msg+primeiro frame).
+**Auth:** `POST` anônimo (nada identificável é aceito nem gravado). `GET` exige `X-Metrics-Key` == `env.METRICS_ADMIN_KEY` (404 sem a variável; mesmo segredo de `metrics.js`).
+**Rate limit:** `_rateLimit.js`, buckets `crash` (10/min/IP) e `crash-read`; teto de `MAX_SIGNATURES_PER_DAY` assinaturas novas por dia.
+**Grava/lê:** `kv(env)`, chave `crash:<YYYY-MM-DD>:<assinatura>` = `{ kind, msg, stack, ver, route, plat, n, first, last, vers }`, com `expirationTtl` de 14 dias.
+**Erros:** `400` corpo grande/inválido/fora da allowlist · `429` · `503` sem KV · `404`/`401` na leitura · `405`.
+**Cliente:** `src/utils/crashReport.ts`. **Leitura:** `node scripts/crash-report.mjs`. **Data Safety:** `docs/PLAY-DATA-SAFETY.md` §2.7.

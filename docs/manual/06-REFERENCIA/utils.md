@@ -3213,3 +3213,16 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx`, `src/hooks/useCareSystem.ts`, `src/components/NotificationManager.tsx`, `src/components/MealRhythmRows.tsx`, `src/components/MealInviteCard.tsx`, `src/components/GuideModal.tsx`, `src/components/HelpModal.tsx`, `src/contexts/GameStateContext.tsx`.
 **Régua:** `src/utils/mealRhythm.test.ts`, `src/utils/mealRhythm.contract.test.ts`, `workers/mealRhythm.parity.test.js`.
 **Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (notificações) · decisão no `REGISTRO-DE-DECISOES.md` (ritmo das refeições).
+
+### `src/utils/crashReport.ts`
+**Dono de:** o relatório de falha leve (beta-play-01): monta e envia a `/api/crash` um relatório mínimo — `kind` (boundary | error | rejection), `msg` (≤200) e `stack` (≤800) limpos, `ver`, `route` sem query/ids, `plat` (apk | web). Nunca conteúdo do usuário nem identidade; falha silenciosa.
+**Exports:**
+- `scrub(text, max)` / `scrubRoute(route)` — limpam e-mail, URL, token, ids e números longos; ESPELHAM `functions/api/crash.js` (teste de paridade por vetores).
+- `buildCrashReport(kind, reason, route)` — pura; `null` se não há mensagem.
+- `reportCrash(kind, reason, opts?)` — respeita `isTelemetryEnabled()`, `CRASH_SAMPLE_RATE`, `MAX_PER_SESSION` e um envio por assinatura; nunca lança.
+- `installGlobalCrashHandlers()` — `error` + `unhandledrejection`, idempotente; chamado em `main.tsx` antes do render. O `ErrorBoundary` chama `reportCrash('boundary', …)`.
+**Quem usa:** `main.tsx`, `components/ErrorBoundary.tsx`.
+
+### `src/utils/dayKeyParse.ts`
+**Dono de:** ler uma chave de dia como dia LOCAL. `parseDayKeyLocal(key)` aceita `YYYY-MM-DD` (que `new Date(str)` leria como UTC e, no Brasil, daria o dia anterior — F1 do beta-play-01) e a forma de `toDateString`; ilegível → `null`.
+**Quem usa:** `habitRhythm.dayKeyToDate`, `dailyReset` (`activitiesForWeekDay`, `soParaCoracao`), `rituals`. Regressão em 5 fusos: `utils/dayKeyFuso.regression.test.ts`; gate: `npm run gate:fuso`.
