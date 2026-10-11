@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Talentos: as "skills" da árvore ficam legíveis e distintas por caminho
+>
+> - **Pedido do dono:** "a árvore de talentos está legal, mas as SKILLS não estão legais; melhore." A árvore (grafo, ids, graus, custo) **não muda**; os `talentPicks` salvos seguem valendo.
+> - **Achado:** na Fenda, `Garra da fenda`, `Muro da fenda` e `Arco de luz` eram o MESMO efeito (ataque) com nomes diferentes. Agora são ATAQUE, DEFESA e RITMO (`attr` em `TALENT_TREE`, `talentPveAttrBonus`, espelho `_talents.js` + paridade): canais próprios na Masmorra (mesma via do equipamento); Arena e Pesadelo seguem lendo o total como um número só (regra (e) do combate v3). Soma dos canais = total de antes; teto único de 5% intacto.
+> - **Legível:** copy com o efeito em palavras antes do número; linha "Agora / No grau máximo" no modal de cada nó (`talentEffectLine`, com segundos de espera/ % do HP); bloco "O que a sua árvore dá agora" (já somado ao equipamento e cortado nos 5%) acima do tabuleiro.
+> - **Magnitudes não mudaram:** dobrar cura/escudo da Masmorra mede +0,70 andar e quebra o gate (< 0,4) de `talents.efeitos.test.ts`. Decisão registrada em REGISTRO §29 (com o que ficou de fora: efeitos de combate novos exigem mexer no motor, no espelho `_combate.js`/`_duel.js` e nas réguas).
+> - **Linhas velhas no CLAUDE.md (não editado):** a linha do combate v3 "Masmorra lê o equipamento por atributo… Arena e Pesadelo só pela soma" vale agora também para o talento de PvE — vale citar `talentPveAttrBonus` ali.
+> - **Depende do dono:** dizer se "skills" era o NÓ da árvore (feito) ou os golpes/habilidades da criatura (ficha do class-system, outra frente).
+
 > ## 11/10/2026 — Soulsmith: 15 níveis, custos maiores, opções apresentadas como IGUAIS
 >
 > - **Pedido do dono:** "está fácil de upar… tem de levar tempo; mesmo depois do nível ultra o jogador ainda não terá todos os itens no máximo" + "apresente as DUAS opções como iguais (mais dano OU mais velocidade)". O nome "cobre" fica.

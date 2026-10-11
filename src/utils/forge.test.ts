@@ -275,7 +275,7 @@ describe('fiação', () => {
     const src = readFileSync(`${process.cwd()}/src/contexts/useTalentBonus.ts`, 'utf8');
     expect(src).toMatch(/equipScalar\(equipment, forge\)/);
     expect(src).toMatch(/equipAttrBonus\(equipment, forge\)/);
-    expect(src).toMatch(/'pve'\), equipment, forge\)/);
+    expect(src).toMatch(/talentPveAttrBonus\(picks, bondLevelFor\(xp \?\? 0\)\), equipment, forge\)/); // a Masmorra: talento por canal + equipamento, um teto
     const duel = readFileSync(`${process.cwd()}/functions/api/_duel.js`, 'utf8');
     expect(duel).toMatch(/equipAttrBonus\(state\.equipment, state\.forge\)/);
   });

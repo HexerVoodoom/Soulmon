@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useGameStateOptional } from './GameStateContext';
 import { bondLevelFor } from '../utils/bond';
-import { talentBonus, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../utils/talents';
+import { talentBonus, talentPveAttrBonus, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../utils/talents';
 import { dungeonAttrBonus, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { combinedBonus, combinedAttrBonus, NO_ATTR_BONUS, type AttrBonus } from '../utils/combate/bonus';
 
@@ -20,14 +20,14 @@ export function useTalentBonus(scope: 'pve' | 'nightmare'): number {
   return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment, forge) }), [picks, xp, scope, equipment, forge]);
 }
 
-/** PR12a (§2.28 B) — o bônus do jogador na MASMORRA: talento de PvE no ATK + equipamento em ATK/DEF/SPD, um teto de 5% na soma. */
+/** PR12a (§2.28 B) — o bônus do jogador na MASMORRA: talento de PvE por atributo (ATK/DEF/SPD, 11/10/2026) + equipamento em ATK/DEF/SPD, um teto de 5% na soma. */
 export function useDungeonBonus(): AttrBonus {
   const ctx = useGameStateOptional();
   const xp = ctx?.gameState.totalXP;
   const picks = ctx?.gameState.talentPicks;
   const equipment = ctx?.gameState.equipment;
   const forge = ctx?.gameState.forge;
-  return useMemo(() => dungeonAttrBonus(talentBonus(picks, bondLevelFor(xp ?? 0), 'pve'), equipment, forge), [picks, xp, equipment, forge]);
+  return useMemo(() => dungeonAttrBonus(talentPveAttrBonus(picks, bondLevelFor(xp ?? 0)), equipment, forge), [picks, xp, equipment, forge]);
 }
 
 export interface PvpTalents {
