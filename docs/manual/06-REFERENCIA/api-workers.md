@@ -447,6 +447,18 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor` no `match`).
 **Régua:** `functions/api/community.farm.test.js`.
 
+### `functions/api/_guerra.js`
+**Dono de:** a GUERRA DE GUILDA 4×4 no servidor (PR4): monta o esquadrão (quem pediu + os mais antigos, só com ficha de luta, até 4), PAREIA POR TAMANHO (fila `coopWarQ:<size>`), resolve cada confronto com o combate v3 (`simulateDuel`, semente do servidor, level mais alto contra level mais alto) e rega a casa das duas guildas (seiva `guerra`: 24/12/8). Uma guerra por guilda por dia do jogador. A resposta nunca traz saveId, estágio, HP nem dano — só desfecho por confronto e o nome da guilda rival.
+**Exports:** `WAR_MIN`, `WAR_MAX`, `WAR_PTS`, `WAR_QUEUE_TTL`, `WAR_RES_TTL`, `coopWarQKey`, `coopWarWaitKey`, `coopWarResKey`, `montarEsquadrao`, `resolverGuerra`, `estadoDaGuerra`, `buscarGuerra`.
+**Chamado por:** `guild.js` (`guildWar`, `guildWarSeek`).
+**Régua:** `functions/api/guild.guerra.test.js`.
+
+### `functions/api/_duelLoad.js`
+**Dono de:** a ficha de luta derivada do SAVE no KV (`loadDuelSide`, teto S1, save gigante = "não luta"), compartilhada pelo duelo fantasma (`community.js`) e pela guerra (`_guerra.js`) — antes era um closure de `community.js`.
+**Exports:** `loadDuelSide`.
+**Chamado por:** `community.js`, `_guerra.js`.
+**Régua:** `functions/api/community.duel.v3.test.js`, `guild.guerra.test.js`.
+
 ### `functions/api/_casa.js`
 **Dono de:** a CASA DA GUILDA no servidor (PR2): seiva por fonte (`doacao`/`missao`/`guerra`), doação de Bits com teto diário (`CASA_BITS_POR_DIA`), slot de item por membro e o estágio derivado na leitura (`casaStageFor`). Chave pessoal `coopCasa:<gid>:<save>`; os pontos de quem sai viram `casaLegado` (a casa nunca encolhe). A vista nunca devolve pontos nem limiares.
 **Exports:** `CASA_*` (constantes), `pontosDeMissao` (seiva da missão: cresce com o level e com a roda ativa), `coopCasaKey`, `normalizarCasa`, `pontosDaCasa`, `lerCasa`, `casaStageFor`, `doarBits`, `somarPontos`, `definirSlot`, `recolherCasaDeQuemSai`, `totalDaCasa`.

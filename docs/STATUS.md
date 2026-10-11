@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Guilda de lançamento, PR4: a GUERRA 4×4 (`claude/guilda-lancamento`)
+>
+> - **O que é:** "você + 3 aliados contra 4 inimigos", **pareada por tamanho** (2 com 2, 3 com 3, 4 com 4; guilda de 5+ escala 4). Qualquer membro procura (`guildWarSeek`); o **servidor** monta os esquadrões a partir dos SAVES (`loadDuelSide`, mesmo teto S1 do duelo), pareia pela fila `coopWarQ:<size>`, resolve cada confronto com o **combate v3** (`simulateDuel`, mais forte contra mais forte, semente do servidor) e grava o resultado nas duas guildas. Assíncrono: a 1ª guilda espera na fila, a 2ª resolve na hora. Uma guerra por guilda por dia.
+> - **Casa:** o resultado rega a casa das duas guildas (`guerra`: 24 vitória / 12 empate / 8 derrota — perder nunca rende zero). Sem dinheiro real, sem vantagem paga: a ficha vem do save.
+> - **UI:** seção "Guerra de guilda" no Salão (`SalaGuerra`/`GuerraVisor`: esquadrão × silhuetas, botão, marcas por confronto, a frase do resultado; nada de número). **Rivais só silhueta**: o servidor não manda estágio/linha/nome de pessoa de outra guilda.
+> - **Anti-abuso/segurança:** auth em cada endpoint (`guild.js`), rate limit leve, o corpo não decide nada, a resposta não vaza saveId (teste), 1 guerra/dia/guilda, a guilda não luta contra si, fila com TTL de 2 dias. `loadDuelSide` saiu de `community.js` para `_duelLoad.js` (dono único).
+> - **Decisão do dono revertida:** `PLANO-GUILDA.md` D-G4 ("sem confronto guilda × guilda") — o ditado de 11/10/2026 a substitui; o plano e o `CLAUDE.md` seguem dizendo o contrário.
+> - **Depende do dono:** guerra com recompensa além da seiva (Emblemas?); guerra por semana em vez de por dia; escolher quem vai para o esquadrão (hoje: quem pediu + os mais antigos com ficha).
+
 > ## 11/10/2026 — Guilda de lançamento, PR3: o circo vira MISSÃO da guilda (`claude/guilda-lancamento`)
 >
 > - **O que muda:** a Feira (raid semanal, o "circo") vira uma investigação: o jogador **manda o Solmon** (`GuildSheet` › `SalaFeira` com `missao`), ele **some da Home** por 30 min (`missionAway` no `CompanionHUD`, lupa muda no lugar; `GameState.guildMission`), e ao voltar o App registra a rodada (`guildRaidHit`, o servidor sorteia o valor) e rega a **casa** com seiva que cresce com o level do Solmon e o tamanho da roda ativa (`pontosDeMissao`: 4 → 17). Sem rede, o pet volta para casa do mesmo jeito e o registro espera. A missão está no **Salão do Hall** (cena do fenômeno + estado visível: aberto/ferido/dissipado) e no lote antigo da Arena.

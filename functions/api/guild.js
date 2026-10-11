@@ -23,6 +23,8 @@
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
 //   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
 //   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
+//   GET  guildWar     ?id=&dayKey=         → { war: { waiting: {size}|null, last: {day,outcome,duels[],size,enemy}|null } }   404 no guild
+//   POST guildWarSeek {id, dayKey}         → { state: 'small'|'already'|'waiting'|'done', war }   404 no guild   (a GUERRA: `_guerra.js`)
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
@@ -48,6 +50,7 @@ import {
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
   marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado, membrosAtivos,
 } from './_coop.js';
+import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
@@ -81,6 +84,8 @@ export const GUILD_ACTIONS = Object.freeze({
   guildRaidHit: 'POST',
   guildRewards: 'GET',
   guildClaim: 'POST',
+  guildWar: 'GET',
+  guildWarSeek: 'POST',
   guildDonate: 'POST',
   guildSlot: 'POST',
   guildLeave: 'POST',
@@ -415,6 +420,21 @@ export async function handleGuild({ request, env }) {
     await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
     await cartao(g);
     return vista(await montar(g, id, hoje));
+  }
+
+  if (action === 'guildWar') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    return json({ war: await estadoDaGuerra(env, g.id) });
+  }
+
+  if (action === 'guildWarSeek') {
+    // GUERRA 4×4 (PR4): o servidor monta os esquadrões a partir dos SAVES, pareia por tamanho e resolve com o
+    // combate v3. Qualquer membro pode procurar; uma guerra por guilda por dia do jogador. Nada do corpo decide a luta.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const r = await buscarGuerra(env, g, id, hoje, gid => lerGrupo(env, gid));
+    return json({ state: r.state, war: { waiting: r.waiting, last: r.last } });
   }
 
   if (action === 'guildDonate') {

@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { GuildSheet } from './GuildSheet';
+import { playerDayKey } from '../../utils/playerDay';
 
 const vista = (casa: unknown) => ({
   id: 'g1', name: 'Roda', weekKey: '2026-W41', code: 'ABCD2345', isHost: true, size: 2, full: false,
@@ -108,5 +109,49 @@ describe('a Missão no Salão', () => {
     await waitFor(() => expect(container.querySelector('[data-missao-fora]')).not.toBeNull());
     expect(container.querySelector('[data-missao-mandar]')).toBeNull();
     expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}/);
+  });
+});
+
+describe('a Guerra no Salão', () => {
+  const guerraMock = (war: unknown, seek?: () => unknown) => {
+    globalThis.fetch = vi.fn(async (url: string) => {
+      const action = new URL(url, 'https://x.dev').searchParams.get('action');
+      if (action === 'guildWar') return new Response(JSON.stringify({ war }), { status: 200 });
+      if (action === 'guildWarSeek') return new Response(JSON.stringify(seek?.() ?? { state: 'waiting', war: { waiting: { size: 2 }, last: null } }), { status: 200 });
+      if (action === 'guildRewards') return new Response(JSON.stringify({ rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
+      return new Response(JSON.stringify({ guild: vista(casaVista()) }), { status: 200 });
+    }) as never;
+  };
+
+  it('sem guerra: botão de procurar; ao tocar o servidor responde "na fila" e a tela diz que espera', async () => {
+    guerraMock({ waiting: null, last: null });
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-guerra-buscar]')).not.toBeNull());
+    expect(container.querySelector('[data-guerra-visor]')).not.toBeNull();
+    fireEvent.click(container.querySelector('[data-guerra-buscar]')!);
+    await waitFor(() => expect(container.querySelector('[data-guerra-esperando]')).not.toBeNull());
+    expect(container.querySelector('[data-guerra-buscar]')).toBeNull();
+  });
+
+  it('com resultado de hoje: marcas por confronto (sem números), a frase e nenhum botão de novo', async () => {
+    const hoje = playerDayKey(new Date(), undefined);
+    guerraMock({ waiting: null, last: { day: hoje, outcome: 'loss', duels: ['win', 'loss'], size: 2, enemy: 'Rivais' } });
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-guerra-resultado="loss"]')).not.toBeNull());
+    expect(container.querySelectorAll('[data-guerra-duelo]').length).toBe(2);
+    expect(container.querySelector('[data-guerra-resultado]')!.textContent).toMatch(/Rivais/);
+    expect(container.querySelector('[data-guerra-resultado]')!.textContent).toMatch(/seiva do mesmo jeito/);
+    expect(container.querySelector('[data-guerra-buscar]')).toBeNull();
+  });
+
+  it('o servidor sem a rota da guerra: a sala simplesmente não aparece', async () => {
+    globalThis.fetch = vi.fn(async (url: string) => {
+      const action = new URL(url, 'https://x.dev').searchParams.get('action');
+      if (action === 'guildWar') return new Response('{}', { status: 400 });
+      return new Response(JSON.stringify({ guild: vista(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
+    }) as never;
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-casa-visor]')).not.toBeNull());
+    expect(container.querySelector('[data-guild-room="guerra"]')).toBeNull();
   });
 });
