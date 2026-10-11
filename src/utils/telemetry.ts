@@ -740,6 +740,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
         'Uma vez por semana, dois números de 0 a 7: em quantos dias você concluiu alguma coisa e em quantos alcançou a sua meta do dia. A contagem é feita aqui no aparelho; o que sai são só esses dois números.',
         'A data — só o dia, nunca a hora.',
         'Um identificador aleatório criado neste aparelho, sem nenhuma ligação com seu e-mail nem com seu save.',
+        'Se o app travar: a mensagem técnica do erro, a versão do app e a tela (sem nada que você escreveu, e sem ligação com você), só para o dono corrigir a falha. Apaga sozinho em 14 dias.',
       ],
       never: [
         'Nome de tarefa, nome de hábito ou qualquer texto que você escreveu.',
@@ -763,6 +764,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
       'Once a week, two numbers from 0 to 7: on how many days you completed something, and on how many you reached your own daily goal. The counting happens here on your device; only those two numbers leave it.',
       'The date — the day only, never the time.',
       'A random identifier created on this device, with no link to your email or your save.',
+      'If the app crashes: the technical error message, the app version and the screen (nothing you wrote, and not linked to you), only so the owner can fix the bug. Deleted automatically after 14 days.',
     ],
     never: [
       'Task names, habit names, or any text you wrote.',
