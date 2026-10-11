@@ -124,7 +124,8 @@ retenção ("não guardamos o áudio") e como revogar.
 > `SCHEDULE_EXACT_ALARM` foi **removida** em `fix/beta-prontidao` (#311): o lembrete usa alarme
 > inexato (`setAndAllowWhileIdle`), tolera alguns minutos de janela e não precisa de permissão restrita.
 >
-> Reconferir a cada AAB: `Select-String -Path androidppuild\intermediates\merged_manifests
+> Reconferir a cada AAB: `Select-String -Path android\app\build\intermediates\merged_manifests\release\AndroidManifest.xml -Pattern "uses-permission"`
+elease\AndroidManifest.xml -Pattern "uses-permission"`
 elease\AndroidManifest.xml -Pattern "uses-permission"`
 
 | Permissão (mesclada) | De onde vem | Para quê | Perigosa / exige declaração? | Aparece como dado na ficha? |
