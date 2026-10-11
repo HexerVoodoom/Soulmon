@@ -44,7 +44,7 @@ correção). Sem isso o próximo incidente repete a investigação.
 
 **Sinal.**
 - Mensagens de vários testadores "abre e fica branco / fecha sozinho".
-- `/api/crash` com pico de ocorrências **[conferir no PR como listar]**.
+- `/api/crash` com pico de ocorrências: `$env:METRICS_ADMIN_KEY = "<valor>"; node scripts/crash-report.mjs --days 1` (agrupa por assinatura, mais frequentes primeiro).
 - Android vitals (Play Console -> Qualidade) com taxa de falha > 0 (pouco sinal com 15
   testadores; não espere por ele).
 - Tela branca *sem* texto = Worker fora ou bundle quebrado; tela de erro de rede com a
@@ -331,7 +331,7 @@ resposta e o ajuste.
 | Motivo comum | Onde a squad olha | Resposta/ajuste |
 |---|---|---|
 | **Data Safety diverge do app** (permissões, SDKs, diagnóstico de crash, assinatura) | `PLAY-DATA-SAFETY.md` §2.4b e §2.7 | corrigir o formulário; **declarar o crash reporting próprio** e o histórico de compras/assinatura |
-| **Declaração de permissão sensível** (`SCHEDULE_EXACT_ALARM`, `RECORD_AUDIO`, `ACTIVITY_RECOGNITION`) | `AndroidManifest.xml`; `PLAY-DATA-SAFETY.md` §2.4b | se o alarme exato foi removido, mostrar o manifesto sem ela; senão, preencher o formulário de uso de alarme exato |
+| **Declaração de permissão sensível** (`SCHEDULE_EXACT_ALARM`, `RECORD_AUDIO`, `ACTIVITY_RECOGNITION`) | `AndroidManifest.xml`; `PLAY-DATA-SAFETY.md` §2.4b | `SCHEDULE_EXACT_ALARM` **foi removida** (#311) — mostrar o manifesto mesclado sem ela; declarar só `RECORD_AUDIO` e `ACTIVITY_RECOGNITION` |
 | **Política de privacidade ou exclusão de conta** inacessível | `privacidade.html#exclusao` no ar | conferir 200 e o botão in-app Seus dados -> Excluir conta |
 | **Acesso ao app**: revisor não consegue entrar | conta de teste do revisor | recrie a conta de e-mail/senha, ative, reenvie as instruções |
 | **App em WebView / funcionalidade mínima** (o APK é um shell que carrega `server.url`) | `capacitor.config.json` | responder com a lista de recursos nativos reais: notificações push e locais, Play Billing, contador de passos, widget, microfone; e o app funcionar mesmo com a tela de erro de rede própria |

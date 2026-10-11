@@ -10,13 +10,17 @@
 > FECHADO (regra de conta pessoal nova), compra de teste ponta a ponta, zero crash,
 > zero perda de save.
 >
-> **Pressupostos desta versão** (duas branches paralelas, ainda não mescladas
-> quando isto foi escrito):
+> **Conferido na `release/beta-1`** (11/10/2026), que incorpora #311 fix/beta-prontidao,
+> #312 feat/sprite-pose, #313 feat/chat-soulmon-agente, #314 feat/assinatura-trimestral e
+> #310 este runbook. Os antigos marcadores "[conferir no PR]" foram trocados pelos valores
+> reais do código:
 > (a) assinatura trimestral `soulmon_cosmetic_quarterly`, R$ 9,90, sem trial, com
 > RTDN em `/api/rtdn`; (b) fix de fuso (`dayKeyToDate`), tela de erro de rede via
 > `server.errorPath`, crash reporting próprio em `/api/crash` (diagnóstico **não
-> vinculado** à conta) e remoção possível de `SCHEDULE_EXACT_ALARM`. Onde um nome
-> depende dessas branches está marcado **[conferir no PR]**.
+> vinculado** à conta) e **remoção** de `SCHEDULE_EXACT_ALARM` (feita em #311: alarme inexato
+> `setAndAllowWhileIdle`; o manifesto mesclado não a tem); (c) chat agente com Groq
+> (`GROQ_API_KEY`, modelo pela var `CHAT_MODEL`, padrão `llama-3.3-70b-versatile`) e
+> fallback Gemini (`GEMINI_API_KEY`).
 
 ## Legenda
 
@@ -93,6 +97,9 @@ $env:TZ = "America/Sao_Paulo"; npx vitest run src/utils/taskSteps.rule.test.ts; 
 **Faça ANTES do merge da branch da assinatura**, porque o push na `main` publica o Worker
 sozinho (~2 min) e o código novo vai esperar a tabela. A migração deve ser só aditiva
 (`CREATE`/`ADD COLUMN`) — confira o arquivo novo em `migrations/` antes de aplicar.
+**Nova nesta release: `migrations/0003_rtdn_messages.sql`** — só `CREATE TABLE IF NOT EXISTS
+rtdn_messages` (idempotência do RTDN); `order_claims` não muda. Reverter = `DROP TABLE`
+(sem ponto de não retorno; sem a tabela o código cai no KV).
 
 ```powershell
 npx wrangler login
@@ -103,7 +110,9 @@ npx wrangler d1 migrations list soulmon-billing --remote
 
 **Verificação:** a última listagem diz `No migrations to apply`, e
 `npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"`
-mostra 4+ colunas incluindo `expires_at`. **Nunca** use `d1 execute --file` como migração
+mostra 4+ colunas incluindo `expires_at`, e
+`npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(rtdn_messages)"`
+mostra `message_id`, `received_at`, `expires_at`. **Nunca** use `d1 execute --file` como migração
 (lápide em `migrations/README.md`).
 
 ### 0.4 Higiene do repo para segredos `[SQUAD pode fazer]`
@@ -386,9 +395,9 @@ beta ninguém é cobrado (licença de teste), mas o preço aparece na folha da P
 
 | Campo | Valor |
 |---|---|
-| ID do produto | `soulmon_cosmetic_quarterly` (exato; **[conferir no PR]** contra `PRODUCTS` em `_billing.js`) |
+| ID do produto | `soulmon_cosmetic_quarterly` (exato; conferido: `SUBSCRIPTION_SKU` em `functions/api/_billing.js`) |
 | Nome | `Soulmon Cosmético Trimestral` / `Soulmon Cosmetic Quarterly` |
-| Plano base | ID `quarterly` **[conferir no PR]**; **Renovação automática**; período de faturamento **3 meses** |
+| Plano base | ID livre (sugestão `quarterly`) — conferido: o app **não** lê o ID do plano; `BillingPlugin.kt` escolhe a oferta base sem fase grátis (`baseOffer`) e recusa (`no-base-offer`) se não houver; **Renovação automática**; período de faturamento **3 meses** |
 | Preço | **R$ 9,90** (BRL); deixe a Play converter as demais moedas |
 | **Oferta / teste gratuito** | **NENHUM.** Não crie oferta de introdução, trial nem "primeiro mês grátis" (regra D10 e R6 do threat model) |
 | Período de tolerância (grace) | Padrão da Play (o servidor concede em `IN_GRACE_PERIOD`) |
@@ -429,7 +438,13 @@ npx wrangler secret put ANDROID_PACKAGE_NAME          # com.hexervoodoom.soulmon
 npx wrangler secret list
 ```
 
-Opcional, mas recomendado para operar o beta: `METRICS_ADMIN_KEY`, `ENTITLEMENTS_ADMIN_KEY`
+Chat agente: `GROQ_API_KEY` (principal) e `GEMINI_API_KEY` (fallback) como secrets;
+`CHAT_MODEL` é **var** opcional (padrão `llama-3.3-70b-versatile`; ex. `openai/gpt-oss-120b`).
+Kill-switches do beta (vars, sem segredo): `BILLING_DISABLED` e `CHAT_DISABLED` — ver
+[`BETA-CONTINGENCIA.md`](BETA-CONTINGENCIA.md) §0.
+
+Opcional, mas recomendado para operar o beta: `METRICS_ADMIN_KEY` (também é a chave de
+leitura do `/api/crash`), `ENTITLEMENTS_ADMIN_KEY`
 (cortesia), `COURTESY_MAX_ACCOUNTS` (estado de 22/09: ausentes; reconfira com `secret list`).
 Depois **apague o `.json` da service account** de `E:\soulmon-secrets\` (guarde só no
 gerenciador de senhas): `Remove-Item E:\soulmon-secrets\play-billing-verify*.json`.
@@ -447,8 +462,12 @@ da Play responde 503 e **nada é concedido** (proposital).
 4. **Assinatura** do tópico: tipo **Push**, endpoint `https://soulmon.mateus-sprnd.workers.dev/api/rtdn`,
    **Ativar autenticação** com a service account `rtdn-push`, **audience** = o mesmo URL do
    endpoint. Prazo de confirmação 20-60 s; retry com backoff.
-5. Secrets do Worker com o e-mail da SA de push e o `aud` **[conferir no PR: nomes das
-   variáveis; ex. `RTDN_PUSH_SA_EMAIL` e `RTDN_AUDIENCE`]**.
+5. Secrets do Worker com o e-mail da SA de push e o `aud` (nomes conferidos em
+   `functions/api/_pubsubAuth.js`; sem os dois o `/api/rtdn` recusa tudo):
+   ```powershell
+   npx wrangler secret put RTDN_AUDIENCE        # https://soulmon.mateus-sprnd.workers.dev/api/rtdn (igual ao audience da assinatura push)
+   npx wrangler secret put RTDN_PUSH_SA_EMAIL   # rtdn-push@soulmon-app.iam.gserviceaccount.com
+   ```
 6. **Play Console -> Monetizar -> Configuração de monetização -> Notificações em tempo
    real do desenvolvedor**: colar o nome completo do tópico
    (`projects/soulmon-app/topics/play-rtdn`), tipo *Assinaturas e todos os produtos
@@ -603,7 +622,10 @@ Gmail, canal, data de opt-in, status) que serve de controle do relógio.
    instalados.
 2. **Qualidade -> Android vitals / ANRs e falhas:** zero? (12-15 testadores dão pouco
    sinal; por isso o `/api/crash` próprio.)
-3. `/api/crash` **[conferir no PR: como ler]**: novas ocorrências desde ontem.
+3. `/api/crash`: novas ocorrências desde ontem —
+   `$env:METRICS_ADMIN_KEY = "<valor>"; node scripts/crash-report.mjs --days 2` (GET com
+   cabeçalho `X-Metrics-Key`; sem a chave a rota responde 404 de propósito; `--json` para
+   bruto). Registros expiram em 14 dias.
 4. `npx wrangler tail soulmon --format pretty` por 1 minuto: erros 5xx em `/api/save`,
    `/api/billing`, `/api/rtdn`?
 5. Formulário de bugs (`BETA-TESTADORES.md` §6): respostas novas.
