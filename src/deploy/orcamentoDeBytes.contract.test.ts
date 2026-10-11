@@ -135,7 +135,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // da fiação do `AreaView`. A descida idle da masmorra NÃO engordou a entrada de propósito: `DungeonGame`, `dungeonIdle`,
   // `dungeonFight`, `dungeonScenes`, `PlaySheets` e `OficinaSheet` são chunks próprios, e `hydrateSave` sanitiza o `dungeonHp`
   // inline. Crescimento JUSTIFICADO, não perdoado — medido com `ls -l dist/assets/index-*.js` em build limpo.
-  'index.js': 621_108,
+  // 11/10/2026 (onda de lançamento): 621_108 → 637_910 (+16,4 KB) — onboarding de 3 blocos, comida premium e subitens,
+  // sessão de foco (App), Level Up (fila + som), ritmo das refeições e apresentação de prédio (outras sessões). Débito
+  // REGISTRADO: a sessão `claude/velocidade-dev` tem a meta de baixar este número com lazy/manualChunks.
+  'index.js': 637_910,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
