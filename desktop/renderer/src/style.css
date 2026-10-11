@@ -38,6 +38,19 @@ html, body, #stage {
 }
 
 .walking #pet-img { animation: pet-bob 0.5s steps(2) infinite; }
+/* Altitude 'air' (`src/utils/spritePose.ts`): a faixa tem só 8px de folga acima do pet (72 vs 64),
+   então ele sobe 8px, a sombra fica no chão e o balanço do passo é trocado pela altura —
+   sem animação nova (nada a cortar em movimento reduzido). */
+#pet.air #pet-img { translate: 0 -8px; animation: none; }
+#pet.air::after {
+  content: '';
+  position: absolute;
+  left: 16px; bottom: 0;
+  width: 32px; height: 5px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .3);
+  pointer-events: none;
+}
 @keyframes pet-bob {
   0%, 100% { margin-top: 0; }
   50% { margin-top: -4px; }

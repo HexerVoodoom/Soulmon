@@ -16,6 +16,7 @@
 // campos de ação local ficam claramente separados.
 import { STORAGE_KEY } from './config';
 import type { GenericLine } from './sprites';
+import { sanitizeSpritePose, type SpritePose } from '../../../src/utils/spritePose';
 import type { RubHealRecord } from '../../../src/utils/careRules';
 
 /** Tarefa de hoje, vinda do save do app. O desktop NÃO cria tarefas. */
@@ -41,6 +42,8 @@ export interface DesktopState {
   maxEnergy: number;
   /** Pastinha de comida do save (emoji → quantidade). */
   foodInventory: Record<string, number>;
+  /** Pose do sprite (espelho + altitude), espelhada do save. */
+  spritePose: SpritePose;
 
   // --- só do desktop ---
   language: 'pt-BR' | 'en';
@@ -107,6 +110,7 @@ function defaults(): DesktopState {
     energy: 0,
     maxEnergy: 4,
     foodInventory: {},
+    spritePose: { flipX: false, altitude: 'ground' },
     language: 'pt-BR',
     tasks: [],
     sleeping: false,
@@ -124,7 +128,7 @@ export function loadState(): DesktopState {
     if (!raw) return defaults();
     const parsed = JSON.parse(raw) as Partial<DesktopState>;
     // Campos novos entram com fallback (mesma convenção do cloud save do app).
-    return { ...defaults(), ...parsed };
+    return { ...defaults(), ...parsed, spritePose: sanitizeSpritePose(parsed.spritePose) };
   } catch {
     return defaults();
   }

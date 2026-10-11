@@ -77,9 +77,11 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe('AUTOVERIFICAÇÃO', () => {
   it('a lista de campos veio do tipo e tem os 117 (+ `guildMission`, 11/10/2026, missão da guilda; + `guildDonatedItem`, 11/10/2026, casa da guilda; + `buildingIntrosSeen`, 08/10/2026, apresentação do prédio; + `crossings`, 30/09/2026; + `onboardingProfile` e `soulTestAnswers`, 01/10/2026; + `hideFromPublicList`, 02/10/2026; + `caderno`, 04/10/2026; + `ownedFrames` e `equippedFrame`, 04/10/2026; + `talentPicks`, 06/10/2026, Combate v3 PR7; + `equipment` e `bitsOrigin`, 06/10/2026, Combate v3 PR8; + `fichaJornada`, 07/10/2026, Combate v3 PR15b); + `avatarId`, 07/10/2026, Tarefa C; + `buildingQuests`, 07/10/2026, missao por predio; + `forge`, 07/10/2026, Ferreiro; + `demoLocal`, 07/10/2026, demo local; + `mealRhythm` e `mealRitual`, 11/10/2026, ritmo das refeições)', () => {
     const campos = camposDeGameState();
-    expect(campos.length).toBe(122); // + evolutionPoints (11/10/2026, gauge de evolução); + dungeonDepthRecord (11/10/2026, masmorra idle)
+    expect(campos.length).toBe(123); // + spritePose (11/10/2026, flipX/altitude); + evolutionPoints (11/10/2026, gauge de evolução); + dungeonDepthRecord (11/10/2026, masmorra idle)
     expect(campos).toContain('dungeonDepthRecord');
     expect(campos).toContain('evolutionPoints');
+    expect(campos).toContain('spritePose');
+    expect(campos).toContain('spritePose');
     expect(campos).toContain('guildMission');
     expect(campos).toContain('guildDonatedItem');
     expect(campos).toContain('buildingIntrosSeen');

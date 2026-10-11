@@ -1,5 +1,6 @@
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
+import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, type SpritePose } from '../utils/spritePose';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
@@ -514,6 +515,10 @@ export interface GameState {
   /** 🍽️ Quais janelas de HOJE já foram atendidas/dispensadas. Do DIA do jogador
    *  e se esvazia na virada — sem histórico, sem sequência, sem contador. */
   mealRitual?: MealRitualRecord;
+  /** Pose do sprite (11/10/2026): `flipX` (espelha) e `altitude` ('ground' | 'air'). Preferência
+   *  do jogador — nenhuma regra de jogo a lê. Dono único: `utils/spritePose.ts` (`applySpritePose`).
+   *  Lixo → padrão (pés no chão, sem espelho); campo novo com `??`, sem subir `SAVE_SCHEMA_VERSION`. */
+  spritePose?: SpritePose;
   /** 🧭 Passeio e Travessias (30/09/2026, `docs/REGISTRO-DE-DECISOES.md` §5.6):
    *  regiões abertas, a Travessia escolhida, os "Fiz" guardados, o destino do
    *  Passeio e o interruptor. Só ids, enum e `dayKey` — nada de texto livre,
@@ -1400,6 +1405,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Ritmo das refeições: lixo vira o padrão (push DESLIGADO), nunca derruba o load.
         mealRhythm: sanitizeMealRhythm(loadedState.mealRhythm),
         mealRitual: sanitizeMealRitual(loadedState.mealRitual),
+        // Pose do sprite: lixo vira o padrão (`sanitizeSpritePose`), nunca derruba o load.
+        spritePose: sanitizeSpritePose(loadedState.spritePose),
         // Travessias: lixo é descartado pelo dono (`normalizeCrossings`), nunca derruba o load.
         crossings: normalizeCrossings(loadedState.crossings),
         // Caderno: lixo é descartado, teto de 120 × 2000 (`normalizeEntries`); nunca derruba o load.
@@ -1810,6 +1817,11 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     }, espera);
     return () => clearTimeout(timer);
   }, [gameState]);
+
+  // `applySpritePose` (utils/spritePose.ts, único dono de escrita) escreve por aqui.
+  useEffect(() => registerSpritePoseWriter(patch =>
+    setGameState(prev => ({ ...prev, spritePose: mergeSpritePose(prev.spritePose, patch) })),
+  ), []);
 
   const value = useMemo(() => ({ gameState, setGameState }), [gameState]);
 

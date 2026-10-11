@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
+import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
@@ -161,6 +162,8 @@ interface CompanionHUDProps {
    *  nunca um erro: o visor não tem estado de carregamento nem de erro
    *  (`spec-geracao-incremental.md` §2.1). */
   ownSpriteUrl?: string;
+  /** Pose do sprite (Configurações → "Virar Soulmon" / "Voar"). Sem ela: chão, sem espelho. */
+  spritePose?: Partial<SpritePose>;
   healthPoints: number;
   maxHealthPoints: number;
   dominantBranch: 'power' | 'harmony' | 'benevolence' | 'balanced';
@@ -279,6 +282,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   eggType = 'ignar',
   demoCharacterId,
   ownSpriteUrl,
+  spritePose,
   healthPoints,
   maxHealthPoints, 
   dominantBranch, 
@@ -910,7 +914,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   // são desenhadas olhando pra ESQUERDA e viram ao andar pra direita — senão
   // andam de costas. Sprite próprio (acervo) não declara lado: direita.
   const arteOlhaEsquerda = !(ownSpriteUrl && ownSpriteUrl !== spriteQuebrado) && artFacesLeft(evolutionStage, demoCharacterId);
-  const getHorizontalFlip = () => ((direction === 'left') !== arteOlhaEsquerda ? 'scaleX(-1)' : 'scaleX(1)');
+  // Pose escolhida pelo jogador (`utils/spritePose.ts`): `flipX` inverte a "frente" da arte
+  // (e portanto o espelho do passeio); `altitude: 'air'` sobe o sprite e deixa a sombra no chão.
+  const pose = sanitizeSpritePose(spritePose);
+  const noAr = pose.altitude === 'air';
+  const getHorizontalFlip = () => (mirrorSprite(direction === 'left', arteOlhaEsquerda, pose.flipX) ? 'scaleX(-1)' : 'scaleX(1)');
 
   /* Respiração: 3% (≈2 device px num sprite de 128 = 1 pixel de origem).
      Os 10% de antes eram um salto, não uma respiração. */
@@ -1487,6 +1495,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                   width: Math.round(PET_RENDER * 0.52),
                   height: Math.round(PET_RENDER * 0.12),
                   pointerEvents: 'none',
+                  /* No ar a sombra fica NO CHÃO, menor e mais fraca: é ela que diz "voando". */
+                  ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
                 }}
               />
               {/* 🧭 PASSEANDO (30/09/2026). A mochila ao pé do pet diz, sem
@@ -1554,13 +1564,18 @@ export const CompanionHUD = memo(function CompanionHUD({
                      que não existia em lugar nenhum deste arquivo. É gesto,
                      não cobrança: nenhum texto acompanha, nada fica vermelho
                      e a inclinação some sozinha quando a pilha esvazia. */
-                  className={`object-contain sm-visor-swap${hauntedWatching ? ' sm-pet-haunted' : ''}${petIsTarget ? ' sm3-pet-alvo' : ''}`}
+                  data-pet-altitude={pose.altitude}
+                  className={`object-contain sm-visor-swap${noAr ? ' sm-pet-air' : ''}${hauntedWatching ? ' sm-pet-haunted' : ''}${petIsTarget ? ' sm3-pet-alvo' : ''}`}
                   key={sprite}
                   onError={() => { if (ownSpriteUrl && sprite === ownSpriteUrl) setSpriteQuebrado(ownSpriteUrl); }}
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
                     visibility: missionAway ? 'hidden' : undefined,
+                    /* `translate` (propriedade própria) e não `transform`: as animações do
+                       sprite (esfregar, comer, saudar) mexem no `transform` e não podem
+                       derrubar a altitude. */
+                    ...(noAr ? ({ ['--pet-air-lift' as string]: `${AIR_LIFT_PX}px` } as React.CSSProperties) : null),
                     /* `isBlinking` entra AQUI, em JS — nunca via `animation`
                        CSS separada tocando `filter` (ver a nota grande em
                        `getCompanionFilter` e em `sm2-pet-blink`, index.css).

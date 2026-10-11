@@ -5779,6 +5779,8 @@ select:focus-visible {
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
+  /* Altitude 'air': sem flutuação — o pet fica parado no alto (a altura é a informação). */
+  .sm-pet-air { animation: none !important; }
   /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
   .sm-reveal-cocoon, .sm-reveal-cocoon-img { animation: none !important; }
   /* Celebração (rodada 7, M5): sem movimento ela nem renderiza; o texto de estado basta. */
@@ -6339,6 +6341,18 @@ body {
   border-radius: 50%;
   background: rgba(0, 0, 0, .28);
   filter: blur(3px);
+}
+
+/* ALTITUDE 'air' (`utils/spritePose.ts`): o sprite sobe `--pet-air-lift` e flutua uns
+   3px. Usa a propriedade `translate` (independe do `transform` das animações do pet).
+   Movimento reduzido: fica parado no alto (regra no bloco canônico, no fim do arquivo). */
+@keyframes sm-pet-air-float {
+  0%, 100% { translate: 0 calc(var(--pet-air-lift, 22px) * -1); }
+  50%      { translate: 0 calc(var(--pet-air-lift, 22px) * -1 - 3px); }
+}
+.sm-pet-air {
+  translate: 0 calc(var(--pet-air-lift, 22px) * -1);
+  animation: sm-pet-air-float 2.4s ease-in-out infinite;
 }
 
 /* WP1.1 — O CASULO do reveal.

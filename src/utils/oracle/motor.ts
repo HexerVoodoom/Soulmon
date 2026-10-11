@@ -8,6 +8,7 @@
  * de código do chunk de entrada (`oracleBundleSplit.contract.test.ts` cobra).
  * Testes e scripts que precisam do corpo síncrono importam daqui.
  */
+import { SPRITE_FACING_PROMPT } from '../spritePose';
 import type { OracleInputSync, OracleInputWithClass, FamiliasOraculo, ElementId, RoleId, AlignmentId, RealmId, LText, OracleInput, OracleOverrides, ScoreEntry, ArchetypeResult, CreatureStage, OracleResult, FamilySlot, FamilyResult, QuestionEffects, CaminhoRitual } from '../oracle';
 import {
   hashString,
@@ -1472,6 +1473,10 @@ function composeSpritePrompt(args: {
     `Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${concept}. ${args.levelBlock}. ` +
     (args.rebirth ? `${args.rebirth} ` : '') +
+    // DIREÇÃO (11/10/2026): o app desenha a arte olhando para a DIREITA e espelha ao
+    // andar para a esquerda; sem esta frase o gerador entregava o bicho virado para
+    // qualquer lado e ele parecia andar de costas. Dono: `utils/spritePose.ts`.
+    `${SPRITE_FACING_PROMPT} ` +
     `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
     // As paletas do pool já citam 2–3 cores, mas o gerador ainda entrega
     // resultados quase monocromáticos (uma cor só em tons diferentes) —

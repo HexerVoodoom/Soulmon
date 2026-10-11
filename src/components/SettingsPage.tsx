@@ -22,6 +22,8 @@ import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
 import { MealRhythmRows } from './MealRhythmRows';
+import { SpritePoseRows } from './SpritePoseRows';
+import type { SpritePose } from '../utils/spritePose';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
 
 /**
@@ -66,6 +68,8 @@ interface SettingsPageProps {
   /** Ritmo das refeições (`utils/mealRhythm.ts`). Sem o callback a linha não existe. */
   mealRhythm?: MealRhythmSettings;
   onChangeMealRhythm?: (next: MealRhythmSettings) => void;
+  /** Pose do sprite (`utils/spritePose.ts`). A escrita é do `applySpritePose`, não de callback. */
+  spritePose?: Partial<SpritePose>;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
   /** Amarra o save ao e-mail VERIFICADO pelo Google (G4: o campo de e-mail
    *  livre saiu; quem chama é o botão "Entrar com Google" da `AccountSection`). */
@@ -210,6 +214,7 @@ export function SettingsPage({
   onToggleNotifications,
   mealRhythm,
   onChangeMealRhythm,
+  spritePose,
   redeemed = false,
   showRedeemed = false,
   onToggleShowRedeemed,
@@ -537,6 +542,7 @@ export function SettingsPage({
             ))}
           </div>
         </div>
+        <SpritePoseRows language={language} pose={spritePose} />
         <div className="sm2-conta-rg">
           <span className="sm2-conta-rg-lb" id="sm-conta-lang-lb">{t.settings.language}</span>
           <div role="radiogroup" aria-labelledby="sm-conta-lang-lb" className="sm2-conta-rg-seg">

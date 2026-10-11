@@ -7,7 +7,7 @@
 // grade pra escolher o bicho na mão. No Soulmon **cada jogador tem uma linha
 // evolutiva única**, gerada pelo oráculo no onboarding — escolher a forma
 // manualmente não faria sentido. Ela vem do save sincronizado, sempre.
-import { getSpriteForStage } from '../../../src/utils/sprites';
+import { getSpriteForStage, artFacesLeft } from '../../../src/utils/sprites';
 
 /**
  * `eggType` do save. Ainda existe no save e no snapshot (cloudSync/state), mas
@@ -25,12 +25,11 @@ export function petSprite(stage: string, demoCharId?: string): string {
 }
 
 /**
- * Os sprites do jogo já são desenhados na orientação final. `LEFT_FACING_STAGES`
- * existia para as formas `digiegg`/`baby-i`, que sumiram quando a árvore passou a
- * nascer em rookie — a lista já era sempre falsa antes de ser removida em
- * `1b14d2b8`. Fica como função (e não some) porque o overlay espelha o sprite ao
- * andar (`main.ts:66`) e precisa saber qual é a orientação natural.
+ * Para onde a arte olha — o MESMO dono do app (`artFacesLeft`, src/utils/sprites.ts).
+ * Antes isto era um `false` fixo e o overlay andava de costas com as linhas de arte
+ * que olham para a esquerda (11/10/2026). O overlay espelha o sprite ao andar
+ * (`main.ts`) e precisa saber a orientação natural.
  */
-export function facesLeft(_stage: string): boolean {
-  return false;
+export function facesLeft(stage: string, demoCharId?: string): boolean {
+  return artFacesLeft(stage, demoCharId);
 }

@@ -2662,6 +2662,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Avisos do arquivo:**
 - ⚠️ Reverter e re-sintonizar NÃO consomem o teto de tentativas — nenhuma função de adoção toca `attempts`.
 
+### `src/utils/spritePose.ts`
+**Dono de:** a pose do sprite — `SpritePose = { flipX, altitude: 'ground' | 'air' }`, a sanitização (lixo -> chão, sem espelho), a conta do espelho do passeio (`mirrorSprite`, em que `flipX` inverte a "frente" da arte), a frase de direção do prompt de geração (`SPRITE_FACING_PROMPT`: arte virada à DIREITA) e o ÚNICO ponto de escrita, `applySpritePose(patch)`. Vale na home e no overlay do desktop; combate fica de fora (o palco fixa os lados).
+**Exports:** `SpritePose`, `SpriteAltitude`, `DEFAULT_SPRITE_POSE`, `SPRITE_FACING_PROMPT`, `AIR_LIFT_PX`, `sanitizeSpritePose`, `mirrorSprite`, `applySpritePose`, `registerSpritePoseWriter`, `mergeSpritePose`.
+**Chamado por:** `src/contexts/GameStateContext.tsx` (campo `spritePose`, writer), `src/components/SpritePoseRows.tsx`, `src/components/CompanionHUD.tsx`, `src/utils/oracle/motor.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/cloudSync.ts`.
+**Régua:** `src/utils/spritePose.test.ts`, `src/contexts/GameStateContext.spritePose.test.tsx`, `src/utils/spritePose.desktop.contract.test.ts`.
+
 ### `src/utils/spriteRunner.ts`
 **Dono de:** O executor de um lote de geração de sprite — serial, com recuo, sem React.
 **Exports:**
