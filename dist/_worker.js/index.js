@@ -6720,7 +6720,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-HdzLcR/functionsRoutes-0.7995240863600108.mjs
+// ../.wrangler/tmp/pages-vfbUIg/functionsRoutes-0.7587276376228622.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -6962,7 +6962,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/.pnpm/path-to-regexp@6.3.0/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../../../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -7288,7 +7288,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/.pnpm/wrangler@4.148.0_@types+node@20.19.43/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../../../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
