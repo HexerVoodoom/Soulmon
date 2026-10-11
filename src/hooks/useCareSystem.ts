@@ -4,6 +4,8 @@ import { showNotification } from '../utils/notifications';
 import type { Language } from '../utils/i18n';
 import { getStageLevel } from '../types/progression';
 import { earliestPoopHour } from '../utils/passives';
+import { alignedFirstPoopHour, alignedSecondGapHours, normalizeMealTimes } from '../utils/mealRhythm';
+import type { MealRhythmSettings } from '../utils/mealRhythm';
 
 interface CareGameState {
   lastResetDate: string;
@@ -15,6 +17,9 @@ interface CareGameState {
   energyPoints: number;
   /** Traço de nascimento — Madrugador atrasa o primeiro cocô (utils/passives.ts). */
   petPassive?: string;
+  /** Ritmo das refeições: com ele ligado, o horário SORTEADO do cocô prefere o
+   *  pós-refeição — dentro dos MESMOS limites de sempre (ver `alignedFirstPoopHour`). */
+  mealRhythm?: MealRhythmSettings;
 }
 
 interface UseCareSystemProps {
@@ -51,13 +56,20 @@ export function useCareSystem({
       // depois) ainda cair no mesmo dia. O traço Madrugador (utils/passives.ts)
       // empurra o início para as 10h.
       const earliest = earliestPoopHour(gameState.petPassive, 7);
-      const firstPoopHour = earliest + Math.random() * (15 - earliest);
+      // Com o ritmo das refeições ligado, o sorteio prefere a janela pós-café ou
+      // pós-almoço — dentro do MESMO intervalo [earliest, 15h). A regra (2×/dia,
+      // 07–15h, Madrugador, dreno, teto) não muda; muda onde cai o dado.
+      const ritmo = gameState.mealRhythm && (gameState.mealRhythm.inApp || gameState.mealRhythm.push);
+      const firstPoopHour = ritmo
+        ? alignedFirstPoopHour(Math.random, earliest, 15, normalizeMealTimes(gameState.mealRhythm?.times))
+        : earliest + Math.random() * (15 - earliest);
       setGameState(prev => ({
         ...prev,
         poopEventsScheduled: [startOfDay + firstPoopHour * 3600000],
       }));
     }
   }, [gameState.lastResetDate, gameState.poopEventsScheduled, gameState.evolutionStage, gameState.petPassive]);
+  // (`mealRhythm` fica de fora das deps de propósito: mexer nos horários não reagenda o cocô do dia.)
 
   // Check care events and trigger them
   useEffect(() => {
@@ -93,7 +105,12 @@ export function useCareSystem({
               // First poop just appeared → schedule the second 8-10h later, so
               // the minimum 8h gap is measured from the first poop's appearance.
               if (index === 0 && newScheduled.length < 2) {
-                const secondGapHour = 8 + Math.random() * 2;
+                // 8–10 h depois do 1º aparecer, como sempre; com o ritmo ligado,
+                // de preferência caindo no pós-jantar do mesmo dia.
+                const ritmo = prev.mealRhythm && (prev.mealRhythm.inApp || prev.mealRhythm.push);
+                const secondGapHour = ritmo
+                  ? alignedSecondGapHours(Math.random, now, normalizeMealTimes(prev.mealRhythm?.times))
+                  : 8 + Math.random() * 2;
                 newScheduled = [...newScheduled, now + secondGapHour * 3600000];
               }
               return { ...prev, poopEventsShown: newShown, poopEventsScheduled: newScheduled };

@@ -60,7 +60,7 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
   { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '28%', top: '86%', width: '62%' },
-  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '71%', top: '90%', width: '46%' },
+  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '71%', top: '90%', width: '40%' }, // 11/10/2026: chalé campina (opaco ~89% da caixa) — 40% mantém o tamanho aparente de antes
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de

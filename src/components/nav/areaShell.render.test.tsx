@@ -33,6 +33,16 @@ describe('AreaScene', () => {
     expect(sc.style.minHeight).toBe('');
   });
 
+  it('a cena não rola: foco num lote que passa da borda não empurra a folha (bug do Passeio, 11/10/2026)', () => {
+    // O lote do Passeio tem `left 76% + width 56%` = 104% da cena: abrir a folha e devolver o foco a ele rolava a cena
+    // 16px para a esquerda e levava a folha junto (sem margem à esquerda, cortada à direita, ✕ fora do lugar).
+    const { container } = renderWithCss(<AreaScene areaId="exploracao" language="pt-BR" lots={lot(() => {})} />);
+    const sc = container.querySelector('[data-area-scene]') as HTMLElement;
+    sc.scrollLeft = 16;
+    fireEvent.scroll(sc);
+    expect(sc.scrollLeft).toBe(0);
+  });
+
   it('não desenha NPC nenhum fora de uma folha aberta (o anfitrião fixo saiu)', () => {
     const { container } = renderWithCss(
       <AreaScene areaId="mercado" language="pt-BR" lots={lot(() => {})} />,

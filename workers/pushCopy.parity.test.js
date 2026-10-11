@@ -29,8 +29,12 @@ const ler = p => readFileSync(resolve(RAIZ, p), 'utf8');
 // ---------------------------------------------------------------------------
 describe('as horas do cron são as horas que o código sabe responder', () => {
   const toml = ler('workers/wrangler.toml');
+  // O cron `*/30` é a passada do RITMO DAS REFEIÇÕES (`MEAL_TICK_CRON`), não
+  // uma hora de `PUSH_HOURS_BRT`: tem o seu próprio teste em
+  // `mealRhythm.parity.test.js`.
   const crons = (toml.match(/^crons\s*=\s*\[(.*)\]/m)?.[1] ?? '')
-    .split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+    .split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+    .filter(c => c !== '*/30 * * * *');
 
   it('AUTOVERIFICAÇÃO: o parser realmente leu os crons do arquivo', () => {
     // Sem este caso, um regex quebrado deixaria `crons` vazio e a comparação
@@ -216,7 +220,7 @@ describe('regras compartilhadas são importadas, nunca copiadas', () => {
   it('o worker não reimplementa `getNotification` por baixo do módulo', () => {
     const src = ler('workers/push-scheduler.js');
     expect(src).not.toMatch(/function\s+getNotification/);
-    expect(src).toMatch(/import \{ pushCopy \} from '\.\.\/functions\/api\/_pushCopy\.js'/);
+    expect(src).toMatch(/import \{ pushCopy[^}]*\} from '\.\.\/functions\/api\/_pushCopy\.js'/);
   });
 });
 

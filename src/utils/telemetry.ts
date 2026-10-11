@@ -152,7 +152,13 @@ export type TelemetryEvent =
   /** Feira: `outcome` 0 = rodada, 1 = dissipada vista, 2 = recuou vista. */
   | 'guild_raid'
   /** 1ª vez que o aparelho vê um estágio do Bosque; `level` 1..5. */
-  | 'guild_stage';
+  | 'guild_stage'
+  // ---- Ritmo das refeições (docs/REGISTRO-DE-DECISOES.md) — só inteiros em enum ----
+  /** Uma janela de refeição foi atendida por um gesto de cuidado. `meal` 0 = café,
+   *  1 = almoço, 2 = jantar; `kind` = micro-ação que fechou (0 comida, 1 banho,
+   *  2 carinho, 3 "oi"/tarefa). Responde UMA pergunta — o convite é atendido? —
+   *  e nunca vira régua de cobrança: não há meta por janela. */
+  | 'meal_ritual';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -239,6 +245,8 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   guild_thread: { kind: { min: 0, max: 1 } },
   guild_raid: { outcome: { min: 0, max: 2 } },
   guild_stage: { level: { min: 1, max: 5 } },
+  /* Ritmo das refeições — ESPELHO de `functions/api/metrics.js`. */
+  meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -488,6 +496,8 @@ export interface TelemetryProps {
   weeks?: number;
   /** `guild_raid`: 0 = rodada, 1 = dissipada vista, 2 = recuou vista (a Feira é a fatia B2). */
   outcome?: number;
+  /** `meal_ritual`: 0 = café, 1 = almoço, 2 = jantar. */
+  meal?: number;
 }
 
 /** O que vai no corpo da requisição. Três campos, todos números ou enums. */

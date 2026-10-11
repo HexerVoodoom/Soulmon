@@ -455,3 +455,12 @@ Implementado na branch `feat/r8-torneio` com a recomendação do lead; detalhe e
    continua dizendo "Sem prêmio e sem custo".
 6. **"i" único:** o pedido citava a Feira; a Feira é outra folha (Guilda) e não aparece no Torneio, por isso não está
    no texto. Incluir uma linha apontando para ela?
+
+## Ritmo das refeições (11/10/2026)
+
+1. **Recompensa pelo convite: manter só a reação do bicho, ou dar XP de vínculo?** Hoje não há moeda: atender a janela só grava `mealRitual`. A alternativa pronta é um evento `mealRitual` em `bond.ts` de ~5 XP, 1 por janela (teto estrutural de 15 XP/dia, ~23% de um dia completo). **Ressalva:** desde o Combate v3 o Vínculo é o level do usuário e rende ponto de talento — XP aqui vira poder, e um incentivo de presença que paga poder é exatamente o que as linhas vermelhas pedem para não fazer sem decisão sua. Recomendação: manter sem XP.
+2. **O push de cocô:** o worker não sabe se há cocô, então o push só sorteia comida/carinho/"oi"; o convite de cocô existe só no cartão do app (que vê o estado). Para um push de cocô de verdade seria preciso o app enviar ao servidor o horário do cocô agendado (dado novo, política de privacidade) — vale?
+3. **Alinhar o cocô à refeição muda a distribuição, não os limites** (o 1º continua em 07–15h, o 2º 8–10 h depois). Se preferir que o sorteio volte a ser uniforme, basta desligar o ritmo no app; confirmar que é isto que você quis em "por cocô".
+4. **Os convites de 10h/16h e o aviso das 20h saem para quem liga os lembretes das refeições** (para não somar visitas). Se preferir somar (até 6 pushes/dia), é mudar `PUSH_DAILY_CAP` e a regra `cedeAoRitmo` — não recomendo.
+5. **Padrão do cartão no app: ligado; lembretes: desligados.** Quer o cartão desligado também até a pessoa ativar?
+6. **Custo da passada de 30 min** (48 listas do KV por dia, uma por passada, mesmo com poucas inscrições): aceitável hoje; aviso para quando crescer.

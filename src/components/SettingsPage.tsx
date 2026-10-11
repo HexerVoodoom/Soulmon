@@ -20,6 +20,8 @@ import { ProfileEditor } from './perfil/ProfileEditor';
 import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
+import { MealRhythmRows } from './MealRhythmRows';
+import type { MealRhythmSettings } from '../utils/mealRhythm';
 
 /**
  * CONFIGURAÇÕES — revamp minimalista.
@@ -60,6 +62,9 @@ interface SettingsPageProps {
   onOpenGlossary: () => void;
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
+  /** Ritmo das refeições (`utils/mealRhythm.ts`). Sem o callback a linha não existe. */
+  mealRhythm?: MealRhythmSettings;
+  onChangeMealRhythm?: (next: MealRhythmSettings) => void;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
   /** Amarra o save ao e-mail VERIFICADO pelo Google (G4: o campo de e-mail
    *  livre saiu; quem chama é o botão "Entrar com Google" da `AccountSection`). */
@@ -202,6 +207,8 @@ export function SettingsPage({
   onOpenGlossary,
   notificationsEnabled,
   onToggleNotifications,
+  mealRhythm,
+  onChangeMealRhythm,
   redeemed = false,
   showRedeemed = false,
   onToggleShowRedeemed,
@@ -489,6 +496,14 @@ export function SettingsPage({
           infoLabel={isPt ? 'Sobre as notificações' : 'About notifications'}
           info={t.settings.notificationsDescription}
         />
+        {onChangeMealRhythm && (
+          <MealRhythmRows
+            language={language}
+            settings={mealRhythm}
+            notificationsEnabled={notificationsEnabled}
+            onChange={onChangeMealRhythm}
+          />
+        )}
         <SwitchRow
           checked={useAI}
           onToggle={onToggleAI}

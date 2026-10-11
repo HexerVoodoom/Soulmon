@@ -3113,3 +3113,18 @@ Updaters puros e idempotentes: `applyForgeGrant` (1º resgate da missão do pré
 
 ## `src/utils/forgeCopy.ts` (07/10/2026)
 Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
+
+### `src/utils/mealRhythm.ts`
+**Dono de:** o RITMO DAS REFEIÇÕES no cliente (11/10/2026) — configuração (`mealRhythm` no save: cartão no app ligado, push DESLIGADO/opt-in, 3 horários locais), o registro do dia (`mealRitual`: janelas atendidas/dispensadas hoje, sem histórico nem sequência), a escolha da micro-ação e o alinhamento do horário SORTEADO do cocô ao pós-refeição. Funções PURAS. O horário/janela/teto vêm do dono único `functions/api/_mealRhythm.js`; nada aqui lê meta, HP, energia, Bits nem XP (régua `mealRhythm.contract.test.ts`).
+**Exports:**
+- `MealRhythmSettings`, `DEFAULT_MEAL_RHYTHM`, `sanitizeMealRhythm(v)` — lixo vira o padrão (push `false`, cartão `true`); só `push === true` liga o push.
+- `MealRitualRecord`, `sanitizeMealRitual(v)`, `MEAL_KIND_CODE` — registro do DIA DO JOGADOR (`playerDayKey`); dia diferente = registro vazio.
+- `openInvite(now, gate)` — a janela aberta e sem resposta, ou `null` (cartão desligado, dormindo, dentro da janela de descanso, já atendida/dispensada).
+- `markMealDone(state, now, kind, isSleeping)` / `skipMeal(state, meal, now)` — atendem/dispensam; IDEMPOTENTES (mesma referência), entram direto em updater. Só escrevem `mealRitual`.
+- `pickMicroAction(ctx, seed)` — cocô na tela > comida que serve > carinho/"oi"; nunca convida a comer se comer não serviria, nunca inventa cocô.
+- `serverMeals(settings, restWindow, now)` — o campo `meals` da inscrição de push (`null` com o push desligado: nada sai do aparelho).
+- `alignedFirstPoopHour(rand, earliest, latest, times)` / `alignedSecondGapHours(rand, firstAt, times)` — distribuição pós-refeição DENTRO dos limites do cocô (1º em [07h|10h, 15h), 2º de 8–10 h depois).
+- Reexporta `MEAL_KEYS`, `DEFAULT_MEAL_TIMES`, `MEAL_WINDOW_MIN`, `PUSH_DAILY_CAP`, `normalizeMealTimes`, `inRestArc`, `parseHHMM`, `formatHHMM`.
+**Chamado por:** `src/App.tsx`, `src/hooks/useCareSystem.ts`, `src/components/NotificationManager.tsx`, `src/components/MealRhythmRows.tsx`, `src/components/MealInviteCard.tsx`, `src/components/GuideModal.tsx`, `src/components/HelpModal.tsx`, `src/contexts/GameStateContext.tsx`.
+**Régua:** `src/utils/mealRhythm.test.ts`, `src/utils/mealRhythm.contract.test.ts`, `workers/mealRhythm.parity.test.js`.
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (notificações) · decisão no `REGISTRO-DE-DECISOES.md` (ritmo das refeições).

@@ -29,6 +29,7 @@ import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
+import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
 interface GuideModalProps {
   isOpen: boolean;
@@ -180,6 +181,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             {L(
               `Cada tarefa concluída rende uma comida. Alimentar dá energia e pontos de atributo — que definem o galho da evolução — e NÃO cura coração. Até ${FOOD_LIMIT_PER_HOUR} vezes por hora.`,
               `Each completed task yields one food. Feeding grants energy and attribute points — which steer your evolution branch — and does NOT heal hearts. Up to ${FOOD_LIMIT_PER_HOUR} times an hour.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Depois do café, do almoço e do jantar (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} e ${DEFAULT_MEAL_TIMES.dinner}, nas Configurações você muda), seu Soulmon pode pedir UMA coisa pequena por ${MEAL_WINDOW_MIN / 60} horas: um carinho, um banho, uma comidinha. Não vale pontos, não conta e pular não custa nada. Os lembretes começam desligados.`,
+              `After breakfast, lunch and dinner (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} and ${DEFAULT_MEAL_TIMES.dinner} — change them in Settings), your Soulmon may ask for ONE small thing for ${MEAL_WINDOW_MIN / 60} hours: a pat, a rinse, a snack. It earns no points, nothing is counted, and skipping costs nothing. The reminders start off.`,
             )}
           </p>
         </>

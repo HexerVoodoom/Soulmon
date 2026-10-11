@@ -457,3 +457,9 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
 **Exports:** `GATES`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.
 **Régua:** `functions/api/gates.parity.test.js`.
+
+### `functions/api/_mealRhythm.js`
+**Dono de:** a conta de horário do RITMO DAS REFEIÇÕES, nas três árvores (cliente, worker de push, rotas de inscrição) — ESM puro, sem dependência, com `_mealRhythm.d.ts`.
+**Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.
+**Chamado por:** `workers/push-scheduler.js`, `functions/api/_pushCopy.js`, `functions/api/_pushIdentity.js`, `src/utils/mealRhythm.ts`.
+**Régua:** `workers/mealRhythm.parity.test.js` (varre as 48 passadas do dia com o worker real e prova o teto).
