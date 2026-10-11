@@ -29,7 +29,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:ferreiro': [0.04, 0.08, 0.963, 0.94],
   'arena:torneio': [0.073, 0, 0.927, 1],
   'arena:duelo': [0.167, 0, 0.833, 1],
-  'arena:feira': [0.153, 0.12, 0.847, 0.973],
+  'hall:feira': [0.153, 0.12, 0.847, 0.973],
   'exploracao:masmorra': [0.23, 0, 0.767, 1],
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).

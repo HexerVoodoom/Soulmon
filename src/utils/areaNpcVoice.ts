@@ -140,7 +140,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
   // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
   // `00-BIBLIA-DAS-AREAS.md`); Bastia fica só no Salão.
-  'arena:feira': {
+  'hall:feira': {
     namePt: 'Fanfare', nameEn: 'Fanfare',
     linePt: GUILD_COPY['guild.npc.feira'][0],
     lineEn: GUILD_COPY['guild.npc.feira'][1],

@@ -44,13 +44,13 @@ export const BUILDING_GATES = {
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.feira': { minBond: GATES.pvp.minBond },
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },
   'hall.biblioteca': { minBond: 2 },
   'hall.amigos': { minBond: 2 },
   'hall.guilda': { minBond: 4 },
+  'hall.feira': { minBond: GATES.pvp.minBond },
 };
 
 /** @param {keyof typeof BUILDING_GATES} id @param {unknown} bondLevel */

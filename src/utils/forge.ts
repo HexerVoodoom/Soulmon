@@ -95,7 +95,7 @@ export const FORGE_PIECES: readonly ForgePiece[] = [
   { id: 'eq-carapaca-t3', slot: 'carapaca', tier: 3, building: 'hall.guilda', mats: ['crest', 'down'] },
   { id: 'eq-rastro-t1', slot: 'rastro', tier: 1, building: 'jogos.salao', mats: ['spark', 'moss'] },
   { id: 'eq-rastro-t2', slot: 'rastro', tier: 2, building: 'exploracao.oficina', mats: ['gear', 'spark'] },
-  { id: 'eq-rastro-t3', slot: 'rastro', tier: 3, building: 'arena.feira', mats: ['ribbon', 'gear'] },
+  { id: 'eq-rastro-t3', slot: 'rastro', tier: 3, building: 'hall.feira', mats: ['ribbon', 'gear'] },
 ];
 
 export const PIECE_BY_ID: ReadonlyMap<string, ForgePiece> = new Map(FORGE_PIECES.map((p) => [p.id, p]));
