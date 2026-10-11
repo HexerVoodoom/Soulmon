@@ -10,8 +10,8 @@ import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
   it('Arena tem Torneio, Duelo e Feira; Hall tem Biblioteca, Círculo de Amigos e Salão da Guilda', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'feira']);
-    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['biblioteca', 'amigos', 'guilda']);
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo']);
+    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['biblioteca', 'amigos', 'guilda', 'feira']);
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats']);
   });
 
@@ -20,7 +20,6 @@ describe('lotes novos (29/09/2026)', () => {
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
     expect(pct(arena.torneio.left)).toBeLessThan(50);
     expect(pct(arena.duelo.left)).toBeLessThanOrEqual(50);
-    expect(pct(arena.feira.left)).toBeGreaterThan(60);
     // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — no mesmo tablado, mas bem visiveis.
     expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(40);
     expect(pct((arena.duelo as { width?: string }).width)).toBeGreaterThanOrEqual(40);
@@ -47,7 +46,7 @@ describe('lotes novos (29/09/2026)', () => {
 
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
-      ['arena', 'duelo', 'Naia'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
+      ['arena', 'duelo', 'Naia'], ['hall', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
       ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Brume'],
@@ -57,7 +56,8 @@ describe('lotes novos (29/09/2026)', () => {
     for (const [a, l, nome] of lotes) {
       // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
       // 07/10/2026: Amigos (Trill), Arquivo (Faro) e Santuário (Oriel) trocaram de busto a pedido do dono.
-      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'jogos:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:amigos': 'npc-extra-filhote-de-mel', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
+      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'jogos:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:feira': 'npc-arena-feira', // a Feira mudou da Arena para o Hall (11/10/2026); o arquivo mantém o nome da leva
+        'hall:amigos': 'npc-extra-filhote-de-mel', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
       const arquivo = TROCADOS[`${a}:${l}`] ?? `npc-${a}-${l}`;
       expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
       expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt(a, l));

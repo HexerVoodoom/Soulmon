@@ -37,19 +37,19 @@ describe('Emblemas: o Torneio e a Feira passam pelo MESMO caminho', () => {
 });
 
 describe('o lote e o NPC da Feira', () => {
-  it('a Arena tem Torneio, Duelo e FEIRA; o Salão é o lote `guilda` do Hall — dois lotes, duas salas', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'feira']);
-    expect(hallLots('pt-BR').map(l => l.id)).toContain('guilda');
-    expect(arenaLots('pt-BR').find(l => l.id === 'feira')!.label).toBe('Feira');
-    expect(arenaLots('en-US').find(l => l.id === 'feira')!.label).toBe('Fair');
+  it('11/10/2026: a Arena tem só Torneio e Arena livre; a FEIRA mora no Hall ao lado do Salão (`guilda`) — dois lotes, duas salas', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo']);
+    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['biblioteca', 'amigos', 'guilda', 'feira']);
+    expect(hallLots('pt-BR').find(l => l.id === 'feira')!.label).toBe('Feira');
+    expect(hallLots('en-US').find(l => l.id === 'feira')!.label).toBe('Fair');
     const av = ler('components/nav/AreaView.tsx');
     expect(av).toMatch(/open\?\.id === 'feira'[\s\S]{0,80}room="feira"/);
     expect(av).toMatch(/open\?\.id === 'guilda'[\s\S]{0,80}room="salao"/);
   });
 
-  it('a Feira tem o busto do Fanfare registrado em `arena:feira` (Marla saiu da Arena) e os ids da leva de arte estão declarados', () => {
-    expect(lotNpcArt('arena', 'feira')).toBe(npcArenaFeira);
-    expect(lotNpcArt('arena', 'feira')).not.toBe(lotNpcArt('hall', 'guilda'));
+  it('a Feira tem o busto do Fanfare registrado em `hall:feira` (mudou da Arena em 11/10/2026) e os ids da leva de arte estão declarados', () => {
+    expect(lotNpcArt('hall', 'feira')).toBe(npcArenaFeira);
+    expect(lotNpcArt('hall', 'feira')).not.toBe(lotNpcArt('hall', 'guilda'));
     expect(npcArenaFeira).toContain(FAIR_ART_IDS.npc);
     expect(ler('assets/soulmon/npcs/index.ts')).not.toContain("'arena:guilda'");
     expect(ler('utils/areaNpcVoice.ts')).not.toContain("'arena:guilda'");
