@@ -138,7 +138,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 11/10/2026 (onda de lançamento): 621_108 → 637_910 (+16,4 KB) — onboarding de 3 blocos, comida premium e subitens,
   // sessão de foco (App), Level Up (fila + som), ritmo das refeições e apresentação de prédio (outras sessões). Débito
   // REGISTRADO: a sessão `claude/velocidade-dev` tem a meta de baixar este número com lazy/manualChunks.
-  'index.js': 637_910,
+  // 11/10/2026 (Level Up + áudio): 637_910 → 650_631 (+12,4 KB) — fila do Level Up e `levelUp.ts`/`playLevelUp`, o diretor de
+  // música (`musica.ts`), a serialização dos especiais e o gate do Duelo entram no App. Débito REGISTRADO (PR #294 tenta baixar).
+  'index.js': 650_631,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
