@@ -42,6 +42,7 @@ export const STALL_NPC_ART = {
 } as const;
 
 import npcArenaDuelo from './npc-extra-arena-duelo.png';
+import npcArenaFeira from './npc-arena-feira.png';
 import npcJogosMente from './npc-jogos-mente.png';
 import npcJogosRefugio from './npc-oceano-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
@@ -82,6 +83,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:ferreiro': FERREIRO_NPC_ART,
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
+  'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume
   // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram

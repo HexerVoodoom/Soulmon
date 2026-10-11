@@ -137,8 +137,14 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
     lineEn: 'One duel, one round at a time. Come on.',
   },
-  // 11/10/2026 (PR3): a Feira saiu da Arena (virou a Missão do Salão); o NPC Fanfare e a fala `guild.npc.feira`
-  // ficam na copy/arte para a futura arena de guilda, sem lote por enquanto.
+  // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
+  // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
+  // `00-BIBLIA-DAS-AREAS.md`); Bastia fica só no Salão.
+  'arena:feira': {
+    namePt: 'Fanfare', nameEn: 'Fanfare',
+    linePt: GUILD_COPY['guild.npc.feira'][0],
+    lineEn: GUILD_COPY['guild.npc.feira'][1],
+  },
   // Os prédios de Jogos (30/09/2026). Nomes e falas PLACEHOLDER de nomeação.
   // Tom: convite; o Ateliê DESCREVE o que os jogos pedem (nunca promete
   // efeito — benchmark §1.2) e o Refúgio não cobra nada de ninguém.

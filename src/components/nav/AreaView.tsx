@@ -324,6 +324,9 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} skills={props.skills} shop={{ ownership, actions }} headSlot={tournamentHead} />
             )}
+            {open?.id === 'feira' && (
+              <GuildSheet room="feira" language={language} {...props.guild} />
+            )}
             {open?.id === 'duelo' && (
               <DueloSheet
                 language={language}

@@ -920,6 +920,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/groveLocal.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Avisos do arquivo:** falha de storage tem fallback em memória do módulo (marco e recibo não repetem na mesma execução).
 
+### `src/utils/guildMission.ts`
+**Dono de:** a MISSÃO da guilda no aparelho (PR3): a ida do Solmon (`GuildMissionState`, `GUILD_MISSION_MINUTES` = 30), quando ele está fora da Home e quando é hora de voltar. A trava real (1 volta por dia do jogador) e o valor da rodada são do servidor (`guildRaidHit`).
+**Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `isMissionDue`, `msUntilReturn`.
+**Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
+**Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
+
 ### `src/utils/guildHouse.ts`
 **Dono de:** a regra do ITEM NA CASA DA GUILDA (guilda-lancamento PR2): item posto no slot sai de `ownedFurniture` e de `equippedDecor` e vive em `guildDonatedItem`; tirar (ou perder a guilda) o devolve.
 **Exports:** `applyGuildSlot` (pura e idempotente: mesmo slot, mesma referência), `donatableItems`, `GuildHouseSaveSlice`.
