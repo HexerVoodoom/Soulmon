@@ -156,8 +156,14 @@ describe('Exploração — Zeph e a Masmorra', () => {
     // atrás do "?" — fica fora da tela até o jogador tocar.
     expect(folha.textContent).not.toMatch(/nunca os seus corações/);
     fireEvent.click(getByRole('button', { name: 'Como funciona a masmorra' }));
-    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/nunca os seus corações/);
-    expect(folha.textContent).toContain('4→12');
+    // Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e vive no "i", como lista.
+    expect(folha.textContent).not.toContain('Pode cair');
+    expect(folha.textContent).not.toContain('4→12');
+    const painel = document.querySelector('[data-info-tip-panel]')!;
+    expect(painel.textContent).toMatch(/nunca os seus corações/);
+    expect(painel.textContent).toContain('Pode cair');
+    expect(painel.querySelectorAll('[data-masmorra-drops] li')).toHaveLength(4);
+    expect(painel.textContent).toContain('4→12');
     // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu.
     expect(folha.querySelectorAll('ol li')).toHaveLength(0);
   });

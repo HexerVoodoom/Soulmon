@@ -186,17 +186,18 @@ describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
 });
 
 describe('o card da missão em uso (11/10/2026) — cabeçalho legível, sem emoji de enfeite', () => {
-  it('o título fica sozinho na linha dele; o glifo da área vai na legenda, e o "?" fica à direita', () => {
+  it('duas etapas inequívocas: destino (com a imagem) × o que você faz (sem ícone nenhum)', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA }));
     const card = container.querySelector('[data-travessia-ativa]')!;
-    const titulo = card.querySelector('[data-travessia-titulo]') as HTMLElement;
+    const destino = card.querySelector('[data-passeio-destino-card]') as HTMLElement;
+    expect(destino.textContent).toMatch(/Destino de hoje à noite/);
+    expect(destino.querySelector('img, svg, .sm2-icon')).toBeTruthy();
+    const faca = card.querySelector('[data-passeio-faca]') as HTMLElement;
+    expect(faca.textContent).toMatch(/Faça isto hoje, para o Soulmon fazer o passeio à noite/);
+    expect(faca.querySelector('img, svg, .sm2-icon, [data-travessia-glifo], [data-mission-mark]')).toBeNull();
+    const titulo = faca.querySelector('[data-travessia-titulo]') as HTMLElement;
     expect(titulo.textContent).toBe(travessiaTitle(C1.id, true)!);
-    expect(titulo.querySelector('[data-travessia-glifo], svg, img')).toBeNull();
-    const legenda = titulo.nextElementSibling as HTMLElement;
-    expect(legenda.querySelector('img, svg, [data-travessia-glifo], .sm2-icon')).toBeTruthy();
-    // O "?" é irmão do bloco de texto (à direita do cabeçalho), não está dentro da linha de texto.
-    const marca = card.querySelector('[data-mission-mark="progress"]')!;
-    expect(titulo.parentElement!.contains(marca)).toBe(false);
+    expect(card.querySelector('[data-mission-mark="progress"]')).toBeNull();
   });
 
   it('a região guardada não usa emoji (🌄) — ícone do sistema', () => {

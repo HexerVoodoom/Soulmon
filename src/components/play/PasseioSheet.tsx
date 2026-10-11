@@ -185,7 +185,6 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
   if (!ativa) return null;
   const { region, challenge } = ativa;
   const nome = isPt ? region.namePt : region.nameEn;
-  const area = AREA_LABEL[challenge.area];
   const feito = doneToday(crossings, todayKey);
   /* O passeio leva um tempo: o "Concluir" só abre depois de `STROLL_MIN_MINUTES`. */
   const espera = feito ? 0 : strollWaitMs(crossings, now);
@@ -206,24 +205,29 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
       }}
     >
       {justDone && <Celebration />}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* ETAPA 1 — ONDE o Soulmon vai esta noite (o destino): é aqui que mora a
+          imagem da região. Pedido do dono (11/10/2026): as duas etapas
+          (destino × o que VOCÊ faz) estavam misturadas num card só. */}
+      <div data-passeio-destino-card style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <RegionPostal region={region} width={64} height={52} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
           <p style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? `Sua missão de hoje · ${nome}` : `Your mission today · ${nome}`}
+            {isPt ? 'Destino de hoje à noite' : 'Tonight’s destination'}
           </p>
-          <p data-travessia-titulo style={sheetCardTitle}>
-            {titulo ?? (isPt ? challenge.textPt : challenge.textEn)}
-          </p>
-          <p style={{ ...note, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <AreaGlyph area={challenge.area} challengeId={challenge.id} size={24} />
-            {isPt ? area.pt : area.en}
-          </p>
+          <p style={sheetCardTitle}>{nome}</p>
         </div>
-        {!feito && <MissionMark kind="progress" isPt={isPt} size={24} />}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* ETAPA 2 — o que VOCÊ faz hoje para o Soulmon fazer esse passeio à noite.
+          Sem ícone nenhum aqui (nem o da área, nem o sinal de missão): é texto. */}
+      <div data-passeio-faca style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <hr style={divider} />
+        <p style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? 'Faça isto hoje, para o Soulmon fazer o passeio à noite' : 'Do this today, so the Soulmon takes the stroll tonight'}
+        </p>
+        <p data-travessia-titulo style={sheetCardTitle}>
+          {titulo ?? (isPt ? challenge.textPt : challenge.textEn)}
+        </p>
         <Proposta c={challenge} isPt={isPt} />
       </div>
 
