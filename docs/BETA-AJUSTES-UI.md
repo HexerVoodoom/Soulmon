@@ -33,8 +33,9 @@ Os "prédios" do ditado são **lotes das áreas** (Hall, Exploração, Jogos), n
   Biblioteca e Círculo descem (40→47%).
 - **Exploração:** o Caderno ("Jornal") sobe para **entre a Masmorra e a Oficina do Foco** (30%/54%): coluna da esquerda com
   3 prédios; o canto de baixo à direita (onde ele estava) fica **LIVRE, reservado** a um prédio futuro. Arte do Caderno:
-  volta ao **tinteiro com a pena** (`lote-exploracao-caderno.png`, já em disco; o chalé campina "não dizia caderno") —
-  sem arte nova; `LOT_ART_BOUNDS` atualizado.
+  volta ao **tinteiro com a pena** (`lote-exploracao-caderno.png`, já em disco; o chalé campina "não dizia caderno") e,
+  como essa arte é teal sobre teal (o que o dono já tinha reclamado), ganha um **halo claro** (`LOT_HALO` em `nav/AreaScene.tsx`,
+  só filtro CSS) — sem arte nova; `LOT_ART_BOUNDS` atualizado.
 - **Jogos:** Salão **mais ao centro** (31→44%); Ateliê da Mente **desce** para a clareira de baixo, abaixo da escada e
   um pouco à direita (64%/55%); o Refúgio desceu 2% (82→84%) só para o par Ateliê × Refúgio não se tocar em telas de 360×740.
 - **Guardas verdes:** `areaLotGeometry.contract` (nenhum par de alvos de toque se encosta, 5 viewports; proporção
