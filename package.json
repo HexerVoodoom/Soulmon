@@ -46,6 +46,10 @@
     "test:coverage": "vitest run --coverage",
     "orcamento": "node scripts/orcamento-de-tempo.mjs",
     "typecheck": "tsc --noEmit",
-    "portoes": "node scripts/portoes.mjs"
+    "portoes": "node scripts/portoes.mjs",
+    "test:fast": "vitest run --changed origin/main --passWithNoTests",
+    "test:shard": "vitest run --shard",
+    "gates": "node scripts/gates.mjs",
+    "analisar:entrada": "node scripts/analisar-entrada.mjs"
   }
 }
