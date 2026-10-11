@@ -812,6 +812,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ Até 06/09/2026 o cabeçalho afirmava reset mensal, limite diário de jogo e gate de HP na entrada — os três eram falsos (e `handleDungeonLose` já era um callback vazio). Número de balanceamento aqui muda Masmorra, Pesadelo e Arena ao mesmo tempo, e nenhum dos três avisa.
 **Regra de negócio:** A Masmorra não cobra coração e não tem gate de entrada nem limite diário. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/dungeonIdle.ts`
+
+**Dono de:** a descida idle da Masmorra (08/10/2026) — constantes `DUNGEON_AUTO_FIGHT_MS` (4000), `DUNGEON_FIGHTS_PER_FLOOR` (6), `DUNGEON_MILESTONE_FLOOR` (5), `DUNGEON_HP_REGEN_FULL_HOURS` (4), `DUNGEON_MIN_HP_TO_ENTER_PCT` (25). **Exports:** `hpAgora(state, now)` (HP por timestamp, nunca > 1), `gravarHp`, `podeDescer`, `msAteDescer`, `posicaoDaLuta`, `formatarEspera`, `sanitizeDungeonHp`. Puro, sem imports. Régua: `dungeonIdle.test.ts`.
+
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.
 **Exports:**

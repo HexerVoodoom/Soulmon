@@ -156,7 +156,8 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
 
 // ── Os jogos LONGOS contra o teto diário (decisão do dono, 30/09/2026) ─────
 import { buildDungeonWave, DUNGEON_BITS_FACTOR } from '../dungeon';
-import { clearBonus, MAX_FLOORS } from '../../components/DungeonGame';
+import { clearBonus } from '../../components/DungeonGame';
+import { DUNGEON_MILESTONE_FLOOR as MAX_FLOORS } from '../dungeonIdle';
 import { ARENA_ROUNDS, buildArenaRound } from '../arena';
 
 function masmorraRunCompleta(nivel: number, estagio: string): number {

@@ -4496,13 +4496,41 @@ higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) 
 <a id="masmorra"></a>
 ## 51. ⚔️ Masmorra
 
-**Em uma frase.** Uma run de cinco andares contra seis inimigos cada, sem limite
-diário e sem porta de entrada — e perder **não custa um único coração**.
+**Em uma frase.** Uma **descida automática e sem fim**: as lutas encadeiam sozinhas, a
+cada 6 desce-se uma camada, e o que a encerra é o HP — que não enche entre descidas e
+volta com o tempo. Sem limite diário, sem porta de entrada além do piso de HP, e perder
+**não custa um único coração nem Bits**.
 
-**A regra.** Uma run = `MAX_FLOORS` (5) andares, e a constante mora em
-`src/components/DungeonGame.tsx`. Cada andar é uma escada fixa de **6** inimigos
-subindo `LADDER_TIERS` em ordem: `baby-i → baby-ii → rookie → champion →
-ultimate → mega`.
+> **08/10/2026 — DESCIDA IDLE (decisão do dono, `REGISTRO-DE-DECISOES.md` §5.6, linha "Masmorra vira DESCIDA IDLE").** Dono único das constantes e
+> das contas puras: **`src/utils/dungeonIdle.ts`** (função PURA, `now` por parâmetro, sem imports — o Guia lê dali).
+> ⚰️ Saíram: o botão "Desafiar <inimigo>", o "Camada N+1"/"Sair c/ placar" entre andares, o cartão `run-complete`,
+> a constante `MAX_FLOORS` (5) e o enchimento do HP a cada run.
+>
+> | Constante | Valor | Papel |
+> |---|---|---|
+> | `DUNGEON_AUTO_FIGHT_MS` | 4000 | pausa entre o fim de uma luta e o começo da próxima (ritmo visível) |
+> | `DUNGEON_FIGHTS_PER_FLOOR` | 6 | lutas por andar (= `LADDER_TIERS.length`, travado em teste) |
+> | `DUNGEON_MILESTONE_FLOOR` | 5 | o MARCO: limpar este andar, 1× por descida |
+> | `DUNGEON_HP_REGEN_FULL_HOURS` | 4 | horas de HP zero a cheio, por TIMESTAMP, até com o app fechado |
+> | `DUNGEON_MIN_HP_TO_ENTER_PCT` | 25 | piso de HP para ENTRAR (evita o laço de morte imediata; pior espera = 1 h) |
+>
+> **O HP.** `GameState.dungeonHp?: { frac, at }` (fração do máximo + epoch ms; ausente = cheio). Nunca se lê direto:
+> `hpAgora(state, now) = min(1, frac + (now − at) / 4 h)`. A descida grava `{frac, at: agora}` ao fim de cada luta
+> ganha, depois da cura do andar e em 0 ao zerar; a regeneração DENTRO da descida (segundos) é ignorada, de propósito.
+> Fechar a tela perde só a luta em curso: o HP persistido da última luta vale. **Cliente apenas** — não compra vantagem,
+> só limita a descida (mesma regra do placar/Emblemas). Abaixo do piso o lobby mostra "Recuperando… pode descer de novo em
+> 1 h 05 min" / "Recovering… ready to go down again in 1h 05m" (**verbo RECUPERAR**: a bíblia §5.12 veta "descansar" sobre
+> a criatura) e o botão fica desabilitado; nada de coração, nada de Bits, nada de culpa.
+>
+> **O laço.** Fim de luta ganha → painel do inimigo (`enemy-down`) → após `DUNGEON_AUTO_FIGHT_MS` a próxima luta, sem
+> toque. 6ª luta ganha = andar limpo (`floor-clear`: bônus, Vínculo, marco, cura) → a camada de baixo. **Pausar/Retomar**
+> (e a confirmação do X) seguram o relógio; o X sai (o placar fica). A linha "Camada N" é `aria-live="polite"`. HP zero
+> (derrota ou empate) → `ended`/"ficou sem fôlego". O portão do Vínculo (`masmorraFloorOpen`, andares ≥ 4 exigem Vínculo 8)
+> agora é checado ao limpar um andar: fechado, a descida termina em `ended`/"lacrado por ora" com o `gateLine`.
+>
+> **O MARCO** (era "concluir os 5 andares"): ao limpar o andar 5 — **uma vez por descida** (`milestoneRef`) — pagam
+> `onGlitchtama` (🌀, 1 uso/dia, `specialItemUse.ts` intocado, **nenhuma fonte nova de `perfectDays`**),
+> `setDungeonDifficultyAtLeast(base + 1)`, `recordDungeonReached` e `dungeonRunsCompleted` (missões "runs"). Os andares 6, 7… NÃO pagam de novo.
 
 `buildDungeonWave(level, petStage, rng, playerLevel)` (`src/utils/dungeon.ts`) monta a onda. A
 dificuldade do andar F é `base + (F − 1)`. **Combate v3 (PR4, 06/10/2026): o inimigo é
@@ -4518,9 +4546,13 @@ o jogador é o `soulCombatant` do level, e a Arena e o Pesadelo leem o mesmo nú
 
 **Recompensas.** Bits por inimigo (`enemy.points`) + bônus de andar
 `clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
-uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício); o HP do jogador **carrega** entre andares. Limpar
-os 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base
-(`setDungeonDifficultyAtLeast(base + 1)`).
+uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício + o talento `healBoost`) — cura DENTRO da descida, mantida de
+propósito: a parede calibrada do combate v3 a pressupõe e o ofício/talento dependem dela; o HP do jogador **carrega** entre
+andares. O marco do andar 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
+**Teto diário de Bits:** inalterado — o funil único `handleEarnGamePoints` → `creditMinigameBits` (`MINIGAME_BITS_PER_DAY` =
+150, `minigameBits` no save) limita a descida infinita; ao bater, a tela diz "Teto diário de Bits atingido — a descida segue,
+só sem Bits." e nada pára. Simulação (`dungeonIdle.test.ts`, 200 descidas, ruler de 15 levels): a dificuldade derruba o
+jogador em média no andar 5,35 (máx 6), a descida dura no máximo ~21 min e o que pagaria sem teto fica em ≤ 131 Bits.
 
 **A base persiste e reseta toda SEMANA** — `STORAGE_KEYS.DUNGEON_DIFFICULTY`,
 gravado como `{week, level}` com `weekKey()` local. O placar é

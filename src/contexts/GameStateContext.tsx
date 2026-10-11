@@ -385,6 +385,10 @@ export interface GameState {
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
   minigameBits?: { day: string; earned: number };
+  /** O HP do jogador na Masmorra (descida idle, 08/10/2026): fração do máximo + instante da medida.
+   *  NUNCA se lê direto — `hpAgora(state, now)` (`utils/dungeonIdle.ts`) soma a regeneração por timestamp.
+   *  Ausente = cheio. Não compra vantagem (só limita a descida), então é do cliente como Emblemas/placar. */
+  dungeonHp?: { frac: number; at: number };
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1140,6 +1144,13 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         minigameBits: (() => {
           const m = obj<unknown>(loadedState.minigameBits);
           return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0) } : undefined;
+        })(),
+        // HP da descida idle: lixo/ausente → `undefined` (cheio). Mesma regra de `sanitizeDungeonHp`
+        // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
+        dungeonHp: (() => {
+          const d = obj<unknown>(loadedState.dungeonHp);
+          return typeof d.frac === 'number' && Number.isFinite(d.frac) && typeof d.at === 'number' && Number.isFinite(d.at)
+            ? { frac: Math.min(1, Math.max(0, d.frac)), at: Math.max(0, d.at) } : undefined;
         })(),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".

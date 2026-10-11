@@ -29,6 +29,7 @@ import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
+import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR } from '../utils/dungeonIdle';
 
 interface GuideModalProps {
   isOpen: boolean;
@@ -337,6 +338,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             {L(
               'Masmorra e Torneio nunca cobram corações. Perder custa só a run.',
               'Dungeon and Tournament never cost hearts. Losing only costs the run.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, sem fim, até o HP acabar. O HP não enche entre descidas — volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo. Limpar a camada ${DUNGEON_MILESTONE_FLOOR} é um marco: rende o item 🌀 (veja Itens).`,
+              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, endlessly, until the HP runs out. HP does not refill between descents — it comes back over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even with the app closed) and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down again. Clearing layer ${DUNGEON_MILESTONE_FLOOR} is a milestone: it earns the 🌀 item (see Items).`,
             )}
           </p>
           <p style={para}>

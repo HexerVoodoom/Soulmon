@@ -12,6 +12,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { DungeonGame } from './DungeonGame';
+import { DUNGEON_AUTO_FIGHT_MS } from '../utils/dungeonIdle';
 
 const H = vi.hoisted(() => ({ calls: 0, cheerSeen: 0, hpStart: [] as number[], enStart: [] as number[] }));
 
@@ -86,7 +87,8 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(screen.queryByText(/torça por ele/i)).toBeNull();
     expect(screen.queryByText(/se defende/i)).toBeNull();
     expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
-    expect(document.body.textContent).toMatch(/Camada 1\/5/);
+    expect(document.body.textContent).toMatch(/Camada 1/);
+    expect(document.body.textContent).not.toMatch(/\/5\b/); // descida sem teto de andares
   });
 
   it('a explicação do lobby mora atrás do "?" e conta as mecânicas (energia, anel, esquiva) e NÃO fala de torcida', () => {
@@ -150,8 +152,9 @@ describe('Masmorra — sem torcida (§2.19); a energia e o HP PERSISTEM entre os
     // o cartão do inimigo derrotado NÃO apaga a cena: a mesma segue na tela
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
     expect(energia('me')).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /^Desafiar / }));
-    await avancar(10);
+    // idle: NÃO há botão de próximo oponente — o relógio encadeia a luta seguinte sozinho
+    expect(screen.queryByRole('button', { name: /^Desafiar |^Challenge / })).toBeNull();
+    await avancar(DUNGEON_AUTO_FIGHT_MS + 50);
     // segundo combate: o núcleo recebeu o HP e a energia do primeiro (`startHp`/`startEnergy`)
     expect(H.calls).toBe(2);
     expect(H.hpStart[0]).toBe(1);
@@ -169,6 +172,6 @@ describe('Masmorra — em inglês', () => {
     expect(screen.queryByRole('button', { name: 'Cheer for your Soulmon' })).toBeNull();
     const texto = document.body.textContent ?? '';
     for (const palavra of ['Camada', 'Você', 'Torcer', 'Sair']) expect(texto.includes(palavra), palavra).toBe(false);
-    expect(texto).toMatch(/Layer 1\/5/);
+    expect(texto).toMatch(/Layer 1/);
   });
 });

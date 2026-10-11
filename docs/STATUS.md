@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 08/10/2026 — Masmorra vira DESCIDA IDLE (lutas automáticas, HP persistente, andares infinitos)
+>
+> - **Pedido do dono (modal respondido):** sem botão de próximo oponente; o HP não enche entre descidas e **recupera com o tempo** (por timestamp, até com o app fechado); a cada 6 lutas desce 1 andar, **sem teto**, até o HP acabar; lutas automáticas com pausar/sair.
+> - **Dono único:** `src/utils/dungeonIdle.ts` — `DUNGEON_AUTO_FIGHT_MS` 4000 · `DUNGEON_HP_REGEN_FULL_HOURS` 4 · `DUNGEON_MIN_HP_TO_ENTER_PCT` 25 · `DUNGEON_MILESTONE_FLOOR` 5 · `hpAgora(state, now)` pura. Campo novo no save: `dungeonHp?: { frac, at }` (hidratado/higienizado em `hydrateSave`, fuzz2 → 98 campos). Motor de combate, servidor e `*.parity.test.js` **intocados** (o HP persistente é só cliente e não compra vantagem).
+> - **Recompensas:** o "concluir os 5 andares" virou o MARCO "limpou a camada 5", 1× por descida (Glitchtama com o teto de 1 uso/dia, `setDungeonDifficultyAtLeast`, `dungeonRunsCompleted`); camadas 6+ não pagam de novo. Placar `DUNGEON_BEST` segue sendo a soma de Bits-base da descida. **Teto diário de Bits (150) já existia** no funil `creditMinigameBits` e foi mantido; a tela avisa "Daily Bits cap reached" sem parar a descida. Coraçãozinho 5%/inimigo, máx 2/dia: igual.
+> - **Cura do andar mantida** (~25%, ofício + talento `healBoost`): é cura DENTRO da descida; removê-la deslocaria a parede calibrada e mataria um talento. O que saiu foi o enchimento ENTRE descidas.
+> - **Copy:** "Recuperando…/Recovering…" (a bíblia veta "descansar" sobre a criatura — desvio consciente do "Resting" pedido). Portão do Vínculo (andar ≥ 4, Vínculo 8) agora encerra a descida ("lacrado por ora") em vez de desabilitar um botão.
+> - **Depende do dono:** ajustar as 3 constantes; confirmar a cura do andar e o marco "limpar" (vs. "chegar").
+
 > ## 08/10/2026 — "Stroll fica com o NPC": o Passeio volta INTEIRO ao lote; a Home só lista a linha "Take a stroll"
 >
 > - **Pedido do dono (ênfase dele):** "Stroll fica com o NPC! A Home só tem a missão 'faça um stroll', mas o stroll deve ficar TODO ali, EXATAMENTE como era."

@@ -120,8 +120,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from clearing all 5 dungeon floors. Using it grants one complete day — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from the layer-5 milestone of the automatic dungeon descent. Using it grants one complete day — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro do marco da camada 5 da descida automática da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.

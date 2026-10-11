@@ -1,7 +1,8 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
-import { MAX_FLOORS, clearBonus } from '../DungeonGame';
+import { clearBonus } from '../DungeonGame';
+import { DUNGEON_MILESTONE_FLOOR } from '../../utils/dungeonIdle';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, getDungeonDifficulty, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
@@ -23,7 +24,7 @@ import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
  * `#modalDino`) e `propostas/jogos/mock.html` (`#modalPPT`). Cada folha é a
  * PORTA de um minijogo que já existia: mostra o que está em jogo e abre o
  * jogo pelo CTA. **Nenhuma regra nasce aqui** — os números vêm das constantes
- * dos donos (`MAX_FLOORS`/`clearBonus` da `DungeonGame`, `HEART_DROP_CHANCE`
+ * dos donos (`DUNGEON_MILESTONE_FLOOR`/`clearBonus` da `DungeonGame`, `HEART_DROP_CHANCE`
  * de `utils/dungeon`, `MATCH_POINTS`/`WINS_NEEDED` do `RPSGame`), e os placares
  * são lidos das MESMAS chaves que os jogos gravam (`DUNGEON_BEST`,
  * `DUNGEON_DIFFICULTY`, `DINO_BEST`).
@@ -117,10 +118,10 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
       {/* H11 (01/10/2026): a fileira de andares numerados saiu — repetia o
           número da linha de cima e não dizia nada que ela não dissesse. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <p style={sectionHead}>{isPt ? `${MAX_FLOORS} andares por run` : `${MAX_FLOORS} floors per run`}</p>
+        <p style={sectionHead}>{isPt ? 'Descida automática, sem fim' : 'Automatic descent, no end'}</p>
         {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
         <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
-          {isPt ? 'Perder custa só a run — nunca os seus corações.' : 'Losing only costs the run — never your hearts.'}
+          {isPt ? 'As lutas vêm sozinhas e o HP volta com o tempo. Perder custa só a descida — nunca os seus corações.' : 'Fights run on their own and HP comes back over time. Losing only costs the descent — never your hearts.'}
         </ModalInfo>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
@@ -131,14 +132,14 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         <DropRow
           label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
-          value={`${clearBonus(1)}→${clearBonus(MAX_FLOORS)}`}
+          value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
         />
         <DropRow
           label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
           value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
         />
         <DropRow
-          label={isPt ? `Glitchtama ao fechar os ${MAX_FLOORS} andares` : `Glitchtama for clearing all ${MAX_FLOORS} floors`}
+          label={isPt ? `Glitchtama ao limpar o andar ${DUNGEON_MILESTONE_FLOOR}` : `Glitchtama for clearing floor ${DUNGEON_MILESTONE_FLOOR}`}
           value="1"
         />
       </ul>
