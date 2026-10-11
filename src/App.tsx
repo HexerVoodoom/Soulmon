@@ -20,7 +20,7 @@ import { needsWelcomeTour } from './utils/welcomeTour';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant } from './utils/forgeActions';
-import { applyFocusLoot, rollFocusLoot, type FocusLootRequest } from './utils/focusExpedition';
+import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
@@ -6384,6 +6384,16 @@ export default function App() {
                       return committed.accepted ? { ...prev, ...committed.state } : prev;
                     });
                     return { accepted: preview.accepted, items: preview.items, chancePercent: roll.chancePercent };
+                  },
+                  /* Concluir o PROCESSO da Oficina: 1 item, teto de 2/dia dentro do de 8 — a regra é de `applyFocusLoot`. */
+                  onPlanReward: (request: FocusLootRequest) => {
+                    const roll = rollPlanLoot(request.environment);
+                    const preview = applyFocusLoot(gameState, request, roll);
+                    if (preview.accepted) setGameState(prev => {
+                      const committed = applyFocusLoot(prev, request, roll);
+                      return committed.accepted ? { ...prev, ...committed.state } : prev;
+                    });
+                    return { accepted: preview.accepted, items: preview.items, chancePercent: 0 };
                   },
                   review: gameState.review,
                   minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),

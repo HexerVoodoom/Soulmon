@@ -92,6 +92,7 @@ export interface PlayHandlers {
   focusTasks?: Array<{ id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
+  onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;
@@ -379,7 +380,7 @@ export function AreaView(props: AreaViewProps) {
                 seed={props.passeio?.seed}
               />
             )}
-            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} />}
+            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}

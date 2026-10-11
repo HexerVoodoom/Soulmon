@@ -23,7 +23,7 @@ function planejarSessao(container: HTMLElement, mode: 'p25' | 'p50' = 'p25', env
   fireEvent.change(container.querySelector('[data-oficina-plano] input')!, { target: { value: 'Sessão de teste' } });
   fireEvent.click(container.querySelector('[data-oficina-plano] footer button:last-child')!);
   fireEvent.click(q(container, `[data-focus-environment="${environment}"]`)!);
-  if (mode === 'p50') fireEvent.click(Array.from(container.querySelectorAll('[role="radio"]')).find(b => b.textContent === '50 / 10')!);
+  if (mode === 'p50') fireEvent.click(Array.from(container.querySelectorAll('[data-oficina-plano] [role="radio"]')).find(b => b.textContent === '50 / 10')!);
   for (let i = 0; i < 6; i++) fireEvent.click(container.querySelector('[data-oficina-plano] footer button:last-child')!);
   fireEvent.click(q(container, '[data-oficina-save-session]')!);
 }
@@ -124,21 +124,23 @@ describe('Oficina do Foco', () => {
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOPS)).toBeNull();
   });
 
-  it('o fim do Pomodoro não conclui a tarefa antes da sessão; a conclusão só fica no card final', () => {
+  it('o fim do Pomodoro não conclui a tarefa: só o check da lista chama o handler real', () => {
     const onCompleteTask = vi.fn();
     const { container } = render(createElement(OficinaSheet, {
       language: 'pt-BR', todayKey: DIA,
       tasks: [{ id: 't1', name: 'Enviar proposta', completed: false }], onCompleteTask,
     }));
     fireEvent.change(container.querySelector('[data-oficina-plano] input')!, { target: { value: 'Proposta' } });
-    fireEvent.click(Array.from(container.querySelectorAll('button')).find(b => b.textContent === 'Próxima etapa')!);
+    fireEvent.click(q(container, '[data-oficina-next]')!);
     fireEvent.click(q(container, '[data-focus-environment="forest"]')!);
-    fireEvent.change(container.querySelector('[data-oficina-plano] select')!, { target: { value: 't1' } });
-    for (let i = 0; i < 6; i++) fireEvent.click(container.querySelector('[data-oficina-plano] footer button:last-child')!);
+    fireEvent.click(q(container, '[data-oficina-next]')!);
+    fireEvent.click(q(container, '[data-oficina-pick="t1"]')!);
+    for (let i = 0; i < 5; i++) fireEvent.click(q(container, '[data-oficina-next]')!);
     fireEvent.click(q(container, '[data-oficina-save-session]')!);
     fireEvent.click(q(container, '[data-oficina-session-pomodoro]')!);
     act(() => { vi.setSystemTime(new Date(2026, 9, 4, 10, 26, 0)); vi.advanceTimersByTime(1000); });
-    expect(q(container, '[data-oficina-task-complete]')).toBeNull();
+    expect(onCompleteTask).not.toHaveBeenCalled();
+    fireEvent.click(q(container, '[data-oficina-foquei]')!);
     expect(onCompleteTask).not.toHaveBeenCalled();
   });
 
@@ -155,7 +157,7 @@ describe('Oficina do Foco', () => {
     expect(getByText('Próxima etapa')).toBeTruthy();
   });
 
-  it('mantém uma sessão salva em um card expansível, mostra subtópicos, permite editar/excluir e só conclui no final', () => {
+  it('mantém uma sessão salva em um card expansível, mostra subtópicos, permite editar/excluir; concluir a sessão NÃO conclui tarefa', () => {
     const onCompleteTask = vi.fn();
     const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, {
       language: 'pt-BR', todayKey: DIA,
@@ -165,39 +167,78 @@ describe('Oficina do Foco', () => {
     fireEvent.click(getByText('Próxima etapa'));
     fireEvent.click(q(container, '[data-focus-environment="forest"]')!);
     fireEvent.click(getByText('Próxima etapa'));
-    fireEvent.change(container.querySelector('[data-oficina-plano] select')!, { target: { value: 't1' } });
-    expect(container.querySelector('[data-oficina-plano] [data-oficina-task-complete]')).toBeNull();
+    fireEvent.click(q(container, '[data-oficina-pick="t1"]')!);
     for (let i = 0; i < 5; i++) fireEvent.click(getByText('Próxima etapa'));
     expect(container.querySelector('[data-oficina-review]')!.textContent).toContain('Enviar proposta');
-    expect(container.querySelector('[data-oficina-review]')!.textContent).toContain('Revisar valores');
     fireEvent.click(getByText('Salvar sessão'));
     expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Fechar proposta');
     expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Enviar proposta');
     expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Revisar valores');
     fireEvent.click(getByText('Expandir sessão'));
-    expect(container.querySelector('[data-oficina-session-details]')).not.toBeNull();
-    expect(container.querySelector('[data-oficina-session-task-list]')!.textContent).toContain('Revisar valores');
     expect(container.querySelector('[data-oficina-session-details]')!.textContent).toContain('Pomodoro 25/5');
     fireEvent.click(getByText('Editar sessão'));
     expect(container.querySelector('[data-oficina-plano]')).not.toBeNull();
     fireEvent.click(getByText('Cancelar'));
-    expect(container.querySelector('[data-oficina-sessao-salva]')).not.toBeNull();
     fireEvent.click(getByText('Concluir sessão'));
-    expect(onCompleteTask).toHaveBeenCalledWith('t1');
+    expect(onCompleteTask).not.toHaveBeenCalled();
     expect(container.querySelector('[data-oficina-sessao-salva]')!.textContent).toContain('Sessão concluída');
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOP_PLAN)).not.toBeNull();
   });
 
-  it('Brain Dump tem nome e cronômetro próprios; If-Then sugere uma recompensa e a última etapa é revisão', () => {
+  it('Brain Dump tem tempo escolhido e cronômetro; If-Then sugere; a última etapa é a lista', () => {
     const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
     fireEvent.change(getByLabelText('Nome da sessão'), { target: { value: 'Estudar' } });
     for (let i = 0; i < 5; i++) fireEvent.click(getByText('Próxima etapa'));
     expect(container.querySelectorAll('[data-oficina-if-then] input')[1].getAttribute('placeholder')).toContain('jogar videogame');
+    fireEvent.click(q(container, '[data-oficina-suggestion="0"]')!);
+    expect((container.querySelectorAll('[data-oficina-if-then] input')[0] as HTMLInputElement).value).toContain('Se eu sentar');
     fireEvent.click(getByText('Próxima etapa'));
-    expect(container.querySelector('[data-oficina-brain-dump]')!.textContent).toContain('Brain Dump');
+    expect(q(container, '[data-oficina-dump-clock]')!.textContent).toBe('05:00');
+    fireEvent.click(Array.from(container.querySelectorAll('[data-oficina-brain-dump] [role="radio"]')).find(b => b.textContent === '3 min')!);
+    expect(q(container, '[data-oficina-dump-clock]')!.textContent).toBe('03:00');
+    fireEvent.click(q(container, '[data-oficina-dump-start]')!);
+    act(() => { vi.advanceTimersByTime(61_000); });
+    expect(q(container, '[data-oficina-dump-clock]')!.textContent).toBe('01:59');
+    act(() => { vi.advanceTimersByTime(130_000); });
+    expect(q(container, '[data-oficina-dump-fim]')).not.toBeNull();
     fireEvent.click(getByText('Próxima etapa'));
     expect(container.querySelector('[data-oficina-review]')).not.toBeNull();
-    expect(container.textContent).not.toContain('temporary for this session');
+  });
+
+  it('fluxo interativo: 2 min, Eisenhower e sapo montam a lista em ordem; o check conclui pelo handler real e a sessão concluída paga UMA vez', () => {
+    const onCompleteTask = vi.fn();
+    const onPlanReward = vi.fn().mockReturnValue({ accepted: true, chancePercent: 0, items: [{ kind: 'material', id: 'moss', icon: '🌿', namePt: 'Musgo', nameEn: 'Moss' }] });
+    const tasks = [{ id: 'a', name: 'Alfa', completed: false }, { id: 'b', name: 'Beta', completed: false }, { id: 'c', name: 'Gama', completed: false }];
+    const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, { language: 'en-US', todayKey: DIA, tasks, onCompleteTask, onPlanReward }));
+    fireEvent.change(getByLabelText('Session name'), { target: { value: 'Deep work' } });
+    fireEvent.click(getByText('Next step'));
+    fireEvent.click(q(container, '[data-focus-environment="shore"]')!);
+    fireEvent.click(getByText('Next step'));
+    fireEvent.click(q(container, '[data-oficina-pick="c"]')!);
+    expect(q(container, '[data-oficina-pick="c"]')!.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(getByText('Next step'));
+    fireEvent.change(q(container, '[data-oficina-quadrant="b"]')!, { target: { value: 'schedule' } });
+    fireEvent.change(q(container, '[data-oficina-quadrant="a"]')!, { target: { value: 'do' } });
+    expect(Array.from(container.querySelectorAll('[data-oficina-matrix-order] li')).map(li => li.textContent!.slice(0, 4))).toEqual(['Alfa', 'Beta']);
+    fireEvent.click(getByText('Next step'));
+    fireEvent.click(q(container, '[data-oficina-pick="b"]')!);
+    fireEvent.click(getByText('Skip'));
+    fireEvent.click(getByText('Skip'));
+    fireEvent.click(getByText('Skip'));
+    expect(Array.from(container.querySelectorAll('[data-oficina-review-item]')).map(li => li.getAttribute('data-oficina-review-item'))).toEqual(['c', 'b', 'a']);
+    fireEvent.click(getByText('Save session'));
+    expect(onCompleteTask).not.toHaveBeenCalled();
+    fireEvent.click(q(container, '[data-oficina-check="c"]')!);
+    expect(onCompleteTask).toHaveBeenCalledTimes(1);
+    expect(onCompleteTask).toHaveBeenCalledWith('c');
+    expect(q(container, '[data-oficina-check="c"]')!.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(getByText('Complete session'));
+    expect(onPlanReward).toHaveBeenCalledTimes(1);
+    expect(onPlanReward.mock.calls[0][0]).toMatchObject({ environment: 'shore', eventId: expect.stringMatching(/^plan:foco-/) });
+    expect(q(container, '[data-oficina-plan-loot]')!.textContent).toContain('Moss');
+    expect(q(container, '[data-oficina-concluidas]')!.textContent).toContain('Deep work');
+    fireEvent.click(q(container, '[data-oficina-new-session]')!);
+    expect(q(container, '[data-oficina-plano]')).not.toBeNull();
   });
 
   it.each(FOCO_TECNICAS.map(t => [t.id, t] as const))('card "%s": responde ao toque (abre a explicação com a fonte e fecha ao tocar de novo)', (id, t) => {

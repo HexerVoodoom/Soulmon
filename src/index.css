@@ -5785,6 +5785,8 @@ select:focus-visible {
   .sm2-celebrate { display: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }
+  /* Oficina do Foco: a barra de etapas muda de largura sem deslizar. */
+  .sm-oficina-bar { transition: none !important; }
   /* Tour do corvo: o corvo fica parado, os cartões esperam o toque do mesmo jeito. */
   .sm-corvo-bob { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
@@ -8377,3 +8379,5 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   text-shadow: 0 0 2px var(--sm2-bg, #071413);
   pointer-events: none;
 }
+/* Oficina do Foco (10/10/2026): barra de etapas do planejamento. Sem movimento: regra no bloco canônico de movimento reduzido. */
+.sm-oficina-bar { transition: width 180ms ease; }

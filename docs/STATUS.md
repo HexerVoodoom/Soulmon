@@ -19,6 +19,12 @@
 > - **C. Finanças**: SEM categoria nova (exigiria números do dono); vive em `Work`. Atalho "Pagar contas" no CreateModal (`data/taskPresets.ts`): o usuário marca as contas, vira TAREFA com subitens, repete a cada 30 dias da CONCLUSÃO (`repeatEveryDays`; a próxima nasce `someday` + `wakeOn`, acorda na virada). Peso: `effortWithSteps` em `taskModel.ts` (teto `min(3, nº de subitens)` com ≥2; piso sugerido idêntico na criação) — vale em `registeredForDay`/virada/check-in/progresso/`completeTask` (`taskEffort`).
 > - **D. Comida premium** (`utils/premiumFood.ts`): 1 por tarefa com ≥3 subitens TODOS feitos; tetos 1/dia e 3/semana (dia do jogador); uso +5 de energia (nunca acima das barras; recusa com energia cheia; 1 uso/dia). Campo novo no save: `premiumFood`. Estrelinha em CSS (`.sm3-item-arte[data-premium]`).
 > - Decisões abertas para o dono: ver relatório da sessão (premium em hábito com etapas? tetos 1/3? Work = Harmonia?).
+> ## 10/10/2026 — Oficina do Foco: a sessão em ETAPAS interativas (branch local do worktree, sem push)
+>
+> - **Pedido do dono:** as técnicas deixam de ser só guia. Etapas puláveis (preparar → ritmo → 2 minutos com picker → Eisenhower com ordem ao vivo → sapo → se-então → brain dump com tempo) terminam numa **lista organizada** e na ativação do Pomodoro. Regra pura em `utils/focoSessao.ts` (+ teste); UI `components/play/OficinaPlano.tsx` (viaja no chunk lazy da Oficina, fora da entrada).
+> - **Conclusão real:** o check da lista chama `handleToggleTask` (prop `onCompleteFocusTask`); a Home nunca é reordenada. "Concluir sessão" antes concluía todas as tarefas; **não conclui mais nenhuma**.
+> - **Recompensa extra:** `onPlanReward` → `rollPlanLoot` + `applyFocusLoot` com recibo `plan:<id>`: 1 item, 1×/sessão, máx. 2/dia (`FOCUS_PLAN_DAILY_CAP`), dentro do teto de 8. Sem campo novo no save (fuzz2 intocado).
+> - **Depende do dono:** rever o teto de 2 sessões premiadas/dia e a exigência de ≥1 tarefa na lista para concluir.
 
 > ## 08/10/2026 — Fala do pet mais alta + display "+N EXP" no ganho de XP
 >
