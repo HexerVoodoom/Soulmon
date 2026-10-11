@@ -116,8 +116,9 @@ export function equipAttrBonus(raw: unknown, forge?: unknown): AttrBonus {
  * (`combatantAt`) já aplica DEF (o inimigo precisa de mais golpes) e SPD (o golpe sai mais cedo), sem mudar o motor.
  * Arena e Pesadelo seguem no canal escalar (`equipScalar`): não mudam.
  */
-export function dungeonAttrBonus(talentPve: number, raw: unknown, forge?: unknown): AttrBonus {
-  return combinedAttrBonus({ talent: { atk: talentPve }, equipment: equipAttrBonus(raw, forge) });
+export function dungeonAttrBonus(talentPve: number | Partial<AttrBonus>, raw: unknown, forge?: unknown): AttrBonus {
+  // Número = o canal ATK sozinho (legado); objeto = os três canais do talento (11/10/2026: `tal-pve-02` é DEF e `tal-pve-06` é SPD).
+  return combinedAttrBonus({ talent: typeof talentPve === 'number' ? { atk: talentPve } : talentPve, equipment: equipAttrBonus(raw, forge) });
 }
 
 /** O mesmo bônus como UM número (a soma dos três): é a parcela de equipamento do canal da fenda (`combinedBonus`). */

@@ -5977,3 +5977,6 @@ de conserto silencioso.
 **Não faz.** Não grava e-mail, não consulta a nuvem, não pede termos nem as 26 perguntas (a demo pula o onboarding — *o dono deve conferir se quer o aceite dos Termos/18+ antes da demo*), não entra em ranking.
 
 **Régua.** `utils/demoMode.test.ts`, `utils/demoMode.contract.test.ts`, `components/nav/AreaView.demo.render.test.tsx`, `components/SoulmonOnboarding.demoLocal.render.test.tsx`, `contexts/GameStateContext.demoLocal.test.tsx`.
+
+- **Talentos — as "skills" da árvore (11/10/2026, REGISTRO §29).** A árvore não mudou. `tal-pve-01/02/06` passam a ser ATAQUE/DEFESA/RITMO da Fenda (`TalentEffect.combatBonus.attr`, `talentPveAttrBonus` em `src/utils/talents.ts`, espelho `functions/api/_talents.js`): canais próprios na Masmorra (`useDungeonBonus` → `dungeonAttrBonus`), e Arena/Pesadelo leem o TOTAL (`talentBonus`) como um número só — a soma dos canais é igual ao total de antes. Teto único de 5% intacto. Texto: `talentCopy.ts` abre pelo efeito; `talentEffectLine` dá "Agora / No grau máximo" no modal; `TalentTree` mostra "O que a sua árvore dá agora" (já somado ao equipamento). Magnitudes de cura/escudo NÃO mudaram (o gate da Masmorra, `talents.efeitos.test.ts`, mede ~0,35 andar contra o teto de 0,4).
+

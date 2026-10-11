@@ -32,8 +32,13 @@ export type TalentPath = 'pvp' | 'pve' | 'comercio';
 export type AttrKey = 'atk' | 'def' | 'spd';
 
 export type TalentEffect =
-  /** Soma `perRank × grau` ao canal de bônus de combate do `scope`. Só PvP no Duelo; só PvE nas lutas da fenda. */
-  | { readonly kind: 'combatBonus'; readonly scope: 'pvp' | 'pve' | 'nightmare'; readonly perRank: number; /** PvP: o canal (ATK/DEF/SPD). */ readonly attr?: AttrKey }
+  /**
+   * Soma `perRank × grau` ao canal de bônus de combate do `scope`. Só PvP no Duelo; só PvE nas lutas da fenda.
+   * `attr` = o CANAL (ATK = dano dado, DEF = dano recebido, SPD = ritmo). No PvP vale sempre; no PvE (11/10/2026) vale na MASMORRA
+   * (`talentPveAttrBonus`, o mesmo que o equipamento já fazia: `useDungeonBonus`), enquanto a Arena e o Pesadelo leem o TOTAL do PvE
+   * como um número só (`talentBonus`) — a regra (e) do combate v3, que vale para talento e equipamento.
+   */
+  | { readonly kind: 'combatBonus'; readonly scope: 'pvp' | 'pve' | 'nightmare'; readonly perRank: number; readonly attr?: AttrKey }
   /** Soma `perRank × grau` ao rendimento da torcida do Duelo (1 + soma, até `CHEER_SCALE_MAX`). Só o seu lado, só quando você torce. */
   | { readonly kind: 'cheerBoost'; readonly perRank: number }
   /** Comércio: refazer UM ponto (o que você escolher) em vez da árvore toda. Só moeda GANHA (Bits). */
@@ -134,11 +139,11 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'allAttr', perRank: CROWN_STEP }, requires: [req('tal-pvp-05', 3), req('tal-pvp-04', 1), req('tal-pvp-06', 1)] },
   // ── PvE ──────────────────────────────────────────────────────────────────
   { id: 'tal-pve-01', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
-  { id: 'tal-pve-02', path: 'pve', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP }, requires: [req('tal-pve-01', 2)] },
+  { id: 'tal-pve-02', path: 'pve', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP, attr: 'def' }, requires: [req('tal-pve-01', 2)] },
   { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'healBoost', perRank: HEAL_BOOST_STEP }, requires: [req('tal-pve-01', 2)] },
   { id: 'tal-pve-04', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'riftBits', perRank: RIFT_BITS_STEP }, requires: [req('tal-pve-03', 1)] },
   { id: 'tal-pve-05', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'nightmare', perRank: NIGHTMARE_STEP }, requires: [req('tal-pve-03', 1)] },
-  { id: 'tal-pve-06', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'pve', perRank: ARC_STEP }, requires: [req('tal-pve-02', 2)] },
+  { id: 'tal-pve-06', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'pve', perRank: ARC_STEP, attr: 'spd' }, requires: [req('tal-pve-02', 2)] },
   { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'startShield', perRank: START_SHIELD_STEP }, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
   // ── Comércio (só preço e ganho de moeda GANHA; nunca % de combate) ──────
   { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'equipPrice' } },
@@ -296,6 +301,21 @@ export function talentAttrBonus(picks: unknown, bondLevel: unknown): AttrBonus {
     const e = TALENT_BY_ID.get(id)!.effect;
     if (e.kind === 'combatBonus' && e.scope === 'pvp' && e.attr) out[e.attr] += e.perRank * rank;
     if (e.kind === 'allAttr') { out.atk += e.perRank * rank; out.def += e.perRank * rank; out.spd += e.perRank * rank; }
+  }
+  return out;
+}
+
+/**
+ * PvE por ATRIBUTO (11/10/2026): a parcela do talento em cada canal na MASMORRA — `tal-pve-01` (ATK), `tal-pve-02` (DEF) e `tal-pve-06`
+ * (SPD). O Pesadelo (`tal-pve-05`) não entra: a Masmorra não o tem. Sem `attr` o nó vale ATK. Inválido para o Vínculo = 0 nos três. Quem soma
+ * com o equipamento e corta nos 5% é `combinedAttrBonus` (via `dungeonAttrBonus`); a SOMA dos três canais é a mesma de `talentBonus('pve')`.
+ */
+export function talentPveAttrBonus(picks: unknown, bondLevel: unknown): AttrBonus {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!isValidPicks(picks, bondLevel)) return out;
+  for (const [id, rank] of ranksOf(picks)) {
+    const e = TALENT_BY_ID.get(id)!.effect;
+    if (e.kind === 'combatBonus' && e.scope === 'pve') out[e.attr ?? 'atk'] += e.perRank * rank;
   }
   return out;
 }

@@ -12,7 +12,7 @@ vi.setConfig({ testTimeout: 300_000 });
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  TALENT_BY_ID, isPickable, isValidPicks, talentAttrBonus, talentBonus, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield,
+  TALENT_BY_ID, isPickable, isValidPicks, talentAttrBonus, talentPveAttrBonus, talentBonus, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield,
   START_ENERGY_MAX, DOT_RESIST_MAX, HEAL_BOOST_MAX, RIFT_BITS_MAX, START_SHIELD_MAX,
 } from './talents';
 import { combinedAttrBonus, combinedBonus, COMBAT_BONUS_CAP } from './combate/bonus';
@@ -24,6 +24,7 @@ import { specialOf, cleanStartEnergy, cleanDotResist, cleanStartShield, SPECIAL_
 import { simulateDungeonRunV3 } from './dungeonFight';
 import { REFERENCE_BUILD_NAMES } from './combate/level';
 import { riftBitsWith } from '../contexts/useTalentBonus';
+import { dungeonAttrBonus } from './equipment';
 
 const rep = (id: string, n: number) => Array<string>(n).fill(id);
 const P4 = [...rep('tal-pvp-01', 2), ...rep('tal-pvp-02', 2), ...rep('tal-pvp-03', 2)];
@@ -33,6 +34,43 @@ const PVE = [...rep('tal-pve-01', 2), ...rep('tal-pve-02', 2), 'tal-pve-03'];
 describe('os nós saíram de "pendente"', () => {
   it('nenhum nó é pendente e todos os 21 se compram', () => {
     for (const n of TALENT_BY_ID.values()) { expect(n.effect.kind, n.id).not.toBe('pendente'); expect(isPickable(n)).toBe(true); }
+  });
+});
+
+describe('PvE por atributo (11/10/2026): `Muro da fenda` é DEFESA e `Arco de luz` é RITMO, não mais três cópias do mesmo ataque', () => {
+  const CHEIO = [...rep('tal-pve-01', 4), ...rep('tal-pve-02', 4), 'tal-pve-03', 'tal-pve-05', ...rep('tal-pve-06', 3)];
+  it('cada nó de combate da fenda tem o SEU canal: 01 ATK, 02 DEF, 06 SPD (e o Pesadelo fica de fora)', () => {
+    const e = (id: string) => TALENT_BY_ID.get(id)!.effect as { kind: string; scope: string; attr?: string };
+    expect(e('tal-pve-01').attr ?? 'atk').toBe('atk');
+    expect(e('tal-pve-02').attr).toBe('def');
+    expect(e('tal-pve-06').attr).toBe('spd');
+    const b = talentPveAttrBonus(CHEIO, 20);
+    expect(b.atk).toBeCloseTo(4 * 0.006, 12);
+    expect(b.def).toBeCloseTo(4 * 0.006, 12);
+    expect(b.spd).toBeCloseTo(3 * 0.004, 12);
+  });
+  it('a SOMA dos canais é o TOTAL que a Arena e o Pesadelo leem (um número só) — nada se perde nem se duplica', () => {
+    const POUCO = [...rep('tal-pve-01', 2), ...rep('tal-pve-02', 2), 'tal-pve-03', 'tal-pve-05', 'tal-pve-06']; // abaixo do teto de 5%
+    const b = talentPveAttrBonus(POUCO, 20);
+    expect(b.atk + b.def + b.spd).toBeCloseTo(talentBonus(POUCO, 20, 'pve'), 12);
+    // O nó do Pesadelo não entra nos canais da Masmorra (ela não tem Pesadelo), mas soma no total do Pesadelo.
+    expect(talentBonus(POUCO, 20, 'nightmare')).toBeCloseTo(talentBonus(POUCO, 20, 'pve') + 0.004, 12);
+    // Cheio, o total do talento sozinho já passa dos 5%: o corte é do canal único, nunca daqui.
+    expect(talentBonus(CHEIO, 20, 'pve')).toBe(COMBAT_BONUS_CAP);
+  });
+  it('vetor inválido vale 0 nos três canais; nenhum nó de PvE mexe no canal do PvP e vice-versa', () => {
+    expect(talentPveAttrBonus(['tal-pve-02'], 20)).toEqual({ atk: 0, def: 0, spd: 0 }); // sem o pré-requisito
+    expect(talentPveAttrBonus(null, 20)).toEqual({ atk: 0, def: 0, spd: 0 });
+    expect(talentPveAttrBonus(P4, 20)).toEqual({ atk: 0, def: 0, spd: 0 });
+    expect(talentAttrBonus(CHEIO, 20)).toEqual({ atk: 0, def: 0, spd: 0 });
+  });
+  it('o teto único de 5% vale na Masmorra com os três canais do talento + equipamento (a forma é mantida, a soma é cortada)', () => {
+    const t = talentPveAttrBonus(CHEIO, 20);
+    const eq = { owned: ['eq-nucleo-t3', 'eq-carapaca-t3', 'eq-rastro-t3'], equipped: { nucleo: 'eq-nucleo-t3', carapaca: 'eq-carapaca-t3', rastro: 'eq-rastro-t3' }, fragments: 0 };
+    const b = dungeonAttrBonus(t, eq);
+    expect(b.atk + b.def + b.spd).toBeLessThanOrEqual(COMBAT_BONUS_CAP + 1e-12);
+    expect(b.def).toBeGreaterThan(0); expect(b.spd).toBeGreaterThan(0); // DEF e SPD chegam ao motor da Masmorra
+    expect(dungeonAttrBonus(0.02, eq)).toEqual(dungeonAttrBonus({ atk: 0.02 }, eq)); // número = ATK (legado)
   });
 });
 

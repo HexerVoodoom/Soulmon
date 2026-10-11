@@ -30,11 +30,11 @@ export const PICKABLE = {
   'tal-pvp-06': { maxRank: 3, kind: 'dotResist', perRank: 0.06, requires: [req('tal-pvp-02', 2)] },
   'tal-pvp-07': { maxRank: 1, kind: 'allAttr', perRank: 0.002, requires: [req('tal-pvp-05', 3), req('tal-pvp-04', 1), req('tal-pvp-06', 1)] },
   'tal-pve-01': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
-  'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006, requires: [req('tal-pve-01', 2)] },
+  'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', attr: 'def', perRank: 0.006, requires: [req('tal-pve-01', 2)] },
   'tal-pve-03': { maxRank: 3, kind: 'healBoost', perRank: 0.005, requires: [req('tal-pve-01', 2)] },
   'tal-pve-04': { maxRank: 3, kind: 'riftBits', perRank: 0.03, requires: [req('tal-pve-03', 1)] },
   'tal-pve-05': { maxRank: 3, kind: 'combatBonus', scope: 'nightmare', perRank: 0.004, requires: [req('tal-pve-03', 1)] },
-  'tal-pve-06': { maxRank: 3, kind: 'combatBonus', scope: 'pve', perRank: 0.004, requires: [req('tal-pve-02', 2)] },
+  'tal-pve-06': { maxRank: 3, kind: 'combatBonus', scope: 'pve', attr: 'spd', perRank: 0.004, requires: [req('tal-pve-02', 2)] },
   'tal-pve-07': { maxRank: 1, kind: 'startShield', perRank: 0.01, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
   'tal-com-01': { maxRank: 3, kind: 'equipPrice' },
   'tal-com-02': { maxRank: 3, kind: 'fragmentGain', requires: [req('tal-com-01', 2)] },
@@ -143,6 +143,21 @@ export function talentAttrBonus(picks, bondLevel) {
     const n = PICKABLE[id];
     if (n.kind === 'combatBonus' && n.scope === 'pvp' && n.attr) out[n.attr] += n.perRank ?? 0;
     if (n.kind === 'allAttr') { out.atk += n.perRank ?? 0; out.def += n.perRank ?? 0; out.spd += n.perRank ?? 0; }
+  }
+  return out;
+}
+
+/**
+ * PvE por ATRIBUTO (11/10/2026, so a MASMORRA le): `tal-pve-01` ATK, `tal-pve-02` DEF, `tal-pve-06` SPD. Espelho de `talentPveAttrBonus`.
+ * O servidor nao usa (a fenda e local), mas a paridade trava a forma. Sem `attr` o no vale ATK.
+ * @param {unknown} picks @param {unknown} bondLevel @returns {{ atk: number, def: number, spd: number }}
+ */
+export function talentPveAttrBonus(picks, bondLevel) {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!isValidPicks(picks, bondLevel)) return out;
+  for (const id of picks) {
+    const n = PICKABLE[id];
+    if (n.kind === 'combatBonus' && n.scope === 'pve') out[n.attr ?? 'atk'] += n.perRank ?? 0;
   }
   return out;
 }
