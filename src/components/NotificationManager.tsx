@@ -5,8 +5,10 @@ import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 // WP3.4 — dono único do texto e do horário das notificações agendadas. Este
 // import é a fronteira que faltava: as três árvores (cliente, worker, cron)
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
-import { pushCopy, sleepReminderCopy, eveningCopy } from '../../functions/api/_pushCopy.js';
+import { pushCopy, sleepReminderCopy, eveningCopy, mealInviteCopy, mealPushKind } from '../../functions/api/_pushCopy.js';
 import { sleepReminderAt } from '../utils/restWindow';
+import { MEAL_KEYS, inRestArc, parseHHMM, restArc, serverMeals } from '../utils/mealRhythm';
+import type { MealRhythmSettings } from '../utils/mealRhythm';
 import {
   checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms,
   unsubscribeFromPush, registerForPushNotifications, unregisterFromPushNotifications,
@@ -36,6 +38,10 @@ interface NotificationManagerProps {
   /** WP3.11 — a janela de descanso escolhida pela pessoa. Ausente = sem
    *  lembrete de deitar (a mecânica é opt-in inteira). */
   restWindow?: { start: string; end: string } | null;
+  /** Ritmo das refeições. O PUSH só existe com `push: true` (opt-in) — e
+   *  quando existe, os convites genéricos de 10h/16h (e o aviso das 20h) CEDEM
+   *  a vez a ele: somar seria a quarta visita. Ver `functions/api/_mealRhythm.js`. */
+  mealRhythm?: MealRhythmSettings;
   /** WP3.11 — o pet está dormindo? Já deitou: não há o que lembrar. */
   isSleeping?: boolean;
   /** #23 (QA geral 21/09/2026) — amarra a inscrição de push à conta, para que
@@ -57,6 +63,7 @@ export function NotificationManager({
   petName,
   bornAt,
   restWindow,
+  mealRhythm,
   isSleeping = false,
   saveId,
   language,
@@ -81,6 +88,15 @@ export function NotificationManager({
   restWindowRef.current = restWindow;
   const isSleepingRef = useRef(isSleeping);
   isSleepingRef.current = isSleeping;
+  /* O push das refeições é OPT-IN (`push` começa desligado) e exige o mesmo
+     `enabled` (permissão) das demais notificações. */
+  const mealPush = enabled && mealRhythm?.push === true;
+  const mealPushRef = useRef(mealPush);
+  mealPushRef.current = mealPush;
+  /* O que viaja para o servidor — `null` quando desligado (nada do ritmo sai do
+     aparelho). Chave estável para o efeito de inscrição reenviar só quando muda. */
+  const mealsPayload = mealPush ? serverMeals(mealRhythm, restWindow, new Date()) : null;
+  const mealsKey = JSON.stringify(mealsPayload);
 
   // Push subscription — register/unregister when notifications toggle. Native
   // Android uses FCM (the WebView has no Web Push support); browsers/PWA use
@@ -92,10 +108,10 @@ export function NotificationManager({
       if (isNativeAndroid) {
         registerForPushNotifications(petName, language, (title, body) => {
           toast(title, { description: body });
-        }, saveId);
+        }, saveId, mealsPayload);
       } else {
         // WP1.17 — a idade vai junto: é ela que dá voz própria aos dias 1 e 2.
-        subscribeToPush(petName, language, bornAt, saveId);
+        subscribeToPush(petName, language, bornAt, saveId, mealsPayload);
       }
     } else {
       if (isNativeAndroid) {
@@ -106,7 +122,7 @@ export function NotificationManager({
         unsubscribeFromPush();
       }
     }
-  }, [enabled, petName, language, saveId]);
+  }, [enabled, petName, language, saveId, mealsKey]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {
@@ -169,6 +185,9 @@ export function NotificationManager({
          faixa noturna é onde o produto já removeu o nudge das 21h pelo mesmo
          motivo. Quem não configurou janela continua recebendo. */
       if (restWindowRef.current) return;
+      /* O jantar do ritmo das refeições (padrão 20h) é o convite da noite para
+         quem ligou: este aviso cede, senão seriam dois toques no mesmo horário. */
+      if (mealPushRef.current) return;
 
       lastEveningWarnDate.current = today;
       // A copy mora no DONO ÚNICO (`_pushCopy.js`). Ela era inline aqui, e foi
@@ -198,7 +217,16 @@ export function NotificationManager({
       // O nudge das 21h saiu: a auditoria de carga do plano conclui que nada
       // deve pedir uma quarta visita ao app, e cobrar tarefa na hora de dormir
       // é o oposto de um companheiro.
-      if (completedSteps < totalRequired) {
+      /* RITMO DAS REFEIÇÕES (opt-in): os convites genéricos de 10h/16h CEDEM a
+         vez aos de refeição — o teto de `PUSH_DAILY_CAP` é estrutural. O "boa
+         noite" das 22h também cede quando há janela de descanso (o lembrete de
+         deitar já fecha a noite), igual ao worker (`cedeAoRitmo`). */
+      const ritmo = mealPushRef.current;
+      if (ritmo) {
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-10' }).catch(() => {});
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-16' }).catch(() => {});
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
+      } else if (completedSteps < totalRequired) {
         if (nudge10) SoulmonAlarm.scheduleAlarm({ id: nudge10.tag, title: nudge10.title, body: nudge10.body, scheduledTime: '10:00' }).catch(() => {});
         if (nudge16) SoulmonAlarm.scheduleAlarm({ id: nudge16.tag, title: nudge16.title, body: nudge16.body, scheduledTime: '16:00' }).catch(() => {});
         SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
@@ -208,13 +236,39 @@ export function NotificationManager({
         SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
       }
 
-      if (boaNoite) {
+      if (ritmo && restWindowRef.current && boaNoite) {
+        SoulmonAlarm.cancelAlarm({ id: boaNoite.tag }).catch(() => {});
+      } else if (boaNoite) {
         SoulmonAlarm.scheduleAlarm({
           id: boaNoite.tag,
           title: boaNoite.title,
           body: boaNoite.body,
           scheduledTime: '22:00',
         }).catch(() => {});
+      }
+    }
+
+    /* Alarmes das refeições (APK): HORA LOCAL do aparelho, direto no
+       AlarmManager — funcionam com o app fechado e sem servidor. A mesma TAG
+       (`meal-<refeição>`) do FCM do worker faz a segunda a chegar SUBSTITUIR a
+       primeira (ver `AlarmReceiver`). Hora dentro da janela de descanso não é
+       agendada. O texto é sorteado pelo dia, igual ao worker; como o alarme
+       repete amanhã com o mesmo corpo, ele é reagendado a cada abertura. */
+    if (Capacitor.isNativePlatform()) {
+      const lang = language === 'pt-BR' ? 'pt-BR' : 'en-US';
+      // Dia LOCAL no mesmo formato do worker (`dayKeyLocal`): o alarme e o FCM do mesmo dia sorteiam o mesmo convite.
+      const agora = new Date();
+      const dia = new Date(agora.getTime() - agora.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+      const arco = restArc(restWindowRef.current);
+      for (const meal of MEAL_KEYS) {
+        const hhmm = mealRhythm?.times?.[meal];
+        const copia = mealInviteCopy(meal, mealPushKind(meal, dia), petName, lang);
+        const dentroDoDescanso = hhmm ? inRestArc(parseHHMM(hhmm), arco) : false;
+        if (mealPushRef.current && hhmm && !dentroDoDescanso) {
+          SoulmonAlarm.scheduleAlarm({ id: copia.tag, title: copia.title, body: copia.body, scheduledTime: hhmm }).catch(() => {});
+        } else {
+          SoulmonAlarm.cancelAlarm({ id: copia.tag }).catch(() => {});
+        }
       }
     }
 
@@ -271,7 +325,7 @@ export function NotificationManager({
       const copia = (h: number) => pushCopy(h, petName, ispt ? 'pt-BR' : 'en-US');
 
       // 10:00 — incomplete tasks nudge
-      if (hh === 10 && completedSteps < totalRequired && lastNudge10Date.current !== today) {
+      if (hh === 10 && !mealPushRef.current && completedSteps < totalRequired && lastNudge10Date.current !== today) {
         const c = copia(10);
         if (c) {
           lastNudge10Date.current = today;
@@ -280,7 +334,7 @@ export function NotificationManager({
       }
 
       // 16:00 — incomplete tasks nudge
-      if (hh === 16 && completedSteps < totalRequired && lastNudge16Date.current !== today) {
+      if (hh === 16 && !mealPushRef.current && completedSteps < totalRequired && lastNudge16Date.current !== today) {
         const c = copia(16);
         if (c) {
           lastNudge16Date.current = today;
@@ -289,7 +343,7 @@ export function NotificationManager({
       }
 
       // 22:00 — goodnight (always fires regardless of tasks)
-      if (hh === 22 && lastGoodnightDate.current !== today) {
+      if (hh === 22 && !(mealPushRef.current && restWindowRef.current) && lastGoodnightDate.current !== today) {
         const c = copia(22);
         if (c) {
           lastGoodnightDate.current = today;
@@ -301,7 +355,7 @@ export function NotificationManager({
     checkPetNotifications();
     const interval = setInterval(checkPetNotifications, 60000);
     return () => clearInterval(interval);
-  }, [enabled, petName, language, completedSteps, totalRequired]);
+  }, [enabled, petName, language, completedSteps, totalRequired, mealsKey, mealRhythm?.times, restWindow?.start, restWindow?.end]);
 
   return null;
 }

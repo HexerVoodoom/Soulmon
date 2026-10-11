@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
 import { authHeaders } from './auth';
 import { dayKeyToIso } from './playerDay';
+import type { ServerMeals } from './mealRhythm';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -152,7 +153,10 @@ export const subscribeToPush = async (
   /** #23 (QA geral 21/09/2026) — o `saveId` amarra a inscrição à conta para
    *  que apagar a conta possa apagar o push no servidor também. Opcional: sem
    *  ele o body é o de sempre. */
-  saveId?: string | null
+  saveId?: string | null,
+  /** Ritmo das refeições — só com o aviso LIGADO (`serverMeals` devolve `null`
+   *  senão, e aí nada do ritmo vai para o servidor). */
+  meals?: ServerMeals | null,
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (!webNotificationGranted()) return false;
@@ -177,6 +181,7 @@ export const subscribeToPush = async (
       // converter, a copy dos dias 1/2 nunca chegava a ninguém.
       bornAt: dayKeyToIso(bornAt) ?? undefined,
       ...(saveId ? { saveId } : {}),
+      ...(meals ? { meals } : {}),
     };
 
     // `Authorization` quando há sessão (QA rodada 2, segurança §2): o
@@ -230,6 +235,7 @@ let fcmListenersBound = false;
 let fcmPetName = '';
 let fcmLanguage: 'pt-BR' | 'en-US' = 'en-US';
 let fcmSaveId: string | null = null;
+let fcmMeals: ServerMeals | null = null;
 
 export const registerForPushNotifications = async (
   petName: string,
@@ -237,11 +243,14 @@ export const registerForPushNotifications = async (
   onForegroundNotification?: (title: string, body: string) => void,
   /** #23 — ver `subscribeToPush`. */
   saveId?: string | null,
+  /** Ritmo das refeições — ver `subscribeToPush`. */
+  meals?: ServerMeals | null,
 ): Promise<boolean> => {
   if (Capacitor.getPlatform() !== 'android') return false;
   fcmPetName = petName;
   fcmLanguage = language;
   fcmSaveId = saveId ?? null;
+  fcmMeals = meals ?? null;
 
   try {
     const current = await PushNotifications.checkPermissions();
@@ -265,6 +274,7 @@ export const registerForPushNotifications = async (
           body: JSON.stringify({
             token: token.value, petName: fcmPetName, language: fcmLanguage,
             ...(fcmSaveId ? { saveId: fcmSaveId } : {}),
+            ...(fcmMeals ? { meals: fcmMeals } : {}),
           }),
         })).catch((err) => console.error('FCM token upload failed:', err));
       });

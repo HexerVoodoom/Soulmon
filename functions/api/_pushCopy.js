@@ -21,6 +21,8 @@
 // Toda cópia daqui é escrita sob essa regra. Se um horário ou um texto mudar,
 // muda AQUI. `workers/pushCopy.parity.test.js` trava as três árvores.
 
+import { MEAL_KEYS, seededIndex } from './_mealRhythm.js';
+
 /**
  * Horas (BRT, UTC-3) em que existe notificação agendada.
  * 21h saiu de propósito: nada deve pedir uma quarta visita ao app, e cobrar
@@ -191,4 +193,81 @@ export function pushCopy(brtHour, petName, language, ageDays) {
     };
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// O RITMO DAS REFEIÇÕES — convites de depois do café, do almoço e do jantar.
+//
+// UMA fonte de texto para o push (Web Push + FCM, via worker), para o alarme do
+// APK e para o cartão que aparece DENTRO do app: o cartão e o push dizem a mesma
+// coisa em tons que só diferem no que o app sabe (o push não sabe se há cocô na
+// tela; o cartão sabe). A TAG é uma por refeição (`meal-<refeição>`) — é ela
+// que impede a duplicata entre o alarme local e o FCM (CLAUDE.md, linha de push).
+//
+// Regras de escrita (docs/NARRATIVA-E-UNIVERSO.md): a criatura nota o que está
+// ao alcance AGORA e convida; nunca sente falta, nunca cobra, nunca relata
+// desempenho (L2/L11), nunca diz "você perdeu" nem conta nada que desce (L4/L6).
+// "Fome" não aparece como NECESSIDADE dela — comida é ocasião (§5.3) e a criatura
+// que passa fome por ausência é a culpa pela porta dos fundos. Ela está PERTO da
+// pastinha; a pessoa decide o resto.
+// ---------------------------------------------------------------------------
+
+/** Os tipos de convite. `poop` só existe no cartão do app (o push não sabe se há cocô). */
+export const MEAL_INVITE_KINDS = ['snack', 'poop', 'pet', 'tenSeconds'];
+
+/** O que um PUSH pode sortear: só o que é verdade sem olhar o save. */
+export const MEAL_PUSH_KINDS = ['snack', 'pet', 'tenSeconds'];
+
+/** As tags de toda a família — uma por refeição. */
+export const MEAL_PUSH_TAGS = ['meal-breakfast', 'meal-lunch', 'meal-dinner'];
+
+const SNACK_BODY = {
+  breakfast: { en: 'Breakfast crumbs, if there are any.', pt: 'Migalhas de café da manhã, se tiver.' },
+  lunch: { en: "A midday bite, if there's one in there.", pt: 'Uma beliscada de meio-dia, se tiver alguma aí.' },
+  dinner: { en: "An evening bite, if there's one in there.", pt: 'Uma beliscada da noite, se tiver alguma aí.' },
+};
+
+export function mealInviteCopy(meal, kind, petName, language) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  const tag = `meal-${MEAL_KEYS.includes(meal) ? meal : 'lunch'}`;
+  switch (kind) {
+    case 'poop':
+      return {
+        title: pt ? `${name} está perto do chuveiro` : `${name} is by the shower`,
+        body: pt ? 'Tem o que enxaguar.' : "There's something to rinse off.",
+        tag,
+      };
+    case 'pet':
+      return {
+        title: pt ? `${name} está por perto` : `${name} is nearby`,
+        body: pt ? 'Um carinho rápido é bem-vindo.' : 'A quick pat is welcome.',
+        tag,
+      };
+    case 'tenSeconds':
+      return {
+        title: pt ? `${name} tem uma coisinha` : `${name} has a small thing`,
+        body: pt ? 'Dez segundos, um toque. Quando der.' : 'Ten seconds, one tap. Whenever.',
+        tag,
+      };
+    case 'snack':
+    default: {
+      const line = SNACK_BODY[meal] ?? SNACK_BODY.lunch;
+      return {
+        title: pt ? `${name} está perto da pastinha` : `${name} is at the pantry`,
+        body: pt ? line.pt : line.en,
+        tag,
+      };
+    }
+  }
+}
+
+/**
+ * O tipo que o PUSH daquele dia/refeição sorteia. Determinístico por
+ * (dia, refeição): o alarme local do APK e o FCM do mesmo dia dizem a MESMA
+ * frase, então a tag que os funde não troca um texto pelo outro. Variado de um
+ * dia para o outro, que é o que impede o convite de virar papel de parede.
+ */
+export function mealPushKind(meal, dayKey) {
+  return MEAL_PUSH_KINDS[seededIndex(`${dayKey}|${meal}`, MEAL_PUSH_KINDS.length)];
 }

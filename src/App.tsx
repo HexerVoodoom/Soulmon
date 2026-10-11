@@ -93,6 +93,8 @@ import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
+import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
+import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
@@ -539,6 +541,7 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
+const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
@@ -914,6 +917,35 @@ export default function App() {
       return next === prev.firstDay ? prev : { ...prev, firstDay: next };
     });
   }, []);
+
+  /* RITMO DAS REFEIÇÕES — qualquer gesto de cuidado (comer, banho, carinho,
+     concluir algo, "dizer oi") atende a janela de refeição aberta, se houver.
+     `markMealDone` é PURA e idempotente (devolve a mesma referência sem janela
+     aberta), então entra direto no updater (footgun 6). NÃO concede nada: o
+     que cada gesto rende continua sendo dele, sob o teto dele. */
+  const isSleepingRefeicao = useRef(isSleeping);
+  isSleepingRefeicao.current = isSleeping;
+  const atenderRefeicao = useCallback((kind: MealInviteKind) => {
+    setGameState(prev => markMealDone(prev, new Date(), kind, isSleepingRefeicao.current));
+  }, []);
+
+  /* Telemetria do ritmo: dispara quando uma janela PASSA a constar como
+     atendida NESTA sessão (comparando com o render anterior) — fora do updater
+     (footgun 6) e sem reagir a save adotado da nuvem (a referência inicial é
+     a do primeiro render). Só vai se a telemetria já tem consentimento: `track`
+     é o mesmo funil de sempre. */
+  const refeicoesAtendidasRef = useRef<string>(`${gameState.mealRitual?.day}|${gameState.mealRitual?.done.join(',')}`);
+  useEffect(() => {
+    const rec = gameState.mealRitual;
+    const chave = `${rec?.day}|${rec?.done.join(',')}`;
+    if (chave === refeicoesAtendidasRef.current) return;
+    const [diaAnterior, anterior = ''] = refeicoesAtendidasRef.current.split('|');
+    refeicoesAtendidasRef.current = chave;
+    const novas = rec ? rec.done.filter(m => rec.day !== diaAnterior || !anterior.split(',').includes(m)) : [];
+    if (novas.length === 1 && rec?.lastKind) {
+      track('meal_ritual', { meal: MEAL_KEYS.indexOf(novas[0]), kind: MEAL_KIND_CODE[rec.lastKind] });
+    }
+  }, [gameState.mealRitual]);
 
   const falar = useCallback((kind: PetVoiceKind) => {
     setSpeakSignal(prev => ({ n: (prev?.n ?? 0) + 1, kind }));
@@ -2716,6 +2748,7 @@ export default function App() {
           const assombrada = isHaunted(task, new Date());
           falar(assombrada ? 'haunted' : rolledRareCheer(Math.random()) ? 'rare' : 'task');
           marcarGestoDoDia('task');
+          atenderRefeicao('tenSeconds');
         });
       });
     }
@@ -3222,6 +3255,7 @@ export default function App() {
     // WP1.3 — só a comida COMUM conta o gesto: o item especial (coraçãozinho,
     // chip) sai por outro caminho e não é o que se está ensinando aqui.
     marcarGestoDoDia('feed');
+    atenderRefeicao('snack');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
@@ -3232,7 +3266,8 @@ export default function App() {
       handleCareEventComplete();
     }
     falar('shower');
-  }, [careEvent, handleCareEventComplete, falar]);
+    atenderRefeicao(careEvent?.type === 'poop' ? 'poop' : 'tenSeconds');
+  }, [careEvent, handleCareEventComplete, falar, atenderRefeicao]);
 
   // ── ADMIN / GM (29/09/2026) ────────────────────────────────────────────────
   // `useAdmin()` vem SÓ da resposta do servidor nesta abertura
@@ -5036,6 +5071,8 @@ export default function App() {
   // no localStorage, PWA + APK davam 2 corações/dia ao mesmo jogador.
   // Bumped when rubbing can't heal because today's cap was reached → pet comments.
   const [healCapSignal, setHealCapSignal] = useState(0);
+  /** Ritmo das refeições: o cartão pede a mochila aberta (bump). */
+  const [backpackSignal, setBackpackSignal] = useState(0);
 
   const handlePet = useCallback(() => {
     // Regra em utils/careRules.ts, compartilhada com o app de desktop. A
@@ -5072,6 +5109,7 @@ export default function App() {
       falar('rub');
     }
     marcarGestoDoDia('pet');
+    atenderRefeicao('pet');
     // O teto é reconferido sobre o `prev` — quem manda é a regra pura, sobre o
     // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
@@ -6472,6 +6510,7 @@ export default function App() {
                 isSleeping={isSleeping}
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
+                openBackpackSignal={backpackSignal}
                 speakSignal={speakSignal}
                 /* WP3.10 — o traço de nascimento chega à VOZ. Ele existia só
                    como efeito de regra e uma linha em Estatísticas: dois pets
@@ -6777,6 +6816,57 @@ export default function App() {
                 // (PRINCÍPIOS §2: aviso é texto; âmbar = convite). É AVISO,
                 // NUNCA BLOQUEIO: a lista inteira continua viva. Última da
                 // fila — é o mais adiável de todos os avisos.
+                /* ── 5b. RITMO DAS REFEIÇÕES ─────────────────────────────
+                   Convite do pet nas três janelas do dia (depois do café, do
+                   almoço e do jantar): UMA coisa pequena, que o jogo já tem.
+                   Posição declarada: depois do recomeço e antes da carga — é
+                   um convite, e convite cede a vez a tudo o que descreve o
+                   DIA. Não cobra: não olha meta, HP nem constância (ver
+                   `utils/mealRhythm.ts`); "Agora não" dispensa a janela, e ela
+                   fecha sozinha em 2 h. Dormindo ou na janela de descanso,
+                   nada abre. */
+                {
+                  const refeicaoA = openInvite(agoraA, {
+                    settings: gameState.mealRhythm,
+                    record: gameState.mealRitual,
+                    restWindow: gameState.rest?.window ?? null,
+                    isSleeping,
+                    playerDayTz: gameState.playerDayTz,
+                  });
+                  if (refeicaoA) {
+                    const comumNaPastinha = Object.keys(gameState.foodInventory).some(
+                      e => !SPECIAL_ITEMS[e] && (gameState.foodInventory[e] ?? 0) > 0,
+                    );
+                    const kindA = pickMicroAction({
+                      poopPending: pendingPoopEvent(gameState) !== null,
+                      // Só convida a comer se comer SERVE: comida comum na pastinha,
+                      // vaga na janela horária e energia com espaço.
+                      canFeed: comumNaPastinha
+                        && feedTimesFor(gameState.careCaps, agoraA.getTime()).length < FOOD_LIMIT_PER_HOUR
+                        && gameState.energyPoints < getMaxEnergyForStage(gameState.evolutionStage),
+                    }, `${playerDayKey(agoraA, gameState.playerDayTz)}|${refeicaoA}`);
+                    avisos.push({
+                      key: 'refeicao',
+                      node: (
+                        <Suspense fallback={null}>
+                          <MealInviteCard
+                            language={language}
+                            petName={getCurrentStageName()}
+                            meal={refeicaoA}
+                            kind={kindA}
+                            onAct={kind => {
+                              if (kind === 'snack') setBackpackSignal(n => n + 1);
+                              else if (kind === 'poop') handleShower();
+                              else { falar(kind === 'pet' ? 'rub' : 'cheer'); atenderRefeicao(kind); }
+                            }}
+                            onSkip={() => setGameState(prev => skipMeal(prev, refeicaoA, new Date()))}
+                          />
+                        </Suspense>
+                      ),
+                    });
+                  }
+                }
+
                 if (isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))) avisos.push({
                   key: 'carga',
                   node: (
@@ -7010,6 +7100,8 @@ export default function App() {
               onOpenGlossary={() => setShowHelpModal(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
+              mealRhythm={gameState.mealRhythm}
+              onChangeMealRhythm={next => setGameState(prev => ({ ...prev, mealRhythm: next }))}
               onRestoreFromCloud={async (id) => {
                 const { cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
                 const state = await cloudLoad(id);
@@ -7428,6 +7520,7 @@ export default function App() {
            mecânica manda. `sleepReminderAt` existia, com teste, e nunca tinha
            sido chamado por ninguém. */
         restWindow={gameState.rest?.window ?? null}
+        mealRhythm={gameState.mealRhythm}
         isSleeping={isSleeping}
         /* #23 — a inscrição de push leva o `saveId` para que apagar a conta
            alcance o push no servidor; muda no login e o manager reenvia. */

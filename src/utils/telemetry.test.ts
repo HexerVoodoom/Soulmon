@@ -106,7 +106,7 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os trinta e três eventos declarados, e só eles', () => {
+  it('aceita os trinta e quatro eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
       'install', 'onboarding_step', 'demo_pick', 'first_task_done', 'day_active',
       'unlock_view', 'purchase', 'demo_cap_hit', 'activity_create', 'week_active',
@@ -121,6 +121,8 @@ describe('allowlist de eventos', () => {
       'sound_state', 'sound_off',
       // Guilda (WPG-7) — sem id de guilda nem pid
       'guild_create', 'guild_join', 'guild_leave', 'guild_thread', 'guild_raid', 'guild_stage',
+      // Ritmo das refeições
+      'meal_ritual',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });
   });
