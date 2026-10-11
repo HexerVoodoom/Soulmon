@@ -44,3 +44,8 @@ state/
 .booklet-pdf-tmp/
 scripts/__pycache__/
 node_modules
+
+# Segredos de assinatura Android: NUNCA no repo (repo publico)
+*.jks
+*.keystore
+keystore.properties

@@ -3,7 +3,15 @@
 Guia do que precisa ser configurado FORA do código para o pagamento funcionar.
 O código já está pronto; falta credencial e configuração de conta.
 
-> ## 🚨 AÇÃO NECESSÁRIA: registrar o novo pacote no Firebase
+> ## ✅ ATUALIZADO em 11/10/2026 — o pacote JÁ está registrado no Firebase (C1)
+>
+> `android/app/google-services.json` **já é do projeto `soulmon-app`** com
+> `package_name: com.hexervoodoom.soulmon` (conferido). O build **não falha mais** por isso.
+> Resta só cadastrar a impressão digital SHA-1/SHA-256 da chave de **App Signing** e da de
+> **upload** (nascem no 1º upload na Play): `docs/BETA-FECHADO-RUNBOOK.md` Fase 5. O texto
+> abaixo é o histórico de quando o pacote mudou.
+>
+> ### (histórico) Registrar o novo pacote no Firebase
 >
 > O `applicationId` mudou de `com.digipartner.digiapp` para
 > **`com.hexervoodoom.soulmon`**, porque o antigo já pertence ao DigiApp
@@ -72,6 +80,13 @@ Arquivos envolvidos:
 
 ## 1. Produtos no Google Play Console
 
+> **Assinatura (11/10/2026):** o catálogo ganha o SKU de **assinatura** `soulmon_cosmetic_quarterly`
+> (R$ 9,90 / 3 meses, **sem trial**, só cosmético: `bg`/`furniture`). Criação: *Monetizar ->
+> Produtos -> **Assinaturas***, base plan trimestral (`BETA-FECHADO-RUNBOOK.md` Fase 6.3). A
+> vigência vem da Play (`purchases.subscriptionsv2`), o servidor recebe RTDN em `/api/rtdn` e a
+> vigência **nunca** é lida por regra de jogo (`docs/ASSINATURA-SPEC.md`, D10). Os preços da tabela
+> abaixo são **sugestão** — o dono ainda não confirmou (C12).
+
 Em **Monetizar → Produtos no app → Produtos gerenciados**, criar com estes IDs
 exatos (têm que bater com `PRODUCTS` em `functions/api/billing.js` e com
 `CREDIT_PACKS`/`FULL_UNLOCK_SKU` em `src/utils/monetization.ts`):
@@ -91,18 +106,25 @@ texto de UI e precisam ser atualizados à mão se o preço mudar.
 1. **Google Play Console → Configurações → Acesso à API**
 2. Vincular um projeto do Google Cloud (ou criar um).
 3. Criar uma **conta de serviço** no Google Cloud e conceder a ela, no Play
-   Console, a permissão **"Ver dados financeiros"** (necessária para
-   `purchases.products.get`).
+   Console, as permissões **"Ver dados financeiros"** (`purchases.products.get`) e
+   **"Gerenciar pedidos e assinaturas"** (assinatura e acknowledge). O escopo de OAuth é o mesmo
+   (`androidpublisher`).
 4. Baixar a chave JSON dessa conta de serviço.
 5. Habilitar a **Google Play Android Developer API** no projeto do Cloud.
 
 > A propagação da permissão pode levar algumas horas. Até lá a verificação
 > responde 502/`verification-failed` — é esperado, não é bug no código.
 
-## 3. Secrets no Cloudflare Pages
+## 3. Secrets no Cloudflare (Worker `soulmon`)
 
-**Settings → Environment variables** (Production **e** Preview), marcando
-*Encrypt*:
+> ⚠️ **Corrigido em 11/10/2026:** o app é um **Worker**, não Pages. Caminho: Workers & Pages ->
+> `soulmon` -> Settings -> Variables and Secrets, ou `npx wrangler secret put <NOME>` na raiz do
+> repo. Use **secret** (variável comum some no próximo `wrangler deploy`). O D1 `soulmon-billing`
+> **já existe** e as migrações 0001/0002 foram aplicadas em 22/09/2026; a da assinatura
+> (aditiva) é aplicada com `npx wrangler d1 migrations apply soulmon-billing --remote` **antes**
+> do merge. Ordem completa: `BETA-FECHADO-RUNBOOK.md` Fases 0 e 7.
+
+Secrets (Production **e** Preview, se usar):
 
 | Variável | Valor |
 |---|---|
@@ -200,8 +222,10 @@ antes disso — ela é o único freio hoje.
 
 - [ ] 4 produtos criados no Play Console com os IDs exatos da tabela
 - [ ] Conta de serviço criada, com permissão financeira e API habilitada
-- [ ] `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` no Pages
-- [ ] `google-services.json` novo, com o pacote `com.hexervoodoom.soulmon`
+- [ ] `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` no Worker (`wrangler secret put`)
+- [x] `google-services.json` do `soulmon-app` com o pacote `com.hexervoodoom.soulmon` (conferido 11/10/2026); falta só cadastrar os SHA (Runbook Fase 5)
+- [ ] Produto de **assinatura** `soulmon_cosmetic_quarterly` criado (sem trial) e RTDN configurado (Runbook 6.3 e 7.3)
+- [ ] Teste de compra, de assinatura e de **Restaurar compras** em licença de teste
 - [ ] Compra testada com **licença de teste** (Play Console → Testes de
       licença) — não use cartão real para testar
 - [ ] "Restaurar compras" testado: reinstalar o app e confirmar que o

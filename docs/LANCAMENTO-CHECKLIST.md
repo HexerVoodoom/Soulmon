@@ -11,5 +11,5 @@ as decisões de produto abertas estão em [`PERGUNTAS-DO-DONO.md`](PERGUNTAS-DO-
 - [ ] **Worker de push:** `wrangler deploy` dentro de `workers/` (ritmo das refeições mudou o `push-scheduler.js`).
 - [ ] **Segredos do `/api/transcribe`:** `SUPABASE_PROJECT_ID`/`SUPABASE_ANON_KEY` — e `FIREBASE_PROJECT_ID` (a rota agora exige o ID token e é fail-closed: 503 sem ele).
 - [ ] **Conferir no aparelho:** onboarding de 3 blocos, tour do corvo, Level Up, masmorra idle, comida premium, música por superfície, notificações no APK.
-- [ ] **Próxima rodada (decisão do dono):** a masmorra passa a usar a **energia da Home** e um **teto de andares por nível** (fases até 999). Hoje: andares sem teto, HP persistente, sem energia. Não implementado.
+- [ ] **Próxima rodada (decisão do dono):** a masmorra passa a usar a **energia da Home** e um **teto de andares por nível** (fases até 999). **Atualizado 11/10/2026 (C6):** já implementado (STATUS, REGISTRO §31): energia por camada, teto 999, Level Up restaura. O que falta são as constantes do dono (4 h, 25%, curva da zona, sumidouro de Bits).
 - [ ] As 11 decisões L1–L11 de `PERGUNTAS-DO-DONO.md`.
