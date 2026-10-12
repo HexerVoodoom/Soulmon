@@ -68,8 +68,8 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 // longe da borda; o Refúgio desce para o meio da clareira de baixo, longe da
 // escadinha (antes encostava nela).
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
-  { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '44%', top: '32%', width: '46%' }, // 11/10/2026 (dono): mais ao centro da clareira de cima (antes 31%)
-  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '64%', top: '55%', width: '46%' }, // 11/10/2026 (dono): desce para a clareira de baixo, abaixo da escadinha e acima do Refúgio, um pouco à direita (antes 69%/39%, clareira de cima)
+  { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '44%', top: '28%', width: '52%' }, // adendo do dono (11/10): maior (46→52%), sobe 4 pontos para caber; 52% é o teto sem a área de toque encostar no Ateliê (guard H11) // 11/10/2026 (dono): mais ao centro da clareira de cima (antes 31%)
+  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '72%', top: '54%', width: '50%' }, // adendo do dono (11/10): maior (46→50%) e mais à DIREITA (64→72%); descer além de 54% faz a área de toque encostar na do Refúgio em 360×780/390×844 (guard H11) — o tamanho venceu a descida // 11/10/2026 (dono): desce para a clareira de baixo, abaixo da escadinha e acima do Refúgio, um pouco à direita (antes 69%/39%, clareira de cima)
   { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '50%', top: '84%', width: '64%' },
 ];
 
