@@ -209,3 +209,96 @@ export function recordLayerCleared<T extends { dungeonDepthRecord?: number }>(pr
   if (nova === old) return { next: prev, marks: [] };
   return { next: { ...prev, dungeonDepthRecord: nova }, marks: depthMarksCrossed(old, nova) };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ⏩ VELOCIDADE E 🏠 A DESCIDA QUE CONTINUA SOZINHA (pedido do dono, 11/10/2026 — REGISTRO §36).
+//
+//  · VELOCIDADE (1×/2×/3×): só encurta o RELÓGIO da cena e a pausa entre lutas. O núcleo de combate decide a luta
+//    pela semente e não lê o relógio de parede, então o resultado é o MESMO em qualquer velocidade (teste:
+//    `dungeonAway.test.ts` e `useGroupBattle.velocidade.test.tsx`). A preferência mora no aparelho (`STORAGE_KEYS.DUNGEON_SPEED`).
+//  · A DESCIDA IDLE (`dungeonAway` no save): sair da tela NÃO cancela. O que fica gravado é a posição da descida
+//    (camada, lugar na escada, HP, energia do especial, semente, um instantâneo do jogador); quem calcula o avanço
+//    ao voltar é a conta pura de `utils/dungeonAway.ts`, sobre o relógio e com TETO de tempo fora. Enquanto o registro
+//    existe o Soulmon está OCUPADO (`soulmonNaMasmorra`): nada que use o Soulmon abre até ele ser retirado.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** As velocidades da cena de combate da masmorra. */
+export const DUNGEON_SPEEDS = [1, 2, 3] as const;
+export type DungeonSpeed = (typeof DUNGEON_SPEEDS)[number];
+
+/** Lixo/ausente → 1×. */
+export function sanitizeDungeonSpeed(raw: unknown): DungeonSpeed {
+  const n = typeof raw === 'string' ? Number(raw) : raw;
+  return (DUNGEON_SPEEDS as readonly number[]).includes(n as number) ? (n as DungeonSpeed) : 1;
+}
+
+/** Próxima velocidade do botão do canto (1 → 2 → 3 → 1). */
+export function nextDungeonSpeed(s: DungeonSpeed): DungeonSpeed {
+  return DUNGEON_SPEEDS[(DUNGEON_SPEEDS.indexOf(s) + 1) % DUNGEON_SPEEDS.length];
+}
+
+/** Quanto tempo fora a descida idle conta, no máximo (ms). Passou disso, o que sobrou não rende (nem custa) nada. */
+export const DUNGEON_AWAY_MAX_HOURS = 8;
+export const DUNGEON_AWAY_MAX_MS = DUNGEON_AWAY_MAX_HOURS * 3_600_000;
+
+/** O instantâneo do jogador gravado com a descida: a conta fora do app não depende de hook nem de tela. */
+export interface DungeonAwayPlayer {
+  level: number; atk: number; def: number; spd: number; hp: number; bonus: number;
+  /** Família do especial (`SpecialFamily`). */
+  fam: string;
+  /** Id do ofício da ficha (ausente = jeito padrão). */
+  prof?: string;
+  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `riftBits`: Bits a mais por ganho. */
+  sh: number; hb: number; rb: number;
+  /** Estágio de evolução (decide os sprites/chaves do bestiário dos inimigos). */
+  stage: string;
+}
+
+/** A descida em andamento (campo `dungeonAway` do save). Opcional: ausente = o Soulmon não está na masmorra. */
+export interface DungeonAway {
+  /** Instante (epoch ms) a que a posição abaixo se refere. */
+  since: number;
+  /** Semente da descida (decide ondas e lutas). */
+  seed: number;
+  /** Camada atual e o lugar da PRÓXIMA luta na escada (0..5; 6 = a camada foi limpa e a descida para a de baixo ainda não aconteceu). */
+  layer: number;
+  slot: number;
+  /** HP (fração) e energia do especial (0..ENERGY_TRIGGER) que passam para a próxima luta. */
+  hp: number;
+  en: number;
+  /** O marco do andar 5 desta descida já foi pago. */
+  ms: boolean;
+  player: DungeonAwayPlayer;
+}
+
+const numIn = (x: unknown, d: number, lo: number, hi: number): number =>
+  typeof x === 'number' && Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d;
+
+/** Higieniza o que veio do disco/nuvem. Qualquer campo ruim → `undefined` (= o Soulmon não está na masmorra). */
+export function sanitizeDungeonAway(raw: unknown): DungeonAway | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = raw as Record<string, unknown>;
+  const p = r.player && typeof r.player === 'object' && !Array.isArray(r.player) ? r.player as Record<string, unknown> : null;
+  if (!p || typeof r.since !== 'number' || !Number.isFinite(r.since) || typeof r.seed !== 'number' || !Number.isFinite(r.seed)) return undefined;
+  if (typeof p.fam !== 'string' || typeof p.stage !== 'string' || p.fam.length > 40 || p.stage.length > 80) return undefined;
+  const prof = typeof p.prof === 'string' && p.prof.length <= 40 ? p.prof : undefined;
+  return {
+    since: Math.max(0, r.since),
+    seed: Math.trunc(r.seed) | 0,
+    layer: Math.trunc(numIn(r.layer, 1, 1, DUNGEON_MAX_LAYER)),
+    slot: Math.trunc(numIn(r.slot, 0, 0, DUNGEON_FIGHTS_PER_FLOOR)),
+    hp: numIn(r.hp, 1, 0, 1),
+    en: numIn(r.en, 0, 0, 100),
+    ms: r.ms === true,
+    player: {
+      level: Math.trunc(numIn(p.level, 1, 1, TOP_LEVEL)),
+      atk: numIn(p.atk, 1, 0, 1e6), def: numIn(p.def, 1, 0, 1e6), spd: numIn(p.spd, 1, 0, 1e6), hp: numIn(p.hp, 1, 1, 1e7), bonus: numIn(p.bonus, 0, 0, 10),
+      fam: p.fam, prof, sh: numIn(p.sh, 0, 0, 1), hb: numIn(p.hb, 0, 0, 1), rb: numIn(p.rb, 0, 0, 10), stage: p.stage,
+    },
+  };
+}
+
+/** O Soulmon está na masmorra (descida idle em andamento)? É o ÚNICO critério de "ocupado". */
+export function soulmonNaMasmorra(state: { dungeonAway?: DungeonAway | null } | null | undefined): boolean {
+  return !!state?.dungeonAway;
+}

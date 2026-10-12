@@ -116,6 +116,25 @@ const pickOdds = (r: () => number, p: readonly number[]): number => {
   return x < p[0] ? 0 : x < p[0] + p[1] ? 1 : 2;
 };
 
+// ── The AUTOMATIC special (owner, 11/10/2026 — REGISTRO §36) ─────────────────
+// Nobody taps the ring or swipes the dodge in the Dungeon any more: the Soulmon charges the special by itself.
+// The grade of each cast is a SEEDED draw from the odds of the 'media' skill — the very odds every balance gate
+// already simulates (`playSequence` default) — so the measured wall does not move. It depends only on the fight's
+// seed and the cast's number: the same on screen at any speed and in the offline replay (`utils/dungeonAway.ts`).
+
+/** The skill the automatic special plays at: the middle of `ARENA_SKILL_ODDS` (what the gates assume). */
+export const DUNGEON_AUTO_SKILL: ArenaSkill = 'media';
+
+/** Grade of the pet's `n`-th special (ring) of a fight. Pure: `(fightSeed, n)` → grade. */
+export function autoRingGrade(fightSeed: number, n: number): RingGrade {
+  return RING_GRADES[pickOdds(mulberry32((fightSeed * 7919 + n * 104729 + 11) | 0), ARENA_SKILL_ODDS[DUNGEON_AUTO_SKILL].ring)];
+}
+
+/** Grade of the dodge against the foe's `n`-th special of a fight. Pure. */
+export function autoDodgeGrade(fightSeed: number, n: number): DodgeGrade {
+  return DODGE_GRADES[pickOdds(mulberry32((fightSeed * 6271 + n * 130363 + 23) | 0), ARENA_SKILL_ODDS[DUNGEON_AUTO_SKILL].dodge)];
+}
+
 /* No cheer (torcida) in the Dungeon or the Nightmare (contexto §2.19): the Soulmon goes alone. */
 
 /** One enemy of the sequence: its slot and the floor (dungeon level) it was built for. */

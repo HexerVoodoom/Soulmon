@@ -66,6 +66,10 @@ export const STORAGE_KEYS = {
   DUNGEON_BEST: 'soulmon-dungeon-best',
   DUNGEON_REACHED: 'soulmon-dungeon-reached',
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
+  /** Velocidade da cena de combate da masmorra (1/2/3), preferência do aparelho (REGISTRO §36). */
+  DUNGEON_SPEED: 'soulmon-dungeon-speed',
+  /** Melhor pontuação do Combina 3 (Salão de Jogos), no aparelho como o recorde da Corrida. */
+  MATCH3_BEST: 'soulmon-match3-best',
   DINO_BEST: 'soulmon-dino-best',
   /** H17 (01/10/2026) — ids de jogador/criatura que a pessoa já abriu na
    *  Biblioteca do Hall (JSON `string[]`). Só decide o que a lista mostra sem

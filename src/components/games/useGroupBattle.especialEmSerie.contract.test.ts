@@ -24,7 +24,7 @@ describe('useGroupBattle — a cauda do especial é esperada antes do próximo g
   });
 
   it('os DOIS ramos do `cast` (o do pet e o do inimigo) esperam a cauda depois de aplicar o golpe e o status', () => {
-    const esperas = [...codigo.matchAll(/await wait\(specialTailMs\(reduced\)\)/g)];
+    const esperas = [...codigo.matchAll(/await wait\(specialTailMs\(reduced\(\)\)\)/g)];
     expect(esperas.length).toBe(2);
     // cada espera vem DEPOIS de um `startStatus(` e ANTES do `ev = pull()` que libera o evento seguinte
     for (const e of esperas) {
