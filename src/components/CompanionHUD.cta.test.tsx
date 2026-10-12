@@ -28,7 +28,7 @@
  * jsdom não faz layout, então este guard mede o que DECIDE o layout: o
  * `top`/`bottom` inline de cada peça e o `pointer-events` da faixa.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
@@ -57,6 +57,11 @@ const base = {
   maxEnergyPoints: 4,
 };
 
+// Diagnóstico (release/beta-1): o vermelho intermitente deste arquivo (visto na `main` e no passe 2 da
+// suíte em São Paulo, com outras sessões carregando a máquina) é a `Mochila` ser `lazy` desde a
+// velocidade-dev: sob carga a 1ª transformação do módulo passa de 1 s e o `findBy*` desiste.
+// Isolado passa sempre. Pré-carregar os módulos lazy tira o relógio do teste sem mudar o que ele afirma.
+beforeAll(async () => { await import('./home/Mochila'); await import('./ChatBox'); });
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
 });
