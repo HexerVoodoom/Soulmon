@@ -777,6 +777,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/autoDefesa.test.ts` (regra pura, determinismo, paridade com `sampleAcc` da Arena), `DungeonGame.defesaAuto.render.test.tsx`, `NightmareBattle.render.test.tsx`, `ArenaGame.torcida.render.test.tsx`.
 
 ### `src/utils/dungeonFight.ts`
+
+**Acréscimo de 11/10/2026:** `DUNGEON_AUTO_SKILL` (`media`), `autoRingGrade(fightSeed, n)`/`autoDodgeGrade(fightSeed, n)` — a nota do especial AUTOMÁTICO da Masmorra (sorteio com semente sobre as chances de `ARENA_SKILL_ODDS.media`; igual na tela, em qualquer velocidade e na conta fora do app).
 **Dono de:** a regra de UMA luta da Masmorra e do Pesadelo no núcleo v3 (PR4, contexto §2.18) — a MESMA que as telas jogam e que a simulação do balanço mede, para uma não divergir da outra: o jogador (`soulCombatant` com o HP do ofício, o especial da família da escola, alvo único), o inimigo (`dungeonFoe`), a defesa automática como `hitScale` do inimigo (0 na defesa perfeita, senão (1 − acc)/0,3), o contra-ataque do ofício no próximo básico, o anel (× `PVE_FAMILY_POWER.dungeon`) e a esquiva (`1 − DODGE_REDUCE`) como multiplicadores de cast.
 **Exports:** `dungeonFight(jogador, inimigo, semente)` → `{ player, foes, seed, hitScale, castScale }` · `dungeonPlayerSide`, `dungeonFightSeed`, `dungeonFamily` · `playSequence`, `ladderRefs`, `nightmareRefs`, `simulateDungeonRunV3`, `simulateNightmareV3` (o motor dos gates de `dungeon.v3.test.ts`/`nightmares.v3.test.ts`; habilidade `nenhuma`/`media`/`boa` e torcida `nenhum`/`teto`) · tipos `DungeonPlayerCfg`, `DungeonFight`, `SequenceConfig`, `SequenceResult`, `DungeonRunResult`.
 **Quem chama:** `DungeonGame`, `NightmareBattle`, os testes v3.
@@ -815,6 +817,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/dungeonIdle.ts`
 
 **Dono de:** a descida idle da Masmorra (08/10/2026) — constantes `DUNGEON_AUTO_FIGHT_MS` (4000), `DUNGEON_FIGHTS_PER_FLOOR` (6), `DUNGEON_MILESTONE_FLOOR` (5), `DUNGEON_HP_REGEN_FULL_HOURS` (4), `DUNGEON_MIN_HP_TO_ENTER_PCT` (25). **Exports:** `hpAgora(state, now)` (HP por timestamp, nunca > 1), `gravarHp`, `podeDescer`, `msAteDescer`, `posicaoDaLuta`, `formatarEspera`, `sanitizeDungeonHp`. Puro, sem imports. Régua: `dungeonIdle.test.ts`.
+
+**Acréscimo de 11/10/2026 (REGISTRO §36):** `DUNGEON_SPEEDS` (1/2/3), `sanitizeDungeonSpeed`, `nextDungeonSpeed` · `DUNGEON_AWAY_MAX_HOURS`/`DUNGEON_AWAY_MAX_MS` (8 h) · `DungeonAway`/`DungeonAwayPlayer` (o registro `dungeonAway` do save), `sanitizeDungeonAway` (registro inteiro ou `undefined`), `soulmonNaMasmorra(state)` (o critério único de "ocupado").
+
+### `src/utils/dungeonAway.ts`
+
+**Dono de:** a conta PURA de quem ficou fora da masmorra (REGISTRO §36). **Exports:** `applyDungeonAway(estado, nowMs, { heartsLeft?, retire? })` → `{ next, report }` (rejoga a descida luta a luta pelo motor da tela, com o especial automático, até `DUNGEON_AWAY_MAX_MS`; idempotente; credita pelos funis de sempre), `settleDungeonAwayNow(base, setGameState, now, retire)` (a ponte com o `setGameState`, uma chamada por volta; guarda o teto de corações no aparelho fora do updater), `dungeonWaveOf(seed, camada, nível, estágio)` (a onda da camada, a MESMA da tela), `awayPlayerCfg`, `playAutoFight`, `fightWallMs`, `AWAY_CAST_PAUSE_MS` (2200), `AWAY_END_BEAT_MS` (900), `AwayReport`/`AwayEnd`. **Régua:** `dungeonAway.test.ts`. **Chamado por:** `DungeonGame` (ao entrar) e `App` (`retirarDaMasmorra`, import dinâmico).
+
+### `src/utils/dungeonRewards.ts`
+
+**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (o item do marco, Vínculo, `dungeonRunsCompleted`, fragmentos da run), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+
+### `src/utils/dungeonDrops.ts`
+
+**Dono de:** a fila do modalzinho de drop da Masmorra (REGISTRO §36). **Exports:** `pushDrop(fila, tipo, qtd, velocidade, id)` (mesmo item soma; em 3× tudo vira um modal), `popDrop`, `dropName`, `dropTitle`, `DropKind` (`heart`/`glitchtama`/`fragments`). **Chamado por:** `DungeonGame`, `games/DropNotice`. **Régua:** `dungeonDrops.test.ts`.
+
+### `src/utils/match3.ts`
+
+**Dono de:** a lógica pura do Combina 3, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (troca inválida não muda nada), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Combina 3" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`.
 
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.

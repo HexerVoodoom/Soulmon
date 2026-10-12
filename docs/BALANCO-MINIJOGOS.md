@@ -45,6 +45,9 @@ produção ainda. Quando houver telemetria, é esta tabela que se confronta.
 | Corrida do Dino | 6 · 1,05 · **5,7** | 18 · 3,05 · **5,9** |
 | Pedra, papel e tesoura | 2,5 · 0,36 · **6,9** | igual (sorte) |
 | Revisão da Malha (1×/dia) | 5 · 1,25 · **4,0** | 5 · 0,75 · **6,7** |
+| **Combina 3** (11/10/2026) | 3 · 1,22 · **3,3** | 6 · 0,82 · **7,3** |
+
+> **Combina 3** (REGISTRO §36): 20 movimentos, 1 Bit a cada 250 pontos, teto 8. Medido com as funções reais (mediana de 41 sementes; típico = qualquer jogada válida a 3,5 s por lance, experiente = sempre a melhor troca a 2,3 s). Tabela: `BALANCO_PRINT=1 npx vitest run src/utils/mente/balanco.test.ts --disable-console-intercept`.
 
 O Picross fica de propósito no piso da faixa: é o jogo calmo, sem relógio, e o
 desenho do dia soma **+5** uma vez por dia.

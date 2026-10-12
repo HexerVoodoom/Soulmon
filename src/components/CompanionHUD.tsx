@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
+import { DungeonSign } from './home/DungeonSign';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
@@ -213,6 +214,10 @@ interface CompanionHUDProps {
   walkingTo?: string | null;
   /** 🔎 MISSÃO da guilda (PR3): o Solmon foi investigar e SOME do palco até voltar. Sem texto de cobrança — só a ausência e uma lupa. */
   missionAway?: boolean;
+  /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
+  naMasmorra?: boolean;
+  /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
+  onSinalMasmorra?: () => void;
   equippedBackground?: string | null; // shop backdrop id for the pet box
   /** Decoração equipada por espaço do palco (utils/petStage.ts). */
   equippedDecor?: Partial<Record<SlotId, string>>;
@@ -298,6 +303,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   hauntedWatching = false,
   walkingTo = null,
   missionAway = false,
+  naMasmorra = false,
+  onSinalMasmorra,
   daysAway = 0,
   petPassive,
   talento = null,
@@ -1385,6 +1392,17 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             ))}
 
+            {/* 🏠 A PLAQUINHA da masmorra (REGISTRO §36): NO LUGAR do pet, ancorada nos pés dele — fora da caixa que anda e espelha, para o texto
+                nunca virar de lado nem andar junto. O pet fica `visibility: hidden` (mesma caixa, mesmo chão). */}
+            {naMasmorra && !missionAway && (
+              <div
+                data-pet-masmorra-slot
+                style={{ position: 'absolute', left: '50%', top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP + PET_RENDER}px)`, transform: 'translate(-50%, -100%)', zIndex: 3 }}
+              >
+                <DungeonSign language={language} onTap={onSinalMasmorra} />
+              </div>
+            )}
+
             {/* Hug balloon — follows pet position, shown after feed or shower */}
             {hugBalloon && (
               <div
@@ -1542,6 +1560,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <img
                   src={sprite}
                   alt={missionAway ? '' : currentStage}
+                  aria-hidden={naMasmorra ? true : undefined}
                   /* A OUTRA METADE DA SINTONIA (`spec-geracao-incremental.md`
                      §2.1 e §2.3.1). A varredura de 400 ms já passava por cima
                      deste sprite; a spec sempre pediu o PAR — "scanline de
@@ -1577,6 +1596,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
                     visibility: missionAway ? 'hidden' : undefined,
+                    ...(naMasmorra ? { visibility: 'hidden' as const } : null), // na masmorra o pet some do palco (a plaquinha fica no lugar)
                     /* `translate` (propriedade própria) e não `transform`: as animações do
                        sprite (esfregar, comer, saudar) mexem no `transform` e não podem
                        derrubar a altitude. */

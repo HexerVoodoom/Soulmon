@@ -160,6 +160,9 @@ import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/cu
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
+import { soulmonNaMasmorra } from './utils/dungeonIdle';
+import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
+import { DungeonBusyModal, type OcupadoAcao } from './components/DungeonBusyModal';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -3093,7 +3096,41 @@ export default function App() {
    * gravava `ultimate-power`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
   const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, degeneratedByHP } = gameState;
+  /* 🏠 O SOULMON ESTÁ NA MASMORRA (pedido do dono, 11/10/2026, REGISTRO §36): enquanto `dungeonAway` existir no save ele está OCUPADO.
+     Tudo que usa o Soulmon de verdade passa por `bloqueiaOcupado(acao)` — evoluir, renascer, missão da guilda, passeio, duelo e
+     torneio (os dois últimos e o passeio, pelos lotes do `AreaView`). Ocupado: abre o aviso com o "Retirar da masmorra" e NÃO faz a
+     ação. Cuidar (comer, banho, dormir, carinho) segue livre: é o que abastece a energia da própria descida. */
+  const naMasmorra = soulmonNaMasmorra(gameState);
+  const naMasmorraRef = useRef(naMasmorra);
+  naMasmorraRef.current = naMasmorra;
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
+  const [ocupadoAviso, setOcupadoAviso] = useState<{ acao: OcupadoAcao | null } | null>(null);
+  const [retirando, setRetirando] = useState(false);
+  const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
+    if (!naMasmorraRef.current) return false;
+    setOcupadoAviso({ acao });
+    return true;
+  }, []);
+  const abrirAvisoMasmorra = useCallback((acao: OcupadoAcao | null) => setOcupadoAviso({ acao }), []);
+  /** "Retirar da masmorra": acerta a descida até agora (o que rendeu já entra pelos funis de sempre) e o Soulmon volta para casa. */
+  const retirarDaMasmorra = useCallback(async () => {
+    setRetirando(true);
+    try {
+      const { settleDungeonAwayNow } = await import('./utils/dungeonAway');
+      const r = settleDungeonAwayNow(gameStateRef.current, setGameState, Date.now(), true);
+      setOcupadoAviso(null);
+      if (r) {
+        const { layers, bits } = r.report;
+        toast(language === 'pt-BR'
+          ? `Ele voltou da masmorra${layers > 0 || bits > 0 ? `: ${layers} ${layers === 1 ? 'camada' : 'camadas'}, ${bits} Bits` : ''}.`
+          : `He's back from the dungeon${layers > 0 || bits > 0 ? `: ${layers} ${layers === 1 ? 'layer' : 'layers'}, ${bits} Bits` : ''}.`);
+      }
+    } finally { setRetirando(false); }
+  }, [setGameState, language]);
+
   const handleEvolveRequest = useCallback(() => {
+    if (bloqueiaOcupado('evolucao')) return;
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -3107,9 +3144,10 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP]);
+  }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP]);
 
   const handleEvolve = useCallback(() => {
+    if (bloqueiaOcupado('evolucao')) return;
     setGameState(prev => {
       // Evolution padlock (Evolution page): while locked, never evolve.
       if (prev.evolutionLocked) return prev;
@@ -3623,17 +3661,9 @@ export default function App() {
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
-    setGameState(prev => addFragments({
-      // 🔗 Vínculo: a run completa (os 5 andares) é o evento de masmorra que o
-      // app tem em mãos, e ele passa pelo TETO DIÁRIO SUAVE de `bond.ts` —
-      // ao bater, simplesmente para de somar. Nada é subtraído e a masmorra
-      // continua inteira (Bits, Glitchtama, placar): o teto diz "o pet já está
-      // satisfeito", nunca "você jogou demais".
-      ...awardBondXP(prev, { kind: 'dungeonRun' }, playerDayKey(new Date(), prev.playerDayTz)),
-      foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
-      dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
-    // PR8b: a run COMPLETA rende fragmentos de equipamento (moeda ganha jogando; o Comércio soma até +25%).
-    }, fragmentGain(FRAGMENTS_PER_RUN, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)))));
+    // A conta (Vínculo pelo teto diário suave de `bond.ts`, o Glitchtama, `dungeonRunsCompleted` e os fragmentos da run com o
+    // Comércio) é de `utils/dungeonRewards.ts` — a MESMA que a descida que continua sozinha usa.
+    setGameState(prev => applyMilestoneItem(prev, new Date()));
     contarMissao('dungeon-runs');
   }, [contarMissao]);
 
@@ -3641,23 +3671,13 @@ export default function App() {
      QA rodada 2 (§2.4) mediu: a tabela do §55 declarava `dungeonFloor` e
      `grep -rn "kind: 'dungeonFloor'" src` não achava emissor nenhum. */
   const handleDungeonFloorCleared = useCallback(() => {
-    setGameState(prev => awardBondXP(prev, { kind: 'dungeonFloor' }, playerDayKey(new Date(), prev.playerDayTz)));
+    setGameState(prev => applyFloorCleared(prev, new Date()));
   }, []);
 
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
-    setGameState(prev => ({
-      ...prev,
-      dungeonKills: (prev.dungeonKills ?? 0) + 1,
-      /* WP4.6 — o BESTIÁRIO. A masmorra tem seis linhas × seis tiers e o jogo
-         não guardava NADA do que o jogador enfrentou: cada run apagava a
-         anterior. Registrar é o que transforma "matei uns bichos" em coleção.
-         Só cresce, e o `Set` mantém a idempotência (matar o mesmo tipo cem
-         vezes é uma entrada). */
-      bestiary: enemyKey && !(prev.bestiary ?? []).includes(enemyKey)
-        ? [...(prev.bestiary ?? []), enemyKey]
-        : prev.bestiary,
-    }));
+    // WP4.6 — o BESTIÁRIO + o contador de abates (`applyEnemyDefeated`, dono: `utils/dungeonRewards.ts`).
+    setGameState(prev => applyEnemyDefeated(prev, enemyKey));
   }, []);
 
   /* 🫧 CONVITE AO REFÚGIO — a regra inteira é de `utils/refugio/convite.ts`;
@@ -3901,11 +3921,12 @@ export default function App() {
 
   /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
   const handleGuildMissionSend = useCallback(() => {
+    if (bloqueiaOcupado('missao')) return;
     setGameState(prev => {
       if (prev.guildMission) return prev;
       return { ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) };
     });
-  }, [setGameState]);
+  }, [setGameState, bloqueiaOcupado]);
 
   // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Solmon aparece de novo.
   // Sem rede, o registro espera (nova tentativa a cada minuto e ao voltar ao app) — mas o pet já está em casa.
@@ -4105,6 +4126,7 @@ export default function App() {
    */
   const handleRebirth = useCallback(async (choices: RebirthChoices): Promise<boolean> => {
     if (!canRebirth(gameState)) return false;
+    if (bloqueiaOcupado('renascer')) return false;
     // Opções de escola/elemento, `applyRebirth` e a herança vivem em `rebirth.ts`
     // (puxa o class-system) — só carregam aqui, no momento de renascer.
     const { applyRebirth, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo } = await import('./utils/rebirth');
@@ -5309,6 +5331,7 @@ export default function App() {
   }, []);
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
+    if (bloqueiaOcupado('evolucao')) return;
     setGameState(prev => {
       if (!prev.unlockedEvolutions.includes(targetStage)) return prev;
 
@@ -6488,6 +6511,7 @@ export default function App() {
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
+                ocupado={{ naMasmorra, missaoFora: isMissionAway(guildMission, Date.now()), onBusy: abrirAvisoMasmorra }}
                 language={language}
                 ownership={{
                   ownedBackgrounds: gameState.ownedBackgrounds ?? [],
@@ -6721,6 +6745,8 @@ export default function App() {
                    gesto nenhum. Nunca vai ao widget, ao desktop nem ao push. */
                 walkingTo={passeandoEm}
                 missionAway={isMissionAway(guildMission, Date.now())}
+                naMasmorra={naMasmorra}
+                onSinalMasmorra={() => abrirAvisoMasmorra(null)}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
@@ -7619,6 +7645,15 @@ export default function App() {
           language={language}
         /></Suspense>
       )}
+
+      <DungeonBusyModal
+        open={ocupadoAviso !== null && (naMasmorra || ocupadoAviso.acao === 'masmorra-em-missao')}
+        acao={ocupadoAviso?.acao ?? null}
+        language={language}
+        onRetire={() => void retirarDaMasmorra()}
+        onClose={() => setOcupadoAviso(null)}
+        busy={retirando}
+      />
 
       <ConfirmDialog
         isOpen={resetOnboardingOpen}

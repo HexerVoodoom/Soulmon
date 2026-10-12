@@ -18,6 +18,7 @@ import type { GuildSheet as GuildSheetT } from '../guild/GuildSheet';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
+import type { OcupadoAcao } from '../DungeonBusyModal';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
@@ -25,7 +26,7 @@ import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import {
-  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadEcoGame, loadBolhasGame,
+  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame,
   loadTrocaGame, loadPicrossGame, loadRevisaoGame, loadRespiracaoGame,
 } from './playPrefetch';
 
@@ -63,6 +64,7 @@ const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.Refugio
 const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
+const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
 const DungeonGame = lazy(() => loadDungeonGame().then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
 const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
@@ -102,6 +104,9 @@ export interface PlayHandlers {
   minigameBitsToday?: number;
 }
 
+/** Os lotes que usam o Soulmon DE VERDADE (ficam fechados com ele na masmorra — REGISTRO §36) e o que o aviso diz que o jogador queria fazer. */
+const LOTE_OCUPA_SOULMON: Record<string, OcupadoAcao> = { 'arena.duelo': 'duelo', 'arena.torneio': 'torneio', 'exploracao.passeio': 'passeio' };
+
 export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
 export type LabTab = 'evolution' | 'pet' | 'stats';
 
@@ -126,6 +131,9 @@ export interface AreaViewProps {
   onVisitBuilding?: (id: BuildingId) => void;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
+  /** 🏠 O Soulmon na masmorra (REGISTRO §36): `naMasmorra` fecha os lotes que o usam (duelo, torneio, passeio) com o aviso `onBusy`;
+   *  `missaoFora` (ele foi investigar pela guilda) impede descer à masmorra. Sem a prop, nada é trancado. */
+  ocupado?: { naMasmorra: boolean; missaoFora: boolean; onBusy: (acao: OcupadoAcao) => void };
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
   ownership: ShopOwnership;
   actions: ShopActions;
@@ -217,9 +225,17 @@ export function AreaView(props: AreaViewProps) {
   const enter = (lotId: string) => { onVisitBuilding?.(`${area}.${lotId}` as BuildingId); setSheet(lotId); };
   /** DEMO: o prédio é social e a demo não entra em PvP/ranking/comunidade. */
   const demoBlocks = (lotId: string | null | undefined) => !!props.demo && !!lotId && isDemoBlockedLot(area, lotId);
+  /** O Soulmon está na masmorra e o lote precisa dele: o toque abre o aviso "Ele está na masmorra" (com o "Retirar") em vez da folha. */
+  const busyAcao = (lotId: string | null | undefined): OcupadoAcao | null => (props.ocupado?.naMasmorra && lotId ? LOTE_OCUPA_SOULMON[`${area}.${lotId}`] ?? null : null);
+  const busyLot = (l: AreaLot): AreaLot => {
+    const acao = busyAcao(l.id);
+    return acao ? { ...l, onOpen: () => props.ocupado?.onBusy(acao) } : l;
+  };
   const initialDemoBlocked = demoBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
-  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
+  const initialBusy = !initialLock && !initialDemoBlocked ? busyAcao(props.initialSheet) : null;
+  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked || initialBusy ? null : props.initialSheet ?? null);
+  useEffect(() => { if (initialBusy) props.ocupado?.onBusy(initialBusy); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [lockNote, setLockNote] = useState<string | null>(
     initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
       : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
@@ -233,7 +249,7 @@ export function AreaView(props: AreaViewProps) {
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
-    if (!g) return l;
+    if (!g) return busyLot(l);
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
   const [duelOpen, setDuelOpen] = useState(false);
@@ -387,7 +403,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
+            {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} reviewDue={dueCards(review, todayKey).length} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
@@ -436,6 +452,8 @@ export function AreaView(props: AreaViewProps) {
                 onExit={exitGame}
               />
             )}
+            {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
+            {game === 'match3' && <Match3Game {...base} onEarnPoints={props.onEarnPoints} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} onEarnPoints={props.onEarnPoints} />}
             {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}

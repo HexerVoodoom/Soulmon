@@ -89,6 +89,13 @@ export interface GroupBattleOptions {
   onEnd: (r: GroupResult) => void;
   /** `false` = sem torcida (Masmorra e Pesadelo, contexto §2.19): `cheer()` não faz nada e nenhuma descarga entra no núcleo. Padrão: `true`. */
   torcida?: boolean;
+  /** AVANÇO RÁPIDO (11/10/2026, REGISTRO §36): fator do relógio da cena (1 = tempo real). Só encurta a ESPERA entre eventos; o núcleo
+   *  decide a luta pela semente, então o resultado é o mesmo em qualquer fator. Acima de 1 as animações ficam no modo reduzido
+   *  (flash no alvo) para a arte acompanhar o relógio. Pode mudar no meio da luta sem reiniciá-la. */
+  speed?: number;
+  /** ESPECIAL AUTOMÁTICO (11/10/2026, REGISTRO §36): com ele o anel e a esquiva NÃO abrem — a nota de cada especial vem daqui
+   *  (sorteio com semente, `dungeonFight.autoRingGrade/autoDodgeGrade`). Sem ele (Arena, Duelo, Pesadelo) o jogador toca e desliza como antes. */
+  autoSpecial?: { ring(n: number): RingGrade; dodge(n: number): DodgeGrade };
 }
 
 const now = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -121,7 +128,7 @@ export interface GroupBattle {
 }
 
 export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
-  const { running, paused, reduced, seed } = opts;
+  const { running, paused, seed } = opts;
   const optsRef = useRef(opts);
   optsRef.current = opts;
   const pausedRef = useRef(paused);
@@ -197,17 +204,22 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
     const my = ++runId.current;
     const alive = () => runId.current === my;
     const timers = new Set<ReturnType<typeof setTimeout>>();
+    const factor = (): number => Math.max(1, Math.min(8, optsRef.current.speed ?? 1));
+    /** Movimento reduzido de verdade OU avanço rápido: sem investida/projétil, a arte acompanha o relógio. */
+    const reduced = (): boolean => optsRef.current.reduced || factor() > 1;
 
     /** Espera `ms` de relógio de luta (a pausa congela). Devolve false se a luta foi cancelada. */
     const wait = (ms: number) => new Promise<boolean>((resolve) => {
       let left = ms;
       const tick = () => {
         if (!alive()) { resolve(false); return; }
-        if (left <= 0) { resolve(true); return; }
-        const slice = Math.min(SLICE_MS, left);
+        if (left <= 1e-6) { resolve(true); return; }
+        // `left` é tempo de LUTA; a fatia de parede é `fatia/fator`. O fator é lido a cada fatia (o botão muda no meio da luta).
+        const f = factor();
+        const slice = Math.min(SLICE_MS, left / f);
         const id = setTimeout(() => {
           timers.delete(id);
-          if (!pausedRef.current) left -= slice;
+          if (!pausedRef.current) left -= slice * f;
           tick();
         }, slice);
         timers.add(id);
@@ -336,14 +348,20 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           let dodgeG: DodgeGrade | null = null;
           if (ev.who === 0) {
             const target = alivePos(foesNow);
-            const spec = ringSpec(seed, nRing++);
-            setCharging(true);
-            setRing({ spec, foe: target, key: ++seq.current });
-            setPhaseBoth('ring');
-            ringG = await new Promise<RingGrade>((resolve) => { ringResolver.current = resolve; });
-            ringResolver.current = null;
-            setRing(null); setPhaseBoth('idle'); setCharging(false);
-            if (!alive()) return;
+            const auto = optsRef.current.autoSpecial;
+            if (auto) {
+              // ESPECIAL AUTOMÁTICO (§36): sem anel — o Soulmon carrega sozinho; a nota é o sorteio com semente do número do cast.
+              ringG = auto.ring(nRing++);
+            } else {
+              const spec = ringSpec(seed, nRing++);
+              setCharging(true);
+              setRing({ spec, foe: target, key: ++seq.current });
+              setPhaseBoth('ring');
+              ringG = await new Promise<RingGrade>((resolve) => { ringResolver.current = resolve; });
+              ringResolver.current = null;
+              setRing(null); setPhaseBoth('idle'); setCharging(false);
+              if (!alive()) return;
+            }
             ringTagRef.current = ringG;
             const pForm = scene.playerKind(true);
             setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, element: scene.playerElement(true) });
@@ -355,7 +373,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             if (nx) queue.unshift(nx);
             // PR18: a cena do especial (nome + fundo escuro) vem antes do golpe; é só pausa de apresentação (nenhum `pull`
             // acontece nela, então a ordem e o resultado do motor não mudam).
-            if (!(await wait(introMs('special') + impactMs('special', reduced)))) return;
+            if (!(await wait(introMs('special') + impactMs('special', reduced())))) return;
             if (batch.length) apply(batch, true, null);
             else if (scene.personalTag) showHits([{ id: ++seq.current, side: 'me', foe: 0, value: 0, tag: scene.personalTag }]);
             else setPetEnergy(ev.energy);
@@ -363,7 +381,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             startStatus(0, player.area === 'area' ? foesNow.flatMap((h, i) => (h > EPS ? [i + 1] : [])) : [target + 1], (batch.length ? batch[batch.length - 1] : ev).fx);
             // 11/10/2026: UM especial de cada vez — o efeito termina de aparecer ANTES de qualquer golpe (de qualquer lado)
             // começar; o relógio da luta segue parado (`wait` não o avança), então nada é pulado: só retomado depois.
-            if (!(await wait(specialTailMs(reduced)))) return;
+            if (!(await wait(specialTailMs(reduced())))) return;
             ev = pull();
             continue;
           }
@@ -377,15 +395,22 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           });
           if (hasSp[casterFoe]) { fEn[casterFoe] = Math.max(0, fEn[casterFoe] - ENERGY_TRIGGER); setFoeEnergy(fEn.slice()); }
           if (!(await wait(introMs('special')))) return;
-          dodgeAt.current = null;
-          dodgeStart.current = wallClock();
-          setDodge({ spec, key: ++seq.current });
-          setPhaseBoth('dodge');
           const scaleFor = (d: DodgeGrade) => round.castScale({ who: ev!.who, ring: null, dodge: d, foesHp: ev!.foesHp });
-          // a esquiva é decidida no fim da janela: o núcleo só recebe a nota depois
-          if (!(await wait(spec.impactMs))) return;
-          dodgeG = dodgeGrade(dodgeAt.current, spec);
-          setDodge(null); setPhaseBoth('idle');
+          const autoD = optsRef.current.autoSpecial;
+          if (autoD) {
+            // ESPECIAL AUTOMÁTICO (§36): sem janela de esquiva — o projétil voa o tempo dele e a nota é o sorteio com semente.
+            if (!(await wait(spec.impactMs))) return;
+            dodgeG = autoD.dodge(nDodge - 1);
+          } else {
+            dodgeAt.current = null;
+            dodgeStart.current = wallClock();
+            setDodge({ spec, key: ++seq.current });
+            setPhaseBoth('dodge');
+            // a esquiva é decidida no fim da janela: o núcleo só recebe a nota depois
+            if (!(await wait(spec.impactMs))) return;
+            dodgeG = dodgeGrade(dodgeAt.current, spec);
+            setDodge(null); setPhaseBoth('idle');
+          }
           const first = pull(scaleFor(dodgeG));
           const batch: GroupEvent[] = [];
           let nx = first;
@@ -393,7 +418,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           if (nx) queue.unshift(nx);
           if (batch.length) apply(batch, true, dodgeG);
           startStatus(ev.who, [0], (batch.length ? batch[batch.length - 1] : ev).fx); // o inimigo mira o pet; cura/escudo/buff ficam nele mesmo
-          if (!(await wait(specialTailMs(reduced)))) return; // UM especial de cada vez (ver o do pet, acima)
+          if (!(await wait(specialTailMs(reduced())))) return; // UM especial de cada vez (ver o do pet, acima)
           ev = pull();
           continue;
         }
@@ -410,7 +435,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           const foeIdx = first.who - 1;
           const blocked = first.who !== 0 && first.frac <= EPS;
           const kind: StageActionKind = first.who === 0 ? scene.playerKind(false) : scene.foeKind(foeIdx, false);
-          const lead = impactMs(kind, reduced) / 1000;
+          const lead = impactMs(kind, reduced()) / 1000;
           const room = first.t - clockS.current;
           // sem espaço para a animação inteira: ela é CORTADA no impacto (a nova troca a antiga)
           const start = room >= lead ? first.t - lead : clockS.current;
@@ -444,7 +469,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
     };
     // O relógio reinicia só quando a luta liga/desliga, a rodada muda ou a semente muda — o resto vem por ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, seed, reduced, opts.runKey]);
+  }, [running, seed, opts.runKey]);
 
   return {
     action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,

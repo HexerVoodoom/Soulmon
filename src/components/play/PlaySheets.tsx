@@ -22,6 +22,9 @@ import { PixelIcon } from '../ui/PixelIcon';
 // (`icons/games`, 128², alfa real): o velociraptor da Corrida e a tesoura do Pedra-papel-tesoura. Pelados, sem moldura.
 import iconCorrida from '../../assets/soulmon/icons/games/icon-game-dino.png';
 import iconPpt from '../../assets/soulmon/icons/games/icon-game-rps.png';
+// Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
+import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
+import { M3_MAX_BITS, M3_POINTS_PER_BIT, M3_MOVES } from '../../utils/match3';
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -190,6 +193,23 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
   );
 }
 
+// ── Combina 3 ───────────────────────────────────────────────────────────────
+export function Match3Sheet({ language, onStart }: { language: Language; onStart: () => void }) {
+  const isPt = language === 'pt-BR';
+  const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
+  return (
+    <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
+        <StatBox value={`${isPt ? 'até' : 'up to'} ${M3_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
+      </div>
+      <button type="button" data-match3-start onClick={onStart} style={cta}>
+        {isPt ? 'Jogar' : 'Play'}
+      </button>
+    </div>
+  );
+}
+
 // ── Pedra, papel e tesoura ──────────────────────────────────────────────────
 export function PptSheet({ language, onStart }: { language: Language; onStart: () => void }) {
   const isPt = language === 'pt-BR';
@@ -216,7 +236,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
 // Lumosity). O Refúgio não paga, não pontua e não mede nada, por desenho.
 // ════════════════════════════════════════════════════════════════════════════
 
-export type SalaoGame = 'dino' | 'ppt';
+export type SalaoGame = 'dino' | 'ppt' | 'match3';
 export type MenteGame = 'eco' | 'bolhas' | 'troca' | 'picross' | 'revisao';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
@@ -235,10 +255,15 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
               ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
               : `Jump the obstacles · every ${DINO_POINTS_PER_BIT} points becomes 1 Bit`}
           </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'} last>
+          <InfoTipSection title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}>
             {isPt
               ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
               : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
+            {isPt
+              ? `Troque peças vizinhas e forme linhas de 3 ou mais · ${M3_MOVES} movimentos · cada ${M3_POINTS_PER_BIT} pontos vira 1 Bit, até ${M3_MAX_BITS}`
+              : `Swap neighbouring tiles to line up 3 or more · ${M3_MOVES} moves · every ${M3_POINTS_PER_BIT} points becomes 1 Bit, up to ${M3_MAX_BITS}`}
           </InfoTipSection>
         </ModalInfo>
       </div>
@@ -256,6 +281,13 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
             <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
           </div>
           <PptSheet language={language} onStart={() => onStart('ppt')} />
+        </li>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCombina} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Combina 3' : 'Match 3'}</p>
+          </div>
+          <Match3Sheet language={language} onStart={() => onStart('match3')} />
         </li>
       </ul>
     </div>

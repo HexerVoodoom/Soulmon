@@ -1,5 +1,14 @@
 # Status do Soulmon — registro vivo
 
+> ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
+>
+> - **Dono:** `utils/dungeonAway.ts` (a conta pura de quem ficou fora: `applyDungeonAway`, `settleDungeonAwayNow`) · `utils/dungeonRewards.ts` (recompensas puras compartilhadas com o `App`) · `utils/dungeonIdle.ts` (`DungeonAway`, `sanitizeDungeonAway`, `soulmonNaMasmorra`, velocidades, teto de 8 h) · `utils/dungeonFight.ts` (`autoRingGrade`/`autoDodgeGrade`) · `utils/dungeonDrops.ts` + `games/DropNotice.tsx` (modalzinho) · `DungeonBusyModal` + `home/DungeonSign` (ocupado e plaquinha) · `utils/match3.ts` + `Match3Game.tsx` (Combina 3).
+> - **HUD:** o "6" é a escada de 6 criaturas da camada (as camadas vão até 999): um indicador só, "Camada N · luta k de 6"; antes eram três (título, selo "k/6", linha de baixo).
+> - **Avanço rápido 1×/2×/3×** no canto inferior direito; resultado idêntico em qualquer velocidade (teste). **Especial automático:** nota por sorteio com semente na habilidade `media` (a do balanço) — a parede medida não se mexe.
+> - **Idle de verdade:** campo novo `dungeonAway` (fuzz2 → 124); sair NÃO cancela; ao voltar, cartão com o que rendeu; teto 8 h; energia da Home limita; **Retirar da masmorra** libera. Soulmon ocupado: evoluir, renascer, missão da guilda, Duelo, Torneio e Passeio fecham com aviso; plaquinha na Home.
+> - **Combina 3** no Salão de Jogos: 7×7, ícones de elemento do repo, cascata, peça especial, 20 movimentos, 250 pts/Bit até 8 (régua em `balanco.test.ts`: 3,3 Bits/min típico, 7,3 experiente), pelo funil e teto diário dos outros jogos.
+> - **Depende do dono:** cuidar com o Soulmon fora; Pesadelo da manhã com ele na masmorra; os números 8 h e 250 pts/Bit; "luta k de 6". Detalhe e limites (relógio do aparelho) no REGISTRO §36. Merge: o texto do manual (§02/§11) mudou ⇒ rodar `npm run gen:chat-kb` se `functions/api/_chatKnowledge.data.js` também mudou do outro lado.
+
 > ## 11/10/2026 — Assinatura cosmética trimestral implementada (`feat/assinatura-trimestral`, run `beta-play-01`)
 >
 > - **Dono:** `docs/ASSINATURA-SPEC.md` (agora "implementado") · `functions/api/_billing.js` (`purchases.subscriptionsv2`, cadeia `linkedPurchaseToken`, acknowledge no servidor) · `rtdn.js` + `_pubsubAuth.js` (Pub/Sub push com OIDC, idempotente por `messageId`) · `migrations/0003_rtdn_messages.sql` · `BillingPlugin.kt` (SUBS) · `src/utils/subscription*.ts`.

@@ -1488,3 +1488,19 @@ Envolve o `<App />` em `main.tsx`: com o veredito `beta-closed` (`utils/betaClos
 
 ### `src/components/BetaClosedScreen.tsx` (release/beta-1)
 A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy` em `BetaClosedGate`). Logo, mascote, o e-mail da sessão, "peça ao Mateus para incluir este e-mail" e **Trocar de conta** (`trocarContaBetaFechado`), PT/EN (`BETA_CLOSED_COPY`). **Régua:** `src/utils/betaClosed.render.test.tsx`.
+
+### `src/components/Match3Game.tsx`
+
+**Dono de:** a TELA do Combina 3 (Salão de Jogos, REGISTRO §36). **Exports:** `Match3Game(props: EarningGameProps & { seed? })`. Tabuleiro `role="grid"` com foco rotativo (setas, Enter/Espaço), arrasto, dica, cascata animada passo a passo (movimento reduzido: sem animação), recorde no aparelho (`STORAGE_KEYS.MATCH3_BEST`), `onEarnPoints(bits)` UMA vez no fim da rodada. **Assets:** os ícones de elemento `el-fogo`/`el-agua`/`el-terra`/`el-vida`/`el-ar`/`el-luz` (`utils/elementIconArt`). **Chamado por:** `nav/AreaView.tsx` (lazy; `game === 'match3'`). **Régua:** `Match3Game.render.test.tsx`.
+
+### `src/components/DungeonBusyModal.tsx`
+
+**Dono de:** o aviso "Ele está na masmorra" (REGISTRO §36) sobre o `ModalSheet` base. **Exports:** `DungeonBusyModal`, `OcupadoAcao`, `ocupadoVerbo`, `ocupadoMensagem`. **Chamado por:** `App.tsx` (`bloqueiaOcupado`, a plaquinha) e `nav/AreaView.tsx` (via `onBusy`).
+
+### `src/components/games/DropNotice.tsx`
+
+**Dono de:** o modalzinho de drop da Masmorra (ícone, nome, quantidade; fecha por toque, "OK", Esc ou sozinho). Fora do `ModalSheet` de propósito (a luta e o avanço rápido seguem à mão). **Exports:** `DropNotice`, `DROP_AUTOCLOSE_MS`. **Chamado por:** `DungeonGame`.
+
+### `src/components/home/DungeonSign.tsx`
+
+**Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.

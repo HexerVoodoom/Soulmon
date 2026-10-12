@@ -204,3 +204,24 @@ export function rollDungeonHeartDrop(bonusChance = 0): boolean {
   writeJson(STORAGE_KEYS.DUNGEON_HEART_DROPS, { date: today, count: rec.count + 1 });
   return true;
 }
+
+/** Corações que a masmorra ainda PODE soltar hoje (teto de `HEART_DROP_DAILY_CAP` por dia, no aparelho como sempre foi). */
+export function dungeonHeartsLeftToday(): number {
+  const today = new Date().toDateString();
+  const saved = readJson<{ date?: string; count?: number } | null>(STORAGE_KEYS.DUNGEON_HEART_DROPS, null);
+  const used = saved?.date === today ? Number(saved.count) || 0 : 0;
+  return Math.max(0, HEART_DROP_DAILY_CAP - used);
+}
+
+/** Anota `n` corações soltos (a descida que continua sozinha, `utils/dungeonAway.ts`) no MESMO registro de `rollDungeonHeartDrop`. */
+export function noteDungeonHeartDrops(n: number): void {
+  const k = Math.floor(n);
+  if (!(k > 0)) return;
+  const today = new Date().toDateString();
+  const saved = readJson<{ date?: string; count?: number } | null>(STORAGE_KEYS.DUNGEON_HEART_DROPS, null);
+  const used = saved?.date === today ? Number(saved.count) || 0 : 0;
+  writeJson(STORAGE_KEYS.DUNGEON_HEART_DROPS, { date: today, count: used + k });
+}
+
+/** Bits por limpar uma camada — escala com a profundidade e passa pelo `DUNGEON_BITS_FACTOR` (decisão do dono, 30/09/2026). Dono único: a tela e a descida idle leem daqui. */
+export const clearBonus = (floor: number): number => Math.round((10 + 5 * (floor - 1)) * DUNGEON_BITS_FACTOR);

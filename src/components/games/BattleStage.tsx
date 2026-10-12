@@ -617,7 +617,7 @@ export interface BattleStageProps {
   closeLabel: string;
   onClose: () => void;
   /** Sair perde progresso? Então o X pede confirmação antes. */
-  exitConfirm?: { title: string; stay: string; leave: string };
+  exitConfirm?: { title: string; stay: string; leave: string; /** Uma terceira saída (Masmorra: "Retirar da masmorra"), em largura cheia abaixo das duas. */ alt?: { label: string; onClick: () => void } };
   /** A cena pausa a luta enquanto a confirmação está aberta. */
   onPauseChange?: (paused: boolean) => void;
   /** A barra de CHEER (no pé da cena, ao lado do mascote). */
@@ -626,6 +626,8 @@ export interface BattleStageProps {
   hit?: StageHit | StageHit[] | null;
   /** Um selo ao lado do título (ex.: a carga do especial) — sem texto na tela. */
   badge?: ReactNode;
+  /** AVANÇO RÁPIDO (Masmorra, REGISTRO §36): a cena entra no modo de movimento reduzido (flash no alvo, sem investida/projétil) para a arte acompanhar o relógio acelerado. */
+  fast?: boolean;
   /** Uma etiqueta de ESTADO (não explicativa) no pé da cena, ex.: "Conferindo…". */
   status?: string;
   /** PvE: o pet está carregando o especial (a aura fica ligada). */
@@ -664,13 +666,13 @@ function bannerLabel(
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
+  charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
   const layout = stageLayout(w, h, foes.length);
   const reducedRef = useRef(prefersReducedMotion());
-  const reduced = reducedRef.current;
+  const reduced = reducedRef.current || fast;
   const [confirmingRaw, setConfirming] = useState(false);
   // Sem `exitConfirm` (a luta acabou com a confirmação aberta) o diálogo some: a pausa tem que sumir junto.
   const confirming = confirmingRaw && !!exitConfirm;
@@ -914,6 +916,11 @@ export function BattleStage({
                 {exitConfirm.leave}
               </button>
             </div>
+            {exitConfirm.alt && (
+              <button type="button" onClick={exitConfirm.alt.onClick} data-stage-confirm-alt style={{ ...sm2Button('outline'), width: '100%' }}>
+                {exitConfirm.alt.label}
+              </button>
+            )}
           </div>
         </div>
       )}
