@@ -9,6 +9,8 @@ import { PICROSS_BITS_BY_SIZE, PICROSS_DAILY_BONUS, PICROSS_MAX_BITS, picrossBit
 import { REVIEW_SESSION_BITS, REVIEW_SESSION_SIZE } from './revisao';
 import { MATCH_POINTS, WINS_NEEDED } from '../../components/RPSGame';
 import { MINIGAME_BITS_PER_DAY } from '../currencies';
+import { M3_MAX_BITS, M3_MOVES, M3_POINTS_PER_BIT, bestMove, match3Bits, newRound, trySwap, validMoves } from '../match3';
+import { mulberry32 } from '../combate/rng';
 
 /**
  * O BALANÇO DOS MINIJOGOS LEVES (30/09/2026, `docs/BALANCO-MINIJOGOS.md`).
@@ -100,13 +102,36 @@ function ppt(p: Perfil): Medida {
   return medir('Pedra, papel e tesoura', p, MATCH_POINTS * 0.5, rodadas * 2500 + 3000);
 }
 
+// ── Combina 3 (Salão, 11/10/2026): a rodada é jogada com as funções REAIS ──────────────────────────────
+// Típico = um jogador que acha um movimento válido qualquer; experiente = quem sempre vê a melhor troca. A MEDIANA de 41 sementes.
+// Tempo por movimento (olhar + trocar + a cascata correr): 3,5 s típico, 2,3 s experiente; +3 s de abertura e fim.
+const M3_SEG_POR_MOVIMENTO = { típico: 3.5, experiente: 2.3 } as const;
+function pontosCombina3(p: Perfil, seed: number): number {
+  const { board: b0, rng } = newRound(seed);
+  const escolha = mulberry32(seed * 7 + 1);
+  let b = b0; let total = 0;
+  for (let m = 0; m < M3_MOVES; m++) {
+    const lances = validMoves(b);
+    if (!lances.length) break;
+    const x = p === TIPICO ? lances[Math.floor(escolha() * lances.length)] : bestMove(b, escolha)!;
+    const r = trySwap(b, x.a, x.b, rng);
+    if (!r.ok) throw new Error('lance inválido no balanço');
+    total += r.score; b = r.board;
+  }
+  return total;
+}
+function combina3(p: Perfil): Medida {
+  const r = Array.from({ length: 41 }, (_, i) => pontosCombina3(p, i + 1)).sort((a, b) => a - b);
+  return medir('Combina 3', p, match3Bits(r[20]), (M3_MOVES * M3_SEG_POR_MOVIMENTO[p.nome] + 3) * 1000);
+}
+
 // Revisão: 1×/dia; ~15 s por cartão.
 function revisao(p: Perfil): Medida {
   return medir('Revisão da Malha', p, REVIEW_SESSION_BITS, REVIEW_SESSION_SIZE * (p === TIPICO ? 15 : 9) * 1000);
 }
 
 const PERFIS = [TIPICO, EXPERIENTE];
-const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p)]);
+const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p)]);
 
 /** A faixa de Bits/minuto do jogador TÍPICO nos jogos leves. */
 const FAIXA_TIPICA = { min: 2.5, max: 9 };
@@ -141,6 +166,10 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
     expect(bolhas(EXPERIENTE).bits).toBe(BOLHAS_MAX_BITS);
     expect(trocaBits(TROCA_DECK_SIZE)).toBe(TROCA_MAX_BITS);
     expect(picrossBits(10, true)).toBe(PICROSS_MAX_BITS);
+    // Combina 3: o teto de 8 Bits é alcançável por quem joga muito bem (p90 das sementes do experiente), não só no papel
+    const exp = Array.from({ length: 41 }, (_, i) => pontosCombina3(EXPERIENTE, i + 1)).sort((a, b) => a - b);
+    expect(match3Bits(exp[Math.floor(exp.length * 0.95)])).toBe(M3_MAX_BITS);
+    expect(match3Bits(M3_POINTS_PER_BIT * M3_MAX_BITS)).toBe(M3_MAX_BITS);
   });
 
   it('o típico nas três grades do Picross fica na faixa — grade grande não paga menos por minuto a ponto de ser evitada', () => {

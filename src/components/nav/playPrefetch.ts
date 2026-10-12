@@ -22,6 +22,7 @@ export const loadPlaySheets = () => import('../play/PlaySheets');
 export const loadDungeonGame = () => import('../DungeonGame');
 export const loadDinoGame = () => import('../DinoGame');
 export const loadRPSGame = () => import('../RPSGame');
+export const loadMatch3Game = () => import('../Match3Game');
 export const loadEcoGame = () => import('../mente/EcoGame');
 export const loadBolhasGame = () => import('../mente/BolhasGame');
 export const loadTrocaGame = () => import('../mente/TrocaGame');
@@ -33,7 +34,7 @@ type Loader = () => Promise<unknown>;
 
 /** Ordem: o que o dono mais abre primeiro. */
 const GAME_LOADERS: Loader[] = [
-  loadDungeonGame, loadDinoGame, loadRPSGame, loadEcoGame, loadBolhasGame,
+  loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame,
   loadTrocaGame, loadPicrossGame, loadRevisaoGame, loadRespiracaoGame,
 ];
 

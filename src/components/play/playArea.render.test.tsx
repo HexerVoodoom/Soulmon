@@ -354,12 +354,12 @@ describe('fiação no App (guard de fonte)', () => {
 });
 
 describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
-  it('Corrida com obstáculos e Pedra-papel-tesoura têm ícone próprio, pelado (sem moldura)', async () => {
+  it('Corrida com obstáculos, Pedra-papel-tesoura e Combina 3 têm ícone próprio, pelado (sem moldura)', async () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
     const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
-    expect(cards.length).toBe(2);
+    expect(cards.length).toBe(3); // + Combina 3 (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
       expect(img).toBeTruthy();
