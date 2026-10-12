@@ -1,6 +1,6 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v190';
+const CACHE_VERSION = 'v192';
 const STATIC_CACHE = `soulmon-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `soulmon-runtime-${CACHE_VERSION}`;
 
@@ -88,6 +88,11 @@ self.addEventListener('fetch', (event) => {
   // Never cache API calls (e.g. /api/save) — a cached cloud save could be
   // served stale offline and overwrite fresher local state.
   if (url.pathname.startsWith('/api/')) return;
+
+  // /embed (utils/embedMode.ts): a página é servida com cabeçalhos PRÓPRIOS (frame-ancestors
+  // liberado só para o portfólio). Nunca passa pelo SW: um index.html vindo do cache ou
+  // gravado de outra rota carregaria X-Frame-Options: DENY e o iframe ficaria em branco.
+  if (request.mode === 'navigate' && url.pathname === '/embed') return;
 
   // Navigation: network-first with offline fallback
   if (request.mode === 'navigate') {

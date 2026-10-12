@@ -37,6 +37,7 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
 import type { StarterId } from '../utils/sprites';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
+import { isEmbedMode } from '../utils/embedMode';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable, billingDisabledMessage } from '../utils/playBilling';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
@@ -311,7 +312,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // login. Os seletores inline do portão e dos termos saíram. O modal é sempre
   // em inglês (o idioma-padrão antes da escolha).
   const [idiomaPendente, setIdiomaPendente] = useState(
-    () => !isUpgrade && readLocal(STORAGE_KEYS.LANGUAGE) === null,
+    () => !isUpgrade && !isEmbedMode() && readLocal(STORAGE_KEYS.LANGUAGE) === null, // /embed: sem seletor, inglês (resolveLanguage)
   );
   const escolherInicial = (l: Language) => {
     escolherIdioma(l);
@@ -452,6 +453,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // marca ("Começar") e a conta vinha três telas depois; o dono pediu a conta
   // logo após o carregamento, e a marca virou o cabeçalho do próprio portão.
   const [step, setStep] = useState(() => {
+    // /embed (utils/embedMode.ts): sem portão de login — abre na escolha da DEMO.
+    if (isEmbedMode() && !isUpgrade) return DEMO_LOCAL_PICK;
     if (!draft) return isUpgrade ? 1 : IDENTITY_STEP;
     // ⚰️ Rascunho salvo ANTES de 22/09/2026 pode estar parado no degrau da
     // criatura favorita, que não renderiza mais: quem retomasse veria o casco
@@ -1030,7 +1033,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // continua lá).
     if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
     // A escolha da DEMO volta ao portão (a demo não tem estado a desfazer).
-    if (step === DEMO_LOCAL_PICK) { setStep(IDENTITY_STEP); return; }
+    if (step === DEMO_LOCAL_PICK) { if (!isEmbedMode()) setStep(IDENTITY_STEP); return; }
     // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
     // personagem — o passo anterior na numeração é o REVEAL, que só existe
     // no caminho do oráculo e renderizaria vazio.
@@ -1452,7 +1455,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   /** Onde a seta de voltar existe (B6). Espelha os ramos de `back()`. */
   const temVolta = !oracleDebugOpen && (
-    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK, DEMO_LOCAL_PICK].includes(step)
+    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK].includes(step)
+    || (step === DEMO_LOCAL_PICK && !isEmbedMode())
     || (step >= 1 && step < FAVORITE_STEP)
     || (step >= QUIZ_START && step < QUIZ_END)
     || (step >= DEEP_START && step < DEEP_END)

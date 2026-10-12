@@ -141,3 +141,44 @@ describe('CSP existe e não é decorativa', () => {
     expect(headers).toMatch(/Strict-Transport-Security:\s*max-age=\d+/);
   });
 });
+
+describe('/embed — frame liberado SÓ para o portfólio do dono', () => {
+  const linhas = headers.split(/\r?\n/);
+  const ini = linhas.findIndex(l => l.trim() === '/embed');
+  const bloco = ini < 0 ? [] : (() => {
+    const out: string[] = [];
+    for (let i = ini + 1; i < linhas.length && /^\s+\S/.test(linhas[i]); i++) out.push(linhas[i].trim());
+    return out;
+  })();
+  const cspEmbed = (bloco.find(l => l.startsWith('Content-Security-Policy:')) ?? '').replace('Content-Security-Policy:', '').trim();
+  const diretivas = (c: string) => c.split(';').map(x => x.trim()).filter(Boolean);
+  const ancestors = (c: string) => diretivas(c).find(d => d.startsWith('frame-ancestors')) ?? '';
+
+  it('a regra /embed existe e destaca X-Frame-Options e a CSP herdados de /*', () => {
+    expect(ini).toBeGreaterThan(-1);
+    expect(bloco).toContain('! X-Frame-Options');
+    expect(bloco).toContain('! Content-Security-Policy');
+    expect(bloco.some(l => l.startsWith('X-Frame-Options'))).toBe(false);
+    expect(bloco.indexOf('! Content-Security-Policy')).toBeLessThan(bloco.findIndex(l => l.startsWith('Content-Security-Policy:')));
+  });
+
+  it('frame-ancestors lista exatamente o portfólio e seus previews — nada de * nem https:', () => {
+    expect(ancestors(cspEmbed)).toBe('frame-ancestors https://mateus-sperandio.mateus-sprnd.workers.dev https://mateus-sperandio.pages.dev https://*.mateus-sperandio.pages.dev');
+  });
+
+  it('todas as outras diretivas são idênticas às de /* (só o frame-ancestors muda)', () => {
+    const tira = (c: string) => diretivas(c).filter(d => !d.startsWith('frame-ancestors'));
+    expect(tira(cspEmbed)).toEqual(tira(csp));
+    expect(diretivas(cspEmbed)).toHaveLength(diretivas(csp).length);
+  });
+
+  it('/* continua DENY e frame-ancestors none — só /embed abre', () => {
+    const globalIni = linhas.findIndex(l => l.trim() === '/*');
+    expect(globalIni).toBeGreaterThan(-1);
+    expect(globalIni).toBeLessThan(ini);
+    expect(headers).toMatch(/^\s+X-Frame-Options: DENY/m);
+    expect(diretiva('frame-ancestors')).toBe("'none'");
+    const caminhos = linhas.filter(l => /^\//.test(l) );
+    expect(caminhos.filter(c => /embed/.test(c))).toEqual(['/embed']);
+  });
+});
