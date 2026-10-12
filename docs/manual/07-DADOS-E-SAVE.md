@@ -249,6 +249,7 @@ Todos entram com fallback `?? padrão` no load e sincronizam com a nuvem; o fuzz
 | `evolutionPoints` | `number` | **gauge de evolução** (critério de evolução). Ausente/corrompido → migra de `perfectDays` na mesma fração da barra (idempotente) | `utils/evolutionGauge.ts` (`hydrateEvolutionPoints`) |
 | `premiumFood?` | `{day, dropped, used, week, weekDropped}` | tetos da comida premium (drop por dia/semana, uso por dia) | `utils/premiumFood.ts` |
 | `dungeonHp?` | `{frac, at}` | HP persistente da descida idle (fração do máximo + instante, lido por `hpAgora`) | `utils/dungeonIdle.ts` |
+| `dungeonAway?` | `DungeonAway` | **Campo novo de 11/10/2026** (REGISTRO §36): a descida que continua sozinha — camada, lugar na escada (0..6), HP, energia do especial, semente, instantâneo do jogador, marco pago, `since`. **Presente = o Soulmon está NA MASMORRA** (ocupado; plaquinha na Home). Ausente = em casa. Hidratação: registro inteiro ou nada (`sanitizeDungeonAway`, faixas presas). Não sobe `SAVE_SCHEMA_VERSION` (campo novo com `??`). A conta de quem ficou fora é `utils/dungeonAway.ts › applyDungeonAway`. | `utils/dungeonIdle.ts` · `utils/dungeonAway.ts` |
 | `buildingQuests?` | `BuildingQuestState` | missão do dia por prédio | `utils/buildingQuests.ts` |
 | `buildingIntrosSeen?` | `string[]` | prédios cuja apresentação o NPC já fez | `utils/buildingIntro.ts` |
 | `lastCelebratedLevel?` | `number` | último nível do Vínculo celebrado (Level Up uma vez por nível) | `utils/levelUp.ts` |

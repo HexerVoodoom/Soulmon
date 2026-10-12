@@ -1,7 +1,7 @@
 // GERADO por scripts/gen-chat-knowledge.mjs — NÃO EDITE À MÃO.
 // Fontes: docs/manual/02-REGRAS-DE-NEGOCIO.md, docs/manual/11-GLOSSARIO.md
 // Regerar: npm run gen:chat-kb  (o teste chatKnowledge.stale reprova se ficar velho)
-export const KNOWLEDGE_HASH = '5062876678c8ac5f';
+export const KNOWLEDGE_HASH = 'c18e16f1a9303836';
 export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia","x":"Uma vez por dia o jogo compara o que a pessoa fez com a meta dela e, se faltou muito, tira no máximo um coração — e há cinco mecanismos que podem impedir até isso."},
 {"id":"regra-2","t":"Carinho","x":"Esfregar o pet cura HP — meio coração por gesto, no máximo um por dia — e é a cura principal do jogo. O gesto é um pointer drag sobre o pet; a animação de explosão de corações toca sempre, inclusive quando a cura é recusada — quem decide isso é o App.tsx, não a regra."},
 {"id":"regra-3","t":"Comida","x":"Comer enche energia e dá pontos de atributo — nunca cura HP — e há um teto por hora, não por dia. Por que o teto é derivado. Era o literal 5 enquanto mega/ultra pedem 6 tarefas. Como energia só enche comendo e energia cheia é condição do dia completo, quem fechava as 6 numa sessão só dava 5 comidas e perdia o dia completo tendo feito 100% da própria meta — punido por ritmo, não por esforço."},
@@ -152,6 +152,9 @@ export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia
 {"id":"termo-mare","t":"Maré","x":"O ciclo de 6 semanas da Guilda (GUILD_TIDE_WEEKS). A floração da maré é colhida no estado em que estiver na virada e vira peça permanente do Bosque, em três tamanhos descritivos (petala, corola, floracao) — nenhum \"pior\". Maré sem crescimento não gera peça e nada é dito; nenhuma falha, nenhum reset."},
 {"id":"termo-marco-de-habito","t":"Marco de hábito","x":"Os degraus de maturidade em dias efetivos: 7, 21 e 66. Os 66 são a mediana real de Lally et al. (2010); os \"21 dias\" populares vêm de outra coisa e não têm a ver com hábito. Cada marco tem cerimônia e sobe o rendimento de atributo."},
 {"id":"termo-masmorra","t":"Masmorra","x":"O modo de combate por andares. Sem limite diário e sem gate de entrada; perder não custa coração nenhum — o jogo nunca cobra da barra que representa o cuidado que o usuário teve consigo mesmo."},
+{"id":"termo-plaquinha-da-masmorra","t":"Plaquinha da masmorra","x":"O aviso \"Estou na masmorra, volto logo\" que fica no lugar do Soulmon na Home enquanto ele está descendo sozinho. Tocar nela abre a opção de retirá-lo da masmorra. Nunca cobra nada de você."},
+{"id":"termo-avanco-rapido","t":"Avanço rápido","x":"O botão 1×, 2× ou 3× no canto de baixo da luta da masmorra. Só deixa a cena mais rápida; o resultado da luta é o mesmo em qualquer velocidade."},
+{"id":"termo-combina-3","t":"Combina 3","x":"O jogo de combinar peças do Salão de Jogos: troque duas peças vizinhas para formar linhas de 3 ou mais elementos iguais, em 20 movimentos. Cada 250 pontos viram 1 Bit, até 8 por rodada, dentro do teto diário de Bits dos minijogos."},
 {"id":"termo-memoria","t":"Memória","x":"O marco de convivência que o app devolve ao jogador em datas de relação (não de desempenho). Mostrado uma vez, de forma idempotente."},
 {"id":"termo-meta-de-coracao-meta-do-dia","t":"Meta de coração × meta do dia","x":"⚠️ São DUAS réguas desde 07/09/2026 (decisão P1). A que PROTEGE o coração é menor; a do dia completo é a meta inteira. A excelência não foi afrouxada: quem quer evoluir continua tendo que fazer tudo."},
 {"id":"termo-missoes","t":"Missões","x":"Seis objetivos permanentes que liberam a compra de cenários exclusivos. Contadores lifetime no save."},

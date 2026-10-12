@@ -428,6 +428,14 @@ Fenda Rósea) + os cenários da loja sorteados por run. Overlay `dungeon-vhs`.
 **Não verificados:** fim de andar, run completa (Glitchtama), derrota, drop de
 coraçãozinho, ranking.
 
+**Delta de 11/10/2026 (REGISTRO §36), lido do código:** a luta tem UM indicador no título ("Camada N · luta k de 6" / "Layer N · fight k of 6"; o selo "k/6" e a repetição embaixo saíram), **Pausar** à esquerda e **avanço rápido 1×/2×/3×** no canto inferior direito, especial automático, modalzinho de drop (ícone + nome + quantidade), o × com **Ficar / Sair / Retirar da masmorra**, o cartão "Enquanto você esteve fora, a descida seguiu" ao voltar, e na Home a **plaquinha** "Estou na masmorra, volto logo" no lugar do pet (`DungeonSign`). O aviso "Ele está na masmorra" (`DungeonBusyModal`) abre nas ações bloqueadas.
+
+### 5.6-B Combina 3 — `Match3Game.tsx` (Salão de Jogos)
+
+**Arquivo:** `Match3Game.tsx` (card em `PlaySheets › SalaoSheet`, ícone `icons/icon-gem.png`). **Frequência: livre (sem limite diário; os Bits passam pelo teto diário de minijogo).**
+
+Lido do código: cabeçalho com "?" (como se joga), três etiquetas (Movimentos, Pontos, Bits), aviso vivo (troca sem linha, dica, embaralhada, cascata), tabuleiro 7×7 de ícones de elemento (`el-fogo`, `el-agua`, `el-terra`, `el-vida`, `el-ar`, `el-luz`), "Próximo Bit com N pontos", botão **Dica**; fim: "Você fez N pontos", "+N Bits", recorde, **De novo / Sair**. PT/EN. Teclado: setas movem o foco, Enter seleciona/troca. Movimento reduzido: sem queda, tremida nem deslize. **Não verificado em aparelho real** (só em Chrome 390×844 e jsdom).
+
 ### 5.7 Dino Runner — `DinoGame.tsx`
 Ícone lucide `ArrowUp` + PNG `icon-game-dino`, `icon-close`. **Não percorrido**
 (exige interação de canvas/teclado). Frequência: semanal.
