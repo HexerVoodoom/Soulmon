@@ -4,7 +4,7 @@
  * Critérios: 403 `beta-closed` troca o app pela tela própria (PT/EN, identidade);
  * a recusa de sprite mostra UM aviso claro por código e não quebra.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, cleanup } from '@testing-library/react';
 const { toast } = vi.hoisted(() => ({ toast: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
@@ -20,6 +20,10 @@ import { BetaClosedGate } from '../components/BetaClosedGate';
 import { avisarRecusaDeSprite, _resetAvisosDeSprite } from './spriteGen';
 import { STORAGE_KEYS } from './storageKeys';
 
+// A tela é `lazy` (fora do chunk de entrada). Sob carga, a 1ª transformação do módulo pelo
+// Vitest passou de 1 s (falha vista no gate:fuso/Tokyo; isolada passa). Pré-carregar o módulo
+// tira o relógio do teste sem afrouxar o que ele afirma.
+beforeAll(async () => { await import('../components/BetaClosedScreen'); });
 beforeEach(() => { installDomGlobals(); localStorage.clear(); _resetBetaClosed(); _resetAvisosDeSprite(); toast.mockReset(); });
 afterEach(() => { cleanup(); });
 
