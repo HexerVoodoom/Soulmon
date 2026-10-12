@@ -246,7 +246,10 @@ describe('a arte e a fonte dos fragmentos', () => {
     expect(fragmentGain(FRAGMENTS_PER_RUN, Array(3).fill('tal-com-02'))).toBeLessThanOrEqual(Math.floor(FRAGMENTS_PER_RUN * 1.25));
     const app = readFileSync(`${process.cwd()}/src/App.tsx`, 'utf8');
     const corpo = app.slice(app.indexOf('const handleGlitchtama = useCallback'), app.indexOf("contarMissao('dungeon-runs')"));
-    expect(corpo).toMatch(/addFragments\(/);
-    expect(corpo).toMatch(/fragmentGain\(FRAGMENTS_PER_RUN/);
+    // 11/10/2026 (REGISTRO §36): a conta do marco mudou para `utils/dungeonRewards.ts` (a MESMA da descida que continua sozinha); o App a chama
+    expect(corpo).toMatch(/applyMilestoneItem\(/);
+    const conta = readFileSync(`${process.cwd()}/src/utils/dungeonRewards.ts`, 'utf8');
+    expect(conta).toMatch(/addFragments\(/);
+    expect(conta).toMatch(/fragmentGain\(FRAGMENTS_PER_RUN/);
   });
 });

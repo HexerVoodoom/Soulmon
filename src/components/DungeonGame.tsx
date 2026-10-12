@@ -6,25 +6,31 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playVictory } from '../utils/sounds';
-import { DUNGEON_BITS_FACTOR } from '../utils/dungeon';
+import { clearBonus } from '../utils/dungeon';
 import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
   hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
-  DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, effectiveFloor, dungeonLayerCap, startLayerFor, isMilestoneLayer,
+  DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, dungeonLayerCap, startLayerFor, isMilestoneLayer,
   canPayLayer, layersAffordable, spendLayerEnergy, recordLayerCleared, sanitizeDepthRecord,
+  nextDungeonSpeed, sanitizeDungeonSpeed, DUNGEON_AWAY_MAX_HOURS, type DungeonSpeed, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
+import { dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
+import { autoDodgeGrade, autoRingGrade } from '../utils/dungeonFight';
+import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
+import { DropNotice } from './games/DropNotice';
+import { readLocal, writeLocal } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
 import { addFragments } from '../utils/equipment';
 import { MINIGAME_BITS_PER_DAY, minigameBitsToday } from '../utils/currencies';
 import { playerDayKey } from '../utils/playerDay';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
-  buildDungeonWave, getDungeonBest, recordDungeonScore, LADDER_TIERS,
+  getDungeonBest, recordDungeonScore, LADDER_TIERS,
   type DungeonEnemy,
 } from '../utils/dungeon';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { ENERGY_TRIGGER } from '../utils/combate/specials';
-import { mulberry32 } from '../utils/combate/rng';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
@@ -85,13 +91,18 @@ import type { Language } from '../utils/i18n';
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
 // decisão do dono que trouxe a run completa para perto do teto diário.
-export const clearBonus = (floor: number) => Math.round((10 + 5 * (floor - 1)) * DUNGEON_BITS_FACTOR);
+export { clearBonus };
 
-type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'ended';
+type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'ended' | 'away';
 
 /** O cartão de resultado sobre a cena (entre inimigos, camadas e no fim). */
 /** Sem torcida na Masmorra (contexto §2.19): o toque na cena não faz nada. */
 const noTap = (): void => {};
+
+/** Texto só para leitor de tela (a camada já está no título; a linha viva não se repete na tela). */
+const SR_ONLY: CSSProperties = {
+  position: 'absolute', width: 1, height: 1, margin: -1, padding: 0, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
+};
 
 const PANEL: CSSProperties = {
   position: 'absolute', left: 12, right: 12, zIndex: 7, boxSizing: 'border-box',
@@ -182,6 +193,24 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const nivelJogador = jogador.combatant.level;
   const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
 
+  /* ⏩ AVANÇO RÁPIDO (REGISTRO §36): 1×/2×/3×, preferência do aparelho. Só encurta o relógio da cena e a pausa entre lutas. */
+  const [speed, setSpeedState] = useState<DungeonSpeed>(() => sanitizeDungeonSpeed(readLocal(STORAGE_KEYS.DUNGEON_SPEED)));
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
+  const cycleSpeed = () => {
+    const n = nextDungeonSpeed(speedRef.current);
+    speedRef.current = n;
+    setSpeedState(n);
+    writeLocal(STORAGE_KEYS.DUNGEON_SPEED, String(n));
+  };
+  /* 🎁 O modalzinho de DROP: fila (a lógica é de `utils/dungeonDrops.ts`; em 3× tudo vira um aviso só). */
+  const [drops, setDrops] = useState<DropGroup[]>([]);
+  const dropSeq = useRef(0);
+  const noteDrop = (kind: DropKind, qty: number) => setDrops(q => pushDrop(q, kind, qty, speedRef.current, ++dropSeq.current));
+  const closeDrop = useCallback(() => setDrops(q => popDrop(q)), []);
+  /** O que a ausência rendeu (a descida seguiu sozinha) — o cartão que abre ao voltar. */
+  const [awayReport, setAwayReport] = useState<AwayReport | null>(null);
+  const awaySettledRef = useRef(false);
   const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
@@ -258,9 +287,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   /** A onda de uma CAMADA: a força é a do andar EFETIVO (`effectiveFloor`: a zona de conforto do Lv luta no andar 1);
       o sabor e a semente da luta saem da camada de verdade, para duas camadas da zona não repetirem a mesma luta. */
-  const waveOf = (layer: number) =>
-    buildDungeonWave(effectiveFloor(layer, nivelJogador), evolutionStage, mulberry32((runSeedRef.current ^ Math.imul(layer, 0x9e3779b1)) | 0), nivelJogador)
-      .map(e => ({ ...e, floor: layer }));
+  const waveOf = (layer: number) => dungeonWaveOf(runSeedRef.current, layer, nivelJogador, evolutionStage);
 
   /* 🔋 ENERGIA, TETO E RECORDE (REGISTRO §31). Sem provider (demo, testes) não há save: nada é cobrado nem fecha. */
   const bond = gs ? bondLevelFor(gs.totalXP ?? 0) : 1;
@@ -290,6 +317,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     resumoRef.current.recordTo = Math.max(resumoRef.current.recordTo, layer);
     const frag = marks.reduce((a, m) => a + m.fragments, 0);
     resumoRef.current.fragments += frag;
+    if (frag > 0) noteDrop('fragments', frag);
     ctx.setGameState(prev => {
       const r = recordLayerCleared(prev, layer);
       const ganho = r.marks.reduce((a, m) => a + m.fragments, 0);
@@ -302,6 +330,27 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const salvarHp = (frac: number) => {
     ctx?.setGameState(prev => ({ ...prev, dungeonHp: gravarHp(frac, Date.now()) }));
   };
+  /** O instantâneo do jogador que vai junto da descida: a conta de quem ficou fora (`utils/dungeonAway.ts`) não depende de hook nem de tela. */
+  const instantaneoDoJogador = (): DungeonAwayPlayer => {
+    const j = jogadorRef.current;
+    const c = j.combatant;
+    return {
+      level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus,
+      fam: j.family, prof: profissao ?? undefined, sh: rift.startShield ?? 0, hb: rift.healBoost ?? 0, rb: rift.riftBits ?? 0, stage: evolutionStage,
+    };
+  };
+  /** 🏠 GRAVA onde a descida está (camada, lugar na escada, HP, energia): é isso que faz sair da tela NÃO cancelar nada — e que
+      deixa o Soulmon OCUPADO na masmorra (`soulmonNaMasmorra`). Sem provider (demo, testes) não há save e nada é gravado. */
+  const gravarAway = (layer: number, slot: number) => {
+    if (!ctx) return;
+    const reg: DungeonAway = {
+      since: Date.now(), seed: runSeedRef.current, layer, slot, hp: hpCarryRef.current, en: energyCarryRef.current,
+      ms: milestoneRef.current, player: instantaneoDoJogador(),
+    };
+    ctx.setGameState(prev => ({ ...prev, dungeonAway: reg }));
+  };
+  /** A descida acabou (ou o jogador retirou o Soulmon): ele volta para casa. */
+  const limparAway = () => { ctx?.setGameState(prev => (prev.dungeonAway ? { ...prev, dungeonAway: undefined } : prev)); };
   /** O estado de onde sai o HP de agora (sem provider — demo, testes —: cheio). */
   const hpState = { dungeonHp: gs?.dungeonHp };
 
@@ -332,6 +381,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     milestoneRef.current = false;
     setMilestoneNow(false);
     setPausadoManual(false);
+    setAwayReport(null);
+    gravarAway(inicio, 0); // a descida já fica registrada: fechar o app agora não a perde
     setPhase('fight');
   };
 
@@ -347,11 +398,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     addPoints(e.points);
     resumoRef.current.enemies += 1;
     const caiuCoracao = onHeartDrop();
-    if (caiuCoracao) resumoRef.current.hearts += 1;
+    if (caiuCoracao) { resumoRef.current.hearts += 1; noteDrop('heart', 1); }
     setGotHeart(caiuCoracao);
     setRewardMsg(`+${e.points} Bits`);
     if (enemyIdxRef.current + 1 >= enemiesRef.current.length) clearFloor();
-    else setPhase('enemy-down');
+    else { gravarAway(e.floor, enemyIdxRef.current + 1); setPhase('enemy-down'); }
   };
 
   /** O andar limpo (os 6 da escada): bônus, Vínculo, o MARCO (1×/descida), a cura do ofício — e o portão do próximo. */
@@ -369,6 +420,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       milestoneRef.current = true; // idempotente: um Glitchtama por descida, no primeiro marco limpo
       setMilestoneNow(true);
       resumoRef.current.glitchtama += 1;
+      noteDrop('glitchtama', 1);
       onGlitchtama();                             // marco → 🌀 Glitchtama (1 uso/dia: `specialItemUse.ts`)
     } else {
       setMilestoneNow(false);
@@ -384,6 +436,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     if (!floorOpen(floor + 1)) { endDescent(gs && floor + 1 > capCamadas && masmorraFloorOpen(floor + 1, bond) ? 'deep' : 'sealed'); return; }
     // 🔋 A próxima camada custa energia: sem ela, a descida para aqui com uma frase calma (nunca cobrança).
     if (!temEnergiaAgora()) { endDescent('energy'); return; }
+    gravarAway(floor, DUNGEON_FIGHTS_PER_FLOOR); // camada limpa; a de baixo ainda não foi paga
     setPhase('floor-clear');
   };
 
@@ -399,6 +452,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setEndReason(why);
     setAgora(Date.now());
     setPausadoManual(false);
+    limparAway(); // a descida acabou: o Soulmon volta para casa
     setPhase('ended');
   };
 
@@ -458,10 +512,18 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   aoFimRef.current = aoFimImpl;
   const aoFimDaLuta = useCallback((res: GroupResult) => aoFimRef.current(res), []);
 
+  /** A nota de cada especial: função da SEMENTE da luta e do número do especial (igual à da conta fora do app). */
+  const autoEspecial = useMemo(() => ({
+    ring: (n: number) => autoRingGrade(dungeonFightSeed(runSeedRef.current, enemiesRef.current[enemyIdxRef.current]?.floor ?? 0, enemiesRef.current[enemyIdxRef.current]?.slot ?? 0), n),
+    dodge: (n: number) => autoDodgeGrade(dungeonFightSeed(runSeedRef.current, enemiesRef.current[enemyIdxRef.current]?.floor ?? 0, enemiesRef.current[enemyIdxRef.current]?.slot ?? 0), n),
+  }), []);
   const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
     round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: false,
+    speed,
+    // ESPECIAL AUTOMÁTICO (REGISTRO §36): sem anel nem esquiva — a nota é o sorteio com semente do número do especial na luta.
+    autoSpecial: autoEspecial,
   });
 
   // O próximo passo da descida, SEM toque: outro inimigo do andar, ou o andar de baixo (sem teto).
@@ -479,17 +541,81 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       enterEnemy(list, 0);
       setRewardMsg('');
       setMilestoneNow(false);
+      gravarAway(f, 0);
       setPhase('fight');
     }
   };
   const avancarRef = useRef(avancar);
   avancarRef.current = avancar;
+
+  /** Põe a tela na posição de um registro `dungeonAway` (a descida que seguiu sozinha enquanto o jogador estava fora). */
+  const posicionar = (a: DungeonAway, hp: number) => {
+    runSeedRef.current = a.seed;
+    setSeedLuta(a.seed);
+    const list = waveOf(a.layer);
+    setRunScenes(buildRunScenes());
+    setStartLayer(a.layer);
+    setFloor(a.layer);
+    setEnemies(list);
+    hpCarryRef.current = hp;
+    energyCarryRef.current = a.en;
+    setHpFrac(hp);
+    milestoneRef.current = a.ms;
+    setMilestoneNow(false);
+    runScoreRef.current = 0;
+    setRunScore(0);
+    enterEnemy(list, Math.min(a.slot, list.length - 1));
+  };
+  /** O Soulmon sai da masmorra de vez (o botão "Retirar da masmorra"): o que rendeu até aqui já foi creditado; ele volta para casa. */
+  const retirar = () => {
+    recordDungeonScore(runScoreRef.current);
+    ctx?.setGameState(prev => ({ ...prev, dungeonAway: undefined, dungeonHp: gravarHp(hpCarryRef.current, Date.now()) }));
+    onExit();
+  };
+  // 🏠 AO ENTRAR: se a descida seguiu sozinha enquanto o jogador estava fora, acerta a conta (UMA vez) e mostra o que rendeu.
+  useEffect(() => {
+    if (awaySettledRef.current || !ctx || !gs?.dungeonAway) return;
+    awaySettledRef.current = true;
+    const antes = gs.dungeonAway;
+    const r = settleDungeonAwayNow(gs, ctx.setGameState, Date.now(), false);
+    if (!r) return;
+    const { report, away, hp } = r;
+    resumoRef.current = {
+      layers: report.layers, enemies: report.enemies, bits: report.bits, hearts: report.hearts, glitchtama: report.glitchtama,
+      fragments: report.fragments, energy: report.energy, recordFrom: report.recordFrom, recordTo: report.recordTo,
+    };
+    setResumo({ ...resumoRef.current });
+    recordeRef.current = Math.max(recordeRef.current, report.recordTo);
+    if (report.energy > 0) energiaRef.current -= report.energy;
+    if (!away) {
+      // a descida acabou sozinha (HP, energia, portão ou teto): o Soulmon já voltou para casa
+      posicionar({ ...antes, layer: report.toLayer, slot: DUNGEON_FIGHTS_PER_FLOOR - 1 }, hp);
+      setAwayReport(report);
+      setEndReason((report.ended === 'energy' || report.ended === 'sealed' || report.ended === 'deep') ? report.ended : 'hp');
+      setAgora(Date.now());
+      setPhase('ended');
+      return;
+    }
+    posicionar(away, hp);
+    if (report.enemies === 0 && report.layers === 0) {
+      setPhase(away.slot >= DUNGEON_FIGHTS_PER_FLOOR ? 'floor-clear' : 'fight'); // não houve avanço para contar: segue direto
+    } else {
+      setAwayReport(report);
+      setPhase('away'); // o cartão "enquanto você esteve fora" — a luta espera o "Ver a descida"
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const verDescida = () => {
+    const a = ctx?.gameState.dungeonAway;
+    setAwayReport(null);
+    setPhase(a && a.slot >= DUNGEON_FIGHTS_PER_FLOOR ? 'floor-clear' : 'fight');
+  };
   // O relógio entre lutas: uma a cada `DUNGEON_AUTO_FIGHT_MS`; pausar (ou a confirmação de sair) o segura.
   useEffect(() => {
     if ((phase !== 'enemy-down' && phase !== 'floor-clear') || pausado) return;
-    const t = setTimeout(() => avancarRef.current(), DUNGEON_AUTO_FIGHT_MS);
+    const t = setTimeout(() => avancarRef.current(), DUNGEON_AUTO_FIGHT_MS / speed);
     return () => clearTimeout(t);
-  }, [phase, pausado, fightKey, floor]);
+  }, [phase, pausado, fightKey, floor, speed]);
 
   // No lobby, repinta a contagem de recuperação (o valor vem de `hpAgora`, nunca é acumulado aqui).
   useEffect(() => {
@@ -499,13 +625,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   }, [phase]);
 
   const inStage = enemies.length > 0 && phase !== 'intro';
-  const sceneName = isPt ? scene.namePt : scene.nameEn;
   const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= MINIGAME_BITS_PER_DAY;
   /** Quanto falta para o HP chegar ao piso de entrada (0 = já pode descer). */
   const espera = msAteDescer(hpState, agora);
   const hpLobby = hpAgora(hpState, agora);
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
+  /** O indicador único do HUD: "Camada 3 · luta 2 de 6" / "Layer 3 · fight 2 of 6". */
+  const hudLabel = isPt ? `Camada ${floor} · luta ${enemyIdx + 1} de ${ladderLen}` : `Layer ${floor} · fight ${enemyIdx + 1} of ${ladderLen}`;
 
   /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a energia
      segue visível entre os inimigos (a masmorra é contínua). */
@@ -555,28 +682,66 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
             dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
           }}
-          /* Copy §4: "camada/layer" é o termo canônico (§12). Sem "/N": a descida não tem fim de andares. */
-          title={`${isPt ? 'Camada' : 'Layer'} ${floor}`}
-          badge={<span className="sm2-num" style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', textShadow: '0 1px 2px rgba(0,0,0,.8)' }} aria-label={`${sceneName} · ${isPt ? 'inimigo' : 'enemy'} ${enemyIdx + 1}/${ladderLen}`}>{enemyIdx + 1}/{ladderLen}</span>}
+          /* UM indicador só (pedido do dono, 11/10/2026, REGISTRO §36): "Camada N · luta k de 6". O "6" NÃO é o número de camadas (elas vão
+             até a 999, sem fim de andares): é a escada de criaturas da camada (`LADDER_TIERS`, baby-i → mega). Copy §4: "camada/layer" é o
+             termo canônico (§12). */
+          title={hudLabel}
+          fast={speed > 1}
           closeLabel={exitLabel}
           onClose={exitRun}
           exitConfirm={!ended ? {
-            title: isPt ? 'Sair da descida? O placar até aqui fica.' : 'Leave the descent? Your score so far stays.',
-            stay: isPt ? 'Continuar' : 'Keep going',
+            title: isPt ? 'Sair da tela? Ele continua descendo sozinho e o que render fica esperando você.' : 'Leave the screen? He keeps going down on his own and whatever he earns waits for you.',
+            stay: isPt ? 'Ficar' : 'Stay',
             leave: exitLabel,
+            alt: ctx ? { label: isPt ? 'Retirar da masmorra' : 'Take him out of the dungeon', onClick: retirar } : undefined,
           } : undefined}
           onPauseChange={setPausado}
         >
-          {/* Os controles da descida: SEMPRE à mão (Pausar/Retomar; o Sair é o X da cena). A linha viva é o placar do
-              andar para o leitor de tela (`aria-live`): só muda quando o ANDAR muda. Sem botão de "próximo". */}
-          {!ended && (
-            <div data-dungeon-controls style={{ position: 'absolute', left: 12, right: 12, zIndex: 8, boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 8px)' }}>
+          {/* Os controles da descida: SEMPRE à mão (Pausar/Retomar à esquerda; o AVANÇO RÁPIDO 1×/2×/3× no canto inferior DIREITO; o Sair é o X
+              da cena). A camada já está no título: aqui a linha viva (`aria-live`) é só para o leitor de tela e só muda quando a CAMADA
+              muda — o texto visível não se repete. Sem botão de "próximo". */}
+          {!ended && phase !== 'away' && (
+            <div data-dungeon-controls style={{ position: 'absolute', left: 12, right: 12, zIndex: 8, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 8px)' }}>
               <button type="button" data-dungeon-pause aria-pressed={pausadoManual} onClick={() => setPausadoManual(v => !v)} style={{ ...sm2Button('outline'), flexShrink: 0, padding: '0 12px' }}>
                 {pausadoManual ? (isPt ? 'Retomar' : 'Resume') : (isPt ? 'Pausar' : 'Pause')}
               </button>
-              <p data-dungeon-floor-live aria-live="polite" className="sm2-num" style={{ ...phaseLine, margin: 0, textAlign: 'right', flex: 1, minWidth: 0 }}>
+              <p data-dungeon-floor-live aria-live="polite" style={SR_ONLY}>
                 {isPt ? `Camada ${floor}` : `Layer ${floor}`}{pausadoManual ? (isPt ? ' · em pausa' : ' · paused') : ''}
               </p>
+              <button
+                type="button"
+                data-dungeon-speed={speed}
+                onClick={cycleSpeed}
+                aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${nextDungeonSpeed(speed)}×.` : `Fast forward: ${speed}×. Tap to change to ${nextDungeonSpeed(speed)}×.`}
+                style={{ ...sm2Button(speed > 1 ? 'primary' : 'outline'), flexShrink: 0, padding: '0 12px', gap: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true" focusable="false" style={{ flexShrink: 0 }}>
+                  <path d="M1 1 L8 7 L1 13 Z M9 1 L16 7 L9 13 Z" fill="currentColor" />
+                </svg>
+                <span className="sm2-num">{speed}×</span>
+              </button>
+            </div>
+          )}
+          {phase === 'away' && awayReport && (
+            <div role="status" style={PANEL} data-dungeon-away-report>
+              <p style={phaseTitle}>{isPt ? 'Enquanto você esteve fora, a descida seguiu.' : 'While you were away, the descent went on.'}</p>
+              <DungeonSummary isPt={isPt} resumo={resumo} capBits={capBits} />
+              <p className="sm2-num" style={phaseLine}>
+                {isPt ? `Agora ele está na camada ${floor}.` : `He is on layer ${floor} now.`}
+              </p>
+              {awayReport.capped && (
+                <p style={phaseLine} data-dungeon-away-capped>
+                  {isPt ? `Contei até ${DUNGEON_AWAY_MAX_HOURS} h de descida por vez; o resto do tempo fica para a próxima.` : `I count up to ${DUNGEON_AWAY_MAX_HOURS} h of descent at a time; the rest waits for next time.`}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={verDescida} data-dungeon-away-continue style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                  {isPt ? 'Ver a descida' : 'Watch the descent'}
+                </button>
+                <button type="button" onClick={retirar} data-dungeon-retire style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                  {isPt ? 'Retirar da masmorra' : 'Take him out'}
+                </button>
+              </div>
             </div>
           )}
           {phase === 'enemy-down' && (
@@ -662,6 +827,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                     : `His Lv reaches down to layer ${capCamadas}. Lv grows with your complete days and evolution.`}
                 </p>
               )}
+              {awayReport && (
+                <p style={phaseLine} data-dungeon-away-note>
+                  {isPt ? 'Isto aconteceu enquanto você esteve fora; ele já voltou para casa.' : 'This happened while you were away; he is back home now.'}
+                </p>
+              )}
               <DungeonSummary isPt={isPt} resumo={resumo} capBits={capBits} />
               <p className="sm2-num" style={phaseLine}>
                 {isPt ? `Camada ${floor} · ${scoreLine}` : `Layer ${floor} · ${scoreLine}`}
@@ -685,6 +855,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             </div>
           )}
         </BattleStage>
+        {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
+        {drops.length > 0 && <DropNotice group={drops[0]} isPt={isPt} speed={speed} onClose={closeDrop} />}
       </TorcidaLayer>
     );
   }
@@ -730,8 +902,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Seu Soulmon vai sozinho: golpeia e se defende, e a energia dele fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
-                    : 'Your Soulmon goes alone: it strikes and defends, and its energy carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
+                    ? 'Seu Soulmon vai sozinho: golpeia, se defende e solta o especial sozinho quando a energia enche (ela passa de um inimigo para o outro). O botão do canto de baixo acelera a cena (1×, 2× ou 3×) sem mudar o resultado. Pode sair da tela: ele continua descendo e o que render fica esperando você. Enquanto estiver na masmorra ele não faz outra coisa; para chamá-lo de volta, use "Retirar da masmorra".'
+                    : 'Your Soulmon goes alone: it strikes, defends and unleashes its special by itself when the energy fills (it carries over from one enemy to the next). The button in the bottom corner speeds the scene up (1×, 2× or 3×) without changing the outcome. You can leave the screen: he keeps going down and whatever he earns waits for you. While he is in the dungeon he does nothing else; to call him back, use "Take him out".'}
                 </span>
           </span>
         </InfoTip>

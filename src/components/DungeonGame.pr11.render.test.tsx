@@ -67,19 +67,15 @@ async function ateInimigoCair(limiteMs = 120_000) {
 
 
 describe('Masmorra — círculo de cast (PR11)', () => {
-  it('o especial do pet (energia cheia) mostra o círculo de cast depois do anel; o golpe básico não tem', async () => {
+  it('o especial do pet (energia cheia) é AUTOMÁTICO (REGISTRO §36): o círculo de cast aparece sozinho, sem anel e sem toque; o golpe básico não tem', async () => {
     vi.useFakeTimers();
     H.startEnergy = [100];
     montar();
     descer();
-    await avancar(10);
-    expect(document.querySelector('[data-stage-cast]')).toBeNull();
-    for (let t = 0; t < 5000 && !document.querySelector('[data-stage-ring]'); t += 100) await avancar(100);
-    const ring = document.querySelector('[data-stage-ring]') as HTMLElement;
-    expect(ring).not.toBeNull();
-    await avancar(Number(ring.getAttribute('data-ring-target')));
-    fireEvent.pointerDown(document.body);
-    await avancar(50);
+    for (let t = 0; t < 8000 && !document.querySelector('[data-stage-cast="special"]'); t += 100) {
+      await avancar(100);
+      expect(document.querySelector('[data-stage-ring]')).toBeNull(); // nenhum anel, em nenhum instante
+    }
     expect(document.querySelector('[data-stage-cast="special"]')).not.toBeNull();
   });
 });

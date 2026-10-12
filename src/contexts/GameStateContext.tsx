@@ -4,6 +4,7 @@ import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, register
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
+import { sanitizeDungeonAway, type DungeonAway } from '../utils/dungeonIdle';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
@@ -414,6 +415,10 @@ export interface GameState {
   /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
    *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
   dungeonDepthRecord?: number;
+  /** A DESCIDA QUE CONTINUA SOZINHA (11/10/2026, REGISTRO §36): a posição da descida na masmorra (camada, lugar na escada, HP, energia do
+   *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
+   *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
+  dungeonAway?: DungeonAway;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1218,6 +1223,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
         dungeonDepthRecord: typeof loadedState.dungeonDepthRecord === 'number' && Number.isFinite(loadedState.dungeonDepthRecord)
           ? Math.min(999, Math.max(0, Math.floor(loadedState.dungeonDepthRecord))) : undefined,
+        // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
+        // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
+        dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
