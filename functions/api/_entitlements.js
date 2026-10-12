@@ -145,6 +145,16 @@ function emptyEntitlement() {
      * cliente inflaria este registro com uma chave por requisição.
      */
     aiForms: {},
+    /**
+     * ASSINATURA COSMÉTICA (D10). `{ rootHash, until, state, test, updatedAt }` ou
+     * `null`. `until` (epoch ms) é o `expiryTime` que a GOOGLE devolveu — só
+     * `applySubscriptionState` escreve, e só a partir de uma consulta à Google.
+     * NUNCA é lido por regra de jogo: abre a vitrine do trimestre e mais nada
+     * (guard: src/security/subscriptionBoundary.contract.test.ts). Fica FORA de
+     * `orderDetails` de propósito: o reembolso do vitalício (auditRefunds) não
+     * pode tocar nela, e ela não concede tier nem Créditos.
+     */
+    sub: null,
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now(),
@@ -187,7 +197,7 @@ export async function writeEntitlement(env, saveId, ent) {
  * Marca (epoch ms) de que o RENASCIMENTO já zerou o teto vitalício de sprite
  * desta conta. Existe para o reset ser **uma vez só**, do mesmo jeito que o
  * renascimento é um por save — sem ela, quem descobrisse a rota teria
- * geração de sprite infinita a R$ 0,10 cada (o teto vitalício é 26).
+ * geração de sprite infinita a R$ 0,10 cada (o teto vitalício era 26; desde a release/beta-1 é 15 e o renascimento não zera mais, REGISTRO §34).
  */
 export const REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt';
 
@@ -221,8 +231,12 @@ export async function resetSpriteLifetimeOnRebirth(env, saveId) {
   if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
     return { ent, jaFeito: true, anterior: 0 };
   }
+  // ⚰️ release/beta-1 (dono, 11/10/2026): "o usuário NÃO pode ficar regerando
+  // o Soulmon". O renascimento NÃO zera mais o vitalício: as formas já geradas
+  // reusam a arte do cache (`sprite:img:<saveId>:<formId>`) e as que nunca foram
+  // geradas ainda podem sair UMA vez cada (dentro do vitalício). A marca segue
+  // gravada para a rota continuar idempotente.
   const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
-  ent.aiLifetime = { ...(ent.aiLifetime || {}), sprite: 0 };
   ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
   await writeEntitlement(env, saveId, ent);
   return { ent, jaFeito: false, anterior };
@@ -256,7 +270,74 @@ export function publicView(ent) {
     // Só aparece quando há o que dizer: cliente antigo e os testes que fixam a
     // forma `{ tier, credits, adsLeft }` não veem campo novo em conta demo.
     ...(provider ? { provider } : {}),
+    // Só quando a conta já teve assinatura: contas sem ela mantêm o formato de sempre.
+    ...(ent.sub ? { subActive: isSubscriptionActive(ent), subUntil: Number(ent.sub.until) || 0 } : {}),
   };
+}
+
+/** A vitrine do trimestre está aberta? `until` vem da Google; aqui só se compara com o relógio. */
+export function isSubscriptionActive(ent, now = Date.now()) {
+  return !!ent?.sub && Number(ent.sub.until) > now;
+}
+
+/**
+ * Grava o estado da assinatura que a GOOGLE acabou de reportar. Quem chama já
+ * consultou `subscriptionsv2` — esta função nunca recebe vigência do cliente.
+ *
+ * `entitled:false` de uma cadeia que NÃO é a atual é ignorado: o aviso de uma
+ * assinatura antiga expirando não pode fechar a vitrine de uma nova, vigente.
+ * Fechar nunca retira o que já foi entregue (posse mora no save, não aqui).
+ *
+ * @returns {Promise<{ ent: any, changed: boolean }>}
+ */
+export async function applySubscriptionState(env, saveId, { rootHash, until, state, entitled, test = false }, now = Date.now()) {
+  const ent = await readEntitlement(env, saveId);
+  const cur = ent.sub;
+  if (cur && cur.rootHash !== rootHash && !entitled) return { ent, changed: false };
+  const next = { rootHash, until: Math.max(0, Number(until) || 0), state: String(state ?? ''), test: !!test, updatedAt: now };
+  if (cur && cur.rootHash === rootHash && cur.until === next.until && cur.state === next.state && cur.test === next.test) {
+    return { ent, changed: false };
+  }
+  ent.sub = next;
+  await writeEntitlement(env, saveId, ent);
+  return { ent, changed: true };
+}
+
+/** Quem reivindicou este comprovante? `null` = ninguém. */
+export async function lookupOrderOwner(env, orderId) {
+  if (env.DB) {
+    const row = await env.DB.prepare('SELECT save_id FROM order_claims WHERE order_id = ?').bind(orderId).first();
+    return row?.save_id ?? null;
+  }
+  return (await kvOrThrow(env).get(ORDER_PREFIX + orderId)) ?? null;
+}
+
+/** Retenção da dedupe de mensagens do Pub/Sub: a Google reentrega por até 7 dias. */
+export const RTDN_DEDUPE_TTL_SECONDS = 8 * 24 * 60 * 60;
+const RTDN_KV_PREFIX = 'rtdn:';
+
+/** Já processamos esta `messageId`? */
+export async function rtdnSeen(env, messageId) {
+  if (env.DB) {
+    const row = await env.DB.prepare('SELECT 1 AS x FROM rtdn_messages WHERE message_id = ? AND expires_at > ?').bind(messageId, Date.now()).first();
+    return !!row;
+  }
+  return !!(await kvOrThrow(env).get(RTDN_KV_PREFIX + messageId));
+}
+
+/** Marca a mensagem como processada (chamar só DEPOIS do efeito). Idempotente. */
+export async function rtdnMarkSeen(env, messageId, now = Date.now()) {
+  if (env.DB) {
+    await env.DB.prepare('DELETE FROM rtdn_messages WHERE expires_at <= ?').bind(now).run();
+    try {
+      await env.DB.prepare('INSERT INTO rtdn_messages (message_id, received_at, expires_at) VALUES (?, ?, ?)')
+        .bind(messageId, now, now + RTDN_DEDUPE_TTL_SECONDS * 1000).run();
+    } catch (err) {
+      if (!ehViolacaoDeChave(err)) throw err;
+    }
+    return;
+  }
+  await kvOrThrow(env).put(RTDN_KV_PREFIX + messageId, '1', { expirationTtl: RTDN_DEDUPE_TTL_SECONDS });
 }
 
 /**

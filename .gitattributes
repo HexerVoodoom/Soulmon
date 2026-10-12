@@ -1,0 +1,34 @@
+# Fim de linha: o repo e LF em todo lugar (F2, beta-play-01). Sem isto, o checkout
+# no Windows (core.autocrlf=true) traz CRLF e os contract tests que leem a FONTE
+# procurando '\n' (ex.: filaDeAvisos.contract.test.ts) falham so no Windows.
+* text=auto eol=lf
+
+# Binarios: nunca converter
+*.png binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.webm binary
+*.mp4 binary
+*.m4a binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.jar binary
+*.aar binary
+*.apk binary
+*.aab binary
+*.jks binary
+*.keystore binary
+*.so binary
+*.zip binary
+
+# Scripts de shell precisam de LF; .bat do Windows precisa de CRLF
+*.sh text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf

@@ -338,3 +338,16 @@ describe('billing.js — creditar na conta de outro', () => {
     expect(e.DIGIAPP_SAVES.store.get(`${ORDER_PREFIX}steam:own:1234567:${STEAM_ID}`)).toBe(ID);
   });
 });
+
+// Gate adversarial S8: os erros de verificação/auditoria logam só a MENSAGEM
+// truncada — nunca o objeto inteiro (que pode carregar URL com `?key=` da Steam).
+import { readFileSync as lerFonteS8 } from 'node:fs';
+describe('S8: logs de erro do _billing.js', () => {
+  it('nenhum console.error loga o objeto `err` cru; todos truncam a mensagem', () => {
+    const fonte = lerFonteS8(new URL('./_billing.js', import.meta.url), 'utf8');
+    expect(fonte).not.toMatch(/console\.error\([^)]*,\s*err\)/);
+    const linhas = fonte.split('\n').filter(l => /console\.error\(/.test(l) && /\berr\b/.test(l));
+    expect(linhas.length).toBeGreaterThanOrEqual(9);
+    for (const l of linhas) expect(l).toMatch(/String\(err\?\.message \?\? err\)\.slice\(0, 120\)/);
+  });
+});

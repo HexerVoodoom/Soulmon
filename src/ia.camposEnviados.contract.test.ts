@@ -29,9 +29,12 @@ const SRC = path.join(ROOT, 'src');
 const CAMPOS_DECLARADOS: Record<string, Record<string, string[][]>> = {
   '/api/chat': {
     // Chat aberto (mensagem digitada). `context` = inteiros de estado (WP3.1);
-    // `history` = as falas anteriores desta conversa (política §2b).
+    // `history` = as falas anteriores desta conversa (política §2b); `actions` = flag que liga as ferramentas; `behavior` = resumo agregado, só quando a pessoa pergunta como está indo.
     'src/components/ChatBox.tsx': [
-      ['message', 'petName', 'mood', 'evolutionStage', 'dominantBranch', 'language', 'aiSettings', 'context', 'history'],
+      ['message', 'petName', 'mood', 'evolutionStage', 'dominantBranch', 'language', 'aiSettings', 'context', 'history', 'actions', 'behavior'],
+      // Feedback proativo (opt-in, 1x/dia): sem mensagem; `behavior` = só CONTAGENS
+      // inteiras e categorias fixas (nenhum nome de hábito/tarefa) — docs/CHAT-SOULMON.md §Privacidade.
+      ['mode', 'petName', 'mood', 'evolutionStage', 'dominantBranch', 'language', 'aiSettings', 'context', 'behavior'],
     ],
     // Fala espontânea (idle) e fala ao toque — `message` aqui é um prompt fixo
     // do app, nunca texto da pessoa.

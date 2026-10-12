@@ -76,6 +76,7 @@ no primeiro commit, o símbolo se reencontra por `grep`.
 [52. Bestiário](#bestiario) ·
 [53. Torneio: rodada, faixas e Arena](#torneio) ·
 [54. Minijogos: PPT e Corrida com obstáculos](#minijogos) ·
+[64. A masmorra que continua sozinha e o Combina 3](#masmorra-fora) ·
 [55. Vínculo e o gate de PvP](#vinculo) · [55-B. Combate v3: level, talentos, equipamento e o teto de 5%](#combate-v3) ·
 [56. Comunidade e cooperativo](#comunidade) · [56-A. A Guilda](#guilda) ·
 [57. Estações](#estacoes) ·
@@ -6043,3 +6044,17 @@ decisão em aberto vai para [`PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md).
 **Também novos (sem regra de balanço própria):** `buildingIntro`/`buildingIntrosSeen` (o NPC apresenta o prédio aberto pelo Vínculo), `guildHouse`/`guildMission`/`guildDonatedItem` (casa evolutiva, missão da Feira/Arena, doação de Bits), `forge`/`forgeActions` (Soulsmith, 15 níveis, `BALANCO-SOULSMITH.md`), `nightmareShadows` (obstáculos do Pesadelo viram sombras, arte placeholder), `focoSessao`/`focusExpedition`/`focusLoot` (Oficina do Foco em etapas), `welcomeTour` (tour do corvo Rook), `demoMode`/`demoStart` (5 iniciais; sem XP, sem compras, sem PvP), `tema`/`musica`/`trilhaArena` (música por superfície, S17 emendada), `xpGain` (display "+N EXP").
 
 **Régua.** `utils/evolutionGauge.test.ts`, `utils/dungeonIdle.test.ts`, `utils/taskSteps.rule.test.ts`, `GameStateContext.hydrate.fuzz.test.tsx`.
+
+<a id="masmorra-fora"></a>
+
+## 64. 🏠 A masmorra que continua sozinha e o Combina 3 (11/10/2026)
+
+**Em uma frase.** Sair da tela da masmorra não cancela a descida: o Soulmon continua lá, descendo sozinho, e ao voltar você vê o que rendeu — mas enquanto ele está na masmorra ele não faz mais nada (evoluir, missão, passeio, duelo) até você retirá-lo, e o Salão de Jogos ganhou o Combina 3.
+
+**A regra.** A descida fica registrada no save (`dungeonAway`) desde o começo e a cada luta vencida; ao voltar, a conta pura `utils/dungeonAway.ts` refaz a descida luta a luta com o mesmo motor da tela, até o teto de `DUNGEON_AWAY_MAX_HOURS` (8 h) por vez. A energia da Home (1 por camada) é o que limita; sem energia, HP zerado, portão do Vínculo ou teto do nível a descida acaba sozinha e o Soulmon volta para casa. Os ganhos passam pelos mesmos tetos de sempre (Bits até 150 por dia, 2 corações por dia, 1 item do marco por descida). O avanço rápido 1×/2×/3× só acelera a cena; o resultado da luta é o mesmo. O especial é automático.
+
+**Ocupado.** Com o registro presente o pet some da Home e fica uma plaquinha "Estou na masmorra, volto logo". Evoluir, renascer, mandar em missão da guilda, Duelo, Torneio e Passeio abrem o aviso "Ele está na masmorra" com **Retirar da masmorra**. Cuidar (comer, banho, dormir, carinho) continua livre. Dono: `utils/dungeonIdle.ts` (`soulmonNaMasmorra`), `DungeonBusyModal`, `home/DungeonSign`; lista travada em `soulmonOcupado.contract.test.ts`.
+
+**Combina 3 (Salão de Jogos).** Troque duas peças vizinhas para formar linhas de 3 ou mais do mesmo elemento; as linhas somem, as peças caem e a cascata vale mais a cada passo; uma linha de 4 deixa uma peça com setas que limpa a linha ou a coluna. São 20 movimentos por rodada; cada 250 pontos viram 1 Bit, até 8, pelo mesmo teto diário dos outros jogos. Troca que não forma linha volta sem gastar movimento. Dono: `utils/match3.ts`; régua: `utils/match3.test.ts` e `utils/mente/balanco.test.ts`.
+
+**Régua.** `utils/dungeonAway.test.ts`, `components/games/useGroupBattle.velocidade.test.tsx`, `components/DungeonGame.beta-play.render.test.tsx`, `utils/match3.test.ts`, `components/Match3Game.render.test.tsx`, `contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx` (124 campos). Decisão: `REGISTRO-DE-DECISOES.md` §36.

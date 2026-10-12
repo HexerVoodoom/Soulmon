@@ -787,6 +787,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/autoDefesa.test.ts` (regra pura, determinismo, paridade com `sampleAcc` da Arena), `DungeonGame.defesaAuto.render.test.tsx`, `NightmareBattle.render.test.tsx`, `ArenaGame.torcida.render.test.tsx`.
 
 ### `src/utils/dungeonFight.ts`
+
+**Acréscimo de 11/10/2026:** `DUNGEON_AUTO_SKILL` (`media`), `autoRingGrade(fightSeed, n)`/`autoDodgeGrade(fightSeed, n)` — a nota do especial AUTOMÁTICO da Masmorra (sorteio com semente sobre as chances de `ARENA_SKILL_ODDS.media`; igual na tela, em qualquer velocidade e na conta fora do app).
 **Dono de:** a regra de UMA luta da Masmorra e do Pesadelo no núcleo v3 (PR4, contexto §2.18) — a MESMA que as telas jogam e que a simulação do balanço mede, para uma não divergir da outra: o jogador (`soulCombatant` com o HP do ofício, o especial da família da escola, alvo único), o inimigo (`dungeonFoe`), a defesa automática como `hitScale` do inimigo (0 na defesa perfeita, senão (1 − acc)/0,3), o contra-ataque do ofício no próximo básico, o anel (× `PVE_FAMILY_POWER.dungeon`) e a esquiva (`1 − DODGE_REDUCE`) como multiplicadores de cast.
 **Exports:** `dungeonFight(jogador, inimigo, semente)` → `{ player, foes, seed, hitScale, castScale }` · `dungeonPlayerSide`, `dungeonFightSeed`, `dungeonFamily` · `playSequence`, `ladderRefs`, `nightmareRefs`, `simulateDungeonRunV3`, `simulateNightmareV3` (o motor dos gates de `dungeon.v3.test.ts`/`nightmares.v3.test.ts`; habilidade `nenhuma`/`media`/`boa` e torcida `nenhum`/`teto`) · tipos `DungeonPlayerCfg`, `DungeonFight`, `SequenceConfig`, `SequenceResult`, `DungeonRunResult`.
 **Quem chama:** `DungeonGame`, `NightmareBattle`, os testes v3.
@@ -825,6 +827,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/dungeonIdle.ts`
 
 **Dono de:** a descida idle da Masmorra (08/10/2026) — constantes `DUNGEON_AUTO_FIGHT_MS` (4000), `DUNGEON_FIGHTS_PER_FLOOR` (6), `DUNGEON_MILESTONE_FLOOR` (5), `DUNGEON_HP_REGEN_FULL_HOURS` (4), `DUNGEON_MIN_HP_TO_ENTER_PCT` (25). **Exports:** `hpAgora(state, now)` (HP por timestamp, nunca > 1), `gravarHp`, `podeDescer`, `msAteDescer`, `posicaoDaLuta`, `formatarEspera`, `sanitizeDungeonHp`. Puro, sem imports. Régua: `dungeonIdle.test.ts`.
+
+**Acréscimo de 11/10/2026 (REGISTRO §36):** `DUNGEON_SPEEDS` (1/2/3), `sanitizeDungeonSpeed`, `nextDungeonSpeed` · `DUNGEON_AWAY_MAX_HOURS`/`DUNGEON_AWAY_MAX_MS` (8 h) · `DungeonAway`/`DungeonAwayPlayer` (o registro `dungeonAway` do save), `sanitizeDungeonAway` (registro inteiro ou `undefined`), `soulmonNaMasmorra(state)` (o critério único de "ocupado").
+
+### `src/utils/dungeonAway.ts`
+
+**Dono de:** a conta PURA de quem ficou fora da masmorra (REGISTRO §36). **Exports:** `applyDungeonAway(estado, nowMs, { heartsLeft?, retire? })` → `{ next, report }` (rejoga a descida luta a luta pelo motor da tela, com o especial automático, até `DUNGEON_AWAY_MAX_MS`; idempotente; credita pelos funis de sempre), `settleDungeonAwayNow(base, setGameState, now, retire)` (a ponte com o `setGameState`, uma chamada por volta; guarda o teto de corações no aparelho fora do updater), `dungeonWaveOf(seed, camada, nível, estágio)` (a onda da camada, a MESMA da tela), `awayPlayerCfg`, `playAutoFight`, `fightWallMs`, `AWAY_CAST_PAUSE_MS` (2200), `AWAY_END_BEAT_MS` (900), `AwayReport`/`AwayEnd`. **Régua:** `dungeonAway.test.ts`. **Chamado por:** `DungeonGame` (ao entrar) e `App` (`retirarDaMasmorra`, import dinâmico).
+
+### `src/utils/dungeonRewards.ts`
+
+**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (o item do marco, Vínculo, `dungeonRunsCompleted`, fragmentos da run), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+
+### `src/utils/dungeonDrops.ts`
+
+**Dono de:** a fila do modalzinho de drop da Masmorra (REGISTRO §36). **Exports:** `pushDrop(fila, tipo, qtd, velocidade, id)` (mesmo item soma; em 3× tudo vira um modal), `popDrop`, `dropName`, `dropTitle`, `DropKind` (`heart`/`glitchtama`/`fragments`). **Chamado por:** `DungeonGame`, `games/DropNotice`. **Régua:** `dungeonDrops.test.ts`.
+
+### `src/utils/match3.ts`
+
+**Dono de:** a lógica pura do Combina 3, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (troca inválida não muda nada), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Combina 3" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`.
 
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.
@@ -2645,7 +2665,7 @@ dominância populacional — por isso ±15%. Régua nova:
 - `SpriteFormFailure` (interface) — campos: `attempts`, `manual`, `kind`, `terminal`, `lastAt`.
 - `PendingTune` (interface) — A oferta de adoção da forma ATUAL (§2.3.1). Expira em uma virada de dia.
 - `SpriteLibrary` (interface) — campos: `sprites`, `failures`, `pendingTune`, `reverted`, `tunedUnseen`.
-- `SPRITE_FORM_ATTEMPT_CAP` — Teto de tentativas por forma — espelha `AI_LIMITS.sprite.perFormLifetime` (`functions/api/_aiGuard.js`). O servidor é a autoridade; isto é o disjuntor local que evita gastar uma chamada que já se sabe recusada.
+- `SPRITE_FORM_ATTEMPT_CAP` — Teto de tentativas por forma — disjuntor LOCAL de falhas por forma (3); desde a release/beta-1 o servidor permite UMA geração por forma (`perFormLifetime: 1`) e devolve a unidade em falha transitória, então estas tentativas contam falhas, não gerações. O servidor é a autoridade; isto é o disjuntor local que evita gastar uma chamada que já se sabe recusada.
 - `SPRITE_MANUAL_RETRY_CAP` — Botão manual: 3 por forma, vitalício (`custo-geracao-sprite.md` §6).
 - `SPRITE_MANUAL_COOLDOWN_MS` — Cooldown do botão manual, em ms (idem §6).
 - `function isSafeSpriteUrl(url: unknown): url is string` — A URL pode virar `<img src>`? Guarda ÚNICA — `normalizeSpriteLibrary`, `recordSprite` e `spriteGen.loadImage` compartilham esta função em vez de cada um ter o seu dicionário de esquema, que é o mesmo motivo pelo qual `SpriteFailKind` empresta os nomes de `cloudSave.ts`: duas (…)
@@ -2671,6 +2691,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `spriteLibrary.test.ts`
 **Avisos do arquivo:**
 - ⚠️ Reverter e re-sintonizar NÃO consomem o teto de tentativas — nenhuma função de adoção toca `attempts`.
+
+### `src/utils/spritePose.ts`
+**Dono de:** a pose do sprite — `SpritePose = { flipX, altitude: 'ground' | 'air' }`, a sanitização (lixo -> chão, sem espelho), a conta do espelho do passeio (`mirrorSprite`, em que `flipX` inverte a "frente" da arte), a frase de direção do prompt de geração (`SPRITE_FACING_PROMPT`: arte virada à DIREITA) e o ÚNICO ponto de escrita, `applySpritePose(patch)`. Vale na home e no overlay do desktop; combate fica de fora (o palco fixa os lados).
+**Exports:** `SpritePose`, `SpriteAltitude`, `DEFAULT_SPRITE_POSE`, `SPRITE_FACING_PROMPT`, `AIR_LIFT_PX`, `sanitizeSpritePose`, `mirrorSprite`, `applySpritePose`, `registerSpritePoseWriter`, `registerSpritePoseReader`, `getSpritePose`, `mergeSpritePose`.
+**Chamado por:** `src/contexts/GameStateContext.tsx` (campo `spritePose`, writer), `src/components/SpritePoseRows.tsx`, `src/components/CompanionHUD.tsx`, `src/components/ChatBox.tsx` (ações `flip_soulmon`/`fly`/`land`, via `getSpritePose` + `applySpritePose`), `src/utils/oracle/motor.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/cloudSync.ts`.
+**Régua:** `src/utils/spritePose.test.ts`, `src/contexts/GameStateContext.spritePose.test.tsx`, `src/utils/spritePose.desktop.contract.test.ts`.
 
 ### `src/utils/spriteRunner.ts`
 **Dono de:** O executor de um lote de geração de sprite — serial, com recuo, sem React.
@@ -3223,3 +3249,59 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx`, `src/hooks/useCareSystem.ts`, `src/components/NotificationManager.tsx`, `src/components/MealRhythmRows.tsx`, `src/components/MealInviteCard.tsx`, `src/components/GuideModal.tsx`, `src/components/HelpModal.tsx`, `src/contexts/GameStateContext.tsx`.
 **Régua:** `src/utils/mealRhythm.test.ts`, `src/utils/mealRhythm.contract.test.ts`, `workers/mealRhythm.parity.test.js`.
 **Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (notificações) · decisão no `REGISTRO-DE-DECISOES.md` (ritmo das refeições).
+
+### `src/utils/crashReport.ts`
+**Dono de:** o relatório de falha leve (beta-play-01): monta e envia a `/api/crash` um relatório mínimo — `kind` (boundary | error | rejection), `msg` (≤200) e `stack` (≤800) limpos, `ver`, `route` sem query/ids, `plat` (apk | web). Nunca conteúdo do usuário nem identidade; falha silenciosa.
+**Exports:**
+- `scrub(text, max)` / `scrubRoute(route)` — limpam e-mail, URL, token, ids e números longos; ESPELHAM `functions/api/crash.js` (teste de paridade por vetores).
+- `buildCrashReport(kind, reason, route)` — pura; `null` se não há mensagem.
+- `reportCrash(kind, reason, opts?)` — respeita `isTelemetryEnabled()`, `CRASH_SAMPLE_RATE`, `MAX_PER_SESSION` e um envio por assinatura; nunca lança.
+- `installGlobalCrashHandlers()` — `error` + `unhandledrejection`, idempotente; chamado em `main.tsx` antes do render. O `ErrorBoundary` chama `reportCrash('boundary', …)`.
+**Quem usa:** `main.tsx`, `components/ErrorBoundary.tsx`.
+
+### `src/utils/dayKeyParse.ts`
+**Dono de:** ler uma chave de dia como dia LOCAL. `parseDayKeyLocal(key)` aceita `YYYY-MM-DD` (que `new Date(str)` leria como UTC e, no Brasil, daria o dia anterior — F1 do beta-play-01) e a forma de `toDateString`; ilegível → `null`.
+**Quem usa:** `habitRhythm.dayKeyToDate`, `dailyReset` (`activitiesForWeekDay`, `soParaCoracao`), `rituals`. Regressão em 5 fusos: `utils/dayKeyFuso.regression.test.ts`; gate: `npm run gate:fuso`.
+
+### Chat agente (11/10/2026) — `src/utils/chatActions.ts`, `src/utils/chatBehavior.ts`, `src/utils/spritePose.ts`
+
+**`src/utils/chatActions.ts`** — a 2ª validação (cliente) das ações propostas pelo chat e a construção de `Activity`/`Task` a partir delas.
+**Exports:** `parseChatAction`, `parseChatActions`, `describeAction`, `renameAction`, `buildHabit`, `buildTask`, `isCreateAction`, `MAX_CHAT_ACTIONS`.
+**Chamado por:** `src/components/ChatBox.tsx`, `src/components/ChatActionCard.tsx`, `src/App.tsx` (`handleChatCreate`).
+**Régua:** `src/utils/chatActions.test.ts`, `functions/api/chatActions.parity.test.js` (paridade com `_chatActions.js`).
+**Regra:** [`docs/CHAT-SOULMON.md`](../../CHAT-SOULMON.md).
+
+**`src/utils/chatBehavior.ts`** — o resumo AGREGADO do comportamento (só inteiros e categorias fixas) enviado quando a pessoa pergunta como está indo.
+**Exports:** `buildBehaviorSummary`, `FEEDBACK_ASK`, `BehaviorSummary`.
+**Chamado por:** `src/App.tsx` (`getChatBehavior`), `src/components/ChatBox.tsx`.
+**Régua:** `src/utils/chatActions.test.ts` (nenhum texto livre sai), `functions/api/chat.actions.test.js` (`sanitizeBehavior`).
+
+**`src/utils/spritePose.ts`** — pose do sprite (`flipX`, `altitude`); dono único (ver a seção própria). O chat lê `getSpritePose` (leitor ligado pelo `GameStateProvider` via `registerSpritePoseReader`) e escreve só por `applySpritePose`.
+**Exports usados:** `getSpritePose`, `applySpritePose`.
+**Chamado por:** `src/components/ChatBox.tsx`.
+
+
+## `src/utils/artAliases.ts` (11/10/2026)
+
+**Dono de:** a tabela de ARTE EMPRESTADA — ids novos que, por ora, usam a pintura/arte de um item existente (o conjunto do trimestre da assinatura). Dado puro; quem aplica é o fim de `backgrounds.ts` e de `decorArt.ts`.
+**Exports:** `BG_ART_ALIASES` (cenário novo → `{ from, namePt, nameEn }`), `DECOR_ART_ALIASES` (decoração nova → id de origem).
+**Chamado por:** `src/utils/backgrounds.ts`, `src/utils/decorArt.ts`.
+**Régua:** `src/utils/subscriptionShop.test.ts` (cada item resolve arte) e `src/assets/artMaps.contract.test.ts` (miniatura 1:1 — as duas miniaturas do trimestre são cópias das de origem).
+
+## `src/utils/subscription.ts` (11/10/2026)
+
+**Dono de:** o lado do cliente da assinatura cosmética trimestral (D10, `docs/ASSINATURA-SPEC.md`) — o SKU `soulmon_cosmetic_quarterly`, a store da vigência FORA do GameState (`useSyncExternalStore`), o link oficial de "Gerenciar assinatura" e o texto da divulgação pré-compra (PT/EN).
+**Exports:** `SUBSCRIPTION_SKU`, `ANDROID_PACKAGE`, `manageSubscriptionUrl`, `getSubscriptionStatus`, `setSubscriptionFromEntitlement`, `useSubscriptionStatus`, `periodPhrase`, `subscriptionDisclosure`, `_resetSubscriptionStatus`.
+**Chamado por:** `src/App.tsx`, `src/components/SubscriptionSection.tsx`.
+**Régua:** `src/utils/subscription.test.ts`; fronteira em `src/security/subscriptionBoundary.contract.test.ts`.
+
+## `src/utils/subscriptionShop.ts` (11/10/2026)
+
+**Dono de:** o RESGATE de graça de um item do trimestre — a única porta desses itens. Puro sobre o `prev`; nunca remove item (posse permanente).
+**Exports:** `applySubscriptionClaim`, `subscriptionClaimRefusal`, `SubscriptionClaimRefusal`, `SubscriptionClaimState`.
+**Chamado por:** `src/App.tsx` (`handleClaimSubscription`).
+**Régua:** `src/utils/subscriptionShop.test.ts`.
+
+### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
+**Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
+**Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.

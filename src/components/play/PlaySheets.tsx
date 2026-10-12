@@ -22,6 +22,9 @@ import { PixelIcon } from '../ui/PixelIcon';
 // (`icons/games`, 128², alfa real): o velociraptor da Corrida e a tesoura do Pedra-papel-tesoura. Pelados, sem moldura.
 import iconCorrida from '../../assets/soulmon/icons/games/icon-game-dino.png';
 import iconPpt from '../../assets/soulmon/icons/games/icon-game-rps.png';
+// Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
+import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
+import { M3_MAX_BITS, M3_POINTS_PER_BIT, M3_MOVES } from '../../utils/match3';
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -102,13 +105,8 @@ function StatBox({ value, label, valueStyle }: { value: ReactNode; label: string
   );
 }
 
-function DropRow({ label, value }: { label: string; value: string }) {
-  return (
-    <li style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--sm2-line)' }}>
-      <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{label}</span>
-      <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{value}</span>
-    </li>
-  );
+function DropItem({ label, value }: { label: string; value: string }) {
+  return <li>{label} — <span className="sm2-num">{value}</span></li>;
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
@@ -127,34 +125,39 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         <p style={sectionHead}>{isPt ? 'Descida automática, sem fim' : 'Automatic descent, no end'}</p>
         {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
         <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
+          <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
           {isPt
             ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que enche comendo), até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
             : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, filled by feeding), down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
+          </InfoTipSection>
+          {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
+              vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
+          <InfoTipSection title={isPt ? 'Pode cair' : 'Possible drops'} last>
+            <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
+              <DropItem
+                label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
+                value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
+              />
+              <DropItem
+                label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
+                value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
+              />
+              <DropItem
+                label={isPt ? `Glitchtama no primeiro marco (a cada ${DUNGEON_MILESTONE_FLOOR} camadas) da descida` : `Glitchtama at the descent's first milestone (every ${DUNGEON_MILESTONE_FLOOR} layers)`}
+                value="1"
+              />
+              <DropItem
+                label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
+                value="5→100"
+              />
+            </ul>
+          </InfoTipSection>
         </ModalInfo>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />
         <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
       </div>
-      <p style={sectionHead}>{isPt ? 'Pode cair' : 'Possible drops'}</p>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-        <DropRow
-          label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
-          value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
-        />
-        <DropRow
-          label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
-          value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
-        />
-        <DropRow
-          label={isPt ? `Glitchtama no primeiro marco (a cada ${DUNGEON_MILESTONE_FLOOR} camadas) da descida` : `Glitchtama at the descent's first milestone (every ${DUNGEON_MILESTONE_FLOOR} layers)`}
-          value="1"
-        />
-        <DropRow
-          label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
-          value="5→100"
-        />
-      </ul>
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
@@ -190,6 +193,23 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
   );
 }
 
+// ── Combina 3 ───────────────────────────────────────────────────────────────
+export function Match3Sheet({ language, onStart }: { language: Language; onStart: () => void }) {
+  const isPt = language === 'pt-BR';
+  const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
+  return (
+    <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
+        <StatBox value={`${isPt ? 'até' : 'up to'} ${M3_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
+      </div>
+      <button type="button" data-match3-start onClick={onStart} style={cta}>
+        {isPt ? 'Jogar' : 'Play'}
+      </button>
+    </div>
+  );
+}
+
 // ── Pedra, papel e tesoura ──────────────────────────────────────────────────
 export function PptSheet({ language, onStart }: { language: Language; onStart: () => void }) {
   const isPt = language === 'pt-BR';
@@ -216,7 +236,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
 // Lumosity). O Refúgio não paga, não pontua e não mede nada, por desenho.
 // ════════════════════════════════════════════════════════════════════════════
 
-export type SalaoGame = 'dino' | 'ppt';
+export type SalaoGame = 'dino' | 'ppt' | 'match3';
 export type MenteGame = 'eco' | 'bolhas' | 'troca' | 'picross' | 'revisao';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
@@ -235,10 +255,15 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
               ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
               : `Jump the obstacles · every ${DINO_POINTS_PER_BIT} points becomes 1 Bit`}
           </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'} last>
+          <InfoTipSection title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}>
             {isPt
               ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
               : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
+            {isPt
+              ? `Troque peças vizinhas e forme linhas de 3 ou mais · ${M3_MOVES} movimentos · cada ${M3_POINTS_PER_BIT} pontos vira 1 Bit, até ${M3_MAX_BITS}`
+              : `Swap neighbouring tiles to line up 3 or more · ${M3_MOVES} moves · every ${M3_POINTS_PER_BIT} points becomes 1 Bit, up to ${M3_MAX_BITS}`}
           </InfoTipSection>
         </ModalInfo>
       </div>
@@ -256,6 +281,13 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
             <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
           </div>
           <PptSheet language={language} onStart={() => onStart('ppt')} />
+        </li>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCombina} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Combina 3' : 'Match 3'}</p>
+          </div>
+          <Match3Sheet language={language} onStart={() => onStart('match3')} />
         </li>
       </ul>
     </div>

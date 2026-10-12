@@ -11,7 +11,7 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE
  * número e sem som: nada que cobre.
  *
  * Ícone pelado dentro do anel (a mesma exceção D1 do `CornerLink`); o alvo de
- * 44 é do botão, e o rótulo mora no `aria-label`/`title`.
+ * 44 é do botão, e o rótulo mora no `aria-label` (sem `title`).
  */
 export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, kind = 'daily', row = 1 }: {
   /** `null` = nada a fazer nem a entregar: o ícone SOME (não há porta para uma lista vazia). */
@@ -33,7 +33,7 @@ export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, k
       type="button"
       onClick={onClick}
       aria-label={markLabel ? `${label}, ${markLabel}` : label}
-      title={markLabel ? `${label}, ${markLabel}` : label}
+      /* SEM `title` (pedido do dono, 11/10/2026): o balãozinho nativo do navegador mostrava "Missões diárias, Missão disponível" colado no "!" — texto estranho sobre o ícone. O nome falado fica só no `aria-label`. */
       data-missions-link={kind}
       data-missions-kind={kind}
       data-mission-mark-home={mark ?? 'none'}

@@ -69,6 +69,9 @@ import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js'
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER, ADMIN_SPRITE_MONTHLY_CAP } from './_admin.js';
+import { betaGate } from './_betaAccess.js';
+import { takeToken } from './_rateLimit.js';
+import { alertAdmin, cruzouLimiar } from './_adminAlert.js';
 
 /**
  * Tetos. Chat é barato (llama-8b) e acontece o tempo todo; geração de imagem é
@@ -86,10 +89,21 @@ export const AI_LIMITS = {
   // cauda do chat era pago igual por quem nunca pagou. Demo 30 / paid 120 até
   // o dono responder; o `perAccount` continua sendo o teto de quem não tem
   // tier conhecido (fail-closed no lado barato).
-  chat: { perAccount: 120, perAccountByTier: { demo: 30, paid: 120 }, global: 20000 },
+  // CUSTO ZERO (dono, 11/10/2026, REGISTRO §32): o chat roda só no plano
+  // GRATUITO do Groq (gpt-oss-120b: 1.000 RPD / 200K TPD ≈ 105 chamadas/dia de
+  // ~1.900 tokens) + Gemini gratuito de reserva (~250 RPD). Teto global 300/dia
+  // fica abaixo da soma (~355); por conta 15 (demo) / 20 (pago) — 15 testadores ×
+  // 15 = 225 cabe com folga. Se o beta crescer, este é o número a refazer.
+  // release/beta-1 (dono, 11/10): global 250 (cabe no Groq ~105 + Gemini ~250
+  // gratuitos com folga) e `perMinute` 4 por conta (amortecedor de rajada: o Groq
+  // gratuito é 30 RPM para a org inteira; memória do isolate, não exato).
+  chat: { perAccount: 15, perAccountByTier: { demo: 15, paid: 20 }, global: 250, perMinute: 4 },
+  // Transcrição (Supabase → fala): passava sem cota nenhuma (`abuso-e-custo` V4.5).
+  transcribe: { perAccount: 10, global: 100, perMinute: 4 },
   suggest: { perAccount: 30, global: 3000 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
   //
+  // HISTÓRICO (o valor vigente é 15, ver a nota da release/beta-1 abaixo).
   // 26 vitalício: o 20 anterior foi calibrado contra "14 gerações por save", que
   // é a árvore ERRADA. `ultra` exige as TRÊS megas (`dailyReset.ts:86-88`), então
   // o caminho completo percorre as 11 formas distintas que existem
@@ -101,7 +115,15 @@ export const AI_LIMITS = {
   //
   // 3 por forma = 1 tentativa + 1 refeitura por recusa + 1 retentativa. A forma
   // que falhou três vezes fica na arte de reserva; as outras seguem inteiras.
-  sprite: { perAccount: 6, perAccountLifetime: 26, perFormLifetime: 3, globalMonth: 800 },
+  //
+  // ⚠️ release/beta-1 (decisão do dono, 11/10/2026): "o usuário NÃO pode ficar
+  // regerando o Soulmon". UMA geração por forma (`perFormLifetime: 1`); o
+  // acerto de cache devolve a mesma arte para sempre (nunca regenera). A
+  // refeitura automática por RECUSA de conteúdo (não saiu imagem) não conta na
+  // forma, só no vitalício. Vitalício 15 = 11 formas + 4 de folga para recusas.
+  // Renascer NÃO zera mais nada (ver `resetSpriteLifetimeOnRebirth`). Teto
+  // GLOBAL DIÁRIO 40 (Higgsfield) além do mensal de 800.
+  sprite: { perAccount: 6, perAccountLifetime: 15, perFormLifetime: 1, globalMonth: 800, globalDay: 40 },
 };
 
 const day = (now = new Date()) => now.toISOString().slice(0, 10);
@@ -125,8 +147,8 @@ export const AI_REFUSAL_MESSAGES = {
     en: 'Your Soulmon has already received all the art this journey held for it. Any forms from here on show up with their reserve art — and it counts just the same.',
   },
   'sprite-form-cap': {
-    'pt-BR': 'Esta forma resistiu ao lápis do Oráculo — ele tentou tudo que sabia e ela vai ficar com a arte de reserva. As outras formas do seu caminho continuam abertas, do jeito que sempre estiveram.',
-    en: "This form resisted the Oracle's pencil — it tried everything it knows, and this one will keep its reserve art. Every other form on your path is still open, just as it always was.",
+    'pt-BR': 'O Oráculo desenha cada forma uma vez só, e esta já teve a sua vez — ela fica com a arte de reserva. As outras formas do seu caminho continuam abertas, do jeito que sempre estiveram.',
+    en: "The Oracle draws each form only once, and this one has had its turn — it keeps its reserve art. Every other form on your path is still open, just as it always was.",
   },
   'ai-daily-limit': {
     'pt-BR': 'Por hoje já desenhamos bastante para o seu Soulmon. Amanhã a gente continua de onde parou.',
@@ -139,6 +161,22 @@ export const AI_REFUSAL_MESSAGES = {
   'ai-daily-budget-reached': {
     'pt-BR': 'O ateliê já rendeu bastante hoje. Amanhã ele abre de novo.',
     en: 'The studio has given plenty today. It opens again tomorrow.',
+  },
+  'beta-closed': {
+    'pt-BR': 'O Soulmon está em teste fechado e esta conta ainda não está na lista. Se você recebeu um convite, entre com o mesmo e-mail do convite.',
+    en: 'Soulmon is in a closed test and this account is not on the list yet. If you got an invite, sign in with the same e-mail it was sent to.',
+  },
+  'ai-rate-limit': {
+    'pt-BR': 'Calma, uma coisa de cada vez — tenta de novo em um minutinho.',
+    en: 'Easy, one thing at a time — try again in a minute.',
+  },
+  'sprite-disabled': {
+    'pt-BR': 'O ateliê do Oráculo está fechado por enquanto. Seu Soulmon segue com a arte de reserva, sem perder nada.',
+    en: "The Oracle's studio is closed for now. Your Soulmon carries on with its reserve art, losing nothing.",
+  },
+  'ip-sprite-limit': {
+    'pt-BR': 'Por hoje já desenhamos bastante a partir desta conexão. Amanhã o ateliê abre de novo.',
+    en: "We've drawn plenty from this connection today. The studio opens again tomorrow.",
   },
   'ai-quota-unavailable': {
     'pt-BR': 'Não conseguimos conferir a sua cota agora, e preferimos não arriscar cobrar você duas vezes. Tente de novo daqui a pouco.',
@@ -220,10 +258,11 @@ function formUsed(ent, formId) {
  * já estourou não pode consumir a cota mensal (que é a fatura de todo mundo)
  * batendo na porta que já fechou.
  *
- * @param {'chat'|'suggest'|'sprite'} bucket
+ * @param {'chat'|'suggest'|'sprite'|'transcribe'} bucket
  * @param {string|undefined} saveId  vem do corpo da requisição
  * @param {number} units  quantas gerações esta chamada vai custar (a recusa de
  *   conteúdo refaz o pedido com `promptFallback` e por isso custa 2).
+ * @param {{ ok: boolean, email?: string } | null} [preAuth]  autorização já feita pela rota (ver abaixo).
  * @param {string|null|undefined} formId  a forma da árvore que está sendo
  *   desenhada. Quando vem, o teto POR FORMA (`perFormLifetime`) vale — e é ele
  *   o disjuntor de loop de retentativa numa forma só. Quando NÃO vem, os outros
@@ -245,7 +284,7 @@ function formUsed(ent, formId) {
  *   estar escrita para valer contra concorrência), e o chamador a DEVOLVE quando
  *   a geração não aconteceu. Ver `makeRelease` — recusa de conteúdo não devolve.
  */
-export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
+export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null, preAuth = null) {
   if (!kv(env)) return refuse(500, 'storage-not-bound');
 
   const limits = AI_LIMITS[bucket];
@@ -256,10 +295,22 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   }
 
   // Quando o login estiver ligado, isto amarra a chamada à conta de verdade.
-  const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) {
-    return { ok: false, status: authStatus(auth), reason: auth.reason };
+  // `preAuth`: a rota JÁ verificou o token e derivou o saveId do e-mail dele
+  // (transcrição) — não reverifica. Só aceito com `ok: true` e `email`.
+  /** @type {{ ok: boolean, email?: string }} */
+  let auth;
+  if (preAuth && preAuth.ok === true && preAuth.email) {
+    auth = preAuth;
+  } else {
+    const a = await authorizeSaveAccess(request, env, saveId);
+    if (!a.ok) return { ok: false, status: authStatus(a), reason: a.reason };
+    auth = a;
   }
+
+  // Beta fechado / allowlist de IA (`_betaAccess.js`): depois da autorização
+  // (o e-mail vem do token verificado), antes de qualquer contador.
+  if (betaGate(env, auth, 'ai')) return refuse(403, 'beta-closed');
+
 
   // ADMIN (`_admin.js`): tetos POR CONTA de sprite × ADMIN_AI_CAP_MULTIPLIER.
   // O global (mensal) NÃO muda — é ele que protege a fatura.
@@ -283,6 +334,8 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   const globalLimit = usesMonth ? limits.globalMonth : limits.global;
   const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
   const accountKey = `ai:${bucket}:${saveId}:${today}`;
+  // Imagem: além do mensal, um teto DIÁRIO global (`globalDay`).
+  const dayKey = usesMonth && typeof limits.globalDay === 'number' ? `ai:${bucket}:@all:${today}` : null;
   const hasLifetime = typeof limits.perAccountLifetime === 'number';
   // Forma só entra na conta se for uma forma que existe. Texto livre recusa —
   // numa rota que queima dinheiro, entrada que não dá para validar não passa.
@@ -302,6 +355,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   let usedGlobal = 0;
   let usedAccount = 0;
   let usedAdminMonth = 0;
+  let usedDay = 0;
   try {
     if (hasLifetime || hasFormCap || hasTierCap) {
       // Uma leitura só do entitlement, reaproveitada pelos três tetos.
@@ -319,6 +373,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
     if (adminKey) usedAdminMonth = await readCounter(env, adminKey);
+    if (dayKey) usedDay = await readCounter(env, dayKey);
   } catch (err) {
     // Não deu para saber quanto já foi gasto → não gasta mais. FAIL-CLOSED.
     console.error('aiGuard: contador ilegível, recusando', err?.message);
@@ -349,6 +404,9 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   if (usedGlobal + units > globalLimit) {
     return refuse(503, usesMonth ? 'ai-monthly-budget-reached' : 'ai-daily-budget-reached');
   }
+  if (dayKey && usedDay + units > limits.globalDay) {
+    return refuse(503, 'ai-daily-budget-reached');
+  }
 
   try {
     if (hasLifetime || hasFormCap) {
@@ -362,13 +420,22 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
     if (adminKey) await kvOrThrow(env).put(adminKey, String(usedAdminMonth + units), { expirationTtl: MONTH_TTL_SECONDS });
+    if (dayKey) await kvOrThrow(env).put(dayKey, String(usedDay + units), { expirationTtl: TTL_SECONDS });
   } catch (err) {
     // Débito que não gravou é chamada sem teto. Recusa.
     console.error('aiGuard: falha ao debitar cota, recusando', err?.message);
     return refuse(503, 'ai-quota-unavailable');
   }
 
-  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey }) };
+  // Alerta ao dono (push FCM, 1×/tipo/dia) quando um teto global cruza 80 %.
+  if (cruzouLimiar(usedGlobal, usedGlobal + units, globalLimit)) {
+    await alertAdmin(env, `${bucket}-${usesMonth ? 'mes' : 'dia'}-80`, `${usedGlobal + units}/${globalLimit}`);
+  }
+  if (dayKey && cruzouLimiar(usedDay, usedDay + units, limits.globalDay)) {
+    await alertAdmin(env, `${bucket}-dia-80`, `${usedDay + units}/${limits.globalDay}`);
+  }
+
+  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey, dayKey }) };
 }
 
 /**
@@ -403,7 +470,7 @@ function makeRelease(env, ctx) {
   return async function release(motivo) {
     if (devolvida) return;
     devolvida = true;
-    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey } = ctx;
+    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey, dayKey } = ctx;
     const menos = (n) => Math.max(0, n - units);
     try {
       if (hasLifetime || hasFormCap) {
@@ -418,9 +485,23 @@ function makeRelease(env, ctx) {
       await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
       await kvOrThrow(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
       if (adminKey) await kvOrThrow(env).put(adminKey, String(menos(await readCounter(env, adminKey))), { expirationTtl: MONTH_TTL_SECONDS });
+      if (dayKey) await kvOrThrow(env).put(dayKey, String(menos(await readCounter(env, dayKey))), { expirationTtl: TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? '-'} — ${motivo}`);
     } catch (err) {
       console.error('aiGuard: falha ao devolver cota reservada', err?.message);
     }
   };
+}
+
+/**
+ * Rajada por conta (`perMinute`, memória do isolate — amortecedor, o diário é o
+ * teto). Chamado pela ROTA antes de `guardAiRequest` (chat, transcrição), para o
+ * portão continuar testável em laço sem relógio.
+ * @returns {null | { ok: false, status: number, reason: string, message?: object }}
+ */
+export function perMinuteGate(bucket, saveId) {
+  const lim = AI_LIMITS[bucket]?.perMinute;
+  if (!lim || !saveId) return null;
+  const t = takeToken(`ai-min-${bucket}`, saveId, { limit: lim, windowMs: 60_000 });
+  return t.ok ? null : refuse(429, 'ai-rate-limit');
 }

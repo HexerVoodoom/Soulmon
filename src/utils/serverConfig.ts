@@ -24,9 +24,16 @@ export interface ServerConfig {
   authRequired: boolean;
   /** `/api/transcribe` tem provedor configurado. */
   transcribeAvailable: boolean;
+  /** Kill-switch `BILLING_DISABLED` do Worker: esconder compra NOVA.
+   *  ⚠️ Exceção à regra 2: falha de rede = `false` (loja "aberta"), porque quem
+   *  GARANTE a recusa é o servidor (`functions/api/_killSwitch.js`); esconder a
+   *  loja por um 500 do `/api/config` seria fechar o caixa por engano. */
+  billingDisabled: boolean;
+  /** Kill-switch `CHAT_DISABLED`: o chat fica nas respostas locais. Mesma exceção. */
+  chatDisabled: boolean;
 }
 
-const DESLIGADO: ServerConfig = { authRequired: false, transcribeAvailable: false };
+const DESLIGADO: ServerConfig = { authRequired: false, transcribeAvailable: false, billingDisabled: false, chatDisabled: false };
 
 /** A promessa em voo, para N chamadas simultâneas virarem UMA requisição. */
 let emVoo: Promise<ServerConfig> | null = null;
@@ -38,6 +45,8 @@ export function fetchServerConfig(): Promise<ServerConfig> {
       .then((d: Partial<ServerConfig> | null) => ({
         authRequired: d?.authRequired === true,
         transcribeAvailable: d?.transcribeAvailable === true,
+        billingDisabled: d?.billingDisabled === true,
+        chatDisabled: d?.chatDisabled === true,
       }))
       .catch(() => DESLIGADO);
   }

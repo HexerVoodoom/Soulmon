@@ -1,6 +1,6 @@
 {
   "name": "soulmon",
-  "version": "1.1.4",
+  "version": "1.2.0-beta2",
   "private": true,
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.5.2",
@@ -36,6 +36,7 @@
   "scripts": {
     "sync:oracle-data": "node scripts/sync-oracle-data.mjs",
     "vendor:class-system": "node scripts/vendor-class-system.mjs",
+    "gen:chat-kb": "node scripts/gen-chat-knowledge.mjs",
     "gen:cascata-fixtures": "node scripts/gen-cascata-fixtures.mjs",
     "dev": "vite",
     "booklet:pdf": "node scripts/booklet-pdf.mjs",
@@ -50,6 +51,8 @@
     "test:fast": "vitest run --changed origin/main --passWithNoTests",
     "test:shard": "vitest run --shard",
     "gates": "node scripts/gates.mjs",
+    "gate:fuso": "node scripts/gate-fuso.mjs",
+    "backup:saves": "node scripts/backup-saves.mjs",
     "analisar:entrada": "node scripts/analisar-entrada.mjs"
   }
 }

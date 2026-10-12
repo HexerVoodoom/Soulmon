@@ -3,7 +3,7 @@ import { Icon } from './ui/Icon';
 import { AlertLine, ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { FULL_UNLOCK_SKU, DEMO_ACTIVITY_TOTAL_CAP } from '../utils/monetization';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
-import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
+import { purchase, restorePurchases, isBillingAvailable, useStoreOpen, billingDisabledMessage } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
 import type { Language } from '../utils/i18n';
 import { track, TELEMETRY_UNLOCK_REASON, unlockReasonCode } from '../utils/telemetry';
@@ -83,6 +83,11 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
     onClose();
   };
 
+  /* Kill-switch `BILLING_DISABLED`: o "Desbloquear" some; "Restaurar" fica
+     (restaurar o que já foi pago continua valendo com a loja fechada). */
+  const lojaAberta = useStoreOpen();
+  const lojaFechada = isBillingAvailable() && lojaAberta === false;
+
   const handleBuy = async () => {
     if (!isBillingAvailable()) { setMessage(unavailable); return; }
     setLoading('buy');
@@ -90,7 +95,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
     const result = await purchase(FULL_UNLOCK_SKU);
     setLoading(null);
     if (result.ok) { onUnlocked(result.ent); return; }
-    setMessage(result.reason === 'cancelled'
+    setMessage(result.reason === 'billing-disabled' ? billingDisabledMessage(isPt) : result.reason === 'cancelled'
       ? (isPt ? 'Compra cancelada.' : 'Purchase cancelled.')
       : (isPt
         ? 'Não foi possível concluir a compra agora. Tente de novo em instantes.'
@@ -122,13 +127,15 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   return (
     <ModalSheet
       open
+      dismissOnBackdrop={false} /* formulário de conta com texto digitado */
       onClose={onClose}
       language={language}
       title={isPt ? 'Seu Soulmon cresce porque você cresce' : 'Your Soulmon grows because you do'}
       maxWidth={440}
       footer={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <button
+          {lojaFechada && <p data-unlock-closed style={{ ...sm2Hint, margin: 0 }}>{billingDisabledMessage(isPt)}</p>}
+          {!lojaFechada && <button
             type="button"
             onClick={handleBuy}
             disabled={loading !== null}
@@ -138,7 +145,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             {loading === 'buy'
               ? <><Icon name="sync" size={20} tone="inherit" className="sm2-kit-spin" />{isPt ? 'Comprando…' : 'Purchasing…'}</>
               : (isPt ? `Desbloquear — ${precoLabel}` : `Unlock — ${precoLabel}`)}
-          </button>
+          </button>}
           {/* WP5.5 — "Agora não" com a MESMA largura do primário, logo abaixo
               dele (Mobbin, Character AI). Uma oferta cuja única saída visível é
               o X no canto é uma oferta que encurrala; a recusa declarada é

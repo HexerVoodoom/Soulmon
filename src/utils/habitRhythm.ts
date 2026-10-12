@@ -9,6 +9,7 @@ import {
   MISS_INTERVENTION_AT,
 } from '../types/taskModel';
 import type { Schedule, HabitTier } from '../types/taskModel';
+import { parseDayKeyLocal } from './dayKeyParse';
 
 // O MOTOR DE CONSTÂNCIA DOS HÁBITOS
 // =================================
@@ -121,7 +122,8 @@ export function dayKeyOf(date: Date): string {
 
 /** dayKey → meia-noite local daquele dia. */
 export function dayKeyToDate(key: string): Date {
-  const d = new Date(key);
+  // Não usa `new Date(key)`: 'YYYY-MM-DD' seria meia-noite UTC (dia anterior no Brasil).
+  const d = parseDayKeyLocal(key) ?? new Date(NaN);
   d.setHours(0, 0, 0, 0);
   return d;
 }

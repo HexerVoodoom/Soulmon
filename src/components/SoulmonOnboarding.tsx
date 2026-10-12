@@ -39,7 +39,7 @@ import type { StarterId } from '../utils/sprites';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { isEmbedMode } from '../utils/embedMode';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
-import { purchase, isBillingAvailable } from '../utils/playBilling';
+import { purchase, isBillingAvailable, billingDisabledMessage } from '../utils/playBilling';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
 import {
   isAuthConfigured, getCurrentEmail, entrarComGoogle, type AuthErro,
@@ -1397,7 +1397,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       return;
     }
     setUnlockMessage(
-      result.reason === 'cancelled'
+      result.reason === 'billing-disabled' ? billingDisabledMessage(isPt) : result.reason === 'cancelled'
         ? (isPt ? 'Compra cancelada.' : 'Purchase cancelled.')
         : (isPt
           ? 'Não foi possível concluir a compra agora. Tente de novo em instantes.'

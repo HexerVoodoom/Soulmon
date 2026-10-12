@@ -27,6 +27,7 @@ import { playerDayKey } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
+import { parseDayKeyLocal } from './dayKeyParse';
 
 /**
  * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
@@ -560,7 +561,7 @@ export function activitiesForWeekDay<A extends { id?: string; weekDays?: number[
   weekDay: number,
   dayKey?: string,
 ): A[] {
-  const parsed = dayKey ? new Date(dayKey) : null;
+  const parsed = dayKey ? parseDayKeyLocal(dayKey) : null;
   const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
   const weekdaysMatter = canSelectWeekdays(state.evolutionStage);
   return state.activities.filter(a => {
@@ -728,7 +729,7 @@ export function heartGoalFor(state: DailyGoalState, weekDay: number, dayKey?: st
  * referência quando nada é filtrado — `dailyGoalFor` é chamado em render.
  */
 function soParaCoracao<T extends DailyGoalState>(state: T, dayKey?: string): T {
-  const parsed = dayKey ? new Date(dayKey) : null;
+  const parsed = dayKey ? parseDayKeyLocal(dayKey) : null;
   if (!parsed || Number.isNaN(parsed.getTime())) return state;
   const filtradas = state.activities.filter(
     a => habitCountsForHeartsOn(a, state.habitRhythms?.[String(a.id)], parsed),

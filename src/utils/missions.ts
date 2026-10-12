@@ -134,11 +134,18 @@ export function isMissionComplete(missionId: string, progress: Record<string, nu
  * Whether a shop item's purchase is unlocked. Locked items still render in
  * the shop (darkened + padlock) with a hint on how to unlock them —
  * mission-gated: unlocked once the mission is complete.
+ *
+ * `unlock.kind === 'subscription'` (D10): open only while the quarterly cosmetic
+ * subscription is active. `subscriptionActive` is a PLAIN BOOLEAN handed in by
+ * the caller — this is the vitrine gate, the only place the subscription may be
+ * read, and the rule engine never sees the expiry (boundary guard test).
  */
 export function isShopItemUnlocked(
   item: ShopItem,
   missionProgress: Record<string, number>,
+  subscriptionActive = false,
 ): boolean {
   if (!item.unlock) return true;
+  if (item.unlock.kind === 'subscription') return subscriptionActive;
   return isMissionComplete(item.unlock.missionId, missionProgress);
 }

@@ -619,14 +619,14 @@ desde `a6c1cd8a`).
 repositório). Régua: `src/deploy/versaoUnica.contract.test.ts`. Bump de versão =
 `package.json` **e** `versionName`/`versionCode` no Gradle, no mesmo commit.
 
-**Alarme exato (`a6c1cd8a`, PL-9):** `SoulmonAlarmPlugin.kt` só chama
-`setExactAndAllowWhileIdle` atrás de `canScheduleExactAlarms()`, com fallback
-`setAndAllowWhileIdle`; o manifesto e o `BootReceiver` recebem
-`SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` e reagendam; o lado JS ganhou
-`canScheduleExact()`/`openExactAlarmSettings()` (`src/plugins/SoulmonAlarmPlugin.ts`,
-ainda sem chamador na UI). ⚰️ Android 14+ com target ≥ 33 não pré-concede a
-permissão, o `setExact*` lançava `SecurityException` e o JS engolia — **nenhum
-lembrete de tarefa tocava no APK**. Como tudo em `android/`, só chega com APK novo.
+**Alarme (PL-9, revisto em beta-play-01):** o app NÃO declara mais `SCHEDULE_EXACT_ALARM`
+(permissão restrita da Play; lembrete tolera minutos de janela). `SoulmonAlarmPlugin.kt`
+agenda só com `setAndAllowWhileIdle` (inexato, acorda em Doze); saíram o gate
+`canScheduleExactAlarms()`, o reagendamento por `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED`
+e `canScheduleExact()`/`openExactAlarmSettings()` do JS (nunca tiveram chamador na UI).
+⚰️ Antes: Android 14+ com target ≥ 33 não pré-concede a permissão, o `setExact*` lançava
+`SecurityException` e o JS engolia — nenhum lembrete tocava no APK. Régua:
+`src/plugins/billingPbl8.contract.test.ts`. Como tudo em `android/`, só chega com APK novo.
 
 Guia operacional: [../APK-BUILD-INFO.md](../APK-BUILD-INFO.md).
 ⚠️ **Aquele arquivo é da era do fork** (cabeçalho: "última atualização declarada:

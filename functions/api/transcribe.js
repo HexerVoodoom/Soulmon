@@ -41,7 +41,8 @@
  * app. Botão que existe e falha é pior que botão que não existe.
  */
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
-import { bearerToken, verifyIdToken } from './_auth.js';
+import { bearerToken, verifyIdToken, emailToSaveId } from './_auth.js';
+import { guardAiRequest, perMinuteGate } from './_aiGuard.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -133,6 +134,16 @@ export async function onRequestPost({ request, env }) {
   const bruto = String(form.get('language') ?? '').slice(0, 5).split('-')[0].toLowerCase();
   const language = IDIOMAS.has(bruto) ? bruto : 'en';
 
+  // COTA (release/beta-1, `abuso-e-custo` V4.5): a transcrição não passava pelo
+  // `_aiGuard` — sem teto diário nem global. Agora: 4/min e 10/dia por conta,
+  // 100/dia no total, e a allowlist do beta. Conferido DEPOIS de validar o
+  // áudio (corpo ruim não gasta cota) e ANTES do provedor.
+  const saveId = await emailToSaveId(claims.email);
+  const rajada = perMinuteGate('transcribe', saveId);
+  if (rajada) return json({ error: rajada.reason, message: rajada.message }, 429);
+  const cota = await guardAiRequest(request, env, 'transcribe', saveId, 1, null, { ok: true, email: claims.email });
+  if (!cota.ok) return json({ error: cota.reason, ...(cota.message ? { message: cota.message } : {}) }, cota.status);
+
   const repasse = new FormData();
   repasse.append('audio', audio, 'recording.webm');
   repasse.append('language', language);
@@ -154,11 +165,13 @@ export async function onRequestPost({ request, env }) {
     // ⚠️ A mensagem do erro NÃO volta ao cliente: ela carrega a URL montada,
     // e a URL carrega o id do projeto.
     console.error('[transcribe] falha ao falar com o provedor:', err?.name);
+    await cota.release('provedor de transcrição indisponível');
     return json({ error: 'transcribe-unavailable' }, 502);
   }
 
   if (!upstream.ok) {
     console.error('[transcribe] provedor respondeu', upstream.status);
+    await cota.release(`provedor respondeu ${upstream.status}`);
     return json({ error: 'transcribe-failed' }, 502);
   }
 

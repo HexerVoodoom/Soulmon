@@ -631,7 +631,7 @@ export const METRICS_KEY_HEADER = 'X-Metrics-Key';
  * Compara em tempo (aproximadamente) constante. Não é defesa de missão crítica
  * — é o mínimo para o segredo não vazar pelo tempo do `===` num loop de sonda.
  */
-function secretEquals(a, b) {
+export function secretEquals(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);

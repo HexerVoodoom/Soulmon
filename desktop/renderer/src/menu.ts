@@ -481,6 +481,7 @@ function applySnapshot(s: RemoteSnapshot) {
   state.maxEnergy = s.maxEnergy;
   state.foodInventory = s.foodInventory;
   state.tasks = s.tasks;
+  state.spritePose = s.spritePose;
   state.lastSyncAt = new Date().toISOString();
 }
 

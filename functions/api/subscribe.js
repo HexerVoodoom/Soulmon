@@ -1,6 +1,7 @@
 // POST   /api/subscribe  — save a push subscription
 // DELETE /api/subscribe  — remove a push subscription
 
+import { isBetaClosed } from './_betaAccess.js';
 import { isAllowedPushEndpoint } from './_pushTargets.js';
 import { VALID_ID } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
@@ -197,10 +198,16 @@ export async function onRequestDelete({ request, env }) {
  * @returns {Promise<{ saveId: string | null, status?: number, reason?: string }>}
  */
 async function saveIdAutorizado(request, env, saveId) {
-  if (typeof saveId !== 'string' || !VALID_ID.test(saveId)) return { saveId: null };
+  // BETA FECHADO (gate adversarial S1): sem conta provada na lista, não inscreve
+  // — nem "sem conta" (seria escrita de KV de quem está fora do beta).
+  if (typeof saveId !== 'string' || !VALID_ID.test(saveId)) {
+    return isBetaClosed(env) ? { saveId: null, status: 403, reason: 'beta-closed' } : { saveId: null };
+  }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (auth.ok) return { saveId };
-  if (auth.reason === 'account-deleted') return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  if (auth.reason === 'account-deleted' || auth.reason === 'beta-closed' || isBetaClosed(env)) {
+    return { saveId: null, status: auth.reason === 'account-deleted' ? authStatus(auth) : 403, reason: auth.reason === 'account-deleted' ? auth.reason : 'beta-closed' };
+  }
   console.warn('[subscribe] saveId sem prova de posse, inscrição gravada sem conta', { reason: auth.reason });
   return { saveId: null };
 }

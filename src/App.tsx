@@ -161,6 +161,9 @@ import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/cu
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
+import { soulmonNaMasmorra } from './utils/dungeonIdle';
+import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
+import type { OcupadoAcao } from './components/DungeonBusyModal';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -175,7 +178,9 @@ const corvoAdocao = () => import('./utils/corvoAdocao');
 import { createEntitlementSync } from './utils/entitlementSync';
 import { subscribeAuthState } from './utils/auth';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
-import { purchase } from './utils/playBilling';
+import { purchase, reconcileSubscription } from './utils/playBilling';
+import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
+import { applySubscriptionClaim } from './utils/subscriptionShop';
 
 /* ⚰️ `EVOLVE_SEGMENTS` (7/9/11/14/999) saiu em 06/09/2026, junto com
    `digivolutionSegments`/`digivolutionSegmentsNeeded` do `GameState`.
@@ -550,8 +555,9 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
-const EvolutionGaugeMini = lazy(() => import('./components/EvolutionGaugeMini').then(m => ({ default: m.EvolutionGaugeMini })));
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
+// Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
+const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
@@ -709,6 +715,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
+import type { CreateAction } from './utils/chatActions';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 // minimal-ui F5 — a `ActivitiesPage` (hub de cartões) saiu: Masmorra e Corrida
@@ -1498,6 +1505,8 @@ export default function App() {
         // Admin/GM: SÓ da resposta do servidor, só em memória (`utils/adminFlag.ts`).
         // Falha de rede / sem saveId = não-admin.
         setAdminFlag(adminFromEntitlement(ent));
+        // Vitrine da assinatura (D10): vem do servidor, fica numa store fora do save e só a vitrine lê.
+        setSubscriptionFromEntitlement(ent);
         if (!ent) return;
         setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
           ? prev
@@ -2559,46 +2568,32 @@ export default function App() {
     setEditingActivity(null);
   }, []);
 
-  const handleAICreateActivity = useCallback((activity: {
-    name: string;
-    category: string;
-    points: { power: number; harmony: number; benevolence: number };
-  }) => {
-    if (import.meta.env.DEV) console.log('AI creating activity:', activity);
-
-    const category = AI_CATEGORY_MAP[activity.category] || 'Study';
-    const emoji = CATEGORY_EMOJIS[category] || '✨';
-
-    // Create auto-generated steps based on category and points
-    const steps: Step[] = [
-      {
-        id: `${Date.now()}-1`,
-        label: `Complete ${activity.name}`,
-        completed: false
-      }
-    ];
-
-    // Create the activity with custom points. `schedule` nasce junto de
-    // `weekDays` (os dois dizendo a mesma coisa): um hábito criado pela IA sem
-    // o campo novo cairia no `normalizeSchedule` de save antigo — funciona,
-    // mas a lista mostraria "todo dia" sem que ninguém tenha decidido isso.
-    const newActivity: Activity = {
-      id: Date.now().toString(),
-      name: activity.name,
-      category,
-      emoji,
-      steps,
-      weekDays: [0, 1, 2, 3, 4, 5, 6], // Available all days by default
-      schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
-    };
-
-    // Criar pela IA nao e um privilegio: o portao vale igual (D-12).
-    const criadas = commitHabitCreate([newActivity], TELEMETRY_CREATE_PATH.ai_chat);
-
-    if (import.meta.env.DEV) {
-      console.log(criadas ? 'Activity created successfully:' : 'Activity refused by cap:', newActivity);
+  /**
+   * Criação PROPOSTA pelo chat e CONFIRMADA no cartão (`ChatActionCard`).
+   *
+   * Reusa os MESMOS portões da UI (`commitHabitCreate` / `commitTaskCreate`):
+   * teto do demo, teto de estágio e telemetria valem igual — criar pela IA não
+   * é um privilégio (D-12). O modelo nunca chega aqui sem o toque da pessoa, e
+   * a ação já passou por `parseChatAction` (servidor E cliente).
+   * Substitui o `handleAICreateActivity` antigo, que criava SEM confirmação.
+   */
+  // `chatActions`/`chatBehavior` saem do chunk de entrada (orçamento de bytes, release/beta-1):
+  // só carregam quando a pessoa confirma um cartão do chat ou pergunta "como estou indo?".
+  const handleChatCreate = useCallback(async (action: CreateAction): Promise<'ok' | 'cap'> => {
+    const { buildHabit, buildTask } = await import('./utils/chatActions');
+    if (action.type === 'create_habit') {
+      const habit = buildHabit(action, CATEGORY_ICONS[action.habit.category], weekDaysForSchedule);
+      return commitHabitCreate([habit], TELEMETRY_CREATE_PATH.ai_chat) > 0 ? 'ok' : 'cap';
     }
-  }, [commitHabitCreate]);
+    const task = buildTask(action, CATEGORY_ICONS[action.task.category]);
+    return commitTaskCreate(task, TELEMETRY_CREATE_PATH.ai_chat, 'topo') ? 'ok' : 'cap';
+  }, [commitHabitCreate, commitTaskCreate]);
+
+  /** Lido só quando a pessoa pergunta "como estou indo?" (ver `chatBehavior.ts`). */
+  const getChatBehavior = useCallback(
+    async () => (await import('./utils/chatBehavior')).buildBehaviorSummary(gameState),
+    [gameState],
+  );
 
   /**
    * Salva uma tarefa vinda do `TaskEditModal` (criação e edição).
@@ -3107,7 +3102,41 @@ export default function App() {
    * gravava `ultimate-power`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
   const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, degeneratedByHP } = gameState;
+  /* 🏠 O SOULMON ESTÁ NA MASMORRA (pedido do dono, 11/10/2026, REGISTRO §36): enquanto `dungeonAway` existir no save ele está OCUPADO.
+     Tudo que usa o Soulmon de verdade passa por `bloqueiaOcupado(acao)` — evoluir, renascer, missão da guilda, passeio, duelo e
+     torneio (os dois últimos e o passeio, pelos lotes do `AreaView`). Ocupado: abre o aviso com o "Retirar da masmorra" e NÃO faz a
+     ação. Cuidar (comer, banho, dormir, carinho) segue livre: é o que abastece a energia da própria descida. */
+  const naMasmorra = soulmonNaMasmorra(gameState);
+  const naMasmorraRef = useRef(naMasmorra);
+  naMasmorraRef.current = naMasmorra;
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
+  const [ocupadoAviso, setOcupadoAviso] = useState<{ acao: OcupadoAcao | null } | null>(null);
+  const [retirando, setRetirando] = useState(false);
+  const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
+    if (!naMasmorraRef.current) return false;
+    setOcupadoAviso({ acao });
+    return true;
+  }, []);
+  const abrirAvisoMasmorra = useCallback((acao: OcupadoAcao | null) => setOcupadoAviso({ acao }), []);
+  /** "Retirar da masmorra": acerta a descida até agora (o que rendeu já entra pelos funis de sempre) e o Soulmon volta para casa. */
+  const retirarDaMasmorra = useCallback(async () => {
+    setRetirando(true);
+    try {
+      const { settleDungeonAwayNow } = await import('./utils/dungeonAway');
+      const r = settleDungeonAwayNow(gameStateRef.current, setGameState, Date.now(), true);
+      setOcupadoAviso(null);
+      if (r) {
+        const { layers, bits } = r.report;
+        toast(language === 'pt-BR'
+          ? `Ele voltou da masmorra${layers > 0 || bits > 0 ? `: ${layers} ${layers === 1 ? 'camada' : 'camadas'}, ${bits} Bits` : ''}.`
+          : `He's back from the dungeon${layers > 0 || bits > 0 ? `: ${layers} ${layers === 1 ? 'layer' : 'layers'}, ${bits} Bits` : ''}.`);
+      }
+    } finally { setRetirando(false); }
+  }, [setGameState, language]);
+
   const handleEvolveRequest = useCallback(() => {
+    if (bloqueiaOcupado('evolucao')) return;
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -3121,9 +3150,10 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP]);
+  }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP]);
 
   const handleEvolve = useCallback(() => {
+    if (bloqueiaOcupado('evolucao')) return;
     setGameState(prev => {
       // Evolution padlock (Evolution page): while locked, never evolve.
       if (prev.evolutionLocked) return prev;
@@ -3567,6 +3597,22 @@ export default function App() {
     goTo(areaView(dest.area));
   }, [goTo]);
 
+  /* "Faça um passeio" no menu de Missões leva ao PRÉDIO do Passeio (pedido do dono, 11/10/2026):
+     fecha o menu e abre a área com a folha do lote aberta, como o "Ir lá" da Mochila. */
+  const irAoPasseio = useCallback(() => {
+    setMissionsOpen(null);
+    setPendingSheet({ area: 'exploracao', lot: 'passeio' });
+    goTo(areaView('exploracao'));
+  }, [goTo]);
+
+  /* A linha de missão de prédio (Caderno) leva ao lote com a folha aberta, como o Passeio (dono, 11/10/2026). */
+  const irAoPredioDaMissao = useCallback((id: BuildingId) => {
+    const [area, lot] = id.split('.');
+    setMissionsOpen(null);
+    setPendingSheet({ area: area as AreaId, lot });
+    goTo(areaView(area as AreaId));
+  }, [goTo]);
+
   /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
      lote aberta — direto, sem passar por `buildingDestination`, que mandaria o Caderno ao menu de Missões. */
   const markIntroSeen = useCallback((id: BuildingId) => {
@@ -3629,17 +3675,9 @@ export default function App() {
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
-    setGameState(prev => addFragments({
-      // 🔗 Vínculo: a run completa (os 5 andares) é o evento de masmorra que o
-      // app tem em mãos, e ele passa pelo TETO DIÁRIO SUAVE de `bond.ts` —
-      // ao bater, simplesmente para de somar. Nada é subtraído e a masmorra
-      // continua inteira (Bits, Glitchtama, placar): o teto diz "o pet já está
-      // satisfeito", nunca "você jogou demais".
-      ...awardBondXP(prev, { kind: 'dungeonRun' }, playerDayKey(new Date(), prev.playerDayTz)),
-      foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
-      dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
-    // PR8b: a run COMPLETA rende fragmentos de equipamento (moeda ganha jogando; o Comércio soma até +25%).
-    }, fragmentGain(FRAGMENTS_PER_RUN, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)))));
+    // A conta (Vínculo pelo teto diário suave de `bond.ts`, o Glitchtama, `dungeonRunsCompleted` e os fragmentos da run com o
+    // Comércio) é de `utils/dungeonRewards.ts` — a MESMA que a descida que continua sozinha usa.
+    setGameState(prev => applyMilestoneItem(prev, new Date()));
     contarMissao('dungeon-runs');
   }, [contarMissao]);
 
@@ -3647,23 +3685,13 @@ export default function App() {
      QA rodada 2 (§2.4) mediu: a tabela do §55 declarava `dungeonFloor` e
      `grep -rn "kind: 'dungeonFloor'" src` não achava emissor nenhum. */
   const handleDungeonFloorCleared = useCallback(() => {
-    setGameState(prev => awardBondXP(prev, { kind: 'dungeonFloor' }, playerDayKey(new Date(), prev.playerDayTz)));
+    setGameState(prev => applyFloorCleared(prev, new Date()));
   }, []);
 
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
-    setGameState(prev => ({
-      ...prev,
-      dungeonKills: (prev.dungeonKills ?? 0) + 1,
-      /* WP4.6 — o BESTIÁRIO. A masmorra tem seis linhas × seis tiers e o jogo
-         não guardava NADA do que o jogador enfrentou: cada run apagava a
-         anterior. Registrar é o que transforma "matei uns bichos" em coleção.
-         Só cresce, e o `Set` mantém a idempotência (matar o mesmo tipo cem
-         vezes é uma entrada). */
-      bestiary: enemyKey && !(prev.bestiary ?? []).includes(enemyKey)
-        ? [...(prev.bestiary ?? []), enemyKey]
-        : prev.bestiary,
-    }));
+    // WP4.6 — o BESTIÁRIO + o contador de abates (`applyEnemyDefeated`, dono: `utils/dungeonRewards.ts`).
+    setGameState(prev => applyEnemyDefeated(prev, enemyKey));
   }, []);
 
   /* 🫧 CONVITE AO REFÚGIO — a regra inteira é de `utils/refugio/convite.ts`;
@@ -3827,6 +3855,27 @@ export default function App() {
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
+  // Assinatura cosmética (D10): a vigência fica numa store fora do GameState e SÓ abre a vitrine do trimestre.
+  const subscription = useSubscriptionStatus();
+  useEffect(() => {
+    // Reabertura do app / reinstalação / aviso perdido: reconcilia com a Play e o servidor (silencioso).
+    if (!saveId) return;
+    let off = false;
+    reconcileSubscription(SUBSCRIPTION_SKU).then(ent => { if (!off) setSubscriptionFromEntitlement(ent); });
+    return () => { off = true; };
+  }, [saveId]);
+
+  /** Resgate (de graça) de um item do trimestre. Nunca gasta moeda; posse permanente depois (utils/subscriptionShop.ts). */
+  const handleClaimSubscription = useCallback((itemId: string): boolean => {
+    const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return false;
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    if (!isShopItemUnlocked(item, missionProgress, subscription.active)) return false;
+    if (applySubscriptionClaim(gameState, item, subscription.active).refused) return false;
+    setGameState(prev => applySubscriptionClaim(prev, item, subscription.active).state);
+    return true;
+  }, [gameState, missionProgress, subscription.active, refuseDemo]);
+
   const handleShopBuy = useCallback((itemId: string): boolean => {
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return false;
@@ -3886,11 +3935,12 @@ export default function App() {
 
   /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
   const handleGuildMissionSend = useCallback(() => {
+    if (bloqueiaOcupado('missao')) return;
     setGameState(prev => {
       if (prev.guildMission) return prev;
       return { ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) };
     });
-  }, [setGameState]);
+  }, [setGameState, bloqueiaOcupado]);
 
   // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Solmon aparece de novo.
   // Sem rede, o registro espera (nova tentativa a cada minuto e ao voltar ao app) — mas o pet já está em casa.
@@ -4090,6 +4140,7 @@ export default function App() {
    */
   const handleRebirth = useCallback(async (choices: RebirthChoices): Promise<boolean> => {
     if (!canRebirth(gameState)) return false;
+    if (bloqueiaOcupado('renascer')) return false;
     // Opções de escola/elemento, `applyRebirth` e a herança vivem em `rebirth.ts`
     // (puxa o class-system) — só carregam aqui, no momento de renascer.
     const { applyRebirth, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo } = await import('./utils/rebirth');
@@ -5294,6 +5345,7 @@ export default function App() {
   }, []);
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
+    if (bloqueiaOcupado('evolucao')) return;
     setGameState(prev => {
       if (!prev.unlockedEvolutions.includes(targetStage)) return prev;
 
@@ -6473,6 +6525,7 @@ export default function App() {
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
+                ocupado={{ naMasmorra, missaoFora: isMissionAway(guildMission, Date.now()), onBusy: abrirAvisoMasmorra }}
                 language={language}
                 ownership={{
                   ownedBackgrounds: gameState.ownedBackgrounds ?? [],
@@ -6480,8 +6533,9 @@ export default function App() {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   missionProgress,
+                  subscriptionActive: subscription.active,
                 }}
-                actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture }}
+                actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
                 points={gameState.gamePoints ?? 0}
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}
@@ -6625,6 +6679,7 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 eggType={gameState.eggType}
                 demoCharacterId={petLine}
+                spritePose={gameState.spritePose}
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
                 ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
@@ -6704,6 +6759,8 @@ export default function App() {
                    gesto nenhum. Nunca vai ao widget, ao desktop nem ao push. */
                 walkingTo={passeandoEm}
                 missionAway={isMissionAway(guildMission, Date.now())}
+                naMasmorra={naMasmorra}
+                onSinalMasmorra={() => abrirAvisoMasmorra(null)}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
@@ -6714,7 +6771,8 @@ export default function App() {
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
                 aiSettings={chatPersonality}
-                onCreateActivity={handleAICreateActivity}
+                onChatCreate={handleChatCreate}
+                getBehavior={getChatBehavior}
                 language={language}
                 evolutionFlash={evolutionFlash}
                 feedAnim={feedAnim}
@@ -6733,20 +6791,9 @@ export default function App() {
                   paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)',
                 }}
               >
-              {/* 🧬 O gauge de evolução compacto (11/10/2026). Não é aviso:
-                  é medidor permanente, como os corações — por isso fica FORA
-                  do slot de avisos e não disputa a fila. */}
-              {(
-                <Suspense fallback={null}>
-                  <EvolutionGaugeMini
-                    language={language}
-                    evolutionPoints={gameState.evolutionPoints ?? 0}
-                    evolutionStage={gameState.evolutionStage}
-                    unlockedEvolutions={gameState.unlockedEvolutions}
-                    todayWeight={dailyDone}
-                  />
-                </Suspense>
-              )}
+              {/* O gauge "Caminho até a próxima forma" NÃO mora mais na Home (pedido
+                  do dono, 11/10/2026): fica só no Perfil/Evolução (`EvolutionPath`).
+                  `EvolutionGaugeMini` segue no repo, sem uso na Home. */}
               {/* minimal-ui F2 (abordagem B): o SLOT DO DIA mora logo abaixo da
                   faixa do pet — a ordem da tela é marca → cena → avisos → lista.
                   A fila e a prioridade não mudaram (filaDeAvisos.contract). */}
@@ -7286,6 +7333,7 @@ export default function App() {
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
               mealRhythm={gameState.mealRhythm}
+              spritePose={gameState.spritePose}
               onChangeMealRhythm={next => setGameState(prev => ({ ...prev, mealRhythm: next }))}
               onRestoreFromCloud={async (id) => {
                 const { cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
@@ -7439,6 +7487,7 @@ export default function App() {
         language={language}
         crossings={crossings}
         onClaimStroll={resgatarPasseio}
+        onGoStroll={irAoPasseio}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
         weekly={missoesDaSemana}
         onClaimWeekly={resgatarMissao}
@@ -7450,6 +7499,7 @@ export default function App() {
           day: playerDayKey(new Date(), gameState.playerDayTz),
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarPredio,
+          onGo: irAoPredioDaMissao,
         }}
       /></Suspense>}
       {currentView === 'map' && (
@@ -7610,6 +7660,15 @@ export default function App() {
           language={language}
         /></Suspense>
       )}
+
+      {ocupadoAviso !== null && <Suspense fallback={null}><DungeonBusyModal
+        open={ocupadoAviso !== null && (naMasmorra || ocupadoAviso.acao === 'masmorra-em-missao')}
+        acao={ocupadoAviso?.acao ?? null}
+        language={language}
+        onRetire={() => void retirarDaMasmorra()}
+        onClose={() => setOcupadoAviso(null)}
+        busy={retirando}
+      /></Suspense>}
 
       <ConfirmDialog
         isOpen={resetOnboardingOpen}

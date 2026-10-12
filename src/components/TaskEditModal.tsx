@@ -122,6 +122,7 @@ export function TaskEditModal({
   return (
     <ModalSheet
       open={isOpen}
+      dismissOnBackdrop={false} /* formulário com texto digitado */
       title={title ?? (isPt ? 'Editar tarefa' : 'Edit task')}
       onClose={onClose}
       language={language}

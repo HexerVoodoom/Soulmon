@@ -10,6 +10,7 @@
 // do app do celular, não uma cópia. Tarefas continuam locais (ver menu.ts).
 import { spriteLineOf, type CorvoCarrier } from '../../../src/utils/corvoPet';
 import { APP_URL } from './config';
+import { sanitizeSpritePose, type SpritePose } from '../../../src/utils/spritePose';
 import { migrateBranchIds } from '../../../src/utils/branchMigration';
 import type { GenericLine } from './sprites';
 
@@ -66,6 +67,8 @@ export interface RemoteSnapshot {
   foodInventory: Record<string, number>;
   /** Tarefas pendentes de hoje, como estão no app. */
   tasks: Array<{ id: string; name: string; emoji: string }>;
+  /** Pose do sprite escolhida no app (espelho + altitude). */
+  spritePose: SpritePose;
 }
 
 export type SyncResult =
@@ -150,6 +153,7 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
       maxEnergy: getMaxEnergyForStage(stage),
       foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
       tasks: pendingTasks(state),
+      spritePose: sanitizeSpritePose(state.spritePose),
     },
   };
 }
@@ -325,5 +329,6 @@ function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
     maxEnergy: getMaxEnergyForStage(stage),
     foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
     tasks: pendingTasks(state),
+    spritePose: sanitizeSpritePose(state.spritePose),
   };
 }

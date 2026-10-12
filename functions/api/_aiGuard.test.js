@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { guardAiRequest, AI_LIMITS } from './_aiGuard.js';
 
 // Este portão é o que separa "a IA custa o que os usuários pagam" de "a IA
@@ -60,11 +60,16 @@ describe('portão das rotas de IA', () => {
     // hash de e-mail, então o atacante inventa um novo toda vez. A cota por
     // conta não pega isso; o teto global é o disjuntor da fatura.
     const global = AI_LIMITS.sprite.globalMonth;
+    const porDia = AI_LIMITS.sprite.globalDay; // desde 11/10/2026 também há teto diário: anda o relógio
+    vi.useFakeTimers();
     for (let i = 0; i < global; i++) {
+      vi.setSystemTime(new Date(Date.UTC(2026, 7, 1 + Math.floor(i / porDia), 12)));
       expect((await guardAiRequest(req(), env, 'sprite', `conta${i}xxxxxxx`)).ok).toBe(true);
     }
+    vi.setSystemTime(new Date(Date.UTC(2026, 7, 25, 12)));
     expect(await guardAiRequest(req(), env, 'sprite', 'maisumaconta1'))
       .toMatchObject({ ok: false, status: 503, reason: 'ai-monthly-budget-reached' });
+    vi.useRealTimers();
   });
 
   it('buckets não dividem contador entre si', async () => {
@@ -83,8 +88,10 @@ describe('portão das rotas de IA', () => {
   });
 
   it('geração de imagem tem teto bem menor que o chat — é a cara', () => {
-    // O de imagem é MENSAL e o do chat é DIÁRIO: comparar os dois números crus
-    // já favorece o chat, e ainda assim o de imagem tem que ser menor.
-    expect(AI_LIMITS.sprite.globalMonth).toBeLessThan(AI_LIMITS.chat.global);
+    // O de imagem é MENSAL e o do chat é DIÁRIO. Até 11/10/2026 a comparação era
+    // dos números crus (20000/dia de chat); com o chat no plano GRATUITO (300/dia,
+    // REGISTRO §32) a comparação passa a ser na MESMA unidade — mês contra mês —
+    // e a imagem continua bem menor (800 contra 9.000).
+    expect(AI_LIMITS.sprite.globalMonth).toBeLessThan(AI_LIMITS.chat.global * 30 / 5);
   });
 });

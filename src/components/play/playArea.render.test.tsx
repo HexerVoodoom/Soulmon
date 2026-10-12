@@ -156,8 +156,14 @@ describe('Exploração — Zeph e a Masmorra', () => {
     // atrás do "?" — fica fora da tela até o jogador tocar.
     expect(folha.textContent).not.toMatch(/nunca os seus corações/);
     fireEvent.click(getByRole('button', { name: 'Como funciona a masmorra' }));
-    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/nunca os seus corações/);
-    expect(folha.textContent).toContain('4→12');
+    // Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e vive no "i", como lista.
+    expect(folha.textContent).not.toContain('Pode cair');
+    expect(folha.textContent).not.toContain('4→12');
+    const painel = document.querySelector('[data-info-tip-panel]')!;
+    expect(painel.textContent).toMatch(/nunca os seus corações/);
+    expect(painel.textContent).toContain('Pode cair');
+    expect(painel.querySelectorAll('[data-masmorra-drops] li')).toHaveLength(4);
+    expect(painel.textContent).toContain('4→12');
     // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu.
     expect(folha.querySelectorAll('ol li')).toHaveLength(0);
   });
@@ -354,12 +360,12 @@ describe('fiação no App (guard de fonte)', () => {
 });
 
 describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
-  it('Corrida com obstáculos e Pedra-papel-tesoura têm ícone próprio, pelado (sem moldura)', async () => {
+  it('Corrida com obstáculos, Pedra-papel-tesoura e Combina 3 têm ícone próprio, pelado (sem moldura)', async () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
     const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
-    expect(cards.length).toBe(2);
+    expect(cards.length).toBe(3); // + Combina 3 (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
       expect(img).toBeTruthy();

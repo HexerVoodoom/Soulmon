@@ -1,4 +1,4 @@
-import { useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip, ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
@@ -375,7 +375,7 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop,
 }: {
   open: boolean;
   title: string;
@@ -396,15 +396,32 @@ export function ModalSheet({
   /** Rodada 7 (I2): O "i" ÚNICO da folha — canto superior DIREITO do cabeçalho,
    *  explicando TUDO que há nela (várias seções curtas dentro do mesmo tooltip). */
   info?: { label: string; content: ReactNode };
+  /** Clicar/tocar FORA da folha (no véu) fecha — o padrão de todo modal (pedido do dono,
+   *  11/10/2026). Por padrão é `true`, exceto quando o fechar vai à direita (`closeSide` end; o fechar encerra uma
+   *  atividade em andamento). Passe `false` só em folha que bloqueia DE PROPÓSITO: confirmação
+   *  destrutiva e formulário com texto digitado (um toque fora não pode perder o que a pessoa
+   *  escreveu). A lista vive em `docs/BETA-AJUSTES-UI.md`. */
+  dismissOnBackdrop?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  const fechaNoVeu = dismissOnBackdrop ?? closeSide !== 'end';
+  /* O toque tem de COMEÇAR e TERMINAR no véu: arrastar uma seleção de texto de dentro
+     da folha para fora solta o clique no ancestral comum (o véu) e fecharia sem querer. */
+  const comecouNoVeu = useRef(false);
   const { slot, slotRef } = useModalInfoSlot();
   if (!open) return null;
   return (
     <ModalInfoSlotProvider slot={slot}>
     <div
       className="sm2-sheet-fade"
+      data-modal-backdrop
+      data-dismiss-on-backdrop={fechaNoVeu ? 'true' : 'false'}
+      onPointerDown={(e) => { comecouNoVeu.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (fechaNoVeu && comecouNoVeu.current && e.target === e.currentTarget) onClose();
+        comecouNoVeu.current = false;
+      }}
       style={{
         position: 'fixed', inset: 0, zIndex: 120,
         background: 'rgba(4, 18, 20, .55)',

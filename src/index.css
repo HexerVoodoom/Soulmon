@@ -5779,6 +5779,8 @@ select:focus-visible {
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
+  /* Altitude 'air': sem flutuação — o pet fica parado no alto (a altura é a informação). */
+  .sm-pet-air { animation: none !important; }
   /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
   .sm-reveal-cocoon, .sm-reveal-cocoon-img { animation: none !important; }
   /* Celebração (rodada 7, M5): sem movimento ela nem renderiza; o texto de estado basta. */
@@ -6339,6 +6341,18 @@ body {
   border-radius: 50%;
   background: rgba(0, 0, 0, .28);
   filter: blur(3px);
+}
+
+/* ALTITUDE 'air' (`utils/spritePose.ts`): o sprite sobe `--pet-air-lift` e flutua uns
+   3px. Usa a propriedade `translate` (independe do `transform` das animações do pet).
+   Movimento reduzido: fica parado no alto (regra no bloco canônico, no fim do arquivo). */
+@keyframes sm-pet-air-float {
+  0%, 100% { translate: 0 calc(var(--pet-air-lift, 22px) * -1); }
+  50%      { translate: 0 calc(var(--pet-air-lift, 22px) * -1 - 3px); }
+}
+.sm-pet-air {
+  translate: 0 calc(var(--pet-air-lift, 22px) * -1);
+  animation: sm-pet-air-float 2.4s ease-in-out infinite;
 }
 
 /* WP1.1 — O CASULO do reveal.
@@ -8444,3 +8458,13 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }
 .sm-lvup-burst { animation: sm-lvup-burst 24s linear infinite; }
 .sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }
+
+/* Cartão de confirmação das ações propostas pelo chat (ChatActionCard). */
+.sm2-chat-action-btn {
+  min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--sm2-line); background: transparent; color: var(--sm2-ink);
+  font: inherit;
+}
+.sm2-chat-action-btn:disabled { opacity: .5; cursor: default; }
+.sm2-chat-action-primary { background: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); }
+.sm2-chat-action-card { box-shadow: 0 6px 20px rgba(0, 0, 0, .18); }

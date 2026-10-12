@@ -31,7 +31,7 @@ function fakeEnv() {
   store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid' }));
   store.set(ENT_PREFIX + OUTRA_CONTA, JSON.stringify({ tier: 'paid' }));
   const env = {
-    GEMINI_API_KEY: 'k',
+    GEMINI_API_KEY: 'k', SPRITE_GEMINI_IMAGE: '1' /* o mock do provedor é o caminho Gemini; em produção ele fica desligado */,
     DIGIAPP_SAVES: {
       get: async k => (store.has(k) ? store.get(k) : null),
       put: async (k, v, opts) => { store.set(k, v); if (opts?.metadata) meta.set(k, opts.metadata); },
@@ -167,12 +167,15 @@ describe('dedupe: a MESMA forma nunca é gerada duas vezes', () => {
     expect(chamadasDeIA).toHaveLength(2);
   });
 
-  it('sem `formId` não há dedupe — a OraclePage segue gerando (e pagando)', async () => {
+  // Até 11/10/2026 o pedido sem `formId` gerava sem dedupe (e pagava de novo).
+  // Decisão do dono: uma geração por forma — sem forma, não há geração.
+  it('sem `formId` é 400 form-id-required — nunca gera sem dedupe', async () => {
     const env = fakeEnv();
-    await onRequestPost({ request: req({ formId: undefined }), env });
-    await onRequestPost({ request: req({ formId: undefined }), env });
-    expect(chamadasDeIA).toHaveLength(2);
-    expect(vitalicio(env)).toBe(2);
+    const res = await onRequestPost({ request: req({ formId: undefined }), env });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('form-id-required');
+    expect(chamadasDeIA).toHaveLength(0);
+    expect(vitalicio(env)).toBe(0);
   });
 
   it('`formId` inventado é 400 antes de qualquer chave e de qualquer IA', async () => {

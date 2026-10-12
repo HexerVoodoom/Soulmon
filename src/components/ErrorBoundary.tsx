@@ -5,6 +5,7 @@ import { readLocal } from '../utils/safeStorage';
 import { Viewport } from './ui/Viewport';
 import { sm2Button } from './form/FormKit';
 import { FeedbackLink } from './FeedbackLink';
+import { reportCrash } from '../utils/crashReport';
 
 interface Props { children: ReactNode; }
 interface State { hasError: boolean; error: Error | null; }
@@ -17,6 +18,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // Relatório mínimo e sem conteúdo do usuário (`utils/crashReport.ts`). Nunca lança.
+    reportCrash('boundary', error);
     if (import.meta.env.DEV) {
       console.error('[Soulmon] Render error:', error, info.componentStack);
     }

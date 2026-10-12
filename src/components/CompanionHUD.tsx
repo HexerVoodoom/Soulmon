@@ -1,6 +1,8 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
+import { DungeonSign } from './home/DungeonSign';
+import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
@@ -161,6 +163,8 @@ interface CompanionHUDProps {
    *  nunca um erro: o visor não tem estado de carregamento nem de erro
    *  (`spec-geracao-incremental.md` §2.1). */
   ownSpriteUrl?: string;
+  /** Pose do sprite (Configurações → "Virar Soulmon" / "Voar"). Sem ela: chão, sem espelho. */
+  spritePose?: Partial<SpritePose>;
   healthPoints: number;
   maxHealthPoints: number;
   dominantBranch: 'power' | 'harmony' | 'benevolence' | 'balanced';
@@ -210,6 +214,10 @@ interface CompanionHUDProps {
   walkingTo?: string | null;
   /** 🔎 MISSÃO da guilda (PR3): o Solmon foi investigar e SOME do palco até voltar. Sem texto de cobrança — só a ausência e uma lupa. */
   missionAway?: boolean;
+  /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
+  naMasmorra?: boolean;
+  /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
+  onSinalMasmorra?: () => void;
   equippedBackground?: string | null; // shop backdrop id for the pet box
   /** Decoração equipada por espaço do palco (utils/petStage.ts). */
   equippedDecor?: Partial<Record<SlotId, string>>;
@@ -232,11 +240,11 @@ interface CompanionHUDProps {
   onCareEventComplete?: () => void;
   useAI: boolean;
   aiSettings?: any;
-  onCreateActivity?: (activity: {
-    name: string;
-    category: string;
-    points: { power: number; harmony: number; benevolence: number };
-  }) => void;
+  /** Criação proposta pelo chat, já CONFIRMADA pela pessoa no cartão. Devolve
+   *  `'cap'` quando o teto do plano recusou (o cartão avisa, sem culpa). */
+  onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
+  /** Resumo agregado do comportamento recente (só é lido quando a pessoa pergunta). */
+  getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary | Promise<import('../utils/chatBehavior').BehaviorSummary>;
   language: Language;
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */
@@ -279,6 +287,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   eggType = 'ignar',
   demoCharacterId,
   ownSpriteUrl,
+  spritePose,
   healthPoints,
   maxHealthPoints, 
   dominantBranch, 
@@ -294,6 +303,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   hauntedWatching = false,
   walkingTo = null,
   missionAway = false,
+  naMasmorra = false,
+  onSinalMasmorra,
   daysAway = 0,
   petPassive,
   talento = null,
@@ -313,7 +324,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   onCareEventComplete,
   useAI,
   aiSettings,
-  onCreateActivity,
+  onChatCreate,
+  getBehavior,
   language,
   foodInventory = {},
   materials,
@@ -910,7 +922,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   // são desenhadas olhando pra ESQUERDA e viram ao andar pra direita — senão
   // andam de costas. Sprite próprio (acervo) não declara lado: direita.
   const arteOlhaEsquerda = !(ownSpriteUrl && ownSpriteUrl !== spriteQuebrado) && artFacesLeft(evolutionStage, demoCharacterId);
-  const getHorizontalFlip = () => ((direction === 'left') !== arteOlhaEsquerda ? 'scaleX(-1)' : 'scaleX(1)');
+  // Pose escolhida pelo jogador (`utils/spritePose.ts`): `flipX` inverte a "frente" da arte
+  // (e portanto o espelho do passeio); `altitude: 'air'` sobe o sprite e deixa a sombra no chão.
+  const pose = sanitizeSpritePose(spritePose);
+  const noAr = pose.altitude === 'air';
+  const getHorizontalFlip = () => (mirrorSprite(direction === 'left', arteOlhaEsquerda, pose.flipX) ? 'scaleX(-1)' : 'scaleX(1)');
 
   /* Respiração: 3% (≈2 device px num sprite de 128 = 1 pixel de origem).
      Os 10% de antes eram um salto, não uma respiração. */
@@ -1190,7 +1206,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         useAI={useAI}
         onSendMessage={handleChatMessage}
         aiSettings={aiSettings}
-        onCreateActivity={onCreateActivity}
+        onChatCreate={onChatCreate}
+        getBehavior={getBehavior}
         chatContext={chatContext}
         language={language}
       />
@@ -1375,6 +1392,17 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             ))}
 
+            {/* 🏠 A PLAQUINHA da masmorra (REGISTRO §36): NO LUGAR do pet, ancorada nos pés dele — fora da caixa que anda e espelha, para o texto
+                nunca virar de lado nem andar junto. O pet fica `visibility: hidden` (mesma caixa, mesmo chão). */}
+            {naMasmorra && !missionAway && (
+              <div
+                data-pet-masmorra-slot
+                style={{ position: 'absolute', left: '50%', top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP + PET_RENDER}px)`, transform: 'translate(-50%, -100%)', zIndex: 3 }}
+              >
+                <DungeonSign language={language} onTap={onSinalMasmorra} />
+              </div>
+            )}
+
             {/* Hug balloon — follows pet position, shown after feed or shower */}
             {hugBalloon && (
               <div
@@ -1382,8 +1410,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 /* O botão "Evoluir" mora em `top: 10` no centro do palco: com o
                    balão a -78px do meio os dois se sobrepunham e o 🤗 ficava
                    ESCONDIDO atrás do botão (visto no screenshot da rodada 3).
-                   Quando o botão está na tela, o balão desce. */
-                style={{ left: `${position}%`, top: canEvolve && !isSleeping ? 'calc(50% - 46px)' : 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
+                   11/10/2026 (dono): a -78px o balão do BANHO ficava ~35px acima do topo
+                   visível do palco (250px, `overflow: hidden`) e só aparecia um pedaço
+                   cortado. A -46px ele cabe dentro do palco, logo acima da cabeça do pet,
+                   COM ou SEM o botão "Evoluir" — o mesmo valor serve aos dois casos. */
+                style={{ left: `${position}%`, top: 'calc(50% - 46px)', transform: 'translateX(-50%)' }}
               >
                 <div className="relative bg-white rounded-full px-2 py-0.5 shadow text-lg leading-none">
                   <img src={balloonKind === 'bath' ? UI_ICON_ART.banho : FX_ART['🤗']} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle' }} />
@@ -1487,6 +1518,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                   width: Math.round(PET_RENDER * 0.52),
                   height: Math.round(PET_RENDER * 0.12),
                   pointerEvents: 'none',
+                  /* No ar a sombra fica NO CHÃO, menor e mais fraca: é ela que diz "voando". */
+                  ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
                 }}
               />
               {/* 🧭 PASSEANDO (30/09/2026). A mochila ao pé do pet diz, sem
@@ -1502,7 +1535,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     position: 'absolute',
                     left: `calc(50% + ${Math.round(PET_RENDER * 0.22)}px)`,
-                    bottom: PET_GROUND_KEEP + PET_LIFT + Math.round(PET_RENDER * 0.28), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão
+                    bottom: Math.round(PET_RENDER * 0.3), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão. 11/10/2026 (dono): `bottom` é relativo à caixa do sprite (cujo fundo JÁ é o pé do pet) — somar `PET_GROUND_KEEP + PET_LIFT` jogava a mochila ~100px para CIMA do pet, flutuando junto à janela do cenário.
                     lineHeight: 0,
                     pointerEvents: 'none',
                     zIndex: 1,
@@ -1527,6 +1560,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <img
                   src={sprite}
                   alt={missionAway ? '' : currentStage}
+                  aria-hidden={naMasmorra ? true : undefined}
                   /* A OUTRA METADE DA SINTONIA (`spec-geracao-incremental.md`
                      §2.1 e §2.3.1). A varredura de 400 ms já passava por cima
                      deste sprite; a spec sempre pediu o PAR — "scanline de
@@ -1554,13 +1588,19 @@ export const CompanionHUD = memo(function CompanionHUD({
                      que não existia em lugar nenhum deste arquivo. É gesto,
                      não cobrança: nenhum texto acompanha, nada fica vermelho
                      e a inclinação some sozinha quando a pilha esvazia. */
-                  className={`object-contain sm-visor-swap${hauntedWatching ? ' sm-pet-haunted' : ''}${petIsTarget ? ' sm3-pet-alvo' : ''}`}
+                  data-pet-altitude={pose.altitude}
+                  className={`object-contain sm-visor-swap${noAr ? ' sm-pet-air' : ''}${hauntedWatching ? ' sm-pet-haunted' : ''}${petIsTarget ? ' sm3-pet-alvo' : ''}`}
                   key={sprite}
                   onError={() => { if (ownSpriteUrl && sprite === ownSpriteUrl) setSpriteQuebrado(ownSpriteUrl); }}
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
                     visibility: missionAway ? 'hidden' : undefined,
+                    ...(naMasmorra ? { visibility: 'hidden' as const } : null), // na masmorra o pet some do palco (a plaquinha fica no lugar)
+                    /* `translate` (propriedade própria) e não `transform`: as animações do
+                       sprite (esfregar, comer, saudar) mexem no `transform` e não podem
+                       derrubar a altitude. */
+                    ...(noAr ? ({ ['--pet-air-lift' as string]: `${AIR_LIFT_PX}px` } as React.CSSProperties) : null),
                     /* `isBlinking` entra AQUI, em JS — nunca via `animation`
                        CSS separada tocando `filter` (ver a nota grande em
                        `getCompanionFilter` e em `sm2-pet-blink`, index.css).

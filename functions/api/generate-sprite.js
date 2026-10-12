@@ -61,6 +61,9 @@ import { requirePaidTier } from './_entitlements.js';
 import { verifiedAdmin } from './_admin.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
+import { flagOn } from './_killSwitch.js';
+import { takeIpQuota } from './_ipHash.js';
+import { AI_REFUSAL_MESSAGES } from './_aiGuard.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -286,10 +289,11 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
 }
 
 async function generateGemini(env, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+  // Chave em HEADER, nunca na URL (URL vai parar em log de proxy; `abuso-e-custo` V1.6).
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { responseModalities: ['IMAGE'] },
@@ -335,7 +339,11 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
     }
   }
 
-  if (env.GEMINI_API_KEY) {
+  // Gemini Image DESLIGADO por padrão (dono, 11/10/2026): a `GEMINI_API_KEY`
+  // fica só no plano gratuito do chat; imagem no Gemini não tem gratuito e
+  // ligar billing naquele projeto tiraria o chat do gratuito. Religar só com
+  // `SPRITE_GEMINI_IMAGE=1` E uma chave de OUTRO projeto (decisão do dono).
+  if (env.GEMINI_API_KEY && flagOn(env.SPRITE_GEMINI_IMAGE)) {
     try {
       const image = await generateGemini(env, prompt);
       return { image, provider: 'gemini', hfError };
@@ -350,7 +358,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   if (hfRefusal) throw refusalError(hfError);
   if (hfError) throw new Error(hfError);
   const err = /** @type {Error & { notConfigured?: boolean }} */ (
-    new Error('image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)')
+    new Error('image generation not configured (HF_API_KEY/HF_SECRET)')
   );
   err.notConfigured = true;
   throw err;
@@ -390,7 +398,17 @@ export function referenciasSeguras(request, referenceImageUrls) {
 export async function onRequestPost({ request, env }) {
   let lock = null;
   try {
+    // Kill-switch `SPRITE_DISABLED`: nada de provedor, nada de cota; o app fica
+    // na arte de reserva com a mensagem do ateliê fechado.
+    if (flagOn(env?.SPRITE_DISABLED)) {
+      return Response.json({ error: 'sprite-disabled', message: AI_REFUSAL_MESSAGES['sprite-disabled'] }, { status: 503, headers: CORS });
+    }
     const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = await request.json();
+    // UMA geração por forma (dono, 11/10): sem `formId` não há dedupe nem teto
+    // por forma — então não há geração.
+    if (typeof formId !== 'string' || !formId) {
+      return Response.json({ error: 'form-id-required' }, { status: 400, headers: CORS });
+    }
     if (!prompt || typeof prompt !== 'string') {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
     }
@@ -511,6 +529,12 @@ export async function onRequestPost({ request, env }) {
         { status: gate.status, headers: CORS },
       );
     }
+    // Antiabuso de múltiplas contas: gerações por ip-hash/dia (`_ipHash.js`).
+    const porIp = await takeIpQuota(env, request, 'sprite');
+    if (!porIp.ok) {
+      await gate.release('limite por ip-hash');
+      return Response.json({ error: porIp.reason, message: AI_REFUSAL_MESSAGES[porIp.reason] }, { status: porIp.status, headers: CORS });
+    }
 
     /**
      * Único ponto de saída bem-sucedido: republica SEMPRE (data: do Gemini OU
@@ -573,7 +597,9 @@ export async function onRequestPost({ request, env }) {
       // Ela é uma SEGUNDA COBRANÇA do provedor — uma recusa custa duas imagens.
       // Por isso passa pelo portão de volume de novo, debitando a unidade extra
       // ANTES de gerar: teto que não conta a refeitura é teto que mente.
-      const extra = await guardAiRequest(request, env, 'sprite', id, 1, formId);
+      // `formId` null: a refeitura por recusa não saiu imagem nenhuma, então não
+      // conta como a "uma geração" da forma — só no vitalício/diário/global.
+      const extra = await guardAiRequest(request, env, 'sprite', id, 1, null);
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...(extra.message ? { message: extra.message } : {}) },

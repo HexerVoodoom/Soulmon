@@ -39,7 +39,7 @@ describe('Emblemas: o Torneio e a Feira passam pelo MESMO caminho', () => {
 describe('o lote e o NPC da Feira', () => {
   it('11/10/2026: a Arena tem só Torneio e Arena livre; a FEIRA mora no Hall ao lado do Salão (`guilda`) — dois lotes, duas salas', () => {
     expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo']);
-    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['biblioteca', 'amigos', 'guilda', 'feira']);
+    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'biblioteca', 'amigos', 'guilda']); // 11/10/2026: a Feira vem PRIMEIRO = fica ATRÁS (a ordem do array é a ordem de pintura)
     expect(hallLots('pt-BR').find(l => l.id === 'feira')!.label).toBe('Feira');
     expect(hallLots('en-US').find(l => l.id === 'feira')!.label).toBe('Fair');
     const av = ler('components/nav/AreaView.tsx');

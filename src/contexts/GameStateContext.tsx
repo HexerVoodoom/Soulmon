@@ -1,8 +1,10 @@
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
+import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
+import { sanitizeDungeonAway, type DungeonAway } from '../utils/dungeonIdle';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
@@ -413,6 +415,10 @@ export interface GameState {
   /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
    *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
   dungeonDepthRecord?: number;
+  /** A DESCIDA QUE CONTINUA SOZINHA (11/10/2026, REGISTRO §36): a posição da descida na masmorra (camada, lugar na escada, HP, energia do
+   *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
+   *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
+  dungeonAway?: DungeonAway;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -514,6 +520,10 @@ export interface GameState {
   /** 🍽️ Quais janelas de HOJE já foram atendidas/dispensadas. Do DIA do jogador
    *  e se esvazia na virada — sem histórico, sem sequência, sem contador. */
   mealRitual?: MealRitualRecord;
+  /** Pose do sprite (11/10/2026): `flipX` (espelha) e `altitude` ('ground' | 'air'). Preferência
+   *  do jogador — nenhuma regra de jogo a lê. Dono único: `utils/spritePose.ts` (`applySpritePose`).
+   *  Lixo → padrão (pés no chão, sem espelho); campo novo com `??`, sem subir `SAVE_SCHEMA_VERSION`. */
+  spritePose?: SpritePose;
   /** 🧭 Passeio e Travessias (30/09/2026, `docs/REGISTRO-DE-DECISOES.md` §5.6):
    *  regiões abertas, a Travessia escolhida, os "Fiz" guardados, o destino do
    *  Passeio e o interruptor. Só ids, enum e `dayKey` — nada de texto livre,
@@ -1213,6 +1223,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
         dungeonDepthRecord: typeof loadedState.dungeonDepthRecord === 'number' && Number.isFinite(loadedState.dungeonDepthRecord)
           ? Math.min(999, Math.max(0, Math.floor(loadedState.dungeonDepthRecord))) : undefined,
+        // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
+        // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
+        dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
@@ -1400,6 +1413,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Ritmo das refeições: lixo vira o padrão (push DESLIGADO), nunca derruba o load.
         mealRhythm: sanitizeMealRhythm(loadedState.mealRhythm),
         mealRitual: sanitizeMealRitual(loadedState.mealRitual),
+        // Pose do sprite: lixo vira o padrão (`sanitizeSpritePose`), nunca derruba o load.
+        spritePose: sanitizeSpritePose(loadedState.spritePose),
         // Travessias: lixo é descartado pelo dono (`normalizeCrossings`), nunca derruba o load.
         crossings: normalizeCrossings(loadedState.crossings),
         // Caderno: lixo é descartado, teto de 120 × 2000 (`normalizeEntries`); nunca derruba o load.
@@ -1810,6 +1825,15 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     }, espera);
     return () => clearTimeout(timer);
   }, [gameState]);
+
+  // `applySpritePose` (utils/spritePose.ts, único dono de escrita) escreve por aqui.
+  useEffect(() => registerSpritePoseWriter(patch =>
+    setGameState(prev => ({ ...prev, spritePose: mergeSpritePose(prev.spritePose, patch) })),
+  ), []);
+  // Leitura da pose atual (o chat alterna `flipX` a partir dela). Ref = sem re-registro a cada render.
+  const spritePoseRef = useRef<unknown>(gameState.spritePose);
+  spritePoseRef.current = gameState.spritePose;
+  useEffect(() => registerSpritePoseReader(() => spritePoseRef.current), []);
 
   const value = useMemo(() => ({ gameState, setGameState }), [gameState]);
 

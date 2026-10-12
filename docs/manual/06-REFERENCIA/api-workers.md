@@ -102,7 +102,7 @@
 **Rota:** `/api/generate-sprite` · **Métodos:** `OPTIONS`, `POST`.
 **Dono de:** gerar 1 sprite de Soulmon — provedor primário Higgsfield (Soul, com referência de imagem para cadeia de evolução), fallback Gemini (texto puro) se o Higgsfield recusar por política de conteúdo. Republica SEMPRE em `/api/sprite-image?k=...` (nunca devolve `data:` nem URL de outro domínio) e faz dedupe multi-device por resultado (sem TTL) e por requisição em voo (`inflight`, TTL curto).
 **Auth:** `requirePaidTier` (fail-closed sem `_entitlements.js` configurado) + `authorizeSaveAccess`.
-**Rate limit:** cota de IA via `_aiGuard.js` (`AI_LIMITS.sprite = { perAccount:6, perAccountLifetime:26, perFormLifetime:3, globalMonth:800 }`).
+**Rate limit:** cota de IA via `_aiGuard.js` (`AI_LIMITS.sprite = { perAccount:6, perAccountLifetime:15, perFormLifetime:1, globalMonth:800, globalDay:40 }` desde a release/beta-1, REGISTRO §34: uma geração por forma; `formId` obrigatório).
 **Grava/lê:** `kv` — blob da imagem em `sprite:blob:<token>` (via `guardarBlob`/`republicar`), chave de dedupe de resultado, e os contadores de `_aiGuard.js`/`ent:<saveId>` (`aiLifetime`/`aiForms`).
 **Erros (contrato completo, tabela no cabeçalho do arquivo):** `400` (`prompt required`/`invalid-form-id`/`missing-save-id`) · `401 unauthenticated` · `402` (`paid-tier-required` ou `sprite-lifetime-cap`, este último com `message` PT/EN) · `403 forbidden` · `410 account-deleted` (via `authStatus`, desde `592e2c14`) · `409 sprite-form-cap` (só a forma esgotou, as outras 10 seguem) · `429 ai-daily-limit` · `503` (`ai-monthly-budget-reached`/`ai-daily-budget-reached`/`ai-quota-unavailable`/`tier-unavailable`/sem config) · `500 internal error` · `200 {image, provider?, cached?}` · `202 {pending:true, retryAfter:20}`.
 **Régua:** `functions/api/generate-sprite.cap.test.js`, `.dedupe.test.js`, `.release.test.js`, `.tier.test.js`, `aiRoutes.release.test.js`.
@@ -305,7 +305,7 @@
 - `ORDER_HISTORY_MAX = 200` · **`podarOrderDetails(details, max?)`** (desde `592e2c14`, `00-skeptic-r2` #3) — poda `orderDetails` ao teto SEM nunca descartar um pedido pago VIVO (`grantTier === 'paid'` e não `voided`): ⚰️ o `slice(-200)` cego podava o pedido que sustenta o tier e, na conferência seguinte, `auditRefunds` derivava `tier` de `paidProviderOf` — que não achava mais nada — e REBAIXAVA uma conta paga para demo (raro: 200 pedidos de crédito depois da compra; mas é dinheiro real virando demo sem evento). Preserva a ordem cronológica; `consumedOrders` continua com `slice(-ORDER_HISTORY_MAX)`.
 - `applyVerifiedPurchase(env, saveId, {...})` — aplica compra já verificada; ignora `orderId` já consumido; poda por `podarOrderDetails`.
 - **Cortesia** (desde `42b07bec`, decisão #12 do QA GERAL): `COURTESY_PROVIDER = 'courtesy'`, `COURTESY_COUNT_KEY = 'courtesy:count'`, `COURTESY_DEFAULT_MAX = 25`, `courtesyOrderId(saveId)` → `courtesy:<saveId>`, `courtesyMaxFrom(env)` (lê `COURTESY_MAX_ACCOUNTS`; qualquer coisa que não seja inteiro ≥ 0 cai no padrão) e `grantCourtesy(env, saveId, max?)` → `{ ok: true, ent, duplicate, count, max }` ou `{ ok: false, reason: 'courtesy-cap', count, max }`. Passa por `applyVerifiedPurchase` (uma porta só de escrita do tier), `grantCredits: 0` sempre, idempotente por construção (o `orderId` deriva da conta; repetição devolve `duplicate: true` sem consumir vaga), contador global que **só sobe** (apagar a conta não devolve a vaga) e sobe ANTES da concessão (na dúvida, a vaga some; o tier não aparece).
-- **`REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt'`** e **`resetSpriteLifetimeOnRebirth(env, saveId)`** (desde `cf6315e1`, decisão do dono **#62**) — zera `ent.aiLifetime.sprite` no RENASCIMENTO e devolve `{ ent, jaFeito, anterior }`. **Idempotente por construção**: o campo é gravado junto, e a 2ª chamada devolve `{ jaFeito: true }` sem escrever — o renascimento é um por save, o reset também; sem a marca, quem descobrisse a rota teria geração de sprite infinita (o teto vitalício é 26, a ~R$ 0,10 cada). **Nunca zera**: `aiForms` (teto por FORMA — zerá-lo daria 3 gerações extras em cada forma já gerada, o abuso exato que ele existe para fechar), `aiLifetime.chat`/`.suggest` (não têm teto vitalício, e a decisão fala de sprite) e nada de dinheiro (`tier`, `credits`, `consumedOrders`).
+- **`REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt'`** e **`resetSpriteLifetimeOnRebirth(env, saveId)`** (desde `cf6315e1`, decisão do dono **#62**) — ⚰️ **desde a release/beta-1 (REGISTRO §34) NÃO zera mais** — só grava a marca; antes zerava `ent.aiLifetime.sprite` no RENASCIMENTO e devolve `{ ent, jaFeito, anterior }`. **Idempotente por construção**: o campo é gravado junto, e a 2ª chamada devolve `{ jaFeito: true }` sem escrever — o renascimento é um por save, o reset também; sem a marca, quem descobrisse a rota teria geração de sprite infinita (o teto vitalício era 26; hoje é 15). **Nunca zera**: `aiForms` (teto por FORMA — zerá-lo daria 3 gerações extras em cada forma já gerada, o abuso exato que ele existe para fechar), `aiLifetime.chat`/`.suggest` (não têm teto vitalício, e a decisão fala de sprite) e nada de dinheiro (`tier`, `credits`, `consumedOrders`).
 - `AUDIT_INTERVAL_MS` — 24h entre conferências de reembolso da mesma conta.
 - `auditRefunds(env, saveId, isVoided, now)` — desfaz compras reembolsadas, no máximo 1×/dia por conta, na leitura do saldo (sem cron); créditos já gastos nunca ficam negativos. **Desde `a6c1cd8a` o tier é DERIVADO, não decrementado:** `ent.tier = paidProviderOf(ent) ? 'paid' : 'demo'` no fim da auditoria — invariante "`paid` SE E SOMENTE SE existe pedido pago não desfeito". ⚰️ Era `if (order.grantTier === 'paid') ent.tier = 'demo'` por pedido desfeito, sem olhar se OUTRO pedido pago valia — inalcançável com um pedido por conta, mas a cortesia criou o segundo e com ele o estado `tier: 'demo'` com `paidProviderOf === 'courtesy'`, o mesmo arquivo dando duas respostas. **Consequência PROVISÓRIA (#40, `PERGUNTAS-DO-DONO.md`): a cortesia SOBREVIVE ao reembolso da Play** — se o dono decidir o contrário, o conserto é marcar o pedido `courtesy:*` como `voided` na auditoria; a derivação continua certa. Régua: `_entitlements.tierDerivado.qa.test.js` (4).
 **Chamado por:** `billing.js`, `entitlements.js`, `save.js`, `account.js`, `_aiGuard.js`, `generate-sprite.js`; `VALID_ID` também por `subscribe.js` e `fcm-subscribe.js` (desde `42b07bec`).
@@ -481,3 +481,59 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.
 **Chamado por:** `workers/push-scheduler.js`, `functions/api/_pushCopy.js`, `functions/api/_pushIdentity.js`, `src/utils/mealRhythm.ts`.
 **Régua:** `workers/mealRhythm.parity.test.js` (varre as 48 passadas do dia com o worker real e prova o teto).
+
+### `functions/api/crash.js`
+**Rota:** `/api/crash` · **Métodos:** `POST` (relatório de falha), `GET` (leitura do dono) — via `onRequest`/`onRequestGet`.
+**Dono de:** o diagnóstico de falhas do beta, sem SDK de terceiro. `sanitizeReport` é allowlist (`kind`, `msg`, `stack`, `ver`, `route`, `plat`); campo extra derruba o relatório. O servidor re-limpa com `scrub` (não confia no cliente). Agrupa por assinatura (`signatureOf`: SHA-256 de kind+msg+primeiro frame).
+**Auth:** `POST` anônimo (nada identificável é aceito nem gravado). `GET` exige `X-Metrics-Key` == `env.METRICS_ADMIN_KEY` (404 sem a variável; mesmo segredo de `metrics.js`).
+**Rate limit:** `_rateLimit.js`, buckets `crash` (10/min/IP) e `crash-read`; teto de `MAX_SIGNATURES_PER_DAY` assinaturas novas por dia.
+**Grava/lê:** `kv(env)`, chave `crash:<YYYY-MM-DD>:<assinatura>` = `{ kind, msg, stack, ver, route, plat, n, first, last, vers }`, com `expirationTtl` de 14 dias.
+**Erros:** `400` corpo grande/inválido/fora da allowlist · `429` · `503` sem KV · `404`/`401` na leitura · `405`.
+**Cliente:** `src/utils/crashReport.ts`. **Leitura:** `node scripts/crash-report.mjs`. **Data Safety:** `docs/PLAY-DATA-SAFETY.md` §2.7.
+
+### Chat agente (11/10/2026) — `functions/api/_chatActions.js`, `_chatKnowledge.js`, `_chatKnowledge.data.js`, `_llm.js`
+
+**`functions/api/_chatActions.js`** — definição das ferramentas (`TOOLS`) e o schema fechado das ações (`validateToolCall`, `sanitizeToolCalls`, `MAX_ACTIONS`). O modelo só propõe; nada grava.
+**`functions/api/_chatKnowledge.js`** — busca BM25 sobre a base curada (`searchKnowledge`, `knowledgeBlock`, `MIN_SCORE`).
+**`functions/api/_chatKnowledge.data.js`** — GERADO por `scripts/gen-chat-knowledge.mjs` a partir de `docs/manual/` (`npm run gen:chat-kb`); não edite à mão.
+**`functions/api/_llm.js`** — adaptador único Groq (principal, tool calling) com fallback Gemini (`callChatModel`, `chatModel`, `hasChatProvider`).
+**Chamado por:** `functions/api/chat.js`.
+**Régua:** `functions/api/chat.actions.test.js`, `functions/api/chatKnowledge.stale.test.js`, `functions/api/chatActions.parity.test.js`.
+**Regra:** [`docs/CHAT-SOULMON.md`](../../CHAT-SOULMON.md).
+
+
+### `functions/api/rtdn.js` (11/10/2026)
+
+**Rota:** `POST /api/rtdn` — Pub/Sub push das notificações em tempo real da Google Play (RTDN). Autentica o JWT OIDC do Pub/Sub (`_pubsubAuth.js`); o payload nunca é confiado: só aponta um `purchaseToken`, e o servidor reconsulta `purchases.subscriptionsv2`, reconhece a assinatura e abre/fecha a vitrine (`ent.sub`). Idempotente por `messageId` (D1 `rtdn_messages` ou KV). Nunca escreve tier nem Créditos.
+**Variáveis:** `RTDN_AUDIENCE`, `RTDN_PUSH_SA_EMAIL`, `ANDROID_PACKAGE_NAME`, `GOOGLE_PLAY_SERVICE_ACCOUNT`.
+**Respostas:** 401 sem JWT válido · 503 sem configuração · 2xx tratada/nada a fazer · 5xx para o Pub/Sub tentar de novo.
+**Régua:** `functions/api/rtdn.test.js`.
+
+### `functions/api/_pubsubAuth.js` (11/10/2026)
+
+**Exports:** `verifyPubsubPush(request, env)` (RS256 contra o JWKS da Google; confere `iss`, `aud`, `email`, `email_verified`, `exp`/`iat`; nunca lança), `pubsubAuthConfigured(env)`, `_resetPubsubJwksCache()`.
+**Chamado por:** `functions/api/rtdn.js`.
+**Régua:** `functions/api/rtdn.test.js`.
+
+### `functions/api/_killSwitch.js` (release/beta-1, 11/10/2026)
+**Dono de:** os interruptores do beta — `flagOn`, `isBillingDisabled` (`env.BILLING_DISABLED`), `isChatDisabled` (`env.CHAT_DISABLED`), `BILLING_DISABLED_MESSAGE`, `CHAT_DISABLED_MESSAGE`. Valor que liga: `1`/`true`/`yes`/`on`/`sim`.
+**Chamado por:** `functions/api/billing.js` (`recusaSeLojaFechada`: 503 `billing-disabled` para comprovante que ainda não é da conta, antes do claim e do acknowledge; restaurar passa), `functions/api/chat.js` (503 `chat-disabled` antes de provedor e cota), `functions/api/config.js` (`billingDisabled`, `chatDisabled`).
+**Régua:** `functions/api/killSwitch.test.js`, `functions/api/config.test.js`. **Operação:** [`docs/BETA-CONTINGENCIA.md`](../../BETA-CONTINGENCIA.md) §0.
+
+### `functions/api/_betaAccess.js` (release/beta-1, 11/10/2026)
+**Dono de:** o acesso do beta fechado — `parseBetaEmails`, `betaRuleApplies`, `betaAllows`, `betaGate`, `BETA_CLOSED_MESSAGE`. `BETA_EMAILS` (secret, e-mails normalizados) e `BETA_CLOSED` (flag). Flag ligada: fora da lista não acessa save, IA nem compra (403 `beta-closed`); flag desligada: só IA exige a lista (se houver). Fail-closed sem e-mail verificado.
+**Chamado por:** `_auth.js` › `authorizeSaveAccess` (TODA rota por saveId, gate S1), `_aiGuard.js` (IA), `save.js`, `billing.js`, `subscribe.js`/`fcm-subscribe.js` (`isBetaClosed`). Comparação por `canonBetaEmail` (Gmail sem ponto/+tag). **Régua:** `functions/api/betaAccess.test.js`, `functions/api/betaClosed.routes.test.js`.
+
+### `functions/api/_ipHash.js` (release/beta-1, 11/10/2026)
+**Dono de:** antiabuso por HASH de IP — `ipHash` (HMAC-SHA256 com `IP_HASH_SALT`, 16 hex; o IP nunca é gravado), `takeIpQuota` (contadores `iph:<tipo>:<hash>:<dia>`, TTL 30 dias), `IP_LIMITS` (3 contas novas e 4 sprites por ip-hash/dia). Sem `IP_HASH_SALT`, nada é calculado.
+**Chamado por:** `save.js` (1ª gravação), `generate-sprite.js`. **Régua:** `functions/api/betaAccess.test.js`. **Política:** `privacidade.html` §6d.
+
+### `functions/api/_adminAlert.js` (release/beta-1, 11/10/2026)
+**Dono de:** o alerta ao dono por push FCM — `alertAdmin` (1×/tipo/dia, chave `alert:<dia>:<tipo>`; `ADMIN_PUSH_TARGET` + `FIREBASE_SERVICE_ACCOUNT`, senão só log) e `cruzouLimiar` (80 %).
+**Chamado por:** `_aiGuard.js` (teto global cruzando 80 %). **Régua:** `functions/api/betaAccess.test.js`.
+
+### `functions/api/top-ai.js` (release/beta-1, 11/10/2026)
+**Rota:** `GET /api/top-ai?day=AAAA-MM-DD`, com `X-Metrics-Key` = `METRICS_ADMIN_KEY` (404 sem a variável). Top 20 por bucket (`chat`, `sprite`, `transcribe`, `suggest`) com saveId truncado em 8 e marca de ≥ 80 % da cota. **Script:** `node scripts/top-consumidores.mjs`. **Régua:** `tests/topConsumidores.test.ts`.
+
+### `functions/api/sprite-admin.js` (release/beta-1, gate adversarial C2)
+**Rota:** `POST /api/sprite-admin?action=release-form`, com `X-Metrics-Key` = `METRICS_ADMIN_KEY` (404 sem a variável; `secretEquals`). Corpo `{ id, formId }`. Apaga a arte em cache daquela forma (inclusive no id antigo) e devolve 1 unidade de `aiForms[formId]`; o vitalício não volta. **Script:** `node scripts/liberar-forma.mjs`. **Régua:** `functions/api/spriteAdmin.test.js`, `tests/liberarForma.test.ts`.

@@ -1,4 +1,4 @@
-import { isGuildReward, type ShopItem } from './shop';
+import { isGuildReward, isSubscriptionReward, type ShopItem } from './shop';
 import type { SlotId } from './petStage';
 import { spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 
@@ -63,6 +63,8 @@ export function shopBalanceFor(state: ShopBuyState, item: ShopItem): number {
 export function shopBuyRefusal(state: ShopBuyState, item: ShopItem): ShopBuyRefusal | undefined {
   // Conquista da Guilda (`GUILD_ITEMS`, preço 0): só o resgate da Feira a concede — nunca a compra.
   if (isGuildReward(item)) return 'not-for-sale';
+  // Item do trimestre da assinatura: nunca se compra com moeda (anti double-dip) — só o resgate (`subscriptionShop.ts`).
+  if (isSubscriptionReward(item)) return 'not-for-sale';
   if (shopBalanceFor(state, item) < item.price) return 'no-funds';
   if (item.kind === 'bg' && (state.ownedBackgrounds ?? []).includes(item.id)) return 'already-owned';
   if (item.kind === 'furniture' && (state.ownedFurniture ?? []).includes(item.id)) return 'already-owned';

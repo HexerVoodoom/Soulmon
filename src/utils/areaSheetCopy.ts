@@ -100,11 +100,14 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '22%', top: '40%', width: '44%' },
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '78%', top: '40%', width: '40%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '34%', top: '73%', width: '44%' },
-  // 11/10/2026: a Feira (Missão da guilda) divide a plataforma de baixo com o Salão — um em cada metade, como Torneio e Duelo na Arena.
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '73%', top: '73%', width: '40%' },
+  // 11/10/2026 (pedido do dono, ajustes de UI do beta): a Feira vai para TRÁS, entre a Biblioteca e o Círculo de Amigos, no espaço
+  // largo do fundo (o caminho de pedra de cima). Ela vem PRIMEIRO na lista de propósito: a ordem do array é a ordem de pintura
+  // (sem z-index), então quem vem antes fica atrás. A Biblioteca e o Círculo descem um pouco para encaixar no tablado, e a Guilda
+  // fica maior e CENTRALIZADA na plataforma grande de baixo.
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '50%', top: '22%', width: '40%' }, // adendo do dono (11/10) pedia descer; NÃO cabe: com a Biblioteca/Círculo subindo, qualquer descida faz o rótulo da Feira encostar na área de toque da Biblioteca (guard H11, medido em 5 viewports). Fica em 22%
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '22%', top: '46%', width: '44%' }, // adendo (11/10): sobe de 47% (#316) para 46%; 45% ou menos encosta na área de toque da Feira (guard H11) — é o máximo que sobe sem encolher a Feira
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '78%', top: '46%', width: '40%' }, // adendo (11/10): idem
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '77%', width: '58%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {

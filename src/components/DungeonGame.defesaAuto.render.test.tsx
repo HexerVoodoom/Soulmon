@@ -87,19 +87,21 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(screen.queryByText(/torça por ele/i)).toBeNull();
     expect(screen.queryByText(/se defende/i)).toBeNull();
     expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
-    expect(document.body.textContent).toMatch(/Camada 1/);
+    expect(document.body.textContent).toMatch(/Camada 1 · luta 1 de 6/);
     expect(document.body.textContent).not.toMatch(/\/5\b/); // descida sem teto de andares
   });
 
-  it('a explicação do lobby mora atrás do "?" e conta as mecânicas (energia, anel, esquiva) e NÃO fala de torcida', () => {
+  it('a explicação do lobby mora atrás do "?" e conta as mecânicas (energia, especial AUTOMÁTICO, avanço rápido, sair sem cancelar) e NÃO fala de torcida nem de anel/esquiva', () => {
     vi.useFakeTimers();
     montar();
     fireEvent.click(screen.getByRole('button', { name: 'Como funciona a descida' }));
     const nota = document.querySelector('[data-dungeon-help-panel]')!.textContent ?? '';
     expect(nota).not.toMatch(/cheer|torc/i);
-    expect(nota).toMatch(/anel/i);
-    expect(nota).toMatch(/deslize/i);
+    expect(nota).not.toMatch(/anel|deslize/i); // REGISTRO §36: o especial é automático, ninguém toca no anel nem desliza
+    expect(nota).toMatch(/solta o especial sozinho/i);
     expect(nota).toMatch(/de um inimigo para o outro/i); // a energia persiste
+    expect(nota).toMatch(/1×, 2× ou 3×/);
+    expect(nota).toMatch(/Retirar da masmorra/);
   });
 
   it('sem barra de esquiva: o golpe sai sozinho e a defesa automática responde sem nenhum toque; o número só chega no IMPACTO', async () => {

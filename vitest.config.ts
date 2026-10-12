@@ -98,6 +98,7 @@ export default defineConfig({
     // 1248 ms e o fator de contenção de 4,4× medido no incidente de referência,
     // um guard de relógio ficaria vermelho a ~5,5 s numa máquina carregada sem
     // que nada tivesse piorado no código. Seria trocar um flake por outro.
+    setupFiles: ['./vitest.setup.rateLimits.ts'],
     testTimeout: TEST_TIMEOUT_MS,
     // O hook (beforeAll/afterEach…) tinha o default de 10 s, abaixo do piso de
     // 15 s dos testes: sob carga o hook de um teste de render estourava antes do

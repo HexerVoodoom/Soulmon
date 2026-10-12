@@ -656,7 +656,8 @@ describe('Play — isPlayPurchaseVoided (a conferência de estorno)', () => {
 
 describe('Play — o catálogo é o que a loja vende', () => {
   it('os 4 SKUs existem, com os valores exatos', () => {
-    expect(Object.keys(PRODUCTS).sort()).toEqual([
+    // A assinatura (kind:'subscription') tem catálogo e teste próprios: billing.subscription.test.js.
+    expect(Object.keys(PRODUCTS).filter(id => PRODUCTS[id].kind !== 'subscription').sort()).toEqual([
       'soulmon.credits.150', 'soulmon.credits.400', 'soulmon.credits.60', 'soulmon.unlock.full',
     ]);
     expect(PRODUCTS['soulmon.unlock.full']).toEqual({ grantTier: 'paid', grantCredits: 0, consumable: false });

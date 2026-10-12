@@ -4,7 +4,8 @@
   "webDir": "dist",
   "server": {
     "url": "https://soulmon.mateus-sprnd.workers.dev",
-    "cleartext": false
+    "cleartext": false,
+    "errorPath": "offline.html"
   },
   "plugins": {
     "FirebaseAuthentication": {
