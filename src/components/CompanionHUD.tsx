@@ -242,9 +242,9 @@ interface CompanionHUDProps {
   aiSettings?: any;
   /** Criação proposta pelo chat, já CONFIRMADA pela pessoa no cartão. Devolve
    *  `'cap'` quando o teto do plano recusou (o cartão avisa, sem culpa). */
-  onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap';
+  onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
   /** Resumo agregado do comportamento recente (só é lido quando a pessoa pergunta). */
-  getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary;
+  getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary | Promise<import('../utils/chatBehavior').BehaviorSummary>;
   language: Language;
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */

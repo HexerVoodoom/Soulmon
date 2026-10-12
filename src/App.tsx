@@ -162,7 +162,7 @@ import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
-import { DungeonBusyModal, type OcupadoAcao } from './components/DungeonBusyModal';
+import type { OcupadoAcao } from './components/DungeonBusyModal';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -555,6 +555,8 @@ function PostponeNudgeSheet({
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
+// Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
+const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
@@ -712,8 +714,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
-import { buildHabit, buildTask, type CreateAction } from './utils/chatActions';
-import { buildBehaviorSummary } from './utils/chatBehavior';
+import type { CreateAction } from './utils/chatActions';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 // minimal-ui F5 — a `ActivitiesPage` (hub de cartões) saiu: Masmorra e Corrida
@@ -2574,7 +2575,10 @@ export default function App() {
    * a ação já passou por `parseChatAction` (servidor E cliente).
    * Substitui o `handleAICreateActivity` antigo, que criava SEM confirmação.
    */
-  const handleChatCreate = useCallback((action: CreateAction): 'ok' | 'cap' => {
+  // `chatActions`/`chatBehavior` saem do chunk de entrada (orçamento de bytes, release/beta-1):
+  // só carregam quando a pessoa confirma um cartão do chat ou pergunta "como estou indo?".
+  const handleChatCreate = useCallback(async (action: CreateAction): Promise<'ok' | 'cap'> => {
+    const { buildHabit, buildTask } = await import('./utils/chatActions');
     if (action.type === 'create_habit') {
       const habit = buildHabit(action, CATEGORY_ICONS[action.habit.category], weekDaysForSchedule);
       return commitHabitCreate([habit], TELEMETRY_CREATE_PATH.ai_chat) > 0 ? 'ok' : 'cap';
@@ -2585,7 +2589,7 @@ export default function App() {
 
   /** Lido só quando a pessoa pergunta "como estou indo?" (ver `chatBehavior.ts`). */
   const getChatBehavior = useCallback(
-    () => buildBehaviorSummary(gameState),
+    async () => (await import('./utils/chatBehavior')).buildBehaviorSummary(gameState),
     [gameState],
   );
 
@@ -7655,14 +7659,14 @@ export default function App() {
         /></Suspense>
       )}
 
-      <DungeonBusyModal
+      {ocupadoAviso !== null && <Suspense fallback={null}><DungeonBusyModal
         open={ocupadoAviso !== null && (naMasmorra || ocupadoAviso.acao === 'masmorra-em-missao')}
         acao={ocupadoAviso?.acao ?? null}
         language={language}
         onRetire={() => void retirarDaMasmorra()}
         onClose={() => setOcupadoAviso(null)}
         busy={retirando}
-      />
+      /></Suspense>}
 
       <ConfirmDialog
         isOpen={resetOnboardingOpen}

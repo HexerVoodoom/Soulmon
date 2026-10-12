@@ -3663,6 +3663,9 @@ var KNOWLEDGE = [
   { "id": "termo-mare", "t": "Mar\xE9", "x": 'O ciclo de 6 semanas da Guilda (GUILD_TIDE_WEEKS). A flora\xE7\xE3o da mar\xE9 \xE9 colhida no estado em que estiver na virada e vira pe\xE7a permanente do Bosque, em tr\xEAs tamanhos descritivos (petala, corola, floracao) \u2014 nenhum "pior". Mar\xE9 sem crescimento n\xE3o gera pe\xE7a e nada \xE9 dito; nenhuma falha, nenhum reset.' },
   { "id": "termo-marco-de-habito", "t": "Marco de h\xE1bito", "x": 'Os degraus de maturidade em dias efetivos: 7, 21 e 66. Os 66 s\xE3o a mediana real de Lally et al. (2010); os "21 dias" populares v\xEAm de outra coisa e n\xE3o t\xEAm a ver com h\xE1bito. Cada marco tem cerim\xF4nia e sobe o rendimento de atributo.' },
   { "id": "termo-masmorra", "t": "Masmorra", "x": "O modo de combate por andares. Sem limite di\xE1rio e sem gate de entrada; perder n\xE3o custa cora\xE7\xE3o nenhum \u2014 o jogo nunca cobra da barra que representa o cuidado que o usu\xE1rio teve consigo mesmo." },
+  { "id": "termo-plaquinha-da-masmorra", "t": "Plaquinha da masmorra", "x": 'O aviso "Estou na masmorra, volto logo" que fica no lugar do Soulmon na Home enquanto ele est\xE1 descendo sozinho. Tocar nela abre a op\xE7\xE3o de retir\xE1-lo da masmorra. Nunca cobra nada de voc\xEA.' },
+  { "id": "termo-avanco-rapido", "t": "Avan\xE7o r\xE1pido", "x": "O bot\xE3o 1\xD7, 2\xD7 ou 3\xD7 no canto de baixo da luta da masmorra. S\xF3 deixa a cena mais r\xE1pida; o resultado da luta \xE9 o mesmo em qualquer velocidade." },
+  { "id": "termo-combina-3", "t": "Combina 3", "x": "O jogo de combinar pe\xE7as do Sal\xE3o de Jogos: troque duas pe\xE7as vizinhas para formar linhas de 3 ou mais elementos iguais, em 20 movimentos. Cada 250 pontos viram 1 Bit, at\xE9 8 por rodada, dentro do teto di\xE1rio de Bits dos minijogos." },
   { "id": "termo-memoria", "t": "Mem\xF3ria", "x": "O marco de conviv\xEAncia que o app devolve ao jogador em datas de rela\xE7\xE3o (n\xE3o de desempenho). Mostrado uma vez, de forma idempotente." },
   { "id": "termo-meta-de-coracao-meta-do-dia", "t": "Meta de cora\xE7\xE3o \xD7 meta do dia", "x": "\u26A0\uFE0F S\xE3o DUAS r\xE9guas desde 07/09/2026 (decis\xE3o P1). A que PROTEGE o cora\xE7\xE3o \xE9 menor; a do dia completo \xE9 a meta inteira. A excel\xEAncia n\xE3o foi afrouxada: quem quer evoluir continua tendo que fazer tudo." },
   { "id": "termo-missoes", "t": "Miss\xF5es", "x": "Seis objetivos permanentes que liberam a compra de cen\xE1rios exclusivos. Contadores lifetime no save." },
@@ -8889,7 +8892,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-D5hwLC/functionsRoutes-0.38605839479600734.mjs
+// ../.wrangler/tmp/pages-mBMCzp/functionsRoutes-0.2693590839721842.mjs
 var routes = [
   {
     routePath: "/api/account",

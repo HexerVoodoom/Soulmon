@@ -36,10 +36,10 @@ interface ChatBoxProps {
     moodToday?: number;
   };
   /** Criação proposta pelo chat e CONFIRMADA no cartão. `'cap'` = o teto do plano recusou. */
-  onChatCreate?: (action: CreateAction) => 'ok' | 'cap';
+  onChatCreate?: (action: CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
   /** Resumo agregado do comportamento recente. Lido SÓ quando a pessoa pergunta
    *  como está indo (ou no feedback proativo opt-in) — nunca a cada mensagem. */
-  getBehavior?: () => BehaviorSummary;
+  getBehavior?: () => BehaviorSummary | Promise<BehaviorSummary>;
 }
 
 /** Chave do dia do último feedback proativo. Só local; nada vai ao servidor. */
@@ -219,7 +219,7 @@ export function ChatBox({
         history,
         actions: true,
         // Só vai quando a pessoa PERGUNTA como está indo (minimização).
-        behavior: getBehavior && FEEDBACK_ASK.test(userMessage) ? getBehavior() : undefined,
+        behavior: getBehavior && FEEDBACK_ASK.test(userMessage) ? await getBehavior() : undefined,
       }, { signal: controller.signal });
 
       if (!response.ok) {
@@ -286,8 +286,8 @@ export function ChatBox({
 
   /* A pessoa tocou em "Criar": só aqui a proposta vira dado, pelo portão único
      do App. Teto do plano recusou → aviso sem culpa e o cartão fica. */
-  const confirmarCriacao = (acao: CreateAction) => {
-    const r = onChatCreate?.(acao);
+  const confirmarCriacao = async (acao: CreateAction) => {
+    const r = await onChatCreate?.(acao);
     if (r === 'ok') {
       setPending(prev => prev.slice(1));
       toast.success(isPt ? 'Criado.' : 'Created.');
@@ -309,7 +309,7 @@ export function ChatBox({
     try {
       const r = await aiFetch('/api/chat', {
         mode: 'feedback', petName, mood, evolutionStage, dominantBranch, language, aiSettings, context: chatContext,
-        behavior: getBehavior(),
+        behavior: await getBehavior(),
       });
       if (!r.ok) return;
       const d = await r.json();

@@ -156,7 +156,13 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // a pose do sprite, o kill-switch de compra (`useStoreOpen`) e o portão do beta fechado (`betaClosed`;
   // a TELA já é `lazy`). Medido com `npm run analisar:entrada` em build limpo. Crescimento JUSTIFICADO, não
   // perdoado — candidatos a pagar: `chatActions`/`chatBehavior` atrás de `import()` no `handleChatCreate`.
-  'index.js': 639_560,
+  // 11/10/2026 (release/beta-1 + #316/#317): os merges levaram a entrada a 644_949 (masmorra idle: `dungeonIdle`,
+  // `DungeonSign` na Home, `DungeonBusyModal`; ajustes de UI). PAGO em parte no mesmo dia: 644_949 → 638_386 (−6,6 KB)
+  // tirando da entrada `chatActions`/`chatBehavior` (import() só ao confirmar um cartão do chat ou pedir feedback) e o
+  // `DungeonBusyModal` (lazy, só quando aparece). O resto é da primeira pintura (a plaquinha da masmorra na Home, o
+  // relógio da descida idle, o `crashReport` de boot) ou está preso ao `UnlockAccountModal` (o `UnlockNudge` mora no
+  // mesmo arquivo e é inline na Home — separar os dois é o próximo corte, ~6 KB). Medido em `npm run build` limpo.
+  'index.js': 638_386,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

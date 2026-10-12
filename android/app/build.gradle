@@ -15,8 +15,8 @@ android {
         // localizado vindo da Play, WP2.6 widget com constância/escudos/oferta.
         // A Play recusa AAB com versionCode repetido — bump manual, sem
         // automação no CI (15-superficies-secundarias.md §B "Versão").
-        versionCode 16
-        versionName "1.2.0-beta1"
+        versionCode 17
+        versionName "1.2.0-beta2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
