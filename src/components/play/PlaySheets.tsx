@@ -102,13 +102,8 @@ function StatBox({ value, label, valueStyle }: { value: ReactNode; label: string
   );
 }
 
-function DropRow({ label, value }: { label: string; value: string }) {
-  return (
-    <li style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--sm2-line)' }}>
-      <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{label}</span>
-      <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{value}</span>
-    </li>
-  );
+function DropItem({ label, value }: { label: string; value: string }) {
+  return <li>{label} — <span className="sm2-num">{value}</span></li>;
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
@@ -127,34 +122,39 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         <p style={sectionHead}>{isPt ? 'Descida automática, sem fim' : 'Automatic descent, no end'}</p>
         {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
         <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
+          <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
           {isPt
             ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que enche comendo), até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
             : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, filled by feeding), down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
+          </InfoTipSection>
+          {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
+              vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
+          <InfoTipSection title={isPt ? 'Pode cair' : 'Possible drops'} last>
+            <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
+              <DropItem
+                label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
+                value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
+              />
+              <DropItem
+                label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
+                value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
+              />
+              <DropItem
+                label={isPt ? `Glitchtama no primeiro marco (a cada ${DUNGEON_MILESTONE_FLOOR} camadas) da descida` : `Glitchtama at the descent's first milestone (every ${DUNGEON_MILESTONE_FLOOR} layers)`}
+                value="1"
+              />
+              <DropItem
+                label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
+                value="5→100"
+              />
+            </ul>
+          </InfoTipSection>
         </ModalInfo>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />
         <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
       </div>
-      <p style={sectionHead}>{isPt ? 'Pode cair' : 'Possible drops'}</p>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-        <DropRow
-          label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
-          value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
-        />
-        <DropRow
-          label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
-          value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
-        />
-        <DropRow
-          label={isPt ? `Glitchtama no primeiro marco (a cada ${DUNGEON_MILESTONE_FLOOR} camadas) da descida` : `Glitchtama at the descent's first milestone (every ${DUNGEON_MILESTONE_FLOOR} layers)`}
-          value="1"
-        />
-        <DropRow
-          label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
-          value="5→100"
-        />
-      </ul>
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}

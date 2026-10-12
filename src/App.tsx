@@ -551,7 +551,6 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
-const EvolutionGaugeMini = lazy(() => import('./components/EvolutionGaugeMini').then(m => ({ default: m.EvolutionGaugeMini })));
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
@@ -3552,6 +3551,14 @@ export default function App() {
     if (dest.kind === 'missions') { setMissionsOpen('daily'); return; }
     setPendingSheet({ area: dest.area, lot: dest.lot });
     goTo(areaView(dest.area));
+  }, [goTo]);
+
+  /* "Faça um passeio" no menu de Missões leva ao PRÉDIO do Passeio (pedido do dono, 11/10/2026):
+     fecha o menu e abre a área com a folha do lote aberta, como o "Ir lá" da Mochila. */
+  const irAoPasseio = useCallback(() => {
+    setMissionsOpen(null);
+    setPendingSheet({ area: 'exploracao', lot: 'passeio' });
+    goTo(areaView('exploracao'));
   }, [goTo]);
 
   /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
@@ -6744,20 +6751,9 @@ export default function App() {
                   paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)',
                 }}
               >
-              {/* 🧬 O gauge de evolução compacto (11/10/2026). Não é aviso:
-                  é medidor permanente, como os corações — por isso fica FORA
-                  do slot de avisos e não disputa a fila. */}
-              {(
-                <Suspense fallback={null}>
-                  <EvolutionGaugeMini
-                    language={language}
-                    evolutionPoints={gameState.evolutionPoints ?? 0}
-                    evolutionStage={gameState.evolutionStage}
-                    unlockedEvolutions={gameState.unlockedEvolutions}
-                    todayWeight={dailyDone}
-                  />
-                </Suspense>
-              )}
+              {/* O gauge "Caminho até a próxima forma" NÃO mora mais na Home (pedido
+                  do dono, 11/10/2026): fica só no Perfil/Evolução (`EvolutionPath`).
+                  `EvolutionGaugeMini` segue no repo, sem uso na Home. */}
               {/* minimal-ui F2 (abordagem B): o SLOT DO DIA mora logo abaixo da
                   faixa do pet — a ordem da tela é marca → cena → avisos → lista.
                   A fila e a prioridade não mudaram (filaDeAvisos.contract). */}
@@ -7451,6 +7447,7 @@ export default function App() {
         language={language}
         crossings={crossings}
         onClaimStroll={resgatarPasseio}
+        onGoStroll={irAoPasseio}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
         weekly={missoesDaSemana}
         onClaimWeekly={resgatarMissao}

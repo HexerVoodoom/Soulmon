@@ -19,21 +19,44 @@ function mount() {
   );
 }
 
-describe('Home em abas', () => {
-  it('Today mostra o diário e a tarefa; Weekly só o que é por semana', () => {
-    const { container, getByRole } = mount();
+const mensal = { id: 'a3', name: 'Trocar filtro', category: 'home', emoji: 'x', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6], schedule: { kind: 'everyNDays', n: 30, from: 'schedule' } } as unknown as Activity;
+
+describe('Lista única (sem abas)', () => {
+  it('não há abas Hoje/Weekly nem chip duplicado', () => {
+    const { container, queryByRole } = mount();
+    expect(queryByRole('tab')).toBeNull();
+    expect(container.querySelector('[data-home-tabs]')).toBeNull();
+    expect(container.querySelector('[data-week-chip]')).toBeNull();
+    expect(container.textContent).not.toContain('This check is for today');
+    expect(container.textContent).not.toContain('per week');
+  });
+  it('tudo na mesma lista; semanal reduzido a "0 of 3 this week" + XP base', () => {
+    const { container } = mount();
     expect(container.textContent).toContain('Beber água');
     expect(container.textContent).toContain('Pagar conta');
-    expect(container.textContent).not.toContain('Correr');
-    fireEvent.click(getByRole('tab', { name: 'Weekly' }));
     expect(container.textContent).toContain('Correr');
-    expect(container.textContent).not.toContain('Beber água');
-    expect(container.textContent).not.toContain('Pagar conta');
+    expect(container.textContent).toContain('0 of 3 this week · +10 base XP');
+    expect(container.textContent).not.toContain('3×');
   });
   it('mostra o XP ANTES de concluir (tarefa esforço 2 = +20; hábito = +10)', () => {
     const { container } = mount();
     expect(container.textContent).toContain('+20 base XP');
     expect(container.textContent).toContain('+10 base XP');
+  });
+  it('recorrente fora do dia vai para "Programadas", abaixo da linha separadora', () => {
+    const { container } = renderWithCss(
+      <DailyRituals tasks={[]} activities={[diario, mensal]} completedTasks={[]}
+        habitRhythms={{ a3: { done: ['2026-10-05'], lastCompletedDate: '2026-10-05', totalDone: 1 } } as never}
+        language="pt-BR" now={new Date('2026-10-07T12:00:00')}
+        expanded={{}} onExpand={noop} onToggleTask={noop} onEditTask={noop} onPostponeNudge={noop} onEditActivity={noop}
+        onToggleActivity={noop} onUpdateStep={noop} onRestoreTask={noop} onCreate={noop} ctaLabel="Add" emptyMessage="vazio" variant="home" />,
+    );
+    const sep = container.querySelector('[data-scheduled-sep]') as HTMLElement;
+    expect(sep).not.toBeNull();
+    expect(sep.textContent).toBe('Programadas');
+    const txt = container.textContent ?? '';
+    expect(txt.indexOf('Beber água')).toBeLessThan(txt.indexOf('Programadas'));
+    expect(txt.indexOf('Programadas')).toBeLessThan(txt.indexOf('Trocar filtro'));
   });
 });
 

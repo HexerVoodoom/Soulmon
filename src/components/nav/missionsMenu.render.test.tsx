@@ -196,3 +196,22 @@ describe('o primeiro dia é missão (07/10/2026): vive no menu, não na Home', (
     expect(document.querySelector('[data-missions-section="first-day"]')).toBeNull();
   });
 });
+
+describe('Hoje sem "!" no título e "Take a stroll" leva ao prédio (11/10/2026)', () => {
+  it('o "!" não fica na frente de "Today"; fica só na linha da missão; tocar em "Take a stroll" chama onGoStroll', async () => {
+    const onGoStroll = vi.fn();
+    render(
+      <MissionsSheet
+        kind="daily" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} onGoStroll={onGoStroll}
+        todayKey="2026-10-07" weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}}
+        marks={{ daily: 'available', torneio: null, conquistas: null }}
+      />,
+    );
+    await waitFor(() => expect(document.querySelector('[data-missions-section="daily"]')).not.toBeNull());
+    const daily = document.querySelector('[data-missions-section="daily"]')!;
+    expect(daily.querySelector('h3 [data-mission-mark]')).toBeNull();
+    expect(daily.querySelector('[data-stroll-line] [data-mission-mark="available"]')).not.toBeNull();
+    fireEvent.click(daily.querySelector('[data-stroll-go]')!);
+    expect(onGoStroll).toHaveBeenCalledTimes(1);
+  });
+});

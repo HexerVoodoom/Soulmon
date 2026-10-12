@@ -20,7 +20,7 @@
  *  · Ordem: tarefas ativas, hábitos devidos hoje, hábitos fora do dia,
  *    concluídas de hoje por último.
  */
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { Language } from '../utils/i18n';
 import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext';
 import type { ActivityCategory } from '../types/attributes';
@@ -31,10 +31,10 @@ import { weeklyProgress, type HabitRhythm } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
 import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
-import { TaskMeta, sm2Tag } from './TaskMeta';
+import { TaskMeta } from './TaskMeta';
 import { StepRow } from './StepRow';
 import { bondXP } from '../utils/bond';
-import { habitTier, milestoneReached, weekChip } from '../utils/habitRhythm';
+import { habitTier, milestoneReached, habitCountsOn } from '../utils/habitRhythm';
 import { HABIT_WEIGHT } from '../types/taskModel';
 import { effortOf } from '../utils/taskTriage';
 
@@ -115,11 +115,11 @@ export function DailyRituals({
   variant = 'panel', dayComplete = false,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
-  /* Home em abas (11/10/2026): "Hoje" = o que é do dia; "Semanal" = o que se mede
-     por semana (`timesPerWeek`). Só muda QUAL lista aparece — o contador N/M, a
-     meta e o dia completo seguem contando tudo, como antes. */
-  const [aba, setAba] = useState<'today' | 'weekly'>('today');
-  const today = now.getDay(); // 0 = domingo, 6 = sábado
+  /* Lista ÚNICA (pedido do dono, 11/10/2026 — antes eram abas Hoje/Semanal e a
+     semanal cortava o conteúdo). Em cima: o que VENCE hoje (tarefas, hábitos
+     devidos pela regra `habitCountsOn`, feitos de hoje). Embaixo de uma linha
+     separadora: "Programadas" — o que existe mas não vence hoje (ex.: "a cada
+     30 dias" fora do dia). Programada não cobra nada. */
   const todayString = now.toDateString();
   const diasCurtos = isPt
     ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -137,14 +137,9 @@ export function DailyRituals({
     .filter(c => new Date(c.completedAt).toDateString() === todayString && !idsVivos.has(c.id));
 
   const ehSemanal = (a: Activity) => normalizeSchedule(a as Parameters<typeof normalizeSchedule>[0]).kind === 'timesPerWeek';
-  const comAbas = variant === 'home';
-  const naAbaSemanal = comAbas && aba === 'weekly';
-  const atividades = [
-    ...activities.filter(a => a.weekDays?.includes(today)),
-    ...activities.filter(a => !a.weekDays?.includes(today)),
-  ].map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number } => ({
+  const atividades = activities.map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number } => ({
     ...activity,
-    disponivelHoje: !!activity.weekDays?.includes(today),
+    disponivelHoje: habitCountsOn(activity as Parameters<typeof habitCountsOn>[0], habitRhythms?.[activity.id], now),
     isComplete: activity.steps.length > 0
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),
@@ -159,10 +154,12 @@ export function DailyRituals({
       const milestone = milestoneReached(Math.max(0, after - 1), after);
       return base + (milestone ? bondXP({ kind: 'habitMilestone', days: after }) : 0);
     })(),
-  })).sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
+  })).map(a => (a.isComplete && !a.disponivelHoje ? { ...a, disponivelHoje: true } : a))
+    .sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
 
   /* A4: devido hoje + concluídas de hoje. O hábito fora do dia não é devido. */
   const devidos = atividades.filter(a => a.disponivelHoje);
+  const programadas = atividades.filter(a => !a.disponivelHoje);
   const total = tarefas.length + devidos.length + feitasHoje.length;
   const feitos = tarefas.filter(t => t.completed).length
     + devidos.filter(a => a.isComplete).length
@@ -186,31 +183,7 @@ export function DailyRituals({
         variant={variant}
         dayComplete={dayComplete}
       >
-        {comAbas && (
-          <div role="tablist" aria-label={isPt ? 'Visão da lista' : 'List view'} data-home-tabs style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-            {(['today', 'weekly'] as const).map(k => (
-              <button
-                key={k}
-                type="button"
-                role="tab"
-                aria-selected={aba === k}
-                data-home-tab={k}
-                onClick={() => setAba(k)}
-                style={{ ...sm2Button(aba === k ? 'primary' : 'quiet', false, 'sm'), flex: 1 }}
-              >
-                {k === 'today' ? (isPt ? 'Hoje' : 'Today') : (isPt ? 'Semanal' : 'Weekly')}
-              </button>
-            ))}
-          </div>
-        )}
-        {naAbaSemanal && atividades.filter(a => ehSemanal(a)).length === 0 && (
-          <p data-home-weekly-empty style={{ margin: 0, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>
-            {isPt
-              ? 'Nada medido por semana ainda. Um hábito de "N vezes por semana" aparece aqui.'
-              : 'Nothing measured by the week yet. A "times per week" habit shows up here.'}
-          </p>
-        )}
-        {(naAbaSemanal ? [] : tarefas).map(task => (
+        {tarefas.map(task => (
           <RitualRow
             key={task.id}
             flipKey={`t:${task.id}`}
@@ -250,11 +223,11 @@ export function DailyRituals({
           </RitualRow>
         ))}
 
-        {atividades.filter(a => !a.isComplete && (!comAbas || ehSemanal(a) === naAbaSemanal)).map(activity => renderHabit(activity))}
+        {devidos.filter(a => !a.isComplete).map(activity => renderHabit(activity))}
 
         {/* Concluídas de hoje, no fim: hábitos feitos e tarefas do histórico. */}
-        {atividades.filter(a => a.isComplete && (!comAbas || ehSemanal(a) === naAbaSemanal)).map(activity => renderHabit(activity))}
-        {(naAbaSemanal ? [] : feitasHoje).map(c => (
+        {devidos.filter(a => a.isComplete).map(activity => renderHabit(activity))}
+        {feitasHoje.map(c => (
           <RitualRow
             key={`done-${c.id}-${c.completedAt}`}
             flipKey={`t:${c.id}`}
@@ -272,6 +245,16 @@ export function DailyRituals({
             toggleLabelEn={`Task completed: ${c.name}`}
           />
         ))}
+
+        {/* PROGRAMADAS: existe, mas não vence hoje. Linha separadora + rótulo;
+            nada aqui cobra (dimmed, sem prévia de XP). */}
+        {programadas.length > 0 && (
+          <div role="separator" data-scheduled-sep aria-label={isPt ? 'Programadas' : 'Scheduled'}
+            style={{ borderTop: '1px solid var(--sm2-border, currentColor)', marginTop: 12, paddingTop: 8, fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>
+            {isPt ? 'Programadas' : 'Scheduled'}
+          </div>
+        )}
+        {programadas.map(activity => renderHabit(activity))}
       </RitualPanel>
 
       {/* GAVETA DO QUE SAIU DE VISTA — fechada por padrão, em `muted` (tinta,
@@ -318,21 +301,6 @@ export function DailyRituals({
     </>
   );
 
-  function renderWeekChip(activity: Activity & { disponivelHoje: boolean }): ReactNode {
-    const chip = weekChip(habitRhythms?.[activity.id], normalizeSchedule(activity as Parameters<typeof normalizeSchedule>[0]), now);
-    if (!chip) return null;
-    return (
-      <span data-week-chip style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={sm2Tag}>
-          {isPt ? `Semana: ${chip.done} de ${chip.target}` : `This week: ${chip.done} of ${chip.target}`}
-        </span>
-        <span className="sm2-ritual-sub" data-today-only>
-          {isPt ? 'O check vale só para hoje' : 'This check is for today'}
-        </span>
-      </span>
-    );
-  }
-
   function renderHabit(activity: Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number }): ReactNode {
     const etapas = activity.steps ?? [];
     const feitasEtapas = etapas.filter(s => s.completed).length;
@@ -340,13 +308,19 @@ export function DailyRituals({
     // Prévia ANTES de concluir (11/10/2026, pedido do dono): o valor aparece sempre;
     // hábito fora do dia não é devido, então não promete nada.
     const xp = activity.isComplete || activity.disponivelHoje ? ` · +${activity.xpEarned} ${isPt ? 'XP base' : 'base XP'}` : '';
-    const semana = ehSemanal(activity) && habitRhythms?.[activity.id]
-      ? weeklyProgress(habitRhythms[activity.id], (activity as { schedule?: never }).schedule as never, now)
+    const semana = ehSemanal(activity)
+      ? weeklyProgress(habitRhythms?.[activity.id] ?? { done: [] } as unknown as HabitRhythm, (activity as { schedule?: never }).schedule as never, now)
       : null;
-    const progSemana = semana && semana.target > 0 ? ` · ${semana.done}/${semana.target} ${isPt ? 'na semana' : 'this week'}` : '';
-    const subtitulo = etapas.length > 0
-      ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${progSemana}${xp}`
-      : `${freq}${progSemana}${xp}`;
+    /* Semanal ("N× por semana"): só "0 de 3 esta semana" + XP base — sem o rótulo
+       de frequência, sem contagem de etapas, sem chip duplicado (pedido do dono). */
+    const progSemana = semana && semana.target > 0
+      ? (isPt ? `${semana.done} de ${semana.target} esta semana` : `${semana.done} of ${semana.target} this week`)
+      : null;
+    const subtitulo = progSemana
+      ? `${progSemana}${xp}`
+      : etapas.length > 0
+        ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${xp}`
+        : `${freq}${xp}`;
     return (
       <RitualRow
         key={activity.id}
@@ -368,7 +342,6 @@ export function DailyRituals({
            chip À PARTE (só exibição — não mexe em constância nem pontuação). */
         toggleLabelPt={`${activity.isComplete ? 'Hoje concluído' : 'Marcar como feito hoje'}: ${activity.name}`}
         toggleLabelEn={`${activity.isComplete ? 'Done today' : 'Mark as done today'}: ${activity.name}`}
-        below={renderWeekChip(activity)}
         /* D2+D3 (navegação do dono, 01/10/2026): a janela de 7 tracejada +
            a bolinha/folha de maturidade (`HabitConstancy compact`) SAIU da
            linha — o dono leu a folha como "botão de editar" e o tracejado

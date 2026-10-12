@@ -56,7 +56,11 @@ import loteOficina from './lote-exploracao-oficina-akasha.png';
 // 🏡 11/10/2026 (pedido do dono: "o prédio do jornal é massa mas muito misturado com o background"): o Caderno troca o santuário do
 // Pântano (verde-escuro sobre a clareira verde-escura) pelo chalé de sapé `-campina`, que já estava em disco — amarelo-quente
 // sobre o fundo teal, é o prédio que mais SE DESTACA da Exploração (medido sobre o fundo; folha de contato na PR). O Pântano fica em disco.
-import loteCaderno from './lote-exploracao-caderno-campina.png';
+// 11/10/2026 (dono, 2ª rodada: "o ícone do prédio do jornal não tá legal"): o chalé de sapé era bonito mas NÃO DIZ "caderno" —
+// lia como uma casa qualquer. Volta a casa do TINTEIRO com a pena no telhado (`lote-exploracao-caderno.png`, arte própria que já
+// estava em disco): é o único dos três que se reconhece como diário só pela silhueta. O chalé `-campina` e o santuário `-pantano`
+// ficam em disco, sem import. (Se o dono achar que mistura com o fundo de novo, a alternativa é o halo, não outro chalé.)
+import loteCaderno from './lote-exploracao-caderno.png';
 // 🎨 07/10/2026: o dono NÃO gostou da reforma e Mente/Oficina/Caderno/Amigos voltaram à arte original (as `-akasha`/`-deserto`/`-campina` ficam em disco, sem import). Nota antiga da reforma: prédios de DOMÍNIO (`../../dominios/<dom>/predios`, arte própria já no repo) copiados
 // para cá — o contrato de geometria lê só esta pasta. Trocaram os quatro lotes teal-sobre-teal (Mente, Oficina, Caderno e
 // os do Hall); as artes antigas ficam em disco, sem import (`lote-jogos-mente`, `lote-exploracao-oficina`/`caderno`,

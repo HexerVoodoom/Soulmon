@@ -127,6 +127,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   return (
     <ModalSheet
       open
+      dismissOnBackdrop={false} /* formulário de conta com texto digitado */
       onClose={onClose}
       language={language}
       title={isPt ? 'Seu Soulmon cresce porque você cresce' : 'Your Soulmon grows because you do'}

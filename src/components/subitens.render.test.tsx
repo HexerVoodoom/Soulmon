@@ -36,20 +36,22 @@ function montar(over: Partial<Parameters<typeof DailyRituals>[0]> = {}) {
 }
 
 describe('hábito semanal: o check é de HOJE (A)', () => {
-  it('3x/semana: chip "Semana: 1 de 3" separado, aviso e rótulo do check de hoje', () => {
+  it('3x/semana: só "1 de 3 esta semana" + XP base (sem chip duplicado, sem "3× por semana", sem aviso)', () => {
     montar();
-    expect(screen.getByText('Semana: 1 de 3')).toBeTruthy();
-    expect(screen.getByText('O check vale só para hoje')).toBeTruthy();
+    expect(screen.getByText(/1 de 3 esta semana · \+\d+ XP base/)).toBeTruthy();
+    expect(screen.queryByText('O check vale só para hoje')).toBeNull();
+    expect(screen.queryByText(/Semana: 1 de 3/)).toBeNull();
+    expect(screen.queryByText(/× por semana/)).toBeNull();
     expect(screen.getByRole('checkbox', { name: /Marcar como feito hoje: Atividade física/ })).toBeTruthy();
   });
 
-  it('diário: "N de 7" e em inglês o mesmo contrato', () => {
+  it('diário: sem chip "N de 7" (nem aviso), em inglês o mesmo contrato; rótulo do check segue "hoje"', () => {
     montar({
       language: 'en-US',
       activities: [habito({ name: 'Drink 2 L of water', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] } })],
     });
-    expect(screen.getByText('This week: 1 of 7')).toBeTruthy();
-    expect(screen.getByText('This check is for today')).toBeTruthy();
+    expect(screen.queryByText('This week: 1 of 7')).toBeNull();
+    expect(screen.queryByText('This check is for today')).toBeNull();
     expect(screen.getByRole('checkbox', { name: /Mark as done today: Drink 2 L of water/ })).toBeTruthy();
   });
 
