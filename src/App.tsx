@@ -3599,6 +3599,14 @@ export default function App() {
     goTo(areaView('exploracao'));
   }, [goTo]);
 
+  /* A linha de missão de prédio (Caderno) leva ao lote com a folha aberta, como o Passeio (dono, 11/10/2026). */
+  const irAoPredioDaMissao = useCallback((id: BuildingId) => {
+    const [area, lot] = id.split('.');
+    setMissionsOpen(null);
+    setPendingSheet({ area: area as AreaId, lot });
+    goTo(areaView(area as AreaId));
+  }, [goTo]);
+
   /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
      lote aberta — direto, sem passar por `buildingDestination`, que mandaria o Caderno ao menu de Missões. */
   const markIntroSeen = useCallback((id: BuildingId) => {
@@ -7485,6 +7493,7 @@ export default function App() {
           day: playerDayKey(new Date(), gameState.playerDayTz),
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarPredio,
+          onGo: irAoPredioDaMissao,
         }}
       /></Suspense>}
       {currentView === 'map' && (

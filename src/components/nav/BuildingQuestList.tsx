@@ -13,6 +13,8 @@ export interface BuildingQuestsProps {
   day: string;
   bondLevel: number;
   onClaim: (id: BuildingId) => void;
+  /** Leva ao prédio da missão (a folha do lote aberta), como a linha do Passeio (dono, 11/10/2026). */
+  onGo?: (id: BuildingId) => void;
 }
 
 /** O nome do prédio, do mesmo lugar que o Mapa lê (um dono por rótulo). */
@@ -32,7 +34,7 @@ export function nameOf(id: BuildingId, language: Language): string {
  * continua sendo pago pelo modelo, mas nenhuma tela de missão o mostra. Só vive no menu da Home,
  * nunca dentro do prédio. Sem cobrança: quem não escreveu não perde nada.
  */
-export function BuildingQuestList({ language, state, day, bondLevel, onClaim }: BuildingQuestsProps & { language: Language }) {
+export function BuildingQuestList({ language, state, day, bondLevel, onClaim, onGo }: BuildingQuestsProps & { language: Language }) {
   const isPt = language === 'pt-BR';
   const open = LISTED_QUEST_BUILDINGS.filter(id => questStatus(state, day, id, bondLevel) !== 'locked');
   if (open.length === 0) return null;
@@ -44,7 +46,20 @@ export function BuildingQuestList({ language, state, day, bondLevel, onClaim }: 
           <li key={id} data-building-quest={id} data-status={st} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>📓</span>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="sm2-title" style={{ display: 'block', fontSize: 'var(--sm2-text-md)', color: st === 'claimed' ? 'var(--sm2-muted)' : undefined }}>{questText(day, id, isPt)}</span>
+              {/* Toda missão com lugar próprio NAVEGA até ele (dono, 11/10/2026) — mesmo desenho do Passeio. */}
+              {onGo && st !== 'claimed' ? (
+                <button
+                  type="button"
+                  data-building-go={id}
+                  onClick={() => onGo(id)}
+                  className="sm2-title"
+                  style={{ display: 'block', width: '100%', minHeight: 44, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 'var(--sm2-text-md)', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
+                >
+                  {questText(day, id, isPt)}
+                </button>
+              ) : (
+                <span className="sm2-title" style={{ display: 'block', fontSize: 'var(--sm2-text-md)', color: st === 'claimed' ? 'var(--sm2-muted)' : undefined }}>{questText(day, id, isPt)}</span>
+              )}
             </span>
             {(st === 'available' || st === 'ready') && <MissionMark kind={st === 'ready' ? 'ready' : 'available'} size={24} isPt={isPt} />}
             {st === 'ready' && (

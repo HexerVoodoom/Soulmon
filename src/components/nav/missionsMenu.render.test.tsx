@@ -215,3 +215,22 @@ describe('Hoje sem "!" no título e "Take a stroll" leva ao prédio (11/10/2026)
     expect(onGoStroll).toHaveBeenCalledTimes(1);
   });
 });
+
+// Dono, 11/10/2026: toda missão diária com lugar próprio NAVEGA até ele (como o Passeio).
+describe('missão do Caderno leva ao prédio', () => {
+  it('o texto da linha é um botão que chama onGo("exploracao.caderno"); resgatada, vira texto', async () => {
+    const onGo = vi.fn();
+    const base = { kind: 'daily' as const, open: true, onClose: () => {}, language: 'pt-BR' as const, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(), todayKey: '2026-10-07',
+      weekly: [], onClaimWeekly: vi.fn(), missionProgress: {}, marks: { daily: 'available' as const, torneio: null, conquistas: null } };
+    render(<MissionsSheet {...base} buildings={{ state: undefined, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
+    const go = await waitFor(() => { const b = document.querySelector('[data-building-go="exploracao.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 8000 });
+    fireEvent.click(go);
+    expect(onGo).toHaveBeenCalledWith('exploracao.caderno');
+    cleanup();
+    let st: BuildingQuestState | undefined = completeBuildingQuest(undefined, '2026-10-07', 'exploracao.caderno', 99);
+    st = claimBuildingQuest(st, '2026-10-07', 'exploracao.caderno', 99).state ?? st;
+    render(<MissionsSheet {...base} buildings={{ state: st, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
+    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 8000 });
+    expect(document.querySelector('[data-building-go]')).toBeNull();
+  });
+});
