@@ -1,5 +1,13 @@
 # Status do Soulmon — registro vivo
 
+> ## 13/10/2026 — Beta-2, frente C: resumos e modais (`feat/b2-resumos-modais`, backlog 4.2–4.4, 5.1, 7.1–7.3, 13.1)
+>
+> - **Resumo pós-dia** (`DailyReportModal`): uma folha por seção (tarefas → corações → aventura → hoje); sem `Evolution path`; `Yesterday Tasks`; 3 corações (`DayHearts`, `utils/dayHearts.ts`) em que o cobrado treme, quebra e vira preto UMA vez; `From Yesterday's Adventure` com `New` dourado, vínculo Missão/Destino (`strollSummary`) e o NPC do Passeio (`AreaSheet`); `Stretch Closed` e corações sem NPC.
+> - **Save:** `lastDayReport.heartsAnimSeen?: boolean` (DENTRO do relatório; some sozinho na virada). Sem campo de topo ⇒ **o contador do `GameStateContext.hydrate.fuzz2.qa.test.tsx` NÃO foi alterado** (segue 124 nesta branch). **Merge:** as outras frentes podem somar campos de topo; ao juntar, o contador é a soma de todas, e esta frente não entra nela.
+> - **Passeio** (`PasseioSheet`): Free Stroll e Mission of the Day numa escolha só — missão em primeiro plano, destino em destaque dourado discreto; sem "Passeio livre" (o `setDestination` segue na lógica).
+> - **Modais:** `BuildingIntro` agora vive no `AreaSheet` (novo prop opcional `speech`); `LevelUpOverlay` sem caixa nem sunburst (glow difuso), `Now Open` quando abre algo, chevron sem corte; `CatalogOnboardingFlow` (`Add tasks to list`): tudo marcado, sem duplicar (`withoutExisting`).
+> - **Depende do dono / design-critic:** `product/beta-play-01/builder/b2-c/design-review.md`.
+
 > ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
 >
 > - **Dono:** `utils/dungeonAway.ts` (a conta pura de quem ficou fora: `applyDungeonAway`, `settleDungeonAwayNow`) · `utils/dungeonRewards.ts` (recompensas puras compartilhadas com o `App`) · `utils/dungeonIdle.ts` (`DungeonAway`, `sanitizeDungeonAway`, `soulmonNaMasmorra`, velocidades, teto de 8 h) · `utils/dungeonFight.ts` (`autoRingGrade`/`autoDodgeGrade`) · `utils/dungeonDrops.ts` + `games/DropNotice.tsx` (modalzinho) · `DungeonBusyModal` + `home/DungeonSign` (ocupado e plaquinha) · `utils/match3.ts` + `Match3Game.tsx` (Combina 3).

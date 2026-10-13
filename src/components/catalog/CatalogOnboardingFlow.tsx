@@ -3,9 +3,9 @@ import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { RitualDialog, ritualTitle } from '../ritual/RitualKit';
-import { sm2Button, sm2Hint, sm2Text, Chip } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, Chip, CheckRow } from '../form/FormKit';
 import { recommendStarterSet } from '../../utils/recommend';
-import { activitiesFromCatalogChoice } from '../../utils/catalogChoice';
+import { activitiesFromCatalogChoice, withoutExisting } from '../../utils/catalogChoice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
 import {
   LIFE_AREA_LABEL, LIFE_AREAS,
@@ -35,6 +35,8 @@ interface CatalogOnboardingFlowProps {
    *  só para quem ainda a passa; não é chamada. */
   onSkip?: () => void;
   onComplete: (chosen: CatalogItem[]) => void;
+  /** As atividades que a pessoa JÁ tem (beta-2, 7.3): o que já está na lista não é oferecido de novo nem entra duplicado. */
+  existingActivities?: ReadonlyArray<{ catalogId?: string | null }>;
 }
 
 type Step = 'areas' | 'struggles' | 'strengths' | 'starter';
@@ -45,32 +47,32 @@ function toggle<T>(list: T[], value: T, max: number): T[] {
   return [...list, value];
 }
 
-export function CatalogOnboardingFlow({ language = 'en-US', onComplete }: CatalogOnboardingFlowProps) {
+export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existingActivities }: CatalogOnboardingFlowProps) {
   const isPt = language === 'pt-BR';
   const [step, setStep] = useState<Step>('areas');
   const [areas, setAreas] = useState<LifeArea[]>([]);
   const [struggles, setStruggles] = useState<StruggleId[]>([]);
   const [strengths, setStrengths] = useState<StrengthId[]>([]);
-  /* C12 (navegação do dono, 01/10/2026): o starter set deixou de nascer
-     ACEITO. Antes cada sugestão entrava na lista a menos que a pessoa tocasse
-     "Trocar" — e foi assim que hábitos que o dono "não definiu" apareceram na
-     Home (C8). Agora cada sugestão tem um botão "Assumir"/"Commit" que, ao
-     toque, vira uma caixa MARCADA (toque de novo desmarca). Só entra o que
-     foi assumido. */
-  const [committed, setCommitted] = useState<Set<string>>(new Set());
+  /* Beta-2 (7.3, pedido do dono 13/10/2026): o ponto de partida voltou a nascer MARCADO. A C12 (01/10) tinha feito
+     cada sugestão nascer desmarcada ("Assumir"), e a pessoa tinha de tocar item por item; agora TODAS vêm marcadas
+     e só se DESMARCA o que não quer — só entra o que ficou marcado. Guardamos o que foi DESMARCADO (e não o que
+     foi marcado) porque a lista de sugestões muda quando a pessoa volta e troca as escolhas: o que ela nunca
+     tocou segue marcado. */
+  const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
 
+  /* O que já está na lista (`catalogId`) não é oferecido de novo: sem tarefa duplicada. */
   const starterSet = useMemo(
-    () => recommendStarterSet({ areas, struggles, strengths }, ACTIVITY_CATALOG),
-    [areas, struggles, strengths],
+    () => withoutExisting(recommendStarterSet({ areas, struggles, strengths }, ACTIVITY_CATALOG), existingActivities),
+    [areas, struggles, strengths, existingActivities],
   );
-  const finalSet = starterSet.filter((i) => committed.has(i.id));
+  const finalSet = starterSet.filter((i) => !unchecked.has(i.id));
 
   /* C9: "o que você quer melhorar" → "Definir metas" / "Set goals". */
   const titles: Record<Step, string> = {
     areas: isPt ? 'Definir metas' : 'Set goals',
     struggles: isPt ? 'O que mais te trava?' : "What's holding you back most?",
     strengths: isPt ? 'O que já é forte em você?' : "What's already a strength?",
-    starter: isPt ? 'Seu ponto de partida' : 'Your starting point',
+    starter: isPt ? 'Adicionar tarefas à lista' : 'Add tasks to list',
   };
   /* C10: mínimo 1 em cada escolha (áreas, travas, forças); C11: no ponto de
      partida, ao menos 1 meta assumida antes de avançar. */
@@ -78,7 +80,7 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete }: Catalo
     areas: isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.',
     struggles: isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.',
     strengths: isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.',
-    starter: isPt ? 'Assuma ao menos uma para começar.' : 'Commit to at least one to begin.',
+    starter: isPt ? 'Desmarque o que não quiser.' : 'Uncheck what you don’t want.',
   };
 
   const canAdvance =
@@ -168,59 +170,25 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete }: Catalo
       {step === 'starter' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {starterSet.map((item) => {
-            const isOn = committed.has(item.id);
             const name = isPt ? item.name.pt : item.name.en;
-            const toggleItem = () => setCommitted((prev) => {
-              const nextSet = new Set(prev);
-              if (nextSet.has(item.id)) nextSet.delete(item.id); else nextSet.add(item.id);
-              return nextSet;
-            });
-            /* C7: sem a descrição pequena sob o cartão; D5: sem emoji como
-               ícone — o nome fala sozinho. */
+            /* C7: sem a descrição pequena sob o cartão; D5: sem emoji como ícone — o nome fala sozinho. A caixa é a
+               `CheckRow` do kit (rótulo inteiro = alvo de 44). */
             return (
-              <div key={item.id} className="sm2-conta-card" data-starter-item={item.id} style={{ padding: '6px 6px 6px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, minHeight: 44 }}>
-                  {/* 04/10/2026 (decisão do dono): ícone de atividade em pixel, quando existe. */}
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <div key={item.id} className="sm2-conta-card" data-starter-item={item.id} style={{ padding: '2px 12px' }}>
+                <CheckRow
+                  checked={!unchecked.has(item.id)}
+                  onChange={(on) => setUnchecked((prev) => {
+                    const nextSet = new Set(prev);
+                    if (on) nextSet.delete(item.id); else nextSet.add(item.id);
+                    return nextSet;
+                  })}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    {/* 04/10/2026 (decisão do dono): ícone de atividade em pixel, quando existe. */}
                     {ACTIVITY_ICON_ART[item.id] && <PixelIcon src={ACTIVITY_ICON_ART[item.id]} size={32} style={{ flex: 'none' }} />}
-                    <span style={{ ...sm2Text, fontWeight: 600 }}>{name}</span>
+                    <span style={{ fontWeight: 600 }}>{name}</span>
                   </span>
-                  {isOn ? (
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked="true"
-                      aria-label={isPt ? `Assumida: ${name}` : `Committed: ${name}`}
-                      onClick={toggleItem}
-                      data-starter-committed
-                      style={{
-                        width: 44, height: 44, flex: '0 0 44px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                      }}
-                    >
-                      <span
-                        aria-hidden="true"
-                        style={{
-                          width: 24, height: 24, borderRadius: 'var(--sm2-radius-sm)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          backgroundColor: 'var(--sm2-primary-fill)', color: 'var(--sm2-on-primary)',
-                        }}
-                      >
-                        <Icon name="check" size={20} fill={1} weight={700} />
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={toggleItem}
-                      aria-label={isPt ? `Assumir: ${name}` : `Commit: ${name}`}
-                      style={{ ...sm2Button('outline', false, 'sm'), minHeight: 32, height: 32, padding: '0 12px' }}
-                    >
-                      {isPt ? 'Assumir' : 'Commit'}
-                    </button>
-                  )}
-                </div>
+                </CheckRow>
               </div>
             );
           })}
