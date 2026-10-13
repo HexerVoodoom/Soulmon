@@ -2,7 +2,6 @@ import type { Language } from '../utils/i18n';
 import { sm2Button, sm2Text } from './form/FormKit';
 import { mealInviteCopy } from '../../functions/api/_pushCopy.js';
 import type { MealInviteKind, MealKey } from '../utils/mealRhythm';
-import type { CheckInSlot } from '../utils/checkIns';
 
 /**
  * O CARTÃO DA REFEIÇÃO — o convite do Soulmon dentro do app, nas três janelas
@@ -21,22 +20,13 @@ const CTA: Record<MealInviteKind, { en: string; pt: string }> = {
   tenSeconds: { en: 'Say hi', pt: 'Dizer oi' },
 };
 
-/** O rótulo do check-in de cada janela (beta-2 4.1): o PROPÓSITO da janela, sem número de recompensa na tela. */
-const CHECK_IN_LABEL: Record<CheckInSlot, { en: string; pt: string }> = {
-  morning: { en: 'Plan the day', pt: 'Preparar o dia' },
-  afternoon: { en: 'See how it is going', pt: 'Ver como está indo' },
-  night: { en: 'Close the day', pt: 'Encerrar o dia' },
-};
-
-export function MealInviteCard({ language, petName, meal, kind, onAct, onSkip, checkIn }: {
+export function MealInviteCard({ language, petName, meal, kind, onAct, onSkip }: {
   language: Language;
   petName: string;
   meal: MealKey;
   kind: MealInviteKind;
   onAct: (kind: MealInviteKind) => void;
   onSkip: () => void;
-  /** Check-in desta janela (`utils/checkIns.ts`), quando ainda não foi resgatado hoje. Ausente = sem botão. */
-  checkIn?: { slot: CheckInSlot; onClaim: () => void };
 }) {
   const isPt = language === 'pt-BR';
   const copy = mealInviteCopy(meal, kind, petName, isPt ? 'pt-BR' : 'en-US');
@@ -50,11 +40,6 @@ export function MealInviteCard({ language, petName, meal, kind, onAct, onSkip, c
     >
       <p style={{ ...sm2Text, margin: '0 0 4px', fontWeight: 600 }}>{copy.title}</p>
       <p style={{ ...sm2Text, margin: '0 0 10px' }}>{copy.body}</p>
-      {checkIn && (
-        <button type="button" data-checkin={checkIn.slot} style={{ ...sm2Button('primary'), width: '100%', marginBottom: 8 }} onClick={checkIn.onClaim}>
-          {isPt ? CHECK_IN_LABEL[checkIn.slot].pt : CHECK_IN_LABEL[checkIn.slot].en}
-        </button>
-      )}
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" data-meal-invite-act style={{ ...sm2Button('primary'), flex: 1 }} onClick={() => onAct(kind)}>
           {isPt ? CTA[kind].pt : CTA[kind].en}

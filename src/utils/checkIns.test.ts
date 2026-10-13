@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  CHECKIN_REWARDS, CHECKIN_SLOTS, availableCheckIn, checkInDayOf, claimCheckIn, claimedToday, currentSlot, sanitizeCheckIns, type CheckInState,
+  CHECKIN_REWARDS, CHECKIN_SLOTS, availableCheckIn, checkInDayOf, checkInWindows, claimCheckIn, claimedToday, currentSlot, sanitizeCheckIns, type CheckInState,
 } from './checkIns';
 import { hungerAt } from './hunger';
 import { playerDayIso } from './playerDay';
@@ -149,5 +149,28 @@ describe('nada de vantagem paga nem de energia direta', () => {
       const depois = claimCheckIn(antes, t).state;
       expect(depois.energyPoints).toBe(antes.energyPoints);
     }
+  });
+});
+
+describe('checkInWindows (a folha dos check-ins: horário e estado de cada janela)', () => {
+  it('antes do primeiro horário: as três por vir; manhã em curso: manhã aberta e as outras por vir', () => {
+    expect(checkInWindows(estado(), local(13, 7)).map(w => w.status)).toEqual(['upcoming', 'upcoming', 'upcoming']);
+    expect(checkInWindows(estado(), local(13, 10)).map(w => w.status)).toEqual(['open', 'upcoming', 'upcoming']);
+  });
+  it('mostra os horários (padrão 09:00 · 13:30 · 20:00; a noite não tem fim)', () => {
+    expect(checkInWindows(estado(), local(13, 10)).map(w => [w.from, w.to])).toEqual([['09:00', '13:30'], ['13:30', '20:00'], ['20:00', null]]);
+  });
+  it('janela que passou sem resgate = missed (neutro); resgatada = claimed; funciona com o ritmo das refeições nunca configurado', () => {
+    const r = claimCheckIn(estado(), local(13, 10)).state;
+    expect(checkInWindows(r, local(13, 21)).map(w => w.status)).toEqual(['claimed', 'missed', 'open']);
+    expect(r.mealRhythm).toBeUndefined();
+  });
+  it('usa os horários editados', () => {
+    const e = estado({ mealRhythm: { times: { breakfast: '07:00', lunch: '12:00', dinner: '19:00' } } });
+    expect(checkInWindows(e, local(13, 8)).map(w => w.from)).toEqual(['07:00', '12:00', '19:00']);
+  });
+  it('dia novo reabre as três (nada acumula)', () => {
+    const r = claimCheckIn(estado(), local(13, 10)).state;
+    expect(checkInWindows(r, local(14, 10))[0]!.status).toBe('open');
   });
 });

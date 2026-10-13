@@ -22,7 +22,7 @@ import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
-import { availableCheckIn, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
+import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -563,6 +563,7 @@ function PostponeNudgeSheet({
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
+const CheckInSheet = lazy(() => import('./components/CheckInSheet').then(m => ({ default: m.CheckInSheet })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
@@ -907,6 +908,8 @@ export default function App() {
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
+  /* Folha dos check-ins (beta-2 4.1): estado de VISTA; vive no App (não no aviso) para sobreviver ao resgate, que apaga o aviso. */
+  const [checkInsAbertos, setCheckInsAbertos] = useState(false);
   /* Etapas na Home nascem RECOLHIDAS (G1): uma atividade de 4 etapas ocupava 5
      linhas e comia sozinha a dobra. Estado de VISTA, não de jogo — de propósito
      fora do GameState, para não virar cloud save a cada toque. */
@@ -7178,16 +7181,23 @@ export default function App() {
                               else { falar(kind === 'pet' ? 'rub' : 'cheer'); atenderRefeicao(kind); }
                             }}
                             onSkip={() => setGameState(prev => skipMeal(prev, refeicaoA, new Date()))}
-                            checkIn={(() => {
-                              const slot = availableCheckIn(gameState, agoraA.getTime());
-                              return slot ? { slot, onClaim: () => resgatarCheckIn() } : undefined;
-                            })()}
                           />
                         </Suspense>
                       ),
                     });
                   }
                 }
+
+                /* CHECK-IN DA JANELA (beta-2 4.1): um atalho discreto que abre o bottom sheet com as 3 janelas. Independe do ritmo das
+                   refeições estar ligado (usa os horários padrão ou os editados). Some quando a janela em curso já foi resgatada. */
+                if (availableCheckIn(gameState, agoraA.getTime()) !== null) avisos.push({
+                  key: 'checkin',
+                  node: (
+                    <button type="button" data-checkin-open style={{ ...sm2Button('outline'), width: '100%', marginBottom: 12 }} onClick={() => setCheckInsAbertos(true)}>
+                      {isPtA ? 'Check-ins do dia' : 'Daily check-ins'}
+                    </button>
+                  ),
+                });
 
                 if (isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))) avisos.push({
                   key: 'carga',
@@ -7573,6 +7583,13 @@ export default function App() {
       {currentView === 'home' && celebrarMeta && (
         <Celebration fixed onDone={() => setCelebrarMeta(false)} />
       )}
+      {checkInsAbertos && <Suspense fallback={null}><CheckInSheet
+        open
+        language={language}
+        windows={checkInWindows(gameState, Date.now())}
+        onClaim={resgatarCheckIn}
+        onClose={() => setCheckInsAbertos(false)}
+      /></Suspense>}
       {missionsOpen && <Suspense fallback={null}><MissionsSheet
         kind={missionsOpen}
         open

@@ -5106,6 +5106,10 @@ select:focus-visible {
   /* BRONZE dos checkboxes da lista (beta-2, 2.2): alias do ouro-cobre do sistema — nunca valor próprio. */
   --sm2-check-fill: var(--sm2-gold-fill);
   --sm2-on-check: var(--sm2-on-gold);
+  /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
+  --sm2-wood: #7a4c24;
+  --sm2-wood-edge: #4a2c12;
+  --sm2-wood-ink: #f8ecd2;
   /* perigo */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
@@ -5155,6 +5159,10 @@ select:focus-visible {
   --sm2-on-gold: #04211F;
   --sm2-check-fill: var(--sm2-gold-fill);
   --sm2-on-check: var(--sm2-on-gold);
+  /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
+  --sm2-wood: #7a4c24;
+  --sm2-wood-edge: #4a2c12;
+  --sm2-wood-ink: #f8ecd2;
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -6881,10 +6889,11 @@ button[style*="--sm2-btn: ghost"]:active {
     height: 14px;
     transform: scale(0);
     transition: transform var(--sm2-dur-tap) var(--sm2-ease);
-    background-color: var(--sm2-on-primary);
+    background-color: var(--sm2-on-check);
     clip-path: polygon(14% 44%, 0 62%, 40% 100%, 100% 20%, 86% 8%, 40% 70%);
   }
-  &:checked { background-color: var(--sm2-primary-fill); border-color: var(--sm2-primary-fill); }
+  /* BRONZE (beta-2): o CheckRow vale para metas/onboarding também — mesmo token da lista de atividades. */
+  &:checked { background-color: var(--sm2-check-fill); border-color: var(--sm2-check-fill); }
   &:checked::before { transform: scale(1); }
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
   &:disabled { opacity: .45; cursor: default; }

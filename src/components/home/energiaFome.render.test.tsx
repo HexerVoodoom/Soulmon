@@ -9,7 +9,8 @@ import { renderWithCss } from '../../test/renderEnv';
 import { EnergyTimer } from './EnergyTimer';
 import { HungerIndicator } from './HungerIndicator';
 import { CompanionHUD } from '../CompanionHUD';
-import { MealInviteCard } from '../MealInviteCard';
+import { CheckInSheet } from '../CheckInSheet';
+import type { CheckInWindow } from '../../utils/checkIns';
 
 const MIN = 60_000;
 
@@ -95,30 +96,37 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
   });
 });
 
-describe('cartão da refeição com check-in (beta-2 4.1)', () => {
-  const props = { language: 'pt-BR' as const, petName: 'Pyraka', meal: 'breakfast' as const, kind: 'tenSeconds' as const, onAct: vi.fn(), onSkip: vi.fn() };
-  it('mostra UM botão de check-in com o propósito da janela (sem número de recompensa na tela) e chama onClaim', () => {
+describe('folha dos check-ins (beta-2 4.1): bottom sheet com as 3 janelas', () => {
+  const win = (status: CheckInWindow['status'], slot: CheckInWindow['slot'], from: string, to: string | null): CheckInWindow => ({ slot, from, to, status });
+  const janelas: CheckInWindow[] = [win('claimed', 'morning', '09:00', '13:30'), win('open', 'afternoon', '13:30', '20:00'), win('upcoming', 'night', '20:00', null)];
+  it('mostra as três janelas com horário e estado; só a janela aberta tem botão, e ele chama onClaim', () => {
     const onClaim = vi.fn();
-    render(<MealInviteCard {...props} checkIn={{ slot: 'morning', onClaim }} />);
-    const b = document.querySelector('[data-checkin="morning"]') as HTMLButtonElement;
-    expect(b.textContent).toBe('Preparar o dia');
-    expect(b.textContent).not.toMatch(/\d/);
+    render(<CheckInSheet open language="pt-BR" windows={janelas} onClaim={onClaim} onClose={() => {}} />);
+    expect(document.querySelectorAll('[data-checkin-window]').length).toBe(3);
+    expect(document.querySelector('[data-checkin-window="morning"]')!.textContent).toContain('Feito');
+    expect(document.querySelector('[data-checkin-window="night"]')!.textContent).toContain('Mais tarde');
+    expect(document.querySelector('[data-checkin-window="night"]')!.textContent).toContain('20:00 até o fim do dia');
+    expect(document.querySelectorAll('button[data-checkin]').length).toBe(1);
+    const b = document.querySelector('[data-checkin="afternoon"]') as HTMLButtonElement;
+    expect(document.body.textContent).not.toMatch(/\+\d|Bits|XP/);
     fireEvent.click(b);
     expect(onClaim).toHaveBeenCalledTimes(1);
   });
   it('os três rótulos em PT e EN', () => {
     const esperado = { morning: ['Preparar o dia', 'Plan the day'], afternoon: ['Ver como está indo', 'See how it is going'], night: ['Encerrar o dia', 'Close the day'] } as const;
-    for (const slot of ['morning', 'afternoon', 'night'] as const) {
-      for (const [i, lang] of (['pt-BR', 'en-US'] as const).entries()) {
-        const { unmount } = render(<MealInviteCard {...props} language={lang} checkIn={{ slot, onClaim: () => {} }} />);
-        expect(document.querySelector(`[data-checkin="${slot}"]`)!.textContent).toBe(esperado[slot][i]);
-        unmount();
+    for (const [i, lang] of (['pt-BR', 'en-US'] as const).entries()) {
+      const { unmount } = render(<CheckInSheet open language={lang} windows={janelas} onClaim={() => {}} onClose={() => {}} />);
+      for (const slot of ['morning', 'afternoon', 'night'] as const) {
+        expect(document.querySelector(`[data-checkin-window="${slot}"]`)!.textContent).toContain(esperado[slot][i]);
       }
+      unmount();
     }
   });
-  it('sem check-in disponível (já resgatado): o cartão é o de sempre, sem o botão', () => {
-    render(<MealInviteCard {...props} />);
-    expect(document.querySelector('[data-checkin]')).toBeNull();
-    expect(document.querySelector('[data-meal-invite-act]')).not.toBeNull();
+  it('sem janela aberta (tudo feito/passou): nenhum botão; fechada não renderiza nada', () => {
+    const { unmount } = render(<CheckInSheet open language="en-US" windows={janelas.map(w => ({ ...w, status: 'claimed' as const }))} onClaim={() => {}} onClose={() => {}} />);
+    expect(document.querySelector('button[data-checkin]')).toBeNull();
+    unmount();
+    render(<CheckInSheet open={false} language="en-US" windows={janelas} onClaim={() => {}} onClose={() => {}} />);
+    expect(document.querySelector('[data-checkin-sheet]')).toBeNull();
   });
 });

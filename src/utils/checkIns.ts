@@ -21,7 +21,7 @@
 //  5. Nada aqui concede energia direto, HP, Emblema, nem vantagem paga: pagar nunca deixa mais forte.
 //
 // Funções PURAS; `nowMs` por parâmetro; a recusa é reconferida sobre o `prev` (roda dentro do updater do `setGameState`).
-import { DEFAULT_MEAL_TIMES, mealMinutes } from '../../functions/api/_mealRhythm.js';
+import { DEFAULT_MEAL_TIMES, formatHHMM, mealMinutes } from '../../functions/api/_mealRhythm.js';
 import type { MealTimes } from './mealRhythm';
 import { eat } from './hunger';
 import { awardBondXP } from './bond';
@@ -113,4 +113,28 @@ export function claimCheckIn<T extends CheckInState>(prev: T, nowMs: number): { 
   if (rw.bits > 0) s = { ...noteFreeBits(s, rw.bits, playerDayKey(new Date(nowMs), prev.playerDayTz)), gamePoints: (s.gamePoints ?? 0) + rw.bits };
   if (rw.xp > 0) s = awardBondXP(s as T & { totalXP: number }, { kind: 'checkIn' }, playerDayKey(new Date(nowMs), prev.playerDayTz));
   return { state: s, slot };
+}
+
+/** O estado de uma janela para a folha dos check-ins: já resgatada, aberta agora, ainda por vir, ou que passou sem resgate. */
+export type CheckInWindowStatus = 'claimed' | 'open' | 'upcoming' | 'missed';
+export interface CheckInWindow { slot: CheckInSlot; from: string; to: string | null; status: CheckInWindowStatus }
+
+/**
+ * As três janelas de HOJE com o horário e o estado de cada uma (a folha dos check-ins). Pura e sem leitura de desempenho. `to` é `null`
+ * na noite (vai até o fim do dia). "missed" é só um estado neutro de leitura: não cobra nada e não deixa rastro no save.
+ */
+export function checkInWindows(
+  state: Pick<CheckInState, 'checkIns' | 'playerDayTz' | 'mealRhythm'>,
+  nowMs: number,
+): CheckInWindow[] {
+  const mins = mealMinutes(state.mealRhythm?.times ?? DEFAULT_MEAL_TIMES) as [number, number, number];
+  const done = claimedToday(state, nowMs);
+  const atual = currentSlot(state.mealRhythm?.times, nowMs);
+  return CHECKIN_SLOTS.map((slot, i) => {
+    const status: CheckInWindowStatus = done.includes(slot)
+      ? 'claimed'
+      : atual === slot ? 'open'
+      : (atual === null || CHECKIN_SLOTS.indexOf(atual) < i) ? 'upcoming' : 'missed';
+    return { slot, from: formatHHMM(mins[i]), to: i < 2 ? formatHHMM(mins[i + 1]) : null, status };
+  });
 }
