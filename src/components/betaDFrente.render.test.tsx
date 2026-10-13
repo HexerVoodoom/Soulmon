@@ -137,8 +137,11 @@ describe('12 — humor', () => {
   const relatorio = {
     date: 'Tue Sep 08 2026', done: 4, total: 4, required: 4, heartsLost: 0, wasPerfect: true, perfectDays: 3, degenerated: false,
   } as never;
+  /** O resumo é em passos (frente C): tarefas -> corações -> hoje (onde mora o humor). */
+  const ateHoje = () => { for (let i = 0; i < 2; i++) fireEvent.click(document.querySelector('[data-report-next]') as HTMLElement); };
   it('cinco ícones próprios de 40 px em alvos de pelo menos 44, com rótulo e estado preservados', () => {
     renderWithCss(<DailyReportModal report={relatorio} onClose={() => {}} language="pt-BR" moodToday={4} onPickMood={() => {}} />);
+    ateHoje();
     const grupo = screen.getByRole('group', { name: 'Humor' });
     const botoes = [...grupo.querySelectorAll('button')];
     expect(botoes).toHaveLength(5);
@@ -154,9 +157,11 @@ describe('12 — humor', () => {
   });
   it('sem humor escolhido não há rótulo; EN usa o rótulo em inglês', () => {
     renderWithCss(<DailyReportModal report={relatorio} onClose={() => {}} language="en-US" moodToday={null} onPickMood={() => {}} />);
+    ateHoje();
     expect(document.querySelector('[data-mood-label]')).toBeNull();
     cleanup();
     renderWithCss(<DailyReportModal report={relatorio} onClose={() => {}} language="en-US" moodToday={5} onPickMood={() => {}} />);
+    ateHoje();
     expect(document.querySelector('[data-mood-label]')!.textContent).toBe('Great');
   });
 });

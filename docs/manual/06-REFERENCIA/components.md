@@ -1454,6 +1454,12 @@ não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onV
 **Chamado por:** `src/App.tsx` (lazy).
 **Régua:** `src/components/filaDeAvisos.contract.test.ts`, `src/utils/mealRhythm.contract.test.ts`.
 
+### `src/components/CheckInSheet.tsx`
+**Dono de:** a folha (bottom sheet `ModalSheet`) dos três check-ins do dia (beta-2 4.1, REGISTRO §40): as janelas com horário e estado (feito · aberto agora · mais tarde · passou); só a janela aberta tem botão. Sem número de recompensa, sem sequência. Abre do atalho `data-checkin-open` do slot de avisos, mesmo com o ritmo das refeições desligado. Lazy.
+**Exports:** `CheckInSheet({ open, language, windows, onClaim, onClose })`.
+**Chamado por:** `src/App.tsx` (lazy; estado `checkInsAbertos` vive no App para sobreviver ao resgate).
+**Régua:** `src/components/home/energiaFome.render.test.tsx`, `src/utils/checkIns.test.ts` (`checkInWindows`).
+
 ### `src/components/SpritePoseRows.tsx`
 **Dono de:** as duas linhas da pose do Soulmon em Configurações > Aparência — "Virar Soulmon" / "Flip Soulmon" (`flipX`) e "Soulmon voando" / "Soulmon flying" (`altitude`). Só desenha; escreve por `applySpritePose`.
 **Exports:** `SpritePoseRows({ language, pose })`.
