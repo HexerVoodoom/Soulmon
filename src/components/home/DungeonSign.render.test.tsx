@@ -61,7 +61,7 @@ describe('plaquinha na Home', () => {
       tamanhos.add(`${b.style.width}x${b.style.height}`);
       unmount();
     }
-    expect([...tamanhos]).toEqual(['118px x 46px'.replace(' x ', 'x')]);
+    expect([...tamanhos]).toEqual(['136px x 46px'.replace(' x ', 'x')]);
   });
 
   it('a arte é a porta da masmorra que já existe (nenhuma imagem nova) e é um botão acessível', () => {
