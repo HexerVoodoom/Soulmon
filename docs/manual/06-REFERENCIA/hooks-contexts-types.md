@@ -239,3 +239,9 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 `useDungeonBonus()` (PR12a): a Masmorra, por atributo (talento de PvE no ATK + equipamento em ATK/DEF/SPD, um teto de 5% na soma).
 **Exports:** `useTalentBonus`, `useDungeonBonus`, `usePvpTalents`, `PvpTalents`.
 **Régua:** `src/contexts/useTalentBonus.test.tsx`.
+
+### `src/hooks/useEnergyStatus.ts` (beta-2 3.4/3.5)
+**Dono de:** o `energyStatus(state, now)` memoizado para a Home, recalculado a cada 15 s. Não guarda contador: o `now` só dispara o re-render. **Exports:** `useEnergyStatus(state, everyMs?)`. **Chamado por:** `App.tsx` (alimenta o número da energia, `EnergyTimer` e `HungerIndicator`). **Régua:** `utils/hunger.test.ts` (a conta); os componentes em `components/home/`.
+
+### `src/hooks/useDungeonReturn.ts` (beta-2 6.2)
+**Dono de:** o instante de retorno do Soulmon na masmorra para a placa da Home — o fim que a MESMA conta determinística de `applyDungeonAway` vai dar, a partir do estado PERSISTIDO (teto de 8 h; antes se a energia, o HP, o limite diário ou o portão acabarem). Carrega o motor por `import()` dinâmico; até lá vale o teto. **Exports:** `useDungeonReturn(state, everyMs?)` → `{ returnAt, msLeft }`. **Chamado por:** `App.tsx` (→ `CompanionHUD.masmorraRetornoMs`). **Régua:** `hooks/useDungeonReturn.test.tsx` (não reinicia ao reabrir; muda com o estado).
