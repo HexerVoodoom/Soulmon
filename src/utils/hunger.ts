@@ -73,6 +73,8 @@ export interface HungerState {
   evolutionStage?: string;
   hunger?: HungerRecord;
   energyClock?: EnergyClock;
+  /** A descida idle em andamento (`utils/dungeonIdle.ts`): só o `since` importa aqui — ver `tickTime`. */
+  dungeonAway?: { since: number } | null;
 }
 
 const fin = (n: unknown, d = 0): number => (typeof n === 'number' && Number.isFinite(n) ? n : d);
@@ -197,6 +199,25 @@ export function eat<T extends HungerState>(prev: T, now: number, amount: number)
   return { ...s, hunger: { v, at: now } };
 }
 
+// ── a descida idle e o relógio da energia ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * O instante até onde o TICK da Home e a leitura de tela acertam a energia: o `now`, EXCETO com o Soulmon na masmorra — aí fica
+ * congelado em `dungeonAway.since`. Quem acerta a energia ao longo da descida é a conta de quem ficou fora (`applyDungeonAway`), que
+ * rejoga a LINHA DO TEMPO gastando camada por camada e regenerando entre elas. Se o tick creditasse a regeneração de antemão, a conta
+ * veria no começo da descida uma energia que só existiria horas depois (camadas "de graça"). Congelar é ADIAR, não perder: o relógio
+ * (`energyClock`) não anda, e o acerto depois da volta credita o intervalo todo, uma vez.
+ */
+export function tickTime(state: { dungeonAway?: { since: number } | null }, now: number): number {
+  const since = state.dungeonAway?.since;
+  return typeof since === 'number' && Number.isFinite(since) ? Math.min(now, since) : now;
+}
+
+/** O acerto periódico da Home (tick): `settleEnergy` até `tickTime`. Devolve a MESMA referência quando não há o que mudar. */
+export function tickEnergy<T extends HungerState>(prev: T, now: number): T {
+  return settleEnergy(prev, tickTime(prev, now));
+}
+
 // ── o que a tela mostra ───────────────────────────────────────────────────────────────────────────────────────────────
 
 export type EnergyMode = 'full' | 'regen' | 'slow' | 'paused';
@@ -241,7 +262,8 @@ function msUntilPoints(rec: HungerRecord | undefined, now: number, needPoints: n
  * O estado real da energia/fome em `now` — o que o indicador e o timer leem. NÃO é uma contagem própria: acerta o relógio com
  * `settleEnergy` (sem gravar) e projeta com as MESMAS fronteiras do motor.
  */
-export function energyStatus(state: HungerState, now: number): EnergyStatus {
+export function energyStatus(state: HungerState, nowMs: number): EnergyStatus {
+  const now = tickTime(state, nowMs); // com o Soulmon na masmorra a tela mostra a energia congelada na saída (o que o estado realmente tem)
   const s = settleEnergy(state, now);
   const max = maxEnergyOf(s);
   const energy = Math.max(0, Math.floor(fin(s.energyPoints, 0)));

@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   HUNGER_MAX, HUNGER_FED_MIN, HUNGER_FAIR_MIN, HUNGER_PER_FOOD, HUNGER_FULL_TO_EMPTY_HOURS, ENERGY_REGEN_MINUTES, REGEN_FAIR_PCT,
-  UNIT_POINTS, eat, energyStatus, hungerAt, regenPoints, sanitizeEnergyClock, sanitizeHunger, setEnergy, settleEnergy, tierOf, formatEnergyEta,
+  UNIT_POINTS, eat, energyStatus, hungerAt, regenPoints, sanitizeEnergyClock, sanitizeHunger, setEnergy, settleEnergy, tierOf, formatEnergyEta, tickEnergy, tickTime,
   type HungerState,
 } from './hunger';
 import { feedFood, type CareState } from './careRules';
@@ -255,5 +255,29 @@ describe('exploits', () => {
   it('fome em zero e energia em zero: nada gera energia sem comer (nem em 30 dias)', () => {
     const s = andar(novo({ hunger: fome(0) }), T0, T0 + 30 * 24 * HOUR, 6 * HOUR);
     expect(s.energyPoints).toBe(0);
+  });
+});
+
+describe('com o Soulmon na masmorra o tick CONGELA a energia (a conta de quem ficou fora regenera ao longo da linha do tempo)', () => {
+  it('tickTime: sem descida é o agora; com descida é o `since` (nunca depois do agora)', () => {
+    expect(tickTime({}, T0 + HOUR)).toBe(T0 + HOUR);
+    expect(tickTime({ dungeonAway: { since: T0 } }, T0 + 5 * HOUR)).toBe(T0);
+    expect(tickTime({ dungeonAway: { since: T0 + 9 * HOUR } }, T0 + HOUR)).toBe(T0 + HOUR);
+    expect(tickTime({ dungeonAway: { since: Number.NaN } }, T0 + HOUR)).toBe(T0 + HOUR);
+  });
+  it('tickEnergy durante a descida não credita nada (mesma referência) e a leitura da tela mostra o que o estado tem', () => {
+    const fora = novo({ hunger: fome(100), dungeonAway: { since: T0 } });
+    expect(tickEnergy(fora, T0 + 6 * HOUR)).toBe(fora);
+    const st = energyStatus(fora, T0 + 6 * HOUR);
+    expect(st.energy).toBe(0); // congelada: a UI não mostra regeneração que o estado ainda não tem
+  });
+  it('congelar é ADIAR, não perder: ao voltar, o acerto credita o intervalo todo — o mesmo total de quem ficou em casa', () => {
+    const casa = andar(novo({ hunger: fome(100) }), T0, T0 + 5 * HOUR, 15_000);
+    const fora = novo({ hunger: fome(100), dungeonAway: { since: T0 } });
+    let cur = fora;
+    for (let t = T0 + 15_000; t <= T0 + 5 * HOUR; t += 15_000) cur = tickEnergy(cur, t);
+    expect(cur.energyPoints).toBe(0);
+    const voltou = { ...cur, dungeonAway: undefined };
+    expect(tickEnergy(voltou, T0 + 5 * HOUR).energyPoints).toBe(casa.energyPoints);
   });
 });

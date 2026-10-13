@@ -21,7 +21,7 @@ import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
-import { setEnergy, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
+import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
 import { availableCheckIn, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -958,7 +958,7 @@ export default function App() {
      aba volta ao foco (o app pode ter ficado fechado por horas); `settleEnergy` devolve a MESMA referência sem unidade nova, então não
      há re-render nem escrita à toa. O que a Home mostra (`energyStatus`) é calculado sobre o mesmo estado e as mesmas fronteiras. */
   useEffect(() => {
-    const acertar = () => setGameState(prev => settleEnergy(prev, Date.now()));
+    const acertar = () => setGameState(prev => tickEnergy(prev, Date.now()));
     acertar();
     const id = setInterval(acertar, 15_000);
     const aoVoltar = () => { if (document.visibilityState === 'visible') acertar(); };
@@ -2059,7 +2059,7 @@ export default function App() {
       hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
       healthPoints: Math.floor(gameState.healthPoints),
       maxHealthPoints: gameState.maxHealthPoints,
-      energyPoints: settleEnergy(gameState, Date.now()).energyPoints ?? 0,
+      energyPoints: settleEnergy(gameState, tickTime(gameState, Date.now())).energyPoints ?? 0,
       hasPoop: (gameState.poopEventsShown || []).some(i => !(gameState.poopEventsCompleted || []).includes(i)),
       /* WP2.6 — o widget passa a saber de HÁBITO. Ele mostrava só tarefas do
          dia, HP e energia: o motor de constância, a peça mais central do
