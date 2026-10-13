@@ -303,9 +303,10 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
     </button>
   );
   const closeLabel = isPt ? 'Fechar' : 'Close';
-  const wrapSheet = (key: string, title: string, children: ReactNode) => (
+  // P4 (beta-2): a folha dos corações tem ALTURA MÍNIMA (~40vh) e centra o conteúdo — com e sem o botão "Eu fiz…" ela não encolhe a uma tira.
+  const wrapSheet = (key: string, title: string, children: ReactNode, minHeight?: string) => (
     <ModalSheet key={key} open title={title} onClose={onClose} language={language} maxWidth={420} footer={nextButton}>
-      <div data-report-step={key} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
+      <div data-report-step={key} style={{ display: 'flex', flexDirection: 'column', gap: 12, ...(minHeight ? { minHeight, justifyContent: 'center' } : null) }}>{children}</div>
     </ModalSheet>
   );
 
@@ -365,7 +366,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
           </div>
         )}
       </>
-    ));
+    ), '40vh');
   }
 
   if (step === 'adventure' && adventure) {
@@ -387,6 +388,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
           language={language}
           title={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}
           closeLabel={closeLabel}
+          closeInSheet
           open
           onClose={onClose}
         >

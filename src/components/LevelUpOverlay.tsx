@@ -39,6 +39,8 @@ const LEVELUP_SCRIM = 'rgba(2, 10, 12, .88)';
 const INK = '#E9F5F2';
 const CYAN = '#6EFFFB';
 const GOLD = '#D9A05B';
+/** P6 (beta-2): a dica de saída usa o `--sm2-muted` do vidro (#9DBCB4, ~9:1 sobre o fundo escuro do overlay) em vez de INK a 50–85% de opacidade. */
+const HINT_INK = '#9DBCB4';
 /** Janela em que o toque é ignorado (o gesto que causou a subida ainda está "no ar"). */
 export const ARM_MS = 450;
 /** O número sobe de `from` até `to` neste tempo, em passos (nunca mais de `MAX_STEPS`). */
@@ -242,7 +244,7 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
           type="button"
           data-lvup-continue
           className={reduced ? undefined : 'sm-lvup-hint'}
-          style={{ background: 'none', border: 0, font: 'inherit', boxSizing: 'border-box', padding: '10px 16px', cursor: 'pointer', color: INK, fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.85 }}
+          style={{ background: 'none', border: 0, font: 'inherit', boxSizing: 'border-box', padding: '10px 16px', cursor: 'pointer', color: HINT_INK, fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}
         >
           {isPt ? 'Toque para continuar' : 'Tap to continue'}
         </button>

@@ -1928,7 +1928,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               {statsSlots?.hunger != null ? (
                 <span className="sm3-stat-slot" data-slot="hunger">{statsSlots.hunger}</span>
               ) : (
-                energyInfo && <HungerIndicator tier={energyInfo.tier} value={energyInfo.hunger} language={language} />
+                energyInfo && <HungerIndicator tier={energyInfo.tier} value={energyInfo.hunger} language={language} expanded={statAberto === 'energy'} onTap={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))} />
               )}
             </div>
             {statAberto && (() => {

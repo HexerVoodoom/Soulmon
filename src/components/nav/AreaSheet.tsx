@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, speech, headSlotRef, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, speech, headSlotRef, closeInSheet = false, children }: {
   areaId: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
    *  via `lotNpcArt`. Áreas com folha única (Laboratório/Hall) passam o
@@ -47,6 +47,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Encaixe no canto DIREITO da linha do título (ex.: o indicador da faixa do
    *  Torneio, que entra por portal). Ref-callback: o conteúdo recebe o elemento. */
   headSlotRef?: (el: HTMLElement | null) => void;
+  /** P2 (beta-2): o ✕ mora DENTRO da folha, no canto superior esquerdo acima do título (o mesmo lugar do `ModalSheet`), e não no anel sobre a
+   *  cena. Para a folha que faz parte de uma SEQUÊNCIA de `ModalSheet` (a aventura do resumo), onde o fechar não pode mudar de lugar. */
+  closeInSheet?: boolean;
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -89,29 +92,31 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           pointerEvents: 'none',
         }}
       >
-        <button
-          type="button"
-          data-area-sheet-close
-          onClick={e => { e.stopPropagation(); onClose(); }}
-          aria-label={closeLabel}
-          title={closeLabel}
-          className="sm2-area-back"
-          style={{
-            position: 'absolute', zIndex: 3,
-            top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
-            width: 44, height: 44, boxSizing: 'border-box',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 0, cursor: 'pointer', pointerEvents: 'auto',
-            // O MESMO anel do voltar das áreas (`AreaTopBar` overScene), com
-            // miolo escuro translúcido: o ✕ fica sobre a arte do NPC/cena.
-            background: 'rgba(8,25,26,.72)',
-            border: '2px solid rgba(233,245,242,.6)',
-            borderRadius: '50%',
-            color: '#E9F5F2',
-          }}
-        >
-          <Icon name="close" size={24} tone="inherit" />
-        </button>
+        {!closeInSheet && (
+          <button
+            type="button"
+            data-area-sheet-close
+            onClick={e => { e.stopPropagation(); onClose(); }}
+            aria-label={closeLabel}
+            title={closeLabel}
+            className="sm2-area-back"
+            style={{
+              position: 'absolute', zIndex: 3,
+              top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
+              width: 44, height: 44, boxSizing: 'border-box',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, cursor: 'pointer', pointerEvents: 'auto',
+              // O MESMO anel do voltar das áreas (`AreaTopBar` overScene), com
+              // miolo escuro translúcido: o ✕ fica sobre a arte do NPC/cena.
+              background: 'rgba(8,25,26,.72)',
+              border: '2px solid rgba(233,245,242,.6)',
+              borderRadius: '50%',
+              color: '#E9F5F2',
+            }}
+          >
+            <Icon name="close" size={24} tone="inherit" />
+          </button>
+        )}
 
         {/* O 1/3 de cima da TELA, FORA do card e transparente: o NPC da
             sub-loja + o balão de fala dele. Nunca a área inteira — cada lote
@@ -176,6 +181,21 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             overflow: 'hidden',
           }}
         >
+          {closeInSheet && (
+            <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+              <button
+                type="button"
+                data-area-sheet-close
+                className="sm2-ora-back"
+                onClick={e => { e.stopPropagation(); onClose(); }}
+                aria-label={closeLabel}
+                title={closeLabel}
+                style={{ margin: '0 0 0 -10px' }}
+              >
+                <Icon name="close" size={24} tone="inherit" />
+              </button>
+            </div>
+          )}
           <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
             <h2 style={{ flex: 1, margin: 0, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
               {title}

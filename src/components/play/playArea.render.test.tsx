@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderWithCss } from '../../test/renderEnv';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
+import { DinoSheet, Match3Sheet } from './PlaySheets';
 
 const recebidas: Record<string, Record<string, unknown>> = {};
 vi.mock('../DungeonGame', async (orig) => {
@@ -151,7 +152,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Masmorra' });
     expect(folha.textContent).toContain('321');
-    expect(folha.textContent).toContain('Camada 0'); // REGISTRO §31: o recorde de profundidade (save vazio = 0), não mais a base semanal
+    expect(folha.textContent).not.toContain('Camada 0'); // P10 (beta-2): chip zerado não aparece (REGISTRO §31: o recorde de profundidade vem do save; vazio = 0 = sem chip)
     // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
     // atrás do "?" — fica fora da tela até o jogador tocar.
     expect(folha.textContent).not.toMatch(/nunca os seus corações/);
@@ -373,5 +374,23 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
       expect(img.parentElement!.style.background).toBe('');
       expect(img.parentElement!.style.border).toBe('');
     }
+  });
+});
+
+describe('P10 (beta-2) — chips zerados do Salão não aparecem', () => {
+  it('Corrida sem recorde: nenhum chip "0"/"0 Bits"; com recorde, os dois entram', () => {
+    const { container, unmount } = renderWithCss(<DinoSheet language="pt-BR" onStart={() => {}} />);
+    expect(container.textContent).not.toMatch(/seu recorde|no recorde/);
+    unmount();
+    localStorage.setItem(STORAGE_KEYS.DINO_BEST, '250');
+    const r = renderWithCss(<DinoSheet language="pt-BR" onStart={() => {}} />);
+    expect(r.container.textContent).toContain('seu recorde');
+    expect(r.container.textContent).toContain('2 Bits');
+    localStorage.removeItem(STORAGE_KEYS.DINO_BEST);
+  });
+  it('Combina 3 sem recorde: só o "até N Bits"; PPT mantém seus dois chips (não são zerados)', () => {
+    const { container } = renderWithCss(<Match3Sheet language="pt-BR" onStart={() => {}} />);
+    expect(container.textContent).not.toContain('seu recorde');
+    expect(container.textContent).toMatch(/até \d+ Bits/);
   });
 });

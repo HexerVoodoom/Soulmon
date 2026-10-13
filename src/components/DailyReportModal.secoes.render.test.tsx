@@ -262,3 +262,32 @@ describe('4.3 — From Yesterday’s Adventure, `New` dourado, vínculo com o Pa
     expect(screen.getByText(ACHADO.titleEn)).toBeTruthy();
   });
 });
+
+describe('P2 (beta-2) — a folha da aventura', () => {
+  it('o ✕ mora DENTRO da folha (acima do título), como nas outras folhas do resumo — e fecha o resumo', () => {
+    const { onClose } = abrir();
+    proximo(); proximo();
+    const folha = document.querySelector('[data-area-sheet]') as HTMLElement;
+    const x = document.querySelector('[data-area-sheet-close]') as HTMLElement;
+    expect(folha.contains(x)).toBe(true);
+    expect(document.querySelectorAll('[data-area-sheet-close]')).toHaveLength(1); // sem o anel sobre a cena
+    expect(x.compareDocumentPosition(folha.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(x);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+  it('com o Passeio de ontem, o bloco Missão/Destino aparece (destino em destaque); sem Passeio, não há bloco vazio', () => {
+    abrir({}, { stroll: STROLL });
+    proximo(); proximo();
+    expect(document.querySelector('[data-stroll-mission]')!.textContent).toBe('A Stretch Without Screens');
+    expect(document.querySelector('[data-stroll-destination]')!.textContent).toBe('Desert Mind');
+    cleanup();
+    abrir();
+    proximo(); proximo();
+    expect(document.querySelector('[data-stroll-link]')).toBeNull();
+  });
+  it('P4: a folha dos corações tem altura mínima de ~40vh', () => {
+    abrir({ heartsLost: 0 });
+    proximo();
+    expect((document.querySelector('[data-report-step="hearts"]') as HTMLElement).style.minHeight).toBe('40vh');
+  });
+});

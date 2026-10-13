@@ -350,6 +350,20 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/nav/AvisosLink.tsx`
+**Dono de:** o botão de AVISOS da Home (beta-2, F3 do crítico de design, 13/10/2026) — mais um botão fixo da pilha do canto direito, logo abaixo das missões, com um SELO (ponto dourado, sem número). Os avisos do dia deixaram a faixa acima de "HOJE" (altura zero, com ou sem aviso) e moram na folha `AvisosSheet`. Some quando não há aviso.
+**Props principais:** `count` (0 = some), `label`, `countLabel` (o nome falado com a contagem), `row` (linha da pilha), `onClick`.
+**Exports:** `AvisosLink(props)`.
+**Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
+**Régua:** `src/components/nav/avisos.render.test.tsx`.
+
+### `src/components/nav/AvisosSheet.tsx`
+**Dono de:** a folha (`ModalSheet`) dos avisos do dia, na ordem da fila de prioridade da Home (a fila não mudou, só o lugar onde é lida); o check-in da janela entra por ela. Fecha sozinha quando o último aviso some.
+**Props principais:** `open`, `language`, `items` (`{ key, node }[]`), `onClose`.
+**Exports:** `AvisosSheet(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/avisos.render.test.tsx`.
+
 ### `src/components/nav/MissionsLink.tsx`
 **Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
 **Props principais:** `kind` (`daily`|`weekly`, um ícone por acesso), `row` (linha da pilha), `mark: QuestMark` (de `questMarks().dailyCorner`/`weeklyCorner`), `tone?` (`weeklyTone`), `markLabel`, `label`, `onClick`.

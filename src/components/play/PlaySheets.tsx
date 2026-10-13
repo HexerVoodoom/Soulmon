@@ -156,10 +156,13 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
           </InfoTipSection>
         </ModalInfo>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />
-        <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
-      </div>
+      {/* P10 (beta-2): chip ZERADO não aparece (recorde 0 não diz nada) — a fileira inteira some se nenhum tiver o que dizer. */}
+      {(deepest > 0 || best > 0) && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
+          {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
+        </div>
+      )}
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
@@ -178,14 +181,17 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
   const [best] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
   return (
     <div data-dino style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
-        <StatBox
-          value={`${Math.floor(best / DINO_POINTS_PER_BIT)} Bits`}
-          label={isPt ? 'no recorde' : 'at your best'}
-          valueStyle={bitsStyle}
-        />
-      </div>
+      {/* P10 (beta-2): sem recorde (0) os dois chips somem — não há "0 Bits no recorde" para mostrar. */}
+      {best > 0 && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
+          <StatBox
+            value={`${Math.floor(best / DINO_POINTS_PER_BIT)} Bits`}
+            label={isPt ? 'no recorde' : 'at your best'}
+            valueStyle={bitsStyle}
+          />
+        </div>
+      )}
       {/* H13 (01/10/2026): "Jogar"/"Play" nos dois jogos do Salão — "Correr"
           lia como descrição do jogo, não como a ação de abri-lo. */}
       <button type="button" data-dino-start onClick={onStart} style={cta}>
@@ -202,7 +208,7 @@ export function Match3Sheet({ language, onStart }: { language: Language; onStart
   return (
     <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
+        {best > 0 && <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />}
         <StatBox value={`${isPt ? 'até' : 'up to'} ${M3_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>

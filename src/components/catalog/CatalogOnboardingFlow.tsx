@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
-import { RitualDialog, ritualTitle } from '../ritual/RitualKit';
-import { sm2Button, sm2Hint, sm2Text, Chip, CheckRow } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, Chip, CheckRow, ModalSheet } from '../form/FormKit';
 import { recommendStarterSet } from '../../utils/recommend';
 import { activitiesFromCatalogChoice, withoutExisting } from '../../utils/catalogChoice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
@@ -103,29 +101,42 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
     else if (step === 'starter') setStep('strengths');
   };
 
+  /* Beta-2 (F4 do crítico, 13/10/2026): o fluxo é uma FOLHA de baixo (`ModalSheet`), não um modal central — o polegar chega lá e
+     o botão de confirmar fica no rodapé da folha. O título e a seta de voltar são os da folha (a seta só do 2º passo em diante). */
+  const passoAnterior = step !== 'areas';
+  const botaoPrimario = step !== 'starter' ? (
+    <button
+      type="button"
+      onClick={next}
+      aria-disabled={!canAdvance || undefined}
+      style={{ ...sm2Button('primary', !canAdvance), width: '100%' }}
+    >
+      {isPt ? 'Continuar' : 'Continue'}
+    </button>
+  ) : (
+    <button
+      type="button"
+      onClick={() => { if (canAdvance) onComplete(finalSet); }}
+      aria-disabled={!canAdvance || undefined}
+      style={{ ...sm2Button('primary', !canAdvance), width: '100%' }}
+    >
+      {isPt ? 'Confirmar' : 'Confirm'}
+    </button>
+  );
+
   return (
-    /* C11: sem "pular". O Esc do diálogo VOLTA um passo (no primeiro passo
-       não faz nada) — a saída é definir a meta, não fugir dela. */
-    <RitualDialog label={titles[step]} onClose={back} zIndex={200} maxWidth={380}>
-      {/* Back padronizado (B6/I3): seta no canto superior ESQUERDO, acima do
-          título — nunca botão "Voltar" embaixo. */}
-      {step !== 'areas' && (
-        <button
-          type="button"
-          onClick={back}
-          aria-label={isPt ? 'Voltar' : 'Back'}
-          title={isPt ? 'Voltar' : 'Back'}
-          data-flow-back
-          style={{
-            alignSelf: 'flex-start', width: 44, height: 44, margin: '-8px 0 -8px -10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)',
-          }}
-        >
-          <Icon name="arrow_back" size={24} />
-        </button>
-      )}
-      <h2 style={ritualTitle}>{titles[step]}</h2>
+    /* C11: sem "pular". O Esc VOLTA um passo (no primeiro passo não faz nada) — a saída é definir a meta, não fugir dela. */
+    <ModalSheet
+      open
+      title={titles[step]}
+      onClose={back}
+      onBack={passoAnterior ? back : undefined}
+      closeSide={passoAnterior ? 'start' : 'none'}
+      dismissOnBackdrop={false}
+      language={language}
+      maxWidth={420}
+      footer={botaoPrimario}
+    >
       {step === 'areas' && (
         /* C9: em uma linha, o benefício de engajar — descreve o mecanismo,
            sem veredito sobre a pessoa (bíblia §17). */
@@ -197,29 +208,7 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
           )}
         </div>
       )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-        {step !== 'starter' ? (
-          <button
-            type="button"
-            onClick={next}
-            aria-disabled={!canAdvance || undefined}
-            style={{ ...sm2Button('primary', !canAdvance), width: '100%' }}
-          >
-            {isPt ? 'Continuar' : 'Continue'}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => { if (canAdvance) onComplete(finalSet); }}
-            aria-disabled={!canAdvance || undefined}
-            style={{ ...sm2Button('primary', !canAdvance), width: '100%' }}
-          >
-            {isPt ? 'Confirmar' : 'Confirm'}
-          </button>
-        )}
-      </div>
-    </RitualDialog>
+    </ModalSheet>
   );
 }
 

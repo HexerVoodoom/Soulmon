@@ -38,10 +38,22 @@ describe('Lista única (sem abas)', () => {
     expect(container.textContent).toContain('0 of 3 this week · +10 base XP');
     expect(container.textContent).not.toContain('3×');
   });
-  it('mostra o XP ANTES de concluir (tarefa esforço 2 = +20; hábito = +10)', () => {
+  it('mostra o XP do HÁBITO antes de concluir (+10); a TAREFA não carrega "+20 base XP" nem a etiqueta "medium" (P9, beta-2)', () => {
     const { container } = mount();
-    expect(container.textContent).toContain('+20 base XP');
+    expect(container.textContent).not.toContain('+20 base XP');
+    expect(container.textContent).not.toMatch(/medium|média/);
     expect(container.textContent).toContain('+10 base XP');
+  });
+  it('P9: linha com etapas (pai) não repete a barra segmentada — o checkbox `mixed` e o "steps" do subtítulo já dizem', () => {
+    const pai = { id: 'p', name: 'Mudar', completed: false, effort: 2, steps: [{ id: 'a', label: 'a', completed: true }, { id: 'b', label: 'b', completed: false }] } as unknown as Task;
+    const { container } = renderWithCss(
+      <DailyRituals tasks={[pai]} activities={[]} completedTasks={[]} language="en-US" now={new Date('2026-10-07T12:00:00')}
+        expanded={{}} onExpand={noop} onToggleTask={noop} onToggleTaskStep={noop} onEditTask={noop} onPostponeNudge={noop} onEditActivity={noop}
+        onToggleActivity={noop} onUpdateStep={noop} onRestoreTask={noop} onCreate={noop} ctaLabel="Add" emptyMessage="empty" variant="home" />,
+    );
+    expect(container.querySelector('.sm2-ritual [role="progressbar"]')).toBeNull();
+    expect(container.querySelector('.sm2-ritual')!.textContent).toMatch(/1\/2 steps/);
+    expect(container.querySelector('[aria-checked="mixed"]')).not.toBeNull();
   });
   it('recorrente fora do dia NÃO aparece na Home (vai para o `View all` > Scheduled)', () => {
     const { container } = renderWithCss(

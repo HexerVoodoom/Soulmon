@@ -40,7 +40,7 @@ import { StepRow } from './StepRow';
 import { bondXP } from '../utils/bond';
 import { habitTier, milestoneReached, habitCountsOn } from '../utils/habitRhythm';
 import { HABIT_WEIGHT } from '../types/taskModel';
-import { effortOf, parseDayValue } from '../utils/taskTriage';
+import { parseDayValue } from '../utils/taskTriage';
 
 
 /**
@@ -235,7 +235,7 @@ export function DailyRituals({
         name={task.name}
         subtitle={`${task.category
           ? categoryLabel(task.category as ActivityCategory, isPt)
-          : (isPt ? 'Tarefa avulsa' : 'One-off task')}${etapas.length > 0 ? ` · ${stepsLabel(feitasEtapas, etapas.length, isPt)}` : ''}${` · +${bondXP({ kind: 'completion', weight: effortOf(task) })} ${isPt ? 'XP base' : 'base XP'}`}${inicio}`}
+          : (isPt ? 'Tarefa avulsa' : 'One-off task')}${etapas.length > 0 ? ` · ${stepsLabel(feitasEtapas, etapas.length, isPt)}` : ''}${inicio}`}
         value={task.completed ? (etapas.length || 1) : feitasEtapas}
         max={Math.max(1, etapas.length || 1)}
         done={task.completed}
@@ -256,7 +256,7 @@ export function DailyRituals({
         below={(
           /* Prazo, esforço, "adiada 4×" e o convite da assombrada — dado
              honesto, nunca acusação (TaskMeta.tsx). */
-          <TaskMeta task={task} now={now} language={language} onPostponeNudge={onPostponeNudge} />
+          <TaskMeta task={task} now={now} language={language} onPostponeNudge={onPostponeNudge} hideDefaultEffort />
         )}
       >
         {etapas.map(step => (
@@ -280,7 +280,7 @@ export function DailyRituals({
         flipKey={`t:${c.id}`}
         kind="task"
         name={c.name}
-        subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'} · +${bondXP({ kind: 'completion', weight: effortOf(c) })} ${isPt ? 'XP base' : 'base XP'}`}
+        subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'}`}
         value={1}
         max={1}
         done

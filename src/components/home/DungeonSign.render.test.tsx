@@ -47,7 +47,10 @@ describe('plaquinha na Home', () => {
     expect(b.container.querySelector('[data-dungeon-sign-time]')!.textContent).toBe('42m');
     b.unmount();
     const c = renderWithCss(<CompanionHUD {...base} naMasmorra masmorraRetornoMs={0} />);
-    expect(c.container.querySelector('[data-dungeon-sign-time]')!.textContent).toBe('Voltou');
+    // F2 do crítico: o TÍTULO muda quando já voltou — "In Dungeon" + "Back" se contradizia
+    expect(c.container.querySelector('[data-dungeon-sign-label]')!.textContent).toBe('Voltou');
+    expect(c.container.querySelector('[data-dungeon-sign-time]')!.textContent).toBe('da masmorra');
+    expect(c.container.querySelector('[data-dungeon-sign]')!.getAttribute('aria-label')).not.toMatch(/Na masmorra/);
     c.unmount();
     const d = renderWithCss(<CompanionHUD {...base} naMasmorra masmorraRetornoMs={null} />);
     expect(d.container.querySelector('[data-dungeon-sign-time]')).toBeNull(); // sem número, só o texto curto

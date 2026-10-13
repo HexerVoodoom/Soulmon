@@ -75,7 +75,7 @@ export function SoulmonPerfil({ language, input }: { language: Language; input: 
           <Row id="atributo" icon={art(ATTR_ART[p.atributo])} label={isPt ? 'Atributo principal' : 'Main attribute'}>
             {L(PERFIL_ATRIBUTO[p.atributo])}
           </Row>
-          <Row id="equipamento" icon={art(iconGear)} label={isPt ? 'Equipamento do Soulsmith' : 'Soulsmith gear'}>
+          <Row id="equipamento" icon={art(iconGear)} label={isPt ? 'Equipamento do Soulsmith' : 'Soulsmith equipment'}>
             {p.equipamentoNivel !== null
               ? <span className="sm2-num">{isPt ? `Nv ${p.equipamentoNivel}` : `Lv ${p.equipamentoNivel}`}</span>
               : <span style={{ color: 'var(--sm2-muted)' }}>{isPt ? 'Nenhuma peça' : 'No pieces'}</span>}

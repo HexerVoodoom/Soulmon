@@ -28,11 +28,13 @@ describe('EnergyTimer', () => {
   });
   it('pausado (faminto) ou sem previsão: um traço, e o nome acessível explica', () => {
     const { unmount } = render(<EnergyTimer msToNext={null} mode="paused" language="pt-BR" />);
-    expect(document.querySelector('[data-energy-timer]')!.textContent).toBe('–');
-    expect(document.querySelector('[data-energy-timer]')!.getAttribute('aria-label')).toMatch(/pausada.*faminto/);
+    const t = document.querySelector('[data-energy-timer]')!;
+    expect(t.textContent).toBe('');
+    expect(t.querySelector('svg')).not.toBeNull(); // a pausa é VISÍVEL: símbolo de duas barras, sem depender do aria-label
+    expect(t.getAttribute('aria-label')).toMatch(/pausada.*faminto/);
     unmount();
     render(<EnergyTimer msToNext={null} mode="slow" language="en-US" />);
-    expect(document.querySelector('[data-energy-timer]')!.textContent).toBe('–');
+    expect(document.querySelector('[data-energy-timer] svg')).not.toBeNull();
   });
   it('energia cheia: não renderiza nada (não há próxima unidade)', () => {
     const { container } = render(<EnergyTimer msToNext={null} mode="full" language="pt-BR" />);
@@ -62,6 +64,27 @@ describe('HungerIndicator', () => {
   });
 });
 
+describe('HungerIndicator — legibilidade (beta-2 F1)', () => {
+  it('pontos de 6px em LINHA (não empilhados) e faminto leva a tinta de aviso', () => {
+    render(<HungerIndicator tier="starving" value={2} language="pt-BR" />);
+    const pontos = [...document.querySelectorAll('[data-hunger-indicator] i')] as HTMLElement[];
+    expect(pontos).toHaveLength(3);
+    for (const p of pontos) { expect(p.style.width).toBe('6px'); expect(p.style.height).toBe('6px'); }
+    expect((pontos[0].parentElement as HTMLElement).style.flexDirection).toBe('row');
+  });
+  it('com onTap vira botão e chama; sem onTap segue imagem', () => {
+    const onTap = vi.fn();
+    const { unmount } = render(<HungerIndicator tier="fair" language="en-US" onTap={onTap} />);
+    const b = screen.getByRole('button', { name: 'Hunger: a little hungry' });
+    fireEvent.click(b);
+    expect(onTap).toHaveBeenCalledTimes(1);
+    unmount();
+    render(<HungerIndicator tier="fair" language="en-US" />);
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByRole('img', { name: 'Hunger: a little hungry' })).not.toBeNull();
+  });
+});
+
 describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
   const base = {
     companionMood: 'idle' as const, energyLevel: 3, message: 'Oi!', currentStage: 'rookie', evolutionStage: 'rookie',
@@ -75,6 +98,14 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
     const stats = container.querySelector('.sm3-stats')!;
     expect(stats.querySelector('[data-hunger-indicator]')!.getAttribute('data-hunger-tier')).toBe('fair');
     expect(botao.contains(stats.querySelector('[data-hunger-indicator]'))).toBe(false);
+  });
+  it('tocar na fome abre a dica da energia (statTips) — e tocar de novo fecha', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'starving', hunger: 3, mode: 'paused', msToNext: null }} />);
+    const fome = container.querySelector('button[data-hunger-indicator]')!;
+    fireEvent.click(fome);
+    expect(container.querySelector('[data-stat-tip="energy"]')).not.toBeNull();
+    fireEvent.click(fome);
+    expect(container.querySelector('[data-stat-tip]')).toBeNull();
   });
   it('sem `energyInfo` (testes, desktop): nada muda — a faixa é a de antes', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);

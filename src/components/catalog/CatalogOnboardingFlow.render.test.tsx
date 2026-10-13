@@ -44,7 +44,7 @@ describe('CatalogOnboardingFlow', () => {
 
   it('ponto de partida: "Adicionar tarefas à lista", TODAS marcadas por padrão, só entra o marcado', () => {
     const onComplete = ate_o_ponto_de_partida();
-    expect(screen.getByRole('heading', { name: 'Adicionar tarefas à lista' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Adicionar tarefas à lista' })).toBeTruthy();
     const caixas = screen.getAllByRole('checkbox') as HTMLInputElement[];
     expect(caixas.length).toBeGreaterThan(1);
     expect(caixas.every(c => c.checked)).toBe(true);
@@ -90,20 +90,28 @@ describe('CatalogOnboardingFlow', () => {
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
     fireEvent.click(screen.getAllByRole('button').find(b => /discipline/i.test(b.textContent ?? ''))!);
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-    expect(screen.getByRole('heading', { name: 'Add tasks to list' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Add tasks to list' })).toBeTruthy();
   });
 
   it('voltar é a seta no topo (Back padronizado), não botão embaixo', () => {
     const { container } = renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Sono' }));
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
-    const voltar = container.querySelector('[data-flow-back]')!;
-    const titulo = container.querySelector('h2')!;
+    const voltar = container.querySelector('[data-back-arrow] button')!;
+    const titulo = container.querySelector('.sm2-title')!;
     expect(voltar.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(voltar);
     expect(screen.getByText(/definir metas/i)).toBeTruthy();
   });
 
+  it('F4 (beta-2): é uma FOLHA de baixo (ModalSheet), com o botão no rodapé e o checkbox em bronze — não um modal central', () => {
+    const { container } = renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={vi.fn()} />);
+    expect(container.querySelector('[data-modal-backdrop]')).not.toBeNull();
+    expect((container.querySelector('[role="dialog"]') as HTMLElement).className).toContain('sm2-sheet-rise');
+    // C11: sem "pular" — no 1º passo não há fechar nem seta, e o véu não fecha
+    expect(container.querySelector('[data-back-arrow]')).toBeNull();
+    expect(container.querySelector('[data-dismiss-on-backdrop]')!.getAttribute('data-dismiss-on-backdrop')).toBe('false');
+  });
   it('renderiza em EN sem quebrar', () => {
     renderWithCss(<CatalogOnboardingFlow language="en-US" onComplete={vi.fn()} />);
     expect(screen.getByText(/set goals/i)).toBeTruthy();

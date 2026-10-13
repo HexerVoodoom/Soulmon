@@ -332,8 +332,9 @@ export function RitualRow({
               {subtitle}
             </span>
           )}
-          {/* Barra segmentada só onde ela DIZ alguma coisa (com etapas). */}
-          {max > 1 && (
+          {/* Barra segmentada só onde ela DIZ alguma coisa. P9 (beta-2): linha PAI (com etapas) NÃO tem a barra — o checkbox `mixed` e o
+              "1/2 etapas" do subtítulo já dizem o mesmo; eram três vozes para um dado. Sem filhos (ex.: "2 de 3 na semana") a barra fica. */}
+          {max > 1 && !pai && (
             <PixelSegmentedBar
               value={value}
               max={max}

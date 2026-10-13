@@ -48,7 +48,6 @@ import { PixelTabs } from './pixel/PixelKit';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { auraForElement } from '../utils/attackFxArt';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
-import { ANIM_ART } from '../utils/animArt';
 import { HUD_ART } from '../utils/hudArt';
 import { RitualDialog } from './ritual/RitualKit';
 /* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
@@ -950,25 +949,9 @@ export function EvolutionPath({
               key={spriteAtual}
               onError={() => { if (spriteProprioAtual && spriteAtual === spriteProprioAtual) setSpriteQuebrado(spriteProprioAtual); }}
             />
-            {/* A FAÍSCA da evolução pronta (X2): `anim-sparkle-pop` quadro 4
-                (a dispersão), 64² a 2× = 128, no canto superior direito do
-                vidro, FORA da criatura (0 px de sobreposição: alfa do quadro
-                em x 164–220, sprite em 32–160). Quadro parado — o FX que a
-                Home já liga na evolução pronta, sem loop. */}
-            {prontoParaEvoluir && !evolutionLocked && (
-              <span
-                aria-hidden="true"
-                data-visor-spark
-                style={{
-                  position: 'absolute', left: 128, top: 8, width: 128, height: 128,
-                  backgroundImage: `url(${ANIM_ART.sparklePop.src})`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: `${ANIM_ART.sparklePop.frames * 128}px 128px`,
-                  backgroundPosition: `-${(ANIM_ART.sparklePop.frames - 1) * 128}px 0`,
-                  imageRendering: 'pixelated', pointerEvents: 'none',
-                }}
-              />
-            )}
+            {/* P7 (beta-2): a FAÍSCA estática da evolução pronta (X2: o quadro 4 do `anim-sparkle-pop`, parado no canto) SAIU — parada, a
+                dispersão lia como pixels SOLTOS à direita da criatura. A evolução pronta já tem as suas vozes (a placa, a barra cheia e a
+                frase "a próxima forma está tomando corpo"); o FX animado vive na Home. */}
             {/* "ON HOLD" na língua do vidro (D-E5): a MESMA peça do "EVOLVE"
                 da Home (`.sm2-pxbtn` — Silkscreen 14 na moldura pixel a ½×
                 sobre placa `viewport-bg` 78%), aqui como placa, não botão:
@@ -1099,7 +1082,8 @@ export function EvolutionPath({
                 : null),
             }}
           >
-            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
+            {/* P7 (beta-2): o botão é a AÇÃO de segurar — cadeado FECHADO nos dois estados (o preenchido diz que já está segurado); `lock_open` lia como "solto". */}
+            <Icon name="lock" size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
             {evolutionLocked
               ? (isPt ? 'Evolução segurada' : 'Evolution on hold')
               : (isPt ? 'Segurar evolução' : 'Hold evolution')}

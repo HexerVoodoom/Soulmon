@@ -59,7 +59,7 @@ describe('TalentTree', () => {
 
   it('Vínculo 1, árvore vazia: 1 ponto, a tela diz isso e os 3 caminhos aparecem', () => {
     abrir({ totalXP: 0 });
-    expect(estadoTxt()).toMatch(/Vínculo 1 · 0\/1 pontos gastos/);
+    expect(estadoTxt()).toMatch(/^0\/1 pontos gastos/);
     expect(estadoTxt()).toMatch(/Árvore vazia/);
     for (const p of ['pvp', 'pve', 'comercio']) expect(document.querySelector(`[data-talent-path="${p}"]`), p).not.toBeNull();
   });
@@ -115,7 +115,7 @@ describe('TalentTree', () => {
 
   it('inglês: texto em EN e "Bond N", nunca "Level"', () => {
     abrir({ totalXP: 0 }, 'en-US');
-    expect(estadoTxt()).toMatch(/Bond 1 · 0\/1 points spent/);
+    expect(estadoTxt()).toMatch(/^0\/1 points spent/);
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/Level|Nível/);
   });
 });
@@ -167,7 +167,10 @@ describe('legibilidade (11/10/2026): "o que a sua árvore dá agora" e a linha A
     expect(duelo).toMatch(/dano \+0,8% · defesa \+0% · ritmo \+0%/);
     expect(fenda).toMatch(/Masmorra: dano \+1,2% · defesa \+1,2% · ritmo \+0%/); // 02 é DEFESA de verdade na Masmorra
     expect(fenda).toMatch(/Arena \+2,4% · Pesadelo \+2,4% \(um bônus só\)/);
-    expect(ul.textContent).toMatch(/Já somado ao equipamento\. Em cada lugar, o total para em 5%\./);
+    // F5 (beta-2): a regra dos 5% mora UMA vez, atrás do "i" — não repete na lista nem em parágrafo solto
+    expect(ul.textContent).not.toMatch(/5%\./);
+    fireEvent.click(screen.getByRole('button', { name: 'Como funcionam os talentos' }));
+    expect(document.body.textContent).toMatch(/o bônus de combate para em 5%\. Já somado ao equipamento/);
   });
 
   it('EN: o mesmo resumo em inglês, sem "challenge"/PT', () => {

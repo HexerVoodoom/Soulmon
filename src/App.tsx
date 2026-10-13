@@ -16,6 +16,8 @@ import {
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
+import { AvisosLink } from './components/nav/AvisosLink';
+import { AvisosSheet } from './components/nav/AvisosSheet';
 import { needsWelcomeTour } from './utils/welcomeTour';
 import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
@@ -910,6 +912,8 @@ export default function App() {
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
+  /* F3 (beta-2): a fila de avisos é MONTADA no corpo da Home (abaixo) e LIDA pelo botão do canto e pela folha, lá no fim do render. */
+  const avisosDoDia: { lista: { key: string; node: ReactNode }[] } = { lista: [] };
   /* Folha dos check-ins (beta-2 4.1): estado de VISTA; vive no App (não no aviso) para sobreviver ao resgate, que apaga o aviso. */
   const [checkInsAbertos, setCheckInsAbertos] = useState(false);
   /* Etapas na Home nascem RECOLHIDAS (G1): uma atividade de 4 etapas ocupava 5
@@ -4907,7 +4911,8 @@ export default function App() {
     writeLocal(STORAGE_KEYS.TERMS_NOTICE_SEEN, marca, { silent: true });
     setTermsNoticeSeen(marca);
   }, []);
-  const handleToggleAvisos = useCallback(() => setAvisosAbertos(v => !v), []);
+  const handleAbrirAvisos = useCallback(() => setAvisosAbertos(true), []);
+  const handleFecharAvisos = useCallback(() => setAvisosAbertos(false), []);
 
   const handleTriageResolve = useCallback((taskId: string, action: TriageAction) => {
     const now = new Date();
@@ -5939,7 +5944,7 @@ export default function App() {
   // mostrado uma vez, depois que o Soulmon já nasceu, antes de liberar o app.
   if (!hasCompletedTutorial) {
     return (
-      <Suspense fallback={<ScreenSkeleton language={language} />}>
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
         <GameTutorialFlow
           language={language}
@@ -5965,7 +5970,7 @@ export default function App() {
   // sem intro nem cadastro (ver SoulmonOnboarding mode='upgrade').
   if (upgradeRitual) {
     return (
-      <Suspense fallback={<ScreenSkeleton language={language} />}>
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
         <SoulmonOnboarding
           mode="upgrade"
@@ -6586,7 +6591,7 @@ export default function App() {
           })()}
 
           {pane === 'map' && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
             <MapPage
               language={language}
               onOpenArea={(id: AreaId) => goTo(areaView(id))}
@@ -6606,7 +6611,7 @@ export default function App() {
               Corrida com obstáculos), Jogos (Pedra, papel e tesoura), Laboratório
               (Evolução/Soulmon/Stats) e Hall (Biblioteca). */}
           {area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
               <AreaView
                 key={currentView}
@@ -7201,7 +7206,7 @@ export default function App() {
                 if (availableCheckIn(gameState, agoraA.getTime()) !== null) avisos.push({
                   key: 'checkin',
                   node: (
-                    <button type="button" data-checkin-open style={{ ...sm2Button('outline'), width: '100%', marginBottom: 12 }} onClick={() => setCheckInsAbertos(true)}>
+                    <button type="button" data-checkin-open style={{ ...sm2Button('outline'), width: '100%' }} onClick={() => { setAvisosAbertos(false); setCheckInsAbertos(true); }}>
                       {isPtA ? 'Check-ins do dia' : 'Daily check-ins'}
                     </button>
                   ),
@@ -7269,34 +7274,9 @@ export default function App() {
                   if (termsNoticePrimeiraVez) avisos.unshift(termos); else avisos.push(termos);
                 }
 
-                if (avisos.length === 0) return null;
-                const resto = avisos.length - 1;
-                return (
-                  <div className="sm2-notice-slot">
-                    {avisos[0].node}
-                    {resto > 0 && (
-                      <>
-                        <button
-                          type="button"
-                          className="sm2-notice-more"
-                          aria-expanded={avisosAbertos}
-                          onClick={handleToggleAvisos}
-                        >
-                          <Icon name={avisosAbertos ? 'expand_less' : 'expand_more'} size={20} />
-                          <span className="sm2-num" style={{ fontWeight: 600 }}>+{resto}</span>
-                          <span>
-                            {isPtA
-                              ? (resto === 1 ? 'aviso' : 'avisos')
-                              : (resto === 1 ? 'notice' : 'notices')}
-                          </span>
-                        </button>
-                        {avisosAbertos && avisos.slice(1).map(a => (
-                          <div key={a.key}>{a.node}</div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                );
+                /* F3: NADA ocupa a faixa acima de "HOJE" (altura 0, com ou sem aviso) — a fila vai para o botão do canto e a folha. */
+                avisosDoDia.lista = avisos;
+                return null;
               })()}
 
               {/* BRINCAR saiu do card (`PlayCard`) e virou a 5ª célula do deck
@@ -7543,7 +7523,7 @@ export default function App() {
           )}
 
           {pane === 'oracle' && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
               <OraclePage language={language} />
             </Suspense>
           )}
@@ -7587,6 +7567,20 @@ export default function App() {
           label={language === 'pt-BR' ? 'Missões semanais' : 'Weekly missions'}
           onClick={abrirMissoesSemanais}
         />
+      )}
+      {currentView === 'home' && (
+        <AvisosLink
+          count={avisosDoDia.lista.length}
+          row={(1 + (marcasDeMissao.dailyCorner !== null ? 1 : 0) + (marcasDeMissao.weeklyCorner !== null ? 1 : 0)) as 1 | 2 | 3}
+          label={language === 'pt-BR' ? 'Avisos' : 'Notices'}
+          countLabel={language === 'pt-BR'
+            ? `${avisosDoDia.lista.length} ${avisosDoDia.lista.length === 1 ? 'aviso' : 'avisos'}`
+            : `${avisosDoDia.lista.length} ${avisosDoDia.lista.length === 1 ? 'notice' : 'notices'}`}
+          onClick={handleAbrirAvisos}
+        />
+      )}
+      {currentView === 'home' && (
+        <AvisosSheet open={avisosAbertos} language={language} items={avisosDoDia.lista} onClose={handleFecharAvisos} />
       )}
       {currentView === 'home' && celebrarMeta && (
         <Celebration fixed onDone={() => setCelebrarMeta(false)} />

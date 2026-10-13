@@ -7,6 +7,8 @@ import { soulCombatant } from '../../utils/soulXP';
 import { elementIcon } from '../../utils/elementIconArt';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+import { ATTRIBUTE_ART } from '../../assets/soulmon/icones-ui';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
 
@@ -121,8 +123,9 @@ export function DueloSheet({ language, evolutionStage, onStart }: {
       {/* 11.3 (beta-2): elemento e golpes saíram da Arena livre e moram no PERFIL do Soulmon (Laboratório) — fonte única em `utils/soulmonPerfil.ts`. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ ...box, flex: '0 0 auto' }} data-duelo-poder title={isPt ? 'Poder' : 'Power'} aria-label={`${isPt ? 'Poder' : 'Power'}: ${poder}`}>
-          <Icon name="bolt" size={24} tone="gold" fill={1} />
-          <span className="sm2-num" style={boxValue}>{poder}</span>
+          {/* F6 (beta-2): o raio é o glifo da ENERGIA; o Poder tem o ícone próprio (as garras) e a PALAVRA ao lado do número. */}
+          <PixelIcon src={ATTRIBUTE_ART.power} size={24} />
+          <span className="sm2-num" style={boxValue}>{isPt ? 'Poder' : 'Power'} {poder}</span>
         </div>
         <span style={{ flex: 1 }} />
         <ModalInfo language={language} label={isPt ? 'Como funciona a Arena' : 'How the Arena works'} align="right">

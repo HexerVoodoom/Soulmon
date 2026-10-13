@@ -69,9 +69,11 @@ export interface TaskMetaProps {
    * Sem handler, o contador continua visível (é dado honesto), só não é clicável.
    */
   onPostponeNudge?: (taskId: string) => void;
+  /** P9 (beta-2): na lista do dia o esforço PADRÃO (médio) não vira etiqueta — só o que foge dele (leve/pesado) é dito. Padrão `false`: triagem e detalhe seguem mostrando. */
+  hideDefaultEffort?: boolean;
 }
 
-export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps) {
+export function TaskMeta({ task, now, language, onPostponeNudge, hideDefaultEffort = false }: TaskMetaProps) {
   const isPt = language === 'pt-BR';
   const effort = effortOf(task);
   const postponed = task.postponedCount ?? 0;
@@ -85,6 +87,10 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
   const postponedText = isPt
     ? `adiada ${postponed} ${postponed === 1 ? 'vez' : 'vezes'}`
     : `postponed ${postponed} ${postponed === 1 ? 'time' : 'times'}`;
+
+  const showEffort = !(hideDefaultEffort && effort === 2);
+  // Nada a dizer (esforço padrão escondido, sem prazo, adiamento nem assombração): não renderiza a faixa vazia.
+  if (!showEffort && !due && postponed < 1 && !haunted) return null;
 
   return (
     <div
@@ -111,13 +117,15 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
       {/* Esforço em palavra. Os três pontinhos SAÍRAM: codificavam 1/2/3 ao
           lado da palavra que já diz 1/2/3. A recompensa escala com ISTO,
           nunca com a contagem de tarefas. */}
-      <span
-        style={sm2Tag}
-        title={isPt ? `Esforço ${effort} de 3` : `Effort ${effort} of 3`}
-        aria-label={isPt ? `Esforço ${effort} de 3, ${effortText}` : `Effort ${effort} of 3, ${effortText}`}
-      >
-        {effortText}
-      </span>
+      {showEffort && (
+        <span
+          style={sm2Tag}
+          title={isPt ? `Esforço ${effort} de 3` : `Effort ${effort} of 3`}
+          aria-label={isPt ? `Esforço ${effort} de 3, ${effortText}` : `Effort ${effort} of 3, ${effortText}`}
+        >
+          {effortText}
+        </span>
+      )}
 
       {/* Contador de adiamentos (Sunsama). Torna evitação crônica um DADO em
           vez de um sentimento — e dado tem botão, sentimento não. O ALVO é 44

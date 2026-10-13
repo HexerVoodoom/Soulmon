@@ -36,11 +36,14 @@ const post: CSSProperties = { width: 6, height: 12, backgroundColor: 'var(--sm2-
 
 export function DungeonSign({ language, onTap, returnInMs }: { language: Language; onTap?: () => void; returnInMs?: number | null }) {
   const isPt = language === 'pt-BR';
-  const label = isPt ? 'Na masmorra' : 'In Dungeon';
   const hasTime = typeof returnInMs === 'number' && Number.isFinite(returnInMs);
   const back = hasTime && (returnInMs as number) <= 0;
-  const time = hasTime ? (back ? (isPt ? 'Voltou' : 'Back') : formatEnergyEta(returnInMs as number, isPt)) : null;
-  const aria = `${label}${time ? `, ${back ? time : (isPt ? `volta em ${time}` : `back in ${time}`)}` : ''}. ${isPt ? 'Toque para ver' : 'Tap for details'}`;
+  // Já voltou: o TÍTULO muda (F2 do crítico: "In Dungeon" + "Back" se contradizia); a segunda linha completa a frase.
+  const label = back ? (isPt ? 'Voltou' : 'Back') : (isPt ? 'Na masmorra' : 'In Dungeon');
+  const time = hasTime ? (back ? (isPt ? 'da masmorra' : 'from the Dungeon') : formatEnergyEta(returnInMs as number, isPt)) : null;
+  const aria = back
+    ? `${label} ${time}. ${isPt ? 'Toque para receber' : 'Tap to welcome him'}`
+    : `${label}${time ? `, ${isPt ? `volta em ${time}` : `back in ${time}`}` : ''}. ${isPt ? 'Toque para ver' : 'Tap for details'}`;
   return (
     <div data-pet-masmorra style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'auto' }}>
       <button type="button" data-dungeon-sign data-dungeon-return={hasTime ? Math.round(returnInMs as number) : undefined} onClick={onTap} aria-label={aria} style={sign}>

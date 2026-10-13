@@ -5125,6 +5125,8 @@ select:focus-visible {
      `--sm2-viewport-ink` — mesmo valor nos dois temas, porque o vidro é
      escuro nos dois. */
   --sm2-viewport-danger: #FF8B8B;
+  /* Aviso discreto sobre o vidro (fome 'faminto'): dourado claro, nunca vermelho — o estado descreve, não cobra. */
+  --sm2-viewport-warn: #EBBE84;
   /* CRÉDITOS — a moeda de dinheiro real. É a única das três cuja distinção é
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
@@ -5171,6 +5173,7 @@ select:focus-visible {
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
   --sm2-viewport-danger: #FF8B8B;
+  --sm2-viewport-warn: #EBBE84;
   --sm2-credit-ink: #C9A7FF;
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
      de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
@@ -7067,9 +7070,17 @@ button[style*="--sm2-btn: ghost"]:active {
   margin: 0;
   padding: 0 12px;
 }
+/* P9 (beta-2): o divisor entre linhas é um traço RETO (pseudo-elemento), não `border-top` — como a linha tem `border-radius`, a borda curvava
+   nos cantos e a linha aberta (com etapas) ficava com um arco no topo enquanto as vizinhas tinham uma reta. */
 .sm2-ritual {
-  border-top: 1px solid var(--sm2-line);
-  &:first-child { border-top: 0; }
+  & + .sm2-ritual::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--sm2-line);
+    pointer-events: none;
+  }
 }
 .sm2-ritual-row {
   display: flex;
@@ -7735,6 +7746,11 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 /* Encaixe dos slots da faixa (fome / timer de energia): inline, texto `xs` da própria faixa, sem quebrar linha. */
 .sm3-stat-slot { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-weight: 600; }
 .sm3-stat[data-low] { color: var(--sm2-viewport-danger); }
+/* Fome (beta-2 F1): botão com o mesmo alvo de 44 dos vizinhos; faminto troca a tinta para o aviso dourado do vidro. */
+button.sm3-hunger { background: none; border: none; padding: 12px 2px; margin: -12px -2px; font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.sm3-hunger:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 0; border-radius: var(--sm2-radius-sm); }
+button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"] { color: var(--sm2-viewport-warn); }
+[data-energy-timer][data-mode="paused"] { color: var(--sm2-viewport-warn); display: inline-flex; align-items: center; gap: 3px; opacity: 1; }
 
 /* OS TRÊS CUIDADOS — canto inferior direito. EXCEÇÃO D1 (decisão do dono,
    23/09/2026): estes três ícones podem ter fundo/anel. Fundo = o próprio vidro
@@ -7855,7 +7871,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   text-transform: uppercase;
   color: var(--sm2-muted);
 }
-.sm3-secao + .sm2-ritual { border-top: 0; }
+.sm3-secao + .sm2-ritual::before { content: none; }
 /* Beta-2 (2.3) — `View all →` no fim da lista de hoje. */
 .sm3-ver-tudo {
   display: flex;
@@ -8643,7 +8659,7 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 @keyframes sm-lvup-banner { 0% { transform: translateY(-24px) scale(.8); opacity: 0; } 60% { transform: translateY(3px) scale(1.04); opacity: 1; } 100% { transform: none; opacity: 1; } }
 @keyframes sm-lvup-pet { 0% { transform: translateY(14px) scale(.8); opacity: 0; } 55% { transform: translateY(-10px) scale(1.06); opacity: 1; } 100% { transform: none; opacity: 1; } }
 @keyframes sm-lvup-burst { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes sm-lvup-hint { 0%, 100% { opacity: .5; } 50% { opacity: .95; } }
+@keyframes sm-lvup-hint { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
 .sm-lvup-num { display: inline-block; animation: sm-lvup-num .7s cubic-bezier(.2,.9,.3,1.2) both; }
 .sm-lvup-banner { animation: sm-lvup-banner .55s ease-out both; }
 .sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }

@@ -8,7 +8,7 @@ import type { Language } from '../../utils/i18n';
  *
  *   <HungerIndicator tier={status.tier} value={status.hunger} language={language} />
  *
- * Três estados legíveis SEM depender de cor: uma tigela e três pontos (cheio / meio / só o contorno). O nome acessível diz o estado em
+ * Três estados legíveis SEM depender de cor: uma tigela e três pontos de 6px em linha (cheio / meio / só o contorno); faminto também troca a tinta para o aviso dourado do vidro (`--sm2-viewport-warn`). O nome acessível diz o estado em
  * palavras. Sem texto na tela (minimalismo): o detalhe vive na dica da energia (`home/statTips.ts`). Sem animação, sem som, sem cobrança.
  * Cor só por tokens (`currentColor` + `--sm2-*`): herda a tinta do contêiner (na cena escura, os tons `viewport*` do `sm3-stat`).
  */
@@ -19,45 +19,71 @@ const STATE_COPY: Record<HungerTier, { pt: string; en: string }> = {
 };
 const PIPS: Record<HungerTier, number> = { fed: 3, fair: 2, starving: 0 };
 
-const wrap: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 3, lineHeight: 0 };
+const wrap: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, lineHeight: 0 };
 
-export function HungerIndicator({ tier, value, language, size = 20, style }: {
+/** Pontos em LINHA, 6px (F1 do crítico: os de 4px empilhados liam como "⋮"). */
+const PIP = 6;
+
+export function HungerIndicator({ tier, value, language, size = 20, style, onTap, expanded }: {
   tier: HungerTier;
   /** Fome 0..100 (só para o nome acessível e `data-hunger`; a tela não mostra número). */
   value?: number;
   language: Language;
   size?: number;
   style?: CSSProperties;
+  /** Com `onTap` o indicador vira botão (abre a dica da energia, que já explica a fome); sem ele segue como imagem. */
+  onTap?: () => void;
+  expanded?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const copy = isPt ? STATE_COPY[tier].pt : STATE_COPY[tier].en;
   const filled = PIPS[tier];
-  return (
-    <span
-      role="img"
-      data-hunger-indicator
-      data-hunger-tier={tier}
-      data-hunger={value === undefined ? undefined : Math.round(value)}
-      aria-label={isPt ? `Fome: ${copy}` : `Hunger: ${copy}`}
-      style={{ ...wrap, ...style }}
-    >
+  const nome = isPt ? `Fome: ${copy}` : `Hunger: ${copy}`;
+  const corpo = (
+    <>
       <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
         {/* tigela em pixel: borda e base; o vapor aparece só com a fome atendida */}
         <path d="M2 7h12v1h-1v2h-1v2h-1v1H5v-1H4v-2H3V8H2z" fill="currentColor" />
         {tier !== 'starving' && <path d="M5 3h1v2H5zM8 2h1v3H8zM11 3h1v2h-1z" fill="currentColor" opacity={tier === 'fed' ? 1 : 0.55} />}
       </svg>
-      <span aria-hidden="true" style={{ display: 'inline-flex', flexDirection: 'column', gap: 2 }}>
-        {[2, 1, 0].map(i => (
+      <span aria-hidden="true" style={{ display: 'inline-flex', flexDirection: 'row', gap: 3 }}>
+        {[0, 1, 2].map(i => (
           <i
             key={i}
             style={{
-              display: 'block', width: 4, height: 4, boxSizing: 'border-box',
+              display: 'block', width: PIP, height: PIP, boxSizing: 'border-box',
               background: i < filled ? 'currentColor' : 'transparent',
               border: '1px solid currentColor',
             }}
           />
         ))}
       </span>
+    </>
+  );
+  const dados = {
+    'data-hunger-indicator': true,
+    'data-hunger-tier': tier,
+    'data-hunger': value === undefined ? undefined : Math.round(value),
+  };
+  if (onTap) {
+    return (
+      <button
+        type="button"
+        {...dados}
+        className="sm3-hunger"
+        aria-label={nome}
+        aria-expanded={expanded ?? false}
+        aria-controls="sm3-stat-tip"
+        onClick={onTap}
+        style={{ ...wrap, ...style }}
+      >
+        {corpo}
+      </button>
+    );
+  }
+  return (
+    <span role="img" {...dados} aria-label={nome} style={{ ...wrap, ...style }}>
+      {corpo}
     </span>
   );
 }

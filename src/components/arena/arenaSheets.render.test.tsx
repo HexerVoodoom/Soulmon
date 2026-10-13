@@ -128,6 +128,17 @@ describe('Duelo', () => {
     expect(container.querySelector('[data-duelo-poder]')).not.toBeNull();
   });
 
+  it('F6 (beta-2): o Poder tem ícone PRÓPRIO (as garras) e a palavra "Poder N" — o raio é o glifo da energia', () => {
+    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
+    const poder = container.querySelector('[data-duelo-poder]')!;
+    expect(poder.textContent).toMatch(/^Poder \d+$/);
+    expect(poder.querySelector('img[data-pixel-icon="art"]')!.getAttribute('src')).toMatch(/atributo-poder/);
+    expect(poder.textContent).not.toMatch(/bolt/);
+    expect(poder.querySelector('.sm2-icon')).toBeNull(); // sem glifo Material (o raio)
+    const en = renderWithCss(<DueloSheet language="en-US" evolutionStage="rookie" onStart={() => {}} />);
+    expect(en.container.querySelector('[data-duelo-poder]')!.textContent).toMatch(/^Power \d+$/);
+  });
+
   it('mostra a ficha padrão sem skills e o botão abre a luta', () => {
     const onStart = vi.fn();
     const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);

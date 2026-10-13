@@ -37,13 +37,15 @@ function paintedUrl(css: string | undefined): string | null {
 }
 
 /** O ícone grande, solto, no centro da área escurecida acima da folha. */
-function FloatingPreview({ anchor, item }: { anchor: HTMLElement | null; item: ShopItem }) {
+function FloatingPreview({ anchor, item, onClose }: { anchor: HTMLElement | null; item: ShopItem; onClose: () => void }) {
   const [top, setTop] = useState<number | null>(null);
   useLayoutEffect(() => {
     if (!anchor) return;
     const measure = () => {
       const dlg = anchor.closest('[role="dialog"]') as HTMLElement | null;
-      setTop(dlg ? dlg.getBoundingClientRect().top : null);
+      // Posição de LAYOUT (a folha é colada no rodapé): `getBoundingClientRect().top` incluía o `translateY` da animação de subida e, no 1º
+      // quadro, media a tela inteira — com o véu próprio da prévia (P1) isso cobriria a folha. `offsetHeight` não vê transformação.
+      setTop(dlg ? Math.max(0, window.innerHeight - dlg.offsetHeight) : null);
     };
     measure();
     window.addEventListener('resize', measure);
@@ -61,10 +63,13 @@ function FloatingPreview({ anchor, item }: { anchor: HTMLElement | null; item: S
     <div
       aria-hidden="true"
       data-item-preview
+      /* P1 (beta-2): a prévia é a camada MAIS ALTA acima da folha, com o PRÓPRIO véu (a lista da loja não vaza mais pelos lados do ícone)
+         e o toque nela FECHA a folha (como o toque no véu). Decorativa para leitor de tela: o ✕ e o Esc da folha seguem sendo o caminho. */
+      onClick={onClose}
       style={{
         position: 'fixed', left: 0, right: 0, top: 0, height: area, zIndex: 121,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        pointerEvents: 'none',
+        background: 'rgba(2, 8, 9, .96)', cursor: 'pointer',
         paddingTop: 'env(safe-area-inset-top, 0px)', boxSizing: 'border-box',
       }}
     >
@@ -275,7 +280,7 @@ export function ShopItemSheet({
           </div>
         )}
       </ModalSheet>
-      {item && !isBg && <FloatingPreview anchor={anchorEl} item={item} />}
+      {item && !isBg && <FloatingPreview anchor={anchorEl} item={item} onClose={onClose} />}
       {item && !isBg && <ItemLightbox open={zoom} item={item} name={name} language={language} onClose={() => setZoom(false)} />}
       {item && isBg && <BackgroundLightbox open={zoom} bgId={item.id} name={name} language={language} onClose={() => setZoom(false)} />}
     </>

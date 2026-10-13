@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 13/10/2026 — Beta-2, correções da revisão de design (`integ/beta-2`, PR #323; `product/beta-play-01/sweeper/design-critic-beta2.md`)
+>
+> - **F1–F6 (obrigatórios):** fome legível (pontos de 6px em linha, faminto na tinta `--sm2-viewport-warn`, toque abre a dica da energia, pausa visível por símbolo) · placa da masmorra troca o título para "Voltou" · **avisos da Home saem da faixa acima de HOJE** (botão `AvisosLink` na pilha do canto direito com selo, folha `AvisosSheet`; o check-in entra pelo mesmo canal) · "Adicionar tarefas à lista" é `ModalSheet` · Santuário sem a linha repetida de Vínculo e com a regra dos 5% atrás do "i" · Arena livre com o ícone e a palavra de Poder.
+> - **Polimento feito:** P1, P2 (✕ dentro da folha; o bloco Missão/Destino já existia e só aparece com Passeio de ontem), P4, P5, P6, P7, P8, P9 (sem "+N XP base" nem "medium" na TAREFA, sem barra no pai, divisor reto — o XP do hábito fica, é pedido do dono de 11/10), P10, P11 ("Soulsmith equipment"; "Soulforger" não existe no código), P12 (telas inteiras com `variant="overlay"`).
+> - **Não feito:** **P3** (resumo em 3 folhas): fundir tarefas+corações mexe na ordem "tarefas → corações → aventura → hoje" pedida em 4.4 e em ~12 testes; a regra "animação uma vez por relatório" não corre risco, mas a decisão de produto é do dono.
+
 > ## 13/10/2026 — Beta-2, frente B (regras): fome e energia por tempo, limite diário da masmorra, check-ins, placa de madeira, Soulsmith e modo imersivo (`feat/b2-regras`, REGISTRO §40)
 >
 > - **Soulsmith "bloqueado" (8.3) — causa raiz achada e corrigida:** a missão de prédio só tinha botão de Resgatar para o Caderno; os outros 14 prédios ficavam `ready` sem ninguém para pagar a peça de nível 1 e os materiais (`applyBuildingEntry`). Reproduzido em `soulsmithAcesso.test.ts`.

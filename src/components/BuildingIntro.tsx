@@ -58,19 +58,20 @@ export function BuildingIntro({ id, language, onGo, onLater }: {
             {isPt ? 'Um lugar novo no Mapa' : 'A new place on the Map'}
           </p>
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-            <button type="button" onClick={later} data-bi-later style={sm2Button('ghost', false, 'sm')}>
-              {isPt ? 'Depois' : 'Later'}
-            </button>
+          {/* P5 (beta-2): a ação principal em CIMA, largura toda; "Depois" é um botão SECUNDÁRIO (contorno), não um texto solto ao lado. */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
             {i < last ? (
-              <button type="button" onClick={next} data-bi-next style={{ ...sm2Button('primary'), flex: 1 }}>
+              <button type="button" onClick={next} data-bi-next style={{ ...sm2Button('primary'), width: '100%' }}>
                 {isPt ? 'Próximo' : 'Next'}
               </button>
             ) : (
-              <button type="button" onClick={go} data-bi-go style={{ ...sm2Button('primary'), flex: 1 }}>
+              <button type="button" onClick={go} data-bi-go style={{ ...sm2Button('primary'), width: '100%' }}>
                 {isPt ? 'Ir lá' : 'Go there'}
               </button>
             )}
+            <button type="button" onClick={later} data-bi-later style={{ ...sm2Button('outline'), width: '100%' }}>
+              {isPt ? 'Depois' : 'Later'}
+            </button>
           </div>
         </div>
       </AreaSheet>
