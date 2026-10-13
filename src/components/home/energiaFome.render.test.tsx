@@ -83,7 +83,15 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
   });
   it('o nome acessível do botão da energia continua sendo o da energia (o timer é decoração do botão, com nome próprio)', () => {
     renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'fed', hunger: 90, mode: 'regen', msToNext: 30 * MIN }} />);
-    expect(screen.getByRole('button', { name: /Energia: 2 de 8/ })).toBeTruthy();
+    const b = screen.getByRole('button', { name: /Energia: 2 de 8/ });
+    expect(b.getAttribute('aria-label')).toBe('Energia: 2 de 8. Próxima em 30 min');
+  });
+  it('o nome acessível do botão leva o estado do timer: parada (faminto) e cheia', () => {
+    const { unmount } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'starving', hunger: 3, mode: 'paused', msToNext: null }} />);
+    expect(screen.getByRole('button', { name: /Energia: 2 de 8/ }).getAttribute('aria-label')).toBe('Energia: 2 de 8. Regeneração parada');
+    unmount();
+    renderWithCss(<CompanionHUD {...base} energyPoints={8} energyInfo={{ tier: 'fed', hunger: 99, mode: 'full', msToNext: null }} />);
+    expect(screen.getByRole('button', { name: /Energia: 8 de 8/ }).getAttribute('aria-label')).toBe('Energia: 8 de 8');
   });
 });
 

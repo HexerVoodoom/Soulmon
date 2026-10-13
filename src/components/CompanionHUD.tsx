@@ -4,7 +4,7 @@ import { aiFetch } from '../utils/aiClient';
 import { DungeonSign } from './home/DungeonSign';
 import { EnergyTimer } from './home/EnergyTimer';
 import { HungerIndicator } from './home/HungerIndicator';
-import type { EnergyStatus } from '../utils/hunger';
+import { formatEnergyEta, type EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
@@ -1871,9 +1871,15 @@ export const CompanionHUD = memo(function CompanionHUD({
                 aria-expanded={statAberto === 'energy'}
                 aria-controls="sm3-stat-tip"
                 onClick={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))}
-                aria-label={isPt
+                aria-label={(isPt
                   ? `Energia: ${energyPoints} de ${maxEnergy}${enBaixo ? ' (vazia)' : ''}`
-                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`}
+                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`)
+                  /* o timer vive DENTRO do botão: o nome acessível do botão leva o tempo (os filhos não são lidos) */
+                  + (energyInfo && energyInfo.mode !== 'full'
+                    ? (energyInfo.msToNext === null
+                      ? (isPt ? '. Regeneração parada' : '. Regeneration paused')
+                      : (isPt ? `. Próxima em ${formatEnergyEta(energyInfo.msToNext, true)}` : `. Next in ${formatEnergyEta(energyInfo.msToNext, false)}`))
+                    : '')}
               >
                 <PixelIcon name="energia" size={20} />
                 <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
