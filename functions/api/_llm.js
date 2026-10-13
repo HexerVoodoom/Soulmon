@@ -88,6 +88,22 @@ async function logGroqError(env, res) {
   console.error('[chat] groq 400', { code, type, model: chatModel(env) });
 }
 
+// Falha de CONTA/CONFIG do Groq (modelo, chave, termos): 400 final (já sem
+// ferramentas), 401, 403, 404. Não é culpa do pedido: troca de provedor.
+const isAccountFail = st => st === 400 || st === 401 || st === 403 || st === 404;
+
+// Disjuntor em memória do isolate: 2 falhas de conta em 10 min => 10 min direto
+// no Gemini, sem gastar 2 chamadas por mensagem. Sucesso do Groq zera.
+const BREAKER_WINDOW_MS = 10 * 60 * 1000;
+/** @type {{ fails: number[], openUntil: number }} */
+const breaker = { fails: [], openUntil: 0 };
+export function _resetBreaker() { breaker.fails = []; breaker.openUntil = 0; }
+function noteAccountFail(now) {
+  breaker.fails = breaker.fails.filter(t => now - t < BREAKER_WINDOW_MS);
+  breaker.fails.push(now);
+  if (breaker.fails.length >= 2) breaker.openUntil = now + BREAKER_WINDOW_MS;
+}
+
 /** @param {Record<string, any>} env @param {LlmReq} req @returns {Promise<LlmResult>} */
 async function groq(env, req) {
   let res = await callGroq(env, req, true);
@@ -102,7 +118,6 @@ async function groq(env, req) {
     if (res.status === 400) await logGroqError(env, res);
     return { ok: false, status: res.status };
   }
-  if (!res.ok) return { ok: false, status: res.status };
   const data = await res.json();
   const msg = data.choices?.[0]?.message ?? {};
   return {
@@ -180,18 +195,22 @@ async function gemini(env, req) {
 export async function callChatModel(env, req) {
   /** @type {LlmResult} */
   let last = { ok: false, status: 0 };
-  if (env.GROQ_API_KEY) {
+  const now = Date.now();
+  const skipGroq = !!env.GEMINI_API_KEY && now < breaker.openUntil;
+  if (env.GROQ_API_KEY && !skipGroq) {
     try {
       const r = await groq(env, req);
-      if (r.ok) return r;
+      if (r.ok) { breaker.fails = []; return r; }
       last = r;
       console.error('[chat] groq falhou', { status: r.status });
+      if (isAccountFail(r.status)) noteAccountFail(now);
     } catch (err) {
       console.error('[chat] groq rede/timeout', { name: err?.name });
       last = { ok: false, status: 0 };
     }
-    // 4xx do pedido (≠ 429) não melhora trocando de provedor; o resto, sim.
-    if (last.status >= 400 && last.status < 500 && last.status !== 429) return last;
+    // Outro 4xx (ex.: 413/422) é do pedido: trocar de provedor não ajuda.
+    // 400/401/403/404 são de conta/config e caem no Gemini (se houver chave).
+    if (last.status >= 400 && last.status < 500 && last.status !== 429 && !isAccountFail(last.status)) return last;
   }
   if (env.GEMINI_API_KEY) {
     try {
