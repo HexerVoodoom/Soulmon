@@ -47,6 +47,7 @@ export const BUILDING_GATES = {
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },
+  'laboratorio.perfil': { minBond: 2 },
   'hall.biblioteca': { minBond: 2 },
   'hall.amigos': { minBond: 2 },
   'hall.guilda': { minBond: 4 },

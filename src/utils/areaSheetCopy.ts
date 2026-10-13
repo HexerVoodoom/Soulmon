@@ -34,7 +34,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro';
 export type ArenaLotId = 'torneio' | 'duelo';
-export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats';
+export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats' | 'perfil';
 export type HallLotId = 'biblioteca' | 'amigos' | 'guilda' | 'feira';
 
 interface AreaLotSpec<K extends string> {
@@ -69,7 +69,7 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '19%', top: '49%', width: '40%' },
-  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '50%', top: '56%', width: '40%' },
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '68%', top: '45%', width: '44%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];
@@ -97,6 +97,8 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
   { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '26%', top: '70%', width: '44%' },
   { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '78%', top: '70%', width: '50%' },
   { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '43%', width: '62%' },
+  // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
+  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '92%', width: '36%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [

@@ -205,6 +205,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Cada dia fica anotado aqui. É só para olhar.',
     lineEn: "Every day is written here. It's just to look at.",
   },
+  'laboratorio:perfil': {
+    // beta-2 (11): o busto da Oriel (`npc-f-sacerdotisa`, que o Santuário deixou em 07/10/2026) volta como leitora do Perfil — arte que já existia; NPC próprio é pedido à frente de arte.
+    namePt: 'Oriel, a leitora do Perfil', nameEn: 'Oriel, reader of the Profile',
+    linePt: 'Aqui se vê quem ele é, do jeito que ele é.',
+    lineEn: 'Here you see who they are, just as they are.',
+  },
 };
 
 /** A fala do NPC de UM lote (`área:lote`); sem entrada própria, a voz da área. */

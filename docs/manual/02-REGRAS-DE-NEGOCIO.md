@@ -4139,7 +4139,7 @@ do pet; há teste travando a ausência de id repetido no catálogo inteiro.
 Duas recusas, `'no-funds'` e `'already-owned'`. O efeito por `kind`:
 
 - `chip` / `heart` → `+1` na mochila (`foodInventory`, chaveada pelo **emoji**;
-  a descrição dos chips diz "Vai pra mochila" — ⚰️ antes "pastinha");
+  a descrição dos chips é só "+3 Poder" (nome, efeito, valor — beta-2 8.1, 13/10/2026; ⚰️ antes "Vai pra mochila", e antes disso "pastinha");
   o efeito acontece no USO ([§48](#itens-especiais)), nunca na compra.
 - `bg` → entra em `ownedBackgrounds` **e equipa na hora**.
 - `furniture` → entra em `ownedFurniture` e equipa no `slot` que o item declara;
@@ -6064,6 +6064,6 @@ decisão em aberto vai para [`PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md).
 
 **Ocupado.** Com o registro presente o pet some da Home e fica uma plaquinha "Estou na masmorra, volto logo". Evoluir, renascer, mandar em missão da guilda, Duelo, Torneio e Passeio abrem o aviso "Ele está na masmorra" com **Retirar da masmorra**. Cuidar (comer, banho, dormir, carinho) continua livre. Dono: `utils/dungeonIdle.ts` (`soulmonNaMasmorra`), `DungeonBusyModal`, `home/DungeonSign`; lista travada em `soulmonOcupado.contract.test.ts`.
 
-**Combina 3 (Salão de Jogos).** Troque duas peças vizinhas para formar linhas de 3 ou mais do mesmo elemento; as linhas somem, as peças caem e a cascata vale mais a cada passo; uma linha de 4 deixa uma peça com setas que limpa a linha ou a coluna. São 20 movimentos por rodada; cada 250 pontos viram 1 Bit, até 8, pelo mesmo teto diário dos outros jogos. Troca que não forma linha volta sem gastar movimento. Dono: `utils/match3.ts`; régua: `utils/match3.test.ts` e `utils/mente/balanco.test.ts`.
+**Combina 3 (Salão de Jogos).** Troque duas peças vizinhas (beta-2, 13/10/2026: a troca é LIVRE — vale pontue ou não, e gasta 1 movimento; antes, a que não formava linha voltava sem gastar) para formar linhas de 3 ou mais do mesmo elemento; as linhas somem, as peças caem e a cascata vale mais a cada passo; uma linha de 4 deixa uma peça com setas que limpa a linha ou a coluna. São 20 movimentos por rodada; cada 250 pontos viram 1 Bit, até 8, pelo mesmo teto diário dos outros jogos. Troca que não forma linha volta sem gastar movimento. Dono: `utils/match3.ts`; régua: `utils/match3.test.ts` e `utils/mente/balanco.test.ts`.
 
 **Régua.** `utils/dungeonAway.test.ts`, `components/games/useGroupBattle.velocidade.test.tsx`, `components/DungeonGame.beta-play.render.test.tsx`, `utils/match3.test.ts`, `components/Match3Game.render.test.tsx`, `contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx` (124 campos). Decisão: `REGISTRO-DE-DECISOES.md` §36.

@@ -86,17 +86,17 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   [CHIP_EMOJI.power]: {
     emoji: CHIP_EMOJI.power, kind: 'chip', attr: 'power',
     namePt: 'Chip de Poder', nameEn: 'Power Chip',
-    descPt: `Usar inclina o caminho para Poder (+${CHIP_BOOST} de tipo; sem energia, sem força extra)`, descEn: `Use to lean your path toward Power (+${CHIP_BOOST} type points; no energy, no extra strength)`,
+    descPt: `+${CHIP_BOOST} Poder`, descEn: `+${CHIP_BOOST} Power`,
   },
   [CHIP_EMOJI.harmony]: {
     emoji: CHIP_EMOJI.harmony, kind: 'chip', attr: 'harmony',
     namePt: 'Chip de Harmonia', nameEn: 'Harmony Chip',
-    descPt: `Usar inclina o caminho para Harmonia (+${CHIP_BOOST} de tipo; sem energia, sem força extra)`, descEn: `Use to lean your path toward Harmony (+${CHIP_BOOST} type points; no energy, no extra strength)`,
+    descPt: `+${CHIP_BOOST} Harmonia`, descEn: `+${CHIP_BOOST} Harmony`,
   },
   [CHIP_EMOJI.benevolence]: {
     emoji: CHIP_EMOJI.benevolence, kind: 'chip', attr: 'benevolence',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
-    descPt: `Usar inclina o caminho para Benevolência (+${CHIP_BOOST} de tipo; sem energia, sem força extra)`, descEn: `Use to lean your path toward Benevolence (+${CHIP_BOOST} type points; no energy, no extra strength)`,
+    descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`,
   },
   [HEART_ITEM_EMOJI]: {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
@@ -118,13 +118,13 @@ export const SHOP_ITEMS: ShopItem[] = [
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, nomes únicos desde 29/09/2026.
   { id: 'chip-power',   kind: 'chip', icon: CHIP_EMOJI.power, attr: 'power',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
-    descPt: `Vai pra mochila; usar muda o caminho para Poder, sem força extra`, descEn: `Goes to your Backpack; use to change your path toward Power, no extra strength`, price: 120 },
+    descPt: `+${CHIP_BOOST} Poder`, descEn: `+${CHIP_BOOST} Power`, price: 120 },
   { id: 'chip-harmony',    kind: 'chip', icon: CHIP_EMOJI.harmony, attr: 'harmony',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
-    descPt: `Vai pra mochila; usar muda o caminho para Harmonia, sem força extra`, descEn: `Goes to your Backpack; use to change your path toward Harmony, no extra strength`, price: 120 },
+    descPt: `+${CHIP_BOOST} Harmonia`, descEn: `+${CHIP_BOOST} Harmony`, price: 120 },
   { id: 'chip-benevolence', kind: 'chip', icon: CHIP_EMOJI.benevolence, attr: 'benevolence',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
-    descPt: `Vai pra mochila; usar muda o caminho para Benevolência, sem força extra`, descEn: `Goes to your Backpack; use to change your path toward Benevolence, no extra strength`, price: 120 },
+    descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`, price: 120 },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
   // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a

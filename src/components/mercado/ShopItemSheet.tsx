@@ -120,6 +120,48 @@ export function BackgroundLightbox({ open, bgId, name, language, onClose }: {
   );
 }
 
+/** 8.2 (beta-2): a MESMA visualização ampliada dos cenários, para chip e mobília — a arte grande sobre o fundo escurecido. */
+export function ItemLightbox({ open, item, name, language, onClose }: {
+  open: boolean; item: ShopItem; name: string; language: Language; onClose: () => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const ref = useDialogA11y<HTMLDivElement>(open, onClose);
+  if (!open) return null;
+  const png = DECOR_ART[item.id] ?? ITEM_ART[item.icon];
+  return createPortal(
+    <div
+      ref={ref}
+      role="dialog"
+      aria-modal="true"
+      aria-label={name}
+      data-item-lightbox
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 140, background: 'rgba(2,8,9,.92)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, boxSizing: 'border-box',
+      }}
+    >
+      <button
+        type="button"
+        data-lightbox-close
+        onClick={e => { e.stopPropagation(); onClose(); }}
+        aria-label={isPt ? 'Fechar' : 'Close'}
+        style={{
+          position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 8,
+          width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: 'none', cursor: 'pointer', color: '#E9F5F2',
+        }}
+      >
+        <Icon name="close" size={24} tone="inherit" />
+      </button>
+      {png
+        ? <img data-lightbox-image src={png} alt={name} onClick={e => e.stopPropagation()} style={{ maxWidth: '86vw', maxHeight: '62vh', width: 'auto', height: 'min(62vh, 320px)', objectFit: 'contain', imageRendering: 'pixelated' }} />
+        : <span data-lightbox-image role="img" aria-label={name} onClick={e => e.stopPropagation()} style={{ fontSize: 160, lineHeight: 1 }}>{item.icon}</span>}
+    </div>,
+    document.body,
+  );
+}
+
 /** A pílula "interno / externo / qualquer" da decoração (I6). Contraste AA: tinta de token sobre `surface-2`. */
 export function DecorFitTag({ fits, isPt }: { fits: ShopItem['fits']; isPt: boolean }) {
   const { fit, text } = decorFitLabel(fits, isPt);
@@ -168,6 +210,7 @@ export function ShopItemSheet({
   const isFurniture = item?.kind === 'furniture';
   const affordable = !!item && balance >= item.price;
 
+  const itemThumb = item && !isBg ? (DECOR_ART[item.id] ?? ITEM_ART[item.icon]) : undefined;
   const thumbSrc = (() => {
     if (!isBg || !item) return null;
     return paintedUrl(PET_BACKGROUNDS[item.id]?.css);
@@ -199,6 +242,19 @@ export function ShopItemSheet({
                   : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[item.id]?.css }} />}
               </button>
             )}
+            {!isBg && (
+              <button
+                type="button"
+                data-item-zoom
+                onClick={() => setZoom(true)}
+                aria-label={isPt ? `Ver ${name} ampliado` : `View ${name} larger`}
+                style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 44, minHeight: 44, padding: 0, background: 'none', border: 'none', cursor: 'zoom-in' }}
+              >
+                {itemThumb
+                  ? <img src={itemThumb} alt="" style={{ height: 40, width: 'auto', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                  : <span aria-hidden="true" style={{ fontSize: 32, lineHeight: 1 }}>{item.icon}</span>}
+              </button>
+            )}
             <p style={{ ...sm2Text, margin: 0 }}>{isPt ? item.descPt : item.descEn}</p>
             {isFurniture && <DecorFitTag fits={item.fits} isPt={isPt} />}
             {!owned && (
@@ -220,6 +276,7 @@ export function ShopItemSheet({
         )}
       </ModalSheet>
       {item && !isBg && <FloatingPreview anchor={anchorEl} item={item} />}
+      {item && !isBg && <ItemLightbox open={zoom} item={item} name={name} language={language} onClose={() => setZoom(false)} />}
       {item && isBg && <BackgroundLightbox open={zoom} bgId={item.id} name={name} language={language} onClose={() => setZoom(false)} />}
     </>
   );

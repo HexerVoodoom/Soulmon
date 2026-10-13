@@ -44,12 +44,38 @@ describe('detecção de linhas', () => {
 });
 
 describe('troca', () => {
-  it('troca inválida (sem linha) devolve nomatch e NÃO muda o tabuleiro', () => {
+  it('9.2: troca entre vizinhas SEM linha é válida — troca as duas peças, não pontua e não muta a entrada', () => {
     const b = neutro();
     const antes = JSON.stringify(b);
     const r = trySwap(b, { r: 3, c: 3 }, { r: 3, c: 4 }, mulberry32(1));
-    expect(r).toEqual({ ok: false, reason: 'nomatch' });
     expect(JSON.stringify(b)).toBe(antes);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.scored).toBe(false);
+    expect(r.steps).toEqual([]);
+    expect(r.score).toBe(0);
+    expect(r.swapped[3][3]).toEqual(b[3][4]);
+    expect(r.swapped[3][4]).toEqual(b[3][3]);
+    expect(findRuns(r.board)).toEqual([]);
+  });
+  it('9.2: troca repetida (A↔B e depois B↔A) devolve o tabuleiro original; trocar duas peças iguais é válida e inerte', () => {
+    const b = neutro();
+    const a = { r: 3, c: 3 }; const d = { r: 3, c: 4 };
+    const r1 = trySwap(b, a, d, mulberry32(1));
+    expect(r1.ok).toBe(true);
+    if (!r1.ok) return;
+    const r2 = trySwap(r1.swapped, a, d, mulberry32(1));
+    expect(r2.ok).toBe(true);
+    if (!r2.ok) return;
+    expect(r2.swapped).toEqual(b);
+    // duas iguais lado a lado
+    const iguais = neutro(); set(iguais, 0, 0, 2); set(iguais, 0, 1, 2);
+    const r3 = trySwap(iguais, { r: 0, c: 0 }, { r: 0, c: 1 }, mulberry32(1));
+    expect(r3.ok && r3.scored).toBe(false);
+  });
+  it('9.2: casa sem peça segue inválida ("empty") e nada muda', () => {
+    const b = neutro(); b[1][1] = null;
+    expect(trySwap(b, { r: 1, c: 1 }, { r: 1, c: 2 }, mulberry32(1))).toEqual({ ok: false, reason: 'empty' });
   });
   it('só vizinhas (4 direções) contam: diagonal, longe, a mesma e fora do tabuleiro são "far"', () => {
     const b = neutro();
@@ -200,6 +226,56 @@ describe('determinismo por semente', () => {
   it('o módulo não usa Math.random (a semente decide tudo)', () => {
     const src = readFileSync(join(__dirname, 'match3.ts'), 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     expect(src).not.toMatch(/Math\.random/);
+  });
+});
+
+describe('9.2: movimentação livre — partida inteira e fim', () => {
+  /** Joga a rodada com uma política de escolha de troca; devolve o histórico para checar invariantes. */
+  function partida(seed: number, escolhe: (b: Board, i: number) => { a: { r: number; c: number }; b: { r: number; c: number } }) {
+    const { board, rng } = newRound(seed);
+    let b = board; let moves = M3_MOVES; let total = 0; let jogadas = 0; let livres = 0;
+    const log: string[] = [];
+    while (moves > 0) {
+      const m = escolhe(b, jogadas);
+      const r = trySwap(b, m.a, m.b, rng);
+      expect(r.ok, `semente ${seed} jogada ${jogadas}`).toBe(true);
+      if (!r.ok) break;
+      moves -= 1; jogadas += 1; total += r.score;
+      if (!r.scored) livres += 1;
+      b = r.board;
+      // sem estado inválido: tabuleiro cheio, sem linha pronta, tipos no intervalo
+      expect(b.every(row => row.every(t => t && t.k >= 0 && t.k < M3_KINDS))).toBe(true);
+      expect(findRuns(b)).toEqual([]);
+      log.push(JSON.stringify(b));
+    }
+    return { moves, total, jogadas, livres, log };
+  }
+  const horizontal = (b: Board, i: number) => ({ a: { r: i % M3_ROWS, c: i % (M3_COLS - 1) }, b: { r: i % M3_ROWS, c: (i % (M3_COLS - 1)) + 1 } });
+  it('só trocas LIVRES (que não pontuam) também levam a partida ao fim em exatamente M3_MOVES, com 0 ponto', () => {
+    for (const seed of [1, 7, 42, 99]) {
+      const naoPontua = (b: Board) => {
+        const bons = new Set(validMoves(b).map(m => `${m.a.r},${m.a.c}-${m.b.r},${m.b.c}`));
+        for (let r = 0; r < M3_ROWS; r++) for (let c = 0; c < M3_COLS - 1; c++) if (!bons.has(`${r},${c}-${r},${c + 1}`)) return { a: { r, c }, b: { r, c: c + 1 } };
+        return horizontal(b, 0);
+      };
+      const res = partida(seed, naoPontua);
+      expect(res.moves).toBe(0);
+      expect(res.jogadas).toBe(M3_MOVES);
+      expect(res.livres).toBeGreaterThan(0);
+    }
+  });
+  it('trocas misturadas (livres e que pontuam) em várias sementes: fim em M3_MOVES, pontuação >= 0 e Bits dentro do teto', () => {
+    for (let seed = 1; seed <= 25; seed++) {
+      const res = partida(seed, (b, i) => (i % 3 === 0 ? (validMoves(b)[0] ?? horizontal(b, i)) : horizontal(b, i)));
+      expect(res.moves).toBe(0);
+      expect(res.total).toBeGreaterThanOrEqual(0);
+      expect(match3Bits(res.total)).toBeLessThanOrEqual(M3_MAX_BITS);
+    }
+  });
+  it('determinismo: mesma semente + mesmas trocas livres/pontuáveis → mesmo histórico', () => {
+    const pol = (b: Board, i: number) => (i % 2 === 0 ? (validMoves(b)[0] ?? horizontal(b, i)) : horizontal(b, i));
+    expect(partida(123, pol)).toEqual(partida(123, pol));
+    expect(JSON.stringify(partida(124, pol).log) === JSON.stringify(partida(123, pol).log)).toBe(false);
   });
 });
 

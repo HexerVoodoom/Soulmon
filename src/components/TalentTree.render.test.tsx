@@ -263,13 +263,13 @@ describe('Tarefa B: a árvore como árvore', () => {
     act(() => { fireEvent.click(document.querySelector('[data-talent-backdrop]')!); });
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
-  it('o resumo da StatsPage só monta a árvore ao abrir', async () => {
+  it('10.2: o resumo da StatsPage traz a árvore ABERTA por padrão, sem botão de abrir/recolher nem resumo repetido', async () => {
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], totalXP: 0 }));
     render(<GameStateProvider><TalentTreeCard language="pt-BR" /></GameStateProvider>);
-    expect(document.querySelector('[data-talent-summary]')).not.toBeNull();
-    expect(document.querySelector('[data-talent-tree]')).toBeNull();
-    act(() => { fireEvent.click(document.querySelector('[data-talent-toggle]')!); });
+    expect(document.querySelector('[data-talent-summary]')).toBeNull(); // o cartão de resumo saiu: a árvore já abre com a mesma linha
     await screen.findByRole('group', { name: 'Árvore de talentos' });
     expect(document.querySelector('[data-talent-tree]')).not.toBeNull();
+    expect(document.querySelector('[data-talent-toggle]')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Recolher a árvore|Abrir a árvore/ })).toBeNull();
   });
 });

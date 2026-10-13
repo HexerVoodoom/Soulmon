@@ -6568,6 +6568,29 @@ body {
   }
 }
 
+/* ── Abas COMPACTAS (beta-2, 10.3): sublinhado fino, separadores discretos, rótulo inteiro ─────────── */
+.sm2-kit-tabs-compact { gap: 0; }
+.sm2-kit-tabs-compact .sm2-kit-tab {
+  padding: 0 var(--sm2-space-2);
+  font-size: var(--sm2-text-xs);
+  white-space: nowrap;
+  flex: 1 0 auto;
+  color: var(--sm2-tab-ink-idle, var(--sm2-muted));
+}
+.sm2-kit-tabs-compact .sm2-kit-tab + .sm2-kit-tab::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 25%; bottom: 25%;
+  width: 1px;
+  background-color: var(--sm2-line);
+}
+.sm2-kit-tabs-compact .sm2-kit-tab-on { color: var(--sm2-tab-ink, var(--sm2-primary-ink)); font-weight: 600; }
+.sm2-kit-tabs-compact .sm2-kit-tab-on::after {
+  left: 8%; right: 8%; height: 2px;
+  background-color: var(--sm2-tab-ink, var(--sm2-primary-ink));
+}
+.sm2-kit-tab[data-tab-emphasis="sim"] > span:first-child { filter: drop-shadow(0 0 4px var(--sm2-tab-ink, var(--sm2-primary-ink))); }
+
 /* ── Chip de seleção (tonal, 44 de alvo) ────────────────────────────────── */
 .sm2-kit-chip {
   box-sizing: border-box;

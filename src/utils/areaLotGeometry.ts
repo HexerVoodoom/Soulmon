@@ -43,6 +43,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'laboratorio:evolucao': [0.1, 0.027, 0.9, 0.973],
   'laboratorio:pet': [0.227, 0.217, 0.773, 0.973],
   'laboratorio:stats': [0.247, 0.12, 0.757, 0.973],
+  'laboratorio:perfil': [0.123, 0.033, 0.877, 0.97], // beta-2 (11): `lote-jogos-mente-akasha` (alfa > 20)
   'hall:biblioteca': [0.027, 0.03, 0.973, 0.973],
   'hall:amigos': [0.04, 0.117, 0.96, 0.943],
   'hall:guilda': [0.057, 0.037, 0.943, 0.97],

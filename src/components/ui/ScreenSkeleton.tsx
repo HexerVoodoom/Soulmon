@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Viewport } from './Viewport';
+import { sm2Button } from '../form/FormKit';
 import type { Language } from '../../utils/i18n';
 
 /**
@@ -27,6 +28,11 @@ import type { Language } from '../../utils/i18n';
  *    o bloco global do projeto usa `animation-duration: .01ms` em `*`, o que
  *    num loop `infinite` vira milhares de recálculos por segundo;
  *  · texto EN + PT-BR, sempre os dois.
+ *
+ * BETA-2 (9.4, 13/10/2026) — MINIMALISTA: uma só palavra (a legenda "Carregando…" repetida saiu), o visor sem o "respirar"
+ * (o único movimento é o segmento que alterna por cor, em `steps()`, e some com movimento reduzido), altura menor
+ * (`page` 96, não 220) e a variante `inline` (dentro de uma folha já aberta). Três ESTADOS: `loading` (o padrão),
+ * `error` (frase curta + "Tentar de novo" quando há `onRetry`) e `done` (não desenha nada — o conteúdo chegou).
  */
 
 export interface ScreenSkeletonProps {
@@ -37,7 +43,11 @@ export interface ScreenSkeletonProps {
    * `'page'` ocupa a área de conteúdo (padrão). `'overlay'` cobre a tela
    * inteira com um véu — é o certo para modal, que abre por cima de algo.
    */
-  variant?: 'page' | 'overlay';
+  variant?: 'page' | 'overlay' | 'inline';
+  /** `loading` (padrão) · `error` (falhou, com a saída) · `done` (concluído: nada a mostrar). */
+  state?: 'loading' | 'error' | 'done';
+  /** No `error`: o gesto que tenta de novo. Sem ele a frase de erro fica sem botão. */
+  onRetry?: () => void;
 }
 
 /** Mesma checagem do `Viewport`: reduced-motion desliga o loop de verdade. */
@@ -63,6 +73,13 @@ function usePrefersReducedMotion(): boolean {
    24×12 dentro do vidro alternando — `steps()`, movimento reduzido desliga.
    Alterna por COR (fill ↔ primary-deep), nunca por opacidade (canvas
    Conta D-K10: o gerador reprova `opacity < 1`). */
+/** O "Tentar de novo": botão discreto com os tokens do app (sem importar o FormKit para o chunk de entrada). */
+const RETRY_STYLE: React.CSSProperties = {
+  minHeight: 44, padding: '0 16px', boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-md)',
+  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500, cursor: 'pointer',
+  background: 'transparent', color: 'var(--sm2-ink)', border: '1px solid var(--sm2-line)',
+};
+
 const PULSE_CSS = `
 @keyframes sm2-skel-pulse {
   0%, 49%  { background-color: var(--sm2-primary-fill); }
@@ -73,10 +90,11 @@ const PULSE_CSS = `
 }
 `;
 
-export function ScreenSkeleton({ language = 'en-US', label, variant = 'page' }: ScreenSkeletonProps) {
+export function ScreenSkeleton({ language = 'en-US', label, variant = 'page', state = 'loading', onRetry }: ScreenSkeletonProps) {
   const reduced = usePrefersReducedMotion();
   const pt = language === 'pt-BR';
   const text = label ?? (pt ? 'Carregando' : 'Loading');
+  if (state === 'done') return null;
 
   const outer: React.CSSProperties =
     variant === 'overlay'
@@ -95,17 +113,34 @@ export function ScreenSkeleton({ language = 'en-US', label, variant = 'page' }: 
           alignItems: 'center',
           justifyContent: 'center',
           gap: 12,
-          minHeight: 220,
-          padding: 24,
+          minHeight: variant === 'inline' ? 72 : 96,
+          padding: variant === 'inline' ? 16 : 24,
           width: '100%',
         };
+
+  if (state === 'error') {
+    return (
+      <div style={outer} role="alert" data-skel-error>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
+          <span style={{ fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-ink)' }}>
+            {pt ? 'Não deu para abrir agora.' : "Couldn't open this right now."}
+          </span>
+          {onRetry && (
+            <button type="button" data-skel-retry onClick={onRetry} style={RETRY_STYLE}>
+              {pt ? 'Tentar de novo' : 'Try again'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       style={outer}
       role="status"
       aria-live="polite"
-      aria-label={pt ? 'Carregando' : 'Loading'}
+      aria-label={text}
     >
       <style>{PULSE_CSS}</style>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -118,7 +153,7 @@ export function ScreenSkeleton({ language = 'en-US', label, variant = 'page' }: 
           width={28}
           height={20}
           scale={2}
-          breathing={!reduced}
+          breathing={false}
           screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <span
@@ -147,17 +182,6 @@ export function ScreenSkeleton({ language = 'en-US', label, variant = 'page' }: 
           }}
         >
           {text}
-        </span>
-        {/* Par EN + PT-BR: a legenda de fora é a do usuário. */}
-        <span
-          style={{
-            fontFamily: 'var(--sm2-font-text)',
-            fontSize: 'var(--sm2-text-sm)',
-            lineHeight: 'var(--sm2-leading-body)',
-            color: 'var(--sm2-muted)',
-          }}
-        >
-          {pt ? 'Carregando…' : 'Loading…'}
         </span>
       </div>
     </div>

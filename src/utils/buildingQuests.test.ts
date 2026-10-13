@@ -15,7 +15,9 @@ const MAXB = 99;
 describe('tabela prédio → material', () => {
   it('todo prédio fora do Mercado tem 1 material, e o Mercado nenhum', () => {
     expect(QUEST_BUILDINGS.some(id => id.startsWith('mercado.'))).toBe(false);
-    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.')).length);
+    // beta-2 (11): o Perfil do Soulmon é leitura — sem missão, sem material (e sem peça do Soulsmith).
+    expect(QUEST_BUILDINGS).not.toContain('laboratorio.perfil');
+    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil').length);
     expect(MATERIALS.map(m => m.building).sort()).toEqual([...QUEST_BUILDINGS].sort());
     expect(new Set(MATERIAL_IDS).size).toBe(MATERIAL_IDS.length);
   });

@@ -856,7 +856,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/match3.ts`
 
-**Dono de:** a lógica pura do Combina 3, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (troca inválida não muda nada), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Combina 3" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`.
+**Dono de:** a lógica pura do Combina 3, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (beta-2, 9.2: a troca entre vizinhas é LIVRE — vale pontue ou não, devolve `scored`; só `far`/`empty` são inválidas e não gastam movimento; a tela gasta 1 movimento por troca válida), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Combina 3" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`.
 
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.
@@ -1919,6 +1919,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `App.tsx` (texto do Lv na StatsPage). Os motores de luta (PR3+) leem `soulLevel`/`soulCombatant`.
 **Régua:** `src/utils/soulXP.test.ts`, `src/utils/soulXP.hydrate.test.tsx`, `functions/api/soulXP.parity.test.js`, bloco "combate v3" de `src/copy.semFomo.contract.test.ts`.
 **Avisos do arquivo:** o servidor nunca aceita level nem stats do cliente (espelho em `functions/api/_soulXP.js`). `dayXP` só lê somas de peso de esforço; o esforço parcial de dias NÃO completos não entra no level porque não há histórico persistido dele (campo novo = decisão do dono).
+
+### `src/utils/soulmonPerfil.ts`
+**Dono de:** a LEITURA pura do Perfil do Soulmon (beta-2, 11, 13/10/2026): `buildPerfil` junta o traço de nascimento (`passives`), o atributo principal QUALITATIVO (o maior de ATK/DEF/SPD do `soulCombatant`; empate Força > Resistência > Agilidade), o maior nível entre as peças EQUIPADAS no Soulsmith (`forge.pieceLevel`) e a identidade de combate (`fighterIdentity`: elemento principal, forma do golpe, família do especial). O que o app não tem vira `null` (nada inventado); o elemento do especial só aparece se difere do principal. 11.3: elemento e ataque saíram da Arena livre e moram só aqui.
+**Exports:** `PerfilInput`, `Perfil`, `MainAttr` (tipos) · `buildPerfil`, `atributoPrincipal`, `nivelDoEquipamento`, `fichaStageOf` · `PERFIL_ATRIBUTO`, `PERFIL_FORMA`, `PERFIL_EFEITO` (rótulos PT/EN).
+**Chamado por:** `src/components/perfil/SoulmonPerfil.tsx`.
+**Régua:** `src/utils/soulmonPerfil.test.ts`.
 
 ### `src/utils/soulProfile/astrology/chart.ts`
 **Dono de:** Cálculo do mapa astral real (posições, aspectos, ângulos, casas Placidus) via astronomy-engine.

@@ -465,9 +465,9 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
                   aria-pressed={active}
                   title={isPt ? m.labelPt : m.labelEn}
                   style={{
-                    flex: 1, minHeight: 44, cursor: 'pointer',
+                    flex: 1, minHeight: 64, minWidth: 44, cursor: 'pointer', // 12 (beta-2): alvo de toque folgado (>= 44) para o ícone maior
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 24, lineHeight: 1,
+                    fontSize: 40, lineHeight: 1,
                     boxSizing: 'border-box',
                     border: 'none',
                     borderRadius: 'var(--sm2-radius-md)',
@@ -477,12 +477,17 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
                 >
                   {/* C6: arte própria quando existir (`utils/moodArt.ts`); emoji é o fallback. */}
                   {moodArtFor(m.value)
-                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={24} height={24} style={{ display: 'block', imageRendering: 'pixelated' }} />
+                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={40} height={40} style={{ display: 'block', width: 40, height: 40, imageRendering: 'pixelated' }} />
                     : <span aria-hidden="true">{m.emoji}</span>}
                 </button>
               );
             })}
           </div>
+          {/* 12 (beta-2): ícone ↔ rótulo ↔ estado — o nome do humor escolhido aparece sob a fileira (uma palavra, sem explicação). */}
+          {moodToday !== undefined && moodToday !== null && (() => {
+            const sel = MOOD_OPTIONS.find(o => o.value === moodToday);
+            return sel ? <p data-mood-label style={{ ...hint, textAlign: 'center', fontWeight: 500 }}>{isPt ? sel.labelPt : sel.labelEn}</p> : null;
+          })()}
           {moodNote && <p style={hint}>{moodNote}</p>}
         </div>
       )}
