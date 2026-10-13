@@ -370,6 +370,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `USER_NAME` | `soulmon-user-name` | O nome do JOGADOR (vai ao ranking público quando o PvP está ligado). | `App.tsx`, `GameStateContext.tsx` |
 | `EGG_TYPE` | `soulmon-egg-type` | Linha de sprite genérico; semente do `eggType` do save. | `App.tsx`, `GameStateContext.tsx` |
 | `FIRST_TASK_POPUP_SHOWN` | `soulmon-first-task-popup-shown` | O aviso da primeira tarefa já apareceu. | `App.tsx` |
+| `RITUAL_OPEN` | `soulmon-ritual-open` | Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`, teto 200). Preferência de tela do aparelho, não progresso; não vai para a nuvem. | `App.tsx`, `utils/atividadesLista.ts` |
 | `NOTIFICATIONS_ENABLED` | `soulmon-notifications-enabled` | O jogador ligou notificações. | `App.tsx` |
 | `PWA_INSTALL_DISMISSED` | `soulmon-pwa-install-dismissed` | Dispensou o convite de instalar a PWA. | `InstallPrompt.tsx`, `WelcomePromptModal.tsx` |
 | `NOTIFICATION_PROMPT_DISMISSED` | `soulmon-notification-prompt-dismissed` | Dispensou o PRIMEIRO convite de push. | `App.tsx`, `WelcomePromptModal.tsx` |
