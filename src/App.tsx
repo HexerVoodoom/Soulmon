@@ -238,7 +238,7 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
-import { activitiesFromCatalogChoice } from './utils/catalogChoice';
+import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
 import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
@@ -4623,6 +4623,26 @@ export default function App() {
     return adventureOfNight(entries, r.done, r.required, r.date);
   }, [gameState.lastDayReport, gameState.adventures, gameState.crossings, trv, showDailyReport]);
 
+  /**
+   * O vínculo explícito do resumo (beta-2, 4.3): a missão do Passeio que a pessoa cumpriu no dia anterior e o
+   * destino dela. Vem do REGISTRO do mapa (`strollOfDay`) — a mesma fonte da viagem da noite —, então o que o
+   * resumo diz é o que de fato levou o Soulmon ao achado. Sem missão cumprida naquele dia, `null`.
+   */
+  const strollDaNoite = useMemo(() => {
+    const r = gameState.lastDayReport;
+    if (!r || !trv) return null;
+    return trv.strollSummary(gameState.crossings ?? CROSSINGS_EMPTY, dayKeyToIso(r.date) ?? r.date, language === 'pt-BR');
+  }, [gameState.lastDayReport, gameState.crossings, trv, language]);
+
+  /** A animação dos corações começou: grava "já vista" no relatório (idempotente; o updater é puro — footgun 6). */
+  const handleHeartsAnimSeen = useCallback(() => {
+    setGameState(prev => {
+      const rep = prev.lastDayReport;
+      if (!rep || rep.heartsAnimSeen) return prev;
+      return { ...prev, lastDayReport: { ...rep, heartsAnimSeen: true } };
+    });
+  }, [setGameState]);
+
   /** Inédito = não estava no diário ANTES desta noite. Só muda o rótulo na tela. */
   const aventuraInedita = useMemo(
     () => !!aventuraDaNoite && !(gameState.adventures ?? []).some(e =>
@@ -7812,6 +7832,10 @@ export default function App() {
           report={gameState.lastDayReport}
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
+          stroll={strollDaNoite}
+          maxHearts={gameState.maxHealthPoints}
+          heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
+          onHeartsAnimSeen={handleHeartsAnimSeen}
           onClose={() => {
             /* WP4.8 — o marco é registrado ao FECHAR: se fosse ao abrir, um
                relatório reaberto no mesmo dia gastaria a memória sem ela ter
@@ -8010,7 +8034,10 @@ export default function App() {
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <CatalogOnboardingFlow
           language={language}
-          onComplete={(chosen) => {
+          existingActivities={gameState.activities as ReadonlyArray<{ catalogId?: string | null }>}
+          onComplete={(chosenRaw) => {
+            // 7.3: defesa em profundidade — mesmo que a tela mande um item que já está na lista, ele não entra duplicado.
+            const chosen = withoutExisting(chosenRaw, gameState.activities as ReadonlyArray<{ catalogId?: string | null }>);
             // ACRESCENTA, nunca substitui — nenhuma atividade existente é
             // tocada (decisão do dono, 28/09/2026). Mas pelo PORTÃO de criação
             // (D-12): escrever em `activities` por fora furava o teto do demo e

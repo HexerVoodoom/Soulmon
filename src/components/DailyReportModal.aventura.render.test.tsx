@@ -15,7 +15,7 @@
  *  4. **PT e EN.**
  */
 import { describe, it, expect } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { DailyReportModal } from './DailyReportModal';
 import { ADVENTURE_CATALOG, adventureOfDay } from '../utils/adventure';
@@ -34,7 +34,13 @@ const relatorio = (over: Record<string, unknown> = {}) => ({
   ...over,
 }) as never;
 
-function abrir(over: Record<string, unknown> = {}, props: Record<string, unknown> = {}) {
+/** Beta-2 (4.4): cada seção é uma folha — a aventura é a TERCEIRA (tarefas → corações → aventura). */
+function irParaAventura() {
+  fireEvent.click(screen.getByRole('button', { name: /continuar|continue/i }));
+  fireEvent.click(screen.getByRole('button', { name: /continuar|continue/i }));
+}
+
+function abrir(over: Record<string, unknown> = {}, props: Record<string, unknown> = {}, avancar = true) {
   renderWithCss(
     <DailyReportModal
       report={relatorio(over)}
@@ -44,6 +50,7 @@ function abrir(over: Record<string, unknown> = {}, props: Record<string, unknown
       {...props}
     />,
   );
+  if (avancar) irParaAventura();
 }
 
 describe('a aventura aparece — inclusive quando o dia foi ruim', () => {
@@ -67,8 +74,9 @@ describe('a aventura aparece — inclusive quando o dia foi ruim', () => {
   it('quem VOLTOU depois de sumir também recebe', () => {
     // O modo acolhida some com os números de falha; a única coisa boa da tela
     // não pode sumir junto.
-    abrir({ welcomeBack: true, daysAway: 5, done: 0 });
+    abrir({ welcomeBack: true, daysAway: 5, done: 0 }, {}, false);
     expect(screen.getByText('Que saudade!')).toBeTruthy();
+    irParaAventura();
     expect(screen.getByText(ACHADO.titlePt)).toBeTruthy();
   });
 
@@ -92,25 +100,26 @@ describe('o que o card NÃO diz', () => {
     }
   });
 
-  it('"inédito" só aparece quando é inédito de verdade', () => {
+  it('"Novo" só aparece quando é inédito de verdade', () => {
     abrir({}, { adventureIsNew: false });
-    expect(screen.queryByText(/inédito/)).toBeNull();
+    expect(document.querySelector('[data-adventure-new]')).toBeNull();
     cleanup();
     abrir({}, { adventureIsNew: true });
-    expect(screen.getByText(/inédito/)).toBeTruthy();
+    expect(document.querySelector('[data-adventure-new]')?.textContent).toBe('Novo');
   });
 });
 
 describe('idioma', () => {
   it('fala os dois', () => {
     abrir();
-    expect(screen.getByText(/Da aventura de hoje/)).toBeTruthy();
+    expect(screen.getByText(/Da aventura de ontem/)).toBeTruthy();
     expect(screen.getByText(ACHADO.textPt)).toBeTruthy();
     cleanup();
     renderWithCss(
       <DailyReportModal report={relatorio()} adventure={ACHADO} onClose={() => {}} language="en-US" />,
     );
-    expect(screen.getByText(/From today's adventure/)).toBeTruthy();
+    irParaAventura();
+    expect(screen.getByText(/From Yesterday's Adventure/)).toBeTruthy();
     expect(screen.getByText(ACHADO.textEn)).toBeTruthy();
   });
 });

@@ -3305,3 +3305,8 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 ### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
 **Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
 **Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.
+
+### `src/utils/dayHearts.ts` (beta-2, 13/10/2026)
+**Dono de:** a fileira de corações do resumo do dia (`heartStrip`: total, quebrados, inteiros — meio coração perdido conta como um quebrado) e da regra "a animação de quebra toca uma vez" (`shouldPlayHeartBreak`, lida de `lastDayReport.heartsAnimSeen`).
+**Exports:** `DEFAULT_HEARTS`, `HeartStrip`, `heartStrip`, `shouldPlayHeartBreak`.
+**Régua:** `src/utils/dayHearts.test.ts`, `src/components/DailyReportModal.secoes.render.test.tsx`.

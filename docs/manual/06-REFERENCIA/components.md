@@ -1504,3 +1504,10 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/home/DungeonSign.tsx`
 
 **Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+
+### `src/components/DayHearts.tsx` (beta-2, 13/10/2026)
+**Dono de:** a fileira de corações do resumo pós-dia: os inteiros ficam como estão; o cobrado treme (`sm2-heart-shake`), quebra (`sm2-heart-snap`) e vira coração preto (o ícone `hp` do HUD, escurecido por filtro). Só anima quando `play` é verdadeiro na montagem; movimento reduzido pula para o preto.
+**Props principais:** `strip` (`HeartStrip`), `play`, `onPlayed`, `isPt`.
+**Exports:** `DayHearts`, `HEART_SHAKE_MS`, `HEART_SNAP_MS`.
+**Chamado por:** `src/components/DailyReportModal.tsx` (folha dos corações).
+**Régua:** `src/components/DailyReportModal.secoes.render.test.tsx`.

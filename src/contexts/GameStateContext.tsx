@@ -598,6 +598,10 @@ export interface GameState {
     weeklyRelief?: boolean;
     /** Já usou o "esqueci de marcar" deste relatório (1× por dia). */
     heartsRecovered?: boolean;
+    /** A animação de quebra dos corações (tremor → coração preto) já rodou neste relatório (beta-2, 4.2):
+     *  reabrir o resumo do MESMO dia não a repete. Mora DENTRO do relatório de propósito — a virada do dia
+     *  grava um relatório novo e a marca some sozinha ("uma vez por dia"), e o save não ganha campo de topo. */
+    heartsAnimSeen?: boolean;
     /** P2 — a folga da semana absorveu a perda desta virada. A UI CONTA isso:
      *  perdão que a pessoa não soube que recebeu não acalma, e faz a cobrança
      *  da semana seguinte parecer arbitrária. */
@@ -1465,9 +1469,14 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // truthy e abriria o modal do relatório com campos vazios.
         lastDayReport: (() => {
           const r = obj<unknown>(loadedState.lastDayReport);
-          return typeof r.date === 'string'
-            ? (loadedState.lastDayReport as GameState['lastDayReport'])
-            : undefined;
+          if (typeof r.date !== 'string') return undefined;
+          const rep = loadedState.lastDayReport as NonNullable<GameState['lastDayReport']>;
+          // `heartsAnimSeen` só vale como `true` literal: lixo no save não pode calar a animação nem quebrar a tela.
+          if ('heartsAnimSeen' in rep && rep.heartsAnimSeen !== true) {
+            const { heartsAnimSeen: _lixo, ...resto } = rep;
+            return resto;
+          }
+          return rep;
         })(),
         // Motor de tarefas (docs/PLANO-TAREFAS.md). Todos opcionais, mas com
         // linha aqui por regra: campo sem linha em `hydrateSave` já produziu a
