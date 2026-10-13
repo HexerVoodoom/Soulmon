@@ -12,7 +12,7 @@ describe('lotes novos (29/09/2026)', () => {
   it('Arena tem Torneio, Duelo e Feira; Hall tem Biblioteca, Círculo de Amigos e Salão da Guilda', () => {
     expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'biblioteca', 'amigos', 'guilda']); // 11/10/2026: a Feira vem PRIMEIRO = fica ATRÁS (a ordem do array é a ordem de pintura)
-    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats']);
+    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats', 'perfil']); // beta-2 (11): o Perfil do Soulmon
   });
 
   it('H15/H16/H17 (01/10/2026; Arena revista no beta-2 9.3: Torneio num tablado e Arena livre no OUTRO); Santuário do Vínculo bem maior; Hall maior', () => {

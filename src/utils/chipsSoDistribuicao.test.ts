@@ -89,9 +89,9 @@ describe('PR6: nenhum caminho de combate le chip, inventario ou XP', () => {
 describe('PR6: copy dos chips (EN primeiro, PT-BR) sem promessa de forca', () => {
   const textos = [...SHOP_ITEMS.filter(i => i.kind === 'chip'), ...Object.values(SPECIAL_ITEMS).filter(i => i.kind === 'chip')]
     .flatMap(i => [i.descEn, i.descPt]);
-  it('descreve caminho e nao "+N de atributo"', () => {
+  it('8.1 (beta-2): a descrição é só nome do efeito + valor ("+3 Power") e nunca promete força', () => {
     expect(textos.length).toBe(12 / 2 * 2);
-    for (const t of textos) expect(t).toMatch(/path|caminho/);
-    for (const t of textos) expect(t).not.toMatch(/(Use|Usar|use|usar) (for|dá) \+\d/);
+    for (const t of textos) expect(t).toMatch(/^\+3 (Power|Harmony|Benevolence|Poder|Harmonia|Benevolência)$/);
+    for (const t of textos) expect(t).not.toMatch(/(Use|Usar|use|usar) (for|dá) \+\d|forç|strength/i);
   });
 });

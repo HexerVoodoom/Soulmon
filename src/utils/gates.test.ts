@@ -156,3 +156,17 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     expect(buildingLockLine(4, 'pt-BR')).not.toMatch(/faltam|falta|!/);
   });
 });
+
+describe('beta-2 (11): o Perfil do Soulmon', () => {
+  it('abre no Vínculo 2 (o mesmo do Arquivo, de onde lê a ficha), fecha no 1 e nunca é prédio de entrada', () => {
+    expect(BUILDING_GATES['laboratorio.perfil'].minBond).toBe(BUILDING_GATES['laboratorio.pet'].minBond);
+    expect(buildingGateFor('laboratorio.perfil', 1).open).toBe(false);
+    expect(buildingGateFor('laboratorio.perfil', 2).open).toBe(true);
+    expect(buildingGateFor('laboratorio.perfil', undefined).open).toBe(false); // ausência de prova não é prova
+    expect(BUILDINGS_ALWAYS_OPEN).not.toContain('laboratorio.perfil');
+    expect(areaMinBond('laboratorio')).toBe(1); // o Centro de Evolução mantém a área aberta
+  });
+  it('é leitura: não dá missão nem material (fora de QUEST_BUILDINGS), e o texto de trancado é neutro', () => {
+    expect(buildingLockLine(2, 'pt-BR')).not.toMatch(/faltam|falta|!/);
+  });
+});
