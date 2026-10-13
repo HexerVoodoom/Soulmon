@@ -8,7 +8,8 @@
  *
  *  · o nome escrito pelo usuário TRUNCA — e por isso precisa carregar `title`,
  *    senão um nome longo em PT-BR desaparece sem recurso de leitura;
- *  · o selo é o TIPO (`task_alt`/`event_repeat`, D-A2), nunca emoji nem PNG;
+ *  · (beta-2, 2.2) o checkbox BRONZE fica à esquerda do nome, o selo do tipo
+ *    saiu e o pai com filhos nunca conclui direto;
  *  · a linha continua com ≥56px de altura mesmo com nome de 40+ caracteres
  *    (canvas Atividades: `.li` 56, checkbox 24 em alvo 44).
  *
@@ -59,13 +60,13 @@ describe('RitualRow — a ação central continua acessível na composição den
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 
-  // D2 (01/10/2026): editar = tocar no ÍCONE DA ESQUERDA (o selo do tipo).
-  it('o ícone da esquerda é o botão de EDITAR, com rótulo que diz o nome', () => {
+  // Beta-2 (2.2): editar = o NOME (o checkbox bronze ocupa a esquerda).
+  it('o nome é o botão de EDITAR, com rótulo que diz o nome', () => {
     const edit = vi.fn();
     const { container } = renderWithCss(<ul>{linha({ onEdit: edit })}</ul>);
     const botao = screen.getByRole('button', { name: 'Editar: Beber 2 litros de água' });
     expect(botao.getAttribute('data-ritual-edit')).not.toBeNull();
-    expect(botao.querySelector('.sm2-icon')).not.toBeNull();
+    expect(botao.textContent).toContain('Beber 2 litros de água');
     fireEvent.click(botao);
     expect(edit).toHaveBeenCalledTimes(1);
     // um só controle de editar por linha (sem lápis/folha extra)
@@ -102,24 +103,69 @@ describe('RitualRow — sobreviver ao texto PT-BR (N3 da análise de gap)', () =
   });
 });
 
-describe('RitualRow — o selo é o TIPO (D-A2), pelado, e NUNCA emoji', () => {
-  it('hábito = `event_repeat`, tarefa = `task_alt`, 24 e decorativos', () => {
-    const { container, unmount } = renderWithCss(<ul>{linha({ kind: 'habit' })}</ul>);
-    const selo = container.querySelector('.sm2-icon') as HTMLElement;
-    expect(selo.textContent).toBe('event_repeat');
-    expect(selo.getAttribute('aria-hidden')).toBe('true');
-    expect(selo.style.fontSize).toBe('24px');
-    unmount();
-    const r2 = renderWithCss(<ul>{linha({ kind: 'task' })}</ul>);
-    expect((r2.container.querySelector('.sm2-icon') as HTMLElement).textContent).toBe('task_alt');
+describe('RitualRow — checkbox bronze à esquerda, sem selo de tipo (beta-2, 2.2)', () => {
+  it('o checkbox vem ANTES do nome no DOM e a linha não desenha mais o selo do tipo', () => {
+    const { container } = renderWithCss(<ul>{linha({ kind: 'habit' })}</ul>);
+    const box = container.querySelector('[role="checkbox"]') as HTMLElement;
+    const nome = container.querySelector('.sm2-ritual-name') as HTMLElement;
+    expect(box.compareDocumentPosition(nome) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector('li')!.getAttribute('data-kind')).toBe('habit');
+    const nomesDeIcone = Array.from(container.querySelectorAll('.sm2-icon')).map(i => i.textContent);
+    expect(nomesDeIcone).not.toContain('event_repeat');
+    expect(nomesDeIcone).not.toContain('task_alt');
   });
 
-  it('o selo não ganha caixa e nunca é PNG', () => {
-    const { container } = renderWithCss(<ul>{linha()}</ul>);
-    const selo = container.querySelector('.sm2-icon') as HTMLElement;
-    expect(selo.style.backgroundColor).toBe('');
-    expect(selo.style.border).toBe('');
-    expect(container.querySelectorAll('img').length).toBe(0);
+  it('marcado, o checkbox é BRONZE por TOKEN (`--sm2-check-fill`), nunca valor literal', () => {
+    renderWithCss(<ul>{linha({ done: true })}</ul>);
+    const caixa = screen.getByRole('checkbox').querySelector('span') as HTMLElement;
+    expect(caixa.style.backgroundColor).toBe('var(--sm2-check-fill)');
+    expect(caixa.style.border).toContain('var(--sm2-check-fill)');
+    expect(caixa.style.color).toBe('var(--sm2-on-check)');
+  });
+
+  it('o bronze é alias do ouro-cobre do sistema nos DOIS temas (sem hex próprio)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('src/index.css', 'utf8');
+    const decl = css.match(/--sm2-check-fill:\s*([^;]+);/g) ?? [];
+    expect(decl.length).toBeGreaterThanOrEqual(2);
+    for (const d of decl) expect(d).toContain('var(--sm2-gold-fill)');
+  });
+
+  it('PAI com filhos: o checkbox NÃO conclui; reflete parcial (`mixed`) e tocar abre os filhos', () => {
+    const toggle = vi.fn();
+    const abrir = vi.fn();
+    renderWithCss(<ul>{linha({
+      onToggle: toggle, expandable: true, expanded: false, onExpand: abrir, value: 1, max: 3,
+      children: <p>filho</p>,
+    })}</ul>);
+    const box = screen.getByRole('checkbox');
+    expect(box.getAttribute('aria-checked')).toBe('mixed');
+    expect(box.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(box);
+    expect(toggle).not.toHaveBeenCalled();
+    expect(abrir).toHaveBeenCalledTimes(1);
+  });
+
+  it('PAI com todos os filhos feitos: marcado, inerte e o toque não faz nada', () => {
+    const toggle = vi.fn();
+    const abrir = vi.fn();
+    renderWithCss(<ul>{linha({
+      onToggle: toggle, expandable: true, expanded: false, onExpand: abrir, value: 3, max: 3, done: true,
+    })}</ul>);
+    const box = screen.getByRole('checkbox');
+    expect(box.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(box);
+    expect(toggle).not.toHaveBeenCalled();
+    expect(abrir).not.toHaveBeenCalled();
+  });
+
+  it('o chevron de recolher é discreto (ícone 20) e não duplica o checkbox', () => {
+    const { container } = renderWithCss(<ul>{linha({
+      expandable: true, expanded: true, onExpand: () => {}, children: <p>filho</p>,
+    })}</ul>);
+    const chevron = container.querySelector('[data-ritual-expand] .sm2-icon') as HTMLElement;
+    expect(chevron.style.fontSize).toBe('20px');
+    expect(container.querySelectorAll('[role="checkbox"]')).toHaveLength(1);
   });
 
   it('nenhum emoji do sistema sobra no conteúdo da linha', () => {
