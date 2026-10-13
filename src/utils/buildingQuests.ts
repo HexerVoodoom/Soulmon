@@ -65,8 +65,8 @@ export const MATERIAL_BUILDING: Readonly<Record<MaterialId, BuildingId>> = {
 
 export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 
-/** Os prédios que dão missão: todos menos `mercado.*`. */
-export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.'));
+/** Os prédios que dão missão: todos menos `mercado.*` e o Perfil do Soulmon (beta-2: é uma LEITURA da ficha — sem missão, sem material, sem peça do Soulsmith). */
+export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil');
 
 /** Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita. */
 export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = ['exploracao.caderno'];

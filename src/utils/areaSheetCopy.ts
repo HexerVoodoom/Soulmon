@@ -34,7 +34,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro';
 export type ArenaLotId = 'torneio' | 'duelo';
-export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats';
+export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats' | 'perfil';
 export type HallLotId = 'biblioteca' | 'amigos' | 'guilda' | 'feira';
 
 interface AreaLotSpec<K extends string> {
@@ -97,6 +97,8 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
   { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '26%', top: '70%', width: '44%' },
   { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '78%', top: '70%', width: '50%' },
   { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '43%', width: '62%' },
+  // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
+  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '92%', width: '40%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [

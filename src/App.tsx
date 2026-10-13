@@ -734,13 +734,14 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ d
 // orçamento de bytes (decisão #31).
 const AreaView = lazy(() => loadAreaView().then(m => ({ default: m.AreaView })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
+const SoulmonPerfil = lazy(() => import('./components/perfil/SoulmonPerfil').then(m => ({ default: m.SoulmonPerfil })));
 
 /** O que o `<main>` desenha fora das áreas, DERIVADO da navegação
  *  (`navigation.ts`). Desde a F5 toda área é desenhada pelo `AreaView`; o
  *  `pane` delas só importa no Laboratório, onde a sub-aba (`labTab`) decide a
  *  folha. As outras cinco áreas viram `'area'`. */
-type Pane = 'main' | 'map' | 'area' | 'evolution' | 'stats' | 'pet' | 'settings' | 'oracle';
-type LabTab = 'evolution' | 'pet' | 'stats';
+type Pane = 'main' | 'map' | 'area' | 'evolution' | 'stats' | 'pet' | 'perfil' | 'settings' | 'oracle';
+type LabTab = 'evolution' | 'pet' | 'stats' | 'perfil';
 
 function paneFor(view: ViewType, labTab: LabTab): Pane {
   if (view === 'home') return 'main';
@@ -6182,6 +6183,27 @@ export default function App() {
             </div>
           )}
           {labTab === 'stats' && statsPage}
+          {/* O PERFIL do Soulmon (beta-2, 11): leitura curta da ficha, do Soulsmith e da personalidade — `utils/soulmonPerfil.ts`. */}
+          {labTab === 'perfil' && (
+            <Suspense fallback={<ScreenSkeleton language={language} variant="inline" />}>
+              <SoulmonPerfil
+                language={language}
+                input={{
+                  evolutionStage: gameState.evolutionStage,
+                  perfectDays: gameState.perfectDays,
+                  powerPoints: gameState.powerPoints,
+                  harmonyPoints: gameState.harmonyPoints,
+                  benevolencePoints: gameState.benevolencePoints,
+                  degeneratedByHP: gameState.degeneratedByHP,
+                  petPassive: gameState.petPassive,
+                  skills: gameState.soulmonSkills,
+                  petElement: gameState.soulmonMeta?.dominantElement,
+                  equipment: gameState.equipment,
+                  forge: gameState.forge,
+                }}
+              />
+            </Suspense>
+          )}
     </>
   );
   const hallContent = (view: 'directory' | 'friends') => (<Suspense fallback={<ScreenSkeleton language={language} />}>

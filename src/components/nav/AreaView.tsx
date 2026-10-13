@@ -107,7 +107,7 @@ export interface PlayHandlers {
 const LOTE_OCUPA_SOULMON: Record<string, OcupadoAcao> = { 'arena.duelo': 'duelo', 'arena.torneio': 'torneio', 'exploracao.passeio': 'passeio' };
 
 export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
-export type LabTab = 'evolution' | 'pet' | 'stats';
+export type LabTab = 'evolution' | 'pet' | 'stats' | 'perfil';
 
 type TournamentProps = Omit<ComponentProps<typeof TournamentPageT>, 'shop'>;
 
@@ -476,7 +476,7 @@ export function AreaView(props: AreaViewProps) {
   // Laboratório; Biblioteca / Círculo de Amigos / Salão da Guilda no Hall. As
   // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
   if (area === 'laboratorio') {
-    const tabOf: Record<LaboratorioLotId, LabTab> = { evolucao: 'evolution', pet: 'pet', stats: 'stats' };
+    const tabOf: Record<LaboratorioLotId, LabTab> = { evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' };
     const lots = laboratorioLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
     return (

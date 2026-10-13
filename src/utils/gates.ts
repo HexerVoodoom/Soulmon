@@ -93,7 +93,7 @@ export type BuildingId =
   | 'jogos.salao' | 'jogos.refugio' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio'
   | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina'
-  | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats'
+  | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
   | 'hall.biblioteca' | 'hall.amigos' | 'hall.guilda' | 'hall.feira';
 
 /**
@@ -126,6 +126,8 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },
+  // O PERFIL do Soulmon (beta-2, 11): lê a ficha do Arquivo (elemento, golpes) — por isso abre no MESMO Vínculo dele. Default da squad; o dono ajusta só aqui.
+  'laboratorio.perfil': { minBond: 2 },
   'hall.biblioteca': { minBond: 2 },
   'hall.amigos': { minBond: 2 },
   'hall.guilda': { minBond: 4 },

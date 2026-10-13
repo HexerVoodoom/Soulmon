@@ -16,7 +16,11 @@ import type { Language } from '../../utils/i18n';
  * ficha. Mock aprovado: `propostas/arena/mock.html` (`#modalArena`: "sua
  * ficha" + CTA).
  *
- * I9 (02/10/2026): o dono não entendia "Sua ficha / Neutro · elemento · golpe
+ * BETA-2 (9.3 + 11.3, 13/10/2026): a Arena livre ganhou o seu PRÓPRIO bloco no mapa (o Torneio ficou no outro) e o elemento e os
+ * golpes do Soulmon SAÍRAM desta folha — moram no Perfil do Soulmon (Laboratório, `components/perfil/SoulmonPerfil.tsx`). Sobrou o poder, a
+ * escolha dos adversários e o botão.
+ *
+ * I9 (02/10/2026, histórico): o dono não entendia "Sua ficha / Neutro · elemento · golpe
  * básico · habilidade". Agora só o essencial — o elemento do Soulmon (com ícone),
  * o poder e os dois golpes, numa linha — e o que cada coisa significa mora atrás
  * de um "?" (`InfoTip`).
@@ -114,7 +118,7 @@ export function DueloSheet({ language, evolutionStage, onStart }: {
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* 11.3 (beta-2): elemento e golpes saíram da Arena livre e moram no PERFIL do Soulmon (Laboratório) — fonte única, `fighterIdentity`. */}
+      {/* 11.3 (beta-2): elemento e golpes saíram da Arena livre e moram no PERFIL do Soulmon (Laboratório) — fonte única em `utils/soulmonPerfil.ts`. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ ...box, flex: '0 0 auto' }} data-duelo-poder title={isPt ? 'Poder' : 'Power'} aria-label={`${isPt ? 'Poder' : 'Power'}: ${poder}`}>
           <Icon name="bolt" size={24} tone="gold" fill={1} />

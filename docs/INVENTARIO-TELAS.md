@@ -432,16 +432,18 @@ coraçãozinho, ranking.
 
 ### 5.6-B Combina 3 — `Match3Game.tsx` (Salão de Jogos)
 
+> **Beta-2 (13/10/2026, 9.2):** a troca entre vizinhas é LIVRE (pontue ou não; gasta 1 movimento). O aviso "essa troca não forma linha" saiu.
+
 **Arquivo:** `Match3Game.tsx` (card em `PlaySheets › SalaoSheet`, ícone `icons/icon-gem.png`). **Frequência: livre (sem limite diário; os Bits passam pelo teto diário de minijogo).**
 
 Lido do código: cabeçalho com "?" (como se joga), três etiquetas (Movimentos, Pontos, Bits), aviso vivo (troca sem linha, dica, embaralhada, cascata), tabuleiro 7×7 de ícones de elemento (`el-fogo`, `el-agua`, `el-terra`, `el-vida`, `el-ar`, `el-luz`), "Próximo Bit com N pontos", botão **Dica**; fim: "Você fez N pontos", "+N Bits", recorde, **De novo / Sair**. PT/EN. Teclado: setas movem o foco, Enter seleciona/troca. Movimento reduzido: sem queda, tremida nem deslize. **Não verificado em aparelho real** (só em Chrome 390×844 e jsdom).
 
 ### 5.7 Dino Runner — `DinoGame.tsx`
-Ícone lucide `ArrowUp` + PNG `icon-game-dino`, `icon-close`. **Não percorrido**
+Ícone lucide `ArrowUp` + PNG `icon-game-dino`, `icon-close` (o card do Salão usa, desde 13/10/2026, a bota `ativ-corpo-caminhar`). **Não percorrido**
 (exige interação de canvas/teclado). Frequência: semanal.
 
 ### 5.8 Pedra-Papel-Tesoura — `RPSGame.tsx`
-PNG `icon-game-rps`, `icon-game-tournament`, `icon-skull`, `icon-close`.
+PNG `icon-game-rps`, `icon-game-tournament`, `icon-skull`, `icon-close` (o card do Salão usa, desde 13/10/2026, o punho `games/hand-rock`).
 **Não percorrido.** Frequência: semanal.
 
 ### 5.9 `tournament` — Torneio
@@ -728,3 +730,11 @@ Prioridade = frequência × gravidade. `P0` = todo dia + quebra a linguagem;
 4. **Percorrer o caminho pago** do onboarding (26 telas não verificadas).
 5. **Torneio com PvP ligado** e **Masmorra até o 5º andar**.
 6. Rodar no **APK** para verificar `StepsCard` e o `InstallPrompt`.
+
+---
+
+## Delta de 13/10/2026 (beta-2, frente D) — Perfil do Soulmon
+
+### Laboratório › Perfil — `SoulmonPerfil.tsx` (prédio `laboratorio.perfil`, Vínculo 2)
+
+**Arquivo:** `components/perfil/SoulmonPerfil.tsx` (lazy, montado em `labContent` do `App` com `labTab === 'perfil'`). **Frequência: livre (só leitura).** Lido do código: duas cartas (`sheetCard`) — "Quem ele é" (Personalidade, Atributo principal, Equipamento do Soulsmith) e "Como luta" (Elemento, Ataque, Especial, Efeito, Elemento do especial). Ícones: `icones-ui/interacao` (passiva, `ativ-corpo-forca`, `status-raio`), `icons/icon-shield|gear|target|spellbook|flame|potion|star|heart-handshake`, `games/hand-rock` e os ícones de elemento. A linha some sem dado. **Não percorrido em aparelho real**; capturas em `product/beta-play-01/builder/b2-d/`.
