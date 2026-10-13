@@ -4,15 +4,10 @@ import { ARENA_ROUNDS, ARENA_ROUND_COMP, buildArenaRound, elementLabel, loadBest
 import { mulberry32 } from '../../utils/combate/rng';
 import { newDefenseSeed } from '../../utils/autoDefesa';
 import { soulCombatant } from '../../utils/soulXP';
-import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { elementIcon } from '../../utils/elementIconArt';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
-import { getStageLevel } from '../../types/progression';
-import { fighterIdentity } from '../../utils/fighterIdentity';
-import { elementoNomeDe } from '../../utils/soulProfile/ficha/elementoNome';
-import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
-import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { Language } from '../../utils/i18n';
 
 /**
@@ -103,80 +98,46 @@ function EscolhaDeAdversarios({ isPt, onPick }: { isPt: boolean; onPick: (seed: 
   );
 }
 
-function fichaStageOf(evolutionStage: string): FichaStage {
-  const nivel = getStageLevel(evolutionStage);
-  return (['rookie', 'champion', 'ultimate', 'mega', 'ultra'].includes(nivel) ? nivel : 'rookie') as FichaStage;
-}
-
-export function DueloSheet({ language, evolutionStage, skills, petElement, onStart }: {
+export function DueloSheet({ language, evolutionStage, onStart }: {
   language: Language;
   evolutionStage: string;
-  skills?: Partial<Record<FichaStage, StageSkills>>;
-  /** Fallback da identidade sem ficha (o dominante do oráculo), igual nas telas de luta. */
-  petElement?: string;
   /** Chamado com a semente do desafio ESCOLHIDO (sem ela, a Arena sorteia). */
   onStart: (seed?: number) => void;
 }) {
   const isPt = language === 'pt-BR';
-  const stage = fichaStageOf(evolutionStage);
-  const par = skills?.[stage];
-  const t = (x: { pt: string; en: string } | undefined) => (x ? (isPt ? x.pt : x.en) : null);
-  // O elemento do Soulmon = o do golpe BÁSICO, da identidade de combate (dono único): o mesmo que a luta usa.
-  const elementoId = fighterIdentity(par, petElement).basico.elemento;
-  const elemento = par ? t(elementoNomeDe(elementoId)) : (petElement ? t(elementoNomeDe(elementoId)) : (isPt ? 'Neutro' : 'Neutral'));
-  const arte = elementIcon(elementoId) ?? elementIcon('neutro');
   // O mesmo poder que a luta usa (`ArenaGame`, Combate v3): o ATK do `soulCombatant` do save; sem save (demo, testes), o do estágio.
   const gs = useGameStateOptional()?.gameState;
   const poder = soulCombatant(gs
     ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
     : { evolutionStage }).atk;
-  const golpes = [t(par?.basica?.nome), t(par?.especial?.nome)].filter(Boolean) as string[];
   const [pickedSeed, setPickedSeed] = useState<number | undefined>(undefined);
-  const golpesTxt = golpes.length ? golpes.join(' · ') : (isPt ? 'Golpe básico' : 'Basic strike');
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={box} data-duelo-elemento>
-          {arte && <img src={arte} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'pixelated', flexShrink: 0 }} />}
-          <span style={boxValue}>{elemento}</span>
-        </div>
+      {/* 11.3 (beta-2): elemento e golpes saíram da Arena livre e moram no PERFIL do Soulmon (Laboratório) — fonte única, `fighterIdentity`. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ ...box, flex: '0 0 auto' }} data-duelo-poder title={isPt ? 'Poder' : 'Power'} aria-label={`${isPt ? 'Poder' : 'Power'}: ${poder}`}>
           <Icon name="bolt" size={24} tone="gold" fill={1} />
           <span className="sm2-num" style={boxValue}>{poder}</span>
         </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <p data-duelo-golpes style={{ ...sm2Text, margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {golpesTxt}
-        </p>
-        <ModalInfo language={language} label={isPt ? 'O que são elemento, poder e golpes' : 'What element, power and strikes are'} align="right">
+        <span style={{ flex: 1 }} />
+        <ModalInfo language={language} label={isPt ? 'Como funciona a Arena' : 'How the Arena works'} align="right">
           <span data-duelo-ajuda>
             <span style={{ display: 'block' }}>
-              {isPt
-                ? 'Elemento: a natureza do seu Soulmon. Alguns elementos ganham de outros na luta.'
-                : "Element: your Soulmon's nature. Some elements beat others in a fight."}
-            </span>
-            <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
                 ? 'Poder: a força dos seus golpes. Cresce quando o Soulmon evolui.'
                 : 'Power: how hard your strikes hit. It grows as your Soulmon evolves.'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? 'Golpes: o primeiro é o básico; o segundo é o especial, que sai quando a barra de energia enche.'
-                : 'Strikes: the first is the basic one; the second is the special, which fires when the energy bar is full.'}
+                ? 'Elemento e golpes do seu Soulmon: veja no Perfil, no Laboratório.'
+                : "Your Soulmon's element and strikes: see them in the Profile, in the Laboratory."}
             </span>
             <span data-duelo-como-lutar style={{ display: 'block', marginTop: 6 }}>
               {isPt
                 ? 'Na luta, seu Soulmon ataca e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele. Com a energia cheia, ele solta o especial — toque no anel na hora certa para render mais. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
                 : 'In the fight, your Soulmon attacks and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it. With full energy it unleashes its special — tap the ring at the right moment to hit harder. When the enemy unleashes its own, swipe sideways to dodge.'}
             </span>
-            {!par && (
-              <span style={{ display: 'block', marginTop: 6 }}>
-                {isPt ? 'Sem ficha neste aparelho: você luta com o par de golpes padrão.' : 'No sheet on this device: you fight with the default pair of moves.'}
-              </span>
-            )}
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
                 ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, sempre de poder parecido com o seu (acompanham o nível do seu Soulmon). Vencer rende Bits; perder não custa nada. O Torneio é o modo ranqueado: lá o servidor sorteia os oponentes pela sua faixa.`

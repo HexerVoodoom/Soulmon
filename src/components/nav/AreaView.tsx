@@ -8,7 +8,6 @@ import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_A
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
 import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
-import { sm2Hint } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
@@ -205,11 +204,8 @@ export interface AreaViewProps {
 /** Espera curta dentro da folha — o conteúdo é `lazy`, e a folha já está
  *  aberta: nunca um branco sem explicação. */
 function SheetLoading({ language }: { language: Language }) {
-  return (
-    <p role="status" style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0', margin: 0 }}>
-      {language === 'pt-BR' ? 'Abrindo…' : 'Opening…'}
-    </p>
-  );
+  // beta-2 (9.4): o mesmo esqueleto minimalista do app, na variante dentro da folha (antes, um parágrafo próprio).
+  return <ScreenSkeleton language={language} variant="inline" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />;
 }
 
 export function AreaView(props: AreaViewProps) {
@@ -345,8 +341,6 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                skills={props.skills}
-                petElement={props.petElement}
                 onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
             )}

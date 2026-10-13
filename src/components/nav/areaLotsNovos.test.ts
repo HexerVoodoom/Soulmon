@@ -15,12 +15,14 @@ describe('lotes novos (29/09/2026)', () => {
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats']);
   });
 
-  it('H15/H16/H17 (01/10/2026): Torneio e Duelo no mesmo tablado e a Feira no outro; Santuário do Vínculo bem maior; Hall maior', () => {
+  it('H15/H16/H17 (01/10/2026; Arena revista no beta-2 9.3: Torneio num tablado e Arena livre no OUTRO); Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
     expect(pct(arena.torneio.left)).toBeLessThan(50);
-    expect(pct(arena.duelo.left)).toBeLessThanOrEqual(50);
-    // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — no mesmo tablado, mas bem visiveis.
+    // 9.3 (beta-2): cada modo no seu bloco — Torneio no tablado da esquerda, Arena livre no da direita.
+    expect(pct(arena.duelo.left)).toBeGreaterThan(50);
+    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeGreaterThanOrEqual(40);
+    // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — bem visiveis.
     expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(40);
     expect(pct((arena.duelo as { width?: string }).width)).toBeGreaterThanOrEqual(40);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));

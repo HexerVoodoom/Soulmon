@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelIcon } from '../ui/PixelIcon';
@@ -9,6 +9,7 @@ import { DECOR_ART } from '../../utils/decorArt';
 import { SUBSCRIPTION_ITEMS, type ShopItem } from '../../utils/shop';
 import { isShopItemUnlocked } from '../../utils/missions';
 import type { Language } from '../../utils/i18n';
+import { BackgroundLightbox, ItemLightbox } from './ShopItemSheet';
 import { shopTagStyle, type ShopActions, type ShopOwnership } from './ShopShelf';
 
 /**
@@ -30,6 +31,7 @@ const row: CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 64, padding: '8px 12px',
   textAlign: 'left', boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-lg)',
 };
+const mainBtn: CSSProperties = { flex: 1, minWidth: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: 10, padding: 0, border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' };
 
 export function SubscriptionShelf({ language, kind, ownership, actions }: {
   language: Language;
@@ -40,6 +42,8 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
   const isPt = language === 'pt-BR';
   const items = SUBSCRIPTION_ITEMS.filter(i => i.kind === kind);
   const [said, setSaid] = useState('');
+  /** 8.2 - a miniatura abre a pre-visualizacao (a mesma dos cenarios da loja). */
+  const [preview, setPreview] = useState<ShopItem | null>(null);
   if (items.length === 0) return null;
 
   const active = ownership.subscriptionActive === true;
@@ -76,6 +80,16 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
     );
   };
 
+  const thumb = (item: ShopItem, node: ReactNode) => (
+    <button
+      type="button"
+      data-thumb-preview={item.id}
+      onClick={() => setPreview(item)}
+      aria-label={isPt ? `Ver ${item.namePt} ampliado` : `View ${item.nameEn} larger`}
+      style={{ flex: 'none', padding: 0, border: 'none', background: 'none', cursor: 'zoom-in', display: 'flex' }}
+    >{node}</button>
+  );
+
   const why = isPt
     ? 'Faz parte da assinatura do trimestre. Em Configurações, "Sua conta", você vê como funciona.'
     : 'Part of the quarterly subscription. In Settings, "Your account", you can see how it works.';
@@ -97,13 +111,14 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
             else actions.onEquip(equipped ? null : item.id);
           };
           return (
-            <button
-              key={item.id} type="button" data-subscription-item={item.id} data-state="owned" aria-pressed={equipped}
-              aria-label={`${name} — ${equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip')}`}
-              onClick={toggle}
-              style={{ ...row, border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', cursor: 'pointer' }}
-            >
-              {art(item, equipped, false)}
+            <div key={item.id} style={{ ...row, border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)' }}>
+              {thumb(item, art(item, equipped, false))}
+              <button
+                type="button" data-subscription-item={item.id} data-state="owned" aria-pressed={equipped}
+                aria-label={`${name} — ${equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip')}`}
+                onClick={toggle}
+                style={mainBtn}
+              >
               <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 {equipped && (
@@ -114,25 +129,28 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
                 )}
               </span>
               {!equipped && <span style={{ ...sm2Button('outline', false, 'sm'), padding: '0 12px', flex: 'none' }}>{isPt ? 'Equipar' : 'Equip'}</span>}
-            </button>
+              </button>
+            </div>
           );
         }
 
         if (unlocked) {
           return (
-            <button
-              key={item.id} type="button" data-subscription-item={item.id} data-state="claimable"
-              aria-label={`${name} — ${isPt ? 'Resgatar' : 'Claim'}`}
-              onClick={() => claim(item)}
-              style={{ ...row, border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', cursor: 'pointer' }}
-            >
-              {art(item, false, false)}
+            <div key={item.id} style={{ ...row, border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)' }}>
+              {thumb(item, art(item, false, false))}
+              <button
+                type="button" data-subscription-item={item.id} data-state="claimable"
+                aria-label={`${name} — ${isPt ? 'Resgatar' : 'Claim'}`}
+                onClick={() => claim(item)}
+                style={mainBtn}
+              >
               <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 <span style={sm2Hint}>{isPt ? item.descPt : item.descEn}</span>
               </span>
               <span style={{ ...sm2Button('primary', false, 'sm'), padding: '0 12px', flex: 'none' }}>{isPt ? 'Resgatar' : 'Claim'}</span>
-            </button>
+              </button>
+            </div>
           );
         }
 
@@ -156,6 +174,8 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
         );
       })}
       <p aria-live="polite" style={{ ...sm2Hint, margin: 0, minHeight: 18 }}>{said}</p>
+      {preview && preview.kind === 'bg' && <BackgroundLightbox open bgId={preview.id} name={isPt ? preview.namePt : preview.nameEn} language={language} onClose={() => setPreview(null)} />}
+      {preview && preview.kind !== 'bg' && <ItemLightbox open item={preview} name={isPt ? preview.namePt : preview.nameEn} language={language} onClose={() => setPreview(null)} />}
     </section>
   );
 }

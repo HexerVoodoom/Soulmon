@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Icon } from '../ui/Icon';
 import { MiniGlass } from '../ui/MiniGlass';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
@@ -8,6 +8,7 @@ import { ALL_SHOP_ITEMS, isGuildReward } from '../../utils/shop';
 import { GROVE_STAGES, type GroveStageId } from '../../utils/guildRules';
 import { guildText, groveStageName } from '../../utils/guildCopy';
 import type { Language } from '../../utils/i18n';
+import { BackgroundLightbox, ItemLightbox } from './ShopItemSheet';
 import { shopTagStyle, type ShopActions, type ShopOwnership } from './ShopShelf';
 
 /**
@@ -30,8 +31,10 @@ const GLASS_BG_H = 52;
 const row: CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 64, padding: '8px 12px',
   textAlign: 'left', boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-lg)',
-  border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', cursor: 'pointer',
+  border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
 };
+const thumbBtn: CSSProperties = { flex: 'none', padding: 0, border: 'none', background: 'none', cursor: 'zoom-in', display: 'flex' };
+const mainBtn: CSSProperties = { flex: 1, minWidth: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: 10, padding: 0, border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' };
 
 const STAGE_PREFIX = 'bg-guild-';
 
@@ -42,6 +45,8 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
   actions: Pick<ShopActions, 'onEquip' | 'onEquipFurniture'>;
 }) {
   const isPt = language === 'pt-BR';
+  /** 8.2 - a miniatura abre a pre-visualizacao (a mesma dos cenarios da loja). */
+  const [preview, setPreview] = useState<string | null>(null);
   const items = kind === 'bg'
     ? GROVE_STAGES
         .filter(st => ownership.ownedBackgrounds.includes(STAGE_PREFIX + st))
@@ -66,15 +71,14 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
         const bg = PET_BACKGROUNDS[it.id];
         const png = DECOR_ART[it.id];
         return (
-          <button
-            key={it.id}
-            type="button"
-            data-guild-owned-item={it.id}
-            aria-pressed={equipped}
-            aria-label={`${it.name} — ${equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip')}`}
-            onClick={toggle}
-            style={row}
-          >
+          <div key={it.id} style={row}>
+            <button
+              type="button"
+              data-thumb-preview={it.id}
+              onClick={() => setPreview(it.id)}
+              aria-label={isPt ? `Ver ${it.name} ampliado` : `View ${it.name} larger`}
+              style={thumbBtn}
+            >
             {kind === 'bg' ? (
               <MiniGlass size={GLASS_ITEM} style={{ width: GLASS_BG_W, height: GLASS_BG_H, ...(equipped ? { boxShadow: '0 0 0 2px var(--sm2-primary-ink)' } : {}) }}>
                 <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: bg && `${bg.css} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor, imageRendering: 'pixelated' }} />
@@ -84,6 +88,15 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
                 {png && <img src={png} alt="" className="sm2-shop-art" style={{ transform: 'translate(-50%, -50%) scale(0.5)' }} />}
               </MiniGlass>
             )}
+            </button>
+            <button
+              type="button"
+              data-guild-owned-item={it.id}
+              aria-pressed={equipped}
+              aria-label={`${it.name} — ${equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip')}`}
+              onClick={toggle}
+              style={mainBtn}
+            >
             <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</span>
               {equipped && (
@@ -94,9 +107,17 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
               )}
             </span>
             {!equipped && <span style={{ ...sm2Button('outline', false, 'sm'), padding: '0 12px', flex: 'none' }}>{isPt ? 'Equipar' : 'Equip'}</span>}
-          </button>
+            </button>
+          </div>
         );
       })}
+      {preview && kind === 'bg' && (
+        <BackgroundLightbox open bgId={preview} name={items.find(i => i.id === preview)?.name ?? ''} language={language} onClose={() => setPreview(null)} />
+      )}
+      {preview && kind === 'furniture' && (() => {
+        const it = ALL_SHOP_ITEMS.find(i => i.id === preview);
+        return it ? <ItemLightbox open item={it} name={isPt ? it.namePt : it.nameEn} language={language} onClose={() => setPreview(null)} /> : null;
+      })()}
     </section>
   );
 }

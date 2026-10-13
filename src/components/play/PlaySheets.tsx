@@ -18,13 +18,15 @@ import { SupportNote } from '../refugio/SupportNote';
 import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { PixelIcon } from '../ui/PixelIcon';
-// 11/10/2026 (pedido do dono): os dois jogos do Salão ganham o ÍCONE próprio — arte nossa que já estava no repo
-// (`icons/games`, 128², alfa real): o velociraptor da Corrida e a tesoura do Pedra-papel-tesoura. Pelados, sem moldura.
-import iconCorrida from '../../assets/soulmon/icons/games/icon-game-dino.png';
-import iconPpt from '../../assets/soulmon/icons/games/icon-game-rps.png';
+// Beta-2 (backlog 9.1): o velociraptor e a tesoura SAIRAM do Salão (o dono não gostou). Reuso de arte que já existe,
+// pelada, sem moldura: a bota de caminhada (`ativ-corpo-caminhar`) para a Corrida e o punho de pedra (`hand-rock`,
+// o mesmo do jogo) para o Pedra-papel-tesoura. Nenhum asset novo.
+import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
+import iconPpt from '../../assets/soulmon/icons/games/hand-rock.png';
 // Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
 import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
 import { M3_MAX_BITS, M3_POINTS_PER_BIT, M3_MOVES } from '../../utils/match3';
+const iconCorrida = ACTIVITY_ICON_ART['corpo-caminhar'];
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -246,7 +248,7 @@ export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 export function SalaoSheet({ language, onStart, bitsToday }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   return (
-    <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
@@ -267,7 +269,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
           </InfoTipSection>
         </ModalInfo>
       </div>
-      <ul style={sheetCardList}>
+      <ul style={{ ...sheetCardList, gap: 'var(--sm2-space-4, 16px)' }}>
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
