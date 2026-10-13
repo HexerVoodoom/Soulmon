@@ -1,0 +1,386 @@
+# test-run.log — beta-2 FRENTE B (regras) — branch feat/b2-regras — 86aa46858 — 13/10/2026 14:34
+# ambiente: node v25.2.1 · vitest 4.1.9 · Windows 10 · máquina compartilhada (--maxWorkers=50%) · worktree E:/soulmon-b2-b (base origin/release/beta-2 af9db6d15)
+
+================================================================ 1. TYPECHECK (3 projetos)
+$ npx tsc --noEmit
+exit=0
+
+$ npx tsc -p tsconfig.server.json --noEmit
+exit=0
+
+$ npx tsc -p desktop/tsconfig.json --noEmit
+exit=0
+
+================================================================ 2. SUÍTE COMPLETA — TZ=UTC (saída real: cabeçalho + resumo)
+$ TZ=UTC npx vitest run --maxWorkers=50%
+
+ RUN  v4.1.9 E:/soulmon-b2-b
+[... ~460 KB de saída de arquivos omitidos; nenhum teste vermelho ...]
+ Test Files  736 passed (736)
+      Tests  9264 passed | 1 expected fail | 2 skipped | 4 todo (9271)
+   Start at  16:41:52
+   Duration  998.41s (transform 221.13s, setup 18.87s, import 526.57s, tests 928.76s, environment 842.69s)
+exit=0
+
+================================================================ 3. SUÍTE COMPLETA — TZ=America/Sao_Paulo, 2a execução (verde)
+$ TZ=America/Sao_Paulo npx vitest run --maxWorkers=50%   (2a execução, máquina menos carregada)
+
+ Test Files  736 passed (736)
+      Tests  9264 passed | 1 expected fail | 2 skipped | 4 todo (9271)
+   Start at  14:15:40
+   Duration  955.94s (transform 192.98s, setup 18.86s, import 495.98s, tests 922.52s, environment 827.03s)
+exit=0
+
+---- 3b. TZ=America/Sao_Paulo, 1a execução (1 teste vermelho por TIMEOUT sob carga, passa isolado — mesma máquina rodando outras frentes)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 735 passed (736)
+      Tests  1 failed | 9263 passed | 1 expected fail | 2 skipped | 4 todo (9271)
+   Duration  939.03s (transform 209.19s, setup 18.62s, import 493.57s, tests 960.26s, environment 779.03s)
+ FAIL  src/components/nav/AreaView.ocupado.render.test.tsx > AreaView com o Soulmon na masmorra > Soulmon em MISSÃO da guilda não desce à masmorra: o "Enter the dungeon" chama o aviso
+Error: Test timed out in 15000ms.
+$ TZ=America/Sao_Paulo npx vitest run src/components/nav/AreaView.ocupado.render.test.tsx   (isolado)
+ Test Files  1 passed (1) · Tests  10 passed (10) · Duration 15.09s   (o teste lento, "Soulmon em MISSÃO da guilda", leva ~7 s sozinho; o limite é 15 s)
+
+================================================================ 4. TESTES NOVOS/ALTERADOS DA FRENTE B (verbose, TZ=UTC)
+$ TZ=UTC npx vitest run --reporter=verbose <testes novos/alterados da frente B>
+
+ RUN  v4.1.9 E:/soulmon-b2-b
+
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > HP fica sempre em [0, máximo do estágio RESULTANTE] e na grade de 0,5 453ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > a perda nunca passa de MAX_HEARTS_LOST_PER_DAY e nunca é negativa 415ms
+ ✓ src/hooks/useDungeonReturn.test.tsx > useDungeonReturn > sem descida em andamento: nada 17ms
+ ✓ src/hooks/useDungeonReturn.test.tsx > useDungeonReturn > antes da projeção carregar vale o TETO (since + 8 h); depois, o fim projetado — o mesmo que a conta de volta vai dar 76ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > `totalPerfectDays` (contador vitalício das missões) só cresce 285ms
+ ✓ src/components/home/energiaFome.render.test.tsx > EnergyTimer > regenerando: mostra o tempo até a próxima unidade (curto, sem número de 0) 33ms
+ ✓ src/components/home/energiaFome.render.test.tsx > EnergyTimer > devagar (fome): o nome acessível diz que está devagar; EN também 4ms
+ ✓ src/components/home/energiaFome.render.test.tsx > EnergyTimer > pausado (faminto) ou sem previsão: um traço, e o nome acessível explica 6ms
+ ✓ src/components/home/energiaFome.render.test.tsx > EnergyTimer > energia cheia: não renderiza nada (não há próxima unidade) 2ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > `perfectDays` NUNCA cai numa virada sem degeneração (CLAUDE.md: "só acumulam") 329ms
+ ✓ src/hooks/useDungeonReturn.test.tsx > useDungeonReturn > NÃO reinicia ao reabrir: remontar o hook (navegar/fechar/abrir) com o mesmo estado dá o MESMO instante de retorno, e o tempo restante só diminui 303ms
+ ✓ src/hooks/useDungeonReturn.test.tsx > useDungeonReturn > muda quando o ESTADO muda: mais energia, descida mais longa — e o limite diário a encurta 285ms
+ ✓ src/hooks/useDungeonReturn.test.tsx > useDungeonReturn > o tempo restante nunca é negativo 5ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > MONOTONICIDADE: concluir MAIS nunca custa mais coração nem menos dia perfeito 519ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > nenhum estado gerado faz a virada LANÇAR 437ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > o relatório do dia é internamente coerente (done ≤ total, required ≤ total) 476ms
+ ✓ src/components/home/energiaFome.render.test.tsx > HungerIndicator > três estados legíveis SEM depender de cor: nome acessível em palavras e pontos preenchidos 3 / 2 / 0 110ms
+ ✓ src/components/home/energiaFome.render.test.tsx > HungerIndicator > EN e o valor numérico só vai para data-hunger (a tela não mostra número) 11ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > na masmorra: a plaquinha aparece no lugar do pet (sprite escondido e fora do leitor de tela), em PT 1618ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > em EN: "In Dungeon" 89ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > DECLARADO: degenerar restaura HP cheio, então HP final não é comparável sozinho 2ms
+ ✓ src/utils/gameRules.fuzz.test.ts > computeDailyReset — invariantes sobre estado gerado > AUTOVERIFICAÇÃO: o gerador cobre os desfechos que os invariantes precisam ver 325ms
+ ✓ src/utils/gameRules.fuzz.test.ts > a resposta "quanto falta para não perder coração?" é a mesma conta que cobra > fazer `tasksToAvoidHeartLoss` itens zera a perda; fazer um a menos, não 121ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > 6.2 — mostra o TEMPO DE RETORNO que vem do estado persistido (1h05 / 42 min), e "Voltou" quando já passou 257ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > 6.2 — a caixa da placa tem tamanho FIXO (texto/tempo/idioma não empurram o cenário nem o sprite) 203ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > a arte é a porta da masmorra que já existe (nenhuma imagem nova) e é um botão acessível 16ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > tocar na plaquinha chama o aviso 27ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > em casa (retirado ou sem descida): sem plaquinha, o pet está lá, visível 16ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > plaquinha na Home > a texto da plaquinha não cobra nem culpa 36ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > aviso "Ele está na masmorra" > diz o que o jogador queria fazer e oferece "Retirar da masmorra" / "Deixar lá" 35ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > aviso "Ele está na masmorra" > cobre todas as ações, em PT e EN, sempre com o caminho de saída e sem culpa 1ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > aviso "Ele está na masmorra" > tocar na plaquinha (sem ação) pergunta se quer trazê-lo de volta 10ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > aviso "Ele está na masmorra" > Soulmon em missão: aviso próprio, só "Entendi" (sem Retirar — a missão não é a masmorra) 10ms
+ ✓ src/components/home/DungeonSign.render.test.tsx > aviso "Ele está na masmorra" > EN: título e botões 54ms
+ ✓ src/components/home/energiaFome.render.test.tsx > encaixe no CompanionHUD (a faixa de status do cenário) > com `energyInfo`: o timer entra DENTRO do botão da energia e o indicador de fome é irmão dele, no mesmo bloco `.sm3-stats` 1663ms
+ ✓ src/components/home/energiaFome.render.test.tsx > encaixe no CompanionHUD (a faixa de status do cenário) > sem `energyInfo` (testes, desktop): nada muda — a faixa é a de antes 42ms
+ ✓ src/components/home/energiaFome.render.test.tsx > encaixe no CompanionHUD (a faixa de status do cenário) > o nome acessível do botão da energia continua sendo o da energia (o timer é decoração do botão, com nome próprio) 561ms
+ ✓ src/components/home/energiaFome.render.test.tsx > encaixe no CompanionHUD (a faixa de status do cenário) > o nome acessível do botão leva o estado do timer: parada (faminto) e cheia 487ms
+ ✓ src/components/home/energiaFome.render.test.tsx > cartão da refeição com check-in (beta-2 4.1) > mostra UM botão de check-in com o propósito da janela (sem número de recompensa na tela) e chama onClaim 28ms
+ ✓ src/components/home/energiaFome.render.test.tsx > cartão da refeição com check-in (beta-2 4.1) > os três rótulos em PT e EN 54ms
+ ✓ src/components/home/energiaFome.render.test.tsx > cartão da refeição com check-in (beta-2 4.1) > sem check-in disponível (já resgatado): o cartão é o de sempre, sem o botão 4ms
+ ✓ src/utils/gameRules.fuzz.test.ts > a resposta "quanto falta para não perder coração?" é a mesma conta que cobra > `daysSinceLastReset` nunca devolve menos de 1, nem NaN, para data hostil 7ms
+ ✓ src/utils/gameRules.fuzz.test.ts > careRules — invariantes de domínio > comer NUNCA muda a energia (sobe a fome, 0..100), nunca produz número não finito (beta-2 3.5) 45ms
+ ✓ src/utils/gameRules.fuzz.test.ts > careRules — invariantes de domínio > o carinho nunca ultrapassa o máximo, nunca reduz HP e respeita o teto diário 13ms
+ ✓ src/utils/gameRules.fuzz.test.ts > careRules — invariantes de domínio > `feedsLeft` fica em [0, 5] mesmo com timestamps hostis 1ms
+ ✓ src/utils/gameRules.fuzz.test.ts > careRules — invariantes de domínio > SEQUÊNCIA: 60 dias de ações aleatórias mantêm o estado no domínio 1535ms
+ ✓ src/utils/gameRules.fuzz.test.ts > carePattern / tournamentTiers — leitura nunca lança nem sai do domínio > `computeCarePattern` aguenta histórico hostil 5ms
+ ✓ src/utils/gameRules.fuzz.test.ts > carePattern / tournamentTiers — leitura nunca lança nem sai do domínio > `resolveBranch` SEMPRE devolve um galho válido — nunca `undefined` 3ms
+ ✓ src/utils/gameRules.fuzz.test.ts > carePattern / tournamentTiers — leitura nunca lança nem sai do domínio > faixa do torneio: acumular ponto NUNCA rebaixa, e o domínio se sustenta 5ms
+ ✓ src/utils/energiaPortaUnica.test.ts > virada do dia: zera a ENERGIA, não o relógio nem a fome (timers não reiniciam) > computeDailyReset zera energyPoints e MANTÉM o progresso até a próxima unidade e a fome 5ms
+ ✓ src/utils/energiaPortaUnica.test.ts > virada do dia: zera a ENERGIA, não o relógio nem a fome (timers não reiniciam) > a energia regenerada ANTES da virada não vaza para o dia novo, e a de DEPOIS conta 1ms
+ ✓ src/utils/energiaPortaUnica.test.ts > Level Up enche pela porta única e deixa o relógio parado > enche até o máximo do estágio, nunca acima, e a energia cheia tem o timer parado 1ms
+ ✓ src/utils/energiaPortaUnica.test.ts > Level Up enche pela porta única e deixa o relógio parado > idempotente: a 2ª celebração do mesmo nível devolve a MESMA referência 0ms
+ ✓ src/utils/energiaPortaUnica.test.ts > brincar gasta pela porta única > o gasto usa a energia de AGORA (a regeneração já ganha paga) e não reinicia o progresso 1ms
+ ✓ src/utils/energiaPortaUnica.test.ts > GUARD de fonte: ninguém escreve energyPoints de gasto/ganho fora dos donos > nenhum módulo soma/subtrai energyPoints à mão (`energyPoints: ... + n`/`- n`) — usa `setEnergy`/`eat` 588ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > o servidor aceita no máximo o dia dele + 1 3ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > mesmo dia: camadas = máximo (voltar o contador não devolve camada) 1ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > dia anterior ao gravado: mantém o gravado (relógio que voltou não reabre o dia) 0ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > dia seguinte do jogador: aceita o contador novo (virada legítima, também em fuso à frente do servidor) 0ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > dia mais de 1 à frente do servidor: recusado, vale o gravado (adiantar o relógio por semanas não rende) 0ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > campo ausente ou lixo no que chegou mantém o gravado (omitir não zera) 1ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > sem gravado: aceita o que chegou (conta nova) e prende camadas em 0..999 1ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > check-ins: mesmo dia = união das janelas (apagar o save local não devolve janela); dia novo = o que chegou; futuro demais = gravado 1ms
+ ✓ functions/api/_dayCounters.test.js > contadores diários monotônicos — a regra pura > a forma: janelas desconhecidas e repetidas somem; ordem canônica 0ms
+ ✓ functions/api/_dayCounters.test.js > save.js — o POST do save aplica a regra (contra o que o servidor JÁ gravou) > apagar/voltar o contador no aparelho e subir o save NÃO devolve camada nem janela 71ms
+ ✓ functions/api/_dayCounters.test.js > save.js — o POST do save aplica a regra (contra o que o servidor JÁ gravou) > um save "limpo" que omite os campos também não os apaga 2ms
+ ✓ functions/api/_dayCounters.test.js > save.js — o POST do save aplica a regra (contra o que o servidor JÁ gravou) > relógio adiantado em semanas é ignorado; em 1 dia, aceito (virada de fuso); voltar depois não reabre 3ms
+ ✓ functions/api/_dayCounters.test.js > save.js — o POST do save aplica a regra (contra o que o servidor JÁ gravou) > conta nova sem os campos continua sem eles (compatível com cliente antigo) 1ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > a comida sem conta continua a MESMA regra do app (beta-2 3.5: comer sobe a FOME, não a energia) > em todo estágio, energia, estoque e janela: as recusas e o estoque são os do caminho antigo — e a energia NÃO muda ao comer 91ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum > rookie: dez comidas seguidas deixam a energia onde estava 2ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum > champion-power: dez comidas seguidas deixam a energia onde estava 1ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum > ultimate-harmony: dez comidas seguidas deixam a energia onde estava 1ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum > mega-benevolence: dez comidas seguidas deixam a energia onde estava 5ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum > ultra: dez comidas seguidas deixam a energia onde estava 1ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum > não há campo de teto para o chamador passar errado (o tipo `LocalFeedState` não tem `maxEnergy`) 0ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > as recusas continuam sendo as do app > sem estoque devolve no-stock e nao mexe em nada 0ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > as recusas continuam sendo as do app > janela cheia devolve hourly-limit e PODA os vencidos mesmo recusando 21ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > as recusas continuam sendo as do app > o limite de ritmo continua sendo o do app, nao um literal do overlay 1ms
+ ✓ desktop/renderer/src/care.feed.parity.test.ts > com conta: o overlay grava a FOME no save e deixa a energia ao relógio (beta-2 3.5) > comer sobe `hunger` no save real e NÃO mexe em `energyPoints` 10ms
+ ✓ src/utils/hunger.test.ts > as faixas da fome > bem alimentado ≥ 60 · mediano 20..59 · faminto < 20 3ms
+ ✓ src/utils/hunger.test.ts > as faixas da fome > a fome desce por TIMESTAMP: cheia → zero em HUNGER_FULL_TO_EMPTY_HOURS, relógio que voltou vale o nível gravado, sem registro = cheia 1ms
+ ✓ src/utils/hunger.test.ts > a velocidade da regeneração segue a fome > bem alimentado: 1 unidade a cada ENERGY_REGEN_MINUTES (velocidade 100%) 1ms
+ ✓ src/utils/hunger.test.ts > a velocidade da regeneração segue a fome > mediano: metade da velocidade (o dobro do tempo por unidade) 0ms
+ ✓ src/utils/hunger.test.ts > a velocidade da regeneração segue a fome > faminto: a regeneração está INTERROMPIDA (nada acontece em dias) 2ms
+ ✓ src/utils/hunger.test.ts > a velocidade da regeneração segue a fome > a fome DESCE durante a regeneração: o ganho diminui sozinho conforme ela passa de faixa (integral por segmentos) 0ms
+ ✓ src/utils/hunger.test.ts > a velocidade da regeneração segue a fome > energia cheia: o relógio PARA (sem regeneração acumulada além do máximo) 1ms
+ ✓ src/utils/hunger.test.ts > comer sobe a FOME e NÃO concede energia > feedFood: fome +HUNGER_PER_FOOD, energia INTACTA (mesmo com a pastinha cheia) 2ms
+ ✓ src/utils/hunger.test.ts > comer sobe a FOME e NÃO concede energia > comer não joga fora a regeneração já ganha (acerta a energia ANTES de subir a fome) 0ms
+ ✓ src/utils/hunger.test.ts > comer sobe a FOME e NÃO concede energia > REGRESSÃO: o pendente de um período FAMINTO não é reavaliado com a fome nova depois de comer 0ms
+ ✓ src/utils/hunger.test.ts > o timer é o motor projetado, não uma contagem visual > bem alimentado: msToNext = tempo restante até a próxima unidade; a unidade chega exatamente nele 0ms
+ ✓ src/utils/hunger.test.ts > o timer é o motor projetado, não uma contagem visual > projeta a QUEDA DE FAIXA: perto da fronteira, a previsão já embute a velocidade menor (e bate com o motor) 0ms
+ ✓ src/utils/hunger.test.ts > o timer é o motor projetado, não uma contagem visual > muda quando a fome muda: comer encurta o timer 0ms
+ ✓ src/utils/hunger.test.ts > o timer é o motor projetado, não uma contagem visual > faminto → comer reativa a regeneração (timer sai de "pausada" para um tempo) 1ms
+ ✓ src/utils/hunger.test.ts > o timer é o motor projetado, não uma contagem visual > o formato curto do timer arredonda para cima e nunca mostra 0 0ms
+ ✓ src/utils/hunger.test.ts > fatiar o tempo não muda o total (sem regeneração em dobro nem perdida) > ler a cada 20 s, a cada 7 min ou uma vez só dá a MESMA energia e o MESMO progresso (várias fomes iniciais) 11ms
+ ✓ src/utils/hunger.test.ts > fatiar o tempo não muda o total (sem regeneração em dobro nem perdida) > relógio que VOLTA não regenera nem tira 0ms
+ ✓ src/utils/hunger.test.ts > estados persistem (fechar e reabrir) > JSON + sanitize devolve o mesmo relógio e a mesma fome; o timer fecha com o de antes de fechar 1ms
+ ✓ src/utils/hunger.test.ts > estados persistem (fechar e reabrir) > lixo no save cai em fome cheia / relógio novo (nunca NaN, nunca negativo, nunca dívida retroativa) 1ms
+ ✓ src/utils/hunger.test.ts > estados persistem (fechar e reabrir) > save SEM relógio (antigo): nasce agora, sem regeneração retroativa 0ms
+ ✓ src/utils/hunger.test.ts > gasto, ganho e cheia: o relógio nunca conta em dobro > gastar parte da energia NÃO reinicia o progresso até a próxima unidade (timers não reiniciam) 1ms
+ ✓ src/utils/hunger.test.ts > gasto, ganho e cheia: o relógio nunca conta em dobro > sair da energia CHEIA começa o relógio do zero no instante do gasto (não credita o tempo parado) 0ms
+ ✓ src/utils/hunger.test.ts > gasto, ganho e cheia: o relógio nunca conta em dobro > evoluir (o MÁXIMO sobe) com a energia que estava cheia há dias não credita dias de regeneração 0ms
+ ✓ src/utils/hunger.test.ts > gasto, ganho e cheia: o relógio nunca conta em dobro > Level Up / pesadelo enchem pela mesma porta e deixam o relógio parado 0ms
+ ✓ src/utils/hunger.test.ts > exploits > adiantar o relógio: só rende o que a fome permitiria naquele tempo (não é energia grátis) 0ms
+ ✓ src/utils/hunger.test.ts > exploits > abrir e fechar o app 200 vezes no mesmo minuto não regenera nada a mais 1ms
+ ✓ src/utils/hunger.test.ts > exploits > comer ao máximo repetido não dá energia nenhuma (só a fome, limitada a 100) 0ms
+ ✓ src/utils/hunger.test.ts > exploits > fome em zero e energia em zero: nada gera energia sem comer (nem em 30 dias) 0ms
+ ✓ src/utils/hunger.test.ts > com o Soulmon na masmorra o tick CONGELA a energia (a conta de quem ficou fora regenera ao longo da linha do tempo) > tickTime: sem descida é o agora; com descida é o `since` (nunca depois do agora) 0ms
+ ✓ src/utils/hunger.test.ts > com o Soulmon na masmorra o tick CONGELA a energia (a conta de quem ficou fora regenera ao longo da linha do tempo) > tickEnergy durante a descida não credita nada (mesma referência) e a leitura da tela mostra o que o estado tem 0ms
+ ✓ src/utils/hunger.test.ts > com o Soulmon na masmorra o tick CONGELA a energia (a conta de quem ficou fora regenera ao longo da linha do tempo) > congelar é ADIAR, não perder: ao voltar, o acerto credita o intervalo todo — o mesmo total de quem ficou em casa 2ms
+ ✓ src/utils/checkIns.test.ts > as janelas (horários do ritmo das refeições: 09:00 · 13:30 · 20:00) > antes do primeiro horário não há janela; depois cada uma vale até a próxima começar (a noite vai até o fim do dia) 4ms
+ ✓ src/utils/checkIns.test.ts > as janelas (horários do ritmo das refeições: 09:00 · 13:30 · 20:00) > usa os horários EDITADOS pela pessoa nas Configurações 0ms
+ ✓ src/utils/checkIns.test.ts > as janelas (horários do ritmo das refeições: 09:00 · 13:30 · 20:00) > horário de preferência corrompido cai no padrão (nunca derruba) 0ms
+ ✓ src/utils/checkIns.test.ts > a recompensa de cada janela é específica e única > manhã: enche a FOME (não a energia) · tarde: Bits · noite: XP de Vínculo 2ms
+ ✓ src/utils/checkIns.test.ts > a recompensa de cada janela é específica e única > UMA vez por janela por dia: o 2º resgate (tap duplo no mesmo lote, reabrir o app, entrar/sair) devolve a MESMA referência 1ms
+ ✓ src/utils/checkIns.test.ts > a recompensa de cada janela é específica e única > no máximo 3 por dia, uma de cada; a 4ª tentativa em qualquer horário não paga 1ms
+ ✓ src/utils/checkIns.test.ts > a recompensa de cada janela é específica e única > o app NÃO precisa estar aberto na hora marcada: chegar tarde dentro do intervalo ainda vale 0ms
+ ✓ src/utils/checkIns.test.ts > ausência não invalida nada e não deixa rastro > perder a manhã e a tarde não muda a noite (nem cria contador, sequência ou dívida) 0ms
+ ✓ src/utils/checkIns.test.ts > ausência não invalida nada e não deixa rastro > um dia inteiro sem abrir: o dia seguinte começa com as três janelas livres (nada acumulou, nada foi cobrado) 0ms
+ ✓ src/utils/checkIns.test.ts > ausência não invalida nada e não deixa rastro > a disponibilidade e a recompensa NÃO leem desempenho: mesmo resultado com o dia fechado ou com nada feito 1ms
+ ✓ src/utils/checkIns.test.ts > ausência não invalida nada e não deixa rastro > o módulo não importa nada de desempenho (meta, HP, constância, tarefas) — linha vermelha do ritmo 0ms
+ ✓ src/utils/checkIns.test.ts > dia e fuso do jogador (relógio, reabrir, troca de aparelho) > relógio que VOLTA não reabre as janelas já resgatadas (vale o maior entre o dia do relógio e o do registro) 0ms
+ ✓ src/utils/checkIns.test.ts > dia e fuso do jogador (relógio, reabrir, troca de aparelho) > a virada de dia é a do fuso FIXO do save, não a do aparelho 29ms
+ ✓ src/utils/checkIns.test.ts > dia e fuso do jogador (relógio, reabrir, troca de aparelho) > reabrir o app (JSON + sanitize) preserva o resgatado: a recompensa não repaga 3ms
+ ✓ src/utils/checkIns.test.ts > dia e fuso do jogador (relógio, reabrir, troca de aparelho) > lixo no registro vira "nada resgatado hoje" (nunca lança, nunca trava o jogador fora) 0ms
+ ✓ src/utils/checkIns.test.ts > nada de vantagem paga nem de energia direta > nenhuma janela concede energia, HP, Emblema ou Crédito 1ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > AUTOVERIFICAÇÃO > a lista de campos veio do tipo e tem os 117 (+ `guildMission`, 11/10/2026, missão da guilda; + `guildDonatedItem`, 11/10/2026, casa da guilda; + `buildingIntrosSeen`, 08/10/2026, apresentação do prédio; + `crossings`, 30/09/2026; + `onboardingProfile` e `soulTestAnswers`, 01/10/2026; + `hideFromPublicList`, 02/10/2026; + `caderno`, 04/10/2026; + `ownedFrames` e `equippedFrame`, 04/10/2026; + `talentPicks`, 06/10/2026, Combate v3 PR7; + `equipment` e `bitsOrigin`, 06/10/2026, Combate v3 PR8; + `fichaJornada`, 07/10/2026, Combate v3 PR15b); + `avatarId`, 07/10/2026, Tarefa C; + `buildingQuests`, 07/10/2026, missao por predio; + `forge`, 07/10/2026, Ferreiro; + `demoLocal`, 07/10/2026, demo local; + `mealRhythm` e `mealRitual`, 11/10/2026, ritmo das refeições) 7ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > activities 309ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > tasks 87ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > completedTasks 139ms
+ ✓ src/contexts/GameStateContext.beta2.persistencia.test.tsx > hydrateSave dos campos novos > save bom: ida e volta idêntica (nada reescrito, nada perdido) 35ms
+ ✓ src/contexts/GameStateContext.beta2.persistencia.test.tsx > hydrateSave dos campos novos > save ANTIGO (sem os campos): abre, e a ausência significa fome cheia / relógio novo / nenhuma camada / nenhuma janela 15ms
+ ✓ src/contexts/GameStateContext.beta2.persistencia.test.tsx > hydrateSave dos campos novos > lixo: nunca NaN, nunca negativo, nunca estoura o relógio; campo ruim some em vez de derrubar o load 9ms
+ ✓ src/contexts/GameStateContext.beta2.persistencia.test.tsx > o estado vivo persiste e a UI lê o mesmo dado que a regra (fechar e reabrir o app) > comer → gastar camada → check-in → "fechar o app" (localStorage) → reabrir: fome, relógio, contador e janela voltam iguais, e nada é repago 13ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > activityStats 106ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > healthPoints 109ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > maxHealthPoints 85ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > energyPoints 59ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > perfectDays 62ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > evolutionPoints 78ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > totalXP 71ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > bondRewardsClaimed 122ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > bondDaily 94ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > a tabela (para o REGISTRO): energia por dia × conclusões por dia 3ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > sem comer, NADA: faminto = regeneração interrompida (0 energia por dia) 0ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > comer mais nunca rende MENOS energia (monotônica) 0ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > o "leve" (2 conclusões) ainda paga pelo menos 1 camada por dia; o "médio" (4) paga 4+; o "intenso" (9) chega a 9+ 0ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > o teto é o RELÓGIO: nem 12 comidas por dia passam de 24 h ÷ ENERGY_REGEN_MINUTES 0ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > comer tudo de uma vez rende menos que comer espalhado (a fome desce com o tempo: comida junta é desperdiçada) — sem exploit de "empilhar" 3ms
+ ✓ src/utils/hunger.balanco.test.ts > a curva fome × energia cabe no orçamento do REGISTRO §30 > a energia que sobra no tanque (não gasta) respeita o máximo do estágio e a virada: nunca passa das barras 1ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > powerPoints 45ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > harmonyPoints 37ms
+ ✓ functions/api/dayCounters.parity.test.js > contadores diários: servidor e app concordam na FORMA > mesmo teto de camadas e mesma lista de janelas 3ms
+ ✓ functions/api/dayCounters.parity.test.js > contadores diários: servidor e app concordam na FORMA > a saneação de dungeonDaily bate em entradas boas e hostis 1ms
+ ✓ functions/api/dayCounters.parity.test.js > contadores diários: servidor e app concordam na FORMA > a saneação de checkIns bate em entradas boas e hostis 1ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > benevolencePoints 124ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastResetDate 38ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > evolutionStage 104ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > poopEventsScheduled 53ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > poopEventsCompleted 48ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > unlockedEvolutions 50ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > degeneratedByHP 67ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > demoTint 46ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > memoriesShown 59ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > offerShownWeek 40ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > offerDismissed 61ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > formReachedAt 57ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > bestiary 57ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > incubation 27ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > firstDay 35ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > redeemed 66ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > showRedeemed 59ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > hideFromPublicList 73ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > currentBranch 43ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastDayWasPerfect 34ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — causa raiz reproduzida (fluxo ANTIGO: só visita + resgate do prédio listado) > visitar os 14 prédios não listados por 30 dias não rende peça nem material de peça; o Soulsmith segue vazio 5ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > Masmorra no Vínculo 2: entrar concede a peça de nível 1 e 1 minério; entrar de novo no mesmo dia não paga de novo 1ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > dia seguinte paga mais 1 (o material é o ritmo), a peça não duplica 0ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > reabrir o app (JSON + sanitize) preserva o pago e não repaga no mesmo dia 1ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > trocar o relógio para trás (dia já pago) não repaga; o dia é o do JOGADOR, passado por parâmetro 0ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > Vínculo insuficiente não paga (nada é liberado de graça): Duelo exige Vínculo 5 0ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > prédio sem peça paga só o material (Biblioteca); o Caderno (listado) segue manual 0ms
+ ✓ src/utils/soulsmithAcesso.test.ts > 8.3 — correção: entrar no prédio paga (uma vez por dia do jogador) > com o dia andando, o aprimoramento do Soulsmith passa a ter material (não fica "no-materials" para sempre) 2ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > oculta as barras do sistema pelo WindowInsetsControllerCompat (status + navegação) 3ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > o comportamento é "barras transitórias por deslize": o gesto de voltar e a revelação da navegação por botões continuam funcionando 0ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > reaplica ao ganhar o foco (diálogo do sistema, login do Google, notificações e volta do segundo plano trazem as barras de volta) 0ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > NÃO usa FLAG_FULLSCREEN, windowFullscreen nem setDecorFitsSystemWindows(false): quebrariam o teclado (adjustResize) no Android < 11 0ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > não mexe nas áreas seguras: o recorte (notch) fica no padrão do sistema 0ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > o tema pós-splash continua o do Capacitor (AppTheme.NoActionBar) e a Activity continua com singleTask + as configChanges 0ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > os plugins nativos continuam registrados antes do super.onCreate (o registro depois do bridge nunca funciona) 0ms
+ ✓ src/deploy/androidImersivo.contract.test.ts > modo imersivo da casca Android > as dependências do AndroidX usadas existem no projeto (core ≥ 1.5 traz o WindowInsetsControllerCompat) 1ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > maxActivityCap 39ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > eggType 40ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulmonStages 45ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > spriteLibrary 60ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulmonSkills 63ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > fichaJornada 40ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulmonClassTitles 45ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulmonCompanheiro 36ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulmonManifestacao 42ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulmonMeta 40ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > bornAt 51ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > attributesSinceLastEvolution 31ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > foodInventory 75ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > poopEventsShown 30ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > poopPenaltyClockAt 71ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > poopDrainCharge 33ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > glitchtamaUse 62ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > premiumFood 61ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > minigameBits 42ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dungeonHp 35ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dungeonDepthRecord 53ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dungeonAway 43ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > hunger 66ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > energyClock 69ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dungeonDaily 85ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > checkIns 37ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > restDaysLeft 46ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > restWeekKey 95ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > adventures 56ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > careCaps 49ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > gamePoints 60ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > emblems 52ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > weeklyMissions 80ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > buildingQuests 86ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > buildingIntrosSeen 37ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastCelebratedLevel 36ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > focusLoot 29ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > ownedBackgrounds 49ms
+ ✓ src/utils/dungeonDaily.test.ts > spendLayer — a porta única da camada > gasta a energia da camada e conta UMA camada do dia 3ms
+ ✓ src/utils/dungeonDaily.test.ts > spendLayer — a porta única da camada > no limite diário NOVAS camadas são recusadas — mesmo com energia sobrando — e a recusa devolve a MESMA referência 1ms
+ ✓ src/utils/dungeonDaily.test.ts > spendLayer — a porta única da camada > sem energia a camada é recusada ("no-energy") e não conta no dia 0ms
+ ✓ src/utils/dungeonDaily.test.ts > spendLayer — a porta única da camada > usa a energia de AGORA: a regeneração já ganha paga a camada (o estado velho do último tick não decide) 0ms
+ ✓ src/utils/dungeonDaily.test.ts > spendLayer — a porta única da camada > dois toques no mesmo lote (a 2ª passada enxerga a 1ª): com 1 energia a 2ª é recusada e o contador não anda 0ms
+ ✓ src/utils/dungeonDaily.test.ts > spendLayer — a porta única da camada > a UI velha não fura o limite: um espelho desatualizado (contador 0) não importa, quem decide é o `prev` do updater 0ms
+ ✓ src/utils/dungeonDaily.test.ts > o dia do limite (fuso do jogador, relógio, reabrir) > dia novo do jogador zera o contador; no mesmo dia ele permanece 0ms
+ ✓ src/utils/dungeonDaily.test.ts > o dia do limite (fuso do jogador, relógio, reabrir) > a virada é no fuso FIXO do save (playerDayTz), não no do aparelho 21ms
+ ✓ src/utils/dungeonDaily.test.ts > o dia do limite (fuso do jogador, relógio, reabrir) > relógio que VOLTA não reabre o dia: vale o maior entre o dia do relógio e o do registro 1ms
+ ✓ src/utils/dungeonDaily.test.ts > o dia do limite (fuso do jogador, relógio, reabrir) > REABRIR o app (JSON + sanitize) preserva o contador: o limite não mora na tela 0ms
+ ✓ src/utils/dungeonDaily.test.ts > o dia do limite (fuso do jogador, relógio, reabrir) > entrar e sair 50 vezes (re-render, StrictMode, retirar): só o que foi COMEÇADO conta 1ms
+ ✓ src/utils/dungeonDaily.test.ts > o campo `dungeonDaily` no save > lixo vira undefined; valores absurdos são presos 1ms
+ ✓ src/utils/dungeonDaily.test.ts > o campo `dungeonDaily` no save > um contador adulterado para MENOS é só um contador menor: o servidor (monotônico) é o que o desfaz — ver functions/api/_dayCounters.test.js 0ms
+ ✓ src/utils/dungeonDaily.test.ts > a conta de quem ficou fora respeita o MESMO limite > com 9 camadas já começadas hoje, 8 h fora rendem NO MÁXIMO 1 camada nova e acabam com "daily" 8ms
+ ✓ src/utils/dungeonDaily.test.ts > a conta de quem ficou fora respeita o MESMO limite > no limite já na saída: nenhuma camada nova, nada de energia gasta, e o Soulmon volta para casa 1ms
+ ✓ src/utils/dungeonDaily.test.ts > a conta de quem ficou fora respeita o MESMO limite > a conta fora conta as camadas no contador do dia e a energia sai pelo relógio (regeneração incluída) 54ms
+ ✓ src/utils/dungeonDaily.test.ts > a conta de quem ficou fora respeita o MESMO limite > idempotente: reaplicar no mesmo instante não gasta camada nem energia de novo 9ms
+ ✓ src/utils/dungeonDaily.test.ts > integração com a regeneração (o estado visto pelo limite é o real) > settleEnergy antes de gastar não duplica: gastar em t e reler em t não muda a energia 0ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > equippedBackground 75ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > ownedFurniture 60ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > equippedDecor 77ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > guildDonatedItem 64ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > guildMission 33ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > equippedFurniture 69ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > evolutionLocked 55ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > pvpEnabled 45ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > trophies 56ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > friends 37ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dungeonKills 66ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dungeonRunsCompleted 31ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > dinoBest 54ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > review 59ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > refugeInvite 55ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > mealRhythm 90ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > mealRitual 51ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > spritePose 41ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > crossings 45ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > caderno 55ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > ownedFrames 53ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > talentPicks 64ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — energia por camada > lobby: mostra energia, custo, ponto de retorno e o teto do Lv (EN) 1707ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > equipment 40ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > forge 41ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > bitsOrigin 36ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > equippedFrame 55ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > avatarId 33ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > totalPerfectDays 53ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — energia por camada > sem energia: o botão não acende e a frase é convite, nunca cobrança (PT) 172ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > missionPerfectDays 72ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > conquistasHerdadas 51ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > season 45ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > droppedItems 43ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastDayReport 32ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulGoal 32ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulStruggle 34ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > onboardingProfile 41ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > soulTestAnswers 67ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > consent 30ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > moodLog 39ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > activityLog 44ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > petPassive 54ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — energia por camada > com 1 de energia: desce UMA camada, para com o resumo, grava o recorde e gasta a energia — corações intactos 692ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > accountTier 46ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > rebirth 71ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > demoCharacterId 38ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > demoLocal 46ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — limite diário de camadas (beta-2 6.1, REGISTRO §40) > no limite do dia o botão NÃO acende (mesmo com energia sobrando) e a frase é calma — PT e EN 222ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — limite diário de camadas (beta-2 6.1, REGISTRO §40) > o lobby mostra quantas camadas dá para fazer AGORA: o menor entre a energia e o que resta do dia 13ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > credits 117ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > habitRhythms 72ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — limite diário de camadas (beta-2 6.1, REGISTRO §40) > reabrir o app (remontar do localStorage) no limite continua bloqueado: o contador mora no save, não na tela 193ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > rest 43ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > playerDayTz 69ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastCheckInDate 58ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastWeeklyReportDate 78ms
+ ✓ src/components/DungeonGame.energia.render.test.tsx > Masmorra — limite diário de camadas (beta-2 6.1, REGISTRO §40) > com 1 camada de folga no dia e energia de sobra: desce UMA, termina com "daily", conta a camada no save e NÃO gasta mais energia 398ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > lastFreshStartDate 42ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > nightmares 34ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > playLog 52ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > steps 38ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > cada um dos 98 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam > stepsConsent 49ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > campos novos de 21–22/09 > conquistasHerdadas: só ids conhecidos sobrevivem; lixo vira [] 43ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > campos novos de 21–22/09 > consent: registro sem acceptedAt string some; versões não-string viram "desconhecida"; nunca lança 42ms
+ ✓ src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx > campos novos de 21–22/09 > soulmonMeta hostil não derruba o nome do bicho (HUD, widget, aniversário leem em todo render) 12ms
+
+ Test Files  17 passed (17)
+      Tests  313 passed (313)
+   Start at  17:33:27
+   Duration  27.02s (transform 65.47s, setup 2.42s, import 68.47s, tests 23.15s, environment 29.23s)
+
+exit=0
+
+================================================================ 5. ANDROID — assembleDebug (JAVA_HOME = JBR do Android Studio; GRADLE_USER_HOME=E:/gradle-home)
+$ JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew.bat assembleDebug --no-daemon   (apos `npx cap sync android`)
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 1m 24s
+195 actionable tasks: 87 executed, 108 from cache
+merged manifest (debug): MainActivity theme=@style/AppTheme.NoActionBarLaunch · launchMode=singleTask · configChanges=orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode · minSdk 26 · targetSdk 36 (inalterados)
+APK: android/app/build/outputs/apk/debug/app-debug.apk 55056336 bytes (13/10/2026 11:39) — artefatos de build/cap sync removidos do worktree depois (gitignored; deixavam testes que varrem o repo vermelhos)
+NÃO VERIFICADO EM APARELHO: sem dispositivo na máquina. Testar em Android 10, 12 e 15: barras escondidas, deslize revela, voltar por gesto/botão funciona, teclado abre sem cobrir o campo.
+
+================================================================ 6. BUILD DE PRODUÇÃO (verificação de bundling; dist/ NÃO regenerado no PR)
+$ npx vite build --outDir E:/tmp/dist-b2 --emptyOutDir
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 32.03s[39m
+exit=0
