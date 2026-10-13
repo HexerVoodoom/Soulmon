@@ -66,7 +66,13 @@ véu** (arrastar uma seleção de texto de dentro para fora não fecha).
 | `CreateModal`, `EditModal`, `TaskEditModal` | formulário com texto digitado — toque fora perderia o que a pessoa escreveu |
 | `UnlockAccountModal` | formulário de conta |
 | `closeSide="end"` (minijogos) | o fechar encerra a atividade |
-| `RitualDialog` (check-in, sonho, relatório, cerimônias), `LevelUpOverlay`, `EvolutionCeremony`, `MilestoneCeremony`, confirmações de sair do jogo (`GameKit`/`BattleStage`), `SoulmonOnboarding`, `GameTutorialFlow` | rituais/cerimônias e fluxos obrigatórios: pedem o gesto explícito |
+| `RitualDialog` (check-in, sonho, cerimônias), `LevelUpOverlay`, `EvolutionCeremony`, `MilestoneCeremony`, confirmações de sair do jogo (`GameKit`/`BattleStage`), `SoulmonOnboarding`, `GameTutorialFlow` | rituais/cerimônias e fluxos obrigatórios: pedem o gesto explícito |
+
+**Beta-2 (13/10/2026, frente C)**: o relatório do dia deixou de ser `RitualDialog` e virou uma sequência de `ModalSheet`s
+(tarefas → corações → hoje) e de um `AreaSheet` (aventura, com o NPC do Passeio) — tocar fora fecha o resumo todo, como o ✕.
+O `BuildingIntro` (prédio novo) também saiu do diálogo central e vive no `AreaSheet`; fechar por fora = "Depois". O
+`LevelUpOverlay` continua tela cheia (cerimônia), agora sem caixa e com glow difuso. `AreaSheet` ganhou a prop opcional
+`speech` (fala do NPC no lugar da fala-padrão do lote).
 
 Já fechavam pelo véu (não mudaram): `AreaSheet` (lotes), `Mochila`, lightbox do `ShopItemSheet`, `ForgeCard`, `TalentTree`.
 

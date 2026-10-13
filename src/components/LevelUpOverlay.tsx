@@ -10,8 +10,11 @@
  *    "Lv A → Lv B" com o número FINAL grande.
  *  · O que ganhou vem dos donos (`levelUpGains`): ponto de talento, recompensas do Vínculo e portões.
  *    Tom: descrição de presente, nunca cobrança — nada de "faltam N".
- *  · LUZ: reaproveita o canvas da cerimônia de evolução (`EvolutionLight`). A arte opcional (banner,
- *    burst, moldura) entra por `utils/levelUpArt.ts`; sem o PNG, tudo é procedural e funciona hoje.
+ *  · BETA-2 (13/10/2026, 7.2): o resultado vive DIRETO sobre o fundo escurecido — sem caixa (o vidro saiu) e sem
+ *    o sunburst rígido: no lugar, um glow difuso (gradiente radial que respira). Sem "Seu vínculo cresceu" e sem
+ *    pontos de talento (eram redundantes: o número já diz). Quando o nível abre algo, aparece `Now Open` com o que abriu.
+ *  · LUZ: o glow é CSS puro. A arte opcional (banner, moldura) entra por `utils/levelUpArt.ts`; sem o PNG,
+ *    tudo é procedural e funciona hoje.
  *  · Movimento reduzido reduz o MOVIMENTO, nunca a pausa: sem luz animada, sem número que sobe, sem
  *    pulso — o display continua esperando o toque (regras no bloco canônico do `index.css`).
  *  · SOM (`playLevelUp`, categoria `marco`): a D11 mora AQUI. Só toca com a aba visível e com o áudio
@@ -21,7 +24,6 @@
  *    Um toque nos primeiros `ARM_MS` é ignorado: o toque que causou o level up não pode fechá-lo.
  */
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { EvolutionLight } from './EvolutionLight';
 import { usePrefersReducedMotion } from './ui/Viewport';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { levelUpGains, type LevelUpEvent } from '../utils/levelUp';
@@ -59,10 +61,8 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
   const done = useRef(false);
   const [shown, setShown] = useState(reduced ? event.to : event.from);
   const [bannerOk, setBannerOk] = useState(true);
-  const [burstOk, setBurstOk] = useState(true);
   const gains = levelUpGains(event.from, event.to);
   const bannerArt = levelUpArt('banner');
-  const burstArt = levelUpArt('burst');
   const frameArt = levelUpArt('frame');
   const many = event.to - event.from > 1;
 
@@ -134,29 +134,23 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
           {isPt ? `Vínculo nível ${event.to}` : `Bond level ${event.to}`}
         </h2>
 
-        {/* O VIDRO (regra-mãe: pixel art só dentro do visor): a luz, o burst, o banner, o pet e o número moram aqui. */}
+        {/* O PALCO, sem caixa (7.2): a luz, o banner, o pet e o número ficam direto sobre o fundo escurecido. */}
         <div
-          className="sm2-viewport-screen sm2-visor"
           aria-hidden="true"
-          data-lvup-glass
-          style={{ width: '100%', height: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', padding: '10px 12px', boxShadow: '0 0 0 2px #C98B4B, 0 0 0 4px #061414' }}
+          data-lvup-stage
+          style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', padding: '10px 12px' }}
         >
-          {/* A LUZ: a mesma da cerimônia de evolução (raios, halo, partículas). Parada em movimento reduzido. */}
-          {!reduced && (
-            <div data-lvup-light style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
-              <EvolutionLight size={340} />
-            </div>
-          )}
-          {burstArt && burstOk && (
-            <img
-              src={burstArt}
-              alt=""
-              data-lvup-burst
-              onError={() => setBurstOk(false)}
-              className={reduced ? undefined : 'sm-lvup-burst'}
-              style={{ position: 'absolute', left: '50%', top: '50%', width: 340, height: 340, transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}
-            />
-          )}
+          {/* O GLOW DIFUSO: no lugar do sunburst rígido, um halo radial macio que respira (parado em movimento reduzido). */}
+          <div
+            data-lvup-glow
+            className={reduced ? undefined : 'sm-lvup-glow'}
+            style={{
+              position: 'absolute', left: '50%', top: '50%', width: 420, height: 420, marginLeft: -210, marginTop: -210,
+              borderRadius: '50%', pointerEvents: 'none',
+              background: 'radial-gradient(closest-side, rgba(110,255,251,.34) 0%, rgba(110,255,251,.14) 42%, rgba(217,160,91,.07) 68%, rgba(217,160,91,0) 100%)',
+              filter: 'blur(10px)',
+            }}
+          />
 
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             {/* O BANNER: arte opcional; sem ela, a palavra na voz do aparelho. */}
@@ -193,12 +187,16 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
             )}
 
             {/* O NÚMERO, grande, com a moldura opcional. */}
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8, minWidth: 150, padding: '2px 18px' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 150, padding: '2px 18px' }}>
               {frameArt && (
                 <img src={frameArt} alt="" data-lvup-frame style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none' }} />
               )}
-              <img src={LEVELUP_CHEVRON} alt="" width={48} height={48} data-lvup-chevron style={{ width: 48, height: 48, alignSelf: 'center', display: 'block' }} />
-              <span style={{ ...pixel, fontSize: 16, letterSpacing: '0.16em', color: CYAN }}>LV</span>
+              {/* O chevron triplo: a arte (96²) vai de borda a borda na vertical, então a caixa NÃO pode cortar — `overflow: visible`,
+                  respiro de 2 px em cima e embaixo e escala 0,5× exata (48), pixel a pixel. */}
+              <span data-lvup-chevron-box style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, overflow: 'visible' }}>
+                <img src={LEVELUP_CHEVRON} alt="" width={48} height={48} data-lvup-chevron style={{ width: 48, height: 48, display: 'block', imageRendering: 'pixelated' }} />
+              </span>
+              <span style={{ ...pixel, fontSize: 16, letterSpacing: '0.16em', color: CYAN, alignSelf: 'center' }}>LV</span>
               <span
                 data-lvup-number
                 className={reduced ? undefined : 'sm-lvup-num'}
@@ -208,7 +206,6 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
               </span>
             </div>
           </div>
-          <span className="sm2-viewport-glass" />
         </div>
 
         {many && (
@@ -217,25 +214,28 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
           </p>
         )}
 
-        {/* O que veio com o nível. Descrição de presente: nunca "faltam N". */}
-        <ul id="lvup-desc" data-lvup-gains style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6, color: INK, fontSize: 14, fontWeight: 500 }}>
-          <li>{isPt ? 'Seu vínculo cresceu.' : 'Your bond grew.'}</li>
-          {gains.talentPoints > 0 && (
-            <li data-lvup-talent>
-              {isPt
-                ? `+${gains.talentPoints} ${gains.talentPoints === 1 ? 'ponto de talento' : 'pontos de talento'}`
-                : `+${gains.talentPoints} talent ${gains.talentPoints === 1 ? 'point' : 'points'}`}
-            </li>
+        {/* O que veio com o nível (só o que NÃO é redundante). Descrição de presente: nunca "faltam N". */}
+        <div id="lvup-desc" data-lvup-gains style={{ display: 'grid', gap: 6, color: INK, fontSize: 14, fontWeight: 500 }}>
+          {gains.rewards.length > 0 && (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
+              {gains.rewards.map((r) => (
+                <li key={r.id} data-lvup-reward>{isPt ? r.namePt : r.nameEn}</li>
+              ))}
+            </ul>
           )}
-          {gains.rewards.map((r) => (
-            <li key={r.id} data-lvup-reward>{isPt ? r.namePt : r.nameEn}</li>
-          ))}
-          {gains.gates.map((g) => (
-            <li key={g} data-lvup-gate>
-              {isPt ? `Agora aberto: ${gateName(g, language)}` : `Now open: ${gateName(g, language)}`}
-            </li>
-          ))}
-        </ul>
+          {gains.gates.length > 0 && (
+            <div data-lvup-open style={{ display: 'grid', gap: 4 }}>
+              <p data-lvup-open-label style={{ margin: 0, ...pixel, fontSize: 14, letterSpacing: '0.14em', color: GOLD, textTransform: 'uppercase' }}>
+                {isPt ? 'Agora aberto' : 'Now Open'}
+              </p>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
+                {gains.gates.map((g) => (
+                  <li key={g} data-lvup-gate>{gateName(g, language)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
         {/* A SAÍDA é o toque (a tela toda); o botão existe para teclado e leitor de tela. */}
         <button

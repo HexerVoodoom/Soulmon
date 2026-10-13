@@ -22,13 +22,15 @@ describe('BuildingIntro', () => {
   it('mostra o prédio, o NPC (busto + nome) e é um diálogo nomeado pelo prédio', () => {
     const { container } = render(<BuildingIntro id="mercado.decoracao" language="en-US" onGo={() => {}} onLater={() => {}} />);
     const v = buildingIntroView('mercado.decoracao', 'en-US');
-    expect(q(container, '[data-bi-title]')!.textContent).toBe(v.place);
-    expect(q(container, '[data-bi-npc]')!.getAttribute('src')).toBeTruthy();
-    expect(q(container, '[data-bi-npc]')!.getAttribute('alt')).toBe('');
+    // 7.1: é o MESMO bottom sheet dos prédios/mercado (`AreaSheet`), não mais um diálogo central.
+    expect(q(container, '[data-area-sheet]')).not.toBeNull();
+    expect(q(container, '[data-area-sheet-head] h2')!.textContent).toBe(v.place);
+    expect(q(container, '[data-area-sheet-npc]')!.getAttribute('src')).toBeTruthy();
+    expect(q(container, '[data-area-sheet-npc]')!.getAttribute('alt')).toBe('');
     expect(container.textContent).toContain('Lasca, the carpenter');
     const dlg = document.querySelector('[role="dialog"]')!;
     expect(dlg.getAttribute('aria-modal')).toBe('true');
-    expect(dlg.getAttribute('aria-labelledby')).toBe('bi-title');
+    expect(dlg.getAttribute('aria-label')).toBe(v.place);
   });
 
   it('três balões, um por toque em "Próximo"; só no último aparece "Ir lá"', () => {

@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
-import { RitualDialog, ritualLabel, ritualTitle } from './ritual/RitualKit';
+import { ritualLabel } from './ritual/RitualKit';
 import { sm2Button } from './form/FormKit';
-import { NpcSpeech } from './nav/NpcSpeech';
-import { lotNpcArt } from '../assets/soulmon/npcs';
+import { AreaSheet } from './nav/AreaSheet';
 import { buildingIntroView } from '../utils/buildingIntroCopy';
 import type { BuildingId } from '../utils/gates';
 import type { AreaId } from '../navigation';
@@ -13,8 +12,9 @@ import type { Language } from '../utils/i18n';
  * abrir porque o Vínculo cresceu (`utils/buildingIntro.ts` decide QUAL e QUANDO; `buildingIntroCopy.ts` é o texto).
  * Um por vez — vários prédios abertos juntos viram uma fila no chamador, e este componente mostra sempre o primeiro.
  *
- * O NPC (busto e nome) é o mesmo da folha do prédio: aparece, diz quem é, o que se faz ali e convida — três balões,
- * um por toque. Regras:
+ * BETA-2 (13/10/2026, 7.1/13.1): vive no MESMO bottom sheet dos prédios e do mercado (`AreaSheet`), e não mais num
+ * diálogo central — modal central é para alerta. O NPC (busto e nome) é o mesmo da folha do prédio: aparece, diz quem
+ * é, o que se faz ali e convida — três balões, um por toque. Regras:
  *  · só fecha por GESTO ("Ir lá", "Depois", Escape): nenhum timer, nenhuma saída sozinha;
  *  · "Ir lá" e "Depois" são o mesmo "visto" para a regra — a apresentação não volta, não cobra, não vira pendência;
  *  · nenhum som (R-NOVA: superfície nova nasce muda), nenhuma recompensa, nenhum XP;
@@ -31,7 +31,7 @@ export function BuildingIntro({ id, language, onGo, onLater }: {
 }) {
   const isPt = language === 'pt-BR';
   const view = buildingIntroView(id, language);
-  const [area, lot] = id.split('.');
+  const [area, lot] = id.split('.') as [AreaId, string];
   const [i, setI] = useState(0);
   const last = view.lines.length - 1;
 
@@ -40,47 +40,41 @@ export function BuildingIntro({ id, language, onGo, onLater }: {
   const next = useCallback(() => setI(n => Math.min(n + 1, last)), [last]);
 
   return (
-    <RitualDialog labelledBy="bi-title" onClose={later} zIndex={200} maxWidth={380}>
-      <div data-building-intro={id} data-step={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <p style={ritualLabel} data-bi-kicker>
-          {isPt ? 'Um lugar novo no Mapa' : 'A new place on the Map'}
-        </p>
+    /* O contêiner `fixed` dá à folha (absoluta por natureza) a tela inteira; fechar por fora, pelo ✕ ou por
+       Escape é "Depois" (o mesmo "visto" da regra). */
+    <div data-building-intro-root style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+      <AreaSheet
+        areaId={area}
+        lotId={lot}
+        language={language}
+        title={view.place}
+        closeLabel={isPt ? 'Fechar' : 'Close'}
+        open
+        onClose={later}
+        speech={{ name: view.npcName, line: view.lines[i], key: `intro:${id}:${i}` }}
+      >
+        <div data-building-intro={id} data-step={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={ritualLabel} data-bi-kicker>
+            {isPt ? 'Um lugar novo no Mapa' : 'A new place on the Map'}
+          </p>
 
-        <p id="bi-title" style={ritualTitle} data-bi-title>{view.place}</p>
-
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-          <img
-            src={lotNpcArt(area as AreaId, lot)}
-            alt=""
-            aria-hidden="true"
-            width={96}
-            height={96}
-            draggable={false}
-            className="sm-npc-intro"
-            data-bi-npc
-            style={{ flex: 'none', width: 96, height: 96, objectFit: 'contain', objectPosition: 'bottom', display: 'block', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.5))' }}
-          />
-          <div aria-live="polite" style={{ flex: 1, minWidth: 0, display: 'flex' }}>
-            <NpcSpeech name={view.npcName} line={view.lines[i]} speakerKey={`intro:${id}:${i}`} />
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button type="button" onClick={later} data-bi-later style={sm2Button('ghost', false, 'sm')}>
+              {isPt ? 'Depois' : 'Later'}
+            </button>
+            {i < last ? (
+              <button type="button" onClick={next} data-bi-next style={{ ...sm2Button('primary'), flex: 1 }}>
+                {isPt ? 'Próximo' : 'Next'}
+              </button>
+            ) : (
+              <button type="button" onClick={go} data-bi-go style={{ ...sm2Button('primary'), flex: 1 }}>
+                {isPt ? 'Ir lá' : 'Go there'}
+              </button>
+            )}
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-          <button type="button" onClick={later} data-bi-later style={sm2Button('ghost', false, 'sm')}>
-            {isPt ? 'Depois' : 'Later'}
-          </button>
-          {i < last ? (
-            <button type="button" onClick={next} data-bi-next style={{ ...sm2Button('primary'), flex: 1 }}>
-              {isPt ? 'Próximo' : 'Next'}
-            </button>
-          ) : (
-            <button type="button" onClick={go} data-bi-go style={{ ...sm2Button('primary'), flex: 1 }}>
-              {isPt ? 'Ir lá' : 'Go there'}
-            </button>
-          )}
-        </div>
-      </div>
-    </RitualDialog>
+      </AreaSheet>
+    </div>
   );
 }
 
