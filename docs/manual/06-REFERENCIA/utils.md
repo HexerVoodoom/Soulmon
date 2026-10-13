@@ -3323,3 +3323,7 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 
 ### `src/utils/checkIns.ts` (beta-2 4.1, 13/10/2026 — REGISTRO §40)
 **Dono de:** os três check-ins do dia (manhã/tarde/noite) sobre as janelas do ritmo das refeições. **Exports:** `CHECKIN_SLOTS`, `CHECKIN_REWARDS` (manhã = fome +30 · tarde = 10 Bits · noite = 10 de XP de Vínculo), `availableCheckIn`, `claimCheckIn` (recusa reconferida sobre o `prev`; devolve a MESMA referência), `currentSlot`, `claimedToday`, `checkInDayOf`, `sanitizeCheckIns`. Recompensa única por janela por DIA DO JOGADOR (fuso fixo do save); relógio que volta não reabre; sem sequência nem contador de perdidos; nenhuma leitura de desempenho. **Chamado por:** `App.tsx` (`resgatarCheckIn`), `MealInviteCard`. **Régua:** `checkIns.test.ts`; servidor: `functions/api/_dayCounters.js`.
+### `src/utils/dayHearts.ts` (beta-2, 13/10/2026)
+**Dono de:** a fileira de corações do resumo do dia (`heartStrip`: total, quebrados, inteiros — meio coração perdido conta como um quebrado) e da regra "a animação de quebra toca uma vez" (`shouldPlayHeartBreak`, lida de `lastDayReport.heartsAnimSeen`).
+**Exports:** `DEFAULT_HEARTS`, `HeartStrip`, `heartStrip`, `shouldPlayHeartBreak`.
+**Régua:** `src/utils/dayHearts.test.ts`, `src/components/DailyReportModal.secoes.render.test.tsx`.

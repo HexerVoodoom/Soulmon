@@ -5871,7 +5871,7 @@ select:focus-visible {
   .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; }
   .sm-forge-sweep, .sm-forge-spark { display: none; }
   /* Level up (11/10/2026): o número, o banner, o pet, o burst e a dica ficam PARADOS — o display continua esperando o toque. */
-  .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-hint { animation: none !important; }
+  .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-glow, .sm-lvup-hint { animation: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -8367,6 +8367,25 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 }
 .sm2-travessia-assenta { animation: sm2-travessia-assenta 360ms ease-out 1; }
 
+/* ── Resumo do dia (beta-2, 4.2): o coração cobrado TREME e QUEBRA antes de virar preto. Uma vez por relatório
+   (quem chama persiste "já vista"); `prefers-reduced-motion` pula direto para o coração preto (a lógica está no
+   componente) e o bloco canônico zera a duração. */
+@keyframes sm2-heart-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-3px) rotate(-6deg); }
+  30% { transform: translateX(3px) rotate(6deg); }
+  45% { transform: translateX(-4px) rotate(-8deg); }
+  60% { transform: translateX(4px) rotate(8deg); }
+  80% { transform: translateX(-2px) rotate(-3deg); }
+}
+@keyframes sm2-heart-snap {
+  0%   { transform: scale(1); filter: none; }
+  40%  { transform: scale(1.25) rotate(4deg); filter: brightness(1.6); }
+  100% { transform: scale(.92) rotate(0); filter: grayscale(1) brightness(.2); }
+}
+.sm2-heart-shake { animation: sm2-heart-shake 650ms ease-in-out 1; }
+.sm2-heart-snap { animation: sm2-heart-snap 350ms ease-in 1 forwards; }
+
 
 /* TORCIDA (02/10/2026): o "grito" que sobe do ponto tocado na luta. Com movimento
    reduzido o efeito nem renderiza (regra no bloco canonico de prefers-reduced-motion). */
@@ -8597,6 +8616,9 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-lvup-banner { animation: sm-lvup-banner .55s ease-out both; }
 .sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }
 .sm-lvup-burst { animation: sm-lvup-burst 24s linear infinite; }
+/* beta-2 (7.2): o glow difuso que substitui o sunburst — respira devagar; parado em movimento reduzido. */
+@keyframes sm-lvup-glow { 0%, 100% { opacity: .8; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.04); } }
+.sm-lvup-glow { animation: sm-lvup-glow 4s ease-in-out infinite; }
 .sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }
 
 /* Cartão de confirmação das ações propostas pelo chat (ChatActionCard). */

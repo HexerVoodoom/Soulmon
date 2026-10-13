@@ -6,6 +6,13 @@
 > - **Fome e energia (3.4/3.5):** comida enche a FOME, não a energia; a energia regenera com o tempo na velocidade que a fome permite (100%/50%/parada); timer = motor projetado (`utils/hunger.ts`). Reverte o "só enche comendo" de §30/§31 por pedido do dono.
 > - **Limite diário da masmorra (6.1):** 10 camadas/dia na porta única `spendLayer` (tela + conta de quem ficou fora) + contador monotônico no servidor. **Check-ins (4.1):** 3 janelas sobre o ritmo das refeições. **Placa "In Dungeon" (6.2)** com o tempo de retorno projetado do estado persistido. **Android imersivo (3.1):** `MainActivity` (assembleDebug verde; falta testar em aparelho).
 > - **Depende do dono:** todos os números (REGISTRO §40.9) e onde mora o botão de check-in. Contrato com as outras frentes e contador do fuzz2 (124 → 128): `docs/FRENTE-B-REGRAS-BETA2.md`.
+> ## 13/10/2026 — Beta-2, frente C: resumos e modais (`feat/b2-resumos-modais`, backlog 4.2–4.4, 5.1, 7.1–7.3, 13.1)
+>
+> - **Resumo pós-dia** (`DailyReportModal`): uma folha por seção (tarefas → corações → aventura → hoje); sem `Evolution path`; `Yesterday Tasks`; 3 corações (`DayHearts`, `utils/dayHearts.ts`) em que o cobrado treme, quebra e vira preto UMA vez; `From Yesterday's Adventure` com `New` dourado, vínculo Missão/Destino (`strollSummary`) e o NPC do Passeio (`AreaSheet`); `Stretch Closed` e corações sem NPC.
+> - **Save:** `lastDayReport.heartsAnimSeen?: boolean` (DENTRO do relatório; some sozinho na virada). Sem campo de topo ⇒ **o contador do `GameStateContext.hydrate.fuzz2.qa.test.tsx` NÃO foi alterado** (segue 124 nesta branch). **Merge:** as outras frentes podem somar campos de topo; ao juntar, o contador é a soma de todas, e esta frente não entra nela.
+> - **Passeio** (`PasseioSheet`): Free Stroll e Mission of the Day numa escolha só — missão em primeiro plano, destino em destaque dourado discreto; sem "Passeio livre" (o `setDestination` segue na lógica).
+> - **Modais:** `BuildingIntro` agora vive no `AreaSheet` (novo prop opcional `speech`); `LevelUpOverlay` sem caixa nem sunburst (glow difuso), `Now Open` quando abre algo, chevron sem corte; `CatalogOnboardingFlow` (`Add tasks to list`): tudo marcado, sem duplicar (`withoutExisting`).
+> - **Depende do dono / design-critic:** `product/beta-play-01/builder/b2-c/design-review.md`.
 
 > ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
 >

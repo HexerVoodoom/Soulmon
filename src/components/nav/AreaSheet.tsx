@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, headSlotRef, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, speech, headSlotRef, children }: {
   areaId: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
    *  via `lotNpcArt`. Áreas com folha única (Laboratório/Hall) passam o
@@ -36,6 +36,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Override explícito do NPC (raro — testes/casos sem lote). Sem ele, usa
    *  `lotNpcArt(areaId, lotId)`. */
   npcArt?: string;
+  /** Fala do NPC no lugar da fala-padrão do lote (beta-2, 7.1: o `BuildingIntro` apresenta o prédio por aqui,
+   *  com as três falas da apresentação). Sem ele, a voz do lote (`lotNpcVoice`). */
+  speech?: { name: string; line: string; key?: string };
   title: string;
   /** Rótulo acessível do fechar — PT/EN, decidido por quem chama (a `AreaScene` sabe o idioma). */
   closeLabel: string;
@@ -57,7 +60,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   if (!open) return null;
 
   const npcSrc = npcArt ?? lotNpcArt(areaId, lotId);
-  const npc = lotNpcVoice(areaId, lotId, language);
+  const npc = speech ?? lotNpcVoice(areaId, lotId, language);
 
   return (
     <div
@@ -148,7 +151,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           />
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
-          <NpcSpeech name={npc.name} line={npc.line} speakerKey={lotId ? `${areaId}:${lotId}` : undefined} />
+          <NpcSpeech name={npc.name} line={npc.line} speakerKey={speech?.key ?? (lotId ? `${areaId}:${lotId}` : undefined)} />
         </div>
 
         <div

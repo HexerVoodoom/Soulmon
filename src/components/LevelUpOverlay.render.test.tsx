@@ -6,7 +6,7 @@
  * reduzido reduz o movimento e NUNCA a pausa, e o som obedece à D11 (visível + áudio já liberado).
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { screen, fireEvent, act } from '@testing-library/react';
+import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 
 const som = vi.hoisted(() => ({ playLevelUp: vi.fn(), estado: 'running' as string | null }));
@@ -14,7 +14,6 @@ vi.mock('../utils/sounds', () => ({ playLevelUp: som.playLevelUp }));
 vi.mock('../utils/audioBus', () => ({
   barramentoAtual: () => (som.estado ? { ctx: { state: som.estado } } : null),
 }));
-vi.mock('./EvolutionLight', () => ({ EvolutionLight: () => <canvas data-testid="luz" /> }));
 
 import { LevelUpOverlay, ARM_MS } from './LevelUpOverlay';
 
@@ -55,7 +54,8 @@ describe('LevelUpOverlay — abre e escurece', () => {
   it('PT-BR: "Toque para continuar"', () => {
     renderWithCss(<LevelUpOverlay {...base} language="pt-BR" onDone={() => {}} />);
     expect(screen.getByText('Toque para continuar')).toBeTruthy();
-    expect(screen.getByText('Seu vínculo cresceu.')).toBeTruthy();
+    // 7.2: o texto redundante saiu (o número já diz que o vínculo cresceu).
+    expect(screen.queryByText('Seu vínculo cresceu.')).toBeNull();
   });
 
   it('o pet aparece em destaque', () => {
@@ -125,18 +125,42 @@ describe('LevelUpOverlay — vários níveis de uma vez', () => {
 });
 
 describe('LevelUpOverlay — o que ganhou', () => {
-  it('1 ponto de talento por nível, a recompensa do Vínculo e o portão que abriu', () => {
-    // 4 → 5: o nível 5 dá +1 talento, o sonho "À deriva num barquinho" e abre o Duelo e o Torneio.
+  it('a recompensa do Vínculo e, sob "Now Open", o que abriu — SEM pontos de talento e SEM "Your bond grew"', () => {
+    // 4 → 5: o nível 5 dá o sonho "À deriva num barquinho" e abre o Duelo e o Torneio.
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
-    expect(container.querySelector('[data-lvup-talent]')?.textContent).toBe('+1 talent point');
+    expect(container.querySelector('[data-lvup-talent]')).toBeNull();
+    expect(container.textContent).not.toMatch(/talent|Your bond grew/i);
     expect(container.querySelector('[data-lvup-reward]')?.textContent).toMatch(/Adrift on a little boat/);
+    expect(container.querySelector('[data-lvup-open-label]')?.textContent).toBe('Now Open');
     const gates = [...container.querySelectorAll('[data-lvup-gate]')].map(n => n.textContent);
-    expect(gates).toEqual(expect.arrayContaining(['Now open: The Duel', 'Now open: The Tournament']));
+    expect(gates).toEqual(expect.arrayContaining(['The Duel', 'The Tournament']));
   });
 
-  it('vários níveis somam os pontos de talento; PT-BR no plural', () => {
-    const { container } = renderWithCss(<LevelUpOverlay {...base} language="pt-BR" event={{ from: 1, to: 4 }} onDone={() => {}} />);
-    expect(container.querySelector('[data-lvup-talent]')?.textContent).toBe('+3 pontos de talento');
+  it('PT-BR: "Agora aberto"; sem desbloqueio, o rótulo nem aparece', () => {
+    const { container } = renderWithCss(<LevelUpOverlay {...base} language="pt-BR" onDone={() => {}} />);
+    expect(container.querySelector('[data-lvup-open-label]')?.textContent).toBe('Agora aberto');
+    expect(container.textContent).not.toMatch(/talento/);
+    cleanup();
+    // 1 → 2 não abre nenhum portão.
+    const sem = renderWithCss(<LevelUpOverlay {...base} event={{ from: 1, to: 2 }} onDone={() => {}} />);
+    expect(sem.container.querySelector('[data-lvup-open]')).toBeNull();
+  });
+
+  it('7.2: resultado direto sobre o fundo escurecido — sem caixa (vidro) e sem o sunburst', () => {
+    const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    expect(container.querySelector('[data-lvup-glass], .sm2-viewport-screen, .sm2-visor')).toBeNull();
+    expect(container.querySelector('[data-lvup-burst], [data-lvup-light], canvas')).toBeNull();
+    expect(container.querySelector('[data-lvup-glow]')).not.toBeNull();
+  });
+
+  it('7.2: o ícone das três setas não é cortado — caixa visível, escala 0,5× exata, pixel nítido', () => {
+    const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const box = container.querySelector('[data-lvup-chevron-box]') as HTMLElement;
+    const img = container.querySelector('[data-lvup-chevron]') as HTMLElement;
+    expect(box.style.overflow).toBe('visible');
+    expect(parseInt(box.style.height)).toBeGreaterThan(parseInt(img.style.height)); // respiro: a arte vai de borda a borda
+    expect(img.style.width).toBe('48px');
+    expect(img.style.imageRendering).toBe('pixelated');
   });
 
   it('nunca cobra: sem "faltam", sem urgência', () => {
@@ -146,11 +170,11 @@ describe('LevelUpOverlay — o que ganhou', () => {
 });
 
 describe('LevelUpOverlay — movimento reduzido reduz o MOVIMENTO, nunca a pausa', () => {
-  it('sem luz animada, sem classes de animação, número final direto — e continua ESPERANDO o toque', () => {
+  it('sem glow animado, sem classes de animação, número final direto — e continua ESPERANDO o toque', () => {
     reducao(true);
     const onDone = vi.fn();
     const { container } = renderWithCss(<LevelUpOverlay {...base} event={{ from: 3, to: 7 }} onDone={onDone} />);
-    expect(screen.queryByTestId('luz')).toBeNull();
+    expect(container.querySelector('.sm-lvup-glow')).toBeNull();
     expect(container.querySelector('[data-lvup-number]')?.textContent).toBe('7');
     expect(container.querySelector('.sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-hint')).toBeNull();
     act(() => { vi.advanceTimersByTime(60_000); });
@@ -159,9 +183,9 @@ describe('LevelUpOverlay — movimento reduzido reduz o MOVIMENTO, nunca a pausa
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('com movimento: a luz do canvas da cerimônia de evolução monta', () => {
-    renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
-    expect(screen.getByTestId('luz')).toBeTruthy();
+  it('com movimento: o glow difuso respira (classe de animação)', () => {
+    const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    expect(container.querySelector('[data-lvup-glow]')?.className).toContain('sm-lvup-glow');
   });
 });
 

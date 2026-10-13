@@ -86,9 +86,9 @@ describe('rodada 7 (M1–M4, M7) — escolhida, só a missão; sem Recuar, sem E
   it('escolhida: some o "para onde ele vai hoje"; não há Recuar, Trocar nem Esconder Travessias', () => {
     const aberta: CrossingsState = { ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-09-01' }] };
     const { container } = render(createElement(Viva, { inicial: aberta, dia: DIA }));
-    // Com uma região aberta há o que escolher: o destino aparece, rotulado — até escolher a missão.
-    expect(container.querySelector('[data-passeio-destino]')).toBeTruthy();
-    expect(container.textContent).toMatch(/Passeio livre/);
+    // Beta-2 (5.1): o "Passeio livre" saiu — o destino é o da missão, mesmo com região aberta.
+    expect(container.querySelector('[data-passeio-destino]')).toBeNull();
+    expect(container.textContent).not.toMatch(/Passeio livre|Free stroll/);
     fireEvent.click(container.querySelector(`[data-travessia-abrir="${C1.id}"]`)!);
     fireEvent.click(container.querySelector(`[data-travessia-escolher="${C1.id}"]`)!);
     expect(container.querySelector('[data-passeio-destino]')).toBeNull();
@@ -103,6 +103,18 @@ describe('rodada 7 (M1–M4, M7) — escolhida, só a missão; sem Recuar, sem E
   it('só a casa aberta: não há "destino" para escolher (o chip sem sentido saiu)', () => {
     const { container } = render(createElement(Viva, { inicial: CROSSINGS_EMPTY, dia: DIA }));
     expect(container.querySelector('[data-passeio-destino]')).toBeNull();
+  });
+
+  it('5.1: cada proposta mostra a MISSÃO (título) e o DESTINO que ela justifica, em destaque discreto', () => {
+    const { container } = render(createElement(Viva, { inicial: CROSSINGS_EMPTY, dia: DIA }));
+    for (const m of hoje3) {
+      const card = container.querySelector(`[data-travessia-card="${m.challenge.id}"]`)!;
+      expect(card.textContent).toContain(travessiaTitle(m.challenge.id, true)!);
+      const dest = card.querySelector('[data-passeio-destino-nome]') as HTMLElement;
+      expect(dest.textContent).toBe(`Destino${m.region.namePt}`);
+      // destaque pelo token dourado da paleta, nunca hex
+      expect((dest.lastElementChild as HTMLElement).style.color).toBe('var(--sm2-gold-ink)');
+    }
   });
 
   it('o card diz quantas horas restam, sem "prazo"; o texto longo do mapa saiu', () => {
@@ -186,14 +198,16 @@ describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
 });
 
 describe('o card da missão em uso (11/10/2026) — cabeçalho legível, sem emoji de enfeite', () => {
-  it('duas etapas inequívocas: destino (com a imagem) × o que você faz (sem ícone nenhum)', () => {
+  it('5.1: UMA escolha — a missão é o principal e o destino (com a imagem) vem logo abaixo, sem duas etapas', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA }));
     const card = container.querySelector('[data-travessia-ativa]')!;
     const destino = card.querySelector('[data-passeio-destino-card]') as HTMLElement;
-    expect(destino.textContent).toMatch(/Destino de hoje à noite/);
+    expect(destino.textContent).toBe(`Destino${R1.namePt}`);
     expect(destino.querySelector('[data-travessia-postal]')).toBeTruthy();
+    expect(card.textContent).not.toMatch(/Destino de hoje à noite|Faça isto hoje, para o Soulmon/);
     const faca = card.querySelector('[data-passeio-faca]') as HTMLElement;
-    expect(faca.textContent).toMatch(/Faça isto hoje, para o Soulmon fazer o passeio à noite/);
+    // a missão vem ANTES do destino
+    expect(faca.compareDocumentPosition(destino) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(faca.querySelector('img, svg, .sm2-icon, [data-travessia-glifo], [data-mission-mark]')).toBeNull();
     const titulo = faca.querySelector('[data-travessia-titulo]') as HTMLElement;
     expect(titulo.textContent).toBe(travessiaTitle(C1.id, true)!);
