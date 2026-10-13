@@ -6,6 +6,7 @@ import type { Language } from '../utils/i18n';
 import { isAuthConfigured } from '../utils/auth';
 import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { encerrarSessao } from '../utils/sessionReset';
 import {
   requestExport, requestDelete, confirmDelete, downloadExport,
   type AccountFailure, type Bilingual, type DeletePlan, type DeleteRequest, type NotIncludedItem,
@@ -241,6 +242,10 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
       await notif.unsubscribeFromPush();
       await notif.unregisterFromPushNotifications();
     } catch { /* sem push neste ambiente: a exclusão já aconteceu */ }
+    // O servidor apagou a conta: o aparelho também larga o save dela, a sessão e as
+    // inscrições (dono único `sessionReset`). Sem reload agora — a despedida
+    // continua na tela; "Voltar ao início" recarrega na entrada.
+    await encerrarSessao({ motivo: 'account-deleted', copiaDeSeguranca: false, revogarPush: false, recarregar: null });
     setPending(null);
     setFarewell(pick(res.value.aviso, isPt));
     setNotIncluded(res.value.naoIncluido || []);
@@ -361,6 +366,11 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
           <p style={{ ...sm2Hint, color: 'var(--sm2-ink)', fontWeight: 500 }}>{exportNote}</p>
         )}
         {farewell && <p style={{ ...sm2Text, fontWeight: 500 }}>{farewell}</p>}
+        {deletePhase === 'done' && (
+          <button type="button" data-farewell-restart onClick={() => { try { globalThis.location?.reload(); } catch { /* sem window */ } }} style={{ ...sm2Button('outline'), width: '100%' }}>
+            {isPt ? 'Voltar ao início' : 'Back to start'}
+          </button>
+        )}
         {(exportPhase === 'done' || deletePhase === 'done') && notIncluded && (
           <Panel><NotIncluded items={notIncluded} isPt={isPt} /></Panel>
         )}
