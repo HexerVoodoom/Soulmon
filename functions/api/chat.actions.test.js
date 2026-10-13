@@ -251,6 +251,56 @@ describe('provedor: Groq com fallback para Gemini, num adaptador só', () => {
   });
 });
 
+describe('Groq 400: formato do corpo, retentativa e log', () => {
+  const erro400 = () => new Response(JSON.stringify({ error: { message: 'eco: meu segredo é banana', type: 'invalid_request_error', code: 'invalid_value', failed_generation: 'banana' } }), { status: 400 });
+
+  it('corpo enviado: max_completion_tokens, sem max_tokens, sem parallel_tool_calls', async () => {
+    const { espiao } = await pedir('crie um hábito', groqTools('ok', undefined));
+    const b = JSON.parse(espiao.mock.calls[0][1].body);
+    expect(b.max_completion_tokens).toBe(560);
+    expect(b).not.toHaveProperty('max_tokens');
+    expect(b).not.toHaveProperty('parallel_tool_calls');
+    expect(b.reasoning_effort).toBe('low');
+    expect(b.tool_choice).toBe('auto');
+    expect(b.tools.length).toBeGreaterThan(0);
+    expect(b.messages.every(m => typeof m.content === 'string' && m.content.length > 0)).toBe(true);
+  });
+
+  it('400 com ferramentas (qualquer motivo) → repete SEM ferramentas e responde', async () => {
+    const espiao = vi.fn()
+      .mockResolvedValueOnce(erro400())
+      .mockResolvedValueOnce(groqTools('oi!', undefined));
+    vi.stubGlobal('fetch', espiao);
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await chat({ request: new Request('https://soulmon.test/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'meu segredo é banana', id: SAVE, actions: true }) }), env: fakeEnv() });
+    expect((await res.json()).response).toBe('oi!');
+    expect(espiao).toHaveBeenCalledTimes(2);
+    const b2 = JSON.parse(espiao.mock.calls[1][1].body);
+    expect(b2).not.toHaveProperty('tools');
+    expect(b2).not.toHaveProperty('tool_choice');
+    const log = JSON.stringify(err.mock.calls);
+    expect(log).toContain('invalid_value');
+    expect(log).toContain('invalid_request_error');
+    expect(log).toContain('openai/gpt-oss-120b');
+    expect(log).not.toContain('banana');
+    err.mockRestore();
+  });
+
+  it('400 nas duas tentativas, sem Gemini → 502 ai-upstream, log sem conteúdo nem chave', async () => {
+    const espiao = vi.fn(async () => erro400());
+    vi.stubGlobal('fetch', espiao);
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await chat({ request: new Request('https://soulmon.test/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'meu segredo é banana', id: SAVE, actions: true }) }), env: fakeEnv({ GROQ_API_KEY: 'chave-secreta-xyz' }) });
+    expect(res.status).toBe(502);
+    expect((await res.json()).error).toBe('ai-upstream');
+    expect(espiao).toHaveBeenCalledTimes(2);
+    const log = JSON.stringify(err.mock.calls);
+    expect(log).not.toContain('banana');
+    expect(log).not.toContain('chave-secreta-xyz');
+    err.mockRestore();
+  });
+});
+
 describe('conhecimento: dúvida sobre o jogo só com a base', () => {
   it('pergunta coberta → bloco GAME FACTS com o trecho', async () => {
     const { espiao } = await pedir('como funciona a constância dos hábitos?', groqTools('ok', undefined));

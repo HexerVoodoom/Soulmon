@@ -228,6 +228,11 @@ export function ChatBox({
         if (response.status === 429) {
           return isPt ? 'Tô cansadinho agora… tenta de novo daqui a pouco?' : "I'm a little tired right now… try again in a bit?";
         }
+        /* 502 'ai-upstream' = o provedor recusou o pedido (4xx) nas duas tentativas.
+           Não é a rede do usuário caindo: mesma voz calma do "cansado". */
+        if (response.status === 502) {
+          return isPt ? 'Tô meio enrolado agora… tenta de novo daqui a pouco?' : "I'm a bit tangled up right now… try again in a bit?";
+        }
         if (import.meta.env.DEV) console.error('AI API error:', await response.clone().text().catch(() => ''));
         /* 500 'AI not configured' = o servidor está sem chave: estado permanente,
            não instabilidade. Mensagem clara, e o chat local segue funcionando. */

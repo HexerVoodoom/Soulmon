@@ -24,7 +24,7 @@ const groqOk = text => new Response(JSON.stringify({ choices: [{ message: { cont
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('chat no plano gratuito', () => {
-  it('(a) padrão gpt-oss-120b com reasoning_effort low e folga de max_tokens para o raciocínio', async () => {
+  it('(a) padrão gpt-oss-120b com reasoning_effort low e folga de max_completion_tokens para o raciocínio', async () => {
     expect(GROQ_MODEL_DEFAULT).toBe('openai/gpt-oss-120b');
     const f = vi.fn(async () => groqOk('oi!'));
     vi.stubGlobal('fetch', f);
@@ -33,7 +33,7 @@ describe('chat no plano gratuito', () => {
     const body = JSON.parse(f.mock.calls[0][1].body);
     expect(body.model).toBe('openai/gpt-oss-120b');
     expect(body.reasoning_effort).toBe('low');
-    expect(body.max_tokens).toBeGreaterThanOrEqual(300);
+    expect(body.max_completion_tokens).toBeGreaterThanOrEqual(300);
   });
 
   it('modelo não-gpt-oss (CHAT_MODEL) não recebe reasoning_effort', async () => {

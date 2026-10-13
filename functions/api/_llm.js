@@ -59,14 +59,14 @@ async function callGroq(env, req, withTools) {
   const body = {
     model: chatModel(env),
     messages,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     temperature,
   };
   // gpt-oss raciocina antes de responder; `low` gasta menos do TPD gratuito.
-  // O raciocínio conta dentro de `max_tokens`: sem folga, uma resposta de 120
+  // O raciocínio conta dentro de `max_completion_tokens`: sem folga, uma resposta de 120
   // tokens podia sair VAZIA (tudo gasto pensando). +300 de folga.
-  if (/^openai\/gpt-oss/.test(body.model)) { body.reasoning_effort = 'low'; body.max_tokens = maxTokens + 300; }
-  if (withTools && tools?.length) { body.tools = tools; body.tool_choice = 'auto'; body.parallel_tool_calls = false; }
+  if (/^openai\/gpt-oss/.test(body.model)) { body.reasoning_effort = 'low'; body.max_completion_tokens = maxTokens + 300; }
+  if (withTools && tools?.length) { body.tools = tools; body.tool_choice = 'auto'; }
   const res = await timedFetch(GROQ_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.GROQ_API_KEY}` },
@@ -75,15 +75,32 @@ async function callGroq(env, req, withTools) {
   return res;
 }
 
+/** Só metadados do erro do Groq: `error.code`, `error.type` e o modelo.
+ *  NUNCA `message`/`failed_generation` (ecoam o prompt). Valores passam por
+ *  lista de caracteres seguros para não carregar texto livre. */
+async function logGroqError(env, res) {
+  let code = '', type = '';
+  try {
+    const e = JSON.parse(await res.text())?.error ?? {};
+    const safe = v => (typeof v === 'string' && /^[\w.-]{1,40}$/.test(v) ? v : '');
+    code = safe(e.code); type = safe(e.type);
+  } catch { /* corpo não-JSON: sem metadados */ }
+  console.error('[chat] groq 400', { code, type, model: chatModel(env) });
+}
+
 /** @param {Record<string, any>} env @param {LlmReq} req @returns {Promise<LlmResult>} */
 async function groq(env, req) {
   let res = await callGroq(env, req, true);
   if (res.status === 400 && req.tools?.length) {
-    // `tool_use_failed`: o modelo montou a chamada errada. Uma segunda tentativa
-    // SEM ferramentas ainda entrega a conversa (e nenhuma ação, que é o seguro).
-    const t = await res.text().catch(() => '');
-    if (/tool_use_failed/.test(t)) res = await callGroq(env, req, false);
-    else return { ok: false, status: 400 };
+    // 400 COM ferramentas, por qualquer motivo (modelo montou a chamada errada,
+    // esquema/parâmetro rejeitado): uma 2ª tentativa SEM ferramentas ainda
+    // entrega a conversa (e nenhuma ação, que é o seguro). Só a 2ª falha vale.
+    await logGroqError(env, res);
+    res = await callGroq(env, req, false);
+  }
+  if (!res.ok) {
+    if (res.status === 400) await logGroqError(env, res);
+    return { ok: false, status: res.status };
   }
   if (!res.ok) return { ok: false, status: res.status };
   const data = await res.json();
