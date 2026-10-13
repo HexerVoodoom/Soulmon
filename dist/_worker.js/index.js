@@ -3515,10 +3515,10 @@ __name(sanitizeToolCalls, "sanitizeToolCalls");
 var KNOWLEDGE = [
   { "id": "regra-1", "t": "Cora\xE7\xF5es (HP) e a virada do dia", "x": "Uma vez por dia o jogo compara o que a pessoa fez com a meta dela e, se faltou muito, tira no m\xE1ximo um cora\xE7\xE3o \u2014 e h\xE1 cinco mecanismos que podem impedir at\xE9 isso." },
   { "id": "regra-2", "t": "Carinho", "x": "Esfregar o pet cura HP \u2014 meio cora\xE7\xE3o por gesto, no m\xE1ximo um por dia \u2014 e \xE9 a cura principal do jogo. O gesto \xE9 um pointer drag sobre o pet; a anima\xE7\xE3o de explos\xE3o de cora\xE7\xF5es toca sempre, inclusive quando a cura \xE9 recusada \u2014 quem decide isso \xE9 o App.tsx, n\xE3o a regra." },
-  { "id": "regra-3", "t": "Comida", "x": "Comer enche energia e d\xE1 pontos de atributo \u2014 nunca cura HP \u2014 e h\xE1 um teto por hora, n\xE3o por dia. Por que o teto \xE9 derivado. Era o literal 5 enquanto mega/ultra pedem 6 tarefas. Como energia s\xF3 enche comendo e energia cheia \xE9 condi\xE7\xE3o do dia completo, quem fechava as 6 numa sess\xE3o s\xF3 dava 5 comidas e perdia o dia completo tendo feito 100% da pr\xF3pria meta \u2014 punido por ritmo, n\xE3o por esfor\xE7o." },
+  { "id": "regra-3", "t": "Comida", "x": "Comer enche a fome e d\xE1 pontos de atributo \u2014 nunca cura HP e nunca d\xE1 energia \u2014 e h\xE1 um teto por hora, n\xE3o por dia. Por que o teto \xE9 derivado. Era o literal 5 enquanto mega/ultra pedem 6 tarefas. Quem fechava as 6 numa sess\xE3o s\xF3 dava 5 comidas e perdia o dia completo tendo feito 100% da pr\xF3pria meta \u2014 punido por ritmo, n\xE3o por esfor\xE7o." },
   { "id": "regra-4", "t": "Onde os tetos moram (careCaps)", "x": "Os dois contadores de teto de cuidado moram no save, n\xE3o no localStorage do aparelho \u2014 porque um teto que se fura trocando de aparelho n\xE3o \xE9 um teto. Por que existe (D-33). Enquanto os dois contadores moravam no aparelho, o mesmo jogador com PWA e APK tinha DOIS tetos: 2 cora\xE7\xF5es/dia e 12 comidas/hora em vez de 1 e 6." },
   { "id": "regra-5", "t": "O dia do jogador (playerDay)", "x": "Todo registro DI\xC1RIO que mora no save \xE9 nomeado num fuso fixo gravado no save, e nunca pelo rel\xF3gio do aparelho. Decis\xE3o. Achado X-4, res\xEDduo documentado no cabe\xE7alho do m\xF3dulo." },
-  { "id": "regra-6", "t": "Energia", "x": "A energia s\xF3 enche comendo, zera todo dia, e o n\xFAmero de barras \xE9 o requisito de tarefas do est\xE1gio. O que N\xC3O faz. N\xE3o enche com o tempo. N\xE3o enche com chip (chip d\xE1 s\xF3 atributo). N\xE3o \xE9 gasta por nada al\xE9m de brincar." },
+  { "id": "regra-6", "t": "Energia", "x": "A energia sobe com o tempo \u2014 mais depressa quando o Soulmon est\xE1 bem alimentado, parada quando est\xE1 faminto \u2014, zera todo dia, e o n\xFAmero de barras \xE9 o dobro do requisito de tarefas do est\xE1gio. O que N\xC3O faz. N\xE3o enche com o tempo. N\xE3o enche com chip (chip d\xE1 s\xF3 atributo). N\xE3o \xE9 gasta por nada al\xE9m de brincar." },
   { "id": "regra-7", "t": "Dia completo", "x": "Fez o peso da pr\xF3pria meta, tinha pelo menos uma coisa cadastrada e a energia chegou na meta \u2192 +1 ponto de evolu\xE7\xE3o. Decis\xE3o. product/soulmon-01/balance/carga-diaria.md P5 (o nome) e P1 (a separa\xE7\xE3o das duas metas)." },
   { "id": "regra-8", "t": "Coc\xF4 e dreno", "x": "At\xE9 dois coc\xF4s por dia; n\xE3o limpar custa um cora\xE7\xE3o a cada 6 h, respeitando exatamente as mesmas travas da virada do dia. Decis\xE3o. squad-alpha-runs/soulmon-01/discovery/verificacao-V1.md, decis\xE3o D-09. A auditoria de 25/08/2026 achou o App.tsx subtraindo periods cru e drenando o HP inteiro do pet, escapando das tr\xEAs travas." },
   { "id": "regra-9", "t": "Banho", "x": "Sempre dispon\xEDvel; limpa o coc\xF4 e para o rel\xF3gio de 6 h. Decis\xE3o. Commit 86341fcb \u2014 at\xE9 26/08/2026 o banho do overlay n\xE3o escrevia no save, e o jogador via o pet perder cora\xE7\xE3o apertando o bot\xE3o que existe para impedir isso." },
@@ -3665,7 +3665,8 @@ var KNOWLEDGE = [
   { "id": "termo-masmorra", "t": "Masmorra", "x": "O modo de combate por andares. Sem limite di\xE1rio e sem gate de entrada; perder n\xE3o custa cora\xE7\xE3o nenhum \u2014 o jogo nunca cobra da barra que representa o cuidado que o usu\xE1rio teve consigo mesmo." },
   { "id": "termo-plaquinha-da-masmorra", "t": "Plaquinha da masmorra", "x": 'O aviso "Estou na masmorra, volto logo" que fica no lugar do Soulmon na Home enquanto ele est\xE1 descendo sozinho. Tocar nela abre a op\xE7\xE3o de retir\xE1-lo da masmorra. Nunca cobra nada de voc\xEA.' },
   { "id": "termo-avanco-rapido", "t": "Avan\xE7o r\xE1pido", "x": "O bot\xE3o 1\xD7, 2\xD7 ou 3\xD7 no canto de baixo da luta da masmorra. S\xF3 deixa a cena mais r\xE1pida; o resultado da luta \xE9 o mesmo em qualquer velocidade." },
-  { "id": "termo-combina-3", "t": "Combina 3", "x": "O jogo de combinar pe\xE7as do Sal\xE3o de Jogos: troque duas pe\xE7as vizinhas para formar linhas de 3 ou mais elementos iguais, em 20 movimentos. Cada 250 pontos viram 1 Bit, at\xE9 8 por rodada, dentro do teto di\xE1rio de Bits dos minijogos." },
+  { "id": "termo-perfil", "t": "Perfil", "x": "O pr\xE9dio do Laborat\xF3rio (V\xEDnculo 2) que mostra, em duas cartas curtas e sem pontua\xE7\xE3o, quem o Soulmon \xE9 (personalidade, atributo principal, equipamento do Soulsmith) e como luta (elemento, ataque, especial). L\xEA o que o app j\xE1 sabe; nunca inventa. N\xE3o confundir com o perfil da PESSOA (ProfileEditor)." },
+  { "id": "termo-combina-3", "t": "Combina 3", "x": "O jogo de combinar pe\xE7as do Sal\xE3o de Jogos: troque duas pe\xE7as vizinhas (a troca vale pontue ou n\xE3o, e gasta 1 movimento) para formar linhas de 3 ou mais elementos iguais, em 20 movimentos. Cada 250 pontos viram 1 Bit, at\xE9 8 por rodada, dentro do teto di\xE1rio de Bits dos minijogos." },
   { "id": "termo-memoria", "t": "Mem\xF3ria", "x": "O marco de conviv\xEAncia que o app devolve ao jogador em datas de rela\xE7\xE3o (n\xE3o de desempenho). Mostrado uma vez, de forma idempotente." },
   { "id": "termo-meta-de-coracao-meta-do-dia", "t": "Meta de cora\xE7\xE3o \xD7 meta do dia", "x": "\u26A0\uFE0F S\xE3o DUAS r\xE9guas desde 07/09/2026 (decis\xE3o P1). A que PROTEGE o cora\xE7\xE3o \xE9 menor; a do dia completo \xE9 a meta inteira. A excel\xEAncia n\xE3o foi afrouxada: quem quer evoluir continua tendo que fazer tudo." },
   { "id": "termo-missoes", "t": "Miss\xF5es", "x": "Seis objetivos permanentes que liberam a compra de cen\xE1rios exclusivos. Contadores lifetime no save." },
@@ -4265,6 +4266,7 @@ var BUILDING_GATES = {
   "laboratorio.evolucao": { minBond: 1 },
   "laboratorio.pet": { minBond: 2 },
   "laboratorio.stats": { minBond: 3 },
+  "laboratorio.perfil": { minBond: 2 },
   "hall.biblioteca": { minBond: 2 },
   "hall.amigos": { minBond: 2 },
   "hall.guilda": { minBond: 4 },
@@ -8198,6 +8200,66 @@ function sanitizeFocusLoot(raw) {
 }
 __name(sanitizeFocusLoot, "sanitizeFocusLoot");
 
+// api/_dayCounters.js
+var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+var DAY_MS = 864e5;
+var DUNGEON_MAX_LAYER = 999;
+var CHECKIN_SLOTS = ["morning", "afternoon", "night"];
+function isoDayUtc(ms) {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+__name(isoDayUtc, "isoDayUtc");
+function maxAcceptableDay(nowMs = Date.now()) {
+  return isoDayUtc(nowMs + DAY_MS);
+}
+__name(maxAcceptableDay, "maxAcceptableDay");
+function sanitizeDungeonDaily(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {{day?:unknown,layers?:unknown}} */
+    raw
+  );
+  if (typeof r.day !== "string" || !ISO_DAY.test(r.day) || typeof r.layers !== "number" || !Number.isFinite(r.layers)) return void 0;
+  return { day: r.day, layers: Math.min(DUNGEON_MAX_LAYER, Math.max(0, Math.floor(r.layers))) };
+}
+__name(sanitizeDungeonDaily, "sanitizeDungeonDaily");
+function sanitizeCheckIns(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {{day?:unknown,claimed?:unknown}} */
+    raw
+  );
+  if (typeof r.day !== "string" || !ISO_DAY.test(r.day)) return void 0;
+  const claimed = Array.isArray(r.claimed) ? CHECKIN_SLOTS.filter((s) => (
+    /** @type {unknown[]} */
+    r.claimed.includes(s)
+  )) : [];
+  return { day: r.day, claimed };
+}
+__name(sanitizeCheckIns, "sanitizeCheckIns");
+function monotonic(inc, sto, merge, nowMs) {
+  if (!inc) return sto;
+  if (inc.day > maxAcceptableDay(nowMs)) return sto;
+  if (!sto) return inc;
+  if (inc.day < sto.day) return sto;
+  if (inc.day === sto.day) return merge(inc, sto);
+  return inc;
+}
+__name(monotonic, "monotonic");
+function enforceDungeonDaily(incoming, stored, nowMs = Date.now()) {
+  return monotonic(sanitizeDungeonDaily(incoming), sanitizeDungeonDaily(stored), (a, b) => ({ day: a.day, layers: Math.max(a.layers, b.layers) }), nowMs);
+}
+__name(enforceDungeonDaily, "enforceDungeonDaily");
+function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
+  return monotonic(
+    sanitizeCheckIns(incoming),
+    sanitizeCheckIns(stored),
+    (a, b) => ({ day: a.day, claimed: CHECKIN_SLOTS.filter((s) => a.claimed.includes(s) || b.claimed.includes(s)) }),
+    nowMs
+  );
+}
+__name(enforceCheckIns, "enforceCheckIns");
+
 // api/save.js
 var CORS11 = {
   "Access-Control-Allow-Origin": "*",
@@ -8379,6 +8441,25 @@ async function onRequest6({ request, env }) {
       if (mexeu.length) console.warn("save: estagio da fichaJornada ja gravado, mantido o do servidor", { saveId, estagios: mexeu });
       if (ficha) state.fichaJornada = ficha;
       else delete state.fichaJornada;
+    }
+    {
+      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"'));
+      if (temGravado || "dungeonDaily" in state || "checkIns" in state) {
+        let gravado = {};
+        if (temGravado) {
+          try {
+            gravado = JSON.parse(prev.value) ?? {};
+          } catch {
+            gravado = {};
+          }
+        }
+        const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
+        if (dd) state.dungeonDaily = dd;
+        else delete state.dungeonDaily;
+        const ci = enforceCheckIns(state.checkIns, gravado.checkIns);
+        if (ci) state.checkIns = ci;
+        else delete state.checkIns;
+      }
     }
     const serialized = JSON.stringify(state);
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
@@ -8892,7 +8973,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-UnmiMv/functionsRoutes-0.9811741787129804.mjs
+// ../.wrangler/tmp/pages-AnL7D7/functionsRoutes-0.5200358518364674.mjs
 var routes = [
   {
     routePath: "/api/account",

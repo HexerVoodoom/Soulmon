@@ -1460,6 +1460,17 @@ não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onV
 **Chamado por:** `src/App.tsx` (lazy; estado `checkInsAbertos` vive no App para sobreviver ao resgate).
 **Régua:** `src/components/home/energiaFome.render.test.tsx`, `src/utils/checkIns.test.ts` (`checkInWindows`).
 
+### `src/components/UnlockNudge.tsx`
+**Dono de:** o convite discreto de desbloqueio (uma linha clicável), separado do modal para o chunk de entrada não carregar o modal de compra (orçamento de bytes, beta-2). `UnlockAccountModal.tsx` o reexporta.
+**Exports:** `UnlockNudge({ language, reason, variant, onOpen, trailingSpace })`.
+**Chamado por:** `src/App.tsx` (estático), `CreateModal`, `DailyReportModal`, `GuildSheet`, `MercadoSheets`, `SoulmonOnboarding` (via `UnlockAccountModal`).
+**Régua:** `src/components/UnlockAccountModal.copy.render.test.tsx`, `src/deploy/orcamentoDeBytes.contract.test.ts`.
+
+### `src/components/unlockReason.ts`
+**Dono de:** o tipo `UnlockReason` (os motivos do convite de desbloqueio), em módulo mínimo para `UnlockNudge` e `App` não puxarem o modal.
+**Exports:** `UnlockReason`.
+**Chamado por:** `UnlockNudge.tsx`, `UnlockAccountModal.tsx`, `src/App.tsx`.
+
 ### `src/components/SpritePoseRows.tsx`
 **Dono de:** as duas linhas da pose do Soulmon em Configurações > Aparência — "Virar Soulmon" / "Flip Soulmon" (`flipX`) e "Soulmon voando" / "Soulmon flying" (`altitude`). Só desenha; escreve por `applySpritePose`.
 **Exports:** `SpritePoseRows({ language, pose })`.

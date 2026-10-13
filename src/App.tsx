@@ -29,7 +29,6 @@ import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } fr
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
-import { MapPage } from './components/nav/MapPage';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import {
   type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
@@ -173,7 +172,6 @@ import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './util
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
-import { WeeklyReportCard } from './components/WeeklyReportCard';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
@@ -211,7 +209,8 @@ const XP_BY_LEVEL: Record<string, number> = {
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
-import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
+import { UnlockNudge } from './components/UnlockNudge';
+import type { UnlockReason } from './components/unlockReason';
 
 // ── O MOTOR DE TAREFAS (docs/PLANO-TAREFAS.md) ──────────────────────────────
 // As REGRAS moram nos módulos puros (`taskTriage`, `habitRhythm`, `rituals`,
@@ -563,6 +562,9 @@ function PostponeNudgeSheet({
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
+const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ default: m.MapPage })));
+const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
+const UnlockAccountModal = lazy(() => import('./components/UnlockAccountModal').then(m => ({ default: m.UnlockAccountModal })));
 const CheckInSheet = lazy(() => import('./components/CheckInSheet').then(m => ({ default: m.CheckInSheet })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
@@ -6348,12 +6350,14 @@ export default function App() {
             baixo da barra em vez de cobri-lo (QA da Guilda L1 #22). */}
         <OfflineSeal language={language} topOffset={area ? 64 : 8} />
         {unlockReason && (
+          <Suspense fallback={null}>
           <UnlockAccountModal
             language={language}
             reason={unlockReason}
             onUnlocked={handleAccountUnlocked}
             onClose={() => setUnlockReason(null)}
           />
+          </Suspense>
         )}
         {/* ⚠️ `interstitial === 'welcome'` (= nenhum intersticial na tela) é o
             gate, e ele substitui a esperança depositada no `setTimeout(15s)`.
@@ -6582,6 +6586,7 @@ export default function App() {
           })()}
 
           {pane === 'map' && (
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
             <MapPage
               language={language}
               onOpenArea={(id: AreaId) => goTo(areaView(id))}
@@ -6590,6 +6595,7 @@ export default function App() {
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
             />
+            </Suspense>
           )}
 
           {/* ── AS ÁREAS DO MAPA (minimal-ui F4 molde + F5 conteúdo) ─────────
@@ -7034,6 +7040,7 @@ export default function App() {
                 if (semanaA) avisos.push({
                   key: 'semanal',
                   node: (
+                    <Suspense fallback={null}>
                     <WeeklyReportCard
                       report={weeklyReport(gameState, agoraA)}
                       suggestion={stackingSuggestion(gameState, agoraA, language)}
@@ -7043,6 +7050,7 @@ export default function App() {
                       language={language}
                       onDismiss={handleDismissWeeklyReport}
                     />
+                    </Suspense>
                   ),
                 });
 
