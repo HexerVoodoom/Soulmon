@@ -15,9 +15,11 @@
  * clique do ÚNICO CTA que faz o jogo avançar, por até 5 segundos, sem que nada
  * parecesse errado na tela.
  *
- * NOTA (#291, 08/10/2026): o balão hoje é uma linha NO FLUXO acima do palco
- * (`data-pet-bubble-row`), fora da caixa do "Evoluir"; o parágrafo abaixo é
- * histórico. A regra (não se cruzam; posição não depende do CTA) segue valendo.
+ * NOTA (beta-2, 2.5): o balão (`data-pet-bubble-row`) é SOBREPOSTO à janela do
+ * cenário (absoluto, topo, 3 linhas no máximo) — o #291 o pusera no fluxo e um
+ * texto como "Tomar banho" empurrava cenário e sprite. O que impede o roubo do
+ * toque do CTA agora é a camada: o "Evoluir" (z 30) fica ACIMA do balão (z 24).
+ * O parágrafo abaixo é histórico.
  *
  * O CONSERTO DEFINITIVO (27/08/2026, pedido do dono): o balão saiu do rodapé
  * de vez e foi ANCORADO NO TOPO da janela do palco (`top: BUBBLE_GAP`, fixo,
@@ -67,13 +69,13 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); });
 
-/** A linha do balão (`data-pet-bubble-row`): vive NO FLUXO, acima da janela do pet. */
+/** A linha do balão (`data-pet-bubble-row`): SOBREPOSTA à janela do cenário (beta-2, 2.5), fora do fluxo. */
 function linhaDoBalao(): HTMLElement {
   return document.querySelector<HTMLElement>('[data-pet-bubble-row]')!;
 }
 
 describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
-  it('BLOQUEADOR: com "Evoluir" no ALTO do palco, o balão está FORA do palco (no fluxo) — as faixas não se cruzam', () => {
+  it('BLOQUEADOR: o balão fica na camada ABAIXO do "Evoluir" — onde se tocam, o CTA recebe o toque', () => {
     renderWithCss(<CompanionHUD {...base} canEvolve onEvolveRequest={() => {}} />);
     fireEvent.click(screen.getByAltText('rookie'));
 
@@ -81,28 +83,41 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     const linha = linhaDoBalao();
 
     // B3 (02/10/2026): "Evoluir" é CENTRALIZADO no ALTO da área do pet
-    // (`top`, `left: 50%`). #291 (08/10/2026): o balão saiu de dentro do
-    // palco e virou uma linha NO FLUXO acima dele (`position: relative`, sem
-    // `top`/`bottom`), então as duas faixas não se cruzam por construção.
+    // (`top`, `left: 50%`).
     expect(btn.style.left).toBe('50%');
     expect(btn.style.bottom).toBe('');
     expect(parseFloat(btn.style.top)).toBeGreaterThanOrEqual(0);
-    expect(linha.style.position).toBe('relative');
-    expect(linha.style.top).toBe('');
-    expect(linha.style.bottom).toBe('');
+    expect(linha.style.position).toBe('absolute');
     expect(linha.contains(btn)).toBe(false);
     expect(linha.style.pointerEvents).toBe('none');
+    expect(Number(btn.style.zIndex)).toBeGreaterThan(Number(linha.style.zIndex));
     // alvo ≥ 44 e rótulo acessível
     expect(parseFloat(btn.style.minHeight)).toBeGreaterThanOrEqual(44);
     expect(btn.getAttribute('aria-label')).toBe('Evoluir');
+  });
+
+  it('2.5: o balão NÃO está no fluxo — fala curta ou longa não muda a altura da área do pet', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    const sticky = container.querySelector('.sm-pet-sticky')!;
+    const antes = Array.from(sticky.children).length;
+    fireEvent.click(screen.getByAltText('rookie'));
+    const linha = linhaDoBalao();
+    // dentro da JANELA do cenário (a caixa de altura fixa), nunca irmão do palco
+    expect(container.querySelector('.sm3-cena')!.contains(linha)).toBe(true);
+    expect(linha.style.position).toBe('absolute');
+    expect(Array.from(sticky.children).length).toBe(antes);
+    // texto longo é CONTIDO: 3 linhas no máximo, quebra em qualquer ponto
+    const p = linha.querySelector('p')!;
+    expect(p.style.webkitLineClamp || p.style.getPropertyValue('-webkit-line-clamp')).toBe('3');
+    expect(p.style.overflow).toBe('hidden');
+    expect(p.style.overflowWrap).toBe('anywhere');
   });
 
   it('sem CTA na tela o balão fica na MESMA posição (a posição não depende do botão)', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
     const linha = linhaDoBalao();
-    expect(linha.style.position).toBe('relative');
-    expect(linha.style.top).toBe('');
+    expect(linha.style.position).toBe('absolute');
     expect(linha.style.bottom).toBe('');
   });
 

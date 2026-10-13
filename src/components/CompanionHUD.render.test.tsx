@@ -152,15 +152,15 @@ describe('CompanionHUD', () => {
     expect(visor.contains(balao)).toBe(false);
   });
 
-  it('o balão fica no fluxo abaixo do cabeçalho e não sobrepõe os controles do pet', () => {
+  it('o balão é sobreposto à janela do cenário (fora do fluxo) e não empurra os controles do pet', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
     const bubble = container.querySelector<HTMLElement>('[data-pet-bubble]')!;
     const row = container.querySelector<HTMLElement>('[data-pet-bubble-row]')!;
     expect(bubble).toBeTruthy();
-    expect(row.style.position).toBe('relative');
+    expect(row.style.position).toBe('absolute');
     expect(bubble.style.position).toBe('relative');
-    expect(row.compareDocumentPosition(container.querySelector('.sm2-home-pet')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector('.sm3-cena')!.contains(row)).toBe(true);
     expect(bubble.querySelector('p')!.style.textAlign).toBe('left');
   });
 

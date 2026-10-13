@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { DungeonSign } from './home/DungeonSign';
@@ -16,7 +16,7 @@ import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
-import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
+import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { statTip, type StatTipKind } from './home/statTips';
@@ -85,6 +85,12 @@ const VIEW_SCALE = 2 as const;
    "img"`, escala inteira), mas sem o anel de cobre em volta. Sem anel, a
    folga que a geometria descontava é zero. */
 const RING_PX = 0;
+/* Beta-2 (3.3): a arte nasce de baixo de um degradê em cima (o topo da composição
+   desce `CENA_DESCE` e deixaria uma quina) e some em degradê ANTES do chão
+   (`GROUND_Y`, % da altura da composição), onde a linha pintada começa. */
+const CENA_ARTE_MASK = `linear-gradient(to bottom, transparent 0, #000 44px, #000 ${GROUND_Y - 18}%, transparent ${GROUND_Y - 1}%)`;
+/** Beta-2 (3.3): quanto a composição desce na janela do palco (ver `stageDrop`). */
+const CENA_DESCE = 20;
 /* A altura da faixa vem do token `--sm3-cena-h` (330 na referência de 390×844
    do mock aprovado; encolhe em tela baixa). Este é só o fallback do jsdom. */
 const STAGE_FALLBACK_H = 330;
@@ -212,6 +218,18 @@ interface CompanionHUDProps {
    *  (≠ casa), já no idioma. Vira um marcador pequeno e SEM TEXTO perto do pet —
    *  diegético, sem bloquear gesto nenhum de cuidado. `null` = em casa. */
   walkingTo?: string | null;
+  /**
+   * Beta-2 (3.3) — CONTRATO DOS SLOTS DA FAIXA DE STATUS (frente B: fome e timer
+   * de energia). A faixa `.sm3-stats` (canto inferior esquerdo do cenário, DENTRO
+   * do background) reserva dois encaixes e não muda de altura com eles:
+   *  · `energyTimer` — nó inline logo À DIREITA do botão de energia (o "tempo
+   *    para a próxima unidade"). Render discreto (texto `xs`, tinta do visor).
+   *  · `hunger` — nó inline logo depois da energia (o indicador de fome). Se
+   *    for interativo, é problema de quem passa (alvo 44, `aria-*` próprios).
+   * Ambos são opcionais; sem eles a faixa fica exatamente como era. Nenhum
+   * dos dois lê estado do HUD — quem passa calcula sobre o estado real.
+   */
+  statsSlots?: { hunger?: ReactNode; energyTimer?: ReactNode };
   /** 🔎 MISSÃO da guilda (PR3): o Solmon foi investigar e SOME do palco até voltar. Sem texto de cobrança — só a ausência e uma lupa. */
   missionAway?: boolean;
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
@@ -302,6 +320,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   openBackpackSignal = 0,
   hauntedWatching = false,
   walkingTo = null,
+  statsSlots,
   missionAway = false,
   naMasmorra = false,
   onSinalMasmorra,
@@ -435,7 +454,13 @@ export const CompanionHUD = memo(function CompanionHUD({
   /* F4 (01/10/2026): no banho o balão mostra o CHUVEIRINHO aprovado (o mesmo do
      botão de banho), não as mãozinhas do abraço — que ficam para a comida. */
   const [balloonKind, setBalloonKind] = useState<'hug' | 'bath'>('hug');
-  const stageDrop = 0;
+  /* Beta-2 (3.3): a COMPOSIÇÃO inteira (arte + decoração + pet) desce `CENA_DESCE`
+     px dentro da janela do palco. A faixa escura que a arte pintada traz abaixo do
+     chão fica fora da janela (cortada), o chão chega perto da base e HP/energia/
+     controles moram DENTRO do cenário. Tudo que mora na composição desce junto,
+     então chão, decoração e pés do pet não se desencontram (só o alvo do carinho,
+     ancorado na janela, soma a mesma conta). */
+  const stageDrop = CENA_DESCE;
   /* C13 — qual dica de leitura está aberta (coração ou energia). Fecha com
      novo toque no mesmo ícone, toque na própria dica, toque fora ou Esc. */
   const [statAberto, setStatAberto] = useState<StatTipKind | null>(null);
@@ -1227,21 +1252,6 @@ export const CompanionHUD = memo(function CompanionHUD({
           (`VisorBar` sobre a placa de D-H3), uma vez só. */}
       <div className="relative">
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {showBubble && (
-          <div data-pet-bubble-row style={{ position: 'relative', zIndex: 45, padding: '0 10px 10px', pointerEvents: 'none' }}>
-            <div
-              data-pet-bubble
-              className="relative pointer-events-auto"
-              onClick={handleBubbleClick}
-              style={{ cursor: 'pointer', position: 'relative', width: 'fit-content', maxWidth: 'min(100%, 460px)', background: BUBBLE_BG, borderRadius: 'var(--sm2-radius-md)', padding: '8px 12px' }}
-            >
-              <p className="break-words" style={{ margin: 0, fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)', textAlign: 'left', textShadow: '0 1px 2px var(--sm2-bg)' }}>
-                {bubbleText}
-              </p>
-              <span aria-hidden="true" className="absolute" style={{ bottom: -7, left: 22, width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: `7px solid ${BUBBLE_BG}` }} />
-            </div>
-          </div>
-        )}
         <div className="sm2-home-pet">
         {/* A janela do palco: ancora os CONTROLES que ficam por cima da tela
             (evoluir, balão, alvo do carinho) e é a caixa que dá a largura
@@ -1305,9 +1315,27 @@ export const CompanionHUD = memo(function CompanionHUD({
             // significa alguma coisa. Sem esticar (o pixel não perdoa) e sem
             // `cover` (que numa caixa larga escala pela largura e joga o chão
             // para fora). O que sobra nas laterais é a `baseColor`.
-            ...(cenarioBase ? { background: `${cenario} center bottom / auto 100% no-repeat` } : null),
           }}
         >
+          {/* Beta-2 (3.3): a ARTE do cenário é uma camada própria, com a borda de baixo
+              em DEGRADÊ (`mask`): a arte pintada traz uma linha ciano e uma faixa
+              escura sob o chão (em `GROUND_Y`) — era a "linha divisória" abaixo do
+              cenário. O chão agora se dissolve ANTES da linha, suave, e o resto é a
+              cor de base. Só a arte é mascarada: decoração e pet ficam inteiros. */}
+          {cenarioBase && (
+            <div
+              aria-hidden="true"
+              data-cena-arte
+              style={{
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                background: `${cenario} center bottom / auto 100% no-repeat`,
+                WebkitMaskImage: CENA_ARTE_MASK,
+                maskImage: CENA_ARTE_MASK,
+              }}
+            />
+          )}
           {/* Os corações de HP saíram daqui (rodada 3 / B1): viraram cápsula
               emoldurada no HUD do topo, ao lado de ENERGIA. Eram o único
               medidor do app desenhado sem superfície — e o T1 os citava como
@@ -1315,7 +1343,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Evolution flash overlay */}
           {evolutionFlash && (
-            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
+            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200" style={{ top: -stageDrop }}>
               {/* L1 (QA rodada 2): `#2dd4bf` sobre branco/70 dava ~1,6:1. O
                   flash é sobre o VIDRO (escuro nos dois temas), então a tinta
                   é a do visor e o véu é o próprio fundo do visor pulsando. */}
@@ -1522,30 +1550,10 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
                 }}
               />
-              {/* 🧭 PASSEANDO (30/09/2026). A mochila ao pé do pet diz, sem
-                  palavra, que hoje ele sai para a região escolhida no Passeio.
-                  `pointerEvents: none`: nunca rouba o toque de comer, banho,
-                  dormir ou carinho. Sem animação, sem som (R-NOVA). O nome vai
-                  só para o leitor de tela. */}
-              {walkingTo && (
-                <span
-                  role="img"
-                  data-pet-passeando
-                  aria-label={language === 'pt-BR' ? `Saiu para passear: ${walkingTo}` : `Out on a stroll to ${walkingTo}`}
-                  style={{
-                    position: 'absolute',
-                    left: `calc(50% + ${Math.round(PET_RENDER * 0.22)}px)`,
-                    bottom: Math.round(PET_RENDER * 0.3), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão. 11/10/2026 (dono): `bottom` é relativo à caixa do sprite (cujo fundo JÁ é o pé do pet) — somar `PET_GROUND_KEEP + PET_LIFT` jogava a mochila ~100px para CIMA do pet, flutuando junto à janela do cenário.
-                    lineHeight: 0,
-                    pointerEvents: 'none',
-                    zIndex: 1,
-                  }}
-                >
-                  {/* Arte da rodada 3 (32², 30/09/2026) no lugar do emoji 🎒 —
-                      desenhada a 1× (20 px é o tamanho que o emoji ocupava). */}
-                  <img src={UI_ICON_ART.mochila} alt="" aria-hidden="true" draggable={false} width={20} height={20} style={{ display: 'block', imageRendering: 'pixelated' }} />
-                </span>
-              )}
+              {/* 🧭 PASSEANDO — beta-2 (3.2): a mochila NÃO desenha mais ao pé do pet. Ela
+                  aparecia colada ao sprite (o ícone sobreposto ao personagem); agora o
+                  ícone da mochila mora SÓ no lugar da funcionalidade (`sm3-cuidar`), e o
+                  estado "passeando" vai no nome acessível desse botão (`data-walking`). */}
               {missionAway && (
                 <span
                   role="img"
@@ -1710,6 +1718,35 @@ export const CompanionHUD = memo(function CompanionHUD({
         )}
         </Viewport>
 
+        {/* O BALÃO DE FALA (beta-2, 2.5): SOBREPOSTO à janela do cenário, nunca no
+            fluxo — texto de qualquer comprimento ("Tomar banho", frase longa) não
+            muda a altura da Home nem desloca cenário e sprite. Altura máxima de 3
+            linhas (corta com reticências). A faixa não intercepta toque (só a caixa
+            de fala, que dispensa o balão) e fica ABAIXO do "Evoluir" (z 30): onde
+            as duas se tocam, quem recebe o toque é o CTA. */}
+        {showBubble && (
+          <div data-pet-bubble-row style={{ position: 'absolute', top: BUBBLE_GAP, left: 10, right: 10, zIndex: 24, pointerEvents: 'none' }}>
+            <div
+              data-pet-bubble
+              className="pointer-events-auto"
+              onClick={handleBubbleClick}
+              style={{ cursor: 'pointer', position: 'relative', width: 'fit-content', maxWidth: 'min(100%, 320px)', background: BUBBLE_BG, borderRadius: 'var(--sm2-radius-md)', padding: '6px 10px' }}
+            >
+              <p
+                className="break-words"
+                style={{
+                  margin: 0, fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)', textAlign: 'left',
+                  textShadow: '0 1px 2px var(--sm2-bg)', overflowWrap: 'anywhere',
+                  display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden',
+                }}
+              >
+                {bubbleText}
+              </p>
+              <span aria-hidden="true" className="absolute" style={{ bottom: -7, left: 22, width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: `7px solid ${BUBBLE_BG}` }} />
+            </div>
+          </div>
+        )}
+
         {/* ── O ALVO DO CARINHO — o controle mais importante do jogo ─────────
             BLOQUEADOR corrigido: o gesto de esfregar (a ÚNICA cura de HP)
             morava numa `<div>` sem role, sem tabIndex e sem nome acessível,
@@ -1869,6 +1906,12 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <PixelIcon name="energia" size={20} />
                 <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
               </button>
+              {statsSlots?.energyTimer != null && (
+                <span className="sm3-stat-slot" data-slot="energy-timer">{statsSlots.energyTimer}</span>
+              )}
+              {statsSlots?.hunger != null && (
+                <span className="sm3-stat-slot" data-slot="hunger">{statsSlots.hunger}</span>
+              )}
             </div>
             {statAberto && (() => {
               const tip = statTip(statAberto, isPt);
@@ -1909,12 +1952,14 @@ export const CompanionHUD = memo(function CompanionHUD({
             type="button"
             className="sm3-cuidado"
             data-cuidado="mochila"
+            data-walking={walkingTo ? 'true' : undefined}
             onClick={openMochila}
             aria-haspopup="dialog"
             aria-expanded={mochilaOpen}
-            aria-label={language === 'pt-BR'
+            aria-label={(language === 'pt-BR'
               ? (hasNewItems ? 'Mochila — item novo' : 'Mochila')
-              : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
+              : (hasNewItems ? 'Backpack — new item' : 'Backpack'))
+              + (walkingTo ? (language === 'pt-BR' ? ` — passeando: ${walkingTo}` : ` — out on a stroll to ${walkingTo}`) : '')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
             {/* 07/10/2026 (pedido do dono): a MOCHILA é um asset PNG (pixel art `UI_ICON_ART.mochila`, com a aba turquesa recolorida para marrom), não glifo vetorial. A mesma arte aparece no passeio, ao pé do pet. */}
