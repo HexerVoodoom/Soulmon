@@ -7695,7 +7695,9 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   font-size: var(--sm2-text-xs);
   font-weight: 800;
   color: var(--sm2-viewport-ink);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+  /* Halo escuro: no tema claro a faixa fica sobre o degradê que sobe para o fundo da página. */
+  text-shadow: 0 0 6px var(--sm2-viewport-bg), 0 1px 0 rgba(0, 0, 0, .6);
+  filter: drop-shadow(0 0 3px var(--sm2-viewport-bg));
 }
 .sm3-stat { display: inline-flex; align-items: center; gap: 4px; }
 /* Encaixe dos slots da faixa (fome / timer de energia): inline, texto `xs` da própria faixa, sem quebrar linha. */
