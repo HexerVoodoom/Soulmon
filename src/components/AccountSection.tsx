@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { sm2Button, sm2Hint } from './form/FormKit';
+import { AlertLine, sm2Button, sm2Hint } from './form/FormKit';
 import { InfoTip } from './ui/InfoTip';
 import { Icon } from './ui/Icon';
 import { CREDIT_COLOR } from '../utils/currencies';
 import type { Language } from '../utils/i18n';
 import { fetchEntitlement, type Entitlement } from '../utils/entitlements';
 import { isBillingAvailable, restorePurchases } from '../utils/playBilling';
-import { isAuthConfigured, getCurrentEmail, signOut, entrarComGoogle } from '../utils/auth';
+import { isAuthConfigured, getCurrentEmail, entrarComGoogle } from '../utils/auth';
+import {
+  sincronizarAntesDeSair, encerrarSessao, baixarBackupLocal, guardarCopiaDeSeguranca,
+} from '../utils/sessionReset';
 
 /**
  * Conta & compras. Vive DENTRO do grupo "Sua conta" da `SettingsPage`, então
@@ -86,10 +89,36 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
       : 'No purchases found on this Google account.');
   };
 
+  /* Sair da conta (`utils/sessionReset.ts`): primeiro tenta mandar o que ainda não
+     chegou à nuvem; se não der, AVISA e oferece o backup — nunca apaga em silêncio.
+     Dá certo = apaga o estado local da conta, encerra a sessão e recarrega na entrada. */
+  const [saida, setSaida] = useState<'idle' | 'sincronizando' | 'falhou' | 'saindo'>('idle');
+  const [saidaOffline, setSaidaOffline] = useState(false);
+
+  const sairDeVez = async (semSync: boolean) => {
+    setSaida('saindo');
+    // Sem sync = a cópia no aparelho é a única rede de segurança: guarda com o motivo certo.
+    if (semSync) guardarCopiaDeSeguranca('logout-sem-sync');
+    await encerrarSessao({ motivo: 'logout', copiaDeSeguranca: !semSync });
+  };
+
   const handleSignOut = async () => {
-    await signOut();
-    setAuthEmail(null);
-    flash(isPt ? 'Você saiu da conta.' : 'Signed out.');
+    if (saida === 'sincronizando' || saida === 'saindo') return;
+    setSaida('sincronizando');
+    const r = await sincronizarAntesDeSair();
+    if (r.estado === 'falhou') {
+      setSaidaOffline(r.offline);
+      setSaida('falhou');
+      return;
+    }
+    await sairDeVez(false);
+  };
+
+  const handleExportBackup = () => {
+    const ok = baixarBackupLocal();
+    flash(ok
+      ? (isPt ? 'Backup baixado. Guarde o arquivo em um lugar seguro.' : 'Backup downloaded. Keep the file somewhere safe.')
+      : (isPt ? 'Não deu para baixar o backup aqui.' : "Couldn't download the backup here."), ok);
   };
 
   const handleGoogle = async () => {
@@ -170,10 +199,40 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
             : 'Brings back what you already bought on this Google account. Nothing is charged.'}
         </InfoTip>
       </div>
-      {isAuthConfigured() && authEmail && (
-        <button type="button" onClick={handleSignOut} style={{ ...sm2Button('quiet'), width: '100%' }}>
-          {isPt ? 'Sair da conta' : 'Sign out'}
+      {isAuthConfigured() && authEmail && saida !== 'falhou' && (
+        <button type="button" onClick={handleSignOut} disabled={saida !== 'idle'} style={{ ...sm2Button('quiet', saida !== 'idle'), width: '100%' }}>
+          {saida === 'sincronizando'
+            ? (isPt ? 'Salvando na nuvem…' : 'Saving to the cloud…')
+            : saida === 'saindo'
+              ? (isPt ? 'Saindo…' : 'Signing out…')
+              : (isPt ? 'Sair da conta' : 'Sign out')}
         </button>
+      )}
+      {saida === 'falhou' && (
+        <div data-signout-sync-failed style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <AlertLine>
+            {isPt
+              ? `${saidaOffline ? 'Parece que a internet não está ajudando agora. ' : ''}Seu progresso mais recente ainda não chegou à nuvem. Se você sair, o que está só neste aparelho será apagado daqui.`
+              : `${saidaOffline ? "Looks like the connection isn't cooperating right now. " : ''}Your latest progress hasn't reached the cloud yet. If you sign out, what's only on this device will be erased from it.`}
+          </AlertLine>
+          <button type="button" onClick={handleExportBackup} data-signout-export style={{ ...sm2Button('primary'), width: '100%' }}>
+            {isPt ? 'Exportar backup' : 'Export backup'}
+          </button>
+          <button type="button" onClick={handleSignOut} style={{ ...sm2Button('outline'), width: '100%' }}>
+            {isPt ? 'Tentar enviar de novo' : 'Try sending again'}
+          </button>
+          <button
+            type="button"
+            data-signout-anyway
+            onClick={() => { void sairDeVez(true); }}
+            style={{ ...sm2Button('quiet'), width: '100%' }}
+          >
+            {isPt ? 'Sair e apagar daqui' : 'Sign out and erase here'}
+          </button>
+          <button type="button" onClick={() => setSaida('idle')} style={{ ...sm2Button('quiet'), width: '100%' }}>
+            {isPt ? 'Ficar na conta' : 'Stay signed in'}
+          </button>
+        </div>
       )}
 
       {/* Região viva SEMPRE montada (18px de piso): leitor de tela não anuncia

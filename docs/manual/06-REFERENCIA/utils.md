@@ -3302,6 +3302,10 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx` (`handleClaimSubscription`).
 **Régua:** `src/utils/subscriptionShop.test.ts`.
 
+### `src/utils/sessionReset.ts` (fix/logout-limpa-estado, 13/10/2026)
+**Dono de:** o FIM DE SESSÃO — `encerrarSessao({motivo})` (cópia de segurança → revoga push → `signOut` → apaga o estado local da conta → zera assinatura/admin em memória → recarrega na entrada), `sincronizarAntesDeSair()` (tenta enviar o save pendente; falha = a tela avisa e oferece "Exportar backup", nunca apaga em silêncio), `SOBREVIVEM_AO_LOGOUT` (allowlist do que é do APARELHO: idioma, tema, som, consentimento/id de telemetria, avisos de Termos, rastro forense `soulmon-reconcile-backup`), `chavesDaConta()`, `sessaoEncerrando()` (o `GameStateContext` não regrava nem sobe depois do logout), `marcarMudancaPendente`/`marcarSincronizado` (chave `soulmon-sync-pending`, persistida), `baixarBackupLocal`. **Por quê:** "Sair da conta" só chamava `signOut` e o login seguinte subia o save da conta anterior para a conta nova.
+**Chamado por:** `components/AccountSection.tsx` (Sair da conta), `components/AccountDataSection.tsx` (exclusão de conta, sem reload até "Voltar ao início"), `utils/betaClosed.ts` (`trocarContaBetaFechado`), `utils/cloudSave.ts` (`reagirContaExcluida`), `contexts/GameStateContext.tsx`. Os quatro caminhos usam a MESMA função. **Régua:** `src/utils/sessionReset.contract.test.ts` (allowlist travada, toda chave decidida, só este módulo apaga save/identidade), `sessionReset.test.ts`, `sessionReset.cenarios.test.ts` (A→B→A + controle), `src/components/AccountSection.signout.render.test.tsx`.
+
 ### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
 **Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
 **Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.

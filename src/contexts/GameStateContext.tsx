@@ -9,6 +9,7 @@ import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
 import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
+import { sessaoEncerrando, marcarMudancaPendente, marcarSincronizado } from '../utils/sessionReset';
 // `community.ts` (cliente do Torneio/Guilda) só serve DEPOIS do primeiro paint e
 // só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
 type PushProfileArg = Parameters<typeof import('../utils/community').pushProfile>[0];
@@ -1706,6 +1707,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const falhaJaAvisada = useRef<string | null>(null);
 
   useEffect(() => {
+    // FIM DE SESSÃO (`utils/sessionReset.ts`): depois de "Sair da conta" o estado
+    // em memória NÃO pode regravar o save que acabou de ser apagado, nem subir.
+    if (sessaoEncerrando()) return;
     // Storage cheio (`QuotaExceededError`) OU bloqueado não pode derrubar a
     // árvore do React: o jogo segue em memória e o usuário é avisado uma vez.
     writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
@@ -1719,6 +1723,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     // DEMO LOCAL (`utils/demoMode.ts`): salva SÓ no aparelho. Sem POST, sem
     // `saveId` gerado e sem perfil publicado — a demo não tem conta nem nuvem.
     if (isDemoMode(gameState)) return;
+
+    // Há mudança que a nuvem ainda não confirmou (o logout lê isto para tentar enviar antes de apagar).
+    const versaoDaMudanca = marcarMudancaPendente();
 
     // Generate save ID on first use
     let saveId = readLocal(STORAGE_KEYS.SAVE_ID);
@@ -1753,6 +1760,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
 
     const timer = setTimeout(() => {
       rajadaComecouEm.current = null;
+      if (sessaoEncerrando()) return;
       // R-3 — o retorno é LIDO. Antes este `false` era jogado fora: o servidor
       // podia recusar o dia inteiro e a única pista era um `console.warn`.
       //
@@ -1763,7 +1771,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // introduzir: a reconciliação de conflito precisa de uma via própria,
       // fora deste efeito. Avisar por `toast` é seguro (não é estado do jogo).
       void cloudSaveComRetry(saveId!, gameState).then(resultado => {
-        if (resultado.ok) { falhaJaAvisada.current = null; publicarPerfil(); return; }
+        if (resultado.ok) { falhaJaAvisada.current = null; marcarSincronizado(versaoDaMudanca); publicarPerfil(); return; }
         // 410: a conta foi excluída. Não é aviso — é parada: limpa, desloga e
         // volta ao portão (não toca em `setGameState`, R-1 respeitado).
         if (resultado.kind === 'deleted') { void reagirContaExcluida(); return; }

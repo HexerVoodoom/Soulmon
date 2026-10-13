@@ -97,6 +97,10 @@ export const STORAGE_KEYS = {
   SOUND_THEME_OFF: 'soulmon-sound-theme-off',
   FCM_TOKEN: 'soulmon-fcm-token',
   LAST_CLOUD_SYNC: 'soulmon-last-cloud-sync',
+  /** '1' = há mudança do jogo que a nuvem ainda não confirmou. Escrita a cada mutação, apagada quando o
+   *  servidor responde ok. É o que o logout lê para decidir se tenta sincronizar antes de apagar
+   *  (`utils/sessionReset.ts`). Persistida de propósito: sobrevive a fechar o app offline. */
+  SYNC_PENDING: 'soulmon-sync-pending',
   ORACLE_FORM: 'soulmon-oracle-form',
   /** WP1.7 — rascunho do ritual do Oráculo (`utils/oracleDraft.ts`): fechar o
    *  app no item 15 de 20 não perde as respostas. Apagado na geração, no
