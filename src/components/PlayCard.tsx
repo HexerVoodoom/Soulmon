@@ -166,8 +166,9 @@ export function PlayCard({
           </PixelButton>
         ) : (
           // Sem energia. Frase NEUTRA — sem alerta, sem cor de erro, sem
-          // "você precisa": a energia vem de comer, e comida vem de concluir
-          // tarefa. Cobrar aqui seria cobrar tarefa por tabela.
+          // "você precisa": a energia volta com o tempo (mais depressa com o
+          // Soulmon bem alimentado, e comida vem de concluir tarefa). Cobrar aqui
+          // seria cobrar tarefa por tabela.
           <p style={mutedLine}>
             {isPt
               ? `Brincar pede ${PLAY_ENERGY_COST} de energia — dá pra deixar pra depois de uma comidinha.`

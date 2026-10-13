@@ -8,7 +8,7 @@
  * `catalogId` que não exista no pool, e sempre nível 1.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './CatalogOnboardingFlow';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
@@ -29,40 +29,89 @@ describe('CatalogOnboardingFlow', () => {
     expect(continuar().getAttribute('aria-disabled')).toBe('true');
   });
 
-  // C12: o starter set nasce DESMARCADO; "Assumir" vira caixa marcada; só entra o assumido.
-  it('ponto de partida: só entra o que foi assumido, e exige ao menos 1', () => {
+  // Beta-2 (7.3): o starter set nasce MARCADO; desmarca-se o que não quer; só entra o marcado.
+  function ate_o_ponto_de_partida(props: Record<string, unknown> = {}) {
     const onComplete = vi.fn();
-    renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={onComplete} />);
+    renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={onComplete} {...props} />);
     fireEvent.click(screen.getByRole('button', { name: 'Sono' }));
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
     fireEvent.click(screen.getAllByRole('button').find(b => /começar/i.test(b.textContent ?? ''))!);
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
     fireEvent.click(screen.getAllByRole('button').find(b => /disciplina/i.test(b.textContent ?? ''))!);
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
-    expect(screen.getByText(/ponto de partida/i)).toBeTruthy();
-    // Confirmar sem assumir nada não conclui.
+    return onComplete;
+  }
+
+  it('ponto de partida: "Adicionar tarefas à lista", TODAS marcadas por padrão, só entra o marcado', () => {
+    const onComplete = ate_o_ponto_de_partida();
+    expect(screen.getByRole('dialog', { name: 'Adicionar tarefas à lista' })).toBeTruthy();
+    const caixas = screen.getAllByRole('checkbox') as HTMLInputElement[];
+    expect(caixas.length).toBeGreaterThan(1);
+    expect(caixas.every(c => c.checked)).toBe(true);
+    // Desmarca a primeira: ela não entra.
+    fireEvent.click(caixas[0]);
+    expect((screen.getAllByRole('checkbox') as HTMLInputElement[])[0].checked).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete.mock.calls[0][0]).toHaveLength(caixas.length - 1);
+  });
+
+  it('ponto de partida: com tudo desmarcado, não conclui (C11: ao menos 1)', () => {
+    const onComplete = ate_o_ponto_de_partida();
+    for (const c of screen.getAllByRole('checkbox')) fireEvent.click(c);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
     expect(onComplete).not.toHaveBeenCalled();
-    const assumir = screen.getAllByRole('button', { name: /^assumir:/i });
-    expect(assumir.length).toBeGreaterThan(0);
-    fireEvent.click(assumir[0]);
-    expect(screen.getAllByRole('checkbox', { checked: true })).toHaveLength(1);
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete.mock.calls[0][0]).toHaveLength(1);
+  });
+
+  it('sem duplicar: o que já está na lista (catalogId) não é oferecido nem entra de novo', () => {
+    const onComplete = ate_o_ponto_de_partida();
+    const ids = screen.getAllByRole('checkbox').map(c => c.closest('[data-starter-item]')!.getAttribute('data-starter-item')!);
+    fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
+    expect(onComplete.mock.calls[0][0].map((i: { id: string }) => i.id)).toEqual(ids);
+    cleanup();
+    // Agora com a primeira sugestão já na lista.
+    const onComplete2 = ate_o_ponto_de_partida({ existingActivities: [{ catalogId: ids[0] }] });
+    const ids2 = screen.getAllByRole('checkbox').map(c => c.closest('[data-starter-item]')!.getAttribute('data-starter-item')!);
+    expect(ids2).not.toContain(ids[0]);
+    fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
+    expect(onComplete2.mock.calls[0][0].map((i: { id: string }) => i.id)).not.toContain(ids[0]);
+  });
+
+  it('EN: "Add tasks to list"', () => {
+    const onComplete = vi.fn();
+    renderWithCss(<CatalogOnboardingFlow language="en-US" onComplete={onComplete} />);
+    fireEvent.click(screen.getByRole('button', { name: /sleep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getAllByRole('button').find(b => /start/i.test(b.textContent ?? ''))!);
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getAllByRole('button').find(b => /discipline/i.test(b.textContent ?? ''))!);
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    expect(screen.getByRole('dialog', { name: 'Add tasks to list' })).toBeTruthy();
   });
 
   it('voltar é a seta no topo (Back padronizado), não botão embaixo', () => {
     const { container } = renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Sono' }));
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
-    const voltar = container.querySelector('[data-flow-back]')!;
-    const titulo = container.querySelector('h2')!;
+    const voltar = container.querySelector('[data-back-arrow] button')!;
+    const titulo = container.querySelector('.sm2-title')!;
     expect(voltar.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(voltar);
     expect(screen.getByText(/definir metas/i)).toBeTruthy();
   });
 
+  it('F4 (beta-2): é uma FOLHA de baixo (ModalSheet), com o botão no rodapé e o checkbox em bronze — não um modal central', () => {
+    const { container } = renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={vi.fn()} />);
+    expect(container.querySelector('[data-modal-backdrop]')).not.toBeNull();
+    expect((container.querySelector('[role="dialog"]') as HTMLElement).className).toContain('sm2-sheet-rise');
+    // C11: sem "pular" — no 1º passo não há fechar nem seta, e o véu não fecha
+    expect(container.querySelector('[data-back-arrow]')).toBeNull();
+    expect(container.querySelector('[data-dismiss-on-backdrop]')!.getAttribute('data-dismiss-on-backdrop')).toBe('false');
+  });
   it('renderiza em EN sem quebrar', () => {
     renderWithCss(<CatalogOnboardingFlow language="en-US" onComplete={vi.fn()} />);
     expect(screen.getByText(/set goals/i)).toBeTruthy();

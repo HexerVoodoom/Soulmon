@@ -96,6 +96,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
 **Saiu no PR3b:** `STAGE_BUDGET`, `getArenaPlayerStats`, `SPECIAL_EFFECTS`, `SPECIAL_CHARGE_TURNS`, `playerHitDamage`, `enemyHitDamage`, `ADVANTAGE_MULT`/`DISADVANTAGE_MULT`, `simulateArenaRun`, `simulateArenaRunEnergy`, `ARENA_HP_SCALE`, `ARENA_FOE_HP_EXTRA`, `ARENA_TORCIDA_MULT`, `arenaTorcidaTurn`, `arenaTurnIsSpecial`, `CLASS_SHAPE`, `ARENA_ENERGY_ENABLED`, `ARENA_TIMING_ATTACK_ENABLED`, `ARENA_AUTO_ACC`.
 **Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
+### `src/utils/atividadesLista.ts`
+**Dono de:** quem aparece onde na lista de atividades (beta-2, itens 2.1 a 2.3): `Habit` (todo dia) × `Scheduled` (recorrência em dias específicos) para a tela `View all`, "tarefa de hoje" (sem `startDate` no futuro) para a Home, e o estado aberto/recolhido das linhas com filhos (aberta enquanto há pendente, recolhida quando todos concluem; a escolha manual vale só para o mesmo estado de conclusão) com seu parse/serialização no aparelho (`STORAGE_KEYS.RITUAL_OPEN`). Puro; a recorrência continua lida por `normalizeSchedule`/`habitCountsOn`.
+**Exports:**
+- `ActivityBucket` (type) — `'habit' | 'scheduled'`
+- `function activityBucket(a)` — 7 dias = habit; qualquer outra recorrência (semanal, dias alternados, mensal, N×/semana) = scheduled.
+- `function taskIsForToday(task, now)` — tarefa sem `startDate` futuro.
+- `function ritualOpenKey(id, allDone)` / `function isRitualOpen(overrides, id, allDone)` — chave e leitura do estado aberto/recolhido.
+- `function parseRitualOpen(raw)` / `function serializeRitualOpen(o)` / `RITUAL_OPEN_MAX` — persistência local (lixo vira `{}`, teto de entradas).
+**Chamado por:** `src/App.tsx`, `src/components/DailyRituals.tsx`
+**Régua:** `atividadesLista.test.ts`, `components/DailyRituals.todas.render.test.tsx`
+**Regra de negócio:** Home só de hoje; `View all` com tudo; pai nunca conclui direto. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/audioBus.ts`
 **Dono de:** O BARRAMENTO DE ÁUDIO (run `som-01`, Fase 2): sub-mix por categoria, limitador e ducking, substituindo o `AudioContext`-por-chamada de `sounds.ts`.
 **Exports:**
@@ -844,7 +856,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/match3.ts`
 
-**Dono de:** a lógica pura do Combina 3, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (troca inválida não muda nada), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Combina 3" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`.
+**Dono de:** a lógica pura do Combina 3, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (beta-2, 9.2: a troca entre vizinhas é LIVRE — vale pontue ou não, devolve `scored`; só `far`/`empty` são inválidas e não gastam movimento; a tela gasta 1 movimento por troca válida), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Combina 3" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`.
 
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.
@@ -1907,6 +1919,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `App.tsx` (texto do Lv na StatsPage). Os motores de luta (PR3+) leem `soulLevel`/`soulCombatant`.
 **Régua:** `src/utils/soulXP.test.ts`, `src/utils/soulXP.hydrate.test.tsx`, `functions/api/soulXP.parity.test.js`, bloco "combate v3" de `src/copy.semFomo.contract.test.ts`.
 **Avisos do arquivo:** o servidor nunca aceita level nem stats do cliente (espelho em `functions/api/_soulXP.js`). `dayXP` só lê somas de peso de esforço; o esforço parcial de dias NÃO completos não entra no level porque não há histórico persistido dele (campo novo = decisão do dono).
+
+### `src/utils/soulmonPerfil.ts`
+**Dono de:** a LEITURA pura do Perfil do Soulmon (beta-2, 11, 13/10/2026): `buildPerfil` junta o traço de nascimento (`passives`), o atributo principal QUALITATIVO (o maior de ATK/DEF/SPD do `soulCombatant`; empate Força > Resistência > Agilidade), o maior nível entre as peças EQUIPADAS no Soulsmith (`forge.pieceLevel`) e a identidade de combate (`fighterIdentity`: elemento principal, forma do golpe, família do especial). O que o app não tem vira `null` (nada inventado); o elemento do especial só aparece se difere do principal. 11.3: elemento e ataque saíram da Arena livre e moram só aqui.
+**Exports:** `PerfilInput`, `Perfil`, `MainAttr` (tipos) · `buildPerfil`, `atributoPrincipal`, `nivelDoEquipamento`, `fichaStageOf` · `PERFIL_ATRIBUTO`, `PERFIL_FORMA`, `PERFIL_EFEITO` (rótulos PT/EN).
+**Chamado por:** `src/components/perfil/SoulmonPerfil.tsx`.
+**Régua:** `src/utils/soulmonPerfil.test.ts`.
 
 ### `src/utils/soulProfile/astrology/chart.ts`
 **Dono de:** Cálculo do mapa astral real (posições, aspectos, ângulos, casas Placidus) via astronomy-engine.
@@ -3302,6 +3320,20 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx` (`handleClaimSubscription`).
 **Régua:** `src/utils/subscriptionShop.test.ts`.
 
+### `src/utils/sessionReset.ts` (fix/logout-limpa-estado, 13/10/2026)
+**Dono de:** o FIM DE SESSÃO — `encerrarSessao({motivo})` (cópia de segurança → revoga push → `signOut` → apaga o estado local da conta → zera assinatura/admin em memória → recarrega na entrada), `sincronizarAntesDeSair()` (tenta enviar o save pendente; falha = a tela avisa e oferece "Exportar backup", nunca apaga em silêncio), `SOBREVIVEM_AO_LOGOUT` (allowlist do que é do APARELHO: idioma, tema, som, consentimento/id de telemetria, avisos de Termos, rastro forense `soulmon-reconcile-backup`), `chavesDaConta()`, `sessaoEncerrando()` (o `GameStateContext` não regrava nem sobe depois do logout), `marcarMudancaPendente`/`marcarSincronizado` (chave `soulmon-sync-pending`, persistida), `baixarBackupLocal`. **Por quê:** "Sair da conta" só chamava `signOut` e o login seguinte subia o save da conta anterior para a conta nova.
+**Chamado por:** `components/AccountSection.tsx` (Sair da conta), `components/AccountDataSection.tsx` (exclusão de conta, sem reload até "Voltar ao início"), `utils/betaClosed.ts` (`trocarContaBetaFechado`), `utils/cloudSave.ts` (`reagirContaExcluida`), `contexts/GameStateContext.tsx`. Os quatro caminhos usam a MESMA função. **Régua:** `src/utils/sessionReset.contract.test.ts` (allowlist travada, toda chave decidida, só este módulo apaga save/identidade), `sessionReset.test.ts`, `sessionReset.cenarios.test.ts` (A→B→A + controle), `src/components/AccountSection.signout.render.test.tsx`.
+
 ### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
 **Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
 **Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.
+
+### `src/utils/hunger.ts` (beta-2 3.4/3.5, 13/10/2026 — REGISTRO §40)
+**Dono de:** a FOME e o relógio de regeneração da ENERGIA. Funções puras, `now` em ms por parâmetro. A fome (0–100) desce por timestamp (`HUNGER_FULL_TO_EMPTY_HOURS` 14 h) e só sobe comendo (`HUNGER_PER_FOOD` 40; premium `HUNGER_PER_PREMIUM` 100, recusada a partir de `HUNGER_PREMIUM_REFUSE_AT` 80); a energia regenera 1 unidade a cada `ENERGY_REGEN_MINUTES` (120) a 100% — bem alimentado (fome ≥ 60) 100%, mediano (≥ 20) 50%, faminto 0% (interrompida). O progresso até a próxima unidade (`energyClock.carry`, em ponto-ms inteiros) mora no save. **Exports:** `settleEnergy` (acerta até `now`; devolve a MESMA referência sem unidade nova), `setEnergy` (a porta ÚNICA para gastar/ganhar energia fora da regeneração: acerta, aplica e reposiciona o relógio), `eat` (acerta com a fome de ANTES e só então sobe a fome; nunca toca a energia), `energyStatus` (o que a Home mostra: energia, fome, faixa, velocidade, modo e `msToNext` projetado com a queda de faixa), `tickEnergy`/`tickTime` (o tick da Home: com o Soulmon na masmorra congela em `dungeonAway.since`, a conta de quem ficou fora regenera ao longo da linha do tempo), `hungerAt`, `tierOf`, `regenPoints`, `sanitizeHunger`, `sanitizeEnergyClock`, `formatEnergyEta`, as constantes. **Chamado por:** `careRules.feedFood`, `specialItemUse` (premium), `petNeeds.play`, `levelUp`, `dailyReset` (zera a energia SEM reiniciar o relógio), `dungeonIdle.spendLayer`, `checkIns`, `App.tsx` (acerto a cada 15 s), `hooks/useEnergyStatus`. **Régua:** `hunger.test.ts` (aceite: comer não dá energia, velocidade por faixa, timer = motor, fatiar o tempo não muda o total, exploits) e `hunger.balanco.test.ts` (a curva fome × energia contra o orçamento do REGISTRO §30).
+
+### `src/utils/checkIns.ts` (beta-2 4.1, 13/10/2026 — REGISTRO §40)
+**Dono de:** os três check-ins do dia (manhã/tarde/noite) sobre as janelas do ritmo das refeições. **Exports:** `CHECKIN_SLOTS`, `CHECKIN_REWARDS` (manhã = fome +30 · tarde = 10 Bits · noite = 10 de XP de Vínculo), `availableCheckIn`, `checkInWindows` (horário e estado de cada janela, para a folha `CheckInSheet`), `claimCheckIn` (recusa reconferida sobre o `prev`; devolve a MESMA referência), `currentSlot`, `claimedToday`, `checkInDayOf`, `sanitizeCheckIns`. Recompensa única por janela por DIA DO JOGADOR (fuso fixo do save); relógio que volta não reabre; sem sequência nem contador de perdidos; nenhuma leitura de desempenho. **Chamado por:** `App.tsx` (`resgatarCheckIn`), `MealInviteCard`. **Régua:** `checkIns.test.ts`; servidor: `functions/api/_dayCounters.js`.
+### `src/utils/dayHearts.ts` (beta-2, 13/10/2026)
+**Dono de:** a fileira de corações do resumo do dia (`heartStrip`: total, quebrados, inteiros — meio coração perdido conta como um quebrado) e da regra "a animação de quebra toca uma vez" (`shouldPlayHeartBreak`, lida de `lastDayReport.heartsAnimSeen`).
+**Exports:** `DEFAULT_HEARTS`, `HeartStrip`, `heartStrip`, `shouldPlayHeartBreak`.
+**Régua:** `src/utils/dayHearts.test.ts`, `src/components/DailyReportModal.secoes.render.test.tsx`.

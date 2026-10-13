@@ -65,7 +65,7 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
   const busyRef = useRef(false);
   const [clearing, setClearing] = useState<ReadonlySet<number>>(new Set());
   const [fresh, setFresh] = useState<{ id: number; cells: ReadonlySet<number> }>({ id: 0, cells: new Set() });
-  const [shake, setShake] = useState<{ id: number; cells: ReadonlySet<number> }>({ id: 0, cells: new Set() });
+  const [shake] = useState<{ id: number; cells: ReadonlySet<number> }>({ id: 0, cells: new Set() });
   const [hint, setHint] = useState<{ a: Pos; b: Pos } | null>(null);
   const [chain, setChain] = useState(0);
   const [note, setNote] = useState('');
@@ -128,14 +128,7 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
     if (busyRef.current || overRef.current || movesRef.current <= 0) return;
     clearHint();
     const res = trySwap(boardRef.current, a, d, rngRef.current);
-    if (!res.ok) {
-      setSel(null);
-      if (res.reason === 'nomatch') {
-        setShake(s => ({ id: s.id + 1, cells: new Set([key(a), key(d)]) }));
-        say('Essa troca não forma linha — tente outra.', "That swap doesn't make a line — try another.");
-      }
-      return;
-    }
+    if (!res.ok) { setSel(null); return; }
     busyRef.current = true;
     setBusy(true);
     setSel(null);
@@ -257,7 +250,7 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={(
           <>
-            <span style={{ display: 'block' }}>{isPt ? `Troque duas peças vizinhas para formar uma linha de 3 ou mais iguais. Você tem ${M3_MOVES} movimentos.` : `Swap two neighbouring tiles to line up 3 or more alike. You have ${M3_MOVES} moves.`}</span>
+            <span style={{ display: 'block' }}>{isPt ? `Troque duas peças vizinhas, pontue a troca ou não, para formar linhas de 3 ou mais iguais. Cada troca gasta 1 dos ${M3_MOVES} movimentos.` : `Swap two neighbouring tiles, scoring or not, to line up 3 or more alike. Each swap costs 1 of your ${M3_MOVES} moves.`}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Uma linha de 4 deixa uma peça com setas: quando ela entra numa combinação, limpa a linha (ou a coluna) inteira.' : 'A line of 4 leaves a tile with arrows: when it joins a match, it clears its whole row (or column).'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Toque numa peça e depois numa vizinha, ou arraste. Teclado: setas e Enter.' : 'Tap a tile, then a neighbour, or swipe. Keyboard: arrows and Enter.'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? `Cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit, até ${M3_MAX_BITS}.` : `Every ${M3_POINTS_PER_BIT} points becomes 1 Bit, up to ${M3_MAX_BITS}.`}</span>

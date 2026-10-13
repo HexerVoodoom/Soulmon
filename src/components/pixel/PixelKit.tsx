@@ -254,6 +254,14 @@ export interface PixelTabItem<K extends string> {
   icon?: string;
   /** Ícone Material (20px). FILL 1 na aba selecionada. */
   iconName?: string;
+  /** Glifo próprio (já desenhado por quem chama), antes do rótulo — p.ex. o glifo de um caminho. */
+  glyph?: ReactNode;
+  /** Valor depois do rótulo (um número, p.ex.). Decorativo para a seleção; o nome continua sendo o `label`. */
+  meta?: ReactNode;
+  /** Cor da identidade da aba (tinta e sublinhado quando selecionada). Sem ela, `primary-ink`. */
+  color?: string;
+  /** Destaque discreto (brilho no glifo) — "quem lidera". Estado extra, nunca a seleção. */
+  emphasis?: boolean;
 }
 
 export interface PixelTabsProps<K extends string> {
@@ -263,6 +271,12 @@ export interface PixelTabsProps<K extends string> {
   /** Rótulo acessível da fileira (já vem com par PT/EN de quem chama). */
   ariaLabel?: string;
   style?: CSSProperties;
+  /**
+   * `compact` (beta-2, 10.3): a mesma fileira em versão enxuta — sublinhado FINO (2px) na ativa, separadores discretos entre
+   * as abas e rótulo em 12px que nunca é cortado (a aba cresce até o conteúdo; se não couber, a fileira rola). Mesmo componente,
+   * mesma semântica (`tablist`/`tab`), mesmos tokens.
+   */
+  variant?: 'default' | 'compact';
 }
 
 /**
@@ -275,7 +289,7 @@ export interface PixelTabsProps<K extends string> {
  * corte é medida, não presumida (`data-cut`): uma máscara fixa esmaeceria a
  * última aba das fileiras que cabem inteiras.
  */
-export function PixelTabs<K extends string>({ items, value, onChange, ariaLabel, style }: PixelTabsProps<K>) {
+export function PixelTabs<K extends string>({ items, value, onChange, ariaLabel, style, variant = 'default' }: PixelTabsProps<K>) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [cut, setCut] = useState<'none' | 'start' | 'end' | 'both'>('none');
   useEffect(() => {
@@ -298,7 +312,7 @@ export function PixelTabs<K extends string>({ items, value, onChange, ariaLabel,
   return (
     <div
       ref={ref}
-      className="sm2-kit-tabs"
+      className={variant === 'compact' ? 'sm2-kit-tabs sm2-kit-tabs-compact' : 'sm2-kit-tabs'}
       role="tablist"
       aria-label={ariaLabel}
       data-cut={cut === 'none' ? undefined : cut}
@@ -314,9 +328,14 @@ export function PixelTabs<K extends string>({ items, value, onChange, ariaLabel,
             aria-selected={on}
             onClick={() => onChange(t.key)}
             className={on ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
+            data-tab-key={t.key}
+            data-tab-emphasis={t.emphasis ? 'sim' : undefined}
+            style={t.color ? ({ '--sm2-tab-ink': t.color } as CSSProperties) : undefined}
           >
+            {t.glyph}
             <InlineIcon src={t.icon} name={t.iconName} fill={on ? 1 : 0} />
-            {t.label}
+            <span data-tab-label>{t.label}</span>
+            {t.meta !== undefined && <span className="sm2-num" data-tab-meta style={{ fontWeight: 600 }}>{t.meta}</span>}
           </button>
         );
       })}

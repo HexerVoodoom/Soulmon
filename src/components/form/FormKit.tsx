@@ -340,7 +340,7 @@ export function Segment({
  * Caixa de seleção com rótulo. O rótulo inteiro é o alvo, com 44px de altura.
  * A caixa é 24 com raio 4 (canvas `Cards`): `appearance: none` em
  * `.sm2-form-check` — o nativo não aceita raio nem a fronteira `muted` 2px,
- * e marcada vira `primary-fill` com o check em `on-primary`.
+ * e marcada vira BRONZE (`--sm2-check-fill`, o mesmo da lista de atividades) com o check em `--sm2-on-check`.
  */
 export function CheckRow({
   checked, onChange, children,
@@ -387,8 +387,9 @@ export function ModalSheet({
   /** I3 (02/10/2026): onde mora o fechar. `'start'` (padrão) = canto superior
    *  ESQUERDO, acima do título (o mesmo lugar do voltar). `'end'` = canto
    *  superior DIREITO, só para a folha cujo fechar ENCERRA uma atividade em
-   *  andamento. */
-  closeSide?: 'start' | 'end';
+   *  andamento. `'none'` (beta-2, F4): SEM fechar — só o fluxo de definição de metas no primeiro passo (C11: sem "pular"); exige `dismissOnBackdrop={false}`
+   *  (e, se houver passo anterior, `onBack` não renderiza a seta: use `'start'` a partir do segundo passo). */
+  closeSide?: 'start' | 'end' | 'none';
   /** Folha com sub-tela interna (ex.: o aviso do catálogo): a peça do canto
    *  superior ESQUERDO vira a SETA de voltar à tela anterior da folha, e não o
    *  fechar. Sem ele, é o fechar (`close`). */
@@ -398,14 +399,14 @@ export function ModalSheet({
   info?: { label: string; content: ReactNode };
   /** Clicar/tocar FORA da folha (no véu) fecha — o padrão de todo modal (pedido do dono,
    *  11/10/2026). Por padrão é `true`, exceto quando o fechar vai à direita (`closeSide` end; o fechar encerra uma
-   *  atividade em andamento). Passe `false` só em folha que bloqueia DE PROPÓSITO: confirmação
+   *  atividade em andamento) ou `none` (sem fechar). Passe `false` só em folha que bloqueia DE PROPÓSITO: confirmação
    *  destrutiva e formulário com texto digitado (um toque fora não pode perder o que a pessoa
    *  escreveu). A lista vive em `docs/BETA-AJUSTES-UI.md`. */
   dismissOnBackdrop?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
-  const fechaNoVeu = dismissOnBackdrop ?? closeSide !== 'end';
+  const fechaNoVeu = dismissOnBackdrop ?? closeSide === 'start';
   /* O toque tem de COMEÇAR e TERMINAR no véu: arrastar uma seleção de texto de dentro
      da folha para fora solta o clique no ancestral comum (o véu) e fecharia sem querer. */
   const comecouNoVeu = useRef(false);
@@ -465,7 +466,7 @@ export function ModalSheet({
             <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
           </div>
         ) : null}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : '10px 8px 12px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
           <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
           {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título. */}
           <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />

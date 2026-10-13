@@ -16,16 +16,21 @@ import {
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
+import { AvisosLink } from './components/nav/AvisosLink';
+import { AvisosSheet } from './components/nav/AvisosSheet';
 import { needsWelcomeTour } from './utils/welcomeTour';
 import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
-import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
-import { applyForgeGrant } from './utils/forgeActions';
+import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
+import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
+import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
+import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
+import { useEnergyStatus } from './hooks/useEnergyStatus';
+import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
-import { MapPage } from './components/nav/MapPage';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import {
   type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
@@ -62,6 +67,7 @@ import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from '.
 import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo } from './utils/demoStart';
@@ -168,7 +174,6 @@ import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './util
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
-import { WeeklyReportCard } from './components/WeeklyReportCard';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
@@ -206,7 +211,8 @@ const XP_BY_LEVEL: Record<string, number> = {
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
-import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
+import { UnlockNudge } from './components/UnlockNudge';
+import type { UnlockReason } from './components/unlockReason';
 
 // ── O MOTOR DE TAREFAS (docs/PLANO-TAREFAS.md) ──────────────────────────────
 // As REGRAS moram nos módulos puros (`taskTriage`, `habitRhythm`, `rituals`,
@@ -238,7 +244,7 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
-import { activitiesFromCatalogChoice } from './utils/catalogChoice';
+import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
 import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
@@ -558,6 +564,10 @@ function PostponeNudgeSheet({
 const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
+const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ default: m.MapPage })));
+const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
+const UnlockAccountModal = lazy(() => import('./components/UnlockAccountModal').then(m => ({ default: m.UnlockAccountModal })));
+const CheckInSheet = lazy(() => import('./components/CheckInSheet').then(m => ({ default: m.CheckInSheet })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
@@ -734,13 +744,14 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ d
 // orçamento de bytes (decisão #31).
 const AreaView = lazy(() => loadAreaView().then(m => ({ default: m.AreaView })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
+const SoulmonPerfil = lazy(() => import('./components/perfil/SoulmonPerfil').then(m => ({ default: m.SoulmonPerfil })));
 
 /** O que o `<main>` desenha fora das áreas, DERIVADO da navegação
  *  (`navigation.ts`). Desde a F5 toda área é desenhada pelo `AreaView`; o
  *  `pane` delas só importa no Laboratório, onde a sub-aba (`labTab`) decide a
  *  folha. As outras cinco áreas viram `'area'`. */
-type Pane = 'main' | 'map' | 'area' | 'evolution' | 'stats' | 'pet' | 'settings' | 'oracle';
-type LabTab = 'evolution' | 'pet' | 'stats';
+type Pane = 'main' | 'map' | 'area' | 'evolution' | 'stats' | 'pet' | 'perfil' | 'settings' | 'oracle';
+type LabTab = 'evolution' | 'pet' | 'stats' | 'perfil';
 
 function paneFor(view: ViewType, labTab: LabTab): Pane {
   if (view === 'home') return 'main';
@@ -901,11 +912,27 @@ export default function App() {
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
+  /* F3 (beta-2): a fila de avisos é MONTADA no corpo da Home (abaixo) e LIDA pelo botão do canto e pela folha, lá no fim do render. */
+  const avisosDoDia: { lista: { key: string; node: ReactNode }[] } = { lista: [] };
+  /* Folha dos check-ins (beta-2 4.1): estado de VISTA; vive no App (não no aviso) para sobreviver ao resgate, que apaga o aviso. */
+  const [checkInsAbertos, setCheckInsAbertos] = useState(false);
   /* Etapas na Home nascem RECOLHIDAS (G1): uma atividade de 4 etapas ocupava 5
      linhas e comia sozinha a dobra. Estado de VISTA, não de jogo — de propósito
      fora do GameState, para não virar cloud save a cada toque. */
-  const [expandedRituals, setExpandedRituals] = useState<Record<string, boolean>>({});
-  const handleExpandRitual = useCallback((id: string) => setExpandedRituals(prev => ({ ...prev, [id]: !prev[id] })), []);
+  /* Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia sobrevive a
+     navegar, atualizar e reabrir (preferência de tela do APARELHO, não save).
+     Sem escolha, a linha com filhos fica aberta enquanto houver pendente e
+     recolhe quando todos concluem (`utils/atividadesLista.ts`). */
+  const [expandedRituals, setExpandedRituals] = useState<Record<string, boolean>>(
+    () => parseRitualOpen(readLocal(STORAGE_KEYS.RITUAL_OPEN)),
+  );
+  const handleExpandRitual = useCallback((key: string, open: boolean) => setExpandedRituals(prev => {
+    if (prev[key] === open) return prev;
+    const { [key]: _antigo, ...resto } = prev; // reinserir no fim = o mais recente sobrevive ao teto
+    const next = { ...resto, [key]: open };
+    writeLocal(STORAGE_KEYS.RITUAL_OPEN, serializeRitualOpen(next), { silent: true });
+    return next;
+  }), []);
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
@@ -947,6 +974,21 @@ export default function App() {
   const atenderRefeicao = useCallback((kind: MealInviteKind) => {
     setGameState(prev => markMealDone(prev, new Date(), kind, isSleepingRefeicao.current));
   }, []);
+
+
+  /* ⏱️ A REGENERAÇÃO DA ENERGIA (beta-2 3.4/3.5, `utils/hunger.ts`): a energia sobe com o TEMPO, na velocidade que a fome permite, e o
+     que vale é o relógio gravado no save (`energyClock`) — nunca um contador de tela. Este efeito só ACERTA o estado a cada 15 s e quando a
+     aba volta ao foco (o app pode ter ficado fechado por horas); `settleEnergy` devolve a MESMA referência sem unidade nova, então não
+     há re-render nem escrita à toa. O que a Home mostra (`energyStatus`) é calculado sobre o mesmo estado e as mesmas fronteiras. */
+  useEffect(() => {
+    const acertar = () => setGameState(prev => tickEnergy(prev, Date.now()));
+    acertar();
+    const id = setInterval(acertar, 15_000);
+    const aoVoltar = () => { if (document.visibilityState === 'visible') acertar(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('focus', acertar);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', aoVoltar); window.removeEventListener('focus', acertar); };
+  }, [setGameState]);
 
   /* Telemetria do ritmo: dispara quando uma janela PASSA a constar como
      atendida NESTA sessão (comparando com o render anterior) — fora do updater
@@ -2040,7 +2082,7 @@ export default function App() {
       hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
       healthPoints: Math.floor(gameState.healthPoints),
       maxHealthPoints: gameState.maxHealthPoints,
-      energyPoints: gameState.energyPoints ?? 0,
+      energyPoints: settleEnergy(gameState, tickTime(gameState, Date.now())).energyPoints ?? 0,
       hasPoop: (gameState.poopEventsShown || []).some(i => !(gameState.poopEventsCompleted || []).includes(i)),
       /* WP2.6 — o widget passa a saber de HÁBITO. Ele mostrava só tarefas do
          dia, HP e energia: o motor de constância, a peça mais central do
@@ -2845,14 +2887,10 @@ export default function App() {
     if (dailyTotal > 0) {
       parts.push(isPt ? `📋 ${dailyDone}/${dailyTotal} do dia` : `📋 ${dailyDone}/${dailyTotal} today`);
     }
-    // Só oferece o próximo passo se ele existir de verdade: a condição do dia
-    // perfeito é energia ≥ meta do dia, então com a energia já cheia isto seria
-    // uma cobrança inventada em cima de quem acabou de fechar tudo.
-    if (dailyTotal > 0 && dailyDone >= dailyTotal && (gameState.energyPoints ?? 0) < dailyTotal) {
-      parts.push(isPt ? '⚡ falta encher a energia' : '⚡ energy left to fill');
-    }
+    // (beta-2 3.5) A dica "falta encher a energia" SAIU: a energia não enche mais comendo (a comida enche a FOME e o tempo regenera a
+    // energia), e a meta do dia não depende dela desde 11/10/2026 — o toast não cobra nada além do que a pessoa acabou de fazer.
     toast(parts.join('  ·  '));
-  }, [language, dailyDone, dailyTotal, gameState.energyPoints]);
+  }, [language, dailyDone, dailyTotal]);
 
   /**
    * Fila de UM anúncio: o handler só ENFILEIRA (`queueTaskGains`) e o efeito
@@ -3111,6 +3149,11 @@ export default function App() {
   naMasmorraRef.current = naMasmorra;
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
+  /* ⏱️🍽️ O estado real da energia/fome (beta-2 3.4/3.5): relógio do save + fome de agora, recalculado a cada 15 s. Alimenta o número da
+     energia, o timer e o indicador de fome da Home (`EnergyTimer`/`HungerIndicator`). */
+  const energiaStatus = useEnergyStatus(gameState);
+  /* 🪵 O retorno do Soulmon na masmorra (beta-2 6.2): fim projetado da descida a partir do estado PERSISTIDO — alimenta a placa de madeira. */
+  const masmorraRetorno = useDungeonReturn(gameState);
   const [ocupadoAviso, setOcupadoAviso] = useState<{ acao: OcupadoAcao | null } | null>(null);
   const [retirando, setRetirando] = useState(false);
   const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
@@ -3327,7 +3370,7 @@ export default function App() {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
       }
       if (special.kind === 'premium') {
-        toast(language === 'pt-BR' ? '⭐ Comida premium! +5 de energia' : '⭐ Premium food! +5 energy');
+        toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');
       }
       return;
     }
@@ -3357,6 +3400,20 @@ export default function App() {
     atenderRefeicao('snack');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
+
+  /* ☀️🌤️🌙 CHECK-IN DA JANELA (beta-2 4.1, `utils/checkIns.ts`): a recompensa sai TODA do updater (`claimCheckIn` reconfere a janela
+     sobre o `prev` — dois toques no mesmo lote pagam uma vez) e o toast vem do resultado da MESMA chamada, fora do updater. */
+  const resgatarCheckIn = useCallback(() => {
+    const agora = Date.now();
+    const slot = availableCheckIn(gameStateRef.current, agora);
+    if (!slot) return;
+    setGameState(prev => claimCheckIn(prev, agora).state);
+    atenderRefeicao('tenSeconds');
+    const rw = CHECKIN_REWARDS[slot];
+    toast(language === 'pt-BR'
+      ? (slot === 'morning' ? '☀️ O dia começa com ele alimentado' : slot === 'afternoon' ? `🌤️ +${rw.bits} Bits` : `🌙 +${rw.xp} de Vínculo`)
+      : (slot === 'morning' ? '☀️ The day starts with him fed' : slot === 'afternoon' ? `🌤️ +${rw.bits} Bits` : `🌙 +${rw.xp} Bond`));
+  }, [language, atenderRefeicao]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -4623,6 +4680,26 @@ export default function App() {
     return adventureOfNight(entries, r.done, r.required, r.date);
   }, [gameState.lastDayReport, gameState.adventures, gameState.crossings, trv, showDailyReport]);
 
+  /**
+   * O vínculo explícito do resumo (beta-2, 4.3): a missão do Passeio que a pessoa cumpriu no dia anterior e o
+   * destino dela. Vem do REGISTRO do mapa (`strollOfDay`) — a mesma fonte da viagem da noite —, então o que o
+   * resumo diz é o que de fato levou o Soulmon ao achado. Sem missão cumprida naquele dia, `null`.
+   */
+  const strollDaNoite = useMemo(() => {
+    const r = gameState.lastDayReport;
+    if (!r || !trv) return null;
+    return trv.strollSummary(gameState.crossings ?? CROSSINGS_EMPTY, dayKeyToIso(r.date) ?? r.date, language === 'pt-BR');
+  }, [gameState.lastDayReport, gameState.crossings, trv, language]);
+
+  /** A animação dos corações começou: grava "já vista" no relatório (idempotente; o updater é puro — footgun 6). */
+  const handleHeartsAnimSeen = useCallback(() => {
+    setGameState(prev => {
+      const rep = prev.lastDayReport;
+      if (!rep || rep.heartsAnimSeen) return prev;
+      return { ...prev, lastDayReport: { ...rep, heartsAnimSeen: true } };
+    });
+  }, [setGameState]);
+
   /** Inédito = não estava no diário ANTES desta noite. Só muda o rótulo na tela. */
   const aventuraInedita = useMemo(
     () => !!aventuraDaNoite && !(gameState.adventures ?? []).some(e =>
@@ -4834,7 +4911,8 @@ export default function App() {
     writeLocal(STORAGE_KEYS.TERMS_NOTICE_SEEN, marca, { silent: true });
     setTermsNoticeSeen(marca);
   }, []);
-  const handleToggleAvisos = useCallback(() => setAvisosAbertos(v => !v), []);
+  const handleAbrirAvisos = useCallback(() => setAvisosAbertos(true), []);
+  const handleFecharAvisos = useCallback(() => setAvisosAbertos(false), []);
 
   const handleTriageResolve = useCallback((taskId: string, action: TriageAction) => {
     const now = new Date();
@@ -5073,10 +5151,8 @@ export default function App() {
     setGameState(prev => awardBondXP({
       ...prev,
       healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + (rewards.hearts ?? 0)),
-      energyPoints: Math.min(
-        getMaxEnergyForStage(prev.evolutionStage),
-        (prev.energyPoints ?? 0) + (rewards.energy ?? 0),
-      ),
+      // O Pesadelo vencido devolve energia pela porta única (`setEnergy`): acerta a regeneração e não reinicia o relógio.
+      ...(() => { const e = setEnergy(prev, Date.now(), (cur) => cur + (rewards.energy ?? 0)); return { energyPoints: e.energyPoints, energyClock: e.energyClock }; })(),
       gamePoints: (prev.gamePoints ?? 0) + (rewards.bits ?? 0),
       bitsOrigin: noteFreeBits(prev, rewards.bits ?? 0, playerDayKey(new Date(), prev.playerDayTz)).bitsOrigin,
       nightmares: markFought(
@@ -5731,10 +5807,8 @@ export default function App() {
 
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
-    setGameState(prev => {
-      const next = visitBuilding(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), id, bondLevelFor(prev.totalXP ?? 0));
-      return next === prev.buildingQuests ? prev : { ...prev, buildingQuests: next };
-    });
+    /* 8.3: o prédio NÃO listado paga o material e a peça do Soulsmith na própria entrada (`applyBuildingEntry`) — não há tela de Resgatar para ele. */
+    setGameState(prev => applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id));
   }, []);
 
   /** Resgata o material do prédio. Idempotente: a recusa é reconferida sobre o `prev` (resgate duplo não paga 2×). */
@@ -5870,7 +5944,7 @@ export default function App() {
   // mostrado uma vez, depois que o Soulmon já nasceu, antes de liberar o app.
   if (!hasCompletedTutorial) {
     return (
-      <Suspense fallback={<ScreenSkeleton language={language} />}>
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
         <GameTutorialFlow
           language={language}
@@ -5896,7 +5970,7 @@ export default function App() {
   // sem intro nem cadastro (ver SoulmonOnboarding mode='upgrade').
   if (upgradeRitual) {
     return (
-      <Suspense fallback={<ScreenSkeleton language={language} />}>
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
         <SoulmonOnboarding
           mode="upgrade"
@@ -6182,6 +6256,27 @@ export default function App() {
             </div>
           )}
           {labTab === 'stats' && statsPage}
+          {/* O PERFIL do Soulmon (beta-2, 11): leitura curta da ficha, do Soulsmith e da personalidade — `utils/soulmonPerfil.ts`. */}
+          {labTab === 'perfil' && (
+            <Suspense fallback={<ScreenSkeleton language={language} variant="inline" />}>
+              <SoulmonPerfil
+                language={language}
+                input={{
+                  evolutionStage: gameState.evolutionStage,
+                  perfectDays: gameState.perfectDays,
+                  powerPoints: gameState.powerPoints,
+                  harmonyPoints: gameState.harmonyPoints,
+                  benevolencePoints: gameState.benevolencePoints,
+                  degeneratedByHP: gameState.degeneratedByHP,
+                  petPassive: gameState.petPassive,
+                  skills: gameState.soulmonSkills,
+                  petElement: gameState.soulmonMeta?.dominantElement,
+                  equipment: gameState.equipment,
+                  forge: gameState.forge,
+                }}
+              />
+            </Suspense>
+          )}
     </>
   );
   const hallContent = (view: 'directory' | 'friends') => (<Suspense fallback={<ScreenSkeleton language={language} />}>
@@ -6260,12 +6355,14 @@ export default function App() {
             baixo da barra em vez de cobri-lo (QA da Guilda L1 #22). */}
         <OfflineSeal language={language} topOffset={area ? 64 : 8} />
         {unlockReason && (
+          <Suspense fallback={null}>
           <UnlockAccountModal
             language={language}
             reason={unlockReason}
             onUnlocked={handleAccountUnlocked}
             onClose={() => setUnlockReason(null)}
           />
+          </Suspense>
         )}
         {/* ⚠️ `interstitial === 'welcome'` (= nenhum intersticial na tela) é o
             gate, e ele substitui a esperança depositada no `setTimeout(15s)`.
@@ -6494,6 +6591,7 @@ export default function App() {
           })()}
 
           {pane === 'map' && (
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
             <MapPage
               language={language}
               onOpenArea={(id: AreaId) => goTo(areaView(id))}
@@ -6502,6 +6600,7 @@ export default function App() {
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
             />
+            </Suspense>
           )}
 
           {/* ── AS ÁREAS DO MAPA (minimal-ui F4 molde + F5 conteúdo) ─────────
@@ -6512,7 +6611,7 @@ export default function App() {
               Corrida com obstáculos), Jogos (Pedra, papel e tesoura), Laboratório
               (Evolução/Soulmon/Stats) e Hall (Biblioteca). */}
           {area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
               <AreaView
                 key={currentView}
@@ -6689,7 +6788,8 @@ export default function App() {
                 currentXP={gameState.totalXP}
                 nextLevelXP={getNextLevelXP()}
                 triggerMessage={messageTrigger}
-                energyPoints={gameState.energyPoints}
+                energyPoints={energiaStatus.energy}
+                energyInfo={energiaStatus}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
                 talento={manifestacaoAtual?.talento}
                 equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
@@ -6761,6 +6861,7 @@ export default function App() {
                 missionAway={isMissionAway(guildMission, Date.now())}
                 naMasmorra={naMasmorra}
                 onSinalMasmorra={() => abrirAvisoMasmorra(null)}
+                masmorraRetornoMs={naMasmorra ? masmorraRetorno.msLeft : null}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
@@ -6944,6 +7045,7 @@ export default function App() {
                 if (semanaA) avisos.push({
                   key: 'semanal',
                   node: (
+                    <Suspense fallback={null}>
                     <WeeklyReportCard
                       report={weeklyReport(gameState, agoraA)}
                       suggestion={stackingSuggestion(gameState, agoraA, language)}
@@ -6953,6 +7055,7 @@ export default function App() {
                       language={language}
                       onDismiss={handleDismissWeeklyReport}
                     />
+                    </Suspense>
                   ),
                 });
 
@@ -7074,7 +7177,7 @@ export default function App() {
                       // vaga na janela horária e energia com espaço.
                       canFeed: comumNaPastinha
                         && feedTimesFor(gameState.careCaps, agoraA.getTime()).length < FOOD_LIMIT_PER_HOUR
-                        && gameState.energyPoints < getMaxEnergyForStage(gameState.evolutionStage),
+                        && hungerAt(gameState.hunger, agoraA.getTime()) < HUNGER_PREMIUM_REFUSE_AT,
                     }, `${playerDayKey(agoraA, gameState.playerDayTz)}|${refeicaoA}`);
                     avisos.push({
                       key: 'refeicao',
@@ -7097,6 +7200,17 @@ export default function App() {
                     });
                   }
                 }
+
+                /* CHECK-IN DA JANELA (beta-2 4.1): um atalho discreto que abre o bottom sheet com as 3 janelas. Independe do ritmo das
+                   refeições estar ligado (usa os horários padrão ou os editados). Some quando a janela em curso já foi resgatada. */
+                if (availableCheckIn(gameState, agoraA.getTime()) !== null) avisos.push({
+                  key: 'checkin',
+                  node: (
+                    <button type="button" data-checkin-open style={{ ...sm2Button('outline'), width: '100%' }} onClick={() => { setAvisosAbertos(false); setCheckInsAbertos(true); }}>
+                      {isPtA ? 'Check-ins do dia' : 'Daily check-ins'}
+                    </button>
+                  ),
+                });
 
                 if (isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))) avisos.push({
                   key: 'carga',
@@ -7160,34 +7274,9 @@ export default function App() {
                   if (termsNoticePrimeiraVez) avisos.unshift(termos); else avisos.push(termos);
                 }
 
-                if (avisos.length === 0) return null;
-                const resto = avisos.length - 1;
-                return (
-                  <div className="sm2-notice-slot">
-                    {avisos[0].node}
-                    {resto > 0 && (
-                      <>
-                        <button
-                          type="button"
-                          className="sm2-notice-more"
-                          aria-expanded={avisosAbertos}
-                          onClick={handleToggleAvisos}
-                        >
-                          <Icon name={avisosAbertos ? 'expand_less' : 'expand_more'} size={20} />
-                          <span className="sm2-num" style={{ fontWeight: 600 }}>+{resto}</span>
-                          <span>
-                            {isPtA
-                              ? (resto === 1 ? 'aviso' : 'avisos')
-                              : (resto === 1 ? 'notice' : 'notices')}
-                          </span>
-                        </button>
-                        {avisosAbertos && avisos.slice(1).map(a => (
-                          <div key={a.key}>{a.node}</div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                );
+                /* F3: NADA ocupa a faixa acima de "HOJE" (altura 0, com ou sem aviso) — a fila vai para o botão do canto e a folha. */
+                avisosDoDia.lista = avisos;
+                return null;
               })()}
 
               {/* BRINCAR saiu do card (`PlayCard`) e virou a 5ª célula do deck
@@ -7266,6 +7355,8 @@ export default function App() {
                     now={agora}
                     expanded={expandedRituals}
                     onExpand={handleExpandRitual}
+                    /* Beta-2 (2.4): a meta do dia, só para exibir (mesma `dailyTotal` do selo). */
+                    goal={dailyTotal}
                     onToggleTask={handleToggleTask}
                     onToggleTaskStep={handleToggleTaskStep}
                     onEditTask={handleEditTask}
@@ -7432,7 +7523,7 @@ export default function App() {
           )}
 
           {pane === 'oracle' && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
               <OraclePage language={language} />
             </Suspense>
           )}
@@ -7477,9 +7568,30 @@ export default function App() {
           onClick={abrirMissoesSemanais}
         />
       )}
+      {currentView === 'home' && (
+        <AvisosLink
+          count={avisosDoDia.lista.length}
+          row={(1 + (marcasDeMissao.dailyCorner !== null ? 1 : 0) + (marcasDeMissao.weeklyCorner !== null ? 1 : 0)) as 1 | 2 | 3}
+          label={language === 'pt-BR' ? 'Avisos' : 'Notices'}
+          countLabel={language === 'pt-BR'
+            ? `${avisosDoDia.lista.length} ${avisosDoDia.lista.length === 1 ? 'aviso' : 'avisos'}`
+            : `${avisosDoDia.lista.length} ${avisosDoDia.lista.length === 1 ? 'notice' : 'notices'}`}
+          onClick={handleAbrirAvisos}
+        />
+      )}
+      {currentView === 'home' && (
+        <AvisosSheet open={avisosAbertos} language={language} items={avisosDoDia.lista} onClose={handleFecharAvisos} />
+      )}
       {currentView === 'home' && celebrarMeta && (
         <Celebration fixed onDone={() => setCelebrarMeta(false)} />
       )}
+      {checkInsAbertos && <Suspense fallback={null}><CheckInSheet
+        open
+        language={language}
+        windows={checkInWindows(gameState, Date.now())}
+        onClaim={resgatarCheckIn}
+        onClose={() => setCheckInsAbertos(false)}
+      /></Suspense>}
       {missionsOpen && <Suspense fallback={null}><MissionsSheet
         kind={missionsOpen}
         open
@@ -7812,6 +7924,10 @@ export default function App() {
           report={gameState.lastDayReport}
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
+          stroll={strollDaNoite}
+          maxHearts={gameState.maxHealthPoints}
+          heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
+          onHeartsAnimSeen={handleHeartsAnimSeen}
           onClose={() => {
             /* WP4.8 — o marco é registrado ao FECHAR: se fosse ao abrir, um
                relatório reaberto no mesmo dia gastaria a memória sem ela ter
@@ -8010,7 +8126,10 @@ export default function App() {
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <CatalogOnboardingFlow
           language={language}
-          onComplete={(chosen) => {
+          existingActivities={gameState.activities as ReadonlyArray<{ catalogId?: string | null }>}
+          onComplete={(chosenRaw) => {
+            // 7.3: defesa em profundidade — mesmo que a tela mande um item que já está na lista, ele não entra duplicado.
+            const chosen = withoutExisting(chosenRaw, gameState.activities as ReadonlyArray<{ catalogId?: string | null }>);
             // ACRESCENTA, nunca substitui — nenhuma atividade existente é
             // tocada (decisão do dono, 28/09/2026). Mas pelo PORTÃO de criação
             // (D-12): escrever em `activities` por fora furava o teto do demo e

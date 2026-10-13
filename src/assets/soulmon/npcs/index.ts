@@ -97,6 +97,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'laboratorio:evolucao': npcLaboratorio,
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro — o busto `npc-conta` segue como NPC de função)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
+  'laboratorio:perfil': npcFSacerdotisa, // Oriel, leitora do Perfil (beta-2, 11: o busto que o Santuário deixou em 07/10/2026; segue também em EXTRA_NPC_ART)
   'hall:biblioteca': npcHall,
   'hall:amigos': npcHallAmigosMel, // Zumi (filhote de mel; 07/10/2026 trocou o Ramo, o carvalho — `npc-hall-guilda.png` segue em disco)
   'hall:guilda': npcHallGuildaLuz, // Aurea (leoa solar; 07/10/2026 trocou a Bastia — `npc-f-guarda` segue em EXTRA_NPC_ART)

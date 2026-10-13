@@ -4,7 +4,8 @@ import { ActivityCategory } from './attributes';
  * SAÍRAM em 20/09/2026 (canvas Atividades, D-A7 / achado 3): ícone de
  * categoria é ícone de INTERFACE, mora fora do visor e é vetor —
  * `CATEGORY_ICON_NAME` abaixo. Os PNG ficam em `src/assets/soulmon/icons/
- * categories/` só como arquivo de arte; nenhum componente os importa.
+ * categories/`; desde o beta-2 (10.1) SÓ o Santuário do Vínculo (`StatsPage`) os usa, por `categoryIconArt`, nas listas de
+ * atividades (o dono pediu arte própria no lugar do emoji). Os chips de criação/edição e o onboarding seguem no vetor.
  */
 
 /**

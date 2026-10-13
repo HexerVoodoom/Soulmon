@@ -211,8 +211,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/arena/DueloSheet.tsx`
-**Dono de:** a folha do lote **Duelo** da Arena (minimal-ui F5, 24/09/2026) — mostra a ficha (elemento e habilidade especial do estágio, de `soulmonSkills`; sem ficha no aparelho, o par padrão) e abre a `ArenaGame` em tela cheia. Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.
-**Props principais:** `language`, `evolutionStage`, `skills?`, `onStart`.
+**Dono de:** a folha do lote **Arena livre** (id `duelo`) da Arena (minimal-ui F5, 24/09/2026) — o poder, a escolha dos três adversários e o botão que abre a `ArenaGame` em tela cheia. **Beta-2 (9.3 + 11.3, 13/10/2026):** a Arena livre ganhou o próprio bloco no mapa (o Torneio fica no outro tablado) e o ELEMENTO e os GOLPES do Soulmon saíram daqui — moram no Perfil (`components/perfil/SoulmonPerfil.tsx`), pela mesma fonte (`fighterIdentity`). Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.
+**Props principais:** `language`, `evolutionStage`, `onStart` (⚰️ `skills?` e `petElement?` saíram em 13/10/2026: a folha não lê mais a ficha).
 **Exports:** `DueloSheet(props)`.
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy, dentro do `AreaSheet` da Arena).
 **Régua:** `src/components/arena/arenaSheets.render.test.tsx`.
@@ -350,6 +350,20 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/nav/AvisosLink.tsx`
+**Dono de:** o botão de AVISOS da Home (beta-2, F3 do crítico de design, 13/10/2026) — mais um botão fixo da pilha do canto direito, logo abaixo das missões, com um SELO (ponto dourado, sem número). Os avisos do dia deixaram a faixa acima de "HOJE" (altura zero, com ou sem aviso) e moram na folha `AvisosSheet`. Some quando não há aviso.
+**Props principais:** `count` (0 = some), `label`, `countLabel` (o nome falado com a contagem), `row` (linha da pilha), `onClick`.
+**Exports:** `AvisosLink(props)`.
+**Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
+**Régua:** `src/components/nav/avisos.render.test.tsx`.
+
+### `src/components/nav/AvisosSheet.tsx`
+**Dono de:** a folha (`ModalSheet`) dos avisos do dia, na ordem da fila de prioridade da Home (a fila não mudou, só o lugar onde é lida); o check-in da janela entra por ela. Fecha sozinha quando o último aviso some.
+**Props principais:** `open`, `language`, `items` (`{ key, node }[]`), `onClose`.
+**Exports:** `AvisosSheet(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/avisos.render.test.tsx`.
+
 ### `src/components/nav/MissionsLink.tsx`
 **Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
 **Props principais:** `kind` (`daily`|`weekly`, um ícone por acesso), `row` (linha da pilha), `mark: QuestMark` (de `questMarks().dailyCorner`/`weeklyCorner`), `tone?` (`weeklyTone`), `markLabel`, `label`, `onClick`.
@@ -399,6 +413,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `statTip(kind, isPt)`, `StatTip`, `StatTipKind`.
 **Chamado por:** `src/components/CompanionHUD.tsx`.
 **Régua:** `src/components/home/statTips.test.ts`, `src/components/CompanionHUD.cta.test.tsx`.
+
+### `src/components/perfil/SoulmonPerfil.tsx`
+**Dono de:** a folha do prédio **Perfil** do Soulmon (`laboratorio.perfil`, beta-2 item 11, 13/10/2026) — duas cartas curtas, só valores QUALITATIVOS e só o que o app tem: **Quem ele é** (personalidade = o traço de nascimento; atributo principal = Força/Resistência/Agilidade; nível do equipamento do Soulsmith) e **Como luta** (elemento principal, tipo de ataque, nome e efeito do especial e, só quando difere do principal, o elemento do especial). A linha some quando o dado não existe. Sem pontuação, sem melhoria do Soulsmith (o aprimoramento mora no Mercado). Ícones: arte que já existia no repo.
+**Props principais:** `language`, `input: PerfilInput` (`utils/soulmonPerfil.ts`).
+**Exports:** `SoulmonPerfil(props)`.
+**Chamado por:** `src/App.tsx` (`labContent`, `labTab === 'perfil'`, `lazy`).
+**Régua:** `src/components/perfil/SoulmonPerfil.render.test.tsx`, `src/utils/soulmonPerfil.test.ts`.
 
 ### `src/components/perfil/ProfileAvatarButton.tsx`
 **Dono de:** o botão do USUÁRIO no canto superior esquerdo da Home (Tarefa C, 07/10/2026) — a foto de perfil (NPC) com a moldura equipada, num alvo de 44 no fluxo (coluna de 48 do `HomeHud`, como antes) com o avatar de 42 (+50% em 07/10/2026) SOBREPOSTO em `absolute` e `z-index` 20 — não empurra o pet nem o nome. ⚰️ Substitui o sanduíche e o `HomeMenuSheet` (apagado): abre `page:settings`. O que morava no menu foi para as Configurações: Guia (já em Ajuda), Créditos (linha `onOpenCredits`) e Oráculo/Refazer o ritual (ocultos por `MENU_SHOWS_RITUAL_TOOLS = false`, hoje exportada de `SettingsPage.tsx`).
@@ -1273,11 +1294,11 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 
 ### `src/components/ui/ScreenSkeleton.tsx`
 **Dono de:** o que aparece enquanto uma tela `lazy()` chega — substitui os 20 `Suspense fallback={null}` que apagavam a tela.
-**Props principais:** `ScreenSkeletonProps` (exportado) — `language?`, `label?` (rótulo do que está carregando, par PT/EN já resolvido por quem chama).
+**Props principais:** `ScreenSkeletonProps` (exportado) — `language?`, `label?` (rótulo do que está carregando, par PT/EN já resolvido por quem chama), `variant?` (`page` · `overlay` · `inline`, a de dentro de uma folha), `state?` (`loading` · `error` · `done`, beta-2 9.4) e `onRetry?` (o "Tentar de novo" do `error`). Minimalista: UMA palavra, visor sem "respirar", `page` com 96 de altura mínima; `done` não desenha nada.
 **Exports:** `ScreenSkeletonProps` (interface) · `ScreenSkeleton(props)` · `default`.
 **Estado/efeitos relevantes:** `useState`/`useEffect` detectam `prefers-reduced-motion` (`reduced`) e cortam a varredura em JS (o bloco global do projeto usa `animation-duration:.01ms` que, num loop `infinite`, vira milhares de recálculos/segundo).
 **Chamado por:** `src/App.tsx`, `src/components/ContentModals.tsx`, `src/components/SoulmonOnboarding.tsx` (`grep -rl "from '.*/ScreenSkeleton'" src`, 09/09/2026).
-**Régua:** nenhuma direta (`find src/components/ui -maxdepth 1 -name 'ScreenSkeleton.*test.ts*'` vazio, 09/09/2026).
+**Régua:** `src/components/ui/ScreenSkeleton.render.test.tsx` (beta-2, 9.4).
 **Avisos do arquivo:** o desenho é o do APARELHO (`Viewport` com varredura), não um spinner genérico; nenhuma classe utilitária de valor arbitrário — layout em `style={{}}`, `@keyframes` em `<style>` local (footgun 1).
 
 ### `src/components/ui/BackArrow.tsx`
@@ -1416,7 +1437,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/nav/NpcSpeech.render.test.tsx`.
 
 ### `src/components/TalentTreeCard.tsx`
-**Dono de:** o RESUMO dos talentos na `StatsPage` (Tarefa B, §2.37): pontos gastos/livres e o botão "Abrir a árvore", que MONTA o `TalentTree` (`lazy`). Sem save (demo) não renderiza nada.
+**Dono de:** a árvore de talentos dentro da `StatsPage` (Tarefa B, §2.37) — **desde o beta-2 (10.2, 13/10/2026) ela nasce ABERTA**: o botão "Abrir/Recolher a árvore" e o cartão de resumo (que repetia a linha da própria árvore) saíram; o progresso (`talentPicks`) mora no save e nunca dependeu de abrir. Monta o `TalentTree` (`lazy`). Sem save (demo) não renderiza nada.
 **Régua:** `src/components/TalentTree.render.test.tsx` (bloco "Tarefa B").
 
 ### `src/components/TalentTree.tsx`
@@ -1446,6 +1467,23 @@ não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onV
 **Exports:** `MealInviteCard({ language, petName, meal, kind, onAct, onSkip })`.
 **Chamado por:** `src/App.tsx` (lazy).
 **Régua:** `src/components/filaDeAvisos.contract.test.ts`, `src/utils/mealRhythm.contract.test.ts`.
+
+### `src/components/CheckInSheet.tsx`
+**Dono de:** a folha (bottom sheet `ModalSheet`) dos três check-ins do dia (beta-2 4.1, REGISTRO §40): as janelas com horário e estado (feito · aberto agora · mais tarde · passou); só a janela aberta tem botão. Sem número de recompensa, sem sequência. Abre do atalho `data-checkin-open` do slot de avisos, mesmo com o ritmo das refeições desligado. Lazy.
+**Exports:** `CheckInSheet({ open, language, windows, onClaim, onClose })`.
+**Chamado por:** `src/App.tsx` (lazy; estado `checkInsAbertos` vive no App para sobreviver ao resgate).
+**Régua:** `src/components/home/energiaFome.render.test.tsx`, `src/utils/checkIns.test.ts` (`checkInWindows`).
+
+### `src/components/UnlockNudge.tsx`
+**Dono de:** o convite discreto de desbloqueio (uma linha clicável), separado do modal para o chunk de entrada não carregar o modal de compra (orçamento de bytes, beta-2). `UnlockAccountModal.tsx` o reexporta.
+**Exports:** `UnlockNudge({ language, reason, variant, onOpen, trailingSpace })`.
+**Chamado por:** `src/App.tsx` (estático), `CreateModal`, `DailyReportModal`, `GuildSheet`, `MercadoSheets`, `SoulmonOnboarding` (via `UnlockAccountModal`).
+**Régua:** `src/components/UnlockAccountModal.copy.render.test.tsx`, `src/deploy/orcamentoDeBytes.contract.test.ts`.
+
+### `src/components/unlockReason.ts`
+**Dono de:** o tipo `UnlockReason` (os motivos do convite de desbloqueio), em módulo mínimo para `UnlockNudge` e `App` não puxarem o modal.
+**Exports:** `UnlockReason`.
+**Chamado por:** `UnlockNudge.tsx`, `UnlockAccountModal.tsx`, `src/App.tsx`.
 
 ### `src/components/SpritePoseRows.tsx`
 **Dono de:** as duas linhas da pose do Soulmon em Configurações > Aparência — "Virar Soulmon" / "Flip Soulmon" (`flipX`) e "Soulmon voando" / "Soulmon flying" (`altitude`). Só desenha; escreve por `applySpritePose`.
@@ -1503,4 +1541,18 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/home/DungeonSign.tsx`
 
+**Dono de:** a PLACA DE MADEIRA "Na masmorra" / "In Dungeon" + o tempo de retorno (beta-2 6.2) que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova; caixa fixa 118 × 46). **Exports:** `DungeonSign({ language, onTap, returnInMs })`, `SIGN_W`, `SIGN_H`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+
+### `src/components/home/EnergyTimer.tsx` (beta-2 3.4)
+**Dono de:** o timer discreto ao lado da energia (`1h05` / `42 min`; `–` quando a regeneração está pausada; nada com a energia cheia). Props simples (`msToNext`, `mode`, `language`); sem relógio próprio — o valor vem de `energyStatus`. **Exports:** `EnergyTimer`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato de encaixe: `docs/FRENTE-B-REGRAS-BETA2.md`.
+
+### `src/components/home/HungerIndicator.tsx` (beta-2 3.5)
+**Dono de:** o indicador de fome da Home (tigela em SVG + três pontos: bem alimentado / mediano / faminto; o estado não depende de cor). Props simples (`tier`, `value?`, `language`). **Exports:** `HungerIndicator`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato: `docs/FRENTE-B-REGRAS-BETA2.md`.
 **Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+
+### `src/components/DayHearts.tsx` (beta-2, 13/10/2026)
+**Dono de:** a fileira de corações do resumo pós-dia: os inteiros ficam como estão; o cobrado treme (`sm2-heart-shake`), quebra (`sm2-heart-snap`) e vira coração preto (o ícone `hp` do HUD, escurecido por filtro). Só anima quando `play` é verdadeiro na montagem; movimento reduzido pula para o preto.
+**Props principais:** `strip` (`HeartStrip`), `play`, `onPlayed`, `isPt`.
+**Exports:** `DayHearts`, `HEART_SHAKE_MS`, `HEART_SNAP_MS`.
+**Chamado por:** `src/components/DailyReportModal.tsx` (folha dos corações).
+**Régua:** `src/components/DailyReportModal.secoes.render.test.tsx`.

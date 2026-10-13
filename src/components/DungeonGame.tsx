@@ -11,7 +11,7 @@ import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
   hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
   DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, dungeonLayerCap, startLayerFor, isMilestoneLayer,
-  canPayLayer, layersAffordable, spendLayerEnergy, recordLayerCleared, sanitizeDepthRecord,
+  layersAffordable, spendLayer, layerRefusal, layersLeftToday, DUNGEON_DAILY_LAYERS, recordLayerCleared, sanitizeDepthRecord,
   nextDungeonSpeed, sanitizeDungeonSpeed, DUNGEON_AWAY_MAX_HOURS, type DungeonSpeed, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
 import { dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
@@ -21,6 +21,7 @@ import { DropNotice } from './games/DropNotice';
 import { readLocal, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
+import { settleEnergy } from '../utils/hunger';
 import { addFragments } from '../utils/equipment';
 import { MINIGAME_BITS_PER_DAY, minigameBitsToday } from '../utils/currencies';
 import { playerDayKey } from '../utils/playerDay';
@@ -241,7 +242,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const [pausadoManual, setPausadoManual] = useState(false);
   const pausado = pausadoConfirm || pausadoManual;
   /** Por que a descida acabou: HP zerado, energia acabou, o portão do Vínculo fechou, ou o teto de camadas do Lv. */
-  const [endReason, setEndReason] = useState<'hp' | 'sealed' | 'energy' | 'deep'>('hp');
+  const [endReason, setEndReason] = useState<'hp' | 'sealed' | 'energy' | 'deep' | 'daily'>('hp');
   /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, contado aqui e mostrado no fim. */
   const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0 });
   const [resumo, setResumo] = useState(resumoRef.current);
@@ -293,19 +294,27 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const bond = gs ? bondLevelFor(gs.totalXP ?? 0) : 1;
   const capCamadas = gs ? dungeonLayerCap(nivelJogador, bond) : Number.POSITIVE_INFINITY;
   const recorde = sanitizeDepthRecord(gs?.dungeonDepthRecord);
-  const energia = gs ? gs.energyPoints ?? 0 : Number.POSITIVE_INFINITY;
+  /** A energia de AGORA (a regeneração até o instante já acertada), não a do último tick. */
+  const energia = gs ? settleEnergy(gs, agora).energyPoints ?? 0 : Number.POSITIVE_INFINITY;
   const energiaMax = getMaxEnergyForStage(evolutionStage);
-  const temEnergia = !gs || canPayLayer(energia);
+  /** 🚧 Por que a PRÓXIMA camada não pode começar (energia ou limite diário) — a UI só ESPELHA o que `spendLayer` decide no updater. */
+  const recusaCamada = gs ? layerRefusal(gs, agora) : undefined;
+  const temEnergia = !gs || recusaCamada !== 'no-energy';
+  const limiteDiario = recusaCamada === 'daily-limit';
+  const camadasHoje = gs ? layersLeftToday(gs, agora) : DUNGEON_DAILY_LAYERS;
   const inicio = gs ? startLayerFor(recorde, capCamadas) : 1;
-  /** A energia é lida do save no instante do gasto (o updater decide; aqui só se espelha o que ele fez). */
-  const energiaRef = useRef(energia);
-  energiaRef.current = energia;
-  /** Gasta a energia de UMA camada. Devolve se deu (sem provider, sempre). */
+  /** O ESPELHO do save no instante do gasto: a tela decide por ele, mas quem manda é o updater (`spendLayer` reconfere energia e limite
+      diário sobre o `prev`). Cada camada paga atualiza o espelho na hora, para dois toques no mesmo lote não passarem os dois. */
+  const gsRef = useRef(gs);
+  gsRef.current = gs;
+  /** Começa UMA camada (energia + limite diário, pela porta única). Devolve se deu (sem provider, sempre). */
   const pagarCamada = (): boolean => {
     if (!ctx) return true;
-    if (!canPayLayer(energiaRef.current)) return false;
-    energiaRef.current -= DUNGEON_ENERGY_PER_LAYER;
-    ctx.setGameState(prev => spendLayerEnergy(prev));
+    const now = Date.now();
+    const atual = gsRef.current;
+    if (!atual || layerRefusal(atual, now)) return false;
+    gsRef.current = spendLayer(atual, now);
+    ctx.setGameState(prev => spendLayer(prev, now));
     resumoRef.current.energy += DUNGEON_ENERGY_PER_LAYER;
     return true;
   };
@@ -435,16 +444,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     // PR7: os andares ALTOS têm portão pelo Vínculo. Fechado, a descida termina aqui — sem cobrança.
     if (!floorOpen(floor + 1)) { endDescent(gs && floor + 1 > capCamadas && masmorraFloorOpen(floor + 1, bond) ? 'deep' : 'sealed'); return; }
     // 🔋 A próxima camada custa energia: sem ela, a descida para aqui com uma frase calma (nunca cobrança).
-    if (!temEnergiaAgora()) { endDescent('energy'); return; }
+    if (!temEnergiaAgora()) { endDescent(gsRef.current && layerRefusal(gsRef.current, Date.now()) === 'daily-limit' ? 'daily' : 'energy'); return; }
     gravarAway(floor, DUNGEON_FIGHTS_PER_FLOOR); // camada limpa; a de baixo ainda não foi paga
     setPhase('floor-clear');
   };
 
   /** Sem provider (demo, testes) não há Vínculo para medir e nada fecha. */
   const floorOpen = (f: number) => !gs || masmorraFloorOpen(f, bondLevelFor(gs.totalXP ?? 0)) && f <= capCamadas;
-  const temEnergiaAgora = () => !ctx || canPayLayer(energiaRef.current);
+  const temEnergiaAgora = () => !ctx || !gsRef.current || layerRefusal(gsRef.current, Date.now()) === undefined;
 
-  const endDescent = (why: 'hp' | 'sealed' | 'energy' | 'deep') => {
+  const endDescent = (why: 'hp' | 'sealed' | 'energy' | 'deep' | 'daily') => {
     setResumo({ ...resumoRef.current });
     recordDungeonScore(runScoreRef.current);
     setBest(getDungeonBest());
@@ -534,7 +543,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       setPhase('fight');
     } else if (phase === 'floor-clear') {
       const f = floor + 1;
-      if (!pagarCamada()) { endDescent('energy'); return; } // a energia pode ter mudado entre o fim do andar e agora
+      if (!pagarCamada()) { endDescent(gsRef.current && layerRefusal(gsRef.current, Date.now()) === 'daily-limit' ? 'daily' : 'energy'); return; } // energia ou limite diário podem ter mudado entre o fim do andar e agora
       const list = waveOf(f);
       setFloor(f);
       setEnemies(list);
@@ -586,12 +595,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     };
     setResumo({ ...resumoRef.current });
     recordeRef.current = Math.max(recordeRef.current, report.recordTo);
-    if (report.energy > 0) energiaRef.current -= report.energy;
     if (!away) {
       // a descida acabou sozinha (HP, energia, portão ou teto): o Soulmon já voltou para casa
       posicionar({ ...antes, layer: report.toLayer, slot: DUNGEON_FIGHTS_PER_FLOOR - 1 }, hp);
       setAwayReport(report);
-      setEndReason((report.ended === 'energy' || report.ended === 'sealed' || report.ended === 'deep') ? report.ended : 'hp');
+      setEndReason((report.ended === 'energy' || report.ended === 'sealed' || report.ended === 'deep' || report.ended === 'daily') ? report.ended : 'hp');
       setAgora(Date.now());
       setPhase('ended');
       return;
@@ -806,6 +814,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   ? (isPt ? 'O caminho para baixo está lacrado por ora.' : 'The way further down is sealed for now.')
                   : endReason === 'energy'
                     ? (isPt ? 'A energia desta descida acabou. Ele volta à superfície.' : 'The energy for this descent ran out. He heads back up.')
+                    : endReason === 'daily'
+                    ? (isPt ? 'Por hoje foi o bastante lá embaixo. Ele volta amanhã.' : 'That is enough down there for today. He goes back tomorrow.')
                     : endReason === 'deep'
                       ? (isPt ? 'Mais fundo que isso, ele ainda não alcança.' : 'Deeper than this is still out of his reach.')
                       : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
@@ -816,8 +826,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               {endReason === 'energy' && (
                 <p style={phaseLine} data-dungeon-no-energy>
                   {isPt
-                    ? 'Volte mais tarde: cada atividade concluída vira comida, e a comida enche a energia.'
-                    : 'Come back later: each activity you finish becomes food, and food fills the energy.'}
+                    ? 'Volte mais tarde: a energia volta com o tempo, e mais depressa quando ele está bem alimentado.'
+                    : 'Come back later: energy returns with time, and faster when he is well fed.'}
+                </p>
+              )}
+              {endReason === 'daily' && (
+                <p style={phaseLine} data-dungeon-daily-limit>
+                  {isPt ? `Cada dia rende até ${DUNGEON_DAILY_LAYERS} camadas. Nada se perde: o que já foi limpo fica.` : `Each day allows up to ${DUNGEON_DAILY_LAYERS} layers. Nothing is lost: what you cleared stays.`}
                 </p>
               )}
               {endReason === 'deep' && (
@@ -843,7 +858,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </p>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
-                {espera === 0 && temEnergia && (
+                {espera === 0 && temEnergia && !limiteDiario && (
                   <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
                     {isPt ? 'Descer de novo' : 'Go down again'}
                   </button>
@@ -892,8 +907,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           <span data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span>
                   {isPt
-                    ? `A descida é automática: as lutas vêm sozinhas, e a cada ${ladderLen} lutas você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia — a mesma da Home, que enche quando ele come o que você ganha concluindo atividades. O HP volta com o tempo, até com o app fechado (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio; precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer). Cada ${DUNGEON_MILESTONE_FLOOR} camadas são um marco: a descida seguinte começa dali, e o primeiro marco de cada descida rende um Glitchtama. Quanto mais Lv, mais fundo ele vai. Subir de nível enche a energia e o HP. Nunca custa seus corações.`
-                    : `The descent is automatic: fights come one after another on their own, and every ${ladderLen} fights you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy — the same energy as Home, which fills when he eats what you earn by finishing activities. HP comes back over time, even with the app closed (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full; you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns a Glitchtama. The higher his Lv, the deeper he goes. Leveling up refills energy and HP. It never costs your hearts.`}
+                    ? `A descida é automática: as lutas vêm sozinhas, e a cada ${ladderLen} lutas você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia — a mesma da Home, que volta com o tempo (mais depressa quando ele está bem alimentado: a comida que você ganha concluindo atividades enche a fome). Há um limite de ${DUNGEON_DAILY_LAYERS} camadas por dia. O HP volta com o tempo, até com o app fechado (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio; precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer). Cada ${DUNGEON_MILESTONE_FLOOR} camadas são um marco: a descida seguinte começa dali, e o primeiro marco de cada descida rende um Glitchtama. Quanto mais Lv, mais fundo ele vai. Subir de nível enche a energia e o HP. Nunca custa seus corações.`
+                    : `The descent is automatic: fights come one after another on their own, and every ${ladderLen} fights you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy — the same energy as Home, which returns with time (faster when he is well fed: the food you earn by finishing activities fills his hunger). There is a limit of ${DUNGEON_DAILY_LAYERS} layers a day. HP comes back over time, even with the app closed (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full; you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns a Glitchtama. The higher his Lv, the deeper he goes. Leveling up refills energy and HP. It never costs your hearts.`}
                 </span>
                 <span>
                   {isPt
@@ -921,11 +936,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         {gs && (
           <p style={phaseLine} data-dungeon-plan className="sm2-num">
             {isPt
-              ? `Começa na camada ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} de energia por camada · dá para ${layersAffordable(energia)} agora · o Lv ${nivelJogador} chega até a ${capCamadas}`
-              : `Starts at layer ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} energy per layer · enough for ${layersAffordable(energia)} now · Lv ${nivelJogador} reaches layer ${capCamadas}`}
+              ? `Começa na camada ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} de energia por camada · dá para ${Math.min(layersAffordable(energia), camadasHoje)} agora (até ${DUNGEON_DAILY_LAYERS} por dia) · o Lv ${nivelJogador} chega até a ${capCamadas}`
+              : `Starts at layer ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} energy per layer · enough for ${Math.min(layersAffordable(energia), camadasHoje)} now (up to ${DUNGEON_DAILY_LAYERS} a day) · Lv ${nivelJogador} reaches layer ${capCamadas}`}
           </p>
         )}
-        <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia} style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
+        <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia || limiteDiario} style={{ ...sm2Button('primary', espera > 0 || !temEnergia || limiteDiario), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
           {isPt ? 'Descer' : 'Go down'}
         </button>
@@ -935,12 +950,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}
           </p>
         )}
-        {/* Sem energia: um convite, nunca cobrança. A energia volta comendo (cada atividade concluída vira comida). */}
-        {!temEnergia && (
+        {/* Sem energia: um convite, nunca cobrança. A energia volta com o tempo e a fome decide a velocidade (comida enche a fome). */}
+        {!temEnergia && !limiteDiario && (
           <p style={phaseLine} role="status" data-dungeon-no-energy>
             {isPt
-              ? 'Sem energia por agora. Conclua algo do seu dia, dê a comida a ele e volte para descer.'
-              : 'No energy for now. Finish something from your day, feed him, and come back to go down.'}
+              ? 'Sem energia por agora. Ela volta com o tempo, mais depressa com ele bem alimentado: conclua algo do seu dia, dê a comida a ele e volte.'
+              : 'No energy for now. It returns with time, faster when he is well fed: finish something from your day, feed him, and come back.'}
+          </p>
+        )}
+        {limiteDiario && (
+          <p style={phaseLine} role="status" data-dungeon-daily-limit>
+            {isPt ? `Por hoje já deu: até ${DUNGEON_DAILY_LAYERS} camadas por dia. Amanhã ele desce de novo.` : `That is it for today: up to ${DUNGEON_DAILY_LAYERS} layers a day. He goes down again tomorrow.`}
           </p>
         )}
       </div>

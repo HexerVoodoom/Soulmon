@@ -75,3 +75,17 @@ Sai do aparelho para Groq (e, na reserva, Google): mensagem (≤500 caracteres, 
 ## 7. Operar
 
 `GROQ_API_KEY` (principal), `GEMINI_API_KEY` (reserva), `CHAT_MODEL` (opcional). Teste manual: `wrangler pages dev` com `.dev.vars` e `curl -X POST /api/chat` com `actions:true`. Regerar a base: `npm run gen:chat-kb`.
+
+## 8. Incidente: HTTP 400 do Groq (release/beta-1, 13/10/2026)
+
+Sintoma: log `[chat] groq falhou {status:400}` e toast "AI unavailable" (sem `GEMINI_API_KEY` não há reserva).
+Causa provável (a doc do Groq não lista o 400 exato; a evidência é indireta): o corpo mandava
+`parallel_tool_calls: false`, e a tabela de modelos de console.groq.com/docs/tool-use marca
+`openai/gpt-oss-120b` como **sem** suporte a uso paralelo de ferramentas. Também usávamos `max_tokens`;
+a doc de reasoning (console.groq.com/docs/reasoning) só documenta `max_completion_tokens`. Foram removidos
+`parallel_tool_calls` (o teto de 2 ações e o portão de intenção já limitam) e trocado para
+`max_completion_tokens`. `reasoning_effort: low` é válido (low/medium/high). O código antigo só repetia
+sem ferramentas se o corpo tivesse `tool_use_failed`; qualquer outro 400 virava erro.
+Comportamento agora: 400 com ferramentas (qualquer motivo) -> 2ª chamada SEM ferramentas; 2ª falha -> `502 {error:'ai-upstream'}`
+quando não há Gemini (o ChatBox mostra mensagem calma; "AI unavailable" fica para rede/5xx). Log: só `error.code`,
+`error.type` e o modelo (nunca message, prompt, `failed_generation` ou chave). Se o 400 persistir, o `code` no log diz qual campo.

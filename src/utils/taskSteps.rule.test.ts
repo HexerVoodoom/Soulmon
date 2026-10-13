@@ -7,7 +7,8 @@ import { completeTaskStep, nextOccurrence, wakeDueTasks, effortOf, allStepsDone 
 import { completeTask, type TaskState } from './careRules';
 import { registeredForDay } from './dailyReset';
 import { weekChip, emptyRhythm } from './habitRhythm';
-import { premiumKey, PREMIUM_DROPS_PER_DAY, PREMIUM_DROPS_PER_WEEK, premiumDropFor, PREMIUM_ENERGY } from './premiumFood';
+import { premiumKey, PREMIUM_DROPS_PER_DAY, PREMIUM_DROPS_PER_WEEK, premiumDropFor } from './premiumFood';
+import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, hungerAt } from './hunger';
 import { applySpecialItem, specialRefusal, type SpecialItemState } from './specialItemUse';
 import { SPECIAL_ITEMS } from './shop';
 import { getMaxEnergyForStage } from '../types/progression';
@@ -167,6 +168,7 @@ describe('comida premium: o uso (D)', () => {
   const uso = (over: Partial<SpecialItemState> = {}): SpecialItemState => ({
     healthPoints: 3, maxHealthPoints: 3, foodInventory: { [K]: 2 }, perfectDays: 0, powerPoints: 0,
     harmonyPoints: 0, benevolencePoints: 0, totalXP: 0, energyPoints: 0, evolutionStage: 'mega',
+    hunger: { v: 10, at: AGORA.getTime() }, // com fome (a premium enche a FOME e recusa com a fome quase cheia)
     attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 }, ...over,
   });
 
@@ -176,19 +178,19 @@ describe('comida premium: o uso (D)', () => {
     expect(SPECIAL_ITEMS[K].nameEn).toBe('Premium Apple');
   });
 
-  it('dá 5 de energia (não 1), sem atributo, XP nem HP, e gasta 1 do inventário', () => {
+  it('enche a FOME (não dá energia), sem atributo, XP nem HP, e gasta 1 do inventário', () => {
     const { state, refused } = applySpecialItem(uso(), K, AGORA);
     expect(refused).toBeUndefined();
-    expect(state.energyPoints).toBe(PREMIUM_ENERGY);
+    expect(state.energyPoints).toBe(0); // beta-2 3.5: comida premium não dá energia direto
+    expect(hungerAt(state.hunger, AGORA.getTime())).toBe(Math.min(100, 10 + HUNGER_PER_PREMIUM));
     expect(state.foodInventory[K]).toBe(1);
     expect(state.powerPoints + state.harmonyPoints + state.benevolencePoints + state.totalXP).toBe(0);
     expect(state.healthPoints).toBe(3);
   });
 
-  it('nunca passa das barras do estágio; com a energia cheia RECUSA e o item volta', () => {
-    const max = getMaxEnergyForStage('mega');
-    expect(applySpecialItem(uso({ energyPoints: max - 2 }), K, AGORA).state.energyPoints).toBe(max);
-    const cheio = uso({ energyPoints: max });
+  it('nunca passa da fome máxima; com a fome quase cheia RECUSA e o item volta', () => {
+    expect(hungerAt(applySpecialItem(uso({ hunger: { v: HUNGER_PREMIUM_REFUSE_AT - 5, at: AGORA.getTime() } }), K, AGORA).state.hunger, AGORA.getTime())).toBe(100);
+    const cheio = uso({ hunger: { v: HUNGER_PREMIUM_REFUSE_AT, at: AGORA.getTime() } });
     expect(specialRefusal(cheio, K, AGORA)).toBe('already-full');
     const r = applySpecialItem(cheio, K, AGORA);
     expect(r.state).toBe(cheio);
@@ -200,7 +202,7 @@ describe('comida premium: o uso (D)', () => {
     expect(specialRefusal(um, K, AGORA)).toBe('daily-cap');
     expect(applySpecialItem(um, K, AGORA).state).toBe(um);
     const amanha = new Date(AGORA.getTime() + 86_400_000);
-    expect(specialRefusal({ ...um, energyPoints: 0 }, K, amanha)).toBeUndefined();
+    expect(specialRefusal({ ...um, hunger: { v: 10, at: amanha.getTime() } }, K, amanha)).toBeUndefined();
   });
 
   it('sem estoque: recusa', () => {

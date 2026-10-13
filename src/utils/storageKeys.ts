@@ -68,6 +68,8 @@ export const STORAGE_KEYS = {
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
   /** Velocidade da cena de combate da masmorra (1/2/3), preferência do aparelho (REGISTRO §36). */
   DUNGEON_SPEED: 'soulmon-dungeon-speed',
+  /** Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`). Preferência de tela do aparelho — não é progresso e não vai para a nuvem. */
+  RITUAL_OPEN: 'soulmon-ritual-open',
   /** Melhor pontuação do Combina 3 (Salão de Jogos), no aparelho como o recorde da Corrida. */
   MATCH3_BEST: 'soulmon-match3-best',
   DINO_BEST: 'soulmon-dino-best',
@@ -97,6 +99,10 @@ export const STORAGE_KEYS = {
   SOUND_THEME_OFF: 'soulmon-sound-theme-off',
   FCM_TOKEN: 'soulmon-fcm-token',
   LAST_CLOUD_SYNC: 'soulmon-last-cloud-sync',
+  /** '1' = há mudança do jogo que a nuvem ainda não confirmou. Escrita a cada mutação, apagada quando o
+   *  servidor responde ok. É o que o logout lê para decidir se tenta sincronizar antes de apagar
+   *  (`utils/sessionReset.ts`). Persistida de propósito: sobrevive a fechar o app offline. */
+  SYNC_PENDING: 'soulmon-sync-pending',
   ORACLE_FORM: 'soulmon-oracle-form',
   /** WP1.7 — rascunho do ritual do Oráculo (`utils/oracleDraft.ts`): fechar o
    *  app no item 15 de 20 não perde as respostas. Apagado na geração, no

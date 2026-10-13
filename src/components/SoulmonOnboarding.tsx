@@ -1824,7 +1824,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             desmarcar tira. ≥1 mantido para seguir — sem "pular" (C11 pede o
             mesmo na Home). O recomendador PROPÕE, a pessoa decide. */}
         {step === STARTER_STEP && (
-          <StepShell title={isPt ? 'Seu ponto de partida' : 'Your starting point'}
+          <StepShell title={isPt ? 'Adicionar tarefas à lista' : 'Add tasks to list'}
             hint={isPt ? 'Fique com o que quiser começar.' : 'Keep what you want to start with.'}>
             <p style={{ ...sm2Hint, margin: '0 0 8px' }}>{isPt ? 'Hábitos para repetir' : 'Habits to repeat'}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

@@ -662,6 +662,11 @@ export async function onRequestPost({ request, env }) {
       if (result.status === 429) {
         return Response.json({ error: 'ai-busy', response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS });
       }
+      // Provedor rejeitou o pedido (4xx ≠ 429) nas duas tentativas e não há
+      // reserva: falha do upstream, não do app. O cliente mostra mensagem calma.
+      if (result.status >= 400 && result.status < 500) {
+        return Response.json({ error: 'ai-upstream' }, { status: 502, headers: CORS });
+      }
       return Response.json({ error: 'AI service error' }, { status: 500, headers: CORS });
     }
 

@@ -1,8 +1,12 @@
 import type { CSSProperties } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Icon } from './ui/Icon';
 import { REPORT_HEAD_ART } from '../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from './ui/InfoTip';
-import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { AreaSheet } from './nav/AreaSheet';
+import { DayHearts } from './DayHearts';
+import { DEFAULT_HEARTS, heartStrip, shouldPlayHeartBreak } from '../utils/dayHearts';
 import { UnlockNudge } from './UnlockAccountModal';
 import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
@@ -12,7 +16,7 @@ import { ADVENTURE_ART } from '../utils/adventureArt';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
-import { RitualDialog, RitualGlass, RitualRow, SpriteGlass, ritualTitle, type RitualRowTone } from './ritual/RitualKit';
+import { RitualGlass, RitualRow, SpriteGlass, type RitualRowTone } from './ritual/RitualKit';
 
 interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
@@ -31,6 +35,17 @@ interface DailyReportModalProps {
   adventure?: Pick<AdventureFind, 'id' | 'emoji' | 'titlePt' | 'titleEn' | 'textPt' | 'textEn'> | null;
   /** Ainda não estava no diário. Muda só o rótulo. */
   adventureIsNew?: boolean;
+  /**
+   * O Passeio escolhido no dia anterior que levou a este achado (beta-2, 4.3): o título da missão e o nome
+   * do destino. Sem missão cumprida naquele dia, `null` — e a seção mostra só o achado.
+   */
+  stroll?: { missionTitle: string; destination: string } | null;
+  /** HP máximo do estágio: o tamanho da fileira de corações (3 quando a tela não sabe). */
+  maxHearts?: number;
+  /** A animação de quebra deste relatório já foi vista (persistido em `lastDayReport.heartsAnimSeen`). */
+  heartsAnimSeen?: boolean;
+  /** A animação começou: quem chama grava "já vista" para ela não repetir ao reabrir. */
+  onHeartsAnimSeen?: () => void;
   onClose: () => void;
   language: Language;
   /** O "porquê" que o usuário escreveu no onboarding. O pet devolve isso em
@@ -120,6 +135,12 @@ function pickFor(date: string): number {
 /**
  * O relatório do dia, mostrado uma vez na primeira abertura depois da virada.
  *
+ * BETA-2 (13/10/2026, itens 4.2–4.4 do backlog): deixou de ser UM diálogo central e virou uma SEQUÊNCIA de folhas
+ * (bottom sheet padrão, `ModalSheet`), uma por seção, em ordem de tempo — ONTEM (tarefas → corações → aventura) e
+ * depois HOJE (humor/convite/memórias). O NPC só mora na folha da aventura (o do Passeio, via `AreaSheet`); `A
+ * stretch closed` e os corações não têm NPC. Os corações são uma fileira (`DayHearts`): o cobrado treme, quebra e
+ * vira preto UMA vez (`lastDayReport.heartsAnimSeen`, gravado pelo App). O `Evolution path` saiu do resumo.
+ *
  * O TOM JÁ PASSOU POR UM PASSE E NÃO REGRIDE: nenhum vermelho, nenhum sinal de
  * menos, nenhum imperativo. Perda vira "em recuperação", e a frase de rodapé
  * oferece o caminho de volta em vez de mandar.
@@ -142,7 +163,7 @@ function pickFor(date: string): number {
  *  · **humor = 5 alvos 44 iguais** com o emoji de `mood.ts` (D-R6);
  *  · **convite** = card irmão com × 44 e `outline` de duas linhas em 260 (D-R9).
  */
-export function DailyReportModal({ report, adventure, adventureIsNew = false, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
+export function DailyReportModal({ report, adventure, adventureIsNew = false, stroll = null, maxHearts = DEFAULT_HEARTS, heartsAnimSeen, onHeartsAnimSeen, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
@@ -160,32 +181,21 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   const heartsValue = report.heartsLost <= 0
     ? (isPt ? 'inteiros!' : 'all there!')
     : (isPt ? 'O padrão afrouxou um pouco.' : 'The pattern loosened a little.');
+  // 4.2 (beta-2): o resumo NÃO mostra mais o caminho da evolução (nem "Caminho da evolução", nem "Caminho
+  // guardado" da acolhida). O gauge segue no save e na tela de evolução; aqui ele era ruído.
   const rows: Row[] = [];
-  if (welcome) {
-    rows.push({ label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', tone: 'hi' });
-    // 13.7 — posse pode mostrar zero, mas aqui o zero não é posse: some (R4).
-    // 🧬 11/10/2026: o que fica guardado é o CAMINHO (gauge), não dias.
-    if ((report.evolutionPoints ?? 0) > 0) {
-      rows.push({ label: isPt ? 'Caminho guardado' : 'Path kept', value: `${report.evolutionPoints}`, tone: 'hi' });
-    }
-  } else {
+  if (!welcome) {
     // R5 — feitos = 0: "not logged" quando houve cobrança (é o referente do
     // botão "I did it, forgot to log"); sem cobrança a linha some — um "0 of
     // 4" numa manhã perdoada não explica nada.
     if (report.done > 0) {
       rows.push({
-        label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
+        label: isPt ? 'Tarefas de ontem' : 'Yesterday Tasks',
         value: isPt ? `${report.done} de ${report.total}` : `${report.done} of ${report.total}`,
         tone: report.wasPerfect ? 'hi' : undefined,
       });
     } else if (report.heartsLost > 0) {
-      rows.push({ label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks", value: isPt ? 'sem registro' : 'not logged', tone: 'soft' });
-    }
-    rows.push({ label: isPt ? 'Corações' : 'Hearts', value: heartsValue, tone: report.heartsLost > 0 ? 'soft' : 'hi' });
-    // 🧬 11/10/2026 (decisão do dono): a linha da evolução é o gauge — quanto
-    // o caminho andou ontem. Zero some (R4): um dia sem passo não vira linha.
-    if ((report.gaugeGain ?? 0) > 0) {
-      rows.push({ label: isPt ? 'Caminho da evolução' : 'Evolution path', value: `+${report.gaugeGain}`, tone: 'hi' });
+      rows.push({ label: isPt ? 'Tarefas de ontem' : 'Yesterday Tasks', value: isPt ? 'sem registro' : 'not logged', tone: 'soft' });
     }
   }
 
@@ -215,7 +225,9 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   // Frases de rodapé. Nenhuma delas cobra — a mais "dura" apenas conta o que
   // aconteceu. S1: o N de dias fora NÃO aparece (a acolhida é a linha do pet,
   // no cabeçalho). STATUS h: folga e alívio semanal não entram no retorno.
-  const notes: string[] = [];
+  // 4.4 (beta-2): cada nota mora na seção a que se refere — as dos corações na folha dos corações.
+  const taskNotes: string[] = [];
+  const heartNotes: string[] = [];
   // P2 — a folga da semana entrou. **Contar é obrigatório**: uma folga gasta em
   // silêncio é um perdão que a pessoa nunca soube que recebeu — e na semana
   // seguinte ela é cobrada sem entender por que desta vez doeu.
@@ -224,14 +236,14 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   // perdão é dívida com outro nome (§10). "Recarrega na segunda" é permitido
   // por ser fato que só sobe (§17 #6).
   if (!welcome && report.restDayUsed) {
-    notes.push(isPt
+    heartNotes.push(isPt
       ? 'A maré absorveu ontem. Nada foi cobrado. Ela recarrega na segunda.'
       : 'The tide absorbed yesterday. Nothing was charged. It comes back on Monday.');
   }
   // Copy §2.5: nunca "recuperamos seu progresso perdido" — sugere perda, e L4
   // diz que não houve.
   if (!welcome && report.weeklyRelief) {
-    notes.push(isPt
+    heartNotes.push(isPt
       ? 'A maré devolveu um pouco. Semana nova.'
       : 'The tide gave a little back. New week.');
   }
@@ -239,24 +251,24 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   // punição. Fato verdadeiro no código — `unlockedEvolutions`, `perfectDays` e
   // o registro não são tocados (L4).
   if (!welcome && report.degenerated) {
-    notes.push(isPt
+    heartNotes.push(isPt
       ? 'Nada do que foi descoberto saiu. O caminho de volta é o mesmo caminho.'
       : 'Nothing found is gone. The way back is the same way.');
   }
   // Copy §2.3, linha de apoio do dia completo: o exemplo literal ✅ da §13.
   // Nomeia o ato e o efeito na Malha (L12); o mérito fica de fora.
   if (!welcome && report.wasPerfect) {
-    notes.push(isPt ? 'A fagulha firmou.' : 'The ember steadied.');
+    taskNotes.push(isPt ? 'A fagulha firmou.' : 'The ember steadied.');
   }
   if (!welcome && report.done >= report.required && report.energyWasFull === false) {
-    notes.push(isPt
+    taskNotes.push(isPt
       // "Faltou" para quem cumpriu 100% da própria meta é a palavra de quem
       // cobra. Vira dica para amanhã, que é o que ela de fato é.
       ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia completo.'
       : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a complete day.');
   }
   if (report.heartsRecovered) {
-    notes.push(isPt
+    heartNotes.push(isPt
       // A segunda oração corrigia o comportamento logo depois de perdoar — o
       // perdão com ressalva é o que ensina a pessoa a não pedir de novo.
       ? 'Corações devolvidos. Ficou tudo certo.'
@@ -270,91 +282,179 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
 
   const adventureArt = adventure ? ADVENTURE_ART[adventure.id] : undefined;
 
-  return (
-    <RitualDialog label={headline} onClose={onClose} maxWidth={340} closeLabel={isPt ? 'Fechar' : 'Close'}>
-      {/* Cabeçalho: a manchete é APARELHO — glifo 48 pelado (ícone nunca
-          dentro de box) ou, no retorno, a criatura num vidro. O confete é
-          absoluto na faixa do glifo e o título fica acima dele no z. */}
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center', paddingTop: report.wasPerfect ? 6 : 4 }}>
-        {report.wasPerfect && <Confetti />}
-        {welcome && spriteUrl
-          ? <SpriteGlass spriteUrl={spriteUrl} />
-          /* 04/10/2026 (decisão do dono): a manchete usa a arte de ciclo do dia / recompensa
-             (`REPORT_HEAD_ART`, pixel 96² a 48); o glifo é o fallback. */
-          : REPORT_HEAD_ART[headIcon]
-            ? <img src={REPORT_HEAD_ART[headIcon]} alt="" aria-hidden="true" data-report-head-art={headIcon} width={48} height={48} style={{ width: 48, height: 48, display: 'block', imageRendering: 'pixelated', position: 'relative', zIndex: 1 }} />
-            : <Icon name={headIcon} size={48} fill={report.wasPerfect ? 1 : 0} tone={headTone} style={{ position: 'relative', zIndex: 1 }} />}
-        <h2 data-headline style={{ ...ritualTitle, position: 'relative', zIndex: 1 }}>{headline}</h2>
-      </div>
+  // 4.2 — a fileira dos corações: o que quebrou é o que a virada cobrou; a animação toca uma vez por relatório.
+  // `heartsLost` é o que o dia REALMENTE tirou (e na acolhida nada é cobrado).
+  const strip = heartStrip(welcome ? 0 : report.heartsLost, maxHearts);
+  const playBreak = shouldPlayHeartBreak(strip, heartsAnimSeen);
 
-      {/* R4 — UMA linha da família `welcomeBackLine`; nunca o N de dias. */}
-      {welcomeLine && <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{welcomeLine}</p>}
+  // 4.4 — uma folha por seção, em ordem de tempo: ONTEM (tarefas → corações → aventura) e depois HOJE.
+  const hasToday = !!onPickMood || (showOffer && !!onOpenOffer) || !!memories;
+  const steps: Array<'tasks' | 'hearts' | 'adventure' | 'today'> = ['tasks', 'hearts'];
+  if (adventure) steps.push('adventure');
+  if (hasToday) steps.push('today');
+  const [stepIdx, setStepIdx] = useState(0);
+  const step = steps[Math.min(stepIdx, steps.length - 1)];
+  const isLast = stepIdx >= steps.length - 1;
+  const goNext = () => (isLast ? onClose() : setStepIdx(i => i + 1));
+  const nextLabel = isLast ? (isPt ? 'Começar o dia' : 'Start the day') : (isPt ? 'Continuar' : 'Continue');
+  const nextButton = (
+    <button type="button" data-report-next={isLast ? 'start' : 'next'} onClick={goNext} style={{ ...sm2Button('primary'), width: '100%' }}>
+      {nextLabel}
+    </button>
+  );
+  const closeLabel = isPt ? 'Fechar' : 'Close';
+  // P4 (beta-2): a folha dos corações tem ALTURA MÍNIMA (~40vh) e centra o conteúdo — com e sem o botão "Eu fiz…" ela não encolhe a uma tira.
+  const wrapSheet = (key: string, title: string, children: ReactNode, minHeight?: string) => (
+    <ModalSheet key={key} open title={title} onClose={onClose} language={language} maxWidth={420} footer={nextButton}>
+      <div data-report-step={key} style={{ display: 'flex', flexDirection: 'column', gap: 12, ...(minHeight ? { minHeight, justifyContent: 'center' } : null) }}>{children}</div>
+    </ModalSheet>
+  );
 
-      {/* Linhas de ONTEM */}
-      <div>
-        {rows.map(r => <RitualRow key={r.label} label={r.label} value={r.value} tone={r.tone} />)}
-        {notes.map((n, i) => (
-          <p key={i} style={{ ...hint, paddingTop: 4 }}>{n}</p>
-        ))}
-        {goalNote && (
-          <p style={{ ...hint, paddingTop: 4 }}>
-            {isPt ? 'Lembra por que você começou: “' : 'Remember why you started: “'}
-            <i>{goalNote}</i>
-            ”.
-          </p>
-        )}
-      </div>
-
-      {/* ── A AVENTURA DA NOITE ──────────────────────────────────────────
-          O pet saiu durante o dia e voltou com uma cena. É o loop de duas
-          visitas do Finch, e a razão de ele ser narrativo está no benchmark
-          do `docs/PLANO-TAREFAS.md`: **narrativa não satura**.
-
-          APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem
-          voltou depois de sumir. É deliberado: o dia ruim é o momento mais
-          frágil do app, e é justamente nele que a única coisa boa da tela não
-          pode faltar.
-
-          NÃO PAGA NADA (decisão do dono, 08/09/2026). Sem Bits, sem item, sem
-          atributo. A arte (96² nativa) entra a 48 (0,5×) num vidro 48² — o
-          único pixel do card (D-R3). */}
-      {adventure && (
-        <div style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start', padding: '8px 12px 8px 8px' }}>
-          {adventureArt
-            ? (
-              <RitualGlass width={48}>
-                <img src={adventureArt} alt="" width={48} height={48} style={{ width: 48, height: 48, display: 'block' }} />
-              </RitualGlass>
-            )
-            /* Emoji do catálogo quando a arte ainda não existe — conteúdo, não
-               pixel: fica fora do vidro. */
-            : <span aria-hidden style={{ fontSize: 28, lineHeight: '48px', width: 48, textAlign: 'center', flexShrink: 0 }}>{adventure.emoji}</span>}
-          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <p style={hint}>
-              {isPt ? 'Da aventura de hoje' : "From today's adventure"}
-              {adventureIsNew && <b style={{ fontWeight: 600 }}>{isPt ? ' · inédito' : ' · new'}</b>}
-            </p>
-            <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
-              {isPt ? adventure.titlePt : adventure.titleEn}
-            </p>
-            <p style={hint}>
-              {isPt ? adventure.textPt : adventure.textEn}
-            </p>
-          </div>
+  if (step === 'tasks') {
+    return wrapSheet('tasks', headline, (
+      <>
+        {/* Cabeçalho: a manchete é APARELHO — glifo 48 pelado (ícone nunca
+            dentro de box) ou, no retorno, a criatura num vidro. O confete é
+            absoluto na faixa do glifo. Sem NPC aqui (4.4): o dia fechado não tem anfitrião. */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center', paddingTop: report.wasPerfect ? 6 : 4, minHeight: 56 }}>
+          {report.wasPerfect && <Confetti />}
+          {welcome && spriteUrl
+            ? <SpriteGlass spriteUrl={spriteUrl} />
+            /* 04/10/2026 (decisão do dono): a manchete usa a arte de ciclo do dia / recompensa
+               (`REPORT_HEAD_ART`, pixel 96² a 48); o glifo é o fallback. */
+            : REPORT_HEAD_ART[headIcon]
+              ? <img src={REPORT_HEAD_ART[headIcon]} alt="" aria-hidden="true" data-report-head-art={headIcon} width={48} height={48} style={{ width: 48, height: 48, display: 'block', imageRendering: 'pixelated', position: 'relative', zIndex: 1 }} />
+              : <Icon name={headIcon} size={48} fill={report.wasPerfect ? 1 : 0} tone={headTone} style={{ position: 'relative', zIndex: 1 }} />}
         </div>
-      )}
+        {/* R4 — UMA linha da família `welcomeBackLine`; nunca o N de dias. */}
+        {welcomeLine && <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{welcomeLine}</p>}
+        <div>
+          {rows.map(r => <RitualRow key={r.label} label={r.label} value={r.value} tone={r.tone} />)}
+          {taskNotes.map((n, i) => (
+            <p key={i} style={{ ...hint, paddingTop: 4 }}>{n}</p>
+          ))}
+          {goalNote && (
+            <p style={{ ...hint, paddingTop: 4 }}>
+              {isPt ? 'Lembra por que você começou: “' : 'Remember why you started: “'}
+              <i>{goalNote}</i>
+              ”.
+            </p>
+          )}
+        </div>
+      </>
+    ));
+  }
 
-      {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a
-          HISTÓRIA. Fica dentro do relatório que a pessoa já ia ver: não
-          gera push, badge nem lembrete. Ainda é ONTEM (R2). */}
+  if (step === 'hearts') {
+    return wrapSheet('hearts', isPt ? 'Corações' : 'Hearts', (
+      <>
+        <DayHearts strip={strip} play={playBreak} onPlayed={onHeartsAnimSeen} isPt={isPt} />
+        <p data-hearts-line style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{heartsValue}</p>
+        {heartNotes.map((n, i) => (
+          <p key={i} style={{ ...hint, textAlign: 'center' }}>{n}</p>
+        ))}
+        {canRecover && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
+              {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
+            </button>
+            <InfoTip language={language} label={isPt ? 'O que este botão faz' : 'What this button does'} align="right">
+              {isPt
+                ? 'Devolve os corações. O dia completo não volta — esse já passou.'
+                : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
+            </InfoTip>
+          </div>
+        )}
+      </>
+    ), '40vh');
+  }
+
+  if (step === 'adventure' && adventure) {
+    /* ── A AVENTURA DE ONTEM ────────────────────────────────────────────
+       O pet saiu e voltou com uma cena. É o loop de duas visitas do Finch, e a razão de ele ser narrativo
+       está no benchmark do `docs/PLANO-TAREFAS.md`: **narrativa não satura**.
+
+       APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem voltou depois de sumir. É
+       deliberado: o dia ruim é o momento mais frágil do app, e é justamente nele que a única coisa boa da
+       tela não pode faltar. NÃO PAGA NADA (decisão do dono, 08/09/2026).
+
+       4.3/4.4 (beta-2): é uma folha INDEPENDENTE, a única com o NPC — o do Passeio (`AreaSheet`, o mesmo
+       molde dos prédios), ligada explicitamente à missão e ao destino escolhidos no dia anterior. */
+    return (
+      <div data-report-step="adventure" style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+        <AreaSheet
+          areaId="exploracao"
+          lotId="passeio"
+          language={language}
+          title={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}
+          closeLabel={closeLabel}
+          closeInSheet
+          open
+          onClose={onClose}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {stroll && (
+              /* O VÍNCULO: a missão que a pessoa escolheu ontem justifica o destino (que fica em destaque). */
+              <div data-stroll-link style={{ ...card, display: 'flex', flexDirection: 'column', gap: 6, padding: 12 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                  <span style={{ ...hint, flex: 'none', minWidth: 72 }}>{isPt ? 'Missão' : 'Mission'}</span>
+                  <span data-stroll-mission style={{ ...sm2Text, fontWeight: 500 }}>{stroll.missionTitle}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                  <span style={{ ...hint, flex: 'none', minWidth: 72 }}>{isPt ? 'Destino' : 'Destination'}</span>
+                  <span data-stroll-destination style={{ ...sm2Text, fontWeight: 600, color: 'var(--sm2-gold-ink)' }}>{stroll.destination}</span>
+                </div>
+              </div>
+            )}
+            <div style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start', padding: '8px 12px 8px 8px' }}>
+              {adventureArt
+                ? (
+                  <RitualGlass width={48}>
+                    <img src={adventureArt} alt="" width={48} height={48} style={{ width: 48, height: 48, display: 'block' }} />
+                  </RitualGlass>
+                )
+                /* Emoji do catálogo quando a arte ainda não existe — conteúdo, não
+                   pixel: fica fora do vidro. */
+                : <span aria-hidden style={{ fontSize: 28, lineHeight: '48px', width: 48, textAlign: 'center', flexShrink: 0 }}>{adventure.emoji}</span>}
+              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {adventureIsNew && (
+                  /* `New` no dourado da paleta (tokens do par gold, nunca hex). */
+                  <span
+                    data-adventure-new
+                    style={{
+                      alignSelf: 'flex-start', padding: '0 8px', borderRadius: 'var(--sm2-radius-sm)',
+                      backgroundColor: 'var(--sm2-gold-fill)', color: 'var(--sm2-on-gold)',
+                      fontSize: 'var(--sm2-text-xs)', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase',
+                    }}
+                  >
+                    {isPt ? 'Novo' : 'New'}
+                  </span>
+                )}
+                <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
+                  {isPt ? adventure.titlePt : adventure.titleEn}
+                </p>
+                <p style={hint}>
+                  {isPt ? adventure.textPt : adventure.textEn}
+                </p>
+              </div>
+            </div>
+            {nextButton}
+          </div>
+        </AreaSheet>
+      </div>
+    );
+  }
+
+  /* HOJE — a pergunta do humor, o convite e as memórias. Ainda cabe no relatório que a pessoa já ia ver:
+     não gera push, badge nem lembrete. */
+  return wrapSheet('today', onPickMood ? (isPt ? 'E você, como está hoje?' : 'And how are you today?') : (isPt ? 'Hoje' : 'Today'), (
+    <>
+      {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a HISTÓRIA. */}
       {memories && <MemoriesCard {...memories} language={language} />}
 
-      {/* A pergunta de HOJE (R2): o humor, colado ao CTA. Fica aqui porque o
-          relatório já aparece 1×/dia. Opcional, e não vale ponto (D-R6: sem
-          rótulo de prêmio; 5 alvos 44 iguais com o emoji de `mood.ts`). */}
+      {/* O humor: opcional, e não vale ponto (D-R6: sem rótulo de prêmio; 5 alvos 44 iguais com o emoji de `mood.ts`). */}
       {onPickMood && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
-          <p style={hint}>{isPt ? 'E você, como está hoje?' : 'And how are you today?'}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div role="group" aria-label={isPt ? 'Humor' : 'Mood'} style={{ display: 'flex', gap: 8 }}>
             {MOOD_OPTIONS.map(m => {
               const active = moodToday === m.value;
@@ -367,9 +467,9 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
                   aria-pressed={active}
                   title={isPt ? m.labelPt : m.labelEn}
                   style={{
-                    flex: 1, minHeight: 44, cursor: 'pointer',
+                    flex: 1, minHeight: 64, minWidth: 44, cursor: 'pointer', // 12 (beta-2): alvo de toque folgado (>= 44) para o ícone maior
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 24, lineHeight: 1,
+                    fontSize: 40, lineHeight: 1,
                     boxSizing: 'border-box',
                     border: 'none',
                     borderRadius: 'var(--sm2-radius-md)',
@@ -379,23 +479,24 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
                 >
                   {/* C6: arte própria quando existir (`utils/moodArt.ts`); emoji é o fallback. */}
                   {moodArtFor(m.value)
-                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={24} height={24} style={{ display: 'block', imageRendering: 'pixelated' }} />
+                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={40} height={40} style={{ display: 'block', width: 40, height: 40, imageRendering: 'pixelated' }} />
                     : <span aria-hidden="true">{m.emoji}</span>}
                 </button>
               );
             })}
           </div>
+          {/* 12 (beta-2): ícone ↔ rótulo ↔ estado — o nome do humor escolhido aparece sob a fileira (uma palavra, sem explicação). */}
+          {moodToday !== undefined && moodToday !== null && (() => {
+            const sel = MOOD_OPTIONS.find(o => o.value === moodToday);
+            return sel ? <p data-mood-label style={{ ...hint, textAlign: 'center', fontWeight: 500 }}>{isPt ? sel.labelPt : sel.labelEn}</p> : null;
+          })()}
           {moodNote && <p style={hint}>{moodNote}</p>}
         </div>
       )}
 
-      {/* WP5.1 — O CONVITE NO VALUE MOMENT.
-          Fica ANTES do botão de fechar e depois do relatório inteiro: quem
-          veio ver o próprio dia vê o dia primeiro. As travas são de
-          `utils/offerMoment.ts`. A FORMA (D-R9, o único padrão positivo do
-          dossiê — Garmin): × 44 no próprio card, `outline` de duas linhas com
-          largura PARCIAL (260) contra os CTAs de largura total, container
-          irmão, removível de vez. Sem cadeado: é convite, não recusa. */}
+      {/* WP5.1 — O CONVITE NO VALUE MOMENT. As travas são de `utils/offerMoment.ts`. A FORMA (D-R9, o único
+          padrão positivo do dossiê — Garmin): × 44 no próprio card, `outline` de duas linhas com largura
+          PARCIAL (260), container irmão, removível de vez. Sem cadeado: é convite, não recusa. */}
       {showOffer && onOpenOffer && (
         <div aria-label={isPt ? 'Convite' : 'Invitation'} style={{ ...card, position: 'relative', padding: 12 }}>
           {onDismissOffer && (
@@ -422,27 +523,6 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
           </div>
         </div>
       )}
-
-      {/* Ações */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {canRecover && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
-                {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
-              </button>
-              <InfoTip language={language} label={isPt ? 'O que este botão faz' : 'What this button does'} align="right">
-                {isPt
-                  ? 'Devolve os corações. O dia completo não volta — esse já passou.'
-                  : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
-              </InfoTip>
-            </div>
-          </>
-        )}
-        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
-          {isPt ? 'Começar o dia' : 'Start the day'}
-        </button>
-      </div>
-    </RitualDialog>
-  );
+    </>
+  ));
 }

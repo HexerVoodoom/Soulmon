@@ -30,6 +30,7 @@ import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { adventureOfDay, findById, type AdventureEntry, type AdventureFind } from './adventure';
 import { hashString, mulberry32 } from './oracle/base';
 import { missionLive, strollWaitMs } from './travessiasSave';
+import { travessiaTitle } from './travessiaTitles';
 
 export { normalizeCrossings, REGION_IDS, isRegionId, crossingsTouchMap, missionMark, missionLive, type MissionMark } from './travessiasSave';
 
@@ -305,4 +306,27 @@ export function passeioFindOfDay(args: {
   }
 
   return adventureOfDay(antes, feito, meta, dayKey);
+}
+
+/**
+ * A missão do Passeio CUMPRIDA na noite `crossDay` (a chave do MAPA, `AAAA-MM-DD`): o que o resumo
+ * "From Yesterday's Adventure" liga ao achado. Lê o registro (`log`), que o "Fiz" grava com dia, região e
+ * ato — a mesma fonte da viagem da noite (`trip`). Sem missão cumprida naquele dia → `null`.
+ */
+export function strollOfDay(s: CrossingsState, crossDay: string): { challenge: string; region: RegionId } | null {
+  for (let i = s.log.length - 1; i >= 0; i--) {
+    const e = s.log[i];
+    if (e.day === crossDay) return { challenge: e.challenge, region: e.region };
+  }
+  return null;
+}
+
+/** O que o resumo mostra da missão da noite: o título dela e o nome do destino (a região), na língua pedida. */
+export function strollSummary(s: CrossingsState, crossDay: string, isPt: boolean): { missionTitle: string; destination: string } | null {
+  const st = strollOfDay(s, crossDay);
+  if (!st) return null;
+  const region = regionById(st.region);
+  const missionTitle = travessiaTitle(st.challenge, isPt);
+  if (!region || !missionTitle) return null;
+  return { missionTitle, destination: isPt ? region.namePt : region.nameEn };
 }

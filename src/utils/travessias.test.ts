@@ -595,3 +595,31 @@ describe('a linha "Take a stroll" do menu (07/10/2026): o Resgatar é só recibo
     expect(normalizeCrossings({ ...feita, claimDay: 'lixo' }).claimDay).toBeNull();
   });
 });
+
+
+describe('strollOfDay / strollSummary — o vínculo do resumo com o Passeio de ontem (beta-2, 4.3)', () => {
+  const dia = '2026-10-12';
+  const [m] = dailyOffer(dia, 'seed-vinculo');
+  const feita = markDone(pickMission(CROSSINGS_EMPTY, dia, 'seed-vinculo', m.region.id, m.challenge.id, 0), dia, 60 * 60 * 1000);
+
+  it('a missão cumprida naquele dia aparece com o destino dela (a região)', async () => {
+    const { strollOfDay, strollSummary } = await import('./travessias');
+    expect(strollOfDay(feita, dia)).toEqual({ challenge: m.challenge.id, region: m.region.id });
+    const pt = strollSummary(feita, dia, true)!;
+    expect(pt.destination).toBe(m.region.namePt);
+    expect(pt.missionTitle.length).toBeGreaterThan(0);
+    expect(strollSummary(feita, dia, false)!.destination).toBe(m.region.nameEn);
+  });
+
+  it('sem missão cumprida naquele dia, não há vínculo (só o achado)', async () => {
+    const { strollOfDay, strollSummary } = await import('./travessias');
+    expect(strollOfDay(feita, '2026-10-11')).toBeNull();
+    expect(strollSummary(CROSSINGS_EMPTY, dia, true)).toBeNull();
+  });
+
+  it('só a escolhida e NÃO cumprida não conta: o registro é do "Fiz"', async () => {
+    const { strollOfDay } = await import('./travessias');
+    const so_escolhida = pickMission(CROSSINGS_EMPTY, dia, 'seed-vinculo', m.region.id, m.challenge.id, 0);
+    expect(strollOfDay(so_escolhida, dia)).toBeNull();
+  });
+});

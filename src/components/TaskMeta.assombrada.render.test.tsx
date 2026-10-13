@@ -53,10 +53,7 @@ describe('tarefa assombrada — tinta, não alfa', () => {
     const nome = li.querySelector('.sm2-ritual-name') as HTMLElement;
     // jsdom não resolve `var()`: o que dá para medir é a regra do index.css.
     expect(getComputedStyle(nome).color).toMatch(/sm2-haunted/);
-    // o selo do tipo segue a tinta da linha
-    const icone = li.querySelector('.sm2-icon') as HTMLElement;
-    expect(icone.style.color).toBe('var(--sm2-haunted)');
-    // lápis (a coluna de texto é o botão de editar) e checkbox intactos
+    // o nome (botão de editar) e o checkbox seguem intactos
     expect(li.querySelector('button[aria-label^="Edit"]')).toBeTruthy();
     expect(li.querySelector('[role="checkbox"]')).toBeTruthy();
   });

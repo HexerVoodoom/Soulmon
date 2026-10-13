@@ -84,7 +84,7 @@ describe('jogar', () => {
     expect(cell({ r: 3, c: 3 }).getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('troca que NÃO forma linha: nada muda, NENHUM movimento é gasto, e o aviso é calmo (sem "errou")', async () => {
+  it('9.2: troca que NÃO forma linha é LIVRE — as duas peças trocam, gasta 1 movimento, não pontua e não há aviso de erro', async () => {
     montar();
     const { board } = newRound(SEED);
     // acha um par vizinho que não forma linha
@@ -92,15 +92,17 @@ describe('jogar', () => {
     let par: { a: Pos; b: Pos } | null = null;
     for (let r = 0; r < M3_ROWS && !par; r++) for (let c = 0; c < M3_COLS - 1 && !par; c++) if (!validos.has(`${r},${c}-${r},${c + 1}`)) par = { a: { r, c }, b: { r, c: c + 1 } };
     expect(par).not.toBeNull();
-    const antes = [...document.querySelectorAll('[data-m3-cell]')].map(b => b.getAttribute('aria-label'));
+    const kindA = cell(par!.a).getAttribute('data-m3-kind');
+    const kindB = cell(par!.b).getAttribute('data-m3-kind');
     fireEvent.click(cell(par!.a));
     fireEvent.click(cell(par!.b));
-    await avancar(500);
-    expect(num('data-m3-moves')).toBe(M3_MOVES);
-    expect([...document.querySelectorAll('[data-m3-cell]')].map(b => b.getAttribute('aria-label'))).toEqual(antes);
-    const aviso = document.querySelector('[data-m3-note]')!.textContent ?? '';
-    expect(aviso).toMatch(/doesn't make a line|try another/i);
-    expect(aviso).not.toMatch(/wrong|error|fail|errou/i);
+    await assentar();
+    expect(num('data-m3-moves')).toBe(M3_MOVES - 1);
+    expect(num('data-m3-score')).toBe(0);
+    expect(cell(par!.a).getAttribute('data-m3-kind')).toBe(kindB);
+    expect(cell(par!.b).getAttribute('data-m3-kind')).toBe(kindA);
+    const aviso = document.querySelector('[data-m3-note]')?.textContent ?? '';
+    expect(aviso).not.toMatch(/doesn't make a line|try another|wrong|error|fail|errou/i);
   });
 
   it('jogada válida: gasta 1 movimento, a cascata anima passo a passo e a pontuação bate com a conta pura', async () => {

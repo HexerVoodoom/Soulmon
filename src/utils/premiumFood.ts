@@ -15,9 +15,8 @@ import { playerDayIso, type PlayerDayAnchor } from './playerDay';
  * não muda de identidade. A estrela é só a marca; a arte é a da comida de base.
  *
  * Por que há tetos (energia é limitada pela META DO DIA, não por vontade):
- *  · rende `PREMIUM_ENERGY` (5) em vez de 1, sempre limitada pelas barras do
- *    estágio — nunca passa do máximo, e RECUSA com a energia cheia (o item
- *    volta, como o coraçãozinho com vida cheia);
+ *  · (beta-2 3.5, REGISTRO §40) enche a FOME (`HUNGER_PER_PREMIUM`, `utils/hunger.ts`) e NÃO dá energia direto — era +5 de
+ *    energia; RECUSA com a fome quase cheia (o item volta, como o coraçãozinho com vida cheia);
  *  · cai no máx. `PREMIUM_DROPS_PER_DAY` por dia do jogador e
  *    `PREMIUM_DROPS_PER_WEEK` por semana (segunda a domingo) — criar uma
  *    tarefa de 3 passos por dia NÃO vira fonte infinita de energia;
@@ -25,7 +24,6 @@ import { playerDayIso, type PlayerDayAnchor } from './playerDay';
  * Não toca em HP nem na regra do "dia completo": só a perna de energia.
  */
 export const PREMIUM_SUFFIX = '★';
-export const PREMIUM_ENERGY = 5;
 export const PREMIUM_DROPS_PER_DAY = 1;
 export const PREMIUM_DROPS_PER_WEEK = 3;
 export const PREMIUM_USES_PER_DAY = 1;
@@ -111,8 +109,8 @@ export const PREMIUM_SPECIAL_ITEMS: Record<string, SpecialItem> = Object.fromEnt
     const item: SpecialItem = {
       emoji: key, kind: 'premium',
       namePt: `${PT_NAMES[f.name] ?? f.name} premium`, nameEn: `Premium ${f.name}`,
-      descPt: `Rende ${PREMIUM_ENERGY} de energia em vez de 1 — vem de fechar uma tarefa de várias etapas. Não passa do máximo do dia.`,
-      descEn: `Gives ${PREMIUM_ENERGY} energy instead of 1 — earned by finishing a multi-step task. Never above the day's max.`,
+      descPt: 'Enche a fome do seu Soulmon — vem de fechar uma tarefa de várias etapas.',
+      descEn: "Fills your Soulmon's hunger — earned by finishing a multi-step task.",
     };
     return [key, item];
   }),

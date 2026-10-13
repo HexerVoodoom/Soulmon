@@ -17,7 +17,7 @@
 import { BOND_MAX_LEVEL, bondLevelFor, bondRewardFor, type BondReward } from './bond';
 import { gatesOpenedBetween, type GateFeature } from './gates';
 import { talentPointsFor } from './talents';
-import { getMaxEnergyForStage } from '../types/progression';
+import { setEnergy, type EnergyClock, type HungerRecord } from './hunger';
 
 export interface LevelUpEvent {
   /** O último nível celebrado (o que a pessoa já viu). */
@@ -91,15 +91,14 @@ export function levelUpGains(from: number, to: number): LevelUpGains {
  */
 export function applyLevelUpCelebrated<T extends {
   lastCelebratedLevel?: number; energyPoints: number; evolutionStage: string; dungeonHp?: { frac: number; at: number };
-}>(prev: T, celebrated: number): T {
+  hunger?: HungerRecord; energyClock?: EnergyClock;
+}>(prev: T, celebrated: number, nowMs: number = Date.now()): T {
   const before = prev.lastCelebratedLevel;
   const next = Math.max(before ?? 0, Math.floor(Number.isFinite(celebrated) ? celebrated : 0));
   if (next === before) return prev;
   if (before === undefined || next <= before) return { ...prev, lastCelebratedLevel: next };
   return {
-    ...prev,
-    lastCelebratedLevel: next,
-    energyPoints: Math.max(prev.energyPoints ?? 0, getMaxEnergyForStage(prev.evolutionStage)),
-    dungeonHp: undefined,
+    // Enche pela porta única da energia (`setEnergy`): acerta a regeneração até agora e deixa o relógio parado na energia cheia.
+    ...setEnergy({ ...prev, lastCelebratedLevel: next, dungeonHp: undefined }, nowMs, (cur, max) => Math.max(cur, max)),
   };
 }

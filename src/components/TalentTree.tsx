@@ -20,6 +20,7 @@ import {
 } from '../utils/talents';
 import { combinedAttrBonus, combinedBonus } from '../utils/combate/bonus';
 import { LAYOUT_NODES, LAYOUT_EDGES, BOARD, NODE_SIZE, HUB, HUB_POINT, ARM_ANGLE, pointOf, neighborIn } from '../utils/talentLayout';
+import { InfoTip } from './ui/InfoTip';
 import { loadTalentArt } from '../utils/talentArt';
 import { spendBits, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { TALENT_COPY, talentEffectLine } from '../utils/talentCopy';
@@ -232,16 +233,18 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
     <section className="sm2-stats-card" aria-labelledby="sm2-talent-title" data-talent-tree>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Art nome="talent-point-chip" size={24} />
-        <p id="sm2-talent-title" className="sm2-stats-lab" style={{ margin: 0 }}>{isPt ? 'Talentos do Vínculo' : 'Bond talents'}</p>
+        <p id="sm2-talent-title" className="sm2-stats-lab" style={{ margin: 0, flex: 1 }}>{isPt ? 'Talentos do Vínculo' : 'Bond talents'}</p>
+        {/* F5 (beta-2): a regra dos 5% mora atrás do "i" (uma vez só) — antes aparecia em dois parágrafos soltos. */}
+        <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funcionam os talentos' : 'How talents work'} align="right" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Os pontos nunca dão para tudo: escolha o caminho. Somando talento, equipamento e Comércio, o bônus de combate para em 5%. Já somado ao equipamento. Nada disto se compra com dinheiro.'
+            : 'Points never cover everything, so pick a path. Talent, equipment and Trade together cap combat bonus at 5%. Already added to your equipment. None of it can be bought with real money.'}
+        </InfoTip>
       </div>
+      {/* O nível do Vínculo já é a leitura do cartão de cima — aqui só o que é DESTA árvore (pontos gastos / livres). */}
       <p className="sm2-stats-s" data-talent-state aria-live="polite">
-        {isPt ? `Vínculo ${bond} · ${picks.length}/${total} pontos gastos. ` : `Bond ${bond} · ${picks.length}/${total} points spent. `}
+        {isPt ? `${picks.length}/${total} pontos gastos. ` : `${picks.length}/${total} points spent. `}
         {estado}
-      </p>
-      <p className="sm2-stats-s">
-        {isPt
-          ? 'Os pontos nunca dão para tudo: escolha o caminho. Somando talento, equipamento e Comércio, o bônus de combate para em 5%. Nada disto se compra com dinheiro.'
-          : 'Points never cover everything, so pick a path. Talent, equipment and Trade together cap combat bonus at 5%. None of it can be bought with real money.'}
       </p>
 
       <ul data-talent-now aria-label={isPt ? 'O que a sua árvore dá agora' : 'What your tree gives now'} style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
@@ -257,7 +260,6 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
             </li>
           );
         })}
-        <li className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Já somado ao equipamento. Em cada lugar, o total para em 5%.' : 'Already added to your equipment. In each place the total stops at 5%.'}</li>
       </ul>
 
       <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} style={{ overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>

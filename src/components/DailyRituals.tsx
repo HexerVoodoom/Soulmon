@@ -20,7 +20,8 @@
  *  · Ordem: tarefas ativas, hábitos devidos hoje, hábitos fora do dia,
  *    concluídas de hoje por último.
  */
-import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext';
 import type { ActivityCategory } from '../types/attributes';
@@ -29,6 +30,9 @@ import { categoryLabel } from '../types/category-icons';
 import { isActive, isHaunted } from '../utils/taskTriage';
 import { weeklyProgress, type HabitRhythm } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
+import { BackArrow } from './ui/BackArrow';
+import { useBackLayer } from '../utils/backStack';
+import { activityBucket, taskIsForToday, isRitualOpen, ritualOpenKey } from '../utils/atividadesLista';
 import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { TaskMeta } from './TaskMeta';
@@ -36,7 +40,7 @@ import { StepRow } from './StepRow';
 import { bondXP } from '../utils/bond';
 import { habitTier, milestoneReached, habitCountsOn } from '../utils/habitRhythm';
 import { HABIT_WEIGHT } from '../types/taskModel';
-import { effortOf } from '../utils/taskTriage';
+import { parseDayValue } from '../utils/taskTriage';
 
 
 /**
@@ -88,8 +92,12 @@ export interface DailyRitualsProps {
   hideMetrics?: boolean;
   language: Language;
   now: Date;
+  /** Escolhas manuais de abrir/recolher (chave `ritualOpenKey`). Sem escolha, a
+   *  linha fica ABERTA enquanto houver filho pendente e RECOLHE quando todos
+   *  estão concluídos (`isRitualOpen`). */
   expanded: Record<string, boolean>;
-  onExpand: (activityId: string) => void;
+  /** `key` = `ritualOpenKey(id, allDone)`; `open` = o estado que a pessoa quer. */
+  onExpand: (key: string, open: boolean) => void;
   onToggleTask: (taskId: string) => void;
   /** Subitem de uma tarefa (o último fecha a tarefa — quem fecha é o App). */
   onToggleTaskStep?: (taskId: string, stepId: string) => void;
@@ -106,28 +114,48 @@ export interface DailyRitualsProps {
   variant?: 'panel' | 'home';
   /** Home B: o selo "Dia completo" (regra da virada, `completeDayReached`). */
   dayComplete?: boolean;
+  /** Beta-2 (2.4): a meta do dia (`dailyGoalFor`), só para EXIBIR no cabeçalho. */
+  goal?: number;
 }
+
+/** Distância mínima (px) e razão horizontal/vertical do gesto que abre `View all`. */
+const SWIPE_MIN_PX = 64;
+const SWIPE_RATIO = 2;
 
 export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, language, now,
   expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
-  variant = 'panel', dayComplete = false,
+  variant = 'panel', dayComplete = false, goal,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
-  /* Lista ÚNICA (pedido do dono, 11/10/2026 — antes eram abas Hoje/Semanal e a
-     semanal cortava o conteúdo). Em cima: o que VENCE hoje (tarefas, hábitos
-     devidos pela regra `habitCountsOn`, feitos de hoje). Embaixo de uma linha
-     separadora: "Programadas" — o que existe mas não vence hoje (ex.: "a cada
-     30 dias" fora do dia). Programada não cobra nada. */
+  /* Beta-2 (2.1/2.3): a Home mostra SÓ o que é de hoje, em `Tasks` e `Habits`.
+     O resto (recorrência em dias específicos, tarefa com início futuro) mora na
+     tela cheia `View all`, aberta pelo botão do fim da lista OU pelo gesto
+     horizontal — a MESMA experiência (`allOpen`). Programada não cobra nada. */
+  const [allOpen, setAllOpen] = useState(false);
+  const fecharTudo = useCallback(() => setAllOpen(false), []);
+  useBackLayer(allOpen, fecharTudo);
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const swipeStart = (e: ReactPointerEvent) => { swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() }; };
+  const swipeEnd = (e: ReactPointerEvent, aoAcionar: (dx: number) => void) => {
+    const s0 = swipeRef.current;
+    swipeRef.current = null;
+    if (!s0) return;
+    const dx = e.clientX - s0.x;
+    const dy = e.clientY - s0.y;
+    if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) >= SWIPE_RATIO * Math.abs(dy) && Date.now() - s0.t < 800) aoAcionar(dx);
+  };
+
   const todayString = now.toDateString();
   const diasCurtos = isPt
     ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const tarefas = tasks
+  const ativas = tasks
     .filter(t => isActive(t))
     .sort((a, b) => Number(a.completed) - Number(b.completed));
+  const tarefas = ativas.filter(t => taskIsForToday(t, now));
   const guardadas = tasks.filter(t => !isActive(t));
   /* Concluídas HOJE (já fora de `tasks`, no histórico). Uma tarefa que acabou
      de ser marcada ainda está em `tasks` com `completed: true` por 3s — não
@@ -159,18 +187,124 @@ export function DailyRituals({
 
   /* A4: devido hoje + concluídas de hoje. O hábito fora do dia não é devido. */
   const devidos = atividades.filter(a => a.disponivelHoje);
-  const programadas = atividades.filter(a => !a.disponivelHoje);
   const total = tarefas.length + devidos.length + feitasHoje.length;
   const feitos = tarefas.filter(t => t.completed).length
     + devidos.filter(a => a.isComplete).length
     + feitasHoje.length;
 
+  /* View all: o que NÃO é "de hoje" também está aqui. */
+  const habitosTodos = atividades.filter(a => activityBucket(a) === 'habit');
+  const programadasTodas = atividades.filter(a => activityBucket(a) === 'scheduled');
+
   const gavetaRotulo = isPt
-    ? `Guardadas (${guardadas.length}) — não cobram nada`
-    : `Put aside (${guardadas.length}) — these ask nothing of you`;
+    ? `Guardadas (${guardadas.length})`
+    : `Put aside (${guardadas.length})`;
+  const tTasks = isPt ? 'Tarefas' : 'Tasks';
+  const tHabits = isPt ? 'Hábitos' : 'Habits';
+  const tScheduled = isPt ? 'Programadas' : 'Scheduled';
+
+  const secao = (titulo: string, key: string) => (
+    <li key={`sec-${key}`} className="sm3-secao" data-ritual-section={key}><h3>{titulo}</h3></li>
+  );
+
+  const verTudo = (
+    <div className="sm3-ver-tudo">
+      <button type="button" data-view-all onClick={() => setAllOpen(true)}>
+        {isPt ? 'Ver tudo' : 'View all'}
+        <Icon name="arrow_forward" size={20} />
+      </button>
+    </div>
+  );
+
+  /** Linha de TAREFA (pontual). Com subitens: o pai nunca conclui direto. */
+  function renderTask(task: Task, opts: { all?: boolean } = {}): ReactNode {
+    const etapas = task.steps ?? [];
+    const feitasEtapas = etapas.filter(st => st.completed).length;
+    const todasFeitas = task.completed || (etapas.length > 0 && feitasEtapas === etapas.length);
+    const comFilhos = etapas.length > 0 && !!onToggleTaskStep;
+    const aberta = isRitualOpen(expanded, task.id, todasFeitas);
+    const futura = !!opts.all && !taskIsForToday(task, now);
+    const inicio = futura && task.startDate
+      ? ` · ${isPt ? 'começa' : 'starts'} ${(parseDayValue(task.startDate) ?? new Date(NaN)).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { month: 'short', day: 'numeric' })}`
+      : '';
+    return (
+      <RitualRow
+        key={task.id}
+        flipKey={`t:${task.id}`}
+        kind="task"
+        name={task.name}
+        subtitle={`${task.category
+          ? categoryLabel(task.category as ActivityCategory, isPt)
+          : (isPt ? 'Tarefa avulsa' : 'One-off task')}${etapas.length > 0 ? ` · ${stepsLabel(feitasEtapas, etapas.length, isPt)}` : ''}${inicio}`}
+        value={task.completed ? (etapas.length || 1) : feitasEtapas}
+        max={Math.max(1, etapas.length || 1)}
+        done={task.completed}
+        haunted={isHaunted(task, now)}
+        dimmed={futura}
+        onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
+        onEdit={() => onEditTask(task.id)}
+        language={language}
+        expandable={comFilhos}
+        expanded={aberta}
+        onExpand={() => onExpand(ritualOpenKey(task.id, todasFeitas), !aberta)}
+        toggleLabelPt={comFilhos
+          ? `${task.completed ? 'Tarefa concluída' : 'Conclua as etapas'}: ${task.name}`
+          : `${task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}: ${task.name}`}
+        toggleLabelEn={comFilhos
+          ? `${task.completed ? 'Task completed' : 'Complete the steps'}: ${task.name}`
+          : `${task.completed ? 'Task completed' : 'Mark task as completed'}: ${task.name}`}
+        below={(
+          /* Prazo, esforço, "adiada 4×" e o convite da assombrada — dado
+             honesto, nunca acusação (TaskMeta.tsx). */
+          <TaskMeta task={task} now={now} language={language} onPostponeNudge={onPostponeNudge} hideDefaultEffort />
+        )}
+      >
+        {etapas.map(step => (
+          <StepRow
+            key={step.id}
+            id={step.id}
+            label={step.label}
+            completed={step.completed}
+            onToggle={(stepId) => onToggleTaskStep?.(task.id, stepId)}
+            language={language}
+          />
+        ))}
+      </RitualRow>
+    );
+  }
+
+  function renderDoneTask(c: CompletedTask): ReactNode {
+    return (
+      <RitualRow
+        key={`done-${c.id}-${c.completedAt}`}
+        flipKey={`t:${c.id}`}
+        kind="task"
+        name={c.name}
+        subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'}`}
+        value={1}
+        max={1}
+        done
+        inert
+        onToggle={() => {}}
+        onEdit={() => {}}
+        language={language}
+        toggleLabelPt={`Tarefa concluída: ${c.name}`}
+        toggleLabelEn={`Task completed: ${c.name}`}
+      />
+    );
+  }
 
   return (
     <>
+      <div
+        data-ritual-swipe
+        /* `pan-y`: a rolagem vertical continua do navegador; o horizontal chega
+           aqui como gesto (abre `View all`). */
+        style={{ touchAction: 'pan-y' }}
+        onPointerDown={swipeStart}
+        onPointerUp={(e) => swipeEnd(e, () => setAllOpen(true))}
+        onPointerCancel={() => { swipeRef.current = null; }}
+      >
       <RitualPanel
         done={feitos}
         total={total}
@@ -179,86 +313,57 @@ export function DailyRituals({
         ctaLabel={ctaLabel}
         onCta={onCreate}
         /* Vazio de VERDADE: nada cadastrado — um hábito fora do dia ainda é lista. */
-        emptyMessage={tarefas.length + atividades.length + feitasHoje.length === 0 ? emptyMessage : undefined}
+        emptyMessage={ativas.length + atividades.length + feitasHoje.length === 0 ? emptyMessage : undefined}
         variant={variant}
         dayComplete={dayComplete}
+        goal={goal}
+        footer={variant === 'home' ? verTudo : undefined}
       >
-        {tarefas.map(task => (
-          <RitualRow
-            key={task.id}
-            flipKey={`t:${task.id}`}
-            kind="task"
-            name={task.name}
-            subtitle={`${task.category
-            ? categoryLabel(task.category as ActivityCategory, isPt)
-              : (isPt ? 'Tarefa avulsa' : 'One-off task')}${(task.steps?.length ?? 0) > 0 ? ` · ${stepsLabel((task.steps ?? []).filter(st => st.completed).length, task.steps?.length ?? 0, isPt)}` : ''}${` · +${bondXP({ kind: 'completion', weight: effortOf(task) })} ${isPt ? 'XP base' : 'base XP'}`}`}
-            value={task.completed ? (task.steps?.length ?? 1) : (task.steps ?? []).filter(st => st.completed).length}
-            max={Math.max(1, task.steps?.length ?? 1)}
-            done={task.completed}
-            haunted={isHaunted(task, now)}
-            onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
-            onEdit={() => onEditTask(task.id)}
-            language={language}
-            expandable={(task.steps?.length ?? 0) > 0 && !!onToggleTaskStep}
-            expanded={!!expanded[task.id]}
-            onExpand={() => onExpand(task.id)}
-            toggleLabelPt={`${task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}: ${task.name}`}
-            toggleLabelEn={`${task.completed ? 'Task completed' : 'Mark task as completed'}: ${task.name}`}
-            below={(
-              /* Prazo, esforço, "adiada 4×" e o convite da assombrada — dado
-                 honesto, nunca acusação (TaskMeta.tsx). */
-              <TaskMeta task={task} now={now} language={language} onPostponeNudge={onPostponeNudge} />
-            )}
-          >
-            {(task.steps ?? []).map(step => (
-              <StepRow
-                key={step.id}
-                id={step.id}
-                label={step.label}
-                completed={step.completed}
-                onToggle={(stepId) => onToggleTaskStep?.(task.id, stepId)}
-                language={language}
-              />
-            ))}
-          </RitualRow>
-        ))}
+        {(tarefas.length > 0 || feitasHoje.length > 0) && secao(tTasks, 'tasks')}
+        {tarefas.map(task => renderTask(task))}
+        {feitasHoje.map(c => renderDoneTask(c))}
 
+        {devidos.length > 0 && secao(tHabits, 'habits')}
         {devidos.filter(a => !a.isComplete).map(activity => renderHabit(activity))}
-
-        {/* Concluídas de hoje, no fim: hábitos feitos e tarefas do histórico. */}
+        {/* Concluídas de hoje, no fim do grupo. */}
         {devidos.filter(a => a.isComplete).map(activity => renderHabit(activity))}
-        {feitasHoje.map(c => (
-          <RitualRow
-            key={`done-${c.id}-${c.completedAt}`}
-            flipKey={`t:${c.id}`}
-            kind="task"
-            name={c.name}
-            subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'} · +${bondXP({ kind: 'completion', weight: effortOf(c) })} ${isPt ? 'XP base' : 'base XP'}`}
-            value={1}
-            max={1}
-            done
-            inert
-            onToggle={() => {}}
-            onEdit={() => {}}
-            language={language}
-            toggleLabelPt={`Tarefa concluída: ${c.name}`}
-            toggleLabelEn={`Task completed: ${c.name}`}
-          />
-        ))}
-
-        {/* PROGRAMADAS: existe, mas não vence hoje. Linha separadora + rótulo;
-            nada aqui cobra (dimmed, sem prévia de XP). */}
-        {programadas.length > 0 && (
-          <div role="separator" data-scheduled-sep aria-label={isPt ? 'Programadas' : 'Scheduled'}
-            style={{ borderTop: '1px solid var(--sm2-border, currentColor)', marginTop: 12, paddingTop: 8, fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>
-            {isPt ? 'Programadas' : 'Scheduled'}
-          </div>
-        )}
-        {programadas.map(activity => renderHabit(activity))}
       </RitualPanel>
+      </div>
+
+      {allOpen && typeof document !== 'undefined' && createPortal(
+        <AllActivitiesScreen
+          language={language}
+          onClose={fecharTudo}
+          swipeStart={swipeStart}
+          swipeEnd={swipeEnd}
+        >
+          {ativas.length > 0 && (
+            <section aria-label={tTasks} data-all-section="tasks">
+              <h3 className="sm3-secao-h">{tTasks}</h3>
+              <ul className="sm2-ritual-list">{ativas.map(t => renderTask(t, { all: true }))}</ul>
+            </section>
+          )}
+          {habitosTodos.length > 0 && (
+            <section aria-label={tHabits} data-all-section="habits">
+              <h3 className="sm3-secao-h">{tHabits}</h3>
+              <ul className="sm2-ritual-list">{habitosTodos.map(a => renderHabit(a))}</ul>
+            </section>
+          )}
+          {programadasTodas.length > 0 && (
+            <section aria-label={tScheduled} data-all-section="scheduled">
+              <h3 className="sm3-secao-h">{tScheduled}</h3>
+              <ul className="sm2-ritual-list">{programadasTodas.map(a => renderHabit(a))}</ul>
+            </section>
+          )}
+          {ativas.length + atividades.length === 0 && (
+            <p style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>{emptyMessage}</p>
+          )}
+        </AllActivitiesScreen>,
+        document.body,
+      )}
 
       {/* GAVETA DO QUE SAIU DE VISTA — fechada por padrão, em `muted` (tinta,
-          não opacidade), e diz em uma linha que nada ali cobra nada. */}
+          não opacidade). Nada ali cobra nada (e o rótulo não precisa dizer). */}
       {guardadas.length > 0 && (
         <details style={{ marginTop: 8 }}>
           <summary
@@ -321,6 +426,7 @@ export function DailyRituals({
       : etapas.length > 0
         ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${xp}`
         : `${freq}${xp}`;
+    const aberta = isRitualOpen(expanded, activity.id, activity.isComplete);
     return (
       <RitualRow
         key={activity.id}
@@ -334,14 +440,18 @@ export function DailyRituals({
         dimmed={!activity.disponivelHoje}
         onEdit={() => onEditActivity(activity.id)}
         expandable={etapas.length > 0}
-        expanded={!!expanded[activity.id]}
-        onExpand={() => onExpand(activity.id)}
+        expanded={aberta}
+        onExpand={() => onExpand(ritualOpenKey(activity.id, activity.isComplete), !aberta)}
         onToggle={etapas.length > 0 ? undefined : () => onToggleActivity(activity.id)}
         language={language}
         /* O check é de HOJE, e o rótulo diz isso; o progresso da semana é um
            chip À PARTE (só exibição — não mexe em constância nem pontuação). */
-        toggleLabelPt={`${activity.isComplete ? 'Hoje concluído' : 'Marcar como feito hoje'}: ${activity.name}`}
-        toggleLabelEn={`${activity.isComplete ? 'Done today' : 'Mark as done today'}: ${activity.name}`}
+        toggleLabelPt={etapas.length > 0
+          ? `${activity.isComplete ? 'Hoje concluído' : 'Conclua as etapas de hoje'}: ${activity.name}`
+          : `${activity.isComplete ? 'Hoje concluído' : 'Marcar como feito hoje'}: ${activity.name}`}
+        toggleLabelEn={etapas.length > 0
+          ? `${activity.isComplete ? 'Done today' : "Complete today's steps"}: ${activity.name}`
+          : `${activity.isComplete ? 'Done today' : 'Mark as done today'}: ${activity.name}`}
         /* D2+D3 (navegação do dono, 01/10/2026): a janela de 7 tracejada +
            a bolinha/folha de maturidade (`HabitConstancy compact`) SAIU da
            linha — o dono leu a folha como "botão de editar" e o tracejado
@@ -363,6 +473,51 @@ export function DailyRituals({
       </RitualRow>
     );
   }
+}
+
+/**
+ * A TELA CHEIA de todas as atividades (beta-2, 2.3) — `Tasks`, `Habits`,
+ * `Scheduled`. Seta de voltar + `View today` levam de volta à Home; o gesto
+ * horizontal para a direita também. Camada própria: o voltar do sistema fecha
+ * (`useBackLayer` no pai), Esc também. As linhas são as MESMAS da Home.
+ */
+function AllActivitiesScreen({
+  language, onClose, swipeStart, swipeEnd, children,
+}: {
+  language: Language;
+  onClose: () => void;
+  swipeStart: (e: ReactPointerEvent) => void;
+  swipeEnd: (e: ReactPointerEvent, aoAcionar: (dx: number) => void) => void;
+  children: ReactNode;
+}) {
+  const isPt = language === 'pt-BR';
+  const raiz = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    raiz.current?.querySelector<HTMLButtonElement>('[data-back-arrow] button')?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div
+      ref={raiz}
+      className="sm3-tudo"
+      role="dialog"
+      aria-modal="true"
+      aria-label={isPt ? 'Todas as atividades' : 'All activities'}
+      data-all-activities
+      onPointerDown={swipeStart}
+      onPointerUp={(e) => swipeEnd(e, (dx) => { if (dx > 0) onClose(); })}
+    >
+      <header className="sm3-tudo-head">
+        <BackArrow onClick={onClose} language={language === 'pt-BR' ? 'pt-BR' : 'en-US'} style={{ margin: 0 }} />
+        <button type="button" className="sm3-tudo-hoje" data-view-today onClick={onClose}>
+          {isPt ? 'Ver hoje' : 'View today'}
+        </button>
+      </header>
+      <div className="sm3-tudo-corpo">{children}</div>
+    </div>
+  );
 }
 
 export default DailyRituals;

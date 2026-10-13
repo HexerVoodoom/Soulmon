@@ -50,6 +50,7 @@ import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import { PixelIcon } from './ui/PixelIcon';
+import { categoryIconArt } from '../assets/soulmon/icons/categories';
 import { PASSIVE_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { BirthCard } from './BirthCard';
 import type { CarePattern } from '../utils/carePattern';
@@ -154,6 +155,12 @@ const PATTERN_ICON: Record<string, string> = {
   explosivo: 'bolt',
   equilibrado: 'spa',
 };
+
+/** 10.1 (beta-2): a marca da categoria nas listas — a arte própria dela (legível a 24px); sem arte, o emoji da atividade, como antes. */
+function CatMark({ category, emoji }: { category?: string; emoji: string }) {
+  const art = categoryIconArt(category);
+  return <span className="em" aria-hidden="true">{art ? <PixelIcon src={art} size={24} /> : emoji}</span>;
+}
 
 /** Cabeçalho de card (D-S3): ícone 24 `muted` pelado + Cinzel 16 — a mesma
  *  peça do painel de rituais da Home. */
@@ -456,7 +463,7 @@ export function StatsPage({
                 {/* O emoji da atividade é CONTEÚDO — escolha da pessoa, não
                     ícone de sistema: 20px pelado numa coluna de 24, nunca em
                     caixa (D-S9). */}
-                <span className="em" aria-hidden="true">{stat.emoji}</span>
+                <CatMark category={stat.category} emoji={stat.emoji} />
                 <span className="t" title={stat.name}>{stat.name}</span>
                 {!hideMetrics && (
                   <span className="s sm2-num">
@@ -480,7 +487,7 @@ export function StatsPage({
           <ul className="sm2-stats-lst">
             {recent.map(task => (
               <li key={task.id}>
-                <span className="em" aria-hidden="true">{task.emoji}</span>
+                <CatMark category={task.category} emoji={task.emoji} />
                 <span className="t" title={task.name}>{task.name}</span>
                 <span className="s sm2-num">{formatDate(task.completedAt)}</span>
               </li>

@@ -16,7 +16,8 @@
  */
 import { MAX_HEARTS_LOST_PER_DAY, WEEKLY_RELIEF_HEARTS } from '../../utils/dailyReset';
 import { RUB_HEAL_DAILY_CAP } from '../../utils/careRules';
-import { DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
+import { DUNGEON_DAILY_LAYERS, DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
+import { ENERGY_REGEN_MINUTES } from '../../utils/hunger';
 
 export type StatTipKind = 'hp' | 'energy';
 
@@ -57,14 +58,14 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
     upLabel,
     downLabel,
     up: isPt
-      ? 'comendo: cada atividade concluída rende uma comida na mochila.'
-      : 'by eating: each finished activity gives one food in the backpack.',
+      ? `com o tempo: +1 a cada ${ENERGY_REGEN_MINUTES} min com ele bem alimentado, a metade da velocidade com um pouco de fome, parada se faminto. Comer enche a fome, não a energia.`
+      : `with time: +1 every ${ENERGY_REGEN_MINUTES} min when well fed, half speed when a little hungry, stopped when starving. Eating fills hunger, not energy.`,
     down: isPt
       ? `recomeça do zero a cada dia, e cada camada da Masmorra gasta ${DUNGEON_ENERGY_PER_LAYER}.`
       : `starts again from zero each day, and each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,
     useLabel: isPt ? 'Serve para' : 'Used for',
     use: isPt
-      ? `descer a Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada, e a descida segue enquanto houver energia. Subir de nível enche de novo.`
-      : `going down the Dungeon: ${DUNGEON_ENERGY_PER_LAYER} per layer, and the descent goes on while there is energy. Leveling up fills it again.`,
+      ? `descer a Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada, até ${DUNGEON_DAILY_LAYERS} camadas por dia. Subir de nível enche de novo.`
+      : `going down the Dungeon: ${DUNGEON_ENERGY_PER_LAYER} per layer, up to ${DUNGEON_DAILY_LAYERS} layers a day. Leveling up fills it again.`,
   };
 }

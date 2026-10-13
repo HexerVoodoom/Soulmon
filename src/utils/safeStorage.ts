@@ -146,6 +146,27 @@ export function writeLocal(key: string, value: string, opts?: WriteOptions): boo
   }
 }
 
+/**
+ * Lista as chaves presentes. Vazia em qualquer falha (ou num storage falso sem
+ * `length`/`key`) — quem precisa de varredura completa (`sessionReset`) soma
+ * isto às chaves que CONHECE, então a lista vazia nunca esconde uma chave.
+ */
+export function listLocalKeys(): string[] {
+  try {
+    const st = globalThis.localStorage;
+    if (!st || typeof st.length !== 'number' || typeof st.key !== 'function') return [];
+    const out: string[] = [];
+    for (let i = 0; i < st.length; i++) {
+      const k = st.key(i);
+      if (k != null) out.push(k);
+    }
+    return out;
+  } catch (err) {
+    report('read', '*', err);
+    return [];
+  }
+}
+
 /** Apaga. Devolve `false` quando não deu — nunca lança. */
 export function removeLocal(key: string, opts?: WriteOptions): boolean {
   try {

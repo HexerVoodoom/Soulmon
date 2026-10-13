@@ -12,6 +12,8 @@ import { spriteLineOf, type CorvoCarrier } from '../../../src/utils/corvoPet';
 import { APP_URL } from './config';
 import { sanitizeSpritePose, type SpritePose } from '../../../src/utils/spritePose';
 import { migrateBranchIds } from '../../../src/utils/branchMigration';
+// A energia REGENERA com o tempo (beta-2 3.4/3.5): o overlay mostra a energia de AGORA, acertada pelo relógio do save — importada do app, não copiada.
+import { settleEnergy } from '../../../src/utils/hunger';
 import type { GenericLine } from './sprites';
 
 // ⚠️ AQUI MORAVAM TRÊS CÓPIAS: `MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL` e uma
@@ -149,7 +151,7 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
       demoCharacterId: spriteLineOf(state as CorvoCarrier),
       hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
       maxHearts: MAX_HP_BY_FORM[getStageLevel(stage)],
-      energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
+      energy: energiaDeAgora(state, stage),
       maxEnergy: getMaxEnergyForStage(stage),
       foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
       tasks: pendingTasks(state),
@@ -312,6 +314,16 @@ export function isSaneCareState(state: Record<string, unknown>): boolean {
   return (state.healthPoints as number) >= 0;
 }
 
+/** A energia de AGORA: o valor gravado + a regeneração que o relógio do save já contou até este instante (`utils/hunger.ts`). */
+function energiaDeAgora(state: Record<string, unknown>, stage: string): number {
+  const gravada = typeof state.energyPoints === 'number' && Number.isFinite(state.energyPoints) ? state.energyPoints : 0;
+  try {
+    return settleEnergy({ ...(state as object), energyPoints: gravada, evolutionStage: stage } as Parameters<typeof settleEnergy>[0], Date.now()).energyPoints;
+  } catch {
+    return gravada;
+  }
+}
+
 /** Extrai o snapshot de exibição de um GameState já em mãos. */
 function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
   const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
@@ -325,7 +337,7 @@ function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
       demoCharacterId: spriteLineOf(state as CorvoCarrier),
     hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
     maxHearts: MAX_HP_BY_FORM[getStageLevel(stage)],
-    energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
+    energy: energiaDeAgora(state, stage),
     maxEnergy: getMaxEnergyForStage(stage),
     foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
     tasks: pendingTasks(state),

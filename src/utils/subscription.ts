@@ -60,6 +60,9 @@ export function setSubscriptionFromEntitlement(ent: Pick<Entitlement, 'subActive
   listeners.forEach(l => l());
 }
 
+/** Logout: o selo de assinatura é da conta que saiu (`utils/sessionReset.ts`). */
+export function clearSubscriptionStatus(): void { _resetSubscriptionStatus(); }
+
 /** Só para os testes. */
 export function _resetSubscriptionStatus(): void {
   current = NEVER;

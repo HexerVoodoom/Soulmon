@@ -61,36 +61,38 @@ const alvo44: CSSProperties = {
   background: 'none',
 };
 
-/** Selo 24 + gap 8 = onde a coluna de texto começa; a 2ª linha alinha aqui. */
-const SELO = 24;
+/** Checkbox 44 + gap 8 = onde a coluna de texto começa; a 2ª linha e os filhos alinham aqui. */
+const CHECK = 44;
 const GAP = 8;
-export const RITUAL_TEXT_INSET = SELO + GAP;
+export const RITUAL_TEXT_INSET = CHECK + GAP;
 
 /**
  * O checkbox da lista — a ação central do app.
  *
  * Mesma semântica (`role="checkbox"` + `aria-checked`) e o mesmo alvo de 44×44
- * declarado INLINE (footgun 1), com a caixa do sistema: 24, raio 4, borda
- * `muted` 2px; marcada = `--sm2-primary-fill` com o glifo em `--sm2-on-primary`.
- * Inerte = TRACEJADA + `aria-disabled` (canvas Home E7): por FORMA, nunca por
- * opacidade.
+ * declarado INLINE (footgun 1), com a caixa do sistema: 24, raio 4, borda 2px.
+ * BRONZE (beta-2, 2.2): marcada = `--sm2-check-fill` (o bronze do sistema, par
+ * `--sm2-on-check` no glifo). PARCIAL (`mixed`) = o pai com alguns filhos feitos:
+ * borda bronze e um traço — o pai nunca conclui sozinho. Inerte = TRACEJADA +
+ * `aria-disabled` (canvas Home E7): por FORMA, nunca por opacidade.
  */
-function RitualCheck({
-  checked, disabled, onToggle, label,
-}: { checked: boolean; disabled: boolean; onToggle: () => void; label: string }) {
+export function RitualCheck({
+  checked, mixed = false, disabled, onToggle, label,
+}: { checked: boolean; mixed?: boolean; disabled: boolean; onToggle?: () => void; label: string }) {
   return (
     <button
       type="button"
       role="checkbox"
-      aria-checked={checked}
+      aria-checked={mixed && !checked ? 'mixed' : checked}
       aria-label={label}
+      data-ritual-check
       /* A11 (QA rodada 2): SÓ `aria-disabled`, nunca `disabled` junto. O
          `disabled` nativo tira o checkbox da ordem de foco e do leitor de
          tela — a pessoa deixa de saber que o item existe e está concluído.
          Inerte = anunciado como inerte, alcançável, e o clique não faz nada. */
       aria-disabled={disabled || undefined}
-      onClick={disabled ? undefined : onToggle}
-      style={{ ...alvo44, border: 'none', cursor: disabled ? 'default' : 'pointer' }}
+      onClick={onToggle}
+      style={{ ...alvo44, flex: '0 0 44px', border: 'none', cursor: disabled && !onToggle ? 'default' : 'pointer' }}
     >
       <span
         aria-hidden="true"
@@ -102,15 +104,20 @@ function RitualCheck({
           alignItems: 'center',
           justifyContent: 'center',
           boxSizing: 'border-box',
-          border: checked ? '2px solid var(--sm2-primary-fill)' : `2px ${disabled ? 'dashed' : 'solid'} var(--sm2-muted)`,
-          backgroundColor: checked ? 'var(--sm2-primary-fill)' : 'transparent',
-          color: 'var(--sm2-on-primary)',
+          border: checked || mixed
+            ? '2px solid var(--sm2-check-fill)'
+            : `2px ${disabled ? 'dashed' : 'solid'} var(--sm2-muted)`,
+          backgroundColor: checked ? 'var(--sm2-check-fill)' : 'transparent',
+          color: 'var(--sm2-on-check)',
           transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
         }}
       >
         {/* O glifo só existe marcado: nada de `opacity: 0` escondendo um
             check (alfa em nó nenhum da linha). */}
         {checked && <Icon name="check" size={20} fill={1} weight={700} />}
+        {!checked && mixed && (
+          <span style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: 'var(--sm2-check-fill)' }} />
+        )}
       </span>
     </button>
   );
@@ -254,51 +261,44 @@ export function RitualRow({
   }, [done]);
   const isPt = language === 'pt-BR';
   const isHaunted = haunted && !done;
-  /* A tinta do título e do selo: uma só regra, por estado (D-A3). */
+  /* A tinta do título: uma só regra, por estado (D-A3). */
   const tinta = isHaunted
     ? 'var(--sm2-haunted)'
     : (done || dimmed) ? 'var(--sm2-muted)' : 'var(--sm2-ink)';
-  const seloTinta = done ? 'var(--sm2-primary-ink)' : isHaunted ? 'var(--sm2-haunted)' : 'var(--sm2-muted)';
+  /* PAI × FILHOS (beta-2, 2.2): linha com filhos NUNCA conclui direto. O
+     checkbox à esquerda só REFLETE (marcado = todos feitos; `mixed` = alguns) e
+     tocá-lo abre os filhos; quem conclui são eles. */
+  const pai = expandable;
+  const parcial = pai && !done && value > 0;
+  const rotuloCheck = isPt
+    ? (toggleLabelPt ?? (done ? 'Concluído' : 'Marcar como concluído'))
+    : (toggleLabelEn ?? (done ? 'Completed' : 'Mark as completed'));
+  const abrir = pai && !done && !expanded ? onExpand : undefined;
   return (
     <li
       ref={liRef}
       data-flip-key={flipKey}
       className={`sm2-ritual${done ? ' sm2-ritual-done' : ''}${dimmed ? ' sm2-ritual-dim' : ''}${isHaunted ? ' sm2-ritual-haunted' : ''}`}
       data-haunted={isHaunted ? 'true' : undefined}
+      data-kind={kind}
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit
     >
       <div className="sm2-ritual-row" style={{ gap: GAP }}>
-        {/* D2 (navegação do dono, 01/10/2026): EDITAR = tocar no ÍCONE DA
-            ESQUERDA. O selo do tipo (24, pelado — ícone nunca em caixa) mora
-            num botão de alvo 44 com o rótulo "Editar: <nome>"; o lápis/folha
-            que o dono lia como "botão de editar" (o glifo de maturidade) saiu
-            da linha (D3). A coluna de texto continua respondendo ao toque
-            (atalho de ponteiro), mas o controle acessível é o selo — um só
-            ponto de parada no Tab. */}
-        <button
-          type="button"
-          className="sm2-ritual-edit"
-          onClick={inert ? undefined : onEdit}
-          aria-disabled={inert || undefined}
-          aria-label={`${isPt ? 'Editar' : 'Edit'}: ${name}`}
-          data-ritual-edit
-          style={{
-            flex: '0 0 44px', width: 44, height: 44, margin: '0 -10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 0, padding: 0,
-            cursor: inert ? 'default' : 'pointer',
-          }}
-        >
-          <Icon
-            name={RITUAL_KIND_ICON[kind]}
-            size={SELO}
-            fill={done ? 1 : 0}
-            style={{ color: seloTinta, flexShrink: 0 }}
-          />
-        </button>
+        {/* O CHECKBOX BRONZE à ESQUERDA do nome (beta-2, 2.2). O selo do tipo
+            (tarefa/hábito) saiu: a lista já se divide em `Tasks`/`Habits`, e o
+            ícone repetia a informação. */}
+        <RitualCheck
+          checked={done}
+          mixed={parcial}
+          disabled={done || dimmed || inert || pai}
+          onToggle={pai ? abrir : (done || dimmed || inert ? undefined : onToggle)}
+          label={rotuloCheck}
+        />
 
-        {/* Coluna de texto: toque também edita (ponteiro), sem papel de botão. */}
+        {/* Coluna de texto. EDITAR = o nome (botão nomeado, o controle
+            acessível); a coluna inteira também responde ao toque (atalho de
+            ponteiro), sem papel de botão para não duplicar a parada no Tab. */}
         <div
           className="sm2-ritual-main"
           onClick={inert ? undefined : onEdit}
@@ -306,24 +306,35 @@ export function RitualRow({
         >
           {/* `title` porque o nome TRUNCA: sem ele, um nome longo em PT-BR
               some sem recurso nenhum de leitura. */}
-          <span
-            className="sm2-ritual-name"
-            title={name}
-            style={{
-              color: tinta,
-              textDecoration: done ? 'line-through' : 'none',
-              fontWeight: done ? 400 : 500,
-            }}
+          <button
+            type="button"
+            className="sm2-ritual-edit"
+            data-ritual-edit
+            onClick={inert ? undefined : (e) => { e.stopPropagation(); onEdit(); }}
+            aria-disabled={inert || undefined}
+            aria-label={`${isPt ? 'Editar' : 'Edit'}: ${name}`}
+            style={{ cursor: inert ? 'default' : 'pointer' }}
           >
-            {name}
-          </span>
+            <span
+              className="sm2-ritual-name"
+              title={name}
+              style={{
+                color: tinta,
+                textDecoration: done ? 'line-through' : 'none',
+                fontWeight: done ? 400 : 500,
+              }}
+            >
+              {name}
+            </span>
+          </button>
           {subtitle && (
             <span className="sm2-ritual-sub" title={subtitle}>
               {subtitle}
             </span>
           )}
-          {/* Barra segmentada só onde ela DIZ alguma coisa (com etapas). */}
-          {max > 1 && (
+          {/* Barra segmentada só onde ela DIZ alguma coisa. P9 (beta-2): linha PAI (com etapas) NÃO tem a barra — o checkbox `mixed` e o
+              "1/2 etapas" do subtítulo já dizem o mesmo; eram três vozes para um dado. Sem filhos (ex.: "2 de 3 na semana") a barra fica. */}
+          {max > 1 && !pai && (
             <PixelSegmentedBar
               value={value}
               max={max}
@@ -346,26 +357,18 @@ export function RitualRow({
             type="button"
             onClick={onExpand}
             aria-expanded={expanded}
+            data-ritual-expand
             aria-label={isPt
               ? `${expanded ? 'Recolher' : 'Expandir'} etapas de ${name}`
               : `${expanded ? 'Collapse' : 'Expand'} steps of ${name}`}
-            /* Chevron do sistema, SEM caixa — ícone não mora em moldura; quem
-               carrega o alvo de 44px é o botão. */
+            /* Chevron DISCRETO (20, `muted`), SEM caixa — ícone não mora em
+               moldura; quem carrega o alvo de 44px é o botão. */
             style={{ ...alvo44, border: 'none', color: 'var(--sm2-muted)' }}
           >
-            <Icon name={expanded ? 'expand_less' : 'expand_more'} size={24} />
+            <Icon name={expanded ? 'expand_less' : 'expand_more'} size={20} />
           </button>
-        ) : onToggle ? (
-          <RitualCheck
-            checked={done}
-            disabled={done || dimmed || inert}
-            onToggle={onToggle}
-            label={isPt
-              ? (toggleLabelPt ?? (done ? 'Concluído' : 'Marcar como concluído'))
-              : (toggleLabelEn ?? (done ? 'Completed' : 'Mark as completed'))}
-          />
         ) : (
-          <span aria-hidden="true" style={{ flex: '0 0 44px', width: 44, height: 44 }} />
+          <span aria-hidden="true" style={{ flex: '0 0 12px', width: 12, height: 44 }} />
         )}
       </div>
 
@@ -375,8 +378,8 @@ export function RitualRow({
         <div style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{below}</div>
       )}
 
-      {expanded && children && (
-        <div style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{children}</div>
+      {expandable && expanded && children && (
+        <div data-ritual-children style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{children}</div>
       )}
     </li>
   );
@@ -406,11 +409,17 @@ export interface RitualPanelProps {
   /** Home B: o selo "Dia completo" — quem decide é a regra da virada
    *  (`completeDayReached`), nunca este componente. */
   dayComplete?: boolean;
+  /** Beta-2 (2.4): a META do dia (`dailyGoalFor`), só para EXIBIR. É outra
+   *  grandeza que "feitos/total" (contagem da lista) e nunca altera o registro
+   *  de conclusão — por isso mora num bloco SEPARADO do título. */
+  goal?: number;
+  /** Beta-2 (2.3): rodapé da lista (o `View all →`). */
+  footer?: ReactNode;
 }
 
 export function RitualPanel({
   done, total, titleIconName, children, ctaLabel, onCta, emptyMessage, language,
-  variant = 'panel', dayComplete = false,
+  variant = 'panel', dayComplete = false, goal, footer,
 }: RitualPanelProps) {
   const isPt = language === 'pt-BR';
   const listaRef = useRef<HTMLUListElement | null>(null);
@@ -430,12 +439,15 @@ export function RitualPanel({
       <section aria-labelledby="sm2-ritual-title" data-ritual-home>
         <div className="sm3-hoje-head">
           <h2 id="sm2-ritual-title" className="sm3-hoje-titulo">
-            {isPt ? 'Hoje' : 'Today'}
+            {/* `Today` com acabamento cromado discreto (beta-2, 2.4). */}
+            <span className="sm3-cromo" data-today-title>{isPt ? 'Hoje' : 'Today'}</span>
             {/* Piso de dígitos E5: o contador só existe com feitos ≥ 1 —
-                "0/5" é a fatura, não o dado. */}
+                "0/5" é a fatura, não o dado. Esta é a CONTAGEM de atividades
+                da lista; a meta é o bloco ao lado. */}
             {total > 0 && done >= 1 && (
               <b
                 className="sm2-num"
+                data-today-count
                 aria-label={isPt ? `${done} de ${total} concluídos` : `${done} of ${total} done`}
               >
                 {done}/{total}
@@ -445,6 +457,16 @@ export function RitualPanel({
               <span className="sm3-selo" data-dia-completo>{isPt ? 'Dia completo' : 'Day complete'}</span>
             )}
           </h2>
+          {goal !== undefined && goal > 0 && (
+            <span
+              className="sm3-meta"
+              data-today-goal
+              aria-label={isPt ? `Meta do dia: ${goal}` : `Daily goal: ${goal}`}
+            >
+              <span aria-hidden="true">{isPt ? 'Meta' : 'Goal'}</span>
+              <b className="sm2-num" aria-hidden="true">{goal}</b>
+            </span>
+          )}
           <button
             type="button"
             className="sm3-add"
@@ -466,7 +488,10 @@ export function RitualPanel({
             </button>,
           )
         ) : (
-          <ul ref={listaRef} className="sm2-ritual-list">{children}</ul>
+          <>
+            <ul ref={listaRef} className="sm2-ritual-list">{children}</ul>
+            {footer}
+          </>
         )}
       </section>
     );

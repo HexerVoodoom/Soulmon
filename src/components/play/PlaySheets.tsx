@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
-import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
+import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, DUNGEON_DAILY_LAYERS, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
@@ -18,13 +18,15 @@ import { SupportNote } from '../refugio/SupportNote';
 import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { PixelIcon } from '../ui/PixelIcon';
-// 11/10/2026 (pedido do dono): os dois jogos do Salão ganham o ÍCONE próprio — arte nossa que já estava no repo
-// (`icons/games`, 128², alfa real): o velociraptor da Corrida e a tesoura do Pedra-papel-tesoura. Pelados, sem moldura.
-import iconCorrida from '../../assets/soulmon/icons/games/icon-game-dino.png';
-import iconPpt from '../../assets/soulmon/icons/games/icon-game-rps.png';
+// Beta-2 (backlog 9.1): o velociraptor e a tesoura SAIRAM do Salão (o dono não gostou). Reuso de arte que já existe,
+// pelada, sem moldura: a bota de caminhada (`ativ-corpo-caminhar`) para a Corrida e o punho de pedra (`hand-rock`,
+// o mesmo do jogo) para o Pedra-papel-tesoura. Nenhum asset novo.
+import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
+import iconPpt from '../../assets/soulmon/icons/games/hand-rock.png';
 // Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
 import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
 import { M3_MAX_BITS, M3_POINTS_PER_BIT, M3_MOVES } from '../../utils/match3';
+const iconCorrida = ACTIVITY_ICON_ART['corpo-caminhar'];
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -127,8 +129,8 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
           <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
           {isPt
-            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que enche comendo), até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
-            : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, filled by feeding), down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
+            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que volta com o tempo), até ${DUNGEON_DAILY_LAYERS} camadas por dia e até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
+            : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, which returns with time), up to ${DUNGEON_DAILY_LAYERS} layers a day and down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
           </InfoTipSection>
           {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
               vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
@@ -154,10 +156,13 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
           </InfoTipSection>
         </ModalInfo>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />
-        <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
-      </div>
+      {/* P10 (beta-2): chip ZERADO não aparece (recorde 0 não diz nada) — a fileira inteira some se nenhum tiver o que dizer. */}
+      {(deepest > 0 || best > 0) && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
+          {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
+        </div>
+      )}
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
@@ -176,14 +181,17 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
   const [best] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
   return (
     <div data-dino style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
-        <StatBox
-          value={`${Math.floor(best / DINO_POINTS_PER_BIT)} Bits`}
-          label={isPt ? 'no recorde' : 'at your best'}
-          valueStyle={bitsStyle}
-        />
-      </div>
+      {/* P10 (beta-2): sem recorde (0) os dois chips somem — não há "0 Bits no recorde" para mostrar. */}
+      {best > 0 && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
+          <StatBox
+            value={`${Math.floor(best / DINO_POINTS_PER_BIT)} Bits`}
+            label={isPt ? 'no recorde' : 'at your best'}
+            valueStyle={bitsStyle}
+          />
+        </div>
+      )}
       {/* H13 (01/10/2026): "Jogar"/"Play" nos dois jogos do Salão — "Correr"
           lia como descrição do jogo, não como a ação de abri-lo. */}
       <button type="button" data-dino-start onClick={onStart} style={cta}>
@@ -200,7 +208,7 @@ export function Match3Sheet({ language, onStart }: { language: Language; onStart
   return (
     <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
+        {best > 0 && <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />}
         <StatBox value={`${isPt ? 'até' : 'up to'} ${M3_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>
@@ -246,7 +254,7 @@ export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 export function SalaoSheet({ language, onStart, bitsToday }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   return (
-    <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
@@ -267,7 +275,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
           </InfoTipSection>
         </ModalInfo>
       </div>
-      <ul style={sheetCardList}>
+      <ul style={{ ...sheetCardList, gap: 'var(--sm2-space-4, 16px)' }}>
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />

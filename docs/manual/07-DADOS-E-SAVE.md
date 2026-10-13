@@ -261,6 +261,17 @@ Todos entram com fallback `?? padrão` no load e sincronizam com a nuvem; o fuzz
 | `demoCharacterId?` / `demoLocal?` | id / `boolean` | demo local com os 5 iniciais (nunca sobe com XP/compras) | `utils/demoMode.ts` |
 | `repeatEveryDays?` / `wakeOn?` | `number` / `string` | em atividade/tarefa: repetição a cada N dias e data de reativação | `types/taskModel.ts` |
 
+#### 2.12-C Campos acrescentados em 13/10/2026 (beta-2, frente B — REGISTRO §40)
+
+Quatro campos opcionais, com sanitize no `hydrateSave` (lixo → ausente) e **sem subir `SAVE_SCHEMA_VERSION`** (campo novo com `??`). `fuzz2`: 124 → **128** (somar às demais frentes no merge).
+
+| Campo | Tipo | O que guarda | Dono |
+|---|---|---|---|
+| `hunger?` | `{v: 0..100, at: ms}` | a FOME medida no instante `at`; lida SEMPRE por `hungerAt`/`energyStatus` (desce por timestamp, 14 h do cheio ao vazio). Ausente = cheia | `utils/hunger.ts` |
+| `energyClock?` | `{at: ms, carry}` | o relógio da regeneração da energia: até onde foi contada e o progresso até a próxima unidade (ponto-ms). Moram no save para o timer não reiniciar ao fechar/navegar. Ausente = nasce na próxima leitura | `utils/hunger.ts` |
+| `dungeonDaily?` | `{day: 'AAAA-MM-DD', layers}` | camadas da masmorra COMEÇADAS no dia do jogador (limite `DUNGEON_DAILY_LAYERS` = 10). Servidor: monotônico (`functions/api/_dayCounters.js`) | `utils/dungeonIdle.ts` |
+| `checkIns?` | `{day, claimed: ('morning'\|'afternoon'\|'night')[]}` | janelas de check-in já resgatadas no dia do jogador; sem histórico. Servidor: monotônico | `utils/checkIns.ts` |
+
 ### 2.13 O que NUNCA vai para o save
 
 | Coisa | Onde ela vive de verdade | Por quê |
@@ -370,6 +381,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `USER_NAME` | `soulmon-user-name` | O nome do JOGADOR (vai ao ranking público quando o PvP está ligado). | `App.tsx`, `GameStateContext.tsx` |
 | `EGG_TYPE` | `soulmon-egg-type` | Linha de sprite genérico; semente do `eggType` do save. | `App.tsx`, `GameStateContext.tsx` |
 | `FIRST_TASK_POPUP_SHOWN` | `soulmon-first-task-popup-shown` | O aviso da primeira tarefa já apareceu. | `App.tsx` |
+| `RITUAL_OPEN` | `soulmon-ritual-open` | Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`, teto 200). Preferência de tela do aparelho, não progresso; não vai para a nuvem. | `App.tsx`, `utils/atividadesLista.ts` |
 | `NOTIFICATIONS_ENABLED` | `soulmon-notifications-enabled` | O jogador ligou notificações. | `App.tsx` |
 | `PWA_INSTALL_DISMISSED` | `soulmon-pwa-install-dismissed` | Dispensou o convite de instalar a PWA. | `InstallPrompt.tsx`, `WelcomePromptModal.tsx` |
 | `NOTIFICATION_PROMPT_DISMISSED` | `soulmon-notification-prompt-dismissed` | Dispensou o PRIMEIRO convite de push. | `App.tsx`, `WelcomePromptModal.tsx` |

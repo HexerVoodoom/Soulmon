@@ -32,3 +32,23 @@ export function activitiesFromCatalogChoice(
     schedule: item.levels[0].defaultSchedule,
   }));
 }
+
+/**
+ * Tira da escolha o que JÁ está na lista (beta-2, 7.3: "sem duplicar"). A chave é o `catalogId` da atividade
+ * existente — o mesmo item do catálogo não entra duas vezes, mesmo que a pessoa o tenha renomeado — e,
+ * dentro da própria escolha, o mesmo item não se repete. Função pura; a ORDEM da escolha é preservada.
+ */
+export function withoutExisting<T extends { id: string }>(
+  items: readonly T[],
+  existing: ReadonlyArray<{ catalogId?: string | null }> | undefined,
+): T[] {
+  const ja = new Set<string>();
+  for (const a of existing ?? []) if (a && typeof a.catalogId === 'string' && a.catalogId) ja.add(a.catalogId);
+  const out: T[] = [];
+  for (const it of items) {
+    if (ja.has(it.id)) continue;
+    ja.add(it.id);
+    out.push(it);
+  }
+  return out;
+}

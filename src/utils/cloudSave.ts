@@ -169,34 +169,18 @@ export async function reagirContaExcluida(
   try {
     gravarAvisoContaExcluida(opts.excluidaEm);
     // Cópia do save local ANTES de apagar (QA rodada 2, segurança §5 / skeptic
-    // 1b): o 410 pode ter vindo de um aparelho que ainda tinha progresso não
-    // sincronizado. A cópia é a mesma de `reconcileSaveId` — um único lugar
-    // onde o suporte procura "o que se perdeu". Se a cópia falhar (storage
-    // cheio), a limpeza segue mesmo assim: continuar sincronizando recriaria
-    // o que a pessoa mandou apagar, e isso é pior do que perder a cópia.
-    const estadoLocal = readLocal(STORAGE_KEYS.GAME_STATE);
-    if (estadoLocal) {
-      let state: unknown = estadoLocal;
-      try { state = JSON.parse(estadoLocal); } catch { /* guarda o texto cru */ }
-      writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, JSON.stringify({
-        saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? '',
-        salvoEm: new Date().toISOString(),
-        motivo: 'account-deleted',
-        state,
-      }), { silent: true });
-    }
-    removeLocal(STORAGE_KEYS.GAME_STATE, { silent: true });
-    removeLocal(STORAGE_KEYS.SAVE_ID, { silent: true });
-    removeLocal(STORAGE_KEYS.LAST_CLOUD_SYNC, { silent: true });
-    removeLocal(STORAGE_KEYS.USER_EMAIL, { silent: true });
-    try {
-      const { signOut } = await import('./auth');
-      await signOut();
-    } catch { /* sem sessão para encerrar */ }
-  } finally {
-    const recarregar = opts.recarregar ?? (() => { try { globalThis.location?.reload(); } catch { /* sem window */ } });
-    recarregar();
-  }
+    // 1b), limpeza, push, signOut e reload: tudo no dono único `sessionReset`
+    // (a cópia é a mesma de `reconcileSaveId` — um único lugar onde o suporte
+    // procura "o que se perdeu"). Se a cópia falhar (storage cheio), a limpeza
+    // segue: continuar sincronizando recriaria o que a pessoa mandou apagar.
+    const { encerrarSessao } = await import('./sessionReset');
+    await encerrarSessao({
+      motivo: 'account-deleted',
+      copiaDeSeguranca: true,
+      revogarPush: false,
+      recarregar: opts.recarregar ?? undefined,
+    });
+  } catch { /* nunca lança */ }
 }
 /** Só para teste. */
 export function __resetContaExcluida(): void { contaExcluidaTratada = false; }

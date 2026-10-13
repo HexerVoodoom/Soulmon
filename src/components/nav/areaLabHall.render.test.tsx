@@ -70,7 +70,7 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     expect(lab).toContain("labTab === 'evolution'");
     expect(lab).toContain("labTab === 'pet' && (");
     expect(lab).toContain("labTab === 'stats' && statsPage");
-    expect(AREA_VIEW).toContain("{ evolucao: 'evolution', pet: 'pet', stats: 'stats' }");
+    expect(AREA_VIEW).toContain("{ evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' }");
     expect(AREA_VIEW).toContain('props.onLabTab(tabOf[l.id])');
     // Dentro da folha o `<h1>` é o do AreaTopBar: a ficha desce para h2.
     expect(lab).toMatch(/<PetPage\s+headingLevel=\{2\}/);

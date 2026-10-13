@@ -2,7 +2,8 @@
  * COMBINA 3 — a lógica PURA do jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36).
  *
  * Tabuleiro `M3_ROWS × M3_COLS` de peças de `M3_KINDS` tipos (os ícones de ELEMENTO que já existem no repo — ver `M3_TILE_ELEMENTS`).
- * O jogador troca duas peças vizinhas; a troca só vale se formar uma linha de 3+ (senão volta, e NÃO gasta movimento). As linhas somem,
+ * O jogador troca duas peças vizinhas, LIVREMENTE (beta-2, backlog 9.2: a exigência de "a troca tem que pontuar" saiu — toda troca entre vizinhas
+ * vale e gasta 1 movimento, pontue ou não; é o que garante o fim da partida). Se formar linha de 3+, as linhas somem,
  * as peças de cima caem, o topo é preenchido e, se isso formar linhas novas, a CASCATA continua sozinha (cada passo da cascata vale
  * mais). Uma linha de 4+ deixa para trás uma peça ESPECIAL (listrada): quando ela entra numa combinação, limpa a linha (ou a coluna)
  * inteira — e pode acionar outra listrada, em cadeia. Sem movimentos possíveis, o tabuleiro se embaralha sozinho (sem custo).
@@ -225,22 +226,25 @@ export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [
 }
 
 export type SwapResult =
-  | { ok: false; reason: 'far' | 'nomatch' | 'empty' }
-  | { ok: true; swapped: Board; steps: Step[]; board: Board; score: number; reshuffled: Board | null };
+  | { ok: false; reason: 'far' | 'empty' }
+  | { ok: true; swapped: Board; steps: Step[]; board: Board; score: number; reshuffled: Board | null; scored: boolean };
 
-/** A jogada: trocar duas peças VIZINHAS. Sem linha formada a troca é inválida (nada muda, nenhum movimento gasto). */
+/**
+ * A jogada: trocar duas peças VIZINHAS. Válida SEMPRE que as duas casas existem, são vizinhas e têm peça — formando linha ou não
+ * (sem linha: `steps` vazio, `score` 0, `scored` false e o tabuleiro fica com as duas peças trocadas). Inválida (nada muda,
+ * nenhum movimento gasto) só quando `far` (fora do tabuleiro ou não vizinhas) ou `empty` (casa sem peça). Quem chama gasta 1 movimento por troca válida.
+ */
 export function trySwap(b: Board, a: Pos, d: Pos, rng: Rng): SwapResult {
   if (!inside(a.r, a.c) || !inside(d.r, d.c)) return { ok: false, reason: 'far' };
   if (Math.abs(a.r - d.r) + Math.abs(a.c - d.c) !== 1) return { ok: false, reason: 'far' };
   if (!b[a.r][a.c] || !b[d.r][d.c]) return { ok: false, reason: 'empty' };
   const swapped = cloneBoard(b);
   swapCells(swapped, a, d);
-  if (findRuns(swapped).length === 0) return { ok: false, reason: 'nomatch' };
   const res = resolveBoard(swapped, rng, [a, d]);
   let board = res.board;
   let reshuffled: Board | null = null;
   if (!hasMoves(board)) { board = shuffleBoard(board, rng); reshuffled = board; }
-  return { ok: true, swapped, steps: res.steps, board, score: res.score, reshuffled };
+  return { ok: true, swapped, steps: res.steps, board, score: res.score, reshuffled, scored: res.steps.length > 0 };
 }
 
 // ── a rodada e os Bits ───────────────────────────────────────────────────────────────────────────────────────────────

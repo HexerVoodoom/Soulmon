@@ -5103,6 +5103,13 @@ select:focus-visible {
   --sm2-gold-ink: #8A5A2B;
   --sm2-gold-fill: #A2641F;
   --sm2-on-gold: #FFFFFF;
+  /* BRONZE dos checkboxes da lista (beta-2, 2.2): alias do ouro-cobre do sistema — nunca valor próprio. */
+  --sm2-check-fill: var(--sm2-gold-fill);
+  --sm2-on-check: var(--sm2-on-gold);
+  /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
+  --sm2-wood: #7a4c24;
+  --sm2-wood-edge: #4a2c12;
+  --sm2-wood-ink: #f8ecd2;
   /* perigo */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
@@ -5118,6 +5125,8 @@ select:focus-visible {
      `--sm2-viewport-ink` — mesmo valor nos dois temas, porque o vidro é
      escuro nos dois. */
   --sm2-viewport-danger: #FF8B8B;
+  /* Aviso discreto sobre o vidro (fome 'faminto'): dourado claro, nunca vermelho — o estado descreve, não cobra. */
+  --sm2-viewport-warn: #EBBE84;
   /* CRÉDITOS — a moeda de dinheiro real. É a única das três cuja distinção é
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
@@ -5150,6 +5159,12 @@ select:focus-visible {
   --sm2-gold-ink: #EBBE84;
   --sm2-gold-fill: #D9A05B;
   --sm2-on-gold: #04211F;
+  --sm2-check-fill: var(--sm2-gold-fill);
+  --sm2-on-check: var(--sm2-on-gold);
+  /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
+  --sm2-wood: #7a4c24;
+  --sm2-wood-edge: #4a2c12;
+  --sm2-wood-ink: #f8ecd2;
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -5158,6 +5173,7 @@ select:focus-visible {
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
   --sm2-viewport-danger: #FF8B8B;
+  --sm2-viewport-warn: #EBBE84;
   --sm2-credit-ink: #C9A7FF;
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
      de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
@@ -5866,7 +5882,7 @@ select:focus-visible {
   .sm-forge-sweep, .sm-forge-spark, .sm-forge-pulse, .sm-forge-seal { animation: none !important; }
   .sm-forge-sweep, .sm-forge-spark { display: none; }
   /* Level up (11/10/2026): o número, o banner, o pet, o burst e a dica ficam PARADOS — o display continua esperando o toque. */
-  .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-hint { animation: none !important; }
+  .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-glow, .sm-lvup-hint { animation: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -6563,6 +6579,29 @@ body {
   }
 }
 
+/* ── Abas COMPACTAS (beta-2, 10.3): sublinhado fino, separadores discretos, rótulo inteiro ─────────── */
+.sm2-kit-tabs-compact { gap: 0; }
+.sm2-kit-tabs-compact .sm2-kit-tab {
+  padding: 0 var(--sm2-space-2);
+  font-size: var(--sm2-text-xs);
+  white-space: nowrap;
+  flex: 1 0 auto;
+  color: var(--sm2-tab-ink-idle, var(--sm2-muted));
+}
+.sm2-kit-tabs-compact .sm2-kit-tab + .sm2-kit-tab::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 25%; bottom: 25%;
+  width: 1px;
+  background-color: var(--sm2-line);
+}
+.sm2-kit-tabs-compact .sm2-kit-tab-on { color: var(--sm2-tab-ink, var(--sm2-primary-ink)); font-weight: 600; }
+.sm2-kit-tabs-compact .sm2-kit-tab-on::after {
+  left: 8%; right: 8%; height: 2px;
+  background-color: var(--sm2-tab-ink, var(--sm2-primary-ink));
+}
+.sm2-kit-tab[data-tab-emphasis="sim"] > span:first-child { filter: drop-shadow(0 0 4px var(--sm2-tab-ink, var(--sm2-primary-ink))); }
+
 /* ── Chip de seleção (tonal, 44 de alvo) ────────────────────────────────── */
 .sm2-kit-chip {
   box-sizing: border-box;
@@ -6853,10 +6892,11 @@ button[style*="--sm2-btn: ghost"]:active {
     height: 14px;
     transform: scale(0);
     transition: transform var(--sm2-dur-tap) var(--sm2-ease);
-    background-color: var(--sm2-on-primary);
+    background-color: var(--sm2-on-check);
     clip-path: polygon(14% 44%, 0 62%, 40% 100%, 100% 20%, 86% 8%, 40% 70%);
   }
-  &:checked { background-color: var(--sm2-primary-fill); border-color: var(--sm2-primary-fill); }
+  /* BRONZE (beta-2): o CheckRow vale para metas/onboarding também — mesmo token da lista de atividades. */
+  &:checked { background-color: var(--sm2-check-fill); border-color: var(--sm2-check-fill); }
   &:checked::before { transform: scale(1); }
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
   &:disabled { opacity: .45; cursor: default; }
@@ -7030,9 +7070,17 @@ button[style*="--sm2-btn: ghost"]:active {
   margin: 0;
   padding: 0 12px;
 }
+/* P9 (beta-2): o divisor entre linhas é um traço RETO (pseudo-elemento), não `border-top` — como a linha tem `border-radius`, a borda curvava
+   nos cantos e a linha aberta (com etapas) ficava com um arco no topo enquanto as vizinhas tinham uma reta. */
 .sm2-ritual {
-  border-top: 1px solid var(--sm2-line);
-  &:first-child { border-top: 0; }
+  & + .sm2-ritual::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--sm2-line);
+    pointer-events: none;
+  }
 }
 .sm2-ritual-row {
   display: flex;
@@ -7677,19 +7725,32 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    tinta `viewport-ink`, sombra de 1px para descolar do cenário pintado. */
 .sm3-stats {
   position: absolute;
-  left: var(--sm2-space-4);
-  bottom: 22px;
+  left: var(--sm2-space-3);
+  bottom: 12px;
   z-index: 12;
   display: flex;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
+  /* Beta-2 (3.3): altura TRAVADA — os slots de fome e do timer de energia
+     (`statsSlots` do `CompanionHUD`) entram sem mudar a faixa. */
+  height: 20px;
   font-family: var(--sm2-font-text);
-  font-size: var(--sm2-text-sm);
+  font-size: var(--sm2-text-xs);
   font-weight: 800;
   color: var(--sm2-viewport-ink);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+  /* Halo escuro: no tema claro a faixa fica sobre o degradê que sobe para o fundo da página. */
+  text-shadow: 0 0 6px var(--sm2-viewport-bg), 0 1px 0 rgba(0, 0, 0, .6);
+  filter: drop-shadow(0 0 3px var(--sm2-viewport-bg));
 }
-.sm3-stat { display: inline-flex; align-items: center; gap: 5px; }
+.sm3-stat { display: inline-flex; align-items: center; gap: 4px; }
+/* Encaixe dos slots da faixa (fome / timer de energia): inline, texto `xs` da própria faixa, sem quebrar linha. */
+.sm3-stat-slot { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-weight: 600; }
 .sm3-stat[data-low] { color: var(--sm2-viewport-danger); }
+/* Fome (beta-2 F1): botão com o mesmo alvo de 44 dos vizinhos; faminto troca a tinta para o aviso dourado do vidro. */
+button.sm3-hunger { background: none; border: none; padding: 12px 2px; margin: -12px -2px; font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.sm3-hunger:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 0; border-radius: var(--sm2-radius-sm); }
+button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"] { color: var(--sm2-viewport-warn); }
+[data-energy-timer][data-mode="paused"] { color: var(--sm2-viewport-warn); display: inline-flex; align-items: center; gap: 3px; opacity: 1; }
 
 /* OS TRÊS CUIDADOS — canto inferior direito. EXCEÇÃO D1 (decisão do dono,
    23/09/2026): estes três ícones podem ter fundo/anel. Fundo = o próprio vidro
@@ -7697,15 +7758,19 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm3-cuidar {
   position: absolute;
   right: var(--sm2-space-3);
-  bottom: 10px;
+  bottom: 4px;
   z-index: 12;
   display: flex;
-  gap: 4px;
+  gap: 8px;
 }
+/* Beta-2 (3.3): os controles encolhem DISCRETAMENTE (44 → 36 de desenho) e o
+   alvo de toque continua 44×44 (`::after`, invisível) — o gap de 8 cobre a
+   diferença, então os alvos vizinhos não se sobrepõem. */
+.sm3-cuidado::after { content: ""; position: absolute; inset: -4px; }
 .sm3-cuidado {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7766,6 +7831,117 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   color: var(--sm2-muted);
 }
 .sm3-hoje-titulo b { color: var(--sm2-gold-ink); font-weight: 800; margin-left: 6px; }
+/* Beta-2 (2.4) — `Today` cromado DISCRETO: o texto recebe um degradê vertical
+   só de tokens (tinta → muted → tinta → muted), como metal escovado. O `color`
+   fica como reserva para quem não tem `background-clip: text`. */
+.sm3-cromo {
+  color: var(--sm2-ink);
+  background-image: linear-gradient(180deg, var(--sm2-ink) 0%, var(--sm2-muted) 46%, var(--sm2-ink) 54%, var(--sm2-muted) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/* Beta-2 (2.4) — a META (`Goal N`) mora FORA do título e do contador: outra
+   grandeza, outro bloco (pílula de linha fina, número em tinta — o contador de
+   atividades segue em ouro). Só exibe; não registra nada. */
+.sm3-meta {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--sm2-line);
+  border-radius: 999px;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-meta b { color: var(--sm2-ink); font-weight: 800; letter-spacing: 0; }
+/* Beta-2 (2.1) — rótulo de categoria dentro da lista (`Tasks` / `Habits`). */
+.sm3-secao { list-style: none; padding: 10px 0 2px; }
+.sm3-secao h3 {
+  margin: 0;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-secao + .sm2-ritual::before { content: none; }
+/* Beta-2 (2.3) — `View all →` no fim da lista de hoje. */
+.sm3-ver-tudo {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 4px;
+}
+.sm3-ver-tudo button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 600;
+  color: var(--sm2-primary-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+/* Beta-2 (2.3) — a tela cheia de todas as atividades. Camada própria (voltar do
+   sistema fecha — `useBackLayer`); sem animação de entrada, de propósito. */
+.sm3-tudo {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--sm2-bg);
+  color: var(--sm2-ink);
+  touch-action: pan-y;
+}
+.sm3-tudo-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 4px) 12px 4px;
+}
+.sm3-tudo-head .sm3-tudo-hoje {
+  margin-left: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 600;
+  color: var(--sm2-primary-ink);
+}
+.sm3-tudo .sm2-ritual-list { padding: 0; }
+.sm3-secao-h {
+  margin: 16px 0 2px;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-tudo-corpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
 /* O selo do dia completo (mock `dia-completo`): cobre sólido, texto `on-gold`. */
 .sm3-selo {
   margin-left: 8px;
@@ -8134,9 +8310,21 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 /* D1 — a linha concluída desliza por CIMA das vizinhas (o `zIndex` do
    keyframe só vale com posição) e o brilho tem cantos. */
 .sm2-ritual { position: relative; border-radius: var(--sm2-radius-md); }
-/* D2 — o ícone da esquerda é o botão de EDITAR (alvo 44, ícone pelado). */
-.sm2-ritual-edit { -webkit-tap-highlight-color: transparent; }
-.sm2-ritual-edit:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; border-radius: var(--sm2-radius-md); }
+/* Beta-2 (2.2) — EDITAR = o NOME da linha (botão sem moldura; o checkbox
+   bronze ocupa a esquerda). Reset de botão: o texto herda tudo do `<span>`. */
+.sm2-ritual-edit {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.sm2-ritual-edit:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
 
 /* D4 — faixa horizontal que rola SEM barra visível (filtros do catálogo). */
 .sm2-scroll-x-quiet { scrollbar-width: none; -ms-overflow-style: none; }
@@ -8226,6 +8414,25 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { transform: scale(1); }
 }
 .sm2-travessia-assenta { animation: sm2-travessia-assenta 360ms ease-out 1; }
+
+/* ── Resumo do dia (beta-2, 4.2): o coração cobrado TREME e QUEBRA antes de virar preto. Uma vez por relatório
+   (quem chama persiste "já vista"); `prefers-reduced-motion` pula direto para o coração preto (a lógica está no
+   componente) e o bloco canônico zera a duração. */
+@keyframes sm2-heart-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-3px) rotate(-6deg); }
+  30% { transform: translateX(3px) rotate(6deg); }
+  45% { transform: translateX(-4px) rotate(-8deg); }
+  60% { transform: translateX(4px) rotate(8deg); }
+  80% { transform: translateX(-2px) rotate(-3deg); }
+}
+@keyframes sm2-heart-snap {
+  0%   { transform: scale(1); filter: none; }
+  40%  { transform: scale(1.25) rotate(4deg); filter: brightness(1.6); }
+  100% { transform: scale(.92) rotate(0); filter: grayscale(1) brightness(.2); }
+}
+.sm2-heart-shake { animation: sm2-heart-shake 650ms ease-in-out 1; }
+.sm2-heart-snap { animation: sm2-heart-snap 350ms ease-in 1 forwards; }
 
 
 /* TORCIDA (02/10/2026): o "grito" que sobe do ponto tocado na luta. Com movimento
@@ -8452,11 +8659,14 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 @keyframes sm-lvup-banner { 0% { transform: translateY(-24px) scale(.8); opacity: 0; } 60% { transform: translateY(3px) scale(1.04); opacity: 1; } 100% { transform: none; opacity: 1; } }
 @keyframes sm-lvup-pet { 0% { transform: translateY(14px) scale(.8); opacity: 0; } 55% { transform: translateY(-10px) scale(1.06); opacity: 1; } 100% { transform: none; opacity: 1; } }
 @keyframes sm-lvup-burst { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes sm-lvup-hint { 0%, 100% { opacity: .5; } 50% { opacity: .95; } }
+@keyframes sm-lvup-hint { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
 .sm-lvup-num { display: inline-block; animation: sm-lvup-num .7s cubic-bezier(.2,.9,.3,1.2) both; }
 .sm-lvup-banner { animation: sm-lvup-banner .55s ease-out both; }
 .sm-lvup-pet { animation: sm-lvup-pet .7s .15s ease-out both; }
 .sm-lvup-burst { animation: sm-lvup-burst 24s linear infinite; }
+/* beta-2 (7.2): o glow difuso que substitui o sunburst — respira devagar; parado em movimento reduzido. */
+@keyframes sm-lvup-glow { 0%, 100% { opacity: .8; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.04); } }
+.sm-lvup-glow { animation: sm-lvup-glow 4s ease-in-out infinite; }
 .sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }
 
 /* Cartão de confirmação das ações propostas pelo chat (ChatActionCard). */

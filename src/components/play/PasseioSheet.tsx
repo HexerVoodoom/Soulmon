@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { choiceStyle, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { Language } from '../../utils/i18n';
-import { HOME_REGION, MISSION_WINDOW_MS, type CrossingChallenge, type CrossingsState, type Region, type RegionId } from '../../types/travessias';
+import { MISSION_WINDOW_MS, type CrossingChallenge, type CrossingsState, type Region, type RegionId } from '../../types/travessias';
 import {
   activeChallenge, dailyOffer, doneToday, markDone,
-  openRegions, pickMission, regionById, setDestination, strollWaitMs,
+  pickMission, regionById, strollWaitMs,
   type DailyMission,
 } from '../../utils/travessias';
 import { travessiaTitle } from '../../utils/travessiaTitles';
@@ -13,13 +13,17 @@ import { Celebration } from '../ui/Celebration';
 import { Icon } from '../ui/Icon';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { MissionMark } from './MissionMark';
-import { AREA_LABEL, AreaGlyph, RegionPostal } from './TravessiaIcon';
+import { AreaGlyph, RegionPostal } from './TravessiaIcon';
 
 /**
  * 🧭 A FOLHA DO PASSEIO (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md`
  * §5.6; condições em `docs/reviews/2026-09-30-missoes/` e
  * `docs/reviews/2026-09-30-exploracao/`). Redesenhada em 02/10/2026 (F1–F5 de
  * `docs/AJUSTES-NAVEGACAO-2026-10-02.md`).
+ *
+ * BETA-2 (13/10/2026, 5.1): Free Stroll e Mission of the Day viraram UMA escolha — a missão é a informação
+ * principal e o destino (a região dela) vem em destaque discreto, justificado por ela; o bloco "Passeio livre ·
+ * escolha o destino" saiu (o `setDestination` segue na lógica, só não tem mais botão aqui).
  *
  * Duas camadas, e só a primeira é o Passeio:
  *  1. **Para onde ele vai hoje** — escolha livre entre as regiões abertas (casa
@@ -67,31 +71,17 @@ const fallbackDayKey = (): string => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-function Postal({ region, selected, isPt, onPick }: {
-  region: Region; selected: boolean; isPt: boolean; onPick: () => void;
-}) {
-  const nome = isPt ? region.namePt : region.nameEn;
-  const casa = region.id === HOME_REGION;
+/**
+ * O DESTINO, em destaque discreto (beta-2, 5.1): a missão é a informação principal e o destino é o que ela
+ * justifica — por isso vem como UMA linha curta (rótulo `muted` + nome em `gold-ink`), nunca como uma etapa à
+ * parte. Mesmo componente na proposta e no card da escolhida.
+ */
+function Destino({ nome, isPt }: { nome: string; isPt: boolean }) {
   return (
-    <li>
-      <button
-        type="button"
-        data-passeio-destino={region.id}
-        aria-pressed={selected}
-        onClick={onPick}
-        style={{ ...choiceStyle(selected), display: 'flex', gap: 12, alignItems: 'center' }}
-      >
-        <RegionPostal region={region} />
-        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          <span style={{ fontWeight: 600 }}>
-            {nome}{casa ? (isPt ? ' · casa' : ' · home') : ''}
-          </span>
-          <span style={{ fontSize: 'var(--sm2-text-xs)', opacity: 0.85 }}>
-            {isPt ? region.glimpsePt : region.glimpseEn}
-          </span>
-        </span>
-      </button>
-    </li>
+    <span data-passeio-destino-nome style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+      <span style={note}>{isPt ? 'Destino' : 'Destination'}</span>
+      <span style={{ ...sm2Text, fontWeight: 600, color: 'var(--sm2-gold-ink)', minWidth: 0 }}>{nome}</span>
+    </span>
   );
 }
 
@@ -130,7 +120,6 @@ function MissoesDoDia({ ofertas, isPt, language, aberto, setAberto, onPick }: {
           const open = aberto === c.id;
           const title = travessiaTitle(c.id, isPt) ?? (isPt ? c.textPt : c.textEn);
           const bodyId = `sm2-travessia-${c.id}`;
-          const area = AREA_LABEL[c.area];
           return (
             <li key={c.id} data-travessia-card={c.id} style={{ ...sheetCard, padding: 0, gap: 0 }}>
               <button
@@ -148,9 +137,9 @@ function MissoesDoDia({ ofertas, isPt, language, aberto, setAberto, onPick }: {
                 <RegionPostal region={region} />
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                   <span style={sheetCardTitle}>{title}</span>
-                  <span style={{ ...note, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <AreaGlyph area={c.area} challengeId={c.id} size={24} />
-                    {isPt ? `${region.namePt} · ${area.pt}` : `${region.nameEn} · ${area.en}`}
+                    <Destino nome={isPt ? region.namePt : region.nameEn} isPt={isPt} />
                   </span>
                 </span>
                 <Icon name={open ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
@@ -205,30 +194,17 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
       }}
     >
       {justDone && <Celebration />}
-      {/* ETAPA 1 — ONDE o Soulmon vai esta noite (o destino): é aqui que mora a
-          imagem da região. Pedido do dono (11/10/2026): as duas etapas
-          (destino × o que VOCÊ faz) estavam misturadas num card só. */}
-      <div data-passeio-destino-card style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <RegionPostal region={region} width={64} height={52} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
-          <p style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? 'Destino de hoje à noite' : 'Tonight’s destination'}
-          </p>
-          <p style={sheetCardTitle}>{nome}</p>
-        </div>
-      </div>
-
-      {/* ETAPA 2 — o que VOCÊ faz hoje para o Soulmon fazer esse passeio à noite.
-          Sem ícone nenhum aqui (nem o da área, nem o sinal de missão): é texto. */}
+      {/* UMA coisa só (beta-2, 5.1): a MISSÃO é a informação principal e o DESTINO é o que ela justifica — não
+          há mais duas etapas (antes: "destino" e "faça isto" em blocos separados). */}
       <div data-passeio-faca style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <hr style={divider} />
-        <p style={{ ...sm2Hint, margin: 0 }}>
-          {isPt ? 'Faça isto hoje, para o Soulmon fazer o passeio à noite' : 'Do this today, so the Soulmon takes the stroll tonight'}
-        </p>
         <p data-travessia-titulo style={sheetCardTitle}>
           {titulo ?? (isPt ? challenge.textPt : challenge.textEn)}
         </p>
         <Proposta c={challenge} isPt={isPt} />
+      </div>
+      <div data-passeio-destino-card style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <RegionPostal region={region} width={64} height={52} />
+        <Destino nome={nome} isPt={isPt} />
       </div>
 
       {/* O estado de HOJE. Sem sequência, sem "ontem", sem cobrança: ou está
@@ -352,17 +328,11 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   }, [nowProp, esperando]);
 
   const dia = todayKey ?? fallbackDayKey();
-  const destino = crossings.destination ?? HOME_REGION;
-  const abertas = openRegions(crossings);
   const ativa = activeChallenge(crossings, dia, now);
   const feitoHoje = doneToday(crossings, dia);
   const pendentes = crossings.pending.map(regionById).filter((r): r is Region => !!r);
   const nomeDe = (r: Region) => (isPt ? r.namePt : r.nameEn);
   const ofertas = useMemo(() => dailyOffer(dia, seed), [dia, seed]);
-  // O destino só aparece quando há de fato o que escolher (mais de uma região
-  // aberta) e nenhuma missão está de pé: com a casa sozinha era um "botão" sem
-  // sentido (M1), e com missão escolhida a folha mostra só a missão (M2).
-  const mostraDestino = !ativa && !feitoHoje && abertas.length > 1;
 
   const escolher = (region: RegionId, challengeId: string) => {
     const t = Date.now(); // fora do updater: ele pode rodar duas vezes (footgun 6)
@@ -391,26 +361,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
               : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
           </InfoTipSection>
       </ModalInfo>
-      {mostraDestino && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Passeio livre · escolha o destino' : 'Free stroll · pick the destination'}</p>
-          </div>
-          <ul style={list} role="group" aria-label={isPt ? 'Destino do passeio' : 'Stroll destination'}>
-            {abertas.map(r => (
-              <Postal
-                key={r.id}
-                region={r}
-                isPt={isPt}
-                selected={r.id === destino}
-                onPick={() => onChange(c => setDestination(c, r.id))}
-              />
-            ))}
-          </ul>
-          <hr style={divider} />
-        </>
-      )}
-
       <section data-travessias aria-label={isPt ? 'Missões' : 'Missions'} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ativa ? (
           <CardAtivo

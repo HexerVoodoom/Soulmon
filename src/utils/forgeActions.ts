@@ -7,7 +7,7 @@
  */
 
 import { sanitizeEquipment, discounted, equipPriceDiscount, weeklyDiscountFor, type EquipmentState } from './equipment';
-import { stockOf, MATERIAL_CAP, type BuildingQuestState, type MaterialId } from './buildingQuests';
+import { stockOf, MATERIAL_CAP, LISTED_QUEST_BUILDINGS, visitBuilding, claimBuildingQuest, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import { earnedBits, type BitsOrigin } from './bitsOrigin';
 import { bondLevelFor } from './bond';
 import type { BuildingId } from './gates';
@@ -148,4 +148,23 @@ export function applyForgeGrant<T extends ForgeGameState>(prev: T, building: Bui
     equipment: { ...eq, owned: [...eq.owned.filter((id) => id !== old), piece.id], equipped: { ...eq.equipped, [piece.slot]: piece.id } },
     forge: { v: FORGE_SCHEMA, levels, picks },
   };
+}
+
+/**
+ * ENTRAR NUM PRÉDIO (8.3, beta-2 — causa raiz do "Soulsmith bloqueado"): a missão de prédio só tem tela de "Resgatar" para os prédios
+ * LISTADOS (hoje o Caderno, que paga tinta — material de NENHUMA peça). Os outros 14 ficavam `ready` para sempre, sem botão: ninguém
+ * recebia o material do prédio nem a peça de nível 1 (`applyForgeGrant`), e o Soulsmith abria vazio. Aqui o prédio NÃO listado paga
+ * na mesma entrada (a presença é a ação; é o gesto que `visitBuilding` já contava). O prédio listado segue manual (Resgatar).
+ *
+ * Nada é liberado de graça: continua valendo o Vínculo do prédio (`questStatus` dá `locked`), 1 material por prédio por DIA DO JOGADOR
+ * (`claimed` do dia) e a peça só entra uma vez (`applyForgeGrant` é idempotente). Voltar o relógio não repaga (mesmo dia = mesmo
+ * `claimed`); adiantar só vale até o dia seguinte do fuso FIXO do save. Idempotente: devolve o MESMO `prev` quando nada muda.
+ */
+export function applyBuildingEntry<T extends ForgeGameState>(prev: T, day: string, id: BuildingId): T {
+  const bond = bondLevelFor(prev.totalXP ?? 0);
+  const visited = visitBuilding(prev.buildingQuests, day, id, bond);
+  const base = visited === prev.buildingQuests ? prev : { ...prev, buildingQuests: visited };
+  if ((LISTED_QUEST_BUILDINGS as readonly string[]).includes(id)) return base;
+  const { state, paid } = claimBuildingQuest(base.buildingQuests, day, id, bond);
+  return paid === null ? base : applyForgeGrant({ ...base, buildingQuests: state }, id);
 }

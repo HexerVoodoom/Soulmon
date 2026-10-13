@@ -11,6 +11,9 @@ import foodSprite from 'figma:asset/90d2794255a0abd49ab9e2ca8c9f1c54b45d7cd0.png
    assentado; não existe mais um PNG estático por cima. Sob movimento
    reduzido a animação encolhe para o fim e o quadro 3 aparece direto. */
 const FX_PX = 128;
+/* P8 (beta-2): o x do cocô/comida. Em 66% o objeto caía EM CIMA do botão da mochila (a coluna dos cuidados ocupa de ~65% à borda direita do
+   cenário em 390 px) e o toque ia para o objeto sem querer. 55% fica na faixa livre entre a vitrine (47%) e os botões. */
+export const CARE_X_PCT = 55;
 
 export interface CareEvent {
   type: 'poop' | 'food';
@@ -38,7 +41,7 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
         data-care-poop
         role="img"
         aria-label={isPt ? 'Cocô para limpar — dê um banho' : 'Poop to clean — use the shower'}
-        style={{ left: '66%', top: `${GROUND_Y}%`, marginLeft: -FX_PX / 2, marginTop: -FX_PX + 16, width: FX_PX, height: FX_PX, pointerEvents: 'none' }}
+        style={{ left: `${CARE_X_PCT}%`, top: `${GROUND_Y}%`, marginLeft: -FX_PX / 2, marginTop: -FX_PX + 16, width: FX_PX, height: FX_PX, pointerEvents: 'none' }}
       >
         <SpriteAnim
           key={`plop-${careEvent.requestTime}`}
@@ -54,13 +57,13 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
 
   // Cocô/comida ficam APOIADOS no chão do palco, como toda a decoração
   // (utils/petStage.ts). Antes eram `bottom-3 right-3` — uma regra anterior ao
-  // palco, que os deixava boiando abaixo da linha do piso. O x é 66%: a faixa
-  // livre entre a vitrine (47%) e o canto direito (84%).
+  // palco, que os deixava boiando abaixo da linha do piso. O x é `CARE_X_PCT`: a faixa
+  // livre entre a vitrine (47%) e a coluna dos cuidados (a partir de ~65%).
   const SIZE = 48;
   return (
     <div
       className="absolute z-10 animate-in fade-in slide-in-from-bottom-2 duration-300"
-      style={{ left: '66%', top: `${GROUND_Y}%`, marginLeft: -SIZE / 2, marginTop: -SIZE }}
+      style={{ left: `${CARE_X_PCT}%`, top: `${GROUND_Y}%`, marginLeft: -SIZE / 2, marginTop: -SIZE }}
     >
       <img
         src={foodSprite}

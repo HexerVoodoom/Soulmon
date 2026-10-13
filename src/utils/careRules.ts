@@ -2,7 +2,8 @@ import type { ActivityCategory } from '../types/attributes';
 import { isDemoMode } from './demoMode';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { getMaxEnergyForStage, MAX_STAGE_REQUIREMENT } from '../types/progression';
+import { MAX_STAGE_REQUIREMENT } from '../types/progression';
+import { eat, HUNGER_PER_FOOD, type HungerRecord, type EnergyClock } from './hunger';
 import { GULOSO_BONUS_ATTR, hasPassive, rubDailyCap } from './passives';
 import { isHaunted as isHauntedTask, effortOf, nextOccurrence } from './taskTriage';
 import { premiumDropFor, withPremiumDrop, type PremiumRecord } from './premiumFood';
@@ -41,6 +42,9 @@ export interface CareState {
   petPassive?: string;
   /** Demo local (`utils/demoMode.ts`): comer não rende XP de Vínculo. */
   demoLocal?: boolean;
+  /** Fome e relógio da energia (`utils/hunger.ts`, REGISTRO §40): comer SOBE a fome; a energia só regenera com o tempo. */
+  hunger?: HungerRecord;
+  energyClock?: EnergyClock;
 }
 
 /**
@@ -121,9 +125,9 @@ export function feedFood<T extends CareState>(
   return {
     feedTimes: [...recent, now],
     state: {
-      ...state,
-      // A energia só enche comendo, limitada pelas barras do estágio.
-      energyPoints: Math.min(getMaxEnergyForStage(state.evolutionStage), (state.energyPoints ?? 0) + 1),
+      // COMER SOBE A FOME, NÃO A ENERGIA (beta-2 3.5, REGISTRO §40): `eat` acerta antes a regeneração com a fome de ANTES e só então
+      // sobe a fome — a energia é a do relógio, nunca um +1 por comida.
+      ...eat(state, now, HUNGER_PER_FOOD),
       foodInventory,
       powerPoints: state.powerPoints + attrs.power,
       harmonyPoints: state.harmonyPoints + attrs.harmony,

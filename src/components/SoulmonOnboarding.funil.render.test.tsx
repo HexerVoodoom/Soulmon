@@ -103,7 +103,7 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText("What's already a strength?")).toBeTruthy();
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(btn('Continue'));
-    expect(screen.getByText('Your starting point')).toBeTruthy();
+    expect(screen.getByText('Add tasks to list')).toBeTruthy();
     // voltar pela seta
     fireEvent.click(btn('Back'));
     expect(screen.getByText("What's already a strength?")).toBeTruthy();
@@ -121,7 +121,7 @@ describe('funil grátis — identidade do canvas', () => {
     for (const c of caixas) fireEvent.click(c);
     expect(screen.getByText('Keep at least one.')).toBeTruthy();
     fireEvent.click(btn('Continue'));
-    expect(screen.getByText('Your starting point')).toBeTruthy();
+    expect(screen.getByText('Add tasks to list')).toBeTruthy();
   });
 
   it('11/10/2026: o ponto de partida traz UMA tarefa sugerida, editável e esvaziável; hábitos seguem como sugestões', async () => {
@@ -142,7 +142,7 @@ describe('funil grátis — identidade do canvas', () => {
     expect(campo.value).toBe('');
     // esvaziar não trava o avanço: a tarefa é opcional
     fireEvent.click(btn('Continue'));
-    expect(screen.queryByText('Your starting point')).toBeNull();
+    expect(screen.queryByText('Add tasks to list')).toBeNull();
   });
 
   it('B7 Escolha: grátis primário, "Get your own Soulmon" outline (sem dourado), voltar pela seta', async () => {
@@ -153,7 +153,7 @@ describe('funil grátis — identidade do canvas', () => {
     expect(pago.style.color).toBe('var(--sm2-ink)');
     expect(screen.queryByText(/Get the full game/)).toBeNull();
     fireEvent.click(btn('Back'));
-    expect(screen.getByText('Your starting point')).toBeTruthy();
+    expect(screen.getByText('Add tasks to list')).toBeTruthy();
   });
 
   it('EscolherPersonagem: os 5 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {

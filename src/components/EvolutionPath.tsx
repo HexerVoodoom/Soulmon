@@ -40,6 +40,7 @@ import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_POINTS }
 import { dailyGaugeCap } from '../utils/evolutionGauge';
 import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
+import { PixelTabs } from './pixel/PixelKit';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
    (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
    — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
@@ -47,7 +48,6 @@ import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { auraForElement } from '../utils/attackFxArt';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
-import { ANIM_ART } from '../utils/animArt';
 import { HUD_ART } from '../utils/hudArt';
 import { RitualDialog } from './ritual/RitualKit';
 /* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
@@ -216,6 +216,8 @@ export function EvolutionPath({
   const L = (t: LText) => (isPt ? t.pt : t.en);
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
   const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
+  /** 10.3: o gesto de deslizar para trocar de aba do galho (origem do toque). */
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean } | null>(null);
   // Locked evolutions are hidden behind a "?" (spoiler guard). The user can
   // reveal one (shown darkened) after confirming; this local set resets when
@@ -947,25 +949,9 @@ export function EvolutionPath({
               key={spriteAtual}
               onError={() => { if (spriteProprioAtual && spriteAtual === spriteProprioAtual) setSpriteQuebrado(spriteProprioAtual); }}
             />
-            {/* A FAÍSCA da evolução pronta (X2): `anim-sparkle-pop` quadro 4
-                (a dispersão), 64² a 2× = 128, no canto superior direito do
-                vidro, FORA da criatura (0 px de sobreposição: alfa do quadro
-                em x 164–220, sprite em 32–160). Quadro parado — o FX que a
-                Home já liga na evolução pronta, sem loop. */}
-            {prontoParaEvoluir && !evolutionLocked && (
-              <span
-                aria-hidden="true"
-                data-visor-spark
-                style={{
-                  position: 'absolute', left: 128, top: 8, width: 128, height: 128,
-                  backgroundImage: `url(${ANIM_ART.sparklePop.src})`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: `${ANIM_ART.sparklePop.frames * 128}px 128px`,
-                  backgroundPosition: `-${(ANIM_ART.sparklePop.frames - 1) * 128}px 0`,
-                  imageRendering: 'pixelated', pointerEvents: 'none',
-                }}
-              />
-            )}
+            {/* P7 (beta-2): a FAÍSCA estática da evolução pronta (X2: o quadro 4 do `anim-sparkle-pop`, parado no canto) SAIU — parada, a
+                dispersão lia como pixels SOLTOS à direita da criatura. A evolução pronta já tem as suas vozes (a placa, a barra cheia e a
+                frase "a próxima forma está tomando corpo"); o FX animado vive na Home. */}
             {/* "ON HOLD" na língua do vidro (D-E5): a MESMA peça do "EVOLVE"
                 da Home (`.sm2-pxbtn` — Silkscreen 14 na moldura pixel a ½×
                 sobre placa `viewport-bg` 78%), aqui como placa, não botão:
@@ -1096,7 +1082,8 @@ export function EvolutionPath({
                 : null),
             }}
           >
-            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
+            {/* P7 (beta-2): o botão é a AÇÃO de segurar — cadeado FECHADO nos dois estados (o preenchido diz que já está segurado); `lock_open` lia como "solto". */}
+            <Icon name="lock" size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
             {evolutionLocked
               ? (isPt ? 'Evolução segurada' : 'Evolution on hold')
               : (isPt ? 'Segurar evolução' : 'Hold evolution')}
@@ -1286,46 +1273,40 @@ export function EvolutionPath({
         )}
 
         {/* Seletor de galho — só os branches disponíveis (transição de arte).
-            Chips de SELEÇÃO (`role=radio`, canvas `EvoArvore`): 44, pílula,
-            `surface-2` + fronteira `muted`; selecionado `primary-soft` +
-            `primary-ink` — o mesmo idioma da sub-aba ativa e do cadeado
-            segurado. I11 (02/10): a cor e o glifo do caminho VOLTARAM ao
-            botão (pedido do dono) — o RÓTULO continua sendo o portador da
-            informação (WCAG 1.4.1); cor/glifo são identidade. */}
-        <div role="radiogroup" aria-label={isPt ? 'Linha de evolução' : 'Evolution branch'} style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-          {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
-            const active = selectedBranch === b;
-            return (
-              <button
-                key={b}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setSelectedBranch(b)}
-                className="sm2-form-chip"
-                style={{
-                  flex: 1, minWidth: 0, minHeight: 44, padding: '0 6px', borderRadius: 999, gap: 4,
-                  boxSizing: 'border-box', cursor: 'pointer', whiteSpace: 'nowrap',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: active ? 600 : 500,
-                  lineHeight: 'var(--sm2-leading-body)',
-                  border: `${active ? 2 : 1}px solid ${ATTR_COLOR[b]}`,
-                  backgroundColor: active
-                    ? `color-mix(in srgb, ${ATTR_COLOR[b]} 16%, var(--sm2-surface-2))`
-                    : 'var(--sm2-surface-2)',
-                  color: ATTR_INK[b],
-                  // I5: o ramo que lidera brilha na cor dele (Poder verde, Harmonia azul, Benevolência dourado).
-                  boxShadow: lider === b ? `0 0 12px 2px ${ATTR_COLOR[b]}` : undefined,
-                }}
-                data-attr-leader={lider === b ? 'sim' : undefined}
-              >
-                <AttrGlyph attr={b} />
-                <span data-attr-name={b} style={{ fontSize: 'var(--sm2-text-xs)' }}>{L(ATTR_LABEL[b])}</span>
-                {/* I4: a progressão em NÚMERO, dentro da pílula. */}
-                <span className="sm2-num" data-attr-points={b} style={{ fontWeight: 600 }}>{pontosDe(b)}</span>
-              </button>
-            );
-          })}
+            BETA-2 (10.3, 13/10/2026): as três PÍLULAS viraram ABAS COMPACTAS (`PixelTabs variant="compact"`): sublinhado fino na
+            ativa, separadores discretos, o nome inteiro (Poder/Harmonia/Benevolência nunca é cortado) e o número do caminho. Toque OU
+            deslize para o lado na área da árvore troca de aba. I11 (02/10): a cor e o glifo do caminho continuam na aba — o RÓTULO
+            é o portador da informação (WCAG 1.4.1); cor/glifo são identidade. I5: o caminho que lidera brilha no glifo. */}
+        <div
+          data-branch-swipe
+          style={{ touchAction: 'pan-y' }}
+          onPointerDown={e => { swipeRef.current = { x: e.clientX, y: e.clientY }; }}
+          onPointerUp={e => {
+            const o = swipeRef.current; swipeRef.current = null;
+            if (!o) return;
+            const dx = e.clientX - o.x; const dy = e.clientY - o.y;
+            if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            const list = AVAILABLE_BRANCHES as readonly Attr[];
+            const next = list[list.indexOf(selectedBranch as Attr) + (dx < 0 ? 1 : -1)];
+            if (next) setSelectedBranch(next);
+          }}
+          onPointerCancel={() => { swipeRef.current = null; }}
+        >
+        <div style={{ marginBottom: 12 }}>
+          <PixelTabs
+            variant="compact"
+            ariaLabel={isPt ? 'Linha de evolução' : 'Evolution branch'}
+            value={selectedBranch as Attr}
+            onChange={k => setSelectedBranch(k)}
+            items={(AVAILABLE_BRANCHES as readonly Attr[]).map(b => ({
+              key: b,
+              label: L(ATTR_LABEL[b]),
+              glyph: <AttrGlyph attr={b} />,
+              meta: pontosDe(b),
+              color: ATTR_INK[b],
+              emphasis: lider === b,
+            }))}
+          />
         </div>
 
         {branchPath.length === 0 && !ultra ? (
@@ -1357,6 +1338,7 @@ export function EvolutionPath({
             );
           })()
         )}
+        </div>
       </section>
     </div>
   );

@@ -1,5 +1,31 @@
 # Status do Soulmon — registro vivo
 
+> ## 13/10/2026 — Beta-2, correções da revisão de design (`integ/beta-2`, PR #323; `product/beta-play-01/sweeper/design-critic-beta2.md`)
+>
+> - **F1–F6 (obrigatórios):** fome legível (pontos de 6px em linha, faminto na tinta `--sm2-viewport-warn`, toque abre a dica da energia, pausa visível por símbolo) · placa da masmorra troca o título para "Voltou" · **avisos da Home saem da faixa acima de HOJE** (botão `AvisosLink` na pilha do canto direito com selo, folha `AvisosSheet`; o check-in entra pelo mesmo canal) · "Adicionar tarefas à lista" é `ModalSheet` · Santuário sem a linha repetida de Vínculo e com a regra dos 5% atrás do "i" · Arena livre com o ícone e a palavra de Poder.
+> - **Polimento feito:** P1, P2 (✕ dentro da folha; o bloco Missão/Destino já existia e só aparece com Passeio de ontem), P4, P5, P6, P7, P8, P9 (sem "+N XP base" nem "medium" na TAREFA, sem barra no pai, divisor reto — o XP do hábito fica, é pedido do dono de 11/10), P10, P11 ("Soulsmith equipment"; "Soulforger" não existe no código), P12 (telas inteiras com `variant="overlay"`).
+> - **Não feito:** **P3** (resumo em 3 folhas): fundir tarefas+corações mexe na ordem "tarefas → corações → aventura → hoje" pedida em 4.4 e em ~12 testes; a regra "animação uma vez por relatório" não corre risco, mas a decisão de produto é do dono.
+
+> ## 13/10/2026 — Beta-2, frente B (regras): fome e energia por tempo, limite diário da masmorra, check-ins, placa de madeira, Soulsmith e modo imersivo (`feat/b2-regras`, REGISTRO §40)
+>
+> - **Soulsmith "bloqueado" (8.3) — causa raiz achada e corrigida:** a missão de prédio só tinha botão de Resgatar para o Caderno; os outros 14 prédios ficavam `ready` sem ninguém para pagar a peça de nível 1 e os materiais (`applyBuildingEntry`). Reproduzido em `soulsmithAcesso.test.ts`.
+> - **Fome e energia (3.4/3.5):** comida enche a FOME, não a energia; a energia regenera com o tempo na velocidade que a fome permite (100%/50%/parada); timer = motor projetado (`utils/hunger.ts`). Reverte o "só enche comendo" de §30/§31 por pedido do dono.
+> - **Limite diário da masmorra (6.1):** 10 camadas/dia na porta única `spendLayer` (tela + conta de quem ficou fora) + contador monotônico no servidor. **Check-ins (4.1):** 3 janelas sobre o ritmo das refeições. **Placa "In Dungeon" (6.2)** com o tempo de retorno projetado do estado persistido. **Android imersivo (3.1):** `MainActivity` (assembleDebug verde; falta testar em aparelho).
+> - **Depende do dono:** todos os números (REGISTRO §40.9) e onde mora o botão de check-in. Contrato com as outras frentes e contador do fuzz2 (124 → 128): `docs/FRENTE-B-REGRAS-BETA2.md`.
+> ## 13/10/2026 — Beta-2, frente C: resumos e modais (`feat/b2-resumos-modais`, backlog 4.2–4.4, 5.1, 7.1–7.3, 13.1)
+>
+> - **Resumo pós-dia** (`DailyReportModal`): uma folha por seção (tarefas → corações → aventura → hoje); sem `Evolution path`; `Yesterday Tasks`; 3 corações (`DayHearts`, `utils/dayHearts.ts`) em que o cobrado treme, quebra e vira preto UMA vez; `From Yesterday's Adventure` com `New` dourado, vínculo Missão/Destino (`strollSummary`) e o NPC do Passeio (`AreaSheet`); `Stretch Closed` e corações sem NPC.
+> - **Save:** `lastDayReport.heartsAnimSeen?: boolean` (DENTRO do relatório; some sozinho na virada). Sem campo de topo ⇒ **o contador do `GameStateContext.hydrate.fuzz2.qa.test.tsx` NÃO foi alterado** (segue 124 nesta branch). **Merge:** as outras frentes podem somar campos de topo; ao juntar, o contador é a soma de todas, e esta frente não entra nela.
+> - **Passeio** (`PasseioSheet`): Free Stroll e Mission of the Day numa escolha só — missão em primeiro plano, destino em destaque dourado discreto; sem "Passeio livre" (o `setDestination` segue na lógica).
+> - **Modais:** `BuildingIntro` agora vive no `AreaSheet` (novo prop opcional `speech`); `LevelUpOverlay` sem caixa nem sunburst (glow difuso), `Now Open` quando abre algo, chevron sem corte; `CatalogOnboardingFlow` (`Add tasks to list`): tudo marcado, sem duplicar (`withoutExisting`).
+> - **Depende do dono / design-critic:** `product/beta-play-01/builder/b2-c/design-review.md`.
+
+> ## 13/10/2026 — Beta-2, frente D: mercado, jogos, Arena, Santuário, Evolução, Perfil e humor (`feat/b2-mercado-jogos`, backlog 8–12)
+>
+> - **Feito:** 8.1 descrição do chip (`+3 Poder`…); 8.2 miniatura abre a pré-visualização (folha do item e prateleiras da Guilda/trimestre); 9.1 espaço no Salão + ícones novos (bota e punho, arte que já existia); 9.2 Combina 3 com troca livre (gasta 1 movimento); 9.3 Arena livre no outro tablado, sem elemento/golpes; 9.4 `ScreenSkeleton` minimalista (loading/erro/concluído); 10.1 ícones de categoria no Santuário; 10.2 árvore aberta, sem colher; 10.3 abas compactas na Evolução (toque e deslize); 11 prédio **Perfil** (`laboratorio.perfil`, Vínculo 2, `utils/soulmonPerfil.ts`); 12 humor com ícones de 40 px.
+> - **Sem save novo:** nenhum campo novo no save (o Perfil só lê); o contador do `fuzz2` não mudou.
+> - **Depende do dono (defaults da squad):** Vínculo de abertura do Perfil (2); a troca livre do Combina 3 gasta movimento (a alternativa — só a que pontua gasta — abriria partida sem fim); NPC e arte própria do Perfil (hoje: busto da Oriel e o santuário `lote-jogos-mente-akasha`, reaproveitados); "nível do equipamento" = o maior entre as peças equipadas.
+>
 > ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
 >
 > - **Dono:** `utils/dungeonAway.ts` (a conta pura de quem ficou fora: `applyDungeonAway`, `settleDungeonAwayNow`) · `utils/dungeonRewards.ts` (recompensas puras compartilhadas com o `App`) · `utils/dungeonIdle.ts` (`DungeonAway`, `sanitizeDungeonAway`, `soulmonNaMasmorra`, velocidades, teto de 8 h) · `utils/dungeonFight.ts` (`autoRingGrade`/`autoDodgeGrade`) · `utils/dungeonDrops.ts` + `games/DropNotice.tsx` (modalzinho) · `DungeonBusyModal` + `home/DungeonSign` (ocupado e plaquinha) · `utils/match3.ts` + `Match3Game.tsx` (Combina 3).

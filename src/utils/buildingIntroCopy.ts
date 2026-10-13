@@ -126,6 +126,12 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Each day is written down here, with your talents and your gear. It only goes up.', pt: 'Cada dia fica anotado aqui, com os seus talentos e o equipamento. Ele só cresce.' },
     invite: { en: 'It is just to look at.', pt: 'É só para olhar.' },
   },
+  'laboratorio.perfil': {
+    place: { en: 'Profile', pt: 'Perfil' },
+    hello: { en: "I'm {name}. I read the Profile.", pt: 'Eu sou {name}. Eu leio o Perfil.' },
+    what: { en: 'Who your Soulmon is today: its element, how it fights and its special.', pt: 'Quem o seu Soulmon é hoje: o elemento, o jeito de lutar e o especial.' },
+    invite: { en: 'It is just to look at.', pt: 'É só para olhar.' },
+  },
   'hall.biblioteca': {
     place: { en: 'Library', pt: 'Biblioteca' },
     hello: { en: "I'm {name}, your host in the Hall.", pt: 'Eu sou {name}, a anfitriã do Hall.' },

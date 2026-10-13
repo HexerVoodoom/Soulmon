@@ -44,10 +44,21 @@ describe('I5 — a folha do item', () => {
     const prev = document.body.querySelector('[data-item-preview]') as HTMLElement;
     expect(prev).not.toBeNull();
     expect(prev.getAttribute('aria-hidden')).toBe('true');
-    expect(prev.style.pointerEvents).toBe('none');
+    // P1 (beta-2): véu próprio (a lista não vaza pelos lados), camada acima do véu da folha, e o toque nele FECHA a folha
+    expect(prev.style.pointerEvents).not.toBe('none');
+    expect(prev.style.background).toMatch(/rgba\(2, 8, 9/);
+    expect(Number(prev.style.zIndex)).toBeGreaterThan(120);
     // solto na área escurecida: nada de MiniGlass/box em volta do ícone
     expect(prev.querySelector('[data-mini-glass], .sm2-viewport-screen')).toBeNull();
     expect(prev.querySelector('img, span')).not.toBeNull();
+  });
+
+  it('P1: tocar na prévia fecha a folha (e tira a prévia)', () => {
+    abrir({ stall: 'itens' });
+    fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
+    fireEvent.click(document.body.querySelector('[data-item-preview]') as HTMLElement);
+    expect(screen.queryByRole('dialog', { name: chip.nameEn })).toBeNull();
+    expect(document.body.querySelector('[data-item-preview]')).toBeNull();
   });
 
   it('fechar a folha tira o preview', () => {

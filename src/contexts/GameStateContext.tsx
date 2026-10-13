@@ -4,11 +4,14 @@ import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, register
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
-import { sanitizeDungeonAway, type DungeonAway } from '../utils/dungeonIdle';
+import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
+import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
+import { sanitizeCheckIns } from '../utils/checkIns';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
 import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
+import { sessaoEncerrando, marcarMudancaPendente, marcarSincronizado } from '../utils/sessionReset';
 // `community.ts` (cliente do Torneio/Guilda) só serve DEPOIS do primeiro paint e
 // só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
 type PushProfileArg = Parameters<typeof import('../utils/community').pushProfile>[0];
@@ -220,7 +223,7 @@ export interface GameState {
   activityStats: ActivityStats;
   healthPoints: number;
   maxHealthPoints: number;
-  /** Version B: energy/satiety gauge — fills only by feeding, caps at maxHealthPoints */
+  /** Energia: REGENERA com o tempo (`energyClock`), na velocidade que a FOME (`hunger`) permite — comer NÃO a enche (beta-2 3.5, REGISTRO §40). Lida sempre acertada: `settleEnergy`/`energyStatus` (`utils/hunger.ts`). Zera na virada. */
   energyPoints: number;
   perfectDays: number;
   /** 🧬 Gauge de evolução: PESO DE ESFORÇO creditado no estágio atual (teto
@@ -419,6 +422,17 @@ export interface GameState {
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
   dungeonAway?: DungeonAway;
+  /** 🍽️ A FOME (beta-2 3.5, REGISTRO §40): nível 0..100 + o instante da medida. NUNCA se lê direto — `hungerAt`/`energyStatus` (`utils/hunger.ts`)
+   *  somam a queda por timestamp. Comer SOBE a fome (não a energia). Ausente = cheia (sem dívida retroativa). Fome não tira coração nem Bits. */
+  hunger?: { v: number; at: number };
+  /** ⏱️ O relógio da regeneração da ENERGIA (`utils/hunger.ts`): até onde a regeneração foi contada e o progresso até a próxima unidade.
+   *  Moram no save para fechar o app, navegar ou trocar de aparelho NÃO reiniciarem o timer. Ausente = nasce na próxima leitura. */
+  energyClock?: { at: number; carry: number };
+  /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (`DUNGEON_DAILY_LAYERS`, `utils/dungeonIdle.ts`) mora no
+   *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
+  dungeonDaily?: { day: string; layers: number };
+  /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
+  checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -598,6 +612,10 @@ export interface GameState {
     weeklyRelief?: boolean;
     /** Já usou o "esqueci de marcar" deste relatório (1× por dia). */
     heartsRecovered?: boolean;
+    /** A animação de quebra dos corações (tremor → coração preto) já rodou neste relatório (beta-2, 4.2):
+     *  reabrir o resumo do MESMO dia não a repete. Mora DENTRO do relatório de propósito — a virada do dia
+     *  grava um relatório novo e a marca some sozinha ("uma vez por dia"), e o save não ganha campo de topo. */
+    heartsAnimSeen?: boolean;
     /** P2 — a folga da semana absorveu a perda desta virada. A UI CONTA isso:
      *  perdão que a pessoa não soube que recebeu não acalma, e faz a cobrança
      *  da semana seguinte parecer arbitrária. */
@@ -1226,6 +1244,12 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
         dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
+        // Fome, relógio da energia, camadas do dia e check-ins (beta-2): registro bom ou nada (lixo → ausente = cheia / relógio novo /
+        // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
+        hunger: sanitizeHunger(loadedState.hunger),
+        energyClock: sanitizeEnergyClock(loadedState.energyClock),
+        dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
+        checkIns: sanitizeCheckIns(loadedState.checkIns),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
@@ -1465,9 +1489,14 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // truthy e abriria o modal do relatório com campos vazios.
         lastDayReport: (() => {
           const r = obj<unknown>(loadedState.lastDayReport);
-          return typeof r.date === 'string'
-            ? (loadedState.lastDayReport as GameState['lastDayReport'])
-            : undefined;
+          if (typeof r.date !== 'string') return undefined;
+          const rep = loadedState.lastDayReport as NonNullable<GameState['lastDayReport']>;
+          // `heartsAnimSeen` só vale como `true` literal: lixo no save não pode calar a animação nem quebrar a tela.
+          if ('heartsAnimSeen' in rep && rep.heartsAnimSeen !== true) {
+            const { heartsAnimSeen: _lixo, ...resto } = rep;
+            return resto;
+          }
+          return rep;
         })(),
         // Motor de tarefas (docs/PLANO-TAREFAS.md). Todos opcionais, mas com
         // linha aqui por regra: campo sem linha em `hydrateSave` já produziu a
@@ -1706,6 +1735,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const falhaJaAvisada = useRef<string | null>(null);
 
   useEffect(() => {
+    // FIM DE SESSÃO (`utils/sessionReset.ts`): depois de "Sair da conta" o estado
+    // em memória NÃO pode regravar o save que acabou de ser apagado, nem subir.
+    if (sessaoEncerrando()) return;
     // Storage cheio (`QuotaExceededError`) OU bloqueado não pode derrubar a
     // árvore do React: o jogo segue em memória e o usuário é avisado uma vez.
     writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
@@ -1719,6 +1751,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     // DEMO LOCAL (`utils/demoMode.ts`): salva SÓ no aparelho. Sem POST, sem
     // `saveId` gerado e sem perfil publicado — a demo não tem conta nem nuvem.
     if (isDemoMode(gameState)) return;
+
+    // Há mudança que a nuvem ainda não confirmou (o logout lê isto para tentar enviar antes de apagar).
+    const versaoDaMudanca = marcarMudancaPendente();
 
     // Generate save ID on first use
     let saveId = readLocal(STORAGE_KEYS.SAVE_ID);
@@ -1753,6 +1788,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
 
     const timer = setTimeout(() => {
       rajadaComecouEm.current = null;
+      if (sessaoEncerrando()) return;
       // R-3 — o retorno é LIDO. Antes este `false` era jogado fora: o servidor
       // podia recusar o dia inteiro e a única pista era um `console.warn`.
       //
@@ -1763,7 +1799,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // introduzir: a reconciliação de conflito precisa de uma via própria,
       // fora deste efeito. Avisar por `toast` é seguro (não é estado do jogo).
       void cloudSaveComRetry(saveId!, gameState).then(resultado => {
-        if (resultado.ok) { falhaJaAvisada.current = null; publicarPerfil(); return; }
+        if (resultado.ok) { falhaJaAvisada.current = null; marcarSincronizado(versaoDaMudanca); publicarPerfil(); return; }
         // 410: a conta foi excluída. Não é aviso — é parada: limpa, desloga e
         // volta ao portão (não toca em `setGameState`, R-1 respeitado).
         if (resultado.kind === 'deleted') { void reagirContaExcluida(); return; }
