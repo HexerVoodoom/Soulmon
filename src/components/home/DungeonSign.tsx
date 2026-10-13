@@ -18,7 +18,7 @@ import type { Language } from '../../utils/i18n';
  * Visual: madeira em CSS (veios, pregos, haste) com a porta da masmorra (`DUNGEON_PROP_ART`) como selo — nenhuma imagem nova. Cores da
  * madeira em variáveis locais com fallback; texto creme sobre marrom-escuro (contraste ~8:1). Sem animação, sem som, sem cobrança no texto.
  */
-export const SIGN_W = 118;
+export const SIGN_W = 136;
 export const SIGN_H = 46;
 
 const sign: CSSProperties = {
