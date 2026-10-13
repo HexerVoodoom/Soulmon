@@ -43,7 +43,7 @@ describe('Lista única (sem abas)', () => {
     expect(container.textContent).toContain('+20 base XP');
     expect(container.textContent).toContain('+10 base XP');
   });
-  it('recorrente fora do dia vai para "Programadas", abaixo da linha separadora', () => {
+  it('recorrente fora do dia NÃO aparece na Home (vai para o `View all` > Scheduled)', () => {
     const { container } = renderWithCss(
       <DailyRituals tasks={[]} activities={[diario, mensal]} completedTasks={[]}
         habitRhythms={{ a3: { done: ['2026-10-05'], lastCompletedDate: '2026-10-05', totalDone: 1 } } as never}
@@ -51,12 +51,11 @@ describe('Lista única (sem abas)', () => {
         expanded={{}} onExpand={noop} onToggleTask={noop} onEditTask={noop} onPostponeNudge={noop} onEditActivity={noop}
         onToggleActivity={noop} onUpdateStep={noop} onRestoreTask={noop} onCreate={noop} ctaLabel="Add" emptyMessage="vazio" variant="home" />,
     );
-    const sep = container.querySelector('[data-scheduled-sep]') as HTMLElement;
-    expect(sep).not.toBeNull();
-    expect(sep.textContent).toBe('Programadas');
+    expect(container.querySelector('[data-scheduled-sep]')).toBeNull();
     const txt = container.textContent ?? '';
-    expect(txt.indexOf('Beber água')).toBeLessThan(txt.indexOf('Programadas'));
-    expect(txt.indexOf('Programadas')).toBeLessThan(txt.indexOf('Trocar filtro'));
+    expect(txt).toContain('Beber água');
+    expect(txt).not.toContain('Trocar filtro');
+    expect(txt).not.toContain('Programadas');
   });
 });
 

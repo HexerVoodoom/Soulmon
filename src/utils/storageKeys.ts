@@ -68,6 +68,8 @@ export const STORAGE_KEYS = {
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
   /** Velocidade da cena de combate da masmorra (1/2/3), preferência do aparelho (REGISTRO §36). */
   DUNGEON_SPEED: 'soulmon-dungeon-speed',
+  /** Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`). Preferência de tela do aparelho — não é progresso e não vai para a nuvem. */
+  RITUAL_OPEN: 'soulmon-ritual-open',
   /** Melhor pontuação do Combina 3 (Salão de Jogos), no aparelho como o recorde da Corrida. */
   MATCH3_BEST: 'soulmon-match3-best',
   DINO_BEST: 'soulmon-dino-best',

@@ -5103,6 +5103,9 @@ select:focus-visible {
   --sm2-gold-ink: #8A5A2B;
   --sm2-gold-fill: #A2641F;
   --sm2-on-gold: #FFFFFF;
+  /* BRONZE dos checkboxes da lista (beta-2, 2.2): alias do ouro-cobre do sistema — nunca valor próprio. */
+  --sm2-check-fill: var(--sm2-gold-fill);
+  --sm2-on-check: var(--sm2-on-gold);
   /* perigo */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
@@ -5150,6 +5153,8 @@ select:focus-visible {
   --sm2-gold-ink: #EBBE84;
   --sm2-gold-fill: #D9A05B;
   --sm2-on-gold: #04211F;
+  --sm2-check-fill: var(--sm2-gold-fill);
+  --sm2-on-check: var(--sm2-on-gold);
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -7677,18 +7682,26 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    tinta `viewport-ink`, sombra de 1px para descolar do cenário pintado. */
 .sm3-stats {
   position: absolute;
-  left: var(--sm2-space-4);
-  bottom: 22px;
+  left: var(--sm2-space-3);
+  bottom: 12px;
   z-index: 12;
   display: flex;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
+  /* Beta-2 (3.3): altura TRAVADA — os slots de fome e do timer de energia
+     (`statsSlots` do `CompanionHUD`) entram sem mudar a faixa. */
+  height: 20px;
   font-family: var(--sm2-font-text);
-  font-size: var(--sm2-text-sm);
+  font-size: var(--sm2-text-xs);
   font-weight: 800;
   color: var(--sm2-viewport-ink);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+  /* Halo escuro: no tema claro a faixa fica sobre o degradê que sobe para o fundo da página. */
+  text-shadow: 0 0 6px var(--sm2-viewport-bg), 0 1px 0 rgba(0, 0, 0, .6);
+  filter: drop-shadow(0 0 3px var(--sm2-viewport-bg));
 }
-.sm3-stat { display: inline-flex; align-items: center; gap: 5px; }
+.sm3-stat { display: inline-flex; align-items: center; gap: 4px; }
+/* Encaixe dos slots da faixa (fome / timer de energia): inline, texto `xs` da própria faixa, sem quebrar linha. */
+.sm3-stat-slot { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-weight: 600; }
 .sm3-stat[data-low] { color: var(--sm2-viewport-danger); }
 
 /* OS TRÊS CUIDADOS — canto inferior direito. EXCEÇÃO D1 (decisão do dono,
@@ -7697,15 +7710,19 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm3-cuidar {
   position: absolute;
   right: var(--sm2-space-3);
-  bottom: 10px;
+  bottom: 4px;
   z-index: 12;
   display: flex;
-  gap: 4px;
+  gap: 8px;
 }
+/* Beta-2 (3.3): os controles encolhem DISCRETAMENTE (44 → 36 de desenho) e o
+   alvo de toque continua 44×44 (`::after`, invisível) — o gap de 8 cobre a
+   diferença, então os alvos vizinhos não se sobrepõem. */
+.sm3-cuidado::after { content: ""; position: absolute; inset: -4px; }
 .sm3-cuidado {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7766,6 +7783,117 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   color: var(--sm2-muted);
 }
 .sm3-hoje-titulo b { color: var(--sm2-gold-ink); font-weight: 800; margin-left: 6px; }
+/* Beta-2 (2.4) — `Today` cromado DISCRETO: o texto recebe um degradê vertical
+   só de tokens (tinta → muted → tinta → muted), como metal escovado. O `color`
+   fica como reserva para quem não tem `background-clip: text`. */
+.sm3-cromo {
+  color: var(--sm2-ink);
+  background-image: linear-gradient(180deg, var(--sm2-ink) 0%, var(--sm2-muted) 46%, var(--sm2-ink) 54%, var(--sm2-muted) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/* Beta-2 (2.4) — a META (`Goal N`) mora FORA do título e do contador: outra
+   grandeza, outro bloco (pílula de linha fina, número em tinta — o contador de
+   atividades segue em ouro). Só exibe; não registra nada. */
+.sm3-meta {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--sm2-line);
+  border-radius: 999px;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-meta b { color: var(--sm2-ink); font-weight: 800; letter-spacing: 0; }
+/* Beta-2 (2.1) — rótulo de categoria dentro da lista (`Tasks` / `Habits`). */
+.sm3-secao { list-style: none; padding: 10px 0 2px; }
+.sm3-secao h3 {
+  margin: 0;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-secao + .sm2-ritual { border-top: 0; }
+/* Beta-2 (2.3) — `View all →` no fim da lista de hoje. */
+.sm3-ver-tudo {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 4px;
+}
+.sm3-ver-tudo button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 600;
+  color: var(--sm2-primary-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+/* Beta-2 (2.3) — a tela cheia de todas as atividades. Camada própria (voltar do
+   sistema fecha — `useBackLayer`); sem animação de entrada, de propósito. */
+.sm3-tudo {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--sm2-bg);
+  color: var(--sm2-ink);
+  touch-action: pan-y;
+}
+.sm3-tudo-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 4px) 12px 4px;
+}
+.sm3-tudo-head .sm3-tudo-hoje {
+  margin-left: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 600;
+  color: var(--sm2-primary-ink);
+}
+.sm3-tudo .sm2-ritual-list { padding: 0; }
+.sm3-secao-h {
+  margin: 16px 0 2px;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-tudo-corpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
 /* O selo do dia completo (mock `dia-completo`): cobre sólido, texto `on-gold`. */
 .sm3-selo {
   margin-left: 8px;
@@ -8134,9 +8262,21 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 /* D1 — a linha concluída desliza por CIMA das vizinhas (o `zIndex` do
    keyframe só vale com posição) e o brilho tem cantos. */
 .sm2-ritual { position: relative; border-radius: var(--sm2-radius-md); }
-/* D2 — o ícone da esquerda é o botão de EDITAR (alvo 44, ícone pelado). */
-.sm2-ritual-edit { -webkit-tap-highlight-color: transparent; }
-.sm2-ritual-edit:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; border-radius: var(--sm2-radius-md); }
+/* Beta-2 (2.2) — EDITAR = o NOME da linha (botão sem moldura; o checkbox
+   bronze ocupa a esquerda). Reset de botão: o texto herda tudo do `<span>`. */
+.sm2-ritual-edit {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.sm2-ritual-edit:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
 
 /* D4 — faixa horizontal que rola SEM barra visível (filtros do catálogo). */
 .sm2-scroll-x-quiet { scrollbar-width: none; -ms-overflow-style: none; }

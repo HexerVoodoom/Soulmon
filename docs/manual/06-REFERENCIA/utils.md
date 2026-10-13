@@ -96,6 +96,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
 **Saiu no PR3b:** `STAGE_BUDGET`, `getArenaPlayerStats`, `SPECIAL_EFFECTS`, `SPECIAL_CHARGE_TURNS`, `playerHitDamage`, `enemyHitDamage`, `ADVANTAGE_MULT`/`DISADVANTAGE_MULT`, `simulateArenaRun`, `simulateArenaRunEnergy`, `ARENA_HP_SCALE`, `ARENA_FOE_HP_EXTRA`, `ARENA_TORCIDA_MULT`, `arenaTorcidaTurn`, `arenaTurnIsSpecial`, `CLASS_SHAPE`, `ARENA_ENERGY_ENABLED`, `ARENA_TIMING_ATTACK_ENABLED`, `ARENA_AUTO_ACC`.
 **Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
+### `src/utils/atividadesLista.ts`
+**Dono de:** quem aparece onde na lista de atividades (beta-2, itens 2.1 a 2.3): `Habit` (todo dia) × `Scheduled` (recorrência em dias específicos) para a tela `View all`, "tarefa de hoje" (sem `startDate` no futuro) para a Home, e o estado aberto/recolhido das linhas com filhos (aberta enquanto há pendente, recolhida quando todos concluem; a escolha manual vale só para o mesmo estado de conclusão) com seu parse/serialização no aparelho (`STORAGE_KEYS.RITUAL_OPEN`). Puro; a recorrência continua lida por `normalizeSchedule`/`habitCountsOn`.
+**Exports:**
+- `ActivityBucket` (type) — `'habit' | 'scheduled'`
+- `function activityBucket(a)` — 7 dias = habit; qualquer outra recorrência (semanal, dias alternados, mensal, N×/semana) = scheduled.
+- `function taskIsForToday(task, now)` — tarefa sem `startDate` futuro.
+- `function ritualOpenKey(id, allDone)` / `function isRitualOpen(overrides, id, allDone)` — chave e leitura do estado aberto/recolhido.
+- `function parseRitualOpen(raw)` / `function serializeRitualOpen(o)` / `RITUAL_OPEN_MAX` — persistência local (lixo vira `{}`, teto de entradas).
+**Chamado por:** `src/App.tsx`, `src/components/DailyRituals.tsx`
+**Régua:** `atividadesLista.test.ts`, `components/DailyRituals.todas.render.test.tsx`
+**Regra de negócio:** Home só de hoje; `View all` com tudo; pai nunca conclui direto. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/audioBus.ts`
 **Dono de:** O BARRAMENTO DE ÁUDIO (run `som-01`, Fase 2): sub-mix por categoria, limitador e ducking, substituindo o `AudioContext`-por-chamada de `sounds.ts`.
 **Exports:**

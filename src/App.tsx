@@ -62,6 +62,7 @@ import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from '.
 import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo } from './utils/demoStart';
@@ -904,8 +905,20 @@ export default function App() {
   /* Etapas na Home nascem RECOLHIDAS (G1): uma atividade de 4 etapas ocupava 5
      linhas e comia sozinha a dobra. Estado de VISTA, não de jogo — de propósito
      fora do GameState, para não virar cloud save a cada toque. */
-  const [expandedRituals, setExpandedRituals] = useState<Record<string, boolean>>({});
-  const handleExpandRitual = useCallback((id: string) => setExpandedRituals(prev => ({ ...prev, [id]: !prev[id] })), []);
+  /* Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia sobrevive a
+     navegar, atualizar e reabrir (preferência de tela do APARELHO, não save).
+     Sem escolha, a linha com filhos fica aberta enquanto houver pendente e
+     recolhe quando todos concluem (`utils/atividadesLista.ts`). */
+  const [expandedRituals, setExpandedRituals] = useState<Record<string, boolean>>(
+    () => parseRitualOpen(readLocal(STORAGE_KEYS.RITUAL_OPEN)),
+  );
+  const handleExpandRitual = useCallback((key: string, open: boolean) => setExpandedRituals(prev => {
+    if (prev[key] === open) return prev;
+    const { [key]: _antigo, ...resto } = prev; // reinserir no fim = o mais recente sobrevive ao teto
+    const next = { ...resto, [key]: open };
+    writeLocal(STORAGE_KEYS.RITUAL_OPEN, serializeRitualOpen(next), { silent: true });
+    return next;
+  }), []);
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
@@ -7266,6 +7279,8 @@ export default function App() {
                     now={agora}
                     expanded={expandedRituals}
                     onExpand={handleExpandRitual}
+                    /* Beta-2 (2.4): a meta do dia, só para exibir (mesma `dailyTotal` do selo). */
+                    goal={dailyTotal}
                     onToggleTask={handleToggleTask}
                     onToggleTaskStep={handleToggleTaskStep}
                     onEditTask={handleEditTask}
