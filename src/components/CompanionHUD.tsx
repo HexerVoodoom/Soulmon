@@ -2,6 +2,9 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, 
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { DungeonSign } from './home/DungeonSign';
+import { EnergyTimer } from './home/EnergyTimer';
+import { HungerIndicator } from './home/HungerIndicator';
+import { formatEnergyEta, type EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
@@ -177,7 +180,9 @@ interface CompanionHUDProps {
   currentXP: number;
   nextLevelXP: number;
   triggerMessage?: number; // Prop to trigger message from outside
-  energyPoints?: number; // Version B: energy gauge, fills only via feeding
+  energyPoints?: number; // a energia de AGORA (regenera com o tempo; a fome decide a velocidade — `utils/hunger.ts`)
+  /** Fome e timer da energia (beta-2 3.4/3.5): o que `energyStatus` calculou. Ausente = sem indicador (testes, desktop). */
+  energyInfo?: Pick<EnergyStatus, 'tier' | 'hunger' | 'mode' | 'msToNext'>;
   maxEnergyPoints?: number; // energy bars = the stage's daily task requirement
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
@@ -236,6 +241,8 @@ interface CompanionHUDProps {
   naMasmorra?: boolean;
   /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
   onSinalMasmorra?: () => void;
+  /** Ms até o Soulmon voltar da masmorra (`useDungeonReturn`, estado persistido) — a placa de madeira mostra. `null` = sem número. */
+  masmorraRetornoMs?: number | null;
   equippedBackground?: string | null; // shop backdrop id for the pet box
   /** Decoração equipada por espaço do palco (utils/petStage.ts). */
   equippedDecor?: Partial<Record<SlotId, string>>;
@@ -313,6 +320,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   nextLevelXP,
   triggerMessage = 0,
   energyPoints = 0,
+  energyInfo,
   maxEnergyPoints,
   fullSignal = 0,
   healCapSignal = 0,
@@ -324,6 +332,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   missionAway = false,
   naMasmorra = false,
   onSinalMasmorra,
+  masmorraRetornoMs,
   daysAway = 0,
   petPassive,
   talento = null,
@@ -1427,7 +1436,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 data-pet-masmorra-slot
                 style={{ position: 'absolute', left: '50%', top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP + PET_RENDER}px)`, transform: 'translate(-50%, -100%)', zIndex: 3 }}
               >
-                <DungeonSign language={language} onTap={onSinalMasmorra} />
+                <DungeonSign language={language} onTap={onSinalMasmorra} returnInMs={masmorraRetornoMs} />
               </div>
             )}
 
@@ -1899,18 +1908,27 @@ export const CompanionHUD = memo(function CompanionHUD({
                 aria-expanded={statAberto === 'energy'}
                 aria-controls="sm3-stat-tip"
                 onClick={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))}
-                aria-label={isPt
+                aria-label={(isPt
                   ? `Energia: ${energyPoints} de ${maxEnergy}${enBaixo ? ' (vazia)' : ''}`
-                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`}
+                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`)
+                  /* o timer vive DENTRO do botão: o nome acessível do botão leva o tempo (os filhos não são lidos) */
+                  + (energyInfo && energyInfo.mode !== 'full'
+                    ? (energyInfo.msToNext === null
+                      ? (isPt ? '. Regeneração parada' : '. Regeneration paused')
+                      : (isPt ? `. Próxima em ${formatEnergyEta(energyInfo.msToNext, true)}` : `. Next in ${formatEnergyEta(energyInfo.msToNext, false)}`))
+                    : '')}
               >
                 <PixelIcon name="energia" size={20} />
                 <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
+                {energyInfo && <EnergyTimer msToNext={energyInfo.msToNext} mode={energyInfo.mode} language={language} />}
               </button>
               {statsSlots?.energyTimer != null && (
                 <span className="sm3-stat-slot" data-slot="energy-timer">{statsSlots.energyTimer}</span>
               )}
-              {statsSlots?.hunger != null && (
+              {statsSlots?.hunger != null ? (
                 <span className="sm3-stat-slot" data-slot="hunger">{statsSlots.hunger}</span>
+              ) : (
+                energyInfo && <HungerIndicator tier={energyInfo.tier} value={energyInfo.hunger} language={language} />
               )}
             </div>
             {statAberto && (() => {

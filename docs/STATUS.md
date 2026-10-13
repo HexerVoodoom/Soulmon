@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 13/10/2026 — Beta-2, frente B (regras): fome e energia por tempo, limite diário da masmorra, check-ins, placa de madeira, Soulsmith e modo imersivo (`feat/b2-regras`, REGISTRO §40)
+>
+> - **Soulsmith "bloqueado" (8.3) — causa raiz achada e corrigida:** a missão de prédio só tinha botão de Resgatar para o Caderno; os outros 14 prédios ficavam `ready` sem ninguém para pagar a peça de nível 1 e os materiais (`applyBuildingEntry`). Reproduzido em `soulsmithAcesso.test.ts`.
+> - **Fome e energia (3.4/3.5):** comida enche a FOME, não a energia; a energia regenera com o tempo na velocidade que a fome permite (100%/50%/parada); timer = motor projetado (`utils/hunger.ts`). Reverte o "só enche comendo" de §30/§31 por pedido do dono.
+> - **Limite diário da masmorra (6.1):** 10 camadas/dia na porta única `spendLayer` (tela + conta de quem ficou fora) + contador monotônico no servidor. **Check-ins (4.1):** 3 janelas sobre o ritmo das refeições. **Placa "In Dungeon" (6.2)** com o tempo de retorno projetado do estado persistido. **Android imersivo (3.1):** `MainActivity` (assembleDebug verde; falta testar em aparelho).
+> - **Depende do dono:** todos os números (REGISTRO §40.9) e onde mora o botão de check-in. Contrato com as outras frentes e contador do fuzz2 (124 → 128): `docs/FRENTE-B-REGRAS-BETA2.md`.
+
 > ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
 >
 > - **Dono:** `utils/dungeonAway.ts` (a conta pura de quem ficou fora: `applyDungeonAway`, `settleDungeonAwayNow`) · `utils/dungeonRewards.ts` (recompensas puras compartilhadas com o `App`) · `utils/dungeonIdle.ts` (`DungeonAway`, `sanitizeDungeonAway`, `soulmonNaMasmorra`, velocidades, teto de 8 h) · `utils/dungeonFight.ts` (`autoRingGrade`/`autoDodgeGrade`) · `utils/dungeonDrops.ts` + `games/DropNotice.tsx` (modalzinho) · `DungeonBusyModal` + `home/DungeonSign` (ocupado e plaquinha) · `utils/match3.ts` + `Match3Game.tsx` (Combina 3).

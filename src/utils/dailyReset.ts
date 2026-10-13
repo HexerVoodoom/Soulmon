@@ -28,6 +28,7 @@ import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
+import { setEnergy } from './hunger';
 
 /**
  * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
@@ -1270,7 +1271,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     maxActivityCap: newMaxActivityCap,
     attributesSinceLastEvolution: newRecentAttrs,
     habitRhythms: rhythms,
-    energyPoints: 0, // Energia zera todo dia (enche comendo)
+    // Energia zera todo dia (REGISTRO §30/§40). Pela porta única da energia: o relógio de regeneração NÃO reinicia (o progresso até a
+    // próxima unidade passa intacto) e a fome também não é tocada.
+    ...(() => { const z = setEnergy(prev as any, now.getTime(), () => 0); return { energyPoints: z.energyPoints, energyClock: z.energyClock }; })(),
     // Resumo de ontem, mostrado 1× como "relatório diário" na próxima abertura.
     lastDayReport: {
       date: yesterdayString,

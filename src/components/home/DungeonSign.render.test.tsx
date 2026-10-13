@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 /**
- * A PLAQUINHA da Home e o aviso "Ele está na masmorra" (pedido do dono, 11/10/2026, REGISTRO §36).
+ * A PLACA DE MADEIRA da Home e o aviso "Ele está na masmorra" (pedido do dono, 11/10/2026, REGISTRO §36; beta-2 6.2: "Na masmorra" / "In Dungeon"
+ * + o tempo de retorno).
  *
- * Com o Soulmon na masmorra o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo" / "I'm in the
- * dungeon, back soon" (componente de CSS com a porta da masmorra de `DUNGEON_PROP_ART`; nenhuma imagem nova). Tocar nela abre o
+ * Com o Soulmon na masmorra o pet some do palco e no lugar dele fica a placa (componente de CSS com a porta da masmorra de `DUNGEON_PROP_ART`;
+ * nenhuma imagem nova). Tocar nela abre o
  * aviso; "Retirar da masmorra" restaura o pet. O aviso também é o que as ações bloqueadas mostram, com o que o jogador queria fazer.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -25,22 +26,49 @@ describe('plaquinha na Home', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} naMasmorra />);
     const placa = container.querySelector('[data-dungeon-sign]') as HTMLElement;
     expect(placa).not.toBeNull();
-    expect(placa.textContent).toBe('Estou na masmorra, volto logo');
+    expect(placa.textContent).toBe('Na masmorra');
     const sprite = container.querySelector('img[data-pet-altitude]') as HTMLElement;
     expect(sprite.style.visibility).toBe('hidden');
     expect(sprite.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('em EN: "I’m in the dungeon, back soon"', () => {
+  it('em EN: "In Dungeon"', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} language="en-US" naMasmorra />);
-    expect((container.querySelector('[data-dungeon-sign]') as HTMLElement).textContent).toBe('I’m in the dungeon, back soon');
+    expect((container.querySelector('[data-dungeon-sign]') as HTMLElement).textContent).toBe('In Dungeon');
+  });
+
+  it('6.2 — mostra o TEMPO DE RETORNO que vem do estado persistido (1h05 / 42 min), e "Voltou" quando já passou', () => {
+    const a = renderWithCss(<CompanionHUD {...base} naMasmorra masmorraRetornoMs={65 * 60_000} />);
+    expect(a.container.querySelector('[data-dungeon-sign-time]')!.textContent).toBe('1h05');
+    expect(a.container.querySelector('[data-dungeon-sign-label]')!.textContent).toBe('Na masmorra');
+    expect(a.container.querySelector('[data-dungeon-sign]')!.getAttribute('aria-label')).toMatch(/volta em 1h05/);
+    a.unmount();
+    const b = renderWithCss(<CompanionHUD {...base} language="en-US" naMasmorra masmorraRetornoMs={42 * 60_000} />);
+    expect(b.container.querySelector('[data-dungeon-sign-time]')!.textContent).toBe('42m');
+    b.unmount();
+    const c = renderWithCss(<CompanionHUD {...base} naMasmorra masmorraRetornoMs={0} />);
+    expect(c.container.querySelector('[data-dungeon-sign-time]')!.textContent).toBe('Voltou');
+    c.unmount();
+    const d = renderWithCss(<CompanionHUD {...base} naMasmorra masmorraRetornoMs={null} />);
+    expect(d.container.querySelector('[data-dungeon-sign-time]')).toBeNull(); // sem número, só o texto curto
+  });
+
+  it('6.2 — a caixa da placa tem tamanho FIXO (texto/tempo/idioma não empurram o cenário nem o sprite)', () => {
+    const tamanhos = new Set<string>();
+    for (const [lang, ms] of [['pt-BR', null], ['pt-BR', 5 * 3_600_000 + 59 * 60_000], ['en-US', 7 * 60_000], ['en-US', 0]] as const) {
+      const { container, unmount } = renderWithCss(<CompanionHUD {...base} language={lang} naMasmorra masmorraRetornoMs={ms} />);
+      const b = container.querySelector('[data-dungeon-sign]') as HTMLElement;
+      tamanhos.add(`${b.style.width}x${b.style.height}`);
+      unmount();
+    }
+    expect([...tamanhos]).toEqual(['118px x 46px'.replace(' x ', 'x')]);
   });
 
   it('a arte é a porta da masmorra que já existe (nenhuma imagem nova) e é um botão acessível', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} naMasmorra />);
     const placa = container.querySelector('[data-dungeon-sign]') as HTMLButtonElement;
     expect(placa.tagName).toBe('BUTTON');
-    expect(placa.getAttribute('aria-label')).toMatch(/Estou na masmorra, volto logo/);
+    expect(placa.getAttribute('aria-label')).toMatch(/Na masmorra/);
     const img = placa.querySelector('img')!;
     expect(img.getAttribute('src')).toMatch(/masmorra-porta/);
     expect(img.getAttribute('alt')).toBe('');

@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, DUNGEON_CAP_MARGIN, DUNGEON_MILESTONE_FLOOR, DUNGEON_DEPTH_MARKS,
   comfortLayers, effectiveFloor, dungeonLayerCap, startLayerFor, isMilestoneLayer, canPayLayer, layersAffordable,
-  spendLayerEnergy, sanitizeDepthRecord, depthMarksCrossed, recordLayerCleared,
+  spendLayer, sanitizeDepthRecord, depthMarksCrossed, recordLayerCleared,
 } from './dungeonIdle';
 import { GATES, MASMORRA_ALTO_A_PARTIR_DO_ANDAR } from './gates';
 import { STAGE_LEVEL_CAPS, getMaxEnergyForStage, FORM_REQUIREMENTS } from '../types/progression';
@@ -104,12 +104,13 @@ describe('ponto de retorno, marcos e recorde', () => {
 
 describe('energia por camada', () => {
   it('gasta 1 e não muta; sem energia devolve a MESMA referência (nada de negativo)', () => {
-    const s = Object.freeze({ energyPoints: 2, x: 1 });
-    const a = spendLayerEnergy(s);
+    const T = Date.UTC(2026, 9, 13, 15, 0, 0);
+    const s = Object.freeze({ energyPoints: 2, evolutionStage: 'rookie', hunger: { v: 0, at: T }, x: 1 });
+    const a = spendLayer(s, T);
     expect(a.energyPoints).toBe(1);
     expect(s.energyPoints).toBe(2);
-    const z = { energyPoints: 0 };
-    expect(spendLayerEnergy(z)).toBe(z);
+    const z = { energyPoints: 0, evolutionStage: 'rookie', hunger: { v: 0, at: T } };
+    expect(spendLayer(z, T)).toBe(z);
     expect(canPayLayer(0)).toBe(false);
     expect(canPayLayer('9')).toBe(false);
     expect(canPayLayer(1)).toBe(true);

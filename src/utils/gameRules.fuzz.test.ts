@@ -345,7 +345,7 @@ describe('a resposta "quanto falta para não perder coração?" é a mesma conta
 
 // ═══════════════════════════════════════════════════════════════════════════
 describe('careRules — invariantes de domínio', () => {
-  it('comer nunca passa da energia máxima do estágio nem produz número não finito', () => {
+  it('comer NUNCA muda a energia (sobe a fome, 0..100), nunca produz número não finito (beta-2 3.5)', () => {
     const fails: string[] = [];
     for (let seed = 0; seed < 3000; seed++) {
       const r = mulberry32(seed + 8000);
@@ -363,9 +363,9 @@ describe('careRules — invariantes de domínio', () => {
       const out = feedFood(st, '🍎', [], Date.now());
       if (out.refused) continue;                       // recusa devolve o estado intacto
       if (!Number.isFinite(out.state.energyPoints)) fails.push(`seed ${seed}: energia não finita`);
-      else if (out.state.energyPoints > maxE) fails.push(`seed ${seed}: energia ${out.state.energyPoints} > máx ${maxE}`);
-      if (out.state.energyPoints < st.energyPoints && st.energyPoints <= maxE)
-        fails.push(`seed ${seed}: comer DIMINUIU a energia`);
+      else if (out.state.energyPoints !== st.energyPoints) fails.push(`seed ${seed}: comer MUDOU a energia (${st.energyPoints} → ${out.state.energyPoints}; máx ${maxE})`);
+      const fome = out.state.hunger?.v;
+      if (typeof fome !== 'number' || !Number.isFinite(fome) || fome < 0 || fome > 100) fails.push(`seed ${seed}: fome fora de 0..100 (${String(fome)})`);
       if (out.feedTimes.length > FOOD_LIMIT_PER_HOUR) fails.push(`seed ${seed}: ${out.feedTimes.length} comidas na janela`);
     }
     expect(fails.slice(0, 10)).toEqual([]);

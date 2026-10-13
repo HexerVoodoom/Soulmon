@@ -28,12 +28,13 @@ function estado(over: Partial<CareState> = {}): CareState {
 }
 
 describe('alimentar', () => {
-  it('consome a comida, dá +1 energia e os atributos da categoria', () => {
+  it('consome a comida, sobe a FOME (não a energia) e dá os atributos da categoria', () => {
     // 🍎 = Study → { power: 0, harmony: 3, benevolence: 1 }
     const r = feedFood(estado(), '🍎', [], 0);
     expect(r.refused).toBeUndefined();
     expect(r.state.foodInventory['🍎']).toBe(1);
-    expect(r.state.energyPoints).toBe(1);
+    expect(r.state.energyPoints).toBe(0); // beta-2 3.5: comer NÃO dá energia
+    expect(r.state.hunger).toEqual({ v: 100, at: 0 }); // fome estava cheia (sem registro) e comer não passa do máximo
     expect(r.state.harmonyPoints).toBe(3);
     expect(r.state.benevolencePoints).toBe(1);
     expect(r.state.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 3, benevolence: 1 });
@@ -350,7 +351,7 @@ describe('teto de comida × requisito do estágio', () => {
     expect(abaixo).toEqual([]);
   });
 
-  it('mega que fecha as 6 tarefas numa sessão só consegue dar as 6 comidas (a energia do dia inteiro)', () => {
+  it('mega que fecha as 6 tarefas numa sessão só consegue dar as 6 comidas (sem recusa por ritmo)', () => {
     const agora = Date.now();
     let st = estado({
       evolutionStage: 'mega-harmony',           // 6 barras de energia
@@ -365,7 +366,7 @@ describe('teto de comida × requisito do estágio', () => {
       st = r.state;
       times = r.feedTimes;
     }
-    expect(st.energyPoints).toBe(FORM_REQUIREMENTS.mega.required);
+    expect(st.energyPoints).toBe(0); // beta-2 3.5: a comida enche a fome; a energia só regenera com o tempo
     expect(getMaxEnergyForStage('mega-harmony')).toBeGreaterThanOrEqual(FORM_REQUIREMENTS.mega.required);
   });
 

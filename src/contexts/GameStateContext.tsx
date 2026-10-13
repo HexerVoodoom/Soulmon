@@ -4,7 +4,9 @@ import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, register
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
-import { sanitizeDungeonAway, type DungeonAway } from '../utils/dungeonIdle';
+import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
+import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
+import { sanitizeCheckIns } from '../utils/checkIns';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
@@ -220,7 +222,7 @@ export interface GameState {
   activityStats: ActivityStats;
   healthPoints: number;
   maxHealthPoints: number;
-  /** Version B: energy/satiety gauge — fills only by feeding, caps at maxHealthPoints */
+  /** Energia: REGENERA com o tempo (`energyClock`), na velocidade que a FOME (`hunger`) permite — comer NÃO a enche (beta-2 3.5, REGISTRO §40). Lida sempre acertada: `settleEnergy`/`energyStatus` (`utils/hunger.ts`). Zera na virada. */
   energyPoints: number;
   perfectDays: number;
   /** 🧬 Gauge de evolução: PESO DE ESFORÇO creditado no estágio atual (teto
@@ -419,6 +421,17 @@ export interface GameState {
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
   dungeonAway?: DungeonAway;
+  /** 🍽️ A FOME (beta-2 3.5, REGISTRO §40): nível 0..100 + o instante da medida. NUNCA se lê direto — `hungerAt`/`energyStatus` (`utils/hunger.ts`)
+   *  somam a queda por timestamp. Comer SOBE a fome (não a energia). Ausente = cheia (sem dívida retroativa). Fome não tira coração nem Bits. */
+  hunger?: { v: number; at: number };
+  /** ⏱️ O relógio da regeneração da ENERGIA (`utils/hunger.ts`): até onde a regeneração foi contada e o progresso até a próxima unidade.
+   *  Moram no save para fechar o app, navegar ou trocar de aparelho NÃO reiniciarem o timer. Ausente = nasce na próxima leitura. */
+  energyClock?: { at: number; carry: number };
+  /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (`DUNGEON_DAILY_LAYERS`, `utils/dungeonIdle.ts`) mora no
+   *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
+  dungeonDaily?: { day: string; layers: number };
+  /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
+  checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1226,6 +1239,12 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
         dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
+        // Fome, relógio da energia, camadas do dia e check-ins (beta-2): registro bom ou nada (lixo → ausente = cheia / relógio novo /
+        // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
+        hunger: sanitizeHunger(loadedState.hunger),
+        energyClock: sanitizeEnergyClock(loadedState.energyClock),
+        dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
+        checkIns: sanitizeCheckIns(loadedState.checkIns),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'

@@ -261,6 +261,17 @@ Todos entram com fallback `?? padrão` no load e sincronizam com a nuvem; o fuzz
 | `demoCharacterId?` / `demoLocal?` | id / `boolean` | demo local com os 5 iniciais (nunca sobe com XP/compras) | `utils/demoMode.ts` |
 | `repeatEveryDays?` / `wakeOn?` | `number` / `string` | em atividade/tarefa: repetição a cada N dias e data de reativação | `types/taskModel.ts` |
 
+#### 2.12-C Campos acrescentados em 13/10/2026 (beta-2, frente B — REGISTRO §40)
+
+Quatro campos opcionais, com sanitize no `hydrateSave` (lixo → ausente) e **sem subir `SAVE_SCHEMA_VERSION`** (campo novo com `??`). `fuzz2`: 124 → **128** (somar às demais frentes no merge).
+
+| Campo | Tipo | O que guarda | Dono |
+|---|---|---|---|
+| `hunger?` | `{v: 0..100, at: ms}` | a FOME medida no instante `at`; lida SEMPRE por `hungerAt`/`energyStatus` (desce por timestamp, 14 h do cheio ao vazio). Ausente = cheia | `utils/hunger.ts` |
+| `energyClock?` | `{at: ms, carry}` | o relógio da regeneração da energia: até onde foi contada e o progresso até a próxima unidade (ponto-ms). Moram no save para o timer não reiniciar ao fechar/navegar. Ausente = nasce na próxima leitura | `utils/hunger.ts` |
+| `dungeonDaily?` | `{day: 'AAAA-MM-DD', layers}` | camadas da masmorra COMEÇADAS no dia do jogador (limite `DUNGEON_DAILY_LAYERS` = 10). Servidor: monotônico (`functions/api/_dayCounters.js`) | `utils/dungeonIdle.ts` |
+| `checkIns?` | `{day, claimed: ('morning'\|'afternoon'\|'night')[]}` | janelas de check-in já resgatadas no dia do jogador; sem histórico. Servidor: monotônico | `utils/checkIns.ts` |
+
 ### 2.13 O que NUNCA vai para o save
 
 | Coisa | Onde ela vive de verdade | Por quê |

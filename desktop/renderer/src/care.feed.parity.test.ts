@@ -9,7 +9,8 @@
 // mudança é ESTRUTURAL e o que se prova aqui é paridade byte a byte com o
 // caminho antigo — mais o guard que faz a coincidência parar de ser sorte.
 import { describe, it, expect } from 'vitest';
-import { localFeed } from './care';
+import { localFeed, remoteFeed } from './care';
+import { hungerAt } from '../../../src/utils/hunger';
 import { feedFood, FOOD_LIMIT_PER_HOUR, type CareState } from '../../../src/utils/careRules';
 import { getMaxEnergyForStage } from '../../../src/types/progression';
 
@@ -36,11 +37,11 @@ function legado(
 
 const ESTAGIOS = ['rookie', 'champion-power', 'ultimate-harmony', 'mega-benevolence', 'ultra'];
 
-describe('a comida sem conta continua exatamente a mesma para o jogador', () => {
-  it('paridade com o caminho antigo em todo estagio, energia, estoque e janela', () => {
+describe('a comida sem conta continua a MESMA regra do app (beta-2 3.5: comer sobe a FOME, não a energia)', () => {
+  it('em todo estágio, energia, estoque e janela: as recusas e o estoque são os do caminho antigo — e a energia NÃO muda ao comer', () => {
     let casos = 0;
     for (const stage of ESTAGIOS) {
-      const maxEnergy = getMaxEnergyForStage(stage); // o que o cloudSync teria posto em cache
+      const maxEnergy = getMaxEnergyForStage(stage);
       for (let energy = 0; energy <= maxEnergy; energy++) {
         for (const foodInventory of [{}, { '🍎': 1 }, { '🍎': 3, '🍚': 2 }] as Record<string, number>[]) {
           for (const feedTimes of [
@@ -53,8 +54,9 @@ describe('a comida sem conta continua exatamente a mesma para o jogador', () => 
             const velho = legado({ ...base }, '🍎', AGORA);
             const novo = localFeed({ stage, energy, foodInventory, feedTimes }, '🍎', AGORA);
             expect(novo.refused, `${stage}/${energy}`).toBe(velho.refused);
-            expect(novo.energy, `${stage}/${energy}`).toBe(velho.energy);
             expect(novo.foodInventory, `${stage}/${energy}`).toEqual(velho.foodInventory);
+            // A ÚNICA diferença para o caminho antigo é a pedida pelo dono: a comida não dá mais +1 de energia.
+            expect(novo.energy, `${stage}/${energy}`).toBe(energy);
             casos++;
           }
         }
@@ -64,46 +66,22 @@ describe('a comida sem conta continua exatamente a mesma para o jogador', () => 
   });
 });
 
-describe('o teto de energia do overlay passa a ser o do JOGO, nao um cache', () => {
-  // VERMELHO com a linha antiga: ela usava `state.maxEnergy`, um campo de
-  // cache. Um save de mega lido antes de o cache atualizar (ou um teto que o
-  // jogo passe a calcular de outro jeito) fazia o overlay parar de encher a
-  // energia num número velho. `localFeed` nem oferece onde escrever esse cache.
-  it.each(ESTAGIOS)('%s: enche ate getMaxEnergyForStage e para', stage => {
-    const teto = getMaxEnergyForStage(stage);
-    let st = { stage, energy: 0, foodInventory: { '🍎': 99 } as Record<string, number>, feedTimes: [] as number[] };
-    for (let i = 0; i < teto + 3; i++) {
-      // Janela sempre limpa: o que se mede aqui é o teto de energia, nao o de ritmo.
+describe('o overlay não reescreve a energia: comer nunca a muda, em estágio nenhum', () => {
+  it.each(ESTAGIOS)('%s: dez comidas seguidas deixam a energia onde estava', stage => {
+    let st = { stage, energy: 3, foodInventory: { '🍎': 99 } as Record<string, number>, feedTimes: [] as number[] };
+    for (let i = 0; i < 10; i++) {
+      // Janela sempre limpa: o que se mede aqui é a energia, não o ritmo.
       const r = localFeed({ ...st, feedTimes: [] }, '🍎', AGORA + i * 1000);
       expect(r.refused).toBeUndefined();
       st = { ...st, energy: r.energy, foodInventory: r.foodInventory };
     }
-    expect(st.energy).toBe(teto);
+    expect(st.energy).toBe(3);
   });
 
-  // A PROVA DE QUE A COPIA ERA COPIA, e nao so redundancia visual.
-  //
-  // Nao e um bug alcancavel HOJE: `stage` e `maxEnergy` sao escritos juntos em
-  // `applySnapshot`/`syncNow`, entao o cache nunca esta atrasado em relacao ao
-  // estagio. Nao e, portanto, correcao de comportamento, e nada muda para o
-  // jogador. O que este caso mede e a DISTANCIA entre as duas escritas da
-  // regra: basta um caminho que atualize um campo sem o outro (um snapshot
-  // parcial, um estado legado carregado do localStorage, um estagio novo) para
-  // o overlay parar de encher a energia num numero velho, em silencio. Com a
-  // regra escrita uma vez so, esse caminho deixa de existir: nao ha onde
-  // escrever o teto errado.
-  it('a linha antiga divergia com o cache atrasado; a nova nao tem cache', () => {
-    const atrasado = { stage: 'mega-harmony', energy: 4, maxEnergy: 4, foodInventory: { '🍎': 1 }, feedTimes: [] };
-    expect(legado({ ...atrasado }, '🍎', AGORA).energy).toBe(4);            // preso no teto de rookie
-    expect(localFeed(atrasado, '🍎', AGORA).energy).toBe(5);                // o teto do estagio real
-    expect(getMaxEnergyForStage('mega-harmony')).toBe(12); // 6 × ENERGY_HEADROOM (11/10/2026)
-  });
-
-  it('nao ha campo de teto para o chamador passar errado', () => {
-    // O tipo `LocalFeedState` nao tem `maxEnergy` — o teto entra pelo `stage`.
+  it('não há campo de teto para o chamador passar errado (o tipo `LocalFeedState` não tem `maxEnergy`)', () => {
     const r = localFeed({ stage: 'mega-harmony', energy: 11, foodInventory: { '🍎': 1 }, feedTimes: [] }, '🍎', AGORA);
-    expect(r.energy).toBe(getMaxEnergyForStage('mega-harmony'));
-    expect(r.energy).toBe(12);
+    expect(r.energy).toBe(11);
+    expect(getMaxEnergyForStage('mega-harmony')).toBe(12);
   });
 });
 
@@ -133,5 +111,22 @@ describe('as recusas continuam sendo as do app', () => {
       st = { ...st, foodInventory: r.foodInventory, feedTimes: r.feedTimes };
     }
     expect(localFeed(st, '🍎', AGORA + FOOD_LIMIT_PER_HOUR).refused).toBe('hourly-limit');
+  });
+});
+
+describe('com conta: o overlay grava a FOME no save e deixa a energia ao relógio (beta-2 3.5)', () => {
+  const remoto = () => ({
+    evolutionStage: 'rookie', healthPoints: 3, maxHealthPoints: 3, energyPoints: 2, foodInventory: { '🍎': 2 },
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+    hunger: { v: 10, at: AGORA - 1000 }, energyClock: { at: AGORA - 1000, carry: 0 },
+  } as Record<string, unknown>);
+  it('comer sobe `hunger` no save real e NÃO mexe em `energyPoints`', () => {
+    const r = remoteFeed(remoto(), '🍎', AGORA);
+    expect(r.refused).toBeUndefined();
+    const next = r.next as Record<string, unknown>;
+    expect(next.energyPoints).toBe(2);
+    expect(hungerAt(next.hunger as { v: number; at: number }, AGORA)).toBeGreaterThan(10);
+    expect((next.foodInventory as Record<string, number>)['🍎']).toBe(1);
   });
 });

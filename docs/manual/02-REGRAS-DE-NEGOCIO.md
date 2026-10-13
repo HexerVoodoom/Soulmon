@@ -240,8 +240,8 @@ como contato, porque sem ela o teto lê como "pare". Régua da fala:
 <a id="comida"></a>
 ## 3. 🍎 Comida
 
-**Em uma frase.** Comer enche energia e dá pontos de atributo — nunca cura HP —
-e há um teto por hora, não por dia.
+**Em uma frase.** Comer enche a fome e dá pontos de atributo — nunca cura HP e
+nunca dá energia — e há um teto por hora, não por dia.
 
 **A regra.** `FOOD_LIMIT_PER_HOUR = MAX_STAGE_REQUIREMENT`
 (`src/utils/careRules.ts`), **derivado** do maior `required` de
@@ -249,7 +249,8 @@ e há um teto por hora, não por dia.
 DESLIZANTE de 1 h sobre timestamps (`recentFeeds`), não contador diário.
 
 Uma comida comum (`FOOD_BY_CATEGORY`, `src/constants/labels.ts`):
-- `energyPoints = min(getMaxEnergyForStage(stage), energy + 1)`;
+- sobe a FOME em `HUNGER_PER_FOOD` (40, `src/utils/hunger.ts` → `eat`) — a
+  energia NÃO muda (beta-2, REGISTRO §40: antes era `energy + 1`);
 - soma `CATEGORY_ATTRIBUTES[categoria]` em `powerPoints`/`harmonyPoints`/`benevolencePoints`
   **e** em `attributesSinceLastEvolution`;
 - `totalXP += (soma dos atributos) × 10`;
@@ -269,8 +270,7 @@ comida da categoria da tarefa. Os atributos NÃO vêm de concluir; vêm de
 alimentar.
 
 **Por que o teto é derivado.** Era o literal `5` enquanto mega/ultra pedem 6
-tarefas. Como energia só enche comendo e energia cheia é condição do dia
-completo, quem fechava as 6 numa sessão só dava 5 comidas e **perdia o dia
+tarefas. Quem fechava as 6 numa sessão só dava 5 comidas e **perdia o dia
 completo tendo feito 100% da própria meta** — punido por ritmo, não por esforço.
 
 **Dono.** `src/utils/careRules.ts` → `feedFood`, `recentFeeds`, `feedsLeft`;
@@ -416,12 +416,21 @@ as sete famílias acima.
 <a id="energia"></a>
 ## 6. ⚡ Energia
 
-**Em uma frase.** A energia só enche comendo, zera todo dia, e o número de
-barras é o requisito de tarefas do estágio.
+**Em uma frase.** A energia sobe com o tempo — mais depressa quando o Soulmon
+está bem alimentado, parada quando está faminto —, zera todo dia, e o número de
+barras é o dobro do requisito de tarefas do estágio.
 
-**A regra.** `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required`
-(`src/types/progression.ts`) — rookie 4, champion 5, ultimate 5, mega 6, ultra 6.
-`computeDailyReset` grava `energyPoints: 0` em toda virada.
+**A regra (beta-2, 13/10/2026, REGISTRO §40).** A energia regenera 1 unidade a
+cada `ENERGY_REGEN_MINUTES` (120 min) a 100% de velocidade; a velocidade é
+decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
+mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
+sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
+até a próxima unidade fica no save (`energyClock`): fechar o app não reinicia o
+timer. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
+ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
+10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
+relógio e a fome seguem). A energia serve para descer a Masmorra (1 por camada,
+até 10 camadas por dia) e para brincar.
 
 **Condição do dia completo**: `energyPoints >= dailyGoalFor`, e **não** o
 requisito cru do estágio. Comida vem de concluir tarefa, então num dia de meta 2
@@ -1073,8 +1082,8 @@ atributo, e o atributo escolhe o galho da próxima evolução.
    Wellness 🧃 · Discipline 🍚 · Social 🍕 · Creativity 🍭.
 2. **Comer** (`feedFood`) soma `CATEGORY_ATTRIBUTES[categoria]`
    (`src/types/attributes.ts`) em `powerPoints`/`harmonyPoints`/`benevolencePoints`,
-   soma o mesmo em `attributesSinceLastEvolution`, dá +1 de energia (limitada
-   por `getMaxEnergyForStage`) e `totalXP += (soma dos três) × 10`.
+   soma o mesmo em `attributesSinceLastEvolution`, enche a fome (a energia não muda) e
+   `totalXP += (soma dos três) × 10`.
    Ex.: Study `{power 0, harmony 3, benevolence 1}`; Creativity `{3,1,0}`;
    Discipline `{0,1,3}`.
 3. **O traço Guloso** soma `GULOSO_BONUS_ATTR` (1) **no atributo que a comida já
