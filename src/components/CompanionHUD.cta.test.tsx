@@ -257,6 +257,6 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     fireEvent.click(hp);
     expect(screen.queryByRole('tooltip')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Energia/ }));
-    expect(screen.getByRole('tooltip').textContent).toMatch(/comendo/);
+    expect(screen.getByRole('tooltip').textContent).toMatch(/com o tempo/); // beta-2 3.5: a energia sobe com o TEMPO (comer enche a fome)
   });
 });

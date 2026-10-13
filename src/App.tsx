@@ -19,8 +19,12 @@ import { MissionsLink } from './components/nav/MissionsLink';
 import { needsWelcomeTour } from './utils/welcomeTour';
 import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
-import { buildingMarks, visitBuilding, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
-import { applyForgeGrant } from './utils/forgeActions';
+import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
+import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
+import { setEnergy, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
+import { availableCheckIn, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
+import { useEnergyStatus } from './hooks/useEnergyStatus';
+import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
@@ -947,6 +951,21 @@ export default function App() {
   const atenderRefeicao = useCallback((kind: MealInviteKind) => {
     setGameState(prev => markMealDone(prev, new Date(), kind, isSleepingRefeicao.current));
   }, []);
+
+
+  /* ⏱️ A REGENERAÇÃO DA ENERGIA (beta-2 3.4/3.5, `utils/hunger.ts`): a energia sobe com o TEMPO, na velocidade que a fome permite, e o
+     que vale é o relógio gravado no save (`energyClock`) — nunca um contador de tela. Este efeito só ACERTA o estado a cada 15 s e quando a
+     aba volta ao foco (o app pode ter ficado fechado por horas); `settleEnergy` devolve a MESMA referência sem unidade nova, então não
+     há re-render nem escrita à toa. O que a Home mostra (`energyStatus`) é calculado sobre o mesmo estado e as mesmas fronteiras. */
+  useEffect(() => {
+    const acertar = () => setGameState(prev => settleEnergy(prev, Date.now()));
+    acertar();
+    const id = setInterval(acertar, 15_000);
+    const aoVoltar = () => { if (document.visibilityState === 'visible') acertar(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('focus', acertar);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', aoVoltar); window.removeEventListener('focus', acertar); };
+  }, [setGameState]);
 
   /* Telemetria do ritmo: dispara quando uma janela PASSA a constar como
      atendida NESTA sessão (comparando com o render anterior) — fora do updater
@@ -2040,7 +2059,7 @@ export default function App() {
       hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
       healthPoints: Math.floor(gameState.healthPoints),
       maxHealthPoints: gameState.maxHealthPoints,
-      energyPoints: gameState.energyPoints ?? 0,
+      energyPoints: settleEnergy(gameState, Date.now()).energyPoints ?? 0,
       hasPoop: (gameState.poopEventsShown || []).some(i => !(gameState.poopEventsCompleted || []).includes(i)),
       /* WP2.6 — o widget passa a saber de HÁBITO. Ele mostrava só tarefas do
          dia, HP e energia: o motor de constância, a peça mais central do
@@ -2845,14 +2864,10 @@ export default function App() {
     if (dailyTotal > 0) {
       parts.push(isPt ? `📋 ${dailyDone}/${dailyTotal} do dia` : `📋 ${dailyDone}/${dailyTotal} today`);
     }
-    // Só oferece o próximo passo se ele existir de verdade: a condição do dia
-    // perfeito é energia ≥ meta do dia, então com a energia já cheia isto seria
-    // uma cobrança inventada em cima de quem acabou de fechar tudo.
-    if (dailyTotal > 0 && dailyDone >= dailyTotal && (gameState.energyPoints ?? 0) < dailyTotal) {
-      parts.push(isPt ? '⚡ falta encher a energia' : '⚡ energy left to fill');
-    }
+    // (beta-2 3.5) A dica "falta encher a energia" SAIU: a energia não enche mais comendo (a comida enche a FOME e o tempo regenera a
+    // energia), e a meta do dia não depende dela desde 11/10/2026 — o toast não cobra nada além do que a pessoa acabou de fazer.
     toast(parts.join('  ·  '));
-  }, [language, dailyDone, dailyTotal, gameState.energyPoints]);
+  }, [language, dailyDone, dailyTotal]);
 
   /**
    * Fila de UM anúncio: o handler só ENFILEIRA (`queueTaskGains`) e o efeito
@@ -3111,6 +3126,11 @@ export default function App() {
   naMasmorraRef.current = naMasmorra;
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
+  /* ⏱️🍽️ O estado real da energia/fome (beta-2 3.4/3.5): relógio do save + fome de agora, recalculado a cada 15 s. Alimenta o número da
+     energia, o timer e o indicador de fome da Home (`EnergyTimer`/`HungerIndicator`). */
+  const energiaStatus = useEnergyStatus(gameState);
+  /* 🪵 O retorno do Soulmon na masmorra (beta-2 6.2): fim projetado da descida a partir do estado PERSISTIDO — alimenta a placa de madeira. */
+  const masmorraRetorno = useDungeonReturn(gameState);
   const [ocupadoAviso, setOcupadoAviso] = useState<{ acao: OcupadoAcao | null } | null>(null);
   const [retirando, setRetirando] = useState(false);
   const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
@@ -3327,7 +3347,7 @@ export default function App() {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
       }
       if (special.kind === 'premium') {
-        toast(language === 'pt-BR' ? '⭐ Comida premium! +5 de energia' : '⭐ Premium food! +5 energy');
+        toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');
       }
       return;
     }
@@ -3357,6 +3377,20 @@ export default function App() {
     atenderRefeicao('snack');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
+
+  /* ☀️🌤️🌙 CHECK-IN DA JANELA (beta-2 4.1, `utils/checkIns.ts`): a recompensa sai TODA do updater (`claimCheckIn` reconfere a janela
+     sobre o `prev` — dois toques no mesmo lote pagam uma vez) e o toast vem do resultado da MESMA chamada, fora do updater. */
+  const resgatarCheckIn = useCallback(() => {
+    const agora = Date.now();
+    const slot = availableCheckIn(gameStateRef.current, agora);
+    if (!slot) return;
+    setGameState(prev => claimCheckIn(prev, agora).state);
+    atenderRefeicao('tenSeconds');
+    const rw = CHECKIN_REWARDS[slot];
+    toast(language === 'pt-BR'
+      ? (slot === 'morning' ? '☀️ O dia começa com ele alimentado' : slot === 'afternoon' ? `🌤️ +${rw.bits} Bits` : `🌙 +${rw.xp} de Vínculo`)
+      : (slot === 'morning' ? '☀️ The day starts with him fed' : slot === 'afternoon' ? `🌤️ +${rw.bits} Bits` : `🌙 +${rw.xp} Bond`));
+  }, [language, atenderRefeicao]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -5073,10 +5107,8 @@ export default function App() {
     setGameState(prev => awardBondXP({
       ...prev,
       healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + (rewards.hearts ?? 0)),
-      energyPoints: Math.min(
-        getMaxEnergyForStage(prev.evolutionStage),
-        (prev.energyPoints ?? 0) + (rewards.energy ?? 0),
-      ),
+      // O Pesadelo vencido devolve energia pela porta única (`setEnergy`): acerta a regeneração e não reinicia o relógio.
+      ...(() => { const e = setEnergy(prev, Date.now(), (cur) => cur + (rewards.energy ?? 0)); return { energyPoints: e.energyPoints, energyClock: e.energyClock }; })(),
       gamePoints: (prev.gamePoints ?? 0) + (rewards.bits ?? 0),
       bitsOrigin: noteFreeBits(prev, rewards.bits ?? 0, playerDayKey(new Date(), prev.playerDayTz)).bitsOrigin,
       nightmares: markFought(
@@ -5731,10 +5763,8 @@ export default function App() {
 
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
-    setGameState(prev => {
-      const next = visitBuilding(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), id, bondLevelFor(prev.totalXP ?? 0));
-      return next === prev.buildingQuests ? prev : { ...prev, buildingQuests: next };
-    });
+    /* 8.3: o prédio NÃO listado paga o material e a peça do Soulsmith na própria entrada (`applyBuildingEntry`) — não há tela de Resgatar para ele. */
+    setGameState(prev => applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id));
   }, []);
 
   /** Resgata o material do prédio. Idempotente: a recusa é reconferida sobre o `prev` (resgate duplo não paga 2×). */
@@ -6689,7 +6719,8 @@ export default function App() {
                 currentXP={gameState.totalXP}
                 nextLevelXP={getNextLevelXP()}
                 triggerMessage={messageTrigger}
-                energyPoints={gameState.energyPoints}
+                energyPoints={energiaStatus.energy}
+                energyInfo={energiaStatus}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
                 talento={manifestacaoAtual?.talento}
                 equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
@@ -6761,6 +6792,7 @@ export default function App() {
                 missionAway={isMissionAway(guildMission, Date.now())}
                 naMasmorra={naMasmorra}
                 onSinalMasmorra={() => abrirAvisoMasmorra(null)}
+                masmorraRetornoMs={naMasmorra ? masmorraRetorno.msLeft : null}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
@@ -7074,7 +7106,7 @@ export default function App() {
                       // vaga na janela horária e energia com espaço.
                       canFeed: comumNaPastinha
                         && feedTimesFor(gameState.careCaps, agoraA.getTime()).length < FOOD_LIMIT_PER_HOUR
-                        && gameState.energyPoints < getMaxEnergyForStage(gameState.evolutionStage),
+                        && hungerAt(gameState.hunger, agoraA.getTime()) < HUNGER_PREMIUM_REFUSE_AT,
                     }, `${playerDayKey(agoraA, gameState.playerDayTz)}|${refeicaoA}`);
                     avisos.push({
                       key: 'refeicao',
@@ -7091,6 +7123,10 @@ export default function App() {
                               else { falar(kind === 'pet' ? 'rub' : 'cheer'); atenderRefeicao(kind); }
                             }}
                             onSkip={() => setGameState(prev => skipMeal(prev, refeicaoA, new Date()))}
+                            checkIn={(() => {
+                              const slot = availableCheckIn(gameState, agoraA.getTime());
+                              return slot ? { slot, onClaim: () => resgatarCheckIn() } : undefined;
+                            })()}
                           />
                         </Suspense>
                       ),

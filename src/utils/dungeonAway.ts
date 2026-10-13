@@ -25,7 +25,7 @@
 import type { GameState } from '../contexts/GameStateContext';
 import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_AWAY_MAX_MS, DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER,
-  canPayLayer, dungeonLayerCap, effectiveFloor, gravarHp, isMilestoneLayer, recordLayerCleared, sanitizeDungeonAway, spendLayerEnergy,
+  dungeonLayerCap, effectiveFloor, gravarHp, isMilestoneLayer, layerRefusal, recordLayerCleared, sanitizeDungeonAway, spendLayer,
   type DungeonAway, type DungeonAwayPlayer,
 } from './dungeonIdle';
 import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartDrops, HEART_DROP_CHANCE, type DungeonEnemy } from './dungeon';
@@ -51,7 +51,7 @@ export const AWAY_CAST_PAUSE_MS = 2200;
 const MAX_FIGHTS_PER_CALL = 4000;
 
 /** Por que a descida terminou (o Soulmon voltou para casa). `null` = segue lá. */
-export type AwayEnd = 'hp' | 'energy' | 'sealed' | 'deep' | 'retired' | null;
+export type AwayEnd = 'hp' | 'energy' | 'daily' | 'sealed' | 'deep' | 'retired' | null;
 
 /** O que a ausência rendeu — o relatório que a tela mostra. */
 export interface AwayReport {
@@ -182,10 +182,13 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
         ended = masmorraFloorOpen(next, bond) ? 'deep' : 'sealed';
         break;
       }
-      if (!canPayLayer(s.energyPoints)) { ended = 'energy'; break; }
-      s = spendLayerEnergy(s);
-      report.energy += DUNGEON_ENERGY_PER_LAYER;
+      // A MESMA porta da tela (`spendLayer`): energia com a regeneração acertada até o instante DA LINHA DO TEMPO da descida (`t`) e o
+      // limite diário de camadas do dia daquele instante. Sem isto a conta fora do app furaria o limite que a tela respeita.
       t += DUNGEON_AUTO_FIGHT_MS;
+      const refusal = layerRefusal(s, t);
+      if (refusal) { ended = refusal === 'daily-limit' ? 'daily' : 'energy'; t -= DUNGEON_AUTO_FIGHT_MS; break; }
+      s = spendLayer(s, t);
+      report.energy += DUNGEON_ENERGY_PER_LAYER;
       layer = next; slot = 0;
       continue;
     }

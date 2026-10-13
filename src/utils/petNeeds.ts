@@ -33,7 +33,7 @@
  * `GameState` inteiro e receber ele de volta sem perder campo.
  */
 
-import { getMaxEnergyForStage } from '../types/progression';
+import { HUNGER_FED_MIN, hungerAt, setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import { OVERCOMMIT_EFFORT, isOvercommitted, plannedEffort } from './taskTriage';
 import type { PlannedActivity, TriageTask } from './taskTriage';
 import { GOOD_CONSTANCY_RATIO, dayKeyOf } from './habitRhythm';
@@ -98,6 +98,9 @@ export interface PlayLog {
  */
 export interface PetNeedsState {
   energyPoints: number;
+  /** Fome e relógio da energia (`utils/hunger.ts`). */
+  hunger?: HungerRecord;
+  energyClock?: EnergyClock;
   foodInventory: Record<string, number>;
   evolutionStage?: string;
   tasks?: TriageTask[];
@@ -204,7 +207,8 @@ export function play<T extends PetNeedsState>(
   now: Date = new Date(),
 ): { state: T; buff?: PlayBuff; refused?: PlayRefusal } {
   if (playedToday(state, todayKey)) return { state, refused: 'already-played' };
-  if ((state.energyPoints ?? 0) < PLAY_ENERGY_COST) return { state, refused: 'no-energy' };
+  // A energia de AGORA (a regeneração até `now` já contada), e não a do último tick.
+  if ((settleEnergy(state, now.getTime()).energyPoints ?? 0) < PLAY_ENERGY_COST) return { state, refused: 'no-energy' };
 
   const attribute = attributeForDay(todayKey);
   const buff: PlayBuff = {
@@ -219,8 +223,9 @@ export function play<T extends PetNeedsState>(
   return {
     buff,
     state: {
-      ...state,
-      energyPoints: Math.max(0, (state.energyPoints ?? 0) - PLAY_ENERGY_COST),
+      // O gasto passa por `setEnergy` (utils/hunger.ts): acerta a regeneração até `now` antes de cobrar, para o relógio da energia
+      // não contar em dobro nem se perder.
+      ...setEnergy(state, now.getTime(), (e) => e - PLAY_ENERGY_COST),
       [attrKey]: (state[attrKey] ?? 0) + PLAY_ATTRIBUTE_POINT,
       playLog: { date: todayKey, buff },
     },
@@ -338,8 +343,6 @@ export interface PetWish {
   pt: string;
 }
 
-/** Abaixo desta fração da energia máxima, comer é uma boa ideia. */
-export const LOW_ENERGY_RATIO = 0.5;
 
 /**
  * O que o pet gostaria agora — **no máximo UM item**.
@@ -382,8 +385,8 @@ export function needsAttention(state: PetNeedsState, now: Date): PetWish[] {
   }
 
   const stock = Object.values(state.foodInventory ?? {}).reduce((s, n) => s + (n ?? 0), 0);
-  const maxEnergy = getMaxEnergyForStage(state.evolutionStage ?? '');
-  if (stock > 0 && (state.energyPoints ?? 0) < maxEnergy * LOW_ENERGY_RATIO) {
+  // Fome (beta-2 3.5): comer sobe a FOME; o pet só pede quando ela está abaixo de "bem alimentado" (comida serve de verdade).
+  if (stock > 0 && hungerAt(state.hunger, now.getTime()) < HUNGER_FED_MIN) {
     return [{
       kind: 'feed',
       en: 'I am a little hungry, if you feel like it.',

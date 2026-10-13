@@ -14,7 +14,8 @@ import {
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { GATES } from '../utils/gates';
-import { DUNGEON_ENERGY_PER_LAYER } from '../utils/dungeonIdle';
+import { DUNGEON_ENERGY_PER_LAYER, DUNGEON_DAILY_LAYERS } from '../utils/dungeonIdle';
+import { ENERGY_REGEN_MINUTES } from '../utils/hunger';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL } from '../utils/forge';
@@ -70,8 +71,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar. Fills only by feeding (up to ${FOOD_LIMIT_PER_HOUR}/hour), holds twice the daily goal and resets each day. It is the Dungeon's fuel: each layer spends ${DUNGEON_ENERGY_PER_LAYER}, and leveling up refills it.`,
-    descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora), guarda o dobro da meta do dia e zera todo dia. É o combustível da Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER}, e subir de nível enche de novo.`,
+    descEn: `The side bar. Rises with time (1 every ${ENERGY_REGEN_MINUTES} min when well fed; slower when hungry, stopped when starving — eating fills hunger, not energy), holds twice the daily goal and resets each day. It is the Dungeon's fuel: each layer spends ${DUNGEON_ENERGY_PER_LAYER} (up to ${DUNGEON_DAILY_LAYERS} a day), and leveling up refills it.`,
+    descPt: `A barra lateral. Sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado; mais devagar com fome, parada se faminto — comer enche a fome, não a energia), guarda o dobro da meta do dia e zera todo dia. É o combustível da Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} (até ${DUNGEON_DAILY_LAYERS} por dia), e subir de nível enche de novo.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
@@ -168,8 +169,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '⭐', en: 'Premium food', pt: 'Comida premium',
-    descEn: 'Earned by finishing every step of a task with 3 or more steps. Gives 5 energy instead of 1 (never above the day\'s max). One a day, three a week.',
-    descPt: 'Vem de fechar todos os subitens de uma tarefa com 3 ou mais. Dá 5 de energia em vez de 1 (nunca acima do máximo do dia). Uma por dia, três por semana.',
+    descEn: 'Earned by finishing every step of a task with 3 or more steps. Fills your Soulmon\'s hunger (it does not give energy directly). One a day, three a week.',
+    descPt: 'Vem de fechar todos os subitens de uma tarefa com 3 ou mais. Enche a fome do Soulmon (não dá energia direto). Uma por dia, três por semana.',
   },
   {
     icon: '🎯', en: 'Today\'s focus', pt: 'Foco do dia',

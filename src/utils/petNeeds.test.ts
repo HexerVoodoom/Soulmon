@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  LOW_ENERGY_RATIO,
   PLAY_ATTRIBUTE_POINT,
   PLAY_BUFF_DURATION_MIN,
   PLAY_BUFF_MULTIPLIER,
@@ -161,20 +160,21 @@ describe('needsAttention', () => {
     expect(wishes[0].en).not.toBe(wishes[0].pt);
   });
 
-  it('oferece brincar quando dá, e comida só com estoque e energia baixa', () => {
+  it('oferece brincar quando dá, e comida só com estoque e FOME abaixo de "bem alimentado"', () => {
     expect(needsAttention(baseState(), NOW)[0].kind).toBe('play');
 
-    const played = play(baseState({ energyPoints: 0, foodInventory: { '🍎': 1 } }), TODAY, NOW).state;
+    // beta-2 3.5: o pet pede comida pela FOME, não pela energia
+    const fome = { v: 30, at: NOW.getTime() };
+    const played = play(baseState({ energyPoints: 0, hunger: fome, foodInventory: { '🍎': 1 } }), TODAY, NOW).state;
     expect(needsAttention({ ...played, playLog: { date: TODAY } }, NOW)[0].kind).toBe('feed');
 
     // sem estoque não sugere comer (seria cobrar tarefa por tabela)
-    const noStock = { ...baseState({ energyPoints: 0 }), playLog: { date: TODAY } };
+    const noStock = { ...baseState({ energyPoints: 0, hunger: fome }), playLog: { date: TODAY } };
     expect(needsAttention(noStock, NOW)).toHaveLength(0);
   });
 
-  it('energia acima do corte não gera sugestão de comida', () => {
-    const s = { ...baseState({ energyPoints: 4, foodInventory: { '🍎': 2 } }), playLog: { date: TODAY } };
-    expect(s.energyPoints).toBeGreaterThan(4 * LOW_ENERGY_RATIO);
+  it('bem alimentado não gera sugestão de comida (com ou sem energia)', () => {
+    const s = { ...baseState({ energyPoints: 0, hunger: { v: 90, at: NOW.getTime() }, foodInventory: { '🍎': 2 } }), playLog: { date: TODAY } };
     expect(needsAttention(s, NOW)).toHaveLength(0);
   });
 });

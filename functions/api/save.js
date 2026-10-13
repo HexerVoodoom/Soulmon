@@ -21,6 +21,7 @@ import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
+import { enforceDungeonDaily, enforceCheckIns } from './_dayCounters.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -312,6 +313,20 @@ export async function onRequest({ request, env }) {
       const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
       if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveId, estagios: mexeu });
       if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
+    }
+    // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so
+    // crescem dentro do dia e o dia so anda para a frente (ate o dia do servidor + 1). Apagar o save local ou voltar o contador nao
+    // devolve camada nem janela; omitir o campo mantem o gravado. So parseia o gravado quando algum dos dois campos existe nele.
+    {
+      const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"'));
+      if (temGravado || 'dungeonDaily' in state || 'checkIns' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
+        if (dd) state.dungeonDaily = dd; else delete state.dungeonDaily;
+        const ci = enforceCheckIns(state.checkIns, gravado.checkIns);
+        if (ci) state.checkIns = ci; else delete state.checkIns;
+      }
     }
     const serialized = JSON.stringify(state);
     // BYTES, nao caracteres (PR13): UTF-8 chega a 3 bytes por caractere. So mede de verdade quando o pior caso poderia estourar.

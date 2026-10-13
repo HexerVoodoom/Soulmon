@@ -17,6 +17,8 @@
 
 import { STAGE_LEVEL_CAPS } from '../types/progression';
 import { MASMORRA_ALTO_A_PARTIR_DO_ANDAR, masmorraFloorOpen } from './gates';
+import { setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
+import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 
 /** Pausa entre o fim de uma luta e o começo da próxima (ritmo visível do idle). Ajustável pelo dono. */
 export const DUNGEON_AUTO_FIGHT_MS = 4000;
@@ -174,10 +176,83 @@ export function layersAffordable(energy: unknown): number {
   return Math.max(0, Math.floor(int(energy) / DUNGEON_ENERGY_PER_LAYER));
 }
 
-/** Gasta a energia de UMA camada. Sem energia devolve a MESMA referência (o updater não muda nada). */
-export function spendLayerEnergy<T extends { energyPoints: number }>(prev: T): T {
-  if (!canPayLayer(prev.energyPoints)) return prev;
-  return { ...prev, energyPoints: int(prev.energyPoints) - DUNGEON_ENERGY_PER_LAYER };
+// (`spendLayerEnergy` SAIU em 13/10/2026: gastava `energyPoints` à mão, sem acertar a regeneração nem o limite diário. A porta única é `spendLayer`, abaixo.)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🚧 LIMITE DIÁRIO DE CAMADAS E CUSTO DE ENERGIA (beta-2 item 6.1 — REGISTRO §40).
+//
+// A porta ÚNICA para começar uma camada é `spendLayer`: ela é PURA, roda dentro do updater do `setGameState` (a tela) e dentro da
+// conta de quem ficou fora (`dungeonAway.ts`), e reconfere as DUAS condições sobre o `prev` — energia (já com a regeneração acertada
+// até `now`) e camadas do dia. Nenhuma tela decide sozinha: a UI só espelha o que o updater vai fazer (`layerRefusal`).
+//
+//  · `DUNGEON_DAILY_LAYERS` camadas por DIA DO JOGADOR (fuso fixo do save), contadas ao COMEÇAR a camada (a mesma hora em que a
+//    energia é cobrada). Entrar e sair da tela, reabrir o app ou retirar o Soulmon NÃO devolvem camada: o contador mora no save.
+//  · Relógio que volta NÃO reabre o dia (vale o maior entre o dia do relógio e o do registro); relógio adiantado só vale até o
+//    servidor (`functions/api/_dungeonDaily.js`, monotônico no POST do save) ver o dia futuro.
+//  · Bater o limite NUNCA custa coração nem Bits: o botão não acende e a frase é calma. O que já foi limpo fica.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Camadas que a descida pode COMEÇAR por dia do jogador (default proposto; o dono decide). */
+export const DUNGEON_DAILY_LAYERS = 10;
+
+/** O contador do dia, no SAVE (`dungeonDaily`). `day` é `playerDayIso` (AAAA-MM-DD, ordenável). */
+export interface DungeonDaily { day: string; layers: number }
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Lixo → `undefined` (= nenhuma camada hoje). `layers` preso a 0..`DUNGEON_MAX_LAYER`. */
+export function sanitizeDungeonDaily(raw: unknown): DungeonDaily | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = raw as { day?: unknown; layers?: unknown };
+  if (typeof r.day !== 'string' || !ISO_DAY.test(r.day) || typeof r.layers !== 'number' || !Number.isFinite(r.layers)) return undefined;
+  return { day: r.day, layers: Math.min(DUNGEON_MAX_LAYER, Math.max(0, Math.floor(r.layers))) };
+}
+
+export interface DungeonDailyState { dungeonDaily?: DungeonDaily; playerDayTz?: PlayerDayAnchor }
+
+/** O dia que VALE para o contador: nunca anterior ao do registro (relógio que voltou não reabre o dia). */
+export function dungeonDayOf(state: DungeonDailyState, nowMs: number): string {
+  const hoje = playerDayIso(new Date(nowMs), state.playerDayTz);
+  const rec = sanitizeDungeonDaily(state.dungeonDaily);
+  return rec && rec.day > hoje ? rec.day : hoje;
+}
+
+/** Camadas já começadas HOJE. */
+export function layersToday(state: DungeonDailyState, nowMs: number): number {
+  const rec = sanitizeDungeonDaily(state.dungeonDaily);
+  return rec && rec.day === dungeonDayOf(state, nowMs) ? rec.layers : 0;
+}
+
+/** Camadas que o limite diário ainda deixa começar hoje. */
+export function layersLeftToday(state: DungeonDailyState, nowMs: number): number {
+  return Math.max(0, DUNGEON_DAILY_LAYERS - layersToday(state, nowMs));
+}
+
+export type LayerRefusal = 'no-energy' | 'daily-limit';
+
+export interface LayerState extends DungeonDailyState {
+  energyPoints: number;
+  evolutionStage?: string;
+  hunger?: HungerRecord;
+  energyClock?: EnergyClock;
+}
+
+/** Por que a próxima camada NÃO pode começar agora (energia de AGORA, com a regeneração acertada). `undefined` = pode. */
+export function layerRefusal(state: LayerState, nowMs: number): LayerRefusal | undefined {
+  if (layersLeftToday(state, nowMs) <= 0) return 'daily-limit';
+  if (!canPayLayer(settleEnergy(state, nowMs).energyPoints)) return 'no-energy';
+  return undefined;
+}
+
+/**
+ * Começa UMA camada: reconfere a recusa sobre `prev` e, se der, gasta a energia (pela porta única `setEnergy`) e conta a camada do
+ * dia. Recusa devolve a MESMA referência — dois toques no mesmo lote não gastam duas vezes, e uma tela velha não fura o limite.
+ */
+export function spendLayer<T extends LayerState>(prev: T, nowMs: number): T {
+  if (layerRefusal(prev, nowMs)) return prev;
+  const day = dungeonDayOf(prev, nowMs);
+  const gasto = setEnergy(prev, nowMs, (cur) => cur - DUNGEON_ENERGY_PER_LAYER);
+  return { ...gasto, dungeonDaily: { day, layers: layersToday(prev, nowMs) + 1 } };
 }
 
 /** Os marcos de PROFUNDIDADE (recorde, 1× na vida) e os fragmentos do Soulsmith de cada um. Material, nunca Bits. */
