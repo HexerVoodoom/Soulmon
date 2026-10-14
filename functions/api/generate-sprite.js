@@ -1,5 +1,6 @@
 // Cloudflare Pages Function — gera 1 sprite de Soulmon.
-// Provedor primário: HIGGSFIELD — GPT Image 2.5 flare (HF_CREDENTIALS) ou, sem ela, Soul.
+// Provedor primário: HIGGSFIELD — GPT Image 2 low (rota via SPRITE_GPT_IMAGE_ROUTE, ver §47),
+// senão flare (HF_CREDENTIALS) ou, sem ela, Soul.
 //   Secrets: HF_API_KEY + HF_SECRET (já configurados via `wrangler secret`).
 //   Suporta referência de imagem (cadeia de evolução: champion parte do
 //   rookie etc. — ver `composeSpritePrompts` em `src/utils/oracle.ts`).
@@ -244,10 +245,33 @@ function flareCredentials(env) {
   return /^[^:\s]+:[^:\s]+$/.test(c) ? c : null;
 }
 
+// GPT Image 2 LOW (dono, 14/10/2026, §47): modelo padrão do sprite. `SPRITE_MODEL`:
+// 'gpt_image_2' (padrão) | 'flare' | 'soul' | id de rota. `SPRITE_QUALITY` (low|medium|high,
+// padrão low). A rota REST de `gpt_image_2` NÃO está na documentação pública
+// (docs.higgsfield.ai só lista Soul, Marketing Studio, Grok, Recraft, Ideogram...; o
+// `gpt_image_2` existe só na CLI como job_type). Por isso a rota é configurável:
+// `SPRITE_GPT_IMAGE_ROUTE` (ex.: "<owner>/<model>"). Sem ela, gpt_image_2 é ignorado
+// (log) e a cadeia segue flare -> Soul -> Gemini. Nada de rota inventada.
+function spriteQuality(env) {
+  const q = String(env.SPRITE_QUALITY || '').trim().toLowerCase();
+  return ['low', 'medium', 'high'].includes(q) ? q : 'low';
+}
+
 function spriteModel(env) {
   const forced = String(env.SPRITE_MODEL || '').trim();
+  if (forced === 'flare') return FLARE_MODEL;
   if (forced) return forced;
-  return flareCredentials(env) ? FLARE_MODEL : 'soul';
+  return 'gpt_image_2';
+}
+
+/** Rota REST efetiva do modelo pedido, ou null se não configurada/confirmável. */
+function resolveRoute(env, model) {
+  if (model === 'soul') return null;
+  if (model === 'gpt_image_2') {
+    const r = String(env.SPRITE_GPT_IMAGE_ROUTE || '').trim().replace(/^\/+/, '');
+    return r || (flareCredentials(env) ? FLARE_MODEL : null);
+  }
+  return model;
 }
 
 async function generateFlare(env, model, prompt, referenceImageUrls) {
@@ -256,8 +280,9 @@ async function generateFlare(env, model, prompt, referenceImageUrls) {
   const input = {
     // Fundo transparente pedido NO TEXTO (sem chroma-key); a API não documenta flag de background.
     prompt,
-    quality: 'medium',
+    quality: spriteQuality(env),
     resolution: '1k',
+    background: 'transparent',
     aspect_ratio: '1:1',
     moderation: 'auto',
     enhance_prompt: false,
@@ -294,8 +319,12 @@ async function generateFlare(env, model, prompt, referenceImageUrls) {
 }
 
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
-  const model = spriteModel(env);
-  if (model !== 'soul' && flareCredentials(env)) {
+  const wanted = spriteModel(env);
+  const model = resolveRoute(env, wanted);
+  if (wanted === 'gpt_image_2' && !env.SPRITE_GPT_IMAGE_ROUTE) {
+    console.error('SPRITE_GPT_IMAGE_ROUTE ausente: gpt_image_2 sem rota REST confirmada, usando flare/Soul');
+  }
+  if (model && flareCredentials(env)) {
     try {
       return await generateFlare(env, model, prompt, referenceImageUrls);
     } catch (err) {

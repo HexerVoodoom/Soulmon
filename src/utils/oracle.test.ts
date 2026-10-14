@@ -220,8 +220,9 @@ describe('generateOracle', () => {
       // Template validado empiricamente: prompt CURTO estilo v-pet, sem fundo,
       // sem outline/shading/anti-aliasing (frases longas geram sprites piores —
       // ver composeSpritePrompt).
-      expect(s.imagePrompt.startsWith('Generate an original creature')).toBe(true);
-      expect(s.imagePrompt).toContain('Retro virtual-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard');
+      expect(s.imagePrompt.startsWith('Generate this RPG creature inspired by')).toBe(true);
+      expect(s.imagePromptFallback.startsWith('Generate this original RPG creature.')).toBe(true);
+      expect(s.imagePrompt).toContain('Tamagotchi-style v-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard');
       // Duas variantes por forma: a 1ª tentativa CITA as referências de gênero
       // (decisão do dono: puxa resultado melhor) e o fallback não cita ninguém.
       // Se o provedor recusar a primeira, generate-sprite.js refaz com a
@@ -246,13 +247,8 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('isolated subject, no backdrop, no checkerboard');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      // O gerador entregava criaturas quase monocromáticas; o veto ao
-      // tingimento de matiz única vale para TODOS os estágios.
-      expect(s.imagePrompt).toContain('Do not tint the whole creature in a single hue');
-      // Escala de cinza é exceção permitida — preto e branco é escolha de arte,
-      // não falta de cor. Se alguém reintroduzir o veto, isto quebra.
-      expect(s.imagePrompt).toContain('Grayscale/black-and-white is acceptable');
-      expect(s.imagePrompt).not.toMatch(/not grayscale/i);
+      // v-pet (§47): sem o veto de matiz única (o exemplo do dono não o tem).
+      expect(s.imagePrompt).not.toContain('Do not tint');
       // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
       const conceptMatch = s.imagePrompt.match(/no checkerboard: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();

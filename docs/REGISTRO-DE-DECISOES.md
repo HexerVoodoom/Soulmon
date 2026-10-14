@@ -2322,6 +2322,15 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Testes alterados:** `energiaFome.render.test.tsx` — o teste "nome acessível do botão leva o estado do timer" foi removido e o do timer na faixa trocado por "nada na faixa / dica com contagem / faminto pausada", porque o contrato mudou. O slot `statsSlots.energyTimer` do HUD continua existindo (contrato de encaixe), mas o app não o usa.
 - **Fome em níveis (complemento, mesmo dia):** o indicador de fome mostra o nível N de 3 (bem alimentado 3, mediano 2, faminto 1) em marcas cheias/contorno. Tocar nele abre a dica da fome: contagem ao vivo (`H:MM:SS`/`M:SS`) até cair de nível (`msToHungerDrop` de `energyStatus`; faminto = sem contagem) e o impacto (a fome define a velocidade da energia: 3 normal, 2 metade, 1 parada). A penalidade por fome NÃO está nesta decisão (outra frente).
 
+## 47. Template de prompt v-pet e GPT Image 2 LOW (dono, 14/10/2026)
+
+- **Decisão:** novo template `v-pet` (baseado nos exemplos do estilo antigo do dono) vira padrão; o anterior fica como `composeSpritePromptLegacy` (`VITE_SPRITE_PROMPT_STYLE=legacy`). Texto de ambos em `docs/PROMPT-SPRITE-ESTILOS.md`. Mantidas: cláusula `Do not copy any existing franchise character`, direção RIGHT, fundo transparente explícito, duas variantes (principal com franquias, reserva sem marcas), uma geração por forma. O veto de matiz única (`hueGuard`) saiu por não constar nos exemplos (reativável).
+- **Modelo:** GPT Image 2 (`gpt_image_2`) qualidade **low** (0,5 crédito) substitui o "medium"/flare do §41/§43 (`SPRITE_MODEL`, `SPRITE_QUALITY`). A rota REST de `gpt_image_2` não consta na documentação pública; configurar `SPRITE_GPT_IMAGE_ROUTE`. Sem ela cai em flare/Soul/Gemini.
+- **Risco de IP (aceito pelo dono):** citar marcas no prompt principal; a cláusula anti-cópia e a reserva sem marcas continuam.
+- **Teste real:** CLI gerou 3 sprites (E:\soulmon-sprites-teste-pet\); saída veio RGB opaco com fundo branco, sem alfa (ver relatório).
+
+
+
 ## 46. Cota do modo grátis só conta hábito diário; prazo e assombrada voltam à linha do Hoje (dono, modal, 14/10/2026)
 
 - **Cota:** tarefa AGENDADA (`Activity` com `schedule` em dias específicos) NÃO gasta a cota de hábitos do modo grátis (resolve a pendência do §44); só o hábito diário conta (`activityBucket === 'habit'`). Fonte única: `consomeCotaDeHabito`/`contaCotaDeHabitos` em `utils/atividadesLista.ts`, usada por `fitHabitCreates`, pelo portão de tarefa, por `atCapForDemo` e pelas contagens do `CreateModal` e do tutorial. O `CreateModal` só bloqueia o Salvar quando o tipo é Hábito; a mensagem do teto diz que tarefas (pontuais ou em dias específicos) seguem sem limite. Save antigo: uma atividade agendada que já existia deixa de ocupar vaga (só libera, nunca tira).
