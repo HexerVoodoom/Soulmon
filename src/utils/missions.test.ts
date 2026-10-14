@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MISSIONS, getMissionProgress, isMissionComplete, isShopItemUnlocked, type MissionState } from './missions';
+import { MISSIONS, getMissionProgress, isMissionComplete, isShopItemUnlocked, sanitizeMissionsClaimed, completedMissionIds, hasUnclaimedMission, type MissionState } from './missions';
 import { SHOP_ITEMS } from './shop';
 import { PET_BACKGROUNDS } from './backgrounds';
 
@@ -70,5 +70,28 @@ describe('missions — shop unlock gating', () => {
     const chip = SHOP_ITEMS.find(i => i.id === 'chip-power')!;
     expect(isShopItemUnlocked(chip, progress)).toBe(true);
     expect(SHOP_ITEMS.some(i => i.id === 'glitchtama')).toBe(false);
+  });
+});
+
+describe('resgate explícito da conquista (REGISTRO §56)', () => {
+  const item = { id: 'bg-x', unlock: { kind: 'mission', missionId: 'mission-dino-1000' } } as unknown as Parameters<typeof isShopItemUnlocked>[0];
+  const feito = { 'mission-dino-1000': 1000 };
+  it('cumprir NÃO basta: sem o resgate a compra segue fechada; resgatada, abre. Resgatar só libera (não há item a conceder aqui)', () => {
+    expect(isShopItemUnlocked(item, feito, false, [])).toBe(false);
+    expect(isShopItemUnlocked(item, feito, false, ['mission-dino-1000'])).toBe(true);
+    expect(isShopItemUnlocked(item, { 'mission-dino-1000': 999 }, false, ['mission-dino-1000'])).toBe(false);
+  });
+  it('save não migrado (claimed ausente): a liberação segue automática, ninguém perde acesso', () => {
+    expect(isShopItemUnlocked(item, feito)).toBe(true);
+  });
+  it('migração: os ids cumpridos agora; pendência só existe com o campo presente', () => {
+    expect(completedMissionIds(feito)).toEqual(['mission-dino-1000']);
+    expect(hasUnclaimedMission(feito, undefined)).toBe(false);
+    expect(hasUnclaimedMission(feito, [])).toBe(true);
+    expect(hasUnclaimedMission(feito, completedMissionIds(feito))).toBe(false);
+  });
+  it('sanitize: só ids do catálogo, sem repetição', () => {
+    expect(sanitizeMissionsClaimed(null)).toBeUndefined();
+    expect(sanitizeMissionsClaimed(['mission-mega', 'mission-mega', 'x', 3])).toEqual(['mission-mega']);
   });
 });

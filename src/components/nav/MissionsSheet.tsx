@@ -29,7 +29,7 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, firstDay }: {
+export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, firstDay }: {
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
   initialTab?: MissionsTab;
   open: boolean;
@@ -56,6 +56,9 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   dailies?: DailyMissionsProps;
   /** As primeiras vezes (missões únicas, `utils/dailyMissions.ts`): seção própria na aba Diárias. */
   firsts?: FirstTimesProps;
+  /** Conquistas já resgatadas e o Resgatar (REGISTRO §56). `missionsClaimed` ausente = save não migrado. */
+  missionsClaimed?: readonly string[];
+  onClaimMission?: (id: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<MissionsTab>(initialTab);
@@ -139,9 +142,9 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
               <div role="tabpanel" hidden={tab !== 'achievements'} data-missions-panel="achievements">
                 <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt} id="achievements">
                   <p data-achievements-hint style={{ margin: '0 0 8px', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>
-                    {isPt ? 'Cumprir libera o item para compra. A compra é no Mercado, prédio Conquistas.' : 'Completing one unlocks the item for sale. You buy it at the Market, Achievements building.'}
+                    {isPt ? 'Cumpra, resgate aqui e compre o item no Mercado, prédio Conquistas. Resgatar só libera a compra.' : 'Complete it, claim it here, then buy the item at the Market, Achievements building. Claiming only unlocks buying.'}
                   </p>
-                  <ConquistasSheet language={language} missionProgress={missionProgress} />
+                  <ConquistasSheet language={language} missionProgress={missionProgress} claimed={missionsClaimed} onClaim={onClaimMission} />
                 </Section>
               </div>
             )}

@@ -259,7 +259,7 @@ describe('2.2 Pai e filhos', () => {
 
 describe('2.4 Today e Goal', () => {
   it('`Today` ganha o acabamento cromado e a meta vira o indicador ÚNICO `Mission N/G`', () => {
-    // §56: antes a contagem (`N/total`) e o bloco `Goal G` eram dois indicadores; agora é um só.
+    // §57: antes a contagem (`N/total`) e o bloco `Goal G` eram dois indicadores; agora é um só.
     const feita = { ...diario, completedToday: true, lastCompletedDate: TERCA.toDateString() } as unknown as Activity;
     const { container } = mount({ activities: [feita] });
     const titulo = container.querySelector('[data-today-title]') as HTMLElement;
@@ -301,7 +301,7 @@ describe('2.4 Today e Goal', () => {
     a.unmount();
     const b = mount({ goal: 99, activities: [feita] });
     expect(t1).not.toBeNull();
-    // §56: só o G exibido muda; o N (feitos) vem da lista e é o mesmo.
+    // §57: só o G exibido muda; o N (feitos) vem da lista e é o mesmo.
     expect(feitosDe(b)).toBe(t1);
   });
 });

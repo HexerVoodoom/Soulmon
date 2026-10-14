@@ -36,7 +36,7 @@ const mainBtn: CSSProperties = { flex: 1, minWidth: 0, alignSelf: 'stretch', dis
 export function SubscriptionShelf({ language, kind, ownership, actions }: {
   language: Language;
   kind: 'bg' | 'furniture';
-  ownership: Pick<ShopOwnership, 'ownedBackgrounds' | 'equippedBackground' | 'ownedFurniture' | 'equippedDecor' | 'missionProgress' | 'subscriptionActive'>;
+  ownership: Pick<ShopOwnership, 'ownedBackgrounds' | 'equippedBackground' | 'ownedFurniture' | 'equippedDecor' | 'missionProgress' | 'missionClaimed' | 'subscriptionActive'>;
   actions: Pick<ShopActions, 'onEquip' | 'onEquipFurniture' | 'onClaimSubscription'>;
 }) {
   const isPt = language === 'pt-BR';
@@ -102,7 +102,7 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
       {items.map(item => {
         const name = isPt ? item.namePt : item.nameEn;
         const owned = ownedList.includes(item.id);
-        const unlocked = isShopItemUnlocked(item, ownership.missionProgress, active);
+        const unlocked = isShopItemUnlocked(item, ownership.missionProgress, active, ownership.missionClaimed);
         const equipped = owned && (item.slot ? ownership.equippedDecor[item.slot] === item.id : ownership.equippedBackground === item.id);
 
         if (owned) {

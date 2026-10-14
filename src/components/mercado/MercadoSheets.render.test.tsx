@@ -281,7 +281,7 @@ describe('Conquistas — filtro por categoria, sem coluna de zeros (WP4.12)', ()
     const li = container.querySelector(`[data-mission="${m.id}"]`) as HTMLElement;
     expect(li.getAttribute('data-done')).toBe('true');
     expect(li.style.border).toContain('var(--sm2-primary-ink)');
-    expect(li.textContent).toContain('Unlocked');
+    expect(li.textContent).toContain('Claimed'); // 14/10/2026 (§56): cumprida sem campo de resgate (save não migrado) vale como resgatada e diz onde comprar
   });
 });
 

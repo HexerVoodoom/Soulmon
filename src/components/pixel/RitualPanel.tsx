@@ -420,7 +420,7 @@ export function RitualPanel({
             {/* `Today` com acabamento cromado discreto (beta-2, 2.4). */}
             <span className="sm3-cromo" data-today-title>{isPt ? 'Hoje' : 'Today'}</span>
             {/* Piso de dígitos E5: o contador só existe com feitos ≥ 1 —
-                "0/5" é a fatura, não o dado. Indicador ÚNICO (REGISTRO §56):
+                "0/5" é a fatura, não o dado. Indicador ÚNICO (REGISTRO §57):
                 com meta definida mostra `Missão N/G` (G = a META, não o
                 número de atividades; N pode passar de G: `6/4`). Sem meta,
                 cai na contagem simples da lista. Só EXIBIÇÃO. */}

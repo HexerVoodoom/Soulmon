@@ -190,6 +190,8 @@ export interface ShopOwnership {
   equippedDecor: Partial<Record<SlotId, string>>;
   /** Progresso por missão (utils/missions.ts) — decide o cadeado. */
   missionProgress: Record<string, number>;
+  /** Conquistas já RESGATADAS (REGISTRO §56). Ausente = save não migrado: a liberação é automática. */
+  missionClaimed?: readonly string[];
   /** A vitrine do trimestre da assinatura está aberta? (`utils/subscription.ts`.)
    *  Só a `SubscriptionShelf` lê isto — a prateleira de Bits nunca. */
   subscriptionActive?: boolean;
@@ -226,7 +228,7 @@ export function ShopShelf({
   hideDecorRule?: boolean;
 }) {
   const isPt = language === 'pt-BR';
-  const { ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor, missionProgress } = ownership;
+  const { ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor, missionProgress, missionClaimed } = ownership;
   // Defesa das três moedas: item cobrado em outra moeda não entra nesta
   // prateleira, mesmo que alguém o passe por engano.
   const shelf = items.filter(i => itemCurrency(i) === currency);
@@ -271,6 +273,7 @@ export function ShopShelf({
     const m = MISSIONS.find(x => x.id === missionId);
     if (!m) return '';
     const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
+    if (cur >= m.target && missionClaimed && !missionClaimed.includes(m.id)) return isPt ? 'Cumprida: resgate em Missões (!) › Conquistas' : 'Done: claim it in Missions (!) › Achievements';
     /* WP4.12 (achado E4) — ZERO NÃO É PROGRESSO, é a ausência dele. */
     const prog = m.target > 1 && cur > 0 ? ` · ${cur}/${m.target}` : '';
     return `${isPt ? m.descPt : m.descEn}${prog}`;
@@ -305,7 +308,7 @@ export function ShopShelf({
   };
 
   const renderItem = (item: ShopItem) => {
-    const unlocked = isShopItemUnlocked(item, missionProgress);
+    const unlocked = isShopItemUnlocked(item, missionProgress, false, missionClaimed);
     const isEquippable = item.kind === 'bg' || item.kind === 'furniture';
     const ownedList = item.kind === 'bg' ? ownedBackgrounds : item.kind === 'furniture' ? ownedFurniture : [];
     const owned = isEquippable && ownedList.includes(item.id);

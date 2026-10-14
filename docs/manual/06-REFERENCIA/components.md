@@ -495,7 +495,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/CompanionHUD.tsx`
 
-**Balão de fala (14/10/2026, REGISTRO §56):** `[data-pet-bubble]` é um balão de verdade (`role="status"`, `aria-live="polite"`): fundo `--sm2-surface` sólido, borda `--sm2-line`, sombra sutil, texto à esquerda, largura máx. 80%, 3 linhas com reticências, cauda (`[data-pet-bubble-tail]`) para baixo no x do pet (`50 + (position-50)*CENA_ZOOM`, o balão acompanha o pet que anda sem sair da janela). Fora do fluxo (`position:absolute` em `[data-pet-bubble-row]`, `BUBBLE_TOP` = `BUBBLE_GAP`+14); fade de entrada `sm3-balao` só fora de `reducedMotion`.
+**Balão de fala (14/10/2026, REGISTRO §57):** `[data-pet-bubble]` é um balão de verdade (`role="status"`, `aria-live="polite"`): fundo `--sm2-surface` sólido, borda `--sm2-line`, sombra sutil, texto à esquerda, largura máx. 80%, 3 linhas com reticências, cauda (`[data-pet-bubble-tail]`) para baixo no x do pet (`50 + (position-50)*CENA_ZOOM`, o balão acompanha o pet que anda sem sair da janela). Fora do fluxo (`position:absolute` em `[data-pet-bubble-row]`, `BUBBLE_TOP` = `BUBBLE_GAP`+14); fade de entrada `sm3-balao` só fora de `reducedMotion`.
 **Dono de:** a área do pet inteira — sprite, HUD do "aparelho" (visor pixel-art), gesto de esfregar, ações (comer/banho/dormir/item), fala, chat embutido e decoração do palco.
 **Props principais:** `CompanionHUDProps` (arquivo lido, interface em torno da linha 124) — estado do pet (`healthPoints`, `energyLevel`, `evolutionStage`, `dominantBranch`, `currentXP`…), sinais que só crescem (`fullSignal`, `healCapSignal`, `speakSignal`, `daysAway`, `moodToday`, `hauntedWatching`), `walkingTo?` (desde `3532ccf5`: o nome da região de destino do Passeio, ≠ casa; vira 🎒 nas costas do pet, `data-pet-passeando`, `pointerEvents: none`, sem animação nem som, o nome só no `aria-label`; `null` = em casa), decoração (`equippedBackground`, `equippedDecor`, `trophies`), evolução manual (`onEvolve`, `canEvolve`, `onEvolveRequest`), cuidado (`careEvent`, `onFeed`, `onShower`, `onSleep`, `onPet`, `foodInventory`, `hasNewItems?`, `onBackpackSeen?` — ⚰️ era `onOpenItems`, a pastinha que saiu na minimal-ui), chat (`useAI`, `aiSettings`, `onCreateActivity`; ⚰️ `onOpenAISettings` não está mais nas props), `language`.
 **Exports:** `PET_RENDER` (re-export de `src/utils/petStage.ts` — não redeclarado aqui, de propósito) · `CompanionHUD` (`const`, `memo(function CompanionHUD(...))`).
@@ -529,7 +529,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `CoopPanel` (alias de `GuildSheet`).
 **Chamado por:** `src/components/LibraryPage.tsx` — mas a aba "Grupo" da Biblioteca é **inalcançável** (o único mount, `hallContent`, passa `view`, que esconde as abas); o caminho real é `AreaView` → `GuildSheet`. (⚠️ dizia "Chamado por LibraryPage" como se fosse o caminho vivo — achado L1-conformidade #28.)
 **Régua:** `src/components/CoopPanel.render.test.tsx`; a tela em si → `guild/GuildSheet.*.test.tsx`.
-**Avisos do arquivo:** as invariantes (nenhum número por pessoa, sair num toque, sem push) agora são do `GuildSheet` e de `functions/api/guild.js` — [02 §56-A](../02-REGRAS-DE-NEGOCIO.md).
+**Avisos do arquivo:** as invariantes (nenhum número por pessoa, sair num toque, sem push) agora são do `GuildSheet` e de `functions/api/guild.js` — [02 §57-A](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/components/CreateModal.tsx`
 **Dono de:** formulário de criação de hábito/tarefa — Quick-Add como caminho primário, formulário completo atrás de "mais opções".
@@ -859,6 +859,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/NightmareBattle'" src`, 09/09/2026).
 **Régua:** `src/components/NightmareBattle.render.test.tsx` (o convite, a cena em tela cheia, o anel, a esquiva, vencer, perder sem custo, a energia que segue de um inimigo para o outro); a régua de recompensa/onda vive em `src/utils/nightmares.test.ts`.
 **Avisos do arquivo:** perder não custa nada (mesma regra da Masmorra) — tela de derrota diz "o sonho passou, você acorda bem"; tom sem horror/susto/vermelho de perigo; `DungeonGame` deliberadamente NÃO reutilizado — ele não aceita onda pronta, é uma run de 5 andares (não uma luta única) e escreve direto no localStorage (misturaria a economia da Masmorra com a do Pesadelo).
+
+### `src/components/NoticeToast.tsx`
+**Dono de:** o balãozinho de aviso acionável da Home (REGISTRO §56): não é modal, some sozinho em `NOTICE_TOAST_MS` (8 s) e o toque abre a folha de Avisos.
+**Exports:** `NOTICE_TOAST_MS` · `NOTICE_TOAST_KEYS` (`refeicao`, `refugio`, `termos`, `triagem`, `recomeco`) · `NoticeToastKey` · `pickNoticeKey(presentes, vistos)` (puro: o primeiro ainda não visto) · `noticeToastText(key, language)` · `NoticeToast({ noticeKey, language, onOpen, onDone })`.
+**Chamado por:** `src/App.tsx`.
 
 ### `src/components/NotificationManager.tsx`
 **Dono de:** o agendamento em memória de toasts/notificações locais (nudges de hábito, boa noite, lembrete de deitar) — não decide texto/hora (isso é `functions/api/_pushCopy.js`).
@@ -1237,7 +1242,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/pixel/RitualPanel.tsx`
 
-**Missão N/G (14/10/2026, REGISTRO §56):** na variante `home` o cabeçalho tem UM indicador, `data-today-count` (`sm3-missao`, tabular-nums): com `goal > 0` mostra `Missão N/G` / `Mission N/G` (`aria-label` `Missão N de G`; N = feitos da lista, pode passar de G; o atributo `data-today-goal` guarda G); sem meta, a contagem simples `N/total`. O bloco separado `Goal`/`sm3-meta` saiu. Só exibição.
+**Missão N/G (14/10/2026, REGISTRO §57):** na variante `home` o cabeçalho tem UM indicador, `data-today-count` (`sm3-missao`, tabular-nums): com `goal > 0` mostra `Missão N/G` / `Mission N/G` (`aria-label` `Missão N de G`; N = feitos da lista, pode passar de G; o atributo `data-today-goal` guarda G); sem meta, a contagem simples `N/total`. O bloco separado `Goal`/`sm3-meta` saiu. Só exibição.
 **Dono de:** o painel de rituais da Home — um painel titulado, coluna única, linhas de ~72px, dimensionado para o PT-BR (mais longo que o EN).
 **Props principais:** `RitualRowProps` (exportado), `RitualPanelProps` (exportado) — lista de itens (hábitos/tarefas do dia), progresso segmentado, callback de concluir/editar; `RitualPanelProps.variant?: 'panel' | 'home'` (minimal-ui F2: `home` = a lista da Home B, sem o painel em volta — cabeçalho `<h2>` "Hoje" com o contador `N/M` só com feitos ≥ 1 (piso E5), botão "+" `data-ritual-add` no papel do CTA; vazio SIS-06 `task_alt` 48 ciano, que na Home B ganha o CTA largo) e `dayComplete?` (selo "Dia completo" — quem decide é a regra da virada, nunca o painel).
 **Exports:** `RITUAL_TEXT_INSET` (const — recuo do texto até o fim do selo) · `RitualKind` (type: `'task'|'habit'`) · `RITUAL_KIND_ICON` (const, mapa `RitualKind`→nome do ícone: `task_alt`/`event_repeat` — substitui o antigo `RitualIcon`, removido) · `RitualRowProps` (interface) · `RitualRow(props)` · `RitualPanelProps` (interface) · `RitualPanel(props)`.
