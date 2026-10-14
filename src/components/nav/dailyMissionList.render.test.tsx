@@ -6,6 +6,8 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { AvisosLink } from './AvisosLink';
+import { NoticeToast, noticeToastText, pickNoticeKey } from '../NoticeToast';
+import { pickPresentation } from '../../utils/presentationQueue';
 import { CROSSINGS_EMPTY } from '../../types/travessias';
 import { bumpDaily, claimDaily, claimFirst, dailyMissionsFor, markFirstForEvent, type DailyMissionsState, type FirstTimesState } from '../../utils/dailyMissions';
 
@@ -97,14 +99,62 @@ describe('seção "Primeiras vezes" na aba Diárias', () => {
   });
 });
 
-describe('aba Conquistas', () => {
-  it('mostra critérios e progresso, sem botão de comprar ou resgatar; a compra é no Mercado (só texto)', async () => {
-    render(<MissionsSheet initialTab="achievements" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} todayKey={DAY}
-      weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }} />);
+describe('aba Conquistas: resgate explícito, a compra segue no Mercado', () => {
+  const feito = (id: string) => ({ [id]: 99999 });
+  const mkC = (claimed: string[] | undefined, onClaim = vi.fn(), progress: Record<string, number> = feito('mission-mega')) => (
+    <MissionsSheet initialTab="achievements" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} todayKey={DAY}
+      weekly={[]} onClaimWeekly={vi.fn()} missionProgress={progress} marks={{ daily: null, torneio: null, conquistas: null }}
+      missionsClaimed={claimed} onClaimMission={onClaim} />
+  );
+  it('bloqueada: critério e progresso, sem botão; cumprida e não resgatada: Claim; resgatada: "compre no Mercado", sem botão', async () => {
+    const onClaim = vi.fn();
+    const { rerender } = render(mkC([], onClaim, { 'mission-mega': 0 }));
     await waitFor(() => expect(document.querySelector('[data-conquistas]')).not.toBeNull(), { timeout: 20000 });
     const painel = document.querySelector('[data-missions-panel="achievements"]')!;
     expect(painel.querySelector('[data-achievements-hint]')!.textContent).toContain('Market');
     expect(painel.querySelectorAll('[data-mission]').length).toBeGreaterThan(0);
-    for (const b of painel.querySelectorAll('button')) expect(b.textContent ?? '').not.toMatch(/buy|comprar|claim|resgatar|equip/i);
+    expect(painel.querySelector('[data-claim-mission]')).toBeNull();
+    rerender(mkC([], onClaim));
+    const claim = painel.querySelector('[data-claim-mission="mission-mega"]') as HTMLButtonElement;
+    expect(claim.textContent).toBe('Claim');
+    for (const b of painel.querySelectorAll('button')) expect(b.textContent ?? '').not.toMatch(/buy|comprar|equip/i);
+    fireEvent.click(claim);
+    expect(onClaim).toHaveBeenCalledWith('mission-mega');
+    rerender(mkC(['mission-mega'], onClaim));
+    expect(painel.querySelector('[data-claim-mission]')).toBeNull();
+    expect(painel.querySelector('[data-mission-buy-hint]')!.textContent).toContain('buy it in the Background stall at the Market');
+  });
+  it('save ainda não migrado (claimed ausente): a cumprida já vale como resgatada, sem botão', async () => {
+    render(mkC(undefined));
+    await waitFor(() => expect(document.querySelector('[data-conquistas]')).not.toBeNull(), { timeout: 20000 });
+    expect(document.querySelector('[data-claim-mission]')).toBeNull();
+    expect(document.querySelector('[data-mission-buy-hint]')).not.toBeNull();
+  });
+});
+
+describe('NoticeToast', () => {
+  it('escolhe o primeiro aviso acionável ainda não visto, na ordem de importância; informativos e HP/incubação não entram', () => {
+    expect(pickNoticeKey(['hp', 'carga', 'termos', 'refeicao'], [])).toBe('refeicao');
+    expect(pickNoticeKey(['hp', 'termos', 'refeicao'], ['refeicao'])).toBe('termos');
+    expect(pickNoticeKey(['hp', 'incubacao', 'carga', 'marcoBosque', 'semanal', 'priming', 'checkin'], [])).toBeNull();
+    expect(pickNoticeKey(['termos'], ['termos'])).toBeNull();
+  });
+  it('PT/EN e o toque abre a folha de Avisos e fecha o balão (não é modal)', () => {
+    const onOpen = vi.fn(); const onDone = vi.fn();
+    const { container, rerender } = render(<NoticeToast noticeKey="refugio" language="pt-BR" onOpen={onOpen} onDone={onDone} />);
+    const b = container.querySelector('[data-notice-toast="refugio"]') as HTMLElement;
+    expect(b.textContent).toBe(noticeToastText('refugio', 'pt-BR'));
+    expect(b.getAttribute('role')).toBe('status');
+    expect(b.getAttribute('aria-modal')).toBeNull();
+    rerender(<NoticeToast noticeKey="refugio" language="en-US" onOpen={onOpen} onDone={onDone} />);
+    expect(container.textContent).toContain('Refuge');
+    fireEvent.click(b);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onDone).toHaveBeenCalled();
+  });
+  it('na fila: leve, não segura a tela e perde para qualquer modal ou para o balão de prédio', () => {
+    expect(pickPresentation({ noticeToast: true })).toBe('noticeToast');
+    expect(pickPresentation({ noticeToast: true, unlockToast: true })).toBe('unlockToast');
+    expect(pickPresentation({ noticeToast: true, checkIn: true }, 'noticeToast')).toBe('checkIn');
   });
 });

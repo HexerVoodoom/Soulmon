@@ -126,7 +126,7 @@ import { heartDropBonus, rollPetPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { evolutionTarget } from './utils/evolutionTarget';
-import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
+import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
 const getGifts = (...a: Parameters<typeof import('./utils/community').getGifts>) => import('./utils/community').then(m => m.getGifts(...a));
 const getPendingTrophies = (...a: Parameters<typeof import('./utils/community').getPendingTrophies>) => import('./utils/community').then(m => m.getPendingTrophies(...a));
@@ -150,6 +150,7 @@ import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
 import { PresentationSlot } from './components/PresentationSlot';
 import { UnlockToast } from './components/UnlockToast';
+import { NoticeToast, pickNoticeKey, type NoticeToastKey } from './components/NoticeToast';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
   CEREMONY_MIN_INDEX,
@@ -2041,6 +2042,9 @@ export default function App() {
      MESMO level-up num só) que entra na fila como item leve (`unlockToast`). A apresentação com o NPC grande (`BuildingIntro`)
      só dispara na PRIMEIRA ENTRADA em cada prédio (`visitarPredio`), marcada em `buildingIntrosSeen` (save antigo: semeado). */
   const [unlockToastIds, setUnlockToastIds] = useState<readonly BuildingId[]>([]);
+  /* 14/10/2026 (dono, REGISTRO §56): o botão Avisos saiu da Home; os avisos ACIONÁVEIS viram um balão leve na fila (`noticeToast`), 1× por dia cada. */
+  const [noticeKey, setNoticeKey] = useState<NoticeToastKey | null>(null);
+  const avisosKeysRef = useRef<string[]>([]);
   const presentation = usePresentationQueue({
     ready: {
       welcomeTour: welcomeTourOpen,
@@ -2050,6 +2054,7 @@ export default function App() {
       buildingIntro: introShown.length > 0,
       mapTutorial: mapTutorialOpen,
       unlockToast: unlockToastIds.length > 0,
+      noticeToast: noticeKey !== null,
       catalogOnboarding: needsCatalogOnboarding(gameState as any),
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
@@ -2066,6 +2071,12 @@ export default function App() {
         handleLevelUpDone(levelUpEvent.to);
         const abertos = buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to);
         if (abertos.length > 0) setUnlockToastIds(abertos);
+      } else if (id === 'noticeToast' && noticeKey) {
+        // "visto" ao MOSTRAR: `<dia>|<chave>,<chave>` — reabrir o app no mesmo dia não repete o balão
+        const dia = playerDayKey(new Date(), gameState.playerDayTz);
+        const [d, ks] = (readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN) ?? '').split('|');
+        const vistos = d === dia && ks ? ks.split(',') : [];
+        writeLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN, `${dia}|${[...vistos, noticeKey].join(',')}`, { silent: true });
       } else if (id === 'mapTutorial') {
         setMapTutorialShown(true);
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
@@ -2087,6 +2098,7 @@ export default function App() {
         case 'buildingIntro': setIntroShown([]); break;
         case 'mapTutorial': setMapTutorialShown(false); break;
         case 'unlockToast': setUnlockToastIds([]); break;
+        case 'noticeToast': setNoticeKey(null); break;
         case 'checkIn': handleCheckInSkip(); break;
         case 'evolveTask': setEvolveModalStage(null); break;
         case 'groveMilestone': acknowledgeGroveMilestone(); break;
@@ -2100,6 +2112,14 @@ export default function App() {
   });
   /** Quem está na tela agora (`'welcome'` = nenhum intersticial). */
   const interstitial = presentation.current;
+  /* Escolhe o próximo aviso acionável ainda não visto hoje (só na Home, só um por vez). */
+  useEffect(() => {
+    if (currentView !== 'home' || noticeKey !== null) return;
+    const dia = playerDayKey(new Date(), gameState.playerDayTz);
+    const [d, ks] = (readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN) ?? '').split('|');
+    const k = pickNoticeKey(avisosKeysRef.current, d === dia && ks ? ks.split(',') : []);
+    if (k) setNoticeKey(k);
+  });
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
@@ -3928,6 +3948,19 @@ export default function App() {
   };
   const missionProgress = getMissionProgress(missionState);
 
+  /* RESGATE DE CONQUISTA (dono, 14/10/2026, REGISTRO §56): resgatar LIBERA a compra no Mercado, nunca concede o item. Idempotente
+     (já resgatada devolve `prev`). MIGRAÇÃO: save sem o campo marca como já resgatadas as conquistas já cumpridas — quem já tinha
+     item liberado não precisa fazer nada nem perde acesso; as que cumprir depois pedem o Resgatar. */
+  const resgatarConquista = useCallback((id: string) => {
+    if (!isMissionComplete(id, missionProgress)) return;
+    setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : { ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }));
+  }, [missionProgress, setGameState]);
+  useEffect(() => {
+    if (gameState.missionsClaimed !== undefined) return;
+    const feitas = completedMissionIds(missionProgress);
+    setGameState(prev => (prev.missionsClaimed !== undefined ? prev : { ...prev, missionsClaimed: feitas }));
+  }, [gameState.missionsClaimed, missionProgress, setGameState]);
+
   /**
    * O buff de brincar já foi gasto NESTA sessão de minijogo?
    *
@@ -4068,7 +4101,7 @@ export default function App() {
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return false;
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
-    if (!isShopItemUnlocked(item, missionProgress, subscription.active)) return false;
+    if (!isShopItemUnlocked(item, missionProgress, subscription.active, gameState.missionsClaimed)) return false;
     if (applySubscriptionClaim(gameState, item, subscription.active).refused) return false;
     setGameState(prev => applySubscriptionClaim(prev, item, subscription.active).state);
     return true;
@@ -4079,7 +4112,7 @@ export default function App() {
     if (!item) return false;
     // DEMO LOCAL: a loja é só de vitrine — comprar com Bits fica desligado, sem culpa.
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
-    if (!isShopItemUnlocked(item, missionProgress)) return false;
+    if (!isShopItemUnlocked(item, missionProgress, false, gameState.missionsClaimed)) return false;
     // A recusa lida AQUI decide o retorno do botão e o som — efeito colateral
     // não entra em updater (footgun 6). Ela NÃO é mais a única: `applyShopBuy`
     // reconfere sobre o `prev` (utils/shopBuy.ts). Enquanto era só esta, dois
@@ -5963,11 +5996,12 @@ export default function App() {
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+    missionsClaimed: gameState.missionsClaimed,
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
     dailyExtra: dailyMissionsMark(gameState.dailyMissions, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
     firsts: firstTimesMark(gameState.firstTimes, bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.firstTimes, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.firstTimes, gameState.missionsClaimed, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Resgata uma missão diária dos outros recursos (`utils/dailyMissions.ts`). Idempotente: reconfere sobre o `prev` (toque duplo não paga 2×). */
   const resgatarDiaria = useCallback((id: string) => {
@@ -6830,6 +6864,7 @@ export default function App() {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   missionProgress,
+                  missionClaimed: gameState.missionsClaimed,
                   subscriptionActive: subscription.active,
                 }}
                 actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
@@ -7476,6 +7511,7 @@ export default function App() {
 
                 /* F3: NADA ocupa a faixa acima de "HOJE" (altura 0, com ou sem aviso) — a fila vai para o botão do canto e a folha. */
                 avisosDoDia.lista = avisos;
+                avisosKeysRef.current = avisos.map(a => a.key);
                 return null;
               })()}
 
@@ -7806,6 +7842,8 @@ export default function App() {
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarDiaria,
         }}
+        missionsClaimed={gameState.missionsClaimed}
+        onClaimMission={resgatarConquista}
         firsts={{ state: gameState.firstTimes, bondLevel: bondLevelFor(gameState.totalXP ?? 0), onClaim: resgatarPrimeira }}
       /></Suspense>}
       {currentView === 'map' && (
@@ -8110,6 +8148,9 @@ export default function App() {
         <PresentationSlot id="mapTutorial" onFail={() => presentation.fail('mapTutorial')} fallback={null}>
           <MapTutorial language={language} onFinish={() => setMapTutorialShown(false)} />
         </PresentationSlot>
+      )}
+      {interstitial === 'noticeToast' && noticeKey && (
+        <NoticeToast noticeKey={noticeKey} language={language} onOpen={handleAbrirAvisos} onDone={() => setNoticeKey(null)} />
       )}
       {interstitial === 'unlockToast' && unlockToastIds.length > 0 && (
         <UnlockToast ids={unlockToastIds} language={language} onDone={() => setUnlockToastIds([])} />

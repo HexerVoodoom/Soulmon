@@ -40,6 +40,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  8. `evolveTask` — "crie mais atividades" depois de evoluir;
  *  9. `groveMilestone`, 10. `dream`, 11. `nightmare`, 12. `catalogLevelInvite`, 13. `restSetup` — avisos leves;
  * 14. `unlockToast` — balãozinho NÃO bloqueante "<Prédio> desbloqueado no <local>" (nunca sticky: qualquer modal pronto o substitui);
+ * 14b. `noticeToast` — balãozinho NÃO bloqueante de um aviso acionável (refeição, Refúgio, termos, triagem, recomeço), 1× por dia cada, o mais leve de todos;
  * 15. `welcome` — ocioso (o pedido de instalar/notificar decide sozinho se tem algo a dizer).
  */
 export const PRESENTATION_ORDER = [
@@ -58,6 +59,7 @@ export const PRESENTATION_ORDER = [
   'catalogLevelInvite',
   'restSetup',
   'unlockToast',
+  'noticeToast',
   PRESENTATION_IDLE,
 ] as const;
 
@@ -67,7 +69,7 @@ export type PresentationId = (typeof PRESENTATION_ORDER)[number];
 export type PresentationReady = Partial<Record<PresentationId, boolean>>;
 
 /** Itens que NÃO seguram a tela: o ocioso e o balão de desbloqueio (qualquer modal pronto os substitui). */
-const NON_STICKY: ReadonlySet<PresentationId> = new Set<PresentationId>([PRESENTATION_IDLE, 'unlockToast']);
+const NON_STICKY: ReadonlySet<PresentationId> = new Set<PresentationId>([PRESENTATION_IDLE, 'unlockToast', 'noticeToast']);
 
 const NO_FAILED: ReadonlySet<PresentationId> = new Set();
 

@@ -19,7 +19,7 @@ import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
-import { sanitizeDailyMissions, sanitizeFirstTimes } from './_dailyMissions.js';
+import { sanitizeDailyMissions, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceDungeonDaily, enforceCheckIns } from './_dayCounters.js';
@@ -300,6 +300,10 @@ export async function onRequest({ request, env }) {
     if ('dailyMissions' in state) {
       const q = sanitizeDailyMissions(state.dailyMissions);
       if (q) state.dailyMissions = q; else delete state.dailyMissions;
+    }
+    if ('missionsClaimed' in state) {
+      const q = sanitizeMissionsClaimed(state.missionsClaimed);
+      if (q) state.missionsClaimed = q; else delete state.missionsClaimed;
     }
     if ('firstTimes' in state) {
       const q = sanitizeFirstTimes(state.firstTimes);

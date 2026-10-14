@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
-import { sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { UnlockNudge } from '../UnlockAccountModal';
 import { STALL_CURRENCIES, stallItems, type MercadoStall } from '../../utils/mercadoCatalog';
 import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory } from '../../utils/missions';
@@ -170,9 +170,13 @@ function categoryLabel(c: MissionCategory, isPt: boolean): string {
  * WP4.12 (achado E4) vale aqui: sem progresso, NENHUM "0/N" — uma coluna de
  * zeros lê como boletim. A condição em palavras aparece sempre.
  */
-export function ConquistasSheet({ language, missionProgress }: {
+export function ConquistasSheet({ language, missionProgress, claimed, onClaim }: {
   language: Language;
   missionProgress: Record<string, number>;
+  /** Conquistas já resgatadas (REGISTRO §56). Ausente = save não migrado: cumprida já vale como resgatada. */
+  claimed?: readonly string[];
+  /** O Resgatar (só no ícone "!" de Missões). Sem ele (prédio do Mercado) a cumprida só aponta onde resgatar. */
+  onClaim?: (id: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
@@ -194,6 +198,7 @@ export function ConquistasSheet({ language, missionProgress }: {
       <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-3, 12px)', listStyle: 'none', margin: 0, padding: 0 }}>
         {list.map(m => {
           const done = isMissionComplete(m.id, missionProgress);
+          const resgatada = done && (claimed === undefined || claimed.includes(m.id));
           const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
           const reward = SHOP_ITEMS.find(i => i.id === m.bgReward);
           const rewardName = reward ? (isPt ? reward.namePt : reward.nameEn) : null;
@@ -226,8 +231,14 @@ export function ConquistasSheet({ language, missionProgress }: {
                     </span>
                   )}
                 </InfoTip>
-                {done ? (
-                  <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'concluída' : 'done'} />
+                {resgatada ? (
+                  <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'resgatada' : 'claimed'} />
+                ) : done ? (
+                  onClaim ? (
+                    <button type="button" data-claim-mission={m.id} style={sm2Button('primary', false, 'sm')} onClick={() => onClaim(m.id)}>{isPt ? 'Resgatar' : 'Claim'}</button>
+                  ) : (
+                    <span data-claim-hint style={{ ...sm2Hint, flex: 'none' }}>{isPt ? 'Resgate em Missões (!)' : 'Claim in Missions (!)'}</span>
+                  )
                 ) : m.target > 1 && cur > 0 ? (
                   <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', whiteSpace: 'nowrap' }}>{cur}/{m.target}</span>
                 ) : null}
@@ -244,8 +255,11 @@ export function ConquistasSheet({ language, missionProgress }: {
                       {isPt ? 'O que ganha' : 'What you get'}
                     </span>
                     <span style={{ ...sm2Text, fontWeight: 500 }}>{rewardName}</span>
-                    {done && (
-                      <span style={sm2Hint}>{isPt ? 'Liberado — está na lojinha de Background.' : 'Unlocked — it is in the Background stall.'}</span>
+                    {resgatada && (
+                      <span data-mission-buy-hint style={sm2Hint}>{isPt ? 'Resgatada — compre na lojinha de Background, no Mercado.' : 'Claimed — buy it in the Background stall at the Market.'}</span>
+                    )}
+                    {done && !resgatada && (
+                      <span style={sm2Hint}>{isPt ? 'Resgate para liberar a compra no Mercado.' : 'Claim it to unlock buying at the Market.'}</span>
                     )}
                   </span>
                 </div>
