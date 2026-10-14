@@ -115,6 +115,17 @@ export function speedPct(tier: HungerTier): number {
   return tier === 'fed' ? REGEN_FED_PCT : tier === 'fair' ? REGEN_FAIR_PCT : REGEN_STARVING_PCT;
 }
 
+/**
+ * O instante (ms) em que o registro passou a ser FAMINTO (fome < `HUNGER_FAIR_MIN`); `null` se não há registro (fome cheia). Sai do
+ * REGISTRO (timestamp persistido), nunca de um contador de tela — é a âncora da penalidade de fome (`utils/hungerPenalty.ts`).
+ * Comer troca o registro e, com ele, esta âncora: a contagem das 12 h recomeça sozinha.
+ */
+export function starvingSince(rec: HungerRecord | undefined): number | null {
+  if (!rec) return null;
+  const t = crossing(rec, HUNGER_FAIR_MIN);
+  return t === -Infinity ? rec.at : t === Infinity ? null : t;
+}
+
 export const hungerTierAt = (rec: HungerRecord | undefined, t: number): HungerTier => tierOf(hungerAt(rec, t));
 
 /** O instante (ms, inteiro) em que o registro cruza `level` descendo; `Infinity` se já está abaixo ou nunca cruza. */

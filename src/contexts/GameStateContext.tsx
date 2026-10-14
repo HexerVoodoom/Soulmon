@@ -6,6 +6,7 @@ import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
 import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
+import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -435,6 +436,8 @@ export interface GameState {
   /** ⏱️ O relógio da regeneração da ENERGIA (`utils/hunger.ts`): até onde a regeneração foi contada e o progresso até a próxima unidade.
    *  Moram no save para fechar o app, navegar ou trocar de aparelho NÃO reiniciarem o timer. Ausente = nasce na próxima leitura. */
   energyClock?: { at: number; carry: number };
+  /** 🍽️ Penalidade de fome (REGISTRO §45, `utils/hungerPenalty.ts`): meio coração a cada 12 h CONTÍNUAS de faminto. `since` = a âncora da fome, `paid` = janelas já resolvidas (anti-dupla), `unreported` = o que o resumo do dia ainda vai contar. Ausente = nada cobrado. */
+  hungerPenalty?: { since: number; paid: number; unreported: number };
   /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (`DUNGEON_DAILY_LAYERS`, `utils/dungeonIdle.ts`) mora no
    *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
   dungeonDaily?: { day: string; layers: number };
@@ -605,6 +608,8 @@ export interface GameState {
     heartsLost: number;
     wasPerfect: boolean;
     energyWasFull?: boolean;
+    /** Corações que a FOME tirou (meio por 12 h faminto, REGISTRO §45) desde o resumo anterior. Ausente/0 = nada. */
+    hungerHeartsLost?: number;
     perfectDays: number;
     /** 🧬 Pontos que a virada creditou no gauge e o total depois dela. */
     gaugeGain?: number;
@@ -1255,6 +1260,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
         hunger: sanitizeHunger(loadedState.hunger),
         energyClock: sanitizeEnergyClock(loadedState.energyClock),
+        hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { renderWithCss } from '../test/renderEnv';
 import { DungeonGame } from './DungeonGame';
 import { GameStateProvider, useGameState, type GameState } from '../contexts/GameStateContext';
+import { closeTopBackLayer } from '../utils/backStack';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { DUNGEON_AUTO_FIGHT_MS, DUNGEON_AWAY_MAX_MS } from '../utils/dungeonIdle';
 
@@ -35,7 +36,7 @@ function Sonda() {
   return null;
 }
 
-function Casca({ language, onHeartDrop, onExit, onEarn }: { language: 'pt-BR' | 'en-US'; onHeartDrop: () => boolean; onExit: () => void; onEarn?: (n: number) => void }) {
+function Casca({ language, onHeartDrop, onExit, onEarn, onExitToMap }: { language: 'pt-BR' | 'en-US'; onHeartDrop: () => boolean; onExit: () => void; onEarn?: (n: number) => void; onExitToMap?: () => void }) {
   const [aberta, setAberta] = useState(true);
   return (
     <GameStateProvider>
@@ -45,16 +46,16 @@ function Casca({ language, onHeartDrop, onExit, onEarn }: { language: 'pt-BR' | 
         <DungeonGame
           evolutionStage="rookie" language={language} petElement="fogo"
           onEnter={() => ({ ok: true, level: 1, best: 0 })} onLose={() => {}} onHeartDrop={onHeartDrop}
-          onGlitchtama={() => {}} onEnemyDefeated={() => {}} onEarnPoints={onEarn ?? (() => {})} onExit={onExit}
+          onGlitchtama={() => {}} onEnemyDefeated={() => {}} onEarnPoints={onEarn ?? (() => {})} onExit={onExit} onExitToMap={onExitToMap}
         />
       )}
     </GameStateProvider>
   );
 }
 
-function montar(opts: { language?: 'pt-BR' | 'en-US'; heart?: boolean; save?: Record<string, unknown>; onExit?: () => void } = {}) {
+function montar(opts: { language?: 'pt-BR' | 'en-US'; heart?: boolean; save?: Record<string, unknown>; onExit?: () => void; onExitToMap?: () => void } = {}) {
   localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ energyPoints: 12, ...(opts.save ?? {}) }));
-  return renderWithCss(<Casca language={opts.language ?? 'en-US'} onHeartDrop={() => !!opts.heart} onExit={opts.onExit ?? (() => {})} />);
+  return renderWithCss(<Casca language={opts.language ?? 'en-US'} onHeartDrop={() => !!opts.heart} onExit={opts.onExit ?? (() => {})} onExitToMap={opts.onExitToMap} />);
 }
 const alternar = () => fireEvent.click(document.querySelector('[data-test-toggle]')!);
 
@@ -95,8 +96,8 @@ describe('HUD — um indicador só', () => {
   });
 });
 
-describe('Avanço rápido 1×/2×/3× no canto inferior direito', () => {
-  it('o botão cicla 1× → 2× → 3× → 1×, fica DEPOIS do Pausar (à direita), tem nome acessível e a escolha persiste no aparelho', async () => {
+describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2026)', () => {
+  it('o botão cicla 1× → 3× → 1×, fica DEPOIS do Pausar (à direita), tem nome acessível e a escolha persiste no aparelho', async () => {
     vi.useFakeTimers();
     montar();
     descer();
@@ -106,9 +107,6 @@ describe('Avanço rápido 1×/2×/3× no canto inferior direito', () => {
     expect(ff().getAttribute('aria-label')).toMatch(/Fast forward: 1×/);
     const controles = document.querySelector('[data-dungeon-controls]')!;
     expect(controles.lastElementChild).toBe(ff()); // o último, no canto direito
-    fireEvent.click(ff());
-    expect(ff().getAttribute('data-dungeon-speed')).toBe('2');
-    expect(localStorage.getItem(STORAGE_KEYS.DUNGEON_SPEED)).toBe('2');
     fireEvent.click(ff());
     expect(ff().textContent).toContain('3×');
     expect(localStorage.getItem(STORAGE_KEYS.DUNGEON_SPEED)).toBe('3');
@@ -240,15 +238,60 @@ describe('A descida que continua sozinha', () => {
     expect(estadoAtual!.dungeonAway!.slot).toBe(1);
   });
 
-  it('o X pergunta "Sair da tela?" e diz que ele continua descendo; há a 3ª saída "Retirar da masmorra"', async () => {
+  it('o ícone do MAPA (no lugar do X) vai DIRETO ao mapa, sem confirmação, e NÃO abandona: o registro da descida segue', async () => {
     vi.useFakeTimers();
-    montar();
+    const onExitToMap = vi.fn();
+    const onExit = vi.fn();
+    montar({ onExitToMap, onExit });
+    descer();
+    await avancar(10);
+    const antes = estadoAtual!.dungeonAway;
+    expect(antes).toBeDefined();
+    const btn = document.querySelector('[data-stage-close]') as HTMLButtonElement;
+    expect(btn.querySelector('svg, img')).not.toBeNull(); // o ícone ilustrado do mapa, não o glifo do X
+    fireEvent.click(btn);
+    expect(document.querySelector('[data-stage-confirm]')).toBeNull(); // sem "Sair da tela?"
+    expect(onExitToMap).toHaveBeenCalledTimes(1);
+    expect(onExit).not.toHaveBeenCalled();
+    expect(estadoAtual!.dungeonAway).toBeDefined(); // sair ≠ abandonar
+    expect(estadoAtual!.dungeonAway!.slot).toBe(antes!.slot);
+  });
+
+  it('o botão do mapa tem alvo >= 44 px e nome acessível em PT e EN', async () => {
+    vi.useFakeTimers();
+    montar({ language: 'pt-BR' });
+    descer();
+    await avancar(10);
+    const btn = document.querySelector('[data-stage-close]') as HTMLButtonElement;
+    expect(btn.style.width).toBe('44px');
+    expect(btn.style.height).toBe('44px');
+    expect(btn.getAttribute('aria-label')).toMatch(/mapa/i);
+    cleanup();
+    montar({ language: 'en-US' });
+    descer();
+    await avancar(10);
+    expect((document.querySelector('[data-stage-close]') as HTMLButtonElement).getAttribute('aria-label')).toMatch(/map/i);
+  });
+
+  it('sem onExitToMap (demo/testes) o ícone cai em onExit', async () => {
+    vi.useFakeTimers();
+    const onExit = vi.fn();
+    montar({ onExit });
     descer();
     await avancar(10);
     fireEvent.click(document.querySelector('[data-stage-close]')!);
-    const dlg = document.querySelector('[data-stage-confirm]')!;
-    expect(dlg.textContent).toMatch(/keeps going down on his own/);
-    expect(dlg.querySelector('[data-stage-confirm-alt]')!.textContent).toBe('Take him out of the dungeon');
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('o voltar do Android (camada de voltar) faz o MESMO que o ícone do mapa', async () => {
+    vi.useFakeTimers();
+    const onExitToMap = vi.fn();
+    montar({ onExitToMap });
+    descer();
+    await avancar(10);
+    expect(closeTopBackLayer()).toBe(true);
+    expect(onExitToMap).toHaveBeenCalledTimes(1);
+    expect(estadoAtual!.dungeonAway).toBeDefined();
   });
 
   it('ao VOLTAR depois de um tempo, o avanço aparece (cartão "While you were away") com o que rendeu — e o save ganhou isso', async () => {
@@ -299,19 +342,6 @@ describe('A descida que continua sozinha', () => {
       // a descida já tinha acabado sozinha (HP/energia): ele já está em casa
       expect(estadoAtual!.dungeonAway).toBeUndefined();
     }
-  });
-
-  it('"Retirar" pelo X da luta apaga o registro e sai', async () => {
-    vi.useFakeTimers();
-    const onExit = vi.fn();
-    montar({ onExit });
-    descer();
-    await avancar(10);
-    expect(estadoAtual!.dungeonAway).toBeDefined();
-    fireEvent.click(document.querySelector('[data-stage-close]')!);
-    fireEvent.click(document.querySelector('[data-stage-confirm-alt]')!);
-    expect(estadoAtual!.dungeonAway).toBeUndefined();
-    expect(onExit).toHaveBeenCalled();
   });
 
   it('a descida que ACABA (energia/HP) limpa o registro: o Soulmon volta para casa sozinho', async () => {

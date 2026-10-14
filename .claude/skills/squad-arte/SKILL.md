@@ -1,6 +1,6 @@
 ---
 name: squad-arte
-description: "SQUAD-ARTE — a squad que produz TODOS os assets visuais do Soulmon a partir de uma fila fechada (docs/ASSETS-A-GERAR.md) e um inventário medido (docs/INVENTARIO-ASSETS.md). 3 agentes: arte-gerador (parametrizado por família — cenario, criatura, fx, emblema, marca, hud; uma instância por família, em paralelo) + arte-conferente (gate) + arte-instalador (repo). Regra-mãe: pixel art só dentro do visor. Use quando: gerar cenário/sprite/FX/emblema/HUD/marca, instalar uma leva de _gemini_out, conferir arte antes de instalar, ver o que falta de asset. Comandos: /squad-arte [status | gerar <familia> [ids] | conferir <leva> | instalar <leva> | inventario | fila]. NÃO desenha UI do aparelho (botão, nav, ícone de sistema — é --sm2-* + Material, squad-design), NÃO reabre decisões D1–D9 do dono, NÃO escreve prompt de criatura à mão."
+description: "SQUAD-ARTE — a squad que produz TODOS os assets visuais do Soulmon a partir de uma fila fechada (docs/ASSETS-A-GERAR.md) e um inventário medido (docs/INVENTARIO-ASSETS.md). 3 agentes: arte-gerador (parametrizado por família — cenario, criatura, fx, emblema, marca, hud, predio, mapa, ui, npc; uma instância por família, em paralelo) + arte-conferente (gate) + arte-instalador (repo). Regra-mãe: pixel art só dentro do visor. Use quando: gerar cenário/sprite/FX/emblema/HUD/marca, instalar uma leva de _gemini_out, conferir arte antes de instalar, ver o que falta de asset. Comandos: /squad-arte [status | gerar <familia> [ids] | conferir <leva> | instalar <leva> | inventario | fila]. NÃO desenha UI do aparelho (botão, nav, ícone de sistema — é --sm2-* + Material, squad-design), NÃO reabre decisões D1–D9 do dono, NÃO escreve prompt de criatura à mão."
 ---
 
 # SQUAD-ARTE — Orquestrador
@@ -24,6 +24,7 @@ Um só agente gera, `arte-gerador`, sempre com `familia=<x>` no briefing (a tabe
 | emblema | `arte-gerador` `familia=emblema` | 8 conquistas |
 | marca | `arte-gerador` `familia=marca` | M1 (vetorizar kit), C4 (ícone de notificação) |
 | hud | `arte-gerador` `familia=hud` | H1 (3 versões EvoArvore), H2 (A5), H3 (A6), C5 (glifos), progress 1×, sigilos |
+| predio · mapa · ui · npc | `arte-gerador` `familia=<x>` | padrão aprovado de 23/09/2026 — `docs/GUIA-CONSISTENCIA-2026-09-23.md`; blocos `[PRÉDIO]` `[PRÉDIO-VIVO]` `[MAPA-ISO]` `[UI-KIT]` `[NPC-BUSTO]` em `ASSETS-A-GERAR.md` §1 |
 
 > Até 21/09/2026 eram seis agentes (`arte-cenario`, `-criatura`, `-fx`, `-emblema`, `-marca`, `-hud-visor`); a governança (`docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md` §8 F1) fundiu-os porque era o mesmo procedimento com bloco de estilo diferente.
 
