@@ -150,7 +150,7 @@ import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
 import { PresentationSlot } from './components/PresentationSlot';
 import { UnlockToast } from './components/UnlockToast';
-import { NoticeToast, pickNoticeKey, type NoticeToastKey } from './components/NoticeToast';
+import { NoticeToast, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
   CEREMONY_MIN_INDEX,
@@ -2074,9 +2074,9 @@ export default function App() {
       } else if (id === 'noticeToast' && noticeKey) {
         // "visto" ao MOSTRAR: `<dia>|<chave>,<chave>` — reabrir o app no mesmo dia não repete o balão
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
-        const [d, ks] = (readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN) ?? '').split('|');
-        const vistos = d === dia && ks ? ks.split(',') : [];
-        writeLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN, `${dia}|${[...vistos, noticeKey].join(',')}`, { silent: true });
+        const gravar = recordNoticeShown(readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN), readLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE), dia, noticeKey);
+        writeLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN, gravar.dia, { silent: true });
+        writeLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE, gravar.sempre, { silent: true });
       } else if (id === 'mapTutorial') {
         setMapTutorialShown(true);
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
@@ -2116,8 +2116,7 @@ export default function App() {
   useEffect(() => {
     if (currentView !== 'home' || noticeKey !== null) return;
     const dia = playerDayKey(new Date(), gameState.playerDayTz);
-    const [d, ks] = (readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN) ?? '').split('|');
-    const k = pickNoticeKey(avisosKeysRef.current, d === dia && ks ? ks.split(',') : []);
+    const k = pickNoticeKey(avisosKeysRef.current, parseNoticeSeen(readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN), dia), (readLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE) ?? '').split(','));
     if (k) setNoticeKey(k);
   });
 

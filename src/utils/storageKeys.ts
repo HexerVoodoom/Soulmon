@@ -60,6 +60,8 @@ export const STORAGE_KEYS = {
   DAILY_REPORT_SHOWN: 'soulmon-daily-report-shown',
   /** Balão de aviso acionável já mostrado hoje: `<dia>|<chave>,<chave>` (REGISTRO §56). */
   NOTICE_TOAST_SEEN: 'soulmon-notice-toast-seen',
+  /** Balões de UMA vez na vida já mostrados (`termos`), `<chave>,<chave>` (REGISTRO §56). */
+  NOTICE_TOAST_ONCE: 'soulmon-notice-toast-once',
   RUB_HINT_SHOWN: 'soulmon-rub-hint-shown',
   AUTO_SLEEP_ENABLED: 'soulmon-auto-sleep-enabled',
   AUTO_SLEEP_START: 'soulmon-auto-sleep-start',

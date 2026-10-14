@@ -6,7 +6,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { AvisosLink } from './AvisosLink';
-import { NoticeToast, noticeToastText, pickNoticeKey } from '../NoticeToast';
+import { NoticeToast, noticeToastText, parseNoticeSeen, pickNoticeKey, recordNoticeShown } from '../NoticeToast';
 import { pickPresentation } from '../../utils/presentationQueue';
 import { CROSSINGS_EMPTY } from '../../types/travessias';
 import { bumpDaily, claimDaily, claimFirst, dailyMissionsFor, markFirstForEvent, type DailyMissionsState, type FirstTimesState } from '../../utils/dailyMissions';
@@ -129,6 +129,31 @@ describe('aba Conquistas: resgate explícito, a compra segue no Mercado', () => 
     await waitFor(() => expect(document.querySelector('[data-conquistas]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-claim-mission]')).toBeNull();
     expect(document.querySelector('[data-mission-buy-hint]')).not.toBeNull();
+  });
+});
+
+describe('NoticeToast: termos uma única vez na vida, convites 1×/dia', () => {
+  it('termos: depois de mostrado nunca mais volta, nem no dia seguinte; convite volta no dia seguinte', () => {
+    let dia: string | null = null; let sempre: string | null = null;
+    const mostrar = (d: string, k: 'termos' | 'refeicao') => { const r = recordNoticeShown(dia, sempre, d, k); dia = r.dia; sempre = r.sempre; };
+    const presentes = ['termos', 'refeicao'];
+    const escolher = (d: string) => pickNoticeKey(presentes, parseNoticeSeen(dia, d), (sempre ?? '').split(','));
+    expect(escolher('2026-10-14')).toBe('refeicao');
+    mostrar('2026-10-14', 'refeicao');
+    expect(escolher('2026-10-14')).toBe('termos');
+    mostrar('2026-10-14', 'termos');
+    expect(escolher('2026-10-14')).toBeNull();
+    expect(escolher('2026-10-15')).toBe('refeicao');
+    mostrar('2026-10-15', 'refeicao');
+    expect(escolher('2026-10-15')).toBeNull();
+    expect(escolher('2026-10-20')).toBe('refeicao');
+    expect(sempre).toBe('termos');
+  });
+  it('recordNoticeShown é idempotente para o registro de uma vez só e ignora lixo', () => {
+    const a = recordNoticeShown(null, 'termos', '2026-10-14', 'termos');
+    expect(a.sempre).toBe('termos');
+    expect(parseNoticeSeen('lixo', '2026-10-14')).toEqual([]);
+    expect(recordNoticeShown('2026-10-13|refeicao', null, '2026-10-14', 'refugio').dia).toBe('2026-10-14|refugio');
   });
 });
 

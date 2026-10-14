@@ -12,9 +12,27 @@ export const NOTICE_TOAST_MS = 8000;
 export const NOTICE_TOAST_KEYS = ['refeicao', 'refugio', 'termos', 'triagem', 'recomeco'] as const;
 export type NoticeToastKey = (typeof NOTICE_TOAST_KEYS)[number];
 
-/** O primeiro aviso acionável ainda NÃO visto (na ordem de importância), ou `null`. Puro. */
-export function pickNoticeKey(presentes: readonly string[], vistos: readonly string[]): NoticeToastKey | null {
-  return NOTICE_TOAST_KEYS.find(k => presentes.includes(k) && !vistos.includes(k)) ?? null;
+/** Os avisos que o balão mostra UMA ÚNICA vez na vida (dono, 14/10/2026, REGISTRO §56): o dos termos. Os convites seguem 1×/dia. */
+export const NOTICE_ONCE_KEYS: readonly NoticeToastKey[] = ['termos'];
+
+/** O primeiro aviso acionável ainda NÃO visto (na ordem de importância), ou `null`. `vistos` = hoje; `paraSempre` = os de uma vez só. Puro. */
+export function pickNoticeKey(presentes: readonly string[], vistos: readonly string[], paraSempre: readonly string[] = []): NoticeToastKey | null {
+  return NOTICE_TOAST_KEYS.find(k => presentes.includes(k) && !vistos.includes(k) && !paraSempre.includes(k)) ?? null;
+}
+
+/** `<dia>|<chave>,<chave>` → as chaves vistas NESTE dia (outro dia ou lixo = nenhuma). Puro. */
+export function parseNoticeSeen(raw: string | null | undefined, dia: string): string[] {
+  const [d, ks] = (raw ?? '').split('|');
+  return d === dia && ks ? ks.split(',') : [];
+}
+
+/** O que gravar ao MOSTRAR `key`: o registro do dia (todas as chaves) e, se for de uma vez só, o registro para sempre. Puro. */
+export function recordNoticeShown(rawDia: string | null | undefined, rawSempre: string | null | undefined, dia: string, key: NoticeToastKey): { dia: string; sempre: string } {
+  const sempre = (rawSempre ?? '').split(',').filter(Boolean);
+  return {
+    dia: `${dia}|${[...parseNoticeSeen(rawDia, dia), key].join(',')}`,
+    sempre: (NOTICE_ONCE_KEYS.includes(key) && !sempre.includes(key) ? [...sempre, key] : sempre).join(','),
+  };
 }
 
 export function noticeToastText(key: NoticeToastKey, language: Language): string {
