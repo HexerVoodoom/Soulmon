@@ -2388,7 +2388,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 
 **Gatilho de rever:** relato de quem pagou, excluiu a conta por engano e quer o direito de volta (hoje: só pelo suporte/Play, nada automático).
 
-## 50. Missões numa folha só com abas, mais missões diárias dos outros recursos e fim do ícone de "login diário" (dono, por voz, 14/10/2026)
+## 51. Missões numa folha só com abas, mais missões diárias dos outros recursos e fim do ícone de "login diário" (dono, por voz, 14/10/2026)
 
 - **Pedido (3 itens):** (1) "o ícone Material do daily login continua lá perto das exclamações das missões"; (2) "inclua mais missões diárias para incentivar o usuário a usar os outros recursos, como minijogos, pomodoro..."; (3) "coloque tudo dentro do mesmo ícone de missão com tab para dailies, semanal, achievements".
 - **1. Ícone de login diário:** o ícone Material vizinho do "!" era o botão de **Avisos** (glifo `event_note`, um calendário com nota, que lê como "check-in diário"). Os check-ins em si já saem pela flag `CHECKINS_ENABLED=false` (§40.4-b, PR #338: sem janela disponível, o atalho "Check-ins do dia" nem entra nos Avisos). Aqui o glifo do Avisos passou a `info` (do inventário da fonte, sem mexer nela), então **não há mais nenhum ícone de calendário/login diário na pilha de cantos**. Nenhum código de check-in foi apagado. O botão de Avisos segue existindo (HP, incubação, triagem, convites...).
@@ -2398,3 +2398,15 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Anti-abuso e limites honestos:** o estado `dailyMissions` mora no save e é conferido no cliente, como as semanais (o servidor não o espelha; ver pergunta ao dono). A lista do dia só muda no meio do dia se o Vínculo abrir um prédio sorteado antes das que já estão lá.
 - **Régua viva:** `utils/dailyMissions.test.ts` (catálogo, rotação, bloqueios, condição, 1 recompensa/dia, teto de estoque), `utils/dailyMissions.fiacao.test.ts` (todo evento tem emissor), `components/nav/dailyMissionList.render.test.tsx`, `components/nav/missionsMenu.render.test.tsx` (reescrito: o teste antigo de "Weekly" e PT-BR assumia dois acessos com `kind`, já falhava na main).
 - **Gatilho para rever:** o dono achar o volume de materiais alto, querer espelho no servidor, ou redesenhar os check-ins (religar a flag e rever o glifo do Avisos).
+
+## 50. Loading minimalista: uma barra fina turquesa que enche (pedido do dono por voz, 14/10/2026)
+
+*Pedido do dono (voz):* "Troca o asset de loading. Faz uma barra azul turquesa fina sendo preenchida." Fecha o item 9.4 do backlog do beta-2.
+
+- **Decisão:** o indicador de carregando do app passa a ser UMA barra de 3px, turquesa (token `--sm2-primary-fill`; no visor/splash, `--sm2-primary-ink`; nenhuma cor nova), que enche da esquerda para a direita. Sem texto, sem spinner, sem ilustração. Glow só um `box-shadow` discreto na ponta; trilho a 12% da própria cor.
+- **Um só componente:** `src/components/ui/LoadingBar.tsx` (`progress` 0-1 = real; sem `progress` = simulado assintótico, teto 94%; `done` completa a 100% e some em fade de 220ms; `role=progressbar`, `aria-valuenow` só quando determinado, `aria-busy`, rótulo Carregando/Loading só para leitor de tela). `ScreenSkeleton` (fallback de `lazy()`) agora só enquadra (page/overlay/inline) e mantém o estado `error`; o `loading` é a `LoadingBar`.
+- **Splash do `index.html`:** só o fundo do visor + a mesma `.sm2-loadbar` (CSS puro, preenchimento 4% a 92% em 14s com desaceleração; `main.tsx` a completa e some em fade). Saíram a chama, o wordmark, os textos "LOADING DATA..."/"SOUL_LINK ESTABLISHED", a barra de 8 segmentos e os cristais (CSS `.sm2-splash-bar/crystal/flame/title/link` apagado; `brandFlame.parity.test.ts` virou "splash sem ilustração"). A `BrandFlame` do portão continua.
+- **Movimento reduzido:** preenchimento em passos de 20% (até 80%), sem transição e sem brilho.
+- **Assets apagados (sem importador):** `src/assets/brand/final/loading.mp4` e `loading-thumb.webp`.
+- **Fora desta decisão (reportado):** a tela de intro (`intro.mp4`/`intro-poster.webp`, "TAP TO START") traz "LOADING DATA..." DENTRO da arte; e o splash nativo do Android (`android/.../drawable/splash.png`) é imagem nativa. Trocar os dois exige arte nova / mudança nativa.
+- **Gatilho de rever:** relato de que a barra simulada "parece travada" em rede muito lenta (hoje para em 94% / 92% na splash até o conteúdo chegar).

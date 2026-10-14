@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * As missões diárias dos outros recursos na folha de Missões (14/10/2026, REGISTRO §50) e o fim do ícone de "login diário" na Home.
+ * As missões diárias dos outros recursos na folha de Missões (14/10/2026, REGISTRO §51) e o fim do ícone de "login diário" na Home.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';

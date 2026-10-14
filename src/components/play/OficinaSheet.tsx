@@ -60,7 +60,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Recompensa por concluir o processo (1 item, teto diário no ledger). Sem ela, concluir não paga. */
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
-  /** Um ciclo de foco (Pomodoro) terminou de verdade — a missão do dia conta o evento (REGISTRO §50). */
+  /** Um ciclo de foco (Pomodoro) terminou de verdade — a missão do dia conta o evento (REGISTRO §51). */
   onFocusCycle?: () => void;
 }) {
   const isPt = language === 'pt-BR';

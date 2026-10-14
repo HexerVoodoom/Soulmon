@@ -5863,9 +5863,10 @@ select:focus-visible {
   /* Onboarding-oráculo (D-Q11/R1): o casulo para de pulsar e continua sendo o
      cristal aceso; o `sync` da espera para de girar — o `role=status` anuncia. */
   .sm2-ora-pulse, .sm2-ora-spin { animation: none !important; }
-  /* A splash/intro (canvas Onboarding-funil): a onda da barra e os cristais
-     param; o que informa é o texto ("LOADING DATA..."), não o movimento. */
-  .sm2-splash-bar i, .sm2-splash-crystal { animation: none !important; }
+  /* A barra de carregamento (REGISTRO §50): sem brilho e o preenchimento da
+     splash anda em PASSOS; o do componente já anda em passos em JS. */
+  .sm2-loadbar i { transition: none !important; box-shadow: none !important; }
+  #splash .sm2-loadbar i { animation: sm2-loadbar-boot-steps 14s steps(5, end) forwards !important; }
   /* Spritesheet: para no ÚLTIMO quadro (o estado final do efeito), sem varrer. */
   .sm-sheet { animation: none !important; background-position-x: calc(-1 * var(--sm-sheet-w) + var(--sm-sheet-w) / var(--sm-sheet-frames)) !important; }
   /* A varredura da sintonia NÃO TOCA (§6 da spec). O corte de verdade é em JS
@@ -7228,57 +7229,12 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   -webkit-font-smoothing: none;
   image-rendering: pixelated;
 }
-#splash { z-index: 9999; transition: opacity .45s ease; }
+#splash { z-index: 9999; transition: opacity .22s ease .12s; }
 #splash.done { opacity: 0; pointer-events: none; }
 /* O reflexo do vidro, sem raio (é a tela inteira). */
 .sm2-splash > .sm2-viewport-glass { border-radius: 0; }
-/* A chama do kit a 4× inteiro (76×120, D-O1) — sem `drop-shadow`, sem
-   `transform` fracionário: o pulso da splash é COR, não escala (D-O2). */
-.sm2-splash-flame { display: block; flex: none; shape-rendering: crispEdges; }
-.sm2-splash-title {
-  margin: 0;
-  font-family: inherit;
-  font-size: var(--sm2-text-2xl);
-  font-weight: 400;
-  letter-spacing: .12em;
-  line-height: 1.2;
-  text-transform: uppercase;
-  color: var(--sm2-primary-ink);
-}
 /* 14px é o PISO da Silkscreen e o piso de "texto que o usuário lê". */
 .sm2-splash-pix { margin: 0; font-size: var(--sm2-text-sm); letter-spacing: .16em; color: var(--sm2-muted); text-transform: uppercase; }
-.sm2-splash-link { color: var(--sm2-primary-ink); }
-.sm2-splash-bar {
-  width: 220px; height: 16px; padding: 2px; box-sizing: border-box;
-  background: var(--sm2-surface-2); border: 1px solid var(--sm2-line);
-  border-radius: var(--sm2-radius-sm); display: flex; gap: 2px;
-}
-/* Segmento apagado em TINTA (`primary-ink` 15% sobre `surface-2`), nunca por
-   `opacity`; o aceso é `primary-ink`. A onda anima a COR entre os dois. */
-.sm2-splash-bar i {
-  flex: 1;
-  background: color-mix(in srgb, var(--sm2-primary-ink) 15%, var(--sm2-surface-2));
-  animation: sm2-splash-seg 1.6s linear infinite;
-}
-@keyframes sm2-splash-seg {
-  0%, 20% { background: color-mix(in srgb, var(--sm2-primary-ink) 15%, var(--sm2-surface-2)); }
-  30%, 70% { background: var(--sm2-primary-ink); }
-  80%, 100% { background: color-mix(in srgb, var(--sm2-primary-ink) 15%, var(--sm2-surface-2)); }
-}
-.sm2-splash-crystals { display: flex; gap: 24px; margin-top: 4px; }
-/* Cristais em vetor (gradiente + `clip-path`), sem `box-shadow`. */
-.sm2-splash-crystal {
-  width: 14px; height: 26px;
-  background: linear-gradient(160deg, var(--sm2-viewport-ink) 0%, var(--sm2-primary-ink) 45%, var(--sm2-primary-deep) 100%);
-  clip-path: polygon(50% 0, 100% 30%, 78% 100%, 22% 100%, 0 30%);
-  animation: sm2-splash-flick 1.6s ease-in-out infinite;
-}
-.sm2-splash-crystal:nth-child(2) { height: 34px; width: 17px; animation-delay: .3s; }
-.sm2-splash-crystal:nth-child(3) { animation-delay: .6s; }
-@keyframes sm2-splash-flick {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.14) translateY(-1px); }
-}
 /* A INTRO dentro do mesmo visor: o vídeo `cover`, o corvo (ilustração 512²
    a 128 = 0,25×, `image-rendering: auto` — como o `bg-room`) e o wordmark
    Silkscreen 20; "TAP TO SKIP" 14 `muted` no pé, dentro do alvo. */
@@ -7288,6 +7244,45 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-splash-tap { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px; pointer-events: none; }
 .sm2-splash[role="button"] { cursor: pointer; }
 .sm2-splash[role="button"]:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -4px; }
+
+/* ── BARRA DE CARREGAMENTO (REGISTRO §50, 14/10/2026) ────────────────────────
+   O ÚNICO indicador de carregando: 3px, turquesa, enche da esquerda para a
+   direita, sem texto/spinner/ilustração. Usada pelo componente `LoadingBar`
+   e, com o mesmo markup estático, pela splash do `index.html` (que pinta antes
+   do bundle). Altura fixa: nada salta. Fica FORA do bloco `.sm2-splash` de
+   propósito (o glow é um `box-shadow` discreto na ponta; o portão da splash
+   proíbe sombra dentro dela). Cor: turquesa do tema; no visor, a tinta do visor. */
+.sm2-loadbar {
+  --lb: var(--sm2-primary-fill);
+  position: relative;
+  display: block;
+  width: min(240px, 60%);
+  height: 3px;
+  flex: none;
+  box-sizing: border-box;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--lb) 12%, transparent);
+  transition: opacity .22s ease;
+}
+.sm2-visor .sm2-loadbar, .sm2-loadbar-boot { --lb: var(--sm2-primary-ink); }
+.sm2-loadbar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--lb);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--lb) 55%, transparent);
+  transition: width .18s linear;
+}
+.sm2-loadbar.is-done { opacity: 0; }
+.sm2-loadbar.is-done i { width: 100% !important; }
+.sm2-loadbar-still i { transition: none; box-shadow: none; }
+/* Splash: preenchimento assintótico em CSS puro (sobe rápido, desacelera, para em 92%). */
+#splash .sm2-loadbar i { animation: sm2-loadbar-boot 14s cubic-bezier(.12,.7,.25,1) forwards; }
+#splash .sm2-loadbar.is-done { opacity: 1; }
+#splash .sm2-loadbar.is-done i { animation: none; }
+@keyframes sm2-loadbar-boot { from { width: 4%; } to { width: 92%; } }
+@keyframes sm2-loadbar-boot-steps { from { width: 4%; } to { width: 80%; } }
 
 /* LOJA (canvas §26) — o card-aparelho: a arte no mini-visor, o véu do travado, a barra da missão.
    Nenhum token novo; o resto do card é inline em `ShopModal.tsx`. */

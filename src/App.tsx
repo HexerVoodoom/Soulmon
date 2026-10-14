@@ -3734,7 +3734,7 @@ export default function App() {
    * virada de semana (`forWeek`) tem de acontecer no MESMO updater que soma —
    * senão um contador de semana passada recebe +1 antes de ser zerado.
    */
-  /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §50) contam o MESMO evento real:
+  /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §51) contam o MESMO evento real:
      os gestos que já têm contador semanal alimentam também o dia (aqui, no mesmo updater); os demais chamam `contarDiaria`. */
   const contarDiaria = useCallback((evento: DailyEvent) => {
     setGameState(prev => ({ ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento) }));

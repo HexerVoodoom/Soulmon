@@ -47,7 +47,7 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit }: {
   demoCharacterId?: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
-  /** A partida chegou ao fim (vitória OU derrota) — a missão do dia conta o jogo, não o resultado (REGISTRO §50). */
+  /** A partida chegou ao fim (vitória OU derrota) — a missão do dia conta o jogo, não o resultado (REGISTRO §51). */
   onMatchEnd?: () => void;
   onExit: () => void;
 }) {

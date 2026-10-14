@@ -483,7 +483,7 @@ export interface GameState {
   /** Missão por prédio + materiais (07/10/2026, `utils/buildingQuests.ts`): UM objeto — o dia do jogador, os prédios
    *  visitados/resgatados hoje e o estoque de materiais (0..99). Dia novo zera a parte diária na leitura. */
   buildingQuests?: BuildingQuestState;
-  /** Missões diárias dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §50): contagem por evento do dia e as já pagas. Dia novo zera na leitura. */
+  /** Missões diárias dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §51): contagem por evento do dia e as já pagas. Dia novo zera na leitura. */
   dailyMissions?: DailyMissionsState;
   /** Apresentações de prédio já vistas (08/10/2026, `utils/buildingIntro.ts`): ids `<área>.<lote>`. O NPC se apresenta UMA vez por
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —

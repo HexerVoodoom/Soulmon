@@ -1094,7 +1094,7 @@ type ShopSegment = 'shop' | 'tournament';
 - **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (a ação real, guardar um registro no Caderno, é que conclui); o lote **não** leva marca
   e a folha do prédio **não** tem painel de missão (**exceção: o Passeio**, cuja experiência inteira fica no lote — 08/10/2026; a Home só lista a linha "Take a stroll"): a UI das demais vive só no menu de Missões da Home
   (`MissionsSheet`, **UMA folha com três ABAS compactas** — `PixelTabs variant="compact"`, o mesmo componente do Centro de Evolução —
-  desde 14/10/2026 (REGISTRO §50): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
+  desde 14/10/2026 (REGISTRO §51): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
   recursos, `DailyMissionList`), **Semanal** ("Esta semana"/"This week") e **Conquistas**; toque ou deslize troca de aba, as já visitadas
   ficam montadas; **um ícone só** na Home (`MissionsLink`), sempre presente — esmaecido sem pendência — com um ponto discreto na aba que
   tem "!"/"?". Os dois ícones antigos (diário/semanal) saíram; linha aponta, pronta, Resgatar). Ver

@@ -12,7 +12,7 @@ export interface DailyMissionsProps {
 }
 
 /**
- * As missões do dia dos OUTROS RECURSOS (minijogos, foco, cuidado... — `utils/dailyMissions.ts`, REGISTRO §50). Convite, nunca
+ * As missões do dia dos OUTROS RECURSOS (minijogos, foco, cuidado... — `utils/dailyMissions.ts`, REGISTRO §51). Convite, nunca
  * cobrança: a linha só diz o que fazer; quando o evento real acontece fica "pronta" e o "Resgatar" paga. SEM lista de materiais
  * (nenhuma tela de missão os mostra). Quem não fez não perde nada — amanhã a lista é outra.
  */

@@ -158,7 +158,7 @@ export interface AreaViewProps {
   /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes da Masmorra. */
   petElement?: string;
   onEarnPoints: (points: number) => void;
-  /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §50). */
+  /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §51). */
   onDailyEvent?: (event: DailyEvent) => void;
   /** Exploração + Jogos (F5). */
   play: PlayHandlers;
