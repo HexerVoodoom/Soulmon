@@ -13,6 +13,18 @@
  * dentro da caixa de colisão — o que se vê é, no máximo, o que acerta.
  */
 import { DUNGEON_LINE_SPRITES } from './sprites';
+import shadow1 from '../assets/soulmon/dino/dino-shadow-1.png';
+import shadow1b from '../assets/soulmon/dino/dino-shadow-1b.png';
+import shadow1c from '../assets/soulmon/dino/dino-shadow-1c.png';
+import shadow2 from '../assets/soulmon/dino/dino-shadow-2.png';
+import shadow2b from '../assets/soulmon/dino/dino-shadow-2b.png';
+import shadow2c from '../assets/soulmon/dino/dino-shadow-2c.png';
+import shadow3 from '../assets/soulmon/dino/dino-shadow-3.png';
+import shadow3b from '../assets/soulmon/dino/dino-shadow-3b.png';
+import shadow3c from '../assets/soulmon/dino/dino-shadow-3c.png';
+import shadow4 from '../assets/soulmon/dino/dino-shadow-4.png';
+import shadow4b from '../assets/soulmon/dino/dino-shadow-4b.png';
+import shadow4c from '../assets/soulmon/dino/dino-shadow-4c.png';
 
 export type ShadowStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export interface ShadowSlot { id: string; line: string; stage: ShadowStage }
@@ -29,8 +41,8 @@ export const SHADOW_SLOTS: ReadonlyArray<ReadonlyArray<ShadowSlot>> = [
   [{ id: '4', line: 'lumel', stage: 'mega' }, { id: '4b', line: 'serah', stage: 'mega' }, { id: '4c', line: 'astrase', stage: 'mega' }],
 ];
 
-/** A arte real, por id (`dino-shadow-<id>.png`, 128², alfa). Vazio até a leva da squad-arte entrar. */
-export const SHADOW_ART: Readonly<Record<string, string>> = {};
+/** A arte real, por id (`dino-shadow-<id>.png`, 128², alfa). Instalada em 13/10/2026 (leva low do Higgsfield). */
+export const SHADOW_ART: Readonly<Record<string, string>> = { '1': shadow1, '1b': shadow1b, '1c': shadow1c, '2': shadow2, '2b': shadow2b, '2c': shadow2c, '3': shadow3, '3b': shadow3b, '3c': shadow3c, '4': shadow4, '4b': shadow4b, '4c': shadow4c };
 
 export interface ShadowSource { id: string; src: string; /** `true` = arte real; `false` = placeholder pintado de preto em tempo de desenho. */ art: boolean }
 

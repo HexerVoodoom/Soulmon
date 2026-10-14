@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { HungerTier } from '../../utils/hunger';
 import type { Language } from '../../utils/i18n';
+import { fomeCheio, fomeMedio, fomeFaminto } from '../../assets/soulmon/icones-ui';
 
 /**
  * O INDICADOR DE FOME da Home (beta-2 3.5, REGISTRO §40). Componente PEQUENO e DESACOPLADO: só props simples, nenhum acesso ao save —
@@ -8,7 +9,7 @@ import type { Language } from '../../utils/i18n';
  *
  *   <HungerIndicator tier={status.tier} value={status.hunger} language={language} />
  *
- * Três estados legíveis SEM depender de cor: uma tigela e três pontos de 6px em linha (cheio / meio / só o contorno); faminto também troca a tinta para o aviso dourado do vidro (`--sm2-viewport-warn`). O nome acessível diz o estado em
+ * Três estados legíveis SEM depender de cor: carne no osso inteira / pela metade / só o osso (arte escolhida pelo dono, 14/10/2026; o faminto vem em dourado). O nome acessível diz o estado em
  * palavras. Sem texto na tela (minimalismo): o detalhe vive na dica da energia (`home/statTips.ts`). Sem animação, sem som, sem cobrança.
  * Cor só por tokens (`currentColor` + `--sm2-*`): herda a tinta do contêiner (na cena escura, os tons `viewport*` do `sm3-stat`).
  */
@@ -17,12 +18,9 @@ const STATE_COPY: Record<HungerTier, { pt: string; en: string }> = {
   fair: { pt: 'com um pouco de fome', en: 'a little hungry' },
   starving: { pt: 'faminto', en: 'starving' },
 };
-const PIPS: Record<HungerTier, number> = { fed: 3, fair: 2, starving: 0 };
+const ART: Record<HungerTier, string> = { fed: fomeCheio, fair: fomeMedio, starving: fomeFaminto };
 
 const wrap: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, lineHeight: 0 };
-
-/** Pontos em LINHA, 6px (F1 do crítico: os de 4px empilhados liam como "⋮"). */
-const PIP = 6;
 
 export function HungerIndicator({ tier, value, language, size = 20, style, onTap, expanded }: {
   tier: HungerTier;
@@ -37,28 +35,9 @@ export function HungerIndicator({ tier, value, language, size = 20, style, onTap
 }) {
   const isPt = language === 'pt-BR';
   const copy = isPt ? STATE_COPY[tier].pt : STATE_COPY[tier].en;
-  const filled = PIPS[tier];
   const nome = isPt ? `Fome: ${copy}` : `Hunger: ${copy}`;
   const corpo = (
-    <>
-      <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
-        {/* tigela em pixel: borda e base; o vapor aparece só com a fome atendida */}
-        <path d="M2 7h12v1h-1v2h-1v2h-1v1H5v-1H4v-2H3V8H2z" fill="currentColor" />
-        {tier !== 'starving' && <path d="M5 3h1v2H5zM8 2h1v3H8zM11 3h1v2h-1z" fill="currentColor" opacity={tier === 'fed' ? 1 : 0.55} />}
-      </svg>
-      <span aria-hidden="true" style={{ display: 'inline-flex', flexDirection: 'row', gap: 3 }}>
-        {[0, 1, 2].map(i => (
-          <i
-            key={i}
-            style={{
-              display: 'block', width: PIP, height: PIP, boxSizing: 'border-box',
-              background: i < filled ? 'currentColor' : 'transparent',
-              border: '1px solid currentColor',
-            }}
-          />
-        ))}
-      </span>
-    </>
+    <img src={ART[tier]} alt="" width={size} height={size} draggable={false} aria-hidden="true" style={{ imageRendering: 'pixelated' }} />
   );
   const dados = {
     'data-hunger-indicator': true,

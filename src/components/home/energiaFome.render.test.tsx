@@ -43,17 +43,19 @@ describe('EnergyTimer', () => {
 });
 
 describe('HungerIndicator', () => {
-  it('três estados legíveis SEM depender de cor: nome acessível em palavras e pontos preenchidos 3 / 2 / 0', () => {
+  it('três estados legíveis SEM depender de cor: nome acessível em palavras e uma arte por estado', () => {
     const casos = [['fed', 3, 'Fome: bem alimentado'], ['fair', 2, 'Fome: com um pouco de fome'], ['starving', 0, 'Fome: faminto']] as const;
-    for (const [tier, pontos, nome] of casos) {
+    const arts = new Set<string | null>();
+    for (const [tier, , nome] of casos) {
       const { unmount } = render(<HungerIndicator tier={tier} value={50} language="pt-BR" />);
       const el = document.querySelector('[data-hunger-indicator]')!;
       expect(el.getAttribute('aria-label')).toBe(nome);
       expect(el.getAttribute('data-hunger-tier')).toBe(tier);
-      const cheios = [...el.querySelectorAll('i')].filter(i => (i as HTMLElement).style.background === 'currentcolor').length;
-      expect(cheios).toBe(pontos);
+      expect(el.querySelectorAll('img')).toHaveLength(1);
+      arts.add(el.querySelector('img')!.getAttribute('src'));
       unmount();
     }
+    expect(arts.size).toBe(3);
   });
   it('EN e o valor numérico só vai para data-hunger (a tela não mostra número)', () => {
     render(<HungerIndicator tier="starving" value={7.4} language="en-US" />);
@@ -65,12 +67,10 @@ describe('HungerIndicator', () => {
 });
 
 describe('HungerIndicator — legibilidade (beta-2 F1)', () => {
-  it('pontos de 6px em LINHA (não empilhados) e faminto leva a tinta de aviso', () => {
+  it('a arte é pixelada e nenhum ponto empilhado resta', () => {
     render(<HungerIndicator tier="starving" value={2} language="pt-BR" />);
-    const pontos = [...document.querySelectorAll('[data-hunger-indicator] i')] as HTMLElement[];
-    expect(pontos).toHaveLength(3);
-    for (const p of pontos) { expect(p.style.width).toBe('6px'); expect(p.style.height).toBe('6px'); }
-    expect((pontos[0].parentElement as HTMLElement).style.flexDirection).toBe('row');
+    expect(document.querySelectorAll('[data-hunger-indicator] i')).toHaveLength(0);
+    expect((document.querySelector('[data-hunger-indicator] img') as HTMLElement).style.imageRendering).toBe('pixelated');
   });
   it('com onTap vira botão e chama; sem onTap segue imagem', () => {
     const onTap = vi.fn();
