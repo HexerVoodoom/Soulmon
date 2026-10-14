@@ -84,6 +84,12 @@ via `language === 'pt-BR'`).
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.
 
+> **`docs/FILA-DE-MODAIS.md`** (14/10/2026, REGISTRO §42) é o inventário da **fila central de modais**: todo intersticial da
+> Home/App (tour, level-up, resumo do dia, intro de NPC/mapa, metas, check-in, avisos leves) passa por
+> `src/utils/presentationQueue.ts` + `src/hooks/usePresentationQueue.ts` — UM por vez, na ordem de `PRESENTATION_ORDER`, quem
+> está na tela NÃO é expulso, e o "visto" é gravado **AO MOSTRAR** (não ao fechar). **Modal novo da Home entra na fila**
+> (receita na §5 do doc); a intro de NPC reutiliza `components/NpcSequence.tsx`, não cria outra.
+
 > **`docs/manual/00-MAPA.md`** é a porta de entrada do **manual completo** do
 > Soulmon (18 documentos em `docs/manual/` — `find docs/manual -name '*.md' | wc -l`, 21/09/2026; escritos em 09–10/09/2026): visão e
 > linhas vermelhas, as regras de negócio sistema por sistema, fluxo de telas,

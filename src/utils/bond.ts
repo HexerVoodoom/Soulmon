@@ -58,7 +58,7 @@ import type { HabitTier } from '../types/taskModel';
 /** XP base por UNIDADE DE PESO DE ESFORÇO concluída (hábito = 1, tarefa = effort 1–3). */
 export const XP_PER_EFFORT = 10;
 /**
- * 🪜 XP POR SUBTAREFA (proposta de 14/10/2026, REGISTRO §42 — o dono revisa os dois números).
+ * 🪜 XP POR SUBTAREFA (proposta de 14/10/2026, REGISTRO §43 — o dono revisa os dois números).
  * Cada subtarefa concluída paga `XP_STEP_FRACTION` do XP-base da tarefa/hábito dela (mínimo 1) e
  * só as primeiras `XP_STEP_MAX_PAID` de cada tarefa (de cada hábito, por dia) pagam: o total de
  * uma tarefa com subtarefas fica entre +10% e +50% acima da tarefa simples, nunca mais que isso.
@@ -675,7 +675,7 @@ export function applyBondRewards<T extends BondRewardTarget>(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. XP por subtarefa (proposta 14/10/2026, REGISTRO §42).
+// 7. XP por subtarefa (proposta 14/10/2026, REGISTRO §43).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**

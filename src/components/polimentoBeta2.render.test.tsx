@@ -14,16 +14,11 @@ import { CareSystem, CARE_X_PCT } from './CareSystem';
 afterEach(cleanup);
 const src = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf8');
 
-describe('P5 — folha do prédio novo', () => {
-  it('a ação principal vem primeiro, em largura toda; "Depois/Later" é um botão SECUNDÁRIO (contorno) logo abaixo', () => {
-    const { container } = renderWithCss(<BuildingIntro id={'mercado.itens' as never} language="en-US" onGo={vi.fn()} onLater={vi.fn()} />);
-    const next = container.querySelector('[data-bi-next], [data-bi-go]') as HTMLElement;
-    const later = container.querySelector('[data-bi-later]') as HTMLElement;
-    expect(next.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(next.style.width).toBe('100%');
-    expect(later.style.width).toBe('100%');
-    expect(later.style.getPropertyValue('--sm2-btn')).toBe('outline');
-    expect(later.textContent).toBe('Later');
+describe('P5 — apresentação do prédio novo (substituída em 14/10/2026 pela NpcSequence em tela cheia)', () => {
+  it('sem botões "Depois/Later"/"Próximo"/"Ir lá": só o toque avança e um "Skip" discreto pula', () => {
+    const { container } = renderWithCss(<BuildingIntro ids={['mercado.itens' as never]} language="en-US" onFinish={vi.fn()} />);
+    expect(container.querySelector('[data-bi-next], [data-bi-go], [data-bi-later]')).toBeNull();
+    expect(container.querySelector('[data-npc-skip]')!.textContent).toBe('Skip');
   });
 });
 

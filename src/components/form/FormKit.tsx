@@ -370,12 +370,12 @@ export function CheckRow({
 }
 
 /**
- * Bottom sheet. Vem de baixo porque o polegar chega lá — o botão primário de um
+ * Bottom sheet (ou, com `placement="center"`, modal CENTRALIZADO). Vem de baixo porque o polegar chega lá — o botão primário de um
  * formulário longo no topo da tela é um alvo que ninguém alcança de uma mão.
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom',
 }: {
   open: boolean;
   title: string;
@@ -403,8 +403,14 @@ export function ModalSheet({
    *  destrutiva e formulário com texto digitado (um toque fora não pode perder o que a pessoa
    *  escreveu). A lista vive em `docs/BETA-AJUSTES-UI.md`. */
   dismissOnBackdrop?: boolean;
+  /** 14/10/2026 (dono): os modais do COMEÇO DO DIA (resumo do dia, escolha das primeiras metas) NÃO são folha de baixo —
+   *  são o modal CENTRALIZADO. `'center'` centra o painel na tela, com cantos arredondados nos quatro lados, sem
+   *  alça e sem subir de baixo (só o véu e o painel aparecem com fade). Tudo o mais (foco, Esc, véu, safe-area,
+   *  rodapé) é igual ao `'bottom'`, o padrão. */
+  placement?: 'bottom' | 'center';
 }) {
   const isPt = language === 'pt-BR';
+  const centered = placement === 'center';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   const fechaNoVeu = dismissOnBackdrop ?? closeSide === 'start';
   /* O toque tem de COMEÇAR e TERMINAR no véu: arrastar uma seleção de texto de dentro
@@ -426,7 +432,8 @@ export function ModalSheet({
       style={{
         position: 'fixed', inset: 0, zIndex: 120,
         background: 'rgba(4, 18, 20, .55)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        display: 'flex', alignItems: centered ? 'center' : 'flex-end', justifyContent: 'center',
+        ...(centered ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
       }}
     >
       <div
@@ -434,12 +441,13 @@ export function ModalSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="sm2-sheet-rise"
+        data-placement={placement}
+        className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
         style={{
-          width: '100%', maxWidth, maxHeight: '92vh',
+          width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           backgroundColor: 'var(--sm2-surface)',
-          borderRadius: '20px 20px 0 0',
+          borderRadius: centered ? 20 : '20px 20px 0 0',
           boxShadow: SM2_SHADOW_SHEET,
         }}
       >
@@ -449,6 +457,7 @@ export function ModalSheet({
             existe aqui (fechar é o X e o Escape, os dois já acessíveis), então
             ele é `aria-hidden` — anunciar uma alça que não arrasta seria pior
             que não ter alça nenhuma. */}
+        {centered ? null : (
         <div
           aria-hidden="true"
           style={{
@@ -458,6 +467,7 @@ export function ModalSheet({
             flexShrink: 0,
           }}
         />
+        )}
 
         {closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),

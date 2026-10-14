@@ -585,44 +585,39 @@ o assunto restante virou a constante exportada `SHOP_AND_CURRENCY_PRIMER`.
 
 ### 3.1 Fila 1 — os intersticiais (um por vez, tela cheia)
 
-A prioridade é **uma expressão só**, no `src/App.tsx` (`const interstitial`):
+Desde 14/10/2026 (REGISTRO §42) a prioridade é **uma fila central só**: `src/utils/presentationQueue.ts`
+(`PRESENTATION_ORDER` + `pickPresentation`, puros), ligada ao React por `src/hooks/usePresentationQueue.ts`, chamada UMA vez no
+`src/App.tsx` (`const presentation = usePresentationQueue({ ready, onShow, onDismiss })`; `const interstitial = presentation.current`).
+O inventário de quem dispara o quê é `docs/FILA-DE-MODAIS.md`.
 
 ```ts
-const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare'
-  | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
-  welcomeTourOpen ? 'welcomeTour'
-    : buildingIntroOpen ? 'buildingIntro'
-    : triageTasks ? 'triage'
-    : showDailyReport && gameState.lastDayReport ? 'dailyReport'
-      : checkInPlanData ? 'checkIn'
-        : grovePendente ? 'groveMilestone'
-          : morningDream ? 'dream'
-            : nightmareOpen ? 'nightmare'
-              : needsCatalogOnboarding(gameState) ? 'catalogOnboarding'
-                : catalogLevelInviteCandidate ? 'catalogLevelInvite'
-                  : 'welcome';
+PRESENTATION_ORDER = ['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'catalogOnboarding',
+  'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'welcome']
 ```
 
-Ordem: **tour do corvo (07/10/2026, §4.27) → apresentação do prédio novo (08/10/2026, §4.28) → triagem → relatório diário → check-in → marco do Bosque (`groveMilestone`,
-Guilda, 29/09/2026) → sonho → pesadelo → onboarding do catálogo → convite de nível
-do catálogo → welcome prompt**. (⚰️ esta lista omitia os dois do catálogo — ver o
-`const interstitial` do `App.tsx`; a régua é `filaDeAvisos.contract.test.ts`, que
-trava a ordem inteira e a posição do `groveMilestone`: depois de relatório e
-check-in, ANTES do sonho — é raro e descritivo, cede a vez ao que se faz todo
-dia, mas não espera o adiável.) Quem está mais abaixo continua **pendente** e monta sozinho quando o de
-cima fecha — nada é descartado. A triagem vem primeiro por ser a única aberta
-por TOQUE do usuário; o welcome prompt vem por último porque é o único que decide
-sozinho se tem algo a dizer.
+Ordem: **tour do corvo (§4.27) → triagem (a única aberta por TOQUE) → level-up → resumo do dia (modal centralizado
+"ontem + corações", depois a aventura, depois "hoje") → NPC apresenta o prédio (§4.28, tela cheia, só na PRIMEIRA entrada nele) → escolha das metas
+(catálogo) → compromisso do dia (check-in) → "crie mais atividades" (`EvolveTaskModal`) → marco do Bosque → sonho →
+pesadelo → convite de nível do catálogo → convite do sono → balão "prédio desbloqueado" (`unlockToast`, não bloqueante) → welcome prompt (ocioso)**. Regras: **um por vez**; **quem está
+na tela NÃO é expulso** por um mais prioritário que fica pronto depois (a cadeia antiga recalculava a cada render e
+desmontava o resumo); o **"visto" é gravado AO MOSTRAR** (`onShow`), não ao fechar — fechar o app no meio não repete o evento;
+o **voltar do Android** fecha o item da tela (`onDismiss`) e a fila avança; item que **lança no render, não carrega em 8 s
+(`PresentationSlot`) ou cujo fechamento lança** é pulado até a próxima abertura. Quem está mais abaixo continua pendente e
+monta sozinho quando o de cima fecha.
 
-Duas superfícies **entram por gate reativo** em vez de entrar na fila:
+Superfícies que **entram por gate reativo** em vez de entrar na fila:
 
 ```jsx
 {protectPrompt && interstitial === 'welcome' && (   // ProtectProgressModal
-<EvolveTaskModal isOpen={evolveModalStage !== null && evolutionCeremony === null} …/>
 ```
 
-- **Régua**: `src/components/filaDeAvisos.contract.test.ts` — trava as duas
-  strings acima, literalmente.
+(O `EvolveTaskModal` ENTROU na fila como `evolveTask`: `isOpen={interstitial === 'evolveTask'}`, "pronto" = evolução pendente e
+`evolutionCeremony === null`.) As cerimônias de gesto (`EvolutionCeremony`, `MilestoneCeremony`) e os sheets abertos por
+toque ficam de fora de propósito — a tabela está em `FILA-DE-MODAIS.md` §4.
+
+- **Régua**: `src/utils/presentationQueue.test.ts`, `src/hooks/usePresentationQueue.test.tsx` (inclui o cenário exato do dono:
+  dia novo + level-up + prédio + compromisso, e a reabertura sem repetição) e `src/components/filaDeAvisos.contract.test.ts`
+  (ordem, montagem única de cada item, "visto ao mostrar").
 
 ### 3.2 Fila 2 — o slot de avisos da Home
 
@@ -1666,7 +1661,13 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   setShowDailyReport(true);
   ```
 
-- **Sai para**: `onClose` — que **primeiro** grava o marco de memória
+  Desde 14/10/2026 a marca `DAILY_REPORT_SHOWN` é gravada **AO MOSTRAR** (`onShow` da fila central, §3.1), não só ao fechar:
+  fechar o app com o resumo aberto não o traz de volta. **Forma:** modal CENTRALIZADO (`ModalSheet placement="center"`), em
+  passos — **ontem** (a manchete, as tarefas de ontem e os corações NO MESMO modal, `data-report-step="yesterday"`), a
+  **aventura** (`AreaSheet` com o NPC do scroll, passo separado) e **hoje** (humor/oferta/memórias).
+
+- **Sai para**: `onClose` (`closeDailyReport` no `App.tsx`, o mesmo caminho do botão, do ✕, do Esc, do voltar do Android e
+  da falha do item) — que **primeiro** grava o marco de memória
   (`markMemoryShown`, idempotente; registrado ao FECHAR, não ao abrir) e depois
   chama `handleCloseDailyReport`.
 - **O que se vê/faz**: o resumo do dia; o **check-in de humor** (5 carinhas,
@@ -2063,11 +2064,11 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 
 ### 4.28 O NPC apresenta o prédio novo <a id="npc-apresenta-predio"></a>
 
-- **Chega por**: o intersticial `buildingIntro`, **o segundo da fila 1** (§3.1), logo depois do tour. Condição (`buildingIntroReady`): há prédio PENDENTE (aberto no Vínculo atual E fora de `buildingIntrosSeen`), nenhum display de Level Up aberto (`levelUpOpen` — hoje `false`, ⚠️ TODO: ligar ao `LevelUpOverlay` quando ele entrar na main; a espera já é regra e está testada) e a tela é a Home ou o Mapa (nunca por cima de um jogo).
-- **Fonte única**: a tabela prédio→Vínculo é `BUILDING_GATES` (`utils/gates.ts`), a MESMA que tranca o lote no Mapa; `utils/buildingIntro.ts` deriva dela (nenhum número próprio) e `buildingIntro.test.ts` reprova divergência. Vários prédios abertos juntos viram fila, um por vez, do Vínculo mais cedo ao mais tarde (`BUILDING_INTRO_ORDER`).
-- **Save**: `buildingIntrosSeen?: string[]` (ids `<área>.<lote>`). Campo ausente/lixo na carga é **semeado** com tudo que já está aberto no Vínculo daquela carga (`sanitizeBuildingIntrosSeen`, no `hydrateSave`): save existente nunca re-dispara apresentação de prédio que o jogador já usa; jogador novo (Vínculo 1) só vê o que abrir depois.
-- **Estados**: `BuildingIntro` (`RitualDialog` z-200): título = nome do prédio; o NPC do lote (busto de `lotNpcArt`, nome de `LOT_NPC_VOICE`) fala **três balões** em primeira pessoa — quem é · o que se faz ali · convite —, um por toque em "Next/Próximo"; texto em `utils/buildingIntroCopy.ts` (EN base + PT-BR, os 21 prédios), escrito sob L1..L12.
-- **Sai para**: "Go there/Ir lá" (último balão) grava o visto e abre a ÁREA com a folha do lote aberta (`pendingSheet`, direto — não passa por `buildingDestination`, que mandaria o Caderno ao menu de Missões); "Later/Depois" (todo passo) e Esc gravam o MESMO visto. Nada fecha sozinho; a apresentação nunca volta. Muda e sem recompensa (R-NOVA); movimento reduzido para a ENTRADA do busto (`.sm-npc-intro`, bloco canônico) e mantém a pausa. Dono: `src/components/BuildingIntro.tsx`, `src/utils/buildingIntro.ts`.
+- **Chega por**: o intersticial `buildingIntro` (§3.1), disparado **só na PRIMEIRA entrada no prédio** (`visitarPredio` no `App.tsx`: `id` fora de `buildingIntrosSeen`). Nunca no level-up nem ao abrir o Mapa: o level-up só mostra o balão `UnlockToast` ("<Prédio> desbloqueado em <local>", `buildingsUnlockedBetween(from, to)`, todos do mesmo level-up num só).
+- **Fonte única**: a tabela prédio→Vínculo é `BUILDING_GATES` (`utils/gates.ts`), a MESMA que tranca o lote no Mapa; `utils/buildingIntro.ts` deriva dela (nenhum número próprio) e `buildingIntro.test.ts` reprova divergência. A intro é de UM prédio por vez (a entrada).
+- **Save**: `buildingIntrosSeen?: string[]` (ids `<área>.<lote>`). Campo ausente/lixo na carga é **semeado** com tudo que já está aberto no Vínculo daquela carga (`sanitizeBuildingIntrosSeen`, no `hydrateSave`): save existente nunca re-dispara apresentação de prédio que o jogador já usa. **Desde 14/10/2026 o prédio é marcado visto na hora em que a intro abre** (não ao fechar): fechar o app no meio não a traz de volta.
+- **Estados**: `BuildingIntro` → `NpcSequence` (`FILA-DE-MODAIS.md` §6): **tela cheia, NPC bem grande** (a arte de `lotNpcArt`), janela de texto embaixo com o nome do NPC, **sem botões "Próximo/Ir lá/Depois"**. Três falas por prédio (quem é · o que se faz ali · convite), texto em `utils/buildingIntroCopy.ts` (EN base + PT-BR, os 21 prédios), escrito sob L1..L12. **Toque em qualquer lugar avança**; na última fala o toque fecha.
+- **Sai para**: toque na última fala (`done`) ou **"Pular/Skip"** (texto discreto no canto superior ESQUERDO, ≥ 44 px, dentro da safe-area), Esc ou o voltar do Android (`skip`) — os dois encerram a sequência inteira. Enter/Espaço avançam. Nada fecha sozinho. Muda e sem recompensa (R-NOVA). Dono: `src/components/BuildingIntro.tsx` (monta as falas), `src/components/NpcSequence.tsx` (a mecânica, genérica — o tutorial do mapa deve reutilizá-la), `src/utils/buildingIntro.ts`.
 
 ### 4.25 Superfícies globais (montadas uma vez, cobrem tudo)
 
@@ -2309,5 +2310,5 @@ Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/g
 - **Carregamento:** o esqueleto de tela (`ScreenSkeleton`) é uma palavra e um visor parado; dentro de uma folha, a variante `inline`; estados `loading`/`error` (com "Tentar de novo")/`done`.
 - **Santuário do Vínculo:** as listas de atividades usam o ícone de categoria do repo no lugar do emoji; a árvore de talentos nasce aberta (sem "Abrir/Recolher a árvore" e sem o cartão de resumo repetido).
 - **Centro de Evolução:** as três pílulas dos caminhos viraram abas compactas (sublinhado fino na ativa, separadores, nome inteiro + número); tocar ou deslizar na área da árvore troca de aba.
-- **Perfil (novo prédio do Laboratório, Vínculo 2):** "Quem ele é" (personalidade, atributo principal, equipamento do Soulsmith) e "Como luta" (elemento, ataque, especial, efeito, elemento do especial quando difere). Sem pontuação; linha ausente quando o app não tem o dado. NPC: Oriel (busto reaproveitado).
+- **Perfil (novo prédio do Laboratório, Vínculo 2):** "Quem ele é" (personalidade, atributo principal, equipamento do Soulsmith) e "Como luta" (elemento, ataque, especial, efeito, elemento do especial quando difere). Sem pontuação; linha ausente quando o app não tem o dado. NPC: o Corvo, mascote (`mascot-raven.png`; decisão do dono, 14/10/2026).
 - **Humor ("E você, como está hoje?"):** ícones de 40 px em alvos de 64, e o nome do humor escolhido aparece sob a fileira.
