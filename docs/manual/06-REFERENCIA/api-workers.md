@@ -524,6 +524,10 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Dono de:** o acesso do beta fechado — `parseBetaEmails`, `betaRuleApplies`, `betaAllows`, `betaGate`, `BETA_CLOSED_MESSAGE`. `BETA_EMAILS` (secret, e-mails normalizados) e `BETA_CLOSED` (flag). Flag ligada: fora da lista não acessa save, IA nem compra (403 `beta-closed`); flag desligada: só IA exige a lista (se houver). Fail-closed sem e-mail verificado.
 **Chamado por:** `_auth.js` › `authorizeSaveAccess` (TODA rota por saveId, gate S1), `_aiGuard.js` (IA), `save.js`, `billing.js`, `subscribe.js`/`fcm-subscribe.js` (`isBetaClosed`). Comparação por `canonBetaEmail` (Gmail sem ponto/+tag). **Régua:** `functions/api/betaAccess.test.js`, `functions/api/betaClosed.routes.test.js`.
 
+### `functions/api/_chroma.js` e `functions/api/_png.js` (14/10/2026, §48)
+**Dono de:** o chroma-key do sprite por API — `chromaKeyPng` (PNG com fundo verde `#00FF00` -> PNG RGBA binário, despill, ilhas `<24 px` fora, recorte com margem), `keyRgba`, `BadChromaError` (`bad-chroma`); e o codec PNG mínimo em JS puro sobre `fflate` (`decodePng`, `encodePng`).
+**Chamado por:** `generate-sprite.js` (`baixarEChavear`, `chaveioOpcional`). **Régua:** `functions/api/_chroma.test.js`, `functions/api/generate-sprite.chroma.test.js`. **Decisão:** `REGISTRO-DE-DECISOES.md` §48.
+
 ### `functions/api/_ipHash.js` (release/beta-1, 11/10/2026)
 **Dono de:** antiabuso por HASH de IP — `ipHash` (HMAC-SHA256 com `IP_HASH_SALT`, 16 hex; o IP nunca é gravado), `takeIpQuota` (contadores `iph:<tipo>:<hash>:<dia>`, TTL 30 dias), `IP_LIMITS` (3 contas novas e 4 sprites por ip-hash/dia). Sem `IP_HASH_SALT`, nada é calculado.
 **Chamado por:** `save.js` (1ª gravação), `generate-sprite.js`. **Régua:** `functions/api/betaAccess.test.js`. **Política:** `privacidade.html` §6d.
