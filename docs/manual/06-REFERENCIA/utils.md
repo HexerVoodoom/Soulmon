@@ -2710,6 +2710,9 @@ dominância populacional — por isso ±15%. Régua nova:
 **Avisos do arquivo:**
 - ⚠️ Reverter e re-sintonizar NÃO consomem o teto de tentativas — nenhuma função de adoção toca `attempts`.
 
+### `src/utils/sleepZ.ts`
+**Dono de:** onde fica o Z do sono na Home (14/10/2026): `sleepZPlacement({ footY, spriteBox, size, zoom, airLiftPx?, margin? })` — ao lado da cabeça, nunca acima do topo visível do palco depois do zoom da cena (`CENA_ZOOM`), com ou sem altitude. Puro. **Chamado por:** `CompanionHUD` (bloco `isSleeping`). **Régua:** `utils/sleepZ.test.ts`.
+
 ### `src/utils/spritePose.ts`
 **Dono de:** a pose do sprite — `SpritePose = { flipX, altitude: 'ground' | 'air' }`, a sanitização (lixo -> chão, sem espelho), a conta do espelho do passeio (`mirrorSprite`, em que `flipX` inverte a "frente" da arte), a frase de direção do prompt de geração (`SPRITE_FACING_PROMPT`: arte virada à DIREITA) e o ÚNICO ponto de escrita, `applySpritePose(patch)`. Vale na home e no overlay do desktop; combate fica de fora (o palco fixa os lados).
 **Exports:** `SpritePose`, `SpriteAltitude`, `DEFAULT_SPRITE_POSE`, `SPRITE_FACING_PROMPT`, `AIR_LIFT_PX`, `sanitizeSpritePose`, `mirrorSprite`, `applySpritePose`, `registerSpritePoseWriter`, `registerSpritePoseReader`, `getSpritePose`, `mergeSpritePose`.
