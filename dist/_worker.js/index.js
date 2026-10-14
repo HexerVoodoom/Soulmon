@@ -3207,17 +3207,16 @@ async function callGroq(env, req2, withTools) {
   const body = {
     model: chatModel(env),
     messages,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     temperature
   };
   if (/^openai\/gpt-oss/.test(body.model)) {
     body.reasoning_effort = "low";
-    body.max_tokens = maxTokens + 300;
+    body.max_completion_tokens = maxTokens + 300;
   }
   if (withTools && tools?.length) {
     body.tools = tools;
     body.tool_choice = "auto";
-    body.parallel_tool_calls = false;
   }
   const res = await timedFetch(GROQ_URL, {
     method: "POST",
@@ -3227,14 +3226,37 @@ async function callGroq(env, req2, withTools) {
   return res;
 }
 __name(callGroq, "callGroq");
+async function logGroqError(env, res) {
+  let code = "", type = "";
+  try {
+    const e = JSON.parse(await res.text())?.error ?? {};
+    const safe3 = /* @__PURE__ */ __name((v) => typeof v === "string" && /^[\w.-]{1,40}$/.test(v) ? v : "", "safe");
+    code = safe3(e.code);
+    type = safe3(e.type);
+  } catch {
+  }
+  console.error("[chat] groq 400", { code, type, model: chatModel(env) });
+}
+__name(logGroqError, "logGroqError");
+var isAccountFail = /* @__PURE__ */ __name((st) => st === 400 || st === 401 || st === 403 || st === 404, "isAccountFail");
+var BREAKER_WINDOW_MS = 10 * 60 * 1e3;
+var breaker = { fails: [], openUntil: 0 };
+function noteAccountFail(now) {
+  breaker.fails = breaker.fails.filter((t) => now - t < BREAKER_WINDOW_MS);
+  breaker.fails.push(now);
+  if (breaker.fails.length >= 2) breaker.openUntil = now + BREAKER_WINDOW_MS;
+}
+__name(noteAccountFail, "noteAccountFail");
 async function groq(env, req2) {
   let res = await callGroq(env, req2, true);
   if (res.status === 400 && req2.tools?.length) {
-    const t = await res.text().catch(() => "");
-    if (/tool_use_failed/.test(t)) res = await callGroq(env, req2, false);
-    else return { ok: false, status: 400 };
+    await logGroqError(env, res);
+    res = await callGroq(env, req2, false);
   }
-  if (!res.ok) return { ok: false, status: res.status };
+  if (!res.ok) {
+    if (res.status === 400) await logGroqError(env, res);
+    return { ok: false, status: res.status };
+  }
   const data = await res.json();
   const msg = data.choices?.[0]?.message ?? {};
   return {
@@ -3304,17 +3326,23 @@ async function gemini(env, req2) {
 __name(gemini, "gemini");
 async function callChatModel(env, req2) {
   let last = { ok: false, status: 0 };
-  if (env.GROQ_API_KEY) {
+  const now = Date.now();
+  const skipGroq = !!env.GEMINI_API_KEY && now < breaker.openUntil;
+  if (env.GROQ_API_KEY && !skipGroq) {
     try {
       const r = await groq(env, req2);
-      if (r.ok) return r;
+      if (r.ok) {
+        breaker.fails = [];
+        return r;
+      }
       last = r;
       console.error("[chat] groq falhou", { status: r.status });
+      if (isAccountFail(r.status)) noteAccountFail(now);
     } catch (err) {
       console.error("[chat] groq rede/timeout", { name: err?.name });
       last = { ok: false, status: 0 };
     }
-    if (last.status >= 400 && last.status < 500 && last.status !== 429) return last;
+    if (last.status >= 400 && last.status < 500 && last.status !== 429 && !isAccountFail(last.status)) return last;
   }
   if (env.GEMINI_API_KEY) {
     try {
@@ -4215,6 +4243,9 @@ async function onRequestPost2({ request, env }) {
       if (result.status === 429) {
         return Response.json({ error: "ai-busy", response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS3 });
       }
+      if (result.status >= 400 && result.status < 500) {
+        return Response.json({ error: "ai-upstream" }, { status: 502, headers: CORS3 });
+      }
       return Response.json({ error: "AI service error" }, { status: 500, headers: CORS3 });
     }
     let actions = [];
@@ -4258,7 +4289,7 @@ var BUILDING_GATES = {
   "jogos.salao": { minBond: 1 },
   "jogos.refugio": { minBond: 1 },
   "jogos.mente": { minBond: 3 },
-  "exploracao.masmorra": { minBond: 2 },
+  "exploracao.masmorra": { minBond: 1 },
   "exploracao.caderno": { minBond: 2 },
   "exploracao.oficina": { minBond: 3 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
@@ -8973,7 +9004,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-b7zqYz/functionsRoutes-0.6098526400636302.mjs
+// ../.wrangler/tmp/pages-chMAdZ/functionsRoutes-0.49839127026338037.mjs
 var routes = [
   {
     routePath: "/api/account",
