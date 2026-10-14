@@ -2278,6 +2278,12 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Evidência:** teste `E:\soulmon-sprites-teste` (3 usuários simulados × 5 formas, low × medium) e `sombras\folha-low-x-medium.png`.
 - **Pendente:** ligar `gpt_image_2` + chroma-key verde na geração em produção (`generate-sprite.js`) com a correção de prompts do teste; refazer as sombras pelo oráculo se o dono quiser (as instaladas vieram de prompts escritos à mão para o teste).
 
+## 43. Sprites de Soulmon: fundo TRANSPARENTE (sem chroma verde) e GPT Image 2.5 flare (dono, 14/10/2026)
+
+- **Decisão:** o prompt de sprite (`composeSpritePrompt`) pede `transparent background, isolated subject, no backdrop, no checkerboard`; nenhum `#00FF00`/chroma-key no gerador de Soulmon (o pendente do §41 sobre chroma-key fica substituído). Modelo: GPT Image 2.5 **flare** via API pública, id `marketing-studio/image/flare` (`POST https://api.higgsfield.ai/marketing-studio/image/flare`, status em `GET /requests/{id}/status`), qualidade **medium**, `resolution 1k`, `aspect_ratio 1:1`, `enhance_prompt false`, `moderation auto`. Credencial única `HF_CREDENTIALS` (`keyId:keySecret`); ausente, `generate-sprite.js` segue no Soul. `SPRITE_MODEL` força o modelo (`soul` ou outro id).
+- **Não vale para** ícones/UI do arte-gerador (seguem o chroma da regra global).
+- **Pendente de verificação:** a documentação pública não lista o schema do flare (a página do modelo dá 404) e a CLI ficou fora do ar na sessão; o ALFA REAL não foi confirmado. Se o flare devolver xadrez/RGB, a mitigação é fundo sólido neutro + remoção no cliente, a decidir pelo dono.
+
 ## 42. Fila central de modais, intro de NPC em tela cheia e resumo do dia centralizado (pedido do dono por voz, 14/10/2026)
 
 *Pedido (transcrição no topo de `FILA-DE-MODAIS.md`):* "bugs com esses modais novos, quando sobe de nível ou quando começa um dia novo… sobrepõe um modal com o outro, trava e o fluxo todo quebra… fechei o jogo, abri de novo, veio um modal, depois outro modal do mapa. Tem que ter uma ordem de prioridade para não haver sobreposição. Também: a tela de introdução do mapa, dos NPCs… o NPC bem GRANDE e a janela de texto, SEM aquele modalzinho com 'continuar'/'depois'… ao tocar na tela, avança… no canto superior ESQUERDO, 'Pular'/'Skip'. Os modais do começo do dia NÃO são bottom sheet: são o modal CENTRALIZADO. E agrupe mais: 'como foi o dia anterior' + 'quantas vidas tem' vira UM só. Por enquanto agrupe só esses."
