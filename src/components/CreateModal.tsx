@@ -448,7 +448,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
 
   // Tarefa avulsa (`isSingleExecution`) NUNCA bate no teto — D-12: ela é o uso
   // espontâneo, e no desenho antigo custava a mesma cota de um hábito.
-  const isAtCap = !isSingleExecution && activitiesCount >= activitiesCap;
+  // Só o HÁBITO (todo dia) gasta cota; a tarefa em dias específicos também não (dono, 14/10/2026).
+  const isAtCap = kind === 'habit' && activitiesCount >= activitiesCap;
   const isBlocked = isAtCap;
   const currentEmoji = CATEGORY_ICONS[category];
 
@@ -549,9 +550,9 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
     save: isPt ? 'Salvar' : 'Save',
     limitReached: isPt ? 'Limite atingido' : 'Limit reached',
     demoCapHint: isPt
-      ? `Modo grátis: até ${activitiesCap} hábitos ativos. Tarefas avulsas continuam sem limite; `
+      ? `Modo grátis: até ${activitiesCap} hábitos ativos. Tarefas (pontuais ou em dias específicos) continuam sem limite; `
         + 'evoluir com seu próprio Soulmon é o que aumenta esse teto.'
-      : `Free mode: up to ${activitiesCap} active habits. One-off tasks stay unlimited; `
+      : `Free mode: up to ${activitiesCap} active habits. Tasks (one-off or on specific days) stay unlimited; `
         + 'evolving your own Soulmon is what raises this ceiling.',
     projectSteps: isPt
       ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos?'

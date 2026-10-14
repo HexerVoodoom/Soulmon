@@ -134,6 +134,7 @@ import {
   type CreditPack, type AccountTier,
 } from './utils/monetization';
 import { fitHabitCreates } from './utils/habitCreate';
+import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
@@ -1777,7 +1778,7 @@ export default function App() {
     if (!canCreateActivity({
       tier: tierForRules,
       kind: 'task',
-      habitCount: gameState.activities.length,
+      habitCount: contaCotaDeHabitos(gameState.activities),
       stageCap: gameState.maxActivityCap,
     })) return false;
     setGameState(prev => ({
@@ -1805,7 +1806,7 @@ export default function App() {
    * principal da tela inicial. Somá-los daria de novo a média de duas
    * populações — o defeito que o `funnel` já resolveu para o `onboarding_step`.
    */
-  const atCapForDemo = tierForRules === 'demo' && gameState.activities.length >= activityCap;
+  const atCapForDemo = tierForRules === 'demo' && contaCotaDeHabitos(gameState.activities) >= activityCap;
   useEffect(() => {
     if (!atCapForDemo || !createModalOpen) return;
     track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.create_modal });
@@ -6051,7 +6052,7 @@ export default function App() {
         <GameTutorialFlow
           language={language}
           maxActivities={activityCap}
-          existingActivitiesCount={gameState.activities.length}
+          existingActivitiesCount={contaCotaDeHabitos(gameState.activities)}
           /* WP1.4 — o que a pessoa escreveu volta como a PRIMEIRA área da
              lista. Casamento por palavra-chave, no aparelho: o texto não sai
              daqui (decisão D8, e `_redact.js` já declarava a mesma linha). */
@@ -7823,7 +7824,7 @@ export default function App() {
           initialKind={createInitialKind}
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
-          activitiesCount={gameState.activities.length}
+          activitiesCount={contaCotaDeHabitos(gameState.activities)}
           activitiesCap={activityCap}
           /* O convite de compra so faz sentido para quem PODE comprar, e so
              quando o teto que morde e o do modo gratis. Um pagante no teto do

@@ -23,8 +23,9 @@
  * POLIMENTO DA HOME (14/10/2026, pedido do dono):
  *  · **Hábitos = TODO DIA; Tasks = pontual OU em dias específicos.** Hoje, `Tasks`
  *    junta as pontuais e as agendadas que caem hoje; `Habits` são as diárias.
- *  · A linha de HOJE mostra SÓ o nome e o checkbox (+ os filhos, se houver): sem
- *    subtítulo, selo, barra, XP, prazo nem convite.
+ *  · A linha de HOJE mostra o nome e o checkbox (+ os filhos, se houver) e, só se
+ *    houver, UMA linha secundária pequena com o PRAZO e o convite da assombrada
+ *    (`TaskMeta lean`, decisão §45). Sem subtítulo, selo, barra, XP, adiamentos nem categoria.
  *  · `View all` (gatilho discreto + swipe) lista só TASKS agendadas/recorrentes:
  *    NÃO marca nada, só edita, e a prévia é o nome + os dias em que aparece.
  */
@@ -42,6 +43,7 @@ import { activityBucket, taskIsForToday, isRitualOpen, ritualOpenKey } from '../
 import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { StepRow } from './StepRow';
+import { TaskMeta } from './TaskMeta';
 import { habitCountsOn } from '../utils/habitRhythm';
 import { parseDayValue } from '../utils/taskTriage';
 
@@ -247,6 +249,7 @@ export function DailyRituals({
         toggleLabelPt={comFilhos
           ? `${task.completed ? 'Tarefa concluída' : 'Conclua as etapas'}: ${task.name}`
           : `${task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}: ${task.name}`}
+        below={<TaskMeta task={task} now={now} language={language} lean />}
         toggleLabelEn={comFilhos
           ? `${task.completed ? 'Task completed' : 'Complete the steps'}: ${task.name}`
           : `${task.completed ? 'Task completed' : 'Mark task as completed'}: ${task.name}`}

@@ -24,6 +24,22 @@ export function activityBucket(a: { schedule?: unknown; weekDays?: number[] }): 
 }
 
 /**
+ * COTA DO MODO GRÁTIS (decisão do dono, 14/10/2026): só o HÁBITO DIÁRIO conta.
+ * A tarefa em dias específicos é gravada como `Activity` com `schedule`, mas é
+ * tarefa para o dono — não gasta vaga. Valor que não é objeto (lote de teste,
+ * candidato opaco) conta como hábito, o lado conservador.
+ */
+export function consomeCotaDeHabito(a: unknown): boolean {
+  if (a === null || typeof a !== 'object') return true;
+  return activityBucket(a as { schedule?: unknown; weekDays?: number[] }) === 'habit';
+}
+
+/** Quantas atividades da lista ocupam a cota de hábitos. */
+export function contaCotaDeHabitos(activities: readonly unknown[]): number {
+  return activities.filter(consomeCotaDeHabito).length;
+}
+
+/**
  * Tarefa pontual é "de hoje" quando não tem data de início no futuro.
  * (`startDate` é "quando pretendo fazer" — Things 3; sem ele a tarefa está
  * aberta desde sempre e continua na Home, como já era.)
