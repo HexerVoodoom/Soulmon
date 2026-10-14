@@ -2425,3 +2425,13 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Alternativas que perderam:** manter a Masmorra no Vínculo 2 com um aviso (o dono quer o gacha/idle no dia 1); abrir o tutorial do mapa também no replay de Configurações (o replay segue só no básico); flag do tutorial do mapa em `localStorage` (a regra é do jogador, não do aparelho — mesmo motivo dos tetos de cuidado, §8 do CLAUDE.md).
 - **Gatilho para rever:** quem entra na Masmorra no dia 1 e abandona o app antes do 1º dia completo (aprofundar a descida cedo demais pode competir com o hábito de tarefas) — a leitura é a telemetria D1, que só existe com usuários.
 - **Régua viva:** `src/utils/gates.test.ts`, `src/components/WelcomeTour.render.test.tsx`, `src/components/nav/nav.render.test.tsx`, `functions/api/gates.parity.test.js`.
+
+## 53. Compromisso da manhã volta, com interruptor próprio; os 3 check-ins seguem ocultos (dono, modal, 14/10/2026)
+
+- **Decisão (modal):** o ritual matinal de foco do dia (`MorningCheckIn`: escolher até 3 tarefas/compromisso) estava desligado junto com os 3 check-ins de janela pela mesma `CHECKINS_ENABLED=false` (§40.4-b, nota da PR #338 — "depende do dono"). O dono quer **só o compromisso de volta**, e os 3 check-ins diários (manhã/tarde/noite, atalho "Check-ins do dia") **ocultos**.
+- **Como ficou:** nova `MORNING_COMMITMENT_ENABLED = true` no mesmo lugar canônico (`src/utils/checkIns.ts`). O item `checkIn` da fila de apresentação e o effect que monta o plano (`src/App.tsx`) dependem **só** dela. `CHECKINS_ENABLED` segue `false` e continua escondendo atalho, folha, recompensa e notificação dos 3 check-ins. Sem espaço reservado na Home para eles (o atalho só entra nos Avisos quando há janela).
+- **Uma vez por dia:** a fila já oferece o item uma só vez, na ordem definida (depois do relatório diário), centralizado como os demais modais (`RitualDialog`). Novo: o "visto" (`lastCheckInDate`) é gravado **ao mostrar** (`onShow`), como os outros itens da fila — recarregar no meio não reabre nem repaga o XP de Vínculo do confirmar.
+- **Independência:** o compromisso não lê `checkIns` do save nem `checkIns.ts` além da flag; usa `rituals.ts` (`needsCheckIn`/`completeCheckIn`). Sem campo novo no save, `fuzz2` inalterado.
+- **Alternativas que perderam:** religar `CHECKINS_ENABLED` (traria os 3 check-ins); gravar o visto só no confirmar/pular (reabria após recarga).
+- **Gatilho para rever:** o dono decidir religar ou apagar os 3 check-ins de janela.
+- **Régua viva:** `src/components/filaDeAvisos.contract.test.ts`, `src/utils/checkIns.test.ts`.
