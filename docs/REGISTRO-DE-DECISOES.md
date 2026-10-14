@@ -2322,6 +2322,11 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Testes alterados:** `energiaFome.render.test.tsx` — o teste "nome acessível do botão leva o estado do timer" foi removido e o do timer na faixa trocado por "nada na faixa / dica com contagem / faminto pausada", porque o contrato mudou. O slot `statsSlots.energyTimer` do HUD continua existindo (contrato de encaixe), mas o app não o usa.
 - **Fome em níveis (complemento, mesmo dia):** o indicador de fome mostra o nível N de 3 (bem alimentado 3, mediano 2, faminto 1) em marcas cheias/contorno. Tocar nele abre a dica da fome: contagem ao vivo (`H:MM:SS`/`M:SS`) até cair de nível (`msToHungerDrop` de `energyStatus`; faminto = sem contagem) e o impacto (a fome define a velocidade da energia: 3 normal, 2 metade, 1 parada). A penalidade por fome NÃO está nesta decisão (outra frente).
 
+## 46. Cota do modo grátis só conta hábito diário; prazo e assombrada voltam à linha do Hoje (dono, modal, 14/10/2026)
+
+- **Cota:** tarefa AGENDADA (`Activity` com `schedule` em dias específicos) NÃO gasta a cota de hábitos do modo grátis (resolve a pendência do §44); só o hábito diário conta (`activityBucket === 'habit'`). Fonte única: `consomeCotaDeHabito`/`contaCotaDeHabitos` em `utils/atividadesLista.ts`, usada por `fitHabitCreates`, pelo portão de tarefa, por `atCapForDemo` e pelas contagens do `CreateModal` e do tutorial. O `CreateModal` só bloqueia o Salvar quando o tipo é Hábito; a mensagem do teto diz que tarefas (pontuais ou em dias específicos) seguem sem limite. Save antigo: uma atividade agendada que já existia deixa de ocupar vaga (só libera, nunca tira).
+- **Linha do Hoje:** voltam, numa linha secundária pequena abaixo do nome (`RitualRow.below` + `TaskMeta lean`), o PRAZO da tarefa e o convite da assombrada. Continuam FORA: subtítulo, barra, XP, adiamentos, categoria e esforço. Some quando a tarefa está feita.
+- **Confirmado sem mudança:** hábito com etapas paga XP por etapa (10%, teto 5); swipe do View all só esquerda abre, direita volta.
 ## 45. Penalidade de fome, dia completo só por tarefas e controles da masmorra (pedido do dono por voz, 14/10/2026)
 
 *Numeração:* §42, §43 e §44 já são de outras frentes do mesmo dia; esta usa **§45**.

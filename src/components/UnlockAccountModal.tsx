@@ -178,9 +178,9 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
       <p style={{ ...sm2Text, margin: 0 }}>
         {reason === 'task-limit'
           ? (isPt
-            ? `No modo grátis cabem ${DEMO_ACTIVITY_TOTAL_CAP} hábitos ativos — a rotina inteira do Rookie. `
+            ? `No modo grátis cabem ${DEMO_ACTIVITY_TOTAL_CAP} hábitos ativos (os diários; tarefas agendadas não contam) — a rotina inteira do Rookie. `
               + 'Quem evolui com o próprio Soulmon vai além desse teto.'
-            : `The free mode holds ${DEMO_ACTIVITY_TOTAL_CAP} active habits — the whole Rookie routine. `
+            : `The free mode holds ${DEMO_ACTIVITY_TOTAL_CAP} active daily habits (scheduled tasks do not count) — the whole Rookie routine. `
               + 'Evolving your own Soulmon is what takes you past that ceiling.')
           : (isPt
             // WP5.9 (decisão D12): a copy dizia que os três caminhos "levam ao

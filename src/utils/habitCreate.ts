@@ -1,4 +1,5 @@
 import { canCreateActivity, type AccountTier } from './monetization';
+import { consomeCotaDeHabito, contaCotaDeHabitos } from './atividadesLista';
 
 /**
  * QUANTOS HÁBITOS NOVOS CABEM — a decisão do teto, tomada sobre o estado que
@@ -50,14 +51,19 @@ export function fitHabitCreates<A>(
   tier: AccountTier,
 ): A[] {
   const cabem: A[] = [];
+  /* Tarefa agendada (dias específicos) NÃO gasta cota (dono, 14/10/2026): entra
+     sempre; só o hábito diário passa pelo teto. */
+  let usadas = contaCotaDeHabitos(state.activities);
   for (const novo of novos) {
+    if (!consomeCotaDeHabito(novo)) { cabem.push(novo); continue; }
     if (!canCreateActivity({
       tier,
       kind: 'habit',
-      habitCount: state.activities.length + cabem.length,
+      habitCount: usadas,
       stageCap: state.maxActivityCap,
     })) break;
     cabem.push(novo);
+    usadas++;
   }
   return cabem;
 }
