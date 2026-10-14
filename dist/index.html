@@ -1,0 +1,257 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Soulmon</title>
+      <!-- Descrição e Open Graph: sem isto o link chega "pelado" em qualquer
+           chat/rede (achado do QA geral de 21/09/2026 — `grep og: index.html`
+           dava 0). A frase é a essência declarada (`01-VISAO.md` §2): avatar
+           que evolui COM a pessoa, nunca um cobrador. A imagem é o ícone 512
+           já servido pelo Worker; trocar por um key visual 1200×630 quando a
+           squad-arte gerar um (fila em `docs/ASSETS-A-GERAR.md`). -->
+      <meta name="description" content="It grows with your day. Habits and tasks become care, evolution and story — never nagging." />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Soulmon" />
+      <meta property="og:title" content="Soulmon — the companion that evolves with you" />
+      <meta property="og:description" content="It grows with your day. Habits and tasks become care, evolution and story — never nagging." />
+      <meta property="og:image" content="https://soulmon.mateus-sprnd.workers.dev/og-image.png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale:alternate" content="pt_BR" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <link rel="manifest" href="/manifest.json" />
+      <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0f766e" />
+      <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071413" />
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+      <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+      <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+      <!-- FONTES — self-hosted em `/fonts/`, NUNCA de CDN.
+           `public/sw.js` ignora toda requisição cross-origin
+           (`if (url.origin !== self.location.origin) return;`), então fonte
+           vinda de fonts.gstatic.com jamais entra no cache e some quando o
+           app abre offline — que é metade do uso de um PWA de bichinho.
+           Servida daqui, ela cai na regra cache-first de same-origin que já
+           existe. Os @font-face ficam em `src/index.css` (o único CSS
+           empacotado, footgun 1); estes preloads existem só para o
+           carregador não esperar o CSS parsear para descobrir as três fontes
+           da primeira tela. `crossorigin` é OBRIGATÓRIO mesmo same-origin:
+           fonte é requisição em modo CORS, e sem o atributo o preload é
+           descartado e o arquivo baixa DUAS vezes.
+           `as="font"` + woff2: só os subsets latin, que é o que a primeira
+           tela usa; latin-ext chega sob demanda pelo unicode-range. -->
+      <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/rubik-latin.woff2" />
+      <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/cinzel-latin.woff2" />
+      <!-- A Material Symbols (145 KB) NÃO é preloadada de propósito: ela usa
+           `font-display: block` e só é buscada quando um ícone realmente
+           renderiza. Preload dela hoje seriam 145 KB no caminho crítico sem
+           nenhum ícone na tela — mais um aviso de "preloaded but not used" no
+           console. Quando a barra inferior passar a usar `<Icon>`, ela vira o
+           primeiro glifo acima da dobra e a linha entra aqui. -->
+
+      <script>
+        (function () {
+          try {
+            // Mesma chave de `STORAGE_KEYS.THEME` (src/utils/storageKeys.ts).
+            // Lia `digiapp-theme` até o QA de 21/09/2026 — a chave morreu em
+            // 07/09 e o anti-flash ignorava a preferência salva do jogador.
+            var stored = localStorage.getItem('soulmon-theme');
+            var mode = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'system';
+            // O visual do jogo (moldura cobre, teal escuro) só existe no tema
+            // escuro — sem preferência salva, o padrão é escuro, não o SO.
+            var resolved = mode === 'system' ? 'dark' : mode;
+            document.documentElement.dataset.theme = resolved;
+          } catch (e) {}
+        })();
+      </script>
+      <script type="module" crossorigin src="/assets/index-37869kn8.js"></script>
+      <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
+      <link rel="stylesheet" crossorigin href="/assets/index-BBPHLbhh.css">
+    </head>
+
+    <!-- SPLASH — estática de propósito: aparece ANTES do bundle carregar (é
+         uma tela de loading de verdade, não um timer artificial). O React a
+         remove com fade no primeiro frame (main.tsx); se o bundle nem parsear,
+         o aviso de WebView antigo a remove também.
+
+         É o VISOR do aparelho ligando (canvas Onboarding-funil ONB-01, DECISÕES
+         §23): a chama do kit a 4× inteiro, o wordmark em Silkscreen, a barra
+         de 8 segmentos em TINTA, os três cristais. O CSS dela vive em
+         `src/index.css` (`.sm2-visor` + `.sm2-splash-*`) — até 20/09/2026 este
+         arquivo carregava ~60 linhas de cópia dos tokens do tema escuro, que
+         era o footgun 9 na primeira tela do app. No build o CSS entra pelo
+         `<link>` bloqueante do `<head>`, então a splash lê os tokens de lá; a
+         paleta dentro do vidro é a do visor nos DOIS temas (D-O16). A chama é
+         a de `src/brand/flame.ts` (`brandFlame.parity.test.ts` trava as duas
+         cópias uma contra a outra). -->
+
+    <body>
+      <div id="root"></div>
+      <div id="splash" class="sm2-visor sm2-splash" aria-hidden="true">
+        <svg class="sp-flame sm2-splash-flame" viewBox="0 0 19 30" width="76" height="120" aria-hidden="true"><g fill="#172223"><rect x="9" y="0" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="11" y="3" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="13" y="4" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="13" y="5" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/><rect x="13" y="14" width="1" height="1"/><rect x="15" y="14" width="1" height="1"/><rect x="13" y="15" width="1" height="1"/><rect x="0" y="22" width="1" height="1"/><rect x="17" y="23" width="1" height="1"/><rect x="16" y="25" width="1" height="1"/><rect x="13" y="28" width="1" height="1"/></g><g fill="#0e5271"><rect x="9" y="1" width="1" height="1"/><rect x="12" y="5" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="6" y="9" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="4" y="12" width="1" height="1"/><rect x="13" y="12" width="1" height="1"/><rect x="12" y="13" width="1" height="1"/><rect x="12" y="14" width="1" height="1"/><rect x="12" y="15" width="1" height="1"/><rect x="12" y="16" width="1" height="1"/><rect x="1" y="19" width="1" height="1"/><rect x="1" y="20" width="1" height="1"/><rect x="1" y="21" width="1" height="1"/><rect x="1" y="22" width="1" height="1"/><rect x="2" y="23" width="1" height="1"/><rect x="16" y="23" width="1" height="1"/><rect x="12" y="27" width="1" height="1"/></g><g fill="#001314"><rect x="8" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="9" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="4" y="9" width="1" height="1"/><rect x="7" y="9" width="1" height="1"/><rect x="8" y="9" width="1" height="1"/><rect x="14" y="9" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="14" y="10" width="1" height="1"/><rect x="4" y="11" width="1" height="1"/><rect x="14" y="12" width="1" height="1"/><rect x="3" y="13" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/><rect x="14" y="13" width="1" height="1"/><rect x="3" y="14" width="1" height="1"/><rect x="2" y="15" width="1" height="1"/><rect x="15" y="15" width="1" height="1"/><rect x="16" y="15" width="1" height="1"/><rect x="2" y="16" width="1" height="1"/><rect x="13" y="16" width="1" height="1"/><rect x="14" y="16" width="1" height="1"/><rect x="16" y="16" width="1" height="1"/><rect x="2" y="17" width="1" height="1"/><rect x="14" y="17" width="1" height="1"/><rect x="16" y="17" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="0" y="20" width="1" height="1"/><rect x="0" y="21" width="1" height="1"/><rect x="0" y="23" width="1" height="1"/><rect x="0" y="24" width="1" height="1"/><rect x="1" y="24" width="1" height="1"/><rect x="2" y="24" width="1" height="1"/><rect x="16" y="24" width="1" height="1"/><rect x="17" y="24" width="1" height="1"/><rect x="2" y="25" width="1" height="1"/><rect x="3" y="26" width="1" height="1"/><rect x="15" y="26" width="1" height="1"/><rect x="4" y="27" width="1" height="1"/><rect x="5" y="27" width="1" height="1"/><rect x="13" y="27" width="1" height="1"/><rect x="14" y="27" width="1" height="1"/><rect x="5" y="28" width="1" height="1"/></g><g fill="#04a2f4"><rect x="9" y="2" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="13" y="7" width="1" height="1"/><rect x="13" y="8" width="1" height="1"/><rect x="5" y="9" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="5" y="10" width="1" height="1"/><rect x="8" y="10" width="1" height="1"/><rect x="5" y="11" width="1" height="1"/><rect x="6" y="11" width="1" height="1"/><rect x="7" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/><rect x="4" y="13" width="1" height="1"/><rect x="11" y="13" width="1" height="1"/><rect x="11" y="14" width="1" height="1"/><rect x="3" y="15" width="1" height="1"/><rect x="9" y="15" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/><rect x="3" y="16" width="1" height="1"/><rect x="9" y="16" width="1" height="1"/><rect x="11" y="16" width="1" height="1"/><rect x="15" y="16" width="1" height="1"/><rect x="9" y="17" width="1" height="1"/><rect x="8" y="18" width="1" height="1"/><rect x="2" y="19" width="1" height="1"/><rect x="8" y="19" width="1" height="1"/><rect x="10" y="19" width="1" height="1"/><rect x="14" y="19" width="1" height="1"/><rect x="2" y="20" width="1" height="1"/><rect x="7" y="20" width="1" height="1"/><rect x="8" y="20" width="1" height="1"/><rect x="10" y="20" width="1" height="1"/><rect x="11" y="20" width="1" height="1"/><rect x="2" y="21" width="1" height="1"/><rect x="11" y="21" width="1" height="1"/><rect x="12" y="21" width="1" height="1"/><rect x="13" y="21" width="1" height="1"/><rect x="16" y="21" width="1" height="1"/><rect x="2" y="22" width="1" height="1"/><rect x="13" y="22" width="1" height="1"/><rect x="16" y="22" width="1" height="1"/><rect x="13" y="23" width="1" height="1"/><rect x="3" y="24" width="1" height="1"/><rect x="13" y="24" width="1" height="1"/><rect x="15" y="24" width="1" height="1"/><rect x="3" y="25" width="1" height="1"/><rect x="8" y="25" width="1" height="1"/><rect x="11" y="25" width="1" height="1"/><rect x="15" y="25" width="1" height="1"/><rect x="4" y="26" width="1" height="1"/><rect x="14" y="26" width="1" height="1"/><rect x="11" y="27" width="1" height="1"/></g><g fill="#06fbfb"><rect x="10" y="5" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/><rect x="11" y="9" width="1" height="1"/><rect x="12" y="9" width="1" height="1"/><rect x="9" y="10" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/><rect x="12" y="10" width="1" height="1"/><rect x="9" y="11" width="1" height="1"/><rect x="10" y="11" width="1" height="1"/><rect x="11" y="11" width="1" height="1"/><rect x="12" y="11" width="1" height="1"/><rect x="9" y="12" width="1" height="1"/><rect x="10" y="12" width="1" height="1"/><rect x="5" y="13" width="1" height="1"/><rect x="8" y="13" width="1" height="1"/><rect x="9" y="13" width="1" height="1"/><rect x="10" y="13" width="1" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="5" y="14" width="1" height="1"/><rect x="6" y="14" width="1" height="1"/><rect x="7" y="14" width="1" height="1"/><rect x="8" y="14" width="1" height="1"/><rect x="10" y="14" width="1" height="1"/><rect x="4" y="15" width="1" height="1"/><rect x="5" y="15" width="1" height="1"/><rect x="6" y="15" width="1" height="1"/><rect x="7" y="15" width="1" height="1"/><rect x="10" y="15" width="1" height="1"/><rect x="4" y="16" width="1" height="1"/><rect x="5" y="16" width="1" height="1"/><rect x="6" y="16" width="1" height="1"/><rect x="7" y="16" width="1" height="1"/><rect x="10" y="16" width="1" height="1"/><rect x="3" y="17" width="1" height="1"/><rect x="4" y="17" width="1" height="1"/><rect x="5" y="17" width="1" height="1"/><rect x="10" y="17" width="1" height="1"/><rect x="11" y="17" width="1" height="1"/><rect x="15" y="17" width="1" height="1"/><rect x="3" y="18" width="1" height="1"/><rect x="4" y="18" width="1" height="1"/><rect x="5" y="18" width="1" height="1"/><rect x="10" y="18" width="1" height="1"/><rect x="11" y="18" width="1" height="1"/><rect x="15" y="18" width="1" height="1"/><rect x="3" y="19" width="1" height="1"/><rect x="4" y="19" width="1" height="1"/><rect x="5" y="19" width="1" height="1"/><rect x="11" y="19" width="1" height="1"/><rect x="12" y="19" width="1" height="1"/><rect x="13" y="19" width="1" height="1"/><rect x="15" y="19" width="1" height="1"/><rect x="3" y="20" width="1" height="1"/><rect x="4" y="20" width="1" height="1"/><rect x="13" y="20" width="1" height="1"/><rect x="14" y="20" width="1" height="1"/><rect x="15" y="20" width="1" height="1"/><rect x="16" y="20" width="1" height="1"/><rect x="3" y="21" width="1" height="1"/><rect x="4" y="21" width="1" height="1"/><rect x="14" y="21" width="1" height="1"/><rect x="15" y="21" width="1" height="1"/><rect x="3" y="22" width="1" height="1"/><rect x="4" y="22" width="1" height="1"/><rect x="14" y="22" width="1" height="1"/><rect x="15" y="22" width="1" height="1"/><rect x="4" y="23" width="1" height="1"/><rect x="14" y="23" width="1" height="1"/><rect x="4" y="24" width="1" height="1"/><rect x="14" y="24" width="1" height="1"/><rect x="4" y="25" width="1" height="1"/><rect x="5" y="25" width="1" height="1"/><rect x="13" y="25" width="1" height="1"/><rect x="14" y="25" width="1" height="1"/><rect x="5" y="26" width="1" height="1"/><rect x="6" y="26" width="1" height="1"/><rect x="7" y="26" width="1" height="1"/><rect x="8" y="26" width="1" height="1"/><rect x="9" y="26" width="1" height="1"/><rect x="10" y="26" width="1" height="1"/><rect x="11" y="26" width="1" height="1"/><rect x="12" y="26" width="1" height="1"/><rect x="13" y="26" width="1" height="1"/><rect x="8" y="27" width="1" height="1"/><rect x="9" y="27" width="1" height="1"/><rect x="10" y="27" width="1" height="1"/></g><g fill="#11b0d6"><rect x="12" y="6" width="1" height="1"/><rect x="13" y="11" width="1" height="1"/><rect x="12" y="12" width="1" height="1"/><rect x="12" y="17" width="1" height="1"/><rect x="7" y="21" width="1" height="1"/><rect x="7" y="22" width="1" height="1"/><rect x="7" y="23" width="1" height="1"/></g><g fill="#1b7aa8"><rect x="13" y="6" width="1" height="1"/><rect x="13" y="17" width="1" height="1"/><rect x="6" y="27" width="1" height="1"/></g><g fill="#273739"><rect x="14" y="6" width="1" height="1"/><rect x="7" y="10" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="1" y="16" width="1" height="1"/><rect x="17" y="19" width="1" height="1"/><rect x="18" y="19" width="1" height="1"/><rect x="18" y="20" width="1" height="1"/><rect x="18" y="21" width="1" height="1"/><rect x="18" y="22" width="1" height="1"/><rect x="1" y="23" width="1" height="1"/><rect x="18" y="23" width="1" height="1"/><rect x="18" y="24" width="1" height="1"/><rect x="8" y="28" width="1" height="1"/><rect x="12" y="28" width="1" height="1"/><rect x="6" y="29" width="1" height="1"/><rect x="7" y="29" width="1" height="1"/><rect x="9" y="29" width="1" height="1"/><rect x="11" y="29" width="1" height="1"/><rect x="12" y="29" width="1" height="1"/></g><g fill="#14e9e5"><rect x="13" y="9" width="1" height="1"/><rect x="13" y="10" width="1" height="1"/></g><g fill="#0cc6f0"><rect x="5" y="12" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="11" y="12" width="1" height="1"/><rect x="6" y="13" width="1" height="1"/><rect x="7" y="13" width="1" height="1"/><rect x="8" y="17" width="1" height="1"/><rect x="9" y="18" width="1" height="1"/><rect x="12" y="18" width="1" height="1"/><rect x="13" y="18" width="1" height="1"/><rect x="16" y="19" width="1" height="1"/><rect x="6" y="20" width="1" height="1"/><rect x="12" y="20" width="1" height="1"/><rect x="6" y="21" width="1" height="1"/><rect x="6" y="22" width="1" height="1"/><rect x="3" y="23" width="1" height="1"/><rect x="6" y="23" width="1" height="1"/><rect x="15" y="23" width="1" height="1"/><rect x="12" y="25" width="1" height="1"/><rect x="7" y="27" width="1" height="1"/></g><g fill="#7ffffb"><rect x="9" y="14" width="1" height="1"/><rect x="8" y="15" width="1" height="1"/><rect x="8" y="16" width="1" height="1"/><rect x="7" y="18" width="1" height="1"/><rect x="7" y="19" width="1" height="1"/><rect x="9" y="19" width="1" height="1"/><rect x="5" y="20" width="1" height="1"/><rect x="9" y="20" width="1" height="1"/><rect x="5" y="21" width="1" height="1"/><rect x="8" y="21" width="1" height="1"/><rect x="9" y="21" width="1" height="1"/><rect x="10" y="21" width="1" height="1"/><rect x="5" y="22" width="1" height="1"/><rect x="8" y="22" width="1" height="1"/><rect x="9" y="22" width="1" height="1"/><rect x="10" y="22" width="1" height="1"/><rect x="11" y="22" width="1" height="1"/><rect x="5" y="23" width="1" height="1"/><rect x="8" y="23" width="1" height="1"/><rect x="9" y="23" width="1" height="1"/><rect x="10" y="23" width="1" height="1"/><rect x="11" y="23" width="1" height="1"/><rect x="5" y="24" width="1" height="1"/><rect x="8" y="24" width="1" height="1"/><rect x="9" y="24" width="1" height="1"/><rect x="10" y="24" width="1" height="1"/><rect x="11" y="24" width="1" height="1"/><rect x="7" y="25" width="1" height="1"/><rect x="9" y="25" width="1" height="1"/><rect x="10" y="25" width="1" height="1"/></g><g fill="#41f9f7"><rect x="6" y="17" width="1" height="1"/><rect x="7" y="17" width="1" height="1"/><rect x="6" y="18" width="1" height="1"/><rect x="6" y="19" width="1" height="1"/><rect x="12" y="22" width="1" height="1"/><rect x="6" y="25" width="1" height="1"/></g><g fill="#2e4c58"><rect x="1" y="18" width="1" height="1"/><rect x="17" y="18" width="1" height="1"/><rect x="5" y="29" width="1" height="1"/><rect x="8" y="29" width="1" height="1"/><rect x="10" y="29" width="1" height="1"/><rect x="13" y="29" width="1" height="1"/></g><g fill="#073c58"><rect x="2" y="18" width="1" height="1"/><rect x="14" y="18" width="1" height="1"/><rect x="16" y="18" width="1" height="1"/><rect x="17" y="20" width="1" height="1"/><rect x="17" y="21" width="1" height="1"/><rect x="17" y="22" width="1" height="1"/><rect x="6" y="28" width="1" height="1"/><rect x="7" y="28" width="1" height="1"/><rect x="9" y="28" width="1" height="1"/><rect x="10" y="28" width="1" height="1"/><rect x="11" y="28" width="1" height="1"/></g><g fill="#45cff4"><rect x="12" y="23" width="1" height="1"/><rect x="12" y="24" width="1" height="1"/></g><g fill="#2abbe5"><rect x="6" y="24" width="1" height="1"/><rect x="7" y="24" width="1" height="1"/></g></svg>
+        <h1 class="sm2-splash-title">Soulmon</h1>
+        <p class="sm2-splash-pix" id="sp-loading">LOADING DATA...</p>
+        <div class="sm2-splash-bar" aria-hidden="true"><i style="animation-delay:0s"></i><i style="animation-delay:.14s"></i><i style="animation-delay:.28s"></i><i style="animation-delay:.42s"></i><i style="animation-delay:.56s"></i><i style="animation-delay:.7s"></i><i style="animation-delay:.84s"></i><i style="animation-delay:.98s"></i></div>
+        <p class="sm2-splash-pix sm2-splash-link" id="sp-link">SOUL_LINK ESTABLISHED</p>
+        <div class="sm2-splash-crystals" aria-hidden="true"><div class="sm2-splash-crystal"></div><div class="sm2-splash-crystal"></div><div class="sm2-splash-crystal"></div></div>
+        <span class="sm2-viewport-glass" aria-hidden="true"></span>
+      </div>
+      <script>
+        // Localiza a splash sem esperar o bundle (regra do app: PT-BR + EN).
+        (function () {
+          try {
+            if ((navigator.language || '').toLowerCase().indexOf('pt') === 0) {
+              document.getElementById('sp-loading').textContent = 'CARREGANDO DADOS...';
+              document.getElementById('sp-link').textContent = 'SOUL_LINK ESTABELECIDO';
+            }
+          } catch (e) {}
+        })();
+      </script>
+      <script>
+        // AVISO DE WEBVIEW ANTIGO — roda ANTES do bundle, de propósito.
+        //
+        // O app usa oklch(), color-mix() e aninhamento de CSS, e builda com
+        // target 'esnext' (sem transpilar). Num navegador antigo o bundle morre
+        // no parse e o usuário fica com TELA BRANCA, sem explicação. Foi assim
+        // que ele se comportou no emulador da API 30 (WebView 83, de 2020).
+        //
+        // O gate testa o requisito MAIS NOVO do `src/index.css`, não o mais
+        // conhecido: oklch()/color-mix() chegaram no Chromium 111, mas o
+        // aninhamento (`&:hover` dentro da regra, 122 ocorrências) só existe
+        // a partir do 112 — um WebView 111 passava no teste antigo e abria o
+        // app com o kit inteiro sem hover/foco/variante, que é pior que a
+        // tela branca porque parece bug nosso. `selector(&)` é a forma
+        // padrão de perguntar por aninhamento (QA geral de 21/09/2026, #19).
+        //
+        // Isso não é hipótese de laboratório: no Android o WebView se atualiza
+        // SEPARADO do sistema, então um aparelho novo com WebView travado
+        // quebra igual — e `minSdkVersion = 24` faz a Play Store oferecer o app
+        // para exatamente esse público.
+        //
+        // Este bloco não conserta a incompatibilidade: troca uma tela branca
+        // por uma frase acionável. Se o bundle carregar, o React substitui
+        // este conteúdo e nada disto aparece.
+        (function () {
+          try {
+            var ok =
+              typeof CSS !== 'undefined' &&
+              CSS.supports &&
+              CSS.supports('color', 'oklch(0 0 0)') &&
+              CSS.supports('color', 'color-mix(in srgb, red, blue)') &&
+              CSS.supports('selector(&)');
+            if (ok) return;
+
+            var pt = (navigator.language || '').toLowerCase().indexOf('pt') === 0;
+            // Só o WEBVIEW do Android é "Android System WebView" — e o ramo
+            // com os dois botões da Play só serve para ele. Samsung Internet,
+            // Firefox Android e qualquer navegador de terceiro rodando em
+            // Android caíam no mesmo texto e eram mandados atualizar um
+            // componente que não usam (QA rodada 2, skeptic #5 / design A8).
+            // A marca do WebView é `; wv)` no UA (Android 5+), ou o UA antigo
+            // `Version/X.Y ... Chrome/` (WebView do Android 4.4). iOS/desktop
+            // seguem no genérico (skeptic #4 / design D3, 21/09/2026).
+            var ua = navigator.userAgent || '';
+            var android = /Android/i.test(ua)
+              && (/; wv\)/.test(ua) || /Version\/\d+\.\d+ .*Chrome\//.test(ua))
+              && !/Firefox|SamsungBrowser|EdgA|OPR\//.test(ua);
+            try { document.documentElement.lang = pt ? 'pt-BR' : 'en'; } catch (e2) {}
+            var titulo = pt ? 'Precisamos de uma atualização' : 'An update is needed';
+            var corpo, comoT, como;
+            if (android) {
+              corpo = pt
+                ? 'O componente que desenha páginas no seu aparelho (Android System WebView) está desatualizado e não consegue abrir o Soulmon.'
+                : 'The component that renders pages on your device (Android System WebView) is out of date and cannot open Soulmon.';
+              comoT = pt ? 'Como resolver' : 'How to fix it';
+              como = pt
+                ? 'Atualize os dois na Play Store e abra o Soulmon de novo:'
+                : 'Update both on the Play Store, then open Soulmon again:';
+            } else {
+              corpo = pt
+                ? 'Seu navegador está desatualizado e não consegue abrir o Soulmon.'
+                : 'Your browser is out of date and cannot open Soulmon.';
+              comoT = pt ? 'Como resolver' : 'How to fix it';
+              como = pt
+                ? 'Atualize o navegador (ou abra o Soulmon em outro mais recente) e tente de novo.'
+                : 'Update your browser (or open Soulmon in a newer one) and try again.';
+            }
+            var contato = pt ? 'Se continuar travado, escreva para ' : 'If it stays stuck, write to ';
+            // Mesmo endereço de `src/components/FeedbackLink.tsx` › FEEDBACK_EMAIL
+            // (contrato em tests/indexHtmlGateWebView.test.ts compara os dois).
+            var email = 'mateus.sprnd@gmail.com';
+
+            // Montado com createElement + textContent, não com concatenação de
+            // HTML. O user agent é dado de fora; filtrar caractere depois de
+            // concatenar é o padrão que produz XSS quando alguém acrescenta o
+            // próximo campo ao lado. Aqui não existe caminho de injeção.
+            var raiz = document.getElementById('root');
+            var fundo = document.createElement('div');
+            fundo.setAttribute(
+              'style',
+              'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;' +
+                'background:#0c1c1a;color:#e6f4f1;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
+            );
+            var caixa = document.createElement('div');
+            caixa.setAttribute('style', 'max-width:34rem;line-height:1.55');
+
+            function linha(tag, texto, estilo) {
+              var el = document.createElement(tag);
+              el.textContent = texto;
+              el.setAttribute('style', estilo);
+              caixa.appendChild(el);
+              return el;
+            }
+            function botaoLoja(texto, pacote) {
+              var a = document.createElement('a');
+              a.textContent = texto;
+              a.setAttribute('href', 'https://play.google.com/store/apps/details?id=' + pacote);
+              a.setAttribute('rel', 'noopener');
+              a.setAttribute(
+                'style',
+                'display:block;min-height:44px;box-sizing:border-box;padding:12px 16px;margin:0 0 10px;' +
+                  'border-radius:10px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600;text-align:center'
+              );
+              caixa.appendChild(a);
+            }
+
+            linha('h1', titulo, 'font-size:1.35rem;margin:0 0 12px;color:#5eead4');
+            linha('p', corpo, 'margin:0 0 16px');
+            linha('h2', comoT, 'font-size:1rem;margin:0 0 8px;color:#5eead4');
+            linha('p', como, 'margin:0 0 ' + (android ? '12px' : '20px'));
+            if (android) {
+              botaoLoja(pt ? 'Atualizar Android System WebView' : 'Update Android System WebView', 'com.google.android.webview');
+              botaoLoja(pt ? 'Atualizar Google Chrome' : 'Update Google Chrome', 'com.android.chrome');
+            }
+            var pc = linha('p', contato, 'margin:' + (android ? '10px' : '0') + ' 0 16px;font-size:.9rem');
+            var mail = document.createElement('a');
+            mail.textContent = email;
+            mail.setAttribute('href', 'mailto:' + email);
+            mail.setAttribute('style', 'color:#5eead4');
+            pc.appendChild(mail);
+            pc.appendChild(document.createTextNode('.'));
+            linha('p', (android ? 'WebView: ' : 'Browser: ') + (navigator.userAgent || ''), 'margin:0;font-size:.8rem;opacity:.6');
+
+            fundo.appendChild(caixa);
+            raiz.innerHTML = '';
+            raiz.appendChild(fundo);
+            // A splash fica ACIMA do #root: sem esta linha, o aviso que este
+            // bloco acabou de montar ficaria escondido atrás dela pra sempre
+            // (o bundle que a removeria é justamente o que não vai carregar).
+            var sp = document.getElementById('splash');
+            if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
+          } catch (e) {}
+        })();
+      </script>
+      <script>
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+              .catch(() => {});
+          });
+        }
+      </script>
+    </body>
+  </html>
