@@ -2,10 +2,11 @@
  * O TOUR DE BOAS-VINDAS DO CORVO — conteúdo e regra de entrada (07/10/2026,
  * pedido do dono). Puro: sem React, sem localStorage, sem `Date`.
  *
- * O que é: oito cartões curtos depois do ritual e do tutorial de 1ª tarefa,
- * ANTES do check-in e do priming. Parte 1 = o básico (tarefas → comida/energia →
- * dia completo → evolução manual → cuidado leve). Parte 2 = o mapa e a função de
- * cada área. A essência é a do produto: o Soulmon é um avatar que evolui COM a
+ * O que é: seis cartões curtos depois do ritual e do tutorial de 1ª tarefa,
+ * ANTES do check-in e do priming: o básico (tarefas → comida/energia → dia
+ * completo → evolução manual → cuidado leve → cantos da Home). ⚠️ A Parte 2 (o
+ * mapa e os prédios) SAIU daqui em 14/10/2026 (pedido do dono, voz): virou o
+ * `MAP_TOUR_STEPS`, abaixo, que abre UMA vez, na primeira abertura do Mapa. A essência é a do produto: o Soulmon é um avatar que evolui COM a
  * pessoa — o corvo apresenta, nunca cobra.
  *
  * ⚠️ O texto é EN por enquanto (pedido do dono). Cada string é um objeto
@@ -16,7 +17,9 @@
  * Números NUNCA à mão: a meta inicial do dia vem de `FORM_REQUIREMENTS.rookie`.
  */
 import { FORM_REQUIREMENTS } from '../types/progression';
-import { areaLabel } from '../navigation';
+import { areaLabel, type AreaId } from '../navigation';
+import { BUILDING_INTRO_COPY } from './buildingIntroCopy';
+import type { BuildingId } from './gates';
 import type { Language } from './i18n';
 
 /** O corvo ainda não tem nome; “Mysterious Soulmon” é o rótulo temporário escolhido. */
@@ -45,9 +48,6 @@ export interface TourStep {
   /** Linhas do mapa (passos da Parte 2) — uma frase por área, na ordem do mapa. */
   areas?: TourAreaRow[];
 }
-
-const area = (id: Parameters<typeof areaLabel>[0], line: string): TourAreaRow =>
-  ({ name: { en: areaLabel(id, false) }, line: { en: line } });
 
 /** A meta inicial do dia, em peso de esforço (`dailyGoalFor` = min(cadastrado, requisito do estágio)). */
 export const TOUR_STARTING_GOAL = FORM_REQUIREMENTS.rookie.required;
@@ -79,29 +79,9 @@ export const TOUR_STEPS: readonly TourStep[] = [
     speech: { en: 'Day to day: pet it, feed it, wash it, and let it sleep. A little is plenty.' },
   },
   {
-    id: 'map-a', part: 2,
-    title: { en: 'The map (1/2)' },
-    speech: { en: 'Now the map. Tap the Map icon on Home to open it. Each place has its own job.' },
-    areas: [
-      area('laboratorio', "See your Soulmon's attributes and its path to evolution, plus stats, the Archive and the Bond Sanctum."),
-      area('mercado', 'Shops for items, decor and backdrops, your Achievements, and the Soulsmith, who upgrades your gear.'),
-      area('arena', 'The Tournament and the Duel, and the Fair.'),
-    ],
-  },
-  {
-    id: 'map-b', part: 2,
-    title: { en: 'The map (2/2)' },
-    speech: { en: 'The other three places.' },
-    areas: [
-      area('jogos', 'Minigames in the Game Hall, calm in the Refuge, and the Mind Workshop.'),
-      area('exploracao', 'The Dungeon, the Stroll, the Focus Workshop and the Journal.'),
-      area('hall', 'The Library, the Friends Circle and the Guild Hall.'),
-    ],
-  },
-  {
-    id: 'corners', part: 2,
+    id: 'corners', part: 1,
     title: { en: 'Missions and the Bag' },
-    speech: { en: 'Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon — your items wait there. You can replay this tour from Settings any time.' },
+    speech: { en: "Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon — your items wait there. The first time you open the map, I'll show you around it. You can replay this tour from Settings any time." },
   },
 ];
 
@@ -112,4 +92,89 @@ export const TOUR_STEPS: readonly TourStep[] = [
  */
 export function needsWelcomeTour(p: { shown: boolean; jaConcluiuAlgo: boolean }): boolean {
   return !p.shown && !p.jaConcluiuAlgo;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// O TUTORIAL DO MAPA (14/10/2026, pedido do dono) — abre UMA vez, na primeira abertura do Mapa.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A ordem dos cartões de área é a do Mapa tal como o tour antigo a lia (travada em teste). */
+export const MAP_TOUR_AREA_ORDER: readonly AreaId[] = ['laboratorio', 'mercado', 'arena', 'jogos', 'exploracao', 'hall'];
+
+const bRow = (id: BuildingId, en: string, pt: string): TourAreaRow =>
+  ({ name: { en: BUILDING_INTRO_COPY[id].place.en, pt: BUILDING_INTRO_COPY[id].place.pt }, line: { en, pt } });
+
+const mapStep = (area: AreaId, speech: LocalizedText, rows: TourAreaRow[]): TourStep =>
+  ({ id: `map-${area}`, part: 2, title: { en: areaLabel(area, false), pt: areaLabel(area, true) }, speech, areas: rows });
+
+/**
+ * Um cartão por ÁREA, com uma linha por PRÉDIO (o nome vem da copy de apresentação, então nunca diverge dela).
+ * EN + PT-BR, na ordem do Mapa. Nenhum número de Vínculo aqui: a Masmorra e os prédios de entrada abrem desde o
+ * começo, o resto abre com o uso (e cada prédio novo se apresenta sozinho quando abre).
+ */
+export const MAP_TOUR_STEPS: readonly TourStep[] = [
+  {
+    id: 'map-hello', part: 2,
+    title: { en: 'The map', pt: 'O mapa' },
+    speech: {
+      en: "This is the map. Each place has its own job — I'll go through them quickly, and you can skip whenever you like.",
+      pt: 'Este é o mapa. Cada lugar tem a sua função — vou passar por eles rapidinho, e você pode pular quando quiser.',
+    },
+  },
+  mapStep('laboratorio', { en: 'Where your Soulmon is looked at up close.', pt: 'Onde o seu Soulmon é visto de perto.' }, [
+    bRow('laboratorio.evolucao', 'Its attributes and the path to the next form.', 'Os atributos e o caminho até a próxima forma.'),
+    bRow('laboratorio.pet', 'Its sheet: element, moves and the creatures you have met.', 'A ficha: elemento, golpes e as criaturas que você já encontrou.'),
+    bRow('laboratorio.stats', 'Your stats and your Bond.', 'Suas estatísticas e o seu Vínculo.'),
+    bRow('laboratorio.perfil', 'Your profile card.', 'O seu cartão de perfil.'),
+  ]),
+  mapStep('mercado', { en: 'Shops, and the forge.', pt: 'Lojas, e a forja.' }, [
+    bRow('mercado.itens', 'Food, chips and small things for your Soulmon.', 'Comida, chips e coisinhas para o seu Soulmon.'),
+    bRow('mercado.conquistas', 'The milestones you have reached.', 'Os marcos que você já atravessou.'),
+    bRow('mercado.decoracao', 'Furniture for its den.', 'Móveis para o abrigo dele.'),
+    bRow('mercado.background', 'Backdrops for its stage.', 'Cenários para o palco dele.'),
+    bRow('mercado.ferreiro', 'Upgrades for its gear.', 'Aprimora os equipamentos dele.'),
+  ]),
+  mapStep('arena', { en: 'Meeting other Soulmons.', pt: 'Encontros com outros Soulmons.' }, [
+    bRow('arena.duelo', 'One duel at a time, against another Soulmon.', 'Um duelo de cada vez, contra outro Soulmon.'),
+    bRow('arena.torneio', 'The ranked Tournament and the Open Arena.', 'O Torneio ranqueado e a Arena livre.'),
+  ]),
+  mapStep('jogos', { en: 'Play, and calm.', pt: 'Brincar, e acalmar.' }, [
+    bRow('jogos.salao', 'Minigames, for fun and for Bits.', 'Minijogos, pela graça e por Bits.'),
+    bRow('jogos.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
+    bRow('jogos.mente', 'Memory and logic games.', 'Jogos de memória e lógica.'),
+  ]),
+  mapStep('exploracao', { en: 'Out in the mist. The Dungeon is open from day one.', pt: 'Lá fora, na névoa. A Masmorra está aberta desde o primeiro dia.' }, [
+    bRow('exploracao.masmorra', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
+    bRow('exploracao.passeio', 'A calm walk through the mist.', 'Uma caminhada calma pela névoa.'),
+    bRow('exploracao.oficina', 'Focus sessions.', 'Sessões de foco.'),
+    bRow('exploracao.caderno', 'Your journal.', 'O seu caderno.'),
+  ]),
+  mapStep('hall', { en: 'Company.', pt: 'Companhia.' }, [
+    bRow('hall.biblioteca', 'Stories, and the people who tell them.', 'Histórias, e quem as conta.'),
+    bRow('hall.amigos', 'Your friends.', 'Os seus amigos.'),
+    bRow('hall.guilda', 'Your Guild.', 'A sua Guilda.'),
+    bRow('hall.feira', 'The Fair: send your Soulmon on a mission for the Guild.', 'A Feira: mande o seu Soulmon em missão pela Guilda.'),
+  ]),
+];
+
+/**
+ * Valor de `mapTutorialSeen` para um save lido (migração segura, 14/10/2026):
+ *  · boolean gravado → respeita;
+ *  · ausente + o tour de boas-vindas já visto, ou save com progresso (atividade/tarefa/conclusão/dia completo) → `true`
+ *    (quem já joga, ou já passou pelo tour antigo — que explicava o mapa — não é interrompido);
+ *  · ausente + save sem progresso → `false` (jogador novo: abre na 1ª abertura do Mapa).
+ * O erro seguro é NÃO apresentar de novo.
+ */
+export function sanitizeMapTutorialSeen(raw: unknown, save: Record<string, any> | null | undefined, welcomeTourShown = false): boolean {
+  if (typeof raw === 'boolean') return raw;
+  if (welcomeTourShown) return true;
+  const s = save ?? {};
+  const len = (x: unknown) => (Array.isArray(x) ? x.length : 0);
+  return len(s.activities) > 0 || len(s.tasks) > 0 || len(s.completedTasks) > 0 || len(s.activityLog) > 0
+    || (typeof s.perfectDays === 'number' && s.perfectDays > 0);
+}
+
+/** O tutorial do mapa abre com o Mapa na tela, ainda não visto e sem o tour de boas-vindas na frente. */
+export function needsMapTutorial(p: { seen: boolean | undefined; onMap: boolean; welcomeTourOpen: boolean }): boolean {
+  return p.seen === false && p.onMap && !p.welcomeTourOpen;
 }

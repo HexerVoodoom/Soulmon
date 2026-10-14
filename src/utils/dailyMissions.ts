@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------
 // MISSÕES DIÁRIAS DOS OUTROS RECURSOS (pedido do dono, 14/10/2026): "inclua mais missões diárias para incentivar o usuário a
-// usar os outros recursos, como minijogos, pomodoro...". REGISTRO §51.
+// usar os outros recursos, como minijogos, pomodoro...". REGISTRO §52.
 //
 // O que é: um CATÁLOGO de convites do dia. Cada dia o jogo mostra `DAILY_MISSION_COUNT` deles, sorteados de forma
 // DETERMINÍSTICA pelo dia do jogador (mesma chave de dia = mesma lista em qualquer aparelho, como `weeklyMissions` é por semana).

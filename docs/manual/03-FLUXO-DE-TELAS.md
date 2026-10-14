@@ -1094,7 +1094,7 @@ type ShopSegment = 'shop' | 'tournament';
 - **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (a ação real, guardar um registro no Caderno, é que conclui); o lote **não** leva marca
   e a folha do prédio **não** tem painel de missão (**exceção: o Passeio**, cuja experiência inteira fica no lote — 08/10/2026; a Home só lista a linha "Take a stroll"): a UI das demais vive só no menu de Missões da Home
   (`MissionsSheet`, **UMA folha com três ABAS compactas** — `PixelTabs variant="compact"`, o mesmo componente do Centro de Evolução —
-  desde 14/10/2026 (REGISTRO §51): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
+  desde 14/10/2026 (REGISTRO §52): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
   recursos, `DailyMissionList`), **Semanal** ("Esta semana"/"This week") e **Conquistas**; toque ou deslize troca de aba, as já visitadas
   ficam montadas; **um ícone só** na Home (`MissionsLink`), sempre presente — esmaecido sem pendência — com um ponto discreto na aba que
   tem "!"/"?". Os dois ícones antigos (diário/semanal) saíram; linha aponta, pronta, Resgatar). Ver
@@ -2315,3 +2315,9 @@ Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/g
 - **Centro de Evolução:** as três pílulas dos caminhos viraram abas compactas (sublinhado fino na ativa, separadores, nome inteiro + número); tocar ou deslizar na área da árvore troca de aba.
 - **Perfil (novo prédio do Laboratório, Vínculo 2):** "Quem ele é" (personalidade, atributo principal, equipamento do Soulsmith) e "Como luta" (elemento, ataque, especial, efeito, elemento do especial quando difere). Sem pontuação; linha ausente quando o app não tem o dado. NPC: o Corvo, mascote (`mascot-raven.png`; decisão do dono, 14/10/2026).
 - **Humor ("E você, como está hoje?"):** ícones de 40 px em alvos de 64, e o nome do humor escolhido aparece sob a fileira.
+
+## Delta de 14/10/2026: Masmorra no Vínculo 1, tutorial do mapa e ícones de canto sem círculo
+
+- **Masmorra livre desde o Vínculo 1** (`BUILDING_GATES['exploracao.masmorra']`, `gates.ts` + espelho `_gates.js`; REGISTRO §42). Energia, limite diário de camadas, portão dos andares altos (Vínculo 8) e a ocupação do Soulmon não mudaram.
+- **Tutorial do mapa:** o tour de boas-vindas tem 6 cartões (sem a Parte 2). Na 1ª abertura do Mapa abre o MESMO `WelcomeTour` com `MAP_TOUR_STEPS` (abertura + 1 cartão por área, 1 linha por prédio, EN/PT-BR); visto ou pulado grava `mapTutorialSeen` no save (`sanitizeMapTutorialSeen`: save com progresso ou com o tour já visto = `true`). O replay de Configurações repete só o básico.
+- **Casinha e ícone do Mapa sem círculo:** `CornerLink` perdeu a prop `ring`; ficam o ícone de 32 px, o brilho e o alvo de 56 px.

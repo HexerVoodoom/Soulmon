@@ -136,11 +136,17 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     for (const l of [NaN, null, undefined, 'x', -3]) expect(buildingGateFor('hall.guilda', l).bondLevel).toBe(1);
   });
   it('sempre livres: mínimo 1 e abertos no Vínculo 1', () => {
-    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio']);
+    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio', 'exploracao.masmorra']);
     for (const id of BUILDINGS_ALWAYS_OPEN) {
       expect(BUILDING_GATES[id].minBond).toBe(1);
       expect(buildingGateFor(id, 1).open).toBe(true);
     }
+  });
+  it('Masmorra livre desde o Vínculo 1 (14/10/2026); só os andares ALTOS seguem no portão', () => {
+    expect(buildingGateFor('exploracao.masmorra', 1)).toMatchObject({ open: true, minBond: 1 });
+    expect(masmorraFloorOpen(1, 1)).toBe(true);
+    expect(masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, 1)).toBe(false);
+    expect(areaMinBond('exploracao')).toBe(1);
   });
   it('Arena/Feira/Torneio leem a tabela de portões (um número só)', () => {
     expect(BUILDING_GATES['arena.duelo'].minBond).toBe(GATES.pvp.minBond);

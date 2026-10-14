@@ -115,7 +115,7 @@ describe('condição, 1 recompensa por dia, sem duplicar', () => {
   });
 });
 
-describe('economia (REGISTRO §51): o máximo diário por faixa de Vínculo', () => {
+describe('economia (REGISTRO §52): o máximo diário por faixa de Vínculo', () => {
   it('no máximo DAILY_MISSION_COUNT materiais por dia, sempre materiais (sem moeda nova)', () => {
     for (const bond of [1, 2, 3, 5]) {
       for (let d = 0; d < 50; d += 1) {

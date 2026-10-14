@@ -18,7 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
 import { AvisosSheet } from './components/nav/AvisosSheet';
-import { needsWelcomeTour } from './utils/welcomeTour';
+import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTour';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { bumpDaily, claimDaily, dailyMissionsMark, type DailyEvent } from './utils/dailyMissions';
@@ -711,6 +711,7 @@ const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
 const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
 const WelcomeTour = lazy(() => import('./components/WelcomeTour').then(m => ({ default: m.WelcomeTour })));
+const MapTutorial = lazy(() => import('./components/MapTutorial').then(m => ({ default: m.MapTutorial })));
 const BuildingIntro = lazy(() => import('./components/BuildingIntro').then(m => ({ default: m.BuildingIntro })));
 const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
 const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
@@ -2000,6 +2001,13 @@ export default function App() {
   const [welcomeTourShown, setWelcomeTourShown] = useState(() => readFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN));
   const [welcomeTourReplay, setWelcomeTourReplay] = useState(false);
   const welcomeTourOpen = welcomeTourReplay || needsWelcomeTour({ shown: welcomeTourShown, jaConcluiuAlgo });
+  /* O TUTORIAL DO MAPA (14/10/2026): um item PRÓPRIO da fila (`mapTutorial`, logo depois da apresentação de prédio), na
+     `NpcSequence` (tela cheia, o corvo/NPC da área e toque para avançar). Abre UMA vez, na 1ª abertura do Mapa, depois do
+     tour básico. O "visto" (`mapTutorialSeen` no SAVE) é gravado AO MOSTRAR — como todo item da fila —, então o
+     instantâneo `mapTutorialShown` mantém o item na tela depois que a flag deixa de pedi-lo. Visto OU pulado: nunca volta. */
+  const mapTutorialWanted = needsMapTutorial({ seen: gameState.mapTutorialSeen, onMap: currentView === 'map', welcomeTourOpen });
+  const [mapTutorialShown, setMapTutorialShown] = useState(false);
+  const mapTutorialOpen = mapTutorialWanted || mapTutorialShown;
   const handleWelcomeTourDone = useCallback(() => {
     if (!welcomeTourReplay) {
       writeFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN, true, { silent: true });
@@ -2039,6 +2047,7 @@ export default function App() {
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
       buildingIntro: introShown.length > 0,
+      mapTutorial: mapTutorialOpen,
       unlockToast: unlockToastIds.length > 0,
       catalogOnboarding: needsCatalogOnboarding(gameState as any),
       checkIn: Boolean(checkInPlanData),
@@ -2056,6 +2065,9 @@ export default function App() {
         handleLevelUpDone(levelUpEvent.to);
         const abertos = buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to);
         if (abertos.length > 0) setUnlockToastIds(abertos);
+      } else if (id === 'mapTutorial') {
+        setMapTutorialShown(true);
+        setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
       } else if (id === 'dailyReport' && gameState.lastDayReport) {
         writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
       }
@@ -2068,6 +2080,7 @@ export default function App() {
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
         case 'buildingIntro': setIntroShown([]); break;
+        case 'mapTutorial': setMapTutorialShown(false); break;
         case 'unlockToast': setUnlockToastIds([]); break;
         case 'checkIn': handleCheckInSkip(); break;
         case 'evolveTask': setEvolveModalStage(null); break;
@@ -3734,7 +3747,7 @@ export default function App() {
    * virada de semana (`forWeek`) tem de acontecer no MESMO updater que soma —
    * senão um contador de semana passada recebe +1 antes de ser zerado.
    */
-  /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §51) contam o MESMO evento real:
+  /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §52) contam o MESMO evento real:
      os gestos que já têm contador semanal alimentam também o dia (aqui, no mesmo updater); os demais chamam `contarDiaria`. */
   const contarDiaria = useCallback((evento: DailyEvent) => {
     setGameState(prev => ({ ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento) }));
@@ -8058,6 +8071,11 @@ export default function App() {
         </PresentationSlot>
       )}
       {/* LEVEL UP — o mais prioritário depois do tour e da triagem. z 300, só sai ao toque. */}
+      {interstitial === 'mapTutorial' && (
+        <PresentationSlot id="mapTutorial" onFail={() => presentation.fail('mapTutorial')} fallback={null}>
+          <MapTutorial language={language} onFinish={() => setMapTutorialShown(false)} />
+        </PresentationSlot>
+      )}
       {interstitial === 'unlockToast' && unlockToastIds.length > 0 && (
         <UnlockToast ids={unlockToastIds} language={language} onDone={() => setUnlockToastIds([])} />
       )}

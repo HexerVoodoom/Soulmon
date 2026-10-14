@@ -1104,11 +1104,19 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/BuildingIntro.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila, montagem única, "visto ao mostrar").
 **Avisos do arquivo:** só fecha por gesto (sem timer); muda e sem recompensa (R-NOVA); não grava nada (o "visto" é de quem monta, ao MOSTRAR).
 
+### `src/components/MapTutorial.tsx`
+**Dono de:** o tutorial do mapa (14/10/2026, pedido do dono): monta as falas a partir de `MAP_TOUR_STEPS` (uma de abertura com o corvo + uma por área, com o NPC da área e a lista dos prédios) e entrega à `NpcSequence`.
+**Props principais:** `language`, `onFinish('done' | 'skip')`.
+**Exports:** `MapTutorial(props)` (nomeado e default).
+**Chamado por:** `src/App.tsx` (item `mapTutorial` da fila, só na 1ª abertura do Mapa, depois do tour básico).
+**Régua:** `src/components/MapTutorial.render.test.tsx`, `src/components/WelcomeTour.render.test.tsx` (conteúdo e regras de `MAP_TOUR_STEPS`), `src/components/filaDeAvisos.contract.test.ts` (posição na fila).
+**Avisos do arquivo:** só fecha por gesto; muda e sem recompensa; não grava nada (o `mapTutorialSeen` é gravado por quem monta, ao MOSTRAR).
+
 ### `src/components/NpcSequence.tsx`
 **Dono de:** a sequência de falas de um NPC em TELA CHEIA (14/10/2026, pedido do dono): NPC bem grande (`min(135vw, 82dvh)`), janela de texto embaixo (`TypewriterText`), toque em qualquer lugar avança, a última fala fecha, "Pular/Skip" discreto no canto superior ESQUERDO (≥ 44 px, safe-area). Genérico: o tutorial do mapa pode usá-lo.
 **Props principais:** `lines` (`NpcSequenceLine[]`: `speaker`, `art`, `text`), `language`, `onFinish('done' | 'skip')`, `label?`.
 **Exports:** `NpcSequence(props)`, `NpcSequenceLine` (type).
-**Chamado por:** `src/components/BuildingIntro.tsx`.
+**Chamado por:** `src/components/BuildingIntro.tsx`, `src/components/MapTutorial.tsx`.
 **Régua:** `src/components/NpcSequence.render.test.tsx` (toque avança, pular, última fala, teclado, voltar do Android, alvo de 44 px, PT/EN, `onFinish` uma vez).
 **Avisos do arquivo:** o botão de avançar cobre a tela e é o PRIMEIRO focável (Enter/Espaço avançam; Esc e voltar pulam); o texto do "Pular" vem depois no foco; usa `useDialogA11y` e `useBackLayer`; nenhum som, nenhum timer.
 

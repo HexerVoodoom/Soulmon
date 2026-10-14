@@ -130,7 +130,7 @@ export function NpcSequence({ lines, language, onFinish, label }: {
             boxShadow: '0 8px 22px rgba(0,0,0,.5)',
             color: '#E9F5F2',
             font: '500 15px/1.4 var(--sm2-font-text)',
-            position: 'relative',
+            position: 'relative', whiteSpace: 'pre-line',
           }}
         >
           <b data-npc-name style={{ display: 'block', marginBottom: 4, fontSize: 12, letterSpacing: '0.06em', color: 'var(--sm2-gold-ink)' }}>
