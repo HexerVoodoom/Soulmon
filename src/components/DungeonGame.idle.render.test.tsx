@@ -76,7 +76,7 @@ describe('Masmorra idle — o laço automático', () => {
     expect(caiu()).toBe(false);
   });
 
-  it('a linha do andar é aria-live (polite) e a cena tem a saída (X) sempre presente', async () => {
+  it('a linha do andar é aria-live (polite) e a cena tem a saída (ícone do mapa) sempre presente', async () => {
     vi.useFakeTimers();
     montar();
     descer();
@@ -84,7 +84,7 @@ describe('Masmorra idle — o laço automático', () => {
     const live = document.querySelector('[data-dungeon-floor-live]')!;
     expect(live.getAttribute('aria-live')).toBe('polite');
     expect(live.textContent).toContain('Layer 1');
-    expect(screen.getByRole('button', { name: 'Exit' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Go to the map/ })).toBeTruthy();
   });
 
   it('6 lutas = +1 andar (Layer 2) sem nenhum toque', async () => {

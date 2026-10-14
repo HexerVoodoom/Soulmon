@@ -262,12 +262,13 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
   if (!welcome && report.wasPerfect) {
     taskNotes.push(isPt ? 'A fagulha firmou.' : 'The ember steadied.');
   }
-  if (!welcome && report.done >= report.required && report.energyWasFull === false) {
-    taskNotes.push(isPt
-      // "Faltou" para quem cumpriu 100% da própria meta é a palavra de quem
-      // cobra. Vira dica para amanhã, que é o que ela de fato é.
-      ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia completo.'
-      : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a complete day.');
+  // Dia completo = TAREFAS cumpridas (`completeDayReached`); a energia/comida não entra. A dica antiga "encher a energia fecha o dia
+  // completo" era resíduo de antes de 11/10/2026 e dizia o contrário da regra: removida (pedido do dono, 14/10/2026).
+  // A fome (REGISTRO §45): conta o fato, em voz de produto, e aponta o que ajuda — sem culpa.
+  if (!welcome && (report.hungerHeartsLost ?? 0) > 0) {
+    heartNotes.push(isPt
+      ? 'Ele ficou muito tempo com fome e perdeu meio coração. Comer ajuda a recuperar.'
+      : 'It went hungry for a long while and lost half a heart. Eating helps it recover.');
   }
   if (report.heartsRecovered) {
     heartNotes.push(isPt
@@ -286,7 +287,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
 
   // 4.2 — a fileira dos corações: o que quebrou é o que a virada cobrou; a animação toca uma vez por relatório.
   // `heartsLost` é o que o dia REALMENTE tirou (e na acolhida nada é cobrado).
-  const strip = heartStrip(welcome ? 0 : report.heartsLost, maxHearts);
+  const strip = heartStrip(welcome ? 0 : report.heartsLost + (report.hungerHeartsLost ?? 0), maxHearts);
   const playBreak = shouldPlayHeartBreak(strip, heartsAnimSeen);
 
   // 4.4 — uma folha por seção, em ordem de tempo: ONTEM (tarefas → corações → aventura) e depois HOJE.

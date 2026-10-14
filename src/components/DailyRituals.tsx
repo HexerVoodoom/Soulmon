@@ -25,7 +25,7 @@
  *    junta as pontuais e as agendadas que caem hoje; `Habits` são as diárias.
  *  · A linha de HOJE mostra o nome e o checkbox (+ os filhos, se houver) e, só se
  *    houver, UMA linha secundária pequena com o PRAZO e o convite da assombrada
- *    (`TaskMeta lean`, decisão §45). Sem subtítulo, selo, barra, XP, adiamentos nem categoria.
+ *    (`TaskMeta lean`, decisão §46). Sem subtítulo, selo, barra, XP, adiamentos nem categoria.
  *  · `View all` (gatilho discreto + swipe) lista só TASKS agendadas/recorrentes:
  *    NÃO marca nada, só edita, e a prévia é o nome + os dias em que aparece.
  */

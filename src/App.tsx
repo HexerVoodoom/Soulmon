@@ -23,6 +23,7 @@ import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from '.
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
+import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
@@ -985,7 +986,8 @@ export default function App() {
      aba volta ao foco (o app pode ter ficado fechado por horas); `settleEnergy` devolve a MESMA referência sem unidade nova, então não
      há re-render nem escrita à toa. O que a Home mostra (`energyStatus`) é calculado sobre o mesmo estado e as mesmas fronteiras. */
   useEffect(() => {
-    const acertar = () => setGameState(prev => tickEnergy(prev, Date.now()));
+    // A penalidade de fome (`utils/hungerPenalty.ts`) roda no MESMO tick, por timestamp do save: devolve a mesma referência sem janela nova.
+    const acertar = () => setGameState(prev => { const now = Date.now(); return applyHungerPenalty(tickEnergy(prev, now), now); });
     acertar();
     const id = setInterval(acertar, 15_000);
     const aoVoltar = () => { if (document.visibilityState === 'visible') acertar(); };
@@ -3551,6 +3553,19 @@ export default function App() {
     },
     onAddPerfectDays: (n: number) => { void gmTools().then(m => setGameState(prev => m.gmAddPerfectDays(prev, n))); },
   }), [petIsCorvo, gameState.evolutionStage, setGameState, careEvent, handleCareEventComplete]);
+
+  /* Aviso calmo da penalidade de fome: fora do updater (footgun 6), só quando o que o resumo vai contar SOBE nesta sessão (a referência
+     inicial é a do primeiro render: reabrir o app não repete o aviso). Voz de produto: diz o que aconteceu e o que ajuda, sem cobrança. */
+  const fomeAvisadaRef = useRef(gameState.hungerPenalty?.unreported ?? 0);
+  useEffect(() => {
+    const atual = gameState.hungerPenalty?.unreported ?? 0;
+    if (atual > fomeAvisadaRef.current) {
+      toast(language === 'pt-BR'
+        ? 'Seu Soulmon ficou muito tempo com fome e perdeu meio coração. Uma comidinha e ele se recupera.'
+        : 'Your Soulmon went hungry for a long while and lost half a heart. A little snack and it bounces back.');
+    }
+    fomeAvisadaRef.current = atual;
+  }, [gameState.hungerPenalty?.unreported, language]);
 
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
@@ -6727,6 +6742,7 @@ export default function App() {
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
+                onGoToMap={() => goTo('map')}
                 ocupado={{ naMasmorra, missaoFora: isMissionAway(guildMission, Date.now()), onBusy: abrirAvisoMasmorra }}
                 language={language}
                 ownership={{
