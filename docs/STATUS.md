@@ -1,5 +1,13 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/10/2026 — Fila central de modais, intro de NPC em tela cheia e resumo do dia centralizado (`fix/fila-de-modais-intro-npc`, REGISTRO §42, `docs/FILA-DE-MODAIS.md`)
+>
+> - **Bug do beta-2 (dono, por voz):** "sobe de nível / dia novo → modais se sobrepõem, trava; fechei, abri, veio um modal e depois outro do mapa". **Causa:** a cadeia `interstitial` era recalculada a cada render (o prédio novo, mais prioritário, DESMONTAVA o resumo/check-in que a pessoa lia) e o "visto" só era gravado ao FECHAR (prédios, resumo do dia, level-up) — fechar o app no meio devolvia tudo, um modal por prédio.
+> - **Feito:** UMA fila (`utils/presentationQueue.ts` + `hooks/usePresentationQueue.ts` + `components/PresentationSlot.tsx`): ordem explícita (level-up > resumo do dia > intro de NPC/mapa > metas > compromisso > avisos leves), um por vez, quem está na tela não é expulso, "visto" gravado AO MOSTRAR, voltar do Android fecha e avança, item que falha (render/chunk 8 s/fechamento) é pulado. **Sem campo novo no save** (fuzz2 segue em 128).
+> - **Prédio desbloqueado = balão** (`UnlockToast`, item leve da fila) e a intro do NPC só na PRIMEIRA entrada no prédio (`visitarPredio` + `buildingIntrosSeen`).
+> - **Intro de NPC:** `NpcSequence` (tela cheia, NPC grande, toque avança, "Pular/Skip" no canto superior esquerdo; genérico — o tutorial do mapa deve reutilizar) no lugar do bottom sheet "Próximo/Ir lá/Depois". **Resumo do dia:** "ontem + corações" num modal só e CENTRALIZADO (`ModalSheet placement="center"`); a escolha de metas também centralizada.
+> - **Depende do dono / pendente:** agrupar também o passo "hoje" (humor/convite/memórias)? o tutorial do mapa (`feat/dungeon-nv1-tutorial-mapa`) deve ser ligado à `NpcSequence` quando entrar na main.
+
 > ## 13/10/2026 — Beta-2, correções da revisão de design (`integ/beta-2`, PR #323; `product/beta-play-01/sweeper/design-critic-beta2.md`)
 >
 > - **F1–F6 (obrigatórios):** fome legível (pontos de 6px em linha, faminto na tinta `--sm2-viewport-warn`, toque abre a dica da energia, pausa visível por símbolo) · placa da masmorra troca o título para "Voltou" · **avisos da Home saem da faixa acima de HOJE** (botão `AvisosLink` na pilha do canto direito com selo, folha `AvisosSheet`; o check-in entra pelo mesmo canal) · "Adicionar tarefas à lista" é `ModalSheet` · Santuário sem a linha repetida de Vínculo e com a regra dos 5% atrás do "i" · Arena livre com o ícone e a palavra de Poder.

@@ -162,7 +162,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // `DungeonBusyModal` (lazy, só quando aparece). O resto é da primeira pintura (a plaquinha da masmorra na Home, o
   // relógio da descida idle, o `crashReport` de boot) ou está preso ao `UnlockAccountModal` (o `UnlockNudge` mora no
   // mesmo arquivo e é inline na Home — separar os dois é o próximo corte, ~6 KB). Medido em `npm run build` limpo.
-  'index.js': 638_386,
+  // 14/10/2026 (fila central de modais, REGISTRO §42): 638_386 → 681_986 em build limpo. A soma das frentes do beta-2 já
+  // estava no `main` sem re-medir (o `dist/` commitado media 644_409); a fila (`presentationQueue`, `NpcSequence`,
+  // `PresentationSlot`, `UnlockToast`) é < 8 KB disso. Corte real segue como tarefa própria.
+  'index.js': 681_986,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
