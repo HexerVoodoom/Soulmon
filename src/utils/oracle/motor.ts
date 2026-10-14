@@ -1474,7 +1474,7 @@ export function composeSpritePromptLegacy(args: SpritePromptArgs): string {
     // Vale nas DUAS variantes: mesmo citando inspirações, o que sai não pode ser
     // um personagem registrado — o sprite vai pro app de um usuário real.
     `Do not copy any existing franchise character. ` +
-    `Retro virtual-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard: ` +
+    `Retro virtual-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: ` +
     `${concept}. ${args.levelBlock}. ` +
     (args.rebirth ? `${args.rebirth} ` : '') +
     // DIREÇÃO (11/10/2026): o app desenha a arte olhando para a DIREITA e espelha ao
@@ -1520,9 +1520,9 @@ export const VPET_TEMPLATE = {
   /** Vale nas duas variantes (IP). Não remover. */
   antiCopy: 'Do not copy any existing franchise character.',
   /** Estilo + fundo, com marca (1ª tentativa). */
-  styleRefs: 'Tamagotchi-style v-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard:',
+  styleRefs: 'Tamagotchi-style v-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe:',
   /** Estilo + fundo, sem marca (fallback). */
-  styleClean: 'Retro virtual-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard:',
+  styleClean: 'Retro virtual-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe:',
   /** Acabamento plano (fim da frase de cores). */
   finish: 'no shading, no outlines, no anti-aliasing.',
   /** Veto ao tingimento de matiz única; o exemplo do dono não o tem. true = acrescenta. */
