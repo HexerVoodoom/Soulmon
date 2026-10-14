@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+import { useBackLayer } from '../../utils/backStack';
 import { useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
@@ -375,7 +377,7 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom',
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false,
 }: {
   open: boolean;
   title: string;
@@ -408,6 +410,11 @@ export function ModalSheet({
    *  alça e sem subir de baixo (só o véu e o painel aparecem com fade). Tudo o mais (foco, Esc, véu, safe-area,
    *  rodapé) é igual ao `'bottom'`, o padrão. */
   placement?: 'bottom' | 'center';
+  /** 14/10/2026 (bug do `View all`): a folha que abre POR CIMA de uma tela cheia em portal (`AllActivitiesScreen`, z 80 no `<body>`).
+   *  O container do `App` é `position: fixed` (cria contexto de empilhamento), então um véu z 120 de DENTRO dele ficava ATRÁS da tela
+   *  — a edição abria escondida e a tela, inerte, parecia travada. Com `sobreTelas` a folha vai para o `<body>` (portal) e registra a
+   *  camada do voltar do sistema (o voltar fecha a folha, não a tela de baixo). */
+  sobreTelas?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const centered = placement === 'center';
@@ -417,8 +424,9 @@ export function ModalSheet({
      da folha para fora solta o clique no ancestral comum (o véu) e fecharia sem querer. */
   const comecouNoVeu = useRef(false);
   const { slot, slotRef } = useModalInfoSlot();
+  useBackLayer(open && sobreTelas && closeSide !== 'none', onClose);
   if (!open) return null;
-  return (
+  const folha = (
     <ModalInfoSlotProvider slot={slot}>
     <div
       className="sm2-sheet-fade"
@@ -529,6 +537,7 @@ export function ModalSheet({
     </div>
     </ModalInfoSlotProvider>
   );
+  return sobreTelas && typeof document !== 'undefined' ? createPortal(folha, document.body) : folha;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
