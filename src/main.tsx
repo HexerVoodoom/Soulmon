@@ -72,6 +72,8 @@
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const sp = document.getElementById('splash');
     if (!sp) return;
+    // A barra completa (100%) e a splash some em fade curto (REGISTRO §50).
+    sp.querySelector('.sm2-loadbar')?.classList.add('is-done');
     sp.classList.add('done');
     sp.addEventListener('transitionend', remover, { once: true });
   }));
