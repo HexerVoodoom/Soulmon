@@ -7841,6 +7841,11 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   color: var(--sm2-muted);
 }
 .sm3-hoje-titulo b { color: var(--sm2-gold-ink); font-weight: 800; margin-left: 6px; }
+/* REGISTRO §57 — indicador único `Missão N/G` (algarismos tabulares, sem caixa alta própria). */
+.sm3-missao { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* REGISTRO §57 — o balão aparece com um fade curto; sem animar se o usuário pediu menos (o HUD só põe a classe fora de `reducedMotion`). */
+.sm3-balao { animation: sm3-balao-in var(--sm2-dur-tap) var(--sm2-ease) both; }
+@keyframes sm3-balao-in { from { opacity: 0; } to { opacity: 1; } }
 /* Beta-2 (2.4) — `Today` cromado DISCRETO: o texto recebe um degradê vertical
    só de tokens (tinta → muted → tinta → muted), como metal escovado. O `color`
    fica como reserva para quem não tem `background-clip: text`. */
@@ -7851,25 +7856,6 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-/* Beta-2 (2.4) — a META (`Goal N`) mora FORA do título e do contador: outra
-   grandeza, outro bloco (pílula de linha fina, número em tinta — o contador de
-   atividades segue em ouro). Só exibe; não registra nada. */
-.sm3-meta {
-  flex: none;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 2px 10px;
-  border: 1px solid var(--sm2-line);
-  border-radius: 999px;
-  font-family: var(--sm2-font-text);
-  font-size: var(--sm2-text-xs);
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--sm2-muted);
-}
-.sm3-meta b { color: var(--sm2-ink); font-weight: 800; letter-spacing: 0; }
 /* Beta-2 (2.1) — rótulo de categoria dentro da lista (`Tasks` / `Habits`). */
 .sm3-secao { list-style: none; padding: 10px 0 2px; }
 .sm3-secao h3 {

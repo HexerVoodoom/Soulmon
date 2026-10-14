@@ -9447,6 +9447,14 @@ var FIRST_TIME_IDS = [
   "visit:hall.guilda",
   "visit:hall.feira"
 ];
+var MISSION_IDS = [
+  "mission-champion",
+  "mission-mega",
+  "mission-kills-100",
+  "mission-runs-3",
+  "mission-dino-1000",
+  "mission-perfect-30"
+];
 var has5 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function sanitizeDailyMissions(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
@@ -9481,6 +9489,11 @@ function sanitizeFirstTimes(raw) {
   return { done, claimed };
 }
 __name(sanitizeFirstTimes, "sanitizeFirstTimes");
+function sanitizeMissionsClaimed(raw) {
+  if (!Array.isArray(raw)) return void 0;
+  return [...new Set(raw.filter((x2) => typeof x2 === "string" && MISSION_IDS.includes(x2)))];
+}
+__name(sanitizeMissionsClaimed, "sanitizeMissionsClaimed");
 
 // api/_focusLoot.js
 var FOCUS_LOOT_DAILY_CAP = 8;
@@ -9724,6 +9737,11 @@ async function onRequest6({ request, env }) {
       const q = sanitizeDailyMissions(state.dailyMissions);
       if (q) state.dailyMissions = q;
       else delete state.dailyMissions;
+    }
+    if ("missionsClaimed" in state) {
+      const q = sanitizeMissionsClaimed(state.missionsClaimed);
+      if (q) state.missionsClaimed = q;
+      else delete state.missionsClaimed;
     }
     if ("firstTimes" in state) {
       const q = sanitizeFirstTimes(state.firstTimes);
@@ -10281,7 +10299,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-C07DLO/functionsRoutes-0.3064549074667322.mjs
+// ../.wrangler/tmp/pages-VKnGfR/functionsRoutes-0.43203566512390656.mjs
 var routes = [
   {
     routePath: "/api/account",
