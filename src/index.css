@@ -5103,9 +5103,10 @@ select:focus-visible {
   --sm2-gold-ink: #8A5A2B;
   --sm2-gold-fill: #A2641F;
   --sm2-on-gold: #FFFFFF;
-  /* BRONZE dos checkboxes da lista (beta-2, 2.2): alias do ouro-cobre do sistema — nunca valor próprio. */
+  /* CHECKBOX (beta-2 2.2; polimento 14/10/2026): o CONTORNO é o BRONZE do sistema (alias do ouro-cobre) e o check marcado é o
+     TURQUESA da paleta (`primary-ink`). O glow é do check, não da caixa: difuso (blur 4), baixo (32%) e estático. Nunca valor próprio. */
   --sm2-check-fill: var(--sm2-gold-fill);
-  --sm2-on-check: var(--sm2-on-gold);
+  --sm2-check-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--sm2-primary-ink) 32%, transparent));
   /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
@@ -5160,7 +5161,7 @@ select:focus-visible {
   --sm2-gold-fill: #D9A05B;
   --sm2-on-gold: #04211F;
   --sm2-check-fill: var(--sm2-gold-fill);
-  --sm2-on-check: var(--sm2-on-gold);
+  --sm2-check-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--sm2-primary-ink) 32%, transparent));
   /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
@@ -5857,6 +5858,7 @@ select:focus-visible {
   /* minimal-ui F2 (Home B): o cursor do terminal fica ACESO e parado; o "+1"
      aparece sem subir; a mochila abre e desce por corte, sem deslizar. */
   .sm3-term-cur, .sm3-mais { animation: none !important; }
+  .sm3-tudo, .sm3-tudo[data-closing] { animation: none !important; }
   .sm3-mochila, .sm3-mochila-bg { transition: none !important; }
   /* Onboarding-oráculo (D-Q11/R1): o casulo para de pulsar e continua sendo o
      cristal aceso; o `sync` da espera para de girar — o `role=status` anuncia. */
@@ -6880,24 +6882,37 @@ button[style*="--sm2-btn: ghost"]:active {
   width: 24px;
   height: 24px;
   border-radius: var(--sm2-radius-sm);
-  border: 2px solid var(--sm2-muted);
+  position: relative;
+  border: 2px solid var(--sm2-check-fill);
   background-color: transparent;
   display: inline-grid;
   place-content: center;
   cursor: pointer;
-  transition: background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
   &::before {
     content: "";
     width: 14px;
     height: 14px;
+    position: relative;
+    z-index: 1;
     transform: scale(0);
     transition: transform var(--sm2-dur-tap) var(--sm2-ease);
-    background-color: var(--sm2-on-check);
+    background-color: var(--sm2-primary-ink);
     clip-path: polygon(14% 44%, 0 62%, 40% 100%, 100% 20%, 86% 8%, 40% 70%);
   }
-  /* BRONZE (beta-2): o CheckRow vale para metas/onboarding também — mesmo token da lista de atividades. */
-  &:checked { background-color: var(--sm2-check-fill); border-color: var(--sm2-check-fill); }
+  /* O glow do CheckRow: o `clip-path` do check cortaria um drop-shadow, então o halo é uma camada à parte, difusa e estática
+     (mesma cor e mesma intensidade do `--sm2-check-glow` dos outros checkboxes). */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent) 0%, transparent 72%);
+    transform: scale(0);
+    pointer-events: none;
+  }
+  /* O CheckRow vale para metas/onboarding também: o mesmo desenho da lista de atividades (contorno bronze, check turquesa). */
   &:checked::before { transform: scale(1); }
+  &:checked::after { transform: scale(1.5); }
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
   &:disabled { opacity: .45; cursor: default; }
 }
@@ -7882,19 +7897,20 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 0 8px;
   background: none;
   border: 0;
   cursor: pointer;
   font-family: var(--sm2-font-text);
-  font-size: var(--sm2-text-sm);
-  font-weight: 600;
-  color: var(--sm2-primary-ink);
+  font-size: var(--sm2-text-xs);
+  font-weight: 400;
+  color: var(--sm2-muted);
   -webkit-tap-highlight-color: transparent;
 }
+.sm3-ver-tudo button:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 /* Beta-2 (2.3) — a tela cheia de todas as atividades. Camada própria (voltar do
-   sistema fecha — `useBackLayer`); sem animação de entrada, de propósito. */
+   sistema fecha — `useBackLayer`). Entra e sai DESLIZANDO para o lado (swipe); em movimento reduzido não há animação. */
 .sm3-tudo {
   position: fixed;
   inset: 0;
@@ -7904,7 +7920,11 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   background-color: var(--sm2-bg);
   color: var(--sm2-ink);
   touch-action: pan-y;
+  animation: sm3-tudo-in 280ms cubic-bezier(.2,.8,.2,1) both;
 }
+.sm3-tudo[data-closing] { animation: sm3-tudo-out 240ms cubic-bezier(.4,0,.8,.4) both; }
+@keyframes sm3-tudo-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes sm3-tudo-out { from { transform: translateX(0); } to { transform: translateX(100%); } }
 .sm3-tudo-head {
   flex: none;
   display: flex;

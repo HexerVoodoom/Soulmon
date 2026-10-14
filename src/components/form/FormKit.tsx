@@ -340,7 +340,7 @@ export function Segment({
  * Caixa de seleção com rótulo. O rótulo inteiro é o alvo, com 44px de altura.
  * A caixa é 24 com raio 4 (canvas `Cards`): `appearance: none` em
  * `.sm2-form-check` — o nativo não aceita raio nem a fronteira `muted` 2px,
- * e marcada vira BRONZE (`--sm2-check-fill`, o mesmo da lista de atividades) com o check em `--sm2-on-check`.
+ * vazia = contorno BRONZE (`--sm2-check-fill`); marcada = o mesmo contorno com o check TURQUESA (`--sm2-primary-ink`) e glow baixo, como na lista de atividades.
  */
 export function CheckRow({
   checked, onChange, children,

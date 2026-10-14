@@ -162,13 +162,13 @@ describe('AreaTopBar', () => {
   });
 
   it('H9: o voltar fica FIXO na âncora do canto — a mesma do anel da casinha, em qualquer tela', () => {
-    const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} ring />);
+    const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     const caixa = casinha.container.querySelector('button')!;
-    const anel = casinha.container.querySelector('[data-corner-ring]') as HTMLElement;
     expect(caixa.style.top).toContain('safe-area-inset-top');
     // o jsdom normaliza `calc()`: compara pelo MESMO caminho de normalização
     const norm = (prop: 'top' | 'left', v: string) => { const el = document.createElement('div'); el.style[prop] = v; return el.style[prop]; };
-    expect(anel.style.width).toBe('44px');
+    expect(casinha.container.querySelector('[data-corner-ring]')).toBeNull(); // sem círculo (14/10/2026)
+    expect(caixa.style.width).toBe('56px');
     for (const overScene of [true, false]) {
       const r = renderWithCss(<AreaTopBar title="T" backLabel="Voltar" onBack={() => {}} icon={overScene ? 'map' : 'arrow_back'} overScene={overScene} />);
       const back = r.container.querySelector('[data-area-back]') as HTMLButtonElement;

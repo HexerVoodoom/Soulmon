@@ -148,6 +148,10 @@ export interface Activity {
    *  para este item — cooldown de `LEVEL_DOWN_COOLDOWN_DAYS` antes de
    *  oferecer de novo (`utils/catalogLevel.ts`). */
   catalogLevelDeclinedAt?: string;
+  /** XP por etapa (REGISTRO §42): quantas etapas já pagaram XP em `stepXpDay`. As etapas voltam
+   *  desmarcadas todo dia, então o contador zera sozinho quando o dia do jogador muda. */
+  stepXpPaid?: number;
+  stepXpDay?: string;
 }
 
 /**
@@ -190,6 +194,9 @@ export interface Task {
   repeatEveryDays?: number;
   /** `YYYY-MM-DD` em que uma tarefa guardada pela repetição volta a `open`. */
   wakeOn?: string;
+  /** XP por subtarefa (REGISTRO §42): quantas subtarefas desta tarefa JÁ pagaram XP. Só sobe; teto
+   *  `XP_STEP_MAX_PAID`. Ausente (save antigo) = as subtarefas já feitas contam como pagas. */
+  stepXpPaid?: number;
 }
 
 export interface CompletedTask {

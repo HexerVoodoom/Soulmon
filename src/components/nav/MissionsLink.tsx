@@ -1,6 +1,6 @@
 import { QuestGlyph } from '../play/MissionMark';
 import type { QuestMark, QuestTone } from '../../utils/questMarks';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O ÍCONE DE MISSÕES na Home (rodada 7, M8, 04/10/2026): logo abaixo do link do
@@ -10,8 +10,9 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE
  * quando não há nada pendente — a porta da lista continua lá. Parado, sem
  * número e sem som: nada que cobre.
  *
- * Ícone pelado dentro do anel (a mesma exceção D1 do `CornerLink`); o alvo de
- * 44 é do botão, e o rótulo mora no `aria-label` (sem `title`).
+ * Ícone PELADO (14/10/2026, pedido do dono: sem círculo nem fundo em volta do
+ * "!"/"?"); a legibilidade sobre o cenário vem do brilho do canto (`CORNER_GLOW`),
+ * o alvo de toque é o botão de 56 e o rótulo mora no `aria-label` (sem `title`).
  */
 export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, kind = 'daily', row = 1 }: {
   /** `null` = nada a fazer nem a entregar: o ícone SOME (não há porta para uma lista vazia). */
@@ -50,9 +51,9 @@ export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, k
         filter: CORNER_GLOW,
       }}
     >
-      <span aria-hidden="true" style={{ ...CORNER_RING_STYLE, opacity: 1 }}>
-        {/* 04/10/2026 ("?") e 05/10/2026 ("!"): a arte de quest do dono. */}
-        <QuestGlyph kind={mark === 'ready' ? 'ready' : 'available'} tone={mark ? tone : 'gold'} size={24} />
+      {/* 04/10/2026 ("?") e 05/10/2026 ("!"): a arte de quest do dono. */}
+      <span aria-hidden="true" style={{ display: 'flex' }}>
+        <QuestGlyph kind={mark === 'ready' ? 'ready' : 'available'} tone={mark ? tone : 'gold'} size={32} />
       </span>
     </button>
   );
