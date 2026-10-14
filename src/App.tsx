@@ -26,7 +26,7 @@ import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './util
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
-import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED } from './utils/checkIns';
+import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -2071,6 +2071,10 @@ export default function App() {
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
       } else if (id === 'dailyReport' && gameState.lastDayReport) {
         writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
+      } else if (id === 'checkIn') {
+        // compromisso da manhã: "visto" ao MOSTRAR (REGISTRO §53) — reabrir/recarregar no meio não repete nem repaga o Vínculo
+        const dia = playerDayKey(new Date(), gameState.playerDayTz);
+        setGameState(prev => (prev.lastCheckInDate === dia ? prev : { ...prev, lastCheckInDate: dia }));
       }
     },
     // voltar do Android / erro de render / chunk que não carregou: fecha o item pelo caminho "pular" do dono dele
@@ -4992,9 +4996,9 @@ export default function App() {
     // Mesma régua de `needsCheckIn`: com `dayKeyOf` aqui, a trava de sessão
     // rearmaria na virada do APARELHO e a leitura na virada do JOGADOR.
     const hoje = playerDayKey(now, gameState.playerDayTz);
-    // Check-ins ocultos (14/10/2026, interruptor único `CHECKINS_ENABLED`, REGISTRO §40.4-b): o item `checkIn` (compromisso do dia)
-    // da fila NÃO é oferecido — nem o rastreio `checkin_shown`, nem o plano. Religar = `true` em `utils/checkIns.ts`.
-    if (!CHECKINS_ENABLED) return;
+    // Compromisso da manhã (14/10/2026, interruptor PRÓPRIO `MORNING_COMMITMENT_ENABLED`, REGISTRO §53): o item `checkIn` da fila
+    // só depende dele — os 3 check-ins de janela (§40.4-b) seguem ocultos e não entram aqui.
+    if (!MORNING_COMMITMENT_ENABLED) return;
     if (checkInPromptedRef.current === hoje) return;
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;

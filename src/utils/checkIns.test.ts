@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  CHECKINS_ENABLED, __setCheckInsEnabledForTest, CHECKIN_REWARDS, CHECKIN_SLOTS, availableCheckIn, checkInDayOf, checkInWindows, claimCheckIn, claimedToday, currentSlot, sanitizeCheckIns, type CheckInState,
+  CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED, __setCheckInsEnabledForTest, CHECKIN_REWARDS, CHECKIN_SLOTS, availableCheckIn, checkInDayOf, checkInWindows, claimCheckIn, claimedToday, currentSlot, sanitizeCheckIns, type CheckInState,
 } from './checkIns';
 import { hungerAt } from './hunger';
 import { playerDayIso } from './playerDay';
@@ -183,6 +183,7 @@ describe('checkInWindows (a folha dos check-ins: horário e estado de cada janel
 describe('desligado (CHECKINS_ENABLED = false — o que está no ar)', () => {
   it('a constante de produção é false e nenhuma janela fica disponível nem paga', () => {
     expect(CHECKINS_ENABLED).toBe(false);
+    expect(MORNING_COMMITMENT_ENABLED).toBe(true); // o compromisso é outro interruptor e fica ligado
     __setCheckInsEnabledForTest(false);
     try {
       for (const h of [9, 14, 21]) {

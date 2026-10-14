@@ -3078,7 +3078,7 @@ sem cobrar nada de quem pular.
 
 > **14/10/2026 — os três check-ins por janela (manhã/tarde/noite, `src/utils/checkIns.ts`) estão OCULTOS** atrás de
 > `CHECKINS_ENABLED = false` (decisão do dono, `REGISTRO-DE-DECISOES.md` §40.4-b): sem atalho, folha nem recompensa; o código e o
-> campo `checkIns` do save ficam intactos. Isto NÃO desliga o ritual de planejamento descrito abaixo.
+> campo `checkIns` do save ficam intactos. Isto NÃO desliga o ritual de planejamento descrito abaixo: ele tem interruptor próprio, `MORNING_COMMITMENT_ENABLED = true` (REGISTRO §53), 1×/dia, com o "visto" gravado ao mostrar.
 
 **A regra.**
 
