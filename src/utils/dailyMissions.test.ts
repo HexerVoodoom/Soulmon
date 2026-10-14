@@ -44,14 +44,15 @@ describe('rotação determinística', () => {
     for (let d = 1; d <= 30; d += 1) conjuntos.add(dailyMissionsFor(`2026-09-${String(d).padStart(2, '0')}`, 99).map(m => m.id).join());
     expect(conjuntos.size).toBeGreaterThan(15);
   });
-  it('RESPEITA BLOQUEIOS: nada de Duelo/Torneio/Oficina/Masmorra antes do Vínculo que abre o prédio, em nenhum dia', () => {
+  it('RESPEITA BLOQUEIOS: nada de Duelo/Torneio/Oficina/Amigos antes do Vínculo que abre o prédio, em nenhum dia', () => {
     for (let d = 1; d <= 60; d += 1) {
       const day = `2026-08-${String((d % 28) + 1).padStart(2, '0')}-${d}`;
       for (const bond of [1, 2, 3, 4, 5]) {
         for (const m of dailyMissionsFor(day, bond)) expect(buildingGateFor(m.building, bond).open).toBe(true);
       }
+      // a Masmorra abre no Vínculo 1 desde a #328 (REGISTRO §51): sai da lista de bloqueadas, o portão é lido da tabela.
       const b1 = dailyMissionsFor(day, 1).map(m => m.event);
-      for (const e of ['arena', 'torneio', 'foco', 'masmorra', 'amigo'] as const) expect(b1).not.toContain(e);
+      for (const e of ['arena', 'torneio', 'foco', 'amigo'] as const) expect(b1).not.toContain(e);
     }
   });
   it('as missões dos recursos novos aparecem quando o Vínculo os abre', () => {
