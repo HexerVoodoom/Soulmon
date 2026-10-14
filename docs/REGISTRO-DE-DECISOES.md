@@ -2278,7 +2278,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Evidência:** teste `E:\soulmon-sprites-teste` (3 usuários simulados × 5 formas, low × medium) e `sombras\folha-low-x-medium.png`.
 - **Pendente:** ligar `gpt_image_2` + chroma-key verde na geração em produção (`generate-sprite.js`) com a correção de prompts do teste; refazer as sombras pelo oráculo se o dono quiser (as instaladas vieram de prompts escritos à mão para o teste).
 
-## 43. Polimento da Home e atividades: XP por subtarefa, Hábito × Tarefa, View all (pedido do dono, 14/10/2026)
+## 44. Polimento da Home e atividades: XP por subtarefa, Hábito × Tarefa, View all (pedido do dono, 14/10/2026)
 
 - **Pedido (voz):** sem círculos nos botões Mapa/casinha/"!"; checkbox vazio com contorno bronze e marcado com check turquesa e glow discreto; lista Hoje só com nome + checkbox (+ filhos); cada subtarefa dá XP; Hábitos = todo dia, Tasks = pontual ou em dias específicos; tirar a sugestão "Pagar contas"; `View all` discreto, com swipe lateral, só edita e mostra nome + dias.
 - **XP por subtarefa — PROPOSTA A REVISAR PELO DONO (default conservador):**
@@ -2292,6 +2292,12 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **View all:** só TASKS agendadas (atividades fora do "todo dia") e pontuais com início futuro; hábitos não entram; a linha não tem checkbox (tocar abre a edição) e mostra nome + dias em que aparece. Gesto: arrastar para a **esquerda** abre, para a direita volta; a tela desliza (280 ms / 240 ms), sem animação em `prefers-reduced-motion`.
 - **Sugestão removida:** `src/data/taskPresets.ts` ("Pagar contas") e o atalho no `CreateModal`. Fica o `repeatEveryDays` do modelo (saves antigos) e o `nextOccurrence`.
 - **Efeitos colaterais para o dono ver:** (1) a linha do Hoje perdeu o convite da tarefa assombrada, o contador de adiamentos, prazo e a prévia "+N XP base" do hábito (o pedido de 11/10 foi superado pelo de 14/10); o `TaskMeta` segue na tela de edição; (2) o brilho de linha recém-concluída (caixa dura) saiu junto do glow antigo; (3) o `AvisosLink` também perdeu o círculo, para a pilha do canto ficar coerente.
+
+## 43. Sprites de Soulmon: fundo TRANSPARENTE (sem chroma verde) e GPT Image 2.5 flare (dono, 14/10/2026)
+
+- **Decisão:** o prompt de sprite (`composeSpritePrompt`) pede `transparent background, isolated subject, no backdrop, no checkerboard`; nenhum `#00FF00`/chroma-key no gerador de Soulmon (o pendente do §41 sobre chroma-key fica substituído). Modelo: GPT Image 2.5 **flare** via API pública, id `marketing-studio/image/flare` (`POST https://api.higgsfield.ai/marketing-studio/image/flare`, status em `GET /requests/{id}/status`), qualidade **medium**, `resolution 1k`, `aspect_ratio 1:1`, `enhance_prompt false`, `moderation auto`. Credencial única `HF_CREDENTIALS` (`keyId:keySecret`); ausente, `generate-sprite.js` segue no Soul. `SPRITE_MODEL` força o modelo (`soul` ou outro id).
+- **Não vale para** ícones/UI do arte-gerador (seguem o chroma da regra global).
+- **Pendente de verificação:** a documentação pública não lista o schema do flare (a página do modelo dá 404) e a CLI ficou fora do ar na sessão; o ALFA REAL não foi confirmado. Se o flare devolver xadrez/RGB, a mitigação é fundo sólido neutro + remoção no cliente, a decidir pelo dono.
 
 ## 42. Fila central de modais, intro de NPC em tela cheia e resumo do dia centralizado (pedido do dono por voz, 14/10/2026)
 
@@ -2307,3 +2313,11 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Custo aceito:** app encerrado no instante em que o item entrou na tela perde aquele item (o resumo continua consultável na Evolução; o prédio no Mapa). 
 - **Gatilho para rever:** testador reclamar que "perdeu" um resumo/intro por ter fechado o app cedo (voltar a marcar ao fechar só para os que têm progresso), ou um novo modal da Home nascer fora da fila (o `filaDeAvisos.contract.test.ts` e a §4 de `FILA-DE-MODAIS.md` pegam).
 - **Depende do dono:** (1) o resumo "hoje" (humor/convite/memórias) continua um passo separado do "ontem" — agrupar também? (2) a ida direta ao prédio saiu da intro; (3) a ordem do `evolveTask` (depois do compromisso do dia) é minha.
+
+## 43. Placa da masmorra sem deformar, timer de energia só na dica e Zs do sono dentro do visor (dono, por voz, 14/10/2026)
+
+- **Decisão (placa):** a placa "In Dungeon" "ficou deformada, meio cortada e com o texto enorme": sai o ícone da portinha e fica só a plaquinha. A arte (recorte de `key-sign-2.png`, 60×35, quantizada) vai na tela em **escala inteira 2×** (`<img>`, `image-rendering: pixelated`), caixa fixa 120×70, texto xs centrado na área lisa. Substitui o `border-image` 9-slice do §40.
+- **Decisão (timer):** "o timer da comida/energia deixa só quando tocar na energia, no raiozinho, e mostra em tempo real, horas, minutos e segundos. Se tiver hora, mostra hora." Nada de timer fixo na faixa de status: tocar no raio abre a dica da energia com a contagem regressiva ao vivo (1 s), `H:MM:SS` com hora e `M:SS` sem; faminto mostra "pausada". Acessibilidade: `aria-live="polite"` só no rótulo, o número que muda é `aria-hidden`. Muda o §40 (3.4: timer discreto ao lado da energia) e o nome acessível do botão da energia (não leva mais o tempo).
+- **Correção (Zs):** o Z do sono, ancorado acima da cabeça, saía da tela depois do zoom da cena. Agora fica ao lado da cabeça e nunca acima do topo visível (`utils/sleepZ.ts`, com teste).
+- **Testes alterados:** `energiaFome.render.test.tsx` — o teste "nome acessível do botão leva o estado do timer" foi removido e o do timer na faixa trocado por "nada na faixa / dica com contagem / faminto pausada", porque o contrato mudou. O slot `statsSlots.energyTimer` do HUD continua existindo (contrato de encaixe), mas o app não o usa.
+- **Fome em níveis (complemento, mesmo dia):** o indicador de fome mostra o nível N de 3 (bem alimentado 3, mediano 2, faminto 1) em marcas cheias/contorno. Tocar nele abre a dica da fome: contagem ao vivo (`H:MM:SS`/`M:SS`) até cair de nível (`msToHungerDrop` de `energyStatus`; faminto = sem contagem) e o impacto (a fome define a velocidade da energia: 3 normal, 2 metade, 1 parada). A penalidade por fome NÃO está nesta decisão (outra frente).

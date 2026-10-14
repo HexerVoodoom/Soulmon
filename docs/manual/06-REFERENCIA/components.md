@@ -1565,14 +1565,14 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/home/DungeonSign.tsx`
 
-**Dono de:** a PLACA DE MADEIRA "Na masmorra" / "In Dungeon" + o tempo de retorno (beta-2 6.2) que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova; caixa fixa 118 × 46). **Exports:** `DungeonSign({ language, onTap, returnInMs })`, `SIGN_W`, `SIGN_H`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+**Dono de:** a PLACA DE MADEIRA "Na masmorra" / "In Dungeon" + o tempo de retorno (beta-2 6.2) que fica no lugar do pet na Home (só a arte `placa-madeira.png` 60×35 em escala inteira 2× — `<img>` pixelated, sem border-image, sem ícone; caixa fixa 120 × 70; texto xs na área lisa). **Exports:** `DungeonSign({ language, onTap, returnInMs })`, `SIGN_W`, `SIGN_H`, `SIGN_ART_W/H`, `SIGN_SCALE`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
 
 ### `src/components/home/EnergyTimer.tsx` (beta-2 3.4)
-**Dono de:** o timer discreto ao lado da energia (`1h05` / `42 min`; `–` quando a regeneração está pausada; nada com a energia cheia). Props simples (`msToNext`, `mode`, `language`); sem relógio próprio — o valor vem de `energyStatus`. **Exports:** `EnergyTimer`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato de encaixe: `docs/FRENTE-B-REGRAS-BETA2.md`.
+**Dono de:** a CONTAGEM REGRESSIVA ao vivo da próxima energia, que mora DENTRO da dica da energia (abre ao tocar no raio; REGISTRO §43 — não há mais timer fixo na faixa). `H:MM:SS` com hora, `M:SS` sem (`formatEnergyCountdown`), 1 s; `paused` mostra "pausada"; `full` não renderiza. `aria-live="polite"` só no rótulo (o número é `aria-hidden`). Sem relógio próprio — ancora no `msToNext` de `energyStatus` e desconta o decorrido. **Exports:** `EnergyTimer`. **Chamado por:** `CompanionHUD` (dica `energy`, prop `energyInfo`).
 
 ### `src/components/home/HungerIndicator.tsx` (beta-2 3.5)
-**Dono de:** o indicador de fome da Home (tigela em SVG + três pontos: bem alimentado / mediano / faminto; o estado não depende de cor). Props simples (`tier`, `value?`, `language`). **Exports:** `HungerIndicator`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato: `docs/FRENTE-B-REGRAS-BETA2.md`.
-**Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+**Dono de:** o indicador de fome da Home (ícone de carne + três marcas cheias/contorno = nível 3/2/1 de 3, 14/10/2026; o estado não depende de cor; tocar abre a dica da FOME com `HungerTimer`, a contagem ao vivo até cair de nível, e o impacto na energia). Props simples (`tier`, `value?`, `language`). **Exports:** `HungerIndicator`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato: `docs/FRENTE-B-REGRAS-BETA2.md`.
+**Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (só a placa pixel, sem ícone). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
 
 ### `src/components/DayHearts.tsx` (beta-2, 13/10/2026)
 **Dono de:** a fileira de corações do resumo pós-dia: os inteiros ficam como estão; o cobrado treme (`sm2-heart-shake`), quebra (`sm2-heart-snap`) e vira coração preto (o ícone `hp` do HUD, escurecido por filtro). Só anima quando `play` é verdadeiro na montagem; movimento reduzido pula para o preto.

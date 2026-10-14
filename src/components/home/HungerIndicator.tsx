@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { HungerTier } from '../../utils/hunger';
+import { hungerLevelOf, type HungerTier } from '../../utils/hunger';
 import type { Language } from '../../utils/i18n';
 import { fomeCheio, fomeMedio, fomeFaminto } from '../../assets/soulmon/icones-ui';
 
@@ -35,9 +35,18 @@ export function HungerIndicator({ tier, value, language, size = 20, style, onTap
 }) {
   const isPt = language === 'pt-BR';
   const copy = isPt ? STATE_COPY[tier].pt : STATE_COPY[tier].en;
-  const nome = isPt ? `Fome: ${copy}` : `Hunger: ${copy}`;
+  const nivel = hungerLevelOf(tier);
+  const nome = isPt ? `Fome: ${copy}, nível ${nivel} de 3` : `Hunger: ${copy}, level ${nivel} of 3`;
   const corpo = (
-    <img src={ART[tier]} alt="" width={size} height={size} draggable={false} aria-hidden="true" style={{ imageRendering: 'pixelated' }} />
+    <>
+      <img src={ART[tier]} alt="" width={size} height={size} draggable={false} aria-hidden="true" style={{ imageRendering: 'pixelated' }} />
+      {/* nível N de 3 (REGISTRO §43): três marcas, cheias × só contorno — a forma diz o nível, não a cor */}
+      <svg data-hunger-level={nivel} width="14" height="6" viewBox="0 0 14 6" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
+        {[0, 1, 2].map(i => (i < nivel
+          ? <rect key={i} x={i * 5} y="0" width="4" height="6" fill="currentColor" />
+          : <rect key={i} x={i * 5 + 0.5} y="0.5" width="3" height="5" fill="none" stroke="currentColor" strokeWidth="1" />))}
+      </svg>
+    </>
   );
   const dados = {
     'data-hunger-indicator': true,

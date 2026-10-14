@@ -2420,7 +2420,7 @@ export default function App() {
         }
 
         const stepDayKey = playerDayKey(new Date(), prev.playerDayTz);
-        // 🪜 XP por etapa (REGISTRO §43): as etapas do hábito voltam desmarcadas todo dia, então o
+        // 🪜 XP por etapa (REGISTRO §44): as etapas do hábito voltam desmarcadas todo dia, então o
         // contador `stepXpPaid` vale POR DIA (`stepXpDay`); editar a lista no meio do dia não abre vaga nova.
         const antesAtividade = prev.activities.find(a => a.id === activityId);
         const pagasHoje = antesAtividade?.stepXpDay === stepDayKey ? (antesAtividade.stepXpPaid ?? 0) : 0;
@@ -2921,7 +2921,7 @@ export default function App() {
     setGameState(prev => {
       const tasks = completeTaskStep(prev.tasks, taskId, stepId);
       if (tasks === prev.tasks) return prev; // já feita: nada a pagar (idempotente no StrictMode)
-      // 🪜 XP por subtarefa (REGISTRO §43): paga na TRANSIÇÃO pendente → feita, uma vez por vaga.
+      // 🪜 XP por subtarefa (REGISTRO §44): paga na TRANSIÇÃO pendente → feita, uma vez por vaga.
       // O contador `stepXpPaid` só sobe (teto por tarefa); save antigo nasce com as já feitas contadas.
       const antes = prev.tasks.find(t => t.id === taskId);
       if (!antes) return { ...prev, tasks };

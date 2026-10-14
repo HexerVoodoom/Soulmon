@@ -1,5 +1,5 @@
 /**
- * XP POR SUBTAREFA (proposta 14/10/2026, REGISTRO §43): cada subtarefa concluída paga uma fração
+ * XP POR SUBTAREFA (proposta 14/10/2026, REGISTRO §44): cada subtarefa concluída paga uma fração
  * do XP da tarefa, com teto por tarefa, sem duplicar e sem mexer na meta do dia.
  */
 import { describe, it, expect } from 'vitest';
