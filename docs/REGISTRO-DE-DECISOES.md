@@ -2387,3 +2387,15 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 **Sair.** `sessionReset.irParaEntradaDoApp()`: troca a entrada do `history` por Home (sem `?query`/`#hash`) e recarrega; sem save nem sessão o app abre no portão de login (web/PWA e WebView do Android). A limpeza de estado é a do `fix/logout-limpa-estado`.
 
 **Gatilho de rever:** relato de quem pagou, excluiu a conta por engano e quer o direito de volta (hoje: só pelo suporte/Play, nada automático).
+
+## 50. Loading minimalista: uma barra fina turquesa que enche (pedido do dono por voz, 14/10/2026)
+
+*Pedido do dono (voz):* "Troca o asset de loading. Faz uma barra azul turquesa fina sendo preenchida." Fecha o item 9.4 do backlog do beta-2.
+
+- **Decisão:** o indicador de carregando do app passa a ser UMA barra de 3px, turquesa (token `--sm2-primary-fill`; no visor/splash, `--sm2-primary-ink`; nenhuma cor nova), que enche da esquerda para a direita. Sem texto, sem spinner, sem ilustração. Glow só um `box-shadow` discreto na ponta; trilho a 12% da própria cor.
+- **Um só componente:** `src/components/ui/LoadingBar.tsx` (`progress` 0-1 = real; sem `progress` = simulado assintótico, teto 94%; `done` completa a 100% e some em fade de 220ms; `role=progressbar`, `aria-valuenow` só quando determinado, `aria-busy`, rótulo Carregando/Loading só para leitor de tela). `ScreenSkeleton` (fallback de `lazy()`) agora só enquadra (page/overlay/inline) e mantém o estado `error`; o `loading` é a `LoadingBar`.
+- **Splash do `index.html`:** só o fundo do visor + a mesma `.sm2-loadbar` (CSS puro, preenchimento 4% a 92% em 14s com desaceleração; `main.tsx` a completa e some em fade). Saíram a chama, o wordmark, os textos "LOADING DATA..."/"SOUL_LINK ESTABLISHED", a barra de 8 segmentos e os cristais (CSS `.sm2-splash-bar/crystal/flame/title/link` apagado; `brandFlame.parity.test.ts` virou "splash sem ilustração"). A `BrandFlame` do portão continua.
+- **Movimento reduzido:** preenchimento em passos de 20% (até 80%), sem transição e sem brilho.
+- **Assets apagados (sem importador):** `src/assets/brand/final/loading.mp4` e `loading-thumb.webp`.
+- **Fora desta decisão (reportado):** a tela de intro (`intro.mp4`/`intro-poster.webp`, "TAP TO START") traz "LOADING DATA..." DENTRO da arte; e o splash nativo do Android (`android/.../drawable/splash.png`) é imagem nativa. Trocar os dois exige arte nova / mudança nativa.
+- **Gatilho de rever:** relato de que a barra simulada "parece travada" em rede muito lenta (hoje para em 94% / 92% na splash até o conteúdo chegar).
