@@ -4,7 +4,7 @@
  * save, nenhum relógio próprio. Também o ENCAIXE no `CompanionHUD` (a menor mudança) e o botão de check-in do cartão da refeição.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { EnergyTimer } from './EnergyTimer';
 import { HungerIndicator } from './HungerIndicator';
@@ -14,27 +14,42 @@ import type { CheckInWindow } from '../../utils/checkIns';
 
 const MIN = 60_000;
 
-describe('EnergyTimer', () => {
-  it('regenerando: mostra o tempo até a próxima unidade (curto, sem número de 0)', () => {
-    render(<EnergyTimer msToNext={65 * MIN} mode="regen" language="pt-BR" />);
+describe('EnergyTimer (contagem ao vivo dentro da dica da energia, REGISTRO §42)', () => {
+  it('regenerando: H:MM:SS quando há hora, tabular; o número é aria-hidden e o rótulo falado leva o tempo da abertura', () => {
+    render(<EnergyTimer msToNext={65 * MIN + 5000} mode="regen" language="pt-BR" />);
     const t = document.querySelector('[data-energy-timer]')!;
-    expect(t.textContent).toBe('1h05');
-    expect(t.getAttribute('aria-label')).toBe('Próxima energia em 1h05');
-    expect(t.getAttribute('data-mode')).toBe('regen');
+    expect(t.querySelector('[data-energy-countdown]')!.textContent).toBe('1:05:05');
+    expect(t.querySelector('[data-energy-countdown]')!.getAttribute('aria-hidden')).toBe('true');
+    expect(t.getAttribute('aria-live')).toBe('polite');
+    expect(t.textContent).toContain('Próxima energia em');
+    expect(t.querySelector('.sm2-sr-only')!.textContent).toBe('1h06');
   });
-  it('devagar (fome): o nome acessível diz que está devagar; EN também', () => {
+  it('sem hora: M:SS, em EN; devagar avisa', () => {
     render(<EnergyTimer msToNext={42 * MIN} mode="slow" language="en-US" />);
-    expect(document.querySelector('[data-energy-timer]')!.getAttribute('aria-label')).toBe('Next energy in 42m (regenerating slowly)');
-  });
-  it('pausado (faminto) ou sem previsão: um traço, e o nome acessível explica', () => {
-    const { unmount } = render(<EnergyTimer msToNext={null} mode="paused" language="pt-BR" />);
     const t = document.querySelector('[data-energy-timer]')!;
-    expect(t.textContent).toBe('');
-    expect(t.querySelector('svg')).not.toBeNull(); // a pausa é VISÍVEL: símbolo de duas barras, sem depender do aria-label
-    expect(t.getAttribute('aria-label')).toMatch(/pausada.*faminto/);
-    unmount();
-    render(<EnergyTimer msToNext={null} mode="slow" language="en-US" />);
-    expect(document.querySelector('[data-energy-timer] svg')).not.toBeNull();
+    expect(t.querySelector('[data-energy-countdown]')!.textContent).toBe('42:00');
+    expect(t.textContent).toContain('Next energy in');
+    expect(t.textContent).toContain('slower');
+  });
+  it('anda a cada segundo, sem mexer no texto falado, e reancora quando chega um msToNext novo', () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(<EnergyTimer msToNext={61_000} mode="regen" language="pt-BR" />);
+      const n = () => document.querySelector('[data-energy-countdown]')!.textContent;
+      expect(n()).toBe('1:01');
+      act(() => { vi.advanceTimersByTime(3000); });
+      expect(n()).toBe('0:58');
+      expect(document.querySelector('.sm2-sr-only')!.textContent).toBe('2 min');
+      rerender(<EnergyTimer msToNext={30_000} mode="regen" language="pt-BR" />);
+      expect(n()).toBe('0:30');
+    } finally { vi.useRealTimers(); }
+  });
+  it('pausado (faminto): estado "pausada" em vez de contagem', () => {
+    render(<EnergyTimer msToNext={null} mode="paused" language="pt-BR" />);
+    const t = document.querySelector('[data-energy-timer]')!;
+    expect(t.querySelector('[data-energy-countdown]')).toBeNull();
+    expect(t.textContent).toMatch(/pausada.*faminto/);
+    expect(t.getAttribute('data-mode')).toBe('paused');
   });
   it('energia cheia: não renderiza nada (não há próxima unidade)', () => {
     const { container } = render(<EnergyTimer msToNext={null} mode="full" language="pt-BR" />);
@@ -44,7 +59,7 @@ describe('EnergyTimer', () => {
 
 describe('HungerIndicator', () => {
   it('três estados legíveis SEM depender de cor: nome acessível em palavras e uma arte por estado', () => {
-    const casos = [['fed', 3, 'Fome: bem alimentado'], ['fair', 2, 'Fome: com um pouco de fome'], ['starving', 0, 'Fome: faminto']] as const;
+    const casos = [['fed', 3, 'Fome: bem alimentado, nível 3 de 3'], ['fair', 2, 'Fome: com um pouco de fome, nível 2 de 3'], ['starving', 0, 'Fome: faminto, nível 1 de 3']] as const;
     const arts = new Set<string | null>();
     for (const [tier, , nome] of casos) {
       const { unmount } = render(<HungerIndicator tier={tier} value={50} language="pt-BR" />);
@@ -60,9 +75,9 @@ describe('HungerIndicator', () => {
   it('EN e o valor numérico só vai para data-hunger (a tela não mostra número)', () => {
     render(<HungerIndicator tier="starving" value={7.4} language="en-US" />);
     const el = document.querySelector('[data-hunger-indicator]') as HTMLElement;
-    expect(el.getAttribute('aria-label')).toBe('Hunger: starving');
+    expect(el.getAttribute('aria-label')).toBe('Hunger: starving, level 1 of 3');
     expect(el.getAttribute('data-hunger')).toBe('7');
-    expect(el.textContent).toBe('');
+    expect(el.textContent).toBe(''); // as marcas de nível são SVG, sem texto
   });
 });
 
@@ -75,13 +90,13 @@ describe('HungerIndicator — legibilidade (beta-2 F1)', () => {
   it('com onTap vira botão e chama; sem onTap segue imagem', () => {
     const onTap = vi.fn();
     const { unmount } = render(<HungerIndicator tier="fair" language="en-US" onTap={onTap} />);
-    const b = screen.getByRole('button', { name: 'Hunger: a little hungry' });
+    const b = screen.getByRole('button', { name: 'Hunger: a little hungry, level 2 of 3' });
     fireEvent.click(b);
     expect(onTap).toHaveBeenCalledTimes(1);
     unmount();
     render(<HungerIndicator tier="fair" language="en-US" />);
     expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.getByRole('img', { name: 'Hunger: a little hungry' })).not.toBeNull();
+    expect(screen.getByRole('img', { name: 'Hunger: a little hungry, level 2 of 3' })).not.toBeNull();
   });
 });
 
@@ -91,19 +106,54 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
     healthPoints: 3, maxHealthPoints: 3, dominantBranch: 'balanced' as const, currentXP: 0, nextLevelXP: 10, useAI: false,
     language: 'pt-BR' as const, energyPoints: 2, maxEnergyPoints: 8,
   };
-  it('com `energyInfo`: o timer entra DENTRO do botão da energia e o indicador de fome é irmão dele, no mesmo bloco `.sm3-stats`', () => {
+  it('com `energyInfo`: NADA de timer na faixa; o indicador de fome segue irmão do botão da energia', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'fair', hunger: 45, mode: 'slow', msToNext: 80 * MIN }} />);
+    expect(container.querySelector('[data-energy-timer]')).toBeNull();
     const botao = container.querySelector('button[data-stat="energy"]')!;
-    expect(botao.querySelector('[data-energy-timer]')!.textContent).toBe('1h20');
     const stats = container.querySelector('.sm3-stats')!;
     expect(stats.querySelector('[data-hunger-indicator]')!.getAttribute('data-hunger-tier')).toBe('fair');
     expect(botao.contains(stats.querySelector('[data-hunger-indicator]'))).toBe(false);
   });
-  it('tocar na fome abre a dica da energia (statTips) — e tocar de novo fecha', () => {
+  it('tocar no raio abre a dica com a contagem ao vivo (H:MM:SS com hora); tocar de novo fecha e o timer some', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'fair', hunger: 45, mode: 'slow', msToNext: 80 * MIN }} />);
+    const raio = container.querySelector('button[data-stat="energy"]')!;
+    fireEvent.click(raio);
+    const tip = container.querySelector('[data-stat-tip="energy"]')!;
+    expect(tip.querySelector('[data-energy-countdown]')!.textContent).toBe('1:20:00');
+    fireEvent.click(raio);
+    expect(container.querySelector('[data-energy-timer]')).toBeNull();
+  });
+  it('faminto: a dica mostra "pausada" no lugar da contagem', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'starving', hunger: 3, mode: 'paused', msToNext: null }} />);
+    fireEvent.click(container.querySelector('button[data-stat="energy"]')!);
+    expect(container.querySelector('[data-energy-timer][data-mode="paused"]')).not.toBeNull();
+    expect(container.querySelector('[data-energy-countdown]')).toBeNull();
+  });
+  it('tocar na fome abre a dica da FOME com contagem ao vivo até cair de nível e o impacto; faminto não tem contagem', () => {
+    const { container, unmount } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'fed', hunger: 90, mode: 'regen', msToNext: 30 * MIN, msToHungerDrop: 135 * MIN + 7000 }} />);
+    fireEvent.click(container.querySelector('button[data-hunger-indicator]')!);
+    expect(container.querySelector('[data-stat-tip="hunger"] [data-hunger-countdown]')!.textContent).toBe('2:15:07');
+    expect(container.querySelector('[data-stat-tip="hunger"] [data-stat-tip-use]')!.textContent).toMatch(/velocidade da energia/);
+    expect(container.querySelector('[data-energy-timer]')).toBeNull();
+    unmount();
+    const r = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'starving', hunger: 3, mode: 'paused', msToNext: null, msToHungerDrop: null }} />);
+    fireEvent.click(r.container.querySelector('button[data-hunger-indicator]')!);
+    expect(r.container.querySelector('[data-hunger-countdown]')).toBeNull();
+    expect(r.container.querySelector('[data-hunger-timer]')).not.toBeNull();
+  });
+  it('o indicador mostra o nível N de 3 em marcas (3/2/1 cheias) e tocar de novo fecha', () => {
+    for (const [tier, n] of [['fed', 3], ['fair', 2], ['starving', 1]] as const) {
+      const { container, unmount } = render(<HungerIndicator tier={tier} language="pt-BR" />);
+      expect(container.querySelector('[data-hunger-level]')!.getAttribute('data-hunger-level')).toBe(String(n));
+      expect(container.querySelectorAll('svg rect:not([fill="none"])')).toHaveLength(n);
+      unmount();
+    }
+  });
+  it('tocar na fome abre a dica e tocar de novo fecha', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'starving', hunger: 3, mode: 'paused', msToNext: null }} />);
     const fome = container.querySelector('button[data-hunger-indicator]')!;
     fireEvent.click(fome);
-    expect(container.querySelector('[data-stat-tip="energy"]')).not.toBeNull();
+    expect(container.querySelector('[data-stat-tip="hunger"]')).not.toBeNull();
     fireEvent.click(fome);
     expect(container.querySelector('[data-stat-tip]')).toBeNull();
   });
@@ -113,17 +163,10 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
     expect(container.querySelector('[data-hunger-indicator]')).toBeNull();
     expect(container.querySelector('button[data-stat="energy"]')).not.toBeNull();
   });
-  it('o nome acessível do botão da energia continua sendo o da energia (o timer é decoração do botão, com nome próprio)', () => {
+  it('o nome acessível do botão da energia é só o da energia (o tempo mora na dica, não no botão)', () => {
     renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'fed', hunger: 90, mode: 'regen', msToNext: 30 * MIN }} />);
     const b = screen.getByRole('button', { name: /Energia: 2 de 8/ });
-    expect(b.getAttribute('aria-label')).toBe('Energia: 2 de 8. Próxima em 30 min');
-  });
-  it('o nome acessível do botão leva o estado do timer: parada (faminto) e cheia', () => {
-    const { unmount } = renderWithCss(<CompanionHUD {...base} energyInfo={{ tier: 'starving', hunger: 3, mode: 'paused', msToNext: null }} />);
-    expect(screen.getByRole('button', { name: /Energia: 2 de 8/ }).getAttribute('aria-label')).toBe('Energia: 2 de 8. Regeneração parada');
-    unmount();
-    renderWithCss(<CompanionHUD {...base} energyPoints={8} energyInfo={{ tier: 'fed', hunger: 99, mode: 'full', msToNext: null }} />);
-    expect(screen.getByRole('button', { name: /Energia: 8 de 8/ }).getAttribute('aria-label')).toBe('Energia: 8 de 8');
+    expect(b.getAttribute('aria-label')).toBe('Energia: 2 de 8');
   });
 });
 

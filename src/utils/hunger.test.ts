@@ -7,6 +7,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+  hungerLevelOf,
+  formatEnergyCountdown,
   HUNGER_MAX, HUNGER_FED_MIN, HUNGER_FAIR_MIN, HUNGER_PER_FOOD, HUNGER_FULL_TO_EMPTY_HOURS, ENERGY_REGEN_MINUTES, REGEN_FAIR_PCT,
   UNIT_POINTS, eat, energyStatus, hungerAt, regenPoints, sanitizeEnergyClock, sanitizeHunger, setEnergy, settleEnergy, tierOf, formatEnergyEta, tickEnergy, tickTime,
   type HungerState,
@@ -279,5 +281,31 @@ describe('com o Soulmon na masmorra o tick CONGELA a energia (a conta de quem fi
     expect(cur.energyPoints).toBe(0);
     const voltou = { ...cur, dungeonAway: undefined };
     expect(tickEnergy(voltou, T0 + 5 * HOUR).energyPoints).toBe(casa.energyPoints);
+  });
+});
+
+describe('formatEnergyCountdown (REGISTRO §42)', () => {
+  it('H:MM:SS com hora, M:SS sem; arredonda para cima em segundos; nunca negativo', () => {
+    expect(formatEnergyCountdown(3_725_000)).toBe('1:02:05');
+    expect(formatEnergyCountdown(59_001)).toBe('1:00');
+    expect(formatEnergyCountdown(42 * 60_000)).toBe('42:00');
+    expect(formatEnergyCountdown(3_600_000)).toBe('1:00:00');
+    expect(formatEnergyCountdown(-5)).toBe('0:00');
+    expect(formatEnergyCountdown(NaN)).toBe('0:00');
+  });
+});
+
+describe('energyStatus.msToHungerDrop e hungerLevelOf (REGISTRO §42)', () => {
+  it('fed→fair em (v-60)/taxa, fair→starving em (v-20)/taxa, faminto = null; nível 3/2/1', () => {
+    const H = 3_600_000;
+    const at = 1_000_000;
+    const mk = (v: number) => ({ energyPoints: 0, hunger: { v, at }, energyClock: undefined, evolutionStage: 'rookie' }) as unknown as Parameters<typeof energyStatus>[0];
+    const rate = HUNGER_MAX / (HUNGER_FULL_TO_EMPTY_HOURS * H);
+    const fed = energyStatus(mk(100), at);
+    expect(fed.msToHungerDrop).toBeCloseTo((100 - HUNGER_FED_MIN) / rate, -1);
+    const fair = energyStatus(mk(50), at);
+    expect(fair.msToHungerDrop).toBeCloseTo((50 - HUNGER_FAIR_MIN) / rate, -1);
+    expect(energyStatus(mk(10), at).msToHungerDrop).toBeNull();
+    expect([hungerLevelOf('fed'), hungerLevelOf('fair'), hungerLevelOf('starving')]).toEqual([3, 2, 1]);
   });
 });

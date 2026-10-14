@@ -2,9 +2,9 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, 
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { DungeonSign } from './home/DungeonSign';
-import { EnergyTimer } from './home/EnergyTimer';
+import { EnergyTimer, HungerTimer } from './home/EnergyTimer';
 import { HungerIndicator } from './home/HungerIndicator';
-import { formatEnergyEta, type EnergyStatus } from '../utils/hunger';
+import type { EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
@@ -22,6 +22,7 @@ import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
 import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
+import { sleepZPlacement } from '../utils/sleepZ';
 import { statTip, type StatTipKind } from './home/statTips';
 
 /** C3 — o cenário pintado quando nenhum está equipado: o Quarto grátis,
@@ -136,6 +137,8 @@ const BUBBLE_GAP = 6;
    grade lógica 64 × `VIEW_SCALE` do `Viewport`. Ancorados ACIMA da cabeça
    (X8), nunca sobre o rosto. */
 const FX_PX = 64 * VIEW_SCALE;
+/** Lado do Z do sono no grupo do pet (a célula é 64; 40 a deixa pequena o bastante para caber ao lado da cabeça). */
+const SLEEP_Z_PX = 40;
 
 /** Passo do passeio: 2 device px = 1 pixel de origem do sprite (escala 2:1).
     Meio pixel aqui é o que transforma serrilhado em borrão. */
@@ -182,7 +185,7 @@ interface CompanionHUDProps {
   triggerMessage?: number; // Prop to trigger message from outside
   energyPoints?: number; // a energia de AGORA (regenera com o tempo; a fome decide a velocidade — `utils/hunger.ts`)
   /** Fome e timer da energia (beta-2 3.4/3.5): o que `energyStatus` calculou. Ausente = sem indicador (testes, desktop). */
-  energyInfo?: Pick<EnergyStatus, 'tier' | 'hunger' | 'mode' | 'msToNext'>;
+  energyInfo?: Pick<EnergyStatus, 'tier' | 'hunger' | 'mode' | 'msToNext'> & { msToHungerDrop?: number | null };
   maxEnergyPoints?: number; // energy bars = the stage's daily task requirement
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
@@ -1690,17 +1693,20 @@ export const CompanionHUD = memo(function CompanionHUD({
                 Quadro a quadro (entrega 4), acima e à direita da cabeça (X8). O
                 `sleep-z` é teal escuro e some sobre `bg-room` — sobre cenário
                 escuro (`isDarkBackground`) entra a folha clara `sleepZLight`. */}
-            {isSleeping && (
+            {isSleeping && (() => {
+              /* Posição pelo cálculo puro `utils/sleepZ.ts`: ao lado da cabeça e NUNCA acima do topo visível do palco (o Z antigo, ancorado
+                 acima da cabeça, saía da tela depois do zoom da cena). O `min()` segura também a borda direita. */
+              const z = sleepZPlacement({ footY: STAGE_HEIGHT - PET_BOTTOM_IN_STAGE, spriteBox: PET_RENDER, size: SLEEP_Z_PX, zoom: CENA_ZOOM, airLiftPx: noAr ? AIR_LIFT_PX : 0 });
+              return (
                 <SpriteAnim
                   sheet={isDarkBackground(cenarioId) ? ANIM_ART.sleepZLight : ANIM_ART.sleepZ}
-                  size={FX_PX / 2}
+                  size={SLEEP_Z_PX}
                   durationMs={1800}
                   loop
-                  /* Célula 64 a 1× DENTRO do grupo, que amplia `CENA_ZOOM`:
-                     acima e à direita da cabeça (X8), nunca sobre o rosto. */
-                  style={{ position: 'absolute', left: `calc(${position}% + 28px)`, top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP + 16 - FX_PX / 2}px)` }}
+                  style={{ position: 'absolute', left: `min(calc(${position}% + ${z.dx}px), calc(50% + (50% - 4px) / ${CENA_ZOOM} - ${SLEEP_Z_PX}px))`, top: z.top, pointerEvents: 'none' }}
                 />
-            )}
+              );
+            })()}
           </div>
 
 
@@ -1905,22 +1911,15 @@ export const CompanionHUD = memo(function CompanionHUD({
                 className="sm3-stat"
                 data-stat="energy"
                 data-low={enBaixo || undefined}
-                aria-expanded={statAberto === 'energy'}
+                aria-expanded={statAberto === 'hunger'}
                 aria-controls="sm3-stat-tip"
                 onClick={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))}
-                aria-label={(isPt
+                aria-label={isPt
                   ? `Energia: ${energyPoints} de ${maxEnergy}${enBaixo ? ' (vazia)' : ''}`
-                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`)
-                  /* o timer vive DENTRO do botão: o nome acessível do botão leva o tempo (os filhos não são lidos) */
-                  + (energyInfo && energyInfo.mode !== 'full'
-                    ? (energyInfo.msToNext === null
-                      ? (isPt ? '. Regeneração parada' : '. Regeneration paused')
-                      : (isPt ? `. Próxima em ${formatEnergyEta(energyInfo.msToNext, true)}` : `. Next in ${formatEnergyEta(energyInfo.msToNext, false)}`))
-                    : '')}
+                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`}
               >
                 <PixelIcon name="energia" size={20} />
                 <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
-                {energyInfo && <EnergyTimer msToNext={energyInfo.msToNext} mode={energyInfo.mode} language={language} />}
               </button>
               {statsSlots?.energyTimer != null && (
                 <span className="sm3-stat-slot" data-slot="energy-timer">{statsSlots.energyTimer}</span>
@@ -1928,7 +1927,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               {statsSlots?.hunger != null ? (
                 <span className="sm3-stat-slot" data-slot="hunger">{statsSlots.hunger}</span>
               ) : (
-                energyInfo && <HungerIndicator tier={energyInfo.tier} value={energyInfo.hunger} language={language} expanded={statAberto === 'energy'} onTap={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))} />
+                energyInfo && <HungerIndicator tier={energyInfo.tier} value={energyInfo.hunger} language={language} expanded={statAberto === 'hunger'} onTap={() => setStatAberto(v => (v === 'hunger' ? null : 'hunger'))} />
               )}
             </div>
             {statAberto && (() => {
@@ -1945,6 +1944,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                   <p><b>{tip.upLabel}</b> {tip.up}</p>
                   <p><b>{tip.downLabel}</b> {tip.down}</p>
                   {tip.use && <p data-stat-tip-use><b>{tip.useLabel}</b> {tip.use}</p>}
+                  {statAberto === 'hunger' && energyInfo && <HungerTimer msToDrop={energyInfo.msToHungerDrop ?? null} language={language} />}
+                  {statAberto === 'energy' && energyInfo && <EnergyTimer msToNext={energyInfo.msToNext} mode={energyInfo.mode} language={language} />}
                 </div>
               );
             })()}

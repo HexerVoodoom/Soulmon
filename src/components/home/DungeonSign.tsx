@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { DUNGEON_PROP_ART, placaMadeira } from '../../assets/soulmon/icones-ui';
+import { placaMadeira } from '../../assets/soulmon/icones-ui';
 import { formatEnergyEta } from '../../utils/hunger';
 import type { Language } from '../../utils/i18n';
 
@@ -15,18 +15,26 @@ import type { Language } from '../../utils/i18n';
  *    `null`/`undefined` = sem número (só o texto curto); `0` = já voltou (toque para recebê-lo).
  *  · é um botão (alvo de toque ≥ 44): tocar abre o aviso "Ele está na masmorra" com o caminho para trazê-lo de volta.
  *
- * Visual: madeira em CSS (veios, pregos, haste) com a porta da masmorra (`DUNGEON_PROP_ART`) como selo — nenhuma imagem nova. Cores da
+ * Visual (14/10/2026, dono: "deformada, cortada, texto enorme; tire o ícone da portinha"): só a placa pixel (`placa-madeira.png`, 60×35) em escala inteira 2× com `image-rendering: pixelated`, sem border-image e sem ícone; texto xs centrado na área lisa. Cores da
  * madeira em variáveis locais com fallback; texto creme sobre marrom-escuro (contraste ~8:1). Sem animação, sem som, sem cobrança no texto.
  */
-export const SIGN_W = 136;
-export const SIGN_H = 46;
+/** A arte da placa é 60×35 px (proporção 12:7 do recorte de `key-sign-2.png`); vai na tela em ESCALA INTEIRA (2×), nunca esticada. */
+export const SIGN_ART_W = 60;
+export const SIGN_ART_H = 35;
+export const SIGN_SCALE = 2;
+export const SIGN_W = SIGN_ART_W * SIGN_SCALE;
+export const SIGN_H = SIGN_ART_H * SIGN_SCALE;
 
 const sign: CSSProperties = {
-  position: 'relative', display: 'flex', alignItems: 'center', gap: 6, boxSizing: 'border-box', width: SIGN_W, height: SIGN_H, padding: '0 4px 0 0', margin: 0,
-  color: 'var(--sm2-wood-ink, #f8ecd2)',
-  // madeira: a placa pixel escolhida pelo dono (9-slice, cantos de 16px; miolo liso e esticável), sem texto na arte
-  backgroundColor: 'transparent', border: '8px solid transparent', borderImage: `url(${placaMadeira}) 16 fill / 8px / 0 stretch`, imageRendering: 'pixelated',
-  fontFamily: 'var(--sm2-font-text)', lineHeight: 1.15, textAlign: 'left', cursor: 'pointer',
+  position: 'relative', display: 'block', boxSizing: 'border-box', width: SIGN_W, height: SIGN_H, padding: 0, margin: 0, border: 'none', background: 'none',
+  color: 'var(--sm2-wood-ink, #f8ecd2)', fontFamily: 'var(--sm2-font-text)', lineHeight: 1.1, textAlign: 'center', cursor: 'pointer',
+};
+// a arte ocupa a caixa inteira, sem deformar (SIGN_W/SIGN_H = arte × inteiro) e sem cortar
+const art: CSSProperties = { position: 'absolute', inset: 0, width: SIGN_W, height: SIGN_H, imageRendering: 'pixelated', pointerEvents: 'none' };
+// texto na área lisa: abaixo da folha do canto (topo) e dentro dos pregos/bordas
+const text: CSSProperties = {
+  position: 'absolute', left: 12, right: 12, top: 24, bottom: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+  textShadow: '0 1px 0 var(--sm2-wood-edge, #4a2c12)', overflow: 'hidden',
 };
 const post: CSSProperties = { width: 6, height: 12, backgroundColor: 'var(--sm2-wood-edge, #4a2c12)', borderRadius: '0 0 2px 2px', margin: '0 auto' };
 
@@ -42,11 +50,12 @@ export function DungeonSign({ language, onTap, returnInMs }: { language: Languag
     : `${label}${time ? `, ${isPt ? `volta em ${time}` : `back in ${time}`}` : ''}. ${isPt ? 'Toque para ver' : 'Tap for details'}`;
   return (
     <div data-pet-masmorra style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'auto' }}>
+      {/* alvo de toque ≥ 44: a placa tem 120×70 */}
       <button type="button" data-dungeon-sign data-dungeon-return={hasTime ? Math.round(returnInMs as number) : undefined} onClick={onTap} aria-label={aria} style={sign}>
-        <img src={DUNGEON_PROP_ART.porta} alt="" width={26} height={26} draggable={false} style={{ flexShrink: 0, imageRendering: 'pixelated' }} />
-        <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span data-dungeon-sign-label style={{ fontSize: 'var(--sm2-text-sm, 12px)', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-          {time && <span data-dungeon-sign-time className="sm2-num" style={{ fontSize: 'var(--sm2-text-xs, 11px)', fontVariantNumeric: 'tabular-nums', opacity: 0.95, whiteSpace: 'nowrap' }}>{time}</span>}
+        <img src={placaMadeira} alt="" width={SIGN_W} height={SIGN_H} draggable={false} style={art} />
+        <span style={text}>
+          <span data-dungeon-sign-label style={{ fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 700, whiteSpace: 'nowrap' }}>{label}</span>
+          {time && <span data-dungeon-sign-time className="sm2-num" style={{ fontSize: 'var(--sm2-text-xs, 11px)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{time}</span>}
         </span>
       </button>
       <span aria-hidden="true" style={post} />

@@ -17,9 +17,9 @@
 import { MAX_HEARTS_LOST_PER_DAY, WEEKLY_RELIEF_HEARTS } from '../../utils/dailyReset';
 import { RUB_HEAL_DAILY_CAP } from '../../utils/careRules';
 import { DUNGEON_DAILY_LAYERS, DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES } from '../../utils/hunger';
+import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS } from '../../utils/hunger';
 
-export type StatTipKind = 'hp' | 'energy';
+export type StatTipKind = 'hp' | 'energy' | 'hunger';
 
 export interface StatTip {
   title: string;
@@ -51,6 +51,21 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
       down: isPt
         ? `na virada do dia, se a meta não fechou (no máximo ${MAX_HEARTS_LOST_PER_DAY} por dia), e com cocô sem banho.`
         : `at the day turn if the goal wasn't met (at most ${MAX_HEARTS_LOST_PER_DAY} a day), and with poop left without a bath.`,
+    };
+  }
+  if (kind === 'hunger') {
+    return {
+      title: isPt ? 'Fome' : 'Hunger',
+      upLabel,
+      downLabel,
+      up: isPt ? 'ao comer: a comida enche a fome (3 de 3 = bem alimentado).' : 'when eating: food fills hunger (3 of 3 = well fed).',
+      down: isPt
+        ? `com o tempo: de cheia a vazia leva ${HUNGER_FULL_TO_EMPTY_HOURS} h, passando por 3, 2 e 1 de 3.`
+        : `with time: full to empty takes ${HUNGER_FULL_TO_EMPTY_HOURS} h, going through 3, 2 and 1 of 3.`,
+      useLabel: isPt ? 'Impacto' : 'Impact',
+      use: isPt
+        ? 'a fome define a velocidade da energia: 3 = normal, 2 = metade, 1 = parada.'
+        : 'hunger sets how fast energy comes back: 3 = normal, 2 = half, 1 = stopped.',
     };
   }
   return {

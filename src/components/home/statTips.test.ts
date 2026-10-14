@@ -33,7 +33,7 @@ describe('statTip', () => {
   it('sem culpa nem veredito sobre a pessoa (bíblia §17)', () => {
     // `\bmorr`: começo de palavra (morrer/morreu), para "Masmorra" não ser falso positivo (11/10/2026).
     const VETADO = /culpa|fault|falhou|failed|você é|you are|\bmorr|die|perdeu|lost/i;
-    for (const kind of ['hp', 'energy'] as const) {
+    for (const kind of ['hp', 'energy', 'hunger'] as const) {
       for (const isPt of [true, false]) {
         const t = statTip(kind, isPt);
         expect(`${t.title} ${t.up} ${t.down} ${t.use ?? ''}`).not.toMatch(VETADO);
