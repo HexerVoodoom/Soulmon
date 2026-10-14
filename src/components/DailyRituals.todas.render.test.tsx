@@ -258,34 +258,50 @@ describe('2.2 Pai e filhos', () => {
 });
 
 describe('2.4 Today e Goal', () => {
-  it('`Today` ganha o acabamento cromado e a meta aparece num bloco SEPARADO da contagem', () => {
+  it('`Today` ganha o acabamento cromado e a meta vira o indicador ÚNICO `Mission N/G`', () => {
+    // §56: antes a contagem (`N/total`) e o bloco `Goal G` eram dois indicadores; agora é um só.
     const feita = { ...diario, completedToday: true, lastCompletedDate: TERCA.toDateString() } as unknown as Activity;
     const { container } = mount({ activities: [feita] });
     const titulo = container.querySelector('[data-today-title]') as HTMLElement;
     expect(titulo.textContent).toBe('Today');
     expect(titulo.className).toContain('sm3-cromo');
     const contagem = container.querySelector('[data-today-count]') as HTMLElement;
-    const meta = container.querySelector('[data-today-goal]') as HTMLElement;
-    expect(contagem.textContent).toMatch(/^\d+\/\d+$/);
-    expect(meta.getAttribute('aria-label')).toBe('Daily goal: 4');
-    expect(meta.textContent).toBe('Goal4');
-    expect(meta.contains(contagem)).toBe(false);
-    expect(contagem.contains(meta)).toBe(false);
+    expect(container.querySelectorAll('[data-today-count]').length).toBe(1);
+    expect(container.querySelector('.sm3-meta')).toBeNull();
+    expect(contagem.getAttribute('data-today-goal')).toBe('4');
+    expect(contagem.textContent).toMatch(/^Mission \d+\/4$/);
+    expect(contagem.getAttribute('aria-label')).toMatch(/^Mission \d+ of 4$/);
+    expect(contagem.className).toContain('sm3-missao');
   });
-  it('sem meta definida não desenha o bloco; PT-BR diz `Meta`', () => {
-    const { container, unmount } = mount({ goal: 0 });
-    expect(container.querySelector('[data-today-goal]')).toBeNull();
+  it('sem meta definida volta à contagem simples; PT-BR diz `Missão N de G`', () => {
+    const feita = { ...diario, completedToday: true, lastCompletedDate: TERCA.toDateString() } as unknown as Activity;
+    const { container, unmount } = mount({ goal: 0, activities: [feita] });
+    const c0 = container.querySelector('[data-today-count]') as HTMLElement;
+    expect(c0.getAttribute('data-today-goal')).toBeNull();
+    expect(c0.textContent).toMatch(/^\d+\/\d+$/);
     unmount();
-    const r = mount({ language: 'pt-BR', goal: 3 });
-    expect(r.container.querySelector('[data-today-goal]')!.getAttribute('aria-label')).toBe('Meta do dia: 3');
+    const r = mount({ language: 'pt-BR', goal: 3, activities: [feita] });
+    const c = r.container.querySelector('[data-today-count]') as HTMLElement;
+    expect(c.getAttribute('aria-label')).toMatch(/^Missão \d+ de 3$/);
+    expect(c.textContent).toMatch(/^Missão \d+\/3$/);
+  });
+  it('o contador PODE passar da meta: feitos 2 com meta 1 mostra `2/1` (G não limita N)', () => {
+    const f1 = { ...diario, completedToday: true, lastCompletedDate: TERCA.toDateString() } as unknown as Activity;
+    const f2 = { ...diario, id: 'd2', name: 'Alongar', completedToday: true, lastCompletedDate: TERCA.toDateString() } as unknown as Activity;
+    const { container } = mount({ goal: 1, activities: [f1, f2] });
+    const c = container.querySelector('[data-today-count]') as HTMLElement;
+    expect(c.textContent).toBe('Mission 2/1');
+    expect(c.getAttribute('aria-label')).toBe('Mission 2 of 1');
   });
   it('mostrar a meta não muda o registro: total/feitos vêm só da lista', () => {
     const feita = { ...diario, completedToday: true, lastCompletedDate: TERCA.toDateString() } as unknown as Activity;
     const a = mount({ goal: 1, activities: [feita] });
-    const t1 = a.container.querySelector('[data-today-count]')?.textContent ?? null;
+    const feitosDe = (r: { container: HTMLElement }) => r.container.querySelector('[data-today-count]')?.getAttribute('aria-label')?.match(/\d+/)?.[0] ?? null;
+    const t1 = feitosDe(a);
     a.unmount();
     const b = mount({ goal: 99, activities: [feita] });
     expect(t1).not.toBeNull();
-    expect(b.container.querySelector('[data-today-count]')?.textContent ?? null).toBe(t1);
+    // §56: só o G exibido muda; o N (feitos) vem da lista e é o mesmo.
+    expect(feitosDe(b)).toBe(t1);
   });
 });

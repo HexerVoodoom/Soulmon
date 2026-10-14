@@ -128,9 +128,9 @@ const PET_BOTTOM_IN_STAGE =
    antiga, e continua necessário: a faixa de largura total do balão é
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
-/** Fundo da caixa de fala: `--sm2-surface` a 30% de opacidade (pedido do dono, 08/10/2026); o texto segue a 100%. */
-const BUBBLE_BG = 'color-mix(in srgb, var(--sm2-surface) 30%, transparent)';
 const BUBBLE_GAP = 6;
+/** Topo do balão na janela: um pouco MAIS BAIXO que o `BUBBLE_GAP` do CTA (REGISTRO §56), ainda acima da cabeça. */
+const BUBBLE_TOP = BUBBLE_GAP + 14;
 /* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
    dono): a composição não desce mais sob a fala; o balão é overlay. */
 /* FX do `animArt` DENTRO do vidro a 2× (célula 64 → 128 CSS, D-H4): mesma
@@ -1739,28 +1739,61 @@ export const CompanionHUD = memo(function CompanionHUD({
             linhas (corta com reticências). A faixa não intercepta toque (só a caixa
             de fala, que dispensa o balão) e fica ABAIXO do "Evoluir" (z 30): onde
             as duas se tocam, quem recebe o toque é o CTA. */}
-        {showBubble && (
-          <div data-pet-bubble-row style={{ position: 'absolute', top: BUBBLE_GAP, left: 10, right: 10, zIndex: 24, pointerEvents: 'none' }}>
+        {showBubble && (() => {
+          /* BALÃO DE VERDADE (REGISTRO §56, dono 14/10/2026): caixa de cantos
+             arredondados, borda fina, sombra sutil, fundo SÓLIDO do token de
+             superfície (claro/escuro seguem o tema), texto à ESQUERDA e uma
+             cauda para BAIXO que aponta para o pet.
+             Posição: `X` é o x do pet NA JANELA (a mesma conta do alvo do
+             carinho: o grupo cresce `CENA_ZOOM` a partir do centro). Truque de
+             CSS sem medir nada: caixa em `left: X%` deslocada `-X%` da PRÓPRIA
+             largura fica sempre dentro da janela, e a cauda em `left: X%` da
+             caixa cai exatamente em X da janela — a ponta acompanha o pet que
+             anda, e a caixa nunca sai da área visível. Largura ≤ 80% do palco,
+             no máximo 3 linhas (reticências): altura estável, fora do fluxo. */
+          const x = Math.min(100, Math.max(0, 50 + (position - 50) * CENA_ZOOM));
+          return (
+          <div data-pet-bubble-row style={{ position: 'absolute', top: BUBBLE_TOP, left: 0, right: 0, zIndex: 24, pointerEvents: 'none' }}>
             <div
               data-pet-bubble
-              className="pointer-events-auto"
+              role="status"
+              aria-live="polite"
+              className={`pointer-events-auto${reducedMotion ? '' : ' sm3-balao'}`}
               onClick={handleBubbleClick}
-              style={{ cursor: 'pointer', position: 'relative', width: 'fit-content', maxWidth: 'min(100%, 320px)', background: BUBBLE_BG, borderRadius: 'var(--sm2-radius-md)', padding: '6px 10px' }}
+              style={{
+                cursor: 'pointer', position: 'relative', width: 'fit-content', maxWidth: '80%',
+                left: `${x}%`, transform: `translateX(-${x}%)`,
+                background: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)',
+                borderRadius: 'var(--sm2-radius-md)', padding: '6px 10px',
+                boxShadow: '0 2px 8px color-mix(in srgb, var(--sm2-ink) 18%, transparent)',
+              }}
             >
               <p
                 className="break-words"
                 style={{
                   margin: 0, fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)', textAlign: 'left',
-                  textShadow: '0 1px 2px var(--sm2-bg)', overflowWrap: 'anywhere',
+                  overflowWrap: 'anywhere',
                   display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden',
                 }}
               >
                 {bubbleText}
               </p>
-              <span aria-hidden="true" className="absolute" style={{ bottom: -7, left: 22, width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: `7px solid ${BUBBLE_BG}` }} />
+              {/* A CAUDA: quadrado girado 45° com borda só nos lados de baixo —
+                  fecha o contorno do balão e aponta para o pet. */}
+              <span
+                aria-hidden="true"
+                data-pet-bubble-tail
+                style={{
+                  position: 'absolute', bottom: -6, left: `clamp(16px, ${x}%, calc(100% - 16px))`, marginLeft: -5,
+                  width: 10, height: 10, background: 'var(--sm2-surface)',
+                  borderRight: '1px solid var(--sm2-line)', borderBottom: '1px solid var(--sm2-line)',
+                  transform: 'rotate(45deg)',
+                }}
+              />
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ── O ALVO DO CARINHO — o controle mais importante do jogo ─────────
             BLOQUEADOR corrigido: o gesto de esfregar (a ÚNICA cura de HP)

@@ -420,31 +420,28 @@ export function RitualPanel({
             {/* `Today` com acabamento cromado discreto (beta-2, 2.4). */}
             <span className="sm3-cromo" data-today-title>{isPt ? 'Hoje' : 'Today'}</span>
             {/* Piso de dígitos E5: o contador só existe com feitos ≥ 1 —
-                "0/5" é a fatura, não o dado. Esta é a CONTAGEM de atividades
-                da lista; a meta é o bloco ao lado. */}
+                "0/5" é a fatura, não o dado. Indicador ÚNICO (REGISTRO §56):
+                com meta definida mostra `Missão N/G` (G = a META, não o
+                número de atividades; N pode passar de G: `6/4`). Sem meta,
+                cai na contagem simples da lista. Só EXIBIÇÃO. */}
             {total > 0 && done >= 1 && (
               <b
-                className="sm2-num"
+                className="sm2-num sm3-missao"
                 data-today-count
-                aria-label={isPt ? `${done} de ${total} concluídos` : `${done} of ${total} done`}
+                data-today-goal={goal !== undefined && goal > 0 ? goal : undefined}
+                aria-label={goal !== undefined && goal > 0
+                  ? (isPt ? `Missão ${done} de ${goal}` : `Mission ${done} of ${goal}`)
+                  : (isPt ? `${done} de ${total} concluídos` : `${done} of ${total} done`)}
               >
-                {done}/{total}
+                {goal !== undefined && goal > 0
+                  ? <><span aria-hidden="true">{isPt ? 'Missão' : 'Mission'}</span>{' '}<span aria-hidden="true">{done}/{goal}</span></>
+                  : `${done}/${total}`}
               </b>
             )}
             {dayComplete && (
               <span className="sm3-selo" data-dia-completo>{isPt ? 'Dia completo' : 'Day complete'}</span>
             )}
           </h2>
-          {goal !== undefined && goal > 0 && (
-            <span
-              className="sm3-meta"
-              data-today-goal
-              aria-label={isPt ? `Meta do dia: ${goal}` : `Daily goal: ${goal}`}
-            >
-              <span aria-hidden="true">{isPt ? 'Meta' : 'Goal'}</span>
-              <b className="sm2-num" aria-hidden="true">{goal}</b>
-            </span>
-          )}
           <button
             type="button"
             className="sm3-add"

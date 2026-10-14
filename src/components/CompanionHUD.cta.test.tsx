@@ -121,11 +121,12 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     expect(linha.style.bottom).toBe('');
   });
 
-  it('a caixa de fala tem 30% de opacidade no fundo e o texto a 100%', () => {
+  it('a caixa de fala tem fundo SÓLIDO do token de superfície (§56 substitui os 30% de 08/10) e o texto a 100%', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
     const texto = screen.getByText(FALA_ENERGIZED);
-    expect(texto.parentElement!.style.background).toContain('30%');
+    // §56: o balão virou balão de verdade (borda + sombra); fundo translúcido deixava o texto ilegível sobre cenário claro/escuro.
+    expect(texto.parentElement!.style.background).toBe('var(--sm2-surface)');
     expect(texto.style.opacity).toBe('');
   });
 
@@ -146,6 +147,37 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     const texto = screen.getByText(FALA_ENERGIZED);
     fireEvent.click(texto.parentElement!);
     expect(screen.queryByText(FALA_ENERGIZED)).toBeNull();
+  });
+
+  it('§56 balão de verdade: texto à esquerda, borda, cauda para baixo, role=status e mais baixo que o CTA', () => {
+    renderWithCss(<CompanionHUD {...base} canEvolve onEvolveRequest={() => {}} />);
+    fireEvent.click(screen.getByAltText('rookie'));
+    const caixa = screen.getByText(FALA_ENERGIZED).parentElement as HTMLElement;
+    expect(caixa.getAttribute('role')).toBe('status');
+    expect(caixa.getAttribute('aria-live')).toBe('polite');
+    expect(caixa.querySelector('p')!.style.textAlign).toBe('left');
+    expect(caixa.style.border).toContain('1px solid');
+    expect(caixa.style.maxWidth).toBe('80%');
+    const cauda = caixa.querySelector<HTMLElement>('[data-pet-bubble-tail]')!;
+    expect(cauda).toBeTruthy();
+    expect(cauda.style.bottom).toBe('-6px'); // sai pela borda de baixo
+    expect(cauda.style.transform).toBe('rotate(45deg)');
+    const btn = screen.getByRole('button', { name: 'Evoluir' });
+    expect(parseFloat(linhaDoBalao().style.top)).toBeGreaterThan(parseFloat(btn.style.top));
+  });
+
+  it('§56 fala LONGA não quebra o layout: fora do fluxo, 3 linhas no máximo, quebra em qualquer ponto', () => {
+    const longa = 'Supercalifragilisticoespialidoso '.repeat(40);
+    renderWithCss(<CompanionHUD {...base} message={longa} triggerMessage={1} />);
+    fireEvent.click(screen.getByAltText('rookie'));
+    const caixa = document.querySelector<HTMLElement>('[data-pet-bubble]')!;
+    const p = caixa.querySelector('p')!;
+    expect(p.style.getPropertyValue('-webkit-line-clamp') || p.style.webkitLineClamp).toBe('3');
+    expect(p.style.overflow).toBe('hidden');
+    expect(p.style.overflowWrap).toBe('anywhere');
+    expect(caixa.style.maxWidth).toBe('80%');
+    expect(linhaDoBalao().style.position).toBe('absolute');
+    expect(linhaDoBalao().style.pointerEvents).toBe('none');
   });
 
   it('o "Evoluir" continua clicável com o balão aberto', () => {
