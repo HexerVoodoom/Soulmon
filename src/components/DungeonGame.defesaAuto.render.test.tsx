@@ -100,7 +100,7 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(nota).not.toMatch(/anel|deslize/i); // REGISTRO §36: o especial é automático, ninguém toca no anel nem desliza
     expect(nota).toMatch(/solta o especial sozinho/i);
     expect(nota).toMatch(/de um inimigo para o outro/i); // a energia persiste
-    expect(nota).toMatch(/1×, 2× ou 3×/);
+    expect(nota).toMatch(/1× ou 3×/);
     expect(nota).toMatch(/Retirar da masmorra/);
   });
 

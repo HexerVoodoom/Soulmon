@@ -297,17 +297,18 @@ export function recordLayerCleared<T extends { dungeonDepthRecord?: number }>(pr
 //    existe o Soulmon está OCUPADO (`soulmonNaMasmorra`): nada que use o Soulmon abre até ele ser retirado.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** As velocidades da cena de combate da masmorra. */
-export const DUNGEON_SPEEDS = [1, 2, 3] as const;
+/** As velocidades da cena de combate da masmorra: só 1× e 3× (o 2× saiu a pedido do dono, 14/10/2026 — REGISTRO §45). */
+export const DUNGEON_SPEEDS = [1, 3] as const;
 export type DungeonSpeed = (typeof DUNGEON_SPEEDS)[number];
 
-/** Lixo/ausente → 1×. */
+/** Lixo/ausente → 1×. Quem tinha 2× salvo migra para 3× (o 2× deixou de existir). */
 export function sanitizeDungeonSpeed(raw: unknown): DungeonSpeed {
   const n = typeof raw === 'string' ? Number(raw) : raw;
+  if (n === 2) return 3;
   return (DUNGEON_SPEEDS as readonly number[]).includes(n as number) ? (n as DungeonSpeed) : 1;
 }
 
-/** Próxima velocidade do botão do canto (1 → 2 → 3 → 1). */
+/** Próxima velocidade do botão do canto (1 → 3 → 1). */
 export function nextDungeonSpeed(s: DungeonSpeed): DungeonSpeed {
   return DUNGEON_SPEEDS[(DUNGEON_SPEEDS.indexOf(s) + 1) % DUNGEON_SPEEDS.length];
 }

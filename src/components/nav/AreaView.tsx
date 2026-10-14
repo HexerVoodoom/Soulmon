@@ -130,6 +130,8 @@ export interface AreaViewProps {
   onVisitBuilding?: (id: BuildingId) => void;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
+  /** Vai ao MAPA (a masmorra sai direto para ele, 14/10/2026). Sem a prop, a masmorra volta à área. */
+  onGoToMap?: () => void;
   /** 🏠 O Soulmon na masmorra (REGISTRO §36): `naMasmorra` fecha os lotes que o usam (duelo, torneio, passeio) com o aviso `onBusy`;
    *  `missaoFora` (ele foi investigar pela guilda) impede descer à masmorra. Sem a prop, nada é trancado. */
   ocupado?: { naMasmorra: boolean; missaoFora: boolean; onBusy: (acao: OcupadoAcao) => void };
@@ -272,7 +274,8 @@ export function AreaView(props: AreaViewProps) {
   }, [layerOpen, onLayerChange]);
   // O voltar do sistema sai do jogo/duelo em andamento antes de trocar de tela.
   useBackLayer(duelOpen, () => setDuelOpen(false));
-  useBackLayer(game !== null, () => setGame(null));
+  // A masmorra registra o PRÓPRIO voltar (vai direto ao mapa, igual ao ícone do mapa); os outros jogos voltam à área.
+  useBackLayer(game !== null && game !== 'masmorra', () => setGame(null));
 
   if (area === 'mercado') {
     const lots = mercadoLots(language);
@@ -425,6 +428,7 @@ export function AreaView(props: AreaViewProps) {
                 bits={props.points}
                 onSpendBits={play.onSpendBits}
                 onExit={exitGame}
+                onExitToMap={() => { setGame(null); props.onGoToMap?.(); }}
               />
             )}
             {game === 'dino' && (
