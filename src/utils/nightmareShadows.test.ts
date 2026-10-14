@@ -16,10 +16,10 @@ describe('as sombras do Pesadelo', () => {
     }
   });
   it('sem arte instalada, vale o placeholder; com arte, a arte vence', () => {
-    expect(Object.keys(SHADOW_ART)).toEqual([]); // até a leva da squad-arte entrar
+    expect(Object.keys(SHADOW_ART).sort()).toEqual(SHADOW_SLOTS.flat().map(x=>x.id).sort());
     const p = shadowSource(0, 0);
-    expect(p.art).toBe(false);
-    expect(p.src).toBe(DUNGEON_LINE_SPRITES.lumel.rookie);
+    expect(p.art).toBe(true);
+    expect(p.src).toBe(SHADOW_ART['1']);
     // índices absurdos não quebram o jogo
     expect(shadowSource(99, 99).id).toBe('4c');
     expect(shadowSource(-1, NaN).id).toBe('1');
