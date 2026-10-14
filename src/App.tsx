@@ -104,7 +104,7 @@ import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeI
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
 import type { MealInviteKind } from './utils/mealRhythm';
-import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
+import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
@@ -2367,6 +2367,8 @@ export default function App() {
 
     // Allow checking without confirmation
     setGameState(prev => {
+        // Duplo toque antes do re-render: a etapa já feita não paga de novo (nem refaz nada).
+        if (prev.activities.find(a => a.id === activityId)?.steps.find(s => s.id === stepId)?.completed) return prev;
         const updatedActivities = prev.activities.map(act =>
           act.id === activityId
             ? {
@@ -2417,12 +2419,20 @@ export default function App() {
           newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
         }
 
+        const stepDayKey = playerDayKey(new Date(), prev.playerDayTz);
+        // 🪜 XP por etapa (REGISTRO §44): as etapas do hábito voltam desmarcadas todo dia, então o
+        // contador `stepXpPaid` vale POR DIA (`stepXpDay`); editar a lista no meio do dia não abre vaga nova.
+        const antesAtividade = prev.activities.find(a => a.id === activityId);
+        const pagasHoje = antesAtividade?.stepXpDay === stepDayKey ? (antesAtividade.stepXpPaid ?? 0) : 0;
+        const comEtapa = awardStepXP(
+          { ...prev, activities: updatedActivities, activityStats: newActivityStats, foodInventory: newFoodInventory, activityLog: newActivityLog } as GameState,
+          pagasHoje,
+          { kind: 'stepCompletion', weight: HABIT_WEIGHT, habitTier: habitTier(prev.habitRhythms?.[activityId]?.totalDone ?? 0) },
+          stepDayKey,
+        );
         const next: GameState = {
-          ...prev,
-          activities: updatedActivities,
-          activityStats: newActivityStats,
-          foodInventory: newFoodInventory,
-          activityLog: newActivityLog,
+          ...comEtapa.state,
+          activities: comEtapa.state.activities.map(a => (a.id === activityId ? { ...a, stepXpPaid: comEtapa.paid, stepXpDay: stepDayKey } : a)),
         };
 
         // Um hábito de etapas fecha na ÚLTIMA etapa — a constância dele precisa
@@ -2908,7 +2918,25 @@ export default function App() {
     if (!task || task.completed || !step || step.completed) return;
     const fechaTudo = (task.steps ?? []).every(s => s.completed || s.id === stepId);
     playTaskComplete();
-    setGameState(prev => ({ ...prev, tasks: completeTaskStep(prev.tasks, taskId, stepId) }));
+    setGameState(prev => {
+      const tasks = completeTaskStep(prev.tasks, taskId, stepId);
+      if (tasks === prev.tasks) return prev; // já feita: nada a pagar (idempotente no StrictMode)
+      // 🪜 XP por subtarefa (REGISTRO §44): paga na TRANSIÇÃO pendente → feita, uma vez por vaga.
+      // O contador `stepXpPaid` só sobe (teto por tarefa); save antigo nasce com as já feitas contadas.
+      const antes = prev.tasks.find(t => t.id === taskId);
+      if (!antes) return { ...prev, tasks };
+      const jaFeitas = (antes.steps ?? []).filter(st => st.completed).length;
+      const pago = awardStepXP(
+        { ...prev, tasks },
+        antes.stepXpPaid ?? jaFeitas,
+        { kind: 'stepCompletion', weight: effortOf(antes) },
+        playerDayKey(new Date(), prev.playerDayTz),
+      );
+      return {
+        ...pago.state,
+        tasks: pago.state.tasks.map(t => (t.id === taskId ? { ...t, stepXpPaid: pago.paid } : t)),
+      };
+    });
     if (fechaTudo) handleToggleTask(taskId);
   };
 
@@ -7618,7 +7646,6 @@ export default function App() {
           side="right"
           label={language === 'pt-BR' ? 'Mapa' : 'Map'}
           onClick={() => goTo('map')}
-          ring
         />
       )}
       {currentView === 'home' && (
@@ -7695,7 +7722,6 @@ export default function App() {
           label={language === 'pt-BR' ? 'Início' : 'Home'}
           onClick={goBack}
           glow
-          ring
         />
       )}
 
@@ -7784,10 +7810,10 @@ export default function App() {
         <div style={{ display: 'grid', gap: 10 }}>
           <button type="button" data-create-choice="habit" style={sm2Button('primary')} onClick={() => {
             setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
-          }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+          }}>{language === 'pt-BR' ? 'Novo hábito (todo dia)' : 'New habit (every day)'}</button>
           <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
             setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
-          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
+          }}>{language === 'pt-BR' ? 'Nova tarefa (pontual ou em dias específicos)' : 'New task (one-off or on specific days)'}</button>
         </div>
       </ModalSheet>
 

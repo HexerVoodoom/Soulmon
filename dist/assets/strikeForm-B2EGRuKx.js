@@ -1,1 +1,0 @@
-const a={combate_fisico:{basica:"melee",especial:"melee"},longo_alcance:{basica:"ranged",especial:"ranged"},conjuracao:{basica:"ranged",especial:"ranged"},benca:{basica:"ranged",especial:"ranged"},maldicao:{basica:"melee",especial:"ranged"}};export{a as S};

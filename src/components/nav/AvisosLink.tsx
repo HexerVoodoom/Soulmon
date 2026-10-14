@@ -1,5 +1,5 @@
 import { Icon } from '../ui/Icon';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O BOTÃO DE AVISOS na Home (beta-2, F3 do crítico, 13/10/2026): na pilha do canto direito, logo abaixo das missões. Os avisos do dia
@@ -38,13 +38,13 @@ export function AvisosLink({ count, label, countLabel, onClick, row }: {
         filter: CORNER_GLOW,
       }}
     >
-      <span aria-hidden="true" style={{ ...CORNER_RING_STYLE, opacity: 1, position: 'relative' }}>
-        <Icon name="event_note" size={24} tone="viewport" />
+      <span aria-hidden="true" style={{ display: 'flex', position: 'relative' }}>
+        <Icon name="event_note" size={32} tone="viewport" />
         {/* o selo: um ponto dourado, sem número */}
         <span
           data-avisos-seal
           style={{
-            position: 'absolute', top: -2, right: -2, width: 12, height: 12, borderRadius: '50%', boxSizing: 'border-box',
+            position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: '50%', boxSizing: 'border-box',
             background: 'var(--sm2-viewport-warn, #EBBE84)', border: '2px solid var(--sm2-viewport-bg, #0E2422)',
           }}
         />

@@ -31,10 +31,9 @@
  *
  * Texto nasce em EN com par PT-BR, como todo texto de UI do app.
  */
-import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
-import { PixelSegmentedBar } from './PixelKit';
 import { SM2_SHADOW_CARD, sm2Button, sm2Hint } from '../form/FormKit';
 
 /** A superfície do painel — a mesma do resto do sistema (FormKit). */
@@ -67,14 +66,49 @@ const GAP = 8;
 export const RITUAL_TEXT_INSET = CHECK + GAP;
 
 /**
- * O checkbox da lista — a ação central do app.
+ * A CAIXA do checkbox — UM desenho só, usado pela linha (`RitualCheck`) e pelos
+ * filhos (`StepRow`): 24, raio 4, borda 2px.
+ *
+ * Polimento da Home (14/10/2026, pedido do dono): VAZIA = fundo transparente e
+ * contorno BRONZE (`--sm2-check-fill`, alias do ouro-cobre do sistema). MARCADA =
+ * o mesmo contorno bronze e, dentro, o check TURQUESA (`--sm2-primary-ink`, o
+ * ciano da paleta, nunca verde) com um glow discreto (`--sm2-check-glow`):
+ * difuso, baixo, na cor do check, sem borda dura e sem animação. É cor, nunca
+ * opacidade; o fundo da caixa não muda entre os estados.
+ * PARCIAL (`mixed`) = o pai com alguns filhos feitos: contorno e traço bronze.
+ * Inerte (fora do dia) e VAZIO = TRACEJADO `muted`, por FORMA.
+ */
+export function checkBoxStyle(
+  { checked, mixed = false, dashed = false }: { checked: boolean; mixed?: boolean; dashed?: boolean },
+): CSSProperties {
+  return {
+    width: 24,
+    height: 24,
+    borderRadius: 'var(--sm2-radius-sm)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+    backgroundColor: 'transparent',
+    border: dashed && !checked && !mixed
+      ? '2px dashed var(--sm2-muted)'
+      : '2px solid var(--sm2-check-fill)',
+  };
+}
+
+/** O check turquesa com o glow baixo: só existe marcado (nada de `opacity: 0`). */
+export function CheckMark() {
+  return (
+    <Icon name="check" size={20} fill={1} weight={700} tone="primary" style={{ filter: 'var(--sm2-check-glow)' }} />
+  );
+}
+
+/**
+ * O checkbox da lista, a ação central do app.
  *
  * Mesma semântica (`role="checkbox"` + `aria-checked`) e o mesmo alvo de 44×44
- * declarado INLINE (footgun 1), com a caixa do sistema: 24, raio 4, borda 2px.
- * BRONZE (beta-2, 2.2): marcada = `--sm2-check-fill` (o bronze do sistema, par
- * `--sm2-on-check` no glifo). PARCIAL (`mixed`) = o pai com alguns filhos feitos:
- * borda bronze e um traço — o pai nunca conclui sozinho. Inerte = TRACEJADA +
- * `aria-disabled` (canvas Home E7): por FORMA, nunca por opacidade.
+ * declarado INLINE (footgun 1); a caixa é `checkBoxStyle`. Inerte = anunciado
+ * com `aria-disabled`, nunca `disabled` (continua alcançável).
  */
 export function RitualCheck({
   checked, mixed = false, disabled, onToggle, label,
@@ -88,33 +122,13 @@ export function RitualCheck({
       data-ritual-check
       /* A11 (QA rodada 2): SÓ `aria-disabled`, nunca `disabled` junto. O
          `disabled` nativo tira o checkbox da ordem de foco e do leitor de
-         tela — a pessoa deixa de saber que o item existe e está concluído.
-         Inerte = anunciado como inerte, alcançável, e o clique não faz nada. */
+         tela. Inerte = anunciado como inerte, alcançável, e o clique não faz nada. */
       aria-disabled={disabled || undefined}
       onClick={onToggle}
       style={{ ...alvo44, flex: '0 0 44px', border: 'none', cursor: disabled && !onToggle ? 'default' : 'pointer' }}
     >
-      <span
-        aria-hidden="true"
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: 'var(--sm2-radius-sm)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxSizing: 'border-box',
-          border: checked || mixed
-            ? '2px solid var(--sm2-check-fill)'
-            : `2px ${disabled ? 'dashed' : 'solid'} var(--sm2-muted)`,
-          backgroundColor: checked ? 'var(--sm2-check-fill)' : 'transparent',
-          color: 'var(--sm2-on-check)',
-          transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
-        }}
-      >
-        {/* O glifo só existe marcado: nada de `opacity: 0` escondendo um
-            check (alfa em nó nenhum da linha). */}
-        {checked && <Icon name="check" size={20} fill={1} weight={700} />}
+      <span aria-hidden="true" style={checkBoxStyle({ checked, mixed, dashed: disabled })}>
+        {checked && <CheckMark />}
         {!checked && mixed && (
           <span style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: 'var(--sm2-check-fill)' }} />
         )}
@@ -137,8 +151,6 @@ function prefersReducedMotion(): boolean {
 
 /** Duração do deslize da linha concluída até a posição nova (D1). */
 export const RITUAL_FLIP_MS = 420;
-/** Duração do brilho na linha recém-concluída (D1). */
-export const RITUAL_GLOW_MS = 1100;
 
 /**
  * D1 (navegação do dono, 01/10/2026) — ao concluir, a linha DESCE até a
@@ -194,9 +206,10 @@ export interface RitualRowProps {
   /** Tarefa ou hábito — decide o selo. */
   kind: RitualKind;
   name: string;
-  /** Uma linha curta: categoria, frequência, "3 steps". */
+  /** Pré-visualização de UMA linha, só na tela `View all` (dias em que a tarefa aparece).
+   *  A lista de HOJE nunca passa isto: ali a linha é só nome + checkbox (14/10/2026). */
   subtitle?: string;
-  /** Barra segmentada fina. `max` 1 = item sem etapas (sem barra). */
+  /** Quantos filhos estão feitos (0 = nenhum) e quantos existem: alimenta o estado `mixed` do pai. */
   value: number;
   max: number;
   done?: boolean;
@@ -205,7 +218,7 @@ export interface RitualRowProps {
   /**
    * TAREFA ASSOMBRADA (P5): título e selo na tinta PRÓPRIA `--sm2-haunted`,
    * lápis e checkbox intactos — NUNCA opacidade na linha. O convite
-   * ("haunted · +relief") é o chip do `TaskMeta`, em `below`.
+   * ("haunted · +relief") saiu da linha (14/10/2026: só nome e checkbox).
    */
   haunted?: boolean;
   /**
@@ -216,6 +229,8 @@ export interface RitualRowProps {
   inert?: boolean;
   /** Ausente = a linha não tem checkbox (quem completa são as etapas). */
   onToggle?: () => void;
+  /** `View all`: a linha NÃO marca nada — sem checkbox, o toque inteiro abre a edição. */
+  editOnly?: boolean;
   onEdit: () => void;
   /** Expansor das etapas, no lugar do checkbox. */
   expandable?: boolean;
@@ -223,10 +238,6 @@ export interface RitualRowProps {
   onExpand?: () => void;
   /** Etapas, renderizadas só quando expandido. */
   children?: ReactNode;
-  /** Metadados DENTRO da coluna de texto (hábito: janela de 7 + maturidade). */
-  meta?: ReactNode;
-  /** Segunda linha FORA do botão, alinhada ao texto (tarefa: `TaskMeta`). */
-  below?: ReactNode;
   language: Language;
   toggleLabelPt?: string;
   toggleLabelEn?: string;
@@ -237,28 +248,9 @@ export interface RitualRowProps {
 
 export function RitualRow({
   kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
-  onToggle, onEdit, expandable = false, expanded = false, onExpand,
-  children, meta, below, language, toggleLabelPt, toggleLabelEn, flipKey,
+  onToggle, editOnly = false, onEdit, expandable = false, expanded = false, onExpand,
+  children, language, toggleLabelPt, toggleLabelEn, flipKey,
 }: RitualRowProps) {
-  /* D1 — o BRILHO de quem acabou de ser concluída: só na transição
-     aberta → concluída (nunca ao montar já concluída). É cor, não movimento,
-     então também acontece com movimento reduzido. */
-  const liRef = useRef<HTMLLIElement | null>(null);
-  const eraFeita = useRef(done);
-  useEffect(() => {
-    const li = liRef.current;
-    if (done && !eraFeita.current && li && typeof li.animate === 'function') {
-      li.animate(
-        [
-          { boxShadow: '0 0 0 0 transparent', backgroundColor: 'transparent' },
-          { boxShadow: '0 0 16px 1px var(--sm2-primary-fill)', backgroundColor: 'var(--sm2-primary-soft)', offset: 0.25 },
-          { boxShadow: '0 0 0 0 transparent', backgroundColor: 'transparent' },
-        ],
-        { duration: RITUAL_GLOW_MS, easing: 'ease-out' },
-      );
-    }
-    eraFeita.current = done;
-  }, [done]);
   const isPt = language === 'pt-BR';
   const isHaunted = haunted && !done;
   /* A tinta do título: uma só regra, por estado (D-A3). */
@@ -276,7 +268,6 @@ export function RitualRow({
   const abrir = pai && !done && !expanded ? onExpand : undefined;
   return (
     <li
-      ref={liRef}
       data-flip-key={flipKey}
       className={`sm2-ritual${done ? ' sm2-ritual-done' : ''}${dimmed ? ' sm2-ritual-dim' : ''}${isHaunted ? ' sm2-ritual-haunted' : ''}`}
       data-haunted={isHaunted ? 'true' : undefined}
@@ -288,13 +279,17 @@ export function RitualRow({
         {/* O CHECKBOX BRONZE à ESQUERDA do nome (beta-2, 2.2). O selo do tipo
             (tarefa/hábito) saiu: a lista já se divide em `Tasks`/`Habits`, e o
             ícone repetia a informação. */}
-        <RitualCheck
-          checked={done}
-          mixed={parcial}
-          disabled={done || dimmed || inert || pai}
-          onToggle={pai ? abrir : (done || dimmed || inert ? undefined : onToggle)}
-          label={rotuloCheck}
-        />
+        {editOnly ? (
+          <span aria-hidden="true" style={{ flex: '0 0 12px', width: 12, height: 44 }} />
+        ) : (
+          <RitualCheck
+            checked={done}
+            mixed={parcial}
+            disabled={done || dimmed || inert || pai}
+            onToggle={pai ? abrir : (done || dimmed || inert ? undefined : onToggle)}
+            label={rotuloCheck}
+          />
+        )}
 
         {/* Coluna de texto. EDITAR = o nome (botão nomeado, o controle
             acessível); a coluna inteira também responde ao toque (atalho de
@@ -332,24 +327,6 @@ export function RitualRow({
               {subtitle}
             </span>
           )}
-          {/* Barra segmentada só onde ela DIZ alguma coisa. P9 (beta-2): linha PAI (com etapas) NÃO tem a barra — o checkbox `mixed` e o
-              "1/2 etapas" do subtítulo já dizem o mesmo; eram três vozes para um dado. Sem filhos (ex.: "2 de 3 na semana") a barra fica. */}
-          {max > 1 && !pai && (
-            <PixelSegmentedBar
-              value={value}
-              max={max}
-              segments={Math.min(max, 12)}
-              height={12}
-              tone={done ? 'gold' : 'cyan'}
-              label={`${isPt ? 'Progresso' : 'Progress'}: ${name}`}
-              style={{ marginTop: 4, width: 96 }}
-            />
-          )}
-          {meta && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 20, marginTop: 4 }}>
-              {meta}
-            </span>
-          )}
         </div>
 
         {expandable ? (
@@ -371,12 +348,6 @@ export function RitualRow({
           <span aria-hidden="true" style={{ flex: '0 0 12px', width: 12, height: 44 }} />
         )}
       </div>
-
-      {/* A 2ª linha da tarefa: chips 24 + o contador (botão 44) — fora do
-          botão de editar, alinhada ao texto. Some na concluída. */}
-      {below && !done && (
-        <div style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{below}</div>
-      )}
 
       {expandable && expanded && children && (
         <div data-ritual-children style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{children}</div>

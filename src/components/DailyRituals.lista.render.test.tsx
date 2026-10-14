@@ -30,21 +30,19 @@ describe('Lista única (sem abas)', () => {
     expect(container.textContent).not.toContain('This check is for today');
     expect(container.textContent).not.toContain('per week');
   });
-  it('tudo na mesma lista; semanal reduzido a "0 of 3 this week" + XP base', () => {
+  it('tudo na mesma lista; a linha mostra SÓ o nome (sem "0 of 3 this week", sem XP, sem frequência)', () => {
     const { container } = mount();
     expect(container.textContent).toContain('Beber água');
     expect(container.textContent).toContain('Pagar conta');
     expect(container.textContent).toContain('Correr');
-    expect(container.textContent).toContain('0 of 3 this week · +10 base XP');
-    expect(container.textContent).not.toContain('3×');
+    expect(container.textContent).not.toMatch(/this week|XP|3×|Every day/);
+    expect(container.querySelector('.sm2-ritual-sub')).toBeNull();
   });
-  it('mostra o XP do HÁBITO antes de concluir (+10); a TAREFA não carrega "+20 base XP" nem a etiqueta "medium" (P9, beta-2)', () => {
+  it('a linha não mostra XP nem a etiqueta de esforço ("medium"/"média") — 14/10/2026 supera a prévia de 11/10', () => {
     const { container } = mount();
-    expect(container.textContent).not.toContain('+20 base XP');
-    expect(container.textContent).not.toMatch(/medium|média/);
-    expect(container.textContent).toContain('+10 base XP');
+    expect(container.textContent).not.toMatch(/XP|medium|média/);
   });
-  it('P9: linha com etapas (pai) não repete a barra segmentada — o checkbox `mixed` e o "steps" do subtítulo já dizem', () => {
+  it('linha com etapas (pai): sem barra nem contagem "1/2 steps"; o checkbox `mixed` e os filhos dizem tudo', () => {
     const pai = { id: 'p', name: 'Mudar', completed: false, effort: 2, steps: [{ id: 'a', label: 'a', completed: true }, { id: 'b', label: 'b', completed: false }] } as unknown as Task;
     const { container } = renderWithCss(
       <DailyRituals tasks={[pai]} activities={[]} completedTasks={[]} language="en-US" now={new Date('2026-10-07T12:00:00')}
@@ -52,7 +50,7 @@ describe('Lista única (sem abas)', () => {
         onToggleActivity={noop} onUpdateStep={noop} onRestoreTask={noop} onCreate={noop} ctaLabel="Add" emptyMessage="empty" variant="home" />,
     );
     expect(container.querySelector('.sm2-ritual [role="progressbar"]')).toBeNull();
-    expect(container.querySelector('.sm2-ritual')!.textContent).toMatch(/1\/2 steps/);
+    expect(container.querySelector('.sm2-ritual')!.textContent).not.toMatch(/\d\/\d steps/);
     expect(container.querySelector('[aria-checked="mixed"]')).not.toBeNull();
   });
   it('recorrente fora do dia NÃO aparece na Home (vai para o `View all` > Scheduled)', () => {
