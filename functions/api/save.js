@@ -19,6 +19,7 @@ import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
+import { sanitizeDailyMissions, sanitizeFirstTimes } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceDungeonDaily, enforceCheckIns } from './_dayCounters.js';
@@ -294,6 +295,15 @@ export async function onRequest({ request, env }) {
     if ('buildingQuests' in state) {
       const q = sanitizeBuildingQuests(state.buildingQuests);
       if (q) state.buildingQuests = q; else delete state.buildingQuests;
+    }
+    // Missoes diarias dos outros recursos e primeiras vezes (14/10/2026): listas fechadas, contagem 0..99. Sem forma = ausente.
+    if ('dailyMissions' in state) {
+      const q = sanitizeDailyMissions(state.dailyMissions);
+      if (q) state.dailyMissions = q; else delete state.dailyMissions;
+    }
+    if ('firstTimes' in state) {
+      const q = sanitizeFirstTimes(state.firstTimes);
+      if (q) state.firstTimes = q; else delete state.firstTimes;
     }
     if ('focusLoot' in state) {
       const q = sanitizeFocusLoot(state.focusLoot);

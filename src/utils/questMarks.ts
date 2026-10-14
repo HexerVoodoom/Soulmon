@@ -47,6 +47,8 @@ export interface QuestMarkInput {
   firstDay?: boolean;
   /** A marca das missões do dia dos outros recursos (`dailyMissionsMark`, REGISTRO §50): entra em "Hoje" e no ícone. */
   dailyExtra?: QuestMark;
+  /** As primeiras vezes (`firstTimesMark`): só "?" quando há uma pronta a resgatar. */
+  firsts?: QuestMark;
 }
 
 export interface QuestMarks {
@@ -94,7 +96,7 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   const buildings = input.buildings ?? {};
   const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
   const firstDay: QuestMark = input.firstDay ? 'available' : null;
-  const extra: QuestMark = input.dailyExtra ?? null;
+  const extra: QuestMark = strongestMark([input.dailyExtra ?? null, input.firsts ?? null]);
   const daily = strongestMark([passeio, predios, extra]);
   const corner = strongestMark([firstDay, passeio, torneio, conquistas, predios, extra]);
   const fontes: [QuestMark, QuestTone][] = [[firstDay, 'gold'], [passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold'], [extra, 'gold']];

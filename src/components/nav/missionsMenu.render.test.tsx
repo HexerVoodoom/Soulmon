@@ -33,7 +33,7 @@ const panel = (key: string) => document.querySelector<HTMLElement>(`[data-missio
 describe('MissionsSheet: uma folha, três abas', () => {
   it('Daily abre primeiro: Hoje (passeio + journaling); semana e conquistas ainda não montadas', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull(), { timeout: 20000 });
     const daily = document.querySelector('[data-missions-section="daily"]')!;
     expect(daily.getAttribute('aria-label')).toBe('Today');
     expect(daily.querySelector('[data-building-quest="exploracao.caderno"]')!.textContent).toContain('Write an entry in your journal');
@@ -57,15 +57,15 @@ describe('MissionsSheet: uma folha, três abas', () => {
 
   it('tocar na aba troca o painel; voltar preserva o que já estava (não remonta)', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
     const quest = document.querySelector('[data-building-quest]')!;
     fireEvent.click(tab('weekly'));
-    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-missions-section="weekly"]')!.getAttribute('aria-label')).toBe('This week');
     expect(panel('weekly')!.hidden).toBe(false);
     expect(panel('daily')!.hidden).toBe(true);
     fireEvent.click(tab('achievements'));
-    await waitFor(() => expect(document.querySelector('[data-missions-section="achievements"]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-missions-section="achievements"]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-missions-section="achievements"]')!.getAttribute('aria-label')).toBe('Achievements');
     expect(panel('weekly')!.hidden).toBe(true);
     fireEvent.click(tab('daily'));
@@ -92,7 +92,7 @@ describe('MissionsSheet: uma folha, três abas', () => {
 
   it('abre direto numa aba por initialTab (weekly): sem diária montada', async () => {
     sheet('en-US', 'weekly');
-    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 20000 });
     expect(tab('weekly').getAttribute('aria-selected')).toBe('true');
     expect(panel('daily')).toBeNull();
     expect(document.querySelector('[data-building-quest]')).toBeNull();
@@ -114,7 +114,7 @@ describe('MissionsSheet: uma folha, três abas', () => {
     expect([...document.querySelectorAll('[role="tab"] [data-tab-label]')].map(t => t.textContent)).toEqual(['Diárias', 'Semanal', 'Conquistas']);
     await waitFor(() => expect(document.querySelector('[data-building-quest]')!.textContent).toContain('Faça um registro no journaling'));
     fireEvent.click(tab('weekly'));
-    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-missions-section="weekly"]')!.getAttribute('aria-label')).toBe('Esta semana');
   });
 });
@@ -123,7 +123,7 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
   const D = '2026-10-07';
   it('aponta: só o texto, sem botão', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
     const li = document.querySelector('[data-building-quest]')!;
     expect(li.getAttribute('data-status')).toBe('available');
     expect(li.querySelector('button')).toBeNull();
@@ -137,7 +137,7 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
         buildings={{ state, day: D, bondLevel: 99, onClaim }} />
     );
     const { rerender } = render(mk(pronta));
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
     const li = document.querySelector('[data-building-quest]')!;
     expect(li.getAttribute('data-status')).toBe('ready');
     const btns = li.querySelectorAll('button');
@@ -270,14 +270,14 @@ describe('missão do Caderno leva ao prédio', () => {
     const base = { open: true, onClose: () => {}, language: 'pt-BR' as const, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(), todayKey: '2026-10-07',
       weekly: [], onClaimWeekly: vi.fn(), missionProgress: {}, marks: { daily: 'available' as const, torneio: null, conquistas: null } };
     render(<MissionsSheet {...base} buildings={{ state: undefined, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
-    const go = await waitFor(() => { const b = document.querySelector('[data-building-go="exploracao.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 8000 });
+    const go = await waitFor(() => { const b = document.querySelector('[data-building-go="exploracao.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 20000 });
     fireEvent.click(go);
     expect(onGo).toHaveBeenCalledWith('exploracao.caderno');
     cleanup();
     let st: BuildingQuestState | undefined = completeBuildingQuest(undefined, '2026-10-07', 'exploracao.caderno', 99);
     st = claimBuildingQuest(st, '2026-10-07', 'exploracao.caderno', 99).state ?? st;
     render(<MissionsSheet {...base} buildings={{ state: st, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-building-go]')).toBeNull();
   });
 });

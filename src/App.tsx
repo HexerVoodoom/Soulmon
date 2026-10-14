@@ -21,7 +21,7 @@ import { AvisosSheet } from './components/nav/AvisosSheet';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTour';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
-import { bumpDaily, claimDaily, dailyMissionsMark, type DailyEvent } from './utils/dailyMissions';
+import { bumpDaily, claimDaily, claimFirst, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
@@ -3758,7 +3758,10 @@ export default function App() {
   /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §52) contam o MESMO evento real:
      os gestos que já têm contador semanal alimentam também o dia (aqui, no mesmo updater); os demais chamam `contarDiaria`. */
   const contarDiaria = useCallback((evento: DailyEvent) => {
-    setGameState(prev => ({ ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento) }));
+    setGameState(prev => {
+      const firstTimes = markFirstForEvent(prev.firstTimes, evento);
+      return { ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento), ...(firstTimes === prev.firstTimes ? {} : { firstTimes }) };
+    });
   }, []);
   const contarMissao = useCallback((id: WeeklyMissionId) => {
     const doDia: Partial<Record<WeeklyMissionId, DailyEvent>> = {
@@ -4896,7 +4899,7 @@ export default function App() {
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       const c1 = claimStroll(c0, playerDayIso(new Date(), prev.playerDayTz));
-      return c1 === c0 ? prev : { ...prev, crossings: c1 };
+      return c1 === c0 ? prev : { ...prev, crossings: c1, firstTimes: markFirst(prev.firstTimes, 'first-stroll') };
     });
   }, [setGameState]);
 
@@ -5962,18 +5965,28 @@ export default function App() {
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
     dailyExtra: dailyMissionsMark(gameState.dailyMissions, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
+    firsts: firstTimesMark(gameState.firstTimes, bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.firstTimes, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Resgata uma missão diária dos outros recursos (`utils/dailyMissions.ts`). Idempotente: reconfere sobre o `prev` (toque duplo não paga 2×). */
   const resgatarDiaria = useCallback((id: string) => {
     setGameState(prev => claimDaily(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
   }, []);
 
+  /** Resgata uma PRIMEIRA VEZ (missão única). Idempotente sobre o `prev`. */
+  const resgatarPrimeira = useCallback((id: string) => {
+    setGameState(prev => claimFirst(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
+  }, []);
+
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
     /* 8.3: o prédio NÃO listado paga o material e a peça do Soulsmith na própria entrada (`applyBuildingEntry`) — não há tela de Resgatar para ele. */
-    setGameState(prev => applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id));
+    setGameState(prev => {
+      const entrou = applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id);
+      const firstTimes = markFirst(entrou.firstTimes, `visit:${id}`);
+      return firstTimes === entrou.firstTimes ? entrou : { ...entrou, firstTimes };
+    });
     /* 14/10/2026: a PRIMEIRA entrada no prédio abre a apresentação do NPC (uma vez só). Marca ao MOSTRAR; save sem o campo
        não apresenta nada (migração por construção — `sanitizeBuildingIntrosSeen` semeia os já abertos). */
     const vistos = gameStateRef.current.buildingIntrosSeen;
@@ -7793,6 +7806,7 @@ export default function App() {
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarDiaria,
         }}
+        firsts={{ state: gameState.firstTimes, bondLevel: bondLevelFor(gameState.totalXP ?? 0), onClaim: resgatarPrimeira }}
       /></Suspense>}
       {currentView === 'map' && (
         <CornerLink
