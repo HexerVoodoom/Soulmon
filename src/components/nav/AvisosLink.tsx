@@ -19,7 +19,7 @@ export function AvisosLink({ count, label, countLabel, onClick, row }: {
   /** A linha da pilha do canto (1 = logo abaixo do Mapa). */
   row: 1 | 2 | 3;
 }) {
-  /* OCULTO por completo (dono, 14/10/2026, REGISTRO §53): o botão não aparece na pilha de cantos. O código fica; religar = `true`. */
+  /* OCULTO por completo (dono, 14/10/2026, REGISTRO §54): o botão não aparece na pilha de cantos. O código fica; religar = `true`. */
   if (!AVISOS_LINK_ENABLED || count <= 0) return null;
   return (
     <button

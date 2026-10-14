@@ -26,7 +26,7 @@ import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './util
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
-import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
+import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -50,7 +50,7 @@ import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
-import { getSpriteForStage } from './utils/sprites';
+import { getSpriteForStage, isStarterId } from './utils/sprites';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -242,6 +242,7 @@ import {
 } from './utils/taskTriage';
 import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
+import { SpritePoseRows } from './components/SpritePoseRows';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
@@ -2070,6 +2071,10 @@ export default function App() {
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
       } else if (id === 'dailyReport' && gameState.lastDayReport) {
         writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
+      } else if (id === 'checkIn') {
+        // compromisso da manhã: "visto" ao MOSTRAR (REGISTRO §53) — reabrir/recarregar no meio não repete nem repaga o Vínculo
+        const dia = playerDayKey(new Date(), gameState.playerDayTz);
+        setGameState(prev => (prev.lastCheckInDate === dia ? prev : { ...prev, lastCheckInDate: dia }));
       }
     },
     // voltar do Android / erro de render / chunk que não carregou: fecha o item pelo caminho "pular" do dono dele
@@ -3298,6 +3303,7 @@ export default function App() {
 
   const handleEvolveRequest = useCallback(() => {
     if (bloqueiaOcupado('evolucao')) return;
+    if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -3311,7 +3317,7 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP]);
+  }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId]);
 
   const handleEvolve = useCallback(() => {
     if (bloqueiaOcupado('evolucao')) return;
@@ -3321,6 +3327,8 @@ export default function App() {
       // Evolução manual: só evolui com o GAUGE de evolução cheio (11/10/2026;
       // a regra é de `utils/evolutionGauge.ts`, aqui só se delega).
       if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions)) return prev;
+      // Os 5 iniciais não evoluem (um sprite só, 14/10/2026 — decisão do dono).
+      if (isStarterId(prev.demoCharacterId)) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
       // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
       // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
@@ -4991,6 +4999,9 @@ export default function App() {
     // Mesma régua de `needsCheckIn`: com `dayKeyOf` aqui, a trava de sessão
     // rearmaria na virada do APARELHO e a leitura na virada do JOGADOR.
     const hoje = playerDayKey(now, gameState.playerDayTz);
+    // Compromisso da manhã (14/10/2026, interruptor PRÓPRIO `MORNING_COMMITMENT_ENABLED`, REGISTRO §53): o item `checkIn` da fila
+    // só depende dele — os 3 check-ins de janela (§40.4-b) seguem ocultos e não entram aqui.
+    if (!MORNING_COMMITMENT_ENABLED) return;
     if (checkInPromptedRef.current === hoje) return;
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
@@ -6409,6 +6420,15 @@ export default function App() {
             /></Suspense>
           )}
 
+          {/* "VIRAR SOULMON" também aqui (14/10/2026): o controle morava só em Configurações › Aparência e o dono não o achou — o
+              bicho aparecia olhando para o lado errado. É a MESMA linha (`SpritePoseRows`, `only="flip"`), a mesma escrita
+              (`applySpritePose`) e vale para TODOS (grátis, demo e pago): nenhum tier a esconde. */}
+          {labTab === 'pet' && (
+            <div style={{ marginTop: 16 }} data-testid="pet-virar">
+              <SpritePoseRows language={language} pose={gameState.spritePose} only="flip" />
+            </div>
+          )}
+
           {/* DEX DE SONHOS na página do PET, e não em Configurações: é uma
               COLEÇÃO do bicho — cenas dele dormindo —, então mora onde já vive
               a ficha dele (formas, descrições, habilidades). Em Configurações
@@ -6977,6 +6997,7 @@ export default function App() {
                 perfectDays={gameState.perfectDays}
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
+                  if (isStarterId(gameState.demoCharacterId)) return false;
                   if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.
@@ -7751,7 +7772,7 @@ export default function App() {
       {currentView === 'home' && celebrarMeta && (
         <Celebration fixed onDone={() => setCelebrarMeta(false)} />
       )}
-      {checkInsAbertos && <Suspense fallback={null}><CheckInSheet
+      {CHECKINS_ENABLED && checkInsAbertos && <Suspense fallback={null}><CheckInSheet
         open
         language={language}
         windows={checkInWindows(gameState, Date.now())}

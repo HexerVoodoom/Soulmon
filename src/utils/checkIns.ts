@@ -28,6 +28,27 @@ import { awardBondXP } from './bond';
 import { noteFreeBits, type BitsOrigin } from './bitsOrigin';
 import { playerDayIso, playerDayKey, type PlayerDayAnchor } from './playerDay';
 
+/**
+ * INTERRUPTOR ÚNICO dos check-ins do dia (14/10/2026, decisão do dono — REGISTRO §40.4-b): "ficou horrível, oculta, depois eu melhoro".
+ * Desligado: nenhuma janela está disponível (`availableCheckIn` → `null`), logo não há atalho na Home, folha nem recompensa — e
+ * `claimCheckIn` (que passa por `availableCheckIn`) devolve o mesmo `prev`. O código, o registro `checkIns` do save e o contador do
+ * servidor ficam intactos (nenhum save é tocado). Para religar: `true` aqui, e só aqui.
+ */
+export const CHECKINS_ENABLED = false;
+
+/**
+ * INTERRUPTOR PRÓPRIO do COMPROMISSO DA MANHÃ (14/10/2026, decisão do dono — REGISTRO §53): o ritual matinal de foco do dia
+ * (`MorningCheckIn`: pendências de ontem, hábitos de hoje e até 3 focos; item `checkIn` da fila de apresentação) é OUTRA coisa que
+ * os 3 check-ins de janela acima e volta a valer sozinho. Não depende de `CHECKINS_ENABLED` nem de `checkIns` no save: a trava de
+ * "uma vez por dia" é `lastCheckInDate` (`utils/rituals.ts`), gravada ao MOSTRAR. Desligar = `false` aqui, e só aqui.
+ */
+export const MORNING_COMMITMENT_ENABLED = true;
+
+/** SÓ para teste: exercita o mecanismo com o interruptor ligado sem mexer na constante (restaure com `undefined`). */
+let override: boolean | undefined;
+export function __setCheckInsEnabledForTest(v: boolean | undefined): void { override = v; }
+const on = (): boolean => override ?? CHECKINS_ENABLED;
+
 export const CHECKIN_SLOTS = ['morning', 'afternoon', 'night'] as const;
 export type CheckInSlot = (typeof CHECKIN_SLOTS)[number];
 
@@ -94,6 +115,7 @@ export function currentSlot(times: MealTimes | undefined, nowMs: number): CheckI
 
 /** A janela que dá para resgatar AGORA (em curso e ainda não resgatada hoje), ou `null`. */
 export function availableCheckIn(state: Pick<CheckInState, 'checkIns' | 'playerDayTz' | 'mealRhythm'>, nowMs: number): CheckInSlot | null {
+  if (!on()) return null;
   const slot = currentSlot(state.mealRhythm?.times, nowMs);
   if (!slot) return null;
   return claimedToday(state, nowMs).includes(slot) ? null : slot;

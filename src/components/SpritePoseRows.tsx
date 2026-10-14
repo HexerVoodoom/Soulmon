@@ -10,7 +10,8 @@ import { applySpritePose, sanitizeSpritePose, type SpritePose } from '../utils/s
  *    desligado, ele aterrissa.
  * Escrita só por `applySpritePose` (`utils/spritePose.ts`, dono único).
  */
-export function SpritePoseRows({ language, pose }: { language: Language; pose: Partial<SpritePose> | undefined }) {
+/** `only: 'flip'` mostra só o "Virar" — o atalho da página do Pet (mesma linha, mesmo dono de escrita; nenhum componente paralelo). */
+export function SpritePoseRows({ language, pose, only }: { language: Language; pose: Partial<SpritePose> | undefined; only?: 'flip' }) {
   const isPt = language === 'pt-BR';
   const p = sanitizeSpritePose(pose);
   return (
@@ -26,7 +27,7 @@ export function SpritePoseRows({ language, pose }: { language: Language; pose: P
           ? 'Se o seu Soulmon parece andar de costas, ligue aqui. Só muda o desenho na tela inicial e no desktop; combate e cuidados ficam como estão.'
           : 'If your Soulmon seems to walk backwards, turn this on. It only changes the picture on the home screen and desktop; battles and care stay as they are.'}
       />
-      <SwitchRow
+      {only !== 'flip' && <SwitchRow
         checked={p.altitude === 'air'}
         onToggle={() => applySpritePose({ altitude: p.altitude === 'air' ? 'ground' : 'air' })}
         label={isPt ? 'Soulmon voando' : 'Soulmon flying'}
@@ -36,7 +37,7 @@ export function SpritePoseRows({ language, pose }: { language: Language; pose: P
         info={isPt
           ? 'Bom para criaturas que voam. Ele sobe um pouco, a sombra fica no chão e ele flutua de leve (parado, se você usa movimento reduzido).'
           : 'Good for flying creatures. He rises a little, the shadow stays on the ground and he hovers gently (still, if you use reduced motion).'}
-      />
+      />}
     </>
   );
 }

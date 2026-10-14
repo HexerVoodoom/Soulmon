@@ -486,7 +486,7 @@ export interface GameState {
   buildingQuests?: BuildingQuestState;
   /** Missões diárias dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §52): contagem por evento do dia e as já pagas. Dia novo zera na leitura. */
   dailyMissions?: DailyMissionsState;
-  /** Primeiras vezes (missões únicas, 14/10/2026, REGISTRO §53): cumpridas e resgatadas, 1× na vida. Save de quem já jogava é semeado como feito e resgatado, sem pagar. */
+  /** Primeiras vezes (missões únicas, 14/10/2026, REGISTRO §54): cumpridas e resgatadas, 1× na vida. Save de quem já jogava é semeado como feito e resgatado, sem pagar. */
   firstTimes?: FirstTimesState;
   /** Apresentações de prédio já vistas (08/10/2026, `utils/buildingIntro.ts`): ids `<área>.<lote>`. O NPC se apresenta UMA vez por
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —

@@ -187,7 +187,7 @@ const SOULMON_SPRITES: Record<string, string> = {
   'ultra': soulmonUltra,
 };
 import { getStageLevel, getStageBranch } from '../types/progression';
-import { CORVO_LINE, corvoSpriteFor } from './corvoPet';
+import { CORVO_LINE, CORVO_SPRITES, CORVO_SPRITES_256, corvoSpriteFor } from './corvoPet';
 
 /**
  * Legacy stage ids (saves made before the Soulmon tree existed) still carry
@@ -254,10 +254,43 @@ export function resolveLineForStage(stage: string, demoCharacterId?: string): { 
  */
 export const LEFT_FACING_LINES: ReadonlySet<string> = new Set(['igni', 'nautilu', 'kaelen', CORVO_LINE]);
 
+/**
+ * Os INICIAIS (um sprite só, `STARTER_SPRITES`) cuja arte olha para a ESQUERDA.
+ * Auditoria de 14/10/2026, sprite a sprite (`docs/AUDITORIA-FACING-GRATUITOS.md`):
+ * `meteoro` (Bolid) tem rosto e pernas voltados à esquerda e o rabo de brasas à
+ * direita; `nascente` (bico à direita) e `industrial`/`alento`/`vida` (de frente)
+ * não precisam de declaração.
+ */
+export const LEFT_FACING_STARTERS: ReadonlySet<string> = new Set(['meteoro']);
+
 export function artFacesLeft(stage: string, demoCharacterId?: string): boolean {
   if (demoCharacterId === CORVO_LINE) return true;
+  if (isStarterId(demoCharacterId)) return LEFT_FACING_STARTERS.has(demoCharacterId);
   const r = resolveLineForStage(stage, demoCharacterId);
   return !!r && LEFT_FACING_LINES.has(r.line);
+}
+
+let facesLeftUrls: Set<string> | null = null;
+/**
+ * A URL deste sprite é de arte que olha para a ESQUERDA (linhas de `LEFT_FACING_LINES`, inicial `meteoro`, corvo)? Existe para o
+ * COMBATE (`BattleStage`), que recebe só a URL do sprite: o palco fixa os lados (eu à esquerda olhando à direita, inimigo à direita
+ * olhando à esquerda), então arte de perfil esquerdo precisa do espelho INVERSO do da arte de perfil direito — senão o bicho luta
+ * de costas. Sprite próprio gerado (acervo) não está no conjunto: é tratado como direita, igual à Home.
+ */
+export function spriteUrlFacesLeft(url: string | undefined): boolean {
+  if (!url) return false;
+  if (!facesLeftUrls) {
+    const set = new Set<string>();
+    for (const line of LEFT_FACING_LINES) {
+      const l = DUNGEON_LINE_SPRITES[line];
+      if (l) Object.values(l).forEach(u => set.add(u));
+    }
+    LEFT_FACING_STARTERS.forEach(id => { if (isStarterId(id)) set.add(STARTER_SPRITES[id]); });
+    Object.values(CORVO_SPRITES).forEach(u => set.add(u));
+    Object.values(CORVO_SPRITES_256).forEach(u => set.add(u));
+    facesLeftUrls = set;
+  }
+  return facesLeftUrls.has(url);
 }
 
 export function getSpriteForStage(stage: string, demoCharacterId?: string, size?: 256): string {

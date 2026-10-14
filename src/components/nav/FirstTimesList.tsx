@@ -28,7 +28,7 @@ function textOf(f: FirstTime, language: Language): string {
 }
 
 /**
- * PRIMEIRAS VEZES (`utils/dailyMissions.ts`, REGISTRO §53): missões únicas, 1× na vida. Só convite: a linha diz a estreia; quando ela
+ * PRIMEIRAS VEZES (`utils/dailyMissions.ts`, REGISTRO §54): missões únicas, 1× na vida. Só convite: a linha diz a estreia; quando ela
  * acontece de verdade fica pronta e o "Resgatar" paga 1 material. As já resgatadas somem da lista (viram só a contagem).
  */
 export function FirstTimesList({ language, state, bondLevel, onClaim }: FirstTimesProps & { language: Language }) {

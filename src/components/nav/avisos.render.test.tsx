@@ -14,7 +14,7 @@ import { AvisosSheet } from './AvisosSheet';
 installDomGlobals();
 afterEach(cleanup);
 
-describe('AvisosLink — OCULTO por completo (dono, 14/10/2026, REGISTRO §53)', () => {
+describe('AvisosLink — OCULTO por completo (dono, 14/10/2026, REGISTRO §54)', () => {
   // Reescrito: os dois testes antigos exigiam o selo e a linha da pilha do botão, que agora não existe na tela (`AVISOS_LINK_ENABLED = false`).
   it('o botão não renderiza nada, com ou sem avisos; o código fica e a flag religa', () => {
     expect(AVISOS_LINK_ENABLED).toBe(false);

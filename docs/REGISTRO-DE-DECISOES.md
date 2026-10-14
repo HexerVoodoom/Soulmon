@@ -2272,6 +2272,12 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Alternativas que perderam:** contador visual só no cliente para o timer (viola 3.4); energia continuar enchendo por comida e a fome só enfeitar (viola 3.5); limite diário só na UI (viola 6.1); `FLAG_FULLSCREEN` para o modo imersivo (quebra o teclado); resgate manual para todos os 14 prédios (14 linhas no menu da Home, contra o §"a UI de missão NUNCA fica dentro do prédio"); recompensa de check-in em energia direta (conflita com 3.5).
 - **Gatilho para rever:** telemetria com a mediana de "faminto" > 50% do dia (queda de 14 h curta demais) ou energia que "nunca sobe" nas queixas; `daily` encerrando mais de 1 descida em cada 3; check-in tocado por < 20% dos que abrem o cartão (benefício fraco) ou por > 90% (virou rotina vazia).
 
+### 40.4-b Check-ins ocultos, prévia só do admin, iniciais não evoluem (dono, 14/10/2026)
+
+- **Decisão:** (1) os três check-ins do dia (§40.4) saem do jogo por ora — "ficou horrível, oculta, depois eu melhoro": `CHECKINS_ENABLED = false` em `utils/checkIns.ts` (único interruptor); (2) forma futura **não é pré-visualizável** para o jogador comum, porque a arte só é gerada perto de evoluir — a prévia (silhueta/revelar) fica só para o administrador, flag derivada do servidor (`verifiedAdmin` → `useAdmin`); (3) **os 5 iniciais não evoluem** (um sprite só).
+- **Alternativas que perderam:** apagar o código/campo `checkIns` (perde save e o mecanismo para religar); flag lida do cliente (forjável); manter a árvore dos iniciais com formas de mesmo sprite (silhuetas idênticas, "evoluções erradas").
+- **Gatilho para rever:** o dono redesenhar os check-ins (religar a flag e ajustar os §40.9-4); a arte dos iniciais ganhar formas próprias.
+
 ## 41. Qualidade da geração de arte: sombras em low, sprites de Soulmon em medium (dono, 13/10/2026)
 
 - **Decisão:** as 12 sombras do Pesadelo usam a qualidade **low** do Higgsfield (`gpt_image_2`, 0,5 crédito/imagem), instaladas em `src/assets/soulmon/dino/dino-shadow-*.png`. Os sprites de Soulmon (rookie → ultra) usam **medium** (1,0 crédito/imagem).
@@ -2420,7 +2426,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Gatilho para rever:** quem entra na Masmorra no dia 1 e abandona o app antes do 1º dia completo (aprofundar a descida cedo demais pode competir com o hábito de tarefas) — a leitura é a telemetria D1, que só existe com usuários.
 - **Régua viva:** `src/utils/gates.test.ts`, `src/components/WelcomeTour.render.test.tsx`, `src/components/nav/nav.render.test.tsx`, `functions/api/gates.parity.test.js`.
 
-## 53. Até 6 diárias, "Primeiras vezes", espelho no servidor e Avisos oculto (dono, modal, 14/10/2026)
+## 54. Até 6 diárias, "Primeiras vezes", espelho no servidor e Avisos oculto (dono, modal, 14/10/2026)
 
 - **Respostas do dono à PR #343:** (1) volume: até **6** missões diárias por dia, mais **missões únicas**; (2) espelhar `dailyMissions` no servidor; (3) ocultar o botão **Avisos**; (4) manter a lista semanal do Torneio e o prédio Conquistas do Mercado.
 - **Diárias, até 6:** `DAILY_MISSION_COUNT = 6` (`utils/dailyMissions.ts`). O corte vem DEPOIS do filtro de portão, então quem tem menos recursos abertos recebe menos que 6; o Vínculo 1 já tem 11 elegíveis (Salão ×3, Masmorra, 6 de cuidado/humor/descanso e Mercado), então enche as 6. Recompensa inalterada: 1 material por missão, `MATERIAL_CAP` 99, sem moeda nova. **Teto novo: 6 materiais/dia** (mais o 1 do Caderno a partir do Vínculo 2 = 7). Isto é **6× a entrada de materiais de antes das diárias** (1/dia) e o dobro da proposta do §52. **Gatilho de revisão:** o estoque de materiais de jogadores ativos chegar ao teto 99 com frequência, ou os upgrades do Soulsmith ficarem baratos demais; o botão é `DAILY_MISSION_COUNT` (e, mais fino, pagar a cada 2 resgates).
@@ -2429,3 +2435,13 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Avisos oculto:** `AVISOS_LINK_ENABLED = false` em `AvisosLink.tsx`; o botão some da pilha de cantos, o código e a folha ficam. Os avisos (`hp`, `incubacao`, `semanal`, `triagem`, `priming`, `recomeco`, `refeicao`, `checkin`, `carga`, `marcoBosque`, `termos`, `refugio`) deixam de ter canal único: ver as dúvidas ao dono nesta frente.
 - **Conquistas:** inalterado. Cumprir a conquista já libera o item para compra (não existe botão de resgate nesta aba nem nunca existiu); a compra é no Mercado, prédio Conquistas. A aba ganhou uma linha dizendo isso.
 - **Régua viva:** `dailyMissions.test.ts`, `dailyMissions.fiacao.test.ts`, `dailyMissions.parity.test.js`, `dailyMissionList.render.test.tsx`, `avisos.render.test.tsx` (reescrito: o botão oculto).
+
+## 53. Compromisso da manhã volta, com interruptor próprio; os 3 check-ins seguem ocultos (dono, modal, 14/10/2026)
+
+- **Decisão (modal):** o ritual matinal de foco do dia (`MorningCheckIn`: escolher até 3 tarefas/compromisso) estava desligado junto com os 3 check-ins de janela pela mesma `CHECKINS_ENABLED=false` (§40.4-b, nota da PR #338 — "depende do dono"). O dono quer **só o compromisso de volta**, e os 3 check-ins diários (manhã/tarde/noite, atalho "Check-ins do dia") **ocultos**.
+- **Como ficou:** nova `MORNING_COMMITMENT_ENABLED = true` no mesmo lugar canônico (`src/utils/checkIns.ts`). O item `checkIn` da fila de apresentação e o effect que monta o plano (`src/App.tsx`) dependem **só** dela. `CHECKINS_ENABLED` segue `false` e continua escondendo atalho, folha, recompensa e notificação dos 3 check-ins. Sem espaço reservado na Home para eles (o atalho só entra nos Avisos quando há janela).
+- **Uma vez por dia:** a fila já oferece o item uma só vez, na ordem definida (depois do relatório diário), centralizado como os demais modais (`RitualDialog`). Novo: o "visto" (`lastCheckInDate`) é gravado **ao mostrar** (`onShow`), como os outros itens da fila — recarregar no meio não reabre nem repaga o XP de Vínculo do confirmar.
+- **Independência:** o compromisso não lê `checkIns` do save nem `checkIns.ts` além da flag; usa `rituals.ts` (`needsCheckIn`/`completeCheckIn`). Sem campo novo no save, `fuzz2` inalterado.
+- **Alternativas que perderam:** religar `CHECKINS_ENABLED` (traria os 3 check-ins); gravar o visto só no confirmar/pular (reabria após recarga).
+- **Gatilho para rever:** o dono decidir religar ou apagar os 3 check-ins de janela.
+- **Régua viva:** `src/components/filaDeAvisos.contract.test.ts`, `src/utils/checkIns.test.ts`.

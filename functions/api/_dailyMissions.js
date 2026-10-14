@@ -1,5 +1,5 @@
 /**
- * Espelho de `src/utils/dailyMissions.ts` (missoes diarias dos outros recursos e primeiras vezes, 14/10/2026, REGISTRO secao 53), so a
+ * Espelho de `src/utils/dailyMissions.ts` (missoes diarias dos outros recursos e primeiras vezes, 14/10/2026, REGISTRO secao 54), so a
  * parte que o SERVIDOR usa: sanear `dailyMissions` e `firstTimes` do save. Listas FECHADAS de eventos e de ids, contagem inteira
  * 0..99, sem repeticao. Pages Functions nao importam de `src/`: as constantes sao copiadas e travadas por
  * `dailyMissions.parity.test.js`. Limite honesto: as contagens sao escritas pelo cliente (economia local-first, sem dinheiro real);

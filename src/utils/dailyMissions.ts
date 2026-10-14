@@ -68,7 +68,7 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel', descPt: 'Dispute uma partida do Torneio', descEn: 'Play a Tournament match' },
 ];
 
-/** Até 6 por dia (dono, 14/10/2026, REGISTRO §53): quem tem menos recursos abertos recebe menos (o filtro de portão vem antes do corte). */
+/** Até 6 por dia (dono, 14/10/2026, REGISTRO §54): quem tem menos recursos abertos recebe menos (o filtro de portão vem antes do corte). */
 export const DAILY_MISSION_COUNT = 6;
 /** Teto de contagem por evento (higiene do save; nenhum alvo passa de 2). */
 export const DAILY_COUNT_CAP = 99;
@@ -176,7 +176,7 @@ export function sanitizeDailyMissions(raw: unknown): DailyMissionsState | undefi
 }
 
 // ---------------------------------------------------------------------------
-// PRIMEIRAS VEZES (missões ÚNICAS, 1× na vida — dono, 14/10/2026, REGISTRO §53): conhecer cada prédio do mapa e estrear o primeiro
+// PRIMEIRAS VEZES (missões ÚNICAS, 1× na vida — dono, 14/10/2026, REGISTRO §54): conhecer cada prédio do mapa e estrear o primeiro
 // minijogo, foco (Pomodoro), passeio e masmorra. Cada uma paga 1 material UMA vez (`claimed`), idempotente.
 //   - SEM retroativo pago: quem já jogava (XP > 0) no dia em que o recurso chegou tem tudo que o Vínculo já abre marcado como
 //     cumprido E resgatado, sem pagar (`seedFirstTimes`) — o mais seguro: ninguém ganha material de graça por algo antigo, e ninguém
