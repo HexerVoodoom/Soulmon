@@ -1097,7 +1097,7 @@ type ShopSegment = 'shop' | 'tournament';
   desde 14/10/2026 (REGISTRO §52): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
   recursos, `DailyMissionList`), **Semanal** ("Esta semana"/"This week") e **Conquistas**; toque ou deslize troca de aba, as já visitadas
   ficam montadas; **um ícone só** na Home (`MissionsLink`), sempre presente — esmaecido sem pendência — com um ponto discreto na aba que
-  tem "!"/"?". Os dois ícones antigos (diário/semanal) saíram; linha aponta, pronta, Resgatar). Ver
+  tem "!"/"?" (§53: até 6 diárias; seção "Primeiras vezes" na aba Diárias; botão Avisos oculto). Os dois ícones antigos (diário/semanal) saíram; linha aponta, pronta, Resgatar). Ver
   [§50-B](02-REGRAS-DE-NEGOCIO.md#50-b-missao-por-predio--materiais-decisao-do-dono-07102026).
 
 ### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)

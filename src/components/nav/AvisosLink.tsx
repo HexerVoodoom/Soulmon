@@ -7,6 +7,8 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAn
  * este botão abre, e o botão carrega só um SELO (ponto) quando há algo — sem número, parado, sem som (nada que cobre). Some quando não
  * há aviso nenhum: não há porta para uma folha vazia. A altura acima de "HOJE" fica FIXA (zero), com ou sem aviso.
  */
+export const AVISOS_LINK_ENABLED = false;
+
 export function AvisosLink({ count, label, countLabel, onClick, row }: {
   /** Quantos avisos há. `0` = o botão SOME. */
   count: number;
@@ -17,7 +19,8 @@ export function AvisosLink({ count, label, countLabel, onClick, row }: {
   /** A linha da pilha do canto (1 = logo abaixo do Mapa). */
   row: 1 | 2 | 3;
 }) {
-  if (count <= 0) return null;
+  /* OCULTO por completo (dono, 14/10/2026, REGISTRO §53): o botão não aparece na pilha de cantos. O código fica; religar = `true`. */
+  if (!AVISOS_LINK_ENABLED || count <= 0) return null;
   return (
     <button
       type="button"

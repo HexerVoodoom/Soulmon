@@ -62,7 +62,7 @@ import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
-import { sanitizeDailyMissions, type DailyMissionsState } from '../utils/dailyMissions';
+import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
 import { sanitizeMapTutorialSeen } from '../utils/welcomeTour';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
@@ -486,6 +486,8 @@ export interface GameState {
   buildingQuests?: BuildingQuestState;
   /** Missões diárias dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §52): contagem por evento do dia e as já pagas. Dia novo zera na leitura. */
   dailyMissions?: DailyMissionsState;
+  /** Primeiras vezes (missões únicas, 14/10/2026, REGISTRO §53): cumpridas e resgatadas, 1× na vida. Save de quem já jogava é semeado como feito e resgatado, sem pagar. */
+  firstTimes?: FirstTimesState;
   /** Apresentações de prédio já vistas (08/10/2026, `utils/buildingIntro.ts`): ids `<área>.<lote>`. O NPC se apresenta UMA vez por
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
    *  save existente nunca re-dispara apresentação do que o jogador já usa. */
@@ -1318,6 +1320,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         dailyMissions: sanitizeDailyMissions(loadedState.dailyMissions),
+        firstTimes: sanitizeFirstTimes(loadedState.firstTimes)
+          ?? (num(loadedState.totalXP, 0) > 0 ? seedFirstTimes(bondLevelFor(num(loadedState.totalXP, 0))) : FIRST_TIMES_EMPTY),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
         mapTutorialSeen: sanitizeMapTutorialSeen(loadedState.mapTutorialSeen, loadedState as Record<string, any>, readLocal(STORAGE_KEYS.WELCOME_TOUR_SHOWN) === 'true'),
         lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
