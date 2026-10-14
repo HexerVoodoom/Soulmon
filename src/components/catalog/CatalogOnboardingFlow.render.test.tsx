@@ -104,10 +104,13 @@ describe('CatalogOnboardingFlow', () => {
     expect(screen.getByText(/definir metas/i)).toBeTruthy();
   });
 
-  it('F4 (beta-2): é uma FOLHA de baixo (ModalSheet), com o botão no rodapé e o checkbox em bronze — não um modal central', () => {
+  it('14/10/2026 (dono): é o modal CENTRALIZADO (ModalSheet placement=center), não folha de baixo; botão no rodapé do painel', () => {
     const { container } = renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={vi.fn()} />);
     expect(container.querySelector('[data-modal-backdrop]')).not.toBeNull();
-    expect((container.querySelector('[role="dialog"]') as HTMLElement).className).toContain('sm2-sheet-rise');
+    const dlg = container.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dlg.getAttribute('data-placement')).toBe('center');
+    expect(dlg.className).not.toContain('sm2-sheet-rise');
+    expect((container.querySelector('[data-modal-backdrop]') as HTMLElement).style.alignItems).toBe('center');
     // C11: sem "pular" — no 1º passo não há fechar nem seta, e o véu não fecha
     expect(container.querySelector('[data-back-arrow]')).toBeNull();
     expect(container.querySelector('[data-dismiss-on-backdrop]')!.getAttribute('data-dismiss-on-backdrop')).toBe('false');

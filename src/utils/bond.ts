@@ -57,6 +57,15 @@ import type { HabitTier } from '../types/taskModel';
 
 /** XP base por UNIDADE DE PESO DE ESFORÇO concluída (hábito = 1, tarefa = effort 1–3). */
 export const XP_PER_EFFORT = 10;
+/**
+ * 🪜 XP POR SUBTAREFA (proposta de 14/10/2026, REGISTRO §44 — o dono revisa os dois números).
+ * Cada subtarefa concluída paga `XP_STEP_FRACTION` do XP-base da tarefa/hábito dela (mínimo 1) e
+ * só as primeiras `XP_STEP_MAX_PAID` de cada tarefa (de cada hábito, por dia) pagam: o total de
+ * uma tarefa com subtarefas fica entre +10% e +50% acima da tarefa simples, nunca mais que isso.
+ * É XP do Vínculo, não peso de esforço: NÃO mexe na meta do dia (`effortWithSteps` segue mandando).
+ */
+export const XP_STEP_FRACTION = 0.1;
+export const XP_STEP_MAX_PAID = 5;
 /** ⭐ Dia perfeito (utils/dailyReset.ts). */
 export const XP_PERFECT_DAY = 50;
 /** 🛏️ Noite deitada dentro da janela de descanso (utils/restWindow.ts). */
@@ -82,6 +91,8 @@ export const XP_CHECK_IN = 10;
 export type BondEvent =
   /** Conclusão de hábito/tarefa. `weight` = PESO DE ESFORÇO (nunca contagem de itens). */
   | { kind: 'completion'; weight: number; habitTier?: HabitTier }
+  /** Uma SUBTAREFA concluída (`XP_STEP_FRACTION` do XP da conclusão). `weight` = o da tarefa-mãe. */
+  | { kind: 'stepCompletion'; weight: number; habitTier?: HabitTier }
   | { kind: 'perfectDay' }
   | { kind: 'restNight' }
   | { kind: 'dreamNew' }
@@ -112,6 +123,12 @@ export function bondXP(event: BondEvent): number {
       const weight = Math.max(0, safe(event.weight));
       const mult = 1 + (event.habitTier ? HABIT_TIER_BONUS[event.habitTier] : 0);
       return Math.max(0, Math.round(XP_PER_EFFORT * weight * mult));
+    }
+    case 'stepCompletion': {
+      const weight = Math.max(0, safe(event.weight));
+      if (weight === 0) return 0;
+      const mult = 1 + (event.habitTier ? HABIT_TIER_BONUS[event.habitTier] : 0);
+      return Math.max(1, Math.round(XP_PER_EFFORT * weight * mult * XP_STEP_FRACTION));
     }
     case 'perfectDay': return XP_PERFECT_DAY;
     case 'restNight': return XP_REST_NIGHT;
@@ -655,4 +672,28 @@ export function applyBondRewards<T extends BondRewardTarget>(
     } as T,
     delivered: pending,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. XP por subtarefa (proposta 14/10/2026, REGISTRO §44).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Paga UMA subtarefa recém-concluída, respeitando o teto por tarefa.
+ *
+ * `paidBefore` é quantas subtarefas desta tarefa (deste hábito, no dia) JÁ pagaram — o contador vive
+ * no item (`stepXpPaid`) e só SOBE, então desmarcar/remarcar, editar a lista de subtarefas ou apagar e
+ * recriar uma nunca paga duas vezes a mesma vaga. Quem chama passa só a TRANSIÇÃO (subtarefa que
+ * acabou de ir de pendente a feita, dentro do updater): idempotência por transição, como o resto do funil.
+ * Devolve o estado e o contador novo; ao bater `XP_STEP_MAX_PAID` o XP simplesmente para (teto suave).
+ */
+export function awardStepXP<T extends BondState>(
+  state: T,
+  paidBefore: number,
+  event: Extract<BondEvent, { kind: 'stepCompletion' }>,
+  dayKey: string,
+): { state: T; paid: number } {
+  const paid = Math.max(0, Math.floor(safe(paidBefore)));
+  if (paid >= XP_STEP_MAX_PAID) return { state, paid };
+  return { state: awardBondXP(state, event, dayKey), paid: paid + 1 };
 }

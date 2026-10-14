@@ -37,7 +37,7 @@ interface BillingPlugin {
    *  (QA rodada 2, 01-seguranca §8). Plugin antigo sem o método: o servidor
    *  já concedeu; a Play estorna em 3 dias e o restore reverifica. */
   acknowledge?(options: { purchaseToken: string }): Promise<void>;
-  /** Compras não consumidas/não consumíveis da conta — usado no "restaurar compras". */
+  /** Compras não consumidas/não consumíveis da conta — usado na reconciliação automática. */
   getPurchases?(options?: { productType?: 'subs' }): Promise<{ purchases: Array<{ productId: string; purchaseToken: string }> }>;
 }
 
@@ -123,6 +123,16 @@ export type PurchaseResult =
  * junto à Google. Nunca conceda benefício sem esse ok.
  */
 export async function purchase(productId: string): Promise<PurchaseResult> {
+  comprasEmCurso += 1;
+  try {
+    if (reconciliando) await reconciliando.catch(() => null);
+    return await purchaseInterno(productId);
+  } finally {
+    comprasEmCurso -= 1;
+  }
+}
+
+async function purchaseInterno(productId: string): Promise<PurchaseResult> {
   const plugin = getPlugin();
   if (!plugin) return { ok: false, reason: 'unavailable' };
   if (!(await isStoreOpen())) return { ok: false, reason: 'billing-disabled' };
@@ -202,12 +212,63 @@ async function fecharNaPlay(plugin: BillingPlugin, purchaseToken: string, consum
   }
 }
 
+/**
+ * CRÉDITO AUTOMÁTICO (REGISTRO §49) — substitui o antigo botão "Restaurar compras".
+ *
+ * Ninguém aperta nada: o app chama isto ao abrir e ao voltar ao primeiro plano.
+ * Pergunta à Play o que está PENDENTE na conta Google (compra paga cujo fluxo foi
+ * interrompido: app fechado, rede caiu, pagamento que ficou "pendente" e depois
+ * aprovou, consumo/reconhecimento que falhou) e manda cada comprovante ao
+ * SERVIDOR, que é quem decide. O servidor concede UMA vez por pedido (histórico
+ * da conta + `order_claims`), então:
+ *  - pacote de Créditos já entregue/gasto NUNCA é recreditado (a Play nem o lista
+ *    depois de consumido; se listar, o servidor responde `duplicate`);
+ *  - o desbloqueio permanente é reconhecido uma vez; reconhecer de novo é no-op;
+ *  - comprovante de OUTRA conta (ou de conta excluída) volta `order-in-use` e é
+ *    ignorado em silêncio.
+ * Silencioso: falha não incomoda ninguém; a próxima abertura tenta de novo.
+ * Devolve o entitlement mais recente quando algo foi (re)confirmado, senão `null`.
+ */
+let reconciliando: Promise<Entitlement | null> | null = null;
+/** >0 enquanto uma compra manual está de pé: a reconciliação espera, senão dois verify do MESMO pedido correriam juntos
+ *  (o voltar ao primeiro plano depois da janela da Play) e o saldo poderia ser lido/gravado em duplicidade. */
+let comprasEmCurso = 0;
+
+export function reconcilePurchases(): Promise<Entitlement | null> {
+  if (reconciliando) return reconciliando;
+  const plugin = getPlugin();
+  if (!plugin?.getPurchases || comprasEmCurso > 0) return Promise.resolve(null);
+  reconciliando = (async () => {
+    try {
+      const { purchases } = await plugin.getPurchases!();
+      let latest: Entitlement | null = null;
+      for (const p of purchases ?? []) {
+        const verified = await verifyPurchase(p.productId, p.purchaseToken);
+        if (verified.ok) {
+          latest = verified.ent;
+          await fecharNaPlay(plugin, p.purchaseToken, verified.consumeToken);
+        }
+      }
+      return latest;
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('[billing] reconcile failed:', err);
+      return null;
+    } finally {
+      reconciliando = null;
+    }
+  })();
+  return reconciliando;
+}
+
 export type RestoreResult =
   | { ok: true; ent: Entitlement }
   | { ok: false; reason: 'nothing-to-restore' | 'order-in-use' | string };
 
 /**
- * Restaurar compras — reenvia ao servidor tudo que a conta Google possui.
+ * Restaurar compras (botão MANTIDO pelo dono, REGISTRO §49) — reenvia ao servidor o que a conta Google possui.
+ * Só RECONHECE o que a conta já comprou: o servidor concede uma vez por pedido, consumível já entregue/gasto
+ * volta `duplicate`/`already-consumed` e NUNCA recredita. Compra feita pelo fluxo normal já credita sozinha
+ * (`reconcilePurchases`); este botão é o gesto manual do mesmo caminho.
  * Necessário para o usuário que reinstalou o app ou trocou de aparelho
  * recuperar o desbloqueio completo (compra não consumível).
  *
@@ -220,6 +281,8 @@ export type RestoreResult =
 export async function restorePurchases(): Promise<RestoreResult> {
   const plugin = getPlugin();
   if (!plugin?.getPurchases) return { ok: false, reason: 'unavailable' };
+  if (reconciliando) await reconciliando.catch(() => null);
+  comprasEmCurso += 1;
   try {
     const { purchases } = await plugin.getPurchases();
     let latest: Entitlement | null = null;
@@ -236,6 +299,8 @@ export async function restorePurchases(): Promise<RestoreResult> {
   } catch (err) {
     if (import.meta.env.DEV) console.warn('[billing] restore failed:', err);
     return { ok: false, reason: 'error' };
+  } finally {
+    comprasEmCurso -= 1;
   }
 }
 
@@ -274,6 +339,16 @@ export async function getSubscriptionOffer(productId: string): Promise<Subscript
 
 /** Assina. `ok:true` só depois do servidor confirmar com a Google. */
 export async function purchaseSubscription(productId: string): Promise<PurchaseResult> {
+  comprasEmCurso += 1;
+  try {
+    if (reconciliando) await reconciliando.catch(() => null);
+    return await purchaseSubscriptionInterno(productId);
+  } finally {
+    comprasEmCurso -= 1;
+  }
+}
+
+async function purchaseSubscriptionInterno(productId: string): Promise<PurchaseResult> {
   const plugin = getPlugin();
   if (!plugin) return { ok: false, reason: 'unavailable' };
   if (!(await isStoreOpen())) return { ok: false, reason: 'billing-disabled' };

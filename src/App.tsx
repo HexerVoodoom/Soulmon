@@ -18,11 +18,12 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
 import { AvisosSheet } from './components/nav/AvisosSheet';
-import { needsWelcomeTour, needsMapTutorial, MAP_TOUR_STEPS } from './utils/welcomeTour';
-import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
+import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTour';
+import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
+import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
@@ -104,7 +105,7 @@ import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeI
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
 import type { MealInviteKind } from './utils/mealRhythm';
-import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
+import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
@@ -134,6 +135,7 @@ import {
   type CreditPack, type AccountTier,
 } from './utils/monetization';
 import { fitHabitCreates } from './utils/habitCreate';
+import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
@@ -144,6 +146,9 @@ import { TermsUpdateBanner } from './components/TermsUpdateBanner';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
+import { usePresentationQueue } from './hooks/usePresentationQueue';
+import { PresentationSlot } from './components/PresentationSlot';
+import { UnlockToast } from './components/UnlockToast';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
   CEREMONY_MIN_INDEX,
@@ -183,7 +188,7 @@ const corvoAdocao = () => import('./utils/corvoAdocao');
 import { createEntitlementSync } from './utils/entitlementSync';
 import { subscribeAuthState } from './utils/auth';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
-import { purchase, reconcileSubscription } from './utils/playBilling';
+import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
 import { applySubscriptionClaim } from './utils/subscriptionShop';
 
@@ -705,6 +710,7 @@ const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
 const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
 const WelcomeTour = lazy(() => import('./components/WelcomeTour').then(m => ({ default: m.WelcomeTour })));
+const MapTutorial = lazy(() => import('./components/MapTutorial').then(m => ({ default: m.MapTutorial })));
 const BuildingIntro = lazy(() => import('./components/BuildingIntro').then(m => ({ default: m.BuildingIntro })));
 const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
 const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
@@ -981,7 +987,8 @@ export default function App() {
      aba volta ao foco (o app pode ter ficado fechado por horas); `settleEnergy` devolve a MESMA referência sem unidade nova, então não
      há re-render nem escrita à toa. O que a Home mostra (`energyStatus`) é calculado sobre o mesmo estado e as mesmas fronteiras. */
   useEffect(() => {
-    const acertar = () => setGameState(prev => tickEnergy(prev, Date.now()));
+    // A penalidade de fome (`utils/hungerPenalty.ts`) roda no MESMO tick, por timestamp do save: devolve a mesma referência sem janela nova.
+    const acertar = () => setGameState(prev => { const now = Date.now(); return applyHungerPenalty(tickEnergy(prev, now), now); });
     acertar();
     const id = setInterval(acertar, 15_000);
     const aoVoltar = () => { if (document.visibilityState === 'visible') acertar(); };
@@ -1555,9 +1562,21 @@ export default function App() {
           : { ...prev, credits: ent.credits, accountTier: ent.tier });
       },
     });
+    /* Compra paga e interrompida (app fechado, rede, pagamento pendente que aprovou) é creditada SOZINHA: ao abrir e ao
+       voltar ao primeiro plano reconcilia com a Play → servidor (concede uma vez por pedido). Sem botão (REGISTRO §49). */
+    const creditarPendentes = () => {
+      if (!saveId) return;
+      void reconcilePurchases().then(ent => {
+        if (!ent) return;
+        setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
+          ? prev
+          : { ...prev, credits: ent.credits, accountTier: ent.tier });
+      });
+    };
     sync.run('mount');
+    creditarPendentes();
     const offAuth = subscribeAuthState(() => sync.run('auth'));
-    const onVisible = () => { if (document.visibilityState === 'visible') sync.run('visible'); };
+    const onVisible = () => { if (document.visibilityState === 'visible') { sync.run('visible'); creditarPendentes(); } };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       sync.dispose();
@@ -1774,7 +1793,7 @@ export default function App() {
     if (!canCreateActivity({
       tier: tierForRules,
       kind: 'task',
-      habitCount: gameState.activities.length,
+      habitCount: contaCotaDeHabitos(gameState.activities),
       stageCap: gameState.maxActivityCap,
     })) return false;
     setGameState(prev => ({
@@ -1802,7 +1821,7 @@ export default function App() {
    * principal da tela inicial. Somá-los daria de novo a média de duas
    * populações — o defeito que o `funnel` já resolveu para o `onboarding_step`.
    */
-  const atCapForDemo = tierForRules === 'demo' && gameState.activities.length >= activityCap;
+  const atCapForDemo = tierForRules === 'demo' && contaCotaDeHabitos(gameState.activities) >= activityCap;
   useEffect(() => {
     if (!atCapForDemo || !createModalOpen) return;
     track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.create_modal });
@@ -1897,6 +1916,28 @@ export default function App() {
     ),
     [gameState.activities, gameState.habitRhythms, (gameState as any).lastCatalogLevelInviteDayKey, catalogLoaded],
   );
+  /** Recusar o convite de nível — o caminho do botão E do "voltar" da fila (`usePresentationQueue`). */
+  const declineCatalogLevelInvite = () => {
+    const cand = catalogLevelInviteCandidate;
+    if (!cand) return;
+    setGameState(prev => {
+      const hoje = dayKeyOf(new Date());
+      const nowIso = new Date().toISOString();
+      const alvo = cand.activity;
+      const isDown = cand.suggestion === 'down';
+      return {
+        ...prev,
+        lastCatalogLevelInviteDayKey: hoje,
+        // Recusar "subir" não inicia cooldown (nada de errado em oferecer
+        // de novo assim que a constância seguir alta); recusar "descer"
+        // inicia o cooldown de LEVEL_DOWN_COOLDOWN_DAYS — é o que impede
+        // o convite de "você piorou" reaparecer todo dia.
+        activities: isDown
+          ? (prev.activities ?? []).map((a: any) => a.id === alvo.id ? { ...a, catalogLevelDeclinedAt: nowIso } : a)
+          : prev.activities,
+      } as any;
+    });
+  };
 
   // F3 do catálogo de atividades (docs/PLANO-CATALOGO-ATIVIDADES.md): o
   // convite de onboarding roda no MENOR grau de prioridade da fila — depois
@@ -1959,22 +2000,21 @@ export default function App() {
      o replay de Configurações o chama de novo sem gravar nada. Funciona na demo. */
   const [welcomeTourShown, setWelcomeTourShown] = useState(() => readFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN));
   const [welcomeTourReplay, setWelcomeTourReplay] = useState(false);
-  const basicsTourOpen = welcomeTourReplay || needsWelcomeTour({ shown: welcomeTourShown, jaConcluiuAlgo });
-  /* O TUTORIAL DO MAPA (14/10/2026): o MESMO componente e o MESMO ponto da fila, com os cartões do mapa. Abre UMA vez, na
-     1ª abertura do Mapa (`mapTutorialSeen` no SAVE: visto OU pulado grava `true`), depois do tour básico. */
-  const mapTourOpen = needsMapTutorial({ seen: gameState.mapTutorialSeen, onMap: currentView === 'map', welcomeTourOpen: basicsTourOpen });
-  const welcomeTourOpen = basicsTourOpen || mapTourOpen;
+  const welcomeTourOpen = welcomeTourReplay || needsWelcomeTour({ shown: welcomeTourShown, jaConcluiuAlgo });
+  /* O TUTORIAL DO MAPA (14/10/2026): um item PRÓPRIO da fila (`mapTutorial`, logo depois da apresentação de prédio), na
+     `NpcSequence` (tela cheia, o corvo/NPC da área e toque para avançar). Abre UMA vez, na 1ª abertura do Mapa, depois do
+     tour básico. O "visto" (`mapTutorialSeen` no SAVE) é gravado AO MOSTRAR — como todo item da fila —, então o
+     instantâneo `mapTutorialShown` mantém o item na tela depois que a flag deixa de pedi-lo. Visto OU pulado: nunca volta. */
+  const mapTutorialWanted = needsMapTutorial({ seen: gameState.mapTutorialSeen, onMap: currentView === 'map', welcomeTourOpen });
+  const [mapTutorialShown, setMapTutorialShown] = useState(false);
+  const mapTutorialOpen = mapTutorialWanted || mapTutorialShown;
   const handleWelcomeTourDone = useCallback(() => {
-    if (mapTourOpen) {
-      setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
-      return;
-    }
     if (!welcomeTourReplay) {
       writeFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN, true, { silent: true });
       setWelcomeTourShown(true);
     }
     setWelcomeTourReplay(false);
-  }, [welcomeTourReplay, mapTourOpen, setGameState]);
+  }, [welcomeTourReplay]);
   const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
   /* LEVEL UP (11/10/2026): o nível é DERIVADO (`bondLevelFor(totalXP)`); o save guarda só o último
      CELEBRADO. Save sem o campo recebe a linha de base (o nível de agora, sem celebrar o passado).
@@ -1988,31 +2028,73 @@ export default function App() {
   const handleLevelUpDone = useCallback((celebrated: number) => {
     setGameState(prev => applyLevelUpCelebrated(prev, celebrated)); // registra o nível E restaura energia + HP da masmorra (1× por celebração)
   }, [setGameState]);
-  /* A APRESENTAÇÃO DO PRÉDIO NOVO (`components/BuildingIntro`, 08/10/2026): quando o Vínculo abre um prédio, o NPC dele se
-     apresenta. Segundo da fila, logo depois do tour — e DEPOIS do display de Level Up (`utils/buildingIntro.ts` ›
-     `BUILDING_INTRO_AFTER`). Um por vez: o pendente é "aberto no Vínculo e ainda não visto", sempre o primeiro da ordem.
-     Só numa tela calma (Home ou Mapa), nunca por cima de um jogo.
-     O Level Up (`LevelUpOverlay`) está na fila: enquanto ele estiver pendente/aberto a apresentação espera. */
-  const levelUpOpen = Boolean(levelUpEvent);
-  const pendingIntros = useMemo(
-    () => (gameState.buildingIntrosSeen === undefined ? [] : pendingBuildingIntros(gameState.buildingIntrosSeen, bondLevelFor(gameState.totalXP ?? 0))),
-    [gameState.buildingIntrosSeen, gameState.totalXP],
-  );
-  const buildingIntroOpen = buildingIntroReady({ pending: pendingIntros, levelUpOpen, calmView: currentView === 'home' || currentView === 'map' });
-  const interstitial: 'welcomeTour' | 'buildingIntro' | 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'levelUp' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
-    welcomeTourOpen ? 'welcomeTour'
-    : buildingIntroOpen ? 'buildingIntro'
-    : triageTasks ? 'triage'
-      : showDailyReport && gameState.lastDayReport ? 'dailyReport'
-        : checkInPlanData ? 'checkIn'
-          : grovePendente ? 'groveMilestone'
-          : levelUpEvent ? 'levelUp'
-          : morningDream ? 'dream'
-            : nightmareOpen ? 'nightmare'
-              : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
-                : catalogLevelInviteCandidate ? 'catalogLevelInvite'
-                  : needsRestSetup ? 'restSetup'
-                    : 'welcome';
+  /* FILA CENTRAL DE APRESENTAÇÃO (14/10/2026, `utils/presentationQueue.ts` + `hooks/usePresentationQueue.ts`;
+     inventário em `docs/FILA-DE-MODAIS.md`). UM item visível por vez, na ORDEM de `PRESENTATION_ORDER`; quem está na tela
+     não é expulso por um mais prioritário que fica pronto depois. Cada evento é marcado como VISTO ao ser MOSTRADO (não ao
+     fechar), por isso fechar/abrir o app não repete nada. O que já está na tela mora num instantâneo (`levelUpShown`,
+     `introShown`), porque a marca de "visto" faz o evento de origem sumir. */
+  const [levelUpShown, setLevelUpShown] = useState<NonNullable<typeof levelUpEvent> | null>(null);
+  const [introShown, setIntroShown] = useState<readonly BuildingId[]>([]);
+  const levelUpOpen = Boolean(levelUpEvent) || levelUpShown !== null;
+  /* 14/10/2026 (dono): prédio desbloqueado NÃO abre modal — vira um balãozinho ("<Prédio> desbloqueado em <local>", todos os do
+     MESMO level-up num só) que entra na fila como item leve (`unlockToast`). A apresentação com o NPC grande (`BuildingIntro`)
+     só dispara na PRIMEIRA ENTRADA em cada prédio (`visitarPredio`), marcada em `buildingIntrosSeen` (save antigo: semeado). */
+  const [unlockToastIds, setUnlockToastIds] = useState<readonly BuildingId[]>([]);
+  const presentation = usePresentationQueue({
+    ready: {
+      welcomeTour: welcomeTourOpen,
+      triage: Boolean(triageTasks),
+      levelUp: levelUpOpen,
+      dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
+      buildingIntro: introShown.length > 0,
+      mapTutorial: mapTutorialOpen,
+      unlockToast: unlockToastIds.length > 0,
+      catalogOnboarding: needsCatalogOnboarding(gameState as any),
+      checkIn: Boolean(checkInPlanData),
+      evolveTask: evolveModalStage !== null && evolutionCeremony === null,
+      groveMilestone: Boolean(grovePendente),
+      dream: Boolean(morningDream),
+      nightmare: nightmareOpen,
+      catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
+      restSetup: needsRestSetup,
+    },
+    // ao MOSTRAR: grava o "visto" (a fila chama uma vez por entrada na tela)
+    onShow: id => {
+      if (id === 'levelUp' && levelUpEvent) {
+        setLevelUpShown(levelUpEvent);
+        handleLevelUpDone(levelUpEvent.to);
+        const abertos = buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to);
+        if (abertos.length > 0) setUnlockToastIds(abertos);
+      } else if (id === 'mapTutorial') {
+        setMapTutorialShown(true);
+        setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
+      } else if (id === 'dailyReport' && gameState.lastDayReport) {
+        writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
+      }
+    },
+    // voltar do Android / erro de render / chunk que não carregou: fecha o item pelo caminho "pular" do dono dele
+    onDismiss: id => {
+      switch (id) {
+        case 'welcomeTour': handleWelcomeTourDone(); break;
+        case 'triage': setTriageTasks(null); break;
+        case 'levelUp': setLevelUpShown(null); break;
+        case 'dailyReport': closeDailyReport(); break;
+        case 'buildingIntro': setIntroShown([]); break;
+        case 'mapTutorial': setMapTutorialShown(false); break;
+        case 'unlockToast': setUnlockToastIds([]); break;
+        case 'checkIn': handleCheckInSkip(); break;
+        case 'evolveTask': setEvolveModalStage(null); break;
+        case 'groveMilestone': acknowledgeGroveMilestone(); break;
+        case 'dream': setMorningDream(null); break;
+        case 'nightmare': closeNightmare(); break;
+        case 'catalogLevelInvite': declineCatalogLevelInvite(); break;
+        case 'restSetup': closeRestSetup(); break;
+        default: break; // catalogOnboarding: sem "pular" por decisão do dono (C11); o erro de render cai no `fail`
+      }
+    },
+  });
+  /** Quem está na tela agora (`'welcome'` = nenhum intersticial). */
+  const interstitial = presentation.current;
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
@@ -2313,6 +2395,8 @@ export default function App() {
 
     // Allow checking without confirmation
     setGameState(prev => {
+        // Duplo toque antes do re-render: a etapa já feita não paga de novo (nem refaz nada).
+        if (prev.activities.find(a => a.id === activityId)?.steps.find(s => s.id === stepId)?.completed) return prev;
         const updatedActivities = prev.activities.map(act =>
           act.id === activityId
             ? {
@@ -2363,12 +2447,20 @@ export default function App() {
           newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
         }
 
+        const stepDayKey = playerDayKey(new Date(), prev.playerDayTz);
+        // 🪜 XP por etapa (REGISTRO §44): as etapas do hábito voltam desmarcadas todo dia, então o
+        // contador `stepXpPaid` vale POR DIA (`stepXpDay`); editar a lista no meio do dia não abre vaga nova.
+        const antesAtividade = prev.activities.find(a => a.id === activityId);
+        const pagasHoje = antesAtividade?.stepXpDay === stepDayKey ? (antesAtividade.stepXpPaid ?? 0) : 0;
+        const comEtapa = awardStepXP(
+          { ...prev, activities: updatedActivities, activityStats: newActivityStats, foodInventory: newFoodInventory, activityLog: newActivityLog } as GameState,
+          pagasHoje,
+          { kind: 'stepCompletion', weight: HABIT_WEIGHT, habitTier: habitTier(prev.habitRhythms?.[activityId]?.totalDone ?? 0) },
+          stepDayKey,
+        );
         const next: GameState = {
-          ...prev,
-          activities: updatedActivities,
-          activityStats: newActivityStats,
-          foodInventory: newFoodInventory,
-          activityLog: newActivityLog,
+          ...comEtapa.state,
+          activities: comEtapa.state.activities.map(a => (a.id === activityId ? { ...a, stepXpPaid: comEtapa.paid, stepXpDay: stepDayKey } : a)),
         };
 
         // Um hábito de etapas fecha na ÚLTIMA etapa — a constância dele precisa
@@ -2854,7 +2946,25 @@ export default function App() {
     if (!task || task.completed || !step || step.completed) return;
     const fechaTudo = (task.steps ?? []).every(s => s.completed || s.id === stepId);
     playTaskComplete();
-    setGameState(prev => ({ ...prev, tasks: completeTaskStep(prev.tasks, taskId, stepId) }));
+    setGameState(prev => {
+      const tasks = completeTaskStep(prev.tasks, taskId, stepId);
+      if (tasks === prev.tasks) return prev; // já feita: nada a pagar (idempotente no StrictMode)
+      // 🪜 XP por subtarefa (REGISTRO §44): paga na TRANSIÇÃO pendente → feita, uma vez por vaga.
+      // O contador `stepXpPaid` só sobe (teto por tarefa); save antigo nasce com as já feitas contadas.
+      const antes = prev.tasks.find(t => t.id === taskId);
+      if (!antes) return { ...prev, tasks };
+      const jaFeitas = (antes.steps ?? []).filter(st => st.completed).length;
+      const pago = awardStepXP(
+        { ...prev, tasks },
+        antes.stepXpPaid ?? jaFeitas,
+        { kind: 'stepCompletion', weight: effortOf(antes) },
+        playerDayKey(new Date(), prev.playerDayTz),
+      );
+      return {
+        ...pago.state,
+        tasks: pago.state.tasks.map(t => (t.id === taskId ? { ...t, stepXpPaid: pago.paid } : t)),
+      };
+    });
     if (fechaTudo) handleToggleTask(taskId);
   };
 
@@ -3469,6 +3579,19 @@ export default function App() {
     onAddPerfectDays: (n: number) => { void gmTools().then(m => setGameState(prev => m.gmAddPerfectDays(prev, n))); },
   }), [petIsCorvo, gameState.evolutionStage, setGameState, careEvent, handleCareEventComplete]);
 
+  /* Aviso calmo da penalidade de fome: fora do updater (footgun 6), só quando o que o resumo vai contar SOBE nesta sessão (a referência
+     inicial é a do primeiro render: reabrir o app não repete o aviso). Voz de produto: diz o que aconteceu e o que ajuda, sem cobrança. */
+  const fomeAvisadaRef = useRef(gameState.hungerPenalty?.unreported ?? 0);
+  useEffect(() => {
+    const atual = gameState.hungerPenalty?.unreported ?? 0;
+    if (atual > fomeAvisadaRef.current) {
+      toast(language === 'pt-BR'
+        ? 'Seu Soulmon ficou muito tempo com fome e perdeu meio coração. Uma comidinha e ele se recupera.'
+        : 'Your Soulmon went hungry for a long while and lost half a heart. A little snack and it bounces back.');
+    }
+    fomeAvisadaRef.current = atual;
+  }, [gameState.hungerPenalty?.unreported, language]);
+
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
   const poopDrainWarnedAtRef = useRef(0);
@@ -3677,21 +3800,6 @@ export default function App() {
     setPendingSheet({ area: area as AreaId, lot });
     goTo(areaView(area as AreaId));
   }, [goTo]);
-
-  /* "Depois" e "Ir lá" gravam o MESMO "visto" (a apresentação não volta, não cobra). "Ir lá" abre a área com a folha do
-     lote aberta — direto, sem passar por `buildingDestination`, que mandaria o Caderno ao menu de Missões. */
-  const markIntroSeen = useCallback((id: BuildingId) => {
-    setGameState(prev => {
-      const seen = markBuildingIntroSeen(prev.buildingIntrosSeen, id);
-      return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen as string[] };
-    });
-  }, [setGameState]);
-  const handleBuildingIntroGo = useCallback((id: BuildingId) => {
-    markIntroSeen(id);
-    const [area, lot] = id.split('.');
-    setPendingSheet({ area: area as AreaId, lot });
-    goTo(areaView(area as AreaId));
-  }, [markIntroSeen, goTo]);
 
   const goBack = useCallback(() => {
     if (viewBack(currentViewRef.current) === null) return;
@@ -4809,6 +4917,23 @@ export default function App() {
     }
     setShowDailyReport(false);
   }, [gameState.lastDayReport]);
+  /** Fechar o resumo do dia (botão, ✕, Esc, voltar do Android ou falha): o mesmo caminho para todos. */
+  const closeDailyReport = () => {
+    /* WP4.8 — o marco é registrado ao FECHAR: se fosse ao abrir, um relatório reaberto no mesmo dia gastaria a memória sem ela ter
+       sido vista. `markMemoryShown` é idempotente. */
+    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+    const marco = memoryToShow({
+      daysWithPet: daysTogether(gameState.bornAt, hoje),
+      shown: gameState.memoriesShown,
+    });
+    if (marco !== null) {
+      setGameState(prev => ({
+        ...prev,
+        memoriesShown: markMemoryShown(prev.memoriesShown, marco),
+      }));
+    }
+    handleCloseDailyReport();
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // OS RITUAIS (docs/PLANO-TAREFAS.md §2.4) — check-in, triagem, sono, semana
@@ -5817,6 +5942,16 @@ export default function App() {
   const visitarPredio = useCallback((id: BuildingId) => {
     /* 8.3: o prédio NÃO listado paga o material e a peça do Soulsmith na própria entrada (`applyBuildingEntry`) — não há tela de Resgatar para ele. */
     setGameState(prev => applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id));
+    /* 14/10/2026: a PRIMEIRA entrada no prédio abre a apresentação do NPC (uma vez só). Marca ao MOSTRAR; save sem o campo
+       não apresenta nada (migração por construção — `sanitizeBuildingIntrosSeen` semeia os já abertos). */
+    const vistos = gameStateRef.current.buildingIntrosSeen;
+    if (vistos !== undefined && isBuildingId(id) && !vistos.includes(id)) {
+      setIntroShown([id]);
+      setGameState(prev => {
+        const seen = markBuildingIntroSeen(prev.buildingIntrosSeen, id);
+        return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen as string[] };
+      });
+    }
   }, []);
 
   /** Resgata o material do prédio. Idempotente: a recusa é reconferida sobre o `prev` (resgate duplo não paga 2×). */
@@ -5957,7 +6092,7 @@ export default function App() {
         <GameTutorialFlow
           language={language}
           maxActivities={activityCap}
-          existingActivitiesCount={gameState.activities.length}
+          existingActivitiesCount={contaCotaDeHabitos(gameState.activities)}
           /* WP1.4 — o que a pessoa escreveu volta como a PRIMEIRA área da
              lista. Casamento por palavra-chave, no aparelho: o texto não sai
              daqui (decisão D8, e `_redact.js` já declarava a mesma linha). */
@@ -6632,6 +6767,7 @@ export default function App() {
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
                 onLayerChange={setAreaLayerOpen}
+                onGoToMap={() => goTo('map')}
                 ocupado={{ naMasmorra, missaoFora: isMissionAway(guildMission, Date.now()), onBusy: abrirAvisoMasmorra }}
                 language={language}
                 ownership={{
@@ -7716,10 +7852,10 @@ export default function App() {
         <div style={{ display: 'grid', gap: 10 }}>
           <button type="button" data-create-choice="habit" style={sm2Button('primary')} onClick={() => {
             setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
-          }}>{language === 'pt-BR' ? 'Novo hábito' : 'New habit'}</button>
+          }}>{language === 'pt-BR' ? 'Novo hábito (todo dia)' : 'New habit (every day)'}</button>
           <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
             setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
-          }}>{language === 'pt-BR' ? 'Nova tarefa' : 'New task'}</button>
+          }}>{language === 'pt-BR' ? 'Nova tarefa (pontual ou em dias específicos)' : 'New task (one-off or on specific days)'}</button>
         </div>
       </ModalSheet>
 
@@ -7729,7 +7865,7 @@ export default function App() {
           initialKind={createInitialKind}
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
-          activitiesCount={gameState.activities.length}
+          activitiesCount={contaCotaDeHabitos(gameState.activities)}
           activitiesCap={activityCap}
           /* O convite de compra so faz sentido para quem PODE comprar, e so
              quando o teto que morde e o do modo gratis. Um pagante no teto do
@@ -7856,7 +7992,7 @@ export default function App() {
           sentido. */}
       <Suspense fallback={null}>
         <EvolveTaskModal
-        isOpen={evolveModalStage !== null && evolutionCeremony === null}
+        isOpen={interstitial === 'evolveTask'}
         onClose={() => setEvolveModalStage(null)}
         onCreateTask={() => { setEvolveModalStage(null); setCreateModalOpen(true); }}
         requiredTasks={FORM_REQUIREMENTS[getStageLevel(evolveModalStage ?? gameState.evolutionStage)].required}
@@ -7909,23 +8045,31 @@ export default function App() {
       />
       {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
       {interstitial === 'welcomeTour' && (
-        <Suspense fallback={null}>
-          <WelcomeTour key={mapTourOpen ? 'map' : 'basics'} language={language} onDone={handleWelcomeTourDone} steps={mapTourOpen ? MAP_TOUR_STEPS : undefined} />
-        </Suspense>
+        <PresentationSlot id="welcomeTour" onFail={() => presentation.fail('welcomeTour')} fallback={null}>
+          <WelcomeTour language={language} onDone={handleWelcomeTourDone} />
+        </PresentationSlot>
       )}
-      {interstitial === 'buildingIntro' && pendingIntros[0] && (
-        <Suspense fallback={null}>
-          <BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]} language={language} onGo={handleBuildingIntroGo} onLater={markIntroSeen} />
-        </Suspense>
+      {interstitial === 'buildingIntro' && introShown.length > 0 && (
+        <PresentationSlot id="buildingIntro" onFail={() => presentation.fail('buildingIntro')} fallback={null}>
+          <BuildingIntro ids={introShown} language={language} onFinish={() => setIntroShown([])} />
+        </PresentationSlot>
       )}
-      {/* LEVEL UP — intersticial: depois do marco do Bosque, antes do sonho. z 300, só sai ao toque. */}
-      {interstitial === 'levelUp' && levelUpEvent && (
-        <Suspense fallback={null}>
-          <LevelUpOverlay event={levelUpEvent} language={language} spriteUrl={minhaCriaturaUrl} onDone={handleLevelUpDone} />
-        </Suspense>
+      {/* LEVEL UP — o mais prioritário depois do tour e da triagem. z 300, só sai ao toque. */}
+      {interstitial === 'mapTutorial' && (
+        <PresentationSlot id="mapTutorial" onFail={() => presentation.fail('mapTutorial')} fallback={null}>
+          <MapTutorial language={language} onFinish={() => setMapTutorialShown(false)} />
+        </PresentationSlot>
+      )}
+      {interstitial === 'unlockToast' && unlockToastIds.length > 0 && (
+        <UnlockToast ids={unlockToastIds} language={language} onDone={() => setUnlockToastIds([])} />
+      )}
+      {interstitial === 'levelUp' && levelUpShown && (
+        <PresentationSlot id="levelUp" onFail={() => presentation.fail('levelUp')} fallback={null}>
+          <LevelUpOverlay event={levelUpShown} language={language} spriteUrl={minhaCriaturaUrl} onDone={() => setLevelUpShown(null)} />
+        </PresentationSlot>
       )}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="dailyReport" onFail={() => presentation.fail('dailyReport')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DailyReportModal
           report={gameState.lastDayReport}
           adventure={aventuraDaNoite}
@@ -7934,23 +8078,7 @@ export default function App() {
           maxHearts={gameState.maxHealthPoints}
           heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
           onHeartsAnimSeen={handleHeartsAnimSeen}
-          onClose={() => {
-            /* WP4.8 — o marco é registrado ao FECHAR: se fosse ao abrir, um
-               relatório reaberto no mesmo dia gastaria a memória sem ela ter
-               sido vista. `markMemoryShown` é idempotente. */
-            const hoje = playerDayKey(new Date(), gameState.playerDayTz);
-            const marco = memoryToShow({
-              daysWithPet: daysTogether(gameState.bornAt, hoje),
-              shown: gameState.memoriesShown,
-            });
-            if (marco !== null) {
-              setGameState(prev => ({
-                ...prev,
-                memoriesShown: markMemoryShown(prev.memoriesShown, marco),
-              }));
-            }
-            handleCloseDailyReport();
-          }}
+          onClose={closeDailyReport}
           onRecoverHearts={handleRecoverHearts}
           moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
           onPickMood={handlePickMood}
@@ -7992,12 +8120,12 @@ export default function App() {
           spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
       {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem
           culpa. Posição na fila: depois do relatório diário. */}
       {interstitial === 'checkIn' && checkInPlanData && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="checkIn" onFail={() => presentation.fail('checkIn')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <MorningCheckIn
           open
           plan={checkInPlanData}
@@ -8020,14 +8148,14 @@ export default function App() {
           onConfirm={handleCheckInConfirm}
           onSkip={handleCheckInSkip}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
 
       {/* MARCO DO BOSQUE — a irmã da cerimônia de hábito: espera o gesto, z 300,
           movimento reduzido reduz o movimento e NUNCA a pausa. Posição na fila:
           depois de relatório e check-in, antes do sonho. Uma vez por estágio novo. */}
       {interstitial === 'groveMilestone' && grovePendente && grove?.pending && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="groveMilestone" onFail={() => presentation.fail('groveMilestone')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <GroveMilestoneCeremony
           stage={grovePendente}
           spriteUrl={minhaCriaturaUrl}
@@ -8036,13 +8164,13 @@ export default function App() {
           language={language}
           onDone={acknowledgeGroveMilestone}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
 
       {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. Topo da
           fila de intersticiais: é a única aberta por toque do usuário. */}
       {interstitial === 'triage' && triageTasks && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="triage" onFail={() => presentation.fail('triage')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <TriagePile
           open
           tasks={triageTasks}
@@ -8052,12 +8180,12 @@ export default function App() {
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
 
       {/* G8 — o convite do sono (sono automático + janela), uma vez só. */}
       {interstitial === 'restSetup' && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="restSetup" onFail={() => presentation.fail('restSetup')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <RestSetupModal
           language={language}
           now={new Date()}
@@ -8065,12 +8193,12 @@ export default function App() {
           onChangeWindow={handleChangeRestWindow}
           onClose={closeRestSetup}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
 
       {/* O SONHO DA MANHÃ — recompensa, nunca veredito. Só de manhã. */}
       {interstitial === 'dream' && morningDream && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="dream" onFail={() => presentation.fail('dream')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <MorningDream
           open
           dream={morningDream.dream}
@@ -8090,14 +8218,14 @@ export default function App() {
               : {};
           })()}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
 
       {/* O PESADELO DA MANHÃ — a face jogável da mesma noite do sonho. Entra
           DEPOIS dele (posição na fila), e nunca à noite. Perder não custa nada,
           e a tela diz isso. */}
       {interstitial === 'nightmare' && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="nightmare" onFail={() => presentation.fail('nightmare')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         <NightmareBattle
           open
           wave={nightmareWave}
@@ -8117,7 +8245,7 @@ export default function App() {
           onLose={markNightmareFought}
           onClose={closeNightmare}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
 
       {/* ÚLTIMO da fila: ele mesmo decide se tem algo a pedir (instalar a PWA /
@@ -8129,7 +8257,7 @@ export default function App() {
           adiável é mais barato que dois diálogos empilhados com dois
           focus-traps. */}
       {interstitial === 'catalogOnboarding' && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="catalogOnboarding" onFail={() => presentation.fail('catalogOnboarding')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <CatalogOnboardingFlow
           language={language}
           existingActivities={gameState.activities as ReadonlyArray<{ catalogId?: string | null }>}
@@ -8148,10 +8276,10 @@ export default function App() {
             setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any);
           }}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
       {interstitial === 'catalogLevelInvite' && catalogLevelInviteCandidate && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="catalogLevelInvite" onFail={() => presentation.fail('catalogLevelInvite')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <CatalogLevelInviteModal
           isOpen
           direction={catalogLevelInviteCandidate.suggestion === 'up' ? 'up' : 'down'}
@@ -8170,28 +8298,12 @@ export default function App() {
                 : a),
             } as any;
           })}
-          onDecline={() => setGameState(prev => {
-            const hoje = dayKeyOf(new Date());
-            const nowIso = new Date().toISOString();
-            const alvo = catalogLevelInviteCandidate.activity;
-            const isDown = catalogLevelInviteCandidate.suggestion === 'down';
-            return {
-              ...prev,
-              lastCatalogLevelInviteDayKey: hoje,
-              // Recusar "subir" não inicia cooldown (nada de errado em oferecer
-              // de novo assim que a constância seguir alta); recusar "descer"
-              // inicia o cooldown de LEVEL_DOWN_COOLDOWN_DAYS — é o que impede
-              // o convite de "você piorou" reaparecer todo dia.
-              activities: isDown
-                ? (prev.activities ?? []).map((a: any) => a.id === alvo.id ? { ...a, catalogLevelDeclinedAt: nowIso } : a)
-                : prev.activities,
-            } as any;
-          })}
+          onDecline={declineCatalogLevelInvite}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
       {interstitial === 'welcome' && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        <PresentationSlot id="welcome" onFail={() => presentation.fail('welcome')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <WelcomePromptModal
           language={language}
           notificationsEnabled={notificationsEnabled}
@@ -8201,7 +8313,7 @@ export default function App() {
           notificationsUnlocked={jaConcluiuAlgo}
           onEnableNotifications={handleToggleNotifications}
         />
-        </Suspense>
+        </PresentationSlot>
       )}
       <Suspense fallback={null}><XpGainDisplay totalXP={gameState.totalXP} language={language} demo={isDemoMode(gameState)} /></Suspense>
       <Toaster richColors position="top-right" />

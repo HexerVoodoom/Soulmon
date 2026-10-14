@@ -3,14 +3,14 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { RitualDialog, ritualLabel, ritualTitle } from './ritual/RitualKit';
 import { sm2Button, sm2Text } from './form/FormKit';
 import { NpcSpeech } from './nav/NpcSpeech';
-import { tourGuideName, TOUR_STEPS, tourText, type TourStep } from '../utils/welcomeTour';
+import { tourGuideName, TOUR_STEPS, tourText } from '../utils/welcomeTour';
 import type { Language } from '../utils/i18n';
 
 /**
  * O TOUR DE BOAS-VINDAS DO CORVO (07/10/2026, pedido do dono).
  *
- * Seis cartões: o básico (tarefas → cantos da Home). O mapa (a função de cada prédio) é o MESMO componente com
- * `steps={MAP_TOUR_STEPS}`, aberto uma vez na primeira abertura do Mapa (14/10/2026).
+ * Seis cartões: o básico (tarefas → cantos da Home). O mapa (a função de cada prédio) NÃO é mais daqui: é o `MapTutorial`
+ * (14/10/2026), item próprio da fila, aberto uma vez na primeira abertura do Mapa.
  * É um INTERSTICIAL (`const interstitial` do `App.tsx`, PRIMEIRO da fila: vem
  * antes do check-in e do priming; z-200 do `RitualDialog`). Regras:
  *  · "Skip" fica visível em todo passo e o Escape faz o mesmo — pular NUNCA
@@ -25,16 +25,10 @@ import type { Language } from '../utils/i18n';
  */
 export type WelcomeTourEnd = 'finished' | 'skipped';
 
-export function WelcomeTour({ language, onDone, steps = TOUR_STEPS }: {
-  language: Language;
-  onDone: (how: WelcomeTourEnd) => void;
-  /** Os cartões. Padrão = o tour de boas-vindas; o tutorial do mapa (`MAP_TOUR_STEPS`, 14/10/2026) reusa o MESMO componente. */
-  steps?: readonly TourStep[];
-}) {
+export function WelcomeTour({ language, onDone }: { language: Language; onDone: (how: WelcomeTourEnd) => void }) {
   const [i, setI] = useState(0);
-  const last = steps.length - 1;
-  const step = steps[i];
-  const isPt = language === 'pt-BR';
+  const last = TOUR_STEPS.length - 1;
+  const step = TOUR_STEPS[i];
 
   const skip = useCallback(() => onDone('skipped'), [onDone]);
   const next = useCallback(() => {
@@ -49,10 +43,10 @@ export function WelcomeTour({ language, onDone, steps = TOUR_STEPS }: {
       <div data-welcome-tour data-step={step.id} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <p style={ritualLabel} data-wt-progress>
-            {step.part === 1 ? (isPt ? 'O básico' : 'The basics') : (isPt ? 'O mapa' : 'The map')} · {i + 1} / {steps.length}
+            {step.part === 1 ? 'The basics' : 'The map'} · {i + 1} / {TOUR_STEPS.length}
           </p>
           <button type="button" onClick={skip} data-wt-skip style={sm2Button('quiet', false, 'sm')}>
-            {isPt && step.part === 2 ? 'Pular' : 'Skip'}
+            Skip
           </button>
         </div>
 
@@ -76,7 +70,7 @@ export function WelcomeTour({ language, onDone, steps = TOUR_STEPS }: {
           <ul data-wt-areas style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {step.areas.map(a => (
               <li
-                key={a.name.en + a.line.en}
+                key={a.name.en}
                 style={{
                   padding: '8px 12px',
                   border: '1px solid var(--sm2-line, var(--sm2-muted))',
@@ -93,11 +87,11 @@ export function WelcomeTour({ language, onDone, steps = TOUR_STEPS }: {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
           {i > 0 && (
             <button type="button" onClick={back} data-wt-back style={sm2Button('ghost', false, 'sm')}>
-              {isPt && step.part === 2 ? 'Voltar' : 'Back'}
+              Back
             </button>
           )}
           <button type="button" onClick={next} data-wt-next style={{ ...sm2Button('primary'), flex: 1 }}>
-            {i === last ? (isPt && step.part === 2 ? 'Vamos lá' : "Let's go") : (isPt && step.part === 2 ? 'Próximo' : 'Next')}
+            {i === last ? "Let's go" : 'Next'}
           </button>
         </div>
       </div>

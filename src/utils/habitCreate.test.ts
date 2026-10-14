@@ -56,3 +56,23 @@ describe('fitHabitCreates — o teto é reconferido sobre o estado recebido', ()
     expect(fitHabitCreates(estado(0, 20), ['a', 'b', 'c'], 'paid')).toEqual(['a', 'b', 'c']);
   });
 });
+
+describe('cota do modo grátis — só hábito diário conta (dono, 14/10/2026)', () => {
+  const diario = { schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] } };
+  const agendada = { schedule: { kind: 'weekdays', days: [1, 3] } };
+
+  it('tarefa agendada existente não ocupa vaga', () => {
+    const cap = activityCapFor('demo', 20);
+    const s: HabitCapState = {
+      activities: [...Array.from({ length: cap - 1 }, () => diario), agendada, agendada, agendada],
+      maxActivityCap: 20,
+    };
+    expect(fitHabitCreates(s, [diario, diario], 'demo')).toEqual([diario]);
+  });
+
+  it('tarefa agendada nova entra com a cota cheia; o lote para no primeiro hábito que não cabe', () => {
+    const cap = activityCapFor('demo', 20);
+    const s: HabitCapState = { activities: Array.from({ length: cap }, () => diario), maxActivityCap: 20 };
+    expect(fitHabitCreates(s, [agendada, diario, agendada], 'demo')).toEqual([agendada]);
+  });
+});

@@ -105,14 +105,6 @@ describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
     }
     expect(MAP_TOUR_STEPS.find(s => s.id === 'map-laboratorio')!.title.pt).toBe(areaLabel('laboratorio', true));
   });
-  it('renderiza em PT-BR com os botões em português e termina como finished', () => {
-    const onDone = vi.fn();
-    const { container } = render(<WelcomeTour language="pt-BR" steps={MAP_TOUR_STEPS} onDone={onDone} />);
-    expect(container.textContent).toContain('Este é o mapa');
-    expect((container.querySelector('[data-wt-skip]') as HTMLElement).textContent).toBe('Pular');
-    for (let i = 0; i < MAP_TOUR_STEPS.length; i++) fireEvent.click(container.querySelector('[data-wt-next]')!);
-    expect(onDone).toHaveBeenCalledWith('finished');
-  });
   it('a Masmorra está listada e dita como aberta desde o primeiro dia', () => {
     const exp = MAP_TOUR_STEPS.find(s => s.id === 'map-exploracao')!;
     expect(exp.areas!.some(r => r.name.en === 'Dungeon')).toBe(true);
@@ -182,9 +174,12 @@ describe('WelcomeTour — conteúdo', () => {
 
 describe('fiação do tutorial do mapa no App (guard de fonte)', () => {
   const app = readFileSync('src/App.tsx', 'utf8');
-  it('mesmo componente e mesmo ponto da fila; visto OU pulado grava mapTutorialSeen no SAVE, num updater puro', () => {
+  it('item PRÓPRIO da fila (mapTutorial) na NpcSequence — sem sistema paralelo; "visto" gravado AO MOSTRAR, num updater puro', () => {
     expect((app.match(/<WelcomeTour /g) ?? [])).toHaveLength(1);
-    expect(app).toContain("steps={mapTourOpen ? MAP_TOUR_STEPS : undefined}");
+    expect(app).not.toContain('MAP_TOUR_STEPS');
+    expect(app).toContain("{interstitial === 'mapTutorial' && (");
+    expect(app).toContain('mapTutorial: mapTutorialOpen,');
+    expect(app).toContain("} else if (id === 'mapTutorial') {");
     expect(app).toContain('setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }))');
     expect(app).toContain("onMap: currentView === 'map'");
   });

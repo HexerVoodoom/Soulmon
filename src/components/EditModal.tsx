@@ -127,6 +127,7 @@ export function EditModal({
     <ModalSheet
       open={isOpen}
       dismissOnBackdrop={false} /* formulário com texto digitado */
+      sobreTelas /* abre também de dentro do `View all` */
       title={isPt ? 'Editar atividade' : 'Edit activity'}
       onClose={onClose}
       language={language}

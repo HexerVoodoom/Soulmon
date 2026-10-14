@@ -135,11 +135,13 @@ function pickFor(date: string): number {
 /**
  * O relatório do dia, mostrado uma vez na primeira abertura depois da virada.
  *
- * BETA-2 (13/10/2026, itens 4.2–4.4 do backlog): deixou de ser UM diálogo central e virou uma SEQUÊNCIA de folhas
- * (bottom sheet padrão, `ModalSheet`), uma por seção, em ordem de tempo — ONTEM (tarefas → corações → aventura) e
- * depois HOJE (humor/convite/memórias). O NPC só mora na folha da aventura (o do Passeio, via `AreaSheet`); `A
- * stretch closed` e os corações não têm NPC. Os corações são uma fileira (`DayHearts`): o cobrado treme, quebra e
- * vira preto UMA vez (`lastDayReport.heartsAnimSeen`, gravado pelo App). O `Evolution path` saiu do resumo.
+ * BETA-2 (13/10/2026, itens 4.2–4.4 do backlog): virou uma SEQUÊNCIA de folhas, em ordem de tempo — ONTEM e depois HOJE
+ * (humor/convite/memórias). O NPC só mora na folha da aventura (o do Passeio, via `AreaSheet`); `A stretch closed` e
+ * os corações não têm NPC. Os corações são uma fileira (`DayHearts`): o cobrado treme, quebra e vira preto UMA vez
+ * (`lastDayReport.heartsAnimSeen`, gravado pelo App). O `Evolution path` saiu do resumo.
+ * 14/10/2026 (dono, por voz): "como foi o dia anterior" + corações viram UM modal só, e os modais do começo do dia são
+ * CENTRALIZADOS (`ModalSheet placement="center"`), não folha de baixo. A aventura segue separada (tem o NPC do scroll)
+ * e HOJE também; quem põe tudo na ordem e não deixa nada se sobrepor é a fila (`utils/presentationQueue.ts`).
  *
  * O TOM JÁ PASSOU POR UM PASSE E NÃO REGRIDE: nenhum vermelho, nenhum sinal de
  * menos, nenhum imperativo. Perda vira "em recuperação", e a frase de rodapé
@@ -260,12 +262,13 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
   if (!welcome && report.wasPerfect) {
     taskNotes.push(isPt ? 'A fagulha firmou.' : 'The ember steadied.');
   }
-  if (!welcome && report.done >= report.required && report.energyWasFull === false) {
-    taskNotes.push(isPt
-      // "Faltou" para quem cumpriu 100% da própria meta é a palavra de quem
-      // cobra. Vira dica para amanhã, que é o que ela de fato é.
-      ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia completo.'
-      : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a complete day.');
+  // Dia completo = TAREFAS cumpridas (`completeDayReached`); a energia/comida não entra. A dica antiga "encher a energia fecha o dia
+  // completo" era resíduo de antes de 11/10/2026 e dizia o contrário da regra: removida (pedido do dono, 14/10/2026).
+  // A fome (REGISTRO §45): conta o fato, em voz de produto, e aponta o que ajuda — sem culpa.
+  if (!welcome && (report.hungerHeartsLost ?? 0) > 0) {
+    heartNotes.push(isPt
+      ? 'Ele ficou muito tempo com fome e perdeu meio coração. Comer ajuda a recuperar.'
+      : 'It went hungry for a long while and lost half a heart. Eating helps it recover.');
   }
   if (report.heartsRecovered) {
     heartNotes.push(isPt
@@ -284,12 +287,13 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
 
   // 4.2 — a fileira dos corações: o que quebrou é o que a virada cobrou; a animação toca uma vez por relatório.
   // `heartsLost` é o que o dia REALMENTE tirou (e na acolhida nada é cobrado).
-  const strip = heartStrip(welcome ? 0 : report.heartsLost, maxHearts);
+  const strip = heartStrip(welcome ? 0 : report.heartsLost + (report.hungerHeartsLost ?? 0), maxHearts);
   const playBreak = shouldPlayHeartBreak(strip, heartsAnimSeen);
 
   // 4.4 — uma folha por seção, em ordem de tempo: ONTEM (tarefas → corações → aventura) e depois HOJE.
   const hasToday = !!onPickMood || (showOffer && !!onOpenOffer) || !!memories;
-  const steps: Array<'tasks' | 'hearts' | 'adventure' | 'today'> = ['tasks', 'hearts'];
+  // 14/10/2026 (dono): "como foi o dia anterior" + os corações viram UM modal só (`yesterday`), CENTRALIZADO.
+  const steps: Array<'yesterday' | 'adventure' | 'today'> = ['yesterday'];
   if (adventure) steps.push('adventure');
   if (hasToday) steps.push('today');
   const [stepIdx, setStepIdx] = useState(0);
@@ -303,15 +307,15 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
     </button>
   );
   const closeLabel = isPt ? 'Fechar' : 'Close';
-  // P4 (beta-2): a folha dos corações tem ALTURA MÍNIMA (~40vh) e centra o conteúdo — com e sem o botão "Eu fiz…" ela não encolhe a uma tira.
-  const wrapSheet = (key: string, title: string, children: ReactNode, minHeight?: string) => (
-    <ModalSheet key={key} open title={title} onClose={onClose} language={language} maxWidth={420} footer={nextButton}>
-      <div data-report-step={key} style={{ display: 'flex', flexDirection: 'column', gap: 12, ...(minHeight ? { minHeight, justifyContent: 'center' } : null) }}>{children}</div>
+  // Os modais do começo do dia são CENTRALIZADOS (`placement="center"`), não folha de baixo.
+  const wrapSheet = (key: string, title: string, children: ReactNode) => (
+    <ModalSheet key={key} open title={title} onClose={onClose} language={language} maxWidth={420} footer={nextButton} placement="center">
+      <div data-report-step={key} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
     </ModalSheet>
   );
 
-  if (step === 'tasks') {
-    return wrapSheet('tasks', headline, (
+  if (step === 'yesterday') {
+    return wrapSheet('yesterday', headline, (
       <>
         {/* Cabeçalho: a manchete é APARELHO — glifo 48 pelado (ícone nunca
             dentro de box) ou, no retorno, a criatura num vidro. O confete é
@@ -341,13 +345,8 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
             </p>
           )}
         </div>
-      </>
-    ));
-  }
-
-  if (step === 'hearts') {
-    return wrapSheet('hearts', isPt ? 'Corações' : 'Hearts', (
-      <>
+        {/* Os corações moram no MESMO modal (14/10/2026): uma seção logo abaixo das tarefas de ontem. */}
+        <section data-report-section="hearts" aria-label={isPt ? 'Corações' : 'Hearts'} style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--sm2-line)', paddingTop: 12 }}>
         <DayHearts strip={strip} play={playBreak} onPlayed={onHeartsAnimSeen} isPt={isPt} />
         <p data-hearts-line style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{heartsValue}</p>
         {heartNotes.map((n, i) => (
@@ -365,8 +364,9 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
             </InfoTip>
           </div>
         )}
+        </section>
       </>
-    ), '40vh');
+    ));
   }
 
   if (step === 'adventure' && adventure) {

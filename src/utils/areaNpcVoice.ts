@@ -206,8 +206,8 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: "Every day is written here. It's just to look at.",
   },
   'laboratorio:perfil': {
-    // beta-2 (11): o busto da Oriel (`npc-f-sacerdotisa`, que o Santuário deixou em 07/10/2026) volta como leitora do Perfil — arte que já existia; NPC próprio é pedido à frente de arte.
-    namePt: 'Oriel, a leitora do Perfil', nameEn: 'Oriel, reader of the Profile',
+    // 14/10/2026 (dono): o Perfil é do Corvo, o mascote (`mascot-raven.png`) — não da Iris (Oráculo) nem da Oriel.
+    namePt: 'Soulmon Misterioso', nameEn: 'Mysterious Soulmon',
     linePt: 'Aqui se vê quem ele é, do jeito que ele é.',
     lineEn: 'Here you see who they are, just as they are.',
   },
@@ -224,7 +224,7 @@ export function lotNpcVoice(id: AreaId, lotId: string | null | undefined, langua
 /**
  * NPCs de FUNÇÃO (30/09/2026, leva `npcs-flare`): nome e fala dos bustos que
  * moram numa função do app, não num lote (`assets/soulmon/npcs` ›
- * `FUNCTION_NPC_ART`). ⚠️ SEM CHAMADA HOJE — nenhuma tela lê este mapa ainda;
+ * `FUNCTION_NPC_ART`). ⚠️ `onboarding` (Ambra) é lido pelo `SoulmonOnboarding` desde 14/10/2026; os outros SEM CHAMADA HOJE;
  * onde cada um aparece é decisão de design (`docs/PERGUNTAS-DO-DONO.md`).
  * Falas do ROSTER, sem cobrança, sem emoji, sem número.
  */

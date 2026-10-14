@@ -4289,7 +4289,7 @@ var BUILDING_GATES = {
   "jogos.salao": { minBond: 1 },
   "jogos.refugio": { minBond: 1 },
   "jogos.mente": { minBond: 3 },
-  "exploracao.masmorra": { minBond: 1 },
+  "exploracao.masmorra": { minBond: 2 },
   "exploracao.caderno": { minBond: 2 },
   "exploracao.oficina": { minBond: 3 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
@@ -9004,7 +9004,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-chMAdZ/functionsRoutes-0.49839127026338037.mjs
+// ../.wrangler/tmp/pages-NkOqKp/functionsRoutes-0.14291095834728385.mjs
 var routes = [
   {
     routePath: "/api/account",

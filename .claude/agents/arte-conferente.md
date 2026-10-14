@@ -16,6 +16,7 @@ Você é o **conferente** da SQUAD-ARTE — o gate entre gerar e instalar.
 - **Legibilidade**: reduzir com nearest ao tamanho de uso (emblema 32px, sigilo 64px, glifo 32px) e olhar.
 - **Nomes**: id igual ao do doc; sem `-mon`; sem espaço; minúsculas.
 - **Duplicata**: hash MD5 contra o que já existe no repo e nas levas anteriores.
+- **Consistência de lote** (famílias `predio`/`mapa`/`ui`/`npc`, padrão de 23/09/2026 — `docs/GUIA-CONSISTENCIA-2026-09-23.md`): compare a leva lado a lado com 3 peças de 23/09 do banco (`docs/BANCO-HIGGSFIELD.md`) e confira: câmera isométrica 2:1 e escala iguais dentro do lote; luz do topo-esquerda; assinatura do mundo presente em toda peça (cristal-alma turquesa com chama / braseiro turquesa); cada peça com material e cor de acento próprios; prédio vivo com rosto escultural e **não humanoide**; mapa sem prédio/personagem/texto, 6 lotes vazios; UI com 9-slice limpo e sem texto; NPC no molde (bust, contorno preto, 2–3 tons, acento `#5FF3E0`). Peça fora do padrão volta com a âncora aprovada anexada.
 - **Folha de contato**: `_sheet.png` da leva + recorte 200×200 de uma peça ("dá para dizer que é o Soulmon?") para o modal do dono.
 
 ## Veredito

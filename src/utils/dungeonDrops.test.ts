@@ -19,8 +19,8 @@ describe('fila do modalzinho de drop', () => {
     expect(q[1].lines).toEqual([{ kind: 'fragments', qty: 5 }]);
   });
 
-  it('itens diferentes entram em fila (um modal por vez) em 1× e 2×', () => {
-    for (const speed of [1, 2]) {
+  it('itens diferentes entram em fila (um modal por vez) em 1×', () => {
+    for (const speed of [1]) {
       let q: DropGroup[] = [];
       q = pushDrop(q, 'heart', 1, speed, 1);
       q = pushDrop(q, 'glitchtama', 1, speed, 2);
@@ -67,12 +67,12 @@ describe('fila do modalzinho de drop', () => {
 
 describe('velocidade da masmorra', () => {
   it('só 1, 2 e 3; lixo vira 1×; o botão cicla', () => {
-    expect([...DUNGEON_SPEEDS]).toEqual([1, 2, 3]);
+    expect([...DUNGEON_SPEEDS]).toEqual([1, 3]); // o 2× saiu (dono, 14/10/2026)
     for (const lixo of [null, undefined, 0, 4, -1, 'x', NaN, {}, [], '2.5']) expect(sanitizeDungeonSpeed(lixo)).toBe(1);
-    expect(sanitizeDungeonSpeed('2')).toBe(2);
+    expect(sanitizeDungeonSpeed('2')).toBe(3); // migração: quem tinha 2× salvo vai para 3×
+    expect(sanitizeDungeonSpeed(2)).toBe(3);
     expect(sanitizeDungeonSpeed(3)).toBe(3);
-    expect(nextDungeonSpeed(1)).toBe(2);
-    expect(nextDungeonSpeed(2)).toBe(3);
+    expect(nextDungeonSpeed(1)).toBe(3);
     expect(nextDungeonSpeed(3)).toBe(1);
   });
 });

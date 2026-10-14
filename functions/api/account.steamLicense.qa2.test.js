@@ -95,7 +95,7 @@ describe('#54 — o vínculo SteamID ↔ conta sai com a conta', () => {
     const s = e.DIGIAPP_SAVES.store;
 
     expect(s.has(`ord:${STEAM_ORDER}`), 'o SteamID não pode sobreviver à exclusão').toBe(false);
-    expect(s.get(`ord:${PLAY_ORDER}`), 'o recibo da Play é a trava anti-fraude e fica').toBe(ID);
+    expect(s.get(`ord:${PLAY_ORDER}`), 'o recibo da Play segue travando, mas ANÔNIMO (REGISTRO 49)').toBe('deleted');
     expect(body.executado.licencasSteamApagadas).toBe(1);
     expect(body.executado.falhou).toEqual([]);
   });
@@ -105,11 +105,11 @@ describe('#54 — o vínculo SteamID ↔ conta sai com a conta', () => {
     await confirmar(e, (await pedirToken(e)).confirmToken);
     const ent = JSON.parse(e.DIGIAPP_SAVES.store.get(`ent:${ID}`));
 
-    expect(ent.consumedOrders).toEqual([PLAY_ORDER]);
-    expect(ent.orderDetails.map(o => o.orderId)).toEqual([PLAY_ORDER]);
-    // O tier pago NÃO é recalculado a partir da lista — o direito comprado fica.
-    expect(ent.tier).toBe('paid');
-    expect(ent.credits).toBe(12);
+    expect(ent.consumedOrders).toEqual([]);
+    expect(ent.orderDetails).toEqual([]);
+    // REGISTRO 49: a exclusão não preserva o direito pago nem o saldo.
+    expect(ent.tier).toBe('demo');
+    expect(ent.credits).toBe(0);
     // Nenhum resquício do SteamID em lugar nenhum do registro.
     expect(JSON.stringify(ent)).not.toContain(STEAM_ID);
   });
@@ -126,7 +126,7 @@ describe('#54 — o vínculo SteamID ↔ conta sai com a conta', () => {
     const body = await (await confirmar(e, (await pedirToken(e)).confirmToken)).json();
     expect(body.executado.licencasSteamApagadas).toBe(0);
     expect(body.executado.apaga.some(k => k.startsWith('ord:steam:'))).toBe(false);
-    expect(e.DIGIAPP_SAVES.store.get(`ord:${PLAY_ORDER}`)).toBe(ID);
+    expect(e.DIGIAPP_SAVES.store.get(`ord:${PLAY_ORDER}`)).toBe('deleted');
   });
 
   it('a chave é DERIVADA do entitlement — nenhuma varredura `list` por `ord:`', async () => {
