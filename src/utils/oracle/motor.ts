@@ -1444,7 +1444,7 @@ const GENRE_REFERENCES =
   'Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, ' +
   'Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft';
 
-function composeSpritePrompt(args: {
+export type SpritePromptArgs = {
   concept: string; colorDesc: string; accent: string; levelBlock: string;
   /** "Qual sua criatura favorita?" (1-2 palavras) — prefixo literal antes do
    *  conceito, em todos os estágios (ver OracleInput.favoriteCreature). */
@@ -1457,7 +1457,11 @@ function composeSpritePrompt(args: {
   inspiracao?: string;
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
-}): string {
+};
+
+/** BACKUP do estilo ANTERIOR (até 14/10/2026), preservado sem alteração de texto.
+ *  Selecionável com SPRITE_PROMPT_STYLE='legacy'. Ver docs/PROMPT-SPRITE-ESTILOS.md. */
+export function composeSpritePromptLegacy(args: SpritePromptArgs): string {
   const concept = args.favoriteCreature ? `${args.favoriteCreature} ${args.concept}` : args.concept;
   return (
     `Generate an original creature for a monster-raising RPG` +
@@ -1491,11 +1495,67 @@ function composeSpritePrompt(args: {
   );
 }
 
+
+/** Estilo do template de prompt de sprite. 'v-pet' (padrão, decisão do dono
+ *  14/10/2026, §46) ou 'legacy' (backup do texto anterior). Trocar por
+ *  `VITE_SPRITE_PROMPT_STYLE` no build ou pelo argumento `style`. */
+export type SpritePromptStyle = 'v-pet' | 'legacy';
+export const DEFAULT_SPRITE_PROMPT_STYLE: SpritePromptStyle = 'v-pet';
+
+function envSpriteStyle(): SpritePromptStyle {
+  const v = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_SPRITE_PROMPT_STYLE;
+  return v === 'legacy' || v === 'v-pet' ? v : DEFAULT_SPRITE_PROMPT_STYLE;
+}
+
+/* ===== TEMPLATE v-pet — UM bloco, ajuste aqui (dono manda mais exemplos) =====
+ * Estrutura (EX1/EX2 do dono):
+ *   <ABERTURA> <CLÁUSULAS> <ESTILO>: <criatura/classe/elemento>. <forma>. <rebirth> <direção>
+ *   Flat <cores> colors with <acentos> accents, <ACABAMENTO>.
+ * Cada constante abaixo é um botão. */
+export const VPET_TEMPLATE = {
+  /** Abertura com referências (1ª tentativa). */
+  openRefs: (refs: string) => `Generate this RPG creature inspired by ${refs}.`,
+  /** Abertura SEM nomes de franquia (fallback p/ recusa do provedor). */
+  openClean: 'Generate this original RPG creature.',
+  /** Vale nas duas variantes (IP). Não remover. */
+  antiCopy: 'Do not copy any existing franchise character.',
+  /** Estilo + fundo, com marca (1ª tentativa). */
+  styleRefs: 'Tamagotchi-style v-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard:',
+  /** Estilo + fundo, sem marca (fallback). */
+  styleClean: 'Retro virtual-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard:',
+  /** Acabamento plano (fim da frase de cores). */
+  finish: 'no shading, no outlines, no anti-aliasing.',
+  /** Veto ao tingimento de matiz única; o exemplo do dono não o tem. true = acrescenta. */
+  hueGuard: false,
+  hueGuardText:
+    'Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.',
+};
+
+export function composeSpritePromptVPet(args: SpritePromptArgs): string {
+  const T = VPET_TEMPLATE;
+  const concept = args.favoriteCreature ? `${args.favoriteCreature} ${args.concept}` : args.concept;
+  return [
+    args.withReferences ? T.openRefs(GENRE_REFERENCES) : T.openClean,
+    args.withReferences && args.inspiracao ? `Draw inspiration from ${args.inspiracao}.` : '',
+    T.antiCopy,
+    args.withReferences ? T.styleRefs : T.styleClean,
+    `${concept}. ${args.levelBlock}.`,
+    args.rebirth || '',
+    SPRITE_FACING_PROMPT,
+    `Flat ${args.colorDesc} colors with ${args.accent} accents, ${T.finish}`,
+    T.hueGuard ? T.hueGuardText : '',
+  ].filter(Boolean).join(' ');
+}
+
+function composeSpritePrompt(args: SpritePromptArgs, style: SpritePromptStyle = envSpriteStyle()): string {
+  return style === 'legacy' ? composeSpritePromptLegacy(args) : composeSpritePromptVPet(args);
+}
+
 /** Par de prompts de uma forma: o COM referências (sempre a 1ª tentativa) e o
  *  limpo (2ª tentativa, para quando o provedor recusa). Quem gera a imagem
  *  manda os dois — ver `requestSprite` e `functions/api/generate-sprite.js`. */
 function composeSpritePrompts(
-  args: Omit<Parameters<typeof composeSpritePrompt>[0], 'withReferences'>,
+  args: Omit<SpritePromptArgs, 'withReferences'>,
 ): { imagePrompt: string; imagePromptFallback: string } {
   return {
     imagePrompt: composeSpritePrompt({ ...args, withReferences: true }),
