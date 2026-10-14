@@ -18,7 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
 import { AvisosSheet } from './components/nav/AvisosSheet';
-import { needsWelcomeTour } from './utils/welcomeTour';
+import { needsWelcomeTour, needsMapTutorial, MAP_TOUR_STEPS } from './utils/welcomeTour';
 import { pendingBuildingIntros, buildingIntroReady, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
@@ -1959,14 +1959,22 @@ export default function App() {
      o replay de Configurações o chama de novo sem gravar nada. Funciona na demo. */
   const [welcomeTourShown, setWelcomeTourShown] = useState(() => readFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN));
   const [welcomeTourReplay, setWelcomeTourReplay] = useState(false);
-  const welcomeTourOpen = welcomeTourReplay || needsWelcomeTour({ shown: welcomeTourShown, jaConcluiuAlgo });
+  const basicsTourOpen = welcomeTourReplay || needsWelcomeTour({ shown: welcomeTourShown, jaConcluiuAlgo });
+  /* O TUTORIAL DO MAPA (14/10/2026): o MESMO componente e o MESMO ponto da fila, com os cartões do mapa. Abre UMA vez, na
+     1ª abertura do Mapa (`mapTutorialSeen` no SAVE: visto OU pulado grava `true`), depois do tour básico. */
+  const mapTourOpen = needsMapTutorial({ seen: gameState.mapTutorialSeen, onMap: currentView === 'map', welcomeTourOpen: basicsTourOpen });
+  const welcomeTourOpen = basicsTourOpen || mapTourOpen;
   const handleWelcomeTourDone = useCallback(() => {
+    if (mapTourOpen) {
+      setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
+      return;
+    }
     if (!welcomeTourReplay) {
       writeFlag(STORAGE_KEYS.WELCOME_TOUR_SHOWN, true, { silent: true });
       setWelcomeTourShown(true);
     }
     setWelcomeTourReplay(false);
-  }, [welcomeTourReplay]);
+  }, [welcomeTourReplay, mapTourOpen, setGameState]);
   const handleReplayWelcomeTour = useCallback(() => setWelcomeTourReplay(true), []);
   /* LEVEL UP (11/10/2026): o nível é DERIVADO (`bondLevelFor(totalXP)`); o save guarda só o último
      CELEBRADO. Save sem o campo recebe a linha de base (o nível de agora, sem celebrar o passado).
@@ -7544,7 +7552,6 @@ export default function App() {
           side="right"
           label={language === 'pt-BR' ? 'Mapa' : 'Map'}
           onClick={() => goTo('map')}
-          ring
         />
       )}
       {currentView === 'home' && (
@@ -7621,7 +7628,6 @@ export default function App() {
           label={language === 'pt-BR' ? 'Início' : 'Home'}
           onClick={goBack}
           glow
-          ring
         />
       )}
 
@@ -7904,7 +7910,7 @@ export default function App() {
       {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
       {interstitial === 'welcomeTour' && (
         <Suspense fallback={null}>
-          <WelcomeTour language={language} onDone={handleWelcomeTourDone} />
+          <WelcomeTour key={mapTourOpen ? 'map' : 'basics'} language={language} onDone={handleWelcomeTourDone} steps={mapTourOpen ? MAP_TOUR_STEPS : undefined} />
         </Suspense>
       )}
       {interstitial === 'buildingIntro' && pendingIntros[0] && (

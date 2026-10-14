@@ -11,9 +11,12 @@ import { readFileSync } from 'node:fs';
 import { WelcomeTour } from './WelcomeTour';
 import {
   TOUR_STEPS, TOUR_GUIDE_NAME, TOUR_STARTING_GOAL, needsWelcomeTour, tourText,
+  MAP_TOUR_STEPS, MAP_TOUR_AREA_ORDER, needsMapTutorial, sanitizeMapTutorialSeen,
 } from '../utils/welcomeTour';
 import { FORM_REQUIREMENTS } from '../types/progression';
 import { AREAS, areaLabel } from '../navigation';
+import { BUILDING_GATES } from '../utils/gates';
+import { BUILDING_INTRO_COPY } from '../utils/buildingIntroCopy';
 
 beforeEach(() => {
   try { localStorage.clear(); } catch { /* jsdom */ }
@@ -24,7 +27,7 @@ afterEach(() => cleanup());
 const stepId = (c: HTMLElement) => c.querySelector('[data-welcome-tour]')!.getAttribute('data-step');
 
 describe('WelcomeTour — fluxo', () => {
-  it('Next percorre os oito passos na ordem e o último ("Let\'s go") termina como finished', () => {
+  it('Next percorre os seis passos na ordem e o último ("Let\'s go") termina como finished', () => {
     const onDone = vi.fn();
     const { container } = render(<WelcomeTour language="en-US" onDone={onDone} />);
     const ids: string[] = [];
@@ -81,15 +84,61 @@ describe('WelcomeTour — fluxo', () => {
     expect(container.textContent).toContain(TOUR_GUIDE_NAME);
   });
 
-  it('os passos do mapa listam as SEIS áreas, na ordem do mapa e com o nome real', () => {
-    const rows = TOUR_STEPS.flatMap(s => s.areas ?? []).map(a => a.name.en);
-    expect(rows).toEqual(['laboratorio', 'mercado', 'arena', 'jogos', 'exploracao', 'hall'].map(id => areaLabel(id as typeof AREAS[number], false)));
-    expect(new Set(rows).size).toBe(AREAS.length);
+  it('o tour inicial NÃO tem mais mapa nem prédios (14/10/2026): tudo isso vive no tutorial do mapa', () => {
+    expect(TOUR_STEPS.map(s => s.id)).toEqual(['hello', 'tasks', 'why', 'evolution', 'care', 'corners']);
+    expect(TOUR_STEPS.some(s => s.areas || s.part === 2)).toBe(false);
+  });
+});
+
+describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
+  it('um cartão por ÁREA, na ordem do mapa, e um prédio por linha: os 22 prédios, cada um UMA vez', () => {
+    const areas = MAP_TOUR_STEPS.filter(s => s.areas).map(s => s.id);
+    expect(areas).toEqual(MAP_TOUR_AREA_ORDER.map(a => `map-${a}`));
+    expect(new Set(MAP_TOUR_AREA_ORDER).size).toBe(AREAS.length);
+    const nomes = MAP_TOUR_STEPS.flatMap(s => s.areas ?? []).map(r => r.name.en);
+    expect(nomes.sort()).toEqual(Object.keys(BUILDING_GATES).map(id => BUILDING_INTRO_COPY[id as keyof typeof BUILDING_INTRO_COPY].place.en).sort());
+  });
+  it('PT-BR e EN em TODA string, com os títulos das áreas reais', () => {
+    for (const s of MAP_TOUR_STEPS) {
+      expect(s.title.pt).toBeTruthy(); expect(s.speech.pt).toBeTruthy();
+      for (const r of s.areas ?? []) { expect(r.name.pt).toBeTruthy(); expect(r.line.pt).toBeTruthy(); expect(r.line.en.length).toBeLessThan(90); }
+    }
+    expect(MAP_TOUR_STEPS.find(s => s.id === 'map-laboratorio')!.title.pt).toBe(areaLabel('laboratorio', true));
+  });
+  it('renderiza em PT-BR com os botões em português e termina como finished', () => {
+    const onDone = vi.fn();
+    const { container } = render(<WelcomeTour language="pt-BR" steps={MAP_TOUR_STEPS} onDone={onDone} />);
+    expect(container.textContent).toContain('Este é o mapa');
+    expect((container.querySelector('[data-wt-skip]') as HTMLElement).textContent).toBe('Pular');
+    for (let i = 0; i < MAP_TOUR_STEPS.length; i++) fireEvent.click(container.querySelector('[data-wt-next]')!);
+    expect(onDone).toHaveBeenCalledWith('finished');
+  });
+  it('a Masmorra está listada e dita como aberta desde o primeiro dia', () => {
+    const exp = MAP_TOUR_STEPS.find(s => s.id === 'map-exploracao')!;
+    expect(exp.areas!.some(r => r.name.en === 'Dungeon')).toBe(true);
+    expect(exp.speech.en).toMatch(/day one/);
+  });
+  it('sanitizeMapTutorialSeen: boolean respeita; save com progresso ou tour visto = true; save vazio = false', () => {
+    expect(sanitizeMapTutorialSeen(false, { activities: [{}] })).toBe(false);
+    expect(sanitizeMapTutorialSeen(true, {})).toBe(true);
+    expect(sanitizeMapTutorialSeen(undefined, { activities: [{}] })).toBe(true);
+    expect(sanitizeMapTutorialSeen(undefined, { completedTasks: [{}] })).toBe(true);
+    expect(sanitizeMapTutorialSeen(undefined, { perfectDays: 2 })).toBe(true);
+    expect(sanitizeMapTutorialSeen(undefined, {}, true)).toBe(true);
+    expect(sanitizeMapTutorialSeen('lixo', {})).toBe(false);
+    expect(sanitizeMapTutorialSeen(undefined, null)).toBe(false);
+  });
+  it('needsMapTutorial: só no mapa, nunca visto e sem o tour básico na frente', () => {
+    expect(needsMapTutorial({ seen: false, onMap: true, welcomeTourOpen: false })).toBe(true);
+    expect(needsMapTutorial({ seen: false, onMap: false, welcomeTourOpen: false })).toBe(false);
+    expect(needsMapTutorial({ seen: true, onMap: true, welcomeTourOpen: false })).toBe(false);
+    expect(needsMapTutorial({ seen: undefined, onMap: true, welcomeTourOpen: false })).toBe(false);
+    expect(needsMapTutorial({ seen: false, onMap: true, welcomeTourOpen: true })).toBe(false);
   });
 });
 
 describe('WelcomeTour — conteúdo', () => {
-  const todos = TOUR_STEPS.flatMap(s => [s.title.en, s.speech.en, ...(s.areas ?? []).flatMap(a => [a.name.en, a.line.en])]);
+  const todos = [...TOUR_STEPS, ...MAP_TOUR_STEPS].flatMap(s => [s.title.en, s.speech.en, s.title.pt ?? '', s.speech.pt ?? '', ...(s.areas ?? []).flatMap(a => [a.name.en, a.line.en, a.line.pt ?? ''])]);
 
   it('sem vocabulário vetado nem verbo de cobrança', () => {
     // Os termos dos caminhos antigos são montados em pedaços: a régua `branchRename.contract` reprova a grafia literal em qualquer fonte.
@@ -120,6 +169,7 @@ describe('WelcomeTour — conteúdo', () => {
     expect(txt).toMatch(/evolution/i);
     expect(txt).toMatch(/you pick the moment/i);
     expect(txt).toMatch(/Missions/);
+    expect(txt).toMatch(/first time you open the map/);
     expect(txt).toMatch(/Bag/);
     expect(txt).toMatch(/Replay|replay/);
   });
@@ -127,6 +177,21 @@ describe('WelcomeTour — conteúdo', () => {
   it('a superfície é muda e sem recompensa (R-NOVA)', () => {
     const src = readFileSync('src/components/WelcomeTour.tsx', 'utf8');
     expect(src).not.toMatch(/utils\/sounds|audioBus|trilha|gamePoints|totalXP|setGameState/);
+  });
+});
+
+describe('fiação do tutorial do mapa no App (guard de fonte)', () => {
+  const app = readFileSync('src/App.tsx', 'utf8');
+  it('mesmo componente e mesmo ponto da fila; visto OU pulado grava mapTutorialSeen no SAVE, num updater puro', () => {
+    expect((app.match(/<WelcomeTour /g) ?? [])).toHaveLength(1);
+    expect(app).toContain("steps={mapTourOpen ? MAP_TOUR_STEPS : undefined}");
+    expect(app).toContain('setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }))');
+    expect(app).toContain("onMap: currentView === 'map'");
+  });
+  it('o save carrega o campo pela migração segura e o jogador novo nasce com false', () => {
+    const ctx = readFileSync('src/contexts/GameStateContext.tsx', 'utf8');
+    expect(ctx).toContain('sanitizeMapTutorialSeen(loadedState.mapTutorialSeen');
+    expect(ctx).toContain('mapTutorialSeen: false,');
   });
 });
 

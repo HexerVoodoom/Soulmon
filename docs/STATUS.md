@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/10/2026 — Masmorra livre no Vínculo 1, tutorial do mapa na 1ª abertura e ícones de canto sem círculo (`feat/dungeon-nv1-tutorial-mapa`, REGISTRO §42)
+>
+> - **Pedido do dono (voz):** Masmorra desde o level 1; tirar mapa/prédios do tutorial inicial e abrir um tutorial do mapa na primeira abertura do Mapa; tirar o círculo da casinha e do ícone do mapa.
+> - **Feito:** `exploracao.masmorra` → Vínculo 1 (cliente + espelho do servidor) · tutorial do mapa (`MAP_TOUR_STEPS`, 22 prédios, EN/PT) no componente `WelcomeTour`, flag `mapTutorialSeen` no SAVE com migração segura · `CornerLink` sem anel.
+> - **Intocado de propósito:** energia, limite diário (servidor), portão dos andares altos (Vínculo 8), restrições de Soulmon ocupado.
+> - **Pré-existente (não é desta mudança):** `AreaView.ocupado.render.test` (timeout de 15 s no `waitFor` da masmorra) e 2 testes de `missionsMenu.render.test` falham também na main neste ambiente Windows.
+
 > ## 13/10/2026 — Beta-2, correções da revisão de design (`integ/beta-2`, PR #323; `product/beta-play-01/sweeper/design-critic-beta2.md`)
 >
 > - **F1–F6 (obrigatórios):** fome legível (pontos de 6px em linha, faminto na tinta `--sm2-viewport-warn`, toque abre a dica da energia, pausa visível por símbolo) · placa da masmorra troca o título para "Voltou" · **avisos da Home saem da faixa acima de HOJE** (botão `AvisosLink` na pilha do canto direito com selo, folha `AvisosSheet`; o check-in entra pelo mesmo canal) · "Adicionar tarefas à lista" é `ModalSheet` · Santuário sem a linha repetida de Vínculo e com a regra dos 5% atrás do "i" · Arena livre com o ícone e a palavra de Poder.

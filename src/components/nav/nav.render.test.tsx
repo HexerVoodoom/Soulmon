@@ -161,14 +161,26 @@ describe('AreaTopBar', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('H9: o voltar fica FIXO na âncora do canto — a mesma do anel da casinha, em qualquer tela', () => {
-    const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} ring />);
+  it('14/10/2026: casinha e ícone do Mapa SEM círculo — ícone pelado, alvo de toque ≥ 44, brilho para ler sobre a cena', () => {
+    for (const [icon, side] of [['home', 'left'], ['mapa', 'right']] as const) {
+      const r = renderWithCss(<CornerLink icon={icon} side={side} label="X" onClick={() => {}} />);
+      const btn = r.container.querySelector('button') as HTMLButtonElement;
+      expect(r.container.querySelector('[data-corner-ring]')).toBeNull();
+      expect(btn.style.background).toBe('transparent');
+      expect(btn.style.border === '' || btn.style.border === 'none' || btn.style.border.startsWith('medium')).toBe(true);
+      expect(parseInt(btn.style.width, 10)).toBeGreaterThanOrEqual(44);
+      expect(parseInt(btn.style.height, 10)).toBeGreaterThanOrEqual(44);
+      expect(btn.style.filter).toContain('drop-shadow');
+      r.unmount();
+    }
+  });
+
+  it('H9: o voltar fica FIXO na âncora do canto — a mesma da caixa da casinha, em qualquer tela', () => {
+    const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     const caixa = casinha.container.querySelector('button')!;
-    const anel = casinha.container.querySelector('[data-corner-ring]') as HTMLElement;
     expect(caixa.style.top).toContain('safe-area-inset-top');
     // o jsdom normaliza `calc()`: compara pelo MESMO caminho de normalização
     const norm = (prop: 'top' | 'left', v: string) => { const el = document.createElement('div'); el.style[prop] = v; return el.style[prop]; };
-    expect(anel.style.width).toBe('44px');
     for (const overScene of [true, false]) {
       const r = renderWithCss(<AreaTopBar title="T" backLabel="Voltar" onBack={() => {}} icon={overScene ? 'map' : 'arrow_back'} overScene={overScene} />);
       const back = r.container.querySelector('[data-area-back]') as HTMLButtonElement;
