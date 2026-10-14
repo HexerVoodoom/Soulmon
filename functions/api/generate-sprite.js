@@ -1,5 +1,5 @@
 // Cloudflare Pages Function — gera 1 sprite de Soulmon.
-// Provedor primário: HIGGSFIELD (platform.higgsfield.ai, modelo Soul).
+// Provedor primário: HIGGSFIELD — GPT Image 2.5 flare (HF_CREDENTIALS) ou, sem ela, Soul.
 //   Secrets: HF_API_KEY + HF_SECRET (já configurados via `wrangler secret`).
 //   Suporta referência de imagem (cadeia de evolução: champion parte do
 //   rookie etc. — ver `composeSpritePrompts` em `src/utils/oracle.ts`).
@@ -232,7 +232,79 @@ function refusalError(message) {
   return err;
 }
 
+// GPT Image 2.5 "flare" (dono, 14/10/2026): id `marketing-studio/image/flare` na API
+// pública (api.higgsfield.ai). Credencial ÚNICA `HF_CREDENTIALS` = "keyId:keySecret"
+// (mesmo par do header `Authorization: Key id:secret`). Ausente -> segue o Soul.
+// `SPRITE_MODEL` força: 'soul' | id do modelo flare. Qualidade medium (§41).
+const FLARE_MODEL = 'marketing-studio/image/flare';
+const HF_API = 'https://api.higgsfield.ai';
+
+function flareCredentials(env) {
+  const c = String(env.HF_CREDENTIALS || '').trim();
+  return /^[^:\s]+:[^:\s]+$/.test(c) ? c : null;
+}
+
+function spriteModel(env) {
+  const forced = String(env.SPRITE_MODEL || '').trim();
+  if (forced) return forced;
+  return flareCredentials(env) ? FLARE_MODEL : 'soul';
+}
+
+async function generateFlare(env, model, prompt, referenceImageUrls) {
+  const auth = `Key ${flareCredentials(env)}`;
+  const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
+  const input = {
+    // Fundo transparente pedido NO TEXTO (sem chroma-key); a API não documenta flag de background.
+    prompt,
+    quality: 'medium',
+    resolution: '1k',
+    aspect_ratio: '1:1',
+    moderation: 'auto',
+    enhance_prompt: false,
+    ...(hasRef ? { image_urls: referenceImageUrls } : {}),
+  };
+  const createRes = await fetch(`${HF_API}/${model}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: auth },
+    body: JSON.stringify(input),
+  });
+  if (!createRes.ok) {
+    const body = (await createRes.text()).slice(0, 300);
+    const msg = `higgsfield flare create ${createRes.status}: ${body}`;
+    if (createRes.status === 400 || createRes.status === 422) throw refusalError(msg);
+    throw new Error(msg);
+  }
+  const created = await createRes.json();
+  const requestId = created.request_id || created.id;
+  if (!requestId) throw new Error('higgsfield flare: no request id');
+  for (let i = 0; i < 40; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const st = await fetch(`${HF_API}/requests/${requestId}/status`, { headers: { Authorization: auth } });
+    if (!st.ok) continue;
+    const data = await st.json();
+    if (data.status === 'nsfw') throw refusalError('higgsfield flare: nsfw/policy rejection');
+    if (data.status === 'failed' || data.status === 'canceled') throw new Error('higgsfield flare: generation failed');
+    if (data.status === 'completed') {
+      const url = data.images?.[0]?.url;
+      if (url) return url;
+      throw new Error('higgsfield flare: completed without url');
+    }
+  }
+  throw new Error('higgsfield flare: timeout');
+}
+
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
+  const model = spriteModel(env);
+  if (model !== 'soul' && flareCredentials(env)) {
+    try {
+      return await generateFlare(env, model, prompt, referenceImageUrls);
+    } catch (err) {
+      // Recusa de conteúdo sobe (troca o prompt); outras falhas caem no Soul se o par antigo existir.
+      if (isRefusal(err) || !(env.HF_API_KEY && env.HF_SECRET)) throw err;
+      console.error('Flare falhou, tentando Soul:', err.message);
+    }
+  }
+  if (!(env.HF_API_KEY && env.HF_SECRET)) throw new Error('higgsfield: soul not configured');
   const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
   // Soul: texto puro; com referência usa o endpoint image2image do Soul.
@@ -328,7 +400,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   let hfError = null;
   let hfRefusal = false;
 
-  if (env.HF_API_KEY && env.HF_SECRET) {
+  if ((env.HF_API_KEY && env.HF_SECRET) || flareCredentials(env)) {
     try {
       const image = await generateHiggsfield(env, prompt, referenceImageUrls);
       return { image, provider: 'higgsfield', hfError: null };

@@ -1470,7 +1470,7 @@ function composeSpritePrompt(args: {
     // Vale nas DUAS variantes: mesmo citando inspirações, o que sai não pode ser
     // um personagem registrado — o sprite vai pro app de um usuário real.
     `Do not copy any existing franchise character. ` +
-    `Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: ` +
+    `Retro virtual-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard: ` +
     `${concept}. ${args.levelBlock}. ` +
     (args.rebirth ? `${args.rebirth} ` : '') +
     // DIREÇÃO (11/10/2026): o app desenha a arte olhando para a DIREITA e espelha ao

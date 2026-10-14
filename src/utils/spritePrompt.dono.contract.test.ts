@@ -37,7 +37,7 @@ const CLAUSULA = 'Do not copy any existing franchise character';
  * que adivinha texto passa por não achar ninguém, que é o pior modo de falha
  * possível para um guard.
  */
-const COMPOE_PROMPT = /transparent background:|pixel art, no background/i;
+const COMPOE_PROMPT = /no checkerboard:|pixel art, transparent background/i;
 
 describe('um dono só para o prompt de sprite', () => {
   it('AUTOVERIFICAÇÃO: o dono vivo é reconhecido pela própria assinatura', () => {
