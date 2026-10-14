@@ -22,7 +22,7 @@ const { verify } = vi.hoisted(() => ({
 }));
 vi.mock('./entitlements', () => ({ verifyPurchase: (p: string, t: string) => verify.fn(p, t) }));
 
-import { purchase, restorePurchases } from './playBilling';
+import { purchase, reconcilePurchases } from './playBilling';
 
 type Falso = {
   purchase: ReturnType<typeof vi.fn>;
@@ -91,7 +91,7 @@ describe('purchase(): reconhecer só depois do verify ok', () => {
   });
 });
 
-describe('restorePurchases(): idem, compra a compra', () => {
+describe('reconcilePurchases(): idem, compra a compra', () => {
   it('cada compra verificada ok é reconhecida; a recusada, não', async () => {
     const { p } = plugin({
       getPurchases: vi.fn(async () => ({ purchases: [
@@ -102,8 +102,8 @@ describe('restorePurchases(): idem, compra a compra', () => {
     verify.fn.mockImplementation(async (_p, tok) => tok === 'ok-1'
       ? { ok: true, ent: { tier: 'paid', credits: 0, adsLeft: 0 } }
       : { ok: false, reason: 'order-in-use' });
-    const r = await restorePurchases();
-    expect(r.ok).toBe(true);
+    const r = await reconcilePurchases();
+    expect(r).not.toBeNull();
     expect(p.acknowledge!.mock.calls).toEqual([[{ purchaseToken: 'ok-1' }]]);
   });
 });

@@ -188,7 +188,7 @@ const corvoAdocao = () => import('./utils/corvoAdocao');
 import { createEntitlementSync } from './utils/entitlementSync';
 import { subscribeAuthState } from './utils/auth';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
-import { purchase, reconcileSubscription } from './utils/playBilling';
+import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
 import { applySubscriptionClaim } from './utils/subscriptionShop';
 
@@ -1561,9 +1561,21 @@ export default function App() {
           : { ...prev, credits: ent.credits, accountTier: ent.tier });
       },
     });
+    /* Compra paga e interrompida (app fechado, rede, pagamento pendente que aprovou) é creditada SOZINHA: ao abrir e ao
+       voltar ao primeiro plano reconcilia com a Play → servidor (concede uma vez por pedido). Sem botão (REGISTRO §49). */
+    const creditarPendentes = () => {
+      if (!saveId) return;
+      void reconcilePurchases().then(ent => {
+        if (!ent) return;
+        setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
+          ? prev
+          : { ...prev, credits: ent.credits, accountTier: ent.tier });
+      });
+    };
     sync.run('mount');
+    creditarPendentes();
     const offAuth = subscribeAuthState(() => sync.run('auth'));
-    const onVisible = () => { if (document.visibilityState === 'visible') sync.run('visible'); };
+    const onVisible = () => { if (document.visibilityState === 'visible') { sync.run('visible'); creditarPendentes(); } };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       sync.dispose();

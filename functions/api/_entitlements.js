@@ -565,6 +565,37 @@ async function claimOrderAtomic(env, saveId, orderId) {
   }
 }
 
+/**
+ * Dono SENTINELA de um comprovante cuja conta foi EXCLUÍDA (decisão do dono,
+ * 14/10/2026, REGISTRO §49: "excluiu a conta e criou outra, paga de novo").
+ * Não é `saveId` válido (`VALID_ID` exige 8+ caracteres e este tem 7), portanto
+ * nenhuma conta o iguala: `claimOrder` devolve `order-in-use` para TODAS,
+ * inclusive a que volta com o mesmo e-mail. Não carrega dado pessoal — o hash
+ * do e-mail some do vínculo; fica só o id do pedido da loja.
+ */
+export const CLAIM_EXCLUIDA = 'deleted';
+
+/**
+ * Na exclusão de conta: o vínculo comprovante -> conta PERMANECE (prazo de 5
+ * anos preservado), mas passa a apontar para `CLAIM_EXCLUIDA`. Melhor esforço
+ * por pedido; devolve os que falharam para a exclusão reportar.
+ * @param {string[]} orderIds
+ * @returns {Promise<string[]>} pedidos que não deu para anonimizar
+ */
+export async function anonimizarClaims(env, orderIds) {
+  const falhou = [];
+  for (const orderId of orderIds) {
+    try {
+      if (env.DB) {
+        await env.DB.prepare('UPDATE order_claims SET save_id = ? WHERE order_id = ?').bind(CLAIM_EXCLUIDA, orderId).run();
+      } else {
+        await kvOrThrow(env).put(ORDER_PREFIX + orderId, CLAIM_EXCLUIDA, { expirationTtl: RETENTION_TTL_SECONDS });
+      }
+    } catch { falhou.push(orderId); }
+  }
+  return falhou;
+}
+
 /** Teto das listas de histórico de pedidos guardadas no entitlement. */
 export const ORDER_HISTORY_MAX = 200;
 
