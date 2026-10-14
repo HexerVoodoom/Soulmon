@@ -120,8 +120,8 @@ async function resetSpriteLifetimeOnRebirth(env, saveId) {
 __name(resetSpriteLifetimeOnRebirth, "resetSpriteLifetimeOnRebirth");
 function paidProviderOf(ent) {
   const details = Array.isArray(ent?.orderDetails) ? ent.orderDetails : [];
-  for (let i = details.length - 1; i >= 0; i--) {
-    const o = details[i];
+  for (let i2 = details.length - 1; i2 >= 0; i2--) {
+    const o = details[i2];
     if (o && o.grantTier === "paid" && !o.voided) return typeof o.provider === "string" ? o.provider : null;
   }
   return null;
@@ -183,8 +183,8 @@ async function rtdnMarkSeen(env, messageId, now = Date.now()) {
     await env.DB.prepare("DELETE FROM rtdn_messages WHERE expires_at <= ?").bind(now).run();
     try {
       await env.DB.prepare("INSERT INTO rtdn_messages (message_id, received_at, expires_at) VALUES (?, ?, ?)").bind(messageId, now, now + RTDN_DEDUPE_TTL_SECONDS * 1e3).run();
-    } catch (err) {
-      if (!ehViolacaoDeChave(err)) throw err;
+    } catch (err2) {
+      if (!ehViolacaoDeChave(err2)) throw err2;
     }
     return;
   }
@@ -237,8 +237,8 @@ async function claimOrder(env, saveId, orderId) {
   return { ok: true };
 }
 __name(claimOrder, "claimOrder");
-function ehViolacaoDeChave(err) {
-  const msg = String(err?.message ?? err?.cause?.message ?? err ?? "");
+function ehViolacaoDeChave(err2) {
+  const msg = String(err2?.message ?? err2?.cause?.message ?? err2 ?? "");
   return /UNIQUE|PRIMARY KEY/i.test(msg);
 }
 __name(ehViolacaoDeChave, "ehViolacaoDeChave");
@@ -249,8 +249,8 @@ async function claimOrderAtomic(env, saveId, orderId) {
   try {
     await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(orderId, saveId, agora, vence).run();
     return { ok: true };
-  } catch (err) {
-    if (!ehViolacaoDeChave(err)) throw err;
+  } catch (err2) {
+    if (!ehViolacaoDeChave(err2)) throw err2;
     const row = await env.DB.prepare("SELECT save_id FROM order_claims WHERE order_id = ?").bind(orderId).first();
     if (row?.save_id !== saveId) return { ok: false, reason: (
       /** @type {const} */
@@ -261,12 +261,29 @@ async function claimOrderAtomic(env, saveId, orderId) {
   }
 }
 __name(claimOrderAtomic, "claimOrderAtomic");
+var CLAIM_EXCLUIDA = "deleted";
+async function anonimizarClaims(env, orderIds) {
+  const falhou = [];
+  for (const orderId of orderIds) {
+    try {
+      if (env.DB) {
+        await env.DB.prepare("UPDATE order_claims SET save_id = ? WHERE order_id = ?").bind(CLAIM_EXCLUIDA, orderId).run();
+      } else {
+        await kvOrThrow(env).put(ORDER_PREFIX + orderId, CLAIM_EXCLUIDA, { expirationTtl: RETENTION_TTL_SECONDS });
+      }
+    } catch {
+      falhou.push(orderId);
+    }
+  }
+  return falhou;
+}
+__name(anonimizarClaims, "anonimizarClaims");
 var ORDER_HISTORY_MAX = 200;
-function podarOrderDetails(details, max = ORDER_HISTORY_MAX) {
-  if (!Array.isArray(details) || details.length <= max) return details;
+function podarOrderDetails(details, max2 = ORDER_HISTORY_MAX) {
+  if (!Array.isArray(details) || details.length <= max2) return details;
   const pagosVivos = details.filter((o) => o?.grantTier === "paid" && !o?.voided);
   const resto = details.filter((o) => !(o?.grantTier === "paid" && !o?.voided));
-  const vaga = Math.max(0, max - pagosVivos.length);
+  const vaga = Math.max(0, max2 - pagosVivos.length);
   const recentes = vaga > 0 ? resto.slice(-vaga) : [];
   const fica = /* @__PURE__ */ new Set([...pagosVivos, ...recentes]);
   return details.filter((o) => fica.has(o));
@@ -315,16 +332,16 @@ function courtesyMaxFrom(env) {
   return Number.isInteger(n) && n >= 0 ? n : COURTESY_DEFAULT_MAX;
 }
 __name(courtesyMaxFrom, "courtesyMaxFrom");
-async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
+async function grantCourtesy(env, saveId, max2 = courtesyMaxFrom(env)) {
   const orderId = courtesyOrderId(saveId);
   const store = kvOrThrow(env);
   const raw = await store.get(COURTESY_COUNT_KEY);
   const count = Number.parseInt(raw ?? "0", 10) || 0;
   const ent = await readEntitlement(env, saveId);
   if (ent.consumedOrders.includes(orderId)) {
-    return { ok: true, ent, duplicate: true, count, max };
+    return { ok: true, ent, duplicate: true, count, max: max2 };
   }
-  if (count >= max) return { ok: false, reason: "courtesy-cap", count, max };
+  if (count >= max2) return { ok: false, reason: "courtesy-cap", count, max: max2 };
   await store.put(COURTESY_COUNT_KEY, String(count + 1), { expirationTtl: RETENTION_TTL_SECONDS });
   const { ent: granted } = await applyVerifiedPurchase(env, saveId, {
     orderId,
@@ -334,7 +351,7 @@ async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
     productId: COURTESY_PROVIDER,
     purchaseToken: null
   });
-  return { ok: true, ent: granted, duplicate: false, count: count + 1, max };
+  return { ok: true, ent: granted, duplicate: false, count: count + 1, max: max2 };
 }
 __name(grantCourtesy, "grantCourtesy");
 var AUDIT_INTERVAL_MS = 24 * 60 * 60 * 1e3;
@@ -465,10 +482,10 @@ async function gateTombstone(env, saveId, authTime) {
   if (loginMs > t.at) {
     try {
       await clearTombstone(env, saveId);
-    } catch (err) {
+    } catch (err2) {
       console.warn("tombstone: reabertura n\xE3o conseguiu apagar a l\xE1pide, chamada segue", {
         saveIdPrefix: String(saveId).slice(0, 8),
-        err: String(err)
+        err: String(err2)
       });
     }
     console.info("tombstone: conta reaberta por login posterior \xE0 exclus\xE3o", {
@@ -502,13 +519,13 @@ async function getJwks(force = false) {
     jwksExpiry = now + maxAge * 1e3;
     jwksFetchedAt = now;
     return jwksCache;
-  } catch (err) {
+  } catch (err2) {
     if (jwksCache) {
       jwksFetchedAt = now;
       jwksExpiry = now + JWKS_FORCE_MIN_GAP_MS;
       return jwksCache;
     }
-    throw err;
+    throw err2;
   }
 }
 __name(getJwks, "getJwks");
@@ -517,7 +534,7 @@ function b64urlToBytes(s) {
   const padded = b64 + "=".repeat((4 - b64.length % 4) % 4);
   const raw = atob(padded);
   const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  for (let i2 = 0; i2 < raw.length; i2++) out[i2] = raw.charCodeAt(i2);
   return out;
 }
 __name(b64urlToBytes, "b64urlToBytes");
@@ -620,7 +637,7 @@ async function requireVerifiedOwner(request, env, saveId) {
     return { ok: false, status: 403, reason: "forbidden" };
   }
   let diff = 0;
-  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ String(saveId).charCodeAt(i);
+  for (let i2 = 0; i2 < expected.length; i2++) diff |= expected.charCodeAt(i2) ^ String(saveId).charCodeAt(i2);
   if (diff !== 0) return { ok: false, status: 403, reason: "forbidden" };
   return { ok: true, email: claims.email };
 }
@@ -664,8 +681,8 @@ function normalizeMealTimes(input) {
     out[key] = Number.isNaN(snapped) || snapped < lo || snapped > hi ? DEFAULT_MEAL_TIMES[key] : formatHHMM(snapped);
   }
   const mins = MEAL_KEYS.map((k) => parseHHMM(out[k]));
-  for (let i = 1; i < mins.length; i++) {
-    if (mins[i] - mins[i - 1] < MEAL_MIN_GAP_MIN) return { ...DEFAULT_MEAL_TIMES };
+  for (let i2 = 1; i2 < mins.length; i2++) {
+    if (mins[i2] - mins[i2 - 1] < MEAL_MIN_GAP_MIN) return { ...DEFAULT_MEAL_TIMES };
   }
   return out;
 }
@@ -691,8 +708,8 @@ function refeicoesDeInscricao(v) {
   const tz = v.tz;
   if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return void 0;
   const times = {};
-  MEAL_KEYS.forEach((k, i) => {
-    times[k] = formatHHMM(t[i]);
+  MEAL_KEYS.forEach((k, i2) => {
+    times[k] = formatHHMM(t[i2]);
   });
   const canon = normalizeMealTimes(times);
   if (MEAL_KEYS.some((k) => canon[k] !== times[k])) return void 0;
@@ -917,15 +934,15 @@ async function gravarCasa(env, gid, save, c) {
 __name(gravarCasa, "gravarCasa");
 function casaStageFor(total) {
   const t = int0(total);
-  let i = 0;
-  for (let k = 0; k < CASA_THRESHOLDS.length; k++) if (t >= CASA_THRESHOLDS[k]) i = k;
-  const prox = CASA_THRESHOLDS[i + 1];
-  const perto = prox !== void 0 && (t - CASA_THRESHOLDS[i]) / (prox - CASA_THRESHOLDS[i]) >= 1 - CASA_PERTO_FRACAO;
-  return { stage: CASA_STAGES[i], stageIndex: i, perto };
+  let i2 = 0;
+  for (let k = 0; k < CASA_THRESHOLDS.length; k++) if (t >= CASA_THRESHOLDS[k]) i2 = k;
+  const prox = CASA_THRESHOLDS[i2 + 1];
+  const perto = prox !== void 0 && (t - CASA_THRESHOLDS[i2]) / (prox - CASA_THRESHOLDS[i2]) >= 1 - CASA_PERTO_FRACAO;
+  return { stage: CASA_STAGES[i2], stageIndex: i2, perto };
 }
 __name(casaStageFor, "casaStageFor");
-async function doarBits(env, gid, save, day2, bits) {
-  const pedido = int0(bits);
+async function doarBits(env, gid, save, day2, bits2) {
+  const pedido = int0(bits2);
   const quer = pedido - pedido % CASA_BITS_POR_PONTO;
   if (quer < CASA_BITS_MIN) return { accepted: 0, capped: false, invalid: true };
   const c = await lerCasa(env, gid, save);
@@ -1044,11 +1061,11 @@ var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCode
 var coopCkKey = /* @__PURE__ */ __name((gid, save) => `coopCk:${gid}:${save}`, "coopCkKey");
 function novoCodigo() {
   const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x) => alfabeto[x % alfabeto.length]).join("");
+  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x2) => alfabeto[x2 % alfabeto.length]).join("");
 }
 __name(novoCodigo, "novoCodigo");
 async function sortearCodigoLivre(env) {
-  for (let i = 0; i < 3; i++) {
+  for (let i2 = 0; i2 < 3; i2++) {
     const tentativa = novoCodigo();
     if (!await kvOrThrow(env).get(coopCodeKey(tentativa))) return tentativa;
   }
@@ -1313,9 +1330,9 @@ function colherMare(g, day2) {
 }
 __name(colherMare, "colherMare");
 function avulsosDoDia(v) {
-  if (Array.isArray(v)) return [...new Set(v.filter((x) => typeof x === "string"))];
+  if (Array.isArray(v)) return [...new Set(v.filter((x2) => typeof x2 === "string"))];
   const k = Math.max(0, Math.floor(Number(v ?? 0)) || 0);
-  return Array.from({ length: k }, (_, i) => `#${i}`);
+  return Array.from({ length: k }, (_, i2) => `#${i2}`);
 }
 __name(avulsosDoDia, "avulsosDoDia");
 function fecharDiasDoBosque(g, fios, hoje, tags = {}) {
@@ -1356,7 +1373,7 @@ function fecharDiasDoBosque(g, fios, hoje, tags = {}) {
 __name(fecharDiasDoBosque, "fecharDiasDoBosque");
 async function lerFiosDaRoda(env, g) {
   const lidos = await Promise.all(g.members.map((m) => lerFio(env, g.id, m)));
-  return Object.fromEntries(g.members.map((m, i) => [m, lidos[i]]));
+  return Object.fromEntries(g.members.map((m, i2) => [m, lidos[i2]]));
 }
 __name(lerFiosDaRoda, "lerFiosDaRoda");
 async function atualizarBosque(env, g, hoje, agora = /* @__PURE__ */ new Date(), fiosProntos = null) {
@@ -1473,7 +1490,7 @@ __name(lerRaidOk, "lerRaidOk");
 async function resolverFeira(env, g, week, refDay, cartoes = null) {
   const golpes = await Promise.all(g.members.map((m) => (cartoes && golpesDoCartao(cartoes[m], week)) ?? lerGolpes(env, g.id, week, m)));
   const dmg = golpes.reduce((s, h) => s + h.dmg, 0);
-  const hitters = g.members.filter((_, i) => golpes[i].days.length > 0);
+  const hitters = g.members.filter((_, i2) => golpes[i2].days.length > 0);
   const fios = cartoes ? fiosDosCartoes(g, cartoes) : await lerFiosDaRoda(env, g);
   const hp = raidHpFor(membrosAtivos(g, fios, refDay).length);
   let cleared = !!await lerRaidOk(env, g.id, week);
@@ -1493,7 +1510,7 @@ async function lerConjunto(env, key) {
   const raw = await kvOrThrow(env).get(key);
   try {
     const r = raw ? JSON.parse(raw) : null;
-    return Array.isArray(r?.ids) ? r.ids.filter((x) => typeof x === "string") : [];
+    return Array.isArray(r?.ids) ? r.ids.filter((x2) => typeof x2 === "string") : [];
   } catch {
     return [];
   }
@@ -1536,7 +1553,7 @@ async function montarCartao(env, gid, save, now = /* @__PURE__ */ new Date()) {
     ck: ck && typeof ck === "object" ? { weekKey: ck.weekKey, days: Array.isArray(ck.days) ? ck.days : [] } : null,
     fio,
     gest: gest && typeof gest === "object" ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,
-    hits: Object.fromEntries(semanas.map((w, i) => [w, { days: hits[i].days, dmg: hits[i].dmg }])),
+    hits: Object.fromEntries(semanas.map((w, i2) => [w, { days: hits[i2].days, dmg: hits[i2].dmg }])),
     casa
   };
 }
@@ -1550,8 +1567,8 @@ __name(renovarCartao, "renovarCartao");
 async function lerCartoes(env, g, now = /* @__PURE__ */ new Date(), ja = {}) {
   const faltam = g.members.filter((m) => !ja[m]);
   const raws = await Promise.all(faltam.map((m) => kvOrThrow(env).get(coopMemKey(g.id, m))));
-  const lidos = await Promise.all(faltam.map(async (m, i) => {
-    const c = parse(raws[i]);
+  const lidos = await Promise.all(faltam.map(async (m, i2) => {
+    const c = parse(raws[i2]);
     return [m, c && c.v === 1 ? c : await montarCartao(env, g.id, m, now)];
   }));
   return { ...ja, ...Object.fromEntries(lidos) };
@@ -1681,8 +1698,8 @@ async function deletePushSubscriptions(env, saveId) {
       if (!indiceCheio) return { deleted, scanned, via: "index" };
       log("account.delete.push-index-full", saveId, { deleted, scanned });
     }
-  } catch (err) {
-    log("account.delete.push-index-failed", saveId, { deleted, scanned, error: String(err?.message || err) });
+  } catch (err2) {
+    log("account.delete.push-index-failed", saveId, { deleted, scanned, error: String(err2?.message || err2) });
     return { deleted, scanned, via: "index" };
   }
   if (typeof pushStore.list !== "function") return { deleted: 0, scanned: 0, via: "none" };
@@ -1701,8 +1718,8 @@ async function deletePushSubscriptions(env, saveId) {
         deleted++;
       }
     }
-  } catch (err) {
-    log("account.delete.push-scan-failed", saveId, { deleted, scanned, error: String(err?.message || err) });
+  } catch (err2) {
+    log("account.delete.push-scan-failed", saveId, { deleted, scanned, error: String(err2?.message || err2) });
   }
   return { deleted, scanned, via: indiceCheio ? "index+scan" : "scan" };
 }
@@ -1781,8 +1798,8 @@ var NOT_INCLUDED = [
   },
   {
     what: "ord:<orderId>",
-    "pt-BR": "O v\xEDnculo entre um comprovante de compra e a conta que o resgatou N\xC3O \xE9 apagado. \xC9 o que impede que um mesmo comprovante vire v\xE1rias contas pagas \u2014 e \xE9 o que deixa voc\xEA restaurar a compra se voltar com o mesmo e-mail.",
-    en: "The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts \u2014 and it is what lets you restore your purchase if you come back with the same email."
+    "pt-BR": 'O v\xEDnculo entre um comprovante de compra e a conta que o resgatou N\xC3O \xE9 apagado, mas fica AN\xD4NIMO: o servidor guarda s\xF3 o n\xFAmero do pedido da loja, marcado como "conta exclu\xEDda" (sem e-mail e sem identificador da conta), por 5 anos. \xC9 o que impede que um mesmo comprovante vire v\xE1rias contas pagas. Consequ\xEAncia: se voc\xEA excluir a conta e criar outra (mesmo com o mesmo e-mail), a compra antiga N\xC3O volta \u2014 o desbloqueio e os Cr\xE9ditos s\xE3o pagos de novo.',
+    en: 'The link between a purchase receipt and the account that redeemed it is NOT deleted, but it becomes ANONYMOUS: the server keeps only the store order number, marked "account deleted" (no email and no account identifier), for 5 years. It is what stops one receipt from becoming several paid accounts. Consequence: if you delete your account and create another (even with the same email), the old purchase does NOT come back \u2014 the unlock and Credits are paid for again.'
   },
   {
     what: "del:done:<saveId> (deletion marker)",
@@ -1966,7 +1983,7 @@ function plan(c, saveId) {
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys
     ].filter(Boolean),
-    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 usage (AI, ads) is removed; purchase fields stay`] : [],
+    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 usage (AI, ads), the paid tier, the Credits balance and purchase details are removed (a purchase is not restored after deletion); only the AI counters and the owner courtesy stay`] : [],
     // Sobrevive o comprovante de COMPRA (Play/cortesia). A licença Steam saiu
     // desta lista em 22/09/2026 e passou para `apaga` (#54).
     sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.filter((o) => !(typeof o === "string" && o.startsWith("steam:own:"))).map((o) => `${ORDER_PREFIX}${o}`) : []
@@ -1995,7 +2012,7 @@ __name(handleDeleteRequest, "handleDeleteRequest");
 function tokenMatches(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length || a.length === 0) return false;
   let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  for (let i2 = 0; i2 < a.length; i2++) diff |= a.charCodeAt(i2) ^ b.charCodeAt(i2);
   return diff === 0;
 }
 __name(tokenMatches, "tokenMatches");
@@ -2029,21 +2046,21 @@ async function handleDeleteConfirm(env, saveId, body) {
       await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
       scrubbed++;
     }
-  } catch (err) {
+  } catch (err2) {
     try {
       await clearTombstone(env, saveId);
     } catch {
     }
-    log("account.delete.aborted", saveId, { step: "friends-scrub", error: String(err?.message || err) });
-    throw err;
+    log("account.delete.aborted", saveId, { step: "friends-scrub", error: String(err2?.message || err2) });
+    throw err2;
   }
   const falhou = [];
   const tentar = /* @__PURE__ */ __name(async (rotulo, fn) => {
     try {
       await fn();
-    } catch (err) {
+    } catch (err2) {
       falhou.push(rotulo);
-      log("account.delete.step-failed", saveId, { step: rotulo, error: String(err?.message || err) });
+      log("account.delete.step-failed", saveId, { step: rotulo, error: String(err2?.message || err2) });
     }
   }, "tentar");
   let coop = { left: false, groupId: null, remaining: 0 };
@@ -2056,14 +2073,27 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.locks) await tentar(k, () => store.delete(k));
   for (const k of c.steamLicenseKeys) await tentar(k, () => store.delete(k));
+  let semAnonimizar = [];
+  if (c.entitlement) {
+    const ids2 = (Array.isArray(c.entitlement.consumedOrders) ? c.entitlement.consumedOrders : []).filter((o) => typeof o === "string" && !o.startsWith("steam:own:") && !o.startsWith("courtesy:"));
+    if (c.entitlement.sub?.rootHash) ids2.push(`play:sub:${c.entitlement.sub.rootHash}`);
+    semAnonimizar = await anonimizarClaims(env, ids2);
+    for (const o of semAnonimizar) falhou.push(`ord:${o}`);
+  }
   if (c.entitlement) {
     const ent = c.entitlement;
-    const ehSteam = /* @__PURE__ */ __name((o) => typeof o === "string" && o.startsWith("steam:own:"), "ehSteam");
+    const COURTESY_PREFIX = "courtesy:";
+    const ehCortesia = (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).some((o) => typeof o === "string" && o.startsWith(COURTESY_PREFIX)) && (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).some((o) => o?.orderId?.startsWith?.(COURTESY_PREFIX) && !o.voided);
     await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
-      tier: ent.tier,
-      credits: ent.credits,
-      consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter((o) => !ehSteam(o)),
-      orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter((o) => !ehSteam(o?.orderId)),
+      // REGISTRO §49 (dono, 14/10/2026): excluiu a conta, paga de novo. O direito
+      // pago e o saldo NÃO sobrevivem (nem para quem volta com o mesmo e-mail);
+      // o vínculo comprovante→conta sobrevive ANONIMIZADO em `order_claims`/`ord:`.
+      // Só a CORTESIA do dono (não é compra) segue valendo.
+      tier: ehCortesia ? "paid" : "demo",
+      credits: 0,
+      // `semAnonimizar`: só fica o que falhou, para o retry reencontrar o pedido.
+      consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter((o) => typeof o === "string" && (o.startsWith(COURTESY_PREFIX) || semAnonimizar.includes(o))),
+      orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter((o) => typeof o?.orderId === "string" && o.orderId.startsWith(COURTESY_PREFIX)),
       auditedAt: ent.auditedAt,
       // ANTIABUSO (dono, 11/10/2026; `abuso-e-custo` V1.2): os contadores de
       // geração de sprite SOBREVIVEM à exclusão — excluir e relogar (mesmo
@@ -2174,7 +2204,7 @@ function pemToArrayBuffer(pem) {
   const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s+/g, "");
   const raw = atob(b64);
   const buf = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
+  for (let i2 = 0; i2 < raw.length; i2++) buf[i2] = raw.charCodeAt(i2);
   return buf.buffer;
 }
 __name(pemToArrayBuffer, "pemToArrayBuffer");
@@ -2237,8 +2267,8 @@ async function verifyPlayPurchase(env, { productId, purchaseToken, saveId }) {
       return { ok: false, reason: "invalid-purchase", status: res.status };
     }
     purchase = await res.json();
-  } catch (err) {
-    console.error("billing verify error (play):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("billing verify error (play):", String(err2?.message ?? err2).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (purchase.purchaseState !== 0) {
@@ -2247,7 +2277,13 @@ async function verifyPlayPurchase(env, { productId, purchaseToken, saveId }) {
   if (!isPlayPurchaseBoundTo(purchase, saveId, env)) {
     return { ok: false, reason: "account-mismatch" };
   }
-  return { ok: true, orderId: `play:${purchase.orderId}`, product };
+  return Object.assign(
+    { ok: (
+      /** @type {const} */
+      true
+    ), orderId: `play:${purchase.orderId}`, product },
+    { consumed: purchase.consumptionState === 1 }
+  );
 }
 __name(verifyPlayPurchase, "verifyPlayPurchase");
 function isPlayPurchaseBoundTo(purchase, saveId, env = {}) {
@@ -2275,8 +2311,8 @@ async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
     if (purchase.purchaseState === 1) return true;
     if (purchase.purchaseState === 0) return false;
     return null;
-  } catch (err) {
-    console.error("refund check error (play):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("refund check error (play):", String(err2?.message ?? err2).slice(0, 120));
     return null;
   }
 }
@@ -2330,8 +2366,8 @@ async function fetchSubscriptionV2(env, purchaseToken) {
     const sub = await res.json().catch(() => null);
     if (!sub || typeof sub !== "object") return { ok: false, reason: "verification-failed" };
     return { ok: true, sub };
-  } catch (err) {
-    console.error("billing verify error (play sub):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("billing verify error (play sub):", String(err2?.message ?? err2).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
 }
@@ -2403,8 +2439,8 @@ async function acknowledgePlaySubscription(env, { purchaseToken, ackPending = tr
     if (res.ok || res.status === 400) return true;
     console.error("billing ack error (play sub):", res.status, maskToken(purchaseToken));
     return false;
-  } catch (err) {
-    console.error("billing ack error (play sub):", String(err?.message ?? err).slice(0, 120), maskToken(purchaseToken));
+  } catch (err2) {
+    console.error("billing ack error (play sub):", String(err2?.message ?? err2).slice(0, 120), maskToken(purchaseToken));
     return false;
   }
 }
@@ -2437,8 +2473,8 @@ async function verifySteamOwnership(env, { ticket }) {
   let auth;
   try {
     auth = await authenticateSteamTicket(cfg, ticket);
-  } catch (err) {
-    console.error("billing verify error (steam ticket):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("billing verify error (steam ticket):", String(err2?.message ?? err2).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!auth.ok) return auth;
@@ -2450,8 +2486,8 @@ async function verifySteamOwnership(env, { ticket }) {
     if (!res.ok) return { ok: false, reason: "verification-failed" };
     const data = await res.json().catch(() => null);
     owns = data?.appownership?.ownsapp === true;
-  } catch (err) {
-    console.error("billing verify error (steam ownership):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("billing verify error (steam ownership):", String(err2?.message ?? err2).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!owns) return { ok: false, reason: "not-purchased" };
@@ -2472,8 +2508,8 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
   let auth;
   try {
     auth = await authenticateSteamTicket(cfg, ticket);
-  } catch (err) {
-    console.error("billing verify error (steam ticket):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("billing verify error (steam ticket):", String(err2?.message ?? err2).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!auth.ok) return { ok: false, reason: auth.reason };
@@ -2484,8 +2520,8 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
     if (!res.ok) return { ok: false, reason: "invalid-purchase" };
     const data = await res.json().catch(() => null);
     params = data?.response?.params;
-  } catch (err) {
-    console.error("billing verify error (steam txn):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("billing verify error (steam txn):", String(err2?.message ?? err2).slice(0, 120));
     return { ok: false, reason: "verification-failed" };
   }
   if (!params) return { ok: false, reason: "invalid-purchase" };
@@ -2517,8 +2553,8 @@ async function isSteamOwnershipVoided(env, { orderId }) {
     if (owns === true) return false;
     if (owns === false) return true;
     return null;
-  } catch (err) {
-    console.error("refund check error (steam ownership):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("refund check error (steam ownership):", String(err2?.message ?? err2).slice(0, 120));
     return null;
   }
 }
@@ -2536,8 +2572,8 @@ async function isSteamPurchaseVoided(env, { orderId }) {
     if (!status) return null;
     if (status === "Succeeded") return false;
     return ["Refunded", "PartialRefund", "Chargeback", "Failed"].includes(status);
-  } catch (err) {
-    console.error("refund check error (steam):", String(err?.message ?? err).slice(0, 120));
+  } catch (err2) {
+    console.error("refund check error (steam):", String(err2?.message ?? err2).slice(0, 120));
     return null;
   }
 }
@@ -2568,6 +2604,7 @@ var STATUS_BY_REASON = {
   "unsupported-transaction": 400,
   // 409: a compra é válida, mas já foi resgatada por outra conta Soulmon.
   "order-in-use": 409,
+  "already-consumed": 409,
   "account-mismatch": 403
 };
 async function onRequestOptions2() {
@@ -2613,6 +2650,14 @@ async function onRequestPost({ request, env }) {
   }
   const fechada = await recusaSeLojaFechada(env, saveId, result.orderId);
   if (fechada) return fechada;
+  if (result.product.consumable && /** @type {any} */
+  result.consumed) {
+    const atual = await readEntitlement(env, saveId);
+    if (!atual.consumedOrders.includes(result.orderId)) {
+      console.log(JSON.stringify({ event: "billing.consumed.refused", saveIdPrefix: String(saveId).slice(0, 8) }));
+      return json2({ ok: false, reason: "already-consumed" }, 409);
+    }
+  }
   const claim = await claimOrder(env, saveId, result.orderId);
   if (!claim.ok) {
     return json2({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
@@ -2791,7 +2836,7 @@ function pemToArrayBuffer2(pem) {
   const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s+/g, "");
   const raw = atob(b64);
   const buf = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
+  for (let i2 = 0; i2 < raw.length; i2++) buf[i2] = raw.charCodeAt(i2);
   return buf.buffer;
 }
 __name(pemToArrayBuffer2, "pemToArrayBuffer");
@@ -2905,8 +2950,8 @@ async function alertAdmin(env, tipo, texto, now = /* @__PURE__ */ new Date()) {
     const token = await getFcmAccessToken(sa);
     const r = await sendFcmPush(alvo, { title: "Soulmon: alerta de uso", body: `${tipo}: ${texto}`.slice(0, 180), tag: `alerta-${tipo}` }, sa.project_id, token);
     return r.ok ? "sent" : "error";
-  } catch (err) {
-    console.error("[alerta] falhou", err?.message);
+  } catch (err2) {
+    console.error("[alerta] falhou", err2?.message);
     return "error";
   }
 }
@@ -3103,8 +3148,8 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
     usedAccount = await readCounter(env, accountKey);
     if (adminKey) usedAdminMonth = await readCounter(env, adminKey);
     if (dayKey) usedDay = await readCounter(env, dayKey);
-  } catch (err) {
-    console.error("aiGuard: contador ileg\xEDvel, recusando", err?.message);
+  } catch (err2) {
+    console.error("aiGuard: contador ileg\xEDvel, recusando", err2?.message);
     return refuse(503, "ai-quota-unavailable");
   }
   if (hasLifetime && usedLifetime + units > capLifetime) {
@@ -3135,8 +3180,8 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
     if (adminKey) await kvOrThrow(env).put(adminKey, String(usedAdminMonth + units), { expirationTtl: MONTH_TTL_SECONDS });
     if (dayKey) await kvOrThrow(env).put(dayKey, String(usedDay + units), { expirationTtl: TTL_SECONDS });
-  } catch (err) {
-    console.error("aiGuard: falha ao debitar cota, recusando", err?.message);
+  } catch (err2) {
+    console.error("aiGuard: falha ao debitar cota, recusando", err2?.message);
     return refuse(503, "ai-quota-unavailable");
   }
   if (cruzouLimiar(usedGlobal, usedGlobal + units, globalLimit)) {
@@ -3168,8 +3213,8 @@ function makeRelease(env, ctx) {
       if (adminKey) await kvOrThrow(env).put(adminKey, String(menos(await readCounter(env, adminKey))), { expirationTtl: MONTH_TTL_SECONDS });
       if (dayKey) await kvOrThrow(env).put(dayKey, String(menos(await readCounter(env, dayKey))), { expirationTtl: TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? "-"} \u2014 ${motivo}`);
-    } catch (err) {
-      console.error("aiGuard: falha ao devolver cota reservada", err?.message);
+    } catch (err2) {
+      console.error("aiGuard: falha ao devolver cota reservada", err2?.message);
     }
   }, "release");
 }
@@ -3338,8 +3383,8 @@ async function callChatModel(env, req2) {
       last = r;
       console.error("[chat] groq falhou", { status: r.status });
       if (isAccountFail(r.status)) noteAccountFail(now);
-    } catch (err) {
-      console.error("[chat] groq rede/timeout", { name: err?.name });
+    } catch (err2) {
+      console.error("[chat] groq rede/timeout", { name: err2?.name });
       last = { ok: false, status: 0 };
     }
     if (last.status >= 400 && last.status < 500 && last.status !== 429 && !isAccountFail(last.status)) return last;
@@ -3349,8 +3394,8 @@ async function callChatModel(env, req2) {
       const r = await gemini(env, req2);
       if (!r.ok) console.error("[chat] gemini falhou", { status: r.status });
       return r;
-    } catch (err) {
-      console.error("[chat] gemini rede/timeout", { name: err?.name });
+    } catch (err2) {
+      console.error("[chat] gemini rede/timeout", { name: err2?.name });
       return { ok: false, status: 0 };
     }
   }
@@ -3798,8 +3843,8 @@ var EN_PT = {
 };
 var norm = /* @__PURE__ */ __name((s) => s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, ""), "norm");
 var stem = /* @__PURE__ */ __name((w) => {
-  const x = w.replace(/(oes|aes)$/, "ao").replace(/s$/, "");
-  return x.length > 6 ? x.slice(0, 6) : x;
+  const x2 = w.replace(/(oes|aes)$/, "ao").replace(/s$/, "");
+  return x2.length > 6 ? x2.slice(0, 6) : x2;
 }, "stem");
 function tokenize(text) {
   const out = [];
@@ -4028,11 +4073,11 @@ function behaviorBlock(b) {
   if (b.tasksDone !== void 0) f.push(`${b.tasksDone} tasks closed in the window; ${b.tasksOpen ?? 0} still open.`);
   if (b.restShieldsUsed) f.push(`They used ${b.restShieldsUsed} rest shield(s) \u2014 resting is allowed and counts as care.`);
   if (b.byPart) {
-    const top = Object.entries(b.byPart).sort((x, y) => y[1] - x[1])[0];
+    const top = Object.entries(b.byPart).sort((x2, y) => y[1] - x2[1])[0];
     if (top && top[1] > 0) f.push(`Most things get done in the ${top[0]}.`);
   }
   if (b.byCategory) {
-    const top = Object.entries(b.byCategory).sort((x, y) => y[1] - x[1])[0];
+    const top = Object.entries(b.byCategory).sort((x2, y) => y[1] - x2[1])[0];
     if (top && top[1] > 0) f.push(`The area with the most activity: ${top[0]}.`);
   }
   if (b.habitsSlipping) f.push(`${b.habitsSlipping} habit(s) have been quiet for a couple of days \u2014 a lighter version could help; this is NOT a failure.`);
@@ -4234,9 +4279,9 @@ async function onRequestPost2({ request, env }) {
         maxTokens: wantsActions || feedbackMode ? 260 : 120,
         temperature: clampTemperature(aiSettings?.temperature)
       });
-    } catch (err) {
-      await gate.release(`erro no provedor de IA: ${err?.message}`);
-      throw err;
+    } catch (err2) {
+      await gate.release(`erro no provedor de IA: ${err2?.message}`);
+      throw err2;
     }
     if (!result.ok) {
       await gate.release(`provedor de IA respondeu ${result.status}`);
@@ -4260,8 +4305,8 @@ async function onRequestPost2({ request, env }) {
       response = actions.length ? ispt ? "D\xE1 uma olhada a\xED e me diz." : "Take a look and tell me." : "...";
     }
     return Response.json(actions.length ? { response, actions } : { response }, { headers: CORS3 });
-  } catch (err) {
-    console.error("Chat error:", err);
+  } catch (err2) {
+    console.error("Chat error:", err2);
     return Response.json({ error: "Internal error" }, { status: 500, headers: CORS3 });
   }
 }
@@ -4289,7 +4334,7 @@ var BUILDING_GATES = {
   "jogos.salao": { minBond: 1 },
   "jogos.refugio": { minBond: 1 },
   "jogos.mente": { minBond: 3 },
-  "exploracao.masmorra": { minBond: 2 },
+  "exploracao.masmorra": { minBond: 1 },
   "exploracao.caderno": { minBond: 2 },
   "exploracao.oficina": { minBond: 3 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
@@ -4356,7 +4401,7 @@ async function legacyPidFor(saveId) {
 __name(legacyPidFor, "legacyPidFor");
 function newPid() {
   const b = crypto.getRandomValues(new Uint8Array(12));
-  return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
+  return Array.from(b).map((x2) => x2.toString(16).padStart(2, "0")).join("");
 }
 __name(newPid, "newPid");
 async function ensurePid(env, p) {
@@ -4397,8 +4442,8 @@ __name(safe, "safe");
 function stageIndexOf(stage) {
   if (typeof stage !== "string") return 0;
   const prefix = stage.split("-")[0];
-  const i = STAGE_ORDER.indexOf(prefix);
-  return i < 0 ? 0 : i;
+  const i2 = STAGE_ORDER.indexOf(prefix);
+  return i2 < 0 ? 0 : i2;
 }
 __name(stageIndexOf, "stageIndexOf");
 function levelCapFor(stage) {
@@ -4492,7 +4537,7 @@ function autoHp(level) {
 __name(autoHp, "autoHp");
 var ORDER = ["atk", "spd", "def"];
 function cleanWeights(w) {
-  const c = /* @__PURE__ */ __name((x) => typeof x === "number" && Number.isFinite(x) && x > 0 ? x : 0, "c");
+  const c = /* @__PURE__ */ __name((x2) => typeof x2 === "number" && Number.isFinite(x2) && x2 > 0 ? x2 : 0, "c");
   const atk = c(w?.atk), def = c(w?.def), spd = c(w?.spd);
   const sum = atk + def + spd;
   return sum > 0 ? { atk: atk / sum, def: def / sum, spd: spd / sum } : REFERENCE_BUILDS.balanced;
@@ -4526,7 +4571,7 @@ function combatantAt(level, weights, bonus = 0) {
   const p = distributePoints(L, weights);
   if (typeof bonus === "number") return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
   const ab = toAttrBonus(bonus);
-  const fold = /* @__PURE__ */ __name((v, x) => x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v, "fold");
+  const fold = /* @__PURE__ */ __name((v, x2) => x2 > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x2) - 1) : v, "fold");
   return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
 }
 __name(combatantAt, "combatantAt");
@@ -4569,16 +4614,16 @@ var CHEER = {
 var CHEER_SCALE_MAX = 1.15;
 var START_ENERGY_MAX = 9;
 var DOT_RESIST_MAX = 0.18;
-function cleanStartEnergy(x) {
-  return typeof x === "number" && Number.isFinite(x) ? Math.min(START_ENERGY_MAX, Math.max(0, x)) : 0;
+function cleanStartEnergy(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(START_ENERGY_MAX, Math.max(0, x2)) : 0;
 }
 __name(cleanStartEnergy, "cleanStartEnergy");
-function cleanDotResist(x) {
-  return typeof x === "number" && Number.isFinite(x) ? Math.min(DOT_RESIST_MAX, Math.max(0, x)) : 0;
+function cleanDotResist(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(DOT_RESIST_MAX, Math.max(0, x2)) : 0;
 }
 __name(cleanDotResist, "cleanDotResist");
-function cleanCheerScale(x) {
-  return typeof x === "number" && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
+function cleanCheerScale(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x2)) : 1;
 }
 __name(cleanCheerScale, "cleanCheerScale");
 function cheerEvents(taps, side, scale = 1) {
@@ -4586,7 +4631,7 @@ function cheerEvents(taps, side, scale = 1) {
   const k = cleanCheerScale(scale);
   const perBucket = /* @__PURE__ */ new Map();
   let acc = 0;
-  for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
+  for (const tap of [...taps].filter((x2) => Number.isFinite(x2) && x2 >= 0).sort((x2, y) => x2 - y)) {
     const b = Math.floor(tap / CHEER.bucketSeconds);
     const n = perBucket.get(b) ?? 0;
     if (n >= CHEER.tapsCapPerBucket) continue;
@@ -4624,18 +4669,18 @@ function* fightSteps(a, b, opts) {
   const phaseRng = mulberry32(seed ^ PHASE_SALT);
   const drawn = [phaseRng(), phaseRng()];
   const phases = opts.phases ?? drawn;
-  const mk = /* @__PURE__ */ __name((s, i) => {
+  const mk = /* @__PURE__ */ __name((s, i2) => {
     const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
-    const r = mulberry32(sideSeed(seed, i + 1));
+    const r = mulberry32(sideSeed(seed, i2 + 1));
     const mult = variance ? ar1Multiplier(r, variance) : () => 1;
     return {
       c,
       sp: s.special,
       mult,
-      hp: opts.startHp?.[i] ?? 1,
-      en: opts.startEnergy?.[i] ?? 0,
+      hp: opts.startHp?.[i2] ?? 1,
+      en: opts.startEnergy?.[i2] ?? 0,
       shield: 0,
-      next: interval(c.spd) * phases[i],
+      next: interval(c.spd) * phases[i2],
       casts: 0,
       dead: Infinity,
       nAtk: 0,
@@ -4661,8 +4706,8 @@ function* fightSteps(a, b, opts) {
   const pending = [];
   const ev = /* @__PURE__ */ __name((kind, side, frac, at) => ({ kind, t: at, side, frac, hp: [F[0].hp, F[1].hp], energy: [F[0].en, F[1].en] }), "ev");
   const hitsOn = /* @__PURE__ */ __name((me, foe) => hitsToKnockOut(me.c, foe.c) / u, "hitsOn");
-  const gain = /* @__PURE__ */ __name((f, x, per) => {
-    if (f.sp && f.dead === Infinity) f.en += per * x;
+  const gain = /* @__PURE__ */ __name((f, x2, per) => {
+    if (f.sp && f.dead === Infinity) f.en += per * x2;
   }, "gain");
   const hit = /* @__PURE__ */ __name((src, v, frac, kind) => {
     if (v.dead < Infinity) return;
@@ -4713,21 +4758,21 @@ function* fightSteps(a, b, opts) {
   }
   __name(flush, "flush");
   function* markDead() {
-    for (const i of [0, 1]) {
-      if (F[i].hp <= EPS && F[i].dead === Infinity) {
-        F[i].dead = t;
-        yield ev("ko", i, 0, t);
+    for (const i2 of [0, 1]) {
+      if (F[i2].hp <= EPS && F[i2].dead === Infinity) {
+        F[i2].dead = t;
+        yield ev("ko", i2, 0, t);
       }
     }
   }
   __name(markDead, "markDead");
-  function* tryCast(i, tt) {
-    const me = F[i];
+  function* tryCast(i2, tt) {
+    const me = F[i2];
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
-      const m = yield ev("cast", i, 0, tt);
-      cast(me, F[1 - i], tt, m ?? 1);
+      const m = yield ev("cast", i2, 0, tt);
+      cast(me, F[1 - i2], tt, m ?? 1);
     }
   }
   __name(tryCast, "tryCast");
@@ -4756,35 +4801,35 @@ function* fightSteps(a, b, opts) {
     t = Math.min(F[0].next, F[1].next, tt, tEn);
     for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
     tPrev = t;
-    for (let i = timed.length - 1; i >= 0; i--) {
-      if (timed[i].t - t < EPS) timed.splice(i, 1)[0].fn();
+    for (let i2 = timed.length - 1; i2 >= 0; i2--) {
+      if (timed[i2].t - t < EPS) timed.splice(i2, 1)[0].fn();
     }
     for (
-      const i of
+      const i2 of
       /** @type {(0 | 1)[]} */
       [0, 1]
     ) {
-      const me = F[i];
-      const foe = F[1 - i];
+      const me = F[i2];
+      const foe = F[1 - i2];
       if (me.next - t >= EPS) continue;
       let mulN = 1;
       if (me.nAtk > EPS) {
-        const x = Math.min(1, me.nAtk);
-        mulN += x;
-        me.nAtk -= x;
+        const x2 = Math.min(1, me.nAtk);
+        mulN += x2;
+        me.nAtk -= x2;
       }
       if (foe.nVuln > EPS) {
-        const x = Math.min(1, foe.nVuln);
-        mulN += x;
-        foe.nVuln -= x;
+        const x2 = Math.min(1, foe.nVuln);
+        mulN += x2;
+        foe.nVuln -= x2;
       }
-      const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
+      const hs = opts.hitScale ? opts.hitScale(i2, me.nHit) : 1;
       me.nHit++;
       hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack");
       if (me.nSpd > EPS) {
-        const x = Math.min(1, me.nSpd);
-        me.nSpd -= x;
-        me.next = t + interval(me.c.spd) / (1 + x);
+        const x2 = Math.min(1, me.nSpd);
+        me.nSpd -= x2;
+        me.next = t + interval(me.c.spd) / (1 + x2);
       } else {
         me.next = t + interval(me.c.spd);
       }
@@ -4795,8 +4840,8 @@ function* fightSteps(a, b, opts) {
     yield* tryCast(1, t);
     yield* flush();
     yield* markDead();
-    for (const i of [0, 1]) {
-      if (F[i].dead < Infinity && F[1 - i].dead === Infinity && t > 10 * F[i].dead + 60) F[1 - i].dead = t;
+    for (const i2 of [0, 1]) {
+      if (F[i2].dead < Infinity && F[1 - i2].dead === Infinity && t > 10 * F[i2].dead + 60) F[1 - i2].dead = t;
     }
     const over = opts.stopAtFirstKo ? F[0].dead < Infinity || F[1].dead < Infinity : F[0].dead < Infinity && F[1].dead < Infinity;
     if (over) return finish();
@@ -4915,7 +4960,7 @@ function talentAttrBonus(picks, bondLevel) {
   return out;
 }
 __name(talentAttrBonus, "talentAttrBonus");
-function sumKind(picks, bondLevel, kind, max) {
+function sumKind(picks, bondLevel, kind, max2) {
   if (!isValidPicks(picks, bondLevel)) return 0;
   let sum = 0;
   for (
@@ -4923,7 +4968,7 @@ function sumKind(picks, bondLevel, kind, max) {
     /** @type {string[]} */
     picks
   ) if (PICKABLE[id].kind === kind) sum += PICKABLE[id].perRank ?? 0;
-  return Math.min(max, sum);
+  return Math.min(max2, sum);
 }
 __name(sumKind, "sumKind");
 var talentStartEnergy = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "startEnergy", START_ENERGY_MAX), "talentStartEnergy");
@@ -4992,7 +5037,7 @@ function sanitizeForge(raw) {
       for (let k = 1; k <= old; k++) {
         const c = k >= 2 && arr[k - 2] === "b" ? "b" : "a";
         const span = OLD_LEVEL_SPAN[k - 1] - (k === 1 ? 1 : 0);
-        for (let i = 0; i < span; i++) list2.push(c);
+        for (let i2 = 0; i2 < span; i2++) list2.push(c);
       }
       levels[id] = OLD_LEVEL_TO_NEW[old - 1];
       if (list2.includes("b")) picks[id] = list2;
@@ -5001,7 +5046,7 @@ function sanitizeForge(raw) {
     const level = Math.min(FORGE_MAX_LEVEL, Math.max(1, Math.floor(v)));
     levels[id] = level;
     const list = [];
-    for (let i = 0; i < level - 1; i++) list.push(arr[i] === "b" ? "b" : "a");
+    for (let i2 = 0; i2 < level - 1; i2++) list.push(arr[i2] === "b" ? "b" : "a");
     if (list.includes("b")) picks[id] = list;
   }
   return Object.keys(levels).length === 0 ? empty : { v: FORGE_SCHEMA, levels, picks };
@@ -5141,15 +5186,15 @@ function cleanGalhos(g) {
 __name(cleanGalhos, "cleanGalhos");
 function planoDoComportamento(janela) {
   const b = GALHOS.map(([, k]) => janela && typeof janela === "object" ? typeof janela[k] === "number" && Number.isFinite(janela[k]) && janela[k] > 0 ? janela[k] : 0 : 0);
-  const total = b.reduce((a, x) => a + x, 0);
+  const total = b.reduce((a, x2) => a + x2, 0);
   if (total < MIN_AMOSTRA) return null;
-  const fatias = b.map((x) => x / total);
+  const fatias = b.map((x2) => x2 / total);
   const plano = {};
   const els = new Set(GALHOS.flatMap(([g]) => Object.keys(GALHO_PARA_ELEMENTO[g])));
   for (const el of els) {
     let p = 0;
-    GALHOS.forEach(([g], i) => {
-      p += fatias[i] * (GALHO_PARA_ELEMENTO[g][el] ?? 0);
+    GALHOS.forEach(([g], i2) => {
+      p += fatias[i2] * (GALHO_PARA_ELEMENTO[g][el] ?? 0);
     });
     if (p > 0) plano[el] = p;
   }
@@ -5238,8 +5283,8 @@ var DUEL_SAVE_MAX_CHARS = 1e6;
 var DUEL_DAY_MS = 864e5;
 function sanitizeTaps(raw) {
   const arr = Array.isArray(raw) ? raw : [];
-  return Array.from({ length: DUEL_CHEER_BUCKETS }, (_, i) => {
-    const n = Math.floor(Number(arr[i]));
+  return Array.from({ length: DUEL_CHEER_BUCKETS }, (_, i2) => {
+    const n = Math.floor(Number(arr[i2]));
     return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
   });
 }
@@ -5473,8 +5518,8 @@ __name(duelSide, "duelSide");
 function duelSeed(...parts) {
   let h = 2166136261;
   const s = parts.join("|");
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
+  for (let i2 = 0; i2 < s.length; i2++) {
+    h ^= s.charCodeAt(i2);
     h = Math.imul(h, 16777619) >>> 0;
   }
   return h >>> 0;
@@ -5518,8 +5563,8 @@ async function loadDuelSide(env, saveId) {
     const state = JSON.parse(value);
     if (!state || typeof state !== "object" || Array.isArray(state)) return null;
     return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
-  } catch (err) {
-    console.warn("duel: ficha indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
+  } catch (err2) {
+    console.warn("duel: ficha indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err2) });
     return null;
   }
 }
@@ -5544,17 +5589,17 @@ var parse2 = /* @__PURE__ */ __name((raw) => {
 async function montarEsquadrao(env, g, requester) {
   const ordem = [requester, ...g.members.filter((m) => m !== requester)];
   const lados = await Promise.all(ordem.map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })));
-  return lados.filter((x) => x.side).slice(0, WAR_MAX);
+  return lados.filter((x2) => x2.side).slice(0, WAR_MAX);
 }
 __name(montarEsquadrao, "montarEsquadrao");
-var porNivel = /* @__PURE__ */ __name((lados) => lados.map((x, i) => ({ ...x, i })).sort((a, b) => b.side.combatant.level - a.side.combatant.level || a.i - b.i), "porNivel");
+var porNivel = /* @__PURE__ */ __name((lados) => lados.map((x2, i2) => ({ ...x2, i: i2 })).sort((a, b) => b.side.combatant.level - a.side.combatant.level || a.i - b.i), "porNivel");
 function resolverGuerra(A, B2, sementeBase) {
   const a = porNivel(A), b = porNivel(B2);
   const n = Math.min(a.length, b.length);
   const duels = [];
   let aWins = 0, bWins = 0;
-  for (let i = 0; i < n; i++) {
-    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed: duelSeed(sementeBase, i), taps: [] });
+  for (let i2 = 0; i2 < n; i2++) {
+    const r = simulateDuel({ me: a[i2].side, opp: b[i2].side, seed: duelSeed(sementeBase, i2), taps: [] });
     if (r.winner === "me") {
       aWins++;
       duels.push("a");
@@ -5589,14 +5634,14 @@ async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
   const fila = parse2(await kvs.get(coopWarQKey(size)));
   const rival = fila && typeof fila.gid === "string" && fila.gid !== g.id && Array.isArray(fila.roster) ? await lerGrupo2(fila.gid) : null;
   if (!rival) {
-    await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x) => x.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
+    await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x2) => x2.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     return { state: "waiting", waiting: { size }, last: antes.last };
   }
   await kvs.delete(coopWarQKey(size));
-  const deles = (await Promise.all(fila.roster.filter((m) => rival.members.includes(m)).map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })))).filter((x) => x.side).slice(0, WAR_MAX);
+  const deles = (await Promise.all(fila.roster.filter((m) => rival.members.includes(m)).map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })))).filter((x2) => x2.side).slice(0, WAR_MAX);
   if (deles.length < WAR_MIN) {
-    await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x) => x.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
+    await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x2) => x2.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     return { state: "waiting", waiting: { size }, last: antes.last };
   }
@@ -5616,8 +5661,8 @@ async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
     kvs.delete(coopWarWaitKey(rival.id)),
     kvs.delete(coopWarWaitKey(g.id)),
     // A seiva da casa vai para os dois esquadrões (cada um na casa da própria guilda; perder nunca rende zero).
-    ...A.map((x) => somarPontos(env, g.id, x.save, "guerra", WAR_PTS[meu])),
-    ...B2.map((x) => somarPontos(env, rival.id, x.save, "guerra", WAR_PTS[dele]))
+    ...A.map((x2) => somarPontos(env, g.id, x2.save, "guerra", WAR_PTS[meu])),
+    ...B2.map((x2) => somarPontos(env, rival.id, x2.save, "guerra", WAR_PTS[dele]))
   ]);
   return { state: "done", waiting: null, last: { day: hoje, outcome: meu, duels: duelosDe(duels, "a"), size: n, enemy: rival.name } };
 }
@@ -5688,28 +5733,28 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
   const nominal = size <= PRESENCA_NOMINAL_MAX;
   const cartoes = await lerCartoes(env, g, /* @__PURE__ */ new Date(), cartoesProntos ?? {});
   const cart = g.members.map((m) => cartoes[m]);
-  const dias = cart.map((c, i) => {
+  const dias = cart.map((c, i2) => {
     const proprios = checkinsDoCartao(c, semana);
-    return proprios.length > 0 ? proprios : g.checkins?.[g.members[i]] || [];
+    return proprios.length > 0 ? proprios : g.checkins?.[g.members[i2]] || [];
   });
   const fios = cart.map(fioDoCartao);
   const firmou = fios.map((f) => !!f?.days?.includes(hoje));
-  const veio = dias.map((d, i) => d.includes(hoje) || firmou[i]);
-  const membros = await Promise.all(g.members.map(async (m, i) => {
+  const veio = dias.map((d, i2) => d.includes(hoje) || firmou[i2]);
+  const membros = await Promise.all(g.members.map(async (m, i2) => {
     const memberId = await idOpacoDoMembro(env, g.id, m);
     return {
       id: memberId,
       memberId,
-      name: cart[i]?.name ?? null,
+      name: cart[i2]?.name ?? null,
       euMesmo: m === euSave,
-      ...nominal && veio[i] ? { apareceuHoje: true } : {}
+      ...nominal && veio[i2] ? { apareceuHoje: true } : {}
     };
   }));
   const eu = g.members.indexOf(euSave);
   const { stage, stageIndex, perto } = bosqueStageFor(g.bosqueProgress);
   const bloom = tamanhoDaFloracao(Number(g.bosqueProgress ?? 0) - Number(g.tideBase ?? 0));
   const gestos = cart.map((c) => gestosDoCartao(c, hoje));
-  const recebidos = new Set(gestos.flatMap((k, i) => g.members[i] === euSave ? [] : k));
+  const recebidos = new Set(gestos.flatMap((k, i2) => g.members[i2] === euSave ? [] : k));
   const meuFio = eu >= 0 ? fios[eu] : null;
   const feira = await resolverFeira(env, g, semana, hoje, cartoes);
   const anterior = semanaAnterior(hoje);
@@ -5753,9 +5798,9 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
     // A CASA (PR2): só estágio, `perto` e os slots de item. Nunca pontos, limiares nem doação por pessoa.
     casa: {
       ...(({ stage: stage2, stageIndex: stageIndex2, perto: perto2 }) => ({ nivel: stage2, nivelIndex: stageIndex2, perto: perto2 }))(casaStageFor(totalDaCasa(g, cartoes))),
-      slots: g.members.flatMap((m, i) => {
-        const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
-        return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];
+      slots: g.members.flatMap((m, i2) => {
+        const c = cart[i2]?.casa ? normalizarCasa(cart[i2].casa) : null;
+        return c?.slot ? [{ memberId: membros[i2].memberId, item: c.slot, euMesmo: m === euSave }] : [];
       }),
       mine: (() => {
         const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
@@ -6095,9 +6140,9 @@ function pickRankedOpponents(pool, myPoints, rng, n = RANKED_PICKS, window = RAN
   }));
   tagged.sort((a, b) => a.d - b.d || a.tie - b.tie);
   const near = tagged.slice(0, Math.max(n, window)).map((t) => t.item);
-  for (let i = near.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [near[i], near[j]] = [near[j], near[i]];
+  for (let i2 = near.length - 1; i2 > 0; i2--) {
+    const j = Math.floor(rng() * (i2 + 1));
+    [near[i2], near[j]] = [near[j], near[i2]];
   }
   return near.slice(0, n);
 }
@@ -6670,12 +6715,12 @@ async function handleCommunity({ request, env }) {
     }
     rows.sort((a, b) => b.points - a.points);
     const top3 = rows.slice(0, 3);
-    for (let i = 0; i < top3.length; i++) {
-      const p = await getProfile(env, top3[i].id);
+    for (let i2 = 0; i2 < top3.length; i2++) {
+      const p = await getProfile(env, top3[i2].id);
       if (!p) continue;
       p.pendingTrophies = p.pendingTrophies || [];
-      p.pendingTrophies.push({ season, place: i + 1 });
-      await putProfile(env, top3[i].id, p);
+      p.pendingTrophies.push({ season, place: i2 + 1 });
+      await putProfile(env, top3[i2].id, p);
     }
     await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }), { expirationTtl: CLOSED_SEASON_TTL });
     return json3({ ok: true, season, awarded: top3.length });
@@ -7060,19 +7105,19 @@ var METRICS_KEY_HEADER = "X-Metrics-Key";
 function secretEquals(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  for (let i2 = 0; i2 < a.length; i2++) diff |= a.charCodeAt(i2) ^ b.charCodeAt(i2);
   return diff === 0;
 }
 __name(secretEquals, "secretEquals");
-function dayRange(from, to, max = MAX_READ_DAYS) {
+function dayRange(from, to, max2 = MAX_READ_DAYS) {
   if (!DAY_RE.test(String(from)) || !DAY_RE.test(String(to))) return null;
   const start = Date.parse(`${from}T00:00:00Z`);
   const end = Date.parse(`${to}T00:00:00Z`);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
   const count = Math.round((end - start) / 864e5) + 1;
-  if (count > max) return null;
+  if (count > max2) return null;
   const days = [];
-  for (let i = 0; i < count; i++) days.push(new Date(start + i * 864e5).toISOString().slice(0, 10));
+  for (let i2 = 0; i2 < count; i2++) days.push(new Date(start + i2 * 864e5).toISOString().slice(0, 10));
   return days;
 }
 __name(dayRange, "dayRange");
@@ -7178,8 +7223,8 @@ async function onRequest4({ request, env }) {
       const next = applyAggregate(current, records);
       await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
       accepted += records.length;
-    } catch (err) {
-      console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err?.name ?? err) });
+    } catch (err2) {
+      console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err2?.name ?? err2) });
     }
   }
   return Response.json({ ok: true, accepted }, { headers: CORS7 });
@@ -7212,10 +7257,10 @@ var VER_RE = /^[0-9A-Za-z.+-]{1,32}$/;
 var SIG_RE = /^[0-9a-f]{16}$/;
 var RATE2 = { limit: 10, windowMs: 6e4 };
 var READ_RATE = { limit: 60, windowMs: 6e4 };
-function scrub(text, max) {
+function scrub(text, max2) {
   let s = typeof text === "string" ? text : "";
   s = s.replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "[email]").replace(/\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]*/g, "[token]").replace(/\bhttps?:\/\/[^\s/?#)'"]+([^\s?#)'"]*)(\?[^\s#)'"]*)?(#[^\s)'"]*)?/g, "$1").replace(/\b[0-9a-fA-F]{24,}\b/g, "[id]").replace(/\b[A-Za-z0-9_-]{32,}\b/g, "[id]").replace(/\d{7,}/g, "[n]");
-  return s.slice(0, max);
+  return s.slice(0, max2);
 }
 __name(scrub, "scrub");
 function scrubRoute(route) {
@@ -7360,7 +7405,7 @@ var GRANT_RATE = { limit: 10, windowMs: 6e4 };
 function secretEquals2(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  for (let i2 = 0; i2 < a.length; i2++) diff |= a.charCodeAt(i2) ^ b.charCodeAt(i2);
   return diff === 0;
 }
 __name(secretEquals2, "secretEquals");
@@ -7563,6 +7608,1015 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
+// ../node_modules/fflate/esm/browser.js
+var u8 = Uint8Array;
+var u16 = Uint16Array;
+var i32 = Int32Array;
+var fleb = new u8([
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  3,
+  3,
+  3,
+  3,
+  4,
+  4,
+  4,
+  4,
+  5,
+  5,
+  5,
+  5,
+  0,
+  /* unused */
+  0,
+  0,
+  /* impossible */
+  0
+]);
+var fdeb = new u8([
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  3,
+  3,
+  4,
+  4,
+  5,
+  5,
+  6,
+  6,
+  7,
+  7,
+  8,
+  8,
+  9,
+  9,
+  10,
+  10,
+  11,
+  11,
+  12,
+  12,
+  13,
+  13,
+  /* unused */
+  0,
+  0
+]);
+var clim = new u8([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]);
+var freb = /* @__PURE__ */ __name(function(eb, start) {
+  var b = new u16(31);
+  for (var i2 = 0; i2 < 31; ++i2) {
+    b[i2] = start += 1 << eb[i2 - 1];
+  }
+  var r = new i32(b[30]);
+  for (var i2 = 1; i2 < 30; ++i2) {
+    for (var j = b[i2]; j < b[i2 + 1]; ++j) {
+      r[j] = j - b[i2] << 5 | i2;
+    }
+  }
+  return { b, r };
+}, "freb");
+var _a = freb(fleb, 2);
+var fl = _a.b;
+var revfl = _a.r;
+fl[28] = 258, revfl[258] = 28;
+var _b = freb(fdeb, 0);
+var fd = _b.b;
+var revfd = _b.r;
+var rev = new u16(32768);
+for (i = 0; i < 32768; ++i) {
+  x = (i & 43690) >> 1 | (i & 21845) << 1;
+  x = (x & 52428) >> 2 | (x & 13107) << 2;
+  x = (x & 61680) >> 4 | (x & 3855) << 4;
+  rev[i] = ((x & 65280) >> 8 | (x & 255) << 8) >> 1;
+}
+var x;
+var i;
+var hMap = /* @__PURE__ */ __name((function(cd, mb, r) {
+  var s = cd.length;
+  var i2 = 0;
+  var l = new u16(mb);
+  for (; i2 < s; ++i2) {
+    if (cd[i2])
+      ++l[cd[i2] - 1];
+  }
+  var le = new u16(mb);
+  for (i2 = 1; i2 < mb; ++i2) {
+    le[i2] = le[i2 - 1] + l[i2 - 1] << 1;
+  }
+  var co;
+  if (r) {
+    co = new u16(1 << mb);
+    var rvb = 15 - mb;
+    for (i2 = 0; i2 < s; ++i2) {
+      if (cd[i2]) {
+        var sv = i2 << 4 | cd[i2];
+        var r_1 = mb - cd[i2];
+        var v = le[cd[i2] - 1]++ << r_1;
+        for (var m = v | (1 << r_1) - 1; v <= m; ++v) {
+          co[rev[v] >> rvb] = sv;
+        }
+      }
+    }
+  } else {
+    co = new u16(s);
+    for (i2 = 0; i2 < s; ++i2) {
+      if (cd[i2]) {
+        co[i2] = rev[le[cd[i2] - 1]++] >> 15 - cd[i2];
+      }
+    }
+  }
+  return co;
+}), "hMap");
+var flt = new u8(288);
+for (i = 0; i < 144; ++i)
+  flt[i] = 8;
+var i;
+for (i = 144; i < 256; ++i)
+  flt[i] = 9;
+var i;
+for (i = 256; i < 280; ++i)
+  flt[i] = 7;
+var i;
+for (i = 280; i < 288; ++i)
+  flt[i] = 8;
+var i;
+var fdt = new u8(32);
+for (i = 0; i < 32; ++i)
+  fdt[i] = 5;
+var i;
+var flm = /* @__PURE__ */ hMap(flt, 9, 0);
+var flrm = /* @__PURE__ */ hMap(flt, 9, 1);
+var fdm = /* @__PURE__ */ hMap(fdt, 5, 0);
+var fdrm = /* @__PURE__ */ hMap(fdt, 5, 1);
+var max = /* @__PURE__ */ __name(function(a) {
+  var m = a[0];
+  for (var i2 = 1; i2 < a.length; ++i2) {
+    if (a[i2] > m)
+      m = a[i2];
+  }
+  return m;
+}, "max");
+var bits = /* @__PURE__ */ __name(function(d, p, m) {
+  var o = p / 8 | 0;
+  return (d[o] | d[o + 1] << 8) >> (p & 7) & m;
+}, "bits");
+var bits16 = /* @__PURE__ */ __name(function(d, p) {
+  var o = p / 8 | 0;
+  return (d[o] | d[o + 1] << 8 | d[o + 2] << 16) >> (p & 7);
+}, "bits16");
+var shft = /* @__PURE__ */ __name(function(p) {
+  return (p + 7) / 8 | 0;
+}, "shft");
+var slc = /* @__PURE__ */ __name(function(v, s, e) {
+  if (s == null || s < 0)
+    s = 0;
+  if (e == null || e > v.length)
+    e = v.length;
+  return new u8(v.subarray(s, e));
+}, "slc");
+var ec = [
+  "unexpected EOF",
+  "invalid block type",
+  "invalid length/literal",
+  "invalid distance",
+  "stream finished",
+  "no stream handler",
+  ,
+  // determined by compression function
+  "no callback",
+  "invalid UTF-8 data",
+  "extra field too long",
+  "date not in range 1980-2099",
+  "filename too long",
+  "stream finishing",
+  "invalid zip data"
+  // determined by unknown compression method
+];
+var err = /* @__PURE__ */ __name(function(ind, msg, nt) {
+  var e = new Error(msg || ec[ind]);
+  e.code = ind;
+  if (Error.captureStackTrace)
+    Error.captureStackTrace(e, err);
+  if (!nt)
+    throw e;
+  return e;
+}, "err");
+var inflt = /* @__PURE__ */ __name(function(dat, st, buf, dict) {
+  var sl = dat.length, dl = dict ? dict.length : 0;
+  if (!sl || st.f && !st.l)
+    return buf || new u8(0);
+  var noBuf = !buf;
+  var resize = noBuf || st.i != 2;
+  var noSt = st.i;
+  if (noBuf)
+    buf = new u8(sl * 3);
+  var cbuf = /* @__PURE__ */ __name(function(l2) {
+    var bl = buf.length;
+    if (l2 > bl) {
+      var nbuf = new u8(Math.max(bl * 2, l2));
+      nbuf.set(buf);
+      buf = nbuf;
+    }
+  }, "cbuf");
+  var final = st.f || 0, pos = st.p || 0, bt = st.b || 0, lm = st.l, dm = st.d, lbt = st.m, dbt = st.n;
+  var tbts = sl * 8;
+  do {
+    if (!lm) {
+      final = bits(dat, pos, 1);
+      var type = bits(dat, pos + 1, 3);
+      pos += 3;
+      if (!type) {
+        var s = shft(pos) + 4, l = dat[s - 4] | dat[s - 3] << 8, t = s + l;
+        if (t > sl) {
+          if (noSt)
+            err(0);
+          break;
+        }
+        if (resize)
+          cbuf(bt + l);
+        buf.set(dat.subarray(s, t), bt);
+        st.b = bt += l, st.p = pos = t * 8, st.f = final;
+        continue;
+      } else if (type == 1)
+        lm = flrm, dm = fdrm, lbt = 9, dbt = 5;
+      else if (type == 2) {
+        var hLit = bits(dat, pos, 31) + 257, hcLen = bits(dat, pos + 10, 15) + 4;
+        var tl = hLit + bits(dat, pos + 5, 31) + 1;
+        pos += 14;
+        var ldt = new u8(tl);
+        var clt = new u8(19);
+        for (var i2 = 0; i2 < hcLen; ++i2) {
+          clt[clim[i2]] = bits(dat, pos + i2 * 3, 7);
+        }
+        pos += hcLen * 3;
+        var clb = max(clt), clbmsk = (1 << clb) - 1;
+        var clm = hMap(clt, clb, 1);
+        for (var i2 = 0; i2 < tl; ) {
+          var r = clm[bits(dat, pos, clbmsk)];
+          pos += r & 15;
+          var s = r >> 4;
+          if (s < 16) {
+            ldt[i2++] = s;
+          } else {
+            var c = 0, n = 0;
+            if (s == 16)
+              n = 3 + bits(dat, pos, 3), pos += 2, c = ldt[i2 - 1];
+            else if (s == 17)
+              n = 3 + bits(dat, pos, 7), pos += 3;
+            else if (s == 18)
+              n = 11 + bits(dat, pos, 127), pos += 7;
+            while (n--)
+              ldt[i2++] = c;
+          }
+        }
+        var lt = ldt.subarray(0, hLit), dt = ldt.subarray(hLit);
+        lbt = max(lt);
+        dbt = max(dt);
+        lm = hMap(lt, lbt, 1);
+        dm = hMap(dt, dbt, 1);
+      } else
+        err(1);
+      if (pos > tbts) {
+        if (noSt)
+          err(0);
+        break;
+      }
+    }
+    if (resize)
+      cbuf(bt + 131072);
+    var lms = (1 << lbt) - 1, dms = (1 << dbt) - 1;
+    var lpos = pos;
+    for (; ; lpos = pos) {
+      var c = lm[bits16(dat, pos) & lms], sym = c >> 4;
+      pos += c & 15;
+      if (pos > tbts) {
+        if (noSt)
+          err(0);
+        break;
+      }
+      if (!c)
+        err(2);
+      if (sym < 256)
+        buf[bt++] = sym;
+      else if (sym == 256) {
+        lpos = pos, lm = null;
+        break;
+      } else {
+        var add = sym - 254;
+        if (sym > 264) {
+          var i2 = sym - 257, b = fleb[i2];
+          add = bits(dat, pos, (1 << b) - 1) + fl[i2];
+          pos += b;
+        }
+        var d = dm[bits16(dat, pos) & dms], dsym = d >> 4;
+        if (!d)
+          err(3);
+        pos += d & 15;
+        var dt = fd[dsym];
+        if (dsym > 3) {
+          var b = fdeb[dsym];
+          dt += bits16(dat, pos) & (1 << b) - 1, pos += b;
+        }
+        if (pos > tbts) {
+          if (noSt)
+            err(0);
+          break;
+        }
+        if (resize)
+          cbuf(bt + 131072);
+        var end = bt + add;
+        if (bt < dt) {
+          var shift = dl - dt, dend = Math.min(dt, end);
+          if (shift + bt < 0)
+            err(3);
+          for (; bt < dend; ++bt)
+            buf[bt] = dict[shift + bt];
+        }
+        for (; bt < end; ++bt)
+          buf[bt] = buf[bt - dt];
+      }
+    }
+    st.l = lm, st.p = lpos, st.b = bt, st.f = final;
+    if (lm)
+      final = 1, st.m = lbt, st.d = dm, st.n = dbt;
+  } while (!final);
+  return bt != buf.length && noBuf ? slc(buf, 0, bt) : buf.subarray(0, bt);
+}, "inflt");
+var wbits = /* @__PURE__ */ __name(function(d, p, v) {
+  v <<= p & 7;
+  var o = p / 8 | 0;
+  d[o] |= v;
+  d[o + 1] |= v >> 8;
+}, "wbits");
+var wbits16 = /* @__PURE__ */ __name(function(d, p, v) {
+  v <<= p & 7;
+  var o = p / 8 | 0;
+  d[o] |= v;
+  d[o + 1] |= v >> 8;
+  d[o + 2] |= v >> 16;
+}, "wbits16");
+var hTree = /* @__PURE__ */ __name(function(d, mb) {
+  var t = [];
+  for (var i2 = 0; i2 < d.length; ++i2) {
+    if (d[i2])
+      t.push({ s: i2, f: d[i2] });
+  }
+  var s = t.length;
+  var t2 = t.slice();
+  if (!s)
+    return { t: et, l: 0 };
+  if (s == 1) {
+    var v = new u8(t[0].s + 1);
+    v[t[0].s] = 1;
+    return { t: v, l: 1 };
+  }
+  t.sort(function(a, b) {
+    return a.f - b.f;
+  });
+  t.push({ s: -1, f: 25001 });
+  var l = t[0], r = t[1], i0 = 0, i1 = 1, i22 = 2;
+  t[0] = { s: -1, f: l.f + r.f, l, r };
+  while (i1 != s - 1) {
+    l = t[t[i0].f < t[i22].f ? i0++ : i22++];
+    r = t[i0 != i1 && t[i0].f < t[i22].f ? i0++ : i22++];
+    t[i1++] = { s: -1, f: l.f + r.f, l, r };
+  }
+  var maxSym = t2[0].s;
+  for (var i2 = 1; i2 < s; ++i2) {
+    if (t2[i2].s > maxSym)
+      maxSym = t2[i2].s;
+  }
+  var tr = new u16(maxSym + 1);
+  var mbt = ln(t[i1 - 1], tr, 0);
+  if (mbt > mb) {
+    var i2 = 0, dt = 0;
+    var lft = mbt - mb, cst = 1 << lft;
+    t2.sort(function(a, b) {
+      return tr[b.s] - tr[a.s] || a.f - b.f;
+    });
+    for (; i2 < s; ++i2) {
+      var i2_1 = t2[i2].s;
+      if (tr[i2_1] > mb) {
+        dt += cst - (1 << mbt - tr[i2_1]);
+        tr[i2_1] = mb;
+      } else
+        break;
+    }
+    dt >>= lft;
+    while (dt > 0) {
+      var i2_2 = t2[i2].s;
+      if (tr[i2_2] < mb)
+        dt -= 1 << mb - tr[i2_2]++ - 1;
+      else
+        ++i2;
+    }
+    for (; i2 >= 0 && dt; --i2) {
+      var i2_3 = t2[i2].s;
+      if (tr[i2_3] == mb) {
+        --tr[i2_3];
+        ++dt;
+      }
+    }
+    mbt = mb;
+  }
+  return { t: new u8(tr), l: mbt };
+}, "hTree");
+var ln = /* @__PURE__ */ __name(function(n, l, d) {
+  return n.s == -1 ? Math.max(ln(n.l, l, d + 1), ln(n.r, l, d + 1)) : l[n.s] = d;
+}, "ln");
+var lc = /* @__PURE__ */ __name(function(c) {
+  var s = c.length;
+  while (s && !c[--s])
+    ;
+  var cl = new u16(++s);
+  var cli = 0, cln = c[0], cls = 1;
+  var w = /* @__PURE__ */ __name(function(v) {
+    cl[cli++] = v;
+  }, "w");
+  for (var i2 = 1; i2 <= s; ++i2) {
+    if (c[i2] == cln && i2 != s)
+      ++cls;
+    else {
+      if (!cln && cls > 2) {
+        for (; cls > 138; cls -= 138)
+          w(32754);
+        if (cls > 2) {
+          w(cls > 10 ? cls - 11 << 5 | 28690 : cls - 3 << 5 | 12305);
+          cls = 0;
+        }
+      } else if (cls > 3) {
+        w(cln), --cls;
+        for (; cls > 6; cls -= 6)
+          w(8304);
+        if (cls > 2)
+          w(cls - 3 << 5 | 8208), cls = 0;
+      }
+      while (cls--)
+        w(cln);
+      cls = 1;
+      cln = c[i2];
+    }
+  }
+  return { c: cl.subarray(0, cli), n: s };
+}, "lc");
+var clen = /* @__PURE__ */ __name(function(cf, cl) {
+  var l = 0;
+  for (var i2 = 0; i2 < cl.length; ++i2)
+    l += cf[i2] * cl[i2];
+  return l;
+}, "clen");
+var wfblk = /* @__PURE__ */ __name(function(out, pos, dat) {
+  var s = dat.length;
+  var o = shft(pos + 2);
+  out[o] = s & 255;
+  out[o + 1] = s >> 8;
+  out[o + 2] = out[o] ^ 255;
+  out[o + 3] = out[o + 1] ^ 255;
+  for (var i2 = 0; i2 < s; ++i2)
+    out[o + i2 + 4] = dat[i2];
+  return (o + 4 + s) * 8;
+}, "wfblk");
+var wblk = /* @__PURE__ */ __name(function(dat, out, final, syms, lf, df, eb, li, bs, bl, p) {
+  wbits(out, p++, final);
+  ++lf[256];
+  var _a2 = hTree(lf, 15), dlt = _a2.t, mlb = _a2.l;
+  var _b2 = hTree(df, 15), ddt = _b2.t, mdb = _b2.l;
+  var _c = lc(dlt), lclt = _c.c, nlc = _c.n;
+  var _d = lc(ddt), lcdt = _d.c, ndc = _d.n;
+  var lcfreq = new u16(19);
+  for (var i2 = 0; i2 < lclt.length; ++i2)
+    ++lcfreq[lclt[i2] & 31];
+  for (var i2 = 0; i2 < lcdt.length; ++i2)
+    ++lcfreq[lcdt[i2] & 31];
+  var _e = hTree(lcfreq, 7), lct = _e.t, mlcb = _e.l;
+  var nlcc = 19;
+  for (; nlcc > 4 && !lct[clim[nlcc - 1]]; --nlcc)
+    ;
+  var flen = bl + 5 << 3;
+  var ftlen = clen(lf, flt) + clen(df, fdt) + eb;
+  var dtlen = clen(lf, dlt) + clen(df, ddt) + eb + 14 + 3 * nlcc + clen(lcfreq, lct) + 2 * lcfreq[16] + 3 * lcfreq[17] + 7 * lcfreq[18];
+  if (bs >= 0 && flen <= ftlen && flen <= dtlen)
+    return wfblk(out, p, dat.subarray(bs, bs + bl));
+  var lm, ll, dm, dl;
+  wbits(out, p, 1 + (dtlen < ftlen)), p += 2;
+  if (dtlen < ftlen) {
+    lm = hMap(dlt, mlb, 0), ll = dlt, dm = hMap(ddt, mdb, 0), dl = ddt;
+    var llm = hMap(lct, mlcb, 0);
+    wbits(out, p, nlc - 257);
+    wbits(out, p + 5, ndc - 1);
+    wbits(out, p + 10, nlcc - 4);
+    p += 14;
+    for (var i2 = 0; i2 < nlcc; ++i2)
+      wbits(out, p + 3 * i2, lct[clim[i2]]);
+    p += 3 * nlcc;
+    var lcts = [lclt, lcdt];
+    for (var it = 0; it < 2; ++it) {
+      var clct = lcts[it];
+      for (var i2 = 0; i2 < clct.length; ++i2) {
+        var len = clct[i2] & 31;
+        wbits(out, p, llm[len]), p += lct[len];
+        if (len > 15)
+          wbits(out, p, clct[i2] >> 5 & 127), p += clct[i2] >> 12;
+      }
+    }
+  } else {
+    lm = flm, ll = flt, dm = fdm, dl = fdt;
+  }
+  for (var i2 = 0; i2 < li; ++i2) {
+    var sym = syms[i2];
+    if (sym > 255) {
+      var len = sym >> 18 & 31;
+      wbits16(out, p, lm[len + 257]), p += ll[len + 257];
+      if (len > 7)
+        wbits(out, p, sym >> 23 & 31), p += fleb[len];
+      var dst = sym & 31;
+      wbits16(out, p, dm[dst]), p += dl[dst];
+      if (dst > 3)
+        wbits16(out, p, sym >> 5 & 8191), p += fdeb[dst];
+    } else {
+      wbits16(out, p, lm[sym]), p += ll[sym];
+    }
+  }
+  wbits16(out, p, lm[256]);
+  return p + ll[256];
+}, "wblk");
+var deo = /* @__PURE__ */ new i32([65540, 131080, 131088, 131104, 262176, 1048704, 1048832, 2114560, 2117632]);
+var et = /* @__PURE__ */ new u8(0);
+var dflt = /* @__PURE__ */ __name(function(dat, lvl, plvl, pre, post, st) {
+  var s = st.z || dat.length;
+  var o = new u8(pre + s + 5 * (1 + Math.ceil(s / 7e3)) + post);
+  var w = o.subarray(pre, o.length - post);
+  var lst = st.l;
+  var pos = (st.r || 0) & 7;
+  if (lvl) {
+    if (pos)
+      w[0] = st.r >> 3;
+    var opt = deo[lvl - 1];
+    var n = opt >> 13, c = opt & 8191;
+    var msk_1 = (1 << plvl) - 1;
+    var prev = st.p || new u16(32768), head = st.h || new u16(msk_1 + 1);
+    var bs1_1 = Math.ceil(plvl / 3), bs2_1 = 2 * bs1_1;
+    var hsh = /* @__PURE__ */ __name(function(i3) {
+      return (dat[i3] ^ dat[i3 + 1] << bs1_1 ^ dat[i3 + 2] << bs2_1) & msk_1;
+    }, "hsh");
+    var syms = new i32(25e3);
+    var lf = new u16(288), df = new u16(32);
+    var lc_1 = 0, eb = 0, i2 = st.i || 0, li = 0, wi = st.w || 0, bs = 0;
+    for (; i2 + 2 < s; ++i2) {
+      var hv = hsh(i2);
+      var imod = i2 & 32767, pimod = head[hv];
+      prev[imod] = pimod;
+      head[hv] = imod;
+      if (wi <= i2) {
+        var rem = s - i2;
+        if ((lc_1 > 7e3 || li > 24576) && (rem > 423 || !lst)) {
+          pos = wblk(dat, w, 0, syms, lf, df, eb, li, bs, i2 - bs, pos);
+          li = lc_1 = eb = 0, bs = i2;
+          for (var j = 0; j < 286; ++j)
+            lf[j] = 0;
+          for (var j = 0; j < 30; ++j)
+            df[j] = 0;
+        }
+        var l = 2, d = 0, ch_1 = c, dif = imod - pimod & 32767;
+        if (rem > 2 && hv == hsh(i2 - dif)) {
+          var maxn = Math.min(n, rem) - 1;
+          var maxd = Math.min(32767, i2);
+          var ml = Math.min(258, rem);
+          while (dif <= maxd && --ch_1 && imod != pimod) {
+            if (dat[i2 + l] == dat[i2 + l - dif]) {
+              var nl = 0;
+              for (; nl < ml && dat[i2 + nl] == dat[i2 + nl - dif]; ++nl)
+                ;
+              if (nl > l) {
+                l = nl, d = dif;
+                if (nl > maxn)
+                  break;
+                var mmd = Math.min(dif, nl - 2);
+                var md = 0;
+                for (var j = 0; j < mmd; ++j) {
+                  var ti = i2 - dif + j & 32767;
+                  var pti = prev[ti];
+                  var cd = ti - pti & 32767;
+                  if (cd > md)
+                    md = cd, pimod = ti;
+                }
+              }
+            }
+            imod = pimod, pimod = prev[imod];
+            dif += imod - pimod & 32767;
+          }
+        }
+        if (d) {
+          syms[li++] = 268435456 | revfl[l] << 18 | revfd[d];
+          var lin = revfl[l] & 31, din = revfd[d] & 31;
+          eb += fleb[lin] + fdeb[din];
+          ++lf[257 + lin];
+          ++df[din];
+          wi = i2 + l;
+          ++lc_1;
+        } else {
+          syms[li++] = dat[i2];
+          ++lf[dat[i2]];
+        }
+      }
+    }
+    for (i2 = Math.max(i2, wi); i2 < s; ++i2) {
+      syms[li++] = dat[i2];
+      ++lf[dat[i2]];
+    }
+    pos = wblk(dat, w, lst, syms, lf, df, eb, li, bs, i2 - bs, pos);
+    if (!lst) {
+      st.r = pos & 7 | w[pos / 8 | 0] << 3;
+      pos -= 7;
+      st.h = head, st.p = prev, st.i = i2, st.w = wi;
+    }
+  } else {
+    for (var i2 = st.w || 0; i2 < s + lst; i2 += 65535) {
+      var e = i2 + 65535;
+      if (e >= s) {
+        w[pos / 8 | 0] = lst;
+        e = s;
+      }
+      pos = wfblk(w, pos + 1, dat.subarray(i2, e));
+    }
+    st.i = s;
+  }
+  return slc(o, 0, pre + shft(pos) + post);
+}, "dflt");
+var adler = /* @__PURE__ */ __name(function() {
+  var a = 1, b = 0;
+  return {
+    p: /* @__PURE__ */ __name(function(d) {
+      var n = a, m = b;
+      var l = d.length | 0;
+      for (var i2 = 0; i2 != l; ) {
+        var e = Math.min(i2 + 2655, l);
+        for (; i2 < e; ++i2)
+          m += n += d[i2];
+        n = (n & 65535) + 15 * (n >> 16), m = (m & 65535) + 15 * (m >> 16);
+      }
+      a = n, b = m;
+    }, "p"),
+    d: /* @__PURE__ */ __name(function() {
+      a %= 65521, b %= 65521;
+      return (a & 255) << 24 | (a & 65280) << 8 | (b & 255) << 8 | b >> 8;
+    }, "d")
+  };
+}, "adler");
+var dopt = /* @__PURE__ */ __name(function(dat, opt, pre, post, st) {
+  if (!st) {
+    st = { l: 1 };
+    if (opt.dictionary) {
+      var dict = opt.dictionary.subarray(-32768);
+      var newDat = new u8(dict.length + dat.length);
+      newDat.set(dict);
+      newDat.set(dat, dict.length);
+      dat = newDat;
+      st.w = dict.length;
+    }
+  }
+  return dflt(dat, opt.level == null ? 6 : opt.level, opt.mem == null ? st.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(dat.length))) * 1.5) : 20 : 12 + opt.mem, pre, post, st);
+}, "dopt");
+var wbytes = /* @__PURE__ */ __name(function(d, b, v) {
+  for (; v; ++b)
+    d[b] = v, v >>>= 8;
+}, "wbytes");
+var zlh = /* @__PURE__ */ __name(function(c, o) {
+  var lv = o.level, fl2 = lv == 0 ? 0 : lv < 6 ? 1 : lv == 9 ? 3 : 2;
+  c[0] = 120, c[1] = fl2 << 6 | (o.dictionary && 32);
+  c[1] |= 31 - (c[0] << 8 | c[1]) % 31;
+  if (o.dictionary) {
+    var h = adler();
+    h.p(o.dictionary);
+    wbytes(c, 2, h.d());
+  }
+}, "zlh");
+var zls = /* @__PURE__ */ __name(function(d, dict) {
+  if ((d[0] & 15) != 8 || d[0] >> 4 > 7 || (d[0] << 8 | d[1]) % 31)
+    err(6, "invalid zlib data");
+  if ((d[1] >> 5 & 1) == +!dict)
+    err(6, "invalid zlib data: " + (d[1] & 32 ? "need" : "unexpected") + " dictionary");
+  return (d[1] >> 3 & 4) + 2;
+}, "zls");
+function zlibSync(data, opts) {
+  if (!opts)
+    opts = {};
+  var a = adler();
+  a.p(data);
+  var d = dopt(data, opts, opts.dictionary ? 6 : 2, 4);
+  return zlh(d, opts), wbytes(d, d.length - 4, a.d()), d;
+}
+__name(zlibSync, "zlibSync");
+function unzlibSync(data, opts) {
+  return inflt(data.subarray(zls(data, opts && opts.dictionary), -4), { i: 2 }, opts && opts.out, opts && opts.dictionary);
+}
+__name(unzlibSync, "unzlibSync");
+var td = typeof TextDecoder != "undefined" && /* @__PURE__ */ new TextDecoder();
+var tds = 0;
+try {
+  td.decode(et, { stream: true });
+  tds = 1;
+} catch (e) {
+}
+
+// api/_png.js
+var SIG = [137, 80, 78, 71, 13, 10, 26, 10];
+var CHANNELS = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
+var u32 = /* @__PURE__ */ __name((b, o) => (b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]) >>> 0, "u32");
+function decodePng(bytes) {
+  for (let i2 = 0; i2 < 8; i2++) if (bytes[i2] !== SIG[i2]) throw new Error("png: assinatura inv\xE1lida");
+  let pos = 8;
+  let width = 0, height = 0, depth = 0, ctype = -1, interlace = 0;
+  let palette = null;
+  let trns = null;
+  const idat = [];
+  while (pos + 8 <= bytes.length) {
+    const len = u32(bytes, pos);
+    const type = String.fromCharCode(bytes[pos + 4], bytes[pos + 5], bytes[pos + 6], bytes[pos + 7]);
+    const body = bytes.subarray(pos + 8, pos + 8 + len);
+    if (type === "IHDR") {
+      width = u32(body, 0);
+      height = u32(body, 4);
+      depth = body[8];
+      ctype = body[9];
+      interlace = body[12];
+    } else if (type === "PLTE") palette = body;
+    else if (type === "tRNS") trns = body;
+    else if (type === "IDAT") idat.push(body);
+    else if (type === "IEND") break;
+    pos += 12 + len;
+  }
+  if (!width || !height || !(ctype in CHANNELS)) throw new Error("png: cabe\xE7alho inv\xE1lido");
+  if (width * height > 16e6) throw new Error("png: grande demais");
+  if (interlace) throw new Error("png: entrela\xE7ado n\xE3o suportado");
+  if (depth !== 8 && depth !== 16) throw new Error("png: profundidade n\xE3o suportada");
+  if (ctype === 3 && (depth !== 8 || !palette)) throw new Error("png: paleta inv\xE1lida");
+  const total = idat.reduce((n, c) => n + c.length, 0);
+  const comp = new Uint8Array(total);
+  let o = 0;
+  for (const c of idat) {
+    comp.set(c, o);
+    o += c.length;
+  }
+  const raw = unzlibSync(comp);
+  const bpp = CHANNELS[ctype] * (depth / 8);
+  const stride = width * bpp;
+  if (raw.length < (stride + 1) * height) throw new Error("png: dados truncados");
+  const px = new Uint8Array(stride * height);
+  for (let y = 0; y < height; y++) {
+    const f = raw[y * (stride + 1)];
+    const src = y * (stride + 1) + 1;
+    const dst = y * stride;
+    for (let x2 = 0; x2 < stride; x2++) {
+      const a = x2 >= bpp ? px[dst + x2 - bpp] : 0;
+      const b = y > 0 ? px[dst - stride + x2] : 0;
+      const c = x2 >= bpp && y > 0 ? px[dst - stride + x2 - bpp] : 0;
+      let v = raw[src + x2];
+      if (f === 1) v += a;
+      else if (f === 2) v += b;
+      else if (f === 3) v += a + b >> 1;
+      else if (f === 4) {
+        const p = a + b - c;
+        const pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+        v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+      } else if (f !== 0) throw new Error("png: filtro inv\xE1lido");
+      px[dst + x2] = v & 255;
+    }
+  }
+  const out = new Uint8Array(width * height * 4);
+  const step = depth / 8;
+  for (let i2 = 0, n = width * height; i2 < n; i2++) {
+    const s = i2 * bpp, d = i2 * 4;
+    if (ctype === 6) {
+      out[d] = px[s];
+      out[d + 1] = px[s + step];
+      out[d + 2] = px[s + 2 * step];
+      out[d + 3] = px[s + 3 * step];
+    } else if (ctype === 2) {
+      out[d] = px[s];
+      out[d + 1] = px[s + step];
+      out[d + 2] = px[s + 2 * step];
+      out[d + 3] = 255;
+    } else if (ctype === 0) {
+      out[d] = out[d + 1] = out[d + 2] = px[s];
+      out[d + 3] = 255;
+    } else if (ctype === 4) {
+      out[d] = out[d + 1] = out[d + 2] = px[s];
+      out[d + 3] = px[s + step];
+    } else {
+      const k = px[s];
+      if (!palette) throw new Error("png: paleta inv\xE1lida");
+      out[d] = palette[k * 3];
+      out[d + 1] = palette[k * 3 + 1];
+      out[d + 2] = palette[k * 3 + 2];
+      out[d + 3] = trns && k < trns.length ? trns[k] : 255;
+    }
+  }
+  return { width, height, data: out };
+}
+__name(decodePng, "decodePng");
+var crcTable = null;
+function crc32(buf) {
+  if (!crcTable) {
+    crcTable = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c2 = n;
+      for (let k = 0; k < 8; k++) c2 = c2 & 1 ? 3988292384 ^ c2 >>> 1 : c2 >>> 1;
+      crcTable[n] = c2 >>> 0;
+    }
+  }
+  let c = 4294967295;
+  for (let i2 = 0; i2 < buf.length; i2++) c = crcTable[(c ^ buf[i2]) & 255] ^ c >>> 8;
+  return (c ^ 4294967295) >>> 0;
+}
+__name(crc32, "crc32");
+function chunk(type, data) {
+  const out = new Uint8Array(12 + data.length);
+  const dv = new DataView(out.buffer);
+  dv.setUint32(0, data.length);
+  for (let i2 = 0; i2 < 4; i2++) out[4 + i2] = type.charCodeAt(i2);
+  out.set(data, 8);
+  dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+  return out;
+}
+__name(chunk, "chunk");
+function encodePng(width, height, rgba) {
+  const stride = width * 4;
+  const raw = new Uint8Array((stride + 1) * height);
+  for (let y = 0; y < height; y++) {
+    raw[y * (stride + 1)] = 0;
+    raw.set(rgba.subarray(y * stride, (y + 1) * stride), y * (stride + 1) + 1);
+  }
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, width);
+  dv.setUint32(4, height);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  const parts = [Uint8Array.from(SIG), chunk("IHDR", ihdr), chunk("IDAT", zlibSync(raw, { level: 6 })), chunk("IEND", new Uint8Array(0))];
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let o = 0;
+  for (const p of parts) {
+    out.set(p, o);
+    o += p.length;
+  }
+  return out;
+}
+__name(encodePng, "encodePng");
+
+// api/_chroma.js
+var BG_G_MIN = 150;
+var BG_D_MIN = 60;
+var EDGE_D_MIN = 35;
+var EDGE_SPAN = 25;
+var MIN_ISLAND = 24;
+var MIN_BG_FRACTION = 0.1;
+var MAX_HOLE_FRACTION = 0.25;
+var BadChromaError = class extends Error {
+  static {
+    __name(this, "BadChromaError");
+  }
+  constructor(detail) {
+    super(`bad-chroma: ${detail}`);
+    this.code = "bad-chroma";
+  }
+};
+function keyRgba(width, height, rgba) {
+  const n = width * height;
+  const alpha = new Uint8Array(n);
+  const isBg = new Uint8Array(n);
+  let bgCount = 0;
+  for (let i2 = 0; i2 < n; i2++) {
+    const p = i2 * 4;
+    const r = rgba[p], g = rgba[p + 1], b = rgba[p + 2];
+    const m = r > b ? r : b;
+    const d = g - m;
+    const bg = g > BG_G_MIN && d > BG_D_MIN;
+    const al = bg ? 0 : d > EDGE_D_MIN ? 255 * (1 - (d - EDGE_D_MIN) / EDGE_SPAN) : 255;
+    if (bg) {
+      isBg[i2] = 1;
+      bgCount++;
+    }
+    if (d > 0) rgba[p + 1] = m;
+    alpha[i2] = al > 128 ? 255 : 0;
+  }
+  const stack = new Int32Array(n);
+  const seen = new Uint8Array(n);
+  for (let s = 0; s < n; s++) {
+    if (!alpha[s] || seen[s]) continue;
+    let top2 = 0, size = 0;
+    stack[top2++] = s;
+    seen[s] = 1;
+    const members = [];
+    while (top2) {
+      const i2 = stack[--top2];
+      size++;
+      if (size <= MIN_ISLAND) members.push(i2);
+      const x2 = i2 % width;
+      if (x2 > 0 && alpha[i2 - 1] && !seen[i2 - 1]) {
+        seen[i2 - 1] = 1;
+        stack[top2++] = i2 - 1;
+      }
+      if (x2 < width - 1 && alpha[i2 + 1] && !seen[i2 + 1]) {
+        seen[i2 + 1] = 1;
+        stack[top2++] = i2 + 1;
+      }
+      if (i2 >= width && alpha[i2 - width] && !seen[i2 - width]) {
+        seen[i2 - width] = 1;
+        stack[top2++] = i2 - width;
+      }
+      if (i2 < n - width && alpha[i2 + width] && !seen[i2 + width]) {
+        seen[i2 + width] = 1;
+        stack[top2++] = i2 + width;
+      }
+    }
+    if (size < MIN_ISLAND) for (const i2 of members) alpha[i2] = 0;
+  }
+  const reach = new Uint8Array(n);
+  let top = 0;
+  const seed = /* @__PURE__ */ __name((i2) => {
+    if (isBg[i2] && !reach[i2]) {
+      reach[i2] = 1;
+      stack[top++] = i2;
+    }
+  }, "seed");
+  for (let x2 = 0; x2 < width; x2++) {
+    seed(x2);
+    seed((height - 1) * width + x2);
+  }
+  for (let y = 0; y < height; y++) {
+    seed(y * width);
+    seed(y * width + width - 1);
+  }
+  while (top) {
+    const i2 = stack[--top];
+    const x2 = i2 % width;
+    if (x2 > 0) seed(i2 - 1);
+    if (x2 < width - 1) seed(i2 + 1);
+    if (i2 >= width) seed(i2 - width);
+    if (i2 < n - width) seed(i2 + width);
+  }
+  let holes = 0, opaque = 0;
+  for (let i2 = 0; i2 < n; i2++) {
+    if (isBg[i2] && !reach[i2]) holes++;
+    if (alpha[i2]) opaque++;
+    rgba[i2 * 4 + 3] = alpha[i2];
+  }
+  return { bgFraction: bgCount / n, opaque, holeFraction: holes + opaque ? holes / (holes + opaque) : 0 };
+}
+__name(keyRgba, "keyRgba");
+function chromaKeyPng(pngBytes) {
+  const { width, height, data } = decodePng(pngBytes);
+  const m = keyRgba(width, height, data);
+  if (m.bgFraction < MIN_BG_FRACTION) throw new BadChromaError(`sem fundo verde (${(m.bgFraction * 100).toFixed(1)}% removido)`);
+  if (m.holeFraction > MAX_HOLE_FRACTION) throw new BadChromaError(`verde demais na criatura (${(m.holeFraction * 100).toFixed(1)}%)`);
+  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x2 = 0; x2 < width; x2++) {
+      if (data[(y * width + x2) * 4 + 3]) {
+        if (x2 < x0) x0 = x2;
+        if (x2 > x1) x1 = x2;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) throw new BadChromaError("nada sobrou depois do recorte");
+  const w = x1 - x0 + 1, h = y1 - y0 + 1;
+  const side = Math.max(w, h);
+  const pad = Math.max(2, Math.floor(side * 0.04));
+  const S = side + 2 * pad;
+  const out = new Uint8Array(S * S * 4);
+  const ox = pad + (side - w >> 1), oy = pad + (side - h >> 1);
+  for (let y = 0; y < h; y++) {
+    out.set(data.subarray(((y0 + y) * width + x0) * 4, ((y0 + y) * width + x0 + w) * 4), ((oy + y) * S + ox) * 4);
+  }
+  return encodePng(S, S, out);
+}
+__name(chromaKeyPng, "chromaKeyPng");
+
 // api/_ipHash.js
 var IP_HASH_TTL_SECONDS = 30 * 24 * 60 * 60;
 var IP_LIMITS = { newAccount: 3, sprite: 4 };
@@ -7613,8 +8667,8 @@ async function destravar(env, key) {
   if (!key) return;
   try {
     await kvOrThrow(env).delete(key);
-  } catch (err) {
-    console.error("generate-sprite: falha ao soltar o lock", err?.message);
+  } catch (err2) {
+    console.error("generate-sprite: falha ao soltar o lock", err2?.message);
   }
 }
 __name(destravar, "destravar");
@@ -7628,8 +8682,8 @@ async function guardarBlob(env, request, bytes, contentType) {
     await kvOrThrow(env).put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
       metadata: { contentType }
     });
-  } catch (err) {
-    console.error("generate-sprite: falha ao republicar a imagem", err?.message);
+  } catch (err2) {
+    console.error("generate-sprite: falha ao republicar a imagem", err2?.message);
     return null;
   }
   return `${new URL(request.url).origin}/api/sprite-image?k=${token}`;
@@ -7643,9 +8697,9 @@ async function republicar(env, request, image) {
     try {
       const bin = atob(b64);
       bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    } catch (err) {
-      console.error("generate-sprite: base64 ileg\xEDvel do provedor", err?.message);
+      for (let i2 = 0; i2 < bin.length; i2++) bytes[i2] = bin.charCodeAt(i2);
+    } catch (err2) {
+      console.error("generate-sprite: base64 ileg\xEDvel do provedor", err2?.message);
       return null;
     }
     return guardarBlob(env, request, bytes, contentType);
@@ -7654,8 +8708,8 @@ async function republicar(env, request, image) {
     let res;
     try {
       res = await fetch(image);
-    } catch (err) {
-      console.error("generate-sprite: falha ao buscar a imagem do provedor", err?.message);
+    } catch (err2) {
+      console.error("generate-sprite: falha ao buscar a imagem do provedor", err2?.message);
       return null;
     }
     if (!res.ok) {
@@ -7667,8 +8721,8 @@ async function republicar(env, request, image) {
     let buf;
     try {
       buf = new Uint8Array(await res.arrayBuffer());
-    } catch (err) {
-      console.error("generate-sprite: corpo ileg\xEDvel do provedor", err?.message);
+    } catch (err2) {
+      console.error("generate-sprite: corpo ileg\xEDvel do provedor", err2?.message);
       return null;
     }
     return guardarBlob(env, request, buf, contentType);
@@ -7681,20 +8735,119 @@ async function onRequestOptions10() {
 }
 __name(onRequestOptions10, "onRequestOptions");
 var REFUSAL_WORDS = /nsfw|safety|policy|polic[ií]|moderation|blocked|prohibited|content[_ -]filter|copyright|trademark|intellectual property|recitation/i;
-function isRefusal(err) {
-  return Boolean(err?.refusal) || REFUSAL_WORDS.test(err?.message || "");
+function isRefusal(err2) {
+  return Boolean(err2?.refusal) || REFUSAL_WORDS.test(err2?.message || "");
 }
 __name(isRefusal, "isRefusal");
 function refusalError(message) {
-  const err = (
+  const err2 = (
     /** @type {Error & { refusal?: boolean }} */
     new Error(message)
   );
-  err.refusal = true;
-  return err;
+  err2.refusal = true;
+  return err2;
 }
 __name(refusalError, "refusalError");
+var HF_API = "https://api.higgsfield.ai";
+var HF_ROUTES = { alpha: "/marketing-studio/image", flare: "/marketing-studio/image/flare" };
+var MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+function hfCredentials(env) {
+  const c = String(env.HF_CREDENTIALS || "").trim();
+  return /^[^:\s]+:[^:\s]+$/.test(c) ? c : null;
+}
+__name(hfCredentials, "hfCredentials");
+function spriteModel(env) {
+  const forced = String(env.SPRITE_MODEL || "").trim().toLowerCase();
+  return forced === "flare" || forced === "soul" ? forced : "alpha";
+}
+__name(spriteModel, "spriteModel");
+function spriteQuality(env, model = "alpha") {
+  const q = String(env.SPRITE_QUALITY || "").trim().toLowerCase();
+  const ok = model === "flare" ? ["low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high"];
+  return ok.includes(q) ? q : "low";
+}
+__name(spriteQuality, "spriteQuality");
+function hfRequestBody(env, model, prompt, referenceImageUrls) {
+  const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
+  return {
+    prompt,
+    quality: spriteQuality(env, model),
+    resolution: "1k",
+    aspect_ratio: "1:1",
+    moderation: "auto",
+    enhance_prompt: false,
+    ...hasRef ? { image_urls: referenceImageUrls } : {}
+  };
+}
+__name(hfRequestBody, "hfRequestBody");
+function bytesToDataUrl(bytes, mime) {
+  let bin = "";
+  for (let i2 = 0; i2 < bytes.length; i2 += 32768) bin += String.fromCharCode(...bytes.subarray(i2, i2 + 32768));
+  return `data:${mime};base64,${btoa(bin)}`;
+}
+__name(bytesToDataUrl, "bytesToDataUrl");
+async function baixarEChavear(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`higgsfield: download ${res.status}`);
+  const buf = new Uint8Array(await res.arrayBuffer());
+  if (buf.length > MAX_IMAGE_BYTES) throw new Error("higgsfield: imagem grande demais");
+  try {
+    return bytesToDataUrl(chromaKeyPng(buf), "image/png");
+  } catch (err2) {
+    if (err2 instanceof BadChromaError) {
+      console.error("generate-sprite:", err2.message);
+      throw err2;
+    }
+    throw new Error(`higgsfield: png ileg\xEDvel (${err2?.message})`);
+  }
+}
+__name(baixarEChavear, "baixarEChavear");
+async function generateHf(env, model, prompt, referenceImageUrls) {
+  const auth = `Key ${hfCredentials(env)}`;
+  const createRes = await fetch(`${HF_API}${HF_ROUTES[model]}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: auth, "Idempotency-Key": crypto.randomUUID() },
+    body: JSON.stringify(hfRequestBody(env, model, prompt, referenceImageUrls))
+  });
+  if (!createRes.ok) {
+    const body = (await createRes.text()).slice(0, 300);
+    const msg = `higgsfield ${model} create ${createRes.status}: ${body}`;
+    if (createRes.status === 400 || createRes.status === 422) throw refusalError(msg);
+    throw new Error(msg);
+  }
+  const created = await createRes.json();
+  const requestId = created.request_id || created.id;
+  if (!requestId) throw new Error(`higgsfield ${model}: no request id`);
+  const statusUrl = typeof created.status_url === "string" && created.status_url.startsWith(`${HF_API}/`) ? created.status_url : `${HF_API}/requests/${requestId}/status`;
+  const interval = hfPollMs;
+  for (let i2 = 0; i2 < 40; i2++) {
+    await new Promise((r) => setTimeout(r, interval));
+    const st = await fetch(statusUrl, { headers: { Authorization: auth } });
+    if (!st.ok) continue;
+    const data = await st.json();
+    if (data.status === "nsfw") throw refusalError(`higgsfield ${model}: nsfw/policy rejection`);
+    if (data.status === "failed" || data.status === "canceled") throw new Error(`higgsfield ${model}: generation failed`);
+    if (data.status === "completed") {
+      const url = data.images?.[0]?.url;
+      if (typeof url === "string" && /^https:\/\//i.test(url)) return baixarEChavear(url);
+      throw new Error(`higgsfield ${model}: completed without url`);
+    }
+  }
+  throw new Error(`higgsfield ${model}: timeout`);
+}
+__name(generateHf, "generateHf");
+var hfPollMs = 2e3;
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
+  const model = spriteModel(env);
+  if (model !== "soul" && hfCredentials(env)) {
+    try {
+      return { image: await generateHf(env, model, prompt, referenceImageUrls), keyed: true };
+    } catch (err2) {
+      if (isRefusal(err2) || !(env.HF_API_KEY && env.HF_SECRET)) throw err2;
+      console.error("API Higgsfield falhou, tentando Soul:", err2.message);
+    }
+  }
+  if (!(env.HF_API_KEY && env.HF_SECRET)) throw new Error("higgsfield: soul not configured");
   const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
   const path = hasRef ? "/v1/image2image/soul" : "/v1/text2image/soul";
@@ -7719,7 +8872,7 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
   const jobSet = await createRes.json();
   const jobSetId = jobSet.id || jobSet.job_set_id;
   if (!jobSetId) throw new Error("higgsfield: no job set id");
-  for (let i = 0; i < 40; i++) {
+  for (let i2 = 0; i2 < 40; i2++) {
     await new Promise((r) => setTimeout(r, 2e3));
     const st = await fetch(`${HF_BASE}/v1/job-sets/${jobSetId}`, {
       headers: { Authorization: auth }
@@ -7736,7 +8889,7 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
     const doneJob = jobs.find((j) => j.status === "completed");
     if (doneJob) {
       const url = doneJob.results?.raw?.url || doneJob.results?.min?.url;
-      if (url) return url;
+      if (url) return { image: url, keyed: false };
       throw new Error("higgsfield: completed without url");
     }
   }
@@ -7773,36 +8926,52 @@ async function generateGemini(env, prompt) {
   return `data:${mime};base64,${inline.data}`;
 }
 __name(generateGemini, "generateGemini");
+async function chaveioOpcional(image) {
+  try {
+    if (image.startsWith("data:image/png;base64,")) {
+      const bin = atob(image.slice(22));
+      const bytes = new Uint8Array(bin.length);
+      for (let i2 = 0; i2 < bin.length; i2++) bytes[i2] = bin.charCodeAt(i2);
+      return bytesToDataUrl(chromaKeyPng(bytes), "image/png");
+    }
+    if (/^https:\/\//i.test(image)) return await baixarEChavear(image);
+  } catch (err2) {
+    console.error("generate-sprite: chroma opcional falhou, imagem mantida:", err2?.message);
+  }
+  return image;
+}
+__name(chaveioOpcional, "chaveioOpcional");
 async function generateWithProviders(env, prompt, referenceImageUrls) {
   let hfError = null;
   let hfRefusal = false;
-  if (env.HF_API_KEY && env.HF_SECRET) {
+  if (env.HF_API_KEY && env.HF_SECRET || hfCredentials(env)) {
     try {
-      const image = await generateHiggsfield(env, prompt, referenceImageUrls);
+      const hf = await generateHiggsfield(env, prompt, referenceImageUrls);
+      const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image);
       return { image, provider: "higgsfield", hfError: null };
-    } catch (err2) {
-      hfError = err2.message;
-      hfRefusal = isRefusal(err2);
-      console.error("Higgsfield falhou, tentando fallback de provedor:", err2.message);
+    } catch (err3) {
+      hfError = err3.message;
+      hfRefusal = isRefusal(err3);
+      console.error("Higgsfield falhou, tentando fallback de provedor:", err3.message);
     }
   }
   if (env.GEMINI_API_KEY && flagOn(env.SPRITE_GEMINI_IMAGE)) {
     try {
-      const image = await generateGemini(env, prompt);
+      const image = await chaveioOpcional(await generateGemini(env, prompt));
       return { image, provider: "gemini", hfError };
-    } catch (err2) {
-      if (isRefusal(err2) || hfRefusal) throw refusalError(err2.message);
-      throw err2;
+    } catch (err3) {
+      if (isRefusal(err3) || hfRefusal) throw refusalError(err3.message);
+      throw err3;
     }
   }
   if (hfRefusal) throw refusalError(hfError);
   if (hfError) throw new Error(hfError);
-  const err = (
+  const err2 = (
     /** @type {Error & { notConfigured?: boolean }} */
     new Error("image generation not configured (HF_API_KEY/HF_SECRET)")
   );
-  err.notConfigured = true;
-  throw err;
+  err2.notConfigured = true;
+  throw err2;
 }
 __name(generateWithProviders, "generateWithProviders");
 var MAX_PROMPT_CHARS = 12e3;
@@ -7870,8 +9039,8 @@ async function onRequestPost5({ request, env }) {
         const antigo = legacyFormIdOf(formId);
         if (!pronta && antigo) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
-      } catch (err) {
-        console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err?.message);
+      } catch (err2) {
+        console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err2?.message);
         return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS10 });
       }
       if (pronta) {
@@ -7897,8 +9066,8 @@ async function onRequestPost5({ request, env }) {
       lock = lockKey(id, formId);
       try {
         await kvOrThrow(env).put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
-      } catch (err) {
-        console.error("generate-sprite: falha ao gravar o lock, recusando", err?.message);
+      } catch (err2) {
+        console.error("generate-sprite: falha ao gravar o lock, recusando", err2?.message);
         lock = null;
         return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS10 });
       }
@@ -7930,8 +9099,8 @@ async function onRequestPost5({ request, env }) {
             cacheKey(id, formId),
             JSON.stringify({ image, provider: out.provider, at: Date.now() })
           );
-        } catch (err) {
-          console.error("generate-sprite: falha ao cachear o resultado", err?.message);
+        } catch (err2) {
+          console.error("generate-sprite: falha ao cachear o resultado", err2?.message);
         }
       }
       return Response.json({ ...out, image }, { headers: CORS10 });
@@ -7939,14 +9108,14 @@ async function onRequestPost5({ request, env }) {
     try {
       const out = await generateWithProviders(env, prompt, referenceImageUrls);
       return await responder(out);
-    } catch (err) {
+    } catch (err2) {
       const canRetry = typeof promptFallback === "string" && promptFallback.length > 0 && promptFallback !== prompt;
-      if (!canRetry || !isRefusal(err)) {
-        if (!isRefusal(err)) await gate.release(err.notConfigured ? "provedor n\xE3o configurado" : `falha do provedor: ${err.message}`);
-        if (err.notConfigured) {
-          return Response.json({ error: err.message }, { status: 503, headers: CORS10 });
+      if (!canRetry || !isRefusal(err2)) {
+        if (!isRefusal(err2)) await gate.release(err2.notConfigured ? "provedor n\xE3o configurado" : `falha do provedor: ${err2.message}`);
+        if (err2.notConfigured) {
+          return Response.json({ error: err2.message }, { status: 503, headers: CORS10 });
         }
-        throw err;
+        throw err2;
       }
       const extra = await guardAiRequest(request, env, "sprite", id, 1, null);
       if (!extra.ok) {
@@ -7955,17 +9124,17 @@ async function onRequestPost5({ request, env }) {
           { status: extra.status, headers: CORS10 }
         );
       }
-      console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err.message);
+      console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err2.message);
       try {
         const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-        return await responder({ ...out, usedFallbackPrompt: true, refusal: err.message });
-      } catch (err2) {
-        if (!isRefusal(err2)) await extra.release(`falha do provedor na refeitura: ${err2.message}`);
-        throw err2;
+        return await responder({ ...out, usedFallbackPrompt: true, refusal: err2.message });
+      } catch (err22) {
+        if (!isRefusal(err22)) await extra.release(`falha do provedor na refeitura: ${err22.message}`);
+        throw err22;
       }
     }
-  } catch (err) {
-    console.error("generate-sprite error:", err);
+  } catch (err2) {
+    console.error("generate-sprite error:", err2);
     return Response.json({ error: "internal error" }, { status: 500, headers: CORS10 });
   } finally {
     await destravar(env, lock);
@@ -7993,13 +9162,13 @@ async function getJwks2(force = false) {
     cacheExpiry = now + maxAge * 1e3;
     cacheFetchedAt = now;
     return cache;
-  } catch (err) {
+  } catch (err2) {
     if (cache) {
       cacheFetchedAt = now;
       cacheExpiry = now + FORCE_MIN_GAP_MS;
       return cache;
     }
-    throw err;
+    throw err2;
   }
 }
 __name(getJwks2, "getJwks");
@@ -8007,7 +9176,7 @@ function b64urlToBytes2(s) {
   const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - s.length % 4) % 4);
   const raw = atob(padded);
   const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  for (let i2 = 0; i2 < raw.length; i2++) out[i2] = raw.charCodeAt(i2);
   return out;
 }
 __name(b64urlToBytes2, "b64urlToBytes");
@@ -8116,8 +9285,8 @@ async function onRequestPost6({ request, env }) {
   }
   try {
     if (await rtdnSeen(env, messageId)) return json7({ ok: true, duplicate: true });
-  } catch (err) {
-    log3("rtdn.dedupe.unavailable", { err: String(err?.message ?? err).slice(0, 80) });
+  } catch (err2) {
+    log3("rtdn.dedupe.unavailable", { err: String(err2?.message ?? err2).slice(0, 80) });
   }
   const text = decodeData(envelope?.message?.data);
   let note = null;
@@ -8144,15 +9313,15 @@ async function onRequestPost6({ request, env }) {
     } else if (note.voidedPurchaseNotification?.purchaseToken && Number(note.voidedPurchaseNotification.productType) === 1) {
       result = await reconcileToken(env, String(note.voidedPurchaseNotification.purchaseToken), "voided");
     }
-  } catch (err) {
-    log3("rtdn.error", { messageId, err: String(err?.message ?? err).slice(0, 80) });
+  } catch (err2) {
+    log3("rtdn.error", { messageId, err: String(err2?.message ?? err2).slice(0, 80) });
     return json7({ ok: false, error: "retry" }, 500);
   }
   if (result.status >= 500) return json7({ ok: false, reason: result.outcome }, result.status);
   try {
     await rtdnMarkSeen(env, messageId);
-  } catch (err) {
-    log3("rtdn.dedupe.unavailable", { err: String(err?.message ?? err).slice(0, 80) });
+  } catch (err2) {
+    log3("rtdn.dedupe.unavailable", { err: String(err2?.message ?? err2).slice(0, 80) });
   }
   return json7({ ok: true, outcome: result.outcome });
 }
@@ -8184,9 +9353,9 @@ var has4 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call
 function ids(v) {
   const out = [];
   if (Array.isArray(v)) {
-    for (const x of v) {
+    for (const x2 of v) {
       if (out.length >= MAX_LIST) break;
-      if (typeof x === "string" && BUILDING_RE.test(x) && !out.includes(x)) out.push(x);
+      if (typeof x2 === "string" && BUILDING_RE.test(x2) && !out.includes(x2)) out.push(x2);
     }
   }
   return out;
@@ -8214,6 +9383,104 @@ function sanitizeBuildingQuests(raw) {
   return { day: r.day, visited, claimed, materials };
 }
 __name(sanitizeBuildingQuests, "sanitizeBuildingQuests");
+
+// api/_dailyMissions.js
+var DAILY_COUNT_CAP = 99;
+var DAILY_EVENTS = [
+  "dino",
+  "ppt",
+  "match3",
+  "foco",
+  "masmorra",
+  "banho",
+  "carinho",
+  "brincar",
+  "comida",
+  "humor",
+  "sono",
+  "mercado",
+  "amigo",
+  "arena",
+  "torneio"
+];
+var DAILY_MISSION_IDS = [
+  "d-dino",
+  "d-ppt",
+  "d-match3",
+  "d-foco",
+  "d-masmorra",
+  "d-banho",
+  "d-carinho",
+  "d-brincar",
+  "d-comida",
+  "d-humor",
+  "d-sono",
+  "d-mercado",
+  "d-amigo",
+  "d-arena",
+  "d-torneio"
+];
+var FIRST_TIME_IDS = [
+  "first-minigame",
+  "first-focus",
+  "first-stroll",
+  "first-dungeon",
+  "visit:mercado.itens",
+  "visit:mercado.conquistas",
+  "visit:mercado.decoracao",
+  "visit:mercado.background",
+  "visit:mercado.ferreiro",
+  "visit:jogos.salao",
+  "visit:jogos.refugio",
+  "visit:jogos.mente",
+  "visit:exploracao.passeio",
+  "visit:exploracao.masmorra",
+  "visit:exploracao.caderno",
+  "visit:exploracao.oficina",
+  "visit:arena.duelo",
+  "visit:arena.torneio",
+  "visit:laboratorio.evolucao",
+  "visit:laboratorio.pet",
+  "visit:laboratorio.stats",
+  "visit:hall.biblioteca",
+  "visit:hall.amigos",
+  "visit:hall.guilda",
+  "visit:hall.feira"
+];
+var has5 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function sanitizeDailyMissions(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof r.day !== "string" || r.day.length === 0 || r.day.length > 40) return void 0;
+  const c = r.counts && typeof r.counts === "object" && !Array.isArray(r.counts) ? (
+    /** @type {Record<string, unknown>} */
+    r.counts
+  ) : {};
+  const counts = {};
+  for (const e of DAILY_EVENTS) {
+    const v = has5(c, e) ? c[e] : void 0;
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) counts[e] = Math.min(DAILY_COUNT_CAP, Math.floor(v));
+  }
+  const claimed = Array.isArray(r.claimed) ? [...new Set(r.claimed.filter((x2) => typeof x2 === "string" && DAILY_MISSION_IDS.includes(x2)))] : [];
+  return { day: r.day, counts, claimed };
+}
+__name(sanitizeDailyMissions, "sanitizeDailyMissions");
+function sanitizeFirstTimes(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const pick = /* @__PURE__ */ __name((v) => Array.isArray(v) ? [...new Set(v.filter((x2) => typeof x2 === "string" && FIRST_TIME_IDS.includes(x2)))] : [], "pick");
+  const done = pick(r.done);
+  const claimed = pick(r.claimed);
+  for (const c of claimed) if (!done.includes(c)) done.push(c);
+  return { done, claimed };
+}
+__name(sanitizeFirstTimes, "sanitizeFirstTimes");
 
 // api/_focusLoot.js
 var FOCUS_LOOT_DAILY_CAP = 8;
@@ -8415,8 +9682,8 @@ async function onRequest6({ request, env }) {
         } else {
           console.info("save: renova\xE7\xE3o de TTL pulada, conte\xFAdo mudou entre leitura e renova\xE7\xE3o", { saveIdPrefix: saveId.slice(0, 8) });
         }
-      } catch (err) {
-        console.warn("save: renova\xE7\xE3o de TTL falhou, leitura segue", { saveIdPrefix: saveId.slice(0, 8), err: String(err) });
+      } catch (err2) {
+        console.warn("save: renova\xE7\xE3o de TTL falhou, leitura segue", { saveIdPrefix: saveId.slice(0, 8), err: String(err2) });
       }
     }
     const state = JSON.parse(raw);
@@ -8452,6 +9719,16 @@ async function onRequest6({ request, env }) {
       const q = sanitizeBuildingQuests(state.buildingQuests);
       if (q) state.buildingQuests = q;
       else delete state.buildingQuests;
+    }
+    if ("dailyMissions" in state) {
+      const q = sanitizeDailyMissions(state.dailyMissions);
+      if (q) state.dailyMissions = q;
+      else delete state.dailyMissions;
+    }
+    if ("firstTimes" in state) {
+      const q = sanitizeFirstTimes(state.firstTimes);
+      if (q) state.firstTimes = q;
+      else delete state.firstTimes;
     }
     if ("focusLoot" in state) {
       const q = sanitizeFocusLoot(state.focusLoot);
@@ -8560,8 +9837,8 @@ async function onRequestGet5({ request, env }) {
   let found;
   try {
     found = await kvOrThrow(env).getWithMetadata(`sprite:blob:${token}`, "arrayBuffer");
-  } catch (err) {
-    console.error("sprite-image: falha ao ler o blob", err?.message);
+  } catch (err2) {
+    console.error("sprite-image: falha ao ler o blob", err2?.message);
     return Response.json({ error: "internal error" }, { status: 500 });
   }
   if (!found?.value) {
@@ -8824,9 +10101,9 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
           temperature: 0.7
         })
       });
-    } catch (err) {
-      await gate.release(`rede/timeout no Groq: ${err?.message}`);
-      throw err;
+    } catch (err2) {
+      await gate.release(`rede/timeout no Groq: ${err2?.message}`);
+      throw err2;
     }
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
@@ -8847,8 +10124,8 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
     return Response.json({ suggestions }, { headers: CORS13 });
-  } catch (err) {
-    console.error("suggest-tasks error:", err);
+  } catch (err2) {
+    console.error("suggest-tasks error:", err2);
     return Response.json({ error: "Internal error" }, { status: 500, headers: CORS13 });
   }
 }
@@ -8962,8 +10239,8 @@ async function onRequestPost10({ request, env }) {
         signal: AbortSignal.timeout(3e4)
       }
     );
-  } catch (err) {
-    console.error("[transcribe] falha ao falar com o provedor:", err?.name);
+  } catch (err2) {
+    console.error("[transcribe] falha ao falar com o provedor:", err2?.name);
     await cota.release("provedor de transcri\xE7\xE3o indispon\xEDvel");
     return json10({ error: "transcribe-unavailable" }, 502);
   }
@@ -9004,7 +10281,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-NkOqKp/functionsRoutes-0.14291095834728385.mjs
+// ../.wrangler/tmp/pages-C07DLO/functionsRoutes-0.3064549074667322.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -9284,28 +10561,28 @@ var routes = [
 // ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
-  var i = 0;
-  while (i < str.length) {
-    var char = str[i];
+  var i2 = 0;
+  while (i2 < str.length) {
+    var char = str[i2];
     if (char === "*" || char === "+" || char === "?") {
-      tokens.push({ type: "MODIFIER", index: i, value: str[i++] });
+      tokens.push({ type: "MODIFIER", index: i2, value: str[i2++] });
       continue;
     }
     if (char === "\\") {
-      tokens.push({ type: "ESCAPED_CHAR", index: i++, value: str[i++] });
+      tokens.push({ type: "ESCAPED_CHAR", index: i2++, value: str[i2++] });
       continue;
     }
     if (char === "{") {
-      tokens.push({ type: "OPEN", index: i, value: str[i++] });
+      tokens.push({ type: "OPEN", index: i2, value: str[i2++] });
       continue;
     }
     if (char === "}") {
-      tokens.push({ type: "CLOSE", index: i, value: str[i++] });
+      tokens.push({ type: "CLOSE", index: i2, value: str[i2++] });
       continue;
     }
     if (char === ":") {
       var name = "";
-      var j = i + 1;
+      var j = i2 + 1;
       while (j < str.length) {
         var code = str.charCodeAt(j);
         if (
@@ -9321,15 +10598,15 @@ function lexer(str) {
         break;
       }
       if (!name)
-        throw new TypeError("Missing parameter name at ".concat(i));
-      tokens.push({ type: "NAME", index: i, value: name });
-      i = j;
+        throw new TypeError("Missing parameter name at ".concat(i2));
+      tokens.push({ type: "NAME", index: i2, value: name });
+      i2 = j;
       continue;
     }
     if (char === "(") {
       var count = 1;
       var pattern = "";
-      var j = i + 1;
+      var j = i2 + 1;
       if (str[j] === "?") {
         throw new TypeError('Pattern cannot start with "?" at '.concat(j));
       }
@@ -9353,16 +10630,16 @@ function lexer(str) {
         pattern += str[j++];
       }
       if (count)
-        throw new TypeError("Unbalanced pattern at ".concat(i));
+        throw new TypeError("Unbalanced pattern at ".concat(i2));
       if (!pattern)
-        throw new TypeError("Missing pattern at ".concat(i));
-      tokens.push({ type: "PATTERN", index: i, value: pattern });
-      i = j;
+        throw new TypeError("Missing pattern at ".concat(i2));
+      tokens.push({ type: "PATTERN", index: i2, value: pattern });
+      i2 = j;
       continue;
     }
-    tokens.push({ type: "CHAR", index: i, value: str[i++] });
+    tokens.push({ type: "CHAR", index: i2, value: str[i2++] });
   }
-  tokens.push({ type: "END", index: i, value: "" });
+  tokens.push({ type: "END", index: i2, value: "" });
   return tokens;
 }
 __name(lexer, "lexer");
@@ -9371,20 +10648,20 @@ function parse3(str, options) {
     options = {};
   }
   var tokens = lexer(str);
-  var _a = options.prefixes, prefixes = _a === void 0 ? "./" : _a, _b = options.delimiter, delimiter = _b === void 0 ? "/#?" : _b;
+  var _a2 = options.prefixes, prefixes = _a2 === void 0 ? "./" : _a2, _b2 = options.delimiter, delimiter = _b2 === void 0 ? "/#?" : _b2;
   var result = [];
   var key = 0;
-  var i = 0;
+  var i2 = 0;
   var path = "";
   var tryConsume = /* @__PURE__ */ __name(function(type) {
-    if (i < tokens.length && tokens[i].type === type)
-      return tokens[i++].value;
+    if (i2 < tokens.length && tokens[i2].type === type)
+      return tokens[i2++].value;
   }, "tryConsume");
   var mustConsume = /* @__PURE__ */ __name(function(type) {
     var value2 = tryConsume(type);
     if (value2 !== void 0)
       return value2;
-    var _a2 = tokens[i], nextType = _a2.type, index2 = _a2.index;
+    var _a3 = tokens[i2], nextType = _a3.type, index2 = _a3.index;
     throw new TypeError("Unexpected ".concat(nextType, " at ").concat(index2, ", expected ").concat(type));
   }, "mustConsume");
   var consumeText = /* @__PURE__ */ __name(function() {
@@ -9413,7 +10690,7 @@ function parse3(str, options) {
       return "[^".concat(escapeString(delimiter), "]+?");
     return "(?:(?!".concat(escapeString(prevText), ")[^").concat(escapeString(delimiter), "])+?");
   }, "safePattern");
-  while (i < tokens.length) {
+  while (i2 < tokens.length) {
     var char = tryConsume("CHAR");
     var name = tryConsume("NAME");
     var pattern = tryConsume("PATTERN");
@@ -9476,29 +10753,29 @@ function regexpToFunction(re, keys, options) {
   if (options === void 0) {
     options = {};
   }
-  var _a = options.decode, decode = _a === void 0 ? function(x) {
-    return x;
-  } : _a;
+  var _a2 = options.decode, decode = _a2 === void 0 ? function(x2) {
+    return x2;
+  } : _a2;
   return function(pathname) {
     var m = re.exec(pathname);
     if (!m)
       return false;
     var path = m[0], index2 = m.index;
     var params = /* @__PURE__ */ Object.create(null);
-    var _loop_1 = /* @__PURE__ */ __name(function(i2) {
-      if (m[i2] === void 0)
+    var _loop_1 = /* @__PURE__ */ __name(function(i3) {
+      if (m[i3] === void 0)
         return "continue";
-      var key = keys[i2 - 1];
+      var key = keys[i3 - 1];
       if (key.modifier === "*" || key.modifier === "+") {
-        params[key.name] = m[i2].split(key.prefix + key.suffix).map(function(value) {
+        params[key.name] = m[i3].split(key.prefix + key.suffix).map(function(value) {
           return decode(value, key);
         });
       } else {
-        params[key.name] = decode(m[i2], key);
+        params[key.name] = decode(m[i3], key);
       }
     }, "_loop_1");
-    for (var i = 1; i < m.length; i++) {
-      _loop_1(i);
+    for (var i2 = 1; i2 < m.length; i2++) {
+      _loop_1(i2);
     }
     return { path, index: index2, params };
   };
@@ -9547,8 +10824,8 @@ function tokensToRegexp(tokens, keys, options) {
   if (options === void 0) {
     options = {};
   }
-  var _a = options.strict, strict = _a === void 0 ? false : _a, _b = options.start, start = _b === void 0 ? true : _b, _c = options.end, end = _c === void 0 ? true : _c, _d = options.encode, encode = _d === void 0 ? function(x) {
-    return x;
+  var _a2 = options.strict, strict = _a2 === void 0 ? false : _a2, _b2 = options.start, start = _b2 === void 0 ? true : _b2, _c = options.end, end = _c === void 0 ? true : _c, _d = options.encode, encode = _d === void 0 ? function(x2) {
+    return x2;
   } : _d, _e = options.delimiter, delimiter = _e === void 0 ? "/#?" : _e, _f = options.endsWith, endsWith = _f === void 0 ? "" : _f;
   var endsWithRe = "[".concat(escapeString(endsWith), "]|$");
   var delimiterRe = "[".concat(escapeString(delimiter), "]");

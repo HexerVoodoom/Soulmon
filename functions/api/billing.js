@@ -148,7 +148,7 @@ export async function onRequestPost({ request, env }) {
   // pacote foi consumido; se este pedido não está no histórico da conta, ele
   // não é uma entrega pendente — é um comprovante velho reapresentado. Só o que
   // já foi creditado volta como `duplicate` (idempotente, sem novo saldo).
-  if (result.product.consumable && result.consumed) {
+  if (result.product.consumable && /** @type {any} */ (result).consumed) {
     const atual = await readEntitlement(env, saveId);
     if (!atual.consumedOrders.includes(result.orderId)) {
       console.log(JSON.stringify({ event: 'billing.consumed.refused', saveIdPrefix: String(saveId).slice(0, 8) }));

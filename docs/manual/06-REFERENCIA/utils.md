@@ -3025,6 +3025,21 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/components/BalanceWeekModal.tsx`, `src/components/CreateModal.tsx`
 **Régua:** nenhuma (`ls src/utils/weekdays*.test.ts` vazio).
 
+### `src/utils/dailyMissions.ts`
+**Dono de:** O catálogo de MISSÕES DIÁRIAS dos outros recursos (minijogos, foco, cuidado...), sorteadas por dia do jogador e pagas em 1 material (REGISTRO §52).
+**Exports:**
+- `DailyEvent` (type) — os 15 eventos reais que contam (`dino`, `ppt`, `match3`, `foco`, `masmorra`, `banho`...).
+- `DailyMission` (interface) — uma missão do catálogo (`id`, `event`, `target`...).
+- `DAILY_MISSION_COUNT` — `3`
+- `DAILY_COUNT_CAP` — `99`
+- `function dailyMissionPool(): readonly DailyMission[]` — o catálogo inteiro (o teste varre o vocabulário).
+- `function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[]` — as missões do dia; DETERMINÍSTICO por `day` e filtrado pelo Vínculo que abre o prédio.
+- `DailyMissionsState` (interface) — `day`, `counts`, `claimed`.
+- `DailyStatus` (type) — `'available' | 'ready' | 'claimed'`.
+- `function dailyForDay`, `function bumpDaily`, `function dailyCount`, `function dailyStatus`, `function claimDaily`, `function dailyMissionsMark`, `function sanitizeDailyMissions` — estado puro: zera na virada do dia, soma 1 por evento, resgate idempotente, selo e saneamento do save.
+**Chamado por:** `src/App.tsx`, `src/components/nav/AreaView.tsx`, `src/components/nav/DailyMissionList.tsx`, `src/components/nav/MissionsSheet.tsx`, `src/contexts/GameStateContext.tsx`
+**Régua:** `dailyMissions.fiacao.test.ts`, `dailyMissions.test.ts`
+
 ### `src/utils/weeklyMissions.ts`
 **Dono de:** As 3 missões SEMANAIS sorteadas deterministicamente, pagas em Emblemas.
 **Exports:**

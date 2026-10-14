@@ -50,7 +50,7 @@ describe('linha mínima no Today', () => {
     schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
   } as unknown as Activity;
 
-  it('só o nome e o checkbox (e os filhos): sem subtítulo, XP, prazo, badge, barra ou convite', () => {
+  it('nome e checkbox (e os filhos) + no máximo prazo e assombrada discretos (§45): sem subtítulo, XP, adiamentos, badge ou barra', () => {
     const { container } = render(
       <DailyRituals
         tasks={[tarefa]} activities={[habito]} completedTasks={[]} language="en-US" now={new Date(2026, 9, 14, 10)}
@@ -66,7 +66,10 @@ describe('linha mínima no Today', () => {
       expect(li.querySelector('[role="progressbar"]')).toBeNull();
     }
     const txt = container.textContent ?? '';
-    expect(txt).not.toMatch(/XP|haunted|postponed|steps|Every day|Due/);
+    // §45 (PR #334): prazo e convite da assombrada VOLTARAM à linha do Hoje (TaskMeta lean).
+    expect(txt).toMatch(/Thu, Jan 1/);
+    expect(txt).toContain('haunted');
+    expect(txt).not.toMatch(/XP|postponed|steps|Every day|Due/);
     expect(txt).toContain('Caixas'); // filhos continuam
     expect(txt).toContain('Frete');
   });
