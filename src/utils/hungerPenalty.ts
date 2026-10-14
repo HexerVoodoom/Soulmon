@@ -10,12 +10,13 @@
 //    trocar de aparelho ou rodar o tick mil vezes lê o mesmo `paid` e não cobra de novo. No máximo 1 perda por janela.
 //  · OFFLINE com teto: ao voltar, no máximo `HUNGER_PENALTY_MAX_PER_RETURN` (2) perdas são cobradas; as janelas além do teto
 //    são PERDOADAS (`paid` avança até o total), não guardadas para a próxima leitura — senão o teto só adiaria a conta.
-//  · PISO: nunca abaixo de `HUNGER_PENALTY_HP_FLOOR` (1 coração). Não mata, não degenera, não bloqueia nada. (A regra de vida do jogo
-//    tem piso 1 só na raiz da árvore; aqui o piso vale para TODO estágio, porque o pedido é "não mata".) HP já ≤ 1 → não cobra,
-//    mas as janelas contam como pagas (nada de dívida retroativa se o HP subir depois).
+//  · MÍNIMO = o do dreno de cocô (`utils/poopDrain.ts`): a fome PODE zerar a vida (decisão do dono, 14/10/2026). Na RAIZ da árvore
+//    (rookie, sem forma abaixo) o piso é 1 coração; nos demais estágios o HP pode chegar a 0, e o HP 0 tem a MESMA consequência de
+//    sempre (degeneração na virada do dia; nada novo aqui). Esta função só subtrai HP, como o dreno.
 //  · Ausência longa NÃO é perdoada além do teto de 2: o pedido do dono fixou "máx. 2 perdas por retorno" (ver REGISTRO §45).
 //  · O HP do jogo já aceita frações de 0,5 (CLAUDE.md, Corações); nenhum save muda de forma: o campo `hungerPenalty` é novo e opcional.
 import { starvingSince } from './hunger';
+import { getPreviousForm } from './dailyReset';
 
 /** Horas CONTÍNUAS de fome para cada perda (decisão do dono). */
 export const HUNGER_PENALTY_WINDOW_HOURS = 12;
@@ -24,8 +25,8 @@ export const HUNGER_PENALTY_WINDOW_MS = HUNGER_PENALTY_WINDOW_HOURS * 3_600_000;
 export const HUNGER_PENALTY_HEARTS = 0.5;
 /** Teto de perdas cobradas de uma vez (ao voltar de uma ausência). */
 export const HUNGER_PENALTY_MAX_PER_RETURN = 2;
-/** Nunca cai abaixo disto por causa da fome. */
-export const HUNGER_PENALTY_HP_FLOOR = 1;
+/** Piso na RAIZ da árvore (o mesmo do dreno de cocô e da virada). */
+export const HUNGER_PENALTY_ROOT_FLOOR = 1;
 
 /** O que fica no save. */
 export interface HungerPenaltyRecord {
@@ -39,8 +40,17 @@ export interface HungerPenaltyRecord {
 
 export interface HungerPenaltyState {
   healthPoints: number;
+  evolutionStage?: string;
+  currentBranch?: string;
   hunger?: { v: number; at: number };
   hungerPenalty?: HungerPenaltyRecord;
+}
+
+/** Mínimo de HP: 1 na raiz da árvore, 0 nos demais (regra do dreno de cocô). */
+function hpFloorOf(state: HungerPenaltyState): number {
+  const stage = state.evolutionStage ?? 'rookie';
+  const naRaiz = getPreviousForm(stage, (state.currentBranch as any) ?? 'data') === stage;
+  return naRaiz ? HUNGER_PENALTY_ROOT_FLOOR : 0;
 }
 
 /** Lixo → `undefined` (sem dívida retroativa). */
@@ -63,13 +73,13 @@ export function starvingWindows(hunger: HungerPenaltyState['hunger'], now: numbe
   return Math.floor((now - since) / HUNGER_PENALTY_WINDOW_MS);
 }
 
-/** Ms até a PRÓXIMA perda se nada mudar; `null` se não está faminto ou se a próxima janela já cobraria 0 (HP no piso). */
+/** Ms até a PRÓXIMA perda se nada mudar; `null` se não está faminto ou se a próxima janela já cobraria 0 (HP no mínimo). */
 export function msToNextHungerLoss(state: HungerPenaltyState, now: number): number | null {
   const since = starvingSince(state.hunger);
   if (since === null || now < since) return null;
   const paid = state.hungerPenalty?.since === since ? state.hungerPenalty.paid : 0;
   const w = Math.max(starvingWindows(state.hunger, now), paid);
-  if (state.healthPoints <= HUNGER_PENALTY_HP_FLOOR) return null;
+  if (state.healthPoints <= hpFloorOf(state)) return null;
   return since + (w + 1) * HUNGER_PENALTY_WINDOW_MS - now;
 }
 
@@ -87,8 +97,8 @@ export function applyHungerPenalty<T extends HungerPenaltyState>(state: T, now: 
 
   const hp = Number.isFinite(state.healthPoints) ? state.healthPoints : 0;
   const wanted = Math.min(owed, HUNGER_PENALTY_MAX_PER_RETURN) * HUNGER_PENALTY_HEARTS;
-  // sempre em passos de 0,5 e nunca abaixo do piso
-  const room = Math.max(0, Math.floor((hp - HUNGER_PENALTY_HP_FLOOR) / HUNGER_PENALTY_HEARTS) * HUNGER_PENALTY_HEARTS);
+  // sempre em passos de 0,5 e nunca abaixo do mínimo
+  const room = Math.max(0, Math.floor((hp - hpFloorOf(state)) / HUNGER_PENALTY_HEARTS) * HUNGER_PENALTY_HEARTS);
   const lost = Math.min(wanted, room);
   const prevUnreported = rec && rec.since === since ? rec.unreported : (rec?.unreported ?? 0);
   return {
