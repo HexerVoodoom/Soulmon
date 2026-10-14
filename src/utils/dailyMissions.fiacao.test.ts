@@ -19,6 +19,12 @@ describe('todo evento do catálogo diário tem emissor', () => {
       else expect(app).toMatch(new RegExp(`['"]?[\\w-]+['"]?: '${porContarMissao[m.event]}'`));
     });
   }
+  it('as primeiras vezes têm emissor: visita no visitarPredio, passeio no resgate, estreias pelo contarDiaria', () => {
+    expect(app).toContain("markFirst(entrou.firstTimes, `visit:${id}`)");
+    expect(app).toContain("markFirst(prev.firstTimes, 'first-stroll')");
+    expect(app).toContain('markFirstForEvent(prev.firstTimes, evento)');
+    expect(app).toContain('onClaim: resgatarPrimeira');
+  });
   it('o App passa o emissor à AreaView e o resgate à folha', () => {
     expect(app).toContain('onDailyEvent={contarDiaria}');
     expect(app).toContain('onClaim: resgatarDiaria');

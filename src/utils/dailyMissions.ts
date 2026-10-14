@@ -24,8 +24,8 @@
 // ---------------------------------------------------------------------------
 
 import { hashString, mulberry32 } from './oracle/base';
-import { buildingGateFor, type BuildingId } from './gates';
-import { MATERIAL_CAP, MATERIAL_PER_QUEST, forDay as buildingForDay, type BuildingQuestState, type MaterialId } from './buildingQuests';
+import { BUILDING_GATES, buildingGateFor, type BuildingId } from './gates';
+import { MATERIAL_CAP, MATERIAL_PER_QUEST, materialOf, forDay as buildingForDay, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import type { QuestMark } from './questMarks';
 
 export type DailyEvent =
@@ -68,12 +68,17 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel', descPt: 'Dispute uma partida do Torneio', descEn: 'Play a Tournament match' },
 ];
 
-export const DAILY_MISSION_COUNT = 3;
+/** Até 6 por dia (dono, 14/10/2026, REGISTRO §54): quem tem menos recursos abertos recebe menos (o filtro de portão vem antes do corte). */
+export const DAILY_MISSION_COUNT = 6;
 /** Teto de contagem por evento (higiene do save; nenhum alvo passa de 2). */
 export const DAILY_COUNT_CAP = 99;
 
 /** O catálogo inteiro — existe para o teste varrer o vocabulário e a soma de recompensa. */
 export function dailyMissionPool(): readonly DailyMission[] { return POOL; }
+
+/** Listas fechadas que o servidor espelha (`functions/api/_dailyMissions.js`, travado por `dailyMissions.parity.test.js`). */
+export const DAILY_MISSION_IDS: readonly string[] = POOL.map(m => m.id);
+export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
 
 /**
  * As missões do dia. DETERMINÍSTICO por `day` (dia do jogador): a mesma chave devolve a mesma ordem em qualquer aparelho.
@@ -168,4 +173,103 @@ export function sanitizeDailyMissions(raw: unknown): DailyMissionsState | undefi
   const ids = POOL.map(m => m.id);
   const claimed = Array.isArray(r.claimed) ? [...new Set(r.claimed.filter((x): x is string => typeof x === 'string' && ids.includes(x)))] : [];
   return { day: r.day, counts, claimed };
+}
+
+// ---------------------------------------------------------------------------
+// PRIMEIRAS VEZES (missões ÚNICAS, 1× na vida — dono, 14/10/2026, REGISTRO §54): conhecer cada prédio do mapa e estrear o primeiro
+// minijogo, foco (Pomodoro), passeio e masmorra. Cada uma paga 1 material UMA vez (`claimed`), idempotente.
+//   - SEM retroativo pago: quem já jogava (XP > 0) no dia em que o recurso chegou tem tudo que o Vínculo já abre marcado como
+//     cumprido E resgatado, sem pagar (`seedFirstTimes`) — o mais seguro: ninguém ganha material de graça por algo antigo, e ninguém
+//     vê uma lista de "primeiras vezes" que já fez. Prédios que o Vínculo abrir DEPOIS contam como novos.
+//   - A lista só mostra o que o Vínculo já abriu; a marca do ícone só acende "?" (pronta a resgatar), NUNCA "!": são convites
+//     tranquilos, sem cobrança.
+// ---------------------------------------------------------------------------
+
+export interface FirstTime {
+  id: string;
+  building: BuildingId;
+  material: MaterialId;
+  /** Só as de evento (as de visita têm o texto montado com o nome do prédio, na tela). */
+  descPt?: string;
+  descEn?: string;
+}
+
+const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil'];
+
+const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[])
+  .filter(b => !NO_VISIT.includes(b))
+  .map(b => ({ id: `visit:${b}`, building: b, material: materialOf(b) ?? 'moss' }));
+
+const FIRST_EVENTS: readonly (FirstTime & { from: readonly DailyEvent[] })[] = [
+  { id: 'first-minigame', building: 'jogos.salao', material: 'spark', from: ['dino', 'ppt', 'match3'], descPt: 'Estreie o seu primeiro minijogo', descEn: 'Try your first mini-game' },
+  { id: 'first-focus', building: 'exploracao.oficina', material: 'gear', from: ['foco'], descPt: 'Faça o seu primeiro ciclo de foco (Pomodoro)', descEn: 'Do your first focus cycle (Pomodoro)' },
+  { id: 'first-stroll', building: 'exploracao.passeio', material: 'pebble', from: [], descPt: 'Conclua o seu primeiro passeio', descEn: 'Finish your first stroll' },
+  { id: 'first-dungeon', building: 'exploracao.masmorra', material: 'ore', from: ['masmorra'], descPt: 'Limpe o seu primeiro andar da Masmorra', descEn: 'Clear your first Dungeon floor' },
+];
+
+const FIRST_POOL: readonly FirstTime[] = [...FIRST_EVENTS.map(({ from: _f, ...r }) => r), ...VISITS];
+export const FIRST_TIME_IDS: readonly string[] = FIRST_POOL.map(f => f.id);
+
+export interface FirstTimesState {
+  done: string[];
+  claimed: string[];
+}
+
+export const FIRST_TIMES_EMPTY: FirstTimesState = { done: [], claimed: [] };
+
+/** As primeiras vezes que o Vínculo já abriu (a ordem do catálogo: estreias antes das visitas). */
+export function firstTimesFor(bondLevel: unknown): FirstTime[] {
+  return FIRST_POOL.filter(f => buildingGateFor(f.building, bondLevel).open);
+}
+
+/** A primeira vez aconteceu. Idempotente: já cumprida (ou id estranho) devolve o MESMO `s`. */
+export function markFirst(s: FirstTimesState | undefined, id: string): FirstTimesState {
+  const cur = s ?? FIRST_TIMES_EMPTY;
+  if (!FIRST_TIME_IDS.includes(id) || cur.done.includes(id)) return cur;
+  return { ...cur, done: [...cur.done, id] };
+}
+
+/** Um evento diário (`DailyEvent`) estreia as primeiras vezes que ele alimenta. */
+export function markFirstForEvent(s: FirstTimesState | undefined, event: DailyEvent): FirstTimesState {
+  let cur = s ?? FIRST_TIMES_EMPTY;
+  for (const e of FIRST_EVENTS) if (e.from.includes(event)) cur = markFirst(cur, e.id);
+  return cur;
+}
+
+export function firstStatus(s: FirstTimesState | undefined, id: string): DailyStatus {
+  const cur = s ?? FIRST_TIMES_EMPTY;
+  if (cur.claimed.includes(id)) return 'claimed';
+  return cur.done.includes(id) ? 'ready' : 'available';
+}
+
+/** Resgata UMA primeira vez: só se está na lista do Vínculo e `ready`. Paga 1 material (até o teto). PURA e idempotente. */
+export function claimFirst<T extends { firstTimes?: FirstTimesState; buildingQuests?: BuildingQuestState }>(prev: T, day: string, bondLevel: unknown, id: string): { state: T; paid: MaterialId | null } {
+  const f = firstTimesFor(bondLevel).find(x => x.id === id);
+  if (!f || firstStatus(prev.firstTimes, id) !== 'ready') return { state: prev, paid: null };
+  const cur = prev.firstTimes ?? FIRST_TIMES_EMPTY;
+  const bq = buildingForDay(prev.buildingQuests, day);
+  const materials = { ...bq.materials, [f.material]: Math.min(MATERIAL_CAP, (bq.materials[f.material] ?? 0) + MATERIAL_PER_QUEST) };
+  return { state: { ...prev, firstTimes: { ...cur, claimed: [...cur.claimed, id] }, buildingQuests: { ...bq, materials } }, paid: f.material };
+}
+
+/** "?" quando há primeira vez pronta a resgatar; nunca "!". */
+export function firstTimesMark(s: FirstTimesState | undefined, bondLevel: unknown): QuestMark {
+  return firstTimesFor(bondLevel).some(f => firstStatus(s, f.id) === 'ready') ? 'ready' : null;
+}
+
+/** Save de quem já jogava: tudo que o Vínculo abre hoje vira cumprido E resgatado, sem pagar nada. */
+export function seedFirstTimes(bondLevel: unknown): FirstTimesState {
+  const ids = firstTimesFor(bondLevel).map(f => f.id);
+  return { done: [...ids], claimed: [...ids] };
+}
+
+/** Higienização (load e servidor): só ids do catálogo, sem repetição, `claimed` implica `done`. */
+export function sanitizeFirstTimes(raw: unknown): FirstTimesState | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = raw as Record<string, unknown>;
+  const pick = (v: unknown): string[] => (Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && FIRST_TIME_IDS.includes(x)))] : []);
+  const done = pick(r.done);
+  const claimed = pick(r.claimed);
+  for (const c of claimed) if (!done.includes(c)) done.push(c);
+  return { done, claimed };
 }

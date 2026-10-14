@@ -7,7 +7,7 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { AvisosLink } from './AvisosLink';
 import { CROSSINGS_EMPTY } from '../../types/travessias';
-import { bumpDaily, claimDaily, dailyMissionsFor, type DailyMissionsState } from '../../utils/dailyMissions';
+import { bumpDaily, claimDaily, claimFirst, dailyMissionsFor, markFirstForEvent, type DailyMissionsState, type FirstTimesState } from '../../utils/dailyMissions';
 
 afterEach(cleanup);
 
@@ -59,14 +59,52 @@ describe('DailyMissionList na aba Diárias', () => {
   });
 });
 
-describe('Home sem ícone de login diário', () => {
-  it('o botão de Avisos usa "info", nunca o calendário (event_note) que lia como check-in/login diário', () => {
+describe('Home sem ícone de login diário nem de Avisos', () => {
+  it('o botão de Avisos fica OCULTO por completo (dono, 14/10/2026), mesmo com avisos', () => {
     const { container } = render(<AvisosLink count={2} row={2} label="Notices" countLabel="2 notices" onClick={() => {}} />);
-    const glifo = container.querySelector('[data-avisos-link] [class*="material"], [data-avisos-link] span span')!;
-    expect(container.querySelector('[data-avisos-link]')).not.toBeNull();
-    expect(container.innerHTML).not.toContain('event_note');
-    expect(container.innerHTML).not.toContain('calendar_month');
-    expect(container.innerHTML).toContain('info');
-    expect(glifo).not.toBeNull();
+    expect(container.querySelector('[data-avisos-link]')).toBeNull();
+    expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('seção "Primeiras vezes" na aba Diárias', () => {
+  const mkF = (state: FirstTimesState | undefined, bond: number, onClaim = vi.fn(), language: 'en-US' | 'pt-BR' = 'en-US') => (
+    <MissionsSheet
+      open onClose={() => {}} language={language} crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} todayKey={DAY}
+      weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }}
+      firsts={{ state, bondLevel: bond, onClaim }}
+    />
+  );
+  it('lista visitas e estreias abertas; pronta mostra Claim, resgatada some e entra na contagem', async () => {
+    const onClaim = vi.fn();
+    const pronta = markFirstForEvent(undefined, 'dino');
+    const { unmount } = render(mkF(pronta, 1, onClaim));
+    await waitFor(() => expect(document.querySelector('[data-first-times]')).not.toBeNull());
+    expect(document.querySelector('[data-missions-section="first-times"]')!.getAttribute('aria-label')).toBe('First times');
+    const li = document.querySelector('[data-first-time="first-minigame"]')!;
+    expect(li.getAttribute('data-status')).toBe('ready');
+    expect(document.querySelector('[data-first-time="visit:mercado.itens"]')!.textContent).toContain('Visit: ');
+    expect(document.querySelector('[data-first-time="visit:hall.feira"]')).toBeNull();
+    fireEvent.click(li.querySelector('button')!);
+    expect(onClaim).toHaveBeenCalledWith('first-minigame');
+    const pago = claimFirst({ firstTimes: pronta, buildingQuests: undefined }, DAY, 1, 'first-minigame').state;
+    unmount();
+    render(mkF(pago.firstTimes, 1, onClaim, 'pt-BR'));
+    await waitFor(() => expect(document.querySelector('[data-first-times]')).not.toBeNull());
+    expect(document.querySelector('[data-first-time="first-minigame"]')).toBeNull();
+    expect(document.querySelector('[data-first-times-count]')!.textContent).toMatch(/^1 de \d+ já feitas$/);
+    expect(document.querySelector('[data-first-time="visit:mercado.itens"]')!.textContent).toContain('Conheça: ');
+  });
+});
+
+describe('aba Conquistas', () => {
+  it('mostra critérios e progresso, sem botão de comprar ou resgatar; a compra é no Mercado (só texto)', async () => {
+    render(<MissionsSheet initialTab="achievements" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} todayKey={DAY}
+      weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }} />);
+    await waitFor(() => expect(document.querySelector('[data-conquistas]')).not.toBeNull(), { timeout: 20000 });
+    const painel = document.querySelector('[data-missions-panel="achievements"]')!;
+    expect(painel.querySelector('[data-achievements-hint]')!.textContent).toContain('Market');
+    expect(painel.querySelectorAll('[data-mission]').length).toBeGreaterThan(0);
+    for (const b of painel.querySelectorAll('button')) expect(b.textContent ?? '').not.toMatch(/buy|comprar|claim|resgatar|equip/i);
   });
 });

@@ -9,6 +9,7 @@ import { MissionMark } from '../play/MissionMark';
 import { PixelTabs } from '../pixel/PixelKit';
 import { StrollQuestLine } from './StrollQuestLine';
 import { DailyMissionList, type DailyMissionsProps } from './DailyMissionList';
+import { FirstTimesList, type FirstTimesProps } from './FirstTimesList';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
@@ -28,7 +29,7 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firstDay }: {
+export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, firstDay }: {
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
   initialTab?: MissionsTab;
   open: boolean;
@@ -46,13 +47,15 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   /** Permanentes (`getMissionProgress`). */
   missionProgress: Record<string, number>;
   /** A marca de cada seção (`questMarks`). */
-  marks: { daily: QuestMark; torneio: QuestMark; conquistas: QuestMark; firstDay?: QuestMark };
+  marks: { daily: QuestMark; torneio: QuestMark; conquistas: QuestMark; firstDay?: QuestMark; firsts?: QuestMark };
   /** O cartão do primeiro dia (os três gestos) — uma MISSÃO, por isso mora aqui e não na Home. `null`/ausente = não há (cumpriu ou o dia virou). */
   firstDay?: FirstDayProgress | null;
   /** As missões de prédio listadas no menu (`utils/buildingQuests.ts`). Fazem parte de "Hoje". */
   buildings?: BuildingQuestsProps;
   /** As missões do dia dos outros recursos (`utils/dailyMissions.ts`). Fazem parte de "Hoje". */
   dailies?: DailyMissionsProps;
+  /** As primeiras vezes (missões únicas, `utils/dailyMissions.ts`): seção própria na aba Diárias. */
+  firsts?: FirstTimesProps;
 }) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<MissionsTab>(initialTab);
@@ -60,7 +63,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
   const go = (t: MissionsTab) => { setTab(t); setSeen(prev => (prev.has(t) ? prev : new Set(prev).add(t))); };
   const tabMarks: Record<MissionsTab, QuestMark> = {
-    daily: strongestMark([marks.daily, marks.firstDay ?? null]),
+    daily: strongestMark([marks.daily, marks.firstDay ?? null, marks.firsts ?? null]),
     weekly: marks.torneio,
     achievements: marks.conquistas,
   };
@@ -118,6 +121,11 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                     {dailies && <DailyMissionList language={language} {...dailies} />}
                   </div>
                 </Section>
+                {firsts && (
+                  <Section title={isPt ? 'Primeiras vezes' : 'First times'} mark={marks.firsts ?? null} glyph={false} isPt={isPt} id="first-times">
+                    <FirstTimesList language={language} {...firsts} />
+                  </Section>
+                )}
               </div>
             )}
             {seen.has('weekly') && (
@@ -130,6 +138,9 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
             {seen.has('achievements') && (
               <div role="tabpanel" hidden={tab !== 'achievements'} data-missions-panel="achievements">
                 <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt} id="achievements">
+                  <p data-achievements-hint style={{ margin: '0 0 8px', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>
+                    {isPt ? 'Cumprir libera o item para compra. A compra é no Mercado, prédio Conquistas.' : 'Completing one unlocks the item for sale. You buy it at the Market, Achievements building.'}
+                  </p>
                   <ConquistasSheet language={language} missionProgress={missionProgress} />
                 </Section>
               </div>

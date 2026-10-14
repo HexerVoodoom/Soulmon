@@ -9384,6 +9384,104 @@ function sanitizeBuildingQuests(raw) {
 }
 __name(sanitizeBuildingQuests, "sanitizeBuildingQuests");
 
+// api/_dailyMissions.js
+var DAILY_COUNT_CAP = 99;
+var DAILY_EVENTS = [
+  "dino",
+  "ppt",
+  "match3",
+  "foco",
+  "masmorra",
+  "banho",
+  "carinho",
+  "brincar",
+  "comida",
+  "humor",
+  "sono",
+  "mercado",
+  "amigo",
+  "arena",
+  "torneio"
+];
+var DAILY_MISSION_IDS = [
+  "d-dino",
+  "d-ppt",
+  "d-match3",
+  "d-foco",
+  "d-masmorra",
+  "d-banho",
+  "d-carinho",
+  "d-brincar",
+  "d-comida",
+  "d-humor",
+  "d-sono",
+  "d-mercado",
+  "d-amigo",
+  "d-arena",
+  "d-torneio"
+];
+var FIRST_TIME_IDS = [
+  "first-minigame",
+  "first-focus",
+  "first-stroll",
+  "first-dungeon",
+  "visit:mercado.itens",
+  "visit:mercado.conquistas",
+  "visit:mercado.decoracao",
+  "visit:mercado.background",
+  "visit:mercado.ferreiro",
+  "visit:jogos.salao",
+  "visit:jogos.refugio",
+  "visit:jogos.mente",
+  "visit:exploracao.passeio",
+  "visit:exploracao.masmorra",
+  "visit:exploracao.caderno",
+  "visit:exploracao.oficina",
+  "visit:arena.duelo",
+  "visit:arena.torneio",
+  "visit:laboratorio.evolucao",
+  "visit:laboratorio.pet",
+  "visit:laboratorio.stats",
+  "visit:hall.biblioteca",
+  "visit:hall.amigos",
+  "visit:hall.guilda",
+  "visit:hall.feira"
+];
+var has5 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function sanitizeDailyMissions(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof r.day !== "string" || r.day.length === 0 || r.day.length > 40) return void 0;
+  const c = r.counts && typeof r.counts === "object" && !Array.isArray(r.counts) ? (
+    /** @type {Record<string, unknown>} */
+    r.counts
+  ) : {};
+  const counts = {};
+  for (const e of DAILY_EVENTS) {
+    const v = has5(c, e) ? c[e] : void 0;
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) counts[e] = Math.min(DAILY_COUNT_CAP, Math.floor(v));
+  }
+  const claimed = Array.isArray(r.claimed) ? [...new Set(r.claimed.filter((x2) => typeof x2 === "string" && DAILY_MISSION_IDS.includes(x2)))] : [];
+  return { day: r.day, counts, claimed };
+}
+__name(sanitizeDailyMissions, "sanitizeDailyMissions");
+function sanitizeFirstTimes(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const pick = /* @__PURE__ */ __name((v) => Array.isArray(v) ? [...new Set(v.filter((x2) => typeof x2 === "string" && FIRST_TIME_IDS.includes(x2)))] : [], "pick");
+  const done = pick(r.done);
+  const claimed = pick(r.claimed);
+  for (const c of claimed) if (!done.includes(c)) done.push(c);
+  return { done, claimed };
+}
+__name(sanitizeFirstTimes, "sanitizeFirstTimes");
+
 // api/_focusLoot.js
 var FOCUS_LOOT_DAILY_CAP = 8;
 function sanitizeFocusLoot(raw) {
@@ -9621,6 +9719,16 @@ async function onRequest6({ request, env }) {
       const q = sanitizeBuildingQuests(state.buildingQuests);
       if (q) state.buildingQuests = q;
       else delete state.buildingQuests;
+    }
+    if ("dailyMissions" in state) {
+      const q = sanitizeDailyMissions(state.dailyMissions);
+      if (q) state.dailyMissions = q;
+      else delete state.dailyMissions;
+    }
+    if ("firstTimes" in state) {
+      const q = sanitizeFirstTimes(state.firstTimes);
+      if (q) state.firstTimes = q;
+      else delete state.firstTimes;
     }
     if ("focusLoot" in state) {
       const q = sanitizeFocusLoot(state.focusLoot);
@@ -10173,7 +10281,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-lgIPLn/functionsRoutes-0.8377282565947238.mjs
+// ../.wrangler/tmp/pages-C07DLO/functionsRoutes-0.3064549074667322.mjs
 var routes = [
   {
     routePath: "/api/account",

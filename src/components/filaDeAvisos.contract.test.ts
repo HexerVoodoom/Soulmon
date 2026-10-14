@@ -277,11 +277,17 @@ describe('o level up tem POSIÇÃO na fila e monta UMA vez', () => {
   });
 });
 
-describe('check-ins ocultos (14/10/2026, REGISTRO §40.4-b)', () => {
-  it('o item `checkIn` (compromisso) da fila só é oferecido atrás do interruptor único CHECKINS_ENABLED', () => {
+describe('check-ins ocultos (§40.4-b) e compromisso da manhã com flag própria (§53)', () => {
+  it('o item `checkIn` (compromisso) da fila depende SÓ de MORNING_COMMITMENT_ENABLED, gravando o visto ao mostrar', () => {
     const efeito = app.slice(app.indexOf('const checkInPromptedRef'), app.indexOf('/** Fecha o check-in gravando os focos escolhidos'));
-    expect(efeito).toContain('if (!CHECKINS_ENABLED) return;');
-    expect(efeito.indexOf('if (!CHECKINS_ENABLED) return;')).toBeLessThan(efeito.indexOf("track('checkin_shown')"));
+    expect(efeito).toContain('if (!MORNING_COMMITMENT_ENABLED) return;');
+    expect(efeito).not.toContain('CHECKINS_ENABLED');
+    expect(efeito.indexOf('if (!MORNING_COMMITMENT_ENABLED) return;')).toBeLessThan(efeito.indexOf("track('checkin_shown')"));
+    expect(app).toMatch(/else if \(id === 'checkIn'\) \{[^}]*lastCheckInDate: dia/);
+    // os 3 check-ins de janela seguem atrás do interruptor antigo
     expect(app).toContain('{CHECKINS_ENABLED && checkInsAbertos && ');
+    const ck = readFileSync('src/utils/checkIns.ts', 'utf8');
+    expect(ck).toContain('export const CHECKINS_ENABLED = false;');
+    expect(ck).toContain('export const MORNING_COMMITMENT_ENABLED = true;');
   });
 });

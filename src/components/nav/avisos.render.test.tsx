@@ -8,30 +8,21 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { installDomGlobals } from '../../test/renderEnv';
-import { AvisosLink } from './AvisosLink';
+import { AvisosLink, AVISOS_LINK_ENABLED } from './AvisosLink';
 import { AvisosSheet } from './AvisosSheet';
 
 installDomGlobals();
 afterEach(cleanup);
 
-describe('AvisosLink — o selo no canto direito', () => {
-  it('sem aviso o botão SOME; com avisos mostra um ponto (sem número) e o nome falado leva a contagem', () => {
+describe('AvisosLink — OCULTO por completo (dono, 14/10/2026, REGISTRO §54)', () => {
+  // Reescrito: os dois testes antigos exigiam o selo e a linha da pilha do botão, que agora não existe na tela (`AVISOS_LINK_ENABLED = false`).
+  it('o botão não renderiza nada, com ou sem avisos; o código fica e a flag religa', () => {
+    expect(AVISOS_LINK_ENABLED).toBe(false);
     const { container, rerender } = render(<AvisosLink count={0} label="Avisos" countLabel="0 avisos" onClick={() => {}} row={1} />);
     expect(container.innerHTML).toBe('');
     rerender(<AvisosLink count={3} label="Avisos" countLabel="3 avisos" onClick={() => {}} row={2} />);
-    const b = screen.getByRole('button', { name: 'Avisos, 3 avisos' });
-    expect(b.querySelector('[data-avisos-seal]')).not.toBeNull();
-    expect(b.textContent).not.toMatch(/\d/); // nada que cobre: só o ponto
-    expect(b.style.position).toBe('fixed');
-  });
-  it('a linha da pilha acompanha as missões: cada linha (1..3) tem o seu `top`', () => {
-    const tops = [1, 2, 3].map(row => {
-      const { container, unmount } = render(<AvisosLink count={1} label="A" countLabel="1" onClick={() => {}} row={row as 1 | 2 | 3} />);
-      const t = (container.firstElementChild as HTMLElement).style.top;
-      unmount();
-      return t;
-    });
-    expect(new Set(tops).size).toBe(3); // uma linha por posição (o jsdom reescreve o calc, então só a distinção é estável)
+    expect(container.innerHTML).toBe('');
+    expect(screen.queryByRole('button', { name: /Avisos/ })).toBeNull();
   });
 });
 

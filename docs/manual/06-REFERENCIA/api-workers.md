@@ -476,6 +476,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `GATES`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.
 **Régua:** `functions/api/gates.parity.test.js`.
 
+### `functions/api/_dailyMissions.js`
+**Dono de:** o ESPELHO de `src/utils/dailyMissions.ts` que o servidor usa: sanear `dailyMissions` e `firstTimes` do save (listas fechadas de eventos e ids, contagem 0..99).
+**Exports:** `DAILY_COUNT_CAP`, `DAILY_EVENTS`, `DAILY_MISSION_IDS`, `FIRST_TIME_IDS`, `sanitizeDailyMissions`, `sanitizeFirstTimes`.
+**Chamado por:** `functions/api/save.js`.
+**Régua:** `functions/api/dailyMissions.parity.test.js`.
+
 ### `functions/api/_mealRhythm.js`
 **Dono de:** a conta de horário do RITMO DAS REFEIÇÕES, nas três árvores (cliente, worker de push, rotas de inscrição) — ESM puro, sem dependência, com `_mealRhythm.d.ts`.
 **Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.

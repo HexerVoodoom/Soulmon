@@ -21,12 +21,12 @@ import { AvisosSheet } from './components/nav/AvisosSheet';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTour';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
-import { bumpDaily, claimDaily, dailyMissionsMark, type DailyEvent } from './utils/dailyMissions';
+import { bumpDaily, claimDaily, claimFirst, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
-import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED } from './utils/checkIns';
+import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -2071,6 +2071,10 @@ export default function App() {
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
       } else if (id === 'dailyReport' && gameState.lastDayReport) {
         writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
+      } else if (id === 'checkIn') {
+        // compromisso da manhã: "visto" ao MOSTRAR (REGISTRO §53) — reabrir/recarregar no meio não repete nem repaga o Vínculo
+        const dia = playerDayKey(new Date(), gameState.playerDayTz);
+        setGameState(prev => (prev.lastCheckInDate === dia ? prev : { ...prev, lastCheckInDate: dia }));
       }
     },
     // voltar do Android / erro de render / chunk que não carregou: fecha o item pelo caminho "pular" do dono dele
@@ -3754,7 +3758,10 @@ export default function App() {
   /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §52) contam o MESMO evento real:
      os gestos que já têm contador semanal alimentam também o dia (aqui, no mesmo updater); os demais chamam `contarDiaria`. */
   const contarDiaria = useCallback((evento: DailyEvent) => {
-    setGameState(prev => ({ ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento) }));
+    setGameState(prev => {
+      const firstTimes = markFirstForEvent(prev.firstTimes, evento);
+      return { ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento), ...(firstTimes === prev.firstTimes ? {} : { firstTimes }) };
+    });
   }, []);
   const contarMissao = useCallback((id: WeeklyMissionId) => {
     const doDia: Partial<Record<WeeklyMissionId, DailyEvent>> = {
@@ -4892,7 +4899,7 @@ export default function App() {
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       const c1 = claimStroll(c0, playerDayIso(new Date(), prev.playerDayTz));
-      return c1 === c0 ? prev : { ...prev, crossings: c1 };
+      return c1 === c0 ? prev : { ...prev, crossings: c1, firstTimes: markFirst(prev.firstTimes, 'first-stroll') };
     });
   }, [setGameState]);
 
@@ -4992,9 +4999,9 @@ export default function App() {
     // Mesma régua de `needsCheckIn`: com `dayKeyOf` aqui, a trava de sessão
     // rearmaria na virada do APARELHO e a leitura na virada do JOGADOR.
     const hoje = playerDayKey(now, gameState.playerDayTz);
-    // Check-ins ocultos (14/10/2026, interruptor único `CHECKINS_ENABLED`, REGISTRO §40.4-b): o item `checkIn` (compromisso do dia)
-    // da fila NÃO é oferecido — nem o rastreio `checkin_shown`, nem o plano. Religar = `true` em `utils/checkIns.ts`.
-    if (!CHECKINS_ENABLED) return;
+    // Compromisso da manhã (14/10/2026, interruptor PRÓPRIO `MORNING_COMMITMENT_ENABLED`, REGISTRO §53): o item `checkIn` da fila
+    // só depende dele — os 3 check-ins de janela (§40.4-b) seguem ocultos e não entram aqui.
+    if (!MORNING_COMMITMENT_ENABLED) return;
     if (checkInPromptedRef.current === hoje) return;
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
@@ -5958,18 +5965,28 @@ export default function App() {
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
     dailyExtra: dailyMissionsMark(gameState.dailyMissions, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
+    firsts: firstTimesMark(gameState.firstTimes, bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.firstTimes, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
 
   /** Resgata uma missão diária dos outros recursos (`utils/dailyMissions.ts`). Idempotente: reconfere sobre o `prev` (toque duplo não paga 2×). */
   const resgatarDiaria = useCallback((id: string) => {
     setGameState(prev => claimDaily(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
   }, []);
 
+  /** Resgata uma PRIMEIRA VEZ (missão única). Idempotente sobre o `prev`. */
+  const resgatarPrimeira = useCallback((id: string) => {
+    setGameState(prev => claimFirst(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
+  }, []);
+
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
     /* 8.3: o prédio NÃO listado paga o material e a peça do Soulsmith na própria entrada (`applyBuildingEntry`) — não há tela de Resgatar para ele. */
-    setGameState(prev => applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id));
+    setGameState(prev => {
+      const entrou = applyBuildingEntry(prev, playerDayKey(new Date(), prev.playerDayTz), id);
+      const firstTimes = markFirst(entrou.firstTimes, `visit:${id}`);
+      return firstTimes === entrou.firstTimes ? entrou : { ...entrou, firstTimes };
+    });
     /* 14/10/2026: a PRIMEIRA entrada no prédio abre a apresentação do NPC (uma vez só). Marca ao MOSTRAR; save sem o campo
        não apresenta nada (migração por construção — `sanitizeBuildingIntrosSeen` semeia os já abertos). */
     const vistos = gameStateRef.current.buildingIntrosSeen;
@@ -7789,6 +7806,7 @@ export default function App() {
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarDiaria,
         }}
+        firsts={{ state: gameState.firstTimes, bondLevel: bondLevelFor(gameState.totalXP ?? 0), onClaim: resgatarPrimeira }}
       /></Suspense>}
       {currentView === 'map' && (
         <CornerLink

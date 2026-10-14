@@ -58,7 +58,7 @@ compromisso do dia esperam o resumo e o mapa; o modal "crie mais atividades" só
   sumir, e o item que está na tela não pode sumir junto.
 * **Evento que NÃO chegou à tela** fica pendente e volta uma única vez — quando for mostrado, ganha a marca.
 * **Rituais com RESPOSTA** (`catalogOnboarding`, `checkIn`) seguem pendentes até a resposta: não são "avisos", são o
-  compromisso em si (o check-in é no máximo 1×/dia por `lastCheckInDate`).
+  compromisso em si (o check-in é no máximo 1×/dia por `lastCheckInDate`, gravada ao MOSTRAR). O item `checkIn` só depende de `MORNING_COMMITMENT_ENABLED` (§53), não de `CHECKINS_ENABLED`.
 * **Sem campo novo no save** — o contador do `fuzz2` não muda. A fila em si não persiste nada.
 * **Custo aceito:** o app morto no instante em que o item entrou na tela perde aquele item (era a troca pedida: nunca
   repetir). O resumo do dia não se perde de verdade: os números ficam em `lastDayReport` e na tela de Evolução.
