@@ -60,6 +60,7 @@ vi.mock('../utils/arena', async importOriginal => {
 });
 vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playTaskComplete: vi.fn(), playFeed: vi.fn() }));
 vi.mock('../utils/sprites', () => ({
+  spriteUrlFacesLeft: () => false,
   getDungeonEnemySprite: () => ({ sprite: 'x.png', name: 'x', line: 'x' }),
   getSpriteForStage: () => 'pet.png',
 }));

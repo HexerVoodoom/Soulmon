@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/10/2026 — Gratuitos: espelho, prévia só do admin, iniciais não evoluem, check-ins ocultos (`fix/gratuitos-espelho-previa-checkins`)
+>
+> - **Espelho:** `meteoro` (Bolid) olha à esquerda e andava de costas → `LEFT_FACING_STARTERS`. O **combate** não lia a orientação da arte (`BattleStage` só tinha a URL) → `spriteUrlFacesLeft`. "Virar Soulmon" também na página do Pet (era só em Configurações, para todos os tiers — o problema era descoberta). Tabela id → lado → correção: `docs/AUDITORIA-FACING-GRATUITOS.md`.
+> - **Evolução:** a prévia de forma futura (silhueta + "Revelar") é **só do admin** (`useAdmin`, flag do servidor); o jogador comum vê "???" sem arte e sem URL no DOM. **Os 5 iniciais não evoluem** (decisão do dono): a página mostra só a forma deles; `handleEvolve`/`canEvolve`/`handleEvolveRequest` recusam. A árvore falsa de 10 formas com o mesmo sprite saiu da tela.
+> - **Check-ins do dia (manhã/tarde/noite) OCULTOS** atrás de `CHECKINS_ENABLED = false` (`utils/checkIns.ts`): sem atalho, folha nem recompensa; código e campo `checkIns` do save intactos. REGISTRO §40.4-b.
+> - **Depende do dono:** "login diário" foi lido como os check-ins das 3 janelas; se era o ritual matinal (`MorningCheckIn`, foco do dia), é outro interruptor — avisar. Kaelen/Orrin/Thalindra (demos antigos) seguem evoluindo com arte de linha.
+
 > ## 13/10/2026 — Beta-2, correções da revisão de design (`integ/beta-2`, PR #323; `product/beta-play-01/sweeper/design-critic-beta2.md`)
 >
 > - **F1–F6 (obrigatórios):** fome legível (pontos de 6px em linha, faminto na tinta `--sm2-viewport-warn`, toque abre a dica da energia, pausa visível por símbolo) · placa da masmorra troca o título para "Voltou" · **avisos da Home saem da faixa acima de HOJE** (botão `AvisosLink` na pilha do canto direito com selo, folha `AvisosSheet`; o check-in entra pelo mesmo canal) · "Adicionar tarefas à lista" é `ModalSheet` · Santuário sem a linha repetida de Vínculo e com a regra dos 5% atrás do "i" · Arena livre com o ícone e a palavra de Poder.

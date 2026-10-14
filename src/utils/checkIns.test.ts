@@ -3,11 +3,11 @@
  * dia do jogador; sem recompensa duplicada ao entrar/sair; respeita dia e fuso; ausência não invalida nada; não exige o app aberto na hora;
  * sem penalidade; horários vêm das preferências do ritmo das refeições.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  CHECKIN_REWARDS, CHECKIN_SLOTS, availableCheckIn, checkInDayOf, checkInWindows, claimCheckIn, claimedToday, currentSlot, sanitizeCheckIns, type CheckInState,
+  CHECKINS_ENABLED, __setCheckInsEnabledForTest, CHECKIN_REWARDS, CHECKIN_SLOTS, availableCheckIn, checkInDayOf, checkInWindows, claimCheckIn, claimedToday, currentSlot, sanitizeCheckIns, type CheckInState,
 } from './checkIns';
 import { hungerAt } from './hunger';
 import { playerDayIso } from './playerDay';
@@ -17,6 +17,11 @@ const local = (day: number, h: number, m = 0) => new Date(2026, 9, day, h, m, 0)
 const estado = (over: Partial<CheckInState> = {}): CheckInState => ({
   energyPoints: 0, evolutionStage: 'rookie', totalXP: 0, gamePoints: 0, hunger: { v: 10, at: local(13, 0) }, energyClock: { at: local(13, 0), carry: 0 }, ...over,
 });
+
+// O interruptor de produção está DESLIGADO (14/10/2026): estes testes exercitam o MECANISMO, que segue inteiro para quando o dono
+// religar — por isso ligam o override; o bloco `desligado` abaixo prova o comportamento que está no ar.
+beforeAll(() => __setCheckInsEnabledForTest(true));
+afterAll(() => __setCheckInsEnabledForTest(undefined));
 
 describe('as janelas (horários do ritmo das refeições: 09:00 · 13:30 · 20:00)', () => {
   it('antes do primeiro horário não há janela; depois cada uma vale até a próxima começar (a noite vai até o fim do dia)', () => {
@@ -172,5 +177,25 @@ describe('checkInWindows (a folha dos check-ins: horário e estado de cada janel
   it('dia novo reabre as três (nada acumula)', () => {
     const r = claimCheckIn(estado(), local(13, 10)).state;
     expect(checkInWindows(r, local(14, 10))[0]!.status).toBe('open');
+  });
+});
+
+describe('desligado (CHECKINS_ENABLED = false — o que está no ar)', () => {
+  it('a constante de produção é false e nenhuma janela fica disponível nem paga', () => {
+    expect(CHECKINS_ENABLED).toBe(false);
+    __setCheckInsEnabledForTest(false);
+    try {
+      for (const h of [9, 14, 21]) {
+        const e = estado();
+        expect(availableCheckIn(e, local(13, h))).toBeNull();
+        expect(claimCheckIn(e, local(13, h)).state).toBe(e); // mesma referência: nada gravado, nada pago
+      }
+      const e = estado();
+      expect(claimCheckIn(e, local(13, 21)).slot).toBeUndefined();
+      expect(e.checkIns).toBeUndefined();
+    } finally { __setCheckInsEnabledForTest(true); }
+  });
+  it('um registro já gravado no save continua legível (nenhum save é tocado)', () => {
+    expect(sanitizeCheckIns({ day: '2026-10-13', claimed: ['morning'] })).toEqual({ day: '2026-10-13', claimed: ['morning'] });
   });
 });
