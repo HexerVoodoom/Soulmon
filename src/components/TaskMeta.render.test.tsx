@@ -67,7 +67,10 @@ describe('TaskMeta — o gatilho do adiamento', () => {
     // O caminho agora passa pela lista: App → `DailyRituals` → `TaskMeta`.
     expect(src).toMatch(/<DailyRituals[\s\S]{0,900}?onPostponeNudge=\{handlePostponeNudge\}/);
     const lista = readFileSync(path.join(process.cwd(), 'src', 'components', 'DailyRituals.tsx'), 'utf-8');
-    expect(lista).toMatch(/<TaskMeta[\s\S]{0,200}?onPostponeNudge=\{onPostponeNudge\}/);
+    // §45 (PR #334): a linha do Hoje usa `TaskMeta lean` (só prazo + assombrada, SEM o contador
+    // de adiamentos), então o handler deixou de descer até o chip nessa lista; o App segue
+    // passando a prop ao DailyRituals (assinatura estável) e o chip vivo continua coberto acima.
+    expect(lista).toMatch(/<TaskMeta[^>]*lean/);
     // E as três ações prometidas no guia existem de verdade do outro lado.
     expect(src).toContain('onShrink={handleShrinkTask}');
     expect(src).toContain('onDrop={handleDropTask}');

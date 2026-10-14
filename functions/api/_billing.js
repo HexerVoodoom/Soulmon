@@ -164,7 +164,10 @@ export async function verifyPlayPurchase(env, { productId, purchaseToken, saveId
   }
 
   // `consumed`: a Play já marcou o consumível como consumido (créditos gastos/entregues).
-  return { ok: true, orderId: `play:${purchase.orderId}`, product, consumed: purchase.consumptionState === 1 };
+  return Object.assign(
+    { ok: /** @type {const} */ (true), orderId: `play:${purchase.orderId}`, product },
+    { consumed: purchase.consumptionState === 1 },
+  );
 }
 
 /**

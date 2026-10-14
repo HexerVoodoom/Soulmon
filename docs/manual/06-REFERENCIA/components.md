@@ -198,6 +198,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/nav/DailyMissionList.tsx`
+**Dono de:** a lista das missões diárias dos outros recursos na folha de Missões (convite, nunca cobrança; REGISTRO §52).
+**Props principais:** `language`, `state` (`DailyMissionsState`), `day` (dia do jogador), `bondLevel`, `onClaim(id)`.
+**Exports:** `DailyMissionsProps` (interface), `DailyMissionList(props)`.
+**Chamado por:** `src/components/nav/MissionsSheet.tsx`.
+**Régua:** `src/components/nav/dailyMissionList.render.test.tsx`.
+
 ### `src/components/nav/npcScale.ts`
 **Dono de:** a escala do NPC na folha do lote — `NPC_SCALE = 1.4` (pedido do dono, 29/09/2026), sobre o teto de largura anterior de 46% (`NPC_BASE_MAX_WIDTH_PCT`); a altura segue limitada pela zona de 1/3 da tela. ⚰️ `NPC_PORTRAIT_ZOOM` (1,4×) saiu em 07/10/2026 (o zoom era do avatar, não do NPC do mapa): o NPC tem o tamanho de antes e `NPC_BASE_UNDER_SHEET` (0,04 da altura da arte) é quanto da base entra sob a folha. Segue o `AVATAR_PORTRAIT_ZOOM` 1,3 nas miniaturas de avatar (`AvatarImg`, já recortadas em círculo).
 **Exports:** `NPC_SCALE`, `NPC_BASE_MAX_WIDTH_PCT`, `NPC_MAX_WIDTH_PCT`, `NPC_BASE_UNDER_SHEET`, `AVATAR_PORTRAIT_ZOOM`, `AVATAR_PORTRAIT_ORIGIN`.

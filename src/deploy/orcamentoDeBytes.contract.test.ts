@@ -165,7 +165,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 14/10/2026 (fila central de modais, REGISTRO §42): 638_386 → 681_986 em build limpo. A soma das frentes do beta-2 já
   // estava no `main` sem re-medir (o `dist/` commitado media 644_409); a fila (`presentationQueue`, `NpcSequence`,
   // `PresentationSlot`, `UnlockToast`) é < 8 KB disso. Corte real segue como tarefa própria.
-  'index.js': 681_986,
+  // 14/10/2026 (CI do main vermelha, PR de conserto): 681_986 → 693_587 (+11,6 KB) em build limpo da `main` pós-#326–#343. É o
+  // crescimento das frentes do beta-2 mergeadas em sequência (missões diárias §52, polimento do Hoje, compras, Level Up), sem
+  // nenhuma única responsável; a fila de modais (§42) já estava contabilizada acima. Corte real segue como tarefa própria.
+  'index.js': 693_587,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

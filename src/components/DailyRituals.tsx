@@ -218,7 +218,7 @@ export function DailyRituals({
     <div className="sm3-ver-tudo">
       <button type="button" data-view-all onClick={abrirTudo}>
         {isPt ? 'Ver tudo' : 'View all'}
-        <Icon name="arrow_forward" size={16} />
+        <Icon name="arrow_forward" size={20} />
       </button>
     </div>
   );
