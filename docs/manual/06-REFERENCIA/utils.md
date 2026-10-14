@@ -3052,6 +3052,17 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/buildingIntro.test.ts`, `src/components/filaDeAvisos.contract.test.ts`, `src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx`.
 **Regra de negócio:** nenhuma de jogo — só apresenta o que o Vínculo (`utils/gates.ts`) já abre; nada cobra, nada conta.
 
+### `src/utils/presentationQueue.ts`
+**Dono de:** a ORDEM e a regra da fila central de apresentação dos modais da Home/App (14/10/2026, REGISTRO §42). Puro.
+**Exports:**
+- `PRESENTATION_ORDER` (tour → triagem → level-up → resumo do dia → intro de NPC/mapa → metas → compromisso → "crie mais atividades" → Bosque → sonho → pesadelo → convite de nível → sono → balão `unlockToast` → `welcome`) · `PRESENTATION_IDLE` (`'welcome'`, o ocioso) · `PresentationId` · `PresentationReady` · `isPresentationId` · `presentationRank`.
+- `pickPresentation(ready, current, failed)` — UM id; o `current` pronto PERMANECE (não é expulso); senão o mais prioritário pronto; senão o ocioso. `presentationBacklog(...)` — a espera inteira, na ordem.
+- `unlockToast` e o ocioso NÃO são sticky: qualquer modal pronto os substitui.
+- `withFailed(failed, id)` (imutável, idempotente) · `runGuarded(fn)` (engole o erro; `false` = falhou).
+**Chamado por:** `src/hooks/usePresentationQueue.ts`, `src/App.tsx` (só a ordem/ids).
+**Régua:** `src/utils/presentationQueue.test.ts`, `src/hooks/usePresentationQueue.test.tsx`, `src/components/filaDeAvisos.contract.test.ts`.
+**Regra de negócio:** nenhuma de jogo — só decide quem se apresenta primeiro. Inventário: `docs/FILA-DE-MODAIS.md`.
+
 ### `src/utils/buildingIntroCopy.ts`
 **Dono de:** a copy dos três balões de cada prédio (21, EN base + PT-BR) e o nome do prédio. O nome do NPC NÃO mora aqui: vem de `LOT_NPC_VOICE` (`areaNpcVoice.ts`).
 **Exports:** `BUILDING_INTRO_COPY` · `buildingNpcFirstName(id, language)` · `buildingIntroView(id, language)` (`{ npcName, place, lines[3] }`) · `BuildingIntroView`.
