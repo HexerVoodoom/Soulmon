@@ -128,3 +128,10 @@ export const ATTRIBUTE_ART = {
   benevolence: atributoBenevolencia,
   habilidade: atributoHabilidade,
 } as const;
+
+// Beta-2 (14/10/2026, escolhidos pelo dono): fome em carne no osso (3 estados), ícone do Pedra-papel-tesoura e a placa de madeira (9-slice).
+export { default as fomeCheio } from './fome-cheio.png';
+export { default as fomeMedio } from './fome-medio.png';
+export { default as fomeFaminto } from './fome-faminto.png';
+export { default as iconePpt } from './ppt.png';
+export { default as placaMadeira } from './placa-madeira.png';

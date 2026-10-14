@@ -22,7 +22,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 // pelada, sem moldura: a bota de caminhada (`ativ-corpo-caminhar`) para a Corrida e o punho de pedra (`hand-rock`,
 // o mesmo do jogo) para o Pedra-papel-tesoura. Nenhum asset novo.
 import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
-import iconPpt from '../../assets/soulmon/icons/games/hand-rock.png';
+import { iconePpt as iconPpt } from '../../assets/soulmon/icones-ui';
 // Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
 import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
 import { M3_MAX_BITS, M3_POINTS_PER_BIT, M3_MOVES } from '../../utils/match3';
