@@ -130,7 +130,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `public/favicon.svg`, `favicon-192x192.png`, `favicon-512x512.png` | `index.html`, `manifest.json` |
 | `android/res/mipmap-*/ic_launcher*.png`, `drawable/splash.png` | app Android |
 | Splash `#splash` — chama em SVG inline (109 `<rect>`), wordmark Silkscreen | `index.html` (não é arquivo) |
-| `src/assets/brand/final/logo.svg`, `icon-1024/512/192.png`, `loading.mp4` | **sem importador** — fonte dos favicons; guardar como "master" da marca |
+| `src/assets/brand/final/logo.svg`, `icon-1024/512/192.png` | **sem importador** — fonte dos favicons; guardar como "master" da marca |
 
 ---
 

@@ -2388,7 +2388,19 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 
 **Gatilho de rever:** relato de quem pagou, excluiu a conta por engano e quer o direito de volta (hoje: só pelo suporte/Play, nada automático).
 
-## 50. Masmorra livre desde o Vínculo 1, tutorial do mapa na 1ª abertura do Mapa e ícones de canto sem círculo (pedido do dono por voz, 14/10/2026)
+## 50. Loading minimalista: uma barra fina turquesa que enche (pedido do dono por voz, 14/10/2026)
+
+*Pedido do dono (voz):* "Troca o asset de loading. Faz uma barra azul turquesa fina sendo preenchida." Fecha o item 9.4 do backlog do beta-2.
+
+- **Decisão:** o indicador de carregando do app passa a ser UMA barra de 3px, turquesa (token `--sm2-primary-fill`; no visor/splash, `--sm2-primary-ink`; nenhuma cor nova), que enche da esquerda para a direita. Sem texto, sem spinner, sem ilustração. Glow só um `box-shadow` discreto na ponta; trilho a 12% da própria cor.
+- **Um só componente:** `src/components/ui/LoadingBar.tsx` (`progress` 0-1 = real; sem `progress` = simulado assintótico, teto 94%; `done` completa a 100% e some em fade de 220ms; `role=progressbar`, `aria-valuenow` só quando determinado, `aria-busy`, rótulo Carregando/Loading só para leitor de tela). `ScreenSkeleton` (fallback de `lazy()`) agora só enquadra (page/overlay/inline) e mantém o estado `error`; o `loading` é a `LoadingBar`.
+- **Splash do `index.html`:** só o fundo do visor + a mesma `.sm2-loadbar` (CSS puro, preenchimento 4% a 92% em 14s com desaceleração; `main.tsx` a completa e some em fade). Saíram a chama, o wordmark, os textos "LOADING DATA..."/"SOUL_LINK ESTABLISHED", a barra de 8 segmentos e os cristais (CSS `.sm2-splash-bar/crystal/flame/title/link` apagado; `brandFlame.parity.test.ts` virou "splash sem ilustração"). A `BrandFlame` do portão continua.
+- **Movimento reduzido:** preenchimento em passos de 20% (até 80%), sem transição e sem brilho.
+- **Assets apagados (sem importador):** `src/assets/brand/final/loading.mp4` e `loading-thumb.webp`.
+- **Fora desta decisão (reportado):** a tela de intro (`intro.mp4`/`intro-poster.webp`, "TAP TO START") traz "LOADING DATA..." DENTRO da arte; e o splash nativo do Android (`android/.../drawable/splash.png`) é imagem nativa. Trocar os dois exige arte nova / mudança nativa.
+- **Gatilho de rever:** relato de que a barra simulada "parece travada" em rede muito lenta (hoje para em 94% / 92% na splash até o conteúdo chegar).
+
+## 51. Masmorra livre desde o Vínculo 1, tutorial do mapa na 1ª abertura do Mapa e ícones de canto sem círculo (pedido do dono por voz, 14/10/2026)
 
 - **Decisão (voz):** "Dungeon tem que estar livre desde o dia 1, desde level 1, que ela é a atividade mais de gacha/idle game que temos." / "No tutorial de introdução, tira a parte do mapa e dos prédios, e quando a pessoa entrar no mapa pela primeira vez é que carrega o tutorial do mapa, falando o que é cada prédio." / "Tira o círculo em volta da casinha e do mapinha; eu tinha pedido, mas acho que fica mais legal sem."
 - **Como ficou:** (1) `BUILDING_GATES['exploracao.masmorra']` = Vínculo **1** (era 2), em `src/utils/gates.ts` e no espelho `functions/api/_gates.js` (paridade travada); o prédio entra em `BUILDINGS_ALWAYS_OPEN`. **Nada mais mudou na Masmorra:** energia (1 por camada), limite diário (`DUNGEON_DAILY_LAYERS`, no servidor), portão dos andares altos (`masmorraAlto`, Vínculo 8), HP, ocupação do Soulmon e as restrições de invocação seguem como estavam. (2) O tour de boas-vindas ficou com 6 cartões (o básico + os cantos da Home); a Parte 2 (mapa e prédios) virou `MAP_TOUR_STEPS` (`utils/welcomeTour.ts`): um cartão de abertura + um por área, uma linha por prédio (os 22), EN e PT-BR, no MESMO componente `WelcomeTour` e no MESMO ponto da fila (`welcomeTour`). Abre quando o Mapa está na tela e `mapTutorialSeen` (campo novo **no save**) é `false`; visto OU pulado grava `true`. (3) `CornerLink` perdeu o anel (`ring`): casinha e ícone do Mapa ficam pelados, com o brilho (`CORNER_GLOW`) e o mesmo alvo de toque de 56 px; o anel do voltar das áreas e dos avisos continua.

@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 14/10/2026 — Masmorra livre no Vínculo 1, tutorial do mapa na 1ª abertura e ícones de canto sem círculo (`feat/dungeon-nv1-tutorial-mapa`, REGISTRO §50)
+> ## 14/10/2026 — Masmorra livre no Vínculo 1, tutorial do mapa na 1ª abertura e ícones de canto sem círculo (`feat/dungeon-nv1-tutorial-mapa`, REGISTRO §51)
 >
 > - **Pedido do dono (voz):** Masmorra desde o level 1; tirar mapa/prédios do tutorial inicial e abrir um tutorial do mapa na primeira abertura do Mapa; tirar o círculo da casinha e do ícone do mapa.
 > - **Feito:** `exploracao.masmorra` → Vínculo 1 (cliente + espelho do servidor) · tutorial do mapa (`MAP_TOUR_STEPS`, 22 prédios, EN/PT) no componente `WelcomeTour`, flag `mapTutorialSeen` no SAVE com migração segura · `CornerLink` sem anel.
