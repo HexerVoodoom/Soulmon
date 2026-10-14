@@ -32,7 +32,7 @@
 >
 > - **Feito:** 8.1 descrição do chip (`+3 Poder`…); 8.2 miniatura abre a pré-visualização (folha do item e prateleiras da Guilda/trimestre); 9.1 espaço no Salão + ícones novos (bota e punho, arte que já existia); 9.2 Combina 3 com troca livre (gasta 1 movimento); 9.3 Arena livre no outro tablado, sem elemento/golpes; 9.4 `ScreenSkeleton` minimalista (loading/erro/concluído); 10.1 ícones de categoria no Santuário; 10.2 árvore aberta, sem colher; 10.3 abas compactas na Evolução (toque e deslize); 11 prédio **Perfil** (`laboratorio.perfil`, Vínculo 2, `utils/soulmonPerfil.ts`); 12 humor com ícones de 40 px.
 > - **Sem save novo:** nenhum campo novo no save (o Perfil só lê); o contador do `fuzz2` não mudou.
-> - **Depende do dono (defaults da squad):** Vínculo de abertura do Perfil (2); a troca livre do Combina 3 gasta movimento (a alternativa — só a que pontua gasta — abriria partida sem fim); NPC e arte própria do Perfil (hoje: busto da Oriel e o santuário `lote-jogos-mente-akasha`, reaproveitados); "nível do equipamento" = o maior entre as peças equipadas.
+> - **Depende do dono (defaults da squad):** Vínculo de abertura do Perfil (2); a troca livre do Combina 3 gasta movimento (a alternativa — só a que pontua gasta — abriria partida sem fim); NPC e arte própria do Perfil (hoje: o Corvo (mascote) e o santuário `lote-jogos-mente-akasha`, reaproveitados); "nível do equipamento" = o maior entre as peças equipadas.
 >
 > ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
 >
