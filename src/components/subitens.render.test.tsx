@@ -36,9 +36,10 @@ function montar(over: Partial<Parameters<typeof DailyRituals>[0]> = {}) {
 }
 
 describe('hábito semanal: o check é de HOJE (A)', () => {
-  it('3x/semana: só "1 de 3 esta semana" + XP base (sem chip duplicado, sem "3× por semana", sem aviso)', () => {
+  it('3x/semana: a linha é só o nome (sem "1 de 3 esta semana", XP, chip duplicado, "3× por semana" ou aviso)', () => {
     montar();
-    expect(screen.getByText(/1 de 3 esta semana · \+\d+ XP base/)).toBeTruthy();
+    expect(screen.queryByText(/esta semana/)).toBeNull();
+    expect(screen.queryByText(/XP/)).toBeNull();
     expect(screen.queryByText('O check vale só para hoje')).toBeNull();
     expect(screen.queryByText(/Semana: 1 de 3/)).toBeNull();
     expect(screen.queryByText(/× por semana/)).toBeNull();
@@ -76,9 +77,9 @@ describe('tarefa com subitens (C)', () => {
     ],
   } as Task;
 
-  it('mostra "1/2 etapas" e, aberta, cada subitem marca pelo handler de subitem', () => {
+  it('aberta, mostra os subitens (sem a contagem "1/2 etapas") e cada um marca pelo handler de subitem', () => {
     const { props } = montar({ tasks: [tarefa], activities: [], expanded: { t1: true } });
-    expect(screen.getByText(/1\/2 etapas/)).toBeTruthy();
+    expect(screen.queryByText(/1\/2 etapas/)).toBeNull();
     fireEvent.click(screen.getByRole('checkbox', { name: /Pagar luz/ }));
     expect(props.onToggleTaskStep).toHaveBeenCalledWith('t1', 'b');
     expect(props.onToggleTask).not.toHaveBeenCalled();

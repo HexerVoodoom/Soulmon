@@ -575,6 +575,7 @@ export function nextOccurrence<T extends TriageTask & {
     startDate: undefined,
     focusDate: undefined,
     steps: task.steps?.map(s => ({ ...s, completed: false })),
+    stepXpPaid: 0,
   };
 }
 

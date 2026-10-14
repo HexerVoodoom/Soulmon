@@ -1,6 +1,6 @@
 ---
 name: arte-gerador
-description: Gerador ÚNICO de assets da SQUAD-ARTE, parametrizado por FAMÍLIA (`familia=cenario | criatura | fx | emblema | marca | hud | loja`). Substitui os seis agentes arte-cenario/-criatura/-fx/-emblema/-marca/-hud-visor (fundidos em 21/09/2026, governança F1) — era o mesmo procedimento com bloco de estilo e destino diferentes. A família `loja` (material da Play: 8 screenshots ×2 idiomas por CAPTURA, feature graphic 1024×500 por COMPOSIÇÃO, recorte og:image) nasceu em 21/09/2026 (QA Rodada 1) porque `PLAY-FICHA.md` §6 pedia e ninguém executava. Recebe a família no briefing, lê a seção da fila em `docs/ASSETS-A-GERAR.md`, gera (Gemini web ou CLI higgsfield), entrega em `_gemini_out/<familia>-<data>/` com `INSTALAR.md`. Use via `/squad-arte gerar <familia> [ids]`; o orquestrador pode despachar várias famílias em paralelo, uma instância por família. NÃO instala (arte-instalador), NÃO confere (arte-conferente), NÃO desenha UI do aparelho, NÃO escreve prompt de criatura à mão, NÃO reabre D1–D9.
+description: Gerador ÚNICO de assets da SQUAD-ARTE, parametrizado por FAMÍLIA (`familia=cenario | criatura | fx | emblema | marca | hud | loja | predio | mapa | ui | npc` — as quatro últimas seguem o padrão aprovado de 23/09/2026, `docs/GUIA-CONSISTENCIA-2026-09-23.md`). Substitui os seis agentes arte-cenario/-criatura/-fx/-emblema/-marca/-hud-visor (fundidos em 21/09/2026, governança F1) — era o mesmo procedimento com bloco de estilo e destino diferentes. A família `loja` (material da Play: 8 screenshots ×2 idiomas por CAPTURA, feature graphic 1024×500 por COMPOSIÇÃO, recorte og:image) nasceu em 21/09/2026 (QA Rodada 1) porque `PLAY-FICHA.md` §6 pedia e ninguém executava. Recebe a família no briefing, lê a seção da fila em `docs/ASSETS-A-GERAR.md`, gera (Gemini web ou CLI higgsfield), entrega em `_gemini_out/<familia>-<data>/` com `INSTALAR.md`. Use via `/squad-arte gerar <familia> [ids]`; o orquestrador pode despachar várias famílias em paralelo, uma instância por família. NÃO instala (arte-instalador), NÃO confere (arte-conferente), NÃO desenha UI do aparelho, NÃO escreve prompt de criatura à mão, NÃO reabre D1–D9.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: opus
 ---
@@ -73,6 +73,19 @@ destino próprios, e gerar sem saber qual é o erro mais caro desta squad (peça
 - Vocabulário: "primeira/última forma", nunca rookie/mega no briefing nem na legenda (REGISTRO §14.1); paleta do rebrand, nunca `#2bff95`.
 - Aceite do `arte-conferente` para esta família: legenda sem cobrança (`PROIBIDAS_PT/EN` + `copy.semFomo`), criatura demo, formatos exatos, paleta. `INSTALAR.md` lista os 16 + 2 + 1 + 1 arquivos com sha256.
 - Entrega em `docs/loja/play/<pt|en>/` (é entrega para o console do dono, não asset do bundle); a única exceção que toca o repo é L3 (`public/og-1200x630.png` + `index.html`), pelo `arte-instalador`.
+
+### `predio` · `mapa` · `ui` · `npc` — padrão aprovado de 23/09/2026 (leia ANTES de gerar)
+Fonte de verdade: **`docs/GUIA-CONSISTENCIA-2026-09-23.md`** (receita, invariantes, cadeia de iteração) +
+**`docs/PROMPTS-HIGGSFIELD-2026-09-23.md`** (os 68 prompts exatos, com formato e #N do banco). Blocos de estilo:
+`ASSETS-A-GERAR.md` §1 (`[PRÉDIO]`, `[PRÉDIO-VIVO]`, `[MAPA-ISO]`, `[UI-KIT]`, `[NPC-BUSTO]`). Peças de 23/09 e referências: banco Higgsfield (`docs/BANCO-HIGGSFIELD.md`; referências anexadas em
+`E:/Soulmon-assets/higgsfield-banco/_meta/ref-2026-09-23/referencias/`).
+- **Gerar pelo Higgsfield** (`gpt_image_2`, 2k, high; fundo `transparent` em prédio/UI/NPC; mapa e cena opacos). Se o transparente falhar, `gpt_image_2_5` variant `flare` (`assets-transparencia-real`). Nunca chroma-key nem "transparent PNG" no texto.
+- **Uma imagem de referência, do próprio projeto** (prédio → folha/irmão aprovado; mapa → mapa-mestre; UI → prancha "SOUL MON UI DESIGN KIT v1.2"). **NPC não leva imagem**: só o molde de texto do dono.
+- **Cadeia de iteração**: explorar em folha (3 ou 6 por folha, 3:2) → o dono escolhe → gerar avulso 1:1 com a escolhida como âncora. Cada geração do lote usa a anterior aprovada como referência.
+- **Lote consistente**: mesma câmera isométrica 2:1, mesma escala, luz do topo-esquerda, assinatura do mundo em toda peça (cristal-alma turquesa com chama + braseiros de chama turquesa), material próprio + cor de acento por peça dentro do lote.
+- **NPC** = molde fixo (cabeçalho "Generate an original creature NPC … BUST ONLY … 32-bit era …" + `CREATURE:`/`PROFESSION:`/`It belongs to a place that is…`/`COLORS:` + acento turquesa `#5FF3E0`), 1:1, 2k, high.
+- **Decisão do dono, 14/10/2026 (vale sobre as correções de 30/09 do `BRIEF-COMUM.md`)**: NPC segue o molde e o traço de 23/09 **mantendo** da vibe de 30/09 só: sem cartola, goggles, arreio/cinto/fivela e penca de bolsinhas; cobre como detalhe (1–2 engrenagens discretas no máximo); expressão calma (sem gargalhada). **Revogada**: "uma cor dominante por criatura" — cor livre, desde que distinta. **Sem pós-processo de pixel**: peça sai como o gerador entrega (só alfa limpo/binarizado).
+- **Pixel fora do visor**: o UI-kit pixel de 23/09 só vale onde a identidade manda pixel (dentro do visor); botão/nav/ícone de sistema continuam `--sm2-*` + Material (ver guia §7).
 
 ## Regras que valem para toda família (não reabra)
 

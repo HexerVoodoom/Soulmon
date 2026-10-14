@@ -1,5 +1,5 @@
 import type { Language } from '../utils/i18n';
-import { Icon } from './ui/Icon';
+import { checkBoxStyle, CheckMark } from './pixel/RitualPanel';
 
 interface StepRowProps {
   id: string;
@@ -12,8 +12,8 @@ interface StepRowProps {
 
 /**
  * Uma etapa do hábito, aberta sob a linha (canvas Atividades,
- * `LinhaHabitoEstados` "passos abertos"): checkbox 24 (raio 4, `muted` 2px;
- * marcado = BRONZE `check-fill` + `check` em `on-check`, beta-2 2.2) num alvo de 44, rótulo
+ * `LinhaHabitoEstados` "passos abertos"): checkbox 24 (raio 4, 2px;
+ * vazio = contorno BRONZE transparente; marcado = check TURQUESA com glow baixo, via `checkBoxStyle`/`CheckMark`) num alvo de 44, rótulo
  * Rubik 14. Sem moldura — quem diz "subitem" é o recuo. Inerte (fora do dia)
  * = caixa TRACEJADA + `aria-disabled`, rótulo em `muted`: por FORMA e TINTA,
  * nunca por `opacity` (D-A3).
@@ -40,18 +40,8 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
           cursor: inert ? 'default' : 'pointer',
         }}
       >
-        <span
-          aria-hidden="true"
-          style={{
-            width: 24, height: 24, borderRadius: 'var(--sm2-radius-sm)', boxSizing: 'border-box',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: completed ? 'var(--sm2-check-fill)' : 'transparent',
-            border: `2px ${disabled && !completed ? 'dashed' : 'solid'} ${completed ? 'var(--sm2-check-fill)' : 'var(--sm2-muted)'}`,
-            color: 'var(--sm2-on-check)',
-            transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease)',
-          }}
-        >
-          {completed && <Icon name="check" size={20} fill={1} weight={700} />}
+        <span aria-hidden="true" style={checkBoxStyle({ checked: completed, dashed: disabled })}>
+          {completed && <CheckMark />}
         </span>
       </button>
 

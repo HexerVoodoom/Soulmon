@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { useBackLayer } from '../utils/backStack';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
@@ -114,7 +115,7 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -158,6 +159,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** WP4.5 — cobra os Bits e devolve se deu. Quem decide é quem tem o save. */
   onSpendBits?: (pts: number) => boolean;
   onExit: () => void;
+  /** Sair DIRETO para o mapa (o ícone do mapa no lugar do X, 14/10/2026). Ausente (demo/testes) → `onExit`. */
+  onExitToMap?: () => void;
 }) {
   // Música (11/10/2026): na masmorra toca o LOOP (se a música de masmorra e arena está ligada). Abrir o jogo é o gesto do jogador.
   useEffect(() => entrarNaSuperficie('masmorra'), []);
@@ -194,7 +197,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const nivelJogador = jogador.combatant.level;
   const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
 
-  /* ⏩ AVANÇO RÁPIDO (REGISTRO §36): 1×/2×/3×, preferência do aparelho. Só encurta o relógio da cena e a pausa entre lutas. */
+  /* ⏩ AVANÇO RÁPIDO (REGISTRO §36): 1×/3×, preferência do aparelho. Só encurta o relógio da cena e a pausa entre lutas. */
   const [speed, setSpeedState] = useState<DungeonSpeed>(() => sanitizeDungeonSpeed(readLocal(STORAGE_KEYS.DUNGEON_SPEED)));
   const speedRef = useRef(speed);
   speedRef.current = speed;
@@ -277,6 +280,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     recordDungeonScore(runScoreRef.current);
     onExit();
   };
+  /** O ícone do mapa (e o voltar do Android): sai da TELA direto para o mapa, sem confirmação. Sair ≠ abandonar: o registro `dungeonAway`
+      (posição persistida) NÃO é tocado — a descida segue; quem retira o Soulmon é o "Retirar da masmorra" da Home / do cartão de volta. */
+  const exitToMap = () => {
+    recordDungeonScore(runScoreRef.current);
+    (onExitToMap ?? onExit)();
+  };
+  useBackLayer(true, exitToMap);
 
   /** Põe um inimigo da escada na luta. */
   const enterEnemy = (list: DungeonEnemy[], idx: number) => {
@@ -695,17 +705,12 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
              termo canônico (§12). */
           title={hudLabel}
           fast={speed > 1}
-          closeLabel={exitLabel}
-          onClose={exitRun}
-          exitConfirm={!ended ? {
-            title: isPt ? 'Sair da tela? Ele continua descendo sozinho e o que render fica esperando você.' : 'Leave the screen? He keeps going down on his own and whatever he earns waits for you.',
-            stay: isPt ? 'Ficar' : 'Stay',
-            leave: exitLabel,
-            alt: ctx ? { label: isPt ? 'Retirar da masmorra' : 'Take him out of the dungeon', onClick: retirar } : undefined,
-          } : undefined}
+          closeLabel={isPt ? 'Ir ao mapa (ele continua descendo sozinho)' : 'Go to the map (he keeps going down on his own)'}
+          closeIcon="map"
+          onClose={exitToMap}
           onPauseChange={setPausado}
         >
-          {/* Os controles da descida: SEMPRE à mão (Pausar/Retomar à esquerda; o AVANÇO RÁPIDO 1×/2×/3× no canto inferior DIREITO; o Sair é o X
+          {/* Os controles da descida: SEMPRE à mão (Pausar/Retomar à esquerda; o AVANÇO RÁPIDO 1×/3× no canto inferior DIREITO; o Sair é o X
               da cena). A camada já está no título: aqui a linha viva (`aria-live`) é só para o leitor de tela e só muda quando a CAMADA
               muda — o texto visível não se repete. Sem botão de "próximo". */}
           {!ended && phase !== 'away' && (
@@ -917,8 +922,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Seu Soulmon vai sozinho: golpeia, se defende e solta o especial sozinho quando a energia enche (ela passa de um inimigo para o outro). O botão do canto de baixo acelera a cena (1×, 2× ou 3×) sem mudar o resultado. Pode sair da tela: ele continua descendo e o que render fica esperando você. Enquanto estiver na masmorra ele não faz outra coisa; para chamá-lo de volta, use "Retirar da masmorra".'
-                    : 'Your Soulmon goes alone: it strikes, defends and unleashes its special by itself when the energy fills (it carries over from one enemy to the next). The button in the bottom corner speeds the scene up (1×, 2× or 3×) without changing the outcome. You can leave the screen: he keeps going down and whatever he earns waits for you. While he is in the dungeon he does nothing else; to call him back, use "Take him out".'}
+                    ? 'Seu Soulmon vai sozinho: golpeia, se defende e solta o especial sozinho quando a energia enche (ela passa de um inimigo para o outro). O botão do canto de baixo acelera a cena (1× ou 3×) sem mudar o resultado. Pode sair da tela: ele continua descendo e o que render fica esperando você. Enquanto estiver na masmorra ele não faz outra coisa; para chamá-lo de volta, use "Retirar da masmorra".'
+                    : 'Your Soulmon goes alone: it strikes, defends and unleashes its special by itself when the energy fills (it carries over from one enemy to the next). The button in the bottom corner speeds the scene up (1× or 3×) without changing the outcome. You can leave the screen: he keeps going down and whatever he earns waits for you. While he is in the dungeon he does nothing else; to call him back, use "Take him out".'}
                 </span>
           </span>
         </InfoTip>

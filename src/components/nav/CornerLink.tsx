@@ -1,5 +1,5 @@
 import { PixelIcon } from '../ui/PixelIcon';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW, CORNER_RING_STYLE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW } from './cornerAnchor';
 
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
@@ -16,7 +16,7 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW, CORNER_RING_STYLE
  * `home.png`, `assets/soulmon/icones-ui`) — até a correção pós-F3 era um glifo
  * vetorial de linha fina no lugar dela, por engano.
  */
-export function CornerLink({ icon, label, side, onClick, glow = true, ring = false }: {
+export function CornerLink({ icon, label, side, onClick, glow = true }: {
   icon: 'mapa' | 'home';
   label: string;
   side: 'left' | 'right';
@@ -26,11 +26,6 @@ export function CornerLink({ icon, label, side, onClick, glow = true, ring = fal
    *  do Mapa o têm sempre, para ler sobre qualquer fundo. A âncora (posição e
    *  tamanho) mora em `cornerAnchor.ts`, compartilhada com o voltar das áreas. */
   glow?: boolean;
-  /** C14 (navegação do dono, 01/10/2026): o MESMO anel do voltar-ao-mapa das
-   *  áreas (`AreaTopBar` sobre a cena: círculo de 44, borda 2px clara). Só o
-   *  desenho em volta muda — o alvo continua o botão de 56. Vale também para a
-   *  casinha do Mapa (H2). */
-  ring?: boolean;
 }) {
   return (
     <button
@@ -53,15 +48,7 @@ export function CornerLink({ icon, label, side, onClick, glow = true, ring = fal
         filter: glow ? CORNER_GLOW : undefined,
       }}
     >
-      {ring ? (
-        <span
-          aria-hidden="true"
-          data-corner-ring
-          style={CORNER_RING_STYLE}
-        >
-          <PixelIcon name={icon} size={32} />
-        </span>
-      ) : <PixelIcon name={icon} size={32} />}
+      <PixelIcon name={icon} size={32} />
     </button>
   );
 }

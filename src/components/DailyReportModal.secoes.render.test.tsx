@@ -291,3 +291,26 @@ describe('P2 (beta-2) — a folha da aventura', () => {
     expect((document.querySelector('[data-report-step="yesterday"]') as HTMLElement).style.minHeight).toBe('');
   });
 });
+
+describe('14/10/2026 (dono) — fome no resumo e dia completo só por tarefas', () => {
+  it('a fome que tirou meio coração aparece na folha dos corações, em voz calma (PT e EN), e a fileira conta o coração quebrado', () => {
+    abrir({ hungerHeartsLost: 0.5 }, {}, 'pt-BR');
+    expect(document.body.textContent).toMatch(/perdeu meio coração/);
+    expect(document.body.textContent).not.toMatch(/culpa|falhou|deveria/i);
+    expect(hearts()).toBeTruthy();
+    cleanup();
+    abrir({ hungerHeartsLost: 0.5 });
+    expect(document.body.textContent).toMatch(/lost half a heart/);
+  });
+
+  it('sem fome cobrada, a nota não existe', () => {
+    abrir({ hungerHeartsLost: 0 });
+    expect(document.body.textContent).not.toMatch(/half a heart/);
+  });
+
+  it('a dica antiga "encher a energia também fecha o dia completo" SAIU (dia completo é só tarefas)', () => {
+    abrir({ done: 4, required: 4, energyWasFull: false });
+    expect(document.body.textContent).not.toMatch(/energy bar also seals|encher a energia/i);
+    expect(document.body.textContent).not.toMatch(/energy bar also seals|encher a energia/i);
+  });
+});
