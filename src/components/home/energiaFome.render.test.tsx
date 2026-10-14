@@ -72,12 +72,12 @@ describe('HungerIndicator', () => {
     }
     expect(arts.size).toBe(3);
   });
-  it('EN e o valor numérico só vai para data-hunger (a tela não mostra número)', () => {
+  it('EN: o valor 0..100 só vai para data-hunger; a tela mostra só N/3', () => {
     render(<HungerIndicator tier="starving" value={7.4} language="en-US" />);
     const el = document.querySelector('[data-hunger-indicator]') as HTMLElement;
     expect(el.getAttribute('aria-label')).toBe('Hunger: starving, level 1 of 3');
     expect(el.getAttribute('data-hunger')).toBe('7');
-    expect(el.textContent).toBe(''); // as marcas de nível são SVG, sem texto
+    expect(el.textContent).toBe('1/3');
   });
 });
 
@@ -141,11 +141,12 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
     expect(r.container.querySelector('[data-hunger-countdown]')).toBeNull();
     expect(r.container.querySelector('[data-hunger-timer]')).not.toBeNull();
   });
-  it('o indicador mostra o nível N de 3 em marcas (3/2/1 cheias) e tocar de novo fecha', () => {
+  it('o indicador mostra o nível como número N/3 (3/3, 2/3, 1/3) e tocar de novo fecha', () => {
     for (const [tier, n] of [['fed', 3], ['fair', 2], ['starving', 1]] as const) {
       const { container, unmount } = render(<HungerIndicator tier={tier} language="pt-BR" />);
       expect(container.querySelector('[data-hunger-level]')!.getAttribute('data-hunger-level')).toBe(String(n));
-      expect(container.querySelectorAll('svg rect:not([fill="none"])')).toHaveLength(n);
+      expect(container.querySelector('[data-hunger-level]')!.textContent).toBe(`${n}/3`);
+      expect(container.querySelector('svg')).toBeNull();
       unmount();
     }
   });
