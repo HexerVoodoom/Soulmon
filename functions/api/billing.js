@@ -32,7 +32,7 @@
 //   Steam: STEAM_PUBLISHER_KEY, STEAM_APP_ID
 // Sem eles a rota da loja em questão responde 503 e NUNCA concede nada.
 
-import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner } from './_entitlements.js';
+import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner, readEntitlement } from './_entitlements.js';
 import { isBillingDisabled, BILLING_DISABLED_MESSAGE } from './_killSwitch.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
@@ -78,6 +78,7 @@ const STATUS_BY_REASON = {
   'unsupported-transaction': 400,
   // 409: a compra é válida, mas já foi resgatada por outra conta Soulmon.
   'order-in-use': 409,
+  'already-consumed': 409,
   'account-mismatch': 403,
 };
 
@@ -142,6 +143,18 @@ export async function onRequestPost({ request, env }) {
   // resgatados em quantas contas o jogador quisesse (ver claimOrder).
   const fechada = await recusaSeLojaFechada(env, saveId, result.orderId);
   if (fechada) return fechada;
+
+  // CONSUMÍVEL JÁ CONSUMIDO NUNCA CREDITA (REGISTRO §49): a Play diz que o
+  // pacote foi consumido; se este pedido não está no histórico da conta, ele
+  // não é uma entrega pendente — é um comprovante velho reapresentado. Só o que
+  // já foi creditado volta como `duplicate` (idempotente, sem novo saldo).
+  if (result.product.consumable && result.consumed) {
+    const atual = await readEntitlement(env, saveId);
+    if (!atual.consumedOrders.includes(result.orderId)) {
+      console.log(JSON.stringify({ event: 'billing.consumed.refused', saveIdPrefix: String(saveId).slice(0, 8) }));
+      return json({ ok: false, reason: 'already-consumed' }, 409);
+    }
+  }
 
   const claim = await claimOrder(env, saveId, result.orderId);
   if (!claim.ok) {

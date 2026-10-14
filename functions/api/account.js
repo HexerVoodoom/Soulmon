@@ -29,12 +29,12 @@
 //               toca na chave `ord:` — nem para apagar, nem para renovar.
 //               Motivo técnico, não jurídico: `ord:` é a trava que faz um
 //               comprovante valer por UMA conta (`_entitlements.js:claimOrder`).
-//               Apagá-lo faz um recibo virar N contas pagas — e, do lado do
-//               titular, é o que permite que ele volte e RESTAURE a compra
-//               (mesmo e-mail -> mesmo saveId -> o `ord:` reconhece o dono).
-//               Apagar aqui destruiria o direito pago junto com o dado.
-//               ⚠️ Esta escolha está ENDEREÇADA AO DONO, não decidida aqui.
-//               Nenhuma norma é afirmada neste arquivo.
+//               Apagá-lo faz um recibo virar N contas pagas.
+//               ✅ DECIDIDO pelo dono em 14/10/2026 (REGISTRO §49): excluiu a
+//               conta, paga de novo — mesmo voltando com o mesmo e-mail. Por
+//               isso a exclusão (passo 5c) reescreve o dono do vínculo para a
+//               SENTINELA `deleted` (`anonimizarClaims`): continua travando, sem
+//               nenhum saveId/e-mail, e o entitlement perde tier e saldo.
 //  APAGA        ⚰️ **`ord:steam:own:<appid>:<steamid>` deixou de sobreviver**
 //  (#54)        em 22/09/2026 (decisão do dono #54, QA R2 `04-dados-r2` #4).
 //               O `orderId` de uma licença Steam É a string
@@ -108,6 +108,7 @@
 
 import {
   VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
+  anonimizarClaims,
 } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
@@ -338,8 +339,8 @@ const NOT_INCLUDED = [
   },
   {
     what: 'ord:<orderId>',
-    'pt-BR': 'O vínculo entre um comprovante de compra e a conta que o resgatou NÃO é apagado. É o que impede que um mesmo comprovante vire várias contas pagas — e é o que deixa você restaurar a compra se voltar com o mesmo e-mail.',
-    en: 'The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts — and it is what lets you restore your purchase if you come back with the same email.',
+    'pt-BR': 'O vínculo entre um comprovante de compra e a conta que o resgatou NÃO é apagado, mas fica ANÔNIMO: o servidor guarda só o número do pedido da loja, marcado como "conta excluída" (sem e-mail e sem identificador da conta), por 5 anos. É o que impede que um mesmo comprovante vire várias contas pagas. Consequência: se você excluir a conta e criar outra (mesmo com o mesmo e-mail), a compra antiga NÃO volta — o desbloqueio e os Créditos são pagos de novo.',
+    en: 'The link between a purchase receipt and the account that redeemed it is NOT deleted, but it becomes ANONYMOUS: the server keeps only the store order number, marked "account deleted" (no email and no account identifier), for 5 years. It is what stops one receipt from becoming several paid accounts. Consequence: if you delete your account and create another (even with the same email), the old purchase does NOT come back — the unlock and Credits are paid for again.',
   },
   {
     what: 'del:done:<saveId> (deletion marker)',
@@ -556,7 +557,7 @@ function plan(c, saveId) {
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys,
     ].filter(Boolean),
-    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} — usage (AI, ads) is removed; purchase fields stay`] : [],
+    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} — usage (AI, ads), the paid tier, the Credits balance and purchase details are removed (a purchase is not restored after deletion); only the AI counters and the owner courtesy stay`] : [],
     // Sobrevive o comprovante de COMPRA (Play/cortesia). A licença Steam saiu
     // desta lista em 22/09/2026 e passou para `apaga` (#54).
     sobrevive: Array.isArray(c.entitlement?.consumedOrders)
@@ -678,6 +679,19 @@ async function handleDeleteConfirm(env, saveId, body) {
   //    `steam:own:` e o retry dentro dos 15 min a reencontra.
   for (const k of c.steamLicenseKeys) await tentar(k, () => store.delete(k));
 
+  /** @type {string[]} */
+  let semAnonimizar = [];
+  // 5c) REGISTRO §49: o vínculo comprovante→conta passa a apontar para a
+  //    SENTINELA `deleted` (sem e-mail/saveId): ninguém — nem a mesma pessoa com
+  //    o mesmo e-mail — reivindica de novo. Antes do passo 6, que descarta os ids.
+  if (c.entitlement) {
+    const ids = (Array.isArray(c.entitlement.consumedOrders) ? c.entitlement.consumedOrders : [])
+      .filter(o => typeof o === 'string' && !o.startsWith('steam:own:') && !o.startsWith('courtesy:'));
+    if (c.entitlement.sub?.rootHash) ids.push(`play:sub:${c.entitlement.sub.rootHash}`);
+    semAnonimizar = await anonimizarClaims(env, ids);
+    for (const o of semAnonimizar) falhou.push(`ord:${o}`);
+  }
+
   // 6) Entitlement: MINIMIZADO, não apagado. Ver o cabeçalho — apagar o
   //    registro de compra destrói o direito pago e a trava anti-fraude junto.
   //    O que sai é USO (não prova nada); o que fica é DINHEIRO.
@@ -687,12 +701,19 @@ async function handleDeleteConfirm(env, saveId, body) {
   //    `tier: 'paid'` acima não é recalculado a partir da lista).
   if (c.entitlement) {
     const ent = c.entitlement;
-    const ehSteam = o => typeof o === 'string' && o.startsWith('steam:own:');
+    const COURTESY_PREFIX = 'courtesy:';
+    const ehCortesia = (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).some(o => typeof o === 'string' && o.startsWith(COURTESY_PREFIX))
+      && (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).some(o => o?.orderId?.startsWith?.(COURTESY_PREFIX) && !o.voided);
     await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
-      tier: ent.tier,
-      credits: ent.credits,
-      consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter(o => !ehSteam(o)),
-      orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter(o => !ehSteam(o?.orderId)),
+      // REGISTRO §49 (dono, 14/10/2026): excluiu a conta, paga de novo. O direito
+      // pago e o saldo NÃO sobrevivem (nem para quem volta com o mesmo e-mail);
+      // o vínculo comprovante→conta sobrevive ANONIMIZADO em `order_claims`/`ord:`.
+      // Só a CORTESIA do dono (não é compra) segue valendo.
+      tier: ehCortesia ? 'paid' : 'demo',
+      credits: 0,
+      // `semAnonimizar`: só fica o que falhou, para o retry reencontrar o pedido.
+      consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter(o => typeof o === 'string' && (o.startsWith(COURTESY_PREFIX) || semAnonimizar.includes(o))),
+      orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter(o => typeof o?.orderId === 'string' && o.orderId.startsWith(COURTESY_PREFIX)),
       auditedAt: ent.auditedAt,
       // ANTIABUSO (dono, 11/10/2026; `abuso-e-custo` V1.2): os contadores de
       // geração de sprite SOBREVIVEM à exclusão — excluir e relogar (mesmo

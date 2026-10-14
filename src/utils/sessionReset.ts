@@ -213,6 +213,21 @@ export interface EncerrarSessaoOpts {
   recarregar?: (() => void) | null;
 }
 
+/**
+ * Destino final do "Sair": a ENTRADA do app (portão/onboarding), nunca uma tela
+ * interna. (1) a entrada atual do `history` vira a Home e perde `?query`/`#hash`
+ * (nada de rota/estado de tela interna sobrevivendo); (2) recarrega, e sem save
+ * nem sessão o app abre no portão de login. Web/PWA e Android (WebView do
+ * Capacitor) usam o mesmo caminho. Nunca lança.
+ */
+export function irParaEntradaDoApp(): void {
+  try {
+    const w = globalThis as unknown as { location?: Location; history?: History };
+    w.history?.replaceState?.({ smView: 'home' }, '', w.location?.pathname ?? '/');
+  } catch { /* history indisponível (sandbox): o reload ainda leva à entrada */ }
+  try { globalThis.location?.reload(); } catch { /* sem window */ }
+}
+
 /** Nunca lança. Idempotente no efeito: chamar duas vezes apaga duas vezes o que já não existe. */
 export async function encerrarSessao(opts: EncerrarSessaoOpts): Promise<void> {
   encerrando = true;
@@ -231,7 +246,7 @@ export async function encerrarSessao(opts: EncerrarSessaoOpts): Promise<void> {
     try { const { setAdminFlag } = await import('./adminFlag'); setAdminFlag(false); } catch { /* store ausente */ }
   } finally {
     if (opts.recarregar !== null) {
-      const rec = opts.recarregar ?? (() => { try { globalThis.location?.reload(); } catch { /* sem window */ } });
+      const rec = opts.recarregar ?? irParaEntradaDoApp;
       rec();
     }
   }

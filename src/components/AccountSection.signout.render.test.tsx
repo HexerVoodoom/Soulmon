@@ -18,7 +18,7 @@ vi.mock('../utils/auth', () => ({
 }));
 vi.mock('../utils/accountData', () => ({ revokePushBeforeDelete: async () => ({ webPush: true, fcm: true }) }));
 vi.mock('../utils/entitlements', () => ({ fetchEntitlement: async () => null }));
-vi.mock('../utils/playBilling', () => ({ isBillingAvailable: () => false, restorePurchases: async () => ({ ok: false }) }));
+vi.mock('../utils/playBilling', () => ({ isBillingAvailable: () => false }));
 
 import { AccountSection } from './AccountSection';
 import { STORAGE_KEYS, RECONCILE_KEYS } from '../utils/storageKeys';

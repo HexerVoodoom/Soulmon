@@ -163,7 +163,8 @@ export async function verifyPlayPurchase(env, { productId, purchaseToken, saveId
     return { ok: false, reason: 'account-mismatch' };
   }
 
-  return { ok: true, orderId: `play:${purchase.orderId}`, product };
+  // `consumed`: a Play já marcou o consumível como consumido (créditos gastos/entregues).
+  return { ok: true, orderId: `play:${purchase.orderId}`, product, consumed: purchase.consumptionState === 1 };
 }
 
 /**

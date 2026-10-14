@@ -1849,7 +1849,7 @@ Três blocos, com condições literais:
   `onToggleSound`; ⚰️ "8" era a contagem antes de `980bc84c` no mesmo dia e
   "cinco grupos" a de 09/09/2026), uma ação dominante
   (entrar/sincronizar). Contém `AccountSection` (conta e compras, com
-  "Restaurar compras" — exigido pela Play), `AccountDataSection` (exportar e
+  "Restaurar compras" — mantido pelo dono em 14/10/2026, só reconhece o que a conta já comprou; a compra credita sozinha ao concluir/abrir/voltar ao app, REGISTRO §49), `AccountDataSection` (exportar e
   apagar), `InstallPrompt` (cartão, **não** modal) e os botões que abrem o
   `GuideModal` (`onOpenGuide`) e o `HelpModal` (`onOpenGlossary`).
   **Grupo "Sobre" / "About"** (`5b91717c`, 21/09/2026 — os três limites da §16
