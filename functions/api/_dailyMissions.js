@@ -24,6 +24,10 @@ export const FIRST_TIME_IDS = [
   'visit:laboratorio.evolucao', 'visit:laboratorio.pet', 'visit:laboratorio.stats',
   'visit:hall.biblioteca', 'visit:hall.amigos', 'visit:hall.guilda', 'visit:hall.feira',
 ];
+/** Ids das conquistas (`MISSIONS`) — espelho de `src/utils/missions.ts`, travado pela paridade. */
+export const MISSION_IDS = [
+  'mission-champion', 'mission-mega', 'mission-kills-100', 'mission-runs-3', 'mission-dino-1000', 'mission-perfect-30',
+];
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 /** @param {unknown} raw */
@@ -52,4 +56,10 @@ export function sanitizeFirstTimes(raw) {
   const claimed = pick(r.claimed);
   for (const c of claimed) if (!done.includes(c)) done.push(c);
   return { done, claimed };
+}
+
+/** Conquistas RESGATADAS (REGISTRO secao 56): so ids do catalogo, sem repeticao. Ausente/lixo = undefined. @param {unknown} raw */
+export function sanitizeMissionsClaimed(raw) {
+  if (!Array.isArray(raw)) return undefined;
+  return [...new Set(raw.filter((x) => typeof x === 'string' && MISSION_IDS.includes(x)))];
 }

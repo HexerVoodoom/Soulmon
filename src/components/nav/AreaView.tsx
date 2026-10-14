@@ -318,7 +318,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {open?.id === 'conquistas' && (
-              <ConquistasSheet language={language} missionProgress={ownership.missionProgress} />
+              <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} />
             )}
             {open?.id === 'ferreiro' && <ForgeCard language={language} />}
           </Suspense>

@@ -3,6 +3,7 @@ import * as srv from './_dailyMissions.js';
 import {
   DAILY_COUNT_CAP, DAILY_EVENTS, DAILY_MISSION_IDS, FIRST_TIME_IDS, sanitizeDailyMissions, sanitizeFirstTimes,
 } from '../../src/utils/dailyMissions';
+import { MISSIONS, sanitizeMissionsClaimed } from '../../src/utils/missions';
 
 describe('missoes diarias e primeiras vezes: servidor e app concordam', () => {
   it('mesmas listas fechadas e mesmo teto', () => {
@@ -18,6 +19,11 @@ describe('missoes diarias e primeiras vezes: servidor e app concordam', () => {
       { day: 'd', counts: [1], claimed: 'd-dino' },
     ];
     for (const c of casos) expect(srv.sanitizeDailyMissions(c), JSON.stringify(c)).toEqual(sanitizeDailyMissions(c));
+  });
+  it('conquistas resgatadas: mesma lista de ids e mesma saneacao', () => {
+    expect(srv.MISSION_IDS).toEqual(MISSIONS.map(m => m.id));
+    const casos = [null, 3, 'x', {}, [], ['mission-mega', 'mission-mega', 'nope', 7], [...MISSIONS.map(m => m.id)]];
+    for (const c of casos) expect(srv.sanitizeMissionsClaimed(c), JSON.stringify(c)).toEqual(sanitizeMissionsClaimed(c));
   });
   it('a saneacao de firstTimes bate em entradas boas e hostis', () => {
     const casos = [

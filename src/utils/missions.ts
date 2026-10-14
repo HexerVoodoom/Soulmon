@@ -144,8 +144,29 @@ export function isShopItemUnlocked(
   item: ShopItem,
   missionProgress: Record<string, number>,
   subscriptionActive = false,
+  claimed?: readonly string[],
 ): boolean {
   if (!item.unlock) return true;
   if (item.unlock.kind === 'subscription') return subscriptionActive;
-  return isMissionComplete(item.unlock.missionId, missionProgress);
+  if (!isMissionComplete(item.unlock.missionId, missionProgress)) return false;
+  // RESGATE EXPLÍCITO (dono, 14/10/2026, REGISTRO §56): cumprir NÃO basta, a pessoa resgata a conquista no ícone "!" e só então a
+  // compra abre — o resgate libera, NUNCA concede o item. `claimed` ausente = save ainda não migrado (a liberação segue automática).
+  return claimed === undefined || claimed.includes(item.unlock.missionId);
+}
+
+/** Higienização do "resgatado" (load e servidor): só ids de conquistas do catálogo, sem repetição. Ausente/lixo = `undefined`. */
+export function sanitizeMissionsClaimed(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const ids = MISSIONS.map(m => m.id);
+  return [...new Set(raw.filter((x): x is string => typeof x === 'string' && ids.includes(x)))];
+}
+
+/** Os ids que já estão cumpridos agora — a MIGRAÇÃO: save antigo vira "já resgatado" e ninguém perde um item que já estava liberado. */
+export function completedMissionIds(missionProgress: Record<string, number>): string[] {
+  return MISSIONS.filter(m => isMissionComplete(m.id, missionProgress)).map(m => m.id);
+}
+
+/** Há conquista cumprida e ainda não resgatada? (a marca "?" do ícone) */
+export function hasUnclaimedMission(missionProgress: Record<string, number>, claimed: readonly string[] | undefined): boolean {
+  return claimed !== undefined && MISSIONS.some(m => isMissionComplete(m.id, missionProgress) && !claimed.includes(m.id));
 }

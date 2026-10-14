@@ -25,6 +25,7 @@
 // ---------------------------------------------------------------------------
 
 import type { MissionMark } from './travessiasSave';
+import { hasUnclaimedMission } from './missions';
 import type { BuildingId } from './gates';
 
 export type QuestMark = 'ready' | 'available' | null;
@@ -39,6 +40,8 @@ export interface QuestMarkInput {
   /** `getMissionProgress` (permanentes, já limitado ao alvo). */
   missionProgress: Record<string, number>;
   ownedBackgrounds: readonly string[];
+  /** Conquistas já RESGATADAS (REGISTRO §56). Ausente = save não migrado: nenhuma pendência de resgate. */
+  missionsClaimed?: readonly string[];
   /** A marca do dia de cada prédio (`buildingMarks`). Opcional: sem ela, nada de prédio acende. */
   buildings?: Partial<Record<BuildingId, QuestMark>>;
   /** A linha "Faça um passeio" está PRONTA para resgatar (concluído no NPC hoje, ainda sem Resgatar)? Vence o "!" do Passeio. */
@@ -92,7 +95,7 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   // para ENTREGAR". Conquista cumprida não tem "Resgatar" na folha (só libera a COMPRA do
   // cenário na loja), então o "?" levava a uma lista sem nada a entregar. Fica sempre nula;
   // `missionProgress`/`ownedBackgrounds` seguem na entrada por compatibilidade.
-  const conquistas: QuestMark = null;
+  const conquistas: QuestMark = hasUnclaimedMission(input.missionProgress, input.missionsClaimed) ? 'ready' : null;
   const buildings = input.buildings ?? {};
   const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
   const firstDay: QuestMark = input.firstDay ? 'available' : null;
