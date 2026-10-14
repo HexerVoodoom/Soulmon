@@ -6,7 +6,9 @@
  *       a animação representa o resultado real do dia e NÃO repete ao reabrir.
  *  4.3  `From Yesterday's Adventure`; `New` no dourado da paleta; vínculo explícito com a missão e o
  *       destino do Passeio escolhido ontem; folha independente com o NPC do Passeio.
- *  4.4  uma folha (bottom sheet padrão) por seção; NPC só na da aventura; sem NPC em `Stretch Closed`.
+ *  4.4  uma folha por seção; NPC só na da aventura; sem NPC em `Stretch Closed`.
+ *  14/10/2026 (dono): "como foi o dia anterior" + corações viram UM modal só, CENTRALIZADO (não bottom sheet); a aventura
+ *       segue separada (tem o NPC do scroll) e HOJE também.
  */
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { screen, cleanup, fireEvent, act } from '@testing-library/react';
@@ -59,13 +61,15 @@ describe('4.2 — o resumo não mostra mais o Evolution Path', () => {
   });
 });
 
-describe('4.4 — uma folha por seção; o NPC só no Passeio; nenhum em `Stretch Closed`', () => {
-  it('a ordem é tarefas → corações → aventura → hoje, UMA seção visível por vez', () => {
+describe('4.4 — uma seção por vez; o NPC só no Passeio; nenhum em `Stretch Closed`', () => {
+  it('a ordem é ontem (tarefas + corações) → aventura → hoje, UMA seção visível por vez', () => {
     abrir({ heartsLost: 1 }, { onPickMood: () => {} });
     const secao = () => document.querySelector('[data-report-step]')!.getAttribute('data-report-step');
-    expect(secao()).toBe('tasks');
+    expect(secao()).toBe('yesterday');
     expect(document.querySelectorAll('[data-report-step]')).toHaveLength(1);
-    proximo(); expect(secao()).toBe('hearts');
+    // tarefas de ontem e corações moram no MESMO modal
+    expect(document.querySelector('[data-report-step="yesterday"] [data-day-hearts]')).not.toBeNull();
+    expect(document.body.textContent).toContain('Yesterday Tasks');
     proximo(); expect(secao()).toBe('adventure');
     proximo(); expect(secao()).toBe('today');
     expect(document.querySelectorAll('[data-report-step]')).toHaveLength(1);
@@ -75,14 +79,13 @@ describe('4.4 — uma folha por seção; o NPC só no Passeio; nenhum em `Stretc
     abrir({ wasPerfect: true, done: 6 });
     expect(screen.getByText('A stretch closed.')).toBeTruthy();
     expect(npc()).toBeNull();
-    proximo();
-    expect(screen.getByText('Hearts')).toBeTruthy();
+    expect(document.querySelector('[data-report-section="hearts"]')).not.toBeNull();
     expect(npc()).toBeNull();
   });
 
   it('só a aventura traz o NPC — o do Passeio — numa folha própria', () => {
     abrir();
-    proximo(); proximo();
+    proximo();
     expect(npc()).not.toBeNull();
     expect(document.querySelector('[data-area-sheet]')).not.toBeNull();
     // a fala/nome do NPC do Passeio (Brume)
@@ -91,18 +94,24 @@ describe('4.4 — uma folha por seção; o NPC só no Passeio; nenhum em `Stretc
     expect(document.querySelector('[data-area-sheet]')!.textContent).not.toMatch(/Yesterday Tasks|Hearts/);
   });
 
-  it('tarefas, corações e hoje usam o bottom sheet padrão (ModalSheet)', () => {
+  it('14/10/2026: ontem (tarefas + corações) e hoje são o modal CENTRALIZADO, nunca a folha de baixo', () => {
     abrir({}, { onPickMood: () => {} });
-    expect(document.querySelector('[data-modal-backdrop]')).not.toBeNull();
+    const centrado = () => {
+      const dlg = document.querySelector('[data-modal-backdrop] [role="dialog"]') as HTMLElement;
+      expect(dlg.getAttribute('data-placement')).toBe('center');
+      expect(dlg.className).not.toContain('sm2-sheet-rise');
+      expect((document.querySelector('[data-modal-backdrop]') as HTMLElement).style.alignItems).toBe('center');
+    };
+    centrado(); // ontem
+    proximo(); // aventura (AreaSheet, com o NPC do scroll)
+    expect(document.querySelector('[data-modal-backdrop]')).toBeNull();
     proximo();
-    expect(document.querySelector('[data-modal-backdrop]')).not.toBeNull();
-    proximo(); proximo();
-    expect(document.querySelector('[data-modal-backdrop]')).not.toBeNull();
+    centrado(); // hoje
   });
 
   it('o último passo é "Start the day"; fechar por fora/✕ fecha o resumo todo', () => {
     const { onClose } = abrir();
-    proximo(); proximo();
+    proximo();
     const fim = document.querySelector('[data-report-next]') as HTMLElement;
     expect(fim.getAttribute('data-report-next')).toBe('start');
     expect(fim.textContent).toBe('Start the day');
@@ -110,26 +119,24 @@ describe('4.4 — uma folha por seção; o NPC só no Passeio; nenhum em `Stretc
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('sem aventura nem "hoje", o último passo são os corações', () => {
+  it('sem aventura nem "hoje", o único passo é o de ontem e já é o "Start the day"', () => {
     const { onClose } = abrir({}, { adventure: null });
-    proximo();
     expect((document.querySelector('[data-report-next]') as HTMLElement).textContent).toBe('Start the day');
     proximo();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('as notas dos corações moram na folha dos corações, não na das tarefas', () => {
+  it('as notas dos corações moram na SEÇÃO dos corações do modal, não na das tarefas', () => {
     abrir({ restDayUsed: true, heartsLost: 0 });
-    expect(document.body.textContent).not.toMatch(/The tide absorbed yesterday/);
-    proximo();
-    expect(document.body.textContent).toMatch(/The tide absorbed yesterday/);
+    const secao = document.querySelector('[data-report-section="hearts"]') as HTMLElement;
+    expect(secao.textContent).toMatch(/The tide absorbed yesterday/);
+    expect(document.querySelector('[data-report-step="yesterday"]')!.textContent).toMatch(/The tide absorbed yesterday/);
   });
 });
 
 describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   it('são 3 corações; sem perda, nenhum quebra e a fileira fica estática', () => {
     abrir({ heartsLost: 0 });
-    proximo();
     expect(hearts().querySelectorAll('[data-heart]')).toHaveLength(3);
     expect(hearts().getAttribute('data-hearts-kept')).toBe('3');
     expect([...hearts().querySelectorAll('[data-heart]')].every(h => h.getAttribute('data-heart') === 'whole')).toBe(true);
@@ -139,7 +146,6 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   it('perdeu 1: o coração cobrado treme, quebra e vira preto; os outros 2 ficam intactos', () => {
     vi.useFakeTimers();
     abrir({ heartsLost: 1 });
-    proximo();
     expect(hearts().getAttribute('data-hearts-phase')).toBe('shake');
     expect(hearts().querySelectorAll('.sm2-heart-shake')).toHaveLength(1);
     act(() => { vi.advanceTimersByTime(HEART_SHAKE_MS + 5); });
@@ -155,7 +161,6 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   it('representa o resultado REAL: 2 corações perdidos quebram 2', () => {
     vi.useFakeTimers();
     abrir({ heartsLost: 2 });
-    proximo();
     act(() => { vi.advanceTimersByTime(HEART_SHAKE_MS + 5); });
     act(() => { vi.advanceTimersByTime(HEART_SNAP_MS + 5); });
     expect([...hearts().querySelectorAll('[data-heart]')].map(h => h.getAttribute('data-heart'))).toEqual(['whole', 'black', 'black']);
@@ -164,14 +169,12 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   it('a animação avisa que começou UMA vez (para o App gravar "já vista")', () => {
     const onHeartsAnimSeen = vi.fn();
     abrir({ heartsLost: 1 }, { onHeartsAnimSeen });
-    proximo();
     expect(onHeartsAnimSeen).toHaveBeenCalledTimes(1);
   });
 
   it('NÃO repete ao reabrir: com `heartsAnimSeen`, o coração cobrado já nasce preto, sem tremor, e nada é regravado', () => {
     const onHeartsAnimSeen = vi.fn();
     abrir({ heartsLost: 1 }, { heartsAnimSeen: true, onHeartsAnimSeen });
-    proximo();
     expect(hearts().getAttribute('data-hearts-phase')).toBe('black');
     expect(hearts().querySelector('.sm2-heart-shake, .sm2-heart-snap')).toBeNull();
     expect([...hearts().querySelectorAll('[data-heart]')].map(h => h.getAttribute('data-heart'))).toEqual(['whole', 'whole', 'black']);
@@ -182,26 +185,22 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }));
     const onHeartsAnimSeen = vi.fn();
     abrir({ heartsLost: 1 }, { onHeartsAnimSeen });
-    proximo();
     expect(hearts().getAttribute('data-hearts-phase')).toBe('black');
     expect(onHeartsAnimSeen).toHaveBeenCalledTimes(1);
   });
 
   it('modo acolhida: nada é cobrado, então nenhum coração quebra (mesmo que o relatório traga perda)', () => {
     abrir({ welcomeBack: true, daysAway: 4, heartsLost: 1 });
-    proximo();
     expect(hearts().getAttribute('data-hearts-lost')).toBe('0');
   });
 
   it('a fileira acompanha o HP máximo do estágio', () => {
     abrir({ heartsLost: 1 }, { maxHearts: 5 });
-    proximo();
     expect(hearts().querySelectorAll('[data-heart]')).toHaveLength(5);
   });
 
   it('o coração preto usa o ícone do HUD escurecido por filtro (nenhuma arte nova)', () => {
     abrir({ heartsLost: 1 }, { heartsAnimSeen: true });
-    proximo();
     const preto = hearts().querySelector('[data-heart="black"] img') as HTMLElement;
     expect(preto.getAttribute('data-pixel-icon')).toBe('hp');
     expect(preto.style.filter).toMatch(/grayscale\(1\)/);
@@ -209,7 +208,7 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
 });
 
 describe('4.3 — From Yesterday’s Adventure, `New` dourado, vínculo com o Passeio de ontem', () => {
-  const irAteAventura = () => { proximo(); proximo(); };
+  const irAteAventura = () => { proximo(); };
 
   it('título EN/PT; a folha é independente e sem textos de tarefa', () => {
     abrir();
@@ -266,7 +265,7 @@ describe('4.3 — From Yesterday’s Adventure, `New` dourado, vínculo com o Pa
 describe('P2 (beta-2) — a folha da aventura', () => {
   it('o ✕ mora DENTRO da folha (acima do título), como nas outras folhas do resumo — e fecha o resumo', () => {
     const { onClose } = abrir();
-    proximo(); proximo();
+    proximo();
     const folha = document.querySelector('[data-area-sheet]') as HTMLElement;
     const x = document.querySelector('[data-area-sheet-close]') as HTMLElement;
     expect(folha.contains(x)).toBe(true);
@@ -277,17 +276,18 @@ describe('P2 (beta-2) — a folha da aventura', () => {
   });
   it('com o Passeio de ontem, o bloco Missão/Destino aparece (destino em destaque); sem Passeio, não há bloco vazio', () => {
     abrir({}, { stroll: STROLL });
-    proximo(); proximo();
+    proximo();
     expect(document.querySelector('[data-stroll-mission]')!.textContent).toBe('A Stretch Without Screens');
     expect(document.querySelector('[data-stroll-destination]')!.textContent).toBe('Desert Mind');
     cleanup();
     abrir();
-    proximo(); proximo();
+    proximo();
     expect(document.querySelector('[data-stroll-link]')).toBeNull();
   });
-  it('P4: a folha dos corações tem altura mínima de ~40vh', () => {
+  it('os corações NÃO têm mais folha própria (a altura mínima de 40vh da folha dos corações saiu junto)', () => {
     abrir({ heartsLost: 0 });
-    proximo();
-    expect((document.querySelector('[data-report-step="hearts"]') as HTMLElement).style.minHeight).toBe('40vh');
+    expect(document.querySelector('[data-report-step="hearts"]')).toBeNull();
+    expect(document.querySelector('[data-report-step="tasks"]')).toBeNull();
+    expect((document.querySelector('[data-report-step="yesterday"]') as HTMLElement).style.minHeight).toBe('');
   });
 });

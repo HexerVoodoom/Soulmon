@@ -1097,12 +1097,36 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** tudo aqui é DESCRIÇÃO, nunca veredito; `suggestion` é `null` sem dados suficientes e esse silêncio é a metade importante; nenhum número deste cartão pode diminuir por castigo.
 
 ### `src/components/BuildingIntro.tsx`
-**Dono de:** a apresentação do prédio novo (08/10/2026): `RitualDialog` z-200 com o busto do NPC do lote, o balão `NpcSpeech` e três balões em sequência (quem é · o que se faz ali · convite); "Next", "Later" (todo passo) e "Go there" (último).
-**Props principais:** `id` (`BuildingId`), `language`, `onGo(id)`, `onLater(id)`.
+**Dono de:** a apresentação do prédio novo (08/10/2026; refeita em 14/10/2026): monta as falas (3 por prédio, cada prédio com o NPC e a arte de `lotNpcArt`) e entrega à `NpcSequence`. Vários prédios = UMA sequência. Sem botões "Próximo/Ir lá/Depois".
+**Props principais:** `ids` (`BuildingId[]`), `language`, `onFinish('done' | 'skip')`.
 **Exports:** `BuildingIntro(props)` (nomeado e default).
-**Chamado por:** `src/App.tsx` (intersticial `buildingIntro`, o SEGUNDO da fila, com `key` do prédio — sem ela o 2º NPC nasceria no último balão do 1º).
-**Régua:** `src/components/BuildingIntro.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila, montagem única, espera do Level Up).
-**Avisos do arquivo:** só fecha por gesto (sem timer); muda e sem recompensa (R-NOVA); `.sm-npc-intro` para no bloco canônico de movimento reduzido.
+**Chamado por:** `src/App.tsx` (intersticial `buildingIntro`, aberto por `visitarPredio` na primeira entrada no prédio).
+**Régua:** `src/components/BuildingIntro.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila, montagem única, "visto ao mostrar").
+**Avisos do arquivo:** só fecha por gesto (sem timer); muda e sem recompensa (R-NOVA); não grava nada (o "visto" é de quem monta, ao MOSTRAR).
+
+### `src/components/NpcSequence.tsx`
+**Dono de:** a sequência de falas de um NPC em TELA CHEIA (14/10/2026, pedido do dono): NPC bem grande (`min(135vw, 82dvh)`), janela de texto embaixo (`TypewriterText`), toque em qualquer lugar avança, a última fala fecha, "Pular/Skip" discreto no canto superior ESQUERDO (≥ 44 px, safe-area). Genérico: o tutorial do mapa pode usá-lo.
+**Props principais:** `lines` (`NpcSequenceLine[]`: `speaker`, `art`, `text`), `language`, `onFinish('done' | 'skip')`, `label?`.
+**Exports:** `NpcSequence(props)`, `NpcSequenceLine` (type).
+**Chamado por:** `src/components/BuildingIntro.tsx`.
+**Régua:** `src/components/NpcSequence.render.test.tsx` (toque avança, pular, última fala, teclado, voltar do Android, alvo de 44 px, PT/EN, `onFinish` uma vez).
+**Avisos do arquivo:** o botão de avançar cobre a tela e é o PRIMEIRO focável (Enter/Espaço avançam; Esc e voltar pulam); o texto do "Pular" vem depois no foco; usa `useDialogA11y` e `useBackLayer`; nenhum som, nenhum timer.
+
+### `src/components/UnlockToast.tsx`
+**Dono de:** o balãozinho "<Prédio> desbloqueado em <local>" (14/10/2026): NÃO bloqueante (`role="status"`, sem foco/véu), some em 6 s ou ao toque; vários prédios do mesmo level-up viram um texto só.
+**Props principais:** `ids` (`BuildingId[]`), `language`, `onDone()`.
+**Exports:** `UnlockToast`, `unlockToastText(ids, language)`, `UNLOCK_TOAST_MS`.
+**Chamado por:** `src/App.tsx` (item `unlockToast` da fila).
+**Régua:** `src/components/UnlockToast.render.test.tsx`.
+**Avisos do arquivo:** muda e sem recompensa (R-NOVA); a apresentação do NPC só vem na primeira entrada no prédio.
+
+### `src/components/PresentationSlot.tsx`
+**Dono de:** a moldura de segurança de cada item da fila central de modais: `Suspense` + boundary de erro. Erro de render ou chunk que não carrega em `PRESENTATION_LOAD_TIMEOUT_MS` (8 s) viram `onFail`, e a fila pula o item.
+**Props principais:** `id`, `onFail()`, `fallback?`, `children`.
+**Exports:** `PresentationSlot`, `PRESENTATION_LOAD_TIMEOUT_MS`.
+**Chamado por:** `src/App.tsx` (um por item de `PRESENTATION_ORDER`).
+**Régua:** `src/hooks/usePresentationQueue.test.tsx` (bloco "PresentationSlot").
+**Avisos do arquivo:** reporta o erro por `reportCrash('boundary')` (sem conteúdo do usuário); `onFail` é chamado fora do render (microtask).
 
 ### `src/components/WelcomeTour.tsx`
 **Dono de:** o tour de boas-vindas do corvo (07/10/2026): oito cartões em `RitualDialog` (z-200, `useDialogA11y` — Esc pula) com o `mascot-raven.png`, o balão `NpcSpeech` (falante "Rook") e, nos passos do mapa, uma lista de uma frase por área. "Skip" e "Next"/"Back" sempre visíveis; muda e sem recompensa (R-NOVA).
