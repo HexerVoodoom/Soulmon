@@ -14,7 +14,7 @@ import type { CheckInWindow } from '../../utils/checkIns';
 
 const MIN = 60_000;
 
-describe('EnergyTimer (contagem ao vivo dentro da dica da energia, REGISTRO §42)', () => {
+describe('EnergyTimer (contagem ao vivo dentro da dica da energia, REGISTRO §43)', () => {
   it('regenerando: H:MM:SS quando há hora, tabular; o número é aria-hidden e o rótulo falado leva o tempo da abertura', () => {
     render(<EnergyTimer msToNext={65 * MIN + 5000} mode="regen" language="pt-BR" />);
     const t = document.querySelector('[data-energy-timer]')!;

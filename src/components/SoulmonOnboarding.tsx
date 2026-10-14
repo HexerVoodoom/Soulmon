@@ -6,6 +6,8 @@ import { BirthCard } from './BirthCard';
 import { getSpriteForStage } from '../utils/sprites';
 // PROVISÓRIO (01/10/2026): wordmark recortado localmente do original do
 // Gemini, com autorização explícita do dono, até chegar a versão com alfa real.
+import { FUNCTION_NPC_ART } from '../assets/soulmon/npcs';
+import { functionNpcVoice } from '../utils/areaNpcVoice';
 import logoUrl from '../assets/brand/final/logo-wordmark.png';
 import { recommendStarterSet } from '../utils/recommend';
 import { suggestFirstTask, firstTaskFrom, type FirstTaskDraft } from '../utils/firstTaskSuggestion';
@@ -1771,6 +1773,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             pergunta, o campo responde. */}
         {step === NAME_STEP && (
           <StepShell title={isPt ? 'Como podemos te chamar?' : 'What should we call you?'}>
+            {/* 14/10/2026 (dono): o NPC de boas-vindas é a Ambra (`onboarding`), não a Iris (Oráculo). */}
+            <div data-onboarding-npc style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <img src={FUNCTION_NPC_ART.onboarding} alt="" width={96} height={96}
+                style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
+              <p style={{ ...sm2Hint, margin: 0 }}>
+                <strong>{functionNpcVoice('onboarding', isPt ? 'pt-BR' : 'en-US').name}</strong>
+                {' — '}{functionNpcVoice('onboarding', isPt ? 'pt-BR' : 'en-US').line}
+              </p>
+            </div>
             <Field id="onb-nick" type="text" value={nickname} autoFocus maxLength={24}
               aria-label={isPt ? 'Seu nome' : 'Your name'}
               /* A legenda de privacidade ("pode ser inventado") saiu por B1; o

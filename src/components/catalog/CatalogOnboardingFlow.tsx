@@ -101,8 +101,9 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
     else if (step === 'starter') setStep('strengths');
   };
 
-  /* Beta-2 (F4 do crítico, 13/10/2026): o fluxo é uma FOLHA de baixo (`ModalSheet`), não um modal central — o polegar chega lá e
-     o botão de confirmar fica no rodapé da folha. O título e a seta de voltar são os da folha (a seta só do 2º passo em diante). */
+  /* Beta-2 (F4 do crítico, 13/10/2026): o fluxo usava a FOLHA de baixo. 14/10/2026 (dono, por voz): os modais do começo do dia
+     NÃO são bottom sheet — são o modal CENTRALIZADO (`placement="center"`). O botão de confirmar segue no rodapé do painel;
+     o título e a seta de voltar são os do painel (a seta só do 2º passo em diante). */
   const passoAnterior = step !== 'areas';
   const botaoPrimario = step !== 'starter' ? (
     <button
@@ -133,6 +134,7 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
       onBack={passoAnterior ? back : undefined}
       closeSide={passoAnterior ? 'start' : 'none'}
       dismissOnBackdrop={false}
+      placement="center"
       language={language}
       maxWidth={420}
       footer={botaoPrimario}

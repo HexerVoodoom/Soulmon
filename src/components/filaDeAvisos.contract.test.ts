@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { PRESENTATION_ORDER } from '../utils/presentationQueue';
 
 // ---------------------------------------------------------------------------
 // AS DUAS FILAS, E O QUE ESTAVA FORA DELAS.
@@ -29,7 +30,9 @@ describe('nada monta por cima da fila de intersticiais', () => {
   });
 
   it('o modal de evolução espera a cerimônia terminar', () => {
-    expect(app).toContain('isOpen={evolveModalStage !== null && evolutionCeremony === null}');
+    // 14/10/2026: o modal entra na fila central; "pronto" = evolução pendente E cerimônia fechada, "na tela" = a vez dele.
+    expect(app).toContain('evolveTask: evolveModalStage !== null && evolutionCeremony === null,');
+    expect(app).toContain("isOpen={interstitial === 'evolveTask'}");
   });
 });
 
@@ -105,22 +108,6 @@ describe('o slot de avisos não tem cartão solto', () => {
 });
 
 describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guilda, B1)', () => {
-  const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1700);
-
-  it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
-    const ordem = ["'welcomeTour'", "'buildingIntro'", "'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'levelUp'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
-    // na UNIÃO de tipos (uma vez, na ordem declarada)
-    const uniao = interstitial.slice(0, interstitial.search(/=\r?\n/));
-    const posUniao = ordem.map(o => uniao.indexOf(o));
-    expect(posUniao.every(p => p >= 0)).toBe(true);
-    expect([...posUniao].sort((a, b) => a - b)).toEqual(posUniao);
-    // e na cadeia de decisão (a ordem que de fato manda)
-    const cadeia = interstitial.slice(interstitial.search(/=\r?\n/));
-    const posCadeia = ordem.map(o => cadeia.indexOf(o));
-    expect(posCadeia.every(p => p >= 0)).toBe(true);
-    expect([...posCadeia].sort((a, b) => a - b)).toEqual(posCadeia);
-    expect((app.match(/\? 'groveMilestone'/g) ?? [])).toHaveLength(1);
-  });
 
   it('a cerimônia monta UMA vez, só quando é a vez dela, e a saída é o gesto (nada de timer)', () => {
     expect((app.match(/interstitial === 'groveMilestone'/g) ?? [])).toHaveLength(1);
@@ -183,14 +170,11 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
 // desta régua verdes: a posição declarada só existia em comentário. Lê a expressão do FONTE.
 // ---------------------------------------------------------------------------
 describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
-  const ini = app.indexOf('const interstitial:');
-  const expr = app.slice(ini, app.indexOf("'welcome';", ini) + "'welcome';".length);
-  /** Os nomes na ordem em que a cadeia ternária os decide (o último é o `: 'welcome'`). */
-  const ordem = [...expr.matchAll(/\?\s*'(\w+)'|:\s*'(welcome)'/g)].map(m => m[1] ?? m[2]);
+  // 14/10/2026: a cadeia ternária `interstitial` virou a fila central (`PRESENTATION_ORDER`); a posição agora é lida dela.
+  const ordem = PRESENTATION_ORDER as readonly string[];
 
-  it('a expressão existe e a ordem é: TOUR DO CORVO → PRÉDIO NOVO → triagem → relatório → check-in → MARCO → LEVEL UP → sonho → pesadelo → catálogo → boas-vindas', () => {
-    expect(ini).toBeGreaterThan(0);
-    expect(ordem).toEqual(['welcomeTour', 'buildingIntro', 'triage', 'dailyReport', 'checkIn', 'groveMilestone', 'levelUp', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
+  it('a ordem declarada é: TOUR → triagem → LEVEL UP → resumo do dia → PRÉDIO NOVO → metas → check-in → modal de evolução → MARCO → sonho → pesadelo → convite de nível → sono → ocioso', () => {
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'catalogOnboarding', 'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {
@@ -200,14 +184,17 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
     expect(i('groveMilestone')).toBeLessThan(i('dream'));
   });
 
-  it('só decide `groveMilestone` quando há marco pendente REAL (`grovePendente`), e a cerimônia monta só por essa fila', () => {
-    expect(expr).toMatch(/grovePendente\s*\?\s*'groveMilestone'/);
+  it('só fica PRONTO quando há marco pendente REAL (`grovePendente`), e a cerimônia monta só por essa fila', () => {
+    expect(app).toContain('groveMilestone: Boolean(grovePendente),');
+    expect(app).toContain('const interstitial = presentation.current;');
     expect(app.match(/<GroveMilestoneCeremony/g) ?? []).toHaveLength(1);
     expect(app).toContain("{interstitial === 'groveMilestone' && grovePendente && grove?.pending && (");
   });
 
-  it('o tipo declarado da fila também lista `groveMilestone` (a expressão e o tipo não divergem)', () => {
-    expect(expr.slice(0, expr.indexOf('=')).includes("'groveMilestone'")).toBe(true);
+  it('a cadeia ternária antiga NÃO existe mais (uma fila só, sem sistema paralelo)', () => {
+    expect(app).not.toContain('const interstitial:');
+    expect(app).not.toMatch(/\? 'groveMilestone'/);
+    expect((app.match(/usePresentationQueue\(/g) ?? [])).toHaveLength(1);
   });
 });
 
@@ -217,7 +204,7 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
 // ---------------------------------------------------------------------------
 describe('o tour do corvo tem POSIÇÃO na fila e monta UMA vez', () => {
   it('é o primeiro intersticial, montado num único ponto', () => {
-    expect(app).toContain("welcomeTourOpen ? 'welcomeTour'");
+    expect(app).toContain('welcomeTour: welcomeTourOpen,');
     expect((app.match(/interstitial === 'welcomeTour'/g) ?? [])).toHaveLength(1);
     expect((app.match(/<WelcomeTour /g) ?? [])).toHaveLength(1);
   });
@@ -232,32 +219,33 @@ describe('o tour do corvo tem POSIÇÃO na fila e monta UMA vez', () => {
 });
 
 // ---------------------------------------------------------------------------
-// A APRESENTAÇÃO DO PRÉDIO NOVO (08/10/2026): intersticial NOVO, SEGUNDO da fila (depois do tour). O display de
-// Level Up (`LevelUpOverlay`, outro run) sobrepõe e sai ao toque; a apresentação espera ele — o ponto de encaixe é
-// `levelUpOpen` + `buildingIntroReady`. TODO no PR: ligar `levelUpOpen` ao estado do overlay quando ele estiver na main.
+// A APRESENTAÇÃO DO PRÉDIO NOVO (08/10/2026; refeita em 14/10/2026 como `NpcSequence` em tela cheia). Vem DEPOIS do
+// level-up e do resumo do dia; é marcada como VISTA ao ser MOSTRADA (não ao fechar) — o bug "abri de novo e vieram dois
+// modais do mapa".
 // ---------------------------------------------------------------------------
 describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez', () => {
-  it('é o segundo intersticial, montado num único ponto, só com um pendente real', () => {
-    expect(app).toContain("welcomeTourOpen ? 'welcomeTour'\n    : buildingIntroOpen ? 'buildingIntro'");
+  it('montada num único ponto, só com a sequência já capturada (`introShown`)', () => {
     expect((app.match(/interstitial === 'buildingIntro'/g) ?? [])).toHaveLength(1);
     expect((app.match(/<BuildingIntro /g) ?? [])).toHaveLength(1);
-    expect(app).toContain("{interstitial === 'buildingIntro' && pendingIntros[0] && (");
+    expect(app).toContain("{interstitial === 'buildingIntro' && introShown.length > 0 && (");
+    expect(app).toContain('buildingIntro: introShown.length > 0,');
   });
-  it('UM por vez: monta sempre o primeiro pendente, com a key do prédio', () => {
-    // a `key` é o que zera os balões ao trocar de prédio (sem ela o 2º NPC nasceria no último balão do 1º)
-    expect(app).toContain('<BuildingIntro key={pendingIntros[0]} id={pendingIntros[0]}');
+  it('fechar/pular esvazia a sequência', () => {
+    expect(app).toContain('<BuildingIntro ids={introShown} language={language} onFinish={() => setIntroShown([])} />');
   });
-  it('espera o Level Up sair e só aparece em tela calma (Home/Mapa); o encaixe está declarado', () => {
-    expect(app).toContain('const levelUpOpen = Boolean(levelUpEvent);');
-    expect(app).toContain("calmView: currentView === 'home' || currentView === 'map'");
-  });
-  it('"Depois" e "Ir lá" gravam o mesmo visto, dentro de um updater puro; "Ir lá" abre a folha do lote', () => {
+  it('14/10/2026: dispara SÓ na primeira entrada no prédio (`visitarPredio`), marcando visto na hora; o level-up NÃO a dispara', () => {
     expect((app.match(/markBuildingIntroSeen\(/g) ?? [])).toHaveLength(1);
-    expect(app).toContain('onGo={handleBuildingIntroGo} onLater={markIntroSeen}');
-    expect(app).toContain('setPendingSheet({ area: area as AreaId, lot });');
+    expect(app).toMatch(/!vistos\.includes\(id\)\)\s*\{\s*setIntroShown\(\[id\]\);/);
+    expect(app).not.toContain('pendingBuildingIntros');
+    expect(app).not.toContain('buildingIntroReady');
+  });
+  it('desbloqueio de prédio vira BALÃO (`unlockToast`), com os prédios do mesmo level-up juntos, gravado ao mostrar o level-up', () => {
+    expect(app).toContain('buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to)');
+    expect(app).toContain('unlockToast: unlockToastIds.length > 0,');
+    expect((app.match(/<UnlockToast /g) ?? [])).toHaveLength(1);
   });
   it('save sem o campo não dispara nada (undefined → sem pendente)', () => {
-    expect(app).toContain('gameState.buildingIntrosSeen === undefined ? []');
+    expect(app).toContain('vistos !== undefined');
   });
 });
 
@@ -266,18 +254,21 @@ describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez
 // vez dele, lazy; a saída é o toque (nada de timer) e z 300 fica acima da fila (200).
 // ---------------------------------------------------------------------------
 describe('o level up tem POSIÇÃO na fila e monta UMA vez', () => {
-  it('é intersticial: depois do marco do Bosque, antes do sonho', () => {
-    expect(app).toMatch(/grovePendente\s*\?\s*'groveMilestone'\s*:\s*levelUpEvent\s*\?\s*'levelUp'\s*:\s*morningDream\s*\?\s*'dream'/);
+  it('é intersticial: o PRIMEIRO depois do tour e da triagem, antes do resumo do dia', () => {
+    const o = PRESENTATION_ORDER as readonly string[];
+    expect(o.indexOf('levelUp')).toBeLessThan(o.indexOf('dailyReport'));
+    expect(o.indexOf('levelUp')).toBeLessThan(o.indexOf('buildingIntro'));
     expect((app.match(/interstitial === 'levelUp'/g) ?? [])).toHaveLength(1);
     expect((app.match(/<LevelUpOverlay /g) ?? [])).toHaveLength(1);
     expect(app).toContain("const LevelUpOverlay = lazy(");
   });
-  it('o evento é DERIVADO (levelUpPending) e o save guarda só o último celebrado, gravado ao tocar', () => {
+  it('o evento é DERIVADO (levelUpPending); o nível é gravado AO MOSTRAR (instantâneo `levelUpShown` segura o overlay)', () => {
     expect(app).toContain('levelUpPending(gameState.totalXP, gameState.lastCelebratedLevel, levelUpDemo)');
-    // REGISTRO §31: a gravação mudou para a função pura `applyLevelUpCelebrated` (que também restaura energia/HP), chamada UMA vez.
+    // REGISTRO §31: a gravação é a função pura `applyLevelUpCelebrated` (que também restaura energia/HP), UMA vez, em `handleLevelUpDone`.
     expect((app.match(/applyLevelUpCelebrated\(prev, celebrated\)/g) ?? [])).toHaveLength(1);
     expect(app).not.toMatch(/lastCelebratedLevel: Math\.max\(/);
-    expect(app).toContain('onDone={handleLevelUpDone}');
+    expect(app).toMatch(/setLevelUpShown\(levelUpEvent\);\s*handleLevelUpDone\(levelUpEvent\.to\);/);
+    expect(app).toContain('onDone={() => setLevelUpShown(null)}');
   });
   it('o overlay fica ACIMA da fila, sem timer de saída', () => {
     const src = readFileSync('src/components/LevelUpOverlay.tsx', 'utf8');

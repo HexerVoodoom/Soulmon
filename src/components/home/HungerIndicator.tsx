@@ -40,7 +40,7 @@ export function HungerIndicator({ tier, value, language, size = 20, style, onTap
   const corpo = (
     <>
       <img src={ART[tier]} alt="" width={size} height={size} draggable={false} aria-hidden="true" style={{ imageRendering: 'pixelated' }} />
-      {/* nível N de 3 (REGISTRO §42): três marcas, cheias × só contorno — a forma diz o nível, não a cor */}
+      {/* nível N de 3 (REGISTRO §43): três marcas, cheias × só contorno — a forma diz o nível, não a cor */}
       <svg data-hunger-level={nivel} width="14" height="6" viewBox="0 0 14 6" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
         {[0, 1, 2].map(i => (i < nivel
           ? <rect key={i} x={i * 5} y="0" width="4" height="6" fill="currentColor" />

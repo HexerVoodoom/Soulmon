@@ -34,9 +34,8 @@ const relatorio = (over: Record<string, unknown> = {}) => ({
   ...over,
 }) as never;
 
-/** Beta-2 (4.4): cada seção é uma folha — a aventura é a TERCEIRA (tarefas → corações → aventura). */
+/** Beta-2 (4.4): cada seção é um passo — a aventura é o SEGUNDO (ontem [tarefas + corações] → aventura), desde 14/10/2026. */
 function irParaAventura() {
-  fireEvent.click(screen.getByRole('button', { name: /continuar|continue/i }));
   fireEvent.click(screen.getByRole('button', { name: /continuar|continue/i }));
 }
 

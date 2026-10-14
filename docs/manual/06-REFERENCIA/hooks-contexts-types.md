@@ -7,7 +7,7 @@
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
 ## Índice
-- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `useSpriteGeneration.ts`
+- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `usePresentationQueue.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `useSpriteGeneration.ts`
 - [src/contexts](#src-contexts) — `GameStateContext.tsx` · `LanguageContext.tsx` · `ThemeContext.tsx`
 - [src/types](#src-types) — `attributes.ts` · `category-icons.ts` · `progression.ts` · `taskModel.ts`
 
@@ -44,6 +44,13 @@
 **Chamado por:** `src/components/NightmareBattle.tsx`, `DailyReportModal.tsx`, `TournamentPage.tsx`, `MorningCheckIn.tsx`, `form/FormKit.tsx`, `TriagePile.tsx`, `MorningDream.tsx`.
 **Régua:** `src/hooks/useDialogA11y.test.tsx`.
 **Avisos do arquivo:** trata de propósito quatro casos que a versão ingênua erra — diálogos empilhados (contagem de referência em `lockCount`/`inertRefs`), restauro exato do `overflow` original, `inert` ausente em WebView antigo (cai em `aria-hidden` + o trap de Tab), e desmontagem abrupta (nada em estado React, tudo no cleanup do efeito, contagens saneadas com `Math.max(0, …)`). O hook **não** desenha véu — cada diálogo continua dono do próprio véu.
+
+### `src/hooks/usePresentationQueue.ts`
+**Dono de:** ligar a fila pura de apresentação (`utils/presentationQueue.ts`) ao React (14/10/2026, REGISTRO §42): deriva quem está na tela a cada render (guardando o item atual num `ref`, para não ser expulso por um mais prioritário), chama `onShow(id)` UMA vez por entrada na tela (onde cada dono grava o "visto"), registra a camada de "voltar" (Android/navegador) que fecha o item da tela por `onDismiss(id)`, e expõe `fail(id)` (erro de render, chunk que não carrega, fechamento que lança: pula o item e tenta o fechamento dele).
+**Exports:** `usePresentationQueue({ ready, onShow?, onDismiss? })` → `{ current, dismiss, fail }`.
+**Chamado por:** `src/App.tsx` (uma vez).
+**Régua:** `src/hooks/usePresentationQueue.test.tsx` (ordem, um por vez, não expulsa, `onShow` uma vez, voltar do Android, fechamento que lança, cenário exato do dono).
+**Avisos do arquivo:** `onShow`/`onDismiss` que lançam NUNCA travam a fila (`runGuarded`); a fila não guarda nada no save.
 
 ### `src/hooks/useGroveWatch.ts`
 **Dono de:** o App OLHAR o Bosque (`PLANO-GUILDA.md` §4) — a cerimônia de marco e o aviso da Home precisam saber que o estágio subiu sem a pessoa abrir o Salão. **Só pergunta ao servidor quem já tem roda NESTE aparelho** (existe memória em `groveLocal`): quem nunca abriu a Guilda não paga requisição a cada abertura. **Sem timer** — consulta ao montar e ao voltar ao app (`visibilitychange`), nunca em intervalo (footgun de re-render/cloud save). **Uma consulta por volta**: com a folha aberta (`isGuildSheetOpen`) o hook fica quieto. Cenários `bg-guild-*` vão ao SAVE por `onScenes` (fora de updater), e **só com a confirmação do servidor** (`mine.groveScenes` da vista que acabou de chegar) — nunca de um número guardado no aparelho, que é editável (L3-codigo B1).

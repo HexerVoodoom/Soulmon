@@ -284,7 +284,7 @@ describe('com o Soulmon na masmorra o tick CONGELA a energia (a conta de quem fi
   });
 });
 
-describe('formatEnergyCountdown (REGISTRO §42)', () => {
+describe('formatEnergyCountdown (REGISTRO §43)', () => {
   it('H:MM:SS com hora, M:SS sem; arredonda para cima em segundos; nunca negativo', () => {
     expect(formatEnergyCountdown(3_725_000)).toBe('1:02:05');
     expect(formatEnergyCountdown(59_001)).toBe('1:00');
@@ -295,7 +295,7 @@ describe('formatEnergyCountdown (REGISTRO §42)', () => {
   });
 });
 
-describe('energyStatus.msToHungerDrop e hungerLevelOf (REGISTRO §42)', () => {
+describe('energyStatus.msToHungerDrop e hungerLevelOf (REGISTRO §43)', () => {
   it('fed→fair em (v-60)/taxa, fair→starving em (v-20)/taxa, faminto = null; nível 3/2/1', () => {
     const H = 3_600_000;
     const at = 1_000_000;

@@ -3,7 +3,7 @@ import { formatEnergyCountdown, formatEnergyEta, type EnergyMode } from '../../u
 import type { Language } from '../../utils/i18n';
 
 /**
- * O TIMER DA ENERGIA (beta-2 3.4; REGISTRO §40 e, desde 14/10/2026, §42): NÃO fica mais na faixa de status. Vive DENTRO da dica da energia,
+ * O TIMER DA ENERGIA (beta-2 3.4; REGISTRO §40 e, desde 14/10/2026, §43): NÃO fica mais na faixa de status. Vive DENTRO da dica da energia,
  * que abre ao tocar no raio. Mostra a contagem regressiva AO VIVO (1 s) até a próxima unidade, "H:MM:SS" com hora, "M:SS" sem.
  *
  * Não conta por conta própria: `msToNext` vem de `energyStatus(state, now)` (`utils/hunger.ts`, via `useEnergyStatus`, a cada 15 s). Aqui só

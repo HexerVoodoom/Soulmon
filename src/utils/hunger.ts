@@ -237,7 +237,7 @@ export interface EnergyStatus {
   msToHungerDrop: number | null;
 }
 
-/** Nível de fome em 3 (REGISTRO §42): bem alimentado = 3, mediano = 2, faminto = 1. */
+/** Nível de fome em 3 (REGISTRO §43): bem alimentado = 3, mediano = 2, faminto = 1. */
 export const hungerLevelOf = (tier: HungerTier): 1 | 2 | 3 => (tier === 'fed' ? 3 : tier === 'fair' ? 2 : 1);
 
 /**
@@ -295,7 +295,7 @@ export function formatEnergyEta(ms: number, pt: boolean): string {
   return `${h}h${String(m).padStart(2, '0')}`;
 }
 
-/** Contagem ao vivo (14/10/2026, REGISTRO §42): "H:MM:SS" quando há hora, "M:SS" caso contrário; arredonda PARA CIMA em segundos. */
+/** Contagem ao vivo (14/10/2026, REGISTRO §43): "H:MM:SS" quando há hora, "M:SS" caso contrário; arredonda PARA CIMA em segundos. */
 export function formatEnergyCountdown(ms: number): string {
   const total = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 1000));
   const h = Math.floor(total / 3600);
