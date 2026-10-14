@@ -161,6 +161,20 @@ describe('AreaTopBar', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it('14/10/2026: casinha e ícone do Mapa SEM círculo — ícone pelado, alvo de toque ≥ 44, brilho para ler sobre a cena', () => {
+    for (const [icon, side] of [['home', 'left'], ['mapa', 'right']] as const) {
+      const r = renderWithCss(<CornerLink icon={icon} side={side} label="X" onClick={() => {}} />);
+      const btn = r.container.querySelector('button') as HTMLButtonElement;
+      expect(r.container.querySelector('[data-corner-ring]')).toBeNull();
+      expect(btn.style.background).toBe('transparent');
+      expect(btn.style.border === '' || btn.style.border === 'none' || btn.style.border.startsWith('medium')).toBe(true);
+      expect(parseInt(btn.style.width, 10)).toBeGreaterThanOrEqual(44);
+      expect(parseInt(btn.style.height, 10)).toBeGreaterThanOrEqual(44);
+      expect(btn.style.filter).toContain('drop-shadow');
+      r.unmount();
+    }
+  });
+
   it('H9: o voltar fica FIXO na âncora do canto — a mesma do anel da casinha, em qualquer tela', () => {
     const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     const caixa = casinha.container.querySelector('button')!;

@@ -34,6 +34,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  3. `levelUp` — o nível subiu: a celebração vem antes de tudo o que é "do dia";
  *  4. `dailyReport` — o resumo do dia, AGRUPADO (tarefas de ontem + corações num modal central, depois a aventura);
  *  5. `buildingIntro` — o NPC do prédio, SÓ na primeira entrada nele (tela cheia, sequência de falas);
+ *  5b. `mapTutorial` — o tutorial do mapa (corvo e NPCs de área em `NpcSequence`), UMA vez, na 1ª abertura do Mapa;
  *  6. `catalogOnboarding` — escolher as primeiras metas (depende de já ter visto o resumo);
  *  7. `checkIn` — se comprometer com as tarefas do dia (depende do resumo e das metas);
  *  8. `evolveTask` — "crie mais atividades" depois de evoluir;
@@ -47,6 +48,7 @@ export const PRESENTATION_ORDER = [
   'levelUp',
   'dailyReport',
   'buildingIntro',
+  'mapTutorial',
   'catalogOnboarding',
   'checkIn',
   'evolveTask',

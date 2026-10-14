@@ -31,14 +31,16 @@ describe('tabela prédio → material', () => {
 
 describe('missão do dia', () => {
   it('trancada pelo Vínculo; aberta vira disponível → pronta → resgatada', () => {
-    expect(questStatus(undefined, D1, 'exploracao.masmorra', 1)).toBe('locked');
-    expect(questStatus(undefined, D1, 'exploracao.masmorra', 2)).toBe('available');
-    const v = visitBuilding(undefined, D1, 'exploracao.masmorra', 2);
-    expect(questStatus(v, D1, 'exploracao.masmorra', 2)).toBe('ready');
-    const c = claimBuildingQuest(v, D1, 'exploracao.masmorra', 2);
-    expect(c.paid).toBe('ore');
-    expect(stockOf(c.state, 'ore')).toBe(1);
-    expect(questStatus(c.state, D1, 'exploracao.masmorra', 2)).toBe('claimed');
+    // A Masmorra abre no Vínculo 1 desde 14/10/2026 (pedido do dono); a Oficina do Foco segue no 3.
+    expect(questStatus(undefined, D1, 'exploracao.masmorra', 1)).toBe('available');
+    expect(questStatus(undefined, D1, 'exploracao.oficina', 2)).toBe('locked');
+    expect(questStatus(undefined, D1, 'exploracao.oficina', 3)).toBe('available');
+    const v = visitBuilding(undefined, D1, 'exploracao.oficina', 3);
+    expect(questStatus(v, D1, 'exploracao.oficina', 3)).toBe('ready');
+    const c = claimBuildingQuest(v, D1, 'exploracao.oficina', 3);
+    expect(c.paid).toBe('gear');
+    expect(stockOf(c.state, 'gear')).toBe(1);
+    expect(questStatus(c.state, D1, 'exploracao.oficina', 3)).toBe('claimed');
   });
   it('resgate duplo não paga 2× e devolve a mesma referência', () => {
     const v = visitBuilding(undefined, D1, 'hall.guilda', MAXB);

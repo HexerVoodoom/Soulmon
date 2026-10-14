@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/10/2026 — Masmorra livre no Vínculo 1, tutorial do mapa na 1ª abertura e ícones de canto sem círculo (`feat/dungeon-nv1-tutorial-mapa`, REGISTRO §51)
+>
+> - **Pedido do dono (voz):** Masmorra desde o level 1; tirar mapa/prédios do tutorial inicial e abrir um tutorial do mapa na primeira abertura do Mapa; tirar o círculo da casinha e do ícone do mapa.
+> - **Feito:** `exploracao.masmorra` → Vínculo 1 (cliente + espelho do servidor) · tutorial do mapa (`MAP_TOUR_STEPS`, 22 prédios, EN/PT) no componente `WelcomeTour`, flag `mapTutorialSeen` no SAVE com migração segura · `CornerLink` sem anel.
+> - **Intocado de propósito:** energia, limite diário (servidor), portão dos andares altos (Vínculo 8), restrições de Soulmon ocupado.
+> - **Pré-existente (não é desta mudança):** `AreaView.ocupado.render.test` (timeout de 15 s no `waitFor` da masmorra) e 2 testes de `missionsMenu.render.test` falham também na main neste ambiente Windows.
+
 > ## 14/10/2026 — Fila central de modais, intro de NPC em tela cheia e resumo do dia centralizado (`fix/fila-de-modais-intro-npc`, REGISTRO §42, `docs/FILA-DE-MODAIS.md`)
 >
 > - **Bug do beta-2 (dono, por voz):** "sobe de nível / dia novo → modais se sobrepõem, trava; fechei, abri, veio um modal e depois outro do mapa". **Causa:** a cadeia `interstitial` era recalculada a cada render (o prédio novo, mais prioritário, DESMONTAVA o resumo/check-in que a pessoa lia) e o "visto" só era gravado ao FECHAR (prédios, resumo do dia, level-up) — fechar o app no meio devolvia tudo, um modal por prédio.

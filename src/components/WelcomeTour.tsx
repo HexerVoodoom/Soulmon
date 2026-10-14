@@ -9,7 +9,8 @@ import type { Language } from '../utils/i18n';
 /**
  * O TOUR DE BOAS-VINDAS DO CORVO (07/10/2026, pedido do dono).
  *
- * Oito cartões: o básico (tarefas → evolução) e o mapa (a função de cada área).
+ * Seis cartões: o básico (tarefas → cantos da Home). O mapa (a função de cada prédio) NÃO é mais daqui: é o `MapTutorial`
+ * (14/10/2026), item próprio da fila, aberto uma vez na primeira abertura do Mapa.
  * É um INTERSTICIAL (`const interstitial` do `App.tsx`, PRIMEIRO da fila: vem
  * antes do check-in e do priming; z-200 do `RitualDialog`). Regras:
  *  · "Skip" fica visível em todo passo e o Escape faz o mesmo — pular NUNCA

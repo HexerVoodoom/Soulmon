@@ -118,7 +118,9 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'jogos.refugio': { minBond: 1 },
   'jogos.mente': { minBond: 3 },
   'exploracao.passeio': { minBond: 1 },
-  'exploracao.masmorra': { minBond: 2 },
+  // A Masmorra abre desde o Vínculo 1 (14/10/2026, pedido do dono: é a atividade mais gacha/idle; o limite diário, a energia e o
+  // portão do andar alto — `masmorraAlto` — seguem valendo). Era 2 até esta data.
+  'exploracao.masmorra': { minBond: 1 },
   'exploracao.caderno': { minBond: 2 },
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
@@ -136,7 +138,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */
-export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio'];
+export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio', 'exploracao.masmorra'];
 
 /** O prédio abre neste Vínculo? `bondLevel` ausente/lixo = Vínculo 1. */
 export function buildingGateFor(id: BuildingId, bondLevel: unknown): GateResult {

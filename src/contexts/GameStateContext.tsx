@@ -63,6 +63,7 @@ import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
+import { sanitizeMapTutorialSeen } from '../utils/welcomeTour';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import {
   readLocal,
@@ -486,6 +487,10 @@ export interface GameState {
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
    *  save existente nunca re-dispara apresentação do que o jogador já usa. */
   buildingIntrosSeen?: string[];
+  /** O tutorial do MAPA já abriu (14/10/2026, `utils/welcomeTour.ts` › `MAP_TOUR_STEPS`): ele abre UMA vez, na 1ª abertura do Mapa,
+   *  e visto OU pulado grava `true`. Campo ausente na carga: `sanitizeMapTutorialSeen` — save com progresso (ou com o tour de
+   *  boas-vindas já visto) vira `true` e nunca re-dispara; save vazio (jogador novo) vira `false`. */
+  mapTutorialSeen?: boolean;
   /** O último nível do Vínculo CELEBRADO (display de level up, 11/10/2026, `utils/levelUp.ts`). O nível em si
    *  nunca vai ao save (`bondLevelFor(totalXP)`); este campo só diz até onde a pessoa JÁ VIU a celebração —
    *  assim o evento sobrevive a fechar o app. Ausente = save anterior: a linha de base é o nível de agora. */
@@ -1310,6 +1315,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
+        mapTutorialSeen: sanitizeMapTutorialSeen(loadedState.mapTutorialSeen, loadedState as Record<string, any>, readLocal(STORAGE_KEYS.WELCOME_TOUR_SHOWN) === 'true'),
         lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
@@ -1580,6 +1586,7 @@ function freshGameState(): GameState {
       healthPoints: getMaxHPForStage('rookie'),
       maxHealthPoints: getMaxHPForStage('rookie'),
       buildingIntrosSeen: seedBuildingIntrosSeen(1),
+      mapTutorialSeen: false,
       energyPoints: 0,
       perfectDays: 0,
       evolutionPoints: 0,
