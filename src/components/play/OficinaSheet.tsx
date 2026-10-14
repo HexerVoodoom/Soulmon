@@ -55,11 +55,13 @@ function useNow(active: boolean): number {
   return now;
 }
 
-export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward }: {
+export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle }: {
   language: Language; todayKey?: string; tasks?: WorkshopTask[]; onCompleteTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Recompensa por concluir o processo (1 item, teto diário no ledger). Sem ela, concluir não paga. */
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
+  /** Um ciclo de foco (Pomodoro) terminou de verdade — a missão do dia conta o evento (REGISTRO §52). */
+  onFocusCycle?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
@@ -104,6 +106,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     if (!timer) return;
     const next = recordSession(days, day, timer.totalMs / 60_000);
     setDays(next); saveSessions(next);
+    onFocusCycle?.();
     if (session && timer.expeditionId && timer.sessionId === session.id) {
       const request: FocusLootRequest = { day, environment: timer.expeditionId as FocusEnvironmentId, sessionId: timer.sessionId, eventId: `${timer.sessionId}:${timer.phaseId}` };
       setLootNotice(onFocusReward?.(request, session.completedCycles) ?? null);

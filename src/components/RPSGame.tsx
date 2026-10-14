@@ -39,7 +39,7 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ language, onEarnPoints, onExit }: {
+export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts). Sem uso visual desde o canvas Jogos
    *  (o pet não aparece na cena do PPT — só as mãos), mantido pela assinatura
@@ -47,6 +47,8 @@ export function RPSGame({ language, onEarnPoints, onExit }: {
   demoCharacterId?: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
+  /** A partida chegou ao fim (vitória OU derrota) — a missão do dia conta o jogo, não o resultado (REGISTRO §52). */
+  onMatchEnd?: () => void;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -84,6 +86,7 @@ export function RPSGame({ language, onEarnPoints, onExit }: {
         if (w >= WINS_NEEDED) {
           // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
           onEarnPoints(MATCH_POINTS);
+          onMatchEnd?.();
           setMatchOver('won');
         }
       } else {
@@ -93,6 +96,7 @@ export function RPSGame({ language, onEarnPoints, onExit }: {
         if (w >= WINS_NEEDED) {
           // C-6 (run `som-01`): derrota de minijogo nao usa o som da perda
           // estrutural. A tela de fim de partida ja diz que perdeu.
+          onMatchEnd?.();
           setMatchOver('lost');
         }
       }

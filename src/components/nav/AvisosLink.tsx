@@ -2,7 +2,7 @@ import { Icon } from '../ui/Icon';
 import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAnchor';
 
 /**
- * O BOTÃO DE AVISOS na Home (beta-2, F3 do crítico, 13/10/2026): na pilha do canto direito, logo abaixo das missões. Os avisos do dia
+ * O BOTÃO DE AVISOS na Home (beta-2, F3 do crítico, 13/10/2026): na pilha do canto direito, logo abaixo das missões. O glifo é `info` (14/10/2026): o `event_note` antigo (calendário com nota) lia como o ícone do login diário/check-ins, ocultado pelo dono. Os avisos do dia
  * (HP, incubação, semanal, triagem, convites, check-ins...) NÃO ocupam mais a faixa acima da lista: moram numa folha (`ModalSheet`) que
  * este botão abre, e o botão carrega só um SELO (ponto) quando há algo — sem número, parado, sem som (nada que cobre). Some quando não
  * há aviso nenhum: não há porta para uma folha vazia. A altura acima de "HOJE" fica FIXA (zero), com ou sem aviso.
@@ -39,7 +39,7 @@ export function AvisosLink({ count, label, countLabel, onClick, row }: {
       }}
     >
       <span aria-hidden="true" style={{ display: 'flex', position: 'relative' }}>
-        <Icon name="event_note" size={32} tone="viewport" />
+        <Icon name="info" size={32} tone="viewport" />
         {/* o selo: um ponto dourado, sem número */}
         <span
           data-avisos-seal

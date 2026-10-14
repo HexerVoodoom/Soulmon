@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
+// @vitest-environment jsdom
 /**
- * O MENU DE MISSÕES DA HOME (07/10/2026): "Hoje" e "Esta semana" separados; sem lista de
- * Materiais, sem "abre amanhã"; o ícone da Home some sem nada a fazer nem a entregar.
+ * O MENU DE MISSÕES DA HOME (reescrito em 14/10/2026 para a folha ÚNICA com ABAS: Diárias | Semanal | Conquistas).
+ * Antes eram dois acessos (`kind` daily/weekly) e dois ícones; o teste antigo de "Weekly" e de PT-BR falhava na main por assumir
+ * essa estrutura e o rótulo antigo. Agora: as abas navegam e PRESERVAM estado, o ícone é um só e fica sempre (esmaecido sem pendência).
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { MissionsSheet } from './MissionsSheet';
+import { MissionsSheet, type MissionsTab } from './MissionsSheet';
 import { MissionsLink } from './MissionsLink';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import { claimStroll } from '../../utils/travessiasSave';
@@ -15,9 +17,9 @@ import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 afterEach(cleanup);
 
 const [m] = weeklyMissionsFor('2026-W41');
-const sheet = (language: 'en-US' | 'pt-BR', kind: 'daily' | 'weekly' = 'daily', state?: BuildingQuestState) => render(
+const sheet = (language: 'en-US' | 'pt-BR', initialTab: MissionsTab = 'daily', state?: BuildingQuestState) => render(
   <MissionsSheet
-    kind={kind}
+    initialTab={initialTab}
     open onClose={() => {}} language={language} crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
     todayKey="2026-10-07"
     weekly={[{ mission: m, count: 0, done: false, claimed: false }]} onClaimWeekly={vi.fn()}
@@ -25,43 +27,94 @@ const sheet = (language: 'en-US' | 'pt-BR', kind: 'daily' | 'weekly' = 'daily', 
     buildings={{ state, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn() }}
   />,
 );
+const tab = (key: string) => document.querySelector<HTMLButtonElement>(`[role="tab"][data-tab-key="${key}"]`)!;
+const panel = (key: string) => document.querySelector<HTMLElement>(`[data-missions-panel="${key}"]`);
 
-describe('MissionsSheet — dois acessos', () => {
-  it('Daily: só Hoje (linha do passeio + journaling); a semana e as conquistas NÃO estão aqui', async () => {
-    sheet('en-US', 'daily');
+describe('MissionsSheet: uma folha, três abas', () => {
+  it('Daily abre primeiro: Hoje (passeio + journaling); semana e conquistas ainda não montadas', async () => {
+    sheet('en-US');
     await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull(), { timeout: 8000 });
     const daily = document.querySelector('[data-missions-section="daily"]')!;
     expect(daily.getAttribute('aria-label')).toBe('Today');
-    expect(document.querySelector('[data-missions-sheet]')!.getAttribute('data-missions-sheet')).toBe('daily');
     expect(daily.querySelector('[data-building-quest="exploracao.caderno"]')!.textContent).toContain('Write an entry in your journal');
     expect(daily.querySelector('[data-stroll-line]')!.textContent).toContain('Take a stroll');
     expect(daily.querySelector('[data-travessias]')).toBeNull();
-    expect(daily.querySelector('[data-travessia-card]')).toBeNull();
-    expect(daily.querySelector('[data-travessia-fiz]')).toBeNull();
-    expect(document.querySelector('[data-missions-section="weekly"]')).toBeNull();
-    expect(document.querySelector('[data-missions-section="achievements"]')).toBeNull();
+    expect(panel('weekly')).toBeNull();
+    expect(panel('achievements')).toBeNull();
     expect(document.querySelectorAll('[data-building-quest]').length).toBe(1);
     expect(document.body.textContent ?? '').not.toMatch(/Materials|Materiais|opens tomorrow|abre amanhã/i);
   });
 
-  it('Weekly: Esta semana + Conquistas; nada de diária', async () => {
-    sheet('en-US', 'weekly');
+  it('tablist compacta com as três abas, nome inteiro, aria-selected na ativa', async () => {
+    sheet('en-US');
+    await waitFor(() => expect(document.querySelector('[role="tablist"]')).not.toBeNull());
+    const list = document.querySelector('[role="tablist"]')!;
+    expect(list.className).toContain('sm2-kit-tabs-compact');
+    expect([...list.querySelectorAll('[role="tab"]')].map(t => t.querySelector('[data-tab-label]')!.textContent)).toEqual(['Dailies', 'Weekly', 'Achievements']);
+    expect(tab('daily').getAttribute('aria-selected')).toBe('true');
+    expect(tab('weekly').getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('tocar na aba troca o painel; voltar preserva o que já estava (não remonta)', async () => {
+    sheet('en-US');
+    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 8000 });
+    const quest = document.querySelector('[data-building-quest]')!;
+    fireEvent.click(tab('weekly'));
     await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 8000 });
     expect(document.querySelector('[data-missions-section="weekly"]')!.getAttribute('aria-label')).toBe('This week');
+    expect(panel('weekly')!.hidden).toBe(false);
+    expect(panel('daily')!.hidden).toBe(true);
+    fireEvent.click(tab('achievements'));
+    await waitFor(() => expect(document.querySelector('[data-missions-section="achievements"]')).not.toBeNull(), { timeout: 8000 });
     expect(document.querySelector('[data-missions-section="achievements"]')!.getAttribute('aria-label')).toBe('Achievements');
-    expect(document.querySelector('[data-missions-section="daily"]')).toBeNull();
+    expect(panel('weekly')!.hidden).toBe(true);
+    fireEvent.click(tab('daily'));
+    expect(panel('daily')!.hidden).toBe(false);
+    expect(document.querySelector('[data-building-quest]')).toBe(quest);
+  });
+
+  it('deslizar para o lado troca de aba (e não passa do fim)', async () => {
+    sheet('en-US');
+    await waitFor(() => expect(document.querySelector('[data-missions-swipe]')).not.toBeNull());
+    const area = document.querySelector('[data-missions-swipe]')!;
+    const swipe = (dx: number) => { fireEvent.pointerDown(area, { clientX: 200, clientY: 100 }); fireEvent.pointerUp(area, { clientX: 200 + dx, clientY: 104 }); };
+    swipe(-120);
+    expect(tab('weekly').getAttribute('aria-selected')).toBe('true');
+    swipe(-120);
+    expect(tab('achievements').getAttribute('aria-selected')).toBe('true');
+    swipe(-120);
+    expect(tab('achievements').getAttribute('aria-selected')).toBe('true');
+    swipe(120);
+    expect(tab('weekly').getAttribute('aria-selected')).toBe('true');
+    swipe(10);
+    expect(tab('weekly').getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('abre direto numa aba por initialTab (weekly): sem diária montada', async () => {
+    sheet('en-US', 'weekly');
+    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 8000 });
+    expect(tab('weekly').getAttribute('aria-selected')).toBe('true');
+    expect(panel('daily')).toBeNull();
     expect(document.querySelector('[data-building-quest]')).toBeNull();
-    expect(document.querySelector('[data-travessias]')).toBeNull();
+  });
+
+  it('ponto de pendência na aba que tem marca (com texto para leitor de tela); sem marca, sem ponto', async () => {
+    sheet('en-US');
+    await waitFor(() => expect(document.querySelector('[role="tablist"]')).not.toBeNull());
+    expect(tab('daily').querySelector('[data-tab-dot="available"]')).not.toBeNull();
+    expect(tab('weekly').querySelector('[data-tab-dot="available"]')).not.toBeNull();
+    expect(tab('achievements').querySelector('[data-tab-dot]')).toBeNull();
+    expect(tab('daily').textContent).toContain('Quest available');
   });
 
   it('PT-BR', async () => {
-    sheet('pt-BR', 'daily');
+    sheet('pt-BR');
     await waitFor(() => expect(document.querySelector('[data-missions-section="daily"]')).not.toBeNull());
     expect(document.querySelector('[data-missions-section="daily"]')!.getAttribute('aria-label')).toBe('Hoje');
+    expect([...document.querySelectorAll('[role="tab"] [data-tab-label]')].map(t => t.textContent)).toEqual(['Diárias', 'Semanal', 'Conquistas']);
     await waitFor(() => expect(document.querySelector('[data-building-quest]')!.textContent).toContain('Faça um registro no journaling'));
-    cleanup();
-    sheet('pt-BR', 'weekly');
-    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull());
+    fireEvent.click(tab('weekly'));
+    await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 8000 });
     expect(document.querySelector('[data-missions-section="weekly"]')!.getAttribute('aria-label')).toBe('Esta semana');
   });
 });
@@ -79,7 +132,7 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
     const pronta = completeBuildingQuest(undefined, D, 'exploracao.caderno', 99);
     const onClaim = vi.fn();
     const mk = (state: BuildingQuestState | undefined) => (
-      <MissionsSheet kind="daily" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
+      <MissionsSheet open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
         todayKey={D} weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }}
         buildings={{ state, day: D, bondLevel: 99, onClaim }} />
     );
@@ -103,7 +156,7 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
 describe('a linha "Take a stroll": aponta, pronta, Claim, resgatada (a experiência vive no NPC)', () => {
   const D = '2026-10-07';
   const mk = (crossings: CrossingsState, onClaimStroll = vi.fn(), language: 'en-US' | 'pt-BR' = 'en-US') => (
-    <MissionsSheet kind="daily" open onClose={() => {}} language={language} crossings={crossings} onClaimStroll={onClaimStroll}
+    <MissionsSheet open onClose={() => {}} language={language} crossings={crossings} onClaimStroll={onClaimStroll}
       todayKey={D} weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }} />
   );
   const feita: CrossingsState = { ...CROSSINGS_EMPTY, active: { region: 'floresta', challenge: 'x' }, doneDay: D };
@@ -143,33 +196,27 @@ describe('a linha "Take a stroll": aponta, pronta, Claim, resgatada (a experiên
   });
 });
 
-describe('MissionsLink — dois ícones separados', () => {
-  it('diário e semanal são botões distintos, cada um com seu rótulo, tom e linha; cada um some sozinho', () => {
-    const { container, rerender } = render(<>
-      <MissionsLink kind="daily" mark="available" label="Daily missions" markLabel="Quest available" onClick={() => {}} />
-      <MissionsLink kind="weekly" row={2} mark="ready" tone="blue" label="Weekly missions" markLabel="Quest ready" onClick={() => {}} />
-    </>);
-    const d = container.querySelector<HTMLElement>('[data-missions-kind="daily"]')!;
-    const w = container.querySelector<HTMLElement>('[data-missions-kind="weekly"]')!;
-    expect(d.getAttribute('aria-label')).toBe('Daily missions, Quest available');
-    expect(w.getAttribute('aria-label')).toBe('Weekly missions, Quest ready');
+describe('MissionsLink: um ícone só', () => {
+  it('rótulo, tom, marca e linha; com marca "ready" azul e com "available" dourado', () => {
+    const { container, rerender } = render(<MissionsLink mark="available" label="Missions" markLabel="Quest available" onClick={() => {}} />);
+    const d = container.querySelector<HTMLElement>('[data-missions-link]')!;
+    expect(container.querySelectorAll('[data-missions-link]').length).toBe(1);
+    expect(d.getAttribute('aria-label')).toBe('Missions, Quest available');
     expect(d.getAttribute('data-mission-tone')).toBe('gold');
-    expect(w.getAttribute('data-mission-tone')).toBe('blue');
     expect(d.getAttribute('data-mission-mark-home')).toBe('available');
-    expect(w.getAttribute('data-mission-mark-home')).toBe('ready');
-    expect(d.style.top).not.toBe(w.style.top);
-    rerender(<>
-      <MissionsLink kind="daily" mark={null} label="Daily missions" markLabel={null} onClick={() => {}} />
-      <MissionsLink kind="weekly" mark="ready" tone="blue" label="Weekly missions" markLabel="Quest ready" onClick={() => {}} />
-    </>);
-    expect(container.querySelector('[data-missions-kind="daily"]')).toBeNull();
-    expect(container.querySelector('[data-missions-kind="weekly"]')).not.toBeNull();
+    rerender(<MissionsLink mark="ready" tone="blue" label="Missions" markLabel="Quest ready" onClick={() => {}} />);
+    expect(container.querySelector('[data-missions-link]')!.getAttribute('data-mission-tone')).toBe('blue');
   });
-  it('some sem marca; com marca aparece', () => {
-    const { container, rerender } = render(<MissionsLink mark={null} label="Missions" markLabel={null} onClick={() => {}} />);
-    expect(container.querySelector('[data-missions-link]')).toBeNull();
-    rerender(<MissionsLink mark="ready" label="Missions" markLabel="Quest ready" onClick={() => {}} />);
-    expect(container.querySelector('[data-missions-link]')).not.toBeNull();
+  it('sem pendência o ícone FICA (a porta das abas é permanente), esmaecido e só com o rótulo', () => {
+    const onClick = vi.fn();
+    const { container } = render(<MissionsLink mark={null} label="Missions" markLabel={null} onClick={onClick} />);
+    const b = container.querySelector<HTMLElement>('[data-missions-link]')!;
+    expect(b).not.toBeNull();
+    expect(b.getAttribute('aria-label')).toBe('Missions');
+    expect(b.getAttribute('data-mission-mark-home')).toBe('none');
+    expect(b.style.opacity).toBe('0.6');
+    fireEvent.click(b);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -181,7 +228,7 @@ describe('o primeiro dia é missão (07/10/2026): vive no menu, não na Home', (
       todayKey: '2026-10-07', weekly: [], onClaimWeekly: vi.fn(), missionProgress: {},
     };
     const { rerender } = render(
-      <MissionsSheet kind="daily" {...props} language="en-US"
+      <MissionsSheet {...props} language="en-US"
         marks={{ daily: null, torneio: null, conquistas: null, firstDay: 'available' }} firstDay={fd} />,
     );
     await waitFor(() => expect(document.querySelector('[data-missions-section="first-day"]')).not.toBeNull());
@@ -190,7 +237,7 @@ describe('o primeiro dia é missão (07/10/2026): vive no menu, não na Home', (
     expect(sec.getAttribute('data-quest-mark')).toBe('available');
     expect(sec.textContent).toContain('You two just met');
     rerender(
-      <MissionsSheet kind="daily" {...props} language="pt-BR"
+      <MissionsSheet {...props} language="pt-BR"
         marks={{ daily: null, torneio: null, conquistas: null }} firstDay={null} />,
     );
     expect(document.querySelector('[data-missions-section="first-day"]')).toBeNull();
@@ -202,7 +249,7 @@ describe('Hoje sem "!" no título e "Take a stroll" leva ao prédio (11/10/2026)
     const onGoStroll = vi.fn();
     render(
       <MissionsSheet
-        kind="daily" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} onGoStroll={onGoStroll}
+        open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} onGoStroll={onGoStroll}
         todayKey="2026-10-07" weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}}
         marks={{ daily: 'available', torneio: null, conquistas: null }}
       />,
@@ -220,7 +267,7 @@ describe('Hoje sem "!" no título e "Take a stroll" leva ao prédio (11/10/2026)
 describe('missão do Caderno leva ao prédio', () => {
   it('o texto da linha é um botão que chama onGo("exploracao.caderno"); resgatada, vira texto', async () => {
     const onGo = vi.fn();
-    const base = { kind: 'daily' as const, open: true, onClose: () => {}, language: 'pt-BR' as const, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(), todayKey: '2026-10-07',
+    const base = { open: true, onClose: () => {}, language: 'pt-BR' as const, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(), todayKey: '2026-10-07',
       weekly: [], onClaimWeekly: vi.fn(), missionProgress: {}, marks: { daily: 'available' as const, torneio: null, conquistas: null } };
     render(<MissionsSheet {...base} buildings={{ state: undefined, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
     const go = await waitFor(() => { const b = document.querySelector('[data-building-go="exploracao.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 8000 });

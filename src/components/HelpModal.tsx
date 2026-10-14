@@ -81,9 +81,9 @@ const TERMS: Term[] = [
     descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do seu Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
   },
   {
-    icon: '❗', en: 'Daily & weekly missions', pt: 'Missões diárias e semanais',
-    descEn: 'Two doors on Home: daily missions and weekly missions. A mission only points at what to do. When you really do it, the line turns ready (a ?) and you tap Claim to receive the reward. Nothing counts tasks, and nothing is owed.',
-    descPt: 'Duas portas na Home: missões diárias e missões semanais. A missão só aponta o que fazer. Quando você faz de verdade, a linha fica pronta (um ?) e você toca em Resgatar para receber. Nada conta tarefas, e nada é cobrado.',
+    icon: '❗', en: 'Missions', pt: 'Missões',
+    descEn: 'One icon on Home opens Missions, with three tabs: Dailies, Weekly and Achievements. The dailies invite you to try the other places too (mini-games, focus, care). A mission only points at what to do. When you really do it, the line turns ready (a ?) and you tap Claim to receive the reward. Nothing counts tasks, and nothing is owed.',
+    descPt: 'Um ícone na Home abre as Missões, com três abas: Diárias, Semanal e Conquistas. As diárias convidam a conhecer os outros cantos (minijogos, foco, cuidado). A missão só aponta o que fazer. Quando você faz de verdade, a linha fica pronta (um ?) e você toca em Resgatar para receber. Nada conta tarefas, e nada é cobrado.',
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',

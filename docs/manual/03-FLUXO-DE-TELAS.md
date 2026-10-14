@@ -1093,8 +1093,11 @@ type ShopSegment = 'shop' | 'tournament';
   `src/utils/weeklyMissions.fiacao.test.ts`.
 - **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (a ação real, guardar um registro no Caderno, é que conclui); o lote **não** leva marca
   e a folha do prédio **não** tem painel de missão (**exceção: o Passeio**, cuja experiência inteira fica no lote — 08/10/2026; a Home só lista a linha "Take a stroll"): a UI das demais vive só no menu de Missões da Home
-  (`MissionsSheet kind="daily"`: "Primeiro dia" + "Hoje"/"Today"; `kind="weekly"`: "Esta semana"/"This week" + Conquistas — dois ícones na Home, cada um some sem
-  nada a fazer nem a entregar; linha aponta, pronta, Resgatar). Ver
+  (`MissionsSheet`, **UMA folha com três ABAS compactas** — `PixelTabs variant="compact"`, o mesmo componente do Centro de Evolução —
+  desde 14/10/2026 (REGISTRO §52): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
+  recursos, `DailyMissionList`), **Semanal** ("Esta semana"/"This week") e **Conquistas**; toque ou deslize troca de aba, as já visitadas
+  ficam montadas; **um ícone só** na Home (`MissionsLink`), sempre presente — esmaecido sem pendência — com um ponto discreto na aba que
+  tem "!"/"?". Os dois ícones antigos (diário/semanal) saíram; linha aponta, pronta, Resgatar). Ver
   [§50-B](02-REGRAS-DE-NEGOCIO.md#50-b-missao-por-predio--materiais-decisao-do-dono-07102026).
 
 ### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)
