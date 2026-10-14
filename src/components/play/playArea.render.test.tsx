@@ -219,7 +219,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(start);
     await achar(container, '[data-jogo="dino"]');
     expect(recebidas.dino.onScore).toBe(p.onDinoScore);
-    expect(recebidas.dino.onEarnPoints).toBe(p.onEarnPoints);
+    // 14/10/2026: o Dino embrulha o funil para também avisar a missão do dia (REGISTRO §50) — o Bit continua passando intacto.
+    (recebidas.dino.onEarnPoints as (pts: number) => void)(7);
+    expect(p.onEarnPoints).toHaveBeenCalledWith(7);
   });
 
   it('EN: rótulos e folha em inglês', async () => {

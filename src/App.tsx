@@ -21,6 +21,7 @@ import { AvisosSheet } from './components/nav/AvisosSheet';
 import { needsWelcomeTour } from './utils/welcomeTour';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
+import { bumpDaily, claimDaily, dailyMissionsMark, type DailyEvent } from './utils/dailyMissions';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
@@ -780,9 +781,8 @@ export default function App() {
   /** O menu ícone da Home (D6). */
   /* Rodada 7 (M8): a lista de missões aberta pelo ícone da Home. */
   /** Os DOIS acessos de missão da Home (07/10/2026): a folha diária e a semanal, cada uma com a sua porta. */
-  const [missionsOpen, setMissionsOpen] = useState<null | 'daily' | 'weekly'>(null);
-  const abrirMissoesDiarias = useCallback(() => setMissionsOpen('daily'), []);
-  const abrirMissoesSemanais = useCallback(() => setMissionsOpen('weekly'), []);
+  const [missionsOpen, setMissionsOpen] = useState<null | 'daily'>(null);
+  const abrirMissoes = useCallback(() => setMissionsOpen('daily'), []);
   const fecharMissoes = useCallback(() => setMissionsOpen(null), []);
   const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
@@ -3502,6 +3502,7 @@ export default function App() {
     // WP1.3 — só a comida COMUM conta o gesto: o item especial (coraçãozinho,
     // chip) sai por outro caminho e não é o que se está ensinando aqui.
     marcarGestoDoDia('feed');
+    contarDiaria('comida');
     atenderRefeicao('snack');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
@@ -3733,11 +3734,22 @@ export default function App() {
    * virada de semana (`forWeek`) tem de acontecer no MESMO updater que soma —
    * senão um contador de semana passada recebe +1 antes de ser zerado.
    */
+  /* As MISSÕES DIÁRIAS dos outros recursos (14/10/2026, `utils/dailyMissions.ts`, REGISTRO §50) contam o MESMO evento real:
+     os gestos que já têm contador semanal alimentam também o dia (aqui, no mesmo updater); os demais chamam `contarDiaria`. */
+  const contarDiaria = useCallback((evento: DailyEvent) => {
+    setGameState(prev => ({ ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento) }));
+  }, []);
   const contarMissao = useCallback((id: WeeklyMissionId) => {
+    const doDia: Partial<Record<WeeklyMissionId, DailyEvent>> = {
+      shower: 'banho', 'play-days': 'brincar', 'mood-checkins': 'humor', 'rub-days': 'carinho', 'friend-visit': 'amigo', 'tournament-match': 'torneio',
+    };
     setGameState(prev => {
-      const semana = isoWeekKey(playerDayKey(new Date(), prev.playerDayTz));
-      if (!semana) return prev;
-      return { ...prev, weeklyMissions: bumpWeekly(forWeek(prev.weeklyMissions, semana), id) };
+      const dia = playerDayKey(new Date(), prev.playerDayTz);
+      const evento = doDia[id];
+      const base = evento ? { ...prev, dailyMissions: bumpDaily(prev.dailyMissions, dia, evento) } : prev;
+      const semana = isoWeekKey(dia);
+      if (!semana) return base;
+      return { ...base, weeklyMissions: bumpWeekly(forWeek(base.weeklyMissions, semana), id) };
     });
   }, []);
 
@@ -3753,13 +3765,14 @@ export default function App() {
     if (v === atual) return;
     // A missão "visite a árvore de evolução" conta a NAVEGAÇÃO até ela.
     if (areaOf(v) === 'laboratorio') contarMissao('evolve-view');
+    if (areaOf(v) === 'mercado') contarDiaria('mercado');
     const lateral = areaOf(v) !== null && areaOf(atual) !== null;
     try {
       if (lateral) window.history.replaceState({ smView: v }, '');
       else window.history.pushState({ smView: v }, '');
     } catch { /* history indisponível (sandbox): a navegação segue sem ela */ }
     setCurrentView(v);
-  }, [contarMissao]);
+  }, [contarMissao, contarDiaria]);
 
   /* O "Ir lá" do material na Mochila. A missão que está no menu da Home (`LISTED_QUEST_BUILDINGS`, o Caderno) abre o menu de
      Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
@@ -3846,7 +3859,8 @@ export default function App() {
      `grep -rn "kind: 'dungeonFloor'" src` não achava emissor nenhum. */
   const handleDungeonFloorCleared = useCallback(() => {
     setGameState(prev => applyFloorCleared(prev, new Date()));
-  }, []);
+    contarDiaria('masmorra');
+  }, [contarDiaria]);
 
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
@@ -5081,6 +5095,7 @@ export default function App() {
     if (isSleeping) {
       // Perder isto só custa a hora de deitar da noite em curso. Silencioso.
       writeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, now.toISOString(), { silent: true });
+      contarDiaria('sono');
       /* 🔗 #59b — 🛏️ NOITE DE DESCANSO. Só a noite DENTRO da janela rende XP:
          é a MESMA régua da missão `rest-nights` logo abaixo, e premiar toda
          noite pagaria por ir dormir em vez de por ir no horário — o que a
@@ -5922,8 +5937,14 @@ export default function App() {
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
     buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
+    dailyExtra: dailyMissionsMark(gameState.dailyMissions, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+  }), [diaDoPasseio, primeiroDiaAtivo, crossings, gameState.playerDayTz, gameState.ownedBackgrounds, gameState.buildingQuests, gameState.dailyMissions, gameState.totalXP, missoesDaSemana, JSON.stringify(missionProgress)]);
+
+  /** Resgata uma missão diária dos outros recursos (`utils/dailyMissions.ts`). Idempotente: reconfere sobre o `prev` (toque duplo não paga 2×). */
+  const resgatarDiaria = useCallback((id: string) => {
+    setGameState(prev => claimDaily(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
+  }, []);
 
   /** Entrar num prédio conta a missão do dia dele (`utils/buildingQuests.ts`). PURO sobre `prev`; sem mudança devolve `prev`. */
   const visitarPredio = useCallback((id: BuildingId) => {
@@ -6803,6 +6824,7 @@ export default function App() {
                 profissaoNome={manifestacaoAtual?.profissaoNome}
                 petElement={gameState.soulmonMeta?.dominantElement}
                 onEarnPoints={handleEarnGamePoints}
+                onDailyEvent={contarDiaria}
                 /* Exploração + Jogos: os MESMOS handlers que a antiga
                    `ActivitiesPage` recebia. */
                 play={{
@@ -7679,29 +7701,17 @@ export default function App() {
       )}
       {currentView === 'home' && (
         <MissionsLink
-          kind="daily"
-          mark={marcasDeMissao.dailyCorner}
-          tone="gold"
-          markLabel={questMarkLabel(marcasDeMissao.dailyCorner, language === 'pt-BR')}
-          label={language === 'pt-BR' ? 'Missões diárias' : 'Daily missions'}
-          onClick={abrirMissoesDiarias}
-        />
-      )}
-      {currentView === 'home' && (
-        <MissionsLink
-          kind="weekly"
-          row={marcasDeMissao.dailyCorner === null ? 1 : 2}
-          mark={marcasDeMissao.weeklyCorner}
-          tone={marcasDeMissao.weeklyTone}
-          markLabel={questMarkLabel(marcasDeMissao.weeklyCorner, language === 'pt-BR')}
-          label={language === 'pt-BR' ? 'Missões semanais' : 'Weekly missions'}
-          onClick={abrirMissoesSemanais}
+          mark={marcasDeMissao.corner}
+          tone={marcasDeMissao.cornerTone}
+          markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
+          label={language === 'pt-BR' ? 'Missões' : 'Missions'}
+          onClick={abrirMissoes}
         />
       )}
       {currentView === 'home' && (
         <AvisosLink
           count={avisosDoDia.lista.length}
-          row={(1 + (marcasDeMissao.dailyCorner !== null ? 1 : 0) + (marcasDeMissao.weeklyCorner !== null ? 1 : 0)) as 1 | 2 | 3}
+          row={2}
           label={language === 'pt-BR' ? 'Avisos' : 'Notices'}
           countLabel={language === 'pt-BR'
             ? `${avisosDoDia.lista.length} ${avisosDoDia.lista.length === 1 ? 'aviso' : 'avisos'}`
@@ -7723,7 +7733,7 @@ export default function App() {
         onClose={() => setCheckInsAbertos(false)}
       /></Suspense>}
       {missionsOpen && <Suspense fallback={null}><MissionsSheet
-        kind={missionsOpen}
+        initialTab={missionsOpen}
         open
         onClose={fecharMissoes}
         language={language}
@@ -7742,6 +7752,12 @@ export default function App() {
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarPredio,
           onGo: irAoPredioDaMissao,
+        }}
+        dailies={{
+          state: gameState.dailyMissions,
+          day: playerDayKey(new Date(), gameState.playerDayTz),
+          bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+          onClaim: resgatarDiaria,
         }}
       /></Suspense>}
       {currentView === 'map' && (

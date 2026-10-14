@@ -45,6 +45,8 @@ export interface QuestMarkInput {
   passeioReady?: boolean;
   /** O cartão do PRIMEIRO DIA ainda está de pé (`shouldShowFirstDay`)? É uma missão: vive no menu de Missões, nunca na lista de tarefas. */
   firstDay?: boolean;
+  /** A marca das missões do dia dos outros recursos (`dailyMissionsMark`, REGISTRO §50): entra em "Hoje" e no ícone. */
+  dailyExtra?: QuestMark;
 }
 
 export interface QuestMarks {
@@ -92,11 +94,12 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   const buildings = input.buildings ?? {};
   const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
   const firstDay: QuestMark = input.firstDay ? 'available' : null;
-  const daily = strongestMark([passeio, predios]);
-  const corner = strongestMark([firstDay, passeio, torneio, conquistas, predios]);
-  const fontes: [QuestMark, QuestTone][] = [[firstDay, 'gold'], [passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold']];
+  const extra: QuestMark = input.dailyExtra ?? null;
+  const daily = strongestMark([passeio, predios, extra]);
+  const corner = strongestMark([firstDay, passeio, torneio, conquistas, predios, extra]);
+  const fontes: [QuestMark, QuestTone][] = [[firstDay, 'gold'], [passeio, 'gold'], [torneio, 'blue'], [conquistas, 'gold'], [predios, 'gold'], [extra, 'gold']];
   const cornerTone = fontes.find(([m]) => m === corner && corner !== null)?.[1] ?? 'gold';
-  const dailyCorner = strongestMark([firstDay, passeio, predios]);
+  const dailyCorner = strongestMark([firstDay, passeio, predios, extra]);
   const weeklyCorner = strongestMark([torneio, conquistas]);
   const weeklyTone: QuestTone = torneio === weeklyCorner && weeklyCorner !== null ? 'blue' : 'gold';
   return { corner, passeio, daily, torneio, conquistas, cornerTone, buildings, firstDay, dailyCorner, weeklyCorner, weeklyTone };

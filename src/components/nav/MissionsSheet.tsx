@@ -1,12 +1,14 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useRef, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { CrossingsState } from '../../types/travessias';
 import { ModalSheet } from '../form/FormKit';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
 import type { BuildingQuestsProps } from './BuildingQuestList';
-import { questMarkLabel, type QuestMark } from '../../utils/questMarks';
+import { questMarkLabel, strongestMark, type QuestMark } from '../../utils/questMarks';
 import { MissionMark } from '../play/MissionMark';
+import { PixelTabs } from '../pixel/PixelKit';
 import { StrollQuestLine } from './StrollQuestLine';
+import { DailyMissionList, type DailyMissionsProps } from './DailyMissionList';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
@@ -14,14 +16,21 @@ const WeeklyMissionList = lazy(() => import('../mercado/ShopShelf').then(m => ({
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 const BuildingQuestList = lazy(() => import('./BuildingQuestList').then(m => ({ default: m.BuildingQuestList })));
 
+export type MissionsTab = 'daily' | 'weekly' | 'achievements';
+
+const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
+
 /**
- * A LISTA DE MISSÕES, aberta pelos ícones da Home. O Passeio é a EXCEÇÃO (07/10/2026,
- * "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
+ * A LISTA DE MISSÕES, aberta pelo ÚNICO ícone de missões da Home (14/10/2026, pedido do dono: "coloque tudo dentro do mesmo ícone de
+ * missão com tab para dailies, semanal, achievements"). UMA folha, três ABAS COMPACTAS (`PixelTabs variant="compact"`, o mesmo
+ * componente do Centro de Evolução, 10.3): Diárias | Semanal | Conquistas. Toque OU deslize para o lado troca de aba. As abas já
+ * visitadas ficam montadas (`hidden`), então trocar de aba não perde estado nem refaz a carga.
+ * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ kind, open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, firstDay }: {
-  /** Qual acesso abriu esta folha (07/10/2026): `daily` = Primeiro dia + Hoje; `weekly` = Esta semana + Conquistas. */
-  kind: 'daily' | 'weekly';
+export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firstDay }: {
+  /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
+  initialTab?: MissionsTab;
   open: boolean;
   onClose: () => void;
   language: Language;
@@ -42,36 +51,91 @@ export function MissionsSheet({ kind, open, onClose, language, crossings, onClai
   firstDay?: FirstDayProgress | null;
   /** As missões de prédio listadas no menu (`utils/buildingQuests.ts`). Fazem parte de "Hoje". */
   buildings?: BuildingQuestsProps;
+  /** As missões do dia dos outros recursos (`utils/dailyMissions.ts`). Fazem parte de "Hoje". */
+  dailies?: DailyMissionsProps;
 }) {
   const isPt = language === 'pt-BR';
-  const daily = kind === 'daily';
+  const [tab, setTab] = useState<MissionsTab>(initialTab);
+  const [seen, setSeen] = useState<ReadonlySet<MissionsTab>>(() => new Set([initialTab]));
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
+  const go = (t: MissionsTab) => { setTab(t); setSeen(prev => (prev.has(t) ? prev : new Set(prev).add(t))); };
+  const tabMarks: Record<MissionsTab, QuestMark> = {
+    daily: strongestMark([marks.daily, marks.firstDay ?? null]),
+    weekly: marks.torneio,
+    achievements: marks.conquistas,
+  };
+  const names: Record<MissionsTab, string> = {
+    daily: isPt ? 'Diárias' : 'Dailies',
+    weekly: isPt ? 'Semanal' : 'Weekly',
+    achievements: isPt ? 'Conquistas' : 'Achievements',
+  };
   return (
-    <ModalSheet open={open} title={daily ? (isPt ? 'Missões diárias' : 'Daily missions') : (isPt ? 'Missões semanais' : 'Weekly missions')} onClose={onClose} language={language}>
-      <div data-missions-sheet={kind}>
-        <Suspense fallback={null}>
-          {daily && firstDay && (
-            <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
-              <FirstDayCard progress={firstDay} language={language} />
-            </Section>
-          )}
-          {daily && <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} onGo={onGoStroll} />
-              {buildings && <BuildingQuestList language={language} {...buildings} />}
-            </div>
-          </Section>}
-          {!daily && (
-            <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} tone="blue" isPt={isPt} id="weekly">
-              <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
-            </Section>
-          )}
-          {/* Conquistas (permanentes) moram na folha SEMANAL: são o "longo prazo" das missões e não pertencem ao dia. */}
-          {!daily && (
-            <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt} id="achievements">
-              <ConquistasSheet language={language} missionProgress={missionProgress} />
-            </Section>
-          )}
-        </Suspense>
+    <ModalSheet open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}>
+      <div data-missions-sheet={tab}>
+        <PixelTabs
+          variant="compact"
+          ariaLabel={isPt ? 'Tipos de missão' : 'Mission types'}
+          value={tab}
+          onChange={go}
+          style={{ marginBottom: 12 }}
+          items={ORDER.map(t => ({
+            key: t,
+            label: names[t],
+            glyph: tabMarks[t] ? (
+              <>
+                <span aria-hidden="true" data-tab-dot={tabMarks[t]} style={{ width: 6, height: 6, borderRadius: '50%', background: t === 'weekly' ? 'var(--sm2-primary-ink)' : 'var(--sm2-viewport-warn, #EBBE84)', flex: 'none' }} />
+                <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(tabMarks[t], isPt)}</span>
+              </>
+            ) : undefined,
+          }))}
+        />
+        <div
+          data-missions-swipe
+          style={{ touchAction: 'pan-y' }}
+          onPointerDown={e => { swipeRef.current = { x: e.clientX, y: e.clientY }; }}
+          onPointerUp={e => {
+            const o = swipeRef.current; swipeRef.current = null;
+            if (!o) return;
+            const dx = e.clientX - o.x; const dy = e.clientY - o.y;
+            if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            const next = ORDER[ORDER.indexOf(tab) + (dx < 0 ? 1 : -1)];
+            if (next) go(next);
+          }}
+          onPointerCancel={() => { swipeRef.current = null; }}
+        >
+          <Suspense fallback={null}>
+            {seen.has('daily') && (
+              <div role="tabpanel" hidden={tab !== 'daily'} data-missions-panel="daily">
+                {firstDay && (
+                  <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
+                    <FirstDayCard progress={firstDay} language={language} />
+                  </Section>
+                )}
+                <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} onGo={onGoStroll} />
+                    {buildings && <BuildingQuestList language={language} {...buildings} />}
+                    {dailies && <DailyMissionList language={language} {...dailies} />}
+                  </div>
+                </Section>
+              </div>
+            )}
+            {seen.has('weekly') && (
+              <div role="tabpanel" hidden={tab !== 'weekly'} data-missions-panel="weekly">
+                <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} tone="blue" isPt={isPt} id="weekly">
+                  <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
+                </Section>
+              </div>
+            )}
+            {seen.has('achievements') && (
+              <div role="tabpanel" hidden={tab !== 'achievements'} data-missions-panel="achievements">
+                <Section title={isPt ? 'Conquistas' : 'Achievements'} mark={marks.conquistas} isPt={isPt} id="achievements">
+                  <ConquistasSheet language={language} missionProgress={missionProgress} />
+                </Section>
+              </div>
+            )}
+          </Suspense>
+        </div>
       </div>
     </ModalSheet>
   );

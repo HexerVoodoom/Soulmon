@@ -7,6 +7,7 @@ import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, t
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
+import type { DailyEvent } from '../../utils/dailyMissions';
 import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
 import { useBackLayer } from '../../utils/backStack';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
@@ -157,6 +158,8 @@ export interface AreaViewProps {
   /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes da Masmorra. */
   petElement?: string;
   onEarnPoints: (points: number) => void;
+  /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §50). */
+  onDailyEvent?: (event: DailyEvent) => void;
   /** Exploração + Jogos (F5). */
   play: PlayHandlers;
   /** 🧭 Passeio + Travessias (30/09/2026): o estado do save e o único caminho de
@@ -358,7 +361,7 @@ export function AreaView(props: AreaViewProps) {
               language={language}
               skills={props.skills}
               petElement={props.petElement}
-              onEarnPoints={props.onEarnPoints}
+              onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('arena'); }}
               onExit={() => setDuelOpen(false)}
             />
           </Suspense>
@@ -398,7 +401,7 @@ export function AreaView(props: AreaViewProps) {
                 seed={props.passeio?.seed}
               />
             )}
-            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} />}
+            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
@@ -436,7 +439,7 @@ export function AreaView(props: AreaViewProps) {
                 evolutionStage={props.evolutionStage}
                 demoCharacterId={props.demoCharacterId}
                 language={language}
-                onEarnPoints={props.onEarnPoints}
+                onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
                 onScore={play.onDinoScore}
                 onExit={exitGame}
               />
@@ -447,11 +450,12 @@ export function AreaView(props: AreaViewProps) {
                 demoCharacterId={props.demoCharacterId}
                 language={language}
                 onEarnPoints={props.onEarnPoints}
+                onMatchEnd={() => props.onDailyEvent?.('ppt')}
                 onExit={exitGame}
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} onEarnPoints={props.onEarnPoints} />}
+            {game === 'match3' && <Match3Game {...base} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} onEarnPoints={props.onEarnPoints} />}
             {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}
