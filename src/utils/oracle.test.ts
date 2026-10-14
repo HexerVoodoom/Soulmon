@@ -220,8 +220,9 @@ describe('generateOracle', () => {
       // Template validado empiricamente: prompt CURTO estilo v-pet, sem fundo,
       // sem outline/shading/anti-aliasing (frases longas geram sprites piores —
       // ver composeSpritePrompt).
-      expect(s.imagePrompt.startsWith('Generate an original creature')).toBe(true);
-      expect(s.imagePrompt).toContain('Retro virtual-pet sprite, 16x16 pixel art, no background');
+      expect(s.imagePrompt.startsWith('Generate this RPG creature inspired by')).toBe(true);
+      expect(s.imagePromptFallback.startsWith('Generate this original RPG creature.')).toBe(true);
+      expect(s.imagePrompt).toContain('Tamagotchi-style v-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe');
       // Duas variantes por forma: a 1ª tentativa CITA as referências de gênero
       // (decisão do dono: puxa resultado melhor) e o fallback não cita ninguém.
       // Se o provedor recusar a primeira, generate-sprite.js refaz com a
@@ -240,19 +241,18 @@ describe('generateOracle', () => {
       expect(s.imagePromptFallback).toContain(SPRITE_FACING_PROMPT);
       expect(s.imagePromptFallback).toContain('Do not copy any existing franchise character');
       // Fora as referências, os dois prompts pedem exatamente a mesma criatura.
-      expect(s.imagePromptFallback).toContain(`transparent background: ${s.imagePrompt.split('transparent background: ')[1]}`.trim());
-      expect(s.imagePrompt).toContain('transparent background');
+      expect(s.imagePromptFallback).toContain(`no green fringe: ${s.imagePrompt.split('no green fringe: ')[1]}`.trim());
+      // §48: fundo VERDE chroma (a API não gera alfa; o servidor faz o chroma-key). Sem pedido de transparência.
+      expect(s.imagePrompt).toContain('#00FF00 chroma-green background');
+      expect(s.imagePromptFallback).toContain('#00FF00 chroma-green background');
+      expect(s.imagePrompt).not.toMatch(/transparent|checkerboard/i);
+      expect(s.imagePrompt).toContain('isolated subject');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      // O gerador entregava criaturas quase monocromáticas; o veto ao
-      // tingimento de matiz única vale para TODOS os estágios.
-      expect(s.imagePrompt).toContain('Do not tint the whole creature in a single hue');
-      // Escala de cinza é exceção permitida — preto e branco é escolha de arte,
-      // não falta de cor. Se alguém reintroduzir o veto, isto quebra.
-      expect(s.imagePrompt).toContain('Grayscale/black-and-white is acceptable');
-      expect(s.imagePrompt).not.toMatch(/not grayscale/i);
+      // v-pet (§47): sem o veto de matiz única (o exemplo do dono não o tem).
+      expect(s.imagePrompt).not.toContain('Do not tint');
       // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
-      const conceptMatch = s.imagePrompt.match(/transparent background: (.+?)\. /);
+      const conceptMatch = s.imagePrompt.match(/no green fringe: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();
       expect(conceptMatch![1].length).toBeGreaterThan(5);
     }
@@ -261,7 +261,7 @@ describe('generateOracle', () => {
   it('conceito é curto (espécie + classe definitiva) e constante entre estágios', () => {
     const r = generateOracle(INPUT, 42);
     // Mesmo conceito em todos os estágios (identidade da espécie)
-    const concepts = r.creature.stages.map(s => s.imagePrompt.match(/transparent background: (.+?)\. /)![1]);
+    const concepts = r.creature.stages.map(s => s.imagePrompt.match(/no green fringe: (.+?)\. /)![1]);
     expect(new Set(concepts).size).toBe(1);
     const concept = concepts[0];
     // Curto de propósito: espécie + classe (+ adjetivo do elemento secundário)
@@ -423,7 +423,7 @@ describe('generateOracle', () => {
     expect([r.creature.fusion.a.en, r.creature.fusion.b.en]).toContain('wolf');
     // A descrição do pet SUBSTITUI o conceito (no slot do subject) em TODOS
     for (const s of r.creature.stages) {
-      const concept = s.imagePrompt.match(/transparent background: (.+?)\. /)![1];
+      const concept = s.imagePrompt.match(/no green fringe: (.+?)\. /)![1];
       expect(concept).toBe('um lobo de gelo protetor, calmo, com olhos azuis'.slice(0, 200));
     }
     // A bio também vira a descrição literal do dono (não a narrativa gerada)

@@ -830,6 +830,17 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
     expect(r.healthPoints).toBe(4); // e não perdeu coração nenhum
   });
 
+  it('🍽️ 14/10/2026: o dia completo ignora COMIDA (fome cheia ou faminto, mesmo resultado) e a virada zera só o que o resumo vai contar da fome', () => {
+    const base = megaNoSabado(2, 0);
+    const comFome = runReset({ ...base, hunger: { v: 0, at: 0 }, hungerPenalty: { since: 5, paid: 3, unreported: 1 } }, DOMINGO);
+    const cheio = runReset({ ...base, hunger: { v: 100, at: DOMINGO.getTime() } }, DOMINGO);
+    expect(comFome.lastDayWasPerfect).toBe(true);
+    expect(cheio.lastDayWasPerfect).toBe(true);
+    expect(comFome.lastDayReport.hungerHeartsLost).toBe(1);
+    expect(comFome.hungerPenalty).toEqual({ since: 5, paid: 3, unreported: 0 }); // âncora e janelas pagas atravessam a virada
+    expect(cheio.lastDayReport.hungerHeartsLost).toBe(0);
+  });
+
   it('⚡ 11/10/2026: quem fez a meta e NÃO comeu TEM o dia completo (energia saiu do critério)', () => {
     // A energia virou combustível da masmorra (decisão do dono); o dia completo
     // é o selo do dia e depende só do peso feito.

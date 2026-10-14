@@ -4,7 +4,7 @@
  * cheia `View all` (`Tasks`/`Habits`/`Scheduled`), o pai que nunca conclui
  * direto, o recolher ao concluir tudo e o cabeçalho Today/Goal.
  */
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { useState } from 'react';
 import { screen, fireEvent, within, cleanup, act } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
@@ -12,6 +12,14 @@ import { DailyRituals } from './DailyRituals';
 import { closeTopBackLayer } from '../utils/backStack';
 import type { Activity, Task } from '../contexts/GameStateContext';
 
+/** Movimento reduzido ligado: o deslize some e a tela desmonta na hora. */
+function reduzirMovimento(reduz: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (q: string) => ({ matches: reduz && q.includes('prefers-reduced-motion'), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
+  });
+}
+beforeEach(() => reduzirMovimento(true));
 afterEach(cleanup);
 
 const TERCA = new Date(2026, 9, 13, 10, 0, 0); // terça-feira
@@ -46,6 +54,12 @@ describe('2.1 Home: só hoje, em Tasks e Habits', () => {
     const { container } = mount();
     const secoes = Array.from(container.querySelectorAll('[data-ritual-section]')).map(e => e.textContent);
     expect(secoes).toEqual(['Tasks', 'Habits']);
+    // Hábito = todo dia: só o diário fica em Habits; a agendada que cai hoje é uma Task.
+    const cabHabits = container.querySelector('[data-ritual-section="habits"]') as HTMLElement;
+    const linhaAgendada = Array.from(container.querySelectorAll('li.sm2-ritual')).find(li => li.textContent?.includes('Aula de terça')) as HTMLElement;
+    const linhaDiaria = Array.from(container.querySelectorAll('li.sm2-ritual')).find(li => li.textContent?.includes('Beber água')) as HTMLElement;
+    expect(cabHabits.compareDocumentPosition(linhaDiaria) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cabHabits.compareDocumentPosition(linhaAgendada) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     const txt = container.textContent ?? '';
     expect(txt).toContain('Pagar conta');
     expect(txt).toContain('Beber água');
@@ -67,19 +81,53 @@ describe('2.1 Home: só hoje, em Tasks e Habits', () => {
 });
 
 describe('2.3 View all', () => {
-  it('o botão `View all` abre a tela com Tasks, Habits e Scheduled', () => {
+  it('o gatilho `View all` é discreto: texto pequeno e de baixa ênfase (CSS)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('src/index.css', 'utf8');
+    const bloco = css.slice(css.indexOf('.sm3-ver-tudo button {'), css.indexOf('.sm3-ver-tudo button:focus-visible'));
+    expect(bloco).toContain('var(--sm2-text-xs)');
+    expect(bloco).toContain('font-weight: 400');
+    expect(bloco).toContain('color: var(--sm2-muted)');
+  });
+  it('o botão abre a tela SÓ com tasks programadas: nome + dias; hábito e pontual de hoje ficam fora', () => {
     mount();
     abrirTudo();
     const tela = document.querySelector('[data-all-activities]') as HTMLElement;
     expect(tela).not.toBeNull();
-    const sec = (k: string) => within(tela.querySelector(`[data-all-section="${k}"]`) as HTMLElement);
-    expect(sec('tasks').getByText('Pagar conta')).toBeTruthy();
-    expect(sec('tasks').getByText('Declarar imposto')).toBeTruthy();       // futura continua em View all
-    expect(sec('habits').getByText('Beber água')).toBeTruthy();
-    expect(sec('scheduled').getByText('Reunião de segunda')).toBeTruthy(); // segunda continua em View all
-    expect(sec('scheduled').getByText('Aula de terça')).toBeTruthy();
-    expect(sec('scheduled').getByText('Trocar filtro')).toBeTruthy();
-    expect(sec('habits').queryByText('Reunião de segunda')).toBeNull();
+    const sec = within(tela.querySelector('[data-all-section="scheduled"]') as HTMLElement);
+    expect(sec.getByText('Reunião de segunda')).toBeTruthy();   // segunda continua em View all
+    expect(sec.getByText('Mon')).toBeTruthy();                  // com os dias em que aparece
+    expect(sec.getByText('Aula de terça')).toBeTruthy();
+    expect(sec.getByText('Trocar filtro')).toBeTruthy();
+    expect(sec.getByText('Every 30 days')).toBeTruthy();
+    expect(sec.getByText('Declarar imposto')).toBeTruthy();     // pontual com início futuro
+    expect(within(tela).queryByText('Beber água')).toBeNull();  // hábito (todo dia) não aparece
+    expect(within(tela).queryByText('Pagar conta')).toBeNull(); // pontual de hoje mora no Today
+    expect(tela.querySelector('[data-all-section="habits"], [data-all-section="tasks"]')).toBeNull();
+  });
+  it('NÃO dá para marcar: sem checkbox; tocar na linha abre a edição', () => {
+    const onEditActivity = vi.fn();
+    const onToggleActivity = vi.fn();
+    mount({ onEditActivity, onToggleActivity });
+    abrirTudo();
+    const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+    expect(tela.querySelectorAll('[role="checkbox"]').length).toBe(0);
+    fireEvent.click(within(tela).getByText('Aula de terça'));
+    expect(onEditActivity).toHaveBeenCalledWith('s2');
+    expect(onToggleActivity).not.toHaveBeenCalled();
+  });
+  it('terça e quinta numa SEGUNDA: fora do Today, dentro do View all, editável', () => {
+    const SEGUNDA = new Date(2026, 9, 12, 10, 0, 0);
+    const tt = { ...base, id: 'tt', name: 'Natação', weekDays: [2, 4], schedule: { kind: 'weekdays', days: [2, 4] } } as unknown as Activity;
+    const onEditActivity = vi.fn();
+    const { container } = mount({ now: SEGUNDA, activities: [tt], tasks: [], onEditActivity });
+    expect(container.textContent).not.toContain('Natação');
+    abrirTudo();
+    const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+    expect(within(tela).getByText('Natação')).toBeTruthy();
+    expect(within(tela).getByText('Tue · Thu')).toBeTruthy();
+    fireEvent.click(within(tela).getByText('Natação'));
+    expect(onEditActivity).toHaveBeenCalledWith('tt');
   });
   it('a tela tem seta de voltar e `View today`; as duas voltam à Home', () => {
     mount();
@@ -133,6 +181,36 @@ describe('2.3 View all', () => {
     abrirTudo();
     expect(screen.getByRole('button', { name: 'Ver hoje' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Voltar' })).toBeTruthy();
+  });
+});
+
+describe('2.3 View all: swipe e movimento reduzido', () => {
+  it('com movimento normal a tela desliza: monta com animação e sai deslizando antes de desmontar', () => {
+    vi.useFakeTimers();
+    try {
+      reduzirMovimento(false);
+      mount();
+      abrirTudo();
+      const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+      expect(tela.hasAttribute('data-closing')).toBe(false);
+      fireEvent.click(within(tela).getByRole('button', { name: 'View today' }));
+      expect((document.querySelector('[data-all-activities]') as HTMLElement).hasAttribute('data-closing')).toBe(true); // deslizando de volta
+      act(() => { vi.advanceTimersByTime(300); });
+      expect(document.querySelector('[data-all-activities]')).toBeNull();
+    } finally { vi.useRealTimers(); }
+  });
+  it('o CSS declara o deslize lateral e o desliga em prefers-reduced-motion', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('src/index.css', 'utf8');
+    expect(css).toContain('@keyframes sm3-tudo-in { from { transform: translateX(100%); }');
+    const canonico = css.slice(css.lastIndexOf('@media (prefers-reduced-motion'));
+    expect(canonico).toMatch(/\.sm3-tudo, \.sm3-tudo\[data-closing\] \{ animation: none !important; \}/);
+  });
+  it('movimento reduzido: fecha e desmonta na hora, sem esperar animação', () => {
+    mount();
+    abrirTudo();
+    fireEvent.click(screen.getByRole('button', { name: 'View today' }));
+    expect(document.querySelector('[data-all-activities]')).toBeNull();
   });
 });
 

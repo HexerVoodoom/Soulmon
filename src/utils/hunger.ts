@@ -115,6 +115,17 @@ export function speedPct(tier: HungerTier): number {
   return tier === 'fed' ? REGEN_FED_PCT : tier === 'fair' ? REGEN_FAIR_PCT : REGEN_STARVING_PCT;
 }
 
+/**
+ * O instante (ms) em que o registro passou a ser FAMINTO (fome < `HUNGER_FAIR_MIN`); `null` se não há registro (fome cheia). Sai do
+ * REGISTRO (timestamp persistido), nunca de um contador de tela — é a âncora da penalidade de fome (`utils/hungerPenalty.ts`).
+ * Comer troca o registro e, com ele, esta âncora: a contagem das 12 h recomeça sozinha.
+ */
+export function starvingSince(rec: HungerRecord | undefined): number | null {
+  if (!rec) return null;
+  const t = crossing(rec, HUNGER_FAIR_MIN);
+  return t === -Infinity ? rec.at : t === Infinity ? null : t;
+}
+
 export const hungerTierAt = (rec: HungerRecord | undefined, t: number): HungerTier => tierOf(hungerAt(rec, t));
 
 /** O instante (ms, inteiro) em que o registro cruza `level` descendo; `Infinity` se já está abaixo ou nunca cruza. */
@@ -233,7 +244,12 @@ export interface EnergyStatus {
   mode: EnergyMode;
   /** Ms até a PRÓXIMA unidade de energia, projetando a queda de tier da fome. `null` = cheia ou pausada (faminto). */
   msToNext: number | null;
+  /** Ms até a fome CAIR de nível (bem alimentado → mediano → faminto), sem nova refeição. `null` = já faminto (não há nível abaixo) ou sem previsão. */
+  msToHungerDrop: number | null;
 }
+
+/** Nível de fome em 3 (REGISTRO §43): bem alimentado = 3, mediano = 2, faminto = 1. */
+export const hungerLevelOf = (tier: HungerTier): 1 | 2 | 3 => (tier === 'fed' ? 3 : tier === 'fair' ? 2 : 1);
 
 /**
  * Ms (a partir de `now`) até a regeneração acumular `needPoints`, projetando a fome descendo SEM nova refeição. `null` se nunca.
@@ -270,7 +286,9 @@ export function energyStatus(state: HungerState, nowMs: number): EnergyStatus {
   const v = hungerAt(s.hunger, now);
   const tier = tierOf(v);
   const speed = speedPct(tier);
-  const base = { energy, max, hunger: Math.round(v), tier, speed };
+  const drop = tier === 'fed' ? crossing(s.hunger, HUNGER_FED_MIN) : tier === 'fair' ? crossing(s.hunger, HUNGER_FAIR_MIN) : Infinity;
+  const msToHungerDrop = Number.isFinite(drop) ? Math.max(0, drop - now) : null;
+  const base = { energy, max, hunger: Math.round(v), tier, speed, msToHungerDrop };
   if (energy >= max) return { ...base, mode: 'full', msToNext: null };
   if (speed <= 0) return { ...base, mode: 'paused', msToNext: null };
   // `settleEnergy` só grava quando uma unidade fecha: o que andou desde `clock.at` ainda é progresso pendente.
@@ -286,4 +304,14 @@ export function formatEnergyEta(ms: number, pt: boolean): string {
   const m = min % 60;
   if (h === 0) return pt ? `${m} min` : `${m}m`;
   return `${h}h${String(m).padStart(2, '0')}`;
+}
+
+/** Contagem ao vivo (14/10/2026, REGISTRO §43): "H:MM:SS" quando há hora, "M:SS" caso contrário; arredonda PARA CIMA em segundos. */
+export function formatEnergyCountdown(ms: number): string {
+  const total = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  const ss = String(sec).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }

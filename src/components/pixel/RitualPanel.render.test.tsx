@@ -115,12 +115,33 @@ describe('RitualRow — checkbox bronze à esquerda, sem selo de tipo (beta-2, 2
     expect(nomesDeIcone).not.toContain('task_alt');
   });
 
-  it('marcado, o checkbox é BRONZE por TOKEN (`--sm2-check-fill`), nunca valor literal', () => {
+  it('VAZIO: fundo transparente e contorno BRONZE por token; MARCADO: mesmo contorno + check turquesa com glow por token', () => {
+    const vazio = renderWithCss(<ul>{linha({ done: false })}</ul>);
+    const caixaVazia = screen.getByRole('checkbox').querySelector('span') as HTMLElement;
+    expect(caixaVazia.style.backgroundColor).toBe('transparent');
+    expect(caixaVazia.style.border).toContain('var(--sm2-check-fill)');
+    expect(caixaVazia.querySelector('.sm2-icon')).toBeNull(); // sem glifo (nada de opacity 0 escondendo)
+    vazio.unmount();
     renderWithCss(<ul>{linha({ done: true })}</ul>);
     const caixa = screen.getByRole('checkbox').querySelector('span') as HTMLElement;
-    expect(caixa.style.backgroundColor).toBe('var(--sm2-check-fill)');
+    expect(caixa.style.backgroundColor).toBe('transparent');
     expect(caixa.style.border).toContain('var(--sm2-check-fill)');
-    expect(caixa.style.color).toBe('var(--sm2-on-check)');
+    const check = caixa.querySelector('.sm2-icon') as HTMLElement;
+    expect(check.className).toContain('sm2-icon-primary');   // turquesa/ciano da paleta, nunca verde
+    expect(check.style.filter).toBe('var(--sm2-check-glow)'); // glow por token
+  });
+
+  it('o glow é discreto: difuso, na cor do check, sem borda dura e sem animação (CSS)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('src/index.css', 'utf8');
+    const glows = css.match(/--sm2-check-glow:\s*([^;]+);/g) ?? [];
+    expect(glows.length).toBeGreaterThanOrEqual(2); // claro e escuro
+    for (const g of glows) {
+      expect(g).toMatch(/drop-shadow\(0 0 4px color-mix\(in srgb, var\(--sm2-primary-ink\) 32%, transparent\)\)/);
+    }
+    expect(css).not.toMatch(/--sm2-on-check/);
+    const form = css.slice(css.indexOf('.sm2-form-check {'), css.indexOf('HOME — identidade'));
+    expect(form).not.toMatch(/animation:/);
   });
 
   it('o bronze é alias do ouro-cobre do sistema nos DOIS temas (sem hex próprio)', async () => {

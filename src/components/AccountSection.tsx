@@ -195,8 +195,8 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
         </button>
         <InfoTip language={language} label={isPt ? 'O que "Restaurar compras" faz' : 'What "Restore purchases" does'} align="right">
           {isPt
-            ? 'Traz de volta o que você já comprou nesta conta Google. Não cobra nada.'
-            : 'Brings back what you already bought on this Google account. Nothing is charged.'}
+            ? 'Só restaura o que esta conta já comprou (o desbloqueio, a assinatura). Não cobra nada e não devolve Créditos ou itens já gastos.'
+            : 'Only restores what this account already bought (the unlock, the subscription). Nothing is charged and spent Credits or items are not returned.'}
         </InfoTip>
       </div>
       {isAuthConfigured() && authEmail && saida !== 'falhou' && (

@@ -4,8 +4,23 @@
 >
 > - **Espelho:** `meteoro` (Bolid) olha à esquerda e andava de costas → `LEFT_FACING_STARTERS`. O **combate** não lia a orientação da arte (`BattleStage` só tinha a URL) → `spriteUrlFacesLeft`. "Virar Soulmon" também na página do Pet (era só em Configurações, para todos os tiers — o problema era descoberta). Tabela id → lado → correção: `docs/AUDITORIA-FACING-GRATUITOS.md`.
 > - **Evolução:** a prévia de forma futura (silhueta + "Revelar") é **só do admin** (`useAdmin`, flag do servidor); o jogador comum vê "???" sem arte e sem URL no DOM. **Os 5 iniciais não evoluem** (decisão do dono): a página mostra só a forma deles; `handleEvolve`/`canEvolve`/`handleEvolveRequest` recusam. A árvore falsa de 10 formas com o mesmo sprite saiu da tela.
-> - **Check-ins do dia (manhã/tarde/noite) OCULTOS** atrás de `CHECKINS_ENABLED = false` (`utils/checkIns.ts`): sem atalho, folha nem recompensa; código e campo `checkIns` do save intactos. REGISTRO §40.4-b.
+> - **Check-ins do dia (manhã/tarde/noite) OCULTOS** atrás de `CHECKINS_ENABLED = false` (`utils/checkIns.ts`): sem atalho, folha nem recompensa — e o item `checkIn` (compromisso) da fila de modais também (merge com a #326); código e campo `checkIns` do save intactos. REGISTRO §40.4-b.
 > - **Depende do dono:** "login diário" foi lido como os check-ins das 3 janelas; se era o ritual matinal (`MorningCheckIn`, foco do dia), é outro interruptor — avisar. Kaelen/Orrin/Thalindra (demos antigos) seguem evoluindo com arte de linha.
+
+> ## 14/10/2026 — Masmorra livre no Vínculo 1, tutorial do mapa na 1ª abertura e ícones de canto sem círculo (`feat/dungeon-nv1-tutorial-mapa`, REGISTRO §51)
+>
+> - **Pedido do dono (voz):** Masmorra desde o level 1; tirar mapa/prédios do tutorial inicial e abrir um tutorial do mapa na primeira abertura do Mapa; tirar o círculo da casinha e do ícone do mapa.
+> - **Feito:** `exploracao.masmorra` → Vínculo 1 (cliente + espelho do servidor) · tutorial do mapa (`MAP_TOUR_STEPS`, 22 prédios, EN/PT) no componente `WelcomeTour`, flag `mapTutorialSeen` no SAVE com migração segura · `CornerLink` sem anel.
+> - **Intocado de propósito:** energia, limite diário (servidor), portão dos andares altos (Vínculo 8), restrições de Soulmon ocupado.
+> - **Pré-existente (não é desta mudança):** `AreaView.ocupado.render.test` (timeout de 15 s no `waitFor` da masmorra) e 2 testes de `missionsMenu.render.test` falham também na main neste ambiente Windows.
+
+> ## 14/10/2026 — Fila central de modais, intro de NPC em tela cheia e resumo do dia centralizado (`fix/fila-de-modais-intro-npc`, REGISTRO §42, `docs/FILA-DE-MODAIS.md`)
+>
+> - **Bug do beta-2 (dono, por voz):** "sobe de nível / dia novo → modais se sobrepõem, trava; fechei, abri, veio um modal e depois outro do mapa". **Causa:** a cadeia `interstitial` era recalculada a cada render (o prédio novo, mais prioritário, DESMONTAVA o resumo/check-in que a pessoa lia) e o "visto" só era gravado ao FECHAR (prédios, resumo do dia, level-up) — fechar o app no meio devolvia tudo, um modal por prédio.
+> - **Feito:** UMA fila (`utils/presentationQueue.ts` + `hooks/usePresentationQueue.ts` + `components/PresentationSlot.tsx`): ordem explícita (level-up > resumo do dia > intro de NPC/mapa > metas > compromisso > avisos leves), um por vez, quem está na tela não é expulso, "visto" gravado AO MOSTRAR, voltar do Android fecha e avança, item que falha (render/chunk 8 s/fechamento) é pulado. **Sem campo novo no save** (fuzz2 segue em 128).
+> - **Prédio desbloqueado = balão** (`UnlockToast`, item leve da fila) e a intro do NPC só na PRIMEIRA entrada no prédio (`visitarPredio` + `buildingIntrosSeen`).
+> - **Intro de NPC:** `NpcSequence` (tela cheia, NPC grande, toque avança, "Pular/Skip" no canto superior esquerdo; genérico — o tutorial do mapa deve reutilizar) no lugar do bottom sheet "Próximo/Ir lá/Depois". **Resumo do dia:** "ontem + corações" num modal só e CENTRALIZADO (`ModalSheet placement="center"`); a escolha de metas também centralizada.
+> - **Depende do dono / pendente:** agrupar também o passo "hoje" (humor/convite/memórias)? o tutorial do mapa (`feat/dungeon-nv1-tutorial-mapa`) deve ser ligado à `NpcSequence` quando entrar na main.
 
 > ## 13/10/2026 — Beta-2, correções da revisão de design (`integ/beta-2`, PR #323; `product/beta-play-01/sweeper/design-critic-beta2.md`)
 >
@@ -31,7 +46,7 @@
 >
 > - **Feito:** 8.1 descrição do chip (`+3 Poder`…); 8.2 miniatura abre a pré-visualização (folha do item e prateleiras da Guilda/trimestre); 9.1 espaço no Salão + ícones novos (bota e punho, arte que já existia); 9.2 Combina 3 com troca livre (gasta 1 movimento); 9.3 Arena livre no outro tablado, sem elemento/golpes; 9.4 `ScreenSkeleton` minimalista (loading/erro/concluído); 10.1 ícones de categoria no Santuário; 10.2 árvore aberta, sem colher; 10.3 abas compactas na Evolução (toque e deslize); 11 prédio **Perfil** (`laboratorio.perfil`, Vínculo 2, `utils/soulmonPerfil.ts`); 12 humor com ícones de 40 px.
 > - **Sem save novo:** nenhum campo novo no save (o Perfil só lê); o contador do `fuzz2` não mudou.
-> - **Depende do dono (defaults da squad):** Vínculo de abertura do Perfil (2); a troca livre do Combina 3 gasta movimento (a alternativa — só a que pontua gasta — abriria partida sem fim); NPC e arte própria do Perfil (hoje: busto da Oriel e o santuário `lote-jogos-mente-akasha`, reaproveitados); "nível do equipamento" = o maior entre as peças equipadas.
+> - **Depende do dono (defaults da squad):** Vínculo de abertura do Perfil (2); a troca livre do Combina 3 gasta movimento (a alternativa — só a que pontua gasta — abriria partida sem fim); NPC e arte própria do Perfil (hoje: o Corvo (mascote) e o santuário `lote-jogos-mente-akasha`, reaproveitados); "nível do equipamento" = o maior entre as peças equipadas.
 >
 > ## 11/10/2026 — Masmorra que continua sozinha, avanço rápido, especial automático, drop em modal e Combina 3 (`feat/beta-masmorra-minijogo`, REGISTRO §36)
 >

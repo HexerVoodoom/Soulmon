@@ -6,6 +6,7 @@ import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
 import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
+import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -62,6 +63,7 @@ import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
+import { sanitizeMapTutorialSeen } from '../utils/welcomeTour';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import {
   readLocal,
@@ -148,6 +150,10 @@ export interface Activity {
    *  para este item — cooldown de `LEVEL_DOWN_COOLDOWN_DAYS` antes de
    *  oferecer de novo (`utils/catalogLevel.ts`). */
   catalogLevelDeclinedAt?: string;
+  /** XP por etapa (REGISTRO §44): quantas etapas já pagaram XP em `stepXpDay`. As etapas voltam
+   *  desmarcadas todo dia, então o contador zera sozinho quando o dia do jogador muda. */
+  stepXpPaid?: number;
+  stepXpDay?: string;
 }
 
 /**
@@ -190,6 +196,9 @@ export interface Task {
   repeatEveryDays?: number;
   /** `YYYY-MM-DD` em que uma tarefa guardada pela repetição volta a `open`. */
   wakeOn?: string;
+  /** XP por subtarefa (REGISTRO §44): quantas subtarefas desta tarefa JÁ pagaram XP. Só sobe; teto
+   *  `XP_STEP_MAX_PAID`. Ausente (save antigo) = as subtarefas já feitas contam como pagas. */
+  stepXpPaid?: number;
 }
 
 export interface CompletedTask {
@@ -428,6 +437,8 @@ export interface GameState {
   /** ⏱️ O relógio da regeneração da ENERGIA (`utils/hunger.ts`): até onde a regeneração foi contada e o progresso até a próxima unidade.
    *  Moram no save para fechar o app, navegar ou trocar de aparelho NÃO reiniciarem o timer. Ausente = nasce na próxima leitura. */
   energyClock?: { at: number; carry: number };
+  /** 🍽️ Penalidade de fome (REGISTRO §45, `utils/hungerPenalty.ts`): meio coração a cada 12 h CONTÍNUAS de faminto. `since` = a âncora da fome, `paid` = janelas já resolvidas (anti-dupla), `unreported` = o que o resumo do dia ainda vai contar. Ausente = nada cobrado. */
+  hungerPenalty?: { since: number; paid: number; unreported: number };
   /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (`DUNGEON_DAILY_LAYERS`, `utils/dungeonIdle.ts`) mora no
    *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
   dungeonDaily?: { day: string; layers: number };
@@ -476,6 +487,10 @@ export interface GameState {
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
    *  save existente nunca re-dispara apresentação do que o jogador já usa. */
   buildingIntrosSeen?: string[];
+  /** O tutorial do MAPA já abriu (14/10/2026, `utils/welcomeTour.ts` › `MAP_TOUR_STEPS`): ele abre UMA vez, na 1ª abertura do Mapa,
+   *  e visto OU pulado grava `true`. Campo ausente na carga: `sanitizeMapTutorialSeen` — save com progresso (ou com o tour de
+   *  boas-vindas já visto) vira `true` e nunca re-dispara; save vazio (jogador novo) vira `false`. */
+  mapTutorialSeen?: boolean;
   /** O último nível do Vínculo CELEBRADO (display de level up, 11/10/2026, `utils/levelUp.ts`). O nível em si
    *  nunca vai ao save (`bondLevelFor(totalXP)`); este campo só diz até onde a pessoa JÁ VIU a celebração —
    *  assim o evento sobrevive a fechar o app. Ausente = save anterior: a linha de base é o nível de agora. */
@@ -598,6 +613,8 @@ export interface GameState {
     heartsLost: number;
     wasPerfect: boolean;
     energyWasFull?: boolean;
+    /** Corações que a FOME tirou (meio por 12 h faminto, REGISTRO §45) desde o resumo anterior. Ausente/0 = nada. */
+    hungerHeartsLost?: number;
     perfectDays: number;
     /** 🧬 Pontos que a virada creditou no gauge e o total depois dela. */
     gaugeGain?: number;
@@ -1248,6 +1265,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
         hunger: sanitizeHunger(loadedState.hunger),
         energyClock: sanitizeEnergyClock(loadedState.energyClock),
+        hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
@@ -1297,6 +1315,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
+        mapTutorialSeen: sanitizeMapTutorialSeen(loadedState.mapTutorialSeen, loadedState as Record<string, any>, readLocal(STORAGE_KEYS.WELCOME_TOUR_SHOWN) === 'true'),
         lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
@@ -1567,6 +1586,7 @@ function freshGameState(): GameState {
       healthPoints: getMaxHPForStage('rookie'),
       maxHealthPoints: getMaxHPForStage('rookie'),
       buildingIntrosSeen: seedBuildingIntrosSeen(1),
+      mapTutorialSeen: false,
       energyPoints: 0,
       perfectDays: 0,
       evolutionPoints: 0,

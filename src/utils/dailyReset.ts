@@ -1274,6 +1274,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     // Energia zera todo dia (REGISTRO §30/§40). Pela porta única da energia: o relógio de regeneração NÃO reinicia (o progresso até a
     // próxima unidade passa intacto) e a fome também não é tocada.
     ...(() => { const z = setEnergy(prev as any, now.getTime(), () => 0); return { energyPoints: z.energyPoints, energyClock: z.energyClock }; })(),
+    // Penalidade de fome (REGISTRO §45): a âncora e as janelas pagas atravessam a virada; só o que o resumo vai CONTAR é zerado.
+    ...((prev as any).hungerPenalty ? { hungerPenalty: { ...(prev as any).hungerPenalty, unreported: 0 } } : {}),
     // Resumo de ontem, mostrado 1× como "relatório diário" na próxima abertura.
     lastDayReport: {
       date: yesterdayString,
@@ -1299,6 +1301,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
         : heartsLost,
       wasPerfect: dayWasPerfect,
       energyWasFull,
+      /** Corações que a FOME tirou desde o resumo anterior (meio por 12 h faminto, REGISTRO §45). */
+      hungerHeartsLost: Math.max(0, Number((prev as any).hungerPenalty?.unreported) || 0),
       perfectDays: newPerfectDays,
       /** 🧬 Quanto o gauge recebeu nesta virada e onde ele ficou. */
       gaugeGain,

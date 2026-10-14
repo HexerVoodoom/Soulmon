@@ -18,7 +18,7 @@ import { earnedBits } from '../utils/bitsOrigin';
 import { isoWeekKey } from '../utils/offerMoment';
 import { playerDayKey } from '../utils/playerDay';
 import { loadEquipArt } from '../utils/equipArt';
-import { ATTR_COPY, SLOT_COPY, itemName } from '../utils/equipmentCopy';
+import { ATTR_COPY, itemName } from '../utils/equipmentCopy';
 import {
   ALT_ATTR, FORGE_MAX_LEVEL, FORGE_PIECES, LEVEL_PCT, PRIMARY_ATTR, REDO_FRAGMENTS, pieceBonus, pieceChoices, type ForgeChoice, type ForgePiece,
 } from '../utils/forge';
@@ -26,8 +26,6 @@ import { applyRedo, applyUpgrade, levelNow, redoBitsPrice, redoRefusal, upgradeC
 import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
-import { nameOf } from './nav/BuildingQuestList';
-import type { Language } from '../utils/i18n';
 
 function useArt(nome: string): string | null {
   const [url, setUrl] = useState<string | null>(null);
@@ -81,7 +79,6 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
   }, [celebra]);
   if (!ctx) return null; // sem save (demo, testes): não há o que forjar
   const isPt = language === 'pt-BR';
-  const lang = language as Language;
   const { gameState, setGameState } = ctx;
   const bond = bondLevelFor(gameState.totalXP ?? 0);
   const picks = sanitizeTalentPicks(gameState.talentPicks, bond);
@@ -140,8 +137,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const recusa = possui ? upgradeRefusal(view, piece.id) : undefined;
     const to = level + 1;
     const max = possui && level >= FORGE_MAX_LEVEL;
-    const origem = nameOf(piece.building, lang);
-    const bonusAgora = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `${attrName(a)} +${pct(b[a], isPt)}`).join(' · ');
+        const bonusAgora = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `+${pct(b[a], isPt)} ${attrName(a).replace(/^./, (c) => c.toUpperCase())}`).join(' · ');
     const custos = possui && !max ? custoTexto(piece, to) : [];
     const festa = celebra && celebra.id === piece.id ? celebra : null;
     const reduzido = festa ? prefersReducedMotion() : false;
@@ -163,25 +159,12 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
           <Art nome={piece.id} size={40} />
           <span style={{ flex: 1, minWidth: 120 }}>
             <b style={{ fontWeight: 500 }}>{nome}</b>
-            <span className="sm2-stats-s" style={{ display: 'block' }}>{isPt ? SLOT_COPY[piece.slot].pt : SLOT_COPY[piece.slot].en}</span>
           </span>
-          {equipado && (
-            <span className="sm2-stats-s" data-equipped-badge style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
-              <span aria-hidden="true">✓ </span>{isPt ? 'Parte da sua alma' : 'Part of your soul'}
-            </span>
-          )}
         </div>
-        {!possui && <span className="sm2-stats-s" data-forge-upgrade-locked>{isPt ? `Vem da missão de ${origem}. Conclua e resgate a missão para liberar os aprimoramentos.` : `Comes from the ${origem} mission. Complete and claim it to unlock upgrades.`}</span>}
         {possui && (
-          <div data-forge-levels>
-            <span className="sm2-num" data-forge-level style={{ fontWeight: 500 }}>
-              {max ? `Lv ${level} · Max` : `Lv ${level} → Lv ${to}`}
-            </span>
-            <span className="sm2-stats-s" style={{ display: 'block' }} data-forge-bonus>
-              {isPt ? 'Agora' : 'Now'}: {bonusAgora}
-              {!max && <> {' · '}{isPt ? 'Próximo' : 'Next'}: +{pct(LEVEL_PCT[to - 1], isPt)} {isPt ? `de ${attrName(PRIMARY_ATTR[piece.slot])} ou de ${attrName(ALT_ATTR[piece.slot])}, à sua escolha` : `${attrName(PRIMARY_ATTR[piece.slot])} or ${attrName(ALT_ATTR[piece.slot])}, your pick`}</>}
-            </span>
-          </div>
+          <span className="sm2-stats-s sm2-num" data-forge-bonus style={{ display: 'block' }}>
+            {bonusAgora}
+          </span>
         )}
         {possui && !max && (
           <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 6 }}>

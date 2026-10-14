@@ -20,7 +20,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · ⚰️ [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) (apagado em `4a8b8049`) · [`FeedbackLink.tsx`](#srccomponentsfeedbacklinktsx) · [`TermsUpdateBanner.tsx`](#srccomponentstermsupdatebannertsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomepromptmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
 - **Onboarding e oráculo:** [`SoulmonOnboarding.tsx`](#srccomponentssoulmononboardingtsx) · [`OraclePage.tsx`](#srccomponentsoraclepagetsx) · [`SoulTestItem.tsx`](#srccomponentssoultestitemtsx) · [`AlignmentIcons.tsx`](#srccomponentsalignmenticonstsx) · [`PixelizerCard.tsx`](#srccomponentspixelizercardtsx) · [`NewReadingModal.tsx`](#srccomponentsnewreadingmodaltsx)
 - **Comunidade:** [`LibraryPage.tsx`](#srccomponentslibrarypagetsx) · [`PlayerDetailModal.tsx`](#srccomponentsplayerdetailmodaltsx) · [`CoopPanel.tsx`](#srccomponentscooppaneltsx) · [`TournamentPage.tsx`](#srccomponentstournamentpagetsx)
-- **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`ritual/RitualKit.tsx`](#srccomponentsritualritualkittsx) · [`pixel/SpriteAnim.tsx`](#srccomponentspixelspriteanimtsx) · [`pixel/VisorBar.tsx`](#srccomponentspixelvisorbartsx) · [`ui/BackArrow.tsx`](#srccomponentsuibackarrowtsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/LockBadge.tsx`](#srccomponentsuilockbadgetsx) · [`ui/MiniGlass.tsx`](#srccomponentsuiminiglasstsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/PixelIcon.tsx`](#srccomponentsuipixelicontsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
+- **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`ritual/RitualKit.tsx`](#srccomponentsritualritualkittsx) · [`pixel/SpriteAnim.tsx`](#srccomponentspixelspriteanimtsx) · [`pixel/VisorBar.tsx`](#srccomponentspixelvisorbartsx) · [`ui/BackArrow.tsx`](#srccomponentsuibackarrowtsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/LoadingBar.tsx`](#srccomponentsuiloadingbartsx) · [`ui/LockBadge.tsx`](#srccomponentsuilockbadgetsx) · [`ui/MiniGlass.tsx`](#srccomponentsuiminiglasstsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/PixelIcon.tsx`](#srccomponentsuipixelicontsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
 
 ---
 
@@ -1097,12 +1097,44 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** tudo aqui é DESCRIÇÃO, nunca veredito; `suggestion` é `null` sem dados suficientes e esse silêncio é a metade importante; nenhum número deste cartão pode diminuir por castigo.
 
 ### `src/components/BuildingIntro.tsx`
-**Dono de:** a apresentação do prédio novo (08/10/2026): `RitualDialog` z-200 com o busto do NPC do lote, o balão `NpcSpeech` e três balões em sequência (quem é · o que se faz ali · convite); "Next", "Later" (todo passo) e "Go there" (último).
-**Props principais:** `id` (`BuildingId`), `language`, `onGo(id)`, `onLater(id)`.
+**Dono de:** a apresentação do prédio novo (08/10/2026; refeita em 14/10/2026): monta as falas (3 por prédio, cada prédio com o NPC e a arte de `lotNpcArt`) e entrega à `NpcSequence`. Vários prédios = UMA sequência. Sem botões "Próximo/Ir lá/Depois".
+**Props principais:** `ids` (`BuildingId[]`), `language`, `onFinish('done' | 'skip')`.
 **Exports:** `BuildingIntro(props)` (nomeado e default).
-**Chamado por:** `src/App.tsx` (intersticial `buildingIntro`, o SEGUNDO da fila, com `key` do prédio — sem ela o 2º NPC nasceria no último balão do 1º).
-**Régua:** `src/components/BuildingIntro.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila, montagem única, espera do Level Up).
-**Avisos do arquivo:** só fecha por gesto (sem timer); muda e sem recompensa (R-NOVA); `.sm-npc-intro` para no bloco canônico de movimento reduzido.
+**Chamado por:** `src/App.tsx` (intersticial `buildingIntro`, aberto por `visitarPredio` na primeira entrada no prédio).
+**Régua:** `src/components/BuildingIntro.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila, montagem única, "visto ao mostrar").
+**Avisos do arquivo:** só fecha por gesto (sem timer); muda e sem recompensa (R-NOVA); não grava nada (o "visto" é de quem monta, ao MOSTRAR).
+
+### `src/components/MapTutorial.tsx`
+**Dono de:** o tutorial do mapa (14/10/2026, pedido do dono): monta as falas a partir de `MAP_TOUR_STEPS` (uma de abertura com o corvo + uma por área, com o NPC da área e a lista dos prédios) e entrega à `NpcSequence`.
+**Props principais:** `language`, `onFinish('done' | 'skip')`.
+**Exports:** `MapTutorial(props)` (nomeado e default).
+**Chamado por:** `src/App.tsx` (item `mapTutorial` da fila, só na 1ª abertura do Mapa, depois do tour básico).
+**Régua:** `src/components/MapTutorial.render.test.tsx`, `src/components/WelcomeTour.render.test.tsx` (conteúdo e regras de `MAP_TOUR_STEPS`), `src/components/filaDeAvisos.contract.test.ts` (posição na fila).
+**Avisos do arquivo:** só fecha por gesto; muda e sem recompensa; não grava nada (o `mapTutorialSeen` é gravado por quem monta, ao MOSTRAR).
+
+### `src/components/NpcSequence.tsx`
+**Dono de:** a sequência de falas de um NPC em TELA CHEIA (14/10/2026, pedido do dono): NPC bem grande (`min(135vw, 82dvh)`), janela de texto embaixo (`TypewriterText`), toque em qualquer lugar avança, a última fala fecha, "Pular/Skip" discreto no canto superior ESQUERDO (≥ 44 px, safe-area). Genérico: o tutorial do mapa pode usá-lo.
+**Props principais:** `lines` (`NpcSequenceLine[]`: `speaker`, `art`, `text`), `language`, `onFinish('done' | 'skip')`, `label?`.
+**Exports:** `NpcSequence(props)`, `NpcSequenceLine` (type).
+**Chamado por:** `src/components/BuildingIntro.tsx`, `src/components/MapTutorial.tsx`.
+**Régua:** `src/components/NpcSequence.render.test.tsx` (toque avança, pular, última fala, teclado, voltar do Android, alvo de 44 px, PT/EN, `onFinish` uma vez).
+**Avisos do arquivo:** o botão de avançar cobre a tela e é o PRIMEIRO focável (Enter/Espaço avançam; Esc e voltar pulam); o texto do "Pular" vem depois no foco; usa `useDialogA11y` e `useBackLayer`; nenhum som, nenhum timer.
+
+### `src/components/UnlockToast.tsx`
+**Dono de:** o balãozinho "<Prédio> desbloqueado em <local>" (14/10/2026): NÃO bloqueante (`role="status"`, sem foco/véu), some em 6 s ou ao toque; vários prédios do mesmo level-up viram um texto só.
+**Props principais:** `ids` (`BuildingId[]`), `language`, `onDone()`.
+**Exports:** `UnlockToast`, `unlockToastText(ids, language)`, `UNLOCK_TOAST_MS`.
+**Chamado por:** `src/App.tsx` (item `unlockToast` da fila).
+**Régua:** `src/components/UnlockToast.render.test.tsx`.
+**Avisos do arquivo:** muda e sem recompensa (R-NOVA); a apresentação do NPC só vem na primeira entrada no prédio.
+
+### `src/components/PresentationSlot.tsx`
+**Dono de:** a moldura de segurança de cada item da fila central de modais: `Suspense` + boundary de erro. Erro de render ou chunk que não carrega em `PRESENTATION_LOAD_TIMEOUT_MS` (8 s) viram `onFail`, e a fila pula o item.
+**Props principais:** `id`, `onFail()`, `fallback?`, `children`.
+**Exports:** `PresentationSlot`, `PRESENTATION_LOAD_TIMEOUT_MS`.
+**Chamado por:** `src/App.tsx` (um por item de `PRESENTATION_ORDER`).
+**Régua:** `src/hooks/usePresentationQueue.test.tsx` (bloco "PresentationSlot").
+**Avisos do arquivo:** reporta o erro por `reportCrash('boundary')` (sem conteúdo do usuário); `onFail` é chamado fora do render (microtask).
 
 ### `src/components/WelcomeTour.tsx`
 **Dono de:** o tour de boas-vindas do corvo (07/10/2026): oito cartões em `RitualDialog` (z-200, `useDialogA11y` — Esc pula) com o `mascot-raven.png`, o balão `NpcSpeech` (falante "Rook") e, nos passos do mapa, uma lista de uma frase por área. "Skip" e "Next"/"Back" sempre visíveis; muda e sem recompensa (R-NOVA).
@@ -1292,11 +1324,19 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** nenhuma direta (`find src/components/ui -maxdepth 1 -name 'OfflineSeal.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** `cloud_off`, não `wifi_off` — o que falha é o save na nuvem/resposta da IA, não a antena; não bloqueia nada — offline é um modo, o jogo roda local; `role="status"` + `aria-live="polite"`.
 
+### `src/components/ui/LoadingBar.tsx`
+**Dono de:** o ÚNICO indicador de carregando do app (REGISTRO §50): barra de 3px turquesa que enche da esquerda para a direita; sem texto, spinner nem ilustração. A splash do `index.html` usa o mesmo visual (`.sm2-loadbar` em `index.css`).
+**Props principais:** `LoadingBarProps` — `progress?` (0-1; ausente = simulado assintótico, teto 94%), `done?` (completa a 100% e some em fade de 220ms), `onExited?`, `language?`, `label?` (só leitor de tela), `style?`.
+**Exports:** `LoadingBar` · `default` · `SIMULATED_CEILING` · `simulatedStep` · `steppedStep`.
+**Estado/efeitos relevantes:** `setInterval` de 120ms só no simulado (500ms em passos de 20% com `prefers-reduced-motion`); `role=progressbar` com `aria-valuenow` só quando determinado, `aria-busy`.
+**Chamado por:** `src/components/ui/ScreenSkeleton.tsx`.
+**Régua:** `src/components/ui/LoadingBar.render.test.tsx`.
+
 ### `src/components/ui/ScreenSkeleton.tsx`
 **Dono de:** o que aparece enquanto uma tela `lazy()` chega — substitui os 20 `Suspense fallback={null}` que apagavam a tela.
-**Props principais:** `ScreenSkeletonProps` (exportado) — `language?`, `label?` (rótulo do que está carregando, par PT/EN já resolvido por quem chama), `variant?` (`page` · `overlay` · `inline`, a de dentro de uma folha), `state?` (`loading` · `error` · `done`, beta-2 9.4) e `onRetry?` (o "Tentar de novo" do `error`). Minimalista: UMA palavra, visor sem "respirar", `page` com 96 de altura mínima; `done` não desenha nada.
+**Props principais:** `ScreenSkeletonProps` — `language?`, `label?` (só leitor de tela), `variant?` (`page` · `overlay` · `inline`), `state?` (`loading` · `error` · `done`) e `onRetry?`. Desde §50 o `loading` é a `LoadingBar`; este componente só enquadra e guarda o `error`.
 **Exports:** `ScreenSkeletonProps` (interface) · `ScreenSkeleton(props)` · `default`.
-**Estado/efeitos relevantes:** `useState`/`useEffect` detectam `prefers-reduced-motion` (`reduced`) e cortam a varredura em JS (o bloco global do projeto usa `animation-duration:.01ms` que, num loop `infinite`, vira milhares de recálculos/segundo).
+**Estado/efeitos relevantes:** nenhum estado próprio.
 **Chamado por:** `src/App.tsx`, `src/components/ContentModals.tsx`, `src/components/SoulmonOnboarding.tsx` (`grep -rl "from '.*/ScreenSkeleton'" src`, 09/09/2026).
 **Régua:** `src/components/ui/ScreenSkeleton.render.test.tsx` (beta-2, 9.4).
 **Avisos do arquivo:** o desenho é o do APARELHO (`Viewport` com varredura), não um spinner genérico; nenhuma classe utilitária de valor arbitrário — layout em `style={{}}`, `@keyframes` em `<style>` local (footgun 1).
@@ -1340,7 +1380,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Props principais:** `ViewportProps` (exportado) — `width`, `height`, `scale: 2|3`, `label?` (torna o elemento `role="img"`), conteúdo (sprite/HUD do aparelho).
 **Exports:** `ViewportProps` (interface) · `usePrefersReducedMotion()` (hook) · `DUR_VARREDURA_MS` (const — os 400ms da varredura em JS, gêmeo do token `--sm2-dur-scan` do CSS) · `useVarreduraDeSintonia()` (hook — verdadeira só enquanto a faixa está passando) · `Viewport(props)` · `default`.
 **Estado/efeitos relevantes:** `useState`/`useEffect` para `reduced` (reduced motion); `useRef` (`anterior`, guarda o sprite anterior para detectar troca) e `useState` (`varrendo`) dentro de `useVarreduraDeSintonia`.
-**Chamado por:** `src/components/CompanionHUD.tsx`, `src/components/EvolutionPath.tsx`, `src/components/PetPage.tsx`, `src/components/PlayerDetailModal.tsx`, `src/components/ui/ScreenSkeleton.tsx` (`grep -rl "from '.*/Viewport'" src`, 09/09/2026).
+**Chamado por:** `src/components/CompanionHUD.tsx`, `src/components/EvolutionPath.tsx`, `src/components/PetPage.tsx`, `src/components/PlayerDetailModal.tsx`, (`grep -rl "from '.*/Viewport'" src`, 09/09/2026).
 **Régua:** `src/components/ui/Viewport.contract.test.tsx`; também exercitado por `src/components/ui/foundation.render.test.tsx`.
 **Avisos do arquivo:** com `label`, o elemento vira `role="img"` — tudo dentro dele some da árvore de acessibilidade, por isso o corpo do aparelho (`.sm2-device`, com controles focáveis) fica FORA, envolvendo este componente, nunca dentro; respiração do anel é loop de 4s desligado por `prefers-reduced-motion`; sem scanline permanente por padrão — a varredura de 400ms é transição única, não estado do visor.
 
@@ -1541,14 +1581,14 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/home/DungeonSign.tsx`
 
-**Dono de:** a PLACA DE MADEIRA "Na masmorra" / "In Dungeon" + o tempo de retorno (beta-2 6.2) que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova; caixa fixa 118 × 46). **Exports:** `DungeonSign({ language, onTap, returnInMs })`, `SIGN_W`, `SIGN_H`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+**Dono de:** a PLACA DE MADEIRA "Na masmorra" / "In Dungeon" + o tempo de retorno (beta-2 6.2) que fica no lugar do pet na Home (só a arte `placa-madeira.png` 60×35 em escala inteira 2× — `<img>` pixelated, sem border-image, sem ícone; caixa fixa 120 × 70; texto xs na área lisa). **Exports:** `DungeonSign({ language, onTap, returnInMs })`, `SIGN_W`, `SIGN_H`, `SIGN_ART_W/H`, `SIGN_SCALE`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
 
 ### `src/components/home/EnergyTimer.tsx` (beta-2 3.4)
-**Dono de:** o timer discreto ao lado da energia (`1h05` / `42 min`; `–` quando a regeneração está pausada; nada com a energia cheia). Props simples (`msToNext`, `mode`, `language`); sem relógio próprio — o valor vem de `energyStatus`. **Exports:** `EnergyTimer`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato de encaixe: `docs/FRENTE-B-REGRAS-BETA2.md`.
+**Dono de:** a CONTAGEM REGRESSIVA ao vivo da próxima energia, que mora DENTRO da dica da energia (abre ao tocar no raio; REGISTRO §43 — não há mais timer fixo na faixa). `H:MM:SS` com hora, `M:SS` sem (`formatEnergyCountdown`), 1 s; `paused` mostra "pausada"; `full` não renderiza. `aria-live="polite"` só no rótulo (o número é `aria-hidden`). Sem relógio próprio — ancora no `msToNext` de `energyStatus` e desconta o decorrido. **Exports:** `EnergyTimer`. **Chamado por:** `CompanionHUD` (dica `energy`, prop `energyInfo`).
 
 ### `src/components/home/HungerIndicator.tsx` (beta-2 3.5)
-**Dono de:** o indicador de fome da Home (tigela em SVG + três pontos: bem alimentado / mediano / faminto; o estado não depende de cor). Props simples (`tier`, `value?`, `language`). **Exports:** `HungerIndicator`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato: `docs/FRENTE-B-REGRAS-BETA2.md`.
-**Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (CSS + `DUNGEON_PROP_ART.porta`; nenhuma imagem nova). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+**Dono de:** o indicador de fome da Home (ícone de carne + três marcas cheias/contorno = nível 3/2/1 de 3, 14/10/2026; o estado não depende de cor; tocar abre a dica da FOME com `HungerTimer`, a contagem ao vivo até cair de nível, e o impacto na energia). Props simples (`tier`, `value?`, `language`). **Exports:** `HungerIndicator`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato: `docs/FRENTE-B-REGRAS-BETA2.md`.
+**Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (só a placa pixel, sem ícone). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
 
 ### `src/components/DayHearts.tsx` (beta-2, 13/10/2026)
 **Dono de:** a fileira de corações do resumo pós-dia: os inteiros ficam como estão; o cobrado treme (`sm2-heart-shake`), quebra (`sm2-heart-snap`) e vira coração preto (o ícone `hp` do HUD, escurecido por filtro). Só anima quando `play` é verdadeiro na montagem; movimento reduzido pula para o preto.

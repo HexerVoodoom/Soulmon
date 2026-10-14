@@ -71,9 +71,11 @@ export interface TaskMetaProps {
   onPostponeNudge?: (taskId: string) => void;
   /** P9 (beta-2): na lista do dia o esforço PADRÃO (médio) não vira etiqueta — só o que foge dele (leve/pesado) é dito. Padrão `false`: triagem e detalhe seguem mostrando. */
   hideDefaultEffort?: boolean;
+  /** Linha do Hoje (14/10/2026): SÓ o prazo e o convite da assombrada. Sem esforço nem contador de adiamentos. */
+  lean?: boolean;
 }
 
-export function TaskMeta({ task, now, language, onPostponeNudge, hideDefaultEffort = false }: TaskMetaProps) {
+export function TaskMeta({ task, now, language, onPostponeNudge, hideDefaultEffort = false, lean = false }: TaskMetaProps) {
   const isPt = language === 'pt-BR';
   const effort = effortOf(task);
   const postponed = task.postponedCount ?? 0;
@@ -88,9 +90,9 @@ export function TaskMeta({ task, now, language, onPostponeNudge, hideDefaultEffo
     ? `adiada ${postponed} ${postponed === 1 ? 'vez' : 'vezes'}`
     : `postponed ${postponed} ${postponed === 1 ? 'time' : 'times'}`;
 
-  const showEffort = !(hideDefaultEffort && effort === 2);
+  const showEffort = !lean && !(hideDefaultEffort && effort === 2);
   // Nada a dizer (esforço padrão escondido, sem prazo, adiamento nem assombração): não renderiza a faixa vazia.
-  if (!showEffort && !due && postponed < 1 && !haunted) return null;
+  if (!showEffort && !due && (lean || postponed < 1) && !haunted) return null;
 
   return (
     <div
@@ -130,7 +132,7 @@ export function TaskMeta({ task, now, language, onPostponeNudge, hideDefaultEffo
       {/* Contador de adiamentos (Sunsama). Torna evitação crônica um DADO em
           vez de um sentimento — e dado tem botão, sentimento não. O ALVO é 44
           e invisível; o DESENHO é a etiqueta 24 (X2). */}
-      {postponed >= 1 && (
+      {!lean && postponed >= 1 && (
         <button
           type="button"
           disabled={!onPostponeNudge}

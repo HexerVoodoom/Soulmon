@@ -47,6 +47,34 @@ Recorte depois com `scripts-arte/_fatiar.mjs` (projeção de pixels; aborta se a
 Para peça única que precise de alfa limpo, trocar o fundo por **verde chapado `#00FF00`** e
 recortar por chroma-key (`chroma-key.mjs`) — nunca pedir "transparent PNG".
 
+**Blocos do padrão de 23/09/2026** (`GUIA-CONSISTENCIA-2026-09-23.md`; prompts completos em `PROMPTS-HIGGSFIELD-2026-09-23.md`). Gerados no Higgsfield (`gpt_image_2`, 2k, high), com **uma** imagem de referência do próprio projeto; fundo `transparent` salvo mapa/cena.
+
+**[PRÉDIO]** — 1:1 (avulso) ou 3:2 (folha de 3 ou 6, `3 columns x 2 rows grid with wide empty gaps`)
+```
+A single isometric pixel-art building, centered, fully isolated on a fully transparent background, no ground tile, no text, no letters, no glow haze, no drop shadow outside its base. Detailed crisp 16-bit pixel art matching the attached reference exactly: dark deep-teal stone and metal (#071413, #0F2A29, #163735), copper/bronze trim (#C68642), small green vines, circuit-line engravings, arcane-tech ancient ruins mood. Signature details: faceted glowing turquoise SOUL CRYSTALS (#5FF3E0) with a tiny flame inside and TURQUOISE FLAMES burning in small braziers. True isometric 2:1 angle, light from top-left, same scale for every piece of the batch. Built from its OWN MATERIAL with its own small accent color: <PRÉDIO — material — acento>.
+```
+
+**[PRÉDIO-VIVO]** — igual ao [PRÉDIO], trocando a última frase
+```
+… The structure is CLEARLY A CREATURE, like the Trent of Legend of Mana: the whole building IS the being, with an unmistakable expressive face sculpted into its body (big eyes with brows and lids, a nose or snout, a real mouth with lips or teeth, cheeks, wrinkles), a personality and a pose. Never humanoid: no human body, no arms, no legs, it stays rooted like a building. COLOR: the body uses the natural rich colors of its own material (not all teal) - teal is reserved for the soul crystals and flames; keep values dark and moody, saturated but not candy.
+```
+
+**[MAPA-ISO]** — 3:4 (ou 9:16), opaco
+```
+Isometric pixel-art game map background, top-down 2:1 isometric view, EXACTLY the same art style and palette as the attached reference (dark deep-teal stone #071413/#0F2A29, copper/bronze accents #C68642, glowing cyan crystals and circuit-line runes #5FF3E0, mossy green vines, arcane-tech ancient ruins). NO buildings, NO characters, NO text, NO UI. Crisp 16-bit pixel art, dark moody edges fading into a #08191A void so the map floats. A single floating island plateau with 6 empty flat square plots in a regular grid of 2 columns by 3 rows, connected by glowing circuit-line stone paths, a central plaza with a cyan crystal obelisk, scattered crystals, ruin fragments and vines.
+```
+
+**[UI-KIT]** — 4:3 / 3:2 / 1:1, `transparent`; só vale DENTRO do visor (fora dele é `--sm2-*` + Material)
+```
+Match EXACTLY the attached reference UI kit style (SOUL MON UI DESIGN KIT v1.2): flat front-facing pixel-art UI, dark deep-teal panels (#0F2A29), thin copper pipe borders with small rivets, glowing turquoise neon (#5FF3E0) for active states, restrained and clean, straight edges suitable for 9-slice. Every piece fully isolated on a fully transparent background with wide empty gaps. NO text, NO letters, NO numbers on any piece. Icons: bold simple shapes readable at 24px, max 5 colors, no box behind them.
+```
+
+**[NPC-BUSTO]** — 1:1, 2k, high, `transparent`, **sem imagem de referência** (molde canônico do dono; ver também memória `npc-molde-e-gpt-image-2-5-flare`)
+```
+Generate an original creature NPC for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Detailed pixel-art CHARACTER PORTRAIT, BUST ONLY: head, shoulders and upper chest, cropped at mid-torso, three-quarter view facing slightly toward the viewer, centered, fully isolated on a fully transparent background, no frame, no text. Clean bold BLACK OUTLINES around every shape, 32-bit era pixel art with noticeably more detail than a tiny sprite, cel shading with 2 to 3 tones per color, crisp pixels, no blur. The creature is NOT human; it is an expressive monster NPC with a strong readable silhouette. CREATURE: <espécie + elemento + essências>. PROFESSION: <função> — make the profession unmistakable through its outfit and props: <adereços>. It belongs to a place that is <local>, so its body materials echo that place. COLORS: <cores>, plus small glowing turquoise soul-crystal accents (#5FF3E0) as the shared signature of the world. Do not tint the whole creature in a single hue — use clearly distinct colors.
+```
+⚠️ Decisão do dono de 14/10/2026: em NPC, sem cartola/goggles/arreio/cinto/penca de bolsinhas, cobre só como detalhe, expressão calma; a regra de "uma cor dominante por criatura" foi **revogada**; sem pós-processo de pixel.
+
 **[ELEMENTO]** — quando o matiz precisar sair do kit (fogo, gelo…): manter a **linguagem** do
 [SPRITE] (pixel chapado, contorno quase-preto, sem halo) e liberar só a cor dominante.
 

@@ -29,6 +29,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
+import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
@@ -620,6 +621,8 @@ export interface BattleStageProps {
   /** Título curto no canto superior esquerdo ("Arena · 2/5", "Duelo"). */
   title: string;
   closeLabel: string;
+  /** Glifo do botão do canto: `close` (X, padrão) ou `map` (o ícone ilustrado do mapa, sem círculo — Masmorra, 14/10/2026). */
+  closeIcon?: 'close' | 'map';
   onClose: () => void;
   /** Sair perde progresso? Então o X pede confirmação antes. */
   exitConfirm?: { title: string; stay: string; leave: string; /** Uma terceira saída (Masmorra: "Retirar da masmorra"), em largura cheia abaixo das duas. */ alt?: { label: string; onClick: () => void } };
@@ -670,7 +673,7 @@ function bannerLabel(
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
-  scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
+  scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
   charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -775,7 +778,7 @@ export function BattleStage({
               filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.85))',
             }}
           >
-            <Icon name="close" size={24} tone="inherit" />
+            {closeIcon === 'map' ? <PixelIcon name="mapa" size={32} /> : <Icon name="close" size={24} tone="inherit" />}
           </button>
         </div>
       </div>

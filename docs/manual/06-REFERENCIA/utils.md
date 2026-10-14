@@ -2710,6 +2710,9 @@ dominância populacional — por isso ±15%. Régua nova:
 **Avisos do arquivo:**
 - ⚠️ Reverter e re-sintonizar NÃO consomem o teto de tentativas — nenhuma função de adoção toca `attempts`.
 
+### `src/utils/sleepZ.ts`
+**Dono de:** onde fica o Z do sono na Home (14/10/2026): `sleepZPlacement({ footY, spriteBox, size, zoom, airLiftPx?, margin? })` — ao lado da cabeça, nunca acima do topo visível do palco depois do zoom da cena (`CENA_ZOOM`), com ou sem altitude. Puro. **Chamado por:** `CompanionHUD` (bloco `isSleeping`). **Régua:** `utils/sleepZ.test.ts`.
+
 ### `src/utils/spritePose.ts`
 **Dono de:** a pose do sprite — `SpritePose = { flipX, altitude: 'ground' | 'air' }`, a sanitização (lixo -> chão, sem espelho), a conta do espelho do passeio (`mirrorSprite`, em que `flipX` inverte a "frente" da arte), a frase de direção do prompt de geração (`SPRITE_FACING_PROMPT`: arte virada à DIREITA) e o ÚNICO ponto de escrita, `applySpritePose(patch)`. Vale na home e no overlay do desktop; combate fica de fora (o palco fixa os lados).
 **Exports:** `SpritePose`, `SpriteAltitude`, `DEFAULT_SPRITE_POSE`, `SPRITE_FACING_PROMPT`, `AIR_LIFT_PX`, `sanitizeSpritePose`, `mirrorSprite`, `applySpritePose`, `registerSpritePoseWriter`, `registerSpritePoseReader`, `getSpritePose`, `mergeSpritePose`.
@@ -3052,6 +3055,17 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/buildingIntro.test.ts`, `src/components/filaDeAvisos.contract.test.ts`, `src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx`.
 **Regra de negócio:** nenhuma de jogo — só apresenta o que o Vínculo (`utils/gates.ts`) já abre; nada cobra, nada conta.
 
+### `src/utils/presentationQueue.ts`
+**Dono de:** a ORDEM e a regra da fila central de apresentação dos modais da Home/App (14/10/2026, REGISTRO §42). Puro.
+**Exports:**
+- `PRESENTATION_ORDER` (tour → triagem → level-up → resumo do dia → intro de NPC/mapa → metas → compromisso → "crie mais atividades" → Bosque → sonho → pesadelo → convite de nível → sono → balão `unlockToast` → `welcome`) · `PRESENTATION_IDLE` (`'welcome'`, o ocioso) · `PresentationId` · `PresentationReady` · `isPresentationId` · `presentationRank`.
+- `pickPresentation(ready, current, failed)` — UM id; o `current` pronto PERMANECE (não é expulso); senão o mais prioritário pronto; senão o ocioso. `presentationBacklog(...)` — a espera inteira, na ordem.
+- `unlockToast` e o ocioso NÃO são sticky: qualquer modal pronto os substitui.
+- `withFailed(failed, id)` (imutável, idempotente) · `runGuarded(fn)` (engole o erro; `false` = falhou).
+**Chamado por:** `src/hooks/usePresentationQueue.ts`, `src/App.tsx` (só a ordem/ids).
+**Régua:** `src/utils/presentationQueue.test.ts`, `src/hooks/usePresentationQueue.test.tsx`, `src/components/filaDeAvisos.contract.test.ts`.
+**Regra de negócio:** nenhuma de jogo — só decide quem se apresenta primeiro. Inventário: `docs/FILA-DE-MODAIS.md`.
+
 ### `src/utils/buildingIntroCopy.ts`
 **Dono de:** a copy dos três balões de cada prédio (21, EN base + PT-BR) e o nome do prédio. O nome do NPC NÃO mora aqui: vem de `LOT_NPC_VOICE` (`areaNpcVoice.ts`).
 **Exports:** `BUILDING_INTRO_COPY` · `buildingNpcFirstName(id, language)` · `buildingIntroView(id, language)` (`{ npcName, place, lines[3] }`) · `BuildingIntroView`.
@@ -3327,6 +3341,9 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 ### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
 **Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
 **Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.
+
+### `src/utils/hungerPenalty.ts` (14/10/2026 — REGISTRO §45)
+**Dono de:** a PENALIDADE DE FOME — faminto (fome < 20) por 12 h CONTÍNUAS = −0,5 coração; comer zera. Pura, `now` por parâmetro. A âncora é `starvingSince(hunger)` (`hunger.ts`); `hungerPenalty {since, paid, unreported}` no save impede a cobrança dupla ao reabrir; máx. 2 perdas por retorno (o excedente é perdoado); mínimo do dreno de cocô (piso 1 só na raiz; fora dela a fome pode zerar a vida). **Exports:** `applyHungerPenalty` (mesma referência sem janela nova), `starvingWindows`, `msToNextHungerLoss`, `sanitizeHungerPenalty`, as constantes. **Chamado por:** `App.tsx` (no tick da energia), `dailyReset` (lê e zera `unreported` para o resumo). **Régua:** `hungerPenalty.test.ts`.
 
 ### `src/utils/hunger.ts` (beta-2 3.4/3.5, 13/10/2026 — REGISTRO §40)
 **Dono de:** a FOME e o relógio de regeneração da ENERGIA. Funções puras, `now` em ms por parâmetro. A fome (0–100) desce por timestamp (`HUNGER_FULL_TO_EMPTY_HOURS` 14 h) e só sobe comendo (`HUNGER_PER_FOOD` 40; premium `HUNGER_PER_PREMIUM` 100, recusada a partir de `HUNGER_PREMIUM_REFUSE_AT` 80); a energia regenera 1 unidade a cada `ENERGY_REGEN_MINUTES` (120) a 100% — bem alimentado (fome ≥ 60) 100%, mediano (≥ 20) 50%, faminto 0% (interrompida). O progresso até a próxima unidade (`energyClock.carry`, em ponto-ms inteiros) mora no save. **Exports:** `settleEnergy` (acerta até `now`; devolve a MESMA referência sem unidade nova), `setEnergy` (a porta ÚNICA para gastar/ganhar energia fora da regeneração: acerta, aplica e reposiciona o relógio), `eat` (acerta com a fome de ANTES e só então sobe a fome; nunca toca a energia), `energyStatus` (o que a Home mostra: energia, fome, faixa, velocidade, modo e `msToNext` projetado com a queda de faixa), `tickEnergy`/`tickTime` (o tick da Home: com o Soulmon na masmorra congela em `dungeonAway.since`, a conta de quem ficou fora regenera ao longo da linha do tempo), `hungerAt`, `tierOf`, `regenPoints`, `sanitizeHunger`, `sanitizeEnergyClock`, `formatEnergyEta`, as constantes. **Chamado por:** `careRules.feedFood`, `specialItemUse` (premium), `petNeeds.play`, `levelUp`, `dailyReset` (zera a energia SEM reiniciar o relógio), `dungeonIdle.spendLayer`, `checkIns`, `App.tsx` (acerto a cada 15 s), `hooks/useEnergyStatus`. **Régua:** `hunger.test.ts` (aceite: comer não dá energia, velocidade por faixa, timer = motor, fatiar o tempo não muda o total, exploits) e `hunger.balanco.test.ts` (a curva fome × energia contra o orçamento do REGISTRO §30).

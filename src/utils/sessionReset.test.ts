@@ -191,3 +191,19 @@ describe('backup local', () => {
     }
   });
 });
+
+describe('logout → entrada do app (REGISTRO 49)', () => {
+  it('encerrarSessao sem `recarregar` troca a entrada do history por Home sem query/hash e recarrega', async () => {
+    const { vi: v } = await import('vitest');
+    const replaceState = v.fn();
+    const reload = v.fn();
+    v.stubGlobal('location', { pathname: '/', reload });
+    v.stubGlobal('history', { replaceState });
+    const { encerrarSessao: enc, __resetSessaoEncerrando: reset } = await import('./sessionReset');
+    reset();
+    await enc({ motivo: 'logout', copiaDeSeguranca: false, revogarPush: false });
+    expect(replaceState).toHaveBeenCalledWith({ smView: 'home' }, '', '/');
+    expect(reload).toHaveBeenCalledTimes(1);
+    v.unstubAllGlobals();
+  });
+});

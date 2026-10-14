@@ -191,15 +191,15 @@ describe('[NÃO PODE MUDAR] exclusão de conta e o `ord:`', () => {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}),
   });
 
-  it('o `ord:` SOBREVIVE inteiro à exclusão — recibo, trava e restauração dependem dele', async () => {
+  it('o `ord:` SOBREVIVE à exclusão ANÔNIMO (REGISTRO 49) — a trava fica, o dono vira `deleted`', async () => {
     const env = contaSeeded();
     const { confirmToken } = await (await accountRoute({ request: post(`action=delete-request&id=${ID}`), env })).json();
     const res = await accountRoute({ request: post(`action=delete-confirm&id=${ID}`, { confirmToken }), env });
     expect(res.status).toBe(200);
     expect(env._store.has(ID)).toBe(false);                    // o save foi
-    expect(env._store.get(ORDER_PREFIX + ORD)).toBe(ID);       // o recibo ficou
-    // E a exclusão não tocou na chave: nada de reescrever nem encurtar prazo.
-    expect(env._quantosPuts(ORDER_PREFIX + ORD)).toBe(0);
+    expect(env._store.get(ORDER_PREFIX + ORD)).toBe('deleted'); // o recibo ficou, sem saveId
+    // Reescrito UMA vez, mantendo o prazo de 5 anos.
+    expect(env._ttlDe(ORDER_PREFIX + ORD)).toBe(CINCO_ANOS);
   });
 
   it('o `ent:` MINIMIZADO pela exclusão também nasce com o TTL — não fica imortal', async () => {
@@ -207,7 +207,7 @@ describe('[NÃO PODE MUDAR] exclusão de conta e o `ord:`', () => {
     const { confirmToken } = await (await accountRoute({ request: post(`action=delete-request&id=${ID}`), env })).json();
     await accountRoute({ request: post(`action=delete-confirm&id=${ID}`, { confirmToken }), env });
     const ent = JSON.parse(env._store.get(ENT_PREFIX + ID));
-    expect(ent.tier).toBe('paid');               // o direito pago sobrevive
+    expect(ent.tier).toBe('demo');               // REGISTRO 49: o direito pago NÃO sobrevive
     expect(ent.aiLifetime.sprite).toBeGreaterThanOrEqual(0); // antiabuso: o contador de sprite sobrevive (11/10/2026)
     expect(env._ttlDe(ENT_PREFIX + ID)).toBe(CINCO_ANOS);
   });

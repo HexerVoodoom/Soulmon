@@ -19,27 +19,32 @@
  *    no `<details>`.
  *  · Ordem: tarefas ativas, hábitos devidos hoje, hábitos fora do dia,
  *    concluídas de hoje por último.
+ *
+ * POLIMENTO DA HOME (14/10/2026, pedido do dono):
+ *  · **Hábitos = TODO DIA; Tasks = pontual OU em dias específicos.** Hoje, `Tasks`
+ *    junta as pontuais e as agendadas que caem hoje; `Habits` são as diárias.
+ *  · A linha de HOJE mostra o nome e o checkbox (+ os filhos, se houver) e, só se
+ *    houver, UMA linha secundária pequena com o PRAZO e o convite da assombrada
+ *    (`TaskMeta lean`, decisão §46). Sem subtítulo, selo, barra, XP, adiamentos nem categoria.
+ *  · `View all` (gatilho discreto + swipe) lista só TASKS agendadas/recorrentes:
+ *    NÃO marca nada, só edita, e a prévia é o nome + os dias em que aparece.
  */
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext';
-import type { ActivityCategory } from '../types/attributes';
 import { normalizeSchedule } from '../types/taskModel';
-import { categoryLabel } from '../types/category-icons';
 import { isActive, isHaunted } from '../utils/taskTriage';
-import { weeklyProgress, type HabitRhythm } from '../utils/habitRhythm';
+import type { HabitRhythm } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
 import { BackArrow } from './ui/BackArrow';
 import { useBackLayer } from '../utils/backStack';
 import { activityBucket, taskIsForToday, isRitualOpen, ritualOpenKey } from '../utils/atividadesLista';
 import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
-import { TaskMeta } from './TaskMeta';
 import { StepRow } from './StepRow';
-import { bondXP } from '../utils/bond';
-import { habitTier, milestoneReached, habitCountsOn } from '../utils/habitRhythm';
-import { HABIT_WEIGHT } from '../types/taskModel';
+import { TaskMeta } from './TaskMeta';
+import { habitCountsOn } from '../utils/habitRhythm';
 import { parseDayValue } from '../utils/taskTriage';
 
 
@@ -134,7 +139,18 @@ export function DailyRituals({
      tela cheia `View all`, aberta pelo botão do fim da lista OU pelo gesto
      horizontal — a MESMA experiência (`allOpen`). Programada não cobra nada. */
   const [allOpen, setAllOpen] = useState(false);
+  /* A tela fica montada durante a saída (o deslize de volta); em movimento reduzido
+     desmonta na hora. */
+  const [telaMontada, setTelaMontada] = useState(false);
+  const abrirTudo = useCallback(() => { setTelaMontada(true); setAllOpen(true); }, []);
   const fecharTudo = useCallback(() => setAllOpen(false), []);
+  useEffect(() => {
+    if (allOpen || !telaMontada) return;
+    const reduz = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduz) { setTelaMontada(false); return; }
+    const id = window.setTimeout(() => setTelaMontada(false), 260);
+    return () => window.clearTimeout(id);
+  }, [allOpen, telaMontada]);
   useBackLayer(allOpen, fecharTudo);
   const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const swipeStart = (e: ReactPointerEvent) => { swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() }; };
@@ -164,24 +180,12 @@ export function DailyRituals({
   const feitasHoje = completedTasks
     .filter(c => new Date(c.completedAt).toDateString() === todayString && !idsVivos.has(c.id));
 
-  const ehSemanal = (a: Activity) => normalizeSchedule(a as Parameters<typeof normalizeSchedule>[0]).kind === 'timesPerWeek';
-  const atividades = activities.map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number } => ({
+  const atividades = activities.map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean } => ({
     ...activity,
     disponivelHoje: habitCountsOn(activity as Parameters<typeof habitCountsOn>[0], habitRhythms?.[activity.id], now),
     isComplete: activity.steps.length > 0
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),
-    xpEarned: (() => {
-      const feito = activity.steps.length > 0
-        ? activity.steps.every(s => s.completed)
-        : !!(activity.completedToday && activity.lastCompletedDate === todayString);
-      // Já feito: `totalDone` já contém a conclusão de hoje. Por fazer: a PRÉVIA
-      // conta a que está para acontecer (+1), a mesma conta do `withHabitCompletion`.
-      const after = Math.max(0, (habitRhythms?.[activity.id]?.totalDone ?? 0) + (feito ? 0 : 1));
-      const base = bondXP({ kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after) });
-      const milestone = milestoneReached(Math.max(0, after - 1), after);
-      return base + (milestone ? bondXP({ kind: 'habitMilestone', days: after }) : 0);
-    })(),
   })).map(a => (a.isComplete && !a.disponivelHoje ? { ...a, disponivelHoje: true } : a))
     .sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
 
@@ -192,16 +196,19 @@ export function DailyRituals({
     + devidos.filter(a => a.isComplete).length
     + feitasHoje.length;
 
-  /* View all: o que NÃO é "de hoje" também está aqui. */
-  const habitosTodos = atividades.filter(a => activityBucket(a) === 'habit');
+  /* Hoje: diárias = Habits; as agendadas que caem hoje entram em Tasks. */
+  const habitosHoje = devidos.filter(a => activityBucket(a) === 'habit');
+  const agendadasHoje = devidos.filter(a => activityBucket(a) === 'scheduled');
+  /* View all: SÓ tasks agendadas/recorrentes (e as pontuais com início futuro). Hábito não entra. */
   const programadasTodas = atividades.filter(a => activityBucket(a) === 'scheduled');
+  const futuras = ativas.filter(t => !taskIsForToday(t, now));
 
   const gavetaRotulo = isPt
     ? `Guardadas (${guardadas.length})`
     : `Put aside (${guardadas.length})`;
   const tTasks = isPt ? 'Tarefas' : 'Tasks';
   const tHabits = isPt ? 'Hábitos' : 'Habits';
-  const tScheduled = isPt ? 'Programadas' : 'Scheduled';
+  const tScheduled = isPt ? 'Tarefas programadas' : 'Scheduled tasks';
 
   const secao = (titulo: string, key: string) => (
     <li key={`sec-${key}`} className="sm3-secao" data-ritual-section={key}><h3>{titulo}</h3></li>
@@ -209,38 +216,30 @@ export function DailyRituals({
 
   const verTudo = (
     <div className="sm3-ver-tudo">
-      <button type="button" data-view-all onClick={() => setAllOpen(true)}>
+      <button type="button" data-view-all onClick={abrirTudo}>
         {isPt ? 'Ver tudo' : 'View all'}
-        <Icon name="arrow_forward" size={20} />
+        <Icon name="arrow_forward" size={16} />
       </button>
     </div>
   );
 
-  /** Linha de TAREFA (pontual). Com subitens: o pai nunca conclui direto. */
-  function renderTask(task: Task, opts: { all?: boolean } = {}): ReactNode {
+  /** Linha de TAREFA (pontual). Só nome + checkbox; com subitens, os filhos. O pai nunca conclui direto. */
+  function renderTask(task: Task): ReactNode {
     const etapas = task.steps ?? [];
     const feitasEtapas = etapas.filter(st => st.completed).length;
     const todasFeitas = task.completed || (etapas.length > 0 && feitasEtapas === etapas.length);
     const comFilhos = etapas.length > 0 && !!onToggleTaskStep;
     const aberta = isRitualOpen(expanded, task.id, todasFeitas);
-    const futura = !!opts.all && !taskIsForToday(task, now);
-    const inicio = futura && task.startDate
-      ? ` · ${isPt ? 'começa' : 'starts'} ${(parseDayValue(task.startDate) ?? new Date(NaN)).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { month: 'short', day: 'numeric' })}`
-      : '';
     return (
       <RitualRow
         key={task.id}
         flipKey={`t:${task.id}`}
         kind="task"
         name={task.name}
-        subtitle={`${task.category
-          ? categoryLabel(task.category as ActivityCategory, isPt)
-          : (isPt ? 'Tarefa avulsa' : 'One-off task')}${etapas.length > 0 ? ` · ${stepsLabel(feitasEtapas, etapas.length, isPt)}` : ''}${inicio}`}
         value={task.completed ? (etapas.length || 1) : feitasEtapas}
         max={Math.max(1, etapas.length || 1)}
         done={task.completed}
         haunted={isHaunted(task, now)}
-        dimmed={futura}
         onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
         onEdit={() => onEditTask(task.id)}
         language={language}
@@ -250,14 +249,10 @@ export function DailyRituals({
         toggleLabelPt={comFilhos
           ? `${task.completed ? 'Tarefa concluída' : 'Conclua as etapas'}: ${task.name}`
           : `${task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}: ${task.name}`}
+        below={<TaskMeta task={task} now={now} language={language} lean />}
         toggleLabelEn={comFilhos
           ? `${task.completed ? 'Task completed' : 'Complete the steps'}: ${task.name}`
           : `${task.completed ? 'Task completed' : 'Mark task as completed'}: ${task.name}`}
-        below={(
-          /* Prazo, esforço, "adiada 4×" e o convite da assombrada — dado
-             honesto, nunca acusação (TaskMeta.tsx). */
-          <TaskMeta task={task} now={now} language={language} onPostponeNudge={onPostponeNudge} hideDefaultEffort />
-        )}
       >
         {etapas.map(step => (
           <StepRow
@@ -273,6 +268,23 @@ export function DailyRituals({
     );
   }
 
+  /** Linha do `View all`: nome + dias em que aparece; NÃO marca, tocar abre a edição. */
+  function renderEditOnly(key: string, name: string, preview: string, onEdit: () => void): ReactNode {
+    return (
+      <RitualRow
+        key={key}
+        kind="task"
+        name={name}
+        subtitle={preview}
+        value={0}
+        max={1}
+        editOnly
+        onEdit={onEdit}
+        language={language}
+      />
+    );
+  }
+
   function renderDoneTask(c: CompletedTask): ReactNode {
     return (
       <RitualRow
@@ -280,7 +292,6 @@ export function DailyRituals({
         flipKey={`t:${c.id}`}
         kind="task"
         name={c.name}
-        subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'}`}
         value={1}
         max={1}
         done
@@ -302,7 +313,7 @@ export function DailyRituals({
            aqui como gesto (abre `View all`). */
         style={{ touchAction: 'pan-y' }}
         onPointerDown={swipeStart}
-        onPointerUp={(e) => swipeEnd(e, () => setAllOpen(true))}
+        onPointerUp={(e) => swipeEnd(e, (dx) => { if (dx < 0) abrirTudo(); })}
         onPointerCancel={() => { swipeRef.current = null; }}
       >
       <RitualPanel
@@ -319,44 +330,45 @@ export function DailyRituals({
         goal={goal}
         footer={variant === 'home' ? verTudo : undefined}
       >
-        {(tarefas.length > 0 || feitasHoje.length > 0) && secao(tTasks, 'tasks')}
+        {(tarefas.length > 0 || feitasHoje.length > 0 || agendadasHoje.length > 0) && secao(tTasks, 'tasks')}
         {tarefas.map(task => renderTask(task))}
+        {agendadasHoje.filter(a => !a.isComplete).map(activity => renderHabit(activity))}
+        {agendadasHoje.filter(a => a.isComplete).map(activity => renderHabit(activity))}
         {feitasHoje.map(c => renderDoneTask(c))}
 
-        {devidos.length > 0 && secao(tHabits, 'habits')}
-        {devidos.filter(a => !a.isComplete).map(activity => renderHabit(activity))}
+        {habitosHoje.length > 0 && secao(tHabits, 'habits')}
+        {habitosHoje.filter(a => !a.isComplete).map(activity => renderHabit(activity))}
         {/* Concluídas de hoje, no fim do grupo. */}
-        {devidos.filter(a => a.isComplete).map(activity => renderHabit(activity))}
+        {habitosHoje.filter(a => a.isComplete).map(activity => renderHabit(activity))}
       </RitualPanel>
       </div>
 
-      {allOpen && typeof document !== 'undefined' && createPortal(
+      {telaMontada && typeof document !== 'undefined' && createPortal(
         <AllActivitiesScreen
           language={language}
           onClose={fecharTudo}
+          closing={!allOpen}
           swipeStart={swipeStart}
           swipeEnd={swipeEnd}
         >
-          {ativas.length > 0 && (
-            <section aria-label={tTasks} data-all-section="tasks">
-              <h3 className="sm3-secao-h">{tTasks}</h3>
-              <ul className="sm2-ritual-list">{ativas.map(t => renderTask(t, { all: true }))}</ul>
-            </section>
-          )}
-          {habitosTodos.length > 0 && (
-            <section aria-label={tHabits} data-all-section="habits">
-              <h3 className="sm3-secao-h">{tHabits}</h3>
-              <ul className="sm2-ritual-list">{habitosTodos.map(a => renderHabit(a))}</ul>
-            </section>
-          )}
-          {programadasTodas.length > 0 && (
+          {(programadasTodas.length > 0 || futuras.length > 0) ? (
             <section aria-label={tScheduled} data-all-section="scheduled">
               <h3 className="sm3-secao-h">{tScheduled}</h3>
-              <ul className="sm2-ritual-list">{programadasTodas.map(a => renderHabit(a))}</ul>
+              <ul className="sm2-ritual-list">
+                {programadasTodas.map(a => renderEditOnly(
+                  `h:${a.id}`, a.name, frequencyLabel(a, isPt, diasCurtos), () => onEditActivity(a.id),
+                ))}
+                {futuras.map(t => {
+                  const d = parseDayValue(t.startDate ?? '') ?? new Date(NaN);
+                  const quando = Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+                  return renderEditOnly(`t:${t.id}`, t.name, quando, () => onEditTask(t.id));
+                })}
+              </ul>
             </section>
-          )}
-          {ativas.length + atividades.length === 0 && (
-            <p style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>{emptyMessage}</p>
+          ) : (
+            <p style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>
+              {isPt ? 'Nenhuma tarefa programada. Tarefas em dias específicos aparecem aqui.' : 'No scheduled tasks. Tasks on specific days show up here.'}
+            </p>
           )}
         </AllActivitiesScreen>,
         document.body,
@@ -406,26 +418,9 @@ export function DailyRituals({
     </>
   );
 
-  function renderHabit(activity: Activity & { disponivelHoje: boolean; isComplete: boolean; xpEarned: number }): ReactNode {
+  function renderHabit(activity: Activity & { disponivelHoje: boolean; isComplete: boolean }): ReactNode {
     const etapas = activity.steps ?? [];
     const feitasEtapas = etapas.filter(s => s.completed).length;
-    const freq = frequencyLabel(activity, isPt, diasCurtos);
-    // Prévia ANTES de concluir (11/10/2026, pedido do dono): o valor aparece sempre;
-    // hábito fora do dia não é devido, então não promete nada.
-    const xp = activity.isComplete || activity.disponivelHoje ? ` · +${activity.xpEarned} ${isPt ? 'XP base' : 'base XP'}` : '';
-    const semana = ehSemanal(activity)
-      ? weeklyProgress(habitRhythms?.[activity.id] ?? { done: [] } as unknown as HabitRhythm, (activity as { schedule?: never }).schedule as never, now)
-      : null;
-    /* Semanal ("N× por semana"): só "0 de 3 esta semana" + XP base — sem o rótulo
-       de frequência, sem contagem de etapas, sem chip duplicado (pedido do dono). */
-    const progSemana = semana && semana.target > 0
-      ? (isPt ? `${semana.done} de ${semana.target} esta semana` : `${semana.done} of ${semana.target} this week`)
-      : null;
-    const subtitulo = progSemana
-      ? `${progSemana}${xp}`
-      : etapas.length > 0
-        ? `${freq} · ${stepsLabel(feitasEtapas, etapas.length, isPt)}${xp}`
-        : `${freq}${xp}`;
     const aberta = isRitualOpen(expanded, activity.id, activity.isComplete);
     return (
       <RitualRow
@@ -433,7 +428,6 @@ export function DailyRituals({
         flipKey={`h:${activity.id}`}
         kind="habit"
         name={activity.name}
-        subtitle={subtitulo}
         value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}
         max={etapas.length > 0 ? etapas.length : 1}
         done={activity.isComplete}
@@ -444,20 +438,13 @@ export function DailyRituals({
         onExpand={() => onExpand(ritualOpenKey(activity.id, activity.isComplete), !aberta)}
         onToggle={etapas.length > 0 ? undefined : () => onToggleActivity(activity.id)}
         language={language}
-        /* O check é de HOJE, e o rótulo diz isso; o progresso da semana é um
-           chip À PARTE (só exibição — não mexe em constância nem pontuação). */
+        /* O check é de HOJE, e o rótulo diz isso. */
         toggleLabelPt={etapas.length > 0
           ? `${activity.isComplete ? 'Hoje concluído' : 'Conclua as etapas de hoje'}: ${activity.name}`
           : `${activity.isComplete ? 'Hoje concluído' : 'Marcar como feito hoje'}: ${activity.name}`}
         toggleLabelEn={etapas.length > 0
           ? `${activity.isComplete ? 'Done today' : "Complete today's steps"}: ${activity.name}`
           : `${activity.isComplete ? 'Done today' : 'Mark as done today'}: ${activity.name}`}
-        /* D2+D3 (navegação do dono, 01/10/2026): a janela de 7 tracejada +
-           a bolinha/folha de maturidade (`HabitConstancy compact`) SAIU da
-           linha — o dono leu a folha como "botão de editar" e o tracejado
-           como ruído que não comunica. A constância continua viva no motor
-           (`habitRhythm.ts`), no check-in (glifo `eco` dos hábitos de hoje),
-           no relatório semanal e na edição do hábito; só não ocupa a lista. */
       >
         {etapas.map(step => (
           <StepRow
@@ -482,10 +469,11 @@ export function DailyRituals({
  * (`useBackLayer` no pai), Esc também. As linhas são as MESMAS da Home.
  */
 function AllActivitiesScreen({
-  language, onClose, swipeStart, swipeEnd, children,
+  language, onClose, closing, swipeStart, swipeEnd, children,
 }: {
   language: Language;
   onClose: () => void;
+  closing: boolean;
   swipeStart: (e: ReactPointerEvent) => void;
   swipeEnd: (e: ReactPointerEvent, aoAcionar: (dx: number) => void) => void;
   children: ReactNode;
@@ -506,6 +494,7 @@ function AllActivitiesScreen({
       aria-modal="true"
       aria-label={isPt ? 'Todas as atividades' : 'All activities'}
       data-all-activities
+      data-closing={closing || undefined}
       onPointerDown={swipeStart}
       onPointerUp={(e) => swipeEnd(e, (dx) => { if (dx > 0) onClose(); })}
     >

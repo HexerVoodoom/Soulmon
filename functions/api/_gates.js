@@ -39,7 +39,7 @@ export const BUILDING_GATES = {
   'jogos.salao': { minBond: 1 },
   'jogos.refugio': { minBond: 1 },
   'jogos.mente': { minBond: 3 },
-  'exploracao.masmorra': { minBond: 2 },
+  'exploracao.masmorra': { minBond: 1 },
   'exploracao.caderno': { minBond: 2 },
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },

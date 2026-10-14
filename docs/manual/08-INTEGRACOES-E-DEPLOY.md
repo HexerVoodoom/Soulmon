@@ -167,7 +167,7 @@ acento passa a casar, e o léxico EN ganhou o coloquial de chat (`wanna die`,
 | **Para quê** | O sprite próprio de cada uma das 11 formas. É a rota mais cara do app. |
 | **Cliente** | `src/utils/spriteGen.ts` (`requestSprite`, `pixelizeDataUrl`, `generateAllSprites`, `SpriteGenError`), `src/utils/spriteLibrary.ts` (o acervo), `src/utils/spriteRunner.ts` (execução) e `src/hooks/useSpriteGeneration.ts` (a janela). |
 | **Servidor** | `functions/api/generate-sprite.js` → `POST` com `{ prompt, promptFallback?, referenceImageUrls?, id, formId? }`. Quando o provedor devolve `data:`, o binário é republicado por `functions/api/sprite-image.js` (`GET ?k=<32 hex>`). |
-| **Credencial** | Primário: `HF_API_KEY` **+** `HF_SECRET` (`wrangler secret`; a rota monta `Key <HF_API_KEY>:<HF_SECRET>`). Reserva: `GEMINI_API_KEY` (`wrangler secret`). |
+| **Credencial** | Primário (14/10/2026): `HF_CREDENTIALS` = `keyId:keySecret` (GPT Image 2.5 flare, `marketing-studio/image/flare`; `SPRITE_MODEL` opcional; cadastrar via dashboard do Cloudflare, ausente cai no Soul). Legado: `HF_API_KEY` **+** `HF_SECRET` (`wrangler secret`; a rota monta `Key <HF_API_KEY>:<HF_SECRET>`). Reserva: `GEMINI_API_KEY` (`wrangler secret`). |
 | **Sem ela** | Sem nenhum dos dois pares a rota lança `image generation not configured`. O app **nunca fica sem arte**: acervo vazio é a arte de RESERVA, que por invariante nunca é erro. |
 | **Régua** | `generate-sprite.cap.test.js`, `.dedupe.test.js`, `.release.test.js`, `.tier.test.js`, `_aiGuard.spriteCap.test.js`, `sprite-image.headers.test.js`. |
 

@@ -171,8 +171,14 @@ describe('account.js — exclusão', () => {
     expect(s.has(`rank:2026-08:${OTHER}`)).toBe(true);
 
     const ent = JSON.parse(s.get(`ent:${ID}`));
-    expect(ent.tier).toBe('paid');                 // o direito pago sobrevive
-    expect(ent.consumedOrders).toEqual(['GPA.1234']);
+    // REGISTRO §49: excluiu a conta, paga de novo. Tier e saldo NÃO sobrevivem...
+    expect(ent.tier).toBe('demo');
+    expect(ent.credits).toBe(0);
+    expect(ent.consumedOrders).toEqual([]);
+    expect(ent.orderDetails).toEqual([]);
+    expect(JSON.stringify(ent)).not.toContain('tok-secreto-9876');
+    // ...e o vínculo do comprovante fica ANÔNIMO (sentinela), nunca com o saveId.
+    expect(s.get('ord:GPA.1234')).toBe('deleted');
     // Desde 11/10/2026 o contador de SPRITE sobrevive (antiabuso V1.2: excluir e
     // relogar não devolve gerações); o resto do uso some.
     expect(ent.aiLifetime).toEqual({ sprite: 3 });
