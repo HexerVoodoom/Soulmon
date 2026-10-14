@@ -59,8 +59,9 @@ describe('ForgeCard', () => {
     expect(document.querySelector('[data-forge-stock]')).toBeNull();
     expect(document.querySelector('[data-equip-state]')).toBeNull();
     expect(document.querySelectorAll('[data-forge-piece]')).toHaveLength(3);
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/Vem da missão de/);
-    expect(peca('eq-nucleo-t1').querySelector('[data-forge-upgrade-locked]')?.textContent).toMatch(/resgate a missão para liberar os aprimoramentos/);
+    // Ajuste do dono (14/10/2026): sem parágrafo explicativo — só o nome do item.
+    expect(peca('eq-nucleo-t1').querySelector('[data-forge-upgrade-locked]')).toBeNull();
+    expect(peca('eq-nucleo-t1').textContent).not.toMatch(/Vem da missão/);
     expect(document.querySelectorAll('[data-forge-card] button')).toHaveLength(0); // peça ainda não obtida: card informativo, sem botão
     expect(document.querySelectorAll('[data-forge-upgrade]')).toHaveLength(0);
     const t = document.querySelector('[data-forge-card]')!.textContent!;
@@ -70,7 +71,7 @@ describe('ForgeCard', () => {
 
   it('aprimorar: o modal pede a ESCOLHA entre A e B, mostra o efeito em %, e confirmar debita os materiais e sobe o nível', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }));
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/Lv 1 → Lv 2/);
+    expect(peca('eq-nucleo-t1').querySelector('[data-forge-bonus]')!.textContent).toBe('+0,1% Ataque');
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Minério 3\/2/);
     click(q('[data-forge-upgrade-btn="eq-nucleo-t1"]'));
     const dlg = document.querySelector('[data-forge-dialog="upgrade"]')!;
@@ -90,15 +91,15 @@ describe('ForgeCard', () => {
     expect(estado().forge.levels['eq-nucleo-t1']).toBe(2);
     expect(estado().forge.picks['eq-nucleo-t1']).toEqual(['b']);
     expect(estado().mats.ore).toBe(1);
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/Lv 2 → Lv 3/);
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/defesa \+0,1%/);
-    // A linha "Próximo" também apresenta as duas como iguais, sem dizer qual é a "do slot".
-    expect(peca('eq-nucleo-t1').textContent).toMatch(/Próximo: \+0,1% de ataque ou de defesa, à sua escolha/);
+    expect(peca('eq-nucleo-t1').textContent).toMatch(/\+0,1% Defesa/);
+    // Sem comparação Agora/Próximo (ajuste do dono, 14/10/2026).
+    expect(peca('eq-nucleo-t1').textContent).not.toMatch(/Agora|Próximo|Now|Next/);
   });
 
   it('peça possuída: UM botão só (Upgrade), sem Equipar nem Tirar; o nome acompanha o tier da peça', () => {
     abrir(nivel1(), 'en-US');
-    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')!.textContent).toMatch(/Part of your soul/);
+    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')).toBeNull();
+    expect(peca('eq-nucleo-t1').textContent).not.toMatch(/Part of your soul/i);
     expect(peca('eq-nucleo-t1').textContent).toMatch(/Copper Core/);
     expect(document.querySelector('[data-equip-unequip]')).toBeNull();
     expect(document.body.textContent).not.toMatch(/Unequip|Tirar|\bEquip\b|Equipar/);
@@ -107,14 +108,14 @@ describe('ForgeCard', () => {
     expect(botoes).toHaveLength(1);
     expect(botoes[0].textContent).toBe('Upgrade');
     expect(peca('eq-carapaca-t1').querySelector('button')).toBeNull();
-    expect(peca('eq-carapaca-t1').textContent).toMatch(/Comes from/);
+    expect(peca('eq-carapaca-t1').textContent).not.toMatch(/Comes from/);
     expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);
   });
 
   it('save antigo com peça possuída e "tirada" volta equipada na carga', () => {
     abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: {}, fragments: 0 } });
     expect(estado().eq.equipped.nucleo).toBe('eq-nucleo-t1');
-    expect(peca('eq-nucleo-t1').querySelector('[data-equipped-badge]')).not.toBeNull();
+    expect(peca("eq-nucleo-t1").querySelector("[data-equipped-badge]")).toBeNull(); // selo "Parte da sua alma" removido
   });
 
   it('celebração: não aparece ao abrir nem ao cancelar; aparece após o upgrade confirmado, com movimento', () => {
@@ -188,8 +189,8 @@ describe('ForgeCard', () => {
 
   it('peça comprada antes do Soulsmith (sem registro) aparece no nível equivalente, sem perder nada', () => {
     abrir({ totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t3'], equipped: { nucleo: 'eq-nucleo-t3' }, fragments: 0 } });
-    expect(peca('eq-nucleo-t3').textContent).toMatch(/Lv 15 · Max/);
-    expect(peca('eq-nucleo-t3').textContent).toMatch(/ataque \+1,5%/);
+    expect(peca('eq-nucleo-t3').textContent).toMatch(/\+1,5% Ataque/);
+    expect(peca('eq-nucleo-t3').textContent).not.toMatch(/Lv 15/);
     expect(peca('eq-nucleo-t3').textContent).not.toMatch(/Upgrade/);
   });
 
@@ -214,7 +215,7 @@ describe('ForgeCard', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 2 }) }), 'en-US');
     const t = document.querySelector('[data-forge-card]')!.textContent!;
     expect(t).toMatch(/Soulsmith/);
-    expect(t).toMatch(/Lv 1 → Lv 2/);
+    expect(peca('eq-nucleo-t1').querySelector('[data-forge-bonus]')!.textContent).toBe('+0.1% Attack');
     expect(t).toMatch(/Ore 2\/2/);
     expect(t).not.toMatch(/Nível|Vem da/);
     expect(itemName('rastro', 3, false)).toBe('Ornate Trail');

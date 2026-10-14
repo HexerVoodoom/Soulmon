@@ -47,15 +47,25 @@ describe('penalidade de fome (REGISTRO §45)', () => {
     expect(desde).toBeGreaterThan(T0 + W + H);
   });
 
-  it('nunca abaixo de 1 coração (não mata, não degenera) — e a dívida não vira retroativa', () => {
+  it('mínimo = o do dreno de cocô: na RAIZ (rookie) o piso é 1 coração; a dívida não vira retroativa', () => {
     const s = applyHungerPenalty(faminto(1.5), T0 + 2 * W);
     expect(s.healthPoints).toBe(1);
     const baixo = applyHungerPenalty(faminto(1), T0 + 5 * W);
     expect(baixo.healthPoints).toBe(1);
     expect(baixo.hungerPenalty!.paid).toBe(5); // se o HP subir depois, não cobra o passado
     expect(applyHungerPenalty({ ...baixo, healthPoints: 3 }, T0 + 5 * W + 1000).healthPoints).toBe(3);
-    const meio = applyHungerPenalty(faminto(0.5), T0 + 3 * W);
-    expect(meio.healthPoints).toBe(0.5);
+    expect(applyHungerPenalty(faminto(0.5), T0 + 3 * W).healthPoints).toBe(0.5);
+  });
+
+  it('fora da raiz a fome PODE zerar a vida (decisão do dono 14/10/2026), em passos de 0,5 e nunca abaixo de 0', () => {
+    const champ = (hp: number) => faminto(hp, { evolutionStage: 'champion' });
+    expect(applyHungerPenalty(champ(1), T0 + W).healthPoints).toBe(0.5);
+    expect(applyHungerPenalty(champ(1), T0 + 2 * W).healthPoints).toBe(0);
+    const zero = applyHungerPenalty(champ(1), T0 + 6 * W);
+    expect(zero.healthPoints).toBe(0);
+    expect(zero.hungerPenalty!.paid).toBe(6);
+    expect(applyHungerPenalty(zero, T0 + 6 * W + 1000)).toBe(zero);
+    expect(applyHungerPenalty(champ(0), T0 + 3 * W).healthPoints).toBe(0);
   });
 
   it('só faminto conta: fome mediana/cheia e save sem registro nunca cobram', () => {
@@ -80,7 +90,8 @@ describe('penalidade de fome (REGISTRO §45)', () => {
   it('starvingWindows e o aviso de tempo até a próxima perda', () => {
     expect(starvingWindows({ v: 0, at: T0 }, T0 + 25 * H)).toBe(2);
     expect(msToNextHungerLoss(faminto(), T0 + 10 * H)).toBe(2 * H);
-    expect(msToNextHungerLoss(faminto(1), T0 + 10 * H)).toBeNull();
+    expect(msToNextHungerLoss(faminto(1), T0 + 10 * H)).toBeNull(); // raiz no piso
+    expect(msToNextHungerLoss(faminto(1, { evolutionStage: 'champion' }), T0 + 10 * H)).toBe(2 * H);
   });
 
   it('lixo no save vira "nada cobrado"', () => {

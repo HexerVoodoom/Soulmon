@@ -1,5 +1,5 @@
 // Cloudflare Pages Function — gera 1 sprite de Soulmon.
-// Provedor primário: HIGGSFIELD — GPT Image 2 low (rota via SPRITE_GPT_IMAGE_ROUTE, ver §46),
+// Provedor primário: HIGGSFIELD — GPT Image 2 low (rota via SPRITE_GPT_IMAGE_ROUTE, ver §47),
 // senão flare (HF_CREDENTIALS) ou, sem ela, Soul.
 //   Secrets: HF_API_KEY + HF_SECRET (já configurados via `wrangler secret`).
 //   Suporta referência de imagem (cadeia de evolução: champion parte do
@@ -245,7 +245,7 @@ function flareCredentials(env) {
   return /^[^:\s]+:[^:\s]+$/.test(c) ? c : null;
 }
 
-// GPT Image 2 LOW (dono, 14/10/2026, §46): modelo padrão do sprite. `SPRITE_MODEL`:
+// GPT Image 2 LOW (dono, 14/10/2026, §47): modelo padrão do sprite. `SPRITE_MODEL`:
 // 'gpt_image_2' (padrão) | 'flare' | 'soul' | id de rota. `SPRITE_QUALITY` (low|medium|high,
 // padrão low). A rota REST de `gpt_image_2` NÃO está na documentação pública
 // (docs.higgsfield.ai só lista Soul, Marketing Studio, Grok, Recraft, Ideogram...; o

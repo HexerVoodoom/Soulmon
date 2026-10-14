@@ -1497,7 +1497,7 @@ export function composeSpritePromptLegacy(args: SpritePromptArgs): string {
 
 
 /** Estilo do template de prompt de sprite. 'v-pet' (padrão, decisão do dono
- *  14/10/2026, §46) ou 'legacy' (backup do texto anterior). Trocar por
+ *  14/10/2026, §47) ou 'legacy' (backup do texto anterior). Trocar por
  *  `VITE_SPRITE_PROMPT_STYLE` no build ou pelo argumento `style`. */
 export type SpritePromptStyle = 'v-pet' | 'legacy';
 export const DEFAULT_SPRITE_PROMPT_STYLE: SpritePromptStyle = 'v-pet';

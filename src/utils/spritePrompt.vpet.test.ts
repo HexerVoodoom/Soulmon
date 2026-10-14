@@ -1,4 +1,4 @@
-/** Contrato do template v-pet (§46) + backup legacy. Exemplos EX1/EX2 do dono (14/10/2026). */
+/** Contrato do template v-pet (§47) + backup legacy. Exemplos EX1/EX2 do dono (14/10/2026). */
 import { describe, it, expect } from 'vitest';
 import { composeSpritePromptVPet, composeSpritePromptLegacy } from './oracle/motor';
 import { SPRITE_FACING_PROMPT } from './spritePose';

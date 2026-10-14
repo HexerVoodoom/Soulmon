@@ -209,6 +209,9 @@ export interface RitualRowProps {
   /** Pré-visualização de UMA linha, só na tela `View all` (dias em que a tarefa aparece).
    *  A lista de HOJE nunca passa isto: ali a linha é só nome + checkbox (14/10/2026). */
   subtitle?: string;
+  /** Linha secundária pequena, FORA do botão, alinhada ao texto (14/10/2026: só o prazo e o
+   *  convite da assombrada, via `TaskMeta lean`). Some quando a linha está feita. */
+  below?: ReactNode;
   /** Quantos filhos estão feitos (0 = nenhum) e quantos existem: alimenta o estado `mixed` do pai. */
   value: number;
   max: number;
@@ -249,7 +252,7 @@ export interface RitualRowProps {
 export function RitualRow({
   kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
   onToggle, editOnly = false, onEdit, expandable = false, expanded = false, onExpand,
-  children, language, toggleLabelPt, toggleLabelEn, flipKey,
+  children, language, toggleLabelPt, toggleLabelEn, flipKey, below,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
   const isHaunted = haunted && !done;
@@ -348,6 +351,10 @@ export function RitualRow({
           <span aria-hidden="true" style={{ flex: '0 0 12px', width: 12, height: 44 }} />
         )}
       </div>
+
+      {below && !done && (
+        <div data-ritual-below style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{below}</div>
+      )}
 
       {expandable && expanded && children && (
         <div data-ritual-children style={{ padding: `0 0 8px ${RITUAL_TEXT_INSET}px`, boxSizing: 'border-box' }}>{children}</div>

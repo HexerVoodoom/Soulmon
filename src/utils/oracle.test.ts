@@ -247,7 +247,7 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('isolated subject, no backdrop, no checkerboard');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      // v-pet (§46): sem o veto de matiz única (o exemplo do dono não o tem).
+      // v-pet (§47): sem o veto de matiz única (o exemplo do dono não o tem).
       expect(s.imagePrompt).not.toContain('Do not tint');
       // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
       const conceptMatch = s.imagePrompt.match(/no checkerboard: (.+?)\. /);

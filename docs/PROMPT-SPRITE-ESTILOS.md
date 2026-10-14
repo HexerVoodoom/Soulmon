@@ -1,4 +1,4 @@
-# Estilos do prompt de sprite (§46)
+# Estilos do prompt de sprite (§47)
 
 Seleção: `VITE_SPRITE_PROMPT_STYLE=legacy|v-pet` (padrão `v-pet`) ou argumento `style` em `composeSpritePrompt` (`src/utils/oracle/motor.ts`).
 

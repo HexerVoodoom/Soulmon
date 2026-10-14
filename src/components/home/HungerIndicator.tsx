@@ -10,7 +10,7 @@ import { fomeCheio, fomeMedio, fomeFaminto } from '../../assets/soulmon/icones-u
  *   <HungerIndicator tier={status.tier} value={status.hunger} language={language} />
  *
  * Três estados legíveis SEM depender de cor: carne no osso inteira / pela metade / só o osso (arte escolhida pelo dono, 14/10/2026; o faminto vem em dourado). O nome acessível diz o estado em
- * palavras. Sem texto na tela (minimalismo): o detalhe vive na dica da energia (`home/statTips.ts`). Sem animação, sem som, sem cobrança.
+ * palavras. O nível aparece como 1/3, 2/3, 3/3: o detalhe vive na dica da energia (`home/statTips.ts`). Sem animação, sem som, sem cobrança.
  * Cor só por tokens (`currentColor` + `--sm2-*`): herda a tinta do contêiner (na cena escura, os tons `viewport*` do `sm3-stat`).
  */
 const STATE_COPY: Record<HungerTier, { pt: string; en: string }> = {
@@ -20,7 +20,7 @@ const STATE_COPY: Record<HungerTier, { pt: string; en: string }> = {
 };
 const ART: Record<HungerTier, string> = { fed: fomeCheio, fair: fomeMedio, starving: fomeFaminto };
 
-const wrap: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, lineHeight: 0 };
+const wrap: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, lineHeight: 'inherit' };
 
 export function HungerIndicator({ tier, value, language, size = 20, style, onTap, expanded }: {
   tier: HungerTier;
@@ -40,12 +40,8 @@ export function HungerIndicator({ tier, value, language, size = 20, style, onTap
   const corpo = (
     <>
       <img src={ART[tier]} alt="" width={size} height={size} draggable={false} aria-hidden="true" style={{ imageRendering: 'pixelated' }} />
-      {/* nível N de 3 (REGISTRO §43): três marcas, cheias × só contorno — a forma diz o nível, não a cor */}
-      <svg data-hunger-level={nivel} width="14" height="6" viewBox="0 0 14 6" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
-        {[0, 1, 2].map(i => (i < nivel
-          ? <rect key={i} x={i * 5} y="0" width="4" height="6" fill="currentColor" />
-          : <rect key={i} x={i * 5 + 0.5} y="0.5" width="3" height="5" fill="none" stroke="currentColor" strokeWidth="1" />))}
-      </svg>
+      {/* nível N/3 em texto, mesmo esquema do numeral da energia/vida (`sm2-num` = tabular-nums) */}
+      <span className="sm2-num" data-hunger-level={nivel} aria-hidden="true">{nivel}/3</span>
     </>
   );
   const dados = {
