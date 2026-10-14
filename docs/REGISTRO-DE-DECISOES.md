@@ -2272,6 +2272,12 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Alternativas que perderam:** contador visual só no cliente para o timer (viola 3.4); energia continuar enchendo por comida e a fome só enfeitar (viola 3.5); limite diário só na UI (viola 6.1); `FLAG_FULLSCREEN` para o modo imersivo (quebra o teclado); resgate manual para todos os 14 prédios (14 linhas no menu da Home, contra o §"a UI de missão NUNCA fica dentro do prédio"); recompensa de check-in em energia direta (conflita com 3.5).
 - **Gatilho para rever:** telemetria com a mediana de "faminto" > 50% do dia (queda de 14 h curta demais) ou energia que "nunca sobe" nas queixas; `daily` encerrando mais de 1 descida em cada 3; check-in tocado por < 20% dos que abrem o cartão (benefício fraco) ou por > 90% (virou rotina vazia).
 
+### 40.4-b Check-ins ocultos, prévia só do admin, iniciais não evoluem (dono, 14/10/2026)
+
+- **Decisão:** (1) os três check-ins do dia (§40.4) saem do jogo por ora — "ficou horrível, oculta, depois eu melhoro": `CHECKINS_ENABLED = false` em `utils/checkIns.ts` (único interruptor); (2) forma futura **não é pré-visualizável** para o jogador comum, porque a arte só é gerada perto de evoluir — a prévia (silhueta/revelar) fica só para o administrador, flag derivada do servidor (`verifiedAdmin` → `useAdmin`); (3) **os 5 iniciais não evoluem** (um sprite só).
+- **Alternativas que perderam:** apagar o código/campo `checkIns` (perde save e o mecanismo para religar); flag lida do cliente (forjável); manter a árvore dos iniciais com formas de mesmo sprite (silhuetas idênticas, "evoluções erradas").
+- **Gatilho para rever:** o dono redesenhar os check-ins (religar a flag e ajustar os §40.9-4); a arte dos iniciais ganhar formas próprias.
+
 ## 41. Qualidade da geração de arte: sombras em low, sprites de Soulmon em medium (dono, 13/10/2026)
 
 - **Decisão:** as 12 sombras do Pesadelo usam a qualidade **low** do Higgsfield (`gpt_image_2`, 0,5 crédito/imagem), instaladas em `src/assets/soulmon/dino/dino-shadow-*.png`. Os sprites de Soulmon (rookie → ultra) usam **medium** (1,0 crédito/imagem).

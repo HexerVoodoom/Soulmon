@@ -276,3 +276,12 @@ describe('o level up tem POSIÇÃO na fila e monta UMA vez', () => {
     expect(src).not.toMatch(/setTimeout\([^)]*(finish|onDone)|setInterval\([^)]*(finish|onDone)/);
   });
 });
+
+describe('check-ins ocultos (14/10/2026, REGISTRO §40.4-b)', () => {
+  it('o item `checkIn` (compromisso) da fila só é oferecido atrás do interruptor único CHECKINS_ENABLED', () => {
+    const efeito = app.slice(app.indexOf('const checkInPromptedRef'), app.indexOf('/** Fecha o check-in gravando os focos escolhidos'));
+    expect(efeito).toContain('if (!CHECKINS_ENABLED) return;');
+    expect(efeito.indexOf('if (!CHECKINS_ENABLED) return;')).toBeLessThan(efeito.indexOf("track('checkin_shown')"));
+    expect(app).toContain('{CHECKINS_ENABLED && checkInsAbertos && ');
+  });
+});

@@ -17,7 +17,8 @@
  * limpa, o mesmo cinza nos dois temas. O que este arquivo trava não mudou: a
  * silhueta existe só com sprite próprio, e nunca deixa a COR passar.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { setAdminFlag } from '../utils/adminFlag';
 import { renderWithCss } from '../test/renderEnv';
 import { EvolutionPath } from './EvolutionPath';
 import { emptySpriteLibrary, recordSprite } from '../utils/spriteLibrary';
@@ -47,6 +48,11 @@ const base = {
 
 /** O sprite PRÓPRIO da forma prevista, já adotado. */
 const spritePrevisto = { url: 'https://cdn/champion-harmony.png', formId: 'champion-harmony', at: 1 };
+
+// 14/10/2026 (pedido do dono): a prévia de forma futura — silhueta e revelar — é SÓ do administrador, porque a arte só é gerada
+// perto de evoluir. Estes dois blocos descrevem o que o ADMIN vê; o bloco final prova que o jogador comum não vê nada disso.
+beforeEach(() => setAdminFlag(true));
+afterEach(() => setAdminFlag(false));
 
 function silhuetas() {
   return [...document.querySelectorAll('[data-node-silhouette]')] as HTMLElement[];
@@ -100,5 +106,43 @@ describe('EvolutionPath — a silhueta NÃO desfaz o spoiler', () => {
     // A forma oculta se anuncia como `???` no grafo (o rótulo acessível diz
     // "Evolução oculta"). A silhueta entra ao lado disso, não no lugar.
     expect(container.textContent).toContain('???');
+  });
+});
+
+describe('EvolutionPath — jogador comum NÃO vê prévia de forma futura (só o administrador)', () => {
+  const lib = () => recordSprite(emptySpriteLibrary(), spritePrevisto, { adopt: 'now' });
+
+  it('sem admin: nenhuma silhueta, nenhuma arte futura e nenhum gesto de revelar', () => {
+    setAdminFlag(false);
+    const { container } = renderWithCss(<EvolutionPath {...base} spriteLibrary={lib()} />);
+    expect(silhuetas()).toHaveLength(0);
+    expect(container.textContent).toContain('???');
+    expect(container.textContent).not.toContain('Prevista');
+    // o nó da forma futura não é botão e não promete "revelar"
+    expect(container.innerHTML).not.toMatch(/Revelar|Reveal \(spoiler\)/);
+  });
+
+  it('sem vazamento da URL da arte futura no DOM', () => {
+    setAdminFlag(false);
+    const { container } = renderWithCss(<EvolutionPath {...base} spriteLibrary={lib()} />);
+    expect(container.innerHTML).not.toContain(spritePrevisto.url);
+    expect(container.innerHTML).not.toContain('champion-harmony.png');
+  });
+
+  it('com admin a prévia continua (a URL só aparece para ele)', () => {
+    setAdminFlag(true);
+    const { container } = renderWithCss(<EvolutionPath {...base} spriteLibrary={lib()} />);
+    expect(silhuetas().length).toBeGreaterThan(0);
+    expect(container.innerHTML).toContain(spritePrevisto.url);
+  });
+
+  it('o inicial não evolui: só a forma dele, sem árvore, sem barra e sem cadeado', () => {
+    setAdminFlag(false);
+    const { container } = renderWithCss(<EvolutionPath {...base} demoCharacterId="meteoro" spriteLibrary={emptySpriteLibrary()} />);
+    expect(container.querySelector('[data-testid="sm-nao-evolui"]')).not.toBeNull();
+    expect(container.querySelector('[data-evo-meter]')).toBeNull();
+    expect(container.querySelector('[data-lock-button]')).toBeNull();
+    expect(container.textContent).not.toContain('???');
+    expect(container.querySelectorAll('article')).toHaveLength(1);
   });
 });

@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/10/2026 — Gratuitos: espelho, prévia só do admin, iniciais não evoluem, check-ins ocultos (`fix/gratuitos-espelho-previa-checkins`)
+>
+> - **Espelho:** `meteoro` (Bolid) olha à esquerda e andava de costas → `LEFT_FACING_STARTERS`. O **combate** não lia a orientação da arte (`BattleStage` só tinha a URL) → `spriteUrlFacesLeft`. "Virar Soulmon" também na página do Pet (era só em Configurações, para todos os tiers — o problema era descoberta). Tabela id → lado → correção: `docs/AUDITORIA-FACING-GRATUITOS.md`.
+> - **Evolução:** a prévia de forma futura (silhueta + "Revelar") é **só do admin** (`useAdmin`, flag do servidor); o jogador comum vê "???" sem arte e sem URL no DOM. **Os 5 iniciais não evoluem** (decisão do dono): a página mostra só a forma deles; `handleEvolve`/`canEvolve`/`handleEvolveRequest` recusam. A árvore falsa de 10 formas com o mesmo sprite saiu da tela.
+> - **Check-ins do dia (manhã/tarde/noite) OCULTOS** atrás de `CHECKINS_ENABLED = false` (`utils/checkIns.ts`): sem atalho, folha nem recompensa — e o item `checkIn` (compromisso) da fila de modais também (merge com a #326); código e campo `checkIns` do save intactos. REGISTRO §40.4-b.
+> - **Depende do dono:** "login diário" foi lido como os check-ins das 3 janelas; se era o ritual matinal (`MorningCheckIn`, foco do dia), é outro interruptor — avisar. Kaelen/Orrin/Thalindra (demos antigos) seguem evoluindo com arte de linha.
+
 > ## 14/10/2026 — Masmorra livre no Vínculo 1, tutorial do mapa na 1ª abertura e ícones de canto sem círculo (`feat/dungeon-nv1-tutorial-mapa`, REGISTRO §51)
 >
 > - **Pedido do dono (voz):** Masmorra desde o level 1; tirar mapa/prédios do tutorial inicial e abrir um tutorial do mapa na primeira abertura do Mapa; tirar o círculo da casinha e do ícone do mapa.

@@ -1225,6 +1225,10 @@ dois casos só com `confident`.
 <a id="evolucao"></a>
 ## 17. 🔒 Evolução manual e o cadeado
 
+> **14/10/2026 — prévia e iniciais.** A prévia de forma futura (silhueta e "Revelar") só existe para o administrador (`useAdmin`, flag do
+> servidor); o jogador comum vê "???" sem arte nem URL no DOM. Os 5 iniciais (`STARTER_IDS`) **não evoluem**: `handleEvolve`, `canEvolve`
+> e `handleEvolveRequest` recusam, e a página de Evolução mostra só a forma deles. Ver `REGISTRO-DE-DECISOES.md` §40.4-b.
+
 **Em uma frase.** Com a barra cheia, quem evolui é o jogador tocando na
 criatura; a virada do dia nunca evolui sozinha, e o cadeado segura tudo.
 
@@ -3071,6 +3075,10 @@ antes/depois, uma por dia, sem números), o botão na página de Atividades
 **Em uma frase.** Uma vez por dia o app oferece um ritual de planejamento curto
 — pendências de ontem, hábitos devidos hoje, até três focos — e sai da frente
 sem cobrar nada de quem pular.
+
+> **14/10/2026 — os três check-ins por janela (manhã/tarde/noite, `src/utils/checkIns.ts`) estão OCULTOS** atrás de
+> `CHECKINS_ENABLED = false` (decisão do dono, `REGISTRO-DE-DECISOES.md` §40.4-b): sem atalho, folha nem recompensa; o código e o
+> campo `checkIns` do save ficam intactos. Isto NÃO desliga o ritual de planejamento descrito abaixo.
 
 **A regra.**
 

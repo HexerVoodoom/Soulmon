@@ -28,6 +28,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
+import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
@@ -274,6 +275,9 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
   lunge: { key: number; dx: number; dy: number; dur: number; delay: number } | null;
   hitKey: number; hitDelay: number; charged: boolean;
 }) {
+  // O palco fixa os lados (eu à esquerda olhando à direita; inimigo à direita olhando à esquerda). Arte de perfil ESQUERDO
+  // (`spriteUrlFacesLeft`) inverte o espelho — senão o bicho luta de costas. Os efeitos (`--flip`, idle) seguem o mesmo valor.
+  const espelha = flip !== spriteUrlFacesLeft(f.sprite);
   return (
     <div
       style={{ position: 'absolute', left: spot.x - spot.size / 2, top: spot.y - spot.size * SPRITE_TOP, width: spot.size, height: spot.size, zIndex, pointerEvents: 'none', opacity: f.down ? 0.28 : 1, filter: f.down ? 'grayscale(1)' : undefined, transition: 'opacity 300ms' }}
@@ -299,10 +303,11 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
             style={{
               display: 'block', width: spot.size, height: spot.size, maxWidth: 'none',
               objectFit: 'contain', imageRendering: 'pixelated',
-              ['--flip' as string]: flip ? '-1' : '1',
+              ['--flip' as string]: espelha ? '-1' : '1',
               ['--bs-bounce' as string]: `${Math.max(5, Math.round(spot.size * 0.045))}px`,
               ['--sm-idle-dur' as string]: flip ? '1.25s' : '1.05s',
-              ...(flip ? { transform: 'scaleX(-1)' } : null),
+              // O palco fixa os lados; a arte de perfil ESQUERDO inverte o espelho (`spriteUrlFacesLeft`), senão luta de costas.
+              ...(espelha ? { transform: 'scaleX(-1)' } : null),
             } as CSSProperties}
           />
         </div>

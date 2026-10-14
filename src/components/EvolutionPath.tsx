@@ -31,7 +31,8 @@
  */
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
-import { getSpriteForStage } from '../utils/sprites';
+import { getSpriteForStage, isStarterId } from '../utils/sprites';
+import { useAdmin } from '../utils/adminFlag';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
@@ -209,6 +210,13 @@ export function EvolutionPath({
   generatingSprites,
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
+  // PRÉVIA DE FORMA FUTURA = SÓ ADMIN (14/10/2026, pedido do dono): a arte de uma forma
+  // só é gerada perto de evoluir, então para o jogador comum a forma futura é "???" sem
+  // arte, sem id de arte no DOM e sem o gesto de revelar. A flag vem do servidor
+  // (`utils/adminFlag.ts`), nunca do aparelho.
+  const isAdmin = useAdmin();
+  // Os 5 iniciais não evoluem (um sprite só): a página mostra só a forma deles.
+  const naoEvolui = isStarterId(demoCharacterId);
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
   const topAttr = Math.max(powerPoints, harmonyPoints, benevolencePoints);
   const isTie = topAttr > 0
@@ -424,7 +432,7 @@ export function EvolutionPath({
   //    passar do requisito enquanto a evolução está travada — e "faltam -2"
   //    seria um jeito criativo de dizer "pronto". ──
   const faltam = Math.max(0, gaugeGoal - evolutionPoints);
-  const prontoParaEvoluir = faltam === 0;
+  const prontoParaEvoluir = !naoEvolui && faltam === 0;
   const ratio = gaugeGoal > 0
     ? Math.min(1, evolutionPoints / gaugeGoal)
     : 1;
@@ -672,7 +680,7 @@ export function EvolutionPath({
     const isUltra = evolution.stage === 'ultra';
     const ramoAttr: Attr | null = !isUltra && evolution.stage !== 'rookie' && evolution.branch ? ALIGN_TO_ATTR[evolution.branch] : null;
     const isUltraMode = isUltra && !podeChegarAoUltra;
-    const isRevealed = revealed.has(stageId);
+    const isRevealed = isAdmin && revealed.has(stageId);
     // "Reached" (shown) = the current form, an already-unlocked form, the
     // shared rookie trunk, or — for Ultra — once all 3 megas are unlocked.
     // Everything else is a spoiler-hidden future form.
@@ -705,7 +713,7 @@ export function EvolutionPath({
       : (isPt ? 'bloqueada' : 'locked');
     const nome = hidden ? (isPt ? 'Evolução oculta' : 'Hidden evolution') : evolution.name;
     // V2: o rótulo diz o que o TOQUE faz — e só quando há toque.
-    const nodeLabel = hidden
+    const nodeLabel = hidden && isAdmin
       ? `${nome} — ${situacao}. ${isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)'}`
       : `${nome} — ${situacao}`;
 
@@ -720,7 +728,9 @@ export function EvolutionPath({
          Oráculo desenha (D-E9), senão a arte de reserva — o piso, nunca erro
          (Invariante nº 1). `displaySprite` é quem sabe a diferença. */
     const spriteProprio = displaySprite(acervo, stageId)?.url;
-    const arteVerdadeira = spriteProprio ?? (demoCharacterId ? getSpriteForStage(stageId, demoCharacterId) : undefined);
+    const arteVerdadeira = isAdmin
+      ? (spriteProprio ?? (demoCharacterId ? getSpriteForStage(stageId, demoCharacterId) : undefined))
+      : undefined;
     const arteDoNo = hidden
       ? arteVerdadeira
       : (spriteProprio
@@ -769,8 +779,8 @@ export function EvolutionPath({
           busy={estado === 'GERANDO'}
           ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
           label={nodeLabel}
-          title={hidden ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
-          onClick={hidden ? () => setConfirmReveal(evolution) : undefined}
+          title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
+          onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : undefined}
         />
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -871,7 +881,7 @@ export function EvolutionPath({
 
       {/* Spoiler-guard das formas futuras — o primário fica aqui, que não
           perde nada. */}
-      {confirmReveal && (
+      {isAdmin && confirmReveal && (
         <RitualDialog
           label={isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
           onClose={() => setConfirmReveal(null)}
@@ -1024,7 +1034,7 @@ export function EvolutionPath({
         {/* A barra de progresso é APARELHO (D-E2): `.meter` SIS-07 em vetor
             (12px, trilho `surface-2` + fronteira `muted`, fill
             `primary-fill`), `aria-valuemax = gateDays`; a frase 14 centrada. */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+        {!naoEvolui && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
           <div
             className="sm2-kit-meter"
             data-evo-meter
@@ -1061,14 +1071,14 @@ export function EvolutionPath({
                 : 'Every habit or task you finish is a step (bigger tasks count more, up to the day’s goal). When it fills, the next form opens — and nothing here ever goes back.'}
             </p>
           )}
-        </div>
+        </div>}
 
         {/* O cadeado fala a língua da SELEÇÃO, não a do bloqueio (D-E4):
             aberto = `outline` 44 com `lock_open`; segurado = `primary-soft` +
             `primary-ink` + anel 1px (o idioma da sub-aba ativa e do chip do
             galho) com `lock` FILL 1. É o mesmo estado do visor, dito em
             palavras, para quem não descobre o gesto. */}
-        {onToggleEvolutionLock && (
+        {!naoEvolui && onToggleEvolutionLock && (
           <button
             type="button"
             data-lock-button
@@ -1219,6 +1229,16 @@ export function EvolutionPath({
       </section>
 
       {/* ─────────── Para onde ele está indo (D-E11) ─────────── */}
+      {naoEvolui ? (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }} aria-label={isPt ? 'Seu Soulmon' : 'Your Soulmon'} data-evo-heading data-testid="sm-nao-evolui">
+          <p style={sectionLabel}>{isPt ? 'Seu Soulmon' : 'Your Soulmon'}</p>
+          <p style={{ ...sm2Text, margin: 0 }}>
+            {isPt
+              ? 'Este Soulmon fica como é. Não há outras formas a esperar — é só cuidar dele.'
+              : 'This Soulmon stays as it is. There are no other forms to wait for — just look after them.'}
+          </p>
+        </section>
+      ) : (
       <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }} aria-label={isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'} data-evo-heading>
         <p style={sectionLabel}>{isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'}</p>
 
@@ -1249,11 +1269,12 @@ export function EvolutionPath({
           </p>
         )}
       </section>
+      )}
 
       {/* ─────────── A árvore ─────────── */}
       <section>
         <p style={{ ...sectionLabel, marginBottom: 10 }}>
-          {isPt ? 'Linhas de evolução' : 'Evolution branches'}
+          {naoEvolui ? (isPt ? 'Forma' : 'Form') : (isPt ? 'Linhas de evolução' : 'Evolution branches')}
         </p>
 
         {/* UM anúncio por LOTE, no container (§6) — nunca um por card, senão um
@@ -1266,7 +1287,7 @@ export function EvolutionPath({
         {/* O empate, dito onde os cards estão (§2.2): "Seu ritmo ainda pode
             decidir." Nenhum dos líderes é destacado como "o provável" —
             destacar seria mentir sobre uma disputa que está aberta. */}
-        {isTie && (
+        {isTie && !naoEvolui && (
           <p style={{ ...sm2Text, marginBottom: 10 }} data-testid="sm-sprite-empate">
             {spriteText('tie', language)}
           </p>
@@ -1292,7 +1313,7 @@ export function EvolutionPath({
           }}
           onPointerCancel={() => { swipeRef.current = null; }}
         >
-        <div style={{ marginBottom: 12 }}>
+        {!naoEvolui && <div style={{ marginBottom: 12 }}>
           <PixelTabs
             variant="compact"
             ariaLabel={isPt ? 'Linha de evolução' : 'Evolution branch'}
@@ -1307,9 +1328,9 @@ export function EvolutionPath({
               emphasis: lider === b,
             }))}
           />
-        </div>
+        </div>}
 
-        {branchPath.length === 0 && !ultra ? (
+        {!naoEvolui && branchPath.length === 0 && !ultra ? (
           // Sem a árvore do oráculo (save antigo ou incompleto) não há o que
           // desenhar. Antes ficava só um vazio enorme abaixo dos botões, e a
           // tela parecia quebrada.
@@ -1330,7 +1351,7 @@ export function EvolutionPath({
         ) : (
           (() => {
             // Uma coluna de cards: tronco (rookie) → galho escolhido → ultra.
-            const ordem = [rookie, ...branchPath, ultra].filter((s): s is CreatureStage => Boolean(s));
+            const ordem = (naoEvolui ? [rookie] : [rookie, ...branchPath, ultra]).filter((s): s is CreatureStage => Boolean(s));
             return (
               <div style={{ display: 'flex', flexDirection: 'column' }} aria-label={isPt ? 'Árvore de evolução' : 'Evolution tree'}>
                 {ordem.map((evolution, i) => renderEvolutionCard(evolution, i === ordem.length - 1))}
