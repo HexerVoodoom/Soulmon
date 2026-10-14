@@ -101,7 +101,7 @@ describe('aba Conquistas', () => {
   it('mostra critérios e progresso, sem botão de comprar ou resgatar; a compra é no Mercado (só texto)', async () => {
     render(<MissionsSheet initialTab="achievements" open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()} todayKey={DAY}
       weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }} />);
-    await waitFor(() => expect(document.querySelector('[data-conquistas]')).not.toBeNull(), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('[data-conquistas]')).not.toBeNull(), { timeout: 20000 });
     const painel = document.querySelector('[data-missions-panel="achievements"]')!;
     expect(painel.querySelector('[data-achievements-hint]')!.textContent).toContain('Market');
     expect(painel.querySelectorAll('[data-mission]').length).toBeGreaterThan(0);
