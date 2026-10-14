@@ -13,7 +13,7 @@ describe('template v-pet', () => {
       const p = composeSpritePromptVPet({ ...ex, withReferences: true });
       expect(p).toBe(
         `Generate this RPG creature inspired by ${REFS}. Do not copy any existing franchise character. ` +
-        `Tamagotchi-style v-pet sprite, 16x16 pixel art, transparent background, isolated subject, no backdrop, no checkerboard: ` +
+        `Tamagotchi-style v-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: ` +
         `${ex.concept}. ${ex.levelBlock}. ${SPRITE_FACING_PROMPT} ` +
         `Flat ${ex.colorDesc} colors with ${ex.accent} accents, no shading, no outlines, no anti-aliasing.`,
       );
@@ -23,7 +23,7 @@ describe('template v-pet', () => {
       for (const m of ['Digimon', 'Pok', 'Tamagotchi', 'Warhammer', 'Hello Kitty']) expect(p).not.toContain(m);
       expect(p).toContain('Do not copy any existing franchise character');
       expect(p).toContain(SPRITE_FACING_PROMPT);
-      expect(p).toContain('no backdrop, no checkerboard');
+      expect(p).toContain('#00FF00 chroma-green background');
     });
   }
   it('rebirth entra nas duas variantes', () => {

@@ -2295,6 +2295,8 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 
 ## 43. Sprites de Soulmon: fundo TRANSPARENTE (sem chroma verde) e GPT Image 2.5 flare (dono, 14/10/2026)
 
+> **REVOGADO em parte pelo §48 (14/10/2026):** o fundo transparente não funciona por API; vale fundo verde + chroma-key no servidor, modelo padrão 2.0 Alpha.
+
 - **Decisão:** o prompt de sprite (`composeSpritePrompt`) pede `transparent background, isolated subject, no backdrop, no checkerboard`; nenhum `#00FF00`/chroma-key no gerador de Soulmon (o pendente do §41 sobre chroma-key fica substituído). Modelo: GPT Image 2.5 **flare** via API pública, id `marketing-studio/image/flare` (`POST https://api.higgsfield.ai/marketing-studio/image/flare`, status em `GET /requests/{id}/status`), qualidade **medium**, `resolution 1k`, `aspect_ratio 1:1`, `enhance_prompt false`, `moderation auto`. Credencial única `HF_CREDENTIALS` (`keyId:keySecret`); ausente, `generate-sprite.js` segue no Soul. `SPRITE_MODEL` força o modelo (`soul` ou outro id).
 - **Não vale para** ícones/UI do arte-gerador (seguem o chroma da regra global).
 - **Pendente de verificação:** a documentação pública não lista o schema do flare (a página do modelo dá 404) e a CLI ficou fora do ar na sessão; o ALFA REAL não foi confirmado. Se o flare devolver xadrez/RGB, a mitigação é fundo sólido neutro + remoção no cliente, a decidir pelo dono.
@@ -2324,11 +2326,25 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 
 ## 47. Template de prompt v-pet e GPT Image 2 LOW (dono, 14/10/2026)
 
+> **REVOGADO em parte pelo §48:** fundo transparente e `SPRITE_GPT_IMAGE_ROUTE` saem; template segue, com cláusula de fundo verde.
+
 - **Decisão:** novo template `v-pet` (baseado nos exemplos do estilo antigo do dono) vira padrão; o anterior fica como `composeSpritePromptLegacy` (`VITE_SPRITE_PROMPT_STYLE=legacy`). Texto de ambos em `docs/PROMPT-SPRITE-ESTILOS.md`. Mantidas: cláusula `Do not copy any existing franchise character`, direção RIGHT, fundo transparente explícito, duas variantes (principal com franquias, reserva sem marcas), uma geração por forma. O veto de matiz única (`hueGuard`) saiu por não constar nos exemplos (reativável).
 - **Modelo:** GPT Image 2 (`gpt_image_2`) qualidade **low** (0,5 crédito) substitui o "medium"/flare do §41/§43 (`SPRITE_MODEL`, `SPRITE_QUALITY`). A rota REST de `gpt_image_2` não consta na documentação pública; configurar `SPRITE_GPT_IMAGE_ROUTE`. Sem ela cai em flare/Soul/Gemini.
 - **Risco de IP (aceito pelo dono):** citar marcas no prompt principal; a cláusula anti-cópia e a reserva sem marcas continuam.
 - **Teste real:** CLI gerou 3 sprites (E:\soulmon-sprites-teste-pet\); saída veio RGB opaco com fundo branco, sem alfa (ver relatório).
 
+
+
+## 48. Sprites por API: fundo VERDE #00FF00 + chroma-key no servidor; modelo 2.0 Alpha (dono, 14/10/2026)
+
+- **Decisão:** a API REST pública do Higgsfield (`POST https://api.higgsfield.ai/marketing-studio/image` = "2.0 Alpha" e `/marketing-studio/image/flare` = "2.5 Flare"; `Authorization: Key keyId:keySecret`; resposta `{request_id, status_url}`, polling até `completed` com `images[0].url`) **NÃO gera transparência**. O dono escolheu **fundo verde chroma `#00FF00` pedido no prompt + chroma-key no servidor**.
+- **Revoga**, só para a geração de sprite de Soulmon por API, o "fundo transparente, sem chroma" do **§43** e do **§47** (e a rota `SPRITE_GPT_IMAGE_ROUTE`/`gpt_image_2` do §47, que nunca existiu na doc pública). Ícones/UI do arte-gerador seguem como estavam.
+- **Motivo (evidência, 14/10/2026):** 6 chamadas reais à API (`E:\soulmon-sprites-teste-pet\`): `background: transparent`, `remove_bg` e "transparent background" no prompt foram **ignorados** em todas — PNG RGB, fundo branco. Só a CLI (login OAuth) gera alfa real, inviável em produção. Com fundo verde pedido no prompt, `flare-verde-verde.png` e `alpha-verde-verde.png` saíram com verde chapado e o chroma-key resolveu.
+- **Prompt (v-pet e legacy, variante principal e reserva):** `..., 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe:`. Resto intacto (direção direita, anti-cópia, marcas só no principal).
+- **Servidor** (`functions/api/_chroma.js` + `_png.js`, JS puro sobre `fflate`, sem Node nativo): depois de baixar a imagem, `d = g - max(r,b)`; fundo = `g>150 && d>60`; borda suave `d` 35..60 e alfa **binário** (`>128`); despill (onde `d>0`, `g := max(r,b)`); ilhas `<24 px` (4-conexo) removidas; recorte pela bounding box, canvas quadrado, margem 4% (mín. 2 px), sem reescala; PNG RGBA vai para o armazenamento de sempre (`republicar`). Equivalente validado do `key()` de `post.py`.
+- **`bad-chroma`:** erro (sem regerar em magenta, sem inventar) quando só sobra `<10%` de fundo removido (a imagem não veio verde) ou quando `>25%` do sprite é verde "furado" não ligado à borda (criatura verde) ou nada sobra. Segue o caminho de falha existente: Soul (se `HF_API_KEY`/`HF_SECRET`) -> Gemini (se ligado) -> erro 500 com a unidade de cota devolvida.
+- **Modelo e rota:** `SPRITE_MODEL` padrão **`alpha`** (2.0 Alpha, qualidade `low`); `flare` opcional por var; `soul` força o Soul. `SPRITE_QUALITY` low|medium|high (flare: +xhigh, max). Corpo `{prompt, quality, resolution:'1k', aspect_ratio:'1:1', moderation:'auto', enhance_prompt:false, image_urls?}` — **sem `background`** (a API ignora). `Idempotency-Key` (UUID) em cada POST. Credencial `HF_CREDENTIALS = keyId:keySecret` (secret do Worker, cadastro do dono); ausente, o fluxo anterior (Soul/Gemini) segue. Soul/Gemini, que agora também recebem o prompt verde, passam por chroma-key "se der" (falha mantém a imagem original).
+- **Gatilho de revisão:** taxa de `bad-chroma` > 5% das gerações (criaturas verdes) -> pedir fundo de outra cor para a forma ou aceitar limpeza manual.
 
 
 ## 46. Cota do modo grátis só conta hábito diário; prazo e assombrada voltam à linha do Hoje (dono, modal, 14/10/2026)

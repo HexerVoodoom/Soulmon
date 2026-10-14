@@ -1,6 +1,7 @@
 // Cloudflare Pages Function — gera 1 sprite de Soulmon.
-// Provedor primário: HIGGSFIELD — GPT Image 2 low (rota via SPRITE_GPT_IMAGE_ROUTE, ver §47),
-// senão flare (HF_CREDENTIALS) ou, sem ela, Soul.
+// Provedor primário: HIGGSFIELD API pública — 2.0 Alpha low (padrão) ou 2.5 Flare
+// (SPRITE_MODEL=flare), com fundo VERDE + chroma-key no servidor (§48); sem
+// HF_CREDENTIALS, Soul.
 //   Secrets: HF_API_KEY + HF_SECRET (já configurados via `wrangler secret`).
 //   Suporta referência de imagem (cadeia de evolução: champion parte do
 //   rookie etc. — ver `composeSpritePrompts` em `src/utils/oracle.ts`).
@@ -56,6 +57,7 @@
 // para os dois provedores igualmente.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { chromaKeyPng, BadChromaError } from './_chroma.js';
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier } from './_entitlements.js';
@@ -233,104 +235,124 @@ function refusalError(message) {
   return err;
 }
 
-// GPT Image 2.5 "flare" (dono, 14/10/2026): id `marketing-studio/image/flare` na API
-// pública (api.higgsfield.ai). Credencial ÚNICA `HF_CREDENTIALS` = "keyId:keySecret"
-// (mesmo par do header `Authorization: Key id:secret`). Ausente -> segue o Soul.
-// `SPRITE_MODEL` força: 'soul' | id do modelo flare. Qualidade medium (§41).
-const FLARE_MODEL = 'marketing-studio/image/flare';
+// API REST pública do Higgsfield (dono, 14/10/2026, §48). Modelos: `alpha` = "2.0 Alpha"
+// (`/marketing-studio/image`, PADRÃO, qualidade low) e `flare` = "2.5 Flare"
+// (`/marketing-studio/image/flare`, opcional por `SPRITE_MODEL=flare`). Credencial única
+// `HF_CREDENTIALS` = "keyId:keySecret" (`Authorization: Key id:secret`). Ausente -> Soul/Gemini.
+// A API NÃO gera transparência (testado: `background`, `remove_bg` e "transparent
+// background" são ignorados e vem PNG RGB branco): o prompt pede fundo verde #00FF00 e o
+// servidor aplica chroma-key (`_chroma.js`) DEPOIS de baixar. Por isso o corpo NÃO leva
+// `background`. `SPRITE_MODEL`: 'alpha' (padrão) | 'flare' | 'soul'.
 const HF_API = 'https://api.higgsfield.ai';
+const HF_ROUTES = { alpha: '/marketing-studio/image', flare: '/marketing-studio/image/flare' };
+const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
-function flareCredentials(env) {
+function hfCredentials(env) {
   const c = String(env.HF_CREDENTIALS || '').trim();
   return /^[^:\s]+:[^:\s]+$/.test(c) ? c : null;
 }
 
-// GPT Image 2 LOW (dono, 14/10/2026, §47): modelo padrão do sprite. `SPRITE_MODEL`:
-// 'gpt_image_2' (padrão) | 'flare' | 'soul' | id de rota. `SPRITE_QUALITY` (low|medium|high,
-// padrão low). A rota REST de `gpt_image_2` NÃO está na documentação pública
-// (docs.higgsfield.ai só lista Soul, Marketing Studio, Grok, Recraft, Ideogram...; o
-// `gpt_image_2` existe só na CLI como job_type). Por isso a rota é configurável:
-// `SPRITE_GPT_IMAGE_ROUTE` (ex.: "<owner>/<model>"). Sem ela, gpt_image_2 é ignorado
-// (log) e a cadeia segue flare -> Soul -> Gemini. Nada de rota inventada.
-function spriteQuality(env) {
+/** 'alpha' | 'flare' | 'soul'. Valor desconhecido cai no padrão (alpha). */
+export function spriteModel(env) {
+  const forced = String(env.SPRITE_MODEL || '').trim().toLowerCase();
+  return forced === 'flare' || forced === 'soul' ? forced : 'alpha';
+}
+
+export function spriteQuality(env, model = 'alpha') {
   const q = String(env.SPRITE_QUALITY || '').trim().toLowerCase();
-  return ['low', 'medium', 'high'].includes(q) ? q : 'low';
+  const ok = model === 'flare' ? ['low', 'medium', 'high', 'xhigh', 'max'] : ['low', 'medium', 'high'];
+  return ok.includes(q) ? q : 'low';
 }
 
-function spriteModel(env) {
-  const forced = String(env.SPRITE_MODEL || '').trim();
-  if (forced === 'flare') return FLARE_MODEL;
-  if (forced) return forced;
-  return 'gpt_image_2';
-}
-
-/** Rota REST efetiva do modelo pedido, ou null se não configurada/confirmável. */
-function resolveRoute(env, model) {
-  if (model === 'soul') return null;
-  if (model === 'gpt_image_2') {
-    const r = String(env.SPRITE_GPT_IMAGE_ROUTE || '').trim().replace(/^\/+/, '');
-    return r || (flareCredentials(env) ? FLARE_MODEL : null);
-  }
-  return model;
-}
-
-async function generateFlare(env, model, prompt, referenceImageUrls) {
-  const auth = `Key ${flareCredentials(env)}`;
+/** Corpo do POST (exportado p/ teste: não pode ter `background`). */
+export function hfRequestBody(env, model, prompt, referenceImageUrls) {
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
-  const input = {
-    // Fundo transparente pedido NO TEXTO (sem chroma-key); a API não documenta flag de background.
+  return {
     prompt,
-    quality: spriteQuality(env),
+    quality: spriteQuality(env, model),
     resolution: '1k',
-    background: 'transparent',
     aspect_ratio: '1:1',
     moderation: 'auto',
     enhance_prompt: false,
     ...(hasRef ? { image_urls: referenceImageUrls } : {}),
   };
-  const createRes = await fetch(`${HF_API}/${model}`, {
+}
+
+function bytesToDataUrl(bytes, mime) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:${mime};base64,${btoa(bin)}`;
+}
+
+/** Baixa a imagem do provedor e devolve o PNG com fundo removido (data URL). */
+async function baixarEChavear(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`higgsfield: download ${res.status}`);
+  const buf = new Uint8Array(await res.arrayBuffer());
+  if (buf.length > MAX_IMAGE_BYTES) throw new Error('higgsfield: imagem grande demais');
+  try {
+    return bytesToDataUrl(chromaKeyPng(buf), 'image/png');
+  } catch (err) {
+    if (err instanceof BadChromaError) {
+      console.error('generate-sprite:', err.message);
+      throw err;
+    }
+    throw new Error(`higgsfield: png ilegível (${err?.message})`);
+  }
+}
+
+async function generateHf(env, model, prompt, referenceImageUrls) {
+  const auth = `Key ${hfCredentials(env)}`;
+  const createRes = await fetch(`${HF_API}${HF_ROUTES[model]}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: auth },
-    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json', Authorization: auth, 'Idempotency-Key': crypto.randomUUID() },
+    body: JSON.stringify(hfRequestBody(env, model, prompt, referenceImageUrls)),
   });
   if (!createRes.ok) {
     const body = (await createRes.text()).slice(0, 300);
-    const msg = `higgsfield flare create ${createRes.status}: ${body}`;
+    const msg = `higgsfield ${model} create ${createRes.status}: ${body}`;
     if (createRes.status === 400 || createRes.status === 422) throw refusalError(msg);
     throw new Error(msg);
   }
   const created = await createRes.json();
   const requestId = created.request_id || created.id;
-  if (!requestId) throw new Error('higgsfield flare: no request id');
+  if (!requestId) throw new Error(`higgsfield ${model}: no request id`);
+  // status_url vem na resposta; só seguimos se for do próprio domínio da API.
+  const statusUrl =
+    typeof created.status_url === 'string' && created.status_url.startsWith(`${HF_API}/`)
+      ? created.status_url
+      : `${HF_API}/requests/${requestId}/status`;
+  const interval = hfPollMs;
   for (let i = 0; i < 40; i++) {
-    await new Promise(r => setTimeout(r, 2000));
-    const st = await fetch(`${HF_API}/requests/${requestId}/status`, { headers: { Authorization: auth } });
+    await new Promise(r => setTimeout(r, interval));
+    const st = await fetch(statusUrl, { headers: { Authorization: auth } });
     if (!st.ok) continue;
     const data = await st.json();
-    if (data.status === 'nsfw') throw refusalError('higgsfield flare: nsfw/policy rejection');
-    if (data.status === 'failed' || data.status === 'canceled') throw new Error('higgsfield flare: generation failed');
+    if (data.status === 'nsfw') throw refusalError(`higgsfield ${model}: nsfw/policy rejection`);
+    if (data.status === 'failed' || data.status === 'canceled') throw new Error(`higgsfield ${model}: generation failed`);
     if (data.status === 'completed') {
       const url = data.images?.[0]?.url;
-      if (url) return url;
-      throw new Error('higgsfield flare: completed without url');
+      if (typeof url === 'string' && /^https:\/\//i.test(url)) return baixarEChavear(url);
+      throw new Error(`higgsfield ${model}: completed without url`);
     }
   }
-  throw new Error('higgsfield flare: timeout');
+  throw new Error(`higgsfield ${model}: timeout`);
 }
 
+/** Intervalo do polling (ms); teste reduz via `__setHfPollMs`. */
+let hfPollMs = 2000;
+export function __setHfPollMs(ms) { hfPollMs = ms; }
+
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
-  const wanted = spriteModel(env);
-  const model = resolveRoute(env, wanted);
-  if (wanted === 'gpt_image_2' && !env.SPRITE_GPT_IMAGE_ROUTE) {
-    console.error('SPRITE_GPT_IMAGE_ROUTE ausente: gpt_image_2 sem rota REST confirmada, usando flare/Soul');
-  }
-  if (model && flareCredentials(env)) {
+  const model = spriteModel(env);
+  if (model !== 'soul' && hfCredentials(env)) {
     try {
-      return await generateFlare(env, model, prompt, referenceImageUrls);
+      return { image: await generateHf(env, model, prompt, referenceImageUrls), keyed: true };
     } catch (err) {
-      // Recusa de conteúdo sobe (troca o prompt); outras falhas caem no Soul se o par antigo existir.
+      // Recusa de conteúdo sobe (troca o prompt); `bad-chroma` e outras falhas caem no
+      // Soul se o par antigo existir (sem inventar regeração).
       if (isRefusal(err) || !(env.HF_API_KEY && env.HF_SECRET)) throw err;
-      console.error('Flare falhou, tentando Soul:', err.message);
+      console.error('API Higgsfield falhou, tentando Soul:', err.message);
     }
   }
   if (!(env.HF_API_KEY && env.HF_SECRET)) throw new Error('higgsfield: soul not configured');
@@ -382,7 +404,7 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
     const doneJob = jobs.find(j => j.status === 'completed');
     if (doneJob) {
       const url = doneJob.results?.raw?.url || doneJob.results?.min?.url;
-      if (url) return url;
+      if (url) return { image: url, keyed: false };
       throw new Error('higgsfield: completed without url');
     }
   }
@@ -422,6 +444,22 @@ async function generateGemini(env, prompt) {
   return `data:${mime};base64,${inline.data}`;
 }
 
+/** Chroma-key "se der" para Soul/Gemini: qualquer falha devolve a imagem original. */
+async function chaveioOpcional(image) {
+  try {
+    if (image.startsWith('data:image/png;base64,')) {
+      const bin = atob(image.slice(22));
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytesToDataUrl(chromaKeyPng(bytes), 'image/png');
+    }
+    if (/^https:\/\//i.test(image)) return await baixarEChavear(image);
+  } catch (err) {
+    console.error('generate-sprite: chroma opcional falhou, imagem mantida:', err?.message);
+  }
+  return image;
+}
+
 /** Roda os provedores na ordem (Higgsfield → Gemini) para UM texto de prompt.
  *  Devolve `{ image, provider, hfError }` ou lança — o erro carrega `refusal`
  *  quando o motivo foi política de conteúdo, que é o que decide a 2ª tentativa. */
@@ -429,9 +467,12 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   let hfError = null;
   let hfRefusal = false;
 
-  if ((env.HF_API_KEY && env.HF_SECRET) || flareCredentials(env)) {
+  if ((env.HF_API_KEY && env.HF_SECRET) || hfCredentials(env)) {
     try {
-      const image = await generateHiggsfield(env, prompt, referenceImageUrls);
+      const hf = await generateHiggsfield(env, prompt, referenceImageUrls);
+      // Soul (e Gemini abaixo) também recebem o prompt de fundo verde: tira o fundo se der,
+      // senão entrega como veio (nunca derruba uma geração já paga).
+      const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image);
       return { image, provider: 'higgsfield', hfError: null };
     } catch (err) {
       hfError = err.message;
@@ -446,7 +487,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   // `SPRITE_GEMINI_IMAGE=1` E uma chave de OUTRO projeto (decisão do dono).
   if (env.GEMINI_API_KEY && flagOn(env.SPRITE_GEMINI_IMAGE)) {
     try {
-      const image = await generateGemini(env, prompt);
+      const image = await chaveioOpcional(await generateGemini(env, prompt));
       return { image, provider: 'gemini', hfError };
     } catch (err) {
       // Se QUALQUER provedor recusou o texto, o erro que sobe é de recusa —
