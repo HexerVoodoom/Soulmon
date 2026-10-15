@@ -7,6 +7,7 @@ import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { iniciarTemaNoGesto, temaIniciado, temaPreferido } from '../utils/tema';
 import { isMuted } from '../utils/sounds';
+import { IntroWelcomePill } from './ui/IntroWelcomePill';
 
 /**
  * A INTRO é a continuação do boot (canvas Onboarding-funil ONB-03/04,
@@ -61,6 +62,7 @@ function TelaDeAbertura({ onStart }: { onStart: () => void }) {
       style={{ zIndex: 500 }}
     >
       <img src={introPoster} alt="Soulmon" className="sm2-splash-video" draggable={false} />
+      <IntroWelcomePill />
       <span className="sm2-viewport-glass" aria-hidden="true" />
       <span className="sm2-splash-tap" aria-hidden="true">
         <span className="sm2-splash-pix" style={{ color: 'var(--sm2-primary-ink)', textShadow: '0 1px 3px var(--sm2-viewport-bg), 0 0 8px var(--sm2-viewport-bg)' }}>{label}</span>
@@ -170,6 +172,7 @@ function IntroVideo({ onFinish }: { onFinish: () => void }) {
           <p className="sm2-splash-wordmark">Soulmon</p>
         </>
       )}
+      {!videoFailed && <IntroWelcomePill />}
       <span className="sm2-viewport-glass" aria-hidden="true" />
       {!videoFailed && (
         <span className="sm2-splash-tap" aria-hidden="true">
