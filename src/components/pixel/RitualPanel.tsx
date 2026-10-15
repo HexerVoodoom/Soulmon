@@ -393,11 +393,13 @@ export interface RitualPanelProps {
   goal?: number;
   /** Beta-2 (2.3): rodapé da lista (o `View all →`). */
   footer?: ReactNode;
+  /** Reafirmar o dia (REGISTRO §66): o convite discreto acima da lista quando o dia ainda não foi montado (variante `home`). */
+  lead?: ReactNode;
 }
 
 export function RitualPanel({
   done, total, titleIconName, children, ctaLabel, onCta, emptyMessage, language,
-  variant = 'panel', dayComplete = false, goal, footer,
+  variant = 'panel', dayComplete = false, goal, footer, lead,
 }: RitualPanelProps) {
   const isPt = language === 'pt-BR';
   const listaRef = useRef<HTMLUListElement | null>(null);
@@ -464,6 +466,7 @@ export function RitualPanel({
           )
         ) : (
           <>
+            {lead}
             <ul ref={listaRef} className="sm2-ritual-list">{children}</ul>
             {footer}
           </>

@@ -13,7 +13,7 @@ const mk = (i: number): OracleInput => ({
   birthPlace: `Cidade ${i % 97}, Brasil`,
 });
 
-// Frases de design (dono, 15/10/2026, REGISTRO 64/65): cada estágio leva a frase
+// Frases de design (dono, 15/10/2026, REGISTRO 64/67): cada estágio leva a frase
 // de ALIGNMENT_DESIGNS + 2 itens de TYPE_LOOK; o motivo de elemento e o de reino
 // são eixos separados e nunca repetem entre as evoluções do mesmo usuário.
 describe('eixos de forma da evolução', () => {

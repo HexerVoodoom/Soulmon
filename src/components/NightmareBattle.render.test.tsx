@@ -13,6 +13,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { NightmareBattle } from './NightmareBattle';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
+import { shadowSource } from '../utils/nightmareShadows';
 import { RING_MULT } from '../utils/energia';
 import type { DungeonEnemy } from '../utils/dungeon';
 import { REFERENCE_BUILDS, combatantAt } from '../utils/combate/level';
@@ -83,24 +84,32 @@ async function ate(cond: () => boolean, maxMs = 60_000) {
 }
 
 describe('Pesadelo — convite', () => {
-  it('C1: usa uma criatura que já existe (linha própria), não a bolha roxa dungeon-spirit', () => {
-    const { container } = montar([inimigo()]);
+  it('C1 (15/10/2026): o convite mostra o PRÓPRIO pesadelo da noite (a sombra), não um Soulmon comum nem a bolha dungeon-spirit', () => {
+    const sombra = shadowSource(1, 0).src;
+    const { container } = montar([{ ...inimigo(), sprite: sombra }]);
     const img = container.querySelector('[data-visor-enemy]') as HTMLImageElement;
-    expect(img.getAttribute('src')).toBe(DUNGEON_LINE_SPRITES.ignar.champion);
+    expect(img.getAttribute('src')).toBe(sombra);
     expect(img.getAttribute('src') ?? '').not.toMatch(/dungeon-spirit/);
+  });
+  it('o convite explica a regra de vitória (torcer + acertar o especial) e diz que é UMA luta', () => {
+    montar([inimigo()]);
+    expect(document.querySelector('[data-nightmare-rule]')?.textContent).toMatch(/torça/);
+    expect(document.body.textContent).toMatch(/Uma luta só/);
   });
 });
 
 describe('Pesadelo — a luta em tela cheia', () => {
-  it('a luta é a CENA: tela cheia, lutadores grandes, HP e ENERGIA do pet, SEM mascote nem barra de torcida (§2.19) — sem texto explicativo; só quem tem especial mostra a energia', () => {
+  it('a luta é a CENA: tela cheia, lutadores grandes, HP e ENERGIA do pet, COM o mascote da torcida (15/10/2026) e SEM barra de torcida; os dois objetivos à vista', () => {
     vi.useFakeTimers();
     montar([inimigo()]);
     entrar();
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
     expect(document.querySelector('[data-stage-plate="me"] [data-stage-energy]')).not.toBeNull();
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).toBeNull(); // sem especial: sem barra
-    expect(document.querySelector('[data-cheer-mascot]')).toBeNull();
+    expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
     expect(document.querySelector('[data-torcida-gauge]')).toBeNull();
+    expect(document.querySelector('[data-nightmare-objective="cheer"]')?.getAttribute('data-done')).toBe('false');
+    expect(document.querySelector('[data-nightmare-objective="special"]')?.getAttribute('data-done')).toBe('false');
     expect(document.querySelector('[data-timing-bar]')).toBeNull(); // a TimingBar segue desligada
     expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
     expect(screen.queryByText(/torça por ele/i)).toBeNull();
@@ -125,15 +134,19 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(screen.queryByText('Desviar!')).toBeNull();
   });
 
-  it('sem torcida: nenhum botão de torcer, e tocar na cena não despeja nada no núcleo', async () => {
+  it('COM torcida: tocar na cena enche a barra e despeja a descarga no núcleo (o teto anti-auto-clique segue valendo)', async () => {
     vi.useFakeTimers();
     montar([inimigo({ hpMul: 6 })]);
     entrar();
     await avancar(10);
-    expect(screen.queryByRole('button', { name: /Torcer|Cheer/ })).toBeNull();
     for (let i = 0; i < 60; i++) fireEvent.pointerDown(document.querySelector('[data-torcida-layer]')!);
+    await avancar(200);
+    expect(H.cheerSeen).toBe(0); // 16 toques por janela de 3 s: 24 ainda não chegaram
     await avancar(3100);
-    expect(H.cheerSeen).toBe(0);
+    for (let i = 0; i < 60; i++) fireEvent.pointerDown(document.querySelector('[data-torcida-layer]')!);
+    await avancar(3000); // o núcleo recolhe a descarga no passo seguinte do relógio
+    expect(H.cheerSeen).toBeGreaterThanOrEqual(1);
+    expect(document.querySelector('[data-nightmare-objective="cheer"]')?.getAttribute('data-done')).toBe('true');
   });
 
   it('energia cheia: o ESPECIAL pede o ANEL (o relógio pausa); o toque na hora certa devolve o multiplicador ÓTIMO ao núcleo', async () => {
@@ -159,36 +172,55 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(document.querySelector('.sm-bs-lunge')).not.toBeNull(); // o pet desliza
   });
 
-  it('vencer: o último inimigo cai, o Pesadelo entrega as recompensas e a tela volta ao diálogo', async () => {
+  it('REGRA DE VITÓRIA: o HP do pesadelo zera, mas SEM cheer e sem acertar o especial ele desvanece e continua à espreita (sem prêmio, sem custo)', async () => {
     vi.useFakeTimers();
     const onWin = vi.fn();
-    montar([inimigo({ hpMul: 0.05 })], { onWin });
+    const onLose = vi.fn();
+    montar([inimigo({ hpMul: 0.05 })], { onWin, onLose });
     entrar();
-    expect(await ate(() => onWin.mock.calls.length > 0)).toBe(true);
-    expect(onWin).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('Seu Soulmon cuidou da sua noite!')).toBeTruthy();
+    expect(await ate(() => onLose.mock.calls.length > 0)).toBe(true);
+    expect(onWin).not.toHaveBeenCalled();
+    expect(onLose).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('O pesadelo desvaneceu, mas continua à espreita.')).toBeTruthy();
     expect(document.querySelector('[data-battle-stage]')).toBeNull();
   });
 
-  it('dois inimigos: a energia SEGUE do primeiro para o segundo', async () => {
+  it('REGRA DE VITÓRIA: com cheer + o especial acertado (anel ótimo) o pesadelo é EXTINTO: prêmio e o texto das sombras', async () => {
     vi.useFakeTimers();
-    montar([inimigo({ hpMul: 0.2 }), inimigo({ hpMul: 8 })]);
+    H.startEnergy = [100];
+    const onWin = vi.fn();
+    montar([inimigo({ hpMul: 1 })], { onWin });
     entrar();
-    await avancar(10);
-    // o primeiro cai e o segundo entra (o núcleo é chamado de novo)
-    expect(await ate(() => H.calls >= 2)).toBe(true);
-    await avancar(100);
-    expect(energia('me')).toBeGreaterThan(0); // a energia do pet atravessou a troca
+    // joga como alguém atento: acerta todo anel na hora certa e torce (um toque por passo de 100 ms, o teto da janela segura o resto)
+    for (let t = 0; t < 200_000 && onWin.mock.calls.length === 0; t += 100) {
+      const ring = document.querySelector('[data-stage-ring]') as HTMLElement | null;
+      if (ring) { await avancar(Number(ring.getAttribute('data-ring-target'))); fireEvent.pointerDown(document.body); }
+      else fireEvent.pointerDown(document.querySelector('[data-torcida-layer]') ?? document.body);
+      await avancar(100);
+    }
+    expect(onWin).toHaveBeenCalledTimes(1);
+    expect(H.cheerSeen).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Seu Soulmon cuidou da sua noite!')).toBeTruthy();
+    expect(screen.getByText('As sombras se dissipam, o pesadelo foi extinto e dá espaço para os sonhos.')).toBeTruthy();
+    expect(document.querySelector('[data-battle-stage]')).toBeNull();
   });
 
-  it('perder NÃO custa nada: o sonho passou, você acorda bem (onLose só marca a noite)', async () => {
+  it('UMA fase: com um inimigo não há contador de fases na cena', () => {
+    vi.useFakeTimers();
+    montar([inimigo()]);
+    entrar();
+    expect(document.body.textContent ?? '').not.toMatch(/\b1\/1\b/);
+  });
+
+  it('perder NÃO custa nada: o pesadelo desvanece (onLose só marca a noite)', async () => {
     vi.useFakeTimers();
     const onLose = vi.fn();
     montar([inimigo({ hpMul: 40, bonus: 6 })], { onLose });
     entrar();
     expect(await ate(() => onLose.mock.calls.length > 0, 200_000)).toBe(true);
     expect(onLose).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('O sonho passou — e você acorda bem.')).toBeTruthy();
+    expect(screen.getByText('O pesadelo desvaneceu, mas continua à espreita.')).toBeTruthy();
+    expect(document.body.textContent).toMatch(/Nada foi perdido/);
   });
 
   it('sair da luta pede confirmação, pausa e, ao sair, não custa nada', async () => {
@@ -221,7 +253,6 @@ describe('Pesadelo — a luta em tela cheia', () => {
     vi.useFakeTimers();
     montar([inimigo()], { language: 'en-US' });
     fireEvent.click(screen.getByRole('button', { name: 'Stand in its way' }));
-    expect(screen.queryByRole('button', { name: 'Cheer for your Soulmon' })).toBeNull();
     const texto = document.body.textContent ?? '';
     for (const palavra of ['Torcer', 'Pesadelo', 'Seu Soulmon', 'Sair']) expect(texto.includes(palavra), palavra).toBe(false);
   });

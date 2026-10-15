@@ -16,7 +16,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Evolução:** [`EvolutionPath.tsx`](#srccomponentsevolutionpathtsx) · [`EvolutionCeremony.tsx`](#srccomponentsevolutionceremonytsx) · [`EvoTrail.tsx`](#srccomponentsevotrailtsx) · [`BestiaryCard.tsx`](#srccomponentsbestiarycardtsx) · [`RebirthModal.tsx`](#srccomponentsrebirthmodaltsx)
 - **Jogos:** [`DungeonGame.tsx`](#srccomponentsdungeongametsx) · [`ArenaGame.tsx`](#srccomponentsarenagametsx) · [`DinoGame.tsx`](#srccomponentsdinogametsx) · [`RPSGame.tsx`](#srccomponentsrpsgametsx) · [`pixel/TimingBar.tsx`](#srccomponentspixeltimingbartsx) · [`games/GameKit.tsx`](#srccomponentsgamesgamekittsx)
 - **Loja e economia:** [`mercado/MercadoSheets.tsx`](#srccomponentsmercadomercadosheetstsx) · [`mercado/ShopShelf.tsx`](#srccomponentsmercadoshopshelftsx) · [`home/Mochila.tsx`](#srccomponentshomemochilatsx) · [`ItemsWindow.tsx`](#srccomponentsitemswindowtsx) · [`CreditsModal.tsx`](#srccomponentscreditsmodaltsx) · [`UnlockAccountModal.tsx`](#srccomponentsunlockaccountmodaltsx)
-- **Rituais e relatórios:** [`DailyReportModal.tsx`](#srccomponentsdailyreportmodaltsx) · [`MemoriesCard.tsx`](#srccomponentsmemoriescardtsx) · [`BalanceWeekModal.tsx`](#srccomponentsbalanceweekmodaltsx) · [`ProtectProgressModal.tsx`](#srccomponentsprotectprogressmodaltsx) · [`StatsPage.tsx`](#srccomponentsstatspagetsx) · [`BirthCard.tsx`](#srccomponentsbirthcardtsx)
+- **Rituais e relatórios:** [`DailyReportModal.tsx`](#srccomponentsdailyreportmodaltsx) · [`DayGoalsModal.tsx`](#srccomponentsdaygoalsmodaltsx-15102026-registro-66) · [`play/StrollFind.tsx`](#srccomponentsplaystrollfindtsx-15102026-registro-66) · [`MemoriesCard.tsx`](#srccomponentsmemoriescardtsx) · [`BalanceWeekModal.tsx`](#srccomponentsbalanceweekmodaltsx) · [`ProtectProgressModal.tsx`](#srccomponentsprotectprogressmodaltsx) · [`StatsPage.tsx`](#srccomponentsstatspagetsx) · [`BirthCard.tsx`](#srccomponentsbirthcardtsx)
 - **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · ⚰️ [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) (apagado em `4a8b8049`) · [`FeedbackLink.tsx`](#srccomponentsfeedbacklinktsx) · [`TermsUpdateBanner.tsx`](#srccomponentstermsupdatebannertsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomepromptmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
 - **Onboarding e oráculo:** [`SoulmonOnboarding.tsx`](#srccomponentssoulmononboardingtsx) · [`OraclePage.tsx`](#srccomponentsoraclepagetsx) · [`SoulTestItem.tsx`](#srccomponentssoultestitemtsx) · [`AlignmentIcons.tsx`](#srccomponentsalignmenticonstsx) · [`PixelizerCard.tsx`](#srccomponentspixelizercardtsx) · [`NewReadingModal.tsx`](#srccomponentsnewreadingmodaltsx)
 - **Comunidade:** [`LibraryPage.tsx`](#srccomponentslibrarypagetsx) · [`PlayerDetailModal.tsx`](#srccomponentsplayerdetailmodaltsx) · [`CoopPanel.tsx`](#srccomponentscooppaneltsx) · [`TournamentPage.tsx`](#srccomponentstournamentpagetsx)
@@ -68,7 +68,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/catalog/CatalogMindNotice.render.test.tsx`.
 
 ### `src/components/catalog/CatalogOnboardingFlow.tsx`
-**Dono de:** o convite do catálogo (F3) — áreas/dificuldades/forças (até 3 cada) e a tela "Seu ponto de partida", com `recommendStarterSet`. Roda para jogador novo e antigo pelo MESMO mecanismo (ver `catalogOnboarding.ts`). Pulável em qualquer passo.
+**Dono de:** o convite do catálogo (F3) — áreas/dificuldades/forças (até 3 cada) e a tela "Seu ponto de partida", com `recommendStarterSet`. Roda para jogador novo e antigo pelo MESMO mecanismo (ver `catalogOnboarding.ts`). Pulável em qualquer passo. **Desde 15/10/2026 (REGISTRO §66) as sugestões nascem DESMARCADAS** e só entra o que for marcado (substitui o "todas marcadas" do 7.3).
 **Props principais:** `CatalogOnboardingFlowProps` — `language?`, `onSkip()`, `onComplete(chosen: CatalogItem[])`.
 **Exports:** `CatalogOnboardingFlow(props)` · `activitiesFromCatalogChoice(items)` — monta as `Activity` (nível 1, agenda do nível 1 do item, id novo).
 **Chamado por:** `src/App.tsx` (intersticial `catalogOnboarding`, menor prioridade da fila).
@@ -335,6 +335,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `PasseioSheet({ language, crossings, onChange(f), todayKey? })`. Redesenhada em 02/10/2026 (F1–F5): a tela mostra só a Travessia em uso (card com postal da região, glifo da área, título, ato, linha "No mapa" vinda de `crossingYield`, estado de hoje), com "Fiz" (uma vez por dia, `markDone(c, dia)`), "Ver todas e trocar" (abre `ModalSheet` com as 21) e "Recuar" (`dropCrossing`); ⚰️ "Deixar pra lá" e a lista de regiões em névoa na tela principal.
 **Missões do dia (04/10/2026):** props novas `seed?` (id do save); sem escolha mostra as 3 de `dailyOffer(dia, seed)` (cards fechados, "Escolher esta" → `pickMission`) com o "!" (`MissionMark`); escolhida vira o card com "?"; depois do "Fiz" diz para onde o Soulmon viaja; `data-marcos` ("Marcos de Aventura · N", só com N ≥ 1) com `InfoTip`. Explicações atrás de `InfoTip`.
 **Imports novos:** `dailyOffer`/`pickMission`/`doneToday`/`crossingYield` de `utils/travessias`, `InfoTip`, `MissionMark`.
+**Achado de ontem (15/10/2026, REGISTRO §66):** prop `achado?` (`PasseioAchado` = `adventure`/`isNew`/`stroll`); com ela a folha abre com a seção `data-passeio-achado` ("Da aventura de ontem") desenhada pelo `StrollFind` — o mesmo achado do resumo do dia, no contexto do passeio. O `App` só a entrega enquanto o relatório é recente (≤ 2 dias).
 
 ### `src/components/play/OficinaPlano.tsx`
 **Dono de:** o planejamento da sessão da Oficina em ETAPAS (10/10/2026): preparar → ritmo/ambiente → regra dos 2 minutos (picker tocável, até 5) → Eisenhower (um `select` por tarefa + a ordem resultante ao vivo) → sapo (um só) → se-então (com sugestões) → brain dump (tempo 3/5/10 min por timestamp) → lista organizada. Cada etapa tem "Pular" (avança sem apagar nada). Só desenha e coleta; a regra é de `utils/focoSessao`. **Exports:** `OficinaPlano({ language, tasks, initial, onSave, onCancel })`. Não conclui nem reordena tarefa do jogo. Barra de etapas = classe `sm-oficina-bar` (reduced-motion no bloco canônico).
@@ -559,7 +560,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/DailyReportModal.tsx`
 **Dono de:** o relatório do dia, mostrado uma vez na primeira abertura após a virada — resumo de cuidado, humor, aventura da noite e convite de desbloqueio no value moment.
 **Props principais:** `DailyReportModalProps` — `report: GameState['lastDayReport']`, `adventure?` (desde `3532ccf5` tipado `Pick<AdventureFind, 'id' | 'emoji' | 'titlePt' | 'titleEn' | 'textPt' | 'textEn'>`, porque pode ser um postal de região do Passeio, sem raridade; achado da noite, vem PRONTO de fora — nunca `useState` local, senão reabrir o relatório sortearia um achado novo), `adventureIsNew?`, `onClose`, `language`, `soulGoal?`, `onRecoverHearts?`, `moodToday?`/`onPickMood?`/`moodNote?`, `showOffer?` (decisão de `src/utils/offerMoment.ts`, só o resultado chega aqui), `spriteUrl?` (novo — o sprite do pet, para o vidro `ritual/RitualKit.tsx` dentro do relatório).
-**Exports:** `DailyReportModal(props)`.
+**Exports:** `DailyReportModal(props)`. O passo da aventura (e a missão/destino do dia anterior) agora é desenhado pelo `StrollFind` (15/10/2026, REGISTRO §66).
 **Estado/efeitos relevantes:** usa `useDialogA11y` (`src/hooks/useDialogA11y.ts`); renderiza `MemoriesCard`, `UnlockNudge`; lê `MOOD_OPTIONS`/`MoodValue` de `src/utils/mood.ts` e `ADVENTURE_ART` de `src/utils/adventureArt.ts`.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/DailyReportModal'" src`, 09/09/2026). A relação com `MemoriesCard.tsx` é a INVERSA: é este arquivo que importa e renderiza `MemoriesCard` (ver Estado/efeitos acima), não o contrário — corrigido em 10/09/2026 por doc-verificador (`grep -n "MemoriesCard" src/components/DailyReportModal.tsx` mostra o import; `grep -n "DailyReportModal" src/components/MemoriesCard.tsx` não acha nada).
 **Régua:** `src/components/DailyReportModal.aventura.render.test.tsx`.
@@ -840,6 +841,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **A12 (`592e2c14`, QA Rodada 2):** a âncora do hábito ("depois do café — na cozinha", `h.anchor.after`/`where`) vivia num `title`, que só existe no hover — no celular e no leitor de tela, nunca; hoje é texto visível `data-habit-anchor` (12 px, `--sm2-muted`) ao lado do nome.
 **Avisos do arquivo:** `overcommitted` é AVISO, nunca bloqueio — o botão de confirmar continua sempre ativo (o Motion é odiado por decidir no lugar do usuário); `onSkip` sempre visível — ritual que só sai da frente se cumprido é cobrança na porta do app.
 
+### `src/components/GoodDream.tsx`
+**Dono de:** o SONHO BOM (15/10/2026, REGISTRO §65): o modal curto, de voz encorajadora, que paga Honra a cada 6 dias de pesadelo. Puro: recebe o prêmio e devolve o gesto; quem paga e reinicia o ciclo é o `App` (`claimGoodDream`).
+**Props principais:** `GoodDreamProps` (exportado) — `open`, `honor`, `petStage`, `demoCharacterId?`, `language`, `onClaim()` (o botão e o × fazem o mesmo).
+**Exports:** `GoodDreamProps` (interface) · `GoodDream(props)` · `default`.
+**Estado/efeitos relevantes:** nenhum estado; usa `RitualDialog` e `GameVisor`.
+**Chamado por:** `src/App.tsx` (no slot `nightmare` da fila de apresentação).
+**Régua:** `src/components/GoodDream.render.test.tsx`.
+
 ### `src/components/MorningDream.tsx`
 **Dono de:** a revelação do sonho da manhã — o único feedback da Janela de Descanso, sempre de manhã, nunca julgando a noite.
 **Props principais:** `MorningDreamProps` (exportado) — `open`, `dream: Dream | null` (`null` = manhã sem cena, não é falha), `isNew`, `language`, `onClose()`.
@@ -1062,6 +1071,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/DailyRituals.tsx`
 **Dono de:** a LISTA DO DIA da Home — o painel "Daily rituals" (tarefas ativas, hábitos devidos hoje, hábitos fora do dia, concluídas de hoje) e a gaveta "Put aside", sobre o canvas Atividades (identidade, `docs/design/wireframes/atividades/identidade/`, DECISÕES §20). Saiu do `App.tsx` em 20/09/2026.
 **Props principais:** `DailyRitualsProps` — `tasks`, `activities`, `completedTasks`, `habitRhythms`, `hideMetrics`, `language`, `now`, `expanded`/`onExpand`, handlers (`onToggleTask`, `onEditTask`, `onPostponeNudge`, `onEditActivity`, `onToggleActivity`, `onUpdateStep`, `onRestoreTask`, `onCreate`), `ctaLabel`, `emptyMessage`, `variant?: 'panel' | 'home'` (Home B, minimal-ui F2: cabeçalho "Hoje N/M" + botão "+" no lugar do CTA largo; repassado ao `RitualPanel`), `dayComplete?` (o selo "Dia completo", regra da virada `completeDayReached`).
+**Reafirmar o dia (15/10/2026, REGISTRO §66):** prop `dayPlan?` (`view` de `dayPlanView`, `invite?`, `onInvite?`) — o não marcado para hoje não aparece (o concluído de hoje aparece sempre), e com `invite` a lista mostra o botão discreto `data-day-plan-invite` ("Montar o meu dia") que reabre o `DayGoalsModal`; `RitualPanel` ganhou o slot `lead` para isso.
 **Exports:** `DailyRituals(props)` · `frequencyLabel(activity, isPt, diasCurtos)` (veio do `App.tsx`) · `stepsLabel(done, total, isPt)` · `default`.
 **Estado/efeitos relevantes:** nenhum — puramente apresentacional; compõe `RitualPanel`/`RitualRow` (`pixel/RitualPanel.tsx`), `TaskMeta`, `HabitConstancy compact` e `StepRow`. "feitos/total" = devidos hoje + concluídas de hoje (A4): o hábito fora do dia não entra no total, e a tarefa concluída hoje (já em `completedTasks`) continua na lista, riscada e inerte, até a virada. "N/M steps" só com N ≥ 1 (A7).
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/DailyRituals'" src`, 20/09/2026).
@@ -1624,6 +1634,20 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/home/HungerIndicator.tsx` (beta-2 3.5)
 **Dono de:** o indicador de fome da Home (ícone de carne + três marcas cheias/contorno = nível 3/2/1 de 3, 14/10/2026; o estado não depende de cor; tocar abre a dica da FOME com `HungerTimer`, a contagem ao vivo até cair de nível, e o impacto na energia). Props simples (`tier`, `value?`, `language`). **Exports:** `HungerIndicator`. **Chamado por:** `CompanionHUD` (prop `energyInfo`). Contrato: `docs/FRENTE-B-REGRAS-BETA2.md`.
 **Dono de:** a plaquinha "Estou na masmorra, volto logo" que fica no lugar do pet na Home (só a placa pixel, sem ícone). **Exports:** `DungeonSign({ language, onTap })`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
+
+### `src/components/DayGoalsModal.tsx` (15/10/2026, REGISTRO §66)
+**Dono de:** "reafirmar o dia" — o modal CENTRALIZADO (`ModalSheet placement="center"`) com caixas de marcar (a `CheckRow` do kit: rótulo inteiro = alvo de 44, contorno bronze, check turquesa) do que a pessoa JÁ cadastrou e cai hoje (Hábitos / Tarefas). As caixas nascem DESMARCADAS (substitui o "todas marcadas" do 7.3); só o marcado aparece no Hoje. Fechar sem confirmar é permitido (sem cobrança). Apresentacional: quem grava é o `App`.
+**Props principais:** `DayGoalsModalProps` — `candidates: DayPlanCandidate[]` (de `dayPlanCandidates`), `language`, `initiallyPicked?`, `onConfirm(ids)`, `onClose()`.
+**Exports:** `DayGoalsModal(props)`.
+**Chamado por:** `src/App.tsx` (item `dayGoals` da fila, depois de `catalogOnboarding` e antes de `checkIn`).
+**Régua:** `src/components/DayGoalsModal.render.test.tsx`, `src/utils/dayPlan.test.ts`, `src/components/DailyRituals.dayPlan.render.test.tsx`, `src/utils/dailyReset.dayPlan.test.ts`.
+
+### `src/components/play/StrollFind.tsx` (15/10/2026, REGISTRO §66)
+**Dono de:** a peça "o que o Soulmon encontrou no passeio", ligada à missão e ao destino escolhidos no dia anterior (`data-stroll-link`, `data-stroll-mission`, `data-stroll-destination`, o achado com arte/emoji e o selo `Novo`). Peça ÚNICA dos dois lugares onde o achado aparece — o passo "From Yesterday's Adventure" do resumo do dia e a seção "Da aventura de ontem" da folha do Passeio —, em vez de um pop-up com visual próprio. Apresentacional (o sorteio é determinístico, de fora).
+**Props principais:** `StrollFindProps` — `adventure`, `isNew?`, `stroll?`, `language`.
+**Exports:** `StrollFind(props)`.
+**Chamado por:** `src/components/DailyReportModal.tsx`, `src/components/play/PasseioSheet.tsx` (prop `achado`).
+**Régua:** `src/components/DailyReportModal.aventura.render.test.tsx`, `src/components/play/PasseioSheet.render.test.tsx`.
 
 ### `src/components/DayHearts.tsx` (beta-2, 13/10/2026)
 **Dono de:** a fileira de corações do resumo pós-dia: os inteiros ficam como estão; o cobrado treme (`sm2-heart-shake`), quebra (`sm2-heart-snap`) e vira coração preto (o ícone `hp` do HUD, escurecido por filtro). Só anima quando `play` é verdadeiro na montagem; movimento reduzido pula para o preto.
