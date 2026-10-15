@@ -3,6 +3,8 @@ import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { achievementTarget } from '../../utils/missionTargets';
+import { resolveGo, type MissionNav } from '../nav/MissionCard';
 import { UnlockNudge } from '../UnlockAccountModal';
 import { STALL_CURRENCIES, stallItems, type MercadoStall } from '../../utils/mercadoCatalog';
 import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory } from '../../utils/missions';
@@ -170,13 +172,15 @@ function categoryLabel(c: MissionCategory, isPt: boolean): string {
  * WP4.12 (achado E4) vale aqui: sem progresso, NENHUM "0/N" — uma coluna de
  * zeros lê como boletim. A condição em palavras aparece sempre.
  */
-export function ConquistasSheet({ language, missionProgress, claimed, onClaim }: {
+export function ConquistasSheet({ language, missionProgress, claimed, onClaim, nav }: {
   language: Language;
   missionProgress: Record<string, number>;
   /** Conquistas já resgatadas (REGISTRO §56). Ausente = save não migrado: cumprida já vale como resgatada. */
   claimed?: readonly string[];
   /** O Resgatar (só no ícone "!" de Missões). Sem ele (prédio do Mercado) a cumprida só aponta onde resgatar. */
   onClaim?: (id: string) => void;
+  /** Para onde a conquista leva (REGISTRO §60): só no ícone "!" (no Mercado o jogador já está comprando). */
+  nav?: MissionNav;
 }) {
   const isPt = language === 'pt-BR';
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
@@ -199,6 +203,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim }:
         {list.map(m => {
           const done = isMissionComplete(m.id, missionProgress);
           const resgatada = done && (claimed === undefined || claimed.includes(m.id));
+          const go = resolveGo(nav, achievementTarget(m.category), language);
           const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
           const reward = SHOP_ITEMS.find(i => i.id === m.bgReward);
           const rewardName = reward ? (isPt ? reward.namePt : reward.nameEn) : null;
@@ -221,7 +226,11 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim }:
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {/* Ícone PELADO (regra do dono), 24 da escala viva. */}
                 <Icon name={m.iconName} size={24} fill={done ? 1 : 0} tone={done ? 'primary' : 'muted'} />
-                <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: 600, fontFamily: 'var(--sm2-font-display)', color: 'var(--sm2-ink)' }}>{isPt ? m.namePt : m.nameEn}</span>
+                {go.onGo && !resgatada ? (
+                  <button type="button" data-mission-go onClick={go.onGo} style={{ ...sm2Text, flex: 1, minWidth: 0, minHeight: 32, padding: 0, textAlign: 'left', fontWeight: 600, fontFamily: 'var(--sm2-font-display)', color: 'var(--sm2-ink)', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>{isPt ? m.namePt : m.nameEn}</button>
+                ) : (
+                  <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: 600, fontFamily: 'var(--sm2-font-display)', color: 'var(--sm2-ink)' }}>{isPt ? m.namePt : m.nameEn}</span>
+                )}
                 {/* K6 (04/10/2026): o "como ganhar" mora atrás do "?" ao lado do nome. */}
                 <InfoTip language={language} label={isPt ? `Como ganhar: ${m.namePt}` : `How to earn: ${m.nameEn}`} align="right" style={{ minHeight: 24 }}>
                   <span data-mission-how style={{ display: 'block' }}>{isPt ? m.descPt : m.descEn}</span>
@@ -243,6 +252,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim }:
                   <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', whiteSpace: 'nowrap' }}>{cur}/{m.target}</span>
                 ) : null}
               </div>
+              {go.lockNote && !resgatada && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{go.lockNote}</p>}
               {rewardName && (
                 <div data-mission-reward style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <MiniGlass size={52} style={{ width: 96, height: 52, flex: 'none' }}>

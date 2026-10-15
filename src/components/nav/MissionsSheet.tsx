@@ -10,6 +10,8 @@ import { PixelTabs } from '../pixel/PixelKit';
 import { StrollQuestLine } from './StrollQuestLine';
 import { DailyMissionList, type DailyMissionsProps } from './DailyMissionList';
 import { FirstTimesList, type FirstTimesProps } from './FirstTimesList';
+import type { GoTarget } from '../../utils/missionTargets';
+import type { MissionNav } from './MissionCard';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
@@ -29,7 +31,7 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, firstDay }: {
+export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay }: {
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
   initialTab?: MissionsTab;
   open: boolean;
@@ -59,10 +61,14 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   /** Conquistas já resgatadas e o Resgatar (REGISTRO §56). `missionsClaimed` ausente = save não migrado. */
   missionsClaimed?: readonly string[];
   onClaimMission?: (id: string) => void;
+  /** O Vínculo (decide quais prédios abrem) e a navegação: toda missão com lugar LEVA até ele (REGISTRO §60). Sem `onGoBuilding`, nenhum cartão navega. */
+  bondLevel?: number;
+  onGoBuilding?: (target: Exclude<GoTarget, null>) => void;
 }) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<MissionsTab>(initialTab);
   const [seen, setSeen] = useState<ReadonlySet<MissionsTab>>(() => new Set([initialTab]));
+  const nav: MissionNav | undefined = onGoBuilding ? { bondLevel, onGo: onGoBuilding } : undefined;
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
   const go = (t: MissionsTab) => { setTab(t); setSeen(prev => (prev.has(t) ? prev : new Set(prev).add(t))); };
   const tabMarks: Record<MissionsTab, QuestMark> = {
@@ -89,7 +95,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
             label: names[t],
             glyph: tabMarks[t] ? (
               <>
-                <span aria-hidden="true" data-tab-dot={tabMarks[t]} style={{ width: 6, height: 6, borderRadius: '50%', background: t === 'weekly' ? 'var(--sm2-primary-ink)' : 'var(--sm2-viewport-warn, #EBBE84)', flex: 'none' }} />
+                <span aria-hidden="true" data-tab-dot={tabMarks[t]} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--sm2-viewport-warn, #EBBE84)', flex: 'none' }} />
                 <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{questMarkLabel(tabMarks[t], isPt)}</span>
               </>
             ) : undefined,
@@ -121,20 +127,20 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} onGo={onGoStroll} />
                     {buildings && <BuildingQuestList language={language} {...buildings} />}
-                    {dailies && <DailyMissionList language={language} {...dailies} />}
+                    {dailies && <DailyMissionList language={language} {...dailies} nav={nav} />}
                   </div>
                 </Section>
                 {firsts && (
                   <Section title={isPt ? 'Primeiras vezes' : 'First times'} mark={marks.firsts ?? null} glyph={false} isPt={isPt} id="first-times">
-                    <FirstTimesList language={language} {...firsts} />
+                    <FirstTimesList language={language} {...firsts} nav={nav} />
                   </Section>
                 )}
               </div>
             )}
             {seen.has('weekly') && (
               <div role="tabpanel" hidden={tab !== 'weekly'} data-missions-panel="weekly">
-                <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} tone="blue" isPt={isPt} id="weekly">
-                  <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
+                <Section title={isPt ? 'Esta semana' : 'This week'} mark={marks.torneio} glyph={false} isPt={isPt} id="weekly">
+                  <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} nav={nav} />
                 </Section>
               </div>
             )}
@@ -144,7 +150,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                   <p data-achievements-hint style={{ margin: '0 0 8px', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>
                     {isPt ? 'Cumpra, resgate aqui e compre o item no Mercado, prédio Conquistas. Resgatar só libera a compra.' : 'Complete it, claim it here, then buy the item at the Market, Achievements building. Claiming only unlocks buying.'}
                   </p>
-                  <ConquistasSheet language={language} missionProgress={missionProgress} claimed={missionsClaimed} onClaim={onClaimMission} />
+                  <ConquistasSheet language={language} missionProgress={missionProgress} claimed={missionsClaimed} onClaim={onClaimMission} nav={nav} />
                 </Section>
               </div>
             )}

@@ -129,7 +129,7 @@ const PET_BOTTOM_IN_STAGE =
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
 const BUBBLE_GAP = 6;
-/** Topo do balão na janela: um pouco MAIS BAIXO que o `BUBBLE_GAP` do CTA (REGISTRO §57), ainda acima da cabeça. */
+/** Topo do balão na janela: um pouco MAIS BAIXO que o `BUBBLE_GAP` do CTA (REGISTRO §60), ainda acima da cabeça. */
 const BUBBLE_TOP = BUBBLE_GAP + 14;
 /* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
    dono): a composição não desce mais sob a fala; o balão é overlay. */
@@ -1740,7 +1740,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             de fala, que dispensa o balão) e fica ABAIXO do "Evoluir" (z 30): onde
             as duas se tocam, quem recebe o toque é o CTA. */}
         {showBubble && (() => {
-          /* BALÃO DE VERDADE (REGISTRO §57, dono 14/10/2026): caixa de cantos
+          /* BALÃO DE VERDADE (REGISTRO §60, dono 14/10/2026): caixa de cantos
              arredondados, borda fina, sombra sutil, fundo SÓLIDO do token de
              superfície (claro/escuro seguem o tema), texto à ESQUERDA e uma
              cauda para BAIXO que aponta para o pet.

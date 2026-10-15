@@ -4,8 +4,7 @@ import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { arenaLots, laboratorioLots, hallLots } from '../../utils/areaSheetCopy';
 import { LISTED_QUEST_BUILDINGS, questStatus, type BuildingQuestState } from '../../utils/buildingQuests';
 import { questText } from '../../utils/buildingQuestsCopy';
-import { sm2Button } from '../form/FormKit';
-import { MissionMark } from '../play/MissionMark';
+import { ClaimButton, MissionCard, MissionCardList } from './MissionCard';
 
 export interface BuildingQuestsProps {
   state: BuildingQuestState | undefined;
@@ -39,38 +38,25 @@ export function BuildingQuestList({ language, state, day, bondLevel, onClaim, on
   const open = LISTED_QUEST_BUILDINGS.filter(id => questStatus(state, day, id, bondLevel) !== 'locked');
   if (open.length === 0) return null;
   return (
-    <ul data-building-quests style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <MissionCardList attrs={{ 'data-building-quests': '' }}>
       {open.map(id => {
         const st = questStatus(state, day, id, bondLevel);
         return (
-          <li key={id} data-building-quest={id} data-status={st} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>📓</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              {/* Toda missão com lugar próprio NAVEGA até ele (dono, 11/10/2026) — mesmo desenho do Passeio. */}
-              {onGo && st !== 'claimed' ? (
-                <button
-                  type="button"
-                  data-building-go={id}
-                  onClick={() => onGo(id)}
-                  className="sm2-title"
-                  style={{ display: 'block', width: '100%', minHeight: 44, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 'var(--sm2-text-md)', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
-                >
-                  {questText(day, id, isPt)}
-                </button>
-              ) : (
-                <span className="sm2-title" style={{ display: 'block', fontSize: 'var(--sm2-text-md)', color: st === 'claimed' ? 'var(--sm2-muted)' : undefined }}>{questText(day, id, isPt)}</span>
-              )}
-            </span>
-            {(st === 'available' || st === 'ready') && <MissionMark kind={st === 'ready' ? 'ready' : 'available'} size={24} isPt={isPt} />}
-            {st === 'ready' && (
-              <button type="button" style={sm2Button('primary', false, 'sm')} data-claim={id} onClick={() => onClaim(id)}>
-                {isPt ? 'Resgatar' : 'Claim'}
-              </button>
-            )}
-            {st === 'claimed' && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{isPt ? 'Resgatada' : 'Claimed'}</span>}
-          </li>
+          <MissionCard
+            key={id}
+            language={language}
+            attrs={{ 'data-building-quest': id, 'data-status': st }}
+            status={st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open'}
+            title={questText(day, id, isPt)}
+            reward={isPt ? '+1 material' : '+1 material'}
+            /* Toda missão com lugar próprio NAVEGA até ele (dono, 11/10/2026) — mesmo desenho do Passeio. */
+            onGo={onGo ? () => onGo(id) : undefined}
+            goAttr="data-building-go"
+            goValue={id}
+            action={<ClaimButton language={language} attrs={{ 'data-claim': id }} onClick={() => onClaim(id)} />}
+          />
         );
       })}
-    </ul>
+    </MissionCardList>
   );
 }

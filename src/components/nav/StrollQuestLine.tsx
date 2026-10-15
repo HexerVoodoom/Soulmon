@@ -1,15 +1,15 @@
 import type { Language } from '../../utils/i18n';
 import type { CrossingsState } from '../../types/travessias';
 import { strollLineState } from '../../utils/travessiasSave';
-import { sm2Button } from '../form/FormKit';
-import { MissionMark } from '../play/MissionMark';
+import { ClaimButton, MissionCard, MissionCardList } from './MissionCard';
 
 /**
  * A LINHA "Take a stroll" do menu de Missões da Home (07/10/2026, pedido do dono: "Stroll fica com o NPC!").
  * O Passeio inteiro — propostas, card, relógio de 30 min, "Concluir" — mora no lote do Passeio (NPC Brume);
- * aqui a linha só APONTA ("!"), fica PRONTA ("?" + Resgatar) quando o passeio foi concluído lá hoje, e depois
+ * aqui o cartão só APONTA ("!"), fica PRONTO ("?" + Resgatar) quando o passeio foi concluído lá hoje, e depois
  * mostra "Resgatada". Não abre o `PasseioSheet`, não tem timer. O Resgatar é só o recibo do dia
  * (`claimStroll`): o pagamento já saiu no "Concluir" do NPC e não se paga duas vezes.
+ * Desde 14/10/2026 é um CARTÃO (`MissionCard`, REGISTRO §60), como todas as missões da folha.
  */
 export function StrollQuestLine({ language, crossings, todayKey, onClaim, onGo }: {
   language: Language;
@@ -23,35 +23,17 @@ export function StrollQuestLine({ language, crossings, todayKey, onClaim, onGo }
   const isPt = language === 'pt-BR';
   const st = strollLineState(crossings, todayKey);
   return (
-    <ul data-stroll-quest style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      <li data-stroll-line data-status={st} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>🧭</span>
-        <span style={{ flex: 1, minWidth: 0 }}>
-          {onGo && st !== 'claimed' ? (
-            <button
-              type="button"
-              data-stroll-go
-              onClick={onGo}
-              className="sm2-title"
-              style={{ display: 'block', width: '100%', minHeight: 44, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 'var(--sm2-text-md)', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
-            >
-              {isPt ? 'Faça um passeio' : 'Take a stroll'}
-            </button>
-          ) : (
-            <span className="sm2-title" style={{ display: 'block', fontSize: 'var(--sm2-text-md)', color: st === 'claimed' ? 'var(--sm2-muted)' : undefined }}>
-              {isPt ? 'Faça um passeio' : 'Take a stroll'}
-            </span>
-          )}
-        </span>
-        {st === 'point' && <MissionMark kind="available" size={24} isPt={isPt} />}
-        {st === 'ready' && <MissionMark kind="ready" size={24} isPt={isPt} />}
-        {st === 'ready' && (
-          <button type="button" style={sm2Button('primary', false, 'sm')} data-claim="stroll" onClick={onClaim}>
-            {isPt ? 'Resgatar' : 'Claim'}
-          </button>
-        )}
-        {st === 'claimed' && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{isPt ? 'Resgatada' : 'Claimed'}</span>}
-      </li>
-    </ul>
+    <MissionCardList attrs={{ 'data-stroll-quest': '' }}>
+      <MissionCard
+        language={language}
+        attrs={{ 'data-stroll-line': '', 'data-status': st }}
+        status={st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open'}
+        title={isPt ? 'Faça um passeio' : 'Take a stroll'}
+        desc={isPt ? 'A aventura acontece no lote do Passeio.' : 'The adventure happens at the Stroll lot.'}
+        onGo={onGo}
+        goAttr="data-stroll-go"
+        action={<ClaimButton language={language} attrs={{ 'data-claim': 'stroll' }} onClick={onClaim} />}
+      />
+    </MissionCardList>
   );
 }

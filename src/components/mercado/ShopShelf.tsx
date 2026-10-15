@@ -17,6 +17,8 @@ import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MISSIONS, isShopItemUnlocked } from '../../utils/missions';
+import { weeklyTarget } from '../../utils/missionTargets';
+import { MissionCard, MissionCardList, resolveGo, type MissionNav } from '../nav/MissionCard';
 import { itemCurrency } from '../../utils/mercadoCatalog';
 import type { SlotId } from '../../utils/petStage';
 import { decorBlockReason, decorReasonText, decorRuleText } from '../../utils/decorRules';
@@ -704,60 +706,51 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
  * Nenhuma missão premia CONTAGEM DE TAREFAS (proibição escrita do CLAUDE.md;
  * há teste varrendo o pool).
  */
-export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly }: {
+export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly, nav }: {
   language: Language;
   weeklyMissions: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
   onClaimWeekly?: (id: WeeklyMissionId) => void;
+  /** Para onde a missão leva (REGISTRO §60). */
+  nav?: MissionNav;
 }) {
   const isPt = language === 'pt-BR';
   if (weeklyMissions.length === 0) {
     return <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'As missões da semana aparecem aqui.' : "This week's missions show up here."}</p>;
   }
   return (
-    <ul data-weekly-missions style={{ display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
-      {weeklyMissions.map(({ mission, count, done, claimed }) => (
-        <li
-          key={mission.id}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '8px 12px',
-            boxSizing: 'border-box',
-            borderRadius: 'var(--sm2-radius-lg)', border: '1px solid var(--sm2-line)',
-            backgroundColor: 'var(--sm2-surface)',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Missão paga vira registro: tinta `muted`, nunca `opacity`. */}
-            <p style={{ ...sm2Text, margin: 0, color: claimed ? 'var(--sm2-muted)' : 'var(--sm2-ink)' }}>{isPt ? mission.descPt : mission.descEn}</p>
-            {/* Progresso só quando ele JÁ COMEÇOU (WP4.12). */}
-            {!done && count > 0 && (
-              <>
-                <p className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>{count}/{mission.target}</p>
-                <span aria-hidden="true" className="sm2-shop-meter" style={{ width: 120 }}>
-                  <i style={{ width: `${Math.round(Math.min(1, count / mission.target) * 100)}%` }} />
-                </span>
-              </>
-            )}
-          </div>
-          {claimed ? (
-            <span style={{ ...sm2Hint, whiteSpace: 'nowrap', flex: 'none' }}>{isPt ? 'recebido' : 'claimed'}</span>
-          ) : done ? (
-            <button
-              type="button"
-              onClick={() => onClaimWeekly?.(mission.id)}
-              aria-label={isPt ? `Receber ${mission.emblems} de Honra` : `Claim ${mission.emblems} Honor`}
-              style={{ ...sm2Button('primary', false, 'sm'), whiteSpace: 'nowrap', flex: 'none', gap: 4 }}
-            >
-              <Icon name="military_tech" size={ICON_TAG} fill={1} tone="inherit" />
-              <span className="sm2-num" style={{ ...emblemStyle, color: 'inherit', fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
-            </button>
-          ) : (
-            <span aria-label={isPt ? `${mission.emblems} de Honra` : `${mission.emblems} Honor`} role="img" style={{ ...shopTagStyle, color: 'var(--sm2-gold-ink)' }}>
-              <Icon name="military_tech" size={ICON_TAG} fill={1} tone="gold" />
-              <span className="sm2-num" style={{ ...emblemStyle, fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
-            </span>
-          )}
-        </li>
-      ))}
-    </ul>
+    <MissionCardList attrs={{ 'data-weekly-missions': '' }}>
+      {weeklyMissions.map(({ mission, count, done, claimed }) => {
+        const go = resolveGo(nav, weeklyTarget(mission.id), language);
+        return (
+          <MissionCard
+            key={mission.id}
+            language={language}
+            attrs={{ 'data-weekly-mission': mission.id }}
+            status={claimed ? 'claimed' : done ? 'ready' : 'open'}
+            title={isPt ? mission.descPt : mission.descEn}
+            progress={{ cur: count, target: mission.target }}
+            reward={
+              <span aria-label={isPt ? `${mission.emblems} de Honra` : `${mission.emblems} Honor`} role="img" style={{ ...shopTagStyle, color: 'var(--sm2-gold-ink)' }}>
+                <Icon name="military_tech" size={ICON_TAG} fill={1} tone="gold" />
+                <span className="sm2-num" style={{ ...emblemStyle, fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
+              </span>
+            }
+            onGo={go.onGo}
+            lockNote={go.lockNote}
+            action={
+              <button
+                type="button"
+                onClick={() => onClaimWeekly?.(mission.id)}
+                aria-label={isPt ? `Receber ${mission.emblems} de Honra` : `Claim ${mission.emblems} Honor`}
+                style={{ ...sm2Button('primary', false, 'sm'), whiteSpace: 'nowrap', flex: 'none', gap: 4 }}
+              >
+                <Icon name="military_tech" size={ICON_TAG} fill={1} tone="inherit" />
+                <span className="sm2-num" style={{ ...emblemStyle, color: 'inherit', fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
+              </button>
+            }
+          />
+        );
+      })}
+    </MissionCardList>
   );
 }

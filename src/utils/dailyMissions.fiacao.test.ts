@@ -24,6 +24,7 @@ describe('todo evento do catálogo diário tem emissor', () => {
     expect(app).toContain("markFirst(prev.firstTimes, 'first-stroll')");
     expect(app).toContain('markFirstForEvent(prev.firstTimes, evento)');
     expect(app).toContain('onClaim: resgatarPrimeira');
+    expect(app).toContain('onGoBuilding={irAoDestinoDaMissao}');
   });
   it('o App passa o emissor à AreaView e o resgate à folha', () => {
     expect(app).toContain('onDailyEvent={contarDiaria}');

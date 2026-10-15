@@ -2489,3 +2489,12 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Ligação** (`ui/FunctionNpcNote`, busto + nome + fala de `functionNpcVoice`, voz de acolhida, sem cobrança): **Tobi** no topo de Configurações, **Faro** no grupo "Sua conta", **Sona** no cartão da Janela de descanso (sono), **Nuri** na Mochila (a tela de cuidados com comida). Ambra segue no onboarding; Iris e o corvo seguem reservados.
 - **Gatilho para rever:** o dono preferir outra tela para a Nuri (não existe folha própria de "Cuidados").
 
+
+## 60. Missões em cartões, com "Ir" até o lugar e o "!" amarelo (dono, voz, 14/10/2026)
+
+- **Pedidos:** (1) toda missão que depende de um prédio DIRECIONA para lá; (2) cada missão em um CARTÃO separado; (3) o "!" da Home e dos cartões é o AMARELO da paleta, sem círculo; (4) tirar o "!" da frente de "This week" na aba Semanal.
+- **Cartão único (`MissionCard`):** um por missão em todas as abas (passeio, Caderno, as 6 diárias, primeiras vezes, semanais; as Conquistas já eram cartões e ganharam o "Ir"). Mesmo padrão de cartão do app (`--sm2-line`, `--sm2-surface`, `--sm2-radius-lg`), altura mínima e ação à direita para não pular de layout. Recompensa mostrada no cartão: "+1 material" (diárias, Caderno, primeiras vezes; sem dizer qual material) e "+N Honra" (semanais).
+- **"Ir":** o título vira botão. O destino sai de uma tabela única (`utils/missionTargets.ts`): minijogos → Salão; foco → Oficina; Masmorra; Mercado; Amigos; Duelo/Torneio → Arena; passeio → Passeio; visita → o próprio prédio; semanais e conquistas por categoria; cuidado, humor e descanso (acontecem no pet/Home) fecham a folha e voltam à Home; missão sem lugar (conquistas de Constância) não tem ação. Navega com o que já existe (`irAoPredioDaMissao` → lote aberto no Mapa).
+- **Bloqueio:** prédio ainda fechado pelo Vínculo NÃO navega; o cartão troca o "Ir" pelo requisito ("Opens at Bond N"/"Libera no Vínculo N"), pela mesma tabela de portões (`buildingGateFor`/`buildingLockLine`).
+- **"!" amarelo:** o ícone da Home e os cartões usam sempre o tom `gold` (a regra de 07/10 do "!" azul das semanais é **revogada** para esses dois lugares; `questMarks` ainda calcula o tom, só não é usado). O ponto da aba Semanal também é dourado. A seção "Esta semana" não tem mais "!" na frente do título.
+- **Régua viva:** `missionCards.render.test.tsx` (um cartão por missão, "!" dourado sem azul, sem "!" em "This week", "Ir" navega, prédio fechado mostra o requisito, destinos) e os testes de lista anteriores.

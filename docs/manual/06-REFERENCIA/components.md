@@ -205,6 +205,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/MissionsSheet.tsx`.
 **Régua:** `src/components/nav/dailyMissionList.render.test.tsx`.
 
+### `src/components/nav/MissionCard.tsx`
+**Dono de:** o CARTÃO DE MISSÃO — um por missão em todas as abas da folha de Missões (borda `--sm2-line`, fundo `--sm2-surface`): "!" amarelo da paleta sem círculo (check quando resgatada), título que vira "Ir" quando a missão tem lugar, descrição curta, progresso, recompensa, estado e a ação (Resgatar). `resolveGo` decide a navegação pelo Vínculo: prédio fechado não navega e mostra o requisito (REGISTRO §60).
+**Props principais:** `language`, `attrs` (`data-*`), `status` (`open`/`ready`/`claimed`), `title`, `desc`, `progress`, `reward`, `onGo`, `lockNote`, `action`.
+**Exports:** `MissionNav` (interface) · `resolveGo(nav, target, language)` · `MissionCardStatus` · `MissionCard(props)` · `MissionCardList` · `ClaimButton`.
+**Chamado por:** `StrollQuestLine`, `BuildingQuestList`, `DailyMissionList`, `FirstTimesList`, `WeeklyMissionList` (`ShopShelf.tsx`).
+**Régua:** `src/components/nav/missionCards.render.test.tsx`.
+
 ### `src/components/nav/FirstTimesList.tsx`
 **Dono de:** a lista das PRIMEIRAS VEZES (missões únicas, 1× na vida) na folha de Missões — convite, as já resgatadas viram só contagem (REGISTRO §54).
 **Props principais:** `language`, `state` (`FirstTimesState`), `bondLevel`, `onClaim(id)`.
