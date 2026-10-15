@@ -421,12 +421,12 @@ export function RitualPanel({
           <h2 id="sm2-ritual-title" className="sm3-hoje-titulo">
             {/* `Today` com acabamento cromado discreto (beta-2, 2.4). */}
             <span className="sm3-cromo" data-today-title>{isPt ? 'Hoje' : 'Today'}</span>
-            {/* Piso de dígitos E5: o contador só existe com feitos ≥ 1 —
-                "0/5" é a fatura, não o dado. Indicador ÚNICO (REGISTRO §60):
+            {/* Piso de dígitos E5: o contador só existe com feitos ≥ 1 OU com
+                meta definida (o dono quer ver `Missão 0/4`: quanto falta). Indicador ÚNICO (REGISTRO §60):
                 com meta definida mostra `Missão N/G` (G = a META, não o
                 número de atividades; N pode passar de G: `6/4`). Sem meta,
                 cai na contagem simples da lista. Só EXIBIÇÃO. */}
-            {total > 0 && done >= 1 && (
+            {total > 0 && (done >= 1 || (goal !== undefined && goal > 0)) && (
               <b
                 className="sm2-num sm3-missao"
                 data-today-count

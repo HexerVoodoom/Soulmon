@@ -304,4 +304,9 @@ describe('2.4 Today e Goal', () => {
     // §57: só o G exibido muda; o N (feitos) vem da lista e é o mesmo.
     expect(feitosDe(b)).toBe(t1);
   });
+  it('com 0 feitos e meta definida mostra `Mission 0/4` (o dono ve quanto falta)', () => {
+    const { container } = mount({ goal: 4, activities: [diario] });
+    const c = container.querySelector('[data-today-count]') as HTMLElement;
+    expect(c.textContent).toBe('Mission 0/4');
+  });
 });
