@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/10/2026 — Corte do `index.js` (`perf/corte-index-js`, REGISTRO §80)
+>
+> - Entrada 724.584 -> ~642 KB bruto (gz 249,8 -> ~223,6 KB): regras do tour sem a copy (`welcomeTourGate.ts`), `UnlockToast` lazy, `sonner`/`@capacitor/core` em `vendor-*`. Sem mudança de comportamento.
+> - **Teto de 250 KB não atingido:** o `App.tsx` sozinho tem ~270 KB. Próximo corte = partir o `App.tsx` (tarefa própria). `index.css` re-medido em 180.815.
+
 > ## 15/10/2026 — Formas altas dos 17 novos Soulmon e arquivo de ramos/combinados (`feat/formas-altas-e-arquivo`, REGISTRO §78)
 >
 > - Ultimate/Mega/Ultra dos 17 instalados (51 PNGs 256² pixelizados, vizinho mais próximo): slots 4/5 da escada, chefe da Arena (ultra>mega>ultimate). Nomes propostos em `FORMAS_ALTAS` (dono pode renomear).
