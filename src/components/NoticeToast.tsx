@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Language } from '../utils/i18n';
 
 /** Quanto o balão fica na tela sozinho. */
@@ -51,10 +51,13 @@ export function noticeToastText(key: NoticeToastKey, language: Language): string
  * só sem o botão na Home). Cada aviso aparece UMA vez por dia (o "visto" é gravado ao MOSTRAR, em `App`). Sem número, sem som.
  */
 export function NoticeToast({ noticeKey, language, onOpen, onDone }: { noticeKey: NoticeToastKey; language: Language; onOpen: () => void; onDone: () => void }) {
+  // `onDone` costuma ser uma arrow inline do pai (identidade nova a cada render): fora das deps, para o re-render do App não reiniciar o tempo.
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
   useEffect(() => {
-    const t = setTimeout(onDone, NOTICE_TOAST_MS);
+    const t = setTimeout(() => doneRef.current(), NOTICE_TOAST_MS);
     return () => clearTimeout(t);
-  }, [onDone]);
+  }, []);
   return (
     <button
       type="button"
