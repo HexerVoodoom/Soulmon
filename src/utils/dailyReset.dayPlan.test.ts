@@ -3,8 +3,9 @@
  * julga (sem falta, sem gasto de escudo). A meta do dia e o coração seguem a regra de sempre (só a lista e a constância mudam).
  */
 import { describe, it, expect } from 'vitest';
-import { computeDailyReset, restWeekKeyFor } from './dailyReset';
+import { computeDailyReset, restWeekKeyFor, dailyGoalFor } from './dailyReset';
 import { emptyRhythm } from './habitRhythm';
+import { playerDayIso } from './playerDay';
 
 const QUARTA = new Date('2026-08-05T12:00:00');
 const ONTEM = new Date('2026-08-04T12:00:00');
@@ -45,12 +46,49 @@ describe('a virada e o dia reafirmado (REGISTRO §66)', () => {
     }
   });
 
-  it('a meta do dia e o total NÃO mudam com o que ficou de fora (decisão do dono: a meta segue a regra atual)', () => {
+  it('meta limitada ao marcado: marcou 2 (de 4 cadastradas) e fez os 2 -> dia completo, sem perda de coração', () => {
+    const acts = ['h1', 'h2', 'h3', 'h4'].map(id => ({ ...habito(id), completedToday: id <= 'h2', lastCompletedDate: id <= 'h2' ? ONTEM.toDateString() : undefined }));
+    const plano = { day: '2026-08-04', offered: ['h1', 'h2', 'h3', 'h4'], picked: ['h1', 'h2'], confirmed: true };
+    const s: any = computeDailyReset(estado({ activities: acts, dayPlan: plano, evolutionStage: 'champion', unlockedEvolutions: ['rookie', 'champion'], habitRhythms: {} }) as any, { now: QUARTA } as any);
+    expect(s.lastDayReport.required).toBe(2);
+    expect(s.lastDayReport.total).toBe(2);
+    expect(s.lastDayReport.done).toBe(2);
+    expect(s.lastDayReport.wasPerfect).toBe(true);
+    expect(s.lastDayReport.heartsLost).toBe(0);
+  });
+
+  it('marcou 0: sem perda e sem "dia completo" falso', () => {
     const plano = { day: '2026-08-04', offered: ['h1', 'h2'], picked: [], confirmed: true };
-    const com: any = computeDailyReset(estado({ dayPlan: plano }) as any, { now: QUARTA } as any);
-    const sem: any = computeDailyReset(estado() as any, { now: QUARTA } as any);
-    expect(com.lastDayReport.required).toBe(sem.lastDayReport.required);
-    expect(com.lastDayReport.total).toBe(sem.lastDayReport.total);
-    expect(com.lastDayReport.heartsLost).toBe(sem.lastDayReport.heartsLost);
+    const s: any = computeDailyReset(estado({ dayPlan: plano }) as any, { now: QUARTA } as any);
+    expect(s.lastDayReport.required).toBe(0);
+    expect(s.lastDayReport.total).toBe(0);
+    expect(s.lastDayReport.wasPerfect).toBe(false);
+    expect(s.lastDayReport.heartsLost).toBe(0);
+    expect(s.totalPerfectDays ?? 0).toBe(0);
+  });
+
+  it('sem plano: a meta é a de sempre e o não-feito custa coração (controle)', () => {
+    const s: any = computeDailyReset(estado() as any, { now: QUARTA } as any);
+    expect(s.lastDayReport.required).toBeGreaterThan(0);
+  });
+
+  it('dia do JOGADOR: plano gravado no dia do jogador vale mesmo com o dia do aparelho diferente', () => {
+    // âncora UTC+14: o dia do jogador de "2026-08-04 12:00 local" pode ser outro; o plano é achado pelo dia do jogador.
+    const tz = { offsetMs: 14 * 3600_000 };
+    const dia = playerDayIso(new Date('2026-08-04T12:00:00'), tz as any);
+    const plano = { day: dia, offered: ['h1', 'h2'], picked: [], confirmed: true };
+    const s: any = computeDailyReset(estado({ dayPlan: plano, playerDayTz: tz }) as any, { now: QUARTA } as any);
+    expect(s.lastDayReport.required).toBe(0);
+    expect(s.habitRhythms.h1).toEqual(emptyRhythm());
+  });
+
+  it('ao vivo: dailyGoalFor (o G do "Missão N/G") segue o marcado e nunca passa dele', () => {
+    const acts = ['h1', 'h2', 'h3', 'h4'].map(habito);
+    const base = { evolutionStage: 'champion', activities: acts, tasks: [] as any[] };
+    const dia = new Date('2026-08-04T12:00:00');
+    const plano = { day: '2026-08-04', offered: ['h1', 'h2', 'h3', 'h4'], picked: ['h1', 'h3'], confirmed: true };
+    expect(dailyGoalFor(base as any, dia.getDay(), dia.toDateString())).toBeGreaterThanOrEqual(2);
+    expect(dailyGoalFor({ ...base, dayPlan: plano } as any, dia.getDay(), dia.toDateString())).toBe(2);
+    expect(dailyGoalFor({ ...base, dayPlan: { ...plano, picked: [] } } as any, dia.getDay(), dia.toDateString())).toBe(0);
   });
 });
