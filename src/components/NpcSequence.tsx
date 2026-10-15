@@ -92,6 +92,8 @@ export function NpcSequence({ lines, language, onFinish, label }: {
           position: 'absolute', inset: 0, width: '100%', height: '100%', padding: 0, margin: 0,
           background: 'none', border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          /* o NPC termina onde a caixa de texto começa (caixa ~130px + respiro) */
+          boxSizing: 'border-box', paddingBottom: 'calc(138px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         <img
@@ -103,7 +105,7 @@ export function NpcSequence({ lines, language, onFinish, label }: {
           data-npc-art
           draggable={false}
           style={{
-            width: 'min(135vw, 82dvh)', height: 'auto', maxWidth: 'none', aspectRatio: '1 / 1',
+            width: 'min(135vw, calc(100dvh - 150px))', height: 'auto', maxWidth: 'none', aspectRatio: '1 / 1',
             objectFit: 'contain', objectPosition: 'bottom',
             filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.6))',
             pointerEvents: 'none',
