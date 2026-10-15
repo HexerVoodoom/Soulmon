@@ -325,9 +325,13 @@ async function generateHf(env, model, prompt, referenceImageUrls) {
   const interval = hfPollMs;
   for (let i = 0; i < 40; i++) {
     await new Promise(r => setTimeout(r, interval));
-    const st = await fetch(statusUrl, { headers: { Authorization: auth } });
-    if (!st.ok) continue;
-    const data = await st.json();
+    // Consulta que falha (rede, 5xx, corpo que não é JSON) NÃO aborta: o provedor já aceitou e cobra o job; o teto é o timeout.
+    let data;
+    try {
+      const st = await fetch(statusUrl, { headers: { Authorization: auth } });
+      if (!st.ok) continue;
+      data = await st.json();
+    } catch { continue; }
     if (data.status === 'nsfw') throw refusalError(`higgsfield ${model}: nsfw/policy rejection`);
     if (data.status === 'failed' || data.status === 'canceled') throw new Error(`higgsfield ${model}: generation failed`);
     if (data.status === 'completed') {
@@ -545,7 +549,11 @@ export async function onRequestPost({ request, env }) {
     if (flagOn(env?.SPRITE_DISABLED)) {
       return Response.json({ error: 'sprite-disabled', message: AI_REFUSAL_MESSAGES['sprite-disabled'] }, { status: 503, headers: CORS });
     }
-    const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = await request.json();
+    const corpo = await request.json().catch(() => null);
+    if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) {
+      return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
+    }
+    const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = corpo;
     // UMA geração por forma (dono, 11/10): sem `formId` não há dedupe nem teto
     // por forma — então não há geração.
     if (typeof formId !== 'string' || !formId) {
