@@ -39,7 +39,6 @@ export function GoodDream({ open, honor, petStage, demoCharacterId, language, on
       zIndex={210}
       maxWidth={340}
       closeLabel={isPt ? 'Fechar' : 'Close'}
-      closeSide="end"
       style={{ alignItems: 'center', textAlign: 'center', gap: 10, paddingTop: 44 }}
     >
       <GameVisor width={DIALOG_VISOR_W} height={72} scene={NIGHTMARE_SCENE.bg}>
