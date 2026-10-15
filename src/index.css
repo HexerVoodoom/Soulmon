@@ -7243,6 +7243,41 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-splash-wordmark { margin: 0; font-family: inherit; font-size: var(--sm2-text-lg); font-weight: 400; letter-spacing: .12em; line-height: 1.2; text-transform: uppercase; color: var(--sm2-primary-ink); }
 .sm2-splash-tap { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px; pointer-events: none; }
 .sm2-splash[role="button"] { cursor: pointer; }
+/* SELO "Welcome" (REGISTRO §79, revisto 15/10/2026): selinho pequeno no topo que
+   OCULTA o patch/versão pintado na arte ("VERSION 1.2"). O palco tem o tamanho da
+   janela; `.sm2-intro-art` reproduz a caixa do vídeo `object-fit: cover` (9:16,
+   720x1280) centrada, e o selo fica em % dessa caixa — cobre o texto em qualquer
+   proporção. Região medida no quadro 720x1280: y 55-82, x 285-435. Sem toque.
+   Texto no tratamento do logo (Silkscreen 700 como `.sm-display`): preenchimento
+   creme, contorno preto grosso e um segundo contorno cobre por fora. */
+.sm2-intro-stage { position: absolute; inset: 0; container-type: size; pointer-events: none; overflow: hidden; }
+.sm2-intro-art {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: max(100cqw, calc(100cqh * 9 / 16)); height: max(100cqh, calc(100cqw * 16 / 9));
+  container-type: size;
+}
+.sm2-intro-pill {
+  position: absolute; left: 50%; top: 5.3%; width: 33%; height: 3.8%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  background: var(--sm2-surface);
+  border-radius: 999px;
+  font-family: var(--sm2-font-pixel);
+  font-weight: 700;
+  font-size: max(var(--sm2-text-sm), 3.2cqw);
+  letter-spacing: .02em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sm2-viewport-ink);
+  -webkit-text-stroke: .16em var(--sm2-viewport-bg);
+  paint-order: stroke fill;
+  text-shadow:
+    .08em 0 0 var(--sm2-viewport-ring), -.08em 0 0 var(--sm2-viewport-ring),
+    0 .08em 0 var(--sm2-viewport-ring), 0 -.08em 0 var(--sm2-viewport-ring),
+    .08em .08em 0 var(--sm2-viewport-ring), -.08em -.08em 0 var(--sm2-viewport-ring),
+    .08em -.08em 0 var(--sm2-viewport-ring), -.08em .08em 0 var(--sm2-viewport-ring);
+}
+
 .sm2-splash[role="button"]:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -4px; }
 
 /* ── BARRA DE CARREGAMENTO (REGISTRO §50, 14/10/2026) ────────────────────────
