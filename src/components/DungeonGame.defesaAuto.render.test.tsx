@@ -72,7 +72,7 @@ async function ateInimigoCair(limiteMs = 120_000) {
 }
 
 describe('Masmorra — a cena em tela cheia', () => {
-  it('a luta é a CENA: lutadores grandes, HP e ENERGIA do pet, SEM mascote nem barra de torcida (§2.19) — sem texto explicativo', () => {
+  it('a luta é a CENA: lutadores grandes, HP e ENERGIA do pet, COM o mascote da torcida (de volta, REGISTRO §70) e SEM barra de torcida — sem texto explicativo', () => {
     vi.useFakeTimers();
     montar();
     descer();
@@ -80,7 +80,7 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(document.querySelector('[data-stage-plate="me"] [data-stage-energy]')).not.toBeNull();
     // o 1º inimigo da escada (baby-i) não tem especial: só o mega mostra a barra de energia
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).toBeNull();
-    expect(document.querySelector('[data-cheer-mascot]')).toBeNull();
+    expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
     expect(document.querySelector('[data-torcida-gauge]')).toBeNull();
     expect(document.querySelector('[data-timing-bar]')).toBeNull();
     expect(document.querySelector('[data-visor-pet]')).toBeNull(); // o visor pequeno saiu da luta
@@ -129,18 +129,21 @@ describe('Masmorra — a cena em tela cheia', () => {
   });
 });
 
-describe('Masmorra — sem torcida (§2.19); a energia e o HP PERSISTEM entre os combates da run', () => {
-  it('sem torcida: nenhum mascote, nenhuma barra, e tocar na cena não despeja nada no núcleo', async () => {
+describe('Masmorra — com torcida (REGISTRO §70); a energia e o HP PERSISTEM entre os combates da run', () => {
+  it('com torcida: o mascote está lá, sem barra, e 24 toques (teto de 16 por janela de 3 s) despejam UMA descarga no núcleo', async () => {
     vi.useFakeTimers();
     montar();
     descer();
     await avancar(10);
-    expect(document.querySelector('[data-cheer-mascot]')).toBeNull();
+    expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
     expect(document.querySelector('[data-torcida-gauge]')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Torcer|Cheer/ })).toBeNull();
     for (let i = 0; i < 60; i++) fireEvent.pointerDown(document.querySelector('[data-torcida-layer]')!);
+    await avancar(200);
+    expect(H.cheerSeen).toBe(0); // 16 por janela: 24 ainda não chegaram
     await avancar(3100);
-    expect(H.cheerSeen).toBe(0);
+    for (let i = 0; i < 60; i++) fireEvent.pointerDown(document.querySelector('[data-torcida-layer]')!);
+    await avancar(3000);
+    expect(H.cheerSeen).toBeGreaterThanOrEqual(1);
   });
 
   it('o primeiro inimigo cai e a energia e o HP continuam do mesmo ponto no segundo', async () => {
@@ -171,7 +174,6 @@ describe('Masmorra — em inglês', () => {
     vi.useFakeTimers();
     montar({ language: 'en-US' });
     fireEvent.click(screen.getByRole('button', { name: 'Go down' }));
-    expect(screen.queryByRole('button', { name: 'Cheer for your Soulmon' })).toBeNull();
     const texto = document.body.textContent ?? '';
     for (const palavra of ['Camada', 'Você', 'Torcer', 'Sair']) expect(texto.includes(palavra), palavra).toBe(false);
     expect(texto).toMatch(/Layer 1/);

@@ -249,3 +249,77 @@ export function nightmareRefs(top: number): DungeonSlotRef[] {
 export function simulateNightmareV3(cfg: SequenceConfig, top: number, seed: number, skill: DungeonSkill = 'media'): SequenceResult {
   return playSequence(cfg, nightmareRefs(top), seed, skill);
 }
+
+// ── The NIGHTMARE fight (owner, 15/10/2026 — REGISTRO §65) ───────────────────
+// The win is the plain HP verdict (nightmare at 0 = extinguished; Soulmon at 0 = it faded). The difficulty is that the
+// nightmare is a SHADOW: the Soulmon's basic blows only graze it (`basic`), its specials hit full only when the ring is
+// hit (`ring*`), and the CHEER (each discharge the core collects) wards off the nightmare's blows (`guardPerCheer`, up to
+// `guardMax`). Without the cheer and the specials the Soulmon falls first; with both it wins with room to spare.
+export interface NightmareKnobs {
+  /** Multiplier of the Soulmon's BASIC blows against the nightmare. */
+  basic: number;
+  /** Multiplier of the special by ring grade (replaces `RING_MULT` in this fight). */
+  ring: Readonly<Record<RingGrade, number>>;
+  /** Fraction of the nightmare's damage warded off per collected cheer discharge, and the cap. */
+  guardPerCheer: number;
+  guardMax: number;
+}
+
+export const NIGHTMARE_KNOBS: NightmareKnobs = {
+  basic: 0.4,
+  ring: { ruim: 0, bom: 1.6, otimo: 2 },
+  guardPerCheer: 0.24,
+  guardMax: 0.72,
+};
+
+/** One fight of the Nightmare: `dungeonFight` + the shadow rules above. `cheers()` = discharges collected so far. */
+export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight {
+  const f = dungeonFight({ ...p, ring: k.ring }, foe, seed, true);
+  return {
+    ...f,
+    hitScale(who, n) {
+      const s = f.hitScale(who, n);
+      return who === 0 ? s * k.basic : s * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));
+    },
+  };
+}
+
+/** The player's behaviour in a simulated Nightmare. */
+export interface NightmareScenario {
+  /** Seconds of fight between two cheer discharges (24 taps); `null` = never cheers. */
+  cheerEvery: number | null;
+  /** Grade of every special's ring. */
+  ring: RingGrade;
+}
+/** 24 taps at the 16-per-3-s cap take 4.5 s; a comfortable tapper takes 6. */
+export const CHEER_EVERY_S = 6;
+export const SCENARIO_FULL: NightmareScenario = { cheerEvery: CHEER_EVERY_S, ring: 'bom' };
+export const SCENARIO_NONE: NightmareScenario = { cheerEvery: null, ring: 'ruim' };
+
+/** Plays the Nightmare of the tier `top` for a scenario; the foe is `nightmareFoe`. Deterministic by `seed`. */
+export function simulateNightmareScenario(cfg: SequenceConfig, top: number, seed: number, sc: NightmareScenario, k: NightmareKnobs = NIGHTMARE_KNOBS): { won: boolean; hpLeft: number; t: number } {
+  const p: DungeonPlayerCfg = { combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito };
+  let drained = 0;
+  let lastT = 0;
+  const f = nightmareFight(p, nightmareFoe(cfg.level, top, cfg.knobs?.foe), dungeonFightSeed(seed, 1, top), () => drained, k);
+  const g = groupFightSteps(f.player, f.foes, {
+    seed: f.seed, startHp: 1, startEnergy: 0, hitScale: f.hitScale,
+    cheerDrain: () => {
+      if (sc.cheerEvery === null) return 0;
+      const due = Math.floor(lastT / sc.cheerEvery);
+      const n = Math.max(0, due - drained);
+      drained += n;
+      return n;
+    },
+  });
+  let step = g.next();
+  while (!step.done) {
+    const e: GroupEvent = step.value;
+    lastT = e.t;
+    step = g.next(e.kind === 'cast'
+      ? f.castScale(e.who === 0 ? { who: 0, ring: sc.ring, dodge: null } : { who: e.who, ring: null, dodge: autoDodgeGrade(f.seed, 0) })
+      : undefined);
+  }
+  const r = step.value;
+  return { won: r.winner === 'player', hpLeft: r.hpLeft, t: r.t };
+}

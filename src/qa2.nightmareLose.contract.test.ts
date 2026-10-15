@@ -27,6 +27,6 @@ describe('pesadelo: derrota mantém a tela de derrota', () => {
   it('onClose fecha, e fechar também grava a noite', () => {
     expect(jsx).toMatch(/onClose=\{closeNightmare\}/);
     const fecha = app.slice(app.indexOf('const closeNightmare = useCallback'));
-    expect(fecha.slice(0, 200)).toMatch(/markNightmareFought\(\);\s*setNightmareOpen\(false\)/);
+    expect(fecha.slice(0, 300)).toMatch(/markNightmareDay\(false\);[\s\S]*?setNightmareOpen\(false\)/);
   });
 });
