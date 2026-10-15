@@ -179,30 +179,23 @@ describe('AC10. skill (P4): "does not act" × "plays well" ≤ 25pp, measured in
 describe('PR4b (contexto §2.19): no cheer (torcida) in the Dungeon or the Nightmare — the Soulmon goes alone', () => {
   const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
   const semComentarios = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  it('the engine of the sequence has no cheer option', () => {
-    expect(semComentarios(ler('utils/dungeonFight.ts'))).not.toMatch(/cheer|DungeonCheer|CHEER/i);
+  it('the offline/balance engine of the Dungeon sequence ignores the live cheer (the cheer is a live bonus only; REGISTRO §70)', () => {
     // the simulation ignores a forged `cheer`: same result with and without the field
     const c = cell(3);
     const a = simulateDungeonRunV3(c, 3, 'media', 5);
     const b = simulateDungeonRunV3({ ...c, cheer: 'teto' } as typeof c, 3, 'media', 5);
     expect(b).toEqual(a);
   });
-  for (const tela of ['components/DungeonGame.tsx']) {
-    it(`${tela}: no mascot, no gauge, no tap that cheers, and the hook runs with torcida: false`, () => {
-      const src = semComentarios(ler(tela));
-      expect(src).not.toMatch(/TorcidaGauge|battle\.cheer|battle\.meter|CHEER_TAPS_FULL/);
-      expect(src).not.toMatch(/\bmascot\b/);
-      expect(src).toMatch(/torcida:\s*false/);
-      expect(src).toMatch(/active=\{false\}/);
+  for (const tela of ['components/DungeonGame.tsx', 'components/NightmareBattle.tsx']) {
+    it(`${tela}: the cheer is BACK (owner, 15/10/2026, REGISTRO §70): mascot, tap, torcida: true`, () => {
+      const raw = ler(tela);
+      const src = semComentarios(raw);
+      expect(src).toMatch(/torcida:\s*true/);
+      expect(src).toMatch(/onTap=\{battle\.cheer\}/);
+      expect(raw).toMatch(/^ +mascot$/m);
+      expect(src).not.toMatch(/TorcidaGauge|noTap/);
     });
   }
-  it('components/NightmareBattle.tsx: the Nightmare is the ONE exception (owner, 15/10/2026): it cheers (mascot, tap, torcida: true)', () => {
-    const src = semComentarios(ler('components/NightmareBattle.tsx'));
-    expect(src).toMatch(/torcida:\s*true/);
-    expect(src).toMatch(/onTap=\{battle\.cheer\}/);
-    expect(ler('components/NightmareBattle.tsx')).toMatch(/^ +mascot$/m);
-    expect(src).not.toMatch(/TorcidaGauge/);
-  });
 });
 
 describe('AC7. no Math.random in the fight or in the wave; the same seed gives the same wave and the same fight', () => {

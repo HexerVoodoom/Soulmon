@@ -119,14 +119,15 @@ export const NIGHTMARE_WAVE_SIZE = 1;
  *
  * ⚠️ CAUSA DO BUG "o pesadelo não causa dano" (15/10/2026): a onda usava `dungeonFoe` do ANDAR 1, cuja força é
  * 0,026–0,096 (a tabela `DUNGEON_SLOTS` foi calibrada para uma run de 5 andares com HP carregado, não para uma luta
- * isolada). Medido: um golpe do pesadelo tirava 0,3–1,3% do HP e a luta inteira 3–12% — o "dano" aparecia como "1"
- * na cena. A Masmorra continua intacta; só o Pesadelo usa esta força própria.
+ * isolada). Medido: um golpe do pesadelo tirava 0,3–1,3% do HP e a luta inteira 3–12%. A Masmorra continua intacta.
  *
- * 0,5 é CONSERVADOR (revisão do dono, REGISTRO): a luta custa ~35–48% do HP de quem joga sem defender (defesa
- * automática média) e ~50% no mega, com 0 derrotas por HP em 40 sementes × 3 levels — a dificuldade vem da REGRA
- * DE VITÓRIA (cheer + especial), não de um muro de HP, porque perder aqui não custa nada.
+ * CALIBRAGEM FINAL (dono, 15/10/2026, REGISTRO §65): a vitória é o HP (pesadelo a zero = extinto; Soulmon a zero =
+ * desvaneceu) e a dificuldade vem de o pesadelo derrubar o Soulmon PRIMEIRO se o jogador não torcer nem acertar os
+ * especiais. Os botões ficam em `dungeonFight.NIGHTMARE_KNOBS`; os números medidos, no REGISTRO e no teste.
  */
-export const NIGHTMARE_POWER = 0.5;
+export const NIGHTMARE_POWER = 1.2;
+/** O pesadelo mega também lança especial: a força dele é escalada por isto para o tier 5 seguir vencível. */
+export const NIGHTMARE_MEGA_EASE = 0.8;
 
 /**
  * O pesadelo no núcleo: o mesmo corpo de `dungeonFoe` (HP e curva relativos ao level), com a força do Pesadelo.
@@ -134,7 +135,8 @@ export const NIGHTMARE_POWER = 0.5;
  */
 export function nightmareFoe(playerLevel: number, slot: number, knobs?: DungeonFoeKnobs): FightSide {
   const base = dungeonFoe(playerLevel, slot, 1, knobs);
-  return { ...base, combatant: { ...base.combatant, bonus: NIGHTMARE_POWER - 1 } };
+  const power = NIGHTMARE_POWER * (slot >= 5 ? NIGHTMARE_MEGA_EASE : 1);
+  return { ...base, combatant: { ...base.combatant, bonus: power - 1 } };
 }
 
 /** Teto do histórico de noites já combatidas (mesmo teto de `MAX_NIGHTS`). */
@@ -399,7 +401,7 @@ export function pendingNightmare(
  * mesmo dayKey não duplica nada (a virada e o modal podem rodar 2×, como em
  * `applyMissedDay`). Poda em `MAX_FOUGHT_HISTORY`, mantendo as mais recentes.
  */
-export function markFought(nm: NightmareState, dayKey: string): NightmareState {
+export function markFought(nm: NightmareState, dayKey: string, count = true): NightmareState {
   const key = String(dayKey ?? '');
   if (!key) return nm;
 
@@ -409,7 +411,7 @@ export function markFought(nm: NightmareState, dayKey: string): NightmareState {
   const out: NightmareState = { ...nm, fought };
   if (nm.pending === key) delete out.pending;
   // O dia de pesadelo conta UMA vez (reabrir/fechar de novo não repete) e só até o ciclo fechar.
-  return isNew ? countNightmareDay(out, key) : out;
+  return isNew && count ? countNightmareDay(out, key) : out;
 }
 
 // ---------------------------------------------------------------------------
@@ -544,30 +546,17 @@ export function nightmareFlavor(rarity: DreamRarity, language: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// 6. A REGRA DE VITÓRIA (decisão do dono, 15/10/2026)
+// 6. O FIM DA NOITE (dono, 15/10/2026 — corrige a regra "resistir com HP zerado" da #360)
 // ---------------------------------------------------------------------------
 //
-// É uma batalha comum, mas DIFÍCIL: zerar o HP do pesadelo NÃO basta. Ele só é EXTINTO se o jogador
-//   (a) TORCEU (cheer) — ao menos `NIGHTMARE_MIN_CHEERS` descarga da torcida entrou na luta; e
-//   (b) ACERTOU os ESPECIAIS pelo menos PARCIALMENTE — `bom` ou `ótimo` no anel (`ruim` não conta como acerto) em
-//       ao menos METADE dos especiais lançados (`NIGHTMARE_SPECIAL_SHARE`), mínimo 1.
-// Sem isso o pesadelo "resiste e volta" mesmo com o HP no chão e a noite termina em DESVANECER (sem prêmio, sem
-// custo — perder aqui nunca custa nada). Determinístico: depende só do que aconteceu na luta (descargas, notas do
-// anel), nunca de sorteio. Justo: as duas condições aparecem na tela durante a luta e dá tempo de cumpri-las (a luta
-// dura ~20 s; uma descarga leva 24 toques e o especial do pet sai sempre ao menos 1 vez — medido em 40 sementes).
+// É uma batalha comum: o veredito é o HP. Pesadelo a zero = EXTINTO; Soulmon a zero = o pesadelo VENCE (desvanece e
+// continua à espreita). A dificuldade mora na luta (`dungeonFight.nightmareFight`): sem a torcida e sem os especiais
+// certeiros o pesadelo derruba o Soulmon antes. Aqui só ficam o placar para a tela (`NightmareTally`) e os textos.
 
-/** Descargas de torcida mínimas para o pesadelo poder ser extinto. */
-export const NIGHTMARE_MIN_CHEERS = 1;
-/** Fração dos especiais lançados que precisa acertar (parcial ou melhor). Valor conservador; o dono revisa. */
-export const NIGHTMARE_SPECIAL_SHARE = 0.5;
-
-/** O que aconteceu na luta e a regra lê. */
+/** O que a tela mostra durante a luta: descargas de torcida, especiais lançados e os que acertaram (ao menos em parte). */
 export interface NightmareTally {
-  /** Descargas de torcida que o núcleo recolheu. */
   cheers: number;
-  /** Especiais que o Soulmon lançou. */
   casts: number;
-  /** Quantos desses acertaram ao menos parcialmente (`bom`/`ótimo`). */
   landed: number;
 }
 
@@ -576,28 +565,10 @@ export const EMPTY_TALLY: NightmareTally = { cheers: 0, casts: 0, landed: 0 };
 /** O anel acertou? `ruim` é erro; `bom` é acerto parcial; `ótimo` é cheio. */
 export const specialLanded = (grade: RingGrade | null | undefined): boolean => grade === 'bom' || grade === 'otimo';
 
-/** Quantos especiais precisam acertar para `casts` lançados: metade (arredondada para cima), mínimo 1. */
-export const specialsNeeded = (casts: number): number => Math.max(1, Math.ceil(Math.max(0, casts) * NIGHTMARE_SPECIAL_SHARE));
-
-/** As duas condições (a luta já zerou o HP do pesadelo). */
-export function nightmareConditions(t: NightmareTally): { cheer: boolean; special: boolean } {
-  return {
-    cheer: t.cheers >= NIGHTMARE_MIN_CHEERS,
-    special: t.casts >= 1 && t.landed >= specialsNeeded(t.casts),
-  };
-}
-
-export type NightmareVerdict = 'extinct' | 'faded';
-
-/** `winner` é o do núcleo ('player' = o HP do pesadelo chegou a zero). Só 'player' com as DUAS condições extingue. */
-export function nightmareVerdict(winner: string, t: NightmareTally): NightmareVerdict {
-  if (winner !== 'player') return 'faded';
-  const c = nightmareConditions(t);
-  return c.cheer && c.special ? 'extinct' : 'faded';
-}
+export type NightmareEnd = 'extinct' | 'faded';
 
 /** O texto de fim (frases do dono, 15/10/2026). */
-export const NIGHTMARE_END_TEXT: Record<NightmareVerdict, { pt: string; en: string }> = {
+export const NIGHTMARE_END_TEXT: Record<NightmareEnd, { pt: string; en: string }> = {
   faded: { pt: 'O pesadelo desvaneceu, mas continua à espreita.', en: 'The nightmare faded, but it still lurks.' },
   extinct: {
     pt: 'As sombras se dissipam, o pesadelo foi extinto e dá espaço para os sonhos.',
@@ -605,4 +576,10 @@ export const NIGHTMARE_END_TEXT: Record<NightmareVerdict, { pt: string; en: stri
   },
 };
 
-export const nightmareEndText = (v: NightmareVerdict, language: string): string => (language === 'pt-BR' ? NIGHTMARE_END_TEXT[v].pt : NIGHTMARE_END_TEXT[v].en);
+export const nightmareEndText = (v: NightmareEnd, language: string): string => (language === 'pt-BR' ? NIGHTMARE_END_TEXT[v].pt : NIGHTMARE_END_TEXT[v].en);
+
+/** A dica da luta (voz que encoraja, sem cobrança). */
+export const NIGHTMARE_HINT = {
+  pt: 'Só com a torcida e os especiais certeiros o Soulmon aguenta o pesadelo. Toque na tela para torcer e acerte o anel!',
+  en: 'Only with the cheer and well-aimed specials can your Soulmon hold out against the nightmare. Tap the screen to cheer and hit the ring!',
+} as const;

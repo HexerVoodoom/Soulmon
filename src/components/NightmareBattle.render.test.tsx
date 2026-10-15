@@ -14,7 +14,7 @@ import { render, screen, act, fireEvent, cleanup } from '@testing-library/react'
 import { NightmareBattle } from './NightmareBattle';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { shadowSource } from '../utils/nightmareShadows';
-import { RING_MULT } from '../utils/energia';
+import { NIGHTMARE_KNOBS } from '../utils/dungeonFight';
 import type { DungeonEnemy } from '../utils/dungeon';
 import { REFERENCE_BUILDS, combatantAt } from '../utils/combate/level';
 import { specialOf } from '../utils/combate/specials';
@@ -91,10 +91,11 @@ describe('Pesadelo — convite', () => {
     expect(img.getAttribute('src')).toBe(sombra);
     expect(img.getAttribute('src') ?? '').not.toMatch(/dungeon-spirit/);
   });
-  it('o convite explica a regra de vitória (torcer + acertar o especial) e diz que é UMA luta', () => {
+  it('o convite explica que a torcida e os especiais certeiros seguram o pesadelo e diz que é UMA luta', () => {
     montar([inimigo()]);
-    expect(document.querySelector('[data-nightmare-rule]')?.textContent).toMatch(/torça/);
+    expect(document.querySelector('[data-nightmare-rule]')?.textContent).toMatch(/Toque na tela para torcer/);
     expect(document.body.textContent).toMatch(/Uma luta só/);
+    expect(document.body.textContent).toMatch(/torcida e os especiais certeiros/);
   });
 });
 
@@ -159,7 +160,7 @@ describe('Pesadelo — a luta em tela cheia', () => {
     await avancar(Number(ring.getAttribute('data-ring-target')));
     fireEvent.pointerDown(document.body);
     await avancar(1200);
-    expect(H.answers[0]).toEqual({ who: 0, ans: RING_MULT.otimo }); // direct (padrão) × ofício padrão
+    expect(H.answers[0]).toEqual({ who: 0, ans: NIGHTMARE_KNOBS.ring.otimo }); // direct (padrão) × ofício padrão
   });
 
   it('o especial do PESADELO carrega e pode ser ESQUIVADO: as setas aparecem e deslizar o dedo vira a nota da esquiva', async () => {
@@ -172,20 +173,16 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(document.querySelector('.sm-bs-lunge')).not.toBeNull(); // o pet desliza
   });
 
-  it('REGRA DE VITÓRIA: o HP do pesadelo zera, mas SEM cheer e sem acertar o especial ele desvanece e continua à espreita (sem prêmio, sem custo)', async () => {
+  it('a vitória é o HP: pesadelo a zero = extinto (mesmo um fraquinho, sem torcida): prêmio e o texto das sombras', async () => {
     vi.useFakeTimers();
     const onWin = vi.fn();
-    const onLose = vi.fn();
-    montar([inimigo({ hpMul: 0.05 })], { onWin, onLose });
+    montar([inimigo({ hpMul: 0.05 })], { onWin });
     entrar();
-    expect(await ate(() => onLose.mock.calls.length > 0)).toBe(true);
-    expect(onWin).not.toHaveBeenCalled();
-    expect(onLose).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('O pesadelo desvaneceu, mas continua à espreita.')).toBeTruthy();
-    expect(document.querySelector('[data-battle-stage]')).toBeNull();
+    expect(await ate(() => onWin.mock.calls.length > 0)).toBe(true);
+    expect(screen.getByText('As sombras se dissipam, o pesadelo foi extinto e dá espaço para os sonhos.')).toBeTruthy();
   });
 
-  it('REGRA DE VITÓRIA: com cheer + o especial acertado (anel ótimo) o pesadelo é EXTINTO: prêmio e o texto das sombras', async () => {
+  it('Com torcida + o especial acertado (anel ótimo) o Soulmon vence: prêmio e o texto das sombras', async () => {
     vi.useFakeTimers();
     H.startEnergy = [100];
     const onWin = vi.fn();
@@ -246,7 +243,7 @@ describe('Pesadelo — a luta em tela cheia', () => {
     await avancar(Number(ring.getAttribute('data-ring-target')));
     fireEvent.pointerDown(document.body);
     await avancar(1200);
-    expect(H.answers[0].ans).toBeCloseTo(RING_MULT.otimo * 1.1, 9);
+    expect(H.answers[0].ans).toBeCloseTo(NIGHTMARE_KNOBS.ring.otimo * 1.1, 9);
   });
 
   it('em inglês: nada de português na luta', () => {

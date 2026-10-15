@@ -55,7 +55,7 @@ import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { GroupResult } from '../utils/combate/group';
-import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
+import { dungeonFamily, nightmareFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
@@ -65,17 +65,14 @@ import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foe
 import { playVictory } from '../utils/sounds';
 import {
   EMPTY_TALLY,
-  nightmareConditions,
+  NIGHTMARE_HINT,
   nightmareEndText,
   nightmareFlavor,
   nightmareName,
   nightmareRewards,
-  nightmareVerdict,
   specialLanded,
-  specialsNeeded,
   type NightmareRewards,
   type NightmareTally,
-  type NightmareVerdict,
 } from '../utils/nightmares';
 import { NIGHTMARE_ELEMENT } from '../utils/nightmareElement';
 import { shadowSource } from '../utils/nightmareShadows';
@@ -116,8 +113,7 @@ export interface NightmareBattleProps {
 const INTRO_FALLBACK = shadowSource(1, 0).src;
 
 type Phase = 'intro' | 'fight' | 'won' | 'lost';
-/** Quem leva a noite para a tela de fim: por que o pesadelo desvaneceu em vez de ser extinto. */
-type FadeWhy = 'hp' | 'rule';
+
 
 export function NightmareBattle({
   open, wave, rarity, petStage, demoCharacterId, petElement, skills, soul, profissao, language, onWin, onLose, onClose,
@@ -151,9 +147,7 @@ export function NightmareBattle({
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
   const [rewards, setRewards] = useState<NightmareRewards | null>(null);
-  const [verdict, setVerdict] = useState<NightmareVerdict>('faded');
-  const [fadeWhy, setFadeWhy] = useState<FadeWhy>('hp');
-  /** O que a luta fez para a regra de vitória: descargas de torcida, especiais lançados e acertados. */
+  /** O placar da luta para a tela: especiais lançados e acertados (o veredito é só o HP). */
   const tallyRef = useRef<NightmareTally>({ ...EMPTY_TALLY });
   /** A SEMENTE da luta: a defesa automática, o anel e a esquiva (determinísticos dentro da noite). */
   const runSeedRef = useRef(newDefenseSeed());
@@ -197,7 +191,6 @@ export function NightmareBattle({
     setHpFrac(1);
     setPhase('intro');
     setRewards(null);
-    setVerdict('faded');
     tallyRef.current = { ...EMPTY_TALLY };
     novaSemente();
     setFightKey(k => k + 1);
@@ -211,11 +204,9 @@ export function NightmareBattle({
     onWin(got);
   };
 
-  const lose = (why: FadeWhy = 'hp') => {
+  const lose = () => {
     // Sem som de degeneração de propósito: perder aqui não é uma perda.
-    setHpFrac(why === 'hp' ? 0 : hpCarryRef.current);
-    setVerdict('faded');
-    setFadeWhy(why);
+    setHpFrac(0);
     setPhase('lost');
     onLose();
   };
@@ -225,7 +216,7 @@ export function NightmareBattle({
      perfeita = sem dano + contra-ataque do ofício, e o especial do pesadelo (do slot mega) pode ser esquivado. */
   const rodadaDoNucleo = useCallback((): GroupRound => {
     const e = waveRef.current[idxRef.current];
-    const f = dungeonFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot), e.slot === 0); // o escudo de largada (`tal-pve-07`) é só do 1º da escada de cada andar
+    const f = nightmareFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot), () => batteryRef.current?.cheersUsed() ?? 0);
     return {
       player: f.player, foes: f.foes, seed: f.seed,
       startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
@@ -257,13 +248,11 @@ export function NightmareBattle({
 
   const aoFimDaLuta = useCallback((res: GroupResult) => {
     if (res.winner !== 'player') { lose(); return; } // derrota ou empate: não custa nada
-    // O HP do pesadelo zerou. Ele só é EXTINTO com cheer + especial acertado (a regra do dono); senão desvanece e volta.
-    if (nightmareVerdict(res.winner, { ...tallyRef.current, cheers: batteryRef.current?.cheersUsed() ?? 0 }) !== 'extinct') { lose('rule'); return; }
+
     // C-1 (run `som-01`): morte de inimigo nao usa o som de conclusao.
     hpCarryRef.current = res.hpLeft;
     energyCarryRef.current = res.energyLeft;
     setHpFrac(res.hpLeft);
-    setVerdict('extinct');
     const n = idxRef.current + 1;
     if (n >= waveRef.current.length) { win(); return; }
     idxRef.current = n;
@@ -309,9 +298,9 @@ export function NightmareBattle({
     const pronto = battle.stateKey === fightKey;
     const foeHpFrac = pronto ? (battle.foesHp[0] ?? 1) : 1;
     const meHpFrac = pronto ? battle.hp : hpFrac;
-    // Os dois objetivos da noite, sempre à vista: torcer e acertar o especial (ao menos em parte).
-    const cond = nightmareConditions({ ...tallyRef.current, cheers: pronto ? battle.cheersUsed() : 0 });
+    // Os dois apoios da noite, sempre à vista: a torcida (guarda do Soulmon) e os especiais certeiros.
     const t = tallyRef.current;
+    const cond = { cheer: pronto && battle.cheersUsed() >= 1, special: t.landed >= 1 };
     const chip = (ok: boolean, label: string, key: string) => (
       <span key={key} data-nightmare-objective={key} data-done={ok ? 'true' : 'false'} className="sm2-num"
         style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', textShadow: '0 1px 2px rgba(0,0,0,.8)', opacity: ok ? 1 : 0.8 }}>
@@ -321,7 +310,7 @@ export function NightmareBattle({
     const objectives = (
       <span style={{ display: 'inline-flex', gap: 10 }} role="status">
         {chip(cond.cheer, isPt ? 'Torcida' : 'Cheer', 'cheer')}
-        {chip(cond.special, isPt ? `Especial ${t.landed}/${specialsNeeded(t.casts)}` : `Special ${t.landed}/${specialsNeeded(t.casts)}`, 'special')}
+        {chip(cond.special, isPt ? `Especial ${t.landed}/${t.casts}` : `Special ${t.landed}/${t.casts}`, 'special')}
       </span>
     );
     return (
@@ -421,9 +410,7 @@ export function NightmareBattle({
                   : `One short fight. Winning gives ${preview.bits} Bits, +${preview.energy} energy${preview.hearts > 0 ? ` and +${preview.hearts} heart` : ''}. Losing costs nothing.`}
               </p>
               <p style={sm2Hint} data-nightmare-rule>
-                {isPt
-                  ? 'Este pesadelo é teimoso: para extingui-lo, torça (toque na tela) e acerte o anel dos especiais, ao menos em parte.'
-                  : 'This nightmare is stubborn: to extinguish it, cheer (tap the screen) and hit the specials ring, at least in part.'}
+                {isPt ? NIGHTMARE_HINT.pt : NIGHTMARE_HINT.en}
               </p>
               <button type="button" onClick={start} style={btn('primary')}>
                 {isPt ? 'Ficar na frente dele' : 'Stand in its way'}
@@ -467,13 +454,9 @@ export function NightmareBattle({
           {visor(72, null)}
           <p style={phaseTitle} data-nightmare-end="faded">{nightmareEndText('faded', language)}</p>
           <p style={{ ...sm2Text, margin: 0 }}>
-            {fadeWhy === 'rule'
-              ? (isPt
-                ? 'Ele caiu, mas voltou: faltou torcer ou acertar o anel dos especiais. Da próxima, torça e mire o anel. Nada foi perdido.'
-                : 'It went down but came back: the cheer or the specials ring was missing. Next time, cheer and aim the ring. Nothing was lost.')
-              : (isPt
-                ? 'Seu Soulmon ficou na frente até o fim e voltou pro seu colo. Nada foi perdido: nenhum coração, nenhum Bit, nenhum progresso.'
-                : 'Your Soulmon stood in the way until the end and came right back to you. Nothing was lost: no hearts, no Bits, no progress.')}
+            {isPt
+              ? 'Seu Soulmon ficou na frente até o fim e voltou pro seu colo. Da próxima, torça e mire o anel dos especiais. Nada foi perdido: nenhum coração, nenhum Bit, nenhum progresso.'
+              : 'Your Soulmon stood in the way until the end and came right back to you. Next time, cheer and aim the specials ring. Nothing was lost: no hearts, no Bits, no progress.'}
           </p>
           <p style={sm2Hint}>{isPt ? 'Amanhã tem outra noite. Sem pressa.' : 'There is another night tomorrow. No rush.'}</p>
           <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>

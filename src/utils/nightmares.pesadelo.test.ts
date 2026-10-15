@@ -6,13 +6,14 @@
 import { describe, expect, it } from 'vitest';
 import { LADDER_TIERS, dungeonFoe } from './dungeon';
 import {
-  EMPTY_TALLY, GOOD_DREAM_HONOR, NIGHTMARE_CYCLE_DAYS, NIGHTMARE_END_TEXT, NIGHTMARE_POWER, NIGHTMARE_SPECIAL_SHARE, NIGHTMARE_WAVE_SIZE,
-  buildNightmareWave, claimGoodDream, countNightmareDay, createNightmareState, hasPendingGoodDream, markFought, nightmareConditions, nightmareEndText,
-  nightmareFoe, nightmareVerdict, sanitizeNightmareState, specialLanded, specialsNeeded, type NightmareState, type NightmareTally,
+  GOOD_DREAM_HONOR, NIGHTMARE_CYCLE_DAYS, NIGHTMARE_END_TEXT, NIGHTMARE_HINT, NIGHTMARE_MEGA_EASE, NIGHTMARE_POWER, NIGHTMARE_WAVE_SIZE,
+  buildNightmareWave, claimGoodDream, countNightmareDay, createNightmareState, hasPendingGoodDream, markFought, nightmareEndText,
+  nightmareFoe, sanitizeNightmareState, specialLanded, type NightmareState,
 } from './nightmares';
-import { nightmareRefs, playSequence, simulateNightmareV3 } from './dungeonFight';
+import { nightmareRefs, playSequence, simulateNightmareScenario, SCENARIO_FULL, SCENARIO_NONE, type NightmareScenario } from './dungeonFight';
 import { createRestState, recordNight, type RestState } from './restWindow';
 import { REFERENCE_BUILDS } from './combate/level';
+import type { SequenceConfig } from './dungeonFight';
 import { SHADOW_SLOTS, nightmareShadowSprite, shadowSource } from './nightmareShadows';
 import { DUNGEON_LINE_SPRITES } from './sprites';
 import { VISUAL_ELEMENTS, fxElementId, fxFrame, FX_FALLBACK_ELEMENT, elementStrikeForm } from './combatFx';
@@ -43,13 +44,12 @@ describe('REGRESSÃO — o pesadelo CAUSA dano', () => {
       expect(antigo, `top ${top}`).toBeGreaterThan(0.88);
     }
   });
-  it('GREEN: com a força do Pesadelo a luta custa uma fatia REAL do HP (entre 25% e 55% em média) e o Soulmon ainda vence', () => {
-    for (const top of [2, 3, 4, 5]) {
-      const r = Array.from({ length: 40 }, (_, s) => simulateNightmareV3(cfg, top, s + 1));
-      const hp = r.reduce((a, x) => a + x.hpLeft, 0) / r.length;
-      expect(1 - hp, `top ${top}`).toBeGreaterThan(0.25);
-      expect(1 - hp, `top ${top}`).toBeLessThan(0.55);
-      expect(r.every((x) => x.won), `top ${top}`).toBe(true);
+  it('GREEN: o pesadelo derruba o Soulmon de verdade (HP chega a zero) quando o jogador não ajuda; e com ajuda ele machuca sem matar', () => {
+    for (const top of [1, 2, 3, 4, 5]) {
+      const sem = Array.from({ length: 40 }, (_, s) => simulateNightmareScenario(cfg, top, s + 1, SCENARIO_NONE));
+      expect(sem.filter((x) => !x.won).length / sem.length, `top ${top}`).toBeGreaterThanOrEqual(0.9); // o Soulmon cai
+      const com = Array.from({ length: 40 }, (_, s) => simulateNightmareScenario(cfg, top, s + 1, SCENARIO_FULL));
+      expect(com.some((x) => x.won && x.hpLeft < 0.95), `top ${top}`).toBe(true); // há dano real mesmo vencendo
     }
   });
   it('o corpo do inimigo (HP) é o da Masmorra; só a força muda — e a Masmorra continua intocada', () => {
@@ -57,7 +57,7 @@ describe('REGRESSÃO — o pesadelo CAUSA dano', () => {
       const n = nightmareFoe(20, slot);
       const d = dungeonFoe(20, slot, 1);
       expect(n.combatant.hp).toBe(d.combatant.hp);
-      expect(n.combatant.bonus).toBe(NIGHTMARE_POWER - 1);
+      expect(n.combatant.bonus).toBe(NIGHTMARE_POWER * (slot >= 5 ? NIGHTMARE_MEGA_EASE : 1) - 1);
       expect(n.special).toEqual(d.special);
       expect(d.combatant.bonus).toBeLessThan(-0.9); // a Masmorra segue com a força dela
     }
@@ -80,39 +80,53 @@ describe('UMA fase, sempre', () => {
   });
 });
 
-describe('REGRA DE VITÓRIA — cheer + especial (ao menos em parte)', () => {
-  const t = (cheers: number, casts: number, landed: number): NightmareTally => ({ cheers, casts, landed });
-  it('só EXTINGUE com as duas condições; HP zerado sozinho desvanece', () => {
-    expect(nightmareVerdict('player', t(1, 1, 1))).toBe('extinct');
-    expect(nightmareVerdict('player', t(0, 1, 1))).toBe('faded'); // sem cheer
-    expect(nightmareVerdict('player', t(1, 1, 0))).toBe('faded'); // especial errado
-    expect(nightmareVerdict('player', t(1, 0, 0))).toBe('faded'); // nenhum especial lançado
-    expect(nightmareVerdict('player', EMPTY_TALLY)).toBe('faded');
-    expect(nightmareVerdict('foes', t(5, 3, 3))).toBe('faded'); // o pesadelo venceu
-    expect(nightmareVerdict('draw', t(5, 3, 3))).toBe('faded');
+describe('CALIBRAGEM — a vitória é o HP; a dificuldade é o pesadelo derrubar o Soulmon primeiro (dono, 15/10/2026)', () => {
+  const cfgs: SequenceConfig[] = [5, 20, 40].flatMap((level) => (['balanced', 'atk'] as const).map((b) => ({ level, build: REFERENCE_BUILDS[b], family: 'direct' as const })));
+  /** Taxa de vitória do Soulmon: 6 fichas x 40 sementes = 240 lutas por tier. */
+  const taxa = (top: number, sc: NightmareScenario): number => {
+    let w = 0;
+    let n = 0;
+    for (const c of cfgs) for (let s = 1; s <= 40; s++) { w += +simulateNightmareScenario(c, top, s, sc).won; n++; }
+    return w / n;
+  };
+  const tiers = [1, 2, 3, 4, 5];
+  const medido = tiers.map((top) => ({
+    top,
+    A: taxa(top, SCENARIO_NONE), // sem torcida e sem especial certeiro (anel ruim)
+    B: taxa(top, SCENARIO_FULL), // torcida ativa + especiais com anel bom
+    C1: taxa(top, { cheerEvery: 6, ring: 'ruim' }), // torcida sem acertar especial
+    C2: taxa(top, { cheerEvery: null, ring: 'bom' }), // especial sem torcida
+  }));
+  it('valores finais e números medidos (registrados no REGISTRO §65)', () => {
+    console.log(`[CALIBRAGEM] ${medido.map((m) => `t${m.top} A ${m.A.toFixed(2)} B ${m.B.toFixed(2)} C1 ${m.C1.toFixed(2)} C2 ${m.C2.toFixed(2)}`).join(' | ')}`);
+    expect(NIGHTMARE_POWER).toBe(1.2);
+    expect(NIGHTMARE_MEGA_EASE).toBe(0.8);
   });
-  it('metade dos especiais lançados, mínimo 1 (valor conservador documentado)', () => {
-    expect(NIGHTMARE_SPECIAL_SHARE).toBe(0.5);
-    expect([1, 2, 3, 4, 5].map(specialsNeeded)).toEqual([1, 1, 2, 2, 3]);
-    expect(specialsNeeded(0)).toBe(1);
-    expect(nightmareVerdict('player', t(2, 3, 1))).toBe('faded');
-    expect(nightmareVerdict('player', t(2, 3, 2))).toBe('extinct');
-    expect(nightmareConditions(t(0, 2, 1))).toEqual({ cheer: false, special: true });
+  it('A: sem torcida e sem especiais certeiros o Soulmon perde em >= 90% das sementes', () => {
+    for (const m of medido) expect(1 - m.A, `tier ${m.top}`).toBeGreaterThanOrEqual(0.9);
   });
-  it('acerto PARCIAL conta: bom e ótimo acertam, ruim erra', () => {
+  it('B: com torcida e especiais ao menos parciais o jogador vence em >= 75% (tiers 1-3) e >= 50% (tiers 4-5)', () => {
+    for (const m of medido) expect(m.B, `tier ${m.top}`).toBeGreaterThanOrEqual(m.top <= 3 ? 0.75 : 0.5);
+  });
+  it('C: torcida sem acertar especiais, e especiais sem torcida: derrota na maioria (>= 70%)', () => {
+    for (const m of medido) {
+      expect(1 - m.C1, `C1 tier ${m.top}`).toBeGreaterThanOrEqual(0.7);
+      expect(1 - m.C2, `C2 tier ${m.top}`).toBeGreaterThanOrEqual(0.7);
+    }
+  });
+  it('determinístico: a mesma ficha, semente e cenário dão a mesma luta', () => {
+    const a = simulateNightmareScenario(cfg, 3, 7, SCENARIO_FULL);
+    expect(simulateNightmareScenario(cfg, 3, 7, SCENARIO_FULL)).toEqual(a);
+  });
+  it('o acerto parcial conta: bom e ótimo acertam, ruim erra', () => {
     expect(specialLanded('otimo')).toBe(true);
     expect(specialLanded('bom')).toBe(true);
     expect(specialLanded('ruim')).toBe(false);
     expect(specialLanded(null)).toBe(false);
   });
-  it('é FUNÇÃO PURA do que aconteceu: mesma entrada, mesmo veredito (sem sorteio)', () => {
-    for (let i = 0; i < 20; i++) expect(nightmareVerdict('player', t(1, 3, 2))).toBe('extinct');
-  });
-  it('a condição é cumprível: em 40 sementes x tiers o Soulmon vence a luta e o núcleo conta ao menos 1 especial', () => {
-    for (const top of [1, 2, 3, 4, 5]) for (let s = 1; s <= 40; s++) {
-      const r = simulateNightmareV3(cfg, top, s);
-      expect(r.won).toBe(true);
-    }
+  it('a dica da luta (PT/EN) diz que só com a torcida e os especiais certeiros o Soulmon aguenta', () => {
+    expect(NIGHTMARE_HINT.pt).toMatch(/torcida e os especiais certeiros/);
+    expect(NIGHTMARE_HINT.en).toMatch(/cheer and well-aimed specials/);
   });
 });
 
@@ -210,6 +224,14 @@ describe('SONHO BOM — a cada 6 dias de pesadelo', () => {
     const ciclo2 = claimGoodDream(lutar(r.state, 6, 50));
     expect(ciclo2.honor).toBe(GOOD_DREAM_HONOR);
     expect(ciclo2.state.goodDreams).toBe(2);
+  });
+  it('fechar pelo × sem lutar NÃO conta para os 6 dias (count=false), mas marca a noite; lutar depois no mesmo dia não é mais contado', () => {
+    const a = markFought(createNightmareState(), 'd1', false);
+    expect(a.fought).toEqual(['d1']);
+    expect(a.lurkDays).toBeUndefined();
+    let s = createNightmareState();
+    for (let i = 1; i <= 6; i++) s = markFought(s, dia(i), false);
+    expect(hasPendingGoodDream(s)).toBe(false);
   });
   it('SEM RETROATIVO: um save antigo (30 noites lutadas, sem o ciclo) começa em zero e não paga nada', () => {
     const antigo = sanitizeNightmareState({ fought: Array.from({ length: 30 }, (_, i) => `old${i}`) });

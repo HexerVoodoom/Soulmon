@@ -32,7 +32,8 @@ import {
   type DungeonEnemy,
 } from '../utils/dungeon';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
-import { ENERGY_TRIGGER } from '../utils/combate/specials';
+import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
+import { CHEER_TAPS_FULL } from '../utils/energia';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
@@ -98,8 +99,6 @@ export { clearBonus };
 type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'ended' | 'away';
 
 /** O cartão de resultado sobre a cena (entre inimigos, camadas e no fim). */
-/** Sem torcida na Masmorra (contexto §2.19): o toque na cena não faz nada. */
-const noTap = (): void => {};
 
 /** Texto só para leitor de tela (a camada já está no título; a linha viva não se repete na tela). */
 const SR_ONLY: CSSProperties = {
@@ -539,7 +538,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: false,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true,
     speed,
     // ESPECIAL AUTOMÁTICO (REGISTRO §36): sem anel nem esquiva — a nota é o sorteio com semente do número do especial na luta.
     autoSpecial: autoEspecial,
@@ -663,10 +662,12 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const meHpFrac = fighting && pronto ? battle.hp : hpFrac;
     return (
       <TorcidaLayer
-        onTap={noTap}
-        active={false} /* sem torcida na Masmorra (contexto §2.19): a camada só leva o gesto da esquiva */
+        onTap={battle.cheer}
+        active={fighting && !pausado && battle.phase === 'idle'} /* torcida de volta na Masmorra (dono, 15/10/2026, REGISTRO §70) */
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
+        mascot
+        cheerRatio={fighting && pronto ? battle.meter / CHEER_TAPS_FULL : 0}
         swipeActive={fighting && battle.phase === 'dodge'}
         onSwipe={battle.swipe}
       >
@@ -679,6 +680,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
+            cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
           }}
           foes={[{
             key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: enemy.name, hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
