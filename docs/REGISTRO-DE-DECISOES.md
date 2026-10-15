@@ -2591,3 +2591,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Decisão:** os pools de Poder, Harmonia e Benevolência (`ALIGNMENT_DESIGNS`, `TYPE_LOOK`) e os motivos novos perdem tudo que descreve olhar, boca, sorriso, bochechas, expressão ou "fofura" (sorriso, careta, olhos, "huggable", "fluffy"...). Ficaram corpo, postura, silhueta, motivos e acentos de cor; os itens faciais foram trocados no mesmo lugar por itens neutros de corpo/postura (os pools mantêm o tamanho). Os 4 adjetivos faciais do pedido de hoje cedo (gentle expression, wise look, serene face, benevolent expression) saíram; ficaram os de postura/forma.
 - **Cláusula constante** em todo prompt, nas duas variantes: "Simple neutral face with minimal facial detail, small plain eyes, no smile, no frown." (`NEUTRAL_FACE_CLAUSE`).
 - **Régua:** `oracle/formas.test.ts` varre os prompts de 150 sementes (todos os estágios, as duas variantes) atrás de vocabulário de expressão. Soulmon salvos não mudam.
+
+## 73. Busto do Tijolino é o caranguejo pedreiro do dono (dono, 15/10/2026)
+
+- **Decisão:** o busto do NPC do Restaurante em obra deixa de ser a arte gerada por IA e passa a ser `dominios/industrial/npcs/npc-industrial-caranguejo-argila-pedreiro.png` (512², pintada, alfa binário), normalizada para 768² (Lanczos, alfa ≥250 → 255) e salva por cima de `soulmon/npcs/npc-mercado-restaurante.png` (ligações e `LOT_NPC_ART` intactos). Nome "Tijolino, o pedreiro", fala, prédio e tutorial não mudam. A pasta `dominios/` não foi tocada.
