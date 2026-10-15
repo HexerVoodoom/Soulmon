@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/10/2026 — Novos Soulmon: champions escolhidos, Arena e formas altas prontas (`feat/novos-soulmon-arena-v3`, REGISTRO §70)
+>
+> - 17 champions finais instalados (marcial/arcano antigos; eletricidade e gravidade trocados). Arena usa as 17 (elemento da criatura). Onda da masmorra sem criatura repetida. Estrutura para Ultimate/Mega/Ultra pronta e vazia (`FORMAS_ALTAS`).
+> - **Pendente:** arte de Ultimate/Mega/Ultra (em geração, passa por aprovação do dono).
+
 > ## 15/10/2026 — 17 novos Soulmon por elemento nos encontros da masmorra (`feat/novos-soulmon-encontros`, REGISTRO §67)
 >
 > - **Feito:** Rookie/Champion de cada elemento base (`utils/novosSoulmon.ts`, arte `soulmon/novos/`) são os encontros comuns da escada (slots baby-i..champion), com elemento, FX, forma do golpe e nome do especial PT/EN coerentes. HP/dano/Bits intactos.
