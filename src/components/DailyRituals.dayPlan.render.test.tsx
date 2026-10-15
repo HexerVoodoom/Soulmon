@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * REGISTRO §65 — a lista de Hoje só mostra o que a pessoa reafirmou; o não marcado some, o concluído sempre aparece e o
+ * REGISTRO §66 — a lista de Hoje só mostra o que a pessoa reafirmou; o não marcado some, o concluído sempre aparece e o
  * convite discreto abre o modal.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';

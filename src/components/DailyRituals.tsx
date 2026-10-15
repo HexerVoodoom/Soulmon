@@ -122,7 +122,7 @@ export interface DailyRitualsProps {
   dayComplete?: boolean;
   /** Beta-2 (2.4): a meta do dia (`dailyGoalFor`), só para EXIBIR no cabeçalho. */
   goal?: number;
-  /** Reafirmar o dia (REGISTRO §65): o que a pessoa não marcou para hoje não aparece (o concluído sempre aparece). `onInvite` define o convite discreto. */
+  /** Reafirmar o dia (REGISTRO §66): o que a pessoa não marcou para hoje não aparece (o concluído sempre aparece). `onInvite` define o convite discreto. */
   dayPlan?: { view: DayPlanView; invite?: boolean; onInvite?: () => void };
 }
 

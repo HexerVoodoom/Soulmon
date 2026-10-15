@@ -19,6 +19,7 @@
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
 import { attackFx, type AttackFxState } from './attackFxArt';
+import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
 import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
 import { baseElementLabel } from './soulProfile/essenceLabels';
@@ -42,6 +43,7 @@ const ORACLE_TO_FX: Record<string, string> = { planta: 'vida', industrial: 'aco'
 /** Id de elemento (do oráculo, da ficha ou do bestiário) → id que tem arte; sem arte, `neutro`. */
 export function fxElementId(id: string | undefined | null): string {
   if (!id) return FX_FALLBACK_ELEMENT;
+  if (id === NIGHTMARE_ELEMENT) return hasNightmareFx() ? id : FX_FALLBACK_ELEMENT; // exclusivo do Pesadelo; sem arte, o procedural
   const mapped = ORACLE_TO_FX[id] ?? id;
   return attackFx(mapped, 'orb') ? mapped : FX_FALLBACK_ELEMENT;
 }
@@ -49,6 +51,7 @@ export function fxElementId(id: string | undefined | null): string {
 /** A URL do estado para o elemento, caindo no `neutro`. Nunca `undefined` se o neutro estiver instalado. */
 export function fxFrame(elementId: string | undefined | null, estado: AttackFxState): string | undefined {
   const id = fxElementId(elementId);
+  if (id === NIGHTMARE_ELEMENT) return nightmareFx(estado) ?? attackFx(FX_FALLBACK_ELEMENT, estado);
   return attackFx(id, estado) ?? attackFx(FX_FALLBACK_ELEMENT, estado);
 }
 

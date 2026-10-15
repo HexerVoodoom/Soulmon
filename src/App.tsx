@@ -270,7 +270,7 @@ import { StepsCard } from './components/StepsCard';
 import { loadAreaView, useAreaViewPrefetch } from './components/nav/playPrefetch';
 import {
   buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
-  createNightmareState, type NightmareRewards,
+  createNightmareState, hasPendingGoodDream, claimGoodDream, GOOD_DREAM_HONOR, type NightmareRewards,
 } from './utils/nightmares';
 import {
   play, canPlay, playedToday, activeBuff, minigameMultiplier, consumeBuff,
@@ -709,6 +709,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
 // Pesadelo da manhã: leva junto BattleStage/PveMechanics/useGroupBattle/combatFx/attackFxArt (~100 KB) — só na luta.
 const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
+const GoodDream = lazy(() => import('./components/GoodDream').then(m => ({ default: m.GoodDream })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
@@ -1148,6 +1149,8 @@ export default function App() {
   // O COMBATE do pesadelo: a outra face da mesma noite que rendeu o sonho.
   // Também só de manhã, também nunca à noite (ver o efeito lá embaixo).
   const [nightmareOpen, setNightmareOpen] = useState(false);
+  /** O slot do pesadelo mostra o SONHO BOM (a cada 6 dias de pesadelo), não a luta. */
+  const [goodDreamNow, setGoodDreamNow] = useState(false);
   // Passos: `null` = ainda não perguntei ao aparelho. Na PWA vira `false` e
   // nada de passos aparece em lugar nenhum (a camada já degrada sozinha).
   const [stepsAvailable, setStepsAvailable] = useState<boolean | null>(null);
@@ -2047,7 +2050,7 @@ export default function App() {
   /* 14/10/2026 (dono, REGISTRO §56): o botão Avisos saiu da Home; os avisos ACIONÁVEIS viram um balão leve na fila (`noticeToast`), 1× por dia cada. */
   const [noticeKey, setNoticeKey] = useState<NoticeToastKey | null>(null);
   const avisosKeysRef = useRef<string[]>([]);
-  /* REAFIRMAR O DIA (15/10/2026, REGISTRO §65): todo dia a pessoa marca, entre o que já cadastrou, o que quer fazer HOJE. Só o marcado
+  /* REAFIRMAR O DIA (15/10/2026, REGISTRO §66): todo dia a pessoa marca, entre o que já cadastrou, o que quer fazer HOJE. Só o marcado
      aparece no Hoje; o resto fica de fora e a virada não o julga. `dayPlan` (no save) guarda o instantâneo do que foi oferecido, o que foi
      marcado e se houve confirmação; o dia só "começa" (lista aparece) depois dela. */
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
@@ -4910,7 +4913,7 @@ export default function App() {
     return trv.strollSummary(gameState.crossings ?? CROSSINGS_EMPTY, dayKeyToIso(r.date) ?? r.date, language === 'pt-BR');
   }, [gameState.lastDayReport, gameState.crossings, trv, language]);
 
-  /** O achado de ontem também mora na folha do Passeio (REGISTRO §65) — o mesmo do resumo do dia, só enquanto é recente (≤ 2 dias). */
+  /** O achado de ontem também mora na folha do Passeio (REGISTRO §66) — o mesmo do resumo do dia, só enquanto é recente (≤ 2 dias). */
   const passeioAchado = useMemo(() => {
     const r = gameState.lastDayReport;
     if (!r || !aventuraDaNoite) return null;
@@ -5092,7 +5095,7 @@ export default function App() {
     if (checkInPromptedRef.current === hoje) return;
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
-    // Reafirmar o dia (REGISTRO §65): o compromisso só enxerga o que a pessoa marcou para hoje (sem reafirmação feita, nada).
+    // Reafirmar o dia (REGISTRO §66): o compromisso só enxerga o que a pessoa marcou para hoje (sem reafirmação feita, nada).
     const visaoDoDia = dayPlanView(gameState.dayPlan, playerDayIso(now, gameState.playerDayTz), hasCompletedOnboarding && hasCompletedTutorial);
     const plan = checkInPlan(
       visaoDoDia.hideAll || visaoDoDia.hidden.size > 0
@@ -5340,6 +5343,12 @@ export default function App() {
     const now = new Date();
     const hour = now.getHours();
     if (hour < 4 || hour >= 12) return; // só de manhã
+    // O SONHO BOM (6 dias de pesadelo fechados) vem ANTES de qualquer luta nova e não depende de noite registrada.
+    if (hasPendingGoodDream(gameState.nightmares)) {
+      setGoodDreamNow(true);
+      setNightmareOpen(true);
+      return;
+    }
     const rest = gameState.rest;
     if (!rest) return;
     if (!hasPendingNightmare(gameState.nightmares ?? EMPTY_NIGHTMARES, rest, now)) return;
@@ -5388,10 +5397,24 @@ export default function App() {
       ),
     }));
   }, [setGameState]);
+  /**
+   * Colhe o SONHO BOM: paga a Honra (`emblems`, a moeda do Torneio) e reinicia o ciclo NO MESMO updater
+   * (`claimGoodDream`, idempotente: sem sonho pendente devolve o mesmo estado, então StrictMode/2x clique não paga duas vezes).
+   */
+  const claimGoodDreamNow = useCallback(() => {
+    setGameState(prev => {
+      const r = claimGoodDream(prev.nightmares ?? EMPTY_NIGHTMARES);
+      if (r.honor <= 0) return prev;
+      return { ...prev, nightmares: r.state, emblems: (prev.emblems ?? 0) + r.honor };
+    });
+    setGoodDreamNow(false);
+    setNightmareOpen(false);
+  }, [setGameState]);
   const closeNightmare = useCallback(() => {
+    if (goodDreamNow) { claimGoodDreamNow(); return; }
     markNightmareFought();
     setNightmareOpen(false);
-  }, [markNightmareFought]);
+  }, [markNightmareFought, goodDreamNow, claimGoodDreamNow]);
 
   /**
    * Vitória: energia (teto do estágio), meio coração no máximo (teto de
@@ -7671,7 +7694,7 @@ export default function App() {
                        segunda definição (footgun 9). */
                     variant="home"
                     dayComplete={diaCompletoHoje}
-                    /* Reafirmar o dia (REGISTRO §65): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
+                    /* Reafirmar o dia (REGISTRO §66): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
                     dayPlan={{
                       view: dayPlanViewNow,
                       invite: dayPlanInvite(gameState.dayPlan, dayPlanToday, dayPlanActive) && dayPlanCandidatesNow.length > 0,
@@ -8387,6 +8410,16 @@ export default function App() {
           e a tela diz isso. */}
       {interstitial === 'nightmare' && (
         <PresentationSlot id="nightmare" onFail={() => presentation.fail('nightmare')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        {goodDreamNow ? (
+          <GoodDream
+            open
+            honor={gameState.nightmares?.goodDream ? GOOD_DREAM_HONOR : 0}
+            petStage={gameState.evolutionStage}
+            demoCharacterId={petLine}
+            language={language}
+            onClaim={claimGoodDreamNow}
+          />
+        ) : (
         <NightmareBattle
           open
           wave={nightmareWave}
@@ -8406,6 +8439,7 @@ export default function App() {
           onLose={markNightmareFought}
           onClose={closeNightmare}
         />
+        )}
         </PresentationSlot>
       )}
 
@@ -8439,7 +8473,7 @@ export default function App() {
         />
         </PresentationSlot>
       )}
-      {/* REAFIRMAR O DIA — o modal centralizado de caixas (desmarcadas) com o que já está cadastrado; só o marcado vai para o Hoje (REGISTRO §65). */}
+      {/* REAFIRMAR O DIA — o modal centralizado de caixas (desmarcadas) com o que já está cadastrado; só o marcado vai para o Hoje (REGISTRO §66). */}
       {interstitial === 'dayGoals' && (
         <PresentationSlot id="dayGoals" onFail={() => presentation.fail('dayGoals')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DayGoalsModal

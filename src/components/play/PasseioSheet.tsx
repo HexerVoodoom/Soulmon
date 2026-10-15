@@ -303,7 +303,7 @@ function Registro({ log, isPt }: { log: CrossingsState['log']; isPt: boolean }) 
   );
 }
 
-/** O achado de ontem dentro da folha do Passeio (REGISTRO §65): o mesmo `StrollFind` do resumo do dia. */
+/** O achado de ontem dentro da folha do Passeio (REGISTRO §66): o mesmo `StrollFind` do resumo do dia. */
 export type PasseioAchado = Pick<StrollFindProps, 'adventure' | 'isNew' | 'stroll'>;
 
 export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp, achado }: {

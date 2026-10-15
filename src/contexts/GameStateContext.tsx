@@ -49,7 +49,7 @@ import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
 import { createRestState, MAX_NIGHTS } from '../utils/restWindow';
 import type { NightmareState } from '../utils/nightmares';
-import { createNightmareState } from '../utils/nightmares';
+import { createNightmareState, sanitizeNightmareState } from '../utils/nightmares';
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
@@ -506,7 +506,7 @@ export interface GameState {
   lastCelebratedLevel?: number;
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
-  /** Reafirmar o dia (15/10/2026, `utils/dayPlan.ts`, REGISTRO §65): o que a pessoa marcou para HOJE entre o que já cadastrou. Só o marcado aparece no Hoje; o não marcado não aparece e a virada não o julga. Ausente = save anterior: a 1ª abertura grava o plano de hoje como já reafirmado (a lista do dia já estava montada). */
+  /** Reafirmar o dia (15/10/2026, `utils/dayPlan.ts`, REGISTRO §66): o que a pessoa marcou para HOJE entre o que já cadastrou. Só o marcado aparece no Hoje; o não marcado não aparece e a virada não o julga. Ausente = save anterior: a 1ª abertura grava o plano de hoje como já reafirmado (a lista do dia já estava montada). */
   dayPlan?: DayPlan;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];
@@ -812,11 +812,8 @@ const obj = <T,>(v: unknown): Record<string, T> =>
  * nuvem derrubaria a árvore antes de qualquer tela aparecer.
  */
 function hydrateNightmares(v: unknown): NightmareState {
-  const base = createNightmareState();
-  const raw = obj<unknown>(v);
-  const fought = arr<unknown>(raw.fought).filter((x): x is string => typeof x === 'string');
-  const pending = typeof raw.pending === 'string' ? raw.pending : undefined;
-  return pending ? { fought, pending } : { ...base, fought };
+  // O ciclo do sonho bom (`lurkDays`/`goodDream`/`goodDreams`, 15/10/2026) é saneado pelo MESMO dono que o servidor espelha.
+  return sanitizeNightmareState(v);
 }
 
 /**

@@ -3,7 +3,7 @@ import { taskIsForToday, activityBucket } from './atividadesLista';
 import { isActive } from './taskTriage';
 
 /**
- * REAFIRMAR O DIA (15/10/2026, pedido do dono; REGISTRO §65). Pura: sem React, sem storage, sem `Date` implícito.
+ * REAFIRMAR O DIA (15/10/2026, pedido do dono; REGISTRO §66). Pura: sem React, sem storage, sem `Date` implícito.
  *
  * Todo dia a pessoa diz o que quer fazer HOJE entre o que já cadastrou (hábitos, tarefas, agendadas que caem hoje).
  * Só o que ela marca aparece no Hoje; o que não marcou NÃO aparece e NÃO conta como falta (a virada não o julga).

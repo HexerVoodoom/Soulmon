@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * REGISTRO §65 — o modal de reafirmar o dia: caixas DESMARCADAS com o que já está cadastrado; só o marcado vai adiante.
+ * REGISTRO §66 — o modal de reafirmar o dia: caixas DESMARCADAS com o que já está cadastrado; só o marcado vai adiante.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, fireEvent, cleanup } from '@testing-library/react';

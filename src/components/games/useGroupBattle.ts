@@ -125,6 +125,8 @@ export interface GroupBattle {
   stateKey: number;
   /** Segundos da luta já vividos. */
   clock(): number;
+  /** Quantas descargas de torcida o núcleo já recolheu nesta luta (o Pesadelo lê para a regra de vitória). */
+  cheersUsed(): number;
 }
 
 export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
@@ -158,6 +160,8 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const runId = useRef(0);
   /** Descargas de cheer ainda não recolhidas pelo núcleo. */
   const discharges = useRef(0);
+  /** Descargas já RECOLHIDAS pelo núcleo na luta em curso. */
+  const drained = useRef(0);
   /** Relógio da LUTA (s) do último evento e toques aceitos por janela. */
   const clockS = useRef(0);
   /** Âncora do relógio ao vivo: o relógio da luta no instante `wall` (hora de parede sem a pausa). */
@@ -247,6 +251,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       anchor.current = { base: 0, wall: wallClock() };
       buckets.current = new Map();
       discharges.current = 0;
+      drained.current = 0;
       let nRing = 0;
       let nDodge = 0;
       let hpNow = round.startHp;
@@ -289,7 +294,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         ...round.options,
         seed: round.seed, startHp: round.startHp, startEnergy: round.startEnergy,
         hitScale: round.hitScale,
-        cheerDrain: () => { const n = discharges.current; discharges.current = 0; return n; },
+        cheerDrain: () => { const n = discharges.current; discharges.current = 0; drained.current += n; return n; },
         withFx: true, // PR16: os turnos do selo vêm dos contadores reais do núcleo (não mudam a luta)
       });
       const queue: GroupEvent[] = [];
@@ -473,6 +478,6 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
 
   return {
     action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,
-    cheer, swipe, resolveRing, stateKey, clock: () => clockS.current,
+    cheer, swipe, resolveRing, stateKey, clock: () => clockS.current, cheersUsed: () => drained.current,
   };
 }

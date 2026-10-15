@@ -171,7 +171,7 @@ export interface AreaViewProps {
     onChange: (f: (c: CrossingsState) => CrossingsState) => void;
     /** A semente do sorteio das missões do dia (o id do save). */
     seed?: string;
-    /** O que o Soulmon encontrou no passeio de ontem (REGISTRO §65): o MESMO achado do resumo do dia, agora também aqui. */
+    /** O que o Soulmon encontrou no passeio de ontem (REGISTRO §66): o MESMO achado do resumo do dia, agora também aqui. */
     achado?: PasseioAchado | null;
   };
   /** 📓 Caderno (04/10/2026): as anotações (do save) e o único caminho de escrita. */

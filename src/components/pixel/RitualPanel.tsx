@@ -393,7 +393,7 @@ export interface RitualPanelProps {
   goal?: number;
   /** Beta-2 (2.3): rodapé da lista (o `View all →`). */
   footer?: ReactNode;
-  /** Reafirmar o dia (REGISTRO §65): o convite discreto acima da lista quando o dia ainda não foi montado (variante `home`). */
+  /** Reafirmar o dia (REGISTRO §66): o convite discreto acima da lista quando o dia ainda não foi montado (variante `home`). */
   lead?: ReactNode;
 }
 

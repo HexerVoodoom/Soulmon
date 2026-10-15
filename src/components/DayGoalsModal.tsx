@@ -4,7 +4,7 @@ import type { DayPlanCandidate } from '../utils/dayPlan';
 import { CheckRow, ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
 
 /**
- * REAFIRMAR O DIA (15/10/2026, pedido do dono; REGISTRO §65) — a lista de caixas de marcar com o que a pessoa JÁ cadastrou
+ * REAFIRMAR O DIA (15/10/2026, pedido do dono; REGISTRO §66) — a lista de caixas de marcar com o que a pessoa JÁ cadastrou
  * (hábitos, tarefas, agendadas que caem hoje). Todo dia ela diz o que quer fazer: as caixas nascem DESMARCADAS (isto
  * substitui o "todas marcadas" do 7.3) e só o que ela marcar aparece no Hoje. O que ficar de fora não cobra nada.
  *

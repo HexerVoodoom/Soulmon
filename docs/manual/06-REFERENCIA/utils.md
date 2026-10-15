@@ -978,10 +978,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
 
+### `src/utils/nightmareElement.ts`
+**Dono de:** o ELEMENTO `pesadelo` (REGISTRO §65): exclusivo da mecânica do Pesadelo, matchup neutro e o encaixe da arte (PNG em `src/assets/soulmon/pesadelo/`: `el-pesadelo.png` e `fx-pesadelo-{cast,aura,slash,impact,defended,orb}.png`). Sem arte, `fxElementId`/`fxFrame` caem no FX procedural (`neutro`).
+**Exports:** `NIGHTMARE_ELEMENT`, `nightmareMatchup`, `nightmareFx`, `hasNightmareFx`, `nightmareIcon`.
+**Chamado por:** `src/utils/combatFx.ts` (`fxElementId`, `fxFrame`), `src/components/NightmareBattle.tsx`.
+**Régua:** `src/utils/nightmares.pesadelo.test.ts`.
+
 ### `src/utils/nightmareShadows.ts`
 **Dono de:** as SOMBRAS DO PESADELO (PR5): os 12 slots (4 degraus × 3 variantes) → Solmon próprio (linha · estágio), o encaixe da arte real (`SHADOW_ART`, vazio até a leva de `docs/ASSETS-A-GERAR.md` §17 entrar) e a geometria do placeholder preso à caixa de colisão. Só visual: a colisão do `DinoGame` não muda.
-**Exports:** `SHADOW_SLOTS`, `SHADOW_ART`, `shadowSource`, `shadowRect`, `shadowEyes`, `ShadowSlot`, `ShadowSource`, `ShadowRect`.
-**Chamado por:** `src/components/DinoGame.tsx` (`drawShadowObstacle`).
+**Exports:** `SHADOW_SLOTS`, `SHADOW_ART`, `shadowSource`, `nightmareShadowSprite` (a sombra do pesadelo na luta, 15/10/2026), `shadowRect`, `shadowEyes`, `ShadowSlot`, `ShadowSource`, `ShadowRect`.
+**Chamado por:** `src/components/DinoGame.tsx` (`drawShadowObstacle`), `src/utils/nightmares.ts` (`buildNightmareWave`), `src/components/NightmareBattle.tsx`.
 **Régua:** `src/utils/nightmareShadows.test.ts`.
 
 ### `src/utils/guildHouse.ts`
@@ -1309,10 +1315,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:**
 - `nightmareSlots(top)` — os slots da onda do pesadelo terminando no tier `top`; um dono só (a onda e a simulação do balanço leem esta função).
 - `NIGHTMARES_PER_NIGHT` — **Teto absoluto: 1 pesadelo por noite registrada.** É esta constante que dá o teto natural que impede farm. Dormir mais não rende mais nada; a única forma de ver mais pesadelos é ter mais NOITES — ou seja, viver mais dias, que é a única "moeda" que ninguém consegue acelerar.
-- `NIGHTMARE_WAVE_SIZE` — Tamanho da onda de combate. Uma luta CURTA, bem menor que um andar de masmorra (que são 6 inimigos): isto acontece de MANHÃ, e uma mecânica de sono que exige dez minutos de combate antes do café vira obrigação.
+- `NIGHTMARE_WAVE_SIZE` — **1** (uma fase só, 15/10/2026). `NIGHTMARE_POWER` (força própria do pesadelo, a causa do bug de dano) e `nightmareFoe(playerLevel, slot)`.
+- Regra de vitória (REGISTRO §65): `NIGHTMARE_MIN_CHEERS`, `NIGHTMARE_SPECIAL_SHARE`, `NightmareTally`, `EMPTY_TALLY`, `specialLanded`, `specialsNeeded`, `nightmareConditions`, `nightmareVerdict`, `NIGHTMARE_END_TEXT`, `nightmareEndText`.
+- Sonho bom: `NIGHTMARE_CYCLE_DAYS` (6), `GOOD_DREAM_HONOR` (3), `MAX_GOOD_DREAMS`, `countNightmareDay`, `hasPendingGoodDream`, `claimGoodDream`, `sanitizeNightmareState` (espelho de `functions/api/_nightmares.js`).
 - `MAX_FOUGHT_HISTORY` — Teto do histórico de noites já combatidas (mesmo teto de `MAX_NIGHTS`).
 - `NIGHTMARE_MAX_HEART_CURE` — Cura máxima de uma vitória: **meio coração**, e o teto é regra. O carinho é a cura PRINCIPAL de HP (até 1 coração/dia). Se vencer um pesadelo curasse mais que isso, o sono viraria a rota ótima de HP e o app estaria de novo premiando o resultado fisiológico.
-- `NightmareState` (interface) — campos: `fought`, `pending`.
+- `NightmareState` (interface) — campos: `fought`, `pending`, `lurkDays`, `goodDream`, `goodDreams`.
 - `function createNightmareState(): NightmareState` — Estado inicial de pesadelos (`fought: []`).
 - `NightmareOffer` (interface) — campos: `count`, `tier`, `rarity`.
 - `NightmareRewards` (interface) — campos: `hearts`, `energy`, `bits`, `item`.
@@ -2539,7 +2547,7 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/focusExpedition.ts`
 **Dono de:** (+ `rollPlanLoot`/`FOCUS_PLAN_DAILY_CAP` = 2: concluir uma sessão rende 1 item, recibo `plan:<id>`, dentro do teto de 8) seis ambientes Pomodoro, quatro materiais possíveis por ambiente, sorteio de comida, chance progressiva do item extra e ledger diário (teto combinado de oito itens). `applyFocusLoot` é idempotente por evento, soma materiais ao estoque de `buildingQuests` e comidas ao inventário normal; `sanitizeFocusLoot` limita a forma do campo persistido. A paridade e o clamp do servidor ficam em `functions/api/_focusLoot.js`.
 
-### `src/utils/dayPlan.ts` (15/10/2026, REGISTRO §65)
+### `src/utils/dayPlan.ts` (15/10/2026, REGISTRO §66)
 **Dono de:** a regra PURA de "reafirmar o dia": `DayPlan { day, offered[], picked[], confirmed }` (um objeto no save, `GameState.dayPlan`), `sanitizeDayPlan` (cliente; o servidor espelha em `functions/api/_dayPlan.js`, paridade em `functions/api/dayPlan.parity.test.js`), `dayPlanCandidates` (o que cabe perguntar: hábitos devidos hoje, agendadas que caem hoje e tarefas abertas de hoje, sem duplicar e sem o já feito), `dayPlanView`/`isHiddenByPlan` (esconde `offered − picked`; plano de outro dia esconde tudo de hoje), `hiddenOnDay` (a virada não julga o não marcado), `needsDayPlan`, `dayPlanInvite`, `migrateDayPlan` (save sem plano = hoje já reafirmado), `showDayPlan` ("visto" ao mostrar) e `confirmDayPlan`. Sem React, sem storage, sem `Date` implícito.
 **Chamado por:** `src/App.tsx`, `src/components/DailyRituals.tsx`, `src/components/DayGoalsModal.tsx`, `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx`.
 **Régua:** `src/utils/dayPlan.test.ts`, `src/utils/dailyReset.dayPlan.test.ts`.

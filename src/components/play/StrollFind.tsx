@@ -6,7 +6,7 @@ import type { AdventureFind } from '../../utils/adventure';
 import type { Language } from '../../utils/i18n';
 
 /**
- * O QUE O SOULMON ENCONTROU NO PASSEIO (15/10/2026, pedido do dono; REGISTRO §65). Peça única, usada nos DOIS lugares onde o
+ * O QUE O SOULMON ENCONTROU NO PASSEIO (15/10/2026, pedido do dono; REGISTRO §66). Peça única, usada nos DOIS lugares onde o
  * achado aparece — o passo "From Yesterday's Adventure" do resumo do dia e a folha do Passeio —, para que seja um fluxo só
  * (o achado dentro do contexto do passeio) e não um pop-up com visual próprio. Mantém a regra do beta-2 (4.3): a missão que
  * a pessoa escolheu no dia anterior e o destino dela vêm LIGADOS ao achado. Apresentacional: o sorteio é de fora (determinístico).

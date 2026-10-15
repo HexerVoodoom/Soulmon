@@ -1170,7 +1170,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     // de constância — sem histórico não há `needsIntervention` ("never miss
     // twice"), não há gasto/ganho de escudo e não há razão de constância
     // baixa. Evitar o item continua sem NENHUMA consequência de jogo.
-    /* REAFIRMAR O DIA (REGISTRO §65): o que a pessoa NÃO marcou para aquele dia não aparecia na lista e não é falta —
+    /* REAFIRMAR O DIA (REGISTRO §66): o que a pessoa NÃO marcou para aquele dia não aparecia na lista e não é falta —
        a virada não o julga (sem `applyMissedDay`). Feito e meta/coração seguem como sempre (só a lista e a constância mudam). */
     const naoMarcados = hiddenOnDay((prev as any).dayPlan, dayKeyToIso(yesterdayString));
     availableActivities.filter((a: any) => !isOptInOnlyActivity(a) && !naoMarcados.has(String(a.id))).forEach((activity: any) => {

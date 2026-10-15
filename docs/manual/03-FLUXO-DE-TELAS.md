@@ -1667,7 +1667,7 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   Desde 14/10/2026 a marca `DAILY_REPORT_SHOWN` é gravada **AO MOSTRAR** (`onShow` da fila central, §3.1), não só ao fechar:
   fechar o app com o resumo aberto não o traz de volta. **Forma:** modal CENTRALIZADO (`ModalSheet placement="center"`), em
   passos — **ontem** (a manchete, as tarefas de ontem e os corações NO MESMO modal, `data-report-step="yesterday"`), a
-  **aventura** (`AreaSheet` com o NPC do scroll, passo separado; desde 15/10/2026 (REGISTRO §65) o conteúdo é o `StrollFind` — a missão e o destino escolhidos no dia anterior ligados ao que o Soulmon encontrou —, a MESMA peça da seção "Da aventura de ontem" da folha do Passeio, sem pop-up com visual próprio) e **hoje** (humor/oferta/memórias).
+  **aventura** (`AreaSheet` com o NPC do scroll, passo separado; desde 15/10/2026 (REGISTRO §66) o conteúdo é o `StrollFind` — a missão e o destino escolhidos no dia anterior ligados ao que o Soulmon encontrou —, a MESMA peça da seção "Da aventura de ontem" da folha do Passeio, sem pop-up com visual próprio) e **hoje** (humor/oferta/memórias).
 
 - **Sai para**: `onClose` (`closeDailyReport` no `App.tsx`, o mesmo caminho do botão, do ✕, do Esc, do voltar do Android e
   da falha do item) — que **primeiro** grava o marco de memória
@@ -1728,7 +1728,7 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   `MorningCheckIn.commit.render.test.tsx`,
   `MorningCheckIn.ofertaReduzida.render.test.tsx`.
 
-### 4.17a `DayGoalsModal` — reafirmar o dia (15/10/2026, REGISTRO §65)
+### 4.17a `DayGoalsModal` — reafirmar o dia (15/10/2026, REGISTRO §66)
 
 - **Chega por**: a fila (`dayGoals`, depois do resumo do dia e da escolha de metas, antes do check-in) · **Aparece quando**:
   `dayGoalsOpen && dayPlanCandidatesNow.length > 0`, aberto por um efeito de 1×/dia (`dayGoalsPromptedRef`) quando o `dayPlan` do
