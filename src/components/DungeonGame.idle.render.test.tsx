@@ -51,7 +51,7 @@ describe('Masmorra idle — o laço automático', () => {
     descer();
     expect(await ateCair()).toBe(true);
     expect(onEnemyDefeated).toHaveBeenCalledTimes(1);
-    // só o X da cena (sem Pausar, §73) — nenhum "Challenge/Desafiar/Next/Próximo"
+    // só o X da cena (sem Pausar, §74) — nenhum "Challenge/Desafiar/Next/Próximo"
     const botoes = screen.getAllByRole('button').map(b => b.textContent ?? '');
     expect(botoes.some(t => /challenge|desafiar|next|próxim|continue/i.test(t))).toBe(false);
     await avancar(DUNGEON_AUTO_FIGHT_MS + 100);
@@ -59,7 +59,7 @@ describe('Masmorra idle — o laço automático', () => {
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
   });
 
-  it('sem botão de Pausar (REGISTRO §73): nada com data-dungeon-pause nem texto Pause/Resume, e a luta segue sozinha', async () => {
+  it('sem botão de Pausar (REGISTRO §74): nada com data-dungeon-pause nem texto Pause/Resume, e a luta segue sozinha', async () => {
     vi.useFakeTimers();
     montar();
     descer();
