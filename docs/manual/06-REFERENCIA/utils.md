@@ -3148,6 +3148,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/components/BuildingIntro.tsx`.
 **Régua:** `src/utils/buildingIntro.test.ts` (todo prédio com NPC e busto, balões curtos, sem cobrança, sem número, sem "subir de nível"), `src/narrativa.contract.test.ts`.
 
+### `src/utils/welcomeTourGate.ts`
+**Dono de:** as regras de ENTRADA do tour de boas-vindas e do tutorial do mapa, sem a copy (15/10/2026, corte do `index.js`, REGISTRO §80). Puro. Existe para o `App.tsx` e o `GameStateContext` decidirem se abrem o tour sem puxar `welcomeTour.ts` (→ `buildingIntroCopy` → `areaNpcVoice` → `guildCopy`) para o chunk de entrada.
+**Exports:** `needsWelcomeTour({ shown, jaConcluiuAlgo })` · `sanitizeMapTutorialSeen(raw, save, welcomeTourShown?)` · `needsMapTutorial({ seen, onMap, welcomeTourOpen })`. `welcomeTour.ts` os re-exporta (os testes antigos seguem valendo).
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`.
+**Régua:** `src/deploy/entradaEnxuta.contract.test.ts` (a copy da Guilda não pode voltar ao chunk de entrada), `src/utils/welcomeTour.test.ts`.
+
 ### `src/utils/welcomeTour.ts`
 **Dono de:** o roteiro do tour do corvo e a regra de entrada (07/10/2026). Puro.
 **Exports:**
