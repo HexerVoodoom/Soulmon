@@ -588,6 +588,7 @@ export async function anonimizarClaims(env, orderIds) {
     try {
       if (env.DB) {
         await env.DB.prepare('UPDATE order_claims SET save_id = ? WHERE order_id = ?').bind(CLAIM_EXCLUIDA, orderId).run();
+        await env.DB.prepare('UPDATE order_claims SET save_id = ? WHERE order_id = ?').bind(CLAIM_EXCLUIDA, GRANT_PREFIX + orderId).run();
       } else {
         await kvOrThrow(env).put(ORDER_PREFIX + orderId, CLAIM_EXCLUIDA, { expirationTtl: RETENTION_TTL_SECONDS });
       }
@@ -595,6 +596,9 @@ export async function anonimizarClaims(env, orderIds) {
   }
   return falhou;
 }
+
+/** Prefixo da linha de `order_claims` que trava a CONCESSÃO (não o vínculo) de um pedido. */
+const GRANT_PREFIX = 'grant:';
 
 /** Teto das listas de histórico de pedidos guardadas no entitlement. */
 export const ORDER_HISTORY_MAX = 200;
@@ -637,6 +641,23 @@ export async function applyVerifiedPurchase(env, saveId, {
   if (orderId && ent.consumedOrders.includes(orderId)) {
     return { ent, duplicate: true };
   }
+  // CONCESSÃO ATÔMICA (QA3, decisão do dono 15/10/2026): com D1, quem ganha a linha `grant:<orderId>` (PRIMARY KEY de
+  // `order_claims`, sem schema novo) é o único a somar. Duas requisições simultâneas do MESMO pedido liam o mesmo
+  // `consumedOrders` no KV (sem CAS) e creditavam duas vezes; a perdedora agora responde `duplicate`.
+  let grantRow = null;
+  if (orderId && env.DB) {
+    grantRow = GRANT_PREFIX + orderId;
+    const agora = Date.now();
+    try {
+      await env.DB
+        .prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
+        .bind(grantRow, saveId, agora, agora + RETENTION_TTL_SECONDS * 1000)
+        .run();
+    } catch (err) {
+      if (!ehViolacaoDeChave(err)) throw err;
+      return { ent: await readEntitlement(env, saveId), duplicate: true };
+    }
+  }
   if (grantTier === 'paid') ent.tier = 'paid';
   if (grantCredits > 0) ent.credits += grantCredits;
   if (orderId) {
@@ -650,7 +671,13 @@ export async function applyVerifiedPurchase(env, saveId, {
     if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
     ent.orderDetails = podarOrderDetails(ent.orderDetails);
   }
-  await writeEntitlement(env, saveId, ent);
+  try {
+    await writeEntitlement(env, saveId, ent);
+  } catch (err) {
+    // A gravação falhou: solta a trava, senão o retry do cliente responderia `duplicate` sem nunca ter creditado.
+    if (grantRow) { try { await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ?').bind(grantRow).run(); } catch { /* expira em 5 anos */ } }
+    throw err;
+  }
   return { ent, duplicate: false };
 }
 

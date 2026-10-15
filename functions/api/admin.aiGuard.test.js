@@ -112,9 +112,9 @@ describe('generate-sprite: requirePaidTier', () => {
     expect(r.status).toBe(503);
     expect(await r.json()).toMatchObject({ error: 'tier-unavailable' });
   });
-  it('token do admin com id de OUTRO save: 402 (sem admin fora da própria conta)', async () => {
+  it('token do admin com id de OUTRO save: 403 (autentica primeiro; sem admin fora da própria conta)', async () => {
     const r = await gerarSprite({ request: reqWith(await token(ADMIN), 'https://x/api/generate-sprite', { method: 'POST', body: body(OTHER_ID) }), env: envWith() });
-    expect(r.status).toBe(402);
+    expect(r.status).toBe(403);
   });
 });
 
