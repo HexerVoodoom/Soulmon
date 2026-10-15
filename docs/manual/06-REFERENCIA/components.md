@@ -1382,6 +1382,11 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Exports:** `AvatarImg(props)`, `AVATAR_THUMB_IDS`.
 **Chamado por:** `UserAvatar.tsx` (lazy), `perfil/ProfileEditor.tsx`.
 
+### `src/components/ui/FunctionNpcNote.tsx`
+**Dono de:** o busto de FUNÇÃO de uma tela (14/10/2026): imagem de `FUNCTION_NPC_ART` + nome e fala de `functionNpcVoice`, só acolhida, sem cobrança.
+**Exports:** `FunctionNpcNote({ id, language, size? })`.
+**Chamado por:** `SettingsPage.tsx` (Tobi em Configurações, Faro em "Sua conta"), `RestWindowCard.tsx` (Sona), `home/Mochila.tsx` (Nuri).
+
 ### `src/components/ui/AvatarFrame.tsx`
 **Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com a ARTE da moldura (`FRAME_ART`, `utils/frames.ts`: canvas 192² com abertura de 96 centrada) desenhada por cima, a abertura em 94% do lado do avatar e o transbordo reservado na `margin`; id sem arte cai no anel CSS do `look`; `null` = sem moldura. Mestre/Grão-Mestre escrevem o `#N` (`plaque`) como texto vivo na plaquinha. `FrameSelector` lista "Sem moldura" + o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).
 **Exports:** `AvatarFrame({ frame, children, style?, size = 32, plaque? })` · `FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt })`.
