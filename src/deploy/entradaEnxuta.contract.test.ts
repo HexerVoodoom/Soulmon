@@ -29,6 +29,11 @@ const SENTINELAS: ReadonlyArray<readonly [string, string]> = [
   ['src/utils/community.ts', "/api/guild"],
   ['src/components/ChatBox.tsx', 'O recado falado não está disponível agora.'],
   ['src/components/home/Mochila.tsx', 'Complete tarefas pra ganhar comida'],
+  // 15/10/2026 (corte do `index.js`, REGISTRO §80): a copy da Guilda só chegava à entrada pelo balão de
+  // "prédio desbloqueado" (UnlockToast → buildingIntroCopy → areaNpcVoice → guildCopy), agora `lazy`; e a
+  // `sonner` mora no chunk `vendor-sonner` (cache de longo prazo, fora do chunk de entrada).
+  ['src/utils/guildCopy.ts', 'Some creatures keep a grove together. It only grows.'],
+  ['node_modules/sonner/dist/index.mjs', 'data-sonner-toaster'],
 ];
 
 describe('bundle — chunk de entrada enxuto', () => {

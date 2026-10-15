@@ -85,14 +85,6 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
 ];
 
-/**
- * Entrada: nunca visto neste aparelho E ainda sem nenhuma conclusão no save.
- * Quem já joga não é interrompido por um tour de boas-vindas — o replay existe
- * em Configurações. `shown` é a flag local (`STORAGE_KEYS.WELCOME_TOUR_SHOWN`).
- */
-export function needsWelcomeTour(p: { shown: boolean; jaConcluiuAlgo: boolean }): boolean {
-  return !p.shown && !p.jaConcluiuAlgo;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // O TUTORIAL DO MAPA (14/10/2026, pedido do dono) — abre UMA vez, na primeira abertura do Mapa.
@@ -159,24 +151,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   ]),
 ];
 
-/**
- * Valor de `mapTutorialSeen` para um save lido (migração segura, 14/10/2026):
- *  · boolean gravado → respeita;
- *  · ausente + o tour de boas-vindas já visto, ou save com progresso (atividade/tarefa/conclusão/dia completo) → `true`
- *    (quem já joga, ou já passou pelo tour antigo — que explicava o mapa — não é interrompido);
- *  · ausente + save sem progresso → `false` (jogador novo: abre na 1ª abertura do Mapa).
- * O erro seguro é NÃO apresentar de novo.
- */
-export function sanitizeMapTutorialSeen(raw: unknown, save: Record<string, any> | null | undefined, welcomeTourShown = false): boolean {
-  if (typeof raw === 'boolean') return raw;
-  if (welcomeTourShown) return true;
-  const s = save ?? {};
-  const len = (x: unknown) => (Array.isArray(x) ? x.length : 0);
-  return len(s.activities) > 0 || len(s.tasks) > 0 || len(s.completedTasks) > 0 || len(s.activityLog) > 0
-    || (typeof s.perfectDays === 'number' && s.perfectDays > 0);
-}
-
-/** O tutorial do mapa abre com o Mapa na tela, ainda não visto e sem o tour de boas-vindas na frente. */
-export function needsMapTutorial(p: { seen: boolean | undefined; onMap: boolean; welcomeTourOpen: boolean }): boolean {
-  return p.seen === false && p.onMap && !p.welcomeTourOpen;
-}
+// As três regras de ENTRADA moram em `welcomeTourGate.ts` (sem a copy): o `App.tsx` e o
+// `GameStateContext` só precisam delas no 1º paint e não podem puxar o texto dos
+// prédios (→ areaNpcVoice → guildCopy) para o chunk de entrada. Re-exportadas aqui.
+export { needsWelcomeTour, sanitizeMapTutorialSeen, needsMapTutorial } from './welcomeTourGate';

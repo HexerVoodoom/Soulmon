@@ -64,6 +64,12 @@ export default defineConfig({
         manualChunks: {
           // Long-term-cacheable vendor chunk — app changes don't invalidate it.
           vendor: ['react', 'react-dom'],
+          // Corte do `index.js` (15/10/2026, REGISTRO §80): `sonner` (64 KB, CSS-in-JS incluso) e o
+          // `@capacitor/core` (24 KB) mudam raramente e não dependem do app — fora do chunk de
+          // entrada, um ajuste de copy não invalida mais 88 KB de cache. NÃO reduz o 1º load (são
+          // `modulepreload` do mesmo HTML); reduz bytes que o RETORNO re-baixa a cada deploy.
+          'vendor-sonner': ['sonner'],
+          'vendor-capacitor': ['@capacitor/core'],
         },
       },
     },

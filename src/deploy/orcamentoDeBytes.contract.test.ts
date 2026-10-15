@@ -171,7 +171,11 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 15/10/2026 (formas altas dos novos Soulmon, §78): 693_587 -> 724_584 em build limpo. Build limpo da `main` (sem esta PR) já medido em
   // 720_533 (o `dist/` commitado da main estava defasado em 700_640); esta PR soma +4,0 KB: 51 URLs de sprite (ultimate/mega/ultra) e 51 nomes em
   // `novosSoulmon*.ts`. Os 240 PNGs do arquivo de ramos/combinados NÃO entram (sem import). Corte real segue como tarefa própria.
-  'index.js': 724_584,
+  // 15/10/2026 (CORTE DO index.js, REGISTRO §80, decisão do dono 'Sim, fazer o corte'): 724_584 -> 641_708 (-82,9 KB, -11,4%; gz 249,8 -> 223,6 KB).
+  // `welcomeTourGate.ts` (regras de entrada sem a copy dos prédios) + `UnlockToast` lazy tiraram buildingIntroCopy/areaNpcVoice/guildCopy (~41 KB);
+  // `sonner` (33,5 KB) e `@capacitor/core` (8,2 KB) viraram `vendor-sonner`/`vendor-capacitor`. Teto 250 KB NÃO atingido: `App.tsx` sozinho é ~270 KB
+  // do que sobra (8,5 mil linhas, estado+handlers+JSX da Home). Próximo corte = partir o `App.tsx`, não mais import avulso.
+  'index.js': 641_708,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

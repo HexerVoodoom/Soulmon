@@ -65,7 +65,7 @@ import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildi
 import { sanitizeMissionsClaimed } from '../utils/missions';
 import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
-import { sanitizeMapTutorialSeen } from '../utils/welcomeTour';
+import { sanitizeMapTutorialSeen } from '../utils/welcomeTourGate';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import { sanitizeDayPlan, type DayPlan } from '../utils/dayPlan';
 import {

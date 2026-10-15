@@ -18,7 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
 import { AvisosSheet } from './components/nav/AvisosSheet';
-import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTour';
+import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { bumpDaily, claimDaily, claimFirst, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
@@ -150,7 +150,6 @@ import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
 import { PresentationSlot } from './components/PresentationSlot';
-import { UnlockToast } from './components/UnlockToast';
 import { NoticeToast, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
@@ -707,6 +706,8 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
   tree: { pt: '66 dias! Isso virou raiz.', en: '66 days! This one took root.' },
 };
 
+// Balão de "prédio desbloqueado": só existe depois de um level-up; a copy dos prédios (→ areaNpcVoice → guildCopy, ~48 KB) fica fora da entrada.
+const UnlockToast = lazy(() => import('./components/UnlockToast').then(m => ({ default: m.UnlockToast })));
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
 // Pesadelo da manhã: leva junto BattleStage/PveMechanics/useGroupBattle/combatFx/attackFxArt (~100 KB) — só na luta.
 const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
@@ -8263,7 +8264,9 @@ export default function App() {
         <NoticeToast noticeKey={noticeKey} language={language} onOpen={handleAbrirAvisos} onDone={() => setNoticeKey(null)} />
       )}
       {interstitial === 'unlockToast' && unlockToastIds.length > 0 && (
-        <UnlockToast ids={unlockToastIds} language={language} onDone={() => setUnlockToastIds([])} />
+        <PresentationSlot id="unlockToast" onFail={() => presentation.fail('unlockToast')} fallback={null}>
+          <UnlockToast ids={unlockToastIds} language={language} onDone={() => setUnlockToastIds([])} />
+        </PresentationSlot>
       )}
       {interstitial === 'levelUp' && levelUpShown && (
         <PresentationSlot id="levelUp" onFail={() => presentation.fail('levelUp')} fallback={null}>
