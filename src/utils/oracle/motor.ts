@@ -1303,6 +1303,7 @@ const TYPE_LOOK: Record<AlignmentId, string[]> = {
     'a thoughtful gaze', 'balanced twin features', 'a zen sitting pose', 'soft flowing curves',
     'a wise steady look', 'tiny orbiting dots', 'a mirrored pattern', 'a poised stance',
     'a spiral emblem', 'a monk-like robe', 'a focused stare', 'clean minimal lines',
+    'a gentle expression', 'a harmonious form', 'a balanced stance', 'a wise look', 'a serene face',
   ],
   benevolencia: [
     'big kind eyes', 'a warm smile', 'a soft rounded body', 'a small halo',
@@ -1311,6 +1312,7 @@ const TYPE_LOOK: Record<AlignmentId, string[]> = {
     'a caring expression', 'a little bell charm', 'a noble upright stance', 'a golden trim',
     'a gentle bow', 'open welcoming arms', 'a soft chest fluff', 'a guardian sigil',
     'rosy cheeks', 'a beaming grin', 'a plush huggable shape', 'a small crown',
+    'an elegant bearing', 'an imposing presence', 'a confident stance', 'a courageous posture', 'a benevolent expression',
   ],
 };
 
@@ -1710,12 +1712,18 @@ const ALIGNMENT_TRAIT_WORDS: Record<AlignmentId, LText[]> = {
     { pt: 'curioso e equilibrado', en: 'curious and balanced' },
     { pt: 'paciente e engenhoso', en: 'patient and resourceful' },
     { pt: 'contemplativo e preciso', en: 'contemplative and precise' },
+    { pt: 'gentil e harmonioso', en: 'gentle and harmonious' },
+    { pt: 'equilibrado e sábio', en: 'balanced and wise' },
+    { pt: 'sereno', en: 'serene' },
   ],
   benevolencia: [
     { pt: 'gentil e protetor', en: 'gentle and protective' },
     { pt: 'leal até o fim', en: 'loyal to the end' },
     { pt: 'acolhedor e corajoso', en: 'warm-hearted and brave' },
     { pt: 'altruísta e vigilante', en: 'selfless and watchful' },
+    { pt: 'elegante e imponente', en: 'elegant and imposing' },
+    { pt: 'confiante e corajoso', en: 'confident and brave' },
+    { pt: 'benevolente', en: 'benevolent' },
   ],
 };
 
