@@ -2595,3 +2595,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 ## 73. Busto do Tijolino é o caranguejo pedreiro do dono (dono, 15/10/2026)
 
 - **Decisão:** o busto do NPC do Restaurante em obra deixa de ser a arte gerada por IA e passa a ser `dominios/industrial/npcs/npc-industrial-caranguejo-argila-pedreiro.png` (512², pintada, alfa binário), normalizada para 768² (Lanczos, alfa ≥250 → 255) e salva por cima de `soulmon/npcs/npc-mercado-restaurante.png` (ligações e `LOT_NPC_ART` intactos). Nome "Tijolino, o pedreiro", fala, prédio e tutorial não mudam. A pasta `dominios/` não foi tocada.
+
+## 74. Sem botão de Pausar nos combates; velocidade 1×/3× sem caixa, abaixo da torcida (dono, 15/10/2026; ajusta §36)
+
+Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o botão de 1x / 3x SEM BOX e ABAIXO do Cheer." O único botão de Pausar/Retomar visível era o da Masmorra (`data-dungeon-pause`); saiu, com o estado `pausadoManual`. Fica só a pausa de SISTEMA (a confirmação "Sair?" do `GameHeader` congela o relógio via `onPauseChange`). Saída da luta: o X/mapa da cena segue. O avanço rápido 1×/3× (`data-dungeon-speed`, mesma chave `DUNGEON_SPEED`) virou texto puro (sem borda/fundo, alvo 44 px, sombra de texto) no canto, logo abaixo do mascote da torcida (`TorcidaLayer` ganhou a prop `belowMascot`). Arena, Pesadelo e Duelo nunca tiveram velocidade nem botão de pausa: seguem como estavam (dúvida ao dono: querem 1×/3× lá também?).

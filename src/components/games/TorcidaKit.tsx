@@ -102,7 +102,7 @@ export function CheerMascot({ cheer, size = 60 }: { cheer: boolean; size?: numbe
   );
 }
 
-export function TorcidaLayer({ onTap, active = true, isPt, children, style, mascot = false, onSwipe, swipeActive = false, cheerRatio = 0 }: {
+export function TorcidaLayer({ onTap, active = true, isPt, children, style, mascot = false, onSwipe, swipeActive = false, cheerRatio = 0, belowMascot }: {
   /** Um toque de torcida. Chamado só quando `active`. */
   onTap: () => void;
   /** Fora da luta (convite, vitória, derrota) o toque não vale nada. */
@@ -123,6 +123,8 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
    * o que ele encheu aparece na barra de ENERGIA do pet (`StageFighter.cheerPending`). Fica no `data-torcida-ratio` do ícone.
    */
   cheerRatio?: number;
+  /** Controle solto logo ABAIXO do mascote, alinhado a ele (a velocidade 1×/3× da Masmorra, 15/10/2026). Só com `mascot`. */
+  belowMascot?: ReactNode;
 }) {
   const [bursts, setBursts] = useState<Burst[]>([]);
   /** Muda a cada toque: reinicia o pulo do mascote e o balão. `pose` = braços para cima. */
@@ -198,8 +200,9 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
           data-cheer-mascot
           data-cheer-pose={pose ? 'cheer' : 'idle'}
           data-torcida-ratio={Math.min(1, Math.max(0, cheerRatio)).toFixed(2)}
-          style={{ position: 'absolute', right: 6, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 2px)', zIndex: 6, pointerEvents: 'none' }}
+          style={{ position: 'absolute', right: 6, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 2px)', zIndex: 6, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}
         >
+          <div style={{ position: 'relative' }}>
           {shout > 0 && (
             <span key={`b${shout}`} aria-hidden="true" data-cheer-bubble className="sm-cheer-bubble">
               {isPt ? 'VAI!' : 'CHEER!'}
@@ -216,6 +219,8 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
               <CheerMascot cheer={pose} size={MASCOT_SIZE} />
             </span>
           </button>
+          </div>
+          {belowMascot}
         </div>
       )}
       {bursts.map(b => (

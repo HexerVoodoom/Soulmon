@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * A DESCIDA IDLE da Masmorra (08/10/2026, decisão do dono): as lutas encadeiam sozinhas, não existe botão de
- * "próximo oponente"/"próximo andar", Pausar/Retomar seguram o relógio, o HP persiste no save e o lobby mostra a
+ * "próximo oponente"/"próximo andar", o HP persiste no save e o lobby mostra a
  * recuperação (sem cobrança). A regra pura é de `utils/dungeonIdle.ts` (testada lá); aqui se trava a TELA.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
@@ -51,7 +51,7 @@ describe('Masmorra idle — o laço automático', () => {
     descer();
     expect(await ateCair()).toBe(true);
     expect(onEnemyDefeated).toHaveBeenCalledTimes(1);
-    // só os controles da descida: Pausar e o X da cena — nenhum "Challenge/Desafiar/Next/Próximo"
+    // só o X da cena (sem Pausar, §74) — nenhum "Challenge/Desafiar/Next/Próximo"
     const botoes = screen.getAllByRole('button').map(b => b.textContent ?? '');
     expect(botoes.some(t => /challenge|desafiar|next|próxim|continue/i.test(t))).toBe(false);
     await avancar(DUNGEON_AUTO_FIGHT_MS + 100);
@@ -59,21 +59,15 @@ describe('Masmorra idle — o laço automático', () => {
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
   });
 
-  it('Pausar segura o relógio entre lutas; Retomar o solta; os dois ficam sempre à mão', async () => {
+  it('sem botão de Pausar (REGISTRO §74): nada com data-dungeon-pause nem texto Pause/Resume, e a luta segue sozinha', async () => {
     vi.useFakeTimers();
     montar();
     descer();
     expect(await ateCair()).toBe(true);
-    const pausa = document.querySelector('[data-dungeon-pause]') as HTMLButtonElement;
-    expect(pausa.textContent).toBe('Pause');
-    fireEvent.click(pausa);
-    expect(pausa.textContent).toBe('Resume');
-    expect(pausa.getAttribute('aria-pressed')).toBe('true');
-    await avancar(DUNGEON_AUTO_FIGHT_MS * 5);
-    expect(caiu()).toBe(true); // pausado: segue no painel
-    fireEvent.click(pausa);
+    expect(document.querySelector('[data-dungeon-pause]')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^(Pause|Resume)$/ })).toBeNull();
     await avancar(DUNGEON_AUTO_FIGHT_MS + 100);
-    expect(caiu()).toBe(false);
+    expect(caiu()).toBe(false); // sem pausa manual o relógio entre lutas corre
   });
 
   it('a linha do andar é aria-live (polite) e a cena tem a saída (ícone do mapa) sempre presente', async () => {

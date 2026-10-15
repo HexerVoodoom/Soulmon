@@ -63,7 +63,7 @@ import type { Language } from '../utils/i18n';
  * encerra). O HP NÃO enche entre descidas: persiste no save (`dungeonHp`, lido por `hpAgora`) e regenera com
  * o tempo, inclusive com o app fechado. Limpar o andar `DUNGEON_MILESTONE_FLOOR` (5) é um MARCO (uma vez por
  * descida): Glitchtama + sobe a base semanal. A descida acaba quando o HP zera (ou quando o portão do
- * Vínculo fecha o próximo andar alto); perder não custa coração nem Bits. Pausar/Sair ficam sempre à mão.
+ * Vínculo fecha o próximo andar alto); perder não custa coração nem Bits. Sem Pausar (§71); Sair é o X da cena.
  *
  * Floor difficulty = base level + (floor-1). Each floor has its own retro scene. The base level resets
  * WEEKLY. A pequena cura ao limpar um andar (`curaAndar` do ofício + talento) SEGUE valendo — é cura
@@ -240,9 +240,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const [hpFrac, setHpFrac] = useState(1);
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausadoConfirm, setPausado] = useState(false);
-  /** O jogador apertou "Pausar": a luta e o relógio entre lutas esperam até "Retomar". */
-  const [pausadoManual, setPausadoManual] = useState(false);
-  const pausado = pausadoConfirm || pausadoManual;
+  /* Sem botão de Pausar (dono, 15/10/2026, REGISTRO §71): só a pausa de sistema (confirmação de sair aberta) segura a luta. */
+  const pausado = pausadoConfirm;
   /** Por que a descida acabou: HP zerado, energia acabou, o portão do Vínculo fechou, ou o teto de camadas do Lv. */
   const [endReason, setEndReason] = useState<'hp' | 'sealed' | 'energy' | 'deep' | 'daily'>('hp');
   /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, contado aqui e mostrado no fim. */
@@ -398,7 +397,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setGotHeart(false);
     milestoneRef.current = false;
     setMilestoneNow(false);
-    setPausadoManual(false);
     setAwayReport(null);
     gravarAway(inicio, 0); // a descida já fica registrada: fechar o app agora não a perde
     setPhase('fight');
@@ -469,7 +467,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setRunScore(runScoreRef.current);
     setEndReason(why);
     setAgora(Date.now());
-    setPausadoManual(false);
     limparAway(); // a descida acabou: o Soulmon volta para casa
     setPhase('ended');
   };
@@ -667,6 +664,18 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
         mascot
+        belowMascot={!ended && phase !== 'away' ? (
+          <button
+            type="button"
+            data-dungeon-speed={speed}
+            onClick={cycleSpeed}
+            aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${nextDungeonSpeed(speed)}×.` : `Fast forward: ${speed}×. Tap to change to ${nextDungeonSpeed(speed)}×.`}
+            className="sm2-num"
+            style={{ pointerEvents: 'auto', background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', fontSize: 16, fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.8)', WebkitTextStroke: '0.5px rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+          >
+            {speed}×
+          </button>
+        ) : undefined}
         cheerRatio={fighting && pronto ? battle.meter / CHEER_TAPS_FULL : 0}
         swipeActive={fighting && battle.phase === 'dodge'}
         onSwipe={battle.swipe}
@@ -712,30 +721,12 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           onClose={exitToMap}
           onPauseChange={setPausado}
         >
-          {/* Os controles da descida: SEMPRE à mão (Pausar/Retomar à esquerda; o AVANÇO RÁPIDO 1×/3× no canto inferior DIREITO; o Sair é o X
-              da cena). A camada já está no título: aqui a linha viva (`aria-live`) é só para o leitor de tela e só muda quando a CAMADA
-              muda — o texto visível não se repete. Sem botão de "próximo". */}
+          {/* A linha viva (`aria-live`) é só para o leitor de tela e só muda quando a CAMADA muda. O AVANÇO RÁPIDO 1×/3× mora no canto,
+              ABAIXO da torcida (`belowMascot`, sem caixa); o Sair é o X da cena. Sem Pausar (§71). */}
           {!ended && phase !== 'away' && (
-            <div data-dungeon-controls style={{ position: 'absolute', left: 12, right: 12, zIndex: 8, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 8px)' }}>
-              <button type="button" data-dungeon-pause aria-pressed={pausadoManual} onClick={() => setPausadoManual(v => !v)} style={{ ...sm2Button('outline'), flexShrink: 0, padding: '0 12px' }}>
-                {pausadoManual ? (isPt ? 'Retomar' : 'Resume') : (isPt ? 'Pausar' : 'Pause')}
-              </button>
-              <p data-dungeon-floor-live aria-live="polite" style={SR_ONLY}>
-                {isPt ? `Camada ${floor}` : `Layer ${floor}`}{pausadoManual ? (isPt ? ' · em pausa' : ' · paused') : ''}
-              </p>
-              <button
-                type="button"
-                data-dungeon-speed={speed}
-                onClick={cycleSpeed}
-                aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${nextDungeonSpeed(speed)}×.` : `Fast forward: ${speed}×. Tap to change to ${nextDungeonSpeed(speed)}×.`}
-                style={{ ...sm2Button(speed > 1 ? 'primary' : 'outline'), flexShrink: 0, padding: '0 12px', gap: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true" focusable="false" style={{ flexShrink: 0 }}>
-                  <path d="M1 1 L8 7 L1 13 Z M9 1 L16 7 L9 13 Z" fill="currentColor" />
-                </svg>
-                <span className="sm2-num">{speed}×</span>
-              </button>
-            </div>
+            <p data-dungeon-floor-live aria-live="polite" style={SR_ONLY}>
+              {isPt ? `Camada ${floor}` : `Layer ${floor}`}
+            </p>
           )}
           {phase === 'away' && awayReport && (
             <div role="status" style={PANEL} data-dungeon-away-report>
