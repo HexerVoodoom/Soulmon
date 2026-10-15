@@ -2511,7 +2511,13 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 
 - **Decisão do dono:** o NPC do Perfil troca o mascote pixel art 384² pelo Corvo em estilo NPC (variação 1 do lote, 1024² reduzido a 768² com Lanczos, alfa normalizado a 255 onde ≥250). Arquivo novo `npcs/npc-perfil-corvo.png`; só `LOT_NPC_ART['laboratorio:perfil']` aponta para ele. Nome 'Mysterious Soulmon' / 'Soulmon Misterioso' mantido; `mascot-raven.png` intocado (mascote em outros lugares).
 
-## 64. Pesadelo: dano real, 1 fase, torcida, regra de vitória, sombras, elemento próprio e sonho bom (dono, 15/10/2026)
+## 64. Pools de alinhamento do oráculo ampliados (dono, 15/10/2026)
+
+- **Pedido do dono:** benevolência ganha elegante, imponente, confiante, corajoso, benevolente; harmonia ganha gentil, harmonioso, equilibrado, sábio, sereno.
+- **Feito** (`utils/oracle/motor.ts`): `TYPE_LOOK` +5 itens por alinhamento (24 para 29) e `ALIGNMENT_TRAIT_WORDS` +3 pares PT/EN em cada (4 para 7), tudo ANEXADO NO FIM dos arrays.
+- **Efeito:** o sorteio por semente usa o tamanho do array, então sementes futuras de harmonia/benevolência podem sortear itens/traços diferentes. Soulmon já gerados não mudam (o prompt fica gravado no save).
+
+## 65. Pesadelo: dano real, 1 fase, torcida, regra de vitória, sombras, elemento próprio e sonho bom (dono, 15/10/2026)
 
 - **Pedido do dono:** (1) o pesadelo usa os sprites dele; (2) BUG: não causava dano; (3) Cheer (torcida) na mecânica; (4) regra de vitória difícil: sem torcer ou sem acertar o especial ao menos em parte o pesadelo não é derrotado; (5) sempre 1 fase; (6) elemento `NIGHTMARE` exclusivo da mecânica; (7) a cada 6 dias de pesadelo, 1 sonho bom que paga Honra.
 - **Causa do "não causa dano":** a onda usava `dungeonFoe` do andar 1, de força 0,026-0,096 (calibrada para uma run de 5 andares, não para uma luta isolada). Medido: cada golpe tirava 0,3-1,3% do HP e a luta toda 3-12% ("1" na cena). A Masmorra não mudou. Agora o Pesadelo tem força própria: `NIGHTMARE_POWER = 0,5` (`nightmareFoe`, mesmo HP da Masmorra). Medido em 40 sementes x 3 levels: a luta custa ~35% do HP (tiers 3-5: 35-48%), 0 derrotas por HP (a dificuldade é a regra, não um muro de HP: perder aqui não custa nada). **Rever:** subir/descer `NIGHTMARE_POWER`.
