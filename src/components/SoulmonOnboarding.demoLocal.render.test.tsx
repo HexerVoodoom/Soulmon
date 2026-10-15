@@ -65,8 +65,8 @@ describe('o botão DEMO no portão', () => {
       expect(card.getAttribute('aria-label')).toContain(c.typeEn);
       expect(card.querySelector('img')!.getAttribute('src')).toBeTruthy();
     }
-    expect(document.body.textContent).toContain('Steel + Battering Ram');
-    expect(document.body.textContent).toContain('Spring + Vital Melody');
+    expect(document.body.textContent).toContain('Earth');
+    expect(document.body.textContent).toContain('Sound');
   });
 
   it('escolher um chama `onStartDemo` com o id — qualquer um dos 5', async () => {
@@ -84,8 +84,8 @@ describe('o botão DEMO no portão', () => {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
     await montar({ onStartDemo: vi.fn() });
     fireEvent.click(document.querySelector('[data-demo-button]')!);
-    expect(document.body.textContent).toContain('Aço + Aríete');
-    expect(document.body.textContent).toContain('Nascente + Melodia Vital');
+    expect(document.body.textContent).toContain('Terra');
+    expect(document.body.textContent).toContain('Som');
     expect(document.body.textContent).toContain('Sem XP, sem compras e sem PvP');
     fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
     expect(document.querySelector('[data-demo-button]')).toBeTruthy();
