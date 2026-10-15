@@ -8,7 +8,8 @@
 import { FORM_REQUIREMENTS } from '../types/progression';
 import { getSpriteForStage, STARTER_NAMES, type StarterId } from './sprites';
 import { STAGE_NAMES } from './oracle/base';
-import type { CreatureStage, StageId, AlignmentId, ElementId } from './oracle';
+import type { CreatureStage, StageId, AlignmentId } from './oracle';
+import { STARTER_ELEMENT, type StarterElement } from './starterElements';
 
 export type AccountTier = 'demo' | 'paid';
 
@@ -25,9 +26,9 @@ export interface PremadeCharacter {
   name: string;
   bioPt: string;
   bioEn: string;
-  /** Elemento do vocabulário do ORÁCULO (`ElementId`) — o que a ficha/ritual enxerga. */
-  elementId: ElementId;
-  /** Essências do class-system (ids de `derivedElements.ts`): um par ou uma essência só. */
+  /** Elemento BASE do inicial (dono: `STARTER_ELEMENT`, `starterElements.ts`) — o dos golpes, do FX e do TIPO exibido. */
+  elementId: StarterElement;
+  /** Essências do class-system (ids de `derivedElements.ts`): hoje só o elemento base do inicial. */
   essence: readonly string[];
   /** Rótulo de TIPO exibido (par PT/EN dos nomes de `derivedElements`/`essenceLabels`; há teste de igualdade). */
   typePt: string;
@@ -37,44 +38,42 @@ export interface PremadeCharacter {
 /**
  * Os 5 personagens iniciais, na ordem da tela de escolha.
  *
- * Mapeamento pedido pelo dono (07/10/2026), em ids REAIS do class-system:
- *  - Crato  (pilha de caixotes, "tartaruga") — domínio industrial: `aco` + `ariete`
- *    (Aço + Aríete; o Aríete é gravidade+marcial). `ElementId`: `industrial`.
- *  - Brooka (ave-lontra verde, "pato") — `nascente` + `melodia` (Nascente + Melodia
- *    Vital). `ElementId`: `agua`.
- *  - Zefi   (borboleta-coruja) — `alento` (Alento = ar+vida). `ElementId`: `ar`.
- *  - Oaken  (árvore) — `vida` (elemento base Vida). `ElementId`: `planta`.
- *  - Bolid  (criatura de fogo) — `meteoro` (Meteoro = espaço+fogo). `ElementId`: `fogo`.
+ * Elemento (pedido do dono, 15/10/2026, REGISTRO §75) — UM dos 17 elementos base cada, em `STARTER_ELEMENT`:
+ *  - Crato  (pilha de caixotes, "tartaruga") → Terra   (antes: Aço + Aríete)
+ *  - Brooka (ave-lontra verde, "pato")       → Som     (antes: Nascente + Melodia Vital)
+ *  - Zefi   (borboleta-coruja)               → Ar      (antes: Alento)
+ *  - Oaken  (árvore)                         → Vida    (antes: Vida, ElementId `planta`)
+ *  - Bolid  (criatura de fogo, o vermelho)   → Fogo    (antes: Meteoro)
  * O NOME vem de `STARTER_NAMES` (dono único, nunca escrito à mão aqui).
  */
 export const PREMADE_CHARACTERS: PremadeCharacter[] = [
   {
-    id: 'industrial', name: STARTER_NAMES.industrial, elementId: 'industrial', essence: ['aco', 'ariete'],
-    typePt: 'Aço + Aríete', typeEn: 'Steel + Battering Ram',
+    id: 'industrial', name: STARTER_NAMES.industrial, elementId: STARTER_ELEMENT.industrial, essence: ['terra'],
+    typePt: 'Terra', typeEn: 'Earth',
     bioPt: 'Uma pilha de caixotes que anda devagar e nunca deixa nada cair.',
     bioEn: 'A stack of crates that walks slowly and never drops a thing.',
   },
   {
-    id: 'nascente', name: STARTER_NAMES.nascente, elementId: 'agua', essence: ['nascente', 'melodia'],
-    typePt: 'Nascente + Melodia Vital', typeEn: 'Spring + Vital Melody',
+    id: 'nascente', name: STARTER_NAMES.nascente, elementId: STARTER_ELEMENT.nascente, essence: ['som'],
+    typePt: 'Som', typeEn: 'Sound',
     bioPt: 'Uma ave de riacho que assobia a água para fora da pedra.',
     bioEn: 'A brook bird that whistles water out of the stone.',
   },
   {
-    id: 'alento', name: STARTER_NAMES.alento, elementId: 'ar', essence: ['alento'],
-    typePt: 'Alento', typeEn: 'Breath',
+    id: 'alento', name: STARTER_NAMES.alento, elementId: STARTER_ELEMENT.alento, essence: ['ar'],
+    typePt: 'Ar', typeEn: 'Air',
     bioPt: 'Uma criatura de asas de maré que respira junto com você.',
     bioEn: 'A tide-winged creature that breathes along with you.',
   },
   {
-    id: 'vida', name: STARTER_NAMES.vida, elementId: 'planta', essence: ['vida'],
+    id: 'vida', name: STARTER_NAMES.vida, elementId: STARTER_ELEMENT.vida, essence: ['vida'],
     typePt: 'Vida', typeEn: 'Life',
     bioPt: 'Uma árvore pequena e paciente que cresce no seu ritmo.',
     bioEn: 'A small, patient tree that grows at your pace.',
   },
   {
-    id: 'meteoro', name: STARTER_NAMES.meteoro, elementId: 'fogo', essence: ['meteoro'],
-    typePt: 'Meteoro', typeEn: 'Meteor',
+    id: 'meteoro', name: STARTER_NAMES.meteoro, elementId: STARTER_ELEMENT.meteoro, essence: ['fogo'],
+    typePt: 'Fogo', typeEn: 'Fire',
     bioPt: 'Uma brasa que veio do céu e ficou para aquecer.',
     bioEn: 'An ember that fell from the sky and stayed to keep you warm.',
   },

@@ -186,17 +186,11 @@ describe('os 5 personagens iniciais', () => {
     for (const n of nomes) { expect(n).not.toMatch(/mon$/i); expect(n.length).toBeLessThanOrEqual(8); expect(n).toMatch(/^[A-Z][a-z]+$/); }
   });
 
-  it('o mapeamento de tipo bate com o class-system: ids reais, rótulos PT e EN iguais aos do dono', () => {
-    const mapa: Record<string, { elementId: string; essence: string[] }> = {
-      industrial: { elementId: 'industrial', essence: ['aco', 'ariete'] },
-      nascente: { elementId: 'agua', essence: ['nascente', 'melodia'] },
-      alento: { elementId: 'ar', essence: ['alento'] },
-      vida: { elementId: 'planta', essence: ['vida'] },
-      meteoro: { elementId: 'fogo', essence: ['meteoro'] },
-    };
+  it('o mapeamento de tipo bate com o class-system: um elemento BASE por inicial (REGISTRO §75), rótulos PT e EN do dono', () => {
+    const mapa: Record<string, string> = { industrial: 'terra', nascente: 'som', alento: 'ar', vida: 'vida', meteoro: 'fogo' };
     for (const c of PREMADE_CHARACTERS) {
-      expect(c.elementId).toBe(mapa[c.id].elementId);
-      expect([...c.essence]).toEqual(mapa[c.id].essence);
+      expect(c.elementId).toBe(mapa[c.id]);
+      expect([...c.essence]).toEqual([mapa[c.id]]);
       const nomePt = (id: string) => DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.nome ?? (BASE_ELEMENT_LABELS as Record<string, string>)[id];
       expect(c.essence.map(nomePt).join(' + ')).toBe(c.typePt);
       expect(c.essence.map(id => essenceEn(id)).join(' + ')).toBe(c.typeEn);

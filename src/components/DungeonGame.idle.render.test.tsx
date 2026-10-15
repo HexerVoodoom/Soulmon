@@ -59,7 +59,7 @@ describe('Masmorra idle — o laço automático', () => {
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
   });
 
-  it('sem botão de Pausar (REGISTRO §74): nada com data-dungeon-pause nem texto Pause/Resume, e a luta segue sozinha', async () => {
+  it('sem botão de Pausar (REGISTRO §75): nada com data-dungeon-pause nem texto Pause/Resume, e a luta segue sozinha', async () => {
     vi.useFakeTimers();
     montar();
     descer();
