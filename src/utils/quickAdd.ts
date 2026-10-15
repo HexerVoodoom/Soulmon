@@ -371,7 +371,7 @@ function parseInner(original: string, opts: QuickAddOptions): QuickAddResult {
   // am/pm primeiro: "2:30pm" tem que ser lido inteiro, senão a regra de `H:MM`
   // leva o "2:30" e deixa um "pm" órfão no nome.
   {
-    let m = eat(/(?<=^|\s)(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s?m\.?(?=\s|$|[.,;])/i);
+    let m = eat(/(?<=^|\s)(0?\d|1[0-2])(?::(\d{2}))?\s*([ap])\.?\s?m\.?(?=\s|$|[.,;])/i); // relógio de 12h: hora 0–12 (\"25pm\"/\"24pm\" viravam 13:00/12:00)
     if (m) {
       let h = parseInt(m[1], 10) % 12;
       if (m[3].toLowerCase() === 'p') h += 12;
