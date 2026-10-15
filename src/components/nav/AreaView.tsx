@@ -25,6 +25,7 @@ import type { CadernoEntry } from '../../utils/cadernoSave';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
+import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame,
   loadTrocaGame, loadPicrossGame, loadRevisaoGame, loadRespiracaoGame,
@@ -170,6 +171,8 @@ export interface AreaViewProps {
     onChange: (f: (c: CrossingsState) => CrossingsState) => void;
     /** A semente do sorteio das missões do dia (o id do save). */
     seed?: string;
+    /** O que o Soulmon encontrou no passeio de ontem (REGISTRO §66): o MESMO achado do resumo do dia, agora também aqui. */
+    achado?: PasseioAchado | null;
   };
   /** 📓 Caderno (04/10/2026): as anotações (do save) e o único caminho de escrita. */
   caderno?: {
@@ -402,6 +405,7 @@ export function AreaView(props: AreaViewProps) {
                 onChange={props.passeio?.onChange ?? (() => {})}
                 todayKey={play.todayKey}
                 seed={props.passeio?.seed}
+                achado={props.passeio?.achado}
               />
             )}
             {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} />}

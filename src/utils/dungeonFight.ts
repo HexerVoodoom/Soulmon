@@ -18,7 +18,7 @@ import { autoDefense, defenseRoll } from './autoDefesa';
 import { ARENA_SKILL_ODDS, autoDefenseHitScale, familyOfSkill, type ArenaSkill } from './arena';
 import { dungeonFoe, type DungeonFoeKnobs } from './dungeon';
 import { DODGE_REDUCE, RING_MULT, type DodgeGrade, type RingGrade } from './energia';
-import { nightmareSlots } from './nightmares';
+import { nightmareFoe, nightmareSlots } from './nightmares';
 import { jeitoParaPve, JEITO_PADRAO, type JeitoNaMasmorra, type JeitoPve } from './profissaoMasmorra';
 import type { Combatant } from './combate/curve';
 import type { FightSide } from './combate/fight';
@@ -141,6 +141,8 @@ export function autoDodgeGrade(fightSeed: number, n: number): DodgeGrade {
 export interface DungeonSlotRef {
   readonly slot: number;
   readonly floor: number;
+  /** `true` = o pesadelo (força própria, `nightmareFoe`), não o inimigo da Masmorra. */
+  readonly nightmare?: boolean;
 }
 
 export interface SequenceConfig {
@@ -187,7 +189,7 @@ export function playSequence(
   for (let i = 0; i < refs.length; i++) {
     const ref = refs[i];
     const fseed = dungeonFightSeed(seed, ref.floor, ref.slot);
-    const f = dungeonFight(p, dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
+    const f = dungeonFight(p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
     const rng = mulberry32((seed * 7919 + i) | 0);
     const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
     let step = g.next();
@@ -241,7 +243,7 @@ export function simulateDungeonRunV3(
  * `top` is the index of the tier (0..5).
  */
 export function nightmareRefs(top: number): DungeonSlotRef[] {
-  return nightmareSlots(top).map((slot) => ({ slot, floor: 1 }));
+  return nightmareSlots(top).map((slot) => ({ slot, floor: 1, nightmare: true }));
 }
 
 export function simulateNightmareV3(cfg: SequenceConfig, top: number, seed: number, skill: DungeonSkill = 'media'): SequenceResult {

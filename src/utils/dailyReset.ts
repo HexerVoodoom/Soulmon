@@ -23,7 +23,8 @@ import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 import { awardBondXP, bondLevelFor } from './bond';
 import { sanitizeTalentPicks } from './talents';
 import { missionBitsGain } from './equipment';
-import { playerDayKey } from './playerDay';
+import { playerDayKey, dayKeyToIso } from './playerDay';
+import { hiddenOnDay } from './dayPlan';
 import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
@@ -1169,7 +1170,10 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     // de constância — sem histórico não há `needsIntervention` ("never miss
     // twice"), não há gasto/ganho de escudo e não há razão de constância
     // baixa. Evitar o item continua sem NENHUMA consequência de jogo.
-    availableActivities.filter((a: any) => !isOptInOnlyActivity(a)).forEach((activity: any) => {
+    /* REAFIRMAR O DIA (REGISTRO §66): o que a pessoa NÃO marcou para aquele dia não aparecia na lista e não é falta —
+       a virada não o julga (sem `applyMissedDay`). Feito e meta/coração seguem como sempre (só a lista e a constância mudam). */
+    const naoMarcados = hiddenOnDay((prev as any).dayPlan, dayKeyToIso(yesterdayString));
+    availableActivities.filter((a: any) => !isOptInOnlyActivity(a) && !naoMarcados.has(String(a.id))).forEach((activity: any) => {
       const current = rhythms[activity.id] ?? emptyRhythm();
       // Sem `isDueOn` de novo aqui: `availableActivities` JÁ foi filtrada pela
       // mesma regra (`habitCountsOn`, que chama `isDueOn` para `everyNDays`).
