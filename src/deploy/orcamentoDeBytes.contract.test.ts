@@ -170,7 +170,7 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // nenhuma única responsável; a fila de modais (§42) já estava contabilizada acima. Corte real segue como tarefa própria.
   // 15/10/2026 (formas altas dos novos Soulmon, §77): 693_587 -> 724_584 em build limpo. Build limpo da `main` (sem esta PR) já medido em
   // 720_533 (o `dist/` commitado da main estava defasado em 700_640); esta PR soma +4,0 KB: 51 URLs de sprite (ultimate/mega/ultra) e 51 nomes em
-  // `novosSoulmon*.ts`. Os 240 PNGs de `novos-arquivo/` NÃO entram (sem import). Corte real segue como tarefa própria.
+  // `novosSoulmon*.ts`. Os 240 PNGs do arquivo de ramos/combinados NÃO entram (sem import). Corte real segue como tarefa própria.
   'index.js': 724_584,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
