@@ -14,6 +14,7 @@ import { Icon } from '../ui/Icon';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { MissionMark } from './MissionMark';
 import { AreaGlyph, RegionPostal } from './TravessiaIcon';
+import { StrollFind, type StrollFindProps } from './StrollFind';
 
 /**
  * 🧭 A FOLHA DO PASSEIO (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md`
@@ -302,7 +303,10 @@ function Registro({ log, isPt }: { log: CrossingsState['log']; isPt: boolean }) 
   );
 }
 
-export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp }: {
+/** O achado de ontem dentro da folha do Passeio (REGISTRO §64): o mesmo `StrollFind` do resumo do dia. */
+export type PasseioAchado = Pick<StrollFindProps, 'adventure' | 'isNew' | 'stroll'>;
+
+export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp, achado }: {
   language: Language;
   crossings: CrossingsState;
   onChange: Update;
@@ -312,6 +316,8 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   seed?: string;
   /** O relógio (epoch ms) da janela de 24 h. Sem ele, `Date.now()` (renova a cada minuto). */
   now?: number;
+  /** O que o Soulmon encontrou no passeio de ontem (ligado à missão que a pessoa escolheu): um fluxo só com o resumo do dia. */
+  achado?: PasseioAchado | null;
 }) {
   const isPt = language === 'pt-BR';
   const [aberto, setAberto] = useState<string | null>(null);
@@ -361,6 +367,13 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
               : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
           </InfoTipSection>
       </ModalInfo>
+      {achado && (
+        <section data-passeio-achado aria-label={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={sectionHead}>{isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}</p>
+          <StrollFind adventure={achado.adventure} isNew={achado.isNew} stroll={achado.stroll} language={language} />
+          <hr style={divider} />
+        </section>
+      )}
       <section data-travessias aria-label={isPt ? 'Missões' : 'Missions'} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ativa ? (
           <CardAtivo

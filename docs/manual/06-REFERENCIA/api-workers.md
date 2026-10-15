@@ -548,5 +548,8 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 ### `functions/api/sprite-admin.js` (release/beta-1, gate adversarial C2)
 **Rota:** `POST /api/sprite-admin?action=release-form`, com `X-Metrics-Key` = `METRICS_ADMIN_KEY` (404 sem a variável; `secretEquals`). Corpo `{ id, formId }`. Apaga a arte em cache daquela forma (inclusive no id antigo) e devolve 1 unidade de `aiForms[formId]`; o vitalício não volta. **Script:** `node scripts/liberar-forma.mjs`. **Régua:** `functions/api/spriteAdmin.test.js`, `tests/liberarForma.test.ts`.
 
+### `functions/api/_dayPlan.js` (15/10/2026, REGISTRO §64)
+**Dono de:** a forma segura do `dayPlan` do save (reafirmar o dia): `sanitizeDayPlan(raw)` — dia ISO `AAAA-MM-DD` obrigatório, `offered`/`picked` como listas de ids `[\w:.-]{1,120}` sem duplicata (teto `DAY_PLAN_MAX_IDS` = 200), `picked ⊆ offered`, `confirmed` booleano estrito; sem forma = ausente (nunca recusa o save). Chamado por `save.js` antes de gravar. **Régua:** `functions/api/dayPlan.parity.test.js` (paridade com `src/utils/dayPlan.ts`), `functions/api/save.dayPlan.test.js`.
+
 ### `functions/api/_dayCounters.js` (beta-2 6.1/4.1, 13/10/2026)
 **Dono de:** a memória MONOTÔNICA dos contadores diários do save (`dungeonDaily` e `checkIns`): mesmo dia = máximo/união; dia anterior ao gravado = mantém o gravado; dia > dia do servidor + 1 = ignora; campo omitido = mantém. **Exports:** `enforceDungeonDaily`, `enforceCheckIns`, `sanitizeDungeonDaily`, `sanitizeCheckIns`, `maxAcceptableDay`, `isoDayUtc`. **Chamado por:** `functions/api/save.js` (POST). **Limite honesto:** o servidor não valida a descida (ADR-006 §D5); ele só lembra. **Régua:** `_dayCounters.test.js`, `dayCounters.parity.test.js`.

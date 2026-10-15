@@ -67,6 +67,7 @@ import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
 import { sanitizeMapTutorialSeen } from '../utils/welcomeTour';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
+import { sanitizeDayPlan, type DayPlan } from '../utils/dayPlan';
 import {
   readLocal,
   writeLocal,
@@ -505,6 +506,8 @@ export interface GameState {
   lastCelebratedLevel?: number;
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
+  /** Reafirmar o dia (15/10/2026, `utils/dayPlan.ts`, REGISTRO §64): o que a pessoa marcou para HOJE entre o que já cadastrou. Só o marcado aparece no Hoje; o não marcado não aparece e a virada não o julga. Ausente = save anterior: a 1ª abertura grava o plano de hoje como já reafirmado (a lista do dia já estava montada). */
+  dayPlan?: DayPlan;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
@@ -1330,6 +1333,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         mapTutorialSeen: sanitizeMapTutorialSeen(loadedState.mapTutorialSeen, loadedState as Record<string, any>, readLocal(STORAGE_KEYS.WELCOME_TOUR_SHOWN) === 'true'),
         lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
+        dayPlan: sanitizeDayPlan(loadedState.dayPlan),
         // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
         // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)
         // passa a ligado — migração segura: o que de fato publica o perfil é o

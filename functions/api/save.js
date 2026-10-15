@@ -21,6 +21,7 @@ import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
+import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceDungeonDaily, enforceCheckIns } from './_dayCounters.js';
 import { frameIdOrNull } from './_frames.js';
@@ -312,6 +313,11 @@ export async function onRequest({ request, env }) {
     if ('focusLoot' in state) {
       const q = sanitizeFocusLoot(state.focusLoot);
       if (q) state.focusLoot = q; else delete state.focusLoot;
+    }
+    // Plano do dia (15/10/2026, REGISTRO §64): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
+    if ('dayPlan' in state) {
+      const q = sanitizeDayPlan(state.dayPlan);
+      if (q) state.dayPlan = q; else delete state.dayPlan;
     }
     // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
     const prev = await kvOrThrow(env).getWithMetadata(saveId);

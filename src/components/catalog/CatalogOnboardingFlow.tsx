@@ -51,19 +51,18 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
   const [areas, setAreas] = useState<LifeArea[]>([]);
   const [struggles, setStruggles] = useState<StruggleId[]>([]);
   const [strengths, setStrengths] = useState<StrengthId[]>([]);
-  /* Beta-2 (7.3, pedido do dono 13/10/2026): o ponto de partida voltou a nascer MARCADO. A C12 (01/10) tinha feito
-     cada sugestão nascer desmarcada ("Assumir"), e a pessoa tinha de tocar item por item; agora TODAS vêm marcadas
-     e só se DESMARCA o que não quer — só entra o que ficou marcado. Guardamos o que foi DESMARCADO (e não o que
-     foi marcado) porque a lista de sugestões muda quando a pessoa volta e troca as escolhas: o que ela nunca
-     tocou segue marcado. */
-  const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
+  /* REGISTRO §64 (dono, 15/10/2026): o ponto de partida nasce DESMARCADO. O "todas marcadas" do beta-2 (7.3) foi SUBSTITUÍDO — a
+     pessoa reafirma o que quer fazer e só entra o que ela marcou (mesma regra do modal diário de metas, `DayGoalsModal`).
+     Guardamos o que foi MARCADO por id: a lista de sugestões muda quando a pessoa volta e troca as escolhas, e o marcado
+     que ainda existe segue marcado. */
+  const [checked, setChecked] = useState<Set<string>>(new Set());
 
   /* O que já está na lista (`catalogId`) não é oferecido de novo: sem tarefa duplicada. */
   const starterSet = useMemo(
     () => withoutExisting(recommendStarterSet({ areas, struggles, strengths }, ACTIVITY_CATALOG), existingActivities),
     [areas, struggles, strengths, existingActivities],
   );
-  const finalSet = starterSet.filter((i) => !unchecked.has(i.id));
+  const finalSet = starterSet.filter((i) => checked.has(i.id));
 
   /* C9: "o que você quer melhorar" → "Definir metas" / "Set goals". */
   const titles: Record<Step, string> = {
@@ -78,7 +77,7 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
     areas: isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.',
     struggles: isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.',
     strengths: isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.',
-    starter: isPt ? 'Desmarque o que não quiser.' : 'Uncheck what you don’t want.',
+    starter: isPt ? 'Marque o que você quer fazer.' : 'Check what you want to do.',
   };
 
   const canAdvance =
@@ -189,10 +188,10 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
             return (
               <div key={item.id} className="sm2-conta-card" data-starter-item={item.id} style={{ padding: '2px 12px' }}>
                 <CheckRow
-                  checked={!unchecked.has(item.id)}
-                  onChange={(on) => setUnchecked((prev) => {
+                  checked={checked.has(item.id)}
+                  onChange={(on) => setChecked((prev) => {
                     const nextSet = new Set(prev);
-                    if (on) nextSet.delete(item.id); else nextSet.add(item.id);
+                    if (on) nextSet.add(item.id); else nextSet.delete(item.id);
                     return nextSet;
                   })}
                 >

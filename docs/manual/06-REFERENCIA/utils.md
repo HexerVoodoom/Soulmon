@@ -2539,6 +2539,11 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/focusExpedition.ts`
 **Dono de:** (+ `rollPlanLoot`/`FOCUS_PLAN_DAILY_CAP` = 2: concluir uma sessão rende 1 item, recibo `plan:<id>`, dentro do teto de 8) seis ambientes Pomodoro, quatro materiais possíveis por ambiente, sorteio de comida, chance progressiva do item extra e ledger diário (teto combinado de oito itens). `applyFocusLoot` é idempotente por evento, soma materiais ao estoque de `buildingQuests` e comidas ao inventário normal; `sanitizeFocusLoot` limita a forma do campo persistido. A paridade e o clamp do servidor ficam em `functions/api/_focusLoot.js`.
 
+### `src/utils/dayPlan.ts` (15/10/2026, REGISTRO §64)
+**Dono de:** a regra PURA de "reafirmar o dia": `DayPlan { day, offered[], picked[], confirmed }` (um objeto no save, `GameState.dayPlan`), `sanitizeDayPlan` (cliente; o servidor espelha em `functions/api/_dayPlan.js`, paridade em `functions/api/dayPlan.parity.test.js`), `dayPlanCandidates` (o que cabe perguntar: hábitos devidos hoje, agendadas que caem hoje e tarefas abertas de hoje, sem duplicar e sem o já feito), `dayPlanView`/`isHiddenByPlan` (esconde `offered − picked`; plano de outro dia esconde tudo de hoje), `hiddenOnDay` (a virada não julga o não marcado), `needsDayPlan`, `dayPlanInvite`, `migrateDayPlan` (save sem plano = hoje já reafirmado), `showDayPlan` ("visto" ao mostrar) e `confirmDayPlan`. Sem React, sem storage, sem `Date` implícito.
+**Chamado por:** `src/App.tsx`, `src/components/DailyRituals.tsx`, `src/components/DayGoalsModal.tsx`, `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx`.
+**Régua:** `src/utils/dayPlan.test.ts`, `src/utils/dailyReset.dayPlan.test.ts`.
+
 ### `src/utils/cadernoSave.ts`
 **Dono de:** o dado do Caderno (04/10/2026), a parte PURA (sem rede): `CadernoEntry`, tetos `MAX_CHARS` (2000) e `MAX_ENTRIES` (120), `normalizeEntries` (load do `GameState.caderno`), `addEntry`, `removeEntry`, `mergeEntries`, `formatoDoDia` e a migração da chave legada (`loadLegacyEntries`/`clearLegacy`, `soulmon-caderno`). Dado SENSÍVEL: nunca em IA/telemetria (`cadernoSensivel.contract.test.ts`). Paridade de tetos com `functions/api/save.js` (`clampCaderno`).
 

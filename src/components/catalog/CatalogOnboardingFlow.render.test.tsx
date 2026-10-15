@@ -29,7 +29,8 @@ describe('CatalogOnboardingFlow', () => {
     expect(continuar().getAttribute('aria-disabled')).toBe('true');
   });
 
-  // Beta-2 (7.3): o starter set nasce MARCADO; desmarca-se o que não quer; só entra o marcado.
+  // REGISTRO §64 (dono, 15/10/2026): o starter set nasce DESMARCADO (substitui o "todas marcadas" do beta-2 7.3): a pessoa
+  // reafirma o que quer fazer e só entra o que ela marcou. Mudou o contrato, não o código de teste à toa.
   function ate_o_ponto_de_partida(props: Record<string, unknown> = {}) {
     const onComplete = vi.fn();
     renderWithCss(<CatalogOnboardingFlow language="pt-BR" onComplete={onComplete} {...props} />);
@@ -42,23 +43,22 @@ describe('CatalogOnboardingFlow', () => {
     return onComplete;
   }
 
-  it('ponto de partida: "Adicionar tarefas à lista", TODAS marcadas por padrão, só entra o marcado', () => {
+  it('ponto de partida: "Adicionar tarefas à lista", TODAS DESMARCADAS por padrão, só entra o marcado', () => {
     const onComplete = ate_o_ponto_de_partida();
     expect(screen.getByRole('dialog', { name: 'Adicionar tarefas à lista' })).toBeTruthy();
     const caixas = screen.getAllByRole('checkbox') as HTMLInputElement[];
     expect(caixas.length).toBeGreaterThan(1);
-    expect(caixas.every(c => c.checked)).toBe(true);
-    // Desmarca a primeira: ela não entra.
+    expect(caixas.every(c => !c.checked)).toBe(true);
+    // Marca a primeira: só ela entra.
     fireEvent.click(caixas[0]);
-    expect((screen.getAllByRole('checkbox') as HTMLInputElement[])[0].checked).toBe(false);
+    expect((screen.getAllByRole('checkbox') as HTMLInputElement[])[0].checked).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
     expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(onComplete.mock.calls[0][0]).toHaveLength(caixas.length - 1);
+    expect(onComplete.mock.calls[0][0]).toHaveLength(1);
   });
 
-  it('ponto de partida: com tudo desmarcado, não conclui (C11: ao menos 1)', () => {
+  it('ponto de partida: sem nada marcado, não conclui (C11: ao menos 1)', () => {
     const onComplete = ate_o_ponto_de_partida();
-    for (const c of screen.getAllByRole('checkbox')) fireEvent.click(c);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
     expect(onComplete).not.toHaveBeenCalled();
     fireEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -70,6 +70,7 @@ describe('CatalogOnboardingFlow', () => {
   it('sem duplicar: o que já está na lista (catalogId) não é oferecido nem entra de novo', () => {
     const onComplete = ate_o_ponto_de_partida();
     const ids = screen.getAllByRole('checkbox').map(c => c.closest('[data-starter-item]')!.getAttribute('data-starter-item')!);
+    for (const c of screen.getAllByRole('checkbox')) fireEvent.click(c);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
     expect(onComplete.mock.calls[0][0].map((i: { id: string }) => i.id)).toEqual(ids);
     cleanup();
@@ -77,6 +78,7 @@ describe('CatalogOnboardingFlow', () => {
     const onComplete2 = ate_o_ponto_de_partida({ existingActivities: [{ catalogId: ids[0] }] });
     const ids2 = screen.getAllByRole('checkbox').map(c => c.closest('[data-starter-item]')!.getAttribute('data-starter-item')!);
     expect(ids2).not.toContain(ids[0]);
+    for (const c of screen.getAllByRole('checkbox')) fireEvent.click(c);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
     expect(onComplete2.mock.calls[0][0].map((i: { id: string }) => i.id)).not.toContain(ids[0]);
   });

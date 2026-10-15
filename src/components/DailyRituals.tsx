@@ -45,6 +45,7 @@ import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { StepRow } from './StepRow';
 import { TaskMeta } from './TaskMeta';
 import { habitCountsOn } from '../utils/habitRhythm';
+import { isHiddenByPlan, type DayPlanView } from '../utils/dayPlan';
 import { parseDayValue } from '../utils/taskTriage';
 
 
@@ -121,6 +122,8 @@ export interface DailyRitualsProps {
   dayComplete?: boolean;
   /** Beta-2 (2.4): a meta do dia (`dailyGoalFor`), só para EXIBIR no cabeçalho. */
   goal?: number;
+  /** Reafirmar o dia (REGISTRO §64): o que a pessoa não marcou para hoje não aparece (o concluído sempre aparece). `onInvite` define o convite discreto. */
+  dayPlan?: { view: DayPlanView; invite?: boolean; onInvite?: () => void };
 }
 
 /** Distância mínima (px) e razão horizontal/vertical do gesto que abre `View all`. */
@@ -131,7 +134,7 @@ export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, language, now,
   expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
-  variant = 'panel', dayComplete = false, goal,
+  variant = 'panel', dayComplete = false, goal, dayPlan,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
   /* Beta-2 (2.1/2.3): a Home mostra SÓ o que é de hoje, em `Tasks` e `Habits`.
@@ -171,7 +174,8 @@ export function DailyRituals({
   const ativas = tasks
     .filter(t => isActive(t))
     .sort((a, b) => Number(a.completed) - Number(b.completed));
-  const tarefas = ativas.filter(t => taskIsForToday(t, now));
+  const oculto = (id: string) => !!dayPlan && isHiddenByPlan(dayPlan.view, String(id));
+  const tarefas = ativas.filter(t => taskIsForToday(t, now)).filter(t => t.completed || !oculto(t.id));
   const guardadas = tasks.filter(t => !isActive(t));
   /* Concluídas HOJE (já fora de `tasks`, no histórico). Uma tarefa que acabou
      de ser marcada ainda está em `tasks` com `completed: true` por 3s — não
@@ -190,7 +194,7 @@ export function DailyRituals({
     .sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
 
   /* A4: devido hoje + concluídas de hoje. O hábito fora do dia não é devido. */
-  const devidos = atividades.filter(a => a.disponivelHoje);
+  const devidos = atividades.filter(a => a.disponivelHoje && (a.isComplete || !oculto(a.id)));
   const total = tarefas.length + devidos.length + feitasHoje.length;
   const feitos = tarefas.filter(t => t.completed).length
     + devidos.filter(a => a.isComplete).length
@@ -329,6 +333,16 @@ export function DailyRituals({
         dayComplete={dayComplete}
         goal={goal}
         footer={variant === 'home' ? verTudo : undefined}
+        lead={dayPlan?.invite && dayPlan.onInvite ? (
+          <button
+            type="button"
+            data-day-plan-invite
+            onClick={dayPlan.onInvite}
+            style={{ ...sm2Button('outline'), width: '100%', margin: '4px 0 8px' }}
+          >
+            {isPt ? 'Montar o meu dia' : 'Plan my day'}
+          </button>
+        ) : undefined}
       >
         {(tarefas.length > 0 || feitasHoje.length > 0 || agendadasHoje.length > 0) && secao(tTasks, 'tasks')}
         {tarefas.map(task => renderTask(task))}

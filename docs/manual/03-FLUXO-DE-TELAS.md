@@ -592,12 +592,12 @@ O inventário de quem dispara o quê é `docs/FILA-DE-MODAIS.md`.
 
 ```ts
 PRESENTATION_ORDER = ['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'catalogOnboarding',
-  'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'welcome']
+  'dayGoals', 'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'welcome']
 ```
 
 Ordem: **tour do corvo (§4.27) → triagem (a única aberta por TOQUE) → level-up → resumo do dia (modal centralizado
 "ontem + corações", depois a aventura, depois "hoje") → NPC apresenta o prédio (§4.28, tela cheia, só na PRIMEIRA entrada nele) → escolha das metas
-(catálogo) → compromisso do dia (check-in) → "crie mais atividades" (`EvolveTaskModal`) → marco do Bosque → sonho →
+(catálogo) → **reafirmar o dia** (`dayGoals`, §4.17a) → compromisso do dia (check-in) → "crie mais atividades" (`EvolveTaskModal`) → marco do Bosque → sonho →
 pesadelo → convite de nível do catálogo → convite do sono → balão "prédio desbloqueado" (`unlockToast`, não bloqueante) → welcome prompt (ocioso)**. Regras: **um por vez**; **quem está
 na tela NÃO é expulso** por um mais prioritário que fica pronto depois (a cadeia antiga recalculava a cada render e
 desmontava o resumo); o **"visto" é gravado AO MOSTRAR** (`onShow`), não ao fechar — fechar o app no meio não repete o evento;
@@ -1667,7 +1667,7 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   Desde 14/10/2026 a marca `DAILY_REPORT_SHOWN` é gravada **AO MOSTRAR** (`onShow` da fila central, §3.1), não só ao fechar:
   fechar o app com o resumo aberto não o traz de volta. **Forma:** modal CENTRALIZADO (`ModalSheet placement="center"`), em
   passos — **ontem** (a manchete, as tarefas de ontem e os corações NO MESMO modal, `data-report-step="yesterday"`), a
-  **aventura** (`AreaSheet` com o NPC do scroll, passo separado) e **hoje** (humor/oferta/memórias).
+  **aventura** (`AreaSheet` com o NPC do scroll, passo separado; desde 15/10/2026 (REGISTRO §64) o conteúdo é o `StrollFind` — a missão e o destino escolhidos no dia anterior ligados ao que o Soulmon encontrou —, a MESMA peça da seção "Da aventura de ontem" da folha do Passeio, sem pop-up com visual próprio) e **hoje** (humor/oferta/memórias).
 
 - **Sai para**: `onClose` (`closeDailyReport` no `App.tsx`, o mesmo caminho do botão, do ✕, do Esc, do voltar do Android e
   da falha do item) — que **primeiro** grava o marco de memória
@@ -1727,6 +1727,22 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 - **Dono**: `src/components/MorningCheckIn.tsx` · **Régua**:
   `MorningCheckIn.commit.render.test.tsx`,
   `MorningCheckIn.ofertaReduzida.render.test.tsx`.
+
+### 4.17a `DayGoalsModal` — reafirmar o dia (15/10/2026, REGISTRO §64)
+
+- **Chega por**: a fila (`dayGoals`, depois do resumo do dia e da escolha de metas, antes do check-in) · **Aparece quando**:
+  `dayGoalsOpen && dayPlanCandidatesNow.length > 0`, aberto por um efeito de 1×/dia (`dayGoalsPromptedRef`) quando o `dayPlan` do
+  save é de OUTRO dia, depois de o resumo do dia ter sido visto, ou pelo convite discreto "Montar o meu dia" da lista de Hoje.
+- **O que se vê/faz**: modal centralizado com caixas de marcar (hábitos e tarefas que JÁ existem e caem hoje), **desmarcadas**; a
+  pessoa marca e confirma. Só o marcado aparece no Hoje; o resto não aparece e a virada não o julga (sem falta na constância).
+  Atividade de dias específicos que não cai hoje não é oferecida. A meta do dia e o `Missão N/G` seguem a regra de sempre.
+- **"Visto" ao mostrar**: `onShow` grava `dayPlan = { day, offered, picked: [], confirmed: false }`. Fechar sem confirmar (✕/Esc/voltar)
+  deixa a lista vazia com o convite e **não reabre no mesmo dia**. Confirmar grava `picked` e `confirmed: true`. Quem nasce depois
+  (criado no meio do dia) não estava em `offered` e aparece sozinho.
+- **Save antigo**: sem `dayPlan`, a 1ª abertura grava o de hoje como "já reafirmado" (a lista do dia já estava montada).
+  Saneado no cliente (`sanitizeDayPlan`) e no servidor (`functions/api/_dayPlan.js`, paridade testada).
+- **Dono**: `src/components/DayGoalsModal.tsx` + `src/utils/dayPlan.ts` · **Régua**: `DayGoalsModal.render.test.tsx`,
+  `dayPlan.test.ts`, `DailyRituals.dayPlan.render.test.tsx`, `dailyReset.dayPlan.test.ts`, `functions/api/dayPlan.parity.test.js`.
 
 ### 4.18 `MorningDream`
 
