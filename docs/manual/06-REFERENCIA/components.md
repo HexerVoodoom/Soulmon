@@ -450,6 +450,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/perfil/DemoSoundButton.tsx`
+**Dono de:** o botão de SOM da demo do portfólio (15/10/2026): no lugar do avatar na Home, liga/desliga todo o áudio pelo mudo existente; alvo 44, aria PT/EN. A demo não abre Configurações.
+**Props principais:** `muted`, `language`, `onToggle`.
+**Exports:** `DemoSoundButton(props)`.
+**Chamado por:** `src/App.tsx` (`leading` do `HomeHud`, só na demo).
+**Régua:** `src/utils/demoPortfolio.test.tsx`.
+
 ### `src/components/perfil/BondXpBar.tsx`
 **Dono de:** a barra de XP do Vínculo (o level do usuário) nas Configurações › Perfil: nível atual, `into / need XP` até o próximo e uma `progressbar` acessível (`aria-valuetext`). Tudo DERIVADO de `bondProgress(totalXP)` (nunca persistido); no nível máximo (`BOND_MAX_LEVEL`) a barra fica cheia e diz "Max"/"Nível máximo". Só descreve — sem meta, sem cobrança.
 **Props principais:** `totalXP`, `language`.

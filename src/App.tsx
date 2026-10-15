@@ -34,6 +34,8 @@ import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
+import { DemoSoundButton } from './components/perfil/DemoSoundButton';
+import { readyFor } from './utils/presentationQueue';
 import {
   type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
@@ -72,7 +74,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
-import { buildDemoPatch, leaveDemo } from './utils/demoStart';
+import { buildDemoPatch, leaveDemo, keepDemoVitalsFull } from './utils/demoStart';
 import type { StarterId } from './utils/sprites';
 import { petElementOf } from './utils/starterElements';
 import {
@@ -995,7 +997,7 @@ export default function App() {
      há re-render nem escrita à toa. O que a Home mostra (`energyStatus`) é calculado sobre o mesmo estado e as mesmas fronteiras. */
   useEffect(() => {
     // A penalidade de fome (`utils/hungerPenalty.ts`) roda no MESMO tick, por timestamp do save: devolve a mesma referência sem janela nova.
-    const acertar = () => setGameState(prev => { const now = Date.now(); return applyHungerPenalty(tickEnergy(prev, now), now); });
+    const acertar = () => setGameState(prev => { const now = Date.now(); return isDemoMode(prev) ? keepDemoVitalsFull(prev, now) : applyHungerPenalty(tickEnergy(prev, now), now); });
     acertar();
     const id = setInterval(acertar, 15_000);
     const aoVoltar = () => { if (document.visibilityState === 'visible') acertar(); };
@@ -2084,7 +2086,7 @@ export default function App() {
     setDayGoalsOpen(true);
   }, [dayPlanActive, rolloverPending, showDailyReport, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
   const presentation = usePresentationQueue({
-    ready: {
+    ready: readyFor(demo, {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
       levelUp: levelUpOpen,
@@ -2102,7 +2104,7 @@ export default function App() {
       nightmare: nightmareOpen,
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
       restSetup: needsRestSetup,
-    },
+    }),
     // ao MOSTRAR: grava o "visto" (a fila chama uma vez por entrada na tela)
     onShow: id => {
       if (id === 'levelUp' && levelUpEvent) {
@@ -3850,6 +3852,7 @@ export default function App() {
   const goTo = useCallback((v: ViewType) => {
     const atual = currentViewRef.current;
     if (v === atual) return;
+    if (demo && v === 'page:settings') return; // demo: sem Configurações/conta
     // A missão "visite a árvore de evolução" conta a NAVEGAÇÃO até ela.
     if (areaOf(v) === 'laboratorio') contarMissao('evolve-view');
     if (areaOf(v) === 'mercado') contarDiaria('mercado');
@@ -3859,7 +3862,7 @@ export default function App() {
       else window.history.pushState({ smView: v }, '');
     } catch { /* history indisponível (sandbox): a navegação segue sem ela */ }
     setCurrentView(v);
-  }, [contarMissao, contarDiaria]);
+  }, [contarMissao, contarDiaria, demo]);
 
   /* O "Ir lá" do material na Mochila. A missão que está no menu da Home (`LISTED_QUEST_BUILDINGS`, o Caderno) abre o menu de
      Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
@@ -7093,7 +7096,9 @@ export default function App() {
                    do squad de arte) pelado (regra do dono),
                    alvo de 44 no botão, divulgação com `aria-expanded`. */
                 petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
-                leading={(
+                leading={demo ? (
+                  <DemoSoundButton muted={soundMuted} language={language} onToggle={handleToggleSound} />
+                ) : (
                   <ProfileAvatarButton
                     avatarId={gameState.avatarId}
                     frameId={gameState.equippedFrame}

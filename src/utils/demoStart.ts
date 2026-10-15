@@ -14,6 +14,7 @@
  */
 import { DEMO_BOND_LEVEL } from './demoMode';
 import { xpForLevel } from './bond';
+import { HUNGER_MAX, hungerAt, maxEnergyOf, type HungerRecord, type EnergyClock } from './hunger';
 import { PREMADE_CHARACTERS, getDemoCreatureStages } from './monetization';
 import { STORAGE_KEYS } from './storageKeys';
 import { removeLocal } from './safeStorage';
@@ -82,4 +83,17 @@ export function leaveDemo(opts: { recarregar?: () => void } = {}): void {
   removeLocal(STORAGE_KEYS.TUTORIAL_COMPLETE, { silent: true });
   const recarregar = opts.recarregar ?? (() => { try { globalThis.location?.reload(); } catch { /* sem window */ } });
   recarregar();
+}
+
+/**
+ * DEMO (portfólio): VIDA e ENERGIA sempre CHEIAS e a fome no MÁXIMO (3/3), sem decair — sem regeneração nem penalidade de fome.
+ * Pura; devolve a MESMA referência quando já está tudo cheio (sem re-render nem escrita à toa).
+ */
+export function keepDemoVitalsFull<T extends { healthPoints: number; maxHealthPoints: number; energyPoints?: number; evolutionStage?: string; hunger?: HungerRecord; energyClock?: EnergyClock }>(prev: T, now: number): T {
+  const maxE = maxEnergyOf(prev);
+  const full = prev.healthPoints >= prev.maxHealthPoints
+    && (prev.energyPoints ?? 0) >= maxE
+    && hungerAt(prev.hunger, now) >= HUNGER_MAX;
+  if (full) return prev;
+  return { ...prev, healthPoints: prev.maxHealthPoints, energyPoints: maxE, hunger: { v: HUNGER_MAX, at: now }, energyClock: { at: now, carry: 0 } };
 }
