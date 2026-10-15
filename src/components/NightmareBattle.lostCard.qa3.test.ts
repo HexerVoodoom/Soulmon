@@ -19,6 +19,6 @@ describe('App › Pesadelo', () => {
     const mark = /const markNightmareFought = useCallback\(([\s\S]*?)\n  \}, \[setGameState\]\);/.exec(app)?.[1] ?? '';
     expect(mark).toMatch(/markFought\(/);
     expect(mark).not.toMatch(/setNightmareOpen\(false\)/);
-    expect(app).toMatch(/const closeNightmare = useCallback\(\(\) => \{\s*markNightmareFought\(\);\s*setNightmareOpen\(false\);/);
+    expect(app).toMatch(/const closeNightmare = useCallback\(\(\) => \{[\s\S]*?markNightmareFought\(\);\s*setNightmareOpen\(false\);/);
   });
 });

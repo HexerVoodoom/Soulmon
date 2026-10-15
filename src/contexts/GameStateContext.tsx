@@ -49,7 +49,7 @@ import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
 import { createRestState, MAX_NIGHTS } from '../utils/restWindow';
 import type { NightmareState } from '../utils/nightmares';
-import { createNightmareState } from '../utils/nightmares';
+import { createNightmareState, sanitizeNightmareState } from '../utils/nightmares';
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
@@ -809,11 +809,8 @@ const obj = <T,>(v: unknown): Record<string, T> =>
  * nuvem derrubaria a árvore antes de qualquer tela aparecer.
  */
 function hydrateNightmares(v: unknown): NightmareState {
-  const base = createNightmareState();
-  const raw = obj<unknown>(v);
-  const fought = arr<unknown>(raw.fought).filter((x): x is string => typeof x === 'string');
-  const pending = typeof raw.pending === 'string' ? raw.pending : undefined;
-  return pending ? { fought, pending } : { ...base, fought };
+  // O ciclo do sonho bom (`lurkDays`/`goodDream`/`goodDreams`, 15/10/2026) é saneado pelo MESMO dono que o servidor espelha.
+  return sanitizeNightmareState(v);
 }
 
 /**

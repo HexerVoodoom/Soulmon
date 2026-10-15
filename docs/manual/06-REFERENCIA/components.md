@@ -840,6 +840,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **A12 (`592e2c14`, QA Rodada 2):** a âncora do hábito ("depois do café — na cozinha", `h.anchor.after`/`where`) vivia num `title`, que só existe no hover — no celular e no leitor de tela, nunca; hoje é texto visível `data-habit-anchor` (12 px, `--sm2-muted`) ao lado do nome.
 **Avisos do arquivo:** `overcommitted` é AVISO, nunca bloqueio — o botão de confirmar continua sempre ativo (o Motion é odiado por decidir no lugar do usuário); `onSkip` sempre visível — ritual que só sai da frente se cumprido é cobrança na porta do app.
 
+### `src/components/GoodDream.tsx`
+**Dono de:** o SONHO BOM (15/10/2026, REGISTRO §65): o modal curto, de voz encorajadora, que paga Honra a cada 6 dias de pesadelo. Puro: recebe o prêmio e devolve o gesto; quem paga e reinicia o ciclo é o `App` (`claimGoodDream`).
+**Props principais:** `GoodDreamProps` (exportado) — `open`, `honor`, `petStage`, `demoCharacterId?`, `language`, `onClaim()` (o botão e o × fazem o mesmo).
+**Exports:** `GoodDreamProps` (interface) · `GoodDream(props)` · `default`.
+**Estado/efeitos relevantes:** nenhum estado; usa `RitualDialog` e `GameVisor`.
+**Chamado por:** `src/App.tsx` (no slot `nightmare` da fila de apresentação).
+**Régua:** `src/components/GoodDream.render.test.tsx`.
+
 ### `src/components/MorningDream.tsx`
 **Dono de:** a revelação do sonho da manhã — o único feedback da Janela de Descanso, sempre de manhã, nunca julgando a noite.
 **Props principais:** `MorningDreamProps` (exportado) — `open`, `dream: Dream | null` (`null` = manhã sem cena, não é falha), `isNew`, `language`, `onClose()`.

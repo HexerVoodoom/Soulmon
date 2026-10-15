@@ -77,3 +77,15 @@ export function shadowEyes(r: ShadowRect): Array<{ x: number; y: number }> {
   const d = Math.max(2, r.w * 0.12);
   return [{ x: cx - d - 1, y }, { x: cx + d - 1, y }];
 }
+
+/**
+ * O SPRITE DO PESADELO NA LUTA (15/10/2026): o monstro-pesadelo é a mesma sombra da Corrida (`dino-shadow-*`:
+ * silhueta preta, só os olhos de luz), não um Soulmon comum. O degrau acompanha o tier do inimigo (slot da escada
+ * 0..5: baby-i/baby-ii/rookie → degrau 0; champion → 1; ultimate → 2; mega → 3) e a variante vem do hash da noite
+ * (a mesma noite, a mesma sombra). Sem arte instalada para o id, cai no placeholder (`art: false`).
+ */
+export function nightmareShadowSprite(slot: number, dayHash: number): ShadowSource {
+  const s = Math.max(0, Math.floor(slot) || 0);
+  const tier = s <= 2 ? 0 : s - 2;
+  return shadowSource(tier, Math.abs(Math.floor(dayHash) || 0) % 3);
+}

@@ -269,7 +269,7 @@ import { StepsCard } from './components/StepsCard';
 import { loadAreaView, useAreaViewPrefetch } from './components/nav/playPrefetch';
 import {
   buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
-  createNightmareState, type NightmareRewards,
+  createNightmareState, hasPendingGoodDream, claimGoodDream, GOOD_DREAM_HONOR, type NightmareRewards,
 } from './utils/nightmares';
 import {
   play, canPlay, playedToday, activeBuff, minigameMultiplier, consumeBuff,
@@ -708,6 +708,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
 // Pesadelo da manhã: leva junto BattleStage/PveMechanics/useGroupBattle/combatFx/attackFxArt (~100 KB) — só na luta.
 const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
+const GoodDream = lazy(() => import('./components/GoodDream').then(m => ({ default: m.GoodDream })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
@@ -1146,6 +1147,8 @@ export default function App() {
   // O COMBATE do pesadelo: a outra face da mesma noite que rendeu o sonho.
   // Também só de manhã, também nunca à noite (ver o efeito lá embaixo).
   const [nightmareOpen, setNightmareOpen] = useState(false);
+  /** O slot do pesadelo mostra o SONHO BOM (a cada 6 dias de pesadelo), não a luta. */
+  const [goodDreamNow, setGoodDreamNow] = useState(false);
   // Passos: `null` = ainda não perguntei ao aparelho. Na PWA vira `false` e
   // nada de passos aparece em lugar nenhum (a camada já degrada sozinha).
   const [stepsAvailable, setStepsAvailable] = useState<boolean | null>(null);
@@ -5285,6 +5288,12 @@ export default function App() {
     const now = new Date();
     const hour = now.getHours();
     if (hour < 4 || hour >= 12) return; // só de manhã
+    // O SONHO BOM (6 dias de pesadelo fechados) vem ANTES de qualquer luta nova e não depende de noite registrada.
+    if (hasPendingGoodDream(gameState.nightmares)) {
+      setGoodDreamNow(true);
+      setNightmareOpen(true);
+      return;
+    }
     const rest = gameState.rest;
     if (!rest) return;
     if (!hasPendingNightmare(gameState.nightmares ?? EMPTY_NIGHTMARES, rest, now)) return;
@@ -5333,10 +5342,24 @@ export default function App() {
       ),
     }));
   }, [setGameState]);
+  /**
+   * Colhe o SONHO BOM: paga a Honra (`emblems`, a moeda do Torneio) e reinicia o ciclo NO MESMO updater
+   * (`claimGoodDream`, idempotente: sem sonho pendente devolve o mesmo estado, então StrictMode/2x clique não paga duas vezes).
+   */
+  const claimGoodDreamNow = useCallback(() => {
+    setGameState(prev => {
+      const r = claimGoodDream(prev.nightmares ?? EMPTY_NIGHTMARES);
+      if (r.honor <= 0) return prev;
+      return { ...prev, nightmares: r.state, emblems: (prev.emblems ?? 0) + r.honor };
+    });
+    setGoodDreamNow(false);
+    setNightmareOpen(false);
+  }, [setGameState]);
   const closeNightmare = useCallback(() => {
+    if (goodDreamNow) { claimGoodDreamNow(); return; }
     markNightmareFought();
     setNightmareOpen(false);
-  }, [markNightmareFought]);
+  }, [markNightmareFought, goodDreamNow, claimGoodDreamNow]);
 
   /**
    * Vitória: energia (teto do estágio), meio coração no máximo (teto de
@@ -8326,6 +8349,16 @@ export default function App() {
           e a tela diz isso. */}
       {interstitial === 'nightmare' && (
         <PresentationSlot id="nightmare" onFail={() => presentation.fail('nightmare')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        {goodDreamNow ? (
+          <GoodDream
+            open
+            honor={gameState.nightmares?.goodDream ? GOOD_DREAM_HONOR : 0}
+            petStage={gameState.evolutionStage}
+            demoCharacterId={petLine}
+            language={language}
+            onClaim={claimGoodDreamNow}
+          />
+        ) : (
         <NightmareBattle
           open
           wave={nightmareWave}
@@ -8345,6 +8378,7 @@ export default function App() {
           onLose={markNightmareFought}
           onClose={closeNightmare}
         />
+        )}
         </PresentationSlot>
       )}
 
