@@ -129,3 +129,9 @@ export function runGuarded(fn: (() => void) | undefined): boolean {
   if (!fn) return true;
   try { fn(); return true; } catch { return false; }
 }
+
+/** DEMO (portfólio): a fila fica INERTE — nenhum item entra sozinho; só toque explícito do usuário abre algo. */
+export const INERT_READY: PresentationReady = Object.freeze({});
+export function readyFor(demo: boolean, ready: PresentationReady): PresentationReady {
+  return demo ? INERT_READY : ready;
+}

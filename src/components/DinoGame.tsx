@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getSpriteForStage } from '../utils/sprites';
+import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
+
+/** A corrida SEMPRE corre para a DIREITA: arte de perfil esquerdo (`artFacesLeft`, mesma regra da Home) é espelhada. */
+export const dinoPetMirrored = (stage: string, demoCharacterId?: string): boolean => artFacesLeft(stage, demoCharacterId);
 import { lineIconForStage } from '../utils/lineIcons';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
@@ -128,12 +131,12 @@ function drawDust(ctx: CanvasRenderingContext2D, list: Dust[], colors: string[])
   ctx.globalAlpha = 1;
 }
 /** Desenha o pet com a pose (origem nos pés, centro da base); sprite sempre nítido. */
-function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose) {
+function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose, mirror = false) {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(DINO_X + DINO_S / 2, groundY - h + pose.dy);
   if (pose.rot) ctx.rotate(pose.rot);
-  ctx.scale(pose.sx, pose.sy);
+  ctx.scale(mirror ? -pose.sx : pose.sx, pose.sy);
   ctx.drawImage(img, -DINO_S / 2, -DINO_S, DINO_S, DINO_S);
   ctx.restore();
 }
@@ -166,10 +169,10 @@ function drawShadowObstacle(ctx: CanvasRenderingContext2D, img: HTMLImageElement
   }
 }
 
-function drawNightmarePet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose) {
+function drawNightmarePet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose, mirror = false) {
   ctx.save();
   ctx.filter = 'brightness(0) saturate(100%) drop-shadow(0 0 4px #763bff)';
-  drawPet(ctx, img, groundY, h, pose);
+  drawPet(ctx, img, groundY, h, pose, mirror);
   ctx.restore();
   const eyeY = groundY - h + pose.dy - DINO_S * pose.sy * 0.68;
   const eyeX = DINO_X + DINO_S * 0.62;
@@ -233,9 +236,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     return () => ro.disconnect();
   }, []);
 
-  // Nossa arte é sempre desenhada olhando pra DIREITA, que é o sentido da
-  // corrida — não existe mais lista de exceções (era só de sprite emprestado).
-  const petNeedsFlip = false;
+  // A corrida vai para a DIREITA: arte de perfil ESQUERDO (`artFacesLeft`, como na Home) é espelhada.
+  const petMirror = dinoPetMirrored(evolutionStage, demoCharacterId);
 
   // Physics/game state lives in a ref — the loop never re-renders React.
   const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0, dust: [] as Dust[], sinceLand: 9, dustIn: 0, wasAir: false });
@@ -283,8 +285,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       if (ground.complete && ground.naturalWidth) strip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
       if (pet.complete && pet.naturalWidth) {
         const pose = idlePose((performance.now() - t0) / 1000, reducedMotionNow());
-        if (nightmareMode) drawNightmarePet(ctx, pet, groundYRef.current, 0, pose);
-        else drawPet(ctx, pet, groundYRef.current, 0, pose);
+        if (nightmareMode) drawNightmarePet(ctx, pet, groundYRef.current, 0, pose, petMirror);
+        else drawPet(ctx, pet, groundYRef.current, 0, pose, petMirror);
       }
     };
     for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
@@ -299,7 +301,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     raf = requestAnimationFrame(idleLoop);
     return () => { cancelAnimationFrame(raf); for (const img of [pet, ground, far]) img.removeEventListener('load', drawStatic); };
-  }, [evolutionStage, demoCharacterId, nightmareMode]);
+  }, [evolutionStage, demoCharacterId, nightmareMode, petMirror]);
 
   const jump = useCallback(() => {
     if (phaseRef.current !== 'playing') return;
@@ -415,15 +417,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       drawDust(ctx, s.dust, dustColors);
       if (pet?.complete) {
         const pose = runPose({ t: s.t, speed: s.speed, h: s.h, vy: s.vy, sinceLand: s.sinceLand, reduced });
-        if (petNeedsFlip) {
-          ctx.save();
-          ctx.translate(DINO_X + DINO_S, GROUND - DINO_S - s.h);
-          ctx.scale(-1, 1);
-          ctx.drawImage(pet, 0, 0, DINO_S, DINO_S);
-          ctx.restore();
-        }
-        else if (nightmareMode) drawNightmarePet(ctx, pet, GROUND, s.h, pose);
-        else drawPet(ctx, pet, GROUND, s.h, pose);
+        if (nightmareMode) drawNightmarePet(ctx, pet, GROUND, s.h, pose, petMirror);
+        else drawPet(ctx, pet, GROUND, s.h, pose, petMirror);
       }
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 
@@ -459,7 +454,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, paused, jump, onEarnPoints, onScore, petNeedsFlip, nightmareMode]);
+  }, [phase, paused, jump, onEarnPoints, onScore, petMirror, nightmareMode]);
 
   return (
     <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
