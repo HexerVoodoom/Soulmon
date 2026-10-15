@@ -368,3 +368,9 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 | `lote-laboratorio-perfil.png` | `soulmon/areas/` | 300² | prédio do Perfil (`LABORATORIO_LOT_ART.perfil`), no lugar de `lote-jogos-mente-akasha` |
 | `perfil-ataque-distancia.png`, `vinculo-badge.png`, `fx-target-down-*` | idem P2 | idem | regerados |
 
+### Corvo HD no Perfil (15/10/2026)
+
+| Arquivo | Pasta | Tamanho | Uso |
+|---|---|---|---|
+| `npc-perfil-corvo.png` | `soulmon/npcs/` | 768² (RGBA, alfa real) | busto do NPC do Perfil (`LOT_NPC_ART['laboratorio:perfil']`); `mascot-raven.png` (384²) segue como mascote nos outros lugares |
+

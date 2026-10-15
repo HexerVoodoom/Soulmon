@@ -9,7 +9,7 @@
 import type { AreaId } from '../../../navigation';
 import type { FunctionNpcId, ExtraNpcId } from '../../../utils/areaNpcVoice';
 
-import mascotRaven from '../mascot-raven.png';
+import npcPerfilCorvo from './npc-perfil-corvo.png';
 import npcMercado from './npc-mercado.png';
 import npcArena from './npc-arena.png';
 import npcLaboratorio from './npc-laboratorio.png';
@@ -100,7 +100,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'laboratorio:evolucao': npcLaboratorio,
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro — o busto `npc-conta` segue como NPC de função)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
-  'laboratorio:perfil': mascotRaven, // o Corvo, mascote (14/10/2026, decisão do dono: o Perfil não usa o busto da Iris/Oráculo nem o da Oriel; `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
+  'laboratorio:perfil': npcPerfilCorvo, // o Corvo em alta qualidade, 768² (15/10/2026, variação 1 do dono); antes o mascote 384² (14/10/2026, decisão do dono: o Perfil não usa o busto da Iris/Oráculo nem o da Oriel; `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
   'hall:biblioteca': npcHall,
   'hall:amigos': npcHallAmigosMel, // Zumi (filhote de mel; 07/10/2026 trocou o Ramo, o carvalho — `npc-hall-guilda.png` segue em disco)
   'hall:guilda': npcHallGuildaLuz, // Aurea (leoa solar; 07/10/2026 trocou a Bastia — `npc-f-guarda` segue em EXTRA_NPC_ART)
