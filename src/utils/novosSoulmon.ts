@@ -119,7 +119,7 @@ const ART: Record<string, { rookie: string; champion: string }> = {
   zephir: { rookie: zephirRookie, champion: zephirChampion },
 };
 
-/** Sprites das formas altas, por criatura (mesmas chaves de `FORMAS_ALTAS`). 256² RGBA, pixelizadas (§77). */
+/** Sprites das formas altas, por criatura (mesmas chaves de `FORMAS_ALTAS`). 256² RGBA, pixelizadas (§78). */
 export const FORMAS_ALTAS_ART: Readonly<Record<string, Partial<Record<NovoHighStage, string>>>> = {
   embrit: { ultimate: embritUltimate, mega: embritMega, ultra: embritUltra },
   spinvex: { ultimate: spinvexUltimate, mega: spinvexMega, ultra: spinvexUltra },

@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 15/10/2026 — Formas altas dos 17 novos Soulmon e arquivo de ramos/combinados (`feat/formas-altas-e-arquivo`, REGISTRO §77)
+> ## 15/10/2026 — Formas altas dos 17 novos Soulmon e arquivo de ramos/combinados (`feat/formas-altas-e-arquivo`, REGISTRO §78)
 >
 > - Ultimate/Mega/Ultra dos 17 instalados (51 PNGs 256² pixelizados, vizinho mais próximo): slots 4/5 da escada, chefe da Arena (ultra>mega>ultimate). Nomes propostos em `FORMAS_ALTAS` (dono pode renomear).
 > - 102 ramos faltantes + 138 combinados guardados em `src/assets/soulmon/novos-arquivo/` (sem consumidor, fora do `dist`).

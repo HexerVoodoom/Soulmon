@@ -3,7 +3,7 @@
  * nomes dos golpes. A arte (PNG) é anexada por `novosSoulmon.ts`; este módulo existe para a Arena (`arena.ts`, sem imports
  * de asset) escolher e nomear a criatura.
  *
- * FORMAS ALTAS (Ultimate/Mega/Ultra) JÁ INSTALADAS (§77). Para nova forma/criatura: 1) ponha o PNG em `assets/soulmon/novos/`,
+ * FORMAS ALTAS (Ultimate/Mega/Ultra) JÁ INSTALADAS (§78). Para nova forma/criatura: 1) ponha o PNG em `assets/soulmon/novos/`,
  * 2) liste o nome em `FORMAS_ALTAS` abaixo e 3) o sprite em `FORMAS_ALTAS_ART` (`novosSoulmon.ts`). Sem isso a forma NÃO
  * existe (criatura sem a forma: slots 4/5 caem nas linhas antigas; chefe da Arena usa o Champion).
  */
@@ -59,7 +59,7 @@ export const NOVOS_DATA: readonly NovoData[] = [
     basico: { pt: "Bicada de Vento", en: "Gust Peck" }, especial: { pt: "Ciclone", en: "Cyclone Dive" } },
 ];
 
-/** Nome das formas altas que JÁ têm arte instalada, por criatura. Leva de 15/10/2026 aprovada pelo dono (REGISTRO §77); nomes curtos propostos no tom do jogo (PT = EN, como os das criaturas). */
+/** Nome das formas altas que JÁ têm arte instalada, por criatura. Leva de 15/10/2026 aprovada pelo dono (REGISTRO §78); nomes curtos propostos no tom do jogo (PT = EN, como os das criaturas). */
 export const FORMAS_ALTAS: Readonly<Record<string, Partial<Record<NovoHighStage, string>>>> = {
   embrit: { ultimate: 'Ignivorn', mega: 'Magmatyr', ultra: 'Infernarch' },
   spinvex: { ultimate: 'Toxivorax', mega: 'Venomaw', ultra: 'Pestilarch' },
