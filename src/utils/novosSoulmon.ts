@@ -2,9 +2,9 @@
  * OS 17 NOVOS SOULMON — dados + ARTE (15/10/2026; contrato e formas futuras em `novosSoulmonData.ts`).
  *
  * Rookie e Champion: encontros COMUNS da masmorra (`buildDungeonWave`) e inimigos da Arena (`buildArenaRound`).
- * Ultimate/Mega/Ultra: encaixe pronto, vazio até haver arte (`FORMAS_ALTAS_ART`). NÃO substituem `DUNGEON_LINE_SPRITES`
+ * Ultimate/Mega: slots 4/5 da escada; Ultra: só o chefe da Arena (`FORMAS_ALTAS_ART`). NÃO substituem `DUNGEON_LINE_SPRITES`
  * (personagens prontos, sombras do Pesadelo, NPCs da Biblioteca, Combina 3, bosque seguem nas 9 linhas antigas).
- * Arte: 256² RGBA (Lanczos a partir de 1024², alfa >=250 vira 255), orientada à direita/de frente.
+ * Arte: 256² RGBA (Rookie/Champion: Lanczos a partir de 1024², alfa >=250 vira 255; formas altas pixelizadas: vizinho mais próximo 1024²->256², alfa binário), orientada à direita/de frente.
  */
 import {
   NOVOS_DATA, FORMAS_ALTAS, novoDataOfStage, novoFormName, novoHasForm, pickNovo,
@@ -47,6 +47,58 @@ import pebbloChampion from '../assets/soulmon/novos/terra-champion.png';
 import zephirRookie from '../assets/soulmon/novos/ar-rookie.png';
 import zephirChampion from '../assets/soulmon/novos/ar-champion.png';
 
+import embritUltimate from '../assets/soulmon/novos/fogo-ultimate.png';
+import embritMega from '../assets/soulmon/novos/fogo-mega.png';
+import embritUltra from '../assets/soulmon/novos/fogo-ultra.png';
+import spinvexUltimate from '../assets/soulmon/novos/vileza-ultimate.png';
+import spinvexMega from '../assets/soulmon/novos/vileza-mega.png';
+import spinvexUltra from '../assets/soulmon/novos/vileza-ultra.png';
+import ossumiUltimate from '../assets/soulmon/novos/morte-ultimate.png';
+import ossumiMega from '../assets/soulmon/novos/morte-mega.png';
+import ossumiUltra from '../assets/soulmon/novos/morte-ultra.png';
+import umbraeUltimate from '../assets/soulmon/novos/sombra-ultimate.png';
+import umbraeMega from '../assets/soulmon/novos/sombra-mega.png';
+import umbraeUltra from '../assets/soulmon/novos/sombra-ultra.png';
+import brawnuUltimate from '../assets/soulmon/novos/vigor-ultimate.png';
+import brawnuMega from '../assets/soulmon/novos/vigor-mega.png';
+import brawnuUltra from '../assets/soulmon/novos/vigor-ultra.png';
+import kenjoUltimate from '../assets/soulmon/novos/marcial-ultimate.png';
+import kenjoMega from '../assets/soulmon/novos/marcial-mega.png';
+import kenjoUltra from '../assets/soulmon/novos/marcial-ultra.png';
+import runixUltimate from '../assets/soulmon/novos/arcano-ultimate.png';
+import runixMega from '../assets/soulmon/novos/arcano-mega.png';
+import runixUltra from '../assets/soulmon/novos/arcano-ultra.png';
+import chronibUltimate from '../assets/soulmon/novos/tempo-ultimate.png';
+import chronibMega from '../assets/soulmon/novos/tempo-mega.png';
+import chronibUltra from '../assets/soulmon/novos/tempo-ultra.png';
+import voidletUltimate from '../assets/soulmon/novos/espaco-ultimate.png';
+import voidletMega from '../assets/soulmon/novos/espaco-mega.png';
+import voidletUltra from '../assets/soulmon/novos/espaco-ultra.png';
+import gravulUltimate from '../assets/soulmon/novos/gravidade-ultimate.png';
+import gravulMega from '../assets/soulmon/novos/gravidade-mega.png';
+import gravulUltra from '../assets/soulmon/novos/gravidade-ultra.png';
+import vibriUltimate from '../assets/soulmon/novos/som-ultimate.png';
+import vibriMega from '../assets/soulmon/novos/som-mega.png';
+import vibriUltra from '../assets/soulmon/novos/som-ultra.png';
+import voltrixUltimate from '../assets/soulmon/novos/eletricidade-ultimate.png';
+import voltrixMega from '../assets/soulmon/novos/eletricidade-mega.png';
+import voltrixUltra from '../assets/soulmon/novos/eletricidade-ultra.png';
+import sproutiUltimate from '../assets/soulmon/novos/vida-ultimate.png';
+import sproutiMega from '../assets/soulmon/novos/vida-mega.png';
+import sproutiUltra from '../assets/soulmon/novos/vida-ultra.png';
+import solionUltimate from '../assets/soulmon/novos/luz-ultimate.png';
+import solionMega from '../assets/soulmon/novos/luz-mega.png';
+import solionUltra from '../assets/soulmon/novos/luz-ultra.png';
+import bubboUltimate from '../assets/soulmon/novos/agua-ultimate.png';
+import bubboMega from '../assets/soulmon/novos/agua-mega.png';
+import bubboUltra from '../assets/soulmon/novos/agua-ultra.png';
+import pebbloUltimate from '../assets/soulmon/novos/terra-ultimate.png';
+import pebbloMega from '../assets/soulmon/novos/terra-mega.png';
+import pebbloUltra from '../assets/soulmon/novos/terra-ultra.png';
+import zephirUltimate from '../assets/soulmon/novos/ar-ultimate.png';
+import zephirMega from '../assets/soulmon/novos/ar-mega.png';
+import zephirUltra from '../assets/soulmon/novos/ar-ultra.png';
+
 const ART: Record<string, { rookie: string; champion: string }> = {
   embrit: { rookie: embritRookie, champion: embritChampion },
   spinvex: { rookie: spinvexRookie, champion: spinvexChampion },
@@ -67,8 +119,26 @@ const ART: Record<string, { rookie: string; champion: string }> = {
   zephir: { rookie: zephirRookie, champion: zephirChampion },
 };
 
-/** Sprites das formas altas, por criatura (mesmas chaves de `FORMAS_ALTAS`). Vazio até a arte ser aprovada e instalada. */
-export const FORMAS_ALTAS_ART: Readonly<Record<string, Partial<Record<NovoHighStage, string>>>> = {};
+/** Sprites das formas altas, por criatura (mesmas chaves de `FORMAS_ALTAS`). 256² RGBA, pixelizadas (§78). */
+export const FORMAS_ALTAS_ART: Readonly<Record<string, Partial<Record<NovoHighStage, string>>>> = {
+  embrit: { ultimate: embritUltimate, mega: embritMega, ultra: embritUltra },
+  spinvex: { ultimate: spinvexUltimate, mega: spinvexMega, ultra: spinvexUltra },
+  ossumi: { ultimate: ossumiUltimate, mega: ossumiMega, ultra: ossumiUltra },
+  umbrae: { ultimate: umbraeUltimate, mega: umbraeMega, ultra: umbraeUltra },
+  brawnu: { ultimate: brawnuUltimate, mega: brawnuMega, ultra: brawnuUltra },
+  kenjo: { ultimate: kenjoUltimate, mega: kenjoMega, ultra: kenjoUltra },
+  runix: { ultimate: runixUltimate, mega: runixMega, ultra: runixUltra },
+  chronib: { ultimate: chronibUltimate, mega: chronibMega, ultra: chronibUltra },
+  voidlet: { ultimate: voidletUltimate, mega: voidletMega, ultra: voidletUltra },
+  gravul: { ultimate: gravulUltimate, mega: gravulMega, ultra: gravulUltra },
+  vibri: { ultimate: vibriUltimate, mega: vibriMega, ultra: vibriUltra },
+  voltrix: { ultimate: voltrixUltimate, mega: voltrixMega, ultra: voltrixUltra },
+  sprouti: { ultimate: sproutiUltimate, mega: sproutiMega, ultra: sproutiUltra },
+  solion: { ultimate: solionUltimate, mega: solionMega, ultra: solionUltra },
+  bubbo: { ultimate: bubboUltimate, mega: bubboMega, ultra: bubboUltra },
+  pebblo: { ultimate: pebbloUltimate, mega: pebbloMega, ultra: pebbloUltra },
+  zephir: { ultimate: zephirUltimate, mega: zephirMega, ultra: zephirUltra },
+};
 
 export interface NovoSoulmon extends NovoData {
   sprite(stage: NovoAnyStage): string;
