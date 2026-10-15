@@ -23,8 +23,9 @@ import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 import { awardBondXP, bondLevelFor } from './bond';
 import { sanitizeTalentPicks } from './talents';
 import { missionBitsGain } from './equipment';
-import { playerDayKey, dayKeyToIso } from './playerDay';
-import { hiddenOnDay } from './dayPlan';
+import { playerDayKey } from './playerDay';
+import { hiddenForDayKey, type DayPlan } from './dayPlan';
+import type { PlayerDayAnchor } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
@@ -535,6 +536,9 @@ export interface DailyGoalState {
    *  volta ao comportamento antigo (hábito flexível elegível) — nunca cobra a
    *  mais por não saber. */
   habitRhythms?: Record<string, HabitRhythm>;
+  /** Reafirmar o dia (REGISTRO §66): o não marcado sai da meta, do feito e do julgamento da virada. */
+  dayPlan?: DayPlan;
+  playerDayTz?: PlayerDayAnchor;
   /** `any` porque a meta lê `effort`/`status` de tarefas que vêm do save (dado
    *  não confiável) — `normalizeEffort` e `countsForGoal` fazem a validação. */
   tasks: any[];
@@ -559,14 +563,16 @@ export interface DailyGoalState {
  * mesma lista.
  */
 export function activitiesForWeekDay<A extends { id?: string; weekDays?: number[]; schedule?: Schedule }>(
-  state: { evolutionStage: string; activities: A[]; habitRhythms?: Record<string, HabitRhythm> },
+  state: { evolutionStage: string; activities: A[]; habitRhythms?: Record<string, HabitRhythm>; dayPlan?: DayPlan; playerDayTz?: PlayerDayAnchor },
   weekDay: number,
   dayKey?: string,
 ): A[] {
+  const naoMarcados = hiddenForDayKey(state.dayPlan, dayKey, state.playerDayTz);
   const parsed = dayKey ? parseDayKeyLocal(dayKey) : null;
   const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
   const weekdaysMatter = canSelectWeekdays(state.evolutionStage);
   return state.activities.filter(a => {
+    if (naoMarcados.has(String(a.id))) return false;
     const schedule = normalizeSchedule(a);
     if (schedule.kind === 'weekdays') {
       // O calendário continua mandando, e continua lendo o `weekDay` recebido
@@ -662,7 +668,7 @@ export function deveCelebrarDiaCompleto(p: { antes: boolean; agora: boolean; ult
 export function registeredForDay(state: DailyGoalState, weekDay: number, dayKey?: string): number {
   return activitiesForWeekDay(state, weekDay, dayKey)
     .reduce((s: number, a: any) => s + habitWeightOf(a), 0)
-    + state.tasks.filter(countsForGoal).reduce((s, t: any) => s + taskEffort(t), 0)
+    + state.tasks.filter(t => countsForGoal(t) && !hiddenForDayKey(state.dayPlan, dayKey, state.playerDayTz).has(String(t?.id))).reduce((s, t: any) => s + taskEffort(t), 0)
     + (dayKey ? tasksCompletedOn(state as any, dayKey) : 0);
 }
 
@@ -1170,10 +1176,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     // de constância — sem histórico não há `needsIntervention` ("never miss
     // twice"), não há gasto/ganho de escudo e não há razão de constância
     // baixa. Evitar o item continua sem NENHUMA consequência de jogo.
-    /* REAFIRMAR O DIA (REGISTRO §66): o que a pessoa NÃO marcou para aquele dia não aparecia na lista e não é falta —
-       a virada não o julga (sem `applyMissedDay`). Feito e meta/coração seguem como sempre (só a lista e a constância mudam). */
-    const naoMarcados = hiddenOnDay((prev as any).dayPlan, dayKeyToIso(yesterdayString));
-    availableActivities.filter((a: any) => !isOptInOnlyActivity(a) && !naoMarcados.has(String(a.id))).forEach((activity: any) => {
+    /* REAFIRMAR O DIA (REGISTRO §66): `availableActivities` já exclui o que a pessoa NÃO marcou para aquele dia — não é falta. */
+    availableActivities.filter((a: any) => !isOptInOnlyActivity(a)).forEach((activity: any) => {
       const current = rhythms[activity.id] ?? emptyRhythm();
       // Sem `isDueOn` de novo aqui: `availableActivities` JÁ foi filtrada pela
       // mesma regra (`habitCountsOn`, que chama `isDueOn` para `everyNDays`).
