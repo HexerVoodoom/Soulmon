@@ -815,7 +815,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `DUNGEON_SLOTS` — os 6 slots da escada (baby-i..mega): `hp` e `power` relativos ao espelho balanceado do level do jogador; o mega solta um especial `direct`. Recalibrados no PR4 com a energia carregada (contexto §2.18). (`PLAYER_STATS` e `playerStatsFor` saíram: o jogador é `soulCombatant`.)
 - `DUNGEON_FLOOR_GROWTH` (`{ hp: 0,14, power: 0,11 }`) — o que cada andar soma, em golpes.
 - `DUNGEON_MIN_HITS` (3) e `function dungeonFoe(L, slot, floor, knobs?): FightSide` — o inimigo do slot no andar, com o piso de 3 golpes do ataque mais forte do level.
-- `DungeonEnemy` (interface) — campos: `name`, `stage`, `sprite`, `points`, `slot`, `floor`, `foe` (o `FightSide` do núcleo). Saíram `hp`, `atk`, `speed` e `dmgReduction`.
+- `DungeonEnemy` (interface) — campos: `name`, `stage`, `sprite`, `points`, `slot`, `floor`, `foe` (o `FightSide` do núcleo) e, só nas criaturas novas (15/10/2026, §67), `element`, `basico`, `especial` (`novosSoulmon.ts`). Saíram `hp`, `atk`, `speed` e `dmgReduction`.
 - `EnemyTier` (type) — `'baby-i' | 'baby-ii' | 'rookie' | 'champion' | 'ultimate' | 'mega'`
 - `LADDER_TIERS` — `['baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega']`
 - `HEART_DROP_CHANCE` (`0.05`) — chance de coraçãozinho por inimigo derrotado; exportada na minimal-ui F5 para a folha-porta da Masmorra (`play/PlaySheets.tsx`) dizer o que pode cair.
@@ -978,8 +978,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
 
+### `src/utils/novosSoulmon.ts`
+**15/10/2026 (REGISTRO §67):** os 17 novos Soulmon por elemento base (Rookie + Champion, arte `assets/soulmon/novos/<elemento>-<estágio>.png`, 256²) nos encontros comuns da masmorra. NÃO substituem `DUNGEON_LINE_SPRITES` (personagens prontos, sombras do Pesadelo, NPCs, Combina 3 e bosque seguem nas 9 linhas antigas); ultimate/mega da escada também.
+**Exports:** `NOVOS_SOULMON` (17: `id`, `line` poder/harmonia/benevolencia, `element`, `rookie`/`champion` `{name, sprite}`, `basico`/`especial` `{pt, en}`) · `novoSoulmonById` · `novoSoulmonOfStage(stage)` (`<id>-<tier>` → criatura) · `novoStageOfTier(tier)` (baby-i/ii/rookie → rookie; champion → champion; ultimate/mega → `null`) · `getDungeonEncounter(tier, exclude, rng, legacy)` (sorteio do slot; cai no `legacy` quando `null`) · tipos `NovoSoulmon`, `NovoAttack`, `DungeonEncounter`. **Chamado por:** `dungeon.ts` (`buildDungeonWave`). `combatFx.ts` ganhou `dungeonEnemyElement` e `dungeonFoeSpecialLabel` (elemento e selo do especial do inimigo; `DungeonGame`/`NightmareBattle`).
+
 ### `src/utils/nightmareElement.ts`
-**Dono de:** o ELEMENTO `pesadelo` (REGISTRO §65): exclusivo da mecânica do Pesadelo, matchup neutro e o encaixe da arte (PNG em `src/assets/soulmon/pesadelo/`: `el-pesadelo.png` e `fx-pesadelo-{cast,aura,slash,impact,defended,orb}.png`). Sem arte, `fxElementId`/`fxFrame` caem no FX procedural (`neutro`).
+**Dono de:** o ELEMENTO `pesadelo` (REGISTRO §67): exclusivo da mecânica do Pesadelo, matchup neutro e o encaixe da arte (PNG em `src/assets/soulmon/pesadelo/`: `el-pesadelo.png` e `fx-pesadelo-{cast,aura,slash,impact,defended,orb}.png`). Sem arte, `fxElementId`/`fxFrame` caem no FX procedural (`neutro`).
 **Exports:** `NIGHTMARE_ELEMENT`, `nightmareMatchup`, `nightmareFx`, `hasNightmareFx`, `nightmareIcon`.
 **Chamado por:** `src/utils/combatFx.ts` (`fxElementId`, `fxFrame`), `src/components/NightmareBattle.tsx`.
 **Régua:** `src/utils/nightmares.pesadelo.test.ts`.
@@ -1316,7 +1320,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `nightmareSlots(top)` — os slots da onda do pesadelo terminando no tier `top`; um dono só (a onda e a simulação do balanço leem esta função).
 - `NIGHTMARES_PER_NIGHT` — **Teto absoluto: 1 pesadelo por noite registrada.** É esta constante que dá o teto natural que impede farm. Dormir mais não rende mais nada; a única forma de ver mais pesadelos é ter mais NOITES — ou seja, viver mais dias, que é a única "moeda" que ninguém consegue acelerar.
 - `NIGHTMARE_WAVE_SIZE` — **1** (uma fase só, 15/10/2026). `NIGHTMARE_POWER` (força própria do pesadelo, a causa do bug de dano) e `nightmareFoe(playerLevel, slot)`.
-- Regra de vitória (REGISTRO §65): `NIGHTMARE_MIN_CHEERS`, `NIGHTMARE_SPECIAL_SHARE`, `NightmareTally`, `EMPTY_TALLY`, `specialLanded`, `specialsNeeded`, `nightmareConditions`, `nightmareVerdict`, `NIGHTMARE_END_TEXT`, `nightmareEndText`.
+- Regra de vitória (REGISTRO §67): `NIGHTMARE_MIN_CHEERS`, `NIGHTMARE_SPECIAL_SHARE`, `NightmareTally`, `EMPTY_TALLY`, `specialLanded`, `specialsNeeded`, `nightmareConditions`, `nightmareVerdict`, `NIGHTMARE_END_TEXT`, `nightmareEndText`.
 - Sonho bom: `NIGHTMARE_CYCLE_DAYS` (6), `GOOD_DREAM_HONOR` (3), `MAX_GOOD_DREAMS`, `countNightmareDay`, `hasPendingGoodDream`, `claimGoodDream`, `sanitizeNightmareState` (espelho de `functions/api/_nightmares.js`).
 - `MAX_FOUGHT_HISTORY` — Teto do histórico de noites já combatidas (mesmo teto de `MAX_NIGHTS`).
 - `NIGHTMARE_MAX_HEART_CURE` — Cura máxima de uma vitória: **meio coração**, e o teto é regra. O carinho é a cura PRINCIPAL de HP (até 1 coração/dia). Se vencer um pesadelo curasse mais que isso, o sono viraria a rota ótima de HP e o app estaria de novo premiando o resultado fisiológico.
