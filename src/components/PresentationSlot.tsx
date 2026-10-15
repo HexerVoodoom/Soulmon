@@ -1,4 +1,4 @@
-import { Component, Suspense, useEffect, type ErrorInfo, type ReactNode } from 'react';
+import { Component, Suspense, useEffect, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { reportCrash } from '../utils/crashReport';
 
 /** Tempo máximo esperando o pedaço (chunk) de um item carregar antes de pular ele e deixar a fila andar. */
@@ -26,10 +26,13 @@ export function PresentationSlot({ id, onFail, fallback = null, children }: {
 }
 
 function LoadWatchdog({ onTimeout, children }: { onTimeout: () => void; children: ReactNode }) {
+  // `onTimeout` costuma ser uma arrow inline do pai: com ele nas deps, cada re-render do App reiniciava os 8 s.
+  const ref = useRef(onTimeout);
+  ref.current = onTimeout;
   useEffect(() => {
-    const t = setTimeout(onTimeout, PRESENTATION_LOAD_TIMEOUT_MS);
+    const t = setTimeout(() => ref.current(), PRESENTATION_LOAD_TIMEOUT_MS);
     return () => clearTimeout(t);
-  }, [onTimeout]);
+  }, []);
   return <>{children}</>;
 }
 

@@ -128,7 +128,8 @@ export async function verifyPlayPurchase(env, { productId, purchaseToken, saveId
   const packageName = env.ANDROID_PACKAGE_NAME;
   if (!rawAccount || !packageName) return { ok: false, reason: 'billing-not-configured' };
 
-  const product = PRODUCTS[productId];
+  // `hasOwn`: "constructor"/"toString" vindos do cliente não podem passar por produto (herança de Object.prototype).
+  const product = typeof productId === 'string' && Object.hasOwn(PRODUCTS, productId) ? PRODUCTS[productId] : undefined;
   if (!product) return { ok: false, reason: 'unknown-product' };
   if (!purchaseToken || typeof purchaseToken !== 'string') return { ok: false, reason: 'missing-token' };
 

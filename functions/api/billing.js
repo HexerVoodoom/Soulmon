@@ -107,7 +107,7 @@ export async function onRequestPost({ request, env }) {
 
   // ASSINATURA (SKU `kind:'subscription'`): outro recurso da Google, outro
   // efeito (vigência da vitrine, nunca tier/Créditos). Ramo à parte de propósito.
-  if (provider === 'play' && PRODUCTS[body?.productId]?.kind === 'subscription') {
+  if (provider === 'play' && typeof body?.productId === 'string' && Object.hasOwn(PRODUCTS, body.productId) && PRODUCTS[body.productId].kind === 'subscription') {
     return handleSubscription(env, saveId, body);
   }
 

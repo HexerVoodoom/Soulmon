@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { areaLabel, type AreaId } from '../navigation';
 import { buildingIntroView } from '../utils/buildingIntroCopy';
 import type { BuildingId } from '../utils/gates';
@@ -29,10 +29,13 @@ export function unlockToastText(ids: readonly BuildingId[], language: Language):
  * A apresentação com o NPC só vem na PRIMEIRA entrada no prédio (`BuildingIntro`). Muda e sem recompensa (R-NOVA).
  */
 export function UnlockToast({ ids, language, onDone }: { ids: readonly BuildingId[]; language: Language; onDone: () => void }) {
+  // `onDone` costuma ser uma arrow inline do pai (identidade nova a cada render): fora das deps, para o re-render do App não reiniciar o tempo.
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
   useEffect(() => {
-    const t = setTimeout(onDone, UNLOCK_TOAST_MS);
+    const t = setTimeout(() => doneRef.current(), UNLOCK_TOAST_MS);
     return () => clearTimeout(t);
-  }, [onDone]);
+  }, []);
   return (
     <button
       type="button"
