@@ -352,7 +352,12 @@ export async function onRequest({ request, env }) {
         if (ci) state.checkIns = ci; else delete state.checkIns;
       }
     }
-    const serialized = JSON.stringify(state);
+    // JSON aninhado fundo cabe no teto de bytes mas estoura a pilha em `JSON.stringify` (RangeError → exceção solta/500): recusa 400.
+    let serialized;
+    try { serialized = JSON.stringify(state); } catch {
+      console.warn('save: POST recusado, state não serializa (aninhamento profundo demais)', { saveIdPrefix: saveId.slice(0, 8) });
+      return Response.json({ error: 'Missing or invalid state' }, { status: 400, headers: CORS });
+    }
     // BYTES, nao caracteres (PR13): UTF-8 chega a 3 bytes por caractere. So mede de verdade quando o pior caso poderia estourar.
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
     if (bytes > MAX_STATE_BYTES) {
