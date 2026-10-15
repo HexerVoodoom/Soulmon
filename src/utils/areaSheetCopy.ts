@@ -32,7 +32,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  * área, `propostas/<area>/mock.html`, descontada a barra do topo). Área que
  * ainda não chegou em F5 não aparece aqui e segue no lote de exemplo acima.
  */
-export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro';
+export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro' | 'restaurante';
 export type ArenaLotId = 'torneio' | 'duelo';
 export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats' | 'perfil';
 export type HallLotId = 'biblioteca' | 'amigos' | 'guilda' | 'feira';
@@ -59,6 +59,8 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   // ⚒️ 07/10/2026 (reforma dos lotes, pedido do dono): o Soulsmith — os EQUIPAMENTOS. Coluna da ESQUERDA, alinhada com Itens e Background, no chão livre de baixo;
   // a direita de baixo fica livre para uma futura loja.
   { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '26%', top: '81%', width: '44%' },
+  // 🏗️ 14/10/2026 (dono): o Restaurante em obra ocupa a direita de baixo que ficava livre. Só vitrine: NPC e fala, sem ação, sem Vínculo mínimo.
+  { id: 'restaurante', labelPt: 'Restaurante', labelEn: 'Restaurant', ariaPt: 'Falar com o pedreiro do Restaurante em obra', ariaEn: 'Talk to the builder of the Restaurant under construction', left: '73%', top: '81%', width: '40%' },
 ];
 
 // ⚔️ 11/10/2026 (guilda-lancamento PR1): TORNEIO = ranqueado (o servidor sorteia o oponente pela sua

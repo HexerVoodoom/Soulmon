@@ -132,6 +132,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'A peça chega crua e melhora com o material que você traz. Escolha o lado que quiser reforçar, sem pressa.',
     lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
   },
+  // 🏗️ Restaurante em obra (14/10/2026, dono): caranguejo pedreiro de tijolo. Só fala; sem ação, sem preço, sem cobrança.
+  'mercado:restaurante': {
+    namePt: 'Tijolino, o pedreiro', nameEn: 'Tijolino, the bricklayer',
+    linePt: 'Estamos em obra! Em breve o restaurante abre as portas e eu vou poder cozinhar comidas especiais por aqui. Volte logo!',
+    lineEn: "We're under construction! Soon the restaurant will open its doors and I'll be able to cook special meals here. Come back soon!",
+  },
   'arena:duelo': {
     namePt: 'Naia, a pescadora', nameEn: 'Naia, the net-fisher', // 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte)
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
