@@ -1,3 +1,0 @@
-import{e as n,ax as u,av as e,au as x,aw as f,ay as T,j as d}from"./index-CKELXjmx.js";import{N as A}from"./NpcSequence-DfjY0Igf.js";import{A as i}from"./index-DZdiV5YF.js";import"./vendor-DDxydHEc.js";import"./TypewriterText-CGgesyXL.js";function E({language:r,onFinish:m}){const p=n.useMemo(()=>u.map(t=>{const o=e(t.speech,r),a=t.id.startsWith("map-")?t.id.slice(4):null;if(!a||!t.areas||!(a in i))return{speaker:f(r),art:x,text:o};const c=t.areas.map(s=>`• ${e(s.name,r)}: ${e(s.line,r)}`).join(`
-`);return{speaker:T(a,r).name,art:i[a],text:`${o}
-${c}`}}),[r]);return d.jsx(A,{lines:p,language:r,onFinish:m,label:r==="pt-BR"?"Tutorial do mapa":"Map tutorial"})}export{E as MapTutorial,E as default};

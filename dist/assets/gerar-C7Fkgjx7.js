@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/motor-DXOrBZX1.js","assets/index-CKELXjmx.js","assets/vendor-DDxydHEc.js","assets/index-D2NmwZvr.css","assets/oracle-m9t5DVvS.js"])))=>i.map(i=>d[i]);
-import{c8 as r}from"./index-CKELXjmx.js";import"./vendor-DDxydHEc.js";async function n(e,t,i){const[o,a]=await Promise.all([r(()=>import("./familias-lo-OTGs5.js"),[]),r(()=>import("./motor-DXOrBZX1.js"),__vite__mapDeps([0,1,2,3,4]))]);return a.generateOracleWithFamilies(e,o,t,i)}export{n as generateOracleAsync};
