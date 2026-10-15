@@ -9,7 +9,7 @@ const TERCA = new Date(2026, 9, 13, 10, 0, 0); // terça
 const act = (id: string, name: string, days: number[]) => ({ id, name, steps: [], weekDays: days, schedule: { kind: 'weekdays', days } });
 const todos = [0, 1, 2, 3, 4, 5, 6];
 
-describe('REGISTRO §64 — reafirmar o dia: regra pura', () => {
+describe('REGISTRO §65 — reafirmar o dia: regra pura', () => {
   it('candidatos: hábito diário, agendada que cai hoje e tarefa de hoje; fora o que não cai hoje, o futuro e o já feito', () => {
     const c = dayPlanCandidates({
       activities: [

@@ -51,7 +51,7 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete, existing
   const [areas, setAreas] = useState<LifeArea[]>([]);
   const [struggles, setStruggles] = useState<StruggleId[]>([]);
   const [strengths, setStrengths] = useState<StrengthId[]>([]);
-  /* REGISTRO §64 (dono, 15/10/2026): o ponto de partida nasce DESMARCADO. O "todas marcadas" do beta-2 (7.3) foi SUBSTITUÍDO — a
+  /* REGISTRO §65 (dono, 15/10/2026): o ponto de partida nasce DESMARCADO. O "todas marcadas" do beta-2 (7.3) foi SUBSTITUÍDO — a
      pessoa reafirma o que quer fazer e só entra o que ela marcou (mesma regra do modal diário de metas, `DayGoalsModal`).
      Guardamos o que foi MARCADO por id: a lista de sugestões muda quando a pessoa volta e troca as escolhas, e o marcado
      que ainda existe segue marcado. */

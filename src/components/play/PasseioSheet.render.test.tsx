@@ -233,7 +233,7 @@ describe('F1 — todo desafio do catálogo tem sinal visual', () => {
   });
 });
 
-describe('o achado de ontem dentro da folha do Passeio (REGISTRO §64, 15/10/2026)', () => {
+describe('o achado de ontem dentro da folha do Passeio (REGISTRO §65, 15/10/2026)', () => {
   const achado = {
     adventure: { id: 'x-achado', emoji: '🐚', titlePt: 'Uma concha', titleEn: 'A shell', textPt: 'Brilhava na areia.', textEn: 'It shone in the sand.' },
     isNew: true,

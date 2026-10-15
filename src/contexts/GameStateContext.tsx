@@ -506,7 +506,7 @@ export interface GameState {
   lastCelebratedLevel?: number;
   /** Recompensas diárias da Oficina (dia do jogador, itens creditados e eventos idempotentes). */
   focusLoot?: FocusLootLedger;
-  /** Reafirmar o dia (15/10/2026, `utils/dayPlan.ts`, REGISTRO §64): o que a pessoa marcou para HOJE entre o que já cadastrou. Só o marcado aparece no Hoje; o não marcado não aparece e a virada não o julga. Ausente = save anterior: a 1ª abertura grava o plano de hoje como já reafirmado (a lista do dia já estava montada). */
+  /** Reafirmar o dia (15/10/2026, `utils/dayPlan.ts`, REGISTRO §65): o que a pessoa marcou para HOJE entre o que já cadastrou. Só o marcado aparece no Hoje; o não marcado não aparece e a virada não o julga. Ausente = save anterior: a 1ª abertura grava o plano de hoje como já reafirmado (a lista do dia já estava montada). */
   dayPlan?: DayPlan;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];

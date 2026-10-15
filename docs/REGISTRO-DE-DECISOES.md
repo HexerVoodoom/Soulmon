@@ -2511,7 +2511,13 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 
 - **Decisão do dono:** o NPC do Perfil troca o mascote pixel art 384² pelo Corvo em estilo NPC (variação 1 do lote, 1024² reduzido a 768² com Lanczos, alfa normalizado a 255 onde ≥250). Arquivo novo `npcs/npc-perfil-corvo.png`; só `LOT_NPC_ART['laboratorio:perfil']` aponta para ele. Nome 'Mysterious Soulmon' / 'Soulmon Misterioso' mantido; `mascot-raven.png` intocado (mascote em outros lugares).
 
-## 64. Início do dia: o achado dentro do Passeio e a reafirmação diária das metas (pedido do dono, 15/10/2026)
+## 64. Pools de alinhamento do oráculo ampliados (dono, 15/10/2026)
+
+- **Pedido do dono:** benevolência ganha elegante, imponente, confiante, corajoso, benevolente; harmonia ganha gentil, harmonioso, equilibrado, sábio, sereno.
+- **Feito** (`utils/oracle/motor.ts`): `TYPE_LOOK` +5 itens por alinhamento (24 para 29) e `ALIGNMENT_TRAIT_WORDS` +3 pares PT/EN em cada (4 para 7), tudo ANEXADO NO FIM dos arrays.
+- **Efeito:** o sorteio por semente usa o tamanho do array, então sementes futuras de harmonia/benevolência podem sortear itens/traços diferentes. Soulmon já gerados não mudam (o prompt fica gravado no save).
+
+## 65. Início do dia: o achado dentro do Passeio e a reafirmação diária das metas (pedido do dono, 15/10/2026)
 
 *Pedido:* (1) o pop-up "do que foi encontrado pelo Soulmon" deve ser INTEGRADO ao modal do stroll (passeio) — um fluxo só, mantendo a regra de que "From Yesterday's Adventure" associa o resultado ao scroll escolhido no dia anterior; (2) o pop-up "Set goals / Add tasks to list" vira uma lista de caixas de marcar com as tarefas/hábitos JÁ cadastrados; a cada dia a pessoa REAFIRMA o que quer fazer, as caixas vêm DESMARCADAS e só o marcado aparece no Hoje; o não marcado não aparece e NÃO conta como falha/quebra.
 

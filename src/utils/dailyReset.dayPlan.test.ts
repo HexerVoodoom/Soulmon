@@ -1,5 +1,5 @@
 /**
- * REGISTRO §64 — reafirmar o dia: o hábito que a pessoa NÃO marcou para aquele dia não aparecia na lista e a virada NÃO o
+ * REGISTRO §65 — reafirmar o dia: o hábito que a pessoa NÃO marcou para aquele dia não aparecia na lista e a virada NÃO o
  * julga (sem falta, sem gasto de escudo). A meta do dia e o coração seguem a regra de sempre (só a lista e a constância mudam).
  */
 import { describe, it, expect } from 'vitest';
@@ -27,7 +27,7 @@ const estado = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe('a virada e o dia reafirmado (REGISTRO §64)', () => {
+describe('a virada e o dia reafirmado (REGISTRO §65)', () => {
   it('hábito NÃO marcado naquele dia: sem falta registrada na constância', () => {
     const plano = { day: '2026-08-04', offered: ['h1', 'h2'], picked: ['h2'], confirmed: true };
     const s: any = computeDailyReset(estado({ dayPlan: plano }) as any, { now: QUARTA } as any);

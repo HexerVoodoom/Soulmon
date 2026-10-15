@@ -2047,7 +2047,7 @@ export default function App() {
   /* 14/10/2026 (dono, REGISTRO §56): o botão Avisos saiu da Home; os avisos ACIONÁVEIS viram um balão leve na fila (`noticeToast`), 1× por dia cada. */
   const [noticeKey, setNoticeKey] = useState<NoticeToastKey | null>(null);
   const avisosKeysRef = useRef<string[]>([]);
-  /* REAFIRMAR O DIA (15/10/2026, REGISTRO §64): todo dia a pessoa marca, entre o que já cadastrou, o que quer fazer HOJE. Só o marcado
+  /* REAFIRMAR O DIA (15/10/2026, REGISTRO §65): todo dia a pessoa marca, entre o que já cadastrou, o que quer fazer HOJE. Só o marcado
      aparece no Hoje; o resto fica de fora e a virada não o julga. `dayPlan` (no save) guarda o instantâneo do que foi oferecido, o que foi
      marcado e se houve confirmação; o dia só "começa" (lista aparece) depois dela. */
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
@@ -4910,7 +4910,7 @@ export default function App() {
     return trv.strollSummary(gameState.crossings ?? CROSSINGS_EMPTY, dayKeyToIso(r.date) ?? r.date, language === 'pt-BR');
   }, [gameState.lastDayReport, gameState.crossings, trv, language]);
 
-  /** O achado de ontem também mora na folha do Passeio (REGISTRO §64) — o mesmo do resumo do dia, só enquanto é recente (≤ 2 dias). */
+  /** O achado de ontem também mora na folha do Passeio (REGISTRO §65) — o mesmo do resumo do dia, só enquanto é recente (≤ 2 dias). */
   const passeioAchado = useMemo(() => {
     const r = gameState.lastDayReport;
     if (!r || !aventuraDaNoite) return null;
@@ -5092,7 +5092,7 @@ export default function App() {
     if (checkInPromptedRef.current === hoje) return;
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
-    // Reafirmar o dia (REGISTRO §64): o compromisso só enxerga o que a pessoa marcou para hoje (sem reafirmação feita, nada).
+    // Reafirmar o dia (REGISTRO §65): o compromisso só enxerga o que a pessoa marcou para hoje (sem reafirmação feita, nada).
     const visaoDoDia = dayPlanView(gameState.dayPlan, playerDayIso(now, gameState.playerDayTz), hasCompletedOnboarding && hasCompletedTutorial);
     const plan = checkInPlan(
       visaoDoDia.hideAll || visaoDoDia.hidden.size > 0
@@ -7671,7 +7671,7 @@ export default function App() {
                        segunda definição (footgun 9). */
                     variant="home"
                     dayComplete={diaCompletoHoje}
-                    /* Reafirmar o dia (REGISTRO §64): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
+                    /* Reafirmar o dia (REGISTRO §65): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
                     dayPlan={{
                       view: dayPlanViewNow,
                       invite: dayPlanInvite(gameState.dayPlan, dayPlanToday, dayPlanActive) && dayPlanCandidatesNow.length > 0,
@@ -8439,7 +8439,7 @@ export default function App() {
         />
         </PresentationSlot>
       )}
-      {/* REAFIRMAR O DIA — o modal centralizado de caixas (desmarcadas) com o que já está cadastrado; só o marcado vai para o Hoje (REGISTRO §64). */}
+      {/* REAFIRMAR O DIA — o modal centralizado de caixas (desmarcadas) com o que já está cadastrado; só o marcado vai para o Hoje (REGISTRO §65). */}
       {interstitial === 'dayGoals' && (
         <PresentationSlot id="dayGoals" onFail={() => presentation.fail('dayGoals')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DayGoalsModal

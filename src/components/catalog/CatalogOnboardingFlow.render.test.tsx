@@ -29,7 +29,7 @@ describe('CatalogOnboardingFlow', () => {
     expect(continuar().getAttribute('aria-disabled')).toBe('true');
   });
 
-  // REGISTRO §64 (dono, 15/10/2026): o starter set nasce DESMARCADO (substitui o "todas marcadas" do beta-2 7.3): a pessoa
+  // REGISTRO §65 (dono, 15/10/2026): o starter set nasce DESMARCADO (substitui o "todas marcadas" do beta-2 7.3): a pessoa
   // reafirma o que quer fazer e só entra o que ela marcou. Mudou o contrato, não o código de teste à toa.
   function ate_o_ponto_de_partida(props: Record<string, unknown> = {}) {
     const onComplete = vi.fn();

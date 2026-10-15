@@ -314,7 +314,7 @@ export async function onRequest({ request, env }) {
       const q = sanitizeFocusLoot(state.focusLoot);
       if (q) state.focusLoot = q; else delete state.focusLoot;
     }
-    // Plano do dia (15/10/2026, REGISTRO §64): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
+    // Plano do dia (15/10/2026, REGISTRO §65): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
     if ('dayPlan' in state) {
       const q = sanitizeDayPlan(state.dayPlan);
       if (q) state.dayPlan = q; else delete state.dayPlan;

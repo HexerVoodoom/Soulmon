@@ -1,4 +1,4 @@
-/** Forma segura do plano do dia (espelho de src/utils/dayPlan.ts › sanitizeDayPlan; REGISTRO §64). */
+/** Forma segura do plano do dia (espelho de src/utils/dayPlan.ts › sanitizeDayPlan; REGISTRO §65). */
 export const DAY_PLAN_MAX_IDS = 200;
 const ID_RE = /^[\w:.-]{1,120}$/;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
