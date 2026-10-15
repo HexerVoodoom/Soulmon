@@ -204,7 +204,9 @@ export function useProgressTracking(gameState: ProgressState) {
           : !!activity.completedToday && activity.lastCompletedDate === today;
 
       if (isComplete) {
+        // Categoria fora do catálogo (save velho/de outra versão): não soma, mas também não derruba a Home.
         const attrs = CATEGORY_ATTRIBUTES[activity.category];
+        if (!attrs) return;
         power += attrs.power;
         harmony += attrs.harmony;
         benevolence += attrs.benevolence;

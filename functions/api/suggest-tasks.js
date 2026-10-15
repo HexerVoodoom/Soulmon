@@ -25,7 +25,8 @@ export async function onRequestOptions() {
 
 export async function onRequestPost({ request, env }) {
   try {
-    const body = await request.json();
+    // `null`/vazio/JSON quebrado davam TypeError -> 500; o contrato para corpo sem objetivo é 400.
+    const body = (await request.json().catch(() => null)) ?? {};
     // N-3: o objetivo é texto livre do usuário e sai para um processador nos
     // EUA. Identificadores diretos não ajudam a sugerir hábito — não saem daqui.
     const goalMin = minimizeForAi((body.goalText || '').toString().trim(), 300);

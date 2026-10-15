@@ -265,7 +265,7 @@ export async function onRequest({ request, env }) {
     // Um save é um OBJETO — array e primitivo são recusados, não convertidos.
     const incoming = body?.state;
     if (typeof incoming !== 'object' || incoming === null || Array.isArray(incoming)) {
-      console.warn('save: POST recusado, state não é objeto', { saveId, tipo: Array.isArray(incoming) ? 'array' : typeof incoming });
+      console.warn('save: POST recusado, state não é objeto', { saveIdPrefix: saveId.slice(0, 8), tipo: Array.isArray(incoming) ? 'array' : typeof incoming });
       return Response.json({ error: 'Missing or invalid state' }, { status: 400, headers: CORS });
     }
     const state = { ...incoming };
@@ -325,7 +325,7 @@ export async function onRequest({ request, env }) {
         try { guardado = JSON.parse(prev.value).fichaJornada; } catch { guardado = undefined; }
       }
       const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
-      if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveId, estagios: mexeu });
+      if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
     }
     // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so
@@ -346,7 +346,7 @@ export async function onRequest({ request, env }) {
     // BYTES, nao caracteres (PR13): UTF-8 chega a 3 bytes por caractere. So mede de verdade quando o pior caso poderia estourar.
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
     if (bytes > MAX_STATE_BYTES) {
-      console.warn('save: POST recusado, state acima do teto', { saveId, bytes });
+      console.warn('save: POST recusado, state acima do teto', { saveIdPrefix: saveId.slice(0, 8), bytes });
       return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
     }
     // `f` = a data da 1ª gravação deste save, em ms (teto S1 do duelo, `_duel.js` › `maxLevelFor`). É o ÚNICO

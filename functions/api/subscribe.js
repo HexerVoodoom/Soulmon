@@ -44,6 +44,8 @@ export async function onRequestPost({ request, env }) {
   let body;
   try {
     body = await request.json();
+    // `null`/número/lista no JSON davam TypeError ao desestruturar (exceção solta, 500 do runtime).
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('not an object');
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
       status: 400,
@@ -156,6 +158,8 @@ export async function onRequestDelete({ request, env }) {
   let body;
   try {
     body = await request.json();
+    // `null`/número/lista no JSON davam TypeError ao desestruturar (exceção solta, 500 do runtime).
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('not an object');
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
       status: 400,

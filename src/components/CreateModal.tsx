@@ -313,6 +313,7 @@ export function CategoryChips({
  */
 export function StrengthensLine({ category, isPt }: { category: ActivityCategory; isPt: boolean }) {
   const attributes = CATEGORY_ATTRIBUTES[category];
+  if (!attributes) return null; // categoria fora do catálogo (save velho): sem a linha, em vez de derrubar a folha
   const keys: BranchType[] = ['power', 'harmony', 'benevolence'];
   const top = Math.max(...keys.map(k => attributes[k]));
   const winners = keys.filter(k => attributes[k] === top);

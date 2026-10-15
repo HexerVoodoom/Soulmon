@@ -263,7 +263,9 @@ export async function handleGuild({ request, env }) {
   const action = alias ? COOP_ALIASES[pedida] : pedida;
   const method = request.method;
   if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json({ error: 'unknown action' }, 400);
-  const body = method === 'POST' ? await request.json().catch(() => ({})) : {};
+  // `null` no JSON passava do `catch` e dava TypeError em `body.id`: corpo que não é objeto vira `{}`.
+  const parsed = method === 'POST' ? await request.json().catch(() => null) : null;
+  const body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
   const id = body.id || url.searchParams.get('id');
 
   // O envelope e as palavras dos erros seguem quem chamou: o cliente antigo lê
