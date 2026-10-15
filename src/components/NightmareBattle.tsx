@@ -57,7 +57,7 @@ import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
 import { playVictory } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -155,7 +155,7 @@ export function NightmareBattle({
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
   const petEl = fxElementId(ident.basico.elemento);
-  const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
+  const enemyEl = fxElementId(dungeonEnemyElement(enemy));
   const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
 
   const novaSemente = () => {
@@ -209,7 +209,7 @@ export function NightmareBattle({
   const cena = useCallback((): GroupScene => {
     const e = waveRef.current[idxRef.current];
     const p = jogadorRef.current;
-    const foeEl = fxElementId(visualElementFor(e?.stage ?? 'x'));
+    const foeEl = fxElementId(dungeonEnemyElement(e));
     return {
       playerMaxHp: Math.max(1, Math.round(dungeonPlayerSide(p).combatant.hp)),
       foeMaxHp: [Math.max(1, Math.round(e?.foe.combatant.hp ?? 1))],
@@ -282,7 +282,7 @@ export function NightmareBattle({
       >
         <BattleStage
           specialLabel={specialLabel(isPt, par?.especial)}
-          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
           isPt={isPt}
           scene={NIGHTMARE_SCENE.bg}
           me={{
