@@ -36,7 +36,8 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  5. `buildingIntro` — o NPC do prédio, SÓ na primeira entrada nele (tela cheia, sequência de falas);
  *  5b. `mapTutorial` — o tutorial do mapa (corvo e NPCs de área em `NpcSequence`), UMA vez, na 1ª abertura do Mapa;
  *  6. `catalogOnboarding` — escolher as primeiras metas (depende de já ter visto o resumo);
- *  7. `checkIn` — se comprometer com as tarefas do dia (depende do resumo e das metas);
+ *  6b. `dayGoals` — reafirmar o dia: marcar, entre o que já cadastrou, o que quer fazer HOJE (REGISTRO §66; depende do resumo e das metas);
+ *  7. `checkIn` — se comprometer com as tarefas do dia (depende do resumo e das metas; só vê o que foi marcado em `dayGoals`);
  *  8. `evolveTask` — "crie mais atividades" depois de evoluir;
  *  9. `groveMilestone`, 10. `dream`, 11. `nightmare`, 12. `catalogLevelInvite`, 13. `restSetup` — avisos leves;
  * 14. `unlockToast` — balãozinho NÃO bloqueante "<Prédio> desbloqueado no <local>" (nunca sticky: qualquer modal pronto o substitui);
@@ -51,6 +52,7 @@ export const PRESENTATION_ORDER = [
   'buildingIntro',
   'mapTutorial',
   'catalogOnboarding',
+  'dayGoals',
   'checkIn',
   'evolveTask',
   'groveMilestone',

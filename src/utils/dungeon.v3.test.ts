@@ -179,7 +179,7 @@ describe('AC10. skill (P4): "does not act" × "plays well" ≤ 25pp, measured in
 describe('PR4b (contexto §2.19): no cheer (torcida) in the Dungeon or the Nightmare — the Soulmon goes alone', () => {
   const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
   const semComentarios = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  it('the offline/balance engine of the Dungeon sequence ignores the live cheer (the cheer is a live bonus only; REGISTRO §66)', () => {
+  it('the offline/balance engine of the Dungeon sequence ignores the live cheer (the cheer is a live bonus only; REGISTRO §69)', () => {
     // the simulation ignores a forged `cheer`: same result with and without the field
     const c = cell(3);
     const a = simulateDungeonRunV3(c, 3, 'media', 5);
@@ -187,7 +187,7 @@ describe('PR4b (contexto §2.19): no cheer (torcida) in the Dungeon or the Night
     expect(b).toEqual(a);
   });
   for (const tela of ['components/DungeonGame.tsx', 'components/NightmareBattle.tsx']) {
-    it(`${tela}: the cheer is BACK (owner, 15/10/2026, REGISTRO §66): mascot, tap, torcida: true`, () => {
+    it(`${tela}: the cheer is BACK (owner, 15/10/2026, REGISTRO §69): mascot, tap, torcida: true`, () => {
       const raw = ler(tela);
       const src = semComentarios(raw);
       expect(src).toMatch(/torcida:\s*true/);

@@ -29,10 +29,11 @@
 | 1 | `welcomeTour` | tour do corvo (primeiro uso) | `STORAGE_KEYS.WELCOME_TOUR_SHOWN`, ao fechar (uma vez por aparelho; só quem nunca concluiu nada) | "Let's go" / Skip / Esc / voltar |
 | 2 | `triage` | "Arrumar a pilha" — a ÚNICA aberta por toque | nada (o gesto é o pedido) | resolver / fechar / voltar |
 | 3 | `levelUp` | `LevelUpOverlay` (+ "Now Open") | `lastCelebratedLevel` via `applyLevelUpCelebrated`, no `onShow` (restaura energia/HP 1×) | toque / voltar |
-| 4 | `dailyReport` | resumo do dia: modal CENTRALIZADO "como foi ontem" + corações; depois a aventura ("From Yesterday's Adventure", com o NPC do scroll); depois "hoje" (humor/convite/memórias) | `STORAGE_KEYS.DAILY_REPORT_SHOWN = report.date`, no `onShow`; `lastDayReport.heartsAnimSeen` marca a animação do coração | "Começar o dia" / ✕ / Esc / voltar |
+| 4 | `dailyReport` | resumo do dia: modal CENTRALIZADO "como foi ontem" + corações; depois a aventura ("From Yesterday's Adventure", com o NPC do scroll; o conteúdo é o `StrollFind`, a mesma peça da folha do Passeio, ligada ao scroll escolhido ontem — §66); depois "hoje" (humor/convite/memórias) | `STORAGE_KEYS.DAILY_REPORT_SHOWN = report.date`, no `onShow`; `lastDayReport.heartsAnimSeen` marca a animação do coração | "Começar o dia" / ✕ / Esc / voltar |
 | 5 | `buildingIntro` | NPC apresenta o prédio SÓ na PRIMEIRA ENTRADA nele (`visitarPredio`): tela cheia, `NpcSequence`. Nunca no level-up nem ao abrir o Mapa | `buildingIntrosSeen` (id do prédio), gravado na hora em que a intro abre; save antigo é semeado com os prédios já abertos (não reapresenta) | toque na última fala / Pular / Esc / voltar |
 | 5b | `mapTutorial` | tutorial do mapa (`MapTutorial`, na `NpcSequence`): o corvo abre e cada área é uma fala do NPC dela, listando os prédios. SÓ na 1ª abertura do Mapa, depois do tour | `mapTutorialSeen` no SAVE, gravado ao MOSTRAR (REGISTRO §51; save antigo com progresso é semeado como visto) | toque na última fala / Pular / Esc / voltar |
-| 6 | `catalogOnboarding` | "Add tasks to list" — escolher as primeiras metas (modal CENTRALIZADO) | `markCatalogOnboardingSeen`, ao confirmar (ritual com RESPOSTA) | confirmar (sem "pular", decisão C11) |
+| 6 | `catalogOnboarding` | "Add tasks to list" — escolher as primeiras metas (modal CENTRALIZADO; as sugestões nascem DESMARCADAS, §66) | `markCatalogOnboardingSeen`, ao confirmar (ritual com RESPOSTA) | confirmar (sem "pular", decisão C11) |
+| 6b | `dayGoals` | REAFIRMAR O DIA (REGISTRO §66): modal CENTRALIZADO de caixas, desmarcadas, com os hábitos/tarefas JÁ cadastrados que caem hoje; só o marcado vai para o Hoje | `dayPlan` (save), gravado AO MOSTRAR (`{ day, offered, picked: [], confirmed: false }`) | Confirmar / ✕ / Esc / voltar (sem confirmar = lista vazia + convite, não reabre no dia) |
 | 7 | `checkIn` | `MorningCheckIn` — se comprometer com as tarefas do dia | `lastCheckInDate`, ao confirmar/pular (ritual com RESPOSTA) | Definir / Pular / voltar |
 | 8 | `evolveTask` | `EvolveTaskModal` — "crie mais atividades" depois de evoluir | nada (derivado da evolução) | criar / fechar / voltar |
 | 9 | `groveMilestone` | marco do Bosque da Guilda | `acknowledgeGroveMilestone` | toque / voltar |
@@ -44,8 +45,8 @@
 | 14b | `noticeToast` | BALÃO não bloqueante de aviso acionável (refeição, Refúgio, termos, triagem, recomeço; toque abre a folha de Avisos), PT/EN, 1× por dia cada, NÃO sticky | `soulmon-notice-toast-seen` (`<dia>|<chaves>`), gravado ao MOSTRAR |
 | 15 | `welcome` | OCIOSO: instalar a PWA / pedir notificação; decide sozinho se tem algo a dizer | flags próprias | — |
 
-Dependências por ordem (não há `if` extra): a escolha de metas espera o resumo do dia; a escolha de metas e o
-compromisso do dia esperam o resumo e o mapa; o modal "crie mais atividades" só depois da cerimônia de evolução
+Dependências por ordem (não há `if` extra): a escolha de metas espera o resumo do dia; a escolha de metas, a reafirmação do dia e o
+compromisso do dia esperam o resumo e o mapa (a reafirmação também só abre depois de o resumo ter sido visto: `DAILY_REPORT_SHOWN`); o compromisso só enxerga o que foi marcado em `dayGoals`; o modal "crie mais atividades" só depois da cerimônia de evolução
 (`evolutionCeremony === null` está no "pronto" dele).
 
 ## 3. Persistência (o bug "abri de novo e vieram dois modais do mapa")
@@ -60,7 +61,7 @@ compromisso do dia esperam o resumo e o mapa; o modal "crie mais atividades" só
 * **Evento que NÃO chegou à tela** fica pendente e volta uma única vez — quando for mostrado, ganha a marca.
 * **Rituais com RESPOSTA** (`catalogOnboarding`, `checkIn`) seguem pendentes até a resposta: não são "avisos", são o
   compromisso em si (o check-in é no máximo 1×/dia por `lastCheckInDate`, gravada ao MOSTRAR). O item `checkIn` só depende de `MORNING_COMMITMENT_ENABLED` (§53), não de `CHECKINS_ENABLED`.
-* **Sem campo novo no save** — o contador do `fuzz2` não muda. A fila em si não persiste nada.
+* **Campo novo no save desde o §66:** `dayPlan` (o contador do `fuzz2` foi a 134); antes disso a fila não persistia nada. A fila em si não persiste nada.
 * **Custo aceito:** o app morto no instante em que o item entrou na tela perde aquele item (era a troca pedida: nunca
   repetir). O resumo do dia não se perde de verdade: os números ficam em `lastDayReport` e na tela de Evolução.
 

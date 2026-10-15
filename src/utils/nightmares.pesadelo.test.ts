@@ -17,7 +17,7 @@ import type { SequenceConfig } from './dungeonFight';
 import { SHADOW_SLOTS, nightmareShadowSprite, shadowSource } from './nightmareShadows';
 import { DUNGEON_LINE_SPRITES } from './sprites';
 import { VISUAL_ELEMENTS, fxElementId, fxFrame, FX_FALLBACK_ELEMENT, elementStrikeForm } from './combatFx';
-import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareMatchup } from './nightmareElement';
+import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx, nightmareIcon, nightmareMatchup } from './nightmareElement';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { EMBLEMS_PER_WIN } from './currencies';
 
@@ -173,10 +173,15 @@ describe('ELEMENTO PESADELO — exclusivo da mecânica', () => {
   it('matchup NEUTRO: nenhum elemento ganha ou perde vantagem por causa dele', () => {
     for (const el of [...VISUAL_ELEMENTS, 'neutro', undefined, null]) expect(nightmareMatchup(el)).toBe(0);
   });
-  it('sem arte instalada cai no FX procedural (neutro) — nada quebra; o encaixe pronto aceita os PNG', () => {
-    expect(hasNightmareFx()).toBe(false); // quando a arte entrar em src/assets/soulmon/pesadelo/, este teste vira "true" de propósito
-    expect(fxElementId(NIGHTMARE_ELEMENT)).toBe(FX_FALLBACK_ELEMENT);
-    for (const e of ['cast', 'aura', 'slash', 'impact', 'defended', 'orb'] as const) expect(fxFrame(NIGHTMARE_ELEMENT, e)).toBe(fxFrame('neutro', e));
+  it('ARTE INSTALADA (15/10/2026, procedural): o elemento tem os 6 estados e o ícone; o resto do app não o enxerga', () => {
+    expect(hasNightmareFx()).toBe(true); // era `false` até a arte entrar em src/assets/soulmon/pesadelo/ — agora é `true` de propósito
+    expect(fxElementId(NIGHTMARE_ELEMENT)).toBe(NIGHTMARE_ELEMENT);
+    for (const e of ['cast', 'aura', 'slash', 'impact', 'defended', 'orb'] as const) {
+      expect(nightmareFx(e), e).toBeTruthy();
+      expect(fxFrame(NIGHTMARE_ELEMENT, e)).toBe(nightmareFx(e));
+      expect(fxFrame(NIGHTMARE_ELEMENT, e)).not.toBe(fxFrame('neutro', e));
+    }
+    expect(nightmareIcon()).toBeTruthy();
     expect(elementStrikeForm(NIGHTMARE_ELEMENT, 'basica')).toBeTruthy();
   });
   it('os outros elementos continuam resolvendo como antes', () => {

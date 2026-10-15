@@ -173,8 +173,8 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   // 14/10/2026: a cadeia ternária `interstitial` virou a fila central (`PRESENTATION_ORDER`); a posição agora é lida dela.
   const ordem = PRESENTATION_ORDER as readonly string[];
 
-  it('a ordem declarada é: TOUR → triagem → LEVEL UP → resumo do dia → PRÉDIO NOVO → metas → check-in → modal de evolução → MARCO → sonho → pesadelo → convite de nível → sono → ocioso', () => {
-    expect(ordem).toEqual(['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
+  it('a ordem declarada é: TOUR → triagem → LEVEL UP → resumo do dia → PRÉDIO NOVO → metas → REAFIRMAR O DIA → check-in → modal de evolução → MARCO → sonho → pesadelo → convite de nível → sono → ocioso', () => {
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {

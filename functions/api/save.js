@@ -21,6 +21,7 @@ import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
+import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceDungeonDaily, enforceCheckIns } from './_dayCounters.js';
@@ -313,6 +314,11 @@ export async function onRequest({ request, env }) {
     if ('focusLoot' in state) {
       const q = sanitizeFocusLoot(state.focusLoot);
       if (q) state.focusLoot = q; else delete state.focusLoot;
+    }
+    // Plano do dia (15/10/2026, REGISTRO §66): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
+    if ('dayPlan' in state) {
+      const q = sanitizeDayPlan(state.dayPlan);
+      if (q) state.dayPlan = q; else delete state.dayPlan;
     }
     // Pesadelos (15/10/2026): `fought` so strings, ciclo do sonho bom (`lurkDays` <= 6, `goodDream` booleano, `goodDreams` 0..9999).
     // Espelho de `sanitizeNightmareState` (cliente); nunca recusa o save.

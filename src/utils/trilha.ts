@@ -51,6 +51,7 @@ import {
 import { isMuted } from './sounds';
 import { esquecerTema, pausarTema, retomarTema } from './tema';
 import { sintetizarPercussaoDaArena } from './trilhaArena';
+import { pausarPesadelo, retomarPesadelo } from './trilhaPesadelo';
 
 /** As faixas que este motor sabe tocar. O DIRETOR (`musica.ts`) decide qual, por superfície. */
 export type FaixaDaTrilha = 'loop' | 'masmorra' | 'arena';
@@ -286,6 +287,7 @@ export function consentirNestaSessao(): void {
 export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
   pausarTema(motivo); // o tema obedece aos mesmos motivos (S17)
   pausas.add(motivo);
+  pausarPesadelo(motivo); // a trilha de terror do Pesadelo obedece aos mesmos motivos
   parar(); // dormir não é troca de cena: corta (a rampa de 150 ms do tema basta)
 }
 
@@ -295,6 +297,7 @@ export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
 export function retomarTrilha(motivo: MotivoDePausa = 'sono'): void {
   retomarTema(motivo);
   pausas.delete(motivo);
+  retomarPesadelo(motivo);
   if (!pausada() && ligadaNestaSessao) void comecar();
 }
 

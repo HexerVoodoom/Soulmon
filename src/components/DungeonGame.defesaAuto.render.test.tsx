@@ -72,7 +72,7 @@ async function ateInimigoCair(limiteMs = 120_000) {
 }
 
 describe('Masmorra — a cena em tela cheia', () => {
-  it('a luta é a CENA: lutadores grandes, HP e ENERGIA do pet, COM o mascote da torcida (de volta, REGISTRO §66) e SEM barra de torcida — sem texto explicativo', () => {
+  it('a luta é a CENA: lutadores grandes, HP e ENERGIA do pet, COM o mascote da torcida (de volta, REGISTRO §69) e SEM barra de torcida — sem texto explicativo', () => {
     vi.useFakeTimers();
     montar();
     descer();
@@ -129,7 +129,7 @@ describe('Masmorra — a cena em tela cheia', () => {
   });
 });
 
-describe('Masmorra — com torcida (REGISTRO §66); a energia e o HP PERSISTEM entre os combates da run', () => {
+describe('Masmorra — com torcida (REGISTRO §69); a energia e o HP PERSISTEM entre os combates da run', () => {
   it('com torcida: o mascote está lá, sem barra, e 24 toques (teto de 16 por janela de 3 s) despejam UMA descarga no núcleo', async () => {
     vi.useFakeTimers();
     montar();
