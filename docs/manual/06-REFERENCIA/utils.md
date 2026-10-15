@@ -3025,6 +3025,11 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/components/BalanceWeekModal.tsx`, `src/components/CreateModal.tsx`
 **Régua:** nenhuma (`ls src/utils/weekdays*.test.ts` vazio).
 
+### `src/utils/missionTargets.ts`
+**Dono de:** PARA ONDE CADA MISSÃO LEVA (REGISTRO §62): tabela pura de destino por missão — um prédio do Mapa, a Home (cuidado, humor) ou nenhum.
+**Exports:** `GoTarget` (type) · `weeklyTarget(id)` · `achievementTarget(category)` · `dailyTarget(mission)`.
+**Régua:** `src/components/nav/missionCards.render.test.tsx`.
+
 ### `src/utils/dailyMissions.ts`
 **Dono de:** O catálogo de MISSÕES DIÁRIAS dos outros recursos (minijogos, foco, cuidado...), sorteadas por dia do jogador e pagas em 1 material (REGISTRO §52).
 **Exports:**

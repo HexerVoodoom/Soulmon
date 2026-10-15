@@ -7841,9 +7841,9 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   color: var(--sm2-muted);
 }
 .sm3-hoje-titulo b { color: var(--sm2-gold-ink); font-weight: 800; margin-left: 6px; }
-/* REGISTRO §57 — indicador único `Missão N/G` (algarismos tabulares, sem caixa alta própria). */
+/* REGISTRO §60 — indicador único `Missão N/G` (algarismos tabulares, sem caixa alta própria). */
 .sm3-missao { font-variant-numeric: tabular-nums; white-space: nowrap; }
-/* REGISTRO §57 — o balão aparece com um fade curto; sem animar se o usuário pediu menos (o HUD só põe a classe fora de `reducedMotion`). */
+/* REGISTRO §60 — o balão aparece com um fade curto; sem animar se o usuário pediu menos (o HUD só põe a classe fora de `reducedMotion`). */
 .sm3-balao { animation: sm3-balao-in var(--sm2-dur-tap) var(--sm2-ease) both; }
 @keyframes sm3-balao-in { from { opacity: 0; } to { opacity: 1; } }
 /* Beta-2 (2.4) — `Today` cromado DISCRETO: o texto recebe um degradê vertical
