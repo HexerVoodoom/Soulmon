@@ -1262,11 +1262,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ **`mission-perfect-30` lê `missionPerfectDays`, não `totalPerfectDays`** (decisão do dono #41/#60, 22/09/2026): a MISSÃO segue contando o 🌀 Glitchtama; quem deixou de contá-lo é `utils/achievements.ts`. São duas perguntas diferentes — "você cumpriu 30 dias?" × "você acumulou 30 marcas?" — e por isso são dois contadores, em vez de um número com dois significados. Quem monta o objeto usa `?? totalPerfectDays`: save anterior à decisão não tem o campo, e ali o vitalício antigo JÁ incluía os 🌀, então a missão nunca anda para trás.
 **Regra de negócio:** Missões permanentes liberam a compra dos 6 cenários exclusivos da loja. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/starterElements.ts`
+**Dono de:** o elemento base dos 5 iniciais (REGISTRO §73) — dados leves.
+**Exports:** `STARTER_ELEMENT` (`industrial`→terra, `nascente`→som, `alento`→ar, `vida`→vida, `meteoro`→fogo), `STARTER_ALIGNMENT` (Poder/Harmonia/Benevolência), `starterElementOf(id)`, `petElementOf(state)` (o elemento de combate do pet: o do inicial, senão `soulmonMeta.dominantElement`; usado pelo `App` em Arena/Masmorra/Pesadelo/Torneio/aura).
+
+### `src/utils/starterSkills.ts`
+**Dono de:** o par básica/especial dos iniciais (`StageSkills` sintético, 1 elemento + 1 escola por inicial, `STARTER_SCHOOL`). `starterSkillsFor(id)`. Puxa o motor da ficha: só por `import()` dinâmico (o `App` grava em `soulmonSkills` uma vez).
+
 ### `src/utils/monetization.ts`
 **Dono de:** Tier de conta, personagens pré-prontos do modo demo, pacotes de crédito e o portão único de criação de atividade.
 **Exports:**
 - `AccountTier` (type) — `'demo' | 'paid'`
-- `PremadeCharacter` (interface) — campos: `id` (`StarterId`: `'industrial' | 'nascente' | 'alento' | 'vida' | 'meteoro'`), `name`, `bioPt`, `bioEn`, `elementId`, `essence`, `typePt`, `typeEn` (desde 07/10/2026).
+- `PremadeCharacter` (interface) — campos: `id` (`StarterId`: `'industrial' | 'nascente' | 'alento' | 'vida' | 'meteoro'`), `name`, `bioPt`, `bioEn`, `elementId` (elemento BASE, `StarterElement`), `essence`, `typePt`, `typeEn` (desde 07/10/2026; elemento base desde 15/10/2026).
 - `PREMADE_CHARACTERS` — Os **cinco** personagens iniciais (desde 07/10/2026; eram seis — `kaelen`/`orrin`/`thalindra`/`igni`/`nautilu`/`astrase` — e deixaram de ser oferecidos, mas seguem resolvendo sprite em save antigo). Nome vem de `STARTER_NAMES` (`sprites.ts`); tipo e mapeamento ao class-system em `02-REGRAS-DE-NEGOCIO.md` §62. ⚠️ **SEM SUFIXO `-mon`** (`CLAUDE.md`, seção de arte).
 - `function getDemoSprite(characterId: string, stage: string): string` — Sprite de um personagem pré-pronto (modo demo) num nível dado — usado na tela de escolha do onboarding. getSpriteForStage já sabe resolver isso quando um demoCharacterId é passado (ver utils/sprites.ts).
 - `function getDemoCreatureStages(character: PremadeCharacter): CreatureStage[]` — Formas do modo demo pra alimentar a página de Evolução (EvolutionPath.tsx), que espera uma árvore CreatureStage[] no formato do oráculo.

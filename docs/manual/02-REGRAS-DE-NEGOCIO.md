@@ -6007,13 +6007,15 @@ de conserto silencioso.
 
 **Os 5 iniciais** (`PREMADE_CHARACTERS`, `src/utils/monetization.ts`; id, arte e nome em `src/utils/sprites.ts` — `STARTER_IDS`/`STARTER_SPRITES`/`STARTER_NAMES`; arte em `src/assets/soulmon/starters/<id>.png`, 512², alfa binário):
 
-| id | Nome | Tipo (PT / EN) | Essências (`derivedElements.ts`) | `ElementId` do oráculo |
+| id | Nome | O que é | Elemento (PT / EN) | Divisão |
 |---|---|---|---|---|
-| `industrial` | Crato | Aço + Aríete / Steel + Battering Ram | `aco` + `ariete` | `industrial` |
-| `nascente` | Brooka | Nascente + Melodia Vital / Spring + Vital Melody | `nascente` + `melodia` | `agua` |
-| `alento` | Zefi | Alento / Breath | `alento` | `ar` |
-| `vida` | Oaken | Vida / Life | `vida` (elemento base) | `planta` |
-| `meteoro` | Bolid | Meteoro / Meteor | `meteoro` | `fogo` |
+| `industrial` | Crato | tartaruga de caixotes | Terra / Earth | Benevolência |
+| `nascente` | Brooka | pato | Som / Sound | Harmonia |
+| `alento` | Zefi | borboleta | Ar / Air | Benevolência |
+| `vida` | Oaken | planta (árvore) | Vida / Life | Benevolência |
+| `meteoro` | Bolid | o vermelho (brasa) | Fogo / Fire | Poder |
+
+Desde 15/10/2026 (REGISTRO §73) cada inicial usa **um elemento base** (`STARTER_ELEMENT`, `src/utils/starterElements.ts`) nos golpes, no FX, na aura, na vantagem da Arena e no tipo exibido; as skills (nome PT/EN, escola, selo do especial) são sintéticas em `src/utils/starterSkills.ts`. Tabela completa antes→depois: `docs/ELEMENTOS-DOS-INICIAIS.md`.
 
 ⚠️ **Um sprite por criatura, o MESMO em todos os estágios (rookie→ultra)** — limitação declarada: a evolução visual vem depois (a mecânica de evolução não muda). Os 6 ids **antigos** (`kaelen`/`orrin`/`thalindra`/`igni`/`nautilu`/`astrase`) **não são mais oferecidos**, mas seguem em `LEGACY_PREMADE_IDS`: `hydrateSave` os aceita e `getSpriteForStage` os resolve como sempre (continuam sendo linhas da masmorra e NPCs da Biblioteca). Os iniciais ficam **fora** de `DUNGEON_LINE_SPRITES` (9 linhas × 4 tiers, contadas por teste).
 
