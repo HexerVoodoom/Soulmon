@@ -7,8 +7,8 @@
  * o especial herda o mesmo elemento (é o `elEspecial` de `elementosDoStage`), então básica e especial são do elemento do inicial.
  * Determinístico por `starter:<id>`. Não mexe em HP, dano nem evolução.
  *
- * ⚠️ A FORMA do golpe vem da ESCOLA (`SCHOOL_STRIKE_FORM`, regra do jogo: com ficha a escola decide, sem ficha o elemento —
- * `ELEMENT_STRIKE_FORM`). Escolhi a escola pelo corpo da criatura; onde ela não bate com a tabela do elemento, está no teste.
+ * ⚠️ A FORMA do golpe vem da tabela do ELEMENTO (`ELEMENT_STRIKE_FORM`) nos 5 iniciais (dono, 15/10/2026, REGISTRO §76):
+ * `formaDoElemento` nas duas skills. Os NOMES são autorais (`STARTER_MOVES`), iguais nos 5 estágios (o inicial não evolui).
  * Puxa o motor da ficha: importar só por `import()` dinâmico.
  */
 import { buildAllStageSkills } from './soulProfile/ficha/skills';
@@ -17,6 +17,7 @@ import type { Ficha, FichaStage, EscolaSkillId, RecursoId } from './soulProfile/
 import { FICHA_STAGE_ORDER } from './soulProfile/ficha/types';
 import type { StarterId } from './sprites';
 import { STARTER_ELEMENT } from './starterElements';
+import { elementStrikeForm } from './combatFx';
 
 /** Escola e recurso de cada inicial (pelo corpo da criatura). */
 export const STARTER_SCHOOL: Record<StarterId, { escola: EscolaSkillId; recurso: RecursoId }> = {
@@ -39,6 +40,15 @@ function fichaDoInicial(id: StarterId): Ficha {
   };
 }
 
+/** Nomes autorais (PT/EN) do básico e do especial. Propostos para o dono rever (docs/ELEMENTOS-DOS-INICIAIS.md). */
+export const STARTER_MOVES: Record<StarterId, { basica: { pt: string; en: string }; especial: { pt: string; en: string } }> = {
+  industrial: { basica: { pt: 'Pancada de Caixote', en: 'Crate Thump' }, especial: { pt: 'Chuva de Caixotes', en: 'Crate Downpour' } },
+  nascente: { basica: { pt: 'Assobio de Riacho', en: 'Brook Whistle' }, especial: { pt: 'Grasnado Estrondoso', en: 'Booming Quack' } },
+  alento: { basica: { pt: 'Bater de Asas', en: 'Wing Flutter' }, especial: { pt: 'Redemoinho Alado', en: 'Winged Whirl' } },
+  vida: { basica: { pt: 'Broto Vivo', en: 'Living Sprout' }, especial: { pt: 'Copa Viçosa', en: 'Lush Canopy' } },
+  meteoro: { basica: { pt: 'Fagulha de Brasa', en: 'Ember Spark' }, especial: { pt: 'Investida Incandescente', en: 'Blazing Charge' } },
+};
+
 const cache = new Map<StarterId, Record<FichaStage, StageSkills>>();
 
 /** As skills dos 5 estágios do inicial (a mesma ficha em todos: o inicial não evolui). */
@@ -48,6 +58,15 @@ export function starterSkillsFor(id: StarterId): Record<FichaStage, StageSkills>
   const f = fichaDoInicial(id);
   const porEstagio = Object.fromEntries(FICHA_STAGE_ORDER.map(st => [st, f])) as Record<FichaStage, Ficha>;
   const out = buildAllStageSkills(porEstagio, `starter:${id}`);
+  const m = STARTER_MOVES[id];
+  for (const st of FICHA_STAGE_ORDER) {
+    const par = out[st];
+    out[st] = {
+      ...par,
+      basica: { ...par.basica, nome: m.basica, formaDoElemento: true, forma: elementStrikeForm(STARTER_ELEMENT[id], 'basica') },
+      especial: { ...par.especial, nome: m.especial, formaDoElemento: true, forma: elementStrikeForm(STARTER_ELEMENT[id], 'especial') },
+    };
+  }
   cache.set(id, out);
   return out;
 }
