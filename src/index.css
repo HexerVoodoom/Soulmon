@@ -7243,7 +7243,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-splash-wordmark { margin: 0; font-family: inherit; font-size: var(--sm2-text-lg); font-weight: 400; letter-spacing: .12em; line-height: 1.2; text-transform: uppercase; color: var(--sm2-primary-ink); }
 .sm2-splash-tap { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px; pointer-events: none; }
 .sm2-splash[role="button"] { cursor: pointer; }
-/* SELO "Welcome" (REGISTRO §77, revisto 15/10/2026): selinho pequeno no topo que
+/* SELO "Welcome" (REGISTRO §79, revisto 15/10/2026): selinho pequeno no topo que
    OCULTA o patch/versão pintado na arte ("VERSION 1.2"). O palco tem o tamanho da
    janela; `.sm2-intro-art` reproduz a caixa do vídeo `object-fit: cover` (9:16,
    720x1280) centrada, e o selo fica em % dessa caixa — cobre o texto em qualquer

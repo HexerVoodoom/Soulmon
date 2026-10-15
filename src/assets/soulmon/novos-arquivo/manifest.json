@@ -1,0 +1,2894 @@
+{
+ "status": "archive-no-consumer",
+ "note": "Sem import em src/; fora do bundle (REGISTRO §78). 256x256 RGBA, vizinho mais proximo; originais 1024 em E:/soulmon-novos-soulmon.",
+ "branches": [
+  {
+   "file": "ramos/fogo/harmonia-champion.png",
+   "element": "fogo",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "7000",
+   "engineName": "EchoFornavyn"
+  },
+  {
+   "file": "ramos/fogo/harmonia-ultimate.png",
+   "element": "fogo",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "7000",
+   "engineName": "AstraFornavyn"
+  },
+  {
+   "file": "ramos/fogo/harmonia-mega.png",
+   "element": "fogo",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "7000",
+   "engineName": "ZenithFornavyn"
+  },
+  {
+   "file": "ramos/fogo/benevolencia-champion.png",
+   "element": "fogo",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "7000",
+   "engineName": "AegisFornavyn"
+  },
+  {
+   "file": "ramos/fogo/benevolencia-ultimate.png",
+   "element": "fogo",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "7000",
+   "engineName": "ArchFornavyn"
+  },
+  {
+   "file": "ramos/fogo/benevolencia-mega.png",
+   "element": "fogo",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "7000",
+   "engineName": "UltimaFornavyn"
+  },
+  {
+   "file": "ramos/vileza/harmonia-champion.png",
+   "element": "vileza",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "8000",
+   "engineName": "EchoLodruvox"
+  },
+  {
+   "file": "ramos/vileza/harmonia-ultimate.png",
+   "element": "vileza",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "8000",
+   "engineName": "MetaLodruvox"
+  },
+  {
+   "file": "ramos/vileza/harmonia-mega.png",
+   "element": "vileza",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "8000",
+   "engineName": "CosmoLodruvox"
+  },
+  {
+   "file": "ramos/vileza/benevolencia-champion.png",
+   "element": "vileza",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "8000",
+   "engineName": "SolLodruvox"
+  },
+  {
+   "file": "ramos/vileza/benevolencia-ultimate.png",
+   "element": "vileza",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "8000",
+   "engineName": "RadiantLodruvox"
+  },
+  {
+   "file": "ramos/vileza/benevolencia-mega.png",
+   "element": "vileza",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "8000",
+   "engineName": "SeraphLodruvox"
+  },
+  {
+   "file": "ramos/morte/harmonia-champion.png",
+   "element": "morte",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "9000",
+   "engineName": "EchoUmbrami"
+  },
+  {
+   "file": "ramos/morte/harmonia-ultimate.png",
+   "element": "morte",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "9000",
+   "engineName": "PrimeUmbrami"
+  },
+  {
+   "file": "ramos/morte/harmonia-mega.png",
+   "element": "morte",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "9000",
+   "engineName": "ZenithUmbrami"
+  },
+  {
+   "file": "ramos/morte/benevolencia-champion.png",
+   "element": "morte",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "9000",
+   "engineName": "BellUmbrami"
+  },
+  {
+   "file": "ramos/morte/benevolencia-ultimate.png",
+   "element": "morte",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "9000",
+   "engineName": "LumenUmbrami"
+  },
+  {
+   "file": "ramos/morte/benevolencia-mega.png",
+   "element": "morte",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "9000",
+   "engineName": "UltimaUmbrami"
+  },
+  {
+   "file": "ramos/sombra/harmonia-champion.png",
+   "element": "sombra",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "10000",
+   "engineName": "EchoNomorvo"
+  },
+  {
+   "file": "ramos/sombra/harmonia-ultimate.png",
+   "element": "sombra",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "10000",
+   "engineName": "MetaNomorvo"
+  },
+  {
+   "file": "ramos/sombra/harmonia-mega.png",
+   "element": "sombra",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "10000",
+   "engineName": "CosmoNomorvo"
+  },
+  {
+   "file": "ramos/sombra/benevolencia-champion.png",
+   "element": "sombra",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "10000",
+   "engineName": "AegisNomorvo"
+  },
+  {
+   "file": "ramos/sombra/benevolencia-ultimate.png",
+   "element": "sombra",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "10000",
+   "engineName": "LumenNomorvo"
+  },
+  {
+   "file": "ramos/sombra/benevolencia-mega.png",
+   "element": "sombra",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "10000",
+   "engineName": "ElysiumNomorvo"
+  },
+  {
+   "file": "ramos/vigor/harmonia-champion.png",
+   "element": "vigor",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "11000",
+   "engineName": "SageArgilnon"
+  },
+  {
+   "file": "ramos/vigor/harmonia-ultimate.png",
+   "element": "vigor",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "11000",
+   "engineName": "PrimeArgilnon"
+  },
+  {
+   "file": "ramos/vigor/harmonia-mega.png",
+   "element": "vigor",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "11000",
+   "engineName": "AeonArgilnon"
+  },
+  {
+   "file": "ramos/vigor/benevolencia-champion.png",
+   "element": "vigor",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "11000",
+   "engineName": "HolyArgilnon"
+  },
+  {
+   "file": "ramos/vigor/benevolencia-ultimate.png",
+   "element": "vigor",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "11000",
+   "engineName": "ArchArgilnon"
+  },
+  {
+   "file": "ramos/vigor/benevolencia-mega.png",
+   "element": "vigor",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "11000",
+   "engineName": "ElysiumArgilnon"
+  },
+  {
+   "file": "ramos/marcial/harmonia-champion.png",
+   "element": "marcial",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "12000",
+   "engineName": "SageVozeka"
+  },
+  {
+   "file": "ramos/marcial/harmonia-ultimate.png",
+   "element": "marcial",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "12000",
+   "engineName": "MetaVozeka"
+  },
+  {
+   "file": "ramos/marcial/harmonia-mega.png",
+   "element": "marcial",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "12000",
+   "engineName": "CosmoVozeka"
+  },
+  {
+   "file": "ramos/marcial/benevolencia-champion.png",
+   "element": "marcial",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "12000",
+   "engineName": "HolyVozeka"
+  },
+  {
+   "file": "ramos/marcial/benevolencia-ultimate.png",
+   "element": "marcial",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "12000",
+   "engineName": "RadiantVozeka"
+  },
+  {
+   "file": "ramos/marcial/benevolencia-mega.png",
+   "element": "marcial",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "12000",
+   "engineName": "ElysiumVozeka"
+  },
+  {
+   "file": "ramos/arcano/poder-champion.png",
+   "element": "arcano",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "13000",
+   "engineName": "DarkLuminil"
+  },
+  {
+   "file": "ramos/arcano/poder-ultimate.png",
+   "element": "arcano",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "13000",
+   "engineName": "ChaosLuminil"
+  },
+  {
+   "file": "ramos/arcano/poder-mega.png",
+   "element": "arcano",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "13000",
+   "engineName": "AbyssLuminil"
+  },
+  {
+   "file": "ramos/arcano/benevolencia-champion.png",
+   "element": "arcano",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "13000",
+   "engineName": "HolyLuminil"
+  },
+  {
+   "file": "ramos/arcano/benevolencia-ultimate.png",
+   "element": "arcano",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "13000",
+   "engineName": "LumenLuminil"
+  },
+  {
+   "file": "ramos/arcano/benevolencia-mega.png",
+   "element": "arcano",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "13000",
+   "engineName": "ElysiumLuminil"
+  },
+  {
+   "file": "ramos/tempo/poder-champion.png",
+   "element": "tempo",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "14000",
+   "engineName": "GrimNimecha"
+  },
+  {
+   "file": "ramos/tempo/poder-ultimate.png",
+   "element": "tempo",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "14000",
+   "engineName": "DoomNimecha"
+  },
+  {
+   "file": "ramos/tempo/poder-mega.png",
+   "element": "tempo",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "14000",
+   "engineName": "AbyssNimecha"
+  },
+  {
+   "file": "ramos/tempo/benevolencia-champion.png",
+   "element": "tempo",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "14000",
+   "engineName": "AegisNimecha"
+  },
+  {
+   "file": "ramos/tempo/benevolencia-ultimate.png",
+   "element": "tempo",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "14000",
+   "engineName": "ArchNimecha"
+  },
+  {
+   "file": "ramos/tempo/benevolencia-mega.png",
+   "element": "tempo",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "14000",
+   "engineName": "ElysiumNimecha"
+  },
+  {
+   "file": "ramos/espaco/poder-champion.png",
+   "element": "espaco",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "15000",
+   "engineName": "FangAlbano"
+  },
+  {
+   "file": "ramos/espaco/poder-ultimate.png",
+   "element": "espaco",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "15000",
+   "engineName": "ChaosAlbano"
+  },
+  {
+   "file": "ramos/espaco/poder-mega.png",
+   "element": "espaco",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "15000",
+   "engineName": "OmegaAlbano"
+  },
+  {
+   "file": "ramos/espaco/benevolencia-champion.png",
+   "element": "espaco",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "15000",
+   "engineName": "BellAlbano"
+  },
+  {
+   "file": "ramos/espaco/benevolencia-ultimate.png",
+   "element": "espaco",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "15000",
+   "engineName": "ArchAlbano"
+  },
+  {
+   "file": "ramos/espaco/benevolencia-mega.png",
+   "element": "espaco",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "15000",
+   "engineName": "UltimaAlbano"
+  },
+  {
+   "file": "ramos/gravidade/poder-champion.png",
+   "element": "gravidade",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "16000",
+   "engineName": "FangGeodano"
+  },
+  {
+   "file": "ramos/gravidade/poder-ultimate.png",
+   "element": "gravidade",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "16000",
+   "engineName": "ChaosGeodano"
+  },
+  {
+   "file": "ramos/gravidade/poder-mega.png",
+   "element": "gravidade",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "16000",
+   "engineName": "ZeedGeodano"
+  },
+  {
+   "file": "ramos/gravidade/benevolencia-champion.png",
+   "element": "gravidade",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "16000",
+   "engineName": "BellGeodano"
+  },
+  {
+   "file": "ramos/gravidade/benevolencia-ultimate.png",
+   "element": "gravidade",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "16000",
+   "engineName": "ArchGeodano"
+  },
+  {
+   "file": "ramos/gravidade/benevolencia-mega.png",
+   "element": "gravidade",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "16000",
+   "engineName": "ElysiumGeodano"
+  },
+  {
+   "file": "ramos/som/poder-champion.png",
+   "element": "som",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "17000",
+   "engineName": "GrimBosconax"
+  },
+  {
+   "file": "ramos/som/poder-ultimate.png",
+   "element": "som",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "17000",
+   "engineName": "WarBosconax"
+  },
+  {
+   "file": "ramos/som/poder-mega.png",
+   "element": "som",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "17000",
+   "engineName": "OmegaBosconax"
+  },
+  {
+   "file": "ramos/som/benevolencia-champion.png",
+   "element": "som",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "17000",
+   "engineName": "BellBosconax"
+  },
+  {
+   "file": "ramos/som/benevolencia-ultimate.png",
+   "element": "som",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "17000",
+   "engineName": "ArchBosconax"
+  },
+  {
+   "file": "ramos/som/benevolencia-mega.png",
+   "element": "som",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "17000",
+   "engineName": "SeraphBosconax"
+  },
+  {
+   "file": "ramos/eletricidade/poder-champion.png",
+   "element": "eletricidade",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "18000",
+   "engineName": "GrimVoltatyn"
+  },
+  {
+   "file": "ramos/eletricidade/poder-ultimate.png",
+   "element": "eletricidade",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "18000",
+   "engineName": "WarVoltatyn"
+  },
+  {
+   "file": "ramos/eletricidade/poder-mega.png",
+   "element": "eletricidade",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "18000",
+   "engineName": "AbyssVoltatyn"
+  },
+  {
+   "file": "ramos/eletricidade/benevolencia-champion.png",
+   "element": "eletricidade",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "18000",
+   "engineName": "AegisVoltatyn"
+  },
+  {
+   "file": "ramos/eletricidade/benevolencia-ultimate.png",
+   "element": "eletricidade",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "18000",
+   "engineName": "LumenVoltatyn"
+  },
+  {
+   "file": "ramos/eletricidade/benevolencia-mega.png",
+   "element": "eletricidade",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "18000",
+   "engineName": "UltimaVoltatyn"
+  },
+  {
+   "file": "ramos/vida/poder-champion.png",
+   "element": "vida",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "19000",
+   "engineName": "RageBromiavo"
+  },
+  {
+   "file": "ramos/vida/poder-ultimate.png",
+   "element": "vida",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "19000",
+   "engineName": "WarBromiavo"
+  },
+  {
+   "file": "ramos/vida/poder-mega.png",
+   "element": "vida",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "19000",
+   "engineName": "OmegaBromiavo"
+  },
+  {
+   "file": "ramos/vida/harmonia-champion.png",
+   "element": "vida",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "19000",
+   "engineName": "SageBromiavo"
+  },
+  {
+   "file": "ramos/vida/harmonia-ultimate.png",
+   "element": "vida",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "19000",
+   "engineName": "AstraBromiavo"
+  },
+  {
+   "file": "ramos/vida/harmonia-mega.png",
+   "element": "vida",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "19000",
+   "engineName": "CosmoBromiavo"
+  },
+  {
+   "file": "ramos/luz/poder-champion.png",
+   "element": "luz",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "20000",
+   "engineName": "GrimSavnavo"
+  },
+  {
+   "file": "ramos/luz/poder-ultimate.png",
+   "element": "luz",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "20000",
+   "engineName": "ChaosSavnavo"
+  },
+  {
+   "file": "ramos/luz/poder-mega.png",
+   "element": "luz",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "20000",
+   "engineName": "AbyssSavnavo"
+  },
+  {
+   "file": "ramos/luz/harmonia-champion.png",
+   "element": "luz",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "20000",
+   "engineName": "EchoSavnavo"
+  },
+  {
+   "file": "ramos/luz/harmonia-ultimate.png",
+   "element": "luz",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "20000",
+   "engineName": "AstraSavnavo"
+  },
+  {
+   "file": "ramos/luz/harmonia-mega.png",
+   "element": "luz",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "20000",
+   "engineName": "ZenithSavnavo"
+  },
+  {
+   "file": "ramos/agua/poder-champion.png",
+   "element": "agua",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "21000",
+   "engineName": "GrimNautinos"
+  },
+  {
+   "file": "ramos/agua/poder-ultimate.png",
+   "element": "agua",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "21000",
+   "engineName": "DoomNautinos"
+  },
+  {
+   "file": "ramos/agua/poder-mega.png",
+   "element": "agua",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "21000",
+   "engineName": "OmegaNautinos"
+  },
+  {
+   "file": "ramos/agua/harmonia-champion.png",
+   "element": "agua",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "21000",
+   "engineName": "RuneNautinos"
+  },
+  {
+   "file": "ramos/agua/harmonia-ultimate.png",
+   "element": "agua",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "21000",
+   "engineName": "AstraNautinos"
+  },
+  {
+   "file": "ramos/agua/harmonia-mega.png",
+   "element": "agua",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "21000",
+   "engineName": "CosmoNautinos"
+  },
+  {
+   "file": "ramos/terra/poder-champion.png",
+   "element": "terra",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "22000",
+   "engineName": "GrimCumolo"
+  },
+  {
+   "file": "ramos/terra/poder-ultimate.png",
+   "element": "terra",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "22000",
+   "engineName": "DoomCumolo"
+  },
+  {
+   "file": "ramos/terra/poder-mega.png",
+   "element": "terra",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "22000",
+   "engineName": "ZeedCumolo"
+  },
+  {
+   "file": "ramos/terra/harmonia-champion.png",
+   "element": "terra",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "22000",
+   "engineName": "GaleCumolo"
+  },
+  {
+   "file": "ramos/terra/harmonia-ultimate.png",
+   "element": "terra",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "22000",
+   "engineName": "PrimeCumolo"
+  },
+  {
+   "file": "ramos/terra/harmonia-mega.png",
+   "element": "terra",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "22000",
+   "engineName": "ZenithCumolo"
+  },
+  {
+   "file": "ramos/ar/poder-champion.png",
+   "element": "ar",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "23000",
+   "engineName": "GrimGlacunis"
+  },
+  {
+   "file": "ramos/ar/poder-ultimate.png",
+   "element": "ar",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "23000",
+   "engineName": "ChaosGlacunis"
+  },
+  {
+   "file": "ramos/ar/poder-mega.png",
+   "element": "ar",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "23000",
+   "engineName": "AbyssGlacunis"
+  },
+  {
+   "file": "ramos/ar/harmonia-champion.png",
+   "element": "ar",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "23000",
+   "engineName": "GaleGlacunis"
+  },
+  {
+   "file": "ramos/ar/harmonia-ultimate.png",
+   "element": "ar",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "23000",
+   "engineName": "MetaGlacunis"
+  },
+  {
+   "file": "ramos/ar/harmonia-mega.png",
+   "element": "ar",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "23000",
+   "engineName": "ZenithGlacunis"
+  }
+ ],
+ "combined": [
+  {
+   "n": 1,
+   "file": "combinados/001-vapor.png",
+   "combination": "Vapor",
+   "components": [
+    "fogo",
+    "agua"
+   ],
+   "name": "Marisvus",
+   "alignment": "benevolencia",
+   "species": "elephant",
+   "role": "tanque",
+   "realm": "deserto",
+   "seed": "100000"
+  },
+  {
+   "n": 2,
+   "file": "combinados/002-lava.png",
+   "combination": "Lava",
+   "components": [
+    "fogo",
+    "terra"
+   ],
+   "name": "Fugaio",
+   "alignment": "poder",
+   "species": "phonograph-pheasant",
+   "role": "magico",
+   "realm": "deserto",
+   "seed": "101000"
+  },
+  {
+   "n": 3,
+   "file": "combinados/003-incendio.png",
+   "combination": "Incêndio",
+   "components": [
+    "fogo",
+    "ar"
+   ],
+   "name": "Ventison",
+   "alignment": "benevolencia",
+   "species": "cicada",
+   "role": "suporte",
+   "realm": "akasha",
+   "seed": "102000"
+  },
+  {
+   "n": 4,
+   "file": "combinados/004-plasma.png",
+   "combination": "Plasma",
+   "components": [
+    "fogo",
+    "eletricidade"
+   ],
+   "name": "Pyrama",
+   "alignment": "poder",
+   "species": "scarab",
+   "role": "fisico",
+   "realm": "akasha",
+   "seed": "103000"
+  },
+  {
+   "n": 5,
+   "file": "combinados/005-fogo_feiticeiro.png",
+   "combination": "Fogo Feiticeiro",
+   "components": [
+    "fogo",
+    "arcano"
+   ],
+   "name": "Ignigo",
+   "alignment": "harmonia",
+   "species": "peach-bird-of-paradise",
+   "role": "suporte",
+   "realm": "akasha",
+   "seed": "104000"
+  },
+  {
+   "n": 6,
+   "file": "combinados/006-fogo_negro.png",
+   "combination": "Fogo Negro",
+   "components": [
+    "fogo",
+    "sombra"
+   ],
+   "name": "Duskasa",
+   "alignment": "poder",
+   "species": "djinn",
+   "role": "fisico",
+   "realm": "campina",
+   "seed": "105000"
+  },
+  {
+   "n": 7,
+   "file": "combinados/007-chama_solar.png",
+   "combination": "Chama Solar",
+   "components": [
+    "fogo",
+    "luz"
+   ],
+   "name": "Saprati",
+   "alignment": "benevolencia",
+   "species": "horse",
+   "role": "alcance",
+   "realm": "campina",
+   "seed": "106000"
+  },
+  {
+   "n": 8,
+   "file": "combinados/008-fogo_infernal.png",
+   "combination": "Fogo Infernal",
+   "components": [
+    "fogo",
+    "vileza"
+   ],
+   "name": "Noxigo",
+   "alignment": "poder",
+   "species": "griffin",
+   "role": "tanque",
+   "realm": "campina",
+   "seed": "107000"
+  },
+  {
+   "n": 9,
+   "file": "combinados/009-chama_azul.png",
+   "combination": "Chama Azul",
+   "components": [
+    "fogo",
+    "morte"
+   ],
+   "name": "Embaha",
+   "alignment": "poder",
+   "species": "millipede-bear",
+   "role": "alcance",
+   "realm": "gelo",
+   "seed": "108000"
+  },
+  {
+   "n": 10,
+   "file": "combinados/010-fenix.png",
+   "combination": "Fênix",
+   "components": [
+    "fogo",
+    "vida"
+   ],
+   "name": "Polaranyn",
+   "alignment": "poder",
+   "species": "lich",
+   "role": "tanque",
+   "realm": "gelo",
+   "seed": "109000"
+  },
+  {
+   "n": 11,
+   "file": "combinados/011-fervor.png",
+   "combination": "Fervor",
+   "components": [
+    "fogo",
+    "vigor"
+   ],
+   "name": "Argilvia",
+   "alignment": "poder",
+   "species": "otter",
+   "role": "magico",
+   "realm": "gelo",
+   "seed": "110000"
+  },
+  {
+   "n": 12,
+   "file": "combinados/012-pantano.png",
+   "combination": "Pântano",
+   "components": [
+    "agua",
+    "terra"
+   ],
+   "name": "Hydropax",
+   "alignment": "benevolencia",
+   "species": "sailfish",
+   "role": "suporte",
+   "realm": "gelo",
+   "seed": "111000"
+  },
+  {
+   "n": 13,
+   "file": "combinados/013-gelo.png",
+   "combination": "Gelo",
+   "components": [
+    "agua",
+    "ar"
+   ],
+   "name": "Undifuo",
+   "alignment": "benevolencia",
+   "species": "owl",
+   "role": "magico",
+   "realm": "cavernas",
+   "seed": "112000"
+  },
+  {
+   "n": 14,
+   "file": "combinados/014-agua_viva.png",
+   "combination": "Água-Viva",
+   "components": [
+    "agua",
+    "eletricidade"
+   ],
+   "name": "Sadyna",
+   "alignment": "benevolencia",
+   "species": "octopus",
+   "role": "suporte",
+   "realm": "cavernas",
+   "seed": "113000"
+  },
+  {
+   "n": 15,
+   "file": "combinados/015-mare.png",
+   "combination": "Maré",
+   "components": [
+    "agua",
+    "arcano"
+   ],
+   "name": "Marisma",
+   "alignment": "harmonia",
+   "species": "cyclops-naga",
+   "role": "fisico",
+   "realm": "cavernas",
+   "seed": "114000"
+  },
+  {
+   "n": 16,
+   "file": "combinados/016-abismo.png",
+   "combination": "Abismo",
+   "components": [
+    "agua",
+    "sombra"
+   ],
+   "name": "Nyktasa",
+   "alignment": "benevolencia",
+   "species": "sylph",
+   "role": "alcance",
+   "realm": "floresta",
+   "seed": "115000"
+  },
+  {
+   "n": 17,
+   "file": "combinados/017-prisma.png",
+   "combination": "Prisma",
+   "components": [
+    "agua",
+    "luz"
+   ],
+   "name": "Albari",
+   "alignment": "benevolencia",
+   "species": "toadstool-ghost",
+   "role": "fisico",
+   "realm": "floresta",
+   "seed": "116000"
+  },
+  {
+   "n": 18,
+   "file": "combinados/018-acido.png",
+   "combination": "Ácido",
+   "components": [
+    "agua",
+    "vileza"
+   ],
+   "name": "Boscocia",
+   "alignment": "benevolencia",
+   "species": "vampire",
+   "role": "alcance",
+   "realm": "floresta",
+   "seed": "117000"
+  },
+  {
+   "n": 19,
+   "file": "combinados/019-veneno.png",
+   "combination": "Veneno",
+   "components": [
+    "agua",
+    "morte"
+   ],
+   "name": "Trygafu",
+   "alignment": "poder",
+   "species": "ladybug",
+   "role": "magico",
+   "realm": "campina",
+   "seed": "118000"
+  },
+  {
+   "n": 20,
+   "file": "combinados/020-nascente.png",
+   "combination": "Nascente",
+   "components": [
+    "agua",
+    "vida"
+   ],
+   "name": "Tesolis",
+   "alignment": "benevolencia",
+   "species": "squid",
+   "role": "suporte",
+   "realm": "campina",
+   "seed": "119000"
+  },
+  {
+   "n": 21,
+   "file": "combinados/021-correnteza.png",
+   "combination": "Correnteza",
+   "components": [
+    "agua",
+    "vigor"
+   ],
+   "name": "Marisza",
+   "alignment": "poder",
+   "species": "millipede-bison",
+   "role": "magico",
+   "realm": "campina",
+   "seed": "120000"
+  },
+  {
+   "n": 22,
+   "file": "combinados/022-areia.png",
+   "combination": "Areia",
+   "components": [
+    "terra",
+    "ar"
+   ],
+   "name": "Montifu",
+   "alignment": "benevolencia",
+   "species": "damselfly-orchid mantis",
+   "role": "suporte",
+   "realm": "campina",
+   "seed": "121000"
+  },
+  {
+   "n": 23,
+   "file": "combinados/023-magnetismo.png",
+   "combination": "Magnetismo",
+   "components": [
+    "terra",
+    "eletricidade"
+   ],
+   "name": "Neviamix",
+   "alignment": "harmonia",
+   "species": "polar bear",
+   "role": "fisico",
+   "realm": "gelo",
+   "seed": "122000"
+  },
+  {
+   "n": 24,
+   "file": "combinados/024-cristal.png",
+   "combination": "Cristal",
+   "components": [
+    "terra",
+    "arcano"
+   ],
+   "name": "Rialba",
+   "alignment": "benevolencia",
+   "species": "kirin",
+   "role": "alcance",
+   "realm": "gelo",
+   "seed": "123000"
+  },
+  {
+   "n": 25,
+   "file": "combinados/025-obsidiana.png",
+   "combination": "Obsidiana",
+   "components": [
+    "terra",
+    "sombra"
+   ],
+   "name": "Dionyra",
+   "alignment": "poder",
+   "species": "vampire bat-leviathan",
+   "role": "alcance",
+   "realm": "picos",
+   "seed": "124001"
+  },
+  {
+   "n": 26,
+   "file": "combinados/026-ouro_vivo.png",
+   "combination": "Ouro Vivo",
+   "components": [
+    "terra",
+    "luz"
+   ],
+   "name": "Astravel",
+   "alignment": "benevolencia",
+   "species": "moray",
+   "role": "alcance",
+   "realm": "cavernas",
+   "seed": "125000"
+  },
+  {
+   "n": 27,
+   "file": "combinados/027-solo_profano.png",
+   "combination": "Solo Profano",
+   "components": [
+    "terra",
+    "vileza"
+   ],
+   "name": "Morvoseo",
+   "alignment": "poder",
+   "species": "bear",
+   "role": "tanque",
+   "realm": "cavernas",
+   "seed": "126000"
+  },
+  {
+   "n": 28,
+   "file": "combinados/028-ossuario.png",
+   "combination": "Ossuário",
+   "components": [
+    "terra",
+    "morte"
+   ],
+   "name": "Oasisor",
+   "alignment": "benevolencia",
+   "species": "mermaid",
+   "role": "tanque",
+   "realm": "deserto",
+   "seed": "127001"
+  },
+  {
+   "n": 29,
+   "file": "combinados/029-flora.png",
+   "combination": "Flora",
+   "components": [
+    "terra",
+    "vida"
+   ],
+   "name": "Grotafu",
+   "alignment": "benevolencia",
+   "species": "peach",
+   "role": "tanque",
+   "realm": "cavernas",
+   "seed": "128000"
+  },
+  {
+   "n": 30,
+   "file": "combinados/030-tita.png",
+   "combination": "Titã",
+   "components": [
+    "terra",
+    "vigor"
+   ],
+   "name": "Boscoti",
+   "alignment": "benevolencia",
+   "species": "mandrake-reindeer",
+   "role": "magico",
+   "realm": "floresta",
+   "seed": "129000"
+  },
+  {
+   "n": 31,
+   "file": "combinados/031-tempestade.png",
+   "combination": "Tempestade",
+   "components": [
+    "ar",
+    "eletricidade"
+   ],
+   "name": "Brumefar",
+   "alignment": "harmonia",
+   "species": "gull-reindeer",
+   "role": "suporte",
+   "realm": "floresta",
+   "seed": "130000"
+  },
+  {
+   "n": 32,
+   "file": "combinados/032-eter.png",
+   "combination": "Éter",
+   "components": [
+    "ar",
+    "arcano"
+   ],
+   "name": "Solarite",
+   "alignment": "benevolencia",
+   "species": "canary",
+   "role": "fisico",
+   "realm": "floresta",
+   "seed": "131000"
+  },
+  {
+   "n": 33,
+   "file": "combinados/033-murmurio.png",
+   "combination": "Murmúrio",
+   "components": [
+    "ar",
+    "sombra"
+   ],
+   "name": "Aeromul",
+   "alignment": "poder",
+   "species": "glasswing butterfly",
+   "role": "suporte",
+   "realm": "pantano",
+   "seed": "132000"
+  },
+  {
+   "n": 34,
+   "file": "combinados/034-aurora.png",
+   "combination": "Aurora",
+   "components": [
+    "ar",
+    "luz"
+   ],
+   "name": "Frostara",
+   "alignment": "benevolencia",
+   "species": "swan",
+   "role": "alcance",
+   "realm": "gelo",
+   "seed": "133002"
+  },
+  {
+   "n": 35,
+   "file": "combinados/035-enxofre.png",
+   "combination": "Enxofre",
+   "components": [
+    "ar",
+    "vileza"
+   ],
+   "name": "Ventixor",
+   "alignment": "poder",
+   "species": "candle-swordfish",
+   "role": "alcance",
+   "realm": "pantano",
+   "seed": "134000"
+  },
+  {
+   "n": 36,
+   "file": "combinados/036-miasma.png",
+   "combination": "Miasma",
+   "components": [
+    "ar",
+    "morte"
+   ],
+   "name": "Mareofar",
+   "alignment": "benevolencia",
+   "species": "orchid mantis",
+   "role": "tanque",
+   "realm": "oceano",
+   "seed": "135000"
+  },
+  {
+   "n": 37,
+   "file": "combinados/037-alento.png",
+   "combination": "Alento",
+   "components": [
+    "ar",
+    "vida"
+   ],
+   "name": "Abysafel",
+   "alignment": "benevolencia",
+   "species": "peacock",
+   "role": "alcance",
+   "realm": "oceano",
+   "seed": "136000"
+  },
+  {
+   "n": 38,
+   "file": "combinados/038-impeto.png",
+   "combination": "Ímpeto",
+   "components": [
+    "ar",
+    "vigor"
+   ],
+   "name": "Petromu",
+   "alignment": "benevolencia",
+   "species": "tortoise-mouse",
+   "role": "suporte",
+   "realm": "picos",
+   "seed": "137001"
+  },
+  {
+   "n": 39,
+   "file": "combinados/039-fluxo.png",
+   "combination": "Fluxo",
+   "components": [
+    "eletricidade",
+    "arcano"
+   ],
+   "name": "Solarixor",
+   "alignment": "harmonia",
+   "species": "stone golem",
+   "role": "magico",
+   "realm": "oceano",
+   "seed": "138000"
+  },
+  {
+   "n": 40,
+   "file": "combinados/040-trovao_negro.png",
+   "combination": "Trovão Negro",
+   "components": [
+    "eletricidade",
+    "sombra"
+   ],
+   "name": "Tromunix",
+   "alignment": "harmonia",
+   "species": "ladybug-lynx",
+   "role": "suporte",
+   "realm": "picos",
+   "seed": "139000"
+  },
+  {
+   "n": 41,
+   "file": "combinados/041-fulgor.png",
+   "combination": "Fulgor",
+   "components": [
+    "eletricidade",
+    "luz"
+   ],
+   "name": "Gozeka",
+   "alignment": "benevolencia",
+   "species": "ifrit",
+   "role": "magico",
+   "realm": "picos",
+   "seed": "140000"
+  },
+  {
+   "n": 42,
+   "file": "combinados/042-tormento.png",
+   "combination": "Tormento",
+   "components": [
+    "eletricidade",
+    "vileza"
+   ],
+   "name": "Dynato",
+   "alignment": "harmonia",
+   "species": "ram",
+   "role": "suporte",
+   "realm": "picos",
+   "seed": "141000"
+  },
+  {
+   "n": 43,
+   "file": "combinados/043-galvanismo.png",
+   "combination": "Galvanismo",
+   "components": [
+    "eletricidade",
+    "morte"
+   ],
+   "name": "Moservo",
+   "alignment": "poder",
+   "species": "mammoth",
+   "role": "fisico",
+   "realm": "deserto",
+   "seed": "142000"
+  },
+  {
+   "n": 44,
+   "file": "combinados/044-sinapse.png",
+   "combination": "Sinapse",
+   "components": [
+    "eletricidade",
+    "vida"
+   ],
+   "name": "Nabromia",
+   "alignment": "harmonia",
+   "species": "ivy",
+   "role": "alcance",
+   "realm": "deserto",
+   "seed": "143000"
+  },
+  {
+   "n": 45,
+   "file": "combinados/045-reflexo.png",
+   "combination": "Reflexo",
+   "components": [
+    "eletricidade",
+    "vigor"
+   ],
+   "name": "Petrason",
+   "alignment": "poder",
+   "species": "cricket-lizard",
+   "role": "fisico",
+   "realm": "deserto",
+   "seed": "144000"
+  },
+  {
+   "n": 46,
+   "file": "combinados/046-ocultismo.png",
+   "combination": "Ocultismo",
+   "components": [
+    "arcano",
+    "sombra"
+   ],
+   "name": "Mantrasa",
+   "alignment": "harmonia",
+   "species": "teapot-millipede",
+   "role": "alcance",
+   "realm": "akasha",
+   "seed": "145000"
+  },
+  {
+   "n": 47,
+   "file": "combinados/047-runa.png",
+   "combination": "Runa",
+   "components": [
+    "arcano",
+    "luz"
+   ],
+   "name": "Fulgosa",
+   "alignment": "benevolencia",
+   "species": "betta",
+   "role": "tanque",
+   "realm": "akasha",
+   "seed": "146000"
+  },
+  {
+   "n": 48,
+   "file": "combinados/048-pacto.png",
+   "combination": "Pacto",
+   "components": [
+    "arcano",
+    "vileza"
+   ],
+   "name": "Fulgofu",
+   "alignment": "harmonia",
+   "species": "werewolf-fairy",
+   "role": "magico",
+   "realm": "akasha",
+   "seed": "147000"
+  },
+  {
+   "n": 49,
+   "file": "combinados/049-alma.png",
+   "combination": "Alma",
+   "components": [
+    "arcano",
+    "morte"
+   ],
+   "name": "Nyktamau",
+   "alignment": "poder",
+   "species": "leviathan",
+   "role": "magico",
+   "realm": "pantano",
+   "seed": "148000"
+  },
+  {
+   "n": 50,
+   "file": "combinados/050-essencia.png",
+   "combination": "Essência",
+   "components": [
+    "arcano",
+    "vida"
+   ],
+   "name": "Astrinel",
+   "alignment": "harmonia",
+   "species": "mandrake-axolotl",
+   "role": "fisico",
+   "realm": "gelo",
+   "seed": "149001"
+  },
+  {
+   "n": 51,
+   "file": "combinados/051-encantamento.png",
+   "combination": "Encantamento",
+   "components": [
+    "arcano",
+    "vigor"
+   ],
+   "name": "Teraca",
+   "alignment": "poder",
+   "species": "crab-lamia",
+   "role": "fisico",
+   "realm": "oceano",
+   "seed": "150000"
+  },
+  {
+   "n": 52,
+   "file": "combinados/052-crepusculo.png",
+   "combination": "Crepúsculo",
+   "components": [
+    "sombra",
+    "luz"
+   ],
+   "name": "Solarire",
+   "alignment": "poder",
+   "species": "tuna",
+   "role": "alcance",
+   "realm": "oceano",
+   "seed": "151000"
+  },
+  {
+   "n": 53,
+   "file": "combinados/053-terror.png",
+   "combination": "Terror",
+   "components": [
+    "sombra",
+    "vileza"
+   ],
+   "name": "Krowsa",
+   "alignment": "poder",
+   "species": "clay golem-ooze",
+   "role": "fisico",
+   "realm": "picos",
+   "seed": "152000"
+  },
+  {
+   "n": 54,
+   "file": "combinados/054-espectro.png",
+   "combination": "Espectro",
+   "components": [
+    "sombra",
+    "morte"
+   ],
+   "name": "Cerape",
+   "alignment": "poder",
+   "species": "mummy",
+   "role": "alcance",
+   "realm": "picos",
+   "seed": "153000"
+  },
+  {
+   "n": 55,
+   "file": "combinados/055-parasita.png",
+   "combination": "Parasita",
+   "components": [
+    "sombra",
+    "vida"
+   ],
+   "name": "Siduska",
+   "alignment": "benevolencia",
+   "species": "magpie",
+   "role": "tanque",
+   "realm": "picos",
+   "seed": "154000"
+  },
+  {
+   "n": 56,
+   "file": "combinados/056-assassinio.png",
+   "combination": "Assassínio",
+   "components": [
+    "sombra",
+    "vigor"
+   ],
+   "name": "Duskasir",
+   "alignment": "poder",
+   "species": "swimming crab",
+   "role": "tanque",
+   "realm": "floresta",
+   "seed": "155001"
+  },
+  {
+   "n": 57,
+   "file": "combinados/057-heresia.png",
+   "combination": "Heresia",
+   "components": [
+    "luz",
+    "vileza"
+   ],
+   "name": "Luxafun",
+   "alignment": "poder",
+   "species": "succulent",
+   "role": "tanque",
+   "realm": "deserto",
+   "seed": "156000"
+  },
+  {
+   "n": 58,
+   "file": "combinados/058-julgamento.png",
+   "combination": "Julgamento",
+   "components": [
+    "luz",
+    "morte"
+   ],
+   "name": "Memira",
+   "alignment": "benevolencia",
+   "species": "wraith",
+   "role": "magico",
+   "realm": "deserto",
+   "seed": "157000"
+  },
+  {
+   "n": 59,
+   "file": "combinados/059-santidade.png",
+   "combination": "Santidade",
+   "components": [
+    "luz",
+    "vida"
+   ],
+   "name": "Mosada",
+   "alignment": "benevolencia",
+   "species": "cactus",
+   "role": "magico",
+   "realm": "pantano",
+   "seed": "158001"
+  },
+  {
+   "n": 60,
+   "file": "combinados/060-bravura.png",
+   "combination": "Bravura",
+   "components": [
+    "luz",
+    "vigor"
+   ],
+   "name": "Orbesor",
+   "alignment": "benevolencia",
+   "species": "anvil-cassowary",
+   "role": "fisico",
+   "realm": "akasha",
+   "seed": "159000"
+  },
+  {
+   "n": 61,
+   "file": "combinados/061-praga.png",
+   "combination": "Praga",
+   "components": [
+    "vileza",
+    "morte"
+   ],
+   "name": "Nimbrafel",
+   "alignment": "poder",
+   "species": "cherub",
+   "role": "suporte",
+   "realm": "akasha",
+   "seed": "160000"
+  },
+  {
+   "n": 62,
+   "file": "combinados/062-mutacao.png",
+   "combination": "Mutação",
+   "components": [
+    "vileza",
+    "vida"
+   ],
+   "name": "Floraceo",
+   "alignment": "poder",
+   "species": "sunflower",
+   "role": "fisico",
+   "realm": "akasha",
+   "seed": "161000"
+  },
+  {
+   "n": 63,
+   "file": "combinados/063-carnificina.png",
+   "combination": "Carnificina",
+   "components": [
+    "vileza",
+    "vigor"
+   ],
+   "name": "Nakrow",
+   "alignment": "poder",
+   "species": "swan-sylph",
+   "role": "alcance",
+   "realm": "campina",
+   "seed": "162000"
+  },
+  {
+   "n": 64,
+   "file": "combinados/064-equilibrio.png",
+   "combination": "Equilíbrio",
+   "components": [
+    "morte",
+    "vida"
+   ],
+   "name": "Quvinea",
+   "alignment": "poder",
+   "species": "firefly",
+   "role": "tanque",
+   "realm": "campina",
+   "seed": "163000"
+  },
+  {
+   "n": 65,
+   "file": "combinados/065-ceifa.png",
+   "combination": "Ceifa",
+   "components": [
+    "morte",
+    "vigor"
+   ],
+   "name": "Fumonti",
+   "alignment": "poder",
+   "species": "slime",
+   "role": "alcance",
+   "realm": "campina",
+   "seed": "164000"
+  },
+  {
+   "n": 66,
+   "file": "combinados/066-vitalidade.png",
+   "combination": "Vitalidade",
+   "components": [
+    "vida",
+    "vigor"
+   ],
+   "name": "Dekripta",
+   "alignment": "benevolencia",
+   "species": "manticore-giant",
+   "role": "suporte",
+   "realm": "cavernas",
+   "seed": "165001"
+  },
+  {
+   "n": 67,
+   "file": "combinados/067-forja.png",
+   "combination": "Forja",
+   "components": [
+    "marcial",
+    "fogo"
+   ],
+   "name": "Polarasix",
+   "alignment": "poder",
+   "species": "great horned owl",
+   "role": "magico",
+   "realm": "gelo",
+   "seed": "166000"
+  },
+  {
+   "n": 68,
+   "file": "combinados/068-tempera.png",
+   "combination": "Têmpera",
+   "components": [
+    "marcial",
+    "agua"
+   ],
+   "name": "Zinkatax",
+   "alignment": "poder",
+   "species": "damselfly",
+   "role": "suporte",
+   "realm": "gelo",
+   "seed": "167000"
+  },
+  {
+   "n": 69,
+   "file": "combinados/069-aco.png",
+   "combination": "Aço",
+   "components": [
+    "marcial",
+    "terra"
+   ],
+   "name": "Cupraco",
+   "alignment": "benevolencia",
+   "species": "stag beetle",
+   "role": "magico",
+   "realm": "gelo",
+   "seed": "168000"
+  },
+  {
+   "n": 70,
+   "file": "combinados/070-esgrima.png",
+   "combination": "Esgrima",
+   "components": [
+    "marcial",
+    "ar"
+   ],
+   "name": "Mechaman",
+   "alignment": "poder",
+   "species": "badger",
+   "role": "suporte",
+   "realm": "cavernas",
+   "seed": "169000"
+  },
+  {
+   "n": 71,
+   "file": "combinados/071-aco_voltaico.png",
+   "combination": "Aço Voltaico",
+   "components": [
+    "marcial",
+    "eletricidade"
+   ],
+   "name": "Ferovor",
+   "alignment": "harmonia",
+   "species": "nosferatu",
+   "role": "fisico",
+   "realm": "cavernas",
+   "seed": "170000"
+  },
+  {
+   "n": 72,
+   "file": "combinados/072-arsenal.png",
+   "combination": "Arsenal",
+   "components": [
+    "marcial",
+    "arcano"
+   ],
+   "name": "Astrasa",
+   "alignment": "poder",
+   "species": "orchid mantis-ankylosaur",
+   "role": "alcance",
+   "realm": "floresta",
+   "seed": "171001"
+  },
+  {
+   "n": 73,
+   "file": "combinados/073-lamina_oculta.png",
+   "combination": "Lâmina Oculta",
+   "components": [
+    "marcial",
+    "sombra"
+   ],
+   "name": "Ramuta",
+   "alignment": "poder",
+   "species": "tarantula",
+   "role": "fisico",
+   "realm": "floresta",
+   "seed": "172000"
+  },
+  {
+   "n": 74,
+   "file": "combinados/074-lamina_radiante.png",
+   "combination": "Lâmina Radiante",
+   "components": [
+    "marcial",
+    "luz"
+   ],
+   "name": "Astralas",
+   "alignment": "poder",
+   "species": "hermit crab",
+   "role": "magico",
+   "realm": "pantano",
+   "seed": "173001"
+  },
+  {
+   "n": 75,
+   "file": "combinados/075-serrilha.png",
+   "combination": "Serrilha",
+   "components": [
+    "marcial",
+    "vileza"
+   ],
+   "name": "Ricerni",
+   "alignment": "poder",
+   "species": "skeleton",
+   "role": "tanque",
+   "realm": "floresta",
+   "seed": "174000"
+  },
+  {
+   "n": 76,
+   "file": "combinados/076-fio_funebre.png",
+   "combination": "Fio Fúnebre",
+   "components": [
+    "marcial",
+    "morte"
+   ],
+   "name": "Dynanon",
+   "alignment": "poder",
+   "species": "vampire bat",
+   "role": "magico",
+   "realm": "oceano",
+   "seed": "175001"
+  },
+  {
+   "n": 77,
+   "file": "combinados/077-lamina_viva.png",
+   "combination": "Lâmina Viva",
+   "components": [
+    "marcial",
+    "vida"
+   ],
+   "name": "Mifero",
+   "alignment": "benevolencia",
+   "species": "duck",
+   "role": "tanque",
+   "realm": "pantano",
+   "seed": "176000"
+  },
+  {
+   "n": 78,
+   "file": "combinados/078-maestria.png",
+   "combination": "Maestria",
+   "components": [
+    "marcial",
+    "vigor"
+   ],
+   "name": "Dynasax",
+   "alignment": "poder",
+   "species": "panda",
+   "role": "suporte",
+   "realm": "campina",
+   "seed": "177000"
+  },
+  {
+   "n": 79,
+   "file": "combinados/079-pira_eterna.png",
+   "combination": "Pira Eterna",
+   "components": [
+    "tempo",
+    "fogo"
+   ],
+   "name": "Embapi",
+   "alignment": "poder",
+   "species": "barn owl",
+   "role": "fisico",
+   "realm": "campina",
+   "seed": "178000"
+  },
+  {
+   "n": 80,
+   "file": "combinados/080-erosao.png",
+   "combination": "Erosão",
+   "components": [
+    "tempo",
+    "agua"
+   ],
+   "name": "Torenfu",
+   "alignment": "harmonia",
+   "species": "luna moth",
+   "role": "tanque",
+   "realm": "deserto",
+   "seed": "179002"
+  },
+  {
+   "n": 81,
+   "file": "combinados/081-fossil.png",
+   "combination": "Fossilização",
+   "components": [
+    "tempo",
+    "terra"
+   ],
+   "name": "Nimbosi",
+   "alignment": "benevolencia",
+   "species": "manticore-hermit crab",
+   "role": "fisico",
+   "realm": "gelo",
+   "seed": "180000"
+  },
+  {
+   "n": 82,
+   "file": "combinados/082-aceleracao.png",
+   "combination": "Aceleração",
+   "components": [
+    "tempo",
+    "ar"
+   ],
+   "name": "Sazonda",
+   "alignment": "harmonia",
+   "species": "air elemental",
+   "role": "alcance",
+   "realm": "gelo",
+   "seed": "181000"
+  },
+  {
+   "n": 83,
+   "file": "combinados/083-instante.png",
+   "combination": "Instante",
+   "components": [
+    "tempo",
+    "eletricidade"
+   ],
+   "name": "Alizetel",
+   "alignment": "harmonia",
+   "species": "earth elemental",
+   "role": "tanque",
+   "realm": "cavernas",
+   "seed": "182000"
+  },
+  {
+   "n": 84,
+   "file": "combinados/084-cronomancia.png",
+   "combination": "Cronomancia",
+   "components": [
+    "tempo",
+    "arcano"
+   ],
+   "name": "Alizesau",
+   "alignment": "harmonia",
+   "species": "crocodile",
+   "role": "magico",
+   "realm": "cavernas",
+   "seed": "183000"
+  },
+  {
+   "n": 85,
+   "file": "combinados/085-entropia.png",
+   "combination": "Entropia",
+   "components": [
+    "tempo",
+    "sombra"
+   ],
+   "name": "Geodafun",
+   "alignment": "poder",
+   "species": "housecat-ghoul",
+   "role": "tanque",
+   "realm": "cavernas",
+   "seed": "184000"
+  },
+  {
+   "n": 86,
+   "file": "combinados/086-eon.png",
+   "combination": "Éon",
+   "components": [
+    "tempo",
+    "luz"
+   ],
+   "name": "Prismasura",
+   "alignment": "harmonia",
+   "species": "umbrella-flower mantis",
+   "role": "magico",
+   "realm": "cavernas",
+   "seed": "185000"
+  },
+  {
+   "n": 87,
+   "file": "combinados/087-ruina.png",
+   "combination": "Ruína",
+   "components": [
+    "tempo",
+    "vileza"
+   ],
+   "name": "Rubrume",
+   "alignment": "poder",
+   "species": "pseudoscorpion",
+   "role": "suporte",
+   "realm": "floresta",
+   "seed": "186000"
+  },
+  {
+   "n": 88,
+   "file": "combinados/088-ocaso.png",
+   "combination": "Ocaso",
+   "components": [
+    "tempo",
+    "morte"
+   ],
+   "name": "Sovespra",
+   "alignment": "harmonia",
+   "species": "scorpion",
+   "role": "fisico",
+   "realm": "floresta",
+   "seed": "187000"
+  },
+  {
+   "n": 89,
+   "file": "combinados/089-florescer.png",
+   "combination": "Florescer",
+   "components": [
+    "tempo",
+    "vida"
+   ],
+   "name": "Aerofur",
+   "alignment": "benevolencia",
+   "species": "orchid",
+   "role": "suporte",
+   "realm": "floresta",
+   "seed": "188000"
+  },
+  {
+   "n": 90,
+   "file": "combinados/090-frenesi.png",
+   "combination": "Frenesi",
+   "components": [
+    "tempo",
+    "vigor"
+   ],
+   "name": "Charkofeo",
+   "alignment": "harmonia",
+   "species": "gorilla-cactus",
+   "role": "fisico",
+   "realm": "pantano",
+   "seed": "189000"
+  },
+  {
+   "n": 91,
+   "file": "combinados/091-contratempo.png",
+   "combination": "Contratempo",
+   "components": [
+    "tempo",
+    "marcial"
+   ],
+   "name": "Sludgera",
+   "alignment": "poder",
+   "species": "owl-mushroom",
+   "role": "alcance",
+   "realm": "pantano",
+   "seed": "190000"
+  },
+  {
+   "n": 92,
+   "file": "combinados/092-estrondo.png",
+   "combination": "Estrondo",
+   "components": [
+    "som",
+    "fogo"
+   ],
+   "name": "Saforna",
+   "alignment": "harmonia",
+   "species": "helmet-swan",
+   "role": "tanque",
+   "realm": "pantano",
+   "seed": "191000"
+  },
+  {
+   "n": 93,
+   "file": "combinados/093-sonar.png",
+   "combination": "Sonar",
+   "components": [
+    "som",
+    "agua"
+   ],
+   "name": "Skyefor",
+   "alignment": "benevolencia",
+   "species": "swimming crab-goblin",
+   "role": "alcance",
+   "realm": "pantano",
+   "seed": "192000"
+  },
+  {
+   "n": 94,
+   "file": "combinados/094-terremoto.png",
+   "combination": "Terremoto",
+   "components": [
+    "som",
+    "terra"
+   ],
+   "name": "Sabatia",
+   "alignment": "harmonia",
+   "species": "cassowary",
+   "role": "tanque",
+   "realm": "oceano",
+   "seed": "193000"
+  },
+  {
+   "n": 95,
+   "file": "combinados/095-estampido.png",
+   "combination": "Estampido",
+   "components": [
+    "som",
+    "ar"
+   ],
+   "name": "Nautifu",
+   "alignment": "benevolencia",
+   "species": "anglerfish",
+   "role": "magico",
+   "realm": "oceano",
+   "seed": "194000"
+  },
+  {
+   "n": 96,
+   "file": "combinados/096-trovao.png",
+   "combination": "Trovão",
+   "components": [
+    "som",
+    "eletricidade"
+   ],
+   "name": "Zinkaro",
+   "alignment": "harmonia",
+   "species": "cricket",
+   "role": "suporte",
+   "realm": "oceano",
+   "seed": "195000"
+  },
+  {
+   "n": 97,
+   "file": "combinados/097-cantico.png",
+   "combination": "Cântico",
+   "components": [
+    "som",
+    "arcano"
+   ],
+   "name": "Frondefu",
+   "alignment": "harmonia",
+   "species": "panda-crow",
+   "role": "suporte",
+   "realm": "floresta",
+   "seed": "196002"
+  },
+  {
+   "n": 98,
+   "file": "combinados/098-sussurro.png",
+   "combination": "Sussurro",
+   "components": [
+    "som",
+    "sombra"
+   ],
+   "name": "Tromuro",
+   "alignment": "harmonia",
+   "species": "swordfish",
+   "role": "suporte",
+   "realm": "picos",
+   "seed": "197000"
+  },
+  {
+   "n": 99,
+   "file": "combinados/099-harmonia.png",
+   "combination": "Harmonia",
+   "components": [
+    "som",
+    "luz"
+   ],
+   "name": "Zekameo",
+   "alignment": "benevolencia",
+   "species": "zebra",
+   "role": "fisico",
+   "realm": "picos",
+   "seed": "198000"
+  },
+  {
+   "n": 100,
+   "file": "combinados/100-dissonancia.png",
+   "combination": "Dissonância",
+   "components": [
+    "som",
+    "vileza"
+   ],
+   "name": "Zondafu",
+   "alignment": "harmonia",
+   "species": "minotaur",
+   "role": "alcance",
+   "realm": "deserto",
+   "seed": "199000"
+  },
+  {
+   "n": 101,
+   "file": "combinados/101-requiem.png",
+   "combination": "Réquiem",
+   "components": [
+    "som",
+    "morte"
+   ],
+   "name": "Onyrare",
+   "alignment": "poder",
+   "species": "rhea",
+   "role": "fisico",
+   "realm": "deserto",
+   "seed": "200000"
+  },
+  {
+   "n": 102,
+   "file": "combinados/102-melodia.png",
+   "combination": "Melodia Vital",
+   "components": [
+    "som",
+    "vida"
+   ],
+   "name": "Bromiasa",
+   "alignment": "harmonia",
+   "species": "sparrow-bee",
+   "role": "alcance",
+   "realm": "deserto",
+   "seed": "201000"
+  },
+  {
+   "n": 103,
+   "file": "combinados/103-brado.png",
+   "combination": "Brado",
+   "components": [
+    "som",
+    "vigor"
+   ],
+   "name": "Sirosa",
+   "alignment": "poder",
+   "species": "hummingbird-horse",
+   "role": "tanque",
+   "realm": "deserto",
+   "seed": "202000"
+  },
+  {
+   "n": 104,
+   "file": "combinados/104-cadencia.png",
+   "combination": "Cadência",
+   "components": [
+    "som",
+    "marcial"
+   ],
+   "name": "Akashaci",
+   "alignment": "harmonia",
+   "species": "penguin-ooze",
+   "role": "magico",
+   "realm": "akasha",
+   "seed": "203000"
+  },
+  {
+   "n": 105,
+   "file": "combinados/105-eco.png",
+   "combination": "Eco",
+   "components": [
+    "som",
+    "tempo"
+   ],
+   "name": "Nimbosao",
+   "alignment": "harmonia",
+   "species": "dragonfly",
+   "role": "tanque",
+   "realm": "akasha",
+   "seed": "204000"
+  },
+  {
+   "n": 106,
+   "file": "combinados/106-fornalha_estelar.png",
+   "combination": "Fornalha Estelar",
+   "components": [
+    "gravidade",
+    "fogo"
+   ],
+   "name": "Naorbe",
+   "alignment": "harmonia",
+   "species": "beaver",
+   "role": "magico",
+   "realm": "akasha",
+   "seed": "205000"
+  },
+  {
+   "n": 107,
+   "file": "combinados/107-voragem.png",
+   "combination": "Voragem",
+   "components": [
+    "gravidade",
+    "agua"
+   ],
+   "name": "Salsorax",
+   "alignment": "benevolencia",
+   "species": "ray",
+   "role": "fisico",
+   "realm": "oceano",
+   "seed": "206000"
+  },
+  {
+   "n": 108,
+   "file": "combinados/108-colapso.png",
+   "combination": "Colapso",
+   "components": [
+    "gravidade",
+    "terra"
+   ],
+   "name": "Ondraceo",
+   "alignment": "harmonia",
+   "species": "albatross",
+   "role": "alcance",
+   "realm": "oceano",
+   "seed": "207000"
+  },
+  {
+   "n": 109,
+   "file": "combinados/109-vacuo.png",
+   "combination": "Vácuo",
+   "components": [
+    "gravidade",
+    "ar"
+   ],
+   "name": "Zephysa",
+   "alignment": "benevolencia",
+   "species": "oak",
+   "role": "fisico",
+   "realm": "oceano",
+   "seed": "208000"
+  },
+  {
+   "n": 110,
+   "file": "combinados/110-magnetar.png",
+   "combination": "Magnetar",
+   "components": [
+    "gravidade",
+    "eletricidade"
+   ],
+   "name": "Zinkasa",
+   "alignment": "harmonia",
+   "species": "clay golem",
+   "role": "alcance",
+   "realm": "picos",
+   "seed": "209000"
+  },
+  {
+   "n": 111,
+   "file": "combinados/111-singularidade.png",
+   "combination": "Singularidade",
+   "components": [
+    "gravidade",
+    "arcano"
+   ],
+   "name": "Basalsia",
+   "alignment": "harmonia",
+   "species": "canary-sphinx",
+   "role": "tanque",
+   "realm": "picos",
+   "seed": "210000"
+  },
+  {
+   "n": 112,
+   "file": "combinados/112-buraco_negro.png",
+   "combination": "Buraco Negro",
+   "components": [
+    "gravidade",
+    "sombra"
+   ],
+   "name": "Vespracyn",
+   "alignment": "harmonia",
+   "species": "harpy eagle",
+   "role": "magico",
+   "realm": "picos",
+   "seed": "211000"
+  },
+  {
+   "n": 113,
+   "file": "combinados/113-halo_gravitacional.png",
+   "combination": "Halo Gravitacional",
+   "components": [
+    "gravidade",
+    "luz"
+   ],
+   "name": "Sargil",
+   "alignment": "benevolencia",
+   "species": "skeleton-bull",
+   "role": "tanque",
+   "realm": "picos",
+   "seed": "212000"
+  },
+  {
+   "n": 114,
+   "file": "combinados/114-jugo.png",
+   "combination": "Jugo",
+   "components": [
+    "gravidade",
+    "vileza"
+   ],
+   "name": "Terasor",
+   "alignment": "harmonia",
+   "species": "giant",
+   "role": "magico",
+   "realm": "deserto",
+   "seed": "213000"
+  },
+  {
+   "n": 115,
+   "file": "combinados/115-implosao.png",
+   "combination": "Implosão",
+   "components": [
+    "gravidade",
+    "morte"
+   ],
+   "name": "Basalsa",
+   "alignment": "poder",
+   "species": "brachiosaur-ant",
+   "role": "suporte",
+   "realm": "deserto",
+   "seed": "214000"
+  },
+  {
+   "n": 116,
+   "file": "combinados/116-ancora_vital.png",
+   "combination": "Âncora Vital",
+   "components": [
+    "gravidade",
+    "vida"
+   ],
+   "name": "Tasylva",
+   "alignment": "harmonia",
+   "species": "pitcher plant",
+   "role": "fisico",
+   "realm": "deserto",
+   "seed": "215000"
+  },
+  {
+   "n": 117,
+   "file": "combinados/117-peso_descomunal.png",
+   "combination": "Peso Descomunal",
+   "components": [
+    "gravidade",
+    "vigor"
+   ],
+   "name": "Rockofu",
+   "alignment": "poder",
+   "species": "slime-zebra",
+   "role": "suporte",
+   "realm": "akasha",
+   "seed": "216000"
+  },
+  {
+   "n": 118,
+   "file": "combinados/118-ariete.png",
+   "combination": "Aríete",
+   "components": [
+    "gravidade",
+    "marcial"
+   ],
+   "name": "Argilfu",
+   "alignment": "harmonia",
+   "species": "angel",
+   "role": "fisico",
+   "realm": "akasha",
+   "seed": "217000"
+  },
+  {
+   "n": 119,
+   "file": "combinados/119-dilatacao.png",
+   "combination": "Dilatação",
+   "components": [
+    "gravidade",
+    "tempo"
+   ],
+   "name": "Akashala",
+   "alignment": "harmonia",
+   "species": "thrush-ooze",
+   "role": "alcance",
+   "realm": "akasha",
+   "seed": "218000"
+  },
+  {
+   "n": 120,
+   "file": "combinados/120-onda_de_choque.png",
+   "combination": "Onda de Choque",
+   "components": [
+    "gravidade",
+    "som"
+   ],
+   "name": "Graniqur",
+   "alignment": "harmonia",
+   "species": "snowy owl-bee",
+   "role": "tanque",
+   "realm": "campina",
+   "seed": "219000"
+  },
+  {
+   "n": 121,
+   "file": "combinados/121-meteoro.png",
+   "combination": "Meteoro",
+   "components": [
+    "espaco",
+    "fogo"
+   ],
+   "name": "Alizesa",
+   "alignment": "poder",
+   "species": "flying fish",
+   "role": "alcance",
+   "realm": "campina",
+   "seed": "220000"
+  },
+  {
+   "n": 122,
+   "file": "combinados/122-cometa.png",
+   "combination": "Cometa",
+   "components": [
+    "espaco",
+    "agua"
+   ],
+   "name": "Futoren",
+   "alignment": "harmonia",
+   "species": "crayfish",
+   "role": "suporte",
+   "realm": "gelo",
+   "seed": "221001"
+  },
+  {
+   "n": 123,
+   "file": "combinados/123-asteroide.png",
+   "combination": "Asteroide",
+   "components": [
+    "espaco",
+    "terra"
+   ],
+   "name": "Montide",
+   "alignment": "benevolencia",
+   "species": "gremlin-living dynamo",
+   "role": "magico",
+   "realm": "cavernas",
+   "seed": "222001"
+  },
+  {
+   "n": 124,
+   "file": "combinados/124-estratosfera.png",
+   "combination": "Estratosfera",
+   "components": [
+    "espaco",
+    "ar"
+   ],
+   "name": "Fufrosta",
+   "alignment": "harmonia",
+   "species": "dragon-atlas moth",
+   "role": "suporte",
+   "realm": "gelo",
+   "seed": "223000"
+  },
+  {
+   "n": 125,
+   "file": "combinados/125-pulsar.png",
+   "combination": "Pulsar",
+   "components": [
+    "espaco",
+    "eletricidade"
+   ],
+   "name": "Glacupu",
+   "alignment": "harmonia",
+   "species": "grasshopper",
+   "role": "magico",
+   "realm": "gelo",
+   "seed": "224000"
+  },
+  {
+   "n": 126,
+   "file": "combinados/126-portal.png",
+   "combination": "Portal",
+   "components": [
+    "espaco",
+    "arcano"
+   ],
+   "name": "Fulgopo",
+   "alignment": "harmonia",
+   "species": "mammoth-werebear",
+   "role": "suporte",
+   "realm": "gelo",
+   "seed": "225000"
+  },
+  {
+   "n": 127,
+   "file": "combinados/127-vazio.png",
+   "combination": "Vazio",
+   "components": [
+    "espaco",
+    "sombra"
+   ],
+   "name": "Cavravia",
+   "alignment": "poder",
+   "species": "satyr",
+   "role": "fisico",
+   "realm": "cavernas",
+   "seed": "226000"
+  },
+  {
+   "n": 128,
+   "file": "combinados/128-constelacao.png",
+   "combination": "Constelação",
+   "components": [
+    "espaco",
+    "luz"
+   ],
+   "name": "Alizecao",
+   "alignment": "harmonia",
+   "species": "rose",
+   "role": "tanque",
+   "realm": "akasha",
+   "seed": "227002"
+  },
+  {
+   "n": 129,
+   "file": "combinados/129-devorador.png",
+   "combination": "Devorador",
+   "components": [
+    "espaco",
+    "vileza"
+   ],
+   "name": "Umbrador",
+   "alignment": "poder",
+   "species": "pseudoscorpion-tyrannosaur",
+   "role": "tanque",
+   "realm": "floresta",
+   "seed": "228001"
+  },
+  {
+   "n": 130,
+   "file": "combinados/130-nebulosa.png",
+   "combination": "Nebulosa",
+   "components": [
+    "espaco",
+    "morte"
+   ],
+   "name": "Vesprasa",
+   "alignment": "harmonia",
+   "species": "panther",
+   "role": "alcance",
+   "realm": "cavernas",
+   "seed": "229000"
+  },
+  {
+   "n": 131,
+   "file": "combinados/131-semente_estelar.png",
+   "combination": "Semente Estelar",
+   "components": [
+    "espaco",
+    "vida"
+   ],
+   "name": "Tezonda",
+   "alignment": "benevolencia",
+   "species": "penguin",
+   "role": "tanque",
+   "realm": "pantano",
+   "seed": "230001"
+  },
+  {
+   "n": 132,
+   "file": "combinados/132-gigante_estelar.png",
+   "combination": "Gigante Estelar",
+   "components": [
+    "espaco",
+    "vigor"
+   ],
+   "name": "Aerola",
+   "alignment": "harmonia",
+   "species": "ghost mantis-mammoth",
+   "role": "magico",
+   "realm": "floresta",
+   "seed": "231000"
+  },
+  {
+   "n": 133,
+   "file": "combinados/133-lamina_sideral.png",
+   "combination": "Lâmina Sideral",
+   "components": [
+    "espaco",
+    "marcial"
+   ],
+   "name": "Siventi",
+   "alignment": "poder",
+   "species": "bell-flamingo",
+   "role": "suporte",
+   "realm": "picos",
+   "seed": "232002"
+  },
+  {
+   "n": 134,
+   "file": "combinados/134-continuum.png",
+   "combination": "Continuum",
+   "components": [
+    "espaco",
+    "tempo"
+   ],
+   "name": "Saondra",
+   "alignment": "harmonia",
+   "species": "kraken",
+   "role": "fisico",
+   "realm": "oceano",
+   "seed": "233001"
+  },
+  {
+   "n": 135,
+   "file": "combinados/135-silencio_cosmico.png",
+   "combination": "Silêncio Cósmico",
+   "components": [
+    "espaco",
+    "som"
+   ],
+   "name": "Zephycis",
+   "alignment": "harmonia",
+   "species": "tengu",
+   "role": "suporte",
+   "realm": "pantano",
+   "seed": "234000"
+  },
+  {
+   "n": 136,
+   "file": "combinados/136-dobra.png",
+   "combination": "Dobra",
+   "components": [
+    "espaco",
+    "gravidade"
+   ],
+   "name": "Teraror",
+   "alignment": "harmonia",
+   "species": "snowy owl-stone golem",
+   "role": "tanque",
+   "realm": "deserto",
+   "seed": "235002"
+  },
+  {
+   "n": 137,
+   "file": "combinados/137-planta.png",
+   "combination": "Planta",
+   "components": [
+    "vida",
+    "terra"
+   ],
+   "name": "Krionasar",
+   "alignment": "benevolencia",
+   "species": "venus flytrap",
+   "role": "fisico",
+   "realm": "gelo",
+   "seed": "236000"
+  },
+  {
+   "n": 138,
+   "file": "combinados/138-industrial.png",
+   "combination": "Industrial",
+   "components": [
+    "marcial",
+    "terra"
+   ],
+   "name": "Saglacu",
+   "alignment": "poder",
+   "species": "horse-werebear",
+   "role": "alcance",
+   "realm": "gelo",
+   "seed": "237000"
+  }
+ ]
+}

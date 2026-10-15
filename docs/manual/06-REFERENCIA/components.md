@@ -798,7 +798,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** puramente cosmético, self-dismiss via `onFinish`; cai para o wordmark raven/gradiente se o vídeo falhar (WebView antiga sem suporte ao formato).
 
 ### `src/components/ui/IntroWelcomePill.tsx`
-**Dono de:** o selinho "Welcome"/"Bem-vindo" no topo que oculta o patch/versão pintado na arte da intro (REGISTRO §77); CSS `.sm2-intro-*` em `src/index.css`.
+**Dono de:** o selinho "Welcome"/"Bem-vindo" no topo que oculta o patch/versão pintado na arte da intro (REGISTRO §79); CSS `.sm2-intro-*` em `src/index.css`.
 **Props principais:** nenhuma.
 **Exports:** `IntroWelcomePill()`.
 **Estado/efeitos relevantes:** nenhum; lê o idioma. Ancorada na caixa `cover` 9:16 do vídeo (cq), `aria-hidden`, `pointer-events: none`.

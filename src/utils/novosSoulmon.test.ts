@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { NOVOS_SOULMON, novoSoulmonOfStage, novoPreferenceOfTier } from './novosSoulmon';
+import { NOVOS_SOULMON, FORMAS_ALTAS_ART, novoSoulmonOfStage, novoPreferenceOfTier } from './novosSoulmon';
 import { NOVOS_DATA, FORMAS_ALTAS, pickNovo } from './novosSoulmonData';
 import { buildArenaRound, ARENA_ROUNDS } from './arena';
 import { buildDungeonWave, LADDER_TIERS } from './dungeon';
@@ -30,10 +30,10 @@ describe('os 17 novos Soulmon da masmorra', () => {
     }
   });
 
-  it('arte 256² RGBA, 34 arquivos sem órfão, peso < 150 KB', () => {
+  it('arte 256² RGBA, 85 arquivos (17×5 formas) sem órfão, peso < 150 KB', () => {
     const files = readdirSync(DIR).filter(f => f.endsWith('.png'));
-    expect(files).toHaveLength(34);
-    for (const n of NOVOS_SOULMON) for (const st of ['rookie', 'champion']) expect(files).toContain(`${n.element}-${st}.png`);
+    expect(files).toHaveLength(85);
+    for (const n of NOVOS_SOULMON) for (const st of ['rookie', 'champion', 'ultimate', 'mega', 'ultra']) expect(files).toContain(`${n.element}-${st}.png`);
     for (const f of files) {
       const b = readFileSync(join(DIR, f));
       expect(b.readUInt32BE(16)).toBe(256);
@@ -50,26 +50,39 @@ describe('os 17 novos Soulmon da masmorra', () => {
     }
   });
 
-  it('a escada: slots rookie/champion = criaturas novas com elemento; ultimate/mega = linhas antigas', () => {
+  it('formas altas: as 17 têm ultimate/mega/ultra, com nome PT/EN (iguais), arte própria e sem colisão', () => {
+    const todos = new Set<string>();
+    for (const n of NOVOS_SOULMON) {
+      expect(NOVOS_DATA.find(d => d.id === n.id)).toBeDefined();
+      for (const st of ['ultimate', 'mega', 'ultra'] as const) {
+        const nome = FORMAS_ALTAS[n.id]?.[st];
+        expect(nome, `${n.id} ${st}`).toMatch(/^[A-Z][a-z]{4,14}$/);
+        expect(n.name(st)).toBe(nome);
+        expect(FORMAS_ALTAS_ART[n.id][st]).toBeTruthy();
+        expect(n.sprite(st)).not.toBe(n.sprite('champion'));
+        todos.add(nome!);
+      }
+      for (const nm of [n.rookie, n.champion]) todos.add(nm);
+    }
+    expect(todos.size).toBe(17 * 5);
+    expect(new Set(Object.values(FORMAS_ALTAS_ART).flatMap(o => Object.values(o))).size).toBe(51);
+  });
+
+  it('a escada: slots rookie/champion/ultimate/mega = criaturas novas com elemento', () => {
     expect(LADDER_TIERS.map(t => novoPreferenceOfTier(t)[0])).toEqual(['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega']);
-    expect(Object.keys(FORMAS_ALTAS)).toEqual([]); // enquanto não há arte, slots 4/5 ficam nas linhas antigas
+    expect(Object.keys(FORMAS_ALTAS)).toHaveLength(17);
     for (let seed = 1; seed <= 20; seed++) {
       const wave = buildDungeonWave(1 + seed % 4, 'rookie', mulberry32(seed));
-      wave.slice(0, 4).forEach((e, i) => {
+      const forma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
+      wave.forEach((e, i) => {
         const n = novoSoulmonOfStage(e.stage)!;
         expect(n, e.stage).toBeDefined();
         expect(e.element).toBe(n.element);
-        expect(e.name).toBe(i === 3 ? n.name('champion') : n.name('rookie'));
-        expect(e.sprite).toBe(i === 3 ? n.sprite('champion') : n.sprite('rookie'));
+        expect(e.name).toBe(n.name(forma[i]));
+        expect(e.sprite).toBe(n.sprite(forma[i]));
         expect(dungeonEnemyElement(e)).toBe(n.element);
         expect(dungeonFoeSpecialLabel(true, e, e.element, e.name)).toBe(n.especial.pt);
         expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).toBe(n.especial.en);
-      });
-      wave.slice(4).forEach(e => {
-        expect(novoSoulmonOfStage(e.stage)).toBeUndefined();
-        expect(e.element).toBeUndefined();
-        expect(Object.keys(DUNGEON_LINE_SPRITES)).toContain(e.stage.split('-')[0]);
-        expect(Object.values(DUNGEON_LINE_NAMES)).toContain(e.name);
       });
     }
   });
@@ -80,17 +93,19 @@ describe('os 17 novos Soulmon da masmorra', () => {
     expect(a.map(e => e.foe)).toEqual(b.map(e => e.foe));
   });
 
-  it('sem repetição: as 4 criaturas novas da onda são todas diferentes', () => {
+  it('sem repetição: as criaturas novas da onda (6 slots) são todas diferentes', () => {
     for (let seed = 1; seed <= 200; seed++) {
-      const ids = buildDungeonWave(1, 'rookie', mulberry32(seed)).slice(0, 4).map(e => e.stage.split('-')[0]);
-      expect(new Set(ids).size, ids.join()).toBe(4);
+      const ids = buildDungeonWave(1, 'rookie', mulberry32(seed)).map(e => e.stage.split('-')[0]);
+      expect(ids).toHaveLength(6);
+      expect(new Set(ids).size, ids.join()).toBe(6);
     }
   });
 
   it('pickNovo: forma sem arte -> null; com `used` esgotado reaproveita', () => {
     const rng = () => 0.3;
-    expect(pickNovo(['mega'], new Set(), rng)).toBeNull();
-    expect(pickNovo(['ultra', 'mega', 'champion'], new Set(), rng)!.stage).toBe('champion');
+    expect(pickNovo(['ultra', 'mega', 'champion'], new Set(), rng)!.stage).toBe('ultra');
+    expect(pickNovo(['mega'], new Set(NOVOS_DATA.map(n => n.id)), rng)!.stage).toBe('mega');
+    expect(pickNovo(['ultimate'], new Set(), () => 0)!.data.id).toBe(NOVOS_DATA[0].id);
     expect(pickNovo(['rookie'], new Set(NOVOS_DATA.map(n => n.id)), rng)).not.toBeNull();
   });
 
@@ -103,10 +118,35 @@ describe('os 17 novos Soulmon da masmorra', () => {
         for (const e of a) {
           const n = NOVOS_SOULMON.find(x => x.id === e.creature)!;
           expect(e.elements).toEqual([n.element]);
-          expect(e.form).toBe(e.cls === 'weak' ? 'rookie' : 'champion'); // sem arte alta: o chefe usa o Champion
+          expect(e.form).toBe(e.cls === 'weak' ? 'rookie' : e.cls === 'medium' ? 'champion' : 'ultra'); // chefe: ultra > mega > ultimate
           expect(e.namePt).toBe(n.name(e.form!));
         }
       }
+    }
+  });
+});
+
+describe('arquivo de ramos e combinados (sem consumidor)', () => {
+  const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
+  it('manifest bate com os PNGs (102 ramos + 138 combinados), 256² RGBA, sem órfão', () => {
+    const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
+    expect(m.branches).toHaveLength(102);
+    expect(m.combined).toHaveLength(138);
+    const listados = new Set<string>([...m.branches, ...m.combined].map((x: { file: string }) => x.file));
+    const reais = [...readdirSync(join(ARQ, 'combinados')).map(f => `combinados/${f}`),
+      ...readdirSync(join(ARQ, 'ramos')).flatMap(d => readdirSync(join(ARQ, 'ramos', d)).map(f => `ramos/${d}/${f}`))];
+    expect(new Set(reais)).toEqual(listados);
+    for (const f of reais) {
+      const b = readFileSync(join(ARQ, f));
+      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]]).toEqual([256, 256, 6]);
+    }
+  });
+  it('nenhum arquivo de src importa o arquivo (fica fora do bundle)', () => {
+    const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap(e =>
+      e.isDirectory() ? (e.name === 'assets' ? [] : walk(join(d, e.name))) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : []);
+    for (const f of walk(join(process.cwd(), 'src'))) {
+      if (f.endsWith('novosSoulmon.test.ts')) continue;
+      expect(readFileSync(f, 'utf8'), f).not.toContain('novos-arquivo');
     }
   });
 });

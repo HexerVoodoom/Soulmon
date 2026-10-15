@@ -154,7 +154,7 @@ describe('IntroScreen — tela de abertura (tema na intro)', () => {
   });
 });
 
-/** REGISTRO §77 — pílula "Welcome" sobre o texto pintado da arte. */
+/** REGISTRO §79 — pílula "Welcome" sobre o texto pintado da arte. */
 describe('IntroScreen — pílula Welcome', () => {
   it('EN "Welcome" / PT "Bem-vindo", decorativa e sem pegar o toque', () => {
     const { unmount } = render(<IntroScreen onFinish={() => {}} />);

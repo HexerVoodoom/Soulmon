@@ -268,6 +268,7 @@ async function anonimizarClaims(env, orderIds) {
     try {
       if (env.DB) {
         await env.DB.prepare("UPDATE order_claims SET save_id = ? WHERE order_id = ?").bind(CLAIM_EXCLUIDA, orderId).run();
+        await env.DB.prepare("UPDATE order_claims SET save_id = ? WHERE order_id = ?").bind(CLAIM_EXCLUIDA, GRANT_PREFIX + orderId).run();
       } else {
         await kvOrThrow(env).put(ORDER_PREFIX + orderId, CLAIM_EXCLUIDA, { expirationTtl: RETENTION_TTL_SECONDS });
       }
@@ -278,6 +279,7 @@ async function anonimizarClaims(env, orderIds) {
   return falhou;
 }
 __name(anonimizarClaims, "anonimizarClaims");
+var GRANT_PREFIX = "grant:";
 var ORDER_HISTORY_MAX = 200;
 function podarOrderDetails(details, max2 = ORDER_HISTORY_MAX) {
   if (!Array.isArray(details) || details.length <= max2) return details;
@@ -301,6 +303,17 @@ async function applyVerifiedPurchase(env, saveId, {
   if (orderId && ent.consumedOrders.includes(orderId)) {
     return { ent, duplicate: true };
   }
+  let grantRow = null;
+  if (orderId && env.DB) {
+    grantRow = GRANT_PREFIX + orderId;
+    const agora = Date.now();
+    try {
+      await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(grantRow, saveId, agora, agora + RETENTION_TTL_SECONDS * 1e3).run();
+    } catch (err2) {
+      if (!ehViolacaoDeChave(err2)) throw err2;
+      return { ent: await readEntitlement(env, saveId), duplicate: true };
+    }
+  }
   if (grantTier === "paid") ent.tier = "paid";
   if (grantCredits > 0) ent.credits += grantCredits;
   if (orderId) {
@@ -316,7 +329,17 @@ async function applyVerifiedPurchase(env, saveId, {
     if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
     ent.orderDetails = podarOrderDetails(ent.orderDetails);
   }
-  await writeEntitlement(env, saveId, ent);
+  try {
+    await writeEntitlement(env, saveId, ent);
+  } catch (err2) {
+    if (grantRow) {
+      try {
+        await env.DB.prepare("DELETE FROM order_claims WHERE order_id = ?").bind(grantRow).run();
+      } catch {
+      }
+    }
+    throw err2;
+  }
   return { ent, duplicate: false };
 }
 __name(applyVerifiedPurchase, "applyVerifiedPurchase");
@@ -2249,7 +2272,7 @@ async function verifyPlayPurchase(env, { productId, purchaseToken, saveId }) {
   const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
   const packageName = env.ANDROID_PACKAGE_NAME;
   if (!rawAccount || !packageName) return { ok: false, reason: "billing-not-configured" };
-  const product = PRODUCTS[productId];
+  const product = typeof productId === "string" && Object.hasOwn(PRODUCTS, productId) ? PRODUCTS[productId] : void 0;
   if (!product) return { ok: false, reason: "unknown-product" };
   if (!purchaseToken || typeof purchaseToken !== "string") return { ok: false, reason: "missing-token" };
   let serviceAccount;
@@ -2623,7 +2646,7 @@ async function onRequestPost({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json2(auth.reason === "beta-closed" ? { ok: false, error: auth.reason, reason: auth.reason, message: BETA_CLOSED_MESSAGE } : { error: auth.reason }, authStatus(auth));
   if (betaGate(env, auth, "core")) return json2({ ok: false, reason: "beta-closed", message: BETA_CLOSED_MESSAGE }, 403);
-  if (provider === "play" && PRODUCTS[body?.productId]?.kind === "subscription") {
+  if (provider === "play" && typeof body?.productId === "string" && Object.hasOwn(PRODUCTS, body.productId) && PRODUCTS[body.productId].kind === "subscription") {
     return handleSubscription(env, saveId, body);
   }
   let result;
@@ -4222,7 +4245,7 @@ async function onRequestOptions3() {
 __name(onRequestOptions3, "onRequestOptions");
 async function onRequestPost2({ request, env }) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null) ?? {};
     const { message: messageRaw, petName: petNameRaw, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
     const feedbackMode = body?.mode === "feedback";
     const behavior = sanitizeBehavior(body?.behavior);
@@ -5832,7 +5855,8 @@ async function handleGuild({ request, env }) {
   const action = alias ? COOP_ALIASES[pedida] : pedida;
   const method = request.method;
   if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json11({ error: "unknown action" }, 400);
-  const body = method === "POST" ? await request.json().catch(() => ({})) : {};
+  const parsed = method === "POST" ? await request.json().catch(() => null) : null;
+  const body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   const id = body.id || url.searchParams.get("id");
   const chave = alias ? "group" : "guild";
   const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json11({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
@@ -8822,9 +8846,14 @@ async function generateHf(env, model, prompt, referenceImageUrls) {
   const interval = hfPollMs;
   for (let i2 = 0; i2 < 40; i2++) {
     await new Promise((r) => setTimeout(r, interval));
-    const st = await fetch(statusUrl, { headers: { Authorization: auth } });
-    if (!st.ok) continue;
-    const data = await st.json();
+    let data;
+    try {
+      const st = await fetch(statusUrl, { headers: { Authorization: auth } });
+      if (!st.ok) continue;
+      data = await st.json();
+    } catch {
+      continue;
+    }
     if (data.status === "nsfw") throw refusalError(`higgsfield ${model}: nsfw/policy rejection`);
     if (data.status === "failed" || data.status === "canceled") throw new Error(`higgsfield ${model}: generation failed`);
     if (data.status === "completed") {
@@ -9003,7 +9032,11 @@ async function onRequestPost5({ request, env }) {
     if (flagOn(env?.SPRITE_DISABLED)) {
       return Response.json({ error: "sprite-disabled", message: AI_REFUSAL_MESSAGES["sprite-disabled"] }, { status: 503, headers: CORS10 });
     }
-    const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = await request.json();
+    const corpo = await request.json().catch(() => null);
+    if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
+      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS10 });
+    }
+    const { prompt, promptFallback, referenceImageUrls: refsCruas, id, formId } = corpo;
     if (typeof formId !== "string" || !formId) {
       return Response.json({ error: "form-id-required" }, { status: 400, headers: CORS10 });
     }
@@ -9014,6 +9047,13 @@ async function onRequestPost5({ request, env }) {
       return Response.json({ error: "prompt too long" }, { status: 400, headers: CORS10 });
     }
     const referenceImageUrls = referenciasSeguras(request, refsCruas);
+    const auth = await authorizeSaveAccess(request, env, id);
+    if (!auth.ok) {
+      return Response.json(
+        { error: auth.reason },
+        { status: authStatus(auth), headers: CORS10 }
+      );
+    }
     const tier = await requirePaidTier(env, id);
     const tierOk = tier.ok || tier.status === 402 && (await verifiedAdmin(env, request, id)).admin;
     if (!tierOk) {
@@ -9023,13 +9063,6 @@ async function onRequestPost5({ request, env }) {
       if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) {
         return Response.json({ error: "invalid-form-id" }, { status: 400, headers: CORS10 });
       }
-    }
-    const auth = await authorizeSaveAccess(request, env, id);
-    if (!auth.ok) {
-      return Response.json(
-        { error: auth.reason },
-        { status: authStatus(auth), headers: CORS10 }
-      );
     }
     if (typeof formId === "string" && formId.length > 0) {
       let pronta = null;
@@ -9511,6 +9544,49 @@ function sanitizeFocusLoot(raw) {
 }
 __name(sanitizeFocusLoot, "sanitizeFocusLoot");
 
+// api/_dayPlan.js
+var DAY_PLAN_MAX_IDS = 200;
+var ID_RE2 = /^[\w:.-]{1,120}$/;
+var DAY_RE2 = /^\d{4}-\d{2}-\d{2}$/;
+function cleanIds(v) {
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v.filter((x2) => typeof x2 === "string" && ID_RE2.test(x2)))].slice(0, DAY_PLAN_MAX_IDS);
+}
+__name(cleanIds, "cleanIds");
+function sanitizeDayPlan(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof r.day !== "string" || !DAY_RE2.test(r.day)) return void 0;
+  const offered = cleanIds(r.offered);
+  const picked = cleanIds(r.picked).filter((id) => offered.includes(id));
+  return { day: r.day, offered, picked, confirmed: r.confirmed === true };
+}
+__name(sanitizeDayPlan, "sanitizeDayPlan");
+
+// api/_nightmares.js
+var MAX_FOUGHT_HISTORY = 30;
+var NIGHTMARE_CYCLE_DAYS = 6;
+var MAX_GOOD_DREAMS = 9999;
+var strs = /* @__PURE__ */ __name((v, max2) => Array.isArray(v) ? [...new Set(v.filter((x2) => typeof x2 === "string" && x2.length > 0 && x2.length <= 64))].slice(-max2) : [], "strs");
+function sanitizeNightmares(raw) {
+  const r = raw && typeof raw === "object" && !Array.isArray(raw) ? (
+    /** @type {Record<string, unknown>} */
+    raw
+  ) : {};
+  const out = { fought: strs(r.fought, MAX_FOUGHT_HISTORY) };
+  if (typeof r.pending === "string" && r.pending.length > 0 && r.pending.length <= 64) out.pending = r.pending;
+  const days = strs(r.lurkDays, NIGHTMARE_CYCLE_DAYS);
+  if (days.length) out.lurkDays = days;
+  if (r.goodDream === true) out.goodDream = true;
+  const n = typeof r.goodDreams === "number" && Number.isFinite(r.goodDreams) ? Math.min(MAX_GOOD_DREAMS, Math.max(0, Math.floor(r.goodDreams))) : 0;
+  if (n > 0) out.goodDreams = n;
+  return out;
+}
+__name(sanitizeNightmares, "sanitizeNightmares");
+
 // api/_dayCounters.js
 var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 var DAY_MS = 864e5;
@@ -9711,7 +9787,7 @@ async function onRequest6({ request, env }) {
     if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS11);
     const incoming = body?.state;
     if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
-      console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveId, tipo: Array.isArray(incoming) ? "array" : typeof incoming });
+      console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveIdPrefix: saveId.slice(0, 8), tipo: Array.isArray(incoming) ? "array" : typeof incoming });
       return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS11 });
     }
     const state = { ...incoming };
@@ -9753,6 +9829,12 @@ async function onRequest6({ request, env }) {
       if (q) state.focusLoot = q;
       else delete state.focusLoot;
     }
+    if ("dayPlan" in state) {
+      const q = sanitizeDayPlan(state.dayPlan);
+      if (q) state.dayPlan = q;
+      else delete state.dayPlan;
+    }
+    if ("nightmares" in state) state.nightmares = sanitizeNightmares(state.nightmares);
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
     if ("fichaJornada" in state) {
       let guardado;
@@ -9764,7 +9846,7 @@ async function onRequest6({ request, env }) {
         }
       }
       const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
-      if (mexeu.length) console.warn("save: estagio da fichaJornada ja gravado, mantido o do servidor", { saveId, estagios: mexeu });
+      if (mexeu.length) console.warn("save: estagio da fichaJornada ja gravado, mantido o do servidor", { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha;
       else delete state.fichaJornada;
     }
@@ -9787,10 +9869,16 @@ async function onRequest6({ request, env }) {
         else delete state.checkIns;
       }
     }
-    const serialized = JSON.stringify(state);
+    let serialized;
+    try {
+      serialized = JSON.stringify(state);
+    } catch {
+      console.warn("save: POST recusado, state n\xE3o serializa (aninhamento profundo demais)", { saveIdPrefix: saveId.slice(0, 8) });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS11 });
+    }
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
     if (bytes > MAX_STATE_BYTES) {
-      console.warn("save: POST recusado, state acima do teto", { saveId, bytes });
+      console.warn("save: POST recusado, state acima do teto", { saveIdPrefix: saveId.slice(0, 8), bytes });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
     }
     if (prev?.value == null) {
@@ -9934,6 +10022,7 @@ async function onRequestPost8({ request, env }) {
   let body;
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("not an object");
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
@@ -10018,6 +10107,7 @@ async function onRequestDelete2({ request, env }) {
   let body;
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("not an object");
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
@@ -10076,7 +10166,7 @@ async function onRequestOptions13() {
 __name(onRequestOptions13, "onRequestOptions");
 async function onRequestPost9({ request, env }) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null) ?? {};
     const goalMin = minimizeForAi((body.goalText || "").toString().trim(), 300);
     const goalText = goalMin.text;
     if (redactionCount(goalMin.redactions) || goalMin.truncated) {
@@ -10152,7 +10242,7 @@ __name(onRequestPost9, "onRequestPost");
 // api/top-ai.js
 var BUCKETS = ["chat", "sprite", "transcribe", "suggest"];
 var TOP_N = 20;
-var DAY_RE2 = /^\d{4}-\d{2}-\d{2}$/;
+var DAY_RE3 = /^\d{4}-\d{2}-\d{2}$/;
 var json9 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
 function ranking(bucket, entradas, limites = AI_LIMITS) {
   const teto = limites[bucket]?.perAccountByTier?.paid ?? limites[bucket]?.perAccount ?? 0;
@@ -10165,7 +10255,7 @@ async function onRequestGet6({ request, env }) {
   if (!gate.ok) return tooManyRequests(gate.retryAfter);
   if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json9({ error: "Unauthorized" }, 401);
   const day2 = new URL(request.url).searchParams.get("day") ?? serverDay();
-  if (!DAY_RE2.test(day2)) return json9({ error: "Invalid day" }, 400);
+  if (!DAY_RE3.test(day2)) return json9({ error: "Invalid day" }, 400);
   if (!kv(env)) return json9({ error: "Unavailable" }, 503);
   const store = kvOrThrow(env);
   const out = {};
@@ -10299,7 +10389,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-tAPLlY/functionsRoutes-0.13363679837454612.mjs
+// ../.wrangler/tmp/pages-vBhtsp/functionsRoutes-0.03164947085055647.mjs
 var routes = [
   {
     routePath: "/api/account",

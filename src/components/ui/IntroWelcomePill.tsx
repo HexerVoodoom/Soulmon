@@ -3,7 +3,7 @@ import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 
 /**
- * PÍLULA "Welcome" da intro (REGISTRO §77, dono 15/10/2026: "coloca um PNG por
+ * PÍLULA "Welcome" da intro (REGISTRO §79, dono 15/10/2026: "coloca um PNG por
  * cima, uma pílula escrito WELCOME"). A arte do vídeo/pôster traz texto PINTADO
  * ("VERSION 1.2" errada, "LOADING DATA...", barra, "SOUL_LINK ESTABLISHED"); a
  * pílula é opaca e cobre isso. CSS puro (não PNG): respeita PT/EN, usa token e a
