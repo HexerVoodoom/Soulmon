@@ -2585,3 +2585,9 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Masmorra sem repetição:** `buildDungeonWave` não repete criatura entre os slots da onda (`used`); 17 > 4, sempre possível.
 - **Formas altas prontas, sem arte inventada:** `utils/novosSoulmonData.ts` (dados puros: `FORMAS_ALTAS` nomes, `FORMAS_ALTAS_ART` em `novosSoulmon.ts` sprites). Enquanto vazias: slots 4/5 da escada (e do Pesadelo, que herda a onda) seguem nas linhas antigas; o chefe da Arena usa o Champion. Ao instalar Ultimate/Mega, o slot 4/5 sorteia entre as criaturas que têm a forma (sem nenhuma, volta à linha antiga). `SHADOW_SLOTS` permanece com as sombras.
 
+
+## 72. Rosto neutro nos sprites (dono, 15/10/2026)
+
+- **Decisão:** os pools de Poder, Harmonia e Benevolência (`ALIGNMENT_DESIGNS`, `TYPE_LOOK`) e os motivos novos perdem tudo que descreve olhar, boca, sorriso, bochechas, expressão ou "fofura" (sorriso, careta, olhos, "huggable", "fluffy"...). Ficaram corpo, postura, silhueta, motivos e acentos de cor; os itens faciais foram trocados no mesmo lugar por itens neutros de corpo/postura (os pools mantêm o tamanho). Os 4 adjetivos faciais do pedido de hoje cedo (gentle expression, wise look, serene face, benevolent expression) saíram; ficaram os de postura/forma.
+- **Cláusula constante** em todo prompt, nas duas variantes: "Simple neutral face with minimal facial detail, small plain eyes, no smile, no frown." (`NEUTRAL_FACE_CLAUSE`).
+- **Régua:** `oracle/formas.test.ts` varre os prompts de 150 sementes (todos os estágios, as duas variantes) atrás de vocabulário de expressão. Soulmon salvos não mudam.

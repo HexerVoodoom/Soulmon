@@ -53,11 +53,11 @@ export const REALM_MOTIFS: Record<RealmId, { motifs: LText[]; mass: LText[] }> =
 export const ROLE_METAMORPHS_EXTRA: Record<RoleId, Array<{ en: string; pt: string }>> = {
   tanque: [
     { en: 'a bastion stalwart: a broad domed carapace, thick pillar-like legs and a wide shielding forearm', pt: 'baluarte firme: carapaça larga em cúpula, pernas grossas como pilares e um antebraço largo de escudo' },
-    { en: 'a rampart beast: stacked armored ridges along the spine and a heavy lowered brow', pt: 'fera-muralha: cristas blindadas empilhadas ao longo da coluna e uma testa baixa e pesada' },
+    { en: 'a rampart beast: stacked armored ridges along the spine and a heavy low-slung frame', pt: 'fera-muralha: cristas blindadas empilhadas ao longo da coluna e uma testa baixa e pesada' },
   ],
   suporte: [
     { en: 'a gentle mender: long soft sleeves, a small glowing pouch and a tail curled like a cradle', pt: 'remendeiro gentil: mangas longas e macias, uma pequena bolsa luminosa e cauda enrolada como berço' },
-    { en: 'a bell-bearer: a chiming charm at the throat, wide sheltering shoulders and a calm lowered head', pt: 'portador de sino: um amuleto tilintante na garganta, ombros largos que abrigam e cabeça calma baixa' },
+    { en: 'a bell-bearer: a chiming charm at the throat, and wide sheltering shoulders', pt: 'portador de sino: um amuleto tilintante na garganta, ombros largos que abrigam e cabeça calma baixa' },
   ],
   fisico: [
     { en: 'a lunging striker: oversized hind legs, forward-leaning shoulders and sharpened forelimb tips', pt: 'atacante de bote: patas traseiras grandes, ombros inclinados à frente e pontas afiadas nos membros dianteiros' },
@@ -68,7 +68,7 @@ export const ROLE_METAMORPHS_EXTRA: Record<RoleId, Array<{ en: string; pt: strin
     { en: 'a sigil carrier: a floating ring behind the head and slow-drifting marks around the shoulders', pt: 'portador de sigilos: um anel flutuante atrás da cabeça e marcas à deriva ao redor dos ombros' },
   ],
   alcance: [
-    { en: 'a long-sighted skirmisher: oversized keen eyes, a long slim snout or beak and a spring-loaded tail', pt: 'escaramuçador de longa vista: olhos grandes e agudos, focinho ou bico longo e esguio e cauda de mola' },
+    { en: 'a long-sighted skirmisher: a long slim snout or beak, a tall upright frame and a spring-loaded tail', pt: 'escaramuçador de longa vista: olhos grandes e agudos, focinho ou bico longo e esguio e cauda de mola' },
     { en: 'a lance thrower: a long prehensile arm with a shoulder rest for aiming, standing tall on slim legs', pt: 'lançador de dardos: braço longo e preênsil com apoio no ombro para mirar, de pé sobre pernas esguias' },
   ],
 };
