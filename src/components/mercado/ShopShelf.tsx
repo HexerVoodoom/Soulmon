@@ -729,12 +729,6 @@ export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly, nav
             status={claimed ? 'claimed' : done ? 'ready' : 'open'}
             title={isPt ? mission.descPt : mission.descEn}
             progress={{ cur: count, target: mission.target }}
-            reward={
-              <span aria-label={isPt ? `${mission.emblems} de Honra` : `${mission.emblems} Honor`} role="img" style={{ ...shopTagStyle, color: 'var(--sm2-gold-ink)' }}>
-                <Icon name="military_tech" size={ICON_TAG} fill={1} tone="gold" />
-                <span className="sm2-num" style={{ ...emblemStyle, fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
-              </span>
-            }
             onGo={go.onGo}
             lockNote={go.lockNote}
             action={
