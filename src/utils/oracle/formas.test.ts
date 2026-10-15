@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { SPRITE_FACING_PROMPT } from '../spritePose';
 import { generateOracle } from '../../test/oracleSync';
 import type { OracleInput } from '../oracle';
 import {
@@ -73,5 +74,19 @@ describe('eixos de forma da evolução', () => {
   it('motivos de elemento, tema e reino não contêm vocabulário proibido (5.8/7.2.1)', () => {
     const all = JSON.stringify([ELEMENT_MOTIFS, THEME_MOTIFS, REALM_MOTIFS]);
     expect(all).not.toMatch(/archive|library|memory|cracked|patched|\bscar(s|red)?\b|wound/i);
+  });
+
+  // Decisão do dono (15/10/2026): rosto neutro, sem expressão nem "fofura".
+  it('rosto neutro: cláusula constante e nenhum vocabulário de expressão nos prompts', () => {
+    const clause = 'Simple neutral face with minimal facial detail, small plain eyes, no smile, no frown.';
+    const FACE = /smile|smirk|grin|scowl|snarl|frown|eyes?|eyed|cheek|expression|gaze|stare|look|cute|huggable|fluff|plush|mouth|fang|maw|gape|brow|bfaces?b|glare|squint/i;
+    for (const r of results.slice(0, 150)) for (const s of r.creature.stages) {
+      for (const p of [s.imagePrompt, s.imagePromptFallback]) {
+        expect(p).toContain(clause);
+        const body = p.split(clause).join('').split(SPRITE_FACING_PROMPT).join('');
+        const m = FACE.exec(body.split('the creature itself contains no green and no green fringe:')[1] ?? '');
+        expect(m ? `${m[0]} :: ${body.slice(Math.max(0, body.indexOf(m[0]) - 60), body.indexOf(m[0]) + 60)}` : null).toBeNull();
+      }
+    }
   });
 });

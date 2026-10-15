@@ -273,14 +273,14 @@ const CHAMPION_SHAPES: EvoShape[] = [
   { pt: 'guerreiro demônio de asas rasgadas', en: 'a horned demon warrior with tattered wings', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'predador marinho de barbatanas-navalha', en: 'a razor-finned sea predator with a harpoon snout', elements: ['agua'], alignments: ['poder'] },
   { pt: 'serpente venenosa de capuz', en: 'a hooded venomous serpent with dripping fangs', elements: ['sombra', 'planta'], alignments: ['poder'] },
-  { pt: 'bípede ambulante de boca larga e dentada', en: 'a walking biped with a wide toothy maw and a lunging stance', elements: ['planta'], alignments: ['poder'] },
+  { pt: 'bípede ambulante de boca larga e dentada', en: 'a walking biped with a broad head and a lunging stance', elements: ['planta'], alignments: ['poder'] },
   { pt: 'fera elegante de cauda-lâmina', en: 'a sleek quadruped beast with a blade-tipped tail', elements: [], alignments: ['harmonia'] },
   { pt: 'inseto blindado de chifre elétrico', en: 'a giant armored insect with a crackling electric horn', elements: ['industrial', 'ar'], alignments: ['harmonia'] },
   { pt: 'coruja-fera de asas rúnicas', en: 'a great owl beast with rune-marked wings', elements: ['ar', 'sombra'], alignments: ['harmonia'] },
   { pt: 'golem sentinela de pedra', en: 'a stone golem sentinel with glowing core lines', elements: ['terra'], alignments: ['harmonia'] },
   { pt: 'raposa mística de várias caudas', en: 'a mystic fox with multiple flowing tails', elements: ['sombra', 'luz'], alignments: ['harmonia'] },
   { pt: 'andarilho bípede de juntas marcadas', en: 'a stiff-legged walking biped with clearly marked joints', elements: ['industrial'], alignments: ['harmonia'] },
-  { pt: 'dragão-marinho de coral', en: 'a coral sea-dragon with gem-like eyes', elements: ['agua'], alignments: ['harmonia'] },
+  { pt: 'dragão-marinho de coral', en: 'a coral sea-dragon with gem-studded scales', elements: ['agua'], alignments: ['harmonia'] },
   { pt: 'corcel alado nobre', en: 'a noble winged stallion with a shining mane', elements: ['luz', 'ar'], alignments: ['benevolencia'] },
   { pt: 'cão de guarda em armadura de bronze', en: 'a loyal guardian hound in bronze armor', elements: ['luz', 'terra'], alignments: ['benevolencia'] },
   { pt: 'lutador angélico de bastão sagrado', en: 'an angelic fighter wielding a sacred staff', elements: ['luz'], alignments: ['benevolencia'] },
@@ -295,7 +295,7 @@ const CHAMPION_SHAPES: EvoShape[] = [
 
 const PERFECT_SHAPES: EvoShape[] = [
   { pt: 'dinossauro bípede com um braço desproporcional', en: 'a bipedal dinosaur with one oversized arm and a heavy chest', elements: ['industrial', 'fogo'], alignments: ['poder'] },
-  { pt: 'nobre vampiro de capa alta', en: 'a vampire noble with a high-collared cape and piercing gaze', elements: ['sombra'], alignments: ['poder'] },
+  { pt: 'nobre vampiro de capa alta', en: 'a vampire noble with a high-collared cape', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'general demônio de seis braços', en: 'a six-armed demon general gripping many weapons', elements: ['sombra', 'fogo'], alignments: ['poder'] },
   { pt: 'ceifador espectral de foice', en: 'a spectral reaper wraith carrying a great scythe', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'leviatã couraçado colossal', en: 'a colossal armored leviathan breaching the deep', elements: ['agua'], alignments: ['poder'] },
@@ -1317,30 +1317,30 @@ function pickAligned<T extends { alignments: AlignmentId[] }>(
 //       Harmonia sempre equilibrado; Benevolência sempre nobre. ~24 opções cada.
 const TYPE_LOOK: Record<AlignmentId, string[]> = {
   poder: [
-    'a fierce fanged grin', 'bristling sharp spikes', 'jagged claws', 'battle scars',
-    'a fierce scowl', 'narrow predatory eyes', 'an aggressive spiky silhouette', 'a single curved horn',
-    'a wild spiky mane', 'clenched fists', 'a snarling mouth', 'angular armor plates',
-    'a spiked whip-tail', 'glowing angry eyes', 'a torn ragged cape', 'a muscular hunched stance',
-    'twin sharp horns', 'a menacing pose', 'a scarred eye', 'bared fangs',
+    'a hunched broad back', 'bristling sharp spikes', 'jagged claws', 'battle scars',
+    'sturdy clawed feet', 'a ridged spine', 'an aggressive spiky silhouette', 'a single curved horn',
+    'a wild spiky mane', 'clenched fists', 'a thick armored tail', 'angular armor plates',
+    'a spiked whip-tail', 'spiked shoulder guards', 'a torn ragged cape', 'a muscular hunched stance',
+    'twin sharp horns', 'a menacing pose', 'a low charging stance', 'broad clawed paws',
     'a bladed forearm', 'a crest of quills', 'a predator crouch', 'a chipped tusk',
   ],
   harmonia: [
-    'a calm expression', 'a symmetric balanced body', 'a serene half-smile', 'glowing rune marks',
-    'a small floating orb', 'a smooth rounded shape', 'meditative closed eyes', 'tidy geometric patterns',
+    'a tall slender neck', 'a symmetric balanced body', 'a draped sash', 'glowing rune marks',
+    'a small floating orb', 'a smooth rounded shape', 'floating twin rings', 'tidy geometric patterns',
     'a scholarly posture', 'gentle glowing lines', 'a small halo ring', 'neat crystalline edges',
-    'a thoughtful gaze', 'balanced twin features', 'a zen sitting pose', 'soft flowing curves',
-    'a wise steady look', 'tiny orbiting dots', 'a mirrored pattern', 'a poised stance',
-    'a spiral emblem', 'a monk-like robe', 'a focused stare', 'clean minimal lines',
-    'a gentle expression', 'a harmonious form', 'a balanced stance', 'a wise look', 'a serene face',
+    'a smooth curved crest', 'balanced twin features', 'a zen sitting pose', 'soft flowing curves',
+    'a tidy folded cloak', 'tiny orbiting dots', 'a mirrored pattern', 'a poised stance',
+    'a spiral emblem', 'a monk-like robe', 'a delicate tail curl', 'clean minimal lines',
+    'a rounded crystal pendant', 'a harmonious form', 'a balanced stance', 'a layered collar', 'a long flowing scarf',
   ],
   benevolencia: [
-    'big kind eyes', 'a warm smile', 'a soft rounded body', 'a small halo',
+    'a rounded sturdy body', 'a flowing short mantle', 'a soft rounded body', 'a small halo',
     'angelic feather tufts', 'a protective posture', 'a heart marking', 'a gentle glowing aura',
-    'a tiny cape', 'sparkling friendly eyes', 'a shield emblem', 'fluffy soft edges',
-    'a caring expression', 'a little bell charm', 'a noble upright stance', 'a golden trim',
-    'a gentle bow', 'open welcoming arms', 'a soft chest fluff', 'a guardian sigil',
-    'rosy cheeks', 'a beaming grin', 'a plush huggable shape', 'a small crown',
-    'an elegant bearing', 'an imposing presence', 'a confident stance', 'a courageous posture', 'a benevolent expression',
+    'a tiny cape', 'a pair of small wings', 'a shield emblem', 'a gem pendant',
+    'a ribbon sash', 'a little bell charm', 'a noble upright stance', 'a golden trim',
+    'a gentle bow', 'open welcoming arms', 'a soft rounded tail', 'a guardian sigil',
+    'a leaf-shaped crest', 'a star badge', 'a neat feathered collar', 'a small crown',
+    'an elegant bearing', 'an imposing presence', 'a confident stance', 'a courageous posture', 'a smooth round belly',
   ],
 };
 
@@ -1449,8 +1449,8 @@ const BIOME_LOOK: Record<RealmId, string[]> = {
 const ROOKIE_LOOK: string[] = [
   'a tiny round chibi body', 'small and simple with a big head', 'a little blob-like body',
   'a small egg-shaped body', 'a chubby palm-sized body', 'a tiny two-legged sprout',
-  'a small curled-up shape', 'a baby-sized round form', 'a squishy little body',
-  'a pint-sized simple shape', 'a tiny bouncy body', 'a small button-eyed form',
+  'a small curled-up shape', 'a baby-sized round form', 'a soft little body',
+  'a pint-sized simple shape', 'a tiny bouncy body', 'a small compact plain form',
 ];
 const ULTRA_LOOK: string[] = [
   'a grand fused body merging its three final forms', 'a towering tri-part fusion silhouette',
@@ -1474,6 +1474,9 @@ const GENRE_REFERENCES =
   'Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, ' +
   'Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft';
 
+/** Rosto neutro e com pouco detalhe (decisão do dono, 15/10/2026): vale em todo estágio e nas duas variantes. */
+export const NEUTRAL_FACE_CLAUSE = 'Simple neutral face with minimal facial detail, small plain eyes, no smile, no frown.';
+
 export type SpritePromptArgs = {
   concept: string; colorDesc: string; accent: string; levelBlock: string;
   /** "Qual sua criatura favorita?" (1-2 palavras) — prefixo literal antes do
@@ -1495,7 +1498,7 @@ export type SpritePromptArgs = {
 
 /** `<conceito>. <design>. Distinguishing features: <looks>. <nível>.` — o mesmo miolo nos dois estilos. */
 function conceptAndLevel(args: SpritePromptArgs, concept: string): string {
-  return `${concept}. ${args.design ? `${args.design}. ` : ''}${args.looks ? `Distinguishing features: ${args.looks}. ` : ''}${args.levelBlock}.`;
+  return `${concept}. ${args.design ? `${args.design}. ` : ''}${args.looks ? `Distinguishing features: ${args.looks}. ` : ''}${args.levelBlock}. ${NEUTRAL_FACE_CLAUSE}`;
 }
 
 /** BACKUP do estilo ANTERIOR (até 14/10/2026), preservado sem alteração de texto.
@@ -1690,29 +1693,29 @@ const ELEMENT_MANIFESTS: Record<ElementId, Array<{ en: string; pt: string }>> = 
 // perspicaz; nem todo Benevolência é angelical, mas é sempre nobre e protetor.
 const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {
   poder: [
-    'POWER-attribute design language: jagged asymmetric silhouette, sharp angular spikes, small fangs and pointed claws, mischievous fierce eyes with narrow pupils, one aggressive blood-red accent, villainous but charming look',
-    'POWER-attribute design language: apex-predator build, lean muscular stance ready to pounce, slit predatory eyes, scratch-mark motifs, one deep crimson accent, wild untamed look',
-    'POWER-attribute design language: gladiator bearing, battle-scarred details, cracked horn or chipped ear, confident smirk with one visible fang, burnt-orange war accent, veteran brawler look',
-    'POWER-attribute design language: cunning trickster energy, sly grin, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue look',
-    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, wild wide fierce eyes, jagged lightning-shaped marks, one hot magenta accent, untamable look',
-    'POWER-attribute design language: silent hunter poise, low crouched stance, cold calculating narrow eyes, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision look',
+    'POWER-attribute design language: jagged asymmetric silhouette, sharp angular spikes, pointed claws, one aggressive blood-red accent, villainous but charming build',
+    'POWER-attribute design language: apex-predator build, lean muscular stance ready to pounce, scratch-mark motifs, one deep crimson accent, wild untamed build',
+    'POWER-attribute design language: gladiator bearing, broad armored frame, a chipped horn, burnt-orange war accent, veteran brawler build',
+    'POWER-attribute design language: cunning trickster energy, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue build',
+    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, jagged lightning-shaped marks, one hot magenta accent, untamable build',
+    'POWER-attribute design language: silent hunter poise, low crouched stance, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision build',
   ],
   harmonia: [
-    'HARMONY-attribute design language: clean symmetric silhouette, balanced geometric shapes with smooth rounded edges, calm focused intelligent eyes, one cool cyan accent, composed scholarly look',
-    'HARMONY-attribute design language: wandering-monk simplicity, minimal serene lines, half-closed meditative eyes, circular zen motifs, one soft jade accent, tranquil sage look',
-    'HARMONY-attribute design language: inventor-tinkerer energy, tidy modular body segments, bright curious round eyes, subtle blueprint-line marks, one teal accent, clever craftsman look',
-    'HARMONY-attribute design language: stargazer poise, upright contemplative posture, deep thoughtful eyes, tiny constellation dot patterns, one indigo accent, quiet oracle look',
-    'HARMONY-attribute design language: tactician bearing, neat symmetric armor lines, sharp attentive eyes scanning ahead, chessboard-like subtle patterning, one emerald accent, strategist look',
-    'HARMONY-attribute design language: flowing dancer grace, smooth continuous curves, gentle balanced expression, ripple and wave motifs, one aquamarine accent, effortless equilibrium look',
+    'HARMONY-attribute design language: clean symmetric silhouette, balanced geometric shapes with smooth rounded edges, one cool cyan accent, composed scholarly bearing',
+    'HARMONY-attribute design language: wandering-monk simplicity, minimal serene lines, circular zen motifs, one soft jade accent, tranquil sage bearing',
+    'HARMONY-attribute design language: inventor-tinkerer energy, tidy modular body segments, subtle blueprint-line marks, one teal accent, clever craftsman bearing',
+    'HARMONY-attribute design language: night-sky poise, upright contemplative posture, tiny constellation dot patterns, one indigo accent, quiet oracle bearing',
+    'HARMONY-attribute design language: tactician bearing, neat symmetric armor lines, chessboard-like subtle patterning, one emerald accent, strategist bearing',
+    'HARMONY-attribute design language: flowing dancer grace, smooth continuous curves, ripple and wave motifs, one aquamarine accent, effortless equilibrium bearing',
   ],
   benevolencia: [
-    'BENEVOLENCE-attribute design language: noble heroic silhouette, soft rounded shapes with upright proud posture, big kind sparkling eyes, white and gold highlights, knightly guardian look',
-    'BENEVOLENCE-attribute design language: gentle-healer warmth, plump huggable proportions, warm smiling eyes, ribbon or bandage motifs, cream and rose-gold highlights, caretaker look',
-    'BENEVOLENCE-attribute design language: loyal-shepherd bearing, sturdy dependable frame, soft attentive eyes always watching over others, bell or lantern charm, ivory and amber highlights, protector look',
-    'BENEVOLENCE-attribute design language: cheerful-champion energy, bouncy confident posture, bright optimistic eyes, star and medal motifs, sunny yellow and white highlights, inspiring hero look',
-    'BENEVOLENCE-attribute design language: serene-priestess aura, flowing graceful lines, calm compassionate eyes, subtle halo or petal ornaments, pearl and pale-gold highlights, blessed look',
-    'BENEVOLENCE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, soft brave eyes, shield and heart motifs, silver and warm-white highlights, dependable look',
-  ],
+    'BENEVOLENCE-attribute design language: noble heroic silhouette, soft rounded shapes with upright proud posture, white and gold highlights, knightly guardian bearing',
+    'BENEVOLENCE-attribute design language: gentle-healer build, rounded sturdy proportions, ribbon or bandage motifs, cream and rose-gold highlights, caretaker bearing',
+    'BENEVOLENCE-attribute design language: loyal-shepherd bearing, sturdy dependable frame, bell or lantern charm, ivory and amber highlights, protector bearing',
+    'BENEVOLENCE-attribute design language: cheerful-champion energy, bouncy confident posture, star and medal motifs, sunny yellow and white highlights, inspiring hero bearing',
+    'BENEVOLENCE-attribute design language: serene-priestess aura, flowing graceful lines, subtle halo or petal ornaments, pearl and pale-gold highlights, blessed bearing',
+    'BENEVOLENCE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, shield and heart motifs, silver and warm-white highlights, dependable bearing',
+  ]
 };
 
 // O atributo já aparece na forma bebê (pool por tipo)
