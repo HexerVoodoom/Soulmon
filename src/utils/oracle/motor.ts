@@ -9,6 +9,8 @@
  * Testes e scripts que precisam do corpo síncrono importam daqui.
  */
 import { SPRITE_FACING_PROMPT } from '../spritePose';
+import { FAMILY_KIN, CHAMPION_MORPHS_EXTRA, PERFECT_MORPHS_EXTRA, MEGA_MORPHS_EXTRA, ELEMENT_MOTIFS, THEME_MOTIFS, type EvoShape, type KinGroup } from './formas';
+import { REALM_MOTIFS, ROLE_METAMORPHS_EXTRA } from './formasReino';
 import type { OracleInputSync, OracleInputWithClass, FamiliasOraculo, ElementId, RoleId, AlignmentId, RealmId, LText, OracleInput, OracleOverrides, ScoreEntry, ArchetypeResult, CreatureStage, OracleResult, FamilySlot, FamilyResult, QuestionEffects, CaminhoRitual } from '../oracle';
 import {
   hashString,
@@ -263,7 +265,6 @@ const MEGA_STAGE_PREFIXES: Record<AlignmentId, string[]> = {
 // A forma é sorteada por linha, sem repetir entre as 9 evoluções.
 // ---------------------------------------------------------------------------
 
-interface EvoShape { pt: string; en: string; elements: ElementId[]; alignments: AlignmentId[] }
 
 const CHAMPION_SHAPES: EvoShape[] = [
   { pt: 'dinossauro tirano bípede com elmo de caveira', en: 'a bipedal tyrant dinosaur with a horned skull helm', elements: ['fogo', 'terra'], alignments: ['poder'] },
@@ -272,13 +273,13 @@ const CHAMPION_SHAPES: EvoShape[] = [
   { pt: 'guerreiro demônio de asas rasgadas', en: 'a horned demon warrior with tattered wings', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'predador marinho de barbatanas-navalha', en: 'a razor-finned sea predator with a harpoon snout', elements: ['agua'], alignments: ['poder'] },
   { pt: 'serpente venenosa de capuz', en: 'a hooded venomous serpent with dripping fangs', elements: ['sombra', 'planta'], alignments: ['poder'] },
-  { pt: 'planta carnívora ambulante', en: 'a walking carnivorous plant with snapping jaw-buds', elements: ['planta'], alignments: ['poder'] },
+  { pt: 'bípede ambulante de boca larga e dentada', en: 'a walking biped with a wide toothy maw and a lunging stance', elements: ['planta'], alignments: ['poder'] },
   { pt: 'fera elegante de cauda-lâmina', en: 'a sleek quadruped beast with a blade-tipped tail', elements: [], alignments: ['harmonia'] },
   { pt: 'inseto blindado de chifre elétrico', en: 'a giant armored insect with a crackling electric horn', elements: ['industrial', 'ar'], alignments: ['harmonia'] },
   { pt: 'coruja-fera de asas rúnicas', en: 'a great owl beast with rune-marked wings', elements: ['ar', 'sombra'], alignments: ['harmonia'] },
   { pt: 'golem sentinela de pedra', en: 'a stone golem sentinel with glowing core lines', elements: ['terra'], alignments: ['harmonia'] },
   { pt: 'raposa mística de várias caudas', en: 'a mystic fox with multiple flowing tails', elements: ['sombra', 'luz'], alignments: ['harmonia'] },
-  { pt: 'autômato andarilho de engrenagens', en: 'a clockwork walker automaton with brass joints', elements: ['industrial'], alignments: ['harmonia'] },
+  { pt: 'andarilho bípede de juntas marcadas', en: 'a stiff-legged walking biped with clearly marked joints', elements: ['industrial'], alignments: ['harmonia'] },
   { pt: 'dragão-marinho de coral', en: 'a coral sea-dragon with gem-like eyes', elements: ['agua'], alignments: ['harmonia'] },
   { pt: 'corcel alado nobre', en: 'a noble winged stallion with a shining mane', elements: ['luz', 'ar'], alignments: ['benevolencia'] },
   { pt: 'cão de guarda em armadura de bronze', en: 'a loyal guardian hound in bronze armor', elements: ['luz', 'terra'], alignments: ['benevolencia'] },
@@ -288,12 +289,12 @@ const CHAMPION_SHAPES: EvoShape[] = [
   { pt: 'ave-canora gigante da alvorada', en: 'a giant dawn songbird with radiant tail feathers', elements: ['ar', 'luz'], alignments: ['benevolencia'] },
   { pt: 'fera de juba flamejante', en: 'a proud beast with a blazing flame mane', elements: ['fogo'], alignments: [] },
   { pt: 'raptor relâmpago', en: 'a lightning raptor crackling with static', elements: ['ar', 'industrial'], alignments: [] },
-  { pt: 'marionete assombrada', en: 'a haunted marionette with living strings', elements: ['sombra', 'industrial'], alignments: ['poder', 'harmonia'] },
+  { pt: 'bípede esguio de membros longos e articulados', en: 'a slender biped with long loosely jointed limbs', elements: ['sombra', 'industrial'], alignments: ['poder', 'harmonia'] },
   { pt: 'tartaruga guerreira de rio', en: 'a river turtle warrior with a shell-shield', elements: ['agua', 'terra'], alignments: [] },
 ];
 
 const PERFECT_SHAPES: EvoShape[] = [
-  { pt: 'dino ciborgue com canhão no peito', en: 'a cyborg dinosaur with a metal chest cannon and one mechanical arm', elements: ['industrial', 'fogo'], alignments: ['poder'] },
+  { pt: 'dinossauro bípede com um braço desproporcional', en: 'a bipedal dinosaur with one oversized arm and a heavy chest', elements: ['industrial', 'fogo'], alignments: ['poder'] },
   { pt: 'nobre vampiro de capa alta', en: 'a vampire noble with a high-collared cape and piercing gaze', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'general demônio de seis braços', en: 'a six-armed demon general gripping many weapons', elements: ['sombra', 'fogo'], alignments: ['poder'] },
   { pt: 'ceifador espectral de foice', en: 'a spectral reaper wraith carrying a great scythe', elements: ['sombra'], alignments: ['poder'] },
@@ -301,10 +302,10 @@ const PERFECT_SHAPES: EvoShape[] = [
   { pt: 'minotauro de guerra acorrentado', en: 'a chained war minotaur with cracked horns', elements: ['terra', 'fogo'], alignments: ['poder'] },
   { pt: 'cavaleiro de armadura completa', en: 'a full-plate armored knight with a greatsword', elements: ['industrial', 'terra'], alignments: ['harmonia', 'benevolencia'] },
   { pt: 'besouro-samurai senhor da lâmina', en: 'a samurai beetle lord with katana-shaped horn blades', elements: ['industrial', 'planta'], alignments: ['harmonia'] },
-  { pt: 'mago dos espelhos', en: 'a mirror mage whose body reflects like polished glass', elements: ['luz', 'agua'], alignments: ['harmonia'] },
-  { pt: 'místico do planetário', en: 'an orrery mystic with tiny planets orbiting its shoulders', elements: ['luz', 'sombra'], alignments: ['harmonia'] },
+  { pt: 'mago bípede de manto longo e mãos abertas', en: 'a long-robed biped with open channeling hands', elements: ['luz', 'agua'], alignments: ['harmonia'] },
+  { pt: 'místico flutuante de ombros largos', en: 'a floating broad-shouldered mystic with trailing robes', elements: ['luz', 'sombra'], alignments: ['harmonia'] },
   { pt: 'esfinge enigmática', en: 'an enigmatic sphinx posing eternal riddles', elements: ['luz', 'terra'], alignments: ['harmonia'] },
-  { pt: 'atirador ciborgue de precisão', en: 'a precision cyborg gunner frame with a long-barrel arm', elements: ['industrial'], alignments: ['harmonia'] },
+  { pt: 'atirador bípede de braço longo e postura firme', en: 'a steady-stanced biped gunner with one long extended arm', elements: ['industrial'], alignments: ['harmonia'] },
   { pt: 'rainha-inseto da colmeia', en: 'a regal insect queen with layered wing veils', elements: ['planta', 'ar'], alignments: ['harmonia'] },
   { pt: 'valquíria de lança luminosa', en: 'a valkyrie with a luminous lance and winged helm', elements: ['luz', 'ar'], alignments: ['benevolencia'] },
   { pt: 'sumo-sacerdote bestial', en: 'a beastly high priest in ceremonial vestments', elements: ['luz'], alignments: ['benevolencia'] },
@@ -313,7 +314,7 @@ const PERFECT_SHAPES: EvoShape[] = [
   { pt: 'dama da geleira', en: 'a glacier maiden crowned with aurora ice', elements: ['agua', 'luz'], alignments: ['benevolencia'] },
   { pt: 'harpia rainha das tempestades', en: 'a storm harpy queen wreathed in lightning', elements: ['ar'], alignments: [] },
   { pt: 'ancião treant de galhos sábios', en: 'an elder treant with wise branching antlers', elements: ['planta', 'terra'], alignments: [] },
-  { pt: 'juggernaut de magma', en: 'a magma juggernaut with molten armor seams', elements: ['fogo', 'terra'], alignments: [] },
+  { pt: 'juggernaut de armadura em camadas', en: 'a layered-armor juggernaut with a hulking frame', elements: ['fogo', 'terra'], alignments: [] },
 ];
 
 const MEGA_SHAPES: EvoShape[] = [
@@ -321,11 +322,11 @@ const MEGA_SHAPES: EvoShape[] = [
   { pt: 'deus-demônio do abismo', en: 'an abyssal demon god wreathed in dark flames', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'deus da guerra berserker de machados gêmeos', en: 'a berserker war god swinging twin great-axes', elements: ['fogo', 'terra'], alignments: ['poder'] },
   { pt: 'serpente do fim que morde o horizonte', en: 'a doom serpent vast enough to bite the horizon', elements: ['agua', 'sombra'], alignments: ['poder'] },
-  { pt: 'kaiju de ferro fumegante', en: 'a smoldering iron kaiju with furnace eyes', elements: ['industrial', 'fogo'], alignments: ['poder'] },
+  { pt: 'kaiju colossal de postura curvada', en: 'a hunched colossal kaiju form with a heavy tail', elements: ['industrial', 'fogo'], alignments: ['poder'] },
   { pt: 'lorde lobisomem da lua de sangue', en: 'a blood-moon werewolf lord in shredded regalia', elements: ['sombra'], alignments: ['poder'] },
   { pt: 'dragão cósmico da ordem', en: 'a cosmic dragon whose scales map the constellations', elements: ['luz', 'ar'], alignments: ['harmonia'] },
-  { pt: 'divindade-máquina de anéis orbitais', en: 'a machine deity with orbital rings and a satellite halo', elements: ['industrial'], alignments: ['harmonia'] },
-  { pt: 'soberano do tempo com auréola de relógio', en: 'a time sovereign crowned with a clockwork halo', elements: ['industrial', 'luz'], alignments: ['harmonia'] },
+  { pt: 'divindade de anéis orbitais e halo', en: 'a deity-like body encircled by orbital rings and a halo', elements: ['industrial'], alignments: ['harmonia'] },
+  { pt: 'soberano de postura régia e coroa-halo', en: 'a regal sovereign form crowned with a floating halo', elements: ['industrial', 'luz'], alignments: ['harmonia'] },
   { pt: 'imperador-fera dos sábios', en: 'a sage emperor beast draped in scholar silks', elements: ['terra', 'luz'], alignments: ['harmonia'] },
   { pt: 'imperatriz-esfinge estelar', en: 'a star sphinx empress with galaxy-pattern wings', elements: ['sombra', 'luz'], alignments: ['harmonia'] },
   { pt: 'duelista divino de mercúrio', en: 'a quicksilver divine duelist with liquid-metal blades', elements: ['agua', 'industrial'], alignments: ['harmonia'] },
@@ -340,6 +341,10 @@ const MEGA_SHAPES: EvoShape[] = [
   { pt: 'fera de duas almas yin-yang', en: 'a twin-souled yin-yang beast, half light and half shadow', elements: ['luz', 'sombra'], alignments: [] },
 ];
 
+CHAMPION_SHAPES.push(...CHAMPION_MORPHS_EXTRA);
+PERFECT_SHAPES.push(...PERFECT_MORPHS_EXTRA);
+MEGA_SHAPES.push(...MEGA_MORPHS_EXTRA);
+
 /** Sorteia uma forma de evolução: prioriza afinidade de tipo e de elemento,
  *  nunca repete forma entre as 9 evoluções da mesma criatura. */
 function pickShape(
@@ -348,15 +353,38 @@ function pickShape(
   branch: AlignmentId,
   elements: ElementId[],
   used: Set<string>,
+  kin?: KinGroup,
 ): EvoShape {
   let candidates = pool.filter(s => !used.has(s.en) && (s.alignments.length === 0 || s.alignments.includes(branch)));
   const elMatches = candidates.filter(s => s.elements.length === 0 || s.elements.some(e => elements.includes(e)));
   if (elMatches.length >= 2) candidates = elMatches;
+  // Afinidade LEVE com a espécie do rookie (só se sobrar escolha).
+  if (kin) {
+    const kinMatches = candidates.filter(s => s.kin?.includes(kin));
+    if (kinMatches.length >= 2) candidates = kinMatches;
+  }
   if (candidates.length === 0) candidates = pool.filter(s => !used.has(s.en));
   if (candidates.length === 0) candidates = pool;
   const shape = pick(rng, candidates);
   used.add(shape.en);
   return shape;
+}
+
+/** Sorteia o MOTIVO (eixo separado da morfologia): pool do(s) elemento(s) do
+ *  Soulmon + temas afins (vileza, morte, arcano…); nunca repete entre as
+ *  evoluções da mesma criatura. */
+function pickMotif(rng: () => number, elements: ElementId[], used: Set<string>): LText {
+  const pool: LText[] = [];
+  for (const e of elements) pool.push(...ELEMENT_MOTIFS[e]);
+  for (const th of Object.values(THEME_MOTIFS)) {
+    if (th.elements.some(e => elements.includes(e))) pool.push(...th.motifs);
+  }
+  let cand = pool.filter(x => !used.has(x.en));
+  if (cand.length === 0) cand = Object.values(ELEMENT_MOTIFS).flat().filter(x => !used.has(x.en));
+  if (cand.length === 0) cand = pool;
+  const m = pick(rng, cand);
+  used.add(m.en);
+  return m;
 }
 
 // FAMÍLIAS — os DADOS (`CREATURE_FAMILIES`, `MOTIVO_ELEMENTO_CLASSE`) moram
@@ -1303,6 +1331,7 @@ const TYPE_LOOK: Record<AlignmentId, string[]> = {
     'a thoughtful gaze', 'balanced twin features', 'a zen sitting pose', 'soft flowing curves',
     'a wise steady look', 'tiny orbiting dots', 'a mirrored pattern', 'a poised stance',
     'a spiral emblem', 'a monk-like robe', 'a focused stare', 'clean minimal lines',
+    'a gentle expression', 'a harmonious form', 'a balanced stance', 'a wise look', 'a serene face',
   ],
   benevolencia: [
     'big kind eyes', 'a warm smile', 'a soft rounded body', 'a small halo',
@@ -1311,6 +1340,7 @@ const TYPE_LOOK: Record<AlignmentId, string[]> = {
     'a caring expression', 'a little bell charm', 'a noble upright stance', 'a golden trim',
     'a gentle bow', 'open welcoming arms', 'a soft chest fluff', 'a guardian sigil',
     'rosy cheeks', 'a beaming grin', 'a plush huggable shape', 'a small crown',
+    'an elegant bearing', 'an imposing presence', 'a confident stance', 'a courageous posture', 'a benevolent expression',
   ],
 };
 
@@ -1455,9 +1485,18 @@ export type SpritePromptArgs = {
   /** Nome da criatura-inspiração do bestiário. Entra SÓ na variante com
    *  referências — ver `OracleInput.bestiaryInspiration.nome`. */
   inspiracao?: string;
+  /** Frase de design do alinhamento (`ALIGNMENT_DESIGNS`) — vai cedo, logo após o conceito. */
+  design?: string;
+  /** 2 itens de `TYPE_LOOK` do alinhamento, já unidos ("a, b"). */
+  looks?: string;
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
 };
+
+/** `<conceito>. <design>. Distinguishing features: <looks>. <nível>.` — o mesmo miolo nos dois estilos. */
+function conceptAndLevel(args: SpritePromptArgs, concept: string): string {
+  return `${concept}. ${args.design ? `${args.design}. ` : ''}${args.looks ? `Distinguishing features: ${args.looks}. ` : ''}${args.levelBlock}.`;
+}
 
 /** BACKUP do estilo ANTERIOR (até 14/10/2026), preservado sem alteração de texto.
  *  Selecionável com SPRITE_PROMPT_STYLE='legacy'. Ver docs/PROMPT-SPRITE-ESTILOS.md. */
@@ -1475,7 +1514,7 @@ export function composeSpritePromptLegacy(args: SpritePromptArgs): string {
     // um personagem registrado — o sprite vai pro app de um usuário real.
     `Do not copy any existing franchise character. ` +
     `Retro virtual-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: ` +
-    `${concept}. ${args.levelBlock}. ` +
+    `${conceptAndLevel(args, concept)} ` +
     (args.rebirth ? `${args.rebirth} ` : '') +
     // DIREÇÃO (11/10/2026): o app desenha a arte olhando para a DIREITA e espelha ao
     // andar para a esquerda; sem esta frase o gerador entregava o bicho virado para
@@ -1539,7 +1578,7 @@ export function composeSpritePromptVPet(args: SpritePromptArgs): string {
     args.withReferences && args.inspiracao ? `Draw inspiration from ${args.inspiracao}.` : '',
     T.antiCopy,
     args.withReferences ? T.styleRefs : T.styleClean,
-    `${concept}. ${args.levelBlock}.`,
+    conceptAndLevel(args, concept),
     args.rebirth || '',
     SPRITE_FACING_PROMPT,
     `Flat ${args.colorDesc} colors with ${args.accent} accents, ${T.finish}`,
@@ -1585,7 +1624,7 @@ const ROLE_METAMORPHS: Record<RoleId, Array<{ en: string; pt: string }>> = {
   fisico: [
     { en: 'a battle master: reinforced gauntlets, blade-like limb edges and a fierce combat stance', pt: 'mestre de batalha: manoplas reforçadas, membros com bordas de lâmina e postura feroz de combate' },
     { en: 'a martial-arts adept: wrapped fists, a training-belt sash and a coiled ready-to-strike pose', pt: 'adepto de artes marciais: punhos enfaixados, faixa de treinamento e pose enrolada pronta pro golpe' },
-    { en: 'a wild brawler: cracked knuckle guards, a torn cape and claw marks raked across its own armor', pt: 'brigador selvagem: proteções de punho rachadas, capa rasgada e marcas de garra riscadas na própria armadura' },
+    { en: 'a wild brawler: heavy knuckle guards, a flowing cape and spiked shoulder guards', pt: 'brigador selvagem: proteções de punho pesadas, capa esvoaçante e ombreiras com espinhos' },
   ],
   magico: [
     { en: 'an arcane sage: rune-etched robe folds, a floating grimoire and glowing sigils orbiting the body', pt: 'sábio arcano: dobras de manto gravadas com runas, um grimório flutuante e sigilos brilhantes orbitando o corpo' },
@@ -1598,6 +1637,8 @@ const ROLE_METAMORPHS: Record<RoleId, Array<{ en: string; pt: string }>> = {
     { en: 'an artillery frame: shoulder-mounted launchers, ammo-belt details and fold-out bipod legs', pt: 'chassi de artilharia: lançadores nos ombros, detalhes de cinto de munição e pernas-bipé dobráveis' },
   ],
 };
+
+for (const r of Object.keys(ROLE_METAMORPHS_EXTRA) as RoleId[]) ROLE_METAMORPHS[r].push(...ROLE_METAMORPHS_EXTRA[r]);
 
 // O elemento vira matéria física no estágio perfeito (pool por elemento)
 const ELEMENT_MANIFESTS: Record<ElementId, Array<{ en: string; pt: string }>> = {
@@ -1710,12 +1751,18 @@ const ALIGNMENT_TRAIT_WORDS: Record<AlignmentId, LText[]> = {
     { pt: 'curioso e equilibrado', en: 'curious and balanced' },
     { pt: 'paciente e engenhoso', en: 'patient and resourceful' },
     { pt: 'contemplativo e preciso', en: 'contemplative and precise' },
+    { pt: 'gentil e harmonioso', en: 'gentle and harmonious' },
+    { pt: 'equilibrado e sábio', en: 'balanced and wise' },
+    { pt: 'sereno', en: 'serene' },
   ],
   benevolencia: [
     { pt: 'gentil e protetor', en: 'gentle and protective' },
     { pt: 'leal até o fim', en: 'loyal to the end' },
     { pt: 'acolhedor e corajoso', en: 'warm-hearted and brave' },
     { pt: 'altruísta e vigilante', en: 'selfless and watchful' },
+    { pt: 'elegante e imponente', en: 'elegant and imposing' },
+    { pt: 'confiante e corajoso', en: 'confident and brave' },
+    { pt: 'benevolente', en: 'benevolent' },
   ],
 };
 
@@ -2284,6 +2331,25 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
   // fusão mínima + a forma do estágio. Os pools ricos abaixo alimentam as
   // DESCRIÇÕES em texto (e um futuro modo HD), não o prompt 16x16.
   const alignTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[dominantAlignment]);
+  // RNG DEDICADO (decorrelado) ao visual do prompt: design do alinhamento,
+  // 2 itens de TYPE_LOOK e motivo de elemento. Não consome `rng`, então nada
+  // do resto (nomes, formas, descrições) muda por causa dele.
+  const lookRng = mulberry32((hashString(`${inputKey}|visual`) ^ salt) >>> 0);
+  const visualFor = (al: AlignmentId): { design: string; looks: string } => {
+    const a = pick(lookRng, TYPE_LOOK[al]);
+    const rest = TYPE_LOOK[al].filter(x => x !== a);
+    return { design: pick(lookRng, ALIGNMENT_DESIGNS[al]), looks: `${a} and ${pick(lookRng, rest)}` };
+  };
+  const speciesFamilyId = CREATURE_FAMILIES.find(f => f.name.en === family.primary.family.en)?.id;
+  const speciesKin: KinGroup | undefined = speciesFamilyId ? FAMILY_KIN[speciesFamilyId] : undefined;
+  const usedMotifs = new Set<string>();
+  // Papel (o que o corpo CRESCE no champion, §5.8) e reino (clima/habitat; no
+  // mega, a massa que o corpo carrega, §5.8). Eixos separados, uma cláusula cada.
+  const roleGrowth = pick(lookRng, ROLE_METAMORPHS[dominantRole]).en.split(': ')[1] ?? '';
+  const realmPool = REALM_MOTIFS[dominantRealm];
+  const realmChamp = pick(lookRng, realmPool.motifs);
+  const realmPerf = pick(lookRng, realmPool.motifs.filter(x => x.en !== realmChamp.en));
+  const realmMass = pick(lookRng, realmPool.mass);
   const palette = pick(rng, ELEMENT_PALETTES[dominantElement]);
   const realmInfo = REALM_INFO[dominantRealm];
   const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
@@ -2451,6 +2517,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
+      ...visualFor(dominantAlignment),
       favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoRookie,
       levelBlock: rookieLevel,
     }),
@@ -2467,7 +2534,10 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
     const bAccent = ALIGNMENT_ACCENT[branch];
-    const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes);
+    const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes, speciesKin);
+    const champMotif = pickMotif(lookRng, petElements, usedMotifs);
+    const perfMotif = pickMotif(lookRng, petElements, usedMotifs);
+    const megaMotif = pickMotif(lookRng, petElements, usedMotifs);
     const perfShape = pickShape(rng, PERFECT_SHAPES, branch, petElements, usedShapes);
     const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
     megaShapeByBranch[branch] = megaShape;
@@ -2488,9 +2558,9 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
         en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
-        concept: spriteConcept, colorDesc, accent: bAccent,
+        concept: spriteConcept, colorDesc, accent: bAccent, ...visualFor(branch),
         favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoChampion,
-        levelBlock: `it has evolved into ${champShape.en}`,
+        levelBlock: `it has evolved into a larger, more defined version of its own species, ${champShape.en}, with ${champMotif.en}. Its body has grown ${roleGrowth}. Habitat trait: ${realmChamp.en}`,
       }),
     });
 
@@ -2504,9 +2574,9 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
         en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
-        concept: spriteConcept, colorDesc, accent: bAccent,
+        concept: spriteConcept, colorDesc, accent: bAccent, ...visualFor(branch),
         favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoPerfeito,
-        levelBlock: `it has transformed into ${perfShape.en}`,
+        levelBlock: `it has transformed into ${perfShape.en}, with ${perfMotif.en}. Habitat trait: ${realmPerf.en}`,
       }),
     });
 
@@ -2520,9 +2590,9 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
         en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${upperFirstText(bRegalia.en.split(':')[0])}. Its body partially transmutes into living ${elName.en}. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
-        concept: spriteConcept, colorDesc, accent: bAccent,
+        concept: spriteConcept, colorDesc, accent: bAccent, ...visualFor(branch),
         favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoMega,
-        levelBlock: `in its final form, it is ${megaShape.en}`,
+        levelBlock: `in its final form, it is ${megaShape.en}, with ${megaMotif.en}. It carries ${realmMass.en}`,
       }),
     });
   }
@@ -2541,7 +2611,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting the ferocity of Power, the balance of Harmony and the nobility of Benevolence. The absolute apex of the archetype "${archetype.phrase.en}". ${behaviorSentence.en}`,
     },
     ...composeSpritePrompts({
-      concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
+      concept: spriteConcept, colorDesc, accent: 'red, cyan and gold', ...visualFor(dominantAlignment),
       favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoUltra,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
     }),

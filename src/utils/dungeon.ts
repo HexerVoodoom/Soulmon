@@ -23,6 +23,7 @@
 // phrases in this file, and a historical note that repeats them would fail it
 // (the self-defeating acceptance that WP4.9 already had to fix once).
 import { getDungeonEnemySprite } from './sprites';
+import { getDungeonEncounter, type NovoAttack } from './novosSoulmon';
 import { soulLevel } from './soulXP';
 import { CURVE_K, elementHits, hitsToKnockOut } from './combate/curve';
 import { COMBAT_BONUS_CAP } from './combate/bonus';
@@ -43,6 +44,11 @@ export interface DungeonEnemy {
   floor: number;
   /** The enemy as the Combat v3 core sees it: relative to the player's level (`dungeonFoe`). */
   foe: FightSide;
+  /** Elemento do encontro quando a criatura é uma das 17 novas (`novosSoulmon.ts`); ausente = linha antiga (elemento por hash do `stage`). */
+  element?: string;
+  /** Nomes PT/EN do golpe básico e do especial (só as criaturas novas). */
+  basico?: NovoAttack;
+  especial?: NovoAttack;
 }
 
 // Enemies always climb these tiers in order within a wave (weakest → strongest).
@@ -157,8 +163,9 @@ export function buildDungeonWave(
 ): DungeonEnemy[] {
   const floor = Math.max(1, Math.floor(level));
   const ptsMult = 1 + 0.12 * (floor - 1);
+  const used = new Set<string>(); // sem criatura repetida dentro da onda (REGISTRO §68)
   return LADDER_TIERS.map((tier, slot) => {
-    const picked = getDungeonEnemySprite(tier, petStage, rng);
+    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite);
     return {
       name: picked.name,
       stage: enemyKey(tier, picked.line),
@@ -167,6 +174,7 @@ export function buildDungeonWave(
       slot,
       floor,
       foe: dungeonFoe(playerLevel, slot, floor),
+      ...('element' in picked && picked.element ? { element: picked.element, basico: picked.basico, especial: picked.especial } : {}),
     };
   });
 }

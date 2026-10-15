@@ -12,11 +12,11 @@ import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import { moodArtFor, MOOD_ART_ID } from '../utils/moodArt';
 import type { AdventureFind } from '../utils/adventure';
-import { ADVENTURE_ART } from '../utils/adventureArt';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
-import { RitualGlass, RitualRow, SpriteGlass, type RitualRowTone } from './ritual/RitualKit';
+import { RitualRow, SpriteGlass, type RitualRowTone } from './ritual/RitualKit';
+import { StrollFind } from './play/StrollFind';
 
 interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
@@ -283,8 +283,6 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
     ? welcomeBackLine(Number(report.daysAway ?? 0), isPt, pickFor(report.date))
     : null;
 
-  const adventureArt = adventure ? ADVENTURE_ART[adventure.id] : undefined;
-
   // 4.2 — a fileira dos corações: o que quebrou é o que a virada cobrou; a animação toca uma vez por relatório.
   // `heartsLost` é o que o dia REALMENTE tirou (e na acolhida nada é cobrado).
   const strip = heartStrip(welcome ? 0 : report.heartsLost + (report.hungerHeartsLost ?? 0), maxHearts);
@@ -393,51 +391,8 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
           onClose={onClose}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {stroll && (
-              /* O VÍNCULO: a missão que a pessoa escolheu ontem justifica o destino (que fica em destaque). */
-              <div data-stroll-link style={{ ...card, display: 'flex', flexDirection: 'column', gap: 6, padding: 12 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <span style={{ ...hint, flex: 'none', minWidth: 72 }}>{isPt ? 'Missão' : 'Mission'}</span>
-                  <span data-stroll-mission style={{ ...sm2Text, fontWeight: 500 }}>{stroll.missionTitle}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <span style={{ ...hint, flex: 'none', minWidth: 72 }}>{isPt ? 'Destino' : 'Destination'}</span>
-                  <span data-stroll-destination style={{ ...sm2Text, fontWeight: 600, color: 'var(--sm2-gold-ink)' }}>{stroll.destination}</span>
-                </div>
-              </div>
-            )}
-            <div style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start', padding: '8px 12px 8px 8px' }}>
-              {adventureArt
-                ? (
-                  <RitualGlass width={48}>
-                    <img src={adventureArt} alt="" width={48} height={48} style={{ width: 48, height: 48, display: 'block' }} />
-                  </RitualGlass>
-                )
-                /* Emoji do catálogo quando a arte ainda não existe — conteúdo, não
-                   pixel: fica fora do vidro. */
-                : <span aria-hidden style={{ fontSize: 28, lineHeight: '48px', width: 48, textAlign: 'center', flexShrink: 0 }}>{adventure.emoji}</span>}
-              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {adventureIsNew && (
-                  /* `New` no dourado da paleta (tokens do par gold, nunca hex). */
-                  <span
-                    data-adventure-new
-                    style={{
-                      alignSelf: 'flex-start', padding: '0 8px', borderRadius: 'var(--sm2-radius-sm)',
-                      backgroundColor: 'var(--sm2-gold-fill)', color: 'var(--sm2-on-gold)',
-                      fontSize: 'var(--sm2-text-xs)', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase',
-                    }}
-                  >
-                    {isPt ? 'Novo' : 'New'}
-                  </span>
-                )}
-                <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
-                  {isPt ? adventure.titlePt : adventure.titleEn}
-                </p>
-                <p style={hint}>
-                  {isPt ? adventure.textPt : adventure.textEn}
-                </p>
-              </div>
-            </div>
+            {/* A MESMA peça do Passeio (`StrollFind`): a missão escolhida ontem, o destino e o que o Soulmon encontrou — um fluxo só. */}
+            <StrollFind adventure={adventure} isNew={adventureIsNew} stroll={stroll} language={language} />
             {nextButton}
           </div>
         </AreaSheet>

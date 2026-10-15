@@ -5,6 +5,7 @@
  *     Home / páginas ........ tema  ("Stone Hall Decay", `tema.ts`)
  *     Masmorra .............. loop  (as duas camadas da trilha, `trilha.ts`, em combate)
  *     Arena ................. faixa DERIVADA (as camadas a 1,2× + percussão procedural, `trilhaArena.ts`)
+ *     Pesadelo .............. trilha de TERROR procedural (`trilhaPesadelo.ts`), só nesta superfície (15/10/2026)
  *
  * Este módulo é só a TABELA e o apply: não toca nada, não tem constante de loudness, não lê relógio. Quem toca é o
  * `tema.ts` (streaming, `busTema`) e o `trilha.ts` (buffers, `busTrilha`); a política de nível é de `loudness.ts`.
@@ -24,18 +25,20 @@
  */
 import { pedirFaixa, consentirNestaSessao, trilhaPreferida, type FaixaDaTrilha } from './trilha';
 import { definirTemaEmCombate, pausarTema, retomarTema, temaPreferido } from './tema';
+import { pedirTrilhaPesadelo } from './trilhaPesadelo';
 
-export type Superficie = 'casa' | 'masmorra' | 'arena';
+/** `pesadelo` (15/10/2026): o convite e a luta do Pesadelo — a trilha de TERROR procedural (`trilhaPesadelo.ts`). */
+export type Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo';
 export type FaixaDeMusica = 'tema' | FaixaDaTrilha;
 
 /** A tabela superfície → faixa de COMBATE (a que o interruptor de combate liga). A Home não tem: é o tema. */
-export const FAIXA_DE_COMBATE: Record<Exclude<Superficie, 'casa'>, FaixaDaTrilha> = {
+export const FAIXA_DE_COMBATE: Record<'masmorra' | 'arena', FaixaDaTrilha> = {
   masmorra: 'masmorra',
   arena: 'arena',
 };
 
 /** Pura: a faixa que deve soar dada a superfície e as duas preferências. `null` = silêncio. */
-export function escolherFaixa(s: Superficie, temaOn: boolean, combateOn: boolean): FaixaDeMusica | null {
+export function escolherFaixa(s: Exclude<Superficie, 'pesadelo'>, temaOn: boolean, combateOn: boolean): FaixaDeMusica | null {
   if (s === 'casa') return temaOn ? 'tema' : combateOn ? 'loop' : null; // sem tema, quem ligou só o loop o tem na Home (legado)
   if (combateOn) return FAIXA_DE_COMBATE[s];
   return temaOn ? 'tema' : null;
@@ -51,8 +54,17 @@ export function superficieAtual(): Superficie {
 /** Reaplica a escolha: chamado ao trocar de superfície e depois de cada interruptor das Configurações. */
 export function reavaliarMusica(): void {
   const s = topo();
-  const f = escolherFaixa(s, temaPreferido(), trilhaPreferida());
   definirTemaEmCombate(s !== 'casa');
+  if (s === 'pesadelo') {
+    // Só o terror toca: nem o tema nem as faixas de combate por cima. Só entra se o jogador já liga música.
+    const quer = temaPreferido() || trilhaPreferida();
+    pedirFaixa(null);
+    if (quer) pausarTema('cena'); else retomarTema('cena');
+    pedirTrilhaPesadelo(true, quer);
+    return;
+  }
+  pedirTrilhaPesadelo(false);
+  const f = escolherFaixa(s, temaPreferido(), trilhaPreferida());
   if (f === 'tema' || f === null) {
     pedirFaixa(null);
     retomarTema('cena');

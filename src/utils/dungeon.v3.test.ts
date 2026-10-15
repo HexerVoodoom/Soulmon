@@ -179,8 +179,7 @@ describe('AC10. skill (P4): "does not act" × "plays well" ≤ 25pp, measured in
 describe('PR4b (contexto §2.19): no cheer (torcida) in the Dungeon or the Nightmare — the Soulmon goes alone', () => {
   const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
   const semComentarios = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  it('the engine of the sequence has no cheer option', () => {
-    expect(semComentarios(ler('utils/dungeonFight.ts'))).not.toMatch(/cheer|DungeonCheer|CHEER/i);
+  it('the offline/balance engine of the Dungeon sequence ignores the live cheer (the cheer is a live bonus only; REGISTRO §70)', () => {
     // the simulation ignores a forged `cheer`: same result with and without the field
     const c = cell(3);
     const a = simulateDungeonRunV3(c, 3, 'media', 5);
@@ -188,12 +187,13 @@ describe('PR4b (contexto §2.19): no cheer (torcida) in the Dungeon or the Night
     expect(b).toEqual(a);
   });
   for (const tela of ['components/DungeonGame.tsx', 'components/NightmareBattle.tsx']) {
-    it(`${tela}: no mascot, no gauge, no tap that cheers, and the hook runs with torcida: false`, () => {
-      const src = semComentarios(ler(tela));
-      expect(src).not.toMatch(/TorcidaGauge|battle\.cheer|battle\.meter|CHEER_TAPS_FULL/);
-      expect(src).not.toMatch(/\bmascot\b/);
-      expect(src).toMatch(/torcida:\s*false/);
-      expect(src).toMatch(/active=\{false\}/);
+    it(`${tela}: the cheer is BACK (owner, 15/10/2026, REGISTRO §70): mascot, tap, torcida: true`, () => {
+      const raw = ler(tela);
+      const src = semComentarios(raw);
+      expect(src).toMatch(/torcida:\s*true/);
+      expect(src).toMatch(/onTap=\{battle\.cheer\}/);
+      expect(raw).toMatch(/^ +mascot$/m);
+      expect(src).not.toMatch(/TorcidaGauge|noTap/);
     });
   }
 });

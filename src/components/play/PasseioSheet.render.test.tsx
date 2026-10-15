@@ -232,3 +232,34 @@ describe('F1 — todo desafio do catálogo tem sinal visual', () => {
     }
   });
 });
+
+describe('o achado de ontem dentro da folha do Passeio (REGISTRO §66, 15/10/2026)', () => {
+  const achado = {
+    adventure: { id: 'x-achado', emoji: '🐚', titlePt: 'Uma concha', titleEn: 'A shell', textPt: 'Brilhava na areia.', textEn: 'It shone in the sand.' },
+    isNew: true,
+    stroll: { missionTitle: 'Respirar ao ar livre', destination: 'Praia' },
+  };
+
+  it('com achado: a seção traz a missão escolhida ontem, o destino e o que ele encontrou — a mesma peça do resumo do dia', () => {
+    const { container } = render(createElement(PasseioSheet, { language: 'pt-BR', crossings: CROSSINGS_EMPTY, onChange: () => {}, todayKey: DIA, seed: SEED, achado }));
+    const sec = container.querySelector('[data-passeio-achado]') as HTMLElement;
+    expect(sec).toBeTruthy();
+    expect(sec.textContent).toContain('Da aventura de ontem');
+    expect(sec.querySelector('[data-stroll-mission]')!.textContent).toBe('Respirar ao ar livre');
+    expect(sec.querySelector('[data-stroll-destination]')!.textContent).toBe('Praia');
+    expect(sec.textContent).toContain('Uma concha');
+    expect(sec.querySelector('[data-adventure-new]')).toBeTruthy();
+    // as missões de hoje seguem logo abaixo
+    expect(container.querySelectorAll('[data-travessia-card]').length).toBe(3);
+  });
+
+  it('sem achado: nada muda na folha', () => {
+    const { container } = render(createElement(PasseioSheet, { language: 'en-US', crossings: CROSSINGS_EMPTY, onChange: () => {}, todayKey: DIA, seed: SEED }));
+    expect(container.querySelector('[data-passeio-achado]')).toBeNull();
+  });
+
+  it('EN: título da seção', () => {
+    const { container } = render(createElement(PasseioSheet, { language: 'en-US', crossings: CROSSINGS_EMPTY, onChange: () => {}, todayKey: DIA, seed: SEED, achado }));
+    expect(container.querySelector('[data-passeio-achado]')!.textContent).toContain("From Yesterday's Adventure");
+  });
+});

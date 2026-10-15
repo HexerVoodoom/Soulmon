@@ -49,6 +49,9 @@ import dungeonBg7 from '../assets/soulmon/bg/dungeon-7.png';
 import dungeonBg8 from '../assets/soulmon/bg/dungeon-8.png';
 import dungeonBg9 from '../assets/soulmon/bg/dungeon-9.png';
 import dungeonBg10 from '../assets/soulmon/bg/dungeon-10.png';
+import pesadeloAbismo from '../assets/soulmon/bg/pesadelo-abismo-glitch.png';
+import pesadeloCorredor from '../assets/soulmon/bg/pesadelo-corredor-impossivel.png';
+import pesadeloQuarto from '../assets/soulmon/bg/pesadelo-quarto-sem-fim.png';
 import ruinedHall from '../assets/soulmon/bg/minigame-dino.png';
 import arenaNight from '../assets/soulmon/bg/tournament-night.png';
 import arenaFinal from '../assets/soulmon/bg/tournament-final.png';
@@ -122,6 +125,35 @@ const SPIRIT_BG_SCENES: DungeonScene[] = [
  *  sorteada: o pesadelo é uma luta só, de manhã, e o vidro do diálogo é o
  *  mesmo todas as noites. */
 export const NIGHTMARE_SCENE: DungeonScene = SPIRIT_BG_SCENES[6];
+/**
+ * Os 3 CENÁRIOS DE PESADELO (15/10/2026, gerados proceduralmente por `scripts/gerar-pesadelo-arte.py`: pixel art 608×1080,
+ * paleta de pesadelo). O Pesadelo sorteia UM por dia — determinístico pelo dia local (`nightmareScene`), a mesma noite
+ * mostra o mesmo cenário em qualquer aparelho. Fora do sorteio de `buildRunScenes` (são do Pesadelo, não da Masmorra).
+ */
+export const NIGHTMARE_SCENES: DungeonScene[] = [
+  { namePt: 'Abismo Glitch', nameEn: 'Glitch Abyss', accent: '#763bff', bg: `url(${pesadeloAbismo}) center/cover #05080c` },
+  { namePt: 'Corredor Impossível', nameEn: 'Impossible Corridor', accent: '#3fc8e8', bg: `url(${pesadeloCorredor}) center/cover #05080c` },
+  { namePt: 'Quarto sem Fim', nameEn: 'Endless Room', accent: '#a9fbff', bg: `url(${pesadeloQuarto}) center/cover #05080c` },
+];
+
+/** A chave do dia LOCAL (`AAAA-MM-DD`) — a mesma ideia do dia do Pesadelo (a manhã em que se luta). */
+function localDayKey(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Índice determinístico (FNV-1a) de `key` em `[0, n)`. Puro. */
+export function nightmareSceneIndex(key: string, n: number = NIGHTMARE_SCENES.length): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return n > 0 ? h % n : 0;
+}
+
+/** O cenário do Pesadelo de `dayKey` (padrão: hoje). Sem arte/lista vazia, cai em `NIGHTMARE_SCENE` (a Forja das Almas). */
+export function nightmareScene(dayKey: string = localDayKey(new Date())): DungeonScene {
+  return NIGHTMARE_SCENES[nightmareSceneIndex(dayKey)] ?? NIGHTMARE_SCENE;
+}
+
 /** A cena da ARENA (`ArenaGame`) — o Abismo Violeta (`dungeon-4`, canvas `Arena`). */
 export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
 /** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */

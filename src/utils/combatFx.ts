@@ -19,6 +19,7 @@
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
 import { attackFx, type AttackFxState } from './attackFxArt';
+import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
 import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
 import { baseElementLabel } from './soulProfile/essenceLabels';
@@ -42,6 +43,7 @@ const ORACLE_TO_FX: Record<string, string> = { planta: 'vida', industrial: 'aco'
 /** Id de elemento (do oráculo, da ficha ou do bestiário) → id que tem arte; sem arte, `neutro`. */
 export function fxElementId(id: string | undefined | null): string {
   if (!id) return FX_FALLBACK_ELEMENT;
+  if (id === NIGHTMARE_ELEMENT) return hasNightmareFx() ? id : FX_FALLBACK_ELEMENT; // exclusivo do Pesadelo; sem arte, o procedural
   const mapped = ORACLE_TO_FX[id] ?? id;
   return attackFx(mapped, 'orb') ? mapped : FX_FALLBACK_ELEMENT;
 }
@@ -49,6 +51,7 @@ export function fxElementId(id: string | undefined | null): string {
 /** A URL do estado para o elemento, caindo no `neutro`. Nunca `undefined` se o neutro estiver instalado. */
 export function fxFrame(elementId: string | undefined | null, estado: AttackFxState): string | undefined {
   const id = fxElementId(elementId);
+  if (id === NIGHTMARE_ELEMENT) return nightmareFx(estado) ?? attackFx(FX_FALLBACK_ELEMENT, estado);
   return attackFx(id, estado) ?? attackFx(FX_FALLBACK_ELEMENT, estado);
 }
 
@@ -60,6 +63,21 @@ export function visualElementFor(seedText: string): string {
     h = Math.imul(h, 0x01000193) >>> 0;
   }
   return VISUAL_ELEMENTS[h % VISUAL_ELEMENTS.length];
+}
+
+/**
+ * O elemento de um inimigo da masmorra/pesadelo: o da criatura nova (`novosSoulmon.ts`) quando ela tem; as linhas antigas
+ * (ultimate/mega) seguem com o elemento sorteado pelo `stage`.
+ */
+export function dungeonEnemyElement(e: { stage?: string; element?: string } | undefined | null): string {
+  return e?.element ?? visualElementFor(e?.stage ?? 'x');
+}
+/** O selo do ESPECIAL do inimigo: o nome da tabela das criaturas novas; sem ele, o nome por regra (`foeSpecialLabel`). */
+export function dungeonFoeSpecialLabel(
+  isPt: boolean, e: { especial?: { pt: string; en: string } } | undefined | null, element: string | undefined, name: string,
+): string {
+  const n = e?.especial;
+  return n ? (isPt ? n.pt : n.en) : foeSpecialLabel(isPt, element, name);
 }
 
 import { SCHOOL_STRIKE_FORM, type StrikeForm, type SkillRole } from './soulProfile/ficha/strikeForm';

@@ -3,18 +3,17 @@
  * stay in `nightmares.test.ts`, untouched; here: the wave comes from `dungeonFoe` at floor 1, ALWAYS, the
  * Nightmare plays the SAME fight setup as the Dungeon (including the craft), and the whole thing lasts 18-22 s per enemy.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { LADDER_TIERS, dungeonFoe } from './dungeon';
-import { buildNightmareWave, nightmareSlots, NIGHTMARE_WAVE_SIZE } from './nightmares';
-import { nightmareRefs, simulateNightmareV3 } from './dungeonFight';
+import { buildNightmareWave, nightmareFoe, nightmareSlots, NIGHTMARE_WAVE_SIZE } from './nightmares';
+import { nightmareRefs } from './dungeonFight';
 import { createRestState, recordNight, type RestState } from './restWindow';
 import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS } from './combate/level';
 import { SPECIAL_FAMILIES } from './combate/specials';
 import { mulberry32 } from './combate/rng';
 
-vi.setConfig({ testTimeout: 180_000 });
 
 const median = (a: readonly number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
 const cell = (s: number) => ({
@@ -38,22 +37,22 @@ function withNights(count: number, lastMorning: Date): RestState {
 }
 
 describe('AC4. the wave: slots top−1..top of floor 1, ALWAYS, from dungeonFoe', () => {
-  it('nightmareSlots: NIGHTMARE_WAVE_SIZE slots ending at the tier (the first tier has only one)', () => {
-    expect(NIGHTMARE_WAVE_SIZE).toBe(2);
-    expect(nightmareSlots(0)).toEqual([0]);
-    for (let top = 1; top < LADDER_TIERS.length; top++) expect(nightmareSlots(top)).toEqual([top - 1, top]);
-    expect(nightmareRefs(5)).toEqual([{ slot: 4, floor: 1 }, { slot: 5, floor: 1 }]);
+  it('nightmareSlots: ONE phase, ALWAYS (owner, 15/10/2026): a single slot, the tier of the night', () => {
+    expect(NIGHTMARE_WAVE_SIZE).toBe(1);
+    for (let top = 0; top < LADDER_TIERS.length; top++) expect(nightmareSlots(top)).toEqual([top]);
+    expect(nightmareRefs(5)).toEqual([{ slot: 5, floor: 1, nightmare: true }]);
   });
-  it('buildNightmareWave: every enemy is dungeonFoe(playerLevel, slot, 1) — never the old max(1, top−1) floor', () => {
+  it('buildNightmareWave: ONE enemy, nightmareFoe(playerLevel, slot) = the floor-1 dungeonFoe body with the Nightmare power', () => {
     const now = at(2026, 7, 20, 8);
     const rest = withNights(7, now);
     for (const stage of ['rookie', 'champion-power', 'ultimate-power', 'mega-power', 'ultra']) {
       for (const L of [1, 13, 40]) {
         const wave = buildNightmareWave(rest, stage, now, L, mulberry32(5));
-        expect(wave.length).toBeGreaterThan(0);
+        expect(wave.length).toBe(1);
         for (const e of wave) {
           expect(e.floor).toBe(1);
-          expect(e.foe).toEqual(dungeonFoe(L, e.slot, 1));
+          expect(e.foe).toEqual(nightmareFoe(L, e.slot));
+          expect(e.foe.combatant.hp).toBe(dungeonFoe(L, e.slot, 1).combatant.hp); // same body: only the power differs
         }
         expect(wave.map((e) => e.slot)).toEqual(nightmareSlots(wave[wave.length - 1].slot));
       }
@@ -70,7 +69,7 @@ describe('AC4. the wave: slots top−1..top of floor 1, ALWAYS, from dungeonFoe'
     const night = src('components/NightmareBattle.tsx');
     const dungeon = src('components/DungeonGame.tsx');
     for (const s of [night, dungeon]) {
-      expect(s).toMatch(/dungeonFight\(/);
+      expect(s).toMatch(/dungeonFight\(|nightmareFight\(/);
       expect(s).toMatch(/dungeonFightSeed\(/);
       expect(s).toMatch(/jeitoDaProfissao|jeitoParaPve/);
     }
@@ -80,30 +79,5 @@ describe('AC4. the wave: slots top−1..top of floor 1, ALWAYS, from dungeonFoe'
   });
 });
 
-describe('AC5. duration and win: the whole Nightmare, 18-22 s per enemy (tops 1-2 may sit a little under 20, declared)', () => {
-  const N = 600;
-  const rows = [1, 2, 3, 4, 5].map((top) => {
-    const times: number[] = [];
-    let win = 0;
-    for (let s = 0; s < N; s++) {
-      const r = simulateNightmareV3(cell(s), top, s);
-      times.push(...r.times);
-      win += +r.won;
-    }
-    return { top, med: median(times), win: win / N };
-  });
-  it('median per enemy in 18-22 s on every tier; the win is ≥ 99% (the Nightmare is a reward, losing costs nothing)', () => {
-    console.log(`[AC5] Nightmare: ${rows.map((r) => `top ${r.top}: ${r.med.toFixed(1)} s, win ${(100 * r.win).toFixed(1)}%`).join(' · ')}`);
-    for (const r of rows) {
-      expect(r.med, `top ${r.top}`).toBeGreaterThanOrEqual(18);
-      expect(r.med, `top ${r.top}`).toBeLessThanOrEqual(22.5);
-      expect(r.win, `top ${r.top}`).toBeGreaterThanOrEqual(0.99);
-    }
-    for (const r of rows.filter((x) => x.top >= 3)) expect(r.med, `top ${r.top}`).toBeGreaterThanOrEqual(19.5);
-  });
-  it('RED: foes with 60% of the HP leave the band', () => {
-    const fast: number[] = [];
-    for (let s = 0; s < 200; s++) fast.push(...simulateNightmareV3({ ...cell(s), knobs: { foe: { hp: 0.6 } } }, 5, s).times);
-    expect(median(fast)).toBeLessThan(18);
-  });
-});
+// AC5 (the old 18-22 s / win >= 99% gate) was retired on 15/10/2026: the Nightmare is no longer a reward walk-over. Its
+// calibration (lose >= 90% without cheer and aimed specials, win >= 75% / 50% with both) lives in `nightmares.pesadelo.test.ts`.

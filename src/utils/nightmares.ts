@@ -73,12 +73,18 @@
 
 import {
   buildDungeonWave,
+  dungeonFoe,
   LADDER_TIERS,
   type DungeonEnemy,
+  type DungeonFoeKnobs,
   type EnemyTier,
 } from './dungeon';
 import { getStageLevel, type EvolutionStage } from '../types/progression';
 import { mulberry32 } from './combate/rng';
+import type { FightSide } from './combate/fight';
+import { soulLevel } from './soulXP';
+import { nightmareShadowSprite } from './nightmareShadows';
+import type { RingGrade } from './energia';
 import {
   dreamRarity,
   restConstancy,
@@ -102,11 +108,36 @@ import { playerDayKey } from './playerDay';
 export const NIGHTMARES_PER_NIGHT = 1;
 
 /**
- * Tamanho da onda de combate. Uma luta CURTA, bem menor que um andar de
- * masmorra (que são 6 inimigos): isto acontece de MANHÃ, e uma mecânica de
- * sono que exige dez minutos de combate antes do café vira obrigação.
+ * Tamanho da onda de combate: **UM combate só, sempre — uma FASE** (decisão do dono, 15/10/2026). Antes eram 2
+ * inimigos em sequência. Isto acontece de MANHÃ, e uma mecânica de sono que exige dez minutos de combate antes
+ * do café vira obrigação. O inimigo é o do tier da noite (`top`), nunca o de um tier abaixo.
  */
-export const NIGHTMARE_WAVE_SIZE = 2;
+export const NIGHTMARE_WAVE_SIZE = 1;
+
+/**
+ * A FORÇA do pesadelo (fração do ataque de um espelho do jogador; `bonus = força − 1` no núcleo).
+ *
+ * ⚠️ CAUSA DO BUG "o pesadelo não causa dano" (15/10/2026): a onda usava `dungeonFoe` do ANDAR 1, cuja força é
+ * 0,026–0,096 (a tabela `DUNGEON_SLOTS` foi calibrada para uma run de 5 andares com HP carregado, não para uma luta
+ * isolada). Medido: um golpe do pesadelo tirava 0,3–1,3% do HP e a luta inteira 3–12%. A Masmorra continua intacta.
+ *
+ * CALIBRAGEM FINAL (dono, 15/10/2026, REGISTRO §65): a vitória é o HP (pesadelo a zero = extinto; Soulmon a zero =
+ * desvaneceu) e a dificuldade vem de o pesadelo derrubar o Soulmon PRIMEIRO se o jogador não torcer nem acertar os
+ * especiais. Os botões ficam em `dungeonFight.NIGHTMARE_KNOBS`; os números medidos, no REGISTRO e no teste.
+ */
+export const NIGHTMARE_POWER = 1.2;
+/** O pesadelo mega também lança especial: a força dele é escalada por isto para o tier 5 seguir vencível. */
+export const NIGHTMARE_MEGA_EASE = 0.8;
+
+/**
+ * O pesadelo no núcleo: o mesmo corpo de `dungeonFoe` (HP e curva relativos ao level), com a força do Pesadelo.
+ * Dono único — a onda e a simulação do balanço (`dungeonFight.playSequence`) leem esta função.
+ */
+export function nightmareFoe(playerLevel: number, slot: number, knobs?: DungeonFoeKnobs): FightSide {
+  const base = dungeonFoe(playerLevel, slot, 1, knobs);
+  const power = NIGHTMARE_POWER * (slot >= 5 ? NIGHTMARE_MEGA_EASE : 1);
+  return { ...base, combatant: { ...base.combatant, bonus: power - 1 } };
+}
 
 /** Teto do histórico de noites já combatidas (mesmo teto de `MAX_NIGHTS`). */
 export const MAX_FOUGHT_HISTORY = 30;
@@ -157,6 +188,12 @@ export interface NightmareState {
   fought: string[];
   /** dayKey do pesadelo em aberto, se houver. */
   pending?: string;
+  /** dayKeys dos dias de pesadelo do CICLO em curso (0..`NIGHTMARE_CYCLE_DAYS`), contados a partir da implantação (15/10/2026). */
+  lurkDays?: string[];
+  /** O ciclo fechou: o próximo evento é o SONHO BOM (paga Honra uma vez e reinicia o ciclo). */
+  goodDream?: boolean;
+  /** Quantos sonhos bons já foram colhidos (0..`MAX_GOOD_DREAMS`). */
+  goodDreams?: number;
 }
 
 export function createNightmareState(): NightmareState {
@@ -318,8 +355,15 @@ export function buildNightmareWave(
   const top = tierIndex(tier);
   // sem `rng`, a onda é a da NOITE: o mesmo dia sorteia as mesmas criaturas (e dias diferentes, outras)
   const seed = rng ?? mulberry32(hashDayKey(nightmareDayKey(now, rest?.playerDayTz)));
-  const wave = buildDungeonWave(1, petStage, seed, playerLevel);
-  return nightmareSlots(top).map((slot) => wave[slot]);
+  const lvl = playerLevel ?? soulLevel({ evolutionStage: petStage });
+  const wave = buildDungeonWave(1, petStage, seed, lvl);
+  const dayHash = hashDayKey(nightmareDayKey(now, rest?.playerDayTz));
+  // Os SPRITES são os do pesadelo (as sombras `dino-shadow-*`, não Soulmons comuns), a força é a do Pesadelo.
+  return nightmareSlots(top).map((slot) => ({
+    ...wave[slot],
+    sprite: nightmareShadowSprite(slot, dayHash).src,
+    foe: nightmareFoe(lvl, slot),
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -357,16 +401,73 @@ export function pendingNightmare(
  * mesmo dayKey não duplica nada (a virada e o modal podem rodar 2×, como em
  * `applyMissedDay`). Poda em `MAX_FOUGHT_HISTORY`, mantendo as mais recentes.
  */
-export function markFought(nm: NightmareState, dayKey: string): NightmareState {
+export function markFought(nm: NightmareState, dayKey: string, count = true): NightmareState {
   const key = String(dayKey ?? '');
   if (!key) return nm;
 
-  const fought = nm.fought.includes(key)
-    ? nm.fought
-    : [...nm.fought, key].slice(-MAX_FOUGHT_HISTORY);
+  const isNew = !nm.fought.includes(key);
+  const fought = isNew ? [...nm.fought, key].slice(-MAX_FOUGHT_HISTORY) : nm.fought;
 
-  const out: NightmareState = { fought };
-  if (nm.pending && nm.pending !== key) out.pending = nm.pending;
+  const out: NightmareState = { ...nm, fought };
+  if (nm.pending === key) delete out.pending;
+  // O dia de pesadelo conta UMA vez (reabrir/fechar de novo não repete) e só até o ciclo fechar.
+  return isNew && count ? countNightmareDay(out, key) : out;
+}
+
+// ---------------------------------------------------------------------------
+// 3b. O SONHO BOM — a cada 6 dias de pesadelo (decisão do dono, 15/10/2026)
+// ---------------------------------------------------------------------------
+
+/** Dias de pesadelo por ciclo: no 6º fecha o ciclo e o próximo evento é o sonho bom. */
+export const NIGHTMARE_CYCLE_DAYS = 6;
+/** Honra do sonho bom: o que UMA vitória no Torneio rende (`EMBLEMS_PER_WIN`, travado por teste) — conservador; o dono revisa (REGISTRO). */
+export const GOOD_DREAM_HONOR = 3;
+/** Teto do contador de sonhos colhidos (higiene do save). */
+export const MAX_GOOD_DREAMS = 9999;
+
+/**
+ * Conta o dia de pesadelo no ciclo. Idempotente por dayKey. **Sem retroativo:** só conta a partir daqui (um save
+ * antigo começa em zero). Com o sonho bom já pendente, não conta mais nada até ele ser colhido.
+ */
+export function countNightmareDay(nm: NightmareState, dayKey: string): NightmareState {
+  const key = String(dayKey ?? '');
+  if (!key || nm.goodDream) return nm;
+  const days = nm.lurkDays ?? [];
+  if (days.includes(key)) return nm;
+  const next = [...days, key].slice(0, NIGHTMARE_CYCLE_DAYS);
+  return next.length >= NIGHTMARE_CYCLE_DAYS ? { ...nm, lurkDays: next, goodDream: true } : { ...nm, lurkDays: next };
+}
+
+/** Há um sonho bom esperando para ser mostrado? */
+export const hasPendingGoodDream = (nm: NightmareState | undefined): boolean => nm?.goodDream === true;
+
+/**
+ * Colhe o sonho bom: paga `GOOD_DREAM_HONOR` UMA vez e reinicia o ciclo. **Idempotente** — sem sonho pendente (ou
+ * numa segunda chamada) devolve o MESMO estado e honra 0, então reabrir o modal ou o StrictMode (updater 2x) não
+ * paga duas vezes.
+ */
+export function claimGoodDream(nm: NightmareState): { state: NightmareState; honor: number } {
+  if (!nm.goodDream) return { state: nm, honor: 0 };
+  const { goodDream: _g, lurkDays: _l, ...rest } = nm;
+  return { state: { ...rest, lurkDays: [], goodDreams: Math.min(MAX_GOOD_DREAMS, (nm.goodDreams ?? 0) + 1) }, honor: GOOD_DREAM_HONOR };
+}
+
+/**
+ * Forma segura do estado vindo do disco/nuvem. ESPELHO de `functions/api/_nightmares.js` (`sanitizeNightmares`) —
+ * um teste de paridade roda os dois sobre as mesmas entradas. Nunca lança; lixo vira o estado vazio.
+ */
+export function sanitizeNightmareState(raw: unknown): NightmareState {
+  const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const strs = (v: unknown, max: number): string[] => (Array.isArray(v)
+    ? [...new Set(v.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= 64))].slice(-max)
+    : []);
+  const out: NightmareState = { fought: strs(r.fought, MAX_FOUGHT_HISTORY) };
+  if (typeof r.pending === 'string' && r.pending.length > 0 && r.pending.length <= 64) out.pending = r.pending;
+  const days = strs(r.lurkDays, NIGHTMARE_CYCLE_DAYS);
+  if (days.length) out.lurkDays = days;
+  if (r.goodDream === true) out.goodDream = true;
+  const n = typeof r.goodDreams === 'number' && Number.isFinite(r.goodDreams) ? Math.min(MAX_GOOD_DREAMS, Math.max(0, Math.floor(r.goodDreams))) : 0;
+  if (n > 0) out.goodDreams = n;
   return out;
 }
 
@@ -443,3 +544,42 @@ export function nightmareFlavor(rarity: DreamRarity, language: string): string {
   const f = FLAVOR[rarity] ?? FLAVOR.common;
   return language === 'pt-BR' ? f.pt : f.en;
 }
+
+// ---------------------------------------------------------------------------
+// 6. O FIM DA NOITE (dono, 15/10/2026 — corrige a regra "resistir com HP zerado" da #360)
+// ---------------------------------------------------------------------------
+//
+// É uma batalha comum: o veredito é o HP. Pesadelo a zero = EXTINTO; Soulmon a zero = o pesadelo VENCE (desvanece e
+// continua à espreita). A dificuldade mora na luta (`dungeonFight.nightmareFight`): sem a torcida e sem os especiais
+// certeiros o pesadelo derruba o Soulmon antes. Aqui só ficam o placar para a tela (`NightmareTally`) e os textos.
+
+/** O que a tela mostra durante a luta: descargas de torcida, especiais lançados e os que acertaram (ao menos em parte). */
+export interface NightmareTally {
+  cheers: number;
+  casts: number;
+  landed: number;
+}
+
+export const EMPTY_TALLY: NightmareTally = { cheers: 0, casts: 0, landed: 0 };
+
+/** O anel acertou? `ruim` é erro; `bom` é acerto parcial; `ótimo` é cheio. */
+export const specialLanded = (grade: RingGrade | null | undefined): boolean => grade === 'bom' || grade === 'otimo';
+
+export type NightmareEnd = 'extinct' | 'faded';
+
+/** O texto de fim (frases do dono, 15/10/2026). */
+export const NIGHTMARE_END_TEXT: Record<NightmareEnd, { pt: string; en: string }> = {
+  faded: { pt: 'O pesadelo desvaneceu, mas continua à espreita.', en: 'The nightmare faded, but it still lurks.' },
+  extinct: {
+    pt: 'As sombras se dissipam, o pesadelo foi extinto e dá espaço para os sonhos.',
+    en: 'The shadows disperse, the nightmare is extinguished and makes room for dreams.',
+  },
+};
+
+export const nightmareEndText = (v: NightmareEnd, language: string): string => (language === 'pt-BR' ? NIGHTMARE_END_TEXT[v].pt : NIGHTMARE_END_TEXT[v].en);
+
+/** A dica da luta (voz que encoraja, sem cobrança). */
+export const NIGHTMARE_HINT = {
+  pt: 'Só com a torcida e os especiais certeiros o Soulmon aguenta o pesadelo. Toque na tela para torcer e acerte o anel!',
+  en: 'Only with the cheer and well-aimed specials can your Soulmon hold out against the nightmare. Tap the screen to cheer and hit the ring!',
+} as const;

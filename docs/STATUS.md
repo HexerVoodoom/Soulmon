@@ -1,5 +1,20 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/10/2026 — Novos Soulmon: champions escolhidos, Arena e formas altas prontas (`feat/novos-soulmon-arena-v3`, REGISTRO §71)
+>
+> - 17 champions finais instalados (marcial/arcano antigos; eletricidade e gravidade trocados). Arena usa as 17 (elemento da criatura). Onda da masmorra sem criatura repetida. Estrutura para Ultimate/Mega/Ultra pronta e vazia (`FORMAS_ALTAS`).
+> - **Pendente:** arte de Ultimate/Mega/Ultra (em geração, passa por aprovação do dono).
+
+> ## 15/10/2026 — 17 novos Soulmon por elemento nos encontros da masmorra (`feat/novos-soulmon-encontros`, REGISTRO §67)
+>
+> - **Feito:** Rookie/Champion de cada elemento base (`utils/novosSoulmon.ts`, arte `soulmon/novos/`) são os encontros comuns da escada (slots baby-i..champion), com elemento, FX, forma do golpe e nome do especial PT/EN coerentes. HP/dano/Bits intactos.
+> - **Ficou com arte antiga:** ultimate/mega da escada (e do Pesadelo), Arena, personagens prontos/legados, sombras do Pesadelo, NPCs da Biblioteca, Combina 3, bosque. Pendente: arte nova de Ultimate/Mega para fechar a troca.
+
+> ## 15/10/2026 — Pesadelo: dano real, 1 fase, torcida, regra de vitória, sombras, elemento próprio e sonho bom (`feat/pesadelo-mecanica`, REGISTRO §67)
+>
+> - **Bug:** o pesadelo não causava dano (força do andar 1 da Masmorra, 0,03-0,10): agora `NIGHTMARE_POWER = 0,5` (~35-48% do HP por luta). **1 fase** (`NIGHTMARE_WAVE_SIZE = 1`). **Sprites** = sombras `dino-shadow-*`. **Torcida** de volta. **Vitória** exige torcer (>= 1 descarga) e acertar >= metade dos especiais (mín. 1) ao menos em parte; senão desvanece. Elemento `pesadelo` isolado (arte: `src/assets/soulmon/pesadelo/`). **Sonho bom** a cada 6 dias de pesadelo: 3 de Honra, idempotente, sem retroativo, campo saneado no cliente e em `save.js`.
+> - **Para o dono rever:** `NIGHTMARE_POWER`, a fração dos especiais, o valor da Honra e o ritmo de 6 dias.
+
 > ## 14/10/2026 — Gratuitos: espelho, prévia só do admin, iniciais não evoluem, check-ins ocultos (`fix/gratuitos-espelho-previa-checkins`)
 >
 > - **Espelho:** `meteoro` (Bolid) olha à esquerda e andava de costas → `LEFT_FACING_STARTERS`. O **combate** não lia a orientação da arte (`BattleStage` só tinha a URL) → `spriteUrlFacesLeft`. "Virar Soulmon" também na página do Pet (era só em Configurações, para todos os tiers — o problema era descoberta). Tabela id → lado → correção: `docs/AUDITORIA-FACING-GRATUITOS.md`.
