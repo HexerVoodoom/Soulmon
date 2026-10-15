@@ -41,7 +41,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   title: string;
   desc?: string;
   progress?: { cur: number; target: number } | null;
-  /** Texto curto da recompensa (ex.: "+1 material"). */
+  /** Texto curto da recompensa (ex.: "+1 material"). Só aparece com a missão PRONTA (dono, 15/10/2026): antes disso o cartão não mostra recompensa. */
   reward?: ReactNode;
   onGo?: () => void;
   goAttr?: string;
@@ -87,7 +87,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             </span>
           </>
         )}
-        {reward && !claimed && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {reward && status === 'ready' && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
         {lockNote && !claimed && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{lockNote}</p>}
       </div>
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>

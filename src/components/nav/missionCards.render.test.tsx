@@ -8,7 +8,7 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { MissionsLink } from './MissionsLink';
 import { CROSSINGS_EMPTY } from '../../types/travessias';
-import { dailyMissionsFor } from '../../utils/dailyMissions';
+import { bumpDaily, dailyMissionsFor } from '../../utils/dailyMissions';
 import { dailyTarget, weeklyTarget, achievementTarget } from '../../utils/missionTargets';
 import { weeklyMissionPool, type WeeklyMission } from '../../utils/weeklyMissions';
 
@@ -138,5 +138,44 @@ describe('tabela de destinos', () => {
     expect(weeklyTarget('shower')).toBe('home');
     expect(achievementTarget('constancy')).toBeNull();
     expect(achievementTarget('games')).toBe('jogos.salao');
+  });
+});
+
+describe('recompensa só quando a missão está PRONTA (dono, 15/10/2026)', () => {
+  it('diária: cartão não pronto não mostra recompensa; pronto mostra "+1 material" e o Claim; resgatado vira concluído, sem recompensa', async () => {
+    const m = dailyMissionsFor(DAY, 99)[0];
+    const { rerender } = render(mk());
+    await waitFor(() => expect(document.querySelector(`[data-daily-mission="${m.id}"]`)).not.toBeNull(), T);
+    const card = () => document.querySelector(`[data-daily-mission="${m.id}"]`)!;
+    expect(card().getAttribute('data-status')).toBe('available');
+    expect(card().querySelector('[data-mission-reward-text]')).toBeNull();
+    const pronta = bumpDaily(undefined, DAY, m.event);
+    rerender(mk({ dailies: { state: pronta, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
+    expect(card().getAttribute('data-status')).toBe('ready');
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toBe('+1 material');
+    expect(card().querySelector('[data-claim-daily]')).not.toBeNull();
+    rerender(mk({ dailies: { state: { ...pronta, claimed: [m.id] }, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
+    expect(card().getAttribute('data-status')).toBe('claimed');
+    expect(card().querySelector('[data-mission-reward-text]')).toBeNull();
+  });
+
+  it('semanal: não pronta sem "Honra"; pronta mostra "+N" no Resgatar', async () => {
+    const mission = semanal('dungeon-runs');
+    const { rerender } = render(mk({ initialTab: 'weekly', weekly: [{ mission, count: 0, done: false, claimed: false }] }));
+    await waitFor(() => expect(document.querySelector('[data-weekly-mission="dungeon-runs"]')).not.toBeNull(), T);
+    const card = () => document.querySelector('[data-weekly-mission="dungeon-runs"]')!;
+    expect(card().textContent).not.toContain(`+${mission.emblems}`);
+    rerender(mk({ initialTab: 'weekly', weekly: [{ mission, count: mission.target, done: true, claimed: false }] }));
+    expect(card().textContent).toContain(`+${mission.emblems}`);
+  });
+
+  it('primeira vez: recompensa só quando pronta', async () => {
+    render(mk());
+    await waitFor(() => expect(document.querySelector('[data-first-time]')).not.toBeNull(), T);
+    for (const c of document.querySelectorAll('[data-first-time]')) expect(c.querySelector('[data-mission-reward-text]')).toBeNull();
+    cleanup();
+    render(mk({ firsts: { state: { done: ['first-minigame'], claimed: [] }, bondLevel: 99, onClaim: vi.fn() } }));
+    await waitFor(() => expect(document.querySelector('[data-first-time="first-minigame"]')).not.toBeNull(), T);
+    expect(document.querySelector('[data-first-time="first-minigame"] [data-mission-reward-text]')!.textContent).toBe('+1 material');
   });
 });
