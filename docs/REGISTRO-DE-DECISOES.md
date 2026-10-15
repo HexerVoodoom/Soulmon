@@ -2610,3 +2610,8 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 ## 76. Golpes dos 5 iniciais: forma da tabela do elemento e nomes autorais (dono, modal, 15/10/2026; complementa §75)
 
 - **Decisão:** (1) o dono aceitou que os iniciais tenham vantagem/desvantagem de elemento na Arena; (2) nos 5 iniciais a forma do golpe segue `ELEMENT_STRIKE_FORM`, não a escola: Crato (terra) especial à distância, Bolid (fogo) especial corpo a corpo (marcador `formaDoElemento` na `StageSkill`, lido só por `fighterIdentity`; skill de ficha comum segue a escola); (3) nomes autorais de básico e especial por inicial (`STARTER_MOVES`, `utils/starterSkills.ts`), iguais nos 5 estágios (o inicial não evolui), substituindo o léxico automático. Tabela em `docs/ELEMENTOS-DOS-INICIAIS.md`.
+
+## 77. Bugfix: franja branca nas setas do LEVEL UP (15/10/2026, bug do dono)
+
+- **Causa real:** o PNG, não o CSS. `fx/gain-levelup.png` tinha alfa binário mas contorno de 1px irregular; o overlay o exibe a 48px com `image-rendering: pixelated` (0,5×, vizinho-mais-próximo descarta metade dos pixels), o contorno sumia em trechos e pixels claros apareciam serrilhados sobre fundo escuro. Chest/confetti/perfect-day tinham o mesmo halo claro.
+- **Correção:** chevron redesenhado por `tools/gerar-gain-levelup.py` (grade de 48 células ×2, paleta ciano `#6EFFFB`/tinta `#E9F5F2`/contorno `#061414`; mesmo nome e 96²); chest/confetti/focus-seal/perfect-day passaram por `tools/defringe-gain.py`. Guard novo `src/assets/gainFringe.contract.test.ts`. `CACHE_VERSION` v203. Antes/depois em `product/beta-play-01/builder/irma/`.
