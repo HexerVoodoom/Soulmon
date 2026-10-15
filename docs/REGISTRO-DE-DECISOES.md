@@ -2506,3 +2506,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Comportamento:** sempre visível (fora do `gated`, sem Vínculo mínimo); tocar abre a folha padrão (`AreaSheet`) só com o busto e a fala. **Sem ação, sem preço, sem save, sem missão:** não é `BuildingId` (fora de `BUILDING_GATES`, das primeiras vezes e das missões de visita). Entra no tutorial do mapa com a linha "Em obra, em breve!".
 - **Gatilho para rever:** quando o restaurante abrir de verdade, vira `BuildingId` com folha, gate e missão próprios.
 
+
+## 63. Corvo em alta qualidade como busto do Perfil (dono, 15/10/2026)
+
+- **Decisão do dono:** o NPC do Perfil troca o mascote pixel art 384² pelo Corvo em estilo NPC (variação 1 do lote, 1024² reduzido a 768² com Lanczos, alfa normalizado a 255 onde ≥250). Arquivo novo `npcs/npc-perfil-corvo.png`; só `LOT_NPC_ART['laboratorio:perfil']` aponta para ele. Nome 'Mysterious Soulmon' / 'Soulmon Misterioso' mantido; `mascot-raven.png` intocado (mascote em outros lugares).
