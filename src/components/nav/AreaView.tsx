@@ -8,7 +8,7 @@ import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_A
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
 import type { DailyEvent } from '../../utils/dailyMissions';
-import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
+import { isDemoBlockedLot, isDemoHiddenLot, demoRefusalText } from '../../utils/demoMode';
 import { useBackLayer } from '../../utils/backStack';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
@@ -492,7 +492,7 @@ export function AreaView(props: AreaViewProps) {
   // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
   if (area === 'laboratorio') {
     const tabOf: Record<LaboratorioLotId, LabTab> = { evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' };
-    const lots = laboratorioLots(language);
+    const lots = laboratorioLots(language).filter(l => !(props.demo && isDemoHiddenLot('laboratorio', l.id)));
     const open = lots.find(l => l.id === sheet) ?? null;
     return (
       <AreaScene

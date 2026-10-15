@@ -8714,3 +8714,21 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm2-chat-action-btn:disabled { opacity: .5; cursor: default; }
 .sm2-chat-action-primary { background: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); }
 .sm2-chat-action-card { box-shadow: 0 6px 20px rgba(0, 0, 0, .18); }
+
+/* Selo DEMO: canto superior direito, só na demo; não captura toque. */
+.sm-demo-seal {
+  position: fixed;
+  z-index: 60;
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  padding: 2px 8px;
+  font-family: 'Silkscreen', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #f5ead2;
+  background: rgba(20, 14, 10, .45);
+  border: 1px solid #b87333;
+  border-radius: 999px;
+  pointer-events: none;
+}

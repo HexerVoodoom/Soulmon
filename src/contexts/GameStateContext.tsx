@@ -1836,7 +1836,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // 410: a conta foi excluída. Não é aviso — é parada: limpa, desloga e
         // volta ao portão (não toca em `setGameState`, R-1 respeitado).
         if (resultado.kind === 'deleted') { void reagirContaExcluida(); return; }
-        if (!resultado.avisaJogador) return;
+        if (!resultado.avisaJogador || isDemoMode(gameState)) return;
         if (falhaJaAvisada.current === resultado.kind) return;
         falhaJaAvisada.current = resultado.kind;
         const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
