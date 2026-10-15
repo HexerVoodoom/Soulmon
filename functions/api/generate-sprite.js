@@ -580,6 +580,16 @@ export async function onRequestPost({ request, env }) {
     //    não quem — por isso não substitui o de cima.
     // ADMIN (`_admin.js`) passa no DIREITO, só com token verificado do PRÓPRIO
     // save. O VOLUME (`guardAiRequest`) continua valendo, com o teto global intacto.
+    // AUTENTICA PRIMEIRO (QA3): sem login a resposta é sempre 401, qualquer que seja o tier da conta (senão 401 x 402 revela
+    // se um e-mail é pagante).
+    const auth = await authorizeSaveAccess(request, env, id);
+    if (!auth.ok) {
+      return Response.json(
+        { error: auth.reason },
+        { status: authStatus(auth), headers: CORS },
+      );
+    }
+
     const tier = await requirePaidTier(env, id);
     const tierOk = tier.ok || (tier.status === 402 && (await verifiedAdmin(env, request, id)).admin);
     if (!tierOk) {
@@ -605,13 +615,6 @@ export async function onRequestPost({ request, env }) {
       if (typeof formId !== 'string' || !VALID_FORM_ID.test(formId)) {
         return Response.json({ error: 'invalid-form-id' }, { status: 400, headers: CORS });
       }
-    }
-    const auth = await authorizeSaveAccess(request, env, id);
-    if (!auth.ok) {
-      return Response.json(
-        { error: auth.reason },
-        { status: authStatus(auth), headers: CORS },
-      );
     }
 
     if (typeof formId === 'string' && formId.length > 0) {

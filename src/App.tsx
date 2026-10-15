@@ -8019,6 +8019,7 @@ export default function App() {
         isOpen={catalogBrowserOpen}
         onClose={() => setCatalogBrowserOpen(false)}
         language={language}
+        existingActivities={gameState.activities as ReadonlyArray<{ catalogId?: string | null }>}
         onAdd={(item) => {
           commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
           setCatalogBrowserOpen(false);
