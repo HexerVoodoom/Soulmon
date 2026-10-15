@@ -55,3 +55,36 @@ export function isDemoBlockedLot(area: string, lotId: string): boolean {
 export function demoRefusalText(isPt: boolean): string {
   return isPt ? 'Não disponível na demo.' : 'Not available in the demo.';
 }
+
+/** Views que a demo ignora no `goTo`: Configurações/conta e o Centro de Evolução (sem ponto de entrada na demo). */
+export function isDemoBlockedView(view: string): boolean {
+  return view === 'page:settings' || view === 'page:evolution' || view === 'evolution';
+}
+
+/** Lotes ESCONDIDOS (não só inertes) na demo: o Centro de Evolução no Laboratório. */
+export function isDemoHiddenLot(area: string, lotId: string): boolean {
+  return area === 'laboratorio' && lotId === 'evolucao';
+}
+
+/**
+ * Guard ÚNICO de rede da demo: com a demo ligada, nenhuma chamada a `/api/*` sai do aparelho
+ * (zero 401, zero aviso de sessão). A resposta é um 503 local; o estado segue só no cache local.
+ */
+let demoNetworkOff = false;
+let fetchGuardInstalled = false;
+export function setDemoNetworkOff(off: boolean): void {
+  demoNetworkOff = off;
+  if (!off || fetchGuardInstalled || typeof window === 'undefined' || typeof window.fetch !== 'function') return;
+  fetchGuardInstalled = true;
+  const real = window.fetch.bind(window);
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    if (demoNetworkOff) {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (/^(https?:\/\/[^/]+)?\/api\//.test(url)) {
+        return Promise.resolve(new Response(JSON.stringify({ error: 'demo' }), { status: 503, headers: { 'Content-Type': 'application/json' } }));
+      }
+    }
+    return real(input, init);
+  };
+}
+export const isDemoNetworkOff = (): boolean => demoNetworkOff;

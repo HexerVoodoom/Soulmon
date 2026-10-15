@@ -72,7 +72,7 @@ import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
-import { isDemoMode, demoRefusalText } from './utils/demoMode';
+import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo, keepDemoVitalsFull } from './utils/demoStart';
 import type { StarterId } from './utils/sprites';
@@ -1466,6 +1466,7 @@ export default function App() {
      `refuseDemo` é a recusa CURTA e sem culpa, no idioma atual. Toda porta de
      compra do App passa por aqui; a régua `demoMode.contract.test.ts` confere. */
   const demo = isDemoMode(gameState);
+  if (demo) setDemoNetworkOff(true); // guard único de rede: demo não fala com /api/*
   const refuseDemo = useCallback(() => {
     toast(demoRefusalText(language === 'pt-BR'));
   }, [language]);
@@ -3852,7 +3853,7 @@ export default function App() {
   const goTo = useCallback((v: ViewType) => {
     const atual = currentViewRef.current;
     if (v === atual) return;
-    if (demo && v === 'page:settings') return; // demo: sem Configurações/conta
+    if (demo && isDemoBlockedView(v)) return; // demo: sem Configurações/conta nem Centro de Evolução
     // A missão "visite a árvore de evolução" conta a NAVEGAÇÃO até ela.
     if (areaOf(v) === 'laboratorio') contarMissao('evolve-view');
     if (areaOf(v) === 'mercado') contarDiaria('mercado');
@@ -6634,6 +6635,7 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
+        {demo && <div className="sm-demo-seal" aria-hidden="true">DEMO</div>}
         {/* ── O VISOR SINTONIZOU SOZINHO ───────────────────────────────────
             X-3: a adoção automática da virada do dia trocava o rosto do bicho
             sem nenhum aviso fora da aba Evolução. Esta região vive na RAIZ, e

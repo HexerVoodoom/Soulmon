@@ -231,3 +231,23 @@ describe('saves antigos com `demoCharacterId` de um dos seis de antes', () => {
     expect([...DEMO_CHARACTER_IDS].sort()).toEqual([...STARTER_IDS, ...LEGACY_PREMADE_IDS].sort());
   });
 });
+
+import { it as itNet, expect as expectNet } from 'vitest';
+import { isDemoBlockedView, isDemoHiddenLot, setDemoNetworkOff } from './demoMode';
+
+itNet('demo: goTo ignora evolution e settings; Centro de Evolução some do Laboratório', () => {
+  expectNet(isDemoBlockedView('page:evolution')).toBe(true);
+  expectNet(isDemoBlockedView('page:settings')).toBe(true);
+  expectNet(isDemoBlockedView('map')).toBe(false);
+  expectNet(isDemoHiddenLot('laboratorio', 'evolucao')).toBe(true);
+  expectNet(isDemoHiddenLot('laboratorio', 'pet')).toBe(false);
+});
+
+itNet('demo: fetch a /api/ não chega à rede', async () => {
+  const real = vi.fn(async () => new Response('{}', { status: 200 }));
+  window.fetch = real as unknown as typeof window.fetch;
+  setDemoNetworkOff(true);
+  const r = await fetch('/api/save?id=x');
+  expectNet(r.status).toBe(503);
+  expectNet(real).not.toHaveBeenCalled();
+});
