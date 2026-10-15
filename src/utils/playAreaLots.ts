@@ -49,7 +49,7 @@ interface PlayLotSpec<K extends string> {
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '24%', top: '22%', width: '52%' }, // tablado de cima, à esquerda
+  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '24%', top: '23%', width: '52%' }, // tablado de cima, à esquerda
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.

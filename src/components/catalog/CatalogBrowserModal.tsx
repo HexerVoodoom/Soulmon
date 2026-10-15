@@ -29,6 +29,8 @@ interface CatalogBrowserModalProps {
   onAdd: (item: CatalogItem) => void;
   /** "Algo que não está aqui?" — abre o fluxo legado de criar do zero. */
   onCreateFromScratch: () => void;
+  /** Atividades que a pessoa já tem: o item do catálogo que já está na lista não se adiciona de novo. */
+  existingActivities?: ReadonlyArray<{ catalogId?: string | null }>;
 }
 
 /** A lupa (e o X que a fecha): ícone pelado num alvo de 44. */
@@ -39,8 +41,9 @@ const lupa = {
   color: 'var(--sm2-ink)',
 } as const;
 
-export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch }: CatalogBrowserModalProps) {
+export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch, existingActivities }: CatalogBrowserModalProps) {
   const isPt = language === 'pt-BR';
+  const jaTem = new Set((existingActivities ?? []).map(a => a?.catalogId).filter((x): x is string => typeof x === 'string' && !!x));
   const [area, setArea] = useState<LifeArea | 'todas'>('todas');
   const [query, setQuery] = useState('');
   const [pendingMindItem, setPendingMindItem] = useState<CatalogItem | null>(null);
@@ -144,8 +147,8 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
                   </span>
                   {/* D6: "Adicionar" mais baixo (32) — o cartão inteiro não
                       precisa de um botão de 44 de altura para uma ação curta. */}
-                  <button type="button" onClick={() => requestAdd(item)} style={{ ...sm2Button('primary', false, 'sm'), minHeight: 32, height: 32, padding: '0 12px' }}>
-                    {isPt ? 'Adicionar' : 'Add'}
+                  <button type="button" disabled={jaTem.has(item.id)} onClick={() => requestAdd(item)} style={{ ...sm2Button('primary', jaTem.has(item.id), 'sm'), minHeight: 32, height: 32, padding: '0 12px' }}>
+                    {jaTem.has(item.id) ? (isPt ? 'Adicionado' : 'Added') : (isPt ? 'Adicionar' : 'Add')}
                   </button>
                 </div>
                 <p style={{ ...sm2Hint, margin: '4px 0 0' }}>{isPt ? item.why.pt : item.why.en}</p>
