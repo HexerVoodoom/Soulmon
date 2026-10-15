@@ -19,7 +19,7 @@ export function DemoSoundButton({ muted, language, onToggle }: { muted: boolean;
       className="sm2-corner-link"
       style={{ position: 'relative', zIndex: 20, width: 44, height: 44, flex: '0 0 44px', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-primary-ink)' }}
     >
-      <Icon name={muted ? 'volume_off' : 'volume_up'} size={28} />
+      <Icon name={muted ? 'volume_off' : 'volume_up'} size={24} />
     </button>
   );
 }
