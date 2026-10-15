@@ -47,6 +47,7 @@ import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
+import { novoSoulmonById } from '../utils/novosSoulmon';
 import {
   ARENA_ROUNDS,
   DEFAULT_ARENA_ATTRIBUTES,
@@ -188,7 +189,7 @@ export function ArenaGame({
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
-    setSprites(novos.map(e => getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);

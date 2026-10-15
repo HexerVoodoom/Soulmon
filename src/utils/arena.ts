@@ -12,6 +12,7 @@
 // module's foes): the constants below were measured by `_sim/cv3-medir/grupo.ts`
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
+import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import type { Ficha } from './soulProfile/ficha/types';
@@ -230,6 +231,9 @@ export interface ArenaEnemy {
   /** Sprite tier for getDungeonEnemySprite (resolved by the component, so
    *  this module stays free of asset imports and fully testable). */
   tier: 'rookie' | 'champion' | 'mega';
+  /** A criatura NOVA do inimigo (`novosSoulmonData.ts`, REGISTRO §68) e a forma dela: o componente resolve o sprite. */
+  creature?: string;
+  form?: NovoAnyStage;
 }
 
 export const ARENA_ROUNDS = 5;
@@ -249,89 +253,36 @@ const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['
   boss:   { points: 16, tier: 'mega' },
 };
 
-/** Generic nouns per class — PT "Noun de Elemento" / EN "Element Noun". */
-const CLASS_NOUNS: Record<ArenaEnemyClass, Array<{ pt: string; en: string }>> = {
-  weak: [
-    { pt: 'Cria', en: 'Whelp' }, { pt: 'Batedor', en: 'Scout' },
-    { pt: 'Rondante', en: 'Prowler' }, { pt: 'Lacaio', en: 'Minion' },
-  ],
-  medium: [
-    { pt: 'Fera', en: 'Beast' }, { pt: 'Sentinela', en: 'Sentinel' },
-    { pt: 'Andarilho', en: 'Wanderer' }, { pt: 'Predador', en: 'Predator' },
-  ],
-  boss: [
-    { pt: 'Colosso', en: 'Colossus' }, { pt: 'Soberano', en: 'Sovereign' },
-    { pt: 'Tirano', en: 'Tyrant' }, { pt: 'Ancião', en: 'Elder' },
-  ],
-};
-
 /**
- * Sorteio ESTRATIFICADO por elemento: primeiro o elemento do inimigo, com chance
- * igual entre os que existem no pool, depois uma criatura DENTRO dele.
- *
- * ⚠️ 06/10/2026: o sorteio era uniforme sobre o pool inteiro. Com o pool curado
- * de 194 isso dava uma mistura de elementos razoavelmente plana; com o corpus de
- * 7.386 (vida em 18% das criaturas, o dobro do esperado) o jogador de vigor
- * passou a ter vantagem em 32% dos inimigos em vez de 21% e a taxa de vitória de
- * vida/terra/gravidade caiu ~9pp enquanto a de vigor/luz/espaço subiu 6–11pp. O
- * anel (`COUNTER_RING`) é simétrico POR CONSTRUÇÃO — cada elemento vence 2 e perde
- * para 2 —, então com o elemento do inimigo sorteado de forma uniforme a Arena é
- * justa para qualquer elemento do jogador. Estratifica-se pelo PRIMEIRO elemento
- * base (é o que o inimigo usa para atacar); o segundo segue a distribuição do pool.
- */
-const ENEMY_BUCKETS = new WeakMap<BestiaryCreature[], BestiaryCreature[][]>();
-
-function enemyBuckets(pool: BestiaryCreature[]): BestiaryCreature[][] {
-  let buckets = ENEMY_BUCKETS.get(pool);
-  if (!buckets) {
-    const byEl = new Map<string, BestiaryCreature[]>();
-    for (const c of pool) {
-      const el = c.elementos.find(e => BASE_SET.has(e)) ?? '';
-      if (!byEl.has(el)) byEl.set(el, []);
-      byEl.get(el)!.push(c);
-    }
-    buckets = [...byEl.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, l]) => l);
-    ENEMY_BUCKETS.set(pool, buckets);
-  }
-  return buckets;
-}
-
-function pickEnemyCreature(pool: BestiaryCreature[], rng: () => number): BestiaryCreature | null {
-  if (pool.length === 0) return null;
-  const buckets = enemyBuckets(pool);
-  const bucket = buckets[Math.floor(rng() * buckets.length)];
-  return bucket[Math.floor(rng() * bucket.length)];
-}
-
-/**
- * The flavour of the foes of one round (1-based): creature from the pool (element), generated name,
- * Bits. `rng` is the run's `mulberry32(seed)` stream — NEVER `Math.random`. The strength is not here:
+ * The flavour of the foes of one round (1-based): one of the 17 new creatures (`novosSoulmonData.ts`: name, element, form), Bits. `rng` is the run's `mulberry32(seed)` stream — NEVER `Math.random`. The strength is not here:
  * it is `arenaFoe(level, cls, round)`.
  */
 export function buildArenaRound(
   roundIdx: number,
   difficulty: number,
   rng: () => number,
-  pool: BestiaryCreature[],
+  _pool?: BestiaryCreature[], // sem uso desde o §68 (o inimigo vem das 17 criaturas novas); mantido para não quebrar chamadores
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
+  const used = new Set<string>(); // sem criatura repetida dentro da rodada
   return comp.map(cls => {
     const shape = CLASS_FLAVOR[cls];
-    const creature = pickEnemyCreature(pool, rng);
-    const elements = (creature?.elementos ?? []).filter(e => BASE_SET.has(e)).slice(0, 2);
-    if (elements.length === 0) {
-      elements.push(CLASS_ELEMENT_ORDER[Math.floor(rng() * CLASS_ELEMENT_ORDER.length)]);
-    }
-    const nouns = CLASS_NOUNS[cls];
-    const noun = nouns[Math.floor(rng() * nouns.length)];
-    const el = elements[0];
+    // REGISTRO §68: o inimigo é UMA das 17 criaturas novas, sorteada por elemento com chance igual (o anel é simétrico, então a
+    // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
+    // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
+    const prefer: NovoAnyStage[] = cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
+    const picked = pickNovo(prefer, used, rng)!;
+    used.add(picked.data.id);
+    const nome = novoFormName(picked.data, picked.stage);
     return {
-      namePt: `${noun.pt} de ${elementLabel(el, true)}`,
-      nameEn: `${elementLabel(el, false)} ${noun.en}`,
-      elements,
+      namePt: nome,
+      nameEn: nome,
+      elements: [picked.data.element],
       points: shape.points + Math.max(0, difficulty - 1),
       cls,
       tier: shape.tier,
+      creature: picked.data.id,
+      form: picked.stage,
     };
   });
 }
