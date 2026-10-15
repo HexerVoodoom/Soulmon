@@ -1,6 +1,8 @@
 import { habitCountsOn } from './habitRhythm';
 import { taskIsForToday, activityBucket } from './atividadesLista';
 import { isActive } from './taskTriage';
+import { dayKeyToIso, playerDayIso, type PlayerDayAnchor } from './playerDay';
+import { parseDayKeyLocal } from './dayKeyParse';
 
 /**
  * REAFIRMAR O DIA (15/10/2026, pedido do dono; REGISTRO §66). Pura: sem React, sem storage, sem `Date` implícito.
@@ -71,6 +73,21 @@ export function isHiddenByPlan(view: DayPlanView, id: string): boolean {
 export function hiddenOnDay(plan: DayPlan | undefined, dayIso: string | null): ReadonlySet<string> {
   if (!plan || !dayIso || plan.day !== dayIso) return EMPTY;
   return new Set(plan.offered.filter(id => !plan.picked.includes(id)));
+}
+
+/**
+ * Ids escondidos no dia `dayKey` (qualquer formato de chave do app), pelo DIA DO JOGADOR: o plano é gravado com `playerDayIso`,
+ * então a chave local (`toDateString`) é lida ao meio-dia e convertida pela mesma âncora (`playerDayTz`) — o dia do jogador e o do
+ * aparelho podem divergir perto da meia-noite e a virada não pode errar de plano (REGISTRO §66).
+ */
+export function hiddenForDayKey(plan: DayPlan | undefined, dayKey: string | undefined, anchor?: PlayerDayAnchor): ReadonlySet<string> {
+  if (!plan || !dayKey) return EMPTY;
+  const local = dayKeyToIso(dayKey);
+  if (local === plan.day) return hiddenOnDay(plan, local);
+  const d = parseDayKeyLocal(dayKey);
+  if (!d || Number.isNaN(d.getTime())) return EMPTY;
+  d.setHours(12, 0, 0, 0);
+  return hiddenOnDay(plan, playerDayIso(d, anchor));
 }
 
 /** Precisa pedir a reafirmação? (há plano antigo; sem plano o `migrateDayPlan` cuida.) */
