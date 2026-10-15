@@ -74,6 +74,7 @@ import { isDemoMode, demoRefusalText } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo } from './utils/demoStart';
 import type { StarterId } from './utils/sprites';
+import { petElementOf } from './utils/starterElements';
 import {
   readFlag, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
@@ -4585,6 +4586,19 @@ export default function App() {
     setGameState(prev => (prev.soulmonSkills && skillsTemFamilia(prev.soulmonSkills) ? prev : { ...prev, soulmonSkills: skills }));
   }, [setGameState]);
 
+  // REGISTRO §73: os iniciais não têm Oráculo, então a ficha deles é a sintética de `starterSkills.ts` (nome, escola e
+  // elemento dos golpes). Mesmo padrão de cache dos outros: grava uma vez no save; import dinâmico (motor da ficha fora do bundle inicial).
+  const starterDoSave = isStarterId(gameState.demoCharacterId) ? gameState.demoCharacterId : null;
+  const starterSkillsProntas = skillsTemFamilia(gameState.soulmonSkills);
+  useEffect(() => {
+    if (!starterDoSave || starterSkillsProntas) return;
+    let vivo = true;
+    import('./utils/starterSkills').then(({ starterSkillsFor }) => {
+      if (vivo) handleSkillsComputed(starterSkillsFor(starterDoSave));
+    }).catch(() => { /* sem a ficha o inicial luta com o elemento dele e o selo padrão */ });
+    return () => { vivo = false; };
+  }, [starterDoSave, starterSkillsProntas, handleSkillsComputed]);
+
   const handleClassTitlesComputed = useCallback((titles: NonNullable<GameState['soulmonClassTitles']>) => {
     setGameState(prev => (prev.soulmonClassTitles ? prev : { ...prev, soulmonClassTitles: titles }));
   }, [setGameState]);
@@ -6407,7 +6421,7 @@ export default function App() {
               language={language}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               spriteLibrary={spriteAcervo}
-              dominantElement={gameState.soulmonMeta?.dominantElement}
+              dominantElement={petElementOf(gameState)}
               onTuneVisor={handleTuneVisor}
               onRetrySprite={handleRetrySprite}
               onRevertVisor={handleRevertVisor}
@@ -6524,7 +6538,7 @@ export default function App() {
             <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
               headingLevel={2}
               stages={gameState.soulmonStages ?? []}
-              dominantElement={gameState.soulmonMeta?.dominantElement}
+              dominantElement={petElementOf(gameState)}
               achievements={unlockedAchievements(gameState)}
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
@@ -6588,7 +6602,7 @@ export default function App() {
                   degeneratedByHP: gameState.degeneratedByHP,
                   petPassive: gameState.petPassive,
                   skills: gameState.soulmonSkills,
-                  petElement: gameState.soulmonMeta?.dominantElement,
+                  petElement: petElementOf(gameState),
                   equipment: gameState.equipment,
                   forge: gameState.forge,
                 }}
@@ -6970,7 +6984,7 @@ export default function App() {
                   equippedFrame: gameState.equippedFrame ?? null,
                   ownedFrames: gameState.ownedFrames ?? [],
                   onEquipFrame: handleEquipFrame,
-                  petElement: gameState.soulmonMeta?.dominantElement,
+                  petElement: petElementOf(gameState),
                   language,
                   emblems: gameState.emblems ?? 0,
                   onEarnEmblems: amount => {
@@ -6990,7 +7004,7 @@ export default function App() {
                 skills={gameState.soulmonSkills}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}
-                petElement={gameState.soulmonMeta?.dominantElement}
+                petElement={petElementOf(gameState)}
                 onEarnPoints={handleEarnGamePoints}
                 onDailyEvent={contarDiaria}
                 /* Exploração + Jogos: os MESMOS handlers que a antiga
@@ -8429,7 +8443,7 @@ export default function App() {
           rarity={nightmareRarity}
           petStage={gameState.evolutionStage}
           demoCharacterId={petLine}
-          petElement={gameState.soulmonMeta?.dominantElement}
+          petElement={petElementOf(gameState)}
           skills={gameState.soulmonSkills}
           soul={gameState}
           profissao={manifestacaoAtual?.profissao}
