@@ -72,6 +72,6 @@ describe('eixos de forma da evolução', () => {
 
   it('motivos de elemento, tema e reino não contêm vocabulário proibido (5.8/7.2.1)', () => {
     const all = JSON.stringify([ELEMENT_MOTIFS, THEME_MOTIFS, REALM_MOTIFS]);
-    expect(all).not.toMatch(/archive|library|memory|cracked|patched|bscar(s|red)?b|wound/i);
+    expect(all).not.toMatch(/archive|library|memory|cracked|patched|\bscar(s|red)?\b|wound/i);
   });
 });
