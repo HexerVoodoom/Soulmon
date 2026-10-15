@@ -5329,7 +5329,7 @@ export default function App() {
    * uma recompensa que insiste vira cobrança. `markFought` é idempotente por
    * dayKey, então o StrictMode (que roda o updater 2×) não duplica nada.
    */
-  const markNightmareFought = useCallback(() => {
+  const markNightmareDay = useCallback((count: boolean) => {
     // A âncora sai de DENTRO do updater: `prev.rest` é o estado corrente, e
     // carimbar com uma âncora capturada por fechamento seria gravar um nome de
     // dia que o portão (`hasPendingNightmare`, que lê `rest.playerDayTz`)
@@ -5339,9 +5339,12 @@ export default function App() {
       nightmares: markFought(
         prev.nightmares ?? EMPTY_NIGHTMARES,
         nightmareDayKey(new Date(), prev.rest?.playerDayTz),
+        count,
       ),
     }));
   }, [setGameState]);
+  /** Lutou (vitória, derrota ou desvanecer): a noite entra na conta dos 6 dias do sonho bom. */
+  const markNightmareFought = useCallback(() => markNightmareDay(true), [markNightmareDay]);
   /**
    * Colhe o SONHO BOM: paga a Honra (`emblems`, a moeda do Torneio) e reinicia o ciclo NO MESMO updater
    * (`claimGoodDream`, idempotente: sem sonho pendente devolve o mesmo estado, então StrictMode/2x clique não paga duas vezes).
@@ -5357,9 +5360,9 @@ export default function App() {
   }, [setGameState]);
   const closeNightmare = useCallback(() => {
     if (goodDreamNow) { claimGoodDreamNow(); return; }
-    markNightmareFought();
+    markNightmareDay(false); // fechar pelo × sem lutar NÃO conta para os 6 dias do sonho bom (dono, 15/10/2026)
     setNightmareOpen(false);
-  }, [markNightmareFought, goodDreamNow, claimGoodDreamNow]);
+  }, [markNightmareDay, goodDreamNow, claimGoodDreamNow]);
 
   /**
    * Vitória: energia (teto do estágio), meio coração no máximo (teto de

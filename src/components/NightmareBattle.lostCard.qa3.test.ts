@@ -15,10 +15,11 @@ describe('App › Pesadelo', () => {
     expect(app).not.toMatch(/onLose=\{closeNightmare\}/);
     expect(app).toMatch(/onLose=\{markNightmareFought\}/);
   });
-  it('closeNightmare marca a noite e fecha; markNightmareFought só marca', () => {
-    const mark = /const markNightmareFought = useCallback\(([\s\S]*?)\n  \}, \[setGameState\]\);/.exec(app)?.[1] ?? '';
-    expect(mark).toMatch(/markFought\(/);
-    expect(mark).not.toMatch(/setNightmareOpen\(false\)/);
-    expect(app).toMatch(/const closeNightmare = useCallback\(\(\) => \{[\s\S]*?markNightmareFought\(\);\s*setNightmareOpen\(false\);/);
+  it('closeNightmare marca a noite SEM contá-la (× sem lutar não conta para os 6 dias); markNightmareFought conta e só marca', () => {
+    const day = /const markNightmareDay = useCallback\(([\s\S]*?)\n  \}, \[setGameState\]\);/.exec(app)?.[1] ?? '';
+    expect(day).toMatch(/markFought\(/);
+    expect(day).not.toMatch(/setNightmareOpen\(false\)/);
+    expect(app).toMatch(/const markNightmareFought = useCallback\(\(\) => markNightmareDay\(true\)/);
+    expect(app).toMatch(/const closeNightmare = useCallback\(\(\) => \{[\s\S]*?markNightmareDay\(false\);[^\n]*\n\s*setNightmareOpen\(false\);/);
   });
 });
