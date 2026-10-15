@@ -1,6 +1,6 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v196';
+const CACHE_VERSION = 'v197';
 const STATIC_CACHE = `soulmon-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `soulmon-runtime-${CACHE_VERSION}`;
 
