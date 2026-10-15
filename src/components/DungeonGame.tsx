@@ -663,7 +663,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     return (
       <TorcidaLayer
         onTap={battle.cheer}
-        active={fighting && !pausado && battle.phase === 'idle'} /* torcida de volta na Masmorra (dono, 15/10/2026, REGISTRO §69) */
+        active={fighting && !pausado && battle.phase === 'idle'} /* torcida de volta na Masmorra (dono, 15/10/2026, REGISTRO §70) */
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
         mascot

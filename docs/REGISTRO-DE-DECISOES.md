@@ -2565,7 +2565,13 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Reprodução fora do app:** `node scripts/render-trilha-pesadelo.mjs [saida.wav]` (4 loops, pico −3 dBFS).
 - **Gatilho para rever:** o dono ouvir a trilha e pedir outro caráter (mais lenta, mais grave, mais stingers) ou enviar o MP3; o dono achar a arte do elemento fraca e mandar arte pintada (soltar os 7 PNG com os mesmos nomes em `soulmon/pesadelo/`).
 
-## 69. Torcida também na Masmorra; ciclo do sonho bom só conta quem lutou (dono, modal, 15/10/2026)
+## 69. Prompt de sprite com design de alinhamento, motivos e eixos de forma (dono, modal, 15/10/2026)
+
+- **Ligado ao prompt (todos os estágios, as duas variantes):** `ALIGNMENT_DESIGNS[alinhamento]` (1 frase sorteada) logo após o conceito, seguida de "Distinguishing features:" com 2 itens de `TYPE_LOOK`. Sorteio por RNG dedicado (`${inputKey}|visual`), que não consome o `rng` principal. Cláusulas de segurança, fundo verde e direita intactas; prompt segue bem abaixo do teto (testes exigem < 2500).
+- **Eixos separados:** (A) SHAPE = só morfologia (`CHAMPION/PERFECT/MEGA_SHAPES`, agora 42/41/41, itens novos no fim, afinidade leve com a espécie do rookie via `kin`); (B) MOTIVO de elemento e de tema (`formas.ts`: `ELEMENT_MOTIFS` 8x8 + `THEME_MOTIFS` 11 temas x5), sem repetir entre as evoluções; (C) REINO (`formasReino.ts`, clima/habitat da NARRATIVA 7.2; Mega leva o pool `mass` da 5.8; akasha só "borda que nunca fecha", sem memória/arquivo); (D) PAPEL: `ROLE_METAMORPHS` (+2 por papel) agora entra no Champion ("o corpo cresce..."). Entradas de tema/espécie antigas (planta carnívora, marionete, ciborgue, relógio, magma, espelhos) viraram motivos; no lugar ficou morfologia pura (mesmo índice).
+- **Efeito:** sementes futuras mudam; Soulmon salvos não (o prompt fica gravado). Testes: `oracle/formas.test.ts`.
+
+## 70. Torcida também na Masmorra; ciclo do sonho bom só conta quem lutou (dono, modal, 15/10/2026)
 
 - **Torcida:** passa a existir na Masmorra e no Pesadelo (reverte de vez o §2.19 "sem torcida na Masmorra e no Pesadelo"). É o mesmo componente e a mesma mecânica das outras batalhas (`TorcidaLayer` com mascote, toque na tela, descarga de 24 toques = `CHEER.energyPerDischarge` de energia, teto de 16 toques por janela de 3 s); só dá a energia que já dá na Arena.
 - **O que NÃO muda:** energia gasta para descer, limite diário e portões da Masmorra; o especial segue automático (§36); os gates de balanço e o replay offline (`dungeonAway`) simulam SEM torcida, então o resultado determinístico por semente é o mesmo; a torcida é só um bônus ao vivo de quem toca.

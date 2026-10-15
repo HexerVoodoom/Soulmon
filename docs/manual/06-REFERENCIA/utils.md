@@ -1486,6 +1486,22 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `CatalogOnboardingFlow.render.test.tsx`
 **Regra de negócio:** o `App.tsx` o usa sem carregar o fluxo (que é `React.lazy`). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/oracle/formas.ts`
+**Dono de:** os eixos de forma da evolução: morfologias extras por estágio (`CHAMPION/PERFECT/MEGA_MORPHS_EXTRA`), grupos de espécie (`FAMILY_KIN`) e motivos de elemento e de tema (`ELEMENT_MOTIFS`, `THEME_MOTIFS`). Só dado.
+**Exports:**
+- `EvoShape`, `KinGroup`, `ThemeId` (tipos) e os pools acima.
+**Chamado por:** `src/utils/oracle/motor.ts`.
+**Régua:** `oracle/formas.test.ts`
+**Regra de negócio:** itens novos SEMPRE no fim; motivo de elemento não vira motivo de reino. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/oracle/formasReino.ts`
+**Dono de:** motivos de REINO (clima/habitat, NARRATIVA 7.2; Mega leva o pool `mass`) e o crescimento por PAPEL no Champion (`ROLE_METAMORPHS_EXTRA`). Só dado.
+**Exports:**
+- `REALM_MOTIFS`, `ROLE_METAMORPHS_EXTRA`.
+**Chamado por:** `src/utils/oracle/motor.ts`.
+**Régua:** `oracle/formas.test.ts`
+**Regra de negócio:** akasha nunca vira memória/arquivo/saber; sem cicatriz ou desgaste. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/oracle/familias.ts`
 **Dono de:** os DADOS das famílias visuais do Oráculo — só dado, zero função. Extraído de `oracle.ts` na Fase 2 do Oráculo para sair do chunk de entrada.
 **Exports:**
