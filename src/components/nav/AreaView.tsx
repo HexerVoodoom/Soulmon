@@ -283,13 +283,16 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'mercado') {
     const lots = mercadoLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
-    const stall = open && open.id !== 'conquistas' && open.id !== 'ferreiro' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'ferreiro'> : null;
+    const stall = open && open.id !== 'conquistas' && open.id !== 'ferreiro' && open.id !== 'restaurante' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'ferreiro' | 'restaurante'> : null;
     return (
       <AreaScene
         areaId={area}
         language={language}
         background={AREA_BG.mercado}
-        lots={gated(lots.map(l => ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)))}
+        // O Restaurante em obra (14/10/2026) fica FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
+        lots={lots.map(l => l.id === 'restaurante'
+          ? ({ ...l, art: MERCADO_LOT_ART.restaurante, onOpen: () => setSheet(l.id) } satisfies AreaLot)
+          : gated([{ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot])[0])}
         notice={lockNote}
       >
         <AreaSheet

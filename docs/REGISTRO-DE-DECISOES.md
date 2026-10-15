@@ -2489,3 +2489,10 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Ligação** (`ui/FunctionNpcNote`, busto + nome + fala de `functionNpcVoice`, voz de acolhida, sem cobrança): **Tobi** no topo de Configurações, **Faro** no grupo "Sua conta", **Sona** no cartão da Janela de descanso (sono), **Nuri** na Mochila (a tela de cuidados com comida). Ambra segue no onboarding; Iris e o corvo seguem reservados.
 - **Gatilho para rever:** o dono preferir outra tela para a Nuri (não existe folha própria de "Cuidados").
 
+## 61. Restaurante em obra (Mercado) e a Nuri sai da Mochila (dono, 14/10/2026)
+
+- **Nuri fora da Mochila:** `FunctionNpcNote 'cuidados'` deixou de ser usado; o componente fica, e Faro (Conta), Sona (Sono) e Tobi (Configurações) seguem.
+- **Restaurante em obra:** novo lote `mercado:restaurante` (arte `areas/lote-mercado-restaurante.png`, 300², alfa real; Higgsfield `gpt_image_2_5 flare`), no canto de baixo à direita do Mercado, que estava livre "para uma futura loja" e é a área da comida (Itens vende comida). NPC **Tijolino**, caranguejo pedreiro de casco-tijolo (`npcs/npc-mercado-restaurante.png`).
+- **Comportamento:** sempre visível (fora do `gated`, sem Vínculo mínimo); tocar abre a folha padrão (`AreaSheet`) só com o busto e a fala. **Sem ação, sem preço, sem save, sem missão:** não é `BuildingId` (fora de `BUILDING_GATES`, das primeiras vezes e das missões de visita). Entra no tutorial do mapa com a linha "Em obra, em breve!".
+- **Gatilho para rever:** quando o restaurante abrir de verdade, vira `BuildingId` com folha, gate e missão próprios.
+

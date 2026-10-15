@@ -29,7 +29,6 @@ import { InfoTip } from '../ui/InfoTip';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
 import type { BuildingId } from '../../utils/gates';
-import { FunctionNpcNote } from '../ui/FunctionNpcNote';
 
 /** Distância (px) que separa um TOQUE de um ARRASTO. Abaixo disto é toque, e
  *  toque nunca usa o item. */
@@ -256,7 +255,6 @@ export function Mochila({
           </InfoTip>
         </div>
 
-        <FunctionNpcNote id="cuidados" language={language} size={48} />
         <div className="sm3-mochila-abas" role="tablist" aria-label={isPt ? 'Tipos de item' : 'Item types'}>
           {([
             { id: 'comida' as const, pt: 'Comida e chips', en: 'Food and chips' },
