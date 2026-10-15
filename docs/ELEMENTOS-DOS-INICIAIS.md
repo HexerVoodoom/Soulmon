@@ -1,4 +1,4 @@
-# Elemento dos 5 Soulmon iniciais gratuitos (15/10/2026, REGISTRO §73)
+# Elemento dos 5 Soulmon iniciais gratuitos (15/10/2026, REGISTRO §74)
 
 Dono do dado: `src/utils/starterElements.ts` (`STARTER_ELEMENT`). Skills: `src/utils/starterSkills.ts`. Sem arte nova: FX = `fx-ataque/fx-<elemento>-*`.
 

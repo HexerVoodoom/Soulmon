@@ -1263,7 +1263,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Regra de negócio:** Missões permanentes liberam a compra dos 6 cenários exclusivos da loja. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/starterElements.ts`
-**Dono de:** o elemento base dos 5 iniciais (REGISTRO §73) — dados leves.
+**Dono de:** o elemento base dos 5 iniciais (REGISTRO §74) — dados leves.
 **Exports:** `STARTER_ELEMENT` (`industrial`→terra, `nascente`→som, `alento`→ar, `vida`→vida, `meteoro`→fogo), `STARTER_ALIGNMENT` (Poder/Harmonia/Benevolência), `starterElementOf(id)`, `petElementOf(state)` (o elemento de combate do pet: o do inicial, senão `soulmonMeta.dominantElement`; usado pelo `App` em Arena/Masmorra/Pesadelo/Torneio/aura).
 
 ### `src/utils/starterSkills.ts`

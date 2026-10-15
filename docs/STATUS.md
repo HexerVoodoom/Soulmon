@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 15/10/2026 — Elemento dos 5 iniciais gratuitos (`feat/elementos-iniciais-gratuitos`, REGISTRO §73)
+> ## 15/10/2026 — Elemento dos 5 iniciais gratuitos (`feat/elementos-iniciais-gratuitos`, REGISTRO §74)
 >
 > - Crato=terra, Brooka=som, Zefi=ar, Oaken=vida, Bolid=fogo (um base cada): golpes, FX, aura, tipo exibido e vantagem da Arena. `utils/starterElements.ts` + `utils/starterSkills.ts`. HP/dano/evolução intactos. Tabela em `docs/ELEMENTOS-DOS-INICIAIS.md`.
 > - **Para o dono rever:** agora os iniciais têm vantagem/desvantagem de elemento na Arena (antes neutros); forma do especial de Crato e Bolid segue a escola, não a tabela do elemento.

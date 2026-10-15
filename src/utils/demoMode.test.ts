@@ -186,7 +186,7 @@ describe('os 5 personagens iniciais', () => {
     for (const n of nomes) { expect(n).not.toMatch(/mon$/i); expect(n.length).toBeLessThanOrEqual(8); expect(n).toMatch(/^[A-Z][a-z]+$/); }
   });
 
-  it('o mapeamento de tipo bate com o class-system: um elemento BASE por inicial (REGISTRO §73), rótulos PT e EN do dono', () => {
+  it('o mapeamento de tipo bate com o class-system: um elemento BASE por inicial (REGISTRO §74), rótulos PT e EN do dono', () => {
     const mapa: Record<string, string> = { industrial: 'terra', nascente: 'som', alento: 'ar', vida: 'vida', meteoro: 'fogo' };
     for (const c of PREMADE_CHARACTERS) {
       expect(c.elementId).toBe(mapa[c.id]);
