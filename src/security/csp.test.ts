@@ -163,7 +163,7 @@ describe('/embed — frame liberado SÓ para o portfólio do dono', () => {
   });
 
   it('frame-ancestors lista exatamente o portfólio e seus previews — nada de * nem https:', () => {
-    expect(ancestors(cspEmbed)).toBe('frame-ancestors https://mateus-sperandio.mateus-sprnd.workers.dev https://mateus-sperandio.pages.dev https://*.mateus-sperandio.pages.dev');
+    expect(ancestors(cspEmbed)).toBe('frame-ancestors https://portfolio.mateus-sprnd.workers.dev https://mateus-sperandio.mateus-sprnd.workers.dev https://mateus-sperandio.pages.dev https://*.mateus-sperandio.pages.dev');
   });
 
   it('todas as outras diretivas são idênticas às de /* (só o frame-ancestors muda)', () => {
