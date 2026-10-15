@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/10/2026 — 17 novos Soulmon por elemento nos encontros da masmorra (`feat/novos-soulmon-encontros`, REGISTRO §65)
+>
+> - **Feito:** Rookie/Champion de cada elemento base (`utils/novosSoulmon.ts`, arte `soulmon/novos/`) são os encontros comuns da escada (slots baby-i..champion), com elemento, FX, forma do golpe e nome do especial PT/EN coerentes. HP/dano/Bits intactos.
+> - **Ficou com arte antiga:** ultimate/mega da escada (e do Pesadelo), Arena, personagens prontos/legados, sombras do Pesadelo, NPCs da Biblioteca, Combina 3, bosque. Pendente: arte nova de Ultimate/Mega para fechar a troca.
+
 > ## 14/10/2026 — Gratuitos: espelho, prévia só do admin, iniciais não evoluem, check-ins ocultos (`fix/gratuitos-espelho-previa-checkins`)
 >
 > - **Espelho:** `meteoro` (Bolid) olha à esquerda e andava de costas → `LEFT_FACING_STARTERS`. O **combate** não lia a orientação da arte (`BattleStage` só tinha a URL) → `spriteUrlFacesLeft`. "Virar Soulmon" também na página do Pet (era só em Configurações, para todos os tiers — o problema era descoberta). Tabela id → lado → correção: `docs/AUDITORIA-FACING-GRATUITOS.md`.

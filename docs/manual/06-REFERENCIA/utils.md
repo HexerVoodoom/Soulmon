@@ -815,7 +815,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `DUNGEON_SLOTS` — os 6 slots da escada (baby-i..mega): `hp` e `power` relativos ao espelho balanceado do level do jogador; o mega solta um especial `direct`. Recalibrados no PR4 com a energia carregada (contexto §2.18). (`PLAYER_STATS` e `playerStatsFor` saíram: o jogador é `soulCombatant`.)
 - `DUNGEON_FLOOR_GROWTH` (`{ hp: 0,14, power: 0,11 }`) — o que cada andar soma, em golpes.
 - `DUNGEON_MIN_HITS` (3) e `function dungeonFoe(L, slot, floor, knobs?): FightSide` — o inimigo do slot no andar, com o piso de 3 golpes do ataque mais forte do level.
-- `DungeonEnemy` (interface) — campos: `name`, `stage`, `sprite`, `points`, `slot`, `floor`, `foe` (o `FightSide` do núcleo). Saíram `hp`, `atk`, `speed` e `dmgReduction`.
+- `DungeonEnemy` (interface) — campos: `name`, `stage`, `sprite`, `points`, `slot`, `floor`, `foe` (o `FightSide` do núcleo) e, só nas criaturas novas (15/10/2026, §65), `element`, `basico`, `especial` (`novosSoulmon.ts`). Saíram `hp`, `atk`, `speed` e `dmgReduction`.
 - `EnemyTier` (type) — `'baby-i' | 'baby-ii' | 'rookie' | 'champion' | 'ultimate' | 'mega'`
 - `LADDER_TIERS` — `['baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega']`
 - `HEART_DROP_CHANCE` (`0.05`) — chance de coraçãozinho por inimigo derrotado; exportada na minimal-ui F5 para a folha-porta da Masmorra (`play/PlaySheets.tsx`) dizer o que pode cair.
@@ -977,6 +977,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `isMissionDue`, `msUntilReturn`.
 **Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
+
+### `src/utils/novosSoulmon.ts`
+**15/10/2026 (REGISTRO §65):** os 17 novos Soulmon por elemento base (Rookie + Champion, arte `assets/soulmon/novos/<elemento>-<estágio>.png`, 256²) nos encontros comuns da masmorra. NÃO substituem `DUNGEON_LINE_SPRITES` (personagens prontos, sombras do Pesadelo, NPCs, Combina 3 e bosque seguem nas 9 linhas antigas); ultimate/mega da escada também.
+**Exports:** `NOVOS_SOULMON` (17: `id`, `line` poder/harmonia/benevolencia, `element`, `rookie`/`champion` `{name, sprite}`, `basico`/`especial` `{pt, en}`) · `novoSoulmonById` · `novoSoulmonOfStage(stage)` (`<id>-<tier>` → criatura) · `novoStageOfTier(tier)` (baby-i/ii/rookie → rookie; champion → champion; ultimate/mega → `null`) · `getDungeonEncounter(tier, exclude, rng, legacy)` (sorteio do slot; cai no `legacy` quando `null`) · tipos `NovoSoulmon`, `NovoAttack`, `DungeonEncounter`. **Chamado por:** `dungeon.ts` (`buildDungeonWave`). `combatFx.ts` ganhou `dungeonEnemyElement` e `dungeonFoeSpecialLabel` (elemento e selo do especial do inimigo; `DungeonGame`/`NightmareBattle`).
 
 ### `src/utils/nightmareShadows.ts`
 **Dono de:** as SOMBRAS DO PESADELO (PR5): os 12 slots (4 degraus × 3 variantes) → Solmon próprio (linha · estágio), o encaixe da arte real (`SHADOW_ART`, vazio até a leva de `docs/ASSETS-A-GERAR.md` §17 entrar) e a geometria do placeholder preso à caixa de colisão. Só visual: a colisão do `DinoGame` não muda.

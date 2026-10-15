@@ -2516,3 +2516,12 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Pedido do dono:** benevolência ganha elegante, imponente, confiante, corajoso, benevolente; harmonia ganha gentil, harmonioso, equilibrado, sábio, sereno.
 - **Feito** (`utils/oracle/motor.ts`): `TYPE_LOOK` +5 itens por alinhamento (24 para 29) e `ALIGNMENT_TRAIT_WORDS` +3 pares PT/EN em cada (4 para 7), tudo ANEXADO NO FIM dos arrays.
 - **Efeito:** o sorteio por semente usa o tamanho do array, então sementes futuras de harmonia/benevolência podem sortear itens/traços diferentes. Soulmon já gerados não mudam (o prompt fica gravado no save).
+
+## 65. 17 novos Soulmon por elemento nos encontros da masmorra (dono, 15/10/2026)
+
+- **Decisão do dono:** "Eu adorei todos" — os 17 Soulmon por elemento base (Rookie e Champion) viram os encontros comuns da masmorra. Divisão: Poder (vileza, morte, sombra, fogo, vigor, marcial), Harmonia (arcano, tempo, espaço, gravidade, som, eletricidade), Benevolência (vida, luz, água, terra, ar). Renomeados: Grava→Gravul, Umbrat→Umbrae, Solleon→Solion, Auroram→Aurolion, Windhawk→Cirruwing, Voltix→Voltrix.
+- **Substituição mais segura:** `DUNGEON_LINE_SPRITES` (9 linhas × 4 estágios) NÃO foi tocado — é dono dos personagens prontos/legados, das sombras do Pesadelo (`SHADOW_SLOTS`), dos NPCs da Biblioteca, do Combina 3 e do bosque. O roster novo vive em `utils/novosSoulmon.ts`; `buildDungeonWave` sorteia dele nos slots baby-i/baby-ii/rookie (forma Rookie) e champion (forma Champion). Ultimate e mega da escada seguem com as linhas antigas até haver arte nova. A Arena (`getDungeonEnemySprite`) segue com as linhas antigas.
+- **Elemento e golpes:** o encontro leva o elemento da criatura (`DungeonEnemy.element`; antes era um hash do `stage`), a forma do golpe sai de `ELEMENT_STRIKE_FORM`, o FX de `fx-ataque/` do próprio elemento, e o selo do especial usa o nome PT/EN da tabela (`dungeonFoeSpecialLabel`). Todos os 17 elementos já tinham FX e forma: nenhum FX faltando.
+- **Sem balanceamento novo:** HP/poder do slot (`DUNGEON_SLOTS`) e Bits intactos; só muda o sabor. A chave do bestiário do save passa a ser `<id>-<tier>` (ex. `embrit-rookie`); chaves antigas ficam no save.
+- **Arte:** 1024² → 256² (Lanczos, alfa preservado, ≥250 → 255), 34 PNGs, todos olhando à direita/de frente (sem entrada em `LEFT_FACING_LINES`). `CACHE_VERSION` v200.
+
