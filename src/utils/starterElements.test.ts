@@ -1,4 +1,4 @@
-// REGISTRO §74 — cada inicial grátis usa UM elemento base, e os golpes, o FX e o tipo exibido seguem esse elemento.
+// REGISTRO §75 — cada inicial grátis usa UM elemento base, e os golpes, o FX e o tipo exibido seguem esse elemento.
 import { describe, it, expect } from 'vitest';
 import { STARTER_IDS } from './sprites';
 import { STARTER_ELEMENT, STARTER_ALIGNMENT, starterElementOf, petElementOf } from './starterElements';

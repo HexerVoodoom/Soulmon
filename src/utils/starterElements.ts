@@ -1,5 +1,5 @@
 /**
- * O ELEMENTO DOS 5 INICIAIS — dono único (15/10/2026, REGISTRO §74).
+ * O ELEMENTO DOS 5 INICIAIS — dono único (15/10/2026, REGISTRO §75).
  *
  * Cada inicial grátis usa UM dos 17 elementos BASE (os mesmos nomes do anel da Arena,
  * `BASE_ELEMENT_LABELS`) e o mesmo elemento vale para: o golpe básico e o especial, a arte de FX

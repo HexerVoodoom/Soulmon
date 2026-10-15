@@ -4586,7 +4586,7 @@ export default function App() {
     setGameState(prev => (prev.soulmonSkills && skillsTemFamilia(prev.soulmonSkills) ? prev : { ...prev, soulmonSkills: skills }));
   }, [setGameState]);
 
-  // REGISTRO §74: os iniciais não têm Oráculo, então a ficha deles é a sintética de `starterSkills.ts` (nome, escola e
+  // REGISTRO §75: os iniciais não têm Oráculo, então a ficha deles é a sintética de `starterSkills.ts` (nome, escola e
   // elemento dos golpes). Mesmo padrão de cache dos outros: grava uma vez no save; import dinâmico (motor da ficha fora do bundle inicial).
   const starterDoSave = isStarterId(gameState.demoCharacterId) ? gameState.demoCharacterId : null;
   const starterSkillsProntas = skillsTemFamilia(gameState.soulmonSkills);

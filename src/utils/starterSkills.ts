@@ -1,5 +1,5 @@
 /**
- * AS SKILLS DOS 5 INICIAIS (15/10/2026, REGISTRO §74) — o par básica/especial de cada inicial, no MESMO formato
+ * AS SKILLS DOS 5 INICIAIS (15/10/2026, REGISTRO §75) — o par básica/especial de cada inicial, no MESMO formato
  * (`StageSkills`) que a ficha gera para quem tem Oráculo. Assim os nomes PT/EN, o selo do especial, a forma do golpe,
  * a família do efeito e o FX do elemento saem do caminho de sempre (`fighterIdentity`), sem tela nova.
  *

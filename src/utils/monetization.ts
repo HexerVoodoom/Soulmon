@@ -38,7 +38,7 @@ export interface PremadeCharacter {
 /**
  * Os 5 personagens iniciais, na ordem da tela de escolha.
  *
- * Elemento (pedido do dono, 15/10/2026, REGISTRO §74) — UM dos 17 elementos base cada, em `STARTER_ELEMENT`:
+ * Elemento (pedido do dono, 15/10/2026, REGISTRO §75) — UM dos 17 elementos base cada, em `STARTER_ELEMENT`:
  *  - Crato  (pilha de caixotes, "tartaruga") → Terra   (antes: Aço + Aríete)
  *  - Brooka (ave-lontra verde, "pato")       → Som     (antes: Nascente + Melodia Vital)
  *  - Zefi   (borboleta-coruja)               → Ar      (antes: Alento)

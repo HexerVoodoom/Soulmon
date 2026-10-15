@@ -6015,7 +6015,7 @@ de conserto silencioso.
 | `vida` | Oaken | planta (árvore) | Vida / Life | Benevolência |
 | `meteoro` | Bolid | o vermelho (brasa) | Fogo / Fire | Poder |
 
-Desde 15/10/2026 (REGISTRO §74) cada inicial usa **um elemento base** (`STARTER_ELEMENT`, `src/utils/starterElements.ts`) nos golpes, no FX, na aura, na vantagem da Arena e no tipo exibido; as skills (nome PT/EN, escola, selo do especial) são sintéticas em `src/utils/starterSkills.ts`. Tabela completa antes→depois: `docs/ELEMENTOS-DOS-INICIAIS.md`.
+Desde 15/10/2026 (REGISTRO §75) cada inicial usa **um elemento base** (`STARTER_ELEMENT`, `src/utils/starterElements.ts`) nos golpes, no FX, na aura, na vantagem da Arena e no tipo exibido; as skills (nome PT/EN, escola, selo do especial) são sintéticas em `src/utils/starterSkills.ts`. Tabela completa antes→depois: `docs/ELEMENTOS-DOS-INICIAIS.md`.
 
 ⚠️ **Um sprite por criatura, o MESMO em todos os estágios (rookie→ultra)** — limitação declarada: a evolução visual vem depois (a mecânica de evolução não muda). Os 6 ids **antigos** (`kaelen`/`orrin`/`thalindra`/`igni`/`nautilu`/`astrase`) **não são mais oferecidos**, mas seguem em `LEGACY_PREMADE_IDS`: `hydrateSave` os aceita e `getSpriteForStage` os resolve como sempre (continuam sendo linhas da masmorra e NPCs da Biblioteca). Os iniciais ficam **fora** de `DUNGEON_LINE_SPRITES` (9 linhas × 4 tiers, contadas por teste).
 

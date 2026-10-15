@@ -97,7 +97,7 @@ describe('HUD — um indicador só', () => {
 });
 
 describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2026)', () => {
-  it('o botão cicla 1× → 3× → 1×, fica DEPOIS do Pausar (à direita), tem nome acessível e a escolha persiste no aparelho', async () => {
+  it('o botão cicla 1× → 3× → 1×, fica ABAIXO do mascote da torcida, sem caixa, tem nome acessível e a escolha persiste no aparelho', async () => {
     vi.useFakeTimers();
     montar();
     descer();
@@ -105,8 +105,12 @@ describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2
     const ff = () => document.querySelector('[data-dungeon-speed]') as HTMLButtonElement;
     expect(ff().textContent).toContain('1×');
     expect(ff().getAttribute('aria-label')).toMatch(/Fast forward: 1×/);
-    const controles = document.querySelector('[data-dungeon-controls]')!;
-    expect(controles.lastElementChild).toBe(ff()); // o último, no canto direito
+    const mascote = document.querySelector('[data-cheer-mascot]')!;
+    expect(mascote.contains(ff())).toBe(true); // mora no canto da torcida…
+    expect(mascote.lastElementChild).toBe(ff()); // …como o último filho, abaixo do botão do Cheer
+    expect(mascote.querySelector('[data-torcida-button]')!.compareDocumentPosition(ff()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(ff().style.borderStyle).toBe('none'); expect(ff().style.backgroundColor).toBe('transparent'); expect(ff().style.boxShadow).toBe('none'); // sem box
+    expect(ff().style.minHeight).toBe('44px');
     fireEvent.click(ff());
     expect(ff().textContent).toContain('3×');
     expect(localStorage.getItem(STORAGE_KEYS.DUNGEON_SPEED)).toBe('3');
