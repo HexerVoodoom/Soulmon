@@ -44,7 +44,8 @@ import type { CSSProperties } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameVisor, VisorSprite, VisorFx, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
-import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
+import { nightmareScene } from '../utils/dungeonScenes';
+import { entrarNaSuperficie } from '../utils/musica';
 import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { CHEER_TAPS_FULL, type RingGrade } from '../utils/energia';
@@ -124,6 +125,8 @@ export function NightmareBattle({
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
   const par = stageSkillsFor(skills, petStage);
+  // O cenário do dia (3 cenários de pesadelo, sorteio determinístico pelo dia local; fallback: a Forja das Almas).
+  const sceneBg = useMemo(() => nightmareScene().bg, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* O jogador do núcleo (PR4): `soulCombatant` do estado (level e ramo) e o jeito do OFÍCIO, o MESMO da
      Masmorra (`jeitoParaPve`). Antes o Pesadelo usava o `base.dmg` cru e ignorava o jeito: era uma divergência
@@ -180,6 +183,9 @@ export function NightmareBattle({
     runSeedRef.current = newDefenseSeed();
     setSeedLuta(runSeedRef.current);
   };
+
+  // A trilha de TERROR (procedural) toca só enquanto o Pesadelo está aberto — convite e luta; fecha com fade.
+  useEffect(() => (open ? entrarNaSuperficie('pesadelo') : undefined), [open]);
 
   // Reabrir com outra noite recomeça limpo (o modal fica montado no App).
   useEffect(() => {
@@ -333,7 +339,7 @@ export function NightmareBattle({
           specialLabel={specialLabel(isPt, par?.especial)}
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           isPt={isPt}
-          scene={NIGHTMARE_SCENE.bg}
+          scene={sceneBg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
@@ -382,7 +388,7 @@ export function NightmareBattle({
      nada caiu (JOGO-25). */
   const otherBox: CSSProperties = { right: 8, top: 12 };
   const visor = (height: 80 | 72, other: React.ReactNode) => (
-    <GameVisor width={DIALOG_VISOR_W} height={height} scene={NIGHTMARE_SCENE.bg}>
+    <GameVisor width={DIALOG_VISOR_W} height={height} scene={sceneBg}>
       {other}
       <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8 }} data-visor-pet />
     </GameVisor>

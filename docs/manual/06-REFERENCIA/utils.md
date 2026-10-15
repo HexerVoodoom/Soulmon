@@ -15,7 +15,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
 **Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`gainArt.ts`](#srcutilsgainartts), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/labels.ts`](#srcutilssoulprofileastrologylabelsts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/companheiro.ts`](#srcutilssoulprofilefichacompanheirots), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/comportamento.ts`](#srcutilssoulprofilefichacomportamentots), [`soulProfile/ficha/comportamentoSimulacao.ts`](#srcutilssoulprofilefichacomportamentosimulacaots), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/manifestacao.ts`](#srcutilssoulprofilefichamanifestacaots), [`soulProfile/ficha/manifestacaoSave.ts`](#srcutilssoulprofilefichamanifestacaosavets), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/elementoNome.ts`](#srcutilssoulprofilefichaelementonomets), [`soulProfile/ficha/nomeEspecial.ts`](#srcutilssoulprofilefichanomeespecialts), [`soulProfile/ficha/strikeForm.ts`](#srcutilssoulprofilefichastrikeformts), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/perfisSinteticos.ts`](#srcutilssoulprofileperfissinteticosts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
-**Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`musica.ts`](#srcutilsmusicats), [`sonsAssets.ts`](#srcutilssonsassetsts), [`sounds.ts`](#srcutilssoundsts), [`trilha.ts`](#srcutilstrilhats), [`trilhaArena.ts`](#srcutilstrilhaarenats)
+**Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`musica.ts`](#srcutilsmusicats), [`sonsAssets.ts`](#srcutilssonsassetsts), [`sounds.ts`](#srcutilssoundsts), [`trilha.ts`](#srcutilstrilhats), [`trilhaArena.ts`](#srcutilstrilhaarenats), [`trilhaPesadelo.ts`](#srcutilstrilhapesadelots), [`trilhaPesadeloSintese.ts`](#srcutilstrilhapesadelosintesets)
 **Persistência (save, conta, storage)** — [`accountData.ts`](#srcutilsaccountdatats), [`auth.ts`](#srcutilsauthts), [`cloudSave.ts`](#srcutilscloudsavets), [`consent.ts`](#srcutilsconsentts), [`playerDay.ts`](#srcutilsplayerdayts), [`safeStorage.ts`](#srcutilssafestoragets), [`serverConfig.ts`](#srcutilsserverconfigts), [`storageKeys.ts`](#srcutilsstoragekeysts)
 **Push e notificações** — [`notifications.ts`](#srcutilsnotificationsts), [`pushPriming.ts`](#srcutilspushprimingts), [`vapid.ts`](#srcutilsvapidts)
 **Comunidade e chat** — [`chatKeywords.ts`](#srcutilschatkeywordsts), [`chatSafety.ts`](#srcutilschatsafetyts), [`community.ts`](#srcutilscommunityts)
@@ -863,7 +863,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:**
 - `DungeonScene` (interface) — campos: `namePt`, `nameEn`, `bg`, `accent`.
 - `DUNGEON_SCENES` — os 5 andares clássicos, cada `bg` um shorthand `url(<png>) center/cover <cor-média>` (`assets/soulmon/bg/dungeon-classic-{retro,vhs,sol,crt,glitch}.png`; a cor final é a de reserva enquanto a imagem carrega): Jardim Flutuante, Terraço dos Dois Sóis, Observatório Partido, Lago-Espelho, Arquipélago Fraturado. ⚰️ Os cinco gradientes CSS antigos (Retro Pet, Fita VHS, Sol Neon, Terminal CRT, Vazio Glitch — dois eram magenta, fora do kit) foram trocados um a um; os nomes de arquivo `classic-*` mantêm os nomes velhos, o `name` mudou. A cena não é persistida (a run a sorteia em `useState` do `DungeonGame`), então não havia id a preservar.
-- `NIGHTMARE_SCENE` — a cena FIXA do Pesadelo (`SPIRIT_BG_SCENES[6]`, a Forja das Almas): não sorteada, porque o pesadelo é uma luta só, de manhã, com o mesmo vidro todas as noites.
+- `NIGHTMARE_SCENE` — a Forja das Almas (`SPIRIT_BG_SCENES[6]`): desde 15/10/2026 é só o FALLBACK do Pesadelo e a cena do `GoodDream`.
+- `NIGHTMARE_SCENES` (os 3 cenários de pesadelo procedurais, `bg/pesadelo-*.png`: Abismo Glitch, Corredor Impossível, Quarto sem Fim) · `function nightmareScene(dayKey?)` — UM por dia local, determinístico (usado por `NightmareBattle`) · `function nightmareSceneIndex(key, n?)` — o hash FNV-1a puro. Régua: `src/utils/dungeonScenes.pesadelo.test.ts`.
 - `ARENA_SCENE` — a cena FIXA da Arena (`SPIRIT_BG_SCENES[3]`, o Abismo Violeta).
 - `DINO_SCENE` — a cena FIXA do Dino (`SPIRIT_BG_SCENES[10]`, o corredor em ruínas atrás do parallax).
 - `function buildRunScenes(count = 5): DungeonScene[]` — Scenes for one run: 5 picks without repeats, drawn at random from the painted scenes (spirit + classic) + the shop backgrounds. Every run looks different.
@@ -983,7 +984,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `NOVOS_SOULMON` (17: `id`, `line` poder/harmonia/benevolencia, `element`, `rookie`/`champion` `{name, sprite}`, `basico`/`especial` `{pt, en}`) · `novoSoulmonById` · `novoSoulmonOfStage(stage)` (`<id>-<tier>` → criatura) · `novoStageOfTier(tier)` (baby-i/ii/rookie → rookie; champion → champion; ultimate/mega → `null`) · `getDungeonEncounter(tier, exclude, rng, legacy)` (sorteio do slot; cai no `legacy` quando `null`) · tipos `NovoSoulmon`, `NovoAttack`, `DungeonEncounter`. **Chamado por:** `dungeon.ts` (`buildDungeonWave`). `combatFx.ts` ganhou `dungeonEnemyElement` e `dungeonFoeSpecialLabel` (elemento e selo do especial do inimigo; `DungeonGame`/`NightmareBattle`).
 
 ### `src/utils/nightmareElement.ts`
-**Dono de:** o ELEMENTO `pesadelo` (REGISTRO §67): exclusivo da mecânica do Pesadelo, matchup neutro e o encaixe da arte (PNG em `src/assets/soulmon/pesadelo/`: `el-pesadelo.png` e `fx-pesadelo-{cast,aura,slash,impact,defended,orb}.png`). Sem arte, `fxElementId`/`fxFrame` caem no FX procedural (`neutro`).
+**Dono de:** o ELEMENTO `pesadelo` (REGISTRO §67): exclusivo da mecânica do Pesadelo, matchup neutro e o encaixe da arte (PNG em `src/assets/soulmon/pesadelo/`: `el-pesadelo.png` e `fx-pesadelo-{cast,aura,slash,impact,defended,orb}.png`). Desde 15/10/2026 a arte está instalada (gerada proceduralmente, `scripts/gerar-pesadelo-arte.py`, `hasNightmareFx() = true`, REGISTRO §68); sem os PNG, `fxElementId`/`fxFrame` caem no FX procedural (`neutro`).
 **Exports:** `NIGHTMARE_ELEMENT`, `nightmareMatchup`, `nightmareFx`, `hasNightmareFx`, `nightmareIcon`.
 **Chamado por:** `src/utils/combatFx.ts` (`fxElementId`, `fxFrame`), `src/components/NightmareBattle.tsx`.
 **Régua:** `src/utils/nightmares.pesadelo.test.ts`.
@@ -1484,6 +1485,22 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/components/catalog/CatalogOnboardingFlow.tsx`.
 **Régua:** `CatalogOnboardingFlow.render.test.tsx`
 **Regra de negócio:** o `App.tsx` o usa sem carregar o fluxo (que é `React.lazy`). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/oracle/formas.ts`
+**Dono de:** os eixos de forma da evolução: morfologias extras por estágio (`CHAMPION/PERFECT/MEGA_MORPHS_EXTRA`), grupos de espécie (`FAMILY_KIN`) e motivos de elemento e de tema (`ELEMENT_MOTIFS`, `THEME_MOTIFS`). Só dado.
+**Exports:**
+- `EvoShape`, `KinGroup`, `ThemeId` (tipos) e os pools acima.
+**Chamado por:** `src/utils/oracle/motor.ts`.
+**Régua:** `oracle/formas.test.ts`
+**Regra de negócio:** itens novos SEMPRE no fim; motivo de elemento não vira motivo de reino. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/oracle/formasReino.ts`
+**Dono de:** motivos de REINO (clima/habitat, NARRATIVA 7.2; Mega leva o pool `mass`) e o crescimento por PAPEL no Champion (`ROLE_METAMORPHS_EXTRA`). Só dado.
+**Exports:**
+- `REALM_MOTIFS`, `ROLE_METAMORPHS_EXTRA`.
+**Chamado por:** `src/utils/oracle/motor.ts`.
+**Régua:** `oracle/formas.test.ts`
+**Regra de negócio:** akasha nunca vira memória/arquivo/saber; sem cicatriz ou desgaste. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/oracle/familias.ts`
 **Dono de:** os DADOS das famílias visuais do Oráculo — só dado, zero função. Extraído de `oracle.ts` na Fase 2 do Oráculo para sair do chunk de entrada.
@@ -2628,12 +2645,12 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/musica.ts`
 **Dono de:** O DIRETOR DE MÚSICA (11/10/2026, `docs/SOM.md` §10): a tabela superfície → faixa (home = tema, masmorra = loop, arena = faixa derivada) e o apply com crossfade. Não toca nada, não tem número de loudness: manda o `tema.ts` (motivo de pausa `cena`) e o `trilha.ts` (`pedirFaixa`).
 **Exports:**
-- `Superficie = 'casa' | 'masmorra' | 'arena'` · `FaixaDeMusica = 'tema' | FaixaDaTrilha` (types) · `FAIXA_DE_COMBATE` — a tabela das faixas de combate.
+- `Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo'` (15/10/2026: `pesadelo` = a trilha de TERROR de `trilhaPesadelo.ts`; o tema recebe `cena`, `pedirFaixa(null)`, e só entra com música ligada) · `FaixaDeMusica = 'tema' | FaixaDaTrilha` (types) · `FAIXA_DE_COMBATE` — a tabela das faixas de combate.
 - `function escolherFaixa(s, temaOn, combateOn): FaixaDeMusica | null` — PURA: a faixa que soa dada a superfície e as duas preferências (sem a música de combate ligada o tema segue; sem tema, quem ligou só o loop o tem na Home).
 - `function reavaliarMusica(): void` — reaplica a escolha (superfície mudou ou interruptor das Configurações).
 - `function entrarNaSuperficie(s): () => void` — chamar num `useEffect` de montagem; o retorno volta à superfície ANTERIOR (pilha). Abrir a masmorra/arena é o gesto da S2 (`consentirNestaSessao`), só com a chave ligada.
 - `function iniciarMusica(): void` (`main.tsx`, só decide) · `function superficieAtual()` · `function esquecerMusica()` (teste).
-**Chamado por:** `src/main.tsx`, `src/components/SettingsPage.tsx` (`reavaliarMusica`), `src/components/DungeonGame.tsx` (`'masmorra'`), `src/components/ArenaGame.tsx` (`'arena'`)
+**Chamado por:** `src/main.tsx`, `src/components/SettingsPage.tsx` (`reavaliarMusica`), `src/components/DungeonGame.tsx` (`'masmorra'`), `src/components/ArenaGame.tsx` (`'arena'`), `src/components/NightmareBattle.tsx` (`'pesadelo'`)
 **Régua:** `src/utils/musica.test.ts`, `src/components/settingsSom.render.test.tsx`
 
 ### `src/utils/trilhaArena.ts`
@@ -2641,6 +2658,18 @@ dominância populacional — por isso ±15%. Régua nova:
 **Exports:** `BPM_DA_ARENA`, `DURACAO_DO_LOOP_DA_ARENA_S` (derivados de `BPM_DA_TRILHA`/`RAZAO_DA_ARENA` em `sonsAssets.ts`) · `PADRAO_ARENA` · `function ataquesDaArena()` · `function sintetizarPercussaoDaArena(taxa): Float32Array<ArrayBuffer>`.
 **Chamado por:** `src/utils/trilha.ts`
 **Régua:** `src/utils/trilhaArena.test.ts`
+
+### `src/utils/trilhaPesadelo.ts`
+**Dono de:** A TRILHA DE TERROR do Pesadelo (15/10/2026, `docs/REGISTRO-DE-DECISOES.md` §68): a REPRODUÇÃO (a síntese é de `trilhaPesadeloSintese.ts`). WebAudio puro, sem arquivo de áudio; toca em loop no `busTrilha` do `audioBus` só enquanto o Pesadelo está aberto, com fade de entrada (3 s) e saída. Respeita mudo/sono/descanso (`pausarTrilha` repassa), aba oculta, e só toca com música ligada (`permitido` vem do diretor `musica.ts`); nada é criado antes do gesto. Loudness: pico −14,1 dBFS + o ganho de uma camada de `loudness.ts`. **Encaixe do dono:** `src/assets/audio/pesadelo-trilha.mp3` (ou `.ogg`/`.m4a`), se existir, toca no lugar da procedural (cai nela se a decodificação falhar).
+**Exports:** `FADE_ENTRADA_PESADELO_S`, `FADE_SAIDA_PESADELO_S` · `ARQUIVO_DO_DONO` (`string | undefined`) · `function pedirTrilhaPesadelo(on, permitirSePreferida?)` · `function pausarPesadelo(motivo)` / `retomarPesadelo(motivo)` (de `trilha.ts`) · `function trilhaPesadeloTocando()` · `function esquecerTrilhaPesadelo()` (teste) · reexporta a síntese.
+**Chamado por:** `src/utils/musica.ts`, `src/utils/trilha.ts`
+**Régua:** `src/utils/trilhaPesadelo.test.ts`, `src/utils/musica.test.ts`
+
+### `src/utils/trilhaPesadeloSintese.ts`
+**Dono de:** A SÍNTESE determinística da trilha de terror (15/10/2026): drones graves (Ré1, tritono, cluster), pad com detuning, batida de coração 45 bpm + infrassom 18 Hz, sussurros de ruído filtrado e stingers FM esparsos, tudo por semente, num loop de 24 s a 12 kHz sem emenda (frequências em múltiplos inteiros de 1/24 Hz; eventos escritos com módulo). Sem imports: o Node a importa direto (`scripts/render-trilha-pesadelo.mjs` renderiza o WAV).
+**Exports:** `DURACAO_PESADELO_S`, `TAXA_PESADELO`, `SEMENTE_PESADELO`, `PICO_PESADELO` · `OpcoesDaTrilhaPesadelo` (type) · `function sintetizarTrilhaPesadelo(opcoes?): Float32Array<ArrayBuffer>` (pico = `PICO_PESADELO`) · `function medirTrilha(d)` · `function paraWav16(d, taxa)`.
+**Chamado por:** `src/utils/trilhaPesadelo.ts`, `scripts/render-trilha-pesadelo.mjs`
+**Régua:** `src/utils/trilhaPesadelo.test.ts`
 
 ### `src/utils/specialGate.ts`
 **Dono de:** A SERIALIZAÇÃO de tempo de cena dos especiais (11/10/2026, `docs/SOM.md` §10.6): "enquanto rola um especial, pare os ataques dos dois e retome depois; um de cada vez". Encenação pura — não importa o motor de combate e não muda nada do núcleo/servidor.
