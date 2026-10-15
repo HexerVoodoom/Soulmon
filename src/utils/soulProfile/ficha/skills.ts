@@ -58,6 +58,9 @@ export interface StageSkill {
   lex?: LexNome;
   /** PR9: a forma do golpe (corpo a corpo ou à distância) — a tabela da escola, lida do dono único. */
   forma?: StrikeForm;
+  /** Os 5 iniciais (REGISTRO §76): a forma do golpe vem da tabela do ELEMENTO (`ELEMENT_STRIKE_FORM`), não da escola.
+   *  `fighterIdentity` lê este marcador; skills de ficha comum nunca o têm. */
+  formaDoElemento?: true;
   /** Custo qualitativo por desenho: básica é frequente, especial é rara. */
   custo: 'baixo' | 'alto';
   /** Impacto REAL calculado pelo motor do class-system (`calcularSkill`),

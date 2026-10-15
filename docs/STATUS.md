@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/10/2026 — Golpes dos iniciais: forma do elemento e nomes autorais (`feat/iniciais-golpes`, REGISTRO §76)
+>
+> - Forma do golpe pela tabela do elemento (Crato especial à distância, Bolid especial corpo a corpo) e nomes PT/EN autorais por inicial (`STARTER_MOVES`). Para o dono rever os nomes: `docs/ELEMENTOS-DOS-INICIAIS.md`.
+
 > ## 15/10/2026 — Elemento dos 5 iniciais gratuitos (`feat/elementos-iniciais-gratuitos`, REGISTRO §75)
 >
 > - Crato=terra, Brooka=som, Zefi=ar, Oaken=vida, Bolid=fogo (um base cada): golpes, FX, aura, tipo exibido e vantagem da Arena. `utils/starterElements.ts` + `utils/starterSkills.ts`. HP/dano/evolução intactos. Tabela em `docs/ELEMENTOS-DOS-INICIAIS.md`.

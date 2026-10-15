@@ -2,12 +2,13 @@
 import { describe, it, expect } from 'vitest';
 import { STARTER_IDS } from './sprites';
 import { STARTER_ELEMENT, STARTER_ALIGNMENT, starterElementOf, petElementOf } from './starterElements';
-import { starterSkillsFor, STARTER_SCHOOL } from './starterSkills';
+import { starterSkillsFor, STARTER_SCHOOL, STARTER_MOVES } from './starterSkills';
 import { PREMADE_CHARACTERS } from './monetization';
 import { VISUAL_ELEMENTS, fxElementId, fxFrame, FX_FALLBACK_ELEMENT, elementStrikeForm } from './combatFx';
 import { fighterIdentity } from './fighterIdentity';
 import { stageSkillsFor } from './soulProfile/ficha/stageSkillsFor';
 import { SCHOOL_STRIKE_FORM } from './soulProfile/ficha/strikeForm';
+import { SUBSTANTIVOS_ESPECIAL } from './soulProfile/ficha/nomeEspecial';
 import { baseElementLabel } from './soulProfile/essenceLabels';
 import { FICHA_STAGE_ORDER } from './soulProfile/ficha/types';
 
@@ -66,37 +67,45 @@ describe('golpes dos iniciais (básica e especial do elemento)', () => {
           expect(s.nome.en.length).toBeGreaterThan(2);
           expect(s.escolaId).toBe(STARTER_SCHOOL[id].escola);
         }
-        const nomeEl = (pt: boolean) => baseElementLabel(el, pt).toLowerCase();
-        expect(par.basica.nome.pt.toLowerCase()).toContain(nomeEl(true));
-        expect(par.basica.nome.en.toLowerCase()).toContain(nomeEl(false));
-        expect(par.especial.nome.pt.toLowerCase()).toContain(nomeEl(true));
-        expect(par.especial.nome.en.toLowerCase()).toContain(nomeEl(false));
+        expect(par.basica.nome).toEqual(STARTER_MOVES[id].basica);
+        expect(par.especial.nome).toEqual(STARTER_MOVES[id].especial);
       }
     }
   });
 
-  it('fighterIdentity (a mesma de Arena/Masmorra/Pesadelo/Duelo) devolve o elemento do inicial nos dois golpes', () => {
+  it('fighterIdentity: o elemento do inicial e a forma da TABELA DO ELEMENTO (ELEMENT_STRIKE_FORM) nos dois golpes', () => {
     for (const id of STARTER_IDS) {
       const par = stageSkillsFor(starterSkillsFor(id), 'rookie');
       const ident = fighterIdentity(par, STARTER_ELEMENT[id]);
       expect(ident.basico.elemento).toBe(STARTER_ELEMENT[id]);
       expect(ident.especial.elemento).toBe(STARTER_ELEMENT[id]);
-      const esc = STARTER_SCHOOL[id].escola;
-      expect(ident.basico.forma).toBe(SCHOOL_STRIKE_FORM[esc].basica);
-      expect(ident.especial.forma).toBe(SCHOOL_STRIKE_FORM[esc].especial);
+      expect(ident.basico.forma).toBe(elementStrikeForm(STARTER_ELEMENT[id], 'basica'));
+      expect(ident.especial.forma).toBe(elementStrikeForm(STARTER_ELEMENT[id], 'especial'));
     }
+    // pedido do dono: Crato (terra) especial à distância; Bolid (fogo) especial corpo a corpo
+    expect(fighterIdentity(starterSkillsFor('industrial').rookie, 'terra').especial.forma).toBe('ranged');
+    expect(fighterIdentity(starterSkillsFor('meteoro').rookie, 'fogo').especial.forma).toBe('melee');
   });
 
-  it('forma do golpe x tabela do elemento: só divergem o especial do Crato e o do Bolid — declarado', () => {
-    const div: string[] = [];
-    for (const id of STARTER_IDS) {
-      const el = STARTER_ELEMENT[id];
-      const par = starterSkillsFor(id).rookie;
-      const ident = fighterIdentity(par, el);
-      if (ident.basico.forma !== elementStrikeForm(el, 'basica')) div.push(`${id}:basica`);
-      if (ident.especial.forma !== elementStrikeForm(el, 'especial')) div.push(`${id}:especial`);
+  it('a regra só vale para os iniciais: skill de ficha comum segue a escola', () => {
+    const par = JSON.parse(JSON.stringify(starterSkillsFor('industrial').rookie));
+    delete par.basica.formaDoElemento; delete par.especial.formaDoElemento;
+    expect(fighterIdentity(par, 'terra').especial.forma).toBe(SCHOOL_STRIKE_FORM[STARTER_SCHOOL.industrial.escola].especial);
+  });
+
+  it('nomes autorais: 10 nomes distintos, PT e EN, sem colidir com o léxico automático dos especiais', () => {
+    const todos = STARTER_IDS.flatMap(id => [STARTER_MOVES[id].basica, STARTER_MOVES[id].especial]);
+    expect(new Set(todos.map(n => n.pt)).size).toBe(10);
+    expect(new Set(todos.map(n => n.en)).size).toBe(10);
+    const lex = Object.values(SUBSTANTIVOS_ESPECIAL).flat();
+    for (const n of todos) {
+      expect(n.pt.length).toBeLessThanOrEqual(26);
+      expect(n.en.length).toBeLessThanOrEqual(26);
+      for (const l of lex) {
+        expect(n.pt.toLowerCase().split(/\s+/)).not.toContain(l.pt.toLowerCase());
+        expect(n.en.toLowerCase().split(/\s+/)).not.toContain(l.en.toLowerCase());
+      }
     }
-    expect(div).toEqual(['industrial:especial', 'meteoro:especial']);
   });
 
   it('sem a ficha (save que ainda não carregou), o inicial luta com o elemento dele, nunca no neutro', () => {

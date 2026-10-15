@@ -45,7 +45,10 @@ const ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
 const elementoValido = (id: unknown): id is string => typeof id === 'string' && ELEMENTO_ID.test(id);
 const famValida = (f: unknown): SpecialFamily | null => (typeof f === 'string' && (SPECIAL_FAMILIES as readonly string[]).includes(f) ? (f as SpecialFamily) : null);
 
-function golpe(escola: unknown, elemento: string, role: SkillRole): FighterStrike {
+function golpe(escola: unknown, elemento: string, role: SkillRole, formaDoElemento = false): FighterStrike {
+  if (formaDoElemento && typeof escola === 'string') {
+    return { elemento, escola: escolaSkillSegura(escola), forma: elementStrikeForm(elemento, role) };
+  }
   if (typeof escola === 'string') {
     const e = escolaSkillSegura(escola);
     return { elemento, escola: e, forma: SCHOOL_STRIKE_FORM[e][role] };
@@ -72,8 +75,8 @@ export function fighterIdentity(par: StageSkills | null | undefined, fallbackEle
   const elBasico = elementoDoBasico(par) ?? sem;
   const elEspecial = elementoValido(esp?.elementoId) ? esp!.elementoId : elBasico;
   return {
-    basico: golpe(par?.basica?.escolaId, elBasico, 'basica'),
-    especial: { ...golpe(esp?.escolaId, elEspecial, 'especial'), familia: familyOfSkill(esp) },
+    basico: golpe(par?.basica?.escolaId, elBasico, 'basica', par?.basica?.formaDoElemento === true),
+    especial: { ...golpe(esp?.escolaId, elEspecial, 'especial', esp?.formaDoElemento === true), familia: familyOfSkill(esp) },
   };
 }
 

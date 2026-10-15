@@ -10,4 +10,16 @@ Dono do dado: `src/utils/starterElements.ts` (`STARTER_ELEMENT`). Skills: `src/u
 | `vida` | Oaken | árvore pequena (planta) | Vida (`planta`) / neutro | **Vida** | Benevolência | bênção: à distância, à distância |
 | `meteoro` | Bolid | criatura vermelha/laranja de brasa | Meteoro (`fogo`) / neutro | **Fogo** | Poder | conjuração: à distância, à distância |
 
-Todos os cinco vieram do pedido do dono (nenhuma proposta nova). Divergência declarada: o especial do Crato (tabela da terra: à distância) e do Bolid (tabela do fogo: corpo a corpo) segue a escola da skill, que decide sobre o elemento quando há ficha (`fighterIdentity`).
+## Golpes (REGISTRO §76; nomes propostos para o dono rever)
+
+Forma do golpe = tabela do elemento (`ELEMENT_STRIKE_FORM`), não a escola. Mesmos nomes nos 5 estágios.
+
+| Inicial | Elemento | Básico PT / EN (forma) | Especial PT / EN (forma) |
+|---|---|---|---|
+| Crato | Terra | Pancada de Caixote / Crate Thump (corpo a corpo) | Chuva de Caixotes / Crate Downpour (à distância) |
+| Brooka | Som | Assobio de Riacho / Brook Whistle (à distância) | Grasnado Estrondoso / Booming Quack (à distância) |
+| Zefi | Ar | Bater de Asas / Wing Flutter (à distância) | Redemoinho Alado / Winged Whirl (à distância) |
+| Oaken | Vida | Broto Vivo / Living Sprout (à distância) | Copa Viçosa / Lush Canopy (à distância) |
+| Bolid | Fogo | Fagulha de Brasa / Ember Spark (à distância) | Investida Incandescente / Blazing Charge (corpo a corpo) |
+
+Todos os cinco elementos vieram do pedido do dono (nenhuma proposta nova); a escola da tabela acima só decide área/recurso. Sem colisão com o léxico automático nem com outros nomes do jogo (teste + grep).
