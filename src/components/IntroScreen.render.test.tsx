@@ -153,3 +153,36 @@ describe('IntroScreen — tela de abertura (tema na intro)', () => {
     expect(document.querySelector('video')).not.toBeNull();
   });
 });
+
+/** REGISTRO §77 — pílula "Welcome" sobre o texto pintado da arte. */
+describe('IntroScreen — pílula Welcome', () => {
+  it('EN "Welcome" / PT "Bem-vindo", decorativa e sem pegar o toque', () => {
+    const { unmount } = render(<IntroScreen onFinish={() => {}} />);
+    const p = screen.getByTestId('intro-pill-welcome');
+    expect(p.textContent).toBe('Welcome');
+    expect(screen.getByTestId('intro-welcome-stage').getAttribute('aria-hidden')).toBe('true');
+    expect(computed(screen.getByTestId('intro-welcome-stage'), 'pointer-events')).toBe('none');
+    expect(screen.getByRole('button', { name: 'Skip intro' })).toBeTruthy();
+    unmount();
+    localStorage.setItem('soulmon-language', 'pt-BR');
+    render(<IntroScreen onFinish={() => {}} />);
+    expect(screen.getByTestId('intro-pill-welcome').textContent).toBe('Bem-vindo');
+  });
+
+  it('o selo cobre só o patch/versão do topo em qualquer proporção (geometria do cover 9:16)', () => {
+    const css = readFileSync(join(__dirname, '../index.css'), 'utf8');
+    const bloco = css.match(/\.sm2-intro-pill \{([^}]*)\}/)![1];
+    const n = (re: RegExp) => parseFloat(bloco.match(re)![1]);
+    const t = n(/top: ([\d.]+)%/), w = n(/width: ([\d.]+)%/), h = n(/height: ([\d.]+)%/);
+    // VERSION 1.2 no quadro 720x1280: x 285-435, y 55-82 (folga de 6 px)
+    expect(50 - w / 2).toBeLessThanOrEqual(((285 - 6) / 720) * 100);
+    expect(50 + w / 2).toBeGreaterThanOrEqual(((435 + 6) / 720) * 100);
+    expect(t - h / 2).toBeLessThanOrEqual(((55 - 6) / 1280) * 100);
+    expect(t + h / 2).toBeGreaterThanOrEqual(((82 + 6) / 1280) * 100);
+    // pequeno e longe do meio: não toca LOADING (y>=755) nem a barra
+    expect(t + h / 2).toBeLessThan((755 / 1280) * 100);
+    expect(screen.queryByTestId('intro-pill-version')).toBeNull();
+    expect(css).toContain('max(100cqw, calc(100cqh * 9 / 16))');
+    expect(bloco).toContain('-webkit-text-stroke');
+  });
+});
