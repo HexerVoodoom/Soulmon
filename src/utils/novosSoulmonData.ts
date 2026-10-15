@@ -3,9 +3,9 @@
  * nomes dos golpes. A arte (PNG) é anexada por `novosSoulmon.ts`; este módulo existe para a Arena (`arena.ts`, sem imports
  * de asset) escolher e nomear a criatura.
  *
- * FORMAS FUTURAS (Ultimate/Mega/Ultra, em geração): quando a arte for aprovada, 1) ponha o PNG em `assets/soulmon/novos/`,
+ * FORMAS ALTAS (Ultimate/Mega/Ultra) JÁ INSTALADAS (§77). Para nova forma/criatura: 1) ponha o PNG em `assets/soulmon/novos/`,
  * 2) liste o nome em `FORMAS_ALTAS` abaixo e 3) o sprite em `FORMAS_ALTAS_ART` (`novosSoulmon.ts`). Sem isso a forma NÃO
- * existe: slots 4/5 da escada caem nas linhas antigas e o chefe da Arena usa o Champion da criatura.
+ * existe (criatura sem a forma: slots 4/5 caem nas linhas antigas; chefe da Arena usa o Champion).
  */
 export type NovoLine = 'poder' | 'harmonia' | 'benevolencia';
 export type NovoStage = 'rookie' | 'champion';
@@ -33,9 +33,9 @@ export const NOVOS_DATA: readonly NovoData[] = [
     basico: { pt: "Garra Sombria", en: "Shade Claw" }, especial: { pt: "Eclipse Umbral", en: "Umbral Eclipse" } },
   { id: 'brawnu', line: 'poder', element: 'vigor', rookie: 'Brawnu', champion: 'Brawnor',
     basico: { pt: "Cabeçada Firme", en: "Steady Bash" }, especial: { pt: "Investida Incansável", en: "Relentless Charge" } },
-  { id: 'kenjo', line: 'poder', element: 'marcial', rookie: 'Kenjo', champion: 'Shihanor',
+  { id: 'kenjo', line: 'poder', element: 'marcial', rookie: 'Kenvar', champion: 'Shihanor',
     basico: { pt: "Soco Duplo", en: "Twin Strike" }, especial: { pt: "Mil Palmas", en: "Thousand Palms" } },
-  { id: 'runix', line: 'harmonia', element: 'arcano', rookie: 'Runix', champion: 'Arcanowl',
+  { id: 'runix', line: 'harmonia', element: 'arcano', rookie: 'Runeko', champion: 'Arcanowl',
     basico: { pt: "Dardo Rúnico", en: "Rune Bolt" }, especial: { pt: "Selo Arcano", en: "Arcane Seal" } },
   { id: 'chronib', line: 'harmonia', element: 'tempo', rookie: 'Chronib', champion: 'Tempora',
     basico: { pt: "Pulso Temporal", en: "Time Pulse" }, especial: { pt: "Reversão", en: "Rewind Burst" } },
@@ -59,8 +59,26 @@ export const NOVOS_DATA: readonly NovoData[] = [
     basico: { pt: "Bicada de Vento", en: "Gust Peck" }, especial: { pt: "Ciclone", en: "Cyclone Dive" } },
 ];
 
-/** Nome das formas altas que JÁ têm arte instalada, por criatura. Vazio até a leva de Ultimate/Mega/Ultra ser aprovada. */
-export const FORMAS_ALTAS: Readonly<Record<string, Partial<Record<NovoHighStage, string>>>> = {};
+/** Nome das formas altas que JÁ têm arte instalada, por criatura. Leva de 15/10/2026 aprovada pelo dono (REGISTRO §77); nomes curtos propostos no tom do jogo (PT = EN, como os das criaturas). */
+export const FORMAS_ALTAS: Readonly<Record<string, Partial<Record<NovoHighStage, string>>>> = {
+  embrit: { ultimate: 'Ignivorn', mega: 'Magmatyr', ultra: 'Infernarch' },
+  spinvex: { ultimate: 'Toxivorax', mega: 'Venomaw', ultra: 'Pestilarch' },
+  ossumi: { ultimate: 'Ceifaron', mega: 'Ossolich', ultra: 'Thanatarch' },
+  umbrae: { ultimate: 'Noctyrant', mega: 'Umbralord', ultra: 'Eclipsarch' },
+  brawnu: { ultimate: 'Brawnoth', mega: 'Vigorath', ultra: 'Hercularch' },
+  kenjo: { ultimate: 'Shihanox', mega: 'Bushidor', ultra: 'Kenzarch' },
+  runix: { ultimate: 'Sigilowl', mega: 'Runemancer', ultra: 'Arcanarch' },
+  chronib: { ultimate: 'Horavex', mega: 'Eternox', ultra: 'Chronarch' },
+  voidlet: { ultimate: 'Riftfang', mega: 'Voidwarden', ultra: 'Cosmarch' },
+  gravul: { ultimate: 'Gravothar', mega: 'Massivor', ultra: 'Singularch' },
+  vibri: { ultimate: 'Sonorath', mega: 'Echoreign', ultra: 'Cacophonarch' },
+  voltrix: { ultimate: 'Fulgurex', mega: 'Stormion', ultra: 'Voltarch' },
+  sprouti: { ultimate: 'Sylvastag', mega: 'Verdantlord', ultra: 'Edenarch' },
+  solion: { ultimate: 'Luminion', mega: 'Solarion', ultra: 'Radiarch' },
+  bubbo: { ultimate: 'Tidalord', mega: 'Oceanor', ultra: 'Abyssarch' },
+  pebblo: { ultimate: 'Terraclast', mega: 'Geodon', ultra: 'Tectonarch' },
+  zephir: { ultimate: 'Cirrostrix', mega: 'Zenithawk', ultra: 'Aeriarch' },
+};
 
 export const NOVO_IDS: readonly string[] = NOVOS_DATA.map(n => n.id);
 const BY_ID: Readonly<Record<string, NovoData>> = Object.fromEntries(NOVOS_DATA.map(n => [n.id, n]));
