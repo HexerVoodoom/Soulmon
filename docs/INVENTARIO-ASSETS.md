@@ -361,3 +361,10 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 | `soul-lv-badge`, `vinculo-badge`, `talent-respec` | `soulmon/combate-v3/hud/` | 64² / 128² / 64² | substituem as anteriores (`talentArt`) |
 | `fx-target-down-1..6`, `fx-target-down-sheet` | `soulmon/combate-v3/fx/` | 128² / 384×256 | alvo derrotado; sem consumidor ainda |
 
+### P2b (14/10/2026)
+
+| Arquivo | Pasta | Tamanho | Uso |
+|---|---|---|---|
+| `lote-laboratorio-perfil.png` | `soulmon/areas/` | 300² | prédio do Perfil (`LABORATORIO_LOT_ART.perfil`), no lugar de `lote-jogos-mente-akasha` |
+| `perfil-ataque-distancia.png`, `vinculo-badge.png`, `fx-target-down-*` | idem P2 | idem | regerados |
+

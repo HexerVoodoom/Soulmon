@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/TalentTree-Cfgly5b7.js","assets/index-BCqUcuMK.js","assets/vendor-DDxydHEc.js","assets/index-D2NmwZvr.css"])))=>i.map(i=>d[i]);
-import{da as r,j as e,e as a,db as n,b$ as s}from"./index-BCqUcuMK.js";import"./vendor-DDxydHEc.js";const o=a.lazy(()=>s(()=>import("./TalentTree-Cfgly5b7.js"),__vite__mapDeps([0,1,2,3])));function c({language:t="pt-BR"}){return r()?e.jsx(a.Suspense,{fallback:e.jsx(n,{language:t==="pt-BR"?"pt-BR":"en-US",variant:"inline"}),children:e.jsx(o,{language:t})}):null}export{c as default};
