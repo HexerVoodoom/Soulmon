@@ -98,8 +98,8 @@ export const LABORATORIO_BG = bgLaboratorio;
 import loteEvolucao from './lote-laboratorio-evolucao.png';
 import lotePet from './lote-laboratorio-pet.png';
 import loteStats from './lote-laboratorio-stats.png';
-import lotePerfil from './lote-jogos-mente-akasha.png';
-// beta-2 (11): o Perfil do Soulmon reusa o santuário cristalino que já estava no repo sem uso (`lote-jogos-mente-akasha`) — arte própria do prédio é PEDIDO À FRENTE DE ARTE (design-review.md).
+// 14/10/2026 (lote P2b): prédio próprio do Perfil, o espelho que lê a alma (Higgsfield gpt_image_2_5 flare, 300², alfa real).
+import lotePerfil from './lote-laboratorio-perfil.png';
 import loteBiblioteca from './lote-hall-biblioteca.png';
 // 07/10/2026 (escolha do dono): o Círculo de Amigos usa o abrigo do domínio Terra.
 import loteAmigos from './lote-hall-amigos-terra.png';
