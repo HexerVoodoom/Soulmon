@@ -57,6 +57,7 @@ import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
 import npcHallAmigosMel from './npc-extra-filhote-de-mel.png';
 
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
+import npcMercadoRestaurante from './npc-mercado-restaurante.png';
 /**
  * 🦎 O NPC do SOULSMITH — ÚNICO ponto de troca (07/10/2026). Escolha do dono: o espírito-do-forno vidraceiro
  * (`dominios/industrial/npcs/npc-industrial-espirito-forno-vidraceiro`, a 'salamandra de vidro industrial').
@@ -82,6 +83,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcMercadoConquistas, // Medra
   'mercado:ferreiro': FERREIRO_NPC_ART,
+  'mercado:restaurante': npcMercadoRestaurante, // Tijolino, o caranguejo pedreiro (14/10/2026; restaurante em obra)
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
   'hall:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)

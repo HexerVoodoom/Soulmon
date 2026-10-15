@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Cartões de missão e "Ir" (dono, 14/10/2026, REGISTRO §60): um CARTÃO por missão em todas as abas, o "!" é o amarelo da paleta,
+ * Cartões de missão e "Ir" (dono, 14/10/2026, REGISTRO §62): um CARTÃO por missão em todas as abas, o "!" é o amarelo da paleta,
  * toda missão com lugar LEVA até ele (prédio fechado mostra o requisito em vez de navegar) e o "This week" não tem "!" na frente.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';

@@ -18,6 +18,8 @@ import loteFeira from './lote-arena-feira.png';
 import loteMercadoConquistas from './lote-mercado-conquistas.png';
 // ⚒️ 07/10/2026: o Ferreiro — a oficina de lava do domínio Fogo (`dominios/fogo/predios/lote-fogo-oficina`). Pedido de arte PRÓPRIA em `docs/ARTE-MELHORIAS-FUTURAS.md`.
 import loteFerreiro from './lote-mercado-ferreiro.png';
+// 14/10/2026 (dono): o RESTAURANTE EM OBRA, canto de baixo à direita (Higgsfield gpt_image_2_5 flare, 300², alfa real). Só vitrine, sem ação.
+import loteRestaurante from './lote-mercado-restaurante.png';
 import loteTorneio from './lote-arena-torneio.png';
 import loteDuelo from './lote-arena-duelo.png';
 
@@ -32,6 +34,7 @@ export const MERCADO_LOT_ART = {
   // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
   conquistas: loteMercadoConquistas,
   ferreiro: loteFerreiro,
+  restaurante: loteRestaurante,
 } as const;
 
 export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo } as const;

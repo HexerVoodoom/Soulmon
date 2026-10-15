@@ -7,7 +7,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { MissionMark } from '../play/MissionMark';
 
 /**
- * COMO UMA MISSÃO SE MOVE (dono, 14/10/2026, REGISTRO §60): quem renderiza a lista recebe isto e só pergunta por alvo.
+ * COMO UMA MISSÃO SE MOVE (dono, 14/10/2026, REGISTRO §62): quem renderiza a lista recebe isto e só pergunta por alvo.
  * `bondLevel` decide o bloqueio: prédio fechado NÃO navega — o cartão mostra o requisito.
  */
 export interface MissionNav {

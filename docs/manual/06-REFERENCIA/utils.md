@@ -3026,7 +3026,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** nenhuma (`ls src/utils/weekdays*.test.ts` vazio).
 
 ### `src/utils/missionTargets.ts`
-**Dono de:** PARA ONDE CADA MISSÃO LEVA (REGISTRO §60): tabela pura de destino por missão — um prédio do Mapa, a Home (cuidado, humor) ou nenhum.
+**Dono de:** PARA ONDE CADA MISSÃO LEVA (REGISTRO §62): tabela pura de destino por missão — um prédio do Mapa, a Home (cuidado, humor) ou nenhum.
 **Exports:** `GoTarget` (type) · `weeklyTarget(id)` · `achievementTarget(category)` · `dailyTarget(mission)`.
 **Régua:** `src/components/nav/missionCards.render.test.tsx`.
 

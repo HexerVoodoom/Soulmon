@@ -95,7 +95,8 @@ describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
     const areas = MAP_TOUR_STEPS.filter(s => s.areas).map(s => s.id);
     expect(areas).toEqual(MAP_TOUR_AREA_ORDER.map(a => `map-${a}`));
     expect(new Set(MAP_TOUR_AREA_ORDER).size).toBe(AREAS.length);
-    const nomes = MAP_TOUR_STEPS.flatMap(s => s.areas ?? []).map(r => r.name.en);
+    // O Restaurante em obra (14/10/2026) é vitrine: tem linha no tutorial mas não é prédio (sem `BuildingId`).
+    const nomes = MAP_TOUR_STEPS.flatMap(s => s.areas ?? []).map(r => r.name.en).filter(n => n !== 'Restaurant');
     expect(nomes.sort()).toEqual(Object.keys(BUILDING_GATES).map(id => BUILDING_INTRO_COPY[id as keyof typeof BUILDING_INTRO_COPY].place.en).sort());
   });
   it('PT-BR e EN em TODA string, com os títulos das áreas reais', () => {

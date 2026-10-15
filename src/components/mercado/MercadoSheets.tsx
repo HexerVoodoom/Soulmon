@@ -179,7 +179,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
   claimed?: readonly string[];
   /** O Resgatar (só no ícone "!" de Missões). Sem ele (prédio do Mercado) a cumprida só aponta onde resgatar. */
   onClaim?: (id: string) => void;
-  /** Para onde a conquista leva (REGISTRO §60): só no ícone "!" (no Mercado o jogador já está comprando). */
+  /** Para onde a conquista leva (REGISTRO §62): só no ícone "!" (no Mercado o jogador já está comprando). */
   nav?: MissionNav;
 }) {
   const isPt = language === 'pt-BR';

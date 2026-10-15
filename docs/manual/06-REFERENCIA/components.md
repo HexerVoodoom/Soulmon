@@ -206,7 +206,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/dailyMissionList.render.test.tsx`.
 
 ### `src/components/nav/MissionCard.tsx`
-**Dono de:** o CARTÃO DE MISSÃO — um por missão em todas as abas da folha de Missões (borda `--sm2-line`, fundo `--sm2-surface`): "!" amarelo da paleta sem círculo (check quando resgatada), título que vira "Ir" quando a missão tem lugar, descrição curta, progresso, recompensa, estado e a ação (Resgatar). `resolveGo` decide a navegação pelo Vínculo: prédio fechado não navega e mostra o requisito (REGISTRO §60).
+**Dono de:** o CARTÃO DE MISSÃO — um por missão em todas as abas da folha de Missões (borda `--sm2-line`, fundo `--sm2-surface`): "!" amarelo da paleta sem círculo (check quando resgatada), título que vira "Ir" quando a missão tem lugar, descrição curta, progresso, recompensa, estado e a ação (Resgatar). `resolveGo` decide a navegação pelo Vínculo: prédio fechado não navega e mostra o requisito (REGISTRO §62).
 **Props principais:** `language`, `attrs` (`data-*`), `status` (`open`/`ready`/`claimed`), `title`, `desc`, `progress`, `reward`, `onGo`, `lockNote`, `action`.
 **Exports:** `MissionNav` (interface) · `resolveGo(nav, target, language)` · `MissionCardStatus` · `MissionCard(props)` · `MissionCardList` · `ClaimButton`.
 **Chamado por:** `StrollQuestLine`, `BuildingQuestList`, `DailyMissionList`, `FirstTimesList`, `WeeklyMissionList` (`ShopShelf.tsx`).
@@ -1392,7 +1392,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 ### `src/components/ui/FunctionNpcNote.tsx`
 **Dono de:** o busto de FUNÇÃO de uma tela (14/10/2026): imagem de `FUNCTION_NPC_ART` + nome e fala de `functionNpcVoice`, só acolhida, sem cobrança.
 **Exports:** `FunctionNpcNote({ id, language, size? })`.
-**Chamado por:** `SettingsPage.tsx` (Tobi em Configurações, Faro em "Sua conta"), `RestWindowCard.tsx` (Sona), `home/Mochila.tsx` (Nuri).
+**Chamado por:** `SettingsPage.tsx` (Tobi em Configurações, Faro em "Sua conta"), `RestWindowCard.tsx` (Sona), (a Nuri, `cuidados`, não é mais usada na Mochila desde 14/10/2026; sem chamada hoje).
 
 ### `src/components/ui/AvatarFrame.tsx`
 **Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com a ARTE da moldura (`FRAME_ART`, `utils/frames.ts`: canvas 192² com abertura de 96 centrada) desenhada por cima, a abertura em 94% do lado do avatar e o transbordo reservado na `margin`; id sem arte cai no anel CSS do `look`; `null` = sem moldura. Mestre/Grão-Mestre escrevem o `#N` (`plaque`) como texto vivo na plaquinha. `FrameSelector` lista "Sem moldura" + o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).

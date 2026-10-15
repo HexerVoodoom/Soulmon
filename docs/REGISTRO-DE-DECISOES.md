@@ -2490,7 +2490,7 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Gatilho para rever:** o dono preferir outra tela para a Nuri (não existe folha própria de "Cuidados").
 
 
-## 60. Missões em cartões, com "Ir" até o lugar e o "!" amarelo (dono, voz, 14/10/2026)
+## 62. Missões em cartões, com "Ir" até o lugar e o "!" amarelo (dono, voz, 14/10/2026)
 
 - **Pedidos:** (1) toda missão que depende de um prédio DIRECIONA para lá; (2) cada missão em um CARTÃO separado; (3) o "!" da Home e dos cartões é o AMARELO da paleta, sem círculo; (4) tirar o "!" da frente de "This week" na aba Semanal.
 - **Cartão único (`MissionCard`):** um por missão em todas as abas (passeio, Caderno, as 6 diárias, primeiras vezes, semanais; as Conquistas já eram cartões e ganharam o "Ir"). Mesmo padrão de cartão do app (`--sm2-line`, `--sm2-surface`, `--sm2-radius-lg`), altura mínima e ação à direita para não pular de layout. Recompensa mostrada no cartão: "+1 material" (diárias, Caderno, primeiras vezes; sem dizer qual material) e "+N Honra" (semanais).
@@ -2498,3 +2498,11 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Bloqueio:** prédio ainda fechado pelo Vínculo NÃO navega; o cartão troca o "Ir" pelo requisito ("Opens at Bond N"/"Libera no Vínculo N"), pela mesma tabela de portões (`buildingGateFor`/`buildingLockLine`).
 - **"!" amarelo:** o ícone da Home e os cartões usam sempre o tom `gold` (a regra de 07/10 do "!" azul das semanais é **revogada** para esses dois lugares; `questMarks` ainda calcula o tom, só não é usado). O ponto da aba Semanal também é dourado. A seção "Esta semana" não tem mais "!" na frente do título.
 - **Régua viva:** `missionCards.render.test.tsx` (um cartão por missão, "!" dourado sem azul, sem "!" em "This week", "Ir" navega, prédio fechado mostra o requisito, destinos) e os testes de lista anteriores.
+
+## 61. Restaurante em obra (Mercado) e a Nuri sai da Mochila (dono, 14/10/2026)
+
+- **Nuri fora da Mochila:** `FunctionNpcNote 'cuidados'` deixou de ser usado; o componente fica, e Faro (Conta), Sona (Sono) e Tobi (Configurações) seguem.
+- **Restaurante em obra:** novo lote `mercado:restaurante` (arte `areas/lote-mercado-restaurante.png`, 300², alfa real; Higgsfield `gpt_image_2_5 flare`), no canto de baixo à direita do Mercado, que estava livre "para uma futura loja" e é a área da comida (Itens vende comida). NPC **Tijolino**, caranguejo pedreiro de casco-tijolo (`npcs/npc-mercado-restaurante.png`).
+- **Comportamento:** sempre visível (fora do `gated`, sem Vínculo mínimo); tocar abre a folha padrão (`AreaSheet`) só com o busto e a fala. **Sem ação, sem preço, sem save, sem missão:** não é `BuildingId` (fora de `BUILDING_GATES`, das primeiras vezes e das missões de visita). Entra no tutorial do mapa com a linha "Em obra, em breve!".
+- **Gatilho para rever:** quando o restaurante abrir de verdade, vira `BuildingId` com folha, gate e missão próprios.
+

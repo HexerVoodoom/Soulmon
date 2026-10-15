@@ -710,7 +710,7 @@ export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly, nav
   language: Language;
   weeklyMissions: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
   onClaimWeekly?: (id: WeeklyMissionId) => void;
-  /** Para onde a missão leva (REGISTRO §60). */
+  /** Para onde a missão leva (REGISTRO §62). */
   nav?: MissionNav;
 }) {
   const isPt = language === 'pt-BR';

@@ -61,7 +61,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   /** Conquistas já resgatadas e o Resgatar (REGISTRO §56). `missionsClaimed` ausente = save não migrado. */
   missionsClaimed?: readonly string[];
   onClaimMission?: (id: string) => void;
-  /** O Vínculo (decide quais prédios abrem) e a navegação: toda missão com lugar LEVA até ele (REGISTRO §60). Sem `onGoBuilding`, nenhum cartão navega. */
+  /** O Vínculo (decide quais prédios abrem) e a navegação: toda missão com lugar LEVA até ele (REGISTRO §62). Sem `onGoBuilding`, nenhum cartão navega. */
   bondLevel?: number;
   onGoBuilding?: (target: Exclude<GoTarget, null>) => void;
 }) {

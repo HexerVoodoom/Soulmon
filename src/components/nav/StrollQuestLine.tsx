@@ -9,7 +9,7 @@ import { ClaimButton, MissionCard, MissionCardList } from './MissionCard';
  * aqui o cartão só APONTA ("!"), fica PRONTO ("?" + Resgatar) quando o passeio foi concluído lá hoje, e depois
  * mostra "Resgatada". Não abre o `PasseioSheet`, não tem timer. O Resgatar é só o recibo do dia
  * (`claimStroll`): o pagamento já saiu no "Concluir" do NPC e não se paga duas vezes.
- * Desde 14/10/2026 é um CARTÃO (`MissionCard`, REGISTRO §60), como todas as missões da folha.
+ * Desde 14/10/2026 é um CARTÃO (`MissionCard`, REGISTRO §62), como todas as missões da folha.
  */
 export function StrollQuestLine({ language, crossings, todayKey, onClaim, onGo }: {
   language: Language;

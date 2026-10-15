@@ -9,14 +9,14 @@ export interface DailyMissionsProps {
   day: string;
   bondLevel: number;
   onClaim: (id: string) => void;
-  /** Para onde a missão leva (REGISTRO §60). */
+  /** Para onde a missão leva (REGISTRO §62). */
   nav?: MissionNav;
 }
 
 /**
  * As missões do dia dos OUTROS RECURSOS (minijogos, foco, cuidado... — `utils/dailyMissions.ts`, REGISTRO §52/§54). Convite, nunca
  * cobrança: o cartão diz o que fazer e LEVA até lá; quando o evento real acontece fica "pronto" e o "Resgatar" paga 1 material.
- * Quem não fez não perde nada — amanhã a lista é outra. Um CARTÃO por missão (REGISTRO §60).
+ * Quem não fez não perde nada — amanhã a lista é outra. Um CARTÃO por missão (REGISTRO §62).
  */
 export function DailyMissionList({ language, state, day, bondLevel, onClaim, nav }: DailyMissionsProps & { language: Language }) {
   const isPt = language === 'pt-BR';

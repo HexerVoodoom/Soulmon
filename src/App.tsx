@@ -3844,7 +3844,7 @@ export default function App() {
     goTo(areaView(area as AreaId));
   }, [goTo]);
 
-  /* TODA missão com lugar LEVA até ele (dono, 14/10/2026, REGISTRO §60): fecha a folha e abre o prédio no Mapa (ou volta à Home,
+  /* TODA missão com lugar LEVA até ele (dono, 14/10/2026, REGISTRO §62): fecha a folha e abre o prédio no Mapa (ou volta à Home,
      onde se cuida do bicho). Prédio fechado nem chega aqui: o cartão mostra o requisito em vez do Ir. */
   const irAoDestinoDaMissao = useCallback((alvo: BuildingId | 'home') => {
     if (alvo === 'home') { setMissionsOpen(null); if (currentViewRef.current !== 'home') goTo('home'); return; }

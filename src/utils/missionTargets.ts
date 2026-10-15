@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// PARA ONDE CADA MISSÃO LEVA (dono, 14/10/2026, REGISTRO §60): toda missão que depende de uma ação num PRÉDIO direciona para lá
+// PARA ONDE CADA MISSÃO LEVA (dono, 14/10/2026, REGISTRO §62): toda missão que depende de uma ação num PRÉDIO direciona para lá
 // (fecha a folha de Missões e abre o lote no Mapa, com a navegação que já existe); a que se faz na Home (cuidado, humor) leva de
 // volta à Home; a que não tem lugar não tem ação. Tabela única e pura — a UI só pergunta.
 // ---------------------------------------------------------------------------

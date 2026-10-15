@@ -10,7 +10,7 @@ export interface FirstTimesProps {
   state: FirstTimesState | undefined;
   bondLevel: number;
   onClaim: (id: string) => void;
-  /** Para onde a missão leva (REGISTRO §60). */
+  /** Para onde a missão leva (REGISTRO §62). */
   nav?: MissionNav;
 }
 
