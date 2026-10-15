@@ -2516,3 +2516,9 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Pedido do dono:** benevolência ganha elegante, imponente, confiante, corajoso, benevolente; harmonia ganha gentil, harmonioso, equilibrado, sábio, sereno.
 - **Feito** (`utils/oracle/motor.ts`): `TYPE_LOOK` +5 itens por alinhamento (24 para 29) e `ALIGNMENT_TRAIT_WORDS` +3 pares PT/EN em cada (4 para 7), tudo ANEXADO NO FIM dos arrays.
 - **Efeito:** o sorteio por semente usa o tamanho do array, então sementes futuras de harmonia/benevolência podem sortear itens/traços diferentes. Soulmon já gerados não mudam (o prompt fica gravado no save).
+
+## 65. Prompt de sprite com design de alinhamento, motivos e eixos de forma (dono, modal, 15/10/2026)
+
+- **Ligado ao prompt (todos os estágios, as duas variantes):** `ALIGNMENT_DESIGNS[alinhamento]` (1 frase sorteada) logo após o conceito, seguida de "Distinguishing features:" com 2 itens de `TYPE_LOOK`. Sorteio por RNG dedicado (`${inputKey}|visual`), que não consome o `rng` principal. Cláusulas de segurança, fundo verde e direita intactas; prompt segue bem abaixo do teto (testes exigem < 2500).
+- **Eixos separados:** (A) SHAPE = só morfologia (`CHAMPION/PERFECT/MEGA_SHAPES`, agora 42/41/41, itens novos no fim, afinidade leve com a espécie do rookie via `kin`); (B) MOTIVO de elemento e de tema (`formas.ts`: `ELEMENT_MOTIFS` 8x8 + `THEME_MOTIFS` 11 temas x5), sem repetir entre as evoluções; (C) REINO (`formasReino.ts`, clima/habitat da NARRATIVA 7.2; Mega leva o pool `mass` da 5.8; akasha só "borda que nunca fecha", sem memória/arquivo); (D) PAPEL: `ROLE_METAMORPHS` (+2 por papel) agora entra no Champion ("o corpo cresce..."). Entradas de tema/espécie antigas (planta carnívora, marionete, ciborgue, relógio, magma, espelhos) viraram motivos; no lugar ficou morfologia pura (mesmo índice).
+- **Efeito:** sementes futuras mudam; Soulmon salvos não (o prompt fica gravado). Testes: `oracle/formas.test.ts`.
