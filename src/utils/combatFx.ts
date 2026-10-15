@@ -65,6 +65,21 @@ export function visualElementFor(seedText: string): string {
   return VISUAL_ELEMENTS[h % VISUAL_ELEMENTS.length];
 }
 
+/**
+ * O elemento de um inimigo da masmorra/pesadelo: o da criatura nova (`novosSoulmon.ts`) quando ela tem; as linhas antigas
+ * (ultimate/mega) seguem com o elemento sorteado pelo `stage`.
+ */
+export function dungeonEnemyElement(e: { stage?: string; element?: string } | undefined | null): string {
+  return e?.element ?? visualElementFor(e?.stage ?? 'x');
+}
+/** O selo do ESPECIAL do inimigo: o nome da tabela das criaturas novas; sem ele, o nome por regra (`foeSpecialLabel`). */
+export function dungeonFoeSpecialLabel(
+  isPt: boolean, e: { especial?: { pt: string; en: string } } | undefined | null, element: string | undefined, name: string,
+): string {
+  const n = e?.especial;
+  return n ? (isPt ? n.pt : n.en) : foeSpecialLabel(isPt, element, name);
+}
+
 import { SCHOOL_STRIKE_FORM, type StrikeForm, type SkillRole } from './soulProfile/ficha/strikeForm';
 export { SCHOOL_STRIKE_FORM };
 export type { StrikeForm, SkillRole };
