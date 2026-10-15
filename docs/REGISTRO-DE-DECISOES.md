@@ -2483,3 +2483,9 @@ Campos novos, todos opcionais com sanitize no `hydrateSave` (**não sobe `SAVE_S
 - **Regerações (conferência a 16 px):** `perfil-ataque-distancia` (arco mais grosso), `vinculo-badge` (elo de corrente de cobre com gema, sem vinha) e `fx-target-down` (riscos de ciano mais grossos, 6 quadros). 4 gerações a mais (a 5ª, de vínculo, saiu com xadrez assado e foi descartada).
 - **Bustos sem uso:** nenhum lote repete o busto de outro lote. O único "repetido" é o anfitrião de área (`AREA_NPC_ART`, usado no `MapTutorial`), que é o MESMO personagem do lote (Vultrak, Zeph, Pipo, Vesca, Lumi: nomes da decisão D5 do dono, travados por testes). Trocar isso é mudar a identidade de 5 NPCs aprovados, então **não foi feito**; os 20 bustos livres (6 de função sem Ambra/Iris, 15 extras menos Oriel já em `EXTRA_NPC_ART`) aguardam o dono escolher telas na folha numerada.
 
+## 60. Bustos de função ligados às telas (dono, modal, 14/10/2026)
+
+- **Resposta do dono à #351:** ligar SÓ os 4 bustos livres de função, sem trocar anfitrião de área nem nome D5 (Zahra, Vela, Trill, Datura e Bastia seguem sem chamada).
+- **Ligação** (`ui/FunctionNpcNote`, busto + nome + fala de `functionNpcVoice`, voz de acolhida, sem cobrança): **Tobi** no topo de Configurações, **Faro** no grupo "Sua conta", **Sona** no cartão da Janela de descanso (sono), **Nuri** na Mochila (a tela de cuidados com comida). Ambra segue no onboarding; Iris e o corvo seguem reservados.
+- **Gatilho para rever:** o dono preferir outra tela para a Nuri (não existe folha própria de "Cuidados").
+

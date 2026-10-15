@@ -47,6 +47,7 @@ import { REST_WINDOW_DAYS } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
 import { GroupCard, SwitchRow, TimeField, sm2Button, sm2Hint } from './form/FormKit';
 import { InfoTip } from './ui/InfoTip';
+import { FunctionNpcNote } from './ui/FunctionNpcNote';
 
 /*
  * CANVAS "CONTA" (20/09/2026, `Descanso.dc.html`, D-K1/D-K3): o cartão é o
@@ -108,6 +109,7 @@ export function RestWindowCard({
 
   return (
     <GroupCard title={isPt ? 'Janela de descanso' : 'Rest window'}>
+      <FunctionNpcNote id="sono" language={language} />
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <InfoTip language={language} label={isPt ? 'Sobre a janela de descanso' : 'About the rest window'} align="right" style={{ minHeight: 24 }}>
           {isPt

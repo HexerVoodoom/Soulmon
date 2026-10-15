@@ -26,6 +26,8 @@ import { MealRhythmRows } from './MealRhythmRows';
 import { SpritePoseRows } from './SpritePoseRows';
 import type { SpritePose } from '../utils/spritePose';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
+import { FunctionNpcNote } from './ui/FunctionNpcNote';
+
 
 /**
  * CONFIGURAÇÕES — revamp minimalista.
@@ -274,6 +276,7 @@ export function SettingsPage({
   return (
     <>
       <InstallPrompt language={language} />
+      <FunctionNpcNote id="config" language={language} />
 
       {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
       {profile && (
@@ -325,6 +328,7 @@ export function SettingsPage({
         {/* G4 (01/10/2026): o campo de e-mail + "Entrar" saiu — o login é o
             Google do portão. Quem está sem sessão ganha o botão do Google
             DENTRO da `AccountSection`, que é quem sabe se há sessão. */}
+        <FunctionNpcNote id="conta" language={language} />
         <AccountSection language={language} onSignedIn={onLoginWithEmail} />
 
         {/* Assinatura cosmética trimestral (D10): divulgação pré-compra, "Assinar" e

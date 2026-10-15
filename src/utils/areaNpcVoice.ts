@@ -224,7 +224,7 @@ export function lotNpcVoice(id: AreaId, lotId: string | null | undefined, langua
 /**
  * NPCs de FUNÇÃO (30/09/2026, leva `npcs-flare`): nome e fala dos bustos que
  * moram numa função do app, não num lote (`assets/soulmon/npcs` ›
- * `FUNCTION_NPC_ART`). ⚠️ `onboarding` (Ambra) é lido pelo `SoulmonOnboarding` desde 14/10/2026; os outros SEM CHAMADA HOJE;
+ * `FUNCTION_NPC_ART`). ⚠️ `onboarding` (Ambra) é lido pelo `SoulmonOnboarding` desde 14/10/2026; `conta`/`sono`/`cuidados`/`config` entram via `ui/FunctionNpcNote` desde 14/10/2026; `oraculo` (Iris) segue sem chamada;
  * onde cada um aparece é decisão de design (`docs/PERGUNTAS-DO-DONO.md`).
  * Falas do ROSTER, sem cobrança, sem emoji, sem número.
  */
