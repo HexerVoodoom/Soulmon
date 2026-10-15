@@ -25,6 +25,25 @@ import { entrarNaSuperficie, escolherFaixa, esquecerMusica, FAIXA_DE_COMBATE, re
 
 beforeEach(() => { M.temaOn = true; M.combateOn = false; M.chamadas.length = 0; esquecerMusica(); });
 
+describe('Pesadelo (15/10/2026): a superfície da trilha de terror', () => {
+  it('entrar com música ligada: o tema ganha a pausa `cena`, as faixas de combate saem e o terror é pedido; sair desfaz', () => {
+    M.temaOn = true;
+    const sair = entrarNaSuperficie('pesadelo');
+    expect(superficieAtual()).toBe('pesadelo');
+    expect(M.chamadas).toEqual(['consentir', 'combate:true', 'faixa:null', 'tema-pausa:cena']);
+    M.chamadas.length = 0;
+    sair();
+    expect(superficieAtual()).toBe('casa');
+    expect(M.chamadas).toEqual(['combate:false', 'faixa:null', 'tema-retoma:cena']);
+  });
+  it('sem nenhuma música ligada o tema não é pausado (o terror nem entra)', () => {
+    M.temaOn = false;
+    M.combateOn = false;
+    entrarNaSuperficie('pesadelo');
+    expect(M.chamadas).not.toContain('tema-pausa:cena');
+  });
+});
+
 describe('a tabela (pura): superfície × preferências → faixa', () => {
   it.each([
     ['casa', true, false, 'tema'],
