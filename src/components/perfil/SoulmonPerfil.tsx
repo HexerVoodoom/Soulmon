@@ -2,7 +2,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import { PixelIcon } from '../ui/PixelIcon';
 import { sm2Hint, sm2Text } from '../form/FormKit';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
-import { ACTIVITY_ICON_ART, PASSIVE_ICON_ART, STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
+import { PASSIVE_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
+import { perfilForca, perfilResistencia, perfilAgilidade, perfilAtaqueCorpo, perfilAtaqueDistancia } from '../../assets/soulmon/icones-ui';
 import { elementIcon } from '../../utils/elementIconArt';
 import { elementoNomeDe } from '../../utils/soulProfile/ficha/elementoNome';
 import {
@@ -11,16 +12,14 @@ import {
 import type { SpecialFamily } from '../../utils/combate/specials';
 import type { StrikeForm } from '../../utils/soulProfile/ficha/strikeForm';
 import type { Language } from '../../utils/i18n';
-// Arte que já está no repo (beta-2, 11: "ícones próprios, sem arte nova"): escudo, engrenagem, alvo, livro, chama, poção, estrela, aperto de mãos, punho.
+// Arte que já está no repo (beta-2, 11: "ícones próprios, sem arte nova"): escudo, engrenagem, livro, chama, poção, estrela, aperto de mãos (atributo e ataque ganharam arte própria, P2).
 import iconShield from '../../assets/soulmon/icons/icon-shield.png';
 import iconGear from '../../assets/soulmon/icons/icon-gear.png';
-import iconTarget from '../../assets/soulmon/icons/icon-target.png';
 import iconSpellbook from '../../assets/soulmon/icons/icon-spellbook.png';
 import iconFlame from '../../assets/soulmon/icons/icon-flame.png';
 import iconPotion from '../../assets/soulmon/icons/icon-potion.png';
 import iconStar from '../../assets/soulmon/icons/icon-star.png';
 import iconBond from '../../assets/soulmon/icons/icon-heart-handshake.png';
-import iconFist from '../../assets/soulmon/icons/games/hand-rock.png';
 
 /**
  * O PERFIL DO SOULMON (beta-2, 11) — a folha do prédio `laboratorio.perfil`. Duas cartas curtas, só valores qualitativos (sem
@@ -29,11 +28,11 @@ import iconFist from '../../assets/soulmon/icons/games/hand-rock.png';
  */
 
 const ATTR_ART: Record<MainAttr, string | undefined> = {
-  forca: ACTIVITY_ICON_ART['corpo-forca'],
-  resistencia: iconShield,
-  agilidade: STATUS_ICON_ART.raio,
+  forca: perfilForca,
+  resistencia: perfilResistencia,
+  agilidade: perfilAgilidade,
 };
-const FORMA_ART: Record<StrikeForm, string> = { melee: iconFist, ranged: iconTarget };
+const FORMA_ART: Record<StrikeForm, string> = { melee: perfilAtaqueCorpo, ranged: perfilAtaqueDistancia };
 const EFEITO_ART: Record<SpecialFamily, string> = {
   direct: iconFlame, dot: iconFlame, defDebuff: iconFlame, heal: iconPotion, shield: iconShield, atkBuff: iconStar, spdBuff: iconStar,
 };

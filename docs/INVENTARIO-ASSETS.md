@@ -351,3 +351,13 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 ## Corvinho (11 formas) - derivado do mascote
 
 `soulmon/corvo/corvo-<id>.png` (512, RGBA) e `corvo-<id>-256.png`, 11 ids da arvore (rookie = mascote original). Recolor programatico de `mascot-raven.png` por `scripts/gen-corvo-forms.py`; conferencia `scripts/check-corvo-forms.py`. Ainda sem consumidor (integracao e de outra fatia). Notas: `docs/reviews/admin-corvo/arte-notas.md`.
+
+## Lote P2 (14/10/2026, Higgsfield gpt_image_2_5, alfa real)
+
+| Arquivo | Pasta | Tamanho | Uso |
+|---|---|---|---|
+| `perfil-forca`, `perfil-resistencia`, `perfil-agilidade`, `perfil-ataque-corpo`, `perfil-ataque-distancia` | `soulmon/icones-ui/` | 64² | `SoulmonPerfil` (atributo e ataque), export em `icones-ui/index.ts` |
+| `st-buff-atk`, `st-buff-spd`, `st-hot` | `soulmon/combate-v3/status/` | 64² | substituem as anteriores (selos de status do `BattleStage`) |
+| `soul-lv-badge`, `vinculo-badge`, `talent-respec` | `soulmon/combate-v3/hud/` | 64² / 128² / 64² | substituem as anteriores (`talentArt`) |
+| `fx-target-down-1..6`, `fx-target-down-sheet` | `soulmon/combate-v3/fx/` | 128² / 384×256 | alvo derrotado; sem consumidor ainda |
+

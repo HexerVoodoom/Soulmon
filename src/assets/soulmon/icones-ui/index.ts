@@ -135,3 +135,11 @@ export { default as fomeMedio } from './fome-medio.png';
 export { default as fomeFaminto } from './fome-faminto.png';
 export { default as iconePpt } from './ppt.png';
 export { default as placaMadeira } from './placa-madeira.png';
+
+// Arte P2 (14/10/2026, Higgsfield gpt_image_2_5 flare, alfa real, 64²): atributo principal e forma de ataque da folha do Perfil.
+// Silhuetas próprias (sem raio, escudo nem punho, que têm outro dono): bíceps, toco com raízes, pena; lâmina curta e arco com seta.
+export { default as perfilForca } from './perfil-forca.png';
+export { default as perfilResistencia } from './perfil-resistencia.png';
+export { default as perfilAgilidade } from './perfil-agilidade.png';
+export { default as perfilAtaqueCorpo } from './perfil-ataque-corpo.png';
+export { default as perfilAtaqueDistancia } from './perfil-ataque-distancia.png';
