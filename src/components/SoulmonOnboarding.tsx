@@ -36,19 +36,20 @@ import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/ty
 import { cityLabel, type City } from '../utils/soulProfile/cities';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
-import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
+import { PREMADE_CHARACTERS, getDemoSprite } from '../utils/monetization';
 import type { StarterId } from '../utils/sprites';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { isEmbedMode } from '../utils/embedMode';
-import { useUnlockPriceLabel } from '../utils/priceLabel';
-import { purchase, isBillingAvailable, billingDisabledMessage } from '../utils/playBilling';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
 import {
   isAuthConfigured, getCurrentEmail, entrarComGoogle, type AuthErro,
 } from '../utils/auth';
 import { resolveLanguage, type Language } from '../utils/i18n';
 import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket, unlockReasonCode } from '../utils/telemetry';
-import { UnlockNudge } from './UnlockAccountModal';
+import { UnlockAccountModal } from './UnlockAccountModal';
+import { NpcSequence, type NpcSequenceLine } from './NpcSequence';
+import { ConfirmDialog } from './ConfirmDialog';
+import { OvoCristal, LuzBranca, useLuzDeChocar } from './OnboardingOvo';
 import type { ActivityCategory } from '../types/attributes';
 
 // Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
@@ -144,6 +145,17 @@ const tituloOnboarding: CSSProperties = { ...sm2TitleStyle, fontFamily: 'var(--s
 /** As listas de opção do catálogo, na ordem do intersticial antigo. */
 const STRUGGLE_IDS: StruggleId[] = ['comecar', 'constancia', 'esquecer', 'energia', 'ansiedade', 'distracao', 'tempo', 'perfeccionismo'];
 const STRENGTH_IDS: StrengthId[] = ['disciplina', 'curiosidade', 'criatividade', 'sociabilidade', 'organizacao', 'energiaFisica', 'calma', 'persistencia'];
+/** As falas da Ambra (§81, texto do dono, 15/10/2026): a apresentação (depois dos Termos) e a despedida (ao entrar na demo). */
+const AMBRA_FALAS = {
+  intro: {
+    pt: 'Bem-vindo. Eu sou a Ambra. Aqui você vai encontrar as profundezas da sua alma e evoluir junto ao seu Soulmon. Vamos te conhecer primeiro.',
+    en: "Welcome. I am Ambra. Here you will find the depths of your soul and evolve alongside your Soulmon. Let's get to know you first.",
+  },
+  demo: {
+    pt: 'Muito bem! Você pode conhecer o seu Soulmon a qualquer momento. Bem-vindo.',
+    en: 'Well done! You can meet your Soulmon at any time. Welcome.',
+  },
+} as const;
 function toggleUpTo<T>(list: T[], value: T, max: number): T[] {
   if (list.includes(value)) return list.filter(v => v !== value);
   if (list.length >= max) return list;
@@ -320,7 +332,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     escolherIdioma(l);
     setIdiomaPendente(false);
   };
-  const precoLabel = useUnlockPriceLabel(isPt);
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   // Atalho oculto pro dono: segurar o mascote na intro (~1.8s) abre a
@@ -382,14 +393,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const DEEP_END = DEEP_START + SOUL_TEST_ITEMS.length;
   const GENERATING = DEEP_END;
   const REVEAL = GENERATING + 1;
-  const REGISTER = REVEAL + 1;
   const DEMO_PICK = -1;
-  // REGISTRO 13.19 (canvas Onboarding-oráculo §31, achado 10): o caminho
-  // grátis responde as 6 perguntas do ritual e vê o REVEAL DEMO — a leitura
-  // de quem ele seria, com a criatura em SILHUETA e a oferta da 13.1 — ANTES
-  // de escolher o personagem pronto. Id negativo como os outros; -4 estava
-  // livre e vira o código 41 na telemetria (`onboardingStepCode`).
-  const REVEAL_DEMO = -4;
+  // REGISTRO §81 (15/10/2026): o REVEAL DEMO (-4, a leitura em silhueta + a oferta da 13.1) e a escolha grátis/própria
+  // (`CHOICE_STEP`) SAÍRAM. O fim do ritual de perguntas é a tela do OVO-CRISTAL (`CHOICE_STEP`, abaixo); o -4 ficou livre.
+  // A apresentação da Ambra, DEPOIS dos Termos e ANTES da primeira pergunta, e a fala dela ao entrar na demo são passos
+  // próprios (ids negativos como os outros — o `step` mora na telemetria e no rascunho; códigos 36 e 35).
+  const AMBRA_INTRO = -14;
+  const AMBRA_DEMO = -15;
   // O "porquê" vem ANTES de nome, data e quiz: a razão para mudar precisa vir
   // da pessoa, não do app (Goal-Setting Theory + autonomia da SDT), e nenhuma
   // mecânica de jogo aparece antes dela. Ids negativos, como DEMO_PICK, para
@@ -404,11 +414,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // pessoal (D-07 exige os Termos antes) e mandar link para menor antes de
   // conferir a idade seria escrever para quem o app não pode atender.
   const IDENTITY_STEP = -6;
-  // A escolha grátis/completo, que MORAVA no passo 0. Desceu para cá porque
-  // `handleUnlockFull` compra com `saveId` — e o saveId só existe derivado do
-  // e-mail. Comprar antes do portão mandava a compra ao Play sem
-  // `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado
-  // ela seria RECUSADA: a pessoa pagaria e não receberia.
+  // O FIM DO RITUAL DE PERGUNTAS (§81): a tela do OVO-CRISTAL (`OnboardingOvo.tsx`), de onde se compra ("Conhecer o seu
+  // Soulmon") ou se pede um Soulmon guia (a demo). O id -7 é o da antiga escolha grátis/completo, que MORAVA no passo 0 e
+  // desceu para cá porque a compra usa o `saveId` — e o saveId só existe derivado do e-mail. Comprar antes do portão
+  // mandava a compra ao Play sem `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado ela seria
+  // RECUSADA: a pessoa pagaria e não receberia. O rascunho do portão que parou no -7 retoma no ovo.
   const CHOICE_STEP = -7;
   // A tela dos TERMOS (A3, 02/10/2026). Vem DEPOIS do login: o portão tem um
   // botão só ("Continue with Google") e, com a conta já autenticada, esta tela
@@ -426,7 +436,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // a telemetria ganhou folga para eles (`NEGATIVE_STEP_BASE`).
   const STRENGTH_STEP = -11;
   const STARTER_STEP = -12;
-  // DEMO LOCAL: a escolha dos 5 iniciais aberta pelo botão DEMO do portão (código de telemetria 37, acima de REGISTER).
+  // DEMO LOCAL: a escolha dos 5 iniciais aberta pelo botão DEMO do portão (código de telemetria 37).
   const DEMO_LOCAL_PICK = -13;
   /** A ordem do onboarding ANTES da escolha grátis/próprio — é o trecho que o
    *  rascunho do portão (`gateDraft.ts`) sabe retomar. */
@@ -499,8 +509,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (redeGoogleRef.current !== null) clearTimeout(redeGoogleRef.current);
   }, []);
   const [demoCharacterId, setDemoCharacterId] = useState<StarterId | null>(null);
-  const [unlockLoading, setUnlockLoading] = useState(false);
-  const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
+  /** A tela do ovo (§81): o modal de compra aberto, a compra já feita (vira o CTA "Chocar") e o aviso de confirmação
+   *  da demo (só o caminho secundário confirma; o primário não). */
+  const [compraAberta, setCompraAberta] = useState(false);
+  const [comprado, setComprado] = useState(false);
+  const [confirmaDemo, setConfirmaDemo] = useState(false);
+  const [avisoCompra, setAvisoCompra] = useState<string | null>(null);
   /** A caixa de consentimento vive FORA do texto legal: é elemento de UI
    *  próprio, com rótulo e foco, e o botão de avançar só liga com ela marcada.
    *  Caixa embutida dentro do parágrafo dos Termos não é consentimento
@@ -597,10 +611,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     () => ({ ...(savedTestAnswers ?? {}), ...(draft?.testAnswers ?? gate?.testAnswers ?? {}) }),
   );
   const [result, setResult] = useState<OracleResult | null>(null);
-  /** A leitura do REVEAL DEMO: só as 6 respostas (sem nome, data, hora,
-   *  cidade — o demo não deu nenhum), pelo caminho legado do oráculo. É uma
-   *  leitura de quem a pessoa seria; a criatura própria só nasce pagando. */
-  const [demoReading, setDemoReading] = useState<OracleResult | null>(null);
   /** Essência do class-system + ofício, calculados pelo pipeline completo —
    *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
   const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
@@ -725,19 +735,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (code === null) return;
     track('onboarding_step', { step: code, funnel });
   }, [step, funnel]);
-  // `unlock_view` COM O MOTIVO (G-5) para o convite do reveal demo: é o
-  // denominador honesto da 13.1 — sem ele a conversão desta tela não existe.
+  // `unlock_view` COM O MOTIVO (G-5): o modal de compra do ovo conta na MESMA faixa do antigo convite do reveal demo
+  // (`unlockReasonCode('ovo')` → `revealDemo`), que é a casa que esta tela substituiu — o funil continua comparável.
   useEffect(() => {
-    if (step === REVEAL_DEMO) track('unlock_view', { reason: unlockReasonCode('reveal-demo') });
-  }, [step]);
+    if (compraAberta) track('unlock_view', { reason: unlockReasonCode('ovo') });
+  }, [compraAberta]);
 
   const [generateError, setGenerateError] = useState(false);
-  /** "Começar agora — é grátis": o 1º toque carrega o motor do Oráculo sob demanda
-   *  (chunks `motor` + `familias`). Sem retorno, em rede móvel isso parecia
-   *  "travado" (relato do dono, 04/10/2026) e, se o chunk falhasse, o toque não
-   *  fazia NADA. Agora o botão mostra que está trabalhando e a falha é avisada. */
-  const [iniciandoGratis, setIniciandoGratis] = useState(false);
-  const [erroGratis, setErroGratis] = useState(false);
 
   // PORTÃO — resolve o estado de autenticação UMA vez, na montagem.
   //
@@ -767,7 +771,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // aceite guardado é a prova de que o portão já foi atravessado, mas só
       // conta quando há passo gravado (rascunho antigo pergunta de novo).
       const podeRetomar = !!consent && (!!atual || (!usavel && gate?.step !== undefined));
-      if (podeRetomar && step === IDENTITY_STEP) { setStep(passoDeRetomada()); return; }
+      if (podeRetomar && step === IDENTITY_STEP) { setStep(depoisDoAceite()); return; }
       // A3: o login vem PRIMEIRO e os termos DEPOIS. Já autenticado (voltou do
       // redirect, ou já tinha sessão) sem aceite da versão atual → tela dos
       // termos. Sem auth configurada o portão não existe: vai direto aos
@@ -976,31 +980,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setStep(s => s + 1);
   };
 
-  /** A escolha GRÁTIS. A leitura demo nasce aqui, das 6 respostas que já
-   *  foram dadas antes da escolha (13.19), e abre o reveal demo. */
-  const escolherGratis = async () => {
-    if (iniciandoGratis) return;
-    setIniciandoGratis(true);
-    setErroGratis(false);
-    try {
-      const leitura = await generateOracleAsync({
-        fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers,
-      });
-      setFlow('demo');
-      setDemoReading(leitura);
-      setStep(REVEAL_DEMO);
-    } catch (err) {
-      // O código cru vai ao console (padrão do projeto): chunk que não baixou,
-      // offline no 1º toque, motor lançando.
-      console.warn('[onboarding] escolherGratis falhou', err);
-      setErroGratis(true);
-    } finally {
-      setIniciandoGratis(false);
-    }
-  };
-
-  // Aquece o motor do Oráculo enquanto a pessoa lê a escolha: quando ela toca
-  // em "Começar agora", os chunks já estão no cache e o clique é instantâneo.
+  // Aquece o motor do Oráculo enquanto a pessoa brinca com o ovo: se ela comprar, a geração (depois do "Chocar") já
+  // encontra os chunks no cache.
   useEffect(() => {
     if (step !== CHOICE_STEP) return;
     void import('../utils/oracle/motor').catch(() => {});
@@ -1033,13 +1014,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === CHOICE_STEP) { setStep(STARTER_STEP); return; }
     // 13.19: da escolha do personagem volta-se ao reveal demo (a leitura
     // continua lá).
-    if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
+    if (step === DEMO_PICK) { setStep(CHOICE_STEP); return; }
     // A escolha da DEMO volta ao portão (a demo não tem estado a desfazer).
     if (step === DEMO_LOCAL_PICK) { if (!isEmbedMode()) setStep(IDENTITY_STEP); return; }
-    // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
-    // personagem — o passo anterior na numeração é o REVEAL, que só existe
-    // no caminho do oráculo e renderizaria vazio.
-    if (step === REGISTER && flow === 'demo') { setStep(DEMO_PICK); return; }
     if (step === 1 && !isUpgrade) { setStep(CHOICE_STEP); return; }
     // O PISO É 1 NOS DOIS MODOS. Era `0` fora do upgrade, e o passo 0 era a
     // intro de marca — que foi APAGADA quando o portão virou a primeira tela.
@@ -1147,6 +1124,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     return isPt ? pt[authErro] : en[authErro];
   })();
 
+  /** Para onde vai quem acabou de aceitar os Termos (ou já tinha aceitado): quem COMEÇA do zero (a retomada cai no nome e o
+   *  rascunho do portão nunca chegou ao primeiro passo do ritual) vê a Ambra se apresentar antes da primeira pergunta
+   *  (§81); quem retoma de um passo que já gravou (o nome ou adiante) segue direto, sem rever a apresentação. */
+  const depoisDoAceite = (): number => {
+    const alvo = passoDeRetomada();
+    return alvo === NAME_STEP && gate?.step === undefined ? AMBRA_INTRO : alvo;
+  };
+
   /** Depois de autenticar, `App.tsx` recarrega a página e conclui a adoção do
    *  save. Aqui só registramos o e-mail e seguimos para a escolha — se o
    *  reload vier antes, melhor ainda. */
@@ -1181,8 +1166,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     }
     // A3: com a conta pronta, falta o aceite dos termos — a menos que esta
     // instalação já tenha provado o aceite da versão ATUAL. Autenticado e
-    // aceito: o NOME vem primeiro (B1) — ou o passo em que a pessoa parou.
-    setStep(consent ? passoDeRetomada() : TERMS_STEP);
+    // aceito: a Ambra se apresenta e o NOME vem primeiro (B1) — ou o passo em que a pessoa parou.
+    setStep(consent ? depoisDoAceite() : TERMS_STEP);
   };
 
   /** A3 — o aceite dos Termos + 18+, DEPOIS do login. O carimbo é feito
@@ -1193,7 +1178,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const aoAceitarTermos = () => {
     if (!podeAutenticar) return;
     if (!consent) setConsent(buildConsentRecord());
-    setStep(passoDeRetomada());
+    setStep(depoisDoAceite());
   };
 
   /* O portão não tem mais muro de idade próprio: com uma CAIXA, quem não tem
@@ -1351,60 +1336,51 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // pro derivado do e-mail) — não há necessidade de setSubmitting(false) aqui.
   };
 
-  const handleUnlockFull = async () => {
-    // Compras digitais no Android têm que passar pela Google Play — no
-    // navegador/PWA não há como cobrar, então avisamos em vez de fingir.
-    if (!isBillingAvailable()) {
-      setUnlockMessage(isPt
-        ? 'A compra está disponível no app Android (Google Play). Enquanto isso, experimente o modo demo.'
-        : 'Purchases are available in the Android app (Google Play). Try the demo in the meantime.');
-      return;
-    }
-    // SEM E-MAIL COMPROVADO NÃO SE COBRA.
-    //
-    // `purchase()` manda o `saveId` como `obfuscatedAccountId`. Antes do
-    // login esse saveId é um UUID ALEATÓRIO gerado por `App.tsx` na primeira
-    // abertura — e ao entrar com e-mail ele é SUBSTITUÍDO pelo SHA-256 do
-    // endereço. `isPlayPurchaseBoundTo` compara os dois por igualdade:
-    //
-    //     if (bound) return !!saveId && String(bound) === String(saveId);
-    //
-    // Comprar antes do login amarra o recibo a um id que a conta abandona no
-    // login seguinte, e o resgate é RECUSADO — inclusive com
-    // `PLAY_REQUIRE_ACCOUNT_BINDING` desligado, porque o campo vem preenchido
-    // e cai no ramo da igualdade. A pessoa paga e não recebe.
-    //
-    // Por isso a guarda é o E-MAIL, não a presença do saveId: o saveId sempre
-    // existe. O portão já torna isto inalcançável pela UI; esta linha existe
-    // para que uma refatoração não reabra o furo em silêncio.
+  /**
+   * A compra voltou OK pelo modal de compra EXISTENTE (`UnlockAccountModal`, o mesmo do jogo: "Desbloquear", "Agora
+   * não" e "Já comprei — restaurar", §49). Só chega aqui depois de o SERVIDOR confirmar. O modal já trata o que o
+   * antigo `handleUnlockFull` tratava (web sem loja, cancelada, falha, loja fechada) e o PORTÃO continua sendo o que
+   * garante o e-mail comprovado antes de qualquer cobrança (a tela do ovo só existe depois do login).
+   *
+   * Os dois botões SOMEM e fica o "Chocar" (`comprado`); o ritual pago (dados de nascimento → geração → reveal →
+   * nome) só começa no "Chocar", quando a luz cobre a tela.
+   */
+  const aoComprar = () => {
+    // Só depois de a compra voltar OK — clique não é receita. WP0.9: `onboarding` é o caminho que não passa por convite.
+    track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
+    flushTelemetry();
+    setFlow('oracle');
+    setComprado(true);
+    setCompraAberta(false);
+  };
+
+  /** "Conhecer o seu Soulmon": abre o modal de compra existente.
+   *
+   *  SEM E-MAIL COMPROVADO NÃO SE COBRA. `purchase()` manda o `saveId` como `obfuscatedAccountId`. Antes do login esse saveId
+   *  é um UUID ALEATÓRIO gerado por `App.tsx` na primeira abertura — e ao entrar com e-mail ele é SUBSTITUÍDO pelo SHA-256 do
+   *  endereço. `isPlayPurchaseBoundTo` compara os dois por igualdade, então comprar antes do login amarra o recibo a um id
+   *  que a conta abandona no login seguinte, e o resgate é RECUSADO: a pessoa paga e não recebe. Por isso a guarda é o
+   *  E-MAIL, não a presença do saveId (que sempre existe). O portão já torna isto inalcançável pela UI (a tela do ovo só
+   *  vem depois do login); esta linha existe para que uma refatoração não reabra o furo em silêncio. */
+  const abrirCompra = () => {
     if (authUsavel && !authEmail) {
-      setUnlockMessage(isPt
+      setAvisoCompra(isPt
         ? 'Entre com seu e-mail antes de comprar — é ele que amarra a compra à sua conta.'
         : 'Sign in with your email before buying — it is what ties the purchase to your account.');
       return;
     }
-    setUnlockLoading(true);
-    setUnlockMessage(null);
-    const result = await purchase(FULL_UNLOCK_SKU);
-    setUnlockLoading(false);
-    if (result.ok) {
-      // Só depois de a compra voltar OK — clique não é receita.
-      // WP0.9: `onboarding` é o caminho que não passa por convite nenhum.
-      track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
-      flushTelemetry();
-      setFlow('oracle');
-      // O "porquê" e o consentimento já aconteceram antes do portão; a compra
-      // entra direto no ritual.
-      setStep(1);
-      return;
-    }
-    setUnlockMessage(
-      result.reason === 'billing-disabled' ? billingDisabledMessage(isPt) : result.reason === 'cancelled'
-        ? (isPt ? 'Compra cancelada.' : 'Purchase cancelled.')
-        : (isPt
-          ? 'Não foi possível concluir a compra agora. Tente de novo em instantes.'
-          : "Couldn't complete the purchase right now. Please try again shortly."),
-    );
+    setAvisoCompra(null);
+    setCompraAberta(true);
+  };
+
+  /** "Chocar": a luz cobre a tela e, com ela toda branca, entra o ritual pago (passo 1); depois some em fade. */
+  const luz = useLuzDeChocar(() => setStep(1));
+
+  /** A demo CONFIRMADA ("Sim"): a Ambra fala de novo e, ao fim dela, o app entra na demo (`finish`). */
+  const confirmarDemo = () => {
+    setConfirmaDemo(false);
+    setFlow('demo');
+    setStep(AMBRA_DEMO);
   };
 
   /* Campo, opção e cartão vivem em `style` inline sobre os tokens `--sm2-*`:
@@ -1457,12 +1433,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   /** Onde a seta de voltar existe (B6). Espelha os ramos de `back()`. */
   const temVolta = !oracleDebugOpen && (
-    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK].includes(step)
+    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, DEMO_PICK].includes(step)
+    || (step === CHOICE_STEP && !comprado && luz.fase === null) // comprou: não se volta atrás do que já foi pago
     || (step === DEMO_LOCAL_PICK && !isEmbedMode())
     || (step >= 1 && step < FAVORITE_STEP)
     || (step >= QUIZ_START && step < QUIZ_END)
     || (step >= DEEP_START && step < DEEP_END)
-    || (step === REGISTER && !!demoChar)
   );
 
   /** A grade dos 5 iniciais (nome, TIPO e bio) — a mesma nas duas escolhas (cadastro grátis e DEMO). */
@@ -1711,60 +1687,55 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* ESCOLHA gratis/completo — depois da identidade, nunca antes. */}
+        {/* AMBRA_INTRO (§81) — a Ambra, GRANDE, se apresenta logo depois dos Termos e antes da 1ª pergunta: a mesma
+            `NpcSequence` das intros de prédio (toque avança, "Pular" no canto superior esquerdo). Pular e terminar levam ao
+            mesmo lugar: o nome. Nada é gravado aqui (o "visto" do onboarding é o de sempre: `ONBOARDING_COMPLETE`). */}
+        {step === AMBRA_INTRO && (
+          <NpcSequence
+            language={lang}
+            label={isPt ? 'Apresentação da Ambra' : 'Ambra introduces herself'}
+            lines={[{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.intro[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
+            onFinish={() => setStep(NAME_STEP)}
+          />
+        )}
+
+        {/* AMBRA_DEMO (§81) — a demo foi confirmada: a Ambra fala de novo e, ao fim (ou ao pular), o app entra no jogo
+            no modo demo/gratuito de sempre (`finish`, `mode: 'demo'`, o Soulmon guia escolhido). */}
+        {step === AMBRA_DEMO && (
+          <NpcSequence
+            language={lang}
+            label={isPt ? 'Despedida da Ambra' : 'Ambra says goodbye'}
+            lines={[{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.demo[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
+            onFinish={() => { void finish(); }}
+          />
+        )}
+
+        {/* O OVO-CRISTAL (§81) — o fim das perguntas, no lugar da escolha grátis/completo e do reveal demo. Tocar balança;
+            com 5 toques aparecem "Conhecer o seu Soulmon" (abre o modal de compra existente) e "Me empreste um Soulmon
+            guia" (a escolha dos 5 iniciais, que pede confirmação). Comprado: só o "Chocar". */}
         {step === CHOICE_STEP && (
-          <StepShell
-            title={isPt ? 'Como você quer começar?' : 'How do you want to start?'}
-            hint={isPt
-              ? 'Dá para mudar depois: a compra continua disponível dentro do app.'
-              : 'You can change later: the purchase stays available inside the app.'}>
-            {/* Comecar gratis segue sendo o caminho PRINCIPAL. Pedir dinheiro
-                de quem ainda nao viu o app funcionar e o jeito mais caro de
-                perder o usuario. */}
-            <button
-              type="button"
-              style={{ ...sm2Button('primary', iniciandoGratis), width: '100%' }}
-              onClick={() => { void escolherGratis(); }}
-              aria-busy={iniciandoGratis}
-              disabled={iniciandoGratis}
-            >
-              {iniciandoGratis
-                ? (isPt ? 'Preparando…' : 'Getting ready…')
-                : (isPt ? 'Começar agora — é grátis' : 'Start now — it’s free')}
-            </button>
-            {/* Falha ao preparar a leitura (rede, chunk): âmbar, a falha não é da
-                pessoa — o botão volta a ficar ativo para tentar outra vez. */}
-            {erroGratis && (
-              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>
-                {isPt
-                  ? 'Não deu para começar agora. Confira a conexão e toque de novo.'
-                  : "We couldn't start just now. Check your connection and tap again."}
-              </p>
+          <>
+            <OvoCristal
+              language={lang}
+              comprado={comprado}
+              ocupado={luz.fase !== null}
+              onConhecer={abrirCompra}
+              onGuia={() => setStep(DEMO_PICK)}
+              onChocar={luz.disparar}
+            />
+            {avisoCompra && !comprado && (
+              <p role="alert" style={{ ...alertStyle, marginTop: 16 }}>{avisoCompra}</p>
             )}
-            {/* A segunda escolha = `outline` (D-O5): peso igual ao de uma
-                porta, sem dourado, sem badge — a bifurcação sem empurrão. O
-                preço em `tabular-nums`. */}
-            <button
-              type="button"
-              className="sm2-num"
-              style={{ ...sm2Button('outline', unlockLoading), width: '100%', marginTop: 12 }}
-              onClick={handleUnlockFull}
-              aria-label={isPt ? `Tenha seu próprio Soulmon — ${precoLabel}` : `Get your own Soulmon — ${precoLabel}`}
-              aria-busy={unlockLoading}
-              disabled={unlockLoading}
-            >
-              {unlockLoading
-                ? <Spinner size={24} />
-                : (isPt ? `Tenha seu próprio Soulmon — ${precoLabel}` : `Get your own Soulmon — ${precoLabel}`)}
-            </button>
-            {/* ONB-17/18/19: compra cancelada / loja indisponível / falha — âmbar,
-                filete, sob os botões; nada de modal, nada de vermelho (D-O7). */}
-            {unlockMessage && (
-              <p role="alert" style={{ ...alertStyle, marginTop: 16 }}>
-                {unlockMessage}
-              </p>
+            {compraAberta && !comprado && (
+              <UnlockAccountModal
+                language={lang}
+                reason="ovo"
+                onUnlocked={aoComprar}
+                /* o "Agora não" do próprio modal já emite `unlock_dismiss` com este motivo (uma vez) */
+                onClose={() => setCompraAberta(false)}
+              />
             )}
-          </StepShell>
+          </>
         )}
 
 
@@ -1905,9 +1876,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === DEMO_PICK && (
           <div style={{ paddingTop: 20 }}>
             <h2 className="sm2-title" style={{ ...tituloOnboarding, marginBottom: 12 }}>
-              {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
+              {isPt ? 'Escolha seu Soulmon guia' : 'Choose your guide Soulmon'}
             </h2>
-            {starterGrid(id => { track('demo_pick'); setDemoCharacterId(id); setStep(REGISTER); })}
+            {starterGrid(id => { track('demo_pick'); setDemoCharacterId(id); setConfirmaDemo(true); })}
+            {/* SÓ este caminho pede confirmação (§81). "Voltar" fecha e deixa a grade como estava. */}
+            <ConfirmDialog
+              isOpen={confirmaDemo}
+              onClose={() => { setConfirmaDemo(false); setDemoCharacterId(null); }}
+              onConfirm={confirmarDemo}
+              language={lang}
+              title={isPt ? 'Versão demo' : 'Demo version'}
+              message={isPt
+                ? 'Você tem certeza que quer experimentar o jogo na versão demo?'
+                : 'Are you sure you want to try the game in the demo version?'}
+              confirmLabel={isPt ? 'Sim' : 'Yes'}
+              cancelLabel={isPt ? 'Voltar' : 'Back'}
+            />
           </div>
         )}
 
@@ -2244,141 +2228,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </div>
         )}
 
-        {/* REVEAL DEMO (REGISTRO 13.19 / canvas §31 `RevealDemo`, ONB-44): a
-            leitura de quem a pessoa seria, feita das 6 respostas, com a
-            criatura em SILHUETA (D-Q8 — a mesma peça por `mask-image` de uma
-            linha pronta; nenhuma é "a dela": a criatura própria, sprite e
-            árvore, só pagando); sem "Born" (o demo nasce no cadastro); sem
-            epíteto (a linha de essência vem do pipeline completo, que precisa
-            do mapa astral que o demo não deu). Abaixo, a descrição e a
-            OFERTA da 13.1: card dispensável de 280 com o × 44 ("Not now"), e
-            "Continue with a demo character" com PESO DE PRIMÁRIO (D-Q13 /
-            F1 da crítica — a régua de morte da 13.1 mede a conversão desta
-            tela, e uma saída grátis mais fraca do que o decidido mediria outra
-            coisa). Dispensar ou continuar → `DEMO_PICK`; a leitura fica para
-            o upgrade. */}
-        {step === REVEAL_DEMO && demoReading && (
-          <div style={{ textAlign: 'center', paddingTop: 40 }}>
-            <p style={{ ...sm2Hint, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 500 }}>
-              {isPt ? 'A criatura da sua alma' : 'Your soul\'s creature'}
-            </p>
-            <div style={{ margin: '8px 0 20px' }}>
-              <BirthCard
-                spriteUrl={getDemoSprite(PREMADE_CHARACTERS[0].id, 'rookie')}
-                silhouette
-                name={demoReading.creature.baseName}
-                soulGoal={soulGoal}
-                language={isPt ? 'pt-BR' : 'en-US'}
-              />
-            </div>
-            <div style={{
-              padding: '16px 16px', marginBottom: 20, borderRadius: 12,
-              border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
-              textAlign: 'left',
-            }}>
-              <p style={{ ...sm2Text, margin: 0 }}>{L(demoReading.creature.bio)}</p>
-            </div>
-            {/* A oferta (13.1): largura parcial — a assimetria diz "opcional";
-                o × é o "Not now" com o próprio alvo 44, pelado (ícone nunca em
-                box). A compra sai por `handleUnlockFull`, o mesmo caminho do
-                `CHOICE_STEP` (reason `onboarding`). */}
-            {/* B8 (checklist do dono, 01/10/2026): o × DENTRO do card, como
-                botão de verdade (alvo 44, nome acessível "Not now"), no canto
-                superior direito — antes ficava solto ao lado. O card é o
-                convite; o × é irmão dele dentro do mesmo invólucro (botão
-                dentro de botão não é HTML válido), e o convite reserva o
-                espaço do × (`trailingSpace`) para o texto não passar por baixo. */}
-            <div data-nudge style={{ position: 'relative', maxWidth: 280, marginBottom: 12, textAlign: 'left' }}>
-              <UnlockNudge
-                language={isPt ? 'pt-BR' : 'en-US'}
-                reason="reveal-demo"
-                trailingSpace={40}
-                onOpen={() => { void handleUnlockFull(); }}
-              />
-              <button
-                type="button"
-                className="sm2-ora-back"
-                data-nudge-close
-                aria-label={isPt ? 'Agora não' : 'Not now'}
-                style={{ position: 'absolute', top: 6, right: 4 }}
-                onClick={() => {
-                  track('unlock_dismiss', { reason: unlockReasonCode('reveal-demo') });
-                  setStep(DEMO_PICK);
-                }}
-              >
-                <Icon name="close" size={24} tone="inherit" />
-              </button>
-            </div>
-            {unlockMessage && (
-              <p role="alert" style={{ ...alertStyle, marginBottom: 12, textAlign: 'left' }}>{unlockMessage}</p>
-            )}
-            {/* B8: o botão de criar a PRÓPRIA criatura, logo acima de seguir
-                com o personagem demo. `outline` (D-O5: outra porta, sem
-                empurrão) — o primário continua sendo o caminho grátis (D-Q13). */}
-            <button
-              type="button"
-              className="sm2-num"
-              style={{ ...sm2Button('outline', unlockLoading), width: '100%', marginBottom: 12 }}
-              onClick={() => { void handleUnlockFull(); }}
-              aria-busy={unlockLoading || undefined}
-              disabled={unlockLoading}
-            >
-              {isPt ? 'Criar minha própria criatura' : 'Create my own creature'}
-            </button>
-            <button
-              type="button"
-              style={{ ...sm2Button('primary'), width: '100%' }}
-              onClick={() => setStep(DEMO_PICK)}
-            >
-              {isPt ? 'Continuar com um personagem demo' : 'Continue with a demo character'}
-            </button>
-          </div>
-        )}
-
-        {/* REGISTER — só o caminho DEMO chega aqui (o pago conclui no reveal).
-            B1: o apelido subiu para o começo; B10: a tonalidade saiu; B11: o
-            antigo "Last details" virou "Name your Soulmon", SOLTO, como título
-            da tela — sem caixa e sem explicação embaixo. */}
-        {step === REGISTER && demoChar && (
-          <div style={{ paddingTop: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-              <Viewport
-                width={96}
-                height={96}
-                scale={2}
-                label={registerDisplayName}
-                screenStyle={{ position: 'relative' }}
-              >
-                <img
-                  src={getSpriteForStage('rookie', demoChar.id)}
-                  alt=""
-                  data-hero
-                  width={128}
-                  height={128}
-                  style={{ position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated' }}
-                />
-              </Viewport>
-            </div>
-            <label className="sm2-title" style={{ ...tituloOnboarding, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
-              {isPt ? 'Dê nome ao seu Soulmon' : 'Name your Soulmon'}
-            </label>
-            <Field id="onb-petname" type="text" value={petNameValue} maxLength={24} autoFocus
-              onChange={e => setPetNameEdit(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-            <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%', marginTop: 24 }}
-              onClick={finish} disabled={!canFinish}
-              aria-label={isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`}
-              aria-busy={submitting}>
-              {submitting
-                ? <Spinner />
-                : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
-            </button>
-            {unlockMessage && (
-              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>{unlockMessage}</p>
-            )}
-          </div>
-        )}
-
         {/* Navegação (para passos com input manual) */}
         {/* D-Q2: o voltar é `arrow_back` 24 PELADO num alvo 44 em `ink` (regra
             do dono: ícone nunca em box), rótulo só no nome acessível;
@@ -2400,6 +2249,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         )}
       </div>
       )}
+      {/* A luz branca do "Chocar" (§81): por cima de tudo; a tela de baixo troca quando ela cobre. */}
+      {luz.fase && <LuzBranca fase={luz.fase} />}
     </div>
   );
 }

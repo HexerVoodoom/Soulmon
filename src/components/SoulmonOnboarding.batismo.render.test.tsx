@@ -6,8 +6,8 @@
  * do onboarding ("What should we call you?"), sem a legenda explicativa
  * embaixo — o exemplo INVENTADO no placeholder é o que sobrou do conserto de
  * privacidade (quem lê um exemplo de nome real digita o nome real). O batismo
- * do Soulmon segue com o nome sugerido PREENCHIDO — manter é não fazer nada,
- * trocar é digitar por cima — sob o título solto "Name your Soulmon".
+ * do Soulmon (o campo "Name your Soulmon", sugerido PREENCHIDO) mora só no reveal
+ * do caminho PAGO desde o §81 (sem render de teste até ali: exige geração real); a demo entra com o guia já nomeado.
  *
  * PT e EN sempre, porque a copy É o conserto.
  */
@@ -17,8 +17,8 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding, type OnboardingCompleteData } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
-import { atravessarRevealDemo } from '../test/ritualDemo';
-import { atravessarPerguntasIniciais } from '../test/metasOnboarding';
+import { entrarNaDemoPeloOvo } from '../test/ovoOnboarding';
+import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 
 function passarPortao(pt: boolean) {
   fireEvent.click(screen.getByText(
@@ -28,15 +28,14 @@ function passarPortao(pt: boolean) {
   ));
   fireEvent.click(screen.getByText(pt ? 'Tenho 18 anos ou mais' : 'I am 18 or older'));
   fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
+  passarApresentacaoDaAmbra(); // §81: a Ambra se apresenta entre os Termos e o nome
 }
 
-/** Caminho demo: portão -> nome -> ritual + teste -> metas -> grátis -> leitura -> personagem -> batismo. */
-async function ateOCadastro(pt: boolean, nome = 'BlueRaven') {
+/** Caminho demo (§81): portão -> Ambra -> nome -> ritual + teste -> metas -> ovo -> guia -> confirmar -> Ambra. */
+async function ateADemo(pt: boolean, nome = 'BlueRaven') {
   passarPortao(pt);
   await atravessarPerguntasIniciais(pt, nome);
-  fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
-  await atravessarRevealDemo(pt);
-  fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
+  entrarNaDemoPeloOvo(pt);
 }
 
 // Aquecimento: a leitura demo carrega as famílias do Oráculo por `import()`
@@ -69,52 +68,26 @@ describe('nome do jogador primeiro, e Soulmon batizado', () => {
     expect((screen.getByLabelText('Seu nome') as HTMLInputElement).getAttribute('placeholder')).toBe('Ex.: CorvoAzul');
   });
 
-  it('EN — o nome sugerido do Soulmon já vem preenchido: manter é não fazer nada', async () => {
-    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    await ateOCadastro(false);
-    const campo = screen.getByLabelText(/name your soulmon/i) as HTMLInputElement;
-    expect(campo.value.trim().length).toBeGreaterThan(1);
-  });
-
-  it('PT — o campo do batismo existe e vem com a sugestão', async () => {
-    localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
-    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    await ateOCadastro(true);
-    const campo = screen.getByLabelText(/dê nome ao seu soulmon/i) as HTMLInputElement;
-    expect(campo.value.trim().length).toBeGreaterThan(1);
-  });
-
-  it('EN — manter o sugerido não exige toque nenhum no campo', async () => {
+  /* §81 (15/10/2026): o batismo da DEMO saiu — o Soulmon guia entra com o nome dele, sem tela de cadastro. O campo "Name your
+     Soulmon" continua só no reveal do caminho PAGO (depois do "Chocar" e da geração). */
+  it('EN — a demo não tem tela de batismo: o guia entra com o próprio nome, e o nome do jogador sai', async () => {
     let recebido: OnboardingCompleteData | null = null;
     renderWithCss(<SoulmonOnboarding onComplete={d => { recebido = d; }} />);
-    await ateOCadastro(false, 'BlueRaven');
-    const sugerido = (screen.getByLabelText(/name your soulmon/i) as HTMLInputElement).value;
-    fireEvent.click(screen.getByRole('button', { name: /hatch/i }));
+    await ateADemo(false, 'BlueRaven');
     await vi.waitFor(() => expect(recebido).not.toBeNull());
+    expect(screen.queryByLabelText(/name your soulmon/i)).toBeNull();
     expect(recebido!.userName).toBe('BlueRaven');
-    expect(recebido!.petName).toBe(sugerido);
+    expect(recebido!.petName).toBe(PREMADE_CHARACTERS[0].name);
   });
 
-  it('PT — trocar o nome do Soulmon é digitar por cima, e é o nome trocado que sai', async () => {
+  it('PT — idem em português', async () => {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
     let recebido: OnboardingCompleteData | null = null;
     renderWithCss(<SoulmonOnboarding onComplete={d => { recebido = d; }} />);
-    await ateOCadastro(true, 'CorvoAzul');
-    fireEvent.change(screen.getByLabelText(/dê nome ao seu soulmon/i), { target: { value: 'Farofa' } });
-    fireEvent.click(screen.getByRole('button', { name: /nascer/i }));
+    await ateADemo(true, 'CorvoAzul');
     await vi.waitFor(() => expect(recebido).not.toBeNull());
-    expect(recebido!.petName).toBe('Farofa');
+    expect(screen.queryByLabelText(/dê nome ao seu soulmon/i)).toBeNull();
     expect(recebido!.userName).toBe('CorvoAzul');
-  });
-
-  it('apagar o campo do batismo volta ao sugerido — nunca fica sem nome', async () => {
-    let recebido: OnboardingCompleteData | null = null;
-    renderWithCss(<SoulmonOnboarding onComplete={d => { recebido = d; }} />);
-    await ateOCadastro(false);
-    const sugerido = (screen.getByLabelText(/name your soulmon/i) as HTMLInputElement).value;
-    fireEvent.change(screen.getByLabelText(/name your soulmon/i), { target: { value: '   ' } });
-    fireEvent.click(screen.getByRole('button', { name: /hatch/i }));
-    await vi.waitFor(() => expect(recebido).not.toBeNull());
-    expect(recebido!.petName).toBe(sugerido);
+    expect(recebido!.petName).toBe(PREMADE_CHARACTERS[0].name);
   });
 });

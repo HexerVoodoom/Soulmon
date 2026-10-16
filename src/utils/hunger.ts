@@ -126,6 +126,20 @@ export function starvingSince(rec: HungerRecord | undefined): number | null {
   return t === -Infinity ? rec.at : t === Infinity ? null : t;
 }
 
+/**
+ * OS VITAIS DO SOULMON PAGO NA CHEGADA (REGISTRO §81, dono, 15/10/2026): vida cheia (o chamador já grava `getMaxHPForStage`),
+ * ENERGIA CHEIA e FOME VAZIA (nível 1/3, "faminto") — o relógio da fome conta já na chegada (`at: now`), então a regra de 12 h
+ * faminto → meio coração (`hungerPenalty`) corre a partir do nascimento. Só o NASCIMENTO do Soulmon pago usa isto: o upgrade de
+ * quem já jogava ("trocou de pele") e a demo (vitais cheios, `keepDemoVitalsFull`) não passam por aqui. Pura: `now` por parâmetro.
+ */
+export function paidArrivalVitals(now: number): { energyPoints: number; hunger: HungerRecord; energyClock: EnergyClock } {
+  return {
+    energyPoints: maxEnergyOf({ evolutionStage: 'rookie' }),
+    hunger: { v: 0, at: now },
+    energyClock: { at: now, carry: 0 },
+  };
+}
+
 export const hungerTierAt = (rec: HungerRecord | undefined, t: number): HungerTier => tierOf(hungerAt(rec, t));
 
 /** O instante (ms, inteiro) em que o registro cruza `level` descendo; `Infinity` se já está abaixo ou nunca cruza. */

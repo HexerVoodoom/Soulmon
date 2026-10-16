@@ -1,1 +1,1 @@
-export type UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo';
+export type UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo' | 'ovo';

@@ -22,8 +22,8 @@ import {
   pendingTelemetry, resetTelemetryForTest, TELEMETRY_FUNNEL, onboardingStepCode,
   track, setTelemetryTier, TELEMETRY_TIER, TELEMETRY_UNLOCK_REASON,
 } from '../utils/telemetry';
-import { atravessarPerguntasIniciais } from '../test/metasOnboarding';
-import { atravessarRevealDemo, esperarRevealDemo } from '../test/ritualDemo';
+import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
+import { abrirGuias, escolherGuiaEConfirmar } from '../test/ovoOnboarding';
 
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
 
@@ -75,15 +75,16 @@ describe('fiação da telemetria — onboarding', () => {
     const ritual = Array.from({ length: 6 }, (_, i) => onboardingStepCode(6 + i));
     const teste = Array.from({ length: 14 }, (_, i) => onboardingStepCode(13 + i));
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
-      onboardingStepCode(-6), onboardingStepCode(-9), onboardingStepCode(-10), ...ritual, ...teste,
+      onboardingStepCode(-6), onboardingStepCode(-9), onboardingStepCode(-14), onboardingStepCode(-10), ...ritual, ...teste,
       onboardingStepCode(-2), onboardingStepCode(-3),
       onboardingStepCode(-11), onboardingStepCode(-12), onboardingStepCode(-7),
     ]);
 
-    // E, escolhido o grátis, o funil passa a ser DEMO de fato.
-    fireEvent.click(screen.getByText('Start now — it’s free'));
-    await esperarRevealDemo();
+    // E, confirmada a demo (o ovo -> "Soulmon guia" -> "Yes", §81), o funil passa a ser DEMO de fato.
+    abrirGuias();
+    escolherGuiaEConfirmar();
     const depois = only('onboarding_step');
+    expect(depois[depois.length - 1].p?.step).toBe(onboardingStepCode(-15));
     expect(depois[depois.length - 1].p?.funnel).toBe(TELEMETRY_FUNNEL.demo);
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -108,6 +109,7 @@ describe('fiação da telemetria — onboarding', () => {
       'I have read and agree to the Terms of Use and the Privacy Policy',
     ));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    passarApresentacaoDaAmbra(); // §81: a Ambra se apresenta entre os Termos e o nome
     // 01/10/2026: o "porquê" virou objetivo; o campo livre que sobrou antes
     // da escolha é o NOME (B1) — é ele que não pode vazar.
     const campo = screen.getByRole('textbox') as HTMLInputElement;
@@ -132,12 +134,11 @@ describe('fiação da telemetria — onboarding', () => {
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await atravessarPerguntasIniciais();
-    fireEvent.click(screen.getByText('Start now — it’s free'));
-    // 13.19: o reveal demo vem antes do personagem, e ele emite `unlock_view`
-    // com o motivo `revealDemo` (o denominador da 13.1) — nunca `demo_pick`.
-    await atravessarRevealDemo();
+    // §81: o ovo vem antes do personagem; abrir o modal de compra emite `unlock_view` com o motivo `revealDemo` (a faixa
+    // que o ovo herdou do reveal demo) e a escolha do guia NÃO o emite — nunca `demo_pick` antes de escolher.
+    abrirGuias();
     expect(only('demo_pick')).toHaveLength(0);
-    expect(only('unlock_view').map(r => r.p?.reason)).toEqual([TELEMETRY_UNLOCK_REASON.revealDemo]);
+    expect(only('unlock_view')).toHaveLength(0);
 
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     expect(only('demo_pick')).toHaveLength(1);

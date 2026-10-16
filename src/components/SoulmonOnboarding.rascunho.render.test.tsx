@@ -15,7 +15,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { atravessarPerguntasIniciais } from '../test/metasOnboarding';
-import { atravessarRevealDemo } from '../test/ritualDemo';
+import { abrirGuias } from '../test/ovoOnboarding';
 
 const rascunho = {
   mode: 'onboarding' as const,
@@ -56,10 +56,9 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await atravessarPerguntasIniciais();
-    fireEvent.click(screen.getByText('Start now — it’s free'));
-    // 13.19: as 6 perguntas e o reveal demo também não gravam rascunho DO
-    // RITUAL (01/10/2026: as perguntas vivem no rascunho do PORTÃO).
-    await atravessarRevealDemo();
+    // §81: as perguntas, o ovo e a escolha do guia também não gravam rascunho DO RITUAL (01/10/2026: as perguntas
+    // vivem no rascunho do PORTÃO).
+    abrirGuias();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     vi.useRealTimers();
     // O rascunho do RITUAL continua sem existir no caminho grátis. O do

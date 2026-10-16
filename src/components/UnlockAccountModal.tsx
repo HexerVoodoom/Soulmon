@@ -176,7 +176,12 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
       }
     >
       <p style={{ ...sm2Text, margin: 0 }}>
-        {reason === 'task-limit'
+        {reason === 'ovo'
+          ? (isPt
+            // §81: o cristal do onboarding guarda a criatura que as respostas acabaram de desenhar.
+            ? 'O cristal guarda um Soulmon feito de quem você é: o ritual nasce das suas respostas, e só você terá esta criatura.'
+            : 'The crystal holds a Soulmon made from who you are: the ritual is born from your answers, and only you will have this creature.')
+          : reason === 'task-limit'
           ? (isPt
             ? `No modo grátis cabem ${DEMO_ACTIVITY_TOTAL_CAP} hábitos ativos (os diários; tarefas agendadas não contam) — a rotina inteira do Rookie. `
               + 'Quem evolui com o próprio Soulmon vai além desse teto.'

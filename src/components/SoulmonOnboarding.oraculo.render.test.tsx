@@ -268,11 +268,12 @@ describe('Reveal pago — o casulo no vidro do cartão, depois o cristal apagado
     expect(document.querySelector('.sm-reveal-cocoon-img')).toBeNull();
   });
 
-  it('o reveal pago não tem a oferta (X2): a fonte não monta UnlockNudge no REVEAL, só no REVEAL_DEMO; a frase do sem-sprite existe nas duas línguas', async () => {
+  it('o reveal pago não tem a oferta (X2): a fonte não monta UnlockNudge no REVEAL (nem em lugar nenhum desde o §81); a frase do sem-sprite existe nas duas línguas', async () => {
     const fs = await import(/* @vite-ignore */ 'node:fs');
     const src = fs.readFileSync(`${process.cwd()}/src/components/SoulmonOnboarding.tsx`, 'utf8');
-    const reveal = src.slice(src.indexOf('{step === REVEAL && result && ('), src.indexOf('{step === REVEAL_DEMO && demoReading && ('));
+    const reveal = src.slice(src.indexOf('{step === REVEAL && result && ('), src.indexOf('{/* Navegação (para passos com input manual) */}'));
     expect(reveal).not.toContain('UnlockNudge');
+    expect(src).not.toContain('UnlockNudge');
     expect(reveal).toContain("pending={revealSprite ? null : revealEsperando ? 'forming' : 'dormant'}");
     expect(reveal).toContain('The drawing is still being made — it arrives on its own, later.');
     expect(reveal).toContain('O desenho ainda está sendo feito — chega sozinho, mais tarde.');
@@ -280,67 +281,9 @@ describe('Reveal pago — o casulo no vidro do cartão, depois o cristal apagado
   });
 });
 
-describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
-  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); localStorage.clear(); localStorage.setItem('soulmon-language', 'en-US'); });
-  afterEach(() => { vi.useRealTimers(); });
-
-  async function ateOReveal() {
-    const { esperarRevealDemo } = await import('../test/ritualDemo');
-    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
-    fireEvent.click(screen.getByText('I am 18 or older'));
-    fireEvent.click(btn('Continue'));
-    const { atravessarPerguntasIniciais } = await import('../test/metasOnboarding');
-    // 01/10/2026: as 6 do ritual (e os 20 itens) vêm ANTES da escolha
-    await atravessarPerguntasIniciais();
-    fireEvent.click(btn('Start now — it’s free'));
-    await esperarRevealDemo();
-  }
-
-  it('o grátis vê a leitura das 6 com a criatura em SILHUETA (mask-image), sem Born, com "You said…"', async () => {
-    await ateOReveal();
-    const card = screen.getByRole('region', { name: 'Birth card' });
-    const sil = card.querySelector('[data-silhouette]') as HTMLElement;
-    expect(sil.className).toContain('sm2-stats-sil');
-    expect(sil.style.maskImage).toMatch(/^url\(/);
-    expect(card.querySelector('img')).toBeNull();
-    expect(card.querySelector('[role="img"]')?.getAttribute('aria-label')).toMatch(/, silhouette$/);
-    expect(card.textContent).not.toContain('Born');
-    expect(card.textContent).toContain('You said');
-    // fora dos três blocos o reveal não mostra pontos
-    expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(localStorage.getItem('soulmon-oracle-draft')).toBeNull();
-  });
-
-  it('D-Q13: "Continue with a demo character" é PRIMÁRIO; a oferta é o convite âmbar de 280 com o × 44 "Not now"; os dois levam à escolha do personagem', async () => {
-    await ateOReveal();
-    const cont = btn('Continue with a demo character');
-    expect(variante(cont)).toBe('primary');
-    const nudge = screen.getByRole('button', { name: /Want a creature that is only yours\?/ });
-    expect(nudge.style.maxWidth).toBe('280px');
-    expect(nudge.querySelector('.sm2-icon')?.textContent).toBe('auto_awesome');
-    expect(nudge.textContent).not.toContain('chevron_right');
-    // B8 (01/10/2026): o × mora DENTRO do card (mesmo invólucro de 280),
-    // e o botão de criar a própria criatura entra acima do "Continue".
-    const x = btn('Not now');
-    expect(x.className).toContain('sm2-ora-back');
-    expect(x.textContent?.trim()).toBe('close');
-    const invólucro = x.closest('[data-nudge]') as HTMLElement;
-    expect(invólucro).toBeTruthy();
-    expect(invólucro.contains(nudge)).toBe(true);
-    const criar = btn('Create my own creature');
-    expect(variante(criar)).toBe('outline');
-    expect(criar.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(document.body.innerHTML).not.toContain('danger');
-    fireEvent.click(x);
-    expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
-    // e voltar da escolha devolve o reveal demo (a leitura fica)
-    fireEvent.click(btn('Back'));
-    expect(btn('Continue with a demo character')).toBeTruthy();
-    fireEvent.click(btn('Continue with a demo character'));
-    expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
-  });
-});
+/* ⚰️ §81 (15/10/2026): o "Reveal demo" (13.19 / 13.1: leitura em silhueta, convite âmbar "Want a creature that is only yours?",
+   "Continue with a demo character" primário) SAIU do onboarding — o fim do ritual é o ovo-cristal. Os dois testes que o
+   percorriam foram removidos junto; o ovo está em `SoulmonOnboarding.ovo.render.test.tsx`. */
 
 describe('Upgrade — o mesmo ritual sem intro e sem cadastro', () => {
   beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
