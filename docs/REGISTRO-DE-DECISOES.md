@@ -2705,3 +2705,8 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **D4:** o cenário pintado de combate (`BattleStage`, `data-stage-scene`) deixou de forçar `image-rendering: pixelated`; sprites, glifos e efeitos seguem pixelados.
 - **B10:** o cartão-convite de refeição (`MealInviteCard`, aviso `refeicao` da fila do App) foi removido; ele agia como a notificação "o pet tem algo pra você". Os lembretes agendados (push) seguem. `openBackpackSignal` e `atenderRefeicao` ficam (outros usos).
 
+
+## 95. Cenários em retrato só para os fundos fora do cenário equipado (dono, 18/10/2026; complementa §88 D5)
+- **Decisão do dono:** não regerar os cenários equipáveis/vendidos. Masmorra, batalha, pesadelo, minigame e torneio já são 9:16. Regerados em retrato (Higgsfield `gpt_image_2_5` flare medium, 9:16, referência = a paisagem, ~0,5 crédito cada, 4 no total) apenas os 8 pintados usados fora do cenário equipado: `bg-campina`, `bg-cavernas` (postais da Travessia), `bg-guild-{clareira,ramagem,copa,mata,bosque-antigo}` (Bosque/Casa/cerimônia) e `bg-arena-spotlight` (Guerra).
+- **Arquivos:** `assets/backgrounds/bg-<id>-portrait.webp` (608×1080, WebP q80, 50–89 KB). As paisagens ficam. `utils/backgroundPortrait.ts` (`sceneCss(id, w, h)`) devolve o retrato quando a caixa é vertical e ele existe; senão a paisagem. Ligado em `GroveVisor`, `CasaVisor`, `GroveMilestoneCeremony`, `GuerraVisor` e `RegionPostal`.
+- **Limite honesto:** todas as caixas atuais desses pontos são horizontais (visores 176 de altura em largura cheia, cerimônia 208×144, postal 56×44), então hoje a paisagem segue valendo na tela. O retrato entra quando houver caixa vertical. O chão foi pedido em ~74% no prompt, mas não foi medido na arte.

@@ -13,6 +13,7 @@
  * ficam paradas (a informação é a mesma — o vidro é o mesmo).
  */
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { sceneCss } from '../../utils/backgroundPortrait';
 import { GROUND_Y } from '../../utils/petStage';
 import { groveCreatures } from '../../utils/groveStage';
 import type { GuildView } from '../../utils/community';
@@ -30,7 +31,8 @@ interface GroveVisorProps {
 
 export function GroveVisor({ guild, mySprite, reducedMotion, label }: GroveVisorProps) {
   // Sem estágio ainda, o chão é o da Clareira: o cenário nasce antes do nome.
-  const bg = PET_BACKGROUNDS[`bg-guild-${guild.bosque.stage ?? 'clareira'}`];
+  const bgId = `bg-guild-${guild.bosque.stage ?? 'clareira'}`;
+  const bg = PET_BACKGROUNDS[bgId];
   const criaturas = groveCreatures(guild);
   return (
     <span
@@ -41,7 +43,7 @@ export function GroveVisor({ guild, mySprite, reducedMotion, label }: GroveVisor
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: GROVE_VISOR_HEIGHT, background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: GROVE_VISOR_HEIGHT, background: bg && `${sceneCss(bgId)} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
     >
       {criaturas.map((c, i) => (
         <img

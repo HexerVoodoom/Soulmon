@@ -10,6 +10,7 @@
  * a mesma casa desenha igual em qualquer aparelho. Movimento reduzido: o brilho do cristal fica parado.
  */
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { sceneCss } from '../../utils/backgroundPortrait';
 import { GROUND_Y } from '../../utils/petStage';
 import { spriteForMember } from '../../utils/groveStage';
 import { DECOR_ART } from '../../utils/decorArt';
@@ -51,7 +52,8 @@ interface CasaVisorProps {
 
 export function CasaVisor({ guild, mySprite, reducedMotion, label }: CasaVisorProps) {
   const lvl = Math.min(5, Math.max(0, guild.casa?.nivelIndex ?? 0));
-  const bg = PET_BACKGROUNDS[`bg-guild-${guild.bosque.stage ?? 'clareira'}`];
+  const bgId = `bg-guild-${guild.bosque.stage ?? 'clareira'}`;
+  const bg = PET_BACKGROUNDS[bgId];
   const cx = W / 2;
   const topY = GROUND - TRUNK_H[lvl];
   // Até quatro criaturas: a sua primeiro, depois os outros por ordem de chegada.
@@ -69,7 +71,7 @@ export function CasaVisor({ guild, mySprite, reducedMotion, label }: CasaVisorPr
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: H, background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: H, background: bg && `${sceneCss(bgId)} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="xMidYMax meet" shapeRendering="crispEdges" style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
         <g transform={`translate(${cx} ${GROUND}) scale(1.3) translate(${-cx} ${-GROUND})`} data-casa-arvore>

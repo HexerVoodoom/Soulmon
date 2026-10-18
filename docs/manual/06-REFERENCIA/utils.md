@@ -3449,6 +3449,12 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx` (`handleFrameBuy`).
 **Régua:** `src/utils/frameBuy.test.ts`.
 
+### `src/utils/backgroundPortrait.ts`
+**Dono de:** a variante RETRATO (9:16) dos cenários pintados usados fora do cenário equipado (REGISTRO §95): `portraitUrl(id)` e `sceneCss(id, w, h)` (retrato só se a caixa for vertical e o `bg-<id>-portrait.webp` existir; senão a paisagem de `PET_BACKGROUNDS`).
+**Exports:** `portraitUrl` · `sceneCss`.
+**Chamado por:** `GroveVisor`, `CasaVisor`, `GroveMilestoneCeremony`, `GuerraVisor`, `TravessiaIcon` (`RegionPostal`).
+**Régua:** `src/utils/backgroundPortrait.test.ts`.
+
 ### `src/utils/forgeVisual.ts`
 **Dono de:** o VISUAL do Soulsmith por nível (REGISTRO §88, D2): `visualTier(level)` (degrau 1..5, a cada `LEVELS_PER_VISUAL_TIER` = 3 níveis: cobre, bronze, prata, dourado, prismático) e `forgeArtName(pieceId, level)` (a chave de `loadEquipArt`). Puro.
 **Exports:** `LEVELS_PER_VISUAL_TIER` · `VISUAL_TIERS` · `visualTier` · `forgeArtName`.

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { sceneCss } from '../../utils/backgroundPortrait';
 import type { CrossingArea, Region } from '../../types/travessias';
 import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
@@ -46,7 +47,7 @@ export function RegionPostal({ region, width = 56, height = 44 }: { region: Regi
   const bg = region.bgId ? PET_BACKGROUNDS[region.bgId] : undefined;
   const style: CSSProperties = {
     width, height, flexShrink: 0, borderRadius: 'var(--sm2-radius-sm)',
-    background: bg?.css ?? 'radial-gradient(circle at 50% 30%, var(--sm2-surface-2), var(--sm2-bg) 80%)',
+    background: (region.bgId ? sceneCss(region.bgId, width, height) : undefined) ?? 'radial-gradient(circle at 50% 30%, var(--sm2-surface-2), var(--sm2-bg) 80%)',
     backgroundColor: bg?.baseColor,
     backgroundSize: 'cover', backgroundPosition: 'center bottom',
   };

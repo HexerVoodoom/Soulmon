@@ -24,6 +24,7 @@ import { Icon } from '../ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { RitualDialog, RitualGlass, ritualTitle } from '../ritual/RitualKit';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { sceneCss } from '../../utils/backgroundPortrait';
 import { GROUND_Y } from '../../utils/petStage';
 import { groveStageName, groveMarcoText, guildCoreText, type GroveMarcoStage } from '../../utils/guildCopyCore';
 import type { GroveStageId } from '../../utils/guildRules';
@@ -51,7 +52,8 @@ export function GroveMilestoneCeremony({
   const reducedMotion = reducedOverride ?? reducedSistema;
   // O voltar do sistema (botão do Android, `popstate`) fecha a cerimônia como fecha as outras camadas (QA L3 B6).
   useBackLayer(true, onDone);
-  const bg = PET_BACKGROUNDS[`bg-guild-${stage satisfies GroveStageId}`];
+  const bgId = `bg-guild-${stage satisfies GroveStageId}`;
+  const bg = PET_BACKGROUNDS[bgId];
   const nome = groveStageName(language, stage);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function GroveMilestoneCeremony({
   return (
     <RitualDialog labelledBy="gmc-title" onClose={onDone} zIndex={300} maxWidth={340} veilRole="status"
       style={{ textAlign: 'center', alignItems: 'center' }}>
-      <RitualGlass width={208} height={144} align="end" style={{ position: 'relative', background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}>
+      <RitualGlass width={208} height={144} align="end" style={{ position: 'relative', background: bg && `${sceneCss(bgId, 208, 144)} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}>
         <img
           src={spriteUrl}
           alt=""
