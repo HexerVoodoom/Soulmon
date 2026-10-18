@@ -172,6 +172,54 @@ export const EXTRA_NPC_ART: Record<ExtraNpcId, string> = {
   ferreira: npcFFerreira, // Kova
 };
 
+
+import type { NovoNpcId } from '../../../utils/areaNpcVoice';
+import npcNAlquimistaLimo from './npc-n-alquimistaLimo.png';
+import npcNEnfermeira from './npc-n-enfermeira.png';
+import npcNColheita from './npc-n-colheita.png';
+import npcNTempo from './npc-n-tempo.png';
+import npcNMusa from './npc-n-musa.png';
+import npcNOssarioFera from './npc-n-ossarioFera.png';
+import npcNOssarioForma from './npc-n-ossarioForma.png';
+import npcNSerpentePlumadaFera from './npc-n-serpentePlumadaFera.png';
+import npcNSerpentePlumadaForma from './npc-n-serpentePlumadaForma.png';
+import npcNBroto from './npc-n-broto.png';
+import npcNCorvo from './npc-n-corvo.png';
+import npcNCozinheiro from './npc-n-cozinheiro.png';
+import npcNBesouro from './npc-n-besouro.png';
+import npcNLuaTronoSentada from './npc-n-luaTronoSentada.png';
+import npcNLuaTronoDePe from './npc-n-luaTronoDePe.png';
+
+/**
+ * NPCs NOVOS (15/10/2026, leva `E:/novos npcs` — 17 PNG do Higgsfield, 15 instalados):
+ * 11 criaturas/guardiãs em busto 768² + Selene em duas poses de trono, a
+ * alquimista de limo e a enfermeira (corpo inteiro / busto). Alfa binarizado em
+ * 128 (o original vinha ~252, não 255) e arte `npc-n-<id>.png`. A enfermeira
+ * (xadrez assado) e a alquimista (fundo preto) tiveram o fundo recortado por
+ * flood-fill a partir da borda; a sereia e a alquimista de costas ficaram de
+ * fora (fundo em degradê / pose só de costas — `docs/NPCS-NOVOS.md`).
+ * ⚠️ **SEM CHAMADA HOJE**, como os extras — onde entram é decisão de design
+ * (`docs/PERGUNTAS-DO-DONO.md`, NPC-1). Nome, fala e categoria:
+ * `utils/areaNpcVoice.ts` › `NOVO_NPC_VOICE`.
+ */
+export const NOVO_NPC_ART: Record<NovoNpcId, string> = {
+  alquimistaLimo: npcNAlquimistaLimo,
+  enfermeira: npcNEnfermeira,
+  colheita: npcNColheita,
+  tempo: npcNTempo,
+  musa: npcNMusa,
+  ossarioFera: npcNOssarioFera,
+  ossarioForma: npcNOssarioForma,
+  serpentePlumadaFera: npcNSerpentePlumadaFera,
+  serpentePlumadaForma: npcNSerpentePlumadaForma,
+  broto: npcNBroto,
+  corvo: npcNCorvo,
+  cozinheiro: npcNCozinheiro,
+  besouro: npcNBesouro,
+  luaTronoSentada: npcNLuaTronoSentada,
+  luaTronoDePe: npcNLuaTronoDePe,
+};
+
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote
  *  sem mapeamento próprio, cai no anfitrião histórico da área. */
 export function lotNpcArt(areaId: AreaId, lotId?: string | null): string {

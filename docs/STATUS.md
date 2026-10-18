@@ -5301,3 +5301,9 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - XP visível antes de concluir (tarefa/hábito) em `DailyRituals`; carinho e missões NÃO têm evento de XP (regra, não bug).
 - "+" abre "Novo hábito / Nova tarefa"; Home com abas Hoje/Semanal (só lista, não pontuação).
 - Pets andavam de costas: `artFacesLeft` (`utils/sprites.ts`) para linhas de perfil esquerdo (igni, nautilu, kaelen, corvo).
+
+## 15/10/2026 — 15 NPCs novos instalados e categorizados (leva `E:/novos npcs`)
+
+- **Feito:** 15 dos 17 PNG viraram `soulmon/npcs/npc-n-<id>.png`, registrados em `NOVO_NPC_ART` (`npcs/index.ts`) e `NOVO_NPC_VOICE` (`utils/areaNpcVoice.ts`: nome, ofício, fala PT+EN, **categoria** `oficio|mistico|natureza|sombrio|criatura`). Pós: bbox, 768² / corpo inteiro 1100, alfa binarizado em 128; enfermeira (xadrez assado) e alquimista (fundo preto) recortadas por flood-fill. Régua: bloco novo em `data/bossRoster.test.ts`. Doc: [`NPCS-NOVOS.md`](NPCS-NOVOS.md).
+- **Sem chamada**, como os extras (NPC-1). **Pendentes (2):** sereia (fundo em degradê — regerar em `#00FF00`) e Lodi de costas. Os originais seguem em `E:/novos npcs`.
+- **Depende do dono:** onde cada um aparece; Ossel/Tzali usam as duas formas? Obs.: `missionsMenu.render.test.tsx` já falhava antes (2 testes, sem relação).

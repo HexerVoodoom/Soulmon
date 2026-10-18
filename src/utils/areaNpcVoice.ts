@@ -373,3 +373,110 @@ export function extraNpcVoice(id: ExtraNpcId, language: Language): { name: strin
   const isPt = language === 'pt-BR';
   return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
 }
+
+/**
+ * NPCs NOVOS (15/10/2026, leva `E:/novos npcs`; arte em `assets/soulmon/npcs` ›
+ * `NOVO_NPC_ART`, arquivos `npc-n-<id>.png`). ⚠️ SEM CHAMADA HOJE, como os extras.
+ * Cada um tem CATEGORIA (`NovoNpcCategory`) para a decisão de onde entra:
+ * `oficio` (quem trabalha com as mãos), `mistico` (tempo, lua, musa),
+ * `natureza` (colheita, brotos), `sombrio` (ossos, neblina, sangue — tom
+ * melancólico, nunca ameaça ao jogador) e `criatura` (bichos falantes).
+ * Falas curtas, sem cobrança, sem emoji, sem número (régua: `bossRoster.test.ts`).
+ * Os pares `*Fera`/`*Forma` e `luaTrono*` são a MESMA personagem em duas formas/poses.
+ */
+export type NovoNpcCategory = 'oficio' | 'mistico' | 'natureza' | 'sombrio' | 'criatura';
+
+export type NovoNpcId =
+  | 'alquimistaLimo' | 'enfermeira' | 'colheita' | 'tempo' | 'musa'
+  | 'ossarioFera' | 'ossarioForma' | 'serpentePlumadaFera' | 'serpentePlumadaForma'
+  | 'broto' | 'corvo' | 'cozinheiro' | 'besouro'
+  | 'luaTronoSentada' | 'luaTronoDePe';
+
+export interface NovoNpcVoice extends ExtraNpcVoice {
+  category: NovoNpcCategory;
+}
+
+export const NOVO_NPC_VOICE: Record<NovoNpcId, NovoNpcVoice> = {
+  alquimistaLimo: {
+    category: 'oficio', namePt: 'Lodi', nameEn: 'Lodi', officePt: 'Alquimista de limo', officeEn: 'Slime alchemist',
+    linePt: 'Tudo que escorre guarda uma receita. Chegue mais perto.',
+    lineEn: 'Everything that drips holds a recipe. Come a little closer.',
+  },
+  enfermeira: {
+    category: 'sombrio', namePt: 'Rubra', nameEn: 'Rubra', officePt: 'Enfermeira da Sombra', officeEn: 'Shade nurse',
+    linePt: 'Sente-se. Eu cuido do que dói, com calma.',
+    lineEn: 'Sit down. I tend whatever aches, nice and slow.',
+  },
+  colheita: {
+    category: 'natureza', namePt: 'Espiga', nameEn: 'Tassel', officePt: 'Guardiã da colheita', officeEn: 'Harvest keeper',
+    linePt: 'O que se planta com paciência volta em dobro. Sem pressa.',
+    lineEn: 'What you plant with patience comes back doubled. Take all the time you need.',
+  },
+  tempo: {
+    category: 'mistico', namePt: 'Clepsi', nameEn: 'Clepsy', officePt: 'Guardião das horas', officeEn: 'Keeper of the hours',
+    linePt: 'O tempo é um rio. Hoje ele corre do seu lado.',
+    lineEn: 'Time is a river. Today it runs beside you.',
+  },
+  musa: {
+    category: 'mistico', namePt: 'Lilia', nameEn: 'Lilia', officePt: 'Musa do jardim', officeEn: 'Garden muse',
+    linePt: 'Até a pedra floresce quando alguém ouve a música.',
+    lineEn: 'Even stone blooms when someone listens to the music.',
+  },
+  ossarioFera: {
+    category: 'sombrio', namePt: 'Ossel', nameEn: 'Ossel', officePt: 'Guardião do ossuário (forma de dragão)', officeEn: 'Ossuary warden (dragon form)',
+    linePt: 'Tudo que cai vira raiz. Eu só guardo o caminho.',
+    lineEn: 'Everything that falls becomes root. I only keep the path.',
+  },
+  ossarioForma: {
+    category: 'sombrio', namePt: 'Ossel', nameEn: 'Ossel', officePt: 'Guardião do ossuário (forma humana)', officeEn: 'Ossuary warden (human form)',
+    linePt: 'Na forma de gente eu converso melhor. Pode perguntar.',
+    lineEn: 'I speak better in my human shape. Go ahead and ask.',
+  },
+  serpentePlumadaFera: {
+    category: 'mistico', namePt: 'Tzali', nameEn: 'Tzali', officePt: 'Serpente emplumada (forma de dragão)', officeEn: 'Feathered serpent (dragon form)',
+    linePt: 'O vento me conhece pelo nome. Quer ouvir o seu?',
+    lineEn: 'The wind knows me by name. Want to hear yours?',
+  },
+  serpentePlumadaForma: {
+    category: 'mistico', namePt: 'Tzali', nameEn: 'Tzali', officePt: 'Serpente emplumada (forma humana)', officeEn: 'Feathered serpent (human form)',
+    linePt: 'Pouso devagar quando há alguém para receber.',
+    lineEn: 'I land softly when someone is there to greet me.',
+  },
+  broto: {
+    category: 'natureza', namePt: 'Faísca', nameEn: 'Spark', officePt: 'Espírito dos elementos', officeEn: 'Elemental sprite',
+    linePt: 'Eu cresço com fogo, raio e chuva. Hoje deu os três!',
+    lineEn: 'I grow on fire, lightning and rain. Today brought all three!',
+  },
+  corvo: {
+    category: 'sombrio', namePt: 'Corvino', nameEn: 'Corvin', officePt: 'Médico da neblina', officeEn: 'Fog doctor',
+    linePt: 'A neblina some quando a lanterna fica acesa. Eu levo a minha.',
+    lineEn: 'The fog lifts when the lantern stays lit. I carry mine.',
+  },
+  cozinheiro: {
+    category: 'criatura', namePt: 'Caldo', nameEn: 'Broth', officePt: 'Cozinheiro do caldeirão', officeEn: 'Cauldron cook',
+    linePt: 'A sopa está no ponto. Pegue uma tigela, tem para todo mundo.',
+    lineEn: 'The soup is just right. Grab a bowl, there is plenty for all.',
+  },
+  besouro: {
+    category: 'criatura', namePt: 'Brio', nameEn: 'Sheen', officePt: 'Sentinela besouro', officeEn: 'Beetle sentinel',
+    linePt: 'Minha casca brilha mais depois da chuva. Fico de guarda, sem pressa.',
+    lineEn: 'My shell shines brighter after rain. I keep watch, no rush.',
+  },
+  luaTronoSentada: {
+    category: 'mistico', namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua no trono (sentada)', officeEn: 'Moon goddess on her throne (seated)',
+    linePt: 'No meu trono a noite fica quieta. Sente aos meus pés, se quiser.',
+    lineEn: 'On my throne the night grows quiet. Sit at my feet, if you like.',
+  },
+  luaTronoDePe: {
+    category: 'mistico', namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua no trono (de pé)', officeEn: 'Moon goddess on her throne (standing)',
+    linePt: 'Levanto o cajado e a lua responde. Venha ver.',
+    lineEn: 'I raise the staff and the moon answers. Come and see.',
+  },
+};
+
+/** Nome, fala e categoria de um NPC novo, no idioma. */
+export function novoNpcVoice(id: NovoNpcId, language: Language): { name: string; line: string; category: NovoNpcCategory } {
+  const v = NOVO_NPC_VOICE[id];
+  const isPt = language === 'pt-BR';
+  return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn, category: v.category };
+}
