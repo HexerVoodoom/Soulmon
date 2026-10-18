@@ -20,6 +20,10 @@ import foodCandy from '../assets/soulmon/items/food-candy.png';
 import itemChipPower from '../assets/soulmon/items/item-chip-power.png';
 import itemChipHarmony from '../assets/soulmon/items/item-chip-harmony.png';
 import itemChipBenevolence from '../assets/soulmon/items/item-chip-benevolence.png';
+import itemChipBigPower from '../assets/soulmon/items/item-chip-big-power.png';
+import itemChipBigHarmony from '../assets/soulmon/items/item-chip-big-harmony.png';
+import itemChipBigBenevolence from '../assets/soulmon/items/item-chip-big-benevolence.png';
+import itemChipPrism from '../assets/soulmon/items/item-chip-prism.png';
 import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
@@ -40,6 +44,10 @@ export const ITEM_ART: Record<string, string> = {
   '👊': itemChipPower,
   '🎶': itemChipHarmony,
   '🤲': itemChipBenevolence,
+  '🥊': itemChipBigPower,
+  '🎼': itemChipBigHarmony,
+  '💞': itemChipBigBenevolence,
+  '🔷': itemChipPrism,
   '💗': itemHeart,
   '🌀': itemGlitchtama,
 };

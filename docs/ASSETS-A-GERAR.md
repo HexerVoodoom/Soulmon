@@ -573,3 +573,6 @@ LU3 com miolo liso; folha de contato no vidro de 340² com o sprite do pet a 128
 recorte antes de instalar. **Decisão do dono em aberto:** o banner é em inglês ("LEVEL UP") nos dois
 idiomas — termo universal de jogo, mas a regra do idioma pede o par PT; se quiser "NOVO NÍVEL" no PT,
 é uma 4ª peça (LU1-PT) e uma linha em `LevelUpOverlay`.
+
+## Guerra de Clãs / Praça / Plantio — arte instalada (18/10/2026, SQUAD-ARTE)
+Higgsfield CLI `gpt_image_2_5` flare, `--background transparent`, `@char_sprite-style`/`@char_npcs`, saldo 182,25 → 176,25 cr. Instalados: `npcs/npc-arena-guerra.png` (Mirevesper, 768²), `areas/lote-arena-guerra.png` (300², caixa em `areaLotGeometry.ts`), `items/item-chip-big-{power,harmony,benevolence}.png` + `item-chip-prism.png` (ligados em `itemArt.ts`), `items/item-gift.png` (PracaVisor), `plantio/fruit-{girassol,melancia,abobora,pinheiro}.png` (PlantioVisor, fruto maduro). Sobra: `plantio/fruit-broto.png` (broto, sem slot) e os estágios 0–3 da planta, que seguem SVG procedural; cenário/canteiro das três salas continuam SVG.
