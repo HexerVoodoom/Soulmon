@@ -144,9 +144,10 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'One duel, one round at a time. Come on.',
   },
   'arena:guerra': {
-    namePt: 'Brunna, a capitã da roda', nameEn: 'Brunna, captain of the round',
-    linePt: 'A roda se forma com o seu clã. Quando o esquadrão estiver junto, é só entrar.',
-    lineEn: 'The round forms with your clan. Once the squad is together, just step in.',
+    // 18/10/2026 (dono): o NPC é a própria criatura, quimera de duas cabeças do brejo (Pântano + Sombra), autoral; nome em inglês.
+    namePt: 'Mirevesper, a quimera do brejo', nameEn: 'Mirevesper, the mire chimera',
+    linePt: 'Duas cabeças, uma só vigília. A roda dos clãs se abre quando o seu esquadrão chega junto.',
+    lineEn: "Two heads, one watch. The clans' round opens when your squad arrives together.",
   },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
   // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,

@@ -80,9 +80,9 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
   },
   'arena.guerra': {
     place: { en: 'Clan War', pt: 'Guerra de Clãs' },
-    hello: { en: "I'm {name}. I keep the round for the clans.", pt: 'Eu sou {name}. Cuido da roda dos clãs.' },
+    hello: { en: "I'm {name}. My two heads keep watch over the clans' round.", pt: 'Eu sou {name}. Minhas duas cabeças vigiam a roda dos clãs.' },
     what: { en: 'The Clan War is fought with your clan, as a squad, at an easy pace.', pt: 'A Guerra de Clãs se luta junto do seu clã, em esquadrão, no seu ritmo.' },
-    invite: { en: 'Come when your squad is ready.', pt: 'Venha quando o esquadrão estiver pronto.' },
+    invite: { en: 'The mist settles when your squad is ready. Come then.', pt: 'A névoa assenta quando o esquadrão está pronto. Venha nessa hora.' },
   },
   'hall.feira': {
     place: { en: 'Fair', pt: 'Feira' },
