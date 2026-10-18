@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BOSS_ROSTER, BOSS_ART, BOSS_FULL_ART, bossArt, bossText } from './bossRoster';
 import { essenceHasEn } from '../utils/soulProfile/essenceLabels';
-import { EXTRA_NPC_ART } from '../assets/soulmon/npcs';
-import { EXTRA_NPC_VOICE, extraNpcVoice, type ExtraNpcId } from '../utils/areaNpcVoice';
+import { EXTRA_NPC_ART, NOVO_NPC_ART } from '../assets/soulmon/npcs';
+import { EXTRA_NPC_VOICE, extraNpcVoice, NOVO_NPC_VOICE, novoNpcVoice, type ExtraNpcId, type NovoNpcId } from '../utils/areaNpcVoice';
 
 // Mesmas listas de cobrança de `utils/petVoice.test.ts` (texto que o jogador lê).
 const PROIBIDAS_PT = [
@@ -97,5 +97,27 @@ describe('15 NPCs extras (12 da leva npcs-femininas + 3 do banco, 01/10/2026)', 
   it('a fala da Datura não flerta (pedido do dono na instalação)', () => {
     expect(extraNpcVoice('venenos', 'en-US').line).not.toMatch(FLERTE);
     expect(extraNpcVoice('venenos', 'pt-BR').line).not.toMatch(FLERTE);
+  });
+});
+
+describe('15 NPCs novos (leva `E:/novos npcs`, 15/10/2026)', () => {
+  const ids = Object.keys(NOVO_NPC_VOICE) as NovoNpcId[];
+  const CATEGORIAS = ['oficio', 'mistico', 'natureza', 'sombrio', 'criatura'];
+
+  it('15 artes próprias, sem colidir com os extras, com categoria e voz nos dois idiomas', () => {
+    expect(ids).toHaveLength(15);
+    expect(Object.keys(NOVO_NPC_ART).sort()).toEqual([...ids].sort());
+    const todas = [...Object.values(EXTRA_NPC_ART), ...Object.values(NOVO_NPC_ART)];
+    expect(new Set(todas).size).toBe(todas.length);
+    for (const id of ids) {
+      expect(NOVO_NPC_ART[id], id).toMatch(new RegExp(`npc-n-${id}`));
+      expect(CATEGORIAS).toContain(NOVO_NPC_VOICE[id].category);
+      for (const lang of ['pt-BR', 'en-US'] as const) {
+        const v = novoNpcVoice(id, lang);
+        expect(v.name).not.toMatch(/mon$/i);
+        expect(v.line.length).toBeGreaterThan(0);
+      }
+      semCobranca(NOVO_NPC_VOICE[id].linePt, NOVO_NPC_VOICE[id].lineEn);
+    }
   });
 });
