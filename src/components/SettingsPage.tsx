@@ -12,6 +12,7 @@ import { SubscriptionSection } from './SubscriptionSection';
 import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { SLEEP_REMINDER_EVENT } from '../utils/restWindow';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
@@ -665,6 +666,8 @@ export function SettingsPage({
             const next = !sleepReminderOn;
             writeFlag(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, next, { silent: true });
             setSleepReminderOn(next);
+            // O NotificationManager relê a flag e reenvia a inscrição de push.
+            try { window.dispatchEvent(new Event(SLEEP_REMINDER_EVENT)); } catch { /* sem window */ }
           }}
           label={isPt ? 'Lembrete de deitar' : 'Bedtime reminder'}
           language={language}

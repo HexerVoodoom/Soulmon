@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
@@ -6,7 +6,7 @@ import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 // import é a fronteira que faltava: as três árvores (cliente, worker, cron)
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
 import { pushCopy, sleepReminderCopy, eveningCopy, mealInviteCopy, mealPushKind } from '../../functions/api/_pushCopy.js';
-import { sleepReminderAt } from '../utils/restWindow';
+import { SLEEP_REMINDER_EVENT, serverSleep, sleepReminderAt } from '../utils/restWindow';
 import { readFlagOr } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { MEAL_KEYS, inRestArc, parseHHMM, restArc, serverMeals } from '../utils/mealRhythm';
@@ -100,6 +100,25 @@ export function NotificationManager({
   const mealsPayload = mealPush ? serverMeals(mealRhythm, restWindow, new Date()) : null;
   const mealsKey = JSON.stringify(mealsPayload);
 
+  /* Lembrete de deitar no push: a flag mora no localStorage (Configurações), então
+     vira estado aqui, relido no evento que a SettingsPage dispara (e no `storage`
+     de outra aba). Desligar muda `sleepKey` → o efeito de inscrição reenvia sem
+     `sleep` → o servidor (que regrava o registro inteiro) deixa de enviar. */
+  const [sleepOn, setSleepOn] = useState(() => readFlagOr(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, true));
+  useEffect(() => {
+    const reler = () => setSleepOn(readFlagOr(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, true));
+    window.addEventListener(SLEEP_REMINDER_EVENT, reler);
+    window.addEventListener('storage', reler);
+    return () => {
+      window.removeEventListener(SLEEP_REMINDER_EVENT, reler);
+      window.removeEventListener('storage', reler);
+    };
+  }, []);
+  const sleepPayload = enabled ? serverSleep(restWindow, sleepOn, new Date()) : null;
+  const sleepKey = JSON.stringify(sleepPayload);
+  const sleepPushRef = useRef(sleepPayload !== null);
+  sleepPushRef.current = sleepPayload !== null;
+
   // Push subscription — register/unregister when notifications toggle. Native
   // Android uses FCM (the WebView has no Web Push support); browsers/PWA use
   // Web Push VAPID.
@@ -110,10 +129,10 @@ export function NotificationManager({
       if (isNativeAndroid) {
         registerForPushNotifications(petName, language, (title, body) => {
           toast(title, { description: body });
-        }, saveId, mealsPayload);
+        }, saveId, mealsPayload, sleepPayload);
       } else {
         // WP1.17 — a idade vai junto: é ela que dá voz própria aos dias 1 e 2.
-        subscribeToPush(petName, language, bornAt, saveId, mealsPayload);
+        subscribeToPush(petName, language, bornAt, saveId, mealsPayload, sleepPayload);
       }
     } else {
       if (isNativeAndroid) {
@@ -124,7 +143,7 @@ export function NotificationManager({
         unsubscribeFromPush();
       }
     }
-  }, [enabled, petName, language, saveId, mealsKey]);
+  }, [enabled, petName, language, saveId, mealsKey, sleepKey]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {
@@ -345,7 +364,7 @@ export function NotificationManager({
       }
 
       // 22:00 — goodnight (always fires regardless of tasks)
-      if (hh === 22 && !(mealPushRef.current && restWindowRef.current) && lastGoodnightDate.current !== today) {
+      if (hh === 22 && !(mealPushRef.current && restWindowRef.current) && !sleepPushRef.current &&lastGoodnightDate.current !== today) {
         const c = copia(22);
         if (c) {
           lastGoodnightDate.current = today;

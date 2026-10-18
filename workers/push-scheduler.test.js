@@ -14,7 +14,9 @@
  * regras de limpeza de inscrição morta.
  */
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import worker, { previousSeasonBrt } from './push-scheduler.js';
+import worker, { previousSeasonBrt, sleepNotifFor, cedeAoRitmo, mealNotifFor } from './push-scheduler.js';
+import { lembreteDeInscricao } from '../functions/api/_pushIdentity.js';
+import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 
 /**
  * Token de registro com a FORMA de um real. Era `'t'` até 09/09/2026, e virou
@@ -450,4 +452,91 @@ describe('push-scheduler — fechamento da season (WP4.18)', () => {
     for (const h of [10, 16, 22]) await worker.scheduled(emBrt(2026, 9, 1, h), envSeason());
     expect(chamadas.filter(x => x.url.includes('closeSeason'))).toHaveLength(1);
   });
+});
+
+describe('push-scheduler — LEMBRETE DE DEITAR no push (P-01)', () => {
+  // instante UTC em que o relógio LOCAL (fuso tz, min a leste) marca hh:mm de 2026-10-12
+  const local = (hh, mm, tz) => new Date(Date.UTC(2026, 9, 12, hh, mm) - tz * 60_000);
+  const S = (hh, mm) => hh * 60 + mm;
+  const sub = (s, tz, extra = {}) => ({ petName: 'Bito', language: 'en-US', sleep: { s, tz }, ...extra });
+
+  it('janela 23:00 -> alvo 22:30 -> dispara no tick 22:30 (BRT), e só nele', () => {
+    const c = sleepNotifFor(sub(S(23, 0), -180), local(22, 30, -180));
+    expect(c).toEqual(sleepReminderCopy('Bito', 'en-US'));
+    expect(c.tag).toBe('pet-sleep-reminder');
+    expect(sleepNotifFor(sub(S(23, 0), -180), local(22, 0, -180))).toBeNull();
+    expect(sleepNotifFor(sub(S(23, 0), -180), local(23, 0, -180))).toBeNull();
+  });
+
+  it('janela 22:15 -> alvo 21:45 -> tick 21:30 (chega ate 29 min ANTES, nunca depois)', () => {
+    expect(sleepNotifFor(sub(S(22, 15), -180), local(21, 30, -180))).not.toBeNull();
+    expect(sleepNotifFor(sub(S(22, 15), -180), local(22, 0, -180))).toBeNull();
+  });
+
+  it('cron atrasado uns minutos ainda cai no mesmo tick (snap)', () => {
+    expect(sleepNotifFor(sub(S(23, 0), -180), local(22, 38, -180))).not.toBeNull();
+  });
+
+  it.each([['Toquio +540', 540], ['Brasilia -180', -180], ['India +330', 330]])('fuso %s', (_n, tz) => {
+    expect(sleepNotifFor(sub(S(23, 0), tz), local(22, 30, tz))).not.toBeNull();
+    expect(sleepNotifFor(sub(S(23, 0), tz), local(22, 30, tz + 60))).toBeNull();
+  });
+
+  it('atravessa a meia-noite: inicio 00:10 -> alvo 23:40 -> tick 23:30 do dia anterior', () => {
+    expect(sleepNotifFor(sub(S(0, 10), -180), local(23, 30, -180))).not.toBeNull();
+    expect(sleepNotifFor(sub(S(0, 10), -180), local(0, 0, -180))).toBeNull();
+  });
+
+  it('sem sleep (desligado) ou sleep invalido: nunca envia', () => {
+    expect(sleepNotifFor({ petName: 'x' }, local(22, 30, -180))).toBeNull();
+    expect(sleepNotifFor({ sleep: { s: 1500, tz: -180 } }, local(22, 30, -180))).toBeNull();
+    expect(sleepNotifFor(null, new Date())).toBeNull();
+  });
+
+  it('D0 nao envia; D1 envia', () => {
+    const t = local(22, 30, -180);
+    expect(sleepNotifFor(sub(S(23, 0), -180, { bornAt: '2026-10-12' }), t)).toBeNull();
+    expect(sleepNotifFor(sub(S(23, 0), -180, { bornAt: '2026-10-11' }), t)).not.toBeNull();
+  });
+
+  it('idioma pt-BR usa a copy do dono unico', () => {
+    const c = sleepNotifFor(sub(S(23, 0), -180, { language: 'pt-BR' }), local(22, 30, -180));
+    expect(c).toEqual(sleepReminderCopy('Bito', 'pt-BR'));
+  });
+
+  it('as 22h BRT: o boa-noite cede se ha sleep valido, e so entao', () => {
+    expect(cedeAoRitmo(sub(S(23, 0), -180), 22)).toBe(true);
+    expect(cedeAoRitmo(sub(S(23, 0), -180), 10)).toBe(false);
+    expect(cedeAoRitmo({ petName: 'x' }, 22)).toBe(false);
+    expect(cedeAoRitmo({ sleep: { s: 99999, tz: 0 } }, 22)).toBe(false);
+  });
+
+  it('passada de 30 min: refeicao tem prioridade sobre o lembrete no mesmo tick', () => {
+    const meals = { t: [540, 810, 1320], tz: -180 };
+    // janela 22:30+30=23:00 inicio -> alvo 22:30; jantar tambem as 22:00? usa tick 22:00 vs 22:30: sem colisao
+    const s = sub(S(23, 0), -180, { meals });
+    const t = local(22, 30, -180);
+    expect(mealNotifFor(s, t) ?? sleepNotifFor(s, t)).toEqual(sleepReminderCopy('Bito', 'en-US'));
+  });
+
+  it('worker real: passada de 30 min envia o lembrete e depois nada no resto do dia', async () => {
+    stubPush(201);
+    const kv = fakeKV({ 'push:1': JSON.stringify({ endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: SUB_KEYS, petName: 'Bito', language: 'en-US', sleep: { s: 1380, tz: -180 } }) });
+    const env = { PUSH_SUBSCRIPTIONS: kv, VAPID_JWK: await vapidJwk() };
+    for (let i = 0; i < 48; i++) {
+      await worker.scheduled({ scheduledTime: Date.UTC(2026, 9, 12, 3, 0) + i * 1_800_000, cron: '*/30 * * * *' }, env);
+    }
+    expect(pushed).toHaveLength(1);
+  });
+});
+
+describe('_pushIdentity — lembreteDeInscricao', () => {
+  it('aceita {s 0..1439, tz inteiro -720..840 multiplo de 15}', () => {
+    expect(lembreteDeInscricao({ s: 1380, tz: -180 })).toEqual({ s: 1380, tz: -180 });
+    expect(lembreteDeInscricao({ s: 0, tz: 840, extra: 1 })).toEqual({ s: 0, tz: 840 });
+  });
+  it.each([
+    [null], [undefined], ['x'], [{}], [{ s: 1440, tz: 0 }], [{ s: -1, tz: 0 }], [{ s: 1.5, tz: 0 }],
+    [{ s: '60', tz: 0 }], [{ s: 60, tz: 7 }], [{ s: 60, tz: 900 }], [{ s: 60, tz: -780 }], [{ s: 60 }],
+  ])('rejeita %j', (v) => { expect(lembreteDeInscricao(v)).toBeUndefined(); });
 });

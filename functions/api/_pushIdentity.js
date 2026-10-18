@@ -73,6 +73,20 @@ export function refeicoesDeInscricao(v) {
 }
 
 /**
+ * O LEMBRETE DE DEITAR na inscrição (opt-in): `{ s, tz }` — `s` = minutos do
+ * INÍCIO da janela de descanso (0..1439), `tz` = fuso em minutos a leste de UTC
+ * (múltiplo de 15, -12h..+14h, igual às refeições). Defeito DESCARTA o campo:
+ * ausente = desligado = sem push.
+ */
+export function lembreteDeInscricao(v) {
+  if (!v || typeof v !== 'object') return undefined;
+  const { s, tz } = v;
+  if (!Number.isInteger(s) || s < 0 || s > 1439) return undefined;
+  if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return undefined;
+  return { s, tz };
+}
+
+/**
  * Token de registro do FCM. O formato do Google não é publicado como contrato,
  * então o teste aqui é de FORMA e de TETO, não de validade: o que ele precisa
  * impedir é `{token: {}}`, `{token: []}` e um megabyte de lixo virarem uma

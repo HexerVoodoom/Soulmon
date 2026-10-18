@@ -8,6 +8,7 @@ import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeS
 import { authHeaders } from './auth';
 import { dayKeyToIso } from './playerDay';
 import type { ServerMeals } from './mealRhythm';
+import type { ServerSleep } from './restWindow';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -157,6 +158,8 @@ export const subscribeToPush = async (
   /** Ritmo das refeições — só com o aviso LIGADO (`serverMeals` devolve `null`
    *  senão, e aí nada do ritmo vai para o servidor). */
   meals?: ServerMeals | null,
+  /** Lembrete de deitar no push — `null`/ausente = desligado (nada vai). */
+  sleep?: ServerSleep | null,
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (!webNotificationGranted()) return false;
@@ -182,6 +185,7 @@ export const subscribeToPush = async (
       bornAt: dayKeyToIso(bornAt) ?? undefined,
       ...(saveId ? { saveId } : {}),
       ...(meals ? { meals } : {}),
+      ...(sleep ? { sleep } : {}),
     };
 
     // `Authorization` quando há sessão (QA rodada 2, segurança §2): o
@@ -236,6 +240,7 @@ let fcmPetName = '';
 let fcmLanguage: 'pt-BR' | 'en-US' = 'en-US';
 let fcmSaveId: string | null = null;
 let fcmMeals: ServerMeals | null = null;
+let fcmSleep: ServerSleep | null = null;
 
 export const registerForPushNotifications = async (
   petName: string,
@@ -245,8 +250,11 @@ export const registerForPushNotifications = async (
   saveId?: string | null,
   /** Ritmo das refeições — ver `subscribeToPush`. */
   meals?: ServerMeals | null,
+  /** Lembrete de deitar — ver `subscribeToPush`. */
+  sleep?: ServerSleep | null,
 ): Promise<boolean> => {
   if (Capacitor.getPlatform() !== 'android') return false;
+  fcmSleep = sleep ?? null;
   fcmPetName = petName;
   fcmLanguage = language;
   fcmSaveId = saveId ?? null;
@@ -275,6 +283,7 @@ export const registerForPushNotifications = async (
             token: token.value, petName: fcmPetName, language: fcmLanguage,
             ...(fcmSaveId ? { saveId: fcmSaveId } : {}),
             ...(fcmMeals ? { meals: fcmMeals } : {}),
+            ...(fcmSleep ? { sleep: fcmSleep } : {}),
           }),
         })).catch((err) => console.error('FCM token upload failed:', err));
       });

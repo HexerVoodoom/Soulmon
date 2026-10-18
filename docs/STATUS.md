@@ -5319,3 +5319,8 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - **Feito:** 15 dos 17 PNG viraram `soulmon/npcs/npc-n-<id>.png`, registrados em `NOVO_NPC_ART` (`npcs/index.ts`) e `NOVO_NPC_VOICE` (`utils/areaNpcVoice.ts`: nome, ofício, fala PT+EN, **categoria** `oficio|mistico|natureza|sombrio|criatura`). Pós: bbox, 768² / corpo inteiro 1100, alfa binarizado em 128; enfermeira (xadrez assado) e alquimista (fundo preto) recortadas por flood-fill. Régua: bloco novo em `data/bossRoster.test.ts`. Doc: [`NPCS-NOVOS.md`](NPCS-NOVOS.md).
 - **Sem chamada**, como os extras (NPC-1). **Pendentes (2):** sereia (fundo em degradê — regerar em `#00FF00`) e Lodi de costas. Os originais seguem em `E:/novos npcs`.
 - **Depende do dono:** onde cada um aparece; Ossel/Tzali usam as duas formas? Obs.: `missionsMenu.render.test.tsx` já falhava antes (2 testes, sem relação).
+
+## 18/10/2026 — Frente P: lembrete de deitar por push (worker)
+
+- **Feito:** `sleepNotifFor` no `workers/push-scheduler.js`; inscrição grava `sleep: {s, tz}` (Web Push + FCM) quando há janela e `SLEEP_REMINDER_ENABLED` ligado. Decisão §100.
+- **Depende do dono — deploy MANUAL do worker** (o push da main não builda o worker): `cd workers && npx wrangler deploy`. Depois verificar: (1) `npx wrangler deployments list --name digiapp-push-scheduler` mostra o deploy novo; (2) os 4 crons continuam (`0 1`, `0 13`, `0 19`, `*/30`); (3) `npx wrangler tail digiapp-push-scheduler` numa passada `meal tick` mostra `sent` ≥ 1 para quem tem janela, no tick 30 min antes do início; (4) num aparelho com o app FECHADO, o lembrete chega e o toque abre o app; com o switch desligado, não chega.

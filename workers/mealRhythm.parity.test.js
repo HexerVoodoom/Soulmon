@@ -119,6 +119,16 @@ describe('o TETO diário de push, com o worker real', () => {
     expect(enviados).toHaveLength(3);
   });
 
+  it('com ritmo + lembrete de deitar (sem rest): 3 refeicoes + lembrete = 4 = teto, o boa-noite cede', async () => {
+    const enviados = await varrerODia(sub({ meals: MEALS, sleep: { s: 1380, tz: -180 } }), meiaNoiteLocal(-180));
+    expect(enviados).toHaveLength(PUSH_DAILY_CAP);
+  });
+
+  it('so lembrete (sem ritmo): 10h, 16h e o lembrete = 3 (o boa-noite cede)', async () => {
+    const enviados = await varrerODia(sub({ sleep: { s: 1380, tz: -180 } }), meiaNoiteLocal(-180));
+    expect(enviados).toHaveLength(3);
+  });
+
   it('quem NÃO ligou o ritmo recebe exatamente o que recebia (zero a mais, zero a menos)', async () => {
     const enviados = await varrerODia(sub({}), meiaNoiteLocal(-180));
     expect(enviados).toHaveLength(3);
