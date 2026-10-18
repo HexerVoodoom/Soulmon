@@ -534,6 +534,10 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Dono de:** o chroma-key do sprite por API — `chromaKeyPng` (PNG com fundo verde `#00FF00` -> PNG RGBA binário, despill, ilhas `<24 px` fora, recorte com margem), `keyRgba`, `BadChromaError` (`bad-chroma`); e o codec PNG mínimo em JS puro sobre `fflate` (`decodePng`, `encodePng`).
 **Chamado por:** `generate-sprite.js` (`baixarEChavear`, `chaveioOpcional`). **Régua:** `functions/api/_chroma.test.js`, `functions/api/generate-sprite.chroma.test.js`. **Decisão:** `REGISTRO-DE-DECISOES.md` §48.
 
+### `functions/api/_betaFull.js` (18/10/2026, PR #397)
+**Dono de:** o beta-full — e-mail da allowlist `BETA_EMAILS` entra como se já tivesse o plano pago, sem comprar. **Exports:** `verifiedBetaFull(env, request, saveId?)` → `{ betaFull }` (ID token Firebase verificado em `verifyIdToken`, com `email_verified === true`; e-mail na allowlist `BETA_EMAILS`; com `saveId`, o token tem de ser do dono daquele save; fail-closed em qualquer falha) · `betaFullPublicView(view)` (devolve `tier: 'paid'`, `provider` `'beta'` se vazio e `betaFull: true`) · `logBetaFull(route)` (log `beta_full_session` sem PII). **Derivado na leitura:** nunca gravado em `ent:<saveId>`; tirar o e-mail da lista revoga na leitura seguinte e uma compra real soma por cima sem conflito.
+**Rota:** `GET /api/entitlements?action=beta-full` (antes do save existir; só o token decide) → `{ betaFull }`. **Chamado por:** `functions/api/entitlements.js` (admin vence: com `admin`, `betaFull` é falso). **Régua:** `functions/api/betaFull.test.js`.
+
 ### `functions/api/_ipHash.js` (release/beta-1, 11/10/2026)
 **Dono de:** antiabuso por HASH de IP — `ipHash` (HMAC-SHA256 com `IP_HASH_SALT`, 16 hex; o IP nunca é gravado), `takeIpQuota` (contadores `iph:<tipo>:<hash>:<dia>`, TTL 30 dias), `IP_LIMITS` (3 contas novas e 4 sprites por ip-hash/dia). Sem `IP_HASH_SALT`, nada é calculado.
 **Chamado por:** `save.js` (1ª gravação), `generate-sprite.js`. **Régua:** `functions/api/betaAccess.test.js`. **Política:** `privacidade.html` §6d.
