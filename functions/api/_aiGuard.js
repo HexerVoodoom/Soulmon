@@ -69,6 +69,7 @@ import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js'
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER, ADMIN_SPRITE_MONTHLY_CAP } from './_admin.js';
+import { verifiedBetaFull } from './_betaFull.js';
 import { betaGate } from './_betaAccess.js';
 import { takeToken } from './_rateLimit.js';
 import { alertAdmin, cruzouLimiar } from './_adminAlert.js';
@@ -364,7 +365,8 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
       if (hasFormCap) usedForm = formUsed(ent, formId);
       if (hasTierCap) {
         const porTier = limits.perAccountByTier[ent?.tier];
-        const tierDoLimite = isAdmin ? 'paid' : ent?.tier;
+        // BETA-FULL: cota de chat da conta paga (sem multiplicador de admin).
+        const tierDoLimite = (isAdmin || (await verifiedBetaFull(env, request, saveId)).betaFull) ? 'paid' : ent?.tier;
         const cota = limits.perAccountByTier[tierDoLimite];
         if (typeof cota === 'number') perAccount = cota * adminMul;
         else if (typeof porTier === 'number') perAccount = porTier * adminMul;

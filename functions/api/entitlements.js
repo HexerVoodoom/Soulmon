@@ -61,6 +61,7 @@ import { kv } from './_kv.js';
 import { bondLevelFor } from './_bond.js';
 import { gateFor } from './_gates.js';
 import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
+import { verifiedBetaFull, betaFullPublicView } from './_betaFull.js';
 
 /**
  * Teto por IP na cortesia. Amortecedor contra sonda de chave (ver
@@ -136,6 +137,10 @@ export async function onRequestOptions() {
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
+  // BETA-FULL antes do save existir (tela do ovo, saveId ainda aleatório): só o TOKEN decide.
+  if (url.searchParams.get('action') === 'beta-full') {
+    return json({ betaFull: (await verifiedBetaFull(env, request)).betaFull }, 200);
+  }
   const saveId = url.searchParams.get('id');
   if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
@@ -165,7 +170,10 @@ export async function onRequestGet({ request, env }) {
   // ADMIN (`_admin.js`): derivado na LEITURA, nunca gravado em `ent:`.
   const { admin } = await verifiedAdmin(env, request, saveId);
   if (admin) logAdminSession('entitlements');
-  const view = admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false };
+  // BETA-FULL (`_betaFull.js`): idem admin, derivado do TOKEN e nunca gravado em `ent:`.
+  const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
+  const base = betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent);
+  const view = admin ? adminPublicView(publicView(ent)) : { ...base, admin: false };
   return json({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
 
@@ -189,7 +197,9 @@ export async function onRequestPost({ request, env }) {
 
   // O admin é decidido pelo TOKEN (nunca por `body.admin`) e só sobre o próprio save.
   const { admin } = await verifiedAdmin(env, request, saveId);
-  const view = (ent) => admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false };
+  const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
+  const view = (ent) => admin ? adminPublicView(publicView(ent))
+    : { ...(betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent)), admin: false };
 
   if (action === 'spend') {
     const amount = Number(body?.amount);
@@ -224,7 +234,7 @@ export async function onRequestPost({ request, env }) {
     // duas regras de `rebirthRefusal` no app. Antes bastava `state.rebirth` forjado no save para zerar `aiLifetime.sprite` de graca.
     // O tier vem do entitlement do servidor (ou do admin pelo token), nunca do save; o Vinculo, do `totalXP` do save (limite
     // honesto de sempre: o cliente escreve o save). Conta que renasceu legitimamente passa nas duas.
-    const tierAtual = admin ? 'paid' : publicView(await readEntitlement(env, saveId)).tier;
+    const tierAtual = (admin || betaFull) ? 'paid' : publicView(await readEntitlement(env, saveId)).tier;
     if (tierAtual !== 'paid') return json({ ok: false, reason: 'not-paid' }, 403);
     if (!gateFor('renascimento', bondLevelFor(state?.totalXP)).open) return json({ ok: false, reason: 'low-bond' }, 403);
 

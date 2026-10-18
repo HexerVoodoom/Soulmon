@@ -21,6 +21,10 @@ export interface Entitlement {
    *  só aceita `=== true`. Nunca vai para o save nem para o localStorage
    *  (`utils/adminFlag.ts`). */
   admin: boolean;
+  /** BETA-FULL (18/10/2026): e-mail da allowlist `BETA_EMAILS` = plano pago sem compra. Decidido SÓ pelo servidor
+   *  (`functions/api/_betaFull.js`, derivado do token); aqui só `=== true` conta. Não vai para o save nem para o
+   *  localStorage. O `tier` já vem `paid` — a flag só serve para a UI saber que NÃO há compra a restaurar/cobrar. */
+  betaFull?: boolean;
   /** Assinatura cosmética (D10): a vitrine do trimestre está aberta? Vem SÓ do
    *  servidor (que perguntou à Google) e só destrava a vitrine — nunca regra de
    *  jogo (guard: src/security/subscriptionBoundary.contract.test.ts). Ausente
@@ -40,6 +44,7 @@ export function sanitizeEntitlement(raw: unknown): Entitlement | null {
     adsLeft: typeof r.adsLeft === 'number' && Number.isFinite(r.adsLeft) ? r.adsLeft : 0,
     ...(typeof r.adsEnabled === 'boolean' ? { adsEnabled: r.adsEnabled } : {}),
     admin: r.admin === true,
+    ...(r.betaFull === true ? { betaFull: true } : {}),
     ...(typeof r.subActive === 'boolean' ? { subActive: r.subActive } : {}),
     ...(typeof r.subUntil === 'number' && Number.isFinite(r.subUntil) && r.subUntil > 0 ? { subUntil: r.subUntil } : {}),
   };
@@ -61,6 +66,20 @@ export async function fetchEntitlement(): Promise<Entitlement | null> {
     return sanitizeEntitlement(await res.json());
   } catch {
     return null;
+  }
+}
+
+/**
+ * BETA-FULL antes de o save existir (tela do ovo no onboarding: o saveId ainda é aleatório e `fetchEntitlement` seria
+ * recusado). Só o token do login decide, no servidor. Falha/offline/sem login = false (nunca libera por engano).
+ */
+export async function fetchBetaFull(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/entitlements?action=beta-full', { headers: await authHeaders() });
+    if (!res.ok) return false;
+    return (await res.json())?.betaFull === true;
+  } catch {
+    return false;
   }
 }
 

@@ -12,6 +12,7 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { takeIpQuota } from './_ipHash.js';
 import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
+import { verifiedBetaFull } from './_betaFull.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
@@ -253,7 +254,9 @@ export async function onRequest({ request, env }) {
     const ent = publicView(await readEntitlement(env, saveId));
     // ADMIN (`_admin.js`): tier efetivo derivado do TOKEN, nunca gravado.
     const { admin } = await verifiedAdmin(env, request, saveId);
-    state.accountTier = admin ? 'paid' : ent.tier;
+    // BETA-FULL (`_betaFull.js`): allowlist = plano pago, derivado do token.
+    const betaFull = admin ? false : (await verifiedBetaFull(env, request, saveId)).betaFull;
+    state.accountTier = (admin || betaFull) ? 'paid' : ent.tier;
     state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
     return Response.json({ found: true, state }, { headers: CORS });
   }
