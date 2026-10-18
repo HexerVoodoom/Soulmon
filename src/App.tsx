@@ -572,7 +572,6 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
-const MealInviteCard = lazy(() => import('./components/MealInviteCard').then(m => ({ default: m.MealInviteCard })));
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
 const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ default: m.MapPage })));
@@ -7522,56 +7521,8 @@ export default function App() {
                 // (PRINCÍPIOS §2: aviso é texto; âmbar = convite). É AVISO,
                 // NUNCA BLOQUEIO: a lista inteira continua viva. Última da
                 // fila — é o mais adiável de todos os avisos.
-                /* ── 5b. RITMO DAS REFEIÇÕES ─────────────────────────────
-                   Convite do pet nas três janelas do dia (depois do café, do
-                   almoço e do jantar): UMA coisa pequena, que o jogo já tem.
-                   Posição declarada: depois do recomeço e antes da carga — é
-                   um convite, e convite cede a vez a tudo o que descreve o
-                   DIA. Não cobra: não olha meta, HP nem constância (ver
-                   `utils/mealRhythm.ts`); "Agora não" dispensa a janela, e ela
-                   fecha sozinha em 2 h. Dormindo ou na janela de descanso,
-                   nada abre. */
-                {
-                  const refeicaoA = openInvite(agoraA, {
-                    settings: gameState.mealRhythm,
-                    record: gameState.mealRitual,
-                    restWindow: gameState.rest?.window ?? null,
-                    isSleeping,
-                    playerDayTz: gameState.playerDayTz,
-                  });
-                  if (refeicaoA) {
-                    const comumNaPastinha = Object.keys(gameState.foodInventory).some(
-                      e => !SPECIAL_ITEMS[e] && (gameState.foodInventory[e] ?? 0) > 0,
-                    );
-                    const kindA = pickMicroAction({
-                      poopPending: pendingPoopEvent(gameState) !== null,
-                      // Só convida a comer se comer SERVE: comida comum na pastinha,
-                      // vaga na janela horária e energia com espaço.
-                      canFeed: comumNaPastinha
-                        && feedTimesFor(gameState.careCaps, agoraA.getTime()).length < FOOD_LIMIT_PER_HOUR
-                        && hungerAt(gameState.hunger, agoraA.getTime()) < HUNGER_PREMIUM_REFUSE_AT,
-                    }, `${playerDayKey(agoraA, gameState.playerDayTz)}|${refeicaoA}`);
-                    avisos.push({
-                      key: 'refeicao',
-                      node: (
-                        <Suspense fallback={null}>
-                          <MealInviteCard
-                            language={language}
-                            petName={getCurrentStageName()}
-                            meal={refeicaoA}
-                            kind={kindA}
-                            onAct={kind => {
-                              if (kind === 'snack') setBackpackSignal(n => n + 1);
-                              else if (kind === 'poop') handleShower();
-                              else { falar(kind === 'pet' ? 'rub' : 'cheer'); atenderRefeicao(kind); }
-                            }}
-                            onSkip={() => setGameState(prev => skipMeal(prev, refeicaoA, new Date()))}
-                          />
-                        </Suspense>
-                      ),
-                    });
-                  }
-                }
+                /* ── 5b. RITMO DAS REFEIÇÕES: o cartão-convite do pet saiu (dono, 18/10/2026, ajustes da revisão 2) — agia como
+                   notificação "o pet tem algo pra você". Os lembretes de refeição seguem só como push/in-app agendado. */
 
                 /* CHECK-IN DA JANELA (beta-2 4.1): um atalho discreto que abre o bottom sheet com as 3 janelas. Independe do ritmo das
                    refeições estar ligado (usa os horários padrão ou os editados). Some quando a janela em curso já foi resgatada. */
