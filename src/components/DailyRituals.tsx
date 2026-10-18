@@ -26,10 +26,11 @@
  *  · A linha de HOJE mostra o nome e o checkbox (+ os filhos, se houver) e, só se
  *    houver, UMA linha secundária pequena com o PRAZO e o convite da assombrada
  *    (`TaskMeta lean`, decisão §46). Sem subtítulo, selo, barra, XP, adiamentos nem categoria.
- *  · `View all` (gatilho discreto + swipe) lista só TASKS agendadas/recorrentes:
- *    NÃO marca nada, só edita, e a prévia é o nome + os dias em que aparece.
+ *  · `View all` (gatilho discreto + swipe) lista TODAS as tarefas e hábitos, com busca,
+ *    filtro e ordem (revisão 2, A3/A4): NÃO marca nada, é o ÚNICO lugar que edita.
+ *    Na Home, tocar em qualquer lugar da linha marca como feita (A1).
  */
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext';
@@ -155,6 +156,10 @@ export function DailyRituals({
     return () => window.clearTimeout(id);
   }, [allOpen, telaMontada]);
   useBackLayer(allOpen, fecharTudo);
+  /* A4: busca + filtro + ordem do `View all`. */
+  const [busca, setBusca] = useState('');
+  const [filtro, setFiltro] = useState<AllFilter>('all');
+  const [ordem, setOrdem] = useState<AllSort>('default');
   const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const swipeStart = (e: ReactPointerEvent) => { swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() }; };
   const swipeEnd = (e: ReactPointerEvent, aoAcionar: (dx: number) => void) => {
@@ -203,16 +208,27 @@ export function DailyRituals({
   /* Hoje: diárias = Habits; as agendadas que caem hoje entram em Tasks. */
   const habitosHoje = devidos.filter(a => activityBucket(a) === 'habit');
   const agendadasHoje = devidos.filter(a => activityBucket(a) === 'scheduled');
-  /* View all: SÓ tasks agendadas/recorrentes (e as pontuais com início futuro). Hábito não entra. */
-  const programadasTodas = atividades.filter(a => activityBucket(a) === 'scheduled');
-  const futuras = ativas.filter(t => !taskIsForToday(t, now));
+
+  /* View all (A3/A4): TODA tarefa e hábito, para editar. Busca por nome, filtro por tipo, ordem. */
+  const quandoDe = (t: Task): string => {
+    const d = parseDayValue(t.startDate ?? '') ?? new Date(NaN);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  const todasLinhas: AllLine[] = [
+    ...ativas.map((t): AllLine => ({ key: `t:${t.id}`, kind: 'task', name: t.name, preview: quandoDe(t), onEdit: () => onEditTask(t.id) })),
+    ...atividades.map((a): AllLine => ({
+      key: `h:${a.id}`, kind: activityBucket(a) === 'habit' ? 'habit' : 'task', name: a.name,
+      preview: frequencyLabel(a, isPt, diasCurtos), onEdit: () => onEditActivity(a.id),
+    })),
+  ];
+  const linhasTodas = filterAndSortLines(todasLinhas, busca, filtro, ordem, language);
+  const tAll = isPt ? 'Todas' : 'All';
 
   const gavetaRotulo = isPt
     ? `Guardadas (${guardadas.length})`
     : `Put aside (${guardadas.length})`;
   const tTasks = isPt ? 'Tarefas' : 'Tasks';
   const tHabits = isPt ? 'Hábitos' : 'Habits';
-  const tScheduled = isPt ? 'Tarefas programadas' : 'Scheduled tasks';
 
   const secao = (titulo: string, key: string) => (
     <li key={`sec-${key}`} className="sm3-secao" data-ritual-section={key}><h3>{titulo}</h3></li>
@@ -245,7 +261,6 @@ export function DailyRituals({
         done={task.completed}
         haunted={isHaunted(task, now)}
         onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
-        onEdit={() => onEditTask(task.id)}
         language={language}
         expandable={comFilhos}
         expanded={aberta}
@@ -301,7 +316,6 @@ export function DailyRituals({
         done
         inert
         onToggle={() => {}}
-        onEdit={() => {}}
         language={language}
         toggleLabelPt={`Tarefa concluída: ${c.name}`}
         toggleLabelEn={`Task completed: ${c.name}`}
@@ -365,23 +379,24 @@ export function DailyRituals({
           swipeStart={swipeStart}
           swipeEnd={swipeEnd}
         >
-          {(programadasTodas.length > 0 || futuras.length > 0) ? (
-            <section aria-label={tScheduled} data-all-section="scheduled">
-              <h3 className="sm3-secao-h">{tScheduled}</h3>
+          <AllFilters
+            language={language}
+            busca={busca} onBusca={setBusca}
+            filtro={filtro} onFiltro={setFiltro}
+            ordem={ordem} onOrdem={setOrdem}
+          />
+          {linhasTodas.length > 0 ? (
+            <section aria-label={tAll} data-all-section="all">
+              <h3 className="sm3-secao-h">{tAll}</h3>
               <ul className="sm2-ritual-list">
-                {programadasTodas.map(a => renderEditOnly(
-                  `h:${a.id}`, a.name, frequencyLabel(a, isPt, diasCurtos), () => onEditActivity(a.id),
-                ))}
-                {futuras.map(t => {
-                  const d = parseDayValue(t.startDate ?? '') ?? new Date(NaN);
-                  const quando = Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-                  return renderEditOnly(`t:${t.id}`, t.name, quando, () => onEditTask(t.id));
-                })}
+                {linhasTodas.map(l => renderEditOnly(l.key, l.name, l.preview, l.onEdit))}
               </ul>
             </section>
           ) : (
-            <p style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>
-              {isPt ? 'Nenhuma tarefa programada. Tarefas em dias específicos aparecem aqui.' : 'No scheduled tasks. Tasks on specific days show up here.'}
+            <p data-all-empty style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>
+              {busca.trim() || filtro !== 'all'
+                ? (isPt ? 'Nada encontrado.' : 'Nothing found.')
+                : (isPt ? 'Nenhuma tarefa ainda. Crie uma com o botão +.' : 'No tasks yet. Create one with the + button.')}
             </p>
           )}
         </AllActivitiesScreen>,
@@ -446,7 +461,6 @@ export function DailyRituals({
         max={etapas.length > 0 ? etapas.length : 1}
         done={activity.isComplete}
         dimmed={!activity.disponivelHoje}
-        onEdit={() => onEditActivity(activity.id)}
         expandable={etapas.length > 0}
         expanded={aberta}
         onExpand={() => onExpand(ritualOpenKey(activity.id, activity.isComplete), !aberta)}
@@ -474,6 +488,52 @@ export function DailyRituals({
       </RitualRow>
     );
   }
+}
+
+export type AllFilter = 'all' | 'tasks' | 'habits';
+export type AllSort = 'default' | 'az';
+export interface AllLine { key: string; kind: 'task' | 'habit'; name: string; preview: string; onEdit: () => void }
+
+/** A4: busca (sem acento/caixa) + filtro por tipo + ordem alfabética opcional. Pura. */
+export function filterAndSortLines(lines: AllLine[], busca: string, filtro: AllFilter, ordem: AllSort, language: Language): AllLine[] {
+  const norm = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const q = norm(busca.trim());
+  const out = lines.filter(l =>
+    (filtro === 'all' || (filtro === 'tasks' ? l.kind === 'task' : l.kind === 'habit'))
+    && (!q || norm(l.name).includes(q)));
+  if (ordem === 'az') out.sort((a, b) => a.name.localeCompare(b.name, language === 'pt-BR' ? 'pt-BR' : 'en'));
+  return out;
+}
+
+/** Busca + filtro + ordem do `View all` (A4). */
+function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem }: {
+  language: Language; busca: string; onBusca: (v: string) => void;
+  filtro: AllFilter; onFiltro: (v: AllFilter) => void; ordem: AllSort; onOrdem: (v: AllSort) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const chip = (ativo: boolean): CSSProperties => ({ ...sm2Button(ativo ? 'primary' : 'outline', false, 'sm'), padding: '0 12px' });
+  const filtros: [AllFilter, string][] = [['all', isPt ? 'Todas' : 'All'], ['tasks', isPt ? 'Tarefas' : 'Tasks'], ['habits', isPt ? 'Hábitos' : 'Habits']];
+  return (
+    <div data-all-filters style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+      <input
+        type="search"
+        data-all-search
+        value={busca}
+        onChange={e => onBusca(e.target.value)}
+        placeholder={isPt ? 'Buscar por nome' : 'Search by name'}
+        aria-label={isPt ? 'Buscar por nome' : 'Search by name'}
+        style={{ minHeight: 44, boxSizing: 'border-box', padding: '0 12px', borderRadius: 10, border: '1px solid var(--sm2-line)', background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-md)' }}
+      />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {filtros.map(([k, rot]) => (
+          <button key={k} type="button" data-all-filter={k} aria-pressed={filtro === k} onClick={() => onFiltro(k)} style={chip(filtro === k)}>{rot}</button>
+        ))}
+        <button type="button" data-all-sort aria-pressed={ordem === 'az'} onClick={() => onOrdem(ordem === 'az' ? 'default' : 'az')} style={{ ...chip(ordem === 'az'), marginLeft: 'auto' }}>
+          A–Z
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /**

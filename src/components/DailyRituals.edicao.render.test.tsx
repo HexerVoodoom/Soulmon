@@ -73,7 +73,7 @@ describe('View all: edição completa', () => {
     // o véu mora no <body>, ao lado da tela (z 80): dentro do container `fixed` do App ele ficava ATRÁS dela
     expect(modal.closest('[data-modal-backdrop]')!.parentElement).toBe(document.body);
     // sem editor de texto inline: a linha segue sendo só leitura
-    expect(tela()!.querySelector('input')).toBeNull();
+    expect(tela()!.querySelector('input:not([data-all-search])')).toBeNull();
   });
 
   it('salvar atualiza a lista; o modal fecha e a tela segue utilizável', () => {

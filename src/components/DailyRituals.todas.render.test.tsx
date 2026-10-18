@@ -89,21 +89,38 @@ describe('2.3 View all', () => {
     expect(bloco).toContain('font-weight: 400');
     expect(bloco).toContain('color: var(--sm2-muted)');
   });
-  it('o botão abre a tela SÓ com tasks programadas: nome + dias; hábito e pontual de hoje ficam fora', () => {
+  it('o botão abre a tela com TODAS as tarefas e hábitos (A3): nome + dias, para editar', () => {
     mount();
     abrirTudo();
     const tela = document.querySelector('[data-all-activities]') as HTMLElement;
     expect(tela).not.toBeNull();
-    const sec = within(tela.querySelector('[data-all-section="scheduled"]') as HTMLElement);
-    expect(sec.getByText('Reunião de segunda')).toBeTruthy();   // segunda continua em View all
-    expect(sec.getByText('Mon')).toBeTruthy();                  // com os dias em que aparece
+    const sec = within(tela.querySelector('[data-all-section="all"]') as HTMLElement);
+    expect(sec.getByText('Reunião de segunda')).toBeTruthy();
+    expect(sec.getByText('Mon')).toBeTruthy();
     expect(sec.getByText('Aula de terça')).toBeTruthy();
     expect(sec.getByText('Trocar filtro')).toBeTruthy();
     expect(sec.getByText('Every 30 days')).toBeTruthy();
-    expect(sec.getByText('Declarar imposto')).toBeTruthy();     // pontual com início futuro
-    expect(within(tela).queryByText('Beber água')).toBeNull();  // hábito (todo dia) não aparece
-    expect(within(tela).queryByText('Pagar conta')).toBeNull(); // pontual de hoje mora no Today
-    expect(tela.querySelector('[data-all-section="habits"], [data-all-section="tasks"]')).toBeNull();
+    expect(sec.getByText('Declarar imposto')).toBeTruthy();
+    expect(sec.getByText('Beber água')).toBeTruthy();   // hábito agora também edita aqui
+    expect(sec.getByText('Pagar conta')).toBeTruthy();  // pontual de hoje também
+  });
+  it('A4: busca por nome, filtro por tipo e ordem A-Z', () => {
+    mount();
+    abrirTudo();
+    const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+    const nomes = () => Array.from(tela.querySelectorAll('.sm2-ritual-name')).map(e => e.textContent);
+    fireEvent.change(tela.querySelector('[data-all-search]') as HTMLInputElement, { target: { value: 'aula' } });
+    expect(nomes()).toEqual(['Aula de terça']);
+    fireEvent.change(tela.querySelector('[data-all-search]') as HTMLInputElement, { target: { value: 'zzz' } });
+    expect(tela.querySelector('[data-all-empty]')).not.toBeNull();
+    fireEvent.change(tela.querySelector('[data-all-search]') as HTMLInputElement, { target: { value: '' } });
+    fireEvent.click(tela.querySelector('[data-all-filter="habits"]') as HTMLElement);
+    expect(nomes()).toContain('Beber água');
+    expect(nomes()).not.toContain('Pagar conta');
+    fireEvent.click(tela.querySelector('[data-all-filter="all"]') as HTMLElement);
+    fireEvent.click(tela.querySelector('[data-all-sort]') as HTMLElement);
+    const az = nomes() as string[];
+    expect(az).toEqual([...az].sort((x, y) => x.localeCompare(y, 'en')));
   });
   it('NÃO dá para marcar: sem checkbox; tocar na linha abre a edição', () => {
     const onEditActivity = vi.fn();

@@ -1,3 +1,4 @@
+import { missionsDoneFirst } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
@@ -184,7 +185,13 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
 }) {
   const isPt = language === 'pt-BR';
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
-  const list = MISSIONS.filter(m => m.category === cat);
+  const list = missionsDoneFirst(
+    MISSIONS.filter(m => m.category === cat),
+    m => {
+      const feita = isMissionComplete(m.id, missionProgress);
+      return !feita ? 'open' : (claimed === undefined || claimed.includes(m.id)) ? 'claimed' : 'ready';
+    },
+  );
 
   return (
     <div data-conquistas style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

@@ -3068,18 +3068,11 @@ export default function App() {
    * O disparo é via `queueTaskGains` + efeito, para o toast ser calculado depois
    * do render que já aplicou a conclusão.
    */
-  const announceTaskGains = useCallback((category: ActivityCategory) => {
+  const announceTaskGains = useCallback((_category: ActivityCategory) => {
     const isPt = language === 'pt-BR';
-    const food = FOOD_BY_CATEGORY[category];
-    const parts = [
-      isPt ? `${food?.emoji ?? '🍎'} +1 comida` : `${food?.emoji ?? '🍎'} +1 food`,
-    ];
-    if (dailyTotal > 0) {
-      parts.push(isPt ? `📋 ${dailyDone}/${dailyTotal} do dia` : `📋 ${dailyDone}/${dailyTotal} today`);
-    }
-    // (beta-2 3.5) A dica "falta encher a energia" SAIU: a energia não enche mais comendo (a comida enche a FOME e o tempo regenera a
-    // energia), e a meta do dia não depende dela desde 11/10/2026 — o toast não cobra nada além do que a pessoa acabou de fazer.
-    toast(parts.join('  ·  '));
+    // Revisão 2 (A2): UM aviso só — o progresso do dia. A parte "+1 comida" saiu (a comida já aparece no inventário/animação).
+    if (dailyTotal <= 0) return;
+    toast(isPt ? `📋 ${dailyDone}/${dailyTotal} do dia` : `📋 ${dailyDone}/${dailyTotal} today`);
   }, [language, dailyDone, dailyTotal]);
 
   /**

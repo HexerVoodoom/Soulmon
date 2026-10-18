@@ -234,7 +234,7 @@ export interface RitualRowProps {
   onToggle?: () => void;
   /** `View all`: a linha NÃO marca nada — sem checkbox, o toque inteiro abre a edição. */
   editOnly?: boolean;
-  onEdit: () => void;
+  onEdit?: () => void;
   /** Expansor das etapas, no lugar do checkbox. */
   expandable?: boolean;
   expanded?: boolean;
@@ -269,6 +269,23 @@ export function RitualRow({
     ? (toggleLabelPt ?? (done ? 'Concluído' : 'Marcar como concluído'))
     : (toggleLabelEn ?? (done ? 'Completed' : 'Mark as completed'));
   const abrir = pai && !done && !expanded ? onExpand : undefined;
+  /* A1: o que o toque na linha faz. Pai: abre/fecha as etapas. Folha: marca (se puder). */
+  const acionar: (() => void) | undefined = editOnly
+    ? onEdit
+    : pai ? onExpand : (done || dimmed || inert ? undefined : onToggle);
+  const nomeSpan = (
+    <span
+      className="sm2-ritual-name"
+      title={name}
+      style={{
+        color: tinta,
+        textDecoration: done ? 'line-through' : 'none',
+        fontWeight: done ? 400 : 500,
+      }}
+    >
+      {name}
+    </span>
+  );
   return (
     <li
       data-flip-key={flipKey}
@@ -294,37 +311,27 @@ export function RitualRow({
           />
         )}
 
-        {/* Coluna de texto. EDITAR = o nome (botão nomeado, o controle
-            acessível); a coluna inteira também responde ao toque (atalho de
-            ponteiro), sem papel de botão para não duplicar a parada no Tab. */}
+        {/* Coluna de texto. Revisão 2 (A1): na Home o toque em QUALQUER lugar da linha
+            marca como feita (ou abre/fecha as etapas, no pai); não há mais editar aqui —
+            editar mora só no `View all` (`editOnly`), onde o nome é o botão de editar. */}
         <div
           className="sm2-ritual-main"
-          onClick={inert ? undefined : onEdit}
-          style={{ cursor: inert ? 'default' : 'pointer' }}
+          onClick={acionar ? () => acionar() : undefined}
+          data-ritual-tap={editOnly ? undefined : 'true'}
+          style={{ cursor: acionar ? 'pointer' : 'default' }}
         >
-          {/* `title` porque o nome TRUNCA: sem ele, um nome longo em PT-BR
-              some sem recurso nenhum de leitura. */}
-          <button
-            type="button"
-            className="sm2-ritual-edit"
-            data-ritual-edit
-            onClick={inert ? undefined : (e) => { e.stopPropagation(); onEdit(); }}
-            aria-disabled={inert || undefined}
-            aria-label={`${isPt ? 'Editar' : 'Edit'}: ${name}`}
-            style={{ cursor: inert ? 'default' : 'pointer' }}
-          >
-            <span
-              className="sm2-ritual-name"
-              title={name}
-              style={{
-                color: tinta,
-                textDecoration: done ? 'line-through' : 'none',
-                fontWeight: done ? 400 : 500,
-              }}
+          {editOnly ? (
+            <button
+              type="button"
+              className="sm2-ritual-edit"
+              data-ritual-edit
+              onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
+              aria-label={`${isPt ? 'Editar' : 'Edit'}: ${name}`}
+              style={{ cursor: 'pointer' }}
             >
-              {name}
-            </span>
-          </button>
+              {nomeSpan}
+            </button>
+          ) : nomeSpan}
           {subtitle && (
             <span className="sm2-ritual-sub" title={subtitle}>
               {subtitle}

@@ -9,7 +9,7 @@ import { MissionMark } from '../play/MissionMark';
 import { PixelTabs } from '../pixel/PixelKit';
 import { StrollQuestLine } from './StrollQuestLine';
 import { DailyMissionList, type DailyMissionsProps } from './DailyMissionList';
-import { FirstTimesList, type FirstTimesProps } from './FirstTimesList';
+import { FirstTimesList, allFirstTimesClaimed, type FirstTimesProps } from './FirstTimesList';
 import type { GoTarget } from '../../utils/missionTargets';
 import type { MissionNav } from './MissionCard';
 import { FirstDayCard } from '../FirstDayCard';
@@ -130,7 +130,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                     {dailies && <DailyMissionList language={language} {...dailies} nav={nav} />}
                   </div>
                 </Section>
-                {firsts && (
+                {firsts && !allFirstTimesClaimed(firsts.state, firsts.bondLevel) && (
                   <Section title={isPt ? 'Primeiras vezes' : 'First times'} mark={marks.firsts ?? null} glyph={false} isPt={isPt} id="first-times">
                     <FirstTimesList language={language} {...firsts} nav={nav} />
                   </Section>

@@ -1,3 +1,4 @@
+import { missionsDoneFirst } from '../../utils/missionOrder';
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
 import { firstStatus, firstTimesFor, type FirstTime, type FirstTimesState } from '../../utils/dailyMissions';
@@ -29,6 +30,12 @@ function textOf(f: FirstTime, language: Language): string {
   return isPt ? `Conheça: ${nome}` : `Visit: ${nome}`;
 }
 
+/** A6: o jogador resgatou TODAS as primeiras vezes do Vínculo dele — a seção inteira some. */
+export function allFirstTimesClaimed(state: FirstTimesState | undefined, bondLevel: number): boolean {
+  const todas = firstTimesFor(bondLevel);
+  return todas.length > 0 && todas.every(f => firstStatus(state, f.id) === 'claimed');
+}
+
 /**
  * PRIMEIRAS VEZES (`utils/dailyMissions.ts`, REGISTRO §54): missões únicas, 1× na vida. Só convite: a linha diz a estreia; quando ela
  * acontece de verdade fica pronta e o "Resgatar" paga 1 material. As já resgatadas somem da lista (viram só a contagem).
@@ -38,11 +45,11 @@ export function FirstTimesList({ language, state, bondLevel, onClaim, nav }: Fir
   const todas = firstTimesFor(bondLevel);
   const abertas = todas.filter(f => firstStatus(state, f.id) !== 'claimed');
   const feitas = todas.length - abertas.length;
-  if (todas.length === 0) return null;
+  if (todas.length === 0 || abertas.length === 0) return null; // A6: fez todas = a lista some
   return (
     <div data-first-times style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <MissionCardList>
-        {abertas.map(f => {
+        {missionsDoneFirst(abertas, f => (firstStatus(state, f.id) === 'ready' ? 'ready' : 'open')).map(f => {
           const st = firstStatus(state, f.id);
           const go = resolveGo(nav, f.building, language);
           return (

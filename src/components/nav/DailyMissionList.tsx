@@ -1,3 +1,4 @@
+import { missionsDoneFirst } from '../../utils/missionOrder';
 import type { Language } from '../../utils/i18n';
 import { dailyCount, dailyMissionsFor, dailyStatus, type DailyMissionsState } from '../../utils/dailyMissions';
 import { dailyTarget } from '../../utils/missionTargets';
@@ -22,9 +23,10 @@ export function DailyMissionList({ language, state, day, bondLevel, onClaim, nav
   const isPt = language === 'pt-BR';
   const list = dailyMissionsFor(day, bondLevel);
   if (list.length === 0) return null;
+  const ordered = missionsDoneFirst(list, m => { const st = dailyStatus(state, day, m); return st === 'available' ? 'open' : st; });
   return (
     <MissionCardList attrs={{ 'data-daily-missions': '' }}>
-      {list.map(m => {
+      {ordered.map(m => {
         const st = dailyStatus(state, day, m);
         const go = resolveGo(nav, dailyTarget(m), language);
         return (

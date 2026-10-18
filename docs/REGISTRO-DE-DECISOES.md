@@ -2657,3 +2657,11 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Régua:** `SoulmonOnboarding.ovo.render.test.tsx` (novo) e os `SoulmonOnboarding.*`/`telemetryWiring` atualizados (helpers `test/metasOnboarding.ts` e `test/ovoOnboarding.ts`; `ritualDemo.ts` e `SoulmonOnboarding.gratis.render.test.tsx` removidos junto com as telas que cobriam).
 - **Não verificado (sem navegador):** o balanço/expansão a olho e a 60 fps, o háptico no aparelho, o modal de compra na Play real e a tela da Ambra em telas estreitas. **Gatilho para rever:** o dono querer a demo local no lugar do grátis; o 1/3 (e não 0/3) da fome na tela; ovo com arte própria de "cristal meio ovo".
 
+## 82. Revisão 2, faixa A: Home / Tarefas / Missões (dono, 18/10/2026)
+
+- **A1:** na lista de HOJE, tocar em qualquer lugar da linha marca como feita (no pai com etapas, abre/fecha as etapas). O botão "Editar: nome" saiu da Home (`RitualRow`; só `editOnly` o desenha).
+- **A2:** ao concluir, UM aviso só: `📋 N/M do dia`. O trecho "+1 comida" saiu de `announceTaskGains` (sem total do dia, nenhum aviso).
+- **A3/A4:** o `View all` lista TODAS as tarefas e hábitos (antes só as programadas) e é o único lugar que edita. Ganhou busca por nome (sem acento/caixa), filtro Todas/Tarefas/Hábitos e ordem A-Z (`filterAndSortLines`).
+- **A5:** `utils/missionOrder.ts` — prontas para resgatar no topo, depois concluídas, depois abertas (estável) em Diárias, Prédio, Primeiras vezes, Semanais e Conquistas.
+- **A6:** com todas as Primeiras vezes resgatadas, a seção inteira some (`allFirstTimesClaimed`).
+- **Régua:** `missionOrder.test.ts`, `DailyRituals.todas.render.test.tsx`, `RitualPanel.render.test.tsx`.
