@@ -3450,7 +3450,7 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Régua:** `src/utils/frameBuy.test.ts`.
 
 ### `src/utils/backgroundPortrait.ts`
-**Dono de:** a variante RETRATO (9:16) dos cenários pintados usados fora do cenário equipado (REGISTRO §94): `portraitUrl(id)` e `sceneCss(id, w, h)` (retrato só se a caixa for vertical e o `bg-<id>-portrait.webp` existir; senão a paisagem de `PET_BACKGROUNDS`).
+**Dono de:** a variante RETRATO (9:16) dos cenários pintados usados fora do cenário equipado (REGISTRO §95): `portraitUrl(id)` e `sceneCss(id, w, h)` (retrato só se a caixa for vertical e o `bg-<id>-portrait.webp` existir; senão a paisagem de `PET_BACKGROUNDS`).
 **Exports:** `portraitUrl` · `sceneCss`.
 **Chamado por:** `GroveVisor`, `CasaVisor`, `GroveMilestoneCeremony`, `GuerraVisor`, `TravessiaIcon` (`RegionPostal`).
 **Régua:** `src/utils/backgroundPortrait.test.ts`.

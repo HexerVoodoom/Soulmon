@@ -233,12 +233,12 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(srcsDe().some(s => /escudo-/.test(s))).toBe(false);
   });
 
-  it('CENÁRIO por elemento: `sceneElement` com arte vence `scene` (camada pixelada); sem arte, fica o `scene`', () => {
+  it('CENÁRIO por elemento: `sceneElement` com arte vence `scene` (camada suavizada); sem arte, fica o `scene`', () => {
     const { unmount } = render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="vapor" />);
     const camada = document.querySelector('[data-stage-scene]') as HTMLElement;
     expect(camada).not.toBeNull();
     expect(camada.style.background).toMatch(/bg-fogo\.png/);
-    expect(camada.style.imageRendering).toBe('pixelated');
+    expect(camada.style.imageRendering).not.toBe('pixelated');
     expect(document.querySelectorAll('[data-stage-platform]').length).toBeGreaterThan(0);
     unmount();
     render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="sem-arte" />);

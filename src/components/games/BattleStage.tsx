@@ -746,9 +746,9 @@ export function BattleStage({
         color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)',
       }}
     >
-      {/* O cenário do elemento: arte 360×640 ampliada SEM suavizar (numa camada própria, para o `pixelated` não herdar). */}
+      {/* O cenário do elemento: arte PINTADA 360×640, ampliada COM suavização (dono, 18/10/2026); só os sprites seguem pixelados. */}
       {elementScene && (
-        <div aria-hidden="true" data-stage-scene={sceneElement ?? ''} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: elementScene, imageRendering: 'pixelated' }} />
+        <div aria-hidden="true" data-stage-scene={sceneElement ?? ''} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: elementScene, imageRendering: 'auto' }} />
       )}
       {/* O véu: escurece o topo e o pé para o HUD e as barras lerem sobre a arte. */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,0) 20%, rgba(0,0,0,0) 76%, rgba(0,0,0,.45))' }} />
