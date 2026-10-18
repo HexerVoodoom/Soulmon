@@ -176,8 +176,9 @@ import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/cu
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
-import { applyClaRewards } from './utils/claCredit';
-import { countMisterioTask, type ClaReward } from './utils/claApi';
+// Prédios do clã: só TIPO aqui. O código entra por import() dinâmico (fora do chunk de entrada; `/api/guild` não pode
+// entrar nele — entradaEnxuta.contract.test.ts).
+import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
@@ -4232,7 +4233,9 @@ export default function App() {
 
   /** PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): credita o prêmio do servidor no save, UMA vez por recibo (`applyClaRewards`, idempotente). */
   const handleClaReward = useCallback((receipt: string, rewards: ClaReward[]) => {
-    setGameState(prev => applyClaRewards(prev, receipt, rewards, playerDayKey(new Date(), prev.playerDayTz)));
+    void import('./utils/claCredit').then(({ applyClaRewards }) => {
+      setGameState(prev => applyClaRewards(prev, receipt, rewards, playerDayKey(new Date(), prev.playerDayTz)));
+    });
   }, [setGameState]);
 
   /** MISTÉRIO do clã: UMA tarefa/hábito concluído soma na barra coletiva. Fire-and-forget; só com clã (a memória do
@@ -4240,7 +4243,9 @@ export default function App() {
   const contarMisterio = useCallback((origem: string, porDia = false) => {
     if (!saveId || !readGroveLocal()) return;
     // Hábito repete o id todo dia, e o servidor é idempotente por id (hoje e ontem): o dia entra no id.
-    countMisterioTask(saveId, porDia ? `${origem}:${playerDayKey(new Date(), gameState.playerDayTz)}` : origem, gameState.playerDayTz);
+    const id = porDia ? `${origem}:${playerDayKey(new Date(), gameState.playerDayTz)}` : origem;
+    const tz = gameState.playerDayTz;
+    void import('./utils/claApi').then(({ countMisterioTask }) => countMisterioTask(saveId, id, tz)).catch(() => {});
   }, [saveId, gameState.playerDayTz]);
 
   /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
