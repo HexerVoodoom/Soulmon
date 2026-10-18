@@ -552,7 +552,7 @@ function plan(c, saveId) {
       'mentions of you in other players\' friend lists',
       'notification subscriptions (push:*/fcm:*) linked to your account',
       ...(c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : []),
-      'Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current guild — those from guilds you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous',
+      'Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current clan — those from clans you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous',
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys,

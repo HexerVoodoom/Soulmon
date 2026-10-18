@@ -72,10 +72,10 @@ export const GUILD_COPY = {
   'guild.missao.feita': ['Hoje a roda já ouviu a sua parte.', 'The circle has already heard your part today.'],
   'guild.missao.regra': ['Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia.', 'Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day.'],
   // ── A GUERRA DE GUILDA (guilda-lancamento PR4): 4×4, pareada por tamanho, resolvida no servidor ──
-  'guild.guerra.titulo': ['Guerra de guilda', 'Guild war'],
-  'guild.guerra.regra': ['Seu esquadrão — você e até três aliados — enfrenta o de outra guilda do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia.', 'Your squad — you and up to three allies — faces another guild’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day.'],
-  'guild.guerra.buscar': ['Procurar uma guilda rival', 'Look for a rival guild'],
-  'guild.guerra.esperando': ['Seu esquadrão espera uma guilda do mesmo tamanho. O resultado chega sozinho.', 'Your squad is waiting for a guild of the same size. The result arrives on its own.'],
+  'guild.guerra.titulo': ['Guerra de clã', 'Clan war'],
+  'guild.guerra.regra': ['Seu esquadrão — você e até três aliados — enfrenta o de outro clã do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia.', 'Your squad — you and up to three allies — faces another clan’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day.'],
+  'guild.guerra.buscar': ['Procurar um clã rival', 'Look for a rival clan'],
+  'guild.guerra.esperando': ['Seu esquadrão espera um clã do mesmo tamanho. O resultado chega sozinho.', 'Your squad is waiting for a clan of the same size. The result arrives on its own.'],
   'guild.guerra.pequena': ['Para a guerra são precisas ao menos duas pessoas com ficha de luta.', 'A war needs at least two people with a fighter sheet.'],
   'guild.guerra.hoje': ['Hoje a guerra já aconteceu.', 'Today’s war has already happened.'],
   'guild.guerra.resultado.win': ['A roda venceu a guerra contra {nome}.', 'The circle won the war against {nome}.'],
@@ -84,9 +84,9 @@ export const GUILD_COPY = {
   'guild.guerra.duelo.win': ['Confronto vencido', 'Bout won'],
   'guild.guerra.duelo.draw': ['Confronto empatado', 'Bout drawn'],
   'guild.guerra.duelo.loss': ['Confronto do outro lado', 'Bout went the other way'],
-  'guild.aria.guerra': ['Um esquadrão da roda diante do esquadrão de uma guilda rival', 'A squad from the circle facing a rival guild’s squad'],
-  'guild.lote.hall.label': ['Salão da Guilda', 'Guild Hall'],
-  'guild.lote.hall.aria': ['Entrar no Salão da Guilda', 'Enter the Guild Hall'],
+  'guild.aria.guerra': ['Um esquadrão da roda diante do esquadrão de um clã rival', 'A squad from the circle facing a rival clan’s squad'],
+  'guild.lote.hall.label': ['Salão do Clã', 'Clan Hall'],
+  'guild.lote.hall.aria': ['Entrar no Salão do Clã', 'Enter the Clan Hall'],
   'guild.lote.feira.label': ['Feira', 'Fair'],
   'guild.lote.feira.aria': ['Entrar na Feira', 'Enter the Fair'],
   // ── Salão sem guilda, criar, código, entrar (§2) ───────────────────────
@@ -217,7 +217,7 @@ export const GUILD_COPY = {
   // ── Guilda esvaziada (§9) ──────────────────────────────────────────────
   'guild.esvaziada.mundo': ['Esta clareira voltou a ser Malha aberta.', 'This clearing is open Mesh again.'],
   // ── aria (§10) ─────────────────────────────────────────────────────────
-  'guild.aria.salao': ['Salão da Guilda', 'Guild Hall'],
+  'guild.aria.salao': ['Salão do Clã', 'Clan Hall'],
   'guild.aria.roda': ['Roda', 'Circle'],
   'guild.aria.codigo.copiar': ['Copiar o código da roda', 'Copy the circle code'],
   'guild.aria.fio': ['Firmar meu fio de hoje', 'Settle my strand for today'],
@@ -231,8 +231,8 @@ export const GUILD_COPY = {
   'guild.aria.feira.dissipado': ['Fenômeno da semana: {nome}, desfeito.', 'This week’s phenomenon: {nome}, come apart.'],
   'guild.aria.rodada': ['Fazer minha rodada de hoje', 'Take my round for today'],
   // ── HelpModal e GuideModal (§11) ───────────────────────────────────────
-  'guild.help.guilda.termo': ['Guilda e roda', 'Guild and circle'],
-  'guild.help.guilda.def': ['A Guilda é o lugar; a roda é quem está nela. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular.', 'The Guild is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications.'],
+  'guild.help.guilda.termo': ['Clã e roda', 'Clan and circle'],
+  'guild.help.guilda.def': ['O Clã é o lugar; a roda é quem está nele. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular.', 'The Clan is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications.'],
   'guild.help.bosque.termo': ['Bosque', 'Grove'],
   'guild.help.bosque.def': ['O bosque da roda tem estes estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe.', 'The circle’s grove has these stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks.'],
   'guild.help.fio.termo': ['Fio', 'Strand'],
@@ -243,11 +243,11 @@ export const GUILD_COPY = {
   'guild.help.casa.def': ['A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário.', 'The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene.'],
   'guild.help.missao.termo': ['Missão', 'Mission'],
   'guild.help.missao.def': ['Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa.', 'Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house.'],
-  'guild.help.guerra.termo': ['Guerra de guilda', 'Guild war'],
-  'guild.help.guerra.def': ['Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outra guilda do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não.', 'Once a day the circle’s squad, up to four people, faces another guild’s squad of the same size. The server settles it, and the house gets sap win or not.'],
+  'guild.help.guerra.termo': ['Guerra de clã', 'Clan war'],
+  'guild.help.guerra.def': ['Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outro clã do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não.', 'Once a day the circle’s squad, up to four people, faces another clan’s squad of the same size. The server settles it, and the house gets sap win or not.'],
   'guild.help.mare.termo': ['Maré', 'Tide'],
   'guild.help.mare.def': ['Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque.', 'A tide lasts {semanas} weeks. When it turns, what settled stays in the grove.'],
-  'guild.guide.titulo': ['A Guilda', 'The Guild'],
+  'guild.guide.titulo': ['O Clã', 'The Clan'],
   'guild.guide.corpo': ['Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido.', 'A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale.'],
 } as const satisfies Record<string, readonly [string, string]>;
 

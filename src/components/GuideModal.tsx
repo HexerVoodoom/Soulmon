@@ -327,8 +327,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       body: (
         <p style={para}>
           {L(
-            `O botão DEMO abre o jogo sem conta, com um dos cinco Soulmon iniciais no Vínculo nível ${DEMO_BOND_LEVEL}. A demo salva só neste aparelho; não ganha XP (o Vínculo fica fixo), não faz compras e não entra no PvP (Torneio, Duelo, Biblioteca e Guilda ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
-            `The DEMO button opens the game without an account, with one of the five starter Soulmon at Bond level ${DEMO_BOND_LEVEL}. The demo saves on this device only; it earns no XP (Bond stays fixed), makes no purchases and does not enter PvP (Tournament, Duel, Library and Guild stay closed). To get an account, leave the demo in Settings.`,
+            `O botão DEMO abre o jogo sem conta, com um dos cinco Soulmon iniciais no Vínculo nível ${DEMO_BOND_LEVEL}. A demo salva só neste aparelho; não ganha XP (o Vínculo fica fixo), não faz compras e não entra no PvP (Torneio, Duelo, Biblioteca e Clã ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
+            `The DEMO button opens the game without an account, with one of the five starter Soulmon at Bond level ${DEMO_BOND_LEVEL}. The demo saves on this device only; it earns no XP (Bond stays fixed), makes no purchases and does not enter PvP (Tournament, Duel, Library and Clan stay closed). To get an account, leave the demo in Settings.`,
           )}
         </p>
       ),
