@@ -25,7 +25,7 @@ import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { iconePpt as iconPpt } from '../../assets/soulmon/icones-ui';
 // Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
 import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
-import { M3_MAX_BITS, M3_POINTS_PER_BIT, M3_MOVES } from '../../utils/match3';
+import { M3_MAX_BITS, M3_POINTS_PER_BIT } from '../../utils/match3';
 const iconCorrida = ACTIVITY_ICON_ART['corpo-caminhar'];
 
 /**
@@ -270,8 +270,8 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
             {isPt
-              ? `Troque peças vizinhas e forme linhas de 3 ou mais · ${M3_MOVES} movimentos · cada ${M3_POINTS_PER_BIT} pontos vira 1 Bit, até ${M3_MAX_BITS}`
-              : `Swap neighbouring tiles to line up 3 or more · ${M3_MOVES} moves · every ${M3_POINTS_PER_BIT} points becomes 1 Bit, up to ${M3_MAX_BITS}`}
+              ? `Troque peças vizinhas e forme linhas de 3 ou mais: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · cada ${M3_POINTS_PER_BIT} pontos do placar vira 1 Bit, até ${M3_MAX_BITS}`
+              : `Swap neighbouring tiles to line up 3 or more: each line strikes the rift team · the round ends when one side steps back · every ${M3_POINTS_PER_BIT} points of the score becomes 1 Bit, up to ${M3_MAX_BITS}`}
           </InfoTipSection>
         </ModalInfo>
       </div>

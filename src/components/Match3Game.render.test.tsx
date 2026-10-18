@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
 /**
- * COMBINA 3 — a TELA (pedido do dono, 11/10/2026, REGISTRO §36). A regra é testada pura em `utils/match3.test.ts`; aqui: o tabuleiro
- * monta (49 peças, nome acessível, formas), troca inválida volta sem gastar movimento, a jogada válida gasta 1 e a cascata anima
- * passo a passo, a rodada fecha em 20 movimentos e paga UMA vez o que a conta pura diz (PT/EN), teclado, dica, recorde, de novo.
+ * COMBINA 3 — a TELA (pedido do dono, 11/10/2026, REGISTRO §36; combate em 18/10/2026, D-02/D-04/D-07). A regra é testada pura em
+ * `utils/match3.test.ts` e `utils/match3Combat.test.ts`; aqui: o tabuleiro monta (49 peças, nome acessível, formas), a arena (você à
+ * esquerda, 3 inimigos em ordem 1→3, o ativo marcado), tela quase cheia, a jogada válida gasta 1 turno e a cascata anima passo a
+ * passo, a rodada fecha quando um lado cai e paga UMA vez o que o placar do combate diz (PT/EN), teclado, dica, recorde, de novo.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { Match3Game } from './Match3Game';
-import { M3_COLS, M3_MAX_BITS, M3_MOVES, M3_ROWS, match3Bits, newRound, trySwap, validMoves, type Board, type Pos, type Rng } from '../utils/match3';
+import { M3_COLS, M3_MAX_BITS, M3_ROWS, match3Bits, newRound, trySwap, validMoves, type Board, type Pos, type Rng } from '../utils/match3';
+import { M3C_ENEMY_HP, M3C_PLAYER_HP, combatScore, newCombat, playTurn, type M3Combat } from '../utils/match3Combat';
+import { mulberry32 } from '../utils/combate/rng';
+import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
 const SEED = 31337;
@@ -24,19 +28,23 @@ const assentar = async () => { await avancar(8000); };
 function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void } = {}) {
   return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} />);
 }
-/** A mesma rodada, jogada pela conta pura, para prever o que a tela deve mostrar. */
-function previsao(n: number): { moves: Array<{ a: Pos; b: Pos }>; total: number; boards: Board[] } {
+/** A mesma rodada, jogada pela conta pura (tabuleiro + combate com os MESMOS rngs da tela), para prever o que a tela deve mostrar. */
+function previsao(n: number): { moves: Array<{ a: Pos; b: Pos }>; total: number; boards: Board[]; combates: M3Combat[] } {
   const { board, rng } = newRound(SEED);
-  let b = board; let total = 0;
+  const er = mulberry32(SEED ^ 0x5eed);
+  let c = newCombat(mulberry32(SEED + 99), Object.keys(DUNGEON_LINE_SPRITES), undefined);
+  let b = board;
   const moves: Array<{ a: Pos; b: Pos }> = [];
   const boards: Board[] = [b];
-  for (let i = 0; i < n; i++) {
+  const combates: M3Combat[] = [c];
+  for (let i = 0; i < n && c.outcome === 'playing'; i++) {
     const m = validMoves(b)[0];
     const r = trySwap(b, m.a, m.b, rng as Rng);
     if (!r.ok) throw new Error('inválida');
-    moves.push(m); total += r.score; b = r.board; boards.push(b);
+    moves.push(m); b = r.board; boards.push(b);
+    c = playTurn(c, r.steps, er); combates.push(c);
   }
-  return { moves, total, boards };
+  return { moves, total: combatScore(c), boards, combates };
 }
 async function jogarEscolhido(m: { a: Pos; b: Pos }) {
   fireEvent.click(cell(m.a));
@@ -63,12 +71,12 @@ describe('o tabuleiro', () => {
     montar({ language: 'pt-BR' });
     expect(cell({ r: 2, c: 3 }).getAttribute('aria-label')).toMatch(/^(Fogo|Água|Terra|Vida|Ar|Luz), linha 3, coluna 4$/);
     expect(screen.getByRole('button', { name: 'Dica' })).toBeTruthy();
-    expect(document.body.textContent).toContain('Movimentos');
+    expect(document.body.textContent).toContain('Turno');
   });
 
-  it('movimentos, pontos e Bits começam em 20 / 0 / 0; só um tabuleiro roving-tabindex (um foco)', () => {
+  it('turno, placar e Bits começam em 0 / 0 / 0; só um tabuleiro roving-tabindex (um foco)', () => {
     montar();
-    expect(num('data-m3-moves')).toBe(M3_MOVES);
+    expect(num('data-m3-turn')).toBe(0);
     expect(num('data-m3-score')).toBe(0);
     expect(num('data-m3-bits')).toBe(0);
     expect([...document.querySelectorAll('[data-m3-cell]')].filter(b => b.getAttribute('tabindex') === '0').length).toBe(1);
@@ -84,7 +92,7 @@ describe('jogar', () => {
     expect(cell({ r: 3, c: 3 }).getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('9.2: troca que NÃO forma linha é LIVRE — as duas peças trocam, gasta 1 movimento, não pontua e não há aviso de erro', async () => {
+  it('9.2: troca que NÃO forma linha é LIVRE — as duas peças trocam, gasta 1 turno (o inimigo responde), não pontua e não há aviso de erro', async () => {
     montar();
     const { board } = newRound(SEED);
     // acha um par vizinho que não forma linha
@@ -97,7 +105,7 @@ describe('jogar', () => {
     fireEvent.click(cell(par!.a));
     fireEvent.click(cell(par!.b));
     await assentar();
-    expect(num('data-m3-moves')).toBe(M3_MOVES - 1);
+    expect(num('data-m3-turn')).toBe(1);
     expect(num('data-m3-score')).toBe(0);
     expect(cell(par!.a).getAttribute('data-m3-kind')).toBe(kindB);
     expect(cell(par!.b).getAttribute('data-m3-kind')).toBe(kindA);
@@ -105,12 +113,11 @@ describe('jogar', () => {
     expect(aviso).not.toMatch(/doesn't make a line|try another|wrong|error|fail|errou/i);
   });
 
-  it('jogada válida: gasta 1 movimento, a cascata anima passo a passo e a pontuação bate com a conta pura', async () => {
+  it('jogada válida: gasta 1 turno, a cascata anima passo a passo e a pontuação bate com a conta pura', async () => {
     montar();
     const p = previsao(1);
     fireEvent.click(cell(p.moves[0].a));
     fireEvent.click(cell(p.moves[0].b));
-    expect(num('data-m3-moves')).toBe(M3_MOVES - 1);
     // durante a animação o tabuleiro trava (aria-busy)
     expect(document.querySelector('[data-m3-board]')!.getAttribute('aria-busy')).toBe('true');
     await assentar();
@@ -131,7 +138,7 @@ describe('jogar', () => {
     fireEvent.pointerUp(cell(a), { clientX: 100 + dx * 40, clientY: 100 + dy * 40 });
     fireEvent.click(cell(a)); // o clique que o navegador dispara depois do gesto não pode trocar de novo
     await assentar();
-    expect(num('data-m3-moves')).toBe(M3_MOVES - 1);
+    expect(num('data-m3-turn')).toBe(1);
     expect(num('data-m3-score')).toBe(p.total);
   });
 
@@ -149,7 +156,7 @@ describe('jogar', () => {
     fireEvent.keyDown(grade, { key: b.r > a.r ? 'ArrowDown' : b.r < a.r ? 'ArrowUp' : b.c > a.c ? 'ArrowRight' : 'ArrowLeft' });
     fireEvent.click(cell(b));
     await assentar();
-    expect(num('data-m3-moves')).toBe(M3_MOVES - 1);
+    expect(num('data-m3-turn')).toBe(1);
   });
 
   it('a dica marca duas peças que de fato trocam (e some sozinha)', async () => {
@@ -162,43 +169,67 @@ describe('jogar', () => {
   });
 });
 
+/** Joga na tela a partida inteira prevista pela conta pura (a rodada acaba quando um lado cai). */
+async function jogarTudo(p: ReturnType<typeof previsao>) {
+  for (let i = 0; i < p.moves.length; i++) await jogarEscolhido(p.moves[i]);
+}
+
 describe('a rodada', () => {
-  it('em 20 movimentos fecha, paga UMA vez exatamente o da conta pura e mostra o resultado (EN)', async () => {
+  it('a rodada acaba quando um lado cai (não por limite de movimentos), paga UMA vez o que o placar diz e mostra o resultado (EN)', async () => {
     const onEarn = vi.fn();
     montar({ onEarn });
-    const p = previsao(M3_MOVES);
-    for (let i = 0; i < M3_MOVES; i++) {
-      expect(num('data-m3-moves')).toBe(M3_MOVES - i);
-      await jogarEscolhido(p.moves[i]);
-    }
+    const p = previsao(60);
+    const final = p.combates[p.combates.length - 1];
+    expect(final.outcome).not.toBe('playing');
+    expect(p.moves.length).toBeGreaterThan(5);
+    await jogarTudo(p);
     expect(document.querySelector('[data-m3-end]')!.textContent).toBe(`You scored ${p.total} points`);
+    expect(document.querySelector('[data-m3-end]')!.getAttribute('data-m3-outcome')).toBe(final.outcome);
     const bits = match3Bits(p.total);
-    expect(bits).toBeGreaterThan(0);
     expect(bits).toBeLessThanOrEqual(M3_MAX_BITS);
-    expect(onEarn).toHaveBeenCalledTimes(1);
-    expect(onEarn).toHaveBeenCalledWith(bits);
-    expect(document.body.textContent).toContain(`+${bits} Bits`);
+    if (bits > 0) {
+      expect(onEarn).toHaveBeenCalledTimes(1);
+      expect(onEarn).toHaveBeenCalledWith(bits);
+      expect(document.body.textContent).toContain(`+${bits} Bits`);
+    } else {
+      expect(onEarn).not.toHaveBeenCalled();
+    }
     expect(localStorage.getItem(STORAGE_KEYS.MATCH3_BEST)).toBe(String(p.total));
     await avancar(5000);
-    expect(onEarn).toHaveBeenCalledTimes(1); // nunca de novo
+    expect(onEarn.mock.calls.length).toBeLessThanOrEqual(1); // nunca de novo
+    expect(document.querySelector('[data-m3-board]')).toBeNull(); // acabou: o tabuleiro sai
+  });
+
+  it('D-07: o valor pago sai SÓ do placar do combate (dano causado − recebido + bônus), com o teto de Bits', async () => {
+    const onEarn = vi.fn();
+    montar({ onEarn });
+    const p = previsao(60);
+    const c = p.combates[p.combates.length - 1];
+    expect(p.total).toBe(Math.max(0, c.dealt - c.taken + c.defeated * 100));
+    await jogarTudo(p);
+    const pago = onEarn.mock.calls.reduce((n, a) => n + (a[0] as number), 0);
+    expect(pago).toBe(match3Bits(p.total));
+    expect(pago).toBeLessThanOrEqual(M3_MAX_BITS);
   });
 
   it('em PT-BR o resultado é em português', async () => {
     montar({ language: 'pt-BR' });
-    const p = previsao(M3_MOVES);
-    for (let i = 0; i < M3_MOVES; i++) await jogarEscolhido(p.moves[i]);
+    const p = previsao(60);
+    await jogarTudo(p);
     expect(document.querySelector('[data-m3-end]')!.textContent).toBe(`Você fez ${p.total} pontos`);
     expect(screen.getByRole('button', { name: 'De novo' })).toBeTruthy();
+    expect(document.querySelector('[data-m3-outcome-line]')!.textContent).toMatch(/time da fenda/);
+    expect(document.body.textContent).not.toMatch(/errou|perdeu|derrota/i);
   });
 
-  it('"De novo" começa outra rodada (movimentos 20, pontos 0) e o recorde fica', async () => {
-    const onEarn = vi.fn();
-    montar({ onEarn });
-    const p = previsao(M3_MOVES);
-    for (let i = 0; i < M3_MOVES; i++) await jogarEscolhido(p.moves[i]);
+  it('"De novo" começa outra rodada (turno 0, placar 0, HP cheio) e o recorde fica', async () => {
+    montar();
+    const p = previsao(60);
+    await jogarTudo(p);
     fireEvent.click(document.querySelector('[data-m3-again]')!);
-    expect(num('data-m3-moves')).toBe(M3_MOVES);
+    expect(num('data-m3-turn')).toBe(0);
     expect(num('data-m3-score')).toBe(0);
+    expect(Number(document.querySelector('[data-m3-player]')!.getAttribute('data-m3-hp'))).toBe(M3C_PLAYER_HP);
     expect(document.querySelector('[data-m3-end]')).toBeNull();
     expect(localStorage.getItem(STORAGE_KEYS.MATCH3_BEST)).toBe(String(p.total));
   });
@@ -212,6 +243,83 @@ describe('a rodada', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     expect(onEarn).not.toHaveBeenCalled();
+  });
+});
+
+describe('D-06: turnos alternados na tela', () => {
+  it('cada jogada válida (pontue ou não) tira vida do Soulmon do jogador e do inimigo ativo, como a conta pura', async () => {
+    montar();
+    const p = previsao(2);
+    await jogarEscolhido(p.moves[0]);
+    const c1 = p.combates[1];
+    expect(Number(document.querySelector('[data-m3-player]')!.getAttribute('data-m3-hp'))).toBe(c1.player.hp);
+    expect(c1.player.hp).toBeLessThan(M3C_PLAYER_HP);
+    expect(Number(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-hp'))).toBe(c1.enemies[0].hp);
+    expect(Number(document.querySelector('[data-m3-enemy="2"]')!.getAttribute('data-m3-hp'))).toBe(M3C_ENEMY_HP[1]);
+    const aviso = document.querySelector('[data-m3-note]')!.textContent ?? '';
+    expect(aviso).toMatch(/Your strike/);
+    expect(aviso).toMatch(/Reply/);
+  });
+});
+
+describe('D-04: a arena', () => {
+  it('1 Soulmon do jogador à ESQUERDA e 3 inimigos à direita em ordem 1→3, com HP e o ativo marcado', () => {
+    montar();
+    const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
+    const player = arena.querySelectorAll('[data-m3-player]');
+    const inimigos = [...arena.querySelectorAll('[data-m3-enemy]')];
+    expect(player.length).toBe(1);
+    expect(inimigos.map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3']);
+    // ordem do documento = ordem visual (linha flex, sem inversão): o jogador vem antes de todos os inimigos
+    for (const e of inimigos) expect(player[0].compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(arena.style.flexDirection).not.toBe('row-reverse');
+    expect(arena.style.flexDirection).not.toBe('column');
+    // sprites e barras de HP (GameKit): 1 + 3 barras
+    expect(player[0].querySelector('img')!.getAttribute('src')).toBeTruthy();
+    for (const e of inimigos) expect(e.querySelector('img[src]')).not.toBeNull();
+    expect(arena.querySelectorAll('[role="progressbar"]').length).toBe(4);
+    // o primeiro é o ativo; os outros não
+    expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['1', '0', '0']);
+    expect(inimigos[0].getAttribute('aria-current')).toBe('true');
+    expect(inimigos[0].textContent).toContain('▸');
+    // três elementos distintos
+    expect(new Set(inimigos.map(e => e.getAttribute('data-m3-element'))).size).toBe(3);
+  });
+
+  it('o inimigo ativo muda quando o 1º cai (a marca vai para o 2º)', async () => {
+    montar();
+    const p = previsao(60);
+    const i = p.combates.findIndex(c => c.active === 1);
+    expect(i).toBeGreaterThan(0);
+    for (let k = 0; k < i; k++) await jogarEscolhido(p.moves[k]);
+    const inimigos = [...document.querySelectorAll('[data-m3-enemy]')];
+    expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['0', '1', '0']);
+    expect(Number(inimigos[0].getAttribute('data-m3-hp'))).toBe(0);
+  });
+
+  it('tela quase cheia (D-02): a página não reserva a faixa da nav, a arena cresce e o tabuleiro escala pela largura', () => {
+    montar();
+    const root = document.querySelector('[data-game-root]') as HTMLElement;
+    expect(root.hasAttribute('data-game-full')).toBe(true);
+    expect(root.style.paddingBottom).not.toContain('--sm-corner-h');
+    const campo = document.querySelector('[data-m3-field]') as HTMLElement;
+    expect(campo.style.flex).toMatch(/^1 /);
+    const board = document.querySelector('[data-m3-board]') as HTMLElement;
+    expect(board.style.width).toBe('100%');
+    // o botão de dica tem alvo ≥ 44
+    expect((document.querySelector('[data-m3-hint-button]') as HTMLElement).style.minHeight).toBe('44px');
+    // nenhum link de canto/nav montado por este componente
+    expect(document.querySelector('[data-corner-link]')).toBeNull();
+  });
+});
+
+describe('D-01: o contexto narrativo', () => {
+  it('o Combina 3 conta o combate (os 3 Soulmon inimigos são um time) em PT e EN', () => {
+    montar({ language: 'pt-BR' });
+    expect(document.querySelector('[data-game-story="match3"]')!.textContent).toMatch(/Três Soulmon da fenda formam um time/);
+    cleanup();
+    montar({ language: 'en-US' });
+    expect(document.querySelector('[data-game-story="match3"]')!.textContent).toMatch(/Three Soulmon from the rift form a team/);
   });
 });
 

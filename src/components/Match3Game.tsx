@@ -1,29 +1,36 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './mente/types';
-import { sm2Button, sm2Text } from './form/FormKit';
-import { GameRoot, GameHeader, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { GameRoot, GameHeader, GameStory, HpBars, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { usePrefersReducedMotion } from './ui/Viewport';
 import { elementIcon } from '../utils/elementIconArt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import {
-  M3_COLS, M3_MOVES, M3_ROWS, M3_TILE_ELEMENTS, M3_TILE_NAMES, M3_POINTS_PER_BIT, M3_MAX_BITS,
+  M3_COLS, M3_ROWS, M3_TILE_ELEMENTS, M3_TILE_NAMES, M3_POINTS_PER_BIT, M3_MAX_BITS,
   bestMove, match3Bits, newRound, trySwap, type Board, type Pos, type Rng, type Step, type Tile,
 } from '../utils/match3';
+import {
+  M3C_DEFEAT_BONUS, applyPlayerSteps, combatScore, newCombat, playTurn, type M3Combat, type M3Element,
+} from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
+import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 
 /**
- * COMBINA 3 — o jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36). Regras e conta em
- * `utils/match3.ts` (puro, com semente); aqui só a TELA: tocar/arrastar para trocar, a cascata animada passo a passo, o teclado.
+ * COMBINA 3 — o jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36), agora um COMBATE (18/10/2026, D-03…D-07):
+ * combinar peças de um elemento é um golpe daquele elemento no inimigo ATIVO; são 3 Soulmon inimigos em fila (um time só), e depois de
+ * cada jogada VÁLIDA o inimigo ativo responde. Regras e conta em `utils/match3.ts` (tabuleiro) e `utils/match3Combat.ts` (combate) — puros,
+ * com semente; aqui só a TELA: tocar/arrastar para trocar, a cascata animada passo a passo, a arena (você à esquerda, os 3 à direita), o teclado.
  *
- * Peças: os ícones de ELEMENTO que já existem no repo (`utils/elementIconArt`) — nada de arte nova. Nasce MUDO (R-NOVA).
- * Troca que não forma linha volta e NÃO gasta movimento ("essa não forma linha — tente outra", sem vermelho nem "errou").
- * Os Bits saem UMA vez, no fim da rodada, pelo funil único do `App` (`onEarnPoints` → teto diário de minijogo).
+ * Peças: os ícones de ELEMENTO que já existem no repo (`utils/elementIconArt`); sprites: os de `getSpriteForStage` e das linhas da masmorra —
+ * nada de arte nova. Nasce MUDO (R-NOVA). A rodada acaba quando um lado cai (o limite de 20 movimentos saiu); perder não custa nada.
+ * Os Bits saem UMA vez, no fim, do PLACAR do combate (`combatScore`) pelo funil único do `App` (`onEarnPoints` → teto diário de minijogo).
+ * Tela quase cheia (D-02): `GameRoot full` tira a faixa vazia da nav; a arena cresce para ocupar tudo o que o tabuleiro não usa.
  *
  * Acessível: tabuleiro `role="grid"` com foco rotativo (setas movem, Enter/Espaço seleciona e troca), nome acessível por peça
  * ("Fogo, linha 2, coluna 3"), avisos em `aria-live`, alvos ≥ 44 px na largura de um celular comum, formas distintas (ícones de
- * elemento: a cor nunca é a única pista). Movimento reduzido: sem deslize, tremida nem queda — só o estado novo, passo a passo.
+ * elemento: a cor nunca é a única pista; o inimigo ativo leva borda E o marcador ▸). Movimento reduzido: sem deslize, tremida nem queda.
  */
 
 const SWIPE_PX = 22;
@@ -31,10 +38,19 @@ const T_SWAP = 170;
 const T_CLEAR = 280;
 const T_FALL = 240;
 const HINT_MS = 2600;
+/** A arte do inimigo 1→3 sobe de estágio: o último do time é o mais imponente. */
+const ENEMY_STAGES = ['rookie', 'champion', 'ultimate'] as const;
+const ENEMY_SPRITE = 64;
+const PLAYER_SPRITE = 88;
 
 const key = (p: Pos) => p.r * M3_COLS + p.c;
 const same = (a: Pos | null, b: Pos | null) => !!a && !!b && a.r === b.r && a.c === b.c;
 const adjacent = (a: Pos, b: Pos) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+const elementName = (el: M3Element, isPt: boolean): string => {
+  const n = M3_TILE_NAMES[M3_TILE_ELEMENTS.indexOf(el)];
+  return isPt ? n.pt : n.en;
+};
+const LINES = Object.keys(DUNGEON_LINE_SPRITES);
 
 export interface Match3Props extends EarningGameProps {
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
@@ -43,20 +59,27 @@ export interface Match3Props extends EarningGameProps {
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
 
-export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props) {
+/** O combate de uma rodada a partir da semente (o rng do tabuleiro NÃO é tocado: os dois têm fluxo próprio). */
+function combatFor(sd: number, playerLine: string | undefined): { combat: M3Combat; rng: Rng } {
+  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine), rng: mulberry32(sd ^ 0x5eed) };
+}
+
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed }: Match3Props) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
 
-  const first = useMemo(() => newRound(seed ?? freshSeed()), [seed]);
-  const [board, setBoard] = useState<Board>(first.board);
-  const boardRef = useRef(first.board);
-  const rngRef = useRef<Rng>(first.rng);
-  const [moves, setMoves] = useState(M3_MOVES);
-  const movesRef = useRef(M3_MOVES);
-  const [score, setScore] = useState(0);
-  const scoreRef = useRef(0);
+  const first = useMemo(() => {
+    const sd = seed ?? freshSeed();
+    return { round: newRound(sd), battle: combatFor(sd, demoCharacterId) };
+  }, [seed, demoCharacterId]);
+  const [board, setBoard] = useState<Board>(first.round.board);
+  const boardRef = useRef(first.round.board);
+  const rngRef = useRef<Rng>(first.round.rng);
+  const [combat, setCombat] = useState<M3Combat>(first.battle.combat);
+  const combatRef = useRef<M3Combat>(first.battle.combat);
+  const enemyRngRef = useRef<Rng>(first.battle.rng);
   const [sel, setSelState] = useState<Pos | null>(null);
   const selRef = useRef<Pos | null>(null);
   const setSel = useCallback((p: Pos | null) => { selRef.current = p; setSelState(p); }, []);
@@ -95,11 +118,11 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
     timers.current.add(id);
   }), []);
 
-  // Fecha a rodada UMA vez e paga UMA vez (fora de updater — footgun 6).
+  // Fecha a rodada UMA vez e paga UMA vez (fora de updater — footgun 6). O pagamento sai SÓ do placar do combate.
   const finish = useCallback(() => {
     if (overRef.current) return;
     overRef.current = true;
-    const final = scoreRef.current;
+    const final = combatScore(combatRef.current);
     const bits = match3Bits(final);
     setEarned(bits);
     const prevBest = readNumber(STORAGE_KEYS.MATCH3_BEST, 0);
@@ -124,17 +147,29 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
     return out;
   };
 
+  /** O aviso do turno: os golpes do jogador (por elemento) e a resposta do inimigo. Descreve; não julga. */
+  const turnNote = useCallback((from: number, c: M3Combat): string => {
+    const novos = c.log.slice(from);
+    const golpes = novos.filter(e => e.by === 'player').map(e => `${elementName(e.element, isPt)} ${e.dmg}`);
+    const resp = novos.find(e => e.by === 'enemy');
+    const a = golpes.length > 0 ? (isPt ? `Seu golpe: ${golpes.join(' · ')}.` : `Your strike: ${golpes.join(' · ')}.`) : (isPt ? 'Sem golpe desta vez.' : 'No strike this time.');
+    const b = resp ? (isPt ? ` Resposta: ${resp.dmg}.` : ` Reply: ${resp.dmg}.`) : '';
+    return a + b;
+  }, [isPt]);
+
   const play = useCallback(async (a: Pos, d: Pos) => {
-    if (busyRef.current || overRef.current || movesRef.current <= 0) return;
+    if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;
     clearHint();
     const res = trySwap(boardRef.current, a, d, rngRef.current);
     if (!res.ok) { setSel(null); return; }
     busyRef.current = true;
     setBusy(true);
     setSel(null);
-    movesRef.current -= 1;
-    setMoves(movesRef.current);
     say('', '');
+    const base = combatRef.current;
+    // a jogada VÁLIDA inteira (dano do jogador + resposta do inimigo) é a conta pura; a tela só a mostra por partes
+    const final = playTurn(base, res.steps, enemyRngRef.current);
+    let preview = base;
     setBoard(res.swapped);
     await wait(T_SWAP);
     for (const st of res.steps) {
@@ -146,8 +181,8 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
       setClearing(new Set());
       boardRef.current = st.after;
       setBoard(st.after);
-      scoreRef.current += st.gained;
-      setScore(scoreRef.current);
+      preview = applyPlayerSteps(preview, [st]);
+      setCombat(preview);
       setFresh(f => ({ id: f.id + 1, cells: dropCells(st) }));
       await wait(T_FALL);
     }
@@ -155,14 +190,18 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
     boardRef.current = res.board;
     setBoard(res.board);
     setChain(0);
+    combatRef.current = final;
+    setCombat(final);
     if (res.reshuffled) {
       setFresh(f => ({ id: f.id + 1, cells: new Set(Array.from({ length: M3_ROWS * M3_COLS }, (_, i) => i)) }));
       say('Sem jogadas: embaralhei as peças para você.', 'No moves left: I shuffled the tiles for you.');
+    } else {
+      setNote(turnNote(base.log.length, final));
     }
     busyRef.current = false;
     setBusy(false);
-    if (movesRef.current <= 0) finish();
-  }, [clearHint, finish, say, setSel, wait]);
+    if (final.outcome !== 'playing') finish();
+  }, [clearHint, finish, say, setSel, turnNote, wait]);
 
   const pick = useCallback((p: Pos) => {
     if (busyRef.current || overRef.current) return;
@@ -216,19 +255,23 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
   const restart = () => {
     timers.current.forEach(clearTimeout);
     timers.current.clear();
-    const r = newRound(seed === undefined ? freshSeed() : seed + 1);
+    const sd = seed === undefined ? freshSeed() : seed + 1;
+    const r = newRound(sd);
+    const c = combatFor(sd, demoCharacterId);
     boardRef.current = r.board;
     rngRef.current = r.rng;
-    movesRef.current = M3_MOVES;
-    scoreRef.current = 0;
+    combatRef.current = c.combat;
+    enemyRngRef.current = c.rng;
     overRef.current = false;
     busyRef.current = false;
-    setBoard(r.board); setMoves(M3_MOVES); setScore(0); setSel(null); setCursor({ r: 0, c: 0 });
+    setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
     setBusy(false); setClearing(new Set()); setHint(null); setChain(0); setNote(''); setOver(false); setEarned(0); setNewBest(false);
   };
 
+  const score = combatScore(combat);
   const nextBitAt = (Math.floor(score / M3_POINTS_PER_BIT) + 1) * M3_POINTS_PER_BIT;
   const bitsNow = match3Bits(score);
+  const win = combat.outcome === 'win';
 
   const cellLabel = (t: Tile, r: number, c: number) => {
     const nome = M3_TILE_NAMES[t.k];
@@ -236,24 +279,71 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
     return isPt ? `${nome.pt}${esp}, linha ${r + 1}, coluna ${c + 1}` : `${nome.en}${esp}, row ${r + 1}, column ${c + 1}`;
   };
 
+  // O tabuleiro escala pela LARGURA da tela (alvo ≥ 44 px em 390 de largura: (366 − 12 − 24) / 7 ≈ 47).
   const boardStyle: CSSProperties = {
     display: 'grid', gridTemplateColumns: `repeat(${M3_COLS}, minmax(0, 1fr))`, gap: 4, padding: 6, boxSizing: 'border-box',
-    width: '100%', maxWidth: 360, alignSelf: 'center', touchAction: 'none', userSelect: 'none',
+    width: '100%', maxWidth: 420, alignSelf: 'center', flex: 'none', touchAction: 'none', userSelect: 'none',
     backgroundColor: 'var(--sm2-surface-2)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
   };
 
+  const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
+
+  // A arena: o SEU Soulmon à esquerda; o time inimigo (1→3) à direita. Ativo = borda + ▸ (a cor nunca é a única pista).
+  const arena = (
+    <div data-m3-arena style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
+      <div data-m3-player data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none' }}>
+        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain' }} />
+        <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
+      </div>
+      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, justifyContent: 'flex-end' }}>
+        {combat.enemies.map((e, i) => {
+          const line = e.line && DUNGEON_LINE_SPRITES[e.line] ? e.line : LINES[i];
+          const src = DUNGEON_LINE_SPRITES[line][ENEMY_STAGES[i]];
+          const isActive = combat.outcome === 'playing' && combat.active === i;
+          const down = e.hp <= 0;
+          const icon = elementIcon(e.element);
+          const nome = `${DUNGEON_LINE_NAMES[line]}, ${elementName(e.element, isPt)}${isActive ? (isPt ? ', ativo' : ', active') : ''}${down ? (isPt ? ', recuou' : ', stepped back') : ''}`;
+          return (
+            <div
+              key={i}
+              data-m3-enemy={i + 1}
+              data-m3-active={isActive ? '1' : '0'}
+              data-m3-hp={e.hp}
+              data-m3-element={e.element}
+              aria-current={isActive ? 'true' : undefined}
+              aria-label={nome}
+              role="group"
+              style={{
+                flex: 1, minWidth: 0, maxWidth: 92, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '4px 2px', boxSizing: 'border-box',
+                border: `2px solid ${isActive ? 'var(--sm2-gold-ink)' : 'transparent'}`, borderRadius: 8,
+              }}
+            >
+              <p aria-hidden="true" style={{ ...sm2Hint, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <span>{isActive ? '▸' : ''}{i + 1}</span>
+                {icon && <img src={icon} alt="" draggable={false} width={14} height={14} style={{ imageRendering: 'pixelated' }} />}
+              </p>
+              <img src={src} alt="" aria-hidden="true" draggable={false} width={ENEMY_SPRITE} height={ENEMY_SPRITE} style={{ width: ENEMY_SPRITE, height: ENEMY_SPRITE, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
+              <HpBars bars={[{ label: DUNGEON_LINE_NAMES[line], cur: e.hp, max: e.max, tone: 'gold' }]} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
-    <GameRoot>
+    <GameRoot full>
       <GameHeader
         title={isPt ? 'Combina 3' : 'Match 3'}
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={(
           <>
-            <span style={{ display: 'block' }}>{isPt ? `Troque duas peças vizinhas, pontue a troca ou não, para formar linhas de 3 ou mais iguais. Cada troca gasta 1 dos ${M3_MOVES} movimentos.` : `Swap two neighbouring tiles, scoring or not, to line up 3 or more alike. Each swap costs 1 of your ${M3_MOVES} moves.`}</span>
+            <span style={{ display: 'block' }}>{isPt ? 'Troque duas peças vizinhas para formar linhas de 3 ou mais iguais. Cada linha é um golpe do elemento da peça no inimigo da vez; o excesso de um golpe se perde.' : 'Swap two neighbouring tiles to line up 3 or more alike. Each line is a strike of the tile’s element on the current enemy; a strike’s excess is lost.'}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Depois de cada troca, o inimigo da vez responde e tira vida do seu Soulmon, pontue a troca ou não. A rodada acaba quando os três recuam ou quando a vida do seu Soulmon chega a zero. Perder não custa nada.' : 'After every swap the current enemy replies and takes health from your Soulmon, whether the swap scored or not. The round ends when all three step back or your Soulmon’s health reaches zero. Losing costs nothing.'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Uma linha de 4 deixa uma peça com setas: quando ela entra numa combinação, limpa a linha (ou a coluna) inteira.' : 'A line of 4 leaves a tile with arrows: when it joins a match, it clears its whole row (or column).'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Toque numa peça e depois numa vizinha, ou arraste. Teclado: setas e Enter.' : 'Tap a tile, then a neighbour, or swipe. Keyboard: arrows and Enter.'}</span>
-            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? `Cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit, até ${M3_MAX_BITS}.` : `Every ${M3_POINTS_PER_BIT} points becomes 1 Bit, up to ${M3_MAX_BITS}.`}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? `O placar é o dano causado menos o recebido, mais ${M3C_DEFEAT_BONUS} por inimigo que recuou. Cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit.` : `The score is damage dealt minus damage taken, plus ${M3C_DEFEAT_BONUS} per enemy that stepped back. Every ${M3_POINTS_PER_BIT} points becomes 1 Bit.`}</span>
           </>
         )}
         closeLabel={isPt ? 'Sair' : 'Exit'}
@@ -261,21 +351,35 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
         exitConfirm={over ? undefined : gameExitConfirm(isPt, 'da rodada')}
       />
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-        <StatTag label={isPt ? 'Movimentos' : 'Moves'} value={<span data-m3-moves={moves}>{moves}</span>} />
-        <StatTag label={isPt ? 'Pontos' : 'Score'} value={<span data-m3-score={score}>{score}</span>} />
-        <StatTag label="Bits" value={<span data-m3-bits={bitsNow}>{bitsNow}</span>} />
+      {/* a arena cresce até o tabuleiro: história, placar, o campo e o aviso vivo moram nela (D-02) */}
+      <div data-m3-field style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
+        <GameStory id="match3" language={language} compact />
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+          <StatTag label={isPt ? 'Turno' : 'Turn'} value={<span data-m3-turn={combat.turns}>{combat.turns}</span>} />
+          <StatTag label={isPt ? 'Placar' : 'Score'} value={<span data-m3-score={score}>{score}</span>} />
+          <StatTag label="Bits" value={<span data-m3-bits={bitsNow}>{bitsNow}</span>} />
+          {!over && (
+            <button type="button" onClick={showHint} disabled={busy} data-m3-hint-button style={{ ...sm2Button('outline', busy), minHeight: 44, minWidth: 64, padding: '0 12px' }}>
+              {isPt ? 'Dica' : 'Hint'}
+            </button>
+          )}
+        </div>
+        {arena}
+        {/* o aviso vivo: golpes, resposta, dica, embaralhada. Sem vermelho; fica fora da área do tabuleiro. */}
+        <p role="status" aria-live="polite" data-m3-note style={{ ...phaseLine, minHeight: 20, margin: 0 }}>
+          {note || (chain > 1 ? (isPt ? `Cascata ×${chain}!` : `Cascade ×${chain}!`) : '')}
+        </p>
       </div>
 
-      {/* o aviso vivo: troca sem linha, dica, embaralhada. Sem vermelho; fica fora da área do tabuleiro. */}
-      <p role="status" aria-live="polite" data-m3-note style={{ ...phaseLine, minHeight: 20, margin: 0 }}>
-        {note || (chain > 1 ? (isPt ? `Cascata ×${chain}!` : `Cascade ×${chain}!`) : '')}
-      </p>
-
       {over ? (
-        <>
-          <p role="status" style={phaseTitle} data-m3-end>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 'none' }}>
+          <p role="status" style={phaseTitle} data-m3-end data-m3-outcome={combat.outcome}>
             {isPt ? `Você fez ${score} pontos` : `You scored ${score} points`}
+          </p>
+          <p style={phaseLine} data-m3-outcome-line>
+            {win
+              ? (isPt ? 'O time da fenda recuou. A passagem está livre.' : 'The rift team stepped back. The way is clear.')
+              : (isPt ? 'O time da fenda segurou a passagem desta vez. Nada foi cobrado.' : 'The rift team held the way this time. Nothing was charged.')}
           </p>
           <p style={phaseLine}>
             {earned > 0 ? `+${earned} Bits` : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
@@ -291,7 +395,7 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
               {isPt ? 'Sair' : 'Exit'}
             </button>
           </div>
-        </>
+        </div>
       ) : (
         <>
           <div
@@ -332,18 +436,11 @@ export function Match3Game({ language, onEarnPoints, onExit, seed }: Match3Props
               );
             }))}
           </div>
-
-          <p style={{ ...phaseLine, margin: 0 }} data-m3-next>
+          <p style={{ ...phaseLine, margin: 0, flex: 'none' }} data-m3-next>
             {bitsNow >= M3_MAX_BITS
               ? (isPt ? 'Você chegou ao máximo de Bits desta rodada.' : 'You reached the Bits maximum for this round.')
               : (isPt ? `Próximo Bit com ${nextBitAt} pontos.` : `Next Bit at ${nextBitAt} points.`)}
           </p>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={showHint} disabled={busy} data-m3-hint-button style={{ ...sm2Button('outline', busy), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {isPt ? 'Dica' : 'Hint'}
-            </button>
-          </div>
         </>
       )}
     </GameRoot>

@@ -3,7 +3,7 @@ import { SupportNote } from './SupportNote';
 import type { CSSProperties } from 'react';
 import type { MiniGameBaseProps } from '../mente/types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
+import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { MINI_FX, REFUGIO_SCENE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
@@ -110,6 +110,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           closeLabel={closeLabel}
           onClose={onExit}
         />
+        <GameStory id="respiracao" language={language} />
         <GameVisor height={72} scene={REFUGIO_SCENE}>
           <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
         </GameVisor>
@@ -179,6 +180,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   return (
     <GameRoot>
       <GameHeader run activity title={title} closeLabel={closeLabel} onClose={onExit} />
+        <GameStory id="respiracao" language={language} />
       <GameVisor height={80} scene={REFUGIO_SCENE}>
         <div
           aria-hidden="true"
