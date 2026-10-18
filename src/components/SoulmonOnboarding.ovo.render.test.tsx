@@ -238,13 +238,14 @@ describe('§81 — o ovo-cristal', () => {
       expect(document.querySelector('[data-ovo]')).toBeTruthy();
       expect((document.querySelector('[data-ovo-chocar]') as HTMLButtonElement).disabled).toBe(true);
       await act(async () => { await vi.advanceTimersByTimeAsync(LUZ_EXPANDE_MS); });
-      // coberta: troca de tela (o caminho PAGO começa no nome completo) e a luz passa a sumir
+      // coberta: troca de tela (Faixa E: o nascimento já foi dado ANTES do ovo, então vai direto à geração) e a luz passa a sumir
       expect(luz()?.getAttribute('data-luz-branca')).toBe('some');
       expect(luz()!.style.animation).toContain('sm-luz-some');
-      expect(screen.getByText('What is your full name?')).toBeTruthy();
+      expect(document.querySelector('.sm2-ora-wait')).toBeTruthy();
+      expect(screen.queryByText('What is your full name?')).toBeNull();
       await act(async () => { await vi.advanceTimersByTimeAsync(LUZ_SOME_MS); });
       expect(luz()).toBeNull();
-      expect(screen.getByText('What is your full name?')).toBeTruthy();
+      expect(screen.queryByText('What is your full name?')).toBeNull();
     });
 
     it('movimento reduzido: sem expansão — a tela inteira vira branca num fade simples e desfaz', async () => {
@@ -256,7 +257,7 @@ describe('§81 — o ovo-cristal', () => {
       expect(luz()!.querySelector('div')).toBeNull(); // sem o disco que expande
       await act(async () => { await vi.advanceTimersByTimeAsync(LUZ_REDUZIDA_MS); });
       expect(luz()!.style.animation).toContain('sm-luz-some');
-      expect(screen.getByText('What is your full name?')).toBeTruthy();
+      expect(document.querySelector('.sm2-ora-wait')).toBeTruthy();
       await act(async () => { await vi.advanceTimersByTimeAsync(LUZ_REDUZIDA_MS); });
       expect(luz()).toBeNull();
     });

@@ -77,7 +77,10 @@ describe('fiação da telemetria — onboarding', () => {
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
       onboardingStepCode(-6), onboardingStepCode(-9), onboardingStepCode(-14), onboardingStepCode(-10), ...ritual, ...teste,
       onboardingStepCode(-2), onboardingStepCode(-3),
-      onboardingStepCode(-11), onboardingStepCode(-12), onboardingStepCode(-7),
+      onboardingStepCode(-11), onboardingStepCode(-12),
+      // Faixa E: nome completo, data, hora e cidade vêm ANTES do ovo
+      onboardingStepCode(1), onboardingStepCode(2), onboardingStepCode(3), onboardingStepCode(4),
+      onboardingStepCode(-7),
     ]);
 
     // E, confirmada a demo (o ovo -> "Soulmon guia" -> "Yes", §81), o funil passa a ser DEMO de fato.

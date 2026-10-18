@@ -44,6 +44,8 @@
 import { readJson, writeJson, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { normalizeConsent, type ConsentRecord } from './consent';
+import { cidadeValida } from './oracleDraft';
+import type { City } from './soulProfile/cities';
 import type { Answers as SoulAnswers } from './soulProfile/personality/types';
 import {
   LIFE_AREAS, STRUGGLE_LABEL, STRENGTH_LABEL,
@@ -80,6 +82,14 @@ export interface GateDraft {
   testAnswers?: SoulAnswers;
   /** Itens do ponto de partida que a pessoa DESMARCOU. */
   starterOff?: string[];
+  /** Faixa E (18/10/2026, decisão do dono): nome completo, data, hora e cidade do ritual vêm ANTES do ovo-cristal,
+   *  então o rascunho do portão também os guarda (opcionais na leitura, sem trocar a versão). */
+  fullName?: string;
+  birthDate?: string;
+  birthDateText?: string;
+  birthTime?: string;
+  birthCity?: City | null;
+  timeUnknown?: boolean;
   /** ISO de quando foi gravado — só para o leitor humano do storage. */
   savedAt: string;
 }
@@ -119,6 +129,12 @@ export function readGateDraft(): GateDraft | null {
     starterOff: Array.isArray(d.starterOff)
       ? d.starterOff.filter((x): x is string => typeof x === 'string').slice(0, 20)
       : [],
+    fullName: typeof d.fullName === 'string' ? d.fullName.slice(0, 80) : '',
+    birthDate: typeof d.birthDate === 'string' ? d.birthDate : '',
+    birthDateText: typeof d.birthDateText === 'string' ? d.birthDateText : '',
+    birthTime: typeof d.birthTime === 'string' ? d.birthTime : '12:00',
+    birthCity: cidadeValida(d.birthCity),
+    timeUnknown: d.timeUnknown === true,
     savedAt: typeof d.savedAt === 'string' ? d.savedAt : '',
   };
 }
@@ -158,7 +174,8 @@ function itensValidos(v: unknown): SoulAnswers {
 
 export function writeGateDraft(
   dados: Pick<GateDraft, 'soulGoal' | 'soulStruggle' | 'consent' | 'areas' | 'struggles' | 'strengths'
-    | 'step' | 'nickname' | 'answers' | 'testAnswers' | 'starterOff'>,
+    | 'step' | 'nickname' | 'answers' | 'testAnswers' | 'starterOff'
+    | 'fullName' | 'birthDate' | 'birthDateText' | 'birthTime' | 'birthCity' | 'timeUnknown'>,
   now: Date = new Date(),
 ): boolean {
   return writeJson(
@@ -176,6 +193,12 @@ export function writeGateDraft(
       ...(dados.answers !== undefined ? { answers: dados.answers } : {}),
       ...(dados.testAnswers !== undefined ? { testAnswers: dados.testAnswers } : {}),
       ...(dados.starterOff !== undefined ? { starterOff: dados.starterOff } : {}),
+      ...(dados.fullName !== undefined ? { fullName: dados.fullName.slice(0, 80) } : {}),
+      ...(dados.birthDate !== undefined ? { birthDate: dados.birthDate } : {}),
+      ...(dados.birthDateText !== undefined ? { birthDateText: dados.birthDateText } : {}),
+      ...(dados.birthTime !== undefined ? { birthTime: dados.birthTime } : {}),
+      ...(dados.birthCity !== undefined ? { birthCity: dados.birthCity } : {}),
+      ...(dados.timeUnknown !== undefined ? { timeUnknown: dados.timeUnknown } : {}),
       savedAt: now.toISOString(),
     } satisfies GateDraft,
     { silent: true },
