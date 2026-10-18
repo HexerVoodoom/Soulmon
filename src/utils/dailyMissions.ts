@@ -194,7 +194,7 @@ export interface FirstTime {
   descEn?: string;
 }
 
-const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil'];
+const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra'];
 
 const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[])
   .filter(b => !NO_VISIT.includes(b))

@@ -46,8 +46,8 @@ describe('o predicado — dono único', () => {
     for (const t of [demoRefusalText(false), demoRefusalText(true)]) expect(t).not.toMatch(/!|você não|you can't|you cannot/i);
   });
 
-  it('os prédios sociais da demo: Arena (Torneio, Duelo) e Hall (Biblioteca, Amigos, Guilda, Feira)', () => {
-    expect(DEMO_BLOCKED_LOTS.arena).toEqual(['torneio', 'duelo']);
+  it('os prédios sociais da demo: Arena (Torneio, Duelo, Guerra de Clãs) e Hall (Biblioteca, Amigos, Guilda, Feira)', () => {
+    expect(DEMO_BLOCKED_LOTS.arena).toEqual(['torneio', 'duelo', 'guerra']);
     expect(DEMO_BLOCKED_LOTS.hall).toEqual(['biblioteca', 'amigos', 'guilda', 'feira']);
     expect(isDemoBlockedLot('arena', 'torneio')).toBe(true);
     expect(isDemoBlockedLot('mercado', 'itens')).toBe(false);

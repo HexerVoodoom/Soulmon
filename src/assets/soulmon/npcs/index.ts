@@ -44,6 +44,7 @@ export const STALL_NPC_ART = {
 
 import npcArenaDuelo from './npc-extra-arena-duelo.png';
 import npcArenaFeira from './npc-arena-feira.png';
+import npcArenaGuerra from './npc-arena-guerra.png';
 import npcJogosMente from './npc-jogos-mente.png';
 import npcJogosRefugio from './npc-oceano-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
@@ -86,6 +87,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:restaurante': npcMercadoRestaurante, // Tijolino, o caranguejo pedreiro (14/10/2026; restaurante em obra)
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
+  'arena:guerra': npcArenaGuerra, // PLACEHOLDER até a arte própria — ver docs/ARTE-MELHORIAS-FUTURAS.md
   'hall:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume

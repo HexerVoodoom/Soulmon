@@ -131,6 +131,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   mapStep('arena', { en: 'Meeting other Soulmons.', pt: 'Encontros com outros Soulmons.' }, [
     bRow('arena.duelo', 'One duel at a time, against another Soulmon.', 'Um duelo de cada vez, contra outro Soulmon.'),
     bRow('arena.torneio', 'The ranked Tournament and the Open Arena.', 'O Torneio ranqueado e a Arena livre.'),
+    bRow('arena.guerra', 'The Clan War, fought with your clan.', 'A Guerra de Clãs, junto do seu clã.'),
   ]),
   mapStep('jogos', { en: 'Play, and calm.', pt: 'Brincar, e acalmar.' }, [
     bRow('jogos.salao', 'Minigames, for fun and for Bits.', 'Minijogos, pela graça e por Bits.'),

@@ -143,6 +143,11 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
     lineEn: 'One duel, one round at a time. Come on.',
   },
+  'arena:guerra': {
+    namePt: 'Brunna, a capitã da roda', nameEn: 'Brunna, captain of the round',
+    linePt: 'A roda se forma com o seu clã. Quando o esquadrão estiver junto, é só entrar.',
+    lineEn: 'The round forms with your clan. Once the squad is together, just step in.',
+  },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
   // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
   // `00-BIBLIA-DAS-AREAS.md`); Bastia fica só no Salão.

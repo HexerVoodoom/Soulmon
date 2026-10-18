@@ -42,7 +42,7 @@ export function isDemoMode(state: DemoCarrier | null | undefined): boolean {
  * lista: `AreaView` a lê daqui, e a régua de fiação confere os dois lados.
  */
 export const DEMO_BLOCKED_LOTS: Readonly<Record<string, readonly string[]>> = {
-  arena: ['torneio', 'duelo'],
+  arena: ['torneio', 'duelo', 'guerra'],
   hall: ['biblioteca', 'amigos', 'guilda', 'feira'],
 };
 

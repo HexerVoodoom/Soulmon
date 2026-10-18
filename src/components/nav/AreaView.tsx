@@ -53,6 +53,7 @@ const ForgeCard = lazy(() => import('../ForgeCard'));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
 const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default: m.DueloSheet })));
+const GuerraClaSheet = lazy(() => import('../arena/GuerraClaSheet').then(m => ({ default: m.GuerraClaSheet })));
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
 // sempre (os mesmos que a antiga `ActivitiesPage` abria).
@@ -355,6 +356,9 @@ export function AreaView(props: AreaViewProps) {
                 evolutionStage={props.evolutionStage}
                 onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
+            )}
+            {open?.id === 'guerra' && (
+              <GuerraClaSheet language={language} onGoToClan={props.onGoToMap ? () => { setSheet(null); props.onGoToMap?.(); } : undefined} />
             )}
           </Suspense>
         </AreaSheet>

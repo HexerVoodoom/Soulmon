@@ -1,7 +1,7 @@
 /**
- * O VISOR DA GUERRA (guilda-lancamento PR4) — o esquadrão da roda (até 4) de um lado e, do outro, as
+ * O VISOR DA GUERRA (clã-lancamento PR4) — o esquadrão da roda (até 4) de um lado e, do outro, as
  * silhuetas do esquadrão rival (a mesma quantidade). Os rivais são SÓ silhueta: o servidor nunca manda o
- * estágio, a linha nem o nome de uma pessoa de outra guilda (LV-G10), então aqui não há o que desenhar além
+ * estágio, a linha nem o nome de uma pessoa de outra clã (LV-G10), então aqui não há o que desenhar além
  * da forma. Dentro do vidro ("O Visor"), sobre o cenário da arena; movimento reduzido para o balanço.
  */
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';

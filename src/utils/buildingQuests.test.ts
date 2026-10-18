@@ -17,7 +17,8 @@ describe('tabela prédio → material', () => {
     expect(QUEST_BUILDINGS.some(id => id.startsWith('mercado.'))).toBe(false);
     // beta-2 (11): o Perfil do Soulmon é leitura — sem missão, sem material (e sem peça do Soulsmith).
     expect(QUEST_BUILDINGS).not.toContain('laboratorio.perfil');
-    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil').length);
+    expect(QUEST_BUILDINGS).not.toContain('arena.guerra'); // a guerra rende na casa do clã, sem material
+    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra').length);
     expect(MATERIALS.map(m => m.building).sort()).toEqual([...QUEST_BUILDINGS].sort());
     expect(new Set(MATERIAL_IDS).size).toBe(MATERIAL_IDS.length);
   });
