@@ -153,12 +153,12 @@ describe('ForgeCard', () => {
     expect(estado().mats.ore).toBe(3);
   });
 
-  it('falta material: o botão fica desabilitado e o MOTIVO aparece em texto neutro', () => {
+  it('falta material: o botão fica desabilitado, os custos 0/N dizem o que falta e NÃO há texto "materiais faltando" (C4)', () => {
     abrir(nivel1({ buildingQuests: bq({}) }));
     expect(q('[data-forge-upgrade-btn="eq-nucleo-t1"]').disabled).toBe(true);
-    const why = peca('eq-nucleo-t1').querySelector('[data-forge-why]')!.textContent!;
-    expect(why).toBe(forgeRefusalText('no-materials', true));
-    expect(why).not.toMatch(/corra|acaba|última|perde/i);
+    expect(peca('eq-nucleo-t1').querySelector('[data-forge-why]')).toBeNull();
+    expect(peca('eq-nucleo-t1').querySelector('[data-forge-cost]')).toBeTruthy();
+    expect(peca('eq-nucleo-t1').textContent).not.toMatch(/faltam materiais|materials are still missing/i);
   });
 
   it('falta Vínculo: o motivo diz de qual Vínculo abre o nível', () => {

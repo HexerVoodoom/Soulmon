@@ -3442,3 +3442,15 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Dono de:** a fileira de corações do resumo do dia (`heartStrip`: total, quebrados, inteiros — meio coração perdido conta como um quebrado) e da regra "a animação de quebra toca uma vez" (`shouldPlayHeartBreak`, lida de `lastDayReport.heartsAnimSeen`).
 **Exports:** `DEFAULT_HEARTS`, `HeartStrip`, `heartStrip`, `shouldPlayHeartBreak`.
 **Régua:** `src/utils/dayHearts.test.ts`, `src/components/DailyReportModal.secoes.render.test.tsx`.
+
+### `src/utils/frameBuy.ts`
+**Dono de:** a COMPRA de uma moldura de avatar na lojinha da Panora (C3, 18/10/2026): `frameBuyRefusal` (`not-for-sale` para moldura que não é `origin: 'shop'`, `already-owned`, `no-funds`, `full`) e `applyFrameBuy` (debita Bits pagando o Bit pago primeiro e acrescenta o id a `ownedFrames`; recusa reconferida sobre o `prev`, no molde de `shopBuy.ts`). Cosmética pura.
+**Exports:** `FrameBuyRefusal`, `FrameBuyState` (tipos) · `frameBuyRefusal` · `applyFrameBuy`.
+**Chamado por:** `src/App.tsx` (`handleFrameBuy`).
+**Régua:** `src/utils/frameBuy.test.ts`.
+
+### `src/utils/materialArt.ts`
+**Dono de:** a arte dos MATERIAIS de aprimoramento na aba Materiais da Mochila (C1). Mapa único `MATERIAL_ART` (chave = `MaterialId`); vazio hoje, e o material cai no emoji dele (placeholder) até a faixa D (D1) entregar os PNGs: é aqui que se liga a arte, sem tocar na Mochila.
+**Exports:** `MATERIAL_ART`.
+**Chamado por:** `src/components/home/Mochila.tsx`.
+**Régua:** `src/components/home/Mochila.render.test.tsx`.

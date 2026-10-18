@@ -16,7 +16,7 @@
  */
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { createRef } from 'react';
-import { screen, fireEvent, within, act } from '@testing-library/react';
+import { screen, fireEvent, within, act, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { Mochila, mochilaTabs, pontoSobre, DRAG_THRESHOLD_PX } from './Mochila';
 
@@ -189,16 +189,22 @@ describe('Mochila — dados e estados', () => {
   });
 });
 
+/** A seção dos materiais (a aba tem o mesmo nome acessível, então se acha pelo data-attr). */
+const secMateriais = async () => {
+  await waitFor(() => expect(document.querySelector('[data-mochila-materiais]')).toBeTruthy(), { timeout: 8000 });
+  return document.querySelector('[data-mochila-materiais]') as HTMLElement;
+};
+
 describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toque abre o tooltip de onde conseguir)', () => {
-  const abrirEspeciais = async (over: Partial<Parameters<typeof Mochila>[0]> = {}) => {
+  const abrirMateriais = async (over: Partial<Parameters<typeof Mochila>[0]> = {}) => {
     const r = montar({ language: 'en-US', materials: { spark: 3, gear: 12 }, ...over });
-    fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
-    const sec = await screen.findByLabelText('Materials');
+    fireEvent.click(screen.getByRole('tab', { name: 'Materials' }));
+    const sec = await secMateriais();
     return { ...r, sec };
   };
 
   it('lista TODOS os 16 materiais do catálogo, mesmo com ×0, com ícone, nome e quantidade', async () => {
-    const { sec } = await abrirEspeciais();
+    const { sec } = await abrirMateriais();
     expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
     expect(within(sec).getByLabelText('Spark × 3').textContent).toContain('✨');
     expect(within(sec).getByLabelText('Gear × 12')).toBeTruthy();
@@ -207,10 +213,13 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
 
   it('sem NENHUM material no save a seção continua inteira (×0) e o vazio dos outros especiais segue', async () => {
     montar({ language: 'en-US', foodInventory: { '🍎': 1 }, materials: {} });
-    fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
-    const sec = await screen.findByLabelText('Materials');
+    fireEvent.click(screen.getByRole('tab', { name: 'Materials' }));
+    const sec = await secMateriais();
     expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
     expect(within(sec).getByLabelText('Spark × 0')).toBeTruthy();
+    // os materiais NÃO moram mais na aba Especiais (C1): lá o vazio dos especiais aparece sem a seção
+    fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
+    expect(document.querySelector('[data-mochila-materiais]')).toBeNull();
     expect(document.querySelector('[data-mochila-vazia]')).toBeTruthy();
   });
 
@@ -220,7 +229,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
   });
 
   it('tocar no ícone abre o tooltip (aria-expanded) com ONDE conseguir; tocar de novo, Esc e toque fora fecham', async () => {
-    const { sec } = await abrirEspeciais();
+    const { sec } = await abrirMateriais();
     const btn = within(sec).getByLabelText('Moss × 0');
     expect(btn.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(btn);
@@ -242,7 +251,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
   it('"Go there" chama o callback com o PRÉDIO do material e fecha a mochila', async () => {
     const onGo = vi.fn();
     const onClose = vi.fn();
-    const { sec } = await abrirEspeciais({ onGoToBuilding: onGo, onClose });
+    const { sec } = await abrirMateriais({ onGoToBuilding: onGo, onClose });
     fireEvent.click(within(sec).getByLabelText('Ore × 0'));
     fireEvent.click(document.querySelector('[data-material-go]')!);
     expect(onGo).toHaveBeenCalledTimes(1);
@@ -252,7 +261,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
 
   it('PT: "Ir lá" e o texto em português', async () => {
     montar({ materials: {}, onGoToBuilding: () => {} });
-    fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
     fireEvent.click(await screen.findByLabelText('Faísca × 0'));
     expect(document.querySelector('[data-material-go]')!.textContent).toBe('Ir lá');
     expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Você encontra mais em/);
@@ -260,7 +269,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
 
   it('demo: prédio social bloqueado não recebe o "Go there" e diz que não está disponível; os liberados seguem', async () => {
     const onGo = vi.fn();
-    const { sec } = await abrirEspeciais({ demo: true, onGoToBuilding: onGo });
+    const { sec } = await abrirMateriais({ demo: true, onGoToBuilding: onGo });
     fireEvent.click(within(sec).getByLabelText('Fang × 0')); // Duelo (arena.duelo) — bloqueado na demo
     expect(document.querySelector('[data-material-go]')).toBeNull();
     expect(document.querySelector('[data-material-demo]')!.textContent).toMatch(/Not available in the demo/);

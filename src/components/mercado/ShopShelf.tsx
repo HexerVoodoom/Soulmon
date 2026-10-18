@@ -195,6 +195,8 @@ export interface ShopOwnership {
   missionProgress: Record<string, number>;
   /** Conquistas já RESGATADAS (REGISTRO §56). Ausente = save não migrado: a liberação é automática. */
   missionClaimed?: readonly string[];
+  /** Molduras de avatar que a pessoa tem (`GameState.ownedFrames`) — só a aba Molduras do Mercado lê. */
+  ownedFrames?: readonly string[];
   /** A vitrine do trimestre da assinatura está aberta? (`utils/subscription.ts`.)
    *  Só a `SubscriptionShelf` lê isto — a prateleira de Bits nunca. */
   subscriptionActive?: boolean;
@@ -205,6 +207,8 @@ export interface ShopActions {
   onClaimSubscription?: (itemId: string) => boolean;
   /** A compra. Quem decide é o `handleShopBuy` do `App.tsx`; devolve false na recusa. */
   onBuy: (itemId: string) => boolean;
+  /** C3: compra de moldura de avatar (aba Molduras da Panora). Ausente = a aba só mostra. */
+  onBuyFrame?: (frameId: string) => boolean;
   onEquip: (id: string | null) => void;
   /** `id` null limpa o espaço; o slot é sempre obrigatório. */
   onEquipFurniture: (id: string | null, slot: SlotId) => void;

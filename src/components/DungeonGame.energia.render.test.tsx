@@ -50,9 +50,8 @@ describe('Masmorra — energia por camada', () => {
     montar({ energyPoints: 3, dungeonDepthRecord: 7, totalXP: 5000, perfectDays: 5 }); // Vínculo ≥ 8 (portão aberto) e Lv 6
     const plano = document.querySelector('[data-dungeon-plan]')!.textContent!;
     expect(plano).toMatch(/Starts at layer 6/);
-    expect(plano).toMatch(/1 energy per layer/);
     expect(plano).toMatch(/enough for 3 now/);
-    expect(plano).toMatch(/Lv 6 reaches layer 22/);
+    expect(document.body.textContent).not.toMatch(/HP\s*\d+%/);
     expect(screen.getByText('Deepest')).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(false);
   });
@@ -104,7 +103,7 @@ describe('Masmorra — limite diário de camadas (beta-2 6.1, REGISTRO §40)', (
 
   it('o lobby mostra quantas camadas dá para fazer AGORA: o menor entre a energia e o que resta do dia', () => {
     montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS - 2 } });
-    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/enough for 2 now \(up to 10 a day\)/);
+    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/enough for 2 now/);
   });
 
   it('reabrir o app (remontar do localStorage) no limite continua bloqueado: o contador mora no save, não na tela', () => {

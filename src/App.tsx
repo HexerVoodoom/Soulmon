@@ -141,6 +141,7 @@ import {
 import { fitHabitCreates } from './utils/habitCreate';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
+import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
@@ -4179,6 +4180,14 @@ export default function App() {
     // a compra em Emblemas decidia sobre um saldo velho.
   }, [gameState, missionProgress, refuseDemo]);
 
+  /** C3: compra de MOLDURA no Mercado — mesma disciplina de `handleShopBuy` (recusa reconferida sobre o `prev`, em `utils/frameBuy.ts`). */
+  const handleFrameBuy = useCallback((frameId: string): boolean => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    if (frameBuyRefusal(gameState, frameId)) return false;
+    setGameState(prev => applyFrameBuy(prev, frameId).state);
+    return true;
+  }, [gameState, refuseDemo, setGameState]);
+
   /** Emblemas ganhos: UM caminho só, o do Torneio E o do resgate da Feira (a mesma moeda). */
   const earnEmblems = useCallback((amount: number) => {
     setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }));
@@ -6990,9 +6999,10 @@ export default function App() {
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   missionProgress,
                   missionClaimed: gameState.missionsClaimed,
+                  ownedFrames: gameState.ownedFrames ?? [],
                   subscriptionActive: subscription.active,
                 }}
-                actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
+                actions={{ onBuy: handleShopBuy, onBuyFrame: handleFrameBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
                 points={gameState.gamePoints ?? 0}
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}

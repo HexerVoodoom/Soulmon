@@ -39,7 +39,7 @@ vi.mock('../utils/community', async (orig) => {
 });
 
 import { LibraryPage } from './LibraryPage';
-import { listPlayers, getPlayer } from '../utils/community';
+import { listPlayers, getPlayer, addFriend } from '../utils/community';
 
 const perfil = (over: Partial<PlayerDetail> = {}): PlayerDetail => ({
   id: 'pid-x', name: 'Fulano', petName: 'Bichinho', stage: 'rookie',
@@ -168,25 +168,79 @@ describe('H17 (01/10/2026) — a Biblioteca do Hall mostra só os Soulmons já v
     vi.useFakeTimers({ shouldAdvanceTime: true });
   });
 
-  it('sem busca, ninguém que ainda não foi aberto; abrir um guarda na lista; a busca alcança qualquer um', async () => {
+  it('C6: sem abrir ninguém a lista não mostra desconhecidos; abrir guarda; a lista mostra o nome da CRIATURA, em ordem alfabética, e a busca filtra pelo nome dela', async () => {
     vi.mocked(listPlayers).mockResolvedValue({
-      players: [perfil({ id: 'pid-novo', name: 'Novato' }) as DirectoryPlayer],
+      players: [
+        perfil({ id: 'pid-z', name: 'Ana', petName: 'Zorro' }) as DirectoryPlayer,
+        perfil({ id: 'pid-a', name: 'Bia', petName: 'Abelhudo' }) as DirectoryPlayer,
+        perfil({ id: 'pid-nunca', name: 'Caio', petName: 'Nunca' }) as DirectoryPlayer,
+      ],
     });
-    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-novo', name: 'Novato' }) });
     const r = renderWithCss(<LibraryPage {...props([])} embedded view="directory" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     await waitFor(() => expect(screen.getByText(/ficam guardados nesta lista/)).toBeTruthy());
-    expect(screen.queryByText('Novato')).toBeNull();
+    expect(linhas()).toHaveLength(0);
+    // o servidor foi consultado SEM termo: a busca do Hall é local
+    expect(vi.mocked(listPlayers).mock.calls.every(c => !c[0])).toBe(true);
 
-    // A busca por nome encontra quem ainda não foi visto…
-    fireEvent.change(screen.getByRole('textbox', { name: /Buscar jogador/ }), { target: { value: 'Nov' } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    await waitFor(() => expect(screen.getByText('Novato')).toBeTruthy());
-    // …e abrir o perfil o guarda: numa montagem nova, sem busca, ele está lá.
-    fireEvent.click(screen.getByRole('button', { name: 'Ver o perfil de Novato' }));
+    // Marca dois como vistos, abrindo-os (via localStorage da própria tela: abre pela busca local não existe sem vistos).
+    localStorage.setItem('soulmon-library-seen', JSON.stringify(['pid-z', 'pid-a']));
     r.unmount();
     renderWithCss(<LibraryPage {...props([])} embedded view="directory" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    await waitFor(() => expect(screen.getByText('Novato')).toBeTruthy());
+    await waitFor(() => expect(linhas()).toHaveLength(2));
+    expect(linhas().map(b => b.getAttribute('aria-label'))).toEqual(['Ver o perfil de Abelhudo', 'Ver o perfil de Zorro']);
+    expect(screen.queryByText('Nunca')).toBeNull();
+
+    fireEvent.change(screen.getByRole('textbox', { name: /Buscar Soulmon/ }), { target: { value: 'zor' } });
+    await waitFor(() => expect(linhas()).toHaveLength(1));
+    expect(screen.getByText('Zorro')).toBeTruthy();
+  });
+});
+
+describe('C7 — Amigos: adicionar pelo nome', () => {
+  beforeEach(() => {
+    vi.mocked(listPlayers).mockReset();
+    vi.mocked(getPlayer).mockReset();
+    vi.mocked(addFriend).mockReset();
+    localStorage.clear();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  const digitar = (v: string) => {
+    fireEvent.change(screen.getByRole('textbox', { name: /Nome do amigo/ }), { target: { value: v } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
+  };
+
+  it('digitar o nome e tocar Adicionar chama addFriend com o id achado e avisa a tela', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [perfil({ id: 'pid-lia', name: 'Lia' }) as DirectoryPlayer] });
+    vi.mocked(addFriend).mockResolvedValue({ ok: true, friends: ['pid-lia'] });
+    const onFriendsChange = vi.fn();
+    renderWithCss(<LibraryPage {...props([])} onFriendsChange={onFriendsChange} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    digitar('lia');
+    await waitFor(() => expect(addFriend).toHaveBeenCalledWith('save-1', 'pid-lia'));
+    await waitFor(() => expect(onFriendsChange).toHaveBeenCalledWith(['pid-lia']));
+    expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Lia entrou/);
+  });
+
+  it('nome que ninguém tem: avisa, sem addFriend', async () => {
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    digitar('Fantasma');
+    await waitFor(() => expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Não achei ninguém/));
+    expect(addFriend).not.toHaveBeenCalled();
+  });
+
+  it('o presente é a mãozinha com coração (volunteer_activism), não a moeda', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    const btn = await screen.findByRole('button', { name: /Enviar 20 Bits para Lia/ });
+    expect(btn.textContent).toContain('volunteer_activism');
+    expect(btn.textContent).not.toContain('paid');
   });
 });

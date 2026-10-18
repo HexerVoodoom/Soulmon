@@ -157,6 +157,10 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
    * encontrável). Vale só na visão fixa do Hall (`view === 'directory'`).
    */
   const seenOnly = view === 'directory';
+  /** C7: o campo "adicionar amigo pelo nome" (aba Amigos). */
+  const [addName, setAddName] = useState('');
+  const [addBusy, setAddBusy] = useState(false);
+  const [addMsg, setAddMsg] = useState<string | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeen);
   const markSeen = (id: string) => {
     setSeen(prev => {
@@ -172,12 +176,13 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     setPlayers(null);
     setLoadError(false);
     const t = setTimeout(() => {
-      listPlayers(search)
+      // C6: no Hall a busca filtra a lista dos já vistos NO CLIENTE (nome da criatura); o servidor devolve o diretório inteiro.
+      listPlayers(seenOnly ? '' : search)
         .then(r => { if (vivo) setPlayers(r.players ?? []); })
         .catch(() => { if (vivo) { setPlayers([]); setLoadError(true); } });
     }, 300);
     return () => { vivo = false; clearTimeout(t); };
-  }, [search, reloadKey]);
+  }, [search, reloadKey, seenOnly]);
 
   /**
    * A ABA AMIGOS RESOLVE POR `action=player`, E NAO PELO DIRETORIO.
@@ -244,13 +249,47 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     }
   };
 
-  const searchLower = search.toLowerCase();
+  /** Nome que a linha mostra: no Hall é o da CRIATURA (C6); fora dele, o do jogador. */
+  const nomeDe = (p: LibraryEntry) => (seenOnly ? (p.petName || p.name) : p.name);
+  const searchLower = search.trim().toLowerCase();
   const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
-  const directoryAll: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...npcMatches];
-  const onlySeen = seenOnly && !searchLower;
+  const directoryAll: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...(seenOnly ? LIBRARY_NPCS : npcMatches)];
+  const onlySeen = seenOnly;
+  // C6: todo Soulmon já visto (NPC incluso), filtrado pelo nome da criatura e em ordem alfabética.
   const directoryList: LibraryEntry[] | null = directoryAll && onlySeen
-    ? directoryAll.filter(p => seen.includes(p.id) || friends.includes(p.id))
+    ? directoryAll
+      .filter(p => seen.includes(p.id) || friends.includes(p.id))
+      .filter(p => !searchLower || p.petName.toLowerCase().includes(searchLower) || p.name.toLowerCase().includes(searchLower))
+      .sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), language, { sensitivity: 'base' }))
     : directoryAll;
+
+  /** C7: adiciona um amigo digitando o nome do jogador (o diretório devolve quem ligou a presença pública). */
+  const addByName = async () => {
+    const q = addName.trim().toLowerCase();
+    if (!q || addBusy) return;
+    setAddMsg(null);
+    setActionError(null);
+    if (friends.length >= MAX_FRIENDS) { setAddMsg(isPt ? `Limite de ${MAX_FRIENDS} amigos.` : `Limit of ${MAX_FRIENDS} friends.`); return; }
+    setAddBusy(true);
+    try {
+      const r = await listPlayers(addName.trim());
+      const todos = (r.players ?? []).filter(p => p.id !== saveId);
+      const exatos = todos.filter(p => p.name.toLowerCase() === q);
+      const cand = exatos.length > 0 ? exatos : todos.filter(p => p.name.toLowerCase().includes(q));
+      if (cand.length === 0) { setAddMsg(isPt ? 'Não achei ninguém com esse nome.' : "I couldn't find anyone with that name."); return; }
+      if (cand.length > 1) { setAddMsg(isPt ? 'Há mais de uma pessoa assim. Digite o nome completo.' : 'More than one person matches. Type the full name.'); return; }
+      const alvo = cand[0];
+      if (friends.includes(alvo.id)) { setAddMsg(isPt ? `${alvo.name} já é seu amigo.` : `${alvo.name} is already your friend.`); return; }
+      const res = await addFriend(saveId, alvo.id);
+      onFriendsChange(res.friends);
+      setAddName('');
+      setAddMsg(isPt ? `${alvo.name} entrou nos seus amigos.` : `${alvo.name} is now your friend.`);
+    } catch {
+      setActionError(isPt ? 'Não deu para adicionar agora. Tente de novo.' : "Couldn't add that friend right now. Try again.");
+    } finally {
+      setAddBusy(false);
+    }
+  };
   // A aba do grupo não é uma lista de jogadores — tem fonte, estados e vazio
   // próprios. Por isso ela não entra em `list`: entrar faria o esqueleto e o
   // "nenhum jogador com esse nome" do diretório aparecerem por cima dela.
@@ -282,7 +321,33 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         </InfoTip>
       </div>
 
-      {tab !== 'coop' && (
+      {tab === 'friends' && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); void addByName(); }}
+          data-friend-add
+          style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+        >
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none' }}>
+              <Icon name="person" size={24} tone="muted" />
+            </span>
+            <Field
+              value={addName}
+              onChange={e => { setAddName(e.target.value); setAddMsg(null); }}
+              placeholder={isPt ? 'Nome do amigo…' : "Friend's name…"}
+              aria-label={isPt ? 'Nome do amigo para adicionar' : 'Name of the friend to add'}
+              maxLength={40}
+              style={{ paddingLeft: 44 }}
+            />
+          </div>
+          <button type="submit" disabled={addBusy || !addName.trim()} style={{ ...sm2Button('primary', addBusy || !addName.trim(), 'sm'), flexShrink: 0 }}>
+            {isPt ? 'Adicionar' : 'Add'}
+          </button>
+        </form>
+      )}
+      {tab === 'friends' && addMsg && <p role="status" className="sm2-lib-s" data-friend-add-msg style={{ margin: 0 }}>{addMsg}</p>}
+
+      {tab === 'directory' && (
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none' }}>
           <Icon name="search" size={24} tone="muted" />
@@ -290,8 +355,8 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         <Field
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder={isPt ? 'Buscar por nome…' : 'Search by name…'}
-          aria-label={isPt ? 'Buscar jogador por nome' : 'Search player by name'}
+          placeholder={seenOnly ? (isPt ? 'Buscar Soulmon por nome…' : 'Search Soulmon by name…') : (isPt ? 'Buscar por nome…' : 'Search by name…')}
+          aria-label={seenOnly ? (isPt ? 'Buscar Soulmon por nome' : 'Search Soulmon by name') : (isPt ? 'Buscar jogador por nome' : 'Search player by name')}
           style={{ paddingLeft: 44 }}
         />
       </div>
@@ -363,9 +428,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       {list && list.length === 0 && tab !== 'coop' && !(loadError && tab === 'directory') && (
         <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
-            ? (isPt ? 'Você ainda não tem amigos. Toque em alguém na aba Todos.' : 'You have no friends yet. Tap someone in the All tab.')
+            ? (isPt ? 'Você ainda não tem amigos. Digite o nome de alguém acima.' : 'You have no friends yet. Type someone’s name above.')
             : onlySeen
-              ? (isPt ? 'Os Soulmons que você abrir aqui ficam guardados nesta lista. Busque um nome para encontrar alguém.' : 'The Soulmons you open here stay on this list. Search a name to find someone.')
+              ? (searchLower
+                ? (isPt ? 'Nenhum Soulmon visto com esse nome.' : 'No Soulmon you have seen has that name.')
+                : (isPt ? 'Os Soulmons que você conhecer ficam guardados nesta lista.' : 'The Soulmons you meet stay on this list.'))
               : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}
         </p>
       )}
@@ -383,7 +450,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
               <button
                 type="button"
                 onClick={() => { setSelectedPlayer(p); markSeen(p.id); onVisitPlayer?.(); }}
-                aria-label={isPt ? `Ver o perfil de ${p.name}` : `View ${p.name}'s profile`}
+                aria-label={isPt ? `Ver o perfil de ${nomeDe(p)}` : `View ${nomeDe(p)}'s profile`}
                 className="sm2-lib-who"
               >
                 {/* A identidade do outro é a CRIATURA num mini-visor 64² sem
@@ -402,7 +469,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                 </MiniGlass>
                 <span className="sm2-lib-nm">
                   <span className="t">
-                    {p.name}
+                    {nomeDe(p)}
                     {isNpc && (
                       <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span>
                     )}
@@ -413,19 +480,20 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                       // WP4.11 / proibição #21: o `rank` saiu. Número que sobe
                       // e desce conforme o outro joga é métrica de desempenho
                       // alheio, e um diretório de amigos é o pior lugar para ela.
-                      : isPt
-                        ? `${p.daysPlaying} dias jogando`
-                        : `${p.daysPlaying} days playing`}
+                      : seenOnly && p.petName && !isNpc
+                        ? p.name
+                        : isPt
+                          ? `${p.daysPlaying} dias jogando`
+                          : `${p.daysPlaying} days playing`}
                   </span>
                 </span>
               </button>
 
               {!isNpc && isFriend && (
                 <RowAction
-                  /* `paid` (moeda) e não `redeem`/`card_giftcard`: o presente
-                     são 20 Bits, e só `paid` existe no inventário de 102 nomes
-                     da fonte subsetada — nome fora dele renderiza VAZIO. */
-                  icon="paid"
+                  /* C7: presente = `volunteer_activism` (mão com coração, já usado na aba Amigos), não a moeda `paid`.
+                     Nome fora do inventário da fonte subsetada renderiza VAZIO. */
+                  icon="volunteer_activism"
                   tone="ink"
                   busy={busyId === p.id}
                   disabled={!canGiftToday || gifted}

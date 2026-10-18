@@ -1682,3 +1682,10 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Exports:** `DayHearts`, `HEART_SHAKE_MS`, `HEART_SNAP_MS`.
 **Chamado por:** `src/components/DailyReportModal.tsx` (folha dos corações).
 **Régua:** `src/components/DailyReportModal.secoes.render.test.tsx`.
+
+### `src/components/mercado/FrameShelf.tsx`
+**Dono de:** a prateleira de MOLDURAS de avatar do Mercado (C3, 18/10/2026) — a aba "Molduras" da lojinha da Panora, ao lado de Backgrounds. Lista só as de loja (`origin: 'shop'`, Bits); a aba Honra vem vazia (nenhuma moldura custa Honra). Compra em dois toques (Comprar, Confirmar); a regra é de `utils/frameBuy.ts`.
+**Props principais:** `{ language, currency, balance, owned, onBuy? }`.
+**Exports:** `FrameShelf(props)`.
+**Chamado por:** `src/components/mercado/MercadoSheets.tsx` (`MercadoStallSheet`, stall `background`).
+**Régua:** `src/components/mercado/MercadoC.render.test.tsx`.

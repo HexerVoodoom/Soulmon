@@ -12,10 +12,13 @@ import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory }
 import { SHOP_ITEMS } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { MiniGlass } from '../ui/MiniGlass';
+import { PixelIcon } from '../ui/PixelIcon';
+import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import type { CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
+import { FrameShelf } from './FrameShelf';
 import {
   CreditExchange, CurrencyBalance, DecorRuleLine, ShopShelf, ShopStatus, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
@@ -71,11 +74,25 @@ export function MercadoStallSheet(props: MercadoStallProps) {
   const tabs = STALL_CURRENCIES[stall];
   const [cur, setCur] = useState<CurrencyId>(tabs[0]);
   const { flash, say } = useShopFlash();
+  /** C3: a lojinha da Panora vende DUAS coisas — separadas em Molduras / Backgrounds; a moeda (Bits / Honra) fica dentro de cada uma. */
+  const [kind, setKind] = useState<'frames' | 'backgrounds'>('backgrounds');
+  const showFrames = stall === 'background' && kind === 'frames';
   const balance = cur === 'emblems' ? emblems : cur === 'credits' ? credits : points;
 
   return (
     <div data-mercado-stall={stall} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={stickyHead}>
+        {stall === 'background' && (
+          <PixelTabs
+            items={[
+              { key: 'frames' as const, label: isPt ? 'Molduras' : 'Frames' },
+              { key: 'backgrounds' as const, label: 'Backgrounds' },
+            ]}
+            value={kind}
+            onChange={setKind}
+            ariaLabel={isPt ? 'O que a Panora vende' : 'What Panora sells'}
+          />
+        )}
         {tabs.length > 1 && (
           <PixelTabs
             items={tabs.map(c => ({ key: c, label: currencyLabel(c, isPt) }))}
@@ -99,7 +116,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
           NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
           Vazio é silêncio — a seção nem desenha o título. */}
-      {cur !== 'credits' && (stall === 'background' || stall === 'decoracao') && (
+      {cur !== 'credits' && !showFrames && (stall === 'background' || stall === 'decoracao') && (
         <GuildOwnedShelf
           language={language}
           kind={stall === 'background' ? 'bg' : 'furniture'}
@@ -109,7 +126,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       )}
       {/* O conjunto do trimestre da assinatura: sempre visível (escurecido com o porquê
           quando a vitrine está fechada), de graça no resgate, posse permanente depois. */}
-      {cur === 'bits' && (stall === 'background' || stall === 'decoracao') && (
+      {cur === 'bits' && !showFrames && (stall === 'background' || stall === 'decoracao') && (
         <SubscriptionShelf
           language={language}
           kind={stall === 'background' ? 'bg' : 'furniture'}
@@ -138,6 +155,14 @@ export function MercadoStallSheet(props: MercadoStallProps) {
             </section>
           )}
         </>
+      ) : showFrames ? (
+        <FrameShelf
+          language={language}
+          currency={cur}
+          balance={balance}
+          owned={props.ownedFrames ?? []}
+          onBuy={props.onBuyFrame}
+        />
       ) : (
         <ShopShelf
           language={language}
@@ -173,7 +198,7 @@ function categoryLabel(c: MissionCategory, isPt: boolean): string {
  * WP4.12 (achado E4) vale aqui: sem progresso, NENHUM "0/N" — uma coluna de
  * zeros lê como boletim. A condição em palavras aparece sempre.
  */
-export function ConquistasSheet({ language, missionProgress, claimed, onClaim, nav }: {
+export function ConquistasSheet({ language, missionProgress, claimed, onClaim, nav, shop }: {
   language: Language;
   missionProgress: Record<string, number>;
   /** Conquistas já resgatadas (REGISTRO §56). Ausente = save não migrado: cumprida já vale como resgatada. */
@@ -182,8 +207,13 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
   onClaim?: (id: string) => void;
   /** Para onde a conquista leva (REGISTRO §62): só no ícone "!" (no Mercado o jogador já está comprando). */
   nav?: MissionNav;
+  /** C2: só no prédio Conquistas do Mercado — liga o Comprar do cenário liberado. Sem isto (ícone "!" de Missões) o card só aponta o Mercado. */
+  shop?: { ownedBackgrounds: readonly string[]; balance: number; onBuy: (itemId: string) => boolean };
 }) {
   const isPt = language === 'pt-BR';
+  /** C2: compra em dois toques (Comprar -> Confirmar), como na prateleira (D1). */
+  const [confirmando, setConfirmando] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
   const list = missionsDoneFirst(
     MISSIONS.filter(m => m.category === cat),
@@ -266,19 +296,54 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
                     {thumb
                       ? <img src={thumb} alt="" width={96} height={52} className="sm2-shop-bg" />
                       : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[reward!.id]?.css }} />}
+                    {!resgatada && <span aria-hidden="true" className="sm2-shop-veil" />}
                   </MiniGlass>
                   <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ ...sm2Hint, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
                       {isPt ? 'O que ganha' : 'What you get'}
                     </span>
                     <span style={{ ...sm2Text, fontWeight: 500 }}>{rewardName}</span>
-                    {resgatada && (
+                    {resgatada && !shop && (
                       <span data-mission-buy-hint style={sm2Hint}>{isPt ? 'Resgatada — compre na lojinha de Background, no Mercado.' : 'Claimed — buy it in the Background stall at the Market.'}</span>
                     )}
                     {done && !resgatada && (
                       <span style={sm2Hint}>{isPt ? 'Resgate para liberar a compra no Mercado.' : 'Claim it to unlock buying at the Market.'}</span>
                     )}
+                    {aviso?.id === m.id && <span role="status" data-mission-buy-flash style={sm2Hint}>{aviso.msg}</span>}
                   </span>
+                  {/* C2: bloqueado = cadeado; liberado = Comprar + preço (ou "Seu" se já comprou). */}
+                  {!resgatada ? (
+                    <span data-mission-locked aria-label={isPt ? 'bloqueado' : 'locked'} style={{ ...sm2Hint, flex: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <PixelIcon src={STATUS_ICON_ART.cadeado} size={20} />
+                      {isPt ? 'bloqueado' : 'locked'}
+                    </span>
+                  ) : shop && reward ? (
+                    shop.ownedBackgrounds.includes(reward.id) ? (
+                      <span data-mission-owned style={{ ...sm2Hint, flex: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Icon name="check_circle" size={20} fill={1} tone="primary" />
+                        {isPt ? 'Seu' : 'Yours'}
+                      </span>
+                    ) : confirmando === m.id ? (
+                      <button type="button" data-mission-buy-confirm={reward.id} style={{ ...sm2Button('primary', false, 'sm'), flex: 'none' }}
+                        onClick={() => {
+                          setConfirmando(null);
+                          const ok = shop.onBuy(reward.id);
+                          setAviso({ id: m.id, ok, msg: ok ? (isPt ? `${rewardName} comprado.` : `${rewardName} purchased.`) : (isPt ? `Saldo insuficiente para ${rewardName}.` : `Not enough to buy ${rewardName}.`) });
+                        }}>
+                        {isPt ? `Confirmar ${reward.price} Bits` : `Confirm ${reward.price} Bits`}
+                      </button>
+                    ) : (
+                      <button type="button" data-mission-buy={reward.id} style={{ ...sm2Button('primary', shop.balance < reward.price, 'sm'), flex: 'none' }}
+                        aria-label={isPt ? `Comprar ${rewardName} por ${reward.price} Bits` : `Buy ${rewardName} for ${reward.price} Bits`}
+                        onClick={() => {
+                          if (shop.balance < reward.price) { setAviso({ id: m.id, ok: false, msg: isPt ? `Faltam Bits para ${rewardName}. Eles vêm dos minijogos.` : `Not enough Bits for ${rewardName} yet. They come from the minigames.` }); return; }
+                          setAviso(null);
+                          setConfirmando(m.id);
+                        }}>
+                        {isPt ? `Comprar · ${reward.price} Bits` : `Buy · ${reward.price} Bits`}
+                      </button>
+                    )
+                  ) : null}
                 </div>
               )}
             </li>
