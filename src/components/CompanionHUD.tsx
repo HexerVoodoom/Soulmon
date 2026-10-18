@@ -1303,7 +1303,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           // piso desenhado. A arte desce para a caixa da composição (logo
           // abaixo), que é a régua certa; aqui fica só a cor de base, que
           // preenche a tela inteira.
-          screenStyle={cenario ? (cenarioBase ? { backgroundColor: cenarioBase } : { background: cenario }) : undefined}
+          screenStyle={cenario ? (cenarioBase ? { backgroundColor: cenarioBase } : { background: `${cenario} center bottom / cover no-repeat` }) : undefined}
         >
         {/* A leitura de HP/EN saiu do vidro (a placa pixel `VisorBar`) e foi
             para o canto inferior ESQUERDO da faixa, em vetor (`.sm3-stats`,
@@ -1322,7 +1322,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                dele. `transform` para não reflow; a transição é o token. */
             transform: stageDrop ? `translateY(${stageDrop}px)` : undefined,
             transition: 'transform var(--sm2-dur-tap) var(--sm2-ease)',
-            // `auto 100%` + `center bottom`: a ALTURA da arte casa com a
+            // `cover` + `center bottom` (preenche sem distorcer nem repetir; igual a `auto 100%` até 462px de largura): a ALTURA da arte casa com a
             // altura da composição, que é a única régua em que `GROUND_Y`
             // significa alguma coisa. Sem esticar (o pixel não perdoa) e sem
             // `cover` (que numa caixa larga escala pela largura e joga o chão
@@ -1342,7 +1342,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 position: 'absolute',
                 inset: 0,
                 pointerEvents: 'none',
-                background: `${cenario} center bottom / auto 100% no-repeat`,
+                background: `${cenario} center bottom / cover no-repeat`,
                 imageRendering: 'auto', // arte PINTADA reduzida: suavizada (o pixelated do palco é para os sprites; nearest aqui vira serrilhado)
                 WebkitMaskImage: CENA_ARTE_MASK,
                 maskImage: CENA_ARTE_MASK,

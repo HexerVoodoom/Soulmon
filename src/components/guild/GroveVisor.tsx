@@ -43,7 +43,7 @@ export function GroveVisor({ guild, mySprite, reducedMotion, label }: GroveVisor
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: GROVE_VISOR_HEIGHT, background: bg && `${sceneCss(bgId)} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: GROVE_VISOR_HEIGHT, background: bg && `${sceneCss(bgId)} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}
     >
       {criaturas.map((c, i) => (
         <img
