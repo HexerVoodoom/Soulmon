@@ -151,6 +151,8 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/guild/FeiraVisor.tsx': 'prédio `hall.feira` — bloqueado na demo',
       'components/guild/GuildSheet.tsx': 'prédios `hall.feira`/`hall.guilda` — bloqueados na demo',
       'components/guild/GroveVisor.tsx': 'prédio `hall.guilda` — bloqueado na demo',
+      'components/guild/claUi.tsx': 'só tipo de erro (`GuildError`) da Praça/Plantio/Mistério, montados dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
+      'utils/claApi.ts': 'cliente dos prédios do clã (Praça/Plantio/Mistério) sobre o `guildCall`; só chega pelo GuildSheet, e o Mistério por tarefa só dispara com memória de clã no aparelho (a demo não tem)',
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
       'hooks/useGroveWatch.ts': 'só consulta quem já tem memória de roda no aparelho — a demo não tem (Guilda bloqueada)',
     };

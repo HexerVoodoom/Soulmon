@@ -3468,3 +3468,7 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Exports:** `LEVELS_PER_VISUAL_TIER` · `VISUAL_TIERS` · `visualTier` · `forgeArtName`.
 **Chamado por:** `src/components/ForgeCard.tsx`.
 **Régua:** `src/utils/forgeVisual.test.ts`.
+
+### `src/utils/claApi.ts` e `src/utils/claCredit.ts` (18/10/2026, prédios do clã)
+**Dono de:** `src/utils/claApi.ts` — o cliente dos prédios do clã (`ClaReward`, `sanitizeReward`, `PRACA_SLOTS`, `sanitizePraca`, `getPraca`): toda resposta do servidor passa por sanitização antes de tocar a tela. `src/utils/claCredit.ts` — o crédito do prêmio no save, UMA vez por recibo (`CLA_RECEIPTS_MAX` = 50, `sanitizeClaReceipts`, `applyClaRewards`, `fruitRewards`, `FRUTO_DECOR`); alimenta o campo `claReceipts` do `GameState`.
+**Chamado por:** `src/components/guild/*Visor.tsx`, `src/contexts/GameStateContext.tsx`. **Régua:** `src/utils/claCredit.test.ts`, `src/utils/claMisterio.fiacao.test.ts`.

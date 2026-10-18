@@ -207,6 +207,7 @@ export interface AreaViewProps {
     casa?: ComponentProps<typeof GuildSheetT>['casa'];
     /** A Missão (PR3): estado da ida do Solmon e o gesto de mandá-lo. */
     missao?: ComponentProps<typeof GuildSheetT>['missao'];
+    cla?: ComponentProps<typeof GuildSheetT>['cla'];
   };
 }
 

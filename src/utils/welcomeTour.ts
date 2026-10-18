@@ -147,8 +147,8 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   mapStep('hall', { en: 'Company.', pt: 'Companhia.' }, [
     bRow('hall.biblioteca', 'Stories, and the people who tell them.', 'Histórias, e quem as conta.'),
     bRow('hall.amigos', 'Your friends.', 'Os seus amigos.'),
-    bRow('hall.guilda', 'Your Guild.', 'A sua Guilda.'),
-    bRow('hall.feira', 'The Fair: send your Soulmon on a mission for the Guild.', 'A Feira: mande o seu Soulmon em missão pela Guilda.'),
+    bRow('hall.guilda', 'Your Clan.', 'O seu Clã.'),
+    bRow('hall.feira', 'The Fair: send your Soulmon on a mission for the Clan.', 'A Feira: mande o seu Soulmon em missão pelo Clã.'),
   ]),
 ];
 

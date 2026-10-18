@@ -472,7 +472,7 @@ function kindOf(status: number, error: string): GuildErrorKind {
 
 const GUILD_BASE = '/api/guild';
 
-async function guildCall<T>(action: string, opts: { method?: 'GET' | 'POST'; params?: Record<string, string>; body?: Record<string, unknown> } = {}): Promise<T> {
+export async function guildCall<T>(action: string, opts: { method?: 'GET' | 'POST'; params?: Record<string, string>; body?: Record<string, unknown> } = {}): Promise<T> {
   const method = opts.method ?? 'GET';
   const qs = new URLSearchParams({ action, ...(opts.params ?? {}) });
   let res: Response;
@@ -512,7 +512,7 @@ async function guildCall<T>(action: string, opts: { method?: 'GET' | 'POST'; par
 }
 
 /** O DIA DO JOGADOR que o servidor valida a ±1 do UTC (`diaDoJogador`, G6 revisto). */
-const dia = (tz: PlayerDayAnchor | undefined) => playerDayKey(new Date(), tz);
+export const dia = (tz: PlayerDayAnchor | undefined) => playerDayKey(new Date(), tz);
 
 const viewOf = (r: { guild?: unknown }) => sanitizeGuildView(r.guild);
 

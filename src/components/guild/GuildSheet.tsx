@@ -74,6 +74,10 @@ import { GroveVisor } from './GroveVisor';
 import { CasaVisor } from './CasaVisor';
 import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
+import { SalaPraca } from './PracaVisor';
+import { SalaPlantio } from './PlantioVisor';
+import { SalaMisterio } from './MisterioVisor';
+import type { ClaOnReward } from './claUi';
 import type { Language } from '../../utils/i18n';
 
 interface GuildSheetProps {
@@ -116,6 +120,8 @@ interface GuildSheetProps {
   };
   /** A MISSÃO (PR3, ex-Feira): o estado da ida do Solmon (no save) e o gesto de mandá-lo. */
   missao?: { state: GuildMissionState | null; onSend: () => void };
+  /** Os PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): a ponte do prêmio com o save. O App credita UMA vez por recibo (`utils/claCredit.ts`). */
+  cla?: { onReward: ClaOnReward };
 }
 
 /** A Clareira SEM roda: o chão de partida, sem membro, sem estágio nem slot marcado (plano §5). */
@@ -133,9 +139,11 @@ type Load =
   | { status: 'error'; kind: GuildErrorKind }
   | { status: 'ready'; guild: GuildView | null; day: string };
 
+type PredioId = 'praca' | 'plantio' | 'misterio';
+
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -156,6 +164,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   const reducedMotion = usePrefersReducedMotion();
   /** A guerra da guilda (PR4). `null` = ainda não perguntado / indisponível (a sala só aparece com o estado). */
   const [war, setWar] = useState<GuildWar | null>(null);
+  /** O prédio do clã aberto (Praça, Plantio, Mistério): um por vez, e só o aberto fala com o servidor. */
+  const [predio, setPredio] = useState<PredioId | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
@@ -580,6 +590,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             )}
           </div>
 
+          {/* D-09: a FICHA do clã, claramente rotulada — nome (acima), quantas pessoas e o nível. É o que já
+              existe, só nomeado: não duplica a Roda (que traz os nomes) nem a Casa (que traz a linha do estágio). */}
+          <section className="sm2-guild-info" aria-label={t('guild.info.titulo')} data-guild-room="info" data-cla-info>
+            <h3 className="sm2-stats-lab" style={{ margin: 0 }}>{t('guild.info.titulo')}</h3>
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-cla-info-membros>{t('guild.info.membros')}{': '}<span className="sm2-num">{g.size}</span></p>
+            {g.casa && <p className="sm2-lib-s" style={{ margin: 0 }} data-cla-info-nivel>{t('guild.info.nivel', { estagio: casaStageName(t, g.casa.nivel) })}</p>}
+          </section>
+
           {g.isHost && ajustes && (
             <section id={ajustesId} className="sm2-guild-sec" aria-label={t('guild.ajustes.titulo')}>
               <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.ajustes.somenteAbriu')}</p>
@@ -643,6 +661,23 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
                 casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
                 return v;
               }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
+            />
+          )}
+
+          {cla && (
+            <SalaPredios
+              t={t}
+              aberto={predio}
+              onAbrir={setPredio}
+              render={(id) => {
+                const comum = {
+                  saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
+                  onReward: cla.onReward, onAnnounce: setAnuncio,
+                };
+                if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
+                if (id === 'plantio') return <SalaPlantio {...comum} />;
+                return <SalaMisterio {...comum} />;
+              }}
             />
           )}
 
@@ -903,6 +938,50 @@ function SalaGuerra({ guild, t, language, war, hoje, ocupado, mySprite, reducedM
 }
 
 const casaStageName = (t: T, nivel: CasaStageId): string => t(`guild.casa.nivel.${nivel}`);
+
+const PREDIOS: ReadonlyArray<{ id: PredioId; titulo: GuildKey; icone: string }> = [
+  { id: 'praca', titulo: 'guild.praca.titulo', icone: 'storefront' },
+  { id: 'plantio', titulo: 'guild.plantio.titulo', icone: 'eco' },
+  { id: 'misterio', titulo: 'guild.misterio.titulo', icone: 'search' },
+];
+
+/**
+ * OS PRÉDIOS DO CLÃ: Praça, Plantio e Mistério. Três portas; abrir uma mostra o prédio por baixo e é SÓ então
+ * que ele fala com o servidor (três leituras a mais ao abrir o Salão seriam peso à toa). Um aberto por vez;
+ * tocar de novo na mesma porta (ou em "Fechar") a fecha.
+ */
+function SalaPredios({ t, aberto, onAbrir, render }: {
+  t: T; aberto: PredioId | null; onAbrir: (id: PredioId | null) => void; render: (id: PredioId) => React.ReactNode;
+}) {
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.predios.titulo')} data-guild-room="predios">
+      <h3 className="sm2-stats-lab">{t('guild.predios.titulo')}</h3>
+      <div role="group" aria-label={t('guild.predios.titulo')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {PREDIOS.map(p => (
+          <button
+            key={p.id}
+            type="button"
+            data-predio={p.id}
+            aria-pressed={aberto === p.id}
+            onClick={() => onAbrir(aberto === p.id ? null : p.id)}
+            className={`sm2-kit-btn sm2-kit-btn-md ${aberto === p.id ? 'sm2-kit-btn-primary' : 'sm2-kit-btn-outline'}`}
+            style={{ flex: '1 1 0' }}
+          >
+            <Icon name={p.icone} size={20} fill={aberto === p.id ? 1 : 0} />
+            {t(p.titulo)}
+          </button>
+        ))}
+      </div>
+      {aberto && render(aberto)}
+      {aberto && (
+        <button type="button" data-predio-fechar onClick={() => onAbrir(null)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+          <Icon name="close" size={20} />
+          {t('guild.predios.fechar')}
+        </button>
+      )}
+    </section>
+  );
+}
 
 /**
  * A CASA (PR2): o nome do estágio, a linha, `perto` (binário), a doação de Bits e o SEU cantinho.

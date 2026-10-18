@@ -23,6 +23,17 @@
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
 //   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
 //   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
+//   POST claPracaSlot {id, dayKey, slot:0..3, item|null} → { praca }   404 no guild · 400 invalid slot/item   (a PRAÇA: `_claPraca.js`)
+//   GET  claPraca     ?id=&dayKey=         → { praca: { slots[4], gifts[], mine:{sentToday[]} } }   404 no guild
+//   POST claPresente  {id, dayKey, to}     → { sent: true, praca }   404 no guild · 400 invalid target · 409 already sent today
+//   POST claPresenteClaim {id, dayKey, giftId} → { claimed:{item,receipt}, praca }   404 nothing to claim
+//   GET  claPlantio   ?id=&dayKey=         → { plantio }   404 no guild   (o PLANTIO: `_claPlantio.js`)
+//   POST claPlantar|claRegar|claProteger|claColher {id, dayKey} → { plantio, fruit? }
+//        409 already planted|already watered|already protected|already harvested|not grown|grown · 404 no plant
+//   GET  claMisterio  ?id=&dayKey=         → { misterio }   404 no guild   (o MISTÉRIO: `_claMisterio.js`)
+//   POST claMisterioEnviar {id, dayKey}    → { misterio }   409 already sent|reward pending
+//   POST claMisterioTarefa {id, dayKey, taskId} → { counted, reason?, misterio }   400 invalid task
+//   POST claMisterioClaim  {id, dayKey}    → { claimed:{reward,receipt}, misterio }   404 nothing to claim
 //   GET  guildWar     ?id=&dayKey=         → { war: { waiting: {size}|null, last: {day,outcome,duels[],size,enemy}|null } }   404 no guild
 //   POST guildWarSeek {id, dayKey}         → { state: 'small'|'already'|'waiting'|'done', war }   404 no guild   (a GUERRA: `_guerra.js`)
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
@@ -51,6 +62,9 @@ import {
   marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado, membrosAtivos,
 } from './_coop.js';
 import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
+import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
+import { vistaDoPlantio, plantar, regar, proteger, colher } from './_claPlantio.js';
+import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio } from './_claMisterio.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
@@ -88,6 +102,19 @@ export const GUILD_ACTIONS = Object.freeze({
   guildWarSeek: 'POST',
   guildDonate: 'POST',
   guildSlot: 'POST',
+  claPraca: 'GET',
+  claPracaSlot: 'POST',
+  claPresente: 'POST',
+  claPresenteClaim: 'POST',
+  claPlantio: 'GET',
+  claPlantar: 'POST',
+  claRegar: 'POST',
+  claProteger: 'POST',
+  claColher: 'POST',
+  claMisterio: 'GET',
+  claMisterioEnviar: 'POST',
+  claMisterioTarefa: 'POST',
+  claMisterioClaim: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -459,6 +486,73 @@ export async function handleGuild({ request, env }) {
     if (novo === undefined) return erro('invalid item', 400);
     await cartao(g);
     return vista(await montar(g, id, hoje));
+  }
+
+  if (action.startsWith('cla')) {
+    // OS TRÊS PRÉDIOS DO CLÃ (Praça, Plantio, Mistério). Estado em chaves KV próprias, o servidor decide
+    // (sorteios, limites, calendário); a vista não traz saveId nem número por pessoa.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    // TODO limite diario/semanal/de estacao destes predios usa o dia do SERVIDOR (UTC); o `dayKey` do cliente
+    // (+-1) so serve para a exibicao das outras rotas - aqui ele deixaria triplicar presente/rega/protecao.
+    const hoje = new Date().toISOString().slice(0, 10);
+    const ids = {};
+    for (const m of g.members) ids[m] = await idOpacoDoMembro(env, g.id, m);
+    const salvoDe = opaco => g.members.find(m => ids[m] === opaco);
+    const praca = async () => vistaDaPraca(env, g.id, id, g.members, ids, hoje);
+    const plantio = async () => vistaDoPlantio(env, g, id, hoje);
+    const misterio = async () => vistaDoMisterio(env, g, id, hoje);
+    const conflito = r => erro(r.reason.replace(/-/g, ' '), r.reason === 'no-plant' ? 404 : 409);
+
+    if (action === 'claPraca') return json({ praca: await praca() });
+    if (action === 'claPracaSlot') {
+      if (body.item !== null && typeof body.item !== 'string') return erro('invalid item', 400);
+      const r = await definirSlotPraca(env, g.id, id, hoje, body.slot, body.item);
+      if (r === undefined) return erro(Number.isInteger(body.slot) && body.slot >= 0 && body.slot < 4 ? 'invalid item' : 'invalid slot', 400);
+      return json({ praca: await praca() });
+    }
+    if (action === 'claPresente') {
+      const alvo = typeof body.to === 'string' ? salvoDe(body.to) : undefined;
+      if (!alvo || alvo === id) return erro('invalid target', 400);
+      const r = await enviarPresente(env, g.id, id, alvo, hoje, undefined, g.members);
+      if (!r.ok) return erro('already sent today', 409);
+      return json({ sent: true, praca: await praca() });
+    }
+    if (action === 'claPresenteClaim') {
+      const [de, dia] = String(body.giftId ?? '').split('|');
+      const origem = salvoDe(de);
+      if (!origem || !dia) return erro('nothing to claim', 404);
+      const r = await resgatarPresente(env, g.id, id, g.members, origem, dia, hoje, ids);
+      if (!r.ok) return erro('nothing to claim', 404);
+      return json({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
+    }
+    if (action === 'claPlantio') return json({ plantio: await plantio() });
+    if (action === 'claPlantar') {
+      const r = await plantar(env, g.id, id, hoje);
+      if (!r.ok) return erro('already planted', 409);
+      return json({ plantio: await plantio() });
+    }
+    if (action === 'claRegar' || action === 'claProteger' || action === 'claColher') {
+      const r = await (action === 'claRegar' ? regar : action === 'claProteger' ? proteger : colher)(env, g, id, hoje);
+      if (!r.ok) return conflito(r);
+      return json({ plantio: await plantio(), ...(r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {}) });
+    }
+    if (action === 'claMisterio') return json({ misterio: await misterio() });
+    if (action === 'claMisterioEnviar') {
+      const r = await enviarMisterio(env, g, id);
+      if (!r.ok) return conflito(r);
+      return json({ misterio: await misterio() });
+    }
+    if (action === 'claMisterioTarefa') {
+      const r = await somarTarefa(env, g, id, hoje, body.taskId);
+      if (!r.ok) return erro('invalid task', 400);
+      return json({ counted: r.counted, ...(r.reason ? { reason: r.reason } : {}), misterio: await misterio() });
+    }
+    if (action === 'claMisterioClaim') {
+      const r = await resgatarMisterio(env, g, id);
+      if (!r.ok) return erro('nothing to claim', 404);
+      return json({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
+    }
   }
 
   if (action === 'guildRaidHit') {

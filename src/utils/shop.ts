@@ -53,6 +53,11 @@ export interface ShopItem {
 }
 
 export const CHIP_BOOST = 3;   // type points (path weight only, no total/XP) granted when a chip is USED
+// Chips MAIORES (D-12, ~2x o chip comum) e o Prisma (reparte 2/2/2). Só pontos de tipo.
+export const BIG_CHIP_BOOST = 6;
+export const PRISM_CHIP_BOOST = 2;
+export const BIG_CHIP_EMOJI: Record<Attr, string> = { power: '🥊', harmony: '🎼', benevolence: '💞' };
+export const PRISM_CHIP_EMOJI = '🔷';
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 
 // Inventory emojis for the consumable items that live in the Items folder.
@@ -67,6 +72,8 @@ export interface SpecialItem {
   emoji: string;
   kind: 'chip' | 'heart' | 'glitchtama' | 'premium';
   attr?: Attr;
+  /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
+  boosts?: Record<Attr, number>;
   namePt: string;
   nameEn: string;
   descPt: string;
@@ -98,6 +105,30 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
     descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`,
   },
+  [BIG_CHIP_EMOJI.power]: {
+    emoji: BIG_CHIP_EMOJI.power, kind: 'chip', attr: 'power',
+    boosts: { power: BIG_CHIP_BOOST, harmony: 0, benevolence: 0 },
+    namePt: 'Chip Maior de Poder', nameEn: 'Major Power Chip',
+    descPt: `+${BIG_CHIP_BOOST} Poder`, descEn: `+${BIG_CHIP_BOOST} Power`,
+  },
+  [BIG_CHIP_EMOJI.harmony]: {
+    emoji: BIG_CHIP_EMOJI.harmony, kind: 'chip', attr: 'harmony',
+    boosts: { power: 0, harmony: BIG_CHIP_BOOST, benevolence: 0 },
+    namePt: 'Chip Maior de Harmonia', nameEn: 'Major Harmony Chip',
+    descPt: `+${BIG_CHIP_BOOST} Harmonia`, descEn: `+${BIG_CHIP_BOOST} Harmony`,
+  },
+  [BIG_CHIP_EMOJI.benevolence]: {
+    emoji: BIG_CHIP_EMOJI.benevolence, kind: 'chip', attr: 'benevolence',
+    boosts: { power: 0, harmony: 0, benevolence: BIG_CHIP_BOOST },
+    namePt: 'Chip Maior de Benevolência', nameEn: 'Major Benevolence Chip',
+    descPt: `+${BIG_CHIP_BOOST} Benevolência`, descEn: `+${BIG_CHIP_BOOST} Benevolence`,
+  },
+  [PRISM_CHIP_EMOJI]: {
+    emoji: PRISM_CHIP_EMOJI, kind: 'chip',
+    boosts: { power: PRISM_CHIP_BOOST, harmony: PRISM_CHIP_BOOST, benevolence: PRISM_CHIP_BOOST },
+    namePt: 'Chip Prisma', nameEn: 'Prism Chip',
+    descPt: `+${PRISM_CHIP_BOOST} Poder, Harmonia e Benevolência`, descEn: `+${PRISM_CHIP_BOOST} Power, Harmony and Benevolence`,
+  },
   [HEART_ITEM_EMOJI]: {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
@@ -118,13 +149,25 @@ export const SHOP_ITEMS: ShopItem[] = [
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, nomes únicos desde 29/09/2026.
   { id: 'chip-power',   kind: 'chip', icon: CHIP_EMOJI.power, attr: 'power',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
-    descPt: `+${CHIP_BOOST} Poder`, descEn: `+${CHIP_BOOST} Power`, price: 120 },
+    descPt: `+${CHIP_BOOST} Poder`, descEn: `+${CHIP_BOOST} Power`, price: 180 },
   { id: 'chip-harmony',    kind: 'chip', icon: CHIP_EMOJI.harmony, attr: 'harmony',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
-    descPt: `+${CHIP_BOOST} Harmonia`, descEn: `+${CHIP_BOOST} Harmony`, price: 120 },
+    descPt: `+${CHIP_BOOST} Harmonia`, descEn: `+${CHIP_BOOST} Harmony`, price: 180 },
   { id: 'chip-benevolence', kind: 'chip', icon: CHIP_EMOJI.benevolence, attr: 'benevolence',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
-    descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`, price: 120 },
+    descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`, price: 180 },
+  { id: 'chip-big-power', kind: 'chip', icon: BIG_CHIP_EMOJI.power, attr: 'power',
+    namePt: 'Chip Maior de Poder', nameEn: 'Major Power Chip',
+    descPt: `+${BIG_CHIP_BOOST} Poder`, descEn: `+${BIG_CHIP_BOOST} Power`, price: 420 },
+  { id: 'chip-big-harmony', kind: 'chip', icon: BIG_CHIP_EMOJI.harmony, attr: 'harmony',
+    namePt: 'Chip Maior de Harmonia', nameEn: 'Major Harmony Chip',
+    descPt: `+${BIG_CHIP_BOOST} Harmonia`, descEn: `+${BIG_CHIP_BOOST} Harmony`, price: 420 },
+  { id: 'chip-big-benevolence', kind: 'chip', icon: BIG_CHIP_EMOJI.benevolence, attr: 'benevolence',
+    namePt: 'Chip Maior de Benevolência', nameEn: 'Major Benevolence Chip',
+    descPt: `+${BIG_CHIP_BOOST} Benevolência`, descEn: `+${BIG_CHIP_BOOST} Benevolence`, price: 420 },
+  { id: 'chip-prism', kind: 'chip', icon: PRISM_CHIP_EMOJI,
+    namePt: 'Chip Prisma', nameEn: 'Prism Chip',
+    descPt: `+${PRISM_CHIP_BOOST} Poder, Harmonia e Benevolência`, descEn: `+${PRISM_CHIP_BOOST} Power, Harmony and Benevolence`, price: 480 },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
   // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a

@@ -268,8 +268,7 @@ export function applySpecialItem<T extends SpecialItemState>(
   // Chip: sem energia. Os três atributos são escritos por extenso
   // em vez de por chave computada porque a chave computada obriga o retorno a
   // largar o tipo do estado — e era exatamente disso que o updater inline vivia.
-  const attr = special.attr as Attr;
-  const boost = (a: Attr) => (attr === a ? CHIP_BOOST : 0);
+  const boost = (a: Attr) => special.boosts?.[a] ?? (special.attr === a ? CHIP_BOOST : 0);
   const since = prev.attributesSinceLastEvolution;
   return {
     state: {

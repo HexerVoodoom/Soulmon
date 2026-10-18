@@ -23,7 +23,7 @@ type Props = Parameters<typeof MercadoStallSheet>[0];
 const abrir = (props: Partial<Props> & { stall: Props['stall'] }) => renderWithCss(<MercadoStallSheet {...base} {...props} />);
 
 describe('8.1 — descrição do chip: nome, efeito, valor', () => {
-  const chips = SHOP_ITEMS.filter(i => i.kind === 'chip');
+  const chips = SHOP_ITEMS.filter(i => i.kind === 'chip' && !i.id.startsWith('chip-big-') && i.id !== 'chip-prism');
   it('os três chips: "+3 Poder/Harmonia/Benevolência" e "+3 Power/Harmony/Benevolence", sem parágrafo', () => {
     expect(chips).toHaveLength(3);
     expect(CHIP_BOOST).toBe(3);
@@ -33,10 +33,10 @@ describe('8.1 — descrição do chip: nome, efeito, valor', () => {
   });
   it('o catálogo de USO (mochila) diz o mesmo; preço e id dos chips não mudaram', () => {
     for (const c of chips) {
-      const uso = Object.values(SPECIAL_ITEMS).find(s => s.kind === 'chip' && s.attr === c.attr)!;
+      const uso = Object.values(SPECIAL_ITEMS).find(s => s.kind === 'chip' && s.attr === c.attr && !s.boosts)!;
       expect(uso.descEn).toBe(c.descEn);
       expect(uso.descPt).toBe(c.descPt);
-      expect(c.price).toBe(120);
+      expect(c.price).toBe(180);
     }
     expect(chips.map(c => c.id)).toEqual(['chip-power', 'chip-harmony', 'chip-benevolence']);
   });

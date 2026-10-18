@@ -151,7 +151,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     invite: { en: 'There is a seat free, whenever.', pt: 'Sempre tem um lugar livre.' },
   },
   'hall.guilda': {
-    place: { en: 'Guild Hall', pt: 'Salão da Guilda' },
+    place: { en: 'Clan Hall', pt: 'Salão do Clã' },
     hello: { en: "I'm {name}. This is the Hall.", pt: 'Eu sou {name}. Este é o Salão.' },
     what: { en: 'A place to gather with other people, calm, at an easy pace.', pt: 'Um lugar para se juntar a outras pessoas, com calma, no seu ritmo.' },
     invite: { en: 'Come in and see.', pt: 'Entre e veja.' },

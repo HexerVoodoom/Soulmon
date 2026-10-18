@@ -90,8 +90,8 @@ describe('PR6: copy dos chips (EN primeiro, PT-BR) sem promessa de forca', () =>
   const textos = [...SHOP_ITEMS.filter(i => i.kind === 'chip'), ...Object.values(SPECIAL_ITEMS).filter(i => i.kind === 'chip')]
     .flatMap(i => [i.descEn, i.descPt]);
   it('8.1 (beta-2): a descrição é só nome do efeito + valor ("+3 Power") e nunca promete força', () => {
-    expect(textos.length).toBe(12 / 2 * 2);
-    for (const t of textos) expect(t).toMatch(/^\+3 (Power|Harmony|Benevolence|Poder|Harmonia|Benevolência)$/);
+    expect(textos.length).toBe(7 * 2 * 2); // 3 comuns + 3 maiores + prisma, em loja e uso, PT+EN
+    for (const t of textos) expect(t).toMatch(/^\+[36] (Power|Harmony|Benevolence|Poder|Harmonia|Benevolência)$|^\+2 (Power, Harmony and Benevolence|Poder, Harmonia e Benevolência)$/);
     for (const t of textos) expect(t).not.toMatch(/(Use|Usar|use|usar) (for|dá) \+\d|forç|strength/i);
   });
 });

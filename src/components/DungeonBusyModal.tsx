@@ -29,8 +29,8 @@ export function ocupadoVerbo(acao: OcupadoAcao, isPt: boolean): string {
 export function ocupadoMensagem(acao: OcupadoAcao | null, isPt: boolean): string {
   if (acao === 'masmorra-em-missao') {
     return isPt
-      ? 'Ele está numa missão da guilda. Quando voltar, ele pode descer à masmorra.'
-      : 'He is out on a guild mission. When he is back, he can go down the dungeon.';
+      ? 'Ele está numa missão do clã. Quando voltar, ele pode descer à masmorra.'
+      : 'He is out on a clan mission. When he is back, he can go down the dungeon.';
   }
   if (!acao) {
     return isPt
