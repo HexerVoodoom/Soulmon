@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 /**
- * G8 — o convite do sono: explica e deixa configurar a Janela de Descanso e o
- * sono automático ali mesmo. Quando aparece é de `utils/restSetup.ts`
- * (testado lá); aqui, a tela.
+ * D-24 — o horário de dormir é obrigatório: a tela só tem "Confirmar" como saída.
+ * Quando aparece é de `utils/restSetup.ts` (testado lá); aqui, a tela.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
@@ -13,54 +12,54 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 beforeEach(() => localStorage.clear());
 
 function montar(language: 'en-US' | 'pt-BR' = 'en-US', hour = 8) {
-  const onChangeWindow = vi.fn();
-  const onClose = vi.fn();
+  const onConfirm = vi.fn();
   renderWithCss(
     <RestSetupModal
       language={language}
       now={new Date(2026, 9, 2, hour, 0)}
       window={{ start: '23:00', end: '07:00' }}
-      onChangeWindow={onChangeWindow}
-      onClose={onClose}
+      onConfirm={onConfirm}
     />,
   );
-  return { onChangeWindow, onClose };
+  return { onConfirm };
 }
 
-describe('RestSetupModal (G8)', () => {
-  it('de manhã diz bom dia; as duas preferências estão na tela', () => {
+describe('RestSetupModal (D-24)', () => {
+  it('de manhã diz bom dia; não há interruptor de sono automático (D-25/D-26)', () => {
     montar('en-US', 8);
     expect(screen.getByRole('dialog').getAttribute('aria-label')).toMatch(/^Good morning!/);
-    expect(screen.getByRole('switch', { name: /Auto sleep/ })).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.getByLabelText('Sleeps')).toBeTruthy();
+    expect(screen.getByLabelText('Wakes')).toBeTruthy();
   });
 
   it('depois do meio-dia aparece igual, sem o bom dia', () => {
     montar('en-US', 15);
-    expect(screen.getByRole('dialog').getAttribute('aria-label')).toBe('A word about nights');
+    expect(screen.getByRole('dialog').getAttribute('aria-label')).toBe('When does your Soulmon sleep?');
   });
 
-  it('mudar o horário do sono automático também vai para o App (rest.window segue o sono automático)', () => {
-    const { onChangeWindow } = montar();
+  it('não tem X nem "depois": a única saída é Confirmar; Esc não fecha', () => {
+    const { onConfirm } = montar();
+    expect(screen.queryByRole('button', { name: /close|fechar/i })).toBeNull();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+
+  it('Confirmar entrega as horas que a pessoa VÊ e grava as chaves do sono automático', () => {
+    const { onConfirm } = montar();
     fireEvent.change(screen.getByLabelText('Sleeps'), { target: { value: '22:30' } });
-    expect(onChangeWindow).toHaveBeenCalledWith({ start: '22:30', end: '07:00' });
-  });
-
-  it('ligar o sono automático grava a chave e as horas que a pessoa VÊ', () => {
-    montar();
-    // B1: nasce ligado — o clique DESLIGA e outro religa
-    fireEvent.click(screen.getByRole('switch', { name: /Auto sleep/ }));
-    fireEvent.click(screen.getByRole('switch', { name: /Auto sleep/ }));
-    expect(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED)).toBe('true');
-    expect(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START)).toBe('23:00');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(onConfirm).toHaveBeenCalledWith({ start: '22:30', end: '07:00' });
+    expect(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START)).toBe('22:30');
     expect(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_END)).toBe('07:00');
-    expect(screen.getByLabelText('Sleeps')).toBeTruthy();
   });
 
-  it('"Pronto"/"Done" fecha; nenhuma palavra de nota de sono ou duração ideal', () => {
-    const { onClose } = montar('pt-BR');
+  it('confirmar o padrão sem mexer também vale; nenhuma palavra de nota de sono ou duração ideal', () => {
+    const { onConfirm } = montar('pt-BR');
     const txt = document.body.textContent ?? '';
     expect(txt).not.toMatch(/8 horas|8 hours|score|nota do sono|qualidade do sono/i);
-    fireEvent.click(screen.getByRole('button', { name: 'Pronto' }));
-    expect(onClose).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(onConfirm).toHaveBeenCalledWith({ start: '23:00', end: '07:00' });
   });
 });

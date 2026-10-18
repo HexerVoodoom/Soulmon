@@ -265,6 +265,7 @@ import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catal
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
   createRestState, recordNight, nightAlreadyRecorded, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
+  decideArmedNight, isInArmPeriod, shouldWakeOnOpen, nightWakeAt, nightEnergyGain, stampNightBonus, armMark, reconcileSleepHours,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
 
@@ -1971,28 +1972,10 @@ export default function App() {
   });
   const grovePendente: GroveMarcoStage | null = grove?.pending && grove.pending.index >= CEREMONY_MIN_INDEX
     ? (groveStageAt(grove.pending.index) as GroveMarcoStage | null) : null;
-  /* G8 (01/10/2026) — O CONVITE DO SONO. Condição de entrada: primeira
-     abertura a partir do 2º dia de uso, uma vez só (`utils/restSetup.ts`).
-     Posição: o ÚLTIMO antes de 'welcome' — é uma vez só como o catálogo, e
-     cede a vez a tudo que é ritual diário. Não pede permissão de sistema. */
-  const [restSetupShown, setRestSetupShown] = useState(() => readFlag(STORAGE_KEYS.REST_SETUP_SHOWN));
-  const [restFirstOpen] = useState<string>(() => {
-    const salvo = readLocal(STORAGE_KEYS.REST_SETUP_FIRST_OPEN);
-    if (salvo) return salvo;
-    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
-    writeLocal(STORAGE_KEYS.REST_SETUP_FIRST_OPEN, hoje, { silent: true });
-    return hoje;
-  });
-  const needsRestSetup = shouldShowRestSetup({
-    shown: restSetupShown,
-    bornAt: gameState.bornAt,
-    firstOpenKey: restFirstOpen,
-    todayKey: playerDayKey(new Date(), gameState.playerDayTz),
-  });
-  const closeRestSetup = useCallback(() => {
-    writeFlag(STORAGE_KEYS.REST_SETUP_SHOWN, true, { silent: true });
-    setRestSetupShown(true);
-  }, []);
+  /* D-24 (18/10/2026) — O HORÁRIO DE DORMIR É OBRIGATÓRIO. O intersticial fica pronto enquanto
+     `rest.windowConfirmed` não for true (jogador novo, logo após o tour, e save antigo) e só fecha
+     CONFIRMANDO (`handleConfirmRestWindow`). Posição na fila inalterada: o último antes de 'welcome'. */
+  const needsRestSetup = shouldShowRestSetup({ confirmed: gameState.rest?.windowConfirmed });
   /**
    * "O jogador já concluiu ALGUMA coisa, algum dia?"
    *
@@ -2154,7 +2137,7 @@ export default function App() {
         case 'dream': setMorningDream(null); break;
         case 'nightmare': closeNightmare(); break;
         case 'catalogLevelInvite': declineCatalogLevelInvite(); break;
-        case 'restSetup': closeRestSetup(); break;
+        case 'restSetup': break; // obrigatório: voltar do Android não pula; só "Confirmar" fecha (o erro de render cai no `fail`)
         default: break; // catalogOnboarding: sem "pular" por decisão do dono (C11); o erro de render cai no `fail`
       }
     },
@@ -5318,6 +5301,24 @@ export default function App() {
   }, [isSleeping, setGameState]);
 
   /**
+   * D-37 (dono, 18/10/2026) — BÔNUS DE ENERGIA DA MANHÃ. Noite `onTime` com a manhã de hoje rende
+   * `NIGHT_ENERGY_BONUS` de energia, 1×/dia (marca `rest.nightBonusDay` no save), nunca acima do teto do estágio
+   * (`setEnergy` limita). Sem noite não acontece nada: ausência não pune. A regra é PURA (`nightEnergyGain`).
+   */
+  useEffect(() => {
+    const agora = new Date();
+    if (nightEnergyGain(gameStateRef.current.rest, agora, gameStateRef.current.energyPoints, getMaxEnergyForStage(gameStateRef.current.evolutionStage)) <= 0) return;
+    setGameState(prev => {
+      const r = prev.rest;
+      if (!r) return prev;
+      let ganho = 0;
+      const e = setEnergy(prev, Date.now(), (cur, max) => { ganho = nightEnergyGain(r, agora, cur, max); return cur + ganho; });
+      if (ganho <= 0) return prev;
+      return { ...prev, energyPoints: e.energyPoints, energyClock: e.energyClock, rest: stampNightBonus(r, agora) };
+    });
+  }, [gameState.rest, setGameState]);
+
+  /**
    * O SONHO DA MANHÃ — e a palavra "manhã" é a regra, não o enfeite.
    *
    * Todo feedback de sono acontece de manhã, dentro do app, e vem em forma de
@@ -5519,6 +5520,11 @@ export default function App() {
     setGameState(prev => ({ ...prev, lastWeeklyReportDate: dayKeyOf(new Date()) }));
   }, [setGameState]);
 
+  /** D-24: grava as horas e confirma — a ÚNICA saída do intersticial `restSetup`. */
+  const handleConfirmRestWindow = useCallback((window: RestWindow) => {
+    setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), window, windowConfirmed: true } }));
+  }, [setGameState]);
+
   /** A Janela de Descanso (Configurações). Só o usuário escolhe os horários. */
   const handleChangeRestWindow = useCallback((window: RestWindow) => {
     setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), window } }));
@@ -5641,13 +5647,16 @@ export default function App() {
       return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
     };
     const check = () => {
-      // Sono automático nasce LIGADO (23h–7h; dono, 18/10/2026, B1): só um 'false' gravado desliga.
-      if (!readFlagOr(STORAGE_KEYS.AUTO_SLEEP_ENABLED, true)) {
-        autoSleepPrevInWindowRef.current = null;
-        return;
+      // D-25/D-26 (dono, 18/10/2026): sono automático SEMPRE ativo — não há mais interruptor; só os horários são editáveis.
+      // Chave local ausente: semeia a partir do SAVE (não sobrescreve o horário confirmado em outro aparelho com o 23/07).
+      const salvo = gameStateRef.current.rest?.window ?? createRestState().window;
+      const rec = reconcileSleepHours(readLocal(STORAGE_KEYS.AUTO_SLEEP_START), readLocal(STORAGE_KEYS.AUTO_SLEEP_END), salvo);
+      const startStr = rec.window.start;
+      const endStr = rec.window.end;
+      if (rec.seed) {
+        writeLocal(STORAGE_KEYS.AUTO_SLEEP_START, startStr, { silent: true });
+        writeLocal(STORAGE_KEYS.AUTO_SLEEP_END, endStr, { silent: true });
       }
-      const startStr = readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00';
-      const endStr = readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00';
       const start = parseHM(startStr, '23:00');
       const end = parseHM(endStr, '07:00');
       // B2/B5: a janela de descanso (que decide se a noite foi "no horário" e portanto se há pesadelo/sonho) segue o horário do sono
@@ -5657,6 +5666,37 @@ export default function App() {
         return r.window.start === startStr && r.window.end === endStr ? prev : { ...prev, rest: { ...r, window: { start: startStr, end: endStr } } };
       });
       const nowD = new Date();
+      const horario: RestWindow = { start: startStr, end: endStr };
+      /* D-23 — A NOITE ARMADA. O lembrete abre o app ~30 min ANTES da janela; se a pessoa fecha antes do início, o
+         pet nunca dormiu "no app" e a manhã não tinha noite (logo, nem pesadelo). Aqui: (1) se há marca de noite
+         armada e a janela já terminou, grava a noite (onTime, início NOMINAL) e limpa a marca; (2) abrir no período do
+         lembrete arma a noite. Decisão em função PURA (`decideArmedNight`/`isInArmPeriod`, utils/restWindow.ts). */
+      let armada = readLocal(STORAGE_KEYS.NIGHT_ARMED_AT);
+      if (armada) {
+        const dec = decideArmedNight(gameStateRef.current.rest ?? createRestState(horario), armada, nowD);
+        if (dec.kind === 'record') {
+          setGameState(prev => {
+            const r = prev.rest ?? createRestState(horario);
+            return nightAlreadyRecorded(r, dec.sleptAt) ? prev : { ...prev, rest: { ...recordNight({ ...r, window: dec.window }, dec.sleptAt, dec.wokeAt), window: r.window } };
+          });
+        }
+        if (dec.kind !== 'none') { removeLocal(STORAGE_KEYS.NIGHT_ARMED_AT, { silent: true }); armada = null; }
+      }
+      if (!armada && isInArmPeriod(horario, nowD)) writeLocal(STORAGE_KEYS.NIGHT_ARMED_AT, armMark(nowD, horario), { silent: true });
+      /* Hipótese 2 do D-23: o app abre FORA da janela com o pet ainda dormindo (a janela acabou com o app fechado).
+         `prev === null` não acordava ninguém. Acorda se o sono começou dentro da janela (sesta manual não é desfeita)
+         e grava a noite com o fim da janela como despertar, para a manhã certa. */
+      if (autoSleepPrevInWindowRef.current === null && readFlag(STORAGE_KEYS.IS_SLEEPING)) {
+        const iniciouIso = readLocal(STORAGE_KEYS.SLEEP_STARTED_AT);
+        if (shouldWakeOnOpen(horario, iniciouIso, nowD)) {
+          const dormiuAt = new Date(iniciouIso as string);
+          const acordouAt = nightWakeAt(horario, dormiuAt, nowD);
+          setGameState(prev => ({ ...prev, rest: recordNight(prev.rest ?? createRestState(horario), dormiuAt, acordouAt) }));
+          removeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, { silent: true });
+          writeFlag(STORAGE_KEYS.IS_SLEEPING, false, { silent: true });
+          setIsSleeping(false);
+        }
+      }
       const cur = nowD.getHours() * 60 + nowD.getMinutes();
       // Window may cross midnight (e.g. 23:00–07:00)
       const inWindow = start <= end ? cur >= start && cur < end : cur >= start || cur < end;
@@ -8383,8 +8423,7 @@ export default function App() {
           language={language}
           now={new Date()}
           window={(gameState.rest ?? createRestState()).window}
-          onChangeWindow={handleChangeRestWindow}
-          onClose={closeRestSetup}
+          onConfirm={handleConfirmRestWindow}
         />
         </PresentationSlot>
       )}

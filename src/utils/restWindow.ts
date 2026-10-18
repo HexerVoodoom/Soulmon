@@ -121,6 +121,17 @@ export interface RestState {
    * verdades sobre qual noite é hoje).
    */
   playerDayTz?: PlayerDayAnchor;
+  /**
+   * D-24 (dono, 18/10/2026): o horário de dormir/acordar é OBRIGATÓRIO. `true`
+   * só depois que a pessoa apertou "Confirmar" no convite do sono. Ausente em
+   * save antigo = `false` (migração idempotente, `?? false`, em `hydrateRest`).
+   */
+  windowConfirmed?: boolean;
+  /**
+   * D-37: dia do JOGADOR em que o bônus de energia da manhã já foi pago. Teto de
+   * 1×/dia no SAVE (não no aparelho: PWA + APK pagariam duas vezes).
+   */
+  nightBonusDay?: string;
 }
 
 export const MAX_NIGHTS = 30;
@@ -617,4 +628,180 @@ export function sleepReminderAt(window: RestWindow, now: Date): Date | null {
   at.setMinutes(target);
   if (at.getTime() <= now.getTime()) at.setDate(at.getDate() + 1);
   return at;
+}
+
+// ---------------------------------------------------------------------------
+// 6. Noite ARMADA (D-23) — a noite que o app fechado não viu
+// ---------------------------------------------------------------------------
+//
+// O lembrete de deitar abre o app ~30 min ANTES da janela. O sono automático só
+// age na borda de dentro da janela; se a pessoa fecha o app antes do início, a
+// noite nunca era gravada e, de manhã, não havia pesadelo (o portão exige uma
+// noite `onTime` com a data de hoje). A saída: abrir o app no período do
+// lembrete ARMA a noite (marca ISO persistida); na próxima abertura, depois do
+// fim da janela, a noite é gravada com o início NOMINAL da janela (onTime true).
+// Tudo aqui é função PURA — o relógio e o storage são de quem chama.
+
+const MS_MIN = 60_000;
+
+function windowSpanMin(window: RestWindow): number {
+  const s = parseTime(window.start);
+  const e = parseTime(window.end);
+  const span = ((e - s) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return span === 0 ? MINUTES_PER_DAY : span;
+}
+
+/** Minutos até o próximo início da janela (0 = é agora), ou NaN se inválida. */
+function minutesUntilStart(window: RestWindow, at: Date): number {
+  const s = parseTime(window.start);
+  if (Number.isNaN(s)) return NaN;
+  return ((s - minutesOfDay(at)) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+}
+
+/**
+ * `at` cai no período do lembrete — de `REST_WINDOW_GRACE_MIN` minutos antes até
+ * o instante do início (exclusive: dentro da janela o sono automático já age)?
+ * Cobre o lembrete (`SLEEP_REMINDER_LEAD_MIN` antes) com folga para abertura atrasada.
+ */
+export function isInArmPeriod(window: RestWindow, at: Date): boolean {
+  const d = minutesUntilStart(window, at);
+  return !Number.isNaN(d) && d > 0 && d <= REST_WINDOW_GRACE_MIN;
+}
+
+export type ArmedNightDecision =
+  | { kind: 'none' }
+  | { kind: 'clear' }
+  | { kind: 'record'; sleptAt: Date; wokeAt: Date; window: RestWindow };
+
+/** Marca persistida da noite armada: `{at,start,end}` em JSON. */
+export function armMark(at: Date, window: RestWindow): string {
+  return JSON.stringify({ at: at.toISOString(), start: window.start, end: window.end });
+}
+
+/** Lê a marca nova (JSON) ou a antiga (só ISO, sem janela). `null` = lixo. */
+export function parseArmedMark(raw: string): { at: Date; window?: RestWindow } | null {
+  let atStr = raw;
+  let window: RestWindow | undefined;
+  if (raw.trim().startsWith('{')) {
+    try {
+      const o = JSON.parse(raw) as { at?: unknown; start?: unknown; end?: unknown };
+      if (typeof o.at !== 'string') return null;
+      atStr = o.at;
+      if (typeof o.start === 'string' && typeof o.end === 'string'
+        && !Number.isNaN(parseTime(o.start)) && !Number.isNaN(parseTime(o.end))) window = { start: o.start, end: o.end };
+    } catch { return null; }
+  }
+  const at = new Date(atStr);
+  return Number.isNaN(at.getTime()) ? null : { at, window };
+}
+
+/**
+ * Reconcilia as horas do sono automático (chaves LOCAIS do aparelho) com a janela do SAVE.
+ * Chave local ausente (aparelho novo, cache limpo) → SEMEIA o storage a partir do save e não mexe no save:
+ * o default 23/07 nunca sobrescreve o horário que quem já confirmou escolheu em outro aparelho.
+ * Chaves presentes e válidas → valem (o usuário editou aqui) e o save as segue.
+ */
+export function reconcileSleepHours(
+  storedStart: string | null | undefined,
+  storedEnd: string | null | undefined,
+  saved: RestWindow,
+): { window: RestWindow; seed: boolean } {
+  const ok = (s: string | null | undefined): s is string => !!s && !Number.isNaN(parseTime(s));
+  if (!ok(storedStart) || !ok(storedEnd)) return { window: { ...saved }, seed: true };
+  return { window: { start: storedStart, end: storedEnd }, seed: false };
+}
+
+/** Depois de quanto tempo do fim da janela uma marca velha é só descartada. */
+export const ARMED_NIGHT_MAX_AGE_MS = 24 * 60 * MS_MIN;
+
+/**
+ * O que fazer com a marca "noite armada" (`armedIso`) agora.
+ *  · `none`   — ainda não é hora (janela não terminou) ou sem marca;
+ *  · `clear`  — marca inútil (inválida, velha, ou a noite já tem registro);
+ *  · `record` — grave `recordNight(rest, sleptAt, wokeAt)` (onTime true) e limpe a marca.
+ * Idempotente: noite já registrada nunca é sobrescrita (um registro real, com
+ * hora real, vale mais que o nominal).
+ */
+export function decideArmedNight(
+  state: RestState,
+  armedRaw: string | null | undefined,
+  now: Date,
+): ArmedNightDecision {
+  if (!armedRaw) return { kind: 'none' };
+  const mark = parseArmedMark(armedRaw);
+  if (!mark) return { kind: 'clear' };
+  const armed = mark.at;
+  // A janela é a da MARCA (a de quando armou), não a de agora: editar o horário entre armar e gravar não perde nem fabrica noite.
+  const win = mark.window ?? state.window;
+  state = { ...state, window: win };
+  if (!isInArmPeriod(win, armed)) return { kind: 'clear' };
+
+  const armedMin = Math.floor(armed.getTime() / MS_MIN) * MS_MIN;
+  const sleptAt = new Date(armedMin + minutesUntilStart(win, armed) * MS_MIN);
+  const wokeAt = new Date(sleptAt.getTime() + windowSpanMin(win) * MS_MIN);
+
+  if (now.getTime() < wokeAt.getTime()) return { kind: 'none' };
+  if (now.getTime() - wokeAt.getTime() > ARMED_NIGHT_MAX_AGE_MS) return { kind: 'clear' };
+  if (nightAlreadyRecorded(state, sleptAt)) return { kind: 'clear' };
+  return { kind: 'record', sleptAt, wokeAt, window: win };
+}
+
+/**
+ * Abrir o app com o pet ainda dormindo FORA da janela: acorda? Só se o sono
+ * começou dentro da janela (ou da tolerância) — sesta manual fora dela não é
+ * desfeita. `startedIso` é o `SLEEP_STARTED_AT`.
+ */
+export function shouldWakeOnOpen(
+  window: RestWindow,
+  startedIso: string | null | undefined,
+  now: Date,
+): boolean {
+  if (!startedIso) return false;
+  const started = new Date(startedIso);
+  if (Number.isNaN(started.getTime())) return false;
+  const st = parseTime(window.start);
+  if (Number.isNaN(st) || Number.isNaN(parseTime(window.end))) return false;
+  const sinceStart = ((minutesOfDay(now) - st) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const insideNow = sinceStart < windowSpanMin(window); // mesma régua do sono automático (sem tolerância)
+  return !insideNow && isWithinWindow(window, started);
+}
+
+/** Quando o pet acordou numa noite em que o app estava fechado: o que vier primeiro, agora ou o fim da janela. */
+export function nightWakeAt(window: RestWindow, sleptAt: Date, now: Date): Date {
+  const end = new Date(sleptAt.getTime() + windowSpanMin(window) * MS_MIN);
+  return end.getTime() < now.getTime() ? end : now;
+}
+
+// ---------------------------------------------------------------------------
+// 7. Bônus de energia da manhã (D-37)
+// ---------------------------------------------------------------------------
+
+/** Energia que a manhã de uma noite `onTime` devolve. Constante — copy lê daqui. */
+export const NIGHT_ENERGY_BONUS = 1;
+
+/**
+ * Quanto de energia pagar AGORA. Só com noite `onTime` cuja manhã é a de hoje
+ * (dia do JOGADOR), no máximo 1×/dia (`nightBonusDay`), e nunca além de `max`.
+ * Sem noite → 0: ausência nunca pune, só não premia.
+ */
+export function nightEnergyGain(rest: RestState | undefined, now: Date, energy: number, max: number): number {
+  if (!rest) return 0;
+  const today = playerDayKey(now, rest.playerDayTz);
+  if (rest.nightBonusDay === today) return 0;
+  const noite = rest.nights.find((n) => n.date === today && n.onTime);
+  if (!noite) return 0;
+  // Só depois de ACORDAR: despertar registrado, ou já fora da janela. Deitar à 01:00 não paga na hora.
+  if (!noite.wokeAt) {
+    const st = parseTime(rest.window.start);
+    const m = now.getHours() * 60 + now.getMinutes();
+    const desde = ((m - st) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+    if (Number.isNaN(st) || desde < windowSpanMin(rest.window)) return 0;
+  }
+  const room = Math.max(0, Math.floor(max) - Math.floor(Number.isFinite(energy) ? energy : 0));
+  return Math.min(NIGHT_ENERGY_BONUS, room);
+}
+
+/** Carimba o dia do bônus (chame só quando `nightEnergyGain` > 0). */
+export function stampNightBonus(rest: RestState, now: Date): RestState {
+  return { ...rest, nightBonusDay: playerDayKey(now, rest.playerDayTz) };
 }

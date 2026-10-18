@@ -7,6 +7,8 @@ import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
 import { pushCopy, sleepReminderCopy, eveningCopy, mealInviteCopy, mealPushKind } from '../../functions/api/_pushCopy.js';
 import { sleepReminderAt } from '../utils/restWindow';
+import { readFlagOr } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 import { MEAL_KEYS, inRestArc, parseHHMM, restArc, serverMeals } from '../utils/mealRhythm';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
 import {
@@ -300,7 +302,7 @@ export function NotificationManager({
          lembrete só saía se a hora caísse em :00/:01, ou seja, quase nunca.
          Não dispara dormindo (já deitou, não há o que lembrar) e é 1×/dia. */
       const janela = restWindowRef.current;
-      if (janela && !isSleepingRef.current && lastSleepReminderDate.current !== today) {
+      if (janela && !isSleepingRef.current && lastSleepReminderDate.current !== today && readFlagOr(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, true)) {
         // -60 s: um tick atrasado (aba em segundo plano) ainda enxerga a ocorrência de HOJE
         // em vez da de amanhã, que `sleepReminderAt` devolve assim que o alvo passa.
         const alvo = sleepReminderAt(janela, new Date(now.getTime() - 60_000));

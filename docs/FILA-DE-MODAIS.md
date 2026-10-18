@@ -40,7 +40,7 @@
 | 10 | `dream` | sonho da manhã | o sonho é gravado ao sortear (`setMorningDream` após o updater da virada), não ao fechar | OK / voltar |
 | 11 | `nightmare` | pesadelo da manhã (jogável) | `markNightmareFought` (a noite lutada) | "Bom dia" / voltar |
 | 12 | `catalogLevelInvite` | convite de subir/descer o nível de um hábito | `lastCatalogLevelInviteDayKey` | aceitar / recusar / voltar (= recusar) |
-| 13 | `restSetup` | convite do sono | `closeRestSetup` | fechar / voltar |
+| 13 | `restSetup` | horário de dormir (OBRIGATÓRIO, D-24: pronto enquanto `rest.windowConfirmed` ≠ true; sem X) | `handleConfirmRestWindow` | só "Confirmar" — voltar não fecha |
 | 14 | `unlockToast` | BALÃO não bloqueante "<Prédio> desbloqueado em <local>" (vários do mesmo level-up num só), PT/EN; NÃO é sticky: qualquer modal pronto o substitui | o level-up (`lastCelebratedLevel`): os ids vêm de `buildingsUnlockedBetween(from, to)` do evento | toque / 6 s |
 | 14b | `noticeToast` | BALÃO não bloqueante de aviso acionável (refeição, Refúgio, termos, triagem, recomeço; toque abre a folha de Avisos), PT/EN, 1× por dia cada, NÃO sticky | `soulmon-notice-toast-seen` (`<dia>|<chaves>`), gravado ao MOSTRAR |
 | 15 | `welcome` | OCIOSO: instalar a PWA / pedir notificação; decide sozinho se tem algo a dizer | flags próprias | — |

@@ -245,7 +245,7 @@ export function SettingsPage({
 
   // Janela de sono automático: lida e gravada direto no localStorage; o efeito
   // do App pega a mudança no tique de minuto seguinte.
-  const [autoSleepEnabled, setAutoSleepEnabled] = useState(() => readFlagOr(STORAGE_KEYS.AUTO_SLEEP_ENABLED, true));
+  const [sleepReminderOn, setSleepReminderOn] = useState(() => readFlagOr(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, true));
   const [autoSleepStart, setAutoSleepStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
   const [autoSleepEnd, setAutoSleepEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
 
@@ -642,38 +642,37 @@ export function SettingsPage({
       {/* ── SEU RITMO — encosta na Janela de Descanso, que o App desenha logo
              abaixo desta página. Os dois falam da mesma coisa. ───────────── */}
       <Group title={isPt ? 'Seu ritmo' : 'Your rhythm'}>
+        {/* D-25/D-26 (18/10/2026): o sono automático não tem mais interruptor — só os horários. */}
+        {/* As horas em `.inp` 44 com `schedule` 20 + mono `tabular-nums`
+             (D-K3). O nome do campo vai no `aria-label`, como no canvas. */}
+        <div className="sm2-conta-times">
+          {([
+            { label: isPt ? 'Dorme' : 'Sleeps', value: autoSleepStart, set: setAutoSleepStart, key: STORAGE_KEYS.AUTO_SLEEP_START },
+            { label: isPt ? 'Acorda' : 'Wakes', value: autoSleepEnd, set: setAutoSleepEnd, key: STORAGE_KEYS.AUTO_SLEEP_END },
+          ] as const).map(f => (
+            <TimeField
+              key={f.key}
+              ariaLabel={f.label}
+              value={f.value}
+              onChange={v => { f.set(v); writeLocal(f.key, v, { silent: true }); }}  /* o App copia o horário para `rest.window` no tique seguinte */
+            />
+          ))}
+        </div>
         <SwitchRow
-          checked={autoSleepEnabled}
+          checked={sleepReminderOn}
           onToggle={() => {
             // Gravar FORA do updater: no StrictMode o updater roda 2× (footgun 6).
-            const next = !autoSleepEnabled;
-            writeFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED, next, { silent: true });
-            setAutoSleepEnabled(next);
+            const next = !sleepReminderOn;
+            writeFlag(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, next, { silent: true });
+            setSleepReminderOn(next);
           }}
-          label={isPt ? 'Sono automático' : 'Auto sleep'}
+          label={isPt ? 'Lembrete de deitar' : 'Bedtime reminder'}
           language={language}
-          infoLabel={isPt ? 'Sobre o sono automático' : 'About auto sleep'}
+          infoLabel={isPt ? 'Sobre o lembrete de deitar' : 'About the bedtime reminder'}
           info={isPt
-            ? 'Seu Soulmon dorme e acorda sozinho. Dormindo, não faz cocô.'
-            : 'It sleeps and wakes on its own. Asleep, it never poops.'}
+            ? 'Um aviso 30 minutos antes da hora de dormir. Sem o lembrete, a noite pode não ser registrada e o pesadelo da manhã não aparece.'
+            : 'A nudge 30 minutes before bedtime. Without the reminder, the night may not be recorded and the morning nightmare will not show up.'}
         />
-        {autoSleepEnabled && (
-          /* As horas em `.inp` 44 com `schedule` 20 + mono `tabular-nums`
-             (D-K3). O nome do campo vai no `aria-label`, como no canvas. */
-          <div className="sm2-conta-times">
-            {([
-              { label: isPt ? 'Dorme' : 'Sleeps', value: autoSleepStart, set: setAutoSleepStart, key: STORAGE_KEYS.AUTO_SLEEP_START },
-              { label: isPt ? 'Acorda' : 'Wakes', value: autoSleepEnd, set: setAutoSleepEnd, key: STORAGE_KEYS.AUTO_SLEEP_END },
-            ] as const).map(f => (
-              <TimeField
-                key={f.key}
-                ariaLabel={f.label}
-                value={f.value}
-                onChange={v => { f.set(v); writeLocal(f.key, v, { silent: true }); }}  /* o App copia o horário para `rest.window` no tique seguinte */
-              />
-            ))}
-          </div>
-        )}
       </Group>
 
     </>

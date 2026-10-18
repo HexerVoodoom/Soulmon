@@ -10993,7 +10993,11 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
+<<<<<<< HEAD
 // ../.wrangler/tmp/pages-xQngMz/functionsRoutes-0.7508617515587602.mjs
+=======
+// ../.wrangler/tmp/pages-vw7TzR/functionsRoutes-0.09614555159478311.mjs
+>>>>>>> origin/feat/sono-pesadelo
 var routes = [
   {
     routePath: "/api/account",

@@ -21,7 +21,7 @@ import {
   REST_WINDOW_DAYS,
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
-import { DREAM_CATALOG } from '../utils/restWindow';
+import { DREAM_CATALOG, NIGHT_ENERGY_BONUS } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS } from '../utils/forge';
@@ -279,8 +279,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Cada noite na janela seu Soulmon SONHA, e o sonho é uma cena colecionável do próprio Soulmon — ${DREAM_COUNT} para descobrir. A raridade vem da regularidade, nunca de dormir mais.`,
-              `Every night inside the window it DREAMS, and the dream is a collectible scene of itself — ${DREAM_COUNT} to discover. Rarity comes from regularity, never from sleeping longer.`,
+              `Cada noite na janela seu Soulmon SONHA, e o sonho é uma cena colecionável do próprio Soulmon — ${DREAM_COUNT} para descobrir. A raridade vem da regularidade, nunca de dormir mais. Uma noite no horário também traz ${NIGHT_ENERGY_BONUS} de energia a mais de manhã, uma vez por dia; sem noite, nada se perde.`,
+              `Every night inside the window it DREAMS, and the dream is a collectible scene of itself — ${DREAM_COUNT} to discover. Rarity comes from regularity, never from sleeping longer. A night on time also brings ${NIGHT_ENERGY_BONUS} extra energy in the morning, once a day; no night, nothing is lost.`,
             )}
           </p>
         </>

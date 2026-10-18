@@ -137,6 +137,11 @@ export const STORAGE_KEYS = {
   /** ISO de quando o pet foi dormir — a "outra ponta" da noite, lida ao acordar
    *  para `recordNight` gravar deitar E acordar (utils/restWindow.ts). */
   SLEEP_STARTED_AT: 'soulmon-sleep-started-at',
+  /** D-23: ISO de quando o app foi aberto no período do lembrete de deitar (a noite "armada").
+   *  De manhã, `decideArmedNight` (utils/restWindow.ts) grava a noite e a limpa. */
+  NIGHT_ARMED_AT: 'soulmon-night-armed-at',
+  /** Lembrete de deitar (30 min antes da janela). Padrão LIGADO: só um 'false' gravado desliga. */
+  SLEEP_REMINDER_ENABLED: 'soulmon-sleep-reminder-enabled',
   /** dayKey da última manhã em que o sonho já foi mostrado. Um por manhã: o
    *  feedback de sono é SÓ de manhã e SÓ uma vez (ortossonia é ansiedade). */
   MORNING_DREAM_SHOWN: 'soulmon-morning-dream-shown',

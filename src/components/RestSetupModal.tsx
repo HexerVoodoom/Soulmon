@@ -1,28 +1,29 @@
 /**
- * O CONVITE DO SONO — sono automático + Janela de Descanso, no 2º dia (G8).
+ * O HORÁRIO DE DORMIR — obrigatório (D-24, dono, 18/10/2026).
  *
- * Quando aparece é regra de `utils/restSetup.ts` (`shouldShowRestSetup`);
- * aqui só a tela. É INTERSTICIAL (`const interstitial` no App, posição
- * declarada) e aparece UMA vez: fechar, por qualquer saída, grava a flag.
+ * Aparece sempre que `rest.windowConfirmed` não é `true` (regra em
+ * `utils/restSetup.ts`): jogador novo, logo depois do tour, e save antigo que
+ * nunca confirmou. É INTERSTICIAL (`const interstitial` no App) e **só fecha
+ * confirmando** — sem X, sem "depois", sem fechar por Esc/voltar. O sono
+ * automático não tem mais interruptor (D-25/D-26): o que se escolhe aqui são
+ * só as duas horas, que seguem editáveis depois em Configurações.
  *
- * As mesmas duas preferências que moram em Configurações, com as mesmas
- * fontes — nenhuma cópia de regra:
  *  · a Janela é do SAVE (`rest.window`), e quem grava é o App
- *    (`onChangeWindow` = `handleChangeRestWindow`);
- *  · o sono automático é do APARELHO (`STORAGE_KEYS.AUTO_SLEEP_*`), lido e
- *    gravado como a `SettingsPage` faz — o efeito do App pega no tique seguinte.
+ *    (`onConfirm` = `handleConfirmRestWindow`);
+ *  · as horas também vão para `STORAGE_KEYS.AUTO_SLEEP_*`, as fontes do sono
+ *    automático — o efeito do App pega no tique seguinte.
  *
  * O que esta tela NUNCA diz (regra do `RestWindowCard`): nota de sono,
  * duração ideal, "8 horas", julgamento da noite. A janela é da pessoa; o app
- * não sugere nenhuma.
+ * não sugere nenhuma. Pode-se apenas confirmar a que já está escolhida.
  */
 import { useState } from 'react';
 import type { Language } from '../utils/i18n';
 import type { RestWindow } from '../utils/restWindow';
-import { readFlagOr, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
+import { readLocal, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isMorning } from '../utils/restSetup';
-import { SwitchRow, TimeField, sm2Button } from './form/FormKit';
+import { TimeField, sm2Button } from './form/FormKit';
 import { RitualDialog, ritualTitle } from './ritual/RitualKit';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
@@ -30,79 +31,55 @@ export interface RestSetupModalProps {
   language: Language;
   now: Date;
   window: RestWindow;
-  onChangeWindow: (w: RestWindow) => void;
-  onClose: () => void;
+  /** Grava as horas e marca o horário como confirmado. É a ÚNICA saída da tela. */
+  onConfirm: (w: RestWindow) => void;
 }
 
-export function RestSetupModal({ language, now, onChangeWindow, onClose }: RestSetupModalProps) {
+const noop = () => {};
+
+export function RestSetupModal({ language, now, window: current, onConfirm }: RestSetupModalProps) {
   const isPt = language === 'pt-BR';
-  const [autoOn, setAutoOn] = useState(() => readFlagOr(STORAGE_KEYS.AUTO_SLEEP_ENABLED, true));
-  const [autoStart, setAutoStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
-  const [autoEnd, setAutoEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
+  const [autoStart, setAutoStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || current.start || '23:00');
+  const [autoEnd, setAutoEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || current.end || '07:00');
 
   const title = isMorning(now)
-    ? (isPt ? 'Bom dia! Vamos falar das noites?' : 'Good morning! A word about nights')
-    : (isPt ? 'Vamos falar das noites?' : 'A word about nights');
+    ? (isPt ? 'Bom dia! A que horas seu Soulmon dorme?' : 'Good morning! When does your Soulmon sleep?')
+    : (isPt ? 'A que horas seu Soulmon dorme?' : 'When does your Soulmon sleep?');
 
-  const setAuto = (next: boolean) => {
-    // Gravar FORA de updater (footgun 6). Ao ligar, as horas mostradas viram
-    // as gravadas — senão o efeito do App leria o padrão, não o que a pessoa vê.
-    writeFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED, next, { silent: true });
-    if (next) {
-      writeLocal(STORAGE_KEYS.AUTO_SLEEP_START, autoStart, { silent: true });
-      writeLocal(STORAGE_KEYS.AUTO_SLEEP_END, autoEnd, { silent: true });
-    }
-    setAutoOn(next);
+  const confirm = () => {
+    writeLocal(STORAGE_KEYS.AUTO_SLEEP_START, autoStart, { silent: true });
+    writeLocal(STORAGE_KEYS.AUTO_SLEEP_END, autoEnd, { silent: true });
+    onConfirm({ start: autoStart, end: autoEnd });
   };
 
   return (
-    <RitualDialog label={title} onClose={onClose} maxWidth={360} closeLabel={isPt ? 'Fechar' : 'Close'}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '0 36px 0 0' }}>
+    <RitualDialog label={title} onClose={noop} maxWidth={360}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: 0 }}>
         <p style={{ ...ritualTitle, margin: 0, flex: 1, minWidth: 0 }}>{title}</p>
-        {/* I13 (02/10/2026): a legenda mora atrás do "?". */}
         <InfoTip language={language} label={isPt ? 'Sobre este ajuste' : 'About this setup'} align="right">
-          <InfoTipSection title={isPt ? 'Este ajuste' : 'This setup'}>
+          <InfoTipSection title={isPt ? 'Por que escolher' : 'Why choose'} last>
             {isPt
-              ? 'Duas coisas que você pode ajustar agora — ou depois, em Configurações.'
-              : 'Two things you can set now — or later, in Settings.'}
-          </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Janela de descanso' : 'Rest window'} last>
-            {isPt
-              ? 'As horas em que você gosta de desacelerar. Pondo seu Soulmon para dormir dentro delas, ele volta de manhã com um sonho.'
-              : 'The hours you like to wind down. Put your Soulmon to bed inside them and it comes back with a dream in the morning.'}
+              ? 'Seu Soulmon dorme e acorda sozinho nestas horas, e as noites no horário rendem um sonho de manhã. Você muda quando quiser em Configurações.'
+              : 'Your Soulmon sleeps and wakes on its own at these hours, and nights on time bring a dream in the morning. You can change it anytime in Settings.'}
           </InfoTipSection>
         </InfoTip>
       </div>
 
+      <p style={{ margin: 0, fontSize: 14 }}>
+        {isPt
+          ? 'Escolha a hora de dormir e a de acordar. Dormindo, ele não faz cocô.'
+          : 'Pick a bedtime and a wake-up time. Asleep, it never poops.'}
+      </p>
+
       <section data-rest-setup="auto" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <SwitchRow
-          checked={autoOn}
-          onToggle={() => setAuto(!autoOn)}
-          label={isPt ? 'Sono automático' : 'Auto sleep'}
-          language={language}
-          infoLabel={isPt ? 'Sobre o sono automático' : 'About auto sleep'}
-          info={isPt
-            ? 'Seu Soulmon dorme e acorda sozinho nestas horas. Dormindo, não faz cocô.'
-            : 'Your Soulmon sleeps and wakes on its own at these hours. Asleep, it never poops.'}
-        />
-        {autoOn && (
-          <div className="sm2-conta-times">
-            <TimeField
-              ariaLabel={isPt ? 'Dorme' : 'Sleeps'}
-              value={autoStart}
-              onChange={(v) => { setAutoStart(v); writeLocal(STORAGE_KEYS.AUTO_SLEEP_START, v, { silent: true }); onChangeWindow({ start: v, end: autoEnd }); }}
-            />
-            <TimeField
-              ariaLabel={isPt ? 'Acorda' : 'Wakes'}
-              value={autoEnd}
-              onChange={(v) => { setAutoEnd(v); writeLocal(STORAGE_KEYS.AUTO_SLEEP_END, v, { silent: true }); onChangeWindow({ start: autoStart, end: v }); }}
-            />
-          </div>
-        )}
+        <div className="sm2-conta-times">
+          <TimeField ariaLabel={isPt ? 'Dorme' : 'Sleeps'} value={autoStart} onChange={setAutoStart} />
+          <TimeField ariaLabel={isPt ? 'Acorda' : 'Wakes'} value={autoEnd} onChange={setAutoEnd} />
+        </div>
       </section>
 
-      <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
-        {isPt ? 'Pronto' : 'Done'}
+      <button type="button" onClick={confirm} style={{ ...sm2Button('primary'), width: '100%' }}>
+        {isPt ? 'Confirmar' : 'Confirm'}
       </button>
     </RitualDialog>
   );

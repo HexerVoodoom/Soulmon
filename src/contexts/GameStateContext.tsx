@@ -978,7 +978,7 @@ function hydrateDecor(v: unknown): Partial<Record<SlotId, string>> {
  * `onTime` inválido vira `false`, que é o valor NEUTRO — jamais inventar um
  * "dormiu no horário" que não aconteceu.
  */
-function hydrateRest(v: unknown, anchor?: PlayerDayAnchor): RestState {
+export function hydrateRest(v: unknown, anchor?: PlayerDayAnchor): RestState {
   const base = createRestState();
   const raw = obj<unknown>(v);
 
@@ -1014,6 +1014,10 @@ function hydrateRest(v: unknown, anchor?: PlayerDayAnchor): RestState {
     })(),
     // `hideMetrics` é switch de apresentação: só o `true` explícito o liga.
     ...(raw.hideMetrics === true ? { hideMetrics: true } : {}),
+    // D-24: horário de dormir confirmado pela pessoa. Save antigo sem o campo = false (migração idempotente).
+    windowConfirmed: raw.windowConfirmed === true,
+    // D-37: dia do último bônus de energia da manhã (teto 1x/dia, no save).
+    ...(typeof raw.nightBonusDay === 'string' && raw.nightBonusDay ? { nightBonusDay: raw.nightBonusDay } : {}),
     // A âncora do load VENCE a que veio no save do `rest`: a do `GameState` é a
     // resolvida (e é ela que persiste), e ter duas discordando dentro do mesmo
     // save seria pior que não ter nenhuma.
