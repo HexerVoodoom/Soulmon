@@ -75,9 +75,9 @@ describe('lotes novos (29/09/2026)', () => {
     expect(lotNpcVoice('laboratorio', 'pet', 'en-US').name).toMatch(/^Tinta/);
   });
 
-  it('os 6 NPCs de função têm arte própria e voz nos dois idiomas', () => {
-    const nomes = { onboarding: 'Ambra', oraculo: 'Iris', conta: 'Faro', sono: 'Sona', cuidados: 'Nuri', config: 'Tobi' } as const;
-    expect(new Set(Object.values(FUNCTION_NPC_ART)).size).toBe(6);
+  it('os 3 NPCs de função (Faro, Sona e Tobi saíram, 18/10/2026) têm arte própria e voz nos dois idiomas', () => {
+    const nomes = { onboarding: 'Ambra', oraculo: 'Iris', cuidados: 'Nuri' } as const;
+    expect(new Set(Object.values(FUNCTION_NPC_ART)).size).toBe(3);
     for (const [id, nome] of Object.entries(nomes) as Array<[keyof typeof nomes, string]>) {
       expect(FUNCTION_NPC_ART[id]).toMatch(new RegExp(`npc-${id}`));
       for (const lang of ['pt-BR', 'en-US'] as const) {

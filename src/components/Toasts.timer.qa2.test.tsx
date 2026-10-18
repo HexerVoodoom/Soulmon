@@ -11,7 +11,7 @@ describe('QA rodada 2: balões não bloqueantes somem sozinhos mesmo com o App r
   it('NoticeToast: re-render a cada 1 s NÃO reinicia os 8 s', () => {
     vi.useFakeTimers();
     const done = vi.fn();
-    const ui = () => <NoticeToast noticeKey="refeicao" language="pt-BR" onOpen={() => {}} onDone={() => done()} />;
+    const ui = () => <NoticeToast noticeKey="triagem" language="pt-BR" onOpen={() => {}} onDone={() => done()} />;
     const { rerender } = render(ui());
     for (let i = 0; i < Math.ceil(NOTICE_TOAST_MS / 1000) + 1; i++) { act(() => { vi.advanceTimersByTime(1000); }); rerender(ui()); }
     expect(done).toHaveBeenCalledTimes(1);

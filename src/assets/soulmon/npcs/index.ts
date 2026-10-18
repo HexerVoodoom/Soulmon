@@ -108,10 +108,7 @@ export const LOT_NPC_ART: Record<string, string> = {
 
 import npcOnboarding from './npc-onboarding.png';
 import npcOraculo from './npc-oraculo.png';
-import npcConta from './npc-conta.png';
-import npcSono from './npc-sono.png';
 import npcCuidados from './npc-cuidados.png';
-import npcConfig from './npc-config.png';
 
 /**
  * NPCs de FUNÇÃO (30/09/2026, mesma leva `npcs-flare`): os bustos que não
@@ -124,10 +121,7 @@ import npcConfig from './npc-config.png';
 export const FUNCTION_NPC_ART: Record<FunctionNpcId, string> = {
   onboarding: npcOnboarding, // Ambra
   oraculo: npcOraculo, // Iris
-  conta: npcConta, // Faro
-  sono: npcSono, // Sona
   cuidados: npcCuidados, // Nuri
-  config: npcConfig, // Tobi
 };
 
 import npcFForja from './npc-f-forja.png';

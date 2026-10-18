@@ -135,44 +135,44 @@ describe('aba Conquistas: resgate explícito, a compra segue no Mercado', () => 
 describe('NoticeToast: termos uma única vez na vida, convites 1×/dia', () => {
   it('termos: depois de mostrado nunca mais volta, nem no dia seguinte; convite volta no dia seguinte', () => {
     let dia: string | null = null; let sempre: string | null = null;
-    const mostrar = (d: string, k: 'termos' | 'refeicao') => { const r = recordNoticeShown(dia, sempre, d, k); dia = r.dia; sempre = r.sempre; };
-    const presentes = ['termos', 'refeicao'];
+    const mostrar = (d: string, k: 'termos' | 'triagem') => { const r = recordNoticeShown(dia, sempre, d, k); dia = r.dia; sempre = r.sempre; };
+    const presentes = ['termos', 'triagem'];
     const escolher = (d: string) => pickNoticeKey(presentes, parseNoticeSeen(dia, d), (sempre ?? '').split(','));
-    expect(escolher('2026-10-14')).toBe('refeicao');
-    mostrar('2026-10-14', 'refeicao');
     expect(escolher('2026-10-14')).toBe('termos');
     mostrar('2026-10-14', 'termos');
+    expect(escolher('2026-10-14')).toBe('triagem');
+    mostrar('2026-10-14', 'triagem');
     expect(escolher('2026-10-14')).toBeNull();
-    expect(escolher('2026-10-15')).toBe('refeicao');
-    mostrar('2026-10-15', 'refeicao');
+    expect(escolher('2026-10-15')).toBe('triagem');
+    mostrar('2026-10-15', 'triagem');
     expect(escolher('2026-10-15')).toBeNull();
-    expect(escolher('2026-10-20')).toBe('refeicao');
+    expect(escolher('2026-10-20')).toBe('triagem');
     expect(sempre).toBe('termos');
   });
   it('recordNoticeShown é idempotente para o registro de uma vez só e ignora lixo', () => {
     const a = recordNoticeShown(null, 'termos', '2026-10-14', 'termos');
     expect(a.sempre).toBe('termos');
     expect(parseNoticeSeen('lixo', '2026-10-14')).toEqual([]);
-    expect(recordNoticeShown('2026-10-13|refeicao', null, '2026-10-14', 'refugio').dia).toBe('2026-10-14|refugio');
+    expect(recordNoticeShown('2026-10-13|triagem', null, '2026-10-14', 'recomeco').dia).toBe('2026-10-14|recomeco');
   });
 });
 
 describe('NoticeToast', () => {
   it('escolhe o primeiro aviso acionável ainda não visto, na ordem de importância; informativos e HP/incubação não entram', () => {
-    expect(pickNoticeKey(['hp', 'carga', 'termos', 'refeicao'], [])).toBe('refeicao');
-    expect(pickNoticeKey(['hp', 'termos', 'refeicao'], ['refeicao'])).toBe('termos');
+    expect(pickNoticeKey(['hp', 'carga', 'triagem', 'recomeco'], [])).toBe('triagem');
+    expect(pickNoticeKey(['hp', 'termos', 'triagem'], ['termos'])).toBe('triagem');
     expect(pickNoticeKey(['hp', 'incubacao', 'carga', 'marcoBosque', 'semanal', 'priming', 'checkin'], [])).toBeNull();
     expect(pickNoticeKey(['termos'], ['termos'])).toBeNull();
   });
   it('PT/EN e o toque abre a folha de Avisos e fecha o balão (não é modal)', () => {
     const onOpen = vi.fn(); const onDone = vi.fn();
-    const { container, rerender } = render(<NoticeToast noticeKey="refugio" language="pt-BR" onOpen={onOpen} onDone={onDone} />);
-    const b = container.querySelector('[data-notice-toast="refugio"]') as HTMLElement;
-    expect(b.textContent).toBe(noticeToastText('refugio', 'pt-BR'));
+    const { container, rerender } = render(<NoticeToast noticeKey="recomeco" language="pt-BR" onOpen={onOpen} onDone={onDone} />);
+    const b = container.querySelector('[data-notice-toast="recomeco"]') as HTMLElement;
+    expect(b.textContent).toBe(noticeToastText('recomeco', 'pt-BR'));
     expect(b.getAttribute('role')).toBe('status');
     expect(b.getAttribute('aria-modal')).toBeNull();
-    rerender(<NoticeToast noticeKey="refugio" language="en-US" onOpen={onOpen} onDone={onDone} />);
-    expect(container.textContent).toContain('Refuge');
+    rerender(<NoticeToast noticeKey="recomeco" language="en-US" onOpen={onOpen} onDone={onDone} />);
+    expect(container.textContent).toContain('fresh');
     fireEvent.click(b);
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(onDone).toHaveBeenCalled();

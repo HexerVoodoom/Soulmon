@@ -11,20 +11,21 @@ const at = (h: number, m = 0) => new Date(2026, 9, 12, h, m, 0, 0);
 const ON: MealRhythmSettings = { ...DEFAULT_MEAL_RHYTHM, times: { ...DEFAULT_MEAL_TIMES } };
 
 describe('configuração', () => {
-  it('o padrão: convite no app LIGADO, push DESLIGADO (opt-in)', () => {
+  it('o padrão: convite no app LIGADO e push LIGADO (B4, 18/10/2026)', () => {
     expect(DEFAULT_MEAL_RHYTHM.inApp).toBe(true);
-    expect(DEFAULT_MEAL_RHYTHM.push).toBe(false);
+    expect(DEFAULT_MEAL_RHYTHM.push).toBe(true);
   });
   it('lixo vira o padrão e nunca lança', () => {
     for (const v of [undefined, null, 'x', 7, [], { push: 'yes', times: 3 }]) {
       const s = sanitizeMealRhythm(v);
-      expect(s.push).toBe(false);
+      expect(s.push).toBe(true);
       expect(s.inApp).toBe(true);
       expect(s.times).toEqual(DEFAULT_MEAL_TIMES);
     }
   });
-  it('só `push === true` liga o push; só `inApp === false` desliga o cartão', () => {
-    expect(sanitizeMealRhythm({ push: 1 }).push).toBe(false);
+  it('só `push === false` desliga o push; só `inApp === false` desliga o cartão', () => {
+    expect(sanitizeMealRhythm({ push: 1 }).push).toBe(true);
+    expect(sanitizeMealRhythm({ push: false }).push).toBe(false);
     expect(sanitizeMealRhythm({ push: true }).push).toBe(true);
     expect(sanitizeMealRhythm({ inApp: false }).inApp).toBe(false);
     expect(sanitizeMealRhythm({ inApp: 0 }).inApp).toBe(true);
@@ -134,7 +135,7 @@ describe('a micro-ação: UMA coisa, que existe de verdade', () => {
 
 describe('o que vai ao servidor (só com opt-in)', () => {
   it('push desligado → NADA vai (nem horário, nem fuso)', () => {
-    expect(serverMeals(ON, null, at(9))).toBeNull();
+    expect(serverMeals({ ...ON, push: false }, null, at(9))).toBeNull();
     expect(serverMeals(undefined, null, at(9))).toBeNull();
   });
   it('push ligado → minutos, fuso e janela de descanso', () => {

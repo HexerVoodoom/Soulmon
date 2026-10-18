@@ -5,7 +5,7 @@ import { sm2Hint } from '../form/FormKit';
 
 /**
  * O NPC de FUNÇÃO de uma tela (14/10/2026, dono): busto pequeno + nome + fala curta, no topo da tela que ele "mora".
- * Faro = Conta, Sona = Sono, Nuri = Cuidados (Mochila), Tobi = Configurações. A fala é só acolhida (sem cobrança).
+ * Nuri = Cuidados (Mochila). Faro/Sona/Tobi saíram (18/10/2026). A fala é só acolhida (sem cobrança).
  */
 export function FunctionNpcNote({ id, language, size = 64 }: { id: FunctionNpcId; language: Language; size?: number }) {
   const v = functionNpcVoice(id, language);

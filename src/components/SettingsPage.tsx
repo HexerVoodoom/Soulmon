@@ -5,7 +5,7 @@ import {
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { Language, useTranslation, getLanguageName } from '../utils/i18n';
-import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
+import { readFlag, readFlagOr, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { isVibrateOn, setVibrateOn } from '../utils/focoTimer';
 import { AccountSection } from './AccountSection';
 import { SubscriptionSection } from './SubscriptionSection';
@@ -26,7 +26,6 @@ import { MealRhythmRows } from './MealRhythmRows';
 import { SpritePoseRows } from './SpritePoseRows';
 import type { SpritePose } from '../utils/spritePose';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
-import { FunctionNpcNote } from './ui/FunctionNpcNote';
 
 
 /**
@@ -93,6 +92,7 @@ interface SettingsPageProps {
   profile?: {
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
+    userName?: string; onChangeName?: (name: string) => void; bits?: number; onBuyFrame?: (id: string) => void;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -245,7 +245,7 @@ export function SettingsPage({
 
   // Janela de sono automático: lida e gravada direto no localStorage; o efeito
   // do App pega a mudança no tique de minuto seguinte.
-  const [autoSleepEnabled, setAutoSleepEnabled] = useState(() => readFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED));
+  const [autoSleepEnabled, setAutoSleepEnabled] = useState(() => readFlagOr(STORAGE_KEYS.AUTO_SLEEP_ENABLED, true));
   const [autoSleepStart, setAutoSleepStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
   const [autoSleepEnd, setAutoSleepEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
 
@@ -276,7 +276,6 @@ export function SettingsPage({
   return (
     <>
       <InstallPrompt language={language} />
-      <FunctionNpcNote id="config" language={language} />
 
       {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
       {profile && (
@@ -303,6 +302,10 @@ export function SettingsPage({
             petStage={profile.petStage}
             onChangeAvatar={profile.onChangeAvatar}
             onChangeFrame={profile.onChangeFrame}
+            userName={profile.userName}
+            onChangeName={profile.onChangeName}
+            bits={profile.bits}
+            onBuyFrame={profile.onBuyFrame}
           />
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />
         </GroupCard>
@@ -328,7 +331,6 @@ export function SettingsPage({
         {/* G4 (01/10/2026): o campo de e-mail + "Entrar" saiu — o login é o
             Google do portão. Quem está sem sessão ganha o botão do Google
             DENTRO da `AccountSection`, que é quem sabe se há sessão. */}
-        <FunctionNpcNote id="conta" language={language} />
         <AccountSection language={language} onSignedIn={onLoginWithEmail} />
 
         {/* Assinatura cosmética trimestral (D10): divulgação pré-compra, "Assinar" e
@@ -667,7 +669,7 @@ export function SettingsPage({
                 key={f.key}
                 ariaLabel={f.label}
                 value={f.value}
-                onChange={v => { f.set(v); writeLocal(f.key, v, { silent: true }); }}
+                onChange={v => { f.set(v); writeLocal(f.key, v, { silent: true }); }}  /* o App copia o horário para `rest.window` no tique seguinte */
               />
             ))}
           </div>

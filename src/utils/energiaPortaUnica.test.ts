@@ -22,8 +22,8 @@ const baseReset = {
   maxActivityCap: 6, lastDayReport: { date: new Date(2026, 9, 11).toDateString(), saveDay: 90 }, restDaysLeft: 0,
 };
 
-describe('virada do dia: zera a ENERGIA, não o relógio nem a fome (timers não reiniciam)', () => {
-  it('computeDailyReset zera energyPoints e MANTÉM o progresso até a próxima unidade e a fome', () => {
+describe('virada do dia: NÃO zera a energia (B7, 18/10/2026), nem o relógio, nem a fome', () => {
+  it('computeDailyReset MANTÉM energyPoints, o progresso até a próxima unidade e a fome', () => {
     const ontem = new Date(2026, 9, 12, 12, 0, 0);
     const hoje = new Date(2026, 9, 13, 8, 0, 0);
     const prev: Record<string, unknown> = {
@@ -34,13 +34,13 @@ describe('virada do dia: zera a ENERGIA, não o relógio nem a fome (timers não
       energyClock: { at: ontem.getTime(), carry: UNIT_POINTS / 4 },
     };
     const next = computeDailyReset(prev, { now: hoje }) as Record<string, any>;
-    expect(next.energyPoints).toBe(0);
+    expect(next.energyPoints).toBe(5);
     expect(next.hunger).toEqual(prev.hunger); // a fome NÃO é diária
     // o progresso (carry) passou intacto ou maior: nunca zerou — o timer não reinicia na virada
     expect(next.energyClock.carry).toBeGreaterThanOrEqual((prev.energyClock as { carry: number }).carry);
-    expect(next.energyClock.at).toBe(hoje.getTime());
+    expect(next.energyClock.at).toBe((prev.energyClock as { at: number }).at); // o relógio não é tocado
   });
-  it('a energia regenerada ANTES da virada não vaza para o dia novo, e a de DEPOIS conta', () => {
+  it('a energia que a pessoa tinha ATRAVESSA a virada', () => {
     const hoje = new Date(2026, 9, 13, 8, 0, 0);
     const prev: Record<string, unknown> = {
       ...baseReset, lastResetDate: new Date(2026, 9, 12).toDateString(),
@@ -48,8 +48,7 @@ describe('virada do dia: zera a ENERGIA, não o relógio nem a fome (timers não
       hunger: { v: 100, at: hoje.getTime() - HOUR }, energyClock: { at: hoje.getTime() - HOUR, carry: 0 },
     };
     const next = computeDailyReset(prev, { now: hoje }) as unknown as HungerState;
-    expect(next.energyPoints).toBe(0);
-    expect(settleEnergy(next, hoje.getTime() + ENERGY_REGEN_MINUTES * MIN).energyPoints).toBeLessThanOrEqual(1);
+    expect(next.energyPoints).toBe(7);
   });
 });
 

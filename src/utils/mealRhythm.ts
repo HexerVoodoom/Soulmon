@@ -51,7 +51,7 @@ export type { MealKey, MealTimes, MealInviteKind };
 export interface MealRhythmSettings {
   /** Cartão dentro do app nas janelas. Padrão: ligado (não interrompe ninguém). */
   inApp: boolean;
-  /** Push/alarme nas janelas. Padrão: DESLIGADO — opt-in, além da permissão do sistema. */
+  /** Push/alarme nas janelas. Padrão: LIGADO desde 18/10/2026 (dono, B4: tudo de notificação nasce ligado); só vale com as notificações ligadas e a permissão do sistema. */
   push: boolean;
   /** Horários locais, na grade de 30 min e dentro da faixa de cada refeição. */
   times: MealTimes;
@@ -59,7 +59,7 @@ export interface MealRhythmSettings {
 
 export const DEFAULT_MEAL_RHYTHM: MealRhythmSettings = {
   inApp: true,
-  push: false,
+  push: true,
   times: { ...DEFAULT_MEAL_TIMES },
 };
 
@@ -69,7 +69,7 @@ export function sanitizeMealRhythm(v: unknown): MealRhythmSettings {
   const o = v as Record<string, unknown>;
   return {
     inApp: o.inApp !== false,
-    push: o.push === true,
+    push: o.push !== false,
     times: normalizeMealTimes(o.times),
   };
 }

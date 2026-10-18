@@ -231,6 +231,17 @@ export function readFlag(key: string): boolean {
   return readLocal(key) === 'true';
 }
 
+/**
+ * Lê um booleano que NASCE num valor (`fallback`) quando a chave nunca foi gravada.
+ * Só `'false'` explícito desliga um default ligado — storage ilegível cai no fallback.
+ */
+export function readFlagOr(key: string, fallback: boolean): boolean {
+  const raw = readLocal(key);
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  return fallback;
+}
+
 /** Grava um booleano no formato do app. */
 export function writeFlag(key: string, on: boolean, opts?: WriteOptions): boolean {
   return writeLocal(key, on ? 'true' : 'false', opts);
