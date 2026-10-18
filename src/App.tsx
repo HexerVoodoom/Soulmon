@@ -59,7 +59,7 @@ import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap, missionMark, strollLineState, claimStroll } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
-import { sanitizeEquippedFrame, sanitizeOwnedFrames, frameById } from './utils/frames';
+import { sanitizeEquippedFrame } from './utils/frames';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
 import { IntroScreen } from './components/IntroScreen';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
@@ -4180,11 +4180,17 @@ export default function App() {
     // a compra em Emblemas decidia sobre um saldo velho.
   }, [gameState, missionProgress, refuseDemo]);
 
-  /** C3: compra de MOLDURA no Mercado — mesma disciplina de `handleShopBuy` (recusa reconferida sobre o `prev`, em `utils/frameBuy.ts`). */
-  const handleFrameBuy = useCallback((frameId: string): boolean => {
+  /** Compra de MOLDURA com Bits, UM handler só (C3 Mercado + B3 Perfil/Torneio): mesma disciplina de `handleShopBuy`
+   *  (recusa reconferida sobre o `prev`, em `utils/frameBuy.ts`). `equipar` (Perfil/Torneio, B3) já veste a moldura comprada;
+   *  o Mercado só entrega a posse. Devolve se a compra passou. */
+  const handleFrameBuy = useCallback((frameId: string, equipar = false): boolean => {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
     if (frameBuyRefusal(gameState, frameId)) return false;
-    setGameState(prev => applyFrameBuy(prev, frameId).state);
+    setGameState(prev => {
+      const { state, refused } = applyFrameBuy(prev, frameId);
+      if (refused || !equipar) return state;
+      return { ...state, equippedFrame: sanitizeEquippedFrame(frameId) };
+    });
     return true;
   }, [gameState, refuseDemo, setGameState]);
 
@@ -4269,16 +4275,8 @@ export default function App() {
     setGameState(prev => (prev.equippedFrame ?? null) === id ? prev : { ...prev, equippedFrame: sanitizeEquippedFrame(id) });
   }, []);
 
-  /** Comprar moldura de LOJA com Bits (B3): desconta (Bit pago primeiro), grava a posse e já equipa. Saldo curto ou id fora da loja = nada. */
-  const handleBuyFrame = useCallback((id: string) => {
-    const f = frameById(id);
-    if (!f || f.origin !== 'shop' || !f.price) return;
-    setGameState(prev => {
-      if ((prev.ownedFrames ?? []).includes(id) || (prev.gamePoints ?? 0) < f.price!) return prev;
-      const pago = spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - f.price! }, f.price!);
-      return { ...pago, ownedFrames: sanitizeOwnedFrames([...(prev.ownedFrames ?? []), id]), equippedFrame: id };
-    });
-  }, [setGameState]);
+  /** Comprar moldura de LOJA no Perfil/Torneio (B3): o handler único da compra, já equipando. */
+  const handleBuyFrame = useCallback((id: string) => { handleFrameBuy(id, true); }, [handleFrameBuy]);
 
   /** Nome público do jogador (B8): local + estado da tela; o perfil público é republicado no próximo save. */
   const handleChangeUserName = useCallback((nome: string) => {
@@ -7002,7 +7000,7 @@ export default function App() {
                   ownedFrames: gameState.ownedFrames ?? [],
                   subscriptionActive: subscription.active,
                 }}
-                actions={{ onBuy: handleShopBuy, onBuyFrame: handleFrameBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
+                actions={{ onBuy: handleShopBuy, onBuyFrame: id => handleFrameBuy(id), onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
                 points={gameState.gamePoints ?? 0}
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}
