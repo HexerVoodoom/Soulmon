@@ -11,8 +11,8 @@
 
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
-| `guild.lote.hall.label` | Salão da Guilda | Guild Hall | areaSheetCopy `HALL_LOTS` (já existe) | §12 vocabulário |
-| `guild.lote.hall.aria` | Entrar no Salão da Guilda | Enter the Guild Hall | areaSheetCopy `HALL_LOTS` (já existe) | §12 |
+| `guild.lote.hall.label` | Salão do Clã | Clan Hall | areaSheetCopy `HALL_LOTS` (já existe) | §12 vocabulário |
+| `guild.lote.hall.aria` | Entrar no Salão do Clã | Enter the Clan Hall | areaSheetCopy `HALL_LOTS` (já existe) | §12 |
 | `guild.lote.feira.label` | Feira | Fair | areaSheetCopy `ARENA_LOTS`, id novo `feira` (substitui o rótulo "Guilda" da Arena) | §12; D-G4 |
 | `guild.lote.feira.aria` | Entrar na Feira | Enter the Fair | idem | §12 |
 | `guild.npc.hall` | Algumas criaturas cuidam de um bosque juntas. Ele só cresce. | Some creatures keep a grove together. It only grows. | areaNpcVoice `hall:guilda` (Bastia, a guardiã do Salão / Bastia, keeper of the Hall — G3, 02/10/2026; era Marla, a intendente). Substitui "grupo pequeno" | L3, L4; LV-G3 |
@@ -195,7 +195,7 @@
 
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
-| `guild.aria.salao` | Salão da Guilda | Guild Hall | título acessível da folha | §13 |
+| `guild.aria.salao` | Salão do Clã | Clan Hall | título acessível da folha | §13 |
 | `guild.aria.bosque` | Bosque da roda, estágio {estagio} | The circle’s grove, stage {estagio} | visor do Bosque | §13 |
 | `guild.aria.progresso` | Progresso do bosque, sem número | Grove progress, no number | faixa de progresso | LV-G1 |
 | `guild.aria.roda` | Roda | Circle | lista de membros | §12 |
@@ -214,8 +214,8 @@
 
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
-| `guild.help.guilda.termo` | Guilda e roda | Guild and circle | HelpModal, glossário | §12 |
-| `guild.help.guilda.def` | A Guilda é o lugar; a roda é quem está nela. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular. | The Guild is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications. | HelpModal; {max} = `GUILD_MAX_MEMBERS` | L10; LV-G4 |
+| `guild.help.guilda.termo` | Clã e roda | Clan and circle | HelpModal, glossário | §12 |
+| `guild.help.guilda.def` | O Clã é o lugar; a roda é quem está nele. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular. | The Clan is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications. | HelpModal; {max} = `GUILD_MAX_MEMBERS` | L10; LV-G4 |
 | `guild.help.bosque.termo` | Bosque | Grove | HelpModal | §12 |
 | `guild.help.bosque.def` | O bosque da roda tem estes estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe. | The circle’s grove has these stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks. | HelpModal | LV-G3 |
 | `guild.help.fio.termo` | Fio | Strand | HelpModal | §12 |
@@ -228,7 +228,7 @@
 | `guild.help.concha.def` | Cada {n} Feiras dissipadas rendem uma Concha da Maré, peça de decoração de quem colhe. Ela marca o que a roda fez junta, nunca uma pessoa. | Every {n} cleared Fairs bring a Tide shell, a decor piece for whoever collects. It marks what the circle did together, never one person. | HelpModal; {n} = `RAID_TROPHY_EVERY`. Não diz "a maré deixa" (a maré do glossário dura `GUILD_TIDE_WEEKS`, e 4 Feiras não cabem em uma maré de 6 semanas) | L10, L12 |
 | `guild.help.anfitriao.termo` | Anfitrião | Host | HelpModal | §12 |
 | `guild.help.anfitriao.def` | Quem abriu a clareira pode renomear a roda e gerar um código novo. Não vê nada a mais sobre ninguém. | Whoever opened the clearing can rename the circle and generate a new code. They see nothing more about anyone. | HelpModal | LV-G1 |
-| `guild.guide.titulo` | A Guilda | The Guild | GuideModal, seção nova | §12 |
+| `guild.guide.titulo` | O Clã | The Clan | GuideModal, seção nova | §12 |
 | `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
 
 ## 12. A Casa (guilda-lancamento PR2, 11/10/2026)
@@ -285,10 +285,10 @@
 
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
-| `guild.guerra.titulo` | Guerra de guilda | Guild war | GuildSheet, título da seção | L12 |
-| `guild.guerra.regra` | Seu esquadrão — você e até três aliados — enfrenta o de outra guilda do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia. | Your squad — you and up to three allies — faces another guild’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day. | atrás do "?" da seção | L10, L12 |
-| `guild.guerra.buscar` | Procurar uma guilda rival | Look for a rival guild | botão que busca a guilda do mesmo tamanho | L12 |
-| `guild.guerra.esperando` | Seu esquadrão espera uma guilda do mesmo tamanho. O resultado chega sozinho. | Your squad is waiting for a guild of the same size. The result arrives on its own. | estado "na fila" | L12 |
+| `guild.guerra.titulo` | Guerra de clã | Clan war | GuildSheet, título da seção | L12 |
+| `guild.guerra.regra` | Seu esquadrão — você e até três aliados — enfrenta o de outro clã do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia. | Your squad — you and up to three allies — faces another clan’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day. | atrás do "?" da seção | L10, L12 |
+| `guild.guerra.buscar` | Procurar um clã rival | Look for a rival clan | botão que busca a guilda do mesmo tamanho | L12 |
+| `guild.guerra.esperando` | Seu esquadrão espera um clã do mesmo tamanho. O resultado chega sozinho. | Your squad is waiting for a clan of the same size. The result arrives on its own. | estado "na fila" | L12 |
 | `guild.guerra.pequena` | Para a guerra são precisas ao menos duas pessoas com ficha de luta. | A war needs at least two people with a fighter sheet. | guilda pequena demais (constatação, sem culpa) | LV-G2 |
 | `guild.guerra.hoje` | Hoje a guerra já aconteceu. | Today’s war has already happened. | uma guerra por dia | LV-G7 |
 | `guild.guerra.resultado.win` | A roda venceu a guerra contra {nome}. | The circle won the war against {nome}. | resultado | L12 |
@@ -297,10 +297,10 @@
 | `guild.guerra.duelo.win` | Confronto vencido | Bout won | rótulo acessível de cada marca | — |
 | `guild.guerra.duelo.draw` | Confronto empatado | Bout drawn | idem | — |
 | `guild.guerra.duelo.loss` | Confronto do outro lado | Bout went the other way | idem | — |
-| `guild.aria.guerra` | Um esquadrão da roda diante do esquadrão de uma guilda rival | A squad from the circle facing a rival guild’s squad | nome acessível do visor da guerra | — |
+| `guild.aria.guerra` | Um esquadrão da roda diante do esquadrão de um clã rival | A squad from the circle facing a rival clan’s squad | nome acessível do visor da guerra | — |
 
-| `guild.help.guerra.termo` | Guerra de guilda | Guild war | HelpModal, glossário | L12 |
-| `guild.help.guerra.def` | Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outra guilda do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não. | Once a day the circle’s squad, up to four people, faces another guild’s squad of the same size. The server settles it, and the house gets sap win or not. | HelpModal, glossário | L12 |
+| `guild.help.guerra.termo` | Guerra de clã | Clan war | HelpModal, glossário | L12 |
+| `guild.help.guerra.def` | Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outro clã do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não. | Once a day the circle’s squad, up to four people, faces another clan’s squad of the same size. The server settles it, and the house gets sap win or not. | HelpModal, glossário | L12 |
 
 **Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 

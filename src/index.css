@@ -8208,6 +8208,10 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-guild .sm2-stats-card { min-width: 0; max-width: 100%; gap: var(--sm2-space-2); }
 .sm2-guild-hd { display: flex; align-items: center; gap: var(--sm2-space-2); min-width: 0; }
 .sm2-guild-name { flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: break-word; outline: none; }
+.sm2-guild-info { display: flex; flex-direction: column; gap: var(--sm2-space-1); min-width: 0; }
+.sm2-misterio-screen { min-width: 0; max-width: 100%; }
+.sm2-plantio-screen { min-width: 0; max-width: 100%; }
+.sm2-praca-screen { min-width: 0; max-width: 100%; }
 .sm2-guild-sec { display: flex; flex-direction: column; gap: var(--sm2-space-1); min-width: 0; }
 .sm2-guild-secHd { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sm2-space-2); }
 .sm2-guild .sm2-guild-you { flex: none; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }

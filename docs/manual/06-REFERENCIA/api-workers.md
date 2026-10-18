@@ -553,3 +553,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 
 ### `functions/api/_dayCounters.js` (beta-2 6.1/4.1, 13/10/2026)
 **Dono de:** a memória MONOTÔNICA dos contadores diários do save (`dungeonDaily` e `checkIns`): mesmo dia = máximo/união; dia anterior ao gravado = mantém o gravado; dia > dia do servidor + 1 = ignora; campo omitido = mantém. **Exports:** `enforceDungeonDaily`, `enforceCheckIns`, `sanitizeDungeonDaily`, `sanitizeCheckIns`, `maxAcceptableDay`, `isoDayUtc`. **Chamado por:** `functions/api/save.js` (POST). **Limite honesto:** o servidor não valida a descida (ADR-006 §D5); ele só lembra. **Régua:** `_dayCounters.test.js`, `dayCounters.parity.test.js`.
+
+### `functions/api/_claPraca.js`, `_claPlantio.js`, `_claMisterio.js` e `_claKv.testkit.js` (18/10/2026, prédios do clã)
+**Dono de:** as regras de servidor dos três prédios do clã, em chaves KV próprias e aditivas. `functions/api/_claPraca.js` (`PRACA_SLOTS`, `PRESENTE_VALE_DIAS`, `pracaKey`): decoração e o presente diário por par. `functions/api/_claPlantio.js` (`PLANTIO_DIAS`, `ESTACOES`, `plantioKey`): o plantio coletivo. `functions/api/_claMisterio.js` (`MISTERIO_ALVO`, `MISTERIO_TETO_DIA`, `MISTERIO_PESOS`, `misKey`): o mistério diário. `functions/api/_claKv.testkit.js` (`fakeKV`, `seeded`): KV falso só para teste.
+**Chamado por:** `functions/api/guild.js`. **Régua:** `functions/api/_claPraca.test.js`, `_claPlantio.test.js`, `_claMisterio.test.js`.

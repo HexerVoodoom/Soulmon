@@ -43,6 +43,7 @@ const TABELA: Record<string, Classe> = {
   'components/DailyReportModal.tsx': 'dispensar-inline', // × do convite dentro do relatório
   'components/CreateModal.tsx': 'dispensar-inline', // remover passo da lista
   'components/catalog/CatalogBrowserModal.tsx': 'dispensar-inline', // fechar a CAIXA de busca
+  'components/guild/GuildSheet.tsx': 'dispensar-inline', // "fechar prédio": botão inline que recolhe o visor aberto (Praça/Plantio/Mistério), não fecha a folha
 };
 
 const FECHA = /name="close"|icon="close"|name: 'close'/;

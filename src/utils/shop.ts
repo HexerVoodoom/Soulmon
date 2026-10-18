@@ -56,7 +56,7 @@ export const CHIP_BOOST = 3;   // type points (path weight only, no total/XP) gr
 // Chips MAIORES (D-12, ~2x o chip comum) e o Prisma (reparte 2/2/2). Só pontos de tipo.
 export const BIG_CHIP_BOOST = 6;
 export const PRISM_CHIP_BOOST = 2;
-export const BIG_CHIP_EMOJI: Record<Attr, string> = { power: '🥊', harmony: '🎼', benevolence: '🫂' };
+export const BIG_CHIP_EMOJI: Record<Attr, string> = { power: '🥊', harmony: '🎼', benevolence: '💞' };
 export const PRISM_CHIP_EMOJI = '🔷';
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 

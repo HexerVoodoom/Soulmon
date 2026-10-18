@@ -29,7 +29,8 @@ export const VETADAS: RegExp[] = [
   /\bnot yet\b/i, /\bain?da n[aã]o\b/i,
   /\bprecisa de voc[eê]\b/i, /\bneeds? you\b/i, /\bsentimos sua falta\b/i, /\bmiss(ed)? you\b/i,
   /\bsa[ií]u\b/i, /\bleft the (circle|guild)\b/i, /\babandon/i,
-  /\bcl[ãa]\b/i, /\btribo\b/i, /\bfac[çc][ãa]o\b/i, /\bequipe\b/i, /\bteam\b/i, /\bclan\b/i, /\bfaction\b/i,
+  // D-08 (guilda vira clã, EN Clan): "clã"/"Clan" deixaram de ser vocabulário vetado.
+  /\btribo\b/i, /\bfac[çc][ãa]o\b/i, /\bequipe\b/i, /\bteam\b/i, /\bfaction\b/i,
   /\bl[ií]der\b/i, /\bleader\b/i, /\bchefe\b/i, /\bboss\b/i,
   /\boutros? bosques?\b/i, /\bother groves?\b/i, /\badvers[aá]rio\b/i, /\bopponent\b/i,
   /\bcampe(ão|ões|oes)\b/i, /\bchampions?\b/i, /\bMVP\b/, /\bpior\b/i, /\bworst\b/i,
