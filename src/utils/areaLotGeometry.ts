@@ -31,7 +31,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
   'arena:torneio': [0.073, 0, 0.927, 1],
   'arena:duelo': [0.167, 0, 0.833, 1],
-  'arena:guerra': [0.003, 0.003, 0.993, 0.997], // arte própria (Mirevesper/pavilhão, 18/10/2026)
+  'arena:guerra': [0.013, 0, 0.983, 1], // arte escolhida pelo dono (18/10/2026): arena-coliseu com grifo e serpente de ossos, alfa > 20
   'hall:feira': [0.153, 0.12, 0.847, 0.973],
   'exploracao:masmorra': [0.23, 0, 0.767, 1],
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],

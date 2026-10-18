@@ -38,7 +38,7 @@ export const MERCADO_LOT_ART = {
   restaurante: loteRestaurante,
 } as const;
 
-// PLACEHOLDER até a arte própria da guerra (lote-arena-guerra = cópia do torneio) — ver docs/ARTE-MELHORIAS-FUTURAS.md
+// Arte da guerra escolhida pelo dono em 18/10/2026 (arena-coliseu com grifo e serpente de ossos) — ver docs/ARTE-MELHORIAS-FUTURAS.md
 export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────

@@ -87,7 +87,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:restaurante': npcMercadoRestaurante, // Tijolino, o caranguejo pedreiro (14/10/2026; restaurante em obra)
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
-  'arena:guerra': npcArenaGuerra, // PLACEHOLDER até a arte própria — ver docs/ARTE-MELHORIAS-FUTURAS.md
+  'arena:guerra': npcArenaGuerra, // Mirevesper: arte escolhida pelo dono em 18/10/2026 — ver docs/ARTE-MELHORIAS-FUTURAS.md
   'hall:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume
