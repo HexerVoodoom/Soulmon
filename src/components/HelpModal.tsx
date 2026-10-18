@@ -66,8 +66,8 @@ interface Term {
 const TERMS: Term[] = [
   {
     icon: '❤️', en: 'Hearts (HP)', pt: 'Corações (HP)',
-    descEn: 'Its health. Rubbing heals it; a bad day costs at most one, and it never drops to zero out of nowhere.',
-    descPt: 'A saúde do seu Soulmon. Carinho cura; um dia ruim custa no máximo um, e nunca zera do nada.',
+    descEn: 'Its health. Rubbing heals it; a bad day costs at most one, and it never drops to zero out of nowhere. When a day costs nothing, the daily report says which pause held it.',
+    descPt: 'A saúde do seu Soulmon. Carinho cura; um dia ruim custa no máximo um, e nunca zera do nada. Quando um dia não custa nada, o relatório diário conta qual pausa segurou.',
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',

@@ -129,6 +129,8 @@ não perder coração e passa a precisar de 4; um rookie com meta 4 continua em 
 nada"). **A excelência não foi afrouxada** — `dayWasPerfect` não chama
 `heartGoalFor`.
 
+**O relatório explica o perdão (D-27, 18/10/2026).** `lastDayReport.pardonReason` (união fechada em `utils/pardonReason.ts`: `restDay | absence | returnGrace | newSave | stubborn | rootFloor | partialGoal | mondayRelief | noneRegistered | none`) registra qual ramo agiu, sem mudar nenhuma conta; saves antigos caem no fallback `pardonReasonOf`. O `DailyReportModal` mostra 1 linha quando a meta não foi cumprida e um perdão agiu.
+
 **A folga da semana (P2).** `REST_DAYS_PER_WEEK = 1`, **gasta sozinha, na
 virada, sobre um dia que já terminou**. A ordem no código é gastar primeiro,
 recarregar depois (`restWeekKeyFor(yesterday)` × `restWeekKeyFor(now)`) — o

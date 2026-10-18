@@ -1,3 +1,4 @@
+import type { PardonReason } from './pardonReason';
 import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch, canReachUltra } from '../types/progression';
 import type { EvolutionStage } from '../types/progression';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
@@ -1219,6 +1220,18 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     ? awardBondXP(prev as any, { kind: 'perfectDay' }, playerDayKey(now, prev.playerDayTz))
     : prev;
 
+  /** Qual perdão agiu (só nomeia; não altera conta). Ordem = ramo que realmente agiu. */
+  const pardonReason: PardonReason =
+    wasAway ? 'absence'
+    : newSaveGrace ? 'newSave'
+    : returnRamp ? 'returnGrace'
+    : totalTasks === 0 ? 'noneRegistered'
+    : usouFolga ? 'restDay'
+    : pisoDaRaizAbsorveu ? 'rootFloor'
+    : (lossCap < MAX_HEARTS_LOST_PER_DAY && rawHeartsLost > lossCap) ? 'stubborn'
+    : (dailyDone > 0 && rawHeartsLost === 0 && !dayWasPerfect) ? 'partialGoal'
+    : (weeklyReliefApplied && heartsLost > 0) ? 'mondayRelief'
+    : 'none';
   return {
     ...comVinculo,
     activities: resetActivities,
@@ -1285,6 +1298,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     // Resumo de ontem, mostrado 1× como "relatório diário" na próxima abertura.
     lastDayReport: {
       date: yesterdayString,
+      pardonReason,
       done: dailyDone,
       total: totalTasks,
       required: dailyGoal,

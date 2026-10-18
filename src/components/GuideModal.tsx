@@ -157,8 +157,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada. Toda segunda seu Soulmon recupera ${WEEKLY_RELIEF_HEARTS} coração.`,
-              `Away for ${ABSENCE_FORGIVENESS_DAYS} days or more? Coming back costs nothing. Every Monday it recovers ${WEEKLY_RELIEF_HEARTS} of a heart.`,
+              `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada. Toda segunda seu Soulmon recupera ${WEEKLY_RELIEF_HEARTS} coração. Quando um dia não custa nada, o relatório diário conta qual pausa segurou.`,
+              `Away for ${ABSENCE_FORGIVENESS_DAYS} days or more? Coming back costs nothing. Every Monday it recovers ${WEEKLY_RELIEF_HEARTS} of a heart. When a day costs nothing, the daily report says which pause held it.`,
             )}
           </p>
           <p style={para}>

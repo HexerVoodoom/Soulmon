@@ -13,6 +13,7 @@ import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import { moodArtFor, MOOD_ART_ID } from '../utils/moodArt';
 import type { AdventureFind } from '../utils/adventure';
 import { welcomeBackLine } from '../utils/welcomeBack';
+import { pardonLine, pardonReasonOf } from '../utils/pardonReason';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 import { RitualRow, SpriteGlass, type RitualRowTone } from './ritual/RitualKit';
@@ -241,6 +242,11 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
     heartNotes.push(isPt
       ? 'A maré absorveu ontem. Nada foi cobrado. Ela recarrega na segunda.'
       : 'The tide absorbed yesterday. Nothing was charged. It comes back on Monday.');
+  }
+  // D-27: meta não cumprida e o coração não caiu (ou caiu menos) — diz QUAL perdão agiu. Sem vermelho.
+  if (!welcome && report.done < report.required) {
+    const line = pardonLine(pardonReasonOf(report), isPt);
+    if (line) heartNotes.push(line);
   }
   // Copy §2.5: nunca "recuperamos seu progresso perdido" — sugere perda, e L4
   // diz que não houve.

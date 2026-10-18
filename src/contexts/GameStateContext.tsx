@@ -653,6 +653,8 @@ export interface GameState {
     restDayUsed?: boolean;
     /** Folgas restantes na semana, depois desta virada. */
     restDaysLeft?: number;
+    /** Qual perdão agiu na virada (utils/pardonReason.ts). Ausente em save antigo. */
+    pardonReason?: 'restDay'|'absence'|'returnGrace'|'newSave'|'stubborn'|'rootFloor'|'partialGoal'|'mondayRelief'|'noneRegistered'|'none';
   };
   /**
    * O "porquê" do usuário, respondido no onboarding ANTES de qualquer mecânica
