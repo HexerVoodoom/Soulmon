@@ -39,6 +39,7 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite } from '../utils/monetization';
 import type { StarterId } from '../utils/sprites';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
+import { fetchBetaFull } from '../utils/entitlements';
 import { isEmbedMode } from '../utils/embedMode';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
 import {
@@ -782,6 +783,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // BETA-FULL (18/10/2026): e-mail da allowlist `BETA_EMAILS` entra COMO PAGO. O servidor decide pelo token verificado
+  // (`GET /api/entitlements?action=beta-full`); aqui só se espelha o booleano. Resultado: o ovo nasce no estado "comprado"
+  // (só o "Chocar" → ritual completo), sem modal de compra e sem demo. Não é compra: nada de `track('purchase')`.
+  // Falha/offline = false, e a pessoa vê a escolha de sempre.
+  const [betaFull, setBetaFull] = useState(false);
+  useEffect(() => {
+    if (isUpgrade || !authEmail) return;
+    let cancelado = false;
+    void fetchBetaFull().then(ok => { if (!cancelado && ok) setBetaFull(true); });
+    return () => { cancelado = true; };
+  }, [authEmail, isUpgrade]);
+  // O `flow` só vira 'oracle' AQUI, na tela do ovo (como `aoComprar`): mudá-lo antes trocaria as perguntas do caminho.
+  useEffect(() => {
+    if (!betaFull || step !== CHOICE_STEP || comprado) return;
+    setFlow('oracle');
+    setComprado(true);
+    setCompraAberta(false);
+  }, [betaFull, step, comprado]);
 
   // Rascunho do portão: gravado em todo o trecho do onboarding que não é o
   // ritual PAGO (este tem o rascunho dele, `oracleDraft`). Some assim que o

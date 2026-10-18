@@ -572,6 +572,7 @@ revisor do Google ficam trancados para fora.
    ```powershell
    npx wrangler secret put BETA_EMAILS     # voce@gmail.com,revisor@...,testador1@gmail.com,...
    ```
+   Desde 18/10/2026 (REGISTRO §98) quem está nesta lista entra **como plano pago** (Soulmon próprio, sem comprar). Para testar a compra de verdade, use uma conta FORA da lista.
 2. **`IP_HASH_SALT`** — gere o valor e cole no prompt:
    ```powershell
    $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)

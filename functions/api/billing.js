@@ -35,6 +35,7 @@
 import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner, readEntitlement } from './_entitlements.js';
 import { isBillingDisabled, BILLING_DISABLED_MESSAGE } from './_killSwitch.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
+import { verifiedBetaFull, betaFullPublicView } from './_betaFull.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import {
   verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase,
@@ -84,6 +85,13 @@ const STATUS_BY_REASON = {
 
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
+}
+
+/** Visão pública da resposta de compra/restauração. BETA-FULL (`_betaFull.js`): quem está na allowlist continua `paid`
+ *  no espelho do cliente mesmo que a compra restaurada seja de uma conta demo — sem revogar nem duplicar nada. */
+async function entView(env, request, saveId, ent) {
+  const v = publicView(ent);
+  return (await verifiedBetaFull(env, request, saveId)).betaFull ? betaFullPublicView(v) : v;
 }
 
 export async function onRequestPost({ request, env }) {
@@ -177,7 +185,7 @@ export async function onRequestPost({ request, env }) {
   return json({
     ok: true,
     duplicate,
-    ...publicView(ent),
+    ...(await entView(env, request, saveId, ent)),
     // Consumíveis da Play precisam ser consumidos lá para poderem ser
     // recomprados. Na Steam quem fecha a transação é o FinalizeTxn do cliente.
     consumeToken: provider === 'play' && result.product.consumable ? body.purchaseToken : undefined,

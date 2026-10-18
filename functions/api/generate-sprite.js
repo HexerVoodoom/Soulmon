@@ -62,6 +62,7 @@ import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier } from './_entitlements.js';
 import { verifiedAdmin } from './_admin.js';
+import { verifiedBetaFull } from './_betaFull.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
@@ -591,7 +592,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     const tier = await requirePaidTier(env, id);
-    const tierOk = tier.ok || (tier.status === 402 && (await verifiedAdmin(env, request, id)).admin);
+    const tierOk = tier.ok || (tier.status === 402
+      && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull));
     if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS });
     }
