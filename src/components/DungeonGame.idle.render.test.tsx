@@ -126,7 +126,8 @@ describe('Masmorra idle — HP persistente e recuperação', () => {
     vi.useFakeTimers();
     montar({ save: { perfectDays: 3 } });
     expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(false);
-    expect(document.body.textContent).toContain('100%');
+    expect(document.querySelector('[data-dungeon-recovering]')).toBeNull(); // C5: o lobby não mostra mais o HP 100%
+    expect(document.body.textContent).not.toContain('100%');
   });
 
   it('o HP vai para o save a cada luta: terminar com o HP no zero grava frac 0, mostra "out of breath" e NÃO oferece descer de novo', async () => {

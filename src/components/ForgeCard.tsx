@@ -155,35 +155,37 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
             ✦ {isPt ? 'Aprimorado!' : 'Upgraded!'} <span key={festa.key} className="sm-forge-pulse" data-forge-level-pulse>{isPt ? `Nv ${festa.to}` : `Lv ${festa.to}`}</span>
           </span>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
           <Art nome={piece.id} size={40} />
-          <span style={{ flex: 1, minWidth: 120 }}>
+          <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
             <b style={{ fontWeight: 500 }}>{nome}</b>
+            {possui && (
+              <span className="sm2-stats-s sm2-num" data-forge-bonus style={{ display: 'block' }}>
+                {bonusAgora}
+              </span>
+            )}
           </span>
-        </div>
-        {possui && (
-          <span className="sm2-stats-s sm2-num" data-forge-bonus style={{ display: 'block' }}>
-            {bonusAgora}
-          </span>
-        )}
-        {possui && !max && (
-          <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 6 }}>
-            <span className="sm2-stats-s" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-              {custos.map(({ m, n, have }) => (
-                <span key={m.id} data-forge-cost={m.id} data-enough={have >= n || undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                  <span aria-hidden="true">{m.icon}</span>{isPt ? m.namePt : m.nameEn} {have}/{n}
-                </span>
-              ))}
-            </span>
-            <span style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* C4: o Upgrade à direita, na linha do nome; os materiais ficam logo abaixo dele. */}
+          {possui && !max && (
+            <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 4, justifyItems: 'end', flexShrink: 0 }}>
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" disabled={!!recusa} data-forge-upgrade-btn={piece.id}
                 onClick={() => abrir({ mode: 'upgrade', id: piece.id })}
                 aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
                 Upgrade
               </button>
-              {recusa && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
-            </span>
-          </div>
+              <span className="sm2-stats-s" style={{ display: 'grid', gap: 2, justifyItems: 'end' }}>
+                {custos.map(({ m, n, have }) => (
+                  <span key={m.id} data-forge-cost={m.id} data-enough={have >= n || undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    <span aria-hidden="true">{m.icon}</span>{isPt ? m.namePt : m.nameEn} {have}/{n}
+                  </span>
+                ))}
+              </span>
+            </div>
+          )}
+        </div>
+        {/* "Faltam materiais" não vira texto: os custos 0/N já dizem (C4). Os outros motivos (Vínculo...) seguem. */}
+        {possui && !max && recusa && recusa !== 'no-materials' && (
+          <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>
         )}
         {possui && level >= 2 && (
           <details data-forge-choices={piece.id}>

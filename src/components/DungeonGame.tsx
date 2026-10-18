@@ -642,7 +642,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= MINIGAME_BITS_PER_DAY;
   /** Quanto falta para o HP chegar ao piso de entrada (0 = já pode descer). */
   const espera = msAteDescer(hpState, agora);
-  const hpLobby = hpAgora(hpState, agora);
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
   /** O indicador único do HUD: "Camada 3 · luta 2 de 6" / "Layer 3 · fight 2 of 6". */
@@ -898,7 +897,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
         <StatTag label={isPt ? 'Mais fundo' : 'Deepest'} value={recorde} />
         <StatTag label={isPt ? 'Energia' : 'Energy'} value={gs ? `${energia}/${energiaMax}` : '—'} />
-        <StatTag label="HP" value={`${Math.round(hpLobby * 100)}%`} />
         {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê.
             I13: agora é o `InfoTip` padrão (antes era um "?" próprio). */}
         <InfoTip language={language} label={isPt ? 'Como funciona a descida' : 'How the descent works'} align="right">
@@ -934,8 +932,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         {gs && (
           <p style={phaseLine} data-dungeon-plan className="sm2-num">
             {isPt
-              ? `Começa na camada ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} de energia por camada · dá para ${Math.min(layersAffordable(energia), camadasHoje)} agora (até ${DUNGEON_DAILY_LAYERS} por dia) · o Lv ${nivelJogador} chega até a ${capCamadas}`
-              : `Starts at layer ${inicio} · ${DUNGEON_ENERGY_PER_LAYER} energy per layer · enough for ${Math.min(layersAffordable(energia), camadasHoje)} now (up to ${DUNGEON_DAILY_LAYERS} a day) · Lv ${nivelJogador} reaches layer ${capCamadas}`}
+              ? `Começa na camada ${inicio} · dá para ${Math.min(layersAffordable(energia), camadasHoje)} agora`
+              : `Starts at layer ${inicio} · enough for ${Math.min(layersAffordable(energia), camadasHoje)} now`}
           </p>
         )}
         <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia || limiteDiario} style={{ ...sm2Button('primary', espera > 0 || !temEnergia || limiteDiario), width: '100%', maxWidth: 320 }}>

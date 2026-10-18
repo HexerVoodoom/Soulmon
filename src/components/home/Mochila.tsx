@@ -5,7 +5,8 @@
  * Junta as duas superfícies antigas de item (a folha "Alimentar" do deck e a
  * pastinha `ItemsWindow`) numa folha de baixo com DUAS abas:
  *  · **Comida e chips** — a comida comum + os chips de atributo;
- *  · **Especiais** — os consumíveis da masmorra (coraçãozinho e cia.).
+ *  · **Especiais** — os consumíveis da masmorra (coraçãozinho e cia.);
+ *  · **Materiais** — os ingredientes de aprimoramento (somente leitura).
  * Os dados são o `foodInventory` do save; nada é inventado aqui.
  *
  * **O item se usa ARRASTANDO até o pet** (decisão 3 do dono): o fantasma do
@@ -23,6 +24,7 @@ import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { isPremiumKey } from '../../utils/premiumFood';
 import { ITEM_ART } from '../../utils/itemArt';
+import { MATERIAL_ART } from '../../utils/materialArt';
 import { getFoodDesc, getFoodName } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip } from '../ui/InfoTip';
@@ -38,6 +40,8 @@ export const DRAG_THRESHOLD_PX = 8;
 export const DROP_SLOP_PX = 12;
 
 export type MochilaAba = 'comida' | 'especiais';
+/** As abas visíveis: as duas de estoque + os materiais (somente leitura, não são arrastáveis). */
+export type MochilaAbaVista = MochilaAba | 'materiais';
 
 /**
  * Separa o inventário nas duas abas. Pura, para teste. Só entra o que tem
@@ -80,7 +84,7 @@ export interface MochilaProps {
   /** Nome do pet para a dica ("arraste até o Bito"). */
   petName?: string;
   /** Materiais de aprimoramento (`buildingQuests.materials`) — SOMENTE LEITURA,
-   *  vistos na aba Especiais. Nomes e ícones vêm de `buildingQuestsCopy`. */
+   *  vistos na aba Materiais. Nomes e ícones vêm de `buildingQuestsCopy`. */
   materials?: Partial<Record<string, number>>;
   /** O "Ir lá" do material: leva ao prédio/missão que o dá. O App fecha a Mochila e navega (`handleMaterialGoTo`). */
   onGoToBuilding?: (building: BuildingId) => void;
@@ -104,7 +108,7 @@ export function Mochila({
   open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials, onGoToBuilding, demo,
 }: MochilaProps) {
   const isPt = language === 'pt-BR';
-  const [aba, setAba] = useState<MochilaAba>('comida');
+  const [aba, setAba] = useState<MochilaAbaVista>('comida');
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [fantasma, setFantasma] = useState<{ emoji: string; x: number; y: number } | null>(null);
   const arrastoRef = useRef<Arrasto | null>(null);
@@ -114,12 +118,12 @@ export function Mochila({
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
   // Dono único dos nomes/ícones: `buildingQuestsCopy` (fora da entrada, então
-  // carrega sob demanda — só quando a aba Especiais abre). O nome do prédio vem
+  // carrega sob demanda — só quando a aba Materiais abre). O nome do prédio vem
   // do mesmo lugar que o Mapa lê (`nameOf`), também sob demanda.
   type Copia = { materiais: typeof import('../../utils/buildingQuestsCopy').MATERIALS; nomeDoPredio: (id: BuildingId, l: Language) => string };
   const [copia, setCopia] = useState<Copia | null>(null);
   useEffect(() => {
-    if (!open || aba !== 'especiais' || copia) return;
+    if (!open || aba !== 'materiais' || copia) return;
     let vivo = true;
     void Promise.all([import('../../utils/buildingQuestsCopy'), import('../nav/BuildingQuestList')])
       .then(([c, l]) => { if (vivo) setCopia({ materiais: c.MATERIALS, nomeDoPredio: l.nameOf }); }).catch(() => {});
@@ -148,10 +152,10 @@ export function Mochila({
     document.addEventListener('pointerdown', onDown, true);
     return () => { window.removeEventListener('keydown', onKey, true); document.removeEventListener('pointerdown', onDown, true); };
   }, [matAberto]);
-  useEffect(() => { if (!open || aba !== 'especiais') setMatAberto(null); }, [open, aba]);
+  useEffect(() => { if (!open || aba !== 'materiais') setMatAberto(null); }, [open, aba]);
 
   const abas = mochilaTabs(foodInventory);
-  const lista = abas[aba];
+  const lista = aba === 'materiais' ? [] : abas[aba];
 
   // Fechou: nada fica selecionado nem arrastando.
   useEffect(() => {
@@ -259,6 +263,7 @@ export function Mochila({
           {([
             { id: 'comida' as const, pt: 'Comida e chips', en: 'Food and chips' },
             { id: 'especiais' as const, pt: 'Especiais', en: 'Specials' },
+            { id: 'materiais' as const, pt: 'Materiais', en: 'Materials' },
           ]).map(t => (
             <button
               key={t.id}
@@ -281,15 +286,11 @@ export function Mochila({
           aria-labelledby={`sm3-aba-${aba}`}
           className="sm3-mochila-painel"
         >
-          {lista.length === 0 && aba !== 'especiais' ? (
+          {lista.length === 0 && aba === 'comida' ? (
             <p className="sm3-mochila-vazia" data-mochila-vazia>
-              {aba === 'comida'
-                ? (isPt
-                  ? 'Nada por aqui. Complete tarefas pra ganhar comida.'
-                  : 'Nothing here yet. Complete tasks to earn food.')
-                : (isPt
-                  ? 'Nenhum item especial ainda. Os especiais vêm da masmorra.'
-                  : 'No special items yet. Specials come from the dungeon.')}
+              {isPt
+                ? 'Nada por aqui. Complete tarefas pra ganhar comida.'
+                : 'Nothing here yet. Complete tasks to earn food.'}
             </p>
           ) : (
             lista.length > 0 && <div className="sm3-mochila-grade">
@@ -329,7 +330,7 @@ export function Mochila({
             </p>
           )}
 
-          {aba === 'especiais' && listaMateriais.length > 0 && (
+          {aba === 'materiais' && listaMateriais.length > 0 && (
             <section className="sm3-materiais" data-mochila-materiais aria-label={isPt ? 'Materiais' : 'Materials'}>
               <h3 className="sm3-materiais-titulo">{isPt ? 'Materiais' : 'Materials'}</h3>
               <ul className="sm3-materiais-lista">
@@ -343,7 +344,9 @@ export function Mochila({
                       <button type="button" className="sm3-material-btn" data-material-btn={m.id} aria-expanded={aberto}
                         aria-controls={aberto ? 'sm3-material-pop' : undefined} aria-label={`${nome} × ${n}`}
                         onClick={() => setMatAberto(aberto ? null : m.id)}>
-                        <span aria-hidden="true" className="sm3-material-icone">{m.icon}</span>
+                        <span aria-hidden="true" className="sm3-material-icone">
+                          {MATERIAL_ART[m.id] ? <img src={MATERIAL_ART[m.id]} alt="" width={32} height={32} draggable={false} /> : m.icon}
+                        </span>
                         <span className="sm3-item-nome">{nome}</span>
                         <small className="sm2-num">×{n}</small>
                       </button>
