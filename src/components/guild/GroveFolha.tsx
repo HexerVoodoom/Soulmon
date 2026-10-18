@@ -16,7 +16,7 @@ import { guildText } from '../../utils/guildCopy';
 import { playerDayIso, type PlayerDayAnchor } from '../../utils/playerDay';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
-import { GroveVisor } from './GroveVisor';
+import { GroveVisor, type GroveVisorProps } from './GroveVisor';
 import { useClaBuilding } from './claUi';
 
 export type OnPlantio = (v: Pick<PlantioView, 'planted' | 'mature' | 'stage' | 'season'>) => void;
@@ -24,6 +24,8 @@ export type OnPlantio = (v: Pick<PlantioView, 'planted' | 'mature' | 'stage' | '
 interface GroveFolhaProps {
   saveId: string;
   language: Language;
+  guild: GroveVisorProps['guild'];
+  mySprite: string;
   tz?: PlayerDayAnchor;
   reducedMotion: boolean;
   arvores: BosqueArvores;
@@ -32,7 +34,7 @@ interface GroveFolhaProps {
   onClose: () => void;
 }
 
-export function GroveFolha({ saveId, language, tz, reducedMotion, arvores, onPlantio, onClose }: GroveFolhaProps) {
+export function GroveFolha({ saveId, language, guild, mySprite, tz, reducedMotion, arvores, onPlantio, onClose }: GroveFolhaProps) {
   useBackLayer(true, onClose);
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const { view } = useClaBuilding(() => getPlantio(saveId, tz));
@@ -54,7 +56,7 @@ export function GroveFolha({ saveId, language, tz, reducedMotion, arvores, onPla
         </button>
         <h2 className="sm2-grove-folha-titulo">{titulo}</h2>
       </div>
-      <GroveVisor language={language} niveis={niveis} reducedMotion={reducedMotion} label={guildText(language, 'guild.bosque.panorama.aria')} />
+      <GroveVisor language={language} guild={guild} mySprite={mySprite} niveis={niveis} reducedMotion={reducedMotion} label={guildText(language, 'guild.bosque.panorama.aria')} />
     </div>,
     document.body,
   );

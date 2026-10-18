@@ -8235,7 +8235,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-creature { image-rendering: pixelated; position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
 @keyframes sm2-grove-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; }
-/* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. Pintura: sem pixelar. */
+/* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
+   imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }
 .sm2-grove-folha-topo { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + var(--sm2-space-2)) var(--sm2-space-3) var(--sm2-space-2); background: linear-gradient(to bottom, rgba(5,14,12,.72), transparent); pointer-events: none; }
 .sm2-grove-folha-topo > * { pointer-events: auto; }
@@ -8248,9 +8249,9 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-pan[data-dragging="true"] { cursor: grabbing; scroll-behavior: auto !important; user-select: none; }
 .sm2-grove-pan:focus-visible { outline: 3px solid var(--sm2-primary, #6EFFFB); outline-offset: -3px; }
 .sm2-grove-pan-cena { position: relative; height: 100%; aspect-ratio: 2048 / 1360; min-width: 100%; }
-.sm2-grove-pan-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: auto; user-select: none; -webkit-user-drag: none; }
+.sm2-grove-pan-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; user-select: none; -webkit-user-drag: none; }
 .sm2-grove-slot { position: absolute; margin: 0; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-.sm2-grove-arvore { width: auto; display: block; image-rendering: auto; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.sm2-grove-arvore { width: auto; display: block; image-rendering: pixelated; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
 .sm2-grove-arvore-5 { filter: drop-shadow(0 0 14px rgba(255,226,140,.75)) drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
 .sm2-grove-vazio { width: 14cqh; height: 4cqh; border-radius: 50%; border: 2px dashed rgba(110,255,251,.8); background: radial-gradient(ellipse at center, rgba(110,255,251,.28), transparent 70%); margin-bottom: 1cqh; }
 .sm2-grove-slot-nome { position: absolute; top: 100%; margin-top: 6px; display: flex; flex-direction: column; align-items: center; white-space: nowrap; padding: 3px 10px; border-radius: 10px; background: rgba(5,14,12,.62); color: #fff; font-size: var(--sm2-text-sm); line-height: 1.25; }

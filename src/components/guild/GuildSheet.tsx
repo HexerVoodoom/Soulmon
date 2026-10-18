@@ -843,7 +843,7 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
       </button>
       {panorama && (
         <Suspense fallback={null}>
-          <GroveFolha saveId={saveId} language={language} tz={tz} reducedMotion={reducedMotion} arvores={arvores} onPlantio={onPlantio} onClose={() => setPanorama(false)} />
+          <GroveFolha saveId={saveId} language={language} guild={guild} mySprite={mySprite} tz={tz} reducedMotion={reducedMotion} arvores={arvores} onPlantio={onPlantio} onClose={() => setPanorama(false)} />
         </Suspense>
       )}
       {/* O que CHEGOU vem colado ao visor, no topo da folha (QA L3 M3/B7): antes ficava a 550 px, abaixo

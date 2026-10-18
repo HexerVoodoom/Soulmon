@@ -788,8 +788,17 @@ describe('o Bosque por estágio', () => {
   });
 });
 
-// (o palco com as criaturas no visor embutido saiu em 18/10/2026: o Bosque é o panorama das 4 árvores — `GroveVisor.render.test.tsx`;
-// as regras puras de quem aparece seguem em `utils/groveStage.ts`.)
+// O palco (quem aparece) foi para dentro do panorama de tela cheia: as regras por tamanho de roda estão em
+// `GroveVisor.render.test.tsx`; aqui só a ponte folha -> panorama.
+describe('o palco do Bosque: a folha entrega a roda e a criatura ao panorama', () => {
+  it('a criatura própria é a que o App manda, e a roda de 4 vira 4 criaturas no panorama', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
+    await montar({ mySprite: '/meu-sprite.png' });
+    fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
+    await waitFor(() => expect(document.querySelectorAll('[data-grove-creature]')).toHaveLength(4));
+    expect(criaturas()[0].getAttribute('src')).toBe('/meu-sprite.png');
+  });
+});
 
 describe('o fio (guildThread) — fora de updater, com a meta como o servidor a confere', () => {
   const meta = { done: 2, heart: 2, full: 3 };
