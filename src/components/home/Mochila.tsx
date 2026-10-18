@@ -24,7 +24,7 @@ import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { isPremiumKey } from '../../utils/premiumFood';
 import { ITEM_ART } from '../../utils/itemArt';
-import { MATERIAL_ART } from '../../utils/materialArt';
+import { MaterialIcon } from '../MaterialIcon';
 import { getFoodDesc, getFoodName } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip } from '../ui/InfoTip';
@@ -345,7 +345,7 @@ export function Mochila({
                         aria-controls={aberto ? 'sm3-material-pop' : undefined} aria-label={`${nome} × ${n}`}
                         onClick={() => setMatAberto(aberto ? null : m.id)}>
                         <span aria-hidden="true" className="sm3-material-icone">
-                          {MATERIAL_ART[m.id] ? <img src={MATERIAL_ART[m.id]} alt="" width={32} height={32} draggable={false} /> : m.icon}
+                          <MaterialIcon id={m.id} emoji={m.icon} size={32} />
                         </span>
                         <span className="sm3-item-nome">{nome}</span>
                         <small className="sm2-num">×{n}</small>
@@ -362,7 +362,7 @@ export function Mochila({
                 const bloqueado = !!demo && isDemoBlockedLot(area, lote);
                 return (
                   <div ref={popRef} id="sm3-material-pop" className="sm3-material-pop" data-material-pop={m.id} role="group" aria-label={nome}>
-                    <p className="sm3-material-pop-nome"><span aria-hidden="true">{m.icon}</span> {nome} <span className="sm2-num">×{materials?.[m.id] ?? 0}</span></p>
+                    <p className="sm3-material-pop-nome"><MaterialIcon id={m.id} emoji={m.icon} size={20} /> {nome} <span className="sm2-num">×{materials?.[m.id] ?? 0}</span></p>
                     <p className="sm3-material-pop-texto" data-material-where>
                       {isPt ? `Você encontra mais em ${lugar}. A missão de lá rende um por dia, sem pressa.` : `Find more at ${lugar}. Its mission pays one a day, no rush.`}
                     </p>

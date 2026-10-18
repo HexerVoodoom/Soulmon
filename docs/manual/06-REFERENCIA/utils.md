@@ -3449,8 +3449,3 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx` (`handleFrameBuy`).
 **Régua:** `src/utils/frameBuy.test.ts`.
 
-### `src/utils/materialArt.ts`
-**Dono de:** a arte dos MATERIAIS de aprimoramento na aba Materiais da Mochila (C1). Mapa único `MATERIAL_ART` (chave = `MaterialId`); vazio hoje, e o material cai no emoji dele (placeholder) até a faixa D (D1) entregar os PNGs: é aqui que se liga a arte, sem tocar na Mochila.
-**Exports:** `MATERIAL_ART`.
-**Chamado por:** `src/components/home/Mochila.tsx`.
-**Régua:** `src/components/home/Mochila.render.test.tsx`.
