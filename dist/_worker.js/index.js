@@ -2001,7 +2001,7 @@ function plan(c, saveId) {
       "mentions of you in other players' friend lists",
       "notification subscriptions (push:*/fcm:*) linked to your account",
       ...c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : [],
-      "Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current guild \u2014 those from guilds you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous",
+      "Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current clan \u2014 those from clans you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous",
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys
@@ -5691,6 +5691,503 @@ async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
 }
 __name(buscarGuerra, "buscarGuerra");
 
+// api/_claPraca.js
+var PRACA_TTL = 86400 * 120;
+var PRACA_SLOTS = 4;
+var PRESENTE_VALE_DIAS = 3;
+var PRESENTE_RESGATADOS_MAX = 60;
+var PRESENTE_SAIDA_DIAS = 8;
+var PRESENTE_RAROS_POR_SEMANA = 1;
+var ehRaro = /* @__PURE__ */ __name((item) => item?.kind === "chip" || item?.kind === "food", "ehRaro");
+var pracaKey = /* @__PURE__ */ __name((gid) => `claPraca:${gid}`, "pracaKey");
+var presOutKey = /* @__PURE__ */ __name((gid, from, to) => `claPresOut:${gid}:${from}:${to}`, "presOutKey");
+var presInKey = /* @__PURE__ */ __name((gid, to) => `claPresIn:${gid}:${to}`, "presInKey");
+var PRESENTE_DECOR = Object.freeze([
+  "furn-plant",
+  "furn-lamp",
+  "furn-books",
+  "furn-rug",
+  "furn-picture",
+  "furn-lantern",
+  "furn-mushrooms",
+  "furn-rock",
+  "furn-campfire",
+  "furn-food-bowl"
+]);
+var PRESENTE_BITS_MIN = 5;
+var PRESENTE_BITS_MAX = 15;
+var PRESENTE_CHIPS = Object.freeze(["chip-power", "chip-harmony", "chip-benevolence"]);
+var PRESENTE_PESOS = Object.freeze({ decor: 560, bits: 390, chip: 25, food: 25 });
+function rngSeguro() {
+  const b = new Uint32Array(1);
+  crypto.getRandomValues(b);
+  return b[0] / 4294967296;
+}
+__name(rngSeguro, "rngSeguro");
+function sortearPonderado(pesos, r) {
+  const ks = Object.keys(pesos);
+  const total = ks.reduce((s, k) => s + pesos[k], 0);
+  let x2 = Math.min(Math.max(r, 0), 0.999999999) * total;
+  for (const k of ks) {
+    if (x2 < pesos[k]) return k;
+    x2 -= pesos[k];
+  }
+  return ks[ks.length - 1];
+}
+__name(sortearPonderado, "sortearPonderado");
+function sortearPresente(rng = rngSeguro) {
+  const kind = sortearPonderado(PRESENTE_PESOS, rng());
+  if (kind === "decor") return { kind, id: PRESENTE_DECOR[Math.floor(rng() * PRESENTE_DECOR.length) % PRESENTE_DECOR.length] };
+  if (kind === "bits") return { kind, amount: PRESENTE_BITS_MIN + Math.floor(rng() * (PRESENTE_BITS_MAX - PRESENTE_BITS_MIN + 1)) % (PRESENTE_BITS_MAX - PRESENTE_BITS_MIN + 1) };
+  if (kind === "chip") return { kind, id: PRESENTE_CHIPS[Math.floor(rng() * PRESENTE_CHIPS.length) % PRESENTE_CHIPS.length] };
+  return { kind: "food" };
+}
+__name(sortearPresente, "sortearPresente");
+function normalizarPresente(p) {
+  if (!p || typeof p !== "object") return null;
+  if (p.kind === "decor" && PRESENTE_DECOR.includes(p.id)) return { kind: "decor", id: p.id };
+  if (p.kind === "bits" && Number.isInteger(p.amount) && p.amount >= PRESENTE_BITS_MIN && p.amount <= PRESENTE_BITS_MAX) return { kind: "bits", amount: p.amount };
+  if (p.kind === "chip" && PRESENTE_CHIPS.includes(p.id)) return { kind: "chip", id: p.id };
+  if (p.kind === "food") return { kind: "food" };
+  return null;
+}
+__name(normalizarPresente, "normalizarPresente");
+var DIA_RE = /^\d{4}-\d{2}-\d{2}$/;
+var numDia2 = /* @__PURE__ */ __name((d) => Math.round(Date.parse(`${d}T00:00:00Z`) / 864e5), "numDia");
+var presenteVale = /* @__PURE__ */ __name((day2, hoje) => DIA_RE.test(day2) && numDia2(hoje) - numDia2(day2) >= 0 && numDia2(hoje) - numDia2(day2) < PRESENTE_VALE_DIAS, "presenteVale");
+var parse3 = /* @__PURE__ */ __name((raw) => {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, "parse");
+function normalizarPraca(r) {
+  const arr = Array.isArray(r?.slots) ? r.slots : [];
+  const slots = Array.from({ length: PRACA_SLOTS }, (_, i2) => {
+    const s = arr[i2];
+    if (!s || typeof s.item !== "string" || !CASA_ITEM_RE.test(s.item)) return null;
+    return { item: s.item, by: typeof s.by === "string" ? s.by : null, day: typeof s.day === "string" ? s.day : null };
+  });
+  return { v: 1, slots };
+}
+__name(normalizarPraca, "normalizarPraca");
+async function lerPraca(env, gid) {
+  return normalizarPraca(parse3(await kvOrThrow(env).get(pracaKey(gid))));
+}
+__name(lerPraca, "lerPraca");
+async function definirSlotPraca(env, gid, save, day2, slot, item) {
+  if (!Number.isInteger(slot) || slot < 0 || slot >= PRACA_SLOTS) return void 0;
+  if (item !== null && !(typeof item === "string" && CASA_ITEM_RE.test(item))) return void 0;
+  const p = await lerPraca(env, gid);
+  p.slots[slot] = item === null ? null : { item, by: save, day: day2 };
+  await kvOrThrow(env).put(pracaKey(gid), JSON.stringify(p), { expirationTtl: PRACA_TTL });
+  return p;
+}
+__name(definirSlotPraca, "definirSlotPraca");
+async function lerSaida(env, gid, from, to) {
+  const r = parse3(await kvOrThrow(env).get(presOutKey(gid, from, to)));
+  const gifts = (Array.isArray(r?.gifts) ? r.gifts : []).map((g) => ({ day: g?.day, item: normalizarPresente(g?.item) })).filter((g) => DIA_RE.test(g.day) && g.item);
+  return { gifts };
+}
+__name(lerSaida, "lerSaida");
+async function lerResgatados(env, gid, to) {
+  const r = parse3(await kvOrThrow(env).get(presInKey(gid, to)));
+  const claimed = (Array.isArray(r?.claimed) ? r.claimed : []).map((x2) => ({ id: x2?.id, item: normalizarPresente(x2?.item), receipt: x2?.receipt })).filter((x2) => typeof x2.id === "string" && x2.item && typeof x2.receipt === "string").slice(-PRESENTE_RESGATADOS_MAX);
+  return { claimed };
+}
+__name(lerResgatados, "lerResgatados");
+var idDoPresente = /* @__PURE__ */ __name((from, day2) => `${from}|${day2}`, "idDoPresente");
+async function enviarPresente(env, gid, from, to, day2, rng = rngSeguro, members = [from]) {
+  if (from === to) return { ok: false, reason: "self" };
+  const s = await lerSaida(env, gid, from, to);
+  if (s.gifts.some((g) => g.day === day2)) return { ok: false, reason: "already-sent" };
+  let item = sortearPresente(rng);
+  if (ehRaro(item)) {
+    const semana = semanaDoDia(day2);
+    let raros = 0;
+    for (const m of members) {
+      if (m === to) continue;
+      const out = m === from ? s : await lerSaida(env, gid, m, to);
+      raros += out.gifts.filter((g) => ehRaro(g.item) && semanaDoDia(g.day) === semana).length;
+    }
+    if (raros >= PRESENTE_RAROS_POR_SEMANA) item = { kind: "decor", id: PRESENTE_DECOR[Math.floor(rng() * PRESENTE_DECOR.length) % PRESENTE_DECOR.length] };
+  }
+  const gifts = [...s.gifts.filter((g) => numDia2(day2) - numDia2(g.day) >= 0 && numDia2(day2) - numDia2(g.day) < PRESENTE_SAIDA_DIAS), { day: day2, item }].slice(-PRESENTE_SAIDA_DIAS);
+  await kvOrThrow(env).put(presOutKey(gid, from, to), JSON.stringify({ v: 1, gifts }), { expirationTtl: 86400 * (PRESENTE_SAIDA_DIAS + 1) });
+  return { ok: true };
+}
+__name(enviarPresente, "enviarPresente");
+async function enviadosHoje(env, gid, from, members, day2) {
+  const out = [];
+  for (const to of members) {
+    if (to === from) continue;
+    if ((await lerSaida(env, gid, from, to)).gifts.some((g) => g.day === day2)) out.push(to);
+  }
+  return out;
+}
+__name(enviadosHoje, "enviadosHoje");
+async function presentesPendentes(env, gid, to, members, hoje) {
+  const { claimed } = await lerResgatados(env, gid, to);
+  const lista = [];
+  for (const from of members) {
+    if (from === to) continue;
+    for (const g of (await lerSaida(env, gid, from, to)).gifts) {
+      if (presenteVale(g.day, hoje) && !claimed.some((c) => c.id === idDoPresente(from, g.day))) lista.push({ from, day: g.day, item: g.item });
+    }
+  }
+  return lista.sort((a, b) => a.day < b.day ? -1 : a.day > b.day ? 1 : 0);
+}
+__name(presentesPendentes, "presentesPendentes");
+async function resgatarPresente(env, gid, to, members, from, day2, hoje, ids2 = {}) {
+  const { claimed } = await lerResgatados(env, gid, to);
+  const id = idDoPresente(from, day2);
+  const ja = claimed.find((c) => c.id === id);
+  if (ja) return { ok: true, item: ja.item, receipt: ja.receipt, repeat: true };
+  const p = (await presentesPendentes(env, gid, to, members, hoje)).find((x2) => x2.from === from && x2.day === day2);
+  if (!p) return { ok: false };
+  const receipt = `${gid}|${ids2[to] ?? "me"}|${ids2[from] ?? "x"}|${day2}`;
+  await kvOrThrow(env).put(presInKey(gid, to), JSON.stringify({ v: 1, claimed: [...claimed, { id, item: p.item, receipt }].slice(-PRESENTE_RESGATADOS_MAX) }), { expirationTtl: PRACA_TTL });
+  return { ok: true, item: p.item, receipt };
+}
+__name(resgatarPresente, "resgatarPresente");
+async function vistaDaPraca(env, gid, eu, members, ids2, hoje) {
+  const praca = await lerPraca(env, gid);
+  const pend = await presentesPendentes(env, gid, eu, members, hoje);
+  const enviados = await enviadosHoje(env, gid, eu, members, hoje);
+  return {
+    slots: praca.slots.map((s, i2) => s ? { slot: i2, item: s.item, by: s.by && ids2[s.by] ? ids2[s.by] : null, mine: s.by === eu } : { slot: i2, item: null, by: null, mine: false }),
+    gifts: pend.map((p) => ({ from: ids2[p.from], day: p.day, item: p.item, id: `${ids2[p.from]}|${p.day}` })),
+    mine: { sentToday: enviados.map((s) => ids2[s]) }
+  };
+}
+__name(vistaDaPraca, "vistaDaPraca");
+
+// api/_claPlantio.js
+var PLANTIO_TTL = 86400 * 400;
+var PLANTIO_DIAS = 14;
+var PLANTIO_HIST_MAX = 120;
+var ARVORE_TIER_MAX = 3;
+var ARVORE_NIVEL_MAX = 9;
+var ESTACOES = Object.freeze({
+  primavera: { especie: "girassol", meses: [9, 10, 11] },
+  verao: { especie: "melancia", meses: [12, 1, 2] },
+  outono: { especie: "abobora", meses: [3, 4, 5] },
+  inverno: { especie: "pinheiro", meses: [6, 7, 8] }
+});
+var ESPECIES = Object.freeze(Object.values(ESTACOES).map((e) => e.especie));
+var plantioKey = /* @__PURE__ */ __name((gid) => `claPlantio:${gid}`, "plantioKey");
+var plantioMembroKey = /* @__PURE__ */ __name((gid, save) => `claPlantioM:${gid}:${save}`, "plantioMembroKey");
+var protKey = /* @__PURE__ */ __name((gid, day2) => `claProt:${gid}:${day2}`, "protKey");
+var arvoresKey = /* @__PURE__ */ __name((gid) => `claArvores:${gid}`, "arvoresKey");
+var DIA_RE2 = /^\d{4}-\d{2}-\d{2}$/;
+var parse4 = /* @__PURE__ */ __name((raw) => {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, "parse");
+function estacaoDoDia(day2) {
+  const ano = +day2.slice(0, 4);
+  const mes = +day2.slice(5, 7);
+  const estacao = Object.keys(ESTACOES).find((k) => ESTACOES[k].meses.includes(mes)) ?? "verao";
+  const anoDaEstacao = estacao === "verao" && mes <= 2 ? ano - 1 : ano;
+  return { key: `${anoDaEstacao}-${estacao}`, estacao, especie: ESTACOES[estacao].especie, ano: anoDaEstacao };
+}
+__name(estacaoDoDia, "estacaoDoDia");
+function arvoreDe(primeiroAno, ano) {
+  const nivel = Math.min(ARVORE_NIVEL_MAX, Math.max(1, 1 + ano - primeiroAno));
+  return { nivel, tier: Math.min(ARVORE_TIER_MAX, nivel) };
+}
+__name(arvoreDe, "arvoreDe");
+function frutoDe(especie, tier) {
+  const t = Math.min(ARVORE_TIER_MAX, Math.max(1, Math.floor(tier) || 1));
+  return { id: `fruto-${especie}-t${t}`, especie, tier: t, bits: 5 * t };
+}
+__name(frutoDe, "frutoDe");
+function avaliarCrescimento({ plantedDay, today: today3, membros, membro }) {
+  let cared = 0, delays = 0, maturedOn = null;
+  const ini = numDia(plantedDay), fim = numDia(today3);
+  let todayWatered = false, todayProtected = false;
+  for (let n = ini; n <= fim; n++) {
+    const d = diaDeNum(n);
+    const eleg = membros.filter((m) => !m.desde || m.desde <= d);
+    const base = eleg.length || 1;
+    const regou = eleg.filter((m) => membro[m.save]?.water?.includes(d)).length;
+    const prot = membros.some((m) => membro[m.save]?.prot?.includes(d));
+    const ok = regou >= Math.ceil(base / 2) && prot;
+    if (d === today3) {
+      todayWatered = regou >= Math.ceil(base / 2);
+      todayProtected = prot;
+    }
+    if (ok && !maturedOn) {
+      cared++;
+      if (cared >= PLANTIO_DIAS) maturedOn = d;
+    } else if (!ok && d !== today3 && !maturedOn) delays++;
+  }
+  return { cared: Math.min(cared, PLANTIO_DIAS), delays, mature: !!maturedOn, maturedOn, todayWatered, todayProtected };
+}
+__name(avaliarCrescimento, "avaliarCrescimento");
+function normalizarPlanta(r) {
+  if (!r || typeof r.season !== "string" || !ESPECIES.includes(r.species) || !DIA_RE2.test(r.plantedDay)) return null;
+  return {
+    v: 1,
+    season: r.season,
+    species: r.species,
+    plantedDay: r.plantedDay,
+    by: typeof r.by === "string" ? r.by : null,
+    nivel: Math.min(ARVORE_NIVEL_MAX, Math.max(1, Math.floor(r.nivel) || 1)),
+    tier: Math.min(ARVORE_TIER_MAX, Math.max(1, Math.floor(r.tier) || 1))
+  };
+}
+__name(normalizarPlanta, "normalizarPlanta");
+var diasLista = /* @__PURE__ */ __name((a) => (Array.isArray(a) ? a.filter((d) => typeof d === "string" && DIA_RE2.test(d)) : []).slice(-PLANTIO_HIST_MAX), "diasLista");
+function normalizarMembro(r) {
+  return {
+    v: 1,
+    water: diasLista(r?.water),
+    prot: diasLista(r?.prot),
+    last: r?.last && typeof r.last.week === "string" && r.last.fruit && typeof r.last.receipt === "string" ? { week: r.last.week, fruit: r.last.fruit, receipt: r.last.receipt } : null,
+    harvest: (Array.isArray(r?.harvest) ? r.harvest.filter((w) => typeof w === "string") : []).slice(-12)
+  };
+}
+__name(normalizarMembro, "normalizarMembro");
+async function lerPlanta(env, gid) {
+  return normalizarPlanta(parse4(await kvOrThrow(env).get(plantioKey(gid))));
+}
+__name(lerPlanta, "lerPlanta");
+async function lerMembro(env, gid, save) {
+  return normalizarMembro(parse4(await kvOrThrow(env).get(plantioMembroKey(gid, save))));
+}
+__name(lerMembro, "lerMembro");
+async function gravarMembro(env, gid, save, m) {
+  await kvOrThrow(env).put(plantioMembroKey(gid, save), JSON.stringify(m), { expirationTtl: PLANTIO_TTL });
+  return m;
+}
+__name(gravarMembro, "gravarMembro");
+async function lerArvores(env, gid) {
+  const r = parse4(await kvOrThrow(env).get(arvoresKey(gid)));
+  const out = {};
+  for (const e of ESPECIES) if (Number.isInteger(r?.[e])) out[e] = r[e];
+  return out;
+}
+__name(lerArvores, "lerArvores");
+async function plantar(env, gid, save, hoje) {
+  const est = estacaoDoDia(hoje);
+  const atual = await lerPlanta(env, gid);
+  if (atual && atual.season === est.key) return { ok: false, reason: "already-planted" };
+  const arvores = await lerArvores(env, gid);
+  const primeiro = arvores[est.especie] ?? est.ano;
+  if (arvores[est.especie] === void 0) {
+    await kvOrThrow(env).put(arvoresKey(gid), JSON.stringify({ ...arvores, [est.especie]: est.ano }), { expirationTtl: PLANTIO_TTL });
+  }
+  const { nivel, tier } = arvoreDe(primeiro, est.ano);
+  const planta = { v: 1, season: est.key, species: est.especie, plantedDay: hoje, by: save, nivel, tier };
+  await kvOrThrow(env).put(plantioKey(gid), JSON.stringify(planta), { expirationTtl: PLANTIO_TTL });
+  return { ok: true, planta };
+}
+__name(plantar, "plantar");
+async function estado(env, g, hoje) {
+  const planta = await lerPlanta(env, g.id);
+  const est = estacaoDoDia(hoje);
+  if (!planta || planta.season !== est.key) return { est, planta: null };
+  const membros = g.members.map((m) => ({ save: m, desde: g.desde?.[m] }));
+  const lidos = await Promise.all(g.members.map((m) => lerMembro(env, g.id, m)));
+  const membro = Object.fromEntries(g.members.map((m, i2) => [m, lidos[i2]]));
+  return { est, planta, membros, membro, cresc: avaliarCrescimento({ plantedDay: planta.plantedDay, today: hoje, membros, membro }) };
+}
+__name(estado, "estado");
+async function regar(env, g, save, hoje) {
+  const s = await estado(env, g, hoje);
+  if (!s.planta) return { ok: false, reason: "no-plant" };
+  if (s.cresc.mature) return { ok: false, reason: "grown" };
+  const m = s.membro[save];
+  if (m.water.includes(hoje)) return { ok: false, reason: "already-watered" };
+  m.water = [...m.water, hoje].slice(-PLANTIO_HIST_MAX);
+  await gravarMembro(env, g.id, save, m);
+  return { ok: true };
+}
+__name(regar, "regar");
+async function proteger(env, g, save, hoje, selo = Math.random().toString(36).slice(2)) {
+  const s = await estado(env, g, hoje);
+  if (!s.planta) return { ok: false, reason: "no-plant" };
+  if (s.cresc.mature) return { ok: false, reason: "grown" };
+  if (s.cresc.todayProtected || await kvOrThrow(env).get(protKey(g.id, hoje))) return { ok: false, reason: "already-protected" };
+  await kvOrThrow(env).put(protKey(g.id, hoje), JSON.stringify({ selo }), { expirationTtl: 86400 * 3 });
+  const lido = parse4(await kvOrThrow(env).get(protKey(g.id, hoje)));
+  if (lido?.selo !== selo) return { ok: false, reason: "already-protected" };
+  const m = s.membro[save];
+  m.prot = [...m.prot, hoje].slice(-PLANTIO_HIST_MAX);
+  await gravarMembro(env, g.id, save, m);
+  return { ok: true };
+}
+__name(proteger, "proteger");
+async function colher(env, g, save, hoje) {
+  const s = await estado(env, g, hoje);
+  if (!s.planta) return { ok: false, reason: "no-plant" };
+  if (!s.cresc.mature) return { ok: false, reason: "not-grown" };
+  const semana = semanaDoDia(hoje);
+  const m = s.membro[save];
+  if (m.harvest.includes(semana)) {
+    if (m.last && m.last.week === semana) return { ok: true, repeat: true, fruit: m.last.fruit, week: semana, receipt: m.last.receipt };
+    return { ok: false, reason: "already-harvested" };
+  }
+  const fruit = frutoDe(s.planta.species, s.planta.tier);
+  const receipt = `${g.id}|${semana}|${s.planta.season}`;
+  m.harvest = [...m.harvest, semana].slice(-12);
+  m.last = { week: semana, fruit, receipt };
+  await gravarMembro(env, g.id, save, m);
+  return { ok: true, fruit, week: semana, receipt };
+}
+__name(colher, "colher");
+async function vistaDoPlantio(env, g, eu, hoje) {
+  const s = await estado(env, g, hoje);
+  const base = { season: s.est.estacao, seasonKey: s.est.key, species: s.est.especie, planted: !!s.planta };
+  if (!s.planta) return { ...base, canPlant: true, stage: 0, mature: false, level: null, tier: null, today: { waterOk: false, protectedToday: false }, mine: { wateredToday: false, canHarvest: false } };
+  const c = s.cresc;
+  const mine = s.membro[eu] ?? normalizarMembro(null);
+  return {
+    ...base,
+    canPlant: false,
+    stage: c.mature ? 4 : Math.min(3, Math.floor(c.cared / PLANTIO_DIAS * 4)),
+    mature: c.mature,
+    progress: Math.round(c.cared / PLANTIO_DIAS * 100),
+    delayed: c.delays > 0,
+    level: s.planta.nivel,
+    tier: s.planta.tier,
+    today: { waterOk: c.todayWatered, protectedToday: c.todayProtected },
+    mine: { wateredToday: mine.water.includes(hoje), canHarvest: c.mature && !mine.harvest.includes(semanaDoDia(hoje)) }
+  };
+}
+__name(vistaDoPlantio, "vistaDoPlantio");
+
+// api/_claMisterio.js
+var MISTERIO_TTL = 86400 * 120;
+var MISTERIO_ALVO = 100;
+var MISTERIO_TETO_DIA = 10;
+var MISTERIO_IDS_MAX = 200;
+var MISTERIO_IDS_DIAS = 14;
+var TASK_ID_RE = /^[A-Za-z0-9_:.-]{1,64}$/;
+var MISTERIO_PESOS = Object.freeze({ bits: 600, decor: 370, chip: 30 });
+var MISTERIO_BITS = Object.freeze([20, 30, 40, 50]);
+var misKey = /* @__PURE__ */ __name((gid, save) => `claMis:${gid}:${save}`, "misKey");
+var misRodadaKey = /* @__PURE__ */ __name((gid) => `claMisRodada:${gid}`, "misRodadaKey");
+var DIA_RE3 = /^\d{4}-\d{2}-\d{2}$/;
+var numDia3 = /* @__PURE__ */ __name((d) => Math.round(Date.parse(`${d}T00:00:00Z`) / 864e5), "numDia");
+var parse5 = /* @__PURE__ */ __name((raw) => {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, "parse");
+var int02 = /* @__PURE__ */ __name((n) => Number.isFinite(n) && n > 0 ? Math.floor(n) : 0, "int0");
+function normalizarMis(r) {
+  return {
+    v: 1,
+    pts: int02(r?.pts),
+    day: typeof r?.day === "string" && DIA_RE3.test(r.day) ? r.day : null,
+    dayPts: Math.min(MISTERIO_TETO_DIA, int02(r?.dayPts)),
+    lastClaim: r?.lastClaim && typeof r.lastClaim.receipt === "string" && r.lastClaim.reward && typeof r.lastClaim.reward === "object" ? { reward: r.lastClaim.reward, receipt: r.lastClaim.receipt } : null,
+    ids: (Array.isArray(r?.ids) ? r.ids : []).filter((x2) => x2 && typeof x2.id === "string" && DIA_RE3.test(x2.day)).slice(-MISTERIO_IDS_MAX),
+    sentRound: Number.isInteger(r?.sentRound) && r.sentRound >= 0 ? r.sentRound : null
+  };
+}
+__name(normalizarMis, "normalizarMis");
+function barraDoMisterio(total, rodadaMax = 0) {
+  const t = int02(total);
+  const rodada = Math.max(Math.floor(t / MISTERIO_ALVO), int02(rodadaMax));
+  const bar = Math.min(MISTERIO_ALVO - 1, Math.max(0, t - rodada * MISTERIO_ALVO));
+  return { rodada, bar };
+}
+__name(barraDoMisterio, "barraDoMisterio");
+function sortearRecompensaMisterio(rng = rngSeguro) {
+  const kind = sortearPonderado(MISTERIO_PESOS, rng());
+  if (kind === "bits") return { kind, amount: MISTERIO_BITS[Math.floor(rng() * MISTERIO_BITS.length) % MISTERIO_BITS.length] };
+  if (kind === "decor") return { kind, id: PRESENTE_DECOR[Math.floor(rng() * PRESENTE_DECOR.length) % PRESENTE_DECOR.length] };
+  return { kind: "chip", id: PRESENTE_CHIPS[Math.floor(rng() * PRESENTE_CHIPS.length) % PRESENTE_CHIPS.length] };
+}
+__name(sortearRecompensaMisterio, "sortearRecompensaMisterio");
+async function lerMis(env, gid, save) {
+  return normalizarMis(parse5(await kvOrThrow(env).get(misKey(gid, save))));
+}
+__name(lerMis, "lerMis");
+async function gravarMis(env, gid, save, m) {
+  await kvOrThrow(env).put(misKey(gid, save), JSON.stringify(m), { expirationTtl: MISTERIO_TTL });
+  return m;
+}
+__name(gravarMis, "gravarMis");
+async function lerRodadaMax(env, gid) {
+  return int02(parse5(await kvOrThrow(env).get(misRodadaKey(gid)))?.rodada);
+}
+__name(lerRodadaMax, "lerRodadaMax");
+async function coletivo(env, g) {
+  const lidos = await Promise.all(g.members.map((m) => lerMis(env, g.id, m)));
+  const total = lidos.reduce((s, m) => s + m.pts, 0);
+  const max2 = await lerRodadaMax(env, g.id);
+  const b = barraDoMisterio(total, max2);
+  if (b.rodada > max2) await kvOrThrow(env).put(misRodadaKey(g.id), JSON.stringify({ rodada: b.rodada }), { expirationTtl: MISTERIO_TTL });
+  return { membros: Object.fromEntries(g.members.map((m, i2) => [m, lidos[i2]])), ...b };
+}
+__name(coletivo, "coletivo");
+async function enviarMisterio(env, g, save) {
+  const c = await coletivo(env, g);
+  const m = c.membros[save];
+  if (m.sentRound !== null) return { ok: false, reason: m.sentRound < c.rodada ? "reward-pending" : "already-sent" };
+  m.sentRound = c.rodada;
+  await gravarMis(env, g.id, save, m);
+  return { ok: true };
+}
+__name(enviarMisterio, "enviarMisterio");
+async function somarTarefa(env, g, save, hoje, taskId) {
+  if (typeof taskId !== "string" || !TASK_ID_RE.test(taskId)) return { ok: false, reason: "invalid-task" };
+  const m = await lerMis(env, g.id, save);
+  const hojeN = numDia3(hoje);
+  if (m.ids.some((x2) => x2.id === taskId && hojeN - numDia3(x2.day) <= MISTERIO_IDS_DIAS)) return { ok: true, counted: false, reason: "duplicate" };
+  const dayPts = m.day === hoje ? m.dayPts : 0;
+  if (dayPts >= MISTERIO_TETO_DIA) return { ok: true, counted: false, reason: "daily-cap" };
+  m.ids = [...m.ids.filter((x2) => hojeN - numDia3(x2.day) <= MISTERIO_IDS_DIAS), { id: taskId, day: hoje }].slice(-MISTERIO_IDS_MAX);
+  m.day = hoje;
+  m.dayPts = dayPts + 1;
+  m.pts += 1;
+  await gravarMis(env, g.id, save, m);
+  return { ok: true, counted: true };
+}
+__name(somarTarefa, "somarTarefa");
+async function resgatarMisterio(env, g, save, rng = rngSeguro) {
+  const c = await coletivo(env, g);
+  const m = c.membros[save];
+  if (m.sentRound === null || m.sentRound >= c.rodada) {
+    if (m.lastClaim) return { ok: true, repeat: true, ...m.lastClaim };
+    return { ok: false, reason: "nothing-to-claim" };
+  }
+  const reward = sortearRecompensaMisterio(rng);
+  const rodada = m.sentRound;
+  m.sentRound = null;
+  const receipt = `${g.id}|mis|${rodada}|${save.slice(0, 8)}`;
+  m.lastClaim = { reward, receipt };
+  await gravarMis(env, g.id, save, m);
+  return { ok: true, reward, receipt };
+}
+__name(resgatarMisterio, "resgatarMisterio");
+async function vistaDoMisterio(env, g, eu, hoje) {
+  const c = await coletivo(env, g);
+  const m = c.membros[eu] ?? normalizarMis(null);
+  const ativos = g.members.filter((x2) => c.membros[x2].sentRound !== null && c.membros[x2].sentRound >= c.rodada).length;
+  return {
+    bar: c.bar,
+    round: c.rodada,
+    investigating: ativos,
+    mine: {
+      sent: m.sentRound !== null && m.sentRound >= c.rodada,
+      rewardPending: m.sentRound !== null && m.sentRound < c.rodada,
+      capReached: m.day === hoje && m.dayPts >= MISTERIO_TETO_DIA
+    }
+  };
+}
+__name(vistaDoMisterio, "vistaDoMisterio");
+
 // api/guild.js
 var CORS4 = {
   "Access-Control-Allow-Origin": "*",
@@ -5720,6 +6217,19 @@ var GUILD_ACTIONS = Object.freeze({
   guildWarSeek: "POST",
   guildDonate: "POST",
   guildSlot: "POST",
+  claPraca: "GET",
+  claPracaSlot: "POST",
+  claPresente: "POST",
+  claPresenteClaim: "POST",
+  claPlantio: "GET",
+  claPlantar: "POST",
+  claRegar: "POST",
+  claProteger: "POST",
+  claColher: "POST",
+  claMisterio: "GET",
+  claMisterioEnviar: "POST",
+  claMisterioTarefa: "POST",
+  claMisterioClaim: "POST",
   guildLeave: "POST",
   guildRename: "POST",
   guildNewCode: "POST"
@@ -6012,6 +6522,67 @@ async function handleGuild({ request, env }) {
     if (novo === void 0) return erro("invalid item", 400);
     await cartao(g);
     return vista(await montar(g, id, hoje));
+  }
+  if (action.startsWith("cla")) {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const hoje2 = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+    const ids2 = {};
+    for (const m of g.members) ids2[m] = await idOpacoDoMembro(env, g.id, m);
+    const salvoDe = /* @__PURE__ */ __name((opaco) => g.members.find((m) => ids2[m] === opaco), "salvoDe");
+    const praca = /* @__PURE__ */ __name(async () => vistaDaPraca(env, g.id, id, g.members, ids2, hoje2), "praca");
+    const plantio = /* @__PURE__ */ __name(async () => vistaDoPlantio(env, g, id, hoje2), "plantio");
+    const misterio = /* @__PURE__ */ __name(async () => vistaDoMisterio(env, g, id, hoje2), "misterio");
+    const conflito = /* @__PURE__ */ __name((r) => erro(r.reason.replace(/-/g, " "), r.reason === "no-plant" ? 404 : 409), "conflito");
+    if (action === "claPraca") return json11({ praca: await praca() });
+    if (action === "claPracaSlot") {
+      if (body.item !== null && typeof body.item !== "string") return erro("invalid item", 400);
+      const r = await definirSlotPraca(env, g.id, id, hoje2, body.slot, body.item);
+      if (r === void 0) return erro(Number.isInteger(body.slot) && body.slot >= 0 && body.slot < 4 ? "invalid item" : "invalid slot", 400);
+      return json11({ praca: await praca() });
+    }
+    if (action === "claPresente") {
+      const alvo = typeof body.to === "string" ? salvoDe(body.to) : void 0;
+      if (!alvo || alvo === id) return erro("invalid target", 400);
+      const r = await enviarPresente(env, g.id, id, alvo, hoje2, void 0, g.members);
+      if (!r.ok) return erro("already sent today", 409);
+      return json11({ sent: true, praca: await praca() });
+    }
+    if (action === "claPresenteClaim") {
+      const [de, dia2] = String(body.giftId ?? "").split("|");
+      const origem = salvoDe(de);
+      if (!origem || !dia2) return erro("nothing to claim", 404);
+      const r = await resgatarPresente(env, g.id, id, g.members, origem, dia2, hoje2, ids2);
+      if (!r.ok) return erro("nothing to claim", 404);
+      return json11({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
+    }
+    if (action === "claPlantio") return json11({ plantio: await plantio() });
+    if (action === "claPlantar") {
+      const r = await plantar(env, g.id, id, hoje2);
+      if (!r.ok) return erro("already planted", 409);
+      return json11({ plantio: await plantio() });
+    }
+    if (action === "claRegar" || action === "claProteger" || action === "claColher") {
+      const r = await (action === "claRegar" ? regar : action === "claProteger" ? proteger : colher)(env, g, id, hoje2);
+      if (!r.ok) return conflito(r);
+      return json11({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
+    }
+    if (action === "claMisterio") return json11({ misterio: await misterio() });
+    if (action === "claMisterioEnviar") {
+      const r = await enviarMisterio(env, g, id);
+      if (!r.ok) return conflito(r);
+      return json11({ misterio: await misterio() });
+    }
+    if (action === "claMisterioTarefa") {
+      const r = await somarTarefa(env, g, id, hoje2, body.taskId);
+      if (!r.ok) return erro("invalid task", 400);
+      return json11({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
+    }
+    if (action === "claMisterioClaim") {
+      const r = await resgatarMisterio(env, g, id);
+      if (!r.ok) return erro("nothing to claim", 404);
+      return json11({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
+    }
   }
   if (action === "guildRaidHit") {
     const g = await grupoDe(env, id, semana);
@@ -7632,7 +8203,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../node_modules/fflate/esm/browser.js
+// ../../../../node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10389,7 +10960,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-4MEGjQ/functionsRoutes-0.7629397123817132.mjs
+// ../.wrangler/tmp/pages-o78wdJ/functionsRoutes-0.2560220434799114.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -10666,7 +11237,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// ../../../../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -10751,7 +11322,7 @@ function lexer(str) {
   return tokens;
 }
 __name(lexer, "lexer");
-function parse3(str, options) {
+function parse6(str, options) {
   if (options === void 0) {
     options = {};
   }
@@ -10850,7 +11421,7 @@ function parse3(str, options) {
   }
   return result;
 }
-__name(parse3, "parse");
+__name(parse6, "parse");
 function match(str, options) {
   var keys = [];
   var re = pathToRegexp(str, keys, options);
@@ -10925,7 +11496,7 @@ function arrayToRegexp(paths, keys, options) {
 }
 __name(arrayToRegexp, "arrayToRegexp");
 function stringToRegexp(path, keys, options) {
-  return tokensToRegexp(parse3(path, options), keys, options);
+  return tokensToRegexp(parse6(path, options), keys, options);
 }
 __name(stringToRegexp, "stringToRegexp");
 function tokensToRegexp(tokens, keys, options) {
@@ -10992,7 +11563,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// ../../../../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
