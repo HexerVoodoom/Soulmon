@@ -44,6 +44,7 @@ export const BUILDING_GATES = {
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
+  'arena.guerra': { minBond: 5 },
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },

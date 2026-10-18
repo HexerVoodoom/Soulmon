@@ -91,7 +91,7 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 export type BuildingId =
   | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
   | 'jogos.salao' | 'jogos.refugio' | 'jogos.mente'
-  | 'arena.duelo' | 'arena.torneio'
+  | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
   | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
   | 'hall.biblioteca' | 'hall.amigos' | 'hall.guilda' | 'hall.feira';
@@ -125,6 +125,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
+  'arena.guerra': { minBond: 5 }, // dono 18/10/2026: a Arena não destrava antes do que já destravava (Vínculo 5)
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },

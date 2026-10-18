@@ -33,7 +33,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  * ainda não chegou em F5 não aparece aqui e segue no lote de exemplo acima.
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro' | 'restaurante';
-export type ArenaLotId = 'torneio' | 'duelo';
+export type ArenaLotId = 'torneio' | 'duelo' | 'guerra';
 export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats' | 'perfil';
 export type HallLotId = 'biblioteca' | 'amigos' | 'guilda' | 'feira';
 
@@ -72,6 +72,7 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '19%', top: '49%', width: '40%' },
   { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '68%', top: '45%', width: '44%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
+  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '44%', top: '74%', width: '36%' },
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];

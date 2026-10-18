@@ -22,6 +22,7 @@ import loteFerreiro from './lote-mercado-ferreiro.png';
 import loteRestaurante from './lote-mercado-restaurante.png';
 import loteTorneio from './lote-arena-torneio.png';
 import loteDuelo from './lote-arena-duelo.png';
+import loteGuerra from './lote-arena-guerra.png';
 
 // ⚠️ SEM CONSUMIDOR desde 01/10/2026: `lote-loja-conquistas.png` só emprestava a arte à Feira, que ganhou a tenda-cúpula própria.
 // O arquivo fica em disco (fora do bundle, sem import).
@@ -37,7 +38,8 @@ export const MERCADO_LOT_ART = {
   restaurante: loteRestaurante,
 } as const;
 
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo } as const;
+// PLACEHOLDER até a arte própria da guerra (lote-arena-guerra = cópia do torneio) — ver docs/ARTE-MELHORIAS-FUTURAS.md
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber

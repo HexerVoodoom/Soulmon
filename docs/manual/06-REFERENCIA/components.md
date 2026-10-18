@@ -238,6 +238,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy, dentro do `AreaSheet` da Arena).
 **Régua:** `src/components/arena/arenaSheets.render.test.tsx`.
 
+### `src/components/arena/GuerraClaSheet.tsx`
+**Dono de:** a folha do lote **Guerra de Clãs** (id `guerra`) da Arena — o NPC da guerra e um parágrafo curto que manda o jogador reunir o esquadrão no Salão do Clã, no Hall. A guerra em si (4×4, servidor decide) não mora aqui. Arte do lote e do NPC são PLACEHOLDER (cópias do Torneio).
+**Props principais:** `language`, `onGoToClan?` (sem ele o botão não aparece).
+**Exports:** `GuerraClaSheet(props)`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy, dentro do `AreaSheet` da Arena).
+**Régua:** `src/components/arena/GuerraClaSheet.render.test.tsx`.
+
 ### `src/components/mercado/MercadoSheets.tsx`
 **Dono de:** o conteúdo das 4 lojinhas do Mercado (minimal-ui F5, 24/09/2026; mock `product/squad-minimal-ui/propostas/loja/mock.html`, citado no cabeçalho do arquivo — fora do repositório) — `MercadoStallSheet` (Itens / Decoração / Background, com abas POR MOEDA vindas de `STALL_CURRENCIES`; saldo sempre da moeda da aba; aba de Créditos = a troca Créditos → Bits + o convite passivo `UnlockNudge reason="shop"` só para `demo`) e `ConquistasSheet` (as missões de `utils/missions.ts` filtradas por `category`, sem moeda nenhuma; sem "0/N" sem progresso — WP4.12). Substitui a `ShopModal` (⚰️ 24/09/2026). **Honra (30/09/2026, `docs/REGISTRO-DE-DECISOES.md` §17):** o rótulo da moeda `emblems` na aba e na linha de status é "Honra"/"Honor" (⚰️ "Emblemas"/"Emblems", que reverteu a D3 de 23/09/2026); só o RÓTULO mudou — o id `'emblems'`, o campo do save e `STALL_CURRENCIES` continuam.
 **Props principais:** `MercadoStallProps` — `stall`, `language`, `points`/`emblems`/`credits`, posse (`ownedBackgrounds`, `equippedBackground`, `ownedFurniture`, `equippedDecor`, `missionProgress`), `onBuy`/`onEquip`/`onEquipFurniture`, `onExchangeCredits`, `accountTier?`, `onUnlock?`.
