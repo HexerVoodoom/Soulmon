@@ -113,6 +113,7 @@ export function normalizarMembro(r) {
     v: 1,
     water: diasLista(r?.water),
     prot: diasLista(r?.prot),
+    last: r?.last && typeof r.last.week === 'string' && r.last.fruit && typeof r.last.receipt === 'string' ? { week: r.last.week, fruit: r.last.fruit, receipt: r.last.receipt } : null,
     harvest: (Array.isArray(r?.harvest) ? r.harvest.filter(w => typeof w === 'string') : []).slice(-12),
   };
 }
@@ -190,10 +191,17 @@ export async function colher(env, g, save, hoje) {
   if (!s.cresc.mature) return { ok: false, reason: 'not-grown' };
   const semana = semanaDoDia(hoje);
   const m = s.membro[save];
-  if (m.harvest.includes(semana)) return { ok: false, reason: 'already-harvested' };
+  // Reentregavel: repetir na mesma semana devolve o MESMO fruto/recibo (o app credita 1x por recibo).
+  if (m.harvest.includes(semana)) {
+    if (m.last && m.last.week === semana) return { ok: true, repeat: true, fruit: m.last.fruit, week: semana, receipt: m.last.receipt };
+    return { ok: false, reason: 'already-harvested' };
+  }
+  const fruit = frutoDe(s.planta.species, s.planta.tier);
+  const receipt = `${g.id}|${semana}|${s.planta.season}`;
   m.harvest = [...m.harvest, semana].slice(-12);
+  m.last = { week: semana, fruit, receipt };
   await gravarMembro(env, g.id, save, m);
-  return { ok: true, fruit: frutoDe(s.planta.species, s.planta.tier), week: semana, receipt: `${g.id}|${semana}|${s.planta.season}` };
+  return { ok: true, fruit, week: semana, receipt };
 }
 
 /**

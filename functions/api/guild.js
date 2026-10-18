@@ -493,6 +493,9 @@ export async function handleGuild({ request, env }) {
     // (sorteios, limites, calendário); a vista não traz saveId nem número por pessoa.
     const g = await grupoDe(env, id, semana);
     if (!g) return erro('no {g}', 404);
+    // TODO limite diario/semanal/de estacao destes predios usa o dia do SERVIDOR (UTC); o `dayKey` do cliente
+    // (+-1) so serve para a exibicao das outras rotas - aqui ele deixaria triplicar presente/rega/protecao.
+    const hoje = new Date().toISOString().slice(0, 10);
     const ids = {};
     for (const m of g.members) ids[m] = await idOpacoDoMembro(env, g.id, m);
     const salvoDe = opaco => g.members.find(m => ids[m] === opaco);
@@ -511,7 +514,7 @@ export async function handleGuild({ request, env }) {
     if (action === 'claPresente') {
       const alvo = typeof body.to === 'string' ? salvoDe(body.to) : undefined;
       if (!alvo || alvo === id) return erro('invalid target', 400);
-      const r = await enviarPresente(env, g.id, id, alvo, hoje);
+      const r = await enviarPresente(env, g.id, id, alvo, hoje, undefined, g.members);
       if (!r.ok) return erro('already sent today', 409);
       return json({ sent: true, praca: await praca() });
     }
@@ -519,7 +522,7 @@ export async function handleGuild({ request, env }) {
       const [de, dia] = String(body.giftId ?? '').split('|');
       const origem = salvoDe(de);
       if (!origem || !dia) return erro('nothing to claim', 404);
-      const r = await resgatarPresente(env, g.id, id, g.members, origem, dia, hoje);
+      const r = await resgatarPresente(env, g.id, id, g.members, origem, dia, hoje, ids);
       if (!r.ok) return erro('nothing to claim', 404);
       return json({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
     }

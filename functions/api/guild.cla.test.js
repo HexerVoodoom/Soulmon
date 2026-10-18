@@ -58,8 +58,35 @@ describe('rotas do clã: praça', () => {
     expect(cl.status).toBe(200);
     expect(cl.json.claimed.item.kind).toBeTruthy();
     expect(cl.json.praca.gifts).toEqual([]);
-    expect((await post(e, 'claPresenteClaim', { id: B, giftId: vb.gifts[0].id })).status).toBe(404);
+    const de = await post(e, 'claPresenteClaim', { id: B, giftId: vb.gifts[0].id }); // reentrega
+    expect(de.status).toBe(200);
+    expect(de.json.claimed).toEqual(cl.json.claimed);
+    expect(cl.json.claimed.receipt).toContain(idA);
     expect((await post(e, 'claPresenteClaim', { id: A, giftId: vb.gifts[0].id })).status).toBe(404);
+  });
+});
+
+describe('rotas do clã: dia do servidor, não do cliente', () => {
+  const d = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+  it('alternar dayKey D-1/D/D+1 não dá 2º presente, 2ª rega/proteção nem fura o teto do mistério', async () => {
+    const { e, idB } = await setup();
+    const chaves = [d(-1), d(0), d(1)];
+    const st = [];
+    for (const k of chaves) st.push((await post(e, 'claPresente', { id: A, to: idB, dayKey: k })).status);
+    expect(st.sort()).toEqual([200, 409, 409]);
+    await post(e, 'claPlantar', { id: A, dayKey: d(0) });
+    const reg = [];
+    for (const k of chaves) reg.push((await post(e, 'claRegar', { id: A, dayKey: k })).status);
+    expect(reg.sort()).toEqual([200, 409, 409]);
+    const pr = [];
+    for (const k of chaves) pr.push((await post(e, 'claProteger', { id: B, dayKey: k })).status);
+    expect(pr.sort()).toEqual([200, 409, 409]);
+    let contou = 0;
+    for (let i = 0; i < 15; i++) {
+      const r = await post(e, 'claMisterioTarefa', { id: A, taskId: `t${i}`, dayKey: chaves[i % 3] });
+      if (r.json.counted) contou++;
+    }
+    expect(contou).toBe(10);
   });
 });
 

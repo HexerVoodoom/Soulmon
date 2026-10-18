@@ -16,12 +16,18 @@
 // ---------------------------------------------------------------------------
 import { kvOrThrow } from './_kv.js';
 import { CASA_ITEM_RE } from './_casa.js';
+import { semanaDoDia } from './_coop.js';
 
 export const PRACA_TTL = 86400 * 120;
 export const PRACA_SLOTS = 4;
 /** Um presente fica à espera de B por este número de dias do jogador (incluindo o do envio). */
 export const PRESENTE_VALE_DIAS = 3;
 export const PRESENTE_RESGATADOS_MAX = 60;
+/** O remetente guarda os presentes por este numero de dias (para contar a SEMANA do destinatario). */
+export const PRESENTE_SAIDA_DIAS = 8;
+/** G-01 agregado: no maximo 1 presente RARO (chip/comida) por destinatario por semana ISO. */
+export const PRESENTE_RAROS_POR_SEMANA = 1;
+export const ehRaro = item => item?.kind === 'chip' || item?.kind === 'food';
 
 export const pracaKey = gid => `claPraca:${gid}`;
 export const presOutKey = (gid, from, to) => `claPresOut:${gid}:${from}:${to}`;
@@ -129,22 +135,39 @@ async function lerSaida(env, gid, from, to) {
 
 async function lerResgatados(env, gid, to) {
   const r = parse(await kvOrThrow(env).get(presInKey(gid, to)));
-  return { claimed: (Array.isArray(r?.claimed) ? r.claimed : []).filter(x => typeof x === 'string').slice(-PRESENTE_RESGATADOS_MAX) };
+  const claimed = (Array.isArray(r?.claimed) ? r.claimed : [])
+    .map(x => ({ id: x?.id, item: normalizarPresente(x?.item), receipt: x?.receipt }))
+    .filter(x => typeof x.id === 'string' && x.item && typeof x.receipt === 'string')
+    .slice(-PRESENTE_RESGATADOS_MAX);
+  return { claimed };
 }
 
 export const idDoPresente = (from, day) => `${from}|${day}`;
 
 /**
- * A envia a B. 1x por dia por par. O servidor sorteia. Devolve
- * `{ ok:true }` ou `{ ok:false, reason:'self'|'already-sent' }`.
+ * A envia a B. 1x por dia por par. O servidor sorteia. `day` e o dia do SERVIDOR
+ * (a rota nunca usa o dayKey do cliente). `members` serve para contar os raros que
+ * B ja recebeu na semana (leitura das saidas de todos; corrida entre dois
+ * remetentes simultaneos pode deixar passar 1 a mais - aceito, KV sem CAS).
+ * Devolve `{ ok:true }` ou `{ ok:false, reason:'self'|'already-sent' }`.
  */
-export async function enviarPresente(env, gid, from, to, day, rng = rngSeguro) {
+export async function enviarPresente(env, gid, from, to, day, rng = rngSeguro, members = [from]) {
   if (from === to) return { ok: false, reason: 'self' };
   const s = await lerSaida(env, gid, from, to);
   if (s.gifts.some(g => g.day === day)) return { ok: false, reason: 'already-sent' };
-  const item = sortearPresente(rng);
-  const gifts = [...s.gifts.filter(g => presenteVale(g.day, day)), { day, item }].slice(-PRESENTE_VALE_DIAS);
-  await kvOrThrow(env).put(presOutKey(gid, from, to), JSON.stringify({ v: 1, gifts }), { expirationTtl: 86400 * (PRESENTE_VALE_DIAS + 1) });
+  let item = sortearPresente(rng);
+  if (ehRaro(item)) {
+    const semana = semanaDoDia(day);
+    let raros = 0;
+    for (const m of members) {
+      if (m === to) continue;
+      const out = m === from ? s : await lerSaida(env, gid, m, to);
+      raros += out.gifts.filter(g => ehRaro(g.item) && semanaDoDia(g.day) === semana).length;
+    }
+    if (raros >= PRESENTE_RAROS_POR_SEMANA) item = { kind: 'decor', id: PRESENTE_DECOR[Math.floor(rng() * PRESENTE_DECOR.length) % PRESENTE_DECOR.length] };
+  }
+  const gifts = [...s.gifts.filter(g => numDia(day) - numDia(g.day) >= 0 && numDia(day) - numDia(g.day) < PRESENTE_SAIDA_DIAS), { day, item }].slice(-PRESENTE_SAIDA_DIAS);
+  await kvOrThrow(env).put(presOutKey(gid, from, to), JSON.stringify({ v: 1, gifts }), { expirationTtl: 86400 * (PRESENTE_SAIDA_DIAS + 1) });
   return { ok: true };
 }
 
@@ -165,7 +188,7 @@ export async function presentesPendentes(env, gid, to, members, hoje) {
   for (const from of members) {
     if (from === to) continue;
     for (const g of (await lerSaida(env, gid, from, to)).gifts) {
-      if (presenteVale(g.day, hoje) && !claimed.includes(idDoPresente(from, g.day))) lista.push({ from, day: g.day, item: g.item });
+      if (presenteVale(g.day, hoje) && !claimed.some(c => c.id === idDoPresente(from, g.day))) lista.push({ from, day: g.day, item: g.item });
     }
   }
   return lista.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
@@ -173,16 +196,20 @@ export async function presentesPendentes(env, gid, to, members, hoje) {
 
 /**
  * B resgata o presente de `from` do `day`. Devolve `{ ok:true, item, receipt }`
- * ou `{ ok:false }` (nada a resgatar / já resgatado). O recibo é determinístico
- * por presente: o app credita UMA vez por recibo (mesmo cuidado do `guildClaim`).
+ * ou `{ ok:false }`. REENTREGAVEL: repetir o claim devolve o MESMO `{item, receipt}`
+ * (o app credita uma vez por recibo). O recibo inclui gid e destinatario
+ * (`ids`: `{save: idOpaco}`; nunca saveId cru).
  */
-export async function resgatarPresente(env, gid, to, members, from, day, hoje) {
-  const p = (await presentesPendentes(env, gid, to, members, hoje)).find(x => x.from === from && x.day === day);
-  if (!p) return { ok: false };
+export async function resgatarPresente(env, gid, to, members, from, day, hoje, ids = {}) {
   const { claimed } = await lerResgatados(env, gid, to);
   const id = idDoPresente(from, day);
-  await kvOrThrow(env).put(presInKey(gid, to), JSON.stringify({ v: 1, claimed: [...claimed, id].slice(-PRESENTE_RESGATADOS_MAX) }), { expirationTtl: PRACA_TTL });
-  return { ok: true, item: p.item, receipt: id };
+  const ja = claimed.find(c => c.id === id);
+  if (ja) return { ok: true, item: ja.item, receipt: ja.receipt, repeat: true };
+  const p = (await presentesPendentes(env, gid, to, members, hoje)).find(x => x.from === from && x.day === day);
+  if (!p) return { ok: false };
+  const receipt = `${gid}|${ids[to] ?? 'me'}|${ids[from] ?? 'x'}|${day}`;
+  await kvOrThrow(env).put(presInKey(gid, to), JSON.stringify({ v: 1, claimed: [...claimed, { id, item: p.item, receipt }].slice(-PRESENTE_RESGATADOS_MAX) }), { expirationTtl: PRACA_TTL });
+  return { ok: true, item: p.item, receipt };
 }
 
 /**

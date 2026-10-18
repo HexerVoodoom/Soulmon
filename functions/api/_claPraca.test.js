@@ -77,11 +77,30 @@ describe('praça: presente', () => {
     const r = await resgatarPresente(e, G, B, M, A, '2026-10-18', '2026-10-19');
     expect(r.ok).toBe(true);
     expect(r.item.kind).toBeTruthy();
-    expect((await resgatarPresente(e, G, B, M, A, '2026-10-18', '2026-10-19')).ok).toBe(false);
+    const outra = await resgatarPresente(e, G, B, M, A, '2026-10-18', '2026-10-19');
+    expect(outra).toMatchObject({ ok: true, repeat: true, receipt: r.receipt, item: r.item }); // reentregável
     expect((await presentesPendentes(e, G, B, M, '2026-10-19')).map(p => p.day)).toEqual(['2026-10-19']);
     expect(await presentesPendentes(e, G, B, M, '2026-10-22')).toEqual([]); // venceu (3 dias)
     expect(presenteVale('2026-10-18', '2026-10-20')).toBe(true);
     expect(presenteVale('2026-10-18', '2026-10-21')).toBe(false);
+  });
+  it('G-01 agregado: no máximo 1 presente raro por destinatário por semana; semana nova libera', async () => {
+    const e = env();
+    const fila = valores => { let i = 0; return () => valores[i++ % valores.length]; };
+    const raro = () => fila([0.96, 0.1]);      // chip
+    const r1 = await enviarPresente(e, G, A, B, '2026-10-19', raro(), M);
+    expect(r1.ok).toBe(true);
+    await enviarPresente(e, G, C, B, '2026-10-20', raro(), M); // cairia raro, B já tem 1 na semana
+    const pend = await presentesPendentes(e, G, B, M, '2026-10-20');
+    expect(pend.map(p => p.item.kind)).toEqual(['chip', 'decor']);
+    await enviarPresente(e, G, A, B, '2026-10-26', raro(), M); // semana ISO seguinte
+    expect((await presentesPendentes(e, G, B, M, '2026-10-26')).map(p => p.item.kind)).toEqual(['chip']); // os anteriores já venceram; o raro da semana nova passa
+  });
+  it('recibo inclui gid e destinatário (ids opacos)', async () => {
+    const e = env();
+    await enviarPresente(e, G, A, B, '2026-10-18', seeded(3), M);
+    const r = await resgatarPresente(e, G, B, M, A, '2026-10-18', '2026-10-18', { [A]: 'oa', [B]: 'ob' });
+    expect(r.receipt).toBe('g1|ob|oa|2026-10-18');
   });
   it('não resgata o que não é seu nem presente inexistente', async () => {
     const e = env();

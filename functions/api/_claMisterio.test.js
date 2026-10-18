@@ -64,8 +64,14 @@ describe('mistério: barra cheia, recompensa e reinício', () => {
     const r = await resgatarMisterio(e, g, A, seeded(11));
     expect(r.ok).toBe(true);
     expect(r.reward.kind).toBeTruthy();
-    expect((await resgatarMisterio(e, g, A)).reason).toBe('nothing-to-claim');
+    expect(await resgatarMisterio(e, g, A)).toMatchObject({ ok: true, repeat: true, receipt: r.receipt, reward: r.reward });
     expect((await enviarMisterio(e, g, A)).ok).toBe(true);
+  });
+  it('idempotência por taskId vale 14 dias (marcar/desmarcar/recontar não soma)', async () => {
+    const e = env();
+    expect((await somarTarefa(e, g, A, '2026-10-01', 'velha')).counted).toBe(true);
+    expect((await somarTarefa(e, g, A, '2026-10-14', 'velha')).reason).toBe('duplicate');
+    expect((await somarTarefa(e, g, A, '2026-10-16', 'velha')).counted).toBe(true); // 15 dias depois
   });
   it('barra em 99 antes do último ponto', async () => {
     const e = env();

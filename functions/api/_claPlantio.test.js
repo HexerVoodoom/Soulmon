@@ -93,8 +93,9 @@ describe('plantio: crescimento, atraso e colheita', () => {
     const r = await colher(e, g, A, fim);
     expect(r.ok).toBe(true);
     expect(r.fruit).toMatchObject({ especie: 'abobora', tier: 1, bits: 5 });
-    expect((await colher(e, g, A, fim)).reason).toBe('already-harvested');
-    expect((await colher(e, g, A, dia(fim, 1))).reason).toBe('already-harvested'); // mesma semana (ou outra, ver abaixo)
+    const rep1 = await colher(e, g, A, fim);          // repetir na mesma semana = mesma entrega, mesmo recibo
+    expect(rep1).toMatchObject({ ok: true, repeat: true, receipt: r.receipt, fruit: r.fruit });
+    expect((await colher(e, g, A, dia(fim, 1))).receipt).toBe(r.receipt);
     expect((await colher(e, g, B, fim)).ok).toBe(true);
     expect((await colher(e, g, A, dia(fim, 7))).ok).toBe(true);
     expect((await vistaDoPlantio(e, g, A, dia(fim, 7))).mine.canHarvest).toBe(false);

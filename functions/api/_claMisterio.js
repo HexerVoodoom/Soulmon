@@ -10,6 +10,11 @@
 // regredir quando alguém sai, `claMisRodada:<gid>` guarda a rodada MÁXIMA já vista
 // (max-merge, corrida benigna); com ela, total abaixo do piso mostra barra 0.
 //
+// LIMITE CONHECIDO: o servidor NAO consegue provar que a tarefa existe nem que foi
+// concluida (o save e do cliente). Risco residual aceito: o teto de 10 pontos por
+// membro/dia e a idempotencia por taskId (14 dias, ate 200 ids) limitam o estrago.
+// Todo limite diario usa o dia do SERVIDOR (UTC), nunca o dayKey do cliente.
+//
 // ABUSO: teto `MISTERIO_TETO_DIA` (10) pontos por membro por dia do jogador e
 // idempotência por `taskId` (ids de hoje e ontem guardados; reenvio = no-op).
 // A vista NUNCA devolve pontos por pessoa — só a barra coletiva (0..99).
@@ -21,7 +26,9 @@ import { rngSeguro, sortearPonderado, PRESENTE_DECOR, PRESENTE_CHIPS } from './_
 export const MISTERIO_TTL = 86400 * 120;
 export const MISTERIO_ALVO = 100;
 export const MISTERIO_TETO_DIA = 10;
-export const MISTERIO_IDS_MAX = 40;
+export const MISTERIO_IDS_MAX = 200;
+/** Dias que um taskId fica lembrado (impede marcar/desmarcar e recontar). */
+export const MISTERIO_IDS_DIAS = 14;
 export const TASK_ID_RE = /^[A-Za-z0-9_:.-]{1,64}$/;
 
 /** Pesos da recompensa (soma 1000). Chip 3% raro; sem comida (G-01). */
@@ -42,6 +49,7 @@ export function normalizarMis(r) {
     pts: int0(r?.pts),
     day: typeof r?.day === 'string' && DIA_RE.test(r.day) ? r.day : null,
     dayPts: Math.min(MISTERIO_TETO_DIA, int0(r?.dayPts)),
+    lastClaim: r?.lastClaim && typeof r.lastClaim.receipt === 'string' && r.lastClaim.reward && typeof r.lastClaim.reward === 'object' ? { reward: r.lastClaim.reward, receipt: r.lastClaim.receipt } : null,
     ids: (Array.isArray(r?.ids) ? r.ids : []).filter(x => x && typeof x.id === 'string' && DIA_RE.test(x.day)).slice(-MISTERIO_IDS_MAX),
     sentRound: Number.isInteger(r?.sentRound) && r.sentRound >= 0 ? r.sentRound : null,
   };
@@ -98,11 +106,11 @@ export async function enviarMisterio(env, g, save) {
 export async function somarTarefa(env, g, save, hoje, taskId) {
   if (typeof taskId !== 'string' || !TASK_ID_RE.test(taskId)) return { ok: false, reason: 'invalid-task' };
   const m = await lerMis(env, g.id, save);
-  if (m.ids.some(x => x.id === taskId)) return { ok: true, counted: false, reason: 'duplicate' };
   const hojeN = numDia(hoje);
+  if (m.ids.some(x => x.id === taskId && hojeN - numDia(x.day) <= MISTERIO_IDS_DIAS)) return { ok: true, counted: false, reason: 'duplicate' };
   const dayPts = m.day === hoje ? m.dayPts : 0;
   if (dayPts >= MISTERIO_TETO_DIA) return { ok: true, counted: false, reason: 'daily-cap' };
-  m.ids = [...m.ids.filter(x => hojeN - numDia(x.day) <= 1), { id: taskId, day: hoje }].slice(-MISTERIO_IDS_MAX);
+  m.ids = [...m.ids.filter(x => hojeN - numDia(x.day) <= MISTERIO_IDS_DIAS), { id: taskId, day: hoje }].slice(-MISTERIO_IDS_MAX);
   m.day = hoje;
   m.dayPts = dayPts + 1;
   m.pts += 1;
@@ -114,12 +122,18 @@ export async function somarTarefa(env, g, save, hoje, taskId) {
 export async function resgatarMisterio(env, g, save, rng = rngSeguro) {
   const c = await coletivo(env, g);
   const m = c.membros[save];
-  if (m.sentRound === null || m.sentRound >= c.rodada) return { ok: false, reason: 'nothing-to-claim' };
+  if (m.sentRound === null || m.sentRound >= c.rodada) {
+    // Reentregavel: resposta perdida -> mesmo {reward, receipt}; o app deduplica por recibo.
+    if (m.lastClaim) return { ok: true, repeat: true, ...m.lastClaim };
+    return { ok: false, reason: 'nothing-to-claim' };
+  }
   const reward = sortearRecompensaMisterio(rng);
   const rodada = m.sentRound;
   m.sentRound = null;
+  const receipt = `${g.id}|mis|${rodada}|${save.slice(0, 8)}`;
+  m.lastClaim = { reward, receipt };
   await gravarMis(env, g.id, save, m);
-  return { ok: true, reward, receipt: `${g.id}|mis|${rodada}|${save.slice(0, 8)}` };
+  return { ok: true, reward, receipt };
 }
 
 /** A VISTA: barra coletiva 0..99, rodada, quantos investigam; nada por pessoa. */
