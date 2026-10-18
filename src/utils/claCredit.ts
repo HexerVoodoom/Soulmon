@@ -15,6 +15,7 @@
 import { CHIP_EMOJI, type Attr } from './shop';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { noteFreeBits, type BitsOriginState } from './bitsOrigin';
+import { migrarEspecie } from './plantSpecies';
 import type { ClaReward } from './claApi';
 
 export const CLA_RECEIPTS_MAX = 50;
@@ -29,8 +30,8 @@ export interface ClaSaveSlice extends BitsOriginState {
 
 /** O fruto de cada espécie vira UMA decoração já existente na loja (cosmético, sem duplicar). Peça única de troca. */
 export const FRUTO_DECOR: Record<string, string> = {
-  girassol: 'furn-plant',
-  melancia: 'furn-food-bowl',
+  cerejeira: 'furn-plant',
+  cacto: 'furn-food-bowl',
   abobora: 'furn-lantern',
   pinheiro: 'furn-campfire',
 };
@@ -79,7 +80,8 @@ export function applyClaRewards<T extends ClaSaveSlice>(prev: T, receipt: string
 
 /** Os prêmios de um fruto colhido: os Bits do servidor e a decoração da espécie. */
 export function fruitRewards(fruitId: string, bits: number): ClaReward[] {
-  const especie = /^fruto-([a-z]+)-t\d+$/.exec(fruitId)?.[1] ?? '';
+  // Fruto antigo (`fruto-girassol-t1`, guardado no servidor) cai na espécie nova da mesma estação.
+  const especie = String(migrarEspecie(/^fruto-([a-z]+)-t\d+$/.exec(fruitId)?.[1] ?? ''));
   const decor = FRUTO_DECOR[especie];
   return [{ kind: 'bits', amount: bits }, ...(decor ? [{ kind: 'decor', id: decor } as ClaReward] : [])];
 }

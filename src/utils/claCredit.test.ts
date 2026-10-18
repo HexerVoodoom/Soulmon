@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { applyClaRewards, fruitRewards, sanitizeClaReceipts, CLA_RECEIPTS_MAX, FRUTO_DECOR, type ClaSaveSlice } from './claCredit';
 import { CHIP_EMOJI } from './shop';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { sanitizeReward, sanitizePraca, sanitizePlantio, sanitizeMisterio } from './claApi';
+import { sanitizeReward, sanitizePraca, sanitizePlantio, sanitizeMisterio, migrarEspecie } from './claApi';
 
 const base = (): ClaSaveSlice => ({ gamePoints: 100, foodInventory: {}, ownedFurniture: ['furn-rug'], guildDonatedItem: null, claReceipts: [] });
 const DAY = '2026-10-18';
@@ -53,10 +53,10 @@ describe('o crédito dos prédios do clã é idempotente por recibo', () => {
 
   it('o fruto entra por UM recibo: Bits + a decoração da espécie, juntos', () => {
     const r = fruitRewards('fruto-girassol-t2', 10);
-    expect(r).toEqual([{ kind: 'bits', amount: 10 }, { kind: 'decor', id: FRUTO_DECOR.girassol }]);
+    expect(r).toEqual([{ kind: 'bits', amount: 10 }, { kind: 'decor', id: FRUTO_DECOR.cerejeira }]);
     const s = applyClaRewards(base(), 'g|2026-W42|2026-primavera', r, DAY);
     expect(s.gamePoints).toBe(110);
-    expect(s.ownedFurniture).toContain(FRUTO_DECOR.girassol);
+    expect(s.ownedFurniture).toContain(FRUTO_DECOR.cerejeira);
     expect(applyClaRewards(s, 'g|2026-W42|2026-primavera', r, DAY)).toBe(s);
   });
 
@@ -87,6 +87,15 @@ describe('o cliente trata a resposta do servidor como dado não confiável', () 
     expect(p.slots[2]).toMatchObject({ item: 'furn-lamp', mine: true });
     expect(p.gifts).toHaveLength(1);
     expect(p.sentToday).toEqual(['x']);
+  });
+
+  it('migração D-38: girassol->cerejeira, melancia->cacto; idempotente; fruto novo e antigo dão a mesma decoração', () => {
+    expect(sanitizePlantio({ species: 'girassol', season: 'primavera' })?.species).toBe('cerejeira');
+    expect(sanitizePlantio({ species: 'melancia', season: 'verao' })?.species).toBe('cacto');
+    expect(sanitizePlantio({ species: 'cacto', season: 'verao' })?.species).toBe('cacto');
+    expect(migrarEspecie(migrarEspecie('melancia'))).toBe('cacto');
+    expect(fruitRewards('fruto-melancia-t1', 5)).toEqual(fruitRewards('fruto-cacto-t1', 5));
+    expect(fruitRewards('fruto-girassol-t1', 5)).toEqual(fruitRewards('fruto-cerejeira-t1', 5));
   });
 
   it('plantio e mistério: espécie/estação desconhecida e barra fora do intervalo', () => {

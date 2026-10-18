@@ -1,44 +1,30 @@
 /**
- * O PLANTIO DO CLÃ (D-14..D-17): UMA planta por estação, cuidada por todos. Girassol na primavera, melancia
- * no verão, abóbora no outono, pinheiro no inverno (calendário do hemisfério sul — o servidor decide).
+ * O PLANTIO DO CLÃ (D-14..D-17, D-38): UMA planta por estação, cuidada por todos — as MESMAS 4 árvores do Bosque:
+ * abóbora no outono, pinheiro no inverno, cerejeira e acácia na primavera, cacto e coqueiro no verão (calendário do
+ * hemisfério sul — o servidor decide). Girassol e melancia saíram em 18/10/2026 e migram para a espécie da mesma
+ * estação (`claApi.ESPECIE_LEGADO`).
  *
- * O Visor: SVG de arestas retas no vidro, na paleta do aparelho, sobre o cenário do Bosque. O estágio
- * (0 semente .. 3 quase no ponto, 4 madura) decide a altura da haste e das folhas; a madura mostra o fruto da
- * espécie. A árvore do clã (nível/tier, D-17) aparece como UMA linha de texto — nunca como ranking.
+ * O Visor: a árvore pintada (os sprites do Bosque, `assets/bosque`) sobre o chão do panorama do Bosque. O estágio do servidor
+ * (0 semente .. 3 quase no ponto, 4 madura) escolhe o nível do sprite (`nivelDoPlantio`: broto, pequena, média,
+ * completa). A árvore do clã (nível/tier, D-17) aparece como UMA linha de texto — nunca como ranking.
  *
  * Regras de tom: planta "atrasada" é um FATO calmo (`guild.plantio.atrasada`); nada morre, nada é cobrado, e
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
-import fruitGirassol from '../../assets/soulmon/plantio/fruit-girassol.png';
-import fruitMelancia from '../../assets/soulmon/plantio/fruit-melancia.png';
-import fruitAbobora from '../../assets/soulmon/plantio/fruit-abobora.png';
-import fruitPinheiro from '../../assets/soulmon/plantio/fruit-pinheiro.png';
-import { PET_BACKGROUNDS } from '../../utils/backgrounds';
-import { sceneCss } from '../../utils/backgroundPortrait';
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
 import { fruitRewards } from '../../utils/claCredit';
+import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
+import { ESTACAO_DA_ESPECIE, nivelDoPlantio } from '../../utils/bosqueArvores';
 import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
 import { useClaBuilding, type ClaSalaProps } from './claUi';
 
-export const PLANTIO_VISOR_HEIGHT = 150;
-const W = 320;
+export const PLANTIO_VISOR_HEIGHT = 220;
 const H = PLANTIO_VISOR_HEIGHT;
-const GROUND = H - 22;
-const SLAB = '#2A5C5A';
-const OUTLINE = '#050E0E';
-const TURQ = '#6EFFFB';
-const COPPER = '#B87333';
-const BONE = '#EFE3C2';
-const BRASS = '#C9A34A';
-const LEAF = '#3E8E6B';
-
-const FRUIT_ART: Record<PlantSpecies, string> = { girassol: fruitGirassol, melancia: fruitMelancia, abobora: fruitAbobora, pinheiro: fruitPinheiro };
-/** (legado) A cor do fruto por espécie (paleta do aparelho + verde de folha; nada de magenta, roxo ou rosa). */
-const FRUIT_COLOR: Record<PlantSpecies, string> = { girassol: BRASS, melancia: LEAF, abobora: COPPER, pinheiro: BONE };
-const STEM_H = [4, 18, 34, 50, 56];
+/** Altura do sprite por nível (1 broto .. 4 completa), em px do vidro: a árvore cresce, a base não sai do chão. */
+const ARVORE_PX = [0, 96, 132, 164, 196];
 
 interface PlantioVisorProps {
   stage: number;
@@ -46,48 +32,38 @@ interface PlantioVisorProps {
   planted: boolean;
   mature: boolean;
   reducedMotion: boolean;
-  stageBg: string | null;
   label?: string;
 }
 
-export function PlantioVisor({ stage, species, planted, mature, reducedMotion, stageBg, label }: PlantioVisorProps) {
-  const bgId = `bg-guild-${stageBg ?? 'clareira'}`;
-  const bg = PET_BACKGROUNDS[bgId];
-  const cx = W / 2;
-  const h = planted ? STEM_H[Math.min(4, Math.max(0, stage))] : 0;
-  const leaves = planted ? Math.min(4, stage + 1) : 0;
+export function PlantioVisor({ stage, species, planted, mature, reducedMotion, label }: PlantioVisorProps) {
+  const nivel = nivelDoPlantio({ planted, mature, stage });
+  const src = nivel > 0 ? ARVORE_SRC[ESTACAO_DA_ESPECIE[species]][nivel] : null;
   return (
     <span
       className="sm2-viewport-screen sm2-visor sm2-plantio-screen"
       data-plantio-visor
       data-species={species}
       data-stage={planted ? stage : undefined}
+      data-nivel={nivel}
       data-reduced-motion={reducedMotion ? 'true' : undefined}
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: H, background: bg && `${sceneCss(bgId)} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: H, background: `url(${PANORAMA_SRC}) 40% 88% / auto 230% no-repeat`, backgroundColor: '#1d3a2a', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="xMidYMax meet" shapeRendering="crispEdges" style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
-        {/* o canteiro: um monte de terra sobre o disco de latão */}
-        <rect x={cx - 50} y={GROUND} width={100} height={8} fill={COPPER} stroke={OUTLINE} strokeWidth={1.5} />
-        <rect x={cx - 34} y={GROUND - 8} width={68} height={8} fill={SLAB} stroke={OUTLINE} strokeWidth={1.5} />
-        {planted && (
-          <g data-plantio-planta>
-            <rect x={cx - 3} y={GROUND - 8 - h} width={6} height={h || 3} fill={LEAF} stroke={OUTLINE} strokeWidth={1.2} />
-            {Array.from({ length: leaves }, (_, i) => {
-              const dir = i % 2 === 0 ? -1 : 1;
-              return <rect key={i} x={dir < 0 ? cx - 3 - 16 : cx + 3} y={GROUND - 8 - 8 - i * 11} width={16} height={6} fill={LEAF} stroke={OUTLINE} strokeWidth={1} />;
-            })}
-            {mature && (
-              <g className={reducedMotion ? undefined : 'sm2-casa-glow'} data-plantio-fruto>
-                <image href={FRUIT_ART[species]} x={cx - 16} y={GROUND - 8 - h - 30} width={32} height={32} preserveAspectRatio="xMidYMax meet" style={{ imageRendering: 'pixelated' }} />
-              </g>
-            )}
-          </g>
-        )}
-        {!planted && <rect x={cx - 8} y={GROUND - 12} width={16} height={2} fill={TURQ} fillOpacity={0.6} />}
-      </svg>
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          data-plantio-planta
+          data-plantio-fruto={mature ? '' : undefined}
+          className={mature && !reducedMotion ? 'sm2-casa-glow' : undefined}
+          style={{ height: ARVORE_PX[nivel], width: 'auto', display: 'block', imageRendering: 'auto', marginBottom: 6, position: 'relative' }}
+        />
+      ) : (
+        <span aria-hidden="true" style={{ width: 96, height: 14, marginBottom: 18, borderRadius: '50%', border: '2px dashed var(--sm2-primary, #6EFFFB)', opacity: 0.7 }} />
+      )}
       <span className="sm2-viewport-glass" />
     </span>
   );
@@ -99,7 +75,7 @@ const ACOES_OK: Record<PlantioAction, GuildKey> = {
 };
 
 /** O painel do Plantio: espécie da estação, estágio, "atrasada", Plantar/Regar/Proteger/Colher e a árvore do clã. */
-export function SalaPlantio({ saveId, language, t, guild, tz, reducedMotion, onReward, onAnnounce }: ClaSalaProps) {
+export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, onAnnounce }: ClaSalaProps) {
   const { view, setView, status, ocupado, erro, agir, recarregar } = useClaBuilding(() => getPlantio(saveId, tz));
 
   const fazer = async (acao: PlantioAction) => {
@@ -124,7 +100,7 @@ export function SalaPlantio({ saveId, language, t, guild, tz, reducedMotion, onR
       )}
       {v && (
         <>
-          <PlantioVisor stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} reducedMotion={reducedMotion} stageBg={guild.bosque.stage} label={t('guild.plantio.aria', { nome: especie })} />
+          <PlantioVisor stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} reducedMotion={reducedMotion} label={t('guild.plantio.aria', { nome: especie })} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <h3 className="sm2-grove-stage" style={{ margin: 0 }} data-plantio-especie>{especie}</h3>
             <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona o plantio' : 'How the garden works'} align="right" style={{ marginRight: -8 }}>{t('guild.plantio.regra')}</InfoTip>

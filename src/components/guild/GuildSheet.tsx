@@ -36,7 +36,7 @@
  *
  * Nada da guilda vai para o `GameState`: o ponteiro é do servidor.
  */
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
   hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, getGuildWar, seekGuildWar,
@@ -70,7 +70,10 @@ import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
-import { GroveVisor } from './GroveVisor';
+/** O panorama (D-32): só nasce aqui, pela porta do Hall, e sob demanda — panorama e árvores fora do chunk de entrada. */
+import type { OnPlantio } from './GroveFolha';
+import type { BosqueArvores } from '../../utils/bosqueArvores';
+const GroveFolha = lazy(() => import('./GroveFolha'));
 import { CasaVisor } from './CasaVisor';
 import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
@@ -121,13 +124,8 @@ interface GuildSheetProps {
   /** A MISSÃO (PR3, ex-Feira): o estado da ida do Solmon (no save) e o gesto de mandá-lo. */
   missao?: { state: GuildMissionState | null; onSend: () => void };
   /** Os PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): a ponte do prêmio com o save. O App credita UMA vez por recibo (`utils/claCredit.ts`). */
-  cla?: { onReward: ClaOnReward };
+  cla?: { onReward: ClaOnReward; /** As 4 árvores do Bosque no save (`bosqueArvores`). */ arvores?: BosqueArvores; /** Guarda o que o plantio mostrou (pico da árvore da estação). */ onPlantio?: OnPlantio };
 }
-
-/** A Clareira SEM roda: o chão de partida, sem membro, sem estágio nem slot marcado (plano §5). */
-const CLAREIRA_VAZIA: Pick<GuildView, 'size' | 'members' | 'bosque'> = {
-  size: 0, members: [], bosque: { stage: null, stageIndex: 0, perto: false, ornaments: [] },
-};
 
 /** `guild_raid` 1/2 (viu dissipada / viu recuou): UMA vez por semana e estado, por execução do app. */
 const raidVista = new Set<string>();
@@ -468,8 +466,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
       <>
         {/* O RESGATE é da pessoa, não da roda: quem saiu ainda colhe (L3-conformidade A-1). */}
         {resgate}
-        {/* A Clareira vazia no visor (plano §5): mostra o que a roda constrói antes de pedir que se abra uma. */}
-        <GroveVisor guild={CLAREIRA_VAZIA} mySprite={mySprite || getSpriteForStage('rookie')} reducedMotion={reducedMotion} />
         {room === 'feira' && <p className="sm2-grove-line" data-guild-feira-convite>{t('guild.feira.semroda')}</p>}
         <p className="sm2-stats-t">{t('guild.salao.vazio.corpo')}</p>
         {alerta}
@@ -638,6 +634,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             ocupado={ocupado}
             mySprite={mySprite || getSpriteForStage('rookie')}
             reducedMotion={reducedMotion}
+            saveId={saveId}
+            tz={tz.current}
+            arvores={cla?.arvores ?? {}}
+            onPlantio={cla?.onPlantio}
             onFio={() => void agir(() => guildThread(saveId, fioGoal, tz.current), {
               anunciar: 'guild.bosque.fio.toast',
               depois: () => track('guild_thread', { kind: 0 }),
@@ -812,10 +812,12 @@ type T = (k: GuildKey, vars?: Record<string, string | number>) => string;
  * própria cumprida nem botão nem frase de explicação. O agregado (5+) só existe
  * com fio hoje e nunca leva número.
  */
-function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, reducedMotion, onFio }: {
+function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, reducedMotion, onFio, saveId, tz, arvores, onPlantio }: {
   guild: GuildView; t: T; language: Language; metaDoDiaCumprida: boolean; ocupado: boolean;
   mySprite: string; reducedMotion: boolean; onFio: () => void;
+  saveId: string; tz: PlayerDayAnchor | undefined; arvores: BosqueArvores; onPlantio?: OnPlantio;
 }) {
+  const [panorama, setPanorama] = useState(false);
   const { stage, stageIndex, perto } = guild.bosque;
   const fioHoje = guild.mine.threadToday;
   const podeFirmar = !fioHoje && metaDoDiaCumprida;
@@ -826,20 +828,23 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
   const proximo = perto && stageIndex < GROVE_STAGES.length ? groveStageName(language, GROVE_STAGES[stageIndex]) : null;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
-      {guild.casa ? (
+      {guild.casa && (
         <CasaVisor
           guild={guild}
           mySprite={mySprite}
           reducedMotion={reducedMotion}
           label={t('guild.aria.casa', { estagio: casaStageName(t, guild.casa.nivel) })}
         />
-      ) : (
-        <GroveVisor
-          guild={guild}
-          mySprite={mySprite}
-          reducedMotion={reducedMotion}
-          label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
-        />
+      )}
+      {/* D-32: o panorama do Bosque abre AQUI (Hall > Guilda), em tela cheia; não há visor embutido na folha. */}
+      <button type="button" data-guild-bosque-entrar onClick={() => setPanorama(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+        <Icon name="eco" size={20} />
+        {t('guild.bosque.entrar')}
+      </button>
+      {panorama && (
+        <Suspense fallback={null}>
+          <GroveFolha saveId={saveId} language={language} tz={tz} reducedMotion={reducedMotion} arvores={arvores} onPlantio={onPlantio} onClose={() => setPanorama(false)} />
+        </Suspense>
       )}
       {/* O que CHEGOU vem colado ao visor, no topo da folha (QA L3 M3/B7): antes ficava a 550 px, abaixo
           da dobra, e com o mesmo estilo de uma linha de membro — lia-se como gente. Só o tipo, em lote,
