@@ -64,7 +64,7 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
       const bg = PET_BACKGROUNDS[item.id];
       return (
         <MiniGlass size={GLASS_ITEM} style={{ width: GLASS_BG_W, height: GLASS_BG_H, ...ring }}>
-          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: bg && `${bg.css} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor, imageRendering: 'pixelated' }} />
+          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: bg && `${bg.css} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }} />
           {veil}
         </MiniGlass>
       );

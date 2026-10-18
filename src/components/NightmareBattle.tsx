@@ -112,6 +112,26 @@ export interface NightmareBattleProps {
 /** O convite mostra o próprio pesadelo da noite (a sombra `dino-shadow-*`); sem onda, a sombra do degrau 2. */
 const INTRO_FALLBACK = shadowSource(1, 0).src;
 
+/** O convite do pesadelo é SOMBRIO (REGISTRO §88): fundo preto, a sombra com glitch e aberração cromática (violeta/ciano, nunca vermelho). */
+const NIGHTMARE_DARK_CARD: CSSProperties = {
+  backgroundColor: '#05080c',
+  boxShadow: '0 0 0 1px #3b2a7a, 0 0 32px rgba(118,59,255,.35)',
+};
+const GLITCH_CSS = `
+.nm-glitch{position:relative;width:160px;height:160px;margin:4px auto 0;display:flex;align-items:center;justify-content:center}
+.nm-glitch__img{image-rendering:pixelated;width:160px;height:160px;transform:scaleX(-1);
+  filter:drop-shadow(-4px 0 0 rgba(118,59,255,.85)) drop-shadow(4px 0 0 rgba(63,200,232,.85));
+  animation:nm-glitch-shift 2.4s steps(1,end) infinite}
+.nm-glitch::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);pointer-events:none}
+@keyframes nm-glitch-shift{
+  0%,86%,100%{transform:scaleX(-1) translateX(0);clip-path:none}
+  88%{transform:scaleX(-1) translateX(-6px);clip-path:inset(12% 0 58% 0)}
+  91%{transform:scaleX(-1) translateX(7px);clip-path:inset(55% 0 20% 0)}
+  94%{transform:scaleX(-1) translateX(-3px);clip-path:inset(30% 0 40% 0)}
+  97%{transform:scaleX(-1) translateX(4px);clip-path:none}}
+@media (prefers-reduced-motion:reduce){.nm-glitch__img{animation:none}}
+`;
+
 type Phase = 'intro' | 'fight' | 'won' | 'lost';
 
 
@@ -392,12 +412,16 @@ export function NightmareBattle({
       maxWidth={340}
       closeLabel={isPt ? 'Fechar' : 'Close'}
       closeSide="end"
-      style={{ alignItems: 'center', textAlign: 'center', gap: 10, paddingTop: 44 }}
+      theme={phase === 'intro' ? 'dark' : undefined}
+      style={{ alignItems: 'center', textAlign: 'center', gap: 10, paddingTop: 44, ...(phase === 'intro' ? NIGHTMARE_DARK_CARD : null) }}
     >
       {/* ── Convite ─────────────────────────────────────────────────── */}
       {phase === 'intro' && (
         <>
-          {visor(80, <VisorSprite src={wave[0]?.sprite ?? INTRO_FALLBACK} alt="" flip idle={false} style={otherBox} data-visor-enemy />)}
+          <style>{GLITCH_CSS}</style>
+          <div className="nm-glitch" data-nightmare-shadow aria-hidden="true">
+            <img className="nm-glitch__img" data-visor-enemy src={wave[0]?.sprite ?? INTRO_FALLBACK} alt="" width={160} height={160} draggable={false} />
+          </div>
           <p style={sm2Hint}>{isPt ? 'De manhã, seu Soulmon conta:' : 'In the morning, your Soulmon says:'}</p>
           <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{title}</h2>
           <p style={{ ...sm2Text, margin: 0 }}>{flavor}</p>
@@ -413,10 +437,7 @@ export function NightmareBattle({
                 {isPt ? NIGHTMARE_HINT.pt : NIGHTMARE_HINT.en}
               </p>
               <button type="button" onClick={start} style={btn('primary')}>
-                {isPt ? 'Ficar na frente dele' : 'Stand in its way'}
-              </button>
-              <button type="button" onClick={onClose} style={btn('outline')}>
-                {isPt ? 'Agora não' : 'Not now'}
+                {isPt ? 'Encarar o pesadelo' : 'Face the nightmare'}
               </button>
             </>
           ) : (

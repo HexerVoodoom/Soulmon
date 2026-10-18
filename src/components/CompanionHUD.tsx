@@ -1343,6 +1343,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 inset: 0,
                 pointerEvents: 'none',
                 background: `${cenario} center bottom / auto 100% no-repeat`,
+                imageRendering: 'auto', // arte PINTADA reduzida: suavizada (o pixelated do palco é para os sprites; nearest aqui vira serrilhado)
                 WebkitMaskImage: CENA_ARTE_MASK,
                 maskImage: CENA_ARTE_MASK,
               }}

@@ -62,7 +62,7 @@ export function GroveMilestoneCeremony({
   return (
     <RitualDialog labelledBy="gmc-title" onClose={onDone} zIndex={300} maxWidth={340} veilRole="status"
       style={{ textAlign: 'center', alignItems: 'center' }}>
-      <RitualGlass width={208} height={144} align="end" style={{ position: 'relative', background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor, imageRendering: 'pixelated' }}>
+      <RitualGlass width={208} height={144} align="end" style={{ position: 'relative', background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}>
         <img
           src={spriteUrl}
           alt=""
@@ -70,7 +70,7 @@ export function GroveMilestoneCeremony({
           height={128}
           data-grove-ceremony-sprite
           className={reducedMotion ? undefined : 'sm-milestone-pop'}
-          style={{ width: 128, height: 128, display: 'block', marginBottom: `${100 - GROUND_Y - 10}%` }}
+          style={{ width: 128, height: 128, imageRendering: 'pixelated', display: 'block', marginBottom: `${100 - GROUND_Y - 10}%` }}
         />
       </RitualGlass>
       <Icon name="eco" size={32} fill={1} tone="primary" />

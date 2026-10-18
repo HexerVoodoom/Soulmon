@@ -55,7 +55,7 @@ import lotePasseio from './lote-exploracao-passeio.png';
 // Flare, alfa real), mesmo pós dos lotes-v2 (300², alfa binário). Até aqui emprestavam o Observatório e a
 // Biblioteca. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
 // 🏞️ 07/10/2026 (escolha do dono): Oficina = santuário do domínio Akasha, Caderno = santuário do Pântano (cópias de `dominios/*/predios`, alfa real).
-import loteOficina from './lote-exploracao-oficina-akasha.png';
+import loteOficina from './lote-exploracao-oficina-v3.png';
 // 🏡 11/10/2026 (pedido do dono: "o prédio do jornal é massa mas muito misturado com o background"): o Caderno troca o santuário do
 // Pântano (verde-escuro sobre a clareira verde-escura) pelo chalé de sapé `-campina`, que já estava em disco — amarelo-quente
 // sobre o fundo teal, é o prédio que mais SE DESTACA da Exploração (medido sobre o fundo; folha de contato na PR). O Pântano fica em disco.
@@ -63,7 +63,8 @@ import loteOficina from './lote-exploracao-oficina-akasha.png';
 // lia como uma casa qualquer. Volta a casa do TINTEIRO com a pena no telhado (`lote-exploracao-caderno.png`, arte própria que já
 // estava em disco): é o único dos três que se reconhece como diário só pela silhueta. O chalé `-campina` e o santuário `-pantano`
 // ficam em disco, sem import. (Se o dono achar que mistura com o fundo de novo, a alternativa é o halo, não outro chalé.)
-import loteCaderno from './lote-exploracao-caderno.png';
+// 18/10/2026 (revisão 2, D6): Caderno e Oficina fora do tema (casa do tinteiro / torre branca) -> prédios NOVOS no kit do Mapa (pedra petróleo, cobre, cristais turquesa, vinhas): Caderno = scriptorium com livro aberto e pena; Oficina = ampulhetas de cristal. Os antigos ficam em disco, sem import.
+import loteCaderno from './lote-exploracao-caderno-v3.png';
 // 🎨 07/10/2026: o dono NÃO gostou da reforma e Mente/Oficina/Caderno/Amigos voltaram à arte original (as `-akasha`/`-deserto`/`-campina` ficam em disco, sem import). Nota antiga da reforma: prédios de DOMÍNIO (`../../dominios/<dom>/predios`, arte própria já no repo) copiados
 // para cá — o contrato de geometria lê só esta pasta. Trocaram os quatro lotes teal-sobre-teal (Mente, Oficina, Caderno e
 // os do Hall); as artes antigas ficam em disco, sem import (`lote-jogos-mente`, `lote-exploracao-oficina`/`caderno`,

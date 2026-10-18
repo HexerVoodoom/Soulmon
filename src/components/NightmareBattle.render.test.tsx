@@ -75,7 +75,7 @@ function montar(wave: DungeonEnemy[], cbs: { onWin?: () => void; onLose?: () => 
   );
 }
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
-const entrar = () => fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
+const entrar = () => fireEvent.click(screen.getByRole('button', { name: 'Encarar o pesadelo' }));
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));
 /** Avança de 100 em 100 ms até a condição valer (ou `maxMs`). */
 async function ate(cond: () => boolean, maxMs = 60_000) {
@@ -249,8 +249,17 @@ describe('Pesadelo — a luta em tela cheia', () => {
   it('em inglês: nada de português na luta', () => {
     vi.useFakeTimers();
     montar([inimigo()], { language: 'en-US' });
-    fireEvent.click(screen.getByRole('button', { name: 'Stand in its way' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Face the nightmare' }));
     const texto = document.body.textContent ?? '';
     for (const palavra of ['Torcer', 'Pesadelo', 'Seu Soulmon', 'Sair']) expect(texto.includes(palavra), palavra).toBe(false);
+  });
+});
+
+describe('Pesadelo — convite sombrio (REGISTRO §88, D3)', () => {
+  it('sem "Agora não"/"Not now"; o botão novo; a sombra tem a camada de glitch', () => {
+    const { container } = montar([inimigo()]);
+    expect(document.body.textContent).not.toMatch(/Agora não|Not now/);
+    expect(screen.getByRole('button', { name: 'Encarar o pesadelo' })).toBeTruthy();
+    expect(container.querySelector('[data-nightmare-shadow]') ?? document.querySelector('[data-nightmare-shadow]')).toBeTruthy();
   });
 });

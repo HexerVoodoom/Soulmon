@@ -49,7 +49,6 @@ export function RegionPostal({ region, width = 56, height = 44 }: { region: Regi
     background: bg?.css ?? 'radial-gradient(circle at 50% 30%, var(--sm2-surface-2), var(--sm2-bg) 80%)',
     backgroundColor: bg?.baseColor,
     backgroundSize: 'cover', backgroundPosition: 'center bottom',
-    imageRendering: 'pixelated',
   };
   return <span aria-hidden="true" data-travessia-postal={region.id} style={style} />;
 }

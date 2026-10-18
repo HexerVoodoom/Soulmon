@@ -119,7 +119,7 @@ export function BackgroundLightbox({ open, bgId, name, language, onClose }: {
       </button>
       {src
         ? <img data-lightbox-image src={src} alt={name} onClick={e => e.stopPropagation()} style={{ maxWidth: '100%', maxHeight: '82vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.6)' }} />
-        : <div data-lightbox-image role="img" aria-label={name} onClick={e => e.stopPropagation()} style={{ width: 'min(92vw, 420px)', aspectRatio: '9 / 16', maxHeight: '82vh', background: css, borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.6)' }} />}
+        : <div data-lightbox-image role="img" aria-label={name} onClick={e => e.stopPropagation()} style={{ width: 'min(92vw, 420px)', aspectRatio: '9 / 16', maxHeight: '82vh', background: css, backgroundSize: 'cover', backgroundPosition: 'center bottom', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.6)' }} />}
     </div>,
     document.body,
   );

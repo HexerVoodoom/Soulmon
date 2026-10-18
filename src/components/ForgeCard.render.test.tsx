@@ -236,8 +236,8 @@ describe('o modal de aprimorar em inglês (11/10/2026)', () => {
 });
 
 describe('a arte e a fonte dos fragmentos', () => {
-  it('os 13 ícones instalados existem (sem arte nova)', () => {
-    expect(equipArtNames().sort()).toEqual([
+  it('os ícones instalados existem (os 13 originais + 4 degraus de nível por peça, D2)', () => {
+    expect(equipArtNames().filter((n) => !/-n\d$/.test(n)).sort()).toEqual([
       'eq-carapaca-t1', 'eq-carapaca-t2', 'eq-carapaca-t3', 'eq-nucleo-t1', 'eq-nucleo-t2', 'eq-nucleo-t3',
       'eq-rastro-t1', 'eq-rastro-t2', 'eq-rastro-t3', 'fragmento', 'slot-carapaca', 'slot-nucleo', 'slot-rastro',
     ]);

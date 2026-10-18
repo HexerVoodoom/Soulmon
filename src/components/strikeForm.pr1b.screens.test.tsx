@@ -129,11 +129,11 @@ describe('N1: o selo do especial do pet leva o nome da skill', () => {
 
   it('Pesadelo com ficha: o nome próprio na cena; sem ficha: SPECIAL_LABEL', () => {
     PVE.Pesadelo(ficha('maldicao', 'maldicao', 'vigor'), 'vigor');
-    fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Encarar o pesadelo' }));
     expect(cenas.at(-1)!.specialLabel).toBe('Lâmina do Crepúsculo');
     cleanup(); cenas.length = 0;
     PVE.Pesadelo(undefined, 'vigor');
-    fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Encarar o pesadelo' }));
     expect(cenas.at(-1)!.specialLabel).toBe(SPECIAL_LABEL.pt);
   });
 });
