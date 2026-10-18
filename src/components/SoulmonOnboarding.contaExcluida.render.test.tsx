@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
+import { passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
@@ -88,6 +89,7 @@ describe('lápide no login', () => {
     ir('I am 18 or older');
     ir('I have read and agree to the Terms of Use and the Privacy Policy');
     botao('Continue');
+    passarApresentacaoDaAmbra(); // §81: a Ambra se apresenta entre os Termos e o nome
     expect(screen.getByText('What should we call you?')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Account deleted' })).toBeNull();
   });

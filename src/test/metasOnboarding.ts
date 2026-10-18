@@ -18,8 +18,16 @@ import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/quest
 const clicarContinuar = (pt: boolean) =>
   fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
 
-/** O passo do nome: digita e segue. Para na 1ª pergunta do ritual. */
+/** A Ambra se apresenta depois dos Termos e antes do nome (§81): toca na tela (o avançar da `NpcSequence`) até o nome
+ *  aparecer. Sem a apresentação na tela (retomada no meio do ritual) não faz nada. */
+export function passarApresentacaoDaAmbra(): void {
+  const avanca = document.querySelector('[data-npc-sequence] [data-npc-advance]');
+  if (avanca) fireEvent.click(avanca);
+}
+
+/** O passo do nome: passa pela Ambra, digita e segue. Para na 1ª pergunta do ritual. */
 export function responderNome(nome = 'Corvo Azul', pt = false): void {
+  passarApresentacaoDaAmbra();
   const campo = screen.getByLabelText(pt ? 'Seu nome' : 'Your name');
   fireEvent.change(campo, { target: { value: nome } });
   clicarContinuar(pt);
@@ -45,8 +53,7 @@ function escolherPrimeira(pt: boolean): void {
   clicarContinuar(pt);
 }
 
-/** Áreas → dificuldades → forças → ponto de partida, e para na ESCOLHA
- *  grátis/completo. */
+/** Áreas → dificuldades → forças → ponto de partida, e para na tela do OVO-CRISTAL (§81; era a escolha grátis/completo). */
 export function responderMetas(pt = false): void {
   escolherPrimeira(pt); // o que melhorar
   escolherPrimeira(pt); // o que atrapalha
@@ -60,7 +67,7 @@ export async function ateAsMetas(pt = false, nome = 'Corvo Azul'): Promise<void>
   await responderPerguntas();
 }
 
-/** Nome + perguntas + metas: da saída do portão até a escolha grátis/completo. */
+/** Nome + perguntas + metas: da saída do portão até a tela do ovo-cristal. */
 export async function atravessarPerguntasIniciais(pt = false, nome = 'Corvo Azul'): Promise<void> {
   await ateAsMetas(pt, nome);
   responderMetas(pt);

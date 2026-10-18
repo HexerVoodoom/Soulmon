@@ -25,7 +25,7 @@ import { bumpDaily, claimDaily, claimFirst, dailyMissionsMark, firstTimesMark, m
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT } from './utils/hunger';
+import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -2087,7 +2087,8 @@ export default function App() {
     setDayGoalsOpen(true);
   }, [dayPlanActive, rolloverPending, showDailyReport, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
   const presentation = usePresentationQueue({
-    ready: readyFor(demo, {
+    // §81: durante o ONBOARDING a fila é inerte (nenhum item "visto" é gravado sem aparecer, nenhum voltar é tomado).
+    ready: readyFor(demo || !hasCompletedOnboarding, {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
       levelUp: levelUpOpen,
@@ -5986,6 +5987,8 @@ export default function App() {
       },
       accountTier: 'paid',
       demoCharacterId: undefined,
+      // §81: o Soulmon pago CHEGA com vida cheia (acima), energia cheia e fome vazia, o relógio da fome já contando.
+      ...paidArrivalVitals(Date.now()),
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
       onboardingProfile: onboardingProfile ?? prev.onboardingProfile,

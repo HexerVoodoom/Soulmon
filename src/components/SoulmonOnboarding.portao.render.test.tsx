@@ -26,6 +26,7 @@ import { SoulmonOnboarding, GOOGLE_SEM_RESPOSTA_MS } from './SoulmonOnboarding';
 import { buildConsentRecord, TERMS_VERSION } from '../utils/consent';
 import { writeGateDraft } from '../utils/gateDraft';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 
 vi.mock('../utils/auth', async () => {
   const real = await vi.importActual<typeof import('../utils/auth')>('../utils/auth');
@@ -130,6 +131,10 @@ describe('portão de identidade', () => {
     ir('I am 18 or older');
     expect(btn('Continue').disabled).toBe(false);
     botao('Continue');
+    // §81: depois dos Termos a Ambra se apresenta; um toque e vem o nome.
+    expect(document.querySelector('[data-npc-sequence]')).toBeTruthy();
+    expect(screen.queryByText('What should we call you?')).toBeNull();
+    passarApresentacaoDaAmbra();
     expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
@@ -158,6 +163,7 @@ describe('portão de identidade', () => {
     await screen.findByText('Before we start');
     aceitarERevelarIdade();
     botao('Continue');
+    passarApresentacaoDaAmbra();
     expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
@@ -261,6 +267,7 @@ describe('portão de identidade', () => {
     aceitarERevelarIdade();
     expect(btn('Continue').disabled).toBe(false);
     await act(async () => { botao('Continue'); });
+    passarApresentacaoDaAmbra();
     expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 

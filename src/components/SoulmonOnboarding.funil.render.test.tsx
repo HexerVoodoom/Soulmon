@@ -7,6 +7,8 @@
  *    sem "prefiro não responder", e ganhou forças + ponto de partida;
  *  · B6 o voltar é a seta no canto superior esquerdo (`BackArrow`);
  *  · B7 "Get your own Soulmon"; B10 sem tonalidade; B11 "Name your Soulmon".
+ * §81 (15/10/2026): a escolha grátis/completo, o reveal demo e o cadastro do nome da demo SAÍRAM — o fim do ritual é o
+ *   ovo-cristal e a demo é o "Soulmon guia" (com confirmação e a Ambra); os testes abaixo foram levados para esse caminho.
  * E pelo pedido seguinte do dono, no mesmo dia: as 6 do ritual e os 20 itens
  * do teste viraram parte OBRIGATÓRIA do onboarding, entre o nome e as metas.
  */
@@ -15,8 +17,8 @@ import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
-import { atravessarRevealDemo } from '../test/ritualDemo';
-import { responderNome, ateAsMetas, atravessarPerguntasIniciais, responderPerguntas } from '../test/metasOnboarding';
+import { abrirGuias, entrarNaDemoPeloOvo, tocarOvo, escolherGuiaEConfirmar } from '../test/ovoOnboarding';
+import { responderNome, ateAsMetas, atravessarPerguntasIniciais, responderPerguntas, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 import { ORACLE_QUESTIONS } from '../utils/oracle';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
 
@@ -27,6 +29,7 @@ function passarPortao() {
   fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
   fireEvent.click(screen.getByText('I am 18 or older'));
   fireEvent.click(btn('Continue'));
+  passarApresentacaoDaAmbra(); // §81: depois dos Termos a Ambra se apresenta; um toque e vem o nome
 }
 
 // Aquecimento: a leitura demo carrega as famílias do Oráculo por `import()`
@@ -145,21 +148,26 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.queryByText('Add tasks to list')).toBeNull();
   });
 
-  it('B7 Escolha: grátis primário, "Get your own Soulmon" outline (sem dourado), voltar pela seta', async () => {
+  it('§81 Ovo: sem botões antes dos 5 toques; depois, "Meet your Soulmon" primário e "Lend me a guide Soulmon" outline; voltar pela seta', async () => {
     await atravessarPerguntasIniciais();
-    expect(variante(btn('Start now — it’s free'))).toBe('primary');
-    const pago = btn(/Get your own Soulmon/);
-    expect(variante(pago)).toBe('outline');
-    expect(pago.style.color).toBe('var(--sm2-ink)');
-    expect(screen.queryByText(/Get the full game/)).toBeNull();
+    expect(document.querySelector('[data-ovo-cristal]')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Meet your Soulmon' })).toBeNull();
+    tocarOvo(4);
+    expect(screen.queryByRole('button', { name: 'Meet your Soulmon' })).toBeNull();
+    tocarOvo(1);
+    expect(variante(btn('Meet your Soulmon'))).toBe('primary');
+    const guia = btn('Lend me a guide Soulmon');
+    expect(variante(guia)).toBe('outline');
+    expect(guia.style.color).toBe('var(--sm2-ink)');
+    expect(screen.queryByText(/Start now/)).toBeNull();
     fireEvent.click(btn('Back'));
     expect(screen.getByText('Add tasks to list')).toBeTruthy();
   });
 
   it('EscolherPersonagem: os 5 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {
     await atravessarPerguntasIniciais();
-    fireEvent.click(btn('Start now — it’s free'));
-    await atravessarRevealDemo();
+    abrirGuias();
+    expect(screen.getByText('Choose your guide Soulmon')).toBeTruthy();
     const cards = document.querySelectorAll('button[data-demo-char]');
     expect(cards.length).toBe(PREMADE_CHARACTERS.length);
     expect(cards.length).toBe(5);
@@ -176,36 +184,28 @@ describe('funil grátis — identidade do canvas', () => {
     }
   });
 
-  it('CadastroDemo: heroína 128 num vidro 192²; SEM tonalidade (B10); "Name your Soulmon" solto (B11); voltar aos personagens', async () => {
+  it('§81 Guia: escolher abre a confirmação; "Back" fecha e deixa a grade; só "Yes" leva à Ambra (e ao jogo)', async () => {
     await atravessarPerguntasIniciais();
-    fireEvent.click(btn('Start now — it’s free'));
-    await atravessarRevealDemo();
+    abrirGuias();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
-    const nome = PREMADE_CHARACTERS[0].name;
-    const hero = screen.getByRole('img', { name: nome });
-    const vidro = hero.querySelector('.sm2-viewport-screen') as HTMLElement;
-    expect(vidro.style.width).toBe('192px');
-    const img = vidro.querySelector('img[data-hero]') as HTMLImageElement;
-    expect(img.style.width).toBe('128px');
-    expect(img.style.filter).toBe('');
-    expect(screen.queryByRole('group', { name: 'Tint' })).toBeNull();
-    expect(screen.queryByText('Last details')).toBeNull();
-    expect(screen.queryByText(/Your nickname/)).toBeNull();
-    const titulo = screen.getByText('Name your Soulmon');
-    expect(titulo.tagName).toBe('LABEL');
-    expect(titulo.className).toContain('sm2-title');
+    expect(screen.getByText('Are you sure you want to try the game in the demo version?')).toBeTruthy();
     fireEvent.click(btn('Back'));
-    expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
+    expect(screen.queryByText('Are you sure you want to try the game in the demo version?')).toBeNull();
+    expect(screen.getByText('Choose your guide Soulmon')).toBeTruthy();
+    expect(onComplete).not.toHaveBeenCalled();
+    escolherGuiaEConfirmar();
+    expect(document.querySelector('[data-npc-sequence]')).toBeTruthy();
+    expect(onComplete).not.toHaveBeenCalled(); // a Ambra fala ANTES de entrar no jogo
   });
 
   it('o nome do começo vira o userName e as metas viajam em catalogChoice', async () => {
     await atravessarPerguntasIniciais(false, 'Ana Lua');
-    fireEvent.click(btn('Start now — it’s free'));
-    await atravessarRevealDemo();
-    fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
-    fireEvent.click(btn(`Hatch ${PREMADE_CHARACTERS[0].name}`));
+    entrarNaDemoPeloOvo();
     expect(onComplete).toHaveBeenCalledTimes(1);
     const data = onComplete.mock.calls[0][0];
+    expect(data.mode).toBe('demo');
+    expect(data.demoCharacterId).toBe(PREMADE_CHARACTERS[0].id);
+    expect(data.petName).toBe(PREMADE_CHARACTERS[0].name); // o guia entra com o nome dele (sem tela de batismo)
     expect(data.userName).toBe('Ana Lua');
     expect(data.demoTint).toBeUndefined();
     expect(data.catalogChoice.areas.length).toBe(1);
@@ -263,10 +263,7 @@ describe('01/10/2026 — fechar no meio e voltar de onde parou', () => {
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(btn('Continue'));
     fireEvent.click(btn('Continue'));
-    fireEvent.click(btn('Start now — it’s free'));
-    await atravessarRevealDemo();
-    fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
-    fireEvent.click(btn(`Hatch ${PREMADE_CHARACTERS[0].name}`));
+    entrarNaDemoPeloOvo();
     const data = onComplete.mock.calls[0][0];
     expect(data.userName).toBe('Ana Lua');
     expect(data.catalogChoice.areas.length).toBe(1);

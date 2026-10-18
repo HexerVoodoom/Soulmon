@@ -49,6 +49,8 @@ Dependências por ordem (não há `if` extra): a escolha de metas espera o resum
 compromisso do dia esperam o resumo e o mapa (a reafirmação também só abre depois de o resumo ter sido visto: `DAILY_REPORT_SHOWN`); o compromisso só enxerga o que foi marcado em `dayGoals`; o modal "crie mais atividades" só depois da cerimônia de evolução
 (`evolutionCeremony === null` está no "pronto" dele).
 
+> **Onboarding (§81, 15/10/2026):** a fila é INERTE enquanto `!hasCompletedOnboarding` (`readyFor(demo || !hasCompletedOnboarding, ...)` em `App.tsx`). A Ambra, o ovo, o modal de compra e a confirmação da demo são do `SoulmonOnboarding` (nascem de gesto ou de passo do ritual), e a fila não grava "visto" nem toma o voltar por item que não aparece.
+
 ## 3. Persistência (o bug "abri de novo e vieram dois modais do mapa")
 
 * **Regra:** o evento é marcado como VISTO **ao ser mostrado** (`onShow` da fila, uma vez por entrada na tela), não ao

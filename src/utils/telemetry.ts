@@ -311,13 +311,15 @@ export const TELEMETRY_PURCHASE_REASON = { ...TELEMETRY_UNLOCK_REASON, onboardin
  * origem daqui a 30 dias. Uma tradução com dono único é o que impede a
  * terceira perna de ser esquecida na próxima vez.
  */
-export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo'): number {
+export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo' | 'ovo'): number {
   switch (reason) {
     case 'task-limit': return TELEMETRY_UNLOCK_REASON.taskLimit;
     case 'evolution': return TELEMETRY_UNLOCK_REASON.evolution;
     case 'report': return TELEMETRY_UNLOCK_REASON.report;
     case 'shop': return TELEMETRY_UNLOCK_REASON.shop;
-    case 'reveal-demo': return TELEMETRY_UNLOCK_REASON.revealDemo;
+    // 'ovo' (§81): a tela do ovo-cristal do onboarding SUBSTITUIU o reveal demo — mesma faixa, funil comparável.
+    case 'reveal-demo':
+    case 'ovo': return TELEMETRY_UNLOCK_REASON.revealDemo;
   }
 }
 
