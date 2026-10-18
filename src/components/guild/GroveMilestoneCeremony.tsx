@@ -64,7 +64,7 @@ export function GroveMilestoneCeremony({
   return (
     <RitualDialog labelledBy="gmc-title" onClose={onDone} zIndex={300} maxWidth={340} veilRole="status"
       style={{ textAlign: 'center', alignItems: 'center' }}>
-      <RitualGlass width={208} height={144} align="end" style={{ position: 'relative', background: bg && `${sceneCss(bgId, 208, 144)} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}>
+      <RitualGlass width={208} height={144} align="end" style={{ position: 'relative', background: bg && `${sceneCss(bgId, 208, 144)} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}>
         <img
           src={spriteUrl}
           alt=""

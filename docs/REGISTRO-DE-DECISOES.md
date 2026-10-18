@@ -2717,3 +2717,9 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Alternativa que perdeu:** tratar cada caso como ajuste de balanço sem perguntar. Perdeu porque o laço tarefa→cuidado é a aposta central do jogo.
 - **Aplicação:** todo Registro de Demanda tem a seção "Checagem G-01". Primeiros casos: D-10 (chip/comida raros no presente), D-16/D-17 (fruto = bônus leve, não substitui comida).
 - **O que falsificaria:** jogadores que completam menos tarefas reais depois de um "perdão extra" entrar no ar.
+
+## 97. Cenário nunca estica nem deixa vão: `cover` + `center bottom`, sem repetir (dono, 18/10/2026)
+- **Auditoria:** masmorra, batalha (BattleStage/elemento), Pesadelo, Arena, Torneio, Dino e minigames já usavam `center/cover` (arte 9:16 sem distorção; medido: cover escala uniforme, sem `100% 100%`/`fill`). O vão estava nos visores que usavam `auto 100%`: a arte 1,85:1 na altura da caixa (150-176px) mede 277-326px, menor que a largura de 360-430 — sobrava faixa de cor nas laterais.
+- **Decisão:** Home (CompanionHUD, inclusive sem `baseColor`, que antes herdava `repeat`), Casa, Bosque, Cerimônia do Bosque, Guerra, Mistério, Plantio, Praça e Feira passam a `center bottom / cover no-repeat`. O chão fica ancorado embaixo; até 462px de largura é idêntico ao `auto 100%` da Home.
+- **Alternativa que perdeu:** `auto 100%` com cor de base (deixa vão em telas largas).
+- **O que falsificaria:** corte do topo da arte esconder algo importante num visor largo (>462px).

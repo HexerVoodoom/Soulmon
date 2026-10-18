@@ -61,7 +61,7 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, s
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: H, background: bg && `${sceneCss(bgId)} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: H, background: bg && `${sceneCss(bgId)} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="xMidYMax meet" shapeRendering="crispEdges" style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
         {/* o canteiro: um monte de terra sobre o disco de latão */}

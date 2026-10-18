@@ -37,7 +37,7 @@ export function GuerraVisor({ guild, mySprite, enemyCount, reducedMotion, label 
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: GUERRA_VISOR_HEIGHT, background: bg && `${sceneCss('bg-arena-spotlight')} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: GUERRA_VISOR_HEIGHT, background: bg && `${sceneCss('bg-arena-spotlight')} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}
     >
       {nossos.map((c, i) => (
         <img
