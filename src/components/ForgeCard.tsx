@@ -18,6 +18,7 @@ import { earnedBits } from '../utils/bitsOrigin';
 import { isoWeekKey } from '../utils/offerMoment';
 import { playerDayKey } from '../utils/playerDay';
 import { loadEquipArt } from '../utils/equipArt';
+import { forgeArtName } from '../utils/forgeVisual';
 import { ATTR_COPY, itemName } from '../utils/equipmentCopy';
 import {
   ALT_ATTR, FORGE_MAX_LEVEL, FORGE_PIECES, LEVEL_PCT, PRIMARY_ATTR, REDO_FRAGMENTS, pieceBonus, pieceChoices, type ForgeChoice, type ForgePiece,
@@ -26,6 +27,7 @@ import { applyRedo, applyUpgrade, levelNow, redoBitsPrice, redoRefusal, upgradeC
 import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
+import { MaterialIcon } from './MaterialIcon';
 
 function useArt(nome: string): string | null {
   const [url, setUrl] = useState<string | null>(null);
@@ -156,7 +158,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
           </span>
         )}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <Art nome={piece.id} size={40} />
+          <Art nome={forgeArtName(piece.id, level)} size={40} />
           <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
             <b style={{ fontWeight: 500 }}>{nome}</b>
             {possui && (
@@ -176,7 +178,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
               <span className="sm2-stats-s" style={{ display: 'grid', gap: 2, justifyItems: 'end' }}>
                 {custos.map(({ m, n, have }) => (
                   <span key={m.id} data-forge-cost={m.id} data-enough={have >= n || undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    <span aria-hidden="true">{m.icon}</span>{isPt ? m.namePt : m.nameEn} {have}/{n}
+                    <MaterialIcon id={m.id} emoji={m.icon} />{isPt ? m.namePt : m.nameEn} {have}/{n}
                   </span>
                 ))}
               </span>
@@ -260,7 +262,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
           {dialog.mode === 'upgrade' && (
             <>
               <span className="sm2-stats-s" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {custoTexto(piece, alvo).map(({ m, n, have }) => <span key={m.id}><span aria-hidden="true">{m.icon}</span> {isPt ? m.namePt : m.nameEn} {have}/{n}</span>)}
+                {custoTexto(piece, alvo).map(({ m, n, have }) => <span key={m.id}><MaterialIcon id={m.id} emoji={m.icon} /> {isPt ? m.namePt : m.nameEn} {have}/{n}</span>)}
               </span>
               {refUp && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(refUp, isPt, alvo - 1)}</span>}
             </>

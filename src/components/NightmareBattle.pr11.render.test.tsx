@@ -73,7 +73,7 @@ function montar(wave: DungeonEnemy[], cbs: { onWin?: () => void; onLose?: () => 
   );
 }
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
-const entrar = () => fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
+const entrar = () => fireEvent.click(screen.getByRole('button', { name: 'Encarar o pesadelo' }));
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));
 /** Avança de 100 em 100 ms até a condição valer (ou `maxMs`). */
 async function ate(cond: () => boolean, maxMs = 60_000) {

@@ -8227,7 +8227,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-casa-screen { display: block; width: 100%; box-sizing: border-box; }
 @keyframes sm2-casa-glow { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
 .sm2-casa-glow { animation: sm2-casa-glow 2.4s steps(3, jump-none) infinite; }
-.sm2-grove-creature { position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
+.sm2-grove-creature { image-rendering: pixelated; position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
 @keyframes sm2-grove-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; }
 .sm2-grove-line { margin: 0; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }

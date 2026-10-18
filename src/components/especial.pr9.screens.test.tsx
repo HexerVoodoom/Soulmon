@@ -63,7 +63,7 @@ const TELAS: Record<string, () => void | Promise<void>> = {
   Pesadelo: () => {
     render(<NightmareBattle open wave={onda()} rarity="common" petStage="rookie" petElement="fogo" skills={ficha()} language="pt-BR"
       onWin={() => {}} onLose={() => {}} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Encarar o pesadelo' }));
   },
   Duelo: () => {
     const s = (duelSide({ evolutionStage: 'rookie', perfectDays: 3 }) as unknown as DuelSide);
