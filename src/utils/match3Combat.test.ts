@@ -192,3 +192,13 @@ describe('D-07: placar, fim e recompensa derivam do combate', () => {
     expect(exp).toBeGreaterThanOrEqual(8);
   });
 });
+
+describe('teto real de Bits (lobby)', () => {
+  it('M3C_MAX_BITS = Bits do placar perfeito e nunca passa de M3_MAX_BITS', async () => {
+    const m = await import('./match3Combat');
+    const b = await import('./match3');
+    const perfeito = m.M3C_ENEMY_HP.reduce((a: number, x: number) => a + x, 0) + 3 * m.M3C_DEFEAT_BONUS;
+    expect(m.M3C_MAX_BITS).toBe(b.match3Bits(perfeito));
+    expect(m.M3C_MAX_BITS).toBeLessThanOrEqual(b.M3_MAX_BITS);
+  });
+});

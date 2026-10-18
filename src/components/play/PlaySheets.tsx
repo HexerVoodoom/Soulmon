@@ -25,7 +25,8 @@ import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { iconePpt as iconPpt } from '../../assets/soulmon/icones-ui';
 // Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
 import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
-import { M3_MAX_BITS, M3_POINTS_PER_BIT } from '../../utils/match3';
+import { M3_POINTS_PER_BIT } from '../../utils/match3';
+import { M3C_MAX_BITS } from '../../utils/match3Combat';
 const iconCorrida = ACTIVITY_ICON_ART['corpo-caminhar'];
 
 /**
@@ -209,7 +210,7 @@ export function Match3Sheet({ language, onStart }: { language: Language; onStart
     <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         {best > 0 && <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />}
-        <StatBox value={`${isPt ? 'até' : 'up to'} ${M3_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
+        <StatBox value={`${isPt ? 'até' : 'up to'} ${M3C_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
@@ -270,8 +271,8 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
             {isPt
-              ? `Troque peças vizinhas e forme linhas de 3 ou mais: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · cada ${M3_POINTS_PER_BIT} pontos do placar vira 1 Bit, até ${M3_MAX_BITS}`
-              : `Swap neighbouring tiles to line up 3 or more: each line strikes the rift team · the round ends when one side steps back · every ${M3_POINTS_PER_BIT} points of the score becomes 1 Bit, up to ${M3_MAX_BITS}`}
+              ? `Troque peças vizinhas e forme linhas de 3 ou mais: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · cada ${M3_POINTS_PER_BIT} pontos do placar vira 1 Bit, até ${M3C_MAX_BITS}`
+              : `Swap neighbouring tiles to line up 3 or more: each line strikes the rift team · the round ends when one side steps back · every ${M3_POINTS_PER_BIT} points of the score becomes 1 Bit, up to ${M3C_MAX_BITS}`}
           </InfoTipSection>
         </ModalInfo>
       </div>

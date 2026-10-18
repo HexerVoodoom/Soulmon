@@ -13,7 +13,7 @@
  * Tudo determinístico: o rng da ação do inimigo vem por PARÂMETRO (`mulberry32` de `combate/rng`) — nunca `Math.random`.
  * O estado é imutável: cada função devolve um estado novo.
  */
-import { chainMultiplier, M3_TILE_ELEMENTS, type Rng, type Step } from './match3';
+import { chainMultiplier, match3Bits, M3_TILE_ELEMENTS, type Rng, type Step } from './match3';
 
 export type M3Element = (typeof M3_TILE_ELEMENTS)[number];
 
@@ -138,3 +138,6 @@ export function playTurn(state: M3Combat, steps: readonly Step[], rng: Rng): M3C
 export function combatScore(s: M3Combat): number {
   return Math.max(0, Math.round(s.dealt - s.taken + s.defeated * M3C_DEFEAT_BONUS));
 }
+
+/** Teto REAL de Bits por partida (placar perfeito: todo HP inimigo, nenhum dano recebido). Derivado, nunca literal. */
+export const M3C_MAX_BITS: number = match3Bits(M3C_ENEMY_HP.reduce((a, b) => a + b, 0) + M3C_ENEMY_HP.length * M3C_DEFEAT_BONUS);
