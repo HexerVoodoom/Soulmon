@@ -1548,6 +1548,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/SoulmonOnboarding.copyRitual.render.test.tsx`, `src/components/SoulmonOnboarding.rascunho.render.test.tsx`, `src/components/SoulmonOnboarding.tsx`
 **Régua:** `oracleDraft.test.ts`
 
+### `src/utils/pardonReason.ts`
+**Dono de:** Qual perdão de HP agiu na virada (D-27), para o relatório diário contar.
+**Exports:**
+- `PardonReason` (type) — `restDay | absence | returnGrace | newSave | stubborn | rootFloor | partialGoal | mondayRelief | noneRegistered | none`.
+- `function pardonReasonOf(report): PardonReason` — lê `lastDayReport.pardonReason`; save antigo cai no fallback (`welcomeBack`/`restDayUsed`/`forgiven`).
+- `function pardonLine(reason, isPt): string | null` — 1 linha calma por motivo; null onde o modal já tem linha própria.
+**Chamado por:** `src/components/DailyReportModal.tsx`, `src/utils/dailyReset.ts` (tipo)
+**Régua:** `dailyReset.pardon.test.ts`
+**Regra de negócio:** Não muda nenhuma conta de HP; só registra o ramo. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/passives.ts`
 **Dono de:** Os cinco traços de nascimento (todos positivos) e seus efeitos, lidos do estado.
 **Exports:**
