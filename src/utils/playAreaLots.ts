@@ -60,7 +60,7 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
   { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '28%', top: '86%', width: '62%' },
-  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '30%', top: '54%', width: '40%' }, // 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
+  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '28%', top: '54%', width: '44%' }, // 18/10/2026 (§88): a arte repintada ficou mais estreita na caixa, então 40% -> 44% (centro mantido). 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de
