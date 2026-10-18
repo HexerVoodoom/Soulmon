@@ -4917,7 +4917,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
   Ele segue jogando e vê o próprio lugar (`rank&id=` autorizado → `me`; essa
   resposta nunca vai para o cache de borda). O perfil sempre sobe com
   `publicHidden` (também `false`) e cliente antigo sem o campo herda o gravado.
-  A Guilda (coop) é círculo por convite e não é afetada. Travado por
+  O Clã (coop) é círculo por convite e não é afetada. Travado por
   `community.publicOptOut.test.js` e `privacidade.listaPublica.contract.test.ts`.
 - **200 com corpo que não é JSON** é FALHA, não sucesso vazio. Era
   `res.json().catch(() => ({}))`, e `getRank()` resolvia com `{}`: a área do
@@ -5229,7 +5229,7 @@ vindo do servidor).
 
 **Em uma frase.** Um diretório onde a pessoa só entra se escolher entrar, com
 verbos de DAR e nenhum de comparar — e o cooperativo, que desde 29/09/2026 é a
-**Guilda** (roda de até 12, [§56-A](#guilda)): nada nela se ordena entre pessoas.
+**Clã** (roda de até 12, [§56-A](#guilda)): nada nela se ordena entre pessoas.
 
 **A regra.** Duas superfícies, um servidor: o **diretório** (quem aparece, e o
 que dele trafega) e o **cooperativo** (o grupo da semana). As duas obedecem à
@@ -5287,7 +5287,7 @@ subiram (`2026-09-30`), então quem consentiu a `2026-09-22` vê o banner com
 `changed = 'terms'` (sem bloqueio). Régua:
 `src/utils/termsNotice.test.ts` + `termsNotice.qa.test.ts`.
 
-### O cooperativo (a Fase 4.3, hoje a Guilda)
+### O cooperativo (a Fase 4.3, hoje o Clã)
 
 > ⚠️ **Esta seção foi CORRIGIDA em 29/09/2026** (`docs/reviews/guilda/qa/L1-conformidade.md`
 > §4 listou nove afirmações falsas; as nove estão consertadas abaixo). O desenho
@@ -5302,15 +5302,15 @@ em **`functions/api/_coop.js`** (dono único):
 
 | Constante | Valor | O que faz |
 |---|---|---|
-| `COOP_MAX_MEMBERS` (= `GUILD_MAX_MEMBERS`) | **12** (⚰️ era 4 até a Guilda) | teto da roda |
+| `COOP_MAX_MEMBERS` (= `GUILD_MAX_MEMBERS`) | **12** (⚰️ era 4 até o Clã) | teto da roda |
 | `PRESENCA_NOMINAL_MAX` | 4 | até aqui a presença é nominal; a partir de 5 ninguém tem estado |
-| `COOP_CHECKINS_POR_MEMBRO` | 5 | **5 e não 7** (ainda existe no servidor; o cliente não desenha a barra semanal desde a Guilda) |
-| `COOP_TTL` | 120 dias | as chaves do grupo renovam JUNTAS; **guilda com Bosque plantado (`bosqueProgress > 0`) não expira** (G17a) |
+| `COOP_CHECKINS_POR_MEMBRO` | 5 | **5 e não 7** (ainda existe no servidor; o cliente não desenha a barra semanal desde o Clã) |
+| `COOP_TTL` | 120 dias | as chaves do grupo renovam JUNTAS; **clã com Bosque plantado (`bosqueProgress > 0`) não expira** (G17a) |
 | `target` | `members.length × COOP_CHECKINS_POR_MEMBRO` | **derivado**, nunca gravado — e **⚰️ não sai mais** para o cliente (M-3) |
 
 **O desenho da tela é a feature.** `vistaDaGuilda` (⚰️ era `vistaDoGrupo`, em
 `community.js`) é a ÚNICA montagem de resposta. O que sai por membro: um id
-**opaco** desta guilda (`memberId`, 16 hex — ⚰️ o `pid` público saía e abria
+**opaco** deste clã (`memberId`, 16 hex — ⚰️ o `pid` público saía e abria
 `community?action=player`, que devolve estágio de criatura alheia), `name`,
 `euMesmo` e, **só com ≤ 4 membros e só quando é `true`**, `apareceuHoje`. Nunca
 `saveId`, `hostSave`, estágio ou HP de outra pessoa, contagem por pessoa ou
@@ -5344,7 +5344,7 @@ consentimento).
 `src/components/LibraryPage.amigos.render.test.tsx`. ⚠️ **"Tudo tem teste" era
 falso** (L1-conformidade M2/M7b/M8/M9/M13: escrita só na própria chave, limpeza
 do órfão na leitura, entrada só por código, classe LIGHT e re-sorteio de colisão
-não tinham teste que as travasse) — o backend da Guilda ganhou
+não tinham teste que as travasse) — o backend do Clã ganhou
 `guild.invariantes.test.js` e `guild.l2.test.js`; reconfira antes de repetir a
 frase.
 
@@ -5367,16 +5367,16 @@ original) e [`docs/PLANO-GUILDA.md`](../PLANO-GUILDA.md) (o que o superou);
   O cliente manda o `dayKey` do JOGADOR (`playerDayKey` + `playerDayTz`) e o servidor
   aceita a ±1 do dia UTC (`diaDoJogador`; override de G6, `PLANO-GUILDA.md` §0.1).
 - **Código de convite**: ⚰️ `PLANO-COOP.md` §4.2 diz "de uso único" e o código nunca fez
-  isso — é reutilizável até a guilda morrer, e o anfitrião o troca por `guildNewCode`
+  isso — é reutilizável até o clã morrer, e o anfitrião o troca por `guildNewCode`
   (não existe expulsão, G7). ⚠️ divergência plano × código, registrada no STATUS.
 - **⚰️ "grupo sem check-in por 4 semanas é apagado"** (`PLANO-COOP.md` §3.4) — nunca foi
   implementado; vale só o `COOP_TTL`, e com Bosque plantado nem ele.
-- **Nome da guilda**: ⚰️ D-1 (só `replace/trim/slice`) — hoje `sanitizarNomeDeGuilda`
+- **Nome do clã**: ⚰️ D-1 (só `replace/trim/slice`) — hoje `sanitizarNomeDeGuilda`
   (NFKC, sem `@`, sem contato/URL/rede social, passa por `minimizeForAi`).
 
 **O que NÃO faz.** Não mostra quanto cada membro fez. Não manda push de cobrança
-(`guild.semPush.contract.test.js` trava: a Guilda nunca notifica). Não paga
-nada além de Honra e cosmético. Não tem busca de guilda. Não reusa
+(`guild.semPush.contract.test.js` trava: o Clã nunca notifica). Não paga
+nada além de Honra e cosmético. Não tem busca de clã. Não reusa
 componente de métrica do próprio perfil na tela do amigo.
 
 **Onde a UI mostra.** ⚰️ Este bloco dizia "`LibraryPage.tsx` (abas Todos / Amigos /
@@ -5390,7 +5390,7 @@ Além disso `src/components/PlayerDetailModal.tsx` e
 ---
 
 <a id="guilda"></a>
-## 56-A. 🌳 A Guilda: Bosque, fio, marés, Feira e resgate
+## 56-A. 🌳 O Clã: Bosque, fio, marés, Feira e resgate
 
 **Em uma frase.** Uma roda de até 12 pessoas que **constrói junto e nunca cobra**:
 cada dia de presença é um fio, os fios fecham o dia e o Bosque só cresce; uma vez
@@ -5402,13 +5402,13 @@ que ninguém saiba quem bateu quanto.
 
 | Peça | O que é | Regra |
 |---|---|---|
-| **Roda** | a Guilda em si | teto `GUILD_MAX_MEMBERS` = **12**; **um coletivo por pessoa** (D-G1); entrada só por código de 8 caracteres (sem 0/O/1/I); **sem expulsão** (G7) — o anfitrião renomeia e troca o código; se o anfitrião sai, a vez passa ao membro mais antigo, em silêncio. |
+| **Roda** | o Clã em si | teto `GUILD_MAX_MEMBERS` = **12**; **um coletivo por pessoa** (D-G1); entrada só por código de 8 caracteres (sem 0/O/1/I); **sem expulsão** (G7) — o anfitrião renomeia e troca o código; se o anfitrião sai, a vez passa ao membro mais antigo, em silêncio. |
 | **Fio** | a presença do dia | `guildThread`: **um por pessoa por dia do jogador**, vale `FIO_PER_MEMBER_DAY` = 1, nunca peso nem contagem de tarefa (LV-G8). Firma com a meta de **CORAÇÃO** (`heartGoalFor`, `META_DO_FIO = 'heart'`, **G1** — adotado por padrão, **aguarda confirmação do dono**, `REGISTRO` §5.5): o dia parcial que protege o coração também firma; o servidor confere `done ≥ heart` quando o corpo traz os números. |
-| **Bosque** | a obra da roda | cada dia FECHADO soma `fios do dia ÷ ativos do dia` (teto 1,0); **só soma** (LV-G3) — nada subtrai. Estágios por `BOSQUE_THRESHOLDS` = **2 / 10 / 25 / 50 / 90** dias-de-guilda: Clareira → Ramagem → Copa → Mata → Bosque antigo. O cliente recebe estágio e um binário `perto` (≥ 80% do intervalo), **nunca** "faltam N" nem razão. |
+| **Bosque** | a obra da roda | cada dia FECHADO soma `fios do dia ÷ ativos do dia` (teto 1,0); **só soma** (LV-G3) — nada subtrai. Estágios por `BOSQUE_THRESHOLDS` = **2 / 10 / 25 / 50 / 90** dias-de-clã: Clareira → Ramagem → Copa → Mata → Bosque antigo. O cliente recebe estágio e um binário `perto` (≥ 80% do intervalo), **nunca** "faltam N" nem razão. |
 | **Viajante** | quem sumiu | sem fio há `TRAVELER_AFTER_WEEKS` = **4** semanas sai do denominador e **continua na roda** — derivado, nunca gravado, invisível para todos. |
-| **Marés** | ciclo de 6 semanas | `GUILD_TIDE_WEEKS` = 6. A floração da maré (meta `TIDE_BLOOM_TARGET` = 12 dias-de-guilda) é **colhida no estado em que estiver** na virada e vira peça permanente do Bosque (`ornaments`), em três tamanhos descritivos — `petala` (< `TIDE_COROLLA_AT` = 4), `corola`, `floracao` (≥ 12) —, nenhum "pior". Maré sem crescimento não gera peça e **nada é dito**; nenhuma maré falha e nada é resetado. Resolvida na LEITURA (sem cron). |
+| **Marés** | ciclo de 6 semanas | `GUILD_TIDE_WEEKS` = 6. A floração da maré (meta `TIDE_BLOOM_TARGET` = 12 dias-de-clã) é **colhida no estado em que estiver** na virada e vira peça permanente do Bosque (`ornaments`), em três tamanhos descritivos — `petala` (< `TIDE_COROLLA_AT` = 4), `corola`, `floracao` (≥ 12) —, nenhum "pior". Maré sem crescimento não gera peça e **nada é dito**; nenhuma maré falha e nada é resetado. Resolvida na LEITURA (sem cron). |
 | **Gestos** | a roda se cumprimenta | `aceno`, `luz`, `descanso`: fixos, **anônimos**, para a roda inteira, sem texto livre, **um de cada por dia**, sem push (LV-G4). O TIPO recebido só chega com 3+ membros (`GESTO_TIPO_MIN_MEMBROS`; numa roda de 2 o "anônimo" seria quem sobrou) — abaixo disso vem só `gestureReceived: true`. |
-| **Feira** | o fenômeno da semana | uma **rodada por pessoa por dia** (`RAID_ROUNDS_PER_DAY` = 1), a qualquer hora da semana ISO; **sem gate de fio, de meta ou de Vínculo** (G15). HP coletivo `max(ativos, 3) × 45`; dano `10 + 2 × poder do estágio`, ±20%, sorteado NO SERVIDOR (`crypto`) e **nunca devolvido**. Fenômeno por semana, determinístico: `nevoa`/`mare`/`estatica`/`enxame` (tempo da Malha, **nunca inimigo**, sem guilda × guilda). O cliente vê `aberta`/`dissipada`, o booleano `ferido` (dano ≥ metade), `hitToday` e o desfecho da semana anterior (`dissipada`/`recuou`, `recuou` nunca aponta ninguém). Golpe na semana já terminada só até segunda 12:00 UTC. |
+| **Feira** | o fenômeno da semana | uma **rodada por pessoa por dia** (`RAID_ROUNDS_PER_DAY` = 1), a qualquer hora da semana ISO; **sem gate de fio, de meta ou de Vínculo** (G15). HP coletivo `max(ativos, 3) × 45`; dano `10 + 2 × poder do estágio`, ±20%, sorteado NO SERVIDOR (`crypto`) e **nunca devolvido**. Fenômeno por semana, determinístico: `nevoa`/`mare`/`estatica`/`enxame` (tempo da Malha, **nunca inimigo**, sem clã × clã). O cliente vê `aberta`/`dissipada`, o booleano `ferido` (dano ≥ metade), `hitToday` e o desfecho da semana anterior (`dissipada`/`recuou`, `recuou` nunca aponta ninguém). Golpe na semana já terminada só até segunda 12:00 UTC. |
 | **Resgate** | o prêmio | só quem **golpeou** (o direito mora com a pessoa em `coopPart`, e **sobrevive à saída**, A-1). `dissipada` → `RAID_EMBLEMS` = **4** de Honra; `recuou` → `RAID_EMBLEMS_FLOOR` = **2** (G9: quem se esforçou nunca sai de mão vazia). A cada `RAID_TROPHY_EVERY` = **4** Feiras dissipadas resgatadas, uma **Concha da Maré** (`trophy-concha-mare`, decoração no espaço `trophy`; NUNCA vendida, `not-for-sale`). Três semanas de janela. **LV-G6: só Emblemas e cosmético** — nada de coração, Créditos, energia, `perfectDays`, Glitchtama ou vantagem de evolução (`guildReward.contract.test.js`). |
 | **Cenários do Bosque** | conquista | `bg-guild-<estágio>` para quem firmou **7 dias DISTINTOS** de fio (`STAGE_UNLOCK_DAYS`, não seguidos — LV-G9), até o estágio atual; **ficam com quem sai** (G12), nunca à venda nem no sorteio da masmorra. |
 | **Saída** | um toque | sem confirmação e sem penalidade (LV-G5): o fio ainda não fechado vira contagem anônima do Bosque (a obra nunca regride), os dias distintos de fio viajam com a pessoa (`coopDias`, o relógio dos 7 dias não recomeça) e o resgate pendente continua colhível. |
@@ -5421,7 +5421,7 @@ memória para storage cheio). O `409 already claimed` **traz** o `claimed` do
 registro: quem perdeu a resposta do 200 ainda credita, mas só quem TENTOU neste
 aparelho (`markClaimAttempt`).
 
-**Nada da Guilda vai para o `GameState`** (`guildNoSave.contract.test.ts`): o
+**Nada do Clã vai para o `GameState`** (`guildNoSave.contract.test.ts`): o
 ponteiro é `coopOf:<saveId>` do servidor; o aparelho guarda só **duas chaves de
 conveniência** (`GUILD_LAST_STAGE` e `GUILD_CLAIMED`, travadas em exatamente duas
 pelo teste; os comentários do código chamam a segunda de "terceira" por contar
@@ -5456,17 +5456,17 @@ exceção ao congelamento da Camada 3). Auditorias:
   CONJUNTO de ids opacos por dia, nunca um contador.
 - **Vista de 12** custa ~16 leituras de KV (cartão derivado `coopMem`, A3) em vez de ~114.
 - **Cliente adulterado** que declara estágio `ultra` bate ~20 em vez de ~12 — só
-  derruba o fenômeno da PRÓPRIA guilda um dia antes; o prêmio é cosmético
+  derruba o fenômeno da PRÓPRIA clã um dia antes; o prêmio é cosmético
   (aceito, `PLANO-GUILDA.md` §10.4).
 
-**O que NÃO faz.** Sem ranking, sem guilda × guilda, sem número por pessoa, sem
+**O que NÃO faz.** Sem ranking, sem clã × clã, sem número por pessoa, sem
 barra da semana, sem push (nem widget: `WPG-14` ainda não existe), sem meta que
 "não bateu", sem Glitchtama ou Créditos como prêmio, sem expulsão.
 
 **Divergências abertas** (para o STATUS): G1 aguarda o dono; `PLANO-COOP.md` §3.4
 e §4.2 (grupo inativo apagado, código de uso único) descrevem o que o código não
 faz; arte real do Bosque/Feira ainda é placeholder (WPG-13/A); motivo próprio de
-telemetria para o convite da Guilda (hoje reusa `shop`).
+telemetria para o convite do Clã (hoje reusa `shop`).
 
 ---
 
@@ -5940,12 +5940,12 @@ registraram divergência nenhuma**.
 | D31 | `CLAUDE.md`, bloco `docs/NARRATIVA-E-UNIVERSO.md` (`01 §7`) | a régua `src/narrativa.contract.test.ts` trava o vocabulário vetado "com a tabela `DÍVIDA` do que já está no app por decisão pendente" | a tabela chama-se **`EXCECOES`** desde `f3654076` (21/09/2026): a decisão §14.4 do `REGISTRO-DE-DECISOES.md` ("nenhum, aceito todos assim") mudou o estatuto de pendência a quitar para exceção declarada. O que a régua trava não mudou (termos nunca aceitos + espalhamento para arquivo novo) | `grep -n "EXCECOES\|DÍVIDA" src/narrativa.contract.test.ts` → só `EXCECOES` |
 | D32 ⚰️ fechada em `15164e4c` (21/09/2026, dono autorizou corrigir o `CLAUDE.md`: cinco arquivos, S16, S1..S16) | `CLAUDE.md`, linha "Áudio — três arquivos" e bloco `docs/SOM.md` (§58-A) | `src/utils/sounds.ts` são "os **8 sons**, todos sintetizados, **zero byte de asset**"; as decisões canônicas são "**S1..S13**" | desde `ee79fd44` (21/09/2026, S16) há **cinco** `.webm` em `public/sounds/` e `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset (`playComAsset`), com o procedural como fallback; são **cinco** módulos de áudio (`sonsAssets.ts` e `trilha.ts` entraram), e o registro vai até **S16** | `ls public/sounds` → 5 arquivos; `grep -n "playComAsset" src/utils/sounds.ts`; `grep -n "S16" docs/REGISTRO-DE-DECISOES.md` |
 | D33 | ⚰️ hint do switch "Trilha" em `src/components/SettingsModal.tsx` (§58-A) | dizia "Uma camada calma, em loop" / "One calm looping layer" | `CAMADAS_DA_TRILHA` tem **duas** camadas (`base` + `ritmo`) desde `8a930657` (21/09/2026). **Fechada em `980bc84c`** (mesmo dia): o hint diz "Duas camadas calmas, em loop" no `SettingsModal` e na `SettingsPage`, e o cabeçalho de `trilha.ts` abre com "duas camadas em fase" | `grep -c "url: '/sounds/trilha-" src/utils/sonsAssets.ts` → 2; `grep -rn "Uma camada" src/components src/utils/trilha.ts` → vazio (21/09/2026) |
-| D34 | `PLANO-COOP.md` §4.2 | o código de convite é "de uso único" | o código é **reutilizável** até a guilda morrer (`coopCodeKey` renovado) e o anfitrião o troca por `guildNewCode`; não existe expulsão (G7) | `grep -n "coopCodeKey" functions/api/_coop.js` |
-| D35 | `PLANO-COOP.md` §3.4 | "grupo sem check-in por 4 semanas é apagado" | **não é implementado**: só o `COOP_TTL` (120 d) — e guilda com Bosque plantado (`bosqueProgress > 0`) nem isso (G17a) | `grep -n "semPrazo" functions/api/_coop.js` |
+| D34 | `PLANO-COOP.md` §4.2 | o código de convite é "de uso único" | o código é **reutilizável** até o clã morrer (`coopCodeKey` renovado) e o anfitrião o troca por `guildNewCode`; não existe expulsão (G7) | `grep -n "coopCodeKey" functions/api/_coop.js` |
+| D35 | `PLANO-COOP.md` §3.4 | "grupo sem check-in por 4 semanas é apagado" | **não é implementado**: só o `COOP_TTL` (120 d) — e clã com Bosque plantado (`bosqueProgress > 0`) nem isso (G17a) | `grep -n "semPrazo" functions/api/_coop.js` |
 | D36 | `PLANO-GUILDA.md` §3 (linha 🧵 do fio) | o fio usa "dia UTC" | o servidor aceita o `dayKey` do JOGADOR a ±1 do dia UTC (`diaDoJogador`, override de G6 do §0.1); o texto do §3 ficou velho (L3-conformidade) | `grep -n "diaDoJogador" functions/api/_coop.js functions/api/guild.js` |
 | D37 | `PLANO-GUILDA.md` §3 (marés) | tamanhos "broto / ramo / floração" | os ids do código são `petala` / `corola` / `floracao` (`TIDE_SIZES`); a copy os nomeia por `tideSizeName` | `grep -n "TIDE_SIZES" functions/api/_coop.js src/utils/guildRules.ts` |
 | D38 | `REGISTRO-DE-DECISOES.md` §5.5 (G1) | o fio é firmado pela meta de coração — a confirmação do dono está pendente | o código já usa `META_DO_FIO = 'heart'` **por padrão da sessão**; trocar é trocar a constante | `grep -n "META_DO_FIO" functions/api/_coop.js` |
-| D39 | comentário de `src/utils/guildClaimLocal.ts` e de `storageKeys.ts` | chama `GUILD_CLAIMED` de "a TERCEIRA chave de conveniência" | a Guilda tem **duas** (`GUILD_LAST_STAGE`, `GUILD_CLAIMED`) — `guildNoSave.contract.test.ts` trava exatamente duas | `grep -n "soulmon-guild" src/utils/storageKeys.ts` |
+| D39 | comentário de `src/utils/guildClaimLocal.ts` e de `storageKeys.ts` | chama `GUILD_CLAIMED` de "a TERCEIRA chave de conveniência" | o Clã tem **duas** (`GUILD_LAST_STAGE`, `GUILD_CLAIMED`) — `guildNoSave.contract.test.ts` trava exatamente duas | `grep -n "soulmon-guild" src/utils/storageKeys.ts` |
 | D40 | `REGISTRO-DE-DECISOES.md` §5.6 (linha "Anfitriões…") e `STATUS.md` 30/09/2026 | o NPC do Refúgio se chama **Boio** | `LOT_NPC_VOICE['jogos:refugio']` em `src/utils/areaNpcVoice.ts` diz **Bobbi** (a auditoria 14.6 renomeou Boio → Bobbi no mesmo dia); a linha do registro e o bloco do STATUS ficaram com o nome velho | `grep -n "Bobbi" src/utils/areaNpcVoice.ts` |
 | D41 | tabela ⭐ (§7) e ⚡ (§6) | "dia completo" exige `peso ≥ meta && energia ≥ meta` e dá +1 `perfectDays` que é o critério de evolução; barras de energia = requisito do estágio | ⚰️ desde 11/10/2026 o critério de evolução é o **gauge** (`evolutionPoints`, `utils/evolutionGauge.ts`); o dia completo virou **selo** cosmético, sem exigir energia; as barras são `required × ENERGY_HEADROOM` (2). **Fechada na edição do `CLAUDE.md` de 11/10/2026** | `grep -n "ENERGY_HEADROOM" src/types/progression.ts` |
 | D42 | tabela 🍎 (§3) | todo alimento conta no limite de `MAX_STAGE_REQUIREMENT` por hora | a comida premium (`🍎★`, `utils/premiumFood.ts`) tem tetos próprios e **fica fora** do limite por hora. **Fechada em 11/10/2026** | `grep -n "PREMIUM_" src/utils/premiumFood.ts` |
@@ -5972,7 +5972,7 @@ de conserto silencioso.
 **A regra.**
 
 1. **Quem é admin.** O e-mail de um ID token Firebase VERIFICADO (assinatura, `aud`, `iss`, `exp`, `email_verified === true`) que esteja em `ADMIN_EMAILS` (secret do Worker; só o NOME aqui, 08 §Entitlements) **e** que seja o dono do `saveId` pedido. Fail-closed: sem `ADMIN_EMAILS`, ou sem `FIREBASE_PROJECT_ID`, ninguém é admin — o `saveId` é calculável a partir do e-mail, então nunca é prova. Dono: `functions/api/_admin.js` (`verifiedAdmin`).
-2. **O que o papel dá** (tudo derivado NA LEITURA, nunca gravado em `ent:<saveId>`): tier efetivo `paid` e Créditos de exibição (`ADMIN_CREDITS_DISPLAY`, não é saldo; `spend` não debita); passa do `requirePaidTier` do gerador; chat na cota paga; tetos POR CONTA de IA de sprite × **3** (`ADMIN_AI_CAP_MULTIPLIER`) **e** um sub-teto mensal próprio de **40** sprites (`ADMIN_SPRITE_MONTHLY_CAP`, contador `ai:sprite:@admin:<mês UTC>`) — o teto global mensal segue intacto e o pior caso do admin é ~R$ 4/mês. Estourar devolve o mesmo 503 do teto global, sem revelar o papel. Nenhuma rota lê ou escreve outro `saveId`; comunidade e guilda tratam o admin como jogador comum.
+2. **O que o papel dá** (tudo derivado NA LEITURA, nunca gravado em `ent:<saveId>`): tier efetivo `paid` e Créditos de exibição (`ADMIN_CREDITS_DISPLAY`, não é saldo; `spend` não debita); passa do `requirePaidTier` do gerador; chat na cota paga; tetos POR CONTA de IA de sprite × **3** (`ADMIN_AI_CAP_MULTIPLIER`) **e** um sub-teto mensal próprio de **40** sprites (`ADMIN_SPRITE_MONTHLY_CAP`, contador `ai:sprite:@admin:<mês UTC>`) — o teto global mensal segue intacto e o pior caso do admin é ~R$ 4/mês. Estourar devolve o mesmo 503 do teto global, sem revelar o papel. Nenhuma rota lê ou escreve outro `saveId`; comunidade e clã tratam o admin como jogador comum.
 3. **No cliente** a flag é só um espelho em memória do `GET /api/entitlements` (`admin === true` literal, `src/utils/adminFlag.ts`): **nunca vai ao save nem ao localStorage**, e rede falha = não-admin. **Quando a consulta roda de novo** (30/09/2026, `src/utils/entitlementSync.ts` › `createEntitlementSync`): ⚰️ antes rodava UMA vez por `saveId`, e uma 1ª resposta sem token do Firebase deixava a sessão não-admin para sempre. Agora `mount`/`auth` (o usuário do Firebase mudou) sempre consultam; `visible` (voltou ao primeiro plano) no máximo a cada `ENTITLEMENT_VISIBLE_MIN_GAP_MS` (30 s); resposta `null` de `mount`/`auth` agenda UM retry após `ENTITLEMENT_RETRY_MS` (2,5 s); resposta de consulta mais velha é descartada. Sem timer recorrente. A segurança não mudou: quem decide é o servidor. Se o corvinho não aparece em produção, procure `admin_denied` no log do Cloudflare (`no-allowlist` = falta `ADMIN_EMAILS`; `not-listed` = e-mail fora da lista; `saveid-mismatch` = consulta antes do login).
 4. **O painel de GM** (`GmPanel`, Configurações — só para admin) chama `src/utils/gmTools.ts`: updaters PUROS e IDEMPOTENTES sobre o save LOCAL — dar saldo (Bits e Honra = `GM_BALANCE` 999999, nunca reduz um saldo maior), desbloquear tudo (cenários, mobílias, evoluções, contadores mínimos das missões permanentes por `Math.max`; NÃO toca `perfectDays`/`totalPerfectDays`), ir para uma das 11 formas, encher cuidados, somar 1/7/30 dias completos. Créditos NÃO (vivem no servidor). O aviso do painel diz que a mudança sobe para a conta inteira (M-2).
 5. **O corvinho.** Na 1ª abertura como admin (e de novo se um save remoto vier sem o corvo, pois a auto-adoção deixou de ser "uma vez por sessão") o app adota o corvinho automaticamente e SEM VOLTA (`adoptCorvo`, `src/utils/corvoAdocao.ts`, import dinâmico): preserva estágio, HP, energia, atributos, atividades, Bits, Emblemas, `perfectDays`, `unlockedEvolutions`, acervo e `petName`; troca `soulmonStages`, `baseName`, `creature` e zera `demoCharacterId`. São 11 formas (a mesma escada do jogo, ids em `CORVO_FORM_IDS`), arte em `src/assets/soulmon/corvo/`. A linha de arte vem de `spriteLineOf` (`corvoPet.ts`). O widget Android também o desenha (`pet_line`, 03 §widget).
@@ -6026,7 +6026,7 @@ Desde 15/10/2026 (REGISTRO §75) cada inicial usa **um elemento base** (`STARTER
 | **Salva só no aparelho** | `GameStateContext` (o efeito de salvar para antes do POST e não gera `saveId`), `cloudSave.ts` (`cloudSave`, `cloudSaveComRetry` e `reconcileSaveId` recusam), aviso de "proteger o save" some, Configurações troca "Sua conta"/"Seus dados" pelo cartão da demo. O servidor já recusa sem conta (`authorizeSaveAccess`: token de e-mail ≠ `saveId` aleatório → 401/403). |
 | **Não ganha XP** | `awardBondXP` devolve a **mesma referência** (no-op, sem ledger, sem toast); `feedFood` não soma XP de Vínculo (atributo sobe normalmente). O nível fica fixo em 5. |
 | **Não faz compras** | `handleShopBuy`, `handleExchangeCredits`, `handleBuyCreditPack`, `handleWatchAd`, `onSpendBits` (sumidouro da masmorra), refazer a árvore de talentos e a forja recusam com "Not available in the demo." / "Não disponível na demo."; `setUnlockReason`/`openCredits` não abrem `UnlockAccountModal`/`CreditsModal`; os `UnlockNudge` do Laboratório, do relatório diário e do teto de criação não montam. A loja é só vitrine. Ganhar Bits (minijogos, masmorra) segue valendo — é local. |
-| **Não entra em PvP** | `AreaView` torna inertes os seis prédios sociais (`DEMO_BLOCKED_LOTS`: Arena — Torneio/Duelo/Feira; Hall — Biblioteca/Círculo de Amigos/Salão da Guilda): o toque mostra a recusa na faixa de aviso do mapa (o mesmo canal do cadeado do Vínculo); abrir por `initialSheet` também não entra. |
+| **Não entra em PvP** | `AreaView` torna inertes os seis prédios sociais (`DEMO_BLOCKED_LOTS`: Arena — Torneio/Duelo/Feira; Hall — Biblioteca/Círculo de Amigos/Salão do Clã): o toque mostra a recusa na faixa de aviso do mapa (o mesmo canal do cadeado do Vínculo); abrir por `initialSheet` também não entra. |
 
 **Sair da demo.** Configurações → "Sair da demo" (`leaveDemo`): apaga o save local, o `saveId` e os carimbos de onboarding e recarrega no portão. **Não existe "converter a demo em conta"** — misturaria um save sem identidade com uma identidade.
 
@@ -6072,7 +6072,7 @@ decisão em aberto vai para [`PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md).
 
 **A regra.** A descida fica registrada no save (`dungeonAway`) desde o começo e a cada luta vencida; ao voltar, a conta pura `utils/dungeonAway.ts` refaz a descida luta a luta com o mesmo motor da tela, até o teto de `DUNGEON_AWAY_MAX_HOURS` (8 h) por vez. A energia da Home (1 por camada) é o que limita; sem energia, HP zerado, portão do Vínculo ou teto do nível a descida acaba sozinha e o Soulmon volta para casa. Os ganhos passam pelos mesmos tetos de sempre (Bits até 150 por dia, 2 corações por dia, 1 item do marco por descida). O avanço rápido 1×/2×/3× só acelera a cena; o resultado da luta é o mesmo. O especial é automático.
 
-**Ocupado.** Com o registro presente o pet some da Home e fica uma plaquinha "Estou na masmorra, volto logo". Evoluir, renascer, mandar em missão da guilda, Duelo, Torneio e Passeio abrem o aviso "Ele está na masmorra" com **Retirar da masmorra**. Cuidar (comer, banho, dormir, carinho) continua livre. Dono: `utils/dungeonIdle.ts` (`soulmonNaMasmorra`), `DungeonBusyModal`, `home/DungeonSign`; lista travada em `soulmonOcupado.contract.test.ts`.
+**Ocupado.** Com o registro presente o pet some da Home e fica uma plaquinha "Estou na masmorra, volto logo". Evoluir, renascer, mandar em missão do clã, Duelo, Torneio e Passeio abrem o aviso "Ele está na masmorra" com **Retirar da masmorra**. Cuidar (comer, banho, dormir, carinho) continua livre. Dono: `utils/dungeonIdle.ts` (`soulmonNaMasmorra`), `DungeonBusyModal`, `home/DungeonSign`; lista travada em `soulmonOcupado.contract.test.ts`.
 
 **Combina 3 (Salão de Jogos).** Troque duas peças vizinhas (a troca é LIVRE — vale pontue ou não) para formar linhas de 3 ou mais do mesmo elemento; as linhas somem, as peças caem e a cascata vale mais a cada passo; uma linha de 4 deixa uma peça com setas que limpa a linha ou a coluna. **Desde 18/10/2026 é um combate** (D-03…D-07): cada linha causa dano do ELEMENTO das peças ao inimigo ativo de um time de 3 Soulmon da fenda (o excesso de um golpe se perde; zerou, o próximo assume; os três = vitória); depois de CADA troca válida o inimigo ativo responde e tira vida do Soulmon do jogador (0 = derrota, sem custo; teto de segurança de 60 turnos). O limite de 20 movimentos saiu: a partida típica leva ~21 jogadas. O placar (dano causado − recebido + 100 por inimigo derrotado, ≥ 0) é o único insumo dos Bits: cada 250 pontos viram 1 Bit, até 8, pelo mesmo teto diário dos outros jogos — o combate paga no máximo o que a regra dos pontos pagava (uma partida perfeita vale 5 Bits). A tela é cheia (sem a faixa da nav) com a arena no alto (o seu Soulmon à esquerda, os 3 inimigos à direita). Dono: `utils/match3.ts` (tabuleiro) e `utils/match3Combat.ts` (combate); régua: `utils/match3.test.ts`, `utils/match3Combat.test.ts` e `utils/mente/balanco.test.ts`.
 

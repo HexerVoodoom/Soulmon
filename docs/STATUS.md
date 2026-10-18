@@ -5301,3 +5301,15 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - XP visível antes de concluir (tarefa/hábito) em `DailyRituals`; carinho e missões NÃO têm evento de XP (regra, não bug).
 - "+" abre "Novo hábito / Nova tarefa"; Home com abas Hoje/Semanal (só lista, não pontuação).
 - Pets andavam de costas: `artFacesLeft` (`utils/sprites.ts`) para linhas de perfil esquerdo (igni, nautilu, kaelen, corvo).
+
+## 18/10/2026 — Minijogos com contexto + Clã (PRs #393 #394 #395)
+
+- **Match-3 virou combate** (D-01..D-07): o minijogo agora tem contexto de batalha.
+- **Guilda → Clã**: renomeado na copy voltada ao jogador (identificadores de código, ids de prédio e nomes de arquivo como `PLANO-GUILDA.md` ficam). Chat do pet regerado (`_chatKnowledge.data.js`).
+- **Praça**: presente 1x/dia/membro, 4 slots.
+- **Plantio por estação** e **Mistério**.
+- **4 chips novos** e chips com +50%.
+- **Guerra de Clãs** com o NPC Mirevesper (gate Vínculo 5).
+- **Guard-rail G-01** (§96).
+
+**Pendências:** arte placeholder em produção (frente `feat/arte-cla-guerra` em andamento); prints de UI não feitos; D-02 (≥90% de altura) sem medição; compliance do texto de exportação em `functions/api/account.js`.

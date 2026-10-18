@@ -483,3 +483,7 @@ Todas têm o provisório já aplicado no código; nada está parado esperando re
 | L10 | **Faixa da Arena derivada**: a música da Arena é uma variante derivada da trilha (equilíbrio percussão × camadas estimado offline). Ouvir (S8) ou pedir faixa própria. | Derivada (`utils/trilhaArena.ts`) | pedido de geração em `docs/SOM.md` §10.3 |
 | L11 | **S17 emendada**: as preferências de música-tema e trilha agora CONVIVEM, alternadas por superfície com crossfade, nunca juntas. A trilha continua nascendo desligada. Confirmar a emenda. | Emendada (SOM §10, `utils/musica.ts`) | voltar a "uma por vez" |
 
+
+## 18/10/2026 — respondidas
+
+P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
