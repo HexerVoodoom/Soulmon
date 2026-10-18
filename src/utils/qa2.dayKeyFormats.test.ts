@@ -34,11 +34,9 @@ describe('chave de dia do jogador × leitores', () => {
     expect(anniversaryOn(nasc, mes)).toBe('month');
   });
 
-  it('o convite do sono aparece no 2º dia com as chaves REAIS do App', () => {
-    expect(shouldShowRestSetup({ shown: false, bornAt: nasc, todayKey: playerDayKey(new Date('2026-10-02T15:00:00Z'), anchor) })).toBe(true);
-    expect(shouldShowRestSetup({ shown: false, bornAt: nasc, todayKey: nasc })).toBe(false);
-    // save sem bornAt: a 1ª abertura do aparelho (também em playerDayKey)
-    expect(shouldShowRestSetup({ shown: false, bornAt: undefined, firstOpenKey: nasc, todayKey: hoje })).toBe(true);
+  it('o horário de dormir é pedido até ser confirmado (D-24)', () => {
+    expect(shouldShowRestSetup({ confirmed: false })).toBe(true);
+    expect(shouldShowRestSetup({ confirmed: true })).toBe(false);
   });
 
   it('dayKeyToIso converte os dois formatos e recusa lixo', () => {

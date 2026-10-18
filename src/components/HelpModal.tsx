@@ -19,7 +19,7 @@ import { ENERGY_REGEN_MINUTES } from '../utils/hunger';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL } from '../utils/forge';
-import { DREAM_CATALOG } from '../utils/restWindow';
+import { DREAM_CATALOG, NIGHT_ENERGY_BONUS } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
@@ -194,8 +194,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🛏️', en: 'Rest Window', pt: 'Janela de Descanso',
-    descEn: `The sleep window you choose (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}). Read as "how many of the last ${REST_WINDOW_DAYS} nights" — no score, no penalty.`,
-    descPt: `A janela de sono que você escolhe (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}). Lida como "quantas das últimas ${REST_WINDOW_DAYS} noites" — sem nota, sem castigo.`,
+    descEn: `The sleep window you choose (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}). Read as "how many of the last ${REST_WINDOW_DAYS} nights" — no score, no penalty. A night on time brings ${NIGHT_ENERGY_BONUS} extra energy in the morning, once a day.`,
+    descPt: `A janela de sono que você escolhe (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}). Lida como "quantas das últimas ${REST_WINDOW_DAYS} noites" — sem nota, sem castigo. Uma noite no horário traz ${NIGHT_ENERGY_BONUS} de energia a mais de manhã, uma vez por dia.`,
   },
   {
     icon: '🌠', en: 'Dream', pt: 'Sonho',
