@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, type SpecialItemState } from './specialItemUse';
 import { playerDayKey } from './playerDay';
-import { CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './shop';
+import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './shop';
 
 // Os três itens especiais tinham a regra dentro de updater inline no
 // `handleFeed`, fora do alcance de qualquer teste. Estes testes travam os
@@ -273,5 +273,39 @@ describe('teto diário do glitchtama', () => {
     });
     expect(applySpecialItem(st, HEART_ITEM_EMOJI, AGORA).refused).toBeUndefined();
     expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBeUndefined();
+  });
+});
+
+describe('chips maiores e prisma (D-12/D-13)', () => {
+  it('chips comuns custam 180; 4 novos existem (420/420/420/480)', () => {
+    for (const id of ['chip-power', 'chip-harmony', 'chip-benevolence']) {
+      expect(SHOP_ITEMS.find(i => i.id === id)!.price).toBe(180);
+    }
+    const preco = (id: string) => SHOP_ITEMS.find(i => i.id === id)!.price;
+    expect(preco('chip-big-power')).toBe(420);
+    expect(preco('chip-big-harmony')).toBe(420);
+    expect(preco('chip-big-benevolence')).toBe(420);
+    expect(preco('chip-prism')).toBe(480);
+  });
+
+  it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
+    'chip maior de %s da +6 so nele, sem XP', (attr, pontos) => {
+      const emoji = BIG_CHIP_EMOJI[attr];
+      const prev = estado({ foodInventory: { [emoji]: 1 }, powerPoints: 4, harmonyPoints: 5, benevolencePoints: 6, totalXP: 70 });
+      const { state } = applySpecialItem(prev, emoji, AGORA);
+      expect(BIG_CHIP_BOOST).toBe(6);
+      expect(state[pontos]).toBe(prev[pontos] + 6);
+      expect(state.attributesSinceLastEvolution[attr]).toBe(6);
+      expect(state.totalXP).toBe(70);
+      expect('energyPoints' in state).toBe(false);
+    });
+
+  it('prisma da +2/+2/+2', () => {
+    const prev = estado({ foodInventory: { [PRISM_CHIP_EMOJI]: 1 }, powerPoints: 4, harmonyPoints: 5, benevolencePoints: 6, totalXP: 70 });
+    const { state } = applySpecialItem(prev, PRISM_CHIP_EMOJI, AGORA);
+    expect(PRISM_CHIP_BOOST).toBe(2);
+    expect([state.powerPoints, state.harmonyPoints, state.benevolencePoints]).toEqual([6, 7, 8]);
+    expect(state.attributesSinceLastEvolution).toEqual({ power: 2, harmony: 2, benevolence: 2 });
+    expect(state.totalXP).toBe(70);
   });
 });
