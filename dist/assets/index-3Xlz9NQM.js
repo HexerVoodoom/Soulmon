@@ -1,6 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-DPSXTwCc.js","assets/vendor-capacitor-B8vh4tkU.js"])))=>i.map(i=>d[i]);
-<<<<<<<< HEAD:dist/assets/index-B7sRakb4.js
-import{bU as r}from"./index-CkmzgEzp.js";import{r as o}from"./vendor-capacitor-B8vh4tkU.js";import"./vendor-DDxydHEc.js";import"./vendor-sonner-BFkWhx6y.js";const p=o("CapacitorPedometer",{web:()=>r(()=>import("./web-DPSXTwCc.js"),__vite__mapDeps([0,1])).then(e=>new e.CapacitorPedometerWeb)});export{p as CapacitorPedometer};
-========
-import{bU as r}from"./index-Q2eWz9O5.js";import{r as o}from"./vendor-capacitor-B8vh4tkU.js";import"./vendor-DDxydHEc.js";import"./vendor-sonner-BFkWhx6y.js";const p=o("CapacitorPedometer",{web:()=>r(()=>import("./web-DPSXTwCc.js"),__vite__mapDeps([0,1])).then(e=>new e.CapacitorPedometerWeb)});export{p as CapacitorPedometer};
->>>>>>>> origin/feat/arte-cla-guerra:dist/assets/index-3Xlz9NQM.js

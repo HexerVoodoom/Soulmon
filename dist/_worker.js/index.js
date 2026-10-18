@@ -2200,6 +2200,26 @@ async function onRequest({ request, env }) {
 }
 __name(onRequest, "onRequest");
 
+// api/_betaFull.js
+async function verifiedBetaFull(env, request, saveId) {
+  try {
+    const projectId = env?.FIREBASE_PROJECT_ID;
+    if (!projectId) return { betaFull: false };
+    if (parseBetaEmails(env?.BETA_EMAILS).length === 0) return { betaFull: false };
+    const claims = await verifyIdToken(bearerToken(request), projectId);
+    if (!claims || !betaAllows(env, claims.email)) return { betaFull: false };
+    if (saveId !== void 0 && await emailToSaveId(claims.email) !== saveId) return { betaFull: false };
+    return { betaFull: true };
+  } catch {
+    return { betaFull: false };
+  }
+}
+__name(verifiedBetaFull, "verifiedBetaFull");
+function betaFullPublicView(view) {
+  return { ...view, tier: "paid", provider: view.provider ?? "beta", betaFull: true };
+}
+__name(betaFullPublicView, "betaFullPublicView");
+
 // api/_billing.js
 var SUBSCRIPTION_SKU = "soulmon_cosmetic_quarterly";
 var PRODUCTS = {
@@ -2634,6 +2654,11 @@ async function onRequestOptions2() {
   return new Response(null, { headers: CORS2 });
 }
 __name(onRequestOptions2, "onRequestOptions");
+async function entView(env, request, saveId, ent) {
+  const v = publicView(ent);
+  return (await verifiedBetaFull(env, request, saveId)).betaFull ? betaFullPublicView(v) : v;
+}
+__name(entView, "entView");
 async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get("action") !== "verify") return json2({ error: "Unknown action" }, 400);
@@ -2703,7 +2728,7 @@ async function onRequestPost({ request, env }) {
   return json2({
     ok: true,
     duplicate,
-    ...publicView(ent),
+    ...await entView(env, request, saveId, ent),
     // Consumíveis da Play precisam ser consumidos lá para poderem ser
     // recomprados. Na Steam quem fecha a transação é o FinalizeTxn do cliente.
     consumeToken: provider === "play" && result.product.consumable ? body.purchaseToken : void 0
@@ -3161,7 +3186,7 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
       if (hasFormCap) usedForm = formUsed(ent, formId);
       if (hasTierCap) {
         const porTier = limits.perAccountByTier[ent?.tier];
-        const tierDoLimite = isAdmin ? "paid" : ent?.tier;
+        const tierDoLimite = isAdmin || (await verifiedBetaFull(env, request, saveId)).betaFull ? "paid" : ent?.tier;
         const cota = limits.perAccountByTier[tierDoLimite];
         if (typeof cota === "number") perAccount = cota * adminMul;
         else if (typeof porTier === "number") perAccount = porTier * adminMul;
@@ -8044,6 +8069,9 @@ async function onRequestOptions8() {
 __name(onRequestOptions8, "onRequestOptions");
 async function onRequestGet4({ request, env }) {
   const url = new URL(request.url);
+  if (url.searchParams.get("action") === "beta-full") {
+    return json5({ betaFull: (await verifiedBetaFull(env, request)).betaFull }, 200);
+  }
   const saveId = url.searchParams.get("id");
   if (!saveId || !VALID_ID.test(saveId)) return json5({ error: "Invalid save ID" }, 400);
   if (!kv(env)) return json5({ error: "Storage not bound" }, 500);
@@ -8058,7 +8086,9 @@ async function onRequestGet4({ request, env }) {
   });
   const { admin } = await verifiedAdmin(env, request, saveId);
   if (admin) logAdminSession("entitlements");
-  const view = admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false };
+  const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
+  const base = betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent);
+  const view = admin ? adminPublicView(publicView(ent)) : { ...base, admin: false };
   return json5({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGet4, "onRequestGet");
@@ -8073,7 +8103,8 @@ async function onRequestPost3({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json5({ error: auth.reason }, authStatus(auth));
   const { admin } = await verifiedAdmin(env, request, saveId);
-  const view = /* @__PURE__ */ __name((ent) => admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false }, "view");
+  const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
+  const view = /* @__PURE__ */ __name((ent) => admin ? adminPublicView(publicView(ent)) : { ...betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent), admin: false }, "view");
   if (action === "spend") {
     const amount = Number(body?.amount);
     if (admin) {
@@ -8096,7 +8127,7 @@ async function onRequestPost3({ request, env }) {
     const r = state?.rebirth;
     const renasceu = !!r && typeof r === "object" && typeof r.at === "string" && r.at.length > 0 && typeof r.fromStage === "string" && r.fromStage.length > 0;
     if (!renasceu) return json5({ ok: false, reason: "rebirth-not-found" }, 409);
-    const tierAtual = admin ? "paid" : publicView(await readEntitlement(env, saveId)).tier;
+    const tierAtual = admin || betaFull ? "paid" : publicView(await readEntitlement(env, saveId)).tier;
     if (tierAtual !== "paid") return json5({ ok: false, reason: "not-paid" }, 403);
     if (!gateFor("renascimento", bondLevelFor(state?.totalXP)).open) return json5({ ok: false, reason: "low-bond" }, 403);
     const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
@@ -8204,7 +8235,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -9627,7 +9658,7 @@ async function onRequestPost5({ request, env }) {
       );
     }
     const tier = await requirePaidTier(env, id);
-    const tierOk = tier.ok || tier.status === 402 && (await verifiedAdmin(env, request, id)).admin;
+    const tierOk = tier.ok || tier.status === 402 && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull);
     if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS10 });
     }
@@ -10350,7 +10381,8 @@ async function onRequest6({ request, env }) {
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
     const { admin } = await verifiedAdmin(env, request, saveId);
-    state.accountTier = admin ? "paid" : ent.tier;
+    const betaFull = admin ? false : (await verifiedBetaFull(env, request, saveId)).betaFull;
+    state.accountTier = admin || betaFull ? "paid" : ent.tier;
     state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
     return Response.json({ found: true, state }, { headers: CORS11 });
   }
@@ -10961,7 +10993,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-9SIUFU/functionsRoutes-0.8552162311439386.mjs
+// ../.wrangler/tmp/pages-ThlC5B/functionsRoutes-0.6023845736548457.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11238,7 +11270,7 @@ var routes = [
   }
 ];
 
-// ../../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11564,7 +11596,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
