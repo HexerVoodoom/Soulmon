@@ -154,7 +154,7 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     expect(BUILDING_GATES['arena.torneio'].minBond).toBe(GATES.torneio.minBond);
   });
   it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {
-    expect(areaMinBond('arena')).toBe(4); // 'arena.guerra' (Vínculo 4) é o menor prédio da Arena
+    expect(areaMinBond('arena')).toBe(5); // 'arena.guerra' fica no Vínculo 5: a Arena não abre antes do que já abria
     expect(areaMinBond('hall')).toBe(2);
     expect(areaMinBond('mercado')).toBe(1);
     expect(buildingLockLine(4, 'en-US')).toBe('Opens at Bond 4. It grows with what you already do here.');

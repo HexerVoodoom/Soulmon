@@ -125,7 +125,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'exploracao.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.guerra': { minBond: 4 }, // mesmo Vínculo do 'hall.guilda': a Guerra de Clãs é do esquadrão do clã
+  'arena.guerra': { minBond: 5 }, // dono 18/10/2026: a Arena não destrava antes do que já destravava (Vínculo 5)
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },

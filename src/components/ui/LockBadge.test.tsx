@@ -24,8 +24,8 @@ describe('cadeado dos prédios', () => {
     const base = { language: 'en-US' as const, onOpenArea: () => {}, bits: 0, emblems: 0, credits: 0 };
     const a = render(<MapPage {...base} bondLevel={1} />);
     const arena = a.container.querySelector('[data-map-area="arena"]')!;
-    expect(arena.getAttribute('data-map-locked')).toBe('4');
-    expect(arena.getAttribute('aria-label')).toContain('Locked, opens at Bond 4');
+    expect(arena.getAttribute('data-map-locked')).toBe('5');
+    expect(arena.getAttribute('aria-label')).toContain('Locked, opens at Bond 5');
     expect(a.container.querySelector('[data-map-area="mercado"]')!.getAttribute('data-map-locked')).toBeNull();
     a.unmount();
     const b = render(<MapPage {...base} bondLevel={9} />);
