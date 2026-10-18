@@ -4,7 +4,7 @@ import { MiniGlass } from './MiniGlass';
 import { FRAMES, FRAME_ART_CANVAS, FRAME_ART_OPENING, frameArt, frameAvailable, type AvatarFrame as FrameDef, type FrameContext } from '../../utils/frames';
 import { PixelIcon } from './PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
-import { sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 
 /**
  * MOLDURAS DE AVATAR (R8, 04/10/2026) — o desenho e o seletor. O catálogo e as regras moram em
@@ -98,13 +98,17 @@ function howText(f: FrameDef, isPt: boolean): string {
  * aparecem com o jeito de conseguir (tracejado, `aria-disabled`, fora do Tab — nunca opacidade, D-J14).
  * `previewSrc` é a criatura do jogador (a mesma que aparece no ranking).
  */
-export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt }: {
+export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits = 0, onBuy }: {
   ctx: FrameContext;
   /** Id da moldura em uso (já resolvido: `null` = sem moldura). */
   equipped: string | null;
   onEquip: (id: string | null) => void;
   previewSrc: string;
   isPt: boolean;
+  /** Saldo de Bits do jogador (só para habilitar o "Comprar"). */
+  bits?: number;
+  /** Comprar uma moldura de LOJA. Ausente = a linha trancada só informa o preço (comportamento antigo). */
+  onBuy?: (id: string) => void;
 }) {
   const preview = (f: FrameDef | null) => (
     <AvatarFrame frame={f}>
@@ -149,6 +153,19 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt }: {
           <li key={f.id}>
             {ok ? (
               <button type="button" data-frame-option={f.id} aria-pressed={on} onClick={() => onEquip(f.id)} style={rowStyle(on, false)}>{body}</button>
+            ) : f.origin === 'shop' && onBuy && f.price ? (
+              <div data-frame-option={f.id} data-frame-buyable style={rowStyle(false, true)}>
+                {body}
+                <button
+                  type="button"
+                  data-frame-buy={f.id}
+                  disabled={bits < f.price}
+                  onClick={() => onBuy(f.id)}
+                  style={{ ...sm2Button('primary'), minHeight: 44, flex: 'none' }}
+                >
+                  {isPt ? `Comprar · ${f.price}` : `Buy · ${f.price}`}
+                </button>
+              </div>
             ) : (
               <div data-frame-option={f.id} data-frame-locked aria-disabled="true" style={rowStyle(false, true)}>{body}</div>
             )}

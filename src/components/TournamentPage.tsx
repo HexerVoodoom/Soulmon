@@ -109,6 +109,9 @@ interface TournamentPageProps {
   equippedFrame?: string | null;
   ownedFrames?: string[];
   onEquipFrame?: (id: string | null) => void;
+  /** B3: saldo de Bits e compra de moldura de loja. */
+  bits?: number;
+  onBuyFrame?: (id: string) => void;
   language: string;
   /** Emblemas atuais (moeda do torneio) — só para exibir. */
   emblems: number;
@@ -197,7 +200,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, shop, headSlot, initialTab }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, shop, headSlot, initialTab }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -956,6 +959,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             ctx={frameCtx}
             equipped={myFrame?.id ?? null}
             onEquip={onEquipFrame}
+            bits={bits}
+            onBuy={onBuyFrame}
             previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)}
             isPt={isPt}
           />

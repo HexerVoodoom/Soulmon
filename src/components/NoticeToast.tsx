@@ -6,10 +6,10 @@ export const NOTICE_TOAST_MS = 8000;
 
 /**
  * Os avisos AÇIONÁVEIS que ganham balão agora que o botão Avisos some da Home (dono, 14/10/2026, REGISTRO §56). Na ordem de
- * importância: o convite de refeição, o convite ao Refúgio, o aviso de termos, a triagem e o recomeço. HP e incubação NÃO estão
+ * importância: o aviso de termos, a triagem e o recomeço. Os balões de convite do pet (refeição e Refúgio, "seu Soulmon tem algo pra você") saíram em 18/10/2026 (dono, checklist B10). HP e incubação NÃO estão
  * aqui: já têm canal próprio (o HUD e o visor). Os informativos sem ação (carga, marco do Bosque, semanal, priming) ficam sem canal.
  */
-export const NOTICE_TOAST_KEYS = ['refeicao', 'refugio', 'termos', 'triagem', 'recomeco'] as const;
+export const NOTICE_TOAST_KEYS = ['termos', 'triagem', 'recomeco'] as const;
 export type NoticeToastKey = (typeof NOTICE_TOAST_KEYS)[number];
 
 /** Os avisos que o balão mostra UMA ÚNICA vez na vida (dono, 14/10/2026, REGISTRO §56): o dos termos. Os convites seguem 1×/dia. */
@@ -38,8 +38,6 @@ export function recordNoticeShown(rawDia: string | null | undefined, rawSempre: 
 export function noticeToastText(key: NoticeToastKey, language: Language): string {
   const isPt = language === 'pt-BR';
   switch (key) {
-    case 'refeicao': return isPt ? 'Seu Soulmon tem um convite de refeição. Toque para ver.' : 'Your Soulmon has a meal invitation. Tap to see.';
-    case 'refugio': return isPt ? 'Há um convite do Refúgio para você. Toque para ver.' : 'There is an invitation from the Refuge for you. Tap to see.';
     case 'termos': return isPt ? 'Os Termos foram atualizados. Toque para ler o aviso.' : 'The Terms were updated. Tap to read the notice.';
     case 'triagem': return isPt ? 'Há tarefas esperando uma olhada. Toque para ver.' : 'Some tasks are waiting for a look. Tap to see.';
     case 'recomeco': return isPt ? 'Vamos recomeçar com calma? Toque para ver.' : 'Shall we start fresh, gently? Tap to see.';

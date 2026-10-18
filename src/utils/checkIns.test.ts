@@ -183,7 +183,7 @@ describe('checkInWindows (a folha dos check-ins: horário e estado de cada janel
 describe('desligado (CHECKINS_ENABLED = false — o que está no ar)', () => {
   it('a constante de produção é false e nenhuma janela fica disponível nem paga', () => {
     expect(CHECKINS_ENABLED).toBe(false);
-    expect(MORNING_COMMITMENT_ENABLED).toBe(true); // o compromisso é outro interruptor e fica ligado
+    expect(MORNING_COMMITMENT_ENABLED).toBe(false); // B9 (18/10/2026): o modal "Good morning" saiu; o de checkboxes (dayGoals) o substitui
     __setCheckInsEnabledForTest(false);
     try {
       for (const h of [9, 14, 21]) {

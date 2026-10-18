@@ -288,6 +288,6 @@ describe('check-ins ocultos (§40.4-b) e compromisso da manhã com flag própria
     expect(app).toContain('{CHECKINS_ENABLED && checkInsAbertos && ');
     const ck = readFileSync('src/utils/checkIns.ts', 'utf8');
     expect(ck).toContain('export const CHECKINS_ENABLED = false;');
-    expect(ck).toContain('export const MORNING_COMMITMENT_ENABLED = true;');
+    expect(ck).toContain('export const MORNING_COMMITMENT_ENABLED = false;');
   });
 });

@@ -59,7 +59,7 @@ import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap, missionMark, strollLineState, claimStroll } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
-import { sanitizeEquippedFrame } from './utils/frames';
+import { sanitizeEquippedFrame, sanitizeOwnedFrames, frameById } from './utils/frames';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
 import { IntroScreen } from './components/IntroScreen';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
@@ -78,7 +78,7 @@ import { buildDemoPatch, leaveDemo, keepDemoVitalsFull } from './utils/demoStart
 import type { StarterId } from './utils/sprites';
 import { petElementOf } from './utils/starterElements';
 import {
-  readFlag, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
+  readFlag, readFlagOr, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
 import { initialNotificationsEnabled, readSystemNotificationPermission } from './utils/notificationDefault';
 import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
@@ -171,7 +171,6 @@ import {
   bumpWeekly, forWeek, claimWeekly, weeklyMissionsFor,
   type WeeklyMissionId,
 } from './utils/weeklyMissions';
-import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -583,7 +582,6 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
-const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
 
@@ -4262,6 +4260,26 @@ export default function App() {
     setGameState(prev => (prev.equippedFrame ?? null) === id ? prev : { ...prev, equippedFrame: sanitizeEquippedFrame(id) });
   }, []);
 
+  /** Comprar moldura de LOJA com Bits (B3): desconta (Bit pago primeiro), grava a posse e já equipa. Saldo curto ou id fora da loja = nada. */
+  const handleBuyFrame = useCallback((id: string) => {
+    const f = frameById(id);
+    if (!f || f.origin !== 'shop' || !f.price) return;
+    setGameState(prev => {
+      if ((prev.ownedFrames ?? []).includes(id) || (prev.gamePoints ?? 0) < f.price!) return prev;
+      const pago = spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - f.price! }, f.price!);
+      return { ...pago, ownedFrames: sanitizeOwnedFrames([...(prev.ownedFrames ?? []), id]), equippedFrame: id };
+    });
+  }, [setGameState]);
+
+  /** Nome público do jogador (B8): local + estado da tela; o perfil público é republicado no próximo save. */
+  const handleChangeUserName = useCallback((nome: string) => {
+    const limpo = nome.trim().slice(0, 24);
+    if (limpo.length < 2) return;
+    writeLocal(STORAGE_KEYS.USER_NAME, limpo);
+    setUserName(limpo);
+    setGameState(prev => ({ ...prev }));
+  }, [setGameState]);
+
   /**
    * Equipa/desequipa decoração. `id` null limpa o espaço; caso contrário o item
    * ocupa o SEU espaço, substituindo quem estava lá. Não existe "equipar em
@@ -5476,11 +5494,6 @@ export default function App() {
     setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), window } }));
   }, [setGameState]);
 
-  /** "Não quero ver métricas": esconde NÚMEROS, preserva RECOMPENSAS. */
-  const handleToggleRestMetrics = useCallback((hide: boolean) => {
-    setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), hideMetrics: hide } }));
-  }, [setGameState]);
-
   // ═══════════════════════════════════════════════════════════════════════════
   // PASSOS (utils/steps.ts) — opcional, e a palavra opcional é literal
   // ═══════════════════════════════════════════════════════════════════════════
@@ -5598,12 +5611,21 @@ export default function App() {
       return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
     };
     const check = () => {
-      if (!readFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED)) {
+      // Sono automático nasce LIGADO (23h–7h; dono, 18/10/2026, B1): só um 'false' gravado desliga.
+      if (!readFlagOr(STORAGE_KEYS.AUTO_SLEEP_ENABLED, true)) {
         autoSleepPrevInWindowRef.current = null;
         return;
       }
-      const start = parseHM(readLocal(STORAGE_KEYS.AUTO_SLEEP_START), '23:00');
-      const end = parseHM(readLocal(STORAGE_KEYS.AUTO_SLEEP_END), '07:00');
+      const startStr = readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00';
+      const endStr = readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00';
+      const start = parseHM(startStr, '23:00');
+      const end = parseHM(endStr, '07:00');
+      // B2/B5: a janela de descanso (que decide se a noite foi "no horário" e portanto se há pesadelo/sonho) segue o horário do sono
+      // automático — antes eram dois horários separados e o pesadelo exigia que o pet dormisse dentro de um deles.
+      setGameState(prev => {
+        const r = prev.rest ?? createRestState();
+        return r.window.start === startStr && r.window.end === endStr ? prev : { ...prev, rest: { ...r, window: { start: startStr, end: endStr } } };
+      });
       const nowD = new Date();
       const cur = nowD.getHours() * 60 + nowD.getMinutes();
       // Window may cross midnight (e.g. 23:00–07:00)
@@ -6986,6 +7008,8 @@ export default function App() {
                   equippedFrame: gameState.equippedFrame ?? null,
                   ownedFrames: gameState.ownedFrames ?? [],
                   onEquipFrame: handleEquipFrame,
+                  bits: gameState.gamePoints ?? 0,
+                  onBuyFrame: demo ? undefined : handleBuyFrame,
                   petElement: petElementOf(gameState),
                   language,
                   emblems: gameState.emblems ?? 0,
@@ -7753,6 +7777,10 @@ export default function App() {
                 totalXP: gameState.totalXP ?? 0,
                 onChangeAvatar: (id) => setGameState(prev => prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }),
                 onChangeFrame: handleEquipFrame,
+                userName,
+                onChangeName: handleChangeUserName,
+                bits: gameState.gamePoints ?? 0,
+                onBuyFrame: demo ? undefined : handleBuyFrame,
               }}
               onOpenCredits={demo ? undefined : openCredits}
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
@@ -7818,34 +7846,8 @@ export default function App() {
             /></Suspense>
           )}
 
-          {/* JANELA DE DESCANSO em CONFIGURAÇÕES: é uma preferência (os
-              horários que combinam com a vida da pessoa) e mora ao lado da
-              janela de sono automático, que ela conversa. O switch "não quero
-              ver métricas" também é preferência — e esconder números sem tirar
-              recompensa é a regra do `restWindow.ts`. */}
-          {pane === 'settings' && (
-            <div style={{ marginTop: 16 }}>
-              <Suspense fallback={<ScreenSkeleton language={language} />}>
-                <RestWindowCard
-                  rest={gameState.rest ?? createRestState()}
-                  now={new Date()}
-                  language={language}
-                  onChangeWindow={handleChangeRestWindow}
-                  onToggleMetrics={handleToggleRestMetrics}
-                  /* WP1.8 — a permissão de push pedida no MOMENTO-OURO: a
-                     pessoa acabou de escolher a hora de deitar. Antes ela só
-                     saía do interruptor geral, em Configurações, longe de
-                     qualquer motivo. */
-                  notificationsEnabled={notificationsEnabled}
-                  onEnableReminder={() => { void handleToggleNotifications(); }}
-                  reminderPreview={sleepReminderCopy(
-                    getCurrentStageName(),
-                    language,
-                  ).body}
-                />
-              </Suspense>
-            </div>
-          )}
+          {/* B5 (18/10/2026): o cartão da Janela de Descanso saiu das Configurações — o ÚNICO horário de sono é o do sono automático
+              (grupo "Seu ritmo"), e `rest.window` passa a seguir esse horário (efeito do sono automático, acima). */}
 
           {/* PASSOS em CONFIGURAÇÕES, logo abaixo da Janela de Descanso: é uma
               PREFERÊNCIA de privacidade (ligar/desligar um sensor, com o texto

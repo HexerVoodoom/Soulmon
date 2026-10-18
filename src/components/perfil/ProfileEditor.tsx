@@ -31,15 +31,22 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame, userName = '', onChangeName, bits = 0, onBuyFrame }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
   avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
+  /** Nome público do jogador (B8). Sem `onChangeName` o campo não aparece. */
+  userName?: string; onChangeName?: (name: string) => void;
+  /** Compra de moldura de loja (B3). */
+  bits?: number; onBuyFrame?: (id: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const ctx = useFrameContext(saveId, ownedFrames);
   const frame = resolveEquippedFrame(equippedFrame, ctx);
   const [q, setQ] = useState('');
+  const [nameDraft, setNameDraft] = useState(userName);
+  useEffect(() => { setNameDraft(userName); }, [userName, open]);
+  const nameOk = nameDraft.trim().length >= 2;
   const [group, setGroup] = useState('all');
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -55,12 +62,21 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}>
           <UserAvatar avatarId={avatarId} frameId={frame?.id ?? null} seed={saveId} size={72} alt={isPt ? 'Sua foto de perfil' : 'Your profile picture'} />
         </div>
+        {onChangeName && (
+          <>
+            <label style={sm2Text} htmlFor="sm-profile-name">{isPt ? 'Nome' : 'Name'}</label>
+            <Field id="sm-profile-name" type="text" value={nameDraft} maxLength={24} autoComplete="nickname"
+              onChange={e => setNameDraft(e.target.value)}
+              onBlur={() => { if (nameOk && nameDraft.trim() !== userName) onChangeName(nameDraft.trim()); else setNameDraft(userName); }} />
+            <p style={sm2Hint}>{isPt ? 'É o nome que outros jogadores veem. Mínimo de 2 letras.' : 'The name other players see. At least 2 letters.'}</p>
+          </>
+        )}
         <label style={sm2Text} htmlFor="sm-profile-email">{isPt ? 'E-mail' : 'Email'}</label>
         <Field id="sm-profile-email" type="email" value={email ?? ''} disabled readOnly placeholder={isPt ? 'em breve' : 'coming soon'} />
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>
 
         <h3 style={sec}>{isPt ? 'Moldura' : 'Frame'}</h3>
-        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} />
+        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} bits={bits} onBuy={onBuyFrame} />
 
         <h3 style={sec}>{isPt ? 'Foto' : 'Picture'}</h3>
         <Field type="search" value={q} onChange={e => setQ(e.target.value)} aria-label={isPt ? 'Buscar foto' : 'Search pictures'} placeholder={isPt ? 'Buscar' : 'Search'} />

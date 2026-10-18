@@ -234,7 +234,7 @@ export function lotNpcVoice(id: AreaId, lotId: string | null | undefined, langua
  * onde cada um aparece é decisão de design (`docs/PERGUNTAS-DO-DONO.md`).
  * Falas do ROSTER, sem cobrança, sem emoji, sem número.
  */
-export type FunctionNpcId = 'onboarding' | 'oraculo' | 'conta' | 'sono' | 'cuidados' | 'config';
+export type FunctionNpcId = 'onboarding' | 'oraculo' | 'cuidados';
 
 const FUNCTION_NPC_VOICE: Record<FunctionNpcId, AreaNpcVoice> = {
   onboarding: {
@@ -247,25 +247,10 @@ const FUNCTION_NPC_VOICE: Record<FunctionNpcId, AreaNpcVoice> = {
     linePt: 'A luz se dobra com gentileza hoje. Olhe o quanto quiser.',
     lineEn: 'The light bends kindly today. Look as long as you like.',
   },
-  conta: {
-    namePt: 'Faro', nameEn: 'Faro',
-    linePt: 'Seu progresso fica guardado aqui, quando você quiser.',
-    lineEn: 'Your progress is kept safe here, whenever you want it.',
-  },
-  sono: {
-    namePt: 'Sona', nameEn: 'Sona',
-    linePt: 'Um sonho novo se abriu enquanto você descansava. Guardei pra você.',
-    lineEn: 'A new dream opened while you rested. I kept it for you.',
-  },
   cuidados: {
     namePt: 'Nuri', nameEn: 'Nuri',
     linePt: 'Água fresca, cantinho limpo, tigela cheia. Simples assim.',
     lineEn: 'Fresh water, a clean corner, a full bowl. Nice and easy.',
-  },
-  config: {
-    namePt: 'Tobi', nameEn: 'Tobi',
-    linePt: 'Mexa no que quiser. Cada ajuste volta ao lugar de antes.',
-    lineEn: 'Turn anything you like. Every setting goes back where it was.',
   },
 };
 

@@ -19,10 +19,10 @@
 import { useState } from 'react';
 import type { Language } from '../utils/i18n';
 import type { RestWindow } from '../utils/restWindow';
-import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
+import { readFlagOr, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isMorning } from '../utils/restSetup';
-import { SwitchRow, TimeField, sm2Button, sm2Text } from './form/FormKit';
+import { SwitchRow, TimeField, sm2Button } from './form/FormKit';
 import { RitualDialog, ritualTitle } from './ritual/RitualKit';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
@@ -34,11 +34,11 @@ export interface RestSetupModalProps {
   onClose: () => void;
 }
 
-export function RestSetupModal({ language, now, window: restWindow, onChangeWindow, onClose }: RestSetupModalProps) {
+export function RestSetupModal({ language, now, onChangeWindow, onClose }: RestSetupModalProps) {
   const isPt = language === 'pt-BR';
-  const [autoOn, setAutoOn] = useState(() => readFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED));
-  const [autoStart, setAutoStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || restWindow.start);
-  const [autoEnd, setAutoEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || restWindow.end);
+  const [autoOn, setAutoOn] = useState(() => readFlagOr(STORAGE_KEYS.AUTO_SLEEP_ENABLED, true));
+  const [autoStart, setAutoStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
+  const [autoEnd, setAutoEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
 
   const title = isMorning(now)
     ? (isPt ? 'Bom dia! Vamos falar das noites?' : 'Good morning! A word about nights')
@@ -74,24 +74,6 @@ export function RestSetupModal({ language, now, window: restWindow, onChangeWind
         </InfoTip>
       </div>
 
-      <section data-rest-setup="window" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Janela de descanso' : 'Rest window'}</p>
-        </div>
-        <div className="sm2-conta-times">
-          <TimeField
-            ariaLabel={isPt ? 'Começa' : 'Starts'}
-            value={restWindow.start}
-            onChange={(v) => onChangeWindow({ ...restWindow, start: v })}
-          />
-          <TimeField
-            ariaLabel={isPt ? 'Termina' : 'Ends'}
-            value={restWindow.end}
-            onChange={(v) => onChangeWindow({ ...restWindow, end: v })}
-          />
-        </div>
-      </section>
-
       <section data-rest-setup="auto" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <SwitchRow
           checked={autoOn}
@@ -108,12 +90,12 @@ export function RestSetupModal({ language, now, window: restWindow, onChangeWind
             <TimeField
               ariaLabel={isPt ? 'Dorme' : 'Sleeps'}
               value={autoStart}
-              onChange={(v) => { setAutoStart(v); writeLocal(STORAGE_KEYS.AUTO_SLEEP_START, v, { silent: true }); }}
+              onChange={(v) => { setAutoStart(v); writeLocal(STORAGE_KEYS.AUTO_SLEEP_START, v, { silent: true }); onChangeWindow({ start: v, end: autoEnd }); }}
             />
             <TimeField
               ariaLabel={isPt ? 'Acorda' : 'Wakes'}
               value={autoEnd}
-              onChange={(v) => { setAutoEnd(v); writeLocal(STORAGE_KEYS.AUTO_SLEEP_END, v, { silent: true }); }}
+              onChange={(v) => { setAutoEnd(v); writeLocal(STORAGE_KEYS.AUTO_SLEEP_END, v, { silent: true }); onChangeWindow({ start: autoStart, end: v }); }}
             />
           </div>
         )}

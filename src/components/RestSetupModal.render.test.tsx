@@ -31,7 +31,6 @@ describe('RestSetupModal (G8)', () => {
   it('de manhã diz bom dia; as duas preferências estão na tela', () => {
     montar('en-US', 8);
     expect(screen.getByRole('dialog').getAttribute('aria-label')).toMatch(/^Good morning!/);
-    expect(screen.getByText('Rest window')).toBeTruthy();
     expect(screen.getByRole('switch', { name: /Auto sleep/ })).toBeTruthy();
   });
 
@@ -40,14 +39,16 @@ describe('RestSetupModal (G8)', () => {
     expect(screen.getByRole('dialog').getAttribute('aria-label')).toBe('A word about nights');
   });
 
-  it('mudar a janela vai para o App (o save é dele)', () => {
+  it('mudar o horário do sono automático também vai para o App (rest.window segue o sono automático)', () => {
     const { onChangeWindow } = montar();
-    fireEvent.change(screen.getByLabelText('Starts'), { target: { value: '22:30' } });
+    fireEvent.change(screen.getByLabelText('Sleeps'), { target: { value: '22:30' } });
     expect(onChangeWindow).toHaveBeenCalledWith({ start: '22:30', end: '07:00' });
   });
 
   it('ligar o sono automático grava a chave e as horas que a pessoa VÊ', () => {
     montar();
+    // B1: nasce ligado — o clique DESLIGA e outro religa
+    fireEvent.click(screen.getByRole('switch', { name: /Auto sleep/ }));
     fireEvent.click(screen.getByRole('switch', { name: /Auto sleep/ }));
     expect(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED)).toBe('true');
     expect(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START)).toBe('23:00');

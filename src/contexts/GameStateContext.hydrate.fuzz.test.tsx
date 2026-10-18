@@ -327,10 +327,9 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
       activities: [], tasks: [], lastResetDate: ontem, energyPoints: 7, perfectDays: 1,
     }));
     const s = montar(ComVirada);
-    // A virada zera a energia e carimba a data de hoje. Se ela não tivesse
-    // rodado, energyPoints continuaria 7 e lastDayReport não existiria.
+    // A virada carimba a data de hoje (a energia NÃO zera mais, B7). Se ela não tivesse
+    // rodado, lastResetDate seria ontem e lastDayReport não existiria.
     expect(s.lastResetDate).toBe(new Date().toDateString());
-    expect(s.energyPoints).toBe(0);
     expect(s.lastDayReport).toBeTruthy();
   });
 

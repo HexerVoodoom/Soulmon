@@ -30,7 +30,6 @@ import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
-import { setEnergy } from './hunger';
 
 /**
  * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
@@ -1279,9 +1278,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     maxActivityCap: newMaxActivityCap,
     attributesSinceLastEvolution: newRecentAttrs,
     habitRhythms: rhythms,
-    // Energia zera todo dia (REGISTRO §30/§40). Pela porta única da energia: o relógio de regeneração NÃO reinicia (o progresso até a
-    // próxima unidade passa intacto) e a fome também não é tocada.
-    ...(() => { const z = setEnergy(prev as any, now.getTime(), () => 0); return { energyPoints: z.energyPoints, energyClock: z.energyClock }; })(),
+    // Energia NÃO zera na virada (dono, 18/10/2026, checklist B7; revoga a parte "zera todo dia" do §30/§40): ela segue só o relógio
+    // de regeneração (`energyClock`) e a fome. Por isso não há mais `setEnergy(..., () => 0)` aqui.
     // Penalidade de fome (REGISTRO §45): a âncora e as janelas pagas atravessam a virada; só o que o resumo vai CONTAR é zerado.
     ...((prev as any).hungerPenalty ? { hungerPenalty: { ...(prev as any).hungerPenalty, unreported: 0 } } : {}),
     // Resumo de ontem, mostrado 1× como "relatório diário" na próxima abertura.
