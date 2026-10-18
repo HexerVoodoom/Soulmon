@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { hungerLevelOf, type HungerTier } from '../../utils/hunger';
+import { hungerDisplayLevel, type HungerTier } from '../../utils/hunger';
 import type { Language } from '../../utils/i18n';
 import { fomeCheio, fomeMedio, fomeFaminto } from '../../assets/soulmon/icones-ui';
 
@@ -10,7 +10,7 @@ import { fomeCheio, fomeMedio, fomeFaminto } from '../../assets/soulmon/icones-u
  *   <HungerIndicator tier={status.tier} value={status.hunger} language={language} />
  *
  * Três estados legíveis SEM depender de cor: carne no osso inteira / pela metade / só o osso (arte escolhida pelo dono, 14/10/2026; o faminto vem em dourado). O nome acessível diz o estado em
- * palavras. O nível aparece como 1/3, 2/3, 3/3: o detalhe vive na dica da energia (`home/statTips.ts`). Sem animação, sem som, sem cobrança.
+ * palavras. O nível aparece como 0/3 (fome vazia, só a chegada do Soulmon pago), 1/3, 2/3, 3/3: o detalhe vive na dica da energia (`home/statTips.ts`). Sem animação, sem som, sem cobrança.
  * Cor só por tokens (`currentColor` + `--sm2-*`): herda a tinta do contêiner (na cena escura, os tons `viewport*` do `sm3-stat`).
  */
 const STATE_COPY: Record<HungerTier, { pt: string; en: string }> = {
@@ -35,7 +35,7 @@ export function HungerIndicator({ tier, value, language, size = 20, style, onTap
 }) {
   const isPt = language === 'pt-BR';
   const copy = isPt ? STATE_COPY[tier].pt : STATE_COPY[tier].en;
-  const nivel = hungerLevelOf(tier);
+  const nivel = hungerDisplayLevel(tier, value);
   const nome = isPt ? `Fome: ${copy}, nível ${nivel} de 3` : `Hunger: ${copy}, level ${nivel} of 3`;
   const corpo = (
     <>

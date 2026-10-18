@@ -5783,6 +5783,7 @@ select:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -8732,3 +8733,16 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   border-radius: 999px;
   pointer-events: none;
 }
+
+/* Convite do pesadelo (REGISTRO §88): a sombra com glitch e aberração cromática (violeta/ciano, nunca vermelho). */
+.nm-glitch{position:relative;width:160px;height:160px;margin:4px auto 0;display:flex;align-items:center;justify-content:center}
+.nm-glitch__img{image-rendering:pixelated;width:160px;height:160px;transform:scaleX(-1);
+  filter:drop-shadow(-4px 0 0 rgba(118,59,255,.85)) drop-shadow(4px 0 0 rgba(63,200,232,.85));
+  animation:nm-glitch-shift 2.4s steps(1,end) infinite}
+.nm-glitch::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);pointer-events:none}
+@keyframes nm-glitch-shift{
+  0%,86%,100%{transform:scaleX(-1) translateX(0);clip-path:none}
+  88%{transform:scaleX(-1) translateX(-6px);clip-path:inset(12% 0 58% 0)}
+  91%{transform:scaleX(-1) translateX(7px);clip-path:inset(55% 0 20% 0)}
+  94%{transform:scaleX(-1) translateX(-3px);clip-path:inset(30% 0 40% 0)}
+  97%{transform:scaleX(-1) translateX(4px);clip-path:none}}

@@ -206,7 +206,9 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
   it('lista TODOS os 16 materiais do catálogo, mesmo com ×0, com ícone, nome e quantidade', async () => {
     const { sec } = await abrirMateriais();
     expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
-    expect(within(sec).getByLabelText('Spark × 3').textContent).toContain('✨');
+    // ícone: o PNG de `MaterialIcon` (carregado sob demanda) ou, enquanto não chega, o emoji do material
+    const icone = within(sec).getByLabelText('Spark × 3').querySelector('.sm3-material-icone')!;
+    expect(icone.querySelector('img') !== null || (icone.textContent ?? '').includes('✨')).toBe(true);
     expect(within(sec).getByLabelText('Gear × 12')).toBeTruthy();
     expect(within(sec).getByLabelText('Moss × 0')).toBeTruthy();
   });

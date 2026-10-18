@@ -53,12 +53,26 @@ function escolherPrimeira(pt: boolean): void {
   clicarContinuar(pt);
 }
 
-/** Áreas → dificuldades → forças → ponto de partida, e para na tela do OVO-CRISTAL (§81; era a escolha grátis/completo). */
+/** Áreas → dificuldades → forças → ponto de partida, e para na 1ª pergunta de nascimento (Faixa E: o nome completo). */
 export function responderMetas(pt = false): void {
   escolherPrimeira(pt); // o que melhorar
   escolherPrimeira(pt); // o que atrapalha
   escolherPrimeira(pt); // forças
   clicarContinuar(pt);  // ponto de partida (tudo vem marcado)
+}
+
+/** Faixa E (18/10/2026, decisão do dono): nome completo, data, hora e cidade vêm ANTES do ovo-cristal. Para na tela do ovo. */
+export function responderNascimento(pt = false, nomeCompleto = 'Jane Doe'): void {
+  fireEvent.change(screen.getByPlaceholderText(pt ? 'Ex.: Maria da Silva' : 'E.g.: Jane Doe'), { target: { value: nomeCompleto } });
+  clicarContinuar(pt);
+  fireEvent.change(screen.getByPlaceholderText(pt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'), { target: { value: '03/09/1994' } });
+  clicarContinuar(pt);
+  clicarContinuar(pt); // hora (o meio-dia já vem preenchido)
+  fireEvent.change(screen.getByLabelText(pt ? 'Cidade de nascimento' : 'Birth city'), { target: { value: pt ? 'São Paulo' : 'London' } });
+  const cidade = document.querySelector('button[aria-pressed="false"]');
+  if (!cidade) throw new Error('nascimento: a busca de cidade não devolveu opção');
+  fireEvent.click(cidade);
+  clicarContinuar(pt);
 }
 
 /** Nome + as 26 perguntas: da saída do portão até a 1ª meta. */
@@ -67,8 +81,9 @@ export async function ateAsMetas(pt = false, nome = 'Corvo Azul'): Promise<void>
   await responderPerguntas();
 }
 
-/** Nome + perguntas + metas: da saída do portão até a tela do ovo-cristal. */
+/** Nome + perguntas + metas + nascimento: da saída do portão até a tela do ovo-cristal. */
 export async function atravessarPerguntasIniciais(pt = false, nome = 'Corvo Azul'): Promise<void> {
   await ateAsMetas(pt, nome);
   responderMetas(pt);
+  responderNascimento(pt);
 }

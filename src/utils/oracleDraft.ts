@@ -77,7 +77,7 @@ function respostasTexto(v: unknown): Record<string, string> {
 }
 
 /** A cidade chega ao mapa astral: sem nome, fuso e coordenadas finitas, é descartada. */
-function cidadeValida(v: unknown): City | null {
+export function cidadeValida(v: unknown): City | null {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   const c = v as Record<string, unknown>;
   const ok = typeof c.name === 'string' && c.name.length > 0

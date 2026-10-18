@@ -1562,6 +1562,11 @@ O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus
 **Régua:** `src/components/ForgeCard.render.test.tsx`.
 
 
+### `src/components/MaterialIcon.tsx`
+Ícone de MATERIAL de aprimoramento (REGISTRO §88, D1): a arte pixel `assets/soulmon/materiais/mat-<id>.png`, carregada SOB DEMANDA (fora do chunk de entrada); sem arte (ou enquanto carrega) cai no emoji de `MaterialDef.icon`. Usado no Soulsmith (`ForgeCard`) e na aba Materiais da Mochila (`home/Mochila.tsx`). Exporta também `materialArtIds()` (para teste).
+**Régua:** `src/components/ForgeCard.render.test.tsx`, `src/components/home/Mochila.render.test.tsx`.
+
+
 ## `src/components/nav/BuildingQuestList.tsx` (07/10/2026)
 
 Seção "Dos prédios"/"Buildings" da `MissionsSheet` (import dinâmico): a missão do dia de cada prédio

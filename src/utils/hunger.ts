@@ -266,6 +266,14 @@ export interface EnergyStatus {
 export const hungerLevelOf = (tier: HungerTier): 1 | 2 | 3 => (tier === 'fed' ? 3 : tier === 'fair' ? 2 : 1);
 
 /**
+ * Nível MOSTRADO no indicador (Faixa E2, 18/10/2026): igual a `hungerLevelOf`, exceto que fome EXATAMENTE vazia (0) mostra
+ * 0/3 — o Soulmon pago chega assim (`paidArrivalVitals`). Antes o piso era 1/3 e a tela contradizia "fome vazia". Sem o valor
+ * (`undefined`) vale o nível do tier; o tier em si (arte "faminto", regra das 12 h) não muda.
+ */
+export const hungerDisplayLevel = (tier: HungerTier, value?: number): 0 | 1 | 2 | 3 =>
+  value !== undefined && Math.round(value) <= 0 ? 0 : hungerLevelOf(tier);
+
+/**
  * Ms (a partir de `now`) até a regeneração acumular `needPoints`, projetando a fome descendo SEM nova refeição. `null` se nunca.
  * Segmentos: [agora, tFed) a 100%, [tFed, tFair) a 50%, depois 0.
  */

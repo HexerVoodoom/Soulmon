@@ -18,7 +18,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { abrirGuias, entrarNaDemoPeloOvo, tocarOvo, escolherGuiaEConfirmar } from '../test/ovoOnboarding';
-import { responderNome, ateAsMetas, atravessarPerguntasIniciais, responderPerguntas, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
+import { responderNome, ateAsMetas, atravessarPerguntasIniciais, responderNascimento, responderPerguntas, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 import { ORACLE_QUESTIONS } from '../utils/oracle';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
 
@@ -161,7 +161,8 @@ describe('funil grátis — identidade do canvas', () => {
     expect(guia.style.color).toBe('var(--sm2-ink)');
     expect(screen.queryByText(/Start now/)).toBeNull();
     fireEvent.click(btn('Back'));
-    expect(screen.getByText('Add tasks to list')).toBeTruthy();
+    // Faixa E: do ovo volta-se à última pergunta de nascimento (a cidade), não ao ponto de partida.
+    expect(screen.getByText('Where were you born?')).toBeTruthy();
   });
 
   it('EscolherPersonagem: os 5 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {
@@ -263,6 +264,7 @@ describe('01/10/2026 — fechar no meio e voltar de onde parou', () => {
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(btn('Continue'));
     fireEvent.click(btn('Continue'));
+    responderNascimento();
     entrarNaDemoPeloOvo();
     const data = onComplete.mock.calls[0][0];
     expect(data.userName).toBe('Ana Lua');

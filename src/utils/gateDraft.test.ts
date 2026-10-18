@@ -211,3 +211,24 @@ describe('🔴 o storage é dado NÃO confiável', () => {
     expect(Array.isArray(d?.consent)).toBe(false);
   });
 });
+
+describe('gateDraft — nascimento antes do ovo (Faixa E)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('guarda nome completo, data, hora, cidade e "não sei a hora"; cidade quebrada vira null', () => {
+    const cidade = { name: 'London', region: 'England', country: 'GB', timeZone: 'Europe/London', latitude: 51.5, longitude: -0.12 };
+    writeGateDraft({
+      soulGoal: '', soulStruggle: '', consent: CONSENT,
+      fullName: 'Jane Doe', birthDate: '1994-09-03', birthDateText: '03/09/1994', birthTime: '08:30',
+      birthCity: cidade as never, timeUnknown: true,
+    });
+    const d = readGateDraft();
+    expect(d?.fullName).toBe('Jane Doe');
+    expect(d?.birthDate).toBe('1994-09-03');
+    expect(d?.birthTime).toBe('08:30');
+    expect(d?.birthCity?.name).toBe('London');
+    expect(d?.timeUnknown).toBe(true);
+    localStorage.setItem(STORAGE_KEYS.GATE_DRAFT, JSON.stringify({ v: GATE_DRAFT_VERSION, soulGoal: '', soulStruggle: '', birthCity: { name: 'X' } }));
+    expect(readGateDraft()?.birthCity).toBeNull();
+  });
+});

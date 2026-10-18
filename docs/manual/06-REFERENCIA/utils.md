@@ -3449,3 +3449,8 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/App.tsx` (`handleFrameBuy`).
 **Régua:** `src/utils/frameBuy.test.ts`.
 
+### `src/utils/forgeVisual.ts`
+**Dono de:** o VISUAL do Soulsmith por nível (REGISTRO §88, D2): `visualTier(level)` (degrau 1..5, a cada `LEVELS_PER_VISUAL_TIER` = 3 níveis: cobre, bronze, prata, dourado, prismático) e `forgeArtName(pieceId, level)` (a chave de `loadEquipArt`). Puro.
+**Exports:** `LEVELS_PER_VISUAL_TIER` · `VISUAL_TIERS` · `visualTier` · `forgeArtName`.
+**Chamado por:** `src/components/ForgeCard.tsx`.
+**Régua:** `src/utils/forgeVisual.test.ts`.

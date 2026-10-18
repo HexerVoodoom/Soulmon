@@ -141,6 +141,15 @@ describe('encaixe no CompanionHUD (a faixa de status do cenário)', () => {
     expect(r.container.querySelector('[data-hunger-countdown]')).toBeNull();
     expect(r.container.querySelector('[data-hunger-timer]')).not.toBeNull();
   });
+  it('fome exatamente vazia (chegada do Soulmon pago) mostra 0/3; com fome > 0 o piso segue 1/3', () => {
+    const vazia = render(<HungerIndicator tier="starving" value={0} language="pt-BR" />);
+    expect(vazia.container.querySelector('[data-hunger-level]')!.textContent).toBe('0/3');
+    expect(vazia.container.querySelector('[data-hunger-indicator]')!.getAttribute('aria-label')).toMatch(/nível 0 de 3/);
+    vazia.unmount();
+    const baixa = render(<HungerIndicator tier="starving" value={3} language="pt-BR" />);
+    expect(baixa.container.querySelector('[data-hunger-level]')!.textContent).toBe('1/3');
+    baixa.unmount();
+  });
   it('o indicador mostra o nível como número N/3 (3/3, 2/3, 1/3) e tocar de novo fecha', () => {
     for (const [tier, n] of [['fed', 3], ['fair', 2], ['starving', 1]] as const) {
       const { container, unmount } = render(<HungerIndicator tier={tier} language="pt-BR" />);

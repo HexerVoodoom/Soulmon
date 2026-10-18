@@ -442,12 +442,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  rascunho do portão (`gateDraft.ts`) sabe retomar. */
   const QUIZ_STEPS = ORACLE_QUESTIONS.map((_, i) => QUIZ_START + i);
   const DEEP_STEPS = SOUL_TEST_ITEMS.map((_, i) => DEEP_START + i);
+  /** Os dados de nascimento do caminho pago (mapa astral). Faixa E (18/10/2026, decisão do dono): são pedidos ANTES
+   *  do ovo-cristal; depois do "Chocar" a tela vai direto à geração. */
+  const RITUAL_PAGO = [1, 2, 3, 4];
   const PRE_ESCOLHA = [
     NAME_STEP, ...QUIZ_STEPS, ...DEEP_STEPS,
-    GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP,
+    GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, ...RITUAL_PAGO, CHOICE_STEP,
   ];
-  /** Os dados de nascimento do caminho pago (mapa astral). */
-  const RITUAL_PAGO = [1, 2, 3, 4];
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -590,18 +591,18 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const soulStruggle = struggles.length > 0
     ? labelsOf(struggles, STRUGGLE_LABEL)
     : (draft?.soulStruggle ?? gate?.soulStruggle ?? '');
-  const [fullName, setFullName] = useState(draft?.fullName ?? '');
-  const [birthDate, setBirthDate] = useState(draft?.birthDate ?? '');
-  const [birthDateText, setBirthDateText] = useState(draft?.birthDateText ?? '');
-  const [birthTime, setBirthTime] = useState(draft?.birthTime ?? '12:00');
+  const [fullName, setFullName] = useState(draft?.fullName ?? gate?.fullName ?? '');
+  const [birthDate, setBirthDate] = useState(draft?.birthDate ?? gate?.birthDate ?? '');
+  const [birthDateText, setBirthDateText] = useState(draft?.birthDateText ?? gate?.birthDateText ?? '');
+  const [birthTime, setBirthTime] = useState(draft?.birthTime ?? gate?.birthTime ?? '12:00');
   // O local vira CIDADE da tabela (lat/lon/fuso IANA) em vez de texto livre: o
   // mapa astral precisa dos três, e o fuso é o que carrega o horário de verão
   // histórico. `birthPlace` continua existindo porque é o campo que o
   // `OracleInput` sempre teve (e o que os perfis já salvos guardam) — passa a
   // ser o rótulo legível da cidade escolhida.
-  const [birthCity, setBirthCity] = useState<City | null>(draft?.birthCity ?? null);
+  const [birthCity, setBirthCity] = useState<City | null>(draft?.birthCity ?? gate?.birthCity ?? null);
   const birthPlace = birthCity ? cityLabel(birthCity, isPt) : '';
-  const [timeUnknown, setTimeUnknown] = useState(draft?.timeUnknown ?? false);
+  const [timeUnknown, setTimeUnknown] = useState(draft?.timeUnknown ?? gate?.timeUnknown ?? false);
   /** As 6 perguntas do ritual — todo mundo responde. O rascunho do ritual
    *  pago vence o do portão (é o mais recente quando existe). */
   const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? gate?.answers ?? {});
@@ -799,9 +800,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     writeGateDraft({
       soulGoal, soulStruggle, consent, areas, struggles, strengths,
       step: passoGravado, nickname, answers, testAnswers, starterOff,
+      fullName, birthDate, birthDateText, birthTime, birthCity, timeUnknown,
     });
   }, [noPortao, passoGravado, soulGoal, soulStruggle, consent, areas, struggles, strengths,
-    nickname, answers, testAnswers, starterOff]);
+    nickname, answers, testAnswers, starterOff, fullName, birthDate, birthDateText, birthTime, birthCity, timeUnknown]);
 
   // WP1.7 — grava o rascunho a cada mudança, só DENTRO do ritual pago (do nome
   // ao último item do teste) e só enquanto não existe resultado. Fora disso o
@@ -968,7 +970,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === STRENGTH_STEP) { setStarterOff([]); setStep(STARTER_STEP); return; }
-    if (step === STARTER_STEP) { setStep(CHOICE_STEP); return; }
+    // Faixa E: nome completo, data, hora e cidade vêm ANTES do ovo (no upgrade/ritual o fluxo antigo segue).
+    if (step === STARTER_STEP) { setStep(1); return; }
     // Gate 18+ (D-06): a MESMA data do mapa astral confirma a idade mínima.
     // `isAgeBlocked` só bloqueia data legível de menor — data vazia ou
     // ilegível segue o fluxo, que é o que impede barrar alguém por engano.
@@ -976,7 +979,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // ⚰️ O degrau da criatura favorita foi pulado (ver FAVORITE_STEP). Do
     // local de nascimento: no onboarding as 26 perguntas já foram feitas antes
     // da escolha, então vai-se à geração; no upgrade, às perguntas.
-    if (step === FAVORITE_STEP - 1) { aposPerguntas(); return; }
+    if (step === FAVORITE_STEP - 1) {
+      if (!isUpgrade && flow !== 'oracle') { setStep(CHOICE_STEP); return; }
+      aposPerguntas();
+      return;
+    }
     setStep(s => s + 1);
   };
 
@@ -1011,13 +1018,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === STRENGTH_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STARTER_STEP) { setStep(STRENGTH_STEP); return; }
-    if (step === CHOICE_STEP) { setStep(STARTER_STEP); return; }
+    if (step === CHOICE_STEP) { setStep(FAVORITE_STEP - 1); return; }
     // 13.19: da escolha do personagem volta-se ao reveal demo (a leitura
     // continua lá).
     if (step === DEMO_PICK) { setStep(CHOICE_STEP); return; }
     // A escolha da DEMO volta ao portão (a demo não tem estado a desfazer).
     if (step === DEMO_LOCAL_PICK) { if (!isEmbedMode()) setStep(IDENTITY_STEP); return; }
-    if (step === 1 && !isUpgrade) { setStep(CHOICE_STEP); return; }
+    if (step === 1 && !isUpgrade) { setStep(STARTER_STEP); return; }
     // O PISO É 1 NOS DOIS MODOS. Era `0` fora do upgrade, e o passo 0 era a
     // intro de marca — que foi APAGADA quando o portão virou a primeira tela.
     // Hoje nada renderiza no 0: quem caísse ali veria o casco do onboarding
@@ -1374,7 +1381,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   };
 
   /** "Chocar": a luz cobre a tela e, com ela toda branca, entra o ritual pago (passo 1); depois some em fade. */
-  const luz = useLuzDeChocar(() => setStep(1));
+  const luz = useLuzDeChocar(() => {
+    // Os dados de nascimento já foram dados antes do ovo: o "Chocar" vai direto à geração.
+    setStep(GENERATING);
+    runGenerate(testAnswers);
+  });
 
   /** A demo CONFIRMADA ("Sim"): a Ambra fala de novo e, ao fim dela, o app entra na demo (`finish`). */
   const confirmarDemo = () => {
