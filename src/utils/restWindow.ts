@@ -737,8 +737,8 @@ export function decideArmedNight(
   if (!isInArmPeriod(win, armed)) return { kind: 'clear' };
 
   const armedMin = Math.floor(armed.getTime() / MS_MIN) * MS_MIN;
-  const sleptAt = new Date(armedMin + minutesUntilStart(state.window, armed) * MS_MIN);
-  const wokeAt = new Date(sleptAt.getTime() + windowSpanMin(state.window) * MS_MIN);
+  const sleptAt = new Date(armedMin + minutesUntilStart(win, armed) * MS_MIN);
+  const wokeAt = new Date(sleptAt.getTime() + windowSpanMin(win) * MS_MIN);
 
   if (now.getTime() < wokeAt.getTime()) return { kind: 'none' };
   if (now.getTime() - wokeAt.getTime() > ARMED_NIGHT_MAX_AGE_MS) return { kind: 'clear' };
