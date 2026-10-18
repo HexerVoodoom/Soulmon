@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Text } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
+import { GameRoot, GameHeader, GameStory, GameVisor, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
 import { readLocal, writeLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
@@ -278,6 +278,7 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           </>
         )}
       />
+      <GameStory id="picross" language={language} />
 
       {picking ? picker : solved ? (
         <>

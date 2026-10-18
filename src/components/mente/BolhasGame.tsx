@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { MiniGameBaseProps } from './types';
 import { sm2Button } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
+import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { MINI_FX, REFUGIO_SCENE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
@@ -195,6 +195,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
         exitConfirm={phase === 'play' && !calma ? gameExitConfirm(isPt, 'da rodada') : undefined}
         onPauseChange={onPauseChange}
       />
+      <GameStory id="bolhas" language={language} />
 
       {!calma && phase === 'play' && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>

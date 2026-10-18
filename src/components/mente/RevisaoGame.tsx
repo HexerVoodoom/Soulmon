@@ -2,7 +2,7 @@ import { useId, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
+import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
 import { ATELIE_SCENE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import {
@@ -138,6 +138,7 @@ export function RevisaoGame({
           closeLabel={closeLabel}
           onClose={onExit}
         />
+        <GameStory id="revisao" language={language} />
         {petVisor}
         <p role="status" data-revisao-due style={phaseTitle}>
           {due.length === 0
@@ -271,6 +272,7 @@ export function RevisaoGame({
           closeLabel={closeLabel}
           onClose={onExit}
         />
+        <GameStory id="revisao" language={language} />
         {petVisor}
         {card && (
           <div style={panel} aria-live="polite">

@@ -152,6 +152,8 @@ export function shuffleBoard(b: Board, rng: Rng): Board {
 export interface Step {
   /** Peças que somem neste passo (já com as linhas das especiais). */
   cleared: Pos[];
+  /** D-03: o TIPO (`k`) de cada peça de `cleared`, na mesma ordem — é daqui que o combate tira o elemento do dano. */
+  kinds: number[];
   /** Especiais que DISPARARAM neste passo. */
   triggered: Pos[];
   /** Especiais que NASCERAM neste passo (linha de 4+). */
@@ -210,6 +212,7 @@ export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [
     const cleared = [...clearSet.values()];
     const gained = Math.round(cleared.length * POINTS_PER_TILE * chainMultiplier(chain)) + created.length * POINTS_PER_CREATED + triggered.length * POINTS_PER_TRIGGER;
     score += gained;
+    const kinds = cleared.map(p => w[p.r][p.c]!.k);
     for (const p of cleared) w[p.r][p.c] = null;
     for (const x of created) w[x.pos.r][x.pos.c] = x.tile;
     // gravidade por coluna, depois o topo é preenchido (coluna a coluna, de cima para baixo: ordem fixa do sorteio)
@@ -220,7 +223,7 @@ export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [
       for (let r = M3_ROWS - 1, i = 0; r >= 0; r--, i++) w[r][c] = i < fica.length ? fica[i] : null;
       for (let r = 0; r < faltam; r++) w[r][c] = { k: pickKind(rng) };
     }
-    steps.push({ cleared, triggered, created, chain, gained, after: cloneBoard(w) });
+    steps.push({ cleared, kinds, triggered, created, chain, gained, after: cloneBoard(w) });
   }
   return { steps, board: w, score };
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Text } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
+import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { DUNGEON_LINE_SPRITES } from '../../utils/sprites';
@@ -218,6 +218,7 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
         exitConfirm={over ? undefined : gameExitConfirm(isPt, 'da rodada')}
         onPauseChange={onPauseChange}
       />
+      <GameStory id="troca" language={language} />
 
       {over ? (
         <>
