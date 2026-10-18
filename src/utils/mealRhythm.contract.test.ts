@@ -31,32 +31,13 @@ describe('NÃO COBRA: o módulo não lê desempenho nenhum', () => {
     expect([...new Set(imports)].sort()).toEqual(['./playerDay', '../../functions/api/_mealRhythm.js', '../../functions/api/_pushCopy.js'].sort());
   });
 
-  it('o cartão do app é decidido SEM olhar a meta: nenhuma variável de desempenho entre `openInvite` e o `push` da fila', () => {
-    const i = app.indexOf('const refeicaoA = openInvite(');
-    const j = app.indexOf("key: 'refeicao',");
-    expect(i).toBeGreaterThan(0);
-    expect(j).toBeGreaterThan(i);
-    const trecho = app.slice(i, j);
-    for (const proibido of ['dailyDone', 'hpSafeToday', 'healthPoints', 'completedSteps', 'perfectDays', 'moodLog']) {
-      expect(trecho, `o convite não pode depender de ${proibido}`).not.toContain(proibido);
-    }
-  });
+
 });
 
-describe('FILA: o cartão entra UMA vez, na posição declarada', () => {
-  it("`refeicao` vem depois do recomeço e antes da carga", () => {
-    const a = app.indexOf("key: 'recomeco',");
-    const b = app.indexOf("key: 'refeicao',");
-    const c = app.indexOf("key: 'carga',");
-    expect(a).toBeGreaterThan(0);
-    expect(b).toBeGreaterThan(a);
-    expect(c).toBeGreaterThan(b);
-    expect((app.match(/key: 'refeicao',/g) ?? []).length).toBe(1);
-    expect((app.match(/<MealInviteCard/g) ?? []).length).toBe(1);
-  });
-  it('e é lazy (os bytes da entrada estão no limite)', () => {
-    expect(app).toMatch(/const MealInviteCard = lazy\(/);
-    expect(app).not.toMatch(/^import \{[^}]*MealInviteCard[^}]*\} from/m);
+describe('FILA: o cartão-convite saiu do app (dono, 18/10/2026)', () => {
+  it('nenhum `refeicao` na fila de avisos e nenhum MealInviteCard no App', () => {
+    expect(app).not.toContain("key: 'refeicao',");
+    expect(app).not.toContain('MealInviteCard');
   });
 });
 
@@ -106,11 +87,5 @@ describe('RECOMPENSA: nada de moeda, energia, HP ou XP pelo convite', () => {
     expect(trecho).toContain('markMealDone(prev, new Date(), kind, isSleepingRefeicao.current)');
     expect(trecho).not.toMatch(/gamePoints|emblems|totalXP|healthPoints|energyPoints/);
   });
-  it('o cartão "carinho" não cura (a cura é de handlePet, sob o teto diário): só reage', () => {
-    const i = app.indexOf('onAct={kind => {');
-    const trecho = app.slice(i, i + 400);
-    expect(trecho).toContain("falar(kind === 'pet' ? 'rub' : 'cheer')");
-    expect(trecho).not.toContain('handlePet');
-    expect(trecho).not.toContain('applyRub');
-  });
+
 });
