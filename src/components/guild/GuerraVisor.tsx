@@ -5,6 +5,7 @@
  * da forma. Dentro do vidro ("O Visor"), sobre o cenário da arena; movimento reduzido para o balanço.
  */
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { sceneCss } from '../../utils/backgroundPortrait';
 import { GROUND_Y } from '../../utils/petStage';
 import { spriteForMember } from '../../utils/groveStage';
 import type { GuildView } from '../../utils/community';
@@ -36,7 +37,7 @@ export function GuerraVisor({ guild, mySprite, enemyCount, reducedMotion, label 
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: GUERRA_VISOR_HEIGHT, background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: GUERRA_VISOR_HEIGHT, background: bg && `${sceneCss('bg-arena-spotlight')} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor }}
     >
       {nossos.map((c, i) => (
         <img
