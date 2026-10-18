@@ -743,6 +743,14 @@ function refeicoesDeInscricao(v) {
   return { t: [...t], tz, ...rest ? { rest } : {} };
 }
 __name(refeicoesDeInscricao, "refeicoesDeInscricao");
+function lembreteDeInscricao(v) {
+  if (!v || typeof v !== "object") return void 0;
+  const { s, tz } = v;
+  if (!Number.isInteger(s) || s < 0 || s > 1439) return void 0;
+  if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return void 0;
+  return { s, tz };
+}
+__name(lembreteDeInscricao, "lembreteDeInscricao");
 function ehTokenFcm(v) {
   return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
 }
@@ -8180,7 +8188,7 @@ async function onRequestPost4({ request, env }) {
   if (limited) return limited;
   const body = await corpoDe(request);
   if (!body) return json6({ error: "Invalid JSON" }, 400);
-  const { token, petName, language, bornAt, saveId, meals } = body;
+  const { token, petName, language, bornAt, saveId, meals, sleep } = body;
   if (!token) return json6({ error: "Missing token" }, 400);
   if (!ehTokenFcm(token)) return json6({ error: "Invalid token" }, 400);
   const dono = await saveIdAutorizado(request, env, saveId);
@@ -8192,6 +8200,8 @@ async function onRequestPost4({ request, env }) {
     bornAt: dataDeNascimento(bornAt),
     // Ritmo das refeições — OPT-IN (ver `refeicoesDeInscricao`): inválido é descartado.
     ...refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {},
+    // Lembrete de deitar — OPT-IN: ausente/inválido = desligado (registro regravado inteiro).
+    ...lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {},
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
@@ -10633,7 +10643,7 @@ async function onRequestPost8({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
-  const { endpoint, keys, petName, language, bornAt, saveId, meals } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -10685,6 +10695,9 @@ async function onRequestPost8({ request, env }) {
        Configurações; inválido é descartado e a inscrição segue sem ele. Ver
        `refeicoesDeInscricao` e `_mealRhythm.js`. */
     ...refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {},
+    // Lembrete de deitar — OPT-IN: ausente/inválido = desligado. O registro é
+    // regravado inteiro, então parar de mandar `sleep` o remove.
+    ...lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {},
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que
@@ -10993,7 +11006,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-vw7TzR/functionsRoutes-0.09614555159478311.mjs
+// ../.wrangler/tmp/pages-TsKWlI/functionsRoutes-0.8737363874961677.mjs
 var routes = [
   {
     routePath: "/api/account",
