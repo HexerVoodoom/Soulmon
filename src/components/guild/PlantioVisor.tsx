@@ -10,6 +10,10 @@
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
+import fruitGirassol from '../../assets/soulmon/plantio/fruit-girassol.png';
+import fruitMelancia from '../../assets/soulmon/plantio/fruit-melancia.png';
+import fruitAbobora from '../../assets/soulmon/plantio/fruit-abobora.png';
+import fruitPinheiro from '../../assets/soulmon/plantio/fruit-pinheiro.png';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { sceneCss } from '../../utils/backgroundPortrait';
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
@@ -31,7 +35,8 @@ const BONE = '#EFE3C2';
 const BRASS = '#C9A34A';
 const LEAF = '#3E8E6B';
 
-/** A cor do fruto por espécie (paleta do aparelho + verde de folha; nada de magenta, roxo ou rosa). */
+const FRUIT_ART: Record<PlantSpecies, string> = { girassol: fruitGirassol, melancia: fruitMelancia, abobora: fruitAbobora, pinheiro: fruitPinheiro };
+/** (legado) A cor do fruto por espécie (paleta do aparelho + verde de folha; nada de magenta, roxo ou rosa). */
 const FRUIT_COLOR: Record<PlantSpecies, string> = { girassol: BRASS, melancia: LEAF, abobora: COPPER, pinheiro: BONE };
 const STEM_H = [4, 18, 34, 50, 56];
 
@@ -76,8 +81,7 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, s
             })}
             {mature && (
               <g className={reducedMotion ? undefined : 'sm2-casa-glow'} data-plantio-fruto>
-                <rect x={cx - 11} y={GROUND - 8 - h - 18} width={22} height={18} fill={FRUIT_COLOR[species]} stroke={OUTLINE} strokeWidth={1.5} />
-                <rect x={cx - 3} y={GROUND - 8 - h - 22} width={6} height={4} fill={SLAB} stroke={OUTLINE} strokeWidth={1} />
+                <image href={FRUIT_ART[species]} x={cx - 16} y={GROUND - 8 - h - 30} width={32} height={32} preserveAspectRatio="xMidYMax meet" style={{ imageRendering: 'pixelated' }} />
               </g>
             )}
           </g>

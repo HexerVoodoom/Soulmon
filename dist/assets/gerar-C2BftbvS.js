@@ -1,0 +1,7 @@
+<<<<<<<< HEAD:dist/assets/gerar-ETLGi4dZ.js
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/motor-y4DzIk3s.js","assets/index-CkmzgEzp.js","assets/vendor-DDxydHEc.js","assets/vendor-sonner-BFkWhx6y.js","assets/vendor-capacitor-B8vh4tkU.js","assets/index-Bwbpc8Gz.css","assets/oracle-CGbRIvjE.js"])))=>i.map(i=>d[i]);
+import{bU as r}from"./index-CkmzgEzp.js";import"./vendor-DDxydHEc.js";import"./vendor-sonner-BFkWhx6y.js";import"./vendor-capacitor-B8vh4tkU.js";async function p(t,i,e){const[o,a]=await Promise.all([r(()=>import("./familias-lo-OTGs5.js"),[]),r(()=>import("./motor-y4DzIk3s.js"),__vite__mapDeps([0,1,2,3,4,5,6]))]);return a.generateOracleWithFamilies(t,o,i,e)}export{p as generateOracleAsync};
+========
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/motor-TY_NTV5P.js","assets/index-Q2eWz9O5.js","assets/vendor-DDxydHEc.js","assets/vendor-sonner-BFkWhx6y.js","assets/vendor-capacitor-B8vh4tkU.js","assets/index-Bwbpc8Gz.css","assets/oracle-9GDvXIfi.js"])))=>i.map(i=>d[i]);
+import{bU as r}from"./index-Q2eWz9O5.js";import"./vendor-DDxydHEc.js";import"./vendor-sonner-BFkWhx6y.js";import"./vendor-capacitor-B8vh4tkU.js";async function p(t,i,e){const[o,a]=await Promise.all([r(()=>import("./familias-lo-OTGs5.js"),[]),r(()=>import("./motor-TY_NTV5P.js"),__vite__mapDeps([0,1,2,3,4,5,6]))]);return a.generateOracleWithFamilies(t,o,i,e)}export{p as generateOracleAsync};
+>>>>>>>> origin/feat/arte-cla-guerra:dist/assets/gerar-C2BftbvS.js

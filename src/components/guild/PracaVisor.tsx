@@ -10,6 +10,7 @@
  * quem olha; quem pôs cada item é um id opaco que o painel só usa para dizer "você" (nunca ranking).
  */
 import { useState } from 'react';
+import giftArt from '../../assets/soulmon/items/item-gift.png';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { sceneCss } from '../../utils/backgroundPortrait';
 import { DECOR_ART } from '../../utils/decorArt';
@@ -73,9 +74,7 @@ export function PracaVisor({ stage, slots, hasGift, reducedMotion, label }: Prac
         })}
         {hasGift && (
           <g data-praca-embrulho className={reducedMotion ? undefined : 'sm2-casa-glow'}>
-            <rect x={W - 36} y={14} width={22} height={18} fill={BRASS} stroke={OUTLINE} strokeWidth={1.5} />
-            <rect x={W - 27} y={14} width={4} height={18} fill={COPPER} />
-            <rect x={W - 36} y={21} width={22} height={4} fill={COPPER} />
+            <image href={giftArt} x={W - 40} y={8} width={30} height={30} preserveAspectRatio="xMidYMid meet" style={{ imageRendering: 'pixelated' }} />
           </g>
         )}
       </svg>
