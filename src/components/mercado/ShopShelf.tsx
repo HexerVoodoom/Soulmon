@@ -1,3 +1,4 @@
+import { missionsDoneFirst } from '../../utils/missionOrder';
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
@@ -719,7 +720,7 @@ export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly, nav
   }
   return (
     <MissionCardList attrs={{ 'data-weekly-missions': '' }}>
-      {weeklyMissions.map(({ mission, count, done, claimed }) => {
+      {missionsDoneFirst(weeklyMissions, w => (w.claimed ? 'claimed' : w.done ? 'ready' : 'open')).map(({ mission, count, done, claimed }) => {
         const go = resolveGo(nav, weeklyTarget(mission.id), language);
         return (
           <MissionCard

@@ -1,3 +1,4 @@
+import { missionsDoneFirst } from '../../utils/missionOrder';
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
@@ -37,9 +38,10 @@ export function BuildingQuestList({ language, state, day, bondLevel, onClaim, on
   const isPt = language === 'pt-BR';
   const open = LISTED_QUEST_BUILDINGS.filter(id => questStatus(state, day, id, bondLevel) !== 'locked');
   if (open.length === 0) return null;
+  const ordered = missionsDoneFirst(open, id => { const st = questStatus(state, day, id, bondLevel); return st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open'; });
   return (
     <MissionCardList attrs={{ 'data-building-quests': '' }}>
-      {open.map(id => {
+      {ordered.map(id => {
         const st = questStatus(state, day, id, bondLevel);
         return (
           <MissionCard

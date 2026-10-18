@@ -16,7 +16,7 @@
  * Cada caso afirma EFEITO OBSERVÁVEL, medido na cascata real do index.css.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
 import { renderWithCss, declaredTargetSize, computed } from '../../test/renderEnv';
 import { RitualPanel, RitualRow } from './RitualPanel';
 
@@ -60,21 +60,33 @@ describe('RitualRow — a ação central continua acessível na composição den
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 
-  // Beta-2 (2.2): editar = o NOME (o checkbox bronze ocupa a esquerda).
-  it('o nome é o botão de EDITAR, com rótulo que diz o nome', () => {
+  // Revisão 2 (A1): na Home tocar em QUALQUER lugar da linha marca; editar só no View all (editOnly).
+  it('tocar no nome marca como feita e não há botão de editar na Home', () => {
+    const toggle = vi.fn();
     const edit = vi.fn();
-    const { container } = renderWithCss(<ul>{linha({ onEdit: edit })}</ul>);
-    const botao = screen.getByRole('button', { name: 'Editar: Beber 2 litros de água' });
-    expect(botao.getAttribute('data-ritual-edit')).not.toBeNull();
-    expect(botao.textContent).toContain('Beber 2 litros de água');
-    fireEvent.click(botao);
-    expect(edit).toHaveBeenCalledTimes(1);
-    // um só controle de editar por linha (sem lápis/folha extra)
-    expect(container.querySelectorAll('[data-ritual-edit]')).toHaveLength(1);
+    const { container } = renderWithCss(<ul>{linha({ onToggle: toggle, onEdit: edit })}</ul>);
+    expect(container.querySelectorAll('[data-ritual-edit]')).toHaveLength(0);
+    fireEvent.click(screen.getByText('Beber 2 litros de água'));
+    expect(toggle).toHaveBeenCalledTimes(1);
+    expect(edit).not.toHaveBeenCalled();
   });
 
-  it('par PT/EN do rótulo de editar', () => {
-    renderWithCss(<ul>{linha({ language: 'en-US' })}</ul>);
+  it('linha concluída/inerte: tocar no nome não faz nada', () => {
+    const toggle = vi.fn();
+    renderWithCss(<ul>{linha({ onToggle: toggle, done: true })}</ul>);
+    fireEvent.click(screen.getByText('Beber 2 litros de água'));
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('editOnly (View all): o nome é o botão de EDITAR, par PT/EN', () => {
+    const edit = vi.fn();
+    const { container } = renderWithCss(<ul>{linha({ editOnly: true, onEdit: edit })}</ul>);
+    const botao = screen.getByRole('button', { name: 'Editar: Beber 2 litros de água' });
+    fireEvent.click(botao);
+    expect(edit).toHaveBeenCalledTimes(1);
+    expect(container.querySelectorAll('[data-ritual-edit]')).toHaveLength(1);
+    cleanup();
+    renderWithCss(<ul>{linha({ editOnly: true, language: 'en-US' })}</ul>);
     expect(screen.getByRole('button', { name: 'Edit: Beber 2 litros de água' })).toBeTruthy();
   });
 });

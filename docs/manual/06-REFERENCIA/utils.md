@@ -1239,6 +1239,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/mercado/MercadoSheets.tsx`, `src/components/mercado/ShopShelf.tsx`, `src/components/TournamentPage.tsx`.
 **Régua:** `src/utils/mercadoCatalog.test.ts` (moeda por aba, Emblemas só cosmético, sem 🌀/💗, nada vendável sumiu na repartição, toda missão com categoria).
 
+### `src/utils/missionOrder.ts`
+**Dono de:** a ORDEM das listas de missão (revisão 2, A5): prontas para resgatar no topo, depois as concluídas/resgatadas, depois as em aberto; estável dentro de cada grupo. PURA.
+**Exports:** `MissionRankState` (`ready`|`claimed`|`open`), `missionsDoneFirst(items, stateOf)`.
+**Chamado por:** `nav/DailyMissionList.tsx`, `nav/BuildingQuestList.tsx`, `nav/FirstTimesList.tsx`, `mercado/ShopShelf.tsx` (semanais), `mercado/MercadoSheets.tsx` (conquistas).
+**Régua:** `src/utils/missionOrder.test.ts`.
+
 ### `src/utils/questMarks.ts`
 **Dono de:** a regra PURA das marcas "!" (disponível/em andamento) e "?" (pronta) de todo local de missão: ícone do canto da Home, lote do Passeio, Torneio, Conquistas do Mercado. "Pronta" é derivada do estado (semanal cumprida e não paga; permanente cumprida com o cenário não comprado) — sem campo no save. Com as duas, vale o "?".
 **Exports:** `QuestMark`, `QuestTone`, `QuestMarkInput`, `QuestMarks` (tipos; `cornerTone` = tom da marca vencedora; semanal = `blue`, resto `gold`; permanentes só "?" quando prontas — 07/10/2026), `questMarks(input)`, `strongestMark(marks)`, `questMarkLabel(mark, isPt)`.
