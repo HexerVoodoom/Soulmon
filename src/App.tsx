@@ -8361,6 +8361,18 @@ export default function App() {
         restWindow={gameState.rest?.window ?? null}
         mealRhythm={gameState.mealRhythm}
         isSleeping={isSleeping}
+        /* REGISTRO §113: o estado de que os pushes de evento (fome mediana, energia cheia,
+           cocô) projetam a hora; o teto de 4/dia mora em `utils/petPushEvents.ts`. */
+        petState={{
+          hunger: gameState.hunger,
+          energyPoints: gameState.energyPoints,
+          energyClock: gameState.energyClock,
+          evolutionStage: gameState.evolutionStage,
+          dungeonAway: gameState.dungeonAway,
+          poopEventsScheduled: gameState.poopEventsScheduled,
+          poopEventsShown: gameState.poopEventsShown,
+          foodCount: Object.values(gameState.foodInventory ?? {}).reduce((a, n) => a + (n > 0 ? n : 0), 0),
+        }}
         /* #23 — a inscrição de push leva o `saveId` para que apagar a conta
            alcance o push no servidor; muda no login e o manager reenvia. */
         saveId={saveId}

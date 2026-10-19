@@ -319,6 +319,21 @@ export function energyStatus(state: HungerState, nowMs: number): EnergyStatus {
   return { ...base, mode: speed >= 100 ? 'regen' : 'slow', msToNext: msUntilPoints(s.hunger, now, UNIT_POINTS - pending) };
 }
 
+/**
+ * Ms (a partir de `nowMs`) até a energia ficar CHEIA, projetando a fome descendo SEM nova refeição (as mesmas fronteiras do motor).
+ * `0` = já cheia; `null` = não enche sem comer (a fome vai a faminto antes). Base do push "energia cheia" (REGISTRO §113).
+ */
+export function msToFullEnergy(state: HungerState, nowMs: number): number | null {
+  const now = tickTime(state, nowMs);
+  const s = settleEnergy(state, now);
+  const max = maxEnergyOf(s);
+  const energy = Math.max(0, Math.floor(fin(s.energyPoints, 0)));
+  if (energy >= max) return 0;
+  const c = s.energyClock;
+  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now) : 0) : 0;
+  return msUntilPoints(s.hunger, now, (max - energy) * UNIT_POINTS - pending);
+}
+
 /** Texto curto do timer ("1 h 05 min" / "1h 05m", "42 min"), arredondado PARA CIMA em minutos. */
 export function formatEnergyEta(ms: number, pt: boolean): string {
   const min = Math.max(1, Math.ceil(ms / MIN_MS));

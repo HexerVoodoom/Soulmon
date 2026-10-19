@@ -26,7 +26,7 @@ import { pushCopy, mealInviteCopy, mealPushKind, sleepReminderCopy } from '../fu
 import {
   MEAL_KEYS, MEAL_TICK_CRON, MEAL_STEP_MIN, mealAtTick, localMinutes, inRestArc, tickOf,
 } from '../functions/api/_mealRhythm.js';
-import { ehTokenFcm, lembreteDeInscricao } from '../functions/api/_pushIdentity.js';
+import { ehTokenFcm, lembreteDeInscricao, suprimidosDeInscricao } from '../functions/api/_pushIdentity.js';
 
 const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo';
 // Endereço de contato do VAPID (RFC 8292 `sub`): é para onde o SERVIÇO DE
@@ -177,12 +177,25 @@ export function sleepNotifFor(sub, date) {
   const tickAlvo = Math.floor(alvo / MEAL_STEP_MIN) * MEAL_STEP_MIN;
   if (tickOf(localMinutes(date, sleep.tz)) !== tickAlvo) return null;
   if (ageDaysOf(sub, date) === 0) return null;
+  if (suprimidoHoje(sub, 'sleep', date, sleep.tz)) return null;
   return sleepReminderCopy(sub.petName, sub.language);
 }
 
 /** Dia local da inscrição (`YYYY-MM-DD`) — semente do convite do dia. */
 function dayKeyLocal(date, tz) {
   return new Date(date.getTime() + tz * 60_000).toISOString().slice(0, 10);
+}
+
+/**
+ * O teto diário (REGISTRO §113) cortou `chave` HOJE? O cliente decide quais
+ * pushes cabem nos `PUSH_DAILY_CAP` (cocô/fome/energia/carta têm prioridade
+ * sobre refeição e lembrete de deitar) e manda o que cortou em `x = { d, k }`;
+ * o worker só obedece, e SÓ no dia `d` do fuso da inscrição — amanhã vale o
+ * plano novo. Sem `x` (ou de outro dia) nada é cortado: o comportamento de sempre.
+ */
+export function suprimidoHoje(sub, chave, date, tz) {
+  const x = suprimidosDeInscricao(sub?.x);
+  return !!x && Number.isInteger(tz) && x.d === dayKeyLocal(date, tz) && x.k.includes(chave);
 }
 
 /**
@@ -203,6 +216,7 @@ export function mealNotifFor(sub, date) {
   if (!meal) return null;
   if (inRestArc(m.t[MEAL_KEYS.indexOf(meal)], m.rest)) return null;
   if (ageDaysOf(sub, date) === 0) return null;
+  if (suprimidoHoje(sub, meal, date, m.tz)) return null;
   const kind = mealPushKind(meal, dayKeyLocal(date, m.tz));
   return mealInviteCopy(meal, kind, sub.petName, sub.language);
 }

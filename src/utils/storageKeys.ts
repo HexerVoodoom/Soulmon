@@ -143,6 +143,9 @@ export const STORAGE_KEYS = {
   /** D-23: ISO de quando o app foi aberto no período do lembrete de deitar (a noite "armada").
    *  De manhã, `decideArmedNight` (utils/restWindow.ts) grava a noite e a limpa. */
   NIGHT_ARMED_AT: 'soulmon-night-armed-at',
+  /** Ledger dos pushes de EVENTO do dia (fome, energia cheia, cocô, progresso): o que já saiu hoje,
+   *  para nunca repetir no mesmo dia e para o teto de 4 contar o que já foi (utils/petPushEvents.ts). */
+  PUSH_EVENT_LEDGER: 'soulmon-push-event-ledger',
   /** Lembrete de deitar (30 min antes da janela). Padrão LIGADO: só um 'false' gravado desliga. */
   SLEEP_REMINDER_ENABLED: 'soulmon-sleep-reminder-enabled',
   /** dayKey da última manhã em que o sonho já foi mostrado. Um por manhã: o

@@ -271,3 +271,71 @@ export function mealInviteCopy(meal, kind, petName, language) {
 export function mealPushKind(meal, dayKey) {
   return MEAL_PUSH_KINDS[seededIndex(`${dayKey}|${meal}`, MEAL_PUSH_KINDS.length)];
 }
+
+// ---------------------------------------------------------------------------
+// PUSH DE EVENTOS DO BICHO (REGISTRO §113): fome na faixa mediana, energia
+// cheia, cocô e o fechamento do dia. Quem decide QUANDO é o planejador do
+// cliente (`src/utils/petPushEvents.ts`, com o teto de `_pushBudget.js`); aqui
+// mora só o TEXTO, numa fonte só (footgun 9).
+//
+// A regra "nunca notificação de culpa ou medo" (REGISTRO, presença fora do app)
+// vence qualquer pedido de tom:
+//  · FOME é CONVITE — "tem comida na pastinha", em voz de ocasião. Nunca diz
+//    que a criatura precisa, sofre ou espera; não cita a palavra "fome", número
+//    nem coração. Só sai quando a pastinha TEM comida (o texto é verdade).
+//  · COCÔ diz o fato e o remédio ("um banho resolve"); não fala de dreno,
+//    coração nem prazo.
+//  · PROGRESSO descreve o dia em voz de convite; nunca sequência, nunca
+//    contagem, nunca "você ainda não".
+// ---------------------------------------------------------------------------
+
+/** Tags fixas das famílias de evento (o cocô leva o índice: `poop-event-<i>`, a mesma do aviso dentro do app). */
+export const EVENT_PUSH_TAGS = {
+  hunger: 'pet-pantry',
+  energyFull: 'pet-energy-full',
+  progress: 'pet-progress',
+};
+
+/** D-02 — a fome cruzou a faixa mediana: convite, e só com comida na pastinha. */
+export function hungerInviteCopy(petName, language) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  return {
+    title: pt ? `${name} deu uma olhada na pastinha` : `${name} peeked at the pantry`,
+    body: pt ? 'Tem comida lá, quando você quiser.' : 'There is food in there, whenever you like.',
+    tag: EVENT_PUSH_TAGS.hunger,
+  };
+}
+
+/** D-03 — a energia chegou ao máximo (uma vez). */
+export function energyFullCopy(petName, language) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  return {
+    title: pt ? `${name} está cheio de energia` : `${name} is full of energy`,
+    body: pt ? 'Pronto para o que vier. Sem pressa.' : 'Ready for whatever comes. No rush.',
+    tag: EVENT_PUSH_TAGS.energyFull,
+  };
+}
+
+/** D-04 — o cocô agendado apareceu. `index` = posição na agenda (a tag funde com o aviso de dentro do app). */
+export function poopPushCopy(petName, language, index = 0) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  return {
+    title: pt ? `🚽 ${name} fez cocô` : `🚽 ${name} pooped`,
+    body: pt ? 'Um banho resolve. 🚿' : 'A quick shower does it. 🚿',
+    tag: `poop-event-${Number.isInteger(index) && index >= 0 ? index : 0}`,
+  };
+}
+
+/** D-06 — o fechamento do dia, no máximo 1×/dia: sem sequência, sem contagem, sem cobrança. */
+export function progressCopy(petName, language) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  return {
+    title: pt ? `${name} tem novidades do dia` : `${name} has news from today`,
+    body: pt ? 'Dá uma olhada em como o dia está indo.' : 'Take a look at how the day is going.',
+    tag: EVENT_PUSH_TAGS.progress,
+  };
+}

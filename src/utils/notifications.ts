@@ -9,6 +9,7 @@ import { authHeaders } from './auth';
 import { dayKeyToIso } from './playerDay';
 import type { ServerMeals } from './mealRhythm';
 import type { ServerSleep } from './restWindow';
+import type { ServerSkip } from './petPushEvents';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -160,6 +161,8 @@ export const subscribeToPush = async (
   meals?: ServerMeals | null,
   /** Lembrete de deitar no push — `null`/ausente = desligado (nada vai). */
   sleep?: ServerSleep | null,
+  /** O que o teto diário cortou HOJE (`serverSkipPayload`): o worker não manda. */
+  skip?: ServerSkip | null,
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (!webNotificationGranted()) return false;
@@ -186,6 +189,7 @@ export const subscribeToPush = async (
       ...(saveId ? { saveId } : {}),
       ...(meals ? { meals } : {}),
       ...(sleep ? { sleep } : {}),
+      ...(skip ? { skip } : {}),
     };
 
     // `Authorization` quando há sessão (QA rodada 2, segurança §2): o
@@ -241,6 +245,7 @@ let fcmLanguage: 'pt-BR' | 'en-US' = 'en-US';
 let fcmSaveId: string | null = null;
 let fcmMeals: ServerMeals | null = null;
 let fcmSleep: ServerSleep | null = null;
+let fcmSkip: ServerSkip | null = null;
 
 export const registerForPushNotifications = async (
   petName: string,
@@ -252,9 +257,12 @@ export const registerForPushNotifications = async (
   meals?: ServerMeals | null,
   /** Lembrete de deitar — ver `subscribeToPush`. */
   sleep?: ServerSleep | null,
+  /** O que o teto diário cortou hoje — ver `subscribeToPush`. */
+  skip?: ServerSkip | null,
 ): Promise<boolean> => {
   if (Capacitor.getPlatform() !== 'android') return false;
   fcmSleep = sleep ?? null;
+  fcmSkip = skip ?? null;
   fcmPetName = petName;
   fcmLanguage = language;
   fcmSaveId = saveId ?? null;
@@ -284,6 +292,7 @@ export const registerForPushNotifications = async (
             ...(fcmSaveId ? { saveId: fcmSaveId } : {}),
             ...(fcmMeals ? { meals: fcmMeals } : {}),
             ...(fcmSleep ? { sleep: fcmSleep } : {}),
+            ...(fcmSkip ? { skip: fcmSkip } : {}),
           }),
         })).catch((err) => console.error('FCM token upload failed:', err));
       });

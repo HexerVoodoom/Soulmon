@@ -329,4 +329,113 @@ export function alignedSecondGapHours(
   return pickInRanges([[Math.max(8, startH), Math.min(10, endH)]], rand) ?? 8 + rand() * 2;
 }
 
+// ---------------------------------------------------------------------------
+// Cocô 2×/dia GARANTIDO, sempre com o pet ACORDADO (REGISTRO §114, D-05)
+// ---------------------------------------------------------------------------
+
+/** Distância mínima entre os dois cocôs do dia quando o dia acordado é curto (h). */
+export const POOP_MIN_GAP_H = 4;
+/** O 2º cocô sempre cai pelo menos isto ANTES do início do sono (h): dá tempo de limpar. */
+export const POOP_SLEEP_MARGIN_H = 0.75;
+/** Sem janela de descanso (save de teste/legado) o dia acordado termina aqui (h). */
+const POOP_FALLBACK_SLEEP_H = 22;
+
+/**
+ * O trecho ACORDADO do dia, em horas desde 00:00: do despertar (fim da janela de
+ * descanso) até o início do sono. Janela que atravessa a meia-noite (23:00–07:00)
+ * dá [7, 23]; janela dentro do mesmo dia (01:00–07:00) dá [7, 24]. Sem janela:
+ * [0, 22]. A janela de descanso é obrigatória desde o §99, então o caso "sem
+ * janela" é só rede de segurança.
+ */
+export function awakeSpanHours(window: { start: string; end: string } | null | undefined): [number, number] {
+  const arc = restArc(window);
+  if (!arc) return [0, POOP_FALLBACK_SLEEP_H];
+  const [s, e] = arc;
+  return s > e ? [e / 60, s / 60] : [e / 60, 24];
+}
+
+function intersect(a: [number, number], b: [number, number]): [number, number] {
+  return [Math.max(a[0], b[0]), Math.min(a[1], b[1])];
+}
+
+/**
+ * Intervalo (h) até o 2º cocô, contado do instante em que o 1º foi AGENDADO/apareceu
+ * (`firstAt`). Preferência: 8–10 h depois (a regra de sempre), de preferência no
+ * pós-jantar (com o ritmo ligado); mas SEMPRE antes de
+ * `início do sono − POOP_SLEEP_MARGIN_H`, para o 2º nunca cair com o pet dormindo
+ * (antes ele caía no sono e o dia saía com 1 só). Se 8 h não cabem, usa o que cabe,
+ * com piso de `POOP_MIN_GAP_H`. Se nem isso cabe (1º tarde demais), devolve o resto
+ * até o sono (mín. 15 min): nunca inventa cocô com o pet dormindo — quem decide
+ * isso é `isSleeping` no aparecimento.
+ */
+export function awakeSecondGapHours(
+  rand: () => number,
+  firstAt: number,
+  times: MealTimes | undefined,
+  restWindow: { start: string; end: string } | null | undefined,
+  aligned: boolean,
+): number {
+  const midnight = new Date(firstAt);
+  midnight.setHours(0, 0, 0, 0);
+  return secondGapFromHour(rand, (firstAt - midnight.getTime()) / 3600000, times, restWindow, aligned);
+}
+
+/** Núcleo de `awakeSecondGapHours`, com o 1º já em hora do dia (sem depender do fuso do aparelho). */
+function secondGapFromHour(
+  rand: () => number,
+  firstH: number,
+  times: MealTimes | undefined,
+  restWindow: { start: string; end: string } | null | undefined,
+  aligned: boolean,
+): number {
+  const [, sleepH] = awakeSpanHours(restWindow);
+  const limitGap = sleepH - POOP_SLEEP_MARGIN_H - firstH;
+  const pref: [number, number] = [8, Math.min(10, limitGap)];
+  const ranges: Array<[number, number]> = [];
+  if (aligned) {
+    const dinnerH = mealMinutes(times ?? DEFAULT_MEAL_TIMES)[2] / 60;
+    const dinner: [number, number] = [
+      dinnerH + POOP_AFTER_MEAL_FROM_H - firstH,
+      dinnerH + POOP_AFTER_MEAL_TO_H - firstH,
+    ];
+    ranges.push(intersect(pref, dinner));
+  }
+  ranges.push(pref, [POOP_MIN_GAP_H, limitGap]);
+  for (const r of ranges) {
+    const pick = pickInRanges([r], rand);
+    if (pick !== null) return pick;
+  }
+  return Math.max(0.25, limitGap);
+}
+
+export interface DailyPoopPlanOptions {
+  /** Hora mais cedo do 1º (07h; 10h com Madrugador). */
+  earliest: number;
+  /** Hora limite do 1º (15h, a regra de sempre). */
+  latest: number;
+  times?: MealTimes;
+  restWindow?: { start: string; end: string } | null;
+  /** Ritmo das refeições ligado: o sorteio prefere o pós-refeição. */
+  aligned: boolean;
+}
+
+/**
+ * A agenda do dia inteiro, de uma vez: `[t1, t2]` em horas desde 00:00. O 1º cai
+ * entre `earliest` e `latest` (e depois do despertar), o 2º segue
+ * `awakeSecondGapHours`. Os dois ficam no save (`poopEventsScheduled`) já no
+ * começo do dia — é o que deixa o push de cocô saber a hora (D-04). `applyPoopDrain`
+ * e o dreno não mudam: só a AGENDA.
+ */
+export function planDailyPoops(rand: () => number, o: DailyPoopPlanOptions): [number, number] {
+  const [wakeH, sleepH] = awakeSpanHours(o.restWindow);
+  const lo = Math.max(o.earliest, wakeH);
+  const hi = Math.max(lo, Math.min(o.latest, sleepH - POOP_SLEEP_MARGIN_H - POOP_MIN_GAP_H));
+  const t1 = o.aligned
+    ? alignedFirstPoopHour(rand, lo, hi, o.times)
+    : (hi > lo ? lo + rand() * (hi - lo) : lo);
+  const first = Math.min(Math.max(t1, lo), hi);
+  const gap = secondGapFromHour(rand, first, o.times, o.restWindow, o.aligned);
+  return [first, first + gap];
+}
+
 export { formatHHMM, inRestArc, parseHHMM };

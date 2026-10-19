@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
@@ -7,10 +7,17 @@ import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
 import { pushCopy, sleepReminderCopy, eveningCopy, mealInviteCopy, mealPushKind } from '../../functions/api/_pushCopy.js';
 import { SLEEP_REMINDER_EVENT, serverSleep, sleepReminderAt } from '../utils/restWindow';
-import { readFlagOr } from '../utils/safeStorage';
+import { readFlagOr, readJson, writeJson } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { MEAL_KEYS, inRestArc, parseHHMM, restArc, serverMeals } from '../utils/mealRhythm';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
+import {
+  ledgerWithPlan, planDayPushes, rollLedger, sanitizeLedger, serverSkipPayload,
+} from '../utils/petPushEvents';
+import type { PetPushState, PushCandidate } from '../utils/petPushEvents';
+import { daysTogether } from '../utils/anniversary';
+import { playerDayKey } from '../utils/playerDay';
+import { EVENT_PUSH_TAGS } from '../../functions/api/_pushCopy.js';
 import {
   checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms,
   unsubscribeFromPush, registerForPushNotifications, unregisterFromPushNotifications,
@@ -46,6 +53,12 @@ interface NotificationManagerProps {
   mealRhythm?: MealRhythmSettings;
   /** WP3.11 — o pet está dormindo? Já deitou: não há o que lembrar. */
   isSleeping?: boolean;
+  /** REGISTRO §113 — o estado do bicho de que os pushes de EVENTO (fome na faixa mediana, energia
+   *  cheia, cocô) projetam a hora. Ausente = sem push de evento (e o teto só enxerga o que já existia). */
+  petState?: PetPushState;
+  /** Candidatos de fora que contam no MESMO teto de `PUSH_DAILY_CAP` — a CARTA de NPC (W4-B):
+   *  `letterPushCandidate(id, atMs)` de `functions/api/_pushBudget.js`. */
+  extraPushes?: PushCandidate[];
   /** #23 (QA geral 21/09/2026) — amarra a inscrição de push à conta, para que
    *  apagar a conta alcance o push. Ausente = inscrição anônima, como antes.
    *  Mudou (login) → reenvia. */
@@ -67,6 +80,8 @@ export function NotificationManager({
   restWindow,
   mealRhythm,
   isSleeping = false,
+  petState,
+  extraPushes,
   saveId,
   language,
   enabled,
@@ -119,6 +134,80 @@ export function NotificationManager({
   const sleepPushRef = useRef(sleepPayload !== null);
   sleepPushRef.current = sleepPayload !== null;
 
+  /* O PLANO DO DIA (REGISTRO §113): quais pushes valem hoje, a hora dos de evento e o que o
+     TETO de 4 cortou. Recalcula quando o estado muda e a cada 15 min / ao voltar para a aba
+     (a hora dos eventos é projetada do estado, que anda com o relógio). */
+  const [planTick, setPlanTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setPlanTick(t => t + 1), 15 * 60_000);
+    const vis = () => { if (!document.hidden) setPlanTick(t => t + 1); };
+    document.addEventListener('visibilitychange', vis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', vis); };
+  }, []);
+  const ps = petState;
+  const planKey = JSON.stringify([
+    enabled, isSleeping, language, petName, bornAt, restWindow, mealRhythm?.push, mealRhythm?.times, sleepOn,
+    ps ? [ps.hunger, ps.energyPoints, ps.energyClock, ps.evolutionStage, ps.dungeonAway?.since ?? null,
+      ps.poopEventsScheduled, ps.poopEventsShown, ps.foodCount > 0] : null,
+    extraPushes,
+  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const plan = useMemo(() => {
+    if (!ps) return null;
+    const nowMs = Date.now();
+    const dias = daysTogether(bornAt, playerDayKey(new Date(nowMs), undefined));
+    return planDayPushes({
+      nowMs, petName, language, enabled, isSleeping,
+      ageDays: dias === null ? null : dias - 1,
+      restWindow, mealRhythm, sleepReminderOn: sleepOn, state: ps,
+      ledger: sanitizeLedger(readJson<unknown>(STORAGE_KEYS.PUSH_EVENT_LEDGER, null)),
+      extra: extraPushes,
+    });
+  }, [planKey, planTick]);
+  const skipPayload = enabled && plan ? serverSkipPayload(plan) : null;
+  const skipKey = JSON.stringify(skipPayload);
+  /* O que o teto cortou, por REF: os efeitos de alarme abaixo leem sem reiniciar o intervalo. */
+  const skipRef = useRef<string[]>([]);
+  skipRef.current = plan?.serverSkip ?? [];
+
+  // O ledger do dia: o que já saiu (e o que ficou agendado) — evento nunca repete no mesmo dia.
+  useEffect(() => {
+    if (!plan) return;
+    const now = Date.now();
+    const rolled = rollLedger(sanitizeLedger(readJson<unknown>(STORAGE_KEYS.PUSH_EVENT_LEDGER, null)), now);
+    writeJson(STORAGE_KEYS.PUSH_EVENT_LEDGER, ledgerWithPlan(rolled, plan, now), { silent: true });
+  }, [plan]);
+
+  // Entrega dos pushes de EVENTO: APK = alarme local (hora do dia, funciona com o app fechado);
+  // PWA = timer enquanto a aba vive (a PWA FECHADA só receberia com o worker lendo o plano —
+  // REGISTRO §113). O cocô na web já avisa dentro do app (`useCareSystem`), então não duplica.
+  useEffect(() => {
+    if (!plan || !enabled) return;
+    const now = Date.now();
+    const native = Capacitor.isNativePlatform();
+    const eventKinds = new Set(['poop', 'hunger', 'energyFull', 'progress']);
+    const keep = new Set<string>();
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (const p of plan.kept) {
+      if (!eventKinds.has(p.kind) || p.at <= now) continue;
+      keep.add(p.tag);
+      if (native) {
+        const d = new Date(p.at);
+        const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        SoulmonAlarm.scheduleAlarm({ id: p.tag, title: p.title, body: p.body, scheduledTime: hhmm }).catch(() => {});
+      } else if (p.kind !== 'poop') {
+        timers.push(setTimeout(() => showNotification(p.title, { body: p.body, tag: p.tag }), p.at - now));
+      }
+    }
+    if (native) {
+      // O que NÃO está mais no plano (comeu, gastou energia, o teto cortou) sai do alarme.
+      const todas = [EVENT_PUSH_TAGS.hunger, EVENT_PUSH_TAGS.energyFull, EVENT_PUSH_TAGS.progress,
+        'poop-event-0', 'poop-event-1', 'poop-event-2', 'poop-event-3'];
+      for (const tag of todas) if (!keep.has(tag)) SoulmonAlarm.cancelAlarm({ id: tag }).catch(() => {});
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [plan, enabled]);
+
   // Push subscription — register/unregister when notifications toggle. Native
   // Android uses FCM (the WebView has no Web Push support); browsers/PWA use
   // Web Push VAPID.
@@ -129,10 +218,10 @@ export function NotificationManager({
       if (isNativeAndroid) {
         registerForPushNotifications(petName, language, (title, body) => {
           toast(title, { description: body });
-        }, saveId, mealsPayload, sleepPayload);
+        }, saveId, mealsPayload, sleepPayload, skipPayload);
       } else {
         // WP1.17 — a idade vai junto: é ela que dá voz própria aos dias 1 e 2.
-        subscribeToPush(petName, language, bornAt, saveId, mealsPayload, sleepPayload);
+        subscribeToPush(petName, language, bornAt, saveId, mealsPayload, sleepPayload, skipPayload);
       }
     } else {
       if (isNativeAndroid) {
@@ -143,7 +232,7 @@ export function NotificationManager({
         unsubscribeFromPush();
       }
     }
-  }, [enabled, petName, language, saveId, mealsKey, sleepKey]);
+  }, [enabled, petName, language, saveId, mealsKey, sleepKey, skipKey]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {
@@ -285,7 +374,9 @@ export function NotificationManager({
         const hhmm = mealRhythm?.times?.[meal];
         const copia = mealInviteCopy(meal, mealPushKind(meal, dia), petName, lang);
         const dentroDoDescanso = hhmm ? inRestArc(parseHHMM(hhmm), arco) : false;
-        if (mealPushRef.current && hhmm && !dentroDoDescanso) {
+        // O teto de 4/dia cortou esta refeição hoje (cocô/fome/energia têm prioridade): cancela o alarme.
+        const cortada = skipRef.current.includes(meal);
+        if (mealPushRef.current && hhmm && !dentroDoDescanso && !cortada) {
           SoulmonAlarm.scheduleAlarm({ id: copia.tag, title: copia.title, body: copia.body, scheduledTime: hhmm }).catch(() => {});
         } else {
           SoulmonAlarm.cancelAlarm({ id: copia.tag }).catch(() => {});
@@ -321,7 +412,7 @@ export function NotificationManager({
          lembrete só saía se a hora caísse em :00/:01, ou seja, quase nunca.
          Não dispara dormindo (já deitou, não há o que lembrar) e é 1×/dia. */
       const janela = restWindowRef.current;
-      if (janela && !isSleepingRef.current && lastSleepReminderDate.current !== today && readFlagOr(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, true)) {
+      if (janela && !isSleepingRef.current && !skipRef.current.includes('sleep') && lastSleepReminderDate.current !== today && readFlagOr(STORAGE_KEYS.SLEEP_REMINDER_ENABLED, true)) {
         // -60 s: um tick atrasado (aba em segundo plano) ainda enxerga a ocorrência de HOJE
         // em vez da de amanhã, que `sleepReminderAt` devolve assim que o alvo passa.
         const alvo = sleepReminderAt(janela, new Date(now.getTime() - 60_000));
@@ -376,7 +467,7 @@ export function NotificationManager({
     checkPetNotifications();
     const interval = setInterval(checkPetNotifications, 60000);
     return () => clearInterval(interval);
-  }, [enabled, petName, language, completedSteps, totalRequired, mealsKey, mealRhythm?.times, restWindow?.start, restWindow?.end]);
+  }, [enabled, petName, language, completedSteps, totalRequired, mealsKey, skipKey, mealRhythm?.times, restWindow?.start, restWindow?.end]);
 
   return null;
 }
