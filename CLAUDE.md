@@ -208,7 +208,7 @@ Repositório: `HexerVoodoom/Soulmon`.
   `electron-updater`, e instalava um `.exe` sem assinatura na máquina do jogador.
   **Publicar não pode ser efeito colateral de commitar.** Ver `desktop/README.md`.
 - O worker de push (`workers/`) **não** é uma Pages Function: não builda no
-  push da `main`. Deploy manual com `wrangler deploy` dentro de `workers/`.
+  push da `main`. Deploy manual com `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`.
 - Ao mudar assets estáticos/HTML de forma incompatível, **bump `CACHE_VERSION`**
   em `public/sw.js` — senão usuários ficam presos em cache velho.
   ⚠️ **O NÚMERO SAIU DAQUI DE PROPÓSITO, na terceira vez que ele apodreceu.**
@@ -358,8 +358,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   `src/utils/cortes.contract.test.ts`).
 - IA: `functions/api/chat.js` (Groq llama-3.1-8b-instant, personalidade via aiSettings).
 - Push: **dois canais**, mesma KV (`PUSH_SUBSCRIPTIONS`), mesmo cron
-  (`workers/push-scheduler.js`, deploy manual via `wrangler deploy` dentro de
-  `workers/` — NÃO é uma Pages Function, não builda sozinho no push do main).
+  (`workers/push-scheduler.js`, deploy manual via `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml` — NÃO é uma Pages Function, não builda sozinho no push do main).
   **Web Push VAPID** (browser/PWA instalado, e também funciona dentro do
   WebView do Capacitor — `PushManager` é suportado): `functions/api/subscribe.js`
   + `public/sw.js` + `workers/webpush.js` (chaves `push:*`). **FCM** (canal

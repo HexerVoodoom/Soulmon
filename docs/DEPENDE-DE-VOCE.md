@@ -31,7 +31,7 @@
 | 6 | **Perfil de pagamentos** da Play (dados bancários/fiscais) — comece cedo, pode demorar dias | Fase 6.1 | produtos |
 | 7 | Criar a **service account** da Play, os **secrets** do Worker e `FIREBASE_SERVICE_ACCOUNT` do push | Fase 7 | compras |
 | 8 | **Pub/Sub + RTDN** da assinatura | Fase 7.3 | assinatura |
-| 9 | **Deploy do worker de push** (`cd workers; npx wrangler deploy -c wrangler.toml`) — pendente desde o ritmo das refeições | Fase 7.4 | push |
+| 9 | **Deploy do worker de push** — ✅ **deployado em 19/10/2026** (versão `a454018e`, 4 crons ok) com `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`. Pendente só o teste em aparelho com o app FECHADO: o lembrete chega 0–29 min antes, o toque abre o app; com o switch desligado, não chega. ⚠️ Não use `npx wrangler deploy` dentro de `workers/`: o npx resolve a config da RAIZ e publica o app `soulmon` (aconteceu no 1º deploy de 19/10, a partir da `main` `5976acb85`, sem mudança de assets) | Fase 7.4 | push |
 | 10 | Testar compra no aparelho e só então ligar **`PLAY_REQUIRE_ACCOUNT_BINDING=true`** | Fase 8 | testadores |
 | 11 | Criar o **Google Group**, a faixa de **teste fechado**, mandar os convites e manter o relógio | Fases 9-10 | produção |
 | 12 | **Recrutar** (a squad redige os textos; você envia) e preencher a **licença de teste** | `BETA-TESTADORES.md` | D0 |

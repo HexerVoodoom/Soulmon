@@ -462,7 +462,7 @@ prompt, nunca como argumento.
 cd workers
 npx wrangler secret put SEASON_ADMIN_KEY      # mesmo valor de E.1
 npx wrangler secret list                      # esperado: VAPID_JWK, FIREBASE_SERVICE_ACCOUNT, SEASON_ADMIN_KEY
-npx wrangler deploy
+../node_modules/.bin/wrangler deploy --config ./wrangler.toml
 ```
 
 **Feito quando:** `cd workers && npx wrangler deployments list` mostra um deploy com

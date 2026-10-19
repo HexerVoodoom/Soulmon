@@ -41,7 +41,7 @@
 | `sync-irmaos.yml` | sincroniza Class-System e Bestiário | clones irmãos lado a lado → `npm run vendor:class-system` **e** `npm run sync:oracle-data` (mesmo SHA) → `npm run portoes` → commit | quando os repos irmãos mudarem |
 
 **O deploy web NÃO depende do Actions**: a `main` é a branch de produção da Cloudflare, que builda
-sozinha no push (`CLAUDE.md` › Deploy). O worker de push continua manual (`wrangler deploy` em `workers/`).
+sozinha no push (`CLAUDE.md` › Deploy). O worker de push continua manual (`cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`).
 
 ## 3. O fluxo de merge sem CI
 
