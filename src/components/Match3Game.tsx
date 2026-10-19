@@ -3,6 +3,7 @@ import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent a
 import type { EarningGameProps } from './mente/types';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameRoot, GameHeader, HpBars, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
+import { BitsAmount } from './ui/BitsAmount';
 import { Icon } from './ui/Icon';
 import { bitsStyle } from '../utils/currencies';
 import { usePrefersReducedMotion } from './ui/Viewport';
@@ -446,7 +447,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
               : (isPt ? 'O time da fenda segurou a passagem desta vez. Nada foi cobrado.' : 'The rift team held the way this time. Nothing was charged.')}
           </p>
           <p style={phaseLine}>
-            {earned > 0 ? `+${earned} Bits` : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
+            {earned > 0 ? <BitsAmount value={earned} sign="+" /> : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           </p>
           <p className="sm2-num" style={phaseLine}>
             {isPt ? `Seu recorde: ${best}` : `Your best: ${best}`}{newBest ? (isPt ? ' · novo recorde' : ' · new best') : ''}
@@ -515,7 +516,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
                   <Icon name={confirmBuy ? 'check' : 'help'} size={24} tone={confirmBuy ? 'primary' : 'ink'} />
                   {act === 'use'
                     ? <span className="sm2-num" data-m3-hints-left={hintsLeft}>{hintsLeft}</span>
-                    : <span className="sm2-num" data-m3-hint-price={M3_HINT_PRICE_BITS} style={bitsStyle}>{M3_HINT_PRICE_BITS} Bits</span>}
+                    : <span data-m3-hint-price={M3_HINT_PRICE_BITS}><BitsAmount value={M3_HINT_PRICE_BITS} /></span>}
                 </button>
               );
             })()}

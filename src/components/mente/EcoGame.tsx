@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
+import { BitsAmount } from '../ui/BitsAmount';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
 import { ATELIE_SCENE_SUAVE, MINI_FX } from '../../utils/visorScenes';
@@ -202,7 +203,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
       {phase === 'done' && (
         <p style={phaseLine} data-eco-done>
           {earned > 0
-            ? (isPt ? `Seu pet comemora o eco. +${earned} Bits` : `Your pet celebrates the echo. +${earned} Bits`)
+            ? <>{isPt ? 'Seu pet comemora o eco.' : 'Your pet celebrates the echo.'} <BitsAmount value={earned} sign="+" /></>
             : (isPt ? 'Seu pet comemora o eco. Bora mais uma?' : 'Your pet celebrates the echo. Another go?')}
         </p>
       )}

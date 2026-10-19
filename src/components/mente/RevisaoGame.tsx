@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
+import { BitsAmount } from '../ui/BitsAmount';
 import { ATELIE_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import {
@@ -321,7 +322,7 @@ export function RevisaoGame({
       {petVisor}
       <div role="status" data-revisao-done style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <p style={phaseTitle}>{isPt ? 'Revisão feita.' : 'Review done.'}</p>
-        {earned > 0 && <p className="sm2-num" style={phaseLine}>+{earned} Bits</p>}
+        {earned > 0 && <p style={phaseLine}><BitsAmount value={earned} sign="+" /></p>}
       </div>
       {/* I3 (01/10/2026): o "Voltar" de baixo virou a seta acima do título. */}
       <button type="button" onClick={onExit} style={{ ...sm2Button('primary'), width: '100%' }}>

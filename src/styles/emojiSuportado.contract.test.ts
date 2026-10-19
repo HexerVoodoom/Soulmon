@@ -60,7 +60,7 @@ const DIVIDA_CONHECIDA: Record<string, string> = {
   'U+1FA81': '🪁 (Emoji 12.0) — utils/restWindow.ts, sonho `dream-paper-kite`. NÃO chega à tela: o DreamDex renderiza o PNG de `dreamArt.ts`. O emoji é só o glifo de push/log.',
   'U+1FA91': '🪑 (12.0) — utils/shop.ts, `furn-chair`. EXIBIDO na loja e no palco. Desenha nesta máquina; some em Android 9. Arte pendente: backlog A7.',
   'U+1FA94': '🪔 (12.0) — utils/restWindow.ts, sonho `dream-firefly-jar`. NÃO chega à tela (PNG em `dreamArt.ts`).',
-  'U+1FA99': '🪙 (12.0) — Bits. SÓ EM COMENTÁRIO (App.tsx, DinoGame, RPSGame, GameStateContext, dungeon): a moeda é exibida sem ícone por decisão de design. Zero impacto.',
+  'U+1FA99': '🪙 (12.0) — Bits. SÓ EM COMENTÁRIO (App.tsx, DinoGame, RPSGame, GameStateContext, dungeon): a moeda tem ícone próprio desde 19/10/2026 (REGISTRO §105, revoga a D-L11) — o emoji 🪙 não é o ícone. Zero impacto.',
   'U+1FA9C': '🪜 (13.0) — utils/adventure.ts, cena `adv-escada`. CAIXA VAZIA no card do relatório e no diário. Arte pendente: backlog A20.',
   'U+1FA9E': '🪞 (13.0) — utils/adventure.ts, cena `adv-lago-espelho`. CAIXA VAZIA. Arte pendente: backlog A20.',
   'U+1FA9F': '🪟 (13.0) — utils/shop.ts, `furn-window`. CAIXA VAZIA na loja E no palco do pet. Arte pendente: backlog A7.',

@@ -9,6 +9,7 @@ import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
 import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
+import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
 import { ECO_MAX_BITS } from '../../utils/mente/eco';
 import { BOLHAS_MAX_BITS } from '../../utils/mente/bolhas';
@@ -187,7 +188,7 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
         <div style={{ display: 'flex', gap: 8 }}>
           <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
           <StatBox
-            value={`${Math.floor(best / DINO_POINTS_PER_BIT)} Bits`}
+            value={<BitsAmount value={Math.floor(best / DINO_POINTS_PER_BIT)} />}
             label={isPt ? 'no recorde' : 'at your best'}
             valueStyle={bitsStyle}
           />
@@ -210,7 +211,7 @@ export function Match3Sheet({ language, onStart }: { language: Language; onStart
     <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         {best > 0 && <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />}
-        <StatBox value={`${isPt ? 'até' : 'up to'} ${M3C_MAX_BITS} Bits`} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
+        <StatBox value={<>{isPt ? 'até' : 'up to'} <BitsAmount value={M3C_MAX_BITS} /></>} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
@@ -225,7 +226,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
   return (
     <div data-ppt style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={`${MATCH_POINTS} Bits`} label={isPt ? 'por vitória' : 'per win'} valueStyle={bitsStyle} />
+        <StatBox value={<BitsAmount value={MATCH_POINTS} />} label={isPt ? 'por vitória' : 'per win'} valueStyle={bitsStyle} />
         <StatBox value={WINS_NEEDED} label={isPt ? 'rodadas para vencer' : 'rounds to win'} />
       </div>
       <button type="button" data-ppt-start onClick={onStart} style={cta}>
@@ -338,7 +339,7 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
   onStart: (g: MenteGame) => void;
 }) {
   const isPt = language === 'pt-BR';
-  const upTo = (n: number) => (isPt ? `até ${n} Bits` : `up to ${n} Bits`);
+  const upTo = (n: number) => <>{isPt ? 'até' : 'up to'} <BitsAmount value={n} /></>;
   const cta = isPt ? 'Jogar' : 'Play';
   const rows: { id: MenteGame; title: string; asks: string; detail: string; meta: ReactNode; cta?: string }[] = [
     {
@@ -378,7 +379,7 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
         : 'Cards YOU write, reviewed at the right interval: what you remember comes back later, what you don’t comes back tomorrow.',
       meta: reviewDue > 0
         ? (isPt ? `${reviewDue} para hoje` : `${reviewDue} for today`)
-        : <span style={bitsStyle}>{`${REVIEW_SESSION_BITS} Bits`}</span>,
+        : <BitsAmount value={REVIEW_SESSION_BITS} />,
       cta: isPt ? 'Abrir' : 'Open',
     },
   ];

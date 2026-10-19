@@ -79,6 +79,7 @@ import { shadowSource } from '../utils/nightmareShadows';
 import type { DungeonEnemy } from '../utils/dungeon';
 import type { DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
+import { RewardLine } from './ui/RewardLine';
 
 export interface NightmareBattleProps {
   open: boolean;
@@ -436,10 +437,8 @@ export function NightmareBattle({
           {visor(72, <VisorFx icon="✨" style={{ right: 8, top: 8 }} data-visor-fx="sparkle" />)}
           <p style={phaseTitle}>{isPt ? 'Seu Soulmon cuidou da sua noite!' : 'Your Soulmon looked after your night!'}</p>
           <p style={sm2Hint} data-nightmare-end="extinct">{nightmareEndText('extinct', language)}</p>
-          <p className="sm2-num" style={{ ...sm2Text, margin: 0 }}>
-            {`+${rewards.bits} Bits`}
-            {rewards.energy > 0 ? ` · +${rewards.energy} ${isPt ? 'energia' : 'energy'}` : ''}
-            {rewards.hearts > 0 ? ` · +${rewards.hearts} ${isPt ? 'coração' : 'heart'}` : ''}
+          <p style={{ ...sm2Text, margin: 0 }}>
+            <RewardLine bits={rewards.bits} energy={rewards.energy} hearts={rewards.hearts} language={language} />
           </p>
           <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>
         </div>

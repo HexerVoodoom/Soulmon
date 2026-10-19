@@ -18,7 +18,7 @@ import type { Language } from '../utils/i18n';
  * `Icon name="diamond"` FILL em `--sm2-credit-ink` (canvas Loja D-L11: a única
  * moeda com glifo, na cor própria), e **nada mais** — nem `icon-gem.png`,
  * nem o emoji de gem, que antes conviviam com este modal e com a loja na mesma
- * sessão. Bits continuam sem ícone; Emblemas são `military_tech` em ouro.
+ * sessão. Bits têm ícone próprio (§105, 19/10/2026); Emblemas são `military_tech` em ouro.
  * Três moedas, três leituras que não se confundem (regra de produto, com
  * teste travando as fronteiras).
  *

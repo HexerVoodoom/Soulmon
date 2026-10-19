@@ -9,6 +9,7 @@ import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
+import { BitsAmount } from './ui/BitsAmount';
 import { DINO_SCENE } from '../utils/dungeonScenes';
 import { idlePose, runPose, type PetPose } from '../utils/petBounce';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
@@ -461,7 +462,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       {phase === 'over' && (
         <>
           <p style={phaseTitle}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
-          <p className="sm2-num" style={phaseLine}>Score: {finalScore} · +{earned} Bits</p>
+          <p className="sm2-num" style={phaseLine}>Score: {finalScore} · <BitsAmount value={earned} sign="+" /></p>
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
             {isPt ? 'Jogar de novo' : 'Play again'}
           </button>
