@@ -51,8 +51,6 @@ export type TalentEffect =
   | { readonly kind: 'backpack' }
   /** Comércio (PR12b): +% por grau nos Bits do dia completo (`equipment.ts › missionBitsGain`). Sem fonte nova; dentro do +25%. */
   | { readonly kind: 'missionBits' }
-  /** Comércio (PR12b): desconto semanal determinístico em UM item do equipamento (`equipment.ts › weeklyDiscountItem`). */
-  | { readonly kind: 'weeklyDiscount' }
   /** Reduz o custo do respec em `perRank × grau` (Comércio: só moeda). */
   | { readonly kind: 'respecDiscount'; readonly perRank: number }
   /** PvP (Tarefa B): a luta começa com `perRank × grau` de ENERGIA do especial (de 100). Largada, não força: até `START_ENERGY_MAX`. */
@@ -152,8 +150,10 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-com-04', path: 'comercio', tier: 3, maxRank: 3, effect: { kind: 'backpack' }, requires: [req('tal-com-02', 2)] },
   { id: 'tal-com-05', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'respecOne' }, requires: [req('tal-com-03', 2)] },
   { id: 'tal-com-06', path: 'comercio', tier: 3, maxRank: 3, effect: { kind: 'missionBits' }, requires: [req('tal-com-02', 1)] },
-  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'weeklyDiscount' }, requires: [req('tal-com-04', 1), req('tal-com-05', 1)] },
 ];
+
+/** `tal-com-07` (Moeda coroada, desconto semanal) foi removido com a promoção; saves que o tinham só perdem esse ponto. */
+export const RETIRED_TALENT_ID = 'tal-com-07';
 
 export const TALENT_BY_ID: ReadonlyMap<string, TalentNode> = new Map(TALENT_TREE.map((n) => [n.id, n]));
 
@@ -253,7 +253,9 @@ export function isValidPicks(raw: unknown, bondLevel: unknown): raw is string[] 
  * se conseguem comprar na ordem do vetor e perde os outros: os pontos deles VOLTAM (`pointsLeft`), sem cobrar respec. Nada se ganha
  * forjando, porque o que sobra é sempre um vetor válido de no máximo os pontos do Vínculo.
  */
-export function sanitizeTalentPicks(raw: unknown, bondLevel: unknown): string[] {
+export function sanitizeTalentPicks(rawIn: unknown, bondLevel: unknown): string[] {
+  // Nó APOSENTADO (REGISTRO §121: a promoção semanal saiu do jogo): o ponto volta, sem descartar o resto do vetor.
+  const raw = Array.isArray(rawIn) ? rawIn.filter((id) => id !== RETIRED_TALENT_ID) : rawIn;
   if (!isWellFormed(raw, bondLevel)) return [];
   const { kept, dropped } = replay(raw);
   return dropped.length === 0 ? [...raw] : kept;

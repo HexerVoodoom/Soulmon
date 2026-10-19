@@ -1,42 +1,42 @@
 /**
- * Combate v3 / PR12b (§2.28 C) — os três nós de Comércio que estavam "em breve": mochila (`tal-com-04`), Bits do dia completo
- * (`tal-com-06`) e desconto da semana (`tal-com-07`). Linhas vermelhas travadas aqui: Comércio só mexe em preço/ganho de moeda
+ * Combate v3 / PR12b (§2.28 C) — os nós de Comércio que estavam "em breve": mochila (`tal-com-04`), Bits do dia completo
+ * (`tal-com-06`). O desconto da semana (`tal-com-07`) saiu (REGISTRO §121). Linhas vermelhas travadas aqui: Comércio só mexe em preço/ganho de moeda
  * (nunca em % de combate), dentro do +25%, sem sorteio, sem pressa.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  EQUIP_CATALOG, BACKPACK_BASE, MISSION_BITS_STEP, WEEKLY_DISCOUNT, COMMERCE_GAIN_CAP, PRICE_STEP, TIER_BITS,
-  backpackCapacity, backpackUsed, backpackHasRoom, missionBitsGain, weeklyDiscountItem, weeklyDiscountFor,
-  equipBuyRefusal, applyEquipBuy, sanitizeEquipment, equipPrice, discounted, type EquipmentState,
+  EQUIP_CATALOG, BACKPACK_BASE, MISSION_BITS_STEP, COMMERCE_GAIN_CAP,
+  backpackCapacity, backpackUsed, backpackHasRoom, missionBitsGain,
+  equipBuyRefusal, applyEquipBuy, sanitizeEquipment, type EquipmentState,
 } from './equipment';
 import { TALENT_BY_ID, isPickable, sanitizeTalentPicks, talentBonus, talentAttrBonus, talentCheerScale } from './talents';
 import { TALENT_COPY } from './talentCopy';
 import { computeDailyReset, restWeekKeyFor, BITS_PER_COMPLETE_DAY } from './dailyReset';
-import { isoWeekKey } from './offerMoment';
 import { xpForLevel } from './bond';
 
 const rep = (id: string, n: number) => Array<string>(n).fill(id);
 /** Tarefa B: a mochila/Bits de missão/desconto abrem só depois dos pré-requisitos do grafo. */
 const ATE_02 = [...rep('tal-com-01', 2), ...rep('tal-com-02', 2)];
 const COM06 = [...ATE_02, ...rep('tal-com-06', 3)];
-const COM07 = [...ATE_02, 'tal-com-04', ...rep('tal-com-03', 2), 'tal-com-05', 'tal-com-07'];
+const COM05 = [...ATE_02, 'tal-com-04', ...rep('tal-com-03', 2), 'tal-com-05'];
 const eqOf = (equipped: Record<string, string>, extra: string[] = []): EquipmentState => ({ owned: [...Object.values(equipped), ...extra], equipped, fragments: 0 });
 const T1 = { nucleo: 'eq-nucleo-t1', carapaca: 'eq-carapaca-t1', rastro: 'eq-rastro-t1' };
 
-describe('1. os três nós agora têm efeito e são pegáveis', () => {
-  it('tal-com-04/06/07 saíram de "pendente" e são de Comércio', () => {
-    for (const [id, kind, rank] of [['tal-com-04', 'backpack', 3], ['tal-com-06', 'missionBits', 3], ['tal-com-07', 'weeklyDiscount', 1]] as const) {
+describe('1. os dois nós têm efeito e são pegáveis; o 07 foi aposentado', () => {
+  it('tal-com-04/06 saíram de "pendente" e são de Comércio; tal-com-07 não existe mais', () => {
+    for (const [id, kind, rank] of [['tal-com-04', 'backpack', 3], ['tal-com-06', 'missionBits', 3]] as const) {
       const n = TALENT_BY_ID.get(id)!;
       expect(n.path).toBe('comercio');
       expect(n.effect.kind).toBe(kind);
       expect(n.maxRank).toBe(rank);
       expect(isPickable(n)).toBe(true);
     }
+    expect(TALENT_BY_ID.has('tal-com-07')).toBe(false);
   });
   it('LINHA VERMELHA: nenhum nó de Comércio entra em % de combate (PvP, PvE, torcida)', () => {
-    const todos = ['tal-com-01', 'tal-com-02', 'tal-com-03', 'tal-com-04', 'tal-com-05', 'tal-com-06', 'tal-com-07'].flatMap((id) => rep(id, TALENT_BY_ID.get(id)!.maxRank));
+    const todos = ['tal-com-01', 'tal-com-02', 'tal-com-03', 'tal-com-04', 'tal-com-05', 'tal-com-06'].flatMap((id) => rep(id, TALENT_BY_ID.get(id)!.maxRank));
     expect(talentBonus(todos, 20, 'pve')).toBe(0);
     expect(talentBonus(todos, 20, 'pvp')).toBe(0);
     expect(talentAttrBonus(todos, 20)).toEqual({ atk: 0, def: 0, spd: 0 });
@@ -97,56 +97,14 @@ describe('3. tal-com-06: Bits do dia completo (a mesma fonte, sem fonte nova)', 
   });
 });
 
-describe('4. tal-com-07: o desconto da semana (determinístico, sem sorte, sem pressa)', () => {
-  const semanas = Array.from({ length: 27 }, (_, i) => `2026-W${String(10 + i).padStart(2, '0')}`);
-  it('a mesma semana dá sempre a mesma peça; 9 semanas seguidas passam pelas 9 peças sem repetir', () => {
-    for (const w of semanas) expect(weeklyDiscountItem(w)).toBe(weeklyDiscountItem(w));
-    for (let i = 0; i + 9 <= semanas.length; i += 9) expect(new Set(semanas.slice(i, i + 9).map(weeklyDiscountItem)).size).toBe(9);
-    expect(weeklyDiscountItem(semanas[0])).not.toBe(weeklyDiscountItem(semanas[1]));
-  });
-  it('chave inválida = nenhuma peça (nunca lança)', () => {
-    for (const w of [undefined, null, '', 'x', '2026-W1', '2026-13', 7]) expect(weeklyDiscountItem(w as never)).toBeNull();
-  });
-  it('só a peça da semana, só com o nó, 20% em Bits; soma com a Etiqueta sem passar de 60%; fragmentos não mudam', () => {
-    const w = '2026-W41';
-    const id = weeklyDiscountItem(w)!;
-    const item = EQUIP_CATALOG.find((i) => i.id === id)!;
-    const outro = EQUIP_CATALOG.find((i) => i.id !== id)!;
-    expect(weeklyDiscountFor(id, [], w)).toBe(0);
-    expect(weeklyDiscountFor(id, ['tal-com-07'], w)).toBe(WEEKLY_DISCOUNT);
-    expect(weeklyDiscountFor(outro.id, ['tal-com-07'], w)).toBe(0);
-    expect(equipPrice(item, 'bits', ['tal-com-07'], w)).toBe(discounted(TIER_BITS[item.tier - 1], WEEKLY_DISCOUNT));
-    expect(equipPrice(outro, 'bits', ['tal-com-07'], w)).toBe(TIER_BITS[outro.tier - 1]); // as outras peças não mudam
-    expect(equipPrice(item, 'bits', [...rep('tal-com-01', 3), 'tal-com-07'], w)).toBe(discounted(TIER_BITS[item.tier - 1], 3 * PRICE_STEP + WEEKLY_DISCOUNT));
-    expect(3 * PRICE_STEP + WEEKLY_DISCOUNT).toBeLessThanOrEqual(0.6);
-    expect(equipPrice(item, 'fragments', ['tal-com-07'], w)).toBe(item.fragments);
-    expect(equipPrice(item, 'bits', ['tal-com-07'])).toBe(item.bits); // sem semana, sem desconto
-  });
-  it('a compra cobra o preço com o desconto da semana, e só Bits GANHOS pagam', () => {
-    const w = '2026-W41';
-    const id = weeklyDiscountItem(w)!;
-    const item = EQUIP_CATALOG.find((i) => i.id === id)!;
-    const preco = discounted(item.bits, WEEKLY_DISCOUNT);
-    const s = { gamePoints: 5000, talentPicks: ['tal-com-07'], weekKey: w };
-    const r = applyEquipBuy(s, id, 'bits');
-    expect(r.ok && r.price).toBe(preco);
-    expect(r.ok && r.state.gamePoints).toBe(5000 - preco);
-    const credito = { ...s, bitsOrigin: { day: 'x', free: 0, fromCredits: 5000, paidLeft: 5000 } };
-    expect(equipBuyRefusal(credito, id, 'bits')).toBe('not-earned');
-  });
-  it('a semana ISO do dia do jogador (formato do app) alimenta a chave', () => {
-    expect(weeklyDiscountItem(isoWeekKey('Mon Oct 05 2026'))).not.toBeNull();
-  });
-});
-
-describe('5. sem sorteio, sem pressa, sem dinheiro', () => {
+describe('4. sem sorteio, sem pressa, sem dinheiro', () => {
   const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
   const sem = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  it('equipment.ts não tem Math.random nem relógio (o desconto da semana vem da chave que entra por parâmetro)', () => {
+  it('equipment.ts não tem Math.random nem relógio ', () => {
     expect(sem(ler('utils/equipment.ts'))).not.toMatch(/Math\s*\.\s*random|Date\s*\.\s*now|new Date\(/);
   });
-  it('a copy dos três nós não cobra, não apressa e não promete sorte', () => {
-    for (const id of ['tal-com-04', 'tal-com-06', 'tal-com-07']) {
+  it('a copy dos nós não cobra, não apressa e não promete sorte', () => {
+    for (const id of ['tal-com-04', 'tal-com-06']) {
       const c = TALENT_COPY[id];
       for (const t of [c.descPt, c.descEn, c.namePt, c.nameEn]) {
         expect(t).not.toMatch(/última chance|só hoje|corra|acaba em|expira|termina em|sorte|limited|hurry|last chance|ends in|expires|luck|R\$|\$/i);
@@ -156,8 +114,9 @@ describe('5. sem sorteio, sem pressa, sem dinheiro', () => {
     }
   });
   it('sanitizeTalentPicks aceita os novos ids e respeita o grau máximo', () => {
-    expect(sanitizeTalentPicks([...ATE_02, ...rep('tal-com-04', 3), 'tal-com-06', ...rep('tal-com-03', 2), 'tal-com-05', 'tal-com-07'], 20)).toHaveLength(12);
-    expect(sanitizeTalentPicks([...COM07, 'tal-com-07'], 20)).toEqual([]);
+    expect(sanitizeTalentPicks([...ATE_02, ...rep('tal-com-04', 3), 'tal-com-06', ...rep('tal-com-03', 2), 'tal-com-05'], 20)).toHaveLength(11);
+    // `tal-com-07` foi aposentado: save que o tinha só perde esse ponto (o resto do vetor fica)
+    expect(sanitizeTalentPicks([...COM05, 'tal-com-07'], 20)).toEqual(COM05);
     expect(sanitizeTalentPicks([...ATE_02, ...rep('tal-com-04', 4)], 20)).toEqual([]);
   });
 });

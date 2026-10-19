@@ -59,11 +59,6 @@ interface HomeHudProps {
    */
   leading?: ReactNode;
   /**
-   * A CARTINHA de NPC (D-13): logo ABAIXO do retrato, à esquerda. Posicionada em `absolute` sobre a coluna da ponta
-   * esquerda — não ocupa altura nem desloca o pet e o nome. Ausente (sem carta) = nada no DOM.
-   */
-  belowLeading?: ReactNode;
-  /**
    * A ponta DIREITA. Hoje ela só reserva o espaço do link do Mapa — o
    * `CornerLink` é `fixed` no canto superior direito (fora do HUD, para
    * continuar à mão com a lista rolada).
@@ -80,7 +75,7 @@ interface HomeHudProps {
  *  para o nome ficar centrado de verdade. */
 const HUD_SIDE_W = 48;
 
-export function HomeHud({ language = 'en-US', focusSealed = false, leading, belowLeading, trailing, petName }: HomeHudProps) {
+export function HomeHud({ language = 'en-US', focusSealed = false, leading, trailing, petName }: HomeHudProps) {
   return (
     <div className="sm2-hud">
       {/* A marca é a PALAVRA, sem ícone ao lado.
@@ -108,9 +103,6 @@ export function HomeHud({ language = 'en-US', focusSealed = false, leading, belo
             pontas têm a MESMA largura, para o centro ser o centro de verdade. */}
         <div data-hud-leading style={{ flex: `0 0 ${HUD_SIDE_W}px`, position: 'relative', display: 'flex', justifyContent: 'flex-start' }}>
           {leading}
-          {belowLeading && (
-            <div data-hud-below-leading style={{ position: 'absolute', left: 0, top: 'calc(100% + 18px)', zIndex: 19 }}>{belowLeading}</div>
-          )}
         </div>
         <div
           data-hud-center

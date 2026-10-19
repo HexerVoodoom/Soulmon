@@ -5,7 +5,7 @@
  */
 import { TALENT_BY_ID, PVP_STEP, PVE_STEP, RESPEC_STEP, CHEER_STEP, START_ENERGY_STEP, DOT_RESIST_STEP, CROWN_STEP, HEAL_BOOST_STEP, RIFT_BITS_STEP, START_SHIELD_STEP, NIGHTMARE_STEP, ARC_STEP } from './talents';
 import { ENERGY } from './combate/specials';
-import { PRICE_STEP, FRAGMENT_GAIN_STEP, BACKPACK_BASE, BACKPACK_STEP, MISSION_BITS_STEP, WEEKLY_DISCOUNT } from './equipment';
+import { PRICE_STEP, FRAGMENT_GAIN_STEP, BACKPACK_BASE, BACKPACK_STEP, MISSION_BITS_STEP } from './equipment';
 
 export interface TalentCopy {
   readonly namePt: string;
@@ -66,7 +66,6 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
     descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto (Bits que você ganhou jogando). É conveniência, não combate.',
     descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point (Bits you earned by playing). Convenience, not combat.' },
   'tal-com-06': { namePt: 'Pergaminho enrolado', nameEn: 'Rolled scroll', descPt: `${pct(MISSION_BITS_STEP, true)} mais Bits por grau no dia completo, até +25%. Não cria Bits novos: só rende mais do que o dia já dava. É moeda, não combate.`, descEn: `${pct(MISSION_BITS_STEP, false)} more Bits per rank on a complete day, up to +25%. No new source of Bits: it only adds to what the day already gave. Currency, not combat.` },
-  'tal-com-07': { namePt: 'Moeda coroada', nameEn: 'Crowned coin', descPt: `Toda semana UMA peça do equipamento fica ${Math.round(WEEKLY_DISCOUNT * 100)}% mais barata em Bits. A peça vem de uma ordem fixa (a mesma para todos, sem acaso), a semana seguinte é só a próxima da ordem e nada some se você não comprar. É preço, não combate.`, descEn: `Every week ONE piece of equipment is ${Math.round(WEEKLY_DISCOUNT * 100)}% cheaper in Bits. The piece follows a fixed order (the same for everyone, nothing random); next week is just the next in line and nothing goes away if you do not buy. Price, not combat.` },
 };
 
 /**

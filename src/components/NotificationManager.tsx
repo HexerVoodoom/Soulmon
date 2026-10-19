@@ -14,7 +14,7 @@ import type { MealRhythmSettings } from '../utils/mealRhythm';
 import {
   ledgerWithPlan, planDayPushes, rollLedger, sanitizeLedger, serverSkipPayload,
 } from '../utils/petPushEvents';
-import type { PetPushState, PushCandidate } from '../utils/petPushEvents';
+import type { PetPushState } from '../utils/petPushEvents';
 import { daysTogether } from '../utils/anniversary';
 import { playerDayKey } from '../utils/playerDay';
 import { EVENT_PUSH_TAGS } from '../../functions/api/_pushCopy.js';
@@ -56,9 +56,6 @@ interface NotificationManagerProps {
   /** REGISTRO §113 — o estado do bicho de que os pushes de EVENTO (fome na faixa mediana, energia
    *  cheia, cocô) projetam a hora. Ausente = sem push de evento (e o teto só enxerga o que já existia). */
   petState?: PetPushState;
-  /** Candidatos de fora que contam no MESMO teto de `PUSH_DAILY_CAP` — a CARTA de NPC (W4-B):
-   *  `letterPushCandidate(id, atMs)` de `functions/api/_pushBudget.js`. */
-  extraPushes?: PushCandidate[];
   /** #23 (QA geral 21/09/2026) — amarra a inscrição de push à conta, para que
    *  apagar a conta alcance o push. Ausente = inscrição anônima, como antes.
    *  Mudou (login) → reenvia. */
@@ -81,7 +78,6 @@ export function NotificationManager({
   mealRhythm,
   isSleeping = false,
   petState,
-  extraPushes,
   saveId,
   language,
   enabled,
@@ -149,7 +145,6 @@ export function NotificationManager({
     enabled, isSleeping, language, petName, bornAt, restWindow, mealRhythm?.push, mealRhythm?.times, sleepOn,
     ps ? [ps.hunger, ps.energyPoints, ps.energyClock, ps.evolutionStage, ps.dungeonAway?.since ?? null,
       ps.poopEventsScheduled, ps.poopEventsShown, ps.foodCount > 0] : null,
-    extraPushes,
   ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const plan = useMemo(() => {
@@ -161,7 +156,6 @@ export function NotificationManager({
       ageDays: dias === null ? null : dias - 1,
       restWindow, mealRhythm, sleepReminderOn: sleepOn, state: ps,
       ledger: sanitizeLedger(readJson<unknown>(STORAGE_KEYS.PUSH_EVENT_LEDGER, null)),
-      extra: extraPushes,
     });
   }, [planKey, planTick]);
   const skipPayload = enabled && plan ? serverSkipPayload(plan) : null;

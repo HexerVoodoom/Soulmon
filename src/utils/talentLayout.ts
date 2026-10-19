@@ -38,7 +38,6 @@ const SLOT: Readonly<Record<string, { ring: 0 | 1 | 2 | 3; lat: number }>> = {
   'tal-com-04': { ring: 2, lat: -140 },
   'tal-com-06': { ring: 2, lat: -40 },
   'tal-com-05': { ring: 2, lat: 90 },
-  'tal-com-07': { ring: 3, lat: -50 },
 };
 
 export interface LayoutNode { readonly id: string; readonly path: TalentPath; readonly x: number; readonly y: number }

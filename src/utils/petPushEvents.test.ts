@@ -7,7 +7,7 @@ import type { PetPushInput } from './petPushEvents';
 import { HUNGER_FULL_TO_EMPTY_HOURS, HUNGER_MAX, msToFullEnergy } from './hunger';
 import { DEFAULT_MEAL_RHYTHM } from './mealRhythm';
 import { PUSH_DAILY_CAP } from '../../functions/api/_mealRhythm.js';
-import { PUSH_KINDS_BY_PRIORITY, capPushes, letterPushCandidate } from '../../functions/api/_pushBudget.js';
+import { PUSH_KINDS_BY_PRIORITY, capPushes } from '../../functions/api/_pushBudget.js';
 import {
   energyFullCopy, hungerInviteCopy, poopPushCopy, progressCopy,
 } from '../../functions/api/_pushCopy.js';
@@ -134,7 +134,7 @@ describe('D-06 — progresso: no máximo 1×/dia, no fechamento, só se sobrar v
   });
 });
 
-describe('TETO — PUSH_DAILY_CAP = 4, com prioridade cocô > fome > energia > carta > refeição > progresso (S-7)', () => {
+describe('TETO — PUSH_DAILY_CAP = 4, com prioridade cocô > fome > energia > lembrete de deitar > refeição > progresso (S-7)', () => {
   const cheio = () => ({
     ...base().state, energyPoints: 7, energyClock: { at: at(8), carry: 0 },
     hunger: hungerCrossing(at(12)), poopEventsScheduled: [at(9, 30), at(18)],
@@ -142,8 +142,9 @@ describe('TETO — PUSH_DAILY_CAP = 4, com prioridade cocô > fome > energia > c
   it('a ordem declarada', () => {
     expect(PUSH_KINDS_BY_PRIORITY.indexOf('poop')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('hunger'));
     expect(PUSH_KINDS_BY_PRIORITY.indexOf('hunger')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('energyFull'));
-    expect(PUSH_KINDS_BY_PRIORITY.indexOf('energyFull')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('letter'));
-    expect(PUSH_KINDS_BY_PRIORITY.indexOf('letter')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('meal'));
+    expect(PUSH_KINDS_BY_PRIORITY.indexOf('energyFull')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('sleep'));
+    expect(PUSH_KINDS_BY_PRIORITY.indexOf('sleep')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('meal'));
+    expect(PUSH_KINDS_BY_PRIORITY).not.toContain('letter');
     expect(PUSH_KINDS_BY_PRIORITY.indexOf('meal')).toBeLessThan(PUSH_KINDS_BY_PRIORITY.indexOf('progress'));
   });
   it('estoura → eventos ficam, refeição e lembrete saem, e o servidor é avisado (`x`)', () => {
@@ -158,14 +159,6 @@ describe('TETO — PUSH_DAILY_CAP = 4, com prioridade cocô > fome > energia > c
     expect(p.kept).toHaveLength(PUSH_DAILY_CAP);
     expect(ids(p.kept)).toEqual(expect.arrayContaining(['poop-0', 'poop-1', 'sleep', 'meal-breakfast']));
     expect(p.serverSkip.sort()).toEqual(['dinner', 'lunch']);
-  });
-  it('a CARTA (W4-B) conta no mesmo teto: ganha de refeição, perde de cocô/fome/energia', () => {
-    const carta = [letterPushCandidate('letter-1', at(15))];
-    const p = planDayPushes(base({ state: { ...base().state, poopEventsScheduled: [at(9, 30)] }, extra: carta }));
-    expect(ids(p.kept)).toContain('letter-1');
-    expect(p.kept).toHaveLength(PUSH_DAILY_CAP);
-    const cheio2 = planDayPushes(base({ state: cheio(), extra: carta }));
-    expect(ids(cheio2.dropped)).toContain('letter-1');
   });
   it('o que já saiu hoje CONTA: com 3 já enviados só cabe 1', () => {
     const led = { day: localDayKey(at(8)), fired: ['poop-0', 'hunger', 'energyFull'], pending: [], skipped: [] };

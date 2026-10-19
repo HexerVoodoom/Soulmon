@@ -366,11 +366,11 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   **energia cheia** (1×/dia), **cocô** (a agenda `poopEventsScheduled`) e **progresso**
   (≤1×/dia, só no fechamento). O planejador `src/utils/petPushEvents.ts` soma TUDO sob
   `PUSH_DAILY_CAP = 4` (dono do teto/prioridade: `functions/api/_pushBudget.js`):
-  cocô > fome > energia cheia > carta > lembrete de deitar > refeição > hora fixa >
+  cocô > fome > energia cheia > lembrete de deitar > refeição > hora fixa >
   progresso. O que o teto corta de refeição/lembrete vai ao worker em `x` na inscrição
   (`{d, k}`), e o worker só obedece no dia `d`. Eventos: alarme local no APK, timer na
-  PWA aberta; **PWA fechada não recebe evento** (o worker não lê o save). A carta de NPC
-  entra no mesmo teto por `letterPushCandidate` → `extraPushes` do `NotificationManager`.
+  PWA aberta; **PWA fechada não recebe evento** (o worker não lê o save). (A carta de NPC e o
+  slot dela saíram em 19/10/2026, REGISTRO §121.)
   Copy de evento = só convite (`hungerInviteCopy`, `energyFullCopy`, `poopPushCopy`,
   `progressCopy` em `_pushCopy.js`), nunca culpa nem medo.
 - Push: **dois canais**, mesma KV (`PUSH_SUBSCRIPTIONS`), mesmo cron
@@ -806,7 +806,7 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
      `combinedAttrBonus`, nunca por multiplicador próprio, e nada comprado com
      dinheiro real entra nele; (c) o motor tem espelho no servidor —
      `functions/api/_combate.js`, `_gates.js`, `_talents.js` e `_equipment.js`,
-     cada um com `*.parity.test.js` (o Comércio — `tal-com-01/02/04/06/07` — só mexe em preço, ganho de moeda e mochila, nunca em % de combate; o desconto da semana é determinístico por `weeklyDiscountItem`, sem sorteio): mudou constante ou fórmula de um lado, mude
+     cada um com `*.parity.test.js` (o Comércio — `tal-com-01/02/04/06` — só mexe em preço, ganho de moeda e mochila, nunca em % de combate): mudou constante ou fórmula de um lado, mude
      os dois; (d) equipamento só se compra com Bits GANHOS (`bitsOrigin.paidLeft`
      é a parte vinda de Crédito) e SEM sorteio — nada de `Math.random`/odds/pity
      (um teste lê a fonte); (e) torcida só na Arena

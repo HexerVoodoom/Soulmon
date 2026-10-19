@@ -2,7 +2,7 @@
  * O PLANEJADOR DOS PUSHES DO DIA (REGISTRO §113/§114): fome na faixa mediana,
  * energia cheia, cocô e o fechamento do dia — mais o TETO de `PUSH_DAILY_CAP`
  * somando TUDO o que o dia pode mandar (refeições, lembrete de deitar, convites
- * de hora fixa, carta de NPC).
+ * de hora fixa).
  *
  * ## O que decide aqui, e o que NÃO decide
  *
@@ -116,8 +116,6 @@ export interface PetPushInput {
   sleepReminderOn: boolean;
   state: PetPushState;
   ledger?: PetPushLedger;
-  /** Candidatos de fora que contam no MESMO teto — a CARTA de NPC (W4-B): `letterPushCandidate`. */
-  extra?: PushCandidate[];
   cap?: number;
 }
 
@@ -275,11 +273,6 @@ export function planDayPushes(inp: PetPushInput): PetPushPlan {
   if (!fired.has('progress') && slot !== null) {
     const t = at(dayStart, slot);
     if (t > now && !inRest(t)) push('progress', 'progress', t, progressCopy(name, lang), false);
-  }
-
-  // ── de fora (carta de NPC): contam no mesmo teto ─────────────────────────
-  for (const e of inp.extra ?? []) {
-    out.push({ ...e, committed: e.committed || e.at <= now, title: '', body: '', tag: e.id, fromServer: false });
   }
 
   // O que já saiu hoje e não é mais candidato (evento disparado) CONTA no teto.

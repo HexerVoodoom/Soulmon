@@ -54,15 +54,15 @@ describe('o grafo', () => {
     const com05 = TALENT_BY_ID.get('tal-com-05')!; // um
     expect(prereqsMet(com05, new Map([['tal-com-03', 1]]))).toBe(false);
     expect(prereqsMet(com05, new Map([['tal-com-03', 2]]))).toBe(true);
-    const com07 = TALENT_BY_ID.get('tal-com-07')!; // dois
-    expect(prereqsMet(com07, new Map([['tal-com-04', 1]]))).toBe(false);
-    expect(prereqsMet(com07, new Map([['tal-com-04', 1], ['tal-com-05', 1]]))).toBe(true);
+    const pve07 = TALENT_BY_ID.get('tal-pve-07')!; // dois
+    expect(prereqsMet(pve07, new Map([['tal-pve-05', 1]]))).toBe(false);
+    expect(prereqsMet(pve07, new Map([['tal-pve-05', 1], ['tal-pve-06', 1]]))).toBe(true);
     const pvp05 = TALENT_BY_ID.get('tal-pvp-05')!; // um OU outro
     expect(prereqsMet(pvp05, new Map())).toBe(false);
     expect(prereqsMet(pvp05, new Map([['tal-pvp-03', 2]]))).toBe(true);
     expect(prereqsMet(pvp05, new Map([['tal-pvp-02', 2]]))).toBe(true);
     expect(missingPrereqs(pvp05, new Map()).any).toHaveLength(2);
-    expect(missingPrereqs(com07, new Map([['tal-com-04', 1]])).all.map((r) => r.id)).toEqual(['tal-com-05']);
+    expect(missingPrereqs(pve07, new Map([['tal-pve-05', 1]])).all.map((r) => r.id)).toEqual(['tal-pve-06']);
   });
   it('comprar fora de ordem é recusado; vetor com nó sem pré-requisito é inválido', () => {
     expect(pickTalent([], 'tal-pvp-02', 20)).toEqual([]);

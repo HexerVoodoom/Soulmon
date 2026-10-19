@@ -174,7 +174,7 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   const ordem = PRESENTATION_ORDER as readonly string[];
 
   it('a ordem declarada é (19/10/2026, D-64): TOUR → triagem → PESADELO → sonho → resumo do dia → PRÉDIO NOVO → metas → "HOJE" (reafirmar + check-in) → LEVEL UP → modal de evolução → MARCO → convite de nível → sono → ocioso', () => {
-    expect(ordem).toEqual(['welcomeTour', 'triage', 'npcLetter', 'nightmare', 'dream', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'nightmare', 'dream', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in (celebração depois do início de dia) e ANTES dos convites (posições, não só presença)', () => {
