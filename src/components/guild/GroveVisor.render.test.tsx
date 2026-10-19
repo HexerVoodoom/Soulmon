@@ -3,7 +3,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { GroveVisor, SLOTS_X } from './GroveVisor';
+import { GroveVisor, SLOTS_X, ESCALA_CENA, CAMPO_LARGURA, OCUPACAO_COMPLETA, RAZAO_4_5, alturaCaixa } from './GroveVisor';
+
+const ESTACOES = ['outono', 'inverno', 'primavera', 'verao'] as const;
 import { createRequire } from 'node:module';
 
 afterEach(cleanup);
@@ -37,7 +39,7 @@ describe('GroveVisor: panorama de tela cheia (D-29/D-31/D-33)', () => {
     const sharp = createRequire(join(process.cwd(), 'package.json'))('sharp');
     const base = join(process.cwd(), 'src/assets/bosque');
     const TELA_UTIL_ALTA = 844; // o iPhone de referência (390×844); o panorama ocupa a altura toda
-    const exibida = { panorama: TELA_UTIL_ALTA, arvore: 0.4 * TELA_UTIL_ALTA }; // a árvore usa 40cqh
+    const exibida = { panorama: ESCALA_CENA * TELA_UTIL_ALTA, arvore: Math.max(...ESTACOES.map(e => alturaCaixa(e))) / 100 * TELA_UTIL_ALTA }; // cena a 118 % da altura; caixa da árvore por estação
     return Promise.all([
       sharp(join(base, 'panorama-bosque.webp')).metadata().then((m: { height: number }) => expect(m.height).toBeGreaterThanOrEqual(exibida.panorama)),
       ...readdirSync(base).filter(n => /^arvore-.*\.webp$/.test(n)).map(n =>
@@ -97,6 +99,29 @@ describe('D-32: o Bosque só se acessa pelo Hall', () => {
 });
 
 
+describe('geometria dos campos (D-33): uma árvore por clareira, centrada, sem cortar', () => {
+  // largura/altura de cada nível 5 na arte (px da folha) -> a maior largura relativa à altura
+  const LARG_5: Record<string, number> = { outono: 659 / 984, inverno: 366 / 569, primavera: 593 / 1079, verao: 538 / 1096 };
+  it.each(ESTACOES)('%s: a completa ocupa 90–95 %% do campo e o nível 5 cabe no campo sem tocar o vizinho', e => {
+    const campo = CAMPO_LARGURA; // fração da altura da cena
+    const h4 = (alturaCaixa(e) / 100 / ESCALA_CENA) * RAZAO_4_5[e] * (504 / 512); // altura do nível 4, fração da altura da cena
+    expect(h4 / campo).toBeGreaterThanOrEqual(0.9);
+    expect(h4 / campo).toBeLessThanOrEqual(0.95);
+    expect(OCUPACAO_COMPLETA).toBeGreaterThanOrEqual(0.9);
+    const h5 = (alturaCaixa(e) / 100 / ESCALA_CENA) * (504 / 512);
+    expect(h5).toBeGreaterThanOrEqual(h4);
+    expect(h5 / h4).toBeLessThanOrEqual(1.25); // "um pouco" acima da completa
+    expect((h5 * LARG_5[e]) / campo, 'largura do nível 5 cabe no campo').toBeLessThanOrEqual(1);
+  });
+  it('os campos são centrados nas clareiras e não se tocam (espaçamento > largura do campo)', () => {
+    const xs = ESTACOES.map(e => SLOTS_X[e]);
+    const largura = CAMPO_LARGURA * (1129 / 1700) * 100; // % da largura da cena (1700×1129)
+    for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1]).toBeGreaterThan(largura);
+    expect(xs[0] - largura / 2).toBeGreaterThan(0);
+    expect(xs[3] + largura / 2).toBeLessThan(100);
+  });
+});
+
 describe('as criaturas do clã no panorama (palco do Bosque)', () => {
   const criaturas = (c: HTMLElement) => Array.from(c.querySelectorAll<HTMLImageElement>('[data-grove-creature]'));
   it('1 membro: só a SUA, no centro, em 128 (escala inteira)', () => {
@@ -115,11 +140,11 @@ describe('as criaturas do clã no panorama (palco do Bosque)', () => {
     const xs = c.map(x => parseFloat(x.style.left));
     expect(xs).toEqual([...xs].sort((a, b) => a - b));
   });
-  it.each([1, 2, 3, 4])('%i criaturas pisam nos vãos, sem cobrir nenhuma árvore', n => {
+  it.each([1, 2, 3, 4])('%i criaturas pisam nos vãos, sem cobrir nenhuma árvore (>= 10 % da cena: meia largura do nível 5 + meia criatura)', n => {
     const { container } = montar(false, roda(n));
     for (const c of criaturas(container)) {
       const x = parseFloat(c.style.left);
-      for (const slot of Object.values(SLOTS_X)) expect(Math.abs(x - slot), `criatura em ${x}% sobre árvore em ${slot}%`).toBeGreaterThanOrEqual(8);
+      for (const slot of Object.values(SLOTS_X)) expect(Math.abs(x - slot), `criatura em ${x}% sobre árvore em ${slot}%`).toBeGreaterThanOrEqual(10);
     }
   });
   it.each([5, 8, 12])('%i membros: SÓ a sua (a fileira com lacunas é a sala de aula que LV-G2 veta)', n => {

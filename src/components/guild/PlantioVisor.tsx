@@ -23,8 +23,9 @@ import { useClaBuilding, type ClaSalaProps } from './claUi';
 
 export const PLANTIO_VISOR_HEIGHT = 220;
 const H = PLANTIO_VISOR_HEIGHT;
-/** Altura do sprite por nível (1 broto .. 4 completa), em px do vidro: a árvore cresce, a base não sai do chão. */
-const ARVORE_PX = [0, 96, 132, 164, 196];
+/** Altura da CAIXA do sprite, em px do vidro. Os 5 níveis de uma árvore dividem a mesma caixa (base alinhada, escala relativa
+ *  preservada): o broto é pequeno e a completa enche a caixa, sem tabela de alturas por nível. */
+const ARVORE_PX = 210;
 
 interface PlantioVisorProps {
   stage: number;
@@ -59,7 +60,7 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, l
           data-plantio-planta
           data-plantio-fruto={mature ? '' : undefined}
           className={mature && !reducedMotion ? 'sm2-casa-glow' : undefined}
-          style={{ height: ARVORE_PX[nivel], width: 'auto', display: 'block', imageRendering: 'auto', marginBottom: 6, position: 'relative' }}
+          style={{ height: ARVORE_PX, width: 'auto', display: 'block', imageRendering: 'pixelated', marginBottom: 6, position: 'relative' }}
         />
       ) : (
         <span aria-hidden="true" style={{ width: 96, height: 14, marginBottom: 18, borderRadius: '50%', border: '2px dashed var(--sm2-primary, #6EFFFB)', opacity: 0.7 }} />

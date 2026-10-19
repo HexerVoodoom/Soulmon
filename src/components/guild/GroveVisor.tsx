@@ -19,16 +19,31 @@ import type { GuildView } from '../../utils/community';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
 
-/** Onde cada lugar fica no panorama: centro em % da largura, e a base (o chão) em % da altura. */
-export const SLOTS_X: Record<EstacaoBosque, number> = { outono: 14, inverno: 38, primavera: 62, verao: 86 };
-const CHAO_Y = 78;
 /**
- * Onde as criaturas do clã pisam: nos VÃOS entre os lugares das árvores (14/38/62/86 %), nunca embaixo de uma copa.
+ * GEOMETRIA DOS 4 CAMPOS (as clareiras de terra do panorama v2, 1700×1129; medidas na imagem, em %):
+ * centro horizontal de cada clareira e o chão (a base da árvore) no meio-baixo dela. Cada árvore é centrada no seu
+ * campo, com a base no chão. A cena é exibida a `ESCALA_CENA` × a altura útil (recorte vertical, ancorada embaixo): é o
+ * ajuste de clareira que deixa a completa (nível 4) ocupar ~92 % da maior dimensão do campo sem encolher a árvore.
+ */
+export const SLOTS_X: Record<EstacaoBosque, number> = { outono: 14.2, inverno: 37.4, primavera: 60.9, verao: 84.4 };
+export const CHAO_Y = 70;
+/** Altura da cena em múltiplos da altura útil (panorama de ~3,7 telas em 390×844). */
+export const ESCALA_CENA = 1.18;
+/** Largura da clareira em fração da ALTURA da cena (≈ 290 px de 1129). */
+export const CAMPO_LARGURA = 290 / 1129;
+/** A completa (nível 4) ocupa esta fração da maior dimensão do campo; o nível 5 passa um pouco, sem estourar. */
+export const OCUPACAO_COMPLETA = 0.92;
+/** Altura do nível 4 / altura do nível 5 em cada folha da arte (a escala relativa entre níveis é a da arte). */
+export const RAZAO_4_5: Record<EstacaoBosque, number> = { outono: 795 / 984, inverno: 494 / 569, primavera: 961 / 1079, verao: 947 / 1096 };
+/** Altura da CAIXA do sprite (512 px, 504 úteis) em % da altura útil: faz o nível 4 medir `OCUPACAO_COMPLETA` do campo. */
+export const alturaCaixa = (e: EstacaoBosque): number => ((OCUPACAO_COMPLETA * CAMPO_LARGURA) / (RAZAO_4_5[e] * (504 / 512))) * ESCALA_CENA * 100;
+
+/**
+ * Onde as criaturas do clã pisam: nos VÃOS entre os lugares das árvores (14/38/62/86 %), nunca embaixo de uma copa (os campos agora são 14,2/37,4/60,9/84,4 %).
  * Da esquerda para a direita, na ordem de chegada da roda (`groveCreatures`); sozinha, a sua fica no centro.
  * A de 64 px da ponta esquerda cabe antes da árvore do outono (que ocupa ~6–22 %).
  */
 const PALCO_X: Record<number, number[]> = { 1: [50], 2: [26, 74], 3: [26, 50, 74], 4: [3.5, 26, 50, 74] };
-const ARVORE_H = 40;
 
 export interface GroveVisorProps {
   language: Language;
@@ -129,7 +144,7 @@ export function GroveVisor({ language, guild, mySprite, niveis, reducedMotion, l
                     draggable={false}
                     decoding="async"
                     className={`sm2-grove-arvore${nv === 5 ? ' sm2-grove-arvore-5' : ''}`}
-                    style={{ height: `${ARVORE_H}cqh` }}
+                    style={{ height: `${alturaCaixa(e).toFixed(2)}cqh` }}
                   />
                 ) : (
                   <span className="sm2-grove-vazio" aria-hidden="true" />
@@ -153,7 +168,7 @@ export function GroveVisor({ language, guild, mySprite, niveis, reducedMotion, l
               className={reducedMotion ? 'sm2-grove-creature' : 'sm2-grove-creature sm2-grove-bob'}
               style={{
                 left: `${xs[i] ?? c.x}%`,
-                top: `${CHAO_Y}%`,
+                top: `${CHAO_Y + 6}%`,
                 width: c.size,
                 height: c.size,
                 // Os pés do sprite caem ~6% acima da borda inferior da caixa.
