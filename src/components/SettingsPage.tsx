@@ -24,6 +24,7 @@ import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
 import { MealRhythmRows } from './MealRhythmRows';
+import { requestOpenFrameShop } from '../utils/frameShopNav';
 import { SpritePoseRows } from './SpritePoseRows';
 import type { SpritePose } from '../utils/spritePose';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
@@ -93,7 +94,7 @@ interface SettingsPageProps {
   profile?: {
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
-    userName?: string; onChangeName?: (name: string) => void; bits?: number; onBuyFrame?: (id: string) => void;
+    userName?: string; onChangeName?: (name: string) => void;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -152,7 +153,7 @@ function FocoVibrateRow({ language }: { language: Language }) {
     <SwitchRow
       checked={on}
       onToggle={() => { const n = !on; setOn(n); setVibrateOn(n); }}
-      label={isPt ? 'Vibrar ao fim do foco' : 'Vibrate when focus ends'}
+      label={isPt ? 'Vibrar quando o foco acabar' : 'Vibrate when Focus ends'}
       language={language}
       infoLabel={isPt ? 'Sobre a vibração do foco' : 'About the focus vibration'}
       info={isPt
@@ -305,8 +306,7 @@ export function SettingsPage({
             onChangeFrame={profile.onChangeFrame}
             userName={profile.userName}
             onChangeName={profile.onChangeName}
-            bits={profile.bits}
-            onBuyFrame={profile.onBuyFrame}
+            onOpenFrameShop={requestOpenFrameShop}
           />
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />
         </GroupCard>
@@ -423,7 +423,16 @@ export function SettingsPage({
       >
         <AccountDataSection language={language} />
         <TelemetrySection language={language} />
-        <FocoVibrateRow language={language} />
+        <SwitchRow
+          checked={useAI}
+          onToggle={onToggleAI}
+          label={isPt ? 'Enviar a conversa ao provedor de IA' : 'Send chat to AI provider'}
+          language={language}
+          infoLabel={isPt ? 'Sobre o envio da conversa à IA' : 'About sending chat to AI'}
+          info={isPt
+            ? 'Ligado, o que você escreve no chat vai ao provedor de IA para o Soulmon responder. Desligado, nada é enviado e ele responde por palavras-chave.'
+            : 'On, what you type in the chat goes to the AI provider so Soulmon can reply. Off, nothing is sent and it answers from keywords.'}
+        />
         {onToggleShowInPublicList && (
           <SwitchRow
             checked={showInPublicList}
@@ -525,16 +534,7 @@ export function SettingsPage({
             onChange={onChangeMealRhythm}
           />
         )}
-        <SwitchRow
-          checked={useAI}
-          onToggle={onToggleAI}
-          label={isPt ? 'Conversa com IA' : 'AI chat'}
-          language={language}
-          infoLabel={isPt ? 'Sobre a conversa com IA' : 'About the AI chat'}
-          info={isPt
-            ? 'Desligado, seu Soulmon responde por palavras-chave.'
-            : 'Off, it answers from keywords.'}
-        />
+        <FocoVibrateRow language={language} />
       </Group>
 
       {/* ── APARÊNCIA ─────────────────────────────────────────────────────── */}

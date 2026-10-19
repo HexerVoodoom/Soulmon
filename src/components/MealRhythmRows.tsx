@@ -8,16 +8,11 @@ import { MEAL_RANGE_MIN, MEAL_STEP_MIN, formatHHMM } from '../../functions/api/_
 
 /**
  * As linhas do RITMO DAS REFEIÇÕES nas Configurações (grupo "O que o Soulmon te
- * manda"). Dois interruptores independentes e três horários:
- *
- *  · **Convites no app** — vem LIGADO; só aparece com o app já aberto.
- *  · **Lembretes** (push/alarme) — vem DESLIGADO: opt-in, além da permissão do
- *    sistema. Não liga sem as notificações ligadas, e a linha diz por quê em
- *    vez de falhar calada.
- *  · **Horários** — grade de 30 min, dentro da faixa de cada refeição (a
- *    normalização é do dono, `_mealRhythm.js`; o `<select>` só oferece o que
- *    ele aceita, então não existe valor inválido para "voltar ao padrão" em
- *    silêncio).
+ * manda"). Um interruptor só — "Meal check-ins" (D-20, 19/10/2026) — liga ou
+ * desliga juntos o convite no app e o push das três janelas (`inApp` + `push`);
+ * o push ainda depende das notificações ligadas e a linha diz isso. Mais três
+ * horários, em grade de 30 min dentro da faixa de cada refeição (normalização em
+ * `_mealRhythm.js`; o `<select>` só oferece o que ele aceita).
  */
 const LABEL: Record<MealKey, { en: string; pt: string }> = {
   breakfast: { en: 'Breakfast', pt: 'Café da manhã' },
@@ -41,34 +36,24 @@ export function MealRhythmRows({ language, settings, notificationsEnabled, onCha
   const isPt = language === 'pt-BR';
   const s = sanitizeMealRhythm(settings);
   const times = normalizeMealTimes(s.times);
-  const pushOn = s.push && notificationsEnabled;
+  const on = s.inApp || s.push;
+  const pushWaits = on && !notificationsEnabled;
   return (
     <>
       <SwitchRow
-        checked={s.inApp}
-        onToggle={() => onChange({ ...s, inApp: !s.inApp })}
-        label={isPt ? 'Convites das refeições' : 'Meal check-ins'}
-        hint={isPt ? 'Três janelas curtas por dia, no app. Sem pressão.' : 'Three short windows a day, in the app. No pressure.'}
+        checked={on}
+        onToggle={() => onChange({ ...s, inApp: !on, push: !on })}
+        label={isPt ? 'Check-ins das refeições' : 'Meal check-ins'}
+        hint={isPt
+          ? (pushWaits ? 'Convite no app. Para receber também por notificação, ligue as notificações.' : 'Café, almoço e jantar: convite no app e notificação.')
+          : (pushWaits ? 'In-app invite. To get it as a notification too, turn notifications on.' : 'Breakfast, lunch and dinner: in-app invite and notification.')}
         language={language}
-        infoLabel={isPt ? 'Sobre os convites das refeições' : 'About meal check-ins'}
+        infoLabel={isPt ? 'Sobre os check-ins das refeições' : 'About meal check-ins'}
         info={isPt
-          ? 'Depois do café, do almoço e do jantar, seu Soulmon pode pedir uma coisa pequena: um carinho, um banho, uma comidinha. Não conta nada e não vale nada se você pular.'
-          : 'After breakfast, lunch and dinner, your Soulmon may ask for one small thing: a pat, a rinse, a snack. Nothing is counted, and skipping costs nothing.'}
+          ? 'Depois do café, do almoço e do jantar, o Soulmon pede uma coisa pequena: carinho, banho ou comida. Até 3 por dia, na sua hora local, fora da janela de descanso. Pular não custa nada. Com a notificação ligada, o fuso e os horários vão ao servidor só para isso; ao desligar, deixam de ir.'
+          : 'After breakfast, lunch and dinner, Soulmon asks for one small thing: a pat, a rinse or a snack. Up to 3 a day, at your local time, outside your rest window. Skipping costs nothing. With notifications on, your time zone and times go to the server for this only; turn it off and they stop.'}
       />
-      <SwitchRow
-        checked={pushOn}
-        onToggle={() => { if (notificationsEnabled) onChange({ ...s, push: !s.push }); }}
-        label={isPt ? 'Lembretes das refeições' : 'Meal reminders'}
-        hint={notificationsEnabled
-          ? (isPt ? 'Um toque leve depois de cada refeição. Troca os lembretes de 10h e 16h.' : 'A light tap after each meal. Replaces the 10:00 and 16:00 reminders.')
-          : (isPt ? 'Ligue as notificações primeiro.' : 'Turn notifications on first.')}
-        language={language}
-        infoLabel={isPt ? 'Sobre os lembretes das refeições' : 'About meal reminders'}
-        info={isPt
-          ? 'Até 3 por dia, na sua hora local, nunca dentro da janela de descanso. Ao ligar, o fuso e os horários vão ao servidor só para isso; ao desligar, deixam de ir.'
-          : 'Up to 3 a day, at your local time, never inside your rest window. While on, your time zone and times go to the server for this only; turn off and they stop.'}
-      />
-      {(s.inApp || pushOn) && (
+      {on && (
         <div role="group" aria-label={isPt ? 'Horários das refeições' : 'Meal times'} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
           {MEAL_KEYS.map(meal => (
             <label key={meal} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 44 }}>

@@ -115,12 +115,9 @@ describe('D-16: moldura de loja trancada leva ao Mercado; nada de comprar no Per
     <ProfileEditor open onClose={() => {}} language="en-US" saveId={'a'.repeat(32)} avatarId={null} equippedFrame={null} ownedFrames={[]}
       petStage="rookie" onChangeAvatar={() => {}} onChangeFrame={() => {}} userName="Lia" onChangeName={() => {}} {...over} />,
   );
-  it('ProfileEditor: não chama onBuyFrame (mesmo se o pai ainda o passar) e não desenha botão de compra', () => {
-    const onBuyFrame = vi.fn();
-    editor({ bits: 9999, onBuyFrame });
+  it('ProfileEditor: não desenha botão de compra (D-16: a compra mora no Mercado)', () => {
+    editor();
     expect(document.querySelector('[data-frame-buy]')).toBeNull();
-    fireEvent.click(document.querySelector(`[data-frame-option="${shopFrame.id}"]`)!);
-    expect(onBuyFrame).not.toHaveBeenCalled();
   });
   it('ProfileEditor: tocar na moldura trancada dispara onOpenFrameShop; sem a prop, vai pelo evento do App', () => {
     const onOpenFrameShop = vi.fn();

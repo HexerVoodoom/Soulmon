@@ -41,8 +41,6 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   /** D-16: o Perfil NÃO compra moldura. A de loja que a pessoa não tem aparece trancada e o toque abre Mercado > Frames
    *  (por padrão, o pedido vai pelo evento de `utils/frameShopNav`, que o `App` atende). */
   onOpenFrameShop?: () => void;
-  /** @deprecated Sem efeito desde D-16 (a compra saiu do Perfil). Aceitas só para a `SettingsPage` não precisar mudar junto. */
-  bits?: number; onBuyFrame?: (id: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const ctx = useFrameContext(saveId, ownedFrames);
