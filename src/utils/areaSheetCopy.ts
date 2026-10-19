@@ -93,30 +93,32 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // Medidas no fundo final renderizado em `cover` a 390×844 (o `left` é % da TELA, não da imagem:
 // o `cover` corta ~11% de cada lado, então a plataforma em 26% da imagem cai em ~22% da tela).
 // Hall: dois losangos em cima (centro ~22/37 e ~78/37 na tela) e um grande embaixo (~50/66).
+// W5 (19/10/2026): fundos NOVOS (variante `e` de cada um; as plataformas saem 5–15 pontos acima do pedido) — `LABORATORIO_LOTS`/`HALL_LOTS` remedidos sobre as
+// plataformas reais (centro medido nos PNG 760×1344: Lab 50/38, 20/41, 81/41, 29/64, 71/64, 50/85; Hall 27/39, 74/39, 50/71). Prévias: `_gemini_out/w5-arte-20261019/previas/`.
 // Laboratório: o hexágono GRANDE subiu (centro ~50/41, o Santuário do Vínculo) e os dois menores desceram
 // (~22/66 e ~78/66). O `top` é o pé do prédio, um pouco à frente do centro da plataforma. Prévia:
 // `E:/Soulmon-assets/out/instalacao-20261004/areas/prancha-01-hall-lab-lotes.png`.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '26%', top: '70%', width: '44%' },
-  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '78%', top: '70%', width: '50%' },
-  { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '43%', width: '62%' },
+  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '29%', top: '66%', width: '44%' },
+  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '71%', top: '67%', width: '48%' },
+  { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '40%', width: '62%' },
   // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
   // D-44 (19/10/2026, dono): "só pode ser um pouco maior" — 36% → 41% (~+15%); o guard H11 (geometria dos lotes) segue verde nos 5 viewports.
-  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '92%', width: '41%' },
+  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '89%', width: '41%' },
   // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
   // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
-  // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 34%: com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '17%', top: '40%', width: '34%' },
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83%', top: '40%', width: '34%' },
+  // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 32% (W5; antes 34%): com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '17%', top: '39%', width: '32%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83%', top: '39%', width: '32%' },
 ];
 
 // D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo
 // (dois losangos em cima, o grande embaixo). A Biblioteca e o Círculo de Amigos foram para o Laboratório (`LABORATORIO_LOTS`). A ordem do array é a ordem de pintura.
-// O Grove ainda não tem arte própria: usa o chalé de campina que já existe nos lotes (a arte nova é outra onda).
+// O Grove tem arte própria desde W5 (19/10/2026): pavilhão de cristal em volta de uma árvore jovem.
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '22%', top: '46%', width: '44%' },
-  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '78%', top: '46%', width: '44%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '77%', width: '58%' },
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '27%', top: '44%', width: '44%' },
+  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '74%', top: '44%', width: '44%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '73%', width: '58%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {

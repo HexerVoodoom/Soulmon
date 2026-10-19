@@ -5,7 +5,8 @@
  * da forma. Dentro do vidro ("O Visor"), sobre o cenário da arena; movimento reduzido para o balanço.
  */
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
-import { sceneCss } from '../../utils/backgroundPortrait';
+// W5 (19/10/2026): cenário PRÓPRIO da guerra (arena com cristais vermelhos). O `bg-arena-spotlight` segue só como cenário da loja.
+import bgArenaGuerra from '../../assets/backgrounds/bg-arena-guerra.png';
 import { GROUND_Y } from '../../utils/petStage';
 import { spriteForMember } from '../../utils/groveStage';
 import type { GuildView } from '../../utils/community';
@@ -37,7 +38,7 @@ export function GuerraVisor({ guild, mySprite, enemyCount, reducedMotion, label 
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: GUERRA_VISOR_HEIGHT, background: bg && `${sceneCss('bg-arena-spotlight')} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}
+      style={{ height: GUERRA_VISOR_HEIGHT, background: `url(${bgArenaGuerra}) center bottom / cover no-repeat`, backgroundColor: bg?.baseColor }}
     >
       {nossos.map((c, i) => (
         <img

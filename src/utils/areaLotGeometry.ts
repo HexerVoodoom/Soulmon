@@ -31,27 +31,27 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
   'arena:torneio': [0.073, 0, 0.927, 1],
   'arena:duelo': [0.167, 0, 0.833, 1],
-  'arena:guerra': [0.013, 0, 0.983, 1], // arte escolhida pelo dono (18/10/2026): arena-coliseu com grifo e serpente de ossos, alfa > 20
-  'hall:feira': [0.153, 0.12, 0.847, 0.973],
+  'arena:guerra': [0.072, 0.039, 0.928, 0.961], // arte escolhida pelo dono (18/10/2026): arena-coliseu com grifo e serpente de ossos, alfa > 20
+  'hall:feira': [0.188, 0.039, 0.811, 0.961],
   'exploracao:masmorra': [0.23, 0, 0.767, 1],
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).
   // 07/10/2026 (escolha do dono): Oficina = santuário Akasha (torre estreita), Caderno = santuário do Pântano, Amigos = abrigo da Terra — bbox do alfa > 20.
-  'exploracao:oficina': [0.2, 0.017, 0.797, 0.983],
+  'exploracao:oficina': [0.264, 0.039, 0.734, 0.961],
   // 11/10/2026: chalé `-campina` (alfa > 20), no lugar do santuário do Pântano ([0.13, 0.027, 0.867, 0.983]).
-  'exploracao:caderno': [0.22, 0.017, 0.78, 0.983], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
+  'exploracao:caderno': [0.23, 0.039, 0.768, 0.961], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
   'jogos:salao': [0.017, 0, 0.98, 1],
   'jogos:mente': [0.227, 0.12, 0.773, 0.973],
   'jogos:refugio': [0.147, 0.12, 0.857, 0.973],
-  'laboratorio:evolucao': [0.1, 0.027, 0.9, 0.973],
-  'laboratorio:pet': [0.227, 0.217, 0.773, 0.973],
-  'laboratorio:stats': [0.247, 0.12, 0.757, 0.973],
+  'laboratorio:evolucao': [0.088, 0.039, 0.91, 0.961],
+  'laboratorio:pet': [0.186, 0.039, 0.814, 0.961],
+  'laboratorio:stats': [0.238, 0.039, 0.762, 0.955],
   'laboratorio:perfil': [0.02, 0.487, 0.98, 0.97], // P2b (14/10/2026): `lote-laboratorio-perfil` (espelho-d'água da alma, alfa > 20)
-  // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório (mesma arte); o Grove usa o chalé de campina (alfa > 20).
+  // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório. W5 (19/10/2026): arte nova do Clã/Feira/Grove/Evolução/Arquivo/Vínculo/Amigos/Guerra/Caderno/Oficina — 512², recorte da bbox + ~4% de margem, caixa medida com alfa > 20.
   'laboratorio:biblioteca': [0.027, 0.03, 0.973, 0.973],
-  'laboratorio:amigos': [0.04, 0.117, 0.96, 0.943],
-  'hall:grove': [0.083, 0.113, 0.953, 0.947],
-  'hall:guilda': [0.057, 0.037, 0.943, 0.97],
+  'laboratorio:amigos': [0.102, 0.039, 0.898, 0.961],
+  'hall:grove': [0.127, 0.039, 0.871, 0.961],
+  'hall:guilda': [0.137, 0.039, 0.863, 0.961],
 };
 
 export function lotArtBounds(areaId: AreaId, lotId: string): LotBounds | undefined {
