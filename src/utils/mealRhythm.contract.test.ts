@@ -65,15 +65,16 @@ describe('NÃO SOMA: o ritmo de push SUBSTITUI, não empilha', () => {
   });
 });
 
-describe('COCÔ: a regra de limites não mudou, só a distribuição', () => {
+describe('COCÔ: dreno e teto não mudaram; a AGENDA agora garante 2 acordado (REGISTRO §114)', () => {
   it('o 1º continua sorteado entre earliest (07h / Madrugador) e 15h', () => {
     expect(care).toContain('earliestPoopHour(gameState.petPassive, 7)');
-    expect(care).toContain('alignedFirstPoopHour(Math.random, earliest, 15,');
-    expect(care).toContain('earliest + Math.random() * (15 - earliest)'); // o caminho sem o ritmo é o de sempre
+    expect(care).toContain('latest: 15,');
+    expect(care).toContain('planDailyPoops(Math.random,');
   });
-  it('o 2º continua de 8 a 10 h depois do 1º aparecer', () => {
-    expect(care).toContain('8 + Math.random() * 2');
-    expect(care).toContain('alignedSecondGapHours(Math.random, now,');
+  it('os DOIS cocôs saem agendados de uma vez; save antigo (1 só) ganha o 2º clampado ao dia acordado', () => {
+    expect(care).toContain('poopEventsScheduled: [startOfDay + h1 * 3600000, startOfDay + h2 * 3600000]');
+    expect(care).toContain('awakeSecondGapHours(');
+    expect(care).not.toContain('8 + Math.random() * 2'); // o caminho que caía no sono morreu
   });
   it('o hook não ganhou NENHUMA regra nova de dreno/teto (isso é de poopDrain.ts)', () => {
     expect(care).not.toMatch(/MAX_HEARTS_LOST|heartLossCap|applyPoopDrain|remainingDrainToday/);

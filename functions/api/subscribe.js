@@ -7,7 +7,7 @@ import { VALID_ID } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
-  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, gravarSeMudou, LIMITE_INSCRICAO,
+  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, suprimidosDeInscricao, gravarSeMudou, LIMITE_INSCRICAO,
   desindexarInscricao,
 } from './_pushIdentity.js';
 
@@ -53,7 +53,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -123,6 +123,8 @@ export async function onRequestPost({ request, env }) {
     // Lembrete de deitar — OPT-IN: ausente/inválido = desligado. O registro é
     // regravado inteiro, então parar de mandar `sleep` o remove.
     ...(lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {}),
+    // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
+    ...(suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {}),
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que

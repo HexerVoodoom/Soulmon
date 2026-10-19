@@ -337,6 +337,7 @@
 **Exports:**
 - `PUSH_HOURS_BRT = [10, 16, 22]` — 21h saiu de propósito (nada deve pedir uma quarta visita, e cobrar tarefa na hora de dormir é o oposto de um companheiro).
 - `PUSH_HOURS_UTC` — derivado (`+3, %24`, ordenado).
+- `hungerInviteCopy`, `energyFullCopy`, `poopPushCopy(name, lang, i)`, `progressCopy`, `EVENT_PUSH_TAGS` — os pushes de EVENTO (§113): só convite, nunca culpa nem medo; a fome só com comida na pastinha.
 - `sleepReminderCopy(petName, language)` — o lembrete de deitar; nunca diz a hora, nunca fala de desempenho, nunca condiciona a meta cumprida.
 - `eveningCopy(petName, language, hpBaixo)` — a copy das 20h (saiu do `NotificationManager.tsx` só em 06/09/2026 — sobreviveu inteira à unificação porque não existe hora 20 em `PUSH_HOURS_BRT` para o teste de paridade comparar); troca por acolhimento quando `hpBaixo`. **Textos trocados em `592e2c14`** (QA Rodada 2, `02-narrativa-r2` A5/A13 — BLOQUEANTE): ⚰️ "está te esperando" (espera + cobrança, à noite, condicionada a meta NÃO cumprida) → "`<nome>` ainda está acordado / Se fez algo hoje, marque. A comida vem daí."; ⚰️ "meio pra baixo" (humor da criatura atribuído ao HP) → "`<nome>` está quieto hoje"; na `pushCopy` das 16h ⚰️ "pensou em você"/"adora companhia" → "`<nome>` está por aí / Se sobrar um minuto, a janela está aberta." ⚠️ O `00-CONSOLIDADO.md` §3.3 diz que `src/narrativa.superficies.contract.test.ts` foi "estendido a `_pushCopy.js`/`account.js` + trava `partner`" — **não aterrissou**: em `592e2c14` a régua varre booklet, ficha, `public/*.html` e `android/**.kt` (`superficies()`), e `partner` só aparece no comentário do cabeçalho. As frases novas estão em `workers/pushCopy.parity.test.js`/`push-scheduler.qa2.test.js` por igualdade, não por veto de vocabulário.
 - `pushCopy(brtHour, petName, language, ageDays)` — texto por hora do cron; dias 1/2 (`ageDays`) ganham copy própria só às 10h. **D0 devolve `null`** (desde `a6c1cd8a`, QA Rodada 1): idade 0 em QUALQUER hora é "não manda" — o `push-scheduler.js` trata `null` como `'skipped'`. ⚰️ Até `f4086ce0` o cabeçalho prometia "nunca no D0" e o código só desviava a copy de recém-nascido para a frase padrão das 10h/16h/22h — o push saía do mesmo jeito. Quem não sabe a idade (inscrição sem `bornAt`) não é D0 e recebe a copy de sempre; a trava só age com certeza.
@@ -349,6 +350,7 @@
 **Exports:**
 - `nomeDePet(v)` — corta em 24 chars (teto do campo do app), trim de espaço, padrão `'Soulmon'`.
 - `idiomaDePush(v)` — só `'pt-BR'` ou `'en-US'`.
+- `suprimidosDeInscricao(v)` / `CHAVES_SUPRIMIVEIS` — o `x = { d, k }` da inscrição (§113): o que o teto diário cortou HOJE (`breakfast`/`lunch`/`dinner`/`sleep`); lixo = nada cortado.
 - `dataDeNascimento(v)` — `YYYY-MM-DD` ou `undefined`; formato inválido é DESCARTADO, não corrigido.
 - `ehTokenFcm(v)` — forma e teto (32–512 chars, alfabeto restrito), não validade — quem decide se presta é o FCM.
 - `TTL_INSCRICAO` — 1 ano.
@@ -491,6 +493,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `MEAL_KEYS`, `MEAL_STEP_MIN` (30), `MEAL_WINDOW_MIN` (120), `MEAL_MIN_GAP_MIN` (180), `DEFAULT_MEAL_TIMES` (09:00 · 13:30 · 20:00), `MEAL_RANGE_MIN`, `PUSH_DAILY_CAP` (4), `MEAL_TICK_CRON` (`*/30 * * * *`); `parseHHMM`, `formatHHMM`, `normalizeMealTimes` (grade de 30 min, faixa, ordem, distância — senão o padrão), `mealMinutes`, `localMinutes`, `inRestArc`, `mealAtTick`, `openMealWindow`, `seededIndex`.
 **Chamado por:** `workers/push-scheduler.js`, `functions/api/_pushCopy.js`, `functions/api/_pushIdentity.js`, `src/utils/mealRhythm.ts`.
 **Régua:** `workers/mealRhythm.parity.test.js` (varre as 48 passadas do dia com o worker real e prova o teto).
+
+### `functions/api/_pushBudget.js`
+**Dono de:** o TETO (`PUSH_DAILY_CAP`) e a PRIORIDADE dos pushes do dia (REGISTRO §113) — ESM puro, sem dependência (além de `_mealRhythm.js`), com `_pushBudget.d.ts`. Uma conta só, lida pelo planejador do cliente, pelo worker (via `x` da inscrição) e pelo teste dos 5 fusos.
+**Exports:** `PUSH_KINDS_BY_PRIORITY` (cocô > fome > energia cheia > carta > lembrete de deitar > refeição > hora fixa > progresso), `PROGRESS_PUSH_MAX_PER_DAY` (1), `pushPriority(kind)`, `letterPushCandidate(id, atMs)` (ENTRADA da carta de NPC, W4-B, para contar no mesmo teto), `capPushes(candidates, cap)` → `{ kept, dropped }` (`committed` nunca é cortado e conta).
+**Chamado por:** `src/utils/petPushEvents.ts`.
+**Régua:** `workers/pushBudget.parity.test.js` (worker real × 48 passadas × 5 fusos), `src/utils/petPushEvents.test.ts`.
 
 ### `functions/api/crash.js`
 **Rota:** `/api/crash` · **Métodos:** `POST` (relatório de falha), `GET` (leitura do dono) — via `onRequest`/`onRequestGet`.

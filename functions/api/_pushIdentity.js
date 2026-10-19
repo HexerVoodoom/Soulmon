@@ -87,6 +87,23 @@ export function lembreteDeInscricao(v) {
 }
 
 /**
+ * O que o TETO de push cortou HOJE (REGISTRO §113): `{ d, k }` — `d` = dia local
+ * `YYYY-MM-DD`, `k` = chaves que o worker NÃO deve mandar naquele dia
+ * (`breakfast`/`lunch`/`dinner`/`sleep`). O planejador do cliente (`petPushEvents.ts`)
+ * decide; o worker só obedece, e só no dia `d` — amanhã vale o plano novo, então
+ * um corte velho nunca silencia uma refeição para sempre. Defeito DESCARTA o
+ * campo (= nada cortado: o pior caso é o comportamento de sempre).
+ */
+export const CHAVES_SUPRIMIVEIS = ['breakfast', 'lunch', 'dinner', 'sleep'];
+export function suprimidosDeInscricao(v) {
+  if (!v || typeof v !== 'object') return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v.d ?? ''))) return undefined;
+  if (!Array.isArray(v.k)) return undefined;
+  const k = CHAVES_SUPRIMIVEIS.filter(c => v.k.includes(c));
+  return k.length ? { d: v.d, k } : undefined;
+}
+
+/**
  * Token de registro do FCM. O formato do Google não é publicado como contrato,
  * então o teste aqui é de FORMA e de TETO, não de validade: o que ele precisa
  * impedir é `{token: {}}`, `{token: []}` e um megabyte de lixo virarem uma

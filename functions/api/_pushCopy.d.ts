@@ -54,3 +54,10 @@ export declare function mealInviteCopy(
 
 /** O tipo que o push daquele dia/refeição sorteia (determinístico). */
 export declare function mealPushKind(meal: 'breakfast' | 'lunch' | 'dinner', dayKey: string): MealInviteKind;
+
+/** REGISTRO §113 — copy dos pushes de evento. Só convite, nunca culpa nem medo. */
+export declare const EVENT_PUSH_TAGS: { hunger: string; energyFull: string; progress: string };
+export declare function hungerInviteCopy(petName: string, language: string): PushCopy;
+export declare function energyFullCopy(petName: string, language: string): PushCopy;
+export declare function poopPushCopy(petName: string, language: string, index?: number): PushCopy;
+export declare function progressCopy(petName: string, language: string): PushCopy;
