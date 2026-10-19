@@ -241,7 +241,7 @@ nenhum de `transcribe.js`, e não pode haver.
 |---|---|
 | **Para quê** | Canal NATIVO extra, só no app Android. FCM tem tratamento mais confiável contra Doze e otimização de bateria em ROMs de fabricante (MIUI, EMUI) do que uma subscription de Web Push crua, e dá visibilidade de entrega pelo Firebase Console. |
 | **Cliente** | `src/utils/notifications.ts` → `registerForPushNotifications` / `unregisterFromPushNotifications`, via `@capacitor/push-notifications`. O token fica em `FCM_TOKEN` (`localStorage`) — e desde `a6c1cd8a` (skeptic #2, QA Rodada 1) **só sai do aparelho depois de `res.ok`** do `DELETE`; falha lança e o token fica para a próxima tentativa (⚰️ era apagado ANTES do `fetch`: um DELETE que falhava não podia ser repetido e o servidor seguia mandando push a uma conta que a pessoa mandou apagar). |
-| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS` (com `saveId` opcional desde `42b07bec`, como em `subscribe.js`; índice `pushidx:` e `desindexarInscricao` no `DELETE` desde `a6c1cd8a`, como em §2.5). O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `wrangler deploy` dentro de `workers/`. |
+| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS` (com `saveId` opcional desde `42b07bec`, como em `subscribe.js`; índice `pushidx:` e `desindexarInscricao` no `DELETE` desde `a6c1cd8a`, como em §2.5). O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`. |
 | **Credencial** | `FIREBASE_SERVICE_ACCOUNT` — **`wrangler secret put` dentro de `workers/`**, com o JSON COMPLETO baixado em Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada. Exige também `android/app/google-services.json` (**commitado**; a API key ali é restrita por pacote e não é segredo) e o canal `soulmon_push` criado em `MainActivity.java`. O `AndroidManifest.xml` aponta `com.google.firebase.messaging.default_notification_icon` para `@drawable/ic_notification` (⚰️ era `@mipmap/ic_launcher` até 15/09/2026, `005a2941`). |
 | **Sem ela** | O cron pula o canal FCM; o Web Push continua funcionando. |
 | **Régua** | `functions/api/fcm-subscribe.test.js`. |
@@ -282,7 +282,7 @@ baixo. Foi reintroduzido de propósito para o lançamento na Play. Os dois convi
 | **Régua** | `workers/push-scheduler.test.js`, `workers/push-scheduler.qa2.test.js` (desde `592e2c14`), `workers/pushCopy.parity.test.js`. |
 
 ⚠️ **Este worker NÃO é uma Pages Function e NÃO builda no push da `main`.**
-Deploy manual: `wrangler deploy` **dentro de `workers/`**. Foi assim que o nudge
+Deploy manual: `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`. Foi assim que o nudge
 das 21h ficou vivo aqui depois de ter sido removido do cliente.
 
 ### 2.8 Google Play Billing
@@ -642,8 +642,10 @@ continua com o dono — o histórico do git ainda a carrega.
 **Não builda no push da `main`.** Deploy manual:
 
 ```
-cd workers && wrangler deploy
+cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml
 ```
+
+Binário da raiz com `--config` explícito de propósito: `npx wrangler deploy` dentro de `workers/` resolve a config da RAIZ (`wrangler.jsonc`) e publica o app `soulmon`, não o worker (achado em 19/10/2026; o 1º deploy errado publicou o app a partir da `main` `5976acb85`, sem mudança de assets). Deployado de verdade em 19/10/2026: versão `a454018e`, 4 crons ok; falta o teste em aparelho com o app fechado.
 
 Os secrets (`VAPID_JWK`, `FIREBASE_SERVICE_ACCOUNT`, `SEASON_ADMIN_KEY`) também
 se definem **dentro de `workers/`**, com `wrangler secret put`.
@@ -655,7 +657,7 @@ deployado** (21/09 12:57Z, posterior ao último commit de `workers/`, `3e758a81`
 o FCM (APK Android) nunca envia; só o Web Push (PWA) funciona. Três rodadas
 perguntaram "está no ar?" e nenhuma "tem os secrets?" — a régua do operador é
 `secret list`, não `deployments list`. ⚠️ `AGE_DAY_BASE_UTC` (§2.7) está no git em
-`592e2c14`, **não no ar** até o próximo `wrangler deploy` dentro de `workers/`.
+`592e2c14`, **não no ar** até o próximo `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`.
 
 ### 3.6 `CACHE_VERSION`
 
@@ -710,12 +712,12 @@ Os itens em aberto que tocam ESTE documento, em 09/09/2026 (linha do Actions acr
 |---|---|
 | ~~**Aplicar as migrações D1** (#65)~~ — ✅ **FEITO em 22/09/2026**: `0001` aplicada, `0002` marcada (a coluna já existia, vinda do `execute --file` do README antigo); `PRAGMA table_info` → 4 colunas, `migrations list` → "No migrations to apply" | ⚰️ "a 1ª compra Play responde 500" — **não responde mais** (§2.8). |
 | **`FIREBASE_SERVICE_ACCOUNT` no worker de push** (`cd workers && npx wrangler secret put FIREBASE_SERVICE_ACCOUNT`) — **segue com o dono** (#66, resposta de 22/09/2026: *"o dono cola o JSON"*) | O FCM do APK nunca envia (§3.5); o worker em si está deployado desde 21/09. **O E0 roda com Web Push (PWA)** e a superfície de cada convidado é anotada, senão "não voltou" se confunde com "não foi lembrado" (#50). |
-| Redeploy do worker de push (`cd workers && wrangler deploy`) depois de `592e2c14` | `AGE_DAY_BASE_UTC` fica só no git: o push das 22h BRT ainda sai no D0 para quem nasceu hoje. |
+| Redeploy do worker de push (`cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`) depois de `592e2c14` | `AGE_DAY_BASE_UTC` fica só no git: o push das 22h BRT ainda sai no D0 para quem nasceu hoje. |
 
 | Item | Consequência enquanto não for feito |
 |---|---|
 | **Regularizar a cobrança do GitHub** (`github.com/settings/billing`, #48 e #68 — parado desde 16/09/2026; ainda parado em 30/09/2026) | Nenhum workflow de §3.3 roda (o substituto local é `npm run portoes`): o compile Kotlin da 8.x, o APK e os portões fora da máquina local ficam sem prova; `gh run list --limit 5` é a medição. |
-| ~~Deploy do worker de push (`cd workers && wrangler deploy`, #50-a)~~ — **medido em 22/09/2026: deployado em 21/09 12:57Z** (`wrangler deployments list --name digiapp-push-scheduler`) | ⚰️ A pergunta #50-a era repetição da #5; o que faltava era o secret (linha acima), não o deploy. |
+| ~~Deploy do worker de push (`cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`, #50-a)~~ — **medido em 22/09/2026: deployado em 21/09 12:57Z** (`wrangler deployments list --name digiapp-push-scheduler`) | ⚰️ A pergunta #50-a era repetição da #5; o que faltava era o secret (linha acima), não o deploy. |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` + `ANDROID_PACKAGE_NAME` | A rota da Play responde 503 e nenhuma compra é concedida. |
 | `PLAY_REQUIRE_ACCOUNT_BINDING = true` (só **depois** de publicar o APK que manda `setObfuscatedAccountId`) | Compra **sem vínculo de conta é aceita** — um recibo pode virar N contas pagas. |
 | ~~`METRICS_ADMIN_KEY` (secret do Worker — ver §0)~~ — **medido em 22/09/2026: DEFINIDA** (`GET /api/metrics` → 401, que só sai com a chave presente; `wrangler secret list` a lista) | ⚰️ "responde 404, ninguém lê nada" — o STATUS §3.2 e a R1 estavam velhos; `scripts/metrics-report.mjs` funciona com a chave em mãos. |

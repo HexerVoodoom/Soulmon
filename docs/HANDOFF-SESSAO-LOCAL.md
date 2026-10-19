@@ -78,7 +78,7 @@ Ele imprime duas coisas:
 ```powershell
 cd D:\Soulmon\repo\workers
 npx wrangler secret put VAPID_JWK -c wrangler.toml
-npx wrangler deploy -c wrangler.toml
+../node_modules/.bin/wrangler deploy --config ./wrangler.toml
 ```
 
 ⚠️ **Nunca** cole a privada em chat, commit, issue ou log. Se ela aparecer em

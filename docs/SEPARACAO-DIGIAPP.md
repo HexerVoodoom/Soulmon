@@ -170,7 +170,7 @@ responde exatamente como respondia antes.
   `mailto:mateus.sprnd@gmail.com`. O item ficou aberto por meses com a
   justificativa "precisa ser um endereço que você controle" — e a resposta era
   o e-mail do dono, que sempre esteve disponível. Fica pendente só o
-  `wrangler deploy` dentro de `workers/`.
+  `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`.
 - `wrangler.jsonc` diz `"name": "soulmon"`, mas `capacitor.config.json` aponta o
   APK para `digiapp-a5e.pages.dev`. Ou já existe um projeto Pages `soulmon` (e aí
   falta só o passo 3 abaixo), ou o nome do wrangler está adiantado. **Confira no

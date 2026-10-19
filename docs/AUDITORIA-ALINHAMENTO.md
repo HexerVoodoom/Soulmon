@@ -201,7 +201,7 @@ reabri-las por conta própria:
   **Sutil demais erra pouco; chamativa demais vira o medidor de desempenho que
   o produto inteiro existe para evitar.** Não subir sem pedido explícito.
 - **VAPID:** `mailto:mateus.sprnd@gmail.com`, já no código. Falta só o
-  `wrangler deploy` dentro de `workers/`.
+  `cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml`.
 - **Namespace KV:** novo e vazio, sem migração (ver `SEPARACAO-DIGIAPP.md`).
 - **Próximo foco: continuar melhorando o produto**, não preparar o lançamento.
   Registrado com a ressalva que o dono ouviu e decidiu contra: mais polimento

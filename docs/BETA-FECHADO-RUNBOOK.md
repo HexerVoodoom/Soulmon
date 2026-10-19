@@ -502,7 +502,7 @@ cd D:\Soulmon\repo\workers
 npx wrangler secret put FIREBASE_SERVICE_ACCOUNT   # Firebase Console -> Contas de serviço -> Gerar chave; cole o JSON
 npx wrangler secret put SEASON_ADMIN_KEY           # MESMO valor da raiz (se ainda não tiver feito)
 npx wrangler secret list -c wrangler.toml          # esperado: VAPID_JWK, FIREBASE_SERVICE_ACCOUNT, SEASON_ADMIN_KEY
-npx wrangler deploy -c wrangler.toml
+../node_modules/.bin/wrangler deploy --config ./wrangler.toml
 npx wrangler deployments list -c wrangler.toml
 cd ..
 ```

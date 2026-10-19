@@ -388,7 +388,7 @@
 
 ## workers
 
-Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de `workers/` — não é Pages Function, não builda no push da `main`).
+Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modules/.bin/wrangler deploy --config ./wrangler.toml` — não é Pages Function, não builda no push da `main`).
 
 ### `workers/fcm.js`
 **Dono de:** envio de push nativo via Firebase Cloud Messaging (HTTP v1), sem `firebase-admin` — WebCrypto puro.

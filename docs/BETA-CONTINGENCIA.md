@@ -384,7 +384,7 @@ min; notificação depois de o dia estar fechado.
 ```powershell
 cd D:\Soulmon\repo\workers
 # editar workers/wrangler.toml:  crons = []
-npx wrangler deploy -c wrangler.toml
+../node_modules/.bin/wrangler deploy --config ./wrangler.toml
 npx wrangler deployments list -c wrangler.toml
 ```
 
@@ -626,7 +626,7 @@ guardam). O que resolve é **rotacionar**, não reescrever histórico.
 | Gente de fora usando o beta | `BETA_CLOSED` + `BETA_EMAILS` — §0.6 |
 | Backup antes de mexer em save | `node scripts/backup-saves.mjs` — §0.3 |
 | Binding derrubou compras | `npx wrangler secret delete PLAY_REQUIRE_ACCOUNT_BINDING` |
-| Push spam | `crons = []` em `workers/wrangler.toml` + `npx wrangler deploy -c wrangler.toml` |
+| Push spam | `crons = []` em `workers/wrangler.toml` + `../node_modules/.bin/wrangler deploy --config ./wrangler.toml` |
 | Gente saindo do teste | `BETA-TESTADORES.md` §2 (convite) |
 | Chave perdida | Console Play -> Integridade do app -> redefinir chave de upload |
 | Segredo vazou | §11 — rotacionar, não reescrever histórico |
