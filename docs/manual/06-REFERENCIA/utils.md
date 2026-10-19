@@ -2801,6 +2801,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Avisos do arquivo:**
 - ⚠️ Reverter e re-sintonizar NÃO consomem o teto de tentativas — nenhuma função de adoção toca `attempts`.
 
+### `src/utils/frameShopNav.ts`
+**Dono de:** o pedido "abrir Mercado > Frames" a partir do Perfil (D-16, 19/10/2026): `OPEN_FRAME_SHOP_EVENT` e `requestOpenFrameShop()` (evento de janela; a moldura não se compra no Editar perfil). **Chamado por:** `ProfileEditor`; **ouvido por:** `App` (`goTo` + `pendingSheet`).
+
+### `src/utils/opponentArt.ts`
+**Dono de:** a arte do oponente (D-60, 19/10/2026): `resolveOpponentLine`, `opponentSprite`, `opponentIcon`, `isKnownArtLine`. Usa a `artLine` do perfil; sem ela (perfil antigo) cai num inicial atual por hash estável do id — nunca na árvore genérica `SOULMON_SPRITES`. **Chamado por:** `TournamentPage`, `LibraryPage`, `PlayerDetailModal`.
+
 ### `src/utils/showerPlacement.ts`
 **Dono de:** onde fica o chuveirinho do banho na Home (D-11, 19/10/2026): `showerPlacement({ footY, spriteBox, size, zoom, airLiftPx?, margin? })` — sobre a cabeça, nunca acima do topo visível do palco depois do zoom da cena (`CENA_ZOOM`), com ou sem altitude; devolve também onde as gotas nascem. Mesma geometria do Z do sono. Puro. **Chamado por:** `CompanionHUD` (bloco `isShowering`). **Régua:** `utils/showerPlacement.test.ts`.
 
