@@ -22,5 +22,6 @@ export declare function mealMinutes(times: unknown): number[];
 export declare function localMinutes(at: Date, tzOffsetMin: number): number;
 export declare function inRestArc(minute: number, rest: readonly number[] | null | undefined): boolean;
 export declare function mealAtTick(localMin: number, times: unknown): MealKey | null;
+export declare function tickOf(localMin: number): number;
 export declare function openMealWindow(localMin: number, times: unknown): MealKey | null;
 export declare function seededIndex(seed: string, length: number): number;

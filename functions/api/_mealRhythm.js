@@ -74,6 +74,11 @@ function snap(min) {
   return Math.round(min / MEAL_STEP_MIN) * MEAL_STEP_MIN;
 }
 
+/** O passo do cron em que o minuto local `localMin` cai (mesmo snap de `mealAtTick`). */
+export function tickOf(localMin) {
+  return snap(localMin) % MIN_PER_DAY;
+}
+
 /**
  * Horários válidos ou os defaults. NUNCA lança, NUNCA devolve horário fora da
  * faixa ou desordenado: save/inscrição malformados caem no padrão em vez de
@@ -127,7 +132,7 @@ export function inRestArc(minute, rest) {
  * no passo seguinte).
  */
 export function mealAtTick(localMin, times) {
-  const tick = snap(localMin) % MIN_PER_DAY;
+  const tick = tickOf(localMin);
   const mins = mealMinutes(times);
   const i = mins.indexOf(tick);
   return i === -1 ? null : MEAL_KEYS[i];

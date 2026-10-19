@@ -19,7 +19,7 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { VALID_ID } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import {
-  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, ehTokenFcm, gravarSeMudou,
+  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, ehTokenFcm, gravarSeMudou,
   LIMITE_INSCRICAO, desindexarInscricao,
 } from './_pushIdentity.js';
 
@@ -65,7 +65,7 @@ export async function onRequestPost({ request, env }) {
   const body = await corpoDe(request);
   if (!body) return json({ error: 'Invalid JSON' }, 400);
 
-  const { token, petName, language, bornAt, saveId, meals } = body;
+  const { token, petName, language, bornAt, saveId, meals, sleep } = body;
   if (!token) return json({ error: 'Missing token' }, 400);
   // Recusar AQUI é o que impede `{token: []}` (que passava, porque `[]` é
   // truthy) e um megabyte de lixo virarem uma linha de um ano que o cron tenta
@@ -84,6 +84,8 @@ export async function onRequestPost({ request, env }) {
     bornAt: dataDeNascimento(bornAt),
     // Ritmo das refeições — OPT-IN (ver `refeicoesDeInscricao`): inválido é descartado.
     ...(refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {}),
+    // Lembrete de deitar — OPT-IN: ausente/inválido = desligado (registro regravado inteiro).
+    ...(lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {}),
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois

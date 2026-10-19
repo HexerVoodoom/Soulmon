@@ -630,6 +630,31 @@ export function sleepReminderAt(window: RestWindow, now: Date): Date | null {
   return at;
 }
 
+/** Evento (window) que a Configurações dispara ao ligar/desligar o lembrete de deitar. */
+export const SLEEP_REMINDER_EVENT = 'soulmon:sleep-reminder-changed';
+
+export interface ServerSleep {
+  /** Minutos desde 00:00 locais do INÍCIO da janela (o servidor tira os 30 min). */
+  s: number;
+  /** Offset do aparelho, minutos a leste de UTC (mesmo de `serverMeals`). */
+  tz: number;
+}
+
+/**
+ * O campo `sleep` da inscrição de push, ou `null` (sem janela / lembrete
+ * desligado: nada vai para o servidor). Mesmo fuso de `serverMeals`.
+ */
+export function serverSleep(
+  window: RestWindow | null | undefined,
+  reminderOn: boolean,
+  now: Date,
+): ServerSleep | null {
+  if (!window || !reminderOn) return null;
+  const s = parseTime(window.start);
+  if (Number.isNaN(s)) return null;
+  return { s, tz: -now.getTimezoneOffset() };
+}
+
 // ---------------------------------------------------------------------------
 // 6. Noite ARMADA (D-23) — a noite que o app fechado não viu
 // ---------------------------------------------------------------------------

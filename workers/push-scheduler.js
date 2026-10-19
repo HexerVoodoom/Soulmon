@@ -22,11 +22,11 @@
 import { sendWebPush } from './webpush.js';
 import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
-import { pushCopy, mealInviteCopy, mealPushKind } from '../functions/api/_pushCopy.js';
+import { pushCopy, mealInviteCopy, mealPushKind, sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import {
-  MEAL_KEYS, MEAL_TICK_CRON, mealAtTick, localMinutes, inRestArc,
+  MEAL_KEYS, MEAL_TICK_CRON, MEAL_STEP_MIN, mealAtTick, localMinutes, inRestArc, tickOf,
 } from '../functions/api/_mealRhythm.js';
-import { ehTokenFcm } from '../functions/api/_pushIdentity.js';
+import { ehTokenFcm, lembreteDeInscricao } from '../functions/api/_pushIdentity.js';
 
 const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo';
 // Endereço de contato do VAPID (RFC 8292 `sub`): é para onde o SERVIÇO DE
@@ -150,10 +150,34 @@ async function closeSeasonIfDue(date, env) {
  * teste `workers/mealRhythm.parity.test.js` varre as 48 passadas do dia.
  */
 export function cedeAoRitmo(sub, brtHour) {
+  // O lembrete de deitar também fecha a noite: com ele ligado, o "boa noite"
+  // das 22h cede (não somar boa-noite + lembrete).
+  if (brtHour === 22 && lembreteDeInscricao(sub?.sleep)) return true;
   if (!sub?.meals) return false;
   if (brtHour === 10 || brtHour === 16) return true;
   if (brtHour === 22 && Array.isArray(sub.meals.rest)) return true;
   return false;
+}
+
+/**
+ * O LEMBRETE DE DEITAR desta inscrição neste instante, ou `null`.
+ *
+ * O alvo é `início − 30 min` (mesma regra de `sleepReminderAt` no cliente), mas o
+ * cron só roda de 30 em 30: o push sai no passo que CONTÉM o alvo (arredondado
+ * para baixo), ou seja, de 0 a 29 min ANTES — nunca depois do início da janela.
+ * Mesma tag do lembrete local (`pet-sleep-reminder`): se o app estiver aberto,
+ * o sistema troca uma pela outra em vez de empilhar. `null` quando: sem `sleep`
+ * válido (desligado), não é o passo, ou D0.
+ */
+export function sleepNotifFor(sub, date) {
+  const sleep = lembreteDeInscricao(sub?.sleep);
+  if (!sleep) return null;
+  const MIN_PER_DAY = 1440;
+  const alvo = (sleep.s - 30 + MIN_PER_DAY) % MIN_PER_DAY;
+  const tickAlvo = Math.floor(alvo / MEAL_STEP_MIN) * MEAL_STEP_MIN;
+  if (tickOf(localMinutes(date, sleep.tz)) !== tickAlvo) return null;
+  if (ageDaysOf(sub, date) === 0) return null;
+  return sleepReminderCopy(sub.petName, sub.language);
 }
 
 /** Dia local da inscrição (`YYYY-MM-DD`) — semente do convite do dia. */
@@ -285,7 +309,7 @@ export default {
     // A passada de 30 min do RITMO DAS REFEIÇÕES. Só mexe em quem ligou (a
     // inscrição tem `meals`); o resto sai como 'skipped' sem custo de envio.
     if (event.cron === MEAL_TICK_CRON) {
-      await entregar(env, `meal tick ${date.toISOString()}`, sub => mealNotifFor(sub, date), { lazyFcm: true });
+      await entregar(env, `meal tick ${date.toISOString()}`, sub => mealNotifFor(sub, date) ?? sleepNotifFor(sub, date), { lazyFcm: true });
       return;
     }
 

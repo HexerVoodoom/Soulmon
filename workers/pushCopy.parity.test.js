@@ -476,3 +476,30 @@ describe('🔴 o LEMBRETE DE DEITAR (WP3.11) — o único push desta mecânica',
     }
   });
 });
+
+describe('lembrete de deitar: hora do worker x hora do cliente (P-01)', () => {
+  const dia = new Date(2026, 9, 12, 12, 0); // meio-dia local do aparelho de teste
+  it('para todo inicio em passos de 15 min o tick do worker fica em [alvo-29min, alvo], com a mesma tag', async () => {
+    const { sleepNotifFor } = await import('./push-scheduler.js');
+    const { sleepReminderAt } = await import('../src/utils/restWindow');
+    const { localMinutes } = await import('../functions/api/_mealRhythm.js');
+    const tz = -180;
+    for (let s = 0; s < 1440; s += 15) {
+      const hh = String(Math.floor(s / 60)).padStart(2, '0'), mm = String(s % 60).padStart(2, '0');
+      const alvoCliente = sleepReminderAt({ start: `${hh}:${mm}`, end: '07:00' }, dia);
+      const alvoMin = alvoCliente.getHours() * 60 + alvoCliente.getMinutes();
+      // varre os 48 ticks do dia local: exatamente UM dispara
+      const disparos = [];
+      for (let t = 0; t < 1440; t += 30) {
+        const inst = new Date(Date.UTC(2026, 9, 12, 0, 0) + (t - tz) * 60_000);
+        const c = sleepNotifFor({ petName: 'x', language: 'pt-BR', sleep: { s, tz } }, inst);
+        if (c) { disparos.push(t); expect(c.tag).toBe(sleepReminderCopy('x', 'pt-BR').tag); }
+        void localMinutes;
+      }
+      expect(disparos).toHaveLength(1);
+      const atraso = (alvoMin - disparos[0] + 1440) % 1440;
+      expect(atraso).toBeGreaterThanOrEqual(0);
+      expect(atraso).toBeLessThanOrEqual(29);
+    }
+  });
+});
