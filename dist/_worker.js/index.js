@@ -8257,7 +8257,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11018,15 +11018,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-// ../.wrangler/tmp/pages-pTcKek/functionsRoutes-0.43484746030340393.mjs
-=======
-// ../.wrangler/tmp/pages-MVxP7c/functionsRoutes-0.35735722106498624.mjs
->>>>>>> origin/feat/arte-guerra-selecionada
-=======
-// ../.wrangler/tmp/pages-TsKWlI/functionsRoutes-0.8737363874961677.mjs
->>>>>>> origin/feat/lembrete-deitar-push
+// ../.wrangler/tmp/pages-pjwwpY/functionsRoutes-0.31954203264414893.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11303,7 +11295,7 @@ var routes = [
   }
 ];
 
-// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11629,7 +11621,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:dist/assets/MiniGlass-BbLuegvo.js
-import{j as e}from"./index-DsuHP9VY.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
-========
-import{j as e}from"./index-NMHuTXpc.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
->>>>>>>> origin/feat/arte-guerra-selecionada:dist/assets/MiniGlass-C_jD2fY-.js
