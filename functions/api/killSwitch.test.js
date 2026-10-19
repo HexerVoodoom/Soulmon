@@ -14,7 +14,7 @@ import { flagOn, isBillingDisabled, isChatDisabled, BILLING_DISABLED_MESSAGE } f
 
 const ID = 'a'.repeat(32);
 const OUTRO = 'b'.repeat(32);
-const PACKAGE = 'com.hexervoodoom.soulmon';
+const PACKAGE = 'com.soulmon';
 const TOKEN = 'tok-kill-switch-ABCDEFGH-123';
 const EXPIRY = new Date(Date.now() + 90 * 86400000).toISOString();
 let SA;

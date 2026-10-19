@@ -723,7 +723,7 @@ Os itens em aberto que tocam ESTE documento, em 09/09/2026 (linha do Actions acr
 | `GEMINI_API_KEY` (secret do Worker) — **medido em 22/09/2026: AUSENTE**; **o E0 roda com Higgsfield Starter** (#63b, resposta do dono: não contratar Gemini agora) | Sem o fallback do sprite (`generate-sprite.js` › `if (env.GEMINI_API_KEY)`), Higgsfield fora = geração morre em vez de cair no Gemini (§2.3). |
 | ~~`SEASON_ADMIN_KEY` como secret do worker (com o MESMO valor do Pages)~~ — **medido em 22/09/2026: DEFINIDA nos dois lados** | ⚰️ fechamento pulado — a season fecha. |
 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages | Os Digital Asset Links não validam. |
-| Registrar o pacote `com.hexervoodoom.soulmon` no Firebase + `google-services.json` novo | ⚠️ O **build do Android FALHA** com `No matching client found for package name` — ver [../BILLING-SETUP.md](../BILLING-SETUP.md). |
+| Registrar o pacote `com.soulmon` no Firebase + `google-services.json` novo | ⚠️ O **build do Android FALHA** com `No matching client found for package name` — ver [../BILLING-SETUP.md](../BILLING-SETUP.md). |
 | Host do CDN do Higgsfield | `isSafeSpriteUrl` fecha esquema, mas não fecha o beacon `https://atacante.example/x.png` (§2.3). |
 | Conta Steamworks, App ID e Depot ID | O cliente Steam não sai do lugar. |
 

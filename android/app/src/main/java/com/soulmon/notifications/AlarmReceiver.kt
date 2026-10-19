@@ -1,4 +1,4 @@
-package com.hexervoodoom.soulmon.notifications
+package com.soulmon.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,7 +8,7 @@ import android.graphics.BitmapFactory
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.hexervoodoom.soulmon.R
+import com.soulmon.R
 
 class AlarmReceiver : BroadcastReceiver() {
 

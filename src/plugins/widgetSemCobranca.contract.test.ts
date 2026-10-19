@@ -19,11 +19,11 @@ import { readFileSync } from 'node:fs';
 // superfície do produto que fala sem ser chamada.
 // ---------------------------------------------------------------------------
 const renderer = readFileSync(
-  'android/app/src/main/java/com/hexervoodoom/soulmon/widget/WidgetRenderer.kt',
+  'android/app/src/main/java/com/soulmon/widget/WidgetRenderer.kt',
   'utf8',
 );
 const plugin = readFileSync(
-  'android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonWidgetPlugin.kt',
+  'android/app/src/main/java/com/soulmon/plugins/SoulmonWidgetPlugin.kt',
   'utf8',
 );
 

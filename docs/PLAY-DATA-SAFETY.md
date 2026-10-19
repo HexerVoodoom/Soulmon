@@ -140,7 +140,7 @@ elease\AndroidManifest.xml -Pattern "uses-permission"`
 | `com.google.android.c2dm.permission.RECEIVE` | Firebase Cloud Messaging | Receber o push do FCM | Não (normal) | O token do FCM vai em "IDs do dispositivo" (§2.7) |
 | `com.google.android.providers.gsf.permission.READ_GSERVICES` | Firebase / Play Services | Ler configuração dos Serviços do Google (FCM) | Não (normal) | Não |
 | `com.android.vending.BILLING` | Play Billing Library | Compras e assinatura no app | Não (normal) | "Histórico de compras" (§2.2) |
-| `com.hexervoodoom.soulmon.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | Receivers dinâmicos não exportados (proteção interna do app) | Interna (assinatura do pacote) | Não |
+| `com.soulmon.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | Receivers dinâmicos não exportados (proteção interna do app) | Interna (assinatura do pacote) | Não |
 | **`ACTIVITY_RECOGNITION`** | app | **Contador de passos** — ver 2.6 | **Perigosa; declarar e justificar** | Sim — "Informações de exercícios físicos" |
 | **`RECORD_AUDIO`** | app | **Recado falado no chat** — ver 2.4 | **Perigosa; declarar e justificar** | Sim — "Gravações de voz ou som" |
 

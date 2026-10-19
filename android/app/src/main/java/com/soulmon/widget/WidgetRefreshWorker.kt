@@ -1,4 +1,4 @@
-package com.hexervoodoom.soulmon.widget
+package com.soulmon.widget
 
 import android.content.Context
 import androidx.work.CoroutineWorker

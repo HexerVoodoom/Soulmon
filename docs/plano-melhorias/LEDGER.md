@@ -98,7 +98,7 @@ rápido; a fonte são os arquivos de `ledger/`.
 > | WP | Comando morto | Comando vivo (rodado em 21/09/2026) |
 > |---|---|---|
 > | WP1.17 | `node --test functions/api/_pushCopy.test.js` (arquivo não existe) | `npx vitest run workers/pushCopy.parity.test.js`; `grep -c ageDays functions/api/_pushCopy.js` → 3 |
-> | WP2.6 | `plugins/DigiWidgetPlugin.kt` + `grep -c constancy_pct → 0` | arquivo é `android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonWidgetPlugin.kt`; as chaves aparecem só em `editor.remove(...)` (exceção da #20 em `vetos.md`, 21/09/2026); régua: `npx vitest run src/plugins/widgetSemCobranca.contract.test.ts` |
+> | WP2.6 | `plugins/DigiWidgetPlugin.kt` + `grep -c constancy_pct → 0` | arquivo é `android/app/src/main/java/com/soulmon/plugins/SoulmonWidgetPlugin.kt`; as chaves aparecem só em `editor.remove(...)` (exceção da #20 em `vetos.md`, 21/09/2026); régua: `npx vitest run src/plugins/widgetSemCobranca.contract.test.ts` |
 > | WP2.14 | `RARE_CHEER_RATE` em `src/types/taskModel.ts` (→ 0) | `grep -n 'RARE_CHEER_RATE =' src/utils/petVoice.ts` → `0.05` |
 > | WP3.5 | `playChirp` em `src/utils/sounds.ts` (→ 0) | `grep -n 'export function playPresence' src/utils/sounds.ts` → 1 (bloco "WP3.5 — O SOM DE PRESENÇA") |
 > | WP4.8 | `src/utils/shareCard.ts` (não existe) | `ls src/components/MemoriesCard.tsx`; `grep -c MemoriesCard src/components/DailyReportModal.tsx` → 2 |

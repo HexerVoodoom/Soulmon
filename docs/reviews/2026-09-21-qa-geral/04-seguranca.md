@@ -41,7 +41,7 @@ Legenda: CRÍTICO / ALTO / MÉDIO / BAIXO / INFO.
 | Achado | Onde | Classe |
 |---|---|---|
 | `VITE_FIREBASE_API_KEY=AIza…` | `.env.production` | INFO — pública por desenho (Firebase web), documentado em `08-INTEGRACOES-E-DEPLOY.md` §0; régua `firebaseNoBuild.contract.test.ts` |
-| `current_key: AIza…` de **`digiapp-88296`** com packages `com.digiapp.app` / `com.digipartner.digiapp` | `android/app/google-services.json` | **BAIXO** — arquivo do projeto Firebase do **DigiApp**, não do Soulmon (`applicationId com.hexervoodoom.soulmon`). `build.gradle` avisa e desliga o plugin. Expõe chave de API pública de outro produto e prova que FCM nativo do Soulmon não está registrado. Substituir pelo `google-services.json` do `soulmon-app`. |
+| `current_key: AIza…` de **`digiapp-88296`** com packages `com.digiapp.app` / `com.digipartner.digiapp` | `android/app/google-services.json` | **BAIXO** — arquivo do projeto Firebase do **DigiApp**, não do Soulmon (`applicationId com.soulmon`). `build.gradle` avisa e desliga o plugin. Expõe chave de API pública de outro produto e prova que FCM nativo do Soulmon não está registrado. Substituir pelo `google-services.json` do `soulmon-app`. |
 | `SUPABASE_ANON_KEY=eyJ…` (trecho) | `docs/APK-BUILD-INFO.md` | INFO — truncado (`…`), não é valor completo |
 | `-----BEGIN PRIVATE KEY-----` | `_billing.js`, `workers/fcm.js`, `dist/_worker.js` | INFO — é `replace()` de PEM, não chave |
 | Arquivos `.env`, `.jks`, `.keystore`, `.p12`, `.pem` rastreados | nenhum além de `.env.example`, `.env.production` | OK |

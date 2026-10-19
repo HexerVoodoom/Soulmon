@@ -333,7 +333,7 @@ na mesma tela, os do **certificado da chave de upload**.
 ### 5.1 Cadastrar os SHA no Firebase `[SQUAD pode fazer via Chrome com confirmação]`
 
 `https://console.firebase.google.com/project/soulmon-app/settings/general` -> app Android
-`com.hexervoodoom.soulmon` -> **Adicionar impressão digital**: SHA-1 e SHA-256 de
+`com.soulmon` -> **Adicionar impressão digital**: SHA-1 e SHA-256 de
 **App Signing** e de **upload** (4 valores). O app Android **já existe** e o
 `android/app/google-services.json` **já é do projeto `soulmon-app`** (corrige o que
 diziam `PLAY-LANCAMENTO.md` §C.2 e `BILLING-SETUP.md`).
@@ -349,14 +349,14 @@ git diff --stat android/app/google-services.json
 - **Diff real:** commite o arquivo (não é segredo) e **refaça a Fase 3** com `versionCode`
   +1, e suba no mesmo teste interno.
 
-**Verificação:** `grep -c '"package_name": "com.hexervoodoom.soulmon"' android/app/google-services.json` -> `1`.
+**Verificação:** `grep -c '"package_name": "com.soulmon"' android/app/google-services.json` -> `1`.
 
 ### 5.2 Restringir a API key `[DONO]` (verificação de 5 min; bloqueia o beta, achado F8)
 
 `https://console.cloud.google.com/apis/credentials?project=soulmon-app`
 
 - A key do `google-services.json` (`current_key`): **Restrições de aplicativo -> Apps
-  Android** -> adicionar pacote `com.hexervoodoom.soulmon` + os **4 SHA-1** (debug fixo
+  Android** -> adicionar pacote `com.soulmon` + os **4 SHA-1** (debug fixo
   do build.gradle, upload, App Signing). **Restrições de API:** só as de Firebase usadas
   (Identity Toolkit, Token Service, Firebase Installations, FCM Registrations).
 - **ATENÇÃO:** a chave **Web** (`VITE_FIREBASE_API_KEY`, inlinada no bundle) é outra. O
@@ -444,7 +444,7 @@ Na raiz do repo (valor sempre no prompt, nunca na linha):
 
 ```powershell
 npx wrangler secret put GOOGLE_PLAY_SERVICE_ACCOUNT   # JSON inteiro em UMA linha; abra o .json, copie, cole no prompt
-npx wrangler secret put ANDROID_PACKAGE_NAME          # com.hexervoodoom.soulmon
+npx wrangler secret put ANDROID_PACKAGE_NAME          # com.soulmon
 npx wrangler secret put FIREBASE_SERVICE_ACCOUNT      # o MESMO JSON do workers/ (7.4), agora também na RAIZ: push de alerta ao dono
 npx wrangler secret put GROQ_API_KEY                  # org Groq no plano FREE
 npx wrangler secret put GEMINI_API_KEY                # projeto do AI Studio SEM faturamento (só o gratuito do chat)
@@ -639,7 +639,7 @@ Console]**).
 ### 9.3 Link de opt-in `[SQUAD pode ler via Chrome]`
 
 Na aba **Testadores** da faixa: **Como os testadores participam -> Copiar link**. É
-`https://play.google.com/apps/testing/com.hexervoodoom.soulmon` (a página web de opt-in) e
+`https://play.google.com/apps/testing/com.soulmon` (a página web de opt-in) e
 o link direto da loja. Este link vai para todos os testadores
 (`BETA-TESTADORES.md`).
 

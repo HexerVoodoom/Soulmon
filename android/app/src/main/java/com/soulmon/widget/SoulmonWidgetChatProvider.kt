@@ -1,9 +1,9 @@
-package com.hexervoodoom.soulmon.widget
+package com.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import com.hexervoodoom.soulmon.R
+import com.soulmon.R
 
 // 4x2 widget: animated pet + auto-rotating phrases from the pet to the partner.
 class SoulmonWidgetChatProvider : AppWidgetProvider() {

@@ -20,7 +20,7 @@ Universo: 380 arquivos não-teste em `src/{components,utils,hooks,contexts,plugi
 | `src/supabase/functions/server/{index,kv_store,transcribe}.tsx` | Edge Function herdada | excluída do `tsconfig`, nenhum `src/` importa; só lida como texto por `security/supabase.contract.test.ts` e `chat.promptInjection.test.js`; 0 ref em 06-REFERENCIA |
 | `android/.../MainActivity.java`, `notifications/BootReceiver.kt`, `plugins/BillingPlugin.kt`, `widget/SoulmonWidget{,Chat,Pet,Screen,Vertical}Provider.kt`, `widget/WidgetRefreshWorker.kt` | Kotlin/Java de produção | 0 teste, 0 ref em 06-REFERENCIA |
 | `android/app/src/main/res/layout/widget_soulmon*.xml` (5), `res/xml/backup_rules.xml`, `res/xml/data_extraction_rules.xml`, `res/xml/file_paths.xml`, `android/variables.gradle` | recursos Android | `backup_rules`/`data_extraction_rules` com 0 citações em `docs/` inteiro |
-| `android/app/src/{test,androidTest}/java/com/getcapacitor/myapp/Example*Test.java` | boilerplate Capacitor | package `com.getcapacitor.myapp` ≠ `com.hexervoodoom.soulmon` |
+| `android/app/src/{test,androidTest}/java/com/getcapacitor/myapp/Example*Test.java` | boilerplate Capacitor | package `com.getcapacitor.myapp` ≠ `com.soulmon` |
 
 ### 1.2 SEM teste, COM ref (documentado, sem régua)
 

@@ -1,14 +1,14 @@
-package com.hexervoodoom.soulmon.widget
+package com.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import com.hexervoodoom.soulmon.R
+import com.soulmon.R
 
-// Variant C — pet only: just the sprite, same footprint as the horizontal widget.
-class SoulmonWidgetPetProvider : AppWidgetProvider() {
+// Variant B — vertical: sprite on top, info below.
+class SoulmonWidgetVerticalProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) WidgetRenderer.renderPet(context, appWidgetManager, id, R.layout.widget_soulmon_pet)
+        for (id in appWidgetIds) WidgetRenderer.renderFull(context, appWidgetManager, id, R.layout.widget_soulmon_vertical)
     }
 
     override fun onEnabled(context: Context) {

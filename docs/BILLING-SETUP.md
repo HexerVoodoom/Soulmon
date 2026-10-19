@@ -6,7 +6,7 @@ O código já está pronto; falta credencial e configuração de conta.
 > ## ✅ ATUALIZADO em 11/10/2026 — o pacote JÁ está registrado no Firebase (C1)
 >
 > `android/app/google-services.json` **já é do projeto `soulmon-app`** com
-> `package_name: com.hexervoodoom.soulmon` (conferido). O build **não falha mais** por isso.
+> `package_name: com.soulmon` (conferido). O build **não falha mais** por isso.
 > Resta só cadastrar a impressão digital SHA-1/SHA-256 da chave de **App Signing** e da de
 > **upload** (nascem no 1º upload na Play): `docs/BETA-FECHADO-RUNBOOK.md` Fase 5. O texto
 > abaixo é o histórico de quando o pacote mudou.
@@ -14,17 +14,17 @@ O código já está pronto; falta credencial e configuração de conta.
 > ### (histórico) Registrar o novo pacote no Firebase
 >
 > O `applicationId` mudou de `com.digipartner.digiapp` para
-> **`com.hexervoodoom.soulmon`**, porque o antigo já pertence ao DigiApp
+> **`com.soulmon`**, porque o antigo já pertence ao DigiApp
 > publicado na Play — dois apps não podem dividir o mesmo package name
 > (o Soulmon entraria como *atualização* do DigiApp, substituindo-o para
 > todos os usuários dele).
 >
 > Consequência: **o build do Android vai FALHAR** com
-> `No matching client found for package name 'com.hexervoodoom.soulmon'`
+> `No matching client found for package name 'com.soulmon'`
 > até você fazer isto:
 >
 > 1. Firebase Console → seu projeto → **Adicionar app → Android**
-> 2. Package name: `com.hexervoodoom.soulmon`
+> 2. Package name: `com.soulmon`
 > 3. Baixar o `google-services.json` novo e substituir
 >    `android/app/google-services.json`
 > 4. Adicionar a impressão digital SHA-1/SHA-256 da chave de assinatura
@@ -129,7 +129,7 @@ Secrets (Production **e** Preview, se usar):
 | Variável | Valor |
 |---|---|
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | Conteúdo **inteiro** do JSON da conta de serviço (uma linha só) |
-| `ANDROID_PACKAGE_NAME` | O `applicationId` do app — `com.hexervoodoom.soulmon` |
+| `ANDROID_PACKAGE_NAME` | O `applicationId` do app — `com.soulmon` |
 | `ADMOB_SSV_ENABLED` | Deixe **ausente** por enquanto (ver 4b) |
 | `STEAM_PUBLISHER_KEY` | Só quando for publicar na Steam (ver 3b) |
 | `STEAM_APP_ID` | Idem |
@@ -174,7 +174,7 @@ Os `itemid` numéricos das microtransações estão em `STEAM_ITEMS`
 
 ## 4. Plugin nativo de billing — JÁ IMPLEMENTADO
 
-`android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt`
+`android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt`
 é um plugin Capacitor próprio, escrito direto sobre a Play Billing Library
 (`com.android.billingclient:billing-ktx`), registrado no `MainActivity.java`
 como `Billing`. Ele:
@@ -223,7 +223,7 @@ antes disso — ela é o único freio hoje.
 - [ ] 4 produtos criados no Play Console com os IDs exatos da tabela
 - [ ] Conta de serviço criada, com permissão financeira e API habilitada
 - [ ] `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` no Worker (`wrangler secret put`)
-- [x] `google-services.json` do `soulmon-app` com o pacote `com.hexervoodoom.soulmon` (conferido 11/10/2026); falta só cadastrar os SHA (Runbook Fase 5)
+- [x] `google-services.json` do `soulmon-app` com o pacote `com.soulmon` (conferido 11/10/2026); falta só cadastrar os SHA (Runbook Fase 5)
 - [ ] Produto de **assinatura** `soulmon_cosmetic_quarterly` criado (sem trial) e RTDN configurado (Runbook 6.3 e 7.3)
 - [ ] Teste de compra, de assinatura e de **Restaurar compras** em licença de teste
 - [ ] Compra testada com **licença de teste** (Play Console → Testes de

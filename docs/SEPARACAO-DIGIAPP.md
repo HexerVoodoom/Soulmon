@@ -12,7 +12,7 @@ ordem segura de separar.
 
 | Item | Onde | Estado |
 |---|---|---|
-| `applicationId` Android | `android/app/build.gradle` | ✅ Separado — `com.hexervoodoom.soulmon` |
+| `applicationId` Android | `android/app/build.gradle` | ✅ Separado — `com.soulmon` |
 | Nome do app | `strings.xml`, `capacitor.config.json` | ✅ Separado — "Soulmon" |
 | Chave dos saves | `utils/cloudSave.ts` (salt `soulmon:`) | ✅ Separado |
 | URL de produção | `capacitor.config.json` → `server.url` | ✅ Separado — `soulmon.mateus-sprnd.workers.dev` |
@@ -44,7 +44,7 @@ Reconfigurar **todas** as variáveis nele (elas não vêm junto):
 |---|---|
 | `GROQ_API_KEY` | Chat do pet e sugestão de tarefas |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | Verificação de compra |
-| `ANDROID_PACKAGE_NAME` | `com.hexervoodoom.soulmon` |
+| `ANDROID_PACKAGE_NAME` | `com.soulmon` |
 | `VITE_FIREBASE_*` | Só quando for ligar o login (ver BILLING-SETUP.md) |
 | `FIREBASE_PROJECT_ID` | **Por último** — é o que passa a exigir token |
 | `SUPABASE_PROJECT_ID` | Projeto do provedor de transcrição. **Só o id**, sem `.supabase.co` — ele vira host e a rota recusa qualquer coisa fora de `[a-z0-9]{16,40}` |
@@ -133,7 +133,7 @@ Projeto **`soulmon-app`**, criado pelo dono. O que ficou pronto:
 
 Falta, e **depende do dono**:
 
-4. ⬜ Registrar o app **Android** `com.hexervoodoom.soulmon` → novo
+4. ⬜ Registrar o app **Android** `com.soulmon` → novo
    `google-services.json` (o atual ainda é do projeto do DigiApp).
 5. ⬜ Refazer a chave do FCM e o secret `FIREBASE_SERVICE_ACCOUNT` do worker de
    push (`workers/`) para o projeto novo.
@@ -157,7 +157,7 @@ projeto Pages:
 
 | Variável | Valor do Soulmon |
 |---|---|
-| `ASSETLINKS_PACKAGE_NAME` | `com.hexervoodoom.soulmon` |
+| `ASSETLINKS_PACKAGE_NAME` | `com.soulmon` |
 | `ASSETLINKS_SHA256` | SHA-256 do certificado de assinatura do release |
 
 O fingerprint sai do Play Console → **Configuração → Integridade do app →

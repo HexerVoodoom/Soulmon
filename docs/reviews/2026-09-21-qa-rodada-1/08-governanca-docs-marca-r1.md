@@ -209,7 +209,7 @@ Ambos nasceram em `42b07bec`; a partir daí eram donos. Hoje mexeu-se em `functi
 | operador: os 3 secrets novos no painel | registrado como "depende do dono" no STATUS ✅; `npx wrangler secret list` não rodou (login) | — |
 | guarda-plataforma: primeiro `/guarda-soulmon plataforma` colando saída de PL-1..PL-4 | **não** — o ledger ainda diz "aguarda o primeiro `/guarda-soulmon plataforma` colar a saída" em 4 linhas | `docs/plano-melhorias/ledger/plataforma.md` |
 | guarda-plataforma: `targetSdk 36` provado no CI | **não, e não pode** (§0) | `PLAY-LANCAMENTO.md` §G |
-| guarda-plataforma: `google-services.json` ainda é do DigiApp (`project_id` `digiapp-88296`, `package_name` `com.digiapp.app`/`com.digipartner.digiapp`) enquanto o `applicationId` é `com.hexervoodoom.soulmon` | ciente (`PLAY-LANCAMENTO.md` §C.2 "é do dono") — mas o `build.gradle` só **avisa** (`logger.warn`), não falha; FCM no APK está morto por construção até o dono trocar | `grep -n package_name android/app/google-services.json` |
+| guarda-plataforma: `google-services.json` ainda é do DigiApp (`project_id` `digiapp-88296`, `package_name` `com.digiapp.app`/`com.digipartner.digiapp`) enquanto o `applicationId` é `com.soulmon` | ciente (`PLAY-LANCAMENTO.md` §C.2 "é do dono") — mas o `build.gradle` só **avisa** (`logger.warn`), não falha; FCM no APK está morto por construção até o dono trocar | `grep -n package_name android/app/google-services.json` |
 
 ---
 

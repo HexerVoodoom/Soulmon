@@ -43,7 +43,7 @@
 
 | Peça | Onde | Prova |
 |---|---|---|
-| `applicationId` próprio | `android/app/build.gradle` › `com.hexervoodoom.soulmon` | `grep applicationId android/app/build.gradle` |
+| `applicationId` próprio | `android/app/build.gradle` › `com.soulmon` | `grep applicationId android/app/build.gradle` |
 | `versionCode 15` / `versionName "1.1.4"` | `android/app/build.gradle` | primeiro bundle com WP0.6 (`setObfuscatedAccountId`), WP5.8 (preço da Play), WP2.6 (widget) |
 | `targetSdk`/`compileSdk` 36 | `android/variables.gradle` | `[verificar no android-build.yml do CI após o merge]` — ver §G |
 | Workflow que gera o **AAB assinado** quando os 4 secrets existirem | `.github/workflows/android-build.yml` › "Build signed release bundle (.aab)" | artefato `soulmon-release-<sha>` |
@@ -163,7 +163,7 @@ sobe na Play (§D.9).
 
 ---
 
-## C. Firebase — registrar `com.hexervoodoom.soulmon`
+## C. Firebase — registrar `com.soulmon`
 
 Fonte: `docs/BILLING-SETUP.md` › "AÇÃO NECESSÁRIA"; `docs/manual/08-INTEGRACOES-E-DEPLOY.md` §2.6.
 
@@ -174,7 +174,7 @@ URL: `https://console.firebase.google.com/project/soulmon-app/settings/general`
 
 | Campo | Valor |
 |---|---|
-| Nome do pacote Android | `com.hexervoodoom.soulmon` (confira contra `android/app/build.gradle` › `applicationId` — é o **real**, não `com.digipartner.digiapp`) |
+| Nome do pacote Android | `com.soulmon` (confira contra `android/app/build.gradle` › `applicationId` — é o **real**, não `com.digipartner.digiapp`) |
 | Apelido do app | `Soulmon Android` |
 | Certificado SHA-1 de depuração | deixe vazio agora; o SHA-256 da chave de assinatura da Play entra em §D.10 `[a confirmar se o login por Google no APK exige]` |
 
@@ -183,7 +183,7 @@ URL: `https://console.firebase.google.com/project/soulmon-app/settings/general`
 ### C.2 Trocar o arquivo no repo
 
 - ✅ **FEITO (conferido em 11/10/2026, corrige C1):** `android/app/google-services.json` **já é do
-  projeto `soulmon-app`**, pacote `com.hexervoodoom.soulmon`. O que falta é só cadastrar os SHA da
+  projeto `soulmon-app`**, pacote `com.soulmon`. O que falta é só cadastrar os SHA da
   chave de App Signing e de upload (depois do 1º upload — `BETA-FECHADO-RUNBOOK.md` Fase 5) e, se o
   arquivo mudar, rebuild. (O texto histórico abaixo falava do projeto `digiapp-88296`.) O arquivo
   **não é segredo** (a API key ali é restrita por pacote — manual 08 §2.6) e **é
@@ -195,9 +195,9 @@ URL: `https://console.firebase.google.com/project/soulmon-app/settings/general`
   **sem FCM** — o push nativo do Android fica morto, o Web Push continua. Ou seja:
   este passo **não bloqueia** o AAB, bloqueia só o push do APK.
 
-**Feito quando:** `grep -c '"package_name": "com.hexervoodoom.soulmon"' android/app/google-services.json`
+**Feito quando:** `grep -c '"package_name": "com.soulmon"' android/app/google-services.json`
 → `1`, e o próximo run do `android-build.yml` **não** mostra o warning
-`google-services.json não tem client pra 'com.hexervoodoom.soulmon'` no log do Gradle.
+`google-services.json não tem client pra 'com.soulmon'` no log do Gradle.
 
 ### C.3 Conta de serviço do FCM no worker (se ainda não existir) `[dono digita segredo]`
 
@@ -511,7 +511,7 @@ em profundidade, não como o conserto deste item.
 | Nome | Valor | Sintoma sem ele |
 |---|---|---|
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | o JSON **inteiro** da conta de serviço (D.8), em **uma linha** | `/api/billing?provider=play` → **503**, nada é concedido (proposital) |
-| `ANDROID_PACKAGE_NAME` | `com.hexervoodoom.soulmon` | idem 503 |
+| `ANDROID_PACKAGE_NAME` | `com.soulmon` | idem 503 |
 | `ASSETLINKS_SHA256` | o SHA-256 de D.10, com os dois-pontos | `/.well-known/assetlinks.json` sem fingerprint |
 | `ASSETLINKS_PACKAGE_NAME` | **não precisa**: o padrão em `functions/.well-known/assetlinks.json.js` › `DEFAULT_PACKAGE` já é o nosso | — |
 

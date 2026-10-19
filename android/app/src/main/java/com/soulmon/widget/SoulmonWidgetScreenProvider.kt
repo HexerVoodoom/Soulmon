@@ -1,9 +1,9 @@
-package com.hexervoodoom.soulmon.widget
+package com.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import com.hexervoodoom.soulmon.R
+import com.soulmon.R
 
 // Pet-screen widget: green grid + hearts + animated pet + energy bar.
 class SoulmonWidgetScreenProvider : AppWidgetProvider() {

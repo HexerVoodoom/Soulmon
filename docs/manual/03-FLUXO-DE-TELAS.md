@@ -2161,7 +2161,7 @@ a Arena tinha um lote `guilda` que abria a folha inteira. · **Sai para**: fecha
 
 ### 5.1 Widgets Android
 
-Cinco provedores, todos em `android/app/src/main/java/com/hexervoodoom/soulmon/widget/`:
+Cinco provedores, todos em `android/app/src/main/java/com/soulmon/widget/`:
 `SoulmonWidgetProvider`, `SoulmonWidgetVerticalProvider`, `SoulmonWidgetPetProvider`,
 `SoulmonWidgetChatProvider`, `SoulmonWidgetScreenProvider`. Os cinco `android:label`
 do `AndroidManifest.xml` são "Soulmon", "Soulmon Vertical", "Soulmon Pet",

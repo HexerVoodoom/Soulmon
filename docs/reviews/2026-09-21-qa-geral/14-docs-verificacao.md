@@ -17,7 +17,7 @@ Vereditos: **V** = verdadeiro · **F** = falso · **D** = desatualizado (já foi
 | 2 | 🫶 Carinho: Coraçãozinho "comprado na loja ou dropado na masmorra" | `rg -n "⚰️ O CORAÇÃOZINHO" src/utils/shop.ts`; contagem de `kind:` dentro de `SHOP_ITEMS` | lápide: "NÃO É MAIS VENDIDO (06/09/2026, D7+D15)"; `SHOP_ITEMS` = 3 chip / 26 bg / 27 furniture / 6 mission, **zero** `heart` | **F** |
 | 3 | 🛒 Loja: "**coraçãozinho** (`💗`, 150) — vai pra pastinha" | idem | idem — só existe em `SPECIAL_ITEMS` (uso), o filtro `kind === 'heart'` do `ShopModal` casa com nada | **F** |
 | 4 | 💎 Créditos: "Gastam em reroll (50), **cura instantânea (10)**" | `rg -n "_COST_CREDITS" src/utils/monetization.ts` | `REROLL_COST_CREDITS = 50` ✓; `HEART_COST_CREDITS = 10` é ⚰️ "saiu em 06/09/2026 (D7+D15)" | **D** (a cura em Créditos não existe) |
-| 5 | Push: "canal `digiapp_push` criado em `MainActivity.java`" | `rg -n "NotificationChannel" android/app/src/main/java/com/hexervoodoom/soulmon/MainActivity.java` | canal é `soulmon_push` (0 ocorrências de `digiapp_push` no repo) — e o próprio `CLAUDE.md`, na seção "Arte e nomes", diz que virou `soulmon_push` | **F** (contradição interna) |
+| 5 | Push: "canal `digiapp_push` criado em `MainActivity.java`" | `rg -n "NotificationChannel" android/app/src/main/java/com/soulmon/MainActivity.java` | canal é `soulmon_push` (0 ocorrências de `digiapp_push` no repo) — e o próprio `CLAUDE.md`, na seção "Arte e nomes", diz que virou `soulmon_push` | **F** (contradição interna) |
 | 6 | Widgets: "Dados via `DigiWidgetPlugin`" | `find android -name "*Plugin*.kt"` | `SoulmonWidgetPlugin.kt`, `SoulmonAlarmPlugin.kt`, `BillingPlugin.kt`; 0 hits de `DigiWidgetPlugin` fora de teste — a mesma seção "Arte e nomes" diz que virou `SoulmonWidget` | **F** (contradição interna) |
 | 7 | Footgun 9 (Vínculo): gate de PvP "cliente (`canPvp`)" | `rg -n "^export (function\|const) \w*[Pp]vp" src/utils/bond.ts` | `meetsPvpBond`, `xpToPvpBond`; `canPvp` = 0 ocorrências no repo | **F** (símbolo inexistente) |
 | 8 | MAPA: "17 documentos em `docs/manual/`" | `find docs/manual -name '*.md' \| wc -l` | **18** (12 na raiz + 6 em `06-REFERENCIA/`) | **D** |
@@ -60,7 +60,7 @@ Vereditos: **V** = verdadeiro · **F** = falso · **D** = desatualizado (já foi
 | Ícones 32/24/32, régua `iconScale.contract.test.ts` | `find src -name "iconScale*"` → `src/styles/iconScale.contract.test.ts`; `src/styles/tokens.md` §6.1 | ✓ |
 | `sync:oracle-data`; `ORACLE_QUESTIONS` = 6; `GOAL_STEP`/`STRUGGLE_STEP`/`DEMO_PICK` | `rg -n "sync:oracle-data" package.json`; contagem de `{` no array; `rg -n "<NOME>" src/components/SoulmonOnboarding.tsx` | ✓ |
 | Símbolos citados (≈190 conferidos em lote, sem teste): `heartGoalFor`, `restWeekKeyFor`, `specialRefusal`, `applySpecialItem`, `rebirthRefusal`, `hauntedWatching`, `sm-pet-haunted`, `sm-pet-sticky`, `contarMissao`, `getDungeonEnemySprite`, `buildDungeonWave`, `setDungeonDifficultyAtLeast`, `buildRunScenes`, `PLAYER_STATS`, `enemyKey`, `bestiary`, `habit_steady`, `eveningCopy`, `isSafeSpriteUrl`, `composeSpritePrompts`, `imagePromptFallback`, `isRefusal`, `claimOrder`, `equippedDecor`, `bondLevelFor`, `emailToSaveId`, `tocarNa`, `resolveLanguage`, `speakRaw`, `MilestoneCeremony`, `ProtectProgressModal`, `EvolveTaskModal`, `FirstDayCard`, `handleUpgradeRevealed`, `simulateReset` (só lápide), … | `rg -l -F "<sym>" src functions workers desktop android public .github .claude -g '!*.test.*'` | único zero: `canPvp` (item 7) |
-| Arquivos citados (≈70): todos os `src/**`, `functions/**`, `desktop/**`, `docs/*.md`, `product/soulmon-01/balance/carga-diaria.md`, `squad-alpha-runs/soulmon-02/builder/tetos-cuidado-no-save.md` | `ls` em cada um | todos existem; único não-resolúvel é o reticente `android/.../widget/WidgetRenderer.kt` (existe em `android/app/src/main/java/com/hexervoodoom/soulmon/widget/`) |
+| Arquivos citados (≈70): todos os `src/**`, `functions/**`, `desktop/**`, `docs/*.md`, `product/soulmon-01/balance/carga-diaria.md`, `squad-alpha-runs/soulmon-02/builder/tetos-cuidado-no-save.md` | `ls` em cada um | todos existem; único não-resolúvel é o reticente `android/.../widget/WidgetRenderer.kt` (existe em `android/app/src/main/java/com/soulmon/widget/`) |
 
 ### 1.3 Inverificáveis por comando (R3 — o arquivo afirma sem medida)
 
@@ -175,7 +175,7 @@ Só 24 links markdown em 122 arquivos — os docs citam por crase, não por link
 
 | Doc | Caminho citado | Situação |
 |---|---|---|
-| `CLAUDE.md` | `android/.../widget/WidgetRenderer.kt` | reticências — existe em `android/app/src/main/java/com/hexervoodoom/soulmon/widget/` |
+| `CLAUDE.md` | `android/.../widget/WidgetRenderer.kt` | reticências — existe em `android/app/src/main/java/com/soulmon/widget/` |
 | `docs/STATUS.md` | `src/utils/iconRegistry.ts` · `src/supabase/.../chat.tsx` | não existem (o segundo foi removido em 09/09) |
 | `docs/INVENTARIO-TELAS.md` | `src/utils/iconRegistry.ts` | não existe (registro de 19/08) |
 | `docs/AUDITORIA-ALINHAMENTO.md`, `docs/SEPARACAO-DIGIAPP.md` | `src/supabase/functions/server/chat.tsx` | removido — registro, sem lápide no ponto |

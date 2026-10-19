@@ -1,4 +1,4 @@
-package com.hexervoodoom.soulmon.plugins
+package com.soulmon.plugins
 
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient

@@ -20,7 +20,7 @@ import type { Language } from './i18n';
 export const SUBSCRIPTION_SKU = 'soulmon_cosmetic_quarterly';
 
 /** `applicationId` do app — o `package` do link da Central de assinaturas. */
-export const ANDROID_PACKAGE = 'com.hexervoodoom.soulmon';
+export const ANDROID_PACKAGE = 'com.soulmon';
 
 /**
  * Link oficial para gerenciar/cancelar uma assinatura específica na Play

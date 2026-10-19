@@ -1,10 +1,10 @@
-package com.hexervoodoom.soulmon.plugins
+package com.soulmon.plugins
 
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.hexervoodoom.soulmon.notifications.AlarmReceiver
+import com.soulmon.notifications.AlarmReceiver
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall

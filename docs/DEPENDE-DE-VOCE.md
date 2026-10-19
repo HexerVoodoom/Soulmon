@@ -71,7 +71,7 @@ bancário.
 
 Deploy do worker de push e VAPID (07/09; **redeploy** pendente, item 9 acima) · `FIREBASE_PROJECT_ID`
 no `wrangler.jsonc` · `VITE_FIREBASE_*` · **projeto Firebase `soulmon-app` e `google-services.json`
-do pacote `com.hexervoodoom.soulmon`** · **D1 `soulmon-billing` criado e migrações 0001/0002
+do pacote `com.soulmon`** · **D1 `soulmon-billing` criado e migrações 0001/0002
 aplicadas (22/09)** · política de privacidade no ar (`privacidade.html`) · conta do Play Console
 paga (08/09) · `minSdkVersion` 26 · TTL do save renova a cada acesso · exclusão de conta e o
 destino do recibo (declarado em `PLAY-DATA-SAFETY.md` §1) · `applicationId` próprio.

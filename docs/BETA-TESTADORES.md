@@ -17,7 +17,7 @@
 
 - [ ] Grupo do Google criado (`soulmon-beta@googlegroups.com` ou o nome real) com aprovação manual.
 - [ ] Link de opt-in da faixa fechada copiado (RUNBOOK 9.3):
-      `https://play.google.com/apps/testing/com.hexervoodoom.soulmon`
+      `https://play.google.com/apps/testing/com.soulmon`
 - [ ] Formulário de bugs criado (§6) e link curto pronto.
 - [ ] Planilha de controle `E:\soulmon-beta\testadores.csv`: nome, Gmail, canal, data do opt-in, instalou?, ativo?
 - [ ] Texto da privacidade: `https://soulmon.mateus-sprnd.workers.dev/privacidade.html`.
@@ -41,7 +41,7 @@ Google conta é NÃO DESINSTALAR). Compras são só de teste, ninguém é cobrad
 
 Como entrar (2 min):
 1. Entre no grupo com o Gmail que você usa na Play Store: {LINK_GRUPO}
-2. Abra o link de teste e toque em "Tornar-se testador": https://play.google.com/apps/testing/com.hexervoodoom.soulmon
+2. Abra o link de teste e toque em "Tornar-se testador": https://play.google.com/apps/testing/com.soulmon
 3. Instale pela Play Store e crie sua conta (e-mail + senha).
 
 Se puder me responder aqui com o seu Gmail, eu libero também a compra de teste.
@@ -58,7 +58,7 @@ poder publicar.
 
 Basta:
 1) entrar neste grupo com seu Gmail: {LINK_GRUPO}
-2) tocar em "Tornar-se testador" aqui: https://play.google.com/apps/testing/com.hexervoodoom.soulmon
+2) tocar em "Tornar-se testador" aqui: https://play.google.com/apps/testing/com.soulmon
 3) instalar pela Play Store e deixar instalado até o dia {DATA_FIM}.
 
 Não precisa jogar todo dia (mas se der uma olhada por dia, me ajuda muito). Só NÃO
@@ -135,7 +135,7 @@ Passo a passo (uns 3 minutos, no celular Android):
    Eu aprovo em até algumas horas.
 
 2) Depois, abra este link NO CELULAR e toque em "Tornar-se testador":
-   https://play.google.com/apps/testing/com.hexervoodoom.soulmon
+   https://play.google.com/apps/testing/com.soulmon
 
 3) Toque em "Baixar na Google Play" e instale o Soulmon.
 
@@ -160,7 +160,7 @@ Thanks for testing Soulmon!
 1) Join this Google Group with the same Gmail you use on Google Play (request to join if
    asked; I approve within hours): {LINK_GROUP}
 2) On your phone, open and tap "Become a tester":
-   https://play.google.com/apps/testing/com.hexervoodoom.soulmon
+   https://play.google.com/apps/testing/com.soulmon
 3) Install from Google Play. Open the app, sign up with email + password, answer the first
    questions.
 
@@ -188,7 +188,7 @@ me diz qual que eu te ajudo. Preciso de todo mundo instalado até {DATA_D0}.
    internet (o app carrega online).
 2. **Entrar no teste:**
    1. Entre no grupo `{LINK_GRUPO}` com o Gmail da Play.
-   2. Abra `https://play.google.com/apps/testing/com.hexervoodoom.soulmon` no celular ->
+   2. Abra `https://play.google.com/apps/testing/com.soulmon` no celular ->
       **Tornar-se testador**.
    3. **Baixar na Google Play** e abrir o Soulmon.
 3. **Criar conta:** e-mail e senha. Marque que você tem 18+ (o app é para adultos).

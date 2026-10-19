@@ -1,7 +1,7 @@
-package com.hexervoodoom.soulmon.plugins
+package com.soulmon.plugins
 
 import android.content.Context
-import com.hexervoodoom.soulmon.widget.WidgetRenderer
+import com.soulmon.widget.WidgetRenderer
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod

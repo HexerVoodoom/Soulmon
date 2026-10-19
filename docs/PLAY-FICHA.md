@@ -23,7 +23,7 @@
 
 | Campo do console | Valor | Fonte |
 |---|---|---|
-| Nome do pacote (`applicationId`) | `com.hexervoodoom.soulmon` | `android/app/build.gradle` › `defaultConfig.applicationId` |
+| Nome do pacote (`applicationId`) | `com.soulmon` | `android/app/build.gradle` › `defaultConfig.applicationId` |
 | Nome do app | `Soulmon` | `capacitor.config.json` › `appName` |
 | Idioma padrão da ficha | **Inglês (Estados Unidos) — en-US** | `CLAUDE.md` › "Idioma: inglês é a base"; PT-BR entra como tradução |
 | Categoria | **Estilo de vida** (Lifestyle) | Anexo A.7/B.7 da review de 03/08 — argumento em §"CATEGORIA DE LOJA" daquele arquivo: prateleira de *care*, não de produtividade |

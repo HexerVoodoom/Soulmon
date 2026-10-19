@@ -127,7 +127,7 @@ este guarda).
 ## 2. Os cinco expostos — parecer e alternativa
 
 ### E1 · Widget Android: `"Don't forget about me today!"` + `"N task(s) left, let's go!"` + corações vermelho/escuro
-- **Onde:** `android/app/src/main/java/com/hexervoodoom/soulmon/widget/WidgetRenderer.kt:62-73` (`CHAT_FIXED_PHRASES`), `:106` (`buildChatPhrases`), `:138` (hearts).
+- **Onde:** `android/app/src/main/java/com/soulmon/widget/WidgetRenderer.kt:62-73` (`CHAT_FIXED_PHRASES`), `:106` (`buildChatPhrases`), `:138` (hearts).
 - **Cruza:** **#19** ("querer a notificação"), e a frase da tese dita em voz alta — o dossiê chama o widget do Duolingo de "o anti-padrão mais puro do arquivo", e a nossa frase é a mesma frase. Multiplicada pela frequência da home screen (§10: "`Well done!` visto 40 vezes por dia é diferente de `Don't forget me!` visto 40 vezes por dia").
 - **Agravante:** só existe em inglês, hardcoded — viola a regra de idioma também.
 - **Parecer: VETADO.** Vai para **WP2.6** (Widget = janela do pet) como critério de aceite.

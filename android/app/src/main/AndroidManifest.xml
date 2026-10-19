@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.hexervoodoom.soulmon">
+    package="com.soulmon">
 
     <!-- Backup: mantido LIGADO (não quebra quem já joga), mas com regra de
          exclusão do diretório do WebView, onde vive o localStorage — o save e,

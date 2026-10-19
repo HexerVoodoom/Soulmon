@@ -1,4 +1,4 @@
-package com.hexervoodoom.soulmon.widget
+package com.soulmon.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -8,7 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.View
 import android.widget.RemoteViews
-import com.hexervoodoom.soulmon.R
+import com.soulmon.R
 
 // Shared rendering for all Soulmon widget variants (horizontal, vertical, pet-only).
 object WidgetRenderer {
