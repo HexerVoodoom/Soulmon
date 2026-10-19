@@ -33,7 +33,7 @@ export type MissionCardStatus = 'open' | 'ready' | 'claimed';
  * fazer; concluída vira o check. Título (vira botão "Ir" quando a missão tem lugar), descrição curta, progresso, recompensa e
  * estado. Estável em layout: altura mínima fixa e a ação sempre à direita.
  */
-export function MissionCard({ language, attrs, status, title, desc, progress, reward, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action }: {
+export function MissionCard({ language, attrs, status, title, desc, progress, reward, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, quiet = false }: {
   language: Language;
   /** Atributos `data-*` do cartão (os ids que os testes e o manual citam). */
   attrs: Record<string, string>;
@@ -50,6 +50,8 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   lockNote?: string;
   /** O botão de Resgatar (já pronto por quem chama) — só aparece com `status="ready"`. */
   action?: ReactNode;
+  /** Cartão calmo (missão especial): sem marca "!"/"?", "Done/Feita" no lugar de Resgatada e recompensa em todo status. */
+  quiet?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const claimed = status === 'claimed';
@@ -66,8 +68,8 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
     >
       <span aria-hidden={claimed ? undefined : true} style={{ flex: 'none', width: 28, display: 'flex', justifyContent: 'center' }}>
         {claimed
-          ? <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'resgatada' : 'claimed'} />
-          : <MissionMark kind="available" tone="gold" size={28} isPt={isPt} />}
+          ? <Icon name="check_circle" size={24} fill={1} tone="primary" label={quiet ? (isPt ? 'feita' : 'done') : (isPt ? 'resgatada' : 'claimed')} />
+          : (quiet ? null : <MissionMark kind="available" tone="gold" size={28} isPt={isPt} />)}
       </span>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {onGo && !claimed ? (
@@ -87,13 +89,13 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             </span>
           </>
         )}
-        {reward && status === 'ready' && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {reward && (quiet || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
         {lockNote && !claimed && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{lockNote}</p>}
       </div>
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-        {status === 'ready' && <MissionMark kind="ready" tone="gold" size={24} isPt={isPt} />}
+        {status === 'ready' && !quiet && <MissionMark kind="ready" tone="gold" size={24} isPt={isPt} />}
         {status === 'ready' && action}
-        {claimed && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{isPt ? 'Resgatada' : 'Claimed'}</span>}
+        {claimed && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{quiet ? (isPt ? 'Feita' : 'Done') : (isPt ? 'Resgatada' : 'Claimed')}</span>}
       </div>
     </li>
   );

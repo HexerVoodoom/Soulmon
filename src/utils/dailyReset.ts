@@ -31,6 +31,7 @@ import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
+import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
 
 /**
  * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
@@ -929,7 +930,11 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal, done: dailyDone });
   // 🧬 O gauge de evolução credita o PESO feito ontem, com teto diário do
   // estágio (`utils/evolutionGauge.ts`). Nunca decresce aqui.
-  const gaugeGain = gaugeContribution(dailyDone, prev.evolutionStage);
+  // Missão especial (REGISTRO §104): BÔNUS ACIMA do teto diário (guard-rail G-01:
+  // não reduz o peso das tarefas reais). Fora do selo de dia completo, do
+  // coração e de dailyGoalFor — por isso NÃO entra em `dailyDone`.
+  const specialBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
+  const gaugeGain = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
   // PR12b (`tal-com-06`): os Bits do dia completo com o Comércio. Picks inválidos para o Vínculo valem zero.
   const dayBits = missionBitsGain(BITS_PER_COMPLETE_DAY, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)));
 
@@ -958,7 +963,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
-  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage);
+  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus;
   let newEvolutionStage = prev.evolutionStage;
   const finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
@@ -1243,6 +1248,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     maxHealthPoints: newMaxHP,
     perfectDays: newPerfectDays,
     evolutionPoints: newEvolutionPoints,
+    ...(specialBonus > 0 && prev.specialMission ? { specialMission: markSpecialMissionCredited(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]) } : {}),
     lastResetDate: now.toDateString(),
     evolutionStage: newEvolutionStage,
     poopEventsScheduled: [],
@@ -1326,6 +1332,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       perfectDays: newPerfectDays,
       /** 🧬 Quanto o gauge recebeu nesta virada e onde ele ficou. */
       gaugeGain,
+      /** Parte de `gaugeGain` que veio da missão especial (0 ou 1). */
+      specialBonus,
       evolutionPoints: newEvolutionPoints,
       degenerated: wasDegeneratedByHP,
       // Modo boas-vindas: a UI deve receber quem voltou sem nenhuma cobrança.

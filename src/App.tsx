@@ -287,8 +287,9 @@ import {
 } from './utils/petNeeds';
 import {
   DEFAULT_STEP_GOAL, isStepsAvailable, hasStepsPermission, requestStepsPermission,
-  readStepsToday, stepsDayKey,
+  readStepsToday, stepsDayKey, sanitizeStepGoal,
 } from './utils/steps';
+import { resolveSpecialMission, tomorrowSpecialKind } from './utils/specialMissions';
 
 /**
  * Categorias em que um passo pode CONFIRMAR o hábito que o usuário já marcou.
@@ -1163,7 +1164,7 @@ export default function App() {
   // Passos: `null` = ainda não perguntei ao aparelho. Na PWA vira `false` e
   // nada de passos aparece em lugar nenhum (a camada já degrada sozinha).
   const [stepsAvailable, setStepsAvailable] = useState<boolean | null>(null);
-  const [stepsPermission, setStepsPermission] = useState(false);
+  const [stepsPermission, setStepsPermission] = useState<boolean | null>(null);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     return readJson<AISettings>(STORAGE_KEYS.AI_SETTINGS, {
       tone: 'casual',
@@ -5626,6 +5627,24 @@ export default function App() {
     setGameState(prev => ({ ...prev, stepsConsent: 'declined' }));
   }, [setGameState]);
 
+  /** MISSÃO ESPECIAL DO DIA (REGISTRO §104): UM ponto de fiação. O gauge é creditado sozinho na virada (dailyReset). */
+  const specialHasSteps = stepsAvailable === true && gameState.stepsConsent === 'granted' && stepsPermission === true;
+  useEffect(() => {
+    // Sondagem do sensor pendente = não decide (senão a 1ª abertura do dia trava em descanso).
+    if (stepsAvailable === null || (stepsAvailable === true && gameState.stepsConsent === 'granted' && stepsPermission === null)) return;
+    setGameState(prev => {
+      const now = new Date();
+      const next = resolveSpecialMission(prev.specialMission, playerDayKey(now, prev.playerDayTz), {
+        hasSteps: specialHasSteps, steps: prev.steps, stepsDayKey: stepsDayKey(now), stepGoal: prev.stepGoal, rest: prev.rest,
+      });
+      return next === prev.specialMission ? prev : { ...prev, specialMission: next };
+    });
+  }, [specialHasSteps, stepsAvailable, stepsPermission, gameState.stepsConsent, gameState.steps, gameState.rest, gameState.stepGoal, gameState.playerDayTz, gameState.lastResetDate, setGameState]);
+
+  const handleChangeStepGoal = useCallback((goal: number) => {
+    setGameState(prev => ({ ...prev, stepGoal: sanitizeStepGoal(goal) }));
+  }, [setGameState]);
+
   /** Passos de HOJE (0 se o registro é de outro dia — nada é herdado da véspera). */
   const stepsToday = gameState.steps && gameState.steps.date === stepsDayKey(new Date())
     ? gameState.steps.today
@@ -7913,10 +7932,12 @@ export default function App() {
               <StepsCard
                 steps={stepsToday}
                 available
-                hasPermission={gameState.stepsConsent === 'granted' && stepsPermission}
+                hasPermission={gameState.stepsConsent === 'granted' && stepsPermission === true}
                 language={language}
                 onRequestPermission={handleStepsRequestPermission}
                 onDismiss={handleStepsDecline}
+                goal={sanitizeStepGoal(gameState.stepGoal)}
+                onChangeGoal={handleChangeStepGoal}
               />
             </div>
           )}
@@ -8004,6 +8025,12 @@ export default function App() {
           day: playerDayKey(new Date(), gameState.playerDayTz),
           bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           onClaim: resgatarDiaria,
+        }}
+        special={{
+          state: gameState.specialMission?.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.specialMission : undefined,
+          stepsToday,
+          stepGoal: sanitizeStepGoal(gameState.stepGoal),
+          tomorrowKind: tomorrowSpecialKind(playerDayKey(new Date(), gameState.playerDayTz), specialHasSteps),
         }}
         missionsClaimed={gameState.missionsClaimed}
         onClaimMission={resgatarConquista}

@@ -23,6 +23,8 @@ import { DREAM_CATALOG, NIGHT_ENERGY_BONUS } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
+import { DEFAULT_STEP_GOAL } from '../utils/steps';
+import { SPECIAL_MISSION_GAUGE_WEIGHT } from '../utils/specialMissions';
 import { MEAL_WINDOW_MIN, PUSH_DAILY_CAP } from '../utils/mealRhythm';
 
 /**
@@ -84,6 +86,11 @@ const TERMS: Term[] = [
     icon: '❗', en: 'Missions', pt: 'Missões',
     descEn: 'One icon on Home opens Missions, with three tabs: Dailies, Weekly and Achievements. The dailies invite you to try the other places too (mini-games, focus, care). A mission only points at what to do. When you really do it, the line turns ready (a ?) and you tap Claim to receive the reward. Nothing counts tasks, and nothing is owed.',
     descPt: 'Um ícone na Home abre as Missões, com três abas: Diárias, Semanal e Conquistas. As diárias convidam a conhecer os outros cantos (minijogos, foco, cuidado). A missão só aponta o que fazer. Quando você faz de verdade, a linha fica pronta (um ?) e você toca em Resgatar para receber. Nada conta tarefas, e nada é cobrado.',
+  },
+  {
+    icon: '✨', en: "Today's special", pt: 'Especial do dia',
+    descEn: `One per day. With a step counter it alternates between walking ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps (you choose the goal) and lying down within your rest window; without one it is always the rest window. It counts like ${SPECIAL_MISSION_GAUGE_WEIGHT} daily habit toward evolution, does not affect the complete-day seal or hearts, and skipping it costs nothing.`,
+    descPt: `Uma por dia. Com contador de passos, alterna entre caminhar ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos (você escolhe a meta) e deitar dentro da sua janela de descanso; sem contador, é sempre a janela de descanso. Vale como ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito diário na evolução, não mexe no selo de dia completo nem nos corações, e deixar para lá não custa nada.`,
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',

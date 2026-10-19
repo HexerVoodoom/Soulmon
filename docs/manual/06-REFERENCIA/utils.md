@@ -2867,10 +2867,28 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `sprites.dungeonRoster.test.ts`, `sprites.umQuadro.contract.test.ts` (D5: cada `lines/*.png` tem UM único sprite, nunca spritesheet — projeção de alfa detecta tira de N quadros num arquivo só).
 **Regra de negócio:** O nome de cada linha jogável mora num lugar só — evita a masmorra e a Biblioteca divergirem no nome. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/specialMissions.ts`
+**Dono de:** a missão especial diária (passos ou deitar na janela): tipo do dia, cumprimento, estado, bônus de gauge da virada e saneamento do save. Funções puras, sem `Date.now`.
+**Exports:**
+- `SpecialMissionKind` (`'steps' | 'rest'`), `SpecialMissionState` (`{day, kind, done, doneDays?, creditedDays?}`), `SpecialMissionInputs` (interfaces/tipos).
+- `SPECIAL_MISSION_GAUGE_WEIGHT` (= `HABIT_WEIGHT`, 1), `SPECIAL_MISSIONS_PER_DAY` (1).
+- `function specialMissionKindFor(day: string, hasSteps: boolean): SpecialMissionKind` — sem sensor é `rest`; com sensor alterna por paridade do dia.
+- `function specialMissionReached(state, inp): boolean` — passos: meta atingida no dia certo; descanso: noite `onTime` com `date` do dia.
+- `function resolveSpecialMission(prev, day, inp): SpecialMissionState` — cria/atualiza o estado; devolve a MESMA referência se nada mudou.
+- `function specialMissionGaugeBonus(s, judgedDayKeys): number` — 1 se algum dia julgado está em `doneDays` e fora de `creditedDays`, senão 0.
+- `function markSpecialMissionCredited(s): SpecialMissionState` — `(s, judgedDayKeys)`: acrescenta a `creditedDays` o dia julgado que pagou.
+- `function tomorrowSpecialKind(day: string, hasSteps: boolean): SpecialMissionKind` — tipo de amanhã (texto do cartão).
+- `function sanitizeSpecialMission(raw: unknown): SpecialMissionState | undefined` — saneamento do load.
+**Chamado por:** `src/utils/dailyReset.ts`, `src/App.tsx`, `src/components/nav/SpecialMissionCard.tsx`
+**Régua:** `specialMissions.test.ts`, `specialMissions.reset.test.ts`, `specialMissions.fiacao.test.ts`, `components/nav/SpecialMissionCard.render.test.tsx`
+**Regra de negócio:** Missão especial diária, 1 hábito no gauge, fora do selo. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md#missao-especial).
+
 ### `src/utils/steps.ts`
 **Dono de:** Contador de passos opcional, leve, com degradação graciosa — camada fina sobre `@capgo/capacitor-pedometer`.
 **Exports:**
-- `DEFAULT_STEP_GOAL` — Meta diária padrão. Referência de caminhada regular, não meta médica.
+- `DEFAULT_STEP_GOAL` — Meta diária padrão (7000). Referência de caminhada regular, não meta médica.
+- `STEP_GOAL_MIN` (1000), `STEP_GOAL_MAX` (30000), `STEP_GOAL_OPTIONS` (3000, 5000, 7000, 10000) — limites e opções da meta escolhida pelo jogador.
+- `function sanitizeStepGoal(v: unknown): number` — saneia a meta do save: inválido vira o padrão, o resto entra no clamp 1000..30000.
 - `StepsRecord` (interface) — O ÚNICO formato persistido (opcional no GameState: `steps?: StepsRecord`). Agregado diário e nada mais.
 - `function stepsDayKey(date: Date): string` — dayKey do repo (mesma convenção de `habitRhythm`/`restWindow`).
 - `function stepsDeltaFrom(baseline: number, raw: number): number` — Quantos passos NOVOS uma leitura crua representa, dado o último acumulado visto. Função pura — é aqui que o reboot é decidido. - `raw >= baseline`: caminhada normal → `raw - baseline`.

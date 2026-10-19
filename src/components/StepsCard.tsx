@@ -28,7 +28,7 @@
  * fica vermelho e não existe texto de "faltam X passos para a meta" — a meta é
  * uma referência de caminhada, nunca uma cobrança.
  */
-import { DEFAULT_STEP_GOAL, stepsConsentCopy, stepsGoalProgress } from '../utils/steps';
+import { DEFAULT_STEP_GOAL, STEP_GOAL_OPTIONS, stepsConsentCopy, stepsGoalProgress } from '../utils/steps';
 import type { Language } from '../utils/i18n';
 import { GroupCard, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { InfoTip } from './ui/InfoTip';
@@ -53,6 +53,8 @@ export interface StepsCardProps {
   hasPermission: boolean;
   /** Meta diária. Padrão `DEFAULT_STEP_GOAL`. */
   goal?: number;
+  /** Escolha da meta diária (missão especial). Ausente = sem a linha de escolha. */
+  onChangeGoal?: (goal: number) => void;
   language: Language;
   /** Só chame depois desta tela de consentimento — nunca antes. */
   onRequestPermission: () => void;
@@ -62,7 +64,7 @@ export interface StepsCardProps {
 
 export function StepsCard({
   steps, available, hasPermission, goal = DEFAULT_STEP_GOAL,
-  language, onRequestPermission, onDismiss,
+  language, onRequestPermission, onDismiss, onChangeGoal,
 }: StepsCardProps) {
   const isPt = language === 'pt-BR';
 
@@ -120,13 +122,26 @@ export function StepsCard({
         <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%` }} />
       </div>
 
+      {onChangeGoal && (
+        <div data-step-goal-choice="" role="group" aria-label={isPt ? 'Meta diária de passos' : 'Daily step goal'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={sm2Hint}>{isPt ? 'Meta diária de passos' : 'Daily step goal'}</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {STEP_GOAL_OPTIONS.map(g => (
+              <button key={g} type="button" data-step-goal={g} aria-pressed={g === goal} onClick={() => onChangeGoal(g)} style={sm2Button(g === goal ? 'primary' : 'outline', false, 'sm')}>
+                {g.toLocaleString(locale)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* A REGRA DE PRODUTO (I13: atrás do "?"; o consentimento dos passos
           continua inteiro em `stepsConsentCopy`). */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <InfoTip language={language} label={isPt ? 'Como os passos contam' : 'How steps count'} align="right" style={{ minHeight: 24 }}>
           {isPt
-            ? 'Passos não valem ponto sozinhos: eles só confirmam um hábito de saúde que você já marcou como feito.'
-            : 'Steps never score on their own: they only confirm a health habit you already marked as done.'}
+            ? 'Passos não valem ponto sozinhos: confirmam um hábito de saúde que você já marcou e movem uma missão especial opcional que vale como um hábito na evolução.'
+            : 'Steps never score on their own: they confirm a health habit you already marked, and they power an optional daily special that counts like one habit toward evolution.'}
         </InfoTip>
       </div>
     </GroupCard>
