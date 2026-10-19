@@ -41,6 +41,7 @@ import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
 import { playAttack, playAttackRanged, playCharge, playDefend, playSpecial } from '../../utils/sounds';
+import { prepararSfxCombate } from '../../utils/sfxCombateCarga';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
 export const BATTLE_LAYER_STYLE: CSSProperties = {
@@ -685,6 +686,8 @@ export function BattleStage({
   // Sem `exitConfirm` (a luta acabou com a confirmação aberta) o diálogo some: a pausa tem que sumir junto.
   const confirming = confirmingRaw && !!exitConfirm;
 
+  // Os 7 efeitos de combate são um chunk à parte (orçamento de bytes): puxa já na montagem, antes do 1º golpe.
+  useEffect(() => { void prepararSfxCombate(); }, []);
   useEffect(() => { if (!exitConfirm) setConfirming(false); }, [exitConfirm]);
   useEffect(() => { onPauseChange?.(confirming); }, [confirming, onPauseChange]);
 

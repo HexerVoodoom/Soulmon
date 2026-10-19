@@ -58,7 +58,6 @@ import { esquecerTema, pausarTema, retomarTema } from './tema';
 import {
   consentirMusicaDeCombate, esquecerMusicaDeCombate, pausarMusicaDeCombate, retomarMusicaDeCombate,
 } from './musicaDeCombate';
-import { sintetizarPercussaoDaArena } from './trilhaArena';
 import { pausarPesadelo, retomarPesadelo } from './trilhaPesadelo';
 
 /** As faixas que este motor sabe tocar. O DIRETOR (`musica.ts`) decide qual, por superfície. */
@@ -134,9 +133,11 @@ function parar(fadeS = 0): void {
   setTimeout(() => descartar(v), fadeS * 1000 + 120);
 }
 
-function percussao(ctx: BaseAudioContext): AudioBuffer | null {
+/** A percussão da Arena é síntese (`trilhaArena.ts`, ~1,2 KB) carregada SOB DEMANDA — fora do chunk de entrada (orçamento de bytes). */
+async function percussao(ctx: BaseAudioContext): Promise<AudioBuffer | null> {
   try {
     if (bufferPercussao && bufferPercussao.taxa === ctx.sampleRate) return bufferPercussao.buf;
+    const { sintetizarPercussaoDaArena } = await import('./trilhaArena');
     const dados = sintetizarPercussaoDaArena(ctx.sampleRate);
     const buf = ctx.createBuffer(1, dados.length, ctx.sampleRate);
     buf.copyToChannel(dados, 0);
@@ -175,7 +176,10 @@ async function comecar(): Promise<boolean> {
   if (b.ctx.state === 'suspended') void b.ctx.resume?.();
   const meu = ++tokenCarga;
   const nomes = Object.keys(CAMADAS_DA_TRILHA) as CamadaDaTrilha[];
-  const bufs = await Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n])));
+  const [bufs, buffPerc] = await Promise.all([
+    Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n]))),
+    usaPercussao(faixa) ? percussao(b.ctx) : Promise.resolve(null),
+  ]);
   // Só as camadas que chegaram tocam; o trim é o do NÚMERO que toca (medido, `loudness.ts`).
   const prontas = nomes.filter((_, i) => bufs[i] !== null);
   if (meu !== tokenCarga || prontas.length === 0 || voz || pausada() || !ligadaNestaSessao || faixaPedida !== faixa) return false;
@@ -210,7 +214,7 @@ async function comecar(): Promise<boolean> {
       fontes.push(src);
     }
     if (usaPercussao(faixa)) {
-      const p = percussao(b.ctx);
+      const p = buffPerc;
       if (p) {
         const src = b.ctx.createBufferSource();
         src.buffer = p;

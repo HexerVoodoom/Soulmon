@@ -33,9 +33,9 @@ vi.mock('./audioBus', () => ({
 vi.mock('./sounds', () => ({ isMuted: () => E.mudo }));
 
 import {
-  DURACAO_PESADELO_S, PICO_PESADELO, TAXA_PESADELO, ARQUIVO_DO_DONO, esquecerTrilhaPesadelo, medirTrilha, paraWav16, pausarPesadelo,
-  pedirTrilhaPesadelo, retomarPesadelo, sintetizarTrilhaPesadelo, trilhaPesadeloTocando,
+  ARQUIVO_DO_DONO, esquecerTrilhaPesadelo, pausarPesadelo, pedirTrilhaPesadelo, retomarPesadelo, trilhaPesadeloTocando,
 } from './trilhaPesadelo';
+import { DURACAO_PESADELO_S, PICO_PESADELO, TAXA_PESADELO, medirTrilha, paraWav16, sintetizarTrilhaPesadelo } from './trilhaPesadeloSintese';
 import { GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB, TRIM_TRILHA_POR_CAMADAS_DB, db2lin } from './loudness';
 
 const pequena = { sampleRate: 4000, duracaoS: 8 };

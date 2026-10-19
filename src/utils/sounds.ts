@@ -8,7 +8,8 @@ const GANHO_BASE_COMBATE = 0.12;
 const GANHO_LEVELUP = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playLevelUp);
 import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
 import { aoGestoSonoro } from './trilha';
-import { sfxNoAlvo, type NomeSfxCombate, SFX_DE_COMBATE } from './sfxCombate';
+import type { NomeSfxCombate } from './sfxCombate';
+import { prepararSfxCombate, sfxCombatePronto } from './sfxCombateCarga';
 
 const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
@@ -199,15 +200,21 @@ export function playSleep(): void {
 
 /** Toca um dos 7 efeitos de combate: o buffer procedural já no alvo da categoria, pelo gate de `play()`. */
 function playSfx(nome: NomeSfxCombate): void {
+  // A síntese é um chunk sob demanda (`sfxCombateCarga.ts`): ainda não chegou → este golpe sai mudo, o próximo toca.
+  const sfx = sfxCombatePronto();
+  if (!sfx) {
+    if (!isMuted()) void prepararSfxCombate();
+    return;
+  }
   play(nome, (ctx, destino) => {
-    const sinal = sfxNoAlvo(nome, ctx.sampleRate, OFFSET_POR_SOM_DB[nome]);
+    const sinal = sfx.sfxNoAlvo(nome, ctx.sampleRate, OFFSET_POR_SOM_DB[nome]);
     const buffer = ctx.createBuffer(1, sinal.length, ctx.sampleRate);
     buffer.getChannelData(0).set(sinal);
     const fonte = ctx.createBufferSource();
     fonte.buffer = buffer;
     fonte.connect(destino);
     fonte.start(ctx.currentTime);
-    return SFX_DE_COMBATE[nome].duracaoS;
+    return sfx.SFX_DE_COMBATE[nome].duracaoS;
   });
 }
 

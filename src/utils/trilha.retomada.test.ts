@@ -10,7 +10,7 @@
  *  4. `busTrilha` em 0 quando o storage falha (janela privada) → tocava mudo;
  *  5. roteamento por faixa: troca de faixa é crossfade, nasce desligada e só por gesto.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 
 const E = vi.hoisted(() => ({
   ctxs: [] as Array<Record<string, any>>,
@@ -66,6 +66,9 @@ const escondida = (v: boolean) => {
   Object.defineProperty(document, 'hidden', { configurable: true, value: v });
   document.dispatchEvent(new Event('visibilitychange'));
 };
+
+// A percussão da Arena é um chunk sob demanda (`import('./trilhaArena')`): aquece o módulo para o `tick` curto bastar.
+beforeAll(async () => { await import('./trilhaArena'); });
 
 beforeEach(() => {
   esquecerTrilha();

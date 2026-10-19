@@ -37,12 +37,10 @@ import { garantirBarramento, retomarContexto } from './audioBus';
 import { db2lin, GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB, TRIM_TRILHA_POR_CAMADAS_DB } from './loudness';
 import { isMuted } from './sounds';
 import { CROSSFADE_MUSICA_S } from './sonsAssets';
-import { TAXA_PESADELO, sintetizarTrilhaPesadelo } from './trilhaPesadeloSintese';
 
-export {
-  DURACAO_PESADELO_S, TAXA_PESADELO, SEMENTE_PESADELO, PICO_PESADELO, sintetizarTrilhaPesadelo, medirTrilha, paraWav16,
-  type OpcoesDaTrilhaPesadelo,
-} from './trilhaPesadeloSintese';
+/* A SÍNTESE (`trilhaPesadeloSintese.ts`, ~2,6 KB) é carregada sob demanda no 1º `comecar()` (orçamento de bytes do chunk
+   de entrada, 19/10/2026): a trilha só toca no Pesadelo. Por isso este módulo NÃO a re-exporta mais — quem precisa de
+   `sintetizarTrilhaPesadelo`/`medirTrilha`/`paraWav16`/constantes importa de `./trilhaPesadeloSintese` direto. */
 
 export const FADE_ENTRADA_PESADELO_S = 3;
 export const FADE_SAIDA_PESADELO_S = CROSSFADE_MUSICA_S + 0.8;
@@ -98,9 +96,10 @@ function parar(fadeS = 0): void {
   setTimeout(() => descartar(v), fadeS * 1000 + 120);
 }
 
-function bufferProcedural(ctx: BaseAudioContext): AudioBuffer | null {
+async function bufferProcedural(ctx: BaseAudioContext): Promise<AudioBuffer | null> {
   try {
-    if (cache && cache.taxa === TAXA_PESADELO) return cache.buf;
+    if (cache) return cache.buf;
+    const { TAXA_PESADELO, sintetizarTrilhaPesadelo } = await import('./trilhaPesadeloSintese');
     const dados = sintetizarTrilhaPesadelo();
     const buf = ctx.createBuffer(1, dados.length, TAXA_PESADELO);
     buf.copyToChannel(dados, 0);
@@ -141,7 +140,7 @@ async function comecar(): Promise<void> {
   const meu = ++token;
   let buf = await bufferDoDono(b.ctx);
   if (!buf && !cache) await new Promise(r => setTimeout(r, 30)); // a conta (~0,5 s) cede o quadro: o convite pinta antes
-  buf = buf ?? bufferProcedural(b.ctx);
+  buf = buf ?? await bufferProcedural(b.ctx);
   if (!buf || meu !== token || voz || !podeTocar()) return;
   try {
     if (b.ctx.state === 'suspended') void b.ctx.resume?.();

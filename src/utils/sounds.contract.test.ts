@@ -30,11 +30,12 @@
  * (e `sintonia-chiado.render.test.tsx`, o precedente): espiona o módulo e
  * renderiza quem chama.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as sounds from './sounds';
 import { esquecerJanelaDeCoincidencia } from './audioBus';
+import { prepararSfxCombate } from './sfxCombateCarga';
 
 /* ── 1. Mudo total ──────────────────────────────────────────────────────── */
 
@@ -99,6 +100,10 @@ const CAMINHOS = Object.entries(sounds)
   .filter(([n, v]) => n.startsWith('play') && typeof v === 'function') as [string, () => void][];
 
 let audio: ReturnType<typeof instalarAudioFalso>;
+
+// Os 7 efeitos de combate vêm de um chunk sob demanda (`prepararSfxCombate`, a cena de luta o pede ao montar): o contrato
+// 'todo play* cria nó' vale com o módulo já carregado, como na luta de verdade.
+beforeAll(async () => { await prepararSfxCombate(); });
 
 beforeEach(() => {
   instalarStorageEmMemoria();

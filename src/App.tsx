@@ -61,7 +61,6 @@ import { getSpriteForStage, isStarterId } from './utils/sprites';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
-import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap, missionMark, strollLineState, claimStroll } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { sanitizeEquippedFrame } from './utils/frames';
@@ -5033,9 +5032,21 @@ export default function App() {
     return () => { vivo = false; };
   }, [usaMapa, trv]);
 
+  /* O módulo da Aventura comum (`utils/adventure.ts`, ~9 KB, catálogo de achados) também fica FORA do chunk de entrada
+     (orçamento de bytes, 19/10/2026): só carrega quando há um relatório do dia para mostrar. Até chegar (milissegundos) o
+     achado é `null` — o mesmo estado "esperando" que o mapa já usa —, e o efeito que guarda no diário só roda depois. */
+  const temRelatorioDoDia = !!gameState.lastDayReport;
+  const [adv, setAdv] = useState<typeof import('./utils/adventure') | null>(null);
+  useEffect(() => {
+    if (!temRelatorioDoDia || adv) return;
+    let vivo = true;
+    import('./utils/adventure').then(m => { if (vivo) setAdv(m); }).catch(() => { /* offline: tenta de novo no próximo render que precisar */ });
+    return () => { vivo = false; };
+  }, [temRelatorioDoDia, adv]);
+
   const aventuraDaNoite = useMemo(() => {
     const r = gameState.lastDayReport;
-    if (!r) return null;
+    if (!r || !adv) return null;
     const entries = gameState.adventures ?? [];
     const c = gameState.crossings ?? CROSSINGS_EMPTY;
     if (trv) {
@@ -5052,8 +5063,8 @@ export default function App() {
     // Mapa tocado e catálogo ainda chegando: espera um instante em vez de
     // mostrar um achado que vai trocar.
     if (crossingsTouchMap(c)) return null;
-    return adventureOfNight(entries, r.done, r.required, r.date);
-  }, [gameState.lastDayReport, gameState.adventures, gameState.crossings, trv, showDailyReport]);
+    return adv.adventureOfNight(entries, r.done, r.required, r.date);
+  }, [gameState.lastDayReport, gameState.adventures, gameState.crossings, trv, adv, showDailyReport]);
 
   /**
    * O vínculo explícito do resumo (beta-2, 4.3): a missão do Passeio que a pessoa cumpriu no dia anterior e o
@@ -5106,7 +5117,7 @@ export default function App() {
    */
   useEffect(() => {
     const r = gameState.lastDayReport;
-    if (!showDailyReport || !r || !aventuraDaNoite) return;
+    if (!showDailyReport || !r || !aventuraDaNoite || !adv) return;
     const dia = r.date;
     const diaMapa = dayKeyToIso(dia) ?? dia; // o mapa usa AAAA-MM-DD (ver `aventuraDaNoite`)
     setGameState(prev => {
@@ -5116,8 +5127,8 @@ export default function App() {
       const diario = prev.adventures ?? [];
       const achado = trv
         ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia, crossDay: diaMapa })
-        : adventureOfNight(diario, r.done, r.required, dia);
-      const novoDiario = collectAdventure(diario, achado.id, dia);
+        : adv.adventureOfNight(diario, r.done, r.required, dia);
+      const novoDiario = adv.collectAdventure(diario, achado.id, dia);
       const diarioMudou = novoDiario.length !== diario.length;
       if (c1 === c0 && !diarioMudou) return prev;
       return {
@@ -5126,7 +5137,7 @@ export default function App() {
         ...(diarioMudou ? { adventures: novoDiario } : {}),
       };
     });
-  }, [showDailyReport, aventuraDaNoite, gameState.lastDayReport, trv, setGameState]);
+  }, [showDailyReport, aventuraDaNoite, gameState.lastDayReport, trv, adv, setGameState]);
 
   /** A folha do Passeio muda o estado por uma função PURA sobre `prev` (footgun 6). */
   const handleCrossings = useCallback((f: (c: CrossingsState) => CrossingsState) => {

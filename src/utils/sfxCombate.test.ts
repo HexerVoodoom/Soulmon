@@ -3,7 +3,7 @@
  * determinismo, mapeamento evento→efeito e mudo. A ESCUTA humana (gate S8) não é medida aqui — está em
  * `scripts/render-sfx-combate.mjs` (WAVs para o dono ouvir).
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -13,6 +13,7 @@ import { ALVO_LUFS_M, CATEGORIA_DO_SOM, OFFSET_MAX_DB, OFFSET_POR_SOM_DB, TETO_D
 import { lufsMMax, picoDbfs, truePeakDbtp } from '../test/lufsM';
 import * as sounds from './sounds';
 import { esquecerJanelaDeCoincidencia } from './audioBus';
+import { prepararSfxCombate } from './sfxCombateCarga';
 
 const SR = 48000;
 
@@ -121,7 +122,9 @@ describe('mudo e gesto: o interruptor de Efeitos silencia os 7', () => {
     expect(fontes).toEqual([]);
   });
 
-  it('CONTRAPROVA: ligado, cada um inicia exatamente UMA fonte (buffer procedural no barramento)', () => {
+  it('CONTRAPROVA: ligado, cada um inicia exatamente UMA fonte (buffer procedural no barramento)', async () => {
+    // A síntese é um chunk sob demanda (`sfxCombateCarga.ts`); a cena de luta a pede ao montar, antes do 1º golpe.
+    await prepararSfxCombate();
     sounds.setMuted(false);
     for (const n of NOMES_SFX_DE_COMBATE) {
       esquecerJanelaDeCoincidencia();
