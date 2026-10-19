@@ -5,7 +5,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
-import { ATELIE_SCENE, MINI_FX } from '../../utils/visorScenes';
+import { ATELIE_SCENE_SUAVE, MINI_FX } from '../../utils/visorScenes';
 import {
   checkTap, ecoBits, growSequence, playbackIntervalMs, startSequence,
   ECO_MAX_BITS, ECO_START_LENGTH, type Stone,
@@ -178,7 +178,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
       <GameStory id="eco" language={language} />
 
       {/* O VISOR: o pet no meio e a pedra que ele está cantando ao lado. */}
-      <GameVisor height={80} scene={ATELIE_SCENE} label={isPt ? 'O pet canta as pedras' : 'Your pet sings the stones'}>
+      <GameVisor height={80} scene={ATELIE_SCENE_SUAVE} label={isPt ? 'O pet canta as pedras' : 'Your pet sings the stones'}>
         <VisorSprite
           src={pet}
           data-visor-pet
