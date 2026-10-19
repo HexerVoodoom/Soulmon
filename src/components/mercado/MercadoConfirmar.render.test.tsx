@@ -11,7 +11,7 @@ import { SHOP_ITEMS } from '../../utils/shop';
 
 const base = {
   language: 'en-US' as const,
-  points: 260,
+  points: 1000,
   emblems: 12,
   credits: 32,
   ownedBackgrounds: ['bg-room'] as string[],
@@ -34,14 +34,14 @@ const sofa = SHOP_ITEMS.find(i => i.id === 'furn-sofa')!;
 describe('D1 — confirmar a compra', () => {
   it('o toque abre "Comprar X por N Bits?" com custo e saldo antes/depois, e não gasta', () => {
     const onBuy = vi.fn(() => true);
-    abrir({ stall: 'itens', onBuy, points: 260 });
+    abrir({ stall: 'itens', onBuy, points: 1000 });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     const dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
     expect(onBuy).not.toHaveBeenCalled();
     expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe(`Buy ${chip.nameEn} for ${chip.price} Bits?`);
     expect(dlg.querySelector('[data-purchase-cost]')!.textContent).toBe(`${chip.price} Bits`);
-    expect(dlg.querySelector('[data-purchase-after]')!.textContent).toBe(`${260 - chip.price} Bits`);
+    expect(dlg.querySelector('[data-purchase-after]')!.textContent).toBe(`${1000 - chip.price} Bits`);
     // seta de voltar no padrão do app + Cancelar + Confirmar
     expect(dlg.querySelector('[data-back-arrow]')).not.toBeNull();
     expect(within(dlg).getByRole('button', { name: 'Cancel' })).toBeTruthy();

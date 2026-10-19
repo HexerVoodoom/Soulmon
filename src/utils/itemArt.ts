@@ -48,6 +48,7 @@ export const ITEM_ART: Record<string, string> = {
   '🎼': itemChipBigHarmony,
   '💞': itemChipBigBenevolence,
   '🔷': itemChipPrism,
+  '💠': itemChipPrism, // Chip Triplo (D-95): reusa a arte do Prisma, sem arte nova
   '💗': itemHeart,
   '🌀': itemGlitchtama,
 };

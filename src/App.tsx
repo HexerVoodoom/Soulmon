@@ -108,7 +108,7 @@ import {
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
-import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
+import { applySpecialItem, specialRefusal, chipsUsedThisStage, CHIPS_PER_STAGE } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
@@ -3503,6 +3503,7 @@ export default function App() {
         perfectDays: 0,
         evolutionPoints: 0,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        chipsStage: undefined, // D-97: a contagem de chips é por estágio
         // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
         fichaJornada: registrarEstagio(
           prev.fichaJornada, fichaStageOf(newEvolutionStage), prev.attributesSinceLastEvolution,
@@ -3600,6 +3601,13 @@ export default function App() {
           : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
         return;
       }
+      if (refused === 'stage-cap') {
+        // D-97: 3 chips por estágio. O chip volta intacto e vale no próximo estágio — sem culpa.
+        toast(language === 'pt-BR'
+          ? `Este Soulmon já recebeu ${CHIPS_PER_STAGE} chips neste estágio. O chip te espera no próximo.`
+          : `This Soulmon already got ${CHIPS_PER_STAGE} chips this stage. The chip will wait for the next one.`);
+        return;
+      }
       if (refused === 'already-full') {
         // Copy §5.1: a vida cheia recusa PROTEGENDO o item — a fala é da
         // criatura ("Tô firme. Guarda essa."), kind `steady` de `petVoice.ts`.
@@ -3618,6 +3626,12 @@ export default function App() {
       setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
       setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
 
+      if (special.kind === 'chip') {
+        const n = chipsUsedThisStage(gameState) + 1;
+        toast(language === 'pt-BR'
+          ? `Este Soulmon pode receber ${CHIPS_PER_STAGE} chips neste estágio · ${n} de ${CHIPS_PER_STAGE}`
+          : `This Soulmon can get ${CHIPS_PER_STAGE} chips this stage · ${n} of ${CHIPS_PER_STAGE}`);
+      }
       if (special.kind === 'glitchtama') {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
       }
@@ -4527,6 +4541,7 @@ export default function App() {
       harmonyPoints: 0,
       benevolencePoints: 0,
       attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        chipsStage: undefined, // D-97: a contagem de chips é por estágio
       currentBranch: 'harmony',
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
@@ -4616,6 +4631,7 @@ export default function App() {
         maxHealthPoints: getMaxHPForStage('rookie'),
         maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        chipsStage: undefined, // D-97: a contagem de chips é por estágio
         currentBranch: 'harmony',
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
@@ -5940,6 +5956,7 @@ export default function App() {
         degeneratedByHP: false,
         // Reset recent branch window — next evolution reflects habits going forward
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        chipsStage: undefined, // D-97: a contagem de chips é por estágio
       };
     });
     playDegenerate();

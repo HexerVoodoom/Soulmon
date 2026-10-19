@@ -58,6 +58,13 @@ export const BIG_CHIP_BOOST = 6;
 export const PRISM_CHIP_BOOST = 2;
 export const BIG_CHIP_EMOJI: Record<Attr, string> = { power: '🥊', harmony: '🎼', benevolence: '💞' };
 export const PRISM_CHIP_EMOJI = '🔷';
+// D-95 (19/10/2026): chip novo, +9 em CADA atributo, 2.400 Bits fixos. Reusa a arte do Prisma (sem arte nova).
+export const TRIPLE_CHIP_BOOST = 9;
+export const TRIPLE_CHIP_EMOJI = '💠';
+export const TRIPLE_CHIP_PRICE = 2400;
+// D-96: preço dos chips +100% (180→360, maiores 420→840).
+export const CHIP_PRICE = 360;
+export const BIG_CHIP_PRICE = 840;
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 
 // Inventory emojis for the consumable items that live in the Items folder.
@@ -129,6 +136,12 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     namePt: 'Chip Prisma', nameEn: 'Prism Chip',
     descPt: `+${PRISM_CHIP_BOOST} Poder, Harmonia e Benevolência`, descEn: `+${PRISM_CHIP_BOOST} Power, Harmony and Benevolence`,
   },
+  [TRIPLE_CHIP_EMOJI]: {
+    emoji: TRIPLE_CHIP_EMOJI, kind: 'chip',
+    boosts: { power: TRIPLE_CHIP_BOOST, harmony: TRIPLE_CHIP_BOOST, benevolence: TRIPLE_CHIP_BOOST },
+    namePt: 'Chip Triplo', nameEn: 'Triple Chip',
+    descPt: `+${TRIPLE_CHIP_BOOST} em cada atributo`, descEn: `+${TRIPLE_CHIP_BOOST} to each attribute`,
+  },
   [HEART_ITEM_EMOJI]: {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
@@ -149,25 +162,27 @@ export const SHOP_ITEMS: ShopItem[] = [
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, nomes únicos desde 29/09/2026.
   { id: 'chip-power',   kind: 'chip', icon: CHIP_EMOJI.power, attr: 'power',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
-    descPt: `+${CHIP_BOOST} Poder`, descEn: `+${CHIP_BOOST} Power`, price: 180 },
+    descPt: `+${CHIP_BOOST} Poder`, descEn: `+${CHIP_BOOST} Power`, price: CHIP_PRICE },
   { id: 'chip-harmony',    kind: 'chip', icon: CHIP_EMOJI.harmony, attr: 'harmony',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
-    descPt: `+${CHIP_BOOST} Harmonia`, descEn: `+${CHIP_BOOST} Harmony`, price: 180 },
+    descPt: `+${CHIP_BOOST} Harmonia`, descEn: `+${CHIP_BOOST} Harmony`, price: CHIP_PRICE },
   { id: 'chip-benevolence', kind: 'chip', icon: CHIP_EMOJI.benevolence, attr: 'benevolence',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
-    descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`, price: 180 },
+    descPt: `+${CHIP_BOOST} Benevolência`, descEn: `+${CHIP_BOOST} Benevolence`, price: CHIP_PRICE },
   { id: 'chip-big-power', kind: 'chip', icon: BIG_CHIP_EMOJI.power, attr: 'power',
     namePt: 'Chip Maior de Poder', nameEn: 'Major Power Chip',
-    descPt: `+${BIG_CHIP_BOOST} Poder`, descEn: `+${BIG_CHIP_BOOST} Power`, price: 420 },
+    descPt: `+${BIG_CHIP_BOOST} Poder`, descEn: `+${BIG_CHIP_BOOST} Power`, price: BIG_CHIP_PRICE },
   { id: 'chip-big-harmony', kind: 'chip', icon: BIG_CHIP_EMOJI.harmony, attr: 'harmony',
     namePt: 'Chip Maior de Harmonia', nameEn: 'Major Harmony Chip',
-    descPt: `+${BIG_CHIP_BOOST} Harmonia`, descEn: `+${BIG_CHIP_BOOST} Harmony`, price: 420 },
+    descPt: `+${BIG_CHIP_BOOST} Harmonia`, descEn: `+${BIG_CHIP_BOOST} Harmony`, price: BIG_CHIP_PRICE },
   { id: 'chip-big-benevolence', kind: 'chip', icon: BIG_CHIP_EMOJI.benevolence, attr: 'benevolence',
     namePt: 'Chip Maior de Benevolência', nameEn: 'Major Benevolence Chip',
-    descPt: `+${BIG_CHIP_BOOST} Benevolência`, descEn: `+${BIG_CHIP_BOOST} Benevolence`, price: 420 },
-  { id: 'chip-prism', kind: 'chip', icon: PRISM_CHIP_EMOJI,
-    namePt: 'Chip Prisma', nameEn: 'Prism Chip',
-    descPt: `+${PRISM_CHIP_BOOST} Poder, Harmonia e Benevolência`, descEn: `+${PRISM_CHIP_BOOST} Power, Harmony and Benevolence`, price: 480 },
+    descPt: `+${BIG_CHIP_BOOST} Benevolência`, descEn: `+${BIG_CHIP_BOOST} Benevolence`, price: BIG_CHIP_PRICE },
+  // D-94 (19/10/2026): o Chip Prisma ('inútil') saiu da LOJA. Continua em `SPECIAL_ITEMS`
+  // (catálogo de USO): quem já o tem na pastinha mantém e usa.
+  { id: 'chip-triple', kind: 'chip', icon: TRIPLE_CHIP_EMOJI,
+    namePt: 'Chip Triplo', nameEn: 'Triple Chip',
+    descPt: `+${TRIPLE_CHIP_BOOST} em cada atributo`, descEn: `+${TRIPLE_CHIP_BOOST} to each attribute`, price: TRIPLE_CHIP_PRICE },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
   // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a
