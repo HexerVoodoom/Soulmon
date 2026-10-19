@@ -9,6 +9,7 @@ import { getRank } from '../../utils/community';
 import { getTierStanding, resolveSeasonPlace } from '../../utils/tournamentTiers';
 import { resolveEquippedFrame, type FrameContext } from '../../utils/frames';
 import { resolveAvatarId } from '../../utils/avatar';
+import { requestOpenFrameShop } from '../../utils/frameShopNav';
 import { AVATAR_CATALOG, AVATAR_GROUPS, avatarAlt } from '../../utils/avatarCopy';
 import type { Language } from '../../utils/i18n';
 
@@ -31,13 +32,16 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame, userName = '', onChangeName, bits = 0, onBuyFrame }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame, userName = '', onChangeName, onOpenFrameShop }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
   avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   /** Nome público do jogador (B8). Sem `onChangeName` o campo não aparece. */
   userName?: string; onChangeName?: (name: string) => void;
-  /** Compra de moldura de loja (B3). */
+  /** D-16: o Perfil NÃO compra moldura. A de loja que a pessoa não tem aparece trancada e o toque abre Mercado > Frames
+   *  (por padrão, o pedido vai pelo evento de `utils/frameShopNav`, que o `App` atende). */
+  onOpenFrameShop?: () => void;
+  /** @deprecated Sem efeito desde D-16 (a compra saiu do Perfil). Aceitas só para a `SettingsPage` não precisar mudar junto. */
   bits?: number; onBuyFrame?: (id: string) => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -64,7 +68,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         </div>
         {onChangeName && (
           <>
-            <label style={sm2Text} htmlFor="sm-profile-name">{isPt ? 'Nome' : 'Name'}</label>
+            <label style={sm2Text} htmlFor="sm-profile-name">{isPt ? 'Apelido' : 'Nickname'}</label>
             <Field id="sm-profile-name" type="text" value={nameDraft} maxLength={24} autoComplete="nickname"
               onChange={e => setNameDraft(e.target.value)}
               onBlur={() => { if (nameOk && nameDraft.trim() !== userName) onChangeName(nameDraft.trim()); else setNameDraft(userName); }} />
@@ -76,7 +80,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>
 
         <h3 style={sec}>{isPt ? 'Moldura' : 'Frame'}</h3>
-        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} bits={bits} onBuy={onBuyFrame} />
+        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} onOpenShop={onOpenFrameShop ?? requestOpenFrameShop} />
 
         <h3 style={sec}>{isPt ? 'Foto' : 'Picture'}</h3>
         <Field type="search" value={q} onChange={e => setQ(e.target.value)} aria-label={isPt ? 'Buscar foto' : 'Search pictures'} placeholder={isPt ? 'Buscar' : 'Search'} />

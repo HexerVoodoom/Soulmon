@@ -41,6 +41,7 @@ import {
 } from './navigation';
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
+import { OPEN_FRAME_SHOP_EVENT } from './utils/frameShopNav';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -798,7 +799,7 @@ export default function App() {
   const [missionsOpen, setMissionsOpen] = useState<null | 'daily'>(null);
   const abrirMissoes = useCallback(() => setMissionsOpen('daily'), []);
   const fecharMissoes = useCallback(() => setMissionsOpen(null), []);
-  const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string } | null>(null);
+  const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string; stallKind?: 'frames' } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
   const [celebrarMeta, setCelebrarMeta] = useState(false);
   const currentViewRef = useRef(currentView);
@@ -3858,6 +3859,17 @@ export default function App() {
     if (dest.kind === 'missions') { setMissionsOpen('daily'); return; }
     setPendingSheet({ area: dest.area, lot: dest.lot });
     goTo(areaView(dest.area));
+  }, [goTo]);
+
+  /* D-16 (19/10/2026): a moldura de loja trancada no Editar perfil leva ao Mercado > Frames (lojinha de Background, aba Frames).
+     O Perfil só pede (evento de `utils/frameShopNav`); a navegação é do App. */
+  useEffect(() => {
+    const abrir = () => {
+      setPendingSheet({ area: 'mercado', lot: 'background', stallKind: 'frames' });
+      goTo(areaView('mercado'));
+    };
+    window.addEventListener(OPEN_FRAME_SHOP_EVENT, abrir);
+    return () => window.removeEventListener(OPEN_FRAME_SHOP_EVENT, abrir);
   }, [goTo]);
 
   /* "Faça um passeio" no menu de Missões leva ao PRÉDIO do Passeio (pedido do dono, 11/10/2026):
@@ -7058,6 +7070,9 @@ export default function App() {
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
                 onInitialSheetConsumed={() => setPendingSheet(null)}
+                initialStallKind={pendingSheet && pendingSheet.area === area ? pendingSheet.stallKind : undefined}
+                weekly={missoesDaSemana}
+                onClaimWeekly={resgatarMissao}
                 demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}

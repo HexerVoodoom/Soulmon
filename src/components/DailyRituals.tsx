@@ -159,7 +159,9 @@ export function DailyRituals({
   /* A4: busca + filtro + ordem do `View all`. */
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<AllFilter>('all');
-  const [ordem, setOrdem] = useState<AllSort>('default');
+  const [ordem, setOrdem] = useState<AllSort>('az');
+  /* D-10: a seta inverte a ordem atual (A–Z ↔ Z–A, mais recente ↔ mais antiga, mais feito ↔ menos feito). */
+  const [invertida, setInvertida] = useState(false);
   const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const swipeStart = (e: ReactPointerEvent) => { swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() }; };
   const swipeEnd = (e: ReactPointerEvent, aoAcionar: (dx: number) => void) => {
@@ -215,14 +217,15 @@ export function DailyRituals({
     return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
   };
   const todasLinhas: AllLine[] = [
-    ...ativas.map((t): AllLine => ({ key: `t:${t.id}`, kind: 'task', name: t.name, preview: quandoDe(t), onEdit: () => onEditTask(t.id) })),
+    ...ativas.map((t): AllLine => ({ key: `t:${t.id}`, kind: 'task', name: t.name, preview: quandoDe(t), created: createdStamp(t.id, t.createdAt), done: 0, onEdit: () => onEditTask(t.id) })),
     ...atividades.map((a): AllLine => ({
       key: `h:${a.id}`, kind: activityBucket(a) === 'habit' ? 'habit' : 'task', name: a.name,
-      preview: frequencyLabel(a, isPt, diasCurtos), onEdit: () => onEditActivity(a.id),
+      preview: frequencyLabel(a, isPt, diasCurtos), created: createdStamp(a.id), done: habitRhythms?.[a.id]?.totalDone ?? 0, onEdit: () => onEditActivity(a.id),
     })),
   ];
-  const linhasTodas = filterAndSortLines(todasLinhas, busca, filtro, ordem, language);
-  const tAll = isPt ? 'Todas' : 'All';
+  const linhasTodas = filterAndSortLines(todasLinhas, busca, filtro, ordem, language, invertida);
+  /* D-07: Tasks em cima, Habits embaixo (cada grupo com o seu cabeçalho; a ordem escolhida vale dentro do grupo). */
+  const gruposTodas = groupLines(linhasTodas);
 
   const gavetaRotulo = isPt
     ? `Guardadas (${guardadas.length})`
@@ -384,14 +387,19 @@ export function DailyRituals({
             busca={busca} onBusca={setBusca}
             filtro={filtro} onFiltro={setFiltro}
             ordem={ordem} onOrdem={setOrdem}
+            invertida={invertida} onInvertida={setInvertida}
           />
           {linhasTodas.length > 0 ? (
-            <section aria-label={tAll} data-all-section="all">
-              <h3 className="sm3-secao-h">{tAll}</h3>
-              <ul className="sm2-ritual-list">
-                {linhasTodas.map(l => renderEditOnly(l.key, l.name, l.preview, l.onEdit))}
-              </ul>
-            </section>
+            <>
+              {([['tasks', tTasks, gruposTodas.tasks], ['habits', tHabits, gruposTodas.habits]] as const).map(([k, titulo, linhas]) => linhas.length > 0 && (
+                <section key={k} aria-label={titulo} data-all-section={k}>
+                  <h3 className="sm3-secao-h">{titulo}</h3>
+                  <ul className="sm2-ritual-list">
+                    {linhas.map(l => renderEditOnly(l.key, l.name, l.preview, l.onEdit))}
+                  </ul>
+                </section>
+              ))}
+            </>
           ) : (
             <p data-all-empty style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>
               {busca.trim() || filtro !== 'all'
@@ -491,28 +499,59 @@ export function DailyRituals({
 }
 
 export type AllFilter = 'all' | 'tasks' | 'habits';
-export type AllSort = 'default' | 'az';
-export interface AllLine { key: string; kind: 'task' | 'habit'; name: string; preview: string; onEdit: () => void }
+/** D-09: a ordem do botão cíclico — alfabética → criação (mais recente primeiro) → mais feito. */
+export type AllSort = 'az' | 'created' | 'done';
+export const ALL_SORT_CYCLE: readonly AllSort[] = ['az', 'created', 'done'];
+export const nextAllSort = (s: AllSort): AllSort => ALL_SORT_CYCLE[(ALL_SORT_CYCLE.indexOf(s) + 1) % ALL_SORT_CYCLE.length];
+export interface AllLine { key: string; kind: 'task' | 'habit'; name: string; preview: string; created?: number; done?: number; onEdit: () => void }
 
-/** A4: busca (sem acento/caixa) + filtro por tipo + ordem alfabética opcional. Pura. */
-export function filterAndSortLines(lines: AllLine[], busca: string, filtro: AllFilter, ordem: AllSort, language: Language): AllLine[] {
+/** Quando o item nasceu (ms): `createdAt` da tarefa; senão o carimbo que vai no id (`task-1760000000000`, `activity-…`). 0 = desconhecido. */
+export function createdStamp(id: string, createdAt?: string): number {
+  const t = createdAt ? Date.parse(createdAt) : NaN;
+  if (Number.isFinite(t)) return t;
+  const m = /\d{12,}/.exec(id);
+  return m ? Number(m[0]) : 0;
+}
+
+/**
+ * A4: busca (sem acento/caixa) + filtro por tipo + ordem. Pura.
+ * Padrão de cada ordem: A–Z; criação com o MAIS RECENTE primeiro; mais feito primeiro. `invertida` vira a lista do avesso (D-10).
+ * Empate cai no nome, então a ordem não pula entre renders.
+ */
+export function filterAndSortLines(lines: AllLine[], busca: string, filtro: AllFilter, ordem: AllSort, language: Language, invertida = false): AllLine[] {
   const norm = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const q = norm(busca.trim());
+  const loc = language === 'pt-BR' ? 'pt-BR' : 'en';
   const out = lines.filter(l =>
     (filtro === 'all' || (filtro === 'tasks' ? l.kind === 'task' : l.kind === 'habit'))
     && (!q || norm(l.name).includes(q)));
-  if (ordem === 'az') out.sort((a, b) => a.name.localeCompare(b.name, language === 'pt-BR' ? 'pt-BR' : 'en'));
-  return out;
+  const porNome = (a: AllLine, b: AllLine) => a.name.localeCompare(b.name, loc);
+  const cmp = ordem === 'az' ? porNome
+    : ordem === 'created' ? (a: AllLine, b: AllLine) => (b.created ?? 0) - (a.created ?? 0) || porNome(a, b)
+    : (a: AllLine, b: AllLine) => (b.done ?? 0) - (a.done ?? 0) || porNome(a, b);
+  out.sort(cmp);
+  return invertida ? out.reverse() : out;
+}
+
+/** D-07: Tasks primeiro, Habits depois (a ordem de cada lista é a que veio). */
+export function groupLines(lines: AllLine[]): { tasks: AllLine[]; habits: AllLine[] } {
+  return { tasks: lines.filter(l => l.kind === 'task'), habits: lines.filter(l => l.kind === 'habit') };
 }
 
 /** Busca + filtro + ordem do `View all` (A4). */
-function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem }: {
+function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem, invertida, onInvertida }: {
   language: Language; busca: string; onBusca: (v: string) => void;
   filtro: AllFilter; onFiltro: (v: AllFilter) => void; ordem: AllSort; onOrdem: (v: AllSort) => void;
+  invertida: boolean; onInvertida: (v: boolean) => void;
 }) {
   const isPt = language === 'pt-BR';
   const chip = (ativo: boolean): CSSProperties => ({ ...sm2Button(ativo ? 'primary' : 'outline', false, 'sm'), padding: '0 12px' });
   const filtros: [AllFilter, string][] = [['all', isPt ? 'Todas' : 'All'], ['tasks', isPt ? 'Tarefas' : 'Tasks'], ['habits', isPt ? 'Hábitos' : 'Habits']];
+  const ordemRotulo: Record<AllSort, string> = {
+    az: 'A–Z',
+    created: isPt ? 'Recentes' : 'Newest',
+    done: isPt ? 'Mais feitos' : 'Most done',
+  };
   return (
     <div data-all-filters style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
       <input
@@ -528,9 +567,24 @@ function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem
         {filtros.map(([k, rot]) => (
           <button key={k} type="button" data-all-filter={k} aria-pressed={filtro === k} onClick={() => onFiltro(k)} style={chip(filtro === k)}>{rot}</button>
         ))}
-        <button type="button" data-all-sort aria-pressed={ordem === 'az'} onClick={() => onOrdem(ordem === 'az' ? 'default' : 'az')} style={{ ...chip(ordem === 'az'), marginLeft: 'auto' }}>
-          A–Z
-        </button>
+        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 4 }}>
+          <button type="button" data-all-sort={ordem} aria-label={isPt ? `Ordem: ${ordemRotulo[ordem]}` : `Sort: ${ordemRotulo[ordem]}`} onClick={() => onOrdem(nextAllSort(ordem))} style={chip(false)}>
+            {ordemRotulo[ordem]}
+          </button>
+          <button
+            type="button"
+            data-all-dir={invertida ? 'reversed' : 'default'}
+            aria-pressed={invertida}
+            aria-label={isPt ? 'Inverter a ordem' : 'Reverse the order'}
+            onClick={() => onInvertida(!invertida)}
+            style={{ ...chip(invertida), padding: 0, width: 44, justifyContent: 'center' }}
+          >
+            {/* Seta própria (SVG): ↓ ordem normal, ↑ invertida. Não depende do subset da fonte de ícones. */}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: invertida ? 'rotate(180deg)' : undefined }}>
+              <path d="M12 5v14M6 13l6 6 6-6" />
+            </svg>
+          </button>
+        </span>
       </div>
     </div>
   );

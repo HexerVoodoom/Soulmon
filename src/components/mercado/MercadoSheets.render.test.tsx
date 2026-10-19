@@ -95,13 +95,14 @@ describe('compra', () => {
     expect(onEquip).toHaveBeenCalledWith(bitsBg.id);
   });
 
-  it('H7: item que a pessoa JÁ TEM (ex.: o sofá ganho) não aparece à venda — mora em "Já são seus", no topo', () => {
+  it('H7: item que a pessoa JÁ TEM (ex.: o sofá ganho) não aparece à venda — mora em "Já são seus", DEPOIS do "For sale" (D-29)', () => {
     const { container } = abrir({ stall: 'decoracao', ownedFurniture: ['furn-sofa'] });
     const owned = container.querySelector('[data-shop-owned]') as HTMLElement;
     const forSale = container.querySelector('[data-shop-for-sale]') as HTMLElement;
     expect(owned.querySelector('[data-shop-item="furn-sofa"]')).not.toBeNull();
     expect(forSale.querySelector('[data-shop-item="furn-sofa"]')).toBeNull();
-    expect(owned.compareDocumentPosition(forSale) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // D-29 (19/10/2026, pedido do dono: "For sale coloca primeiro"): antes o "Já são seus" vinha no topo; agora vem depois.
+    expect(forSale.compareDocumentPosition(owned) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Sem nada na posse, não há seção nem título de "Já são seus".
     const vazio = abrir({ stall: 'itens' });
     expect(vazio.container.querySelector('[data-shop-owned]')).toBeNull();
