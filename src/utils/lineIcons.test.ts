@@ -1,14 +1,14 @@
 /**
  * Os ícones-ficha (rodada 2, R2-2) têm de ser ENCONTRÁVEIS — a lição do
- * `attackFxArt` (924 no mapa, nenhum achável). 9 linhas × 4 tiers × 2 tamanhos.
+ * `attackFxArt` (924 no mapa, nenhum achável). 6 linhas × 4 tiers × 2 tamanhos (D-78: eram 9).
  */
 import { describe, it, expect } from 'vitest';
 import { lineIcon, lineIconForStage, LINE_ICON_COUNT } from './lineIcons';
 import { DUNGEON_LINE_SPRITES } from './sprites';
 
 describe('lineIcons', () => {
-  it('72 ícones no mapa (9 linhas × 4 tiers × 32/64)', () => {
-    expect(LINE_ICON_COUNT).toBe(72);
+  it('48 ícones no mapa (6 linhas × 4 tiers × 32/64; D-78 tirou orrin/serah/nautilu)', () => {
+    expect(LINE_ICON_COUNT).toBe(48);
   });
 
   it('toda linha × tier é encontrável nos dois tamanhos (inclusive kaelen, cujo arquivo tem `-power`)', () => {
@@ -22,7 +22,9 @@ describe('lineIcons', () => {
 
   it('lineIconForStage: demo → a linha escolhida; legado → linha por hash; árvore do jogador → undefined', () => {
     expect(lineIconForStage('champion-power', 64, 'ignar')).toMatch(/ignar-champion-64\.png$/);
-    expect(lineIconForStage('ultra', 32, 'serah')).toMatch(/serah-mega-32\.png$/);
+    expect(lineIconForStage('ultra', 32, 'lumel')).toMatch(/lumel-mega-32\.png$/);
+    // D-78: linha aposentada → inicial de reserva (sem ícone-ficha), nunca o ícone da linha velha
+    expect(lineIconForStage('ultra', 32, 'serah')).toBeUndefined();
     expect(lineIconForStage('agumon', 32)).toMatch(/-rookie-32\.png$/);
     expect(lineIconForStage('agumon', 32)).toBe(lineIconForStage('agumon', 32)); // determinístico
     expect(lineIconForStage('champion-power', 64)).toBeUndefined();

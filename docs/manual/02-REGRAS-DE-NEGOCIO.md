@@ -4721,7 +4721,7 @@ só acrescenta quando a chave ainda não está lá.
 `Object.keys(DUNGEON_LINE_SPRITES)` × `TIERS`, onde `TIERS` são os **quatro**
 tiers que têm arte própria (`rookie`, `champion`, `ultimate`, `mega`) — baby-i e
 baby-ii reusam a arte de rookie, e repetir a mesma imagem duas vezes seria uma
-coleção que mente sobre o próprio tamanho. Hoje são 9 linhas × 4 = **36** células (eram 6 × 4 = 24 até 15/09/2026, quando Igni/Nautil/Astria entraram — `c11dc49d`).
+coleção que mente sobre o próprio tamanho. Hoje são 6 linhas × 4 = **24** células (eram 9 × 4 = 36 até 19/10/2026, quando o dono aposentou Akashai/Serah/Nautil — D-78, REGISTRO §119; chaves já gravadas em `bestiary` como `orrin-*`/`serah-*`/`nautilu-*` ficam no save, ocultas, nunca apagadas).
 
 O que ainda não apareceu é **silhueta**, não espaço vazio: silhueta diz "existe e
 você ainda não viu"; vazio não diz nada, e coleção só é coleção quando o que

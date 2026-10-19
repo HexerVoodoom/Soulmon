@@ -1,5 +1,5 @@
 // NPCs de teste pra Biblioteca — reaproveita as 3 linhas de inimigo geradas
-// via Higgsfield (kaelen/orrin/thalindra, ver sprites.ts) só pra dar conteúdo
+// via Higgsfield (kaelen/astrase/thalindra, ver sprites.ts; D-78: o do meio era `orrin`) só pra dar conteúdo
 // à página sem precisar de contas reais. Marcados com `isNpc` (sem
 // friend/gift — não existe profile de verdade no KV pra esses ids).
 import { DUNGEON_LINE_SPRITES, DUNGEON_LINE_NAMES } from './sprites';
@@ -22,10 +22,10 @@ export const LIBRARY_NPCS: LibraryNpc[] = [
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.kaelen.champion,
   },
   {
-    id: 'npc-orrin', name: 'Orrin', petName: DUNGEON_LINE_NAMES.orrin,
+    id: 'npc-orrin', name: 'Orrin', petName: DUNGEON_LINE_NAMES.astrase,
     stage: 'ultimate-harmony', unlockedStages: ['rookie', 'champion-harmony', 'ultimate-harmony'],
     pvpEnabled: false, daysPlaying: 88,
-    isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.orrin.ultimate,
+    isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.astrase.ultimate, // D-78: era a linha `orrin` (Akashai), aposentada
   },
   {
     id: 'npc-thalindra', name: 'Thalindra', petName: DUNGEON_LINE_NAMES.thalindra,

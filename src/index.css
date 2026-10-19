@@ -7820,6 +7820,14 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   display: flex;
   gap: 8px;
 }
+/* A PLAQUINHA da masmorra (D-80): à direita, ACIMA dos três cuidados. Os cuidados ocupam de bottom 4px a 40px (36 de desenho) e o
+   alvo de toque se estende 4px além (`.sm3-cuidado::after`) → topo efetivo em 44px; a placa começa em 52px: sem sobreposição, em qualquer largura. */
+.sm3-cuidar-placa {
+  position: absolute;
+  right: var(--sm2-space-3);
+  bottom: 52px;
+  z-index: 12;
+}
 /* Beta-2 (3.3): os controles encolhem DISCRETAMENTE (44 → 36 de desenho) e o
    alvo de toque continua 44×44 (`::after`, invisível) — o gap de 8 cobre a
    diferença, então os alvos vizinhos não se sobrepõem. */

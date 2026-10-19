@@ -9,7 +9,7 @@ describe('as sombras do Pesadelo', () => {
     expect(ids).toEqual(['1', '1b', '1c', '2', '2b', '2c', '3', '3b', '3c', '4', '4b', '4c']);
     expect(new Set(ids).size).toBe(12);
   });
-  it('só Solmons PRÓPRIOS (as 9 linhas da casa) e cada sprite existe', () => {
+  it('só Solmons PRÓPRIOS (as 6 linhas ativas da casa) e cada sprite existe', () => {
     for (const s of SHADOW_SLOTS.flat()) {
       expect(Object.keys(DUNGEON_LINE_NAMES), s.id).toContain(s.line);
       expect(DUNGEON_LINE_SPRITES[s.line][s.stage], s.id).toBeTruthy();

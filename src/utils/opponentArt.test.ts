@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ART_LINE_IDS } from '../../functions/api/_artLine.js';
 import { CORVO_LINE } from './corvoPet';
-import { DEMO_CHARACTER_IDS, DUNGEON_LINE_SPRITES, STARTER_SPRITES, getSpriteForStage } from './sprites';
+import { DEMO_CHARACTER_IDS, DUNGEON_LINE_SPRITES, RETIRED_LINE_IDS, STARTER_SPRITES, getSpriteForStage } from './sprites';
 import { isKnownArtLine, opponentIcon, opponentSprite, resolveOpponentLine } from './opponentArt';
 
 // D-60: oponente NUNCA e desenhado com a arvore generica (gato-coruja, arte descartada).
@@ -12,8 +12,15 @@ const STAGES = ['rookie', 'champion-power', 'champion-harmony', 'ultimate-benevo
 const generica = new Set(STAGES.map(s => getSpriteForStage(s)));
 
 describe('opponentArt', () => {
+  it('D-78: perfil com artLine aposentada desenha um inicial atual, nunca a árvore genérica', () => {
+    for (const id of RETIRED_LINE_IDS) for (const st of STAGES) {
+      const sp = opponentSprite({ artLine: id, stage: st, id: 'x' });
+      expect(generica.has(sp), `${id}:${st}`).toBe(false);
+    }
+  });
+
   it('lista fechada do servidor == o que o cliente sabe desenhar', () => {
-    const cliente = new Set<string>([...DEMO_CHARACTER_IDS, ...Object.keys(DUNGEON_LINE_SPRITES), CORVO_LINE]);
+    const cliente = new Set<string>([...DEMO_CHARACTER_IDS, ...Object.keys(DUNGEON_LINE_SPRITES), ...RETIRED_LINE_IDS, CORVO_LINE]); // D-78: o servidor ainda aceita as 3 aposentadas (perfil antigo)
     expect([...ART_LINE_IDS].sort()).toEqual([...cliente].sort());
   });
 

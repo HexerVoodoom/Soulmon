@@ -2,6 +2,7 @@
 /** A placa da masmorra (14/10/2026): arte sem deformar (escala inteira), sem ícone de porta, texto curto, caixa fixa, alvo >= 44, aria. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
 import { DungeonSign, SIGN_W, SIGN_H, SIGN_ART_W, SIGN_ART_H, SIGN_SCALE } from './DungeonSign';
 
 describe('DungeonSign', () => {
@@ -42,5 +43,28 @@ describe('DungeonSign', () => {
     render(<DungeonSign language="pt-BR" returnInMs={0} />);
     expect(screen.getByRole('button').textContent).toContain('Voltou');
     expect(screen.getByRole('button').textContent).toContain('da masmorra');
+  });
+});
+
+/** D-80 (19/10/2026): a placa mora à DIREITA, acima de mochila/noite/banho — sem sobrepor os ícones (geometria no CSS, lida aqui). */
+describe('DungeonSign — posição (D-80)', () => {
+  const css = readFileSync('src/index.css', 'utf8').replace(/\r\n/g, '\n');
+  const bloco = (sel: string): string => {
+    const ini = css.indexOf(`${sel} {`);
+    return ini < 0 ? '' : css.slice(ini, css.indexOf('}', ini));
+  };
+  const px = (b: string, prop: string): number => Number(new RegExp(prop + ':\\s*(\\d+)px').exec(b)?.[1]);
+  it('à direita (mesma âncora dos cuidados) e com a base ACIMA do topo efetivo dos três ícones', () => {
+    const placa = bloco('.sm3-cuidar-placa');
+    const cuidar = bloco('.sm3-cuidar');
+    const cuidado = bloco('.sm3-cuidado');
+    expect(placa).toMatch(/right:\s*var\(--sm2-space-3\)/);
+    expect(cuidar).toMatch(/right:\s*var\(--sm2-space-3\)/);
+    const topoDosIcones = px(cuidar, 'bottom') + px(cuidado, 'height') + 4; // 4 = alvo de toque além do desenho (`::after`)
+    expect(px(placa, 'bottom')).toBeGreaterThanOrEqual(topoDosIcones);
+  });
+  it('a placa (caixa + haste) cabe no palco de 250px acima dos cuidados, em 360x640 e 412x915', () => {
+    expect(52 + SIGN_H + 12).toBeLessThan(250); // base + placa + haste
+    expect(SIGN_W).toBeLessThan(360 / 2); // não passa de metade da largura da tela mais estreita
   });
 });
