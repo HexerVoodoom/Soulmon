@@ -12,6 +12,7 @@ const aiFetch = vi.fn();
 vi.mock('../utils/aiClient', () => ({ aiFetch: (...a: unknown[]) => aiFetch(...a) }));
 vi.mock('../utils/serverConfig', () => ({
   fetchServerConfig: () => Promise.resolve({ authRequired: false, transcribeAvailable: false }),
+  peekServerConfig: () => null,
   resetServerConfigCache: () => {},
 }));
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { warning: vi.fn(), error: vi.fn() }) }));

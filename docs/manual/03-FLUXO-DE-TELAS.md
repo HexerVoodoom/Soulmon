@@ -981,7 +981,7 @@ recusas, inclusive os dois toques no mesmo lote do React).
   site — quem cita é esta linha. Mais serviços ou um diretório diferente é
   decisão do dono.
 - **Dono**: `src/components/ChatBox.tsx` · **Régua**:
-  `src/security/supabase.contract.test.ts` (as quatro peças da transcrição);
+  `src/security/transcribe.contract.test.ts` (as quatro peças da transcrição);
   a linha de suporte: `régua: nenhuma` (`grep -rl "sm2-chat-support" src --include=*.test.*`
   → vazio em 21/09/2026).
 

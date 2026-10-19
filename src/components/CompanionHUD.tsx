@@ -1,6 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo, lazy, Suspense, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { aiFetch } from '../utils/aiClient';
 import { DungeonSign } from './home/DungeonSign';
 import { EnergyTimer, HungerTimer } from './home/EnergyTimer';
 import { HungerIndicator } from './home/HungerIndicator';
@@ -841,14 +840,8 @@ export const CompanionHUD = memo(function CompanionHUD({
       const p = propsRef.current;
       if (p.isSleeping) return;
       speak(getIdlePhrase(), 5000);
-      if (!p.useAI) return;
-      const contextMsg = p.language === 'pt-BR'
-        ? `[ALEATÓRIO] Diga algo espontâneo em primeira pessoa como ${p.currentStage}. Máx 12 palavras. Sem emojis.`
-        : `[RANDOM] Say something spontaneous in first person as ${p.currentStage}. Max 12 words. No emojis.`;
-      aiFetch('/api/chat', { message: contextMsg, petName: p.currentStage, mood: p.companionMood, evolutionStage: p.evolutionStage, dominantBranch: p.dominantBranch, language: p.language, aiSettings: p.aiSettings })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => { if (data?.response) speak(data.response, 5000); })
-        .catch(() => {});
+      /* Decisão do dono (19/10/2026): fala ociosa é SÓ frase local. A cota inteira
+         da IA fica para o chat aberto; 15 falas ociosas esgotavam a cota em ~45 min. */
     }, 180000);
 
     return () => clearInterval(interval);
@@ -892,31 +885,8 @@ export const CompanionHUD = memo(function CompanionHUD({
     else fallback = petVoiceLine('starving', isPt, Math.random());
     speak(fallback, 4000);
 
-    if (!useAI) return;
-
-    const contextMsg = language === 'pt-BR'
-      ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
-      : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
-
-    /* WP3.1 — o CONTEXTO vai junto, e é só INTEIRO.
-       O prompt não recebia nada do estado: o pet respondia igual no dia em que
-       a pessoa voltou depois de duas semanas e no dia em que ela fechou tudo.
-       Nada de texto aqui — `soulGoal`/`soulStruggle` não passam por rota de IA
-       (decisão D8), e o servidor descarta o bloco inteiro se vier prop
-       desconhecida ou valor fora da faixa. */
-    aiFetch('/api/chat', {
-      message: contextMsg, petName: currentStage, mood: companionMood,
-      evolutionStage, dominantBranch, language, aiSettings,
-      context: {
-        hp: Math.max(0, Math.min(4, Math.round(hpRatio * 4))),
-        energy: Math.max(0, Math.min(4, Math.round(ratio * 4))),
-        ...(bondLevel ? { bond: Math.max(1, Math.min(31, bondLevel)) } : {}),
-        ...(daysAway ? { daysAway: Math.max(0, Math.min(3, daysAway)) } : {}),
-      },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.response) speak(data.response, 5000); })
-      .catch(() => {});
+    /* Decisão do dono (19/10/2026): o toque no pet é SÓ frase local (sem /api/chat);
+       a cota inteira fica para o chat aberto. */
   };
 
   // O visor mostra a criatura, e só isso. Sprite próprio quando adotado; senão

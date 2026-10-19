@@ -217,8 +217,8 @@
       you have recording open. Nothing is captured in the background, with the
       app closed, or with the screen off.</li>
   <li><strong>Where it goes:</strong> the audio is sent to our server
-      (Cloudflare) and passed on, via Supabase, to Groq (Whisper model), which
-      returns the text. The text lands in the input box for you to <strong>review before
+      (Cloudflare) and passed straight on to Groq (Whisper model), which
+      returns the text. Recordings stop on their own at 60 seconds. The text lands in the input box for you to <strong>review before
       sending</strong> — it is not sent to your creature on its own.</li>
   <li><strong>How long it is kept:</strong> <strong>we do not store the audio.</strong>
       It is passed through and discarded; it is not saved on your device, on our
@@ -356,7 +356,9 @@
         the personality keywords and tone settings you configured. Outside the
         chat: the goal text you type when asking for task suggestions (in the
         tutorial, pre-filled with your onboarding goal) and the name of the task
-        you ask to break down. See <a href="#chat-context">section 2b</a>.</td>
+        you ask to break down. See <a href="#chat-context">section 2b</a>.
+        If Groq is busy, the same content may go to <strong>Google Gemini</strong>
+        instead, as a backup, to produce the reply.</td>
     <td>Only when you use those features.</td>
   </tr>
   <tr>
@@ -377,9 +379,9 @@
     <td>If you sign in and/or enable notifications.</td>
   </tr>
   <tr>
-    <td>Supabase (relay) and Groq (audio transcription)</td>
+    <td>Groq (audio transcription)</td>
     <td>The <strong>audio</strong> you record in the chat, to turn it into text:
-        it passes through Supabase and is transcribed by Groq (Whisper). We do
+        our server sends it straight to Groq, which transcribes it (Whisper). We do
         not store the audio and we do not send anything identifying you along
         with it. See <a href="#microphone">section 2c</a>.</td>
     <td>Only when you use the record button.</td>
@@ -727,8 +729,8 @@
       você está com a gravação aberta. Nada é capturado em segundo plano, com o
       app fechado ou com a tela desligada.</li>
   <li><strong>Para onde vai:</strong> o áudio é enviado ao nosso servidor
-      (Cloudflare) e repassado, via Supabase, ao Groq (modelo Whisper), que devolve
-      o texto.
+      (Cloudflare) e repassado direto ao Groq (modelo Whisper), que devolve
+      o texto. A gravação para sozinha aos 60 segundos.
       O texto aparece no campo de escrita para você <strong>revisar antes de
       enviar</strong> — ele não é mandado para a criatura sozinho.</li>
   <li><strong>Por quanto tempo fica:</strong> <strong>não guardamos o áudio.</strong>
@@ -868,7 +870,9 @@
         Fora do chat: o texto do objetivo que você digita ao pedir sugestões de
         tarefas (no tutorial, pré-preenchido com o seu objetivo do onboarding)
         e o nome da tarefa que você pede para decompor. Ver a
-        <a href="#chat-contexto">seção 2b</a>.</td>
+        <a href="#chat-contexto">seção 2b</a>.
+        Se o Groq estiver ocupado, o mesmo conteúdo pode ir ao <strong>Google
+        Gemini</strong>, como reserva, para gerar a resposta.</td>
     <td>Só quando você usa esses recursos.</td>
   </tr>
   <tr>
@@ -889,9 +893,9 @@
     <td>Se você fizer login e/ou ativar notificações.</td>
   </tr>
   <tr>
-    <td>Supabase (repasse) e Groq (transcrição de áudio)</td>
-    <td>O <strong>áudio</strong> que você grava no chat, para virar texto: passa
-        pela Supabase e é transcrito pelo Groq (Whisper). Não guardamos o áudio
+    <td>Groq (transcrição de áudio)</td>
+    <td>O <strong>áudio</strong> que você grava no chat, para virar texto: nosso
+        servidor o envia direto ao Groq, que o transcreve (Whisper). Não guardamos o áudio
         nem enviamos junto qualquer coisa que identifique você. Ver a
         <a href="#microfone">seção 2c</a>.</td>
     <td>Só quando você usa o botão de gravar.</td>

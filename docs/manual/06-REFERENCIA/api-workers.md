@@ -70,7 +70,7 @@
 **Dono de:** configuração PÚBLICA do servidor — hoje só `authRequired` (o app de desktop precisa saber se deve exigir login) e `transcribeAvailable` (o cliente usa para NÃO desenhar o botão de microfone quando a rota de voz não teria como funcionar).
 **Auth:** nenhuma — rota pública, cacheável (`Cache-Control: public, max-age=300`).
 **Rate limit:** nenhum.
-**Grava/lê:** nada — só lê `env.FIREBASE_PROJECT_ID`/`env.SUPABASE_PROJECT_ID`/`env.SUPABASE_ANON_KEY`.
+**Grava/lê:** nada — só lê `env.FIREBASE_PROJECT_ID`/`env.GROQ_API_KEY`.
 **Erros:** nenhum caminho de erro (sempre 200).
 **Régua:** `functions/api/config.test.js`.
 **Chamado por:** `desktop/renderer/src/cloudSync.ts` (`isAuthRequired`), e o cliente web para decidir se desenha o microfone do chat.
@@ -164,12 +164,12 @@
 
 ### `functions/api/transcribe.js`
 **Rota:** `/api/transcribe` · **Métodos:** `OPTIONS`, `POST`.
-**Dono de:** transcrever a VOZ do jogador (áudio do `ChatBox`) via provedor externo (Supabase Edge Function), same-origin — o áudio sai da NOSSA origem para o NOSSO servidor, a credencial nunca chega ao navegador.
+**Dono de:** transcrever a VOZ do jogador (áudio do `ChatBox`) enviando o áudio direto ao Groq (Whisper), sem Supabase, same-origin — o áudio sai da NOSSA origem para o NOSSO servidor, a credencial nunca chega ao navegador.
 **Auth:** nenhuma própria (é o rate limit que protege o custo).
 **Rate limit:** `_rateLimit.js`, bucket `transcribe`, `{limit:6, windowMs:60_000}` — mais apertado que o resto ("6/minuto por IP é um humano falando, não um laço").
 **Grava/lê:** nada — o áudio é REPASSADO, nunca gravado (sem `put` de KV/R2 em lugar nenhum deste arquivo).
-**Erros:** `429` (rate limit) · `503 transcribe-not-configured` (sem `SUPABASE_PROJECT_ID`/`SUPABASE_ANON_KEY`, ou formato inválido do project id) · `400 invalid-form|missing-audio|empty-audio` · `413 audio-too-large` (teto `MAX_BYTES=4MB`) · `415 unsupported-audio-type` · `502 transcribe-unavailable|transcribe-failed`.
-**Régua:** `functions/api/transcribe.test.js`; a existência-e-forma da funcionalidade inteira é travada por `src/security/supabase.contract.test.ts`.
+**Erros:** `429` (rate limit) · `503 transcribe-not-configured` (sem `GROQ_API_KEY`) · `400 invalid-form|missing-audio|empty-audio` · `413 audio-too-large` (teto `MAX_BYTES=4MB`) · `415 unsupported-audio-type` · `502 transcribe-unavailable|transcribe-failed`.
+**Régua:** `functions/api/transcribe.test.js`; a existência-e-forma da funcionalidade inteira é travada por `src/security/transcribe.contract.test.ts`. Limite de gravação: 60 s.
 **Chamado por:** `src/components/ChatBox.tsx` (botão de microfone, desenhado só quando `/api/config` diz `transcribeAvailable:true`).
 
 ---

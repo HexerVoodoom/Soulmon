@@ -109,29 +109,20 @@ describe('cabeçalhos', () => {
 });
 
 describe('🔴 `transcribeAvailable` — o botão de microfone depende dele', () => {
-  it('sem as duas variáveis do provedor, é false', async () => {
-    for (const env of [
-      {},
-      { SUPABASE_PROJECT_ID: 'evvcdsnijxbyctipfnkt' },
-      { SUPABASE_ANON_KEY: 'k' },
-      { SUPABASE_PROJECT_ID: '', SUPABASE_ANON_KEY: 'k' },
-    ]) {
+  it('sem GROQ_API_KEY (ausente ou vazia), é false', async () => {
+    for (const env of [{}, { GROQ_API_KEY: '' }, { SUPABASE_ANON_KEY: 'k' }]) {
       expect((await ler(env)).transcribeAvailable, JSON.stringify(env)).toBe(false);
     }
   });
 
-  it('com as duas, é true', async () => {
-    expect((await ler({ SUPABASE_PROJECT_ID: 'evvcdsnijxbyctipfnkt', SUPABASE_ANON_KEY: 'k' })).transcribeAvailable)
-      .toBe(true);
+  it('com GROQ_API_KEY, é true', async () => {
+    expect((await ler({ GROQ_API_KEY: 'k' })).transcribeAvailable).toBe(true);
   });
 
-  it('🔴 a CHAVE do provedor nunca sai por aqui — só o booleano', async () => {
+  it('a CHAVE do provedor nunca sai por aqui, só o booleano', async () => {
     // Esta rota é anônima e cacheada por 5 minutos. Vazar a credencial aqui
     // seria publicá-la para o mundo com um CDN na frente.
-    const texto = JSON.stringify(await ler({
-      SUPABASE_PROJECT_ID: 'evvcdsnijxbyctipfnkt', SUPABASE_ANON_KEY: 'jwt-secreto',
-    }));
-    expect(texto).not.toContain('jwt-secreto');
-    expect(texto).not.toContain('evvcdsnijxbyctipfnkt');
+    const texto = JSON.stringify(await ler({ GROQ_API_KEY: 'gsk-segredo' }));
+    expect(texto).not.toContain('gsk-segredo');
   });
 });

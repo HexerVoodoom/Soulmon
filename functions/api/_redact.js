@@ -9,8 +9,8 @@
 //   2. `src/components/GameTutorialFlow.tsx:149` → `goalText` (estado LOCAL do
 //      tutorial, não `soulGoal`) → `src/utils/taskSuggestions.ts:23` →
 //      `functions/api/suggest-tasks.js:50` → Groq.
-//   3. `CompanionHUD.tsx:298,338` manda só template nosso (`[ALEATÓRIO] …`),
-//      sem texto do usuário.
+//   3. Desde 19/10/2026 o `CompanionHUD` não chama mais `/api/chat`: a fala
+//      ociosa e o toque no pet são frases locais, sem IA.
 //
 //   `soulGoal`/`soulStruggle` NÃO passam por nenhuma dessas rotas — vão ao KV
 //   pelo cloud save e são lidos localmente. Zero ocorrências em `taskSuggestions`.

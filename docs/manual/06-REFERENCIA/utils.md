@@ -19,7 +19,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Persistência (save, conta, storage)** — [`accountData.ts`](#srcutilsaccountdatats), [`auth.ts`](#srcutilsauthts), [`cloudSave.ts`](#srcutilscloudsavets), [`consent.ts`](#srcutilsconsentts), [`playerDay.ts`](#srcutilsplayerdayts), [`safeStorage.ts`](#srcutilssafestoragets), [`serverConfig.ts`](#srcutilsserverconfigts), [`storageKeys.ts`](#srcutilsstoragekeysts)
 **Push e notificações** — [`notifications.ts`](#srcutilsnotificationsts), [`pushPriming.ts`](#srcutilspushprimingts), [`vapid.ts`](#srcutilsvapidts)
 **Comunidade e chat** — [`chatKeywords.ts`](#srcutilschatkeywordsts), [`chatSafety.ts`](#srcutilschatsafetyts), [`community.ts`](#srcutilscommunityts)
-**Utilidades gerais** — [`aiClient.ts`](#srcutilsaiclientts), [`i18n.ts`](#srcutilsi18nts), [`telemetry.ts`](#srcutilstelemetryts), [`tzOffset.ts`](#srcutilstzoffsetts), [`weekdays.ts`](#srcutilsweekdaysts)
+**Utilidades gerais** — [`aiClient.ts`](#srcutilsaiclientts), [`audioFile.ts`](#srcutilsaudiofilets), [`chatErrorCopy.ts`](#srcutilschaterrorcopyts), [`i18n.ts`](#srcutilsi18nts), [`telemetry.ts`](#srcutilstelemetryts), [`tzOffset.ts`](#srcutilstzoffsetts), [`weekdays.ts`](#srcutilsweekdaysts)
 
 ## Módulos (ordem alfabética)
 
@@ -132,6 +132,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `function tocarNa( cat: CategoriaSom, montarFonte: (ctx: AudioContext, destino: AudioNode) => number | void, origem: OrigemDoDespacho = 'gesto'): boolean` — Toca alguma coisa numa categoria. `montarFonte` recebe o contexto e o nó de ENTRADA do despacho — nunca `ctx.destination`, que é o que fazia cada som ignorar o mix. Devolve a duração do som em segundos (para os duckings) ou nada.
 **Chamado por:** `src/utils/sounds.ts`, `src/utils/trilha.ts` (`garantirBarramento`, `definirTrilhaLigada`, `trilhaLigada`)
 **Régua:** `audioBus.contract.test.ts`, `audioBus.rex.test.ts`
+
+### `src/utils/audioFile.ts`
+**Dono de:** A extensão do arquivo de áudio pelo mime REAL gravado (webm, ogg, mp4, m4a, mp3, wav; padrão webm).
+**Exports:**
+- `function audioExtension(mimeType: string | undefined | null): string` — Mapeia o mimeType para a extensão usada em `voice.<ext>` no envio da transcrição.
+**Chamado por:** `src/components/ChatBox.tsx`
+**Régua:** `audioFile.test.ts`
 
 ### `src/utils/auth.ts`
 **Dono de:** Autenticação Firebase (e-mail/senha, Google, link por e-mail) e a ponte de auth para o app de desktop.
@@ -293,6 +300,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ Existe por causa do achado X-6: três bugs de recusa lida de FORA do updater foram consertados na fatia 2 sem nenhum teste cobrindo — não reintroduza regra dentro de updater inline.
 **Regra de negócio:** Aplica carinho/comida com a recusa reconferida sobre o estado real, nunca o de fora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/chatErrorCopy.ts`
+**Dono de:** A copy dos erros do chat (`/api/chat`) e do microfone (`/api/transcribe`), EN e PT-BR, em tom calmo.
+**Exports:**
+- `CHAT_ERR`, `MIC_ERR` (const) — Strings por tipo de erro (sessão, teste fechado, cota, servidor, offline).
+- `function copiaErro(p, isPt): string` — Escolhe o idioma.
+- `function micErroPorStatus(status: number, erro?: string)` — Status do `/api/transcribe` → copy.
+**Chamado por:** `src/components/ChatBox.tsx`
+**Régua:** `ChatBox.errosD96.render.test.tsx`
 
 ### `src/utils/chatKeywords.ts`
 **Dono de:** Detecta a intenção (categoria) de uma mensagem do chat, em PT e EN.
@@ -1931,9 +1947,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:**
 - `ServerConfig` (interface) — O que o SERVIDOR diz sobre si mesmo — `/api/config`, do lado do app web. O app de desktop já perguntava isso (`desktop/renderer/src/cloudSync.ts`); o web nunca perguntou, porque até 09/09/2026 nada dependia da resposta.
 - `function fetchServerConfig(): Promise<ServerConfig>` — Busca `/api/config` uma vez por sessão (cacheado em módulo) e normaliza a resposta.
+- `function peekServerConfig(): ServerConfig | null` — Síncrono, sem rede: a resposta já resolvida desta sessão (ou null).
 - `function resetServerConfigCache(): void` — Só para teste: esquece a resposta cacheada desta sessão.
 **Chamado por:** `src/components/ChatBox.tsx`
-**Régua:** nenhuma (`ls src/utils/serverConfig*.test.ts` vazio).
+**Régua:** `serverConfig.peek.test.ts`
 
 ### `src/utils/shop.ts`
 **Dono de:** O catálogo da loja: itens comuns, especiais e de torneio — `ALL_SHOP_ITEMS` é a fonte única para resolver um item por id.

@@ -119,7 +119,7 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 | `src/contexts/` | **3 módulos**: `GameStateContext.tsx`, `ThemeContext.tsx`, `LanguageContext.tsx` (⚠️ ver §6). |
 | `src/types/` | `progression.ts` (a árvore de formas, HP e requisitos), `taskModel.ts` (dono único das constantes do motor de tarefas), `attributes.ts`, `category-icons.ts`. |
 | `src/plugins/` | As pontes com o Android: `SoulmonWidgetPlugin.ts` e `SoulmonAlarmPlugin.ts` (`registerPlugin` do Capacitor). |
-| `src/security/` | Só testes: `csp.test.ts`, `oldWebview.test.ts`, `supabase.contract.test.ts`. |
+| `src/security/` | Só testes: `csp.test.ts`, `oldWebview.test.ts`, `transcribe.contract.test.ts`. |
 | `src/deploy/` | Só testes: `appUrl.contract.test.ts`, `firebaseNoBuild.contract.test.ts`, `swCache.contract.test.ts` e, desde `4a8b8049`, `depsVivas.contract.test.ts` (#33) e `orcamentoDeBytes.contract.test.ts` (#31) — os dois em §9. |
 | `src/styles/` | `tokens.md` e cinco guards de estilo (contraste, escala de ícone, rótulo da nav, inventário de ícones, suporte a emoji). |
 | `src/constants/` | `labels.ts` — 1 módulo. |
@@ -127,7 +127,7 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 | `src/brand/` | A chama da marca como DADO: `flame.ts` (a grade de pixels, fonte única), `BrandFlame.tsx` (o componente) e `brandFlame.parity.test.ts`. Nasceu em 20/09/2026 (`fd9ec04d`); é daqui que saem `public/push-large-192.png`, `public/badge-96.png` e o desenho de `android/.../drawable/ic_notification.xml` (§7 e [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §2.6). |
 | `src/translations/` | `en.ts` e `pt.ts` (⚠️ ver §6). |
 | `src/test/` | Infra de teste: `renderEnv.tsx` (ambiente de render) e `tsAst.ts` (compilador de TS fora do orçamento). |
-| `src/supabase/functions/server/` | A Edge Function que roda **no provedor**, não no app: `index.tsx`, `transcribe.tsx`, `kv_store.tsx`. `tsconfig.json` a EXCLUI do typecheck e nenhum arquivo de `src/` a importa. |
+| `src/supabase/functions/server/` | ⚰️ Removida: a transcrição vai do Worker direto ao Groq, sem Supabase (ver 08 §2.4). |
 
 ---
 

@@ -1,44 +1,33 @@
 /**
  * POST /api/transcribe — a VOZ do jogador vira texto.
  *
- * ## Por que esta rota existe, e não um `fetch` direto do navegador
+ * ## Para onde o áudio vai
  *
- * Até 09/09/2026 o `ChatBox` gravava áudio e mandava `POST` DIRETO para
- * `https://<projectId>.supabase.co/…/transcribe`, com o JWT anônimo commitado
- * em `src/utils/supabase/info.tsx`. Aquilo nunca funcionou em produção — a CSP
- * não tem `*.supabase.co` em `connect-src` —, e a saída óbvia ("libera a CSP")
- * era a pior das disponíveis:
- *
- *  · abrir `connect-src` para `*.supabase.co` deixa QUALQUER projeto Supabase
- *    ser destino, então um XSS passaria a poder exfiltrar para um projeto do
- *    atacante — a CSP deixaria de ser uma trava e viraria decoração;
- *  · a chave do projeto teria que continuar embarcada no bundle;
- *  · e a chamada ficaria FORA de tudo que o resto do app já tem: sem teto por
- *    IP, sem limite de tamanho, sem um lugar onde medir custo.
- *
- * Passando por aqui, o áudio sai da NOSSA origem para o NOSSO servidor
- * (same-origin: a CSP nem precisa mudar), a credencial do provedor vive em
- * variável de ambiente do servidor e nunca chega ao navegador, e a chamada
- * entra no mesmo regime das outras rotas caras.
+ * O navegador (ou o APK) manda o áudio para ESTA rota, na nossa própria origem
+ * (a CSP não precisa abrir `connect-src` para ninguém). O Worker repassa ao
+ * Groq (`api.groq.com`, modelo `whisper-large-v3`) com a chave
+ * `GROQ_API_KEY`, que vive só no ambiente do servidor e nunca chega ao
+ * navegador. A chamada entra no mesmo regime das outras rotas caras: balde por
+ * IP, ID token do Firebase verificado, cota por conta/dia/global e allowlist
+ * do beta.
  *
  * ## Privacidade — leia antes de mexer
  *
- * ⚠️ Isto envia a VOZ da pessoa para um processador externo. Está declarado em
+ * ⚠️ Isto envia a VOZ da pessoa ao Groq, via o nosso Worker. Está declarado em
  * `public/privacidade.html` e em `docs/PLAY-DATA-SAFETY.md`, e as duas coisas
- * são parte do contrato desta rota, não documentação opcional. Se você mudar
- * PARA ONDE o áudio vai, os dois têm que mudar junto — e o guard
- * `src/security/supabase.contract.test.ts` existe para essa mudança não passar
- * calada.
+ * são parte do contrato desta rota. Se você mudar PARA ONDE o áudio vai, os
+ * dois têm que mudar junto — e o guard `src/security/transcribe.contract.test.ts`
+ * existe para essa mudança não passar calada.
  *
  * O áudio é REPASSADO, nunca gravado: não há `put` de KV nem de R2 em lugar
- * nenhum deste arquivo, e não pode haver.
+ * nenhum deste arquivo, e não pode haver. Só o `text` volta ao cliente.
  *
  * ## Desligada por padrão
  *
- * Sem `SUPABASE_PROJECT_ID` + `SUPABASE_ANON_KEY` no ambiente do servidor, a
- * rota responde 503 `transcribe-not-configured` e `/api/config` diz
- * `transcribeAvailable: false` — o que faz o botão de microfone NÃO aparecer no
- * app. Botão que existe e falha é pior que botão que não existe.
+ * Sem `GROQ_API_KEY` no ambiente do servidor, a rota responde 503
+ * `transcribe-not-configured` e `/api/config` diz `transcribeAvailable: false`
+ * — o que faz o botão de microfone NÃO aparecer no app. Botão que existe e
+ * falha é pior que botão que não existe.
  */
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bearerToken, verifyIdToken, emailToSaveId } from './_auth.js';
@@ -58,15 +47,28 @@ const json = (corpo, status = 200) => Response.json(corpo, { status, headers: CO
  * outras: 6/minuto por IP é um humano falando, não um laço.
  */
 const LIMITE = { limit: 6, windowMs: 60_000 };
+// (O balde por IP é só amortecedor: vive na memória do isolate. Quem fecha a porta é auth + cota.)
 
 /**
- * 4 MB. Opus a 32 kbps dá ~16 minutos — muito mais que qualquer recado para o
- * bichinho, e pouco o bastante para não virar um túnel de upload gratuito na
- * nossa borda. O corpo é lido em memória no Worker: sem teto, um POST de 100 MB
- * derruba a requisição inteira por limite de isolate, o que é um jeito caro de
- * descobrir que faltava um número aqui.
+ * 2 MB. O limite de gravação é 60 s; a 256 kbps (bem acima do Opus/AAC de um
+ * MediaRecorder, que fica em 32-128 kbps) 60 s dão 60 * 256_000 / 8 = 1,92 MB.
+ * Teto apertado para não virar túnel de upload gratuito na nossa borda: o corpo
+ * é lido em memória no Worker, e sem teto um POST de 100 MB derruba a
+ * requisição por limite de isolate.
  */
-const MAX_BYTES = 4 * 1024 * 1024;
+const MAX_BYTES = 2 * 1024 * 1024;
+
+/** Duração máxima aceita (60 s do cliente + folga de 5 s de container/relógio). */
+const MAX_DURACAO_S = 65;
+
+/** Teto do provedor. O cliente espera 30 s: o servidor tem que desistir antes. */
+const TIMEOUT_MS = 25_000;
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
+
+/** Extensão decidida pelo servidor a partir do mime REAL; o nome do cliente é ignorado. */
+const EXTENSAO = { webm: 'webm', ogg: 'ogg', mp4: 'mp4', 'x-m4a': 'm4a', mpeg: 'mp3', wav: 'wav' };
+const extensaoDe = tipo => EXTENSAO[String(tipo).split(';')[0].split('/')[1]?.trim().toLowerCase()] ?? 'webm';
 
 /** Só formatos que um `MediaRecorder` produz. */
 const TIPOS = /^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a)(;.*)?$/i;
@@ -85,18 +87,10 @@ export async function onRequestPost({ request, env }) {
     return tooManyRequests(gate.retryAfter, CORS);
   }
 
-  const projectId = env.SUPABASE_PROJECT_ID;
-  const anonKey = env.SUPABASE_ANON_KEY;
-  // ORDEM: a configuração é conferida ANTES de ler o corpo. Ler 4 MB para
+  // ORDEM: a configuração é conferida ANTES de ler o corpo. Ler 2 MB para
   // descobrir que o serviço não existe gasta o que a pessoa pagou de dados
   // móveis por nada.
-  if (!projectId || !anonKey) {
-    return json({ error: 'transcribe-not-configured' }, 503);
-  }
-  // O id do projeto vira HOST. Sem esta checagem, um valor torto na variável
-  // de ambiente monta uma URL para outro domínio — SSRF por configuração.
-  if (!/^[a-z0-9]{16,40}$/.test(projectId)) {
-    console.error('[transcribe] SUPABASE_PROJECT_ID fora do formato esperado');
+  if (!env.GROQ_API_KEY) {
     return json({ error: 'transcribe-not-configured' }, 503);
   }
 
@@ -115,6 +109,13 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'auth-unavailable' }, 503);
   }
   if (!claims) return json({ error: 'unauthenticated' }, 401);
+
+  // Content-Length declarado grande demais: nega sem ler o corpo. Sem o header
+  // (chunked), segue e o teto por `audio.size` continua valendo.
+  const declarado = request.headers.get('content-length');
+  if (declarado !== null && Number(declarado) > MAX_BYTES + 64 * 1024) {
+    return json({ error: 'audio-too-large' }, 413);
+  }
 
   let form;
   try {
@@ -145,25 +146,24 @@ export async function onRequestPost({ request, env }) {
   if (!cota.ok) return json({ error: cota.reason, ...(cota.message ? { message: cota.message } : {}) }, cota.status);
 
   const repasse = new FormData();
-  repasse.append('audio', audio, 'recording.webm');
+  repasse.append('file', audio, `audio.${extensaoDe(audio.type)}`);
+  repasse.append('model', 'whisper-large-v3');
   repasse.append('language', language);
+  repasse.append('response_format', 'verbose_json');
+  repasse.append('temperature', '0');
 
   let upstream;
   try {
-    upstream = await fetch(
-      `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/transcribe`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${anonKey}` },
-        body: repasse,
-        // Áudio longo num modelo de fala é lento; sem teto a requisição fica
-        // pendurada até o limite do isolate e o app mostra "falhou" tarde.
-        signal: AbortSignal.timeout(30_000),
-      },
-    );
+    upstream = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
+      body: repasse,
+      // Sem teto a requisição fica pendurada até o limite do isolate e o app
+      // mostra "falhou" tarde. 25 s < 30 s do cliente.
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
   } catch (err) {
-    // ⚠️ A mensagem do erro NÃO volta ao cliente: ela carrega a URL montada,
-    // e a URL carrega o id do projeto.
+    // Só o nome do erro vai ao log; a mensagem não volta ao cliente.
     console.error('[transcribe] falha ao falar com o provedor:', err?.name);
     await cota.release('provedor de transcrição indisponível');
     return json({ error: 'transcribe-unavailable' }, 502);
@@ -179,11 +179,20 @@ export async function onRequestPost({ request, env }) {
   try {
     dados = await upstream.json();
   } catch {
+    // Cota NÃO liberada: o provedor respondeu 200, então o custo já ocorreu.
     return json({ error: 'transcribe-failed' }, 502);
   }
 
+  // Limite de 60 s também no servidor: o corpo de 2 MB não prova a duração.
+  // NÃO libera a cota: o custo já ocorreu no provedor. O texto não volta.
+  // FAIL-CLOSED: o Groq sempre manda `duration` em verbose_json; se faltar ou
+  // não for número, a dúvida nega.
+  const d = Number(dados?.duration);
+  if (!Number.isFinite(d) || d > MAX_DURACAO_S) {
+    return json({ error: 'audio-too-long' }, 413);
+  }
+
   // Só o TEXTO atravessa. O que mais o provedor mandar (id de requisição,
-  // metadado do modelo, o próprio áudio) fica do lado de cá — resposta de
-  // terceiro repassada crua é como campo que ninguém revisou chega à tela.
+  // segmentos, metadado do modelo) fica do lado de cá.
   return json({ text: String(dados?.text ?? '').slice(0, 2000) });
 }
