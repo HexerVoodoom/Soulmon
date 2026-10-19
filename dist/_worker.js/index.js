@@ -5896,12 +5896,20 @@ var PLANTIO_HIST_MAX = 120;
 var ARVORE_TIER_MAX = 3;
 var ARVORE_NIVEL_MAX = 9;
 var ESTACOES = Object.freeze({
-  primavera: { especie: "girassol", meses: [9, 10, 11] },
-  verao: { especie: "melancia", meses: [12, 1, 2] },
+  primavera: { especie: "cerejeira", meses: [9, 10, 11] },
+  verao: { especie: "cacto", meses: [12, 1, 2] },
   outono: { especie: "abobora", meses: [3, 4, 5] },
   inverno: { especie: "pinheiro", meses: [6, 7, 8] }
 });
 var ESPECIES = Object.freeze(Object.values(ESTACOES).map((e) => e.especie));
+var ESPECIE_LEGADO = Object.freeze({ girassol: "cerejeira", melancia: "cacto" });
+var migrarEspecie = /* @__PURE__ */ __name((e) => typeof e === "string" && Object.hasOwn(ESPECIE_LEGADO, e) ? ESPECIE_LEGADO[e] : e, "migrarEspecie");
+var migrarFruto = /* @__PURE__ */ __name((f) => {
+  if (!f || typeof f !== "object") return f;
+  const especie = migrarEspecie(f.especie);
+  const id = typeof f.id === "string" ? f.id.replace(/^fruto-(girassol|melancia)-/, (_, e) => `fruto-${ESPECIE_LEGADO[e]}-`) : f.id;
+  return { ...f, especie, id };
+}, "migrarFruto");
 var plantioKey = /* @__PURE__ */ __name((gid) => `claPlantio:${gid}`, "plantioKey");
 var plantioMembroKey = /* @__PURE__ */ __name((gid, save) => `claPlantioM:${gid}:${save}`, "plantioMembroKey");
 var protKey = /* @__PURE__ */ __name((gid, day2) => `claProt:${gid}:${day2}`, "protKey");
@@ -5956,11 +5964,12 @@ function avaliarCrescimento({ plantedDay, today: today3, membros, membro }) {
 }
 __name(avaliarCrescimento, "avaliarCrescimento");
 function normalizarPlanta(r) {
-  if (!r || typeof r.season !== "string" || !ESPECIES.includes(r.species) || !DIA_RE2.test(r.plantedDay)) return null;
+  const species = migrarEspecie(r?.species);
+  if (!r || typeof r.season !== "string" || !ESPECIES.includes(species) || !DIA_RE2.test(r.plantedDay)) return null;
   return {
     v: 1,
     season: r.season,
-    species: r.species,
+    species,
     plantedDay: r.plantedDay,
     by: typeof r.by === "string" ? r.by : null,
     nivel: Math.min(ARVORE_NIVEL_MAX, Math.max(1, Math.floor(r.nivel) || 1)),
@@ -5974,7 +5983,7 @@ function normalizarMembro(r) {
     v: 1,
     water: diasLista(r?.water),
     prot: diasLista(r?.prot),
-    last: r?.last && typeof r.last.week === "string" && r.last.fruit && typeof r.last.receipt === "string" ? { week: r.last.week, fruit: r.last.fruit, receipt: r.last.receipt } : null,
+    last: r?.last && typeof r.last.week === "string" && r.last.fruit && typeof r.last.receipt === "string" ? { week: r.last.week, fruit: migrarFruto(r.last.fruit), receipt: r.last.receipt } : null,
     harvest: (Array.isArray(r?.harvest) ? r.harvest.filter((w) => typeof w === "string") : []).slice(-12)
   };
 }
@@ -5995,7 +6004,10 @@ __name(gravarMembro, "gravarMembro");
 async function lerArvores(env, gid) {
   const r = parse4(await kvOrThrow(env).get(arvoresKey(gid)));
   const out = {};
-  for (const e of ESPECIES) if (Number.isInteger(r?.[e])) out[e] = r[e];
+  for (const [k, v] of Object.entries(r ?? {})) {
+    const e = migrarEspecie(k);
+    if (ESPECIES.includes(e) && Number.isInteger(v)) out[e] = out[e] === void 0 ? v : Math.min(out[e], v);
+  }
   return out;
 }
 __name(lerArvores, "lerArvores");
@@ -8235,7 +8247,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../node_modules/fflate/esm/browser.js
+// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10972,7 +10984,7 @@ async function onRequestPost10({ request, env }) {
 __name(onRequestPost10, "onRequestPost");
 
 // .well-known/assetlinks.json.js
-var DEFAULT_PACKAGE = "com.hexervoodoom.soulmon";
+var DEFAULT_PACKAGE = "com.soulmon";
 async function onRequest7({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
   const fingerprint = env?.ASSETLINKS_SHA256;
@@ -10993,7 +11005,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-JjPfNd/functionsRoutes-0.9771689939354813.mjs
+// ../.wrangler/tmp/pages-pTcKek/functionsRoutes-0.43484746030340393.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11270,7 +11282,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11596,7 +11608,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

@@ -1,5 +1,6 @@
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeClaReceipts } from '../utils/claCredit';
+import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
 import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
@@ -527,6 +528,8 @@ export interface GameState {
   guildDonatedItem?: string | null;
   /** Recibos de prêmio dos prédios do clã (Praça, Plantio, Mistério) JÁ creditados — os últimos ~50. Credita UMA vez por recibo (`utils/claCredit.ts`). */
   claReceipts?: string[];
+  /** As 4 árvores do Bosque: o pico de cada estação e o ano-ciclo em que completou/aperfeiçoou (`utils/bosqueArvores.ts`). */
+  bosqueArvores?: BosqueArvores;
   /** MISSÃO da guilda (PR3): o Solmon foi investigar e some da Home até `returnAt` (`utils/guildMission.ts`). */
   guildMission?: { day: string; returnAt: number } | null;
   /** @deprecated Só sobrevive para migrar saves antigos. Use `equippedDecor`. */
@@ -1367,6 +1370,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         equippedDecor: hydrateDecor(migrateDecor(loadedState)),
         guildMission: normalizeGuildMission(loadedState.guildMission),
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
+        bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
         // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo
@@ -1648,6 +1652,7 @@ function freshGameState(): GameState {
       equippedDecor: {},
       guildDonatedItem: null,
       claReceipts: [],
+      bosqueArvores: {},
       guildMission: null,
       soulGoal: '',
       soulStruggle: '',

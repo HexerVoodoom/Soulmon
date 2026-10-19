@@ -94,6 +94,7 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
  *  A leitura do ritmo olha 14 dias; 90 entradas cobrem isso com folga sem
  *  inchar o save (localStorage e nuvem). */
 const ACTIVITY_LOG_CAP = 90;
+const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
 import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto } from './utils/dailyReset';
@@ -181,6 +182,7 @@ import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMi
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
+import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
@@ -4221,6 +4223,16 @@ export default function App() {
     });
   }, [setGameState]);
 
+  /** BOSQUE: guarda o pico da árvore da estação (e o ano-ciclo de conclusão). Idempotente: vista igual devolve o MESMO estado. */
+  const handleBosquePlantio = useCallback((v: { planted: boolean; mature: boolean; stage: number; season: 'primavera' | 'verao' | 'outono' | 'inverno' }) => {
+    void import('./utils/bosqueArvores').then(({ registrarPlantio }) => {
+      setGameState(prev => {
+        const arv = registrarPlantio(prev.bosqueArvores ?? {}, v, playerDayIso(new Date(), prev.playerDayTz));
+        return arv === (prev.bosqueArvores ?? {}) || arv === prev.bosqueArvores ? prev : { ...prev, bosqueArvores: arv };
+      });
+    });
+  }, [setGameState]);
+
   /** MISTÉRIO do clã: UMA tarefa/hábito concluído soma na barra coletiva. Fire-and-forget; só com clã (a memória do
    *  Bosque neste aparelho diz), nunca bloqueia nem falha a conclusão. Chamado FORA de updater (footgun 6). */
   const contarMisterio = useCallback((origem: string, porDia = false) => {
@@ -7166,7 +7178,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, cla: { onReward: handleClaReward } }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
             </Suspense>
           )}

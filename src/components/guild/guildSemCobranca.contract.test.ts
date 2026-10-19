@@ -249,7 +249,7 @@ describe('fonte da B1 — o palco, o visor e a memória não ordenam nem leem pr
     expect(v).not.toMatch(/as any\)\.(stage|hp|line)/);
     expect(fonte('utils/groveStage.ts')).not.toMatch(/\b(stage|hp|healthPoints|evolution\w*)\b/i);
     const usosDeStage = [...fonte('components/guild/GroveVisor.tsx').matchAll(/(\w+(?:\.\w+)*)\.stage\b/g)].map(m => m[1]);
-    expect(usosDeStage.length).toBeGreaterThan(0);
+    // O panorama (18/10/2026) não lê estágio nenhum: só o nível das árvores. Se voltar a ler, só o da RODA.
     for (const u of usosDeStage) expect(u).toBe('guild.bosque');
   });
 

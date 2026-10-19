@@ -2,8 +2,11 @@
 // O PLANTIO DO CLÃ (D-14..D-17). UMA planta por clã por ESTAÇÃO.
 //
 // CALENDÁRIO FIXO (hemisfério SUL, dono brasileiro; sem fuso, pelo dia do jogador):
-//   primavera set-nov = girassol · verão dez-fev = melancia
-//   outono    mar-mai = abóbora  · inverno jun-ago = pinheiro (fruto: pinhão)
+//   primavera set-nov = cerejeira (cerejeira+acácia) · verão dez-fev = cacto (cacto+coqueiro)
+//   outono    mar-mai = abóbora                      · inverno jun-ago = pinheiro (fruto: pinhão)
+// (18/10/2026: girassol e melancia saíram; as 4 espécies são as 4 árvores do Bosque.
+//  Dado antigo migra NA LEITURA por `ESPECIE_LEGADO`: girassol→cerejeira, melancia→cacto,
+//  a mesma estação; idempotente, e nada é regravado até a próxima escrita normal.)
 // Janeiro e fevereiro pertencem ao verão que COMEÇOU em dezembro do ano anterior
 // (a chave da estação usa o ano do início: `2026-verao` cobre dez/2026..fev/2027).
 //
@@ -32,12 +35,22 @@ export const ARVORE_TIER_MAX = 3;
 export const ARVORE_NIVEL_MAX = 9;
 
 export const ESTACOES = Object.freeze({
-  primavera: { especie: 'girassol', meses: [9, 10, 11] },
-  verao: { especie: 'melancia', meses: [12, 1, 2] },
+  primavera: { especie: 'cerejeira', meses: [9, 10, 11] },
+  verao: { especie: 'cacto', meses: [12, 1, 2] },
   outono: { especie: 'abobora', meses: [3, 4, 5] },
   inverno: { especie: 'pinheiro', meses: [6, 7, 8] },
 });
 export const ESPECIES = Object.freeze(Object.values(ESTACOES).map(e => e.especie));
+/** Espécies aposentadas -> a espécie da MESMA estação. */
+export const ESPECIE_LEGADO = Object.freeze({ girassol: 'cerejeira', melancia: 'cacto' });
+/** Idempotente: espécie nova (ou desconhecida) volta como veio. */
+export const migrarEspecie = e => (typeof e === 'string' && Object.hasOwn(ESPECIE_LEGADO, e) ? ESPECIE_LEGADO[e] : e);
+const migrarFruto = f => {
+  if (!f || typeof f !== 'object') return f;
+  const especie = migrarEspecie(f.especie);
+  const id = typeof f.id === 'string' ? f.id.replace(/^fruto-(girassol|melancia)-/, (_, e) => `fruto-${ESPECIE_LEGADO[e]}-`) : f.id;
+  return { ...f, especie, id };
+};
 
 export const plantioKey = gid => `claPlantio:${gid}`;
 export const plantioMembroKey = (gid, save) => `claPlantioM:${gid}:${save}`;
@@ -98,9 +111,10 @@ export function avaliarCrescimento({ plantedDay, today, membros, membro }) {
 }
 
 export function normalizarPlanta(r) {
-  if (!r || typeof r.season !== 'string' || !ESPECIES.includes(r.species) || !DIA_RE.test(r.plantedDay)) return null;
+  const species = migrarEspecie(r?.species);
+  if (!r || typeof r.season !== 'string' || !ESPECIES.includes(species) || !DIA_RE.test(r.plantedDay)) return null;
   return {
-    v: 1, season: r.season, species: r.species, plantedDay: r.plantedDay,
+    v: 1, season: r.season, species, plantedDay: r.plantedDay,
     by: typeof r.by === 'string' ? r.by : null,
     nivel: Math.min(ARVORE_NIVEL_MAX, Math.max(1, Math.floor(r.nivel) || 1)),
     tier: Math.min(ARVORE_TIER_MAX, Math.max(1, Math.floor(r.tier) || 1)),
@@ -113,7 +127,7 @@ export function normalizarMembro(r) {
     v: 1,
     water: diasLista(r?.water),
     prot: diasLista(r?.prot),
-    last: r?.last && typeof r.last.week === 'string' && r.last.fruit && typeof r.last.receipt === 'string' ? { week: r.last.week, fruit: r.last.fruit, receipt: r.last.receipt } : null,
+    last: r?.last && typeof r.last.week === 'string' && r.last.fruit && typeof r.last.receipt === 'string' ? { week: r.last.week, fruit: migrarFruto(r.last.fruit), receipt: r.last.receipt } : null,
     harvest: (Array.isArray(r?.harvest) ? r.harvest.filter(w => typeof w === 'string') : []).slice(-12),
   };
 }
@@ -127,7 +141,11 @@ async function gravarMembro(env, gid, save, m) {
 async function lerArvores(env, gid) {
   const r = parse(await kvOrThrow(env).get(arvoresKey(gid)));
   const out = {};
-  for (const e of ESPECIES) if (Number.isInteger(r?.[e])) out[e] = r[e];
+  // Chave legada entra na espécie nova; se as duas existem, vale o ano MAIS ANTIGO (a árvore já era mais velha).
+  for (const [k, v] of Object.entries(r ?? {})) {
+    const e = migrarEspecie(k);
+    if (ESPECIES.includes(e) && Number.isInteger(v)) out[e] = out[e] === undefined ? v : Math.min(out[e], v);
+  }
   return out;
 }
 

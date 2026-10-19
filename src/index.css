@@ -8235,6 +8235,31 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-creature { image-rendering: pixelated; position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
 @keyframes sm2-grove-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; }
+/* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
+   imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
+.sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }
+.sm2-grove-folha-topo { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + var(--sm2-space-2)) var(--sm2-space-3) var(--sm2-space-2); background: linear-gradient(to bottom, rgba(5,14,12,.72), transparent); pointer-events: none; }
+.sm2-grove-folha-topo > * { pointer-events: auto; }
+.sm2-grove-folha-titulo { margin: 0; flex: 1; min-width: 0; font-family: var(--sm2-font-display); font-size: var(--sm2-text-lg); font-weight: 600; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+.sm2-grove-folha-fechar { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 4px rgba(0,0,0,.8)); }
+.sm2-grove-folha-busy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+.sm2-grove-pan-wrap { position: relative; flex: 1; min-height: 0; width: 100%; }
+.sm2-grove-pan { position: absolute; inset: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; container-type: size; cursor: grab; display: flex; align-items: flex-end; touch-action: pan-x; }
+.sm2-grove-pan::-webkit-scrollbar { display: none; }
+.sm2-grove-pan[data-dragging="true"] { cursor: grabbing; scroll-behavior: auto !important; user-select: none; }
+.sm2-grove-pan:focus-visible { outline: 3px solid var(--sm2-primary, #6EFFFB); outline-offset: -3px; }
+.sm2-grove-pan-cena { position: relative; flex: none; height: 100cqh; aspect-ratio: 2048 / 1360; min-width: 100%; }
+.sm2-grove-pan-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; user-select: none; -webkit-user-drag: none; }
+.sm2-grove-slot { position: absolute; margin: 0; width: max-content; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.sm2-grove-arvore { width: auto; max-width: none; flex: none; display: block; image-rendering: pixelated; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.sm2-grove-arvore-5 { filter: drop-shadow(0 0 14px rgba(255,226,140,.75)) drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.sm2-grove-vazio { width: 20cqh; height: 6cqh; border-radius: 50%; border: 2px dashed rgba(110,255,251,.8); background: radial-gradient(ellipse at center, rgba(110,255,251,.28), transparent 70%); margin-bottom: 1cqh; }
+.sm2-grove-slot-nome { position: absolute; top: 100%; margin-top: 6px; display: flex; flex-direction: column; align-items: center; white-space: nowrap; padding: 3px 10px; border-radius: 10px; background: rgba(5,14,12,.62); color: #fff; font-size: var(--sm2-text-sm); line-height: 1.25; }
+.sm2-grove-slot-nome span { opacity: .8; }
+.sm2-grove-seta { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; min-width: 44px; min-height: 56px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 5px rgba(0,0,0,.85)); }
+.sm2-grove-seta-e { left: 0; }
+.sm2-grove-seta-d { right: 0; }
+.sm2-grove-seta:focus-visible, .sm2-grove-folha-fechar:focus-visible { outline: 3px solid var(--sm2-primary, #6EFFFB); outline-offset: 2px; }
 .sm2-grove-line { margin: 0; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }
 .sm2-grove-stage { margin: 0; font-family: var(--sm2-font-display); font-size: var(--sm2-text-lg); font-weight: 600; color: var(--sm2-ink); line-height: var(--sm2-leading-title); }
 .sm2-grove-gestures { display: flex; gap: var(--sm2-space-2); min-width: 0; }

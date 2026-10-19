@@ -161,7 +161,7 @@ describe('Plantio (D-14..D-17)', () => {
     const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-especie]')).not.toBeNull());
-    expect(container.querySelector('[data-plantio-especie]')!.textContent).toBe('Girassol');
+    expect(container.querySelector('[data-plantio-especie]')!.textContent).toBe('Cerejeira e acácia');
     expect(container.querySelector('[data-plantio-estacao]')!.textContent).toBe('Primavera');
     fireEvent.click(container.querySelector('[data-plantio-plantar]')!);
     await waitFor(() => expect(calls.some(c => c.action === 'claPlantar')).toBe(true));

@@ -47,7 +47,10 @@ describe('a guilda não entra no save nem no localStorage', () => {
     // (o ponteiro e o slot são do servidor) — é o INVENTÁRIO do jogador: o item de decoração que ele pôs na
     // casa e que, por regra, não pode valer no cenário pessoal enquanto estiver lá (`utils/guildHouse.ts`).
     // Sem o campo, o item voltaria ao cenário pessoal offline. O servidor continua sendo a fonte do slot.
-    const PERMITIDOS = new Set(['guildDonatedItem', 'guildMission']);
+    // 2ª EXCEÇÃO (Bosque, 18/10/2026): `bosqueArvores` é o PICO de cada árvore por estação e o ano-ciclo em que completou/
+    // aperfeiçoou — pedido do dono (a aperfeiçoada só nasce no ano seguinte à completa, derivada do save, não de relógio).
+    // O servidor só mostra a estação de hoje; sem guilda, id, nome, código nem membro nele: só 4 estações × 3 anos.
+    const PERMITIDOS = new Set(['guildDonatedItem', 'guildMission', 'bosqueArvores']);
     expect(campos.filter(c => VETADO.test(c) && !PERMITIDOS.has(c))).toEqual([]);
   });
 

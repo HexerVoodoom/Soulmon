@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fakeKV } from './_claKv.testkit.js';
 import {
   estacaoDoDia, arvoreDe, frutoDe, avaliarCrescimento, plantar, regar, proteger, colher, vistaDoPlantio,
-  PLANTIO_DIAS, ARVORE_TIER_MAX,
+  PLANTIO_DIAS, ARVORE_TIER_MAX, migrarEspecie, normalizarPlanta, normalizarMembro, lerPlanta, plantioKey, arvoresKey,
 } from './_claPlantio.js';
 import { diaDeNum, numDia } from './_coop.js';
 
@@ -13,7 +13,7 @@ const dia = (base, n) => diaDeNum(numDia(base) + n);
 
 describe('plantio: calendário', () => {
   it('estação e espécie por mês (hemisfério sul)', () => {
-    const cas = { '2026-09-01': 'girassol', '2026-11-30': 'girassol', '2026-12-01': 'melancia', '2027-02-28': 'melancia',
+    const cas = { '2026-09-01': 'cerejeira', '2026-11-30': 'cerejeira', '2026-12-01': 'cacto', '2027-02-28': 'cacto',
       '2026-03-01': 'abobora', '2026-05-31': 'abobora', '2026-06-01': 'pinheiro', '2026-08-31': 'pinheiro' };
     for (const [d, esp] of Object.entries(cas)) expect(estacaoDoDia(d).especie).toBe(esp);
   });
@@ -129,6 +129,34 @@ describe('plantio: árvore persiste (D-17)', () => {
     const pin = await plantar(e, g.id, A, '2027-07-01');
     expect(pin.planta).toMatchObject({ species: 'pinheiro', nivel: 2 });
     const gir = await plantar(e, g.id, A, '2027-10-01');
-    expect(gir.planta).toMatchObject({ species: 'girassol', nivel: 1, tier: 1 });
+    expect(gir.planta).toMatchObject({ species: 'cerejeira', nivel: 1, tier: 1 });
+  });
+});
+
+describe('plantio: migração das espécies aposentadas (D-38)', () => {
+  it('girassol -> cerejeira, melancia -> cacto; espécie nova e lixo passam intactos (idempotente)', () => {
+    expect(migrarEspecie('girassol')).toBe('cerejeira');
+    expect(migrarEspecie('melancia')).toBe('cacto');
+    for (const e of ['abobora', 'pinheiro', 'cerejeira', 'cacto', 'x', undefined]) expect(migrarEspecie(e)).toBe(e);
+    expect(migrarEspecie(migrarEspecie('girassol'))).toBe('cerejeira');
+  });
+  it('planta salva com girassol continua plantada (não some) e vira cerejeira', () => {
+    const velho = { v: 1, season: '2026-primavera', species: 'girassol', plantedDay: '2026-09-02', by: 'a', nivel: 1, tier: 1 };
+    const novo = normalizarPlanta(velho);
+    expect(novo).toMatchObject({ species: 'cerejeira', season: '2026-primavera' });
+    expect(normalizarPlanta(novo)).toEqual(novo);
+  });
+  it('fruto guardado como última colheita migra id e espécie, 2x dá o mesmo', () => {
+    const m = normalizarMembro({ last: { week: '2026-W40', receipt: 'r', fruit: { id: 'fruto-melancia-t1', especie: 'melancia', tier: 1, bits: 5 } } });
+    expect(m.last.fruit).toMatchObject({ id: 'fruto-cacto-t1', especie: 'cacto' });
+    expect(normalizarMembro(m).last.fruit).toEqual(m.last.fruit);
+  });
+  it('KV com planta antiga: lerPlanta devolve a espécie nova; árvore antiga mantém o ano e plantar não reinicia o nível', async () => {
+    const e = env();
+    await e.DIGIAPP_SAVES.put(plantioKey('g1'), JSON.stringify({ v: 1, season: '2026-verao', species: 'melancia', plantedDay: '2026-12-02', by: 'a', nivel: 1, tier: 1 }));
+    expect((await lerPlanta(e, 'g1')).species).toBe('cacto');
+    await e.DIGIAPP_SAVES.put(arvoresKey('g1'), JSON.stringify({ melancia: 2026 }));
+    const p = await plantar(e, 'g1', 'a', '2027-12-03');
+    expect(p.planta).toMatchObject({ species: 'cacto', nivel: 2 });
   });
 });

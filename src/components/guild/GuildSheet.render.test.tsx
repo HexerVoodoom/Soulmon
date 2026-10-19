@@ -697,36 +697,36 @@ const visor = () => document.querySelector('[data-guild-visor]') as HTMLElement;
 const criaturas = () => Array.from(document.querySelectorAll<HTMLImageElement>('[data-grove-creature]'));
 
 describe('o Bosque por estágio', () => {
-  it.each([1, 2, 3, 4, 5])('estágio %i: visor do cenário certo, nome e linha em PT e EN, aria do vidro com o estágio', async (idx) => {
+  it.each([1, 2, 3, 4, 5])('estágio %i: nome e linha em PT e EN, sem visor embutido (D-32)', async (idx) => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, idx));
     for (const [language, nomes] of [['pt-BR', NOME_PT], ['en-US', NOME_EN]] as const) {
       cleanup();
       localStorage.clear();
       await montar({ language });
-      expect(visor().getAttribute('data-stage')).toBe(GROVE_STAGES[idx - 1]);
+      expect(visor()).toBeNull(); // D-32: a folha não embute visor; o panorama abre pelo botão
       expect(screen.getByRole('heading', { name: nomes[idx - 1] })).toBeTruthy();
       const chaveLinha = ['clareira', 'ramagem', 'copa', 'mata', 'bosqueAntigo'][idx - 1];
       const linha = GUILD_COPY[`guild.bosque.estagio.${chaveLinha}.linha` as keyof typeof GUILD_COPY][language === 'pt-BR' ? 0 : 1];
       expect(screen.getByText(linha)).toBeTruthy();
-      expect(visor().getAttribute('role')).toBe('img');
-      expect(visor().getAttribute('aria-label')).toBe(language === 'pt-BR' ? `Bosque da roda, estágio ${nomes[idx - 1]}` : `The circle’s grove, stage ${nomes[idx - 1]}`);
     }
   });
 
-  it('o pixel art fica DENTRO do vidro (`.sm2-viewport-screen`) e o texto do estágio FORA dele', async () => {
+  it('D-32: a folha não embute visor; o botão abre o panorama de tela cheia (só no Hall), fecha por botão e por Escape', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3));
     await montar();
-    expect(visor().classList.contains('sm2-viewport-screen')).toBe(true);
-    expect(visor().contains(screen.getByRole('heading', { name: 'Copa' }))).toBe(false);
-    expect(criaturas().every(c => visor().contains(c))).toBe(true);
+    expect(visor()).toBeNull();
+    expect(document.querySelector('[data-grove-folha]')).toBeNull();
+    fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
+    await waitFor(() => expect(document.querySelector('[data-grove-folha]')).not.toBeNull());
+    expect(document.querySelectorAll('[data-grove-slot]')).toHaveLength(4);
+    fireEvent.click(document.querySelector('[data-grove-fechar]')!);
+    await waitFor(() => expect(document.querySelector('[data-grove-folha]')).toBeNull());
   });
 
-  it('ainda sem estágio (índice 0): o chão da Clareira existe, mas NENHUM nome, nenhuma linha e nenhuma faixa', async () => {
+  it('ainda sem estágio (índice 0): NENHUM nome, nenhuma linha e nenhuma faixa', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 0));
     await montar();
-    expect(visor()).toBeTruthy();
-    expect(visor().getAttribute('data-stage')).toBe('');
-    expect(visor().getAttribute('role')).toBeNull();
+    expect(visor()).toBeNull();
     expect(document.querySelector('[data-guild-stage]')).toBeNull();
     expect(document.querySelector('[data-guild-perto]')).toBeNull();
   });
@@ -788,69 +788,14 @@ describe('o Bosque por estágio', () => {
   });
 });
 
-describe('o palco do Bosque: quem aparece no visor', () => {
-  it('1 membro: só a SUA criatura, no centro, em 128 (escala inteira)', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(1, 1, { isHost: true }));
-    await montar();
-    expect(criaturas()).toHaveLength(1);
-    expect(criaturas()[0].getAttribute('data-grove-creature')).toBe('own');
-    expect(criaturas()[0].width).toBe(128);
-  });
-
-  it('até 4: TODOS, na ordem de chegada — a sua em 128, as dos outros em 64 (também escala inteira)', async () => {
+// O palco (quem aparece) foi para dentro do panorama de tela cheia: as regras por tamanho de roda estão em
+// `GroveVisor.render.test.tsx`; aqui só a ponte folha -> panorama.
+describe('o palco do Bosque: a folha entrega a roda e a criatura ao panorama', () => {
+  it('a criatura própria é a que o App manda, e a roda de 4 vira 4 criaturas no panorama', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
-    await montar();
-    const c = criaturas();
-    expect(c).toHaveLength(4);
-    expect(c.map(x => x.getAttribute('data-grove-creature'))).toEqual(['own', 'other', 'other', 'other']);
-    expect(c.map(x => x.width)).toEqual([128, 64, 64, 64]);
-    const xs = c.map(x => parseFloat(x.style.left));
-    expect(xs).toEqual([...xs].sort((a, b) => a - b)); // da esquerda para a direita, na ordem da roda
-    // 256 e 384 dividem por 128 e por 64 sem resto: pixel art sem meio pixel
-    for (const px of [128, 64]) { expect(256 % px).toBe(0); expect(384 % px).toBe(0); }
-  });
-
-  it('a criatura dos outros é a MESMA sempre (hash do id) e nunca uma URL vinda do servidor', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2));
-    await montar();
-    const antes = criaturas().map(c => c.src);
-    cleanup();
-    await montar();
-    expect(criaturas().map(c => c.src)).toEqual(antes.map((s, i) => (i === 0 ? criaturas()[0].src : s)));
-    for (const c of criaturas().slice(1)) expect(c.src).not.toMatch(/^https?:\/\/(?!localhost)/);
-  });
-
-  it('presença NÃO mexe no palco: quem veio e quem não veio ganham a mesma criatura, sem opacidade, sem reordenar', async () => {
-    const dom = async (veio: number[]) => {
-      cleanup();
-      vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2, {}, {}, {}, veio));
-      await montar();
-      return criaturas().map(c => [c.src, c.style.left, c.style.opacity, c.style.filter, c.className]);
-    };
-    const nenhum = await dom([]);
-    const alguns = await dom([1, 3]);
-    // só a criatura PRÓPRIA pode variar com o fio próprio (nada: o palco nem lê presença)
-    expect(alguns).toEqual(nenhum);
-    for (const [, , opacity, filter] of nenhum) { expect(opacity).toBe(''); expect(filter).toBe(''); }
-  });
-
-  it.each([5, 8, 12])('%i membros: SÓ a sua criatura (a fileira com lacunas é a sala de aula que LV-G2 veta)', async (n) => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(n, 3, { threadedToday: true }));
-    await montar();
-    expect(criaturas()).toHaveLength(1);
-    expect(criaturas()[0].getAttribute('data-grove-creature')).toBe('own');
-    expect(parseFloat(criaturas()[0].style.left)).toBe(50);
-  });
-
-  it('o vidro não desenha texto nenhum (nomes, contagens e estados ficam fora dele)', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 3, {}, {}, {}, [0, 1]));
-    await montar();
-    expect(visor().textContent).toBe('');
-  });
-
-  it('a criatura própria é a que o App manda (o estágio dela), com a rookie só como reserva', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
     await montar({ mySprite: '/meu-sprite.png' });
+    fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
+    await waitFor(() => expect(document.querySelectorAll('[data-grove-creature]')).toHaveLength(4));
     expect(criaturas()[0].getAttribute('src')).toBe('/meu-sprite.png');
   });
 });
@@ -1207,22 +1152,22 @@ describe('movimento reduzido reduz o movimento, nunca a informação', () => {
   };
   afterEach(() => { delete (window as { matchMedia?: unknown }).matchMedia; });
 
-  it('sem preferência: as criaturas batem (2 quadros); com `reduce`: paradas, e o MESMO cenário, nome e criaturas', async () => {
+  it('sem preferência: o panorama anima o rolar; com `reduce`: salto instantâneo, e o MESMO nome e as MESMAS árvores', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 3));
     comMediaQuery(false);
     await montar();
-    const normal = criaturas().map(c => c.className);
-    expect(normal.every(c => c.includes('sm2-grove-bob'))).toBe(true);
-    expect(visor().getAttribute('data-reduced-motion')).toBeNull();
+    fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
+    await waitFor(() => expect(document.querySelector('[data-grove-panorama]')).not.toBeNull());
+    expect(document.querySelector('[data-grove-panorama]')!.getAttribute('data-reduced-motion')).toBeNull();
+    expect((document.querySelector('.sm2-grove-pan') as HTMLElement).style.scrollBehavior).toBe('smooth');
     cleanup();
     localStorage.clear();
     comMediaQuery(true);
     await montar();
-    await waitFor(() => expect(visor().getAttribute('data-reduced-motion')).toBe('true'));
-    expect(criaturas()).toHaveLength(3);
-    expect(criaturas().every(c => !c.className.includes('sm2-grove-bob'))).toBe(true);
-    expect(screen.getByRole('heading', { name: 'Copa' })).toBeTruthy();
-    expect(visor().getAttribute('data-stage')).toBe('copa');
+    fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
+    await waitFor(() => expect(document.querySelector('[data-grove-panorama]')!.getAttribute('data-reduced-motion')).toBe('true'));
+    expect((document.querySelector('.sm2-grove-pan') as HTMLElement).style.scrollBehavior).toBe('auto');
+    expect(document.querySelectorAll('[data-grove-slot]')).toHaveLength(4);
   });
 
   it('o CSS também corta a batida no bloco canônico de movimento reduzido', () => {
@@ -1236,17 +1181,12 @@ describe('movimento reduzido reduz o movimento, nunca a informação', () => {
 // RODADA L4 (29/09/2026) — o que o QA de experiência do L3 reabriu.
 // ─────────────────────────────────────────────────────────────────────────────
 describe('L4: sem roda mostra a Clareira e explica por que o botão está inerte', () => {
-  it('M1: o vazio tem o VISOR do Bosque (Clareira, sem membro de outro) acima do formulário', async () => {
+  it('M1: o vazio NÃO embute visor (o Bosque é o panorama, pelo Salão com roda); o texto e o formulário seguem', async () => {
     vi.mocked(getGuild).mockResolvedValue(null);
     await montar();
-    const v = document.querySelector('[data-guild-visor]') as HTMLElement;
-    expect(v).toBeTruthy();
-    expect(v.getAttribute('aria-hidden')).toBe('true'); // decorativo: o texto abaixo é quem fala
-    expect(document.querySelectorAll('[data-grove-creature]')).toHaveLength(1);
-    expect(document.querySelector('[data-grove-creature="other"]')).toBeNull();
-    // o visor vem ANTES do texto e do formulário
-    const corpo = screen.getByText(PT('guild.salao.vazio.corpo'));
-    expect(v.compareDocumentPosition(corpo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelector('[data-guild-visor]')).toBeNull();
+    expect(document.querySelector('[data-grove-creature]')).toBeNull();
+    expect(screen.getByText(PT('guild.salao.vazio.corpo'))).toBeTruthy();
     // sem placa/slot marcado: nada de "+" nem de vaga vazia
     expect(document.querySelector('.sm2-guild')!.textContent).not.toMatch(/\+|vaga|slot/i);
   });

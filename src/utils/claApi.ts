@@ -8,6 +8,7 @@
  * Nenhuma vista carrega número por pessoa: a Praça manda ids opacos de membro, o Plantio só o estado
  * coletivo e o que é SEU, o Mistério só a barra coletiva (0..99).
  */
+import { PLANT_SPECIES, migrarEspecie, type PlantSpecies } from './plantSpecies';
 import { guildCall, dia } from './community';
 import type { PlayerDayAnchor } from './playerDay';
 
@@ -94,8 +95,7 @@ export const claimPresente = (id: string, giftId: string, tz?: PlayerDayAnchor):
   });
 
 // ── PLANTIO ──────────────────────────────────────────────────────────────────
-export const PLANT_SPECIES = ['girassol', 'melancia', 'abobora', 'pinheiro'] as const;
-export type PlantSpecies = (typeof PLANT_SPECIES)[number];
+export { PLANT_SPECIES, ESPECIE_LEGADO, migrarEspecie, type PlantSpecies } from './plantSpecies';
 export const PLANT_SEASONS = ['primavera', 'verao', 'outono', 'inverno'] as const;
 export type PlantSeason = (typeof PLANT_SEASONS)[number];
 
@@ -124,7 +124,8 @@ const int = (v: unknown, lo: number, hi: number): number | null => (typeof v ===
 
 export function sanitizePlantio(raw: unknown): PlantioView | null {
   const r = obj(raw);
-  const species = (PLANT_SPECIES as readonly unknown[]).includes(r.species) ? (r.species as PlantSpecies) : null;
+  const sp = migrarEspecie(r.species);
+  const species = (PLANT_SPECIES as readonly unknown[]).includes(sp) ? (sp as PlantSpecies) : null;
   const season = (PLANT_SEASONS as readonly unknown[]).includes(r.season) ? (r.season as PlantSeason) : null;
   if (!species || !season) return null;
   const today = obj(r.today);
