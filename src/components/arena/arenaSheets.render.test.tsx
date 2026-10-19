@@ -105,25 +105,21 @@ describe('Duelo', () => {
     const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
     expect(container.querySelector('[data-duelo-elemento]')).toBeNull();
     expect(container.querySelector('[data-duelo-golpes]')).toBeNull();
-    expect(container.querySelector('[data-duelo-poder]')).not.toBeNull();
+    expect(container.querySelector('[data-duelo-poder]')).toBeNull();
   });
 
-  it('F6 (beta-2): o Poder tem ícone PRÓPRIO (as garras) e a palavra "Poder N" — o raio é o glifo da energia', () => {
+  it('D-59: sem número de Poder na folha (a regra de poder parecido não muda, só a exibição)', () => {
     const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
-    const poder = container.querySelector('[data-duelo-poder]')!;
-    expect(poder.textContent).toMatch(/^Poder \d+$/);
-    expect(poder.querySelector('img[data-pixel-icon="art"]')!.getAttribute('src')).toMatch(/atributo-poder/);
-    expect(poder.textContent).not.toMatch(/bolt/);
-    expect(poder.querySelector('.sm2-icon')).toBeNull(); // sem glifo Material (o raio)
+    expect(container.querySelector('[data-duelo-poder]')).toBeNull();
+    expect(container.textContent).not.toMatch(/Poder \d|Power \d/);
     const en = renderWithCss(<DueloSheet language="en-US" evolutionStage="rookie" onStart={() => {}} />);
-    expect(en.container.querySelector('[data-duelo-poder]')!.textContent).toMatch(/^Power \d+$/);
+    expect(en.container.querySelector('[data-duelo-poder]')).toBeNull();
   });
 
   it('mostra a ficha padrão sem skills e o botão abre a luta', () => {
     const onStart = vi.fn();
     const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
     // I9: só o essencial na folha; a explicação mora atrás do "?".
-    expect(container.querySelector('[data-duelo-poder]')).not.toBeNull();
     expect(container.textContent).not.toContain('Sua ficha');
     expect(container.textContent).not.toContain('perder não custa nada');
     fireEvent.click(screen.getByRole('button', { name: /Como funciona a Arena/ }));

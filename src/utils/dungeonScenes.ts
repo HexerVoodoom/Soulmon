@@ -38,7 +38,6 @@ export const DUNGEON_SCENES: DungeonScene[] = [
 
 // Shop pet-box backgrounds doubling as dungeon floors (accent picked per bg).
 // Kept as ids into PET_BACKGROUNDS so the CSS lives in one place.
-import { PET_BACKGROUNDS } from './backgrounds';
 import dungeonBg1 from '../assets/soulmon/bg/dungeon-1.png';
 import dungeonBg2 from '../assets/soulmon/bg/dungeon-2.png';
 import dungeonBg3 from '../assets/soulmon/bg/dungeon-3.png';
@@ -159,47 +158,18 @@ export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
 /** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */
 export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
 
-const SHOP_BG_ACCENTS: Record<string, string> = {
-  'bg-forest': '#4ade80',
-  'bg-ocean': '#38bdf8',
-  'bg-gameboy': '#0f380f',
-  'bg-snow': '#1d4ed8',
-  'bg-lava': '#fb923c',
-  'bg-sakura': '#db2777',
-  'bg-toytown': '#f59e0b',
-  'bg-synthwave': '#ff2bd6',
-  'bg-attic': '#c98a4b',
-  'bg-arcade': '#3fd2d9',
-  'bg-library': '#8fd6c2',
-  'bg-shrine': '#5ad6ff',
-  'bg-rooftop': '#7fb8d9',
-  'bg-cloudsea': '#4fe3c1',
-  'bg-observatory': '#d7a55c',
-  'bg-swamp': '#4fd6a8',
-  // 04/10/2026, terceira leva pintada.
-  'bg-lakeside': '#d9a45c',
-  'bg-crystal-grove': '#5ad6ff',
-  'bg-ember-cavern': '#e08a3c',
-  'bg-night-greenhouse': '#4fd6a8',
-  'bg-cozy-loft': '#c98a4b',
-  'bg-cloud-terrace': '#4fe3c1',
-};
-
-const SHOP_BG_SCENES: DungeonScene[] = Object.entries(SHOP_BG_ACCENTS)
-  .filter(([id]) => PET_BACKGROUNDS[id])
-  .map(([id, accent]) => ({
-    namePt: PET_BACKGROUNDS[id].namePt,
-    nameEn: PET_BACKGROUNDS[id].nameEn,
-    bg: PET_BACKGROUNDS[id].css,
-    accent,
-  }));
+// D-79 (19/10/2026): os 16 bgs da loja (`SHOP_BG_ACCENTS`) SAÍRAM do sorteio da masmorra — são cenários HORIZONTAIS pensados para o box do
+// pet, e no campo de batalha (uma caixa ALTA, `cover`) o `bg-sakura` virava um tile enorme repetido. A masmorra só sorteia cenas VERTICAIS
+// (as 5 clássicas + as pintadas 9:16); régua em `dungeonScenes.verticais.test.ts`.
+/** O pool do sorteio da masmorra: só cenas verticais (9:16). */
+export const RUN_SCENE_POOL: readonly DungeonScene[] = [...SPIRIT_BG_SCENES, ...DUNGEON_SCENES];
 
 /**
  * Scenes for one run: 5 picks without repeats, drawn at random from the painted
- * scenes (spirit + classic) + the shop backgrounds. Every run looks different.
+ * VERTICAL scenes (spirit + classic; never the shop backgrounds — D-79). Every run looks different.
  */
 export function buildRunScenes(count = 5): DungeonScene[] {
-  const pool = [...SPIRIT_BG_SCENES, ...DUNGEON_SCENES, ...SHOP_BG_SCENES];
+  const pool = [...RUN_SCENE_POOL];
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];

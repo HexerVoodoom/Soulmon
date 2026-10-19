@@ -54,7 +54,6 @@ const ForgeCard = lazy(() => import('../ForgeCard'));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
 const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default: m.DueloSheet })));
-const GuerraClaSheet = lazy(() => import('../arena/GuerraClaSheet').then(m => ({ default: m.GuerraClaSheet })));
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
 // sempre (os mesmos que a antiga `ActivitiesPage` abria).
@@ -371,7 +370,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {open?.id === 'guerra' && (
-              <GuerraClaSheet language={language} onGoToClan={props.onGoToMap ? () => { setSheet(null); props.onGoToMap?.(); } : undefined} />
+              <GuildSheet room="guerra" language={language} {...props.guild} />
             )}
           </Suspense>
         </AreaSheet>
@@ -479,7 +478,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} onEarnPoints={props.onEarnPoints} />}
             {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}

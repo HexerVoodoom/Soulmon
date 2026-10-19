@@ -2,17 +2,19 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'r
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './mente/types';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { GameRoot, GameHeader, GameStory, HpBars, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
+import { GameRoot, GameHeader, HpBars, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
+import { Icon } from './ui/Icon';
+import { bitsStyle } from '../utils/currencies';
 import { usePrefersReducedMotion } from './ui/Viewport';
 import { elementIcon } from '../utils/elementIconArt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import {
   M3_COLS, M3_ROWS, M3_TILE_ELEMENTS, M3_TILE_NAMES, M3_POINTS_PER_BIT, M3_MAX_BITS,
-  bestMove, match3Bits, newRound, trySwap, type Board, type Pos, type Rng, type Step, type Tile,
+  match3Bits, newRound, trySwap, type Board, type Pos, type Rng, type Step, type Tile,
 } from '../utils/match3';
 import {
-  M3C_DEFEAT_BONUS, applyPlayerSteps, combatScore, newCombat, playTurn, type M3Combat, type M3Element,
+  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, hintAction, newCombat, playTurn, type M3Combat, type M3Element,
 } from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
@@ -38,6 +40,7 @@ const T_SWAP = 170;
 const T_CLEAR = 280;
 const T_FALL = 240;
 const HINT_MS = 2600;
+const CONFIRM_MS = 3000;
 /** A arte do inimigo 1→3 sobe de estágio: o último do time é o mais imponente. */
 const ENEMY_STAGES = ['rookie', 'champion', 'ultimate'] as const;
 const ENEMY_SPRITE = 64;
@@ -55,6 +58,9 @@ const LINES = Object.keys(DUNGEON_LINE_SPRITES);
 export interface Match3Props extends EarningGameProps {
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
   seed?: number;
+  /** D-85: saldo de Bits e a via de gasto do app (`play.onSpendBits`, devolve `false` se não cobrou). Sem elas, não dá para comprar dica. */
+  bits?: number;
+  onSpendBits?: (n: number) => boolean;
 }
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
@@ -64,7 +70,7 @@ function combatFor(sd: number, playerLine: string | undefined): { combat: M3Comb
   return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine), rng: mulberry32(sd ^ 0x5eed) };
 }
 
-export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed }: Match3Props) {
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits }: Match3Props) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
@@ -89,13 +95,19 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const [clearing, setClearing] = useState<ReadonlySet<number>>(new Set());
   const [fresh, setFresh] = useState<{ id: number; cells: ReadonlySet<number> }>({ id: 0, cells: new Set() });
   const [shake] = useState<{ id: number; cells: ReadonlySet<number> }>({ id: 0, cells: new Set() });
-  const [hint, setHint] = useState<{ a: Pos; b: Pos } | null>(null);
   const [chain, setChain] = useState(0);
   const [note, setNote] = useState('');
   const [over, setOver] = useState(false);
   const [earned, setEarned] = useState(0);
   const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   const [newBest, setNewBest] = useState(false);
+  const [hint, setHint] = useState<{ a: Pos; b: Pos } | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [hintsLeft, setHintsLeft] = useState(M3_HINTS_PER_GAME);
+  const [confirmBuy, setConfirmBuy] = useState(false);
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [extraFlash, setExtraFlash] = useState(0);
+  const streakRef = useRef(1);
 
   const alive = useRef(true);
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -103,13 +115,11 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const btnRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const swipe = useRef<{ x: number; y: number; pos: Pos } | null>(null);
   const swiped = useRef(false);
-  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hintRng = useRef(mulberry32(7));
 
   useEffect(() => {
     alive.current = true;
     const t = timers.current;
-    return () => { alive.current = false; t.forEach(clearTimeout); t.clear(); if (hintTimer.current) clearTimeout(hintTimer.current); };
+    return () => { alive.current = false; t.forEach(clearTimeout); t.clear(); if (hintTimer.current) clearTimeout(hintTimer.current); if (confirmTimer.current) clearTimeout(confirmTimer.current); };
   }, []);
 
   /** Espera `ms` (0 em movimento reduzido); some se a tela saiu. */
@@ -133,11 +143,6 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const say = useCallback((pt: string, en: string) => setNote(isPt ? pt : en), [isPt]);
 
-  const clearHint = useCallback(() => {
-    if (hintTimer.current) clearTimeout(hintTimer.current);
-    setHint(null);
-  }, []);
-
   /** O que cai: as colunas dos que sumiram, de cima até a linha mais baixa que sumiu (peça nova ou que desceu). */
   const dropCells = (st: Step): Set<number> => {
     const out = new Set<number>();
@@ -151,57 +156,101 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const turnNote = useCallback((from: number, c: M3Combat): string => {
     const novos = c.log.slice(from);
     const golpes = novos.filter(e => e.by === 'player').map(e => `${elementName(e.element, isPt)} ${e.dmg}`);
-    const resp = novos.find(e => e.by === 'enemy');
+    const resp = novos.filter(e => e.by === 'enemy');
     const a = golpes.length > 0 ? (isPt ? `Seu golpe: ${golpes.join(' · ')}.` : `Your strike: ${golpes.join(' · ')}.`) : (isPt ? 'Sem golpe desta vez.' : 'No strike this time.');
-    const b = resp ? (isPt ? ` Resposta: ${resp.dmg}.` : ` Reply: ${resp.dmg}.`) : '';
+    const b = resp.length > 0 ? (isPt ? ` Resposta: ${resp.reduce((t, e) => t + e.dmg, 0)}.` : ` Reply: ${resp.reduce((t, e) => t + e.dmg, 0)}.`) : '';
     return a + b;
   }, [isPt]);
 
+  const clearHint = useCallback(() => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    setHint(null);
+  }, []);
+
+  /** Anima os passos de uma cascata (do jogador ou do inimigo) e aplica o dano parcial pela função certa. */
+  const runSteps = useCallback(async (steps: readonly Step[], from: M3Combat, apply: typeof applyPlayerSteps): Promise<M3Combat | null> => {
+    let preview = from;
+    for (const st of steps) {
+      if (!alive.current) return null;
+      setClearing(new Set(st.cleared.map(key)));
+      setChain(st.chain);
+      await wait(T_CLEAR);
+      if (!alive.current) return null;
+      setClearing(new Set());
+      boardRef.current = st.after;
+      setBoard(st.after);
+      preview = apply(preview, [st]);
+      setCombat(preview);
+      setFresh(f => ({ id: f.id + 1, cells: dropCells(st) }));
+      await wait(T_FALL);
+    }
+    return preview;
+  }, [wait]);
+
+  const flashExtra = useCallback(() => setExtraFlash(n => n + 1), []);
+
   const play = useCallback(async (a: Pos, d: Pos) => {
     if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;
-    clearHint();
     const res = trySwap(boardRef.current, a, d, rngRef.current);
     if (!res.ok) { setSel(null); return; }
     busyRef.current = true;
     setBusy(true);
     setSel(null);
+    clearHint();
+    setConfirmBuy(false);
     say('', '');
     const base = combatRef.current;
-    // a jogada VÁLIDA inteira (dano do jogador + resposta do inimigo) é a conta pura; a tela só a mostra por partes
-    const final = playTurn(base, res.steps, enemyRngRef.current);
-    let preview = base;
+    // a jogada VÁLIDA inteira (dano do jogador, rodada extra OU a vez do inimigo) é a conta pura; a tela só a mostra por partes
+    const ex = playTurn(base, res.steps, res.board, rngRef.current, streakRef.current);
     setBoard(res.swapped);
     await wait(T_SWAP);
-    for (const st of res.steps) {
-      if (!alive.current) return;
-      setClearing(new Set(st.cleared.map(key)));
-      setChain(st.chain);
-      await wait(T_CLEAR);
-      if (!alive.current) return;
-      setClearing(new Set());
-      boardRef.current = st.after;
-      setBoard(st.after);
-      preview = applyPlayerSteps(preview, [st]);
-      setCombat(preview);
-      setFresh(f => ({ id: f.id + 1, cells: dropCells(st) }));
-      await wait(T_FALL);
-    }
-    if (!alive.current) return;
+    let preview = await runSteps(res.steps, base, applyPlayerSteps);
+    if (!preview || !alive.current) return;
     boardRef.current = res.board;
     setBoard(res.board);
     setChain(0);
-    combatRef.current = final;
-    setCombat(final);
     if (res.reshuffled) {
       setFresh(f => ({ id: f.id + 1, cells: new Set(Array.from({ length: M3_ROWS * M3_COLS }, (_, i) => i)) }));
       say('Sem jogadas: embaralhei as peças para você.', 'No moves left: I shuffled the tiles for you.');
-    } else {
-      setNote(turnNote(base.log.length, final));
     }
+    if (ex.extra) {
+      // D-84: 4+ = rodada extra — o inimigo não joga e o turno não é contado
+      streakRef.current += 1;
+      flashExtra();
+      combatRef.current = ex.state;
+      setCombat(ex.state);
+      if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
+      busyRef.current = false;
+      setBusy(false);
+      return;
+    }
+    streakRef.current = 1;
+    // D-83: a vez do inimigo — ele MEXE as peças (uma troca; 4+ dá outra, até o teto) e os combos tiram HP do jogador
+    for (let i = 0; i < ex.enemyMoves.length; i++) {
+      const m = ex.enemyMoves[i];
+      if (!alive.current) return;
+      setHint({ a: m.a, b: m.b });
+      setBoard(m.swapped);
+      await wait(T_SWAP);
+      setHint(null);
+      const after = await runSteps(m.steps, preview, applyEnemySteps);
+      if (!after || !alive.current) return;
+      preview = after;
+      boardRef.current = m.board;
+      setBoard(m.board);
+      setChain(0);
+      if (i < ex.enemyMoves.length - 1) { flashExtra(); await wait(T_SWAP); }
+    }
+    if (!alive.current) return;
+    boardRef.current = ex.board;
+    setBoard(ex.board);
+    combatRef.current = ex.state;
+    setCombat(ex.state);
+    if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
     busyRef.current = false;
     setBusy(false);
-    if (final.outcome !== 'playing') finish();
-  }, [clearHint, finish, say, setSel, turnNote, wait]);
+    if (ex.state.outcome !== 'playing') finish();
+  }, [clearHint, finish, flashExtra, runSteps, say, setSel, turnNote, wait]);
 
   const pick = useCallback((p: Pos) => {
     if (busyRef.current || overRef.current) return;
@@ -241,13 +290,27 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     void play(s.pos, to);
   };
 
-  const showHint = () => {
+  /** D-85: o botão de dica. Mostra a melhor jogada (a MESMA que a IA inimiga escolheria no tabuleiro do jogador); acabou o uso, compra com Bits (2 toques: pedir + confirmar). */
+  const onHint = () => {
     if (busyRef.current || overRef.current) return;
-    const m = bestMove(boardRef.current, hintRng.current);
+    const act = hintAction(hintsLeft, bits);
+    if (act === 'blocked') return;
+    if (act === 'buy' && !confirmBuy) {
+      setConfirmBuy(true);
+      if (confirmTimer.current) clearTimeout(confirmTimer.current);
+      confirmTimer.current = setTimeout(() => setConfirmBuy(false), CONFIRM_MS);
+      return;
+    }
+    const m = chooseMove(boardRef.current);
     if (!m) return;
+    if (act === 'buy') {
+      if (!onSpendBits || !onSpendBits(M3_HINT_PRICE_BITS)) { setConfirmBuy(false); return; }
+      setConfirmBuy(false);
+    } else {
+      setHintsLeft(n => n - 1);
+    }
     setSel(null);
     setHint({ a: m.a, b: m.b });
-    say('Dica: troque as duas peças marcadas.', 'Hint: swap the two marked tiles.');
     if (hintTimer.current) clearTimeout(hintTimer.current);
     hintTimer.current = setTimeout(() => setHint(null), HINT_MS);
   };
@@ -265,7 +328,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     overRef.current = false;
     busyRef.current = false;
     setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
-    setBusy(false); setClearing(new Set()); setHint(null); setChain(0); setNote(''); setOver(false); setEarned(0); setNewBest(false);
+    setBusy(false); setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
   };
 
   const score = combatScore(combat);
@@ -288,14 +351,14 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
 
-  // A arena: o SEU Soulmon à esquerda; o time inimigo (1→3) à direita. Ativo = borda + ▸ (a cor nunca é a única pista).
+  // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (
-    <div data-m3-arena style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
-      <div data-m3-player data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none' }}>
+    <div data-m3-arena style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
+      <div data-m3-player data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
         <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain' }} />
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
-      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, justifyContent: 'flex-end' }}>
+      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
         {combat.enemies.map((e, i) => {
           const line = e.line && DUNGEON_LINE_SPRITES[e.line] ? e.line : LINES[i];
           const src = DUNGEON_LINE_SPRITES[line][ENEMY_STAGES[i]];
@@ -340,9 +403,9 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
         info={(
           <>
             <span style={{ display: 'block' }}>{isPt ? 'Troque duas peças vizinhas para formar linhas de 3 ou mais iguais. Cada linha é um golpe do elemento da peça no inimigo da vez; o excesso de um golpe se perde.' : 'Swap two neighbouring tiles to line up 3 or more alike. Each line is a strike of the tile’s element on the current enemy; a strike’s excess is lost.'}</span>
-            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Depois de cada troca, o inimigo da vez responde e tira vida do seu Soulmon, pontue a troca ou não. A rodada acaba quando os três recuam ou quando a vida do seu Soulmon chega a zero. Perder não custa nada.' : 'After every swap the current enemy replies and takes health from your Soulmon, whether the swap scored or not. The round ends when all three step back or your Soulmon’s health reaches zero. Losing costs nothing.'}</span>
-            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Uma linha de 4 deixa uma peça com setas: quando ela entra numa combinação, limpa a linha (ou a coluna) inteira.' : 'A line of 4 leaves a tile with arrows: when it joins a match, it clears its whole row (or column).'}</span>
-            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Toque numa peça e depois numa vizinha, ou arraste. Teclado: setas e Enter.' : 'Tap a tile, then a neighbour, or swipe. Keyboard: arrows and Enter.'}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Depois de cada troca, o inimigo da vez também troca duas peças — e os combos dele tiram vida do seu Soulmon —, pontue a sua troca ou não. A rodada acaba quando os três recuam ou quando a vida do seu Soulmon chega a zero. Perder não custa nada.' : 'After every swap the current enemy swaps two tiles too — and its combos take health from your Soulmon — whether your swap scored or not. The round ends when all three step back or your Soulmon’s health reaches zero. Losing costs nothing.'}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Uma linha de 4 deixa uma peça com setas (quando ela entra numa combinação, limpa a linha ou a coluna inteira) e dá uma rodada extra: você joga de novo. Vale para o inimigo também; no máximo 3 jogadas seguidas.' : 'A line of 4 leaves a tile with arrows (when it joins a match, it clears its whole row or column) and gives an extra turn: you play again. The same goes for the enemy; at most 3 moves in a row.'}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Toque numa peça e depois numa vizinha, ou arraste. Teclado: setas e Enter. O botão de dica mostra a melhor troca: são 3 por rodada, e dá para comprar mais com Bits.' : 'Tap a tile, then a neighbour, or swipe. Keyboard: arrows and Enter. The hint button shows the best swap: 3 per round, and you can buy more with Bits.'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? `O placar é o dano causado menos o recebido, mais ${M3C_DEFEAT_BONUS} por inimigo que recuou. Cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit.` : `The score is damage dealt minus damage taken, plus ${M3C_DEFEAT_BONUS} per enemy that stepped back. Every ${M3_POINTS_PER_BIT} points becomes 1 Bit.`}</span>
           </>
         )}
@@ -353,20 +416,21 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
       {/* a arena cresce até o tabuleiro: história, placar, o campo e o aviso vivo moram nela (D-02) */}
       <div data-m3-field style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
-        <GameStory id="match3" language={language} compact />
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <StatTag label={isPt ? 'Turno' : 'Turn'} value={<span data-m3-turn={combat.turns}>{combat.turns}</span>} />
-          <StatTag label={isPt ? 'Placar' : 'Score'} value={<span data-m3-score={score}>{score}</span>} />
-          <StatTag label="Bits" value={<span data-m3-bits={bitsNow}>{bitsNow}</span>} />
-          {!over && (
-            <button type="button" onClick={showHint} disabled={busy} data-m3-hint-button style={{ ...sm2Button('outline', busy), minHeight: 44, minWidth: 64, padding: '0 12px' }}>
-              {isPt ? 'Dica' : 'Hint'}
-            </button>
+          {extraFlash > 0 && (
+            <span key={extraFlash} data-m3-extra={extraFlash} role="img" aria-label={isPt ? 'Rodada extra' : 'Extra turn'} style={{ display: 'inline-flex', marginLeft: 8, animation: reduced ? undefined : 'sm-m3-extra 900ms ease-out both' }}>
+              <Icon name="replay" size={24} tone="gold" />
+            </span>
           )}
         </div>
+        {/* D-77: nada mais de texto na tela de jogo — placar e Bits só para leitor de tela (visualmente ocultos). */}
+        <span className="sm2-sr-only" data-m3-sr>
+          {isPt ? 'Placar' : 'Score'} <span data-m3-score={score}>{score}</span> · Bits <span data-m3-bits={bitsNow}>{bitsNow}</span>
+        </span>
         {arena}
         {/* o aviso vivo: golpes, resposta, dica, embaralhada. Sem vermelho; fica fora da área do tabuleiro. */}
-        <p role="status" aria-live="polite" data-m3-note style={{ ...phaseLine, minHeight: 20, margin: 0 }}>
+        <p role="status" aria-live="polite" data-m3-note className="sm2-sr-only">
           {note || (chain > 1 ? (isPt ? `Cascata ×${chain}!` : `Cascade ×${chain}!`) : '')}
         </p>
       </div>
@@ -436,7 +500,27 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
               );
             }))}
           </div>
-          <p style={{ ...phaseLine, margin: 0, flex: 'none' }} data-m3-next>
+          <div style={{ display: 'flex', justifyContent: 'center', flex: 'none' }}>
+            {(() => {
+              const act = hintAction(hintsLeft, bits);
+              const falta = act === 'buy' && !onSpendBits;
+              const bloqueado = busy || act === 'blocked' || falta;
+              const nome = act === 'use'
+                ? (isPt ? `Dica, ${hintsLeft} restantes` : `Hint, ${hintsLeft} left`)
+                : confirmBuy
+                  ? (isPt ? `Confirmar: comprar uma dica por ${M3_HINT_PRICE_BITS} Bits` : `Confirm: buy a hint for ${M3_HINT_PRICE_BITS} Bits`)
+                  : (isPt ? `Comprar uma dica por ${M3_HINT_PRICE_BITS} Bits` : `Buy a hint for ${M3_HINT_PRICE_BITS} Bits`);
+              return (
+                <button type="button" onClick={onHint} disabled={bloqueado} aria-label={nome} data-m3-hint-button data-m3-hint-mode={confirmBuy ? 'confirm' : act} style={{ ...sm2Button('outline', bloqueado), minHeight: 44, minWidth: 72, padding: '0 14px', gap: 6 }}>
+                  <Icon name={confirmBuy ? 'check' : 'help'} size={24} tone={confirmBuy ? 'primary' : 'ink'} />
+                  {act === 'use'
+                    ? <span className="sm2-num" data-m3-hints-left={hintsLeft}>{hintsLeft}</span>
+                    : <span className="sm2-num" data-m3-hint-price={M3_HINT_PRICE_BITS} style={bitsStyle}>{M3_HINT_PRICE_BITS} Bits</span>}
+                </button>
+              );
+            })()}
+          </div>
+          <p className="sm2-sr-only" data-m3-next>
             {bitsNow >= M3_MAX_BITS
               ? (isPt ? 'Você chegou ao máximo de Bits desta rodada.' : 'You reached the Bits maximum for this round.')
               : (isPt ? `Próximo Bit com ${nextBitAt} pontos.` : `Next Bit at ${nextBitAt} points.`)}

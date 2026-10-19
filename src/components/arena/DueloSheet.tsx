@@ -3,12 +3,8 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, buildArenaRound, elementLabel, loadBestiaryPool, type ArenaEnemy } from '../../utils/arena';
 import { mulberry32 } from '../../utils/combate/rng';
 import { newDefenseSeed } from '../../utils/autoDefesa';
-import { soulCombatant } from '../../utils/soulXP';
 import { elementIcon } from '../../utils/elementIconArt';
-import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { Icon } from '../ui/Icon';
-import { PixelIcon } from '../ui/PixelIcon';
-import { ATTRIBUTE_ART } from '../../assets/soulmon/icones-ui';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
 
@@ -38,10 +34,6 @@ const box: CSSProperties = {
   border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
   backgroundColor: 'var(--sm2-bg)',
   display: 'flex', alignItems: 'center', gap: 8,
-};
-const boxValue: CSSProperties = {
-  ...sm2Text, fontFamily: 'var(--sm2-font-display)', fontWeight: 600,
-  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 };
 
 const SEED_MIX = 0x9e3779b1;
@@ -104,38 +96,24 @@ function EscolhaDeAdversarios({ isPt, onPick }: { isPt: boolean; onPick: (seed: 
   );
 }
 
-export function DueloSheet({ language, evolutionStage, onStart }: {
+export function DueloSheet({ language, onStart }: {
   language: Language;
-  evolutionStage: string;
+  /** Mantido por compat com o chamador; o número de Poder saiu da folha (D-59). */
+  evolutionStage?: string;
   /** Chamado com a semente do desafio ESCOLHIDO (sem ela, a Arena sorteia). */
   onStart: (seed?: number) => void;
 }) {
   const isPt = language === 'pt-BR';
-  // O mesmo poder que a luta usa (`ArenaGame`, Combate v3): o ATK do `soulCombatant` do save; sem save (demo, testes), o do estágio.
-  const gs = useGameStateOptional()?.gameState;
-  const poder = soulCombatant(gs
-    ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
-    : { evolutionStage }).atk;
   const [pickedSeed, setPickedSeed] = useState<number | undefined>(undefined);
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* 11.3 (beta-2): elemento e golpes saíram da Arena livre e moram no PERFIL do Soulmon (Laboratório) — fonte única em `utils/soulmonPerfil.ts`. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ ...box, flex: '0 0 auto' }} data-duelo-poder title={isPt ? 'Poder' : 'Power'} aria-label={`${isPt ? 'Poder' : 'Power'}: ${poder}`}>
-          {/* F6 (beta-2): o raio é o glifo da ENERGIA; o Poder tem o ícone próprio (as garras) e a PALAVRA ao lado do número. */}
-          <PixelIcon src={ATTRIBUTE_ART.power} size={24} />
-          <span className="sm2-num" style={boxValue}>{isPt ? 'Poder' : 'Power'} {poder}</span>
-        </div>
         <span style={{ flex: 1 }} />
         <ModalInfo language={language} label={isPt ? 'Como funciona a Arena' : 'How the Arena works'} align="right">
           <span data-duelo-ajuda>
             <span style={{ display: 'block' }}>
-              {isPt
-                ? 'Poder: a força dos seus golpes. Cresce quando o Soulmon evolui.'
-                : 'Power: how hard your strikes hit. It grows as your Soulmon evolves.'}
-            </span>
-            <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
                 ? 'Elemento e golpes do seu Soulmon: veja no Perfil, no Laboratório.'
                 : "Your Soulmon's element and strikes: see them in the Profile, in the Laboratory."}

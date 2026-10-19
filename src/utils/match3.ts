@@ -253,7 +253,7 @@ export function trySwap(b: Board, a: Pos, d: Pos, rng: Rng): SwapResult {
 // ── a rodada e os Bits ───────────────────────────────────────────────────────────────────────────────────────────────
 
 /** Pontos por Bit e o teto de uma rodada — calibrados em `utils/mente/balanco.test.ts` (mesma faixa de Bits/minuto dos outros jogos). */
-export const M3_POINTS_PER_BIT = 250;
+export const M3_POINTS_PER_BIT = 130;
 export const M3_MAX_BITS = 8;
 
 /** Bits de uma rodada: 1 a cada `M3_POINTS_PER_BIT` pontos, até `M3_MAX_BITS`. */

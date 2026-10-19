@@ -10,7 +10,7 @@ import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { Match3Game } from './Match3Game';
 import { M3_COLS, M3_MAX_BITS, M3_ROWS, match3Bits, newRound, trySwap, validMoves, type Board, type Pos, type Rng } from '../utils/match3';
-import { M3C_ENEMY_HP, M3C_PLAYER_HP, combatScore, newCombat, playTurn, type M3Combat } from '../utils/match3Combat';
+import { M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, M3C_ENEMY_HP, M3C_PLAYER_HP, chooseMove, combatScore, newCombat, playTurn, type M3Combat } from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -25,15 +25,15 @@ const num = (attr: string) => Number(document.querySelector(`[${attr}]`)!.getAtt
 /** Deixa a cascata inteira correr (cada passo ~0,5 s). */
 const assentar = async () => { await avancar(8000); };
 
-function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void } = {}) {
-  return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} />);
+function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void; bits?: number; onSpendBits?: (n: number) => boolean } = {}) {
+  return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} bits={over.bits} onSpendBits={over.onSpendBits} />);
 }
 /** A mesma rodada, jogada pela conta pura (tabuleiro + combate com os MESMOS rngs da tela), para prever o que a tela deve mostrar. */
 function previsao(n: number): { moves: Array<{ a: Pos; b: Pos }>; total: number; boards: Board[]; combates: M3Combat[] } {
   const { board, rng } = newRound(SEED);
-  const er = mulberry32(SEED ^ 0x5eed);
   let c = newCombat(mulberry32(SEED + 99), Object.keys(DUNGEON_LINE_SPRITES), undefined);
   let b = board;
+  let streak = 1;
   const moves: Array<{ a: Pos; b: Pos }> = [];
   const boards: Board[] = [b];
   const combates: M3Combat[] = [c];
@@ -41,8 +41,10 @@ function previsao(n: number): { moves: Array<{ a: Pos; b: Pos }>; total: number;
     const m = validMoves(b)[0];
     const r = trySwap(b, m.a, m.b, rng as Rng);
     if (!r.ok) throw new Error('inválida');
-    moves.push(m); b = r.board; boards.push(b);
-    c = playTurn(c, r.steps, er); combates.push(c);
+    moves.push(m);
+    const ex = playTurn(c, r.steps, r.board, rng as Rng, streak);
+    c = ex.state; b = ex.board; boards.push(b); combates.push(c);
+    streak = ex.extra ? streak + 1 : 1;
   }
   return { moves, total: combatScore(c), boards, combates };
 }
@@ -70,7 +72,7 @@ describe('o tabuleiro', () => {
   it('em PT-BR os nomes e a ajuda estão em português', () => {
     montar({ language: 'pt-BR' });
     expect(cell({ r: 2, c: 3 }).getAttribute('aria-label')).toMatch(/^(Fogo|Água|Terra|Vida|Ar|Luz), linha 3, coluna 4$/);
-    expect(screen.getByRole('button', { name: 'Dica' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Dica, 3 restantes/ })).toBeTruthy();
     expect(document.body.textContent).toContain('Turno');
   });
 
@@ -157,15 +159,6 @@ describe('jogar', () => {
     fireEvent.click(cell(b));
     await assentar();
     expect(num('data-m3-turn')).toBe(1);
-  });
-
-  it('a dica marca duas peças que de fato trocam (e some sozinha)', async () => {
-    montar();
-    fireEvent.click(screen.getByRole('button', { name: 'Hint' }));
-    const marcadas = [...document.querySelectorAll('[data-m3-hint="1"]')];
-    expect(marcadas.length).toBe(2);
-    await avancar(3000);
-    expect(document.querySelectorAll('[data-m3-hint="1"]').length).toBe(0);
   });
 });
 
@@ -263,17 +256,16 @@ describe('D-06: turnos alternados na tela', () => {
 });
 
 describe('D-04: a arena', () => {
-  it('1 Soulmon do jogador à ESQUERDA e 3 inimigos à direita em ordem 1→3, com HP e o ativo marcado', () => {
+  it('1 Soulmon do jogador (em cima) e 3 inimigos (embaixo) em ordem 1→3, com HP e o ativo marcado', () => {
     montar();
     const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
     const player = arena.querySelectorAll('[data-m3-player]');
     const inimigos = [...arena.querySelectorAll('[data-m3-enemy]')];
     expect(player.length).toBe(1);
     expect(inimigos.map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3']);
-    // ordem do documento = ordem visual (linha flex, sem inversão): o jogador vem antes de todos os inimigos
+    // o jogador vem antes de todos os inimigos no documento (e em cima na tela: coluna)
     for (const e of inimigos) expect(player[0].compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(arena.style.flexDirection).not.toBe('row-reverse');
-    expect(arena.style.flexDirection).not.toBe('column');
+    expect(arena.style.flexDirection).toBe('column');
     // sprites e barras de HP (GameKit): 1 + 3 barras
     expect(player[0].querySelector('img')!.getAttribute('src')).toBeTruthy();
     for (const e of inimigos) expect(e.querySelector('img[src]')).not.toBeNull();
@@ -306,20 +298,38 @@ describe('D-04: a arena', () => {
     expect(campo.style.flex).toMatch(/^1 /);
     const board = document.querySelector('[data-m3-board]') as HTMLElement;
     expect(board.style.width).toBe('100%');
-    // o botão de dica tem alvo ≥ 44
+    // o botão de dica (D-85) tem alvo ≥ 44
     expect((document.querySelector('[data-m3-hint-button]') as HTMLElement).style.minHeight).toBe('44px');
     // nenhum link de canto/nav montado por este componente
     expect(document.querySelector('[data-corner-link]')).toBeNull();
   });
 });
 
-describe('D-01: o contexto narrativo', () => {
-  it('o Combina 3 conta o combate (os 3 Soulmon inimigos são um time) em PT e EN', () => {
-    montar({ language: 'pt-BR' });
-    expect(document.querySelector('[data-game-story="match3"]')!.textContent).toMatch(/Três Soulmon da fenda formam um time/);
-    cleanup();
+describe('D-76/D-77: layout da arena e o topo enxuto', () => {
+  it('o Soulmon do jogador vem ANTES (em cima, à esquerda) e os 3 inimigos DEPOIS, em fila da direita para a esquerda', () => {
+    montar();
+    const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
+    expect(arena.style.flexDirection).toBe('column'); // jogador em cima, time embaixo
+    const filhos = [...arena.children] as HTMLElement[];
+    expect(filhos[0].hasAttribute('data-m3-player')).toBe(true);
+    expect(filhos[0].style.alignSelf).toBe('flex-start'); // à esquerda
+    const time = filhos[1];
+    expect(time.hasAttribute('data-m3-enemies')).toBe(true);
+    expect(time.style.flexDirection).toBe('row-reverse'); // o 1º inimigo na ponta DIREITA
+    expect(time.style.justifyContent).toBe('flex-start');
+    expect([...time.querySelectorAll('[data-m3-enemy]')].map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3']);
+  });
+
+  it('no topo só o contador de turnos (e o "i" do cabeçalho): sem história, sem placar/Bits visíveis, sem "próximo Bit"', () => {
     montar({ language: 'en-US' });
-    expect(document.querySelector('[data-game-story="match3"]')!.textContent).toMatch(/Three Soulmon from the rift form a team/);
+    expect(document.querySelector('[data-game-story]')).toBeNull();
+    expect(screen.getByRole('button', { name: 'How to play' })).toBeTruthy();
+    const campo = document.querySelector('[data-m3-field]') as HTMLElement;
+    const clone = campo.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('.sm2-sr-only, [data-m3-arena]').forEach(n => n.remove());
+    expect(clone.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^Turn ?0$/);
+    // placar, Bits, aviso e "próximo Bit" existem só para leitor de tela
+    for (const sel of ['[data-m3-sr]', '[data-m3-note]', '[data-m3-next]']) expect(document.querySelector(sel)!.classList.contains('sm2-sr-only')).toBe(true);
   });
 });
 
@@ -335,5 +345,71 @@ describe('movimento reduzido', () => {
     // sem transição de CSS nas peças
     expect((cell({ r: 0, c: 0 }) as HTMLElement).style.transition === 'none' || (cell({ r: 0, c: 0 }) as HTMLElement).style.transition === '').toBe(true);
     vi.unstubAllGlobals();
+  });
+});
+
+describe('D-85: a dica (3 por partida, depois compra com Bits)', () => {
+  const botao = () => document.querySelector('[data-m3-hint-button]') as HTMLButtonElement;
+  const marcadas = () => [...document.querySelectorAll('[data-m3-hint="1"]')].map(e => e.getAttribute('data-m3-cell'));
+
+  it('mostra os usos restantes (número), marca a MESMA jogada que a IA escolheria e some sozinha', async () => {
+    montar();
+    expect(botao().querySelector('[data-m3-hints-left]')!.textContent).toBe(String(M3_HINTS_PER_GAME));
+    const m = chooseMove(newRound(SEED).board)!;
+    fireEvent.click(botao());
+    expect(marcadas().sort()).toEqual([`${m.a.r},${m.a.c}`, `${m.b.r},${m.b.c}`].sort());
+    expect(botao().querySelector('[data-m3-hints-left]')!.textContent).toBe(String(M3_HINTS_PER_GAME - 1));
+    await avancar(3000);
+    expect(marcadas()).toEqual([]);
+  });
+
+  it('acabados os 3 usos o botão mostra o PREÇO em Bits; sem saldo fica desabilitado (nunca erro)', () => {
+    const gasta = vi.fn(() => true);
+    montar({ bits: 0, onSpendBits: gasta });
+    for (let i = 0; i < M3_HINTS_PER_GAME; i++) fireEvent.click(botao());
+    expect(botao().querySelector('[data-m3-hint-price]')!.textContent).toBe(`${M3_HINT_PRICE_BITS} Bits`);
+    expect(botao().disabled).toBe(true);
+    fireEvent.click(botao());
+    expect(gasta).not.toHaveBeenCalled();
+  });
+
+  it('com saldo: o 1º toque pede confirmação, o 2º compra pela via de gasto do app e mostra a dica', () => {
+    const gasta = vi.fn(() => true);
+    montar({ bits: 50, onSpendBits: gasta });
+    for (let i = 0; i < M3_HINTS_PER_GAME; i++) fireEvent.click(botao());
+    fireEvent.click(botao());
+    expect(botao().getAttribute('data-m3-hint-mode')).toBe('confirm');
+    expect(gasta).not.toHaveBeenCalled();
+    fireEvent.click(botao());
+    expect(gasta).toHaveBeenCalledWith(M3_HINT_PRICE_BITS);
+    expect(marcadas().length).toBe(2);
+  });
+
+  it('se o app recusa a cobrança, nada é dado', async () => {
+    const gasta = vi.fn(() => false);
+    montar({ bits: 50, onSpendBits: gasta });
+    for (let i = 0; i < M3_HINTS_PER_GAME; i++) fireEvent.click(botao());
+    await avancar(3000);
+    fireEvent.click(botao());
+    fireEvent.click(botao());
+    expect(gasta).toHaveBeenCalledTimes(1);
+    expect(marcadas()).toEqual([]); // a compra recusada não mostra dica
+    expect(botao().getAttribute('data-m3-hint-mode')).toBe('buy');
+  });
+});
+
+describe('D-83/D-84: o inimigo joga na tela; 4+ dá o aviso de rodada extra', () => {
+  it('depois de uma jogada que passa a vez, o tabuleiro assenta no que a conta pura diz (jogador + troca do inimigo)', async () => {
+    montar();
+    const p = previsao(1);
+    await jogarEscolhido(p.moves[0]);
+    const esperado = p.boards[1];
+    for (let r = 0; r < M3_ROWS; r++) for (let c = 0; c < M3_COLS; c++) expect(Number(cell({ r, c }).getAttribute('data-m3-kind'))).toBe(esperado[r][c]!.k);
+    expect(num('data-m3-turn')).toBe(p.combates[1].turns);
+  });
+
+  it('o aviso de rodada extra é só um ícone (sem texto visível) e some do caminho quando não houve 4+', async () => {
+    montar();
+    expect(document.querySelector('[data-m3-extra]')).toBeNull();
   });
 });

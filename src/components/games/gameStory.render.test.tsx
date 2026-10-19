@@ -38,6 +38,10 @@ describe('D-01: cada um dos 7 jogos mostra o seu contexto narrativo', () => {
     for (const lang of ['pt-BR', 'en-US'] as const) {
       it(`${id} (${lang}) renderiza o texto de gameStories`, () => {
         const { container } = renderWithCss(JOGOS[id](lang));
+        if (id === 'match3') { // D-77 (19/10/2026): a tela de jogo do Combina 3 não tem nenhum texto de história
+          expect(container.querySelector('[data-game-story]')).toBeNull();
+          return;
+        }
         const el = container.querySelector(`[data-game-story="${id}"]`);
         expect(el, `${id} sem GameStory`).toBeTruthy();
         const esperado = lang === 'pt-BR' ? GAME_STORIES[id].pt : GAME_STORIES[id].en;

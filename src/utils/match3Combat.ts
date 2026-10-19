@@ -3,29 +3,36 @@
  *
  * Combinar peças de um elemento causa dano DAQUELE elemento ao inimigo ATIVO. São três Soulmon inimigos, em fila (1→3), que contam como
  * UM time: o dano só atinge o ativo; a sobra de um golpe que o derruba é descartada; zerou o HP, o próximo assume; os três derrotados = vitória.
- * Depois de cada jogada VÁLIDA do jogador (troca válida, pontue ou não) o inimigo ativo faz UMA ação e tira HP do Soulmon do jogador;
+ * Depois de cada jogada VÁLIDA do jogador (troca válida, pontue ou não) o inimigo ativo MEXE as peças (uma troca, D-83) e os combos dele tiram HP do Soulmon do jogador;
  * HP 0 = a rodada acaba (sem custo nenhum: perder não cobra coração, Bit nem nada — só rende menos).
  *
  * O placar sai do combate e SÓ dele: `dano causado − dano recebido + bônus por inimigo derrotado`, nunca abaixo de 0. É o único número que
  * vira Bits (`match3Bits(placar)`, mesmo teto `M3_MAX_BITS` de antes — o combate nunca paga mais que a regra dos pontos pagava; régua em
  * `utils/mente/balanco.test.ts`).
  *
- * Tudo determinístico: o rng da ação do inimigo vem por PARÂMETRO (`mulberry32` de `combate/rng`) — nunca `Math.random`.
+ * Tudo determinístico: o rng do tabuleiro vem por PARÂMETRO (`mulberry32` de `combate/rng`) — nunca `Math.random`.
  * O estado é imutável: cada função devolve um estado novo.
  */
-import { chainMultiplier, match3Bits, M3_TILE_ELEMENTS, type Rng, type Step } from './match3';
+import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, type Board, type Pos, type Rng, type Step } from './match3';
+import { mulberry32 } from './combate/rng';
 
 export type M3Element = (typeof M3_TILE_ELEMENTS)[number];
 
 /** HP do Soulmon do jogador. */
-export const M3C_PLAYER_HP = 330;
+export const M3C_PLAYER_HP = 520;
 /** HP de cada um dos três inimigos (1→3). O último é o mais duro. */
 export const M3C_ENEMY_HP: readonly [number, number, number] = [290, 350, 410];
 /** Dano por peça limpa (× o multiplicador da cascata). */
 export const M3C_DMG_PER_TILE = 10;
-/** Dano da ação do inimigo: `base + floor(rng() × (spread + 1))`; o inimigo 2 e o 3 batem um pouco mais forte. */
-export const M3C_ENEMY_BASE_DMG: readonly [number, number, number] = [9, 11, 13];
-export const M3C_ENEMY_DMG_SPREAD = 4;
+/**
+ * D-83 (19/10/2026): o inimigo da frente MEXE as peças (uma troca por vez de inimigo) e os combos dele tiram HP do jogador pela MESMA
+ * fórmula do dano do jogador (`M3C_DMG_PER_TILE` × multiplicador da cascata). Como o inimigo escolhe sempre a melhor troca, o HP do jogador
+ * subiu de 330 para `M3C_PLAYER_HP` e o dano dele leva o fator `M3C_ENEMY_DMG_FACTOR` (régua: `match3Combat.test.ts`, balanço).
+ */
+/** D-84: um lado joga no máximo este número de jogadas SEGUIDAS (uma combinação de 4+ dá a vez extra; sem loop infinito). */
+export const M3C_MAX_STREAK = 3;
+/** A alavanca de equilíbrio da D-83: o dano dos combos do inimigo = a fórmula do jogador × este fator (o inimigo escolhe SEMPRE a melhor troca; sem o fator o jogador comum nunca vencia). */
+export const M3C_ENEMY_DMG_FACTOR = 0.2;
 /** Bônus de placar por inimigo derrotado. */
 export const M3C_DEFEAT_BONUS = 100;
 /** Teto de segurança: a rodada que chega a este turno acaba como derrota SEM custo. */
@@ -107,31 +114,102 @@ export function applyPlayerSteps(state: M3Combat, steps: readonly Step[]): M3Com
   return s;
 }
 
-/** A ação do inimigo ativo: tira HP do Soulmon do jogador. HP 0 = derrota. Sem efeito se a rodada já acabou. */
-export function enemyTurn(state: M3Combat, rng: Rng): M3Combat {
-  if (state.outcome !== 'playing') return state;
+/** D-84: a jogada formou uma combinação de 4+ peças (nasce uma peça especial) — vale uma RODADA EXTRA. */
+export const grantsExtraTurn = (steps: readonly Step[]): boolean => steps.some(st => st.created.length > 0);
+
+/** A semente FIXA da sonda: a escolha olha para a frente com ela, nunca com sorte escondida. */
+const PROBE_SEED = 0x2c1b3c6d;
+
+/**
+ * A MELHOR jogada de um tabuleiro (D-83 e D-85: a IA inimiga e a dica do jogador são ESTA função): a troca que mais pontua, medida
+ * com a sonda de semente fixa; empate = a PRIMEIRA na ordem de `validMoves` (linha a linha). Determinística: mesmo tabuleiro, mesma jogada.
+ */
+export function chooseMove(board: Board): { a: Pos; b: Pos; score: number } | null {
+  let melhor: { a: Pos; b: Pos; score: number } | null = null;
+  for (const m of validMoves(board)) {
+    const r = trySwap(board, m.a, m.b, mulberry32(PROBE_SEED));
+    if (r.ok && (!melhor || r.score > melhor.score)) melhor = { a: m.a, b: m.b, score: r.score };
+  }
+  return melhor;
+}
+
+/** O dano dos combos do INIMIGO no jogador: a mesma conta do jogador (peças × `M3C_DMG_PER_TILE` × cascata), um evento por elemento por passo. */
+export function applyEnemySteps(state: M3Combat, steps: readonly Step[]): M3Combat {
   const s = cloneCombat(state);
-  const e = s.enemies[s.active];
-  const bruto = M3C_ENEMY_BASE_DMG[s.active] + Math.floor(rng() * (M3C_ENEMY_DMG_SPREAD + 1));
-  const dmg = Math.min(s.player.hp, bruto);
-  s.player.hp -= dmg;
-  s.taken += dmg;
-  s.log.push({ by: 'enemy', element: e.element, dmg, target: 'player' });
-  if (s.player.hp <= 0) s.outcome = 'loss';
+  for (const st of steps) {
+    const porElemento = new Map<number, number>();
+    for (const k of st.kinds) porElemento.set(k, (porElemento.get(k) ?? 0) + 1);
+    for (const k of [...porElemento.keys()].sort((a, b) => a - b)) {
+      if (s.outcome !== 'playing') return s;
+      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * M3C_ENEMY_DMG_FACTOR));
+      const dmg = Math.min(s.player.hp, bruto);
+      s.player.hp -= dmg;
+      s.taken += dmg;
+      s.log.push({ by: 'enemy', element: M3_TILE_ELEMENTS[k], dmg, target: 'player' });
+      if (s.player.hp <= 0) s.outcome = 'loss';
+    }
+  }
   return s;
 }
 
+/** Uma troca do inimigo, inteira (a tela a anima): as casas, o tabuleiro trocado, os passos da cascata e o tabuleiro final. */
+export interface EnemyMove { a: Pos; b: Pos; swapped: Board; steps: Step[]; board: Board; reshuffled: Board | null }
+
 /**
- * Uma jogada VÁLIDA inteira: o dano do jogador e, se a rodada segue, a resposta do inimigo ativo. Conta o turno; ao chegar a
- * `M3C_MAX_TURNS` sem fim, a rodada acaba como derrota sem custo.
+ * A vez do inimigo da frente (D-83): UMA troca (a melhor, `chooseMove`) no mesmo tabuleiro, com o rng do tabuleiro. Uma combinação de 4+
+ * dá outra troca (D-84), até `M3C_MAX_STREAK` seguidas. Cada troca tira HP do jogador pela fórmula do combate; HP 0 = derrota.
  */
-export function playTurn(state: M3Combat, steps: readonly Step[], rng: Rng): M3Combat {
-  if (state.outcome !== 'playing') return state;
+export function enemyPhase(state: M3Combat, board: Board, boardRng: Rng): { state: M3Combat; board: Board; moves: EnemyMove[] } {
+  let s = state;
+  let b = board;
+  const moves: EnemyMove[] = [];
+  for (let i = 0; i < M3C_MAX_STREAK && s.outcome === 'playing'; i++) {
+    const m = chooseMove(b);
+    if (!m) break;
+    const r = trySwap(b, m.a, m.b, boardRng);
+    if (!r.ok) break;
+    moves.push({ a: m.a, b: m.b, swapped: r.swapped, steps: r.steps, board: r.board, reshuffled: r.reshuffled });
+    s = applyEnemySteps(s, r.steps);
+    b = r.board;
+    if (!grantsExtraTurn(r.steps)) break;
+  }
+  return { state: s, board: b, moves };
+}
+
+export interface M3Exchange {
+  state: M3Combat;
+  /** O tabuleiro depois de tudo (o do jogador, ou o que o inimigo deixou). */
+  board: Board;
+  /** D-84: a jogada do jogador deu RODADA EXTRA — o inimigo NÃO jogou e o turno não foi contado. */
+  extra: boolean;
+  enemyMoves: EnemyMove[];
+}
+
+/**
+ * Uma jogada VÁLIDA do jogador inteira. `board` = o tabuleiro já resolvido pela jogada dele; `streak` = quantas jogadas SEGUIDAS ele já fez
+ * contando esta (1 na primeira). O dano do jogador entra; a vitória acaba ali. Combinação de 4+ com `streak < M3C_MAX_STREAK` = RODADA EXTRA
+ * (sem resposta do inimigo e SEM consumir turno: `turns` só conta jogadas que passam a vez). Senão conta o turno e o inimigo joga (`enemyPhase`).
+ * Ao chegar a `M3C_MAX_TURNS` sem fim, a rodada acaba como derrota sem custo.
+ */
+export function playTurn(state: M3Combat, steps: readonly Step[], board: Board, boardRng: Rng, streak = 1): M3Exchange {
+  if (state.outcome !== 'playing') return { state, board, extra: false, enemyMoves: [] };
   let s = applyPlayerSteps(state, steps);
+  if (s.outcome !== 'playing') return { state: { ...s, turns: s.turns + 1 }, board, extra: false, enemyMoves: [] };
+  if (grantsExtraTurn(steps) && streak < M3C_MAX_STREAK) return { state: s, board, extra: true, enemyMoves: [] };
   s = { ...s, turns: s.turns + 1 };
-  if (s.outcome === 'playing') s = enemyTurn(s, rng);
+  const ph = enemyPhase(s, board, boardRng);
+  s = ph.state;
   if (s.outcome === 'playing' && s.turns >= M3C_MAX_TURNS) s = { ...s, outcome: 'loss' };
-  return s;
+  return { state: s, board: ph.board, extra: false, enemyMoves: ph.moves };
+}
+
+/** D-85: usos de dica por partida e o preço (em Bits) de mais um uso. SUPOSIÇÃO do agente: barato — uma rodada típica rende ~3 Bits. O dono ajusta aqui. */
+export const M3_HINTS_PER_GAME = 3;
+export const M3_HINT_PRICE_BITS = 3;
+/** O que o botão de dica faz agora: `use` (ainda há usos), `buy` (acabaram, mas o saldo cobre o preço) ou `blocked` (saldo insuficiente — botão desabilitado, nunca erro). */
+export function hintAction(left: number, bits: number, price: number = M3_HINT_PRICE_BITS): 'use' | 'buy' | 'blocked' {
+  if (left > 0) return 'use';
+  return Number.isFinite(bits) && bits >= price ? 'buy' : 'blocked';
 }
 
 /** O placar: dano causado − dano recebido + bônus por inimigo derrotado, nunca abaixo de 0. */

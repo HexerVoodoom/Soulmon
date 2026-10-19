@@ -77,6 +77,7 @@ export const GUILD_COPY = {
   'guild.guerra.buscar': ['Procurar um clã rival', 'Look for a rival clan'],
   'guild.guerra.esperando': ['Seu esquadrão espera um clã do mesmo tamanho. O resultado chega sozinho.', 'Your squad is waiting for a clan of the same size. The result arrives on its own.'],
   'guild.guerra.pequena': ['Para a guerra são precisas ao menos duas pessoas com ficha de luta.', 'A war needs at least two people with a fighter sheet.'],
+  'guild.guerra.semcla': ['A guerra é do clã. Entre num clã para lutar.', 'The war belongs to the clan. Join a clan to fight.'],
   'guild.guerra.hoje': ['Hoje a guerra já aconteceu.', 'Today’s war has already happened.'],
   'guild.guerra.resultado.win': ['A roda venceu a guerra contra {nome}.', 'The circle won the war against {nome}.'],
   'guild.guerra.resultado.draw': ['A guerra contra {nome} terminou empatada.', 'The war against {nome} ended in a draw.'],
