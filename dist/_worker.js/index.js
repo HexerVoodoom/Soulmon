@@ -11005,7 +11005,11 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
+<<<<<<< HEAD
 // ../.wrangler/tmp/pages-pTcKek/functionsRoutes-0.43484746030340393.mjs
+=======
+// ../.wrangler/tmp/pages-MVxP7c/functionsRoutes-0.35735722106498624.mjs
+>>>>>>> origin/feat/arte-guerra-selecionada
 var routes = [
   {
     routePath: "/api/account",

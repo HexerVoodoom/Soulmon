@@ -1,1 +1,5 @@
+<<<<<<<< HEAD:dist/assets/realEngine-C5y1OJfU.js
 import{bT as t}from"./index-DsuHP9VY.js";async function a(e){const o=await t(()=>import("./index-Cby75ShZ.js"),[]),s={nome:e.nome,elementos:e.elementos,escolas:e.escolas,recursos:e.recursos,talentos:e.talentos,profissoes:e.profissoes,bestiario:[]},r=o.calcularProgressao(s);return{engine:o,personagem:s,prog:r}}export{a as b};
+========
+import{bT as t}from"./index-NMHuTXpc.js";async function a(e){const o=await t(()=>import("./index-Cby75ShZ.js"),[]),s={nome:e.nome,elementos:e.elementos,escolas:e.escolas,recursos:e.recursos,talentos:e.talentos,profissoes:e.profissoes,bestiario:[]},r=o.calcularProgressao(s);return{engine:o,personagem:s,prog:r}}export{a as b};
+>>>>>>>> origin/feat/arte-guerra-selecionada:dist/assets/realEngine-BWBQkMUt.js
