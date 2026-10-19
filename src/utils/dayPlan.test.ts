@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   sanitizeDayPlan, dayPlanView, isHiddenByPlan, hiddenOnDay, needsDayPlan, dayPlanInvite, migrateDayPlan,
-  dayPlanCandidates, showDayPlan, confirmDayPlan, DAY_PLAN_MAX_IDS,
+  dayPlanCandidates, showDayPlan, confirmDayPlan, dayPlanFocusIds, DAY_PLAN_MAX_IDS,
 } from './dayPlan';
 
 const HOJE = '2026-10-15';
@@ -91,5 +91,19 @@ describe('REGISTRO §66 — reafirmar o dia: regra pura', () => {
     expect(sanitizeDayPlan({ day: HOJE, offered: ['a', 'a', 'com espaço', 3], picked: ['a', 'z'], confirmed: 'sim' }))
       .toEqual({ day: HOJE, offered: ['a'], picked: ['a'], confirmed: false });
     expect(sanitizeDayPlan({ day: HOJE, offered: Array.from({ length: 999 }, (_, i) => `i${i}`) })!.offered).toHaveLength(DAY_PLAN_MAX_IDS);
+  });
+});
+
+describe('dayPlanFocusIds — o foco do "Hoje" (REGISTRO 111)', () => {
+  const tasks = new Set(['t1', 't2', 't3', 't4']);
+  it('só TAREFAS marcadas, pendência de ontem primeiro, depois a sugestão, depois o resto; no máximo 3', () => {
+    const plan = { carryOver: [{ id: 't3' }], suggestedFocus: [{ id: 't1' }, { id: 't3' }] };
+    expect(dayPlanFocusIds(['h1', 't1', 't2', 't3', 't4'], tasks, plan, 3)).toEqual(['t3', 't1', 't2']);
+  });
+  it('desmarcado não entra, hábito/atividade agendada nunca viram foco, sem marcados = vazio', () => {
+    const plan = { carryOver: [{ id: 't3' }], suggestedFocus: [{ id: 't1' }] };
+    expect(dayPlanFocusIds(['h1', 't2'], tasks, plan, 3)).toEqual(['t2']);
+    expect(dayPlanFocusIds([], tasks, plan, 3)).toEqual([]);
+    expect(dayPlanFocusIds(['h1', 'a-agendada'], tasks, plan, 3)).toEqual([]);
   });
 });

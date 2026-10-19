@@ -295,7 +295,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
   const playBreak = shouldPlayHeartBreak(strip, heartsAnimSeen);
 
   // 4.4 — uma folha por seção, em ordem de tempo: ONTEM (tarefas → corações → aventura) e depois HOJE.
-  const hasToday = !!onPickMood || (showOffer && !!onOpenOffer) || !!memories;
+  const hasToday = (showOffer && !!onOpenOffer) || !!memories;
   // 14/10/2026 (dono): "como foi o dia anterior" + os corações viram UM modal só (`yesterday`), CENTRALIZADO.
   const steps: Array<'yesterday' | 'adventure' | 'today'> = ['yesterday'];
   if (adventure) steps.push('adventure');
@@ -369,53 +369,11 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
           </div>
         )}
         </section>
-      </>
-    ));
-  }
-
-  if (step === 'adventure' && adventure) {
-    /* ── A AVENTURA DE ONTEM ────────────────────────────────────────────
-       O pet saiu e voltou com uma cena. É o loop de duas visitas do Finch, e a razão de ele ser narrativo
-       está no benchmark do `docs/PLANO-TAREFAS.md`: **narrativa não satura**.
-
-       APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem voltou depois de sumir. É
-       deliberado: o dia ruim é o momento mais frágil do app, e é justamente nele que a única coisa boa da
-       tela não pode faltar. NÃO PAGA NADA (decisão do dono, 08/09/2026).
-
-       4.3/4.4 (beta-2): é uma folha INDEPENDENTE, a única com o NPC — o do Passeio (`AreaSheet`, o mesmo
-       molde dos prédios), ligada explicitamente à missão e ao destino escolhidos no dia anterior. */
-    return (
-      <div data-report-step="adventure" style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
-        <AreaSheet
-          areaId="exploracao"
-          lotId="passeio"
-          language={language}
-          title={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}
-          closeLabel={closeLabel}
-          closeInSheet
-          open
-          onClose={onClose}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* A MESMA peça do Passeio (`StrollFind`): a missão escolhida ontem, o destino e o que o Soulmon encontrou — um fluxo só. */}
-            <StrollFind adventure={adventure} isNew={adventureIsNew} stroll={stroll} language={language} />
-            {nextButton}
-          </div>
-        </AreaSheet>
-      </div>
-    );
-  }
-
-  /* HOJE — a pergunta do humor, o convite e as memórias. Ainda cabe no relatório que a pessoa já ia ver:
-     não gera push, badge nem lembrete. */
-  return wrapSheet('today', onPickMood ? (isPt ? 'E você, como está hoje?' : 'And how are you today?') : (isPt ? 'Hoje' : 'Today'), (
-    <>
-      {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a HISTÓRIA. */}
-      {memories && <MemoriesCard {...memories} language={language} />}
-
-      {/* O humor: opcional, e não vale ponto (D-R6: sem rótulo de prêmio; 5 alvos 44 iguais com o emoji de `mood.ts`). */}
-      {onPickMood && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* O HUMOR mora no resumo de ontem (19/10/2026, dono — REGISTRO §111): resumo + humor numa tela só; ele é pedido UMA vez. */}
+        {/* O humor: opcional, e não vale ponto (D-R6: sem rótulo de prêmio; 5 alvos 44 iguais com o emoji de `mood.ts`). */}
+        {onPickMood && (
+        <div data-report-section="mood" style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--sm2-line)', paddingTop: 12 }}>
+          <p style={{ ...sm2Text, margin: 0, textAlign: 'center', fontWeight: 500 }}>{isPt ? 'E você, como está hoje?' : 'And how are you today?'}</p>
           <div role="group" aria-label={isPt ? 'Humor' : 'Mood'} style={{ display: 'flex', gap: 8 }}>
             {MOOD_OPTIONS.map(m => {
               const active = moodToday === m.value;
@@ -454,6 +412,50 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
           {moodNote && <p style={hint}>{moodNote}</p>}
         </div>
       )}
+      </>
+    ));
+  }
+
+  if (step === 'adventure' && adventure) {
+    /* ── A AVENTURA DE ONTEM ────────────────────────────────────────────
+       O pet saiu e voltou com uma cena. É o loop de duas visitas do Finch, e a razão de ele ser narrativo
+       está no benchmark do `docs/PLANO-TAREFAS.md`: **narrativa não satura**.
+
+       APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem voltou depois de sumir. É
+       deliberado: o dia ruim é o momento mais frágil do app, e é justamente nele que a única coisa boa da
+       tela não pode faltar. NÃO PAGA NADA (decisão do dono, 08/09/2026).
+
+       4.3/4.4 (beta-2): é uma folha INDEPENDENTE, a única com o NPC — o do Passeio (`AreaSheet`, o mesmo
+       molde dos prédios), ligada explicitamente à missão e ao destino escolhidos no dia anterior. */
+    return (
+      <div data-report-step="adventure" style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+        <AreaSheet
+          areaId="exploracao"
+          lotId="passeio"
+          language={language}
+          title={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}
+          closeLabel={closeLabel}
+          closeInSheet
+          open
+          onClose={onClose}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* A MESMA peça do Passeio (`StrollFind`): a missão escolhida ontem, o destino e o que o Soulmon encontrou — um fluxo só. */}
+            <StrollFind adventure={adventure} isNew={adventureIsNew} stroll={stroll} language={language} />
+            {nextButton}
+          </div>
+        </AreaSheet>
+      </div>
+    );
+  }
+
+  /* HOJE — o convite e as memórias (o humor subiu para o resumo de ontem, §111). Ainda cabe no relatório que a pessoa já ia ver:
+     não gera push, badge nem lembrete. */
+  return wrapSheet('today', isPt ? 'Hoje' : 'Today', (
+    <>
+      {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a HISTÓRIA. */}
+      {memories && <MemoriesCard {...memories} language={language} />}
+
 
       {/* WP5.1 — O CONVITE NO VALUE MOMENT. As travas são de `utils/offerMoment.ts`. A FORMA (D-R9, o único
           padrão positivo do dossiê — Garmin): × 44 no próprio card, `outline` de duas linhas com largura

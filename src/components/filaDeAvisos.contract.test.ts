@@ -173,15 +173,15 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   // 14/10/2026: a cadeia ternária `interstitial` virou a fila central (`PRESENTATION_ORDER`); a posição agora é lida dela.
   const ordem = PRESENTATION_ORDER as readonly string[];
 
-  it('a ordem declarada é: TOUR → triagem → LEVEL UP → resumo do dia → PRÉDIO NOVO → metas → REAFIRMAR O DIA → check-in → modal de evolução → MARCO → sonho → pesadelo → convite de nível → sono → ocioso', () => {
-    expect(ordem).toEqual(['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
+  it('a ordem declarada é (19/10/2026, D-64): TOUR → triagem → PESADELO → sonho → resumo do dia → PRÉDIO NOVO → metas → "HOJE" (reafirmar + check-in) → LEVEL UP → modal de evolução → MARCO → convite de nível → sono → ocioso', () => {
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'nightmare', 'dream', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
   });
 
-  it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {
+  it('o marco vem DEPOIS do relatório e do check-in (celebração depois do início de dia) e ANTES dos convites (posições, não só presença)', () => {
     const i = (k: string) => ordem.indexOf(k);
     expect(i('groveMilestone')).toBeGreaterThan(i('dailyReport'));
     expect(i('groveMilestone')).toBeGreaterThan(i('checkIn'));
-    expect(i('groveMilestone')).toBeLessThan(i('dream'));
+    expect(i('groveMilestone')).toBeLessThan(i('catalogLevelInvite'));
   });
 
   it('só fica PRONTO quando há marco pendente REAL (`grovePendente`), e a cerimônia monta só por essa fila', () => {
@@ -254,10 +254,11 @@ describe('a apresentação do prédio novo tem POSIÇÃO na fila e monta UMA vez
 // vez dele, lazy; a saída é o toque (nada de timer) e z 300 fica acima da fila (200).
 // ---------------------------------------------------------------------------
 describe('o level up tem POSIÇÃO na fila e monta UMA vez', () => {
-  it('é intersticial: o PRIMEIRO depois do tour e da triagem, antes do resumo do dia', () => {
+  it('é intersticial e CELEBRAÇÃO: vem DEPOIS do início de dia (resumo e "Hoje"), antes dos convites (D-64, REGISTRO §111)', () => {
     const o = PRESENTATION_ORDER as readonly string[];
-    expect(o.indexOf('levelUp')).toBeLessThan(o.indexOf('dailyReport'));
-    expect(o.indexOf('levelUp')).toBeLessThan(o.indexOf('buildingIntro'));
+    expect(o.indexOf('levelUp')).toBeGreaterThan(o.indexOf('dailyReport'));
+    expect(o.indexOf('levelUp')).toBeGreaterThan(o.indexOf('checkIn'));
+    expect(o.indexOf('levelUp')).toBeLessThan(o.indexOf('catalogLevelInvite'));
     expect((app.match(/interstitial === 'levelUp'/g) ?? [])).toHaveLength(1);
     expect((app.match(/<LevelUpOverlay /g) ?? [])).toHaveLength(1);
     expect(app).toContain("const LevelUpOverlay = lazy(");

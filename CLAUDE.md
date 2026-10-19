@@ -85,10 +85,13 @@ via `language === 'pt-BR'`).
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.
 
 > **`docs/FILA-DE-MODAIS.md`** (14/10/2026, REGISTRO §42) é o inventário da **fila central de modais**: todo intersticial da
-> Home/App (tour, level-up, resumo do dia, intro de NPC/mapa, metas, check-in, avisos leves) passa por
+> Home/App (tour, pesadelo/sonho, resumo do dia, intro de NPC/mapa, metas, "Hoje", celebrações, avisos leves) passa por
 > `src/utils/presentationQueue.ts` + `src/hooks/usePresentationQueue.ts` — UM por vez, na ordem de `PRESENTATION_ORDER`, quem
 > está na tela NÃO é expulso, e o "visto" é gravado **AO MOSTRAR** (não ao fechar). **Modal novo da Home entra na fila**
-> (receita na §5 do doc); a intro de NPC reutiliza `components/NpcSequence.tsx`, não cria outra.
+> (receita na §5 do doc); a intro de NPC reutiliza `components/NpcSequence.tsx`, não cria outra. **Início de dia (19/10/2026, REGISTRO §110–§112):** o
+> Soulmon dorme na 1ª abertura de cada dia e é acordado com 1 toque (`utils/dayWake.ts`: só pet e jogos param; tarefa/hábito nunca; o sono
+> real, o dreno e o cocô não mudam) → pesadelo OU sonho → resumo com humor → "Hoje" (metas + check-in fundidos), TETO de 3 modais por abertura;
+> celebrações só se sobrar vaga, convites/config/priming de push ficam para outra abertura.
 
 > **`docs/manual/00-MAPA.md`** é a porta de entrada do **manual completo** do
 > Soulmon (18 documentos em `docs/manual/` — `find docs/manual -name '*.md' | wc -l`, 21/09/2026; escritos em 09–10/09/2026): visão e

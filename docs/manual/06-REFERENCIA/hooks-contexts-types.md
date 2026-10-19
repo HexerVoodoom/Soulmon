@@ -47,7 +47,7 @@
 
 ### `src/hooks/usePresentationQueue.ts`
 **Dono de:** ligar a fila pura de apresentação (`utils/presentationQueue.ts`) ao React (14/10/2026, REGISTRO §42): deriva quem está na tela a cada render (guardando o item atual num `ref`, para não ser expulso por um mais prioritário), chama `onShow(id)` UMA vez por entrada na tela (onde cada dono grava o "visto"), registra a camada de "voltar" (Android/navegador) que fecha o item da tela por `onDismiss(id)`, e expõe `fail(id)` (erro de render, chunk que não carrega, fechamento que lança: pula o item e tenta o fechamento dele).
-**Exports:** `usePresentationQueue({ ready, onShow?, onDismiss? })` → `{ current, dismiss, fail }`.
+**Exports:** `usePresentationQueue({ ready, holdDayStart?, onShow?, onDismiss? })` → `{ current, dismiss, fail, dayStartActive }`. Desde 19/10/2026 (REGISTRO §111) acumula num `ref` o que já foi mostrado NESTA abertura do app (teto de 3 modais) e `holdDayStart` segura o início de dia enquanto o Soulmon dorme à espera de ser acordado.
 **Chamado por:** `src/App.tsx` (uma vez).
 **Régua:** `src/hooks/usePresentationQueue.test.tsx` (ordem, um por vez, não expulsa, `onShow` uma vez, voltar do Android, fechamento que lança, cenário exato do dono).
 **Avisos do arquivo:** `onShow`/`onDismiss` que lançam NUNCA travam a fila (`runGuarded`); a fila não guarda nada no save.

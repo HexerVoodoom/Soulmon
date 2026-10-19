@@ -591,14 +591,16 @@ Desde 14/10/2026 (REGISTRO §42) a prioridade é **uma fila central só**: `src/
 O inventário de quem dispara o quê é `docs/FILA-DE-MODAIS.md`.
 
 ```ts
-PRESENTATION_ORDER = ['welcomeTour', 'triage', 'levelUp', 'dailyReport', 'buildingIntro', 'catalogOnboarding',
-  'dayGoals', 'checkIn', 'evolveTask', 'groveMilestone', 'dream', 'nightmare', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'welcome']
+PRESENTATION_ORDER = ['welcomeTour', 'triage', 'nightmare', 'dream', 'dailyReport', 'buildingIntro', 'mapTutorial', 'catalogOnboarding',
+  'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']
 ```
 
-Ordem: **tour do corvo (§4.27) → triagem (a única aberta por TOQUE) → level-up → resumo do dia (modal centralizado
-"ontem + corações", depois a aventura, depois "hoje") → NPC apresenta o prédio (§4.28, tela cheia, só na PRIMEIRA entrada nele) → escolha das metas
-(catálogo) → **reafirmar o dia** (`dayGoals`, §4.17a) → compromisso do dia (check-in) → "crie mais atividades" (`EvolveTaskModal`) → marco do Bosque → sonho →
-pesadelo → convite de nível do catálogo → convite do sono → balão "prédio desbloqueado" (`unlockToast`, não bloqueante) → welcome prompt (ocioso)**. Regras: **um por vez**; **quem está
+**Início de dia (19/10/2026, REGISTRO §110–§112):** o Soulmon aparece DORMINDO na 1ª abertura de cada dia e um toque no "Acordar" o acorda (gesto, não modal; `utils/dayWake.ts`; só o pet e os jogos param até lá). Acordou → **pesadelo OU sonho → resumo de ontem (com o humor, numa tela) → "Hoje" (`dayGoals` + `checkIn` fundidos)**, TETO de 3 modais; celebrações (level-up, "crie mais atividades", marco do Bosque) só se sobrar vaga, convites e configuração (convite de nível, sono, priming de push) ficam para outra abertura.
+
+Ordem: **tour do corvo (§4.27) → triagem (a única aberta por TOQUE) → pesadelo → sonho → resumo do dia (modal centralizado
+"ontem + corações + humor", depois a aventura, depois convite/memórias) → NPC apresenta o prédio (§4.28, tela cheia, só na PRIMEIRA entrada nele) → escolha das metas
+(catálogo) → **"Hoje"** (`dayGoals`, §4.17a, com o compromisso do check-in dentro) → level-up → "crie mais atividades" (`EvolveTaskModal`) → marco do Bosque →
+convite de nível do catálogo → convite do sono → balão "prédio desbloqueado" (`unlockToast`, não bloqueante) → welcome prompt (ocioso)**. Regras: **um por vez**; **quem está
 na tela NÃO é expulso** por um mais prioritário que fica pronto depois (a cadeia antiga recalculava a cada render e
 desmontava o resumo); o **"visto" é gravado AO MOSTRAR** (`onShow`), não ao fechar — fechar o app no meio não repete o evento;
 o **voltar do Android** fecha o item da tela (`onDismiss`) e a fila avança; item que **lança no render, não carrega em 8 s

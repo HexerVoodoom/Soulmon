@@ -109,8 +109,12 @@ describe('haunted_done / checkin_shown — fiação (WP0.13, WP0.14)', () => {
   it('`checkin_shown` sai DEPOIS de todos os gates do ritual, uma vez só', () => {
     const src = app();
     const emissoes = src.match(/track\('checkin_shown'/g) ?? [];
-    expect(emissoes).toHaveLength(1);
-    const i = src.indexOf("track('checkin_shown'");
+    // 19/10/2026 (REGISTRO 111): o compromisso mora também no "Hoje" (`dayGoals`, fundido) — a 2ª emissão é o "visto ao mostrar" dele
+    // (dedupe diário em ONCE_PER_DAY: um dia, uma contagem, venha de onde vier). O ritual avulso segue com a 1ª.
+    expect(emissoes).toHaveLength(2);
+    const visto = src.slice(src.indexOf("} else if (id === 'dayGoals') {"), src.indexOf("} else if (id === 'checkIn') {"));
+    expect(visto).toContain("track('checkin_shown');");
+    const i = src.indexOf("track('checkin_shown'", src.indexOf('const checkInPromptedRef'));
     const efeito = src.slice(src.lastIndexOf('const checkInPromptedRef', i), i);
     // Os três gates que decidem se a oferta chega à tela ficam ANTES dele.
     expect(efeito).toMatch(/if \(!needsCheckIn\(gameState, now\)\) return;/);

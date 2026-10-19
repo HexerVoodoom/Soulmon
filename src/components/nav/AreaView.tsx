@@ -116,6 +116,8 @@ type TournamentProps = ComponentProps<typeof TournamentPageT>;
 
 export interface AreaViewProps {
   area: AreaId;
+  /** Acordar o Soulmon (REGISTRO §112): `true` = a ação de jogo ficou parada (o `App` já mostrou o aviso curto + o atalho "Acordar"). Só os JOGOS passam por aqui (`WAKE_BLOCKED_GAMES`); abrir a área e navegar nunca param. */
+  wakeGuard?: (action: string) => boolean;
   /** Abre um jogo direto ao montar (o convite ao Refúgio abre a respiração).
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
@@ -393,7 +395,7 @@ export function AreaView(props: AreaViewProps) {
   }
 
   if (area === 'exploracao' || area === 'jogos') {
-    const start = (g: PlayGame) => { setSheet(null); setGame(g); };
+    const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
     const exitGame = () => setGame(null);
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({

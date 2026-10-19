@@ -154,6 +154,7 @@ import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/ter
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
+import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
 import { NoticeToast, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
 import {
@@ -2074,7 +2075,34 @@ export default function App() {
     dayGoalsPromptedRef.current = dayPlanToday;
     setDayGoalsOpen(true);
   }, [dayPlanActive, rolloverPending, showDailyReport, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
+  /* ACORDAR O SOULMON (19/10/2026, dono — REGISTRO §110; `utils/dayWake.ts`). Na 1ª abertura de cada dia o pet aparece dormindo e
+     um toque no "Acordar" do deck o acorda. É APRESENTAÇÃO: o sono real (`isSleeping`: dreno, cocô, janela de descanso) não muda. Até
+     acordar, só as ações do pet e dos jogos param (aviso curto + atalho); concluir tarefa/hábito sempre funciona e acorda sozinho. */
+  const [dayWokeDay, setDayWokeDay] = useState<string | null>(() => readLocal(STORAGE_KEYS.DAY_WOKE));
+  const dayWakeToday = playerDayKey(new Date(), gameState.playerDayTz);
+  const dayWakePending = !demo && dayWakePendingFor({
+    active: hasCompletedOnboarding && hasCompletedTutorial,
+    today: dayWakeToday,
+    wokeDay: dayWokeDay,
+    bornToday: daysTogether(gameState.bornAt, dayWakeToday) === 1,
+  });
+  const dayWakePendingRef = useRef(dayWakePending);
+  dayWakePendingRef.current = dayWakePending;
+  const markDayAwake = useCallback(() => {
+    const hoje = playerDayKey(new Date(), gameStateRef.current.playerDayTz);
+    writeLocal(STORAGE_KEYS.DAY_WOKE, hoje, { silent: true });
+    setDayWokeDay(hoje);
+  }, []);
+  /** O aviso curto + o atalho "Acordar" (a ação de pet/jogo parada). Mudo: sem som (superfície nova nasce muda). Devolve `true` se segurou. */
+  const guardWake = useCallback((action: string): boolean => {
+    if (!isBlockedUntilWake(action, dayWakePendingRef.current)) return false;
+    const w = wakeWarning(language === 'pt-BR');
+    toast(w.text, { id: 'wake-warning', action: { label: w.action, onClick: markDayAwake } });
+    return true;
+  }, [language, markDayAwake]);
   const presentation = usePresentationQueue({
+    // enquanto o Soulmon dorme à espera de ser acordado: nada do início de dia, celebração ou convite entra (a fila decide)
+    holdDayStart: dayWakePending,
     // §81: durante o ONBOARDING a fila é inerte (nenhum item "visto" é gravado sem aparecer, nenhum voltar é tomado).
     ready: readyFor(demo || !hasCompletedOnboarding, {
       welcomeTour: welcomeTourOpen,
@@ -2116,7 +2144,14 @@ export default function App() {
       } else if (id === 'dayGoals') {
         // reafirmar o dia: "visto" ao MOSTRAR — fechar sem confirmar deixa a lista vazia com o convite e NÃO reabre no mesmo dia
         const hoje = playerDayIso(new Date(), gameState.playerDayTz);
-        setGameState(prev => ({ ...prev, dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date())) }));
+        // "Hoje" (REGISTRO §111): o compromisso mora no MESMO modal — o "visto" dele (`lastCheckInDate`) é gravado junto, ao MOSTRAR
+        const dia = playerDayKey(new Date(), gameState.playerDayTz);
+        setGameState(prev => ({
+          ...prev,
+          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date())),
+          lastCheckInDate: dia,
+        }));
+        track('checkin_shown');
       } else if (id === 'checkIn') {
         // compromisso da manhã: "visto" ao MOSTRAR (REGISTRO §53) — reabrir/recarregar no meio não repete nem repaga o Vínculo
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
@@ -2157,6 +2192,13 @@ export default function App() {
   });
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
+  /* Concluir QUALQUER tarefa/hábito acorda o Soulmon sozinho (R3, REGISTRO §112). Lido do SAVE (`didCompleteToday`), e não do clique: vale
+     para o app, para o widget Android e para o overlay de desktop, que concluem sem abrir a Home — nenhum deles consulta o bloqueio.
+     Espera a virada do dia rodar (`rolloverPending`): antes dela o save ainda traz os feitos de ontem. */
+  const concluiuHoje = useMemo(() => didCompleteToday(gameState, new Date()), [gameState]);
+  useEffect(() => {
+    if (wakesByCompletion(dayWakePending && !rolloverPending, concluiuHoje)) markDayAwake();
+  }, [dayWakePending, rolloverPending, concluiuHoje, markDayAwake]);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
   // `utils/dailyReset.ts`, derivada da própria fórmula da perda.
   const hpSafeToday = tasksToAvoidHeartLoss(gameState, new Date().getDay(), new Date().toDateString());
@@ -3491,6 +3533,7 @@ export default function App() {
   // via "carinho"). Limited to 5 feedings per rolling hour; once full, the pet
   // just says it's full (no other feedback).
   const handleFeed = useCallback((foodEmoji: string) => {
+    if (guardWake('feed')) return; // Soulmon dormindo à espera de ser acordado: só o pet para (REGISTRO §112)
     // No item in stock → nothing happens (don't burn a feed slot or animate).
     if ((gameState.foodInventory[foodEmoji] ?? 0) <= 0) return;
 
@@ -3578,7 +3621,7 @@ export default function App() {
     contarDiaria('comida');
     atenderRefeicao('snack');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
+  }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language, guardWake]);
 
   /* ☀️🌤️🌙 CHECK-IN DA JANELA (beta-2 4.1, `utils/checkIns.ts`): a recompensa sai TODA do updater (`claimCheckIn` reconfere a janela
      sobre o `prev` — dois toques no mesmo lote pagam uma vez) e o toast vem do resultado da MESMA chamada, fora do updater. */
@@ -3596,13 +3639,14 @@ export default function App() {
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
+    if (guardWake('shower')) return;
     contarMissao('shower');
     if (careEvent?.type === 'poop') {
       handleCareEventComplete();
     }
     falar('shower');
     atenderRefeicao(careEvent?.type === 'poop' ? 'poop' : 'tenSeconds');
-  }, [careEvent, handleCareEventComplete, falar, atenderRefeicao]);
+  }, [careEvent, handleCareEventComplete, falar, atenderRefeicao, guardWake]);
 
   // ── ADMIN / GM (29/09/2026) ────────────────────────────────────────────────
   // `useAdmin()` vem SÓ da resposta do servidor nesta abertura
@@ -3696,6 +3740,14 @@ export default function App() {
   }, [isSleeping, setGameState, gameState.poopEventsShown, gameState.poopEventsCompleted, gameState.poopPenaltyClockAt, language]);
 
   const handleSleep = useCallback(() => {
+    /* O GESTO DE ACORDAR do início de dia (D-66, REGISTRO §110): o MESMO botão do deck, 1 toque, mudo. Com o Soulmon dormindo "para
+       acordar" ele só marca o dia — NÃO deita o pet (o sono real não muda). Se o pet também dorme de verdade (a janela de descanso),
+       acordar segue o caminho de sempre logo abaixo. */
+    const acordandoDoDia = dayWakePendingRef.current;
+    if (acordandoDoDia) {
+      markDayAwake();
+      if (!isSleeping) { falar('wake'); return; }
+    }
     setIsSleeping(prev => {
       const next = !prev;
       writeFlag(STORAGE_KEYS.IS_SLEEPING, next, { silent: true });
@@ -3715,7 +3767,7 @@ export default function App() {
     falar(isSleeping ? 'wake' : 'sleep');
     // E0: a trilha NÃO é pausada aqui — é no `useEffect([isSleeping])` logo
     // abaixo, que cobre o gesto manual E o sono automático com um caminho só.
-  }, [isSleeping, falar]);
+  }, [isSleeping, falar, markDayAwake]);
 
   /* E0 (S13, peça extraída; `SOM.md` §2.1): dormindo, a trilha para — e
      "dormindo" inclui o sono AUTOMÁTICO e o app aberto com o pet já dormindo.
@@ -4064,6 +4116,7 @@ export default function App() {
    * não entra em dia perfeito, HP nem evolução.
    */
   const handlePlay = useCallback(() => {
+    if (guardWake('play')) return;
     const now = new Date();
     // Dia do JOGADOR: `playLog` mora no save e tem teto de 1×/dia. Com
     // `dayKeyOf` (o dia do APARELHO) o mesmo instante rendia dois nomes de dia
@@ -4084,7 +4137,7 @@ export default function App() {
     playFeed();
     playBuffSpentRef.current = false; // buff novo, pronto para o próximo minijogo
     setMessageTrigger(prev => prev + 1);
-  }, [gameState, language, setGameState]);
+  }, [gameState, language, setGameState, guardWake]);
 
   /* A 5ª célula do deck, memoizada: `CompanionHUD` é `memo()` e um objeto
      novo por render anularia o memo (footgun 5). A MESMA régua do
@@ -5771,6 +5824,7 @@ export default function App() {
   const [backpackSignal, setBackpackSignal] = useState(0);
 
   const handlePet = useCallback(() => {
+    if (guardWake('pet')) return;
     // Regra em utils/careRules.ts, compartilhada com o app de desktop. A
     // checagem usa só HP (deps estreitas de propósito: CompanionHUD é memo(),
     // e depender do gameState inteiro anularia o memo — footgun 5).
@@ -5815,7 +5869,7 @@ export default function App() {
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
     // checagem de fora.
     setGameState(prev => applyRub(prev, today).state);
-  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive, gameState.playerDayTz]);
+  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive, gameState.playerDayTz, guardWake]);
 
   // targetStage é sempre um ID da árvore ('rookie' | 'champion-power' | ...),
   // não mais um nome de exibição — a árvore é única por jogador, então não dá
@@ -6182,7 +6236,7 @@ export default function App() {
   const [primingDispensado, setPrimingDispensado] = useState(
     () => readFlag(STORAGE_KEYS.NOTIFICATION_PRIMING_DISMISSED),
   );
-  const mostrarPrimingDePush = useMemo(() => shouldPrimePush({
+  const primingDePushElegivel = useMemo(() => shouldPrimePush({
     daysWithPet: daysTogether(gameState.bornAt, playerDayKey(new Date(), gameState.playerDayTz)),
     notificationsEnabled,
     // Sem o carimbo de hora (dispensou antes desta versão) a espera de 24h já
@@ -6199,6 +6253,8 @@ export default function App() {
     gameState.bornAt, gameState.playerDayTz, gameState.lastDayReport?.welcomeBack,
     notificationsEnabled, primingDispensado,
   ]);
+  /* O priming de push SAI do início de dia (R2, REGISTRO §111): só numa abertura em que nada do início de dia/celebração foi mostrado. */
+  const mostrarPrimingDePush = primingDePushElegivel && !presentation.dayStartActive;
 
   /**
    * As 3 missões da semana, prontas para a tela. DETERMINÍSTICO por semana: a
@@ -7085,6 +7141,7 @@ export default function App() {
               <AreaView
                 key={currentView}
                 area={area}
+                wakeGuard={guardWake}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
@@ -7312,7 +7369,7 @@ export default function App() {
                 hasNewItems={newItemsReady}
                 onBackpackSeen={handleBackpackSeen}
                 onSleep={handleSleep}
-                isSleeping={isSleeping}
+                isSleeping={isSleeping || dayWakePending}
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
                 openBackpackSignal={backpackSignal}
@@ -8583,9 +8640,24 @@ export default function App() {
             candidates={dayPlanCandidatesNow}
             language={language}
             initiallyPicked={gameState.dayPlan?.day === dayPlanToday ? gameState.dayPlan.picked : []}
-            onConfirm={(ids) => {
-              const hoje = playerDayIso(new Date(), gameState.playerDayTz);
-              setGameState(prev => ({ ...prev, dayPlan: confirmDayPlan(prev.dayPlan, hoje, ids) }));
+            /* "HOJE" (REGISTRO §111): metas + compromisso num modal só. Confirmar grava o plano do dia E o foco (as tarefas marcadas, até 3) pelo
+               MESMO caminho do check-in (`completeCheckIn` + Vínculo + missão); fechar não cobra (o "visto" já foi gravado ao MOSTRAR). */
+            fuse={{
+              plan: checkInPlan(gameState as any, new Date()),
+              taskIds: new Set(gameState.tasks.map(t => String(t.id))),
+              onTinyHabit: handleToggleActivityCompletion,
+              soulStruggle: gameState.soulStruggle,
+            }}
+            onConfirm={(ids, focusIds) => {
+              const agora = new Date();
+              const hoje = playerDayIso(agora, gameState.playerDayTz);
+              const dia = playerDayKey(agora, gameState.playerDayTz);
+              contarMissao('checkins');
+              setGameState(prev => awardBondXP(
+                completeCheckIn({ ...prev, dayPlan: confirmDayPlan(prev.dayPlan, hoje, ids) } as any, focusIds, dia) as any,
+                { kind: 'checkIn' }, dia,
+              ));
+              track('checkin_commit', { focus_count: Math.min(focusIds.length, MAX_DAILY_FOCUS) });
               setDayGoalsOpen(false);
             }}
             onClose={() => setDayGoalsOpen(false)}
@@ -8616,7 +8688,8 @@ export default function App() {
         />
         </PresentationSlot>
       )}
-      {interstitial === 'welcome' && (
+      {/* O pedido de instalar/notificar (o ocioso) SAI do início de dia (R2, REGISTRO §111): espera uma abertura sem nada dele. */}
+      {interstitial === 'welcome' && !presentation.dayStartActive && (
         <PresentationSlot id="welcome" onFail={() => presentation.fail('welcome')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <WelcomePromptModal
           language={language}
