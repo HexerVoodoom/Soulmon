@@ -4400,11 +4400,24 @@ var BUILDING_GATES = {
   "laboratorio.pet": { minBond: 2 },
   "laboratorio.stats": { minBond: 3 },
   "laboratorio.perfil": { minBond: 2 },
-  "hall.biblioteca": { minBond: 2 },
-  "hall.amigos": { minBond: 2 },
+  "laboratorio.biblioteca": { minBond: 2 },
+  "laboratorio.amigos": { minBond: 2 },
   "hall.guilda": { minBond: 4 },
+  "hall.grove": { minBond: 4 },
   "hall.feira": { minBond: GATES.pvp.minBond }
 };
+var MOVED_BUILDINGS = {
+  "arena.feira": "hall.feira",
+  "hall.biblioteca": "laboratorio.biblioteca",
+  "hall.amigos": "laboratorio.amigos"
+};
+function currentBuildingId(x2) {
+  return typeof x2 === "string" && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x2) ? (
+    /** @type {Record<string, string>} */
+    MOVED_BUILDINGS[x2]
+  ) : x2;
+}
+__name(currentBuildingId, "currentBuildingId");
 
 // api/_bond.js
 var EARLY_STEPS = [75, 125, 200, 300, 400];
@@ -10038,8 +10051,9 @@ var has4 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call
 function ids(v) {
   const out = [];
   if (Array.isArray(v)) {
-    for (const x2 of v) {
+    for (const raw of v) {
       if (out.length >= MAX_LIST) break;
+      const x2 = currentBuildingId(raw);
       if (typeof x2 === "string" && BUILDING_RE.test(x2) && !out.includes(x2)) out.push(x2);
     }
   }
@@ -10127,8 +10141,8 @@ var FIRST_TIME_IDS = [
   "visit:laboratorio.evolucao",
   "visit:laboratorio.pet",
   "visit:laboratorio.stats",
-  "visit:hall.biblioteca",
-  "visit:hall.amigos",
+  "visit:laboratorio.biblioteca",
+  "visit:laboratorio.amigos",
   "visit:hall.guilda",
   "visit:hall.feira"
 ];
@@ -10167,7 +10181,8 @@ function sanitizeFirstTimes(raw) {
     /** @type {Record<string, unknown>} */
     raw
   );
-  const pick = /* @__PURE__ */ __name((v) => Array.isArray(v) ? [...new Set(v.filter((x2) => typeof x2 === "string" && FIRST_TIME_IDS.includes(x2)))] : [], "pick");
+  const moved = /* @__PURE__ */ __name((x2) => x2.startsWith("visit:") ? `visit:${currentBuildingId(x2.slice(6))}` : x2, "moved");
+  const pick = /* @__PURE__ */ __name((v) => Array.isArray(v) ? [...new Set(v.filter((x2) => typeof x2 === "string").map(moved).filter((x2) => FIRST_TIME_IDS.includes(x2)))] : [], "pick");
   const done = pick(r.done);
   const claimed = pick(r.claimed);
   for (const c of claimed) if (!done.includes(c)) done.push(c);
@@ -11045,7 +11060,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-z7Deyp/functionsRoutes-0.748910415107564.mjs
+// ../.wrangler/tmp/pages-L4wHu0/functionsRoutes-0.6846749118784325.mjs
 var routes = [
   {
     routePath: "/api/account",
