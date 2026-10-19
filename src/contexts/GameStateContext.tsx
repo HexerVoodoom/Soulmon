@@ -54,6 +54,8 @@ import type { NightmareState } from '../utils/nightmares';
 import { createNightmareState, sanitizeNightmareState } from '../utils/nightmares';
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
+import { sanitizeStepGoal } from '../utils/steps';
+import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
 import { normalizeFirstDay } from '../utils/firstDay';
@@ -779,6 +781,14 @@ export interface GameState {
    * sozinho: ele só confirma um hábito de saúde já marcado como feito.
    */
   steps?: StepsRecord;
+  /**
+   * Missão especial diária (utils/specialMissions.ts, REGISTRO §106). 1 por dia:
+   * passos (só com sensor) alterna com descanso. Vale 1 hábito SÓ no gauge de
+   * evolução, como bônus acima do teto; fora do selo, do coração e da meta.
+   */
+  specialMission?: SpecialMissionState;
+  /** Meta de passos escolhida pelo jogador. Ausente = DEFAULT_STEP_GOAL (ler com `??`). */
+  stepGoal?: number;
   /**
    * Resposta do usuário à tela de consentimento de passos. `'declined'` é
    * PERMANENTE de propósito: sem esta marca o app perguntaria de novo a cada
@@ -1589,6 +1599,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         nightmares: hydrateNightmares(loadedState.nightmares),
         playLog: hydratePlayLog(loadedState.playLog),
         steps: hydrateSteps(loadedState.steps),
+        specialMission: sanitizeSpecialMission(loadedState.specialMission),
+        stepGoal: loadedState.stepGoal === undefined ? undefined : sanitizeStepGoal(loadedState.stepGoal),
         // Só os dois valores conhecidos sobrevivem: qualquer outra coisa vira
         // "ainda não perguntei", que é o estado seguro (perguntar de novo é
         // recuperável; tratar lixo como 'granted' leria sensor sem consentimento).

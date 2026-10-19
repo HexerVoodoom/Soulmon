@@ -93,3 +93,7 @@ Dispara só na primeira entrada em cada prédio/NPC. Tela cheia, NPC grande (`mi
 avança, na última fala o toque fecha, "Pular/Skip" no canto superior ESQUERDO (≥ 44 px, safe-area) encerra tudo; Enter/Espaço
 avançam, Esc e o voltar do Android pulam. O `BuildingIntro` o usa; o tutorial do mapa (outra sessão,
 `feat/dungeon-nv1-tutorial-mapa`) deve usá-lo também em vez de criar outro.
+
+## 7. Nota: missão especial diária
+
+O cartão "Especial do dia" (`SpecialMissionCard`) é inline na folha Missões, aba Diárias. Não é modal e não é item da fila. Sem "!", sem som, sem resgate (REGISTRO §106).

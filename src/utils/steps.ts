@@ -15,7 +15,8 @@
  *          Fitness/Health que o usuário JÁ marcou como feito — o hábito
  *          marcado é que vale; o passo só confirma;
  *      (b) **missões corporais OPCIONAIS com teto diário** — conteúdo extra,
- *          nunca requisito de meta, de coração, de dia perfeito ou de evolução.
+ *          nunca requisito de meta, de coração, de dia perfeito ou de evolução
+ *          (a missão especial diária vive em `utils/specialMissions.ts`).
  *    Nenhuma função deste arquivo devolve HP, energia, `perfectDays` ou peso de
  *    esforço, e nenhuma delas deve passar a devolver.
  * 2. **Quem não tem sensor não pode ficar em desvantagem ESTRUTURAL.** A maior
@@ -24,6 +25,10 @@
  *    `readStepsToday()` responde `null`, e o app segue idêntico — só sem
  *    passos. Se um dia uma recompensa só alcançável com sensor aparecer, a
  *    regra 1 já foi quebrada.
+ *    REVOGADA EM PARTE (dono, 19/10/2026, REGISTRO §106): a missão especial de
+ *    passos existe só para quem tem sensor; quem não tem recebe a missão de
+ *    descanso no lugar, com o MESMO peso e o mesmo teto (1/dia) — a alternativa
+ *    recomendada que perdeu era uma missão equivalente declarada.
  * 3. **Consentimento explícito ANTES de pedir a permissão.** `ACTIVITY_RECOGNITION`
  *    é permissão de runtime simples (não é Health Connect), mas a política do
  *    Play e a LGPD exigem dizer, em texto, O QUE é lido e PARA QUÊ antes do
@@ -66,6 +71,16 @@ import type { Language } from './i18n';
 
 /** Meta diária padrão. Referência de caminhada regular, não meta médica. */
 export const DEFAULT_STEP_GOAL = 7000;
+export const STEP_GOAL_MIN = 1000;
+export const STEP_GOAL_MAX = 30000;
+/** Metas oferecidas ao jogador (qualquer inteiro em [MIN, MAX] é aceito ao carregar). */
+export const STEP_GOAL_OPTIONS = [3000, 5000, 7000, 10000] as const;
+
+/** Meta escolhida → inteiro em [MIN, MAX]; inválida → padrão. */
+export function sanitizeStepGoal(v: unknown): number {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return DEFAULT_STEP_GOAL;
+  return Math.min(STEP_GOAL_MAX, Math.max(STEP_GOAL_MIN, Math.floor(v)));
+}
 
 /**
  * O ÚNICO formato persistido (opcional no GameState: `steps?: StepsRecord`).

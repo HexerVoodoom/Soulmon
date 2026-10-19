@@ -177,7 +177,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // do que sobra (8,5 mil linhas, estado+handlers+JSX da Home). Próximo corte = partir o `App.tsx`, não mais import avulso.
   // 18/10/2026 (Frente S, sono/pesadelo D-23/24/26/37): main já em 647_663; esta PR soma +3,0 KB (noite armada, horário obrigatório,
   // bônus de energia da noite em `restWindow.ts`, usado no efeito do auto-sleep do App). 642_067 -> 650_626. Corte real segue = partir o `App.tsx`.
-  'index.js': 650_626,
+  // 19/10/2026 (missão especial diária, REGISTRO §106): main já em 656_940; esta PR soma +4,2 KB (`utils/specialMissions.ts`,
+  // bônus no `computeDailyReset`, efeito único no App, meta de passos no `StepsCard`). 650_626 -> 661_170. Corte real segue = partir o `App.tsx`.
+  'index.js': 661_170,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

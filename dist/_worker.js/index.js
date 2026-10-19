@@ -3693,6 +3693,7 @@ var KNOWLEDGE = [
   { "id": "regra-48", "t": "Itens especiais (o uso da pastinha)", "x": "Cinco itens que moram na mesma pastinha da comida e se comportam de forma completamente diferente dela: chip d\xE1 atributo, cora\xE7\xE3ozinho cura, Glitchtama d\xE1 um dia completo \u2014 e nenhum conta no teto de comida." },
   { "id": "regra-49", "t": "Miss\xF5es permanentes", "x": "Seis conquistas vital\xEDcias que n\xE3o pagam moeda nenhuma \u2014 elas liberam a compra de seis cen\xE1rios que j\xE1 estavam na loja, com cadeado. R\xE9gua. src/utils/missions.test.ts (progresso, clamp, every mission unlocks a distinct shop item, with CSS defined for bg rewards e plain (unlock-less) items are always unlocked; Glitchtama is never sold \u2014 os blocos est\xE3o em ingl\xEAs, como o resto daquele arquivo)." },
   { "id": "regra-50", "t": "Miss\xF5es semanais", "x": "Tr\xEAs objetivos por semana, sorteados de um pool de doze de forma determin\xEDstica, pagos em Honra \u2014 e nenhum deles premia quantidade de tarefa. Determinismo n\xE3o \xE9 eleg\xE2ncia: \xE9 a diferen\xE7a entre uma miss\xE3o e um sorteio. Se a lista mudasse a cada abertura, a pessoa aprenderia a reabrir o app at\xE9 cair uma f\xE1cil." },
+  { "id": "regra-50-a", "t": "Miss\xE3o especial di\xE1ria", "x": 'Uma miss\xE3o calma por dia, de passos ou de deitar na janela, que pesa como um h\xE1bito no gauge de evolu\xE7\xE3o e fica fora do selo "dia completo" (REGISTRO \xA7106). Limite honesto. A recompensa \xE9 local ao save; o servidor n\xE3o valida o gauge. Passo forjado rende no m\xE1ximo +1/dia.' },
   { "id": "regra-51", "t": "Masmorra", "x": "Uma descida autom\xE1tica e sem fim: as lutas encadeiam sozinhas, a cada 6 desce-se uma camada, e o que a encerra \xE9 o HP \u2014 que n\xE3o enche entre descidas e volta com o tempo. Sem limite di\xE1rio, sem porta de entrada al\xE9m do piso de HP, e perder n\xE3o custa um \xFAnico cora\xE7\xE3o nem Bits. O que N\xC3O faz. N\xE3o cobra cora\xE7\xE3o para entrar nem para perder. N\xE3o tem limite di\xE1rio de runs. N\xE3o dropa comida (s\xF3 cora\xE7\xE3ozinho). N\xE3o vende Glitchtama." },
   { "id": "regra-53", "t": "Torneio: rodada, faixas e Arena", "x": "PvP ass\xEDncrono resolvido no servidor, com uma janela semanal que \xE9 convite e n\xE3o tranca, e uma faixa que mede o jogador contra ele mesmo antes de qualquer posi\xE7\xE3o de ranking. S\xE3o quatro pe\xE7as com donos distintos e sem sobreposi\xE7\xE3o: a rodada (quando h\xE1 mais gente), a faixa (a leitura do jogador contra ele mesmo), a partida (o que o servidor resolve e cobra) e a Arena (um minijogo \xE0 parte, que s\xF3 empresta o nome). Cada uma abaixo." },
   { "id": "regra-54", "t": "Minijogos: PPT, Corrida com obst\xE1culos e os tr\xEAs pr\xE9dios de Jogos", "x": "Dois jogos curtos que pagam Bits e n\xE3o tocam em mais nada do jogo \u2014 exceto o recorde da Corrida com obst\xE1culos (dinoBest), que alimenta uma miss\xE3o permanente." },
@@ -8297,7 +8298,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
+// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11060,7 +11061,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-L4wHu0/functionsRoutes-0.6846749118784325.mjs
+// ../.wrangler/tmp/pages-66JSyy/functionsRoutes-0.1476125792590287.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11337,7 +11338,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11663,7 +11664,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

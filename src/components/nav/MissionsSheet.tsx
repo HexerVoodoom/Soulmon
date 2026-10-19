@@ -12,6 +12,7 @@ import { DailyMissionList, type DailyMissionsProps } from './DailyMissionList';
 import { FirstTimesList, allFirstTimesClaimed, type FirstTimesProps } from './FirstTimesList';
 import type { GoTarget } from '../../utils/missionTargets';
 import type { MissionNav } from './MissionCard';
+import { SpecialMissionCard } from './SpecialMissionCard';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
@@ -31,7 +32,9 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay }: {
+export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay, special }: {
+  /** Missão especial do dia (REGISTRO §106): cartão mudo, sem Resgatar. */
+  special?: Omit<React.ComponentProps<typeof SpecialMissionCard>, 'language'>;
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
   initialTab?: MissionsTab;
   open: boolean;
@@ -121,6 +124,11 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                 {firstDay && (
                   <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
                     <FirstDayCard progress={firstDay} language={language} />
+                  </Section>
+                )}
+                {special?.state && (
+                  <Section title={isPt ? 'Especial do dia' : "Today's special"} mark={null} glyph={false} isPt={isPt} id="special">
+                    <SpecialMissionCard language={language} {...special} />
                   </Section>
                 )}
                 <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">

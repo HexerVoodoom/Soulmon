@@ -272,6 +272,17 @@ Quatro campos opcionais, com sanitize no `hydrateSave` (lixo → ausente) e **se
 | `dungeonDaily?` | `{day: 'AAAA-MM-DD', layers}` | camadas da masmorra COMEÇADAS no dia do jogador (limite `DUNGEON_DAILY_LAYERS` = 10). Servidor: monotônico (`functions/api/_dayCounters.js`) | `utils/dungeonIdle.ts` |
 | `checkIns?` | `{day, claimed: ('morning'\|'afternoon'\|'night')[]}` | janelas de check-in já resgatadas no dia do jogador; sem histórico. Servidor: monotônico | `utils/checkIns.ts` |
 
+#### 2.12-D Campos acrescentados em 19/10/2026 (missão especial diária — REGISTRO §106)
+
+Dois campos opcionais, **sem subir `SAVE_SCHEMA_VERSION`**. Migração: save antigo não tem os campos, então ausente = `undefined`, e toda leitura usa `??` (`stepGoal` ausente vira `DEFAULT_STEP_GOAL`; `specialMission` ausente vira "sem missão ainda", e `resolveSpecialMission` cria a do dia).
+
+| Campo | Tipo | O que guarda | Dono |
+|---|---|---|---|
+| `specialMission?` | `{day, kind: 'steps'\|'rest', done, goal?, doneDays?, creditedDays?}` | a missão do dia do jogador; `goal` = meta de passos travada para `day` (primeira avaliação do dia; save antigo sem `goal` recebe a meta atual uma vez; a troca no `StepsCard` vale amanhã); `doneDays`/`creditedDays` (listas únicas, teto 7; migram de `lastDone`/`lastCredited` antigos) sobrevivem à troca de dia e impedem crédito duplo. Saneado no load (`sanitizeSpecialMission`); o servidor guarda opaco | `utils/specialMissions.ts` |
+| `stepGoal?` | `number` | meta diária de passos escolhida (3000/5000/7000/10000; clamp 1000..30000 em `sanitizeStepGoal`) | `utils/steps.ts` |
+
+Nenhum dado de saúde novo: continua só o agregado diário de passos (`steps`). O servidor não valida o gauge; a recompensa é local ao save.
+
 ### 2.13 O que NUNCA vai para o save
 
 | Coisa | Onde ela vive de verdade | Por quê |
