@@ -330,7 +330,7 @@ portões: `.claude/skills/squad-som/SKILL.md#-portões-verdes--bloqueio-de-fase-
 | Data | Onde | O que foi decidido | Alternativa que perdeu | Gatilho de revisão |
 |---|---|---|---|---|
 | 08/09/2026 | `REGISTRO-DE-DECISOES.md` §6.1, S1 | A fonte do som novo é GERAÇÃO POR IA (Higgsfield/Seed Audio) — decisão do dono | Melhorar só o sintetizador procedural | Ver o híbrido admissível já previsto (SFX procedural + IA para trilha/ambiente) |
-| 08/09/2026 | §6.1, S2 | A trilha existe mas nasce DESLIGADA, só começa por gesto (D11 por extensão) | Trilha ligada por padrão | Evidência de que trilha ligada por padrão não aumenta abandono |
+| 08/09/2026 | §6.1, S2 | A trilha existe mas nasce DESLIGADA, só começa por gesto (D11 por extensão). ⚠️ 19/10/2026: revogado para as faixas de combate, que nascem LIGADAS (`REGISTRO-DE-DECISOES.md` §102) | Trilha ligada por padrão | Evidência de que trilha ligada por padrão não aumenta abandono |
 | 08/09/2026 | §6.1, S3 | Alvo de loudness = AES/EBU R 128, ≤ −16 LUFS integrado, ≤ −1 dBTP true peak | −10/−12 dBFS (mistura pico com loudness) | Medição de que −16 LUFS fica inaudível no alto-falante de celular |
 | 08/09/2026 | §6.1, S6 | Orçamento de áudio: 300 KB total, ZERO no bundle inicial | Sem teto de bytes | Medição de que o teto força qualidade inaceitável |
 | 08/09/2026 | §6.1, S7 | Sem teste de escuta com pessoas de fora; o dono decide sozinho | Painel externo de escuta | ⚠️ consequência declarada: N=1 aprovando o próprio conceito |

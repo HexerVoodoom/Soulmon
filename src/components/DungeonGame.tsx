@@ -161,7 +161,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** Sair DIRETO para o mapa (o ícone do mapa no lugar do X, 14/10/2026). Ausente (demo/testes) → `onExit`. */
   onExitToMap?: () => void;
 }) {
-  // Música (11/10/2026): na masmorra toca o LOOP (se a música de masmorra e arena está ligada). Abrir o jogo é o gesto do jogador.
+  // Música (11/10/2026): na masmorra toca o "dungeon theme" (se o interruptor "Música de combate" está ligado; 19/10/2026). Abrir o jogo é o gesto do jogador.
   useEffect(() => entrarNaSuperficie('masmorra'), []);
 
   const isPt = language === 'pt-BR';

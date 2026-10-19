@@ -93,8 +93,11 @@ export const STORAGE_KEYS = {
    *  sem a chave. Isso é coerente para SFX (que só saem por gesto) e
    *  INCOMPATÍVEL com trilha, que é contínua — pendurar a trilha no `mute`
    *  global a faria nascer tocando, ou seja, autoplay, que a D11 veta.
-   *  Aqui a polaridade é invertida de propósito: a chave guarda LIGADA, então
-   *  `readFlag` sem a chave devolve `false` e a trilha nasce DESLIGADA. */
+   *  Atualização de 19/10/2026 (decisão do dono, REGISTRO §102): o interruptor
+   *  "Música de combate" NASCE LIGADO. A chave NÃO mudou (não renomear, #20): o
+   *  LEITOR (`trilhaLigada`) passou a usar `readFlagOr(..., true)`, então sem a
+   *  chave vale LIGADO e só `'false'` explícito desliga. O autoplay segue vetado
+   *  (D11): ligado é preferência, o som só sai depois de um gesto. */
   SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',
   /** A música-TEMA ("Stone Hall Decay"), decisão do dono de 07/10/2026 — revoga o
    *  "nasce desligada" (S2) SÓ para ela. Polaridade como a do mudo: a chave guarda

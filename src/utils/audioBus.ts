@@ -54,7 +54,7 @@
  *   e agenda a liberação; `liberarMarco` fica exposto para quando a cerimônia
  *   ganhar o hook. Um duck sem liberação garantida silenciaria o app inteiro.
  */
-import { readFlag, writeFlag, readJson, writeJson } from './safeStorage';
+import { readFlag, readFlagOr, writeFlag, readJson, writeJson } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import type { CategoriaSom } from './loudness';
 import { ORDEM_DA_ESCADA, TETO_DBTP, GANHO_DE_CATEGORIA_DB, db2lin } from './loudness';
@@ -250,11 +250,13 @@ function ganhoLinearDe(cat: CategoriaSom): number {
 }
 
 /**
- * A trilha **nasce desligada** (S2) e só toca por gesto explícito. A chave é
+ * A trilha de combate **nasce LIGADA** desde 19/10/2026 (decisão do dono, revoga o
+ * "nasce desligada" da S2 para as faixas de combate) mas o autoplay segue vetado (D11): ligada é PREFERÊNCIA, o som só
+ * sai depois de um gesto. Só `'false'` gravado desliga: quem já gravou um valor mantém o que gravou. A chave é
  * PRÓPRIA, separada do `mute` global — ver o comentário em `storageKeys.ts`.
  */
 export function trilhaLigada(): boolean {
-  return readFlag(STORAGE_KEYS.SOUND_TRACK_ENABLED);
+  return readFlagOr(STORAGE_KEYS.SOUND_TRACK_ENABLED, true);
 }
 
 export function definirTrilhaLigada(on: boolean): void {

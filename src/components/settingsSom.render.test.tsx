@@ -75,8 +75,8 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
   });
 
   it.each([
-    ['pt-BR', /^Sons/, /^Música de masmorra e arena/, /^Música-tema/],
-    ['en-US', /^Sound effects/, /^Dungeon & arena music/, /^Theme music/],
+    ['pt-BR', /^Sons/, /^Música de combate/, /^Música-tema/],
+    ['en-US', /^Sound effects/, /^Combat music/, /^Theme music/],
   ] as const)('%s: as três chaves existem, com rótulo no idioma', (language, sons, trilha, tema) => {
     montar(language);
     expect(switchDe(sons)).toBeTruthy();
@@ -95,14 +95,15 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
     expect(temaPreferido()).toBe(true);
   });
 
-  it('S17 emendada (11/10/2026): as duas preferências CONVIVEM — tema na Home, música de masmorra e arena nas lutas', () => {
+  it('S17 emendada (11/10/2026; 19/10/2026): as duas preferências CONVIVEM — tema na Home, música de combate nas lutas, e a de combate NASCE LIGADA', () => {
     montar('en-US');
-    fireEvent.click(switchDe(/^Dungeon & arena music/));
+    const combate = switchDe(/^Combat music/);
     expect(trilhaPreferida()).toBe(true);
-    expect(temaPreferido()).toBe(true); // antes: ligar a trilha desligava o tema; agora o diretor alterna por superfície
+    expect(combate.getAttribute('aria-checked')).toBe('true');
+    expect(temaPreferido()).toBe(true);
     fireEvent.click(switchDe(/^Theme music/));
     expect(temaPreferido()).toBe(false);
-    expect(trilhaPreferida()).toBe(true);
+    expect(trilhaPreferida()).toBe(true); // desligar o tema não desliga a de combate
   });
 
   it('tocar em "Sons" chama o dono do mudo (o App), e o estado refletido é `!soundMuted`', () => {
@@ -114,15 +115,15 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
     expect(onToggleSound).toHaveBeenCalledTimes(1);
   });
 
-  it('tocar em "Música de masmorra e arena" liga a chave PRÓPRIA (S2: nasce desligada; o toque é o gesto) e desliga de novo', () => {
+  it('tocar em "Música de combate" desliga a chave PRÓPRIA (19/10/2026: nasce LIGADA) e liga de novo', () => {
     montar('pt-BR');
-    const sw = switchDe(/^Música de masmorra e arena/);
+    const sw = switchDe(/^Música de combate/);
+    expect(trilhaPreferida()).toBe(true);
+    expect(sw.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(sw);
     expect(trilhaPreferida()).toBe(false);
-    expect(sw.getAttribute('aria-checked')).toBe('false');
     fireEvent.click(sw);
     expect(trilhaPreferida()).toBe(true);
-    fireEvent.click(sw);
-    expect(trilhaPreferida()).toBe(false);
   });
 
   it('sem `onToggleSound` o grupo não aparece (nada de switch morto)', () => {

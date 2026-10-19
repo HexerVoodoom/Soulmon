@@ -1,5 +1,7 @@
 /**
- * A TRILHA — as duas camadas em fase, em loop, no `busTrilha`. Nasce desligada (S2).
+ * A TRILHA — as duas camadas em fase, em loop, no `busTrilha`. O interruptor de combate ("Música de combate",
+ * `SOUND_TRACK_ENABLED`) NASCE LIGADO desde 19/10/2026 (decisão do dono, REGISTRO §102, revoga o "nasce desligada" da
+ * S2); continua só por gesto (D11): ligado é preferência, o som só sai depois do primeiro gesto da sessão.
  *
  * Existem DUAS camadas (`base` + `ritmo`, `CAMADAS_DA_TRILHA`), tocando juntas
  * num estado só: a máquina E0–E6 da S13 continua CONGELADA (a condição (2) —
@@ -25,6 +27,9 @@
  * `loop` (as duas camadas, na Home quando o tema está desligado), `masmorra` (as mesmas camadas, em combate) e
  * `arena` (DERIVADA: as camadas a `RAZAO_DA_ARENA` + a percussão procedural de `trilhaArena.ts`). Trocar de faixa
  * é CROSSFADE (`CROSSFADE_MUSICA_S`), nunca corte; nenhuma faixa nasce tocando (S2 + D11).
+ * Desde 19/10/2026 a masmorra toca o "dungeon theme" em streaming (`musicaDeCombate.ts`) e o diretor não pede mais a
+ * faixa `masmorra` do loop (o tipo fica, os testes de retomada a usam); o duelo e o torneio tocam o "pvp theme" lá também.
+ * Este módulo AVISA `musicaDeCombate.ts` do consentimento e das pausas (ele não importa este, sem ciclo).
  *
  * ## Retomada (auditoria de 11/10/2026)
  * Achados e conserto, cada um com teste em `trilha.retomada.test.ts`:
@@ -50,6 +55,9 @@ import {
 } from './loudness';
 import { isMuted } from './sounds';
 import { esquecerTema, pausarTema, retomarTema } from './tema';
+import {
+  consentirMusicaDeCombate, esquecerMusicaDeCombate, pausarMusicaDeCombate, retomarMusicaDeCombate,
+} from './musicaDeCombate';
 import { sintetizarPercussaoDaArena } from './trilhaArena';
 import { pausarPesadelo, retomarPesadelo } from './trilhaPesadelo';
 
@@ -248,6 +256,7 @@ export function ligarTrilha(): void {
   definirTrilhaLigada(true);
   ligadaNestaSessao = true;
   ligarCicloDeVida();
+  consentirMusicaDeCombate(true);
   void comecar();
 }
 
@@ -255,6 +264,7 @@ export function ligarTrilha(): void {
 export function desligarTrilha(): void {
   definirTrilhaLigada(false);
   ligadaNestaSessao = false;
+  consentirMusicaDeCombate(false);
   parar(CROSSFADE_MUSICA_S);
 }
 
@@ -281,6 +291,7 @@ export function consentirNestaSessao(): void {
   if (!trilhaLigada()) return;
   ligadaNestaSessao = true;
   ligarCicloDeVida();
+  consentirMusicaDeCombate(true);
 }
 
 /** Gancho do App: dormir / janela de descanso / mudo global (E0). Um motivo por chamada. */
@@ -288,6 +299,7 @@ export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
   pausarTema(motivo); // o tema obedece aos mesmos motivos (S17)
   pausas.add(motivo);
   pausarPesadelo(motivo); // a trilha de terror do Pesadelo obedece aos mesmos motivos
+  pausarMusicaDeCombate(motivo); // e as músicas de combate em streaming (dungeon/pvp theme)
   parar(); // dormir não é troca de cena: corta (a rampa de 150 ms do tema basta)
 }
 
@@ -298,6 +310,7 @@ export function retomarTrilha(motivo: MotivoDePausa = 'sono'): void {
   retomarTema(motivo);
   pausas.delete(motivo);
   retomarPesadelo(motivo);
+  retomarMusicaDeCombate(motivo);
   if (!pausada() && ligadaNestaSessao) void comecar();
 }
 
@@ -316,7 +329,13 @@ let primeiroGestoVisto = false;
 export function aoGestoSonoro(): void {
   if (primeiroGestoVisto) return;
   primeiroGestoVisto = true;
-  if (trilhaLigada() && !ligadaNestaSessao) ligarTrilha();
+  // Não chama `ligarTrilha()`: ele GRAVA a preferência, e com o padrão LIGADO isso gravaria 'true' sem o jogador escolher.
+  if (trilhaLigada() && !ligadaNestaSessao) {
+    ligadaNestaSessao = true;
+    ligarCicloDeVida();
+    consentirMusicaDeCombate(true);
+    void comecar();
+  }
 }
 
 /** A preferência persistida (a trilha só TOCA depois de `ligarTrilha()`). */
@@ -341,6 +360,7 @@ export function faixaTocando(): FaixaDaTrilha | null {
 /** Só para teste. */
 export function esquecerTrilha(): void {
   esquecerTema();
+  esquecerMusicaDeCombate();
   parar();
   for (const v of [...saindo]) descartar(v);
   ligadaNestaSessao = false;

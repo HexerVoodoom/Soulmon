@@ -243,18 +243,27 @@ describe('os duckings da §6.2', () => {
   });
 });
 
-/* ── 4. Trilha: chave própria, padrão desligado ──────────────────────────── */
+/* ── 4. Trilha: chave própria, padrão LIGADO desde 19/10/2026 ────────────── */
 
-describe('a trilha nasce DESLIGADA, em chave própria (S2)', () => {
-  it('sem chave nenhuma, a trilha está desligada', () => {
+describe('a trilha de combate nasce LIGADA, em chave própria (decisão do dono, 19/10/2026)', () => {
+  it('sem chave nenhuma, a trilha está LIGADA (o autoplay continua vetado pela D11 — ligada é preferência, o som só sai depois de gesto)', () => {
     expect(armazem.has(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe(false);
-    expect(
-      trilhaLigada(),
-      'trilha ligada por padrão é autoplay, e a D11 veta autoplay — o padrão de fábrica é a decisão S2',
-    ).toBe(false);
+    expect(trilhaLigada()).toBe(true);
   });
 
-  it('o bus da trilha nasce em 0, mesmo com o som global ligado', () => {
+  it('`false` gravado desliga: quem escolheu desligar mantém o que gravou', () => {
+    definirTrilhaLigada(false);
+    expect(armazem.get(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('false');
+    expect(trilhaLigada()).toBe(false);
+  });
+
+  it('o bus da trilha nasce em 1 sem chave (ligada) e em 0 com `false` gravado', () => {
+    tocarNa('cuidado', umaFonte());
+    expect(barramentoAtual()!.busTrilha.gain.value).toBe(1);
+  });
+
+  it('com `false` gravado o bus da trilha nasce em 0', () => {
+    armazem.set(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
     tocarNa('cuidado', umaFonte());
     expect(barramentoAtual()!.busTrilha.gain.value).toBe(0);
   });

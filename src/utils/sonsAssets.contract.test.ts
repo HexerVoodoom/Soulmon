@@ -12,12 +12,15 @@ import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { ASSETS_DE_SOM, CAMADAS_DA_TRILHA, TEMA_DO_JOGO, recortarSilencio } from './sonsAssets';
+import { ASSETS_DE_SOM, CAMADAS_DA_TRILHA, MUSICAS_DE_COMBATE, TEMA_DO_JOGO, recortarSilencio } from './sonsAssets';
 
 const raiz = join(__dirname, '..', '..');
 const TODOS = [...Object.values(ASSETS_DE_SOM), ...Object.values(CAMADAS_DA_TRILHA)];
 /** S17 (07/10/2026): a música-tema — manifesto próprio, fora do S6 de 300 KB, com orçamento por formato. */
 const FORMATOS_DO_TEMA = TEMA_DO_JOGO.formatos;
+/** 19/10/2026: o tema e as músicas de combate (dungeon/pvp theme) têm a mesma forma e o mesmo orçamento. */
+const MUSICAS = [TEMA_DO_JOGO, ...Object.values(MUSICAS_DE_COMBATE)];
+const FORMATOS_DAS_MUSICAS = MUSICAS.flatMap(m => [...m.formatos]);
 const TETO_TEMA_POR_FORMATO_BYTES = 2.5 * 1024 * 1024;
 /** S6, literal: 300 KB no total. */
 const TETO_S6_BYTES = 300 * 1024;
@@ -41,7 +44,7 @@ describe('S9 — procedência nas duas direções', () => {
 
   it('todo arquivo em public/sounds/ está no manifesto (nada entra por fora)', () => {
     const emDisco = readdirSync(join(raiz, 'public', 'sounds')).filter(f => !f.startsWith('.'));
-    const noManifesto = new Set([...TODOS, ...FORMATOS_DO_TEMA].map(a => a.url.replace('/sounds/', '')));
+    const noManifesto = new Set([...TODOS, ...FORMATOS_DAS_MUSICAS].map(a => a.url.replace('/sounds/', '')));
     for (const f of emDisco) expect(noManifesto.has(f), `${f} está em public/sounds/ e não no manifesto`).toBe(true);
   });
 
@@ -62,42 +65,57 @@ describe('S9 — procedência nas duas direções', () => {
   });
 });
 
-describe('S17 — a música-tema: procedência, formatos e orçamento próprio', () => {
+describe('S17 — as músicas em streaming (tema + dungeon/pvp theme): procedência, formatos e orçamento próprio', () => {
   it('cada formato existe em public/ com o hash e os bytes declarados e está na Attributions.md', () => {
     const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
-    expect(FORMATOS_DO_TEMA.length).toBe(2);
-    for (const f of FORMATOS_DO_TEMA) {
-      const b = readFileSync(join(raiz, 'public', f.url));
-      expect(sha256(b), `${f.url}: hash do disco ≠ manifesto`).toBe(f.sha256);
-      expect(b.length, `${f.url}: bytes do disco ≠ manifesto`).toBe(f.bytes);
-      expect(attr, `Attributions.md não cita ${f.url}`).toContain(`public${f.url}`);
-      expect(attr, `Attributions.md não cita o hash de ${f.url}`).toContain(f.sha256);
+    for (const m of MUSICAS) {
+      expect(m.formatos.length, m.nome).toBe(2);
+      for (const f of m.formatos) {
+        const b = readFileSync(join(raiz, 'public', f.url));
+        expect(sha256(b), `${f.url}: hash do disco ≠ manifesto`).toBe(f.sha256);
+        expect(b.length, `${f.url}: bytes do disco ≠ manifesto`).toBe(f.bytes);
+        expect(attr, `Attributions.md não cita ${f.url}`).toContain(`public${f.url}`);
+        expect(attr, `Attributions.md não cita o hash de ${f.url}`).toContain(f.sha256);
+      }
     }
   });
 
   it('a procedência é "fornecida pelo dono, gerada no Suno" e a verificação dos termos é pendência ESCRITA (nada de licença inventada)', () => {
-    expect(TEMA_DO_JOGO.origem).toBe('suno/fornecida-pelo-dono');
+    for (const m of MUSICAS) {
+      expect(m.origem, m.nome).toBe('suno/fornecida-pelo-dono');
+      expect(m.geradoEm, m.nome).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
     const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
     expect(attr).toMatch(/Fornecida pelo dono, gerada no Suno/);
     expect(attr).toMatch(/Pendência do dono — nada aqui afirma licença/);
     expect(attr).toMatch(/termos comerciais do plano Suno/);
   });
 
-  it('cada formato cabe no orçamento próprio (≤ 2,5 MB) e é o ÚNICO motivo de o S6 de 300 KB não valer para ele', () => {
-    for (const f of FORMATOS_DO_TEMA) expect(f.bytes, f.url).toBeLessThanOrEqual(TETO_TEMA_POR_FORMATO_BYTES);
-    expect(TODOS.reduce((s, a) => s + a.bytes, 0)).toBeLessThanOrEqual(TETO_S6_BYTES); // o tema não entra nessa conta e nada mais saiu dela
+  it('as faixas de combate têm a pendência do plano Free escrita na Attributions.md', () => {
+    const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
+    expect(attr).toMatch(/dungeon theme/);
+    expect(attr).toMatch(/pvp theme/);
   });
 
-  it('nenhum formato está em PRECACHE_URLS, e o sw.js não intercepta Range nem /sounds/tema-', () => {
+  it('cada formato cabe no orçamento próprio (≤ 2,5 MB) e é o ÚNICO motivo de o S6 de 300 KB não valer para ele', () => {
+    for (const f of FORMATOS_DAS_MUSICAS) expect(f.bytes, f.url).toBeLessThanOrEqual(TETO_TEMA_POR_FORMATO_BYTES);
+    expect(TODOS.reduce((s, a) => s + a.bytes, 0)).toBeLessThanOrEqual(TETO_S6_BYTES); // elas não entram nessa conta e nada mais saiu dela
+  });
+
+  it('nenhum formato está em PRECACHE_URLS, e o sw.js não intercepta Range nem /sounds/tema- nem /sounds/musica-', () => {
     const sw = readFileSync(join(raiz, 'public', 'sw.js'), 'utf8');
     const lista = sw.match(/PRECACHE_URLS\s*=\s*\[([\s\S]*?)\]/)?.[1] ?? '';
-    for (const f of FORMATOS_DO_TEMA) expect(lista).not.toContain(f.url);
+    for (const f of FORMATOS_DAS_MUSICAS) expect(lista).not.toContain(f.url);
     expect(sw).toMatch(/request\.headers\.get\('range'\)[\s\S]{0,80}\/sounds\/tema-/);
+    expect(sw).toMatch(/request\.headers\.get\('range'\)[\s\S]{0,140}\/sounds\/musica-/);
   });
 
-  it('a pausa entre voltas e o fade-in são positivos (volta com respiro, não loop seco)', () => {
-    expect(TEMA_DO_JOGO.pausaEntreVoltasS).toBeGreaterThan(0);
-    expect(TEMA_DO_JOGO.fadeInS).toBeGreaterThan(0);
+  it('a pausa entre voltas e o fade-in são positivos (volta com respiro, não loop seco); o combate descansa menos que o tema', () => {
+    for (const m of MUSICAS) {
+      expect(m.pausaEntreVoltasS, m.nome).toBeGreaterThan(0);
+      expect(m.fadeInS, m.nome).toBeGreaterThan(0);
+    }
+    for (const m of Object.values(MUSICAS_DE_COMBATE)) expect(m.pausaEntreVoltasS).toBeLessThan(TEMA_DO_JOGO.pausaEntreVoltasS);
   });
 });
 
@@ -142,8 +160,8 @@ describe('footgun 9 — o manifesto não copia alvo de loudness', () => {
     expect(src).not.toMatch(/ALVO_LUFS_M|OFFSET_POR_SOM_DB/);
   });
 
-  it('tema.ts também não contém número de LUFS nem dBTP', () => {
-    const src = readFileSync(join(__dirname, 'tema.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  it.each(['tema.ts', 'streamMusica.ts', 'musicaDeCombate.ts'])('%s também não contém número de LUFS nem dBTP', (arq) => {
+    const src = readFileSync(join(__dirname, arq), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     expect(/-\s?(16|19|22|25|28)(\.0)?\s*(LUFS|dB)/i.test(src)).toBe(false);
   });
 });

@@ -11,7 +11,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, act } from '@testing-library/react';
 
 const reg = vi.hoisted(() => ({ linhas: [] as Array<{ t: number; action: any; hit: any }> }));
-vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ isMuted: () => false, playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn() }));
 vi.mock('./games/BattleStage', () => ({
   BATTLE_LAYER_STYLE: {},
   BattleStage: (p: { action: any; hit: any }) => { reg.linhas.push({ t: performance.now(), action: p.action, hit: p.hit }); return null; },

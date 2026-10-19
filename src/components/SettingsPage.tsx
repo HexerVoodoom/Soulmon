@@ -497,12 +497,12 @@ export function SettingsPage({
               setTrilha(!trilha);
               reavaliarMusica();
             }}
-            label={isPt ? 'Música de masmorra e arena' : 'Dungeon & arena music'}
+            label={isPt ? 'Música de combate' : 'Combat music'}
             language={language}
-            infoLabel={isPt ? 'Sobre a música de masmorra e arena' : 'About the dungeon and arena music'}
+            infoLabel={isPt ? 'Sobre a música de combate' : 'About the combat music'}
             info={soundMuted
               ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, music stays silent.')
-              : (isPt ? 'O loop calmo toca na masmorra e a Arena tem a sua própria faixa. Só começam quando você abre o jogo. Param sozinhas quando o app sai de vista.' : 'The calm loop plays in the dungeon and the Arena has its own track. They start only when you open a game and stop by themselves when the app is out of view.')}
+              : (isPt ? 'A Masmorra, a Arena e o Torneio têm música própria. Começa quando você entra e para sozinha quando o app sai de vista.' : 'The Dungeon, the Arena and the Tournament have their own music. It starts when you go in and stops by itself when the app is out of view.')}
           />
         </Group>
       )}
