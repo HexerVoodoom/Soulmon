@@ -97,7 +97,7 @@ interface GuildSheetProps {
   /** Âncora do DIA DO JOGADOR (`gameState.playerDayTz`); sem ela vale o do aparelho. */
   playerDayTz?: PlayerDayAnchor;
   /** Qual sala abre: o Salão (Bosque/Roda/Mural, o padrão — porta do Hall) ou a Feira (porta da Arena). */
-  room?: 'salao' | 'feira';
+  room?: 'salao' | 'feira' | 'guerra';
   /** O resgate da Feira foi confirmado pelo servidor: soma os Emblemas pelo MESMO caminho do Torneio
    *  e, se veio a Concha da Maré, a põe em `ownedFurniture`. A folha só chama UMA vez por recibo. */
   onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
@@ -231,7 +231,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   // A GUERRA: pergunta ao abrir o Salão (2 leituras no servidor, fora da vista principal). Falha é SILÊNCIO: a sala some.
   const guildaId = load.status === 'ready' ? load.guild?.id ?? null : null;
   useEffect(() => {
-    if (!guildaId || room === 'feira') { setWar(null); return; }
+    if (!guildaId || room === 'feira') { setWar(null); return; } // 'guerra' (lote da Arena) pergunta igual ao Salão
     let vivoLocal = true;
     getGuildWar(saveId, tz.current).then(w => { if (vivoLocal && vivo.current) setWar(w); }).catch(() => { if (vivoLocal) setWar(null); });
     return () => { vivoLocal = false; };
@@ -459,6 +459,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         </button>
       </div>
     );
+  } else if (!load.guild && room === 'guerra') {
+    // D-73: a Guerra é do clã; sem clã a folha da Arena só diz isso (criar/entrar mora no Salão).
+    corpo = <p className="sm2-stats-t" data-guerra-semcla>{t('guild.guerra.semcla')}</p>;
   } else if (!load.guild) {
     const semNome = ocupado || !nome.trim();
     const semCodigo = ocupado || codigo.length < GUILD_CODE_LENGTH;
@@ -545,7 +548,35 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     // jogador que vale agora) e só o que o servidor mandou.
     const nominal = g.size <= GUILD_PRESENCE_NOMINAL_MAX && load.day === playerDayKey(new Date(), tz.current);
     const semNovoNome = ocupado || !novoNome.trim() || novoNome.trim() === g.name;
-    corpo = room === 'feira' ? (
+  const buscarGuerra = () => {
+    if (busy.current) return;
+    busy.current = true;
+    setOcupado(true);
+    setAviso(null);
+    seekGuildWar(saveId, tz.current)
+      .then(r => { if (vivo.current) { setWar(r.war); if (r.state === 'done') { void carregar(true); setAnuncio(t(`guild.guerra.resultado.${r.war.last?.outcome ?? 'draw'}`, { nome: r.war.last?.enemy ?? '' })); } } })
+      .catch(e => { if (vivo.current) setAviso(GUILD_ERROR_KEY[kindOf(e)]); })
+      .finally(() => { busy.current = false; if (vivo.current) setOcupado(false); });
+  };
+    const salaGuerra = war && (
+      <SalaGuerra
+        guild={g}
+        t={t}
+        language={language}
+        war={war}
+        hoje={load.day}
+        ocupado={ocupado}
+        mySprite={mySprite || getSpriteForStage('rookie')}
+        reducedMotion={reducedMotion}
+        onBuscar={buscarGuerra}
+      />
+    );
+    corpo = room === 'guerra' ? (
+      <>
+        {alerta}
+        {salaGuerra}
+      </>
+    ) : room === 'feira' ? (
       <>
         {alerta}
         <SalaFeira
@@ -705,16 +736,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
               ocupado={ocupado}
               mySprite={mySprite || getSpriteForStage('rookie')}
               reducedMotion={reducedMotion}
-              onBuscar={() => {
-                if (busy.current) return;
-                busy.current = true;
-                setOcupado(true);
-                setAviso(null);
-                seekGuildWar(saveId, tz.current)
-                  .then(r => { if (vivo.current) { setWar(r.war); if (r.state === 'done') { void carregar(true); setAnuncio(t(`guild.guerra.resultado.${r.war.last?.outcome ?? 'draw'}`, { nome: r.war.last?.enemy ?? '' })); } } })
-                  .catch(e => { if (vivo.current) setAviso(GUILD_ERROR_KEY[kindOf(e)]); })
-                  .finally(() => { busy.current = false; if (vivo.current) setOcupado(false); });
-              }}
+              onBuscar={buscarGuerra}
             />
           )}
 
@@ -787,7 +809,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   }
 
   return (
-    <div ref={rootRef} tabIndex={-1} className="sm2-guild" aria-label={t(room === 'feira' ? 'guild.feira.titulo' : 'guild.aria.salao')} data-guild-sheet data-guild-room-open={room}>
+    <div ref={rootRef} tabIndex={-1} className="sm2-guild" aria-label={t(room === 'feira' ? 'guild.feira.titulo' : room === 'guerra' ? 'guild.guerra.titulo' : 'guild.aria.salao')} data-guild-sheet data-guild-room-open={room}>
       {/* Região viva SEMPRE montada (QA L1 BAIXO-3): o texto entra depois, e é
           assim que o leitor de tela anuncia — uma região que nasce preenchida não é lida. */}
       <div role="status" aria-live="polite" className="sm2-guild-sr" data-guild-status>{anuncio}</div>

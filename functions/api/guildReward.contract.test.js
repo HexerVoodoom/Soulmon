@@ -160,12 +160,10 @@ describe('3. catálogo — Concha e cenários fora de venda; Emblemas só cosmé
     for (const i of SHOP_ITEMS) expect(i.currency, i.id).not.toBe('emblems');
   });
 
-  it('cenários bg-guild-* fora do sorteio/vitrine da masmorra (SHOP_BG_ACCENTS)', () => {
+  it('cenários bg-guild-* fora do sorteio da masmorra (D-79: os bgs da loja saíram do sorteio; só cenas verticais)', () => {
     const cenas = fonte('src/utils/dungeonScenes.ts');
-    const i = cenas.indexOf('const SHOP_BG_ACCENTS');
-    const bloco = cenas.slice(i, cenas.indexOf('};', i));
-    expect(i).toBeGreaterThan(0);
-    expect(bloco).not.toContain('bg-guild-');
+    expect(cenas).not.toContain('SHOP_BG_SCENES');
+    expect(cenas).not.toContain('bg-guild-');
   });
 
   it('nenhum SKU de dinheiro real concede algo da Guilda', () => {
