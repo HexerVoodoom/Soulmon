@@ -19,6 +19,8 @@
 > `D:\Soulmonrand-archiverand-anterior\`. Estado por peça em `ASSETS-A-GERAR.md` §11. Os §1–§4 abaixo
 > descrevem o estado ANTES da rodada; re-varrer com `/squad-arte inventario`.
 
+> **Atualização 19/10/2026 (W5 L6 — `feat/refino-w8b-instalar-l6`):** fonte `D:\Soulmon\_gemini_out\w5-arte-20261019\L6inal\` (alfa real). Substituídos no lugar (mesmos nomes): **5 iniciais** `soulmon/starters/{industrial,nascente,alento,vida,meteoro}.png` (512²; Crato/`industrial` tem alças curtas de couro com cristal — risco de leitura como arreio, a conferir), **5 humores** `icons/mood/mood-1…5` (128², pintados; `DailyReportModal` a 40 px, sem `pixelated`), `soulmon/fx/fx-sparkle.png` (128², `FX_ART['✨']` → `VisorFx`), **placa da Dungeon** `soulmon/icones-ui/placa-madeira.png` (480×280; `DungeonSign` mantém a caixa lógica 120×70, sem `pixelated`) e **6 FX do Mind Workshop** `soulmon/fx/{fx-bolha-sonho,fx-pop,fx-pedra-*}.png` (192², exibidos a 48 sem `pixelated` em `BolhasGame`/`EcoGame`). **Novos:** `soulmon/fx/spark-{g,m,p}.png` (96², `SPARK_ART` em `fxArt.ts` → `VisorSparks` na vitória do Pesadelo/Arena e no Bom Sonho).
+
 > **Atualização 04/10/2026 (instalação da arte do dono — `feat/arte-marca`):** fonte `E:\Soulmon-assets\entrada-dono\<pasta>\`
 > (arquivo canônico = sem `-vN`), alfa real binarizado, reduzido *nearest* ao tamanho de uso; pranchas de conferência em
 > `E:\Soulmon-assets\out\instalacao-20261004\marca\`. Instalado: **wordmark** definitivo

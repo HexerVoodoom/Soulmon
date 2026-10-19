@@ -47,7 +47,7 @@ function StoneShape({ stone, size }: { stone: Stone; size: number }) {
       data-eco-shape={stone}
       width={size}
       height={size}
-      style={{ display: 'block', width: size, height: size, flex: 'none', imageRendering: 'pixelated' }}
+      style={{ display: 'block', width: size, height: size, flex: 'none', imageRendering: 'auto' }}
     />
   );
 }

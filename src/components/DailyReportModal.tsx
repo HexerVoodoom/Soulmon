@@ -398,7 +398,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
                 >
                   {/* C6: arte própria quando existir (`utils/moodArt.ts`); emoji é o fallback. */}
                   {moodArtFor(m.value)
-                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={40} height={40} style={{ display: 'block', width: 40, height: 40, imageRendering: 'pixelated' }} />
+                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={40} height={40} style={{ display: 'block', width: 40, height: 40, imageRendering: 'auto' }} />
                     : <span aria-hidden="true">{m.emoji}</span>}
                 </button>
               );

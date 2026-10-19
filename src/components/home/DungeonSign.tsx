@@ -18,7 +18,7 @@ import type { Language } from '../../utils/i18n';
  * Visual (14/10/2026, dono: "deformada, cortada, texto enorme; tire o ícone da portinha"): só a placa pixel (`placa-madeira.png`, 60×35) em escala inteira 2× com `image-rendering: pixelated`, sem border-image e sem ícone; texto xs centrado na área lisa. Cores da
  * madeira em variáveis locais com fallback; texto creme sobre marrom-escuro (contraste ~8:1). Sem animação, sem som, sem cobrança no texto.
  */
-/** A arte da placa é 60×35 px (proporção 12:7 do recorte de `key-sign-2.png`); vai na tela em ESCALA INTEIRA (2×), nunca esticada. */
+/** Tamanho LÓGICO da placa (proporção 12:7). D-80 (19/10/2026): a arte agora é 480×280 (4× o tamanho lógico de 120×70, suavizada, sem `pixelated`); a caixa na tela continua 60×35 × 2 = 120×70, nunca esticada. */
 export const SIGN_ART_W = 60;
 export const SIGN_ART_H = 35;
 export const SIGN_SCALE = 2;
@@ -30,7 +30,7 @@ const sign: CSSProperties = {
   color: 'var(--sm2-wood-ink, #f8ecd2)', fontFamily: 'var(--sm2-font-text)', lineHeight: 1.1, textAlign: 'center', cursor: 'pointer',
 };
 // a arte ocupa a caixa inteira, sem deformar (SIGN_W/SIGN_H = arte × inteiro) e sem cortar
-const art: CSSProperties = { position: 'absolute', inset: 0, width: SIGN_W, height: SIGN_H, imageRendering: 'pixelated', pointerEvents: 'none' };
+const art: CSSProperties = { position: 'absolute', inset: 0, width: SIGN_W, height: SIGN_H, imageRendering: 'auto', pointerEvents: 'none' };
 // texto na área lisa: abaixo da folha do canto (topo) e dentro dos pregos/bordas
 const text: CSSProperties = {
   position: 'absolute', left: 12, right: 12, top: 24, bottom: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
