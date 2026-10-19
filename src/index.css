@@ -3871,10 +3871,10 @@ html {
    caía só 30px. Agora a gota fica OPACA quase o trajeto todo (some só no fim)
    e cai 84px, até os pés do pet. */
 @keyframes shower-drop {
-  0%   { opacity: 0; transform: translateY(-26px) scale(0.8); }
+  0%   { opacity: 0; transform: translateY(0) scale(0.8); }
   10%  { opacity: 1; }
   82%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(84px) scale(1); }
+  100% { opacity: 0; transform: translateY(70px) scale(1); }
 }
 
 @keyframes pet-shower-shake {
@@ -3893,9 +3893,17 @@ html {
 }
 
 /* Dungeon minigame: subtle breathing/hover for battle sprites */
+/* D-54 (19/10/2026, dono): o sobe/desce do Soulmon virou BOUNCE — o sprite achata um pouco na altura e volta, com a base
+   (`transform-origin: 50% 100%`) fixa no chão. Nenhum Soulmon em idle usa `translateY` de flutuação, EXCETO os voadores
+   (`.sm-pet-air`, `sm-pet-air-float`, que seguem flutuando — Q4). Régua: `src/styles/bounce.contract.test.ts`.
+   Movimento reduzido: sem bounce (regras `animation: none !important` no bloco canônico). `--flip` espelha o lutador da direita. */
+@keyframes sm-bounce {
+  0%, 100% { transform: scaleX(var(--flip, 1)) scaleY(1); }
+  50%      { transform: scaleX(var(--flip, 1)) scaleY(var(--sm-bounce-squash, 0.92)); }
+}
 @keyframes dungeon-idle {
-  0%, 100% { transform: translateY(0) scaleX(var(--flip, 1)); }
-  50%      { transform: translateY(-5px) scaleX(var(--flip, 1)); }
+  0%, 100% { transform: scaleX(var(--flip, 1)) scaleY(1); }
+  50%      { transform: scaleX(var(--flip, 1)) scaleY(var(--sm-bounce-squash, 0.92)); }
 }
 
 /* Rub-to-heal: hearts EXPLODE from the pet center — quick pop, then radiate
@@ -4968,6 +4976,7 @@ select:focus-visible {
 .sm-visor-hop { animation: visor-hop 300ms ease-out 1; transform-origin: 50% 100%; }
 .sm-battle-idle {
   animation: dungeon-idle var(--sm-idle-dur, 1.5s) ease-in-out infinite;
+  transform-origin: 50% 100%;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -8233,8 +8242,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 @keyframes sm2-casa-glow { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
 .sm2-casa-glow { animation: sm2-casa-glow 2.4s steps(3, jump-none) infinite; }
 .sm2-grove-creature { image-rendering: pixelated; position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
-@keyframes sm2-grove-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-.sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; }
+@keyframes sm2-grove-bob { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.94); } }
+.sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; transform-origin: 50% 100%; }
 /* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
    imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }
@@ -8595,10 +8604,10 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
    o pulo do mascote e o balao "VAI!/CHEER!" param com `prefers-reduced-motion` (regras no fim deste bloco);
    o balao entao so PISCA. O anel do especial e desenhado por JS (e a mecanica essencial). */
 @keyframes sm-bs-bounce {
-  0%, 100% { transform: translateY(0) scaleX(var(--flip, 1)); }
-  50% { transform: translateY(calc(var(--bs-bounce, 6px) * -1)) scaleX(var(--flip, 1)); }
+  0%, 100% { transform: scaleX(var(--flip, 1)) scaleY(1); }
+  50% { transform: scaleX(var(--flip, 1)) scaleY(var(--sm-bounce-squash, 0.92)); }
 }
-.sm-bs-bounce { animation: sm-bs-bounce var(--sm-idle-dur, 1.1s) ease-in-out infinite; }
+.sm-bs-bounce { animation: sm-bs-bounce var(--sm-idle-dur, 1.1s) ease-in-out infinite; transform-origin: 50% 100%; }
 @keyframes sm-bs-glow {
   0%, 100% { filter: drop-shadow(0 0 3px var(--sm2-gold-fill)); }
   50% { filter: drop-shadow(0 0 14px var(--sm2-gold-fill)); }

@@ -7,7 +7,9 @@ import {
   hasPendingNightmare,
   markFought,
   nightmareDayKey,
+  NIGHTMARE_INTRO_TITLE,
   nightmareFlavor,
+  nightmareFlavorShort,
   nightmareName,
   nightmareRewards,
   nightmaresFor,
@@ -202,5 +204,22 @@ describe('textos', () => {
       expect(en).not.toBe(pt);
       expect(nightmareFlavor(rarity, 'en')).not.toBe(nightmareFlavor(rarity, 'pt-BR'));
     }
+  });
+});
+
+describe('D-69: convite do pesadelo enxuto (19/10/2026)', () => {
+  it('a descrição curta é UMA frase, EN e PT, para toda raridade, e vem da descrição já existente', () => {
+    for (const rarity of ['common', 'rare', 'legendary'] as const) {
+      for (const lang of ['en', 'pt-BR']) {
+        const curta = nightmareFlavorShort(rarity, lang);
+        expect(curta.length).toBeGreaterThan(0);
+        expect(curta.match(/[.!?]/g)?.length).toBe(1);
+        expect(nightmareFlavor(rarity, lang)).toContain(curta.slice(0, -1));
+      }
+    }
+  });
+  it('o título do convite existe nas duas línguas', () => {
+    expect(NIGHTMARE_INTRO_TITLE.en).toBe('Oh no, a nightmare!');
+    expect(NIGHTMARE_INTRO_TITLE.pt).toBe('Ah, não! Um pesadelo!');
   });
 });

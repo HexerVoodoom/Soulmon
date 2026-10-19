@@ -529,6 +529,19 @@ const FLAVOR: Record<DreamRarity, { en: string; pt: string }> = {
 };
 
 /**
+ * Descrição CURTA do convite (D-69, 19/10/2026): UMA frase, a primeira da `FLAVOR` (a que descreve o pesadelo); a segunda ("Seu Soulmon
+ * soprou ela pra longe") é o desfecho e fica para depois da luta, não para o convite.
+ */
+const FLAVOR_SHORT: Record<DreamRarity, { en: string; pt: string }> = {
+  common: { en: 'A tiny grey cloud tried to rain on your rest.', pt: 'Uma nuvenzinha cinza tentou chover no seu descanso.' },
+  rare: { en: 'The blankets got all tangled up and grew paws.', pt: 'Os cobertores se embolaram e ganharam patinhas.' },
+  legendary: { en: 'A big soft shadow leaned over your sleep.', pt: 'Uma sombra grande e macia se debruçou sobre o seu sono.' },
+};
+
+/** O título do convite do pesadelo (D-69): é a ÚNICA fala da tela além do nome, da descrição e do botão. */
+export const NIGHTMARE_INTRO_TITLE = { en: 'Oh no, a nightmare!', pt: 'Ah, não! Um pesadelo!' } as const;
+
+/**
  * Nome do pesadelo. **Fofo, nunca assustador.** O pesadelo é o adversário que
  * o SOULMON enfrenta enquanto defende o descanso do dono, não uma ameaça ao
  * jogador — um app que produz medo perto da hora de dormir é o oposto exato do
@@ -542,6 +555,12 @@ export function nightmareName(rarity: DreamRarity, language: string): string {
 /** Descrição do pesadelo, no mesmo tom encorajador. EN + PT-BR. */
 export function nightmareFlavor(rarity: DreamRarity, language: string): string {
   const f = FLAVOR[rarity] ?? FLAVOR.common;
+  return language === 'pt-BR' ? f.pt : f.en;
+}
+
+/** Descrição de UMA frase do convite do pesadelo. EN + PT-BR. */
+export function nightmareFlavorShort(rarity: DreamRarity, language: string): string {
+  const f = FLAVOR_SHORT[rarity] ?? FLAVOR_SHORT.common;
   return language === 'pt-BR' ? f.pt : f.en;
 }
 

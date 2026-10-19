@@ -91,11 +91,19 @@ describe('Pesadelo — convite', () => {
     expect(img.getAttribute('src')).toBe(sombra);
     expect(img.getAttribute('src') ?? '').not.toMatch(/dungeon-spirit/);
   });
-  it('o convite explica que a torcida e os especiais certeiros seguram o pesadelo e diz que é UMA luta', () => {
+  it('D-69 (19/10/2026): o convite é enxuto — título, nome, UMA frase de descrição e o botão; sem "de manhã…", sem recompensa/"Perder não custa nada", sem dica', () => {
     montar([inimigo()]);
-    expect(document.querySelector('[data-nightmare-rule]')?.textContent).toMatch(/Toque na tela para torcer/);
-    expect(document.body.textContent).toMatch(/Uma luta só/);
-    expect(document.body.textContent).toMatch(/torcida e os especiais certeiros/);
+    const texto = document.body.textContent ?? '';
+    expect(screen.getByRole('heading', { name: 'Ah, não! Um pesadelo!' })).toBeTruthy();
+    expect(document.querySelector('[data-nightmare-name]')?.textContent).toBeTruthy();
+    expect(document.querySelector('[data-nightmare-flavor]')?.textContent).toMatch(/^[^.]+\.$/);
+    expect(screen.getByRole('button', { name: 'Encarar o pesadelo' })).toBeTruthy();
+    expect(document.querySelector('[data-nightmare-rule]')).toBeNull();
+    expect(texto).not.toMatch(/De manhã, seu Soulmon conta/);
+    expect(texto).not.toMatch(/Perder não custa nada/);
+    expect(texto).not.toMatch(/Uma luta só/);
+    expect(texto).not.toMatch(/Toque na tela para torcer/);
+    expect(texto).not.toMatch(/Bits/);
   });
 });
 
@@ -217,7 +225,10 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(await ate(() => onLose.mock.calls.length > 0, 200_000)).toBe(true);
     expect(onLose).toHaveBeenCalledTimes(1);
     expect(screen.getByText('O pesadelo desvaneceu, mas continua à espreita.')).toBeTruthy();
-    expect(document.body.textContent).toMatch(/Nada foi perdido/);
+    // R6 (dono, 19/10/2026): na derrota ficam SÓ o título e o botão — a frase "Nada foi perdido" e o "Amanhã tem outra noite" saíram.
+    expect(document.body.textContent).not.toMatch(/Nada foi perdido/);
+    expect(document.body.textContent).not.toMatch(/Amanhã tem outra noite/);
+    expect(screen.getByRole('button', { name: 'Bom dia!' })).toBeTruthy();
   });
 
   it('sair da luta pede confirmação, pausa e, ao sair, não custa nada', async () => {
