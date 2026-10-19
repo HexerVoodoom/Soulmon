@@ -195,7 +195,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
 }
 
 export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, headSlot }: TournamentPageProps) {
-  // Música (19/10/2026): o Torneio toca o "pvp theme" (se o interruptor "Música de combate" está ligado). Antes de qualquer return (hooks).
+  // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música de combate" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';

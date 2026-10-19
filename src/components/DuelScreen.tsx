@@ -102,7 +102,7 @@ const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 export function DuelScreen({
   me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', skills, oppElement, onDone, onClose,
 }: DuelScreenProps) {
-  // Música (19/10/2026): a luta (ranqueada ou treino) toca o "pvp theme" em combate; empilha sobre o torneio e, ao sair, volta a ele.
+  // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
   const par = stageSkillsFor(skills, petStage);
   // A identidade de combate (dono único): a SUA vem da ficha (sem ela, do `fx` que o servidor publicou do seu save); a do

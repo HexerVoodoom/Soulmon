@@ -1,7 +1,8 @@
 /**
- * AS MÚSICAS DE COMBATE em streaming — "dungeon theme" e "pvp theme" (decisão do dono, 19/10/2026,
- * `docs/REGISTRO-DE-DECISOES.md` §102): a Masmorra toca o dungeon theme (no lugar do loop procedural) e o Duelo e o
- * Torneio tocam o pvp theme. A Arena segue com a faixa derivada e o Pesadelo com o terror (ver `musica.ts`, o diretor).
+ * AS MÚSICAS DE COMBATE em streaming — `combate` ("Stone Hall Combat") e `pesadelo` ("Stone Hall Nightmare") (decisão do
+ * dono, 19/10/2026, `docs/REGISTRO-DE-DECISOES.md` §102): Masmorra, Arena, Torneio e Duelo tocam `combate`; o Pesadelo toca
+ * `pesadelo` (ver `musica.ts`, o diretor). Este módulo é o ÚNICO dono de toda música de combate (não há trilha procedural).
+ * Trocar `combate` ↔ `pesadelo` é crossfade: a velha desce, a nova sobe (`pedirMusicaDeCombate`).
  *
  * Este módulo é o DONO DO ESTADO delas (qual foi pedida, se há consentimento, as pausas por motivo); o `<audio>` em si é
  * de `streamMusica.ts` (o mesmo player do tema), ligado ao `busTrilha` — então o interruptor "Música de combate"
