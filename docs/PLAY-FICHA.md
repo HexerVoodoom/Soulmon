@@ -305,6 +305,10 @@ configuração de hoje (mesma regra de `PLAY-DATA-SAFETY.md` §2.4).
 | Acesso à câmera/microfone | **Microfone** (recado falado, opcional) | `RECORD_AUDIO` no manifesto; `PLAY-DATA-SAFETY.md` §2.4 |
 | Público-alvo | 18+ (a política declara na §7; caixa de maioridade na tela de conta) | `PLAY-DATA-SAFETY.md` §0 |
 
+**Respondido de fato no Console em 19/10/2026 (salvo, não enviado):** categoria Jogo; violência = Sim, só contra NÃO humanos (criaturas fantásticas), ambiente fantástico, estilo pixelado, reações irrealistas, perspectiva frequentemente distante, sangue Nenhum, criaturas não se comportam como humanos, violência contra animais reais Não; sons/personagens sinistros ou macabros = **Sim** (Pesadelo e criaturas com ossos na Guerra de Clãs); Medo = **Não**; sexualidade, jogos de azar, idioma ofensivo, substâncias e humor ofensivo = Não; compras de bens digitais = Sim (só bens digitais, sem dinheiro convertível nem NFT); itens aleatórios pagos = Não; **troca de itens entre jogadores com moeda comprada = Sim** (presentes e doação de Bits; Créditos viram Bits); interação entre usuários = Sim; bloquear usuários = Não; denunciar usuários = Não (o app não tem essas funções: grep em `src/` e `functions/` não acha nenhuma); moderação de chat = Não (o chat é com IA); interações limitáveis a amigos convidados = Não; localização compartilhada = Não; nazismo/Coreia/terrorismo/crimes = Não. Contato: `mateus.sprnd@gmail.com`.
+
+**Coerência "Medo: Não" x "sons sinistros: Sim":** coexistem porque o questionário separa *medo/horror como tema* (a tarefa "assombrada" é só esmaecimento + o pet olhando, sem imagem de horror) de *sons/personagens sinistros ou macabros* (o Pesadelo e as criaturas com ossos da Guerra de Clãs). Responder Sim ao segundo é o lado conservador. Aviso do resumo: indisponível na Coreia do Sul até aprovação do GRAC.
+
 Resultado esperado: **Livre / PEGI 3–7** com descritores de "compras no app" e
 "interação entre usuários". Se o IARC devolver algo mais alto por causa do combate,
 aceite — a classificação sai do questionário, não da vontade.

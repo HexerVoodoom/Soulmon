@@ -277,7 +277,7 @@ Na mesma tela, uma por uma:
 | **Classificação de conteúdo** (IARC) | responder com `PLAY-FICHA.md` §4, e-mail `mateus.sprnd@gmail.com` | — |
 | **Público-alvo e conteúdo** | 18 anos ou mais; "não atrai crianças" | decisão #15; `PLAY-DATA-SAFETY.md` §0 |
 | **Apps de notícias** | Não | — |
-| **Rastreamento de contatos COVID / saúde** | Não é app de saúde. `ACTIVITY_RECOGNITION` é o contador de passos do aparelho, **não** Health Connect | `PLAY-DATA-SAFETY.md` §2.6 |
+| **Apps de saúde** (inclui COVID) | **Declarar**: o Console exige a declaração por causa de `ACTIVITY_RECOGNITION`. Categoria "Atividade e condicionamento físicos"; justificativa: contador de passos nativo, só o total diário, sem Health Connect/Google Fit, o app funciona sem a permissão. (Não é app médico nem de COVID.) | `PLAY-DATA-SAFETY.md` §2.6 |
 | **Segurança de dados** | transcrever `PLAY-DATA-SAFETY.md` §3 (a lista-resumo — é dela que se preenche), item por item. Groq, Higgsfield/Gemini e Supabase+Groq (áudio) já estão declarados em §2.3/§2.4 | `PLAY-DATA-SAFETY.md` |
 | **Apps governamentais** | Não | — |
 | **Recursos financeiros** | Nenhum (compras digitais não contam aqui) | — |
@@ -285,6 +285,25 @@ Na mesma tela, uma por uma:
 | **Permissões sensíveis** (se pedir) | `RECORD_AUDIO` = recado falado, opcional; `ACTIVITY_RECOGNITION` = passos. `SCHEDULE_EXACT_ALARM` foi REMOVIDA no beta-play-01 (lembrete usa alarme inexato) | `PLAY-DATA-SAFETY.md` §2.4 tabela de permissões |
 
 **Feito quando:** o painel "Conteúdo do app" não tem nenhuma linha "Ação necessária".
+
+### Estado no Console em 19/10/2026
+
+Feito pela squad com autorização do dono, no app `com.soulmon` (conta pessoal Mojoceramon, app em rascunho, teste interno v19 `1.3.0-beta1`). Tudo **salvo, nada enviado para revisão**.
+
+| Declaração | Resposta no Console | Situação |
+|---|---|---|
+| Política de privacidade | `https://soulmon.mateus-sprnd.workers.dev/privacidade.html` | salva |
+| Anúncios | Não | salva |
+| ID de publicidade | Não | salva |
+| Apps governamentais | Não | salva |
+| Recursos financeiros | Nenhum | salva |
+| Apps de saúde | Declarado: "Atividade e condicionamento físicos"; justificativa de `ACTIVITY_RECOGNITION` em inglês (contador de passos nativo, só total diário, sem Health Connect/Google Fit, app funciona sem a permissão) | salva |
+| Classificação de conteúdo (IARC) | Categoria Jogo; respostas em `PLAY-FICHA.md` §4; contato `mateus.sprnd@gmail.com` | salva |
+| Segurança dos dados | a partir de `PLAY-DATA-SAFETY.md` §3 | pendente (outro agente preenchendo; não duplicar) |
+| Detalhes do login / acesso ao app (instruções do revisor) | conta de revisor + `BETA_EMAILS` | pendente, **dono** |
+| Público-alvo e conteúdo | 18+ (D.5) | pendente, bloqueado até o login |
+
+Avisos e achados: o app fica **indisponível na Coreia do Sul até aprovação do GRAC**; a página "Teste fechado" deu erro de carregamento com o app em rascunho; conta pessoal exige **12 testadores por 14 dias**; as mensagens de "problema urgente com sua conta para pagamentos" (13/10) e o aviso de nível alvo da API (prazo 31/08/2026, 3 apps) são do dono (ver `DEPENDE-DE-VOCE.md`).
 
 ### D.6 Configuração de monetização `[dono digita segredo]` `[submissão: confirmar]`
 

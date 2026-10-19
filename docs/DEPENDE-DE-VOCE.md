@@ -36,6 +36,16 @@
 | 11 | Criar o **Google Group**, a faixa de **teste fechado**, mandar os convites e manter o relógio | Fases 9-10 | produção |
 | 12 | **Recrutar** (a squad redige os textos; você envia) e preencher a **licença de teste** | `BETA-TESTADORES.md` | D0 |
 
+**Play Console, achados de 19/10/2026 (só você):**
+
+| # | O que | Nota |
+|---|---|---|
+| P1 | **Conta de revisor + `BETA_EMAILS`**: crie uma conta de teste no Firebase Auth só para o revisor, digite as instruções em "Detalhes do login" e inclua o e-mail no secret `BETA_EMAILS` (`BETA-CONTINGENCIA.md` §0.6) | destrava também "Público-alvo e conteúdo" |
+| P2 | **"Problema urgente com sua conta para pagamentos"** (mensagem de 13/10 no Console) | pode bloquear D.6/D.7 |
+| P3 | **Nível alvo da API**: aviso com prazo 31/08/2026 que cita 3 apps | confirme se inclui o Soulmon |
+| P4 | **GRAC (Coreia do Sul)**: o app fica indisponível lá até a aprovação | só importa se quiser o país |
+| P5 | **Conta pessoal exige 12 testadores por 14 dias** de teste fechado (a página "Teste fechado" deu erro com o app em rascunho) | o relógio só corre depois de abrir a faixa |
+
 A squad faz o resto via Chrome **com o seu "sim" em cada envio** (ficha, Data Safety, IARC, IA,
 produtos, leitura de painéis). Ela nunca digita senha, keystore, JSON de service account nem dado
 bancário.
