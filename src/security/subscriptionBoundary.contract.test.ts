@@ -150,7 +150,7 @@ describe('o catálogo do servidor não concede nada de jogo pela assinatura', ()
 });
 
 describe('Android — SUBS entra, INAPP fica intacto', () => {
-  const kt = read('android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt');
+  const kt = read('android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt');
 
   it('suporta SUBS: oferta base (sem fase grátis), offerToken, reconciliação e acknowledge', () => {
     expect(kt).toContain('ProductType.SUBS');

@@ -214,7 +214,7 @@ Quatro campos por linha, e nenhum fica vazio: onde **ler**, o **dono** (o símbo
 | Configurações | 03 §4.23 | `src/App.tsx` (`currentView === 'settings'`) | `src/utils/telemetry.test.ts` | 10 §8 |
 | Créditos e Nova Leitura | 03 §4.24 | `src/utils/newReading.ts` + `src/utils/entitlements.ts` | `src/utils/newReading.test.ts` | 10 §4 |
 | Superfícies globais (toasts, erro, a11y) | 03 §4.25 | `src/components/ErrorBoundary.tsx`, `src/hooks/useDialogA11y.ts` | `src/components/ui/Viewport.contract.test.tsx` | 10 §11 |
-| Widgets Android | 03 §5.1 | `src/plugins/SoulmonWidgetPlugin.ts` + `android/app/src/main/java/com/hexervoodoom/soulmon/widget/WidgetRenderer.kt` | `src/plugins/widgetSemCobranca.contract.test.ts` | 10 §7 |
+| Widgets Android | 03 §5.1 | `src/plugins/SoulmonWidgetPlugin.ts` + `android/app/src/main/java/com/soulmon/widget/WidgetRenderer.kt` | `src/plugins/widgetSemCobranca.contract.test.ts` | 10 §7 |
 | Overlay Electron | 03 §5.2 | `desktop/renderer/src/care.ts` | `desktop/renderer/src/care.parity.test.ts` | 10 §12 |
 | Notificações (o que a pessoa lê) | 03 §5.3 | `functions/api/_pushCopy.js` → `pushCopy` | `workers/pushCopy.parity.test.js` | 10 §7 |
 

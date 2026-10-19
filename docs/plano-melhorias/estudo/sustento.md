@@ -271,7 +271,7 @@ rec. 14, guia H.3), e ela continua sendo HP por dinheiro. A recomendação regis
 - **Aceite:** com plugin presente, a UI mostra `formattedPrice`; sem plugin, mostra o fallback e a
   mensagem "compra pelo app Android" que já existe; `publishedPrice.test.ts` continua travando o
   fallback com `termos.html`.
-- **Verificação:** `grep -q "formattedPrice" android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt && grep -q "getLocalizedPrice" src/utils/playBilling.ts`.
+- **Verificação:** `grep -q "formattedPrice" android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt && grep -q "getLocalizedPrice" src/utils/playBilling.ts`.
 
 **Fora de candidatura (registrado, sem WP):** `grantAdReward` credita **Créditos**, não Bits — se
 `ADS_ENABLED` for religado como está, anúncio vira dinheiro real e paga reroll, o caminho que D-13

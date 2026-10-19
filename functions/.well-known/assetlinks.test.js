@@ -21,7 +21,7 @@ describe('assetlinks.json', () => {
 
   it('com fingerprint, declara o pacote do Soulmon', async () => {
     const [alvo] = await ler({ ASSETLINKS_SHA256: 'AA:BB' });
-    expect(alvo.target.package_name).toBe('com.hexervoodoom.soulmon');
+    expect(alvo.target.package_name).toBe('com.soulmon');
     expect(alvo.target.sha256_cert_fingerprints).toEqual(['AA:BB']);
   });
 

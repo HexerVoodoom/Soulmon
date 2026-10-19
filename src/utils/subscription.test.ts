@@ -9,9 +9,9 @@ beforeEach(() => _resetSubscriptionStatus());
 
 describe('Gerenciar assinatura', () => {
   it('o link é o formato oficial da Play, com o SKU e o package do app', () => {
-    expect(manageSubscriptionUrl()).toBe('https://play.google.com/store/account/subscriptions?sku=soulmon_cosmetic_quarterly&package=com.hexervoodoom.soulmon');
+    expect(manageSubscriptionUrl()).toBe('https://play.google.com/store/account/subscriptions?sku=soulmon_cosmetic_quarterly&package=com.soulmon');
     expect(SUBSCRIPTION_SKU).toBe('soulmon_cosmetic_quarterly');
-    expect(ANDROID_PACKAGE).toBe('com.hexervoodoom.soulmon');
+    expect(ANDROID_PACKAGE).toBe('com.soulmon');
   });
 });
 

@@ -75,7 +75,7 @@ Lado JS: `src/plugins/SoulmonWidgetPlugin.ts` (`registerPlugin('SoulmonWidget')`
 - Resíduo de nome: `src/plugins/SoulmonWidgetPlugin.ts` exporta `interface DigiWidgetData`; `WidgetRenderer.kt` `PREFS_NAME = "DigiWidgetPrefs"` (este é **congelado de propósito** — renomear quebra widget instalado).
 - `BillingPlugin.kt` usa `com.android.billingclient:billing-ktx:6.2.1` (`android/app/build.gradle`). **Verificar antes de publicar**: a política do Play exige Billing Library ≥ 7 para atualizações desde 31/08/2025 e ≥ 8 a partir de 31/08/2026 — com 6.2.1 o upload de um AAB novo é rejeitado. Idem `targetSdkVersion = 35` (`android/variables.gradle`): desde 31/08/2026 o Play pede target 36 para atualizações. Não é quebra de build; é bloqueio na loja.
 
-### Widgets (Kotlin, `android/app/src/main/java/com/hexervoodoom/soulmon/`)
+### Widgets (Kotlin, `android/app/src/main/java/com/soulmon/`)
 | classe | papel |
 |---|---|
 | `widget/WidgetRenderer.kt` (`object`, 385 linhas) | Render compartilhado: `renderFull` (A), `renderPet` (C), `renderChat` (D), `renderScreen` (E), `updateAll`, `contextualMessage`, `buildChatPhrases`, `taskCounter`, `attachClick`. Lê `SharedPreferences` `DigiWidgetPrefs`. |
@@ -107,13 +107,13 @@ Lado JS: `src/plugins/SoulmonWidgetPlugin.ts` (`registerPlugin('SoulmonWidget')`
 - Nenhum `.jks` no git (`git ls-files | grep -i jks` vazio; `android/.gitignore` ignora `*.jks`/`*.keystore`). O histórico com keystores do DigiApp é assunto do `docs/STATUS.md` §3.1.
 
 ### Digital Asset Links
-`public/.well-known/assetlinks.json` (cópia em `dist/`): `package_name: com.hexervoodoom.soulmon`, 1 fingerprint SHA-256 `F5:10:2B:…:7B:84`. **Não dá para saber de qual chave é** (upload? Play App Signing? debug?) sem o keystore. **Não há `intent-filter` com `autoVerify` no manifesto** — o assetlinks não é consumido por App Links hoje; só serviria para TWA/PWABuilder (resíduo da era DigiApp, `docs/APK-BUILD-INFO.md`).
+`public/.well-known/assetlinks.json` (cópia em `dist/`): `package_name: com.soulmon`, 1 fingerprint SHA-256 `F5:10:2B:…:7B:84`. **Não dá para saber de qual chave é** (upload? Play App Signing? debug?) sem o keystore. **Não há `intent-filter` com `autoVerify` no manifesto** — o assetlinks não é consumido por App Links hoje; só serviria para TWA/PWABuilder (resíduo da era DigiApp, `docs/APK-BUILD-INFO.md`).
 
 ### Ícones adaptativos
 Existem: `res/mipmap-anydpi-v26/ic_launcher.xml` e `ic_launcher_round.xml` (`background @color/ic_launcher_background`, `foreground @mipmap/ic_launcher_foreground`) + `mipmap-{m,h,xh,xxh,xxxh}dpi`. **Sem `<monochrome>`** → ícone temático do Android 13+ cai no fallback. `drawable-v31/` existe e está vazio.
 
 ### `google-services.json`
-- **O arquivo EXISTE e está versionado**: `android/app/google-services.json` (`git ls-files` retorna). `project_id: digiapp-88296` (projeto Firebase do DigiApp), clients `com.digiapp.app` e `com.digipartner.digiapp` — **nenhum para `com.hexervoodoom.soulmon`**.
+- **O arquivo EXISTE e está versionado**: `android/app/google-services.json` (`git ls-files` retorna). `project_id: digiapp-88296` (projeto Firebase do DigiApp), clients `com.digiapp.app` e `com.digipartner.digiapp` — **nenhum para `com.soulmon`**.
 - O build **não quebra**: `android/app/build.gradle` faz parse do JSON e só aplica `com.google.gms.google-services` se houver `client` com o `applicationId`; senão `logger.warn(...)` e segue. Consequência: o APK de CI sai **sem FCM** (push remoto morto no Android nativo) sem nada ficar vermelho — só um warning no log do Gradle.
 - O STATUS (🔴 "Registrar o pacote no Firebase + baixar `google-services.json`") acerta a pendência, mas "ausente" é impreciso: o que falta é o **client certo**; o arquivo presente é de outro produto e vaza `project_number`/`mobilesdk_app_id` do DigiApp num repo que pode ser público.
 - `FIREBASE_PROJECT_ID` do servidor é `soulmon-app` (STATUS §3.1) — o backend valida tokens de um projeto e o `google-services.json` aponta para outro. O client novo tem que nascer em `soulmon-app`.
@@ -208,7 +208,7 @@ Nenhuma string PT sem ramo EN encontrada. O inverso (EN sem PT) não foi medido 
 ## Resumo do que nunca foi analisado (todas as superfícies)
 1. `desktop/electron/main.js` inteiro — sem teste, sem smoke, comentário falso sobre a URL, `exp:0` = sessão eterna travada por teste.
 2. Electron 33.4.11 fora de suporte carregando página remota; instalador sem assinatura.
-3. `android/app/google-services.json` é do DigiApp — build verde sem FCM; nenhum client `com.hexervoodoom.soulmon`.
+3. `android/app/google-services.json` é do DigiApp — build verde sem FCM; nenhum client `com.soulmon`.
 4. Billing Library 6.2.1 e targetSdk 35 vs. exigências do Play em set/2026 (bloqueio de upload, não de build).
 5. `assetlinks.json` sem `autoVerify` no manifesto e fingerprint de origem desconhecida.
 6. Ícone adaptativo sem `<monochrome>`.

@@ -213,7 +213,7 @@ Só isso. Com 1+2+3+4 o primeiro usuário real chega e é medido em 14 dias.
 
 | # | Bloqueador | De quem | Evidência |
 |---|---|---|---|
-| 5 | Registrar `com.hexervoodoom.soulmon` no Firebase + `google-services.json` novo — **o build Android falha de propósito até isso** | **Dono** | `PLANO-DESKTOP-STEAM.md` §7 item 1 (verificado: `project_id: digiapp-88296`) |
+| 5 | Registrar `com.soulmon` no Firebase + `google-services.json` novo — **o build Android falha de propósito até isso** | **Dono** | `PLANO-DESKTOP-STEAM.md` §7 item 1 (verificado: `project_id: digiapp-88296`) |
 | 6 | Gerar APK novo (WP0.6 `setObfuscatedAccountId`, WP5.8 preço localizado, WP2.6 widget) | CI, após 5 | STATUS §3.2 🟠 |
 | 7 | 4 produtos no Play Console + conta de serviço (`GOOGLE_PLAY_SERVICE_ACCOUNT`, `ANDROID_PACKAGE_NAME`) | **Dono** | STATUS §3.2 🔴 |
 | 8 | D1 `order_claims` vinculado (SEC-3) — "opcional" saiu; sem ele recibo → N contas | **Dono** (binding no painel) + migrations prontas | STATUS §3.2 🟠 |

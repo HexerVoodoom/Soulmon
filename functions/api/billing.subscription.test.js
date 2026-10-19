@@ -16,7 +16,7 @@ import { ENT_PREFIX, publicView, applySubscriptionState, readEntitlement } from 
 
 const ID = 'a'.repeat(32);
 const OUTRO_ID = 'b'.repeat(32);
-const PACKAGE = 'com.hexervoodoom.soulmon';
+const PACKAGE = 'com.soulmon';
 const TOKEN = 'tok-assinatura-ABCDEFGH-1234567890';
 const TOKEN_ANTIGO = 'tok-assinatura-ANTIGO-0987654321';
 const NOW = Date.parse('2026-10-11T12:00:00Z');

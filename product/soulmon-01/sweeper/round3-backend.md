@@ -248,7 +248,7 @@ O que ele **afirma**, em ordem:
    hoje chegaria à Play Store sem nada avisar;
 3. **sem `FATAL EXCEPTION` e sem ANR** no logcat;
 4. a WebView/Capacitor inicializou (linhas do Capacitor no logcat);
-5. **a ponte respondeu**: `run-as com.hexervoodoom.soulmon cat
+5. **a ponte respondeu**: `run-as com.soulmon cat
    shared_prefs/DigiWidgetPrefs.xml` existe **e contém `current_stage`**. Esse
    arquivo só pode ter sido escrito pelo Kotlin de `DigiWidgetPlugin.kt:14-45`
    depois de o JS chamar `DigiWidget.updateWidgetData` (`src/App.tsx:411`). É

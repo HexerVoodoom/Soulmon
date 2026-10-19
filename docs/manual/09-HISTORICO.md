@@ -103,7 +103,7 @@ Tournament PvP e Biblioteca (`3f76d697`, 26/07), sprites reais via Higgsfield
 (`a5a09ffc`, 26/07), 3 linhas de inimigo próprias da masmorra — Kaelen/Orrin/
 Thalindra (`081dd49c`, 27/07), cadastro obrigatório (`2058ff8b`, 28/07),
 sistema demo/pago + créditos (`030167a6`, 29/07), login por e-mail
-(`48e4e3dd`, 30/07), o pacote renomeado para `com.hexervoodoom.soulmon`
+(`48e4e3dd`, 30/07), o pacote renomeado para `com.soulmon`
 (`af23bbd5`, 30/07) e o overlay Electron (`d18544ee`, 31/07 — é também o
 commit da tag `v0.1.0`, ver §3).
 
@@ -326,7 +326,7 @@ lápide:
 - Tag `git tag -l` → **`v0.1.0`**, apontando para `d18544ee feat(desktop):
   overlay do pet na barra de tarefas (Windows) + plano Steam`, 31/07/2026
   (`git log -1 --format='%ad %h %s' --date=short v0.1.0`). É o mesmo dia em
-  que o pacote Android vira `com.hexervoodoom.soulmon` — a tag marca o ponto
+  que o pacote Android vira `com.soulmon` — a tag marca o ponto
   em que o produto já tinha nome, domínio de app id e overlay próprios.
 - `CACHE_VERSION` mora em `public/sw.js`, primeiras linhas — **só o lugar
   entra aqui, nunca o número** (o `CLAUDE.md` já documenta por quê: o

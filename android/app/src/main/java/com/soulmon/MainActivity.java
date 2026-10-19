@@ -1,4 +1,4 @@
-package com.hexervoodoom.soulmon;
+package com.soulmon;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,9 +9,9 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
-import com.hexervoodoom.soulmon.plugins.SoulmonWidgetPlugin;
-import com.hexervoodoom.soulmon.plugins.SoulmonAlarmPlugin;
-import com.hexervoodoom.soulmon.plugins.BillingPlugin;
+import com.soulmon.plugins.SoulmonWidgetPlugin;
+import com.soulmon.plugins.SoulmonAlarmPlugin;
+import com.soulmon.plugins.BillingPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override

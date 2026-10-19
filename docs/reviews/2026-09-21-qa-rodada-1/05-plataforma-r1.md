@@ -36,7 +36,7 @@ Hoje é 21/09/2026 → a 6.x está **dois ciclos** vencida; a 7.x já venceu há
 para o primeiro AAB é **8.x** (release notes: última publicada **8.1.0, 2025-11-06**; conferir no Maven no dia do bump).
 minSdk da 8.x = 23; o app tem `minSdkVersion = 26` — sem conflito.
 
-### 1.1 Tudo que muda em `android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt` (6.2.1 → 8.x)
+### 1.1 Tudo que muda em `android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt` (6.2.1 → 8.x)
 
 Conferido contra `migrate-gpblv8`, `release-notes` e a referência de `ProductDetailsResponseListener` /
 `QueryProductDetailsResult` / `BillingClient.Builder` (WebFetch, todas hoje).
@@ -67,7 +67,7 @@ intacto. Nada de lógica de negócio muda: o plugin segue devolvendo só o `purc
 +    // 8.1.0 = última das release notes em 21/09/2026; conferir Maven antes do AAB.
 +    implementation "com.android.billingclient:billing-ktx:8.1.0"
 
---- android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt
+--- android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt
  import com.android.billingclient.api.ConsumeParams
 +import com.android.billingclient.api.PendingPurchasesParams
  import com.android.billingclient.api.ProductDetails
@@ -160,7 +160,7 @@ da Play; o Soulmon não se qualifica). O que falta é o gate e o fallback.
 ### 2.2 PATCH proposto (não aplicado)
 
 ```diff
---- android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonAlarmPlugin.kt
+--- android/app/src/main/java/com/soulmon/plugins/SoulmonAlarmPlugin.kt
 +import android.os.Build
 +import android.provider.Settings
 @@ companion object
@@ -210,7 +210,7 @@ da Play; o Soulmon não se qualifica). O que falta é o gate e o fallback.
 +                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
              </intent-filter>
 
---- android/app/src/main/java/com/hexervoodoom/soulmon/notifications/BootReceiver.kt
+--- android/app/src/main/java/com/soulmon/notifications/BootReceiver.kt
              Intent.ACTION_BOOT_COMPLETED,
 -            Intent.ACTION_MY_PACKAGE_REPLACED -> SoulmonAlarmPlugin.rescheduleAll(context)
 +            Intent.ACTION_MY_PACKAGE_REPLACED,

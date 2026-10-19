@@ -19,15 +19,15 @@ import { readFileSync } from 'node:fs';
 // ---------------------------------------------------------------------------
 const gradle = readFileSync('android/app/build.gradle', 'utf8');
 const billing = readFileSync(
-  'android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt',
+  'android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt',
   'utf8',
 );
 const alarm = readFileSync(
-  'android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonAlarmPlugin.kt',
+  'android/app/src/main/java/com/soulmon/plugins/SoulmonAlarmPlugin.kt',
   'utf8',
 );
 const boot = readFileSync(
-  'android/app/src/main/java/com/hexervoodoom/soulmon/notifications/BootReceiver.kt',
+  'android/app/src/main/java/com/soulmon/notifications/BootReceiver.kt',
   'utf8',
 );
 const manifest = readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8');

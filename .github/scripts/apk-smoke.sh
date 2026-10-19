@@ -10,7 +10,7 @@
 # ---------------------------------------------------------------------------
 set -uo pipefail
 
-PKG="com.hexervoodoom.soulmon"
+PKG="com.soulmon"
 ACT="$PKG/.MainActivity"
 OUT="smoke-out"
 mkdir -p "$OUT"

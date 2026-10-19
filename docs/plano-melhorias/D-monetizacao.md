@@ -22,4 +22,4 @@ DEMO_ACTIVITY_TOTAL_CAP = FORM_REQUIREMENTS.rookie.cap = 6 (progression.ts:15 ro
 ## Trial/assinatura/presente/Play Billing
 Trial: NÃO ENCONTRADO. Assinatura: NÃO ENCONTRADO (só INAPP; BillingPlugin.kt ProductType.INAPP). Presente monetizado: NÃO — só gift social 20 Bits 1×/dia/amigo (community.js:617, LibraryPage.tsx:189).
 Play Billing: SIM — android/app/build.gradle:62 billing-ktx 6.2.1; BillingPlugin.kt (acknowledgeIfNeeded :94, consume :148, restore :177), registrado em MainActivity.java; ponte src/utils/playBilling.ts (isBillingAvailable, purchase, restorePurchases).
-**LACUNA: setObfuscatedAccountId(saveId) NÃO ENCONTRADO** em BillingPlugin.kt nem playBilling.ts → PLAY_REQUIRE_ACCOUNT_BINDING=true recusaria toda compra; sobra claimOrder best-effort. Package com.hexervoodoom.soulmon pendente de google-services.json.
+**LACUNA: setObfuscatedAccountId(saveId) NÃO ENCONTRADO** em BillingPlugin.kt nem playBilling.ts → PLAY_REQUIRE_ACCOUNT_BINDING=true recusaria toda compra; sobra claimOrder best-effort. Package com.soulmon pendente de google-services.json.

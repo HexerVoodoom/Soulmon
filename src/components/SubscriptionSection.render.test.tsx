@@ -64,7 +64,7 @@ describe('Configurações — SubscriptionSection', () => {
   it('"Gerenciar assinatura" abre a Central de assinaturas da Play no SKU certo', async () => {
     renderWithCss(<SubscriptionSection language="pt-BR" />);
     const a = (await screen.findByRole('link', { name: 'Gerenciar assinatura' })) as HTMLAnchorElement;
-    expect(a.getAttribute('href')).toBe('https://play.google.com/store/account/subscriptions?sku=soulmon_cosmetic_quarterly&package=com.hexervoodoom.soulmon');
+    expect(a.getAttribute('href')).toBe('https://play.google.com/store/account/subscriptions?sku=soulmon_cosmetic_quarterly&package=com.soulmon');
     expect(a.getAttribute('rel')).toContain('noopener');
   });
 

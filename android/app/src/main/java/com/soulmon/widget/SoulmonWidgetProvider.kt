@@ -1,10 +1,10 @@
-package com.hexervoodoom.soulmon.widget
+package com.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
-import com.hexervoodoom.soulmon.R
+import com.soulmon.R
 
 // Variant A — horizontal: sprite on the left, info on the right.
 class SoulmonWidgetProvider : AppWidgetProvider() {
@@ -24,6 +24,6 @@ class SoulmonWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val PREFS_NAME = WidgetRenderer.PREFS_NAME
-        const val ACTION_UPDATE_WIDGET = "com.hexervoodoom.soulmon.UPDATE_WIDGET"
+        const val ACTION_UPDATE_WIDGET = "com.soulmon.UPDATE_WIDGET"
     }
 }

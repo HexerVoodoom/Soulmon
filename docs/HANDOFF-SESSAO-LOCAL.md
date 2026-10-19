@@ -147,7 +147,7 @@ PWA/desktop e funciona dentro do WebView do Capacitor; o FCM existe para
 entrega mais confiável contra Doze em ROMs de fabricante.
 
 1. Firebase Console → registrar o app **Android** com o pacote
-   `com.hexervoodoom.soulmon` → baixar `google-services.json` → substituir
+   `com.soulmon` → baixar `google-services.json` → substituir
    `android/app/google-services.json`.
 2. Configurações do projeto → **Contas de serviço** → Gerar nova chave privada.
 3. `cd workers; npx wrangler secret put FIREBASE_SERVICE_ACCOUNT -c wrangler.toml`

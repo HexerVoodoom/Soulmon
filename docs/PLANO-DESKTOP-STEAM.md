@@ -84,7 +84,7 @@ executado está marcado **`[não verificado]`** — e isso é diferente de ❌.
 
 | Frente | Loja | Estado verificado |
 |---|---|---|
-| 📱 Android (APK/Capacitor) | Google Play | Código pronto; **bloqueado**: `android/app/google-services.json` ainda é do DigiApp (`project_id: digiapp-88296`, pacotes `com.digiapp.app`), enquanto o app é `com.hexervoodoom.soulmon` (`android/app/build.gradle:5,8`). Ver `docs/BILLING-SETUP.md` |
+| 📱 Android (APK/Capacitor) | Google Play | Código pronto; **bloqueado**: `android/app/google-services.json` ainda é do DigiApp (`project_id: digiapp-88296`, pacotes `com.digiapp.app`), enquanto o app é `com.soulmon` (`android/app/build.gradle:5,8`). Ver `docs/BILLING-SETUP.md` |
 | 🌐 Web / PWA | — (Cloudflare) | No ar. `capacitor.config.json:6` e `desktop/renderer/src/config.ts:6` apontam para `https://soulmon.mateus-sprnd.workers.dev` |
 | 🖥️ Desktop (Electron, overlay) | Steam | Renderer **compila** e o app **abre**; o cliente Steamworks **não existe** |
 
@@ -121,7 +121,7 @@ A tabela de renomeações está correta e verificada:
 |---|---|---|
 | Ponte do preload | `window.soulmonDesktop` | `desktop/electron/preload.js:3` |
 | localStorage | `soulmon_desktop_v1` | `desktop/renderer/src/config.ts:9` |
-| `appId` do instalador | `com.hexervoodoom.soulmon.desktop` | `desktop/package.json:27` |
+| `appId` do instalador | `com.soulmon.desktop` | `desktop/package.json:27` |
 | `productName` | "Soulmon" | `desktop/package.json:28` |
 | URL do app completo | `soulmon.mateus-sprnd.workers.dev` | `config.ts:6`, `main.js:26` |
 | Salt do `saveId` | `soulmon:` | `cloudSync.ts:59`, idêntico a `src/utils/cloudSave.ts:18` |
@@ -619,7 +619,7 @@ Consolidado. Nada aqui eu consigo fazer sozinho.
 
 Ver `docs/BILLING-SETUP.md`. Resumo, com o que pude verificar:
 
-1. **Registrar `com.hexervoodoom.soulmon` no Firebase e trocar o
+1. **Registrar `com.soulmon` no Firebase e trocar o
    `google-services.json`.** ✅ **verificado que continua pendente**: o arquivo
    em `android/app/google-services.json` tem `project_id: digiapp-88296` e
    pacotes `com.digiapp.app` / `com.digipartner.digiapp` — nenhum deles é o do

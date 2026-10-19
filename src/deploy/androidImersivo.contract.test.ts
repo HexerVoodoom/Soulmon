@@ -11,7 +11,7 @@ import path from 'node:path';
  */
 const ROOT = path.resolve(__dirname, '../..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const MAIN = read('android/app/src/main/java/com/hexervoodoom/soulmon/MainActivity.java');
+const MAIN = read('android/app/src/main/java/com/soulmon/MainActivity.java');
 const STYLES = read('android/app/src/main/res/values/styles.xml');
 const MANIFEST = read('android/app/src/main/AndroidManifest.xml');
 // o código sem comentários (as asserções "não pode ter" olham só o que executa)

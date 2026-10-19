@@ -1,9 +1,9 @@
-package com.hexervoodoom.soulmon.notifications
+package com.soulmon.notifications
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.hexervoodoom.soulmon.plugins.SoulmonAlarmPlugin
+import com.soulmon.plugins.SoulmonAlarmPlugin
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

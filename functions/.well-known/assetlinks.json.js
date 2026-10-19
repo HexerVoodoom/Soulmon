@@ -25,7 +25,7 @@
 //
 // `ASSETLINKS_PACKAGE_NAME` continua existindo para um pacote diferente do
 // padrão (build interno, sabor de teste), mas o padrão agora é o nosso.
-const DEFAULT_PACKAGE = 'com.hexervoodoom.soulmon';
+const DEFAULT_PACKAGE = 'com.soulmon';
 
 export async function onRequest({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;

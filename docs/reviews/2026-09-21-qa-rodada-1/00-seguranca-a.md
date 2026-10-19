@@ -26,7 +26,7 @@ Sem CRÍTICO novo. 1 ALTO, 2 MÉDIO, 4 BAIXO, resto INFO.
 - Conserto: incluir `push:*/fcm:*` com `saveId` igual no export (endpoint mascarado + `refreshedAt` + `language`), ou declarar em `NOT_INCLUDED` por que não. Registrar o ativo novo no `threat-model.md`.
 
 ### M2. `SoulmonAlarmPlugin.kt` chama `setExactAndAllowWhileIdle` sem `canScheduleExactAlarms()` nem `catch SecurityException`
-`android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonAlarmPlugin.kt:70`; manifesto declara `SCHEDULE_EXACT_ALARM`.
+`android/app/src/main/java/com/soulmon/plugins/SoulmonAlarmPlugin.kt:70`; manifesto declara `SCHEDULE_EXACT_ALARM`.
 - Pré-existente ao bump 35→36 (regra vale desde target 33/Android 14: permissão especial negada por padrão para app novo). O bump reafirma o alvo e `PLAY-LANCAMENTO.md §G` não menciona. Sem a permissão, a chamada lança `SecurityException` — crash no `schedule`, não aviso. Só o que está no código: nenhuma guarda, nenhum fallback para `setAndAllowWhileIdle`/`setWindow`.
 - Conserto: `if (Build.VERSION.SDK_INT >= 31 && !alarmManager.canScheduleExactAlarms()) → setWindow/setAndAllowWhileIdle`, ou remover `SCHEDULE_EXACT_ALARM` (nudge de pet não precisa de exatidão). Política da Play sobre exact alarm: [verificar no Console, sem fonte no repo].
 - Android 16 (API 36) comportamentos novos: não afirmo além do que o código evidencia; item para `alpha-compliance`/dono checar a lista oficial de behavior changes para target 36 antes do upload.

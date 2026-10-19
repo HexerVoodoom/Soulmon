@@ -10,7 +10,7 @@ import { SUBSCRIPTION_SKU, _resetPlayTokenCache, subscriptionOrderId, sha256Hex 
 import { ENT_PREFIX, ORDER_PREFIX, applySubscriptionState, readEntitlement } from './_entitlements.js';
 
 const ID = 'a'.repeat(32);
-const PACKAGE = 'com.hexervoodoom.soulmon';
+const PACKAGE = 'com.soulmon';
 const TOKEN = 'tok-rtdn-ABCDEFGH-1234567890';
 const AUD = 'https://soulmon.example/api/rtdn';
 const PUSH_SA = 'pubsub-push@soulmon-app.iam.gserviceaccount.com';

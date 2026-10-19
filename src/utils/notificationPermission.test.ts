@@ -45,7 +45,7 @@ describe('fiação (fonte)', () => {
   });
   it('o Android declara POST_NOTIFICATIONS e abre as configurações do app', () => {
     expect(readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8')).toContain('android.permission.POST_NOTIFICATIONS');
-    expect(readFileSync('android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonAlarmPlugin.kt', 'utf8'))
+    expect(readFileSync('android/app/src/main/java/com/soulmon/plugins/SoulmonAlarmPlugin.kt', 'utf8'))
       .toContain('ACTION_APP_NOTIFICATION_SETTINGS');
   });
 });

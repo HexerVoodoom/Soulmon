@@ -25,7 +25,7 @@
     "vite": "6.3.5"
   },
   "build": {
-    "appId": "com.hexervoodoom.soulmon.desktop",
+    "appId": "com.soulmon.desktop",
     "productName": "Soulmon",
     "directories": {
       "output": "release"

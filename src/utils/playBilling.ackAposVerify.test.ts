@@ -109,7 +109,7 @@ describe('reconcilePurchases(): idem, compra a compra', () => {
 });
 
 describe('BillingPlugin.kt: o Kotlin NÃO reconhece antes do verify (guard textual)', () => {
-  const kt = readFileSync(resolve(__dirname, '../../android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt'), 'utf8');
+  const kt = readFileSync(resolve(__dirname, '../../android/app/src/main/java/com/soulmon/plugins/BillingPlugin.kt'), 'utf8');
 
   it('o callback da compra (`purchasesUpdatedListener`) só devolve o token — sem `acknowledgeIfNeeded`', () => {
     const listener = kt.slice(kt.indexOf('purchasesUpdatedListener = PurchasesUpdatedListener'), kt.indexOf('override fun load()'));

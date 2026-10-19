@@ -83,7 +83,7 @@ if (!projectId) return { ok: true, enforced: false };
 ### N-5 · MÉDIO — PII do oráculo sai do aparelho via backup automático do Android
 `android/app/src/main/AndroidManifest.xml:6` → `android:allowBackup="true"`, sem `fullBackupContent` nem `dataExtractionRules`.
 
-**Cenário:** `soulmon-profile` (nome completo, data, **hora** e **local de nascimento** — `src/components/SoulmonOnboarding.tsx:148`) vive no `localStorage` do WebView. Com `allowBackup="true"` e sem regra de exclusão, o Android Auto Backup sobe o diretório de dados do app para o Google Drive do usuário; em aparelho com depuração habilitada, `adb backup -f x.ab com.hexervoodoom.soulmon` extrai o mesmo arquivo sem root.
+**Cenário:** `soulmon-profile` (nome completo, data, **hora** e **local de nascimento** — `src/components/SoulmonOnboarding.tsx:148`) vive no `localStorage` do WebView. Com `allowBackup="true"` e sem regra de exclusão, o Android Auto Backup sobe o diretório de dados do app para o Google Drive do usuário; em aparelho com depuração habilitada, `adb backup -f x.ab com.soulmon` extrai o mesmo arquivo sem root.
 **Impacto:** a garantia "a PII do oráculo não sai do cliente" **é falsa no APK**. Quatro campos que, juntos, são identificação civil direta.
 **Correção:** `android:allowBackup="false"` (o save já é sincronizado por conta) ou `dataExtractionRules` excluindo o diretório do WebView. ASVS V8.1 / LGPD art. 46.
 
