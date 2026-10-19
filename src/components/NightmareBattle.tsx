@@ -185,7 +185,7 @@ export function NightmareBattle({
     setSeedLuta(runSeedRef.current);
   };
 
-  // A trilha de TERROR (procedural) toca só enquanto o Pesadelo está aberto — convite e luta; fecha com fade.
+  // A música "Stone Hall Nightmare" (streaming, via diretor) toca só enquanto o Pesadelo está aberto — convite e luta; fecha com fade.
   useEffect(() => (open ? entrarNaSuperficie('pesadelo') : undefined), [open]);
 
   // Reabrir com outra noite recomeça limpo (o modal fica montado no App).

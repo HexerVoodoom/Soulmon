@@ -122,15 +122,12 @@ export type CamadaDaTrilha = keyof typeof CAMADAS_DA_TRILHA;
 
 /**
  * Fatos MUSICAIS das duas camadas (não são alvo de loudness): 100 BPM, 12 compassos de 4 tempos
- * (60/100 × 4 × 12 = 28,8 s = `duracaoS` — há teste). A faixa da ARENA (11/10/2026) é DERIVADA delas: as
- * mesmas camadas tocadas a `RAZAO_DA_ARENA` (100 → 120 BPM, o loop cai para 24 s = 12 compassos de 2 s) mais
- * uma percussão procedural (`trilhaArena.ts`) que fecha no mesmo ponto. Nenhum arquivo novo.
+ * (60/100 × 4 × 12 = 28,8 s = `duracaoS` — há teste).
  */
 export const BPM_DA_TRILHA = 100;
 export const COMPASSOS_DA_TRILHA = 12;
-export const RAZAO_DA_ARENA = 1.2;
 
-/** Duração do crossfade entre músicas ao trocar de superfície (casa ↔ masmorra ↔ arena), em segundos. */
+/** Duração do crossfade entre músicas ao trocar de superfície (tema ↔ combate ↔ pesadelo), em segundos. */
 export const CROSSFADE_MUSICA_S = 1.2;
 
 /** Compatibilidade: a primeira camada. */
@@ -228,9 +225,9 @@ export function tocarBuffer(ctx: BaseAudioContext, destino: AudioNode, buf: Audi
  *   `utils/loudness.ts` (dono único); este arquivo não declara alvo nenhum.
  * - **Streaming, não buffer**: 3m40 decodificados seriam ~70 MB de PCM na RAM de
  *   um celular. Toca num `<audio>` ligado ao `busTema` (`utils/tema.ts`).
- * Procedência (S9): a origem é "gerada no Suno pelo dono"; os TERMOS COMERCIAIS
- * do plano Suno dele ainda não foram verificados — pendência do dono, escrita em
- * `docs/Attributions.md`. O guard prova procedência, nunca originalidade nem licença.
+ * Procedência (S9): a origem é "gerada no Suno pelo dono"; o plano pago foi DECLARADO pelo dono em 19/10/2026, mas
+ * falta o print da página do plano — pendência escrita em `docs/Attributions.md`. Este arquivo NÃO afirma licença; o
+ * guard prova procedência, nunca originalidade nem licença.
  */
 export interface FormatoDoTema {
   url: string;
@@ -257,40 +254,41 @@ export interface ManifestoDeMusica {
 export const TEMA_DO_JOGO = {
   nome: 'Stone Hall Decay',
   /** Duração do mestre, em segundos (o mesmo nos dois formatos, ±1 frame). */
-  duracaoS: 219.84,
+  duracaoS: 227.48,
   /** Silêncio entre o fim da faixa (que já termina em fade) e a volta, em segundos. */
   pausaEntreVoltasS: 30,
   /** Fade-in de cada volta, em segundos — o fim é o fade da própria faixa. */
   fadeInS: 2,
   origem: 'suno/fornecida-pelo-dono',
-  geradoEm: '2026-10-07',
+  geradoEm: '2026-10-19',
   formatos: [
     {
       url: '/sounds/tema-stone-hall-decay.webm',
       mime: 'audio/webm; codecs="opus"',
-      sha256: 'bd26b3196e56e329d31246eaf65b209eabce35988f591866b373971eec745de6',
-      bytes: 2365535,
+      sha256: '65944d0daf3ed90f979f3471686f80d7b3d1dc71ca0fd6f36ec8fb6c54eed31e',
+      bytes: 2296694,
     },
     {
       url: '/sounds/tema-stone-hall-decay.m4a',
       mime: 'audio/mp4; codecs="mp4a.40.2"',
-      sha256: '46142dcb042f334fbed67a6b4d767b8f59ec38425b30ae7c35f99d4dab116c53',
-      bytes: 2469685,
+      sha256: '01edff65c7f84dc2c96caf96d29b8e697a541927f217da79e4ae934e5837c371',
+      bytes: 2555598,
     },
   ],
 } as const satisfies ManifestoDeMusica;
 
 /**
- * AS MÚSICAS DE COMBATE em streaming (decisão do dono, 19/10/2026, `docs/REGISTRO-DE-DECISOES.md` §102): "dungeon theme"
- * toca na Masmorra e "pvp theme" no Duelo e no Torneio. Mesma forma do tema (streaming num `<audio>`, formato por
- * suporte, fora do S6 de 300 KB, ≤ 2,5 MB por formato, fora do pré-cache), e a mesma ressalva de procedência: geradas no
- * Suno do dono, plano Free SEM direito comercial — pendência escrita em `docs/Attributions.md`. O nível é de
- * `utils/loudness.ts` (`TRIM_MUSICAS_DE_COMBATE_DB`); este arquivo não declara alvo nenhum.
+ * AS MÚSICAS DE COMBATE em streaming (decisão do dono, 19/10/2026, `docs/REGISTRO-DE-DECISOES.md` §102): "Stone Hall
+ * Combat" toca na Masmorra, na Arena, no Torneio e no Duelo; "Stone Hall Nightmare" toca no Pesadelo. Mesma forma do
+ * tema (streaming num `<audio>`, formato por suporte, fora do S6 de 300 KB, ≤ 2,5 MB por formato, fora do pré-cache), e a
+ * mesma ressalva de procedência: geradas no Suno do dono, plano pago DECLARADO por ele em 19/10/2026, falta o print do
+ * plano (`docs/Attributions.md`); nenhuma licença é afirmada aqui. O nível é de `utils/loudness.ts`
+ * (`TRIM_MUSICAS_DE_COMBATE_DB`); este arquivo não declara alvo nenhum.
  */
 export const MUSICAS_DE_COMBATE = {
-  masmorra: {
-    nome: 'dungeon theme',
-    duracaoS: 199.42,
+  combate: {
+    nome: 'Stone Hall Combat',
+    duracaoS: 197.88,
     /** Respiro curto: combate não fica 30 s mudo entre voltas. */
     pausaEntreVoltasS: 4,
     fadeInS: 2,
@@ -298,41 +296,41 @@ export const MUSICAS_DE_COMBATE = {
     geradoEm: '2026-10-19',
     formatos: [
       {
-        url: '/sounds/musica-masmorra.webm',
+        url: '/sounds/musica-combate.webm',
         mime: 'audio/webm; codecs="opus"',
-        sha256: '23fa1dcc87c17eeeabe68469297fc82f5ab8ef9fb4149ca72dbd800f6ea7d55e',
-        bytes: 2134684,
+        sha256: 'f94ea91cf3d8a32059889c87c678c37a19270ad3b95a6b49f7707fe05ca954f5',
+        bytes: 1849637,
       },
       {
-        url: '/sounds/musica-masmorra.m4a',
+        url: '/sounds/musica-combate.m4a',
         mime: 'audio/mp4; codecs="mp4a.40.2"',
-        sha256: '3c2ba72d30c06d79f2e0f0f2756135bdace81da4567b3aa6b99faab6a2c0967e',
-        bytes: 2267713,
+        sha256: 'c2dfe0323d17ecd73551489eada3ead9e7eae5d81cec1f4c6676255250a9c16e',
+        bytes: 2241408,
       },
     ],
   },
-  pvp: {
-    nome: 'pvp theme',
-    duracaoS: 212.02,
+  pesadelo: {
+    nome: 'Stone Hall Nightmare',
+    duracaoS: 217.2,
     pausaEntreVoltasS: 4,
-    fadeInS: 2,
+    fadeInS: 3,
     origem: 'suno/fornecida-pelo-dono',
     geradoEm: '2026-10-19',
     formatos: [
       {
-        url: '/sounds/musica-pvp.webm',
+        url: '/sounds/musica-pesadelo.webm',
         mime: 'audio/webm; codecs="opus"',
-        sha256: 'f5ecdcbd63d6b8ec3b67496a463fe036735f1a3f2b5fbad6d97de7015ff0a7d9',
-        bytes: 1954061,
+        sha256: 'bb897ebe3e968a7e2e328404c5bb77ea2ef4504c840489487475f641b09275b2',
+        bytes: 2055285,
       },
       {
-        url: '/sounds/musica-pvp.m4a',
+        url: '/sounds/musica-pesadelo.m4a',
         mime: 'audio/mp4; codecs="mp4a.40.2"',
-        sha256: '7eda5f9327a4da9add83af0c4dc4f698774955eb36788c9c819ab9f967915cbe',
-        bytes: 2398063,
+        sha256: '5d0e1d504fc65db592551f2f85735facf2579a041d3d450e2d0b5829e7d7986d',
+        bytes: 2454316,
       },
     ],
   },
-} as const satisfies Record<'masmorra' | 'pvp', ManifestoDeMusica>;
+} as const satisfies Record<'combate' | 'pesadelo', ManifestoDeMusica>;
 
 export type MusicaDeCombate = keyof typeof MUSICAS_DE_COMBATE;

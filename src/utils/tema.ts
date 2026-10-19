@@ -38,8 +38,8 @@ import { STORAGE_KEYS } from './storageKeys';
 /** Mesmos motivos da trilha (`trilha.ts`): quem pausa por um não libera o outro. */
 export type MotivoDePausa = 'sono' | 'descanso' | 'mudo';
 /**
- * Mais um motivo, só do tema: `cena` = o diretor de música (`musica.ts`) pôs outra faixa no lugar dele (a trilha na
- * masmorra, a faixa da Arena). É um motivo como os outros — o tema volta de onde parou quando a cena sai — mas com
+ * Mais um motivo, só do tema: `cena` = o diretor de música (`musica.ts`) pôs outra faixa no lugar dele (a música
+ * de combate). É um motivo como os outros — o tema volta de onde parou quando a cena sai — mas com
  * crossfade em vez de corte, e sem nada a ver com o sono/mudo (um não libera o outro).
  */
 export type MotivoDoTema = MotivoDePausa | 'cena';

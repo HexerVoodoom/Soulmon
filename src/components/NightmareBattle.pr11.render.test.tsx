@@ -47,7 +47,7 @@ vi.mock('../utils/combate/group', async importOriginal => {
     },
   };
 });
-vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn(), playFeed: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn(), playFeed: vi.fn(), isMuted: () => true }));
 
 beforeEach(() => {
   vi.spyOn(Math, 'random').mockReturnValue(0.3);
