@@ -10,6 +10,9 @@ import fxAttack from '../assets/soulmon/fx/fx-attack.png';
 import fxHit from '../assets/soulmon/fx/fx-hit.png';
 import fxShield from '../assets/soulmon/fx/fx-shield.png';
 import fxSparkle from '../assets/soulmon/fx/fx-sparkle.png';
+import sparkG from '../assets/soulmon/fx/spark-g.png';
+import sparkM from '../assets/soulmon/fx/spark-m.png';
+import sparkP from '../assets/soulmon/fx/spark-p.png';
 import fxDizzy from '../assets/soulmon/fx/fx-dizzy.png';
 import fxDefeat from '../assets/soulmon/fx/fx-defeat.png';
 import careHeartSolid from '../assets/soulmon/fx/care-heart-solid.png';
@@ -42,3 +45,6 @@ export const FX_ART: Record<string, string> = {
   '💧': careDrop,
   '🚿': careShower,
 };
+
+/** D-70: faíscas de luz avulsas (grande / média / pequena), alfa real 96². Usadas por `VisorSparks`. */
+export const SPARK_ART = { g: sparkG, m: sparkM, p: sparkP } as const;

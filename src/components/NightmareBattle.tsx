@@ -43,7 +43,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { GameVisor, VisorSprite, VisorFx, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
+import { GameVisor, VisorSprite, VisorFx, VisorSparks, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
 import { nightmareScene } from '../utils/dungeonScenes';
 import { entrarNaSuperficie } from '../utils/musica';
 import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
@@ -435,7 +435,7 @@ export function NightmareBattle({
       {/* ── Vitória: a faísca no lugar do pesadelo, nunca sobre o pet ── */}
       {phase === 'won' && rewards && (
         <div aria-live="polite" style={{ display: 'contents' }}>
-          {visor(72, <VisorFx icon="✨" style={{ right: 8, top: 8 }} data-visor-fx="sparkle" />)}
+          {visor(72, <><VisorFx icon="✨" style={{ right: 8, top: 8 }} data-visor-fx="sparkle" /><VisorSparks /></>)}
           <p style={phaseTitle}>{isPt ? 'Seu Soulmon cuidou da sua noite!' : 'Your Soulmon looked after your night!'}</p>
           <p style={sm2Hint} data-nightmare-end="extinct">{nightmareEndText('extinct', language)}</p>
           <p style={{ ...sm2Text, margin: 0 }}>

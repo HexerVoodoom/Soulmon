@@ -96,7 +96,7 @@ export const ATELIE_SCENE_SUAVE =
 export function trocaCeuScene(fallback: string): string { return visorStrip(trocaCeu, fallback); }
 export function trocaGrutaScene(fallback: string): string { return visorStrip(trocaGruta, fallback); }
 
-/** FX 48² dos minijogos (pixel, alfa real). A ordem das pedras é a de `STONES` do Eco. */
+/** FX dos minijogos (alfa real; bolha de sonho, pop e pedras do Eco são 192² pintados, exibidos a 48 sem pixelated desde D-93; fiapo/fumaça seguem 48²). A ordem das pedras é a de `STONES` do Eco. */
 export const MINI_FX = {
   pedras: [pedraCirculo, pedraTriangulo, pedraQuadrado, pedraLosango],
   bolhaSonho,

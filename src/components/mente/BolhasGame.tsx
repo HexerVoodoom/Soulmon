@@ -227,7 +227,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
                 // (sprites 48² da leva `visores`, 01/10/2026; sem caixa nem borda em volta).
                 border: 'none',
                 background: `url(${dream ? MINI_FX.bolhaSonho : MINI_FX.fiapo}) center/100% 100% no-repeat`,
-                imageRendering: 'pixelated',
+                imageRendering: 'auto',
               }}
             />
           );
@@ -240,7 +240,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
             style={{
               position: 'absolute', left: f.x, top: f.y, width: BUBBLE, height: BUBBLE, pointerEvents: 'none',
               background: `url(${f.kind === 'pop' ? MINI_FX.pop : MINI_FX.fumaca}) center/100% 100% no-repeat`,
-              imageRendering: 'pixelated',
+              imageRendering: 'auto',
             }}
           />
         ))}

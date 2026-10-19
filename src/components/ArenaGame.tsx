@@ -44,7 +44,7 @@ import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, StatTag, phaseTitle, phaseLine } from './games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { novoSoulmonById } from '../utils/novosSoulmon';
@@ -485,7 +485,7 @@ export function ArenaGame({
               inteiro — na MESMA tinta (D-J8). */}
           <GameVisor height={80} scene={ARENA_SCENE.bg}>
             <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8 }} data-visor-pet />
-            {fase === 'venceu' && <VisorFx icon="✨" style={{ right: 16, top: 8 }} data-visor-fx="sparkle" />}
+            {fase === 'venceu' && <><VisorFx icon="✨" style={{ right: 16, top: 8 }} data-visor-fx="sparkle" /><VisorSparks style={{ marginRight: 8 }} /></>}
           </GameVisor>
           <p style={phaseTitle}>
             {fase === 'venceu'

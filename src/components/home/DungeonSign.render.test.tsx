@@ -19,12 +19,12 @@ describe('DungeonSign', () => {
       unmount();
     }
   });
-  it('só a placa: uma <img> pixelated do tamanho da caixa, sem border-image e sem ícone da porta', () => {
+  it('só a placa: uma <img> suavizada do tamanho da caixa, sem border-image e sem ícone da porta', () => {
     const { container } = render(<DungeonSign language="pt-BR" returnInMs={60_000} />);
     const imgs = container.querySelectorAll('img');
     expect(imgs).toHaveLength(1);
     const img = imgs[0] as HTMLImageElement;
-    expect(img.style.imageRendering).toBe('pixelated');
+    expect(img.style.imageRendering).not.toBe('pixelated'); // D-80: arte pintada 480×280, suavizada
     expect(img.getAttribute('width')).toBe(String(SIGN_W));
     expect((container.querySelector('[data-dungeon-sign]') as HTMLElement).style.borderImage || 'none').toBe('none');
   });

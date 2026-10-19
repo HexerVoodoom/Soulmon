@@ -28,6 +28,7 @@ import { NavGlyph } from '../ui/NavGlyphs';
 import { Viewport } from '../ui/Viewport';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelMeter } from '../pixel/PixelKit';
+import { SPARK_ART } from '../../utils/fxArt';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { InfoTip } from '../ui/InfoTip';
 import { FX_ART } from '../../utils/fxArt';
@@ -341,8 +342,24 @@ export function VisorFx({ icon, size = 128, style, ...data }: {
       width={size}
       height={size}
       {...data}
-      style={{ position: 'absolute', width: size, height: size, maxWidth: 'none', imageRendering: 'pixelated', pointerEvents: 'none', ...style }}
+      style={{ position: 'absolute', width: size, height: size, maxWidth: 'none', imageRendering: icon === '✨' ? 'auto' : 'pixelated', pointerEvents: 'none', ...style }}
     />
+  );
+}
+
+/**
+ * D-70 (19/10/2026): faíscas de luz com alfa real (arte pintada, 96²) que acompanham o `VisorFx icon="✨"` na vitória. Estáticas de
+ * propósito (sem animação: `prefers-reduced-motion` cumprido por construção), decorativas (`aria-hidden`), suavizadas (nunca pixelated)
+ * e sempre à direita, na caixa do OUTRO — nunca sobre o pet.
+ */
+export function VisorSparks({ style }: { style?: CSSProperties }) {
+  const base: CSSProperties = { position: 'absolute', maxWidth: 'none', pointerEvents: 'none', imageRendering: 'auto' };
+  return (
+    <>
+      <img src={SPARK_ART.g} alt="" aria-hidden="true" width={28} height={28} data-visor-spark="g" style={{ ...base, width: 28, height: 28, right: 112, top: 10, ...style }} />
+      <img src={SPARK_ART.m} alt="" aria-hidden="true" width={20} height={20} data-visor-spark="m" style={{ ...base, width: 20, height: 20, right: 96, top: 42, ...style }} />
+      <img src={SPARK_ART.p} alt="" aria-hidden="true" width={14} height={14} data-visor-spark="p" style={{ ...base, width: 14, height: 14, right: 134, top: 34, ...style }} />
+    </>
   );
 }
 
