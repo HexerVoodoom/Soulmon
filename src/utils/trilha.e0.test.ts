@@ -36,10 +36,16 @@ vi.mock('./audioBus', () => {
     trilhaLigada: () => ligada,
   };
 });
+const M_STREAM = vi.hoisted(() => ({
+  nome: 'x', duracaoS: 1, pausaEntreVoltasS: 1, fadeInS: 1, origem: '', geradoEm: '',
+  formatos: [{ url: '/x.webm', mime: 'audio/webm', sha256: '', bytes: 0 }],
+}));
 vi.mock('./sonsAssets', () => ({
   CAMADAS_DA_TRILHA: { base: { duracaoS: 10 }, ritmo: { duracaoS: 10 } },
   CROSSFADE_MUSICA_S: 1.2, RAZAO_DA_ARENA: 1.2, BPM_DA_TRILHA: 100, COMPASSOS_DA_TRILHA: 12,
   carregarAsset: async () => ({ duration: 11 }),
+  // O tema e as músicas de combate (streaming) são importados de verdade por `trilha.ts`; aqui só precisam de forma.
+  TEMA_DO_JOGO: M_STREAM, MUSICAS_DE_COMBATE: { masmorra: M_STREAM, pvp: M_STREAM },
 }));
 vi.mock('./sounds', () => ({ isMuted: () => false }));
 

@@ -14,7 +14,7 @@ import { DUNGEON_AUTO_FIGHT_MS } from '../utils/dungeonIdle';
 import { playerDayKey } from '../utils/playerDay';
 import { MINIGAME_BITS_PER_DAY } from '../utils/currencies';
 
-vi.mock('../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ isMuted: () => false, playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
 beforeEach(() => {
   vi.spyOn(Math, 'random').mockReturnValue(0.3);
   localStorage.clear();

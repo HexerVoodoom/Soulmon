@@ -53,6 +53,7 @@
  */
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { useEffect, useState } from 'react';
+import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
@@ -201,6 +202,8 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
 }
 
 export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, shop, headSlot, initialTab }: TournamentPageProps) {
+  // Música (19/10/2026): o Torneio toca o "pvp theme" (se o interruptor "Música de combate" está ligado). Antes de qualquer return (hooks).
+  useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);

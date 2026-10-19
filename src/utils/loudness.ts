@@ -90,7 +90,7 @@ export const ALVO_TRILHA_LUFS_S = -22.0;
 export const GANHO_MUSICA_DB = ALVO_TRILHA_LUFS_S - ALVO_MASTERIZACAO_MUSICA_LUFS_S;
 
 /**
- * Em combate (Masmorra, Arena) a música desce este tanto, para o degrau mais baixo dos SFX
+ * Em combate (Masmorra, Arena, Duelo, Pesadelo) a música desce este tanto, para o degrau mais baixo dos SFX
  * (Arcade, o golpe, que repete mais) não ser coberto por ela. O resultado
  * (`ALVO_TRILHA_LUFS_S + OFFSET`) fica no degrau do Arcade — há teste.
  */
@@ -106,6 +106,12 @@ export const OFFSET_MUSICA_EM_COMBATE_DB = -3.0;
  * até a escuta do dono (S8).
  */
 export const TRIM_FAIXA_ARENA_DB = -5.8;
+
+/** Trim das músicas de combate em streaming (dungeon/pvp theme, 19/10/2026), em dB sobre o ganho de reprodução: os arquivos
+ * foram mestrados com ganho ÚNICO para `ALVO_MASTERIZACAO_MUSICA_LUFS_S` e medidos depois do encode com o mesmo ffmpeg/`ebur128`
+ * (LUFS-S mediano) do tema: masmorra webm −28,0 / m4a −28,0 (integrado −28,3; true peak −13,6/−12,6 dBTP); pvp webm −28,0 /
+ * m4a −27,9 (integrado −28,2/−28,2; true peak −15,7/−15,8 dBTP). Resíduo < 0,1 dB → 0. Remasterizar = medir de novo. */
+export const TRIM_MUSICAS_DE_COMBATE_DB: Record<'masmorra' | 'pvp', number> = { masmorra: 0, pvp: 0 };
 
 /**
  * Trim da trilha por NÚMERO de camadas tocando ao mesmo tempo, em dB: o que leva a SOMA ao nível de masterização

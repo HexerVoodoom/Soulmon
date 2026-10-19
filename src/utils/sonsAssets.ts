@@ -240,6 +240,20 @@ export interface FormatoDoTema {
   bytes: number;
 }
 
+/** O que o player de streaming (`streamMusica.ts`) precisa saber de uma música: o tema e as de combate têm a mesma forma. */
+export interface ManifestoDeMusica {
+  nome: string;
+  /** Duração do mestre, em segundos. */
+  duracaoS: number;
+  /** Silêncio entre o fim da faixa e a volta, em segundos. */
+  pausaEntreVoltasS: number;
+  /** Fade-in de cada volta, em segundos. */
+  fadeInS: number;
+  origem: string;
+  geradoEm: string;
+  formatos: readonly FormatoDoTema[];
+}
+
 export const TEMA_DO_JOGO = {
   nome: 'Stone Hall Decay',
   /** Duração do mestre, em segundos (o mesmo nos dois formatos, ±1 frame). */
@@ -264,7 +278,61 @@ export const TEMA_DO_JOGO = {
       bytes: 2469685,
     },
   ],
-} as const satisfies {
-  nome: string; duracaoS: number; pausaEntreVoltasS: number; fadeInS: number;
-  origem: string; geradoEm: string; formatos: readonly FormatoDoTema[];
-};
+} as const satisfies ManifestoDeMusica;
+
+/**
+ * AS MÚSICAS DE COMBATE em streaming (decisão do dono, 19/10/2026, `docs/REGISTRO-DE-DECISOES.md` §102): "dungeon theme"
+ * toca na Masmorra e "pvp theme" no Duelo e no Torneio. Mesma forma do tema (streaming num `<audio>`, formato por
+ * suporte, fora do S6 de 300 KB, ≤ 2,5 MB por formato, fora do pré-cache), e a mesma ressalva de procedência: geradas no
+ * Suno do dono, plano Free SEM direito comercial — pendência escrita em `docs/Attributions.md`. O nível é de
+ * `utils/loudness.ts` (`TRIM_MUSICAS_DE_COMBATE_DB`); este arquivo não declara alvo nenhum.
+ */
+export const MUSICAS_DE_COMBATE = {
+  masmorra: {
+    nome: 'dungeon theme',
+    duracaoS: 199.42,
+    /** Respiro curto: combate não fica 30 s mudo entre voltas. */
+    pausaEntreVoltasS: 4,
+    fadeInS: 2,
+    origem: 'suno/fornecida-pelo-dono',
+    geradoEm: '2026-10-19',
+    formatos: [
+      {
+        url: '/sounds/musica-masmorra.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: '23fa1dcc87c17eeeabe68469297fc82f5ab8ef9fb4149ca72dbd800f6ea7d55e',
+        bytes: 2134684,
+      },
+      {
+        url: '/sounds/musica-masmorra.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: '3c2ba72d30c06d79f2e0f0f2756135bdace81da4567b3aa6b99faab6a2c0967e',
+        bytes: 2267713,
+      },
+    ],
+  },
+  pvp: {
+    nome: 'pvp theme',
+    duracaoS: 212.02,
+    pausaEntreVoltasS: 4,
+    fadeInS: 2,
+    origem: 'suno/fornecida-pelo-dono',
+    geradoEm: '2026-10-19',
+    formatos: [
+      {
+        url: '/sounds/musica-pvp.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: 'f5ecdcbd63d6b8ec3b67496a463fe036735f1a3f2b5fbad6d97de7015ff0a7d9',
+        bytes: 1954061,
+      },
+      {
+        url: '/sounds/musica-pvp.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: '7eda5f9327a4da9add83af0c4dc4f698774955eb36788c9c819ab9f967915cbe',
+        bytes: 2398063,
+      },
+    ],
+  },
+} as const satisfies Record<'masmorra' | 'pvp', ManifestoDeMusica>;
+
+export type MusicaDeCombate = keyof typeof MUSICAS_DE_COMBATE;

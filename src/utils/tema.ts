@@ -20,17 +20,18 @@
  *
  * Forma: um `<audio>` em streaming (3m40 decodificados seriam ~70 MB de PCM na
  * RAM de um celular), `preload="none"` — os ~2,4 MB só saem da rede quando o
- * primeiro gesto chega (S6: zero no bundle inicial). Formato por suporte
- * (`canPlayType`), com troca única para o outro se o primeiro falhar.
+ * primeiro gesto chega (S6: zero no bundle inicial). A maquinaria do `<audio>`
+ * (formato por suporte, troca única de formato, fade, volta) mora em
+ * `streamMusica.ts` (extraída em 19/10/2026, dividida com as músicas de combate);
+ * aqui ficam a preferência, o gesto e as pausas por motivo.
  *
  * Fim e retomada, sem corte feio: a faixa já termina num fade de ~5 s; ao acabar
  * o tema descansa `pausaEntreVoltasS` em silêncio e volta com fade-in curto.
  * Presença, não alarme: ele nunca emenda no próprio rabo como um loop seco.
  */
-import { garantirBarramento } from './audioBus';
-import { CROSSFADE_MUSICA_S, TEMA_DO_JOGO, type FormatoDoTema } from './sonsAssets';
+import { CROSSFADE_MUSICA_S, TEMA_DO_JOGO } from './sonsAssets';
+import { criarPlayerDeStreaming, escolherFormatoDe } from './streamMusica';
 import { db2lin, GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB } from './loudness';
-import { isMuted } from './sounds';
 import { readFlag, writeFlag } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 
@@ -46,19 +47,10 @@ export type MotivoDoTema = MotivoDePausa | 'cena';
 const pausas = new Set<MotivoDoTema>();
 const pausada = (): boolean => pausas.size > 0;
 
-let el: HTMLAudioElement | null = null;
-let fade: GainNode | null = null;
-/** O contexto em que o `<audio>` foi ligado ao grafo: se o barramento for refeito (pagehide → bfcache), o elemento é refeito. */
-let ctxDoElemento: AudioContext | null = null;
 let emCombate = false;
 /** Fade-in da PRÓXIMA retomada (sem recomeço): curto, e longo (crossfade) quando quem volta é a cena. */
 let fadeDeRetomadaS = 0.4;
 let ligadaNestaSessao = false;
-let tocando = false;
-let formatoIdx = 0;
-let formatosTentados = 0;
-let timerVolta: ReturnType<typeof setTimeout> | null = null;
-let tokenParada = 0;
 let cicloLigado = false;
 
 const GESTOS = ['pointerup', 'touchend', 'keydown', 'click'] as const;
@@ -71,11 +63,7 @@ export function temaPreferido(): boolean {
 
 /** O formato que este motor diz tocar; WebM/Opus primeiro (menor), M4A como rede. */
 export function escolherFormato(probe: Pick<HTMLAudioElement, 'canPlayType'>): number {
-  const fm: readonly FormatoDoTema[] = TEMA_DO_JOGO.formatos;
-  for (let i = 0; i < fm.length; i++) {
-    if (probe.canPlayType(fm[i].mime) !== '') return i;
-  }
-  return 0;
+  return escolherFormatoDe(TEMA_DO_JOGO.formatos, probe);
 }
 
 /** O ganho de reprodução do tema (linear): `GANHO_MUSICA_DB` da política, e em combate desce `OFFSET_MUSICA_EM_COMBATE_DB`. */
@@ -83,148 +71,36 @@ function alvoDoFade(): number {
   return db2lin(GANHO_MUSICA_DB + (emCombate ? OFFSET_MUSICA_EM_COMBATE_DB : 0));
 }
 
+const player = criarPlayerDeStreaming({
+  manifesto: TEMA_DO_JOGO,
+  bus: b => b.busTema,
+  podeTocar: () => ligadaNestaSessao && !pausada(),
+  alvo: alvoDoFade,
+  aoRecusarPlay: () => instalarOuvintes(),
+});
+
 /** O diretor avisa que a superfície atual é de combate (o tema continua, mais baixo, se a trilha de combate está desligada). */
 export function definirTemaEmCombate(on: boolean): void {
   if (emCombate === on) return;
   emCombate = on;
-  if (!el || !fade || !tocando) return;
-  try {
-    const b = garantirBarramento();
-    if (!b) return;
-    const agora = b.ctx.currentTime;
-    fade.gain.cancelScheduledValues?.(agora);
-    fade.gain.setValueAtTime?.(fade.gain.value, agora);
-    fade.gain.linearRampToValueAtTime?.(alvoDoFade(), agora + CROSSFADE_MUSICA_S);
-  } catch { /* sem rampa: o próximo início usa o alvo novo */ }
+  player.rampaParaAlvo(CROSSFADE_MUSICA_S);
 }
 
-function limparTimer(): void {
-  if (timerVolta) { clearTimeout(timerVolta); timerVolta = null; }
-}
-
-function aoAcabar(): void {
-  tocando = false;
-  limparTimer();
-  // A faixa já terminou em fade: descansa em silêncio e volta. `comecar` rechecha
-  // tudo (mudo, pausa, aba escondida); se algo impedir, a próxima liberação retoma.
-  timerVolta = setTimeout(() => { timerVolta = null; comecar(); }, TEMA_DO_JOGO.pausaEntreVoltasS * 1000);
-}
-
-function aoFalhar(): void {
-  if (!el) return;
-  tocando = false;
-  // Troca UMA vez para o outro formato; se os dois falharem (offline, 404), cala.
-  if (formatosTentados < TEMA_DO_JOGO.formatos.length - 1) {
-    formatosTentados++;
-    formatoIdx = (formatoIdx + 1) % TEMA_DO_JOGO.formatos.length;
-    el.src = TEMA_DO_JOGO.formatos[formatoIdx].url;
-    if (ligadaNestaSessao && !pausada()) comecar();
-  }
-}
-
-function criarElemento(): boolean {
-  const b0 = garantirBarramento();
-  if (el && b0 && ctxDoElemento && ctxDoElemento !== b0.ctx) {
-    // O contexto foi refeito (pagehide fechou o antigo; o bfcache trouxe a página de volta): o `<audio>` está preso
-    // a um grafo morto — `createMediaElementSource` só vale UMA vez por elemento, então o elemento é refeito.
-    try { el.pause(); } catch { /* já parou */ }
-    el = null; fade = null; ctxDoElemento = null; tocando = false;
-  }
-  if (el) return true;
-  if (typeof Audio === 'undefined') return false;
-  const b = b0;
-  if (!b) return false;
-  try {
-    const a = new Audio();
-    a.preload = 'none';
-    a.loop = false;
-    a.setAttribute('playsinline', '');
-    formatoIdx = escolherFormato(a);
-    a.src = TEMA_DO_JOGO.formatos[formatoIdx].url;
-    const g = b.ctx.createGain();
-    g.gain.value = 0;
-    const src = b.ctx.createMediaElementSource(a);
-    src.connect(g);
-    g.connect(b.busTema);
-    a.addEventListener('ended', aoAcabar);
-    a.addEventListener('error', aoFalhar);
-    el = a;
-    fade = g;
-    ctxDoElemento = b.ctx;
-    return true;
-  } catch {
-    el = null;
-    fade = null;
-    ctxDoElemento = null;
-    return false;
-  }
-}
-
-/**
- * Começa (ou retoma) — SÍNCRONO até o `play()`, de propósito: o iOS só honra o
- * gesto se o `play()` sai na mesma pilha dele. Nunca lança.
- */
+/** Começa (ou retoma) — o player é SÍNCRONO até o `play()`. Nunca lança. */
 function comecar(): boolean {
-  if (!ligadaNestaSessao || pausada() || isMuted()) return false;
-  if (typeof document !== 'undefined' && document.hidden) return false;
-  if (tocando) return true;
-  if (!criarElemento() || !el || !fade) return false;
-  const b = garantirBarramento();
-  if (!b) return false;
-  tokenParada++;
-  limparTimer();
-  try {
-    if (b.ctx.state === 'suspended') void b.ctx.resume?.();
-    const recomeco = el.ended || el.currentTime === 0;
-    if (el.ended) el.currentTime = 0;
-    const agora = b.ctx.currentTime;
-    fade.gain.cancelScheduledValues(agora);
-    fade.gain.setValueAtTime(0, agora);
-    fade.gain.linearRampToValueAtTime(alvoDoFade(), agora + (recomeco ? TEMA_DO_JOGO.fadeInS : fadeDeRetomadaS));
-    fadeDeRetomadaS = 0.4;
-    const p = el.play();
-    tocando = true;
-    if (p && typeof p.catch === 'function') {
-      p.catch(() => {
-        // Gesto insuficiente para este motor: não insiste (nada de autoplay cego) —
-        // rearma e o PRÓXIMO gesto tenta de novo.
-        tocando = false;
-        instalarOuvintes();
-      });
-    }
-    return true;
-  } catch {
-    tocando = false;
-    return false;
-  }
+  const ok = player.comecar(fadeDeRetomadaS);
+  if (ok) fadeDeRetomadaS = 0.4;
+  return ok;
 }
 
-function parar(fadeS = 0.15): void {
-  limparTimer();
-  tocando = false;
-  if (!el) return;
-  const meu = ++tokenParada;
-  const a = el;
-  try {
-    const b = garantirBarramento();
-    if (b && fade) {
-      const agora = b.ctx.currentTime;
-      fade.gain.cancelScheduledValues(agora);
-      fade.gain.setValueAtTime(fade.gain.value, agora);
-      fade.gain.linearRampToValueAtTime(0, agora + fadeS);
-    }
-  } catch { /* sem rampa: o pause abaixo basta */ }
-  setTimeout(() => { if (meu === tokenParada) { try { a.pause(); } catch { /* já parou */ } } }, Math.round(fadeS * 1000) + 20);
+function parar(fadeS?: number): void {
+  player.parar(fadeS);
 }
 
 function aoTrocarVisibilidade(): void {
   if (typeof document === 'undefined') return;
   if (document.hidden) {
-    // E0: aba escondida → o elemento para na hora (o `audioBus` já suspende o contexto).
-    limparTimer();
-    tocando = false;
-    tokenParada++;
-    try { el?.pause(); } catch { /* já parou */ }
+    player.ocultar(); // E0: aba escondida → o elemento para na hora
     return;
   }
   if (ligadaNestaSessao && !pausada()) comecar();
@@ -321,22 +197,15 @@ export function temaPausado(): boolean {
 }
 
 export function temaTocando(): boolean {
-  return tocando;
+  return player.tocando();
 }
 
 /** Só para teste. */
 export function esquecerTema(): void {
   desarmar();
-  limparTimer();
-  tokenParada++;
-  try { el?.pause(); } catch { /* ignorado */ }
-  el = null;
-  fade = null;
-  ctxDoElemento = null;
+  player.esquecer();
+  fadeDeRetomadaS = 0.4;
   emCombate = false;
   ligadaNestaSessao = false;
-  tocando = false;
-  formatoIdx = 0;
-  formatosTentados = 0;
   pausas.clear();
 }

@@ -150,6 +150,26 @@ termos aqui; **(b)** trocar a música por uma gerada na Higgsfield (`sonilo_musi
 **(c)** tirar o tema do build até decidir. O guard (`sonsAssets.contract.test.ts`) continua provando
 só procedência, nunca licença.
 
+### As músicas de combate (19/10/2026) — plano Free, SEM direito comercial
+
+Pedido do dono em 19/10/2026: *"E:\dowload adicione aqui a dungeon theme e o pvp theme; inclua no jogo"*.
+
+| Arquivo · SHA-256 | Evento | Origem | Pós-processamento |
+|---|---|---|---|
+| `public/sounds/musica-masmorra.webm` · `23fa1dcc87c17eeeabe68469297fc82f5ab8ef9fb4149ca72dbd800f6ea7d55e` | "dungeon theme" — Masmorra (`utils/musicaDeCombate.ts`) | **Fornecida pelo dono, gerada no Suno** (plano Free; arquivo original `dungeon theme.mp3`, 4 957 153 bytes, SHA-256 `99beb7bba343518841982b5a72aa2a7a6262e2dc9d9797248890c38661da8ee2`, 3m19) | ffmpeg: ganho único de −13,8 dB para o alvo de masterização de `utils/loudness.ts` (LUFS-S mediano −28,0); sem fade (já termina em decrescendo), sem corte de intro; Opus 72 kbps estéreo 48 kHz, 2 134 684 bytes, sem metadados, capa removida |
+| `public/sounds/musica-masmorra.m4a` · `3c2ba72d30c06d79f2e0f0f2756135bdace81da4567b3aa6b99faab6a2c0967e` | idem (formato de reserva p/ Safari/iOS) | idem | idem, AAC-LC 88 kbps, faststart, 2 267 713 bytes |
+| `public/sounds/musica-pvp.webm` · `f5ecdcbd63d6b8ec3b67496a463fe036735f1a3f2b5fbad6d97de7015ff0a7d9` | "pvp theme" — Duelo e Torneio (`utils/musicaDeCombate.ts`) | **Fornecida pelo dono, gerada no Suno** (plano Free; arquivo original `pvp theme.mp3`, 4 905 140 bytes, SHA-256 `2fdab7d796ee55e3f54ec9e591e621aedc56c56c15d2eb69706b55812de66bbf`, 3m32) | ffmpeg: ganho único de −14,1 dB (alvo −28,0 LUFS-S) + fade-out de 3 s no fim (a faixa terminava seca); 0,42 s de silêncio na cabeça mantido; Opus 72 kbps estéreo 48 kHz, 1 954 061 bytes, sem metadados, capa removida |
+| `public/sounds/musica-pvp.m4a` · `7eda5f9327a4da9add83af0c4dc4f698774955eb36788c9c819ab9f967915cbe` | idem (formato de reserva p/ Safari/iOS) | idem | idem, AAC-LC 88 kbps, faststart, 2 398 063 bytes |
+
+⚰️ Os dois originais são `mp3` 48 kHz (~197 kbps) com capa embutida; a capa e os metadados não foram para o build.
+
+⚠️ **Pendência do dono — nada aqui afirma licença.** As duas faixas foram geradas no plano **Free** do
+Suno, que **não tem direito comercial** (a mesma leitura dos termos registrada acima para o tema
+`Stone Hall Decay`). Isto bloqueia publicar o app na loja com elas dentro. O guard
+(`sonsAssets.contract.test.ts`) prova procedência (hash ↔ arquivo ↔ esta linha), nunca licença. A
+escuta do dono (S8) das duas faixas continua pendente. Saídas possíveis, todas do dono, as mesmas do
+tema: plano pago com download oficial, trocar por música da Higgsfield, ou tirar do build.
+
 Pós-processamento (corte, 48 kHz, crista, normalização ao alvo da categoria) por
 `squad-alpha-runs/som-01/prototyper/pos-processar.mjs` (SFX) e `E:/Soulmon-assets/som-01/mestre-trilha.mjs`
 (trilha: mono, 12 compassos a 100 BPM, crossfade de loop, −28 LUFS-S); codificação **WebM/Opus 48 kbps

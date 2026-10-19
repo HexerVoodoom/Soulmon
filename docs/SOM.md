@@ -21,7 +21,9 @@
 | Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **música-TEMA** "Stone Hall Decay" (S17, 07/10/2026): `<audio>` em streaming → `busTema`, nasce LIGADA mas só começa no 1º gesto da sessão, 2 formatos por `canPlayType`, 30 s de silêncio entre voltas | `src/utils/tema.ts` + `TEMA_DO_JOGO` em `sonsAssets.ts` |
 | A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) + a **faixa da Arena** (derivada, §10) | `src/utils/trilha.ts` + `src/utils/trilhaArena.ts` |
-| O **diretor de música** (§10): home = tema, masmorra = loop, arena = faixa própria; crossfade | `src/utils/musica.ts` |
+| ⚠️ 19/10 O **diretor de música** (§10, §11): casa = tema, masmorra = "dungeon theme", torneio (lobby) e duelo = "pvp theme", arena = faixa derivada, pesadelo = terror; crossfade | `src/utils/musica.ts` |
+| ⚠️ 19/10 O **player de `<audio>` em streaming** (extraído do `tema.ts`: formato por `canPlayType`, troca no erro, refaz no bfcache, pausa entre voltas, fade-in) — dono único | `src/utils/streamMusica.ts` |
+| ⚠️ 19/10 O estado das **faixas de combate** (pedida, consentimento, pausas sono/descanso/mudo) no `busTrilha`, crossfade de `CROSSFADE_MUSICA_S`; manifesto `MUSICAS_DE_COMBATE` | `src/utils/musicaDeCombate.ts` + `src/utils/sonsAssets.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
 | Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |
 | Trava da **R-NOVA** — os sons cortados não podem voltar por superfície nova | `src/utils/cortes.contract.test.ts` |
@@ -94,7 +96,7 @@ há um teste (`footgun 9`) que reprova a cópia.
 | Sintonia · Cuidado | **−19,0** |
 | Conclusão · Transação | **−22,0** |
 | Arcade | **−25,0** |
-| Música (trilha, tema e faixa da Arena) | **−22,0 LUFS-S** (era −28,0 até 11/10/2026, §10), **−25,0 em combate**, e ≤ −16 LUFS integrado |
+| Música (trilha, tema, faixa da Arena e ⚠️ 19/10 as faixas de combate "dungeon theme" e "pvp theme", §11) | **−22,0 LUFS-S** (era −28,0 até 11/10/2026, §10), **−25,0 em combate**, e ≤ −16 LUFS integrado |
 
 Tolerância **±1,0 LU**; degrau **3,0 dB**, sem meio-degrau; teto **≤ −1 dBTP** em tudo.
 **Quem repete mais entra mais baixo.** Nível ≠ importância: se algo "deve soar como perda ou como
@@ -292,11 +294,13 @@ a linha do tempo); o interruptor e o `AudioContext` não brigam (o toggle persis
   camadas: a percussão deixa a mistura 5,8 dB mais alta). **Rascunho de ouvido: precisa da escuta do dono.**
 - **Crossfade** de `CROSSFADE_MUSICA_S` (1,2 s) entre as músicas: o tema ganha o motivo de pausa `cena` (desce e pára, volta de onde
   parou) enquanto a de combate sobe; entre `loop` e `masmorra` (mesmo material) só o ganho desliza.
+- ⚠️ 19/10/2026: **o "nasce DESLIGADO" abaixo foi revogado para as faixas de combate** — o interruptor nasce LIGADO e tem outro rótulo
+  (§11). O texto fica como histórico.
 - **Nasce desligada, só por gesto.** O tema segue nascendo ligado (S17); as faixas de combate são o interruptor **"Música de masmorra e
   arena" / "Dungeon & arena music"** (Configurações › Som, `SOUND_TRACK_ENABLED`, NASCE DESLIGADO). Abrir a masmorra/arena é um gesto do
   jogador (`consentirNestaSessao`), mas só vale com o interruptor ligado. Sem ele, o tema segue tocando em combate (mais baixo).
 - **S17 emendada:** "música é uma por vez: ligar uma desliga a outra" virou "as duas preferências convivem; o diretor nunca as deixa
-  soar juntas". Quem ligou só o loop (tema desligado) o mantém na Home (legado).
+  soar juntas". Quem ligou só o loop (tema desligado) o mantém na Home (legado). ⚠️ 19/10/2026: esse legado SAIU (§11.6).
 
 **10.4 Golpe físico × à distância.** `playAttackRanged` (disparo: triangle agudo que cai de tom + parcial uma oitava acima; o físico
 `playAttack` segue o soco grave). **Mesma categoria `arcade`** (R-CAT: o EVENTO é golpe de combate nos dois), offset próprio **1,651 dB**
@@ -315,3 +319,55 @@ próximo golpe ter a animação inteira. Dois especiais no MESMO instante (espel
 (`serializarEspeciais`, retratos refeitos por deltas: a vida não regride). Na Arena/Masmorra/Pesadelo o `cast` já pausava o relógio; o que
 faltava era esperar a cauda antes do golpe seguinte (antes ele CORTAVA o efeito). Efeito colateral declarado: cada especial alonga a luta
 EXIBIDA em ≈ lead + cauda + respiro (≈ 3,3 s); a simulação e o resultado são os mesmos.
+
+## 11. As músicas de combate: dungeon theme e pvp theme (19/10/2026, pedido do dono)
+
+Pedido: *"E:\dowload adicione aqui a dungeon theme e o pvp theme; inclua no jogo"*. Duas faixas do Suno (plano Free), entregues pelo dono.
+
+**11.1 O que toca onde** (`musica.ts`, tabela casa = tema):
+| Superfície | Faixa | É combate? (−3 dB) |
+|---|---|---|
+| casa | tema "Stone Hall Decay" | não |
+| masmorra (`DungeonGame`) | "dungeon theme" | sim |
+| torneio (`TournamentPage`, lobby) | "pvp theme" | **não** |
+| duelo (`DuelScreen`: luta ranqueada e treino) | "pvp theme" | sim |
+| arena (`ArenaGame`, inclusive a folha "Arena livre" do `DueloSheet`, que é PvE) | faixa derivada (§10.3, inalterada) | sim |
+| pesadelo | terror (inalterado) | sim |
+
+`SUPERFICIE_EM_COMBATE` decide o −3 dB. Chamadas: `TournamentPage` → `entrarNaSuperficie('torneio')`, `DuelScreen` → `'duelo'`.
+
+**11.2 O interruptor.** Rótulo **"Música de combate" / "Combat music"** (era "Música de masmorra e arena"), mesma chave
+`SOUND_TRACK_ENABLED`. ⚠️ **Agora NASCE LIGADO** (`readFlagOr(..., true)`); quem gravou `'false'` continua desligado. Isto revoga o "nasce
+desligada" da S2 para as faixas de combate (`REGISTRO-DE-DECISOES.md` §102). **D11 intacta:** só toca depois de gesto; o primeiro gesto sonoro
+dá o consentimento da sessão SEM gravar a preferência.
+
+**11.3 O player único.** `utils/streamMusica.ts` é o `<audio>` em streaming extraído do `tema.ts` (que passa a usá-lo): formato por
+`canPlayType` (WebM/Opus, depois M4A), troca de formato no erro, refaz o `<audio>` no bfcache, pausa entre voltas, fade-in. O estado das
+faixas de combate (pedida, consentimento, pausas por motivo sono/descanso/mudo) mora em `utils/musicaDeCombate.ts`, no `busTrilha`, com
+crossfade de `CROSSFADE_MUSICA_S`; pausa entre voltas de 4 s, fade-in de 2 s. Manifesto: `MUSICAS_DE_COMBATE` em `sonsAssets.ts`.
+
+**11.4 Medidas** (ffmpeg 6.1.1, filtro `ebur128`, BS.1770; LUFS-S mediano; a mesma régua reproduz o tema já instalado: −28,0 / integrado −28,2 / TP −15,1):
+| Faixa | Original (LUFS-S / integrado / TP) | Ganho aplicado | Arquivo final (LUFS-S / integrado / TP) |
+|---|---|---|---|
+| dungeon theme (199,44 s) | −14,2 / −14,5 / −0,4 dBTP | −13,8 dB | webm −28,0 / −28,3 / −13,6; m4a −28,0 / −28,3 / −12,6 |
+| pvp theme (212,04 s) | −13,9 / −14,1 / −2,7 dBTP | −14,1 dB + fade-out de 3 s | webm −28,0 / −28,2 / −15,7; m4a −27,9 / −28,2 / −15,8 |
+
+Com o ganho de reprodução `GANHO_MUSICA_DB` (+6 dB): integrado −22,3 / −22,2 e pior true peak −6,6 dBTP (≤ −1 dBTP e ≤ −16 LUFS: **S3
+cumprida**); em combate (−3 dB) −25,3. Trim residual 0 (`TRIM_MUSICAS_DE_COMBATE_DB` em `loudness.ts`). O pvp ganhou fade-out porque
+terminava seco (os últimos 0,3 s tinham pico −31 dBFS); o dungeon já acaba em decrescendo natural (≈185–199 s); nenhuma intro cortada (o
+pvp tem 0,42 s de silêncio na cabeça, mantido).
+
+**11.5 Bytes, orçamento e service worker.** `public/sounds/`: `musica-masmorra.webm` 2 134 684 B, `musica-masmorra.m4a` 2 267 713 B,
+`musica-pvp.webm` 1 954 061 B, `musica-pvp.m4a` 2 398 063 B (Opus 72 kbps / AAC-LC 88 kbps, 48 kHz, sem metadados nem capa). Orçamento ≤ 2,5 MB
+por formato (o mesmo do tema), **fora** do S6 de 300 KB, **fora** do `PRECACHE`, streaming só depois de gesto. ⚠️ O `sw.js` agora também ignora
+`/sounds/musica-` (requisições `Range`). ~8,8 MB novos no repo (`public/` + `dist/`).
+
+**11.6 O que saiu.** ⚠️ O legado "tema desligado + só o loop ligado → loop na Home" (§10.3, última linha) **SAIU**: com o interruptor
+nascendo ligado, quem desligou o tema passaria a ouvir o loop na Home sem pedir. Home = tema ou silêncio. Decidido pelo orquestrador;
+**pendente de confirmação do dono**. A faixa `masmorra` do loop em `trilha.ts` ficou **sem chamador no diretor** (o tipo fica; os testes de
+retomada a usam).
+
+**11.7 Pendências, sem suavizar.**
+- ⚠️ **Licença:** as duas faixas são do Suno plano Free, **sem direito comercial**. Bloqueia publicar na loja com elas dentro (mesma situação do
+  tema). `Attributions.md` registra procedência, nunca licença.
+- ⚠️ **Falta o gate humano de escuta (S8)** das duas faixas: nível relativo, transição entre faixas, o fade de 3 s do pvp. Os números são de medição.
