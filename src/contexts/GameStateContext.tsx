@@ -82,6 +82,7 @@ import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
+import { spriteLineOf } from '../utils/corvoPet';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
@@ -1887,6 +1888,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // Foto e moldura (só IDs de listas fechadas; `null` limpa no servidor).
         avatarId: sanitizeAvatarId(gameState.avatarId),
         frameId: sanitizeEquippedFrame(gameState.equippedFrame),
+        // Linha de arte (D-60): é por ela que o oponente é desenhado com a arte DELE. `null` limpa no servidor.
+        artLine: spriteLineOf(gameState) ?? null,
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
         // Sempre enviado (inclusive `false`): é assim que o servidor RETIRA ou

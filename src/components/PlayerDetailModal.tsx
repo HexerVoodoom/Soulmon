@@ -19,7 +19,7 @@
  * do sistema antigo saíram); "Close" em `outline` (D-S10).
  */
 import { getStageBranch } from '../types/progression';
-import { getSpriteForStage } from '../utils/sprites';
+import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { ATTR_LABEL } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
@@ -83,7 +83,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <img
-            src={isSafeSpriteSrc(player.spriteUrl) ? player.spriteUrl : getSpriteForStage(player.stage)}
+            src={isSafeSpriteSrc(player.spriteUrl) ? player.spriteUrl : opponentSprite(player)}
             alt=""
             width={128}
             height={128}

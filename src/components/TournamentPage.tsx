@@ -65,6 +65,7 @@ import {
 } from './mercado/ShopShelf';
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
+import { opponentSprite, opponentIcon } from '../utils/opponentArt';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
 import { fxDoLutador } from '../utils/fighterIdentity';
@@ -501,7 +502,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         opp={training.opp}
         seed={training.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
-        oppSprite={training.npc ? training.npc.art : getSpriteForStage(petStage)}
+        oppSprite={training.npc ? training.npc.art : getSpriteForStage(petStage, petLine, 256)}
         oppElement={training.npc ? visualElementFor(training.npc.id) : undefined}
         petStage={petStage}
         skills={skills}
@@ -525,7 +526,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         opp={duel.oppSide}
         seed={duel.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
-        oppSprite={getSpriteForStage(duel.opp.stage)}
+        oppSprite={opponentSprite(duel.opp, 256)}
         petElement={petElement}
         petStage={petStage}
         skills={skills}
@@ -731,7 +732,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     estágio não é de linha, o sprite a 0,25× — sem faixa, sem
                     rank (J1, veto 3b). */}
                 <MiniGlass size={64}>
-                  <img src={lineIconForStage(o.stage, 64) ?? getSpriteForStage(o.stage)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
+                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
                 </MiniGlass>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -913,8 +914,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     <AvatarFrame frame={isMe ? myFrame : null} plaque={isMe ? standing?.place : null}>
                       <MiniGlass size={32}>
                         {(() => {
-                          const icon = lineIconForStage(r.stage, 32);
-                          return <img src={icon ?? getSpriteForStage(r.stage)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
+                          const icon = opponentIcon(r, 32);
+                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
                         })()}
                       </MiniGlass>
                     </AvatarFrame>
@@ -1041,7 +1042,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       {result.won && (
         <GameVisor width={DIALOG_VISOR_W} height={56} scene={`url(${tournamentFinal}) center/cover`}>
           <VisorSprite src={getSpriteForStage(petStage, petLine, 256)} alt="" size={64} idle={false} style={{ left: 56, bottom: 8 }} data-visor-pet />
-          <VisorSprite src={getSpriteForStage(result.opponent.stage)} alt="" size={64} idle={false} flip style={{ right: 56, bottom: 8 }} data-visor-enemy />
+          <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" size={64} idle={false} flip style={{ right: 56, bottom: 8 }} data-visor-enemy />
         </GameVisor>
       )}
       <p className="sm2-num" style={sm2Hint}>
