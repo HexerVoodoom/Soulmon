@@ -15,7 +15,8 @@
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
 import { fruitRewards } from '../../utils/claCredit';
 import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
-import { ESTACAO_DA_ESPECIE, nivelDoPlantio } from '../../utils/bosqueArvores';
+import { ESTACAO_DA_ESPECIE, nivelDoPlantio, type EstacaoBosque } from '../../utils/bosqueArvores';
+import { SPRITES } from './GroveVisor';
 import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
@@ -25,7 +26,9 @@ export const PLANTIO_VISOR_HEIGHT = 220;
 const H = PLANTIO_VISOR_HEIGHT;
 /** Altura da CAIXA do sprite, em px do vidro. Os 5 níveis de uma árvore dividem a mesma caixa (base alinhada, escala relativa
  *  preservada): o broto é pequeno e a completa enche a caixa, sem tabela de alturas por nível. */
-const ARVORE_PX = 210;
+/** A completa (nível 4) mede esta altura no vidro; a caixa de cada árvore se ajusta por `SPRITES` (cada folha tem a sua escala). */
+const COMPLETA_PX = 180;
+const caixaPx = (e: EstacaoBosque): number => Math.round((COMPLETA_PX * SPRITES[e].H) / SPRITES[e].h4);
 
 interface PlantioVisorProps {
   stage: number;
@@ -60,7 +63,7 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, l
           data-plantio-planta
           data-plantio-fruto={mature ? '' : undefined}
           className={mature && !reducedMotion ? 'sm2-casa-glow' : undefined}
-          style={{ height: ARVORE_PX, width: 'auto', display: 'block', imageRendering: 'pixelated', marginBottom: 6, position: 'relative' }}
+          style={{ height: caixaPx(ESTACAO_DA_ESPECIE[species]), width: 'auto', display: 'block', imageRendering: 'pixelated', marginBottom: 6, position: 'relative' }}
         />
       ) : (
         <span aria-hidden="true" style={{ width: 96, height: 14, marginBottom: 18, borderRadius: '50%', border: '2px dashed var(--sm2-primary, #6EFFFB)', opacity: 0.7 }} />

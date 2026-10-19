@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { GroveVisor, SLOTS_X, ESCALA_CENA, CAMPO_LARGURA, OCUPACAO_COMPLETA, RAZAO_4_5, alturaCaixa } from './GroveVisor';
+import { GroveVisor, SLOTS_X, ESCALA_CENA, CLAREIRAS, CENA_W, CENA_H, SPRITES, OCUPACAO_COMPLETA, CRIATURA_Y, chaoY, kSprite, alturaCaixa } from './GroveVisor';
 
 const ESTACOES = ['outono', 'inverno', 'primavera', 'verao'] as const;
 import { createRequire } from 'node:module';
@@ -39,11 +39,12 @@ describe('GroveVisor: panorama de tela cheia (D-29/D-31/D-33)', () => {
     const sharp = createRequire(join(process.cwd(), 'package.json'))('sharp');
     const base = join(process.cwd(), 'src/assets/bosque');
     const TELA_UTIL_ALTA = 844; // o iPhone de referência (390×844); o panorama ocupa a altura toda
-    const exibida = { panorama: ESCALA_CENA * TELA_UTIL_ALTA, arvore: Math.max(...ESTACOES.map(e => alturaCaixa(e))) / 100 * TELA_UTIL_ALTA }; // cena a 118 % da altura; caixa da árvore por estação
+    const exibida = { panorama: ESCALA_CENA * TELA_UTIL_ALTA };
+    const arvoreCss = (n: string) => (alturaCaixa(n.split('-')[1] as (typeof ESTACOES)[number]) / 100) * TELA_UTIL_ALTA;
     return Promise.all([
       sharp(join(base, 'panorama-bosque.webp')).metadata().then((m: { height: number }) => expect(m.height).toBeGreaterThanOrEqual(exibida.panorama)),
       ...readdirSync(base).filter(n => /^arvore-.*\.webp$/.test(n)).map(n =>
-        sharp(join(base, n)).metadata().then((m: { height: number }) => expect(m.height, n).toBeGreaterThanOrEqual(exibida.arvore))),
+        sharp(join(base, n)).metadata().then((m: { height: number }) => expect(m.height, `${n}: sprite >= exibido (DPR 1)`).toBeGreaterThanOrEqual(Math.floor(arvoreCss(n))))),
     ]).then(() => {
       const css = readFileSync(join(process.cwd(), 'src/index.css'), 'utf8');
       const ini = css.lastIndexOf('/*', css.indexOf('O PANORAMA DO BOSQUE'));
@@ -99,26 +100,60 @@ describe('D-32: o Bosque só se acessa pelo Hall', () => {
 });
 
 
-describe('geometria dos campos (D-33): uma árvore por clareira, centrada, sem cortar', () => {
-  // largura/altura de cada nível 5 na arte (px da folha) -> a maior largura relativa à altura
-  const LARG_5: Record<string, number> = { outono: 659 / 984, inverno: 366 / 569, primavera: 593 / 1079, verao: 538 / 1096 };
-  it.each(ESTACOES)('%s: a completa ocupa 90–95 %% do campo e o nível 5 cabe no campo sem tocar o vizinho', e => {
-    const campo = CAMPO_LARGURA; // fração da altura da cena
-    const h4 = (alturaCaixa(e) / 100 / ESCALA_CENA) * RAZAO_4_5[e] * (504 / 512); // altura do nível 4, fração da altura da cena
-    expect(h4 / campo).toBeGreaterThanOrEqual(0.9);
-    expect(h4 / campo).toBeLessThanOrEqual(0.95);
-    expect(OCUPACAO_COMPLETA).toBeGreaterThanOrEqual(0.9);
-    const h5 = (alturaCaixa(e) / 100 / ESCALA_CENA) * (504 / 512);
-    expect(h5).toBeGreaterThanOrEqual(h4);
-    expect(h5 / h4).toBeLessThanOrEqual(1.25); // "um pouco" acima da completa
-    expect((h5 * LARG_5[e]) / campo, 'largura do nível 5 cabe no campo').toBeLessThanOrEqual(1);
+describe('geometria dos campos (D-33): uma árvore por CLAREIRA, centrada, sem cortar', () => {
+  const clareira = (e: (typeof ESTACOES)[number]) => ({ ...CLAREIRAS[e], w: CLAREIRAS[e].x1 - CLAREIRAS[e].x0, cx: (CLAREIRAS[e].x0 + CLAREIRAS[e].x1) / 2 });
+  it('as clareiras do código são as que se veem no panorama (terra batida medida na imagem, ±6 px)', async () => {
+    const sharp = createRequire(join(process.cwd(), 'package.json'))('sharp');
+    const { data, info } = await sharp(join(process.cwd(), 'src/assets/bosque/panorama-bosque.webp')).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { width: w, height: h } = info as { width: number; height: number };
+    expect([w, h]).toEqual([CENA_W, CENA_H]);
+    const m = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) { const r = data[i * 3], g = data[i * 3 + 1], b = data[i * 3 + 2]; if (r > 105 && r < 200 && g > 65 && g < 140 && b > 35 && b < 100 && r - g > 18 && g - b > 12 && r - b > 45) m[i] = 1; }
+    const lab = new Int32Array(w * h).fill(-1);
+    const cs: { n: number; a: number; b: number; t: number; u: number }[] = [];
+    for (let s0 = 0; s0 < w * h; s0++) {
+      if (!m[s0] || lab[s0] >= 0) continue;
+      const st = [s0]; lab[s0] = cs.length; const c = { n: 0, a: 1e9, b: -1, t: 1e9, u: -1 };
+      while (st.length) {
+        const p = st.pop()!; c.n++; const x = p % w, y = (p / w) | 0;
+        if (x < c.a) c.a = x; if (x > c.b) c.b = x; if (y < c.t) c.t = y; if (y > c.u) c.u = y;
+        for (const q of [p - 1, p + 1, p - w, p + w]) if (q >= 0 && q < w * h && m[q] && lab[q] < 0 && Math.abs((q % w) - x) <= 1) { lab[q] = cs.length; st.push(q); }
+      }
+      cs.push(c);
+    }
+    const quatro = cs.sort((p, q) => q.n - p.n).slice(0, 4).sort((p, q) => p.a - q.a);
+    ESTACOES.forEach((e, i) => {
+      for (const [k, v] of [['x0', quatro[i].a], ['x1', quatro[i].b], ['y0', quatro[i].t], ['y1', quatro[i].u]] as const) expect(Math.abs(CLAREIRAS[e][k] - v), `${e}.${k}`).toBeLessThanOrEqual(6);
+    });
   });
-  it('os campos são centrados nas clareiras e não se tocam (espaçamento > largura do campo)', () => {
-    const xs = ESTACOES.map(e => SLOTS_X[e]);
-    const largura = CAMPO_LARGURA * (1129 / 1700) * 100; // % da largura da cena (1700×1129)
-    for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1]).toBeGreaterThan(largura);
-    expect(xs[0] - largura / 2).toBeGreaterThan(0);
-    expect(xs[3] + largura / 2).toBeLessThan(100);
+  it.each(ESTACOES)('%s: a completa mede ~90 %% da largura da clareira; o nível 5 até ~1,2× e cabe nela', e => {
+    const c = clareira(e), k = kSprite(e), sp = SPRITES[e];
+    expect((sp.w4 * k) / c.w).toBeGreaterThanOrEqual(0.88);
+    expect((sp.w4 * k) / c.w).toBeLessThanOrEqual(0.92);
+    expect(OCUPACAO_COMPLETA).toBe(0.9);
+    expect(sp.w5 / sp.w4).toBeGreaterThanOrEqual(1);
+    expect(sp.w5 / sp.w4).toBeLessThanOrEqual(1.2);
+    expect(sp.h5 / sp.h4).toBeLessThanOrEqual(1.25);
+    expect((sp.w5 * k) / c.w, 'o nível 5 não sai da clareira').toBeLessThanOrEqual(1.05 * 1.2 * OCUPACAO_COMPLETA);
+    expect(sp.w5 * k).toBeLessThanOrEqual(c.w * 1.1);
+  });
+  it.each(ESTACOES)('%s: centrada na clareira, base no chão dela, sem cortar no topo da cena', e => {
+    const c = clareira(e);
+    expect(Math.abs(SLOTS_X[e] - (c.cx / CENA_W) * 100)).toBeLessThan(0.01);
+    const baseImg = (chaoY(e) / 100) * CENA_H;
+    expect(baseImg).toBeGreaterThan(c.y0);
+    expect(baseImg).toBeLessThan(c.y1);
+    const topo = baseImg - SPRITES[e].h5 * kSprite(e);
+    expect(topo, 'topo do nível 5 dentro da cena e abaixo do cabeçalho (~13 % da altura)').toBeGreaterThan(0.13 * CENA_H);
+  });
+  it('as árvores vizinhas (nível 5) não se tocam e as clareiras não saem da cena', () => {
+    for (let i = 1; i < ESTACOES.length; i++) {
+      const a = ESTACOES[i - 1], b = ESTACOES[i];
+      const meiaA = (SPRITES[a].w5 * kSprite(a)) / 2, meiaB = (SPRITES[b].w5 * kSprite(b)) / 2;
+      expect(clareira(b).cx - clareira(a).cx).toBeGreaterThan(meiaA + meiaB);
+    }
+    expect(clareira('outono').x0).toBeGreaterThan(0);
+    expect(clareira('verao').x1).toBeLessThan(CENA_W);
   });
 });
 
@@ -140,11 +175,14 @@ describe('as criaturas do clã no panorama (palco do Bosque)', () => {
     const xs = c.map(x => parseFloat(x.style.left));
     expect(xs).toEqual([...xs].sort((a, b) => a - b));
   });
-  it.each([1, 2, 3, 4])('%i criaturas pisam nos vãos, sem cobrir nenhuma árvore (>= 10 % da cena: meia largura do nível 5 + meia criatura)', n => {
+  it.each([1, 2, 3, 4])('%i criaturas ficam no primeiro plano, abaixo do chão de toda clareira (nunca cobrem uma árvore)', n => {
     const { container } = montar(false, roda(n));
+    const chaoMax = Math.max(...ESTACOES.map(e => chaoY(e)));
     for (const c of criaturas(container)) {
-      const x = parseFloat(c.style.left);
-      for (const slot of Object.values(SLOTS_X)) expect(Math.abs(x - slot), `criatura em ${x}% sobre árvore em ${slot}%`).toBeGreaterThanOrEqual(10);
+      const pes = parseFloat(c.style.top); // % da altura da cena
+      expect(pes).toBe(CRIATURA_Y);
+      const altura = (c.width / 0.7476 / CENA_H) * 100; // px css -> px da imagem (844/1129) -> %
+      expect(pes - altura, `topo da criatura (${n}) acima do chão das árvores`).toBeGreaterThan(chaoMax);
     }
   });
   it.each([5, 8, 12])('%i membros: SÓ a sua (a fileira com lacunas é a sala de aula que LV-G2 veta)', n => {
