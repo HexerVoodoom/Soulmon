@@ -18,7 +18,7 @@ import {
 } from './monetization';
 import {
   STARTER_IDS, STARTER_NAMES, STARTER_SPRITES, LEGACY_PREMADE_IDS, DEMO_CHARACTER_IDS,
-  DUNGEON_LINE_SPRITES, getSpriteForStage, resolveLineForStage, isStarterId,
+  DUNGEON_LINE_SPRITES, getSpriteForStage, resolveLineForStage, isStarterId, isRetiredLineId, RETIRED_LINE_STAND_IN,
 } from './sprites';
 import { DERIVED_ELEMENT_PAIRS, BASE_ELEMENT_LABELS } from './soulProfile/derivedElements';
 import { essenceEn } from './soulProfile/essenceLabels';
@@ -215,6 +215,14 @@ describe('os 5 personagens iniciais', () => {
 describe('saves antigos com `demoCharacterId` de um dos seis de antes', () => {
   it('seguem resolvendo o MESMO sprite de sempre, estágio a estágio', () => {
     for (const id of LEGACY_PREMADE_IDS) {
+      if (isRetiredLineId(id)) {
+        // D-78: `orrin`/`nautilu` seguem VÁLIDOS no save, mas a arte exibida é o inicial de reserva.
+        for (const stage of ['rookie', 'champion', 'ultimate', 'mega'] as const) {
+          expect(getSpriteForStage(stage, id)).toBe(STARTER_SPRITES[RETIRED_LINE_STAND_IN[id]]);
+        }
+        expect(resolveLineForStage('rookie', id)).toBeNull();
+        continue;
+      }
       for (const stage of ['rookie', 'champion', 'ultimate', 'mega'] as const) {
         expect(getSpriteForStage(stage, id)).toBe(DUNGEON_LINE_SPRITES[id][stage]);
       }
@@ -223,8 +231,8 @@ describe('saves antigos com `demoCharacterId` de um dos seis de antes', () => {
     }
   });
 
-  it('o roster da masmorra NÃO ganhou os iniciais (continua 9 linhas)', () => {
-    expect(Object.keys(DUNGEON_LINE_SPRITES).length).toBe(9);
+  it('o roster da masmorra NÃO ganhou os iniciais (6 linhas desde D-78)', () => {
+    expect(Object.keys(DUNGEON_LINE_SPRITES).length).toBe(6);
     for (const id of STARTER_IDS) expect(DUNGEON_LINE_SPRITES[id]).toBeUndefined();
   });
 

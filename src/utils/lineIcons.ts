@@ -1,4 +1,4 @@
-// ÍCONES-FICHA das 9 linhas × 4 tiers (rodada 2 da SQUAD-ARTE, 21/09/2026 —
+// ÍCONES-FICHA das 6 linhas × 4 tiers (D-78) (rodada 2 da SQUAD-ARTE, 21/09/2026 —
 // `docs/ASSETS-A-GERAR.md` §13 R2-2, D-J13 do canvas Jogos): 64² para o Dino
 // e os oponentes do Torneio, 32² (a cabeça) para o mini-visor do ranking.
 // São DERIVADOS do sprite 256² de `lines/` (`scripts-arte/derivar-rodada2.mjs`:
@@ -39,5 +39,5 @@ export const lineIconForStage = (stage: string, size: LineIconSize, demoCharacte
   return r ? lineIcon(r.line, r.tier, size) : undefined;
 };
 
-/** Quantos ícones o glob encontrou — guard de instalação (9 linhas × 4 tiers × 2 tamanhos = 72). */
+/** Quantos ícones o glob encontrou — guard de instalação (6 linhas × 4 tiers × 2 tamanhos = 48). */
 export const LINE_ICON_COUNT = Object.keys(ICONS).length;

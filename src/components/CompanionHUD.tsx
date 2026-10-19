@@ -1434,17 +1434,6 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             ))}
 
-            {/* 🏠 A PLAQUINHA da masmorra (REGISTRO §36): NO LUGAR do pet, ancorada nos pés dele — fora da caixa que anda e espelha, para o texto
-                nunca virar de lado nem andar junto. O pet fica `visibility: hidden` (mesma caixa, mesmo chão). */}
-            {naMasmorra && !missionAway && (
-              <div
-                data-pet-masmorra-slot
-                style={{ position: 'absolute', left: '50%', top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP + PET_RENDER}px)`, transform: 'translate(-50%, -100%)', zIndex: 3 }}
-              >
-                <DungeonSign language={language} onTap={onSinalMasmorra} returnInMs={masmorraRetornoMs} />
-              </div>
-            )}
-
             {/* Hug balloon — follows pet position, shown after feed or shower */}
             {hugBalloon && (
               <div
@@ -1618,7 +1607,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
                     visibility: missionAway ? 'hidden' : undefined,
-                    ...(naMasmorra ? { visibility: 'hidden' as const } : null), // na masmorra o pet some do palco (a plaquinha fica no lugar)
+                    ...(naMasmorra ? { visibility: 'hidden' as const } : null), // na masmorra o pet some do palco (a plaquinha fica à direita, acima dos cuidados)
                     /* `translate` (propriedade própria) e não `transform`: as animações do
                        sprite (esfregar, comer, saudar) mexem no `transform` e não podem
                        derrubar a altitude. */
@@ -2002,6 +1991,15 @@ export const CompanionHUD = memo(function CompanionHUD({
 
             CÉLULA INERTE continua sendo `aria-disabled` + forma (tracejado),
             nunca opacidade: o banho em cooldown. */}
+        {/* 🏠 A PLAQUINHA da masmorra (REGISTRO §36; D-80, 19/10/2026: passou para a DIREITA, ACIMA dos três cuidados — antes ficava no
+            lugar do pet). Irmã do `.sm3-cuidar` (mesmo bloco de contenção), ancorada em cima dele: nunca sobrepõe mochila/noite/banho (CSS
+            `.sm3-cuidar-placa`, travado por `DungeonSign.render.test.tsx`). O pet continua `visibility: hidden` na masmorra. */}
+        {naMasmorra && !missionAway && (
+          <div data-pet-masmorra-slot className="sm3-cuidar-placa">
+            <DungeonSign language={language} onTap={onSinalMasmorra} returnInMs={masmorraRetornoMs} />
+          </div>
+        )}
+
         <div
           className="sm3-cuidar"
           role="group"

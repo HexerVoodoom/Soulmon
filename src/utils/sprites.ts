@@ -44,18 +44,10 @@ import lumelRookie from '../assets/soulmon/lines/lumel-rookie.png';
 import lumelChampion from '../assets/soulmon/lines/lumel-champion.png';
 import lumelUltimate from '../assets/soulmon/lines/lumel-ultimate.png';
 import lumelMega from '../assets/soulmon/lines/lumel-mega.png';
-import serahRookie from '../assets/soulmon/lines/serah-rookie.png';
-import serahChampion from '../assets/soulmon/lines/serah-champion.png';
-import serahUltimate from '../assets/soulmon/lines/serah-ultimate.png';
-import serahMega from '../assets/soulmon/lines/serah-mega.png';
 import kaelenRookie from '../assets/soulmon/lines/kaelen-rookie.png';
 import kaelenChampion from '../assets/soulmon/lines/kaelen-champion-power.png';
 import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate-power.png';
 import kaelenMega from '../assets/soulmon/lines/kaelen-mega-power.png';
-import orrinRookie from '../assets/soulmon/lines/orrin-rookie.png';
-import orrinChampion from '../assets/soulmon/lines/orrin-champion.png';
-import orrinUltimate from '../assets/soulmon/lines/orrin-ultimate.png';
-import orrinMega from '../assets/soulmon/lines/orrin-mega.png';
 import thalindraRookie from '../assets/soulmon/lines/thalindra-rookie.png';
 import thalindraChampion from '../assets/soulmon/lines/thalindra-champion.png';
 import thalindraUltimate from '../assets/soulmon/lines/thalindra-ultimate.png';
@@ -66,10 +58,6 @@ import igniRookie from '../assets/soulmon/lines/igni-rookie.png';
 import igniChampion from '../assets/soulmon/lines/igni-champion.png';
 import igniUltimate from '../assets/soulmon/lines/igni-ultimate.png';
 import igniMega from '../assets/soulmon/lines/igni-mega.png';
-import nautiluRookie from '../assets/soulmon/lines/nautilu-rookie.png';
-import nautiluChampion from '../assets/soulmon/lines/nautilu-champion.png';
-import nautiluUltimate from '../assets/soulmon/lines/nautilu-ultimate.png';
-import nautiluMega from '../assets/soulmon/lines/nautilu-mega.png';
 import astraseRookie from '../assets/soulmon/lines/astrase-rookie.png';
 import astraseChampion from '../assets/soulmon/lines/astrase-champion.png';
 import astraseUltimate from '../assets/soulmon/lines/astrase-ultimate.png';
@@ -86,12 +74,9 @@ import starterMeteoro from '../assets/soulmon/starters/meteoro.png';
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   ignar: { rookie: ignarRookie, champion: ignarChampion, ultimate: ignarUltimate, mega: ignarMega },
   lumel: { rookie: lumelRookie, champion: lumelChampion, ultimate: lumelUltimate, mega: lumelMega },
-  serah: { rookie: serahRookie, champion: serahChampion, ultimate: serahUltimate, mega: serahMega },
   kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
-  orrin: { rookie: orrinRookie, champion: orrinChampion, ultimate: orrinUltimate, mega: orrinMega },
   thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
   igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
-  nautilu: { rookie: nautiluRookie, champion: nautiluChampion, ultimate: nautiluUltimate, mega: nautiluMega },
   astrase: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega },
 };
 /**
@@ -114,10 +99,34 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
  * os arquivos de arte.
  */
 export const DUNGEON_LINE_NAMES: Record<string, string> = {
-  ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
-  kaelen: 'Pyraka', orrin: 'Akashai', thalindra: 'Nimbrata',
-  igni: 'Igni', nautilu: 'Nautil', astrase: 'Astria',
+  ignar: 'Ignar', lumel: 'Lumel',
+  kaelen: 'Pyraka', thalindra: 'Nimbrata',
+  igni: 'Igni', astrase: 'Astria',
 };
+
+/**
+ * AS 3 LINHAS APOSENTADAS (D-78, decisão R4 do dono, 19/10/2026) — dono único.
+ *
+ * Akashai (`orrin`), Serah (`serah`) e Nautil (`nautilu`) são linhas DEFASADAS: o dono
+ * mandou tirar o SPRITE delas de todo lugar visível (Match 3, masmorra, bestiário, sombras
+ * do Pesadelo, NPC da Biblioteca, fallback por hash). Elas saíram de `DUNGEON_LINE_SPRITES`
+ * e de `DUNGEON_LINE_NAMES` (roster hoje = 6 linhas × 4 tiers); os PNGs foram removidos.
+ * O NOME Serah segue no lore/copy (REGISTRO §14) — aposentar o sprite não é aposentar o nome.
+ *
+ * ⚠️ O ID continua VÁLIDO em save/perfil antigo (`demoCharacterId`, `artLine`, `eggType`):
+ * só a ARTE exibida muda. Quem recebe um desses ids cai num INICIAL atual
+ * (`RETIRED_LINE_STAND_IN`) — o mesmo mecanismo de reserva do `opponentArt.ts`.
+ * Id novo de linha aposentada? Acrescente aqui; nunca devolva o id ao roster.
+ */
+export const RETIRED_LINE_IDS = ['orrin', 'serah', 'nautilu'] as const;
+export const RETIRED_LINE_STAND_IN: Readonly<Record<typeof RETIRED_LINE_IDS[number], StarterId>> = {
+  orrin: 'industrial', serah: 'vida', nautilu: 'nascente',
+};
+export const isRetiredLineId = (id: unknown): id is typeof RETIRED_LINE_IDS[number] =>
+  typeof id === 'string' && (RETIRED_LINE_IDS as readonly string[]).includes(id);
+/** O id de arte a DESENHAR: linha aposentada vira o inicial de reserva; o resto passa igual. */
+export const resolveArtLineId = (id: string | undefined): string | undefined =>
+  isRetiredLineId(id) ? RETIRED_LINE_STAND_IN[id] : id;
 
 /**
  * OS 5 INICIAIS — dono único de id, arte e NOME (07/10/2026).
@@ -228,7 +237,8 @@ export type LineTier = 'rookie' | 'champion' | 'ultimate' | 'mega';
  * do jogador) → `null`, porque aí a arte é a do próprio Soulmon, não de
  * linha. Consumido por `lineIcons.ts` (rodada 2: ícones-ficha 64²/32²).
  */
-export function resolveLineForStage(stage: string, demoCharacterId?: string): { line: string; tier: LineTier } | null {
+export function resolveLineForStage(stage: string, demoCharacterIdRaw?: string): { line: string; tier: LineTier } | null {
+  const demoCharacterId = resolveArtLineId(demoCharacterIdRaw);
   const key = stage.toLowerCase();
   const level = getStageLevel(key);
   const tier = (level === 'ultra' ? 'mega' : level) as LineTier;
@@ -252,7 +262,7 @@ export function resolveLineForStage(stage: string, demoCharacterId?: string): { 
  * pelo jogador (acervo) não declara lado: tratada como direita.
  * Linha NOVA com arte de perfil: declare aqui, senão anda de costas.
  */
-export const LEFT_FACING_LINES: ReadonlySet<string> = new Set(['igni', 'nautilu', 'kaelen', CORVO_LINE]);
+export const LEFT_FACING_LINES: ReadonlySet<string> = new Set(['igni', 'kaelen', CORVO_LINE]);
 
 /**
  * Os INICIAIS (um sprite só, `STARTER_SPRITES`) cuja arte olha para a ESQUERDA.
@@ -263,7 +273,8 @@ export const LEFT_FACING_LINES: ReadonlySet<string> = new Set(['igni', 'nautilu'
  */
 export const LEFT_FACING_STARTERS: ReadonlySet<string> = new Set(['meteoro']);
 
-export function artFacesLeft(stage: string, demoCharacterId?: string): boolean {
+export function artFacesLeft(stage: string, demoCharacterIdRaw?: string): boolean {
+  const demoCharacterId = resolveArtLineId(demoCharacterIdRaw);
   if (demoCharacterId === CORVO_LINE) return true;
   if (isStarterId(demoCharacterId)) return LEFT_FACING_STARTERS.has(demoCharacterId);
   const r = resolveLineForStage(stage, demoCharacterId);
@@ -293,7 +304,8 @@ export function spriteUrlFacesLeft(url: string | undefined): boolean {
   return facesLeftUrls.has(url);
 }
 
-export function getSpriteForStage(stage: string, demoCharacterId?: string, size?: 256): string {
+export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, size?: 256): string {
+  const demoCharacterId = resolveArtLineId(demoCharacterIdRaw); // D-78: linha aposentada → inicial de reserva
   const key = stage.toLowerCase();
   // O corvinho do administrador (`utils/corvoPet.ts`, dono único): uma arte
   // por forma. O 2º parâmetro é a LINHA de arte do save — `spriteLineOf`.

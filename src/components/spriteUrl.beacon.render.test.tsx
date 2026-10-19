@@ -174,7 +174,7 @@ describe('PlayerDetailModal — o mesmo dado, na tela de perfil', () => {
   });
 
   it('MANTEM o asset empacotado do NPC', () => {
-    const asset = DUNGEON_LINE_SPRITES.orrin.ultimate;
+    const asset = DUNGEON_LINE_SPRITES.astrase.ultimate;
     renderWithCss(
       <PlayerDetailModal
         player={{ ...jogadorHostil(), stage: 'ultimate-harmony', spriteUrl: asset } as DirectoryPlayer & { spriteUrl?: string }}

@@ -36,7 +36,7 @@ async function corridas(arquivo: string): Promise<number> {
 
 describe('D5 — um sprite por criatura (anti-tira)', () => {
   const arquivos = fs.readdirSync(LINES).filter(f => f.endsWith('.png'));
-  it('há sprites para medir', () => { expect(arquivos.length).toBeGreaterThan(30); });
+  it('há sprites para medir', () => { expect(arquivos.length).toBeGreaterThan(20); });
   it('nenhum `lines/*.png` é uma tira de quadros (uma corrida larga por arquivo)', async () => {
     const tiras: string[] = [];
     for (const f of arquivos) if ((await corridas(path.join(LINES, f))) > 1) tiras.push(f);

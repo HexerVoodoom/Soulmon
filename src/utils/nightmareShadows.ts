@@ -14,16 +14,12 @@
  */
 import { DUNGEON_LINE_SPRITES } from './sprites';
 import shadow1 from '../assets/soulmon/dino/dino-shadow-1.png';
-import shadow1b from '../assets/soulmon/dino/dino-shadow-1b.png';
 import shadow1c from '../assets/soulmon/dino/dino-shadow-1c.png';
 import shadow2 from '../assets/soulmon/dino/dino-shadow-2.png';
 import shadow2b from '../assets/soulmon/dino/dino-shadow-2b.png';
-import shadow2c from '../assets/soulmon/dino/dino-shadow-2c.png';
-import shadow3 from '../assets/soulmon/dino/dino-shadow-3.png';
 import shadow3b from '../assets/soulmon/dino/dino-shadow-3b.png';
 import shadow3c from '../assets/soulmon/dino/dino-shadow-3c.png';
 import shadow4 from '../assets/soulmon/dino/dino-shadow-4.png';
-import shadow4b from '../assets/soulmon/dino/dino-shadow-4b.png';
 import shadow4c from '../assets/soulmon/dino/dino-shadow-4c.png';
 
 export type ShadowStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
@@ -32,17 +28,22 @@ export interface ShadowSlot { id: string; line: string; stage: ShadowStage }
 /**
  * Doze sombras (4 degraus × 3 variantes, mesma ordem de `OBSTACLE_TIERS`), uma criatura por slot.
  * Degrau 1/2 = chão baixo e médio (formas pequenas), 3 = coluna alta e estreita (formas esguias),
- * 4 = voadores. As linhas são os 9 Solmons próprios (`DUNGEON_LINE_NAMES`) — nenhuma de terceiros.
+ * 4 = voadores. As linhas são os 6 Solmons próprios ATIVOS (`DUNGEON_LINE_NAMES`) — nenhuma de terceiros.
  */
 export const SHADOW_SLOTS: ReadonlyArray<ReadonlyArray<ShadowSlot>> = [
-  [{ id: '1', line: 'lumel', stage: 'rookie' }, { id: '1b', line: 'serah', stage: 'rookie' }, { id: '1c', line: 'igni', stage: 'rookie' }],
-  [{ id: '2', line: 'ignar', stage: 'champion' }, { id: '2b', line: 'kaelen', stage: 'champion' }, { id: '2c', line: 'nautilu', stage: 'champion' }],
-  [{ id: '3', line: 'orrin', stage: 'ultimate' }, { id: '3b', line: 'thalindra', stage: 'ultimate' }, { id: '3c', line: 'astrase', stage: 'ultimate' }],
-  [{ id: '4', line: 'lumel', stage: 'mega' }, { id: '4b', line: 'serah', stage: 'mega' }, { id: '4c', line: 'astrase', stage: 'mega' }],
+  [{ id: '1', line: 'lumel', stage: 'rookie' }, { id: '1b', line: 'thalindra', stage: 'rookie' }, { id: '1c', line: 'igni', stage: 'rookie' }],
+  [{ id: '2', line: 'ignar', stage: 'champion' }, { id: '2b', line: 'kaelen', stage: 'champion' }, { id: '2c', line: 'astrase', stage: 'champion' }],
+  [{ id: '3', line: 'kaelen', stage: 'ultimate' }, { id: '3b', line: 'thalindra', stage: 'ultimate' }, { id: '3c', line: 'astrase', stage: 'ultimate' }],
+  [{ id: '4', line: 'lumel', stage: 'mega' }, { id: '4b', line: 'ignar', stage: 'mega' }, { id: '4c', line: 'astrase', stage: 'mega' }],
 ];
 
 /** A arte real, por id (`dino-shadow-<id>.png`, 128², alfa). Instalada em 13/10/2026 (leva low do Higgsfield). */
-export const SHADOW_ART: Readonly<Record<string, string>> = { '1': shadow1, '1b': shadow1b, '1c': shadow1c, '2': shadow2, '2b': shadow2b, '2c': shadow2c, '3': shadow3, '3b': shadow3b, '3c': shadow3c, '4': shadow4, '4b': shadow4b, '4c': shadow4c };
+/**
+ * D-78 (19/10/2026): as silhuetas de Serah (`1b`, `4b`), Nautil (`2c`) e Akashai (`3`) foram removidas — o dono
+ * aposentou essas linhas de todo lugar visível. Os 4 slots reaproveitam, ENQUANTO a arte nova não vem, a silhueta
+ * de outro slot do MESMO degrau (caixa de colisão compatível). Pedir 4 silhuetas novas ao squad-arte.
+ */
+export const SHADOW_ART: Readonly<Record<string, string>> = { '1': shadow1, '1b': shadow1c, '1c': shadow1c, '2': shadow2, '2b': shadow2b, '2c': shadow2b, '3': shadow3b, '3b': shadow3b, '3c': shadow3c, '4': shadow4, '4b': shadow4c, '4c': shadow4c };
 
 export interface ShadowSource { id: string; src: string; /** `true` = arte real; `false` = placeholder pintado de preto em tempo de desenho. */ art: boolean }
 

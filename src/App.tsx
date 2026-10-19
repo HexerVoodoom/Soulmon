@@ -4,6 +4,7 @@ import { Icon } from './components/ui/Icon';
 import { ScreenSkeleton } from './components/ui/ScreenSkeleton';
 import { OfflineSeal } from './components/ui/OfflineSeal';
 import { toast } from 'sonner';
+import { BitsAmount } from './components/ui/BitsAmount';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
@@ -1294,9 +1295,7 @@ export default function App() {
       const total = gifts.reduce((sum, g) => sum + g.bits, 0);
       setGameState(prev => noteFreeBits({ ...prev, gamePoints: (prev.gamePoints ?? 0) + total }, total, playerDayKey(new Date(), prev.playerDayTz)));
       toast.success(
-        language === 'pt-BR'
-          ? `Você recebeu ${total} Bits de amigos!`
-          : `You received ${total} Bits from friends!`,
+        <>{language === 'pt-BR' ? 'Você recebeu ' : 'You received '}<BitsAmount value={total} size={14} />{language === 'pt-BR' ? ' de amigos!' : ' from friends!'}</>,
       );
     }).catch(() => {});
     getPendingTrophies(saveId, true).then(({ trophies }) => {
@@ -3418,9 +3417,11 @@ export default function App() {
       setOcupadoAviso(null);
       if (r) {
         const { layers, bits } = r.report;
-        toast(language === 'pt-BR'
-          ? `Ele voltou da masmorra${layers > 0 || bits > 0 ? `: ${layers} ${layers === 1 ? 'camada' : 'camadas'}, ${bits} Bits` : ''}.`
-          : `He's back from the dungeon${layers > 0 || bits > 0 ? `: ${layers} ${layers === 1 ? 'layer' : 'layers'}, ${bits} Bits` : ''}.`);
+        const temResumo = layers > 0 || bits > 0;
+        toast(<>
+          {language === 'pt-BR' ? 'Ele voltou da masmorra' : "He's back from the dungeon"}
+          {temResumo && <>{`: ${layers} ${language === 'pt-BR' ? (layers === 1 ? 'camada' : 'camadas') : (layers === 1 ? 'layer' : 'layers')}, `}<BitsAmount value={bits} size={14} /></>}.
+        </>);
       }
     } finally { setRetirando(false); }
   }, [setGameState, language]);
@@ -3662,9 +3663,11 @@ export default function App() {
     setGameState(prev => claimCheckIn(prev, agora).state);
     atenderRefeicao('tenSeconds');
     const rw = CHECKIN_REWARDS[slot];
-    toast(language === 'pt-BR'
-      ? (slot === 'morning' ? '☀️ O dia começa com ele alimentado' : slot === 'afternoon' ? `🌤️ +${rw.bits} Bits` : `🌙 +${rw.xp} de Vínculo`)
-      : (slot === 'morning' ? '☀️ The day starts with him fed' : slot === 'afternoon' ? `🌤️ +${rw.bits} Bits` : `🌙 +${rw.xp} Bond`));
+    toast(slot === 'afternoon'
+      ? <>🌤️ <BitsAmount value={rw.bits} sign="+" size={14} /></>
+      : language === 'pt-BR'
+        ? (slot === 'morning' ? '☀️ O dia começa com ele alimentado' : `🌙 +${rw.xp} de Vínculo`)
+        : (slot === 'morning' ? '☀️ The day starts with him fed' : `🌙 +${rw.xp} Bond`));
   }, [language, atenderRefeicao]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
@@ -4131,9 +4134,7 @@ export default function App() {
     if (mult > 1) {
       // Fora do updater (footgun 6): no StrictMode ele roda 2×.
       playBuffSpentRef.current = true;
-      toast(language === 'pt-BR'
-        ? `🎈 A brincadeira rendeu: +${total - pts} Bits extras!`
-        : `🎈 Playtime paid off: +${total - pts} bonus Bits!`);
+      toast(<>{language === 'pt-BR' ? '🎈 A brincadeira rendeu: ' : '🎈 Playtime paid off: '}<BitsAmount value={total - pts} sign="+" size={14} />{language === 'pt-BR' ? ' extras!' : ' bonus!'}</>);
     }
   }, [gameState, language, setGameState]);
 
@@ -4216,7 +4217,7 @@ export default function App() {
       const base = r.ok ? r.state : { ...prev, gamePoints: (prev.gamePoints ?? 0) + pack.bits };
       return { ...base, credits: ent.credits, accountTier: ent.tier };
     });
-    toast(language === 'pt-BR' ? `+${pack.bits} Bits!` : `+${pack.bits} Bits!`);
+    toast(<BitsAmount value={pack.bits} sign="+" size={14} />);
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 

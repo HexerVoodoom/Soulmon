@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { DUNGEON_LINE_SPRITES, DUNGEON_LINE_NAMES, getDungeonEnemySprite } from './sprites';
+import {
+  DUNGEON_LINE_SPRITES, DUNGEON_LINE_NAMES, getDungeonEnemySprite,
+  RETIRED_LINE_IDS, RETIRED_LINE_STAND_IN, resolveArtLineId, getSpriteForStage, STARTER_SPRITES,
+} from './sprites';
 import { PREMADE_CHARACTERS } from './monetization';
 import { STARTER_IDS, STARTER_NAMES } from './sprites';
 import { LIBRARY_NPCS } from './libraryNpcs';
+import { SHADOW_SLOTS } from './nightmareShadows';
 
 /**
  * WP4.9 — o roster da masmorra é `DUNGEON_LINE_SPRITES` (linhas NOSSAS — 6 até
@@ -24,8 +28,9 @@ import { LIBRARY_NPCS } from './libraryNpcs';
 describe('roster da masmorra (WP4.9)', () => {
   const lines = Object.keys(DUNGEON_LINE_SPRITES);
 
-  it('tem exatamente 9 linhas, cada uma com as 4 artes', () => {
-    expect(lines).toHaveLength(9);
+  it('tem exatamente 6 linhas (D-78: sem orrin/serah/nautilu), cada uma com as 4 artes = 24 artes', () => {
+    expect(lines).toHaveLength(6);
+    expect(lines.length * 4).toBe(24);
     for (const l of lines) {
       for (const stage of ['rookie', 'champion', 'ultimate', 'mega'] as const) {
         expect(typeof DUNGEON_LINE_SPRITES[l][stage]).toBe('string');
@@ -143,7 +148,7 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
     expect(PREMADE_CHARACTERS.map(c => c.name))
       .toEqual(STARTER_IDS.map(id => STARTER_NAMES[id]));
     expect(LIBRARY_NPCS.map(n => n.petName))
-      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra]);
+      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.astrase, DUNGEON_LINE_NAMES.thalindra]);
     for (const c of PREMADE_CHARACTERS) expect(proibido(c.name)).toBe(false);
     for (const n of LIBRARY_NPCS) expect(proibido(String(n.petName))).toBe(false);
   });
@@ -152,7 +157,31 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
     // O rótulo é cosmético; o id não é. Trocar um id renomearia arquivo de
     // arte e quebraria todo save com `demoCharacterId`.
     // 15/09/2026: +igni/nautilu/astrase (D1) — acrescentar é permitido, renomear não.
+    // D-78 (19/10/2026): orrin/serah/nautilu aposentadas — SAIR do roster é permitido (R4 do dono), renomear não.
     expect(Object.keys(DUNGEON_LINE_SPRITES).sort())
-      .toEqual(['astrase', 'ignar', 'igni', 'kaelen', 'lumel', 'nautilu', 'orrin', 'serah', 'thalindra']);
+      .toEqual(['astrase', 'ignar', 'igni', 'kaelen', 'lumel', 'thalindra']);
+  });
+
+  it('D-78: as 3 linhas aposentadas não aparecem em NENHUMA lista visível (arte nem nome)', () => {
+    for (const id of RETIRED_LINE_IDS) {
+      expect(DUNGEON_LINE_SPRITES[id], id).toBeUndefined();
+      expect(DUNGEON_LINE_NAMES[id], id).toBeUndefined();
+    }
+    for (let i = 0; i < 200; i++) expect(RETIRED_LINE_IDS).not.toContain(getDungeonEnemySprite('mega').line);
+    // sombras do Pesadelo e NPCs da Biblioteca: nenhuma linha aposentada, e o NPC não se chama Akashai/Serah/Nautil
+    for (const slot of SHADOW_SLOTS.flat()) expect(RETIRED_LINE_IDS, slot.id).not.toContain(slot.line);
+    for (const n of LIBRARY_NPCS) expect(['Akashai', 'Serah', 'Nautil']).not.toContain(n.petName);
+  });
+
+  it('D-78: id aposentado em save/perfil antigo segue VÁLIDO, mas desenha o inicial de reserva', () => {
+    for (const id of RETIRED_LINE_IDS) {
+      const reserva = RETIRED_LINE_STAND_IN[id];
+      expect(resolveArtLineId(id)).toBe(reserva);
+      for (const stage of ['rookie', 'champion', 'ultimate', 'mega', 'ultra']) {
+        expect(getSpriteForStage(stage, id), `${id}:${stage}`).toBe(STARTER_SPRITES[reserva]);
+      }
+    }
+    expect(resolveArtLineId('ignar')).toBe('ignar');
+    expect(resolveArtLineId(undefined)).toBeUndefined();
   });
 });

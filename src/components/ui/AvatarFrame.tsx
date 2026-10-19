@@ -3,6 +3,7 @@ import { Icon } from './Icon';
 import { MiniGlass } from './MiniGlass';
 import { FRAMES, FRAME_ART_CANVAS, FRAME_ART_OPENING, frameArt, frameAvailable, type AvatarFrame as FrameDef, type FrameContext } from '../../utils/frames';
 import { PixelIcon } from './PixelIcon';
+import { BitsAmount } from './BitsAmount';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 
@@ -87,9 +88,10 @@ export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
 }
 
 /** O que a linha mostra sobre COMO se consegue a moldura (quando está trancada). */
-function howText(f: FrameDef, isPt: boolean): string {
+function howText(f: FrameDef, isPt: boolean): ReactNode {
   if (f.origin === 'rank') return isPt ? 'Pela faixa do Torneio' : 'From your Tournament tier';
-  if (f.origin === 'shop') return isPt ? `Loja · ${f.price} Bits` : `Shop · ${f.price} Bits`;
+  // D-62/D-80: o valor em Bits é SEMPRE o `BitsAmount` (moeda + número; "Bits" só para leitor de tela).
+  if (f.origin === 'shop') return <>{isPt ? 'Loja' : 'Shop'} · <BitsAmount value={f.price ?? 0} size={12} /></>;
   return (isPt ? f.howPt : f.howEn) ?? '';
 }
 

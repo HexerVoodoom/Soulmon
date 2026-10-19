@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useBackLayer } from '../utils/backStack';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -972,21 +972,21 @@ function DungeonSummary({ isPt, resumo, capBits }: {
   isPt: boolean; capBits: boolean;
   resumo: { layers: number; enemies: number; bits: number; hearts: number; glitchtama: number; fragments: number; energy: number; recordFrom: number; recordTo: number };
 }) {
-  const linhas: string[] = [
-    isPt ? `Camadas limpas: ${resumo.layers}` : `Layers cleared: ${resumo.layers}`,
-    isPt ? `Criaturas que pararam de insistir: ${resumo.enemies}` : `Creatures that stopped holding: ${resumo.enemies}`,
-    capBits
-      ? (isPt ? `Bits: ${resumo.bits} (o teto diário de Bits já foi atingido)` : `Bits: ${resumo.bits} (the daily Bits cap was already reached)`)
-      : `Bits: ${resumo.bits}`,
+  const linhas: Array<{ k: string; n: ReactNode }> = [
+    { k: 'layers', n: isPt ? `Camadas limpas: ${resumo.layers}` : `Layers cleared: ${resumo.layers}` },
+    { k: 'enemies', n: isPt ? `Criaturas que pararam de insistir: ${resumo.enemies}` : `Creatures that stopped holding: ${resumo.enemies}` },
+    // D-62/D-80: o valor em Bits é o `BitsAmount` (moeda + número); o rótulo "Bits" fica só para leitor de tela.
+    { k: 'bits', n: <><BitsAmount value={resumo.bits} />{capBits ? (isPt ? ' (o teto diário de Bits já foi atingido)' : ' (the daily Bits cap was already reached)') : ''}</> },
   ];
-  if (resumo.hearts > 0) linhas.push(isPt ? `Coraçãozinho: +${resumo.hearts} (mochila)` : `Little heart: +${resumo.hearts} (Backpack)`);
-  if (resumo.glitchtama > 0) linhas.push(isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
-  if (resumo.fragments > 0) linhas.push(isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
-  if (resumo.recordTo > resumo.recordFrom) linhas.push(isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`);
-  if (resumo.energy > 0) linhas.push(isPt ? `Energia usada: ${resumo.energy}` : `Energy used: ${resumo.energy}`);
+  const add = (k: string, n: string) => linhas.push({ k, n });
+  if (resumo.hearts > 0) add('hearts', isPt ? `Coraçãozinho: +${resumo.hearts} (mochila)` : `Little heart: +${resumo.hearts} (Backpack)`);
+  if (resumo.glitchtama > 0) add('glitchtama', isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
+  if (resumo.fragments > 0) add('fragments', isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
+  if (resumo.recordTo > resumo.recordFrom) add('record', isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`);
+  if (resumo.energy > 0) add('energy', isPt ? `Energia usada: ${resumo.energy}` : `Energy used: ${resumo.energy}`);
   return (
     <ul data-dungeon-summary aria-label={isPt ? 'Resumo da descida' : 'Descent summary'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {linhas.map(l => <li key={l} className="sm2-num" style={phaseLine}>{l}</li>)}
+      {linhas.map(l => <li key={l.k} className="sm2-num" style={phaseLine}>{l.n}</li>)}
     </ul>
   );
 }

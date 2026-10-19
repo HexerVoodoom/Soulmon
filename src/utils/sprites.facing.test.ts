@@ -4,7 +4,7 @@ import { artFacesLeft, LEFT_FACING_LINES, DUNGEON_LINE_SPRITES } from './sprites
 describe('para onde a arte olha', () => {
   it('linhas de perfil esquerdo são declaradas; as demais olham para a direita/de frente', () => {
     expect(artFacesLeft('rookie', 'igni')).toBe(true);
-    expect(artFacesLeft('champion', 'nautilu')).toBe(true);
+    expect(artFacesLeft('champion', 'nautilu')).toBe(false); // D-78: aposentada → inicial de reserva (de frente)
     expect(artFacesLeft('rookie', 'kaelen')).toBe(true);
     expect(artFacesLeft('rookie', 'corvo')).toBe(true);
     expect(artFacesLeft('rookie', 'ignar')).toBe(false);
