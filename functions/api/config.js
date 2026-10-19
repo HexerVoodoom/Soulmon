@@ -26,8 +26,8 @@ export async function onRequestGet({ env }) {
     // true = `/api/transcribe` tem provedor configurado. O cliente usa isto
     // para NÃO DESENHAR o botão de microfone quando ele não teria como
     // funcionar — botão que existe e falha é pior que botão que não existe.
-    // As duas variáveis são conferidas juntas porque a rota exige as duas.
-    transcribeAvailable: !!(env.SUPABASE_PROJECT_ID && env.SUPABASE_ANON_KEY),
+    // Provedor = Groq direto; a rota só exige `GROQ_API_KEY`.
+    transcribeAvailable: !!env.GROQ_API_KEY,
     // Kill-switches do beta (`_killSwitch.js`, BETA-CONTINGENCIA §0): a UI
     // esconde compra / IA do chat. Quem GARANTE é o servidor, não este campo.
     billingDisabled: isBillingDisabled(env),

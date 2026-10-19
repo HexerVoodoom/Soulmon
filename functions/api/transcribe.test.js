@@ -1,16 +1,13 @@
 /**
  * `/api/transcribe` — a rota que carrega a VOZ da pessoa.
  *
- * Ela nasceu junto com estes testes (09/09/2026), substituindo um `fetch`
- * direto do navegador para `*.supabase.co` com o JWT do projeto embarcado no
- * bundle. O que os casos aqui protegem não é "funciona": é **o que a rota se
- * recusa a fazer**.
+ * O Worker repassa o áudio direto ao Groq Whisper. O que os casos aqui
+ * protegem não é "funciona": é **o que a rota se recusa a fazer**.
  *
  * Três coisas, em ordem de dano:
  *
- *  1. **Não vaza o destino nem a credencial.** O id do projeto vira HOST da
- *     chamada e a chave é do servidor. Um `error.message` repassado ao cliente
- *     entrega os dois de graça.
+ *  1. **Não vaza a credencial nem o corpo do provedor.** A chave é do
+ *     servidor; um `error.message` repassado ao cliente a entregaria de graça.
  *  2. **Não vira túnel.** Rota anônima que aceita corpo binário é upload
  *     gratuito na nossa borda se não tiver teto de tamanho e de taxa.
  *  3. **Não GRAVA o áudio.** Nada aqui escreve em KV. É repasse, e o teste
@@ -28,13 +25,14 @@ vi.mock('./_auth.js', async orig => ({
 }));
 import { onRequestPost, onRequestOptions } from './transcribe.js';
 
-const PROJECT = 'evvcdsnijxbyctipfnkt';
+const GROQ = 'https://api.groq.com/openai/v1/audio/transcriptions';
+const CHAVE = 'gsk-duble';
 function kvFalso() {
   const m = new Map();
   return { get: async k => m.get(k) ?? null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); } };
 }
 // KV desde a release/beta-1: a transcrição passa pelo `_aiGuard` (cota 10/conta/dia, 100/dia).
-const ENV = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'jwt-do-servidor', FIREBASE_PROJECT_ID: 'soulmon-app', get DIGIAPP_SAVES() { return kvFalso(); } };
+const ENV = { GROQ_API_KEY: CHAVE, FIREBASE_PROJECT_ID: 'soulmon-app', get DIGIAPP_SAVES() { return kvFalso(); } };
 
 /** IP próprio por caso: o balde do teto vive no isolate e é compartilhado. */
 let n = 0;
@@ -61,7 +59,7 @@ function stubUpstream(resposta) {
     return resposta();
   }));
 }
-const ok = corpo => () => new Response(JSON.stringify(corpo), {
+const ok = corpo => () => new Response(JSON.stringify({ duration: 5, ...corpo }), {
   status: 200, headers: { 'Content-Type': 'application/json' },
 });
 
@@ -69,9 +67,9 @@ beforeEach(() => { chamadas = []; });
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('🔴 desligada por padrão — botão que falha é pior que botão que não existe', () => {
-  it('sem as variáveis do provedor é 503, e NÃO chama ninguém', async () => {
+  it('sem GROQ_API_KEY é 503, e NÃO chama ninguém', async () => {
     stubUpstream(ok({ text: 'oi' }));
-    for (const env of [{}, { SUPABASE_PROJECT_ID: PROJECT }, { SUPABASE_ANON_KEY: 'k' }]) {
+    for (const env of [{}, { GROQ_API_KEY: '' }, { FIREBASE_PROJECT_ID: 'soulmon-app' }]) {
       const r = await onRequestPost({ request: pedido(), env });
       expect(r.status, JSON.stringify(env)).toBe(503);
       expect((await r.json()).error).toBe('transcribe-not-configured');
@@ -79,19 +77,8 @@ describe('🔴 desligada por padrão — botão que falha é pior que botão que
     expect(chamadas).toEqual([]);
   });
 
-  it('🔴 id de projeto TORTO é 503 — senão vira SSRF por configuração', async () => {
-    // O id vira HOST. `evil.com/` ou `x.attacker.net` numa variável de ambiente
-    // montaria uma URL para outro domínio, com a NOSSA chave no cabeçalho.
-    stubUpstream(ok({ text: 'oi' }));
-    for (const id of ['evil.com', 'a', 'PROJETO', 'abc.def', '../x', 'a'.repeat(41), 'proj eto']) {
-      const r = await onRequestPost({ request: pedido(), env: { ...ENV, SUPABASE_PROJECT_ID: id } });
-      expect(r.status, id).toBe(503);
-    }
-    expect(chamadas).toEqual([]);
-  });
-
   it('a configuração é conferida ANTES de ler o corpo', async () => {
-    // Ler 4 MB para descobrir que o serviço não existe gasta os dados móveis
+    // Ler 2 MB para descobrir que o serviço não existe gasta os dados móveis
     // da pessoa por nada.
     stubUpstream(ok({ text: 'oi' }));
     const req = pedido();
@@ -117,10 +104,42 @@ describe('o que entra', () => {
 
   it('🔴 áudio grande demais é 413 — a rota é anônima e aceita binário', async () => {
     stubUpstream(ok({ text: '' }));
-    const grande = new Blob([new Uint8Array(4 * 1024 * 1024 + 1)], { type: 'audio/webm' });
+    const grande = new Blob([new Uint8Array(2 * 1024 * 1024 + 1)], { type: 'audio/webm' });
     const r = await onRequestPost({ request: pedido({ audio: grande }), env: ENV });
     expect(r.status).toBe(413);
     expect(chamadas).toEqual([]);
+  });
+
+  it('🔴 duração > 65 s no verbose_json é 413 audio-too-long, SEM texto e SEM devolver a cota', async () => {
+    stubUpstream(ok({ text: 'texto longo', duration: 66 }));
+    const store = kvFalso();
+    const r = await onRequestPost({ request: pedido(), env: { ...ENV, DIGIAPP_SAVES: store } });
+    expect(r.status).toBe(413);
+    expect(await r.json()).toEqual({ error: 'audio-too-long' });
+    const hoje = new Date().toISOString().slice(0, 10);
+    expect(await store.get(`ai:transcribe:@all:${hoje}`)).toBe('1');
+  });
+
+  it('🔴 duration ausente é 413 (fail-closed)', async () => {
+    stubUpstream(() => new Response(JSON.stringify({ text: 'oi' }), { status: 200 }));
+    const r = await onRequestPost({ request: pedido(), env: ENV });
+    expect(r.status).toBe(413);
+    expect((await r.json()).error).toBe('audio-too-long');
+  });
+
+  it('🔴 Content-Length gigante é 413 sem chamar o provedor', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const h = new Headers({ 'CF-Connecting-IP': ipNovo(), Authorization: 'Bearer token-valido', 'content-length': String(3 * 1024 * 1024) });
+    const espiao = vi.fn(() => { throw new Error('leu o corpo'); });
+    const r = await onRequestPost({ request: { headers: h, formData: espiao }, env: ENV });
+    expect(espiao).not.toHaveBeenCalled();
+    expect(r.status).toBe(413);
+    expect(chamadas).toEqual([]);
+  });
+
+  it('duração de 65 s passa', async () => {
+    stubUpstream(ok({ text: 'oi', duration: 65 }));
+    expect((await (await onRequestPost({ request: pedido(), env: ENV })).json()).text).toBe('oi');
   });
 
   it('tipo que não é áudio é 415', async () => {
@@ -186,13 +205,10 @@ describe('🔴 o teto por IP — transcrição é a chamada mais cara do projeto
 
 describe('🔴 o que a resposta NÃO carrega de volta', () => {
   it('falha de rede no provedor é 502, sem a mensagem do erro', async () => {
-    // A mensagem carrega a URL montada, e a URL carrega o id do projeto.
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error(`falhou em https://${PROJECT}.supabase.co/x`); }));
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error(`falhou com Bearer ${CHAVE}`); }));
     const r = await onRequestPost({ request: pedido(), env: ENV });
     expect(r.status).toBe(502);
-    const texto = await r.text();
-    expect(texto).not.toContain(PROJECT);
-    expect(texto).not.toContain('supabase');
+    expect(await r.text()).not.toContain(CHAVE);
   });
 
   it('erro do provedor é 502, e o corpo dele não é repassado', async () => {
@@ -231,17 +247,38 @@ describe('🔴 o que a resposta NÃO carrega de volta', () => {
 });
 
 describe('a chamada ao provedor', () => {
-  it('vai para o HOST derivado do id, com a chave do SERVIDOR no cabeçalho', async () => {
+  it('vai ao endpoint do Groq, com a chave do SERVIDOR e os parâmetros fixos', async () => {
     stubUpstream(ok({ text: 'oi' }));
     await onRequestPost({ request: pedido(), env: ENV });
-    expect(chamadas[0].url).toBe(`https://${PROJECT}.supabase.co/functions/v1/make-server-7de212d9/transcribe`);
-    expect(chamadas[0].init.headers.Authorization).toBe('Bearer jwt-do-servidor');
+    expect(chamadas[0].url).toBe(GROQ);
+    expect(chamadas[0].init.headers.Authorization).toBe(`Bearer ${CHAVE}`);
+    const f = chamadas[0].init.body;
+    expect(f.get('model')).toBe('whisper-large-v3');
+    expect(f.get('response_format')).toBe('verbose_json');
+    expect(f.get('temperature')).toBe('0');
+    expect(f.get('language')).toBe('pt');
   });
 
-  it('tem TIMEOUT — sem ele a requisição fica pendurada até o limite do isolate', async () => {
+  it('o nome do arquivo vem do mime REAL, não do nome do cliente', async () => {
     stubUpstream(ok({ text: 'oi' }));
+    const casos = [
+      ['audio/mp4', 'audio.mp4'], ['audio/webm;codecs=opus', 'audio.webm'], ['audio/ogg', 'audio.ogg'],
+      ['audio/x-m4a', 'audio.m4a'], ['audio/mpeg', 'audio.mp3'], ['audio/wav', 'audio.wav'],
+    ];
+    for (const [tipo, nome] of casos) {
+      await onRequestPost({ request: pedido({ tipo, token: `token-valido-n${tipo.replace(/\W/g, '')}` }), env: ENV });
+      // O cliente mandou "recording.webm" em todos.
+      expect(chamadas.at(-1).init.body.get('file').name, tipo).toBe(nome);
+    }
+  });
+
+  it('tem TIMEOUT de 25 s: o signal é passado', async () => {
+    stubUpstream(ok({ text: 'oi' }));
+    const espiao = vi.spyOn(AbortSignal, 'timeout');
     await onRequestPost({ request: pedido(), env: ENV });
-    expect(chamadas[0].init.signal).toBeTruthy();
+    expect(chamadas[0].init.signal).toBeInstanceOf(AbortSignal);
+    expect(espiao).toHaveBeenCalledWith(25_000);
+    espiao.mockRestore();
   });
 });
 
@@ -263,7 +300,7 @@ describe('🔴 a rota NÃO grava o áudio', () => {
     }
     // AUTOVERIFICAÇÃO: a remoção de comentários não pode ter comido o arquivo.
     expect(semComentarios).toContain('onRequestPost');
-    expect(semComentarios).toContain('supabase.co');
+    expect(semComentarios).toContain('api.groq.com');
   });
 
   // Desde a release/beta-1 a rota grava CONTADORES de cota (`ai:transcribe:*`)
@@ -315,7 +352,7 @@ describe('🔴 auditoria de lançamento — a rota não é mais anônima', () =>
 describe('cota da transcrição (release/beta-1, abuso-e-custo V4.5 / Q4)', () => {
   it('a 11ª do dia na mesma conta é 429 ai-daily-limit e NÃO chama o provedor', async () => {
     stubUpstream(ok({ text: 'oi' }));
-    const env = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'k', FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: kvFalso() };
+    const env = { GROQ_API_KEY: CHAVE, FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: kvFalso() };
     const { resetRateLimits } = await import('./_rateLimit.js');
     for (let i = 0; i < 10; i++) {
       resetRateLimits(); // isola o teto POR MINUTO; aqui o alvo é o diário
@@ -330,7 +367,7 @@ describe('cota da transcrição (release/beta-1, abuso-e-custo V4.5 / Q4)', () =
 
   it('a 5ª no mesmo minuto é 429 ai-rate-limit', async () => {
     stubUpstream(ok({ text: 'oi' }));
-    const env = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'k', FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: kvFalso() };
+    const env = { GROQ_API_KEY: CHAVE, FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: kvFalso() };
     for (let i = 0; i < 4; i++) expect((await onRequestPost({ request: pedido(), env })).status).toBe(200);
     const r = await onRequestPost({ request: pedido(), env });
     expect(r.status).toBe(429);
@@ -340,7 +377,7 @@ describe('cota da transcrição (release/beta-1, abuso-e-custo V4.5 / Q4)', () =
   it('provedor fora devolve a unidade (não queima a cota do dia)', async () => {
     stubUpstream(() => new Response('x', { status: 500 }));
     const store = kvFalso();
-    const env = { SUPABASE_PROJECT_ID: PROJECT, SUPABASE_ANON_KEY: 'k', FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: store };
+    const env = { GROQ_API_KEY: CHAVE, FIREBASE_PROJECT_ID: 'soulmon-app', DIGIAPP_SAVES: store };
     expect((await onRequestPost({ request: pedido(), env })).status).toBe(502);
     const hoje = new Date().toISOString().slice(0, 10);
     expect(await store.get(`ai:transcribe:@all:${hoje}`)).toBe('0');

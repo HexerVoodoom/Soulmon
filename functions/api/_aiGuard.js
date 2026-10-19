@@ -99,7 +99,7 @@ export const AI_LIMITS = {
   // gratuitos com folga) e `perMinute` 4 por conta (amortecedor de rajada: o Groq
   // gratuito é 30 RPM para a org inteira; memória do isolate, não exato).
   chat: { perAccount: 15, perAccountByTier: { demo: 15, paid: 20 }, global: 250, perMinute: 4 },
-  // Transcrição (Supabase → fala): passava sem cota nenhuma (`abuso-e-custo` V4.5).
+  // Transcrição (voz → Groq Whisper, direto do Worker desde 19/10/2026): passava sem cota nenhuma (`abuso-e-custo` V4.5).
   transcribe: { perAccount: 10, global: 100, perMinute: 4 },
   suggest: { perAccount: 30, global: 3000 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.

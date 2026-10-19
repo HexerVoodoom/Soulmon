@@ -91,7 +91,7 @@ Uma linha por assunto: onde ele mora, quem decide no código, e o que trava.
 | Cloud save, debounce e reconciliação | [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | §3 | `src/utils/cloudSave.ts` | `src/utils/cloudSave.reconcile.test.ts` |
 | Chaves de `localStorage` e migrações | [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | §4, §5 | `src/utils/storageKeys.ts` → `STORAGE_KEYS` | `src/utils/storageKeys.migration.test.ts` |
 | `saveId` e as três implementações | [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | §7 | `emailToSaveId` (app, overlay) + `functions/api/_auth.js` | `functions/api/saveId.parity.test.js` |
-| Integrações externas (Firebase, Groq, Higgsfield, Supabase, FCM, Billing, Steam) | [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | §2 | `functions/api/*.js` | `src/security/supabase.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts` |
+| Integrações externas (Firebase, Groq, Higgsfield, FCM, Billing, Steam) | [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | §2 | `functions/api/*.js` | `src/security/transcribe.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts` |
 | Deploy, URL de produção, CI e `CACHE_VERSION` | [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | §3 | `capacitor.config.json`, `desktop/renderer/src/config.ts` → `APP_URL`; o que está NO AR é do `soulmon-operador` (desde 21/09/2026) | `src/deploy/appUrl.contract.test.ts` |
 | Paridade entre superfícies (web/APK/overlay), inglês como base, a11y de código | [05-ARQUITETURA.md](05-ARQUITETURA.md) §4 · [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §3.4 · [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) | — | `soulmon-guarda-plataforma` (desde 21/09/2026, decisão #28), ledger [`ledger/plataforma.md`](../plano-melhorias/ledger/plataforma.md) | `src/deploy/depsVivas.contract.test.ts`, `src/deploy/orcamentoDeBytes.contract.test.ts`, `src/i18nSemPtSozinho.contract.test.ts` |
 | Como chegamos aqui (linha do tempo, tags, PRs) | [09-HISTORICO.md](09-HISTORICO.md) | §1–§5 | `git log` | os comandos colados no próprio doc |
@@ -190,7 +190,7 @@ Quatro campos por linha, e nenhum fica vazio: onde **ler**, o **dono** (o símbo
 | Fila 2 — slot de avisos da Home | 03 §3.2 | `src/App.tsx` (slot da Home) | `src/components/filaDeAvisos.contract.test.ts` | 10 §11 |
 | Home | 03 §4.1 | `src/App.tsx` (`currentView === 'main'`) | `src/components/filaDeAvisos.contract.test.ts` | 10 §11 |
 | Área do pet (`CompanionHUD`) | 03 §4.2 | `src/components/CompanionHUD.tsx` | `src/components/sintonia-chiado.render.test.tsx` | 10 §11 |
-| Barra de conversa (`ChatBox`) | 03 §4.3 | `src/components/ChatBox.tsx` + `functions/api/chat.js` | `src/security/supabase.contract.test.ts` | 10 §7 |
+| Barra de conversa (`ChatBox`) | 03 §4.3 | `src/components/ChatBox.tsx` + `functions/api/chat.js` | `src/security/transcribe.contract.test.ts` | 10 §7 |
 | Página Atividades | 03 §4.4 | `src/components/nav/AreaView.tsx` (Exploração + Jogos) | `src/utils/activityCreate.contract.test.ts` | 10 §2 |
 | Lista de atividades e seus modais | 03 §4.5 | `src/components/EditModal.tsx`, `src/hooks/useItemForm.ts` | `src/utils/habitCreate.test.ts` | 10 §2 |
 | Loja (abas) | 03 §4.6 | `src/components/mercado/MercadoSheets.tsx` (⚰️ `ShopModal`, 24/09/2026) + `src/utils/mercadoCatalog.ts` + `src/utils/shopBuy.ts` | `src/utils/shopBuy.test.ts` | 10 §6 |
@@ -225,7 +225,7 @@ Quatro campos por linha, e nenhum fica vazio: onde **ler**, o **dono** (o símbo
 | Firebase Auth (projeto `soulmon-app`) | 08 §2.1 | `src/utils/auth.ts` + `.env.production` | `src/deploy/firebaseNoBuild.contract.test.ts`, `src/utils/auth.redirect.test.ts` | 10 §13 |
 | Groq (chat do pet, sugestão de tarefas) | 08 §2.2 | `functions/api/chat.js`, `functions/api/suggest-tasks.js` | `functions/api/chat.promptInjection.test.js`, `functions/api/suggest-tasks.contract.test.js`, `src/utils/chatSafety.test.ts` | 10 §7 |
 | Higgsfield / Gemini (geração de sprite) | 08 §2.3 | `functions/api/generate-sprite.js` + `src/utils/spriteRunner.ts` | `src/utils/spritePrompt.dono.contract.test.ts`, `src/utils/spriteGen.contract.test.ts` | 10 §10 |
-| Supabase (transcrição de voz) | 08 §2.4 | `functions/api/transcribe.js` | `src/security/supabase.contract.test.ts` | 10 §14 |
+| Groq Whisper (transcrição de voz) | 08 §2.4 | `functions/api/transcribe.js` | `src/security/transcribe.contract.test.ts` | 10 §14 |
 | Web Push (VAPID) | 08 §2.5 | `functions/api/subscribe.js` + `workers/webpush.js` | `workers/vapid.parity.test.js` | 10 §7 |
 | FCM (push nativo Android) | 08 §2.6 | `functions/api/fcm-subscribe.js` + `workers/fcm.js` | `workers/pushCopy.parity.test.js` | 10 §7 |
 | Agendador de push | 08 §2.7 | `workers/push-scheduler.js` → `PUSH_HOURS_BRT` | `workers/pushCopy.parity.test.js` | 10 §7 |

@@ -3039,7 +3039,7 @@ var AI_LIMITS = {
   // gratuitos com folga) e `perMinute` 4 por conta (amortecedor de rajada: o Groq
   // gratuito é 30 RPM para a org inteira; memória do isolate, não exato).
   chat: { perAccount: 15, perAccountByTier: { demo: 15, paid: 20 }, global: 250, perMinute: 4 },
-  // Transcrição (Supabase → fala): passava sem cota nenhuma (`abuso-e-custo` V4.5).
+  // Transcrição (voz → Groq Whisper, direto do Worker desde 19/10/2026): passava sem cota nenhuma (`abuso-e-custo` V4.5).
   transcribe: { perAccount: 10, global: 100, perMinute: 4 },
   suggest: { perAccount: 30, global: 3e3 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
@@ -3296,10 +3296,11 @@ __name(perMinuteGate, "perMinuteGate");
 var GROQ_MODEL_DEFAULT = "openai/gpt-oss-120b";
 var GEMINI_MODEL = "gemini-2.5-flash";
 var GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-var TIMEOUT_MS = 1e4;
-async function timedFetch(url, init) {
+var GROQ_TIMEOUT_MS = 12e3;
+var GEMINI_TIMEOUT_MS = 8e3;
+async function timedFetch(url, init, timeoutMs) {
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: ctl.signal });
   } finally {
@@ -3332,7 +3333,7 @@ async function callGroq(env, req2, withTools) {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.GROQ_API_KEY}` },
     body: JSON.stringify(body)
-  });
+  }, GROQ_TIMEOUT_MS);
   return res;
 }
 __name(callGroq, "callGroq");
@@ -3422,7 +3423,7 @@ async function gemini(env, req2) {
       tools: geminiTools(tools),
       generationConfig: { temperature: Math.min(temperature, 2), maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } }
     })
-  });
+  }, GEMINI_TIMEOUT_MS);
   if (!res.ok) return { ok: false, status: res.status };
   const data = await res.json();
   const parts = data.candidates?.[0]?.content?.parts ?? [];
@@ -3831,7 +3832,7 @@ var KNOWLEDGE = [
   { "id": "termo-quatro-superficies", "t": "Quatro superf\xEDcies", "x": "Os quatro lugares onde o Soulmon aparece: o app web/PWA, o APK Android (com widgets), o overlay de desktop e as notifica\xE7\xF5es. A regra web vale para todas \u2014 o APK carrega a URL de produ\xE7\xE3o." },
   { "id": "termo-ruptura-trama-guarda", "t": "Ruptura / Trama / Guarda", "x": "Vocabul\xE1rio de MUNDO (lore) para os caminhos: Ruptura = Poder, Trama = Harmonia, Guarda = Benevol\xEAncia. Nunca r\xF3tulo de interface." },
   { "id": "termo-roda", "t": "Roda", "x": 'O nome, para a pessoa, do grupo do Cl\xE3 ("da sua roda", "a roda vai at\xE9 ele"). At\xE9 12 pessoas; a presen\xE7a \xE9 nominal s\xF3 com \u2264 4. Na Roda (se\xE7\xE3o do Sal\xE3o) moram os tr\xEAs gestos: aceno, luz, descanso.' },
-  { "id": "termo-recado-falado", "t": "Recado falado", "x": "A mensagem de voz do ChatBox. Passa por /api/transcribe (mesma origem, credencial no servidor) e fica desligada enquanto o ambiente n\xE3o tiver as vari\xE1veis do provedor \u2014 sem elas o bot\xE3o de microfone nem \xE9 desenhado." },
+  { "id": "termo-recado-falado", "t": "Recado falado", "x": "A mensagem de voz do ChatBox. Passa por /api/transcribe (mesma origem, credencial no servidor) e fica desligada enquanto o ambiente n\xE3o tiver as GROQ_API_KEY \u2014 sem ela o bot\xE3o de microfone nem \xE9 desenhado." },
   { "id": "termo-regua-viva", "t": "R\xE9gua viva", "x": "O teste que decide, quando um doc e o c\xF3digo discordam. \xC9 sempre ele que se cita como prova \u2014 nunca um par\xE1grafo de documenta\xE7\xE3o, que envelhece sem ficar vermelho." },
   { "id": "termo-relatorio-diario", "t": "Relat\xF3rio di\xE1rio", "x": "O resumo do dia escrito na virada e mostrado uma vez por dia. Carrega o check-in de humor, a mem\xF3ria do dia e o objetivo do jogador em dias completos." },
   { "id": "termo-relatorio-semanal", "t": "Relat\xF3rio semanal", "x": "A leitura de domingo, checada por SEMANA e n\xE3o por dia: const\xE2ncia por h\xE1bito, melhor h\xE1bito, categoria dominante, esfor\xE7o conclu\xEDdo, sonhos e a sugest\xE3o de encadeamento. Tudo descri\xE7\xE3o, nunca veredito \u2014 e a sugest\xE3o devolve null sem dados suficientes." },
@@ -3847,7 +3848,6 @@ var KNOWLEDGE = [
   { "id": "termo-sonhos-dreamdex", "t": "Sonhos / DreamDex", "x": "A cole\xE7\xE3o de cenas do pet, uma por noite dentro da janela de descanso. Raridade vem da REGULARIDADE, nunca da dura\xE7\xE3o, com piso comum \u2014 pouca regularidade rende menos pr\xEAmio, jamais castigo. A barra s\xF3 cresce." },
   { "id": "termo-soulmon", "t": "Soulmon", "x": "O app e a criatura. Um app de produtividade gamificado do g\xEAnero v-pet, em que o avatar evolui COM o usu\xE1rio e o encoraja \u2014 nunca cobra." },
   { "id": "termo-squad", "t": "Squad", "x": "Um conjunto de agentes com contrato, m\xE9todo e guard execut\xE1vel, invocado por comando. A que escreve este manual \xE9 a SQUAD-DOCS." },
-  { "id": "termo-supabase", "t": "Supabase", "x": "O provedor da transcri\xE7\xE3o do recado falado, chamado pelo servidor. \u26A0\uFE0F At\xE9 09/09/2026 o ChatBox mandava \xE1udio direto para um projeto da era do fork, com o JWT commitado \u2014 bloqueado pela CSP, sem permiss\xE3o de \xE1udio no Android e declarado em lugar nenhum. Hoje \xE9 funcionalidade de verdade, presa por guard." },
   { "id": "termo-tarefa", "t": "Tarefa", "x": "O contrato de EXECU\xC7\xC3O: o valor est\xE1 em terminar e sair da cabe\xE7a. Tem esfor\xE7o, prazo, adiamentos, estados e assombra\xE7\xE3o. N\xE3o se mistura com h\xE1bito." },
   { "id": "termo-telemetria", "t": "Telemetria", "x": "Os eventos m\xEDnimos que arbitram as decis\xF5es do plano, com allowlist de props por evento e nenhum campo de texto livre. Hoje n\xE3o h\xE1 o que ler: ningu\xE9m usou o app em produ\xE7\xE3o." },
   { "id": "termo-teto-de-minijogo-bits", "t": "Teto de minijogo (Bits)", "x": "O limite de 150 Bits por dia do jogador que Dino, PPT e Masmorra podem render juntos, contra os 100 Bits por dia completo que a virada credita a quem cuida (decis\xE3o do dono #61/#63, 22/09/2026). Bater o teto s\xF3 faz os Bits pararem de somar \u2014 n\xE3o bloqueia minijogo, n\xE3o cobra entrada, n\xE3o toca cora\xE7\xE3o." },
@@ -7499,8 +7499,8 @@ async function onRequestGet({ env }) {
     // true = `/api/transcribe` tem provedor configurado. O cliente usa isto
     // para NÃO DESENHAR o botão de microfone quando ele não teria como
     // funcionar — botão que existe e falha é pior que botão que não existe.
-    // As duas variáveis são conferidas juntas porque a rota exige as duas.
-    transcribeAvailable: !!(env.SUPABASE_PROJECT_ID && env.SUPABASE_ANON_KEY),
+    // Provedor = Groq direto; a rota só exige `GROQ_API_KEY`.
+    transcribeAvailable: !!env.GROQ_API_KEY,
     // Kill-switches do beta (`_killSwitch.js`, BETA-CONTINGENCIA §0): a UI
     // esconde compra / IA do chat. Quem GARANTE é o servidor, não este campo.
     billingDisabled: isBillingDisabled(env),
@@ -8309,7 +8309,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
+// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10966,7 +10966,12 @@ var CORS14 = {
 };
 var json10 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS14 }), "json");
 var LIMITE = { limit: 6, windowMs: 6e4 };
-var MAX_BYTES = 4 * 1024 * 1024;
+var MAX_BYTES = 2 * 1024 * 1024;
+var MAX_DURACAO_S = 65;
+var TIMEOUT_MS = 25e3;
+var GROQ_URL2 = "https://api.groq.com/openai/v1/audio/transcriptions";
+var EXTENSAO = { webm: "webm", ogg: "ogg", mp4: "mp4", "x-m4a": "m4a", mpeg: "mp3", wav: "wav" };
+var extensaoDe = /* @__PURE__ */ __name((tipo) => EXTENSAO[String(tipo).split(";")[0].split("/")[1]?.trim().toLowerCase()] ?? "webm", "extensaoDe");
 var TIPOS = /^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a)(;.*)?$/i;
 var IDIOMAS = /* @__PURE__ */ new Set(["pt", "en"]);
 async function onRequestOptions14() {
@@ -10979,13 +10984,7 @@ async function onRequestPost10({ request, env }) {
     console.warn("[transcribe] rate limited", { retryAfter: gate.retryAfter });
     return tooManyRequests(gate.retryAfter, CORS14);
   }
-  const projectId = env.SUPABASE_PROJECT_ID;
-  const anonKey = env.SUPABASE_ANON_KEY;
-  if (!projectId || !anonKey) {
-    return json10({ error: "transcribe-not-configured" }, 503);
-  }
-  if (!/^[a-z0-9]{16,40}$/.test(projectId)) {
-    console.error("[transcribe] SUPABASE_PROJECT_ID fora do formato esperado");
+  if (!env.GROQ_API_KEY) {
     return json10({ error: "transcribe-not-configured" }, 503);
   }
   if (!env.FIREBASE_PROJECT_ID) return json10({ error: "auth-unavailable" }, 503);
@@ -10996,6 +10995,10 @@ async function onRequestPost10({ request, env }) {
     return json10({ error: "auth-unavailable" }, 503);
   }
   if (!claims) return json10({ error: "unauthenticated" }, 401);
+  const declarado = request.headers.get("content-length");
+  if (declarado !== null && Number(declarado) > MAX_BYTES + 64 * 1024) {
+    return json10({ error: "audio-too-large" }, 413);
+  }
   let form;
   try {
     form = await request.formData();
@@ -11017,21 +11020,21 @@ async function onRequestPost10({ request, env }) {
   const cota = await guardAiRequest(request, env, "transcribe", saveId, 1, null, { ok: true, email: claims.email });
   if (!cota.ok) return json10({ error: cota.reason, ...cota.message ? { message: cota.message } : {} }, cota.status);
   const repasse = new FormData();
-  repasse.append("audio", audio, "recording.webm");
+  repasse.append("file", audio, `audio.${extensaoDe(audio.type)}`);
+  repasse.append("model", "whisper-large-v3");
   repasse.append("language", language);
+  repasse.append("response_format", "verbose_json");
+  repasse.append("temperature", "0");
   let upstream;
   try {
-    upstream = await fetch(
-      `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/transcribe`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${anonKey}` },
-        body: repasse,
-        // Áudio longo num modelo de fala é lento; sem teto a requisição fica
-        // pendurada até o limite do isolate e o app mostra "falhou" tarde.
-        signal: AbortSignal.timeout(3e4)
-      }
-    );
+    upstream = await fetch(GROQ_URL2, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
+      body: repasse,
+      // Sem teto a requisição fica pendurada até o limite do isolate e o app
+      // mostra "falhou" tarde. 25 s < 30 s do cliente.
+      signal: AbortSignal.timeout(TIMEOUT_MS)
+    });
   } catch (err2) {
     console.error("[transcribe] falha ao falar com o provedor:", err2?.name);
     await cota.release("provedor de transcri\xE7\xE3o indispon\xEDvel");
@@ -11047,6 +11050,10 @@ async function onRequestPost10({ request, env }) {
     dados = await upstream.json();
   } catch {
     return json10({ error: "transcribe-failed" }, 502);
+  }
+  const d = Number(dados?.duration);
+  if (!Number.isFinite(d) || d > MAX_DURACAO_S) {
+    return json10({ error: "audio-too-long" }, 413);
   }
   return json10({ text: String(dados?.text ?? "").slice(0, 2e3) });
 }
@@ -11074,7 +11081,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-7vgVt8/functionsRoutes-0.43355863962081975.mjs
+// ../.wrangler/tmp/pages-od507c/functionsRoutes-0.3943806008964176.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11351,7 +11358,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11677,7 +11684,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

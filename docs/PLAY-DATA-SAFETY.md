@@ -93,7 +93,7 @@ usuário escolhe.
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde no código |
 |---|---|---|---|---|---|
-| **Gravações de voz ou som** | ✅ Sim | ✅ Sim — **Supabase** (repasse) e **Groq** (transcrição, modelo Whisper) | Funcionalidades do app (falar com a criatura em vez de digitar) | Opcional | `src/components/ChatBox.tsx` → `functions/api/transcribe.js` → Supabase → Groq Whisper; política §2c/§6 nomeia os dois |
+| **Gravações de voz ou som** | ✅ Sim | ✅ Sim — **Groq** (transcrição, modelo Whisper), enviado direto pelo nosso Worker, sem intermediário; limite de 60 s; nada gravado | Funcionalidades do app (falar com a criatura em vez de digitar) | Opcional | `src/components/ChatBox.tsx` → `functions/api/transcribe.js` → Groq Whisper; política §2c/§6 nomeia o Groq |
 | Fotos, vídeos, contatos, calendário, arquivos, músicas | ❌ Não | — | — | — | O app não pede nenhuma dessas permissões |
 
 > ⚠️ **Marque "Sim" mesmo não guardando o áudio.** O formulário pergunta se o
@@ -256,7 +256,7 @@ lado certo para errar.
 **Coletado e compartilhado:**
 - E-mail → Firebase (Google)
 - Outras mensagens no app → Groq, reserva Google Gemini (chat com contexto, ações propostas, resumo agregado de comportamento, sugestões de tarefa, nome da tarefa em "Decompor") e Higgsfield + Google Gemini (descrição da criatura para a imagem)
-- **Gravações de voz ou som** → Supabase (repasse) + Groq Whisper, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
+- **Gravações de voz ou som** → Groq Whisper, direto do nosso Worker, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
 
 **Coletado, não compartilhado:**
 - Nome de usuário

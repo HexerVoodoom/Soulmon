@@ -2,7 +2,9 @@ import { aiFetch } from '../utils/aiClient';
 import { HELPLINE_DIRECTORY_URL, helplineDirectoryLabel, helplineNumbers } from '../utils/supportLine';
 import { chatSafetyDecision } from '../utils/chatSafety';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchServerConfig } from '../utils/serverConfig';
+import { CHAT_ERR, MIC_ERR, copiaErro, micErroPorStatus } from '../utils/chatErrorCopy';
+import { audioExtension } from '../utils/audioFile';
+import { fetchServerConfig, peekServerConfig } from '../utils/serverConfig';
 import { Icon } from './ui/Icon';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
@@ -45,6 +47,9 @@ interface ChatBoxProps {
 /** Chave do dia do último feedback proativo. Só local; nada vai ao servidor. */
 const FEEDBACK_DAY_KEY = 'soulmon-chat-feedback-day';
 
+/** Sem conexão: o chat não grava a troca nem apaga o texto digitado. */
+class SemRede extends Error {}
+
 export function ChatBox({
   petName,
   mood,
@@ -84,20 +89,18 @@ export function ChatBox({
      (`/api/config` → `transcribeAvailable`; ver `utils/serverConfig.ts`).
      `null` = ainda não perguntamos.
 
-     ⚠️ O botão nasce OTIMISTA (`null` desenha o microfone) e só some quando o
-     servidor diz que não há. O contrário — nascer escondido e aparecer depois —
-     esconderia o microfone de quem abre o app para gravar e não toca no campo
-     de texto antes, que é justamente o gesto que a funcionalidade existe para
-     servir. Clicar com a resposta ainda desconhecida ESPERA por ela antes de
-     abrir o microfone, então nunca há gravação que morre no envio. */
-  const [micDisponivel, setMicDisponivel] = useState<boolean | null>(null);
+     Decisão do dono (19/10/2026): o botão só aparece quando `/api/transcribe`
+     está disponível, alinhado ao CLAUDE.md. `null` (ainda não perguntamos) e
+     `false` se comportam igual: sem microfone, o botão fica como "enviar".
+     Quem já tem a resposta desta sessão (`peekServerConfig`, sem rede) nasce
+     com o valor certo. */
+  const [micDisponivel, setMicDisponivel] = useState<boolean | null>(() => peekServerConfig()?.transcribeAvailable ?? null);
 
   /* ⚠️ NÃO no `mount`. O `CompanionHUD` fica montado na Home o tempo todo, e
      existe um guard que exige que montá-lo não toque a rede — buscar a
      configuração ali seria uma requisição por abertura do app para um valor que
      só importa quando a pessoa vai usar o chat. A busca acontece na primeira
-     INTERAÇÃO com a barra, e como `micDisponivel` começa `false` o botão já
-     nasce no estado certo: nada pisca. */
+     INTERAÇÃO com a barra (foco ou toque no campo); até lá não há microfone. */
   const garantirConfig = useCallback(async () => {
     const { transcribeAvailable } = await fetchServerConfig();
     setMicDisponivel(transcribeAvailable);
@@ -111,10 +114,12 @@ export function ChatBox({
      abandonado (um áudio que ninguém vai ver não é transcrito nem enviado). */
   const micRef = useRef<{ recorder: MediaRecorder; stream: MediaStream; abandoned: boolean } | null>(null);
   const vivoRef = useRef(true);
+  const limiteRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     vivoRef.current = true; // StrictMode monta, desmonta e monta de novo
     return () => {
       vivoRef.current = false;
+      if (limiteRef.current) { clearTimeout(limiteRef.current); limiteRef.current = null; }
       const m = micRef.current;
       if (!m) return;
       m.abandoned = true;
@@ -204,6 +209,8 @@ export function ChatBox({
 
   // AI-powered response using Groq API
   const getAIResponse = async (userMessage: string): Promise<string> => {
+    // Sem rede de saída: nem tenta; quem chamou devolve o texto ao campo.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new SemRede();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
     try {
@@ -225,26 +232,26 @@ export function ChatBox({
       if (!response.ok) {
         /* 429 = cota do dia (`_aiGuard`) ou os provedores gratuitos no limite
            (`ai-busy`). Não é falha: o próprio Soulmon diz que está cansado. */
-        if (response.status === 429) {
-          return isPt ? 'Tô cansadinho agora… tenta de novo daqui a pouco?' : "I'm a little tired right now… try again in a bit?";
-        }
+        if (response.status === 429) return copiaErro(CHAT_ERR.busy, isPt);
         /* 502 'ai-upstream' = o provedor recusou o pedido (4xx) nas duas tentativas.
            Não é a rede do usuário caindo: mesma voz calma do "cansado". */
-        if (response.status === 502) {
-          return isPt ? 'Tô meio enrolado agora… tenta de novo daqui a pouco?' : "I'm a bit tangled up right now… try again in a bit?";
-        }
+        if (response.status === 502) return copiaErro(CHAT_ERR.upstream, isPt);
         if (import.meta.env.DEV) console.error('AI API error:', await response.clone().text().catch(() => ''));
-        /* 500 'AI not configured' = o servidor está sem chave: estado permanente,
-           não instabilidade. Mensagem clara, e o chat local segue funcionando. */
-        /* 503 'chat-disabled' = kill-switch `CHAT_DISABLED` do dono (BETA-CONTINGENCIA §0):
-           também é "desligado de propósito", não falha — mesma mensagem calma. */
         const erro = (await response.clone().json().catch(() => null))?.error;
-        const naoLigado = (response.status === 500 && erro === 'AI not configured')
-          || (response.status === 503 && erro === 'chat-disabled');
-        toast.warning(naoLigado
-          ? (isPt ? 'O chat inteligente não está ligado agora — respostas simples continuam.' : 'Smart chat is not switched on right now — simple replies still work.')
-          : (isPt ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses'));
-        return getPetResponse(userMessage);
+        /* Conta/acesso/app = toast (fala o app), e o chat local segue respondendo.
+           500 'AI not configured' / 503 'chat-disabled' (kill-switch do dono) =
+           "desligado de propósito", não falha. */
+        const aviso = response.status === 401 ? CHAT_ERR.unauthenticated
+          : (response.status === 403 && erro === 'beta-closed') ? CHAT_ERR.betaClosed
+          : (response.status === 400 && erro === 'missing-save-id') ? CHAT_ERR.missingSaveId
+          : ((response.status === 500 && erro === 'AI not configured') || (response.status === 503 && erro === 'chat-disabled')) ? CHAT_ERR.notSwitchedOn
+          : null;
+        if (aviso) {
+          toast.warning(copiaErro(aviso, isPt));
+          return getPetResponse(userMessage);
+        }
+        // Demais 5xx/4xx: o próprio Soulmon diz que perdeu o fio.
+        return copiaErro(CHAT_ERR.serverError, isPt);
       }
 
       const data = await response.json();
@@ -275,15 +282,11 @@ export function ChatBox({
       if (typeof data?.response !== 'string' || !data.response.trim()) return getPetResponse(userMessage);
       return data.response;
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        toast.warning(isPt
-          ? 'A IA demorou demais — usando respostas locais'
-          : 'AI response timed out, using local responses');
-      } else {
-        if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
-        toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
-      }
-      return getPetResponse(userMessage);
+      if (error instanceof Error && error.name === 'AbortError') return copiaErro(CHAT_ERR.serverError, isPt);
+      // fetch sem rede rejeita com TypeError.
+      if (error instanceof TypeError) throw new SemRede();
+      if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
+      return copiaErro(CHAT_ERR.serverError, isPt);
     } finally {
       clearTimeout(timeout);
     }
@@ -357,6 +360,12 @@ export function ChatBox({
       lembrar('assistant', response);
       onSendMessage(response);
     } catch (error) {
+      if (error instanceof SemRede) {
+        // Mensagem não saiu: devolve o texto ao campo e avisa por toast.
+        setInputValue(userMessage);
+        toast.warning(copiaErro(CHAT_ERR.offline, isPt));
+        return;
+      }
       if (import.meta.env.DEV) console.error('Error sending message:', error);
       onSendMessage(language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!');
     } finally {
@@ -389,6 +398,7 @@ export function ChatBox({
     if (isRecording) {
       // Stop recording
       if (mediaRecorder) {
+        if (limiteRef.current) { clearTimeout(limiteRef.current); limiteRef.current = null; }
         mediaRecorder.stop();
         setIsRecording(false);
       }
@@ -427,6 +437,7 @@ export function ChatBox({
 
         const mic = { recorder, stream, abandoned: false };
         recorder.onstop = async () => {
+          if (limiteRef.current) { clearTimeout(limiteRef.current); limiteRef.current = null; }
           // Solta o microfone ANTES de transcrever: a transcrição pode levar
           // até 30 s e o aparelho não deve mostrar "microfone em uso" nesse
           // tempo todo (antes as trilhas só paravam depois do `await`).
@@ -444,6 +455,13 @@ export function ChatBox({
 
         // Start recording
         recorder.start();
+        /* Limite de 60 s (decisão do dono): para sozinho e segue para o envio.
+           Limpa no stop manual e ao desmontar. */
+        limiteRef.current = setTimeout(() => {
+          limiteRef.current = null;
+          if (vivoRef.current) { setIsRecording(false); toast.info(copiaErro(MIC_ERR.autoStop60, isPt)); }
+          if (recorder.state !== 'inactive') recorder.stop();
+        }, 60_000);
         micRef.current = mic;
         setMediaRecorder(recorder);
         setIsRecording(true);
@@ -470,20 +488,17 @@ export function ChatBox({
   // Transcribe audio using server endpoint
   const transcribeAudio = async (audioBlob: Blob) => {
     const controller = new AbortController();
+    /* 30 s no cliente de propósito: o servidor corta em 25 s, então o erro dele
+       chega antes e o cliente só aborta se a rede travar. */
     const timeout = setTimeout(() => controller.abort(), 30000);
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('audio', audioBlob, `voice.${audioExtension(audioBlob.type)}`);
       formData.append('language', language.split('-')[0]);
 
-      /* MESMA ORIGEM. Ate 09/09/2026 isto era um POST direto para
-         `<projectId>.supabase.co` com o JWT do projeto embarcado no bundle —
-         que a CSP bloqueava, entao NUNCA funcionou em producao. Passar por
-         `/api/transcribe` mantem a credencial no servidor, poe a chamada sob
-         teto por IP e limite de tamanho, e dispensa abrir `connect-src` para
-         `*.supabase.co` (o que deixaria QUALQUER projeto Supabase ser destino
-         de exfiltracao). Ver o cabecalho de `functions/api/transcribe.js`. */
+      // mesma origem; a credencial do provedor fica no servidor
       /* Desde 11/10/2026 a rota exige o ID token (deixou de ser anônima). */
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new TypeError('offline');
       const { authHeaders } = await import('../utils/auth');
       const response = await fetch('/api/transcribe', {
         method: 'POST',
@@ -498,20 +513,9 @@ export function ChatBox({
            falhar igual na segunda vez, e quem levou 429 precisa esperar, não
            repetir. A rota já distingue os casos (ver
            `functions/api/transcribe.js`); a tela passa a distinguir também. */
-        toast.error(
-          response.status === 413
-            ? (isPt ? 'A gravação ficou longa demais. Tente um recado mais curto.'
-              : 'That recording is too long. Try a shorter message.')
-            : response.status === 429
-              ? (isPt ? 'Muitas gravações seguidas. Espere um pouquinho.'
-                : 'Too many recordings in a row. Give it a moment.')
-              : response.status === 503
-                ? (isPt ? 'O recado falado não está disponível agora.'
-                  : 'Spoken messages are not available right now.')
-                : (isPt ? 'Não consegui transcrever o áudio. Tente de novo.'
-                  : 'Audio transcription failed. Please try again.'),
-        );
-        throw new Error('Transcription failed');
+        const erro = (await response.clone().json().catch(() => null))?.error;
+        toast.error(copiaErro(micErroPorStatus(response.status, erro), isPt));
+        return;
       }
 
       const data = await response.json();
@@ -526,15 +530,13 @@ export function ChatBox({
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        toast.error(isPt
-          ? 'A transcrição demorou demais. Tente de novo.'
-          : 'Transcription timed out. Please try again.');
+        toast.error(copiaErro(MIC_ERR.serverError, isPt));
+      } else if (error instanceof TypeError || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+        toast.error(copiaErro(MIC_ERR.offline, isPt));
       } else {
         if (import.meta.env.DEV) console.error('Transcription error:', error);
+        toast.error(copiaErro(MIC_ERR.serverError, isPt));
       }
-      onSendMessage(isPt
-        ? 'Deu erro ao transcrever o áudio 😅'
-        : 'Error transcribing audio 😅');
     } finally {
       clearTimeout(timeout);
       setIsLoading(false);
@@ -548,7 +550,7 @@ export function ChatBox({
      resposta não chegava. */
   const actionLabel = isLoading
     ? (isPt ? 'Enviando mensagem…' : 'Sending message…')
-    : hasText || micDisponivel === false
+    : hasText || !micDisponivel
       ? (isPt ? 'Enviar mensagem' : 'Send message')
       : isRecording
         ? (isPt ? 'Parar gravação' : 'Stop recording')
@@ -570,6 +572,7 @@ export function ChatBox({
       /* O foco mora na BARRA inteira (campo, botão e o link de apoio): sair do
          campo para tocar no link não pode esconder o link antes do toque. */
       onFocus={() => setFocado(true)}
+      onPointerDown={() => { void garantirConfig(); }}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocado(false); }}
     >
       {/* O TERMINAL `>_` (minimal-ui F2): sempre aberto, o prompt `>` e o
@@ -619,7 +622,7 @@ export function ChatBox({
 
         <button
           type="button"
-          onClick={hasText || micDisponivel === false ? handleSendMessage : handleMicClick}
+          onClick={hasText || !micDisponivel ? handleSendMessage : handleMicClick}
           /* `aria-disabled`, nunca `disabled`: ver a nota do campo acima —
              desabilitar de verdade tira o botão da ordem de tabulação no meio
              do uso e derruba o foco. Os dois handlers já ignoram `isLoading`. */
@@ -627,7 +630,7 @@ export function ChatBox({
              continua no DOM: o comentario acima explica que o no do foco tem
              que ser estavel, e sumir com ele no meio da digitacao derrubaria o
              foco de quem navega por teclado. */
-          aria-disabled={isLoading || (!hasText && micDisponivel === false) || undefined}
+          aria-disabled={isLoading || (!hasText && !micDisponivel) || undefined}
           className="sm2-chat-btn"
           /* Paridade exata com o `&:disabled { opacity: .5 }` do
              `.sm2-chat-btn` (index.css), que o `aria-disabled` não dispara. */
@@ -638,7 +641,7 @@ export function ChatBox({
              mudar de largura) e volta como "enviar" na primeira letra. */
           style={isLoading
             ? { opacity: 0.5, cursor: 'default' }
-            : (!hasText && micDisponivel === false)
+            : (!hasText && !micDisponivel)
               ? { visibility: 'hidden' }
               : undefined}
           title={actionLabel}
@@ -646,7 +649,7 @@ export function ChatBox({
         >
           {isLoading ? (
             <Icon name="sync" size={32} tone="muted" className="animate-spin" />
-          ) : hasText || micDisponivel === false ? (
+          ) : hasText || !micDisponivel ? (
             <Icon name="send" size={32} weight={250} tone="primary" />
           ) : isRecording ? (
             <Icon name="stop_circle" size={32} fill={1} tone="danger" />
