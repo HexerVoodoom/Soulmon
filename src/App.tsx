@@ -18,6 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
 import { AvisosSheet } from './components/nav/AvisosSheet';
+import { visibleBackground } from './utils/backgrounds';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
@@ -6805,7 +6806,7 @@ export default function App() {
           {labTab === 'pet' && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
-                <AdventureDiary entries={gameState.adventures ?? []} language={language} spriteUrl={minhaCriaturaUrl} sceneId={gameState.equippedBackground ?? null} />
+                <AdventureDiary entries={gameState.adventures ?? []} language={language} spriteUrl={minhaCriaturaUrl} sceneId={visibleBackground(gameState.equippedBackground)} />
               </Suspense>
             </div>
           )}
@@ -7189,7 +7190,7 @@ export default function App() {
                 language={language}
                 ownership={{
                   ownedBackgrounds: gameState.ownedBackgrounds ?? [],
-                  equippedBackground: gameState.equippedBackground ?? null,
+                  equippedBackground: visibleBackground(gameState.equippedBackground),
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   missionProgress,
@@ -7440,7 +7441,7 @@ export default function App() {
                    DailyReportModal; opcional por definição (o check-in é
                    opcional) e nunca alimenta pontuação. */
                 moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
-                equippedBackground={gameState.equippedBackground ?? null}
+                equippedBackground={visibleBackground(gameState.equippedBackground)}
                 useAI={useAI}
                 aiSettings={chatPersonality}
                 onChatCreate={handleChatCreate}

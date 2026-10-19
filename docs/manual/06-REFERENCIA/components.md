@@ -290,11 +290,19 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (intersticial `groveMilestone`, depois de relatório e check-in e antes do sonho).
 **Régua:** `src/components/guild/GroveMilestoneCeremony.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila).
 
-### `src/components/guild/CasaVisor.tsx`
-**Dono de:** o visor da CASA DA GUILDA (guilda-lancamento PR2): SVG de arestas retas por cima do cenário `bg-guild-<estágio>` — árvore mecânica com cristal central que ganha ramos, folhas de latão, flores e cristais conforme `casa.nivelIndex` (0..5), até quatro criaturas na linha do chão e um pedestal por item posto. Posições fixas por índice; movimento reduzido para o brilho (`.sm2-casa-glow`).
-**Exports:** `CasaVisor(props)`, `CASA_VISOR_HEIGHT` (176).
-**Chamado por:** `guild/GuildSheet.tsx` (`SalaBosque`, quando a vista traz `casa`).
-**Régua:** `guild/GuildSheet.casa.render.test.tsx`.
+### `src/components/guild/GroveCena.tsx`
+**Dono de:** a CENA do Bosque na ficha do Clã (D-49/D-55/D-56, 19/10/2026) — a janela do cenário ÚNICO do Bosque: o recorte do panorama pintado (`assets/bosque`) com os membros andando (`GroveWalkers`) e, no canto, a fileirinha de arte dos itens que os membros puseram na casa (sem nome nem número). Substitui o antigo `CasaVisor.tsx` (⚰️ SVG vetorial de cobre/turquesa com cristal em losango; o dono não sabia o que era).
+**Props principais:** `language`, `guild: Pick<GuildView, 'members' | 'casa'>`, `mySprite`, `reducedMotion`.
+**Exports:** `GroveCena(props)`, `SPRITE_CENA` (`{ own: 52, other: 40 }`).
+**Chamado por:** `guild/GuildSheet.tsx` (`SalaBosque`).
+**Régua:** `guild/GroveWalkers.render.test.tsx`, `guild/GuildSheet.casa.render.test.tsx` (bloco D-55/D-56/D-57).
+
+### `src/components/guild/GroveWalkers.tsx`
+**Dono de:** a camada de membros ANDANDO no Bosque (D-51..D-53), compartilhada pelo panorama (`GroveVisor`) e pela cena do Clã (`GroveCena`). Até 12 sprites (`GUILD_MAX_MEMBERS`), animação só em CSS (`sm2-grove-walk` + `sm2-grove-flip`, sem JS por frame), contorno por `drop-shadow` (o seu na cor primária), bounce do `sm2-grove-bob`; balão de frase FIXA (EN+PT, `guild.bosque.fala.*`, 20–45 s entre balões, sem IA); tocar = reação visual + nome (sem número), sem som. Movimento reduzido: ninguém anda nem bate.
+**Props principais:** `language`, `guild: Pick<GuildView, 'members'>`, `mySprite`, `reducedMotion`, `sizes`, `baseY`, `faixa?`.
+**Exports:** `GroveWalkers(props)`.
+**Chamado por:** `guild/GroveVisor.tsx`, `guild/GroveCena.tsx`.
+**Régua:** `guild/GroveWalkers.render.test.tsx`, `utils/groveWalkers.test.ts`.
 
 ### `src/components/guild/GuerraVisor.tsx`
 **Dono de:** o visor da GUERRA de guilda (PR4): o esquadrão da roda (até 4) de um lado e, do outro, silhuetas pálidas do esquadrão rival (a mesma quantidade) sobre o cenário `bg-arena-spotlight`. Os rivais são só silhueta de propósito: o servidor nunca manda estágio, linha nem nome de pessoa de outra guilda (LV-G10).
@@ -303,7 +311,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `guild/GuildSheet.casa.render.test.tsx` (bloco "a Guerra no Salão").
 
 ### `src/components/guild/GroveVisor.tsx`
-**Dono de:** o visor do Bosque (`PLANO-GUILDA.md` §6, WPG-11) — o cenário `bg-guild-<estágio>` de `PET_BACKGROUNDS` — arte pintada 1200×648 desde 30/09/2026 (fundos-v2; ⚰️ era gradiente), assentada com `center bottom / auto 100% no-repeat` e `image-rendering: pixelated` — e as criaturas na linha do chão (`GROUND_Y`), decididas por `utils/groveStage.ts` (5–12 membros → só a sua; ≤ 4 → todos, em ordem de chegada). Pixel art só dentro do vidro; estágio, linha e fio ficam fora dele.
+**Dono de:** o panorama do Bosque (tela cheia, 18/10/2026) com as árvores por estação e, desde 19/10/2026 (D-51), os membros ANDANDO nele via `GroveWalkers` (todos, até 12; ⚰️ a regra "5–12 membros → só a sua"). Estágio, linha e fio ficam fora do vidro.
 **Props principais:** `guild: Pick<GuildView, 'size' | 'members' | 'bosque'>`, `mySprite`, `reducedMotion`, `label?`.
 **Exports:** `GroveVisor(props)`, `GROVE_VISOR_HEIGHT` (176).
 **Chamado por:** `src/components/guild/GuildSheet.tsx`.

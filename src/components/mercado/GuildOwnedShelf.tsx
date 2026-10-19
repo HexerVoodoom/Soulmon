@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { Icon } from '../ui/Icon';
 import { MiniGlass } from '../ui/MiniGlass';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { PET_BACKGROUNDS, GUILD_SCENES_RETIRED } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ALL_SHOP_ITEMS, isGuildReward } from '../../utils/shop';
 import { GROVE_STAGES, type GroveStageId } from '../../utils/guildRules';
@@ -47,10 +47,11 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
   const isPt = language === 'pt-BR';
   /** 8.2 - a miniatura abre a pre-visualizacao (a mesma dos cenarios da loja). */
   const [preview, setPreview] = useState<string | null>(null);
+  // D-26: os cenários do Bosque saem do jogo até a arte nova (a posse fica no save); só a Concha (Decoração) segue aqui.
   const items = kind === 'bg'
-    ? GROVE_STAGES
+    ? (GUILD_SCENES_RETIRED ? [] : GROVE_STAGES
         .filter(st => ownership.ownedBackgrounds.includes(STAGE_PREFIX + st))
-        .map(st => ({ id: STAGE_PREFIX + st, name: groveStageName(language, st as GroveStageId), slot: null as null }))
+        .map(st => ({ id: STAGE_PREFIX + st, name: groveStageName(language, st as GroveStageId), slot: null as null })))
     : ownership.ownedFurniture
         .map(id => ALL_SHOP_ITEMS.find(i => i.id === id))
         .filter((i): i is NonNullable<typeof i> => !!i && isGuildReward(i) && !!i.slot)

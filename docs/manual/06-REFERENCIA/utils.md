@@ -1012,6 +1012,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (`handleGuildSlot`), `src/components/guild/GuildSheet.tsx` (`SalaCasa`).
 **Régua:** `src/utils/guildHouse.test.ts`.
 
+### `src/utils/groveWalkers.ts`
+**Dono de:** a parte PURA dos membros andando no Bosque (D-51/D-52, 19/10/2026): TODOS os membros (teto `GROVE_WALKERS_MAX` = `GUILD_MAX_MEMBERS` = 12), na ordem de chegada, sem estado de presença (acima de 4 ninguém o tem); posição de repouso, amplitude, faixa, duração e atraso determinísticos por hash do id; a criatura dos outros por `spriteForMember`; o sorteio do balão (≥ 20 s) e da frase fixa.
+**Exports:** `GROVE_WALKERS_MAX` · `BUBBLE_MIN_MS` · `BUBBLE_SPAN_MS` · `BUBBLE_PHRASES` (8) · `GroveWalker` (interface) · `groveWalkers(guild)` · `nextBubbleDelay(rand)` · `pickBubble(walkers, randWho, randWhat)`.
+**Chamado por:** `components/guild/GroveWalkers.tsx`.
+**Régua:** `src/utils/groveWalkers.test.ts`.
+
 ### `src/utils/groveStage.ts`
 **Dono de:** o PALCO do Bosque (`PLANO-GUILDA.md` §6, WPG-11) — parte PURA de quem aparece no visor e onde. **De 5 a 12 membros só a SUA criatura** (a fileira com lacunas de uma roda de 12 é a sala de aula que LV-G2 veta); **até 4, todos, em ordem de chegada** do servidor, sem estado de presença; **nunca estágio, linha ou HP alheio** (LV-G10): a criatura dos outros é uma das nossas linhas por hash do id opaco (o mesmo membro renderiza sempre a mesma criatura).
 **Exports:** `OWN_RENDER` (128) · `OTHER_RENDER` (64) · `GroveCreature` (interface) · `spriteForMember(key)` · `spreadX(sizes)` (distribuição em % pelo vão, pés na mesma linha) · `groveCreatures(guild)`.

@@ -74,7 +74,7 @@ import { usePrefersReducedMotion } from '../ui/Viewport';
 import type { OnPlantio } from './GroveFolha';
 import type { BosqueArvores } from '../../utils/bosqueArvores';
 const GroveFolha = lazy(() => import('./GroveFolha'));
-import { CasaVisor } from './CasaVisor';
+import { GroveCena } from './GroveCena';
 import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
 import { SalaPraca } from './PracaVisor';
@@ -685,73 +685,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             </section>
           )}
 
-          {salaBosque}
-
-          {g.casa && (
-            <SalaCasa
-              guild={g}
-              t={t}
-              language={language}
-              ocupado={ocupado}
-              casa={casa}
-              onDoar={(bits) => void agir(async () => {
-                const r = await donateToGuild(saveId, bits, tz.current);
-                if (r.accepted > 0) casaRef.current?.onSpend(r.accepted);
-                return r.guild;
-              }, { anunciar: 'guild.casa.doar.ok' })}
-              onSlot={(item) => void agir(async () => {
-                const v = await setGuildSlot(saveId, item, tz.current);
-                casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
-                return v;
-              }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
-            />
-          )}
-
-          {cla && (
-            <SalaPredios
-              t={t}
-              aberto={predio}
-              onAbrir={setPredio}
-              render={(id) => {
-                const comum = {
-                  saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
-                  onReward: cla.onReward, onAnnounce: setAnuncio,
-                };
-                if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
-                if (id === 'plantio') return <SalaPlantio {...comum} />;
-                return <SalaMisterio {...comum} />;
-              }}
-            />
-          )}
-
-          {g.raid && (
-            <SalaFeira
-              guild={g}
-              t={t}
-              language={language}
-              ocupado={ocupado}
-              reducedMotion={reducedMotion}
-              resgate={null}
-              resgateAberto={!!(rewards?.pending[0] || colhido)}
-              onRodada={() => undefined}
-              missao={missao ?? { state: null, onSend: () => undefined }}
-            />
-          )}
-
-          {war && (
-            <SalaGuerra
-              guild={g}
-              t={t}
-              language={language}
-              war={war}
-              hoje={load.day}
-              ocupado={ocupado}
-              mySprite={mySprite || getSpriteForStage('rookie')}
-              reducedMotion={reducedMotion}
-              onBuscar={buscarGuerra}
-            />
-          )}
-
           <SalaRoda
             guild={g}
             t={t}
@@ -790,8 +723,88 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
           </div>
           {g.size <= 1 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.criar.codigo.corpo', { n: guildInviteRoom() })}</p>}
 
-          <SalaMural guild={g} t={t} language={language} marcos={marcos} />
+        </div>
 
+        {/* D-57: um card por assunto. O Clan Hall (acima) é a parte ADMINISTRATIVA: nome, ficha, membros, código. */}
+        <div className="sm2-stats-card" data-guild-card="bosque">
+          {salaBosque}
+        </div>
+
+        {g.casa && (
+        <div className="sm2-stats-card" data-guild-card="casa">
+            <SalaCasa
+              guild={g}
+              t={t}
+              language={language}
+              ocupado={ocupado}
+              casa={casa}
+              onDoar={(bits) => void agir(async () => {
+                const r = await donateToGuild(saveId, bits, tz.current);
+                if (r.accepted > 0) casaRef.current?.onSpend(r.accepted);
+                return r.guild;
+              }, { anunciar: 'guild.casa.doar.ok' })}
+              onSlot={(item) => void agir(async () => {
+                const v = await setGuildSlot(saveId, item, tz.current);
+                casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
+                return v;
+              }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
+            />
+        </div>
+        )}
+
+        {cla && (
+        <div className="sm2-stats-card" data-guild-card="predios">
+            <SalaPredios
+              t={t}
+              aberto={predio}
+              onAbrir={setPredio}
+              render={(id) => {
+                const comum = {
+                  saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
+                  onReward: cla.onReward, onAnnounce: setAnuncio,
+                };
+                if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
+                if (id === 'plantio') return <SalaPlantio {...comum} />;
+                return <SalaMisterio {...comum} />;
+              }}
+            />
+        </div>
+        )}
+
+        {g.raid && (
+        <div className="sm2-stats-card" data-guild-card="feira">
+            <SalaFeira
+              guild={g}
+              t={t}
+              language={language}
+              ocupado={ocupado}
+              reducedMotion={reducedMotion}
+              resgate={null}
+              resgateAberto={!!(rewards?.pending[0] || colhido)}
+              onRodada={() => undefined}
+              missao={missao ?? { state: null, onSend: () => undefined }}
+            />
+        </div>
+        )}
+
+        {war && (
+        <div className="sm2-stats-card" data-guild-card="guerra">
+            <SalaGuerra
+              guild={g}
+              t={t}
+              language={language}
+              war={war}
+              hoje={load.day}
+              ocupado={ocupado}
+              mySprite={mySprite || getSpriteForStage('rookie')}
+              reducedMotion={reducedMotion}
+              onBuscar={buscarGuerra}
+            />
+        </div>
+        )}
+
+        <div className="sm2-stats-card" data-guild-card="mural">
+          <SalaMural guild={g} t={t} language={language} marcos={marcos} />
         </div>
         {/* Saída limpa (LV-G5): um toque, sem diálogo de confirmação e sem penalidade — e SEMPRE ao
             alcance (QA L3 M5): fixa no rodapé da folha, porque uma roda de 12 põe a saída a três telas
@@ -862,14 +875,8 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
   const proximo = perto && stageIndex < GROVE_STAGES.length ? groveStageName(language, GROVE_STAGES[stageIndex]) : null;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
-      {guild.casa && (
-        <CasaVisor
-          guild={guild}
-          mySprite={mySprite}
-          reducedMotion={reducedMotion}
-          label={t('guild.aria.casa', { estagio: casaStageName(t, guild.casa.nivel) })}
-        />
-      )}
+      {/* D-49/D-55/D-56: o Bosque é UM cenário; aqui a janela dele (membros andando), no lugar do antigo visor vetorial da Casa. */}
+      <GroveCena language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} />
       {/* D-32: o panorama do Bosque abre AQUI (Hall > Guilda), em tela cheia; não há visor embutido na folha. */}
       <button type="button" data-guild-bosque-entrar onClick={() => setPanorama(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
         <Icon name="eco" size={20} />
