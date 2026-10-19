@@ -157,39 +157,42 @@ describe('geometria dos campos (D-33): uma árvore por CLAREIRA, centrada, sem c
   });
 });
 
-describe('as criaturas do clã no panorama (palco do Bosque)', () => {
+describe('os membros andando no panorama (D-51: cenário único)', () => {
   const criaturas = (c: HTMLElement) => Array.from(c.querySelectorAll<HTMLImageElement>('[data-grove-creature]'));
-  it('1 membro: só a SUA, no centro, em 128 (escala inteira)', () => {
+  it('1 membro: só a SUA, em 96 (escala inteira), com contorno', () => {
     const { container } = montar(false, roda(1));
     const c = criaturas(container);
     expect(c).toHaveLength(1);
     expect(c[0].getAttribute('data-grove-creature')).toBe('own');
-    expect(c[0].width).toBe(128);
-    expect(parseFloat(c[0].style.left)).toBe(50);
+    expect(c[0].width).toBe(96);
+    expect(c[0].hasAttribute('data-grove-outline')).toBe(true);
   });
-  it('até 4: todos, na ordem da roda — a sua em 128, as dos outros em 64, da esquerda para a direita', () => {
+  it('até 4: todos, na ordem da roda — a sua em 96, as dos outros em 64', () => {
     const { container } = montar(false, roda(4));
     const c = criaturas(container);
     expect(c.map(x => x.getAttribute('data-grove-creature'))).toEqual(['own', 'other', 'other', 'other']);
-    expect(c.map(x => x.width)).toEqual([128, 64, 64, 64]);
-    const xs = c.map(x => parseFloat(x.style.left));
-    expect(xs).toEqual([...xs].sort((a, b) => a - b));
+    expect(c.map(x => x.width)).toEqual([96, 64, 64, 64]);
   });
-  it.each([1, 2, 3, 4])('%i criaturas ficam no primeiro plano, abaixo do chão de toda clareira (nunca cobrem uma árvore)', n => {
-    const { container } = montar(false, roda(n));
-    const chaoMax = Math.max(...ESTACOES.map(e => chaoY(e)));
-    for (const c of criaturas(container)) {
-      const pes = parseFloat(c.style.top); // % da altura da cena
-      expect(pes).toBe(CRIATURA_Y);
-      const altura = (c.width / 0.7476 / CENA_H) * 100; // px css -> px da imagem (844/1129) -> %
-      expect(pes - altura, `topo da criatura (${n}) acima do chão das árvores`).toBeGreaterThan(chaoMax);
-    }
-  });
-  it.each([5, 8, 12])('%i membros: SÓ a sua (a fileira com lacunas é a sala de aula que LV-G2 veta)', n => {
+  it.each([5, 8, 12])('%i membros: TODOS andam (acima de 4 não há estado de presença), a sua primeiro', n => {
     const { container } = montar(false, roda(n));
     const c = criaturas(container);
-    expect(c).toHaveLength(1);
+    expect(c).toHaveLength(n);
     expect(c[0].getAttribute('data-grove-creature')).toBe('own');
+  });
+  it('teto de 12 sprites mesmo que a vista traga mais', () => {
+    const { container } = montar(false, { ...roda(12), members: membros(20) } as never);
+    expect(criaturas(container)).toHaveLength(12);
+  });
+  it.each([1, 4, 12])('%i criaturas pisam no primeiro plano, abaixo do chão de toda clareira (nunca cobrem uma árvore)', n => {
+    const { container } = montar(false, roda(n));
+    const chaoMax = Math.max(...ESTACOES.map(e => chaoY(e)));
+    for (const w of Array.from(container.querySelectorAll<HTMLElement>('[data-grove-walker]'))) {
+      const pes = parseFloat(w.style.top); // % da altura da cena
+      expect(pes).toBeGreaterThanOrEqual(CRIATURA_Y);
+      const img = w.querySelector('img')!;
+      const altura = (img.width / 0.7476 / CENA_H) * 100; // px css -> px da imagem (844/1129) -> %
+      expect(pes - altura, `topo da criatura (${n}) acima do chão das árvores`).toBeGreaterThan(chaoMax);
+    }
   });
   it('a dos outros é sempre a mesma (hash do id), nunca URL do servidor; a própria é a que o App manda', () => {
     const a = criaturas(montar(false, roda(3)).container).map(c => c.getAttribute('src'));
@@ -199,17 +202,20 @@ describe('as criaturas do clã no panorama (palco do Bosque)', () => {
     expect(a[0]).toBe('/meu-sprite.png');
     for (const u of a.slice(1)) expect(u).not.toMatch(/^https?:\/\/(?!localhost)/);
   });
-  it('presença não mexe no palco e as criaturas não desenham texto nem opacidade', () => {
+  it('presença não mexe no cenário (ninguém é apagado nem ordenado por ter vindo hoje)', () => {
     const g = roda(4);
-    const um = criaturas(montar(false, g).container).map(c => [c.getAttribute('src'), c.style.left, c.style.opacity, c.style.filter]);
+    const foto = (c: HTMLElement) => criaturas(c).map(x => [x.getAttribute('src'), x.style.opacity, x.closest<HTMLElement>('[data-grove-walker]')!.style.left]);
+    const um = foto(montar(false, g).container);
     cleanup();
-    const dois = criaturas(montar(false, { ...g, members: g.members.map(m => ({ ...m, apareceuHoje: true })) } as never).container).map(c => [c.getAttribute('src'), c.style.left, c.style.opacity, c.style.filter]);
+    const dois = foto(montar(false, { ...g, members: g.members.map(m => ({ ...m, apareceuHoje: true })) } as never).container);
     expect(dois).toEqual(um);
-    for (const [, , o, f] of um) { expect(o).toBe(''); expect(f).toBe(''); }
+    for (const [, o] of um) expect(o).toBe('');
   });
-  it('batem em 2 quadros; com movimento reduzido ficam paradas', () => {
+  it('batem em 2 quadros e andam; com movimento reduzido ficam paradas', () => {
     expect(criaturas(montar(false, roda(2)).container).every(c => c.className.includes('sm2-grove-bob'))).toBe(true);
     cleanup();
-    expect(criaturas(montar(true, roda(2)).container).every(c => !c.className.includes('sm2-grove-bob'))).toBe(true);
+    const r = montar(true, roda(2));
+    expect(criaturas(r.container).every(c => !c.className.includes('sm2-grove-bob'))).toBe(true);
+    expect(Array.from(r.container.querySelectorAll<HTMLElement>('[data-grove-walker]')).every(w => w.style.animation === 'none')).toBe(true);
   });
 });

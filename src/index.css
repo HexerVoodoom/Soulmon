@@ -5822,6 +5822,8 @@ select:focus-visible {
   .sm-npc-intro { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
   .sm2-grove-bob { animation: none !important; }
+  .sm2-grove-walker, .sm2-grove-walker-flip { animation: none !important; }
+  .sm2-grove-walker-pulse-on { animation: sm2-grove-glow 0.7s ease-out 1 !important; }
   .sm2-casa-glow { animation: none !important; }
   /* Feira da Guilda: o FX do fenômeno fica parado. */
   .sm2-fair-fx { animation: none !important; }
@@ -8244,6 +8246,37 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-creature { image-rendering: pixelated; position: absolute; display: block; max-width: none; pointer-events: none; user-select: none; }
 @keyframes sm2-grove-bob { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.94); } }
 .sm2-grove-bob { animation: sm2-grove-bob 1.6s steps(2, jump-none) infinite; transform-origin: 50% 100%; }
+/* O BOSQUE ÚNICO (D-49..D-53, 19/10/2026): os membros do clã ANDAM no cenário (panorama e janela do Clã). Até 12 sprites, tudo CSS:
+   a travessia é um `transform` por sprite (alterna ida e volta) e o virar de lado é outro, sem JS por frame. O contorno
+   (`drop-shadow` de 1 px nos 4 lados) destaca o sprite do fundo pintado; o seu leva a cor primária. A camada é um container
+   (`cqw` = % da largura DA CENA, não da tela: no panorama a cena tem ~3 telas). */
+.sm2-grove-walkers { position: absolute; inset: 0; container-type: inline-size; pointer-events: none; }
+.sm2-grove-walker { position: absolute; width: 0; height: 0; animation: sm2-grove-walk var(--gw-dur, 18s) ease-in-out var(--gw-delay, 0s) infinite alternate; }
+@keyframes sm2-grove-walk { from { transform: translateX(calc(var(--gw-amp, 10) * -1cqw)); } to { transform: translateX(calc(var(--gw-amp, 10) * 1cqw)); } }
+.sm2-grove-walker-btn { position: absolute; display: block; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.sm2-grove-walker-btn:focus-visible { outline: 2px solid var(--sm2-primary, #6EFFFB); outline-offset: 2px; border-radius: 4px; }
+.sm2-grove-walker-flip { display: block; width: 100%; height: 100%; animation: sm2-grove-flip calc(var(--gw-dur, 18s) * 2) steps(1, end) var(--gw-delay, 0s) infinite; }
+@keyframes sm2-grove-flip { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } 100% { transform: scaleX(1); } }
+.sm2-grove-walker-pulse { display: block; width: 100%; height: 100%; }
+.sm2-grove-walker-pulse-on { animation: sm2-grove-pulse 0.7s ease-out 1; }
+@keyframes sm2-grove-pulse {
+  0% { transform: translateY(0) scale(1); filter: brightness(1); }
+  35% { transform: translateY(-10px) scale(1.12); filter: brightness(1.45); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+@keyframes sm2-grove-glow { 0% { filter: brightness(1); } 35% { filter: brightness(1.45); } 100% { filter: brightness(1); } }
+.sm2-grove-walker-img { display: block; image-rendering: pixelated; max-width: none; user-select: none; -webkit-user-drag: none;
+  filter: drop-shadow(1px 0 0 #F4FFF8) drop-shadow(-1px 0 0 #F4FFF8) drop-shadow(0 1px 0 #F4FFF8) drop-shadow(0 -1px 0 #F4FFF8); }
+.sm2-grove-walker-img[data-grove-creature="own"] {
+  filter: drop-shadow(1px 0 0 var(--sm2-primary, #6EFFFB)) drop-shadow(-1px 0 0 var(--sm2-primary, #6EFFFB)) drop-shadow(0 1px 0 var(--sm2-primary, #6EFFFB)) drop-shadow(0 -1px 0 var(--sm2-primary, #6EFFFB)); }
+.sm2-grove-walker-fala, .sm2-grove-walker-nome { position: absolute; left: 0; transform: translateX(-50%); width: max-content; max-width: 150px; padding: 3px 8px; border-radius: var(--sm2-radius-md, 10px); font-size: var(--sm2-text-xs); line-height: 1.25; text-align: center; pointer-events: none; z-index: 5; }
+.sm2-grove-walker-fala { background: var(--sm2-surface, #fff); color: var(--sm2-ink, #123); border: 1px solid var(--sm2-line, #ccc); }
+.sm2-grove-walker-nome { top: 4px; background: rgba(5, 14, 12, .78); color: #fff; }
+/* A janela do Clã: o recorte do panorama pintado (nada de pixel solto nem SVG) com os membros andando. */
+.sm2-grove-cena { position: relative; width: 100%; height: 190px; overflow: hidden; border-radius: var(--sm2-radius-md); background: #0b1a17; box-sizing: border-box; }
+.sm2-grove-cena-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 88%; user-select: none; -webkit-user-drag: none; }
+.sm2-grove-cena-slots { position: absolute; left: 8px; bottom: 6px; display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; z-index: 4; }
+.sm2-grove-cena-slots img { display: block; image-rendering: pixelated; }
 /* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
    imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }

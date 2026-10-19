@@ -305,6 +305,23 @@
 **Total: 165 chaves** (+ 29 da Casa, seção 12) — originais: (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 
+## 15. O Bosque como cenário único (19/10/2026, D-49..D-53)
+
+Os membros do clã andam no Bosque (Clã e panorama). Balões são um banco FIXO (sem IA), sem cobrança nem comparação; o nome do membro só aparece ao tocar, sem número.
+
+| Chave | PT-BR | EN | Onde | Nota |
+|---|---|---|---|---|
+| `guild.bosque.cena.aria` | O bosque do clã, com as criaturas passeando | The clan grove, with the creatures strolling | nome acessível da cena | — |
+| `guild.bosque.eu` | Você | You | nome da própria criatura ao tocar | — |
+| `guild.bosque.fala.1` | Que ventinho bom. | Nice breeze. | balão | banco fixo |
+| `guild.bosque.fala.2` | Essas folhas cheiram bem. | These leaves smell lovely. | balão | banco fixo |
+| `guild.bosque.fala.3` | Alguém viu uma borboleta? | Anyone seen a butterfly? | balão | banco fixo |
+| `guild.bosque.fala.4` | Aqui é tranquilo. | It is peaceful here. | balão | banco fixo |
+| `guild.bosque.fala.5` | Oi, amigo! | Hello, friend! | balão | banco fixo |
+| `guild.bosque.fala.6` | As árvores gostam de companhia. | The trees like company. | balão | banco fixo |
+| `guild.bosque.fala.7` | Vou dar uma voltinha. | Off for a little stroll. | balão | banco fixo |
+| `guild.bosque.fala.8` | Cheiro de terra molhada. | Smells like damp earth. | balão | banco fixo |
+
 ## Recusas (o que NÃO foi escrito, e por quê)
 
 1. **"Seu grupo/Seus amigos estão esperando", "a roda precisa de você", "sentimos sua falta"**: chantagem social e emoção causada pelo histórico (L6, L11, LV-G4).

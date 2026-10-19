@@ -377,6 +377,20 @@ for (const [id, a] of Object.entries(BG_ART_ALIASES)) {
  * sem cenário — ou cenário sem `baseColor` — o que se vê é o
  * `--sm2-viewport-bg`, escuro nos dois temas, então também é escuro.
  */
+/**
+ * D-26 (19/10/2026, P10 + S-9): os cenários `bg-guild-*` ("From the Grove") SAEM DO JOGO até a arte nova entrar —
+ * fora da loja, do sorteio e de todo seletor. A POSSE fica (`mine.groveScenes`, G12) e o campo EQUIPADO do save
+ * NÃO é tocado: só a LEITURA de quem desenha passa por aqui e cai no cenário padrão. Quando a arte nova
+ * entrar, basta virar `GUILD_SCENES_RETIRED` e quem tinha um equipado o vê voltar sozinho.
+ */
+export const GUILD_SCENES_RETIRED = true;
+export const isGuildScene = (id: string | null | undefined): boolean => typeof id === 'string' && id.startsWith('bg-guild-');
+/** O cenário que se DESENHA a partir do campo equipado do save (cenário do Bosque aposentado = nenhum). */
+export function visibleBackground(id: string | null | undefined): string | null {
+  if (!id) return null;
+  return GUILD_SCENES_RETIRED && isGuildScene(id) ? null : id;
+}
+
 export function isDarkBackground(id: string | null | undefined): boolean {
   const hex = id ? PET_BACKGROUNDS[id]?.baseColor : undefined;
   const m = hex && /^#([0-9a-f]{6})$/i.exec(hex);

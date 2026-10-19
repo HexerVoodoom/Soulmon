@@ -287,16 +287,10 @@ describe('Conquistas — filtro por categoria, sem coluna de zeros (WP4.12)', ()
 });
 
 describe('L4 M4: "Do bosque" no TOPO do segmento, antes dos ~20 cenários da loja', () => {
-  it('Background: com cenário do Bosque na posse, a seção vem ANTES da prateleira de compra', () => {
+  it('Background (D-26): com cenário do Bosque na posse, a seção NÃO existe — a loja começa direto, sem "From the grove"', () => {
     const { container } = abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-copa'] });
-    const daRoda = container.querySelector('[data-guild-owned="bg"]') as HTMLElement;
-    expect(daRoda).toBeTruthy();
-    const primeiroDaLoja = container.querySelector(`[aria-label*="${bitsBg.nameEn}"]`) as HTMLElement;
-    expect(primeiroDaLoja).toBeTruthy();
-    expect(daRoda.compareDocumentPosition(primeiroDaLoja) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // e logo abaixo da cabeça fixa (moeda/saldo), não depois do conteúdo
-    const stall = container.querySelector('[data-mercado-stall]') as HTMLElement;
-    expect(stall.children[1]).toBe(daRoda);
+    expect(container.querySelector('[data-guild-owned="bg"]')).toBeNull();
+    expect(container.querySelector(`[aria-label*="${bitsBg.nameEn}"]`)).toBeTruthy();
   });
 
   it('Decoração: a Concha da Maré também vem antes da lista; sem nada na posse, silêncio (nem o título)', () => {

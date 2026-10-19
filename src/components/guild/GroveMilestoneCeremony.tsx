@@ -23,7 +23,7 @@ import { usePrefersReducedMotion } from '../ui/Viewport';
 import { Icon } from '../ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { RitualDialog, RitualGlass, ritualTitle } from '../ritual/RitualKit';
-import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { PET_BACKGROUNDS, GUILD_SCENES_RETIRED } from '../../utils/backgrounds';
 import { sceneCss } from '../../utils/backgroundPortrait';
 import { GROUND_Y } from '../../utils/petStage';
 import { groveStageName, groveMarcoText, guildCoreText, type GroveMarcoStage } from '../../utils/guildCopyCore';
@@ -79,7 +79,8 @@ export function GroveMilestoneCeremony({
       <p id="gmc-title" style={ritualTitle}>{groveMarcoText(language, stage, 'mundo')}</p>
       <p style={{ ...sm2Text, margin: 0 }}>{groveMarcoText(language, stage, 'pet')}</p>
       {dateLabel && <p style={sm2Hint}>{dateLabel}</p>}
-      {sceneGranted && <p style={sm2Hint}>{guildCoreText(language, 'guild.marco.cenario', { estagio: nome })}</p>}
+      {/* D-26: o cenário saiu do jogo até a arte nova — a frase "já está em Background" seria falsa. */}
+      {sceneGranted && !GUILD_SCENES_RETIRED && <p style={sm2Hint}>{guildCoreText(language, 'guild.marco.cenario', { estagio: nome })}</p>}
       <button type="button" onClick={onDone} style={{ ...sm2Button('primary'), marginTop: 4, minWidth: 200 }}>
         {guildCoreText(language, 'guild.marco.botao')}
       </button>

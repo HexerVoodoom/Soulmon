@@ -207,6 +207,18 @@ export const GUILD_COPY = {
   'guild.bosque.titulo': ['Bosque', 'Grove'],
   // O panorama (18/10/2026): tela cheia, 4 árvores, uma por estação.
   'guild.bosque.entrar': ['Entrar no bosque', 'Enter the grove'],
+  // D-49..D-53 (19/10/2026): o Bosque é UM cenário (Clã e panorama); os membros andam nele. Balões = banco FIXO, sem IA,
+  // sem comparar nem cobrar ninguém. O nome do membro só aparece ao TOCAR, sem número.
+  'guild.bosque.cena.aria': ['O bosque do clã, com as criaturas passeando', 'The clan grove, with the creatures strolling'],
+  'guild.bosque.eu': ['Você', 'You'],
+  'guild.bosque.fala.1': ['Que ventinho bom.', 'Nice breeze.'],
+  'guild.bosque.fala.2': ['Essas folhas cheiram bem.', 'These leaves smell lovely.'],
+  'guild.bosque.fala.3': ['Alguém viu uma borboleta?', 'Anyone seen a butterfly?'],
+  'guild.bosque.fala.4': ['Aqui é tranquilo.', 'It is peaceful here.'],
+  'guild.bosque.fala.5': ['Oi, amigo!', 'Hello, friend!'],
+  'guild.bosque.fala.6': ['As árvores gostam de companhia.', 'The trees like company.'],
+  'guild.bosque.fala.7': ['Vou dar uma voltinha.', 'Off for a little stroll.'],
+  'guild.bosque.fala.8': ['Cheiro de terra molhada.', 'Smells like damp earth.'],
   'guild.bosque.panorama.aria': ['Panorama do bosque. Deslize para os lados ou use as setas do teclado.', 'Grove panorama. Swipe sideways or use the arrow keys.'],
   'guild.bosque.panorama.fechar': ['Fechar o bosque', 'Close the grove'],
   'guild.bosque.panorama.anterior': ['Ver à esquerda', 'View left'],

@@ -795,8 +795,8 @@ describe('o palco do Bosque: a folha entrega a roda e a criatura ao panorama', (
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
     await montar({ mySprite: '/meu-sprite.png' });
     fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
-    await waitFor(() => expect(document.querySelectorAll('[data-grove-creature]')).toHaveLength(4));
-    expect(criaturas()[0].getAttribute('src')).toBe('/meu-sprite.png');
+    await waitFor(() => expect(document.querySelectorAll('[data-grove-folha] [data-grove-creature]')).toHaveLength(4));
+    expect(document.querySelector('[data-grove-folha] [data-grove-creature]')!.getAttribute('src')).toBe('/meu-sprite.png');
   });
 });
 

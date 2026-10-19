@@ -34,13 +34,13 @@ describe('o que ela diz', () => {
     expect(container.textContent).not.toContain('setembro');
   });
 
-  it('o cenário novo só é anunciado quando ELE ENTROU nos cenários da pessoa', () => {
+  it('D-26: o cenário novo NÃO é anunciado enquanto os cenários do Bosque estão fora do jogo (a frase "já está em Background" seria falsa)', () => {
     const { container, rerender } = renderWithCss(<GroveMilestoneCeremony {...base} onDone={() => {}} />);
     expect(container.textContent).not.toMatch(/Cenário do bosque/);
     rerender(<GroveMilestoneCeremony {...base} sceneGranted onDone={() => {}} />);
-    expect(container.textContent).toContain('Cenário do bosque: Copa. Já está em Background.');
+    expect(container.textContent).not.toMatch(/Cenário do bosque|Já está em Background/);
     rerender(<GroveMilestoneCeremony {...base} sceneGranted language="en-US" onDone={() => {}} />);
-    expect(container.textContent).toContain('Grove scenery: Canopy. It is now under Background.');
+    expect(container.textContent).not.toMatch(/Grove scenery|under Background/);
   });
 
   it('sem número, sem "parabéns" e sem cobrança', () => {

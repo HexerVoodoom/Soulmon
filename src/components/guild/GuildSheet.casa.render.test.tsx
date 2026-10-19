@@ -36,10 +36,10 @@ afterEach(cleanup);
 const base = { saveId: 'x'.repeat(32), language: 'pt-BR' as const, metaDoDiaCumprida: false };
 
 describe('a Casa da guilda no Salão', () => {
-  it('mostra o visor da casa, o estágio e "perto" sem número', async () => {
+  it('mostra a cena do Bosque (sem o antigo visor vetorial), o estágio e "perto" sem número', async () => {
     mockServer(casaVista());
     const { container } = render(<GuildSheet {...base} casa={{ bits: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
-    await waitFor(() => expect(container.querySelector('[data-casa-visor]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
     expect(container.querySelector('[data-casa-nivel]')!.textContent).toBe('Haste');
     expect(container.querySelector('[data-casa-perto]')!.textContent).toMatch(/perto de virar Folhas de latão/);
     // nenhum número de progresso: o texto do estágio e do "perto" não tem dígito (os botões trazem a doação, que é constante).
@@ -151,7 +151,49 @@ describe('a Guerra no Salão', () => {
       return new Response(JSON.stringify({ guild: vista(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
     }) as never;
     const { container } = render(<GuildSheet {...base} />);
-    await waitFor(() => expect(container.querySelector('[data-casa-visor]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
     expect(container.querySelector('[data-guild-room="guerra"]')).toBeNull();
+  });
+});
+
+describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall é o administrativo', () => {
+  it('o desenho vetorial (retângulos de cobre/turquesa e o cristal em losango) sumiu da tela da Guilda', async () => {
+    mockServer(casaVista());
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
+    expect(container.querySelector('[data-casa-visor], [data-casa-arvore], [data-casa-tronco], [data-casa-nucleo], [data-casa-cristal], [data-casa-folha], [data-casa-ramo]')).toBeNull();
+    expect(container.querySelector('[data-grove-cena] svg')).toBeNull();
+  });
+
+  it('o Bosque no Clã tem os membros andando (os dois da roda), sem nome na tela até tocar', async () => {
+    mockServer(casaVista());
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelectorAll('[data-grove-cena] [data-grove-creature]')).toHaveLength(2));
+    expect(container.querySelector('[data-grove-nome]')).toBeNull();
+  });
+
+  it('cada assunto tem o seu card: Clan Hall (ficha, membros, código) separado do Bosque, da Casa e do Mural', async () => {
+    mockServer(casaVista());
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
+    const cards = Array.from(container.querySelectorAll<HTMLElement>('.sm2-stats-card'));
+    const donoDe = (sel: string) => cards.filter(c => c.querySelector(sel));
+    // um e só um card por assunto
+    for (const sel of ['[data-cla-info]', '[data-guild-room="bosque"]', '[data-guild-room="casa"]', '[data-guild-room="roda"]', '[data-guild-room="mural"]']) {
+      expect(donoDe(sel), sel).toHaveLength(1);
+    }
+    const [hall] = donoDe('[data-cla-info]');
+    expect(hall.querySelector('[data-guild-room="roda"]')).not.toBeNull(); // membros: administrativo
+    expect(hall.querySelector('[data-guild-room="bosque"]')).toBeNull();
+    expect(hall.querySelector('[data-guild-room="casa"]')).toBeNull();
+    expect(hall.querySelector('[data-guild-room="mural"]')).toBeNull();
+    expect(donoDe('[data-guild-room="bosque"]')[0]).not.toBe(donoDe('[data-guild-room="casa"]')[0]);
+    expect(donoDe('[data-guild-room="casa"]')[0]).not.toBe(donoDe('[data-guild-room="mural"]')[0]);
+  });
+
+  it('o antigo CasaVisor.tsx não existe mais', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    expect(fs.existsSync(path.resolve(__dirname, 'CasaVisor.tsx'))).toBe(false);
   });
 });

@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type Poin
 import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
 import { ESTACOES_BOSQUE, ESPECIE_DA_ESTACAO, type EstacaoBosque } from '../../utils/bosqueArvores';
 import { guildText, type GuildKey } from '../../utils/guildCopy';
-import { groveCreatures } from '../../utils/groveStage';
+import { GroveWalkers } from './GroveWalkers';
 import type { GuildView } from '../../utils/community';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
@@ -52,18 +52,16 @@ export const kSprite = (e: EstacaoBosque): number => (OCUPACAO_COMPLETA * (CLARE
 /** Altura da CAIXA do sprite em % da altura útil. */
 export const alturaCaixa = (e: EstacaoBosque): number => ((SPRITES[e].H * kSprite(e)) / CENA_H) * ESCALA_CENA * 100;
 /** Onde as criaturas pisam (% da altura): no primeiro plano, ABAIXO do chão de qualquer clareira. */
-export const CRIATURA_Y = 88;
+export const CRIATURA_Y = 86;
 
-/**
- * Onde as criaturas do clã pisam: nos VÃOS entre os lugares das árvores (14/38/62/86 %), nunca embaixo de uma copa (os campos agora são 14,2/37,4/60,9/84,4 %).
- * Da esquerda para a direita, na ordem de chegada da roda (`groveCreatures`); sozinha, a sua fica no centro.
- * A de 64 px da ponta esquerda cabe antes da árvore do outono (que ocupa ~6–22 %).
- */
-const PALCO_X: Record<number, number[]> = { 1: [50], 2: [26, 74], 3: [26, 50, 74], 4: [3.5, 26, 50, 74] };
+/** D-51: os sprites andam por TODO o panorama (até 12). Escala inteira de 256²: a sua em 96, as dos outros em 64. */
+export const SPRITE_PANORAMA = { own: 96, other: 64 } as const;
+/** Cada uma das 3 faixas de profundidade desce isto (em % da altura): a mais funda pisa em `CRIATURA_Y`. */
+export const FAIXA_Y = 2.5;
 
 export interface GroveVisorProps {
   language: Language;
-  /** Quem aparece no palco (`utils/groveStage.ts`: até 4 da roda, ou só a sua). */
+  /** Quem anda no cenário (`utils/groveWalkers.ts`: todos os membros, até 12; a sua sempre). */
   guild: Pick<GuildView, 'size' | 'members' | 'bosque'>;
   /** A criatura de quem olha (o App sabe o estágio dela). */
   mySprite: string;
@@ -76,8 +74,6 @@ export interface GroveVisorProps {
 
 export function GroveVisor({ language, guild, mySprite, niveis, reducedMotion, label }: GroveVisorProps) {
   const t = (k: GuildKey, v?: Record<string, string | number>) => guildText(language, k, v);
-  const criaturas = groveCreatures(guild);
-  const xs = PALCO_X[Math.min(4, criaturas.length)] ?? [50];
   const ref = useRef<HTMLDivElement>(null);
   const arraste = useRef<{ x: number; left: number } | null>(null);
   const [borda, setBorda] = useState<{ ini: boolean; fim: boolean }>({ ini: true, fim: false });
@@ -106,6 +102,8 @@ export function GroveVisor({ language, guild, mySprite, niveis, reducedMotion, l
   // Mouse: arrastar. Toque já rola sozinho (e o snap cuida do resto).
   const aoPressionar = (e: PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== 'mouse' || e.button !== 0 || !ref.current) return;
+    // Tocar numa criatura é o toque dela (D-53), não o início de um arraste.
+    if ((e.target as HTMLElement).closest('[data-grove-walker]')) return;
     arraste.current = { x: e.clientX, left: ref.current.scrollLeft };
     ref.current.setPointerCapture(e.pointerId);
     ref.current.dataset.dragging = 'true';
@@ -172,28 +170,7 @@ export function GroveVisor({ language, guild, mySprite, niveis, reducedMotion, l
               </figure>
             );
           })}
-          {criaturas.map((c, i) => (
-            <img
-              key={c.key}
-              src={c.own ? mySprite : (c.sprite ?? undefined)}
-              alt=""
-              width={c.size}
-              height={c.size}
-              draggable={false}
-              data-grove-creature={c.own ? 'own' : 'other'}
-              className={reducedMotion ? 'sm2-grove-creature' : 'sm2-grove-creature sm2-grove-bob'}
-              style={{
-                left: `${xs[i] ?? c.x}%`,
-                top: `${CRIATURA_Y}%`,
-                width: c.size,
-                height: c.size,
-                // Os pés do sprite caem ~6% acima da borda inferior da caixa.
-                marginTop: -Math.round(c.size * 0.94),
-                marginLeft: -Math.round(c.size / 2),
-                animationDelay: reducedMotion ? undefined : `${(i % 3) * 0.4}s`,
-              }}
-            />
-          ))}
+          <GroveWalkers language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} sizes={SPRITE_PANORAMA} baseY={CRIATURA_Y} faixa={FAIXA_Y} />
         </div>
       </div>
       {!borda.ini && (
