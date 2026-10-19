@@ -32,6 +32,6 @@ declare module 'sonner@*' {
 // ⚰️ 21/09/2026 (decisão #33): os `declare module` de `vaul@*`, `recharts@*`,
 // `cmdk@*`, `input-otp@*`, `embla-carousel-react@*`, `next-themes@*`,
 // `react-hook-form@*`, `react-day-picker@*`, `react-resizable-panels@*`,
-// `class-variance-authority@*`, `@radix-ui/react-slot@*`, `@radix-ui/*` e
-// `@jsr/supabase__supabase-js@*` saíram junto com os pacotes (38 sem import).
+// `class-variance-authority@*`, `@radix-ui/react-slot@*` e `@radix-ui/*`
+// saíram junto com os pacotes (38 sem import).
 // Guard: `src/deploy/depsVivas.contract.test.ts`.

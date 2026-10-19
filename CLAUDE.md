@@ -10,16 +10,11 @@ via `language === 'pt-BR'`).
 > bridge, classes e rótulos dos widgets, Digital Asset Links e toda a
 > arte/nomes de franquia. O inventário e o que sobra estão em
 > `docs/SEPARACAO-DIGIAPP.md`.
-> ⚠️ **Esta linha dizia que "o chat paralelo do Supabase" tinha saído. NÃO
-> tinha** (achado em 09/09/2026): o `ChatBox` seguia gravando áudio e mandando
-> direto para um projeto da era DigiApp, com o JWT commitado — bloqueado pela
-> CSP, sem `RECORD_AUDIO` no Android e declarado em lugar nenhum. Hoje a
-> transcrição é uma funcionalidade DE VERDADE: passa por `/api/transcribe`
-> (mesma origem, credencial no servidor; desde 11/10/2026 exige o ID token Firebase e é fail-closed — 503 sem `FIREBASE_PROJECT_ID`), está declarada na política e na ficha
-> da Play, e as quatro peças estão presas por
-> `src/security/supabase.contract.test.ts`. Fica desligada até
-> `SUPABASE_PROJECT_ID`/`SUPABASE_ANON_KEY` existirem no ambiente — e sem elas
-> o botão de microfone **não é desenhado**.
+> ⚠️ **Voz (recado falado)**: hoje o Worker `/api/transcribe` envia o áudio
+> DIRETO ao Groq (Whisper), sem Supabase (o caminho antigo foi removido), com
+> limite de 60 s e nada gravado. Exige o ID token Firebase (fail-closed). Fica
+> desligada sem `GROQ_API_KEY`; o botão de microfone só é desenhado com
+> `transcribeAvailable`. Guard: `src/security/transcribe.contract.test.ts`.
 > **O que resta depende do painel, não do código**: o namespace KV ainda é o
 > mesmo fisicamente — só o dono separa.
 > **O Firebase JÁ FOI separado (07/09/2026)**: o Soulmon tem projeto próprio
@@ -359,7 +354,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   do arquivo), **R-EX** e **R-NOVA** (**toda superfície nova nasce muda** — `ArenaGame.tsx`
   reintroduziu dois sons cortados com 3.974 testes verdes; a régua que faltava hoje é
   `src/utils/cortes.contract.test.ts`).
-- IA: `functions/api/chat.js` (Groq llama-3.1-8b-instant, personalidade via aiSettings).
+- IA: `functions/api/chat.js` (Groq `openai/gpt-oss-120b`, reserva Gemini `gemini-2.5-flash`, personalidade via aiSettings; ver `functions/api/_llm.js`).
 - Push de EVENTO e TETO (§113, 19/10/2026): notificações **vêm ligadas por padrão**
   (save novo, com a permissão do SO pedida 1×). Além das refeições/lembrete de deitar,
   o app agenda push de **fome** (cruza 60, só com comida na pastinha, copy de convite),

@@ -37,6 +37,8 @@ const DESLIGADO: ServerConfig = { authRequired: false, transcribeAvailable: fals
 
 /** A promessa em voo, para N chamadas simultâneas virarem UMA requisição. */
 let emVoo: Promise<ServerConfig> | null = null;
+/** A resposta já resolvida desta sessão (null até a 1ª busca terminar). */
+let resolvido: ServerConfig | null = null;
 
 export function fetchServerConfig(): Promise<ServerConfig> {
   if (!emVoo) {
@@ -48,12 +50,21 @@ export function fetchServerConfig(): Promise<ServerConfig> {
         billingDisabled: d?.billingDisabled === true,
         chatDisabled: d?.chatDisabled === true,
       }))
-      .catch(() => DESLIGADO);
+      .catch(() => DESLIGADO)
+      .then(c => { resolvido = c; return c; });
   }
   return emVoo;
+}
+
+/** Síncrono e SEM rede: a resposta já resolvida desta sessão, ou null se ainda
+ *  não houve busca (ou ela não terminou). Serve a quem precisa decidir o que
+ *  desenhar no 1º render sem disparar requisição. */
+export function peekServerConfig(): ServerConfig | null {
+  return resolvido;
 }
 
 /** Só para teste: esquece a resposta cacheada desta sessão. */
 export function resetServerConfigCache(): void {
   emVoo = null;
+  resolvido = null;
 }

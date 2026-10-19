@@ -36,12 +36,7 @@ const CAMPOS_DECLARADOS: Record<string, Record<string, string[][]>> = {
       // inteiras e categorias fixas (nenhum nome de hábito/tarefa) — docs/CHAT-SOULMON.md §Privacidade.
       ['mode', 'petName', 'mood', 'evolutionStage', 'dominantBranch', 'language', 'aiSettings', 'context', 'behavior'],
     ],
-    // Fala espontânea (idle) e fala ao toque — `message` aqui é um prompt fixo
-    // do app, nunca texto da pessoa.
-    'src/components/CompanionHUD.tsx': [
-      ['message', 'petName', 'mood', 'evolutionStage', 'dominantBranch', 'language', 'aiSettings'],
-      ['message', 'petName', 'mood', 'evolutionStage', 'dominantBranch', 'language', 'aiSettings', 'context'],
-    ],
+    // 19/10/2026: fala ociosa e toque no pet viraram locais; o CompanionHUD não chama /api/chat.
   },
   '/api/suggest-tasks': {
     // `goalText` É texto da pessoa: objetivo do tutorial OU nome da tarefa
@@ -132,7 +127,8 @@ describe('ia.camposEnviados — a lista fechada do que sai para a IA', () => {
   const chamadas = chamadasDeAiFetch();
 
   it('há chamadas (controle negativo do próprio teste)', () => {
-    expect(chamadas.length).toBeGreaterThanOrEqual(5);
+    // 19/10/2026: fala ociosa e toque viraram locais (CompanionHUD saiu): 4 chamadas reais.
+    expect(chamadas.length).toBeGreaterThanOrEqual(4);
   });
 
   it('toda chamada de aiFetch tem rota literal e body objeto-literal (senão a lista não é verificável)', () => {

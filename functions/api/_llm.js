@@ -35,12 +35,16 @@
 export const GROQ_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 export const GEMINI_MODEL = 'gemini-2.5-flash';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const TIMEOUT_MS = 10000;
+// Timeouts separados. O gpt-oss-120b raciocina (mesmo com effort 'low'), então o
+// Groq ganha mais tempo; o Gemini (thinkingBudget 0) é rápido. Soma no pior
+// caso: 12 s + 8 s = 20 s < 25 s do cliente do chat.
+export const GROQ_TIMEOUT_MS = 12000;
+export const GEMINI_TIMEOUT_MS = 8000;
 
 /** @returns {Promise<Response>} */
-async function timedFetch(url, init) {
+async function timedFetch(url, init, timeoutMs) {
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: ctl.signal });
   } finally {
@@ -71,7 +75,7 @@ async function callGroq(env, req, withTools) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.GROQ_API_KEY}` },
     body: JSON.stringify(body),
-  });
+  }, GROQ_TIMEOUT_MS);
   return res;
 }
 
@@ -175,7 +179,7 @@ async function gemini(env, req) {
       tools: geminiTools(tools),
       generationConfig: { temperature: Math.min(temperature, 2), maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } },
     }),
-  });
+  }, GEMINI_TIMEOUT_MS);
   if (!res.ok) return { ok: false, status: res.status };
   const data = await res.json();
   const parts = data.candidates?.[0]?.content?.parts ?? [];

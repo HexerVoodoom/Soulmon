@@ -8,10 +8,11 @@
  * (até 30 s com o microfone "em uso" depois de parar).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 
 vi.mock('../utils/serverConfig', () => ({
   fetchServerConfig: () => Promise.resolve({ authRequired: false, transcribeAvailable: true }),
+  peekServerConfig: () => ({ authRequired: false, transcribeAvailable: true }),
   resetServerConfigCache: () => {},
 }));
 
@@ -39,7 +40,7 @@ beforeEach(() => {
     value: { getUserMedia: vi.fn(async () => ({ getTracks: () => [track] })) },
   });
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); cleanup(); });
 
 const props = {
   petName: 'Bito', mood: 'idle' as const, evolutionStage: 'rookie', useAI: false,
@@ -73,5 +74,19 @@ describe('microfone do chat', () => {
     // a transcrição segue pendente (fetch não resolveu) e o microfone já está livre
     expect(track.stop).toHaveBeenCalled();
     soltarFetch(new Response(JSON.stringify({ text: '' }), { status: 200 }));
+  });
+
+  it('a gravação para sozinha aos 60 s e envia', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ text: '' }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await comecarGravacao();
+    await act(async () => { await vi.advanceTimersByTimeAsync(59_000); });
+    expect(recorders[0].state).toBe('recording');
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_500); });
+    expect(recorders[0].state).toBe('inactive');
+    expect(track.stop).toHaveBeenCalled();
+    const urls = fetchMock.mock.calls.map(c => (c as unknown[])[0]);
+    expect(urls).toContain('/api/transcribe');
   });
 });

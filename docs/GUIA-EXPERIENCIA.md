@@ -308,7 +308,7 @@ pode diminuir** — a falha muda a taxa de crescimento, nunca o sinal.
   nenhum é melhor; declara-se não-confiável com pouco histórico.
 - `BranchForecast` na página de Evolução; evolução manual com cadeado
   (`evolutionLocked`).
-- Chat idle a cada 3min (`/api/chat`, Groq llama-3.1-8b-instant), sem memória.
+- Fala espontânea a cada 3min e toque no pet: só frases locais, sem IA (sem `/api/chat`). A cota de IA fica para o chat aberto (Groq `openai/gpt-oss-120b`, reserva Gemini).
 - Palco com 5 espaços (`petStage.ts`), 27 decorações + 19 cenários; troféus de
   season reais na vitrine.
 - Degeneração por HP 0 — reversível, mas sem narrativa.

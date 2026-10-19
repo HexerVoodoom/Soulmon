@@ -1,2 +1,7 @@
+<<<<<<<< HEAD:dist/assets/gerar-jJ9ITw76.js
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/motor-N8oTPGp7.js","assets/index-DSWLW_ht.js","assets/vendor-DDxydHEc.js","assets/vendor-sonner-BFkWhx6y.js","assets/vendor-capacitor-B8vh4tkU.js","assets/index-FZpfq6Hh.css","assets/oracle-Cc8Siqvt.js"])))=>i.map(i=>d[i]);
 import{bO as r}from"./index-DSWLW_ht.js";import"./vendor-DDxydHEc.js";import"./vendor-sonner-BFkWhx6y.js";import"./vendor-capacitor-B8vh4tkU.js";async function p(t,i,e){const[o,a]=await Promise.all([r(()=>import("./familias-lo-OTGs5.js"),[]),r(()=>import("./motor-N8oTPGp7.js"),__vite__mapDeps([0,1,2,3,4,5,6]))]);return a.generateOracleWithFamilies(t,o,i,e)}export{p as generateOracleAsync};
+========
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/motor-BUG5cZvG.js","assets/index-e18LlUli.js","assets/vendor-DDxydHEc.js","assets/vendor-sonner-BFkWhx6y.js","assets/vendor-capacitor-B8vh4tkU.js","assets/index-DfDyRECh.css","assets/oracle-BuYHoZ5m.js"])))=>i.map(i=>d[i]);
+import{bN as r}from"./index-e18LlUli.js";import"./vendor-DDxydHEc.js";import"./vendor-sonner-BFkWhx6y.js";import"./vendor-capacitor-B8vh4tkU.js";async function p(t,i,e){const[o,a]=await Promise.all([r(()=>import("./familias-lo-OTGs5.js"),[]),r(()=>import("./motor-BUG5cZvG.js"),__vite__mapDeps([0,1,2,3,4,5,6]))]);return a.generateOracleWithFamilies(t,o,i,e)}export{p as generateOracleAsync};
+>>>>>>>> origin/main:dist/assets/gerar-BUtmIJji.js
