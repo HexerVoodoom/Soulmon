@@ -123,6 +123,33 @@ na loja** e anotar aqui a versão dos termos e o plano. Como em todo áudio gera
 (`sonsAssets.contract.test.ts`) prova procedência (hash ↔ arquivo ↔ esta linha), nunca originalidade
 nem licença; a escuta é do dono (S8). Decisão: `REGISTRO-DE-DECISOES.md` §6.1, S17.
 
+⚠️ **Achado de 19/10/2026 — o plano era Free, e o Free não tem direito comercial.** O dono
+informou que gerou o tema no plano **Free**. A página de planos da conta (`suno.com/account`,
+vista em 18/10/2026) lista o Free com *"No commercial rights"* e *"No monthly song downloads"*. Os
+termos (`suno.com/terms`, *Date of Last Revision* 10/08/2026, vigente desde 03/09/2026; lidos em
+18/10/2026 **por resumo da página — conferir o texto antes de citar numa ficha de loja**) dizem que
+conta Free/Basic só usa o Output para fins *"lawful, personal and non-commercial"*, e que o uso
+comercial exige plano pago **e** um Download permitido dentro da cota do plano.
+
+**Consequência, sem suavizar:** o tema `Stone Hall Decay` **não tem licença comercial** e está no
+build. Isto bloqueia publicar o app na loja com ele dentro. Não afeta os assets da Higgsfield
+(termos próprios, S15).
+
+Dois pontos que o registro ainda não sabe responder:
+
+1. **Como o arquivo saiu da conta.** O Free não tem download mensal, e existe um
+   `Stone_Hall_Decay.m4a` de 3 946 099 bytes. Os termos proíbem obter o Output fora do canal oficial
+   de download (por exemplo, captura do stream). O dono precisa dizer como o arquivo foi obtido.
+2. **A fonte do cover.** A conta mostra duas faixas `Stone Hall Decay` e cerca de quinze
+   `Rising Intensity` marcadas **COVER** (modelo V6-MINI). O áudio de origem de um cover não está
+   registrado em lugar nenhum deste repositório.
+
+Saídas, todas do dono: **(a)** assinar o Pro (R$ 40/mês na página de planos de 18/10/2026; 20
+downloads por mês) e regenerar e baixar o tema pelo botão oficial, registrando plano e versão dos
+termos aqui; **(b)** trocar a música por uma gerada na Higgsfield (`sonilo_music`, termos da S15);
+**(c)** tirar o tema do build até decidir. O guard (`sonsAssets.contract.test.ts`) continua provando
+só procedência, nunca licença.
+
 Pós-processamento (corte, 48 kHz, crista, normalização ao alvo da categoria) por
 `squad-alpha-runs/som-01/prototyper/pos-processar.mjs` (SFX) e `E:/Soulmon-assets/som-01/mestre-trilha.mjs`
 (trilha: mono, 12 compassos a 100 BPM, crossfade de loop, −28 LUFS-S); codificação **WebM/Opus 48 kbps
