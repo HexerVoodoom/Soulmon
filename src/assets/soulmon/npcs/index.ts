@@ -50,13 +50,13 @@ import npcJogosRefugio from './npc-oceano-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
 import npcFGuarda from './npc-f-guarda.png';
 import npcExploracaoPasseio from './npc-exploracao-passeio.png';
-import npcExploracaoOficina from './npc-luz-exploracao-oficina.png';
+import npcExploracaoOficina from './npc-exploracao-caderno.png'; // D-32 (19/10/2026): o NPC da Focus Workshop = a escolha 9 do dono (o escriba-polvo-coruja), no lugar da Lume
 import npcExploracaoCaderno from './npc-akasha-exploracao-caderno.png';
 import npcLaboratorioPet from './npc-agua-laboratorio-pet.png';
 import npcLaboratorioStats from './npc-agua-laboratorio-stats.png';
 import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
 import npcHallAmigosMel from './npc-extra-filhote-de-mel.png';
-import npcHallGrove from './npc-hall-guilda.png'; // Ramo, o carvalho (D-50: o busto que sobrou em disco vira o NPC do Grove)
+import npcHallGrove from './npc-n-musa.png'; // D-50 (19/10/2026): o NPC do Grove = a escolha 57 do dono (Lilia, a musa do jardim)
 
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
 import npcMercadoRestaurante from './npc-mercado-restaurante.png';
