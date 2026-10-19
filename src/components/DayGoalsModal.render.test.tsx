@@ -42,11 +42,12 @@ describe('DayGoalsModal', () => {
     const onConfirm = vi.fn();
     renderWithCss(<DayGoalsModal candidates={CANDS} language="pt-BR" onConfirm={onConfirm} onClose={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
-    expect(onConfirm).toHaveBeenLastCalledWith([]);
+    expect(onConfirm).toHaveBeenLastCalledWith([], []);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Pagar conta' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Beber água' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
-    expect(onConfirm).toHaveBeenLastCalledWith(['h1', 't1']);
+    // sem `fuse` (modo antigo) não há foco: o segundo argumento é sempre vazio
+    expect(onConfirm).toHaveBeenLastCalledWith(['h1', 't1'], []);
   });
 
   it('fechar sem confirmar chama só onClose (sem cobrança) e Esc fecha', () => {
@@ -70,5 +71,71 @@ describe('DayGoalsModal', () => {
     renderWithCss(<DayGoalsModal candidates={CANDS} language="pt-BR" initiallyPicked={['h2']} onConfirm={vi.fn()} onClose={vi.fn()} />);
     expect((screen.getByRole('checkbox', { name: 'Alongar' }) as HTMLInputElement).checked).toBe(true);
     expect((screen.getByRole('checkbox', { name: 'Beber água' }) as HTMLInputElement).checked).toBe(false);
+  });
+});
+
+/**
+ * "HOJE" (19/10/2026, dono — REGISTRO 111, D-64): metas + compromisso NUMA tela. Com `fuse`, as TAREFAS marcadas viram o foco do dia
+ * (até 3, as pendências de ontem primeiro), a oferta reduzida de 5 minutos continua, e o `checkIn` deixa de ser modal à parte.
+ */
+describe('DayGoalsModal em modo "Hoje" (fuse)', () => {
+  const TAREFAS = [
+    ...CANDS,
+    { id: 't2', name: 'Ligar pro banco', kind: 'task' as const },
+    { id: 't3', name: 'Enviar relatório', kind: 'task' as const },
+    { id: 't4', name: 'Comprar pão', kind: 'task' as const },
+  ];
+  const fuse = (over: Record<string, unknown> = {}) => ({
+    plan: { carryOver: [{ id: 't3' }], suggestedFocus: [{ id: 't1' }], tinyOffer: ['h2'] },
+    taskIds: new Set(['t1', 't2', 't3', 't4']),
+    onTinyHabit: vi.fn(),
+    ...over,
+  });
+
+  it('é UM modal "Hoje" (metas + foco), com "Hoje não, obrigado" sempre visível', () => {
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={fuse()} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByRole('dialog', { name: 'Hoje' })).toBeTruthy();
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Hoje não, obrigado' })).toBeTruthy();
+    expect(document.body.textContent).toMatch(/viram seu foco \(até 3\)/);
+  });
+
+  it('confirmar devolve as metas marcadas E o foco: só TAREFAS, ontem primeiro, no máximo 3; hábito nunca entra no foco', () => {
+    const onConfirm = vi.fn();
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={fuse()} onConfirm={onConfirm} onClose={vi.fn()} />);
+    for (const nome of ['Beber água', 'Pagar conta', 'Ligar pro banco', 'Enviar relatório', 'Comprar pão']) fireEvent.click(screen.getByRole('checkbox', { name: nome }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    const [ids, foco] = onConfirm.mock.calls[0];
+    expect(ids).toEqual(['h1', 't1', 't2', 't3', 't4']);
+    expect(foco).toEqual(['t3', 't1', 't2']); // pendência de ontem, sugestão do motor, resto; corte em 3
+  });
+
+  it('só o que foi MARCADO entra no foco (tarefa de ontem desmarcada fica de fora, sem cobrança)', () => {
+    const onConfirm = vi.fn();
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={fuse()} onConfirm={onConfirm} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Comprar pão' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(onConfirm).toHaveBeenLastCalledWith(['t4'], ['t4']);
+  });
+
+  it('a oferta reduzida (never miss twice) continua: aceitar chama o MESMO caminho de conclusão e vira "contou"; não há botão de recusar', () => {
+    const f = fuse();
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={f} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    const oferta = document.querySelector('[data-day-goals-tiny-offer="h2"]') as HTMLElement;
+    expect(oferta.textContent).toBe('Alongar: hoje, só 5 minutos?');
+    fireEvent.click(oferta);
+    expect(f.onTinyHabit).toHaveBeenCalledWith('h2');
+    expect(document.querySelector('[data-day-goals-tiny-accepted]')!.textContent).toMatch(/Alongar · contou/);
+    expect(document.querySelector('[data-day-goals-tiny-offer]')).toBeNull();
+  });
+
+  it('"Hoje não" fecha sem confirmar (só onClose) e o EN tem o mesmo conjunto', () => {
+    const onClose = vi.fn();
+    const onConfirm = vi.fn();
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="en-US" fuse={fuse()} onConfirm={onConfirm} onClose={onClose} />);
+    expect(screen.getByRole('dialog', { name: 'Today' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Not today, thanks' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });

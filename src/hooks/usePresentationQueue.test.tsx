@@ -17,11 +17,12 @@ describe('usePresentationQueue', () => {
     const { result, rerender } = renderHook((p: { ready: PresentationReady }) => usePresentationQueue({ ready: p.ready }), {
       initialProps: { ready: { checkIn: true, dailyReport: true, levelUp: true } as PresentationReady },
     });
-    expect(result.current.current).toBe('levelUp');
-    rerender({ ready: { checkIn: true, dailyReport: true } });
+    // D-64 (REGISTRO 111): o resumo e o "Hoje" vêm antes da celebração
     expect(result.current.current).toBe('dailyReport');
-    rerender({ ready: { checkIn: true } });
+    rerender({ ready: { checkIn: true, levelUp: true } });
     expect(result.current.current).toBe('checkIn');
+    rerender({ ready: { levelUp: true } });
+    expect(result.current.current).toBe('levelUp');
     rerender({ ready: {} });
     expect(result.current.current).toBe(PRESENTATION_IDLE);
   });
@@ -34,19 +35,19 @@ describe('usePresentationQueue', () => {
     rerender({ ready: { checkIn: true, levelUp: true, dailyReport: true } });
     expect(result.current.current).toBe('checkIn');
     rerender({ ready: { levelUp: true, dailyReport: true } });
-    expect(result.current.current).toBe('levelUp');
+    expect(result.current.current).toBe('dailyReport');
   });
 
   it('`onShow` roda UMA vez por entrada na tela (não a cada render), e um erro nele não trava', () => {
-    const onShow = vi.fn((id: PresentationId) => { if (id === 'levelUp') throw new Error('boom'); });
+    const onShow = vi.fn((id: PresentationId) => { if (id === 'nightmare') throw new Error('boom'); });
     const { result, rerender } = renderHook((p: { ready: PresentationReady }) => usePresentationQueue({ ready: p.ready, onShow }), {
-      initialProps: { ready: { levelUp: true, dailyReport: true } as PresentationReady },
+      initialProps: { ready: { nightmare: true, dailyReport: true } as PresentationReady },
     });
-    rerender({ ready: { levelUp: true, dailyReport: true } });
-    rerender({ ready: { levelUp: true, dailyReport: true } });
+    rerender({ ready: { nightmare: true, dailyReport: true } });
+    rerender({ ready: { nightmare: true, dailyReport: true } });
     expect(onShow).toHaveBeenCalledTimes(1);
-    expect(onShow).toHaveBeenLastCalledWith('levelUp');
-    expect(result.current.current).toBe('levelUp'); // lançou, mas segue na tela
+    expect(onShow).toHaveBeenLastCalledWith('nightmare');
+    expect(result.current.current).toBe('nightmare'); // lançou, mas segue na tela
     rerender({ ready: { dailyReport: true } });
     expect(onShow).toHaveBeenCalledTimes(2);
     expect(onShow).toHaveBeenLastCalledWith('dailyReport');
@@ -72,15 +73,15 @@ describe('usePresentationQueue', () => {
   it('um fechamento que LANÇA marca o item como falho e a fila avança', () => {
     function Harness() {
       const q = usePresentationQueue({
-        ready: { levelUp: true, dream: true },
-        onDismiss: id => { if (id === 'levelUp') throw new Error('quebrou'); },
+        ready: { dailyReport: true, dayGoals: true },
+        onDismiss: id => { if (id === 'dailyReport') throw new Error('quebrou'); },
       });
       return <div data-testid="atual">{q.current}</div>;
     }
     const { getByTestId } = render(<Harness />);
-    expect(getByTestId('atual').textContent).toBe('levelUp');
+    expect(getByTestId('atual').textContent).toBe('dailyReport');
     act(() => { closeTopBackLayer(); });
-    expect(getByTestId('atual').textContent).toBe('dream');
+    expect(getByTestId('atual').textContent).toBe('dayGoals');
   });
 
   it('`fail` pula o item, tenta o fechamento dele e a fila continua', () => {
@@ -173,15 +174,14 @@ describe('cenário do dono: dia novo + level-up + prédio do mapa + compromisso 
   const inicial: Save = { totalXP: 100000, lastCelebratedLevel: 1, buildingIntrosSeen: seedBuildingIntrosSeen(1), checkInDone: false };
   const toca = (el: HTMLElement) => act(() => { el.click(); });
 
-  it('a sequência é level-up -> resumo do dia -> mapa -> compromisso, sem sobreposição; reiniciar NÃO repete o que foi mostrado', () => {
+  it('a sequência é resumo do dia -> mapa -> compromisso -> level-up (celebração por último), sem sobreposição; reiniciar NÃO repete o que foi mostrado', () => {
     expect(pendingBuildingIntros(inicial.buildingIntrosSeen, bondLevelFor(inicial.totalXP)).length).toBeGreaterThan(0);
     expect(levelUpPending(inicial.totalXP, inicial.lastCelebratedLevel)).not.toBeNull();
     const device: Device = { reportShownFor: null };
     const log1: PresentationId[] = [];
     const a = render(<Jogo save0={inicial} device={device} log={log1} />);
     const atual = () => a.getByTestId('atual');
-    expect(atual().textContent).toBe('levelUp');
-    toca(atual());
+    // D-64 (REGISTRO 111): o resumo vem primeiro; o level-up é celebração e entra DEPOIS do início de dia
     expect(atual().textContent).toBe('dailyReport');
     toca(atual());
     expect(atual().textContent).toBe('buildingIntro');
@@ -191,12 +191,14 @@ describe('cenário do dono: dia novo + level-up + prédio do mapa + compromisso 
 
     const log2: PresentationId[] = [];
     const b = render(<Jogo save0={salvo} device={device} log={log2} />);
-    // o level-up, o resumo e o mapa JÁ foram mostrados: só sobra o compromisso, que ainda não foi respondido
+    // o resumo e o mapa JÁ foram mostrados (não voltam): sobram o compromisso, que ainda não foi respondido, e o level-up, que ainda não chegou à tela
     expect(b.getByTestId('atual').textContent).toBe('checkIn');
-    expect(log2).toEqual(['checkIn']);
+    toca(b.getByTestId('atual'));
+    expect(b.getByTestId('atual').textContent).toBe('levelUp');
     toca(b.getByTestId('atual'));
     expect(b.getByTestId('atual').textContent).toBe(PRESENTATION_IDLE);
-    expect(log1).toEqual(['levelUp', 'dailyReport', 'buildingIntro']);
+    expect(log2).toEqual(['checkIn', 'levelUp']);
+    expect(log1).toEqual(['dailyReport', 'buildingIntro']);
   });
 
   it('REPRODUÇÃO DO BUG ANTIGO: marcar "visto" só ao FECHAR faz o mapa voltar na abertura seguinte', () => {
@@ -222,5 +224,48 @@ describe('cenário do dono: dia novo + level-up + prédio do mapa + compromisso 
     });
     rerender({ ready: { dailyReport: true, buildingIntro: true } });
     expect(result.current.current).toBe('dailyReport');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// D-64/D-66/D-68 (REGISTRO 111): o Soulmon dorme à espera de ser acordado -> nada do início de dia; acordou -> o pesadelo entra logo
+// depois; o teto de 3 modais vale POR ABERTURA do app (o hook acumula o que já foi mostrado).
+// ---------------------------------------------------------------------------
+describe('usePresentationQueue — início de dia (acordar, teto de 3)', () => {
+  const MANHA: PresentationReady = { nightmare: true, dream: true, dailyReport: true, dayGoals: true, checkIn: true, levelUp: true, evolveTask: true, restSetup: true };
+
+  it('dormindo à espera de ser acordado: a fila fica ociosa; ao acordar o PESADELO entra logo (D-68)', () => {
+    const { result, rerender } = renderHook((p: { hold: boolean }) => usePresentationQueue({ ready: MANHA, holdDayStart: p.hold }), { initialProps: { hold: true } });
+    expect(result.current.current).toBe(PRESENTATION_IDLE);
+    expect(result.current.dayStartActive).toBe(true); // o priming de push e o `welcome` esperam
+    rerender({ hold: false });
+    expect(result.current.current).toBe('nightmare');
+  });
+
+  it('a abertura inteira: pesadelo -> resumo -> "Hoje" e PARA (teto de 3); celebrações e convites ficam para a próxima abertura', () => {
+    const vistos: PresentationId[] = [];
+    function Harness() {
+      const [ready, setReady] = useState<PresentationReady>(MANHA);
+      const q = usePresentationQueue({
+        ready,
+        onShow: id => { vistos.push(id); },
+        onDismiss: id => { setReady(r => ({ ...r, [id]: false })); },
+      });
+      return <button type="button" data-testid="atual" onClick={() => q.dismiss(q.current)}>{q.current}</button>;
+    }
+    const a = render(<Harness />);
+    const fecha = () => act(() => { (a.getByTestId('atual') as HTMLElement).click(); });
+    expect(a.getByTestId('atual').textContent).toBe('nightmare');
+    fecha();
+    expect(a.getByTestId('atual').textContent).toBe('dailyReport');
+    fecha();
+    expect(a.getByTestId('atual').textContent).toBe('dayGoals');
+    fecha();
+    expect(a.getByTestId('atual').textContent).toBe(PRESENTATION_IDLE);
+    expect(vistos).toEqual(['nightmare', 'dailyReport', 'dayGoals']);
+    a.unmount();
+    // próxima ABERTURA (hook novo, `shown` vazio): o que sobrou aparece
+    const b = renderHook(() => usePresentationQueue({ ready: { levelUp: true, evolveTask: true, restSetup: true } }));
+    expect(b.result.current.current).toBe('levelUp');
   });
 });

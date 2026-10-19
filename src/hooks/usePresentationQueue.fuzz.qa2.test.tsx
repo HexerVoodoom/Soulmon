@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { usePresentationQueue } from './usePresentationQueue';
-import { PRESENTATION_ORDER, PRESENTATION_IDLE, presentationRank, type PresentationId, type PresentationReady } from '../utils/presentationQueue';
+import { PRESENTATION_ORDER, PRESENTATION_IDLE, pickPresentation, presentationRank, type PresentationId, type PresentationReady } from '../utils/presentationQueue';
 
 afterEach(cleanup);
 
@@ -36,9 +36,9 @@ describe('QA rodada 2: fila de apresentação, fuzz de propriedades', () => {
         const leve = prev === PRESENTATION_IDLE || prev === 'unlockToast' || prev === 'noticeToast';
         if (!leve && ready[prev] && !failedSet.has(prev)) expect(now).toBe(prev);
         if (now !== PRESENTATION_IDLE) { expect(ready[now]).toBe(true); expect(failedSet.has(now)).toBe(false); }
-        // se ninguém sticky na tela, entra o mais prioritário dos prontos
+        // se ninguém sticky na tela, entra o mais prioritário dos ELEGÍVEIS (D-64: o teto de 3, pesadelo x sonho e "Hoje" único podem adiar um pronto)
         if (leve || !ready[prev] || failedSet.has(prev)) {
-          const best = PRESENTATION_ORDER.find(i => i !== PRESENTATION_IDLE && ready[i] && !failedSet.has(i)) ?? PRESENTATION_IDLE;
+          const best = pickPresentation(ready, null, failedSet, { shown: new Set(shown) });
           expect(now).toBe(best);
           if (best !== PRESENTATION_IDLE && now !== PRESENTATION_IDLE && prev !== PRESENTATION_IDLE) expect(presentationRank(now)).toBeLessThanOrEqual(presentationRank(best));
         }

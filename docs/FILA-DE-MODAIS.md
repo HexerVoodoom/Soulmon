@@ -24,30 +24,39 @@
 
 ## 2. A ordem (do mais urgente ao mais leve)
 
+> **Atualizada em 19/10/2026 (dono; REGISTRO §110/§111; D-64).** A tabela abaixo é a ordem VIGENTE; o §2b explica o início de dia (acordar, teto de 3, o que sai).
+
 | # | id | O que é | Dono do "visto" (gravado AO MOSTRAR) | Fecha por |
 |---|---|---|---|---|
 | 1 | `welcomeTour` | tour do corvo (primeiro uso) | `STORAGE_KEYS.WELCOME_TOUR_SHOWN`, ao fechar (uma vez por aparelho; só quem nunca concluiu nada) | "Let's go" / Skip / Esc / voltar |
 | 2 | `triage` | "Arrumar a pilha" — a ÚNICA aberta por toque | nada (o gesto é o pedido) | resolver / fechar / voltar |
-| 3 | `levelUp` | `LevelUpOverlay` (+ "Now Open") | `lastCelebratedLevel` via `applyLevelUpCelebrated`, no `onShow` (restaura energia/HP 1×) | toque / voltar |
-| 4 | `dailyReport` | resumo do dia: modal CENTRALIZADO "como foi ontem" + corações; depois a aventura ("From Yesterday's Adventure", com o NPC do scroll; o conteúdo é o `StrollFind`, a mesma peça da folha do Passeio, ligada ao scroll escolhido ontem — §66); depois "hoje" (humor/convite/memórias) | `STORAGE_KEYS.DAILY_REPORT_SHOWN = report.date`, no `onShow`; `lastDayReport.heartsAnimSeen` marca a animação do coração | "Começar o dia" / ✕ / Esc / voltar |
-| 5 | `buildingIntro` | NPC apresenta o prédio SÓ na PRIMEIRA ENTRADA nele (`visitarPredio`): tela cheia, `NpcSequence`. Nunca no level-up nem ao abrir o Mapa | `buildingIntrosSeen` (id do prédio), gravado na hora em que a intro abre; save antigo é semeado com os prédios já abertos (não reapresenta) | toque na última fala / Pular / Esc / voltar |
-| 5b | `mapTutorial` | tutorial do mapa (`MapTutorial`, na `NpcSequence`): o corvo abre e cada área é uma fala do NPC dela, listando os prédios. SÓ na 1ª abertura do Mapa, depois do tour | `mapTutorialSeen` no SAVE, gravado ao MOSTRAR (REGISTRO §51; save antigo com progresso é semeado como visto) | toque na última fala / Pular / Esc / voltar |
-| 6 | `catalogOnboarding` | "Add tasks to list" — escolher as primeiras metas (modal CENTRALIZADO; as sugestões nascem DESMARCADAS, §66) | `markCatalogOnboardingSeen`, ao confirmar (ritual com RESPOSTA) | confirmar (sem "pular", decisão C11) |
-| 6b | `dayGoals` | REAFIRMAR O DIA (REGISTRO §66): modal CENTRALIZADO de caixas, desmarcadas, com os hábitos/tarefas JÁ cadastrados que caem hoje; só o marcado vai para o Hoje | `dayPlan` (save), gravado AO MOSTRAR (`{ day, offered, picked: [], confirmed: false }`) | Confirmar / ✕ / Esc / voltar (sem confirmar = lista vazia + convite, não reabre no dia) |
-| 7 | `checkIn` | `MorningCheckIn` — se comprometer com as tarefas do dia | `lastCheckInDate`, ao confirmar/pular (ritual com RESPOSTA) | Definir / Pular / voltar |
-| 8 | `evolveTask` | `EvolveTaskModal` — "crie mais atividades" depois de evoluir | nada (derivado da evolução) | criar / fechar / voltar |
-| 9 | `groveMilestone` | marco do Bosque da Guilda | `acknowledgeGroveMilestone` | toque / voltar |
-| 10 | `dream` | sonho da manhã | o sonho é gravado ao sortear (`setMorningDream` após o updater da virada), não ao fechar | OK / voltar |
-| 11 | `nightmare` | pesadelo da manhã (jogável) | `markNightmareFought` (a noite lutada) | "Bom dia" / voltar |
-| 12 | `catalogLevelInvite` | convite de subir/descer o nível de um hábito | `lastCatalogLevelInviteDayKey` | aceitar / recusar / voltar (= recusar) |
-| 13 | `restSetup` | horário de dormir (OBRIGATÓRIO, D-24: pronto enquanto `rest.windowConfirmed` ≠ true; sem X) | `handleConfirmRestWindow` | só "Confirmar" — voltar não fecha |
+| 3 | `nightmare` | pesadelo da manhã (jogável) — logo DEPOIS de acordar o Soulmon (D-68); NUNCA junto do sonho | `markNightmareFought` (a noite lutada) | "Bom dia" / voltar |
+| 4 | `dream` | sonho da manhã, NO LUGAR do pesadelo quando não há luta (a coleta do sonho acontece de qualquer jeito: o modal é só a apresentação) | o sonho é gravado ao sortear (`setMorningDream` após o updater da virada), não ao fechar | OK / voltar |
+| 5 | `dailyReport` | resumo do dia: modal CENTRALIZADO "como foi ontem" + corações **+ o humor (5 carinhas, UMA vez, na mesma tela)**; depois a aventura ("From Yesterday's Adventure", com o NPC do scroll; o conteúdo é o `StrollFind`, a mesma peça da folha do Passeio, ligada ao scroll escolhido ontem — §66); depois "hoje" (só convite/memórias, quando houver) | `STORAGE_KEYS.DAILY_REPORT_SHOWN = report.date`, no `onShow`; `lastDayReport.heartsAnimSeen` marca a animação do coração | "Começar o dia" / ✕ / Esc / voltar |
+| 6 | `buildingIntro` | NPC apresenta o prédio SÓ na PRIMEIRA ENTRADA nele (`visitarPredio`): tela cheia, `NpcSequence`. Nunca no level-up nem ao abrir o Mapa | `buildingIntrosSeen` (id do prédio), gravado na hora em que a intro abre; save antigo é semeado com os prédios já abertos (não reapresenta) | toque na última fala / Pular / Esc / voltar |
+| 6b | `mapTutorial` | tutorial do mapa (`MapTutorial`, na `NpcSequence`): o corvo abre e cada área é uma fala do NPC dela, listando os prédios. SÓ na 1ª abertura do Mapa, depois do tour | `mapTutorialSeen` no SAVE, gravado ao MOSTRAR (REGISTRO §51; save antigo com progresso é semeado como visto) | toque na última fala / Pular / Esc / voltar |
+| 7 | `catalogOnboarding` | "Add tasks to list" — escolher as primeiras metas (modal CENTRALIZADO; as sugestões nascem DESMARCADAS, §66) | `markCatalogOnboardingSeen`, ao confirmar (ritual com RESPOSTA) | confirmar (sem "pular", decisão C11) |
+| 8 | `dayGoals` | **"HOJE" (REGISTRO §111): metas + compromisso num modal só.** Caixas desmarcadas com os hábitos/tarefas JÁ cadastrados que caem hoje; as TAREFAS marcadas viram o foco (até 3, ontem primeiro); a oferta reduzida de 5 minutos continua | `dayPlan` (save) e `lastCheckInDate`, gravados AO MOSTRAR (`{ day, offered, picked: [], confirmed: false }`) | Confirmar / "Hoje não, obrigado" / ✕ / Esc / voltar (sem confirmar = lista vazia + convite, não reabre no dia) |
+| 8b | `checkIn` | `MorningCheckIn` — o compromisso SOZINHO, só quando não há "Hoje" (plano do dia já confirmado, save migrado): é UM modal com o 8, nunca os dois | `lastCheckInDate`, ao mostrar (ritual com RESPOSTA) | Definir / Pular / voltar |
+| 9 | `levelUp` | `LevelUpOverlay` (+ "Now Open") — **celebração: DEPOIS do início de dia, só se sobrar vaga no teto de 3** | `lastCelebratedLevel` via `applyLevelUpCelebrated`, no `onShow` (restaura energia/HP 1×) | toque / voltar |
+| 10 | `evolveTask` | `EvolveTaskModal` — "crie mais atividades" depois de evoluir (celebração, mesmo teto) | nada (derivado da evolução) | criar / fechar / voltar |
+| 11 | `groveMilestone` | marco do Bosque da Guilda (celebração, mesmo teto) | `acknowledgeGroveMilestone` | toque / voltar |
+| 12 | `catalogLevelInvite` | convite de subir/descer o nível de um hábito — **FORA do início de dia** | `lastCatalogLevelInviteDayKey` | aceitar / recusar / voltar (= recusar) |
+| 13 | `restSetup` | horário de dormir (OBRIGATÓRIO, D-24: pronto enquanto `rest.windowConfirmed` ≠ true; sem X) — **FORA do início de dia**: aparece numa abertura sem nada dele | `handleConfirmRestWindow` | só "Confirmar" — voltar não fecha |
 | 14 | `unlockToast` | BALÃO não bloqueante "<Prédio> desbloqueado em <local>" (vários do mesmo level-up num só), PT/EN; NÃO é sticky: qualquer modal pronto o substitui | o level-up (`lastCelebratedLevel`): os ids vêm de `buildingsUnlockedBetween(from, to)` do evento | toque / 6 s |
-| 14b | `noticeToast` | BALÃO não bloqueante de aviso acionável (refeição, Refúgio, termos, triagem, recomeço; toque abre a folha de Avisos), PT/EN, 1× por dia cada, NÃO sticky | `soulmon-notice-toast-seen` (`<dia>|<chaves>`), gravado ao MOSTRAR |
-| 15 | `welcome` | OCIOSO: instalar a PWA / pedir notificação; decide sozinho se tem algo a dizer | flags próprias | — |
+| 14b | `noticeToast` | BALÃO não bloqueante de aviso acionável (refeição, Refúgio, termos, triagem, recomeço; toque abre a folha de Avisos), PT/EN, 1× por dia cada, NÃO sticky | `soulmon-notice-toast-seen` (`<dia>|<chaves>`), gravado ao MOSTRAR | toque / 6 s |
+| 15 | `welcome` | OCIOSO: instalar a PWA / pedir notificação; decide sozinho se tem algo a dizer; **não aparece no início de dia** (nem o priming de push do slot de avisos) | flags próprias | — |
 
-Dependências por ordem (não há `if` extra): a escolha de metas espera o resumo do dia; a escolha de metas, a reafirmação do dia e o
-compromisso do dia esperam o resumo e o mapa (a reafirmação também só abre depois de o resumo ter sido visto: `DAILY_REPORT_SHOWN`); o compromisso só enxerga o que foi marcado em `dayGoals`; o modal "crie mais atividades" só depois da cerimônia de evolução
-(`evolutionCeremony === null` está no "pronto" dele).
+### 2b. O INÍCIO DE DIA (19/10/2026, dono — REGISTRO §110 e §111; D-64/D-66/D-67/D-68)
+
+1. **(0) Acordar o Soulmon — gesto, NÃO modal.** Na 1ª abertura de CADA dia, para todos, o pet aparece dormindo na Home e o botão "Acordar" do deck (1 toque, mudo) o acorda. É estado de APRESENTAÇÃO (`utils/dayWake.ts`, marca local `DAY_WOKE`): o sono real (`isSleeping`: dreno de coração, cocô, janela de descanso) NÃO muda, e "noite sem registro é neutra" continua. Até acordar, só as ações do PET e dos JOGOS param (aviso curto + atalho "Acordar"); concluir tarefa/hábito SEMPRE funciona (app, widget, desktop) e acorda sozinho.
+2. Enquanto dorme à espera, a fila segura (`holdDayStart`) o início de dia, as celebrações e os convites; o que nasce de gesto (triagem, intro de prédio, mapa) e o onboarding passam.
+3. **Acordou → (1) pesadelo OU sonho (nunca os dois) → (2) resumo de ontem COM o humor → (3) "Hoje" (`dayGoals` + `checkIn` fundidos).** TETO de 3 modais por abertura.
+4. **Celebrações** (`levelUp`, `evolveTask`, `groveMilestone`) entram DEPOIS e só se sobrar vaga no teto; senão ficam para a próxima abertura (nada é perdido: cada uma só marca "visto" ao ser MOSTRADA).
+5. **Convites e configuração** (`catalogLevelInvite`, `restSetup`, o priming de push, o `welcome` ocioso) SAEM do início de dia: só numa abertura em que nada do início de dia/celebração foi mostrado nem está pronto.
+
+Dependências por ordem: a escolha de metas espera o resumo do dia; o "Hoje" (`dayGoals`) espera o resumo e o mapa (só abre depois de o resumo ter sido visto: `DAILY_REPORT_SHOWN`) e já inclui o compromisso; o modal "crie mais atividades" só depois da cerimônia de evolução
+(`evolutionCeremony === null` está no "pronto" dele). As regras do início de dia (acordar, teto, pesadelo × sonho, "Hoje" único, convites fora) são PURAS em `utils/presentationQueue.ts` e testadas em `presentationQueue.test.ts`.
 
 > **Onboarding (§81, 15/10/2026):** a fila é INERTE enquanto `!hasCompletedOnboarding` (`readyFor(demo || !hasCompletedOnboarding, ...)` em `App.tsx`). A Ambra, o ovo, o modal de compra e a confirmação da demo são do `SoulmonOnboarding` (nascem de gesto ou de passo do ritual), e a fila não grava "visto" nem toma o voltar por item que não aparece.
 
@@ -84,7 +93,8 @@ compromisso do dia esperam o resumo e o mapa (a reafirmação também só abre d
 1. Acrescente o id em `PRESENTATION_ORDER` na posição que a prioridade pede (e em `filaDeAvisos.contract.test.ts`).
 2. No `App.tsx`: uma chave em `ready` do `usePresentationQueue`; o ramo de `onShow` (grave o "visto" aqui) e de `onDismiss`
    (o caminho de "voltar/pular"); o ponto de render `{interstitial === '<id>' && <PresentationSlot …>}`.
-3. Nunca monte um modal da Home fora disso sem a justificativa da tabela da §4.
+3. Declare a CLASSE dele em `utils/presentationQueue.ts` (REGISTRO §111): início de dia (`DAY_START_IDS`: entra depois de acordar e nunca é adiado pelo teto), celebração (`CELEBRATION_IDS`: só se sobrar vaga no teto de 3) ou convite/config (`INVITE_IDS`: fora do início de dia). Sem classe, ele vale como aviso de gesto (sempre elegível). Atualize `presentationQueue.test.ts`.
+4. Nunca monte um modal da Home fora disso sem a justificativa da tabela da §4.
 
 ## 6. Intro de NPC / mapa (`NpcSequence`)
 

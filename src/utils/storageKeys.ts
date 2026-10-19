@@ -148,6 +148,10 @@ export const STORAGE_KEYS = {
   /** dayKey da última manhã em que o sonho já foi mostrado. Um por manhã: o
    *  feedback de sono é SÓ de manhã e SÓ uma vez (ortossonia é ansiedade). */
   MORNING_DREAM_SHOWN: 'soulmon-morning-dream-shown',
+  /** Dia do JOGADOR em que o Soulmon foi ACORDADO pela última vez neste aparelho (19/10/2026, REGISTRO §110). Apresentação
+   *  pura: sem esta marca de HOJE, a Home mostra o pet dormindo à espera do gesto de acordar; não é o sono real
+   *  (`IS_SLEEPING`), não toca dreno, cocô nem janela de descanso (`utils/dayWake.ts`). */
+  DAY_WOKE: 'soulmon-day-woke',
   /** G8 (01/10/2026): o modal de sono automático + janela de descanso já
    *  apareceu (uma vez só, na 1ª abertura do 2º dia — `utils/restSetup.ts`). */
   REST_SETUP_SHOWN: 'soulmon-rest-setup-shown',

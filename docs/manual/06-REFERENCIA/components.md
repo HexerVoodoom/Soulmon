@@ -1682,7 +1682,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/DayGoalsModal.tsx` (15/10/2026, REGISTRO §66)
 **Dono de:** "reafirmar o dia" — o modal CENTRALIZADO (`ModalSheet placement="center"`) com caixas de marcar (a `CheckRow` do kit: rótulo inteiro = alvo de 44, contorno bronze, check turquesa) do que a pessoa JÁ cadastrou e cai hoje (Hábitos / Tarefas). As caixas nascem DESMARCADAS (substitui o "todas marcadas" do 7.3); só o marcado aparece no Hoje. Fechar sem confirmar é permitido (sem cobrança). Apresentacional: quem grava é o `App`.
-**Props principais:** `DayGoalsModalProps` — `candidates: DayPlanCandidate[]` (de `dayPlanCandidates`), `language`, `initiallyPicked?`, `onConfirm(ids)`, `onClose()`.
+**Props principais:** `DayGoalsModalProps` — `candidates: DayPlanCandidate[]` (de `dayPlanCandidates`), `language`, `initiallyPicked?`, `onConfirm(ids, focusIds)`, `onClose()`, `fuse?` (modo **"Hoje"**, 19/10/2026, REGISTRO §111: metas + compromisso num modal só — as TAREFAS marcadas viram o foco do dia, até 3, ontem primeiro por `dayPlanFocusIds`; a oferta reduzida de 5 minutos continua; "Hoje não, obrigado" sempre visível; `plan`, `taskIds`, `onTinyHabit?`, `soulStruggle?`).
 **Exports:** `DayGoalsModal(props)`.
 **Chamado por:** `src/App.tsx` (item `dayGoals` da fila, depois de `catalogOnboarding` e antes de `checkIn`).
 **Régua:** `src/components/DayGoalsModal.render.test.tsx`, `src/utils/dayPlan.test.ts`, `src/components/DailyRituals.dayPlan.render.test.tsx`, `src/utils/dailyReset.dayPlan.test.ts`.

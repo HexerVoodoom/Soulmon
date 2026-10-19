@@ -156,3 +156,34 @@ export function confirmDayPlan(prev: DayPlan | undefined, todayIso: string, pick
   const offered = [...new Set([...base.offered, ...picked])].slice(0, DAY_PLAN_MAX_IDS);
   return { day: todayIso, offered, picked: [...new Set(picked)].filter(id => offered.includes(id)), confirmed: true };
 }
+
+/** O que o motor do check-in (`checkInPlan`) sabe e interessa à ordem do foco: ids, nada mais. */
+export interface DayPlanFocusSource {
+  carryOver?: readonly { id: string }[];
+  suggestedFocus?: readonly { id: string }[];
+}
+
+/**
+ * O FOCO do "Hoje" (REGISTRO §111): das metas marcadas, as TAREFAS do save (`taskIds`; atividade agendada não tem foco), as
+ * pendências de ontem primeiro, depois a sugestão do motor, depois o resto na ordem marcada; no máximo `max`. Pura. O corte e a
+ * gravação são de `setFocus` (via `completeCheckIn`) — aqui só se escolhe QUEM entra, sem regra de foco nova.
+ */
+export function dayPlanFocusIds(
+  pickedIds: readonly string[],
+  taskIds: ReadonlySet<string>,
+  plan: DayPlanFocusSource,
+  max: number,
+): string[] {
+  const pickedTasks = new Set(pickedIds.filter(id => taskIds.has(id)));
+  const order = [
+    ...(plan.carryOver ?? []).map(t => String(t.id)),
+    ...(plan.suggestedFocus ?? []).map(t => String(t.id)),
+    ...pickedIds,
+  ];
+  const out: string[] = [];
+  for (const id of order) {
+    if (out.length >= max) break;
+    if (pickedTasks.has(id) && !out.includes(id)) out.push(id);
+  }
+  return out;
+}

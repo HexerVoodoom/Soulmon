@@ -63,16 +63,25 @@ describe('4.2 — o resumo não mostra mais o Evolution Path', () => {
 
 describe('4.4 — uma seção por vez; o NPC só no Passeio; nenhum em `Stretch Closed`', () => {
   it('a ordem é ontem (tarefas + corações) → aventura → hoje, UMA seção visível por vez', () => {
-    abrir({ heartsLost: 1 }, { onPickMood: () => {} });
+    abrir({ heartsLost: 1 }, { onPickMood: () => {}, showOffer: true, onOpenOffer: () => {} });
     const secao = () => document.querySelector('[data-report-step]')!.getAttribute('data-report-step');
     expect(secao()).toBe('yesterday');
     expect(document.querySelectorAll('[data-report-step]')).toHaveLength(1);
-    // tarefas de ontem e corações moram no MESMO modal
+    // tarefas de ontem e corações moram no MESMO modal — e o HUMOR também (19/10/2026, REGISTRO 111: resumo + humor numa tela só)
     expect(document.querySelector('[data-report-step="yesterday"] [data-day-hearts]')).not.toBeNull();
+    expect(document.querySelector('[data-report-step="yesterday"] [data-report-section="mood"] [role="group"]')).not.toBeNull();
     expect(document.body.textContent).toContain('Yesterday Tasks');
     proximo(); expect(secao()).toBe('adventure');
     proximo(); expect(secao()).toBe('today');
     expect(document.querySelectorAll('[data-report-step]')).toHaveLength(1);
+    // o humor é pedido UMA vez: o passo "hoje" (convite/memórias) não o repete
+    expect(document.querySelector('[data-report-step="today"] [role="group"][aria-label="Mood"]')).toBeNull();
+  });
+
+  it('sem convite nem memórias não há passo "hoje": o humor não cria uma terceira tela', () => {
+    abrir({}, { onPickMood: () => {}, adventure: null });
+    expect(document.querySelectorAll('[data-report-step]')).toHaveLength(1);
+    expect((document.querySelector('[data-report-next]') as HTMLElement).getAttribute('data-report-next')).toBe('start');
   });
 
   it('`Stretch Closed` (dia completo) não tem NPC; os corações também não', () => {
@@ -95,7 +104,7 @@ describe('4.4 — uma seção por vez; o NPC só no Passeio; nenhum em `Stretch 
   });
 
   it('14/10/2026: ontem (tarefas + corações) e hoje são o modal CENTRALIZADO, nunca a folha de baixo', () => {
-    abrir({}, { onPickMood: () => {} });
+    abrir({}, { onPickMood: () => {}, showOffer: true, onOpenOffer: () => {} });
     const centrado = () => {
       const dlg = document.querySelector('[data-modal-backdrop] [role="dialog"]') as HTMLElement;
       expect(dlg.getAttribute('data-placement')).toBe('center');

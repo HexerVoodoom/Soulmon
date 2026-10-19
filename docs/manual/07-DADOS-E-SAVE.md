@@ -427,6 +427,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `PENDING_LOGIN_EMAIL` | `soulmon-pending-login-email` | O e-mail entre o envio do link de login e o retorno (o Firebase exige reconfirmar). | `auth.ts` |
 | `SLEEP_STARTED_AT` | `soulmon-sleep-started-at` | ISO de quando o pet deitou — a "outra ponta" da noite, lida ao acordar para `recordNight` gravar deitar E acordar. | `App.tsx` |
 | `MORNING_DREAM_SHOWN` | `soulmon-morning-dream-shown` | Dia da última manhã em que o sonho foi mostrado. Um por manhã: o feedback de sono é SÓ de manhã e SÓ uma vez. | `App.tsx` |
+| `DAY_WOKE` | `soulmon-day-woke` | Dia do JOGADOR em que o Soulmon foi acordado pela última vez neste aparelho (19/10/2026). Sem a marca de hoje, a Home mostra o pet dormindo à espera do gesto de acordar. Apresentação pura: não é o sono real (`IS_SLEEPING`) e não toca dreno, cocô nem janela de descanso. | `App.tsx` |
 
 Fora da tabela, de propósito (moram no próprio módulo, como `K_QUEUE`): as duas
 filas da telemetria em `src/utils/telemetry.ts` — `soulmon-telemetry-queue`
