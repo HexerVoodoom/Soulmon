@@ -183,9 +183,9 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // 🛠️ 04/10/2026 (pedido do dono): os dois prédios da clareira de baixo. Falas sem cobrança, sem
   // número e sem prometer efeito (a Oficina descreve; o Caderno guarda e cala).
   'exploracao:oficina': {
-    namePt: 'Lume, o vagalume do coro', nameEn: 'Lume, the choir firefly', // 07/10/2026: busto trocado a pedido do dono (era Tique, a relojoeira)
-    linePt: 'Cada luz acende no seu tempo. Eu só marco o ritmo.',
-    lineEn: 'Each light glows in its own time. I only keep the beat.',
+    namePt: 'Sépia, a copista', nameEn: 'Sépia, the scribe', // 19/10/2026 (D-32): o dono escolheu o busto nº 9 (o escriba-polvo, antes Sépia no Caderno) no lugar da Lume
+    linePt: 'Foco é copiar uma linha de cada vez.',
+    lineEn: 'Focus is copying one line at a time.',
   },
   'exploracao:caderno': {
     namePt: 'Opala, a arquivista das páginas', nameEn: 'Opala, keeper of the pages', // 07/10/2026: busto trocado a pedido do dono (era Sépia, a copista)
@@ -197,9 +197,9 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Cada um traz um pouco de doçura para o Círculo.',
     lineEn: 'Everyone brings a little sweetness to the Circle.',
   },
-  // D-50 (19/10/2026): o Grove (o bosque do clã) é prédio do Hall. Ramo, o carvalho, volta a ser NPC dele (o busto estava em disco).
+  // D-50 (19/10/2026): o Grove (o bosque do clã) é prédio do Hall. O dono escolheu o busto nº 57 (Lilia, a musa do jardim) como NPC dele.
   'hall:grove': {
-    namePt: 'Ramo, o carvalho', nameEn: 'Ramo, the oak',
+    namePt: 'Lilia, a musa do jardim', nameEn: 'Lilia, the garden muse',
     linePt: 'O bosque cresce devagar. Venha ver.',
     lineEn: 'The grove grows slowly. Come see.',
   },
