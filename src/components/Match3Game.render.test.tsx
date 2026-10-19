@@ -413,3 +413,61 @@ describe('D-83/D-84: o inimigo joga na tela; 4+ dá o aviso de rodada extra', ()
     expect(document.querySelector('[data-m3-extra]')).toBeNull();
   });
 });
+
+describe('D-99/D-100: posição dos Soulmon e o poder do combo', () => {
+  const shots = () => [...document.querySelectorAll('[data-m3-dmg]')] as HTMLElement[];
+
+  it('D-99: jogador em cima à esquerda e o time inimigo embaixo à direita (o ativo, o 1º, na ponta direita)', () => {
+    montar();
+    expect(document.querySelector('[data-m3-player]')!.getAttribute('data-m3-pos')).toBe('top-left');
+    const time = document.querySelector('[data-m3-enemies]') as HTMLElement;
+    expect(time.getAttribute('data-m3-pos')).toBe('bottom-right');
+    expect(time.style.flexDirection).toBe('row-reverse');
+    expect(time.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-active')).toBe('1');
+  });
+
+  it('o número do dano mostrado é exatamente o dano aplicado: um por golpe do jogador e um por resposta do inimigo', async () => {
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    await avancar(220);
+    const vistos = shots().filter(s => s.getAttribute('data-m3-dmg-by') === 'player');
+    const log = p.combates[1].log.filter(e => e.by === 'player');
+    expect(vistos.length).toBeGreaterThan(0);
+    expect(vistos.length).toBeLessThanOrEqual(log.length);
+    vistos.forEach(v => expect(log.map(e => String(e.dmg))).toContain(v.getAttribute('data-m3-dmg')));
+    await assentar();
+    // ao fim os números já saíram; o HP bate com a conta pura (o poder não muda a conta)
+    expect(Number(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-hp'))).toBe(p.combates[1].enemies[0].hp);
+  });
+
+  it('o poder sai da célula do combo (elemento do combo) e há poder também do inimigo no mesmo turno', async () => {
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    const vistos: HTMLElement[] = [];
+    for (let i = 0; i < 60; i++) {
+      await avancar(100);
+      shots().forEach(s => { if (!vistos.includes(s)) vistos.push(s); });
+    }
+    expect(vistos.some(s => s.getAttribute('data-m3-dmg-by') === 'player')).toBe(true);
+    expect(vistos.some(s => s.getAttribute('data-m3-dmg-by') === 'enemy')).toBe(true);
+    expect(vistos.filter(s => s.getAttribute('data-m3-dmg-by') === 'enemy').every(s => s.getAttribute('data-m3-dmg-target') === 'player')).toBe(true);
+  });
+
+  it('movimento reduzido: nada viaja (sem ícone em voo) e o número do dano aparece direto, já visível', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false }));
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    await avancar(10);
+    expect(document.querySelectorAll('[data-m3-shot]').length).toBe(0);
+    const n = shots();
+    expect(n.length).toBeGreaterThan(0);
+    expect(n.every(s => s.style.opacity === '1')).toBe(true);
+    vi.unstubAllGlobals();
+  });
+});

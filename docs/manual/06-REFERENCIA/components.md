@@ -1667,7 +1667,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/Match3Game.tsx`
 
-**Dono de:** a TELA do Combina 3 (Salão de Jogos, REGISTRO §36). **Exports:** `Match3Game(props: EarningGameProps & { seed? })`. Tabuleiro `role="grid"` com foco rotativo (setas, Enter/Espaço), arrasto, dica, cascata animada passo a passo (movimento reduzido: sem animação), recorde no aparelho (`STORAGE_KEYS.MATCH3_BEST`), `onEarnPoints(bits)` UMA vez no fim da rodada. **Assets:** os ícones de elemento `el-fogo`/`el-agua`/`el-terra`/`el-vida`/`el-ar`/`el-luz` (`utils/elementIconArt`). **Chamado por:** `nav/AreaView.tsx` (lazy; `game === 'match3'`). **Régua:** `Match3Game.render.test.tsx`.
+**Dono de:** a TELA do Combina 3 (Salão de Jogos, REGISTRO §36). **Exports:** `Match3Game(props: EarningGameProps & { seed? })`. Tabuleiro `role="grid"` com foco rotativo (setas, Enter/Espaço), arrasto, dica, cascata animada passo a passo (movimento reduzido: sem animação), recorde no aparelho (`STORAGE_KEYS.MATCH3_BEST`), `onEarnPoints(bits)` UMA vez no fim da rodada. **Assets:** os ícones de elemento `el-fogo`/`el-agua`/`el-terra`/`el-vida`/`el-ar`/`el-luz` (`utils/elementIconArt`). **Chamado por:** `nav/AreaView.tsx` (lazy; `game === 'match3'`). **D-99/D-100 (19/10/2026):** jogador em cima à esquerda, time inimigo embaixo à direita (`data-m3-pos`); ao fechar um combo sai da célula dele o ícone do elemento até o alvo e o número do dano (o do log do combate) aparece no alvo — `PowerFx`, Web Animations, mudo; movimento reduzido: sem viagem, número direto. **Régua:** `Match3Game.render.test.tsx`.
 
 ### `src/components/DungeonBusyModal.tsx`
 
