@@ -221,6 +221,6 @@ describe('documentação e textos jurídicos', () => {
     }
     const consent = read('src/utils/consent.ts');
     expect(consent).toMatch(/TERMS_VERSION = '2026-10-11'/);
-    expect(consent).toMatch(/PRIVACY_VERSION = '2026-10-11'/);
+    expect(consent).toMatch(/PRIVACY_VERSION = '2026-10-19'/);
   });
 });

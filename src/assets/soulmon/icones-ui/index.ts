@@ -110,8 +110,9 @@ export const DUNGEON_PROP_ART = {
   escada: masmorraEscada,
 } as const;
 
-/** Moedas (64²). ⚠️ SEM CHAMADA (30/09/2026): os Bits são exibidos SEM ícone por regra
- *  (`utils/currencies.ts`), e Honra/Créditos ficam na UI de sistema, que é vetorial (D2).
+/** Moedas (64²). ⚠️ SEM CHAMADA: desde 19/10/2026 os Bits têm ícone, mas via `BitsIcon`/`BitsAmount`
+ *  (vetorial, REGISTRO §105 revogado pela D-62), não por este PNG; Honra/Créditos ficam na UI de
+ *  sistema, que é vetorial (D2).
  *  `emblema` é a moeda do Torneio (campo `emblems`, rótulo "Honra"/"Honor" na UI). */
 export const CURRENCY_ART = {
   bits: moedaBits,

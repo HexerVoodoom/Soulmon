@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useBackLayer } from '../utils/backStack';
-import { Icon } from './ui/Icon';
+import { RewardLine } from './ui/RewardLine';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
@@ -766,16 +766,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               {/* "+N Bits" e, raramente, o coraçãozinho — o emoji da string virou
                   glifo `favorite` 20 FILL `primary-ink` + "+1 heart" (D-J9). */}
               <p style={phaseLine}>
-                {rewardBits > 0 ? <BitsAmount value={rewardBits} sign="+" /> : <span className="sm2-num">{rewardMsg}</span>}
-                {gotHeart && (
-                  <>
-                    {' · '}
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, verticalAlign: 'middle' }}>
-                      <Icon name="favorite" size={20} fill={1} tone="primary" />
-                      +1 {isPt ? 'coração' : 'heart'}
-                    </span>
-                  </>
-                )}
+                {/* D-71: a linha de recompensa com ícones (Bits + coração) é a `RewardLine`. */}
+                {rewardBits > 0 || gotHeart
+                  ? <RewardLine bits={rewardBits} hearts={gotHeart ? 1 : 0} language={isPt ? 'pt-BR' : 'en-US'} />
+                  : <span className="sm2-num">{rewardMsg}</span>}
               </p>
               {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
             </div>
@@ -980,7 +974,7 @@ function DungeonSummary({ isPt, resumo, capBits }: {
     { k: 'bits', n: <><BitsAmount value={resumo.bits} />{capBits ? (isPt ? ' (o teto diário de Bits já foi atingido)' : ' (the daily Bits cap was already reached)') : ''}</> },
   ];
   const add = (k: string, n: string) => linhas.push({ k, n });
-  if (resumo.hearts > 0) add('hearts', isPt ? `Coraçãozinho: +${resumo.hearts} (mochila)` : `Little heart: +${resumo.hearts} (Backpack)`);
+  if (resumo.hearts > 0) linhas.push({ k: 'hearts', n: <><RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} />{isPt ? ' (mochila)' : ' (Backpack)'}</> });
   if (resumo.glitchtama > 0) add('glitchtama', isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
   if (resumo.fragments > 0) add('fragments', isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
   if (resumo.recordTo > resumo.recordFrom) add('record', isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`);

@@ -11,7 +11,9 @@
  *    concedida. Sem ela, fica desligado, e quem pede a permissão continua
  *    sendo o convite que já existe, no momento certo (priming depois da
  *    primeira conclusão real, `utils/pushPriming.ts`; a Janela de Descanso).
- *    Pedir permissão na abertura do app é o que este produto recusa (WP1.5).
+ *    O pedido nativo na 1ª abertura (decisão do dono, 07/10, REGISTRO §113)
+ *    mora em `utils/notificationPermission.ts` + efeito de `App.tsx`; aqui só
+ *    se decide o PADRÃO da preferência, nunca se pede nada.
  *
  * Função PURA: a leitura do localStorage e da `Notification.permission` é de
  * quem chama (`App.tsx`).
