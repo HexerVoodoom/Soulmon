@@ -5,7 +5,7 @@ import type { MiniGameBaseProps } from '../mente/types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
-import { MINI_FX, REFUGIO_SCENE } from '../../utils/visorScenes';
+import { REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import {
   BREATH_PATTERNS, BREATH_DURATIONS_MIN, phaseAt, fillLevel, sessionMs, type BreathPhase,
@@ -111,7 +111,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           onClose={onExit}
         />
         <GameStory id="respiracao" language={language} />
-        <GameVisor height={72} scene={REFUGIO_SCENE}>
+        <GameVisor height={72} scene={REFUGIO_SCENE_SUAVE}>
           <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
         </GameVisor>
         <div role="group" aria-label={isPt ? 'Ritmo' : 'Rhythm'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -150,7 +150,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
     return (
       <GameRoot>
         <GameHeader title={title} closeLabel={closeLabel} onClose={onExit} />
-        <GameVisor height={72} scene={REFUGIO_SCENE}>
+        <GameVisor height={72} scene={REFUGIO_SCENE_SUAVE}>
           <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
         </GameVisor>
         <p role="status" data-respiracao-done style={phaseTitle}>
@@ -172,7 +172,6 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   // ---- respirando ----
   // Bolha: de 40% a 100% do diâmetro máximo. Com movimento reduzido ela não
   // muda de tamanho — só de opacidade — e a barra abaixo mostra o enchimento.
-  // 144 = 3× o sprite 48² (escala inteira; a 136 o pixel saía irregular).
   const BUBBLE = 144;
   const scale = reduced ? 1 : 0.4 + 0.6 * level;
   const petScale = reduced ? 1 : 0.94 + 0.08 * level;
@@ -181,16 +180,16 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
     <GameRoot>
       <GameHeader run activity title={title} closeLabel={closeLabel} onClose={onExit} />
         <GameStory id="respiracao" language={language} />
-      <GameVisor height={80} scene={REFUGIO_SCENE}>
+      <GameVisor height={80} scene={REFUGIO_SCENE_SUAVE}>
         <div
           aria-hidden="true"
           data-respiracao-bubble
           style={{
             position: 'absolute', left: '50%', top: '50%', width: BUBBLE, height: BUBBLE,
             marginLeft: -BUBBLE / 2, marginTop: -BUBBLE / 2,
-            // Sprite 48² `fx-bolha-respiro` (leva `visores`, 01/10/2026), sem borda nem caixa.
-            background: `url(${MINI_FX.bolhaRespiro}) center/100% 100% no-repeat`,
-            imageRendering: 'pixelated',
+            // Bolha vetorial (D-81): degradê radial + anel, escala suave — nada de bitmap 48² esticado.
+            background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55) 0, rgba(190,235,240,0.35) 28%, rgba(120,200,215,0.22) 62%, rgba(120,200,215,0.10) 100%)',
+            border: '2px solid rgba(220,245,250,0.7)', borderRadius: '50%', boxSizing: 'border-box',
             opacity: reduced ? 0.25 + 0.65 * level : (holding ? 0.95 : 0.8),
             transform: `scale(${scale})`,
             transition: reduced ? `opacity ${ease}` : `transform ${ease}, opacity 200ms linear`,

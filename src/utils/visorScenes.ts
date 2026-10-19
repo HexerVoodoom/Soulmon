@@ -75,6 +75,23 @@ export const REFUGIO_SCENE = visorStrip(
   `linear-gradient(180deg, var(--sm2-viewport-bg) 0, ${REFUGIO_TOPO} calc(100% - ${VISOR_STRIP_H}px), ${REFUGIO_TOPO} 100%)`,
 );
 
+/**
+ * Refúgio SUAVE (D-81, 19/10/2026): a Respiração mostra o pet e a bolha sobre um fundo de
+ * degradês — vetorial, sem bitmap, sem blocos de pixel. A faixa `visor-refugio` (pixel de 4×) fazia
+ * o fundo parecer grosseiro ao lado da bolha que respira; aqui a água é só cor contínua.
+ */
+export const REFUGIO_SCENE_SUAVE =
+  'radial-gradient(ellipse 70% 60% at 50% 55%, rgba(120, 190, 190, 0.28) 0, rgba(120, 190, 190, 0) 100%), '
+  + `linear-gradient(180deg, var(--sm2-viewport-bg) 0, ${REFUGIO_TOPO} 100%)`;
+
+/**
+ * Ateliê SUAVE (D-81, Oficina da Mente inteira): Eco e Revisão sem a faixa `visor-atelie` — só degradês
+ * (teto escuro de raízes -> fundo quente), vetorial, sem bloco de pixel. Eram 2x2 px por pixel de arte.
+ */
+export const ATELIE_SCENE_SUAVE =
+  'radial-gradient(ellipse 65% 55% at 50% 60%, rgba(150, 200, 180, 0.16) 0, rgba(150, 200, 180, 0) 100%), '
+  + `linear-gradient(180deg, var(--sm2-viewport-bg) 0, ${ATELIE_TOPO} 100%)`;
+
 /** Fundos de Troca de Regra; o degradê antigo continua como cor de reserva. */
 export function trocaCeuScene(fallback: string): string { return visorStrip(trocaCeu, fallback); }
 export function trocaGrutaScene(fallback: string): string { return visorStrip(trocaGruta, fallback); }

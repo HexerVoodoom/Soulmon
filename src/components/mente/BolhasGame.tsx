@@ -4,7 +4,7 @@ import type { MiniGameBaseProps } from './types';
 import { sm2Button } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
-import { MINI_FX, REFUGIO_SCENE } from '../../utils/visorScenes';
+import { MINI_FX, REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import {
   bolhasBits, bubbleProgress, hasEscaped, initialStaircase, recordOutcome, spawnBubble, timeLeftMs,
@@ -206,7 +206,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
         </div>
       )}
 
-      <GameVisor height={120} scene={REFUGIO_SCENE} label={isPt ? 'Bolhas subindo' : 'Rising bubbles'}>
+      <GameVisor height={120} scene={REFUGIO_SCENE_SUAVE} label={isPt ? 'Bolhas subindo' : 'Rising bubbles'}>
         <VisorSprite src={pet} size={64} data-visor-pet idle={!blowing && !reduced} hop={calma ? 0 : score} style={petStyle} />
         {phase === 'play' && bubbles.current.map(b => {
           const p = posOf(b, now);

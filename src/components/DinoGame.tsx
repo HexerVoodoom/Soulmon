@@ -11,7 +11,6 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { DINO_SCENE } from '../utils/dungeonScenes';
 import { idlePose, runPose, type PetPose } from '../utils/petBounce';
-import { shadowSource, shadowRect, shadowEyes, SHADOW_SLOTS, type ShadowSource } from '../utils/nightmareShadows';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
 import obstacle2 from '../assets/soulmon/dino/dino-obstacle-2.png';
 import obstacle3 from '../assets/soulmon/dino/dino-obstacle-3.png';
@@ -141,50 +140,6 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-/** Visual-only nightmare variant: a shadow silhouette with luminous eyes.
- * Movement, collisions, score and rewards deliberately remain identical. */
-/**
- * 🌑 PR5 (11/10/2026): no Pesadelo o obstáculo é a SOMBRA de um Solmon — silhueta preta, só os olhos de luz.
- * Visual apenas: a colisão segue sendo a de `OBSTACLE_TIERS`. `art` = arte real (célula inteira, já recortada);
- * senão é o placeholder (sprite da linha pintado de preto, preso à caixa de colisão, virado para o pet).
- */
-function drawShadowObstacle(ctx: CanvasRenderingContext2D, img: HTMLImageElement, shadow: ShadowSource, o: { x: number; size: number; tier: number; v: number }, groundY: number) {
-  const cellX = o.x, cellY = groundY - o.size;
-  const { hit, top } = OBSTACLE_TIERS[o.tier].variants[o.v];
-  const r = shadow.art ? { x: 0, y: 0, w: o.size, h: o.size } : shadowRect(o.size, hit, top, img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1);
-  ctx.save();
-  ctx.filter = shadow.art ? 'drop-shadow(0 0 2px #3b2a7a)' : 'brightness(0) drop-shadow(0 0 2px #3b2a7a)';
-  // espelhada: vem da direita, encara o pet
-  ctx.translate(cellX + r.x + r.w, cellY + r.y);
-  ctx.scale(-1, 1);
-  ctx.drawImage(img, 0, 0, r.w, r.h);
-  ctx.restore();
-  if (!shadow.art) {
-    ctx.save();
-    ctx.fillStyle = '#a9fbff';
-    ctx.shadowColor = '#5ee7ff';
-    ctx.shadowBlur = 6;
-    for (const e of shadowEyes(r)) ctx.fillRect(Math.round(cellX + e.x), Math.round(cellY + e.y), 2, 2);
-    ctx.restore();
-  }
-}
-
-function drawNightmarePet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose, mirror = false) {
-  ctx.save();
-  ctx.filter = 'brightness(0) saturate(100%) drop-shadow(0 0 4px #763bff)';
-  drawPet(ctx, img, groundY, h, pose, mirror);
-  ctx.restore();
-  const eyeY = groundY - h + pose.dy - DINO_S * pose.sy * 0.68;
-  const eyeX = DINO_X + DINO_S * 0.62;
-  ctx.save();
-  ctx.fillStyle = '#a9fbff';
-  ctx.shadowColor = '#5ee7ff';
-  ctx.shadowBlur = 8;
-  ctx.fillRect(Math.round(eyeX), Math.round(eyeY), 3, 3);
-  ctx.fillRect(Math.round(eyeX + 7), Math.round(eyeY - 1), 3, 3);
-  ctx.restore();
-}
-
 export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
@@ -200,9 +155,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const scoreElRef = useRef<HTMLSpanElement>(null);
   const petImgRef = useRef<HTMLImageElement | null>(null);
   const tierImgsRef = useRef<HTMLImageElement[][]>([]);
-  /** As sombras do Pesadelo (PR5), carregadas só quando o modo liga: mesma forma de `tierImgsRef`. */
-  const shadowImgsRef = useRef<HTMLImageElement[][]>([]);
-  const shadowSrcRef = useRef<ShadowSource[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -211,7 +163,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const groundYRef = useRef(STAGE_MIN_H - GROUND_FROM_BOTTOM);
   groundYRef.current = stage.h - GROUND_FROM_BOTTOM;
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
-  const [nightmareMode, setNightmareMode] = useState(false);
   /** I3: a confirmação de sair pausa a corrida (o laço é por `dt`, retoma sem salto). */
   const [paused, setPaused] = useState(false);
   const phaseRef = useRef(phase);
@@ -253,10 +204,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       img.src = v.src;
       return img;
     }));
-    if (nightmareMode) {
-      shadowSrcRef.current = SHADOW_SLOTS.map((row, ti) => row.map((_, vi) => shadowSource(ti, vi)));
-      shadowImgsRef.current = shadowSrcRef.current.map(row => row.map(sh => { const im = new Image(); im.src = sh.src; return im; }));
-    }
     const ground = new Image(); ground.src = groundStrip; groundImgRef.current = ground;
     const far = new Image(); far.src = parallaxFar; parallaxImgRef.current = far;
     // O quadro parado do vidro antes de começar: chão, parallax e o pet na
@@ -276,17 +223,14 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const strip = (img: HTMLImageElement, off: number, y: number, w: number, h: number) => { const st = -((off % w) + w) % w; for (let x = st; x < canvas.width; x += w) ctx.drawImage(img, x, y, w, h); };
       if (far.complete && far.naturalWidth) strip(far, s.px, groundYRef.current - PARALLAX_H, PARALLAX_W, PARALLAX_H);
       for (const o of s.obstacles) {
-        const sh = nightmareMode ? shadowSrcRef.current[o.tier]?.[o.v] : undefined;
-        const img = nightmareMode ? shadowImgsRef.current[o.tier]?.[o.v] : tierImgsRef.current[o.tier]?.[o.v];
+        const img = tierImgsRef.current[o.tier]?.[o.v];
         if (!img?.complete || !img.naturalWidth) continue;
-        if (sh) drawShadowObstacle(ctx, img, sh, o, groundYRef.current);
-        else ctx.drawImage(img, o.x, groundYRef.current - o.size, o.size, o.size);
+        ctx.drawImage(img, o.x, groundYRef.current - o.size, o.size, o.size);
       }
       if (ground.complete && ground.naturalWidth) strip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
       if (pet.complete && pet.naturalWidth) {
         const pose = idlePose((performance.now() - t0) / 1000, reducedMotionNow());
-        if (nightmareMode) drawNightmarePet(ctx, pet, groundYRef.current, 0, pose, petMirror);
-        else drawPet(ctx, pet, groundYRef.current, 0, pose, petMirror);
+        drawPet(ctx, pet, groundYRef.current, 0, pose, petMirror);
       }
     };
     for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
@@ -301,7 +245,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     raf = requestAnimationFrame(idleLoop);
     return () => { cancelAnimationFrame(raf); for (const img of [pet, ground, far]) img.removeEventListener('load', drawStatic); };
-  }, [evolutionStage, demoCharacterId, nightmareMode, petMirror]);
+  }, [evolutionStage, demoCharacterId, petMirror]);
 
   const jump = useCallback(() => {
     if (phaseRef.current !== 'playing') return;
@@ -403,11 +347,9 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const far = parallaxImgRef.current;
       if (far?.complete) drawStrip(far, s.px, GROUND - PARALLAX_H, PARALLAX_W, PARALLAX_H);
       for (const o of s.obstacles) {
-        const sh = nightmareMode ? shadowSrcRef.current[o.tier]?.[o.v] : undefined;
-        const img = nightmareMode ? shadowImgsRef.current[o.tier]?.[o.v] : tierImgsRef.current[o.tier]?.[o.v];
+        const img = tierImgsRef.current[o.tier]?.[o.v];
         if (!img?.complete) continue;
-        if (sh) drawShadowObstacle(ctx, img, sh, o, GROUND);
-        else ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
+        ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
       }
       const ground = groundImgRef.current;
       if (ground?.complete) drawStrip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
@@ -417,8 +359,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       drawDust(ctx, s.dust, dustColors);
       if (pet?.complete) {
         const pose = runPose({ t: s.t, speed: s.speed, h: s.h, vy: s.vy, sinceLand: s.sinceLand, reduced });
-        if (nightmareMode) drawNightmarePet(ctx, pet, GROUND, s.h, pose, petMirror);
-        else drawPet(ctx, pet, GROUND, s.h, pose, petMirror);
+        drawPet(ctx, pet, GROUND, s.h, pose, petMirror);
       }
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 
@@ -454,7 +395,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, paused, jump, onEarnPoints, onScore, petMirror, nightmareMode]);
+  }, [phase, paused, jump, onEarnPoints, onScore, petMirror]);
 
   return (
     <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
@@ -512,11 +453,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
       {phase === 'ready' && (
         <>
-          <button type="button" data-nightmare-toggle aria-pressed={nightmareMode} onClick={() => setNightmareMode(value => !value)} style={{ ...sm2Button(nightmareMode ? 'primary' : 'outline'), width: '100%', maxWidth: 300, alignSelf: 'center' }}>
-            {nightmareMode
-              ? (isPt ? 'Pesadelo: sombra ativa ✦' : 'Nightmare: shadow on ✦')
-              : (isPt ? 'Ativar visual de Pesadelo' : 'Enable Nightmare look')}
-          </button>
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
             {isPt ? 'Começar' : 'Start'}
           </button>
