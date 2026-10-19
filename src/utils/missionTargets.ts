@@ -17,7 +17,7 @@ export function weeklyTarget(id: WeeklyMissionId): GoTarget {
     case 'dungeon-runs': return 'exploracao.masmorra';
     case 'evolve-view': return 'laboratorio.evolucao';
     case 'tournament-match': return 'arena.torneio';
-    case 'friend-visit': return 'hall.amigos';
+    case 'friend-visit': return 'laboratorio.amigos';
     case 'rest-nights': case 'checkins': case 'haunted-done': case 'rub-days': case 'shower': case 'play-days': case 'mood-checkins':
       return 'home';
     case 'dream-new': return 'home';

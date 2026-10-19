@@ -507,7 +507,8 @@ export function AreaView(props: AreaViewProps) {
   // Laboratório; Biblioteca / Círculo de Amigos / Salão da Guilda no Hall. As
   // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
   if (area === 'laboratorio') {
-    const tabOf: Record<LaboratorioLotId, LabTab> = { evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' };
+    // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos moram no Laboratório — a folha deles é a `LibraryPage` (`hallContent`), não a do `labContent`.
+    const tabOf: Partial<Record<LaboratorioLotId, LabTab>> = { evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' };
     const lots = laboratorioLots(language).filter(l => !(props.demo && isDemoHiddenLot('laboratorio', l.id)));
     const open = lots.find(l => l.id === sheet) ?? null;
     return (
@@ -515,11 +516,15 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={LABORATORIO_BG}
-        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { props.onLabTab(tabOf[l.id]); enter(l.id); } } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
-          {props.labContent}
+          {open?.id === 'biblioteca' || open?.id === 'amigos' ? (
+            <Suspense fallback={<SheetLoading language={language} />}>
+              {props.hallContent(open.id === 'biblioteca' ? 'directory' : 'friends')}
+            </Suspense>
+          ) : props.labContent}
         </AreaSheet>
       </AreaScene>
     );
@@ -537,13 +542,15 @@ export function AreaView(props: AreaViewProps) {
     >
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
         <Suspense fallback={<SheetLoading language={language} />}>
-          {open?.id === 'biblioteca' && props.hallContent('directory')}
-          {open?.id === 'amigos' && props.hallContent('friends')}
           {open?.id === 'guilda' && (
             <GuildSheet room="salao" language={language} {...props.guild} />
           )}
           {open?.id === 'feira' && (
             <GuildSheet room="feira" language={language} {...props.guild} />
+          )}
+          {/* D-50: o Grove é prédio do Hall — a mesma folha do clã, só a sala do bosque. */}
+          {open?.id === 'grove' && (
+            <GuildSheet room="grove" language={language} {...props.guild} />
           )}
         </Suspense>
       </AreaSheet>

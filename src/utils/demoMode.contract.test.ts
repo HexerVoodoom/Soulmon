@@ -88,7 +88,7 @@ describe('1. cada ponto de fiação continua lendo o predicado', () => {
     const area = ler('components/nav/AreaView.tsx');
     // Os seis lotes existem de verdade no mapa — a lista da demo não pode apontar para um id que sumiu.
     const copy = ler('utils/areaSheetCopy.ts');
-    for (const [, ids] of Object.entries({ arena: ['torneio', 'duelo'], hall: ['biblioteca', 'amigos', 'guilda', 'feira'] })) {
+    for (const [, ids] of Object.entries({ arena: ['torneio', 'duelo'], hall: ['guilda', 'feira', 'grove'], laboratorio: ['biblioteca', 'amigos'] })) {
       for (const id of ids) expect(copy, `lote ${id}`).toContain(`id: '${id}'`);
     }
     expect(area).toContain('demoBlocks(l.id)');
@@ -146,7 +146,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'App.tsx': 'orquestra; os prédios chegam por AreaView (bloqueado na demo)',
       'components/nav/AreaView.tsx': 'só TIPOS; é quem bloqueia os prédios',
       'components/TournamentPage.tsx': 'prédio `arena.torneio` — bloqueado na demo',
-      'components/LibraryPage.tsx': 'prédio `hall.biblioteca`/`hall.amigos` — bloqueado na demo',
+      'components/LibraryPage.tsx': 'prédio `laboratorio.biblioteca`/`laboratorio.amigos` — bloqueado na demo',
       'components/PlayerDetailModal.tsx': 'aberto só dentro da Biblioteca/Torneio (bloqueados)',
       'components/guild/FeiraVisor.tsx': 'prédio `hall.feira` — bloqueado na demo',
       'components/guild/GuildSheet.tsx': 'prédios `hall.feira`/`hall.guilda` — bloqueados na demo',

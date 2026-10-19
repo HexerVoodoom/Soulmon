@@ -94,7 +94,24 @@ export type BuildingId =
   | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
   | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
-  | 'hall.biblioteca' | 'hall.amigos' | 'hall.guilda' | 'hall.feira';
+  | 'laboratorio.biblioteca' | 'laboratorio.amigos'
+  | 'hall.guilda' | 'hall.feira' | 'hall.grove';
+
+/**
+ * Prédios que MUDARAM de id (o save antigo ainda os cita): `arena.feira` → `hall.feira` (11/10/2026) e, em D-50 (19/10/2026),
+ * `hall.biblioteca`/`hall.amigos` → `laboratorio.*`. Tabela ÚNICA; os sanitizadores de save a aplicam na leitura — idempotente
+ * (um id já novo passa intacto) e sem chave nova de storage. O servidor espelha em `functions/api/_gates.js`.
+ */
+export const MOVED_BUILDINGS: Readonly<Record<string, BuildingId>> = {
+  'arena.feira': 'hall.feira',
+  'hall.biblioteca': 'laboratorio.biblioteca',
+  'hall.amigos': 'laboratorio.amigos',
+};
+
+/** O id atual de um prédio (id antigo → novo; qualquer outro valor passa igual). */
+export function currentBuildingId<T>(x: T): T | BuildingId {
+  return typeof x === 'string' && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x) ? MOVED_BUILDINGS[x] : x;
+}
 
 /**
  * A tabela ÚNICA de qual Vínculo abre cada prédio (DECISÃO DO DONO, confirmada em 07/10/2026 — ajuste só aqui; o servidor
@@ -131,9 +148,12 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'laboratorio.stats': { minBond: 3 },
   // O PERFIL do Soulmon (beta-2, 11): lê a ficha do Arquivo (elemento, golpes) — por isso abre no MESMO Vínculo dele. Default da squad; o dono ajusta só aqui.
   'laboratorio.perfil': { minBond: 2 },
-  'hall.biblioteca': { minBond: 2 },
-  'hall.amigos': { minBond: 2 },
+  // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos saíram do Hall e foram para o Laboratório — o Vínculo é o de antes.
+  'laboratorio.biblioteca': { minBond: 2 },
+  'laboratorio.amigos': { minBond: 2 },
   'hall.guilda': { minBond: 4 },
+  // O Grove (D-50): o bosque do clã vira prédio do Hall; abre no mesmo Vínculo do Salão do Clã.
+  'hall.grove': { minBond: 4 },
   // A Feira (a Missão da guilda) mudou da Arena para o Hall em 11/10/2026 — o id e o Vínculo são os de antes.
   'hall.feira': { minBond: GATES.pvp.minBond },
 };

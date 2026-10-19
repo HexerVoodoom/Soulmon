@@ -9,10 +9,10 @@ import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
 import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
-  it('Arena tem Torneio, Duelo e Feira; Hall tem Biblioteca, Círculo de Amigos e Salão da Guilda', () => {
+  it('Arena tem Torneio, Duelo e Guerra; Hall tem Feira, Grove e Salão do Clã; Laboratório tem Biblioteca e Círculo de Amigos (D-50)', () => {
     expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra']);
-    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'biblioteca', 'amigos', 'guilda']); // 11/10/2026: a Feira vem PRIMEIRO = fica ATRÁS (a ordem do array é a ordem de pintura)
-    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats', 'perfil']); // beta-2 (11): o Perfil do Soulmon
+    expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): Biblioteca e Amigos saíram do Hall
+    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats', 'perfil', 'biblioteca', 'amigos']); // beta-2 (11): o Perfil do Soulmon
   });
 
   it('H15/H16/H17 (01/10/2026; Arena revista no beta-2 9.3: Torneio num tablado e Arena livre no OUTRO); Santuário do Vínculo bem maior; Hall maior', () => {
@@ -49,7 +49,7 @@ describe('lotes novos (29/09/2026)', () => {
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
       ['arena', 'duelo', 'Naia'], ['hall', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
-      ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Zumi'],
+      ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['laboratorio', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Brume'],
     ];
@@ -59,7 +59,7 @@ describe('lotes novos (29/09/2026)', () => {
       // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
       // 07/10/2026: Amigos (Trill), Arquivo (Faro) e Santuário (Oriel) trocaram de busto a pedido do dono.
       const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'jogos:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:feira': 'npc-arena-feira', // a Feira mudou da Arena para o Hall (11/10/2026); o arquivo mantém o nome da leva
-        'hall:amigos': 'npc-extra-filhote-de-mel', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
+        'laboratorio:amigos': 'npc-extra-filhote-de-mel', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
       const arquivo = TROCADOS[`${a}:${l}`] ?? `npc-${a}-${l}`;
       expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
       expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt(a, l));

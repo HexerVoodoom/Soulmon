@@ -47,8 +47,10 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'laboratorio:pet': [0.227, 0.217, 0.773, 0.973],
   'laboratorio:stats': [0.247, 0.12, 0.757, 0.973],
   'laboratorio:perfil': [0.02, 0.487, 0.98, 0.97], // P2b (14/10/2026): `lote-laboratorio-perfil` (espelho-d'água da alma, alfa > 20)
-  'hall:biblioteca': [0.027, 0.03, 0.973, 0.973],
-  'hall:amigos': [0.04, 0.117, 0.96, 0.943],
+  // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório (mesma arte); o Grove usa o chalé de campina (alfa > 20).
+  'laboratorio:biblioteca': [0.027, 0.03, 0.973, 0.973],
+  'laboratorio:amigos': [0.04, 0.117, 0.96, 0.943],
+  'hall:grove': [0.083, 0.113, 0.953, 0.947],
   'hall:guilda': [0.057, 0.037, 0.943, 0.97],
 };
 

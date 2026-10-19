@@ -56,6 +56,7 @@ import npcLaboratorioPet from './npc-agua-laboratorio-pet.png';
 import npcLaboratorioStats from './npc-agua-laboratorio-stats.png';
 import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
 import npcHallAmigosMel from './npc-extra-filhote-de-mel.png';
+import npcHallGrove from './npc-hall-guilda.png'; // Ramo, o carvalho (D-50: o busto que sobrou em disco vira o NPC do Grove)
 
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
 import npcMercadoRestaurante from './npc-mercado-restaurante.png';
@@ -103,8 +104,9 @@ export const LOT_NPC_ART: Record<string, string> = {
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro — o busto `npc-conta` segue como NPC de função)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
   'laboratorio:perfil': npcPerfilCorvo, // o Corvo em alta qualidade, 768² (15/10/2026, variação 1 do dono); antes o mascote 384² (14/10/2026, decisão do dono: o Perfil não usa o busto da Iris/Oráculo nem o da Oriel; `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
-  'hall:biblioteca': npcHall,
-  'hall:amigos': npcHallAmigosMel, // Zumi (filhote de mel; 07/10/2026 trocou o Ramo, o carvalho — `npc-hall-guilda.png` segue em disco)
+  'laboratorio:biblioteca': npcHall, // D-50 (19/10/2026): Biblioteca e Amigos mudaram do Hall para o Laboratório — o mesmo NPC de antes
+  'laboratorio:amigos': npcHallAmigosMel, // Zumi (filhote de mel; 07/10/2026 trocou o Ramo, o carvalho — `npc-hall-guilda.png` segue em disco)
+  'hall:grove': npcHallGrove, // Ramo (carvalho; D-50, 19/10/2026: o Grove é prédio do Hall)
   'hall:guilda': npcHallGuildaLuz, // Aurea (leoa solar; 07/10/2026 trocou a Bastia — `npc-f-guarda` segue em EXTRA_NPC_ART)
 };
 

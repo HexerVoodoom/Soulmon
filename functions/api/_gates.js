@@ -49,11 +49,24 @@ export const BUILDING_GATES = {
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },
   'laboratorio.perfil': { minBond: 2 },
-  'hall.biblioteca': { minBond: 2 },
-  'hall.amigos': { minBond: 2 },
+  'laboratorio.biblioteca': { minBond: 2 },
+  'laboratorio.amigos': { minBond: 2 },
   'hall.guilda': { minBond: 4 },
+  'hall.grove': { minBond: 4 },
   'hall.feira': { minBond: GATES.pvp.minBond },
 };
+
+/** Predios que mudaram de id (espelho de `MOVED_BUILDINGS` em `src/utils/gates.ts`; D-50). */
+export const MOVED_BUILDINGS = {
+  'arena.feira': 'hall.feira',
+  'hall.biblioteca': 'laboratorio.biblioteca',
+  'hall.amigos': 'laboratorio.amigos',
+};
+
+/** O id atual de um predio (id antigo -> novo; qualquer outro valor passa igual). @param {unknown} x */
+export function currentBuildingId(x) {
+  return typeof x === 'string' && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x) ? /** @type {Record<string, string>} */ (MOVED_BUILDINGS)[x] : x;
+}
 
 /** @param {keyof typeof BUILDING_GATES} id @param {unknown} bondLevel */
 export function buildingGateFor(id, bondLevel) {

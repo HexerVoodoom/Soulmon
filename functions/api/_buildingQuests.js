@@ -6,6 +6,8 @@
  * (economia local-first, sem dinheiro real, sem sorteio); o servidor garante a FORMA e o teto, nao a procedencia.
  */
 
+import { currentBuildingId } from './_gates.js';
+
 export const MATERIAL_CAP = 99;
 export const MATERIAL_IDS = [
   'spark', 'moss', 'prism', 'pebble', 'ore', 'ink', 'gear', 'fang',
@@ -20,8 +22,9 @@ function ids(v) {
   /** @type {string[]} */
   const out = [];
   if (Array.isArray(v)) {
-    for (const x of v) {
+    for (const raw of v) {
       if (out.length >= MAX_LIST) break;
+      const x = currentBuildingId(raw); // D-50: id antigo -> novo (idempotente)
       if (typeof x === 'string' && BUILDING_RE.test(x) && !out.includes(x)) out.push(x);
     }
   }

@@ -18,6 +18,7 @@
 
 /** As seis áreas do Mapa, na ordem de leitura do Mapa. */
 import { LISTED_QUEST_BUILDINGS } from './utils/buildingQuests';
+import { currentBuildingId } from './utils/gates';
 
 export const AREAS = ['mercado', 'jogos', 'arena', 'exploracao', 'laboratorio', 'hall'] as const;
 export type AreaId = typeof AREAS[number];
@@ -36,7 +37,8 @@ export type ViewType = 'home' | 'map' | `area:${AreaId}` | `page:${MenuPageId}`;
 export type BuildingDestination = { kind: 'missions' } | { kind: 'lot'; area: AreaId; lot: string };
 export function buildingDestination(building: string): BuildingDestination | null {
   if ((LISTED_QUEST_BUILDINGS as readonly string[]).includes(building)) return { kind: 'missions' };
-  const [area, lot] = building.split('.');
+  // D-50: um atalho/link antigo (`hall.biblioteca`, `hall.amigos`) cai no prédio onde ele mora hoje (o Laboratório).
+  const [area, lot] = String(currentBuildingId(building)).split('.');
   if (!lot || !(AREAS as readonly string[]).includes(area)) return null;
   return { kind: 'lot', area: area as AreaId, lot };
 }
@@ -88,8 +90,8 @@ export function areaHint(id: AreaId, isPt: boolean): string {
     case 'jogos': return isPt ? 'Jogos livres, mente e refúgio' : 'Free play, mind and refuge';
     case 'arena': return isPt ? 'Torneio ranqueado e Arena livre' : 'Ranked Tournament and Open Arena';
     case 'exploracao': return isPt ? 'Masmorra, Passeio, Oficina e Caderno' : 'Dungeon, Stroll, Workshop and Journal';
-    case 'laboratorio': return isPt ? 'Evolução do seu Soulmon' : "Your Soulmon's evolution";
-    case 'hall': return isPt ? 'Biblioteca e outros jogadores' : 'Library and other players';
+    case 'laboratorio': return isPt ? 'Evolução, Biblioteca e amigos' : 'Evolution, Library and friends';
+    case 'hall': return isPt ? 'Feira, Clan Hall e Grove' : 'Fair, Clan Hall and Grove';
   }
 }
 

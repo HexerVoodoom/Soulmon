@@ -118,6 +118,8 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('laboratorio.pet', 'Its sheet: element, moves and the creatures you have met.', 'A ficha: elemento, golpes e as criaturas que você já encontrou.'),
     bRow('laboratorio.stats', 'Your stats and your Bond.', 'Suas estatísticas e o seu Vínculo.'),
     bRow('laboratorio.perfil', 'Your profile card.', 'O seu cartão de perfil.'),
+    bRow('laboratorio.biblioteca', 'Stories, and the people who tell them.', 'Histórias, e quem as conta.'),
+    bRow('laboratorio.amigos', 'Your friends.', 'Os seus amigos.'),
   ]),
   mapStep('mercado', { en: 'Shops, and the forge.', pt: 'Lojas, e a forja.' }, [
     bRow('mercado.itens', 'Food, chips and small things for your Soulmon.', 'Comida, chips e coisinhas para o seu Soulmon.'),
@@ -144,11 +146,10 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('exploracao.oficina', 'Focus sessions.', 'Sessões de foco.'),
     bRow('exploracao.caderno', 'Your journal.', 'O seu caderno.'),
   ]),
-  mapStep('hall', { en: 'Company.', pt: 'Companhia.' }, [
-    bRow('hall.biblioteca', 'Stories, and the people who tell them.', 'Histórias, e quem as conta.'),
-    bRow('hall.amigos', 'Your friends.', 'Os seus amigos.'),
+  mapStep('hall', { en: 'Your Clan.', pt: 'O seu Clã.' }, [
     bRow('hall.guilda', 'Your Clan.', 'O seu Clã.'),
     bRow('hall.feira', 'The Fair: send your Soulmon on a mission for the Clan.', 'A Feira: mande o seu Soulmon em missão pelo Clã.'),
+    bRow('hall.grove', 'The grove your Clan grows.', 'O bosque que o seu Clã cultiva.'),
   ]),
 ];
 

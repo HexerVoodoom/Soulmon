@@ -155,7 +155,8 @@ describe('prédios por Vínculo (Tarefa A)', () => {
   });
   it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {
     expect(areaMinBond('arena')).toBe(5); // 'arena.guerra' fica no Vínculo 5: a Arena não abre antes do que já abria
-    expect(areaMinBond('hall')).toBe(2);
+    expect(areaMinBond('hall')).toBe(4); // D-50 (19/10/2026): sem a Biblioteca (Vínculo 2), o prédio mais cedo do Hall é o Clan Hall/Grove (4)
+    expect(areaMinBond('laboratorio')).toBe(1);
     expect(areaMinBond('mercado')).toBe(1);
     expect(buildingLockLine(4, 'en-US')).toBe('Opens at Bond 4. It grows with what you already do here.');
     expect(buildingLockLine(4, 'pt-BR')).toContain('Vínculo 4');
