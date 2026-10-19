@@ -196,8 +196,8 @@ apelido, o nome da criatura e o **nome da guilda**; denúncia por e-mail de cont
 | **Informações de saúde** | ✅ **Sim** (leitura conservadora — ver abaixo) | ❌ Não | Funcionalidades do app | Opcional | `GameState.moodLog`, `soulGoal`, `soulStruggle` |
 
 **Sobre os passos.** É o contador do próprio Android, **não é o Health
-Connect** — logo **não** exige conta de organização verificada, nem a
-declaração de acesso a dados de saúde, nem política dedicada. O que sobe é só
+Connect** — logo **não** exige conta de organização verificada nem política dedicada
+de Health Connect (a declaração simples de Apps de saúde do Console, porém, é exigida). O que sobe é só
 `{ dia, âncora, total }`, nunca uma linha do tempo de movimento. Se o revisor
 perguntar, é isso.
 
@@ -214,7 +214,7 @@ declarar sim:
   pessoa pedir sugestões no tutorial com o campo pré-preenchido (§2.3, política
   §2b — declarado desde 21/09/2026).
 
-Nada disso é dado clínico, e o app não é de saúde. Mas o formulário pergunta se
+Nada disso é dado clínico e o app não é médico. **Atenção:** a declaração de *Apps de saúde* do Console é obrigatória por causa de `ACTIVITY_RECOGNITION` e foi feita em 19/10/2026 ("Atividade e condicionamento físicos"; ver `PLAY-LANCAMENTO.md` › Estado no Console). Mas o formulário pergunta se
 você **coleta**, não se você trata como sensível — e como esses campos saem do
 aparelho, **a recomendação é declarar sim**. É mais rígido que o mínimo, e é o
 lado certo para errar.
