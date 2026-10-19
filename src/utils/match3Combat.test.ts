@@ -6,12 +6,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  M3_COLS, M3_ROWS, M3_MAX_BITS, M3_TILE_ELEMENTS, bestMove, match3Bits, newRound, resolveBoard, trySwap, validMoves,
+  M3_COLS, M3_ROWS, M3_MAX_BITS, M3_TILE_ELEMENTS, match3Bits, newRound, resolveBoard, trySwap, validMoves,
   type Board, type Step,
 } from './match3';
 import {
   M3C_DEFEAT_BONUS, M3C_DMG_PER_TILE, M3C_ENEMY_HP, M3C_MAX_TURNS, M3C_PLAYER_HP,
-  applyPlayerSteps, combatScore, enemyTurn, newCombat, playTurn, type M3Combat,
+  M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, hintAction, M3C_ENEMY_DMG_FACTOR, M3C_MAX_STREAK, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, enemyPhase, grantsExtraTurn, newCombat, playTurn, type M3Combat,
 } from './match3Combat';
 import { mulberry32 } from './combate/rng';
 
@@ -22,7 +22,8 @@ function tabuleiroComTresDeFogo(): Board {
   return b;
 }
 /** Um passo sintético: `n` peças do tipo `k` limpas (só o que o combate lê). */
-const passo = (kinds: number[], chain = 1): Step => ({ cleared: [], kinds, triggered: [], created: [], chain, gained: 0, after: [] });
+const passo = (kinds: number[], chain = 1, quatro = false): Step => ({ cleared: [], kinds, triggered: [], created: quatro ? [{ pos: { r: 0, c: 0 }, tile: { k: kinds[0], sp: 'row' as const } }] : [], chain, gained: 0, after: [] });
+const tab = (seed = 1): Board => newRound(seed).board;
 const novo = (seed = 1) => newCombat(mulberry32(seed), ['a', 'b', 'c', 'd', 'e', 'f'], 'a');
 
 describe('D-03: combinar peças causa dano do ELEMENTO ao inimigo ativo', () => {
@@ -82,47 +83,51 @@ describe('D-05: o dano só atinge o inimigo ATIVO; a sobra é descartada; o time
   });
 });
 
-describe('D-06: turnos alternados — o inimigo ativo age depois de cada jogada válida', () => {
-  it('uma jogada que pontua: dano do jogador e UMA ação do inimigo ativo no HP do jogador', () => {
-    const c = playTurn(novo(), [passo([0, 0, 0])], mulberry32(3));
-    expect(c.log.map(e => e.by)).toEqual(['player', 'enemy']);
-    expect(c.player.hp).toBeLessThan(M3C_PLAYER_HP);
-    expect(c.taken).toBe(M3C_PLAYER_HP - c.player.hp);
-    expect(c.turns).toBe(1);
-    expect(c.log[1].target).toBe('player');
+describe('D-06/D-83: turnos alternados — o inimigo da frente MEXE as peças depois de cada jogada válida', () => {
+  it('uma jogada que pontua: dano do jogador e UMA troca do inimigo, cujos combos tiram HP do jogador', () => {
+    const c0 = novo();
+    const ex = playTurn(c0, [passo([0, 0, 0])], tab(), mulberry32(3));
+    expect(ex.extra).toBe(false);
+    expect(ex.enemyMoves.length).toBeGreaterThanOrEqual(1);
+    expect(ex.state.log[0].by).toBe('player');
+    expect(ex.state.log.slice(1).every(e => e.by === 'enemy' && e.target === 'player')).toBe(true);
+    expect(ex.state.player.hp).toBeLessThan(M3C_PLAYER_HP);
+    expect(ex.state.taken).toBe(M3C_PLAYER_HP - ex.state.player.hp);
+    expect(ex.state.turns).toBe(1);
   });
-  it('troca válida que NÃO pontua também gasta o turno: o inimigo age', () => {
-    const c = playTurn(novo(), [], mulberry32(3));
-    expect(c.dealt).toBe(0);
-    expect(c.log.map(e => e.by)).toEqual(['enemy']);
-    expect(c.taken).toBeGreaterThan(0);
+  it('troca válida que NÃO pontua também gasta o turno: o inimigo joga', () => {
+    const ex = playTurn(novo(), [], tab(), mulberry32(3));
+    expect(ex.state.dealt).toBe(0);
+    expect(ex.enemyMoves.length).toBeGreaterThanOrEqual(1);
+    expect(ex.state.taken).toBeGreaterThan(0);
+    expect(ex.state.turns).toBe(1);
+  });
+  it('o dano do inimigo usa a MESMA fórmula do jogador (peças × 10 × cascata) vezes o fator de equilíbrio, um evento por elemento', () => {
+    const c = applyEnemySteps(novo(), [passo([0, 0, 0, 1, 1, 1, 1], 1), passo([2, 2, 2], 2)]);
+    const f = (n: number) => Math.max(1, Math.round(n * M3C_ENEMY_DMG_FACTOR));
+    expect(c.log.map(e => [e.by, e.element, e.dmg])).toEqual([['enemy', 'fogo', f(30)], ['enemy', 'agua', f(40)], ['enemy', 'terra', f(45)]]);
+    expect(c.taken).toBe(f(30) + f(40) + f(45));
   });
   it('HP do jogador a 0 = derrota; depois dela nada mais acontece', () => {
-    let c: M3Combat = novo();
-    c.player.hp = 5;
-    c = playTurn(c, [], mulberry32(1));
-    expect(c.player.hp).toBe(0);
-    expect(c.outcome).toBe('loss');
-    expect(c.taken).toBe(5); // o dano que passa de 0 não conta
-    expect(playTurn(c, [passo([0, 0, 0])], mulberry32(1))).toBe(c);
-    expect(enemyTurn(c, mulberry32(1))).toBe(c);
+    const c: M3Combat = novo();
+    c.player.hp = 1;
+    const ex = playTurn(c, [], tab(), mulberry32(1));
+    expect(ex.state.player.hp).toBe(0);
+    expect(ex.state.outcome).toBe('loss');
+    expect(ex.state.taken).toBe(1); // o dano que passa de 0 não conta
+    expect(playTurn(ex.state, [passo([0, 0, 0])], tab(), mulberry32(1)).state).toBe(ex.state);
   });
   it('a vitória no golpe do jogador NÃO dá resposta ao inimigo (ele já caiu)', () => {
     const c0 = novo();
     c0.active = 2; c0.defeated = 2; c0.enemies[0].hp = 0; c0.enemies[1].hp = 0; c0.enemies[2].hp = 5;
-    const c = playTurn(c0, [passo([0, 0, 0])], mulberry32(1));
-    expect(c.outcome).toBe('win');
-    expect(c.taken).toBe(0);
+    const ex = playTurn(c0, [passo([0, 0, 0])], tab(), mulberry32(1));
+    expect(ex.state.outcome).toBe('win');
+    expect(ex.state.taken).toBe(0);
+    expect(ex.enemyMoves).toEqual([]);
   });
-  it('o inimigo que age é o ATIVO (o elemento do evento é o dele)', () => {
-    const c0 = novo();
-    c0.active = 1;
-    const c = enemyTurn(c0, mulberry32(2));
-    expect(c.log[0].element).toBe(c0.enemies[1].element);
-  });
-  it('determinístico por rng de parâmetro: mesma semente, mesmo combate; e a fonte não usa Math.random', () => {
-    const a = playTurn(novo(4), [passo([2, 2, 2])], mulberry32(9));
-    const b = playTurn(novo(4), [passo([2, 2, 2])], mulberry32(9));
+  it('determinístico: mesma semente, mesmo combate; a fonte não usa Math.random', () => {
+    const a = playTurn(novo(4), [passo([2, 2, 2])], tab(2), mulberry32(9));
+    const b = playTurn(novo(4), [passo([2, 2, 2])], tab(2), mulberry32(9));
     expect(a).toEqual(b);
     const src = readFileSync(join(__dirname, 'match3Combat.ts'), 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     expect(src).not.toMatch(/Math\.random/);
@@ -137,6 +142,74 @@ describe('D-06: turnos alternados — o inimigo ativo age depois de cada jogada 
   });
 });
 
+describe('D-83: a escolha da jogada do inimigo é simples e DETERMINÍSTICA (e é a mesma da dica, D-85)', () => {
+  it('mesmo tabuleiro, mesma jogada — uma troca que forma linha, a de maior pontuação', () => {
+    for (let s = 1; s <= 8; s++) {
+      const b = tab(s);
+      const m = chooseMove(b)!;
+      expect(chooseMove(b)).toEqual(m);
+      const valid = validMoves(b);
+      expect(valid.some(v => v.a.r === m.a.r && v.a.c === m.a.c && v.b.r === m.b.r && v.b.c === m.b.c)).toBe(true);
+      for (const v of valid) { const r = trySwap(b, v.a, v.b, mulberry32(0x2c1b3c6d)); if (r.ok) expect(r.score).toBeLessThanOrEqual(m.score); }
+    }
+  });
+  it('empate = a PRIMEIRA jogada na ordem fixa', () => {
+    const b = tab(3);
+    const m = chooseMove(b)!;
+    const primeiro = validMoves(b).find(v => { const r = trySwap(b, v.a, v.b, mulberry32(0x2c1b3c6d)); return r.ok && r.score === m.score; })!;
+    expect(m.a).toEqual(primeiro.a);
+    expect(m.b).toEqual(primeiro.b);
+  });
+  it('a vez do inimigo começa pela troca de `chooseMove` e não passa do teto', () => {
+    const b = tab(5);
+    const ph = enemyPhase(novo(), b, mulberry32(1));
+    const esperado = chooseMove(b)!;
+    expect(ph.moves[0].a).toEqual(esperado.a);
+    expect(ph.moves[0].b).toEqual(esperado.b);
+    expect(ph.moves.length).toBeLessThanOrEqual(M3C_MAX_STREAK);
+    if (!grantsExtraTurn(ph.moves[0].steps)) expect(ph.moves).toHaveLength(1);
+  });
+});
+
+describe('D-84: combinação de 4+ dá RODADA EXTRA (e vale para o inimigo)', () => {
+  it('4+ do jogador: sem resposta do inimigo e o turno NÃO é consumido; 3 peças passam a vez', () => {
+    const c0 = novo();
+    const ex = playTurn(c0, [passo([0, 0, 0, 0], 1, true)], tab(), mulberry32(1));
+    expect(ex.extra).toBe(true);
+    expect(ex.enemyMoves).toEqual([]);
+    expect(ex.state.turns).toBe(0);
+    expect(ex.state.taken).toBe(0);
+    expect(ex.state.dealt).toBe(40);
+    const normal = playTurn(c0, [passo([0, 0, 0])], tab(), mulberry32(1));
+    expect(normal.extra).toBe(false);
+    expect(normal.state.turns).toBe(1);
+  });
+  it('teto: no máx. M3C_MAX_STREAK jogadas seguidas — a 3ª seguida passa a vez mesmo com 4+', () => {
+    expect(M3C_MAX_STREAK).toBe(3);
+    const c0 = novo();
+    const seg = (streak: number) => playTurn(c0, [passo([0, 0, 0, 0], 1, true)], tab(), mulberry32(1), streak);
+    expect(seg(1).extra).toBe(true);
+    expect(seg(2).extra).toBe(true);
+    const terceira = seg(3);
+    expect(terceira.extra).toBe(false);
+    expect(terceira.state.turns).toBe(1);
+    expect(terceira.enemyMoves.length).toBeGreaterThanOrEqual(1);
+  });
+  it('o inimigo que forma 4+ joga de novo, e nunca passa do teto de jogadas seguidas (sem loop)', () => {
+    let achou = false;
+    for (let s = 1; s <= 80; s++) {
+      const ph = enemyPhase(novo(), tab(s), mulberry32(s));
+      expect(ph.moves.length).toBeLessThanOrEqual(M3C_MAX_STREAK);
+      if (ph.moves.length >= 2) { achou = true; expect(grantsExtraTurn(ph.moves[0].steps)).toBe(true); }
+    }
+    expect(achou).toBe(true);
+  });
+  it('grantsExtraTurn: só quando nasce peça especial (linha de 4+)', () => {
+    expect(grantsExtraTurn([passo([0, 0, 0])])).toBe(false);
+    expect(grantsExtraTurn([passo([0, 0, 0]), passo([1, 1, 1, 1], 2, true)])).toBe(true);
+  });
+});
+
 describe('D-07: placar, fim e recompensa derivam do combate', () => {
   it('placar = dano causado − dano recebido + bônus por inimigo derrotado, nunca abaixo de 0', () => {
     const c = novo();
@@ -147,7 +220,7 @@ describe('D-07: placar, fim e recompensa derivam do combate', () => {
   it('o teto de segurança acaba a rodada como derrota (sem custo) no turno 60', () => {
     let c: M3Combat = novo();
     c.player.hp = 1e9; c.player.max = 1e9;
-    for (let i = 0; i < M3C_MAX_TURNS; i++) c = playTurn(c, [], mulberry32(i));
+    for (let i = 0; i < M3C_MAX_TURNS; i++) c = playTurn(c, [], tab(i + 1), mulberry32(i)).state;
     expect(c.turns).toBe(M3C_MAX_TURNS);
     expect(c.outcome).toBe('loss');
   });
@@ -160,27 +233,29 @@ describe('D-07: placar, fim e recompensa derivam do combate', () => {
   /** Joga uma partida inteira com as funções REAIS. `tipico` = um lance válido qualquer; senão a melhor troca. */
   function partida(seed: number, tipico: boolean) {
     const { board, rng } = newRound(seed);
-    const er = mulberry32(seed ^ 0x5eed);
     const escolha = mulberry32(seed * 7 + 1);
     let c = newCombat(mulberry32(seed + 99), ['a', 'b', 'c', 'd', 'e'], 'a');
     let b = board;
+    let streak = 1;
     while (c.outcome === 'playing') {
       const lances = validMoves(b);
       if (!lances.length) break;
-      const x = tipico ? lances[Math.floor(escolha() * lances.length)] : bestMove(b, escolha)!;
+      const x = tipico ? lances[Math.floor(escolha() * lances.length)] : chooseMove(b)!;
       const r = trySwap(b, x.a, x.b, rng);
       if (!r.ok) throw new Error('lance inválido');
-      c = playTurn(c, r.steps, er);
-      b = r.board;
+      const ex = playTurn(c, r.steps, r.board, rng, streak);
+      c = ex.state;
+      b = ex.board;
+      streak = ex.extra ? streak + 1 : 1;
     }
     return c;
   }
   it('balanço: o jogador típico leva ~15–25 jogadas (mediana), vence quase sempre e o placar paga dentro do teto', () => {
     const ps = Array.from({ length: 21 }, (_, i) => partida(i + 1, true));
     const turnos = ps.map(p => p.turns).sort((a, b) => a - b);
-    expect(turnos[10]).toBeGreaterThanOrEqual(15);
+    expect(turnos[10]).toBeGreaterThanOrEqual(14); // D-83: o inimigo agora joga a melhor troca
     expect(turnos[10]).toBeLessThanOrEqual(25);
-    expect(ps.filter(p => p.outcome === 'win').length).toBeGreaterThanOrEqual(15);
+    expect(ps.filter(p => p.outcome === 'win').length).toBeGreaterThanOrEqual(14); // D-83: o inimigo agora joga a melhor troca
     expect(ps.every(p => p.outcome !== 'playing' && p.turns < M3C_MAX_TURNS)).toBe(true);
     for (const p of ps) { expect(combatScore(p)).toBeGreaterThanOrEqual(0); expect(match3Bits(combatScore(p))).toBeLessThanOrEqual(M3_MAX_BITS); }
   });
@@ -200,5 +275,23 @@ describe('teto real de Bits (lobby)', () => {
     const perfeito = m.M3C_ENEMY_HP.reduce((a: number, x: number) => a + x, 0) + 3 * m.M3C_DEFEAT_BONUS;
     expect(m.M3C_MAX_BITS).toBe(b.match3Bits(perfeito));
     expect(m.M3C_MAX_BITS).toBeLessThanOrEqual(b.M3_MAX_BITS);
+  });
+});
+
+describe('D-85: dica — 3 usos, compra com Bits, saldo insuficiente', () => {
+  it('há 3 usos por partida e o preço é barato (suposição declarada: ≤ uma rodada típica de Bits)', () => {
+    expect(M3_HINTS_PER_GAME).toBe(3);
+    expect(M3_HINT_PRICE_BITS).toBeGreaterThan(0);
+    expect(M3_HINT_PRICE_BITS).toBeLessThanOrEqual(M3_MAX_BITS);
+  });
+  it('com usos sobrando: use; acabaram e há saldo: buy; sem saldo: blocked (nunca erro)', () => {
+    expect(hintAction(3, 0)).toBe('use');
+    expect(hintAction(1, 0)).toBe('use');
+    expect(hintAction(0, M3_HINT_PRICE_BITS)).toBe('buy');
+    expect(hintAction(0, M3_HINT_PRICE_BITS - 1)).toBe('blocked');
+    expect(hintAction(0, Number.NaN)).toBe('blocked');
+  });
+  it('a dica é a jogada que a IA inimiga escolheria (mesma função, determinística)', () => {
+    for (let s = 1; s <= 5; s++) expect(chooseMove(tab(s))).toEqual(chooseMove(tab(s)));
   });
 });

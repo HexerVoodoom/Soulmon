@@ -8775,3 +8775,6 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   91%{transform:scaleX(-1) translateX(7px);clip-path:inset(55% 0 20% 0)}
   94%{transform:scaleX(-1) translateX(-3px);clip-path:inset(30% 0 40% 0)}
   97%{transform:scaleX(-1) translateX(4px);clip-path:none}}
+
+/* Combina 3: o aviso breve de rodada extra (ícone, sem texto). */
+@keyframes sm-m3-extra { 0% { opacity: 0; transform: scale(0.6); } 25% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0.85; transform: scale(1); } }

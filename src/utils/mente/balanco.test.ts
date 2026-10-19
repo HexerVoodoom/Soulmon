@@ -9,8 +9,8 @@ import { PICROSS_BITS_BY_SIZE, PICROSS_DAILY_BONUS, PICROSS_MAX_BITS, picrossBit
 import { REVIEW_SESSION_BITS, REVIEW_SESSION_SIZE } from './revisao';
 import { MATCH_POINTS, WINS_NEEDED } from '../../components/RPSGame';
 import { MINIGAME_BITS_PER_DAY } from '../currencies';
-import { M3_MAX_BITS, M3_POINTS_PER_BIT, bestMove, match3Bits, newRound, trySwap, validMoves } from '../match3';
-import { M3C_DEFEAT_BONUS, M3C_ENEMY_HP, M3C_MAX_TURNS, combatScore, newCombat, playTurn } from '../match3Combat';
+import { M3_MAX_BITS, M3_POINTS_PER_BIT, match3Bits, newRound, trySwap, validMoves } from '../match3';
+import { M3C_DEFEAT_BONUS, M3C_ENEMY_HP, M3C_MAX_TURNS, chooseMove, combatScore, newCombat, playTurn } from '../match3Combat';
 import { mulberry32 } from '../combate/rng';
 
 /**
@@ -107,27 +107,36 @@ function ppt(p: Perfil): Medida {
 // Típico = um jogador que acha um movimento válido qualquer; experiente = quem sempre vê a melhor troca. A MEDIANA de 41 sementes.
 // Tempo por jogada (olhar + trocar + a cascata correr): 3,5 s típico, 2,3 s experiente; +3 s de abertura e fim. A partida acaba
 // quando um lado cai (não há mais "20 movimentos"): o tempo é o das jogadas que ela de fato levou.
-const M3_SEG_POR_MOVIMENTO = { típico: 3.5, experiente: 2.3 } as const;
-function partidaCombina3(p: Perfil, seed: number): { placar: number; jogadas: number } {
+const M3_SEG_POR_MOVIMENTO = { típico: 3.5, experiente: 3.5 } as const; // D-83/D-84: com o inimigo mexendo as peças e as rodadas extras, quem "vê a melhor troca" também precisa ler o tabuleiro de novo a cada vez: o mesmo ritmo do típico
+// D-83: a vez do inimigo também leva tempo na tela (a troca e a cascata dele): 2 s por troca inimiga.
+const M3_SEG_POR_TROCA_INIMIGA = 2;
+function partidaCombina3(p: Perfil, seed: number): { placar: number; jogadas: number; trocasInimigo: number } {
   const { board: b0, rng } = newRound(seed);
   const escolha = mulberry32(seed * 7 + 1);
   let c = newCombat(mulberry32(seed + 99), ['a', 'b', 'c', 'd', 'e'], 'a');
   let b = b0;
+  let streak = 1;
+  let jogadas = 0;
+  let trocasInimigo = 0;
   while (c.outcome === 'playing') {
     const lances = validMoves(b);
     if (!lances.length) break;
-    const x = p === TIPICO ? lances[Math.floor(escolha() * lances.length)] : bestMove(b, escolha)!;
+    const x = p === TIPICO ? lances[Math.floor(escolha() * lances.length)] : chooseMove(b)!;
     const r = trySwap(b, x.a, x.b, rng);
     if (!r.ok) throw new Error('lance inválido no balanço');
-    c = playTurn(c, r.steps, mulberry32(seed ^ c.turns));
-    b = r.board;
+    const ex = playTurn(c, r.steps, r.board, rng, streak);
+    c = ex.state;
+    b = ex.board;
+    streak = ex.extra ? streak + 1 : 1;
+    jogadas++;
+    trocasInimigo += ex.enemyMoves.length;
   }
-  return { placar: combatScore(c), jogadas: c.turns };
+  return { placar: combatScore(c), jogadas, trocasInimigo };
 }
 const medianaPor = <T,>(xs: T[], k: (x: T) => number): T => [...xs].sort((a, b) => k(a) - k(b))[Math.floor(xs.length / 2)];
 function combina3(p: Perfil): Medida {
   const r = medianaPor(Array.from({ length: 41 }, (_, i) => partidaCombina3(p, i + 1)), x => x.placar);
-  return medir('Combina 3', p, match3Bits(r.placar), (r.jogadas * M3_SEG_POR_MOVIMENTO[p.nome] + 3) * 1000);
+  return medir('Combina 3', p, match3Bits(r.placar), (r.jogadas * M3_SEG_POR_MOVIMENTO[p.nome] + r.trocasInimigo * M3_SEG_POR_TROCA_INIMIGA + 3) * 1000);
 }
 
 // Revisão: 1×/dia; ~15 s por cartão.
