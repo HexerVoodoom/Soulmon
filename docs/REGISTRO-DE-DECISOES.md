@@ -2843,3 +2843,9 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Alternativa que perdeu:** manter "nunca marca no prédio" (07/10/2026), ou marcar todo prédio todo dia (as outras missões pagam ao entrar: "!" que some no primeiro toque vira ruído).
 - **O que falsificaria:** jogador tocar o "?" esperando recolher no prédio (reclamação de "não paga aqui"), ou o "!" fixo no Caderno ser percebido como cobrança.
 
+
+## 117. "Meal check-ins" único (app + push) e opt-out da IA em "Your data" (dono, modais, 19/10/2026; D-16, D-17, D-19..D-23, K-5, P4, P8, P11)
+- **Decisão do dono:** "Meal reminders" sai; "Meal check-ins" liga/desliga juntos o convite no app e o push de café, almoço e jantar. O toggle "AI chat" sai das notificações: a IA nasce sempre ligada e o opt-out de envio ao provedor (Groq) vira UMA linha em "Your data". "Vibrate when Focus ends" (e o "your item") sai de "Your data" e vai para "What Soulmon sends you" (título mantido). Copy do grupo mais objetiva, sem "No pressure" nem tom "soft".
+- **Como:** `MealRhythmRows` tem um `SwitchRow` que grava `inApp` e `push` juntos (o push ainda exige notificações ligadas; a linha diz isso). `SettingsPage` mantém `useAI`/`onToggleAI` e a chave de storage, só mudou onde são expostos ("Send chat to AI provider" / "Enviar a conversa ao provedor de IA"); desligado = resposta por palavra-chave, como antes. O `ProfileEditor` perdeu as props deprecated `bits`/`onBuyFrame` e recebe `onOpenFrameShop` (Mercado > Frames, `utils/frameShopNav`). Política de privacidade e ficha Play não mudam: o opt-out continua existindo.
+- **Alternativa que perdeu:** deixar o toggle de IA no grupo de notificações (mistura "o que chega até você" com "o que sai de você").
+- **O que falsificaria:** pedidos de privacidade ou queixa de não achar o opt-out da IA; jogador que queria só o convite no app, sem push (ou o inverso), e reclama do toggle único.

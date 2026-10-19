@@ -1622,7 +1622,7 @@ não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onV
 **Régua:** `src/components/SpritePoseRows.render.test.tsx`.
 
 ### `src/components/MealRhythmRows.tsx`
-**Dono de:** as linhas do ritmo das refeições nas Configurações — interruptor do cartão no app, interruptor do lembrete (exige notificações ligadas; diz por quê) e os três `<select>` de horário (só oferece o que `normalizeMealTimes` aceita).
+**Dono de:** as linhas do ritmo das refeições nas Configurações — UM interruptor "Meal check-ins" que liga/desliga juntos o convite no app e o push das 3 janelas (o push exige notificações ligadas; a linha diz por quê; REGISTRO §117) e os três `<select>` de horário (só oferece o que `normalizeMealTimes` aceita).
 **Exports:** `MealRhythmRows({ language, settings, notificationsEnabled, onChange })`.
 **Chamado por:** `src/components/SettingsPage.tsx`.
 **Régua:** `src/utils/mealRhythm.contract.test.ts`.

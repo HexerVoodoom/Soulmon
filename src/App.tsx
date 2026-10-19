@@ -4390,7 +4390,6 @@ export default function App() {
   }, []);
 
   /** Comprar moldura de LOJA no Perfil/Torneio (B3): o handler único da compra, já equipando. */
-  const handleBuyFrame = useCallback((id: string) => { handleFrameBuy(id, true); }, [handleFrameBuy]);
 
   /** Nome público do jogador (B8): local + estado da tela; o perfil público é republicado no próximo save. */
   const handleChangeUserName = useCallback((nome: string) => {
@@ -7213,8 +7212,6 @@ export default function App() {
                   equippedFrame: gameState.equippedFrame ?? null,
                   ownedFrames: gameState.ownedFrames ?? [],
                   onEquipFrame: handleEquipFrame,
-                  bits: gameState.gamePoints ?? 0,
-                  onBuyFrame: demo ? undefined : handleBuyFrame,
                   petElement: petElementOf(gameState),
                   language,
                   emblems: gameState.emblems ?? 0,
@@ -7938,8 +7935,6 @@ export default function App() {
                 onChangeFrame: handleEquipFrame,
                 userName,
                 onChangeName: handleChangeUserName,
-                bits: gameState.gamePoints ?? 0,
-                onBuyFrame: demo ? undefined : handleBuyFrame,
               }}
               onOpenCredits={demo ? undefined : openCredits}
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
