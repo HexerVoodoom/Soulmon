@@ -18,6 +18,7 @@ import {
   M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, hintAction, newCombat, playTurn, type M3Combat, type M3Element,
 } from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
+import { powerShots, type PowerShot } from '../utils/match3Powers';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 
 /**
@@ -45,6 +46,10 @@ const CONFIRM_MS = 3000;
 /** A arte do inimigo 1→3 sobe de estágio: o último do time é o mais imponente. */
 const ENEMY_STAGES = ['rookie', 'champion', 'ultimate'] as const;
 const ENEMY_SPRITE = 64;
+/** D-100: a viagem do poder e a vida do número de dano (ms). */
+const FX_TRAVEL = 300;
+const FX_MS = 1200;
+const CAN_ANIMATE = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
 const PLAYER_SPRITE = 88;
 
 const key = (p: Pos) => p.r * M3_COLS + p.c;
@@ -108,6 +113,9 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const [confirmBuy, setConfirmBuy] = useState(false);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [extraFlash, setExtraFlash] = useState(0);
+  const [fx, setFx] = useState<Fx[]>([]);
+  const fxId = useRef(0);
+  const fieldRef = useRef<HTMLDivElement | null>(null);
   const streakRef = useRef(1);
 
   const alive = useRef(true);
@@ -168,11 +176,35 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     setHint(null);
   }, []);
 
-  /** Anima os passos de uma cascata (do jogador ou do inimigo) e aplica o dano parcial pela função certa. */
-  const runSteps = useCallback(async (steps: readonly Step[], from: M3Combat, apply: typeof applyPlayerSteps): Promise<M3Combat | null> => {
+  /** D-100: solta os poderes de um passo — de cada combo (célula) até o alvo, com o dano que a conta já aplicou. Só mede e guarda; a animação é da `PowerFx`. */
+  const launch = useCallback((shots: readonly PowerShot[]) => {
+    const field = fieldRef.current;
+    if (!field || shots.length === 0) return;
+    const fr = field.getBoundingClientRect();
+    const mid = (el: Element | null) => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+    };
+    const made: Fx[] = [];
+    shots.forEach((shot, i) => {
+      const a = mid(btnRefs.current[key(shot.from)] ?? null);
+      const b = mid(field.querySelector(shot.target === 'player' ? '[data-m3-player] img' : `[data-m3-enemy="${shot.target + 1}"] img`));
+      if (a && b) made.push({ id: ++fxId.current, shot, x0: a.x, y0: a.y, x1: b.x, y1: b.y, delay: i * 90 });
+    });
+    if (made.length === 0) return;
+    setFx(f => [...f, ...made]);
+    const t = setTimeout(() => { timers.current.delete(t); setFx(f => f.filter(x => !made.some(m => m.id === x.id))); }, FX_MS + shots.length * 90);
+    timers.current.add(t);
+  }, []);
+
+  /** Anima os passos de uma cascata (do jogador ou do inimigo) e aplica o dano parcial pela função certa. `closers` = as duas casas da troca (onde o combo fechou). */
+  const runSteps = useCallback(async (steps: readonly Step[], from: M3Combat, apply: typeof applyPlayerSteps, closers: readonly Pos[]): Promise<M3Combat | null> => {
     let preview = from;
     for (const st of steps) {
       if (!alive.current) return null;
+      const next = apply(preview, [st]);
+      launch(powerShots(st, next.log.slice(preview.log.length), st.chain === 1 ? closers : []));
       setClearing(new Set(st.cleared.map(key)));
       setChain(st.chain);
       await wait(T_CLEAR);
@@ -180,13 +212,13 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       setClearing(new Set());
       boardRef.current = st.after;
       setBoard(st.after);
-      preview = apply(preview, [st]);
+      preview = next;
       setCombat(preview);
       setFresh(f => ({ id: f.id + 1, cells: dropCells(st) }));
       await wait(T_FALL);
     }
     return preview;
-  }, [wait]);
+  }, [launch, wait]);
 
   const flashExtra = useCallback(() => setExtraFlash(n => n + 1), []);
 
@@ -205,7 +237,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     const ex = playTurn(base, res.steps, res.board, rngRef.current, streakRef.current);
     setBoard(res.swapped);
     await wait(T_SWAP);
-    let preview = await runSteps(res.steps, base, applyPlayerSteps);
+    let preview = await runSteps(res.steps, base, applyPlayerSteps, [a, d]);
     if (!preview || !alive.current) return;
     boardRef.current = res.board;
     setBoard(res.board);
@@ -234,7 +266,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       setBoard(m.swapped);
       await wait(T_SWAP);
       setHint(null);
-      const after = await runSteps(m.steps, preview, applyEnemySteps);
+      const after = await runSteps(m.steps, preview, applyEnemySteps, [m.a, m.b]);
       if (!after || !alive.current) return;
       preview = after;
       boardRef.current = m.board;
@@ -329,7 +361,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     overRef.current = false;
     busyRef.current = false;
     setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
-    setBusy(false); setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
+    setBusy(false); setFx([]); setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
   };
 
   const score = combatScore(combat);
@@ -355,11 +387,11 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (
     <div data-m3-arena style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
-      <div data-m3-player data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
+      <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
         <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain' }} />
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
-      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
+      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
         {combat.enemies.map((e, i) => {
           const line = e.line && DUNGEON_LINE_SPRITES[e.line] ? e.line : LINES[i];
           const src = DUNGEON_LINE_SPRITES[line][ENEMY_STAGES[i]];
@@ -416,7 +448,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       />
 
       {/* a arena cresce até o tabuleiro: história, placar, o campo e o aviso vivo moram nela (D-02) */}
-      <div data-m3-field style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
+      <div ref={fieldRef} data-m3-field style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <StatTag label={isPt ? 'Turno' : 'Turn'} value={<span data-m3-turn={combat.turns}>{combat.turns}</span>} />
           {extraFlash > 0 && (
@@ -430,6 +462,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
           {isPt ? 'Placar' : 'Score'} <span data-m3-score={score}>{score}</span> · Bits <span data-m3-bits={bitsNow}>{bitsNow}</span>
         </span>
         {arena}
+        {fx.map(f => <PowerFx key={f.id} fx={f} reduced={reduced} />)}
         {/* o aviso vivo: golpes, resposta, dica, embaralhada. Sem vermelho; fica fora da área do tabuleiro. */}
         <p role="status" aria-live="polite" data-m3-note className="sm2-sr-only">
           {note || (chain > 1 ? (isPt ? `Cascata ×${chain}!` : `Cascade ×${chain}!`) : '')}
@@ -529,6 +562,46 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
         </>
       )}
     </GameRoot>
+  );
+}
+
+// ── o poder que sai do combo (D-100) ───────────────────────────────────────────────────────────────────────────────────
+
+/** Um poder em voo: onde nasceu (célula do combo), o alvo e o dano mostrado (o que a conta aplicou). Posições relativas ao campo. */
+interface Fx { id: number; shot: PowerShot; x0: number; y0: number; x1: number; y1: number; delay: number }
+
+/**
+ * O ícone do elemento viaja da célula do combo ao alvo e o número do dano aparece NO alvo. Web Animations (transform/opacity, 1 animação
+ * por poder e 1 pelo número; sem JS por frame); sem `animate` (jsdom) ou com movimento reduzido: nada viaja e o número já está no alvo. Mudo.
+ */
+function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
+  const orb = useRef<HTMLSpanElement | null>(null);
+  const num = useRef<HTMLSpanElement | null>(null);
+  const { shot, x0, y0, x1, y1, delay } = fx;
+  useEffect(() => {
+    if (reduced) return;
+    const o = orb.current;
+    const n = num.current;
+    if (o && typeof o.animate === 'function') {
+      o.animate([{ transform: 'translate(0px, 0px) scale(0.6)', opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${x1 - x0}px, ${y1 - y0}px) scale(1.1)`, opacity: 1, offset: 0.9 }, { transform: `translate(${x1 - x0}px, ${y1 - y0}px) scale(1.4)`, opacity: 0 }], { duration: FX_TRAVEL, delay, easing: 'ease-in', fill: 'both' });
+    }
+    if (n && typeof n.animate === 'function') {
+      n.animate([{ transform: 'translate(-50%, 0px)', opacity: 0 }, { transform: 'translate(-50%, -6px)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%, -24px)', opacity: 0 }], { duration: 800, delay: delay + FX_TRAVEL, easing: 'ease-out', fill: 'both' });
+    }
+  }, [reduced, x0, y0, x1, y1, delay]);
+  const icon = elementIcon(shot.element);
+  const base: CSSProperties = { position: 'absolute', pointerEvents: 'none', zIndex: 3 };
+  return (
+    <>
+      {!reduced && icon && (
+        <span ref={orb} aria-hidden="true" data-m3-shot data-m3-shot-element={shot.element} data-m3-shot-by={shot.by} data-m3-shot-from={`${Math.round(x0)},${Math.round(y0)}`} style={{ ...base, left: x0 - 12, top: y0 - 12, width: 24, height: 24, opacity: 0, filter: 'drop-shadow(0 0 4px var(--sm2-gold-fill))' }}>
+          <img src={icon} alt="" draggable={false} width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />
+        </span>
+      )}
+      <span ref={num} aria-hidden="true" className="sm2-num" data-m3-dmg={shot.dmg} data-m3-dmg-target={shot.target} data-m3-dmg-by={shot.by} style={{ ...base, left: x1, top: y1 - 18, transform: 'translate(-50%, 0)', fontWeight: 700, fontSize: 18, color: shot.by === 'player' ? 'var(--sm2-gold-ink)' : 'var(--sm2-primary-ink)', textShadow: '0 1px 0 var(--sm2-surface), 0 0 3px var(--sm2-surface)', whiteSpace: 'nowrap', opacity: reduced || !CAN_ANIMATE ? 1 : 0 }}>
+        {shot.dmg}
+      </span>
+    </>
   );
 }
 

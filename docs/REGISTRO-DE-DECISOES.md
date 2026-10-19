@@ -2881,3 +2881,9 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Alternativa que perdeu:** promoção semanal na forja + "For sale" nas lojinhas + carta do NPC avisando dela.
 - **O que falsificaria:** o dono (ou jogadores) pedir de volta algum tipo de promoção/oferta calma, ou a carta de NPC como correio de novidades.
 
+## 121. Combina 3: poder do elemento sai do combo e mostra o dano; inimigo embaixo à direita (dono, 19/10/2026; D-99/D-100)
+- **Decisão do dono:** (D-99) o Soulmon do jogador fica em cima à esquerda e o do inimigo embaixo à direita (com 3 inimigos, a fila fica embaixo, o da frente na direita). (D-100) ao fechar um combo de um elemento, da célula do combo sai um poder (ícone do elemento já existente) que viaja até o alvo e mostra o dano causado; vale para os dois lados.
+- **Como:** `utils/match3Powers.ts` (puro) liga cada evento do log de `match3Combat` à célula do combo; o dano mostrado é o do evento, sem recalcular (fórmula e balanço intactos). `Match3Game` anima com Web Animations (transform/opacity, sem JS por frame); movimento reduzido: sem viagem, número direto; mudo. O layout D-99 já era o de D-76; ganhou `data-m3-pos` e teste.
+- **Alternativa que perdeu:** dano sem projétil (só a barra de HP mudando).
+- **O que falsificaria:** tela poluída ou queda de fluidez em aparelho fraco (poderes demais por cascata).
+
