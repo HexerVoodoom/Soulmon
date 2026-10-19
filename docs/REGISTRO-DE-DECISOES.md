@@ -2829,3 +2829,17 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **K-9 aceito pelo dono:** mais cocô = mais exposição ao dreno de −1 coração/6 h; o dreno continua limitado pelo mesmo teto diário.
 - **Alternativa que perdeu:** manter "até 2×/dia" (o 2º some no sono) ou mexer no dreno para compensar.
 - **O que falsificaria:** pessoas limpando o 2º cocô quase sempre perto da hora de dormir sem querer (dreno pago à toa), ou o 2º aparecendo com o pet dormindo (teste: 300 sorteios × 5 janelas × 2 modos).
+
+## 115. Carta de NPC: uma por dia, cartinha na Home, abre pela fila (dono, 19/10/2026; D-13, D-14, P6, S-8, K-8)
+- **Decisão do dono:** na Home, um ícone de cartinha à ESQUERDA, abaixo do retrato, que só existe quando há carta. Chega uma carta de NPC para QUALQUER novidade de NPC (promoção, missão disponível, evento), no máximo 1 por dia (S-8: as novidades do dia viram UMA carta de até 3 linhas). Tocar na cartinha abre a carta e a marca lida (a cartinha some). O push da carta conta no teto de 4/dia do W4-A. Sem som (superfície nova nasce muda).
+- **Como:** regra pura em `utils/npcLetter.ts` (`letterForDay`, `npcNewsToday`, `notificarCarta`); estado em `STORAGE_KEYS.NPC_LETTER` (localStorage, SEM campo novo no save); a carta nasce no `App` quando há novidade e o dia ainda não tem carta; a cartinha entra por `HomeHud.belowLeading` (absoluta, não desloca nada); o modal é o item `npcLetter` da fila (gesto, como a triagem; fora do teto de 3 do início de dia), "lida" gravada AO MOSTRAR. Promoção = só a que já existe (`weeklyDiscountFor` da forja, com o talento); missão = o "!" de `buildingMarks`. `event` é vaga sem fonte hoje. Exceção declarada à camada 3 congelada (K-8): pedido explícito do dono.
+- **Ponto de entrada do push:** `registerCartaPushHandler(handler)` + `notificarCarta(letter, language)`, chamado uma vez quando a carta nasce; sem handler é no-op. O W4-A liga o teto/ordem ali.
+- **Alternativa que perdeu:** sem correio (só o aviso na Home) ou só um toast: some sem deixar recado e não dá ao NPC uma voz própria no dia.
+- **O que falsificaria:** a maioria das cartas ficar sem abrir (ignoradas) ou jogadores a descreverem como spam/cobrança (silenciar notificações logo depois do push da carta).
+
+## 116. Marcadores "!" e "?" nos prédios; recolher continua só na Home (dono, 19/10/2026; D-33, D-34, K-7)
+- **Decisão do dono:** o prédio com missão disponível mostra "!" no mapa da área; ao fazer a missão o "!" some. Com a missão completa mostra "?"; o "?" NÃO recolhe a recompensa ali, só a Home recolhe (como hoje).
+- **Como:** `AreaView` recebe `buildingMarks` (a mesma `buildingMarks` de `utils/buildingQuests.ts`) e põe `lot.mark` nos lotes abertos (trancado e Mercado em obra não mostram); o glifo é o `MissionMark` existente, preso à arte do lote, `pointer-events: none` (guard H11), parado (sem pulso, vale com prefers-reduced-motion). Hoje só o Caderno é missão listada (as dos outros prédios pagam na entrada), então só ele acende. Muda a nota de K-7: a UI de missão e o recolher seguem fora do prédio; só o MARCADOR veio.
+- **Alternativa que perdeu:** manter "nunca marca no prédio" (07/10/2026), ou marcar todo prédio todo dia (as outras missões pagam ao entrar: "!" que some no primeiro toque vira ruído).
+- **O que falsificaria:** jogador tocar o "?" esperando recolher no prédio (reclamação de "não paga aqui"), ou o "!" fixo no Caderno ser percebido como cobrança.
+

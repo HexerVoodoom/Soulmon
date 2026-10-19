@@ -23,6 +23,7 @@ import type { OcupadoAcao } from '../DungeonBusyModal';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
+import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
@@ -131,8 +132,10 @@ export interface AreaViewProps {
   demo?: boolean;
   /** O Vínculo do usuário (`bondLevelFor(totalXP)`): decide quais prédios abrem (`BUILDING_GATES`). Sem ele, nada é trancado. */
   bondLevel?: number;
-  /** Missão por prédio: só o aviso de que se entrou nele (`utils/buildingQuests.ts`). A UI de missão vive no menu da Home, nunca no prédio. */
+  /** Missão por prédio: só o aviso de que se entrou nele (`utils/buildingQuests.ts`). Só o MARCADOR vive no prédio; recolher a recompensa continua só no menu da Home (D-33/D-34, K-7). */
   onVisitBuilding?: (id: BuildingId) => void;
+  /** O marcador da missão de cada prédio hoje (`buildingMarks`): "!" disponível (some ao fazer a missão), "?" pronta (não recolhe aqui). Ausente = nenhum. */
+  buildingMarks?: Partial<Record<BuildingId, QuestMark>>;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
   /** Vai ao MAPA (a masmorra sai direto para ele, 14/10/2026). Sem a prop, a masmorra volta à área. */
@@ -262,7 +265,7 @@ export function AreaView(props: AreaViewProps) {
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
-    if (!g) return busyLot(l);
+    if (!g) return busyLot({ ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined });
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
   const [duelOpen, setDuelOpen] = useState(false);

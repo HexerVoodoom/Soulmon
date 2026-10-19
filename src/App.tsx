@@ -36,6 +36,8 @@ import { AreaTopBar } from './components/nav/AreaTopBar';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import { DemoSoundButton } from './components/perfil/DemoSoundButton';
 import { readyFor } from './utils/presentationQueue';
+import { NpcLetterButton } from './components/NpcLetterButton';
+import { hasUnreadLetter, letterForDay, markLetterRead, notificarCarta, npcNewsToday, parseLetterState, serializeLetterState, type LetterState } from './utils/npcLetter';
 import {
   type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
@@ -735,6 +737,7 @@ const GroveMilestoneCeremony = lazy(() => import('./components/guild/GroveMilest
 const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m => ({ default: m.MorningCheckIn })));
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
+const NpcLetterModal = lazy(() => import('./components/NpcLetterModal').then(m => ({ default: m.NpcLetterModal })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
@@ -2043,6 +2046,10 @@ export default function App() {
   const [unlockToastIds, setUnlockToastIds] = useState<readonly BuildingId[]>([]);
   /* 14/10/2026 (dono, REGISTRO §56): o botão Avisos saiu da Home; os avisos ACIONÁVEIS viram um balão leve na fila (`noticeToast`), 1× por dia cada. */
   const [noticeKey, setNoticeKey] = useState<NoticeToastKey | null>(null);
+  /* A CARTA DE NPC (D-13/D-14, REGISTRO §115): UMA por dia, quando há novidade de NPC; a cartinha da Home abre o modal `npcLetter` da fila.
+     Estado em localStorage (sem campo novo no save); `letterOpen` é o instantâneo da carta na tela (marcar lida não pode desmontá-la). */
+  const [npcLetter, setNpcLetter] = useState<LetterState | null>(() => parseLetterState(readLocal(STORAGE_KEYS.NPC_LETTER)));
+  const [letterOpen, setLetterOpen] = useState<LetterState | null>(null);
   const avisosKeysRef = useRef<string[]>([]);
   /* REAFIRMAR O DIA (15/10/2026, REGISTRO §66): todo dia a pessoa marca, entre o que já cadastrou, o que quer fazer HOJE. Só o marcado
      aparece no Hoje; o resto fica de fora e a virada não o julga. `dayPlan` (no save) guarda o instantâneo do que foi oferecido, o que foi
@@ -2107,6 +2114,7 @@ export default function App() {
     ready: readyFor(demo || !hasCompletedOnboarding, {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
+      npcLetter: letterOpen !== null,
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
       buildingIntro: introShown.length > 0,
@@ -2136,6 +2144,11 @@ export default function App() {
         const gravar = recordNoticeShown(readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN), readLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE), dia, noticeKey);
         writeLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN, gravar.dia, { silent: true });
         writeLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE, gravar.sempre, { silent: true });
+      } else if (id === 'npcLetter' && letterOpen) {
+        // "lida" ao MOSTRAR (a cartinha da Home some); o modal segue pelo instantâneo `letterOpen`
+        const lida = markLetterRead(letterOpen);
+        setNpcLetter(lida);
+        writeLocal(STORAGE_KEYS.NPC_LETTER, serializeLetterState(lida), { silent: true });
       } else if (id === 'mapTutorial') {
         setMapTutorialShown(true);
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
@@ -2163,6 +2176,7 @@ export default function App() {
       switch (id) {
         case 'welcomeTour': handleWelcomeTourDone(); break;
         case 'triage': setTriageTasks(null); break;
+        case 'npcLetter': setLetterOpen(null); break;
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
         case 'buildingIntro': setIntroShown([]); break;
@@ -2183,6 +2197,22 @@ export default function App() {
   });
   /** Quem está na tela agora (`'welcome'` = nenhum intersticial). */
   const interstitial = presentation.current;
+  /* A carta do dia nasce quando há novidade de NPC (1×/dia); o push dela passa pelo ponto de entrada `notificarCarta` (teto de 4/dia do W4-A). */
+  const diaDaCarta = playerDayKey(new Date(), gameState.playerDayTz);
+  const novidadesDeNpc = npcNewsToday({
+    weekKey: isoWeekKey(diaDaCarta),
+    bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+    talentPicks: gameState.talentPicks,
+    marks: buildingMarks(gameState.buildingQuests, diaDaCarta, bondLevelFor(gameState.totalXP ?? 0)),
+  }).join(',');
+  useEffect(() => {
+    if (demo || !hasCompletedOnboarding || !hasCompletedTutorial) return;
+    const r = letterForDay(npcLetter, diaDaCarta, novidadesDeNpc ? novidadesDeNpc.split(',') as ('promo' | 'quest')[] : []);
+    if (!r.letter || r.letter === npcLetter) return;
+    setNpcLetter(r.letter);
+    writeLocal(STORAGE_KEYS.NPC_LETTER, serializeLetterState(r.letter), { silent: true });
+    if (r.created) notificarCarta(r.letter, language);
+  }, [demo, hasCompletedOnboarding, hasCompletedTutorial, npcLetter, diaDaCarta, novidadesDeNpc, language]);
   /* Escolhe o próximo aviso acionável ainda não visto hoje (só na Home, só um por vez). */
   useEffect(() => {
     if (currentView !== 'home' || noticeKey !== null) return;
@@ -7152,6 +7182,7 @@ export default function App() {
                 demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
+                buildingMarks={buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0))}
                 onLayerChange={setAreaLayerOpen}
                 onGoToMap={() => goTo('map')}
                 ocupado={{ naMasmorra, missaoFora: isMissionAway(guildMission, Date.now()), onBusy: abrirAvisoMasmorra }}
@@ -7304,6 +7335,8 @@ export default function App() {
                     onClick={() => goTo('page:settings')}
                   />
                 )}
+                /* D-13: a cartinha SÓ existe com carta do dia não lida; abre pela fila (`npcLetter`). */
+                belowLeading={!demo && hasUnreadLetter(npcLetter, diaDaCarta) ? <NpcLetterButton language={language} onOpen={() => setLetterOpen(npcLetter)} /> : undefined}
               />
 
               {/* Pet — acima, sem estar contido em uma caixa */}
@@ -8537,6 +8570,13 @@ export default function App() {
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />
+        </PresentationSlot>
+      )}
+
+      {/* A CARTA DE NPC (D-14): aberta por toque na cartinha da Home, como a triagem. */}
+      {interstitial === 'npcLetter' && letterOpen && (
+        <PresentationSlot id="npcLetter" onFail={() => presentation.fail('npcLetter')} fallback={null}>
+          <NpcLetterModal letter={letterOpen} language={language} onClose={() => setLetterOpen(null)} />
         </PresentationSlot>
       )}
 

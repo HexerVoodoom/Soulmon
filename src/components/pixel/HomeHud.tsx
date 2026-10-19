@@ -59,6 +59,11 @@ interface HomeHudProps {
    */
   leading?: ReactNode;
   /**
+   * A CARTINHA de NPC (D-13): logo ABAIXO do retrato, à esquerda. Posicionada em `absolute` sobre a coluna da ponta
+   * esquerda — não ocupa altura nem desloca o pet e o nome. Ausente (sem carta) = nada no DOM.
+   */
+  belowLeading?: ReactNode;
+  /**
    * A ponta DIREITA. Hoje ela só reserva o espaço do link do Mapa — o
    * `CornerLink` é `fixed` no canto superior direito (fora do HUD, para
    * continuar à mão com a lista rolada).
@@ -75,7 +80,7 @@ interface HomeHudProps {
  *  para o nome ficar centrado de verdade. */
 const HUD_SIDE_W = 48;
 
-export function HomeHud({ language = 'en-US', focusSealed = false, leading, trailing, petName }: HomeHudProps) {
+export function HomeHud({ language = 'en-US', focusSealed = false, leading, belowLeading, trailing, petName }: HomeHudProps) {
   return (
     <div className="sm2-hud">
       {/* A marca é a PALAVRA, sem ícone ao lado.
@@ -101,8 +106,11 @@ export function HomeHud({ language = 'en-US', focusSealed = false, leading, trai
       <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
         {/* B2/H5 (02/10/2026): [menu] [nome do Soulmon] [Mapa] — sem logo. As duas
             pontas têm a MESMA largura, para o centro ser o centro de verdade. */}
-        <div data-hud-leading style={{ flex: `0 0 ${HUD_SIDE_W}px`, display: 'flex', justifyContent: 'flex-start' }}>
+        <div data-hud-leading style={{ flex: `0 0 ${HUD_SIDE_W}px`, position: 'relative', display: 'flex', justifyContent: 'flex-start' }}>
           {leading}
+          {belowLeading && (
+            <div data-hud-below-leading style={{ position: 'absolute', left: 0, top: 'calc(100% + 18px)', zIndex: 19 }}>{belowLeading}</div>
+          )}
         </div>
         <div
           data-hud-center

@@ -62,6 +62,8 @@ export const STORAGE_KEYS = {
   NOTICE_TOAST_SEEN: 'soulmon-notice-toast-seen',
   /** Balões de UMA vez na vida já mostrados (`termos`), `<chave>,<chave>` (REGISTRO §56). */
   NOTICE_TOAST_ONCE: 'soulmon-notice-toast-once',
+  /** A carta de NPC do dia: `{day,kinds,read}` em JSON (`utils/npcLetter.ts`, REGISTRO §115). */
+  NPC_LETTER: 'soulmon-npc-letter',
   RUB_HINT_SHOWN: 'soulmon-rub-hint-shown',
   AUTO_SLEEP_ENABLED: 'soulmon-auto-sleep-enabled',
   AUTO_SLEEP_START: 'soulmon-auto-sleep-start',

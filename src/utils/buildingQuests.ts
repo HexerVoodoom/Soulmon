@@ -28,15 +28,16 @@
 // conta como paga), o material excedente simplesmente não entra. Nunca uma
 // recusa que faça a pessoa sentir que perdeu o dia.
 //
-// ONDE A MISSÃO VIVE (decisão do dono, 07/10/2026): a UI de missão NUNCA fica
-// dentro do prédio nem no lote dele (sem marca "!"/"?" no lote, sem painel); só
-// no menu de Missões da Home. Entrar no prédio continua CONTANDO (`visitBuilding`),
+// ONDE A MISSÃO VIVE (decisão do dono, 07/10/2026; ajustada em 19/10/2026, D-33/D-34, REGISTRO §115):
+// a UI de missão (painel, lista, RECOLHER) NUNCA fica dentro do prédio; só no menu de Missões da
+// Home. Desde 19/10 o lote do prédio mostra apenas o MARCADOR: "!" com a missão disponível (some
+// ao fazer) e "?" com a missão completa (o recolher continua só na Home). Entrar no prédio continua CONTANDO (`visitBuilding`),
 // e o menu lista apenas `LISTED_QUEST_BUILDINGS` (hoje o Caderno: "Escrever no
 // caderno"). O material continua no modelo (a missão paga 1), mas nenhuma tela de
 // missão o exibe — o Ferreiro o mostra sem lista.
 //
 // COR DAS MARCAS: "!" disponível e "?" pronta, em tom `gold` (o mesmo do Passeio
-// — `utils/questMarks.ts`; azul é só da missão SEMANAL), só no ícone do canto da Home.
+// — `utils/questMarks.ts`; azul é só da missão SEMANAL), no ícone do canto da Home e no lote do prédio.
 // ---------------------------------------------------------------------------
 
 import { BUILDING_GATES, buildingGateFor, currentBuildingId, type BuildingId } from './gates';
