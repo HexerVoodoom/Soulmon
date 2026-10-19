@@ -1369,6 +1369,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** exercitado por `src/components/ui/foundation.render.test.tsx`; a regra "ícone nunca dentro de box" é travada por teste próprio.
 **Avisos do arquivo:** ícone NUNCA dentro de box — nenhuma moldura/fundo/borda/chanfro/padding, em nenhuma prop; se existir glifo próprio com o mesmo nome em `NavGlyphs.tsx`, o `Icon` o desenha, senão cai na ligature Material — a troca é invisível para quem chama.
 
+### `src/components/ui/BitsAmount.tsx`
+**Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
+
+### `src/components/ui/RewardLine.tsx`
+**Dono de:** a linha de recompensa com ícones (D-71, 19/10/2026): Bits, energia (`bolt`) e coração (`favorite`), nome só para leitor de tela. **Usado em:** vitória do `NightmareBattle`.
+
 ### `src/components/ui/LockBadge.tsx`
 
 Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` (SVG procedural, sem emoji), `LockBadge` (chip "Vínculo N"/"Bond N", decorativo para leitor de tela), `LockNotice` (`role="status"`) e `lockLabel` (texto acessível do botão). Quem decide trancar é `buildingGateFor`/`areaLockedAt` em `src/utils/gates.ts`; usado por `MapPage`, `AreaScene` e `AreaView`.
