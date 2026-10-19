@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from '../ui/Icon';
+import { BitsAmount } from '../ui/BitsAmount';
 import { MiniGlass } from '../ui/MiniGlass';
 import { AvatarFrame } from '../ui/AvatarFrame';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
@@ -51,13 +52,13 @@ export function FrameShelf({ language, currency, balance, owned, onBuy }: {
                 {isPt ? 'Seu' : 'Yours'}
               </span>
             ) : confirmando === f.id ? (
-              <button type="button" data-frame-confirm={f.id} style={{ ...sm2Button('primary', false, 'sm'), flex: 'none' }}
+              <button type="button" data-frame-confirm={f.id} aria-label={isPt ? `Confirmar ${price} Bits` : `Confirm ${price} Bits`} style={{ ...sm2Button('primary', false, 'sm'), flex: 'none' }}
                 onClick={() => {
                   setConfirmando(null);
                   const ok = !!onBuy && onBuy(f.id);
                   setAviso({ id: f.id, msg: ok ? (isPt ? `${name} comprada.` : `${name} purchased.`) : (isPt ? `Não deu para comprar ${name} agora.` : `Couldn't buy ${name} right now.`) });
                 }}>
-                {isPt ? `Confirmar ${price} Bits` : `Confirm ${price} Bits`}
+                {isPt ? 'Confirmar' : 'Confirm'} <BitsAmount value={price} size={16} style={{ color: 'inherit' }} />
               </button>
             ) : (
               <button type="button" data-frame-buy={f.id} style={{ ...sm2Button('primary', !afford, 'sm'), flex: 'none' }}
@@ -67,7 +68,7 @@ export function FrameShelf({ language, currency, balance, owned, onBuy }: {
                   setAviso(null);
                   setConfirmando(f.id);
                 }}>
-                {isPt ? `Comprar · ${price} Bits` : `Buy · ${price} Bits`}
+                {isPt ? 'Comprar' : 'Buy'} · <BitsAmount value={price} size={16} style={{ color: 'inherit' }} />
               </button>
             )}
           </div>

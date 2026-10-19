@@ -10,7 +10,7 @@ import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from '../ui/InfoTip';
 import { BackArrow } from '../ui/BackArrow';
 import { MiniGlass } from '../ui/MiniGlass';
-import { BitsIcon } from '../ui/BitsIcon';
+import { BitsAmount } from '../ui/BitsAmount';
 import { DecorFitTag, ShopItemSheet } from './ShopItemSheet';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { ShopItem } from '../../utils/shop';
@@ -93,9 +93,7 @@ const unitStyle: CSSProperties = {
 /** "N Bits" — o valor em mono `primary-ink`, a unidade em Rubik `muted`. */
 export function Bits({ value, dim = false, sign = '' }: { value: number; dim?: boolean; sign?: string }) {
   return (
-    <span className="sm2-num" style={{ ...bitsNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', color: dim ? 'var(--sm2-muted)' : bitsNum.color }}>
-      <BitsIcon size={20} />{sign}{value}<span style={unitStyle}>Bits</span>
-    </span>
+    <BitsAmount value={value} sign={sign} size={20} dim={dim} style={{ fontSize: bitsNum.fontSize }} />
   );
 }
 
@@ -675,7 +673,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
             <span>
               {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pack.credits}</span>{isPt ? (pack.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pack.credits === 1 ? ' Credit for ' : ' Credits for ')}
             </span>
-            <span className="sm2-num" style={{ ...bitsNum, color: can ? bitsNum.color : 'var(--sm2-muted)' }}>{pack.bits} Bits</span>
+            <BitsAmount value={pack.bits} size={20} dim={!can} style={{ fontSize: bitsNum.fontSize }} />
           </button>
         );
       })}

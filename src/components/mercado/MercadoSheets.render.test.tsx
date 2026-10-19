@@ -147,7 +147,7 @@ describe('moeda certa por aba', () => {
     const { container } = abrir({ stall: 'decoracao' });
     const p = container.querySelector('[data-balance="bits"]') as HTMLElement;
     expect(p.tagName).toBe('P');
-    expect(p.textContent).toBe('260Bits');
+    expect(p.textContent).toBe('260 Bits');
     const n = p.querySelector('.sm2-num') as HTMLElement;
     expect(n.style.fontFamily).toBe('var(--sm2-font-mono)');
     expect(n.style.color).toBe('var(--sm2-primary-ink)');

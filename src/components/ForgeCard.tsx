@@ -15,6 +15,7 @@ import { sanitizeTalentPicks } from '../utils/talents';
 import { EQUIP_SLOTS, sanitizeEquipment } from '../utils/equipment';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { earnedBits } from '../utils/bitsOrigin';
+import { BitsAmount } from './ui/BitsAmount';
 import { isoWeekKey } from '../utils/offerMoment';
 import { playerDayKey } from '../utils/playerDay';
 import { loadEquipArt } from '../utils/equipArt';
@@ -284,8 +285,8 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
                   aria-label={isPt ? `Refazer por ${REDO_FRAGMENTS} fragmentos` : `Redo for ${REDO_FRAGMENTS} fragments`}>
                   <Art nome="fragmento" size={16} /> {REDO_FRAGMENTS}
                 </button>
-                <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-confirm disabled={!!refBits} onClick={() => confirmar('bits')}>
-                  {isPt ? `Confirmar · ${precoBits} Bits` : `Confirm · ${precoBits} Bits`}
+                <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-confirm disabled={!!refBits} aria-label={isPt ? `Confirmar · ${precoBits} Bits` : `Confirm · ${precoBits} Bits`} onClick={() => confirmar('bits')}>
+                  {isPt ? 'Confirmar' : 'Confirm'} · <BitsAmount value={precoBits} size={16} style={{ color: 'inherit' }} />
                 </button>
               </>
             )}

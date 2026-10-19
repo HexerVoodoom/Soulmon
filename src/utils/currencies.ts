@@ -90,7 +90,7 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 //      a 12px a família sozinha não estava distinguindo nada.
 
 /**
- * Bits: calculadora, tinta primária.
+ * Bits: calculadora, tinta primária. Desde 19/10/2026 COM ícone — quem exibe é o `BitsAmount` (REGISTRO §104, revoga a D-L11).
  *
  * Canvas Loja (DECISÕES §26, checkpoint do dono 20/09/2026): Bits ficam em
  * `primary-ink` — ESTE estilo vence o canvas de Jogos (§25, que pedia `ink`);

@@ -177,6 +177,11 @@ composta sobre o fundo antes de medir; medir alfa direto dá número inventado.
 > `bitsStyle` acrescenta `slashed-zero` como segundo eixo e troca o
 > `letter-spacing` de `1px` fixo para `0.08em`, que acompanha o tamanho (o
 > saldo aparece a 12px na Loja e a 20px em Atividades).
+>
+> **Bits têm ícone (D-62, 19/10/2026, REGISTRO §104; revoga a D-L11 "sem ícone").** O valor sai SEMPRE do
+> `BitsAmount` (`BitsIcon` + número em `bitsStyle`; "Bits" só para leitor de tela). Bits, Honra e Créditos
+> nunca dividem ícone nem tinta: Bits = moeda própria + mono `primary-ink`; Honra = `military_tech` dourado + serifa;
+> Créditos = `diamond` + `credit-ink`.
 
 Escala **fechada**, e o piso é **absoluto**:
 

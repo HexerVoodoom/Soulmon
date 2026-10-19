@@ -2,6 +2,8 @@ import { missionsDoneFirst } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
+import { BitsAmount } from '../ui/BitsAmount';
+import { BitsIcon } from '../ui/BitsIcon';
 import { InfoTip } from '../ui/InfoTip';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { achievementTarget } from '../../utils/missionTargets';
@@ -14,7 +16,7 @@ import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
-import type { CurrencyId } from '../../utils/currencies';
+import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
@@ -47,6 +49,39 @@ function currencyLabel(c: CurrencyId, isPt: boolean): string {
   if (c === 'emblems') return isPt ? 'Honra' : 'Honor';
   if (c === 'credits') return isPt ? 'Créditos' : 'Credits';
   return 'Bits';
+}
+
+/**
+ * D-25 (19/10/2026): a moeda da lojinha em PÍLULAS com ícone — Bits (moeda própria) e Honor (medalha dourada),
+ * uma fileira só. Escolha única (`tablist`/`tab`); o nome da pílula é o texto ("Bits", "Honor"), o ícone é
+ * decorativo. Cada moeda mantém o ícone e a tinta próprios: nunca Bits e Honra com o mesmo ícone.
+ */
+export function CurrencyPills({ tabs, value, onChange, isPt }: {
+  tabs: readonly CurrencyId[]; value: CurrencyId; onChange: (c: CurrencyId) => void; isPt: boolean;
+}) {
+  return (
+    <div role="tablist" aria-label={isPt ? 'Moeda da lojinha' : 'Stall currency'} data-currency-pills style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {tabs.map(c => {
+        const on = c === value;
+        return (
+          <button
+            key={c}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            data-currency-pill={c}
+            className={on ? 'sm2-kit-chip sm2-kit-chip-on' : 'sm2-kit-chip'}
+            onClick={() => onChange(c)}
+          >
+            {c === 'bits' ? <BitsIcon size={20} />
+              : c === 'emblems' ? <Icon name="military_tech" size={20} fill={1} tone="gold" />
+              : <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />}
+            <span>{currencyLabel(c, isPt)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Linha de apoio da região viva quando nada aconteceu ainda. */
@@ -101,12 +136,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           />
         )}
         {tabs.length > 1 && (
-          <PixelTabs
-            items={tabs.map(c => ({ key: c, label: currencyLabel(c, isPt) }))}
-            value={cur}
-            onChange={setCur}
-            ariaLabel={isPt ? 'Moeda da lojinha' : 'Stall currency'}
-          />
+          <CurrencyPills tabs={tabs} value={cur} onChange={setCur} isPt={isPt} />
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -339,13 +369,13 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
                         {isPt ? 'Seu' : 'Yours'}
                       </span>
                     ) : confirmando === m.id ? (
-                      <button type="button" data-mission-buy-confirm={reward.id} style={{ ...sm2Button('primary', false, 'sm'), flex: 'none' }}
+                      <button type="button" data-mission-buy-confirm={reward.id} aria-label={isPt ? `Confirmar ${reward.price} Bits` : `Confirm ${reward.price} Bits`} style={{ ...sm2Button('primary', false, 'sm'), flex: 'none' }}
                         onClick={() => {
                           setConfirmando(null);
                           const ok = shop.onBuy(reward.id);
                           setAviso({ id: m.id, ok, msg: ok ? (isPt ? `${rewardName} comprado.` : `${rewardName} purchased.`) : (isPt ? `Saldo insuficiente para ${rewardName}.` : `Not enough to buy ${rewardName}.`) });
                         }}>
-                        {isPt ? `Confirmar ${reward.price} Bits` : `Confirm ${reward.price} Bits`}
+                        {isPt ? 'Confirmar' : 'Confirm'} <BitsAmount value={reward.price} size={16} style={{ color: 'inherit' }} />
                       </button>
                     ) : (
                       <button type="button" data-mission-buy={reward.id} style={{ ...sm2Button('primary', shop.balance < reward.price, 'sm'), flex: 'none' }}
@@ -355,7 +385,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
                           setAviso(null);
                           setConfirmando(m.id);
                         }}>
-                        {isPt ? `Comprar · ${reward.price} Bits` : `Buy · ${reward.price} Bits`}
+                        {isPt ? 'Comprar' : 'Buy'} · <BitsAmount value={reward.price} size={16} style={{ color: 'inherit' }} />
                       </button>
                     )
                   ) : null}

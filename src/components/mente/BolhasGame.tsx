@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { MiniGameBaseProps } from './types';
 import { sm2Button } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
+import { BitsAmount } from '../ui/BitsAmount';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { MINI_FX, REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
@@ -260,7 +261,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
           </p>
           <p style={phaseLine}>
             {earned > 0
-              ? (isPt ? `Seu pet guarda os sonhos. +${earned} Bits` : `Your pet keeps the dreams. +${earned} Bits`)
+              ? <>{isPt ? 'Seu pet guarda os sonhos.' : 'Your pet keeps the dreams.'} <BitsAmount value={earned} sign="+" /></>
               : (isPt ? 'Seu pet guarda os sonhos.' : 'Your pet keeps the dreams.')}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>

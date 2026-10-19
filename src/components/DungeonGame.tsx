@@ -5,6 +5,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
+import { BitsAmount } from './ui/BitsAmount';
 import { getSpriteForStage } from '../utils/sprites';
 import { playVictory } from '../utils/sounds';
 import { clearBonus } from '../utils/dungeon';
@@ -218,6 +219,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const [enemyIdx, setEnemyIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
   const [rewardMsg, setRewardMsg] = useState('');
+  /** Bits do último inimigo (D-62: vão ao `BitsAmount`, não a uma string). */
+  const [rewardBits, setRewardBits] = useState(0);
   /** O coraçãozinho caiu neste inimigo (JOGO-10) — vira glifo, não emoji na string. */
   const [gotHeart, setGotHeart] = useState(false);
   /** E1: o texto longo do lobby mora atrás do "?". */
@@ -416,7 +419,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const caiuCoracao = onHeartDrop();
     if (caiuCoracao) { resumoRef.current.hearts += 1; noteDrop('heart', 1); }
     setGotHeart(caiuCoracao);
-    setRewardMsg(`+${e.points} Bits`);
+    setRewardMsg(''); setRewardBits(e.points);
     if (enemyIdxRef.current + 1 >= enemiesRef.current.length) clearFloor();
     else { gravarAway(e.floor, enemyIdxRef.current + 1); setPhase('enemy-down'); }
   };
@@ -762,7 +765,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               {/* "+N Bits" e, raramente, o coraçãozinho — o emoji da string virou
                   glifo `favorite` 20 FILL `primary-ink` + "+1 heart" (D-J9). */}
               <p style={phaseLine}>
-                <span className="sm2-num">{rewardMsg}</span>
+                {rewardBits > 0 ? <BitsAmount value={rewardBits} sign="+" /> : <span className="sm2-num">{rewardMsg}</span>}
                 {gotHeart && (
                   <>
                     {' · '}
@@ -784,7 +787,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p style={phaseLine}>{isPt ? 'A próxima camada é mais antiga. A fauna também.' : 'The next layer is older. So is what lives in it.'}</p>
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
-              <p style={phaseLine}>{rewardMsg} · <span className="sm2-num">+{clearBonus(floor)} Bits</span></p>
+              <p style={phaseLine}>{rewardMsg}{rewardMsg ? ' · ' : ''}<BitsAmount value={clearBonus(floor)} sign="+" /></p>
               {/* O MARCO do andar 5 (uma vez por descida). Copy §4, o nó (§7, L4): o nome `Glitchtama` FICA
                   (`EXCECOES` da régua). "Usar" é o verbo da mochila. Fato, nunca "você dominou a masmorra" (L12). */}
               {milestoneNow && (

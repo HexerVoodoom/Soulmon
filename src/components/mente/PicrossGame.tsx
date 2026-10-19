@@ -3,6 +3,7 @@ import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
+import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
 import { readLocal, writeLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
@@ -291,7 +292,7 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           <p role="status" style={phaseTitle} data-picross-solved>
             {isPt ? `Você revelou: ${pattern.namePt}` : `You revealed: ${pattern.nameEn}`}
           </p>
-          <p style={phaseLine}>{`+${earned} Bits`}</p>
+          <p style={phaseLine}><BitsAmount value={earned} sign="+" /></p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={() => setPicking(true)} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Outros' : 'More'}

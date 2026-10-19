@@ -21,6 +21,7 @@ import {
 import { combinedAttrBonus, combinedBonus } from '../utils/combate/bonus';
 import { LAYOUT_NODES, LAYOUT_EDGES, BOARD, NODE_SIZE, HUB, HUB_POINT, ARM_ANGLE, pointOf, neighborIn } from '../utils/talentLayout';
 import { InfoTip } from './ui/InfoTip';
+import { BitsAmount } from './ui/BitsAmount';
 import { loadTalentArt } from '../utils/talentArt';
 import { spendBits, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { TALENT_COPY, talentEffectLine } from '../utils/talentCopy';
@@ -346,7 +347,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
             onClick={() => { setAviso(null); setConfirmando(true); }}
           >
             <Art nome="talent-respec" size={20} />
-            {isPt ? `Refazer a árvore (${custo} Bits)` : `Rebuild the tree (${custo} Bits)`}
+            {isPt ? 'Refazer a árvore' : 'Rebuild the tree'} <BitsAmount value={custo} size={16} style={{ color: 'inherit' }} />
           </button>
         ) : (
           <div role="group" aria-label={isPt ? 'Confirmar' : 'Confirm'} style={{ display: 'grid', gap: 8 }}>
@@ -423,7 +424,7 @@ function TalentModal(p: ModalProps) {
           <div style={{ display: 'grid', gap: 4 }}>
             <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-ghost" data-talent-respec-one={p.id} disabled={!p.takeBack.can} onClick={p.takeBack.run}
               aria-label={isPt ? `Tirar um ponto de ${p.name} (${p.takeBack.cost} Bits)` : `Take one point back from ${p.name} (${p.takeBack.cost} Bits)`}>
-              {isPt ? `Tirar um ponto (${p.takeBack.cost} Bits)` : `Take one point back (${p.takeBack.cost} Bits)`}
+              {isPt ? 'Tirar um ponto' : 'Take one point back'} <BitsAmount value={p.takeBack.cost} size={16} style={{ color: 'inherit' }} />
             </button>
             {!p.takeBack.can && <p className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Outro nó depende deste grau. Tire primeiro o que ele abriu.' : 'Another node depends on this rank. Take back what it opened first.'}</p>}
           </div>

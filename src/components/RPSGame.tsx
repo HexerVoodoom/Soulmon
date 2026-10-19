@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { BitsAmount } from './ui/BitsAmount';
 import type { CSSProperties } from 'react';
 import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
 import type { Language } from '../utils/i18n';
@@ -171,7 +172,7 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit }: {
           dois desfechos (perder uma rodada não é erro). */}
       <p role="status" style={{ ...sm2Text, margin: 0, textAlign: 'center', minHeight: 20 }}>
         {matchOver === 'won'
-          ? (isPt ? `Você venceu! +${MATCH_POINTS} Bits` : `You won! +${MATCH_POINTS} Bits`)
+          ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={MATCH_POINTS} sign="+" /></>
           : matchOver === 'lost'
             ? (isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!')
             : roundMsg}

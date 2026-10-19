@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
-import { BitsIcon } from '../ui/BitsIcon';
+import { BitsAmount } from '../ui/BitsAmount';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
@@ -143,8 +143,8 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
           filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))',
         }}
       >
-        <span data-map-chip aria-label={isPt ? `${bits} Bits` : `${bits} Bits`} style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
-          <BitsIcon size={20} style={{ marginRight: 4 }} />{bits} Bits
+        <span data-map-chip aria-label={`${bits} Bits`} style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
+          <BitsAmount value={bits} size={16} />
         </span>
         <span data-map-chip aria-label={isPt ? `${emblems} de Honra` : `${emblems} Honor`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
           {emblems} {isPt ? 'Honra' : 'Honor'}

@@ -2769,3 +2769,9 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Alternativa que perdeu:** inimigo passivo com dano fixo por resposta (o desenho de 18/10/2026) e a vez que sempre alterna (sem rodada extra).
 - **O que falsificaria:** o combate ficar injusto (jogador comum perdendo quase sempre) ou longo demais (turnos medianos > 25) — a régua `match3Combat.test.ts` (balanço) e `balanco.test.ts` reprovam antes; ou Bits do Combina 3 virando "o jogo de fazer Bits" (a mesma régua).
 
+## 104. Bits ganha ícone no app todo — revoga a D-L11 "Bits sem ícone" (dono, 19/10/2026; D-62/D-63/D-25/D-71)
+- **Decisão do dono (modal, 19/10/2026):** o Bits ganha ícone em TODO o app. Isto REVOGA a D-L11 do canvas Loja e a linha 💠 do CLAUDE.md que mandava exibir Bits "sem ícone, só número + Bits". A regra "as três moedas (Bits, Honra, Créditos) nunca se misturam visualmente" CONTINUA valendo.
+- **Como:** `components/ui/BitsAmount.tsx` é o único jeito de mostrar valor em Bits (`BitsIcon` + número em `bitsStyle`; o nome "Bits" vira texto só para leitor de tela). `components/ui/RewardLine.tsx` mostra recompensa em ícones (Bits, `bolt` de energia, `favorite` de coração) com nome em texto para leitor de tela — usada na vitória do pesadelo. No Mercado, a 2ª fileira (moeda) virou PÍLULAS com ícone: "Bits" (moeda própria) e "Honor" (medalha dourada) (`CurrencyPills`). Os sítios que mostravam "N Bits" ao lado de número (minijogos, Masmorra, folhas do Salão, mapa, molduras, Forja) passaram pelo componente; frases corridas (ajuda, avisos de recusa, Talentos) seguem com a palavra "Bits".
+- **Alternativa que perdeu:** "Bits só número + fonte de calculadora, sem ícone" (D-L11).
+- **O que falsificaria:** jogadores confundirem Bits com Honra nas pílulas/preços (mesmo ícone ou cor lidos como iguais), ou o ícone pequeno (12–16 px) ilegível em tela real. Testes travam: Bits sempre pelo componente; Bits e Honra nunca com o mesmo ícone/cor.
+
