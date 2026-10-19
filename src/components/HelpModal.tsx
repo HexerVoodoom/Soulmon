@@ -89,8 +89,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '✨', en: "Today's special", pt: 'Especial do dia',
-    descEn: `One per day. With a step counter it alternates between walking ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps (you choose the goal) and lying down within your rest window; without one it is always the rest window. It counts like ${SPECIAL_MISSION_GAUGE_WEIGHT} daily habit toward evolution, does not affect the complete-day seal or hearts, and skipping it costs nothing.`,
-    descPt: `Uma por dia. Com contador de passos, alterna entre caminhar ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos (você escolhe a meta) e deitar dentro da sua janela de descanso; sem contador, é sempre a janela de descanso. Vale como ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito diário na evolução, não mexe no selo de dia completo nem nos corações, e deixar para lá não custa nada.`,
+    descEn: `One per day. With a step counter it alternates between walking ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps (you choose the goal; a change starts the next day) and lying down within your rest window; without one it is always the rest window. It counts like ${SPECIAL_MISSION_GAUGE_WEIGHT} daily habit toward evolution, does not affect the complete-day seal or hearts, and skipping it costs nothing.`,
+    descPt: `Uma por dia. Com contador de passos, alterna entre caminhar ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos (você escolhe a meta; a troca vale a partir do dia seguinte) e deitar dentro da sua janela de descanso; sem contador, é sempre a janela de descanso. Vale como ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito diário na evolução, não mexe no selo de dia completo nem nos corações, e deixar para lá não custa nada.`,
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',

@@ -33,7 +33,7 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
 export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay, special }: {
-  /** Missão especial do dia (REGISTRO §104): cartão mudo, sem Resgatar. */
+  /** Missão especial do dia (REGISTRO §106): cartão mudo, sem Resgatar. */
   special?: Omit<React.ComponentProps<typeof SpecialMissionCard>, 'language'>;
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
   initialTab?: MissionsTab;

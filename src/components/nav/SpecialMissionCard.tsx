@@ -4,7 +4,7 @@ import { SPECIAL_MISSION_GAUGE_WEIGHT, type SpecialMissionKind, type SpecialMiss
 import { MissionCard } from './MissionCard';
 
 /**
- * MISSÃO ESPECIAL DO DIA (REGISTRO §104) — apresentação pura. Superfície nova nasce MUDA (nenhum som), sem Resgatar (o gauge é
+ * MISSÃO ESPECIAL DO DIA (REGISTRO §106) — apresentação pura. Superfície nova nasce MUDA (nenhum som), sem Resgatar (o gauge é
  * creditado sozinho na virada), tom calmo: sem cobrança, sem "!" de pendência, sem contagem regressiva.
  */
 export function specialMissionCopy(kind: SpecialMissionKind, done: boolean, language: Language, goal: number): { title: string; desc: string } {

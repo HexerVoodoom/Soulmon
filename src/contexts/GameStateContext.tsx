@@ -782,7 +782,7 @@ export interface GameState {
    */
   steps?: StepsRecord;
   /**
-   * Missão especial diária (utils/specialMissions.ts, REGISTRO §104). 1 por dia:
+   * Missão especial diária (utils/specialMissions.ts, REGISTRO §106). 1 por dia:
    * passos (só com sensor) alterna com descanso. Vale 1 hábito SÓ no gauge de
    * evolução, como bônus acima do teto; fora do selo, do coração e da meta.
    */

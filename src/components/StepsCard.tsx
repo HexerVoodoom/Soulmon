@@ -55,6 +55,8 @@ export interface StepsCardProps {
   goal?: number;
   /** Escolha da meta diária (missão especial). Ausente = sem a linha de escolha. */
   onChangeGoal?: (goal: number) => void;
+  /** Meta TRAVADA de hoje (a troca em `goal` só vale amanhã). Ausente = `goal`. */
+  todayGoal?: number;
   language: Language;
   /** Só chame depois desta tela de consentimento — nunca antes. */
   onRequestPermission: () => void;
@@ -64,7 +66,7 @@ export interface StepsCardProps {
 
 export function StepsCard({
   steps, available, hasPermission, goal = DEFAULT_STEP_GOAL,
-  language, onRequestPermission, onDismiss, onChangeGoal,
+  language, onRequestPermission, onDismiss, onChangeGoal, todayGoal,
 }: StepsCardProps) {
   const isPt = language === 'pt-BR';
 
@@ -96,7 +98,8 @@ export function StepsCard({
   }
 
   // ── Com permissão: o número, a meta e o limite honesto ──────────────────
-  const ratio = stepsGoalProgress(steps, goal);
+  const shownGoal = todayGoal ?? goal;
+  const ratio = stepsGoalProgress(steps, shownGoal);
   const shown = Math.max(0, Math.floor(steps || 0));
   const locale = isPt ? 'pt-BR' : 'en-US';
 
@@ -109,8 +112,8 @@ export function StepsCard({
         <span className="sm2-conta-bignum">{shown.toLocaleString(locale)}</span>
         <span className="sm2-num" style={sm2Hint}>
           {isPt
-            ? `de ${goal.toLocaleString(locale)} passos`
-            : `of ${goal.toLocaleString(locale)} steps`}
+            ? `de ${shownGoal.toLocaleString(locale)} passos`
+            : `of ${shownGoal.toLocaleString(locale)} steps`}
         </span>
       </div>
 
@@ -132,6 +135,13 @@ export function StepsCard({
               </button>
             ))}
           </div>
+          {todayGoal !== undefined && todayGoal !== goal && (
+            <span data-step-goal-tomorrow="" style={sm2Hint}>
+              {isPt
+                ? `A nova meta vale a partir de amanhã. A de hoje continua ${todayGoal.toLocaleString(locale)}.`
+                : `Your new goal starts tomorrow. Today's stays at ${todayGoal.toLocaleString(locale)}.`}
+            </span>
+          )}
         </div>
       )}
 

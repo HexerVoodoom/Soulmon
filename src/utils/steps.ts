@@ -25,7 +25,7 @@
  *    `readStepsToday()` responde `null`, e o app segue idêntico — só sem
  *    passos. Se um dia uma recompensa só alcançável com sensor aparecer, a
  *    regra 1 já foi quebrada.
- *    REVOGADA EM PARTE (dono, 19/10/2026, REGISTRO §104): a missão especial de
+ *    REVOGADA EM PARTE (dono, 19/10/2026, REGISTRO §106): a missão especial de
  *    passos existe só para quem tem sensor; quem não tem recebe a missão de
  *    descanso no lugar, com o MESMO peso e o mesmo teto (1/dia) — a alternativa
  *    recomendada que perdeu era uma missão equivalente declarada.

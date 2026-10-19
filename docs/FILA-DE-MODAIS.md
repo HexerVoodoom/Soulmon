@@ -96,4 +96,4 @@ avançam, Esc e o voltar do Android pulam. O `BuildingIntro` o usa; o tutorial d
 
 ## 7. Nota: missão especial diária
 
-O cartão "Especial do dia" (`SpecialMissionCard`) é inline na folha Missões, aba Diárias. Não é modal e não é item da fila. Sem "!", sem som, sem resgate (REGISTRO §104).
+O cartão "Especial do dia" (`SpecialMissionCard`) é inline na folha Missões, aba Diárias. Não é modal e não é item da fila. Sem "!", sem som, sem resgate (REGISTRO §106).

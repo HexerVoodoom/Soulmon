@@ -1,5 +1,5 @@
 /**
- * MISSÃO ESPECIAL DIÁRIA (dono, 19/10/2026, REGISTRO §104)
+ * MISSÃO ESPECIAL DIÁRIA (dono, 19/10/2026, REGISTRO §106)
  * ========================================================
  *
  * 1 missão especial por dia. Com sensor de passos (consentido) alterna
@@ -34,6 +34,8 @@ export interface SpecialMissionState {
   day: string;
   kind: SpecialMissionKind;
   done: boolean;
+  /** Meta de passos TRAVADA para `day` (primeira avaliação do dia; a troca vale amanhã). */
+  goal?: number;
   /** Dias cumpridos (únicos, mais recentes, teto 7; sobrevivem à troca de dia). */
   doneDays?: string[];
   /** Dias já creditados no gauge (anti-duplo; únicos, teto 7). */
@@ -59,7 +61,7 @@ export function specialMissionKindFor(day: string, hasSteps: boolean): SpecialMi
 }
 
 export function specialMissionReached(
-  state: { day: string; kind: SpecialMissionKind },
+  state: { day: string; kind: SpecialMissionKind; goal?: number },
   inp: SpecialMissionInputs,
 ): boolean {
   if (state.kind === 'steps') {
@@ -67,7 +69,7 @@ export function specialMissionReached(
       inp.hasSteps &&
       !!inp.steps &&
       inp.steps.date === inp.stepsDayKey &&
-      inp.steps.today >= sanitizeStepGoal(inp.stepGoal)
+      inp.steps.today >= (state.goal ?? sanitizeStepGoal(inp.stepGoal))
     );
   }
   const rest = inp.rest;
@@ -94,11 +96,13 @@ function build(
   done: boolean,
   doneDays?: string[],
   creditedDays?: string[],
+  goal?: number,
 ): SpecialMissionState {
   return {
     day,
     kind,
     done,
+    ...(goal !== undefined ? { goal } : {}),
     ...(doneDays && doneDays.length ? { doneDays } : {}),
     ...(creditedDays && creditedDays.length ? { creditedDays } : {}),
   };
@@ -112,14 +116,17 @@ export function resolveSpecialMission(
 ): SpecialMissionState {
   let cur: SpecialMissionState;
   if (!prev || prev.day !== day) {
-    cur = build(day, specialMissionKindFor(day, inp.hasSteps), false, prev?.doneDays, prev?.creditedDays);
+    cur = build(day, specialMissionKindFor(day, inp.hasSteps), false, prev?.doneDays, prev?.creditedDays, sanitizeStepGoal(inp.stepGoal));
   } else if (prev.kind === 'steps' && !prev.done && !inp.hasSteps) {
-    cur = build(day, 'rest', false, prev.doneDays, prev.creditedDays);
+    cur = build(day, 'rest', false, prev.doneDays, prev.creditedDays, prev.goal);
+  } else if (prev.goal === undefined) {
+    // Save antigo (mesmo dia sem `goal`): trava a meta atual uma vez.
+    cur = build(day, prev.kind, prev.done, prev.doneDays, prev.creditedDays, sanitizeStepGoal(inp.stepGoal));
   } else {
     cur = prev;
   }
   if (!cur.done && specialMissionReached(cur, inp)) {
-    return build(day, cur.kind, true, addDay(cur.doneDays, day), cur.creditedDays);
+    return build(day, cur.kind, true, addDay(cur.doneDays, day), cur.creditedDays, cur.goal);
   }
   return cur;
 }
@@ -175,5 +182,11 @@ export function sanitizeSpecialMission(raw: unknown): SpecialMissionState | unde
   const day = key(r.day);
   if (!day) return undefined;
   if (r.kind !== 'steps' && r.kind !== 'rest') return undefined;
-  return build(day, r.kind, r.done === true, days(r.doneDays, r.lastDone), days(r.creditedDays, r.lastCredited));
+  return build(day, r.kind, r.done === true, days(r.doneDays, r.lastDone), days(r.creditedDays, r.lastCredited),
+    typeof r.goal === 'number' && Number.isFinite(r.goal) ? sanitizeStepGoal(r.goal) : undefined);
+}
+
+/** Meta do dia: a travada no estado, senão a atual. */
+export function specialMissionGoal(state: { goal?: number } | undefined, stepGoal: unknown): number {
+  return state?.goal ?? sanitizeStepGoal(stepGoal);
 }

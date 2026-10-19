@@ -4516,17 +4516,17 @@ higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) 
 <a id="missao-especial"></a>
 ## 50-A. 🌟 Missão especial diária
 
-**Em uma frase.** Uma missão calma por dia, de passos ou de deitar na janela, que pesa como um hábito no gauge de evolução e fica fora do selo "dia completo" (REGISTRO §104).
+**Em uma frase.** Uma missão calma por dia, de passos ou de deitar na janela, que pesa como um hábito no gauge de evolução e fica fora do selo "dia completo" (REGISTRO §106).
 
 **As regras.** `src/utils/specialMissions.ts`.
 - **1 por dia** (`SPECIAL_MISSIONS_PER_DAY`), no dia do jogador (`playerDayKey`), o mesmo relógio da virada.
 - **Com sensor de passos e consentimento:** alterna por paridade do dia entre `steps` e `rest`. **Sem sensor:** sempre `rest`. A de passos some; não há equivalente na PWA.
-- **Passos:** cumprida quando os passos de hoje chegam à meta do jogador (`stepGoal`: 3000, 5000, 7000 ou 10000; padrão 7000; clamp 1000..30000).
+- **Passos:** cumprida quando os passos de hoje chegam à meta do jogador, TRAVADA no dia (`goal` no estado, na primeira avaliação do dia; trocar no `StepsCard` vale a partir do dia seguinte) (`stepGoal`: 3000, 5000, 7000 ou 10000; padrão 7000; clamp 1000..30000).
 - **Descanso ("deitar na sua janela"):** cumprida quando há uma noite com `date` igual ao dia (noite nomeada pela manhã) e `onTime`. Sem duração, sem sensor. Noite sem registro é neutra.
 - **A missão só é criada depois da sondagem do sensor** (disponível e permissão resolvidos). Pendente, o App não cria nada.
 - **Peso:** UM hábito (`HABIT_WEIGHT` = 1), só no gauge, creditado na virada (`computeDailyReset`) como bônus ACIMA do teto diário do gauge, para não reduzir o peso das tarefas reais (G-01). Anti-duplo: `doneDays` e `creditedDays` (até 7 dias cada). Descanso exige que a noite tenha começado na véspera (`morningKey` do `sleptAt`).
 - **Fora de:** selo "dia completo", `perfectDays`, `totalPerfectDays`, `missionPerfectDays`, Bits do dia, coração/HP, `dailyGoalFor`, `registeredForDay`. **Sem punição.**
-- **Pendente do dono:** acima x dentro do teto.
+- **Decisões do dono (19/10/2026):** bônus ACIMA do teto; meta de passos trava no dia; a missão não exige tarefa real feita no dia.
 
 **A tela.** Cartão "Especial do dia" / "Today's special" na folha Missões, aba Diárias, acima de "Hoje". `MissionCard` em modo `quiet`: sem "!", rótulo "Feita"/"Done", recompensa visível. Sem resgate, sem som, não é modal, fora da fila. A meta se escolhe no `StepsCard`.
 

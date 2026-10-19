@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   specialMissionKindFor, specialMissionReached, resolveSpecialMission, specialMissionGaugeBonus,
-  markSpecialMissionCredited, tomorrowSpecialKind, sanitizeSpecialMission,
+  markSpecialMissionCredited, tomorrowSpecialKind, sanitizeSpecialMission, specialMissionGoal,
   SPECIAL_MISSION_GAUGE_WEIGHT, type SpecialMissionInputs, type SpecialMissionState,
 } from './specialMissions';
 import { sanitizeStepGoal, DEFAULT_STEP_GOAL } from './steps';
@@ -63,11 +63,11 @@ describe('resolve', () => {
   it('virada preserva doneDays/creditedDays e zera done', () => {
     const prev: SpecialMissionState = { day: day(0), kind: 'rest', done: true, doneDays: [day(0)], creditedDays: [day(-1)] };
     const r = resolveSpecialMission(prev, day(1), inp());
-    expect(r).toEqual({ day: day(1), kind: 'rest', done: false, doneDays: [day(0)], creditedDays: [day(-1)] });
-    expect(Object.keys(resolveSpecialMission(undefined, day(1), inp()))).toEqual(['day', 'kind', 'done']);
+    expect(r).toEqual({ day: day(1), kind: 'rest', done: false, goal: sanitizeStepGoal(undefined), doneDays: [day(0)], creditedDays: [day(-1)] });
+    expect(Object.keys(resolveSpecialMission(undefined, day(1), inp()))).toEqual(['day', 'kind', 'done', 'goal']);
   });
   it('mesma referência sem mudança', () => {
-    const prev: SpecialMissionState = { day: day(0), kind: 'rest', done: false };
+    const prev: SpecialMissionState = { day: day(0), kind: 'rest', done: false, goal: 7000 };
     expect(resolveSpecialMission(prev, day(0), inp())).toBe(prev);
     const done: SpecialMissionState = { ...prev, done: true, doneDays: [day(0)] };
     expect(resolveSpecialMission(done, day(0), inp())).toBe(done);
@@ -139,5 +139,49 @@ describe('descanso: a noite começa na véspera', () => {
   it('sem sleptAt válido aceita pelo date', () => {
     expect(specialMissionReached({ day: D, kind: 'rest' }, inp({ rest: { nights: [{ date: D, onTime: true }] } }))).toBe(true);
     expect(specialMissionReached({ day: D, kind: 'rest' }, inp({ rest: { nights: [{ date: D, onTime: true, sleptAt: 'lixo' }] } }))).toBe(true);
+  });
+});
+
+describe('meta travada no dia', () => {
+  const sd = [0, 1, 2, 3].map(day).find((d) => specialMissionKindFor(d, true) === 'steps')!;
+  const nextSd = [4, 5, 6, 7].map(day).find((d) => specialMissionKindFor(d, true) === 'steps')!;
+  const mk = (d: string, today: number, stepGoal: number) =>
+    inp({ hasSteps: true, stepsDayKey: d, steps: { date: d, today }, stepGoal });
+  it('troca no meio do dia não altera a missão de hoje', () => {
+    const a = resolveSpecialMission(undefined, sd, mk(sd, 100, 7000));
+    expect(a.goal).toBe(7000);
+    const b = resolveSpecialMission(a, sd, mk(sd, 4000, 3000));
+    expect(b.done).toBe(false);
+    expect(b).toBe(a);
+    expect(resolveSpecialMission(b, sd, mk(sd, 7000, 3000)).done).toBe(true);
+  });
+  it('vale amanhã e na virada de dia', () => {
+    const a = resolveSpecialMission(undefined, sd, mk(sd, 100, 7000));
+    const n = resolveSpecialMission(a, nextSd, mk(nextSd, 4000, 3000));
+    expect(n.goal).toBe(3000);
+    expect(n.done).toBe(true);
+  });
+  it('troca steps->rest e latch preservam goal', () => {
+    const a = resolveSpecialMission(undefined, sd, mk(sd, 0, 5000));
+    expect(resolveSpecialMission(a, sd, inp({ stepsDayKey: sd })).goal).toBe(5000);
+    expect(resolveSpecialMission(a, sd, mk(sd, 5000, 3000)).goal).toBe(5000);
+  });
+  it('save antigo sem goal recebe a meta atual uma vez, depois mesma ref', () => {
+    const old: SpecialMissionState = { day: sd, kind: 'steps', done: false };
+    const a = resolveSpecialMission(old, sd, mk(sd, 0, 5000));
+    expect(a).not.toBe(old);
+    expect(a.goal).toBe(5000);
+    expect(resolveSpecialMission(a, sd, mk(sd, 0, 3000))).toBe(a);
+  });
+  it('sanitize com goal lixo e ausente', () => {
+    expect(sanitizeSpecialMission({ day: 'x', kind: 'steps', done: false, goal: 'abc' })).not.toHaveProperty('goal');
+    expect(sanitizeSpecialMission({ day: 'x', kind: 'steps', done: false })).not.toHaveProperty('goal');
+    expect(sanitizeSpecialMission({ day: 'x', kind: 'steps', done: false, goal: NaN })).not.toHaveProperty('goal');
+    expect(sanitizeSpecialMission({ day: 'x', kind: 'steps', done: false, goal: 5000 })?.goal).toBe(5000);
+    expect(sanitizeSpecialMission({ day: 'x', kind: 'steps', done: false, goal: 1e9 })?.goal).toBe(sanitizeStepGoal(1e9));
+  });
+  it('specialMissionGoal', () => {
+    expect(specialMissionGoal({ goal: 7000 }, 3000)).toBe(7000);
+    expect(specialMissionGoal(undefined, 3000)).toBe(3000);
   });
 });

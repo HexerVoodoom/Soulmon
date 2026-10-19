@@ -930,7 +930,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal, done: dailyDone });
   // 🧬 O gauge de evolução credita o PESO feito ontem, com teto diário do
   // estágio (`utils/evolutionGauge.ts`). Nunca decresce aqui.
-  // Missão especial (REGISTRO §104): BÔNUS ACIMA do teto diário (guard-rail G-01:
+  // Missão especial (REGISTRO §106): BÔNUS ACIMA do teto diário (guard-rail G-01:
   // não reduz o peso das tarefas reais). Fora do selo de dia completo, do
   // coração e de dailyGoalFor — por isso NÃO entra em `dailyDone`.
   const specialBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);

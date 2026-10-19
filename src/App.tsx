@@ -289,7 +289,7 @@ import {
   DEFAULT_STEP_GOAL, isStepsAvailable, hasStepsPermission, requestStepsPermission,
   readStepsToday, stepsDayKey, sanitizeStepGoal,
 } from './utils/steps';
-import { resolveSpecialMission, tomorrowSpecialKind } from './utils/specialMissions';
+import { resolveSpecialMission, tomorrowSpecialKind, specialMissionGoal } from './utils/specialMissions';
 
 /**
  * Categorias em que um passo pode CONFIRMAR o hábito que o usuário já marcou.
@@ -5627,7 +5627,7 @@ export default function App() {
     setGameState(prev => ({ ...prev, stepsConsent: 'declined' }));
   }, [setGameState]);
 
-  /** MISSÃO ESPECIAL DO DIA (REGISTRO §104): UM ponto de fiação. O gauge é creditado sozinho na virada (dailyReset). */
+  /** MISSÃO ESPECIAL DO DIA (REGISTRO §106): UM ponto de fiação. O gauge é creditado sozinho na virada (dailyReset). */
   const specialHasSteps = stepsAvailable === true && gameState.stepsConsent === 'granted' && stepsPermission === true;
   useEffect(() => {
     // Sondagem do sensor pendente = não decide (senão a 1ª abertura do dia trava em descanso).
@@ -7937,6 +7937,7 @@ export default function App() {
                 onRequestPermission={handleStepsRequestPermission}
                 onDismiss={handleStepsDecline}
                 goal={sanitizeStepGoal(gameState.stepGoal)}
+                todayGoal={specialMissionGoal(gameState.specialMission?.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.specialMission : undefined, gameState.stepGoal)}
                 onChangeGoal={handleChangeStepGoal}
               />
             </div>
@@ -8029,7 +8030,7 @@ export default function App() {
         special={{
           state: gameState.specialMission?.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.specialMission : undefined,
           stepsToday,
-          stepGoal: sanitizeStepGoal(gameState.stepGoal),
+          stepGoal: specialMissionGoal(gameState.specialMission?.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.specialMission : undefined, gameState.stepGoal),
           tomorrowKind: tomorrowSpecialKind(playerDayKey(new Date(), gameState.playerDayTz), specialHasSteps),
         }}
         missionsClaimed={gameState.missionsClaimed}
