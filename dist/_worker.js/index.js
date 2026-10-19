@@ -4967,8 +4967,7 @@ var PICKABLE = {
   "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1, requires: [req("tal-com-01", 2)] },
   "tal-com-04": { maxRank: 3, kind: "backpack", requires: [req("tal-com-02", 2)] },
   "tal-com-05": { maxRank: 1, kind: "respecOne", requires: [req("tal-com-03", 2)] },
-  "tal-com-06": { maxRank: 3, kind: "missionBits", requires: [req("tal-com-02", 1)] },
-  "tal-com-07": { maxRank: 1, kind: "weeklyDiscount", requires: [req("tal-com-04", 1), req("tal-com-05", 1)] }
+  "tal-com-06": { maxRank: 3, kind: "missionBits", requires: [req("tal-com-02", 1)] }
 };
 var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function talentPointsFor(bondLevel) {
@@ -5019,7 +5018,8 @@ function isValidPicks(raw, bondLevel) {
   return isWellFormed(raw, bondLevel) && replay(raw).dropped.length === 0;
 }
 __name(isValidPicks, "isValidPicks");
-function sanitizeTalentPicks(raw, bondLevel) {
+function sanitizeTalentPicks(rawIn, bondLevel) {
+  const raw = Array.isArray(rawIn) ? rawIn.filter((id) => id !== "tal-com-07") : rawIn;
   if (!isWellFormed(raw, bondLevel)) return [];
   const { kept, dropped } = replay(raw);
   return dropped.length === 0 ? [...raw] : kept;
@@ -8309,7 +8309,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11081,7 +11081,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-od507c/functionsRoutes-0.3943806008964176.mjs
+// ../.wrangler/tmp/pages-9yvw4G/functionsRoutes-0.6956818259242143.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11358,7 +11358,7 @@ var routes = [
   }
 ];
 
-// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11684,7 +11684,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
