@@ -380,3 +380,21 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 | `npc-mercado-restaurante.png` | `soulmon/npcs/` | 768² (RGBA, alfa real) | busto do NPC do Restaurante em obra, Tijolino (`LOT_NPC_ART['mercado:restaurante']`); arte do dono, vem de `dominios/industrial/npcs/npc-industrial-caranguejo-argila-pedreiro.png` (512², Lanczos para 768², alfa ≥250 → 255); a original em `dominios/` segue intacta |
 
 > **15/10/2026:** `fx/gain-levelup.png` redesenhado (chevron sem franja clara, `tools/gerar-gain-levelup.py`) e `gain-chest/confetti/focus-seal/perfect-day` defringeados (`tools/defringe-gain.py`); mesmo nome e 96². Guard: `src/assets/gainFringe.contract.test.ts`. REGISTRO §77.
+
+### W5 — arte regenerada instalada (19/10/2026)
+
+Fonte: `D:/Soulmon/_gemini_out/w5-arte-20261019/<lote>/{raw,final}` (Higgsfield `gpt_image_2_5` flare, alfa real). Prédios: alfa binarizado em 200, recorte da bbox, 512² com ~4% de margem (Lanczos); fundos nas dimensões do pacote. As caixas opacas em `areaLotGeometry.ts` foram remedidas. Os arquivos antigos de mesmo nome foram substituídos (histórico no git). Escolhas do dono: L3/L4. Escolhas PADRÃO (reversíveis trocando o arquivo): L1 prédio `arena-guerra-a`, cenário `arena-guerra-cenario-a`, fundos Lab/Hall variante `e`, L5 `expl-jornal-a`/`expl-foco-a`.
+
+| Arquivo | Pasta | Tamanho | Uso (origem) |
+|---|---|---|---|
+| `lote-arena-guerra.png` | `soulmon/areas/` | 512² | prédio da Guerra (`ARENA_LOT_ART.guerra`) — `L1 arena-guerra-a` (sai o grifo/serpente de ossos) |
+| `lote-laboratorio-stats.png` | idem | 512² | Santuário do Vínculo — `L3 lab-bond-a` |
+| `lote-laboratorio-pet.png` | idem | 512² | Arquivo — `L3 lab-arquivo-b` |
+| `lote-laboratorio-evolucao.png` | idem | 512² | Centro de Evolução — `L3 lab-evolucao-c` |
+| `lote-hall-amigos-terra.png` | idem | 512² | Círculo de Amigos (`LABORATORIO_LOT_ART.amigos`) — `L3 lab-amigos-b` |
+| `lote-hall-guilda-luz.png` | idem | 512² | Clan Hall — `L4 hall-clan-b` |
+| `lote-arena-feira.png` | idem | 512² | Feira (`HALL_LOT_ART.feira`) — `L4 hall-feira-b` |
+| `lote-hall-grove.png` | idem | 512² | **novo**: Grove (`HALL_LOT_ART.grove`), pavilhão de cristal — `L4 hall-grove-b`; o chalé `lote-hall-amigos-campina.png` ficou em disco sem import |
+| `lote-exploracao-caderno-v3.png`, `lote-exploracao-oficina-v3.png` | idem | 512² | Jornal e Focus Workshop (sem vegetação) — `L5 expl-jornal-a`, `expl-foco-a` |
+| `bg-laboratorio.png`, `bg-hall.png` | idem | 760×1344 | fundos novos — `L2 lab-bg-e`, `hall-bg-e`; `LABORATORIO_LOTS`/`HALL_LOTS` remedidos nas plataformas reais |
+| `bg-arena-guerra.png` | `backgrounds/` | 1200×648 | **novo**: cenário do `GuerraVisor` (chão 74%, cristais vermelhos) — `L1 arena-guerra-cenario-a`; NÃO está em `PET_BACKGROUNDS`/loja (o `bg-arena-spotlight` vendido não mudou) |

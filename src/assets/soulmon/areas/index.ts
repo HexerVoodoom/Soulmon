@@ -38,7 +38,7 @@ export const MERCADO_LOT_ART = {
   restaurante: loteRestaurante,
 } as const;
 
-// Arte da guerra escolhida pelo dono em 18/10/2026 (arena-coliseu com grifo e serpente de ossos) — ver docs/ARTE-MELHORIAS-FUTURAS.md
+// W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.
 export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
@@ -121,8 +121,9 @@ export const LABORATORIO_LOT_ART = {
   amigos: loteAmigos,
 } as const;
 
-// D-50: o Grove ainda não tem arte própria — usa o chalé de campina que já existia nos lotes (a arte nova é outra onda).
-import loteGrove from './lote-hall-amigos-campina.png';
+// W5 (19/10/2026, escolha do dono): o Grove ganhou prédio PRÓPRIO — pavilhão de cristal em volta de uma árvore jovem luminosa (Higgsfield gpt_image_2_5 flare, 512², alfa real).
+// O chalé de campina (`lote-hall-amigos-campina.png`) que ele emprestava fica em disco, sem import.
+import loteGrove from './lote-hall-grove.png';
 
 export const HALL_LOT_ART = {
   guilda: loteGuilda,
