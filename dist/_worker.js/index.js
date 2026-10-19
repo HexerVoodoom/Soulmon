@@ -751,6 +751,15 @@ function lembreteDeInscricao(v) {
   return { s, tz };
 }
 __name(lembreteDeInscricao, "lembreteDeInscricao");
+var CHAVES_SUPRIMIVEIS = ["breakfast", "lunch", "dinner", "sleep"];
+function suprimidosDeInscricao(v) {
+  if (!v || typeof v !== "object") return void 0;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v.d ?? ""))) return void 0;
+  if (!Array.isArray(v.k)) return void 0;
+  const k = CHAVES_SUPRIMIVEIS.filter((c) => v.k.includes(c));
+  return k.length ? { d: v.d, k } : void 0;
+}
+__name(suprimidosDeInscricao, "suprimidosDeInscricao");
 function ehTokenFcm(v) {
   return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
 }
@@ -8241,7 +8250,7 @@ async function onRequestPost4({ request, env }) {
   if (limited) return limited;
   const body = await corpoDe(request);
   if (!body) return json6({ error: "Invalid JSON" }, 400);
-  const { token, petName, language, bornAt, saveId, meals, sleep } = body;
+  const { token, petName, language, bornAt, saveId, meals, sleep, skip } = body;
   if (!token) return json6({ error: "Missing token" }, 400);
   if (!ehTokenFcm(token)) return json6({ error: "Invalid token" }, 400);
   const dono = await saveIdAutorizado(request, env, saveId);
@@ -8255,6 +8264,8 @@ async function onRequestPost4({ request, env }) {
     ...refeicoesDeInscricao(meals) ? { meals: refeicoesDeInscricao(meals) } : {},
     // Lembrete de deitar — OPT-IN: ausente/inválido = desligado (registro regravado inteiro).
     ...lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {},
+    // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
+    ...suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {},
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
@@ -8298,7 +8309,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10698,7 +10709,7 @@ async function onRequestPost8({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
-  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -10753,6 +10764,8 @@ async function onRequestPost8({ request, env }) {
     // Lembrete de deitar — OPT-IN: ausente/inválido = desligado. O registro é
     // regravado inteiro, então parar de mandar `sleep` o remove.
     ...lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {},
+    // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
+    ...suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {},
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que
@@ -11061,7 +11074,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-66JSyy/functionsRoutes-0.1476125792590287.mjs
+// ../.wrangler/tmp/pages-7vgVt8/functionsRoutes-0.43355863962081975.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11338,7 +11351,7 @@ var routes = [
   }
 ];
 
-// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11664,7 +11677,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
