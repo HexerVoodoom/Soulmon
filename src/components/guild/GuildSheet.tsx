@@ -97,7 +97,7 @@ interface GuildSheetProps {
   /** Âncora do DIA DO JOGADOR (`gameState.playerDayTz`); sem ela vale o do aparelho. */
   playerDayTz?: PlayerDayAnchor;
   /** Qual sala abre: o Salão (Bosque/Roda/Mural, o padrão — porta do Hall) ou a Feira (porta da Arena). */
-  room?: 'salao' | 'feira' | 'guerra';
+  room?: 'salao' | 'feira' | 'guerra' | 'grove';
   /** O resgate da Feira foi confirmado pelo servidor: soma os Emblemas pelo MESMO caminho do Torneio
    *  e, se veio a Concha da Maré, a põe em `ownedFurniture`. A folha só chama UMA vez por recibo. */
   onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
@@ -571,10 +571,36 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         onBuscar={buscarGuerra}
       />
     );
+    // D-50: o bosque é a mesma sala no Salão do Clã (junto do resto) e no prédio Grove (sozinha).
+    const salaBosque = (
+        <SalaBosque
+          guild={g}
+          t={t}
+          language={language}
+          metaDoDiaCumprida={metaDoDiaCumprida}
+          ocupado={ocupado}
+          mySprite={mySprite || getSpriteForStage('rookie')}
+          reducedMotion={reducedMotion}
+          saveId={saveId}
+          tz={tz.current}
+          arvores={cla?.arvores ?? {}}
+          onPlantio={cla?.onPlantio}
+          onFio={() => void agir(() => guildThread(saveId, fioGoal, tz.current), {
+            anunciar: 'guild.bosque.fio.toast',
+            depois: () => track('guild_thread', { kind: 0 }),
+          })}
+        />
+    );
     corpo = room === 'guerra' ? (
       <>
         {alerta}
         {salaGuerra}
+      </>
+    ) : room === 'grove' ? (
+      <>
+        {alerta}
+        {resgate}
+        <div className="sm2-stats-card">{salaBosque}</div>
       </>
     ) : room === 'feira' ? (
       <>
@@ -659,23 +685,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             </section>
           )}
 
-          <SalaBosque
-            guild={g}
-            t={t}
-            language={language}
-            metaDoDiaCumprida={metaDoDiaCumprida}
-            ocupado={ocupado}
-            mySprite={mySprite || getSpriteForStage('rookie')}
-            reducedMotion={reducedMotion}
-            saveId={saveId}
-            tz={tz.current}
-            arvores={cla?.arvores ?? {}}
-            onPlantio={cla?.onPlantio}
-            onFio={() => void agir(() => guildThread(saveId, fioGoal, tz.current), {
-              anunciar: 'guild.bosque.fio.toast',
-              depois: () => track('guild_thread', { kind: 0 }),
-            })}
-          />
+          {salaBosque}
 
           {g.casa && (
             <SalaCasa
@@ -811,7 +821,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   }
 
   return (
-    <div ref={rootRef} tabIndex={-1} className="sm2-guild" aria-label={t(room === 'feira' ? 'guild.feira.titulo' : room === 'guerra' ? 'guild.guerra.titulo' : 'guild.aria.salao')} data-guild-sheet data-guild-room-open={room}>
+    <div ref={rootRef} tabIndex={-1} className="sm2-guild" aria-label={t(room === 'feira' ? 'guild.feira.titulo' : room === 'guerra' ? 'guild.guerra.titulo' : room === 'grove' ? 'guild.bosque.titulo' : 'guild.aria.salao')} data-guild-sheet data-guild-room-open={room}>
       {/* Região viva SEMPRE montada (QA L1 BAIXO-3): o texto entra depois, e é
           assim que o leitor de tela anuncia — uma região que nasce preenchida não é lida. */}
       <div role="status" aria-live="polite" className="sm2-guild-sr" data-guild-status>{anuncio}</div>

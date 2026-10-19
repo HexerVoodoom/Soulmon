@@ -39,7 +39,7 @@
 // — `utils/questMarks.ts`; azul é só da missão SEMANAL), só no ícone do canto da Home.
 // ---------------------------------------------------------------------------
 
-import { BUILDING_GATES, buildingGateFor, type BuildingId } from './gates';
+import { BUILDING_GATES, buildingGateFor, currentBuildingId, type BuildingId } from './gates';
 import type { QuestMark } from './questMarks';
 
 export type MaterialId =
@@ -60,13 +60,13 @@ export const MATERIAL_BUILDING: Readonly<Record<MaterialId, BuildingId>> = {
   pebble: 'exploracao.passeio', ore: 'exploracao.masmorra', ink: 'exploracao.caderno', gear: 'exploracao.oficina',
   fang: 'arena.duelo', laurel: 'arena.torneio', ribbon: 'hall.feira',
   essence: 'laboratorio.evolucao', down: 'laboratorio.pet', cipher: 'laboratorio.stats',
-  page: 'hall.biblioteca', keepsake: 'hall.amigos', crest: 'hall.guilda',
+  page: 'laboratorio.biblioteca', keepsake: 'laboratorio.amigos', crest: 'hall.guilda',
 };
 
 export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 
-/** Os prédios que dão missão: todos menos `mercado.*` e o Perfil do Soulmon (beta-2: é uma LEITURA da ficha — sem missão, sem material, sem peça do Soulsmith) e a Guerra de Clãs (a guerra rende na casa do clã, não em material). */
-export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra');
+/** Os prédios que dão missão: todos menos `mercado.*` e o Perfil do Soulmon (beta-2: é uma LEITURA da ficha — sem missão, sem material, sem peça do Soulsmith) e a Guerra de Clãs (a guerra rende na casa do clã, não em material) e o Grove (D-50: o bosque rende no clã, não em material). */
+export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove');
 
 /** Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita. */
 export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = ['exploracao.caderno'];
@@ -171,8 +171,8 @@ export function sanitizeBuildingQuests(raw: unknown): BuildingQuestState | undef
   if (typeof r.day !== 'string' || r.day.length === 0 || r.day.length > 40) return undefined;
   const ids = (v: unknown): BuildingId[] => {
     const out: BuildingId[] = [];
-    // `arena.feira` virou `hall.feira` (11/10/2026): o save antigo ainda o cita.
-    if (Array.isArray(v)) for (const raw of v) { const x = raw === 'arena.feira' ? 'hall.feira' : raw; if (isQuestBuilding(x) && !out.includes(x)) out.push(x); }
+    // `arena.feira` → `hall.feira` (11/10/2026) e `hall.biblioteca`/`hall.amigos` → `laboratorio.*` (D-50, 19/10/2026): o save antigo ainda os cita (`currentBuildingId`, idempotente).
+    if (Array.isArray(v)) for (const raw of v) { const x = currentBuildingId(raw); if (isQuestBuilding(x) && !out.includes(x)) out.push(x); }
     return out;
   };
   const m = r.materials && typeof r.materials === 'object' && !Array.isArray(r.materials) ? r.materials as Record<string, unknown> : {};

@@ -26,7 +26,7 @@
  * "Depois" e "Ir lá" gravam o mesmo "visto": a apresentação não reaparece, não vira pendência, não conta nada.
  * Nenhuma função aqui devolve número que desce nem texto de falta.
  */
-import { BUILDING_GATES, type BuildingId } from './gates';
+import { BUILDING_GATES, currentBuildingId, type BuildingId } from './gates';
 import { AREAS } from '../navigation';
 
 const IDS = Object.keys(BUILDING_GATES) as BuildingId[];
@@ -79,8 +79,8 @@ export function seedBuildingIntrosSeen(bondLevel: unknown): BuildingId[] {
 export function sanitizeBuildingIntrosSeen(raw: unknown, bondLevel: unknown): BuildingId[] {
   if (!Array.isArray(raw)) return seedBuildingIntrosSeen(bondLevel);
   const out: BuildingId[] = [];
-  // `arena.feira` virou `hall.feira` (11/10/2026): quem já viu a apresentação não a vê de novo.
-  for (const raw0 of raw) { const x = raw0 === 'arena.feira' ? 'hall.feira' : raw0; if (isBuildingId(x) && !out.includes(x)) out.push(x); }
+  // `arena.feira` → `hall.feira` (11/10/2026) e `hall.biblioteca`/`hall.amigos` → `laboratorio.*` (D-50): quem já viu a apresentação não a vê de novo.
+  for (const raw0 of raw) { const x = currentBuildingId(raw0); if (isBuildingId(x) && !out.includes(x)) out.push(x); }
   return out;
 }
 

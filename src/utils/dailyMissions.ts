@@ -24,7 +24,7 @@
 // ---------------------------------------------------------------------------
 
 import { hashString, mulberry32 } from './oracle/base';
-import { BUILDING_GATES, buildingGateFor, type BuildingId } from './gates';
+import { BUILDING_GATES, buildingGateFor, currentBuildingId, type BuildingId } from './gates';
 import { MATERIAL_CAP, MATERIAL_PER_QUEST, materialOf, forDay as buildingForDay, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import type { QuestMark } from './questMarks';
 
@@ -63,7 +63,7 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-humor', event: 'humor', target: 1, building: 'jogos.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
   { id: 'd-sono', event: 'sono', target: 1, building: 'jogos.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
   { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market' },
-  { id: 'd-amigo', event: 'amigo', target: 1, building: 'hall.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature' },
+  { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature' },
   { id: 'd-arena', event: 'arena', target: 1, building: 'arena.duelo', material: 'fang', descPt: 'Faça um Duelo na Arena', descEn: 'Have a Duel in the Arena' },
   { id: 'd-torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel', descPt: 'Dispute uma partida do Torneio', descEn: 'Play a Tournament match' },
 ];
@@ -194,7 +194,7 @@ export interface FirstTime {
   descEn?: string;
 }
 
-const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra'];
+const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove'];
 
 const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[])
   .filter(b => !NO_VISIT.includes(b))
@@ -267,7 +267,9 @@ export function seedFirstTimes(bondLevel: unknown): FirstTimesState {
 export function sanitizeFirstTimes(raw: unknown): FirstTimesState | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
   const r = raw as Record<string, unknown>;
-  const pick = (v: unknown): string[] => (Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && FIRST_TIME_IDS.includes(x)))] : []);
+  // D-50: `visit:hall.biblioteca`/`visit:hall.amigos` → `visit:laboratorio.*` (a primeira vez já cumprida/resgatada não se perde).
+  const moved = (x: string): string => (x.startsWith('visit:') ? `visit:${currentBuildingId(x.slice(6))}` : x);
+  const pick = (v: unknown): string[] => (Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string').map(moved).filter(x => FIRST_TIME_IDS.includes(x)))] : []);
   const done = pick(r.done);
   const claimed = pick(r.claimed);
   for (const c of claimed) if (!done.includes(c)) done.push(c);

@@ -2,7 +2,7 @@
  * COPY DOS LOTES por área (minimal-ui F4 exemplo + F5 lotes reais).
  *
  * `areaDemoLot` é o rótulo do lote ÚNICO das áreas sem construções próprias
- * (hoje Laboratório e Hall — `AreaView`). O texto de placeholder do molde F4
+ * (hoje só o Hall — `AreaView`; o Laboratório tem seis lotes reais desde D-50). O texto de placeholder do molde F4
  * ("chega na próxima fatia") saiu no fechamento F6: toda folha já tem conteúdo
  * real. Dono único desta copy, para nenhum componente escrever texto de UI
  * solto dentro do JSX.
@@ -17,7 +17,7 @@ const AREA_DEMO_LOT: Record<AreaId, { labelPt: string; labelEn: string }> = {
   arena: { labelPt: 'Torneio', labelEn: 'Tournament' },
   exploracao: { labelPt: 'Masmorra', labelEn: 'Dungeon' },
   laboratorio: { labelPt: 'Evolução', labelEn: 'Evolution' },
-  hall: { labelPt: 'Biblioteca', labelEn: 'Library' },
+  hall: { labelPt: 'Salão do Clã', labelEn: 'Clan Hall' },
 };
 
 export function areaDemoLot(id: AreaId, language: Language): { label: string } {
@@ -34,8 +34,8 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'ferreiro' | 'restaurante';
 export type ArenaLotId = 'torneio' | 'duelo' | 'guerra';
-export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats' | 'perfil';
-export type HallLotId = 'biblioteca' | 'amigos' | 'guilda' | 'feira';
+export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats' | 'perfil' | 'biblioteca' | 'amigos';
+export type HallLotId = 'guilda' | 'feira' | 'grove';
 
 interface AreaLotSpec<K extends string> {
   id: K;
@@ -101,17 +101,21 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
   { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '78%', top: '70%', width: '50%' },
   { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '43%', width: '62%' },
   // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
-  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '92%', width: '36%' },
+  // D-44 (19/10/2026, dono): "só pode ser um pouco maior" — 36% → 41% (~+15%); o guard H11 (geometria dos lotes) segue verde nos 5 viewports.
+  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '92%', width: '41%' },
+  // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
+  // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
+  // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 34%: com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '17%', top: '40%', width: '34%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83%', top: '40%', width: '34%' },
 ];
 
+// D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo
+// (dois losangos em cima, o grande embaixo). A Biblioteca e o Círculo de Amigos foram para o Laboratório (`LABORATORIO_LOTS`). A ordem do array é a ordem de pintura.
+// O Grove ainda não tem arte própria: usa o chalé de campina que já existe nos lotes (a arte nova é outra onda).
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  // 11/10/2026 (pedido do dono, ajustes de UI do beta): a Feira vai para TRÁS, entre a Biblioteca e o Círculo de Amigos, no espaço
-  // largo do fundo (o caminho de pedra de cima). Ela vem PRIMEIRO na lista de propósito: a ordem do array é a ordem de pintura
-  // (sem z-index), então quem vem antes fica atrás. A Biblioteca e o Círculo descem um pouco para encaixar no tablado, e a Guilda
-  // fica maior e CENTRALIZADA na plataforma grande de baixo.
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '50%', top: '22%', width: '40%' }, // adendo do dono (11/10) pedia descer; NÃO cabe: com a Biblioteca/Círculo subindo, qualquer descida faz o rótulo da Feira encostar na área de toque da Biblioteca (guard H11, medido em 5 viewports). Fica em 22%
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '22%', top: '46%', width: '44%' }, // adendo (11/10): sobe de 47% (#316) para 46%; 45% ou menos encosta na área de toque da Feira (guard H11) — é o máximo que sobe sem encolher a Feira
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '78%', top: '46%', width: '40%' }, // adendo (11/10): idem
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '22%', top: '46%', width: '44%' },
+  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '78%', top: '46%', width: '44%' },
   { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '77%', width: '58%' },
 ];
 

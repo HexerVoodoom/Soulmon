@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * A DEMO NÃO ENTRA EM PvP (07/10/2026) — os prédios sociais do mapa ficam inertes:
- * Arena (Torneio, Duelo, Feira) e Hall (Biblioteca, Amigos, Guilda). O toque não
+ * Arena (Torneio, Duelo), Hall (Guilda, Feira, Grove) e Laboratório (Biblioteca, Amigos; D-50). O toque não
  * abre folha nenhuma e mostra a recusa curta na faixa de aviso do mapa. Fora da
  * demo o MESMO toque abre a folha (o controle do teste).
  */
@@ -16,7 +16,7 @@ vi.mock('../TournamentPage', () => ({ TournamentPage: () => <p data-stub="tornei
 vi.mock('../guild/GuildSheet', () => ({ GuildSheet: () => <p data-stub="guilda">guilda</p> }));
 vi.mock('../arena/DueloSheet', () => ({ DueloSheet: () => <p data-stub="duelo">duelo</p> }));
 
-const base = (area: 'arena' | 'hall', over: Record<string, unknown> = {}): ComponentProps<typeof AreaView> => ({
+const base = (area: 'arena' | 'hall' | 'laboratorio', over: Record<string, unknown> = {}): ComponentProps<typeof AreaView> => ({
   area,
   language: 'en-US',
   ownership: { ownedBackgrounds: [], equippedBackground: null, ownedFurniture: [], equippedDecor: {}, missionProgress: {} },
@@ -40,7 +40,7 @@ async function toque(el: HTMLElement) {
 }
 
 describe('AreaView na demo', () => {
-  for (const [area, ids] of [['arena', ['torneio', 'duelo']], ['hall', ['biblioteca', 'amigos', 'guilda', 'feira']]] as const) {
+  for (const [area, ids] of [['arena', ['torneio', 'duelo']], ['hall', ['guilda', 'feira', 'grove']], ['laboratorio', ['biblioteca', 'amigos']]] as const) {
     for (const id of ids) {
       it(`${area}.${id}: toque inerte, sem folha, com a recusa curta`, async () => {
         const { container } = renderWithCss(<AreaView {...base(area, { demo: true })} />);

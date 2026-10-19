@@ -138,17 +138,23 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Who your Soulmon is today: its element, how it fights and its special.', pt: 'Quem o seu Soulmon é hoje: o elemento, o jeito de lutar e o especial.' },
     invite: { en: 'It is just to look at.', pt: 'É só para olhar.' },
   },
-  'hall.biblioteca': {
+  'laboratorio.biblioteca': {
     place: { en: 'Library', pt: 'Biblioteca' },
-    hello: { en: "I'm {name}, your host in the Hall.", pt: 'Eu sou {name}, a anfitriã do Hall.' },
+    hello: { en: "I'm {name}, your host in the Library.", pt: 'Eu sou {name}, a anfitriã da Biblioteca.' },
     what: { en: 'Every Soulmon that has crossed your path has a page in the Library.', pt: 'Todo Soulmon que já cruzou o seu caminho tem uma página na Biblioteca.' },
     invite: { en: 'Come and read them.', pt: 'Venha ler.' },
   },
-  'hall.amigos': {
+  'laboratorio.amigos': {
     place: { en: 'Friends Circle', pt: 'Círculo de Amigos' },
     hello: { en: "I'm {name}. I sit in the Circle.", pt: 'Eu sou {name}. Eu fico no Círculo.' },
     what: { en: 'This is where your friends live. Everyone brings a little sweetness.', pt: 'Aqui moram os seus amigos. Cada um traz um pouco de doçura.' },
     invite: { en: 'There is a seat free, whenever.', pt: 'Sempre tem um lugar livre.' },
+  },
+  'hall.grove': {
+    place: { en: 'Grove', pt: 'Grove' },
+    hello: { en: "I'm {name}. I look after the Grove.", pt: 'Eu sou {name}. Eu cuido do Grove.' },
+    what: { en: 'The Clan grows a grove together, one day at a time.', pt: 'O Clã cultiva um bosque junto, um dia de cada vez.' },
+    invite: { en: 'Come and see.', pt: 'Venha ver.' },
   },
   'hall.guilda': {
     place: { en: 'Clan Hall', pt: 'Salão do Clã' },

@@ -46,9 +46,9 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     // pronto; quem escolhe a folha por área é o `AreaView`.
     expect(APP).toContain('labContent={labContent}');
     expect(APP).toContain('hallContent={hallContent}');
-    expect(AREA_VIEW).toContain('{props.labContent}');
-    expect(AREA_VIEW).toContain("props.hallContent('directory')");
-    expect(AREA_VIEW).toContain("props.hallContent('friends')");
+    expect(AREA_VIEW).toContain('props.labContent');
+    // D-50: Biblioteca e Amigos moram no Laboratório e abrem o `hallContent` (a `LibraryPage`).
+    expect(AREA_VIEW).toContain("props.hallContent(open.id === 'biblioteca' ? 'directory' : 'friends')");
   });
 
   it('labContent monta a EvolutionPath com a cerimônia manual de sempre (sem regra nova)', () => {
@@ -71,7 +71,7 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     expect(lab).toContain("labTab === 'pet' && (");
     expect(lab).toContain("labTab === 'stats' && statsPage");
     expect(AREA_VIEW).toContain("{ evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' }");
-    expect(AREA_VIEW).toContain('props.onLabTab(tabOf[l.id])');
+    expect(AREA_VIEW).toContain('props.onLabTab(tab)');
     // Dentro da folha o `<h1>` é o do AreaTopBar: a ficha desce para h2.
     expect(lab).toMatch(/<PetPage\s+headingLevel=\{2\}/);
   });
@@ -101,8 +101,8 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
       // A Lumi é o NPC do lote único do Hall (`biblioteca`) — mora dentro da
       // folha aberta, não mais num anfitrião fixo da cena.
       const r = renderWithCss(
-        <AreaScene areaId="hall" language={lang} lots={[]}>
-          <AreaSheet areaId="hall" lotId="biblioteca" language={lang} title="Biblioteca" closeLabel="x" open onClose={() => {}}>
+        <AreaScene areaId="laboratorio" language={lang} lots={[]}>
+          <AreaSheet areaId="laboratorio" lotId="biblioteca" language={lang} title="Biblioteca" closeLabel="x" open onClose={() => {}}>
             <p>x</p>
           </AreaSheet>
         </AreaScene>,

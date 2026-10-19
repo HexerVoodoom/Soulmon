@@ -84,7 +84,7 @@ describe('8.3 — correção: entrar no prédio paga (uma vez por dia do jogador
     expect(stockOf(alto.buildingQuests, 'fang')).toBe(1);
   });
   it('prédio sem peça paga só o material (Biblioteca); o Caderno (listado) segue manual', () => {
-    const b = applyBuildingEntry(base(BOND2), '2026-11-01', 'hall.biblioteca');
+    const b = applyBuildingEntry(base(BOND2), '2026-11-01', 'laboratorio.biblioteca');
     expect(owned(b)).toEqual([]);
     expect(stockOf(b.buildingQuests, 'page')).toBe(1);
     const c = applyBuildingEntry(base(BOND2), '2026-11-01', 'exploracao.caderno');

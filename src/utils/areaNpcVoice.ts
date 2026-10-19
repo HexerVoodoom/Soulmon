@@ -104,7 +104,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   'exploracao:masmorra': AREA_NPC_VOICE.exploracao,
   'jogos:salao': AREA_NPC_VOICE.jogos,
   'laboratorio:evolucao': AREA_NPC_VOICE.laboratorio,
-  'hall:biblioteca': AREA_NPC_VOICE.hall,
+  'laboratorio:biblioteca': AREA_NPC_VOICE.hall, // D-50 (19/10/2026): a Biblioteca foi do Hall para o Laboratório — a anfitriã Lumi vai com ela
   // 01/10/2026 (pedido do dono): as bancas de Itens e de Decoração mostravam
   // "Grom", mas os bustos são outras criaturas. Nomes próprios (loremaster):
   // a criatura-cogumelo das miudezas é Lamela (as lâminas sob o chapéu do
@@ -192,10 +192,16 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'O que se escreve aqui fica guardado. Só você abre.',
     lineEn: 'What is written here stays kept. Only you open it.',
   },
-  'hall:amigos': {
+  'laboratorio:amigos': {
     namePt: 'Zumi, o filhote de mel', nameEn: 'Zumi, the honey cub', // 07/10/2026: busto trocado a pedido do dono (era Ramo, o carvalho; antes Trill, a barda)
     linePt: 'Cada um traz um pouco de doçura para o Círculo.',
     lineEn: 'Everyone brings a little sweetness to the Circle.',
+  },
+  // D-50 (19/10/2026): o Grove (o bosque do clã) é prédio do Hall. Ramo, o carvalho, volta a ser NPC dele (o busto estava em disco).
+  'hall:grove': {
+    namePt: 'Ramo, o carvalho', nameEn: 'Ramo, the oak',
+    linePt: 'O bosque cresce devagar. Venha ver.',
+    lineEn: 'The grove grows slowly. Come see.',
   },
   'hall:guilda': {
     // G3 (02/10/2026): a Marla-árvore não agradou ao dono; o Salão passa a ser

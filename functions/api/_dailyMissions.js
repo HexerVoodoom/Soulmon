@@ -6,6 +6,8 @@
  * o servidor garante a FORMA e o teto, nao a procedencia.
  */
 
+import { currentBuildingId } from './_gates.js';
+
 export const DAILY_COUNT_CAP = 99;
 export const DAILY_EVENTS = [
   'dino', 'ppt', 'match3', 'foco', 'masmorra', 'banho', 'carinho', 'brincar',
@@ -22,7 +24,7 @@ export const FIRST_TIME_IDS = [
   'visit:exploracao.passeio', 'visit:exploracao.masmorra', 'visit:exploracao.caderno', 'visit:exploracao.oficina',
   'visit:arena.duelo', 'visit:arena.torneio',
   'visit:laboratorio.evolucao', 'visit:laboratorio.pet', 'visit:laboratorio.stats',
-  'visit:hall.biblioteca', 'visit:hall.amigos', 'visit:hall.guilda', 'visit:hall.feira',
+  'visit:laboratorio.biblioteca', 'visit:laboratorio.amigos', 'visit:hall.guilda', 'visit:hall.feira',
 ];
 /** Ids das conquistas (`MISSIONS`) — espelho de `src/utils/missions.ts`, travado pela paridade. */
 export const MISSION_IDS = [
@@ -51,7 +53,10 @@ export function sanitizeFirstTimes(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
   const r = /** @type {Record<string, unknown>} */ (raw);
   /** @param {unknown} v @returns {string[]} */
-  const pick = (v) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === 'string' && FIRST_TIME_IDS.includes(x)))] : []);
+  // D-50: `visit:hall.biblioteca`/`visit:hall.amigos` -> `visit:laboratorio.*` (a primeira vez ja resgatada nao se perde).
+  /** @param {string} x */
+  const moved = (x) => (x.startsWith('visit:') ? `visit:${currentBuildingId(x.slice(6))}` : x);
+  const pick = (v) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === 'string').map(moved).filter((x) => FIRST_TIME_IDS.includes(x)))] : []);
   const done = pick(r.done);
   const claimed = pick(r.claimed);
   for (const c of claimed) if (!done.includes(c)) done.push(c);

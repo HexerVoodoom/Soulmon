@@ -111,17 +111,22 @@ import loteBiblioteca from './lote-hall-biblioteca.png';
 import loteAmigos from './lote-hall-amigos-terra.png';
 import loteGuilda from './lote-hall-guilda-luz.png';
 
+// D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos mudaram do Hall para o Laboratório — a arte é a mesma de antes.
 export const LABORATORIO_LOT_ART = {
   evolucao: loteEvolucao,
   pet: lotePet,
   stats: loteStats,
   perfil: lotePerfil,
-} as const;
-
-export const HALL_LOT_ART = {
   biblioteca: loteBiblioteca,
   amigos: loteAmigos,
+} as const;
+
+// D-50: o Grove ainda não tem arte própria — usa o chalé de campina que já existia nos lotes (a arte nova é outra onda).
+import loteGrove from './lote-hall-amigos-campina.png';
+
+export const HALL_LOT_ART = {
   guilda: loteGuilda,
+  grove: loteGrove,
   // `feira` (01/10/2026, leva lotes-v2 `lote-arena-feira`, a tenda-cúpula listrada própria): mudou da Arena para o Hall em 11/10/2026
   // (a Feira é a Missão da guilda). O arquivo mantém o nome da leva.
   feira: loteFeira,
