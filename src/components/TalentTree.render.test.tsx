@@ -222,7 +222,7 @@ describe('Tarefa B: a árvore como árvore', () => {
     expect(document.querySelector('[data-edge="tal-pvp-01>tal-pvp-02"]')!.getAttribute('data-edge-state')).toBe('open');
     expect(document.querySelector('[data-edge="tal-pvp-02>tal-pvp-05"]')!.getAttribute('data-edge-state')).toBe('locked');
     const nos = document.querySelectorAll('button[data-talent]');
-    expect(nos.length).toBe(21);
+    expect(nos.length).toBe(20); // 21 antes da W7-B tirar `tal-com-07` (Moeda coroada)
     nos.forEach((b) => expect(b.getAttribute('aria-label')).toMatch(/\S/));
   });
   it('roving tabindex: um só nó na ordem do Tab, e as setas andam', () => {

@@ -5,7 +5,7 @@
  * (campo `x` da inscrição).
  *
  * Total do dia = pushes que o worker mandou + eventos que dispararam (cocô, fome,
- * energia cheia, progresso, carta). Prova: nunca passa de `PUSH_DAILY_CAP`.
+ * energia cheia, progresso). Prova: nunca passa de `PUSH_DAILY_CAP`.
  *
  * Por que aqui: o worker é deploy manual e o planejador sobe sozinho com o
  * cliente; este é o único lugar onde os dois se encontram (mesmo motivo de
@@ -16,7 +16,6 @@ import worker, { mealNotifFor, sleepNotifFor, suprimidoHoje } from './push-sched
 import { MEAL_TICK_CRON, PUSH_DAILY_CAP, DEFAULT_MEAL_TIMES, mealMinutes } from '../functions/api/_mealRhythm.js';
 import { PUSH_HOURS_UTC } from '../functions/api/_pushCopy.js';
 import { suprimidosDeInscricao } from '../functions/api/_pushIdentity.js';
-import { letterPushCandidate } from '../functions/api/_pushBudget.js';
 import {
   ledgerWithPlan, localDayKey, planDayPushes, rollLedger, serverSkipPayload,
 } from '../src/utils/petPushEvents';
@@ -111,7 +110,6 @@ async function viverUmDia(zone, cenario) {
         foodCount: 3,
       },
       ledger,
-      extra: cenario.letter ? [letterPushCandidate('letter-1', at(15))] : [],
     });
     ledger = ledgerWithPlan(ledger, ultimoPlano, t - 60_000);
     // o cliente reenvia a inscrição com `x` (o servidor valida e guarda)
@@ -143,13 +141,6 @@ describe.each(FUSOS)('o TETO de %s com eventos + worker real: nunca passa de PUS
     expect(r.eventos).toBe(2);
     expect(r.worker).toBe(2); // o lembrete de deitar (maior prioridade que refeição) + a 1ª refeição; almoço e jantar cederam
     expect(r.total).toBeLessThanOrEqual(PUSH_DAILY_CAP);
-  });
-
-  it(`${nome}: com uma CARTA de NPC no mesmo dia o teto continua valendo`, async () => {
-    const r = await viverUmDia(zone, { letter: true });
-    // a carta é entregue por quem a possui (W4-B); aqui conta como 1 candidato do plano
-    const cartaNoPlano = r.plano.kept.some(p => p.id === 'letter-1') ? 1 : 0;
-    expect(r.worker + r.eventos + cartaNoPlano).toBeLessThanOrEqual(PUSH_DAILY_CAP);
   });
 
   it(`${nome}: sem ritmo nem lembrete (só os convites de hora fixa do worker): total ≤ 4`, async () => {
