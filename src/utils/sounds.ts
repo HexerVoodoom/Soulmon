@@ -3,15 +3,12 @@ import { STORAGE_KEYS } from './storageKeys';
 import { tocarNa } from './audioBus';
 import { CATEGORIA_DO_SOM, OFFSET_POR_SOM_DB, db2lin } from './loudness';
 
-/** Ganho-base dos sons de combate (o mesmo `beep` de 0,12) × a calibração medida do som. */
+/** Ganho-base do `beep` de 0,12 × a calibração medida do som (hoje só o level up; o combate é de `sfxCombate.ts`). */
 const GANHO_BASE_COMBATE = 0.12;
-const GANHO_ATTACK = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttack);
-const GANHO_ATTACK_RANGED = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playAttackRanged);
-const GANHO_SPECIAL = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playSpecial);
-const GANHO_VICTORY = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playVictory);
 const GANHO_LEVELUP = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playLevelUp);
 import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
 import { aoGestoSonoro } from './trilha';
+import { sfxNoAlvo, type NomeSfxCombate, SFX_DE_COMBATE } from './sfxCombate';
 
 const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
@@ -183,112 +180,61 @@ export function playSleep(): void {
   });
 }
 
-/* ── O SOM DO COMBATE (PR18, pedido do dono, 06/10/2026) ──────────────────
-   Três eventos novos, todos de **uma tela de combate** (Arena, Duelo, Masmorra,
-   Pesadelo): o golpe básico, o ESPECIAL e a VITÓRIA. R-NOVA: a superfície nasceu
-   muda e aqui o pedido é explícito — por isso entram na política (`loudness.ts`)
-   e na tabela de chamadores (`cortes.contract.test.ts`).
+/* ── O SOM DO COMBATE (PR18, 06/10/2026; refeito em 19/10/2026, D-86..D-92) ───────────────────────────────────────
+   Sete eventos de **uma tela de combate** (Arena, Duelo/Torneio, Masmorra, Pesadelo): ataque FÍSICO (corte), DEFESA,
+   ataque MÁGICO, CARREGANDO o especial, SOLTANDO o especial, VITÓRIA e DERROTA. R-NOVA: a superfície nasceu muda e aqui o
+   pedido é explícito — por isso entram na política (`loudness.ts`) e na tabela de chamadores (`cortes.contract.test.ts`).
 
-   **A categoria vem do EVENTO (R-CAT), não do arquivo: as três são `arcade`** —
-   combate é minijogo, e golpe é o evento que MAIS repete (degrau mais baixo da
-   escada, e é o que o D-2 abaixa quando um som superior toca). Vencer o combate
-   também é `arcade`, pelo mesmo motivo do C-11: vitória de minijogo não é
-   "concluir tarefa" nem "marco".
+   **A categoria vem do EVENTO (R-CAT), não do arquivo: as sete são `arcade`** — combate é minijogo, e golpe é o evento que
+   MAIS repete (degrau mais baixo da escada; é o que o D-2 abaixa quando um som superior toca). Vencer/perder o combate
+   também é `arcade`, pelo mesmo motivo do C-11: vitória de minijogo não é "concluir tarefa" nem "marco", e perder um
+   combate NÃO é a degeneração real (C-6: `playDegenerate` é só do App).
 
-   Procedurais (zero byte de asset), no padrão dos outros: osciladores com
-   envelope de rampa, nunca `ctx.destination`. O golpe é um "soco" de square
-   que cai de tom + um tique agudo; o especial sobe (carga) e estoura em duas
-   notas; a vitória é um arpejo ascendente que SEGURA a última nota. Os ganhos
-   saem de `0,12 × db2lin(offset)` com o offset de `OFFSET_POR_SOM_DB`. */
+   **Síntese procedural PRÓPRIA** (`utils/sfxCombate.ts`, origem `procedural próprio`, zero byte de asset, sem IA nem
+   serviço pago): cada efeito é um sinal determinístico renderizado uma vez por contexto e tocado como buffer pelo
+   barramento (`tocarNa`, nunca `ctx.destination`). O nível é o `OFFSET_POR_SOM_DB` de `loudness.ts` embutido no buffer
+   (ganho 1 no grafo, como nos assets). O gate de mudo (`SOUND_MUTED`) e o gesto são os de `play()`; o D11 mora no
+   CHAMADOR (a cena de uma luta que o jogador abriu). Quem escolhe QUAL toca é `games/BattleStage.tsx` (pelo TIPO do
+   ataque, pelo bloqueio e pela carga), nunca o som. Mapa evento → efeito e a descrição de cada timbre: `sfxCombate.ts`. */
 
-/** Golpe básico: um soco curto (square que cai de tom) com um tique agudo. */
-export function playAttack(): void {
-  play('playAttack', (ctx, destino) => {
-    const osc = ctx.createOscillator();
-    const vol = ctx.createGain();
-    osc.connect(vol);
-    vol.connect(destino);
-    osc.type = 'square';
-    const t = ctx.currentTime;
-    osc.frequency.setValueAtTime(260, t);
-    osc.frequency.exponentialRampToValueAtTime(80, t + 0.1);
-    vol.gain.setValueAtTime(0, t);
-    vol.gain.linearRampToValueAtTime(GANHO_ATTACK, t + 0.005);
-    vol.gain.setValueAtTime(GANHO_ATTACK, t + 0.08);
-    vol.gain.linearRampToValueAtTime(0, t + 0.12);
-    osc.start(t);
-    osc.stop(t + 0.12);
-    beep(ctx, destino, 880, 0, 0.03, 'square', GANHO_ATTACK * 0.6);
-    return 0.12;
+/** Toca um dos 7 efeitos de combate: o buffer procedural já no alvo da categoria, pelo gate de `play()`. */
+function playSfx(nome: NomeSfxCombate): void {
+  play(nome, (ctx, destino) => {
+    const sinal = sfxNoAlvo(nome, ctx.sampleRate, OFFSET_POR_SOM_DB[nome]);
+    const buffer = ctx.createBuffer(1, sinal.length, ctx.sampleRate);
+    buffer.getChannelData(0).set(sinal);
+    const fonte = ctx.createBufferSource();
+    fonte.buffer = buffer;
+    fonte.connect(destino);
+    fonte.start(ctx.currentTime);
+    return SFX_DE_COMBATE[nome].duracaoS;
   });
 }
+
+/** D-86 — ataque FÍSICO: um corte (sopro de lâmina + "shing" + baque). */
+export function playAttack(): void { playSfx('playAttack'); }
+
+/** D-87 — DEFESA: o golpe foi bloqueado (baque grave + tinido de metal). */
+export function playDefend(): void { playSfx('playDefend'); }
 
 /**
- * Golpe À DISTÂNCIA (`ranged`) — o par do `playAttack` (11/10/2026, pedido do dono: "diferença de som entre ataque
- * FÍSICO e ataque RANGED"). O físico é o SOCO: grave que cai de tom, square, seco. O à distância é o DISPARO: agudo
- * que cai de tom e SOLTA (triangle, mais longo, com um segundo parcial uma oitava acima que desce mais devagar) — a
- * mesma família de timbre do jogo, mas lido como "algo saiu e voou", não como "algo bateu". Mesma categoria
- * (`arcade`, R-CAT: o EVENTO é golpe de combate nos dois), offset próprio medido. Quem escolhe qual dos dois
- * soa é o TIPO do ataque do combatente (`strikeFormOf` no `BattleStage`), nunca o som.
+ * D-88 — ataque MÁGICO (poder mágico): glissando brilhante + sino + cintilar. É o som do golpe À DISTÂNCIA (`ranged`) —
+ * a arte do projétil do combate é mágica (11/10/2026 o par do físico; 19/10 virou "mágico" a pedido do dono). O nome
+ * `playAttackRanged` fica: é o que os chamadores e as tabelas de contrato já usam.
  */
-export function playAttackRanged(): void {
-  play('playAttackRanged', (ctx, destino) => {
-    const t = ctx.currentTime;
-    const voz = (tipo: OscillatorType, de: number, para: number, dur: number, g: number) => {
-      const osc = ctx.createOscillator();
-      const vol = ctx.createGain();
-      osc.connect(vol);
-      vol.connect(destino);
-      osc.type = tipo;
-      osc.frequency.setValueAtTime(de, t);
-      osc.frequency.exponentialRampToValueAtTime(para, t + dur);
-      vol.gain.setValueAtTime(0, t);
-      vol.gain.linearRampToValueAtTime(g, t + 0.006);
-      vol.gain.setValueAtTime(g, t + dur * 0.55);
-      vol.gain.linearRampToValueAtTime(0, t + dur);
-      osc.start(t);
-      osc.stop(t + dur);
-    };
-    voz('triangle', 1300, 260, 0.2, GANHO_ATTACK_RANGED);
-    voz('sine', 2600, 700, 0.14, GANHO_ATTACK_RANGED * 0.5);
-    return 0.2;
-  });
-}
+export function playAttackRanged(): void { playSfx('playAttackRanged'); }
 
-/** Especial: sobe (a carga que vira ataque) e estoura em duas notas. */
-export function playSpecial(): void {
-  play('playSpecial', (ctx, destino) => {
-    const osc = ctx.createOscillator();
-    const vol = ctx.createGain();
-    osc.connect(vol);
-    vol.connect(destino);
-    osc.type = 'sawtooth';
-    const t = ctx.currentTime;
-    osc.frequency.setValueAtTime(180, t);
-    osc.frequency.exponentialRampToValueAtTime(1400, t + 0.3);
-    vol.gain.setValueAtTime(0, t);
-    vol.gain.linearRampToValueAtTime(GANHO_SPECIAL, t + 0.01);
-    vol.gain.setValueAtTime(GANHO_SPECIAL, t + 0.28);
-    vol.gain.linearRampToValueAtTime(0, t + 0.32);
-    osc.start(t);
-    osc.stop(t + 0.32);
-    beep(ctx, destino, 1175, 0.33, 0.1, 'square', GANHO_SPECIAL);
-    beep(ctx, destino, 1568, 0.43, 0.22, 'square', GANHO_SPECIAL);
-    return 0.65;
-  });
-}
+/** D-89 — CARREGANDO o especial: energia subindo em crescendo (até ~0,95 s). */
+export function playCharge(): void { playSfx('playCharge'); }
 
-/** Vitória: arpejo ascendente (C–E–G–C) que segura a última nota, com a oitava em seno por baixo. */
-export function playVictory(): void {
-  play('playVictory', (ctx, destino) => {
-    beep(ctx, destino, 523, 0, 0.1, 'square', GANHO_VICTORY);
-    beep(ctx, destino, 659, 0.11, 0.1, 'square', GANHO_VICTORY);
-    beep(ctx, destino, 784, 0.22, 0.1, 'square', GANHO_VICTORY);
-    beep(ctx, destino, 1047, 0.33, 0.45, 'square', GANHO_VICTORY);
-    beep(ctx, destino, 523, 0.33, 0.45, 'sine', GANHO_VICTORY * 0.8);
-    return 0.78;
-  });
-}
+/** D-90 — SOLTANDO o especial: o estouro (sub-grave + estalo + varredura + acorde que cintila). */
+export function playSpecial(): void { playSfx('playSpecial'); }
+
+/** D-91 — VITÓRIA (curta): corrida pentatônica que cai num acorde de dó maior. */
+export function playVictory(): void { playSfx('playVictory'); }
+
+/** D-92 — DERROTA (curta, tom NEUTRO): três notas suaves descendo, consonantes. Sem culpa nem escárnio (C-6). */
+export function playDefeat(): void { playSfx('playDefeat'); }
 
 /* ── O SOM DO LEVEL UP (pedido do dono, 11/10/2026) ───────────────────────
    Subir de Vínculo é um MARCO (categoria `marco`, por `CATEGORIA_DO_SOM` — o EVENTO decide, R-CAT).

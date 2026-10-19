@@ -31,7 +31,7 @@ import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/sta
 import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
-import { playVictory } from '../utils/sounds';
+import { playDefeat, playVictory } from '../utils/sounds';
 import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
@@ -239,6 +239,7 @@ export function DuelScreen({
       setPhase('done');
       // PR18: o som de vitória só quando a LUTA terminou a meu favor; o resultado oficial (vitória/derrota/empate) é do servidor.
       if (sim.current.winner === 'me') playVictory();
+      else if (sim.current.winner === 'opp') playDefeat(); // D-92: tom neutro; o empate fica mudo
       endTimer.current = window.setTimeout(() => {
         endTimer.current = null;
         const taps = [...closed.current, live.current].slice(0, DUEL_CHEER_BUCKETS);

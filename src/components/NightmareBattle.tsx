@@ -62,7 +62,7 @@ import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
-import { playVictory } from '../utils/sounds';
+import { playDefeat, playVictory } from '../utils/sounds';
 import {
   EMPTY_TALLY,
   NIGHTMARE_INTRO_TITLE,
@@ -212,7 +212,8 @@ export function NightmareBattle({
   };
 
   const lose = () => {
-    // Sem som de degeneração de propósito: perder aqui não é uma perda.
+    // Sem som de degeneração de propósito: perder aqui não é uma perda. D-92: só o som NEUTRO de fim de luta.
+    playDefeat();
     setHpFrac(0);
     setPhase('lost');
     onLose();

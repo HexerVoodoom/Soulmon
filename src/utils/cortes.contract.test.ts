@@ -250,6 +250,10 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
       // 11/10/2026 (pedido do dono): o golpe À DISTÂNCIA tem som próprio; a CENA escolhe pelo tipo do ataque.
       playAttackRanged: ['components/games/BattleStage.tsx'],
       playSpecial: ['components/games/BattleStage.tsx'],
+      // 19/10/2026 (pedido do dono, D-87/D-89/D-92): defesa e carga moram na CENA; a derrota, nas quatro telas de luta (como a vitória).
+      playDefend: ['components/games/BattleStage.tsx'],
+      playCharge: ['components/games/BattleStage.tsx'],
+      playDefeat: ['components/ArenaGame.tsx', 'components/DuelScreen.tsx', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx'],
       playVictory: ['components/ArenaGame.tsx', 'components/DuelScreen.tsx', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx'],
       // 11/10/2026 (pedido do dono): level up do Vínculo — `marco`, só no overlay (D11 no chamador).
       playLevelUp: ['components/LevelUpOverlay.tsx'],
