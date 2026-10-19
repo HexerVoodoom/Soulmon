@@ -123,6 +123,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `function volumeDe(cat: CategoriaSom): number` — Volume de uma categoria, 0..1. Sem chave =  1  (o som nasce no alvo).
 - `function definirVolume(cat: CategoriaSom, v: number): void` — Grava o volume de uma categoria (persistência silenciosa) e aplica no ganho do barramento vivo, se houver um.
 - `function trilhaLigada(): boolean` — A trilha  nasce desligada  (S2) e só toca por gesto explícito. A chave é PRÓPRIA, separada do `mute` global — ver o comentário em `storageKeys.ts`.
+- `function migrarPreferenciasDeSom(): void` — (19/10/2026, REGISTRO §126) migração ÚNICA e idempotente: sem a marca `SOUND_PREFS_VERSION='1'`, apaga um `SOUND_TRACK_ENABLED='false'` herdado da era "nasce desligada" (S2) e grava a marca; depois dela um `'false'` é escolha e não é tocado. Chamada por `iniciarMusica` (`musica.ts`) antes da primeira leitura. Régua: `musicaCombate.integracao.test.ts`.
 - `function definirTrilhaLigada(on: boolean): void` — Liga/desliga a trilha (flag persistida) e aplica no ganho do bus de trilha vivo.
 - `function encerrarBarramento(): void` — Fecha o contexto e esquece o cache. Idempotente.
 - `function barramentoAtual(): Barramento | null` — Só para teste: o barramento vivo, ou `null`. Não usar em produção.
@@ -131,7 +132,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `function liberarMarco(quandoGesto: number): void` — D-1, liberação por gesto — para quando a cerimônia ganhar o hook.
 - `function tocarNa( cat: CategoriaSom, montarFonte: (ctx: AudioContext, destino: AudioNode) => number | void, origem: OrigemDoDespacho = 'gesto'): boolean` — Toca alguma coisa numa categoria. `montarFonte` recebe o contexto e o nó de ENTRADA do despacho — nunca `ctx.destination`, que é o que fazia cada som ignorar o mix. Devolve a duração do som em segundos (para os duckings) ou nada.
 **Chamado por:** `src/utils/sounds.ts`, `src/utils/trilha.ts` (`garantirBarramento`, `definirTrilhaLigada`, `trilhaLigada`)
-**Régua:** `audioBus.contract.test.ts`, `audioBus.rex.test.ts`
+**Régua:** `audioBus.contract.test.ts`, `audioBus.rex.test.ts`, `musicaCombate.integracao.test.ts`
 
 ### `src/utils/audioFile.ts`
 **Dono de:** A extensão do arquivo de áudio pelo mime REAL gravado (webm, ogg, mp4, m4a, mp3, wav; padrão webm).

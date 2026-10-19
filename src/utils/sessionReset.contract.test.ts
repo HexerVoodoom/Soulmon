@@ -16,7 +16,8 @@ const SRC = resolve(__dirname, '..');
 /** A lista aprovada. Mudar = decisão consciente, não efeito colateral. */
 const ESPERADO = [
   'soulmon-language', 'soulmon-theme',
-  'soulmon-sound-muted', 'soulmon-sound-category-volumes', 'soulmon-sound-track-enabled', 'soulmon-sound-theme-off',
+  'soulmon-sound-muted',
+  'soulmon-sound-prefs-version', 'soulmon-sound-category-volumes', 'soulmon-sound-track-enabled', 'soulmon-sound-theme-off',
   'soulmon-dungeon-speed', 'soulmon-foco-vibrate', 'soulmon-pwa-install-dismissed',
   'soulmon-terms-notice-seen', 'soulmon-terms-notice-shown',
   'soulmon-account-deleted-notice', 'soulmon-pending-login-email',

@@ -25,6 +25,7 @@
  *    combate em `loudness.ts`).
  *  - **Pilha de superfícies**: sair de uma volta à anterior, não à Home (uma Arena aberta de dentro de outra tela).
  */
+import { migrarPreferenciasDeSom } from './audioBus';
 import { pedirFaixa, consentirNestaSessao, trilhaPreferida } from './trilha';
 import { definirTemaEmCombate, pausarTema, retomarTema, temaPreferido } from './tema';
 import { pedirMusicaDeCombate } from './musicaDeCombate';
@@ -117,6 +118,7 @@ export function entrarNaSuperficie(s: Superficie): () => void {
 
 /** `main.tsx`: põe o diretor na Home logo na partida, antes do primeiro gesto (não toca nada — só decide). */
 export function iniciarMusica(): void {
+  migrarPreferenciasDeSom(); // §126: o 'false' herdado da S2 sai uma vez, antes da primeira leitura
   reavaliarMusica();
 }
 
