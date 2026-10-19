@@ -156,9 +156,14 @@ export const CATEGORIA_DO_SOM: Record<string, CategoriaSom> = {
   playTaskComplete: 'conclusao',
   // PR18 (06/10/2026): combate = minijogo → `arcade` (R-CAT: o EVENTO decide; ver o bloco em sounds.ts).
   playAttack: 'arcade',
-  playAttackRanged: 'arcade', // 11/10/2026: o golpe à distância — mesmo evento, mesma categoria (R-CAT)
+  playAttackRanged: 'arcade', // 11/10/2026: o golpe à distância — mesmo evento, mesma categoria (R-CAT); 19/10: vira o ataque MÁGICO (D-88)
   playSpecial: 'arcade',
   playVictory: 'arcade',
+  // 19/10/2026 (pedido do dono, D-86..D-92): os três eventos que faltavam no combate. R-CAT: o EVENTO é combate → `arcade`
+  // (derrota de minijogo não é a degeneração real: C-6; defesa e carga repetem tanto quanto o golpe).
+  playDefend: 'arcade',
+  playCharge: 'arcade',
+  playDefeat: 'arcade',
   // 11/10/2026 (pedido do dono, LEVEL UP): subir de Vínculo é MARCO — raro, voluntário (vem de um gesto) e sem
   // vizinho de repetição (R-CAT: o EVENTO decide, não o arquivo). Mesma categoria de `playEvolve`.
   playLevelUp: 'marco',
@@ -192,12 +197,19 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   playDegenerate: 4.975,
   playSleep: 8.025,
   playVisorTune: 0.037,
-  // PR18: medidos em Chromium (OfflineAudioContext + K-weighting BS.1770, LUFS-M máx. de janela 400 ms com zero-padding;
-  // o mesmo arnês reproduz playFeed −19,00 e playTaskComplete −22,00). Falta só o gate humano de escuta.
-  playAttack: 1.971,
-  playAttackRanged: 1.651, // 11/10/2026: mesmo arnês (reproduz playAttack em 1,971): LUFS-M do som a 0,12 = −26,649
-  playSpecial: -5.216,
-  playVictory: -6.776,
+  // 19/10/2026 (D-86..D-92): os SETE efeitos de combate são buffers procedurais de `utils/sfxCombate.ts` (sinal determinístico,
+  // pico nominal 0,8). Aqui o offset é `alvo − LUFS-M do sinal NOMINAL` (≠ dos antigos, que eram relativos ao ganho 0,12), medido
+  // em Node com o medidor K-weighting de `src/test/lufsM.ts` (mesma definição: LUFS-M máx., janela 400 ms, zero-padding; o medidor
+  // reproduz `playFeed` em −25,39 a 0,12, ou seja, −19,00 com o offset de 6,39). `sfxCombate.loudness.test.ts` re-mede e reprova se
+  // o offset sair da tolerância. Substituem os de PR18/11-10 de `playAttack`/`playAttackRanged`/`playSpecial`/`playVictory`.
+  // Falta só o gate humano de escuta (S8).
+  playAttack: -6.87,
+  playDefend: -5.765,
+  playAttackRanged: -12.816,
+  playCharge: -13.5,
+  playSpecial: -8.656,
+  playVictory: -9.975,
+  playDefeat: -13.378,
   // 11/10/2026: -16,0 (alvo de `marco`) - (-17,893 LUFS-M do recorte a ganho 0,12), medido em Chromium
   // (OfflineAudioContext + K-weighting BS.1770, o MESMO arnês que reproduz playTaskComplete -22,00). Pico -11,5 dBFS.
   // Falta o gate humano de escuta (S8).

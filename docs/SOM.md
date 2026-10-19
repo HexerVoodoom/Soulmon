@@ -16,7 +16,7 @@
 
 | O quê | Arquivo |
 |---|---|
-| Os sons — **12 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 4 do combate, abaixo: `playAttack`, `playAttackRanged`, `playSpecial`, `playVictory`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Os sons — **16 símbolos** (+ `playLevelUp` e, desde 19/10/2026, `playDefend`/`playCharge`/`playDefeat` — §10.5) (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 4 do combate, abaixo: `playAttack`, `playAttackRanged`, `playSpecial`, `playVictory`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Os sons — **12 símbolos** (`playLevelUp` desde 11/10/2026, §3.2; `playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **música-TEMA** "Stone Hall Decay" (S17, 07/10/2026): `<audio>` em streaming → `busTema`, nasce LIGADA mas só começa no 1º gesto da sessão, 2 formatos por `canPlayType`, 30 s de silêncio entre voltas | `src/utils/tema.ts` + `TEMA_DO_JOGO` em `sonsAssets.ts` |
@@ -371,3 +371,9 @@ retomada a usam).
 - ⚠️ **Licença:** as duas faixas são do Suno plano Free, **sem direito comercial**. Bloqueia publicar na loja com elas dentro (mesma situação do
   tema). `Attributions.md` registra procedência, nunca licença.
 - ⚠️ **Falta o gate humano de escuta (S8)** das duas faixas: nível relativo, transição entre faixas, o fade de 3 s do pvp. Os números são de medição.
+
+**10.5 Os 7 efeitos de combate (19/10/2026, D-86..D-92).** `playAttack` (corte), `playDefend` (defesa/bloqueio), `playAttackRanged` (ataque mágico),
+`playCharge` (carregando o especial), `playSpecial` (soltando), `playVictory` e `playDefeat` (derrota neutra) são buffers procedurais de
+`src/utils/sfxCombate.ts` (origem `procedural próprio`, `SFX_DE_COMBATE`), todos `arcade`, com o offset medido de `loudness.ts` embutido (ganho 1 no grafo).
+Registro §117. Para OUVIR (gate S8): `node scripts/render-sfx-combate.mjs` grava os 7 WAV; `--medir` só imprime LUFS-M, pico e offset.
+

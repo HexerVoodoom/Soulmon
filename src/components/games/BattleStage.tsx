@@ -40,7 +40,7 @@ import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
-import { playAttack, playAttackRanged, playSpecial } from '../../utils/sounds';
+import { playAttack, playAttackRanged, playCharge, playDefend, playSpecial } from '../../utils/sounds';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
 export const BATTLE_LAYER_STYLE: CSSProperties = {
@@ -717,20 +717,41 @@ export function BattleStage({
   };
 
   const hits = hit ? (Array.isArray(hit) ? hit : [hit]) : [];
-  /** PR18: os sons do golpe. O básico soa no IMPACTO; o especial sobe no fim da cena e estoura quando o golpe sai.
+  /** Os sons do combate (PR18; D-86..D-90, 19/10/2026). O golpe básico soa no IMPACTO — corte (físico) ou mágico (à
+      distância) — e, se foi BLOQUEADO, o que soa é a DEFESA. O especial CARREGA (energia subindo) e SOLTA (estouro) quando
+      o golpe sai; se o golpe do especial é bloqueado, a defesa soa na batida. A carga já tocou quando o jogador mirou o
+      anel (`charging`), então a cena do especial dele não repete; a do inimigo (e o especial automático) carrega na hora.
       Só toca a partir de uma luta que o jogador abriu (D11); o gate de mudo e a R-EX moram em `sounds.ts`/`audioBus.ts`. */
   const actionRef = useRef(action);
   actionRef.current = action;
   const actionId = action?.id;
+  const cargaJaTocouRef = useRef(false);
+  useEffect(() => {
+    if (!charging) return;
+    cargaJaTocouRef.current = true;
+    playCharge();
+  }, [charging]);
   useEffect(() => {
     const a = actionRef.current;
     if (!a) return undefined;
     const special = a.kind === 'special';
-    const at = special ? Math.max(0, SPECIAL_INTRO_MS - 300) : (a.impactMs ?? impactMs(a.kind, reduced));
-    // 11/10/2026: o som do golpe básico acompanha o TIPO do ataque (físico = soco, à distância = disparo).
-    const ranged = strikeFormOf(a) === 'ranged';
-    const id = window.setTimeout(() => { if (special) playSpecial(); else if (ranged) playAttackRanged(); else playAttack(); }, at);
-    return () => window.clearTimeout(id);
+    const bloqueado = !!a.shield;
+    const impacto = (a.impactMs ?? impactMs(a.kind, reduced)) + introMs(a.kind);
+    const ids: number[] = [];
+    const agendar = (fn: () => void, ms: number) => { ids.push(window.setTimeout(fn, Math.max(0, ms))); };
+    if (special) {
+      const jaCarregou = a.actor === 'me' && cargaJaTocouRef.current;
+      cargaJaTocouRef.current = false;
+      if (!jaCarregou) agendar(() => playCharge(), 0);
+      agendar(() => playSpecial(), SPECIAL_INTRO_MS - 300);
+      if (bloqueado) agendar(() => playDefend(), impacto);
+    } else if (bloqueado) {
+      agendar(() => playDefend(), impacto);
+    } else {
+      // O som do golpe básico acompanha o TIPO do ataque (físico = corte, à distância = mágico).
+      agendar(() => { if (strikeFormOf(a) === 'ranged') playAttackRanged(); else playAttack(); }, impacto);
+    }
+    return () => ids.forEach(id => window.clearTimeout(id));
   }, [actionId, reduced]);
   const cutActor = action?.kind === 'special' ? action.actor : null;
   const meBody = bodyCenter(layout.me);

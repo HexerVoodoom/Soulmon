@@ -31,7 +31,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
-import { playVictory } from '../utils/sounds';
+import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
@@ -257,6 +257,8 @@ export function ArenaGame({
       setFase('rodada-limpa');
     } else {
       // Derrota ou empate: encerra a run, sem custo (não mexe em `hp` nem em corações do save — REGISTRO §20.1).
+      // D-92 (19/10/2026): a derrota tem o som NEUTRO próprio (`playDefeat`, `arcade`); o empate fica mudo.
+      if (res.winner !== 'draw') playDefeat();
       setFase(res.winner === 'draw' ? 'empatou' : 'perdeu');
     }
   }, []);

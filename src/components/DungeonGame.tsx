@@ -7,7 +7,7 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { getSpriteForStage } from '../utils/sprites';
-import { playVictory } from '../utils/sounds';
+import { playDefeat, playVictory } from '../utils/sounds';
 import { clearBonus } from '../utils/dungeon';
 import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
@@ -518,6 +518,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     // Derrota ou empate (o empate conta como derrota, sem custo): o HP zerou e a descida acaba.
     // C-6 (run `som-01`): sem som de degeneracao. Perder a descida nao custa coracao nem Bits —
     // `handleDungeonLose` é um callback vazio, de propósito. O HP volta com o TEMPO (`hpAgora`).
+    playDefeat(); // D-92: o som NEUTRO de fim de luta (`arcade`) — não é o `playDegenerate`, que segue só do App (C-6).
     onLose();
     hpCarryRef.current = 0;
     salvarHp(0);

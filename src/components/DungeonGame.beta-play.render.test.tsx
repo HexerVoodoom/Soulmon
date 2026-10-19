@@ -14,7 +14,7 @@ import { closeTopBackLayer } from '../utils/backStack';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { DUNGEON_AUTO_FIGHT_MS, DUNGEON_AWAY_MAX_MS } from '../utils/dungeonIdle';
 
-vi.mock('../utils/sounds', () => ({ isMuted: () => false, playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
+vi.mock('../utils/sounds', () => ({ isMuted: () => false, playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn(), playFeed: vi.fn(), playTaskComplete: vi.fn() }));
 beforeEach(() => {
   vi.spyOn(Math, 'random').mockReturnValue(0.3);
   localStorage.clear();

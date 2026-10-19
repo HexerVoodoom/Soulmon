@@ -10,7 +10,7 @@ import { render, cleanup, act } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const som = vi.hoisted(() => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn() }));
+const som = vi.hoisted(() => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn() }));
 vi.mock('../../utils/sounds', () => som);
 
 import { BattleStage, ORB_PX, ORB_PX_SPECIAL, SLASH_SCALE, SLASH_SCALE_SPECIAL, type StageAction, type StageFighter } from './BattleStage';
@@ -101,5 +101,66 @@ describe('(5) o especial faz o efeito MAIOR (mesma arte, em escala)', () => {
     expect(canonico).toContain('.sm-bs-pop.sm-bs-big { animation-name: sm-bs-flash !important; }');
     // e não há um SEGUNDO bloco de movimento reduzido para o especial maior fora do canônico
     expect(css.split('.sm-bs-fly.sm-bs-big { display: none').length - 1).toBe(1);
+  });
+});
+
+describe('(D-86..D-90, 19/10/2026) o mapa evento → efeito da cena de combate', () => {
+  const sons = ['playAttack', 'playAttackRanged', 'playDefend', 'playCharge', 'playSpecial'] as const;
+  const chamados = () => sons.filter(n => som[n].mock.calls.length > 0);
+
+  it('D-87: golpe BLOQUEADO soa a DEFESA no impacto — e só ela (nem o corte nem o mágico)', () => {
+    vi.useFakeTimers();
+    render(<BattleStage {...base} action={{ ...acao('melee'), actor: 'foe', shield: 'fogo' }} />);
+    act(() => { vi.advanceTimersByTime(impactMs('melee', false) - 30); });
+    expect(chamados()).toEqual([]);
+    act(() => { vi.advanceTimersByTime(60); });
+    expect(chamados()).toEqual(['playDefend']);
+    cleanup(); vi.clearAllMocks();
+    render(<BattleStage {...base} action={{ ...acao('ranged'), actor: 'foe', shield: 'fogo' }} />);
+    act(() => { vi.advanceTimersByTime(impactMs('ranged', false) + 20); });
+    expect(chamados()).toEqual(['playDefend']);
+  });
+
+  it('D-86/D-88: sem bloqueio, físico = corte e à distância = mágico', () => {
+    vi.useFakeTimers();
+    render(<BattleStage {...base} action={acao('melee')} />);
+    act(() => { vi.advanceTimersByTime(impactMs('melee', false) + 20); });
+    expect(chamados()).toEqual(['playAttack']);
+  });
+
+  it('D-89/D-90: o especial do INIMIGO carrega no começo da cena e SOLTA ~300 ms antes do fim da introdução', () => {
+    vi.useFakeTimers();
+    render(<BattleStage {...base} action={{ ...acao('special', 'ranged'), actor: 'foe' }} />);
+    act(() => { vi.advanceTimersByTime(5); });
+    expect(chamados()).toEqual(['playCharge']);
+    act(() => { vi.advanceTimersByTime(SPECIAL_INTRO_MS - 300); });
+    expect(chamados()).toEqual(['playCharge', 'playSpecial']);
+    expect(som.playCharge).toHaveBeenCalledTimes(1);
+  });
+
+  it('D-89: o jogador que MIROU o anel (`charging`) já ouviu a carga — o especial dele não a repete', () => {
+    vi.useFakeTimers();
+    const r = render(<BattleStage {...base} charging />);
+    expect(som.playCharge).toHaveBeenCalledTimes(1);
+    r.rerender(<BattleStage {...base} charging={false} action={acao('special', 'ranged')} />);
+    act(() => { vi.advanceTimersByTime(SPECIAL_INTRO_MS + 50); });
+    expect(som.playCharge).toHaveBeenCalledTimes(1);
+    expect(som.playSpecial).toHaveBeenCalledTimes(1);
+  });
+
+  it('D-89: especial automático (sem anel) carrega na hora; o seguinte, de novo', () => {
+    vi.useFakeTimers();
+    const r = render(<BattleStage {...base} action={acao('special', 'melee')} />);
+    act(() => { vi.advanceTimersByTime(5); });
+    expect(som.playCharge).toHaveBeenCalledTimes(1);
+    r.rerender(<BattleStage {...base} action={{ ...acao('special', 'melee'), id: 2 }} />);
+    act(() => { vi.advanceTimersByTime(5); });
+    expect(som.playCharge).toHaveBeenCalledTimes(2);
+  });
+
+  it('os 7 efeitos são `arcade` (R-CAT: o evento é combate)', () => {
+    for (const n of ['playAttack', 'playDefend', 'playAttackRanged', 'playCharge', 'playSpecial', 'playVictory', 'playDefeat']) {
+      expect(CATEGORIA_DO_SOM[n], n).toBe('arcade');
+    }
   });
 });
