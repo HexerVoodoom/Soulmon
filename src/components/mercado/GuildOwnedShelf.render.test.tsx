@@ -15,7 +15,7 @@ import { stallItems, tournamentShopItems, MERCADO_STALLS, STALL_CURRENCIES } fro
 import { shopBuyRefusal, applyShopBuy } from '../../utils/shopBuy';
 import { isShopItemUnlocked } from '../../utils/missions';
 import { DECOR_ART } from '../../utils/decorArt';
-import { PET_BACKGROUNDS, GUILD_SCENES_RETIRED } from '../../utils/backgrounds';
+import { PET_BACKGROUNDS, GUILD_SCENES_RETIRED, GUILD_SCENES_RETIRED_IDS } from '../../utils/backgrounds';
 import { RAID_TROPHY_ID, GROVE_STAGES } from '../../utils/guildRules';
 
 const base = {
@@ -29,22 +29,38 @@ type Props = Parameters<typeof MercadoStallSheet>[0];
 const abrir = (props: Partial<Props> & { stall: Props['stall'] }) => renderWithCss(<MercadoStallSheet {...base} {...props} />);
 const secao = (kind: 'bg' | 'furniture') => document.querySelector(`[data-guild-owned="${kind}"]`) as HTMLElement | null;
 
-describe('cenários da roda saem do jogo até a arte nova (D-26/P10/S-9)', () => {
-  it('com cenários do Bosque na posse, o Background NÃO mostra a seção "From the grove" nem o título', () => {
-    abrir({ stall: 'background', ownedBackgrounds: ['bg-room', ...GROVE_STAGES.map(s => `bg-guild-${s}`)] });
-    expect(secao('bg')).toBeNull();
-    expect(document.body.textContent).not.toContain(guildText('pt-BR', 'guild.cenarios.titulo'));
-    for (const nome of ['Clareira', 'Ramagem', 'Copa', 'Mata', 'Bosque antigo']) expect(document.body.textContent).not.toContain(nome);
+describe('cenários da roda voltam ao jogo com a arte nova (D-27/W5-L7; antes D-26/P10/S-9)', () => {
+  it('com cenários do Bosque na posse, o Background mostra a seção "From the grove" só com os que a pessoa tem', () => {
+    abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-clareira', 'bg-guild-mata'] });
+    const sec = secao('bg')!;
+    expect(sec).toBeTruthy();
+    expect(sec.textContent).toContain(guildText('pt-BR', 'guild.cenarios.titulo'));
+    expect(sec.textContent).toContain('Clareira');
+    expect(sec.textContent).toContain('Mata');
+    for (const nome of ['Ramagem', 'Copa', 'Bosque antigo']) expect(sec.textContent).not.toContain(nome);
   });
 
-  it('nem equipado: quem tem um cenário do Bosque equipado não o vê listado (o campo do save é do App, não daqui)', () => {
-    abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-mata'], equippedBackground: 'bg-guild-mata' });
-    expect(secao('bg')).toBeNull();
+  it('equipar: tocar no cenário do Bosque chama onEquip com o id (o campo do save é do App)', () => {
+    const onEquip = vi.fn();
+    abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-mata'], equippedBackground: 'bg-room', onEquip });
+    fireEvent.click(within(secao('bg')!).getByRole('button', { name: /Mata — Equipar/ }));
+    expect(onEquip).toHaveBeenLastCalledWith('bg-guild-mata');
   });
 
-  it('a posse NÃO é apagada: os cenários seguem em PET_BACKGROUNDS (voltam sozinhos quando a arte nova entrar)', () => {
+  it('só um estágio ainda aposentado (sem arte nova) some da seção; os outros ficam', () => {
+    const retired = GUILD_SCENES_RETIRED_IDS as Set<string>;
+    retired.add('bg-guild-copa');
+    try {
+      abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-copa', 'bg-guild-mata'] });
+      expect(secao('bg')!.textContent).toContain('Mata');
+      expect(secao('bg')!.textContent).not.toContain('Copa');
+    } finally { retired.clear(); }
+  });
+
+  it('a posse segue em PET_BACKGROUNDS e a lista de aposentados está vazia', () => {
     for (const s of GROVE_STAGES) expect(PET_BACKGROUNDS[`bg-guild-${s}`], s).toBeTruthy();
-    expect(GUILD_SCENES_RETIRED).toBe(true);
+    expect(GUILD_SCENES_RETIRED).toBe(false);
+    expect(GUILD_SCENES_RETIRED_IDS.size).toBe(0);
   });
 
   it('a Loja de Itens (chips) e a aba de Créditos não desenham a seção', () => {

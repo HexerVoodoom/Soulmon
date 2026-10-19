@@ -10,6 +10,7 @@ import { closeTopBackLayer, hasBackLayer } from '../../utils/backStack';
 import { renderWithCss } from '../../test/renderEnv';
 import { GroveMilestoneCeremony } from './GroveMilestoneCeremony';
 import { GUILD_COPY } from '../../utils/guildCopy';
+import { GUILD_SCENES_RETIRED_IDS } from '../../utils/backgrounds';
 
 const base = { stage: 'copa' as const, spriteUrl: '/eu.png', dateLabel: '29 de setembro de 2026', sceneGranted: false, language: 'pt-BR' as const };
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
@@ -34,13 +35,19 @@ describe('o que ela diz', () => {
     expect(container.textContent).not.toContain('setembro');
   });
 
-  it('D-26: o cenário novo NÃO é anunciado enquanto os cenários do Bosque estão fora do jogo (a frase "já está em Background" seria falsa)', () => {
+  it('D-27: com a arte nova no ar o cenário do estágio É anunciado; um estágio ainda aposentado volta ao silêncio (a frase seria falsa)', () => {
     const { container, rerender } = renderWithCss(<GroveMilestoneCeremony {...base} onDone={() => {}} />);
     expect(container.textContent).not.toMatch(/Cenário do bosque/);
     rerender(<GroveMilestoneCeremony {...base} sceneGranted onDone={() => {}} />);
-    expect(container.textContent).not.toMatch(/Cenário do bosque|Já está em Background/);
+    expect(container.textContent).toMatch(/Cenário do bosque|Já está em Background/);
     rerender(<GroveMilestoneCeremony {...base} sceneGranted language="en-US" onDone={() => {}} />);
-    expect(container.textContent).not.toMatch(/Grove scenery|under Background/);
+    expect(container.textContent).toMatch(/Grove scenery|under Background/);
+    const retired = GUILD_SCENES_RETIRED_IDS as Set<string>;
+    retired.add(`bg-guild-${base.stage}`);
+    try {
+      rerender(<GroveMilestoneCeremony {...base} sceneGranted language="en-US" onDone={() => {}} />);
+      expect(container.textContent).not.toMatch(/Grove scenery|under Background/);
+    } finally { retired.clear(); }
   });
 
   it('sem número, sem "parabéns" e sem cobrança', () => {

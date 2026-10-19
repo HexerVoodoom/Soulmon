@@ -42,11 +42,11 @@ import bgMissionAuroraImg from '../assets/backgrounds/bg-mission-aurora.png';
 // 30/09/2026 — fundos-v2 (rodada 3, aprovados pelo dono): os 5 estágios do Bosque
 // deixam de ser gradiente e ganham arte pintada noturna; campina e cavernas são os
 // postais do Passeio que faltavam (as duas regiões tinham `bgId: null`).
-import bgGuildClareiraImg from '../assets/backgrounds/bg-guild-clareira.png';
-import bgGuildRamagemImg from '../assets/backgrounds/bg-guild-ramagem.png';
-import bgGuildCopaImg from '../assets/backgrounds/bg-guild-copa.png';
-import bgGuildMataImg from '../assets/backgrounds/bg-guild-mata.png';
-import bgGuildBosqueAntigoImg from '../assets/backgrounds/bg-guild-bosque-antigo.png';
+import bgGuildClareiraImg from '../assets/backgrounds/bg-guild-clareira.webp';
+import bgGuildRamagemImg from '../assets/backgrounds/bg-guild-ramagem.webp';
+import bgGuildCopaImg from '../assets/backgrounds/bg-guild-copa.webp';
+import bgGuildMataImg from '../assets/backgrounds/bg-guild-mata.webp';
+import bgGuildBosqueAntigoImg from '../assets/backgrounds/bg-guild-bosque-antigo.webp';
 import bgCampinaImg from '../assets/backgrounds/bg-campina.png';
 import bgCavernasImg from '../assets/backgrounds/bg-cavernas.png';
 // 04/10/2026 — terceira leva de cenários PINTADOS à venda (`entrada-dono/petbox-*`, GPT Image 2.5 Flare 16:9
@@ -325,27 +325,27 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   // amostrada da faixa de baixo (5%) de cada PNG, como nos outros pintados.
   'bg-guild-clareira': {
     namePt: 'Clareira', nameEn: 'Clearing',
-    css: `url(${bgGuildClareiraImg})`, baseColor: '#173537',
+    css: `url(${bgGuildClareiraImg})`, baseColor: '#123c36',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 66,
   },
   'bg-guild-ramagem': {
     namePt: 'Ramagem', nameEn: 'Boughs',
-    css: `url(${bgGuildRamagemImg})`, baseColor: '#173739',
+    css: `url(${bgGuildRamagemImg})`, baseColor: '#0f4149',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
   },
   'bg-guild-copa': {
     namePt: 'Copa', nameEn: 'Canopy',
-    css: `url(${bgGuildCopaImg})`, baseColor: '#18373b',
+    css: `url(${bgGuildCopaImg})`, baseColor: '#173837',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
   },
   'bg-guild-mata': {
     namePt: 'Mata', nameEn: 'Thicket',
-    css: `url(${bgGuildMataImg})`, baseColor: '#19373b',
+    css: `url(${bgGuildMataImg})`, baseColor: '#24403f',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
   },
   'bg-guild-bosque-antigo': {
     namePt: 'Bosque antigo', nameEn: 'Old grove',
-    css: `url(${bgGuildBosqueAntigoImg})`, baseColor: '#19363b',
+    css: `url(${bgGuildBosqueAntigoImg})`, baseColor: '#073534',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
   },
   // ── Postais do Passeio (`data/travessiasCatalog.ts`, 30/09/2026) ──────────
@@ -380,15 +380,21 @@ for (const [id, a] of Object.entries(BG_ART_ALIASES)) {
 /**
  * D-26 (19/10/2026, P10 + S-9): os cenários `bg-guild-*` ("From the Grove") SAEM DO JOGO até a arte nova entrar —
  * fora da loja, do sorteio e de todo seletor. A POSSE fica (`mine.groveScenes`, G12) e o campo EQUIPADO do save
- * NÃO é tocado: só a LEITURA de quem desenha passa por aqui e cai no cenário padrão. Quando a arte nova
- * entrar, basta virar `GUILD_SCENES_RETIRED` e quem tinha um equipado o vê voltar sozinho.
+ * NÃO é tocado: só a LEITURA de quem desenha passa por aqui e cai no cenário padrão.
+ * W5-L7 (D-27, 19/10/2026): a arte nova (pintada, 1200×648 + retrato 608×1080) entrou para os CINCO estágios, então
+ * a lista de aposentados está vazia e quem tinha um equipado o vê voltar sozinho. Um estágio sem arte nova entra
+ * de volta em `GUILD_SCENES_RETIRED_IDS` e cai no padrão de novo.
  */
-export const GUILD_SCENES_RETIRED = true;
+export const GUILD_SCENES_RETIRED_IDS: ReadonlySet<string> = new Set<string>();
+/** Algum cenário do Bosque ainda está fora do jogo? (`false` = os cinco voltaram). */
+export const GUILD_SCENES_RETIRED = GUILD_SCENES_RETIRED_IDS.size > 0;
 export const isGuildScene = (id: string | null | undefined): boolean => typeof id === 'string' && id.startsWith('bg-guild-');
+/** Este cenário do Bosque ainda está aposentado (sem arte nova)? */
+export const isGuildSceneRetired = (id: string | null | undefined): boolean => typeof id === 'string' && GUILD_SCENES_RETIRED_IDS.has(id);
 /** O cenário que se DESENHA a partir do campo equipado do save (cenário do Bosque aposentado = nenhum). */
 export function visibleBackground(id: string | null | undefined): string | null {
   if (!id) return null;
-  return GUILD_SCENES_RETIRED && isGuildScene(id) ? null : id;
+  return isGuildSceneRetired(id) ? null : id;
 }
 
 export function isDarkBackground(id: string | null | undefined): boolean {

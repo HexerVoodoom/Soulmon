@@ -285,9 +285,10 @@ describe('Conquistas — filtro por categoria, sem coluna de zeros (WP4.12)', ()
 });
 
 describe('L4 M4: "Do bosque" no TOPO do segmento, antes dos ~20 cenários da loja', () => {
-  it('Background (D-26): com cenário do Bosque na posse, a seção NÃO existe — a loja começa direto, sem "From the grove"', () => {
+  it('Background (D-27): com cenário do Bosque na posse, a seção "From the grove" volta (arte nova) antes da lista da loja', () => {
     const { container } = abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-copa'] });
-    expect(container.querySelector('[data-guild-owned="bg"]')).toBeNull();
+    expect(container.querySelector('[data-guild-owned="bg"]')).toBeTruthy();
+    expect(container.querySelector('[data-guild-owned-item="bg-guild-copa"]')).toBeTruthy();
     expect(container.querySelector(`[aria-label*="${bitsBg.nameEn}"]`)).toBeTruthy();
   });
 

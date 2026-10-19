@@ -1,26 +1,39 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PET_BACKGROUNDS, visibleBackground, isGuildScene, GUILD_SCENES_RETIRED } from './backgrounds';
+import { PET_BACKGROUNDS, visibleBackground, isGuildScene, isGuildSceneRetired, GUILD_SCENES_RETIRED, GUILD_SCENES_RETIRED_IDS } from './backgrounds';
 import { grantGroveScenes, groveSceneIds } from './groveLocal';
 import { SHOP_ITEMS, ALL_SHOP_ITEMS } from './shop';
 import { GROVE_STAGES } from './guildRules';
 
 /**
- * D-26 / P10 / S-9 (19/10/2026): os cenários `bg-guild-*` saem do jogo (loja, sorteio, seletores) até a arte nova,
- * mas a POSSE e o campo EQUIPADO do save ficam como estão — só o que se DESENHA cai no cenário padrão.
+ * D-26 / P10 / S-9 (19/10/2026): os cenários `bg-guild-*` saíram do jogo até a arte nova; a POSSE e o campo EQUIPADO
+ * do save ficam como estão. D-27 (W5-L7): a arte nova entrou para os cinco estágios, então a lista de aposentados
+ * (`GUILD_SCENES_RETIRED_IDS`) está vazia; só um id que voltar para ela cai no cenário padrão.
  */
-describe('cenários do Bosque aposentados (D-26)', () => {
-  it('quem desenha cai no padrão: `visibleBackground` esconde o bg-guild-* e deixa os outros passarem', () => {
-    expect(GUILD_SCENES_RETIRED).toBe(true);
+describe('cenários do Bosque (D-26 aposentados → D-27 de volta com arte nova)', () => {
+  it('com a arte nova nenhum estágio está aposentado: `visibleBackground` devolve o bg-guild-* e os outros passam', () => {
+    expect(GUILD_SCENES_RETIRED).toBe(false);
+    expect(GUILD_SCENES_RETIRED_IDS.size).toBe(0);
     for (const st of GROVE_STAGES) {
       expect(isGuildScene(`bg-guild-${st}`)).toBe(true);
-      expect(visibleBackground(`bg-guild-${st}`)).toBeNull();
+      expect(isGuildSceneRetired(`bg-guild-${st}`)).toBe(false);
+      expect(visibleBackground(`bg-guild-${st}`)).toBe(`bg-guild-${st}`);
     }
     expect(visibleBackground('bg-room')).toBe('bg-room');
     expect(visibleBackground('bg-mission-aurora')).toBe('bg-mission-aurora');
     expect(visibleBackground(null)).toBeNull();
     expect(visibleBackground(undefined)).toBeNull();
+  });
+
+  it('um estágio SEM arte nova continua aposentado: cai no padrão, os outros seguem visíveis', () => {
+    const retired = GUILD_SCENES_RETIRED_IDS as Set<string>;
+    retired.add('bg-guild-bosque-antigo');
+    try {
+      expect(visibleBackground('bg-guild-bosque-antigo')).toBeNull();
+      expect(isGuildSceneRetired('bg-guild-bosque-antigo')).toBe(true);
+      expect(visibleBackground('bg-guild-copa')).toBe('bg-guild-copa');
+    } finally { retired.clear(); }
   });
 
   it('a posse é preservada: a entrega dos cenários (cloud save/servidor) não apaga nem troca o equipado', () => {
@@ -32,8 +45,8 @@ describe('cenários do Bosque aposentados (D-26)', () => {
     expect(depois.ownedBackgrounds).toEqual(expect.arrayContaining(['bg-room', 'bg-guild-copa', 'bg-guild-mata']));
     // o JSON do save (o que o cloud save carrega) continua com o campo equipado intacto
     expect(JSON.parse(JSON.stringify(depois)).equippedBackground).toBe('bg-guild-copa');
-    // e o que se desenha é o padrão
-    expect(visibleBackground(depois.equippedBackground)).toBeNull();
+    // e, com a arte nova, o cenário equipado volta sozinho a ser o desenhado
+    expect(visibleBackground(depois.equippedBackground)).toBe('bg-guild-copa');
   });
 
   it('o App desenha por `visibleBackground` nos 3 pontos de leitura e NUNCA grava o resultado no save', () => {
