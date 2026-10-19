@@ -249,7 +249,7 @@ export function ShopShelf({
     || (item.kind === 'furniture' && ownedFurniture.includes(item.id));
   // H7 (01/10/2026, navegação do dono): o que a pessoa JÁ TEM (comprado, ou
   // ganho — o sofá da escada do Vínculo, a Concha da Feira) não aparece mais
-  // À VENDA. Continua alcançável para equipar, numa seção própria (D-29: DEPOIS do "For sale").
+  // À VENDA. Continua alcançável para equipar, numa seção própria no topo.
   const owned = shelf.filter(isOwned);
   const forSale = shelf.filter(i => !isOwned(i));
 
@@ -409,19 +409,16 @@ export function ShopShelf({
         ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{emptyHint ?? (isPt ? 'Nada por aqui ainda.' : 'Nothing here yet.')}</p>
         : (
           <>
-            {/* D-29 (19/10/2026): "For sale" vem PRIMEIRO, em Background e em Decoração — o que dá para comprar abre a prateleira; o que já é seu fica depois. */}
-            <section data-shop-for-sale aria-label={isPt ? 'À venda' : 'For sale'} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2, 8px)' }}>
-              {owned.length > 0 && <h3 style={groupHead}>{isPt ? 'À venda' : 'For sale'}</h3>}
-              {forSale.length === 0
-                ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Tudo daqui já é seu.' : 'Everything here is already yours.'}</p>
-                : forSale.map(renderItem)}
-            </section>
+            {/* REGISTRO §122 (19/10/2026): sem seção de promoção/"For sale". O que a pessoa já tem fica numa seção própria no topo (H7); o resto é a lista normal. */}
             {owned.length > 0 && (
               <section data-shop-owned aria-label={isPt ? 'Já são seus' : 'Already yours'} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2, 8px)' }}>
                 <h3 style={groupHead}>{isPt ? 'Já são seus' : 'Already yours'}</h3>
                 {owned.map(renderItem)}
               </section>
             )}
+            {forSale.length === 0
+              ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Tudo daqui já é seu.' : 'Everything here is already yours.'}</p>
+              : forSale.map(renderItem)}
           </>
         )}
       <ShopItemSheet

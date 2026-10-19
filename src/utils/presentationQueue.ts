@@ -40,7 +40,6 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  * A ORDEM. Do mais urgente ao mais leve (a posição é a prioridade):
  *  1. `welcomeTour` — a boas-vindas do primeiro uso (nada mais faz sentido antes dela);
  *  2. `triage` — a única aberta por TOQUE do usuário: ele acabou de pedir;
- *  2b. `npcLetter` — a carta de NPC, aberta por TOQUE na cartinha da Home (D-13/D-14, REGISTRO §115); gesto, como a triagem;
  *  ── INÍCIO DE DIA (D-64, REGISTRO §111), depois de acordar o Soulmon ──
  *  3. `nightmare` — o pesadelo da manhã (jogável) logo depois do despertar; NUNCA junto do sonho;
  *  4. `dream` — o sonho da manhã, no lugar do pesadelo quando não há luta;
@@ -61,7 +60,6 @@ export const PRESENTATION_IDLE = 'welcome' as const;
 export const PRESENTATION_ORDER = [
   'welcomeTour',
   'triage',
-  'npcLetter',
   'nightmare',
   'dream',
   'dailyReport',

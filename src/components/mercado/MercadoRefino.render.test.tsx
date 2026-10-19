@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Refino de 19/10/2026 (onda 1A) — Mercado: D-24 (abas Backgrounds | Frames, abre em Backgrounds), D-29 ("For sale" primeiro),
+ * Refino de 19/10/2026 (onda 1A) — Mercado: D-24 (abas Backgrounds | Frames, abre em Backgrounds), D-29 (REVOGADO por D-98: sem "For sale"),
  * D-58 (missões da semana no topo da aba Honra) e D-16 (a moldura de loja trancada no Perfil leva ao Mercado > Frames).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -47,23 +47,20 @@ describe('D-24: a lojinha de Background tem as abas [Backgrounds, Frames], nessa
   });
 });
 
-describe('D-29: "For sale" vem antes de "Already yours", em Background e em Decoração', () => {
+describe('REGISTRO §122: sem seção "For sale"/promoção nas lojinhas (a ordem volta ao normal: "Already yours" no topo)', () => {
   it.each([
     ['background', { ownedBackgrounds: ['bg-room'] as string[] }],
     ['decoracao', { ownedFurniture: ['furn-sofa'] as string[] }],
   ] as const)('%s', (stall, own) => {
     const { container } = renderWithCss(<MercadoStallSheet {...base} {...own} stall={stall} />);
-    const venda = container.querySelector('[data-shop-for-sale]') as HTMLElement;
-    const meus = container.querySelector('[data-shop-owned]') as HTMLElement;
-    expect(venda).not.toBeNull();
-    expect(meus).not.toBeNull();
-    expect(venda.compareDocumentPosition(meus) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(venda.querySelector('h3')!.textContent).toBe('For sale');
+    expect(container.querySelector('[data-shop-for-sale]')).toBeNull();
+    expect(container.textContent).not.toContain('For sale');
+    expect(container.querySelector('[data-shop-owned]')).not.toBeNull();
   });
   it('sem nada na posse, a prateleira não muda (sem seção de posse)', () => {
     const { container } = renderWithCss(<MercadoStallSheet {...base} ownedBackgrounds={[]} stall="background" />);
     expect(container.querySelector('[data-shop-owned]')).toBeNull();
-    expect(container.querySelector('[data-shop-for-sale]')).not.toBeNull();
+    expect(container.querySelector('[data-shop-for-sale]')).toBeNull();
   });
 });
 

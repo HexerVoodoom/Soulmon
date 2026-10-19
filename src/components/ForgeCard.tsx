@@ -16,8 +16,6 @@ import { EQUIP_SLOTS, sanitizeEquipment } from '../utils/equipment';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { earnedBits } from '../utils/bitsOrigin';
 import { BitsAmount } from './ui/BitsAmount';
-import { isoWeekKey } from '../utils/offerMoment';
-import { playerDayKey } from '../utils/playerDay';
 import { loadEquipArt } from '../utils/equipArt';
 import { forgeArtName } from '../utils/forgeVisual';
 import { ATTR_COPY, itemName } from '../utils/equipmentCopy';
@@ -86,17 +84,16 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
   const bond = bondLevelFor(gameState.totalXP ?? 0);
   const picks = sanitizeTalentPicks(gameState.talentPicks, bond);
   const eq = sanitizeEquipment(gameState.equipment);
-  const weekKey = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
-  const view: ForgeGameState = { gamePoints: gameState.gamePoints, bitsOrigin: gameState.bitsOrigin, equipment: eq, forge: gameState.forge, buildingQuests: gameState.buildingQuests, totalXP: gameState.totalXP, talentPicks: picks, weekKey };
+  const view: ForgeGameState = { gamePoints: gameState.gamePoints, bitsOrigin: gameState.bitsOrigin, equipment: eq, forge: gameState.forge, buildingQuests: gameState.buildingQuests, totalXP: gameState.totalXP, talentPicks: picks };
   const attrName = (a: 'atk' | 'def' | 'spd') => (isPt ? ATTR_COPY[a].pt : ATTR_COPY[a].en);
 
   // O `prev` do updater é quem decide (footgun 6): a tela só LÊ o `view` para mostrar o motivo.
   const prevView = (prev: typeof gameState): ForgeGameState => {
     const b = bondLevelFor(prev.totalXP ?? 0);
-    return { ...prev, talentPicks: sanitizeTalentPicks(prev.talentPicks, b), weekKey: isoWeekKey(playerDayKey(new Date(), prev.playerDayTz)) } as ForgeGameState;
+    return { ...prev, talentPicks: sanitizeTalentPicks(prev.talentPicks, b) } as ForgeGameState;
   };
   const merge = (prev: typeof gameState, next: ForgeGameState): typeof gameState => {
-    const { weekKey: _w, talentPicks: _t, ...resto } = next;
+    const { talentPicks: _t, ...resto } = next;
     return { ...prev, ...resto } as typeof gameState;
   };
 
@@ -225,7 +222,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const refUp = dialog.mode === 'upgrade' ? upgradeRefusal(view, piece.id) : undefined;
     const refBits = dialog.mode === 'redo' ? redoRefusal(view, piece.id, dialog.level, escolha, 'bits') : undefined;
     const refFrag = dialog.mode === 'redo' ? redoRefusal(view, piece.id, dialog.level, escolha, 'fragments') : undefined;
-    const precoBits = redoBitsPrice(piece.id, picks, weekKey);
+    const precoBits = redoBitsPrice(piece.id, picks);
     return (
       <div role="dialog" aria-modal="true" aria-labelledby="sm2-forge-dlg" data-forge-dialog={dialog.mode}
         style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,.55)' }}

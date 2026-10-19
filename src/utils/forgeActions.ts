@@ -6,7 +6,7 @@
  * Sem sorteio. Nada de Créditos nem dinheiro real: o único Bit que paga é o GANHO (`earnedBits`), e o material nunca fica negativo.
  */
 
-import { sanitizeEquipment, discounted, equipPriceDiscount, weeklyDiscountFor, type EquipmentState } from './equipment';
+import { sanitizeEquipment, discounted, equipPriceDiscount, type EquipmentState } from './equipment';
 import { stockOf, MATERIAL_CAP, LISTED_QUEST_BUILDINGS, visitBuilding, claimBuildingQuest, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import { earnedBits, type BitsOrigin } from './bitsOrigin';
 import { bondLevelFor } from './bond';
@@ -24,8 +24,6 @@ export interface ForgeGameState {
   buildingQuests?: BuildingQuestState;
   totalXP?: number;
   talentPicks?: string[];
-  /** A semana ISO do dia do jogador (`isoWeekKey`), só para o desconto semanal do Comércio ao refazer. */
-  weekKey?: string | null;
 }
 
 export type ForgeRefusal = 'unknown' | 'not-owned' | 'max-level' | 'bond' | 'no-materials' | 'bad-choice' | 'bad-level' | 'same' | 'no-funds' | 'not-earned' | 'no-fragments';
@@ -80,9 +78,9 @@ export function applyUpgrade<T extends ForgeGameState>(prev: T, id: string, choi
   return { ok: true, state: { ...prev, buildingQuests: { ...bq, materials }, forge } };
 }
 
-/** O preço em Bits de refazer uma escolha, com o Comércio (`tal-com-01` e a peça da semana). */
-export function redoBitsPrice(id: string, picks: readonly string[] | undefined, weekKey?: string | null): number {
-  return discounted(REDO_BITS, equipPriceDiscount(picks) + weeklyDiscountFor(id, picks, weekKey));
+/** O preço em Bits de refazer uma escolha, com o Comércio (`tal-com-01`). */
+export function redoBitsPrice(id: string, picks: readonly string[] | undefined): number {
+  return discounted(REDO_BITS, equipPriceDiscount(picks));
 }
 
 /** A recusa de refazer a escolha do `level` (2..nível atual) para `choice`, pagando `pay`. */
@@ -94,7 +92,7 @@ export function redoRefusal(state: ForgeGameState, id: string, level: number, ch
   if (!Number.isInteger(level) || level < 2 || level > now) return 'bad-level';
   if (pieceChoices(id, now, state.forge)[level - 2] === choice) return 'same';
   if (pay === 'fragments') return sanitizeEquipment(state.equipment).fragments < REDO_FRAGMENTS ? 'no-fragments' : undefined;
-  const price = redoBitsPrice(id, state.talentPicks, state.weekKey);
+  const price = redoBitsPrice(id, state.talentPicks);
   const bal = Math.max(0, Math.floor(Number.isFinite(state.gamePoints) ? (state.gamePoints as number) : 0));
   if (bal < price) return 'no-funds';
   // Tem Bits, mas parte deles veio de Crédito: refazer só com Bit GANHO.
@@ -114,7 +112,7 @@ export function applyRedo<T extends ForgeGameState>(prev: T, id: string, level: 
     const eq = sanitizeEquipment(prev.equipment);
     return { ok: true, price: REDO_FRAGMENTS, state: { ...prev, forge, equipment: { ...eq, fragments: eq.fragments - REDO_FRAGMENTS } } };
   }
-  const price = redoBitsPrice(id, prev.talentPicks, prev.weekKey);
+  const price = redoBitsPrice(id, prev.talentPicks);
   return { ok: true, price, state: { ...prev, forge, gamePoints: (prev.gamePoints ?? 0) - price } };
 }
 

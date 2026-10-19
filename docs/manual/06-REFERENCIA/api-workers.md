@@ -496,7 +496,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 
 ### `functions/api/_pushBudget.js`
 **Dono de:** o TETO (`PUSH_DAILY_CAP`) e a PRIORIDADE dos pushes do dia (REGISTRO §113) — ESM puro, sem dependência (além de `_mealRhythm.js`), com `_pushBudget.d.ts`. Uma conta só, lida pelo planejador do cliente, pelo worker (via `x` da inscrição) e pelo teste dos 5 fusos.
-**Exports:** `PUSH_KINDS_BY_PRIORITY` (cocô > fome > energia cheia > carta > lembrete de deitar > refeição > hora fixa > progresso), `PROGRESS_PUSH_MAX_PER_DAY` (1), `pushPriority(kind)`, `letterPushCandidate(id, atMs)` (ENTRADA da carta de NPC, W4-B, para contar no mesmo teto), `capPushes(candidates, cap)` → `{ kept, dropped }` (`committed` nunca é cortado e conta).
+**Exports:** `PUSH_KINDS_BY_PRIORITY` (cocô > fome > energia cheia > lembrete de deitar > refeição > hora fixa > progresso), `PROGRESS_PUSH_MAX_PER_DAY` (1), `pushPriority(kind)`, `capPushes(candidates, cap)` → `{ kept, dropped }` (`committed` nunca é cortado e conta).
 **Chamado por:** `src/utils/petPushEvents.ts`.
 **Régua:** `workers/pushBudget.parity.test.js` (worker real × 48 passadas × 5 fusos), `src/utils/petPushEvents.test.ts`.
 

@@ -9,12 +9,13 @@
 // A regra, em uma frase: NO MÁXIMO `PUSH_DAILY_CAP` pushes por dia; quando os
 // candidatos estouram, sai o de MENOR prioridade primeiro.
 //
-//   cocô > fome > energia cheia > carta > lembrete de deitar > refeição >
+//   cocô > fome > energia cheia > lembrete de deitar > refeição >
 //   convite genérico (10h/16h/22h) > progresso
 //
-// A ordem do dono (modal de 19/10/2026) é `cocô > fome > energia cheia > carta >
-// refeição > progresso`. Suposição S-7b (declarada): o lembrete de deitar entra
-// entre `carta` e `refeição` (protege a noite armada do §99/§101) e os convites
+// A ordem do dono é `cocô > fome > energia cheia > lembrete de deitar > refeição >
+// progresso` (a carta de NPC saiu em 19/10/2026, REGISTRO §122). Suposição S-7b
+// (declarada): o lembrete de deitar entra antes de `refeição` (protege a noite
+// armada do §99/§101) e os convites
 // genéricos de hora fixa entre `refeição` e `progresso` (só existem para quem
 // desligou o ritmo). Progresso ainda é o último e no MÁXIMO 1×/dia.
 //
@@ -25,7 +26,7 @@ import { PUSH_DAILY_CAP } from './_mealRhythm.js';
 
 /** Do MAIS prioritário ao menos. A posição é a prioridade. */
 export const PUSH_KINDS_BY_PRIORITY = [
-  'poop', 'hunger', 'energyFull', 'letter', 'sleep', 'meal', 'generic', 'progress',
+  'poop', 'hunger', 'energyFull', 'sleep', 'meal', 'generic', 'progress',
 ];
 
 /** Push de progresso: no máximo 1 por dia, só no fechamento (D-06). */
@@ -35,16 +36,6 @@ export const PROGRESS_PUSH_MAX_PER_DAY = 1;
 export function pushPriority(kind) {
   const i = PUSH_KINDS_BY_PRIORITY.indexOf(kind);
   return i === -1 ? PUSH_KINDS_BY_PRIORITY.length : i;
-}
-
-/**
- * ENTRADA DA CARTA (W4-B): um push de carta de NPC conta no MESMO teto chamando
- * `letterPushCandidate(id, atMs)` e passando o resultado em `extra` de
- * `planDayPushes` (`src/utils/petPushEvents.ts`). `atMs` é o instante (epoch ms)
- * em que a carta aparece. A prioridade (`letter`) já está na lista acima.
- */
-export function letterPushCandidate(id, atMs) {
-  return { id: String(id), kind: 'letter', at: atMs };
 }
 
 /**

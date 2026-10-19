@@ -136,15 +136,13 @@ export const FRAGMENT_GAIN_STEP = 0.05;
 /** O teto do ganho que o Comércio pode somar (o +25% do dono, §2.26). */
 export const COMMERCE_GAIN_CAP = 0.25;
 
-// ── Comércio (PR12b, §2.28 C): mochila, Bits do dia completo e desconto da semana ──────────────
+// ── Comércio (PR12b, §2.28 C): mochila e Bits do dia completo ──────────────
 
 /** A MOCHILA: quantas peças possuídas podem ficar FORA dos slots. Começa em 3 e `tal-com-04` soma 1 por grau (máx. 6 = as 9 peças menos 3 slots). */
 export const BACKPACK_BASE = 3;
 export const BACKPACK_STEP = 1;
 /** Mais Bits do dia completo por grau de `tal-com-06` (3 graus = +15%, dentro do +25% do dono). */
 export const MISSION_BITS_STEP = 0.05;
-/** O desconto da peça da semana (`tal-com-07`), em Bits. Soma com o `tal-com-01` e o total nunca passa de 60% (`discounted`). */
-export const WEEKLY_DISCOUNT = 0.2;
 
 /** Capacidade da mochila (inteiro). `picks` = `talentPicks` (já validado para o Vínculo por quem chama). */
 export function backpackCapacity(picks: readonly string[] | undefined): number {
@@ -170,24 +168,6 @@ export function missionBitsGain(base: number, picks: readonly string[] | undefin
   const n = Math.max(0, Math.floor(Number.isFinite(base) ? base : 0));
   const bonus = Math.min(COMMERCE_GAIN_CAP, MISSION_BITS_STEP * (ranksOf(picks ?? []).get('tal-com-06') ?? 0));
   return Math.floor(n * (1 + bonus) + 1e-9);
-}
-
-/**
- * A peça da semana (`tal-com-07`): DETERMINÍSTICA, sem sorteio nem relógio do aparelho. `weekKey` é a semana ISO do dia do jogador
- * (`2026-W41`). A ordem anda de 4 em 4 pelo catálogo (4 e 9 são primos entre si: as 9 peças passam, sem repetir, em 9 semanas).
- * Chave inválida = nenhuma peça.
- */
-export function weeklyDiscountItem(weekKey: string | null | undefined): string | null {
-  const m = typeof weekKey === 'string' ? /^(\d{4})-W(\d{2})$/.exec(weekKey) : null;
-  if (!m) return null;
-  const n = Number(m[1]) * 53 + Number(m[2]);
-  return EQUIP_CATALOG[(n * 4) % EQUIP_CATALOG.length].id;
-}
-
-/** O desconto de Bits que vale para `itemId` nesta semana (fração): `WEEKLY_DISCOUNT` se tem o nó e é a peça da semana, senão 0. */
-export function weeklyDiscountFor(itemId: string, picks: readonly string[] | undefined, weekKey: string | null | undefined): number {
-  if (!(picks ?? []).includes('tal-com-07')) return 0;
-  return weeklyDiscountItem(weekKey) === itemId ? WEEKLY_DISCOUNT : 0;
 }
 
 /** Desconto de preço do Comércio (fração em [0, 0,6]). `picks` = `talentPicks` (já validado para o Vínculo por quem chama). */
@@ -216,16 +196,14 @@ export interface EquipBuyState {
   bitsOrigin?: BitsOrigin;
   equipment?: EquipmentState;
   talentPicks?: string[];
-  /** PR12b: a semana ISO do dia do jogador (`isoWeekKey`), para a peça da semana. Ausente = sem desconto semanal. */
-  weekKey?: string | null;
 }
 
 export type EquipRefusal = 'unknown' | 'already-owned' | 'no-funds' | 'not-earned' | 'no-fragments' | 'backpack-full';
 export type EquipPay = 'bits' | 'fragments';
 
 /** O preço de `id` na forma de pagamento `pay`, já com o Comércio. */
-export function equipPrice(item: EquipItem, pay: EquipPay, picks: readonly string[] | undefined, weekKey?: string | null): number {
-  return pay === 'bits' ? discounted(item.bits, equipPriceDiscount(picks) + weeklyDiscountFor(item.id, picks, weekKey)) : item.fragments;
+export function equipPrice(item: EquipItem, pay: EquipPay, picks: readonly string[] | undefined): number {
+  return pay === 'bits' ? discounted(item.bits, equipPriceDiscount(picks)) : item.fragments;
 }
 
 /** A recusa da compra (ou `undefined`). Separada para a tela desabilitar o botão com o MESMO motivo. */
@@ -236,7 +214,7 @@ export function equipBuyRefusal(state: EquipBuyState, id: string, pay: EquipPay)
   if (eq.owned.includes(id)) return 'already-owned';
   // PR12b: a peça que NÃO entra num slot vazio vai para a mochila; mochila cheia = não entra mais uma (o que já passa fica).
   if (eq.equipped[item.slot] && !backpackHasRoom(eq, state.talentPicks)) return 'backpack-full';
-  const price = equipPrice(item, pay, state.talentPicks, state.weekKey);
+  const price = equipPrice(item, pay, state.talentPicks);
   if (pay === 'fragments') return eq.fragments < price ? 'no-fragments' : undefined;
   const bal = Math.max(0, Math.floor(Number.isFinite(state.gamePoints) ? (state.gamePoints as number) : 0));
   if (bal < price) return 'no-funds';
@@ -253,7 +231,7 @@ export function applyEquipBuy<T extends EquipBuyState>(prev: T, id: string, pay:
   if (reason) return { ok: false, reason };
   const item = EQUIP_BY_ID.get(id)!;
   const eq = sanitizeEquipment(prev.equipment);
-  const price = equipPrice(item, pay, prev.talentPicks, prev.weekKey);
+  const price = equipPrice(item, pay, prev.talentPicks);
   const equipped = eq.equipped[item.slot] ? eq.equipped : { ...eq.equipped, [item.slot]: id };
   const next: EquipmentState = {
     owned: [...eq.owned, id],

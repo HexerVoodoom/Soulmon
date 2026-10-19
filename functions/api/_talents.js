@@ -19,7 +19,7 @@ const req = (id, rank) => ({ id, rank });
 
 /**
  * id -> grau maximo e efeito, so dos nos PEGAVEIS (os `pendente` nao se compram).
- * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'weeklyDiscount' | 'startEnergy' | 'dotResist' | 'allAttr' | 'healBoost' | 'riftBits' | 'startShield', scope?: 'pvp' | 'pve' | 'nightmare', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
+ * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'startEnergy' | 'dotResist' | 'allAttr' | 'healBoost' | 'riftBits' | 'startShield', scope?: 'pvp' | 'pve' | 'nightmare', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
  */
 export const PICKABLE = {
   'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'atk', perRank: 0.004 },
@@ -42,7 +42,6 @@ export const PICKABLE = {
   'tal-com-04': { maxRank: 3, kind: 'backpack', requires: [req('tal-com-02', 2)] },
   'tal-com-05': { maxRank: 1, kind: 'respecOne', requires: [req('tal-com-03', 2)] },
   'tal-com-06': { maxRank: 3, kind: 'missionBits', requires: [req('tal-com-02', 1)] },
-  'tal-com-07': { maxRank: 1, kind: 'weeklyDiscount', requires: [req('tal-com-04', 1), req('tal-com-05', 1)] },
 };
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -108,9 +107,11 @@ export function isValidPicks(raw, bondLevel) {
 /**
  * Malformado (id inventado, grau/pontos a mais, tipo errado) e DESCARTADO (`[]`), nunca corrigido. Quem so viola PRE-REQUISITO
  * (save de antes da arvore com ramos) fica com os graus que se conseguem comprar e perde os outros (os pontos voltam, sem cobrar respec).
- * @param {unknown} raw @param {unknown} bondLevel @returns {string[]}
+ * @param {unknown} rawIn @param {unknown} bondLevel @returns {string[]}
  */
-export function sanitizeTalentPicks(raw, bondLevel) {
+export function sanitizeTalentPicks(rawIn, bondLevel) {
+  // No aposentado (REGISTRO §122): o ponto volta, o resto do vetor fica.
+  const raw = Array.isArray(rawIn) ? rawIn.filter((id) => id !== 'tal-com-07') : rawIn;
   if (!isWellFormed(raw, bondLevel)) return [];
   const { kept, dropped } = replay(raw);
   return dropped.length === 0 ? [...raw] : kept;
