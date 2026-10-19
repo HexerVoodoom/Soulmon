@@ -2,16 +2,14 @@
 /**
  * A Arena (minimal-ui F5) — as folhas Torneio e Duelo.
  *
- * Torneio: abre em DESAFIAR (02/10/2026; a faixa é o indicador do título), tem as
- * missões da semana pagas em Emblemas e a loja de Emblemas, que só vende
- * cosmético e só mostra Emblemas. Duelo: mostra a ficha e abre a luta.
+ * Torneio: abre em DESAFIAR (02/10/2026; a faixa é o indicador do título). Desde 19/10/2026 (D-58) é SÓ de lutas: sem loja de
+ * Emblemas e sem o botão "Train" (a Honra se gasta no Mercado, aba Honra). Duelo: mostra a ficha e abre a luta.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { TournamentPage } from '../TournamentPage';
 import { DueloSheet } from './DueloSheet';
-import { TOURNAMENT_ITEMS } from '../../utils/shop';
 import { TOURNAMENT_LADDER } from '../../utils/tournamentTiers';
 
 const saveId = 'a'.repeat(32);
@@ -25,10 +23,6 @@ const base = {
   onEarnEmblems: () => {},
   totalXP: 0,
 };
-const shop = {
-  ownership: { ownedBackgrounds: [], equippedBackground: null, ownedFurniture: [], equippedDecor: {}, missionProgress: {} },
-  actions: { onBuy: vi.fn(() => true), onEquip: () => {}, onEquipFurniture: () => {} },
-};
 
 beforeEach(() => {
   // O ranking responde com o jogador na faixa Bronze (lifetime 150).
@@ -39,23 +33,21 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('Torneio', () => {
-  it('o menu é só de ícone (Desafiar · Loja), abre em Desafiar e a Faixa não é aba', () => {
-    renderWithCss(<TournamentPage {...base} shop={shop} />);
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.getAttribute('aria-label'))).toEqual(['Challenge', 'Shop']);
-    for (const t of tabs) expect((t.textContent ?? '').replace(/s/g, '')).not.toContain(t.getAttribute('aria-label')!);
-    expect(screen.getByRole('tab', { name: 'Challenge' }).getAttribute('aria-selected')).toBe('true');
+  it('D-58: sem menu de abas — o Torneio é só de lutas (nada de Loja) e a Faixa não é aba', () => {
+    renderWithCss(<TournamentPage {...base} />);
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    expect(screen.queryByRole('tab', { name: 'Shop' })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'Tier' })).toBeNull();
   });
 
   it('explica que o Torneio é ranqueado/social e a Arena é o duelo PvE escalado', () => {
-    renderWithCss(<TournamentPage {...base} shop={shop} />);
+    renderWithCss(<TournamentPage {...base} />);
     fireEvent.click(screen.getByRole('button', { name: 'About the Tournament' }));
     expect(document.querySelector('[data-torneio-info]')!.textContent).toMatch(/RANKED mode.*server draws opponents.*you don.t choose.*Open Arena/is);
   });
 
   it('a faixa vira indicador do título; tocar abre a folha com as cinco faixas e a atual marcada', async () => {
-    const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
+    const { container } = renderWithCss(<TournamentPage {...base} />);
     const ind = await waitFor(() => {
       const el = container.querySelector('[data-tier-indicator]');
       expect(el).not.toBeNull();
@@ -72,35 +64,23 @@ describe('Torneio', () => {
   });
 
   it('as missões da semana NÃO moram mais no Torneio (07/10/2026): só no menu de Missões da Home', () => {
-    renderWithCss(<TournamentPage {...base} shop={shop} />);
+    renderWithCss(<TournamentPage {...base} />);
     expect(screen.queryByRole('tab', { name: 'Missions' })).toBeNull();
     expect(document.querySelector('[data-weekly-missions]')).toBeNull();
   });
 
-  it('a loja de Emblemas: só os prêmios do Torneio, só Emblemas, só cosmético', () => {
-    const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Shop' }));
-    const ids = Array.from(container.querySelectorAll('[data-shop-item]')).map(el => el.getAttribute('data-shop-item'));
-    expect(ids).toEqual(TOURNAMENT_ITEMS.map(i => i.id));
-    const loja = container.querySelector('[data-tournament-shop]')!;
-    expect(loja.textContent).not.toContain('Bits');
-    expect(loja.querySelector('[data-balance="emblems"]')).not.toBeNull();
-    const cheap = TOURNAMENT_ITEMS[0];
-    fireEvent.click(screen.getByRole('button', { name: `${cheap.nameEn} — ${cheap.price} Honor` }));
-    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
-    expect(shop.actions.onBuy).toHaveBeenCalledWith(cheap.id);
-  });
-
-  it('sem `shop`, não há aba de Loja (nada de aba que abre vazia)', () => {
-    renderWithCss(<TournamentPage {...base} />);
-    expect(screen.queryByRole('tab', { name: 'Shop' })).toBeNull();
+  it('D-58: não há loja de Emblemas no Torneio (mora no Mercado, aba Honra)', () => {
+    const { container } = renderWithCss(<TournamentPage {...base} />);
+    expect(container.querySelector('[data-tournament-shop]')).toBeNull();
+    expect(container.querySelector('[data-shop-item]')).toBeNull();
+    // A Honra segue visível como saldo no topo (o rótulo acessível diz "Honor: N").
+    expect(container.querySelector('[aria-label^="Honor:"]')).not.toBeNull();
   });
 });
 
-describe('Torneio — menu e treino', () => {
+describe('Torneio — faixa e luta', () => {
   it('o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box, e o Torneio não leva marca de missão', async () => {
-    const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
+    const { container } = renderWithCss(<TournamentPage {...base} />);
     expect(container.querySelector('[data-mission-mark]')).toBeNull();
     const ind = await waitFor(() => {
       const el = container.querySelector('[data-tier-indicator]');
@@ -112,11 +92,11 @@ describe('Torneio — menu e treino', () => {
     expect(glifo.style.fontSize).toBe('32px');
   });
 
-  it('o TREINO existe sem Vínculo, sem rede e sem oponentes — e abre a luta local', () => {
+  it('D-58: o botão "Train" saiu do Torneio (com e sem Vínculo mínimo)', () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede'))));
     renderWithCss(<TournamentPage {...base} totalXP={0} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Train' }));
-    expect(screen.queryByRole('button', { name: 'Train' })).toBeNull(); // saiu da folha, entrou a luta
+    expect(screen.queryByRole('button', { name: 'Train' })).toBeNull();
+    expect(document.querySelector('[data-torneio-treino]')).toBeNull();
   });
 });
 

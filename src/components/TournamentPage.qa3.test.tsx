@@ -28,7 +28,6 @@ describe('Desafiar não abre dois duelos ao mesmo tempo', () => {
       saveId={'a'.repeat(32)} petStage="rookie" onMatchPlayed={() => {}} trophies={[]} language="pt-BR"
       emblems={0} onEarnEmblems={() => {}} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)}
     />);
-    fireEvent.click(screen.getByRole('tab', { name: /Desafiar|Challenge/ }));
     const botoes = await waitFor(() => {
       const b = screen.getAllByRole('button', { name: /^Desafiar Op/ });
       expect(b.length).toBe(2);

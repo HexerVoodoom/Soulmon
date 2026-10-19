@@ -94,7 +94,8 @@ describe('2.3 View all', () => {
     abrirTudo();
     const tela = document.querySelector('[data-all-activities]') as HTMLElement;
     expect(tela).not.toBeNull();
-    const sec = within(tela.querySelector('[data-all-section="all"]') as HTMLElement);
+    // D-07: Tasks em cima, Habits embaixo (antes era uma seção única "All"); a busca por texto vale para a tela toda.
+    const sec = within(tela);
     expect(sec.getByText('Reunião de segunda')).toBeTruthy();
     expect(sec.getByText('Mon')).toBeTruthy();
     expect(sec.getByText('Aula de terça')).toBeTruthy();
@@ -118,9 +119,61 @@ describe('2.3 View all', () => {
     expect(nomes()).toContain('Beber água');
     expect(nomes()).not.toContain('Pagar conta');
     fireEvent.click(tela.querySelector('[data-all-filter="all"]') as HTMLElement);
-    fireEvent.click(tela.querySelector('[data-all-sort]') as HTMLElement);
+    // D-09: a ordem já abre em A–Z; dentro de cada grupo (Tasks, depois Habits).
+    expect(tela.querySelector('[data-all-sort]')!.getAttribute('data-all-sort')).toBe('az');
     const az = nomes() as string[];
-    expect(az).toEqual([...az].sort((x, y) => x.localeCompare(y, 'en')));
+    const tarefas = Array.from(tela.querySelectorAll('[data-all-section="tasks"] .sm2-ritual-name')).map(e => e.textContent as string);
+    expect(tarefas).toEqual([...tarefas].sort((x, y) => x.localeCompare(y, 'en')));
+    expect(az.length).toBeGreaterThan(tarefas.length);
+  });
+  it('D-07: na tela cheia, Tasks vêm antes de Habits, cada grupo com o seu cabeçalho', () => {
+    mount();
+    abrirTudo();
+    const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+    const secoes = Array.from(tela.querySelectorAll('[data-all-section]')).map(e => e.getAttribute('data-all-section'));
+    expect(secoes).toEqual(['tasks', 'habits']);
+    const tasks = tela.querySelector('[data-all-section="tasks"]') as HTMLElement;
+    const habits = tela.querySelector('[data-all-section="habits"]') as HTMLElement;
+    expect(tasks.compareDocumentPosition(habits) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(tasks).getByText('Pagar conta')).toBeTruthy();
+    expect(within(tasks).queryByText('Beber água')).toBeNull();
+    expect(within(habits).getByText('Beber água')).toBeTruthy();
+    expect(within(habits).queryByText('Pagar conta')).toBeNull();
+    expect(tasks.querySelector('h3')!.textContent).toBe('Tasks');
+    expect(habits.querySelector('h3')!.textContent).toBe('Habits');
+  });
+  it('D-08: tocar em Tasks mostra só tarefas; tocar em Habits, só hábitos', () => {
+    mount();
+    abrirTudo();
+    const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+    fireEvent.click(tela.querySelector('[data-all-filter="tasks"]') as HTMLElement);
+    expect(tela.querySelector('[data-all-section="habits"]')).toBeNull();
+    expect(within(tela).queryByText('Beber água')).toBeNull();
+    expect(within(tela).getByText('Pagar conta')).toBeTruthy();
+    fireEvent.click(tela.querySelector('[data-all-filter="habits"]') as HTMLElement);
+    expect(tela.querySelector('[data-all-section="tasks"]')).toBeNull();
+    expect(within(tela).queryByText('Pagar conta')).toBeNull();
+    expect(within(tela).getByText('Beber água')).toBeTruthy();
+  });
+  it('D-09/D-10: o botão cíclico percorre A–Z → Newest → Most done → A–Z, e a seta inverte', () => {
+    mount();
+    abrirTudo();
+    const tela = document.querySelector('[data-all-activities]') as HTMLElement;
+    const ordem = () => tela.querySelector('[data-all-sort]') as HTMLElement;
+    expect([ordem().getAttribute('data-all-sort'), ordem().textContent]).toEqual(['az', 'A–Z']);
+    fireEvent.click(ordem());
+    expect([ordem().getAttribute('data-all-sort'), ordem().textContent]).toEqual(['created', 'Newest']);
+    fireEvent.click(ordem());
+    expect([ordem().getAttribute('data-all-sort'), ordem().textContent]).toEqual(['done', 'Most done']);
+    fireEvent.click(ordem());
+    expect(ordem().getAttribute('data-all-sort')).toBe('az');
+    const tasks = () => Array.from(tela.querySelectorAll('[data-all-section="tasks"] .sm2-ritual-name')).map(e => e.textContent);
+    const normal = tasks();
+    const seta = tela.querySelector('[data-all-dir]') as HTMLElement;
+    expect(seta.getAttribute('data-all-dir')).toBe('default');
+    fireEvent.click(seta);
+    expect(seta.getAttribute('data-all-dir')).toBe('reversed');
+    expect(tasks()).toEqual([...normal].reverse());
   });
   it('NÃO dá para marcar: sem checkbox; tocar na linha abre a edição', () => {
     const onEditActivity = vi.fn();

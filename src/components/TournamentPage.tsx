@@ -58,11 +58,6 @@ import type { Language } from '../utils/i18n';
 import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
 import { availableFrames, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { TOURNAMENT_NPCS, npcSide, type TournamentNpc } from '../utils/tournamentNpcs';
-import { tournamentShopItems } from '../utils/mercadoCatalog';
-import {
-  CurrencyBalance, ShopShelf, ShopStatus, useShopFlash,
-  type ShopActions, type ShopOwnership,
-} from './mercado/ShopShelf';
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
@@ -125,15 +120,12 @@ interface TournamentPageProps {
    *  derrota rende XP igual (menos que a vitória, mas rende), e deduzir o
    *  resultado a partir do número de Emblemas seria regra copiada. */
   onMatchPlayed: (won: boolean) => void;
-  /** A loja de Emblemas (minimal-ui F5: mora no Torneio, na Arena). A
-   *  compra continua sendo do `handleShopBuy`; aqui só a prateleira. */
-  shop?: { ownership: ShopOwnership; actions: ShopActions };
+  /* D-58 (19/10/2026): o Torneio é SÓ de lutas. A loja de Emblemas e o botão "Train" saíram; a Honra se gasta no Mercado (aba Honra,
+     com as missões da semana no topo). */
   /** Onde pôr o indicador da faixa: o canto direito da linha do título (que é
    *  da folha, `AreaSheet`). `undefined` = sem folha em volta, o indicador vai
    *  inline no topo; `null` = a folha ainda não entregou o encaixe (espera). */
   headSlot?: HTMLElement | null;
-  /** Aba inicial. As missões da semana NÃO moram mais aqui: vivem no menu de Missões da Home. */
-  initialTab?: 'arena' | 'shop';
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -200,7 +192,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, shop, headSlot, initialTab }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, headSlot }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -258,10 +250,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
-  const [tab, setTab] = useState<'arena' | 'shop'>(initialTab ?? 'arena');
   /** A folha das faixas (antiga aba "Faixa") — abre pelo indicador do título. */
   const [tiersOpen, setTiersOpen] = useState(false);
-  const { flash, say } = useShopFlash();
 
   /* I7 (02/10/2026) — TREINO: o Torneio não tinha NENHUM jeito de lutar sem o PvP
      (Vínculo mínimo + servidor + partida do dia), e por isso "o treinamento não
@@ -395,14 +385,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     }
   };
 
-  /** Menu SÓ DE ÍCONE (02/10/2026): o nome vai no `aria-label`/`title`. Glifos:
-   *  `swords` (combate, Material), `question` (missões — o "?" AMARELO, A2/rodada 7; era `exclamation`, I8)
-   *  e `storefront` (loja) — estes dois com desenho próprio em `NavGlyphs`. */
-  const TABS = [
-    { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge', icon: 'swords', tone: 'inherit' as const },
-    ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop', icon: 'storefront', tone: 'inherit' as const }] : []),
-  ];
-
   /** O indicador da faixa (canto do título): a insígnia atual; toque abre a folha.
    *  Se o ranking falhou, vira a nuvem cortada — tocar tenta de novo. */
   const tierIndicator = rank === null ? null : (
@@ -470,8 +452,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         <span data-torcida-legenda style={{ display: 'block' }}>
           <InfoTipSection title={isPt ? 'Luta e treino' : 'Fighting and training'}>
             {isPt
-              ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela (ou no mascote): a barra de cheer enche devagar e despeja energia no seu Soulmon; com a energia cheia, ele solta o golpe especial. O treino é contra uma sombra, sem internet e sem Vínculo mínimo; não gasta partida e não rende nada.'
-              : 'The two Soulmons fight on their own. You cheer by tapping the screen (or the mascot): the cheer bar fills slowly and pours energy into your Soulmon; with full energy, it unleashes its special strike. Training is against a shadow, with no internet and no minimum Bond; it uses no match and earns nothing.'}
+              ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela (ou no mascote): a barra de cheer enche devagar e despeja energia no seu Soulmon; com a energia cheia, ele solta o golpe especial.'
+              : 'The two Soulmons fight on their own. You cheer by tapping the screen (or the mascot): the cheer bar fills slowly and pours energy into your Soulmon; with full energy, it unleashes its special strike.'}
           </InfoTipSection>
         </span>
         <InfoTipSection title={isPt ? 'Missões' : 'Missions'}>
@@ -479,10 +461,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             ? 'Três missões por semana, pagas em Honra. Contam partidas e jogo, nunca quantidade de tarefas.'
             : 'Three missions a week, paid in Honor. They count matches and play, never the number of tasks.'}
         </InfoTipSection>
-        <InfoTipSection title={isPt ? 'Loja' : 'Shop'}>
+        <InfoTipSection title={isPt ? 'Honra' : 'Honor'}>
           {isPt
-            ? 'A Honra só vem do Torneio e só compra cosmético — nenhuma vantagem de luta.'
-            : 'Honor only comes from the Tournament and only buys cosmetics — no fighting advantage.'}
+            ? 'A Honra só vem do Torneio e só compra cosmético, no Mercado (aba Honra) — nenhuma vantagem de luta.'
+            : 'Honor only comes from the Tournament and only buys cosmetics, at the Market (Honor tab) — no fighting advantage.'}
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Molduras' : 'Frames'} last>
           {isPt
@@ -581,30 +563,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </ul>
       )}
 
-      <div className="sm2-kit-tabs" role="tablist" aria-label={isPt ? 'Seções do torneio' : 'Tournament sections'}>
-        {TABS.map(t => {
-          const on = t.key === tab;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              aria-label={t.label}
-              title={t.label}
-              onClick={() => setTab(t.key)}
-              className={on ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
-            >
-              <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />
-            </button>
-          );
-        })}
-      </div>
-
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
           dívida. Aberto, só o aviso do apelido público (informação, não gesto). */}
-      {tab === 'arena' && !pvpAberto && (
+      {!pvpAberto && (
         <div data-torneio-requisito style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0 -8px 0' }}>
             <p style={{ ...sm2Text, margin: 0, fontWeight: 500, flex: 1, minWidth: 0 }}>
@@ -628,24 +590,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </div>
       )}
 
-      {/* TREINO (I7): a luta que NÃO depende de nada — nem rede, nem Vínculo, nem
-          partida do dia. Fica antes de qualquer trava, sempre à mão. Atrás do "?":
-          como a luta funciona (a torcida) e o que o treino não rende. */}
-      {tab === 'arena' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <button
-            type="button"
-            data-torneio-treino
-            onClick={() => startTraining()}
-            style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}
-          >
-            <Icon name="swords" size={20} />
-            {isPt ? 'Treinar' : 'Train'}
-          </button>
-        </div>
-      )}
-
-      {tab === 'arena' && pvpAberto && (
+      {/* D-58 (19/10/2026): o botão "Train" saiu — o Torneio é só de lutas. O treino contra os desafiantes NPC (`startTraining(npc)`)
+          continua na lista vazia de oponentes. */}
+      {pvpAberto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p data-torneio-ranqueado style={{ ...sm2Hint, margin: 0 }}>
             {isPt ? 'Ranqueado: os oponentes são sorteados perto da sua faixa.' : 'Ranked: opponents are drawn near your tier.'}
@@ -965,30 +912,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             isPt={isPt}
           />
         </RitualDialog>
-      )}
-
-      {/* ─── A LOJA DE EMBLEMAS ────────────────────────────────────────────
-          Só cosmético (`tournamentShopItems` filtra; há teste), só Emblemas —
-          saldo e preço na MESMA moeda, nenhuma outra aparece aqui. */}
-      {tab === 'shop' && shop && (
-        <div data-tournament-shop style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <ShopStatus flash={flash} idle={isPt ? 'Honra só vem do Torneio — e só compra cosmético.' : 'Honor only comes from the Tournament — and only buys cosmetics.'} language={lang} />
-            </div>
-            <CurrencyBalance currency="emblems" value={emblems} language={lang} />
-          </div>
-          <ShopShelf
-            language={lang}
-            items={tournamentShopItems()}
-            currency="emblems"
-            balance={emblems}
-            ownership={shop.ownership}
-            actions={shop.actions}
-            say={say}
-            flash={flash}
-          />
-        </div>
       )}
 
       {trainingOutcome !== null && (

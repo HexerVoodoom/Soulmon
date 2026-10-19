@@ -47,14 +47,14 @@ describe('R8 — desafiantes NPC quando não há oponentes', () => {
 });
 
 describe('R8 — o "i" único', () => {
-  it('há exatamente UM InfoTip na página e ele cobre faixas, treino, missões, loja e molduras', async () => {
+  it('há exatamente UM InfoTip na página e ele cobre faixas, luta, missões, Honra e molduras', async () => {
     stubApi({ rank: [] });
     render(<TournamentPage {...base} />);
     await waitFor(() => expect(document.querySelector('[data-tier-indicator]')).not.toBeNull());
     expect(document.querySelectorAll('[data-info-tip]').length).toBe(1);
     fireEvent.click(screen.getByRole('button', { name: 'About the Tournament' }));
     const t = document.querySelector('[data-torneio-info]')!.textContent!;
-    for (const w of ['Grandmaster', 'top 20', 'Training', 'missions', 'Honor', 'frame']) expect(t).toContain(w);
+    for (const w of ['Grandmaster', 'top 20', 'training', 'missions', 'Honor', 'frame']) expect(t).toContain(w);
   });
 });
 

@@ -20,10 +20,9 @@ import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 /** R8: o "i" ÚNICO da página (canto superior direito) explica tudo; abre por este botão. */
 const abrirInfo = () => fireEvent.click(screen.getByRole('button', { name: /Sobre o Torneio|About the Tournament/ }));
 
-/** A folha abre na Faixa; o requisito e o aviso moram na aba Desafiar. */
+/** D-58: o Torneio não tem mais abas — abre direto em Desafiar, onde moram o requisito e o aviso. */
 function render(ui: Parameters<typeof rtlRender>[0]) {
   const r = rtlRender(ui);
-  fireEvent.click(screen.getByRole('tab', { name: /Desafiar|Challenge/ }));
   return r;
 }
 
@@ -113,10 +112,10 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
   });
 });
 
-describe('o treino aparece nos dois casos e a legenda da torcida mora no "i" único', () => {
+describe('D-58: o botão Train saiu nos dois casos; a legenda da torcida mora no "i" único', () => {
   it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('totalXP=%i', totalXP => {
     render(<TournamentPage {...props} totalXP={totalXP} />);
-    expect(document.querySelector('[data-torneio-treino]')).not.toBeNull();
+    expect(document.querySelector('[data-torneio-treino]')).toBeNull();
     abrirInfo();
     expect(document.querySelector('[data-torcida-legenda]')).not.toBeNull();
   });

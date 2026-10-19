@@ -13,6 +13,7 @@ import { useBackLayer } from '../../utils/backStack';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
+import type { MercadoStallProps } from '../mercado/MercadoSheets';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { GuildSheet as GuildSheetT } from '../guild/GuildSheet';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
@@ -112,7 +113,7 @@ const LOTE_OCUPA_SOULMON: Record<string, OcupadoAcao> = { 'arena.duelo': 'duelo'
 export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
 export type LabTab = 'evolution' | 'pet' | 'stats' | 'perfil';
 
-type TournamentProps = Omit<ComponentProps<typeof TournamentPageT>, 'shop'>;
+type TournamentProps = ComponentProps<typeof TournamentPageT>;
 
 export interface AreaViewProps {
   area: AreaId;
@@ -147,6 +148,11 @@ export interface AreaViewProps {
   onExchangeCredits: (credits: number) => Promise<boolean>;
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
+  /** D-16: o Mercado abre a lojinha de Background já na aba Frames (a moldura trancada do Perfil leva até lá). One-shot por montagem. */
+  initialStallKind?: 'frames';
+  /** D-58: as missões da semana e o Resgatar, no topo da aba Honra do Mercado. */
+  weekly?: MercadoStallProps['weekly'];
+  onClaimWeekly?: MercadoStallProps['onClaimWeekly'];
   /** As props do Torneio, prontas no `App` (partida, missões da semana…). */
   tournament: TournamentProps;
   /** Duelo → `ArenaGame`. */
@@ -269,7 +275,10 @@ export function AreaView(props: AreaViewProps) {
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
-  const close = () => setSheet(null);
+  /* D-16: capturado na montagem (o `App` limpa o pedido logo depois e a folha do Mercado é `lazy` — ela monta DEPOIS disso).
+     Vale só para a primeira abertura: fechar a folha apaga. */
+  const [stallKind, setStallKind] = useState(props.initialStallKind);
+  const close = () => { setSheet(null); setStallKind(undefined); };
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
   // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
   const layerOpen = sheet !== null || duelOpen || game !== null;
@@ -321,6 +330,9 @@ export function AreaView(props: AreaViewProps) {
                 onExchangeCredits={props.onExchangeCredits}
                 accountTier={props.accountTier}
                 onUnlock={props.onUnlock}
+                initialKind={stall === 'background' ? stallKind : undefined}
+                weekly={props.weekly}
+                onClaimWeekly={props.onClaimWeekly}
                 {...ownership}
                 {...actions}
               />
@@ -349,7 +361,7 @@ export function AreaView(props: AreaViewProps) {
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
-              <TournamentPage {...props.tournament} skills={props.skills} shop={{ ownership, actions }} headSlot={tournamentHead} />
+              <TournamentPage {...props.tournament} skills={props.skills} headSlot={tournamentHead} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet

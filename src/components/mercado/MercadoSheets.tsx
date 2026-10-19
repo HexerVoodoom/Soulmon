@@ -20,9 +20,10 @@ import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
 import {
-  CreditExchange, CurrencyBalance, DecorRuleLine, ShopShelf, ShopStatus, bgThumb, useShopFlash,
+  CreditExchange, CurrencyBalance, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './ShopShelf';
+import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
 
 /**
  * O CONTEÚDO DAS LOJINHAS DO MERCADO (minimal-ui F5) — o que entra dentro do
@@ -65,17 +66,26 @@ export interface MercadoStallProps extends ShopOwnership, ShopActions {
   /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba de Créditos. */
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
+  /** D-24: a aba em que a lojinha de Background abre (o Perfil leva a `frames`). Padrão: `backgrounds`. */
+  initialKind?: StallKind;
+  /** D-58: as missões da semana (pagas em Honra) moram no TOPO da aba Honra do Mercado. Sem elas, a aba não as desenha. */
+  weekly?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
+  onClaimWeekly?: (id: WeeklyMissionId) => void;
 }
+
+/** As duas abas da lojinha de Background (D-24): Backgrounds à esquerda (abre nela), Frames à direita. */
+export type StallKind = 'backgrounds' | 'frames';
+export const STALL_KIND_ORDER: readonly StallKind[] = ['backgrounds', 'frames'];
 
 /** Uma lojinha de compra (Itens, Decoração ou Background), com abas por moeda. */
 export function MercadoStallSheet(props: MercadoStallProps) {
-  const { stall, language, points, emblems, credits, onExchangeCredits, accountTier, onUnlock } = props;
+  const { stall, language, points, emblems, credits, onExchangeCredits, accountTier, onUnlock, initialKind, weekly, onClaimWeekly } = props;
   const isPt = language === 'pt-BR';
   const tabs = STALL_CURRENCIES[stall];
   const [cur, setCur] = useState<CurrencyId>(tabs[0]);
   const { flash, say } = useShopFlash();
-  /** C3: a lojinha da Panora vende DUAS coisas — separadas em Molduras / Backgrounds; a moeda (Bits / Honra) fica dentro de cada uma. */
-  const [kind, setKind] = useState<'frames' | 'backgrounds'>('backgrounds');
+  /** C3: a lojinha da Panora vende DUAS coisas — separadas em Backgrounds / Frames; a moeda (Bits / Honra) fica dentro de cada uma. */
+  const [kind, setKind] = useState<StallKind>(initialKind ?? 'backgrounds');
   const showFrames = stall === 'background' && kind === 'frames';
   const balance = cur === 'emblems' ? emblems : cur === 'credits' ? credits : points;
 
@@ -84,10 +94,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       <div style={stickyHead}>
         {stall === 'background' && (
           <PixelTabs
-            items={[
-              { key: 'frames' as const, label: isPt ? 'Molduras' : 'Frames' },
-              { key: 'backgrounds' as const, label: 'Backgrounds' },
-            ]}
+            items={STALL_KIND_ORDER.map(k => ({ key: k, label: k === 'frames' ? (isPt ? 'Molduras' : 'Frames') : 'Backgrounds' }))}
             value={kind}
             onChange={setKind}
             ariaLabel={isPt ? 'O que a Panora vende' : 'What Panora sells'}
@@ -109,6 +116,14 @@ export function MercadoStallSheet(props: MercadoStallProps) {
         </div>
       </div>
 
+
+      {/* D-58 (19/10/2026): as missões da semana (pagas em Honra) abrem a aba Honra — a torneira ao lado do ralo, e só ali. */}
+      {cur === 'emblems' && weekly && weekly.length > 0 && (
+        <section data-mercado-weekly aria-label={isPt ? 'Missões da semana' : 'Weekly missions'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h3 className="sm2-title" style={{ margin: 0, fontSize: 'var(--sm2-text-md)' }}>{isPt ? 'Esta semana' : 'This week'}</h3>
+          <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
+        </section>
+      )}
 
       {/* D2 (02/10/2026): a regra da decoração no TOPO — quantas peças cabem e onde aparecem. */}
       {stall === 'decoracao' && cur !== 'credits' && <DecorRuleLine language={language} />}

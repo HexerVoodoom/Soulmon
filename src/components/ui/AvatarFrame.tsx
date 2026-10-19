@@ -98,7 +98,7 @@ function howText(f: FrameDef, isPt: boolean): string {
  * aparecem com o jeito de conseguir (tracejado, `aria-disabled`, fora do Tab — nunca opacidade, D-J14).
  * `previewSrc` é a criatura do jogador (a mesma que aparece no ranking).
  */
-export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits = 0, onBuy }: {
+export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits = 0, onBuy, onOpenShop }: {
   ctx: FrameContext;
   /** Id da moldura em uso (já resolvido: `null` = sem moldura). */
   equipped: string | null;
@@ -109,6 +109,9 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits =
   bits?: number;
   /** Comprar uma moldura de LOJA. Ausente = a linha trancada só informa o preço (comportamento antigo). */
   onBuy?: (id: string) => void;
+  /** D-16: a moldura de LOJA que a pessoa não tem fica trancada e o toque leva ao Mercado > Frames (a compra mora só lá).
+   *  Sem `onBuy` e com isto, nenhum botão de comprar aparece aqui. */
+  onOpenShop?: () => void;
 }) {
   const preview = (f: FrameDef | null) => (
     <AvatarFrame frame={f}>
@@ -166,6 +169,16 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits =
                   {isPt ? `Comprar · ${f.price}` : `Buy · ${f.price}`}
                 </button>
               </div>
+            ) : f.origin === 'shop' && onOpenShop ? (
+              <button
+                type="button"
+                data-frame-option={f.id}
+                data-frame-locked
+                data-frame-shop-link
+                aria-label={isPt ? `${name} — trancada. Abrir o Mercado` : `${name} — locked. Open the Market`}
+                onClick={onOpenShop}
+                style={{ ...rowStyle(false, true), cursor: 'pointer' }}
+              >{body}</button>
             ) : (
               <div data-frame-option={f.id} data-frame-locked aria-disabled="true" style={rowStyle(false, true)}>{body}</div>
             )}
