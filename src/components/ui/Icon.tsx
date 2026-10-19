@@ -43,7 +43,7 @@ import { GlyphSvg, hasGlyph } from './NavGlyphs';
  *    é o que faz o traço casar com a espessura do pixel do sprite; 400
  *    devolve "biblioteca de ícones padrão".
  *
- * A fonte é um SUBSET de 99 ícones (145 KB). Nome fora do inventário não
+ * A fonte é um SUBSET de 107 ícones (145 KB). Nome fora do inventário não
  * renderiza glifo nenhum — a lista e o comando de regeração estão em
  * `src/styles/tokens.md`.
  */

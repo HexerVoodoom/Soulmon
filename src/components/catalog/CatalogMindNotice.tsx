@@ -57,7 +57,7 @@ export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfir
       </button>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Icon name="health_and_safety" size={24} fill={1} tone="primary" />
+        <Icon name="psychology" size={24} fill={1} tone="primary" />
         <h3 style={{ ...sm2Text, fontWeight: 600, margin: 0 }}>
           {isPt ? 'Antes de adicionar' : 'Before you add this'}
         </h3>

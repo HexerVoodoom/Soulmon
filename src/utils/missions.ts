@@ -104,7 +104,7 @@ export const MISSIONS: Mission[] = [
     progress: s => s.dungeonRunsCompleted,
   },
   {
-    id: 'mission-dino-1000', category: 'games', icon: '🏃', iconName: 'directions_run', target: 1000, bgReward: 'bg-mission-dinoland',
+    id: 'mission-dino-1000', category: 'games', icon: '🏃', iconName: 'bolt', target: 1000, bgReward: 'bg-mission-dinoland',
     namePt: 'Maratonista Jurássico', nameEn: 'Jurassic Marathoner',
     descPt: 'Faça 1000 de score na Corrida com obstáculos', descEn: 'Score 1000 in the Obstacle Run',
     progress: s => s.dinoBest,

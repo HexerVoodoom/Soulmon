@@ -33,13 +33,13 @@ function inventario(): Set<string> {
   return new Set(bloco![1].split(',').map(s => s.trim()).filter(Boolean));
 }
 
-function arquivosTsx(dir: string, saida: string[] = []): string[] {
+function arquivosFonte(dir: string, saida: string[] = []): string[] {
   for (const nome of readdirSync(dir)) {
     const p = join(dir, nome);
     if (statSync(p).isDirectory()) {
       if (nome === 'node_modules' || nome === 'assets') continue;
-      arquivosTsx(p, saida);
-    } else if (nome.endsWith('.tsx') && !nome.includes('.test.')) {
+      arquivosFonte(p, saida);
+    } else if (/\.tsx?$/.test(nome) && !nome.includes('.test.') && !nome.endsWith('.d.ts')) {
       saida.push(p);
     }
   }
@@ -57,25 +57,43 @@ function arquivosTsx(dir: string, saida: string[] = []): string[] {
  */
 const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop', 'mapa', 'exclamation', 'question']);
 
+/** Resultados literais de uma expressão (valor único, ramos de ?: / ?? / ||); comparações como === 'x' não contam. */
+function literais(expr: string): string[] {
+  return [...expr.matchAll(/(?:^|[?:]|\|\||\?\?)\s*['"]([a-z][a-z0-9_]{2,})['"]/g)].map(m => m[1]);
+}
+
+/** Todo nome de ícone de fonte usado: `<Icon name=…>` (literal OU expressão) e chaves de mapa icon:/iconName:. */
+function nomesUsados(src: string): string[] {
+  const achados: string[] = [];
+  for (const m of src.matchAll(/<Icon\b[^>]*?\bname=(?:"([^"]+)"|'([^']+)'|\{([^}]*)\})/g)) {
+    achados.push(...(m[3] !== undefined ? literais(m[3]) : [m[1] ?? m[2]]));
+  }
+  for (const m of src.matchAll(/\b(?:icon|iconName|titleIconName)\s*:\s*(?:'([a-z][a-z0-9_]{2,})'|"([a-z][a-z0-9_]{2,})")/g)) {
+    achados.push(m[1] ?? m[2]);
+  }
+  return achados;
+}
+
 describe('inventário de ícones', () => {
-  it('todo `<Icon name="…">` literal existe no subset da fonte', () => {
+  it('varre .ts E .tsx (o bug directions_run vivia em .ts)', () => {
+    const exts = new Set(arquivosFonte(RAIZ).map(f => f.slice(f.lastIndexOf('.'))));
+    expect(exts.has('.ts')).toBe(true);
+    expect(exts.has('.tsx')).toBe(true);
+  });
+
+  it('todo ícone usado (<Icon name=…>, icon:, iconName:) existe no subset da fonte', () => {
     const nomes = inventario();
-    /** @type {string[]} */
     const fora: string[] = [];
-    for (const arquivo of arquivosTsx(RAIZ)) {
+    for (const arquivo of arquivosFonte(RAIZ)) {
       const src = readFileSync(arquivo, 'utf-8');
-      for (const m of src.matchAll(/(?:name|icon|iconName|titleIconName)\s*[=:]\s*['"]([a-z][a-z_]{2,})['"]/g)) {
-        const nome = m[1];
+      for (const nome of nomesUsados(src)) {
         if (NAO_SAO_ICONES.has(nome) || nomes.has(nome)) continue;
-        // Só reclama de quem está mesmo num `<Icon`/prop de ícone; `name="…"`
-        // de input e de rota não interessa aqui.
-        if (!/Icon|icon/.test(m[0])) continue;
-        fora.push(`${arquivo.slice(RAIZ.length)} → '${nome}'`);
+        fora.push(arquivo.slice(RAIZ.length) + " → '" + nome + "'");
       }
     }
     expect(
       fora,
-      `ícone fora do subset renderiza VAZIO. Acrescente o nome em src/styles/tokens.md (ordenado) E rebaixe a fonte:\n${fora.join('\n')}`,
+      'ícone fora do subset renderiza VAZIO (ou vaza como texto). Troque por um do inventário, ou acrescente o nome em src/styles/tokens.md (ordenado) E rebaixe a fonte:\n' + fora.join('\n'),
     ).toEqual([]);
   });
 });

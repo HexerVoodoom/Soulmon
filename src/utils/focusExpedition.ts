@@ -2,11 +2,11 @@ import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { MATERIAL_CAP, MATERIAL_IDS, type BuildingQuestState, type MaterialId } from './buildingQuests';
 
 export const FOCUS_ENVIRONMENTS = [
-  { id: 'forest', pt: 'Floresta', en: 'Forest', icon: 'forest', materials: ['moss', 'laurel', 'down', 'fang'] },
-  { id: 'shore', pt: 'Costa', en: 'Shore', icon: 'waves', materials: ['pebble', 'prism', 'essence', 'keepsake'] },
-  { id: 'cavern', pt: 'Caverna', en: 'Cavern', icon: 'landscape', materials: ['ore', 'spark', 'cipher', 'crest'] },
-  { id: 'garden', pt: 'Jardim', en: 'Garden', icon: 'yard', materials: ['moss', 'essence', 'page', 'prism'] },
-  { id: 'workshop', pt: 'Oficina', en: 'Workshop', icon: 'build', materials: ['gear', 'ink', 'spark', 'ribbon'] },
+  { id: 'forest', pt: 'Floresta', en: 'Forest', icon: 'park', materials: ['moss', 'laurel', 'down', 'fang'] },
+  { id: 'shore', pt: 'Costa', en: 'Shore', icon: 'water_drop', materials: ['pebble', 'prism', 'essence', 'keepsake'] },
+  { id: 'cavern', pt: 'Caverna', en: 'Cavern', icon: 'diamond', materials: ['ore', 'spark', 'cipher', 'crest'] },
+  { id: 'garden', pt: 'Jardim', en: 'Garden', icon: 'eco', materials: ['moss', 'essence', 'page', 'prism'] },
+  { id: 'workshop', pt: 'Oficina', en: 'Workshop', icon: 'tune', materials: ['gear', 'ink', 'spark', 'ribbon'] },
   { id: 'observatory', pt: 'Observatório', en: 'Observatory', icon: 'visibility', materials: ['cipher', 'down', 'page', 'laurel'] },
 ] as const satisfies ReadonlyArray<{ id: string; pt: string; en: string; icon: string; materials: readonly MaterialId[] }>;
 
