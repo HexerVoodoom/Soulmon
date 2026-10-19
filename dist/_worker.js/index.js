@@ -6796,6 +6796,29 @@ function avatarIdOrNull(raw) {
 }
 __name(avatarIdOrNull, "avatarIdOrNull");
 
+// api/_artLine.js
+var ART_LINE_IDS = /* @__PURE__ */ new Set([
+  "industrial",
+  "nascente",
+  "alento",
+  "vida",
+  "meteoro",
+  "kaelen",
+  "orrin",
+  "thalindra",
+  "igni",
+  "nautilu",
+  "astrase",
+  "ignar",
+  "lumel",
+  "serah",
+  "corvo"
+]);
+function artLineOrNull(raw) {
+  return typeof raw === "string" && ART_LINE_IDS.has(raw) ? raw : null;
+}
+__name(artLineOrNull, "artLineOrNull");
+
 // api/_frames.js
 var FRAME_IDS = /* @__PURE__ */ new Set([
   "rank-madeira",
@@ -6884,6 +6907,7 @@ async function publicProfile(env, p, extra = {}) {
     stage: p.stage,
     avatarId: avatarIdOrNull(p.avatarId),
     frameId: frameIdOrNull(p.frameId),
+    artLine: artLineOrNull(p.artLine),
     unlockedStages: p.unlockedStages,
     pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
@@ -7073,6 +7097,8 @@ async function handleCommunity({ request, env }) {
       // `null` explicito limpa (volta ao padrao do NPC / sem moldura).
       avatarId: "avatarId" in body ? avatarIdOrNull(body.avatarId) : avatarIdOrNull(prev.avatarId),
       frameId: "frameId" in body ? frameIdOrNull(body.frameId) : frameIdOrNull(prev.frameId),
+      // Linha de arte (D-60): só id de lista fechada (`_artLine.js`); ausência herda o gravado, `null` limpa.
+      artLine: "artLine" in body ? artLineOrNull(body.artLine) : artLineOrNull(prev.artLine),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
@@ -7229,7 +7255,7 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId) };
+    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine) };
     const pend = myRank.pending;
     if (pend && pend.opp !== opponentId) await forfeitPending({ id, me, myRank });
     const open = myRank.pending && myRank.pending.opp === opponentId ? myRank.pending : null;
@@ -7322,6 +7348,7 @@ async function handleCommunity({ request, env }) {
         stage: p?.stage || "rookie",
         avatarId: avatarIdOrNull(p?.avatarId),
         frameId: frameIdOrNull(p?.frameId),
+        artLine: artLineOrNull(p?.artLine),
         points: rec.points,
         wins: rec.wins,
         losses: rec.losses,
@@ -8257,7 +8284,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11018,7 +11045,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-CZwnow/functionsRoutes-0.09056670202802797.mjs
+// ../.wrangler/tmp/pages-z7Deyp/functionsRoutes-0.748910415107564.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11295,7 +11322,7 @@ var routes = [
   }
 ];
 
-// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11621,7 +11648,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
