@@ -43,7 +43,35 @@ import {
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap';
+
+/**
+ * D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO de evolução, TODOS os tipos
+ * somados (comum, maior, prisma, triplo). Do 4º em diante o Soulmon recusa e o
+ * chip volta intacto à pastinha — sem punição, e vale no próximo estágio.
+ *
+ * A contagem mora em `chipsStage` ({ stage, used }). Ela vale só para o
+ * `evolutionStage` gravado nela: ao evoluir, o estágio muda e o registro velho
+ * deixa de valer sozinho; renascer/degenerar (que podem repetir o estágio)
+ * zeram o campo explicitamente no `App.tsx`.
+ */
+export const CHIPS_PER_STAGE = 3;
+export interface ChipStageUse { stage: string; used: number }
+
+/** Migração/sanitização do campo do save (idempotente). Ausente ou lixo → `undefined` (0 usados):
+ *  o save antigo não registra uso de chip, então ninguém é bloqueado por dado que não existe. */
+export function sanitizeChipsStage(v: unknown): ChipStageUse | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const c = v as { stage?: unknown; used?: unknown };
+  if (typeof c.stage !== 'string' || !c.stage) return undefined;
+  const used = typeof c.used === 'number' && Number.isFinite(c.used) ? Math.max(0, Math.floor(c.used)) : 0;
+  return { stage: c.stage, used };
+}
+
+export function chipsUsedThisStage(state: { evolutionStage?: string; chipsStage?: ChipStageUse }): number {
+  const reg = state.chipsStage;
+  return reg && reg.stage === (state.evolutionStage ?? 'rookie') ? Math.max(0, reg.used) : 0;
+}
 
 /**
  * Quantos 🌀 Glitchtama o jogador pode CONSUMIR por dia do jogador.
@@ -109,6 +137,8 @@ export interface SpecialItemState {
   hunger?: HungerRecord;
   energyClock?: EnergyClock;
   premiumFood?: PremiumRecord;
+  /** Chips usados no estágio atual (D-97) — ver `CHIPS_PER_STAGE`. */
+  chipsStage?: ChipStageUse;
   playerDayTz?: PlayerDayAnchor;
 }
 
@@ -144,6 +174,8 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
     if (premiumUsedToday(state, now) >= PREMIUM_USES_PER_DAY) return 'daily-cap';
     if (hungerAt(state.hunger, now.getTime()) >= HUNGER_PREMIUM_REFUSE_AT) return 'already-full';
   }
+  // D-97: limite de chips por estágio. Recusa ANTES do decremento: o chip volta intacto.
+  if (special.kind === 'chip' && chipsUsedThisStage(state) >= CHIPS_PER_STAGE) return 'stage-cap';
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
   if (special.kind === 'heart' && state.healthPoints >= state.maxHealthPoints) return 'already-full';
@@ -274,6 +306,7 @@ export function applySpecialItem<T extends SpecialItemState>(
     state: {
       ...prev,
       foodInventory,
+      chipsStage: { stage: prev.evolutionStage ?? 'rookie', used: chipsUsedThisStage(prev) + 1 },
       powerPoints: prev.powerPoints + boost('power'),
       harmonyPoints: prev.harmonyPoints + boost('harmony'),
       benevolencePoints: prev.benevolencePoints + boost('benevolence'),

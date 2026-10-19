@@ -45,7 +45,7 @@ const emblemFurn = TOURNAMENT_ITEMS.find(i => i.kind === 'furniture')!;
 describe('compra', () => {
   it('comprar chama onBuy com o id e anuncia na região viva', () => {
     const onBuy = vi.fn(() => true);
-    const { container } = abrir({ stall: 'itens', onBuy });
+    const { container } = abrir({ stall: 'itens', onBuy, points: 1000 });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
     // I5 (02/10/2026): o toque abre a folha do item; o Comprar dela abre a confirmação.
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));

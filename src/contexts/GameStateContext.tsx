@@ -3,6 +3,7 @@ import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
 import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
+import { sanitizeChipsStage } from '../utils/specialItemUse';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
@@ -424,6 +425,8 @@ export interface GameState {
   glitchtamaUse?: { day: string; used: number };
   /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
   premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
+  /** Chips usados no ESTÁGIO atual, todos os tipos (D-97, limite 3 — `utils/specialItemUse.ts`). */
+  chipsStage?: { stage: string; used: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
@@ -1265,6 +1268,10 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        // D-97: chips por estágio. Ausente/lixo → `undefined` (0 usados): o save antigo
+        // não registra uso de chip, então não há como saber quem já usou — ninguém é
+        // bloqueado por dado que não existe. Presente e válido: mantém (idempotente).
+        chipsStage: sanitizeChipsStage(loadedState.chipsStage),
         // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
         premiumFood: (() => {
           const p = obj<unknown>(loadedState.premiumFood);

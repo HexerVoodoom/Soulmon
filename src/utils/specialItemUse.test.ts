@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, type SpecialItemState } from './specialItemUse';
+import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
 import { playerDayKey } from './playerDay';
-import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './shop';
+import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, TRIPLE_CHIP_EMOJI, TRIPLE_CHIP_BOOST, SPECIAL_ITEMS } from './shop';
 
 // Os três itens especiais tinham a regra dentro de updater inline no
 // `handleFeed`, fora do alcance de qualquer teste. Estes testes travam os
@@ -277,15 +277,17 @@ describe('teto diário do glitchtama', () => {
 });
 
 describe('chips maiores e prisma (D-12/D-13)', () => {
-  it('chips comuns custam 180; 4 novos existem (420/420/420/480)', () => {
+  it('D-96: chips comuns custam 360 e os maiores 840; D-94: o Prisma saiu da loja; D-95: Chip Triplo 2.400', () => {
     for (const id of ['chip-power', 'chip-harmony', 'chip-benevolence']) {
-      expect(SHOP_ITEMS.find(i => i.id === id)!.price).toBe(180);
+      expect(SHOP_ITEMS.find(i => i.id === id)!.price).toBe(360);
     }
     const preco = (id: string) => SHOP_ITEMS.find(i => i.id === id)!.price;
-    expect(preco('chip-big-power')).toBe(420);
-    expect(preco('chip-big-harmony')).toBe(420);
-    expect(preco('chip-big-benevolence')).toBe(420);
-    expect(preco('chip-prism')).toBe(480);
+    expect(preco('chip-big-power')).toBe(840);
+    expect(preco('chip-big-harmony')).toBe(840);
+    expect(preco('chip-big-benevolence')).toBe(840);
+    expect(SHOP_ITEMS.find(i => i.id === 'chip-prism')).toBeUndefined();
+    expect(SHOP_ITEMS.some(i => i.icon === PRISM_CHIP_EMOJI)).toBe(false);
+    expect(preco('chip-triple')).toBe(2400);
   });
 
   it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
@@ -307,5 +309,80 @@ describe('chips maiores e prisma (D-12/D-13)', () => {
     expect([state.powerPoints, state.harmonyPoints, state.benevolencePoints]).toEqual([6, 7, 8]);
     expect(state.attributesSinceLastEvolution).toEqual({ power: 2, harmony: 2, benevolence: 2 });
     expect(state.totalXP).toBe(70);
+  });
+});
+
+describe('D-94 prisma já possuído segue usável', () => {
+  it('quem tem o Prisma na pastinha usa e recebe +2/+2/+2', () => {
+    expect(SPECIAL_ITEMS[PRISM_CHIP_EMOJI]).toBeDefined();
+    const { state, refused } = applySpecialItem(estado({ foodInventory: { [PRISM_CHIP_EMOJI]: 1 } }), PRISM_CHIP_EMOJI, AGORA);
+    expect(refused).toBeUndefined();
+    expect(state.attributesSinceLastEvolution).toEqual({ power: 2, harmony: 2, benevolence: 2 });
+  });
+});
+
+describe('D-95 chip triplo', () => {
+  it('da +9 em cada atributo e vem da loja com o emoji próprio', () => {
+    const it = SHOP_ITEMS.find(i => i.id === 'chip-triple')!;
+    expect(it.icon).toBe(TRIPLE_CHIP_EMOJI);
+    expect(TRIPLE_CHIP_BOOST).toBe(9);
+    const { state } = applySpecialItem(estado({ foodInventory: { [TRIPLE_CHIP_EMOJI]: 1 } }), TRIPLE_CHIP_EMOJI, AGORA);
+    expect([state.powerPoints, state.harmonyPoints, state.benevolencePoints]).toEqual([9, 9, 9]);
+    expect(state.attributesSinceLastEvolution).toEqual({ power: 9, harmony: 9, benevolence: 9 });
+  });
+});
+
+describe('D-97 limite de 3 chips por estágio', () => {
+  const inv = { [CHIP_EMOJI.power]: 9, [PRISM_CHIP_EMOJI]: 9, [TRIPLE_CHIP_EMOJI]: 9 };
+  it('1º, 2º e 3º passam (todos os tipos somados); o 4º é recusado sem consumir', () => {
+    let st = estado({ foodInventory: { ...inv }, evolutionStage: 'rookie' });
+    const ordem = [CHIP_EMOJI.power, PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI];
+    ordem.forEach((e, i) => {
+      expect(chipsUsedThisStage(st)).toBe(i);
+      const r = applySpecialItem(st, e, AGORA);
+      expect(r.refused).toBeUndefined();
+      st = r.state;
+      expect(chipsUsedThisStage(st)).toBe(i + 1);
+    });
+    expect(CHIPS_PER_STAGE).toBe(3);
+    const antes = JSON.stringify(st);
+    expect(specialRefusal(st, CHIP_EMOJI.power, AGORA)).toBe('stage-cap');
+    const r4 = applySpecialItem(st, CHIP_EMOJI.power, AGORA);
+    expect(r4.refused).toBe('stage-cap');
+    expect(r4.state).toBe(st);
+    expect(JSON.stringify(st)).toBe(antes);
+    expect(st.foodInventory[CHIP_EMOJI.power]).toBe(8);
+  });
+  it('a contagem é POR estágio: evoluir zera sozinho, sem tocar no resto', () => {
+    const cheio = estado({ foodInventory: { ...inv }, evolutionStage: 'rookie', chipsStage: { stage: 'rookie', used: 3 } });
+    expect(specialRefusal(cheio, CHIP_EMOJI.power, AGORA)).toBe('stage-cap');
+    const evoluiu = { ...cheio, evolutionStage: 'champion' };
+    expect(chipsUsedThisStage(evoluiu)).toBe(0);
+    const r = applySpecialItem(evoluiu, CHIP_EMOJI.power, AGORA);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.chipsStage).toEqual({ stage: 'champion', used: 1 });
+    // reset explícito (renascer/degenerar repetem o estágio): campo undefined → 0
+    expect(chipsUsedThisStage({ ...cheio, chipsStage: undefined })).toBe(0);
+  });
+  it('o limite só vale para chips: coraçãozinho e glitchtama passam com 3 já usados', () => {
+    const cheio = estado({ foodInventory: { [HEART_ITEM_EMOJI]: 1, [GLITCHTAMA_EMOJI]: 1 }, chipsStage: { stage: 'rookie', used: 3 }, evolutionStage: 'rookie' });
+    expect(specialRefusal(cheio, HEART_ITEM_EMOJI, AGORA)).toBeUndefined();
+    expect(specialRefusal(cheio, GLITCHTAMA_EMOJI, AGORA)).toBeUndefined();
+  });
+  it('quem já tinha MAIS de 3 aplicados mantém: nada é removido, só os novos bloqueiam', () => {
+    const veterano = estado({ foodInventory: { [CHIP_EMOJI.power]: 1 }, evolutionStage: 'rookie', chipsStage: { stage: 'rookie', used: 7 },
+      powerPoints: 21, attributesSinceLastEvolution: { power: 21, harmony: 0, benevolence: 0 } });
+    expect(specialRefusal(veterano, CHIP_EMOJI.power, AGORA)).toBe('stage-cap');
+    expect(veterano.powerPoints).toBe(21);
+  });
+  it('migração: ausente/lixo → undefined (0 usados); válido é mantido e idempotente', () => {
+    expect(sanitizeChipsStage(undefined)).toBeUndefined();
+    expect(sanitizeChipsStage('x')).toBeUndefined();
+    expect(sanitizeChipsStage({ stage: '' , used: 2 })).toBeUndefined();
+    expect(sanitizeChipsStage({ stage: 'rookie', used: 'a' })).toEqual({ stage: 'rookie', used: 0 });
+    expect(sanitizeChipsStage({ stage: 'rookie', used: -4 })).toEqual({ stage: 'rookie', used: 0 });
+    expect(sanitizeChipsStage({ stage: 'rookie', used: 2.9 })).toEqual({ stage: 'rookie', used: 2 });
+    const uma = sanitizeChipsStage({ stage: 'champion', used: 3 });
+    expect(sanitizeChipsStage(uma)).toEqual(uma);
   });
 });

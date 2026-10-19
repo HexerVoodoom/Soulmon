@@ -2758,6 +2758,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** O USO de item especial (glitchtama, coraçãozinho, chip) aplicado ao `prev` — dono único, distinto de `careUpdaters.ts`.
 **Exports:**
 - `SpecialRefusal` (type) — O USO de um item especial da pastinha — glitchtama, coraçãozinho, chip. ⚠️ Por que este arquivo existe, e por que NÃO é o `careUpdaters.ts`.
+- `CHIPS_PER_STAGE` (3), `ChipStageUse` (interface `{ stage, used }`, campo `chipsStage` do save), `chipsUsedThisStage(state)` — D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO, todos os tipos somados. Recusa `'stage-cap'` (o chip não é consumido); a contagem só vale para o `evolutionStage` gravado nela e é zerada ao evoluir, renascer e degenerar (`App.tsx`). Save antigo entra com 0 usados. REGISTRO §121.
 - `GLITCHTAMA_PER_DAY` — Quantos 🌀 Glitchtama o jogador pode CONSUMIR por dia do jogador. ⚠️ Este teto não é economia, é a espinha da progressão — e ele foi acrescentado depois de uma auditoria fazer a conta (06/09/2026). O Glitchtama dá +1 `perfectDays`, que é a moeda que a escada de evolução consome.
 - `GlitchtamaUse` (interface) — O registro do teto, no SAVE (`glitchtamaUse`), nunca no localStorage. Mesmo motivo do `careCaps` e do `poopDrainCharge`: um teto que se fura trocando de aparelho não é um teto.
 - `SpecialItemState` (interface) — Fatia do GameState que o uso de item especial lê e escreve. Ganhou **`missionPerfectDays?`** em `cf6315e1` (decisão do dono #41/#60).
