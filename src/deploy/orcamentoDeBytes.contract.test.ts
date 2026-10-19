@@ -179,7 +179,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // bônus de energia da noite em `restWindow.ts`, usado no efeito do auto-sleep do App). 642_067 -> 650_626. Corte real segue = partir o `App.tsx`.
   // 19/10/2026 (missão especial diária, REGISTRO §106): main já em 656_940; esta PR soma +4,2 KB (`utils/specialMissions.ts`,
   // bônus no `computeDailyReset`, efeito único no App, meta de passos no `StepsCard`). 650_626 -> 661_170. Corte real segue = partir o `App.tsx`.
-  'index.js': 661_170,
+  // 19/10/2026 (re-medida pós refino W3+W4 e Frente IA, REGISTRO §107): a main já estava em 677_043 (inicio de dia, notificações, carta,
+  // marcadores: o teste ficou vermelho ali, sem ninguém re-medir); a Frente IA (transcrição direta no Groq, chat sem IA ociosa, erros
+  // distintos) REMOVE o caminho Supabase e fecha em 675_858 (-1,2 KB sobre a main). 661_170 -> 675_858. Corte real segue = partir o `App.tsx`.
+  'index.js': 675_858,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
