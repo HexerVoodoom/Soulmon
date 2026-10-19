@@ -6,7 +6,7 @@
  * não existe. Por isso a polaridade de fábrica depende do NOME da chave:
  *  - efeitos sonoros: `SOUND_MUTED` ausente  => LIGADOS (isMuted() === false)
  *  - música-tema:     `SOUND_THEME_OFF` ausente => LIGADA (temaPreferido() === true)
- *  - música de masmorra/arena: `SOUND_TRACK_ENABLED` ausente => DESLIGADA (trilhaLigada() === false)
+ *  - música de combate: `SOUND_TRACK_ENABLED` ausente => LIGADA desde 19/10/2026 (REGISTRO §102; trilhaLigada() === true)
  * Inverter qualquer uma (renomear a chave, trocar o sentido do readFlag) faz o app
  * nascer com o som errado sem erro em lugar nenhum.
  */
@@ -33,7 +33,7 @@ describe('polaridades de som do save novo (D-18)', () => {
     expect(temaPreferido()).toBe(true);
   });
 
-  it('música de masmorra/arena nasce DESLIGADA (SOUND_TRACK_ENABLED ausente)', () => {
-    expect(trilhaLigada()).toBe(false);
+  it('música de combate nasce LIGADA (SOUND_TRACK_ENABLED ausente; REGISTRO §102, 19/10/2026)', () => {
+    expect(trilhaLigada()).toBe(true);
   });
 });

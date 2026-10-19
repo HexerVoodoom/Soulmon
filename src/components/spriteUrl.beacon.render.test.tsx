@@ -91,7 +91,9 @@ describe('LibraryPage — o sprite do diretorio publico', () => {
     await waitFor(() => expect(screen.getByText('Vitima')).toBeTruthy());
 
     // Recusar NAO pode virar sprite vazio: o visor nao tem estado de erro.
-    expect(srcs()).toContain(getSpriteForStage('rookie'));
+    // D-60 (19/10/2026): a reserva e um inicial atual, NUNCA a arvore generica (gato-coruja descartado).
+    expect(srcs()).not.toContain(getSpriteForStage('rookie'));
+    expect(srcs().some(s => s.includes('/assets/soulmon/'))).toBe(true);
   });
 
   it('NAO faz o GET para a variante em http: (beacon em texto claro)', async () => {
@@ -101,7 +103,8 @@ describe('LibraryPage — o sprite do diretorio publico', () => {
     await waitFor(() => expect(screen.getByText('Vitima')).toBeTruthy());
 
     expect(srcs().some(s => s.includes('atacante.example'))).toBe(false);
-    expect(srcs()).toContain(getSpriteForStage('rookie'));
+    expect(srcs()).not.toContain(getSpriteForStage('rookie'));
+    expect(srcs().some(s => s.includes('/assets/soulmon/'))).toBe(true);
   });
 
   it('MANTEM o asset empacotado do Vite dos NPCs (o outro lado da guarda)', async () => {
@@ -166,7 +169,8 @@ describe('PlayerDetailModal — o mesmo dado, na tela de perfil', () => {
       <PlayerDetailModal player={jogadorHostil() as DirectoryPlayer & { spriteUrl?: string }} language="pt-BR" onClose={() => {}} />,
     );
     expect(srcs().some(s => s.includes('atacante.example'))).toBe(false);
-    expect(srcs()).toContain(getSpriteForStage('rookie'));
+    expect(srcs()).not.toContain(getSpriteForStage('rookie'));
+    expect(srcs().some(s => s.includes('/assets/soulmon/'))).toBe(true);
   });
 
   it('MANTEM o asset empacotado do NPC', () => {
