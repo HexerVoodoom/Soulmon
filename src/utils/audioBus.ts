@@ -54,7 +54,7 @@
  *   e agenda a liberação; `liberarMarco` fica exposto para quando a cerimônia
  *   ganhar o hook. Um duck sem liberação garantida silenciaria o app inteiro.
  */
-import { readFlag, readFlagOr, writeFlag, readJson, writeJson } from './safeStorage';
+import { readFlag, readFlagOr, writeFlag, readJson, writeJson, readLocal, writeLocal, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import type { CategoriaSom } from './loudness';
 import { ORDEM_DA_ESCADA, TETO_DBTP, GANHO_DE_CATEGORIA_DB, db2lin } from './loudness';
@@ -257,6 +257,20 @@ function ganhoLinearDe(cat: CategoriaSom): number {
  */
 export function trilhaLigada(): boolean {
   return readFlagOr(STORAGE_KEYS.SOUND_TRACK_ENABLED, true);
+}
+
+/**
+ * MIGRAÇÃO ÚNICA das preferências de som (REGISTRO §126, 19/10/2026). Bug do dono: "entrei no combate e não mudou a
+ * trilha" — num aparelho que passou pela era da S2 (a trilha nascia DESLIGADA) a chave podia estar gravada como
+ * `'false'`, e `trilhaLigada()` só trata AUSENTE como ligada: Masmorra/Duelo seguiam com o tema, sem música de combate.
+ * Quem está sem a marca de versão não pode ter escolhido nada DEPOIS do §102 (a marca nasce com este código), então o
+ * `'false'` que tem é herança e sai uma vez (volta ao padrão LIGADO). Depois a marca vale `'1'` e um `'false'` vindo do
+ * interruptor é escolha e nunca mais é tocado. Idempotente. Chame antes da primeira leitura.
+ */
+export function migrarPreferenciasDeSom(): void {
+  if (readLocal(STORAGE_KEYS.SOUND_PREFS_VERSION) === '1') return;
+  if (readLocal(STORAGE_KEYS.SOUND_TRACK_ENABLED) === 'false') removeLocal(STORAGE_KEYS.SOUND_TRACK_ENABLED, { silent: true });
+  writeLocal(STORAGE_KEYS.SOUND_PREFS_VERSION, '1', { silent: true });
 }
 
 export function definirTrilhaLigada(on: boolean): void {

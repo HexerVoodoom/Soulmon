@@ -99,6 +99,10 @@ export const STORAGE_KEYS = {
    *  chave vale LIGADO e só `'false'` explícito desliga. O autoplay segue vetado
    *  (D11): ligado é preferência, o som só sai depois de um gesto. */
   SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',
+  /** Versão do esquema das preferências de som (REGISTRO §126). Ausente = aparelho anterior ao §102, em que
+   *  `SOUND_TRACK_ENABLED='false'` podia ser herança da era "nasce desligada" e não escolha do jogador. `'1'` = a
+   *  migração já rodou: um 'false' gravado DEPOIS dela é escolha explícita e vale. */
+  SOUND_PREFS_VERSION: 'soulmon-sound-prefs-version',
   /** A música-TEMA ("Stone Hall Decay"), decisão do dono de 07/10/2026 — revoga o
    *  "nasce desligada" (S2) SÓ para ela. Polaridade como a do mudo: a chave guarda
    *  DESLIGADA, então `readFlag` sem a chave devolve `false` e o tema nasce LIGADO.
