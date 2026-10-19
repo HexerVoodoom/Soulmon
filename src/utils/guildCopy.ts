@@ -299,6 +299,7 @@ export const GUILD_COPY = {
   'guild.cenarios.titulo': ['Do bosque', 'From the grove'],
   // ── Ajustes e saída (§8) ───────────────────────────────────────────────
   'guild.ajustes.aria': ['Ajustes da roda', 'Circle settings'],
+  'guild.ajustes.rotulo': ['Ajustes', 'Settings'],
   'guild.ajustes.titulo': ['Ajustes', 'Settings'],
   'guild.ajustes.somenteAbriu': ['Só quem abriu a clareira vê estes ajustes.', 'Only whoever opened the clearing sees these settings.'],
   'guild.ajustes.renomear': ['Renomear', 'Rename'],

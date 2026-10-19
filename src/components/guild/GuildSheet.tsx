@@ -449,7 +449,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         )}
         {semConta && onLogin && (
           <button type="button" onClick={onLogin} data-guild-entrar className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}>
-            <Icon name="settings" size={20} />
+            <Icon name="lock_open" size={20} />
             {t('guild.erro.entrar')}
           </button>
         )}
@@ -580,8 +580,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
                 aria-expanded={ajustes}
                 aria-controls={ajustesId}
                 onClick={() => { setAjustes(a => !a); setNovoNome(g.name); }}
+                style={{ width: 'auto', padding: '0 12px', gap: 6, fontSize: 'var(--sm2-text-sm)' }}
               >
                 <Icon name="settings" size={24} fill={ajustes ? 1 : 0} tone={ajustes ? 'primary' : 'ink'} />
+                <span>{t('guild.ajustes.rotulo')}</span>
               </button>
             )}
           </div>
