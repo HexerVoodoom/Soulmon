@@ -23,6 +23,7 @@ import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGH
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { sleepZPlacement } from '../utils/sleepZ';
+import { showerPlacement } from '../utils/showerPlacement';
 import { statTip, type StatTipKind } from './home/statTips';
 
 /** C3 — o cenário pintado quando nenhum está equipado: o Quarto grátis,
@@ -1656,16 +1657,19 @@ export const CompanionHUD = memo(function CompanionHUD({
                 </div>
               )}
 
-              {/* Shower water droplets */}
-              {isShowering && (
-                <div className="absolute inset-0 pointer-events-none z-30">
+              {/* Shower water droplets. D-11 (19/10/2026): a posição vem de `showerPlacement` (utils/showerPlacement.ts) — o chuveiro
+                  ficava 26px acima da caixa do sprite e, com o zoom da cena, saía do topo da tela. */}
+              {isShowering && (() => {
+                const sh = showerPlacement({ footY: STAGE_HEIGHT - PET_BOTTOM_IN_STAGE, spriteBox: PET_RENDER, size: 26, zoom: CENA_ZOOM, airLiftPx: noAr ? AIR_LIFT_PX : 0 });
+                return (
+                <div className="absolute inset-0 pointer-events-none z-30" data-shower-fx>
                   {[0, 1, 2, 3, 4, 5].map(i => (
                     <span
                       key={i}
                       className="absolute text-sm"
                       style={{
                         left: `${10 + i * 14}%`,
-                        top: '-10px',
+                        top: sh.dropTop,
                         animation: `shower-drop 1.1s linear ${i * 0.12}s infinite`,
                       }}
                     >
@@ -1674,7 +1678,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ))}
                   <span
                     className="absolute text-xl"
-                    style={{ left: '50%', top: '-26px', transform: 'translateX(-50%)' }}
+                    data-shower-head
+                    style={{ left: '50%', top: sh.top, transform: 'translateX(-50%)' }}
                   >
                     <img src={FX_ART['🚿']} alt="" width={26} height={26} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   </span>
@@ -1687,7 +1692,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                     style={{ position: 'absolute', left: '50%', bottom: -6, transform: 'translateX(-50%)' }}
                   />
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* O Z do sono mora DENTRO do grupo do pet: cresce e anda com ele.

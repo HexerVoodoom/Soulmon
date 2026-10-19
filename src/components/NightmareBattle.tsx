@@ -65,9 +65,9 @@ import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foe
 import { playVictory } from '../utils/sounds';
 import {
   EMPTY_TALLY,
-  NIGHTMARE_HINT,
+  NIGHTMARE_INTRO_TITLE,
+  nightmareFlavorShort,
   nightmareEndText,
-  nightmareFlavor,
   nightmareName,
   nightmareRewards,
   specialLanded,
@@ -280,8 +280,7 @@ export function NightmareBattle({
 
   const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
   const title = nightmareName(rarity, language);
-  const flavor = nightmareFlavor(rarity, language);
-  const preview = nightmareRewards(rarity, true);
+  const flavor = nightmareFlavorShort(rarity, language);
 
   const start = () => {
     if (wave.length === 0) return;
@@ -407,20 +406,12 @@ export function NightmareBattle({
           <div className="nm-glitch" data-nightmare-shadow aria-hidden="true">
             <img className="nm-glitch__img" data-visor-enemy src={wave[0]?.sprite ?? INTRO_FALLBACK} alt="" width={160} height={160} draggable={false} />
           </div>
-          <p style={sm2Hint}>{isPt ? 'De manhã, seu Soulmon conta:' : 'In the morning, your Soulmon says:'}</p>
-          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{title}</h2>
-          <p style={{ ...sm2Text, margin: 0 }}>{flavor}</p>
+          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{isPt ? NIGHTMARE_INTRO_TITLE.pt : NIGHTMARE_INTRO_TITLE.en}</h2>
+          <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }} data-nightmare-name>{title}</p>
+          <p style={{ ...sm2Text, margin: 0 }} data-nightmare-flavor>{flavor}</p>
 
           {wave.length > 0 ? (
             <>
-              <p style={{ ...sm2Text, margin: 0 }}>
-                {isPt
-                  ? `Uma luta só, curtinha. Vencer rende ${preview.bits} Bits, +${preview.energy} de energia${preview.hearts > 0 ? ` e +${preview.hearts} de coração` : ''}. Perder não custa nada.`
-                  : `One short fight. Winning gives ${preview.bits} Bits, +${preview.energy} energy${preview.hearts > 0 ? ` and +${preview.hearts} heart` : ''}. Losing costs nothing.`}
-              </p>
-              <p style={sm2Hint} data-nightmare-rule>
-                {isPt ? NIGHTMARE_HINT.pt : NIGHTMARE_HINT.en}
-              </p>
               <button type="button" onClick={start} style={btn('primary')}>
                 {isPt ? 'Encarar o pesadelo' : 'Face the nightmare'}
               </button>
@@ -454,17 +445,11 @@ export function NightmareBattle({
         </div>
       )}
 
-      {/* ── Derrota: NÃO custa nada, e a tela diz isso — o pet inteiro ── */}
+      {/* ── Derrota: só o título e o botão (dono, R6, 19/10/2026) — a frase "nada foi perdido" saiu; a REGRA (perder não custa nada) segue valendo ── */}
       {phase === 'lost' && (
         <div aria-live="polite" style={{ display: 'contents' }}>
           {visor(72, null)}
           <p style={phaseTitle} data-nightmare-end="faded">{nightmareEndText('faded', language)}</p>
-          <p style={{ ...sm2Text, margin: 0 }}>
-            {isPt
-              ? 'Seu Soulmon ficou na frente até o fim e voltou pro seu colo. Da próxima, torça e mire o anel dos especiais. Nada foi perdido: nenhum coração, nenhum Bit, nenhum progresso.'
-              : 'Your Soulmon stood in the way until the end and came right back to you. Next time, cheer and aim the specials ring. Nothing was lost: no hearts, no Bits, no progress.'}
-          </p>
-          <p style={sm2Hint}>{isPt ? 'Amanhã tem outra noite. Sem pressa.' : 'There is another night tomorrow. No rush.'}</p>
           <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>
         </div>
       )}

@@ -2801,6 +2801,9 @@ dominância populacional — por isso ±15%. Régua nova:
 **Avisos do arquivo:**
 - ⚠️ Reverter e re-sintonizar NÃO consomem o teto de tentativas — nenhuma função de adoção toca `attempts`.
 
+### `src/utils/showerPlacement.ts`
+**Dono de:** onde fica o chuveirinho do banho na Home (D-11, 19/10/2026): `showerPlacement({ footY, spriteBox, size, zoom, airLiftPx?, margin? })` — sobre a cabeça, nunca acima do topo visível do palco depois do zoom da cena (`CENA_ZOOM`), com ou sem altitude; devolve também onde as gotas nascem. Mesma geometria do Z do sono. Puro. **Chamado por:** `CompanionHUD` (bloco `isShowering`). **Régua:** `utils/showerPlacement.test.ts`.
+
 ### `src/utils/sleepZ.ts`
 **Dono de:** onde fica o Z do sono na Home (14/10/2026): `sleepZPlacement({ footY, spriteBox, size, zoom, airLiftPx?, margin? })` — ao lado da cabeça, nunca acima do topo visível do palco depois do zoom da cena (`CENA_ZOOM`), com ou sem altitude. Puro. **Chamado por:** `CompanionHUD` (bloco `isSleeping`). **Régua:** `utils/sleepZ.test.ts`.
 
