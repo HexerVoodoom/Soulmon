@@ -50,6 +50,7 @@ import { sanitizarNomeDeGuilda } from './_coop.js';
 import { pickRankedOpponents } from './_rankedPick.js';
 import { loadDuelSide as loadDuelSideShared } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
+import { artLineOrNull } from './_artLine.js';
 import { frameIdOrNull } from './_frames.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -172,7 +173,7 @@ async function publicProfile(env, p, extra = {}) {
   return {
     id: pid,
     name: p.name, petName: p.petName, stage: p.stage,
-    avatarId: avatarIdOrNull(p.avatarId), frameId: frameIdOrNull(p.frameId),
+    avatarId: avatarIdOrNull(p.avatarId), frameId: frameIdOrNull(p.frameId), artLine: artLineOrNull(p.artLine),
     unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
     // "X tarefas feitas" de outro jogador é score de vida real num diretório
@@ -481,6 +482,8 @@ async function handleCommunity({ request, env }) {
       // `null` explicito limpa (volta ao padrao do NPC / sem moldura).
       avatarId: 'avatarId' in body ? avatarIdOrNull(body.avatarId) : avatarIdOrNull(prev.avatarId),
       frameId: 'frameId' in body ? frameIdOrNull(body.frameId) : frameIdOrNull(prev.frameId),
+      // Linha de arte (D-60): só id de lista fechada (`_artLine.js`); ausência herda o gravado, `null` limpa.
+      artLine: 'artLine' in body ? artLineOrNull(body.artLine) : artLineOrNull(prev.artLine),
       unlockedStages: Array.isArray(body.unlockedStages)
         ? body.unlockedStages.filter(s => typeof s === 'string' && ID_ESTAGIO.test(s)).slice(0, 16)
         : (prev.unlockedStages || []),
@@ -702,7 +705,7 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId) };
+    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine) };
 
     // Um duelo aberto contra OUTRO oponente fica para trás: é desistência.
     const pend = myRank.pending;
@@ -810,7 +813,7 @@ async function handleCommunity({ request, env }) {
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
         id: p ? await ensurePid(env, p) : null,
         name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
-        avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId),
+        avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId), artLine: artLineOrNull(p?.artLine),
         points: rec.points, wins: rec.wins, losses: rec.losses,
         // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
         lifetime: p?.lifetimePoints ?? 0,

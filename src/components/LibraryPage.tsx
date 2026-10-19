@@ -22,7 +22,7 @@
  * `role=alert` é âmbar (`danger-ink` saiu); "Try again" em `outline`.
  */
 import { useEffect, useState } from 'react';
-import { getSpriteForStage } from '../utils/sprites';
+import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
@@ -442,7 +442,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
           const isNpc = !!p.isNpc;
           const isFriend = friends.includes(p.id);
           const gifted = giftedToday.has(p.id);
-          const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : getSpriteForStage(p.stage);
+          const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : opponentSprite(p);
           return (
             <div key={p.id} className="sm2-lib-row">
               {/* A linha inteira é UM botão: abrir o perfil é a ação dominante,
