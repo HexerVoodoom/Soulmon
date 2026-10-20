@@ -760,6 +760,31 @@ function suprimidosDeInscricao(v) {
   return k.length ? { d: v.d, k } : void 0;
 }
 __name(suprimidosDeInscricao, "suprimidosDeInscricao");
+var POOP_AGENDA_MAX = 2;
+function agendaCocoDeInscricao(v, agora = Date.now()) {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return void 0;
+  const { d, tz, t } = v;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d ?? ""))) return void 0;
+  if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return void 0;
+  if (!Array.isArray(t) || t.length === 0 || t.length > 8) return void 0;
+  const base = Date.parse(`${d}T00:00:00Z`);
+  if (!Number.isFinite(base) || Math.abs(base - agora) > 3 * 864e5) return void 0;
+  const vistos = /* @__PURE__ */ new Set();
+  const itens = [];
+  for (const par of t) {
+    if (!Array.isArray(par) || par.length !== 2) continue;
+    const [slot, at] = par;
+    if (!Number.isInteger(slot) || slot < 0 || slot > 3 || vistos.has(slot)) continue;
+    if (!Number.isSafeInteger(at)) continue;
+    if (new Date(at + tz * 6e4).toISOString().slice(0, 10) !== d) continue;
+    vistos.add(slot);
+    itens.push([slot, at]);
+  }
+  if (!itens.length) return void 0;
+  itens.sort((a, b) => a[1] - b[1]);
+  return { d, tz, t: itens.slice(0, POOP_AGENDA_MAX) };
+}
+__name(agendaCocoDeInscricao, "agendaCocoDeInscricao");
 function ehTokenFcm(v) {
   return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
 }
@@ -1015,18 +1040,24 @@ async function definirSlot(env, gid, save, item) {
   return c.slot;
 }
 __name(definirSlot, "definirSlot");
-async function recolherCasaDeQuemSai(env, gid, save) {
+async function recolherCasaDetalhe(env, gid, save) {
   const c = await lerCasa(env, gid, save);
   await kvOrThrow(env).delete(coopCasaKey(gid, save));
-  return pontosDaCasa(c);
+  return { pts: pontosDaCasa(c), bits: c.pts.doacao * CASA_BITS_POR_PONTO };
 }
-__name(recolherCasaDeQuemSai, "recolherCasaDeQuemSai");
+__name(recolherCasaDetalhe, "recolherCasaDetalhe");
 function totalDaCasa(g, cartoes) {
   let t = int0(g.casaLegado);
   for (const m of g.members) t += pontosDaCasa(cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : null);
   return t;
 }
 __name(totalDaCasa, "totalDaCasa");
+function bitsDaCasa(g, cartoes) {
+  let t = int0(g.bitsLegado);
+  for (const m of g.members) t += (cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : normalizarCasa(null)).pts.doacao * CASA_BITS_POR_PONTO;
+  return t;
+}
+__name(bitsDaCasa, "bitsDaCasa");
 
 // api/_coop.js
 var COOP_MAX_MEMBERS = 12;
@@ -1215,12 +1246,13 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
   await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
-  const casaDeQuemSai = await recolherCasaDeQuemSai(env, lido.id, saveId);
+  const { pts: casaDeQuemSai, bits: bitsDeQuemSai } = await recolherCasaDetalhe(env, lido.id, saveId);
   const semanas = [0, 1, 2, 3].map((k) => semanaDe(new Date(now.getTime() - k * 7 * 864e5)));
   await Promise.all(semanas.map((w) => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
   const g = await lerGrupo(env, lido.id) ?? lido;
   g.members = (g.members || []).filter((m) => m !== saveId);
   if (casaDeQuemSai > 0) g.casaLegado = Math.floor(Number(g.casaLegado) || 0) + casaDeQuemSai;
+  if (bitsDeQuemSai > 0) g.bitsLegado = Math.floor(Number(g.bitsLegado) || 0) + bitsDeQuemSai;
   if (g.checkins) delete g.checkins[saveId];
   if (g.desde) delete g.desde[saveId];
   if (fio) {
@@ -1242,7 +1274,7 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
     const ultima = await lerGrupo(env, g.id);
     const outros = (ultima?.members || []).filter((m) => m !== saveId);
     if (outros.length > 0) {
-      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, bitsLegado: g.bitsLegado ?? ultima.bitsLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
       await gravarGrupo(env, vivo);
       return { left: true, groupId: g.id, remaining: outros.length };
     }
@@ -6400,6 +6432,8 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
     // A CASA (PR2): só estágio, `perto` e os slots de item. Nunca pontos, limiares nem doação por pessoa.
     casa: {
       ...(({ stage: stage2, stageIndex: stageIndex2, perto: perto2 }) => ({ nivel: stage2, nivelIndex: stageIndex2, perto: perto2 }))(casaStageFor(totalDaCasa(g, cartoes))),
+      // W14b: o TOTAL de Bits doados ao clã (um número do clã, nunca por pessoa).
+      bitsTotal: bitsDaCasa(g, cartoes),
       slots: g.members.flatMap((m, i2) => {
         const c = cart[i2]?.casa ? normalizarCasa(cart[i2].casa) : null;
         return c?.slot ? [{ memberId: membros[i2].memberId, item: c.slot, euMesmo: m === euSave }] : [];
@@ -8250,7 +8284,7 @@ async function onRequestPost4({ request, env }) {
   if (limited) return limited;
   const body = await corpoDe(request);
   if (!body) return json6({ error: "Invalid JSON" }, 400);
-  const { token, petName, language, bornAt, saveId, meals, sleep, skip } = body;
+  const { token, petName, language, bornAt, saveId, meals, sleep, skip, poop } = body;
   if (!token) return json6({ error: "Missing token" }, 400);
   if (!ehTokenFcm(token)) return json6({ error: "Invalid token" }, 400);
   const dono = await saveIdAutorizado(request, env, saveId);
@@ -8266,6 +8300,8 @@ async function onRequestPost4({ request, env }) {
     ...lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {},
     // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
     ...suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {},
+    // Agenda de cocô do dia (REGISTRO §144): só instantes; ausente/inválida = sem push de cocô com o app fechado.
+    ...agendaCocoDeInscricao(poop) ? { poop: agendaCocoDeInscricao(poop) } : {},
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
@@ -8309,7 +8345,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10709,7 +10745,7 @@ async function onRequestPost8({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
-  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip, poop } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -10766,6 +10802,8 @@ async function onRequestPost8({ request, env }) {
     ...lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {},
     // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
     ...suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {},
+    // Agenda de cocô do dia (REGISTRO §144): só instantes; ausente/inválida = sem push de cocô com o app fechado.
+    ...agendaCocoDeInscricao(poop) ? { poop: agendaCocoDeInscricao(poop) } : {},
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que
@@ -11081,7 +11119,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-1H59AX/functionsRoutes-0.424591503475125.mjs
+// ../.wrangler/tmp/pages-d5uA63/functionsRoutes-0.7250307626902363.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11358,7 +11396,7 @@ var routes = [
   }
 ];
 
-// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11684,7 +11722,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
