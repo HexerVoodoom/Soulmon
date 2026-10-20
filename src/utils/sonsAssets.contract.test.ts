@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { ASSETS_DE_SOM, CAMADAS_DA_TRILHA, MUSICAS_DE_COMBATE, TEMA_DO_JOGO, recortarSilencio } from './sonsAssets';
+import { ASSETS_DE_SOM, CAMADAS_DA_TRILHA, MUSICAS_DE_COMBATE, SFX_DE_COMBATE_LIVRES, TEMA_DO_JOGO, recortarSilencio } from './sonsAssets';
 
 const raiz = join(__dirname, '..', '..');
 const TODOS = [...Object.values(ASSETS_DE_SOM), ...Object.values(CAMADAS_DA_TRILHA)];
@@ -46,7 +46,7 @@ describe('S9 — procedência nas duas direções', () => {
 
   it('todo arquivo em public/sounds/ está no manifesto (nada entra por fora)', () => {
     const emDisco = readdirSync(join(raiz, 'public', 'sounds')).filter(f => !f.startsWith('.'));
-    const noManifesto = new Set([...TODOS, ...FORMATOS_DAS_MUSICAS].map(a => a.url.replace('/sounds/', '')));
+    const noManifesto = new Set([...TODOS, ...FORMATOS_DAS_MUSICAS, ...Object.values(SFX_DE_COMBATE_LIVRES)].map(a => a.url.replace('/sounds/', '')));
     for (const f of emDisco) expect(noManifesto.has(f), `${f} está em public/sounds/ e não no manifesto`).toBe(true);
   });
 

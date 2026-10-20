@@ -1,6 +1,10 @@
 /**
  * OS 7 EFEITOS SONOROS DO COMBATE — síntese procedural PRÓPRIA (pedido do dono, 19/10/2026, D-86..D-92).
  *
+ * ⚠️ **Desde 20/10/2026 (§130) isto é o FALLBACK, não o padrão.** O dono não gostou do timbre e pediu um banco gratuito: o
+ * padrão agora são os 7 samples CC0 de `SFX_DE_COMBATE_LIVRES` (`sonsAssets.ts`). Este módulo só toca quando o arquivo não
+ * chegou ou não decodificou. Continua medido e testado (`sfxCombate.test.ts`) porque um fallback sem régua apodrece.
+ *
  * Origem de todos: `procedural próprio` (código deste arquivo; nenhum arquivo de áudio, nenhuma IA, nenhum serviço pago,
  * nenhum jingle de terceiro). Licença: do próprio projeto. A decisão e a alternativa que perdeu estão em
  * `docs/REGISTRO-DE-DECISOES.md` (SFX de combate procedurais).

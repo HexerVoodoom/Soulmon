@@ -6,7 +6,7 @@ import { CATEGORIA_DO_SOM, OFFSET_POR_SOM_DB, db2lin } from './loudness';
 /** Ganho-base do `beep` de 0,12 × a calibração medida do som (hoje só o level up; o combate é de `sfxCombate.ts`). */
 const GANHO_BASE_COMBATE = 0.12;
 const GANHO_LEVELUP = GANHO_BASE_COMBATE * db2lin(OFFSET_POR_SOM_DB.playLevelUp);
-import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
+import { assetPronto, prepararAssets, prepararSfxLivres, sfxLivrePronto, tocarBuffer, type NomeDeAsset } from './sonsAssets';
 import { aoGestoSonoro } from './trilha';
 import type { NomeSfxCombate } from './sfxCombate';
 import { prepararSfxCombate, sfxCombatePronto } from './sfxCombateCarga';
@@ -191,22 +191,26 @@ export function playSleep(): void {
    também é `arcade`, pelo mesmo motivo do C-11: vitória de minijogo não é "concluir tarefa" nem "marco", e perder um
    combate NÃO é a degeneração real (C-6: `playDegenerate` é só do App).
 
-   **Síntese procedural PRÓPRIA** (`utils/sfxCombate.ts`, origem `procedural próprio`, zero byte de asset, sem IA nem
-   serviço pago): cada efeito é um sinal determinístico renderizado uma vez por contexto e tocado como buffer pelo
-   barramento (`tocarNa`, nunca `ctx.destination`). O nível é o `OFFSET_POR_SOM_DB` de `loudness.ts` embutido no buffer
-   (ganho 1 no grafo, como nos assets). O gate de mudo (`SOUND_MUTED`) e o gesto são os de `play()`; o D11 mora no
-   CHAMADOR (a cena de uma luta que o jogador abriu). Quem escolhe QUAL toca é `games/BattleStage.tsx` (pelo TIPO do
-   ataque, pelo bloqueio e pela carga), nunca o som. Mapa evento → efeito e a descrição de cada timbre: `sfxCombate.ts`. */
+   **Desde 20/10/2026 (§130, pedido do dono: "o som eu não gostei muito, vê se acha algum banco de dados GRATUITO") o PADRÃO
+   é um SAMPLE de banco livre CC0** (`SFX_DE_COMBATE_LIVRES` em `sonsAssets.ts`: Kenney e JaggedStone, procedência e licença por
+   arquivo na `docs/Attributions.md`): um arquivo estático em `public/sounds/`, mestrado JÁ no alvo da categoria `arcade`
+   (ganho 1 no grafo, como os assets de IA), baixado e decodificado ao montar a cena de luta (`sfxCombateCarga.ts`) ou, no
+   limite, no 1º golpe. **A síntese procedural PRÓPRIA (`utils/sfxCombate.ts`, §120) virou FALLBACK**: arquivo que não chegou, não
+   decodificou (Opus em WebM) ou o `fetch` falhou → o procedural toca naquele golpe, com o `OFFSET_POR_SOM_DB` de `loudness.ts`
+   embutido; só se NENHUM dos dois estiver pronto o golpe sai mudo e o próximo toca. O gate de mudo (`SOUND_MUTED`) e o gesto
+   são os de `play()`; o D11 mora no CHAMADOR (a cena de uma luta que o jogador abriu). Quem escolhe QUAL toca é
+   `games/BattleStage.tsx` (pelo TIPO do ataque, pelo bloqueio e pela carga), nunca o som. Mapa evento → efeito: `sfxCombate.ts`. */
 
-/** Toca um dos 7 efeitos de combate: o buffer procedural já no alvo da categoria, pelo gate de `play()`. */
+/** Toca um dos 7 efeitos de combate: o sample livre já decodificado, senão o buffer procedural, pelo gate de `play()`. */
 function playSfx(nome: NomeSfxCombate): void {
-  // A síntese é um chunk sob demanda (`sfxCombateCarga.ts`): ainda não chegou → este golpe sai mudo, o próximo toca.
+  // A síntese é um chunk sob demanda (`sfxCombateCarga.ts`); o sample é um arquivo. Os dois são pedidos aqui se ainda faltam.
   const sfx = sfxCombatePronto();
-  if (!sfx) {
-    if (!isMuted()) void prepararSfxCombate();
-    return;
-  }
+  if (!sfx && !isMuted()) void prepararSfxCombate();
   play(nome, (ctx, destino) => {
+    void prepararSfxLivres(ctx);
+    const amostra = sfxLivrePronto(nome);
+    if (amostra) return tocarBuffer(ctx, destino, amostra);
+    if (!sfx) return 0; // nada pronto ainda: este golpe sai mudo, o próximo toca
     const sinal = sfx.sfxNoAlvo(nome, ctx.sampleRate, OFFSET_POR_SOM_DB[nome]);
     const buffer = ctx.createBuffer(1, sinal.length, ctx.sampleRate);
     buffer.getChannelData(0).set(sinal);

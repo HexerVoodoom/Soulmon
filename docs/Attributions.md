@@ -241,6 +241,47 @@ aberta** — não como cumprida por presunção.
 > primeiro passo em aberto é administrativo, não jurídico: **perguntar à plataforma, por escrito,
 > qual é o provedor do modelo de áudio e onde fica a política dele.**
 
+### Os 7 efeitos de combate — banco GRATUITO livre, CC0 (20/10/2026, §130)
+
+Pedido do dono: "o som eu não gostei muito, vê se acha algum banco de dados GRATUITO que dá pra usar". Os 7 efeitos de combate
+(D-86..D-92) deixaram de ser síntese procedural (§120, hoje só FALLBACK em `src/utils/sfxCombate.ts`) e passaram a ser **samples de
+domínio público (CC0 1.0)**, todos lidos nas páginas de origem em **20/10/2026**. Manifesto: `SFX_DE_COMBATE_LIVRES` em
+`src/utils/sonsAssets.ts`; régua: `src/utils/sfxCombateLivres.contract.test.ts` (reprova sample sem fonte/licença/hash nesta tabela).
+
+**Licença — o que foi lido, não resumido de memória.** Kenney: a página de cada pacote traz "Creative Commons CC0" e o `License.txt`
+dentro do zip diz "You may use these assets in personal and commercial projects. Credit (Kenney or www.kenney.nl) would be nice but
+is not mandatory"; o FAQ (https://kenney.nl/support) diz que os assets são CC0, "free to use ... even in commercial projects" e
+"Attribution is not required". JaggedStone (OpenGameArt, "magic spell sfx", 17/10/2014): licença CC0 na página, "Copyright/Attribution
+Notice: None needed". Texto da licença: https://creativecommons.org/publicdomain/zero/1.0/. **Atribuição não é obrigatória para nenhum;
+está aqui por boa prática** (e porque o teste de contrato exige a linha). Sem API paga, sem conta, sem cadastro.
+
+| Arquivo instalado (`public/sounds/…`) · SHA-256 · bytes | Evento | Arquivo ORIGINAL · pacote · autor · URL de origem | SHA-256 do original | Licença · atribuição |
+|---|---|---|---|---|
+| `public/sounds/sfx-combate-attack.webm` · `75c2ed92348f009ec55ba247b33d931a68a2c3f795d2c67945f85fcd60b4eab8` · 3 212 B | D-86 ataque físico (`playAttack`) | `knifeSlice.ogg` · RPG Audio · Kenney Vleugels (Kenney.nl) · https://kenney.nl/assets/rpg-audio | `4cd96dc630bed9840c15f1dd2306da2cc56a4da26a5d3f1a03c5a7265ac5e54f` | CC0 1.0 · não exigida |
+| `public/sounds/sfx-combate-defend.webm` · `618c762eea231ec47cee8cfb6d18608424589a4d1d8a8cf86203dc77dd4538c1` · 3 698 B | D-87 defesa (`playDefend`) | `impactPlate_medium_000.ogg` · Impact Sounds · Kenney Vleugels (Kenney.nl) · https://kenney.nl/assets/impact-sounds | `b670d30452983369771081319c268475edaaafe782bf4e8d70bd7eef09d8823c` | CC0 1.0 · não exigida |
+| `public/sounds/sfx-combate-attack-ranged.webm` · `2da3e11f6bb3569896c8a6a483b5b7c150975570e84303b4a879f605da13ed03` · 9 530 B | D-88 ataque mágico (`playAttackRanged`) | `magical_3.ogg` · magic spell sfx · JaggedStone · https://opengameart.org/content/magic-spell-sfx | `9fac648a1de869cf9ca2f4b3f1cd47f1766a3ee9d2fdec45831234401d7b2392` | CC0 1.0 · não exigida |
+| `public/sounds/sfx-combate-charge.webm` · `240dd489ad8412972f02996665403590cfcc92000898b8ce69e20782eaee555c` · 9 530 B | D-89 carregando o especial (`playCharge`) | `magical_1_0.ogg` (listado como "magical_1") · magic spell sfx · JaggedStone · https://opengameart.org/content/magic-spell-sfx | `119f9061a566c72c1c58444b03f8685b833079ef268dda02fe742eb34d3bc68f` | CC0 1.0 · não exigida |
+| `public/sounds/sfx-combate-special.webm` · `e3ec62f3c969c43958ca0475d36f9c7c4d4a844f6e6825005dcfe183c2a1ecc3` · 6 128 B | D-90 soltando o especial (`playSpecial`) | `explosionCrunch_000.ogg` · Sci-Fi Sounds · Kenney Vleugels (Kenney.nl) · https://kenney.nl/assets/sci-fi-sounds | `4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69` | CC0 1.0 · não exigida |
+| `public/sounds/sfx-combate-victory.webm` · `4c39dd150f05105fdb1bdc4a506078d5e2f277c47cbe8c7688b059015985087f` · 12 446 B | D-91 vitória (`playVictory`) | `jingles_STEEL07.ogg` · Music Jingles · Kenney Vleugels (Kenney.nl) · https://kenney.nl/assets/music-jingles | `206b5cb18870c1faa393047cb857eda28441b9682380c9eb5910119ea04c2ece` | CC0 1.0 · não exigida |
+| `public/sounds/sfx-combate-defeat.webm` · `5ccb080897382312d475c2412f1a272557ab668143d4bb765068f825f4c08b24` · 7 586 B | D-92 derrota neutra (`playDefeat`) | `jingles_STEEL04.ogg` · Music Jingles · Kenney Vleugels (Kenney.nl) · https://kenney.nl/assets/music-jingles | `65be5fe4af66574f4725602e454b7ea8d2613ab536a4a719fcb3810a240fdecf` | CC0 1.0 · não exigida |
+
+**Processamento (fato, não licença):** originais Ogg Vorbis → decodificados pelo Chrome a 48 kHz mono → recorte do silêncio inicial e
+da cauda (teto 1,15 s os efeitos / 1,9 s vitória e derrota; fade de saída de 30 ms, 140 ms quando o teto cortou a cauda) → ganho único
+até o alvo `arcade` de `src/utils/loudness.ts` (LUFS-M máx. 400 ms, K-weighting) com true peak ≤ −1,6 dBTP → WebM/Opus 64 kbps mono
+(MediaRecorder do Chrome) → medido de novo no arquivo decodificado: todos entre −25,03 e −24,97 LUFS-M, true peak entre −16,4 e −3,3 dBTP.
+CC0 permite a modificação. Os originais e as 2–3 alternativas de cada efeito (para o dono trocar na escuta) ficam FORA do repositório
+(`D:/Soulmon/_gemini_out/w10-sfx/`, pré-escuta em `para-ouvir/`).
+
+**Bancos avaliados e o que ficou de fora, de propósito.** Usados: Kenney (CC0) e OpenGameArt filtrado a CC0 (JaggedStone). Não usados nesta rodada:
+"Spell Sounds Starter Pack" (p0ss, OpenGameArt) — CC-BY-SA 3.0/GPL, share-alike que o app não quer carregar; Pixabay Sound Effects — o
+resumo da licença (pixabay.com/service/license-summary, lido em 20/10/2026) diz uso grátis, sem atribuição, e proíbe só distribuir o
+conteúdo isolado, marca registrada e uso ilícito/enganoso, mas ele não cita áudio e avisa que só a licença completa vale (plano B
+razoável, relendo os termos na data do download); Mixkit — a página da licença remete a uma "Sound Effects Free License" própria cujo
+texto NÃO consegui ler, então não usei; Freesound (só itens CC0 serviriam; CC-BY-NC e Sampling+ fora) e Sonniss GDC bundles (licença
+royalty-free própria, pacotes de GB) não foram avaliados a fundo porque Kenney + OpenGameArt CC0 já cobriram os 7. **Nada de jogo comercial foi usado.** Risco residual: CC0 vale pela
+declaração do autor; não existe `grep` por originalidade (mesma ressalva de S9/S15). Se o dono não gostar, a troca é arquivo + hash
++ medidas + esta linha.
+
 ## Tipografia
 
 ### As fontes em `public/fonts/` (self-host — ver `src/index.css`, bloco "FONTES — SELF-HOST")

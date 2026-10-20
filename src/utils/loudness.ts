@@ -194,6 +194,8 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   // reproduz `playFeed` em −25,39 a 0,12, ou seja, −19,00 com o offset de 6,39). `sfxCombate.loudness.test.ts` re-mede e reprova se
   // o offset sair da tolerância. Substituem os de PR18/11-10 de `playAttack`/`playAttackRanged`/`playSpecial`/`playVictory`.
   // Falta só o gate humano de escuta (S8).
+  // 20/10/2026 (§130): estes 7 offsets valem para o FALLBACK procedural. O PADRÃO agora é o sample CC0 (`SFX_DE_COMBATE_LIVRES`),
+  // mestrado JÁ no alvo `arcade` e tocado a ganho 1 (o offset NÃO se soma a ele).
   playAttack: -6.87,
   playDefend: -5.765,
   playAttackRanged: -12.816,

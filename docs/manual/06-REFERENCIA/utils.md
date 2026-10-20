@@ -2603,6 +2603,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Exports:**
 - `function prepararSfxCombate(): Promise<void>` — dispara (uma vez) o `import('./sfxCombate')`; idempotente, nunca rejeita. `games/BattleStage.tsx` a chama ao montar, antes do 1º golpe.
 - `function sfxCombatePronto()` — o módulo, se já carregado; senão `null` (e `playSfx` de `sounds.ts` deixa aquele golpe mudo e pede a carga).
+- ⚠️ 20/10/2026 (§130): `prepararSfxCombate()` também AQUECE os 7 samples CC0 (`SFX_DE_COMBATE_LIVRES`): se o interruptor de Efeitos está ligado, decodifica pelo barramento já existente (`garantirBarramento`) ou, sem motor, só aquece o cache HTTP; mudo não baixa nada. O módulo procedural virou FALLBACK.
 **Chamado por:** `src/utils/sounds.ts`, `src/components/games/BattleStage.tsx`.
 **Depende de:** `src/utils/sfxCombate.ts` (dinâmico).
 **Régua:** `src/utils/sfxCombate.test.ts` e `src/utils/sounds.contract.test.ts` (pré-carregam antes da CONTRAPROVA 'todo `play*` cria nó').
@@ -2621,9 +2622,11 @@ dominância populacional — por isso ±15%. Régua nova:
 - `function assetPronto(nome): AudioBuffer | null` — só se já decodificou.
 - `function prepararAssets(ctx): void` — dispara a carga dos 3 SFX de `ASSETS_DE_SOM` uma vez; não espera. As camadas da trilha NÃO entram aqui — `trilha.ts` as carrega por `carregarAsset` quando liga.
 - `function esquecerAssets(): void` — só para teste.
+- ⚠️ 20/10/2026 (§130) `const SFX_DE_COMBATE_LIVRES` (+ `interface AssetDeSfxLivre`, `interface FonteLivre`, `TETO_BYTES_SFX_LIVRE` = 40 KB) — os 7 efeitos de combate em `public/sounds/sfx-combate-*.webm` (Opus mono, CC0: Kenney e JaggedStone), por nome de `play*`, com `url`, `sha256`, `bytes`, `duracaoS`, `medidoLufsM`/`medidoTruePeakDbtp` (fato medido no arquivo decodificado, não alvo) e `fonte` (arquivo original, pacote, URL, autor, licença, data, hash do original, atribuição). Fora do S6 de 300 KB.
+- `function sfxLivrePronto(nome): AudioBuffer | null` · `function prepararSfxLivres(ctx): Promise<void>` — o sample decodificado (ou `null` = fallback procedural) e a carga dos 7 (idempotente, nunca rejeita; `esquecerAssets` a zera).
 - `function tocarBuffer(ctx, destino, buf): number` — buffer source a ganho 1; devolve a duração (fecha D-1/D-2).
 **Chamado por:** `src/utils/sounds.ts` (`assetPronto`, `prepararAssets`, `tocarBuffer`), `src/utils/trilha.ts` (`carregarAsset`, `CAMADAS_DA_TRILHA`)
-**Régua:** `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; as camadas têm a mesma `duracaoS`, múltiplo inteiro do compasso de 100 BPM (2,4 s); sem número de loudness no manifesto)
+**Régua:** `sfxCombateLivres.contract.test.ts` (os 7 samples: arquivo, hash, WebM/Opus, ≤ 40 KB, fonte/licença CC0 por arquivo, Attributions, loudness/pico, sample = padrão e procedural = fallback, mudo); `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; as camadas têm a mesma `duracaoS`, múltiplo inteiro do compasso de 100 BPM (2,4 s); sem número de loudness no manifesto)
 
 ### `src/utils/sounds.ts`
 **Dono de:** Os sons do app (16 `play*`), sintetizados, sem `AudioContext` por chamada. ⚰️ "Zero asset" valeu até 21/09/2026: desde a S16 os três eventos longos (`playEvolve`, `playDegenerate`, `playTaskComplete`) passam pela função privada `playComAsset` — `prepararAssets` + `assetPronto`/`tocarBuffer` de `sonsAssets.ts`, com o procedural como fallback quando o buffer ainda não decodificou; os cinco curtos são só síntese. A função privada `play` é o gate de mudo e, desde 21/09/2026, chama `aoGestoSonoro` (`trilha.ts`) antes de `tocarNa` — o primeiro gesto sonoro da sessão é o que liga a trilha persistida.
