@@ -192,7 +192,7 @@ export function playSleep(): void {
    combate NÃO é a degeneração real (C-6: `playDegenerate` é só do App).
 
    **Desde 20/10/2026 (§130, pedido do dono: "o som eu não gostei muito, vê se acha algum banco de dados GRATUITO") o PADRÃO
-   é um SAMPLE de banco livre CC0** (`SFX_DE_COMBATE_LIVRES` em `sonsAssets.ts`: Kenney e JaggedStone, procedência e licença por
+   é um SAMPLE de banco livre CC0** (`SFX_DE_COMBATE_LIVRES` em `sonsAssets.ts`: Kenney, procedência e licença por
    arquivo na `docs/Attributions.md`): um arquivo estático em `public/sounds/`, mestrado JÁ no alvo da categoria `arcade`
    (ganho 1 no grafo, como os assets de IA), baixado e decodificado ao montar a cena de luta (`sfxCombateCarga.ts`) ou, no
    limite, no 1º golpe. **A síntese procedural PRÓPRIA (`utils/sfxCombate.ts`, §120) virou FALLBACK**: arquivo que não chegou, não
