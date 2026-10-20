@@ -3011,6 +3011,14 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** esperar o próximo APK/arte final e deixar o gato-coruja no widget.
 - **O que falsificaria:** widget quebrado ou sem sprite em aparelho real (o Kotlin NÃO foi compilado nem rodado nesta entrega; só lido e coberto por teste de contrato sobre o fonte) ou criatura do widget diferente da Home para um jogador com inicial.
 
+## 147. Torneio com a base na área marcada pelo dono; Arena livre desce o mínimo (dono, 20/10/2026; W19; emenda o §146)
+
+- **Pedido:** "o TORNEIO tá mal posicionado: a área BRANCA (a BASE do prédio) deveria estar na área marcada em VERMELHO" (captura 390×844: escadaria em ≈(70,328) → alvo ≈(95,366), Δ = +25/+38 px).
+- **Antes → depois (390×844):** Torneio base 19,1/42,8 → 25,5/47,3 (w 30,8 igual); a escadaria cai em (95,366), dentro do círculo vermelho. Arena livre 46,5/54,0 → 46,5/69,0 (desceu 15 pontos = 127 px, sem mexer em x). Guerra intocada (77,4/46,7).
+- **Por que a Arena livre teve de descer tanto:** com o Torneio mais à direita/baixo, as caixas opacas (H11, rótulos incluídos) do Torneio e da Guerra ficam a 83 px uma da outra e a Arena livre tem 101 px: não cabe entre elas em x. Preservar o deslocamento relativo (+25/+38) bateria na Guerra; a menor saída em todos os 5 viewports do contrato é descer sem mexer em x (folga de 2 px). A diagonal do par ficou mais vertical (centro a centro 27,4/10,1 → 21,0/20,6 pontos). Nenhuma tolerância mudou; H12 intacto (opaco 26,3% e 26,0%).
+- **Alternativa que perdeu:** centralizar o par na moldura (§146); o Torneio assentado na área do dono tira o par do centro do piso, e o teste "pegada do par × centro do piso" foi trocado por "âncora da escadaria do Torneio × alvo do dono (±3 px)".
+- **O que falsificaria:** o dono achar a Arena livre baixa demais/solta do piso, ou a escadaria do Torneio fora do círculo vermelho na tela dele.
+
 ## 146. Torneio e Arena livre centralizados dentro da moldura de tijolos do piso (dono, 20/10/2026; W18; emenda o §145)
 
 - **Pedido:** "os dois podem ficar mais CENTRALIZADOS no retângulo; a posição de um em relação ao outro está boa; talvez até mais próximos; tenta deixar os dois DENTRO do retângulo delimitado pelos tijolinhos."
