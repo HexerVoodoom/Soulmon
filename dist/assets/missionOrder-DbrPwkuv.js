@@ -1,0 +1,1 @@
+const l={ready:0,open:1,claimed:2};function d(i,o){return i.map((r,n)=>({item:r,i:n,r:l[o(r)]})).sort((r,n)=>r.r-n.r||r.i-n.i).map(r=>r.item)}function c(i,o,r){const n=d(i.filter(e=>r(e)&&o(e)!=="claimed"),o),t=d(i.filter(e=>!(r(e)&&o(e)!=="claimed")),o);return{top:n,rest:t,divider:n.length>0&&t.length>0}}export{c as l,d as m};

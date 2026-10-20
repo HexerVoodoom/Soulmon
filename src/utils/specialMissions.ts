@@ -119,6 +119,10 @@ export function resolveSpecialMission(
     cur = build(day, specialMissionKindFor(day, inp.hasSteps), false, prev?.doneDays, prev?.creditedDays, sanitizeStepGoal(inp.stepGoal));
   } else if (prev.kind === 'steps' && !prev.done && !inp.hasSteps) {
     cur = build(day, 'rest', false, prev.doneDays, prev.creditedDays, prev.goal);
+  } else if (prev.kind === 'rest' && !prev.done && inp.hasSteps && specialMissionKindFor(day, true) === 'steps') {
+    // Simétrico ao rebaixamento acima: o dia foi resolvido como 'rest' sem sensor (save vindo da nuvem/PWA, ou consentimento
+    // dado no meio do dia) e agora há sensor num dia de passos pela paridade. Nunca mexe em missão cumprida.
+    cur = build(day, 'steps', false, prev.doneDays, prev.creditedDays, prev.goal ?? sanitizeStepGoal(inp.stepGoal));
   } else if (prev.goal === undefined) {
     // Save antigo (mesmo dia sem `goal`): trava a meta atual uma vez.
     cur = build(day, prev.kind, prev.done, prev.doneDays, prev.creditedDays, sanitizeStepGoal(inp.stepGoal));

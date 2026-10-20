@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 20/10/2026 — Ordem da lista de missões + missão especial de passos (`feat/ordem-missoes`, REGISTRO §132)
+>
+> - Ordem única (`missionsInQueueOrder`): "?" no topo, abertas, resgatadas no FIM (revoga A5). Aba Diárias = uma lista só (`DailyMissionBoard`): "Missão especial" no topo, linha fina, normais; a especial concluída desce para o fim.
+> - Passos: só aparece com sensor (APK + consentimento + permissão) e só em dia de passos pela paridade; corrigido o travamento em descanso quando o dia foi resolvido sem sensor; dica "A especial de amanhã é de passos" para quem tem sensor.
+> - **Pendente:** (1) confirmar no aparelho do dono se o APK instalado tem o plugin de pedômetro (`@capgo/capacitor-pedometer`, nativo; APK antigo = sem passos) e se o consentimento de passos foi dado nas Configurações; (2) decisão do dono sobre mostrar "precisa do app com sensor" na PWA (pergunta no PR).
+
 > ## 19/10/2026 — Um interruptor só de música (`feat/interruptor-unico-musica`, REGISTRO §129)
 >
 > - Um interruptor "Música" liga/desliga tema da Home, música de combate (Masmorra, Arena, Duelo, Torneio) e Pesadelo; "Sons" segue separado. Desligada = silêncio em todas. Dono da preferência: `musicaLigada()` em `audioBus.ts`; chave `SOUND_MUSIC_OFF`; migração `migrarPreferenciaDeMusica()` (substitui a da §127). Detalhe: `docs/SOM.md` §13.

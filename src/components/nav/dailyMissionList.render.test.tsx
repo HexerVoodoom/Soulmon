@@ -27,7 +27,7 @@ const mk = (state: DailyMissionsState | undefined, onClaim = vi.fn(), language: 
 describe('DailyMissionList na aba Diárias', () => {
   it('mostra as 3 do dia (PT/EN), sem botão enquanto o evento não aconteceu', async () => {
     render(mk(undefined));
-    await waitFor(() => expect(document.querySelector('[data-daily-missions]')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-daily-board]')).not.toBeNull());
     const rows = [...document.querySelectorAll('[data-daily-mission]')];
     expect(rows.map(r => r.getAttribute('data-daily-mission'))).toEqual(lista.map(m => m.id));
     expect(rows[0].textContent).toContain(lista[0].descEn);

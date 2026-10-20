@@ -1,4 +1,4 @@
-import { missionsDoneFirst } from '../../utils/missionOrder';
+import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
@@ -260,7 +260,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
-  const list = missionsDoneFirst(
+  const list = missionsInQueueOrder(
     MISSIONS.filter(m => m.category === cat),
     m => {
       const feita = isMissionComplete(m.id, missionProgress);
