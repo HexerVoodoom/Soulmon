@@ -10,6 +10,7 @@ separados do corpo) ficam como no original.
   python tools/mood-tint.py previa     # + w13-humor.png (40 px e 32 px, claro e escuro)
 """
 import sys, colorsys
+sys.exit("SUBSTITUIDO em 20/10/2026: os humores sao a arte do dono (tools/mood-dono.py). Nao rode este tingimento: ele regravaria os icones tingidos.")
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont

@@ -3019,3 +3019,9 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Halo:** todo lote já passava por `AreaScene` com uma sombra solta `0 6px 6px` (a do mapa-múndi, `MapPage`, idem) — num fundo escuro (Arena, Laboratório, Hall) ela some, e era isso que parecia "sem". Agora UM ponto, `components/nav/lotHalo.ts` (`lotArtFilter`): contorno preto justo `drop-shadow(0 0 3px rgba(0,0,0,.92))` + a sombra de chão, em todo lote; trancado mantém o cinza (`grayscale+brightness`) e leva o mesmo halo; o halo claro do Caderno segue como acento. Dois filtros por sprite (já composto), nenhum por área. Contrato: `lotHalo.contract.test.tsx` varre os lotes das 6 áreas (abertos e trancados) e reprova lote sem o halo ou componente novo que desenhe sprite de lote.
 - **Alternativa que perdeu:** halo só na Exploração (e Caderno).
 - **O que falsificaria:** prédios "sujos" (contorno preto pesado) em fundo escuro, ou queda de desempenho no aparelho fraco com os filtros.
+
+## 143. Humor: os 5 ícones são a arte do dono (dono, 20/10/2026)
+- **Decisão do dono:** "usa essas para humor" (tira de 5 gotas em pixel art: cinza com chuva, azul triste, verde-água neutro, ciano feliz, dourado com brilhos). Substitui o tingimento do §142 e a arte L6 de humor; a legenda pequena embaixo (Mal/Baixo/Normal/Bom/Ótimo) fica.
+- **Como:** `tools/mood-dono.py` fatia o original do dono (projeção de colunas de alfa, mesma escala nos 5, 128 px) e grava os cinco PNG; idempotente; `tools/mood-tint.py` foi desativado para não regravar os tingidos.
+- **Alternativa que perdeu:** tingir a arte L6 (§142).
+- **O que falsificaria:** os 5 não se distinguirem a 32–40 px sem legenda (a progressão agora é de forma E cor: chuva → triste → neutro → feliz → brilho dourado).
