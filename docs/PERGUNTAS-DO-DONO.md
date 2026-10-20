@@ -484,7 +484,7 @@ Todas têm o provisório já aplicado no código; nada está parado esperando re
 | L7 | **Remoção do "?" das Conquistas** (sem "Resgatar", nunca acende). Confirmar. | Removido (`questMarks.ts`) | recolocar o marcador |
 | L8 | **XP do Vínculo não aparece no modo demo** (sem XP, sem compras, sem PvP). | Oculto | exibir sem gravar |
 | L9 | **Arte de "Mysterious Soulmon"** (o corvo Rook do tour): usa `mascot-raven.png` com rótulo provisório. Gerar arte própria? | `mascot-raven.png` | pedido de geração em `ASSETS-A-GERAR.md` |
-| L10 | **Faixa da Arena derivada**: a música da Arena é uma variante derivada da trilha (equilíbrio percussão × camadas estimado offline). Ouvir (S8) ou pedir faixa própria. | Derivada (`utils/trilhaArena.ts`) | pedido de geração em `docs/SOM.md` §10.3 |
+| L10 | ⚠️ **SUPERADA em 19/10/2026:** a Arena agora toca "Stone Hall Combat" e a faixa derivada saiu (`SOM.md` §12, `REGISTRO-DE-DECISOES.md` §126). Nova pendência: ouvir (S8) as três faixas e mandar o print do plano Suno pago (`suno.com/account`). ~~**Faixa da Arena derivada**: a música da Arena é uma variante derivada da trilha (equilíbrio percussão × camadas estimado offline). Ouvir (S8) ou pedir faixa própria.~~ | ~~Derivada (`utils/trilhaArena.ts`)~~ | ~~pedido de geração em `docs/SOM.md` §10.3~~ |
 | L11 | **S17 emendada**: as preferências de música-tema e trilha agora CONVIVEM, alternadas por superfície com crossfade, nunca juntas. A trilha continua nascendo desligada. Confirmar a emenda. | Emendada (SOM §10, `utils/musica.ts`) | voltar a "uma por vez" |
 
 

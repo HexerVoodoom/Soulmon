@@ -294,6 +294,7 @@
 >   `src/utils/tema.ts` + `TEMA_DO_JOGO` + `busTema`; Configurações › Som › "Música-tema". Registro §6.1 S17, `docs/SOM.md` §9.
 > - **Intro:** o "play cinza" era o pôster padrão do WebView do Android (o `<video>` não tinha `poster`) — pôster agora é o 1º quadro da marca.
 > - **Logo:** ícones/favicons/splash/og:image regenerados do wordmark definitivo (`scripts/gerar-icones-logo.sh`). **Mexeu em `android/` → APK novo.**
+> - ⚠️ superado em 19/10/2026 pela seção "Trilhas licenciadas": o arquivo do tema foi trocado e a pendência passou a ser o print do plano pago.
 > - **Depende do dono:** termos comerciais do plano Suno (`docs/Attributions.md`); escutar o tema (S8) — o alvo da trilha (−28 LUFS-S) pode soar baixo.
 
 > **07/10/2026 — manual sincronizado com `e71061b8` (delta `e3d55bb8..e71061b8`, 374 commits: Combate v3 PR1–PR18, prédios por Vínculo, missões na Home, avatar/perfil).** Docs tocados: 02 (§55-B: ficha que reage ao comportamento PR14/15, selos/Maldição PR16, básico e par PR17, torcida só ícone/cena do especial/sons PR18, árvore de talentos com os oito nós, prédios por Vínculo), 03 (menu sanduíche removido), 04 (§9.1 os três sons `arcade`), 06-REFERENCIA (components, utils, api-workers, hooks-contexts-types: exports novos e ⚰️ `HomeMenuSheet`). A maior parte do combate v3 já tinha entrado no manual junto com cada PR; esta rodada fechou o que faltava (medido por exports). Divergências novas: nenhuma entre `CLAUDE.md` e o manual; pendência herdada: cabeçalhos de 01/05/07/08/09/11/12 e `desktop.md`/`plugins-constants.md` seguem com data anterior (o delta deles não mudou o conteúdo).
@@ -5327,6 +5328,8 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 
 ## 19/10/2026 — Músicas de combate (dungeon theme / pvp theme)
 
+⚠️ superado em 19/10/2026 pela seção "Trilhas licenciadas" (no fim deste arquivo). As duas faixas e seus arquivos saíram do app; o texto abaixo é histórico.
+
 - **Feito:** o "dungeon theme" toca na Masmorra; o "pvp theme" no Duelo (`DuelScreen`, `'duelo'`) e no lobby do Torneio (`TournamentPage`, `'torneio'`, sem o −3 dB). Arena livre, Pesadelo e Home inalterados. 4 arquivos em `public/sounds/musica-*` (webm + m4a, ≤ 2,5 MB cada, fora do PRECACHE; `sw.js` ignora `/sounds/musica-`). Código novo: `utils/streamMusica.ts` (player único, extraído do `tema.ts`) e `utils/musicaDeCombate.ts`. Interruptor "Música de combate" nasce LIGADO (era "Música de masmorra e arena", desligado). Medidas e regras: `SOM.md` §11. Decisão: §102.
 - **Pendências abertas:** (1) **licença** — as duas faixas são do Suno plano Free, sem direito comercial: bloqueia publicar na loja (`Attributions.md`); (2) **falta o gate humano de escuta (S8)** das duas faixas (nível relativo, transição, o fade de 3 s do pvp); (3) **legado da Home removido, a confirmar com o dono**: "tema desligado + só o loop ligado → loop na Home" não existe mais (Home = tema ou silêncio).
 
@@ -5342,3 +5345,9 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 - **Pendentes:** Segurança dos dados (outro agente preenchendo a partir de `PLAY-DATA-SAFETY.md`); Detalhes do login (instruções do revisor, do dono); Público-alvo e conteúdo (bloqueado até o login).
 - **Achados:** app indisponível na Coreia do Sul até aprovação do GRAC; a página "Teste fechado" deu erro de carregamento com o app em rascunho; conta pessoal exige 12 testadores por 14 dias; mensagens do Console de "problema urgente com sua conta para pagamentos" (13/10) e de nível alvo da API (prazo 31/08/2026, 3 apps) são do dono.
 - **Correção de doc:** as fichas diziam que o app "não é de saúde"; o Console exige a declaração de Apps de saúde por causa de `ACTIVITY_RECOGNITION`.
+
+## 19/10/2026 — Trilhas licenciadas (tema novo, Stone Hall Combat, Stone Hall Nightmare)
+
+- **Feito:** (1) tema "Stone Hall Decay" trocado por versão nova; (2) "Stone Hall Combat" toca em TODOS os combates (Masmorra, Arena, Duelo, Torneio; lobby do Torneio sem o −3 dB); (3) "Stone Hall Nightmare" toca no Pesadelo; (4) saíram "dungeon theme", "pvp theme", a faixa derivada da Arena e o terror procedural, sem fallback; (5) o interruptor "Música de combate" cobre combate e Pesadelo (desligado, o Pesadelo cai no tema mais baixo, se ligado). Arquivos em `public/sounds/` (`tema-stone-hall-decay.*`, `musica-combate.*`, `musica-pesadelo.*`). Decisão: §126. Detalhe: `SOM.md` §12. Procedência: `Attributions.md`.
+- **Medidas resumidas:** as três masterizadas em −28,0 LUFS-S (integrado ≈ −28,2 a −28,4); true peak final ≤ −15,8 dBFS. Com +6 dB de reprodução: integrado pior −22,2 LUFS e true peak pior −9,8 dBTP (S3 cumprida). Bytes das músicas: 13 589 741 → 13 452 938 (−136 803). Todo formato ≤ 2,5 MiB, fora do pré-cache.
+- **Pendências abertas:** (1) **licença, suave, não bloqueante pela declaração:** o dono declarou o plano pago em 19/10/2026; falta o print da página do plano (`suno.com/account`) e conferir o termo do download comercial. Se o print mostrar plano sem direito comercial, volta a bloquear a loja; (2) **escuta do dono (S8)** das três faixas e do nível relativo; (3) **loop de 2 camadas** (`trilha-base`, `trilha-ritmo`, ~244 KB) sem uso em produção: decidir se sai; (4) decisões do orquestrador a confirmar: procedural apagado sem fallback; Pesadelo com interruptor desligado cai no tema.

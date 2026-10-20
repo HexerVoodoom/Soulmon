@@ -252,6 +252,7 @@ Detalhe completo, com saídas coladas e proveniência de cada número:
 - **Bytes:** ≤ 2,5 MB por formato, fora do S6 de 300 KB (que vale para SFX e camadas), fora do `PRECACHE_URLS`; o `sw.js` não
   intercepta `Range` nem `/sounds/tema-`.
 - **Pendências do dono:** termos comerciais do plano Suno (`docs/Attributions.md`) e a escuta (S8).
+- ⚠️ 19/10/2026: o arquivo do tema foi trocado por versão nova (§12). Os números de loudness e bytes acima são do arquivo antigo.
 
 ## 10. Auditoria da música, volume, rotas por superfície e golpe físico × à distância (11/10/2026, ditado do dono)
 
@@ -286,7 +287,8 @@ a linha do tempo); o interruptor e o `AudioContext` não brigam (o toggle persis
   **Falta a escuta do dono (S8)** — o número é de medição, não de ouvido.
 
 **10.3 Rotas por superfície** (`musica.ts`): casa = **tema**; masmorra = **loop** (as duas camadas, em combate); arena = **faixa própria**.
-- **Faixa da Arena = DERIVADA, zero asset novo.** As duas camadas a `RAZAO_DA_ARENA` (1,2× → 100→120 BPM; o loop cai de 28,8 para 24 s,
+⚠️ 19/10/2026: substituído pela §12 (masmorra, arena, duelo e torneio tocam "Stone Hall Combat"; pesadelo toca "Stone Hall Nightmare"). Abaixo, histórico.
+- ⚠️ 19/10/2026: substituído pela §12 (a faixa derivada e a percussão `trilhaArena.ts` foram apagadas). **Faixa da Arena = DERIVADA, zero asset novo.** As duas camadas a `RAZAO_DA_ARENA` (1,2× → 100→120 BPM; o loop cai de 28,8 para 24 s,
   12 compassos de 2 s) + uma PERCUSSÃO procedural (`trilhaArena.ts`: bumbo nos tempos 1/3 + contratempo, caixa nos 2/4, chimbal em
   colcheias, virada no 4º compasso de cada 4) sintetizada num buffer de um loop inteiro, que começa no mesmo instante e fecha no mesmo
   ponto (em fase, sem relógio). Sem melodia de propósito: um `AudioBufferSourceNode` não faz time-stretch, então as camadas mudam de
@@ -322,7 +324,9 @@ EXIBIDA em ≈ lead + cauda + respiro (≈ 3,3 s); a simulação e o resultado s
 
 ## 11. As músicas de combate: dungeon theme e pvp theme (19/10/2026, pedido do dono)
 
-Pedido: *"E:\dowload adicione aqui a dungeon theme e o pvp theme; inclua no jogo"*. Duas faixas do Suno (plano Free), entregues pelo dono.
+⚠️ 19/10/2026: substituído pela §12. As faixas "dungeon theme" e "pvp theme" e seus arquivos saíram do app; o histórico abaixo fica como registro. O que segue valendo da §11: o interruptor nasce ligado (11.2), o player único (11.3) e o `sw.js` (11.5).
+
+Pedido: dono entregou duas faixas do Suno (plano Free) para a Masmorra e o PvP.
 
 **11.1 O que toca onde** (`musica.ts`, tabela casa = tema):
 | Superfície | Faixa | É combate? (−3 dB) |
@@ -376,4 +380,57 @@ retomada a usam).
 `playCharge` (carregando o especial), `playSpecial` (soltando), `playVictory` e `playDefeat` (derrota neutra) são buffers procedurais de
 `src/utils/sfxCombate.ts` (origem `procedural próprio`, `SFX_DE_COMBATE`), todos `arcade`, com o offset medido de `loudness.ts` embutido (ganho 1 no grafo).
 Registro §120. Para OUVIR (gate S8): `node scripts/render-sfx-combate.mjs` grava os 7 WAV; `--medir` só imprime LUFS-M, pico e offset.
+
+## 12. Trilhas licenciadas: tema novo, Stone Hall Combat e Stone Hall Nightmare (19/10/2026, pedido do dono)
+
+Decisão do dono: "Todos os combates" tocam uma faixa só, e o Pesadelo tem a sua. Registro: `REGISTRO-DE-DECISOES.md` §126.
+Procedência e hashes: `Attributions.md`. Um dono só para música em streaming: `streamMusica.ts` + `musicaDeCombate.ts`.
+
+**12.1 O que toca onde** (`musica.ts`):
+| Superfície | Faixa | −3 dB (combate)? |
+|---|---|---|
+| casa | tema "Stone Hall Decay" (arquivo novo) | não |
+| torneio (`TournamentPage`, lobby) | "Stone Hall Combat" | **não** |
+| masmorra (`DungeonGame`) | "Stone Hall Combat" | sim |
+| arena (`ArenaGame`, inclusive a folha "Arena livre") | "Stone Hall Combat" | sim |
+| duelo (`DuelScreen`) | "Stone Hall Combat" | sim |
+| torneio (as lutas, depois do lobby) | "Stone Hall Combat" | sim |
+| pesadelo (`NightmareBattle`) | "Stone Hall Nightmare" | sim |
+
+O interruptor "Música de combate" (`SOUND_TRACK_ENABLED`, nasce ligado, só toca depois de gesto, D11) cobre combate **e** Pesadelo.
+Com o interruptor desligado, o Pesadelo segue a regra das outras superfícies de combate: o tema toca mais baixo, se estiver ligado.
+Antes, o terror tocava se o tema OU a trilha estivesse ligado. Nunca duas músicas juntas.
+
+**12.2 Medidas** (ffmpeg 6.1.1, filtro `ebur128`, LUFS-S mediano; régua calibrada no tema antigo instalado: −28,0 / integrado −28,2 / TP −15,1):
+| Faixa | Original (LUFS-S / integrado / TP) | Ganho | WebM final (LUFS-S / integrado / TP) | M4A final (LUFS-S / integrado / TP) |
+|---|---|---|---|---|
+| Stone Hall Decay (227,48 s) | −15,7 / −15,9 / −3,8 | −12,3 dB | −28,0 / −28,2 / −15,8 | −28,0 / −28,3 / −15,8 |
+| Stone Hall Combat | −15,2 / −15,3 / −5,1 | −12,9 dB + fade-out 3 s | −28,0 / −28,2 / −17,5 | −28,0 / −28,2 / −16,3 |
+| Stone Hall Nightmare | −16,0 / −16,2 / −5,6 | −12,2 dB + fade-out 3 s | −28,1 / −28,4 / −17,4 | −28,0 / −28,3 / −17,2 |
+
+Com o ganho de reprodução `GANHO_MUSICA_DB` (+6 dB): integrado pior −22,2 LUFS e true peak pior −9,8 dBTP (S3 cumprida: ≤ −16 LUFS e ≤ −1 dBTP).
+Trim residual 0 (`TRIM_MUSICAS_DE_COMBATE_DB = { combate: 0, pesadelo: 0 }` em `loudness.ts`). Nenhuma intro cortada.
+O combate terminava seco (último 0,3 s com pico −20,6 dBFS) e o Pesadelo sustentava −24 dBFS no último segundo e cortava: por isso o fade-out de 3 s.
+
+**12.3 Bytes, orçamento e service worker.** `public/sounds/`: tema webm 2 296 694 B / m4a 2 555 598 B; combate webm 1 849 637 B / m4a 2 241 408 B;
+pesadelo webm 2 055 285 B / m4a 2 454 316 B. Todo formato ≤ 2,5 MiB (maior: tema m4a). Fora do S6 de 300 KB, fora do pré-cache,
+streaming só depois de gesto. O `sw.js` já ignora `Range` em `/sounds/tema-` e `/sounds/musica-`. Total em `public/sounds/` das músicas:
+antes (tema velho + dungeon + pvp) 13 589 741 B; depois 13 452 938 B (−136 803 B).
+
+**12.4 O que saiu.** Sem fallback, por decisão do orquestrador (um dono só para música em streaming):
+- "dungeon theme" e "pvp theme" (os arquivos `.webm`/`.m4a` das duas, em `public/sounds/`).
+- A faixa derivada da Arena: `src/utils/trilhaArena.ts`, `TRIM_FAIXA_ARENA_DB` e `RAZAO_DA_ARENA`.
+- A trilha de terror procedural do Pesadelo: `trilhaPesadelo.ts`, `trilhaPesadeloSintese.ts` e `scripts/render-trilha-pesadelo.mjs`.
+  O encaixe "solte `pesadelo-trilha.mp3` em `src/assets/audio`" também saiu.
+- No manifesto, `MUSICAS_DE_COMBATE` agora é `{ combate, pesadelo }`. Em `trilha.ts`, `FaixaDaTrilha` é só `'loop'`.
+
+**12.5 Pendências, sem suavizar.**
+- ⚠️ **Licença: declarada, não provada.** O dono declarou em 19/10/2026 que as três faixas foram geradas no plano pago do Suno.
+  O repo não prova o plano. Falta o print da página do plano (`suno.com/account`) e conferir o termo do download comercial.
+  Se o print mostrar plano sem direito comercial, a pendência volta a bloquear a loja. A pendência anterior (plano Free) está SUPERADA pela troca.
+- ⚠️ **Nome de terceiro no título.** No Suno, as faixas de combate e Pesadelo tinham no título o nome de uma trilha de terceiro, por erro de digitação (declaração do dono).
+  O repo não consegue provar por escuta a ausência de material de terceiro.
+- ⚠️ **Falta o gate humano de escuta (S8)** das três faixas e do nível relativo entre elas. Os números são de medição.
+- **Loop de 2 camadas sem uso.** `trilha-base` e `trilha-ritmo` (~244 KB) seguem no repo, mas nenhuma superfície as pede mais. Decidir se saem.
+- **Decisões do orquestrador, a confirmar com o dono:** o procedural foi apagado sem fallback; com o interruptor desligado, o Pesadelo cai no tema.
 

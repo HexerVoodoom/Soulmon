@@ -83,7 +83,7 @@ describe('chave "false" ESCOLHIDA (marca de versão presente): a música de comb
   });
 });
 
-describe('§126: "false" HERDADO (sem marca de versão) é apagado uma vez e a música toca', () => {
+describe('§127: "false" HERDADO (sem marca de versão) é apagado uma vez e a música toca', () => {
   it('masmorra com "false" e sem marca toca o dungeon theme; a marca vira "1"', () => {
     localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
     iniciarMusica();

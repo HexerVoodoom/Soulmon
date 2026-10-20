@@ -1,6 +1,6 @@
 /**
  * O PLAYER DE MÚSICA EM STREAMING — a maquinaria do `<audio>` que o tema (`tema.ts`) e as músicas de combate
- * (`musicaDeCombate.ts`) dividem, extraída do tema em 19/10/2026 para ter UM dono (decisão do dono: dungeon/pvp theme).
+ * (`musicaDeCombate.ts`) dividem, extraída do tema em 19/10/2026 para ter UM dono (decisão do dono: músicas de combate).
  *
  * Forma: um `<audio>` por player (3m30 decodificados seriam ~70 MB de PCM na RAM de um celular), `preload="none"` —
  * os ~2 MB só saem da rede quando o primeiro `comecar()` chega (S6: zero no bundle inicial). Formato por suporte

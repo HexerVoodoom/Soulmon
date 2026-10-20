@@ -99,7 +99,7 @@ export const STORAGE_KEYS = {
    *  chave vale LIGADO e só `'false'` explícito desliga. O autoplay segue vetado
    *  (D11): ligado é preferência, o som só sai depois de um gesto. */
   SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',
-  /** Versão do esquema das preferências de som (REGISTRO §126). Ausente = aparelho anterior ao §102, em que
+  /** Versão do esquema das preferências de som (REGISTRO §127). Ausente = aparelho anterior ao §102, em que
    *  `SOUND_TRACK_ENABLED='false'` podia ser herança da era "nasce desligada" e não escolha do jogador. `'1'` = a
    *  migração já rodou: um 'false' gravado DEPOIS dela é escolha explícita e vale. */
   SOUND_PREFS_VERSION: 'soulmon-sound-prefs-version',

@@ -107,7 +107,7 @@ export interface ArenaGameProps {
 export function ArenaGame({
   evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onExit,
 }: ArenaGameProps) {
-  // Música (11/10/2026): na Arena toca a faixa PRÓPRIA dela (se o interruptor "Música de combate" está ligado).
+  // Música (11/10/2026): na Arena toca o "Stone Hall Combat" (se o interruptor "Música de combate" está ligado).
   useEffect(() => entrarNaSuperficie('arena'), []);
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';

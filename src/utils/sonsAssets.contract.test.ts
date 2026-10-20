@@ -18,10 +18,12 @@ const raiz = join(__dirname, '..', '..');
 const TODOS = [...Object.values(ASSETS_DE_SOM), ...Object.values(CAMADAS_DA_TRILHA)];
 /** S17 (07/10/2026): a música-tema — manifesto próprio, fora do S6 de 300 KB, com orçamento por formato. */
 const FORMATOS_DO_TEMA = TEMA_DO_JOGO.formatos;
-/** 19/10/2026: o tema e as músicas de combate (dungeon/pvp theme) têm a mesma forma e o mesmo orçamento. */
+/** 19/10/2026: o tema e as músicas de combate (Stone Hall Combat/Nightmare) têm a mesma forma e o mesmo orçamento. */
 const MUSICAS = [TEMA_DO_JOGO, ...Object.values(MUSICAS_DE_COMBATE)];
 const FORMATOS_DAS_MUSICAS = MUSICAS.flatMap(m => [...m.formatos]);
 const TETO_TEMA_POR_FORMATO_BYTES = 2.5 * 1024 * 1024;
+/** O conjunto anterior (tema + dungeon/pvp, 13/10 e 19/10/2026): o novo não pode pesar mais que ele. */
+const TETO_CONJUNTO_ANTERIOR_BYTES = 13589741;
 /** S6, literal: 300 KB no total. */
 const TETO_S6_BYTES = 300 * 1024;
 
@@ -65,7 +67,7 @@ describe('S9 — procedência nas duas direções', () => {
   });
 });
 
-describe('S17 — as músicas em streaming (tema + dungeon/pvp theme): procedência, formatos e orçamento próprio', () => {
+describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare): procedência, formatos e orçamento próprio', () => {
   it('cada formato existe em public/ com o hash e os bytes declarados e está na Attributions.md', () => {
     const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
     for (const m of MUSICAS) {
@@ -91,10 +93,26 @@ describe('S17 — as músicas em streaming (tema + dungeon/pvp theme): procedên
     expect(attr).toMatch(/termos comerciais do plano Suno/);
   });
 
-  it('as faixas de combate têm a pendência do plano Free escrita na Attributions.md', () => {
+  it('a Attributions.md tem a declaração do plano pago e a pendência do print; não cita os arquivos removidos', () => {
     const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
-    expect(attr).toMatch(/dungeon theme/);
-    expect(attr).toMatch(/pvp theme/);
+    expect(attr).toMatch(/plano pago/);
+    expect(attr).toContain('falta anexar o print da página do plano');
+    expect(attr).not.toContain('musica-masmorra');
+    expect(attr).not.toContain('musica-pvp');
+    for (const m of Object.values(MUSICAS_DE_COMBATE)) expect(attr, m.nome).toContain(m.nome);
+  });
+
+  it('o guard de hash vale nas duas direções: nada em public/sounds/ fora do manifesto, e os removidos não existem', () => {
+    const emDisco = new Set(readdirSync(join(raiz, 'public', 'sounds')));
+    for (const f of ['musica-masmorra.webm', 'musica-masmorra.m4a', 'musica-pvp.webm', 'musica-pvp.m4a']) expect(emDisco.has(f), f).toBe(false);
+    const noManifesto = new Set(FORMATOS_DAS_MUSICAS.map(f => f.url.replace('/sounds/', '')));
+    for (const f of emDisco) if (/^(tema|musica)-/.test(f)) expect(noManifesto.has(f), `${f} sem manifesto`).toBe(true);
+  });
+
+  it('(f) a soma de bytes de tema + músicas de combate não passa a do conjunto anterior (13 589 741)', () => {
+    const total = FORMATOS_DAS_MUSICAS.reduce((s, f) => s + f.bytes, 0);
+    expect(total, `${total} bytes`).toBeLessThanOrEqual(TETO_CONJUNTO_ANTERIOR_BYTES);
+    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['combate', 'pesadelo']);
   });
 
   it('cada formato cabe no orçamento próprio (≤ 2,5 MB) e é o ÚNICO motivo de o S6 de 300 KB não valer para ele', () => {

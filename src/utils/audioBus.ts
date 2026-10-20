@@ -260,7 +260,7 @@ export function trilhaLigada(): boolean {
 }
 
 /**
- * MIGRAÇÃO ÚNICA das preferências de som (REGISTRO §126, 19/10/2026). Bug do dono: "entrei no combate e não mudou a
+ * MIGRAÇÃO ÚNICA das preferências de som (REGISTRO §127, 19/10/2026). Bug do dono: "entrei no combate e não mudou a
  * trilha" — num aparelho que passou pela era da S2 (a trilha nascia DESLIGADA) a chave podia estar gravada como
  * `'false'`, e `trilhaLigada()` só trata AUSENTE como ligada: Masmorra/Duelo seguiam com o tema, sem música de combate.
  * Quem está sem a marca de versão não pode ter escolhido nada DEPOIS do §102 (a marca nasce com este código), então o

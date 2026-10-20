@@ -109,66 +109,70 @@ três eventos com arquivo mantêm o procedural como fallback. Régua executável
 | `public/sounds/trilha-base.webm` · `2122e7ed4d330a117eb27b067781a2fcbd90ce1113d800d2839a3702acd10688` | trilha, camada `base` (E1) | Higgsfield CLI · `sonilo_music`, job `49823588` | idem | `pacote-prompts.md` §2.14 | 21/09/2026 | idem | idem |
 | `public/sounds/trilha-ritmo.webm` · `6182a9f6ed468a77cfb3c65a6224907b8f7abdce3ce1c7d84df0745a16e175f8` | trilha, camada `ritmo` | Higgsfield CLI · `sonilo_music`, job `6072e49c` | idem | `pacote-prompts.md` §2.15 | 21/09/2026 | idem | idem |
 
-### A música-tema (07/10/2026) — **termos pendentes do dono**
+### As três músicas em streaming (19/10/2026) — plano pago DECLARADO pelo dono, print pendente
 
-| Arquivo · SHA-256 | Evento | Origem | Pós-processamento |
-|---|---|---|---|
-| `public/sounds/tema-stone-hall-decay.webm` · `bd26b3196e56e329d31246eaf65b209eabce35988f591866b373971eec745de6` | música-tema "Stone Hall Decay" (`utils/tema.ts`) | **Fornecida pelo dono, gerada no Suno** (id interno da faixa `a1ea27dd-745f-489f-92e1-cc3c81385b71`, 3m40, 07/10/2026; arquivo original `Stone_Hall_Decay.m4a`, 3 946 099 bytes, SHA-256 `3b692b053b617f94a9f8a6b6ae885340f767b501a87937096176447635918226`) | ffmpeg: ganho único para o alvo da trilha de `utils/loudness.ts` (LUFS-S mediano −28,0), Opus 72 kbps estéreo, sem metadados |
-| `public/sounds/tema-stone-hall-decay.m4a` · `46142dcb042f334fbed67a6b4d767b8f59ec38425b30ae7c35f99d4dab116c53` | idem (formato de reserva p/ Safari/iOS) | idem | idem, AAC-LC 88 kbps |
+Tema, combate e Pesadelo. Cada faixa tem dois arquivos (WebM/Opus 72 kbps e M4A/AAC-LC 88 kbps, 48 kHz,
+estéreo, sem metadados nem capa). Ganho único de masterização para o alvo de `utils/loudness.ts`
+(LUFS-S mediano −28,0); nenhuma intro cortada. Medidas: `SOM.md` §12.
 
-⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno: o
-que vale para uso comercial depende do **plano da conta do dono no momento da geração** (e esse
-plano não foi informado). **Verificar os termos comerciais do plano Suno antes de publicar o app
-na loja** e anotar aqui a versão dos termos e o plano. Como em todo áudio gerado por IA, o guard
-(`sonsAssets.contract.test.ts`) prova procedência (hash ↔ arquivo ↔ esta linha), nunca originalidade
-nem licença; a escuta é do dono (S8). Decisão: `REGISTRO-DE-DECISOES.md` §6.1, S17.
+#### "Stone Hall Decay" — tema da casa (`utils/tema.ts`)
 
-⚠️ **Achado de 19/10/2026 — o plano era Free, e o Free não tem direito comercial.** O dono
-informou que gerou o tema no plano **Free**. A página de planos da conta (`suno.com/account`,
-vista em 18/10/2026) lista o Free com *"No commercial rights"* e *"No monthly song downloads"*. Os
-termos (`suno.com/terms`, *Date of Last Revision* 10/08/2026, vigente desde 03/09/2026; lidos em
-18/10/2026 **por resumo da página — conferir o texto antes de citar numa ficha de loja**) dizem que
-conta Free/Basic só usa o Output para fins *"lawful, personal and non-commercial"*, e que o uso
-comercial exige plano pago **e** um Download permitido dentro da cota do plano.
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/tema-stone-hall-decay.webm` · `65944d0daf3ed90f979f3471686f80d7b3d1dc71ca0fd6f36ec8fb6c54eed31e` · 2 296 694 B | Opus 72 kbps |
+| `public/sounds/tema-stone-hall-decay.m4a` · `01edff65c7f84dc2c96caf96d29b8e697a541927f217da79e4ae934e5837c371` · 2 555 598 B | AAC-LC 88 kbps, faststart (reserva p/ Safari/iOS) |
 
-**Consequência, sem suavizar:** o tema `Stone Hall Decay` **não tem licença comercial** e está no
-build. Isto bloqueia publicar o app na loja com ele dentro. Não afeta os assets da Higgsfield
-(termos próprios, S15).
+Origem: **Fornecida pelo dono, gerada no Suno**. Suno id `5c0871e5-e086-4625-96d4-5b5a5e0d2027`, criada em
+2026-10-19T22:03:18Z, original de 3:47,5 (5 288 519 B). Duração final 227,48 s. Ganho −12,3 dB. Substitui o tema
+anterior (outro id Suno, plano Free), que saiu do bundle.
 
-Dois pontos que o registro ainda não sabe responder:
+#### "Stone Hall Combat" — todos os combates (`utils/musicaDeCombate.ts`)
 
-1. **Como o arquivo saiu da conta.** O Free não tem download mensal, e existe um
-   `Stone_Hall_Decay.m4a` de 3 946 099 bytes. Os termos proíbem obter o Output fora do canal oficial
-   de download (por exemplo, captura do stream). O dono precisa dizer como o arquivo foi obtido.
-2. **A fonte do cover.** A conta mostra duas faixas `Stone Hall Decay` e cerca de quinze
-   `Rising Intensity` marcadas **COVER** (modelo V6-MINI). O áudio de origem de um cover não está
-   registrado em lugar nenhum deste repositório.
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/musica-combate.webm` · `f94ea91cf3d8a32059889c87c678c37a19270ad3b95a6b49f7707fe05ca954f5` · 1 849 637 B | Opus 72 kbps |
+| `public/sounds/musica-combate.m4a` · `c2dfe0323d17ecd73551489eada3ead9e7eae5d81cec1f4c6676255250a9c16e` · 2 241 408 B | AAC-LC 88 kbps, faststart |
 
-Saídas, todas do dono: **(a)** assinar o Pro (R$ 40/mês na página de planos de 18/10/2026; 20
-downloads por mês) e regenerar e baixar o tema pelo botão oficial, registrando plano e versão dos
-termos aqui; **(b)** trocar a música por uma gerada na Higgsfield (`sonilo_music`, termos da S15);
-**(c)** tirar o tema do build até decidir. O guard (`sonsAssets.contract.test.ts`) continua provando
-só procedência, nunca licença.
+Origem: **Fornecida pelo dono, gerada no Suno**. Suno id `59855db6-6336-4400-86e9-c3b93aec7678`, criada em
+2026-10-19T22:28:41Z, original de 3:17,9 (4 611 456 B). Ganho −12,9 dB + fade-out de 3 s (terminava seco).
+Toca na Masmorra, na Arena, no Duelo e no Torneio. O título original no Suno continha o nome de uma trilha de terceiro por erro de digitação, segundo declaração do dono em 19/10/2026; o repo não consegue provar por escuta a ausência de material de terceiro.
 
-### As músicas de combate (19/10/2026) — plano Free, SEM direito comercial
+#### "Stone Hall Nightmare" — Pesadelo (`utils/musicaDeCombate.ts`)
 
-Pedido do dono em 19/10/2026: *"E:\dowload adicione aqui a dungeon theme e o pvp theme; inclua no jogo"*.
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/musica-pesadelo.webm` · `bb897ebe3e968a7e2e328404c5bb77ea2ef4504c840489487475f641b09275b2` · 2 055 285 B | Opus 72 kbps |
+| `public/sounds/musica-pesadelo.m4a` · `5d0e1d504fc65db592551f2f85735facf2579a041d3d450e2d0b5829e7d7986d` · 2 454 316 B | AAC-LC 88 kbps, faststart |
 
-| Arquivo · SHA-256 | Evento | Origem | Pós-processamento |
-|---|---|---|---|
-| `public/sounds/musica-masmorra.webm` · `23fa1dcc87c17eeeabe68469297fc82f5ab8ef9fb4149ca72dbd800f6ea7d55e` | "dungeon theme" — Masmorra (`utils/musicaDeCombate.ts`) | **Fornecida pelo dono, gerada no Suno** (plano Free; arquivo original `dungeon theme.mp3`, 4 957 153 bytes, SHA-256 `99beb7bba343518841982b5a72aa2a7a6262e2dc9d9797248890c38661da8ee2`, 3m19) | ffmpeg: ganho único de −13,8 dB para o alvo de masterização de `utils/loudness.ts` (LUFS-S mediano −28,0); sem fade (já termina em decrescendo), sem corte de intro; Opus 72 kbps estéreo 48 kHz, 2 134 684 bytes, sem metadados, capa removida |
-| `public/sounds/musica-masmorra.m4a` · `3c2ba72d30c06d79f2e0f0f2756135bdace81da4567b3aa6b99faab6a2c0967e` | idem (formato de reserva p/ Safari/iOS) | idem | idem, AAC-LC 88 kbps, faststart, 2 267 713 bytes |
-| `public/sounds/musica-pvp.webm` · `f5ecdcbd63d6b8ec3b67496a463fe036735f1a3f2b5fbad6d97de7015ff0a7d9` | "pvp theme" — Duelo e Torneio (`utils/musicaDeCombate.ts`) | **Fornecida pelo dono, gerada no Suno** (plano Free; arquivo original `pvp theme.mp3`, 4 905 140 bytes, SHA-256 `2fdab7d796ee55e3f54ec9e591e621aedc56c56c15d2eb69706b55812de66bbf`, 3m32) | ffmpeg: ganho único de −14,1 dB (alvo −28,0 LUFS-S) + fade-out de 3 s no fim (a faixa terminava seca); 0,42 s de silêncio na cabeça mantido; Opus 72 kbps estéreo 48 kHz, 1 954 061 bytes, sem metadados, capa removida |
-| `public/sounds/musica-pvp.m4a` · `7eda5f9327a4da9add83af0c4dc4f698774955eb36788c9c819ab9f967915cbe` | idem (formato de reserva p/ Safari/iOS) | idem | idem, AAC-LC 88 kbps, faststart, 2 398 063 bytes |
+Origem: **Fornecida pelo dono, gerada no Suno**. Suno id `e12b0ec8-0451-424a-ae56-f21fd4b952b4`, criada em
+2026-10-19T22:29:09Z, original de 3:37,2 (4 976 023 B). Ganho −12,2 dB + fade-out de 3 s (o último segundo ficava
+sustentado e cortava seco). O título original no Suno continha o nome de uma trilha de terceiro por erro de digitação, segundo declaração do dono em 19/10/2026; o repo não consegue provar por escuta a ausência de material de terceiro.
 
-⚰️ Os dois originais são `mp3` 48 kHz (~197 kbps) com capa embutida; a capa e os metadados não foram para o build.
+#### Licença — o que está declarado e o que falta
 
-⚠️ **Pendência do dono — nada aqui afirma licença.** As duas faixas foram geradas no plano **Free** do
-Suno, que **não tem direito comercial** (a mesma leitura dos termos registrada acima para o tema
-`Stone Hall Decay`). Isto bloqueia publicar o app na loja com elas dentro. O guard
-(`sonsAssets.contract.test.ts`) prova procedência (hash ↔ arquivo ↔ esta linha), nunca licença. A
-escuta do dono (S8) das duas faixas continua pendente. Saídas possíveis, todas do dono, as mesmas do
-tema: plano pago com download oficial, trocar por música da Higgsfield, ou tirar do build.
+⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno. Estado em
+19/10/2026: declarado pelo dono em 19/10/2026: gerado no plano pago; falta anexar o print da página do plano (`suno.com/account`) e conferir o termo do download comercial.
+
+O que o repo sabe e o que não sabe:
+
+- **Declaração, não prova.** O repo não prova o plano. O guard (`sonsAssets.contract.test.ts`) prova
+  procedência (hash ↔ arquivo ↔ esta linha), nunca originalidade nem licença.
+- **Termos lidos em 18/10/2026, por resumo da página** (`suno.com/terms`, *Date of Last Revision*
+  10/08/2026): conta Free/Basic só usa o Output para fins *"lawful, personal and non-commercial"*; o uso
+  comercial exige plano pago **e** um Download permitido dentro da cota do plano. **Conferir o texto antes
+  de citar numa ficha de loja** e anotar aqui a versão dos termos e o plano.
+- **Verificar os termos comerciais do plano Suno antes de publicar o app na loja.** Se o print mostrar plano
+  sem direito comercial, a pendência volta a bloquear a loja.
+- A escuta do dono (S8) das três faixas continua pendente.
+- Não afeta os assets da Higgsfield (termos próprios, S15).
+
+✅ **SUPERADA em 19/10/2026 pela troca:** a pendência anterior do plano **Free** (tema antigo, "dungeon theme" e
+"pvp theme", todos sem direito comercial) deixou de valer porque esses arquivos **saíram do bundle** e não há
+fallback. As dúvidas que ela carregava (como o arquivo saiu da conta, a fonte do cover) ficam sem objeto. A
+nova pendência é só a deste bloco.
+
+🗑️ **Removida em 19/10/2026:** a trilha de terror procedural do Pesadelo (síntese em código, sem arquivo) e a
+faixa da Arena derivada do loop de 2 camadas. O Pesadelo e a Arena tocam as faixas acima.
 
 Pós-processamento (corte, 48 kHz, crista, normalização ao alvo da categoria) por
 `squad-alpha-runs/som-01/prototyper/pos-processar.mjs` (SFX) e `E:/Soulmon-assets/som-01/mestre-trilha.mjs`

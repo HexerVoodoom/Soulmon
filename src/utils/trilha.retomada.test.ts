@@ -10,7 +10,7 @@
  *  4. `busTrilha` em 0 quando o storage falha (janela privada) → tocava mudo;
  *  5. roteamento por faixa: troca de faixa é crossfade, nasce desligada e só por gesto.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const E = vi.hoisted(() => ({
   ctxs: [] as Array<Record<string, any>>,
@@ -58,17 +58,13 @@ vi.mock('./sounds', () => ({ isMuted: () => false }));
 import {
   ligarTrilha, desligarTrilha, pedirFaixa, trilhaTocando, camadasTocando, faixaTocando, esquecerTrilha, consentirNestaSessao, aoGestoSonoro,
 } from './trilha';
-import { GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB, TRIM_FAIXA_ARENA_DB, TRIM_TRILHA_POR_CAMADAS_DB, db2lin } from './loudness';
-import { RAZAO_DA_ARENA } from './sonsAssets';
+import { GANHO_MUSICA_DB, TRIM_TRILHA_POR_CAMADAS_DB, db2lin } from './loudness';
 
 const tick = () => new Promise(r => setTimeout(r, 0));
 const escondida = (v: boolean) => {
   Object.defineProperty(document, 'hidden', { configurable: true, value: v });
   document.dispatchEvent(new Event('visibilitychange'));
 };
-
-// A percussão da Arena é um chunk sob demanda (`import('./trilhaArena')`): aquece o módulo para o `tick` curto bastar.
-beforeAll(async () => { await import('./trilhaArena'); });
 
 beforeEach(() => {
   esquecerTrilha();
@@ -133,68 +129,65 @@ describe('achado 4 — quem toca com consentimento abre o bus', () => {
 });
 
 describe('o ganho vem da política (loudness.ts), nunca de literal', () => {
-  it('loop = trim das 2 camadas + ganho de reprodução; masmorra desce o degrau do combate', async () => {
+  it('loop = trim das 2 camadas + ganho de reprodução, sem degrau de combate (nenhuma superfície toca o loop)', async () => {
     ligarTrilha();
     await tick();
     const alvo = (g: any) => g.gain.rampas[g.gain.rampas.length - 1];
     const loop = E.atual!.ganhos[0];
     expect(alvo(loop)).toBeCloseTo(db2lin(TRIM_TRILHA_POR_CAMADAS_DB[2] + GANHO_MUSICA_DB), 9);
-    pedirFaixa('masmorra');
-    await tick();
-    // mesmo material → o MESMO ganho desliza (a música não recomeça)
     expect(E.atual!.fontes.length).toBe(2);
-    expect(alvo(loop)).toBeCloseTo(db2lin(TRIM_TRILHA_POR_CAMADAS_DB[2] + GANHO_MUSICA_DB + OFFSET_MUSICA_EM_COMBATE_DB), 9);
-    expect(faixaTocando()).toBe('masmorra');
+    pedirFaixa('loop'); // idempotente: a mesma faixa não recomeça nem muda o ganho
+    await tick();
+    expect(E.atual!.fontes.length).toBe(2);
+    expect(alvo(loop)).toBeCloseTo(db2lin(TRIM_TRILHA_POR_CAMADAS_DB[2] + GANHO_MUSICA_DB), 9);
+    expect(faixaTocando()).toBe('loop');
   });
 });
 
 describe('roteamento por faixa (nasce desligada, só por gesto, crossfade)', () => {
   it('sem gesto nesta sessão, pedir uma faixa NÃO toca nada (D11/S2)', async () => {
-    pedirFaixa('arena');
+    pedirFaixa('loop');
     await tick();
     expect(trilhaTocando()).toBe(false);
     expect(E.ctxs.length).toBe(0); // nem o contexto nasceu
   });
 
-  it('consentir (abrir a arena com a chave ligada) + pedir a faixa: toca a ARENA — camadas a 1,2× + percussão', async () => {
+  it('consentir (abrir uma superfície com a chave ligada) + pedir o loop: toca as DUAS camadas, em loop, a 1×', async () => {
     E.ligada = true;
     consentirNestaSessao();
-    pedirFaixa('arena');
+    pedirFaixa('loop');
     await tick();
-    expect(faixaTocando()).toBe('arena');
+    expect(faixaTocando()).toBe('loop');
     const fontes = E.atual!.fontes;
-    expect(fontes.length).toBe(3); // base + ritmo + percussão procedural
-    expect(camadasTocando()).toBe(3);
-    expect(fontes.filter((f: any) => f.playbackRate.value === RAZAO_DA_ARENA).length).toBe(2);
-    expect(fontes[2].loop).toBe(true);
-    // trim da faixa derivada entra no ganho
-    const g = E.atual!.ganhos[0];
-    expect(g.gain.rampas.at(-1)).toBeCloseTo(db2lin(TRIM_TRILHA_POR_CAMADAS_DB[2] + GANHO_MUSICA_DB + OFFSET_MUSICA_EM_COMBATE_DB + TRIM_FAIXA_ARENA_DB), 9);
+    expect(fontes.length).toBe(2);
+    expect(camadasTocando()).toBe(2);
+    expect(fontes.every((f: any) => f.loop === true)).toBe(true);
+    expect(fontes.every((f: any) => !f.playbackRate || f.playbackRate.value === 1)).toBe(true);
   });
 
-  it('trocar masmorra → arena é CROSSFADE: a voz velha desce e para, a nova sobe (nunca duas soando no fim)', async () => {
+  it('pedir `null` é CROSSFADE: a voz desce em rampa e só para ao fim dela (nunca corta de cara)', async () => {
     vi.useFakeTimers();
     try {
       E.ligada = true;
       consentirNestaSessao();
-      pedirFaixa('masmorra');
+      pedirFaixa('loop');
       await vi.advanceTimersByTimeAsync(5);
-      const velhaFontes = [...E.atual!.fontes];
-      const velhoGanho = E.atual!.ganhos[0];
-      pedirFaixa('arena');
+      const fontes = [...E.atual!.fontes];
+      const ganho = E.atual!.ganhos[0];
+      pedirFaixa(null);
       await vi.advanceTimersByTimeAsync(5);
-      expect(velhoGanho.gain.rampas.at(-1)).toBe(0);            // a velha desce em rampa
-      expect(velhaFontes.some((f: any) => f.parou)).toBe(false); // ainda não cortou: é o crossfade
-      expect(faixaTocando()).toBe('arena');
+      expect(ganho.gain.rampas.at(-1)).toBe(0);                  // desce em rampa
+      expect(fontes.some((f: any) => f.parou)).toBe(false);       // ainda não cortou
+      expect(faixaTocando()).toBeNull();
       await vi.advanceTimersByTimeAsync(2000);
-      expect(velhaFontes.every((f: any) => f.parou)).toBe(true); // passada a rampa, só a nova resta
+      expect(fontes.every((f: any) => f.parou)).toBe(true);       // passada a rampa, tudo parado
     } finally { vi.useRealTimers(); }
   });
 
   it('pedir null para; o consentimento é por sessão e a chave desligada não o dá', async () => {
     E.ligada = false;
     consentirNestaSessao();
-    pedirFaixa('masmorra');
+    pedirFaixa('loop');
     await tick();
     expect(trilhaTocando()).toBe(false);
     E.ligada = true;

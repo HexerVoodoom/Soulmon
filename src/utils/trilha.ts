@@ -22,16 +22,14 @@
  *   global também cala a trilha — som nunca é o único canal de nada e o app
  *   funciona 100% mudo —, mas o inverso não vale.
  *
- * ## Faixas por superfície (11/10/2026, pedido do dono)
- * O motor toca UMA faixa por vez, escolhida pelo diretor de música (`musica.ts`) via `pedirFaixa`:
- * `loop` (as duas camadas, na Home quando o tema está desligado), `masmorra` (as mesmas camadas, em combate) e
- * `arena` (DERIVADA: as camadas a `RAZAO_DA_ARENA` + a percussão procedural de `trilhaArena.ts`). Trocar de faixa
- * é CROSSFADE (`CROSSFADE_MUSICA_S`), nunca corte; nenhuma faixa nasce tocando (S2 + D11).
- * Desde 19/10/2026 a masmorra toca o "dungeon theme" em streaming (`musicaDeCombate.ts`) e o diretor não pede mais a
- * faixa `masmorra` do loop (o tipo fica, os testes de retomada a usam); o duelo e o torneio tocam o "pvp theme" lá também.
- * Este módulo AVISA `musicaDeCombate.ts` do consentimento e das pausas (ele não importa este, sem ciclo).
- *
- * ## Retomada (auditoria de 11/10/2026)
+ * ## Faixa (19/10/2026)
+O motor toca UMA faixa: `loop` (as duas camadas, em buffers). O diretor de música (`musica.ts`) pede `loop` ou `null` via
+`pedirFaixa` e hoje pede sempre `null`: nenhuma superfície toca o loop (o tema e as músicas de combate em streaming
+cobrem todas). O motor fica para o loop de camadas, os testes de retomada e o consentimento. Este módulo AVISA
+`musicaDeCombate.ts` do consentimento e das pausas (ele não importa este, sem ciclo). Não há mais trilha procedural de
+Arena nem de Pesadelo.
+
+## Retomada (auditoria de 11/10/2026)
  * Achados e conserto, cada um com teste em `trilha.retomada.test.ts`:
  *  1. voltar para a aba/APK deixava o contexto `suspended` com as fontes ligadas e ninguém mandava `resume()` —
  *     `comecar()` devolvia `true` ANTES de chegar ao `resume`. Agora a retomada é do `audioBus` (`retomarContexto`)
@@ -49,24 +47,18 @@
  * número de loudness é escrito aqui. D-1 (Marco abaixa a trilha ao piso) já mora no `audioBus`.
  */
 import { definirTrilhaLigada, garantirBarramento, retomarContexto, trilhaLigada } from './audioBus';
-import { carregarAsset, CAMADAS_DA_TRILHA, CROSSFADE_MUSICA_S, RAZAO_DA_ARENA, type CamadaDaTrilha } from './sonsAssets';
+import { carregarAsset, CAMADAS_DA_TRILHA, CROSSFADE_MUSICA_S, type CamadaDaTrilha } from './sonsAssets';
 import {
-  db2lin, GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB, TRIM_FAIXA_ARENA_DB, TRIM_TRILHA_POR_CAMADAS_DB,
+  db2lin, GANHO_MUSICA_DB, TRIM_TRILHA_POR_CAMADAS_DB,
 } from './loudness';
 import { isMuted } from './sounds';
 import { esquecerTema, pausarTema, retomarTema } from './tema';
 import {
   consentirMusicaDeCombate, esquecerMusicaDeCombate, pausarMusicaDeCombate, retomarMusicaDeCombate,
 } from './musicaDeCombate';
-import { pausarPesadelo, retomarPesadelo } from './trilhaPesadelo';
 
 /** As faixas que este motor sabe tocar. O DIRETOR (`musica.ts`) decide qual, por superfície. */
-export type FaixaDaTrilha = 'loop' | 'masmorra' | 'arena';
-
-/** Em combate a música desce (o golpe, que mais repete, não pode ser coberto): ver `loudness.ts`. */
-const EM_COMBATE: Record<FaixaDaTrilha, boolean> = { loop: false, masmorra: true, arena: true };
-const usaPercussao = (f: FaixaDaTrilha): boolean => f === 'arena';
-const razaoDe = (f: FaixaDaTrilha): number => (f === 'arena' ? RAZAO_DA_ARENA : 1);
+export type FaixaDaTrilha = 'loop';
 
 /** Uma música em andamento: as fontes, o ganho que a fade e o contexto em que nasceu. */
 interface Voz {
@@ -87,14 +79,10 @@ export type MotivoDePausa = 'sono' | 'descanso' | 'mudo';
 const pausas = new Set<MotivoDePausa>();
 const pausada = (): boolean => pausas.size > 0;
 let cicloLigado = false;
-let bufferPercussao: { taxa: number; buf: AudioBuffer } | null = null;
 
-/** Ganho (linear) final da voz: trim por nº de camadas + ganho de reprodução + combate + trim da faixa. */
-function ganhoDaVoz(faixa: FaixaDaTrilha, camadas: 1 | 2): number {
-  const db = TRIM_TRILHA_POR_CAMADAS_DB[camadas] + GANHO_MUSICA_DB
-    + (EM_COMBATE[faixa] ? OFFSET_MUSICA_EM_COMBATE_DB : 0)
-    + (faixa === 'arena' ? TRIM_FAIXA_ARENA_DB : 0);
-  return db2lin(db);
+/** Ganho (linear) final da voz: trim por nº de camadas + ganho de reprodução. */
+function ganhoDaVoz(camadas: 1 | 2): number {
+  return db2lin(TRIM_TRILHA_POR_CAMADAS_DB[camadas] + GANHO_MUSICA_DB);
 }
 
 /** Rampa linear defensiva (o motor falso dos testes não tem automação). */
@@ -133,19 +121,6 @@ function parar(fadeS = 0): void {
   setTimeout(() => descartar(v), fadeS * 1000 + 120);
 }
 
-/** A percussão da Arena é síntese (`trilhaArena.ts`, ~1,2 KB) carregada SOB DEMANDA — fora do chunk de entrada (orçamento de bytes). */
-async function percussao(ctx: BaseAudioContext): Promise<AudioBuffer | null> {
-  try {
-    if (bufferPercussao && bufferPercussao.taxa === ctx.sampleRate) return bufferPercussao.buf;
-    const { sintetizarPercussaoDaArena } = await import('./trilhaArena');
-    const dados = sintetizarPercussaoDaArena(ctx.sampleRate);
-    const buf = ctx.createBuffer(1, dados.length, ctx.sampleRate);
-    buf.copyToChannel(dados, 0);
-    bufferPercussao = { taxa: ctx.sampleRate, buf };
-    return buf;
-  } catch { return null; }
-}
-
 async function comecar(): Promise<boolean> {
   const faixa = faixaPedida;
   if (!faixa || pausada() || isMuted() || !ligadaNestaSessao) return false;
@@ -158,17 +133,9 @@ async function comecar(): Promise<boolean> {
       descartar(voz);
       voz = null;
     } else {
-      // Mesma faixa → só garante o contexto vivo (voltar de aba/APK). Outra faixa do MESMO material → o ganho
-      // desliza (sem recomeçar a música); material diferente → crossfade para a voz nova, abaixo.
+      // Só há uma faixa: garante o contexto vivo (voltar de aba/APK) e segue.
       if (b.ctx.state === 'suspended') void b.ctx.resume?.();
-      if (voz.faixa === faixa) return true;
-      if (usaPercussao(voz.faixa) === usaPercussao(faixa)) {
-        const g = ganhoDaVoz(faixa, Math.min(voz.fontes.length, 2) as 1 | 2);
-        rampa(voz.trim.gain, voz.trim.gain.value, g, voz.ctx, CROSSFADE_MUSICA_S);
-        voz.faixa = faixa;
-        return true;
-      }
-      parar(CROSSFADE_MUSICA_S);
+      return true;
     }
   }
 
@@ -176,10 +143,7 @@ async function comecar(): Promise<boolean> {
   if (b.ctx.state === 'suspended') void b.ctx.resume?.();
   const meu = ++tokenCarga;
   const nomes = Object.keys(CAMADAS_DA_TRILHA) as CamadaDaTrilha[];
-  const [bufs, buffPerc] = await Promise.all([
-    Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n]))),
-    usaPercussao(faixa) ? percussao(b.ctx) : Promise.resolve(null),
-  ]);
+  const bufs = await Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n])));
   // Só as camadas que chegaram tocam; o trim é o do NÚMERO que toca (medido, `loudness.ts`).
   const prontas = nomes.filter((_, i) => bufs[i] !== null);
   if (meu !== tokenCarga || prontas.length === 0 || voz || pausada() || !ligadaNestaSessao || faixaPedida !== faixa) return false;
@@ -190,13 +154,12 @@ async function comecar(): Promise<boolean> {
     b.busTrilha.gain.value = 1;
     const g = b.ctx.createGain();
     const n = Math.min(prontas.length, 2) as 1 | 2;
-    const alvo = ganhoDaVoz(faixa, n);
+    const alvo = ganhoDaVoz(n);
     g.gain.value = 0;
     g.connect(b.busTrilha);
     // Mesmo instante de início para todas: as camadas foram mestradas no mesmo BPM e no mesmo
     // ponto de loop, e é o início comum que as mantém em fase compasso a compasso.
     const t0 = b.ctx.currentTime + 0.02;
-    const razao = razaoDe(faixa);
     const fontes: AudioBufferSourceNode[] = [];
     for (const nome of prontas) {
       const buf = bufs[nomes.indexOf(nome)] as AudioBuffer;
@@ -204,25 +167,12 @@ async function comecar(): Promise<boolean> {
       src.buffer = buf;
       src.loop = true;
       // O arquivo carrega 1 s de cauda (a cabeça do loop repetida) porque o codec perde a ponta;
-      // o loop fecha no ponto exato do manifesto, dentro de áudio válido. Os pontos são em segundos do BUFFER:
-      // a razão de reprodução não os muda.
+      // o loop fecha no ponto exato do manifesto, dentro de áudio válido.
       src.loopStart = 0;
       src.loopEnd = Math.min(CAMADAS_DA_TRILHA[nome].duracaoS, buf.duration);
-      if (razao !== 1 && src.playbackRate) src.playbackRate.value = razao;
       src.connect(g);
       src.start(t0);
       fontes.push(src);
-    }
-    if (usaPercussao(faixa)) {
-      const p = buffPerc;
-      if (p) {
-        const src = b.ctx.createBufferSource();
-        src.buffer = p;
-        src.loop = true;
-        src.connect(g);
-        src.start(t0);
-        fontes.push(src);
-      }
     }
     rampa(g.gain, 0, alvo, b.ctx, CROSSFADE_MUSICA_S);
     voz = { ctx: b.ctx, faixa, fontes, trim: g };
@@ -254,7 +204,7 @@ function ligarCicloDeVida(): void {
 /**
  * Gesto do jogador (Configurações): liga a PREFERÊNCIA e dá o consentimento desta sessão. Quem decide se a trilha
  * toca agora é a faixa que o diretor pediu (`pedirFaixa`): com o tema tocando na Home, ligar a trilha não a coloca
- * por cima dele — ela entra na masmorra e na arena. Sem diretor (testes), `loop` é o padrão e toca na hora.
+ * por cima dele — ela entra nas superfícies de combate. Sem diretor (testes), `loop` é o padrão e toca na hora.
  */
 export function ligarTrilha(): void {
   definirTrilhaLigada(true);
@@ -288,7 +238,7 @@ export function faixaPedidaAgora(): FaixaDaTrilha | null {
 }
 
 /**
- * O jogador ABRIU uma superfície de combate (toque na Masmorra/Arena) com a trilha ligada nas Configurações: isso
+ * O jogador ABRIU uma superfície de combate (toque na Masmorra/Arena/Torneio/Duelo/Pesadelo) com a trilha ligada nas Configurações: isso
  * é o gesto da S2 para esta sessão, o mesmo papel que o primeiro gesto sonoro já tinha (`aoGestoSonoro`).
  */
 export function consentirNestaSessao(): void {
@@ -302,8 +252,7 @@ export function consentirNestaSessao(): void {
 export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
   pausarTema(motivo); // o tema obedece aos mesmos motivos (S17)
   pausas.add(motivo);
-  pausarPesadelo(motivo); // a trilha de terror do Pesadelo obedece aos mesmos motivos
-  pausarMusicaDeCombate(motivo); // e as músicas de combate em streaming (dungeon/pvp theme)
+  pausarMusicaDeCombate(motivo); // e as músicas de combate em streaming (combate/pesadelo)
   parar(); // dormir não é troca de cena: corta (a rampa de 150 ms do tema basta)
 }
 
@@ -313,7 +262,6 @@ export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
 export function retomarTrilha(motivo: MotivoDePausa = 'sono'): void {
   retomarTema(motivo);
   pausas.delete(motivo);
-  retomarPesadelo(motivo);
   retomarMusicaDeCombate(motivo);
   if (!pausada() && ligadaNestaSessao) void comecar();
 }
@@ -351,7 +299,7 @@ export function trilhaTocando(): boolean {
   return voz !== null && voz.fontes.length > 0;
 }
 
-/** Quantas fontes da voz atual estão tocando (as camadas; a Arena soma a percussão). */
+/** Quantas fontes da voz atual estão tocando (as camadas). */
 export function camadasTocando(): number {
   return voz ? voz.fontes.length : 0;
 }
@@ -371,5 +319,4 @@ export function esquecerTrilha(): void {
   faixaPedida = 'loop';
   pausas.clear();
   primeiroGestoVisto = false;
-  bufferPercussao = null;
 }
