@@ -444,14 +444,14 @@ export function ArenaGame({
           <div style={{ display: 'flex', justifyContent: 'center' }} data-arena-torcida-legenda>
             <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funciona o Duelo' : 'How the Duel works'}>
               {isPt
-                ? 'Seu Soulmon luta e se defende sozinho, contra todos os inimigos ao mesmo tempo. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele. Com a energia cheia, ele solta o especial — toque no anel na hora certa para render mais. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
-                : 'Your Soulmon fights and defends on its own, against all the enemies at once. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it. With full energy it unleashes its special — tap the ring at the right moment to hit harder. When the enemy unleashes its own, swipe sideways to dodge.'}
+                ? 'Seu Soulmon luta e se defende sozinho, contra todos ao mesmo tempo. Toque na tela (ou no mascote) para encher a barra de cheer; no especial, toque no anel na hora certa e deslize o dedo para esquivar do inimigo.'
+                : 'Your Soulmon fights and defends on its own, against all the enemies at once. Tap the screen (or the mascot) to fill the cheer bar; on its special, tap the ring at the right moment and swipe sideways to dodge the enemy’s.'}
             </InfoTip>
           </div>
           <p style={phaseLine}>
             {isPt
-              ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. Seu elemento decide quem você machuca mais e quem te machuca. Entre as rodadas você recupera um pouco. Perder custa a run — nunca os seus corações.`
-              : `${ARENA_ROUNDS} rounds back to back, each harder. Your element decides who you hurt more and who hurts you. You recover a little between rounds. Losing costs you the run — never your hearts.`}
+              ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura, com um respiro entre elas. O elemento pesa no dano, nos dois sentidos; perder custa a run, nunca os seus corações.`
+              : `${ARENA_ROUNDS} rounds back to back, each harder, with a breather between them. Element weighs on damage both ways; losing costs the run, never your hearts.`}
           </p>
           <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
             {isPt ? 'Entrar na Arena' : 'Enter the Arena'}

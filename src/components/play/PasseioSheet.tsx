@@ -358,8 +358,8 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Missões do dia' : 'Daily missions'}>
             {isPt
-              ? 'Todo dia saem três missões, de lugares diferentes. Escolha uma, ou nenhuma. Cada missão é um cenário: à noite o Soulmon viaja para lá e volta com uma historinha. Uma Travessia é algo que você faz na sua vida, fora do app; vale a versão plena ou a pequena. Escolhida, a missão fica com você por 24 horas; se não der, ela se vai sem custo e saem outras.'
-              : 'Every day three missions come up, from different places. Pick one, or none. Each mission is a scene: at night the Soulmon travels there and comes back with a little story. A Crossing is something you do in your own life, outside the app; the full or the small version counts. Once picked, the mission stays with you for 24 hours; if it does not work out, it goes away at no cost and new ones come up.'}
+              ? 'Todo dia saem três missões: escolha uma, ou nenhuma. Uma Travessia é algo que você faz fora do app, na versão plena ou na pequena; escolhida, dura 24 horas e, se não der, se vai sem custo.'
+              : 'Three missions come up every day: pick one, or none. A Crossing is something you do outside the app, in the full or the small version; once picked it lasts 24 hours and, if it does not work out, goes away at no cost.'}
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Marcos de Aventura' : 'Adventure Milestones'} last>
             {isPt

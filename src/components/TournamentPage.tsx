@@ -427,8 +427,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Faixas' : 'Tiers'}>
           {isPt
-            ? 'Sua faixa vem dos pontos que você acumulou e só sobe: Madeira, Bronze (100), Prata (300), Ouro (700), Platina (1100) e Diamante (1500). Mestre é o top 100 da season e Grão-Mestre o top 20: o ícone mostra o #N, a sua posição (no Grão-Mestre, o #N é o seu nível). Esses dois lugares são da season — se você sair do top, volta à faixa que seus pontos dão.'
-            : 'Your tier comes from the points you have gathered and only climbs: Wood, Bronze (100), Silver (300), Gold (700), Platinum (1100) and Diamond (1500). Master is the season top 100 and Grandmaster the top 20: the icon shows #N, your place (for Grandmaster, #N is your level). Those two seats belong to the season — if you drop out of the top, you return to the tier your points give you.'}
+            ? 'A faixa vem dos seus pontos e só sobe: Madeira, Bronze (100), Prata (300), Ouro (700), Platina (1100), Diamante (1500). Mestre (top 100) e Grão-Mestre (top 20) são lugares da season; sair do top devolve a faixa dos seus pontos.'
+            : 'Your tier comes from your points and only climbs: Wood, Bronze (100), Silver (300), Gold (700), Platinum (1100), Diamond (1500). Master (top 100) and Grandmaster (top 20) are season seats; dropping out of the top returns you to the tier your points give.'}
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Desafiar' : 'Challenge'}>
           {!pvpAberto

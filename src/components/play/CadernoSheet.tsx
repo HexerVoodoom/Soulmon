@@ -82,8 +82,8 @@ export function CadernoSheet({ language, todayKey, entries, onChange }: {
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Escrever hoje' : 'Write today'}</p>
         <ModalInfo language={language} align="right" label={isPt ? 'Onde fica o que você escreve' : 'Where your writing lives'}>
           {isPt
-            ? 'O que você escreve aqui fica no seu save, na nuvem, só seu. Nenhuma IA lê, o chat não vê e outras pessoas não têm acesso. Você apaga uma entrada ou tudo, quando quiser, e apagar a conta apaga o Caderno. Nada aqui conta, pontua ou lembra. Escrever sobre algo difícil pode remexer coisas: pare quando quiser. Isto não substitui ajuda profissional.'
-            : 'What you write here lives in your save, in the cloud, yours alone. No AI reads it, the chat cannot see it and other people have no access. You can delete one entry or everything any time, and deleting your account deletes the Journal. Nothing here counts, scores or reminds. Writing about something hard can stir things up: stop whenever you like. This does not replace professional help.'}
+            ? 'Fica só no seu save, na nuvem: nenhuma IA lê e o chat não vê; apague uma entrada ou tudo quando quiser. Se escrever sobre algo difícil remexer coisas, pare quando quiser — isto não substitui ajuda profissional.'
+            : 'It stays in your save, in the cloud, yours alone: no AI reads it and the chat cannot see it; delete one entry or everything any time. If writing about something hard stirs things up, stop whenever you like — this does not replace professional help.'}
         </ModalInfo>
       </div>
 

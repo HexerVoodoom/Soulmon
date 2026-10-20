@@ -184,8 +184,8 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
       />
       <p style={{ ...sm2Text, margin: 0 }}>
         {isPt
-          ? 'Sua criatura chegou ao topo. O Renascimento devolve ela a um ovo: ela volta a Rookie e os pontos de atributo zeram — em troca, ela nasce de novo mais funda, com mais pontos em todos os estágios, e desta vez quem escolhe o que ela é são vocês dois.'
-          : 'Your creature reached the top. Rebirth returns them to an egg: back to Rookie, attribute points reset to zero — in exchange they are born deeper, with more points at every stage, and this time the two of you choose who they are.'}
+          ? 'Sua criatura chegou ao topo. O Renascimento a devolve a um ovo (Rookie, atributos zerados); ela nasce mais funda, com mais pontos em cada estágio, e desta vez vocês dois escolhem quem ela é.'
+          : 'Your creature reached the top. Rebirth returns them to an egg (Rookie, attributes reset); they are born deeper, with more points at every stage, and this time the two of you choose who they are.'}
       </p>
 
       {/* K6 (04/10/2026): o aviso de irreversibilidade FICA (honestidade); o "o que se mantém" mora no "?". */}
