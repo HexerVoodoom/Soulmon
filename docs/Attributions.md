@@ -15,8 +15,10 @@ O caso do widget é o mais grave e o mais silencioso: o APK que iria para a Play
 Store desenhava um personagem registrado como se fosse a criatura do jogador.
 
 **A única justificativa escrita para a primeira linha era compatibilidade de
-save.** O dono confirmou em 07/09/2026 que ninguém nunca usou o app em
-produção — o save que aquilo protegia não existe.
+save.** O dono confirmou em 07/09/2026 que ninguém tinha usado o app em
+produção — o save que aquilo protegia não existia naquela data.
+
+> ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; renomear ou remover ids de save agora exige migração (e backup), não só a justificativa de 07/09. Ver CLAUDE.md › Compatibilidade.
 
 Hoje há régua, e ela é executável: `src/utils/sprites.dungeonRoster.test.ts`
 varre o **bundle construído** (não o fonte — comentário é apagado no build, e

@@ -6,8 +6,12 @@ ordem segura de separar.
 
 ## Situação atual (07/09/2026)
 
+> ⚰️ **Lápide (vencida em 20/10/2026):** a nota abaixo vale como histórico de 07/09/2026. Desde 20/10/2026 há usuários reais (teste fechado na Play).
+>
+> ⚠️ **D-04 — aviso:** desde 20/10/2026 há saves reais em `SOULMON_SAVES`: trocar binding/id ou separar de novo exige backup e cópia antes (nada disso é feito pelo painel sem o dono).
+>
 > ⚠️ **A limpeza inteira foi feita em 07/09/2026**, depois de o dono informar
-> que **ninguém nunca usou o app em produção**. Metade desta tabela justificava
+> que **ninguém nunca usou o app em produção** (premissa vencida em 20/10/2026). Metade desta tabela justificava
 > manter herança "para não quebrar quem já joga" — não havia quem.
 
 | Item | Onde | Estado |
@@ -24,7 +28,7 @@ ordem segura de separar.
 | **Digital Asset Links** | `functions/.well-known/` | ✅ Separado — o padrão era o **pacote do DigiApp**, ou seja, uma declaração falsa de propriedade do nosso domínio. Sem fingerprint, hoje responde vazio |
 | **Chat paralelo** | `src/supabase/.../chat.tsx` | ✅ Apagado — segundo endpoint de LLM, publicado, sem autenticação e sem NENHUMA das travas do `functions/api/chat.js` |
 | **Arte e nomes de franquia** | bundle, APK, bestiário | ✅ Removidos — ver `docs/Attributions.md` |
-| Namespace KV (os DADOS) | Cloudflare → KV | ⚠️ **Ainda o mesmo namespace físico.** Só o dono separa (passo 2) |
+| Namespace KV (os DADOS) | `wrangler.jsonc` → `kv_namespaces` | ✅ **Separado em 07/09/2026:** `SOULMON_SAVES` (id `20b3ba78…`) é um namespace PRÓPRIO; `DIGIAPP_SAVES` (id `aed229e0…`) segue declarado só como o antigo, sem leitura. **Desde 20/10/2026 `SOULMON_SAVES` tem saves reais: não trocar binding/id sem backup e cópia** |
 | Projeto Firebase | `google-services.json` | ✅ **Separado em 07/09/2026** — projeto próprio `soulmon-app` (passo 4 feito) |
 | `power`/`harmony`/`benevolence` | `types/attributes.ts` | ⚪ Mantidos DE PROPÓSITO — palavras genéricas, em dezenas de arquivos, e o jogador nunca as vê (ele lê Poder/Harmonia/Benevolência) |
 

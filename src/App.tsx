@@ -2261,8 +2261,9 @@ export default function App() {
       /* ⚠️ Este campo se chamava `digimonName`, e o comentário aqui dizia que
          ele NÃO era renomeado de propósito, "porque o APK instalado lê
          `digimonName` no Kotlin e trocar quebraria o widget de quem não
-         atualizasse". Não havia APK instalado: ninguém nunca usou o app em
-         produção (07/09/2026). O Kotlin foi renomeado junto (`pet_name`), e o
+         atualizasse". Não havia APK instalado: ninguém tinha usado o app em
+         produção (07/09/2026; desde 20/10/2026 há usuários reais na Play — ver
+         CLAUDE.md › Compatibilidade). O Kotlin foi renomeado junto (`pet_name`), e o
          widget exige APK novo de qualquer forma. */
       // O nome da Home, não o estágio — dono: `widgetPetName` (utils/petName por baixo).
       petName: widgetPetName(gameState.soulmonMeta),

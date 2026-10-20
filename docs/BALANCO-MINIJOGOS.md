@@ -19,8 +19,9 @@ A régua trava três coisas:
 3. o teto que a folha anuncia ("até N Bits") é **alcançável** — anunciar um
    número que ninguém vê é promessa falsa.
 
-Os perfis são **suposições declaradas**, não medição: ninguém usa o app em
-produção ainda. Quando houver telemetria, é esta tabela que se confronta.
+Os perfis são **suposições declaradas**, não medição: em 07/09/2026 ninguém usava o app em
+produção. Quando houver telemetria, é esta tabela que se confronta.
+> ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; a telemetria passa a ter dado e esta tabela já pode ser confrontada (e mudar tetos/recompensas mexe na economia de quem joga). Ver CLAUDE.md › Compatibilidade.
 
 | Suposição | Típico | Experiente |
 |---|---|---|

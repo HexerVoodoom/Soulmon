@@ -8,8 +8,8 @@
  *   dado   → harmonia     (`data`    → `harmony`)
  *   vacina → benevolência (`vaccine` → `benevolence`)
  *
- * Ninguém usou o app em produção (CLAUDE.md), mas o save do DONO pode existir
- * num aparelho — por isso a migração, e não um corte seco. Este é o ÚNICO
+ * (em 07/09/2026 ninguém tinha usado o app; desde 20/10/2026 há usuários reais (teste fechado na Play) — ver CLAUDE.md › Compatibilidade.) A migração é obrigatória: há saves reais em aparelhos, não só o do
+ * DONO — por isso a migração, e não um corte seco. Este é o ÚNICO
  * arquivo de código que ainda soletra os ids antigos (há guard em
  * `branchRename.contract.test.ts`); o resto do app só conhece os novos.
  *

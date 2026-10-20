@@ -3,13 +3,14 @@
  *
  * O prefixo era herança do fork, e este arquivo (mais o `CLAUDE.md`) dizia que
  * ele era mantido **de propósito**, "porque renomear faria os usuários atuais
- * perderem o progresso local". O dono confirmou que **ninguém nunca usou o app
- * em produção** — não havia usuário atual.
+ * perderem o progresso local". O dono confirmou que **em 07/09/2026 ninguém
+ * tinha usado o app em produção** — não havia usuário atual. Desde 20/10/2026
+ * há usuários reais (teste fechado na Play) — ver CLAUDE.md › Compatibilidade.
  *
- * A migração abaixo (`migrateLegacyStorageKeys`) existe mesmo assim, porque o
- * dono pode ter o save DELE num aparelho: "ninguém em produção" não é "nenhum
- * save existe", e o custo de errar isso seria o progresso dele. Ela roda uma
- * vez, copia o que achar e não apaga nada.
+ * A migração abaixo (`migrateLegacyStorageKeys`) deixou de ser opcional: agora
+ * é OBRIGATÓRIA, porque há saves reais em aparelhos de terceiros, além do do
+ * dono. O custo de errar isso é o progresso deles. Ela roda uma vez, copia o
+ * que achar e não apaga nada.
  */
 import { readLocal, writeLocal } from './safeStorage';
 

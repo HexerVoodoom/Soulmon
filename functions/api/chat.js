@@ -561,8 +561,9 @@ export async function onRequestPost({ request, env }) {
     // `null`/vazio/JSON quebrado davam TypeError -> 500; o contrato desta rota para corpo sem mensagem é 400.
     const body = (await request.json().catch(() => null)) ?? {};
     /* ⚠️ Havia um segundo nome para este campo (`digimonName`), aceito "por
-       causa dos APKs já instalados". Não havia APK instalado — ninguém nunca
-       usou o app em produção (07/09/2026) — e um campo com dois nomes é um
+       causa dos APKs já instalados". Não havia APK instalado — ninguém tinha
+       usado o app em produção (07/09/2026; desde 20/10/2026 há usuários reais
+       na Play, ver CLAUDE.md › Compatibilidade) — e um campo com dois nomes é um
        campo que diverge: o segundo é sempre o que alguém esquece. */
     const { message: messageRaw, petName: petNameRaw, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
 

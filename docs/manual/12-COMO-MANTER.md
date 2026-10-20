@@ -314,3 +314,10 @@ Regras: o commit de sincronização só toca `docs/manual/` e `docs/STATUS.md`; 
 não há commit; sem verificação não há carimbo; código errado vira `⚠️ divergência` no
 doc e item no STATUS, nunca conserto de código. **Nunca edite `.sincronizado.json` à
 mão** — é o que faz o próximo delta começar de onde o anterior parou.
+
+## 12. Compatibilidade com usuários reais (desde 20/10/2026)
+
+Desde 20/10/2026 o app está em teste fechado na Google Play, com usuários reais. A regra viva (os 8 pontos) mora em [`CLAUDE.md` › Compatibilidade — há usuários reais desde 20/10/2026](../../CLAUDE.md) e **não é copiada aqui** (R5). Resumo: save, chave e contrato só mudam de forma aditiva, com leitura tolerante e migração idempotente; reverter não pode corromper save já migrado; dado real só migra com backup antes.
+
+Doc do manual que descreve save, contrato de servidor ou chave de storage **precisa citar a migração e o rollback** da mudança que descreve. A régua automática é `src/contexts/saveCompat.contract.test.ts`; decisão em `docs/REGISTRO-DE-DECISOES.md` §148.
+

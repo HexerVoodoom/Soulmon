@@ -22,8 +22,8 @@
 > 3. **Saber onde estamos expostos**: a §8 lista as decisões que não têm evidência
 >    nenhuma além da nossa própria tese.
 >
-> **Nada aqui é dado do Soulmon.** Ninguém nunca usou o app em produção
-> (`docs/STATUS.md`). Toda afirmação sobre "o usuário" é hipótese informada por
+> **Até 20/10/2026, nada aqui era dado do Soulmon**: ninguém nunca usou o app em produção
+> (`docs/STATUS.md`; ⚰️ premissa vencida em 20/10/2026, quando o app entrou em teste fechado na Play e passou a haver dado e usuários reais — ver §148). Até aquela data, toda afirmação sobre "o usuário" era hipótese informada por
 > terceiros. Este documento não esconde isso — ele marca linha por linha.
 >
 > **Consolidado em 08/09/2026, e revisado no mesmo dia** por uma sessão de QA
@@ -3069,3 +3069,12 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Como:** política §2 (inscrição de push e "Meal check-ins" nascem ligados — `notificationDefault.ts`, `mealRhythm.ts` › `DEFAULT_MEAL_RHYTHM`), §2b/§6 (resumo agregado `chat.js` › `sanitizeBehavior`; opt-out `SettingsPage` "Send chat to AI provider"), §6d (cota `_aiGuard.js` `ai:<bucket>:<saveId>:<dia>`, TTL 30 h). Ficha: §2.5 e §3 (cota de IA como prevenção de fraude), §2.5b (refeições), §2.6 e §3 ("Informações de saúde" compartilhadas com Groq: `moodToday`, `moodAvg`, `soulGoal`). `PLAY-LANCAMENTO.md` sem "Supabase".
 - **Alternativa que perdeu:** mergear o texto novo sob a data antiga de 19/10 (consentimento antigo cobriria texto que não citava o resumo nem a cota); ou deixar a ficha com saúde "não compartilhada" por ser só faixa numérica (subdeclarar é o erro que derruba a revisão).
 - **O que falsificaria:** a Play recusar a ficha por divergência em saúde/IDs, ou um campo novo entrar em `CONTEXT_SCHEMA`/`BEHAVIOR_SCALARS` sem a política acompanhar.
+
+## 148. Compatibilidade com usuários reais: o save não pode quebrar a partir de 20/10/2026 (dono, 20/10/2026; teste fechado na Play; regra = régua automática + texto)
+
+- **Fato do dono (20/10/2026):** o app está em teste fechado na Google Play, o dono vai divulgar para recrutar testadores e o próximo passo é produção. A premissa de 07/09/2026 ("ninguém nunca usou o app em produção") venceu: tudo que antes se justificava por "não há quem perca o save" passa a exigir compatibilidade.
+- **Decisão:** a regra viva mora no `CLAUDE.md`, seção "Compatibilidade — há usuários reais desde 20/10/2026", com 8 pontos: (1) todo campo novo do save tem leitura tolerante + migração idempotente + espelho no servidor; (2) nunca renomear chave (`STORAGE_KEYS`, campo de save, KV) sem migração; (3) contrato de API só aditivo; (4) bump de `CACHE_VERSION` quando o bundle ou o cache mudam de forma observável; (5) mudança em `android/` exige AAB novo e compatibilidade com o APK velho já instalado (o APK carrega `server.url`, então o Worker novo serve app velho); (6) reconsentimento só via `PRIVACY_VERSION`/`TERMS_VERSION`; (7) todo PR que toca save/contrato traz o plano de rollback; (8) backup antes de migrar KV/D1 (trocar binding/id de `SOULMON_SAVES` incluído).
+- **Como é verificada:** régua automática `src/contexts/saveCompat.contract.test.ts` + o fuzz de hidratação `GameStateContext.hydrate.fuzz2.qa.test.tsx`; o texto do `CLAUDE.md` cobre o que teste não pega (backup, rollback, AAB). A régua garante servidor ⊆ cliente; o inverso (campo novo do cliente sem sanitização no servidor) fica na revisão de PR, declarado como limite (crítico adversarial de 20/10/2026, objeção 5).
+- **Alternativa que perdeu:** (a) **só texto, sem régua** — o dono escolheu régua + texto, porque regra escrita sem teste se esquece no primeiro PR apressado; (b) **uma constante nova `SAVE_SCHEMA_VERSION`** — descartada: não existe hoje e seria um mecanismo grande; ancoramos no que já existe (`hydrateSave` + sanitizadores do servidor + `STORAGE_KEYS`).
+- **O que falsificaria:** um save real quebrado por um campo novo que passou na régua (a régua é curta demais e precisa de um caso novo), ou a régua travar PR legítimo com frequência (ela é rígida demais).
+- **Onde vive:** `CLAUDE.md` › Compatibilidade; `src/contexts/saveCompat.contract.test.ts`; `src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx`; `docs/SEPARACAO-DIGIAPP.md` (aviso D-04); `wrangler.jsonc` (comentários).

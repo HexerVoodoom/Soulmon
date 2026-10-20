@@ -1,7 +1,7 @@
 // GERADO por scripts/gen-chat-knowledge.mjs — NÃO EDITE À MÃO.
 // Fontes: docs/manual/02-REGRAS-DE-NEGOCIO.md, docs/manual/11-GLOSSARIO.md
 // Regerar: npm run gen:chat-kb  (o teste chatKnowledge.stale reprova se ficar velho)
-export const KNOWLEDGE_HASH = '6838ee3f3746dee7';
+export const KNOWLEDGE_HASH = 'c45b50670294b7e1';
 export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia","x":"Uma vez por dia o jogo compara o que a pessoa fez com a meta dela e, se faltou muito, tira no máximo um coração — e há cinco mecanismos que podem impedir até isso."},
 {"id":"regra-2","t":"Carinho","x":"Esfregar o pet cura HP — meio coração por gesto, no máximo um por dia — e é a cura principal do jogo. O gesto é um pointer drag sobre o pet; a animação de explosão de corações toca sempre, inclusive quando a cura é recusada — quem decide isso é o App.tsx, não a regra."},
 {"id":"regra-3","t":"Comida","x":"Comer enche a fome e dá pontos de atributo — nunca cura HP e nunca dá energia — e há um teto por hora, não por dia. Por que o teto é derivado. Era o literal 5 enquanto mega/ultra pedem 6 tarefas. Quem fechava as 6 numa sessão só dava 5 comidas e perdia o dia completo tendo feito 100% da própria meta — punido por ritmo, não por esforço."},
@@ -199,7 +199,7 @@ export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia
 {"id":"termo-soulmon","t":"Soulmon","x":"O app e a criatura. Um app de produtividade gamificado do gênero v-pet, em que o avatar evolui COM o usuário e o encoraja — nunca cobra."},
 {"id":"termo-squad","t":"Squad","x":"Um conjunto de agentes com contrato, método e guard executável, invocado por comando. A que escreve este manual é a SQUAD-DOCS."},
 {"id":"termo-tarefa","t":"Tarefa","x":"O contrato de EXECUÇÃO: o valor está em terminar e sair da cabeça. Tem esforço, prazo, adiamentos, estados e assombração. Não se mistura com hábito."},
-{"id":"termo-telemetria","t":"Telemetria","x":"Os eventos mínimos que arbitram as decisões do plano, com allowlist de props por evento e nenhum campo de texto livre. Hoje não há o que ler: ninguém usou o app em produção."},
+{"id":"termo-telemetria","t":"Telemetria","x":"Os eventos mínimos que arbitram as decisões do plano, com allowlist de props por evento e nenhum campo de texto livre. Desde 20/10/2026 (teste fechado na Play) há dado real, lido por functions/api/metrics.js com METRICS_ADMIN_KEY (antes, em 07/09/2026, não havia o que ler)."},
 {"id":"termo-teto-de-minijogo-bits","t":"Teto de minijogo (Bits)","x":"O limite de 150 Bits por dia do jogador que Dino, PPT e Masmorra podem render juntos, contra os 100 Bits por dia completo que a virada credita a quem cuida (decisão do dono #61/#63, 22/09/2026). Bater o teto só faz os Bits pararem de somar — não bloqueia minijogo, não cobra entrada, não toca coração."},
 {"id":"termo-torneio","t":"Torneio","x":"O modo competitivo com faixas, rodada semanal e moeda própria (Emblemas)."},
 {"id":"termo-traco-de-nascimento","t":"Traço de nascimento","x":"O traço único sorteado quando o pet nasce, visível em Estatísticas. Todos são positivos — traço negativo puniria por um dado que o jogador não jogou; a variedade é em espécie, não em força. Os efeitos são lidos do ESTADO, nunca por parâmetro novo, e é isso que faz o overlay herdar sem uma segunda implementação."},

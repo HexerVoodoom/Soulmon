@@ -82,9 +82,10 @@ Nunca `high` (ruído) nem `none` (frieza).
 
 ## 5. Limites e o que falsifica esta aposta
 
-- É **hipótese não confrontada**: não há telemetria de uso real (ver `CLAUDE.md`, "ninguém nunca
-  usou o app em produção"). O que a derrubaria: quem recebe a voz derivada responder pior
+- É **hipótese não confrontada**: em 07/09/2026 não havia telemetria de uso real (ver `CLAUDE.md`, "ninguém nunca
+  usou o app em produção", premissa de então). O que a derrubaria: quem recebe a voz derivada responder pior
   (menos conversas, mais opt-out da IA) do que quem tinha escolhido manualmente.
+  > ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; a voz derivada passa a ter dado para ser confrontada, e mudar a derivação altera o que usuários reais já recebem. Ver CLAUDE.md › Compatibilidade.
 - A técnica de mudança de comportamento em jogo é **feedback/reforço social** (taxonomia BCT v1,
   Michie et al., 2013, grupos 2 e 10); não substitui planejamento de obstáculo nem quebra de
   tarefa, que vivem em outros módulos.

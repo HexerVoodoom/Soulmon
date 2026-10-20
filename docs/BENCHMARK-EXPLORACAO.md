@@ -22,7 +22,8 @@
 > **⚠️ Camada 3 congelada.** Conteúdo novo de Exploração está ACIMA do núcleo tarefas→cuidado→evolução, e o
 > `REGISTRO-DE-DECISOES.md` §5.6 congela a Camada 3 até 10 usuários × 14 dias de dado. **Nada aqui é ordem de
 > implementar**; se o dono quiser executar, é **exceção registrada**, como foram a Guilda e o Ateliê
-> (pergunta EXP-1). Ninguém usou o app em produção: qualquer "efeito esperado" é hipótese, não medição.
+> (pergunta EXP-1). Em 07/09/2026 ninguém tinha usado o app em produção: qualquer "efeito esperado" é hipótese, não medição.
+> ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; o gate "10 usuários × 14 dias" da Camada 3 agora pode ser medido. Ver CLAUDE.md › Compatibilidade.
 >
 > **Pareceres (30/09/2026, rodados em paralelo sobre as três finalistas):**
 > [`01-linha-vermelha.md`](reviews/2026-09-30-exploracao/01-linha-vermelha.md) ·

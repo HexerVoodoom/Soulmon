@@ -163,8 +163,9 @@ export const MAX_STAGE_REQUIREMENT: number = Math.max(
    era compatibilidade de save: "pra um save em `gaioumon` continuar mega em
    vez de virar rookie".
 
-   O dono informou que **ninguém nunca usou o app em produção**. Esse save não
-   existe, nunca existiu, e os 57 nomes estavam indo no `dist/` que a
+   O dono informou que **em 07/09/2026 ninguém tinha usado o app em produção**
+   (desde 20/10/2026 há usuários reais em teste fechado na Play — ver CLAUDE.md
+   › Compatibilidade). Esse save não existia naquela data, e os 57 nomes estavam indo no `dist/` que a
    Cloudflare serve — conferido com `grep` no bundle — enquanto o
    `docs/Attributions.md` declarava que "saiu tudo" da Bandai. A arte saiu; os
    nomes ficaram, e iriam junto para a Play Store.

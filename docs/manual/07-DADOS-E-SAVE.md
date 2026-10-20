@@ -659,11 +659,13 @@ gravado no aparelho. Quem conserta é `reconcileSaveId` (§3.4).
 depois da guarda.
 
 ⚠️ **Estado em 09/09/2026:** desde 07/09/2026 o `wrangler.jsonc` declara
-`SOULMON_SAVES` apontando para um namespace **próprio e vazio** (decisão do dono:
-separar sem migrar, já que ninguém usou o app em produção), e `DIGIAPP_SAVES`
+`SOULMON_SAVES` apontando para um namespace **próprio e vazio** (decisão histórica do dono de 07/09/2026:
+separar sem migrar, porque então ninguém usava o app em produção — ⚰️ premissa vencida em 20/10/2026), e `DIGIAPP_SAVES`
 fica declarado só como rede para o dado herdado continuar alcançável por
 `wrangler kv key get`. Como `_kv.js` prefere o primeiro, é ele que vale. O painel
 do Pages tem a própria lista de bindings, e é ela que vale em produção.
+
+⚠️ **Regra nova, desde 20/10/2026 (há usuários reais, teste fechado na Play):** toda mudança de namespace, binding ou chave exige **migração de leitura** que aceite o nome antigo e **backup/cópia antes**, com plano de rollback no PR. Ver [`CLAUDE.md` › Compatibilidade — há usuários reais desde 20/10/2026](../../CLAUDE.md).
 
 **Inventário canônico — 25 famílias de chave em dois namespaces** (reescrito em
 22/09/2026 a partir de [`reviews/2026-09-22-qa-rodada-2/04-dados-r2.md`](../reviews/2026-09-22-qa-rodada-2/04-dados-r2.md)

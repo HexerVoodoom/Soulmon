@@ -43,8 +43,10 @@ essa base de forma proporcional**, para **não ter construído conteúdo morto**
 
 ## 4. Métrica-norte e mecanismo
 
-Não há métrica de produto (retenção, D7) medível hoje — sem usuários, ela é
-hipótese pura. A métrica-norte do PRÓPRIO Oráculo, a que pode ser instrumentada
+Em 07/09/2026 não havia métrica de produto (retenção, D7) medível — sem usuários, ela era
+hipótese pura.
+> ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; retenção/D7 passam a ser medíveis no teste fechado, e o Oráculo não pode mudar o que o save real já guarda sem migração. Ver CLAUDE.md › Compatibilidade.
+ A métrica-norte do PRÓPRIO Oráculo, a que pode ser instrumentada
 por simulação, é:
 
 **Métrica-norte: Índice de Unicidade Percebível (IUP)** — probabilidade de que

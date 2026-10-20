@@ -52,7 +52,7 @@ Você abriu o arquivo certo. Siga na ordem, sem pular:
 | **Overlay de desktop** | app Electron que é **controle remoto** do save, não uma segunda implementação (`desktop/`) |
 | **Widgets Android** | a superfície mais exposta do telefone — e a que **não cobra** |
 
-**Estado do projeto em 09/09/2026** ([`01-VISAO.md` §10](01-VISAO.md#o-estado-do-projeto)): **ninguém nunca usou o app em produção** (informado pelo dono em 07/09/2026). Consequências: toda justificativa que começa com "quebraria o save de quem já joga" decide sobre premissa falsa — o que **não** autoriza apagar nada por conta própria —, e sem usuários não há telemetria, então retenção D1/D7/D30 é hipótese não confrontada. **O gargalo é distribuição, não produto.** O que está em aberto e depende do dono vive na seção 3 de [`docs/STATUS.md`](../STATUS.md).
+**Estado do projeto em 20/10/2026** ([`01-VISAO.md` §10](01-VISAO.md#o-estado-do-projeto)): o app está em **teste fechado na Google Play**, o dono divulga para recrutar testadores e o próximo passo do roteiro é produção — **há usuários reais**. A premissa "ninguém nunca usou o app em produção" (07/09/2026) **venceu** e ficou como lápide. Consequências: compatibilidade de save é regra ([`CLAUDE.md` › Compatibilidade — há usuários reais desde 20/10/2026](../../CLAUDE.md)), e a telemetria D1/D7/D30 passa a ter o que ler. **O gargalo continua sendo distribuição, não produto.** O que está em aberto e depende do dono vive na seção 3 de [`docs/STATUS.md`](../STATUS.md).
 
 ---
 
@@ -241,6 +241,7 @@ Quatro campos por linha, e nenhum fica vazio: onde **ler**, o **dono** (o símbo
 | `CACHE_VERSION` | 08 §3.6 | `public/sw.js` → `CACHE_VERSION` | `src/deploy/swCache.contract.test.ts`, `tests/swOrigemDaResposta.test.ts` | 10 §13 |
 | O que depende do dono | 08 §4 | — (fora do código) | `nenhuma` | [`DEPENDE-DE-VOCE.md`](../DEPENDE-DE-VOCE.md) · 10 §18 |
 | Privacidade e ficha da loja | 08 §5 | `public/privacidade.html`, `public/termos.html` | `nenhuma` | [`PLAY-DATA-SAFETY.md`](../PLAY-DATA-SAFETY.md) · 10 §8 |
+| Save, chave de storage ou contrato de servidor (há usuários reais) | [`CLAUDE.md` › Compatibilidade](../../CLAUDE.md) | `hydrateSave` em `src/contexts/GameStateContext.tsx` | `src/contexts/saveCompat.contract.test.ts` | `REGISTRO-DE-DECISOES.md` §148 · 10 §15 |
 
 ---
 

@@ -10,9 +10,10 @@
  * "VAPID_JWK not configured — skipping Web Push" e **pula o envio inteiro**.
  * Os dois canais estavam mortos na borda, em silêncio, desde sempre.
  *
- * Trocar o par é seguro enquanto não houver inscrições de push em produção —
+ * Trocar o par só é seguro enquanto não houver inscrições de push em produção —
  * uma inscrição é criada CONTRA uma chave pública, e muda de chave invalida
- * as existentes. Com zero usuários, o custo é zero.
+ * as existentes. Em 07/09/2026, com zero usuários, o custo era zero; desde
+ * 20/10/2026 trocar as chaves VAPID derruba as inscrições de push reais.
  *
  * Uso:
  *   node scripts/gerar-vapid.mjs

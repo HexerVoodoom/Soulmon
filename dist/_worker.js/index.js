@@ -3926,7 +3926,7 @@ var KNOWLEDGE = [
   { "id": "termo-soulmon", "t": "Soulmon", "x": "O app e a criatura. Um app de produtividade gamificado do g\xEAnero v-pet, em que o avatar evolui COM o usu\xE1rio e o encoraja \u2014 nunca cobra." },
   { "id": "termo-squad", "t": "Squad", "x": "Um conjunto de agentes com contrato, m\xE9todo e guard execut\xE1vel, invocado por comando. A que escreve este manual \xE9 a SQUAD-DOCS." },
   { "id": "termo-tarefa", "t": "Tarefa", "x": "O contrato de EXECU\xC7\xC3O: o valor est\xE1 em terminar e sair da cabe\xE7a. Tem esfor\xE7o, prazo, adiamentos, estados e assombra\xE7\xE3o. N\xE3o se mistura com h\xE1bito." },
-  { "id": "termo-telemetria", "t": "Telemetria", "x": "Os eventos m\xEDnimos que arbitram as decis\xF5es do plano, com allowlist de props por evento e nenhum campo de texto livre. Hoje n\xE3o h\xE1 o que ler: ningu\xE9m usou o app em produ\xE7\xE3o." },
+  { "id": "termo-telemetria", "t": "Telemetria", "x": "Os eventos m\xEDnimos que arbitram as decis\xF5es do plano, com allowlist de props por evento e nenhum campo de texto livre. Desde 20/10/2026 (teste fechado na Play) h\xE1 dado real, lido por functions/api/metrics.js com METRICS_ADMIN_KEY (antes, em 07/09/2026, n\xE3o havia o que ler)." },
   { "id": "termo-teto-de-minijogo-bits", "t": "Teto de minijogo (Bits)", "x": "O limite de 150 Bits por dia do jogador que Dino, PPT e Masmorra podem render juntos, contra os 100 Bits por dia completo que a virada credita a quem cuida (decis\xE3o do dono #61/#63, 22/09/2026). Bater o teto s\xF3 faz os Bits pararem de somar \u2014 n\xE3o bloqueia minijogo, n\xE3o cobra entrada, n\xE3o toca cora\xE7\xE3o." },
   { "id": "termo-torneio", "t": "Torneio", "x": "O modo competitivo com faixas, rodada semanal e moeda pr\xF3pria (Emblemas)." },
   { "id": "termo-traco-de-nascimento", "t": "Tra\xE7o de nascimento", "x": "O tra\xE7o \xFAnico sorteado quando o pet nasce, vis\xEDvel em Estat\xEDsticas. Todos s\xE3o positivos \u2014 tra\xE7o negativo puniria por um dado que o jogador n\xE3o jogou; a variedade \xE9 em esp\xE9cie, n\xE3o em for\xE7a. Os efeitos s\xE3o lidos do ESTADO, nunca por par\xE2metro novo, e \xE9 isso que faz o overlay herdar sem uma segunda implementa\xE7\xE3o." },
@@ -8390,7 +8390,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
+// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11164,7 +11164,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-R7qFTe/functionsRoutes-0.9993272941641204.mjs
+// ../.wrangler/tmp/pages-iNJ1e1/functionsRoutes-0.030603496221465742.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11441,7 +11441,7 @@ var routes = [
   }
 ];
 
-// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11767,7 +11767,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

@@ -23,8 +23,8 @@ import { mulberry32 } from '../combate/rng';
  * isso a faixa é a MESMA para Salão e Ateliê.
  *
  * Os modelos são SUPOSIÇÕES declaradas (tempo por toque, acerto, duração de
- * uma corrida) — não medição de gente real, que ainda não existe (ninguém usa
- * o app em produção). Quando houver telemetria, é ESTA tabela que se confronta.
+ * uma corrida) — não medição de gente real, que em 07/09/2026 ainda não existia (desde
+ * 20/10/2026 há usuários reais na Play — ver CLAUDE.md › Compatibilidade). Quando houver telemetria, é ESTA tabela que se confronta.
  * A Masmorra, a Arena e o Pesadelo ficam FORA: são jogos longos com outra
  * economia (e a Masmorra sozinha passa do teto diário — pendência do dono).
  */

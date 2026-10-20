@@ -132,9 +132,11 @@ via `language === 'pt-BR'`).
 > **`doc-mantenedor`** (`/manter-docs`, também disparado a cada push na `main`
 > por `.github/workflows/docs-sync.yml`).
 
-> ## ⚠️ NINGUÉM NUNCA USOU O APP EM PRODUÇÃO (07/09/2026, informado pelo dono)
+> ## ⚰️ (vencida em 20/10/2026) "Ninguém nunca usou o app em produção" (07/09/2026)
 >
-> **Leia isto antes de aceitar qualquer justificativa deste arquivo que comece
+> **Desde 20/10/2026 o app está em TESTE FECHADO na Google Play, com usuários reais; a regra viva é a seção "Compatibilidade — há usuários reais desde 20/10/2026" logo abaixo.** O bloco a seguir fica como histórico: era a premissa de 07/09/2026 e já não vale.
+>
+> *(Histórico de 07/09/2026.)* **Leia isto antes de aceitar qualquer justificativa deste arquivo que comece
 > com "quebraria o save de quem já joga" ou "os APKs já instalados".** São 44
 > pontos entre código e docs, e todos decidem sobre uma premissa falsa: o
 > namespace KV `DIGIAPP_SAVES`, as chaves `digiapp_*`, o `digimonName` do
@@ -148,9 +150,24 @@ via `language === 'pt-BR'`).
 > autoriza é **parar de tratar essas justificativas como intocáveis** e levar a
 > decisão ao dono com a conta na mão, em vez de repetir a frase.
 >
-> Consequência de prioridade: sem usuários não há telemetria para ler, e a
+> Consequência de prioridade, em 07/09/2026: sem usuários não havia telemetria para ler, e a
 > curva de retenção D1/D7/D30 e o desenho D30–D90 são **hipótese não
 > confrontada**. O gargalo do projeto hoje é distribuição, não produto.
+
+> ## Compatibilidade — há usuários reais desde 20/10/2026
+>
+> Em 20/10/2026 o app entrou em teste fechado na Play e o dono começou a divulgar para recrutar testadores; o próximo passo do roteiro é produção. Todo save, chave e contrato passa a ter dono real. Regras:
+>
+> 1. **Campo/chave/regra nova no save** = leitura tolerante (`??` / sanitizador em `hydrateSave`) + migração IDEMPOTENTE (rodar duas vezes = no-op) + espelho no servidor (`functions/api/_*.js`/`save.js`) com teste de paridade.
+> 2. **Nunca renomear/apagar chave de save/localStorage/KV** sem migração de leitura que aceite o nome antigo (o "visto" gravado em localStorage por aparelho conta).
+> 3. **Contrato de servidor é aditivo e retrocompatível** com cliente em cache (PWA/service worker velho, WebView do APK).
+> 4. **Mudança incompatível de asset/HTML** = bump de `CACHE_VERSION` em `public/sw.js` (o valor vive no arquivo; não copie o número para o doc).
+> 5. **Mudança só web não exige APK**; mudança em `android/` exige AAB novo e precisa funcionar com o APK antigo instalado (feature detect).
+> 6. **Reconsentimento** só via bump de `PRIVACY_VERSION`/`TERMS_VERSION` (`src/utils/consent.ts`) e só se a mudança for material.
+> 7. **PR que toca save/regra/contrato** diz o plano de rollback (reverter não pode corromper save já migrado).
+> 8. **Migração de dados reais (KV/D1)** só com backup/cópia antes.
+>
+> Régua automática: `src/contexts/saveCompat.contract.test.ts` (todo campo de `GameState` tem linha própria em `hydrateSave` e nenhuma só repassa o valor cru sem `??`/sanitizador; campo sanitizado pelo servidor existe no cliente e tem teste, e `save.js` não lê o save por forma opaca; toda chave de `STORAGE_KEYS` está congelada e nenhuma congelada some). **O que a régua NÃO cobre:** campo novo do cliente que o servidor não sanitiza (o inverso da paridade) — isso é revisão de PR, junto com o plano de rollback. + `GameStateContext.hydrate.fuzz2.qa.test.tsx` (conta os campos e fuzza valores hostis). Decisão: `docs/REGISTRO-DE-DECISOES.md` §148.
 
 ## Comandos (rode ANTES de todo commit)
 
@@ -650,10 +667,11 @@ ficam valendo:
   inimigo da masmorra e o NPC chamando a mesma criatura por outro nome, em
   silêncio. A régua viva é `src/utils/sprites.dungeonRoster.test.ts`, que
   reprova o sufixo E a volta da string duplicada — não este parágrafo.
-- ⚠️ **`digimonName` NÃO EXISTE MAIS** (07/09/2026). Este item dizia que ele e
+- ⚠️ **`digimonName` NÃO EXISTE MAIS** (07/09/2026). Em 07/09/2026, quando ainda
+  não havia usuários, este item dizia que ele e
   as chaves `digiapp_*` ficavam "porque renomear quebraria o widget/save de quem
   já joga", e que o servidor aceitava DOIS nomes de campo "por causa dos APKs já
-  instalados". Não havia APK instalado nem save de terceiro. Hoje o campo é
+  instalados". Naquela data não havia APK instalado nem save de terceiro (⚰️ vencido em 20/10/2026: agora há teste fechado na Play; qualquer rename futuro exige migração de leitura, ver Compatibilidade acima). Hoje o campo é
   `petName` em todo lugar — cliente, bridge (`pet_name` no Kotlin), chat e push
   —, e o servidor conhece **um** nome: campo com dois nomes é campo que diverge,
   e o segundo é sempre o que alguém esquece de atualizar.

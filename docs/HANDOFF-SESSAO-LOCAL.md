@@ -44,8 +44,8 @@ npx wrangler deploy
 trava "um recibo, uma conta".
 
 **Consequência declarada:** a partir daqui o app lê o namespace KV **vazio**.
-Foi decisão do dono (separar sem migrar, já que ninguém usou o app em
-produção). O save local dele, se existir, sobe na primeira sincronização. O
+Foi decisão do dono de 07/09/2026 (separar sem migrar, já que ninguém usou o app em
+produção — ⚰️ premissa vencida em 20/10/2026: agora há saves reais em `SOULMON_SAVES`, e repetir esta troca exige backup e cópia antes). O save local dele, se existir, sobe na primeira sincronização. O
 namespace antigo continua intacto e declarado como `DIGIAPP_SAVES`.
 
 ⚠️ **Rode da RAIZ, sem `-c`.** Em `workers/` o wrangler pega o config errado:

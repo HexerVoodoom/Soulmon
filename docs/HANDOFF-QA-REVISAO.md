@@ -176,7 +176,7 @@ Escrito sem eufemismo, porque é o que torna a revisão útil.
 | **Arte** (A20, 24 cenas + 5.1 decoração) | ⏸️ adiada para uma sessão dedicada — `docs/BACKLOG-ARTE-GERAR.md` |
 | **Selo de "verificado" + missões corporais** | ⬜ Fase 4a, camada de cima. Só aparece no Android com sensor, e o APK depende do keystore |
 | **Keystore → Play Console → App Links** | 🔒 depende do dono. É a corrente inteira do lançamento (`docs/DEPENDE-DE-VOCE.md`) |
-| **Ninguém nunca usou o app em produção** | Nenhum número de retenção foi observado. Toda régua de D1/D7/D30 é hipótese |
+| **Em 07/09/2026 ninguém tinha usado o app em produção** | Nenhum número de retenção havia sido observado. Toda régua de D1/D7/D30 era hipótese. ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; os números agora existem para conferir. Ver CLAUDE.md › Compatibilidade |
 
 ---
 

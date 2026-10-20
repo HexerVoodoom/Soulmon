@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 20/10/2026 — No ar em teste fechado na Play: há usuários reais e a compatibilidade do save vira regra (`docs/compat-usuarios-reais`, REGISTRO §148)
+>
+> - **Fato (dono, 20/10/2026):** o app está em **teste fechado** na Google Play; o dono vai divulgar para recrutar testadores; o próximo passo do roteiro é **produção**. A premissa "ninguém nunca usou o app em produção" (07/09/2026) venceu e virou lápide neste arquivo, em `SEPARACAO-DIGIAPP.md`, `wrangler.jsonc`, `HANDOFF-SESSAO-LOCAL.md`, `REGISTRO-DE-DECISOES.md` e `DEPENDE-DE-VOCE.md`. Estado exato da faixa no Console: [a conferir pelo dono no Play Console].
+> - **Regra viva:** `CLAUDE.md` › "Compatibilidade — há usuários reais desde 20/10/2026" (leitura tolerante + migração idempotente + espelho no servidor; nunca renomear chave sem migração; contrato aditivo; bump de `CACHE_VERSION`; `android/` exige AAB e compat com APK velho; reconsentimento só via `PRIVACY_VERSION`/`TERMS_VERSION`; plano de rollback no PR; backup antes de migrar KV/D1). Decisão: REGISTRO §148. Régua automática: `src/contexts/saveCompat.contract.test.ts`.
+> - **D-03 (caminho crítico do dono):** `METRICS_ADMIN_KEY` e `SEASON_ADMIN_KEY` deixam de ser "sem urgência". D1/D7 se leem em `GET /api/metrics?from=AAAA-MM-DD&to=AAAA-MM-DD` com o header `X-Metrics-Key` (`functions/api/metrics.js`; sem a env a rota responde 404) ou por `scripts/metrics-report.mjs`. `SEASON_ADMIN_KEY` é lida em `functions/api/community.js` (fechamento de temporada) e em `workers/push-scheduler.js`; precisa estar nos dois lados. Estado dos segredos: [a conferir pelo dono com `wrangler secret list`].
+> - **D-04:** há saves reais em `SOULMON_SAVES`; trocar binding/id ou separar de novo exige backup e cópia antes (ver `SEPARACAO-DIGIAPP.md`).
+
 > ## 20/10/2026 — Revisão da política de privacidade e da ficha Play contra o código (`docs/revisao-privacidade`, REGISTRO §137)
 >
 > - Supabase confirmado fora do app (nenhum uso em `src/`/`functions/`; guard `transcribe.contract.test.ts`); chat, sugestões e voz vão ao Groq direto do Worker (reserva Gemini só no chat). Última menção "Supabase+Groq (áudio)" corrigida em `PLAY-LANCAMENTO.md`.
@@ -3199,7 +3206,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   1,11 e 1,37 tela.
 > - Nenhuma tela órfã alcançável depois da remoção do consentimento e da intro.
 
-> ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
+> ## ⚰️ (vencida em 20/10/2026) 07/09/2026 — "NINGUÉM NUNCA USOU O APP EM PRODUÇÃO"
+>
+> **Lápide:** esta premissa venceu em 20/10/2026 (app no ar em teste fechado na Play, com usuários reais; ver a entrada de 20/10/2026 no topo). O texto abaixo é histórico, preservado. O item 2 ("a telemetria não tem urgência") está **revogado**: `METRICS_ADMIN_KEY` e `SEASON_ADMIN_KEY` são caminho crítico do dono.
 >
 > Informado pelo dono. É o fato mais consequente registrado aqui, porque **44
 > pontos do código e da documentação decidem coisas com base na premissa
@@ -3217,7 +3226,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >    IP sem nenhum benefício — e vai para a Play Store junto.
 > 2. **A telemetria não tem urgência.** Sem usuários não há dado: as chaves
 >    `METRICS_ADMIN_KEY`/`SEASON_ADMIN_KEY` da seção 3.2 deixam de ser
->    bloqueio e viram pré-requisito de lançamento. Nada se perdeu — a escrita
+>    bloqueio e viram pré-requisito de lançamento. ⚰️ (revogado em 20/10/2026: agora são caminho crítico do dono.) Nada se perdeu — a escrita
 >    funciona e o KV guarda por 730 dias.
 > 3. **Toda a régua de retenção D1/D7/D30 e a curva D30–D90 são HIPÓTESE.**
 >    Estão implementadas e coerentes com a pesquisa, e nenhuma foi confrontada

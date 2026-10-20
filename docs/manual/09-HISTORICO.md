@@ -260,6 +260,13 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   (causa corrigida em `5edfcfba`: cobrança desde 16/09/2026). Discussão:
   [10 §5, §6, §10 e §13](10-DISCUSSOES-E-DECISOES.md).
 
+### 1.6 20/10/2026 — no ar na Google Play (teste fechado)
+
+- **20/10 — no ar na Google Play (teste fechado), divulgação para recrutar testadores; a premissa "ninguém usou" vence.**
+  A partir daqui há usuários reais: save, chave e contrato passam a exigir compatibilidade
+  ([`CLAUDE.md` › Compatibilidade](../../CLAUDE.md); decisão em `REGISTRO-DE-DECISOES.md` §148;
+  régua `src/contexts/saveCompat.contract.test.ts`). Discussão: [10](10-DISCUSSOES-E-DECISOES.md).
+
 ---
 
 ## 2. Marcos por sistema — quando cada módulo nasceu
@@ -342,6 +349,7 @@ Cada linha: a premissa antiga, a nova, a data e o commit que a virou.
 | Premissa | Antes | Depois | Data · commit |
 |---|---|---|---|
 | **Usuários em produção** | Código e docs (44 pontos, ver `CLAUDE.md`) assumiam save de jogador real em risco | "Ninguém nunca usou o app em produção" — documentado, não decisão de apagar nada | 07/09/2026 · `167ff9ff` |
+| **Usuários em produção (2ª virada)** | "Ninguém nunca usou o app em produção" (07/09/2026) | ⚰️ premissa vencida: o app está em teste fechado na Google Play, com usuários reais, e o dono divulga para recrutar testadores; compatibilidade de save vira regra (`CLAUDE.md` › Compatibilidade, `REGISTRO-DE-DECISOES.md` §148) | 20/10/2026 · sem commit único |
 | **Firebase** | Compartilhado com o DigiApp (implícito) | Projeto próprio `soulmon-app`, Google + e-mail/senha, domínios de produção autorizados | 07/09/2026 · `8073f09a` |
 | **`LEGACY_FORM_TIERS`** | 57 nomes de personagem registrado da Bandai no bundle de produção, para "compat de save" de jogador inexistente | Tabela apagada; id fora do esquema cai em `'rookie'` + sprite por hash (arte nossa) | 07/09/2026 · `cd820d40` |
 | **`digimonName`** | Campo do bridge/save/chat com dois nomes possíveis, "porque APKs já instalados" (não havia) | Campo único `petName` em cliente, bridge (`pet_name`), chat e push | 07/09/2026 · `c31d9599` / `977634f1` |

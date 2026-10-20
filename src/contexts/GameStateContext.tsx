@@ -1231,7 +1231,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
            também ERAM nomes de franquia, então o migrador traduzia um nome
            proibido em outro. Hoje as linhas são as nossas (`ignar`/`lumel`/
            `serah`, de `DUNGEON_LINE_SPRITES`) e não há save de terceiro para
-           migrar — ninguém nunca usou o app em produção. Um id que a arte não
+           migrar — em 07/09/2026 ninguém tinha usado o app (desde 20/10/2026 há
+           usuários reais na Play; ver CLAUDE.md › Compatibilidade). Um id que a arte não
            conheça cai em `fallbackSpriteForStage`, que responde com arte
            NOSSA por hash do id. */
         eggType: loadedState.eggType ?? savedEggType ?? 'ignar',

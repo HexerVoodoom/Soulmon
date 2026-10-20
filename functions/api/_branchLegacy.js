@@ -9,8 +9,9 @@
 //  - o cache, para o sprite já pago não ser gerado (e cobrado) de novo;
 //  - o contador, para o renomeio não ZERAR o teto por forma (seria gerar de
 //    graça trocando de nome).
-// Não migramos as chaves no KV: seria um job de varredura sem usuário em
-// produção; a leitura dupla custa uma `get` a mais só no caminho de miss.
+// Não migramos as chaves no KV: seria um job de varredura (em 07/09/2026 não havia usuário em
+// produção; desde 20/10/2026 há usuários reais na Play — ver CLAUDE.md ›
+// Compatibilidade); a leitura dupla custa uma `get` a mais só no caminho de miss.
 //
 // O mapeamento é o de `src/utils/branchMigration.ts` (`newFormIdToLegacy`) e
 // a paridade é travada por `branchLegacy.parity.test.js` (footgun 9).

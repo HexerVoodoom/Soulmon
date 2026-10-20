@@ -4,11 +4,13 @@
  *
  * O prefixo era herança do fork e este repositório afirmava, em dois lugares,
  * que ele era mantido de propósito "porque renomear faria os usuários atuais
- * perderem o progresso local". Não havia usuários atuais — ninguém nunca usou
- * o app em produção (07/09/2026, confirmado pelo dono).
+ * perderem o progresso local". Não havia usuários atuais — em 07/09/2026
+ * ninguém tinha usado o app em produção (confirmado pelo dono). Desde
+ * 20/10/2026 há usuários reais (teste fechado na Play) — ver CLAUDE.md ›
+ * Compatibilidade.
  *
- * A migração existe assim mesmo, pelo save do DONO: "ninguém em produção" não
- * é "nenhum save existe", e o custo de errar isso seria o progresso dele.
+ * A migração é OBRIGATÓRIA: há saves reais em aparelhos, e o custo de errar
+ * isso é o progresso deles.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { STORAGE_KEYS, migrateLegacyStorageKeys } from './storageKeys';

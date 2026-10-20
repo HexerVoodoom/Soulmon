@@ -36,7 +36,7 @@ Estado verificado hoje:
 
 **A força que exige decidir agora:** enquanto o `FIREBASE_PROJECT_ID` não existe, o `saveId`
 é ao mesmo tempo **identificador e senha**. Quem souber o e-mail lê e sobrescreve o save.
-Zero usuários de terceiro hoje — é a única janela em que isto sai de graça. Depois do Steam,
+Zero usuários de terceiro em 07/09/2026 — era a única janela em que isto saía de graça (ver `## Status revisto (20/10/2026)`). Depois do Steam,
 não sai.
 
 **Restrições duras que a decisão respeita:** ~R$ 200/mês (§4) · não tocar em `digiapp-a5e`
@@ -452,3 +452,7 @@ save sem rede (deve recusar); 413 com poda; paridade `_auth.js` × `cloudSave.ts
 → **`alpha-estrategista-negocio`**: custo desta ADR = **R$ 0/mês**; o que dobra custo está no
 documento de geração de sprite.
 → **Gate:** `alpha-skeptic`.
+
+## Status revisto (20/10/2026)
+
+A janela grátis acabou: o app está em teste fechado na Google Play com usuários reais. A premissa "zero usuários de terceiro hoje" (07/09/2026) venceu. Qualquer mudança de conta/save agora exige migração + backup (CLAUDE.md › Compatibilidade).

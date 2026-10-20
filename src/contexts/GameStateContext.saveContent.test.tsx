@@ -270,8 +270,9 @@ describe('linha de sprite genérica na carga', () => {
   /* ⚠️ Três casos daqui testavam a tradução `'agumon' → 'ignar'` — um nome
      de franquia virando outro nome de franquia. Os ids de linha genérica eram
      `tapirmon`/`veemon`/`salamon` e o migrador cobria um quarto; os quatro
-     saíram em 07/09/2026 (ninguém nunca usou o app em produção, então não há
-     save para migrar). Hoje as linhas são `ignar`/`lumel`/`serah`, de
+     saíram em 07/09/2026 (em 07/09/2026 ninguém tinha usado o app, então não havia
+     save para migrar; desde 20/10/2026 há usuários reais na Play — ver CLAUDE.md
+     › Compatibilidade). Hoje as linhas são `ignar`/`lumel`/`serah`, de
      `DUNGEON_LINE_SPRITES`, e o que ficou testado é a PRECEDÊNCIA — que é a
      regra de verdade, e continua valendo. */
   it('linha desconhecida do save é preservada como veio', () => {

@@ -9,14 +9,18 @@
   },
   "kv_namespaces": [
     // 07/09/2026 — `SOULMON_SAVES` passou a apontar para um namespace PRÓPRIO
-    // e VAZIO (decisão do dono: separar sem migrar, já que ninguém usou o app
-    // em produção). `_kv.js` PREFERE este, então é ele que vale a partir do
-    // próximo deploy.
+    // e VAZIO (decisão do dono DE 07/09/2026: separar sem migrar, já que ninguém
+    // usou o app em produção). `_kv.js` PREFERE este, então é ele que vale a
+    // partir do próximo deploy.
+    // ATENÇÃO — desde 20/10/2026 há saves reais (teste fechado na Play): trocar
+    // binding/id de SOULMON_SAVES exige backup e cópia antes (nada de repetir a
+    // "separação sem migrar" de 07/09).
     { "binding": "SOULMON_SAVES", "id": "20b3ba78a3e84265b5e2d4cd0d411d43" },
     // O antigo fica declarado só enquanto for útil como rede: hoje ele não é
     // lido (o de cima ganha), e existe para o dado herdado continuar
     // alcançável por um `wrangler kv key get` se alguém precisar conferir
-    // alguma coisa. Pode sair a qualquer momento.
+    // alguma coisa. (Decisão de 07/09/2026: "pode sair a qualquer momento".)
+    // Desde 20/10/2026 só sai depois de conferir que nada o lê e com backup antes.
     { "binding": "DIGIAPP_SAVES", "id": "aed229e069fd40d8a141fb1124763d9d" },
     { "binding": "PUSH_SUBSCRIPTIONS", "id": "12dd88d3282140e786a5b2c5b5b940cf" }
   ],

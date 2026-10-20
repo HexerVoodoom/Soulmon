@@ -460,20 +460,24 @@ convidado de iPhone reclamar, em vez de descobrir junto com ele.
 ---
 
 <a id="o-estado-do-projeto"></a>
-## 10. O estado do projeto em 09/09/2026
+## 10. O estado do projeto em 20/10/2026
 
-> ### ⚠️ Ninguém nunca usou o app em produção
+> ### ⚰️ (vencida em 20/10/2026) Ninguém nunca usou o app em produção
 >
-> Informado pelo dono em 07/09/2026 e registrado no `CLAUDE.md`. Duas
-> consequências, e nenhuma delas é "pode apagar tudo":
->
-> 1. **Toda justificativa que começa com "quebraria o save de quem já joga"
->    decide sobre uma premissa falsa.** Isso não autoriza apagar nada por conta
->    própria — o dono pode ter o save dele num aparelho, e "ninguém em
->    produção" ≠ "nenhum save existe". O que autoriza é levar a decisão ao dono
->    com a conta na mão, em vez de repetir a frase.
-> 2. **Sem usuários não há telemetria.** A curva de retenção D1/D7/D30 e o
->    desenho D30–D90 são **hipótese não confrontada**.
+> Premissa informada pelo dono em 07/09/2026 e registrada no `CLAUDE.md`. Em
+> 07/09/2026 ela tinha duas consequências, e nenhuma era "pode apagar tudo":
+> (1) justificativa que começava com "quebraria o save de quem já joga"
+> decidia sobre premissa falsa, sem autorizar apagar nada por conta própria;
+> (2) sem usuários não havia telemetria, e a curva D1/D7/D30 e o desenho
+> D30–D90 eram hipótese não confrontada.
+
+**Estado em 20/10/2026:** o app está em **teste fechado na Google Play**, o dono
+divulga para recrutar testadores e o próximo passo do roteiro é **produção**.
+**Há usuários reais** — a premissa acima venceu. Consequências: compatibilidade
+de save, chave e contrato é regra ([`CLAUDE.md` › Compatibilidade — há usuários
+reais desde 20/10/2026](../../CLAUDE.md); régua `src/contexts/saveCompat.contract.test.ts`;
+decisão em `REGISTRO-DE-DECISOES.md` §148), e a telemetria D1/D7/D30 passa a ter
+o que ler (a hipótese de retenção pode, enfim, ser confrontada).
 
 **O gargalo do projeto hoje é distribuição, não produto.** É a objeção mais
 grave levantada em [`PLANO-PRODUTO.md`](../PLANO-PRODUTO.md), Parte 5: a

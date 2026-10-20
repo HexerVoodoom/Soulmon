@@ -120,8 +120,9 @@ descoberta arquitetural, não o defeito. **A escada de ganhos é que cumpre o te
   comportamento — o `saveId` com salt errado, as tabelas de HP rebaixando um mega a rookie, seis
   consertos de cuidado atrasados no desktop, a energia da comida recalculada por cima. Qualquer
   constante de teto de áudio nasce com **um dono único** ou nasce com este bug latente.
-- **Custo de complexidade:** produto pessoal, dono único, **ninguém nunca usou o app em
-  produção** (`CLAUDE.md`). Não há operação de áudio para pagar dívida de plataforma.
+- **Custo de complexidade:** produto pessoal, dono único, **em 07/09/2026 ninguém tinha usado o
+  app em produção** (`CLAUDE.md`). Não havia operação de áudio para pagar dívida de plataforma.
+  > ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; mudar teto/limitador de áudio agora afeta quem já usa (sem migração de save, mas com regressão audível). Ver CLAUDE.md › Compatibilidade.
 
 ### 1.4 Por que decidir AGORA, e não depois do lote
 

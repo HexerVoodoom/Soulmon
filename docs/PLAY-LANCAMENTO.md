@@ -23,6 +23,17 @@
 > **Atualizado em:** 21/09/2026 (QA geral, etapa 4); **corrigido em 11/10/2026** (run `beta-play-01`, contradições C1-C12 do dossiê).
 > Estado do que já está feito: `docs/STATUS.md` §3.2.
 >
+> ## Estado real (20/10/2026): teste fechado no ar, com usuários reais; próximo = produção
+>
+> Segundo o dono (20/10/2026), o app está em **teste fechado** na Play e será divulgado para
+> recrutar testadores. Feito, pelos próprios docs e commits: AAB com `versionCode` 21 no teste
+> interno e login com Google no Moto G34 (`DEPENDE-DE-VOCE.md`; commit `7f1fd8a93`); `assetlinks`
+> com o SHA do Play App Signing (`6968208ab`); ficha, ícone, gráfico, 3 prints e Segurança dos
+> dados (`DEPENDE-DE-VOCE.md`). O resto da trilha (12+ testadores por 14 dias, depois candidatura
+> à produção, §D.12) segue como está abaixo. Estado exato da faixa e dos testadores:
+> [a conferir pelo dono no Play Console]. Como há usuários reais, vale a regra de
+> compatibilidade do `CLAUDE.md` › "Compatibilidade — há usuários reais desde 20/10/2026".
+>
 > ## Para o BETA FECHADO use [`BETA-FECHADO-RUNBOOK.md`](BETA-FECHADO-RUNBOOK.md)
 >
 > Este arquivo descreve **teste interno -> produção** e **não cobre a trilha de teste
@@ -288,7 +299,7 @@ Na mesma tela, uma por uma:
 
 ### Estado no Console em 19/10/2026
 
-Feito pela squad com autorização do dono, no app `com.soulmon` (conta pessoal Mojoceramon, app em rascunho, teste interno v19 `1.3.0-beta1`). Tudo **salvo, nada enviado para revisão**.
+Feito pela squad com autorização do dono, no app `com.soulmon` (conta pessoal Mojoceramon, app em rascunho **na data deste registro, 19/10/2026**, teste interno v19 `1.3.0-beta1`; de lá para cá o app subiu para teste fechado, ver o topo). Tudo **salvo, nada enviado para revisão**.
 
 | Declaração | Resposta no Console | Situação |
 |---|---|---|

@@ -414,7 +414,7 @@ Roteiro de 25 s existe em `docs/reviews/2026-08-03/soulmon-growth-aso.md` A.6/B.
   converter para outro valor, quem muda é o `FULL_UNLOCK_PRICE_LABEL_USD`
   (`src/utils/monetization.ts`), e o teste `publishedPrice.test.ts` puxa os Termos junto.
 - **"Funciona offline"** — o APK carrega a URL de produção; prometer seria falso.
-- **Número de usuários / prova social** — não existe ainda. Adicionar quando houver.
+- **Número de usuários / prova social** — não usar enquanto não houver número medido (o teste fechado começou em 20/10/2026 e é de poucos testadores). Adicionar quando houver.
 - **Steam / desktop** — outra loja, outro documento (`docs/PLANO-DESKTOP-STEAM.md`).
 - **Fase 4 (Health Connect)** — não está no build; se entrar, a ficha e a Data Safety
   mudam de categoria (`PLAY-DATA-SAFETY.md` §5).

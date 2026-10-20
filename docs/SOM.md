@@ -10,7 +10,8 @@
 > ⚠️ Este arquivo foi escrito na Fase 5, **antes** da Fase 3 e das decisões S11–S13: as
 > seções 2, 2.1 e 5 foram **corrigidas em 09/09/2026** contra o código e contra os
 > artefatos do run, e o que estava obsoleto está marcado onde estava.
-> Nenhum usuário jamais usou o app (`docs/STATUS.md`): tudo sobre "o usuário" é `[hipótese]`.
+> Em 07/09/2026 nenhum usuário tinha usado o app (`docs/STATUS.md`): tudo sobre "o usuário" foi escrito como `[hipótese]`.
+> ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; a telemetria passa a ter dado real, e as hipóteses `[hipótese]` deste doc podem ser confrontadas com ele. Ver CLAUDE.md › Compatibilidade.
 
 ## 1. Onde o som mora
 

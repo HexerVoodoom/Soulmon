@@ -149,9 +149,10 @@ medido — está listado abaixo como pendência para `alpha-gestor-pesquisa`.
   de médio porte em WTP (willingness to pay)/apego declarado quando há esforço de
   montagem real — mas o "esforço" aqui é 6 perguntas rápidas, esforço BAIXO comparado
   aos experimentos clássicos (montar móvel). Efeito esperado: **pequeno**. PREVISÃO.
-- Nenhum desses efeitos foi medido com jogadores reais — CLAUDE.md confirma que
-  "ninguém nunca usou o app em produção" (07/09/2026) — logo TODA leitura de percepção
-  aqui é hipótese, sem exceção, e isso deve ser dito ao dono sem meio-termo.
+- Nenhum desses efeitos foi medido com jogadores reais — em 07/09/2026 o CLAUDE.md
+  confirmava que "ninguém nunca usou o app em produção" — logo TODA leitura de percepção
+  aqui era hipótese, sem exceção, e isso devia ser dito ao dono sem meio-termo.
+  > ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; as leituras de percepção aqui podem agora ser confrontadas com comportamento real. Ver CLAUDE.md › Compatibilidade.
 
 ## 5. O que validar com humanos (→ `alpha-gestor-pesquisa`)
 

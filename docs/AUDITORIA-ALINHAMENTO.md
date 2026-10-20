@@ -133,7 +133,10 @@ define.
 # Fecho da auditoria — 07/09/2026
 
 Os 17 achados foram trabalhados até o fim, mais a limpeza da herança do
-DigiApp que o dono autorizou depois ("ninguém nunca usou o app em produção").
+DigiApp que o dono autorizou depois (em 07/09/2026 "ninguém tinha usado o app em produção").
+
+> ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; as decisões de limpeza deste fecho valeram sob aquela premissa; novas limpezas de herança exigem migração. Ver CLAUDE.md › Compatibilidade.
+
 Suíte no fecho: **235 arquivos, 3456 testes, verde**; `tsc` do app e do
 overlay limpos; `npm run build` OK.
 
@@ -205,6 +208,6 @@ reabri-las por conta própria:
 - **Namespace KV:** novo e vazio, sem migração (ver `SEPARACAO-DIGIAPP.md`).
 - **Próximo foco: continuar melhorando o produto**, não preparar o lançamento.
   Registrado com a ressalva que o dono ouviu e decidiu contra: mais polimento
-  sem usuário é mais hipótese não confrontada, e a curva D1/D7/D30 segue sendo
-  chute. A decisão é dele; o que este parágrafo evita é a próxima sessão
+  (à época, sem usuário) era mais hipótese não confrontada, e a curva D1/D7/D30 segue sendo
+  chute. (Em 20/10/2026 o app entrou em teste fechado na Play: a curva D1/D7/D30 agora pode ser medida — ver CLAUDE.md › Compatibilidade.) A decisão é dele; o que este parágrafo evita é a próxima sessão
   reabrir o argumento como se fosse novidade.

@@ -1,10 +1,10 @@
 # Depende de você — Soulmon
 
-## Estado em 20/10/2026 (fim do dia) — em produção, teste interno rodando
+## Estado em 20/10/2026 (atualizado) — no ar em TESTE FECHADO na Play; próximo passo = PRODUÇÃO
 
 | Feito | Pendente (só você) |
 |---|---|
-| AAB 21 publicado no **teste interno**; login com Google confirmado no Moto G34 | **Verificar o depósito** da conta bancária nova (Perfil para pagamentos) |
+| AAB 21 publicado no **teste interno**; login com Google confirmado no Moto G34. **Faixa atual (dono, 20/10/2026): teste fechado, já no ar**; o dono vai divulgar para recrutar testadores. Próximo = **produção** [estado exato da faixa a conferir pelo dono no Play Console] | **Verificar o depósito** da conta bancária nova (Perfil para pagamentos) |
 | Ficha da loja EN, ícone, gráfico de destaque, 3 prints, Segurança dos dados, categoria, contato | **E-mails dos 12+ testadores** → Google Group + faixa de teste fechado + `BETA_EMAILS` + `BETA_CLOSED=true` |
 | Chat de IA funcionando (Groq + reserva Gemini) | **Trocar a `GROQ_API_KEY`** (colar sem Ctrl+V cru) |
 | `ASSETLINKS` (arquivo estático), SHAs no Firebase, migrações D1 | **Pub/Sub + RTDN** e `FIREBASE_SERVICE_ACCOUNT` (renovação de assinatura) |
@@ -24,11 +24,12 @@
 
 ## Contexto em 3 linhas
 
-- Ninguém nunca usou o app em produção. O alvo agora é **teste FECHADO na Google Play**:
+- ⚰️ (vencida em 20/10/2026) ~~Ninguém nunca usou o app em produção.~~ Desde 20/10/2026 o app está **no ar em teste FECHADO na Google Play** e há usuários reais: a regra de compatibilidade do save vale (`CLAUDE.md` › "Compatibilidade — há usuários reais desde 20/10/2026"). A faixa de teste fechado pede
   12+ testadores (recomendado 15+) com opt-in por 14 dias seguidos.
 - O GitHub Actions está parado por cobrança desde 16/09/2026: **todo build é local**
   (`HANDOFF-LOCAL-SEM-ACTIONS.md`).
 - O APK carrega `server.url` (Worker `soulmon`), então quase todo fix é só publicar o Worker.
+- **Caminho crítico (desde 20/10/2026, há usuários reais):** `METRICS_ADMIN_KEY` (Pages/Worker `soulmon`) e `SEASON_ADMIN_KEY` (Worker + scheduler) precisam estar ativas; D1/D7 se leem em `GET /api/metrics?from=&to=` com o header `X-Metrics-Key` (`functions/api/metrics.js`) ou por `scripts/metrics-report.mjs`. Estado atual de cada segredo: [a conferir pelo dono com `wrangler secret list`; o STATUS os registra como definidos em 22/09/2026].
 
 ## 1. Seu caminho crítico (cada linha aponta para o runbook)
 
@@ -71,7 +72,7 @@ bancário.
 | D3 | **Padrão de verificação** (MASVS-L1 + ASVS-L1 nas rotas de dinheiro/auth) | norteia as checagens de segurança | assumido L1 |
 | D4 | **Data de início (D0)** e **lista de testadores** | sem eles não há relógio | — |
 | D5 | **`SCHEDULE_EXACT_ALARM`**: trocar por alarme inexato ou manter com declaração | permissão que gera declaração extra na Play | a branch de correções propõe remover |
-| D6 | **Constantes da masmorra e do gauge de evolução** (4 h, 25%, curva da zona, sumidouro de Bits; números 30/45/60) | balanceamento sem usuário ainda | os valores atuais do código |
+| D6 | **Constantes da masmorra e do gauge de evolução** (4 h, 25%, curva da zona, sumidouro de Bits; números 30/45/60) | balanceamento sem dado ainda (teste fechado começou 20/10/2026) | os valores atuais do código |
 | D7 | **Quando cortar o `release/beta-1`** (guilda, masmorra e pesadelo já têm fecho datado de 11/10 no STATUS) | congela feature durante os 14 dias | você dá o "fechou" |
 
 ## 3. Pendências suas que não bloqueiam o beta
