@@ -1,6 +1,7 @@
 import { registerPlugin } from '@capacitor/core';
 import { soulmonDisplayName } from '../utils/petName';
 import { spriteLineOf, CORVO_LINE, type CorvoCarrier } from '../utils/corvoPet';
+import { resolveArtLineId, isStarterId, type StarterId } from '../utils/sprites';
 import { groveStageAt, type GroveLocal } from '../utils/groveLocal';
 import { GROVE_STAGES, type GroveStageId } from '../utils/guildRules';
 
@@ -19,13 +20,18 @@ export function widgetPetName(meta?: { baseName?: string; petName?: string } | n
 }
 
 /**
- * `pet_line` do widget (29/09/2026, decisão do dono): só `'corvo'` ou vazio.
- * O Kotlin só tem uma linha de arte ALÉM da árvore padrão — o corvinho do
- * administrador —, então qualquer outra linha (personagem pronto do demo) vai
- * vazia e o plugin REMOVE a chave. Dono da linha: `spriteLineOf` (corvoPet).
+ * `pet_line` do widget: `'corvo'`, o id de um dos 5 INICIAIS (`STARTER_IDS`) ou vazio.
+ * 20/10/2026 (§138): a árvore genérica do gato-coruja saiu do Android como já saíra do app web
+ * (D-104); o widget mostra o sprite do PRÓPRIO jogador pela mesma regra de `getSpriteForStage`
+ * (`resolveArtLineId`: linha aposentada vira o inicial de reserva). Vazio = sem linha de arte
+ * que o widget conheça (linhas legadas, save sem `demoCharacterId`): o plugin REMOVE a chave e o
+ * Kotlin cai num inicial por hash do estágio (`fallbackStarterFor`). Widget antigo (APK velho)
+ * só aceita `'corvo'` e ignora o resto: compatível. Dono da linha: `spriteLineOf` (corvoPet).
  */
-export function widgetPetLine(state: CorvoCarrier): '' | typeof CORVO_LINE {
-  return spriteLineOf(state) === CORVO_LINE ? CORVO_LINE : '';
+export function widgetPetLine(state: CorvoCarrier): '' | typeof CORVO_LINE | StarterId {
+  const line = resolveArtLineId(spriteLineOf(state));
+  if (line === CORVO_LINE) return CORVO_LINE;
+  return isStarterId(line) ? line : '';
 }
 
 /**
@@ -82,8 +88,8 @@ export interface DigiWidgetData {
   habitTierMax?: number;
   /** Alguma coisa faltou 2× seguidas — o widget oferece a versão de 5 min. */
   needsIntervention?: boolean;
-  /** `'corvo'` ou `''` (vazio = o plugin remove `pet_line`). Ver `widgetPetLine`. */
-  petLine?: '' | typeof CORVO_LINE;
+  /** `'corvo'`, id de inicial ou `''` (vazio = o plugin remove `pet_line`). Ver `widgetPetLine`. */
+  petLine?: '' | typeof CORVO_LINE | StarterId;
   /** Id do estágio do Bosque ou `''` (vazio = o plugin remove `grove_stage`). Ver `widgetGroveStage`. */
   groveStage?: '' | GroveStageId;
 }

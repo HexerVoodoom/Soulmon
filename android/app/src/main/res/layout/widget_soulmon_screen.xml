@@ -46,11 +46,11 @@
         <ImageView
             android:id="@+id/widget_sprite"
             android:layout_width="match_parent" android:layout_height="match_parent"
-            android:scaleType="fitEnd" android:contentDescription="@null" android:src="@drawable/sprite_rookie" />
+            android:scaleType="fitEnd" android:contentDescription="@null" android:src="@drawable/sprite_starter_industrial" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent" android:layout_height="match_parent"
-            android:scaleType="fitEnd" android:paddingTop="4dp" android:contentDescription="@null" android:src="@drawable/sprite_rookie" />
+            android:scaleType="fitEnd" android:paddingTop="4dp" android:contentDescription="@null" android:src="@drawable/sprite_starter_industrial" />
     </ViewFlipper>
 
 </RelativeLayout>
