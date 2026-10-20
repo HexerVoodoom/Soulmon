@@ -64,4 +64,9 @@ describe('a frase de direção do prompt de geração', () => {
     expect(SPRITE_FACING_PROMPT).toMatch(/faces RIGHT/);
     expect(SPRITE_FACING_PROMPT).toMatch(/never facing left/);
   });
+
+  it('pede 3/4 na diagonal para o observador, não perfil puro (20/10/2026)', () => {
+    expect(SPRITE_FACING_PROMPT).toMatch(/Three-quarter view/);
+    expect(SPRITE_FACING_PROMPT).toMatch(/not a pure side profile/);
+  });
 });

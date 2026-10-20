@@ -5378,3 +5378,7 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 ### 20/10/2026 — Suno: plano Pro comprovado por print
 
 O dono enviou o print de `suno.com/account`: **Pro Plan**, mensal, próxima cobrança 19/11/2026, com "Commercial use rights". `docs/Attributions.md` e `SOM.md` §12 atualizados; o guard `sonsAssets.contract.test.ts` agora exige o registro do plano. **Resta do dono:** conferir a versão do termo do download comercial antes de citar numa ficha de loja, e a escuta das três faixas (S8).
+
+### 20/10/2026 — Sprites em 3/4
+
+Pedido do dono: o personagem gerado sai em 3/4, na diagonal para o observador, ainda virado à direita. Uma frase só, no dono único `SPRITE_FACING_PROMPT` (`src/utils/spritePose.ts`), que entra nas duas variantes do prompt de criação (`composeSpritePrompt`). O render continua esperando a "frente" à direita (`mirrorSprite`). Vale para criaturas geradas daqui em diante; os sprites já gerados não mudam.
