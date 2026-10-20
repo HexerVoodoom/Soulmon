@@ -285,6 +285,8 @@ export interface GuildCasa {
   /** 0..5 = a ordem de `CASA_STAGES`. */
   nivelIndex: number;
   perto: boolean;
+  /** O TOTAL de Bits que o clã já recebeu em doação (W14b): um número do CLÃ, nunca por pessoa. `null` = servidor antigo. */
+  bitsTotal: number | null;
   slots: Array<{ memberId: string; item: string; euMesmo: boolean }>;
   mine: {
     /** O item que EU pus na casa, ou `null`. */
@@ -310,6 +312,7 @@ function sanitizeCasa(raw: unknown): GuildCasa | null {
     nivel: CASA_STAGES[idx],
     nivelIndex: idx,
     perto: x.perto === true && idx < CASA_STAGES.length - 1,
+    bitsTotal: typeof x.bitsTotal === 'number' && Number.isFinite(x.bitsTotal) && x.bitsTotal >= 0 ? Math.floor(x.bitsTotal) : null,
     slots,
     mine: { slot: itemOk(mine.slot) ? mine.slot : null, capReached: mine.capReached === true },
   };

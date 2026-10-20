@@ -14,16 +14,18 @@ vi.mock('../../utils/community', async (orig) => {
 import { getGuild, getGuildRewards, getGuildWar, sanitizeGuildView } from '../../utils/community';
 import { AreaView, type AreaViewProps } from '../nav/AreaView';
 
-const guilda = () => sanitizeGuildView({
+const guilda = (extra: Record<string, unknown> = {}) => sanitizeGuildView({
   id: 'g1', name: 'Roda da manhã', weekKey: '2026-W40', code: 'ABCD2345', isHost: false, size: 2, full: false,
   members: [{ id: 'a1b2c3d4e5f6a700', memberId: 'a1b2c3d4e5f6a700', name: 'Ana', euMesmo: true }, { id: 'a1b2c3d4e5f6a701', memberId: 'a1b2c3d4e5f6a701', name: 'Bia', euMesmo: false }],
   presence: null, threadedToday: null, mine: { cameToday: false, threadToday: false }, progress: 1, target: 5,
   bosque: { stage: null, stageIndex: 0, perto: false, tide: { key: 'T1', size: null }, ornaments: [] }, gestures: [],
   raid: { weekKey: '2026-W40', phenomenon: 'mare', state: 'aberta', ferido: false, lastWeek: null, mine: {} },
+  casa: { nivel: 'haste', nivelIndex: 1, perto: false, bitsTotal: 1230, slots: [], mine: { slot: null, capReached: false } },
+  ...extra,
 })!;
 
 const area = (a: 'hall' | 'arena') => (
-  <AreaView {...({ area: a, language: 'pt-BR', guild: { saveId: 'save-12345678', metaDoDiaCumprida: true }, hallContent: () => null } as unknown as AreaViewProps)} />
+  <AreaView {...({ area: a, language: 'pt-BR', guild: { saveId: 'save-12345678', metaDoDiaCumprida: true, cla: { onReward: () => undefined } }, hallContent: () => null } as unknown as AreaViewProps)} />
 );
 
 describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
@@ -74,5 +76,36 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     const r = renderWithCss(area('arena'));
     fireEvent.click(r.container.querySelector('[data-area-lot="guerra"]')!);
     await waitFor(() => expect(document.querySelector('[data-guild-room-open="guerra"] [data-guild-room="guerra"]')).toBeTruthy(), { timeout: 8000 });
+  });
+
+  it('Clan Hall: rótulo "Clan Code", seção Bring Bits com o TOTAL do clã; sem plantio, mistério, gestos nem Feira', async () => {
+    const r = renderWithCss(area('hall'));
+    fireEvent.click(r.container.querySelector('[data-area-lot="guilda"]')!);
+    await waitFor(() => expect(document.querySelector('[data-cla-info]')).toBeTruthy(), { timeout: 8000 });
+    expect(document.querySelector('.sm2-coop-code .sm2-lib-s')!.textContent).toBe('Código do clã');
+    expect(document.querySelector('[data-casa-bits-titulo]')!.textContent).toBe('Trazer Bits');
+    expect(document.querySelector('[data-casa-bits-total]')!.textContent).toBe('Bits do clã: 1230');
+    expect(document.body.textContent).not.toMatch(/Código da roda|Circle code/);
+    expect(document.querySelector('[data-predio="plantio"]')).toBeNull();
+    expect(document.querySelector('[data-predio="misterio"]')).toBeNull();
+    expect(document.querySelector('[data-guild-gestos]')).toBeNull();
+    expect(document.querySelector('[data-feira-fenomeno]')).toBeNull();
+    expect(document.querySelector('[data-guild-room="roda"]')).toBeTruthy(); // membros seguem
+  });
+
+  it('Grove: tem plantio, mistério e gestos (o que saiu do Clan Hall existe aqui)', async () => {
+    const r = renderWithCss(area('hall'));
+    fireEvent.click(r.container.querySelector('[data-area-lot="grove"]')!);
+    await waitFor(() => expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="plantio"]')).toBeTruthy(), { timeout: 8000 });
+    expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="misterio"]')).toBeTruthy();
+    expect(document.querySelector('[data-guild-room-open="grove"] [data-guild-gestos]')).toBeTruthy();
+    expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="praca"]')).toBeNull();
+  });
+
+  it('Feira: a missão/rodada (nome do fenômeno) existe aqui e não no Clan Hall nem no Grove', async () => {
+    const r = renderWithCss(area('hall'));
+    fireEvent.click(r.container.querySelector('[data-area-lot="feira"]')!);
+    await waitFor(() => expect(document.querySelector('[data-guild-room-open="feira"] [data-feira-fenomeno]')).toBeTruthy(), { timeout: 8000 });
+    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio]')).toBeNull();
   });
 });

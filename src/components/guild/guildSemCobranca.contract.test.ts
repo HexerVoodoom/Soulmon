@@ -75,7 +75,8 @@ describe('copy da Guilda — vocabulário vetado', () => {
     const comN = entradas.filter(([, [pt]]) => pt.includes('{n}')).map(([k]) => k).sort();
     // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio.
     // L4: `guild.entrar.codigo.dica` leva o TAMANHO do código (`GUILD_CODE_LENGTH`), que é regra e não pessoa.
-    expect(comN).toEqual(['guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
+    // W14b: `guild.casa.bits.total` é o TOTAL de Bits do CLÃ (um número só, nunca por pessoa).
+    expect(comN).toEqual(['guild.casa.bits.total', 'guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
   });
 
   it('a linha de presença é a marca positiva — não existe chave de "ausente"', () => {

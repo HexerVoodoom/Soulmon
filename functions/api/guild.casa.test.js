@@ -55,7 +55,7 @@ describe('a casa da guilda', () => {
     const txt = JSON.stringify(await vista(e, B));
     for (const proibido of ['pts', 'bitsToday', 'doacao', 'legado', 'total']) expect(txt).not.toContain(proibido);
     const casa = (await vista(e, B)).casa;
-    expect(Object.keys(casa).sort()).toEqual(['mine', 'nivel', 'nivelIndex', 'perto', 'slots']);
+    expect(Object.keys(casa).sort()).toEqual(['bitsTotal', 'mine', 'nivel', 'nivelIndex', 'perto', 'slots']);
     expect(casa.slots).toHaveLength(1);
     expect(casa.slots[0]).toMatchObject({ item: 'furn-lamp', euMesmo: false });
     expect(casa.mine.slot).toBeNull(); // o slot do outro não é "meu"
@@ -81,6 +81,15 @@ describe('a casa da guilda', () => {
     const depois = await vista(e, A);
     expect(depois.casa.nivel).toBe('haste');
     expect(depois.casa.slots).toEqual([]);
+  });
+  it('bitsTotal: soma o que o clã doou (um número do clã) e NÃO encolhe quando quem doou sai', async () => {
+    const { e } = await setup();
+    expect((await vista(e, A)).casa.bitsTotal).toBe(0);
+    await call(e, 'guildDonate', { body: { id: A, bits: 100 } });
+    await call(e, 'guildDonate', { body: { id: B, bits: 60 } });
+    expect((await vista(e, A)).casa.bitsTotal).toBe(160);
+    await call(e, 'guildLeave', { body: { id: B } });
+    expect((await vista(e, A)).casa.bitsTotal).toBe(160);
   });
   it('estágio é monótono e derivado dos limiares', () => {
     let ant = -1;

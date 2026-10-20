@@ -65,7 +65,7 @@ import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
 import { vistaDoPlantio, plantar, regar, proteger, colher } from './_claPlantio.js';
 import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio } from './_claMisterio.js';
-import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
+import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -252,6 +252,8 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     // A CASA (PR2): só estágio, `perto` e os slots de item. Nunca pontos, limiares nem doação por pessoa.
     casa: {
       ...(({ stage, stageIndex, perto }) => ({ nivel: stage, nivelIndex: stageIndex, perto }))(casaStageFor(totalDaCasa(g, cartoes))),
+      // W14b: o TOTAL de Bits doados ao clã (um número do clã, nunca por pessoa).
+      bitsTotal: bitsDaCasa(g, cartoes),
       slots: g.members.flatMap((m, i) => {
         const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
         return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];

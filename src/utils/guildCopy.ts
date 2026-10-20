@@ -53,6 +53,9 @@ export const GUILD_COPY = {
   'guild.casa.perto': ['A casa está perto de virar {estagio}.', 'The house is close to becoming {estagio}.'],
   'guild.casa.regra': ['A roda cuida da casa junto: Bits trazidos, missões e guerras fazem a árvore crescer. Ela só cresce.', 'The circle tends the house together: Bits brought, missions and wars make the tree grow. It only grows.'],
   'guild.casa.doar.titulo': ['Trazer Bits', 'Bring Bits'],
+  // W14b: o total de Bits do clã (um número do clã; nunca por pessoa).
+  'guild.casa.bits.total': ['Bits do clã: {n}', 'Clan Bits: {n}'],
+  'guild.bosque.predios.titulo': ['Cuidar do bosque', 'Tend the grove'],
   'guild.casa.doar.botao': ['Trazer {bits} Bits', 'Bring {bits} Bits'],
   'guild.casa.doar.ok': ['A casa recebeu o que você trouxe.', 'The house received what you brought.'],
   'guild.casa.doar.teto': ['Por hoje, é o bastante. A casa agradece.', 'That’s enough for today. The house is grateful.'],
@@ -182,7 +185,7 @@ export const GUILD_COPY = {
   'guild.criar.compartilhar': ['Compartilhar código', 'Share code'],
   'guild.codigo.copiar': ['Copiar código', 'Copy code'],
   'guild.codigo.copiado': ['Copiado', 'Copied'],
-  'guild.codigo.label': ['Código da roda', 'Circle code'],
+  'guild.codigo.label': ['Código do clã', 'Clan Code'],
   'guild.entrar.botao.abrir': ['Entrar com um código', 'Join with a code'],
   'guild.entrar.codigo.label': ['Código', 'Code'],
   // FINAL (L5, 29/09): por que o botão Entrar está inerte com menos caracteres; `{n}` vem de `GUILD_CODE_LENGTH`.
@@ -326,7 +329,7 @@ export const GUILD_COPY = {
   // ── aria (§10) ─────────────────────────────────────────────────────────
   'guild.aria.salao': ['Salão do Clã', 'Clan Hall'],
   'guild.aria.roda': ['Roda', 'Circle'],
-  'guild.aria.codigo.copiar': ['Copiar o código da roda', 'Copy the circle code'],
+  'guild.aria.codigo.copiar': ['Copiar o código do clã', 'Copy the Clan Code'],
   'guild.aria.fio': ['Firmar meu fio de hoje', 'Settle my strand for today'],
   'guild.aria.bosque': ['Bosque da roda, estágio {estagio}', "The circle’s grove, stage {estagio}"],
   'guild.aria.gesto.enviar': ['Enviar {gesto} para a roda', 'Send {gesto} to the circle'],
