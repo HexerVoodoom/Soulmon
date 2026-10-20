@@ -86,53 +86,8 @@ export const ASSETS_DE_SOM = {
 
 export type NomeDeAsset = keyof typeof ASSETS_DE_SOM;
 
-/**
- * As camadas da trilha — DUAS, `base` e `ritmo`, no mesmo BPM fixo (100), cada
- * uma mestrada no alvo sozinha; a soma é trazida ao alvo pelo
- * `TRIM_TRILHA_POR_CAMADAS_DB` de `utils/loudness.ts`. Os arquivos carregam
- * 1 s de cauda (a cabeça do loop repetida) porque o codec perde a ponta; o loop
- * fecha em `duracaoS`, o ponto exato (12 compassos). Com isto a condição (1) da
- * S13 está satisfeita no repositório; a (2) — o dono ligar a trilha por gesto
- * numa sessão real — não é verificável por código, e a máquina E0–E6 continua
- * congelada: hoje as duas camadas tocam juntas, um estado só.
- */
-export const CAMADAS_DA_TRILHA = {
-  base: {
-    url: '/sounds/trilha-base.webm',
-    sha256: '2122e7ed4d330a117eb27b067781a2fcbd90ce1113d800d2839a3702acd10688',
-    bytes: 122447,
-    categoria: 'marco', // não usado: a trilha vai ao busTrilha, não a um bus de categoria
-    duracaoS: 28.8,
-    origem: 'higgsfield/sonilo_music',
-    promptRef: 'squad-alpha-runs/som-01/prototyper/pacote-prompts.md §2.14',
-    geradoEm: '2026-09-21',
-  },
-  ritmo: {
-    url: '/sounds/trilha-ritmo.webm',
-    sha256: '6182a9f6ed468a77cfb3c65a6224907b8f7abdce3ce1c7d84df0745a16e175f8',
-    bytes: 122092,
-    categoria: 'marco',
-    duracaoS: 28.8,
-    origem: 'higgsfield/sonilo_music',
-    promptRef: 'squad-alpha-runs/som-01/prototyper/pacote-prompts.md §2.15',
-    geradoEm: '2026-09-21',
-  },
-} as const satisfies Record<string, AssetDeSom>;
-
-export type CamadaDaTrilha = keyof typeof CAMADAS_DA_TRILHA;
-
-/**
- * Fatos MUSICAIS das duas camadas (não são alvo de loudness): 100 BPM, 12 compassos de 4 tempos
- * (60/100 × 4 × 12 = 28,8 s = `duracaoS` — há teste).
- */
-export const BPM_DA_TRILHA = 100;
-export const COMPASSOS_DA_TRILHA = 12;
-
 /** Duração do crossfade entre músicas ao trocar de superfície (tema ↔ combate ↔ pesadelo), em segundos. */
 export const CROSSFADE_MUSICA_S = 1.2;
-
-/** Compatibilidade: a primeira camada. */
-export const TRILHA_BASE: AssetDeSom = CAMADAS_DA_TRILHA.base;
 
 /**
  * OS 7 EFEITOS DE COMBATE vindos de BANCO GRATUITO LIVRE (pedido do dono, 20/10/2026: "o som eu não gostei muito, vê se acha
