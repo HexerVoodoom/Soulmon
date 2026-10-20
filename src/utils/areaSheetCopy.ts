@@ -104,20 +104,20 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // Arquivo 529/881, Perfil 383/1124; Hall — losangos de cima 196/428 e 586/427 (300×148), o de baixo 385/993 (508×246); Arena — DOIS retângulos: o de baixo-esquerda 500/810 (450×330)
 // e o de cima-direita 755/650 (435×302): Torneio + Arena livre no da esquerda, Guerra de Clãs no da direita. Mercado: só o ajuste fino (os pés sobem 1 a 4 pontos; as linhas de cima e de
 // baixo ficam ≥ 22 pontos separadas por causa do guard H11 — as plataformas distam só 18).
-// ⚠️ Laboratório: o rótulo "Santuário do Vínculo" (a estimativa do guard H11 usa ~170 px de largura) corta o caminho de Biblioteca e Amigos em 360 de largura — por isso os dois só
-// descem ~0,3 ponto em relação ao pé do Santuário (centro das plataformas deles seria ~44%); decisão pendente do dono no relatório da W12.
+// W13 (20/10/2026, dono): o rótulo do lote encurtou para "Vínculo"/"Bond" e a Biblioteca e o Círculo de Amigos DESCERAM ao centro das plataformas deles (~43–44%; o Amigos 1 ponto acima do centro
+// para o rótulo não tocar o Arquivo). Prévias: `w13-laboratorio*.png`.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '26.7%', top: '66.9%', width: '40%' },
-  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '74%', top: '66.6%', width: '46%' },
-  { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '39.4%', width: '64%' },
+  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '26.7%', top: '68.6%', width: '40%' },
+  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '74%', top: '68.3%', width: '46%' },
+  { id: 'stats', labelPt: 'Vínculo', labelEn: 'Bond', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '38.2%', width: '64%' },
   // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
   // D-44 (19/10/2026, dono): "só pode ser um pouco maior" — 36% → 41% (~+15%); o guard H11 (geometria dos lotes) segue verde nos 5 viewports.
   { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50.5%', top: '85.8%', width: '41%' },
   // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
   // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
   // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 32% (W5; antes 34%): com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '16%', top: '39.3%', width: '32%' },
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83.5%', top: '39.3%', width: '32%' },
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '16.2%', top: '44.4%', width: '32%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83.4%', top: '42.9%', width: '32%' },
 ];
 
 // D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo

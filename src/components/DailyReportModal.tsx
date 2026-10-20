@@ -386,8 +386,8 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
                   aria-pressed={active}
                   title={isPt ? m.labelPt : m.labelEn}
                   style={{
-                    flex: 1, minHeight: 64, minWidth: 44, cursor: 'pointer', // 12 (beta-2): alvo de toque folgado (>= 44) para o ícone maior
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    flex: 1, minHeight: 80, minWidth: 44, cursor: 'pointer', // 12 (beta-2): alvo de toque folgado (>= 44) para o ícone maior; W13: +16 px para a legenda
+                    display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '4px 0',
                     fontSize: 40, lineHeight: 1,
                     boxSizing: 'border-box',
                     border: 'none',
@@ -400,6 +400,8 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
                   {moodArtFor(m.value)
                     ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={40} height={40} style={{ display: 'block', width: 40, height: 40, imageRendering: 'auto' }} />
                     : <span aria-hidden="true">{m.emoji}</span>}
+                  {/* W13 (dono): legenda pequena embaixo de cada ícone (≥ 11 px); o aria-label do botão continua. */}
+                  <span aria-hidden="true" data-mood-caption style={{ fontSize: 11, lineHeight: 1.1, fontWeight: 600, color: 'var(--sm2-ink)', whiteSpace: 'nowrap' }}>{isPt ? m.captionPt : m.captionEn}</span>
                 </button>
               );
             })}

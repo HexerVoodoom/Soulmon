@@ -152,6 +152,9 @@ describe('12 — humor', () => {
       expect(img.width).toBe(40);
       expect(img.height).toBe(40);
     });
+    // W13: legenda curta sob cada ícone, ≥ 11 px; o aria-label segue o rótulo longo.
+    expect(botoes.map(b => b.querySelector('[data-mood-caption]')!.textContent)).toEqual(['Mal', 'Baixo', 'Normal', 'Bom', 'Ótimo']);
+    botoes.forEach(b => expect(parseInt((b.querySelector('[data-mood-caption]') as HTMLElement).style.fontSize, 10)).toBeGreaterThanOrEqual(11));
     expect(botoes.map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false', 'true', 'false']);
     expect(document.querySelector('[data-mood-label]')!.textContent).toBe('Bem');
   });
