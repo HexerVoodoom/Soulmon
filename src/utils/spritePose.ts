@@ -29,12 +29,13 @@ export const DEFAULT_SPRITE_POSE: Readonly<SpritePose> = Object.freeze({ flipX: 
 /**
  * A frase de DIREÇÃO do prompt de geração (`composeSpritePrompt`, oracle/motor.ts).
  * O app desenha toda arte "olhando para a DIREITA" e espelha ao andar para a
- * esquerda — então o gerador tem que entregar o bicho de perfil virado à direita.
+ * esquerda — então o gerador tem que entregar o bicho virado à direita, em 3/4 (diagonal
+ * para o observador, 20/10/2026), nunca de perfil puro e nunca olhando para a esquerda.
  * Travada por teste: mudar aqui sem mudar a regra do render (ou vice-versa) é o
  * defeito "anda de costas".
  */
 export const SPRITE_FACING_PROMPT =
-  'Side profile view, the creature faces RIGHT (toward the right edge of the image), never facing left.';
+  'Three-quarter view, body angled slightly toward the viewer on a diagonal (not a pure side profile), the creature still faces RIGHT, never facing left.';
 
 /** Quanto o sprite sobe no ar, em px de tela (o palco tem 250 de altura). */
 export const AIR_LIFT_PX = 22;
