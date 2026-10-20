@@ -20,13 +20,13 @@ describe('lineIcons', () => {
     }
   });
 
-  it('lineIconForStage: demo → a linha escolhida; legado → linha por hash; árvore do jogador → undefined', () => {
+  it('lineIconForStage: demo → a linha escolhida; legado → inicial de reserva (sem ícone); árvore do jogador → undefined', () => {
     expect(lineIconForStage('champion-power', 64, 'ignar')).toMatch(/ignar-champion-64\.png$/);
     expect(lineIconForStage('ultra', 32, 'lumel')).toMatch(/lumel-mega-32\.png$/);
     // D-78: linha aposentada → inicial de reserva (sem ícone-ficha), nunca o ícone da linha velha
     expect(lineIconForStage('ultra', 32, 'serah')).toBeUndefined();
-    expect(lineIconForStage('agumon', 32)).toMatch(/-rookie-32\.png$/);
-    expect(lineIconForStage('agumon', 32)).toBe(lineIconForStage('agumon', 32)); // determinístico
+    // D-104: id legado sem linha → piso = inicial atual (sem ícone-ficha); a arte vem de getSpriteForStage
+    expect(lineIconForStage('agumon', 32)).toBeUndefined();
     expect(lineIconForStage('champion-power', 64)).toBeUndefined();
     expect(lineIconForStage('rookie', 64)).toBeUndefined();
   });

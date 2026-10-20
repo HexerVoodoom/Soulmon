@@ -603,8 +603,8 @@ function arcFrames(dx: number, dy: number, lift: number, peak: number): Keyframe
 
 /**
  * O efeito do combo, em 4 tempos: (1) a AURA do especial (a mesma arte `aura` do `BattleStage`, na cor do elemento, com a classe `sm-bs-pop` e o
- * brilho dourado de `sm-bs-charge`) acende no Soulmon que ataca por ~0,45 s; (2) o poder (arte `orb` do elemento, 56 px; 84 px nos combos 4+) sai
- * da célula do combo e viaja ~0,95 s em arco, com 2 de rastro; (3) no alvo: BURST (arte `impact` + anel; mais uma onda nos 4+) e uma tremida curta
+ * brilho dourado de `sm-bs-charge`) acende no Soulmon que ataca por ~0,45 s; (2) o poder (arte `orb` do elemento, 70 px; 105 px nos combos 4+; UM só por combo) sai
+ * da célula do combo e viaja ~0,95 s em arco, com 2 brilhos de rastro (sem repetir o ícone); (3) no alvo: BURST (arte `impact` + anel; mais uma onda nos 4+) e uma tremida curta
  * do alvo; (4) o número do dano, maior, sobe do alvo. Só `transform`/`opacity`, Web Animations (1 por figura), sem JS por quadro, ≤ 7 elementos por
  * poder. `quick` (cascata longa): só burst + número. Movimento reduzido: sem aura nem viagem — o número já no alvo e um flash estático curto. Mudo.
  */
@@ -651,11 +651,18 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
   const auraSrc = fxFrame(shot.element, 'aura');
   const base: CSSProperties = { position: 'absolute', pointerEvents: 'none', zIndex: 3 };
   const glow = `drop-shadow(0 0 ${shot.big ? 10 : 6}px var(--sm2-gold-fill))`;
+  // D-103: UM único ícone do poder por combo. O rastro NÃO repete o ícone (eram 3 foguinhos): é só um brilho (sem imagem) que segue o poder.
   const flyer = (ref: React.Ref<HTMLSpanElement>, extra: Record<string, string>) => (
     <span ref={ref} aria-hidden="true" {...extra} style={{ ...base, left: x0 - orbPx / 2, top: y0 - orbPx / 2, width: orbPx, height: orbPx, opacity: 0, filter: glow }}>
       {orbSrc && <img src={orbSrc} alt="" draggable={false} width={orbPx} height={orbPx} style={{ width: orbPx, height: orbPx, imageRendering: 'pixelated', display: 'block' }} />}
     </span>
   );
+  const glowTrail = (ref: React.Ref<HTMLSpanElement>, k: number) => {
+    const px = Math.round(orbPx * k);
+    return (
+      <span ref={ref} aria-hidden="true" data-m3-trail="" style={{ ...base, left: x0 - px / 2, top: y0 - px / 2, width: px, height: px, borderRadius: '50%', opacity: 0, background: 'radial-gradient(circle, color-mix(in srgb, var(--sm2-gold-fill) 70%, transparent), transparent 70%)' }} />
+    );
+  };
   const auraPx = att ? att.size * AURA_SCALE * (shot.big ? 1.4 : 1) : 0;
   const ringPx = shot.big ? 96 : 72;
   const ring: CSSProperties = { ...base, left: x1 - ringPx / 2, top: y1 - ringPx / 2, width: ringPx, height: ringPx, boxSizing: 'border-box', borderRadius: '50%', opacity: 0 };
@@ -681,8 +688,8 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
         </span>
       )}
       {full && flyer(orb, { 'data-m3-shot': '', 'data-m3-shot-element': shot.element, 'data-m3-shot-by': shot.by, 'data-m3-shot-from': `${Math.round(x0)},${Math.round(y0)}`, 'data-m3-shot-px': String(orbPx), 'data-m3-shot-big': shot.big ? '1' : '0', 'data-m3-fx-start': String(Math.round(delay + FX_AURA_MS)), 'data-m3-fx-dur': String(FX_TRAVEL_MS) })}
-      {full && flyer(trail1, { 'data-m3-trail': '' })}
-      {full && flyer(trail2, { 'data-m3-trail': '' })}
+      {full && glowTrail(trail1, 0.7)}
+      {full && glowTrail(trail2, 0.45)}
       {!reduced && (
         <span ref={burst} aria-hidden="true" data-m3-burst data-m3-fx-start={Math.round(impactAt)} data-m3-fx-dur={FX_BURST_MS} style={{ ...ring, border: '3px solid var(--sm2-gold-ink)', boxShadow: '0 0 12px var(--sm2-gold-fill), inset 0 0 8px var(--sm2-gold-fill)' }}>
           {impactSrc && <img src={impactSrc} alt="" draggable={false} style={{ position: 'absolute', inset: '8%', width: '84%', height: '84%', imageRendering: 'pixelated' }} />}

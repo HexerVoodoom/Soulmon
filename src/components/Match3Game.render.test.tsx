@@ -480,6 +480,26 @@ describe('D-99/D-100: posição dos Soulmon e o poder do combo', () => {
     expect(document.querySelector('[data-m3-shot]')).toBeNull();
   });
 
+  it('D-103: UM único poder por combo — cada [data-m3-shot] tem 1 só ícone, o rastro não repete o ícone, e o poder é ~25% maior', async () => {
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    let vistos = 0;
+    for (let i = 0; i < 40; i++) {
+      await avancar(100);
+      const poderes = [...document.querySelectorAll('[data-m3-shot]')] as HTMLElement[];
+      vistos += poderes.length;
+      poderes.forEach(o => {
+        expect(o.querySelectorAll('img').length).toBe(1);
+        expect(Number(o.getAttribute('data-m3-shot-px'))).toBe(o.getAttribute('data-m3-shot-big') === '1' ? 105 : 70);
+      });
+      expect(document.querySelectorAll('[data-m3-trail] img').length).toBe(0);
+    }
+    expect(vistos).toBeGreaterThan(0);
+    await assentar();
+  });
+
   it('D-102: nunca mais de 2 poderes (aura + voo) ao mesmo tempo na tela, em nenhum instante da jogada', async () => {
     montar();
     const p = previsao(2);

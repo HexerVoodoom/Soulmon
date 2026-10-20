@@ -19,19 +19,8 @@ export function demoTintFilter(tint: number | undefined): string | undefined {
 }
 
 // Stage → sprite map, shared by CompanionHUD and the dungeon minigame.
-// Árvore jogável do Soulmon: sprites placeholder gerados
-// (scripts/gen-soulmon-placeholders.mjs) até a integração com o Higgsfield.
-import soulmonRookie from '../assets/soulmon/rookie.png';
-import soulmonChampionPower from '../assets/soulmon/champion-power.png';
-import soulmonChampionHarmony from '../assets/soulmon/champion-harmony.png';
-import soulmonChampionBenevolence from '../assets/soulmon/champion-benevolence.png';
-import soulmonUltimatePower from '../assets/soulmon/ultimate-power.png';
-import soulmonUltimateHarmony from '../assets/soulmon/ultimate-harmony.png';
-import soulmonUltimateBenevolence from '../assets/soulmon/ultimate-benevolence.png';
-import soulmonMegaPower from '../assets/soulmon/mega-power.png';
-import soulmonMegaHarmony from '../assets/soulmon/mega-harmony.png';
-import soulmonMegaBenevolence from '../assets/soulmon/mega-benevolence.png';
-import soulmonUltra from '../assets/soulmon/ultra.png';
+// D-104 (20/10/2026): a ÁRVORE GENÉRICA (gato-coruja: rookie/champion-*/ultimate-*/mega-*/ultra .png) foi APOSENTADA —
+// o piso de quem não tem linha nem arte própria é um INICIAL atual (`fallbackStarterFor`).
 export { default as DUNGEON_SPIRIT_SPRITE } from '../assets/soulmon/dungeon-spirit.png';
 
 // 3 linhas completas de Soulmon (placeholder, até o Higgsfield gerar as do
@@ -182,30 +171,18 @@ export function getDungeonEnemySprite(tier: string, excludeLine?: string, rng: (
   return { sprite: DUNGEON_LINE_SPRITES[line][stage], name: DUNGEON_LINE_NAMES[line], line };
 }
 
-const SOULMON_SPRITES: Record<string, string> = {
-  'rookie': soulmonRookie,
-  'champion-power': soulmonChampionPower,
-  'champion-harmony': soulmonChampionHarmony,
-  'champion-benevolence': soulmonChampionBenevolence,
-  'ultimate-power': soulmonUltimatePower,
-  'ultimate-harmony': soulmonUltimateHarmony,
-  'ultimate-benevolence': soulmonUltimateBenevolence,
-  'mega-power': soulmonMegaPower,
-  'mega-harmony': soulmonMegaHarmony,
-  'mega-benevolence': soulmonMegaBenevolence,
-  'ultra': soulmonUltra,
-};
-import { getStageLevel, getStageBranch } from '../types/progression';
+import { getStageLevel } from '../types/progression';
 import { CORVO_LINE, CORVO_SPRITES, CORVO_SPRITES_256, corvoSpriteFor } from './corvoPet';
 
 /**
- * Legacy stage ids (saves made before the Soulmon tree existed) still carry
- * per-species names. They no longer have art of their own: the Bandai-derived
- * sprites that used to back them were removed from the bundle. Resolution now
- * goes through OUR art — the id picks a line deterministically, so the same
- * old save always renders the same creature instead of shuffling every load.
+ * O PISO (D-104): estágio sem linha de arte e sem sprite próprio — jogador sem `demoCharacterId` (conta com criatura gerada ainda
+ * sem arte no acervo), id de estágio antigo (nome de espécie) ou ramo da árvore. NUNCA a árvore genérica aposentada: é um dos 5
+ * INICIAIS atuais, escolhido por hash estável do id do estágio (o mesmo id é sempre a mesma criatura). Só muda a arte exibida —
+ * o id guardado no save continua válido.
  */
-const LEGACY_LINES = Object.keys(DUNGEON_LINE_SPRITES);
+export function fallbackStarterFor(stage: string): StarterId {
+  return STARTER_IDS[hashId(stage.toLowerCase()) % STARTER_IDS.length];
+}
 
 function hashId(id: string): number {
   let h = 0;
@@ -213,29 +190,14 @@ function hashId(id: string): number {
   return h;
 }
 
-function legacySpriteForStage(stageId: string): string {
-  const level = getStageLevel(stageId);
-  const branch = getStageBranch(stageId);
-  // Branch-shaped ids ('champion-power') are the current tree — answer with the
-  // matching Soulmon form. Anything else is a legacy species name.
-  if (branch) {
-    const own = SOULMON_SPRITES[`${level}-${branch}`];
-    if (own) return own;
-  }
-  const line = DUNGEON_LINE_SPRITES[LEGACY_LINES[hashId(stageId) % LEGACY_LINES.length]];
-  const key = level === 'ultra' ? 'mega' : level;
-  return line[key as 'rookie' | 'champion' | 'ultimate' | 'mega'] ?? line.rookie;
-}
-
 /** Tiers com arte própria nas linhas (`lines/<linha>-<tier>.png`). */
 export type LineTier = 'rookie' | 'champion' | 'ultimate' | 'mega';
 
 /**
  * A LINHA e o TIER por trás de um estágio — a mesma resolução de
- * `getSpriteForStage`, sem o sprite: demo → a linha escolhida; id legado →
- * a linha sorteada por hash; estágio com ramo (`champion-power`, a árvore
- * do jogador) → `null`, porque aí a arte é a do próprio Soulmon, não de
- * linha. Consumido por `lineIcons.ts` (rodada 2: ícones-ficha 64²/32²).
+ * `getSpriteForStage`, sem o sprite: demo → a linha escolhida; qualquer outro
+ * caso (inicial, corvo, árvore do jogador, id legado — o piso é um inicial
+ * por hash, D-104) → `null`, porque aí a arte não é de linha. Consumido por `lineIcons.ts` (rodada 2: ícones-ficha 64²/32²).
  */
 export function resolveLineForStage(stage: string, demoCharacterIdRaw?: string): { line: string; tier: LineTier } | null {
   const demoCharacterId = resolveArtLineId(demoCharacterIdRaw);
@@ -245,10 +207,7 @@ export function resolveLineForStage(stage: string, demoCharacterIdRaw?: string):
   if (demoCharacterId === CORVO_LINE) return null; // arte própria por forma (`corvoPet.ts`)
   if (isStarterId(demoCharacterId)) return null; // arte própria, um sprite só (`STARTER_SPRITES`)
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) return { line: demoCharacterId, tier };
-  if (SOULMON_SPRITES[key]) return null;
-  const branch = getStageBranch(key);
-  if (branch && SOULMON_SPRITES[`${level}-${branch}`]) return null;
-  return { line: LEGACY_LINES[hashId(key) % LEGACY_LINES.length], tier };
+  return null; // D-104: sem linha → piso = inicial (`fallbackStarterFor`), que não tem ícone-ficha
 }
 
 /**
@@ -320,6 +279,6 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
     const line = DUNGEON_LINE_SPRITES[demoCharacterId];
     return line[level] ?? line.rookie;
   }
-  return SOULMON_SPRITES[key] ?? legacySpriteForStage(key);
+  return STARTER_SPRITES[fallbackStarterFor(key)];
 }
 

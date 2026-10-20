@@ -51,14 +51,15 @@ export function powerShots(step: Step, events: readonly M3Event[], closers: read
 
 /**
  * Tempos e tamanhos (ms / px). ANTES (D-100): ícone de 24 px, viagem de 300 ms, número de 800 ms, sem aura nem burst.
- * AGORA: aura 450 ms no atacante, poder de 56 px (84 px se 4+) que viaja 950 ms em arco, burst de 420 ms e número de 800 ms no impacto.
+ * AGORA: aura 450 ms no atacante, poder de 70 px (105 px se 4+; D-103: +25%) que viaja 950 ms em arco, burst de 420 ms e número de 800 ms no impacto.
  */
 export const FX_AURA_MS = 450;
 export const FX_TRAVEL_MS = 950;
 export const FX_BURST_MS = 420;
 export const FX_NUM_MS = 800;
-export const FX_ORB_PX = 56;
-export const FX_ORB_PX_BIG = 84;
+/** D-103 (20/10/2026): ~25% maior que os 56/84 px de D-102 (o dono pediu UM foguinho, um pouco maior). */
+export const FX_ORB_PX = 70;
+export const FX_ORB_PX_BIG = 105;
 /** No máximo 2 poderes (aura + poder em voo) ao mesmo tempo; os demais esperam uma pista livre ou saem na versão rápida. */
 export const FX_LANES = 2;
 /** Teto de duração dos efeitos de um lado da jogada (jogador OU inimigo): nada passa disso. */

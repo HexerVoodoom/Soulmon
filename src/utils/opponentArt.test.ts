@@ -9,13 +9,14 @@ import { isKnownArtLine, opponentIcon, opponentSprite, resolveOpponentLine } fro
 // D-60: oponente NUNCA e desenhado com a arvore generica (gato-coruja, arte descartada).
 
 const STAGES = ['rookie', 'champion-power', 'champion-harmony', 'ultimate-benevolence', 'mega-power', 'ultra'];
-const generica = new Set(STAGES.map(s => getSpriteForStage(s)));
+// D-104: a árvore genérica foi APOSENTADA (arquivos removidos); o que vale agora é só "arte atual" = inicial ou linha vigente.
+const atual = new Set<string>([...Object.values(STARTER_SPRITES), ...Object.values(DUNGEON_LINE_SPRITES).flatMap(l => Object.values(l))]);
 
 describe('opponentArt', () => {
   it('D-78: perfil com artLine aposentada desenha um inicial atual, nunca a árvore genérica', () => {
     for (const id of RETIRED_LINE_IDS) for (const st of STAGES) {
       const sp = opponentSprite({ artLine: id, stage: st, id: 'x' });
-      expect(generica.has(sp), `${id}:${st}`).toBe(false);
+      expect(atual.has(sp), `${id}:${st}`).toBe(true);
     }
   });
 
@@ -34,7 +35,7 @@ describe('opponentArt', () => {
     for (const artLine of [undefined, null, '', 'nao-existe', 'rookie']) {
       for (const stage of STAGES) {
         const url = opponentSprite({ stage, artLine, id: 'abc' });
-        expect(generica.has(url), `${String(artLine)}/${stage}`).toBe(false);
+        expect(atual.has(url), `${String(artLine)}/${stage}`).toBe(true);
         expect(Object.values(STARTER_SPRITES)).toContain(url);
         expect(opponentSprite({ stage, artLine, id: 'abc' })).toBe(url);
       }

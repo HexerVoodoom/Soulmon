@@ -4,9 +4,9 @@ import { join, relative, sep } from 'node:path';
 
 // D-60 (resíduo, 19/10/2026): RÉGUA que reprova desenhar OUTRO jogador com a árvore genérica
 // (`SOULMON_SPRITES`, gato-coruja descartado). Oponente/perfil público só passa por `opponentArt.ts`.
-// Chamadas de `getSpriteForStage` SEM linha de arte (1 argumento) caem na árvore genérica: hoje só o
-// PRÓPRIO jogador, como piso quando ainda não há linha (lista fechada abaixo). Entrada nova aqui =
-// decisão consciente; nunca para oponente.
+// Chamadas de `getSpriteForStage` SEM linha de arte (1 argumento): hoje só o PRÓPRIO jogador, como piso quando ainda não há linha
+// (lista fechada abaixo). D-104 (20/10/2026): a árvore genérica foi REMOVIDA — o piso agora é um INICIAL atual (`fallbackStarterFor`),
+// então essas chamadas não mostram mais arte defasada. Entrada nova aqui = decisão consciente; nunca para oponente.
 
 const SRC = join(__dirname, '..');
 function arquivos(dir: string, out: string[] = []): string[] {
