@@ -17,6 +17,8 @@ import {
   type LifeArea, type StruggleId, type StrengthId,
 } from '../types/activityCatalog';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
+import { soulmonIntroLines } from '../utils/soulmonIntro';
+import { getPassive, rollPetPassive } from '../utils/passives';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow, Chip } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -206,6 +208,8 @@ export type OnboardingCompleteData = {
    * (`GameState.soulTestAnswers`) para o upgrade não perguntar de novo.
    */
   soulTestAnswers?: SoulAnswers;
+  /** O traço (id de `PET_PASSIVES`) que o Soulmon DISSE na apresentação: o App grava este mesmo no save. */
+  petPassive?: string;
 } & (
   | {
       mode: 'oracle';
@@ -256,6 +260,10 @@ interface SoulmonOnboardingProps {
    * demo (Vínculo 5, só no aparelho). Ausente = o portão não mostra o botão.
    */
   onStartDemo?: (characterId: StarterId) => void;
+  /** Só em 'upgrade': o traço que o save já tem, para a apresentação falar o mesmo. */
+  introPetPassive?: string;
+  /** Só em 'upgrade': categorias das atividades do jogador, para o "gosto" da apresentação. */
+  introCategories?: readonly ActivityCategory[];
 }
 
 /**
@@ -308,7 +316,7 @@ export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
@@ -394,6 +402,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const DEEP_END = DEEP_START + SOUL_TEST_ITEMS.length;
   const GENERATING = DEEP_END;
   const REVEAL = GENERATING + 1;
+  /** Depois do batismo: o Soulmon se apresenta (NpcSequence). Não é testado por `>=`/`<=` em lugar nenhum. */
+  const SOULMON_INTRO = REVEAL + 1;
   const DEMO_PICK = -1;
   // REGISTRO §81 (15/10/2026): o REVEAL DEMO (-4, a leitura em silhueta + a oferta da 13.1) e a escolha grátis/própria
   // (`CHOICE_STEP`) SAÍRAM. O fim do ritual de perguntas é a tela do OVO-CRISTAL (`CHOICE_STEP`, abaixo); o -4 ficou livre.
@@ -655,6 +665,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** O que SAI daqui. Campo apagado ou só com espaços volta para o sugerido:
    *  o pet nunca fica sem nome por causa de um campo em branco. */
   const petNameFinal = petNameValue.trim() || registerDisplayName;
+  // O traço dito na apresentação é o MESMO que vai para o save (finish -> petPassive). No upgrade vem do save.
+  const [introPassive] = useState(() => getPassive(introPetPassive)?.id ?? rollPetPassive());
+  const introNome = isUpgrade ? (result?.creature.baseName ?? petNameFinal) : petNameFinal;
+  const introLinhas = useMemo<NpcSequenceLine[]>(() => {
+    if (!result) return [];
+    const art = revealSprite?.url ?? PLACEHOLDER_ART.dormant;
+    return soulmonIntroLines({
+      name: introNome,
+      element: result.dominantElement,
+      alignment: result.dominantAlignment,
+      petPassive: introPassive,
+      categories: isUpgrade ? introCategories : starterKept.map(i => i.category),
+      bio: result.creature.bio,
+    }, isPt ? 'pt' : 'en').map(text => ({ speaker: introNome, art, text }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- starterKept é derivado dos mesmos estados do ritual
+  }, [result, revealSprite, introNome, introPassive, isUpgrade, introCategories, isPt, starterOff, starterSet]);
 
   // O PROGRESSO são TRÊS PONTOS, um por bloco de perguntas (11/10/2026, pedido
   // do dono: "a contagem está errada: primeiro conta 6, depois 20, depois tem
@@ -1357,6 +1383,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
         soulTestAnswers: testAnswers,
+        petPassive: introPassive,
       });
     }
     // Nota: o caminho feliz normalmente recarrega a página (troca de saveId
@@ -2247,7 +2274,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 // rota de quem acabou de pagar pela criatura própria.
                 // B1: o nome do jogador já veio no começo, então o cadastro
                 // final ficou vazio no caminho pago — o reveal CONCLUI.
-                if (isUpgrade) onRevealed?.(result, revealSprite ?? undefined); else void finish();
+                // D-110: o Soulmon se apresenta antes de entrar no app (a saída vive no `onFinish` da apresentação).
+                setStep(SOULMON_INTRO);
               }}
               disabled={submitting}
               aria-busy={submitting || undefined}
@@ -2257,6 +2285,23 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {submitting ? <Spinner /> : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
             </button>
           </div>
+        )}
+
+        {/* D-110: o Soulmon pago se apresenta (a mesma NpcSequence da Ambra). Pular e terminar levam ao mesmo lugar;
+            nada é gravado: "visto" = o próprio ritual, que roda uma vez. A arte é a do reveal; sem ela, o casulo. */}
+        {step === SOULMON_INTRO && result && (
+          <NpcSequence
+            language={lang}
+            label={isPt ? `${introNome} se apresenta` : `${introNome} introduces itself`}
+            lines={introLinhas}
+            onFinish={() => {
+              if (isUpgrade) { onRevealed?.(result, revealSprite ?? undefined); return; }
+              // Volta ao cartão do reveal (com o spinner do "Hatch") enquanto o save sai: se `finish` falhar, a pessoa
+              // não fica presa numa NpcSequence já encerrada, e o "Hatch" continua sendo a forma de tentar de novo.
+              setStep(REVEAL);
+              void finish();
+            }}
+          />
         )}
 
         {/* Navegação (para passos com input manual) */}

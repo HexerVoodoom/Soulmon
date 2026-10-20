@@ -353,6 +353,8 @@ sequência inteira. **Os passos negativos existem para não renumerar o ritual**
 | `REVEAL` | — | `BirthCard` (nome + epíteto + batismo). **Estados do sprite**: `pending='forming'` enquanto `revealEsperando`; passado `REVEAL_WAIT_MS`, `pending='dormant'` (cristal apagado) e a frase "The drawing is still being made — it arrives on its own, later." — nunca arte de reserva | — |
 | `REGISTER` | — | apelido (+ tonalidade, no demo) | — |
 
+Fluxo pago depois do `REVEAL` (20/10/2026, §150): Reveal -> Hatch -> apresentação do Soulmon (`SOULMON_INTRO`, uma `NpcSequence` de fundo escuro com Pular; a arte é o sprite do reveal ou o casulo) -> app. No upgrade demo->pago a mesma apresentação roda antes do `onRevealed`. Demo grátis não tem.
+
 Os números 1..5 e 6..11 vêm das constantes derivadas
 (`QUIZ_START = FAVORITE_STEP + 1`, `QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length`),
 não de literais escritos à mão.

@@ -1522,6 +1522,20 @@ desvantagem"** e "save antigo sem traço não quebra nada".
 velocidade. Não é escolhido, comprado, rerrolado nem melhorado. Não existe traço
 raro: os cinco têm a mesma chance.
 
+**Quem sorteia (20/10/2026, §150).** No nascimento pago o traço vem do onboarding
+(`getPassive(data.petPassive)?.id ?? rollPetPassive()` no `App.tsx`): o que a
+apresentação do Soulmon fala é o mesmo traço que o save recebe.
+
+**A apresentação do Soulmon (20/10/2026, §150).** Depois do batismo e antes de
+entrar no app, o Soulmon fala em uma `NpcSequence` (passo `SOULMON_INTRO`, com
+Pular). Roda UMA vez, no nascimento pago e no upgrade demo->pago; demo grátis,
+Nova Leitura e Renascimento não têm. Conteúdo, de `soulmonIntroLines`: o nome,
+"contraparte digital da sua alma" (exceção declarada à L1, travada na régua),
+o elemento e o que leva vantagem sobre ele (`COUNTERS`), a comida da categoria
+mais frequente das atividades iniciais (`FOOD_BY_CATEGORY`), o traço de
+nascimento e o caminho. Só fala: sem efeito de jogo, sem campo novo no save
+(o "visto" é o próprio ritual). Régua: `src/narrativa.contract.test.ts`.
+
 **Onde a UI mostra.** `src/components/StatsPage.tsx` (o cartão do traço, com
 nome e descrição PT/EN).
 

@@ -1020,6 +1020,8 @@ caminho obrigatório do onboarding.** Classificação etária é decisão do don
 ⚠️ **A §5.12 entra nessa lista:** término, ainda que não seja morte, é a seção
 mais pesada da biologia e não vai para caminho obrigatório nenhum.
 
+> **Nota (20/10/2026, decisão do dono, REGISTRO §150):** a apresentação do Soulmon depois do batismo diz literalmente "contraparte digital da sua alma" / "digital counterpart of your soul". Isso é exceção declarada a esta seção e à L1, travada em `src/narrativa.contract.test.ts` (só `src/utils/soulmonIntro.ts`). A regra continua valendo para todo o resto.
+
 ---
 
 ## 17. Checklist para reprovar copy

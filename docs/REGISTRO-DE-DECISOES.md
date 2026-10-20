@@ -3093,3 +3093,18 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** a janela 4h–12h com "pesadelo só de manhã" (§99/§110). Perdeu porque o dono quer que seja a primeira coisa ao acordar o Soulmon, seja qual for a hora. O risco de feedback de sono à noite foi ACEITO pelo dono e mitigado por exigir noite registrada e por poder pular sem custo.
 - **O que falsificaria:** a taxa de "fechar sem lutar" subir muito nas aberturas da tarde/noite, ou queixa de pesadelo à noite (relato ou suporte).
 - **Onde vive:** `src/utils/nightmareWake.ts` (`nightmareGateOpen`, `NIGHTMARE_AFTER_COMPLETION_MS`, `dreamMode`, `DREAM_MODAL_HOURS`, `nightmareRetryInMs`; testes em `nightmareWake.test.ts`) e os efeitos do pesadelo e do sonho no `App.tsx`.
+
+## 150. O Soulmon se apresenta depois do batismo (dono, 20/10/2026; D-110..D-117; exceção à L1/§16)
+
+- **Pedido (literal):** o Soulmon se apresenta ao jogador logo depois do batismo, dizendo que é "uma contraparte digital da sua alma" / "a digital counterpart of your soul".
+- **Decisão:**
+  - **(a) Quando e onde:** logo depois do batismo, antes de entrar no app, numa `NpcSequence` de fundo escuro. A arte é o sprite do reveal ou o casulo (`PLACEHOLDER_ART.dormant`), nunca arte de reserva. Tem Pular (Skip).
+  - **(b) Fala:** template determinístico, sem IA, offline, EN primeiro + PT (`soulmonIntroLines`).
+  - **(c) A frase literal:** "contraparte digital da sua alma" / "digital counterpart of your soul" fica LITERAL por decisão do dono, em conflito declarado com a L1 e com a §16 da bíblia (`NARRATIVA-E-UNIVERSO.md`). Fica registrada como exceção na régua `src/narrativa.contract.test.ts` (termo 'contraparte digital da alma'), permitida só em `src/utils/soulmonIntro.ts`.
+  - **Escopo:** nascimento pago e upgrade demo->pago SIM; demo grátis, Nova Leitura e Renascimento NÃO (menos intrusivo).
+  - **Sem campo novo no save:** o "visto" é o próprio ritual, que roda uma vez. O traço `petPassive` do nascimento pago passa a vir do onboarding (`getPassive(data.petPassive)?.id ?? rollPetPassive()`); o upgrade recebe `introPetPassive`/`introCategories`.
+  - **Conteúdo:** "gosta" = a comida da categoria mais frequente das atividades iniciais (`FOOD_BY_CATEGORY`); "não gosta" = o elemento com vantagem sobre o dele (`COUNTERS`). Só fala, sem efeito de jogo.
+  - **Dívida declarada:** planta->vida e industrial->aco são normalizados localmente até a frente `fix/elemento-oraculo-perfil` entregar o dono único do mapa oráculo->classe.
+- **Alternativa que perdeu:** reescrever a frase sem alma/digital (o dono preferiu a literal); fala por IA (custo, offline).
+- **O que falsificaria:** testador relatar a frase como estranha ou pesada, ou queixa de "o app disse que minha alma está no celular"; taxa de Skip alta.
+- **Onde vive:** `src/utils/soulmonIntro.ts` (`soulmonIntroLines`, `INTRO_CLICHES_PROIBIDOS`, `INTRO_FRASE_MAX`); o passo `SOULMON_INTRO` em `src/components/SoulmonOnboarding.tsx`; o `petPassive` e as props do upgrade no `App.tsx`; a exceção em `src/narrativa.contract.test.ts`.

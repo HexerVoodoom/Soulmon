@@ -141,6 +141,14 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
       'colisão frontal com o nome do mundo de outra franquia. O lugar se chama ' +
       '**a Malha** / the Mesh (bíblia §3).',
   },
+  {
+    termo: 'contraparte digital da alma',
+    re: /(contraparte digital|digital counterpart)/i,
+    motivo:
+      'a premissa "parte da sua alma vive num aparelho" é camada pesada de mundo (bíblia §16) e a L1 tira ' +
+      '"sua alma" de frase de produto. O dono decidiu em 20/10/2026 que a apresentação do Soulmon recém-nascido ' +
+      'diz a frase LITERAL (REGISTRO-DE-DECISOES §150). Fora desse arquivo continua vetada.',
+  },
 ];
 
 /**
@@ -190,6 +198,14 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/utils/itemArt.ts',
       'src/utils/shop.ts',
       'src/utils/specialItemUse.ts',
+    ],
+  },
+  'contraparte digital da alma': {
+    proposta: 'DECISÃO DO DONO em 20/10/2026 (modal da apresentação do Soulmon, REGISTRO §150): a frase fica literal, ' +
+      'em conflito declarado com a L1 e a §16. Alternativa que perdeu: reescrever sem alma/digital',
+    arquivos: [
+      // A fala de apresentação depois do batismo (EN + PT).
+      'src/utils/soulmonIntro.ts',
     ],
   },
 };
