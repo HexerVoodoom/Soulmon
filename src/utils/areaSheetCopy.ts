@@ -70,9 +70,9 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // por espaço, um em cada metade da diagonal), e a Feira fica sozinha no da
 // direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '17%', top: '48.9%', width: '36%' },
-  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '48%', top: '48.1%', width: '44%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
-  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '80.4%', top: '40.8%', width: '36%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '18.5%', top: '49%', width: '33.4%' },
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '47.3%', top: '48.2%', width: '42.8%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
+  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '80.2%', top: '40.8%', width: '40%' },
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];
