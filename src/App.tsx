@@ -77,6 +77,7 @@ import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo, keepDemoVitalsFull } from './utils/demoStart';
+import { DemoExitButton } from './components/home/DemoExitButton';
 import type { StarterId } from './utils/sprites';
 import { petElementOf } from './utils/starterElements';
 import {
@@ -8741,6 +8742,7 @@ export default function App() {
         </PresentationSlot>
       )}
       <Suspense fallback={null}><XpGainDisplay totalXP={gameState.totalXP} language={language} demo={isDemoMode(gameState)} /></Suspense>
+      {demo && hasCompletedOnboarding && <DemoExitButton language={language} onLeave={handleLeaveDemo} />}
       <Toaster richColors position="top-right" />
     </div>
   );

@@ -1,5 +1,16 @@
 # Depende de você — Soulmon
 
+## Estado em 20/10/2026 (fim do dia) — em produção, teste interno rodando
+
+| Feito | Pendente (só você) |
+|---|---|
+| AAB 21 publicado no **teste interno**; login com Google confirmado no Moto G34 | **Verificar o depósito** da conta bancária nova (Perfil para pagamentos) |
+| Ficha da loja EN, ícone, gráfico de destaque, 3 prints, Segurança dos dados, categoria, contato | **E-mails dos 12+ testadores** → Google Group + faixa de teste fechado + `BETA_EMAILS` + `BETA_CLOSED=true` |
+| Chat de IA funcionando (Groq + reserva Gemini) | **Trocar a `GROQ_API_KEY`** (colar sem Ctrl+V cru) |
+| `ASSETLINKS` (arquivo estático), SHAs no Firebase, migrações D1 | **Pub/Sub + RTDN** e `FIREBASE_SERVICE_ACCOUNT` (renovação de assinatura) |
+| Botão **Sair da demo** (canto inferior esquerdo) | Trocar os prints por capturas do celular (os atuais são ampliados) |
+
+
 > **Reescrito em 11/10/2026 (run `beta-play-01`).** A versão anterior (07/09/2026) tinha
 > 20 itens, a maioria já feita ou superada: dizia que o Soulmon "não tem D1", que o
 > `google-services.json` era do DigiApp e que o CI geraria o AAB. Nada disso vale mais

@@ -1,5 +1,28 @@
 # Soulmon — Guia para agentes
 
+> ## 🟢 LEIA PRIMEIRO — O SOULMON ESTÁ EM PRODUÇÃO (desde 20/10/2026)
+>
+> - **Google Play:** app `com.soulmon` no Play Console (conta Mojoceramon), **teste interno ativo** com o
+>   `versionCode 21` (1.3.0-beta1). Próximo passo: **teste fechado** com 12+ testadores por 14 dias — o dono
+>   está coletando os e-mails e divulgando o vídeo. Ficha da loja (EN), Segurança dos dados, categoria
+>   (Jogo › Simulação), produtos e assinatura já estão no Console.
+> - **Servidor:** `https://soulmon.mateus-sprnd.workers.dev` é PRODUÇÃO com usuários de teste reais. O APK
+>   carrega essa URL (`server.url`): **todo push na `main` vai direto para quem está testando.**
+> - **Regra de branches a partir de agora** (decisão do dono, 20/10/2026): desenvolvimento novo vai numa
+>   **branch paralela de versão** e só entra na `main` depois de testado. Nada de commit direto na `main`
+>   sem passar pelos portões (`npm run portoes`). *Transição:* o estado de 20/10 ficou como está; a regra
+>   vale para o próximo trabalho.
+> - **Release Android:** `E:\soulmon-apk\build-release.ps1` (senha da keystore digitada pelo dono). O build
+>   **exige `android/app/google-services.json`** (fora do git; baixar do Firebase `soulmon-app` › `com.soulmon`) —
+>   sem ele o Firebase não inicia, o app fecha e o login com Google falha (achado de 20/10, versão 20). Cada
+>   upload sobe o `versionCode` +1.
+> - **APK baixado do Play Console não abre por fora da loja** (proteção automática de integridade). Para teste
+>   por cabo use o APK *debug* (a chave debug está no Firebase).
+> - **Chat de IA:** Groq `openai/gpt-oss-120b` + reserva Gemini `gemini-3.5-flash-lite` (`functions/api/_llm.js`).
+>   `cleanKey()` remove caractere invisível da chave (a `GROQ_API_KEY` do painel foi colada com `\u0016`).
+> - **Pendências do dono:** verificar o depósito da conta bancária (perfil de pagamentos), lista de testadores,
+>   trocar a chave do Groq, Pub/Sub/RTDN da assinatura. Detalhe em `docs/DEPENDE-DE-VOCE.md`.
+
 App de produtividade gamificado (bichinho virtual, gênero v-pet).
 React 18 + TypeScript + Vite 6 (web), Capacitor 8.4.3 (APK Android; subiu de 8.4.0 em 11/10/2026 por GHSA-rvm3-566m-v7fv, só vale com APK novo) e um overlay
 Electron separado (`desktop/`). UI/textos do app em PT-BR e EN (sempre os dois,

@@ -1688,6 +1688,9 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 **Dono de:** a PLACA DE MADEIRA "Na masmorra" / "In Dungeon" + o tempo de retorno (beta-2 6.2) que fica no lugar do pet na Home (só a arte `placa-madeira.png` 60×35 em escala inteira 2× — `<img>` pixelated, sem border-image, sem ícone; caixa fixa 120 × 70; texto xs na área lisa). **Exports:** `DungeonSign({ language, onTap, returnInMs })`, `SIGN_W`, `SIGN_H`, `SIGN_ART_W/H`, `SIGN_SCALE`. **Chamado por:** `CompanionHUD` (prop `naMasmorra`). **Régua:** `home/DungeonSign.render.test.tsx`.
 
+### `src/components/home/DemoExitButton.tsx` (20/10/2026)
+**Dono de:** o botão SAIR DA DEMO fixo no canto inferior esquerdo (acima da barra do chat), só na demo local. Toque duplo: o 1º troca o rótulo por "Tocar de novo para sair" por 3 s; o 2º chama `leaveDemo` (apaga o save local e volta ao portão demo/login). Existe porque a saída de Configurações é inalcançável na demo (`isDemoBlockedView('page:settings')`). **Exports:** `DemoExitButton({ language, onLeave })`. **Chamado por:** `App` (`demo && hasCompletedOnboarding`, `onLeave={handleLeaveDemo}`).
+
 ### `src/components/home/EnergyTimer.tsx` (beta-2 3.4)
 **Dono de:** a CONTAGEM REGRESSIVA ao vivo da próxima energia, que mora DENTRO da dica da energia (abre ao tocar no raio; REGISTRO §43 — não há mais timer fixo na faixa). `H:MM:SS` com hora, `M:SS` sem (`formatEnergyCountdown`), 1 s; `paused` mostra "pausada"; `full` não renderiza. `aria-live="polite"` só no rótulo (o número é `aria-hidden`). Sem relógio próprio — ancora no `msToNext` de `energyStatus` e desconta o decorrido. **Exports:** `EnergyTimer`. **Chamado por:** `CompanionHUD` (dica `energy`, prop `energyInfo`).
 

@@ -3326,10 +3326,16 @@ __name(perMinuteGate, "perMinuteGate");
 
 // api/_llm.js
 var GROQ_MODEL_DEFAULT = "openai/gpt-oss-120b";
-var GEMINI_MODEL = "gemini-2.5-flash";
+var GEMINI_MODEL = "gemini-3.5-flash-lite";
+function geminiModel(env) {
+  const m = typeof env?.GEMINI_CHAT_MODEL === "string" ? env.GEMINI_CHAT_MODEL.trim() : "";
+  return /^[\w.-]{3,60}$/.test(m) ? m : GEMINI_MODEL;
+}
+__name(geminiModel, "geminiModel");
 var GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-var GROQ_TIMEOUT_MS = 12e3;
-var GEMINI_TIMEOUT_MS = 8e3;
+var GROQ_TIMEOUT_MS = 1e4;
+var GEMINI_TIMEOUT_MS = 14e3;
+var cleanKey = /* @__PURE__ */ __name((k) => typeof k === "string" ? k.replace(/[^!-~]/g, "") : "", "cleanKey");
 async function timedFetch(url, init, timeoutMs) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
@@ -3363,22 +3369,50 @@ async function callGroq(env, req2, withTools) {
   }
   const res = await timedFetch(GROQ_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.GROQ_API_KEY}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${cleanKey(env.GROQ_API_KEY)}` },
     body: JSON.stringify(body)
   }, GROQ_TIMEOUT_MS);
   return res;
 }
 __name(callGroq, "callGroq");
+function errorHint(message) {
+  if (typeof message !== "string") return "";
+  const m = message.toLowerCase();
+  const KEYS = [
+    "decommission",
+    "deprecated",
+    "terms",
+    "does not exist",
+    "not found",
+    "reasoning_effort",
+    "max_completion_tokens",
+    "temperature",
+    "tool",
+    "context",
+    "too large",
+    "thinking",
+    "api key",
+    "permission",
+    "quota",
+    "billing",
+    "organization",
+    "restricted",
+    "invalid"
+  ];
+  return KEYS.filter((k) => m.includes(k)).join("|").slice(0, 80);
+}
+__name(errorHint, "errorHint");
 async function logGroqError(env, res) {
-  let code = "", type = "";
+  let code = "", type = "", hint = "";
   try {
     const e = JSON.parse(await res.text())?.error ?? {};
     const safe3 = /* @__PURE__ */ __name((v) => typeof v === "string" && /^[\w.-]{1,40}$/.test(v) ? v : "", "safe");
     code = safe3(e.code);
     type = safe3(e.type);
+    hint = errorHint(e.message) || `keys:${Object.keys(e).filter((k) => /^\w{1,20}$/.test(k)).join(",")};len:${typeof e.message === "string" ? e.message.length : -1}`;
   } catch {
   }
-  console.error("[chat] groq 400", { code, type, model: chatModel(env) });
+  console.error("[chat] groq 400", { code, type, hint, model: chatModel(env) });
 }
 __name(logGroqError, "logGroqError");
 var isAccountFail = /* @__PURE__ */ __name((st) => st === 400 || st === 401 || st === 403 || st === 404, "isAccountFail");
@@ -3445,18 +3479,29 @@ async function gemini(env, req2) {
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: String(m.content) }]
   }));
-  const res = await timedFetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+  const call = /* @__PURE__ */ __name((generationConfig) => timedFetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel(env)}:generateContent`, {
     method: "POST",
     // Chave em header, não na URL: URL vai parar em log de proxy.
-    headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": cleanKey(env.GEMINI_API_KEY) },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents,
       tools: geminiTools(tools),
-      generationConfig: { temperature: Math.min(temperature, 2), maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } }
+      generationConfig
     })
-  }, GEMINI_TIMEOUT_MS);
-  if (!res.ok) return { ok: false, status: res.status };
+  }, GEMINI_TIMEOUT_MS), "call");
+  const base = { temperature: Math.min(temperature, 2) };
+  let res = await call({ ...base, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } });
+  if (res.status === 400) res = await call({ ...base, maxOutputTokens: maxTokens + 400 });
+  if (!res.ok) {
+    let hint = "";
+    try {
+      hint = errorHint(JSON.parse(await res.text())?.error?.message);
+    } catch {
+    }
+    console.error("[chat] gemini erro", { status: res.status, hint, model: geminiModel(env) });
+    return { ok: false, status: res.status };
+  }
   const data = await res.json();
   const parts = data.candidates?.[0]?.content?.parts ?? [];
   return {
@@ -8345,7 +8390,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
+// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10903,7 +10948,7 @@ async function onRequestPost9({ request, env }) {
     if (!goalText && categories.length === 0) {
       return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS13 });
     }
-    const groqKey = env.GROQ_API_KEY;
+    const groqKey = cleanKey(env.GROQ_API_KEY);
     if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS13 });
     const gate = await guardAiRequest(request, env, "suggest", body.id);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS13 });
@@ -11067,7 +11112,7 @@ async function onRequestPost10({ request, env }) {
   try {
     upstream = await fetch(GROQ_URL2, {
       method: "POST",
-      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
+      headers: { Authorization: `Bearer ${cleanKey(env.GROQ_API_KEY)}` },
       body: repasse,
       // Sem teto a requisição fica pendurada até o limite do isolate e o app
       // mostra "falhou" tarde. 25 s < 30 s do cliente.
@@ -11119,7 +11164,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-UX2qO2/functionsRoutes-0.052144633380456495.mjs
+// ../.wrangler/tmp/pages-R7qFTe/functionsRoutes-0.9993272941641204.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11396,7 +11441,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11722,7 +11767,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
