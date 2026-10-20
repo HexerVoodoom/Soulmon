@@ -109,7 +109,7 @@ três eventos com arquivo mantêm o procedural como fallback. Régua executável
 | `public/sounds/trilha-base.webm` · `2122e7ed4d330a117eb27b067781a2fcbd90ce1113d800d2839a3702acd10688` | trilha, camada `base` (E1) | Higgsfield CLI · `sonilo_music`, job `49823588` | idem | `pacote-prompts.md` §2.14 | 21/09/2026 | idem | idem |
 | `public/sounds/trilha-ritmo.webm` · `6182a9f6ed468a77cfb3c65a6224907b8f7abdce3ce1c7d84df0745a16e175f8` | trilha, camada `ritmo` | Higgsfield CLI · `sonilo_music`, job `6072e49c` | idem | `pacote-prompts.md` §2.15 | 21/09/2026 | idem | idem |
 
-### As três músicas em streaming (19/10/2026) — plano pago DECLARADO pelo dono, print pendente
+### As três músicas em streaming (19/10/2026) — plano Pro comprovado por print do dono (20/10/2026)
 
 Tema, combate e Pesadelo. Cada faixa tem dois arquivos (WebM/Opus 72 kbps e M4A/AAC-LC 88 kbps, 48 kHz,
 estéreo, sem metadados nem capa). Ganho único de masterização para o alvo de `utils/loudness.ts`
@@ -151,11 +151,15 @@ sustentado e cortava seco). O título original no Suno continha o nome de uma tr
 #### Licença — o que está declarado e o que falta
 
 ⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno. Estado em
-19/10/2026: declarado pelo dono em 19/10/2026: gerado no plano pago; falta anexar o print da página do plano (`suno.com/account`) e conferir o termo do download comercial.
+20/10/2026: o dono enviou o print da página do plano (`suno.com/account`): **Pro Plan**, período mensal, próxima cobrança
+19/11/2026 (o ciclo começou em 19/10/2026, o dia da geração das três faixas), 2 360 créditos e 20 downloads restantes; a
+lista de benefícios do próprio plano traz *"Commercial use rights"* (2 500 créditos e 20 downloads por mês). O print
+não prova em qual instante cada faixa foi gerada em relação à assinatura: a data de cobrança é coerente com a declaração
+do dono, nada mais. Falta só conferir o texto do termo (versão) antes de citar numa ficha de loja.
 
 O que o repo sabe e o que não sabe:
 
-- **Declaração, não prova.** O repo não prova o plano. O guard (`sonsAssets.contract.test.ts`) prova
+- **Declaração mais print, não prova pública.** O print do plano Pro (20/10/2026) fica com o dono, fora do git. O guard (`sonsAssets.contract.test.ts`) prova
   procedência (hash ↔ arquivo ↔ esta linha), nunca originalidade nem licença.
 - **Termos lidos em 18/10/2026, por resumo da página** (`suno.com/terms`, *Date of Last Revision*
   10/08/2026): conta Free/Basic só usa o Output para fins *"lawful, personal and non-commercial"*; o uso
