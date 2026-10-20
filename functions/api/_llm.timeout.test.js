@@ -16,38 +16,38 @@ const lento = (ms, resp) => (url, init) => new Promise((resolve, reject) => {
 beforeEach(() => { _resetBreaker(); vi.useFakeTimers(); vi.spyOn(console, 'error').mockImplementation(() => {}); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-describe('timeouts separados Groq 12 s / Gemini 8 s', () => {
+describe('timeouts separados Groq 10 s / Gemini 14 s', () => {
   it('a soma no pior caso fica abaixo dos 25 s do cliente do chat', () => {
-    expect(GROQ_TIMEOUT_MS).toBe(12000);
-    expect(GEMINI_TIMEOUT_MS).toBe(8000);
+    expect(GROQ_TIMEOUT_MS).toBe(10000);
+    expect(GEMINI_TIMEOUT_MS).toBe(14000);
     expect(GROQ_TIMEOUT_MS + GEMINI_TIMEOUT_MS).toBeLessThan(25000);
   });
 
-  it('Groq mudo por 12 s aborta e cai no Gemini', async () => {
+  it('Groq mudo por 10 s aborta e cai no Gemini', async () => {
     vi.stubGlobal('fetch', vi.fn((u, i) => (isGroq(u) ? lento(60000, qOk)(u, i) : Promise.resolve(gOk()))));
     const p = callChatModel(env, req);
-    await vi.advanceTimersByTimeAsync(12000);
+    await vi.advanceTimersByTimeAsync(10000);
     expect(await p).toMatchObject({ ok: true, provider: 'gemini' });
   });
 
-  it('Groq lento de 11 s ainda vence', async () => {
-    vi.stubGlobal('fetch', vi.fn((u, i) => (isGroq(u) ? lento(11000, qOk)(u, i) : Promise.resolve(gOk()))));
+  it('Groq lento de 9 s ainda vence', async () => {
+    vi.stubGlobal('fetch', vi.fn((u, i) => (isGroq(u) ? lento(9000, qOk)(u, i) : Promise.resolve(gOk()))));
     const p = callChatModel(env, req);
-    await vi.advanceTimersByTimeAsync(11000);
+    await vi.advanceTimersByTimeAsync(9000);
     expect(await p).toMatchObject({ ok: true, provider: 'groq', text: 'oi groq' });
   });
 
   it('sem GEMINI_API_KEY, o timeout do Groq devolve status 0', async () => {
     vi.stubGlobal('fetch', vi.fn(lento(60000, qOk)));
     const p = callChatModel({ GROQ_API_KEY: 'g' }, req);
-    await vi.advanceTimersByTimeAsync(12000);
+    await vi.advanceTimersByTimeAsync(10000);
     expect(await p).toEqual({ ok: false, status: 0 });
   });
 
-  it('Gemini mudo aborta aos 8 s (após o Groq cair)', async () => {
+  it('Gemini mudo aborta aos 14 s (após o Groq cair)', async () => {
     vi.stubGlobal('fetch', vi.fn(lento(60000, gOk)));
     const p = callChatModel(env, req);
-    await vi.advanceTimersByTimeAsync(12000 + 8000);
+    await vi.advanceTimersByTimeAsync(10000 + 14000);
     expect(await p).toEqual({ ok: false, status: 0 });
   });
 
