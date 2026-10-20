@@ -457,6 +457,67 @@ describe('D-99/D-100: posição dos Soulmon e o poder do combo', () => {
     expect(vistos.filter(s => s.getAttribute('data-m3-dmg-by') === 'enemy').every(s => s.getAttribute('data-m3-dmg-target') === 'player')).toBe(true);
   });
 
+  it('D-102: a aura acende no atacante ANTES do poder sair e some depois; o poder é maior que o de antes e viaja mais', async () => {
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    await avancar(210);
+    const aura = document.querySelector('[data-m3-aura]') as HTMLElement;
+    const orb = document.querySelector('[data-m3-shot]') as HTMLElement;
+    expect(aura).not.toBeNull();
+    expect(orb).not.toBeNull();
+    expect(aura.getAttribute('data-m3-aura-by')).toBe('player');
+    const folga = Number(orb.getAttribute('data-m3-fx-start')) - Number(aura.getAttribute('data-m3-fx-start'));
+    expect(folga).toBeGreaterThanOrEqual(400);
+    expect(folga).toBeLessThanOrEqual(600);
+    expect(Number(aura.getAttribute('data-m3-fx-start')) + Number(aura.getAttribute('data-m3-fx-dur'))).toBeGreaterThan(Number(orb.getAttribute('data-m3-fx-start')));
+    expect(Number(orb.getAttribute('data-m3-fx-dur'))).toBeGreaterThanOrEqual(900);
+    expect(Number(orb.getAttribute('data-m3-fx-dur'))).toBeLessThanOrEqual(1200);
+    expect(Number(orb.getAttribute('data-m3-shot-px'))).toBeGreaterThanOrEqual(48);
+    await assentar();
+    expect(document.querySelector('[data-m3-aura]')).toBeNull();
+    expect(document.querySelector('[data-m3-shot]')).toBeNull();
+  });
+
+  it('D-102: nunca mais de 2 poderes (aura + voo) ao mesmo tempo na tela, em nenhum instante da jogada', async () => {
+    montar();
+    const p = previsao(2);
+    for (const m of p.moves) {
+      fireEvent.click(cell(m.a));
+      fireEvent.click(cell(m.b));
+      for (let i = 0; i < 80; i++) {
+        await avancar(100);
+        expect(document.querySelectorAll('[data-m3-shot]').length).toBeLessThanOrEqual(2);
+        expect(document.querySelectorAll('[data-m3-aura]').length).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+
+  it('D-102: o efeito é decoração — a vez do inimigo não espera por ele (o tabuleiro destrava no ritmo de sempre)', async () => {
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    await assentar();
+    expect(document.querySelector('[data-m3-board]')!.getAttribute('aria-busy')).toBe('false');
+    expect(num('data-m3-turn')).toBe(p.combates[1].turns);
+  });
+
+  it('D-102: movimento reduzido — sem aura nem viagem; só o flash estático curto e o número já no alvo', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false }));
+    montar();
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    await avancar(10);
+    expect(document.querySelectorAll('[data-m3-aura]').length).toBe(0);
+    expect(document.querySelectorAll('[data-m3-shot]').length).toBe(0);
+    expect(document.querySelectorAll('[data-m3-burst]').length).toBe(0);
+    expect(document.querySelectorAll('[data-m3-flash]').length).toBeGreaterThan(0);
+    vi.unstubAllGlobals();
+  });
+
   it('movimento reduzido: nada viaja (sem ícone em voo) e o número do dano aparece direto, já visível', async () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false }));
     montar();

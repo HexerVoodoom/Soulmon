@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { comboOrigin, powerShots } from './match3Powers';
+import { comboOrigin, powerShots, planFx, FX_AURA_MS, FX_TRAVEL_MS, FX_CAP_MS, FX_FULL_MS, FX_LANES, FX_ORB_PX, FX_ORB_PX_BIG, FX_NUM_MS } from './match3Powers';
 import { newRound, trySwap, validMoves, M3_TILE_ELEMENTS, type Step } from './match3';
 import { applyPlayerSteps, applyEnemySteps, newCombat } from './match3Combat';
 import { mulberry32 } from './combate/rng';
@@ -57,5 +57,58 @@ describe('powerShots: dano mostrado = dano aplicado', () => {
     const shots = powerShots(r.steps[0], next.log, [m.a, m.b]);
     expect(shots.every(s => s.by === 'enemy' && s.target === 'player')).toBe(true);
     expect(shots.map(s => s.dmg)).toEqual(next.log.map(e => e.dmg));
+  });
+});
+
+describe('D-102: o ritmo do efeito (aura → poder maior e mais longo → burst)', () => {
+  it('faixas pedidas: aura 0,4–0,6 s; viagem 0,9–1,2 s (≈ +1 s sobre os 0,3 s de antes); poder 2–3× o ícone de 24 px', () => {
+    expect(FX_AURA_MS).toBeGreaterThanOrEqual(400);
+    expect(FX_AURA_MS).toBeLessThanOrEqual(600);
+    expect(FX_TRAVEL_MS).toBeGreaterThanOrEqual(900);
+    expect(FX_TRAVEL_MS).toBeLessThanOrEqual(1200);
+    expect(FX_ORB_PX / 24).toBeGreaterThanOrEqual(2);
+    expect(FX_ORB_PX / 24).toBeLessThanOrEqual(3);
+    expect(FX_ORB_PX_BIG).toBeGreaterThan(FX_ORB_PX);
+    expect(FX_FULL_MS).toBeLessThanOrEqual(FX_CAP_MS);
+  });
+
+  it('o poder só sai DEPOIS da aura: a aura começa em `start`, o impacto em start + aura + viagem', () => {
+    const { slots } = planFx(1, [0, 0], 1000, 1000);
+    expect(slots[0]).toEqual({ mode: 'full', start: 1000, end: 1000 + FX_AURA_MS + FX_TRAVEL_MS + FX_NUM_MS });
+  });
+
+  it('no máximo 2 poderes completos ao mesmo tempo: o 3º espera a pista ou sai na versão rápida (sem aura nem viagem)', () => {
+    const { slots } = planFx(5, [0, 0], 0, 0);
+    const full = slots.filter(s => s.mode === 'full');
+    const overlap = (t: number) => full.filter(s => s.start <= t && t < s.start + FX_AURA_MS + FX_TRAVEL_MS).length;
+    for (let t = 0; t < FX_CAP_MS; t += 25) expect(overlap(t)).toBeLessThanOrEqual(FX_LANES);
+    expect(full.length).toBeLessThanOrEqual(FX_LANES);
+    expect(slots.filter(s => s.mode === 'quick').length).toBe(5 - full.length);
+  });
+
+  it('teto: nenhum efeito termina depois de 2,5 s da janela, por mais longa que seja a cascata', () => {
+    const { slots } = planFx(12, [0, 0], 0, 0);
+    expect(slots.length).toBe(12);
+    slots.forEach(s => expect(s.end).toBeLessThanOrEqual(FX_CAP_MS));
+  });
+
+  it('janela já estourada: o número ainda sai (rápido, agora) — o dano mostrado nunca é cortado', () => {
+    const { slots } = planFx(2, [9000, 9000], 5000, 0);
+    expect(slots.every(s => s.mode === 'quick' && s.start >= 5000)).toBe(true);
+  });
+
+  it('é pura: o mesmo pedido dá o mesmo plano', () => {
+    expect(planFx(4, [0, 300], 100, 0)).toEqual(planFx(4, [0, 300], 100, 0));
+  });
+});
+
+describe('D-102: combo 4+ ganha a versão enfeitada', () => {
+  it('`big` quando o passo deixou uma especial do elemento; não quando não deixou', () => {
+    const base = step([[2, 1], [2, 2], [2, 3], [2, 4]], [0, 0, 0, 0]);
+    const ev = [{ by: 'player' as const, element: M3_TILE_ELEMENTS[0], dmg: 7, target: 0 as const }];
+    const grande = powerShots({ ...base, created: [{ pos: { r: 2, c: 2 }, tile: { k: 0, sp: 'row' } }] }, ev as never, []);
+    const comum = powerShots(base, ev as never, []);
+    expect(grande[0].big).toBe(true);
+    expect(comum[0].big).toBe(false);
   });
 });

@@ -879,7 +879,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/match3Powers.ts`
 
-**Dono de:** a conta PURA dos poderes por elemento do Combina 3 (D-100, REGISTRO §123): de onde sai o poder de um combo e qual dano mostrar. **Exports:** `comboOrigin(step, kind, closers)` (a célula da troca que entrou no combo; em cascata, a célula do meio das peças do tipo), `powerShots(step, events, closers)` (um `PowerShot` por evento de dano do passo: elemento, `dmg`, alvo, célula de origem). O dano NÃO é recalculado: vem dos eventos que `match3Combat` já gravou, então o número na tela é o aplicado. **Chamado por:** `Match3Game` (chunk lazy do jogo). **Régua:** `match3Powers.test.ts` e `Match3Game.render.test.tsx`.
+**Dono de:** a conta PURA dos poderes por elemento do Combina 3 (D-100, REGISTRO §123): de onde sai o poder de um combo e qual dano mostrar. **Exports:** `comboOrigin(step, kind, closers)` (a célula da troca que entrou no combo; em cascata, a célula do meio das peças do tipo), `powerShots(step, events, closers)` (um `PowerShot` por evento de dano do passo: elemento, `dmg`, alvo, célula de origem). O dano NÃO é recalculado: vem dos eventos que `match3Combat` já gravou, então o número na tela é o aplicado. **D-102 (REGISTRO §131):** `PowerShot.big` (combo 4+), as constantes `FX_*` (aura 450 ms, viagem 950 ms, burst 420 ms, número 800 ms, poder 56/84 px, 2 pistas, teto 2500 ms) e `planFx(count, lanes, now, windowStart)` — o agendador puro (pistas livres, versão `quick` na cascata longa, nunca passa do teto). **Chamado por:** `Match3Game` (chunk lazy do jogo). **Régua:** `match3Powers.test.ts` e `Match3Game.render.test.tsx`.
 
 ### `src/utils/match3Combat.ts`
 
