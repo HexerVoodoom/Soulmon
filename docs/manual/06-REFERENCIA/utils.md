@@ -1306,6 +1306,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ **`mission-perfect-30` lê `missionPerfectDays`, não `totalPerfectDays`** (decisão do dono #41/#60, 22/09/2026): a MISSÃO segue contando o 🌀 Glitchtama; quem deixou de contá-lo é `utils/achievements.ts`. São duas perguntas diferentes — "você cumpriu 30 dias?" × "você acumulou 30 marcas?" — e por isso são dois contadores, em vez de um número com dois significados. Quem monta o objeto usa `?? totalPerfectDays`: save anterior à decisão não tem o campo, e ali o vitalício antigo JÁ incluía os 🌀, então a missão nunca anda para trás.
 **Regra de negócio:** Missões permanentes liberam a compra dos 6 cenários exclusivos da loja. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/uuid.ts` (20/10/2026)
+**Dono de:** `newUuid()` — UUID v4 que não derruba o app: `crypto.randomUUID` quando existe, senão `getRandomValues`, senão `Math.random`. Existe porque o relatório de falha do APK mostrou `crypto.randomUUID is not a function` no 1º uso de um aparelho (WebView sem a função), e os dois pontos que geram o `SAVE_ID` a chamavam crua dentro de um `useState`. **Exports:** `newUuid`. **Chamado por:** `App.tsx` (estado `saveId`) e `GameStateContext` (geração do `SAVE_ID`). **Régua:** `utils/uuid.test.ts`.
+
 ### `src/utils/starterElements.ts`
 **Dono de:** o elemento base dos 5 iniciais (REGISTRO §75) — dados leves.
 **Exports:** `STARTER_ELEMENT` (`industrial`→terra, `nascente`→som, `alento`→ar, `vida`→vida, `meteoro`→fogo), `STARTER_ALIGNMENT` (Poder/Harmonia/Benevolência), `starterElementOf(id)`, `petElementOf(state)` (o elemento de combate do pet: o do inicial, senão `soulmonMeta.dominantElement`; usado pelo `App` em Arena/Masmorra/Pesadelo/Torneio/aura).

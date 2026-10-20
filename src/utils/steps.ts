@@ -213,14 +213,19 @@ export function stepsConsentCopy(language: Language): StepsConsentCopy {
 
 type Pedometer = typeof import('@capgo/capacitor-pedometer')['CapacitorPedometer'];
 
-let pedometerPromise: Promise<Pedometer | null> | null = null;
+/** O plugin vai DENTRO de uma caixa: devolver o proxy do Capacitor direto por uma Promise (`.then`/`async`/`await`) faz o JS chamar `.then` nele,
+ *  e o Capacitor responde `"CapacitorPedometer.then()" is not implemented on android` — o `.catch` engolia isso e o contador de passos ficava
+ *  desligado no Android (33 relatórios por dia, 20/10/2026). Quem usa lê `box.plugin` e nunca devolve o plugin por uma Promise. */
+interface PedometerBox { plugin: Pedometer }
+
+let pedometerPromise: Promise<PedometerBox | null> | null = null;
 let updatesStarted = false;
 
-async function loadPedometer(): Promise<Pedometer | null> {
+async function loadPedometer(): Promise<PedometerBox | null> {
   if (!Capacitor.isNativePlatform()) return null;
   if (!pedometerPromise) {
     pedometerPromise = import('@capgo/capacitor-pedometer')
-      .then((mod) => mod.CapacitorPedometer ?? null)
+      .then((mod) => (mod.CapacitorPedometer ? { plugin: mod.CapacitorPedometer } : null))
       .catch(() => null);
   }
   return pedometerPromise;
@@ -228,7 +233,7 @@ async function loadPedometer(): Promise<Pedometer | null> {
 
 /** O aparelho tem contador de passos? Web/PWA e aparelho sem sensor → false. */
 export async function isStepsAvailable(): Promise<boolean> {
-  const pedometer = await loadPedometer();
+  const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return false;
   try {
     const result = await pedometer.isAvailable();
@@ -240,7 +245,7 @@ export async function isStepsAvailable(): Promise<boolean> {
 
 /** Já temos permissão? Não abre diálogo nenhum. */
 export async function hasStepsPermission(): Promise<boolean> {
-  const pedometer = await loadPedometer();
+  const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return false;
   try {
     const status = await pedometer.checkPermissions();
@@ -255,7 +260,7 @@ export async function hasStepsPermission(): Promise<boolean> {
  * **Só chame depois de mostrar `stepsConsentCopy`** (ver regra 3 no topo).
  */
 export async function requestStepsPermission(): Promise<boolean> {
-  const pedometer = await loadPedometer();
+  const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return false;
   try {
     if (!(await isStepsAvailable())) return false;
@@ -272,7 +277,7 @@ export async function requestStepsPermission(): Promise<boolean> {
  * apagar passo que o usuário deu.
  */
 async function readRawSteps(now: Date): Promise<number | null> {
-  const pedometer = await loadPedometer();
+  const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return null;
   try {
     if (!(await hasStepsPermission())) return null;

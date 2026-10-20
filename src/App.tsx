@@ -54,8 +54,9 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
-import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
-import { getSpriteForStage, isStarterId } from './utils/sprites';
+import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
+import { PLACEHOLDER_ART } from './utils/placeholderArt';
+import { getSpriteForStage, isStarterId, setOwnSprites } from './utils/sprites';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -78,6 +79,7 @@ import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } fro
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo, keepDemoVitalsFull } from './utils/demoStart';
 import { DemoExitButton } from './components/home/DemoExitButton';
+import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
 import { petElementOf } from './utils/starterElements';
 import {
@@ -817,7 +819,7 @@ export default function App() {
     let id = readLocal(STORAGE_KEYS.SAVE_ID);
     // Identidade do save: se nao persistir, o jogador vira outra pessoa a cada
     // abertura. E o caso mais grave que existe - a falha AVISA.
-    if (!id) { id = crypto.randomUUID(); writeLocal(STORAGE_KEYS.SAVE_ID, id); }
+    if (!id) { id = newUuid(); writeLocal(STORAGE_KEYS.SAVE_ID, id); }
     return id;
   });
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -1104,6 +1106,21 @@ export default function App() {
     // gerar duas vezes.
     newborn: isNewbornLibrary(spriteAcervo),
   });
+  /* "CHOCANDO" (20/10/2026, dono): quem tem criatura do oráculo mas ainda não recebeu NENHUM sprite próprio (a geração leva um tempo) vê o cristal com
+     o ser dentro e "seu Soulmon está chocando", em vez do inicial de reserva. Entra no jogo e no tutorial normalmente; quando o sprite chega o visor
+     troca com o fade de sempre. Para quando a geração para de vez (teto da conta ou da forma): aí volta a arte de reserva, nunca um cristal eterno. */
+  const petChocando = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
+    && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
+  // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
+  // Render-time de propósito: telas abertas depois já leem o valor certo; `setOwnSprites` é idempotente (ver utils/sprites.ts).
+  useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const formId of Object.keys(spriteAcervo.sprites)) {
+      const url = displaySprite(spriteAcervo, formId)?.url;
+      if (url) map[formId.toLowerCase()] = url;
+    }
+    setOwnSprites(map, petChocando ? PLACEHOLDER_ART.forming : undefined);
+  }, [spriteAcervo, petChocando]);
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
   /* O botao "Tentar de novo" do card de falha de credencial. Nasceu INERTE no
      commit 60b0c89b: `onRetrySprite` e opcional, entao a prop faltando nao
@@ -6124,9 +6141,9 @@ export default function App() {
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
     // save nos DOIS caminhos; quem lê é a personalidade do Soulmon.
     const onboardingProfile = onboardingProfileFrom(data.catalogChoice);
-    const catalogSeen = catalogActivities.length > 0
-      ? (markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>)
-      : {};
+    // 20/10/2026 (dono): quem acabou de gerar o Soulmon já respondeu as metas no onboarding — o convite "Set goals" NUNCA reaparece
+    // logo depois, mesmo que nenhuma atividade do catálogo tenha sido mantida (antes: só marcava com ≥1 atividade).
+    const catalogSeen = markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>;
 
     // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
     // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
@@ -6527,7 +6544,7 @@ export default function App() {
           soulStruggle={gameState.soulStruggle}
           /* A criatura que acabou de nascer, no vidro do tutorial (canvas
              Onboarding-funil D-O13): o mesmo sprite/tonalidade da Home. */
-          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
+          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine))}
           petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
           demoTint={gameState.demoCharacterId ? gameState.demoTint : undefined}
           onComplete={handleCompleteTutorial}
@@ -7373,6 +7390,7 @@ export default function App() {
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
                 ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
+                chocando={petChocando}
                 healthPoints={gameState.healthPoints}
                 maxHealthPoints={gameState.maxHealthPoints}
                 dominantBranch={getDominantBranch()}

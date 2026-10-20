@@ -263,6 +263,21 @@ export function spriteUrlFacesLeft(url: string | undefined): boolean {
   return facesLeftUrls.has(url);
 }
 
+/**
+ * OS SPRITES PRÓPRIOS, para TODA tela (20/10/2026, dono: "na masmorra aparece aquele Soulmon de fogo, não o que gerou pra mim").
+ * Dezenas de telas (Masmorra, Arena, Pesadelo, Torneio, jogos da mente, Pet…) escolhem a arte do pet só por `getSpriteForStage(estágio, linha)`
+ * e nunca liam o acervo gerado — quem tem criatura do Oráculo via o inicial de reserva (o Meteoro, de fogo) lá dentro. O `App` registra aqui, a cada
+ * mudança do acervo, o que `displaySprite` já mostra na Home (`forma → url`), e esta função o devolve quando o pet NÃO é de uma linha pronta.
+ * `fallback` é o cristal "chocando" enquanto ainda não existe nenhum sprite próprio. Estado de módulo, mas só ESCRITO por `setOwnSprites`
+ * (idempotente) e vazio por padrão — testes e telas sem o `App` seguem exatamente como antes.
+ */
+let ownSprites: Readonly<Record<string, string>> = {};
+let ownFallback: string | undefined;
+export function setOwnSprites(map: Readonly<Record<string, string>>, fallback?: string): void {
+  ownSprites = map;
+  ownFallback = fallback;
+}
+
 export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, size?: 256): string {
   const demoCharacterId = resolveArtLineId(demoCharacterIdRaw); // D-78: linha aposentada → inicial de reserva
   const key = stage.toLowerCase();
@@ -279,6 +294,7 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
     const line = DUNGEON_LINE_SPRITES[demoCharacterId];
     return line[level] ?? line.rookie;
   }
-  return STARTER_SPRITES[fallbackStarterFor(key)];
+  // O Soulmon PRÓPRIO (criatura do Oráculo) já adotado no acervo; enquanto ele ainda não nasceu, o cristal (`setOwnSprites`).
+  return ownSprites[key] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
 }
 

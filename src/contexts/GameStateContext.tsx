@@ -86,6 +86,7 @@ import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
 import { spriteLineOf } from '../utils/corvoPet';
+import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
@@ -1828,7 +1829,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     // Generate save ID on first use
     let saveId = readLocal(STORAGE_KEYS.SAVE_ID);
     if (!saveId) {
-      saveId = crypto.randomUUID();
+      saveId = newUuid();
       // Sem storage, o id vive só nesta sessão: o cloud save ainda acontece,
       // mas na próxima abertura o id é outro. Melhor que não salvar nada.
       writeLocal(STORAGE_KEYS.SAVE_ID, saveId);

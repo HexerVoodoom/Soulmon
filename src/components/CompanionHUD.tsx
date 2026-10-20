@@ -6,6 +6,7 @@ import { HungerIndicator } from './home/HungerIndicator';
 import type { EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
+import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
@@ -175,6 +176,9 @@ interface CompanionHUDProps {
    *  nunca um erro: o visor não tem estado de carregamento nem de erro
    *  (`spec-geracao-incremental.md` §2.1). */
   ownSpriteUrl?: string;
+  /** O Soulmon PRÓPRIO ainda está sendo gerado (20/10/2026, dono): em vez da arte de reserva (um inicial qualquer), o visor mostra o
+   *  cristal com o ser dentro e a legenda "está chocando"; quando o sprite chega, a troca faz o fade de sempre (`sm-visor-swap`). */
+  chocando?: boolean;
   /** Pose do sprite (Configurações → "Virar Soulmon" / "Voar"). Sem ela: chão, sem espelho. */
   spritePose?: Partial<SpritePose>;
   healthPoints: number;
@@ -315,6 +319,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   eggType = 'ignar',
   demoCharacterId,
   ownSpriteUrl,
+  chocando,
   spritePose,
   healthPoints,
   maxHealthPoints, 
@@ -897,7 +902,7 @@ export const CompanionHUD = memo(function CompanionHUD({
      falhou; uma URL nova (regeneração) tenta de novo. */
   const [spriteQuebrado, setSpriteQuebrado] = useState<string | null>(null);
   const sprite = (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
-    ?? getSpriteForStage(evolutionStage, demoCharacterId);
+    ?? (chocando ? PLACEHOLDER_ART.forming : getSpriteForStage(evolutionStage, demoCharacterId));
 
   /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
      A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
@@ -929,7 +934,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   // a maioria olha pra DIREITA (vira ao andar pra esquerda), mas algumas linhas
   // são desenhadas olhando pra ESQUERDA e viram ao andar pra direita — senão
   // andam de costas. Sprite próprio (acervo) não declara lado: direita.
-  const arteOlhaEsquerda = !(ownSpriteUrl && ownSpriteUrl !== spriteQuebrado) && artFacesLeft(evolutionStage, demoCharacterId);
+  const arteOlhaEsquerda = !(ownSpriteUrl && ownSpriteUrl !== spriteQuebrado) && !chocando && artFacesLeft(evolutionStage, demoCharacterId);
   // Pose escolhida pelo jogador (`utils/spritePose.ts`): `flipX` inverte a "frente" da arte
   // (e portanto o espelho do passeio); `altitude: 'air'` sobe o sprite e deixa a sombra no chão.
   const pose = sanitizeSpritePose(spritePose);
@@ -1523,6 +1528,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
                 }}
               />
+              {chocando && (
+                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                  {language === 'pt-BR' ? 'Seu Soulmon está chocando…' : 'Your Soulmon is hatching…'}
+                </span>
+              )}
               {/* 🧭 PASSEANDO — beta-2 (3.2): a mochila NÃO desenha mais ao pé do pet. Ela
                   aparecia colada ao sprite (o ícone sobreposto ao personagem); agora o
                   ícone da mochila mora SÓ no lugar da funcionalidade (`sm3-cuidar`), e o

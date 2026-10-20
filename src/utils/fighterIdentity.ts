@@ -72,8 +72,10 @@ function semFicha(fallbackElement: string | null | undefined): string {
 export function fighterIdentity(par: StageSkills | null | undefined, fallbackElement?: string | null): FighterIdentity {
   const sem = semFicha(fallbackElement);
   const esp: StageSkill | undefined = par?.especial;
-  const elBasico = elementoDoBasico(par) ?? sem;
-  const elEspecial = elementoValido(esp?.elementoId) ? esp!.elementoId : elBasico;
+  // `petElementOf` só devolve 'neutro' para o corvinho do administrador: a ficha herdada do oráculo não decide o elemento dele.
+  const neutro = fallbackElement === FX_FALLBACK_ELEMENT;
+  const elBasico = neutro ? FX_FALLBACK_ELEMENT : (elementoDoBasico(par) ?? sem);
+  const elEspecial = neutro ? FX_FALLBACK_ELEMENT : (elementoValido(esp?.elementoId) ? esp!.elementoId : elBasico);
   return {
     basico: golpe(par?.basica?.escolaId, elBasico, 'basica', par?.basica?.formaDoElemento === true),
     especial: { ...golpe(esp?.escolaId, elEspecial, 'especial', esp?.formaDoElemento === true), familia: familyOfSkill(esp) },

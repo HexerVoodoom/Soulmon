@@ -18,6 +18,7 @@
  */
 import type { StarterId } from './sprites';
 import { isStarterId } from './sprites';
+import { isCorvo } from './corvoPet';
 
 export type StarterElement = 'terra' | 'som' | 'ar' | 'vida' | 'fogo';
 /** Divisão do jogo (REGISTRO §67): Poder, Harmonia ou Benevolência. */
@@ -40,7 +41,10 @@ export function starterElementOf(id: unknown): StarterElement | undefined {
   return isStarterId(id) ? STARTER_ELEMENT[id] : undefined;
 }
 
-/** O elemento de COMBATE do pet: o do inicial; senão o dominante do oráculo. Um lugar só para as telas de luta e a aura. */
-export function petElementOf(state: { demoCharacterId?: string; soulmonMeta?: { dominantElement?: string } | null }): string | undefined {
+/** O elemento de COMBATE do pet: o do inicial; senão o dominante do oráculo. Um lugar só para as telas de luta e a aura.
+ *  O corvinho do administrador é NEUTRO (dono, 20/10/2026): o dominante do oráculo que ficou no save dele não vale. É o ÚNICO caso em que
+ *  isto devolve `'neutro'` (nenhum elemento do oráculo nem inicial se chama assim) — `fighterIdentity` lê esse valor como "ficha não decide". */
+export function petElementOf(state: { demoCharacterId?: string; soulmonMeta?: { dominantElement?: string; creature?: string } | null }): string | undefined {
+  if (isCorvo({ soulmonMeta: state.soulmonMeta ?? undefined })) return 'neutro';
   return starterElementOf(state.demoCharacterId) ?? state.soulmonMeta?.dominantElement;
 }
