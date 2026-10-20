@@ -19,10 +19,9 @@ describe('lotes novos (29/09/2026)', () => {
   it('H15/H16/H17 + W12 (20/10/2026): Torneio e Arena livre dividem UM retângulo do fundo e a Guerra fica no OUTRO; Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
-    // 20/10/2026 (dono, §145): as 4 VAGAS marcadas por ele na captura do app (720×1397): P1 vazia, P2 = Guerra, P3 = Torneio, P4 = Arena livre.
-    // Torneio e Arena livre acompanham a DIAGONAL do losango de baixo (o Arena livre fica mais à direita E mais abaixo, não na mesma linha de chão);
-    // a Guerra é MAIOR (≥ 1,25× o opaco do Torneio) e fica em P2. Em 390×844 o centro VISUAL (caixa opaca) de cada um cai na marca, com a folga mínima
-    // que o H11/H12 pedem (o par de baixo precisou de ~4% de largura para os alvos não se encostarem).
+    // 20/10/2026 (dono, §145 e §146): vagas P1 (vazia), P2 = Guerra, P3 = Torneio, P4 = Arena livre. Torneio e Arena livre acompanham a DIAGONAL do losango
+    // de baixo (o Arena livre fica mais à direita E mais abaixo) e, desde o §146, o PAR fica CENTRADO no piso interno da moldura de tijolos do fundo
+    // (`bg-arena.png`, 1269×1700); a Guerra (P2, bloco de cima) não mudou. Arena livre MAIS BAIXO que o Torneio, e a Guerra MAIOR (≥ 1,25× o opaco do Torneio).
     const opaca = (id: 'torneio' | 'duelo' | 'guerra') => { const b = LOT_ART_BOUNDS[`arena:${id}`]; return pct((arena[id] as { width?: string }).width) * (b[2] - b[0]); };
     expect(pct(arena.torneio.left)).toBeLessThan(pct(arena.duelo.left));
     expect(pct(arena.duelo.top) - pct(arena.torneio.top)).toBeGreaterThanOrEqual(8);               // na diagonal, NÃO lado a lado na mesma linha de chão
@@ -30,14 +29,21 @@ describe('lotes novos (29/09/2026)', () => {
     expect(opaca('torneio')).toBeGreaterThanOrEqual(24);                                           // H12 (sem relaxar)
     expect(opaca('guerra')).toBeGreaterThanOrEqual(opaca('torneio') * 1.25);                      // Clan War MAIOR
     expect(pct(arena.guerra.left)).toBeGreaterThan(pct(arena.duelo.left));                         // P2 fica à direita de P4
-    expect(pct(arena.guerra.top)).toBeLessThan(pct(arena.torneio.top));                            // e acima de P3
-    const centro = (id: string) => { const [art] = lotHitRects('arena', arenaLots('pt-BR').find(l => l.id === id) as never, 390, 844); return [((art.x0 + art.x1) / 2 / 390) * 100, ((art.y0 + art.y1) / 2 / 844) * 100]; };
-    const VAGAS: Record<string, [number, number]> = { torneio: [19.0, 43.6], duelo: [43.1, 52.2], guerra: [76.3, 38.3] }; // P3, P4, P2 em 390×844 (marcas do dono mapeadas pelo `cover` do fundo 1269×1700)
-    for (const [id, [vx, vy]] of Object.entries(VAGAS)) {
-      const [cx, cy] = centro(id);
-      expect(Math.abs(cx - vx), `${id} x`).toBeLessThanOrEqual(3.5);
-      expect(Math.abs(cy - vy), `${id} y`).toBeLessThanOrEqual(1.5);
-    }
+    expect([arena.guerra.left, arena.guerra.top, (arena.guerra as { width?: string }).width]).toEqual(['77.4%', '46.7%', '38%']); // a Guerra não mudou (§146)
+    const rects = (id: string, w: number, h: number) => lotHitRects('arena', arenaLots('pt-BR').find(l => l.id === id) as never, w, h)[0];
+    const centro = (id: string) => { const art = rects(id, 390, 844); return [((art.x0 + art.x1) / 2 / 390) * 100, ((art.y0 + art.y1) / 2 / 844) * 100]; };
+    // §146: diagonal preservada (centro visual do Arena livre − o do Torneio ≈ 27,4 / 10,1 pontos; era 28,0 / 10,3) e PEGADA do par (centro do diamante do
+    // rodapé = base − 0,18 × largura opaca; o modelo de `tools/w12-mapas.py`) no centro do piso interno medido no PNG: polígono (280,775) (490,645) (735,832) (520,972)
+    // em px do fundo → centroide (506,25 / 806) = (33,7% / 47,4%) da cena em 390×844 (cover). Folga: ≤ 1,2 pt em x (a Guerra empurra o par ~0,9 pt para a esquerda) e ≤ 0,6 em y.
+    expect(centro('duelo')[0] - centro('torneio')[0]).toBeCloseTo(27.4, 0);
+    expect(Math.abs(centro('duelo')[1] - centro('torneio')[1] - 10.1)).toBeLessThanOrEqual(0.6);
+    const pegada = (id: string) => { const a = rects(id, 390, 844); return [(a.x0 + a.x1) / 2, a.y1 - 0.18 * (a.x1 - a.x0)]; };
+    const PISO: Array<[number, number]> = [[280, 775], [490, 645], [735, 832], [520, 972]];
+    const escala = Math.max(390 / 1269, 844 / 1700), offX = (1269 * escala - 390) / 2;
+    const centroPiso = [(PISO.reduce((s, p) => s + p[0], 0) / 4) * escala - offX, (PISO.reduce((s, p) => s + p[1], 0) / 4) * escala];
+    const par = [(pegada('torneio')[0] + pegada('duelo')[0]) / 2, (pegada('torneio')[1] + pegada('duelo')[1]) / 2];
+    expect(Math.abs(par[0] - centroPiso[0]) / 390 * 100, 'par × piso, x').toBeLessThanOrEqual(1.2);
+    expect(Math.abs(par[1] - centroPiso[1]) / 844 * 100, 'par × piso, y').toBeLessThanOrEqual(0.6);
     // a vaga P1 (50,8%/35,1%) segue vazia: nenhum prédio tem o centro por lá
     for (const id of ['torneio', 'duelo', 'guerra']) expect(Math.hypot(centro(id)[0] - 50.8, (centro(id)[1] - 35.1) * 2)).toBeGreaterThan(15);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
