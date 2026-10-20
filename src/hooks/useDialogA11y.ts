@@ -183,6 +183,10 @@ function hideOthers(node: HTMLElement): () => void {
     const parent = cur.parentElement;
     for (const sibling of Array.from(parent.children)) {
       if (sibling === cur || SKIP_TAGS.has(sibling.tagName)) continue;
+      // A fala do NPC (`NpcSequence`) é tela cheia e fica POR CIMA de tudo (z 200): se a folha do prédio monta DEPOIS dela
+      // (a folha é `lazy`; no 2º prédio o chunk já está em cache e entra no mesmo instante), inertizá-la deixa a conversa
+      // intocável sob a folha — o jogo "trava" até fechar o app. Quem está por cima não vira inerte por quem veio depois.
+      if (sibling.querySelector('[data-npc-sequence]')) continue;
       markInert(sibling);
       marked.push(sibling);
     }

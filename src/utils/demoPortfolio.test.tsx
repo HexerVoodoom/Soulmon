@@ -32,8 +32,9 @@ describe('demo portfólio', () => {
     rerender(<DemoSoundButton muted language="pt-BR" onToggle={onToggle} />);
     expect(screen.getByRole('button', { name: 'Ligar o som' })).toBeTruthy();
   });
-  it('DinoGame espelha arte de perfil esquerdo (meteoro) e não a direita', () => {
-    expect(dinoPetMirrored('rookie', 'meteoro')).toBe(true);
+  it('DinoGame espelha só arte de perfil esquerdo (corvo); o Bolid novo olha à direita (20/10/2026)', () => {
+    expect(dinoPetMirrored('rookie', 'corvo')).toBe(true);
     expect(dinoPetMirrored('rookie', 'nascente')).toBe(false);
+    expect(dinoPetMirrored('rookie', 'meteoro')).toBe(false);
   });
 });
