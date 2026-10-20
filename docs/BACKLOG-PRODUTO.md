@@ -48,3 +48,12 @@
     queda por HP (`degeneratedEvolutionPoints`) precisam virar o mesmo número em fragmentos.
   - Nova moeda = novo ícone de alma (nada de reuso de Bits/Emblemas), texto PT/EN, migração do save (progresso atual do gauge convertido sem perder nada),
     e a Home/Evolução mostrando "fragmentos" no lugar dos pontos.
+
+## Tamanho do Soulmon
+- **Rookie tem que ser pequeno** (20/10/2026, dono): o Soulmon criado pelo dono (o primeiro, em `rookie`) aparece ENORME. Regra desejada:
+  o tamanho na tela depende do estágio — `rookie` pequeno por padrão e pode crescer (ou não) ao evoluir. Nada obriga crescer: pode existir
+  Soulmon que continua pequenininho até no `mega`. Um `rookie` grande pode existir, mas tem que ser EXTREMAMENTE raro. Pensar em: um fator de
+  escala por estágio (+ variação por criatura, com o "grande no rookie" como exceção rara e declarada), aplicado em UM lugar e lido por Home,
+  jogos, arena, masmorra e combate (hoje cada tela dimensiona o sprite por conta própria — medir antes: Home/`CompanionHUD`, `BattleStage`,
+  `DungeonGame`, `ArenaGame`). Cuidado: o sprite gerado do Oráculo (acervo) vem em 512² com bbox variável; normalizar pela caixa visível, não
+  pelo canvas, senão o "enorme" volta em outra tela.
