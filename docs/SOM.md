@@ -437,8 +437,8 @@ antes (tema velho + dungeon + pvp) 13 589 741 B; depois 13 452 938 B (−136 803
 
 **12.5 Pendências, sem suavizar.**
 - ⚠️ **Licença: declarada, não provada.** O dono declarou em 19/10/2026 que as três faixas foram geradas no plano pago do Suno.
-  O repo não prova o plano. Falta o print da página do plano (`suno.com/account`) e conferir o termo do download comercial.
-  Se o print mostrar plano sem direito comercial, a pendência volta a bloquear a loja. A pendência anterior (plano Free) está SUPERADA pela troca.
+  O repo não prova o plano; o dono enviou o print de `suno.com/account` em 20/10/2026 (Pro Plan, ciclo mensal desde 19/10, "Commercial use rights" na lista do plano; o print fica fora do git). Falta só conferir o texto do termo do download comercial.
+  A pendência anterior (plano Free) está SUPERADA pela troca.
 - ⚠️ **Nome de terceiro no título.** No Suno, as faixas de combate e Pesadelo tinham no título o nome de uma trilha de terceiro, por erro de digitação (declaração do dono).
   O repo não consegue provar por escuta a ausência de material de terceiro.
 - ⚠️ **Falta o gate humano de escuta (S8)** das três faixas e do nível relativo entre elas. Os números são de medição.

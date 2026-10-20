@@ -93,10 +93,11 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
     expect(attr).toMatch(/termos comerciais do plano Suno/);
   });
 
-  it('a Attributions.md tem a declaração do plano pago e a pendência do print; não cita os arquivos removidos', () => {
+  it('a Attributions.md registra o plano Pro comprovado por print e a pendência do termo; não cita os arquivos removidos', () => {
     const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
-    expect(attr).toMatch(/plano pago/);
-    expect(attr).toContain('falta anexar o print da página do plano');
+    expect(attr).toContain('Pro Plan');
+    expect(attr).toContain('Commercial use rights');
+    expect(attr).toContain('Falta só conferir o texto do termo');
     expect(attr).not.toContain('musica-masmorra');
     expect(attr).not.toContain('musica-pvp');
     for (const m of Object.values(MUSICAS_DE_COMBATE)) expect(attr, m.nome).toContain(m.nome);
