@@ -149,9 +149,12 @@ async function purchaseInterno(productId: string): Promise<PurchaseResult> {
     purchaseToken = result?.purchaseToken;
     if (!purchaseToken) return { ok: false, reason: 'cancelled' };
   } catch (err) {
-    // O usuário fechar a janela da Play cai aqui — não é erro nosso.
+    // O usuário fechar a janela da Play cai aqui — não é erro nosso. Mas SÓ ISSO é "cancelada": o plugin rejeita com o
+    // motivo real (`pending`, `product-not-found`, `billing-error-N`, `billing-unavailable`…) e antes tudo virava
+    // "Compra cancelada." (20/10/2026: testadora com cartão de teste aprovado via "cancelada" e ninguém via o motivo).
     if (import.meta.env.DEV) console.warn('[billing] purchase aborted:', err);
-    return { ok: false, reason: 'cancelled' };
+    const msg = String((err as { message?: unknown } | null)?.message ?? err ?? '');
+    return { ok: false, reason: msg === '' || msg === 'cancelled' ? 'cancelled' : msg };
   }
 
   const verified = await verificarComReenvio(productId, purchaseToken);
