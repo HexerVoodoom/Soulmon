@@ -134,9 +134,14 @@ export async function definirSlot(env, gid, save, item) {
  * encolhe) e a chave pessoal — com o slot — é apagada. Devolve os pontos.
  */
 export async function recolherCasaDeQuemSai(env, gid, save) {
+  return (await recolherCasaDetalhe(env, gid, save)).pts;
+}
+
+/** Igual a `recolherCasaDeQuemSai`, e devolve também os Bits que a pessoa doou (viram `bitsLegado`: o total de Bits do clã nunca encolhe). */
+export async function recolherCasaDetalhe(env, gid, save) {
   const c = await lerCasa(env, gid, save);
   await kvOrThrow(env).delete(coopCasaKey(gid, save));
-  return pontosDaCasa(c);
+  return { pts: pontosDaCasa(c), bits: c.pts.doacao * CASA_BITS_POR_PONTO };
 }
 
 /**
@@ -148,5 +153,15 @@ export async function recolherCasaDeQuemSai(env, gid, save) {
 export function totalDaCasa(g, cartoes) {
   let t = int0(g.casaLegado);
   for (const m of g.members) t += pontosDaCasa(cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : null);
+  return t;
+}
+
+/**
+ * O TOTAL DE BITS que o clã já recebeu em doação (W14b, 20/10/2026): legado de quem saiu + o que cada membro atual doou.
+ * É um dado do CLÃ (um número só); a vista nunca o decompõe por pessoa (linha vermelha: sem contribuição individual).
+ */
+export function bitsDaCasa(g, cartoes) {
+  let t = int0(g.bitsLegado);
+  for (const m of g.members) t += (cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : normalizarCasa(null)).pts.doacao * CASA_BITS_POR_PONTO;
   return t;
 }

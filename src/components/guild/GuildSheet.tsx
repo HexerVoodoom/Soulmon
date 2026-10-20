@@ -591,6 +591,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
           })}
         />
     );
+    const renderPredio = (id: PredioId) => {
+      const comum = {
+        saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
+        onReward: cla!.onReward, onAnnounce: setAnuncio,
+      };
+      if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
+      if (id === 'plantio') return <SalaPlantio {...comum} />;
+      return <SalaMisterio {...comum} />;
+    };
     corpo = room === 'guerra' ? (
       <>
         {alerta}
@@ -601,6 +610,17 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         {alerta}
         {resgate}
         <div className="sm2-stats-card">{salaBosque}</div>
+        {/* W14b: o gesto (fio/gestos) e o PLANTIO e o MISTÉRIO do Bosque moram só aqui; o Clan Hall é informativo. */}
+        {g.size >= 2 && (
+          <div className="sm2-stats-card" data-guild-card="gestos">
+            <SalaGestos guild={g} t={t} language={language} ocupado={ocupado} onGesto={(k) => void agir(() => guildGesture(saveId, k, tz.current), { anunciar: `guild.gesto.${k}.enviado` })} />
+          </div>
+        )}
+        {cla && (
+          <div className="sm2-stats-card" data-guild-card="plantio">
+            <SalaPredios t={t} ids={['plantio', 'misterio']} titulo="guild.bosque.predios.titulo" aberto={predio} onAbrir={setPredio} render={renderPredio} />
+          </div>
+        )}
       </>
     ) : room === 'feira' ? (
       <>
@@ -685,16 +705,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             </section>
           )}
 
-          <SalaRoda
-            guild={g}
-            t={t}
-            language={language}
-            nominal={nominal}
-            ocupado={ocupado}
-            onGesto={(k) => void agir(() => guildGesture(saveId, k, tz.current), {
-              anunciar: `guild.gesto.${k}.enviado`,
-            })}
-          />
+          <SalaRoda guild={g} t={t} nominal={nominal} />
 
           <div className="sm2-coop-code">
             <span className="sm2-lib-s">{t('guild.codigo.label')}</span>
@@ -750,20 +761,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
 
         {cla && (
         <div className="sm2-stats-card" data-guild-card="predios">
-            <SalaPredios
-              t={t}
-              aberto={predio}
-              onAbrir={setPredio}
-              render={(id) => {
-                const comum = {
-                  saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
-                  onReward: cla.onReward, onAnnounce: setAnuncio,
-                };
-                if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
-                if (id === 'plantio') return <SalaPlantio {...comum} />;
-                return <SalaMisterio {...comum} />;
-              }}
-            />
+            <SalaPredios t={t} ids={['praca']} aberto={predio} onAbrir={setPredio} render={renderPredio} />
         </div>
         )}
 
@@ -959,14 +957,14 @@ const PREDIOS: ReadonlyArray<{ id: PredioId; titulo: GuildKey; icone: string }> 
  * que ele fala com o servidor (três leituras a mais ao abrir o Salão seriam peso à toa). Um aberto por vez;
  * tocar de novo na mesma porta (ou em "Fechar") a fecha.
  */
-function SalaPredios({ t, aberto, onAbrir, render }: {
-  t: T; aberto: PredioId | null; onAbrir: (id: PredioId | null) => void; render: (id: PredioId) => React.ReactNode;
+function SalaPredios({ t, ids, titulo = 'guild.predios.titulo', aberto, onAbrir, render }: {
+  t: T; ids: ReadonlyArray<PredioId>; titulo?: GuildKey; aberto: PredioId | null; onAbrir: (id: PredioId | null) => void; render: (id: PredioId) => React.ReactNode;
 }) {
   return (
-    <section className="sm2-guild-sec" aria-label={t('guild.predios.titulo')} data-guild-room="predios">
-      <h3 className="sm2-stats-lab">{t('guild.predios.titulo')}</h3>
-      <div role="group" aria-label={t('guild.predios.titulo')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {PREDIOS.map(p => (
+    <section className="sm2-guild-sec" aria-label={t(titulo)} data-guild-room="predios">
+      <h3 className="sm2-stats-lab">{t(titulo)}</h3>
+      <div role="group" aria-label={t(titulo)} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {PREDIOS.filter(p => ids.includes(p.id)).map(p => (
           <button
             key={p.id}
             type="button"
@@ -1018,9 +1016,11 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
         <InfoTip language={language} label={isPt ? 'Como a casa cresce' : 'How the house grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
       </div>
 
+      {/* W14b: "Bring Bits" é a seção de Bits do clã: o TOTAL (um número do clã, nunca por pessoa) e, com carteira, o gesto de trazer. */}
+      <p className="sm2-stats-t" style={{ margin: 0 }} data-casa-bits-titulo>{t('guild.casa.doar.titulo')}</p>
+      {c.bitsTotal !== null && <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-bits-total>{t('guild.casa.bits.total', { n: c.bitsTotal })}</p>}
       {casa && (
         <>
-          <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.casa.doar.titulo')}</p>
           {c.mine.capReached ? (
             <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-teto>{t('guild.casa.doar.teto')}</p>
           ) : bits < CASA_BITS_MIN ? (
@@ -1099,8 +1099,8 @@ const GESTO_ICONE: Record<GuildGesture, string> = { aceno: 'pan_tool', luz: 'lig
  * sem quantos, e sem nada quando não veio nenhum. Roda de uma pessoa só não tem
  * para quem gesticular: a fileira não é desenhada.
  */
-function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
-  guild: GuildView; t: T; language: Language; nominal: boolean; ocupado: boolean; onGesto: (k: GuildGesture) => void;
+function SalaRoda({ guild, t, nominal }: {
+  guild: GuildView; t: T; nominal: boolean;
 }) {
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.aria.roda')} data-guild-room="roda">
@@ -1123,30 +1123,41 @@ function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
           </li>
         ))}
       </ul>
-      {guild.size >= 2 && (
-        <div role="group" aria-label={t('guild.gesto.titulo')} className="sm2-grove-gestures" data-guild-gestos>
-          {GUILD_GESTURES.map(k => {
-            const enviado = guild.mine.gesturesSent.includes(k);
-            const nome = guildGestureName(language, k);
-            return (
-              <button
-                key={k}
-                type="button"
-                className="sm2-grove-gesto"
-                data-gesto={k}
-                // `aria-disabled`, NUNCA `disabled` (QA L3 M6): um botão desabilitado perde o foco e o teclado
-                // cai na raiz da folha. Aqui o botão continua focável, e o toque no que já foi enviado é inerte.
-                aria-disabled={ocupado || enviado ? true : undefined}
-                aria-label={enviado ? t('guild.aria.gesto.enviado', { gesto: nome }) : t('guild.aria.gesto.enviar', { gesto: nome })}
-                onClick={() => { if (!ocupado && !enviado) onGesto(k); }}
-              >
-                <Icon name={GESTO_ICONE[k]} size={24} fill={enviado ? 1 : 0} tone={enviado ? 'primary' : 'ink'} />
-                <span>{enviado ? guildGestureSent(language, k) : nome}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+    </section>
+  );
+}
+
+/**
+ * GESTOS (W14b: moram só na sala do Grove): três fixos, anônimos, para a RODA INTEIRA (nunca uma pessoa escolhida);
+ * um de cada por dia. Roda de uma pessoa só não tem para quem gesticular: a sala não é desenhada.
+ */
+function SalaGestos({ guild, t, language, ocupado, onGesto }: {
+  guild: GuildView; t: T; language: Language; ocupado: boolean; onGesto: (k: GuildGesture) => void;
+}) {
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.gesto.titulo')} data-guild-room="gestos">
+      <div role="group" aria-label={t('guild.gesto.titulo')} className="sm2-grove-gestures" data-guild-gestos>
+        {GUILD_GESTURES.map(k => {
+          const enviado = guild.mine.gesturesSent.includes(k);
+          const nome = guildGestureName(language, k);
+          return (
+            <button
+              key={k}
+              type="button"
+              className="sm2-grove-gesto"
+              data-gesto={k}
+              // `aria-disabled`, NUNCA `disabled` (QA L3 M6): um botão desabilitado perde o foco e o teclado
+              // cai na raiz da folha. Aqui o botão continua focável, e o toque no que já foi enviado é inerte.
+              aria-disabled={ocupado || enviado ? true : undefined}
+              aria-label={enviado ? t('guild.aria.gesto.enviado', { gesto: nome }) : t('guild.aria.gesto.enviar', { gesto: nome })}
+              onClick={() => { if (!ocupado && !enviado) onGesto(k); }}
+            >
+              <Icon name={GESTO_ICONE[k]} size={24} fill={enviado ? 1 : 0} tone={enviado ? 'primary' : 'ink'} />
+              <span>{enviado ? guildGestureSent(language, k) : nome}</span>
+            </button>
+          );
+        })}
+      </div>
     </section>
   );
 }

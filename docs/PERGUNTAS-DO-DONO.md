@@ -491,3 +491,10 @@ Todas têm o provisório já aplicado no código; nada está parado esperando re
 ## 18/10/2026 — respondidas
 
 P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
+
+
+## 20/10/2026 — W14b (Clan Hall / Grove / Feira)
+
+- **BACKLOG — Loja do clã:** itens comprados com os Bits TOTAIS do clã (o total já aparece no Clan Hall, seção "Bring Bits"). Onde ela cabe no Mercado fica a definir. Linha vermelha: nada de contribuição individual com nome + número.
+- **Dúvida:** no ditado, "Isso aqui fica toda na Feira" ficou ambíguo (qual bloco?). Leitura conservadora adotada: a missão/rodada (High Tide) já morava só na sala da Feira, então nada se moveu por essa frase. Se o dono apontava outro bloco (por exemplo a Praça ou o Mistério), é só dizer qual.
+- **Dúvida:** a Praça (decoração e presentes) ficou no Clan Hall, na porta "Prédios", por não ser do Grove nem da Feira. O Mistério foi para o Grove (ditado: "mistério do bosque").

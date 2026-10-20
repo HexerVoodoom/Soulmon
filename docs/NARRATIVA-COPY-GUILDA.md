@@ -33,7 +33,7 @@
 | `guild.criar.compartilhar` | Compartilhar código | Share code | GuildSheet, botão `share` (Web Share) | §12 |
 | `guild.codigo.copiar` | Copiar código | Copy code | GuildSheet e Ajustes, fallback `content_copy` | §13 constata |
 | `guild.codigo.copiado` | Copiado | Copied | idem, estado do botão por ~2 s | §13 constata |
-| `guild.codigo.label` | Código da roda | Circle code | Ajustes e tela pós-criação | §12 |
+| `guild.codigo.label` | Código do clã | Clan Code | Ajustes e tela pós-criação | §12 |
 | `guild.entrar.botao.abrir` | Entrar com um código | Join with a code | GuildSheet, botão `outline` (caminho alternativo) | §12 |
 | `guild.entrar.codigo.label` | Código | Code | GuildSheet, campo (8 chars) | §12 |
 | `guild.entrar.codigo.dica` | O código tem {n} caracteres. | The code has {n} characters. | GuildSheet, dica escrita sob o campo do código (`{n}` = `GUILD_CODE_LENGTH`; FINAL L5) | QA L1 #7 |
@@ -201,7 +201,7 @@
 | `guild.aria.roda` | Roda | Circle | lista de membros | §12 |
 | `guild.aria.gesto.enviar` | Enviar {gesto} para a roda | Send {gesto} to the circle | botão de gesto; {gesto} = nome PT/EN da linha 4 | L12 |
 | `guild.aria.gesto.enviado` | {gesto} já enviado hoje | {gesto} already sent today | botão desabilitado | L4 |
-| `guild.aria.codigo.copiar` | Copiar o código da roda | Copy the circle code | botão | §13 |
+| `guild.aria.codigo.copiar` | Copiar o código do clã | Copy the Clan Code | botão | §13 |
 | `guild.aria.fio` | Firmar meu fio de hoje | Settle my strand for today | botão de fio | L12 |
 | `guild.aria.feira` | Fenômeno da semana: {nome} | This week’s phenomenon: {nome} | visor da Feira | B2 |
 | `guild.aria.feira.ferido` | Fenômeno da semana: {nome}, com luz passando entre as camadas. | This week’s phenomenon: {nome}, with light showing between its layers. | visor da Feira com a luz entrando (nunca "ferido", "metade" nem HP; FINAL L5) | QA L3 M2 |

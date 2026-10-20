@@ -469,7 +469,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 
 ### `functions/api/_casa.js`
 **Dono de:** a CASA DA GUILDA no servidor (PR2): seiva por fonte (`doacao`/`missao`/`guerra`), doação de Bits com teto diário (`CASA_BITS_POR_DIA`), slot de item por membro e o estágio derivado na leitura (`casaStageFor`). Chave pessoal `coopCasa:<gid>:<save>`; os pontos de quem sai viram `casaLegado` (a casa nunca encolhe). A vista nunca devolve pontos nem limiares.
-**Exports:** `CASA_*` (constantes), `pontosDeMissao` (seiva da missão: cresce com o level e com a roda ativa), `coopCasaKey`, `normalizarCasa`, `pontosDaCasa`, `lerCasa`, `casaStageFor`, `doarBits`, `somarPontos`, `definirSlot`, `recolherCasaDeQuemSai`, `totalDaCasa`.
+**Exports:** `CASA_*` (constantes), `pontosDeMissao` (seiva da missão: cresce com o level e com a roda ativa), `coopCasaKey`, `normalizarCasa`, `pontosDaCasa`, `lerCasa`, `casaStageFor`, `doarBits`, `somarPontos`, `definirSlot`, `bitsDaCasa` (total de Bits doados ao clã, W14b), `recolherCasaDetalhe`, `recolherCasaDeQuemSai`, `totalDaCasa`.
 **Chamado por:** `guild.js` (`guildDonate`, `guildSlot`, vista), `_coop.js` (cartão e `coopLeave`).
 **Régua:** `functions/api/guild.casa.test.js`, `src/utils/guildRules.parity.test.ts`.
 

@@ -158,7 +158,7 @@ describe('Plantio (D-14..D-17)', () => {
       claPlantio: () => ({ json: { plantio: atual } }),
       claPlantar: () => { atual = plantio({ planted: true, canPlant: false, stage: 0, progress: 0, level: 1, tier: 1 }); return { json: { plantio: atual } }; },
     });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-especie]')).not.toBeNull());
     expect(container.querySelector('[data-plantio-especie]')!.textContent).toBe('Cerejeira e acácia');
@@ -176,7 +176,7 @@ describe('Plantio (D-14..D-17)', () => {
       claRegar: () => { atual = { ...atual, mine: { wateredToday: true, canHarvest: false } }; return { json: { plantio: atual } }; },
       claProteger: () => { atual = { ...atual, today: { waterOk: false, protectedToday: true } }; return { json: { plantio: atual } }; },
     });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-atrasada]')).not.toBeNull());
     expect(container.querySelector('[data-plantio-colher]')).toBeNull();
@@ -197,7 +197,7 @@ describe('Plantio (D-14..D-17)', () => {
         return { json: { plantio: atual, fruit: { id: 'fruto-girassol-t1', especie: 'girassol', tier: 1, bits: 5 }, receipt: 'g1|2026-W42|2026-primavera' } };
       },
     });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward }} />);
     await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-colher]')).not.toBeNull());
     fireEvent.click(container.querySelector('[data-plantio-colher]')!);
@@ -216,7 +216,7 @@ describe('Plantio (D-14..D-17)', () => {
       claPlantio: () => ({ json: { plantio: planta } }),
       claRegar: () => { planta = { ...planta, mine: { wateredToday: true, canHarvest: false } }; return { status: 409, json: { error: 'already watered' } }; },
     });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-regar]')).not.toBeNull());
     fireEvent.click(container.querySelector('[data-plantio-regar]')!);
@@ -232,7 +232,7 @@ describe('Mistério (D-18)', () => {
       claMisterio: () => ({ json: { misterio: atual } }),
       claMisterioEnviar: () => { atual = misterio({ investigating: 1, mine: { sent: true, rewardPending: false, capReached: false } }); return { json: { misterio: atual } }; },
     });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'misterio');
     await waitFor(() => expect(container.querySelector('[data-misterio-mandar]')).not.toBeNull());
     expect(container.querySelector('[data-misterio-barra]')).not.toBeNull();
@@ -250,7 +250,7 @@ describe('Mistério (D-18)', () => {
       claMisterio: () => ({ json: { misterio: atual } }),
       claMisterioClaim: () => { atual = misterio({ bar: 0, round: 1 }); return { json: { claimed: { reward: { kind: 'bits', amount: 30 }, receipt: 'g1|mis|0|aaaaaaaa' }, misterio: atual } }; },
     });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward }} />);
     await abrir(container, 'misterio');
     await waitFor(() => expect(container.querySelector('[data-misterio-resgatar]')).not.toBeNull());
     fireEvent.click(container.querySelector('[data-misterio-resgatar]')!);
@@ -261,7 +261,7 @@ describe('Mistério (D-18)', () => {
 
   it('a barra não escreve número: só luz', async () => {
     mockServer({ claMisterio: () => ({ json: { misterio: misterio({ bar: 47 }) } }) });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'misterio');
     await waitFor(() => expect(container.querySelector('[data-misterio-barra]')).not.toBeNull());
     expect(container.querySelector('[data-misterio-barra]')!.textContent).toBe('');
