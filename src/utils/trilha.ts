@@ -1,7 +1,6 @@
 /**
- * A TRILHA — as duas camadas em fase, em loop, no `busTrilha`. O interruptor de combate ("Música de combate",
- * `SOUND_TRACK_ENABLED`) NASCE LIGADO desde 19/10/2026 (decisão do dono, REGISTRO §102, revoga o "nasce desligada" da
- * S2); continua só por gesto (D11): ligado é preferência, o som só sai depois do primeiro gesto da sessão.
+ * A TRILHA — as duas camadas em fase, em loop, no `busTrilha`. A preferência de música (interruptor único "Música",
+ * `audioBus.musicaLigada`, REGISTRO §129) NASCE LIGADA desde 19/10/2026 (revoga o "nasce desligada" da S2); continua só por gesto (D11): ligado é preferência, o som só sai depois do primeiro gesto da sessão.
  *
  * Existem DUAS camadas (`base` + `ritmo`, `CAMADAS_DA_TRILHA`), tocando juntas
  * num estado só: a máquina E0–E6 da S13 continua CONGELADA (a condição (2) —
@@ -18,7 +17,7 @@
  *   sono AUTOMÁTICO nem chamava a pausa (achado S-1 da QA rodada 2). Enquanto
  *   houver QUALQUER motivo vivo, `comecar()` recusa — inclusive o `ligarTrilha()`
  *   do primeiro gesto da sessão com o pet já dormindo.
- * - **Chave própria** (`SOUND_TRACK_ENABLED`, separada do mudo global): o mudo
+ * - **Preferência própria** (`musicaLigada`, separada do mudo global): o mudo
  *   global também cala a trilha — som nunca é o único canal de nada e o app
  *   funciona 100% mudo —, mas o inverso não vale.
  *

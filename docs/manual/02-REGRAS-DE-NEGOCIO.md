@@ -5835,6 +5835,7 @@ a ligar.
   `geradoEm`, e o teste casa manifesto ↔ arquivo em `public/sounds/` ↔ linha
   de [`docs/Attributions.md`](../Attributions.md) (seção Áudio). Prova
   procedência, nunca originalidade.
+- ⚠️ **19/10/2026 (REGISTRO §129):** a música é UM interruptor "Música" (`SOUND_MUSIC_OFF`, nasce ligado) para tema, combate e Pesadelo; o texto abaixo é histórico.
 - **A trilha nasce desligada e só começa por gesto** (S2): a chave é
   `STORAGE_KEYS.SOUND_TRACK_ENABLED`, **separada** de `SOUND_MUTED`; o mudo
   global cala a trilha, o inverso não vale. Numa sessão nova, com a preferência

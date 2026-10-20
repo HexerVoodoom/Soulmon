@@ -18,6 +18,7 @@ const ESPERADO = [
   'soulmon-language', 'soulmon-theme',
   'soulmon-sound-muted',
   'soulmon-sound-prefs-version', 'soulmon-sound-category-volumes', 'soulmon-sound-track-enabled', 'soulmon-sound-theme-off',
+  'soulmon-sound-music-off', 'soulmon-sound-music-version',
   'soulmon-dungeon-speed', 'soulmon-foco-vibrate', 'soulmon-pwa-install-dismissed',
   'soulmon-terms-notice-seen', 'soulmon-terms-notice-shown',
   'soulmon-account-deleted-notice', 'soulmon-pending-login-email',

@@ -11,7 +11,9 @@ const E = vi.hoisted(() => ({
   rampas: [] as Array<{ de: number; para: number; s: number }>,
 }));
 
-vi.mock('./audioBus', () => {
+vi.mock('./audioBus', async (orig) => {
+  const real = await orig<typeof import('./audioBus')>(); // a preferência de música (§129) é a REAL, no localStorage
+
   const novoCtx = () => {
     const c: Record<string, any> = {
       state: 'running', currentTime: 0, resume: () => Promise.resolve(),
@@ -29,6 +31,7 @@ vi.mock('./audioBus', () => {
     return c;
   };
   return {
+    ...real,
     garantirBarramento: () => {
       if (!E.ctxAtual || E.ctxAtual.state === 'closed') E.ctxAtual = novoCtx();
       return { ctx: E.ctxAtual, busTema: { gain: { value: 1 }, connect() {} } };

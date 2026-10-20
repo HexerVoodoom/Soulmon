@@ -303,6 +303,7 @@ a linha do tempo); o interruptor e o `AudioContext` não brigam (o toggle persis
   jogador (`consentirNestaSessao`), mas só vale com o interruptor ligado. Sem ele, o tema segue tocando em combate (mais baixo).
 - **S17 emendada:** "música é uma por vez: ligar uma desliga a outra" virou "as duas preferências convivem; o diretor nunca as deixa
   soar juntas". Quem ligou só o loop (tema desligado) o mantém na Home (legado). ⚠️ 19/10/2026: esse legado SAIU (§11.6).
+  (Duas preferências substituídas por um interruptor só pela §13, 19/10/2026.)
 
 **10.4 Golpe físico × à distância.** `playAttackRanged` (disparo: triangle agudo que cai de tom + parcial uma oitava acima; o físico
 `playAttack` segue o soco grave). **Mesma categoria `arcade`** (R-CAT: o EVENTO é golpe de combate nos dois), offset próprio **1,651 dB**
@@ -344,6 +345,7 @@ Pedido: dono entregou duas faixas do Suno (plano Free) para a Masmorra e o PvP.
 `SOUND_TRACK_ENABLED`. ⚠️ **Agora NASCE LIGADO** (`readFlagOr(..., true)`); quem gravou `'false'` continua desligado. Isto revoga o "nasce
 desligada" da S2 para as faixas de combate (`REGISTRO-DE-DECISOES.md` §102). **D11 intacta:** só toca depois de gesto; o primeiro gesto sonoro
 dá o consentimento da sessão SEM gravar a preferência.
+(Rótulo "Música de combate" e chave `SOUND_TRACK_ENABLED` substituídos pela §13, 19/10/2026.)
 
 **11.3 O player único.** `utils/streamMusica.ts` é o `<audio>` em streaming extraído do `tema.ts` (que passa a usá-lo): formato por
 `canPlayType` (WebM/Opus, depois M4A), troca de formato no erro, refaz o `<audio>` no bfcache, pausa entre voltas, fade-in. O estado das
@@ -398,7 +400,9 @@ Procedência e hashes: `Attributions.md`. Um dono só para música em streaming:
 | pesadelo (`NightmareBattle`) | "Stone Hall Nightmare" | sim |
 
 O interruptor "Música de combate" (`SOUND_TRACK_ENABLED`, nasce ligado, só toca depois de gesto, D11) cobre combate **e** Pesadelo.
+(Substituído pela §13, 19/10/2026: agora é o interruptor único "Música".)
 Com o interruptor desligado, o Pesadelo segue a regra das outras superfícies de combate: o tema toca mais baixo, se estiver ligado.
+(Também substituído pela §13: desligada = silêncio em todas as superfícies.)
 Antes, o terror tocava se o tema OU a trilha estivesse ligado. Nunca duas músicas juntas.
 
 **12.2 Medidas** (ffmpeg 6.1.1, filtro `ebur128`, LUFS-S mediano; régua calibrada no tema antigo instalado: −28,0 / integrado −28,2 / TP −15,1):
@@ -432,5 +436,37 @@ antes (tema velho + dungeon + pvp) 13 589 741 B; depois 13 452 938 B (−136 803
   O repo não consegue provar por escuta a ausência de material de terceiro.
 - ⚠️ **Falta o gate humano de escuta (S8)** das três faixas e do nível relativo entre elas. Os números são de medição.
 - **Loop de 2 camadas sem uso.** `trilha-base` e `trilha-ritmo` (~244 KB) seguem no repo, mas nenhuma superfície as pede mais. Decidir se saem.
-- **Decisões do orquestrador, a confirmar com o dono:** o procedural foi apagado sem fallback; com o interruptor desligado, o Pesadelo cai no tema.
+- **Decisões do orquestrador, a confirmar com o dono:** o procedural foi apagado sem fallback; com o interruptor desligado, o Pesadelo cai no tema. (O segundo ponto foi superado pela §13: desligada = silêncio.)
+
+## 13. Um interruptor só de música (19/10/2026, pedido do dono)
+
+**Pedido.** "Quando entro em combate não toca a música tema de batalha" (testado no PWA instalado, com "Música de combate" desligado por um
+`'false'` da era antiga) e "É só um interruptor de música, que vale pra todas." Registro: `REGISTRO-DE-DECISOES.md` §129 (emenda S17, §102 e §127).
+
+**Regra nova.** Um interruptor **"Música" / "Music"** em Configurações › Som liga e desliga, juntos, o tema da Home, a música de combate
+(Masmorra, Arena, Duelo, Torneio) e o Pesadelo. "Sons" (mudo/SFX) é outro interruptor e não mudou. A música nasce ligada, só toca depois de
+gesto (D11/S2), uma por vez com crossfade; as pausas de sono, descanso e mudo seguem iguais. Dono da preferência: `musicaLigada()` /
+`definirMusicaLigada(on)` em `audioBus.ts`, chave `SOUND_MUSIC_OFF` (`soulmon-sound-music-off`, polaridade "off": ausente = ligada) e marca
+`SOUND_MUSIC_VERSION`. `trilhaLigada`, `definirTrilhaLigada` e `temaPreferido` ficaram como aliases que leem dela.
+
+**13.1 O que toca onde** (`escolherFaixa(s, musicaOn)` em `musica.ts`):
+| Superfície | Música ligada | Música desligada |
+|---|---|---|
+| casa (Home) | tema "Stone Hall Decay" | silêncio |
+| masmorra, arena, duelo, torneio (lobby e lutas) | "Stone Hall Combat" | silêncio |
+| pesadelo | "Stone Hall Nightmare" | silêncio |
+
+Acabou o "tema em combate, mais baixo" com o interruptor desligado (§12.1 e §11).
+
+**13.2 Migração** (`migrarPreferenciaDeMusica()`, substitui `migrarPreferenciasDeSom` da §127; roda em `iniciarMusica()`, idempotente).
+Se a marca `SOUND_MUSIC_VERSION` já existe, não faz nada. Senão, a música fica DESLIGADA só se o jogador desligou AS DUAS depois da marca da
+§127 (`SOUND_PREFS_VERSION='1'`, `SOUND_TRACK_ENABLED='false'` e `SOUND_THEME_OFF='true'`). Qualquer outro caso fica ligada, inclusive o
+`'false'` herdado antes da marca e o "só tema desligado". Remove as 3 chaves legadas e grava a marca. Régua:
+`musicaPreferencia.migracao.test.ts` (casos a até i), `musica.test.ts`, `settingsSom.render.test.tsx`, `musicaCombate.integracao.test.ts`.
+
+**13.3 O que segue igual.** "Sons" separado; nasce ligada e só toca depois de gesto; uma música por vez com crossfade; pausas de
+sono, descanso e mudo; guards de loudness e de manifesto; R-NOVA e D11.
+
+**13.4 O que só o aparelho do dono confirma.** No PWA instalado, depois de atualizar: entrar na Masmorra toca "Stone Hall Combat"; desligar
+"Música" silencia Home, combate e Pesadelo; "Sons" continua independente. Os testes cobrem o código, não o aparelho.
 
