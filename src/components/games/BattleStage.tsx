@@ -29,6 +29,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
+import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
@@ -561,7 +562,10 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const intro = introMs(action.kind);
   const form = strikeFormOf(action);
   const landSize = Math.round(toSpot.size * (blocked ? 0.9 : big ? 1.1 : 0.8));
-  const flipX = action.actor === 'foe'; // o corte e o orb são desenhados "para a direita"
+  // Espelho de TODO FX: sai de (para onde a arte olha) × (para onde o golpe vai) — `utils/fxFacing.ts`, dono único. Nunca "inimigo = espelha".
+  const travel = travelOf(action.actor);
+  const slashFlip = fxMirror(el, 'slash', travel);
+  const orb = orbPose(el, travel, ang);
   const fxScale = Math.max(1, meSpot.size / 190);
 
   const layers: ReactNode[] = [];
@@ -586,20 +590,20 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
       layers.push(
         <Fx
           key="orb" src={fxFrame(el, 'orb')} x={from.x} y={from.y} size={Math.round((big ? ORB_PX_SPECIAL : ORB_PX) * fxScale)}
-          anim="sm-bs-fly" big={big} delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={ang}
+          anim="sm-bs-fly" big={big} delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={orb.rot} flipX={orb.flip}
           extra={{ ['--dx' as string]: `${Math.round(dx)}px`, ['--dy' as string]: `${Math.round(dy)}px` } as CSSProperties}
         />,
       );
     } else {
       layers.push(
-        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? SLASH_SCALE_SPECIAL : SLASH_SCALE))} anim="sm-bs-pop" big={big} delay={intro + Math.max(0, impact - 240)} dur={big ? 520 : 400} flipX={flipX} />,
+        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? SLASH_SCALE_SPECIAL : SLASH_SCALE))} anim="sm-bs-pop" big={big} delay={intro + Math.max(0, impact - 240)} dur={big ? 520 : 400} flipX={slashFlip} />,
       );
     }
   }
   // A5 (rodada 7): o golpe FÍSICO (investida) é só o CORTE — sem o splash/"crash" do impacto. O splash é do dano à
   // distância/mágico (projétil, especial à distância). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
   if (reduced || blocked || form !== 'melee') layers.push(
-    <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={flipX && !blocked} />,
+    <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={blocked && !combatShield(action.shield) && fxMirror(action.shield, 'defended', travel)} />,
   );
   return <>{layers}</>;
 }

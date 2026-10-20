@@ -46,11 +46,17 @@ export function fxElementId(id: string | undefined | null): string {
   return attackFx(mapped, 'orb') ? mapped : FX_FALLBACK_ELEMENT;
 }
 
+/** O id do elemento CUJA arte `fxFrame` de fato devolve para o estado (com o fallback para o `neutro`): é o id que vale para a direção da arte (`fxFacing.ts`). */
+export function fxArtId(elementId: string | undefined | null, estado: AttackFxState): string {
+  const id = fxElementId(elementId);
+  if (id === NIGHTMARE_ELEMENT) return nightmareFx(estado) ? id : FX_FALLBACK_ELEMENT;
+  return attackFx(id, estado) ? id : FX_FALLBACK_ELEMENT;
+}
+
 /** A URL do estado para o elemento, caindo no `neutro`. Nunca `undefined` se o neutro estiver instalado. */
 export function fxFrame(elementId: string | undefined | null, estado: AttackFxState): string | undefined {
-  const id = fxElementId(elementId);
-  if (id === NIGHTMARE_ELEMENT) return nightmareFx(estado) ?? attackFx(FX_FALLBACK_ELEMENT, estado);
-  return attackFx(id, estado) ?? attackFx(FX_FALLBACK_ELEMENT, estado);
+  const id = fxArtId(elementId, estado);
+  return id === NIGHTMARE_ELEMENT ? nightmareFx(estado) : attackFx(id, estado);
 }
 
 /** O elemento do oponente do duelo (o servidor não publica elemento): determinístico pelo id dele. */

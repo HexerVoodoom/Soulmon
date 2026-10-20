@@ -20,6 +20,7 @@ import {
 import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
+import { fxMirror } from '../utils/fxFacing';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 
 /**
@@ -647,6 +648,8 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
     ], { duration: FX_NUM_MS, delay: impactAt, easing: 'ease-out' });
   }, [reduced, full, x0, y0, x1, y1, delay, impactAt, shot.target]);
   const orbSrc = fxFrame(shot.element, 'orb') ?? elementIcon(shot.element);
+  // o projétil aponta para o alvo (a arte tem lado: `utils/fxFacing.ts`)
+  const orbMirror = fxFrame(shot.element, 'orb') ? fxMirror(shot.element, 'orb', x1 >= x0 ? 'right' : 'left') : false;
   const impactSrc = fxFrame(shot.element, 'impact') ?? elementIcon(shot.element);
   const auraSrc = fxFrame(shot.element, 'aura');
   const base: CSSProperties = { position: 'absolute', pointerEvents: 'none', zIndex: 3 };
@@ -654,7 +657,7 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
   // D-103: UM único ícone do poder por combo. O rastro NÃO repete o ícone (eram 3 foguinhos): é só um brilho (sem imagem) que segue o poder.
   const flyer = (ref: React.Ref<HTMLSpanElement>, extra: Record<string, string>) => (
     <span ref={ref} aria-hidden="true" {...extra} style={{ ...base, left: x0 - orbPx / 2, top: y0 - orbPx / 2, width: orbPx, height: orbPx, opacity: 0, filter: glow }}>
-      {orbSrc && <img src={orbSrc} alt="" draggable={false} width={orbPx} height={orbPx} style={{ width: orbPx, height: orbPx, imageRendering: 'pixelated', display: 'block' }} />}
+      {orbSrc && <img src={orbSrc} alt="" draggable={false} width={orbPx} height={orbPx} style={{ width: orbPx, height: orbPx, imageRendering: 'pixelated', display: 'block', ...(orbMirror ? { transform: 'scaleX(-1)' } : null) }} />}
     </span>
   );
   const glowTrail = (ref: React.Ref<HTMLSpanElement>, k: number) => {

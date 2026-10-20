@@ -808,6 +808,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** `components/games/useCombatV3Art.ts` (e `combatFx.status.test.ts` para provar que a tabela só cita arte instalada).
 **Régua:** `src/utils/combatFx.status.test.ts`, `src/components/games/BattleStage.status.test.tsx` (sem arte × com arte).
 
+### `src/utils/fxFacing.ts`
+**Dono de:** PARA ONDE A ARTE de cada FX de ataque olha e o espelho que cada caso recebe (REGISTRO §151, 20/10/2026). O espelho nunca é escolhido por lado ("inimigo espelha"): é `arte ≠ sentido do golpe`. Convenção: projétil = cabeça; corte = bojo do crescente; `defended` = para onde o golpe recebido anda; cast/aura/impact simétricos. O jogador golpeia para a direita, o inimigo para a esquerda.
+**Exports:** `fxFacing(elementId, estado)` (`'R' | 'L' | 'S'`, da arte que de fato é desenhada, com o fallback `neutro`) · `fxMirror(elementId, estado, travel)` · `orbPose(elementId, travel, angDeg)` (`{rot, flip}`, nunca de cabeça para baixo) · `travelOf('me' | 'foe')` · `DIRECTIONAL_FX_STATES` · tipos `FxFacing`/`FxTravel`.
+**Quem chama:** `components/games/BattleStage.tsx` (projétil, corte, escudo-fallback) e `components/Match3Game.tsx` (projétil).
+**Régua:** `src/utils/fxFacing.contract.test.ts` (remede os PNG, cobre 155 elementos × orb/slash/defended × jogador/inimigo, exige o espelho do inimigo inverso ao do jogador e a fiação no palco).
+
+### `src/utils/fxFacingTable.ts`
+**Dono de:** a tabela GERADA de direção da arte (`node scripts/fx-facing.mjs` mede os PNG de `fx-ataque/` e `pesadelo/`; não editar à mão). Três letras por elemento: orb · slash · defended (`R`/`L`/`S`).
+**Exports:** `FX_FACING_TABLE`.
+**Quem chama:** só `utils/fxFacing.ts`.
+**Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
+
 ### `src/utils/combatArt.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
 **Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatShadow(sceneElement)` (escura só sobre o cenário de `luz`) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
