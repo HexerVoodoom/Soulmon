@@ -233,7 +233,7 @@ describe('a copy dos pushes de evento: só convite, nunca culpa nem medo (REGIST
   });
 });
 
-describe('§137 — agenda de cocô do dia na inscrição de push', () => {
+describe('§144 — agenda de cocô do dia na inscrição de push', () => {
   const poop = (sched: number[], over: Partial<PetPushInput> = {}) =>
     planDayPushes(base({ state: { ...base().state, poopEventsScheduled: sched }, ...over }));
 

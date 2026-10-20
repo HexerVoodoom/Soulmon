@@ -104,7 +104,7 @@ export function suprimidosDeInscricao(v) {
 }
 
 /**
- * A AGENDA DE COCÔ DO DIA na inscrição (REGISTRO §137): `{ d, tz, t: [[slot, instante], ...] }`.
+ * A AGENDA DE COCÔ DO DIA na inscrição (REGISTRO §144): `{ d, tz, t: [[slot, instante], ...] }`.
  *
  * Só INSTANTES — nenhum dado pessoal: `d` = dia local `YYYY-MM-DD` do jogador,
  * `tz` = fuso em minutos a leste de UTC (múltiplo de 15, -12h..+14h, igual às

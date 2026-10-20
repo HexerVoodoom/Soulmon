@@ -160,7 +160,7 @@ export function NotificationManager({
   }, [planKey, planTick]);
   const skipPayload = enabled && plan ? serverSkipPayload(plan) : null;
   const skipKey = JSON.stringify(skipPayload);
-  /* A AGENDA DE COCÔ do dia (REGISTRO §137): os instantes dos cocôs que ainda vão aparecer hoje, para
+  /* A AGENDA DE COCÔ do dia (REGISTRO §144): os instantes dos cocôs que ainda vão aparecer hoje, para
      o worker avisar com o app/PWA FECHADO. Só instantes + fuso; `null` (nenhum, ou notificações
      desligadas) tira o campo da inscrição — o servidor regrava o registro inteiro. */
   const poopPayload = enabled && plan ? serverPoopPayload(plan, -new Date().getTimezoneOffset()) : null;

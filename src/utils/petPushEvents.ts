@@ -301,7 +301,7 @@ export function serverSkipPayload(plan: PetPushPlan): ServerSkip | null {
 }
 
 /**
- * A AGENDA DE COCÔ DO DIA na inscrição de push (REGISTRO §137): `{ d, tz, t }` — o
+ * A AGENDA DE COCÔ DO DIA na inscrição de push (REGISTRO §144): `{ d, tz, t }` — o
  * dia local, o fuso (min a leste de UTC) e os pares `[slot, instante]` dos cocôs que
  * AINDA vão aparecer hoje e FICARAM no teto. Só instantes, nenhum dado pessoal: é o
  * que o worker lê para avisar com o app/PWA FECHADO (ele não lê o save).

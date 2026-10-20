@@ -225,7 +225,7 @@ export function mealNotifFor(sub, date) {
 }
 
 /**
- * O PUSH DE COCÔ desta inscrição neste instante, ou `null` (REGISTRO §137).
+ * O PUSH DE COCÔ desta inscrição neste instante, ou `null` (REGISTRO §144).
  *
  * O worker NÃO lê o save: só a AGENDA DO DIA que o cliente mandou na inscrição
  * (`poop = { d, tz, t: [[slot, instante]] }`, só instantes). O push sai na
@@ -369,7 +369,7 @@ export default {
     const date = new Date(event.scheduledTime);
 
     // A passada de 30 min do RITMO DAS REFEIÇÕES. Só mexe em quem ligou (a
-    // inscrição tem `meals`) e do COCÔ AGENDADO (`poop`, REGISTRO §137); o resto sai como 'skipped' sem custo de envio.
+    // inscrição tem `meals`) e do COCÔ AGENDADO (`poop`, REGISTRO §144); o resto sai como 'skipped' sem custo de envio.
     if (event.cron === MEAL_TICK_CRON) {
       await entregar(env, `meal tick ${date.toISOString()}`, sub => [poopNotifFor(sub, date), mealNotifFor(sub, date) ?? sleepNotifFor(sub, date)], { lazyFcm: true });
       return;

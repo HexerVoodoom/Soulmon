@@ -125,7 +125,7 @@ export async function onRequestPost({ request, env }) {
     ...(lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {}),
     // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
     ...(suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {}),
-    // Agenda de cocô do dia (REGISTRO §137): só instantes; ausente/inválida = sem push de cocô com o app fechado.
+    // Agenda de cocô do dia (REGISTRO §144): só instantes; ausente/inválida = sem push de cocô com o app fechado.
     ...(agendaCocoDeInscricao(poop) ? { poop: agendaCocoDeInscricao(poop) } : {}),
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,

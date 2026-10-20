@@ -88,7 +88,7 @@ export async function onRequestPost({ request, env }) {
     ...(lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {}),
     // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
     ...(suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {}),
-    // Agenda de cocô do dia (REGISTRO §137): só instantes; ausente/inválida = sem push de cocô com o app fechado.
+    // Agenda de cocô do dia (REGISTRO §144): só instantes; ausente/inválida = sem push de cocô com o app fechado.
     ...(agendaCocoDeInscricao(poop) ? { poop: agendaCocoDeInscricao(poop) } : {}),
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro

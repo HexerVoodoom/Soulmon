@@ -1,5 +1,5 @@
 /**
- * O PUSH DE COCÔ COM O APP FECHADO (REGISTRO §137): o cliente manda a AGENDA DO DIA
+ * O PUSH DE COCÔ COM O APP FECHADO (REGISTRO §144): o cliente manda a AGENDA DO DIA
  * (`poop = { d, tz, t: [[slot, instante]] }`) na inscrição e o worker dispara na passada
  * de 30 min. Aqui se prova, com o worker REAL e o planejador REAL do cliente:
  *  · validação/sanitização do campo (`agendaCocoDeInscricao`) e as duas rotas de inscrição;
