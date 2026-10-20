@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { buildingGateFor, buildingLockLine } from '../../utils/gates';
 import type { GoTarget } from '../../utils/missionTargets';
@@ -26,6 +26,9 @@ export function resolveGo(nav: MissionNav | undefined, target: GoTarget | undefi
 }
 
 export type MissionCardStatus = 'open' | 'ready' | 'claimed';
+
+/** Uma entrada de lista de missões: o `<li>` já pronto + o estado que decide a ordem (`missionOrder.ts`). Os construtores de cada lista devolvem isto. */
+export interface MissionEntry { key: string; state: MissionCardStatus; node: ReactElement }
 
 /**
  * O CARTÃO DE MISSÃO — UM por missão, em todas as abas (dono, 14/10/2026). Mesmo padrão de cartão do app (borda `--sm2-line`,

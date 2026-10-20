@@ -7,18 +7,17 @@ import type { BuildingQuestsProps } from './BuildingQuestList';
 import { questMarkLabel, strongestMark, type QuestMark } from '../../utils/questMarks';
 import { MissionMark } from '../play/MissionMark';
 import { PixelTabs } from '../pixel/PixelKit';
-import { StrollQuestLine } from './StrollQuestLine';
-import { DailyMissionList, type DailyMissionsProps } from './DailyMissionList';
+import type { DailyMissionsProps } from './DailyMissionList';
 import { FirstTimesList, allFirstTimesClaimed, type FirstTimesProps } from './FirstTimesList';
 import type { GoTarget } from '../../utils/missionTargets';
 import type { MissionNav } from './MissionCard';
-import { SpecialMissionCard } from './SpecialMissionCard';
+import type { SpecialMissionProps } from './SpecialMissionCard';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
 const WeeklyMissionList = lazy(() => import('../mercado/ShopShelf').then(m => ({ default: m.WeeklyMissionList })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
-const BuildingQuestList = lazy(() => import('./BuildingQuestList').then(m => ({ default: m.BuildingQuestList })));
+const DailyMissionBoard = lazy(() => import('./DailyMissionBoard').then(m => ({ default: m.DailyMissionBoard })));
 
 export type MissionsTab = 'daily' | 'weekly' | 'achievements';
 
@@ -30,11 +29,11 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * componente do Centro de Evolução, 10.3): Diárias | Semanal | Conquistas. Toque OU deslize para o lado troca de aba. As abas já
  * visitadas ficam montadas (`hidden`), então trocar de aba não perde estado nem refaz a carga.
  * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
- * "Take a stroll" (`StrollQuestLine`) — aponta, fica pronta quando o NPC concluiu, resgata.
+ * "Take a stroll" (`strollEntries`, dentro do `DailyMissionBoard`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
 export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay, special }: {
   /** Missão especial do dia (REGISTRO §106): cartão mudo, sem Resgatar. */
-  special?: Omit<React.ComponentProps<typeof SpecialMissionCard>, 'language'>;
+  special?: Omit<SpecialMissionProps, 'language'>;
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
   initialTab?: MissionsTab;
   open: boolean;
@@ -126,17 +125,11 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                     <FirstDayCard progress={firstDay} language={language} />
                   </Section>
                 )}
-                {special?.state && (
-                  <Section title={isPt ? 'Especial do dia' : "Today's special"} mark={null} glyph={false} isPt={isPt} id="special">
-                    <SpecialMissionCard language={language} {...special} />
-                  </Section>
-                )}
                 <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <StrollQuestLine language={language} crossings={crossings} todayKey={todayKey} onClaim={onClaimStroll} onGo={onGoStroll} />
-                    {buildings && <BuildingQuestList language={language} {...buildings} />}
-                    {dailies && <DailyMissionList language={language} {...dailies} nav={nav} />}
-                  </div>
+                  <DailyMissionBoard
+                    language={language} special={special} crossings={crossings} todayKey={todayKey}
+                    onClaimStroll={onClaimStroll} onGoStroll={onGoStroll} buildings={buildings} dailies={dailies} nav={nav}
+                  />
                 </Section>
                 {firsts && !allFirstTimesClaimed(firsts.state, firsts.bondLevel) && (
                   <Section title={isPt ? 'Primeiras vezes' : 'First times'} mark={marks.firsts ?? null} glyph={false} isPt={isPt} id="first-times">

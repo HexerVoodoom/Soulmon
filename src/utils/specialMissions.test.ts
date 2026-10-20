@@ -185,3 +185,40 @@ describe('meta travada no dia', () => {
     expect(specialMissionGoal(undefined, 3000)).toBe(3000);
   });
 });
+
+describe('promoção rest -> steps quando o sensor chega no meio do dia', () => {
+  const stepsDay = [0, 1].map(day).find(d => specialMissionKindFor(d, true) === 'steps')!;
+  const restDay = [0, 1].map(day).find(d => specialMissionKindFor(d, true) === 'rest')!;
+  const rest = (d: string, o: Partial<SpecialMissionState> = {}): SpecialMissionState => ({ day: d, kind: 'rest', done: false, goal: 9000, doneDays: ['x'], creditedDays: ['y'], ...o });
+  const sensor = (d: string) => inp({ hasSteps: true, stepsDayKey: d, stepGoal: 5000 });
+
+  it('promove em dia de passos, mantendo goal/doneDays/creditedDays', () => {
+    const r = resolveSpecialMission(rest(stepsDay), stepsDay, sensor(stepsDay));
+    expect(r.kind).toBe('steps');
+    expect(r.done).toBe(false);
+    expect(r.goal).toBe(9000);
+    expect(r.doneDays).toEqual(['x']);
+    expect(r.creditedDays).toEqual(['y']);
+  });
+  it('sem goal travado usa a meta atual', () => {
+    const r = resolveSpecialMission(rest(stepsDay, { goal: undefined }), stepsDay, sensor(stepsDay));
+    expect(r.kind).toBe('steps');
+    expect(r.goal).toBe(sanitizeStepGoal(5000));
+  });
+  it('não promove se já cumprida', () => {
+    const prev = rest(stepsDay, { done: true });
+    expect(resolveSpecialMission(prev, stepsDay, sensor(stepsDay))).toBe(prev);
+  });
+  it('não promove em dia de rest pela paridade', () => {
+    const prev = rest(restDay);
+    expect(resolveSpecialMission(prev, restDay, sensor(restDay)).kind).toBe('rest');
+  });
+  it('não promove sem sensor', () => {
+    const prev = rest(stepsDay);
+    expect(resolveSpecialMission(prev, stepsDay, inp({ hasSteps: false, stepsDayKey: stepsDay }))).toBe(prev);
+  });
+  it('idempotente: a 2ª chamada devolve a mesma referência', () => {
+    const a = resolveSpecialMission(rest(stepsDay), stepsDay, sensor(stepsDay));
+    expect(resolveSpecialMission(a, stepsDay, sensor(stepsDay))).toBe(a);
+  });
+});

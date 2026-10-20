@@ -199,17 +199,21 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/nav/DailyMissionList.tsx`
-**Dono de:** a lista das missões diárias dos outros recursos na folha de Missões (convite, nunca cobrança; REGISTRO §52).
+**Dono de:** os cartões das missões diárias dos outros recursos na folha de Missões (convite, nunca cobrança; REGISTRO §52).
 **Props principais:** `language`, `state` (`DailyMissionsState`), `day` (dia do jogador), `bondLevel`, `onClaim(id)`.
-**Exports:** `DailyMissionsProps` (interface), `DailyMissionList(props)`.
-**Chamado por:** `src/components/nav/MissionsSheet.tsx`.
+**Exports:** `DailyMissionsProps` (interface), `dailyMissionEntries(props)` (entradas `MissionEntry` para o quadro).
+**Chamado por:** `src/components/nav/DailyMissionBoard.tsx`.
 **Régua:** `src/components/nav/dailyMissionList.render.test.tsx`.
+
+### `src/components/nav/DailyMissionBoard.tsx` (20/10/2026)
+**Dono de:** o QUADRO da aba Diárias (seção "Hoje"/"Today", lazy): UM `<ul data-daily-board>` com a especial do dia, o Passeio, as missões de prédio e as diárias, na ordem de `layoutMissionBoard` — rótulo "Special mission"/"Missão especial" + especial aberta no topo, linha fina (`data-mission-divider`), prontas, abertas e, no fim, as resgatadas (REGISTRO §132).
+**Régua:** `src/components/nav/dailyMissionBoard.render.test.tsx`.
 
 ### `src/components/nav/MissionCard.tsx`
 **Dono de:** o CARTÃO DE MISSÃO — um por missão em todas as abas da folha de Missões (borda `--sm2-line`, fundo `--sm2-surface`): "!" amarelo da paleta sem círculo (check quando resgatada), título que vira "Ir" quando a missão tem lugar, descrição curta, progresso, recompensa, estado e a ação (Resgatar). `resolveGo` decide a navegação pelo Vínculo: prédio fechado não navega e mostra o requisito (REGISTRO §62).
 **Props principais:** `language`, `attrs` (`data-*`), `status` (`open`/`ready`/`claimed`), `title`, `desc`, `progress`, `reward`, `onGo`, `lockNote`, `action`.
 **Exports:** `MissionNav` (interface) · `resolveGo(nav, target, language)` · `MissionCardStatus` · `MissionCard(props)` · `MissionCardList` · `ClaimButton`.
-**Chamado por:** `StrollQuestLine`, `BuildingQuestList`, `DailyMissionList`, `FirstTimesList`, `WeeklyMissionList` (`ShopShelf.tsx`).
+**Chamado por:** `strollEntries`, `buildingQuestEntries`, `dailyMissionEntries`, `specialMissionEntries` (todos montados no `DailyMissionBoard`), `FirstTimesList`, `WeeklyMissionList` (`ShopShelf.tsx`). Tipo `MissionEntry { key, state, node }`.
 **Régua:** `src/components/nav/missionCards.render.test.tsx`.
 
 ### `src/components/nav/FirstTimesList.tsx`
@@ -341,7 +345,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/nav/StrollQuestLine.tsx` (08/10/2026)
-**Dono de:** a LINHA "Take a stroll" / "Faça um passeio" do menu de Missões (`MissionsSheet kind="daily"`): `point` ("!", só texto) · `ready` ("?" + Claim/Resgatar) · `claimed`. Não monta `PasseioSheet`, sem timer. **Props:** `{ language, crossings, todayKey, onClaim }`. O Claim chama `claimStroll` (`utils/travessiasSave.ts`), que só grava o recibo `crossings.claimDay`.
+**Dono de:** a LINHA "Take a stroll" / "Faça um passeio" do menu de Missões (`MissionsSheet kind="daily"`): `point` ("!", só texto) · `ready` ("?" + Claim/Resgatar) · `claimed`. Não monta `PasseioSheet`, sem timer. **Export:** `strollEntries({ language, crossings, todayKey, onClaim, onGo })` (desde 20/10/2026 o cartão entra no `DailyMissionBoard`). O Claim chama `claimStroll` (`utils/travessiasSave.ts`), que só grava o recibo `crossings.claimDay`.
 **Régua:** `src/components/nav/missionsMenu.render.test.tsx`, `src/utils/travessias.test.ts`.
 
 ### `src/components/play/PasseioSheet.tsx`
@@ -1590,7 +1594,7 @@ O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus
 
 ## `src/components/nav/BuildingQuestList.tsx` (07/10/2026)
 
-Seção "Dos prédios"/"Buildings" da `MissionsSheet` (import dinâmico): a missão do dia de cada prédio
+Desde 20/10/2026 exporta `buildingQuestEntries` (cartões no `DailyMissionBoard`) e `nameOf`. Histórico: seção "Dos prédios"/"Buildings" da `MissionsSheet` (import dinâmico): a missão do dia de cada prédio
 aberto, o botão de pegar o material e o inventário. Recebe `{state, day, bondLevel, onClaim}`;
 não escreve estado por conta própria. `AreaView` ganhou `buildingMarks` e `onVisitBuilding`.
 

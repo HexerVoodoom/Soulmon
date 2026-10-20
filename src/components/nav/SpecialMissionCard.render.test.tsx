@@ -41,12 +41,18 @@ describe('SpecialMissionCard', () => {
     const { container } = renderWithCss(<SpecialMissionCard {...base} state={undefined} />);
     expect(container.innerHTML).toBe('');
   });
-  it('rodapé só com tomorrowKind rest', () => {
+  it('rodapé de amanhã: rest e steps têm cada um o seu, sem número nem cobrança', () => {
     const a = renderWithCss(<SpecialMissionCard {...base} state={st('steps')} tomorrowKind="rest" />);
-    expect(a.container.querySelector('[data-special-tomorrow]')).not.toBeNull();
+    expect(a.container.querySelector('[data-special-tomorrow="rest"]')).not.toBeNull();
+    expect(a.container.querySelector('[data-special-tomorrow="steps"]')).toBeNull();
     a.unmount();
-    const b = renderWithCss(<SpecialMissionCard {...base} state={st('steps')} />);
-    expect(b.container.querySelector('[data-special-tomorrow]')).toBeNull();
+    const b = renderWithCss(<SpecialMissionCard {...base} state={st('rest')} />);
+    const h = b.container.querySelector('[data-special-tomorrow="steps"]')!;
+    expect(h.textContent).toBe("Tomorrow's special is a steps goal.");
+    expect(b.container.querySelector('[data-special-tomorrow="rest"]')).toBeNull();
+    b.unmount();
+    const c = renderWithCss(<SpecialMissionCard {...base} language="pt-BR" state={st('rest')} />);
+    expect(c.container.querySelector('[data-special-tomorrow="steps"]')!.textContent).toBe('A especial de amanhã é de passos.');
   });
   it('copy sem "!" nem palavras vetadas', () => {
     for (const lang of ['en-US', 'pt-BR'] as const) for (const kind of ['steps', 'rest'] as const) for (const done of [false, true]) {
