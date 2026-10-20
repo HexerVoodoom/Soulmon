@@ -90,7 +90,8 @@ async function viverUmDia(zone, cenario) {
   let enviadosWorker = 0;
   vi.stubGlobal('fetch', vi.fn(async () => { enviadosWorker++; return new Response('', { status: 201 }); }));
 
-  const sched = cenario.poop ?? [at(9.5), at(18)];
+  // horas LOCAIS DO FUSO da cidade (nunca `new Date(y,m,d,h)` fora daqui: isso usaria o TZ do processo, não o da cidade)
+  const sched = (cenario.poopHoras ?? [9.5, 18]).map(at);
   let ledger;
   let ultimoPlano;
   for (let i = 0; i < 48; i++) {
@@ -137,7 +138,7 @@ describe.each(FUSOS)('o TETO de %s com eventos + worker real: nunca passa de PUS
   });
 
   it(`${nome}: dia CALMO (só 2 cocôs): total ≤ 4, com lembrete de deitar e a 1ª refeição`, async () => {
-    const r = await viverUmDia(zone, { calmo: true, poop: [new Date(2026, 9, 12, 10).getTime(), new Date(2026, 9, 12, 18).getTime()] });
+    const r = await viverUmDia(zone, { calmo: true, poopHoras: [10, 18] });
     expect(r.eventos).toBe(2);
     expect(r.worker).toBe(2); // o lembrete de deitar (maior prioridade que refeição) + a 1ª refeição; almoço e jantar cederam
     expect(r.total).toBeLessThanOrEqual(PUSH_DAILY_CAP);
