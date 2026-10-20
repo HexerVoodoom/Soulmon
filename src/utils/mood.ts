@@ -48,14 +48,17 @@ export interface MoodOption {
   emoji: string;
   labelPt: string;
   labelEn: string;
+  /** Legenda curta sob o ícone (W13, 20/10/2026): uma palavra que cabe em ~60 px; o `aria-label` segue sendo o rótulo longo. */
+  captionPt: string;
+  captionEn: string;
 }
 
 export const MOOD_OPTIONS: readonly MoodOption[] = [
-  { value: 1, emoji: '😔', labelPt: 'Difícil', labelEn: 'Rough' },
-  { value: 2, emoji: '😕', labelPt: 'Meio pra baixo', labelEn: 'Low' },
-  { value: 3, emoji: '😐', labelPt: 'Normal', labelEn: 'Okay' },
-  { value: 4, emoji: '🙂', labelPt: 'Bem', labelEn: 'Good' },
-  { value: 5, emoji: '😄', labelPt: 'Ótimo', labelEn: 'Great' },
+  { value: 1, emoji: '😔', labelPt: 'Difícil', labelEn: 'Rough', captionPt: 'Mal', captionEn: 'Rough' },
+  { value: 2, emoji: '😕', labelPt: 'Meio pra baixo', labelEn: 'Low', captionPt: 'Baixo', captionEn: 'Low' },
+  { value: 3, emoji: '😐', labelPt: 'Normal', labelEn: 'Okay', captionPt: 'Normal', captionEn: 'Okay' },
+  { value: 4, emoji: '🙂', labelPt: 'Bem', labelEn: 'Good', captionPt: 'Bom', captionEn: 'Good' },
+  { value: 5, emoji: '😄', labelPt: 'Ótimo', labelEn: 'Great', captionPt: 'Ótimo', captionEn: 'Great' },
 ] as const;
 
 /** Quantos dias o histórico guarda. Registro de acompanhamento, não arquivo. */

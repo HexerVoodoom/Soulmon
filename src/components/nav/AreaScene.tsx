@@ -118,6 +118,25 @@ export function AreaScene({ areaId, language, lots, background, notice, children
         >
           {lot.art ? (
             <span style={{ position: 'relative', width: '100%', display: 'block' }}>
+              {areaId === 'laboratorio' && lot.id === 'stats' && (() => {
+                // W13 (dono): o Vínculo VOA — sombra elíptica suave no chão, ligeiramente separada da base. Só CSS, estática (vale para reduced-motion).
+                const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
+                const w = (b[2] - b[0]) * 90;
+                return (
+                  <span
+                    aria-hidden="true"
+                    data-lot-flight-shadow
+                    style={{
+                      position: 'absolute', pointerEvents: 'none',
+                      left: `${(b[0] + b[2]) * 50 - w / 2}%`, top: `${(b[3] + 0.02) * 100 - w * 0.11}%`,
+                      width: `${w}%`, height: `${w * 0.22}%`,
+                      borderRadius: '50%',
+                      background: 'radial-gradient(ellipse at center, rgba(0,0,0,.5) 0%, rgba(0,0,0,.38) 45%, rgba(0,0,0,0) 72%)',
+                      filter: 'blur(3px)',
+                    }}
+                  />
+                );
+              })()}
               <img
                 src={lot.art}
                 alt=""

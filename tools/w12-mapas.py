@@ -206,6 +206,16 @@ def render(area, vw, vh, diag):
         sh = Image.new('RGBA', (vw, vh), (0, 0, 0, 0))
         sh.putalpha(al)
         canvas.alpha_composite(sh)
+        if area == 'laboratorio' and l['id'] == 'stats':  # W13: sombra de voo (espelha AreaScene: elipse 90% da largura opaca, centro 2% da caixa abaixo da base do sprite)
+            ew = (b[2] - b[0]) * bw * 0.9
+            eh = ew * 0.22
+            ecx, ecy = x0 + (b[0] + b[2]) / 2 * bw, y0 + (b[3] + 0.02) * bw
+            sm = Image.new('L', (vw, vh), 0)
+            ImageDraw.Draw(sm).ellipse([ecx - ew / 2, ecy - eh / 2, ecx + ew / 2, ecy + eh / 2], fill=int(255 * .45))
+            sm = sm.filter(ImageFilter.GaussianBlur(3))
+            blk = Image.new('RGBA', (vw, vh), (0, 0, 0, 255))
+            blk.putalpha(sm)
+            canvas.alpha_composite(blk)
         layer = Image.new('RGBA', (vw, vh), (0, 0, 0, 0))
         layer.paste(sp, (round(x0), round(y0)))
         canvas.alpha_composite(layer)
