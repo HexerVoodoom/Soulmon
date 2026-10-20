@@ -33,6 +33,7 @@
  *   gesto, não 240 ms depois.
  */
 import type { CategoriaSom } from './loudness';
+import type { NomeSfxCombate } from './sfxCombate';
 
 export interface AssetDeSom {
   /** Caminho servido, relativo à origem. */
@@ -133,6 +134,116 @@ export const CROSSFADE_MUSICA_S = 1.2;
 /** Compatibilidade: a primeira camada. */
 export const TRILHA_BASE: AssetDeSom = CAMADAS_DA_TRILHA.base;
 
+/**
+ * OS 7 EFEITOS DE COMBATE vindos de BANCO GRATUITO LIVRE (pedido do dono, 20/10/2026: "o som eu não gostei muito, vê se acha
+ * algum banco de dados GRATUITO"; `docs/REGISTRO-DE-DECISOES.md` §130). Substituem como PADRÃO a síntese procedural de
+ * `sfxCombate.ts` (§120), que continua como FALLBACK (arquivo que não chegou/decodificou → o procedural toca naquele golpe).
+ *
+ * Regras (travadas por `sfxCombateLivres.contract.test.ts`):
+ * - **Só licença que permite uso comercial, sem API paga**: aqui tudo é CC0 1.0 (domínio público) — Kenney (kenney.nl) e
+ *   JaggedStone (OpenGameArt). Atribuição NÃO é obrigatória, mas está em `docs/Attributions.md` por boa prática.
+ * - **Procedência por arquivo**: `fonte` (arquivo original, pacote, URL, autor, licença, data de acesso, SHA-256 do original).
+ *   Sample sem `fonte` completa reprova o teste de contrato.
+ * - **Orçamento próprio**: ≤ 40 KB por arquivo (a soma NÃO entra nos 300 KB do S6, que é dos 5 assets de IA); zero no bundle
+ *   inicial (arquivos estáticos em `public/sounds/`, baixados sob demanda pela cena de luta); fora do pré-cache.
+ * - **Nível**: o mestre saiu JÁ no alvo da categoria `arcade` (LUFS-M máx. 400 ms, K-weighting; true peak ≤ −1 dBTP), medido
+ *   DEPOIS do encode, no arquivo decodificado pelo Chrome — por isso toca a ganho 1 e este arquivo NÃO declara alvo: os campos
+ *   `medidoLufsM`/`medidoTruePeakDbtp` são o FATO medido do arquivo, e o teste os compara com `loudness.ts` (dono único).
+ * - **Formato**: WebM/Opus 64 kbps mono (MediaRecorder do Chrome, como os outros sons curtos). Sem m4a: como os outros SFX
+ *   curtos, quem não decodifica Opus em WebM cai no fallback procedural.
+ * Trocar um som = trocar o arquivo + hash + medidas + linha da Attributions (o teste cobra as três).
+ */
+export interface FonteLivre {
+  /** O nome do arquivo ORIGINAL no pacote. */
+  arquivo: string;
+  pacote: string;
+  /** A página de onde veio. */
+  urlOrigem: string;
+  autor: string;
+  licenca: 'CC0 1.0';
+  urlLicenca: string;
+  /** Data em que a página e a licença foram lidas e o arquivo baixado. */
+  acessadoEm: string;
+  /** CC0 não exige crédito; `true` obrigaria uma linha na Attributions (e o teste cobra as duas). */
+  atribuicaoObrigatoria: boolean;
+  /** SHA-256 do arquivo original baixado (antes de recortar/normalizar/codificar). */
+  sha256Original: string;
+  /** Se o asset NÃO é o original recortado/normalizado, o que foi feito (só sobre material CC0). */
+  processamento?: string;
+}
+
+export interface AssetDeSfxLivre {
+  /** O item do pedido do dono. */
+  id: 'D-86' | 'D-87' | 'D-88' | 'D-89' | 'D-90' | 'D-91' | 'D-92';
+  url: string;
+  sha256: string;
+  bytes: number;
+  categoria: 'arcade';
+  /** Duração ÚTIL do arquivo decodificado, em segundos (teto do pedido: efeitos ≤ 1,2 s; vitória/derrota ≤ 2 s). */
+  duracaoS: number;
+  /** LUFS-M máx. do arquivo decodificado (fato medido, não alvo). */
+  medidoLufsM: number;
+  /** True peak do arquivo decodificado, dBTP (fato medido). */
+  medidoTruePeakDbtp: number;
+  fonte: FonteLivre;
+}
+
+const CC0_URL = 'https://creativecommons.org/publicdomain/zero/1.0/';
+const KENNEY = (pacote: string, slug: string, arquivo: string, sha256Original: string): FonteLivre => ({
+  arquivo, pacote, urlOrigem: `https://kenney.nl/assets/${slug}`, autor: 'Kenney Vleugels (Kenney.nl)', licenca: 'CC0 1.0',
+  urlLicenca: CC0_URL, acessadoEm: '2026-10-20', atribuicaoObrigatoria: false, sha256Original,
+});
+const JAGGEDSTONE = (arquivo: string, sha256Original: string): FonteLivre => ({
+  arquivo, pacote: 'magic spell sfx', urlOrigem: 'https://opengameart.org/content/magic-spell-sfx', autor: 'JaggedStone',
+  licenca: 'CC0 1.0', urlLicenca: CC0_URL, acessadoEm: '2026-10-20', atribuicaoObrigatoria: false, sha256Original,
+});
+
+export const SFX_DE_COMBATE_LIVRES = {
+  playAttack: {
+    id: 'D-86', url: '/sounds/sfx-combate-attack.webm', categoria: 'arcade', duracaoS: 0.352, medidoLufsM: -25.03, medidoTruePeakDbtp: -10.77,
+    sha256: '75c2ed92348f009ec55ba247b33d931a68a2c3f795d2c67945f85fcd60b4eab8', bytes: 3212,
+    fonte: KENNEY('RPG Audio', 'rpg-audio', 'knifeSlice.ogg', '4cd96dc630bed9840c15f1dd2306da2cc56a4da26a5d3f1a03c5a7265ac5e54f'),
+  },
+  playDefend: {
+    id: 'D-87', url: '/sounds/sfx-combate-defend.webm', categoria: 'arcade', duracaoS: 0.415, medidoLufsM: -24.98, medidoTruePeakDbtp: -3.33,
+    sha256: '618c762eea231ec47cee8cfb6d18608424589a4d1d8a8cf86203dc77dd4538c1', bytes: 3698,
+    fonte: KENNEY('Impact Sounds', 'impact-sounds', 'impactPlate_medium_000.ogg', 'b670d30452983369771081319c268475edaaafe782bf4e8d70bd7eef09d8823c'),
+  },
+  playAttackRanged: {
+    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 1.134, medidoLufsM: -25.01, medidoTruePeakDbtp: -16.35,
+    sha256: '2da3e11f6bb3569896c8a6a483b5b7c150975570e84303b4a879f605da13ed03', bytes: 9530,
+    fonte: JAGGEDSTONE('magical_3.ogg', '9fac648a1de869cf9ca2f4b3f1cd47f1766a3ee9d2fdec45831234401d7b2392'),
+  },
+  playCharge: {
+    id: 'D-89', url: '/sounds/sfx-combate-charge.webm', categoria: 'arcade', duracaoS: 1.191, medidoLufsM: -25.02, medidoTruePeakDbtp: -13.53,
+    sha256: 'c82e917f312b19f34b01b7eabca2b330fae5fc38accf0f62642229ef870ad576', bytes: 10016,
+    // 20/10/2026: o dono quis "algo como o KI do Dragon Ball" (energia que sobe). Não há um sample CC0 pronto disso, então o
+    // zumbido de motor CC0 da Kenney é tocado com a velocidade subindo (tom sobe), brilho crescente e envelope em crescendo.
+    fonte: {
+      ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'spaceEngine_001.ogg', 'ee53af299758b664c086d9ca99efecb41168596ea9fb1c5c24ac4389f94aea6b'),
+      processamento: 'derivado: leitura com velocidade 0,7x→1,7x (curva quadrática), passa-baixa que abre, crescendo (u^2) de 1,2 s',
+    },
+  },
+  playSpecial: {
+    id: 'D-90', url: '/sounds/sfx-combate-special.webm', categoria: 'arcade', duracaoS: 0.715, medidoLufsM: -24.97, medidoTruePeakDbtp: -11.39,
+    sha256: 'e3ec62f3c969c43958ca0475d36f9c7c4d4a844f6e6825005dcfe183c2a1ecc3', bytes: 6128,
+    fonte: KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'explosionCrunch_000.ogg', '4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69'),
+  },
+  playVictory: {
+    id: 'D-91', url: '/sounds/sfx-combate-victory.webm', categoria: 'arcade', duracaoS: 1.134, medidoLufsM: -25.0, medidoTruePeakDbtp: -11.91,
+    sha256: '3bad651252787f25852c21c9e3a57223fbd91bd86af090e2fa0d53282526093f', bytes: 9530,
+    fonte: KENNEY('Music Jingles', 'music-jingles', 'jingles_HIT15.ogg', 'e2929ad1acb0ff929f2367eb06d4a57d3c543be9f5a8b6a7fad7e44e440474e1'),
+  },
+  playDefeat: {
+    id: 'D-92', url: '/sounds/sfx-combate-defeat.webm', categoria: 'arcade', duracaoS: 1.494, medidoLufsM: -24.97, medidoTruePeakDbtp: -12.76,
+    sha256: '4c39dd150f05105fdb1bdc4a506078d5e2f277c47cbe8c7688b059015985087f', bytes: 12446,
+    fonte: KENNEY('Music Jingles', 'music-jingles', 'jingles_STEEL07.ogg', '206b5cb18870c1faa393047cb857eda28441b9682380c9eb5910119ea04c2ece'),
+  },
+} as const satisfies Record<NomeSfxCombate, AssetDeSfxLivre>;
+
+/** Teto de peso por efeito de combate livre, em bytes. */
+export const TETO_BYTES_SFX_LIVRE = 40 * 1024;
+
 const buffers = new Map<string, AudioBuffer>();
 const emCurso = new Map<string, Promise<AudioBuffer | null>>();
 
@@ -157,7 +268,7 @@ export function recortarSilencio(ctx: BaseAudioContext, buf: AudioBuffer): Audio
  * chamador fica no procedural. Idempotente — a segunda chamada devolve a mesma
  * promessa ou o buffer já pronto.
  */
-export function carregarAsset(ctx: BaseAudioContext, asset: AssetDeSom): Promise<AudioBuffer | null> {
+export function carregarAsset(ctx: BaseAudioContext, asset: Pick<AssetDeSom, 'url'>): Promise<AudioBuffer | null> {
   const pronto = buffers.get(asset.url);
   if (pronto) return Promise.resolve(pronto);
   const andando = emCurso.get(asset.url);
@@ -182,6 +293,21 @@ export function assetPronto(nome: NomeDeAsset): AudioBuffer | null {
   return buffers.get(ASSETS_DE_SOM[nome].url) ?? null;
 }
 
+/** O buffer do efeito de combate livre, se JÁ decodificado; `null` = toca o procedural (fallback) desta vez. */
+export function sfxLivrePronto(nome: NomeSfxCombate): AudioBuffer | null {
+  return buffers.get(SFX_DE_COMBATE_LIVRES[nome].url) ?? null;
+}
+
+let sfxLivresPreparados = false;
+/** Baixa e decodifica os 7 efeitos de combate (idempotente; nunca rejeita; falha → fica no procedural). */
+export function prepararSfxLivres(ctx: BaseAudioContext): Promise<void> {
+  if (sfxLivresPreparados) return Promise.resolve();
+  sfxLivresPreparados = true;
+  return Promise.all(
+    (Object.keys(SFX_DE_COMBATE_LIVRES) as NomeSfxCombate[]).map(n => carregarAsset(ctx, SFX_DE_COMBATE_LIVRES[n])),
+  ).then(() => undefined);
+}
+
 let preparado = false;
 /**
  * Dispara a carga dos três SFX de uma vez, na primeira chamada. É chamada de
@@ -198,6 +324,7 @@ export function esquecerAssets(): void {
   buffers.clear();
   emCurso.clear();
   preparado = false;
+  sfxLivresPreparados = false;
 }
 
 /** Toca um buffer já no alvo: ganho 1, sem oferta de nível (footgun 9). */
