@@ -3,6 +3,7 @@ import { arenaLots, hallLots, laboratorioLots, mercadoLots } from '../../utils/a
 import { BUILDING_GATES } from '../../utils/gates';
 import { lotNpcVoice, areaNpcVoice } from '../../utils/areaNpcVoice';
 import fs from 'node:fs';
+import { LOT_ART_BOUNDS } from '../../utils/areaLotGeometry';
 import path from 'node:path';
 import { lotNpcArt, AREA_NPC_ART, FUNCTION_NPC_ART } from '../../assets/soulmon/npcs';
 import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
@@ -18,17 +19,21 @@ describe('lotes novos (29/09/2026)', () => {
   it('H15/H16/H17 + W12 (20/10/2026): Torneio e Arena livre dividem UM retângulo do fundo e a Guerra fica no OUTRO; Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
-    // W12 (dono, 20/10/2026): o fundo da Arena tem DOIS retângulos (medidos: o de baixo-esquerda e o de cima-direita). Torneio e Arena livre
-    // dividem o da esquerda (um em cada metade, ±15 pontos do centro 33%), e a Guerra de Clãs assenta no da direita (centro 65%).
+    // 20/10/2026 (dono): GRADE DE 4 ESPAÇOS nos dois retângulos do fundo (medidos na W12: baixo-esquerda 500/810 e cima-direita 755/650 do PNG).
+    // Torneio e Arena livre LADO A LADO no de baixo (mesma linha de chão, mesmo tamanho OPACO, sem se sobrepor); a Guerra MAIOR (≥ 1,25×) no de cima;
+    // o 4º espaço fica vazio. A Guerra só não está no CENTRO do retângulo (65%) porque o contrato H11 não deixa a caixa opaca dela (alta) tocar a do
+    // Arena livre: o mais perto do centro que o H11 permite é aqui (limite documentado no REGISTRO).
+    const opaca = (id: 'torneio' | 'duelo' | 'guerra') => { const b = LOT_ART_BOUNDS[`arena:${id}`]; return pct((arena[id] as { width?: string }).width) * (b[2] - b[0]); };
     expect(pct(arena.torneio.left)).toBeLessThan(pct(arena.duelo.left));
-    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeGreaterThanOrEqual(28); // antes ≥ 40 (um em cada tablado)
-    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeLessThanOrEqual(36);    // juntos: cabem no mesmo retângulo (57% da cena)
+    expect(Math.abs(opaca('torneio') - opaca('duelo'))).toBeLessThan(0.6);                       // mesmo tamanho
+    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeGreaterThanOrEqual(opaca('torneio')); // lado a lado, sem se sobrepor
+    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeLessThanOrEqual(opaca('torneio') + 1.5);
+    expect(Math.abs(pct(arena.duelo.top) - pct(arena.torneio.top))).toBeLessThanOrEqual(1);       // mesma base/linha de chão (a pegada difere ~1 ponto por sprite)
+    expect((pct(arena.torneio.left) + pct(arena.duelo.left)) / 2).toBeCloseTo(32.9, 0);           // o par é centrado no retângulo de baixo (centro 32,9%)
     expect(pct(arena.duelo.left)).toBeLessThan(55);
-    expect(pct(arena.guerra.left)).toBeGreaterThanOrEqual(pct(arena.duelo.left) + 25);  // a Guerra no outro retângulo
-    expect(pct(arena.guerra.top)).toBeLessThan(pct(arena.duelo.top));                   // o da direita é o de cima
-    // G4 (02/10/2026) pedia ≥ 40%; com os dois no mesmo retângulo o teto é ~36–44% (a caixa opaca de cada um segue ≥ 24% da cena, H12).
-    expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(34);
-    expect(pct((arena.duelo as { width?: string }).width)).toBeGreaterThanOrEqual(40);
+    expect(opaca('guerra')).toBeGreaterThanOrEqual(opaca('torneio') * 1.25);                      // Clan War MAIOR
+    expect(pct(arena.guerra.left)).toBeGreaterThan(pct(arena.duelo.left));                         // no retângulo da direita
+    expect(pct(arena.guerra.top)).toBeLessThan(pct(arena.duelo.top));                              // o da direita é o de cima
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
     for (const id of ['evolucao', 'pet']) {

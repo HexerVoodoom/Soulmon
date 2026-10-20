@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
 import { lotArtBounds } from '../../utils/areaLotGeometry';
+import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
@@ -142,7 +143,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
                 alt=""
                 aria-hidden="true"
                 data-area-lot-art
-                style={{ width: '100%', display: 'block', filter: lot.locked ? 'grayscale(1) brightness(.72) drop-shadow(0 6px 6px rgba(0,0,0,.55))' : `${LOT_HALO.has(`${areaId}:${lot.id}`) ? 'drop-shadow(0 0 4px rgba(150,255,238,.85)) drop-shadow(0 0 10px rgba(95,243,224,.45)) ' : ''}drop-shadow(0 6px 6px rgba(0,0,0,.55))` }}
+                style={{ width: '100%', display: 'block', filter: lotArtFilter({ locked: !!lot.locked, accent: LOT_HALO.has(`${areaId}:${lot.id}`) }) }}
               />
               {(() => {
                 const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];

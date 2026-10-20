@@ -1,3 +1,4 @@
+import { lotArtFilter } from './lotHalo';
 import { useEffect, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
@@ -183,7 +184,7 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
               src={AREA_ART[id]}
               alt=""
               aria-hidden="true"
-              style={{ width: '100%', filter: locked ? 'grayscale(1) brightness(.72) drop-shadow(0 6px 6px rgba(0,0,0,.55))' : 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
+              style={{ width: '100%', filter: lotArtFilter({ locked: !!locked }) }}
             />
             {locked && (
               <span style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
