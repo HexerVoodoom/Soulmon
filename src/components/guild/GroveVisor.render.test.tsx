@@ -183,16 +183,22 @@ describe('os membros andando no panorama (D-51: cenário único)', () => {
     const { container } = montar(false, { ...roda(12), members: membros(20) } as never);
     expect(criaturas(container)).toHaveLength(12);
   });
-  it.each([1, 4, 12])('%i criaturas pisam no primeiro plano, abaixo do chão de toda clareira (nunca cobrem uma árvore)', n => {
+  it.each([1, 4, 12])('D-105: %i criaturas ficam PARADAS em slots fixos entre as árvores (sem caminhar, sem virar)', n => {
     const { container } = montar(false, roda(n));
-    const chaoMax = Math.max(...ESTACOES.map(e => chaoY(e)));
-    for (const w of Array.from(container.querySelectorAll<HTMLElement>('[data-grove-walker]'))) {
-      const pes = parseFloat(w.style.top); // % da altura da cena
-      expect(pes).toBeGreaterThanOrEqual(CRIATURA_Y);
-      const img = w.querySelector('img')!;
-      const altura = (img.width / 0.7476 / CENA_H) * 100; // px css -> px da imagem (844/1129) -> %
-      expect(pes - altura, `topo da criatura (${n}) acima do chão das árvores`).toBeGreaterThan(chaoMax);
+    const ws = Array.from(container.querySelectorAll<HTMLElement>('[data-grove-walker]'));
+    expect(ws).toHaveLength(n);
+    expect(container.querySelector('[data-grove-walkers]')!.getAttribute('data-mode')).toBe('stand');
+    const pos = new Set<string>();
+    for (const w of ws) {
+      expect(w.hasAttribute('data-stand')).toBe(true);
+      expect(w.style.animation).toBe('none');
+      expect(w.querySelector<HTMLElement>('.sm2-grove-walker-flip')!.style.animation).toBe('none');
+      expect(parseFloat(w.style.top)).toBeLessThan(CRIATURA_Y); // mais acima que o antigo chão
+      pos.add(`${w.style.left},${w.style.top}`);
     }
+    expect(pos.size).toBe(n); // um slot por membro
+    expect(container.querySelector('[data-grove-walker="own"]')).not.toBeNull(); // o seu continua destacado
+    expect(container.querySelector('[data-grove-creature="own"][data-grove-outline]')).not.toBeNull();
   });
   it('a dos outros é sempre a mesma (hash do id), nunca URL do servidor; a própria é a que o App manda', () => {
     const a = criaturas(montar(false, roda(3)).container).map(c => c.getAttribute('src'));

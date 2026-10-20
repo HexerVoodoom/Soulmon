@@ -170,7 +170,7 @@ export function GroveVisor({ language, guild, mySprite, niveis, reducedMotion, l
               </figure>
             );
           })}
-          <GroveWalkers language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} sizes={SPRITE_PANORAMA} baseY={CRIATURA_Y} faixa={FAIXA_Y} />
+          <GroveWalkers language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} sizes={SPRITE_PANORAMA} baseY={CRIATURA_Y} faixa={FAIXA_Y} mode="stand" />
         </div>
       </div>
       {!borda.ini && (

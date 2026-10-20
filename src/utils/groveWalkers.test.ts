@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groveWalkers, nextBubbleDelay, pickBubble, GROVE_WALKERS_MAX, BUBBLE_MIN_MS, BUBBLE_PHRASES } from './groveWalkers';
+import { groveWalkers, groveStandSlots, STAND_SLOTS, WALK_SLOW, nextBubbleDelay, pickBubble, GROVE_WALKERS_MAX, BUBBLE_MIN_MS, BUBBLE_PHRASES } from './groveWalkers';
 import { GUILD_MAX_MEMBERS, GUILD_PRESENCE_NOMINAL_MAX } from './guildRules';
 import { GUILD_COPY } from './guildCopy';
 
@@ -44,7 +44,8 @@ describe('groveWalkers: todos os membros andam (D-51, K-13)', () => {
     for (const w of a) {
       expect(w.home - w.amp).toBeGreaterThanOrEqual(0);
       expect(w.home + w.amp).toBeLessThanOrEqual(100);
-      expect(w.dur).toBeGreaterThanOrEqual(14);
+      expect(w.dur).toBeGreaterThanOrEqual(14 * WALK_SLOW); // D-105: a caminhada do preview é bem mais lenta
+      expect(w.dur).toBeLessThanOrEqual(26 * WALK_SLOW);
       expect(w.delay).toBeLessThanOrEqual(0);
       expect([0, 1, 2]).toContain(w.lane);
     }
@@ -81,5 +82,36 @@ describe('balões (D-52): intervalo aleatório >= 20 s, banco fixo EN+PT', () =>
       expect(pt + en).not.toMatch(/\d|hoje|today|falt|miss|%/i);
     }
     expect(Object.keys(GUILD_COPY).filter(k => k.startsWith('guild.bosque.fala.'))).toHaveLength(BUBBLE_PHRASES);
+  });
+});
+
+describe('D-105: slots fixos entre as árvores (ao entrar no Bosque)', () => {
+  it('a travessia do preview é pelo menos 2x mais lenta que a antiga (14..26 s)', () => {
+    expect(WALK_SLOW).toBeGreaterThanOrEqual(2);
+    expect(WALK_SLOW).toBeLessThanOrEqual(3);
+  });
+  it('são 12 slots, determinísticos, dentro da cena, mais acima que o antigo chão (86..91) e distintos', () => {
+    expect(STAND_SLOTS).toHaveLength(12);
+    expect(new Set(STAND_SLOTS.map(sl => `${sl.x},${sl.y}`)).size).toBe(12);
+    for (const sl of STAND_SLOTS) { expect(sl.x).toBeGreaterThan(5); expect(sl.x).toBeLessThan(95); expect(sl.y).toBeLessThan(86); expect(sl.y).toBeGreaterThan(70); }
+  });
+  it('sem sobreposição: nenhum par de sprites (own 96 px, outros 64 px, cena de 844 px de altura) se cobre', () => {
+    const H = 844; const W = H * 1700 / 1129;
+    for (const n of [1, 4, 12]) {
+      for (const euEm of [0, n - 1]) {
+        const ws = groveWalkers({ members: membros(n, euEm) });
+        const sl = groveStandSlots(ws);
+        const caixas = ws.map((w, i) => { const lado = w.own ? 96 : 64; const cx = (sl[i].x / 100) * W; const pes = (sl[i].y / 100) * H; return { x0: cx - lado / 2, x1: cx + lado / 2, y0: pes - lado, y1: pes }; });
+        for (let a = 0; a < caixas.length; a++) for (let b = a + 1; b < caixas.length; b++) {
+          const A = caixas[a]; const B = caixas[b];
+          const sobre = A.x0 < B.x1 && B.x0 < A.x1 && A.y0 < B.y1 && B.y0 < A.y1;
+          expect(sobre, `n=${n} eu=${euEm}: ${a} x ${b}`).toBe(false);
+        }
+      }
+    }
+  });
+  it('quem olha sempre ocupa o primeiro slot, qualquer que seja a ordem de chegada', () => {
+    const ws = groveWalkers({ members: membros(5, 3) });
+    expect(groveStandSlots(ws)[ws.findIndex(w => w.own)]).toEqual(STAND_SLOTS[0]);
   });
 });

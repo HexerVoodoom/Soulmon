@@ -67,7 +67,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 /** O panorama (D-32): só nasce aqui, pela porta do Hall, e sob demanda — panorama e árvores fora do chunk de entrada. */
@@ -228,10 +228,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     missaoAntes.current = missaoAtiva;
   }, [missaoAtiva, carregar]);
 
-  // A GUERRA: pergunta ao abrir o Salão (2 leituras no servidor, fora da vista principal). Falha é SILÊNCIO: a sala some.
+  // A GUERRA: pergunta ao abrir o lote da Arena (D-107: o Salão não a mostra mais; 2 leituras no servidor). Falha é SILÊNCIO: a sala some.
   const guildaId = load.status === 'ready' ? load.guild?.id ?? null : null;
   useEffect(() => {
-    if (!guildaId || room === 'feira') { setWar(null); return; } // 'guerra' (lote da Arena) pergunta igual ao Salão
+    if (!guildaId || room !== 'guerra') { setWar(null); return; }
     let vivoLocal = true;
     getGuildWar(saveId, tz.current).then(w => { if (vivoLocal && vivo.current) setWar(w); }).catch(() => { if (vivoLocal) setWar(null); });
     return () => { vivoLocal = false; };
@@ -725,11 +725,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
 
         </div>
 
-        {/* D-57: um card por assunto. O Clan Hall (acima) é a parte ADMINISTRATIVA: nome, ficha, membros, código. */}
-        <div className="sm2-stats-card" data-guild-card="bosque">
-          {salaBosque}
-        </div>
-
+        {/* D-57/D-107: o Clan Hall é ADMINISTRATIVO (nome, ficha, membros, código acima; Casa, Prédios e Mural abaixo). O Bosque, a Feira e a Guerra moram nos prédios próprios (Hall e Arena). */}
         {g.casa && (
         <div className="sm2-stats-card" data-guild-card="casa">
             <SalaCasa
@@ -767,38 +763,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
                 if (id === 'plantio') return <SalaPlantio {...comum} />;
                 return <SalaMisterio {...comum} />;
               }}
-            />
-        </div>
-        )}
-
-        {g.raid && (
-        <div className="sm2-stats-card" data-guild-card="feira">
-            <SalaFeira
-              guild={g}
-              t={t}
-              language={language}
-              ocupado={ocupado}
-              reducedMotion={reducedMotion}
-              resgate={null}
-              resgateAberto={!!(rewards?.pending[0] || colhido)}
-              onRodada={() => undefined}
-              missao={missao ?? { state: null, onSend: () => undefined }}
-            />
-        </div>
-        )}
-
-        {war && (
-        <div className="sm2-stats-card" data-guild-card="guerra">
-            <SalaGuerra
-              guild={g}
-              t={t}
-              language={language}
-              war={war}
-              hoje={load.day}
-              ocupado={ocupado}
-              mySprite={mySprite || getSpriteForStage('rookie')}
-              reducedMotion={reducedMotion}
-              onBuscar={buscarGuerra}
             />
         </div>
         )}
@@ -911,9 +875,8 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
       )}
       {proximo && <p className="sm2-grove-line" data-guild-perto>{t('guild.bosque.perto', { estagio: proximo })}</p>}
       {/* K6 (04/10/2026): a regra do bosque mora atrás do "?". */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <InfoTip language={language} label={language === 'pt-BR' ? 'Como o bosque cresce' : 'How the grove grows'} style={{ minHeight: 28 }}>{t('guild.bosque.regra')}</InfoTip>
-      </div>
+      {/* D-106: o "i" do Grove mora na linha do título do modal (canto direito), não no corpo. */}
+      <ModalInfo language={language} label={language === 'pt-BR' ? 'Como o bosque cresce' : 'How the grove grows'}>{t('guild.bosque.regra')}</ModalInfo>
       {fioHoje && <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.bosque.fio.hoje')}</p>}
       {podeFirmar && (
         <button
