@@ -426,9 +426,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             : 'The Tournament is the RANKED mode: the server draws opponents near your tier — you don’t choose. To pick who you fight (bestiary creatures of power similar to yours), enter the Open Arena.'}
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Faixas' : 'Tiers'}>
-          {isPt
-            ? 'A faixa vem dos seus pontos e só sobe: Madeira, Bronze (100), Prata (300), Ouro (700), Platina (1100), Diamante (1500). Mestre (top 100) e Grão-Mestre (top 20) são lugares da season; sair do top devolve a faixa dos seus pontos.'
-            : 'Your tier comes from your points and only climbs: Wood, Bronze (100), Silver (300), Gold (700), Platinum (1100), Diamond (1500). Master (top 100) and Grandmaster (top 20) are season seats; dropping out of the top returns you to the tier your points give.'}
+          <span style={{ display: 'block' }}>
+            {isPt
+              ? 'A faixa vem dos seus pontos e só sobe: Madeira, Bronze (100), Prata (300), Ouro (700), Platina (1100), Diamante (1500).'
+              : 'Your tier comes from your points and only climbs: Wood, Bronze (100), Silver (300), Gold (700), Platinum (1100), Diamond (1500).'}
+          </span>
+          <span style={{ display: 'block', marginTop: 6 }}>
+            {isPt
+              ? 'Mestre (top 100) e Grão-Mestre (top 20) são lugares da season; sair do top devolve a faixa dos seus pontos.'
+              : 'Master (top 100) and Grandmaster (top 20) are season seats; dropping out of the top returns you to the tier your points give.'}
+          </span>
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Desafiar' : 'Challenge'}>
           {!pvpAberto

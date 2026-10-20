@@ -901,8 +901,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           <span data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span>
                   {isPt
-                    ? `A descida é automática: a cada ${ladderLen} lutas você desce uma camada (${DUNGEON_ENERGY_PER_LAYER} de energia, a da Home), até ${DUNGEON_DAILY_LAYERS} por dia. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer; perder nunca custa seus corações.`
-                    : `The descent is automatic: every ${ladderLen} fights you go down a layer (${DUNGEON_ENERGY_PER_LAYER} energy, the Home energy), up to ${DUNGEON_DAILY_LAYERS} a day. HP comes back over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full) and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down; losing never costs your hearts.`}
+                    ? `A descida é automática: a cada ${ladderLen} lutas, uma camada (${DUNGEON_ENERGY_PER_LAYER} de energia, a da Home; até ${DUNGEON_DAILY_LAYERS} por dia).`
+                    : `The descent is automatic: every ${ladderLen} fights, a layer (${DUNGEON_ENERGY_PER_LAYER} energy, the Home energy; up to ${DUNGEON_DAILY_LAYERS} a day).`}
+                </span>
+                <span>
+                  {isPt
+                    ? `O HP volta com o tempo e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer. Perder nunca custa seus corações.`
+                    : `HP comes back over time and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down. Losing never costs your hearts.`}
                 </span>
                 <span>
                   {isPt
@@ -911,8 +916,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Seu Soulmon luta e solta o especial sozinho (a energia passa de um inimigo para o outro); o botão do canto acelera a cena (1× ou 3×). Pode sair da tela e ele segue descendo; para chamá-lo de volta, use "Retirar da masmorra".'
-                    : 'Your Soulmon fights and unleashes its special by itself (the energy carries over from one enemy to the next); the corner button speeds the scene up (1× or 3×). You can leave the screen and he keeps going down; to call him back, use "Take him out".'}
+                    ? 'Seu Soulmon luta e solta o especial sozinho (a energia passa de um inimigo para o outro). O botão do canto acelera a cena (1× ou 3×).'
+                    : 'Your Soulmon fights and unleashes its special by itself (energy carries over between enemies). The corner button speeds up the scene (1× or 3×).'}
+                </span>
+                <span>
+                  {isPt
+                    ? 'Pode sair da tela: a descida segue. Para chamá-lo de volta, use "Retirar da masmorra".'
+                    : 'You can leave the screen: the descent goes on. To call him back, use "Take him out".'}
                 </span>
           </span>
         </InfoTip>

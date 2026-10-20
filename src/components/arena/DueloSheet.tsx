@@ -119,14 +119,26 @@ export function DueloSheet({ language, onStart }: {
                 : "Your Soulmon's element and strikes: see them in the Profile, in the Laboratory."}
             </span>
             <span data-duelo-como-lutar style={{ display: 'block', marginTop: 6 }}>
-              {isPt
-                ? 'Na luta, seu Soulmon ataca e se defende sozinho. Toque na tela (ou no mascote) para torcer; no especial, toque no anel na hora certa e deslize para o lado para esquivar do inimigo.'
-                : 'In the fight, your Soulmon attacks and defends on its own. Tap the screen (or the mascot) to cheer; on its special, tap the ring at the right moment and swipe sideways to dodge the enemy’s.'}
+              <span style={{ display: 'block' }}>
+                {isPt
+                  ? 'Na luta, seu Soulmon ataca e se defende sozinho. Toque na tela (ou no mascote) para torcer.'
+                  : 'In the fight, your Soulmon attacks and defends on its own. Tap the screen (or the mascot) to cheer.'}
+              </span>
+              <span style={{ display: 'block' }}>
+                {isPt
+                  ? 'No especial, toque no anel na hora certa; para esquivar do inimigo, deslize para o lado.'
+                  : 'On its special, tap the ring at the right moment; to dodge the enemy’s, swipe sideways.'}
+              </span>
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido com o seu. Vencer rende Bits; perder não custa nada. O Torneio é o modo ranqueado: o servidor sorteia os oponentes pela sua faixa.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, of power similar to yours. Wins earn Bits; losses cost nothing. The Tournament is the ranked mode: the server draws opponents by your tier.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido com o seu. Vencer rende Bits; perder não custa nada.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, of power similar to yours. Wins earn Bits; losses cost nothing.`}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? 'O Torneio é o modo ranqueado: o servidor sorteia os oponentes pela sua faixa.'
+                : 'The Tournament is the ranked mode: the server draws opponents by your tier.'}
             </span>
           </span>
         </ModalInfo>

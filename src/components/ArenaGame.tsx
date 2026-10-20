@@ -443,15 +443,22 @@ export function ArenaGame({
           {/* A explicação mora atrás do "?" (InfoTip) — nenhum texto explicativo solto (04/10/2026). */}
           <div style={{ display: 'flex', justifyContent: 'center' }} data-arena-torcida-legenda>
             <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funciona o Duelo' : 'How the Duel works'}>
-              {isPt
-                ? 'Seu Soulmon luta e se defende sozinho, contra todos ao mesmo tempo. Toque na tela (ou no mascote) para encher a barra de cheer; no especial, toque no anel na hora certa e deslize o dedo para esquivar do inimigo.'
-                : 'Your Soulmon fights and defends on its own, against all the enemies at once. Tap the screen (or the mascot) to fill the cheer bar; on its special, tap the ring at the right moment and swipe sideways to dodge the enemy’s.'}
+              <span style={{ display: 'block' }}>
+                {isPt
+                  ? 'Seu Soulmon luta e se defende sozinho, contra todos ao mesmo tempo. Toque na tela (ou no mascote) para encher a barra de cheer.'
+                  : 'Your Soulmon fights and defends on its own, against all the enemies at once. Tap the screen (or the mascot) to fill the cheer bar.'}
+              </span>
+              <span style={{ display: 'block', marginTop: 6 }}>
+                {isPt
+                  ? 'No especial, toque no anel na hora certa; para esquivar do inimigo, deslize o dedo para o lado.'
+                  : 'On its special, tap the ring at the right moment; to dodge the enemy’s, swipe sideways.'}
+              </span>
             </InfoTip>
           </div>
           <p style={phaseLine}>
             {isPt
-              ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura, com um respiro entre elas. O elemento pesa no dano, nos dois sentidos; perder custa a run, nunca os seus corações.`
-              : `${ARENA_ROUNDS} rounds back to back, each harder, with a breather between them. Element weighs on damage both ways; losing costs the run, never your hearts.`}
+              ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. O elemento pesa no dano; perder custa a run, nunca os seus corações.`
+              : `${ARENA_ROUNDS} rounds back to back, each harder. Element weighs on damage; losing costs the run, never your hearts.`}
           </p>
           <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
             {isPt ? 'Entrar na Arena' : 'Enter the Arena'}

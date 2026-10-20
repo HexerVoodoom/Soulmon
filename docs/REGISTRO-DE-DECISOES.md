@@ -2976,8 +2976,8 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Alternativa que perdeu:** manter os fundos W5 escurecidos (W8-A) e as posições antigas.
 - **O que falsificaria:** prédio visivelmente fora da plataforma em aparelho real (a referência é 390×844; telas mais largas deslocam o `cover`) ou o dono achar os fundos novos claros demais e pedir a vinheta de volta.
 
-## 139. Textos longos cortados: os 10 piores corpos de modal/intro/tela passam a ≤ ~2 frases (dono, 20/10/2026; D-72)
+## 139. Textos longos cortados: os 10 piores corpos de modal/intro/tela passam a parágrafos de ≤ ~140 caracteres (dono, 20/10/2026; D-72; 2ª rodada pelo modal do dono)
 - **Decisão do dono:** "o texto no geral tem que ser mais conciso; cortar os 10 piores textos longos".
-- **Como:** Masmorra (descida e autonomia), Renascimento, plano da Oficina, muro de idade, Passeio (missões), Caderno, Torneio (faixas), Duelo/Arena (como lutar, resumo da Arena, rodadas). Mantidos: vocabulário canônico, `${}` das constantes, aria-labels e a voz sem cobrança/culpa/veredito. Os detalhes cortados (marcos e Glitchtama, profundidade por Lv, fome e energia) já vivem no Guia/Ajuda; tabela em `prompts/d72-aplicado.md`.
+- **Como:** Masmorra (descida e autonomia), Renascimento, plano da Oficina, muro de idade, Passeio (missões), Caderno, Torneio (faixas), Duelo/Arena (como lutar, resumo da Arena, rodadas). Mantidos: vocabulário canônico, `${}` das constantes, aria-labels e a voz sem cobrança/culpa/veredito. Os detalhes cortados (marcos e Glitchtama, profundidade por Lv, fome e energia) já vivem no Guia/Ajuda; as regras que não cabem viram parágrafos curtos separados no "i" da própria tela; "apagar a conta apaga o Caderno" está em `public/privacidade.html`, e "nada aqui conta nem pontua" voltou ao "i" do Caderno. Tabela em `prompts/d72-aplicado.md`.
 - **Alternativa que perdeu:** manter os textos como estavam.
 - **O que falsificaria:** jogador sem entender uma regra por falta de texto (ex.: não saber que a descida precisa de HP mínimo, ou o que é uma Travessia) apontado em relato ou teste de uso.
