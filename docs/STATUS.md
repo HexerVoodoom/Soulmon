@@ -5391,3 +5391,7 @@ O dono enviou o print de `suno.com/account`: **Pro Plan**, mensal, próxima cobr
 ### 20/10/2026 — Sprites em 3/4
 
 Pedido do dono: o personagem gerado sai em 3/4, na diagonal para o observador, ainda virado à direita. Uma frase só, no dono único `SPRITE_FACING_PROMPT` (`src/utils/spritePose.ts`), que entra nas duas variantes do prompt de criação (`composeSpritePrompt`). O render continua esperando a "frente" à direita (`mirrorSprite`). Vale para criaturas geradas daqui em diante; os sprites já gerados não mudam.
+
+### 20/10/2026 — Novos sprites dos 5 iniciais
+
+O dono mandou `archive (5).zip` com cinco PNGs (1024×1024, alfa real, brilho suave); entraram como `src/assets/soulmon/starters/{industrial,nascente,alento,vida,meteoro}.png` (512×512, redução *nearest*, mesmos ids e caminho). O Bolid (`meteoro`) novo olha à direita: `LEFT_FACING_STARTERS` ficou vazio e `sprites.facing.test.ts` acompanha. Conferido sobre fundo claro e escuro. Save antigo não muda: o id do inicial é o mesmo; só a pele troca.

@@ -226,11 +226,11 @@ export const LEFT_FACING_LINES: ReadonlySet<string> = new Set(['igni', 'kaelen',
 /**
  * Os INICIAIS (um sprite só, `STARTER_SPRITES`) cuja arte olha para a ESQUERDA.
  * Auditoria de 14/10/2026, sprite a sprite (`docs/AUDITORIA-FACING-GRATUITOS.md`):
- * `meteoro` (Bolid) tem rosto e pernas voltados à esquerda e o rabo de brasas à
- * direita; `nascente` (bico à direita) e `industrial`/`alento`/`vida` (de frente)
- * não precisam de declaração.
+ * `meteoro` (Bolid) TINHA rosto e pernas voltados à esquerda; em 20/10/2026 os cinco
+ * sprites foram trocados pelos novos do dono e todos olham para a direita ou de frente,
+ * então a lista ficou VAZIA (o mecanismo continua para arte futura).
  */
-export const LEFT_FACING_STARTERS: ReadonlySet<string> = new Set(['meteoro']);
+export const LEFT_FACING_STARTERS: ReadonlySet<string> = new Set<string>(); // vazio desde 20/10/2026: a arte nova do Bolid olha para a direita
 
 export function artFacesLeft(stage: string, demoCharacterIdRaw?: string): boolean {
   const demoCharacterId = resolveArtLineId(demoCharacterIdRaw);

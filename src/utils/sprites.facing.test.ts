@@ -15,12 +15,13 @@ describe('para onde a arte olha', () => {
   });
 });
 
-// 14/10/2026 — auditoria dos 5 iniciais (docs/AUDITORIA-FACING-GRATUITOS.md): o Bolid (`meteoro`) olha para a ESQUERDA.
+// 14/10/2026 — auditoria dos 5 iniciais (docs/AUDITORIA-FACING-GRATUITOS.md): o Bolid (`meteoro`) olhava para a ESQUERDA;
+// 20/10/2026 — os 5 sprites foram trocados pelos novos do dono (todos à direita ou de frente): a lista ficou vazia.
 describe('os iniciais: para onde a arte olha', () => {
-  it('meteoro declara a esquerda; os demais iniciais não (direita ou de frente)', async () => {
+  it('nenhum inicial declara a esquerda (direita ou de frente)', async () => {
     const { artFacesLeft, STARTER_IDS, LEFT_FACING_STARTERS } = await import('./sprites');
-    for (const id of STARTER_IDS) expect(artFacesLeft('rookie', id), id).toBe(id === 'meteoro');
-    expect([...LEFT_FACING_STARTERS]).toEqual(['meteoro']);
+    for (const id of STARTER_IDS) expect(artFacesLeft('rookie', id), id).toBe(false);
+    expect([...LEFT_FACING_STARTERS]).toEqual([]);
   });
 });
 
@@ -28,7 +29,7 @@ describe('spriteUrlFacesLeft (o combate lê a URL)', () => {
   it('arte de perfil esquerdo é reconhecida; direita/de frente/própria não', async () => {
     const { spriteUrlFacesLeft, getSpriteForStage } = await import('./sprites');
     expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'igni'))).toBe(true);
-    expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'meteoro'))).toBe(true);
+    expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'meteoro'))).toBe(false);
     expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'ignar'))).toBe(false);
     expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'nascente'))).toBe(false);
     expect(spriteUrlFacesLeft('https://cdn/sprite-gerado.png')).toBe(false);

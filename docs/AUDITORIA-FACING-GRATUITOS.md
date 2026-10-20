@@ -49,3 +49,5 @@ do **Pet** (`data-testid="pet-virar"`), para todos os tiers.
 
 - Se o "lado errado" que ele viu era outro bicho além do Bolid: pelas imagens, os demais iniciais olham de frente ou à direita, e o
   controle "Virar" resolve qualquer caso residual (inclusive para arte gerada).
+
+> ⚠️ **Atualização de 20/10/2026:** os cinco sprites iniciais foram trocados pelos novos do dono (`starters/<id>.png`, 512×512, alfa real, redução *nearest* a partir de 1024). Todos olham para a direita ou de frente, então `LEFT_FACING_STARTERS` ficou **vazio** (o Bolid novo olha à direita) e a tabela acima descreve a arte ANTIGA.
