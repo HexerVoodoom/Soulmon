@@ -168,6 +168,8 @@ export interface FonteLivre {
   atribuicaoObrigatoria: boolean;
   /** SHA-256 do arquivo original baixado (antes de recortar/normalizar/codificar). */
   sha256Original: string;
+  /** Se o asset NÃO é o original recortado/normalizado, o que foi feito (só sobre material CC0). */
+  processamento?: string;
 }
 
 export interface AssetDeSfxLivre {
@@ -213,9 +215,14 @@ export const SFX_DE_COMBATE_LIVRES = {
     fonte: JAGGEDSTONE('magical_3.ogg', '9fac648a1de869cf9ca2f4b3f1cd47f1766a3ee9d2fdec45831234401d7b2392'),
   },
   playCharge: {
-    id: 'D-89', url: '/sounds/sfx-combate-charge.webm', categoria: 'arcade', duracaoS: 1.131, medidoLufsM: -25.02, medidoTruePeakDbtp: -14.43,
-    sha256: '240dd489ad8412972f02996665403590cfcc92000898b8ce69e20782eaee555c', bytes: 9530,
-    fonte: JAGGEDSTONE('magical_1_0.ogg', '119f9061a566c72c1c58444b03f8685b833079ef268dda02fe742eb34d3bc68f'),
+    id: 'D-89', url: '/sounds/sfx-combate-charge.webm', categoria: 'arcade', duracaoS: 1.191, medidoLufsM: -25.02, medidoTruePeakDbtp: -13.53,
+    sha256: 'c82e917f312b19f34b01b7eabca2b330fae5fc38accf0f62642229ef870ad576', bytes: 10016,
+    // 20/10/2026: o dono quis "algo como o KI do Dragon Ball" (energia que sobe). Não há um sample CC0 pronto disso, então o
+    // zumbido de motor CC0 da Kenney é tocado com a velocidade subindo (tom sobe), brilho crescente e envelope em crescendo.
+    fonte: {
+      ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'spaceEngine_001.ogg', 'ee53af299758b664c086d9ca99efecb41168596ea9fb1c5c24ac4389f94aea6b'),
+      processamento: 'derivado: leitura com velocidade 0,7x→1,7x (curva quadrática), passa-baixa que abre, crescendo (u^2) de 1,2 s',
+    },
   },
   playSpecial: {
     id: 'D-90', url: '/sounds/sfx-combate-special.webm', categoria: 'arcade', duracaoS: 0.715, medidoLufsM: -24.97, medidoTruePeakDbtp: -11.39,
@@ -223,14 +230,14 @@ export const SFX_DE_COMBATE_LIVRES = {
     fonte: KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'explosionCrunch_000.ogg', '4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69'),
   },
   playVictory: {
-    id: 'D-91', url: '/sounds/sfx-combate-victory.webm', categoria: 'arcade', duracaoS: 1.494, medidoLufsM: -24.97, medidoTruePeakDbtp: -12.76,
-    sha256: '4c39dd150f05105fdb1bdc4a506078d5e2f277c47cbe8c7688b059015985087f', bytes: 12446,
-    fonte: KENNEY('Music Jingles', 'music-jingles', 'jingles_STEEL07.ogg', '206b5cb18870c1faa393047cb857eda28441b9682380c9eb5910119ea04c2ece'),
+    id: 'D-91', url: '/sounds/sfx-combate-victory.webm', categoria: 'arcade', duracaoS: 1.134, medidoLufsM: -25.0, medidoTruePeakDbtp: -11.91,
+    sha256: '3bad651252787f25852c21c9e3a57223fbd91bd86af090e2fa0d53282526093f', bytes: 9530,
+    fonte: KENNEY('Music Jingles', 'music-jingles', 'jingles_HIT15.ogg', 'e2929ad1acb0ff929f2367eb06d4a57d3c543be9f5a8b6a7fad7e44e440474e1'),
   },
   playDefeat: {
-    id: 'D-92', url: '/sounds/sfx-combate-defeat.webm', categoria: 'arcade', duracaoS: 0.893, medidoLufsM: -24.99, medidoTruePeakDbtp: -11.79,
-    sha256: '5ccb080897382312d475c2412f1a272557ab668143d4bb765068f825f4c08b24', bytes: 7586,
-    fonte: KENNEY('Music Jingles', 'music-jingles', 'jingles_STEEL04.ogg', '65be5fe4af66574f4725602e454b7ea8d2613ab536a4a719fcb3810a240fdecf'),
+    id: 'D-92', url: '/sounds/sfx-combate-defeat.webm', categoria: 'arcade', duracaoS: 1.494, medidoLufsM: -24.97, medidoTruePeakDbtp: -12.76,
+    sha256: '4c39dd150f05105fdb1bdc4a506078d5e2f277c47cbe8c7688b059015985087f', bytes: 12446,
+    fonte: KENNEY('Music Jingles', 'music-jingles', 'jingles_STEEL07.ogg', '206b5cb18870c1faa393047cb857eda28441b9682380c9eb5910119ea04c2ece'),
   },
 } as const satisfies Record<NomeSfxCombate, AssetDeSfxLivre>;
 

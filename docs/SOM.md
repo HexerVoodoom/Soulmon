@@ -388,7 +388,7 @@ um banco gratuito. O PADRÃO agora são 7 arquivos `public/sounds/sfx-combate-*.
 manifesto `SFX_DE_COMBATE_LIVRES` em `sonsAssets.ts` (arquivo original, pacote, URL, autor, licença, data, hash), já mestrados no alvo `arcade` e
 tocados a ganho 1. A síntese de `sfxCombate.ts` ficou como FALLBACK (arquivo que não chegou/decodificou). A cena de luta baixa/decodifica ao
 montar (`sfxCombateCarga.ts`); mudo não baixa nada. Procedência: `Attributions.md` ("Os 7 efeitos de combate — banco GRATUITO livre"). Régua:
-`sfxCombateLivres.contract.test.ts`. Alternativas de cada efeito para trocar na escuta: `D:/Soulmon/_gemini_out/w10-sfx/para-ouvir/` (`D-86-a.wav` é a instalada).
+`sfxCombateLivres.contract.test.ts`. Escolhas do dono (20/10): vitória = `jingles_HIT15`, derrota = `jingles_STEEL07`, carga = "ki" derivado de `spaceEngine_001` (CC0). Alternativas de cada efeito para trocar na escuta: `D:/Soulmon/_gemini_out/w10-sfx/para-ouvir/` (`D-86-a.wav` é a instalada).
 
 ## 12. Trilhas licenciadas: tema novo, Stone Hall Combat e Stone Hall Nightmare (19/10/2026, pedido do dono)
 

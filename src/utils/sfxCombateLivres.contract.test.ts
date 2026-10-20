@@ -92,6 +92,8 @@ describe('S9 — procedência por arquivo, nas duas direções', () => {
       expect(attr, `${a.url}: origem`).toContain(a.fonte.urlOrigem);
       expect(attr, `${a.url}: autor`).toContain(a.fonte.autor);
       expect(attr, `${a.url}: licença`).toContain(a.fonte.licenca);
+      // Derivado (ex.: o "ki" da carga) precisa dizer o que foi feito, e só sobre material CC0.
+      if ((a.fonte as { processamento?: string }).processamento) expect(attr, `${a.url}: processamento`).toContain('derivado');
     }
   });
 
