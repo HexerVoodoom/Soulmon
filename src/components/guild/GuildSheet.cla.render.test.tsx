@@ -232,7 +232,7 @@ describe('Mistério (D-18)', () => {
       claMisterio: () => ({ json: { misterio: atual } }),
       claMisterioEnviar: () => { atual = misterio({ investigating: 1, mine: { sent: true, rewardPending: false, capReached: false } }); return { json: { misterio: atual } }; },
     });
-    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'misterio');
     await waitFor(() => expect(container.querySelector('[data-misterio-mandar]')).not.toBeNull());
     expect(container.querySelector('[data-misterio-barra]')).not.toBeNull();
@@ -250,7 +250,7 @@ describe('Mistério (D-18)', () => {
       claMisterio: () => ({ json: { misterio: atual } }),
       claMisterioClaim: () => { atual = misterio({ bar: 0, round: 1 }); return { json: { claimed: { reward: { kind: 'bits', amount: 30 }, receipt: 'g1|mis|0|aaaaaaaa' }, misterio: atual } }; },
     });
-    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward }} />);
+    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward }} />);
     await abrir(container, 'misterio');
     await waitFor(() => expect(container.querySelector('[data-misterio-resgatar]')).not.toBeNull());
     fireEvent.click(container.querySelector('[data-misterio-resgatar]')!);
@@ -261,7 +261,7 @@ describe('Mistério (D-18)', () => {
 
   it('a barra não escreve número: só luz', async () => {
     mockServer({ claMisterio: () => ({ json: { misterio: misterio({ bar: 47 }) } }) });
-    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward: vi.fn() }} />);
     await abrir(container, 'misterio');
     await waitFor(() => expect(container.querySelector('[data-misterio-barra]')).not.toBeNull());
     expect(container.querySelector('[data-misterio-barra]')!.textContent).toBe('');

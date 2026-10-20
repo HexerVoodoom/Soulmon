@@ -610,7 +610,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         {alerta}
         {resgate}
         <div className="sm2-stats-card">{salaBosque}</div>
-        {/* W14b: o gesto (fio/gestos) e o PLANTIO e o MISTÉRIO do Bosque moram só aqui; o Clan Hall é informativo. */}
+        {/* W14b: o gesto (fio/gestos) e o PLANTIO do Bosque moram só aqui; o Clan Hall é informativo. O MISTÉRIO é da Feira (dono, 20/10: "o mistério é da feira"). */}
         {g.size >= 2 && (
           <div className="sm2-stats-card" data-guild-card="gestos">
             <SalaGestos guild={g} t={t} language={language} ocupado={ocupado} onGesto={(k) => void agir(() => guildGesture(saveId, k, tz.current), { anunciar: `guild.gesto.${k}.enviado` })} />
@@ -618,7 +618,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         )}
         {cla && (
           <div className="sm2-stats-card" data-guild-card="plantio">
-            <SalaPredios t={t} ids={['plantio', 'misterio']} titulo="guild.bosque.predios.titulo" aberto={predio} onAbrir={setPredio} render={renderPredio} />
+            <SalaPredios t={t} ids={['plantio']} titulo="guild.bosque.predios.titulo" aberto={predio} onAbrir={setPredio} render={renderPredio} />
           </div>
         )}
       </>
@@ -639,6 +639,12 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             depois: () => track('guild_raid', { outcome: 0 }),
           })}
         />
+        {/* O MISTÉRIO mora aqui, junto da missão e da rodada (dono, 20/10/2026); sai do Grove. */}
+        {cla && (
+          <div className="sm2-stats-card" data-guild-card="misterio">
+            <SalaPredios t={t} ids={['misterio']} titulo="guild.feira.predios.titulo" aberto={predio} onAbrir={setPredio} render={renderPredio} />
+          </div>
+        )}
       </>
     ) : (
       <>
