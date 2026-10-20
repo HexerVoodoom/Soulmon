@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 20/10/2026 — Revisão da política de privacidade e da ficha Play contra o código (`docs/revisao-privacidade`, REGISTRO §137)
+>
+> - Supabase confirmado fora do app (nenhum uso em `src/`/`functions/`; guard `transcribe.contract.test.ts`); chat, sugestões e voz vão ao Groq direto do Worker (reserva Gemini só no chat). Última menção "Supabase+Groq (áudio)" corrigida em `PLAY-LANCAMENTO.md`.
+> - Política (EN+PT): §2b ganha o resumo numérico de comportamento (`sanitizeBehavior`, "Daily comment"/"como estou indo?") e o opt-out "Send chat to AI provider"; §2 check-ins das refeições nascem ligados (B4, 18/10) e inscrição de push nasce ligada com permissão do SO; §6d contadores de cota de IA por conta (TTL 30 h). Ficha: §2.5 cota de IA, §2.5b refeições ligadas por padrão, §2.6/§3 informações de saúde passam a COMPARTILHADAS com o Groq (humor no chat).
+> - **Pendente do dono:** `PRIVACY_VERSION` NÃO foi alterada (carimbo segue 19/10); recomendação = mudança material, subir para `2026-10-20` (ver PR).
+
 > ## 20/10/2026 — Padrões L1–L9 decididos e loop de 2 camadas removido (`chore/aprova-padroes-limpa-audio`, REGISTRO §136)
 >
 > - L1–L9 decididos (§136): L1 em parte (energia superada pela §40), L7 superada pela §56, L9 provisório mantido; as demais aprovadas.

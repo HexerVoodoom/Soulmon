@@ -11,7 +11,7 @@
 > dado pessoal". Cada linha abaixo aponta para o código que a sustenta, então dá
 > para reconferir em vez de acreditar.
 >
-> **Atualizado em:** 11/10/2026 (run `beta-play-01`: §2.2 assinatura, §2.4b permissões do manifesto mesclado, §2.5b guilda/guerra/doação/refeições, §2.7 diagnóstico de falhas) · antes: 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
+> **Atualizado em:** 20/10/2026 (revisão contra o código: check-ins das refeições nascem ligados, contadores de cota de IA por conta em §2.5, informações de saúde passam a compartilhadas com o Groq em §2.6/§3, voz direto ao Groq sem Supabase) · antes: 11/10/2026 (run `beta-play-01`: §2.2 assinatura, §2.4b permissões do manifesto mesclado, §2.5b guilda/guerra/doação/refeições, §2.7 diagnóstico de falhas) · antes: 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
 > essa data — a fonte viva é `public/privacidade.html` e o inventário de eventos
 > em `functions/api/metrics.js`.
 
@@ -125,8 +125,6 @@ retenção ("não guardamos o áudio") e como revogar.
 > inexato (`setAndAllowWhileIdle`), tolera alguns minutos de janela e não precisa de permissão restrita.
 >
 > Reconferir a cada AAB: `Select-String -Path android\app\build\intermediates\merged_manifests\release\AndroidManifest.xml -Pattern "uses-permission"`
-elease\AndroidManifest.xml -Pattern "uses-permission"`
-elease\AndroidManifest.xml -Pattern "uses-permission"`
 
 | Permissão (mesclada) | De onde vem | Para quê | Perigosa / exige declaração? | Aparece como dado na ficha? |
 |---|---|---|---|---|
@@ -152,7 +150,7 @@ elease\AndroidManifest.xml -Pattern "uses-permission"`
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
-| **Interações no app** | ✅ Sim | ❌ Não | Análise (melhorar o app) | **Opcional** — dá para desligar em Configurações → Seus dados | `functions/api/metrics.js` |
+| **Interações no app** | ✅ Sim | ❌ Não | Análise (melhorar o app); **prevenção de fraudes, segurança e conformidade** (contadores diários de uso da IA por conta) | **Opcional** para as estatísticas (Configurações → Seus dados); os contadores de cota da IA existem para quem usa a IA | `functions/api/metrics.js`; cota: `functions/api/_aiGuard.js` (`ai:<bucket>:<saveId>:<dia>`, TTL 30 h) |
 | **Outras ações geradas pelo usuário** | ✅ Sim | ❌ Não | Funcionalidades do app (o save é o jogo) | Obrigatório | `functions/api/save.js` |
 | Histórico de pesquisa, apps instalados | ❌ Não | — | — | — | — |
 
@@ -160,8 +158,10 @@ elease\AndroidManifest.xml -Pattern "uses-permission"`
 > eventos está na seção 4 da política, e há teste conferindo essa lista contra o
 > código). Ainda assim declare "Interações no app: sim" — o Google pergunta se
 > você coleta, não se você identifica.
+>
+> **Contadores de cota da IA (20/10/2026).** `chat`, `transcribe`, `suggest` e `sprite` contam usos por conta e por dia em `ai:<bucket>:<saveId>:<dia>` (só um número, TTL de 30 h; `sprite` tem também contagem vitalícia, já declarada em §1/§2.7). São **vinculados** à conta (hash do e-mail), **não compartilhados**, e servem a custo/antiabuso. O dono lê só o top 20 com o `saveId` truncado em 8 caracteres (`functions/api/top-ai.js`). Política §6d.
 
-### 2.5b Guilda, guerra, doação e lembretes das refeições (adicionado em 11/10/2026)
+### 2.5b Guilda, guerra, doação e check-ins das refeições (adicionado em 11/10/2026; refeições revistas em 20/10/2026)
 
 > Estas funções entraram depois da versão de 22/09/2026 deste formulário e a política
 > publicada (`privacidade.html`, 12 menções a guilda) **já as cobria**: o formulário é
@@ -173,7 +173,7 @@ elease\AndroidManifest.xml -Pattern "uses-permission"`
 | **Guilda** (criar, entrar por código, "fio do dia", Bosque, feira, sombras do pesadelo) | nome da guilda (texto livre curto, escrito por quem cria; visto por quem entra pelo código), apelido e forma do jogador, adesão, progresso agregado do Bosque; o servidor lê/escreve no KV a cada ação | "Nome de usuário" (§2.1) e "Outras ações geradas pelo usuário" (§2.5). O **nome da guilda** é conteúdo gerado pelo usuário visível a outros (`PLAY-FICHA.md` §4) | Não (fica entre jogadores do mesmo código; não vai a terceiros) |
 | **Guerra** (fila de pareamento entre guildas, 1 por dia, recompensa em seiva) | entrada na fila (guilda + TTL de 2 dias), resultado da rodada | "Outras ações geradas pelo usuário" | Não |
 | **Doação de Bits** entre amigos/guilda | quantidade e quem doou para quem **dentro do jogo**; moeda do jogo, sem dinheiro | "Outras ações geradas pelo usuário" | Não |
-| **Lembretes das refeições** (opt-in, desligado por padrão) | três horários de refeição, deslocamento de fuso e janela de descanso, **guardados junto à inscrição de push** (nada é enviado com a chave desligada); apagados ao desligar ou excluir a conta | "IDs do dispositivo ou outros IDs" (§2.7) e "Outras ações geradas pelo usuário" | Não |
+| **Check-ins das refeições** (interruptor único "Meal check-ins": convite no app + push; **ligado por padrão desde 18/10/2026**, decisão B4 do dono; o push só com as notificações ligadas) | três horários de refeição, deslocamento de fuso e janela de descanso, **guardados junto à inscrição de push** (nada é enviado com a chave ou as notificações desligadas; `src/utils/mealRhythm.ts` › `DEFAULT_MEAL_RHYTHM`); apagados ao desligar ou excluir a conta | "IDs do dispositivo ou outros IDs" (§2.7) e "Outras ações geradas pelo usuário" | Não |
 | **Telemetria nova** `guild_*` e `meal_ritual` | só que o evento aconteceu, com contadores mínimos (ex.: tamanho da roda); **nunca nome, código, hora do dia nem quantidade** | "Interações no app" (§2.5), opcional (desligável) | Não |
 
 Moderação: não há mensagem livre entre usuários. O único texto visível a terceiros é o
@@ -193,7 +193,7 @@ apelido, o nome da criatura e o **nome da guilda**; denúncia por e-mail de cont
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
 | **Informações de exercícios físicos** | ✅ **Sim** | ❌ Não | Funcionalidades do app | **Opcional** (o app roda inteiro sem a permissão) | `src/utils/steps.ts`, `GameState.steps` |
-| **Informações de saúde** | ✅ **Sim** (leitura conservadora — ver abaixo) | ❌ Não | Funcionalidades do app | Opcional | `GameState.moodLog`, `soulGoal`, `soulStruggle` |
+| **Informações de saúde** | ✅ **Sim** (leitura conservadora — ver abaixo) | ✅ **Sim — Groq** (reserva Google Gemini), só pelo chat: o humor do dia em faixa (`moodToday`) e o humor médio do resumo (`moodAvg`), e o `soulGoal` se a pessoa pedir sugestões no tutorial com o campo pré-preenchido (corrigido em 20/10/2026; antes dizia "Não") | Funcionalidades do app | Opcional | `GameState.moodLog`, `soulGoal`, `soulStruggle`; envio: `functions/api/chat.js` › `CONTEXT_SCHEMA.moodToday`, `BEHAVIOR_SCALARS.moodAvg`; `suggest-tasks.js` |
 
 **Sobre os passos.** É o contador do próprio Android, **não é o Health
 Connect** — logo **não** exige conta de organização verificada nem política dedicada
@@ -257,14 +257,15 @@ lado certo para errar.
 - E-mail → Firebase (Google)
 - Outras mensagens no app → Groq, reserva Google Gemini (chat com contexto, ações propostas, resumo agregado de comportamento, sugestões de tarefa, nome da tarefa em "Decompor") e Higgsfield + Google Gemini (descrição da criatura para a imagem)
 - **Gravações de voz ou som** → Groq Whisper, direto do nosso Worker, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
+- **Informações de saúde** → Groq, reserva Google Gemini *(opcional; humor do dia/humor médio em faixa no chat e `soulGoal` pré-preenchido nas sugestões — ver 2.6; continua também coletado no save)*
 
 **Coletado, não compartilhado:**
 - Nome de usuário
 - Histórico de compras
-- Interações no app *(opcional — dá para desligar)*
+- Interações no app *(estatísticas: opcional, dá para desligar; + contadores de cota da IA por conta, finalidade prevenção de fraudes/segurança — ver 2.5)*
 - Outras ações geradas pelo usuário (o save)
 - **Informações de exercícios físicos** *(passos — opcional)* ← **não esqueça**
-- **Informações de saúde** *(humor + texto livre — ver 2.6)*
+- ~~Informações de saúde~~ → subiu para "Coletado e compartilhado" em 20/10/2026 (o humor vai ao Groq no chat — ver 2.6)
 - **IDs do dispositivo ou outros IDs** *(token FCM / endpoint Web Push — opcional; ver 2.7, decisão de 21/09/2026)*
 - **Registros de falhas / Diagnóstico** *(crash reporting próprio, **não vinculado à conta**, não compartilhado — ver 2.7)*
 - **Histórico de compras** inclui a **assinatura trimestral** (token + vigência — ver 2.2)
