@@ -3,7 +3,7 @@ import { arenaLots, hallLots, laboratorioLots, mercadoLots } from '../../utils/a
 import { BUILDING_GATES } from '../../utils/gates';
 import { lotNpcVoice, areaNpcVoice } from '../../utils/areaNpcVoice';
 import fs from 'node:fs';
-import { LOT_ART_BOUNDS } from '../../utils/areaLotGeometry';
+import { LOT_ART_BOUNDS, lotHitRects } from '../../utils/areaLotGeometry';
 import path from 'node:path';
 import { lotNpcArt, AREA_NPC_ART, FUNCTION_NPC_ART } from '../../assets/soulmon/npcs';
 import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
@@ -19,21 +19,27 @@ describe('lotes novos (29/09/2026)', () => {
   it('H15/H16/H17 + W12 (20/10/2026): Torneio e Arena livre dividem UM retângulo do fundo e a Guerra fica no OUTRO; Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
-    // 20/10/2026 (dono): GRADE DE 4 ESPAÇOS nos dois retângulos do fundo (medidos na W12: baixo-esquerda 500/810 e cima-direita 755/650 do PNG).
-    // Torneio e Arena livre LADO A LADO no de baixo (mesma linha de chão, mesmo tamanho OPACO, sem se sobrepor); a Guerra MAIOR (≥ 1,25×) no de cima;
-    // o 4º espaço fica vazio. A Guerra só não está no CENTRO do retângulo (65%) porque o contrato H11 não deixa a caixa opaca dela (alta) tocar a do
-    // Arena livre: o mais perto do centro que o H11 permite é aqui (limite documentado no REGISTRO).
+    // 20/10/2026 (dono, §145): as 4 VAGAS marcadas por ele na captura do app (720×1397): P1 vazia, P2 = Guerra, P3 = Torneio, P4 = Arena livre.
+    // Torneio e Arena livre acompanham a DIAGONAL do losango de baixo (o Arena livre fica mais à direita E mais abaixo, não na mesma linha de chão);
+    // a Guerra é MAIOR (≥ 1,25× o opaco do Torneio) e fica em P2. Em 390×844 o centro VISUAL (caixa opaca) de cada um cai na marca, com a folga mínima
+    // que o H11/H12 pedem (o par de baixo precisou de ~4% de largura para os alvos não se encostarem).
     const opaca = (id: 'torneio' | 'duelo' | 'guerra') => { const b = LOT_ART_BOUNDS[`arena:${id}`]; return pct((arena[id] as { width?: string }).width) * (b[2] - b[0]); };
     expect(pct(arena.torneio.left)).toBeLessThan(pct(arena.duelo.left));
+    expect(pct(arena.duelo.top) - pct(arena.torneio.top)).toBeGreaterThanOrEqual(8);               // na diagonal, NÃO lado a lado na mesma linha de chão
     expect(Math.abs(opaca('torneio') - opaca('duelo'))).toBeLessThan(0.6);                       // mesmo tamanho
-    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeGreaterThanOrEqual(opaca('torneio')); // lado a lado, sem se sobrepor
-    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeLessThanOrEqual(opaca('torneio') + 1.5);
-    expect(Math.abs(pct(arena.duelo.top) - pct(arena.torneio.top))).toBeLessThanOrEqual(1);       // mesma base/linha de chão (a pegada difere ~1 ponto por sprite)
-    expect((pct(arena.torneio.left) + pct(arena.duelo.left)) / 2).toBeCloseTo(32.9, 0);           // o par é centrado no retângulo de baixo (centro 32,9%)
-    expect(pct(arena.duelo.left)).toBeLessThan(55);
+    expect(opaca('torneio')).toBeGreaterThanOrEqual(24);                                           // H12 (sem relaxar)
     expect(opaca('guerra')).toBeGreaterThanOrEqual(opaca('torneio') * 1.25);                      // Clan War MAIOR
-    expect(pct(arena.guerra.left)).toBeGreaterThan(pct(arena.duelo.left));                         // no retângulo da direita
-    expect(pct(arena.guerra.top)).toBeLessThan(pct(arena.duelo.top));                              // o da direita é o de cima
+    expect(pct(arena.guerra.left)).toBeGreaterThan(pct(arena.duelo.left));                         // P2 fica à direita de P4
+    expect(pct(arena.guerra.top)).toBeLessThan(pct(arena.torneio.top));                            // e acima de P3
+    const centro = (id: string) => { const [art] = lotHitRects('arena', arenaLots('pt-BR').find(l => l.id === id) as never, 390, 844); return [((art.x0 + art.x1) / 2 / 390) * 100, ((art.y0 + art.y1) / 2 / 844) * 100]; };
+    const VAGAS: Record<string, [number, number]> = { torneio: [19.0, 43.6], duelo: [43.1, 52.2], guerra: [76.3, 38.3] }; // P3, P4, P2 em 390×844 (marcas do dono mapeadas pelo `cover` do fundo 1269×1700)
+    for (const [id, [vx, vy]] of Object.entries(VAGAS)) {
+      const [cx, cy] = centro(id);
+      expect(Math.abs(cx - vx), `${id} x`).toBeLessThanOrEqual(3.5);
+      expect(Math.abs(cy - vy), `${id} y`).toBeLessThanOrEqual(1.5);
+    }
+    // a vaga P1 (50,8%/35,1%) segue vazia: nenhum prédio tem o centro por lá
+    for (const id of ['torneio', 'duelo', 'guerra']) expect(Math.hypot(centro(id)[0] - 50.8, (centro(id)[1] - 35.1) * 2)).toBeGreaterThan(15);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
     for (const id of ['evolucao', 'pet']) {
