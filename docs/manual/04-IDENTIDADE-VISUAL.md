@@ -1355,8 +1355,8 @@ trilha). O que está em `public/sounds/` em `73be1a2f` (`ls -l public/sounds/`,
 | `evolve.webm` | `playEvolve` | 7 641 | 1,2 |
 | `degenerate.webm` | `playDegenerate` | 4 498 | 0,7 |
 | `task-complete.webm` | `playTaskComplete` | 1 570 | 0,2 |
-| `trilha-base.webm` | trilha, camada `base` | 122 447 | 28,8 |
-| `trilha-ritmo.webm` | trilha, camada `ritmo` | 122 092 | 28,8 |
+| `trilha-base.webm` ⚰️ 20/10/2026 (§136): removido | trilha, camada `base` | 122 447 | 28,8 |
+| `trilha-ritmo.webm` ⚰️ 20/10/2026 (§136): removido | trilha, camada `ritmo` | 122 092 | 28,8 |
 
 Total **258 248 bytes** (soma dos cinco; a régua confere contra o teto S6 de 300 KB).
 Codec: **WebM/Opus mono, codificado pelo MediaRecorder do Chrome** — não há
@@ -1414,6 +1414,8 @@ cache estiver `closed` — sem isso um `pagehide` seguido de volta pelo bfcache
 deixaria o app mudo para sempre, sem erro nenhum).
 
 #### 9.2.1 A trilha — `src/utils/trilha.ts` (21/09/2026)
+
+⚰️ 20/10/2026 (§136): removido o loop de 2 camadas (`trilha-base.webm`, `trilha-ritmo.webm`, `CAMADAS_DA_TRILHA` e o motor do loop em `trilha.ts`). O texto abaixo é histórico.
 
 **Duas camadas em fase, um estado só.** `CAMADAS_DA_TRILHA` (`sonsAssets.ts`) tem
 `base` e `ritmo`, ambas a 100 BPM, cada uma mestrada no alvo sozinha; `comecar()` carrega

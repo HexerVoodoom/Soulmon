@@ -543,7 +543,7 @@ O que está aberto e **depende do dono** está na seção 3 de
   (aplicado literal em `c703c8bc`); perguntado, corrigiu — *"quero o gerado nos
   3"* (`73be1a2f`). O que está no app é o **híbrido**: arquivo de IA em
   `playEvolve`/`playDegenerate`/`playTaskComplete` (com o sintetizado como
-  fallback) e na trilha de duas camadas, sintetizado nos cinco curtos. É
+  fallback) e na trilha de duas camadas (⚰️ 20/10/2026 (§136): removido), sintetizado nos cinco curtos. É
   escolha do dono, **não** resultado do A/B cego, que segue montado e não
   ouvido — "a IA venceu" e "o procedural venceu" continuam proibidas (S10).
   Nenhuma linha vermelha muda: nada toca sem gesto, a trilha nasce desligada

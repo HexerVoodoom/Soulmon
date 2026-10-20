@@ -5821,7 +5821,7 @@ a ligar.
 | Degeneração | `playDegenerate` | asset `ASSETS_DE_SOM.playDegenerate`, fallback procedural |
 | Tarefa concluída | `playTaskComplete` | asset `ASSETS_DE_SOM.playTaskComplete`, fallback procedural |
 | Presença, comida, banho, sono, sintonia do visor | `playPresence`, `playFeed`, `playShower`, `playSleep`, `playVisorTune` | procedural, sem asset (o gerador reprovou nos curtos — `PERGUNTAS-DO-DONO.md` #9/#10) |
-| Trilha | `ligarTrilha` / `desligarTrilha` (`src/utils/trilha.ts`) | duas camadas em loop (`CAMADAS_DA_TRILHA.base` + `.ritmo`), nasce desligada |
+| Trilha | `ligarTrilha` / `desligarTrilha` (`src/utils/trilha.ts`) | duas camadas em loop (`CAMADAS_DA_TRILHA.base` + `.ritmo`), nasce desligada ⚰️ 20/10/2026 (§136): removido |
 
 - **Asset se já decodificou, senão o procedural desta vez** — `playComAsset`
   em `sounds.ts`: chama `prepararAssets` (dispara a carga dos três de uma vez,
@@ -5848,7 +5848,7 @@ a ligar.
   (`handleToggleSound` em `App.tsx`, único desde `980bc84c`, passado como
   `onToggleSound` à `SettingsPage`; ⚰️ o `SettingsModal`, que também o recebia, foi
   apagado em `4a8b8049`, #37).
-- **Loop e camadas**: as duas camadas partem no mesmo `t0` e fecham em
+- **Loop e camadas** (⚰️ 20/10/2026 (§136): removido): as duas camadas partem no mesmo `t0` e fecham em
   `loopEnd = duracaoS` (12 compassos a 100 BPM — o arquivo carrega 1 s de cauda
   além disso); o ganho da soma vem de `TRIM_TRILHA_POR_CAMADAS_DB[n]` em
   `src/utils/loudness.ts`, dono único do alvo (footgun 9 — `sonsAssets.ts` não

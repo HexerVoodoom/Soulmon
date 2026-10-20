@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 20/10/2026 — Padrões L1–L9 decididos e loop de 2 camadas removido (`chore/aprova-padroes-limpa-audio`, REGISTRO §136)
+>
+> - L1–L9 decididos (§136): L1 em parte (energia superada pela §40), L7 superada pela §56, L9 provisório mantido; as demais aprovadas.
+> - Loop de 2 camadas removido: `trilha-base.webm`, `trilha-ritmo.webm`, `CAMADAS_DA_TRILHA` e o motor do loop em `trilha.ts`. As menções às duas camadas em registros anteriores (ex.: S16, 21/09/2026) são histórico.
+
 > ## 20/10/2026 — Ordem da lista de missões + missão especial de passos (`feat/ordem-missoes`, REGISTRO §132)
 >
 > - Ordem única (`missionsInQueueOrder`): "?" no topo, abertas, resgatadas no FIM (revoga A5). Aba Diárias = uma lista só (`DailyMissionBoard`): "Missão especial" no topo, linha fina, normais; a especial concluída desce para o fim.
