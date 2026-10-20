@@ -19,6 +19,7 @@
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
 import { attackFx, type AttackFxState } from './attackFxArt';
+import { aliasDoOraculo } from './elementoDoOraculo';
 import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
 import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
@@ -37,14 +38,11 @@ export const VISUAL_ELEMENTS = [
   'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor',
 ] as const;
 
-/** Ids do oráculo que não existem como arte: o mais próximo (`attackFxArt` faz o mesmo para a aura). */
-const ORACLE_TO_FX: Record<string, string> = { planta: 'vida', industrial: 'aco' };
-
 /** Id de elemento (do oráculo, da ficha ou do bestiário) → id que tem arte; sem arte, `neutro`. */
 export function fxElementId(id: string | undefined | null): string {
   if (!id) return FX_FALLBACK_ELEMENT;
   if (id === NIGHTMARE_ELEMENT) return hasNightmareFx() ? id : FX_FALLBACK_ELEMENT; // exclusivo do Pesadelo; sem arte, o procedural
-  const mapped = ORACLE_TO_FX[id] ?? id;
+  const mapped = aliasDoOraculo(id);
   return attackFx(mapped, 'orb') ? mapped : FX_FALLBACK_ELEMENT;
 }
 
@@ -119,7 +117,7 @@ export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 
 
 /** Elemento (inimigo, fantasma, pet sem ficha) → forma do golpe da skill básica/especial dele. */
 export function elementStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
-  const id = element ? (ORACLE_TO_FX[element] ?? element) : undefined;
+  const id = element ? aliasDoOraculo(element) : undefined;
   return (id ? ELEMENT_STRIKE_FORM[id] : undefined)?.[role] ?? ELEMENT_STRIKE_FALLBACK[role];
 }
 

@@ -57,6 +57,7 @@ import {
   arenaFoeSides,
   arenaPlayerCastScale,
   arenaPlayerHitScale,
+  arenaElementsFor,
   arenaPlayerSide,
   arenaRoundSeed,
   arenaSpecialElementScale,
@@ -161,7 +162,7 @@ export function ArenaGame({
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): segue como estava, na base da ficha (`basica.elementoId`); o que se VÊ é a identidade.
-    elements: { basica: basica?.elementoId ?? ident.basico.elemento, especial: especial?.elementoId ?? ident.especial.elemento, attrs: atributos },
+    elements: arenaElementsFor({ basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos),
   }), [estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;

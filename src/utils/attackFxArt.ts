@@ -13,6 +13,7 @@
 //
 // Era `derivedAttackFxArt.ts` (só derivados) até os base entrarem; o nome
 // antigo da função fica exportado como alias.
+import { aliasDoOraculo } from './elementoDoOraculo';
 
 export type AttackFxState =
   | 'cast'
@@ -80,13 +81,7 @@ export const AURA_96_COUNT = Object.keys(AURA_96).length;
 
 export { ATTACK_FX_STATES };
 
-/**
- * O elemento DOMINANTE do oráculo (`soulmonMeta.dominantElement`,
- * `utils/oracle.ts` `ElementId`) não coincide 1:1 com o class-system: `planta`
- * e `industrial` não são elementos base lá. Mapeia para a aura mais próxima
- * (`vida` e `aco` são derivados com arte própria).
- */
-const ORACLE_TO_FX: Record<string, string> = { planta: 'vida', industrial: 'aco' };
+// O dominante do oráculo (`planta`/`industrial`) vira o da classe em `elementoDoOraculo.ts` (dono único do mapa).
 
 /**
  * Aura (D9: a única chamada por agora) para o elemento dominante do bicho.
@@ -95,6 +90,6 @@ const ORACLE_TO_FX: Record<string, string> = { planta: 'vida', industrial: 'aco'
  */
 export const auraForElement = (elementoOraculo: string | undefined, size: 96 | 128 = 128): string | undefined => {
   if (!elementoOraculo) return undefined;
-  const id = ORACLE_TO_FX[elementoOraculo] ?? elementoOraculo;
+  const id = aliasDoOraculo(elementoOraculo);
   return (size === 96 ? AURA_96[id] : undefined) ?? attackFx(id, 'aura');
 };

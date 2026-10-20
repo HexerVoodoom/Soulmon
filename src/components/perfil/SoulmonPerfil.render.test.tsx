@@ -7,6 +7,9 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { installDomGlobals } from '../../test/renderEnv';
 import { SoulmonPerfil } from './SoulmonPerfil';
+import { petElementOf } from '../../utils/starterElements';
+import { elementIcon } from '../../utils/elementIconArt';
+import { elementoNomeDe } from '../../utils/soulProfile/ficha/elementoNome';
 
 installDomGlobals();
 afterEach(cleanup);
@@ -70,4 +73,36 @@ describe('SoulmonPerfil', () => {
       expect(parseInt(r.style.minHeight, 10)).toBeGreaterThanOrEqual(44);
     }
   });
+});
+
+describe('SoulmonPerfil: elemento do oráculo normalizado (dono, 20/10/2026, REGISTRO §150)', () => {
+  const linha = (lang: 'pt-BR' | 'en-US', petElement: string | undefined) => {
+    const { container } = render(<SoulmonPerfil language={lang} input={{ evolutionStage: 'rookie', petElement }} />);
+    const row = container.querySelector('[data-perfil-row="elemento"]')!;
+    return { txt: row.textContent!, src: row.querySelector('img')?.getAttribute('src') };
+  };
+  const dom = (id: string) => petElementOf({ soulmonMeta: { dominantElement: id } });
+  const CASOS: Array<[string, string, string, string]> = [['planta', 'vida', 'Vida', 'Life'], ['industrial', 'aco', 'Aço', 'Steel']];
+  for (const [cru, classe, pt, en] of CASOS) {
+    it(`${cru} → ${classe}: nome nas duas línguas, ícone certo, sem id cru`, () => {
+      const a = linha('pt-BR', dom(cru));
+      expect(a.txt).toContain(pt);
+      expect(a.txt).not.toContain(cru);
+      expect(a.src).toBe(elementIcon(classe));
+      cleanup();
+      const b = linha('en-US', dom(cru));
+      expect(b.txt).toContain(en);
+      expect(b.txt).not.toContain(cru);
+      expect(b.src).toBe(elementIcon(classe));
+    });
+  }
+  for (const id of ['agua', 'fogo', 'terra', 'ar', 'sombra', 'luz']) {
+    it(`${id} (já base) fica inalterado`, () => {
+      const a = linha('pt-BR', dom(id));
+      expect(a.txt).toContain(elementoNomeDe(id).pt);
+      expect(a.src).toBe(elementIcon(id));
+      cleanup();
+      expect(linha('en-US', dom(id)).txt).toContain(elementoNomeDe(id).en);
+    });
+  }
 });
