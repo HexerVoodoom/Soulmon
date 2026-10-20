@@ -32,8 +32,7 @@
 import { CROSSFADE_MUSICA_S, TEMA_DO_JOGO } from './sonsAssets';
 import { criarPlayerDeStreaming, escolherFormatoDe } from './streamMusica';
 import { db2lin, GANHO_MUSICA_DB, OFFSET_MUSICA_EM_COMBATE_DB } from './loudness';
-import { readFlag, writeFlag } from './safeStorage';
-import { STORAGE_KEYS } from './storageKeys';
+import { musicaLigada, definirMusicaLigada } from './audioBus';
 
 /** Mesmos motivos da trilha (`trilha.ts`): quem pausa por um não libera o outro. */
 export type MotivoDePausa = 'sono' | 'descanso' | 'mudo';
@@ -56,9 +55,9 @@ let cicloLigado = false;
 const GESTOS = ['pointerup', 'touchend', 'keydown', 'click'] as const;
 let armado = false;
 
-/** A preferência: o tema NASCE ligado (a chave guarda o DESLIGADO). */
+/** A preferência: a ÚNICA de música (§129, dono `audioBus.musicaLigada`); nasce ligada. */
 export function temaPreferido(): boolean {
-  return !readFlag(STORAGE_KEYS.SOUND_THEME_OFF);
+  return musicaLigada();
 }
 
 /** O formato que este motor diz tocar; WebM/Opus primeiro (menor), M4A como rede. */
@@ -166,14 +165,14 @@ export function iniciarTemaNoGesto(): void {
 
 /** Gesto do jogador nas Configurações: liga (persiste) e começa. */
 export function ligarTema(): void {
-  writeFlag(STORAGE_KEYS.SOUND_THEME_OFF, false, { silent: true });
+  definirMusicaLigada(true);
   desarmar();
   iniciarSessao();
 }
 
 /** Gesto do jogador: desliga (persiste) e para. */
 export function desligarTema(): void {
-  writeFlag(STORAGE_KEYS.SOUND_THEME_OFF, true, { silent: true });
+  definirMusicaLigada(false);
   desarmar();
   ligadaNestaSessao = false;
   parar();

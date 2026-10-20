@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 19/10/2026 — Um interruptor só de música (`feat/interruptor-unico-musica`, REGISTRO §129)
+>
+> - Um interruptor "Música" liga/desliga tema da Home, música de combate (Masmorra, Arena, Duelo, Torneio) e Pesadelo; "Sons" segue separado. Desligada = silêncio em todas. Dono da preferência: `musicaLigada()` em `audioBus.ts`; chave `SOUND_MUSIC_OFF`; migração `migrarPreferenciaDeMusica()` (substitui a da §127). Detalhe: `docs/SOM.md` §13.
+> - Portões (tsc/vitest/build): ver PR.
+> - **Pendente:** confirmação no aparelho do dono (PWA instalado, depois de atualizar: Masmorra toca Stone Hall Combat; desligar "Música" silencia Home, combate e Pesadelo; "Sons" independente).
+
 > ## 15/10/2026 — Corte do `index.js` (`perf/corte-index-js`, REGISTRO §80)
 >
 > - Entrada 724.584 -> ~642 KB bruto (gz 249,8 -> ~223,6 KB): regras do tour sem a copy (`welcomeTourGate.ts`), `UnlockToast` lazy, `sonner`/`@capacitor/core` em `vendor-*`. Sem mudança de comportamento.

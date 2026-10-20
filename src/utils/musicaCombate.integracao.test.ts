@@ -40,8 +40,9 @@ class FakeAudio {
 }
 
 import { entrarNaSuperficie, esquecerMusica, iniciarMusica } from './musica';
-import { esquecerTrilha, aoGestoSonoro, desligarTrilha } from './trilha';
-import { migrarPreferenciasDeSom } from './audioBus';
+import { esquecerTrilha, aoGestoSonoro } from './trilha';
+import { musicaLigada } from './audioBus';
+import { desligarMusica } from './musica';
 import { musicaDeCombateTocando } from './musicaDeCombate';
 import { STORAGE_KEYS } from './storageKeys';
 
@@ -72,45 +73,41 @@ describe('entrar na superfície de combate com a chave AUSENTE (aparelho novo): 
   });
 });
 
-describe('chave "false" ESCOLHIDA (marca de versão presente): a música de combate NÃO toca e a escolha é respeitada', () => {
-  it('masmorra com SOUND_TRACK_ENABLED="false" + marca "1" fica muda (prova da hipótese b)', () => {
-    localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
+describe('§129: a preferência única de música (migração das chaves legadas + interruptor)', () => {
+  it('desligou AS DUAS depois da §127: a música fica desligada e o combate é mudo', () => {
     localStorage.setItem(STORAGE_KEYS.SOUND_PREFS_VERSION, '1');
+    localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
+    localStorage.setItem(STORAGE_KEYS.SOUND_THEME_OFF, 'true');
     iniciarMusica();
+    expect(musicaLigada()).toBe(false);
     entrarNaSuperficie('masmorra');
     expect(tocandoArquivo('musica-combate')).toBe(false);
     expect(musicaDeCombateTocando()).toBeNull();
-    expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('false');
   });
-});
-
-describe('§127: "false" HERDADO (sem marca de versão) é apagado uma vez e a música toca', () => {
-  it('masmorra com "false" e sem marca toca o dungeon theme; a marca vira "1"', () => {
+  it('só o combate "false" (tema ligado): fica LIGADA e a música de combate toca', () => {
+    localStorage.setItem(STORAGE_KEYS.SOUND_PREFS_VERSION, '1');
     localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
     iniciarMusica();
+    expect(musicaLigada()).toBe(true);
     expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBeNull();
-    expect(localStorage.getItem(STORAGE_KEYS.SOUND_PREFS_VERSION)).toBe('1');
     entrarNaSuperficie('masmorra');
     expect(musicaDeCombateTocando()).toBe('combate');
   });
   it('idempotente: depois da migração, desligar pelo interruptor vale e uma 2ª partida NÃO religa', () => {
-    localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
     iniciarMusica();
-    desligarTrilha();
-    expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('false');
+    desligarMusica();
+    expect(localStorage.getItem(STORAGE_KEYS.SOUND_MUSIC_OFF)).toBe('true');
     esquecerTrilha(); esquecerMusica();
     iniciarMusica(); // "recarregar o app"
-    expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('false');
+    expect(musicaLigada()).toBe(false);
     entrarNaSuperficie('masmorra');
     expect(musicaDeCombateTocando()).toBeNull();
   });
-  it('chave ausente ou "true" não é tocada pela migração', () => {
+  it('Pesadelo com a música desligada = silêncio (nem tema)', () => {
     iniciarMusica();
-    expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBeNull();
-    localStorage.removeItem(STORAGE_KEYS.SOUND_PREFS_VERSION);
-    localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'true');
-    migrarPreferenciasDeSom();
-    expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('true');
+    desligarMusica();
+    entrarNaSuperficie('pesadelo');
+    expect(musicaDeCombateTocando()).toBeNull();
   });
 });
 

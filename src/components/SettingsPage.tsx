@@ -15,9 +15,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { SLEEP_REMINDER_EVENT } from '../utils/restWindow';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
-import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
-import { desligarTema, ligarTema, temaPreferido } from '../utils/tema';
-import { reavaliarMusica } from '../utils/musica';
+import { desligarMusica, ligarMusica, musicaPreferida } from '../utils/musica';
 import { APP_VERSION, FeedbackRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { UserAvatar } from './ui/UserAvatar';
@@ -235,8 +233,7 @@ export function SettingsPage({
   onResetOnboarding,
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
-  const [trilha, setTrilha] = useState(() => trilhaPreferida());
-  const [tema, setTema] = useState(() => temaPreferido());
+  const [musica, setMusica] = useState(() => musicaPreferida());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
 
@@ -469,8 +466,8 @@ export function SettingsPage({
       )}
 
       {/* ── SOM ─────────────────────────────────────────────────────────────
-             D11: som só por gesto; o app funciona 100 % mudo. A trilha tem chave
-             PRÓPRIA (S2/S13): nasce desligada e este toque É o gesto que a liga. */}
+             D11: som só por gesto; o app funciona 100 % mudo. "Música" é UMA preferência
+             (§129) que vale para todas as faixas; nasce LIGADA e este toque É o gesto que a liga. */}
       {onToggleSound && (
         <Group title={isPt ? 'Som' : 'Sound'}>
           <SwitchRow
@@ -484,34 +481,18 @@ export function SettingsPage({
               : 'They confirm what you did. Never play on their own.'}
           />
           <SwitchRow
-            checked={tema}
+            checked={musica}
             onToggle={() => {
-              // Desde 11/10/2026 as duas preferências convivem (tema na Home, trilha na masmorra/arena): o diretor
-              // garante que nunca soam juntas e faz o crossfade. O toque É o gesto que liga.
-              if (tema) { desligarTema(); } else { ligarTema(); }
-              setTema(!tema);
-              reavaliarMusica();
+              // §129: UMA preferência para tema da Home + combate + Pesadelo. O toque É o gesto que liga.
+              if (musica) desligarMusica(); else ligarMusica();
+              setMusica(!musica);
             }}
-            label={isPt ? 'Música-tema' : 'Theme music'}
+            label={isPt ? 'Música' : 'Music'}
             language={language}
-            infoLabel={isPt ? 'Sobre a música-tema' : 'About the theme music'}
+            infoLabel={isPt ? 'Sobre a música' : 'About the music'}
             info={soundMuted
               ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, the music stays silent.')
-              : (isPt ? 'Começa no seu primeiro toque ao abrir o jogo. Para sozinha quando o app sai de vista.' : 'Starts on your first tap after the game opens. Stops by itself when the app is out of view.')}
-          />
-          <SwitchRow
-            checked={trilha}
-            onToggle={() => {
-              if (trilha) desligarTrilha(); else ligarTrilha();
-              setTrilha(!trilha);
-              reavaliarMusica();
-            }}
-            label={isPt ? 'Música de combate' : 'Combat music'}
-            language={language}
-            infoLabel={isPt ? 'Sobre a música de combate' : 'About the combat music'}
-            info={soundMuted
-              ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, music stays silent.')
-              : (isPt ? 'A Masmorra, a Arena e o Torneio têm música própria. Começa quando você entra e para sozinha quando o app sai de vista.' : 'The Dungeon, the Arena and the Tournament have their own music. It starts when you go in and stops by itself when the app is out of view.')}
+              : (isPt ? 'Vale para o tema da Home, a música de combate (Masmorra, Arena, Duelo, Torneio) e a do Pesadelo. Começa no seu primeiro toque e para sozinha quando o app sai de vista.' : 'Covers the Home theme, the combat music (Dungeon, Arena, Duel, Tournament) and the Nightmare. Starts on your first tap and stops by itself when the app is out of view.')}
           />
         </Group>
       )}

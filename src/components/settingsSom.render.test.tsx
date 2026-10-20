@@ -8,8 +8,8 @@
  * (decisão #37): o modal foi APAGADO; a SettingsPage é o único caminho. Este teste
  * prova que a `SettingsPage` (a tela que o jogador abre de verdade) expõe as
  * duas chaves, em PT e EN, e que cada toque chega ao dono certo: o mudo no
- * `onToggleSound` do App, a trilha em `ligarTrilha`/`desligarTrilha` (S2: o
- * toque É o gesto).
+ * `onToggleSound` do App, a trilha em `ligarMusica`/`desligarMusica` (§129: UMA
+ * preferência de música; o toque É o gesto).
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
@@ -18,6 +18,8 @@ import { SettingsPage } from './SettingsPage';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { esquecerTrilha, trilhaPreferida } from '../utils/trilha';
 import { temaPreferido } from '../utils/tema';
+import { musicaLigada } from '../utils/audioBus';
+import { escolherFaixa } from '../utils/musica';
 
 /** `matchMedia` não existe no jsdom (InstallPrompt/ThemeProvider chamam no 1º efeito). */
 function installMatchMedia() {
@@ -67,7 +69,7 @@ function montar(language: 'pt-BR' | 'en-US', onToggleSound = () => {}, soundMute
 const switchDe = (rotulo: RegExp) =>
   screen.getAllByRole('switch', { hidden: true }).find(e => rotulo.test(e.textContent || '')) as HTMLElement;
 
-describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => {
+describe('Configurações → Som: o jogador alcança o mudo e a música', () => {
   beforeEach(() => {
     installMatchMedia();
     localStorage.clear();
@@ -75,35 +77,35 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
   });
 
   it.each([
-    ['pt-BR', /^Sons/, /^Música de combate/, /^Música-tema/],
-    ['en-US', /^Sound effects/, /^Combat music/, /^Theme music/],
-  ] as const)('%s: as três chaves existem, com rótulo no idioma', (language, sons, trilha, tema) => {
+    ['pt-BR', /^Sons/, /^Música/],
+    ['en-US', /^Sound effects/, /^Music/],
+  ] as const)('%s: o mudo e UM interruptor de música, com rótulo no idioma (sem "Música-tema"/"Música de combate")', (language, sons, musica) => {
     montar(language);
     expect(switchDe(sons)).toBeTruthy();
-    expect(switchDe(trilha)).toBeTruthy();
-    expect(switchDe(tema)).toBeTruthy();
+    expect(switchDe(musica)).toBeTruthy();
+    const rotulos = screen.getAllByRole('switch', { hidden: true }).map(e => e.textContent || '');
+    expect(rotulos.filter(t => /^(Música|Music)/.test(t))).toHaveLength(1);
+    expect(rotulos.some(t => /Música-tema|Música de combate|Theme music|Combat music/.test(t))).toBe(false);
   });
 
-  it('S17: a música-tema nasce LIGADA (decisão do dono, 07/10/2026), persiste e desliga/religa por toque', () => {
-    montar('en-US');
-    const sw = switchDe(/^Theme music/);
-    expect(temaPreferido()).toBe(true);
+  it('§129: a música nasce LIGADA; um toque desliga tema + combate + Pesadelo, outro liga tudo', () => {
+    montar('pt-BR');
+    const sw = switchDe(/^Música/);
     expect(sw.getAttribute('aria-checked')).toBe('true');
+    expect(musicaLigada()).toBe(true);
     fireEvent.click(sw);
+    expect(sw.getAttribute('aria-checked')).toBe('false');
+    expect(musicaLigada()).toBe(false);
     expect(temaPreferido()).toBe(false);
+    expect(trilhaPreferida()).toBe(false);
+    for (const f of ['casa', 'masmorra', 'pesadelo'] as const) expect(escolherFaixa(f, musicaLigada())).toBeNull();
     fireEvent.click(sw);
+    expect(musicaLigada()).toBe(true);
     expect(temaPreferido()).toBe(true);
-  });
-
-  it('S17 emendada (11/10/2026; 19/10/2026): as duas preferências CONVIVEM — tema na Home, música de combate nas lutas, e a de combate NASCE LIGADA', () => {
-    montar('en-US');
-    const combate = switchDe(/^Combat music/);
     expect(trilhaPreferida()).toBe(true);
-    expect(combate.getAttribute('aria-checked')).toBe('true');
-    expect(temaPreferido()).toBe(true);
-    fireEvent.click(switchDe(/^Theme music/));
-    expect(temaPreferido()).toBe(false);
-    expect(trilhaPreferida()).toBe(true); // desligar o tema não desliga a de combate
+    expect(escolherFaixa('casa', musicaLigada())).toBe('tema');
+    expect(escolherFaixa('masmorra', musicaLigada())).toBe('combate');
+    expect(escolherFaixa('pesadelo', musicaLigada())).toBe('pesadelo');
   });
 
   it('tocar em "Sons" chama o dono do mudo (o App), e o estado refletido é `!soundMuted`', () => {
@@ -115,15 +117,12 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
     expect(onToggleSound).toHaveBeenCalledTimes(1);
   });
 
-  it('tocar em "Música de combate" desliga a chave PRÓPRIA (19/10/2026: nasce LIGADA) e liga de novo', () => {
-    montar('pt-BR');
-    const sw = switchDe(/^Música de combate/);
-    expect(trilhaPreferida()).toBe(true);
-    expect(sw.getAttribute('aria-checked')).toBe('true');
-    fireEvent.click(sw);
-    expect(trilhaPreferida()).toBe(false);
-    fireEvent.click(sw);
-    expect(trilhaPreferida()).toBe(true);
+  it('"Sons" (mudo) segue independente da música: tocar nele não mexe na preferência', () => {
+    const onToggleSound = vi.fn();
+    montar('pt-BR', onToggleSound);
+    fireEvent.click(switchDe(/^Sons/));
+    expect(onToggleSound).toHaveBeenCalledTimes(1);
+    expect(musicaLigada()).toBe(true);
   });
 
   it('sem `onToggleSound` o grupo não aparece (nada de switch morto)', () => {

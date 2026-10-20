@@ -98,16 +98,21 @@ export const STORAGE_KEYS = {
    *  LEITOR (`trilhaLigada`) passou a usar `readFlagOr(..., true)`, então sem a
    *  chave vale LIGADO e só `'false'` explícito desliga. O autoplay segue vetado
    *  (D11): ligado é preferência, o som só sai depois de um gesto. */
-  SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',
+  SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',  // LEGADA (§129): só lida pela migração §129, não use
   /** Versão do esquema das preferências de som (REGISTRO §127). Ausente = aparelho anterior ao §102, em que
    *  `SOUND_TRACK_ENABLED='false'` podia ser herança da era "nasce desligada" e não escolha do jogador. `'1'` = a
    *  migração já rodou: um 'false' gravado DEPOIS dela é escolha explícita e vale. */
-  SOUND_PREFS_VERSION: 'soulmon-sound-prefs-version',
+  SOUND_PREFS_VERSION: 'soulmon-sound-prefs-version',  // LEGADA (§129): só lida pela migração §129, não use
   /** A música-TEMA ("Stone Hall Decay"), decisão do dono de 07/10/2026 — revoga o
    *  "nasce desligada" (S2) SÓ para ela. Polaridade como a do mudo: a chave guarda
    *  DESLIGADA, então `readFlag` sem a chave devolve `false` e o tema nasce LIGADO.
    *  Ele continua só começando por gesto (D11): ligado ≠ tocando. */
-  SOUND_THEME_OFF: 'soulmon-sound-theme-off',
+  SOUND_THEME_OFF: 'soulmon-sound-theme-off',  // LEGADA (§129): só lida pela migração §129, não use
+  /** A ÚNICA preferência de MÚSICA (REGISTRO §129, 19/10/2026): tema da Home + combate + Pesadelo. Polaridade OFF: ausente =
+   *  LIGADA (`readFlag`). Dono: `audioBus.musicaLigada()`. Ligada ≠ tocando (D11: só depois de gesto). */
+  SOUND_MUSIC_OFF: 'soulmon-sound-music-off',
+  /** Marca da migração §129 (`'1'` = já rodou; as três chaves legadas foram removidas). */
+  SOUND_MUSIC_VERSION: 'soulmon-sound-music-version',
   FCM_TOKEN: 'soulmon-fcm-token',
   LAST_CLOUD_SYNC: 'soulmon-last-cloud-sync',
   /** '1' = há mudança do jogo que a nuvem ainda não confirmou. Escrita a cada mutação, apagada quando o

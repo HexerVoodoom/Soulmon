@@ -54,7 +54,7 @@
  *   e agenda a liberação; `liberarMarco` fica exposto para quando a cerimônia
  *   ganhar o hook. Um duck sem liberação garantida silenciaria o app inteiro.
  */
-import { readFlag, readFlagOr, writeFlag, readJson, writeJson, readLocal, writeLocal, removeLocal } from './safeStorage';
+import { readFlag, writeFlag, readJson, writeJson, readLocal, writeLocal, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import type { CategoriaSom } from './loudness';
 import { ORDEM_DA_ESCADA, TETO_DBTP, GANHO_DE_CATEGORIA_DB, db2lin } from './loudness';
@@ -250,32 +250,49 @@ function ganhoLinearDe(cat: CategoriaSom): number {
 }
 
 /**
- * A trilha de combate **nasce LIGADA** desde 19/10/2026 (decisão do dono, revoga o
- * "nasce desligada" da S2 para as faixas de combate) mas o autoplay segue vetado (D11): ligada é PREFERÊNCIA, o som só
- * sai depois de um gesto. Só `'false'` gravado desliga: quem já gravou um valor mantém o que gravou. A chave é
- * PRÓPRIA, separada do `mute` global — ver o comentário em `storageKeys.ts`.
+ * A PREFERÊNCIA ÚNICA DE MÚSICA (REGISTRO §129, 19/10/2026: "é só um interruptor de música, que vale pra todas").
+ * Dono único: liga/desliga tema da Home + combate (Masmorra, Arena, Duelo, Torneio) + Pesadelo. NASCE LIGADA (a chave
+ * guarda o DESLIGADO), mas o autoplay segue vetado (D11): ligada é preferência, o som só sai depois de um gesto.
+ * Separada do mudo global (`SOUND_MUTED`, "Sons"), que também cala a música.
  */
-export function trilhaLigada(): boolean {
-  return readFlagOr(STORAGE_KEYS.SOUND_TRACK_ENABLED, true);
+export function musicaLigada(): boolean {
+  return !readFlag(STORAGE_KEYS.SOUND_MUSIC_OFF);
+}
+
+export function definirMusicaLigada(on: boolean): void {
+  writeFlag(STORAGE_KEYS.SOUND_MUSIC_OFF, !on, { silent: true });
+  if (barramento) barramento.busTrilha.gain.value = on ? 1 : 0;
 }
 
 /**
- * MIGRAÇÃO ÚNICA das preferências de som (REGISTRO §127, 19/10/2026). Bug do dono: "entrei no combate e não mudou a
- * trilha" — num aparelho que passou pela era da S2 (a trilha nascia DESLIGADA) a chave podia estar gravada como
- * `'false'`, e `trilhaLigada()` só trata AUSENTE como ligada: Masmorra/Duelo seguiam com o tema, sem música de combate.
- * Quem está sem a marca de versão não pode ter escolhido nada DEPOIS do §102 (a marca nasce com este código), então o
- * `'false'` que tem é herança e sai uma vez (volta ao padrão LIGADO). Depois a marca vale `'1'` e um `'false'` vindo do
- * interruptor é escolha e nunca mais é tocado. Idempotente. Chame antes da primeira leitura.
+ * MIGRAÇÃO ÚNICA das três chaves legadas para a preferência única (REGISTRO §129; substitui a de §127). Idempotente.
+ * Só desliga a música quem, DEPOIS da §127 (marca de versão '1'), desligou AS DUAS: combate (`SOUND_TRACK_ENABLED='false'`)
+ * e tema (`SOUND_THEME_OFF='true'`). Um 'false' sem a marca é herança da S2; desligar só um dos dois não era "sem música".
+ * Depois remove as legadas e grava a marca — dali em diante `definirMusicaLigada(false)` nunca é desfeito. Chame antes da
+ * primeira leitura.
  */
-export function migrarPreferenciasDeSom(): void {
-  if (readLocal(STORAGE_KEYS.SOUND_PREFS_VERSION) === '1') return;
-  if (readLocal(STORAGE_KEYS.SOUND_TRACK_ENABLED) === 'false') removeLocal(STORAGE_KEYS.SOUND_TRACK_ENABLED, { silent: true });
-  writeLocal(STORAGE_KEYS.SOUND_PREFS_VERSION, '1', { silent: true });
+export function migrarPreferenciaDeMusica(): void {
+  if (readLocal(STORAGE_KEYS.SOUND_MUSIC_VERSION) === '1') return;
+  if (readLocal(STORAGE_KEYS.SOUND_MUSIC_OFF) === null) {
+    const marca127 = readLocal(STORAGE_KEYS.SOUND_PREFS_VERSION) === '1';
+    const combateOff = marca127 && readLocal(STORAGE_KEYS.SOUND_TRACK_ENABLED) === 'false';
+    const temaOff = readLocal(STORAGE_KEYS.SOUND_THEME_OFF) === 'true';
+    if (combateOff && temaOff) writeFlag(STORAGE_KEYS.SOUND_MUSIC_OFF, true, { silent: true });
+  }
+  removeLocal(STORAGE_KEYS.SOUND_TRACK_ENABLED, { silent: true });
+  removeLocal(STORAGE_KEYS.SOUND_PREFS_VERSION, { silent: true });
+  removeLocal(STORAGE_KEYS.SOUND_THEME_OFF, { silent: true });
+  writeLocal(STORAGE_KEYS.SOUND_MUSIC_VERSION, '1', { silent: true });
 }
 
+/** Alias fino (a trilha/combate lê por aqui): o dono é `musicaLigada`. */
+export function trilhaLigada(): boolean {
+  return musicaLigada();
+}
+
+/** Alias fino: o dono é `definirMusicaLigada`. */
 export function definirTrilhaLigada(on: boolean): void {
-  writeFlag(STORAGE_KEYS.SOUND_TRACK_ENABLED, on, { silent: true });
-  if (barramento) barramento.busTrilha.gain.value = on ? 1 : 0;
+  definirMusicaLigada(on);
 }
 
 /* ── O barramento ────────────────────────────────────────────────────────── */

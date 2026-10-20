@@ -32,9 +32,11 @@ import { TETO_DBTP, db2lin } from './loudness';
 import {
   D2_PROFUNDIDADE_DB,
   barramentoAtual,
+  definirMusicaLigada,
   definirTrilhaLigada,
   definirVolume,
   encerrarBarramento,
+  musicaLigada,
   tocarNa,
   trilhaLigada,
   volumeDe,
@@ -243,17 +245,19 @@ describe('os duckings da §6.2', () => {
   });
 });
 
-/* ── 4. Trilha: chave própria, padrão LIGADO desde 19/10/2026 ────────────── */
+/* ── 4. Música: preferência única (§129), padrão LIGADO desde 19/10/2026 ─────── */
 
-describe('a trilha de combate nasce LIGADA, em chave própria (decisão do dono, 19/10/2026)', () => {
+describe('a música nasce LIGADA, em preferência única (decisão do dono, 19/10/2026; §129)', () => {
   it('sem chave nenhuma, a trilha está LIGADA (o autoplay continua vetado pela D11 — ligada é preferência, o som só sai depois de gesto)', () => {
-    expect(armazem.has(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe(false);
-    expect(trilhaLigada()).toBe(true);
+    expect(armazem.has(STORAGE_KEYS.SOUND_MUSIC_OFF)).toBe(false);
+    expect(musicaLigada()).toBe(true);
+    expect(trilhaLigada()).toBe(true); // alias fino
   });
 
   it('`false` gravado desliga: quem escolheu desligar mantém o que gravou', () => {
-    definirTrilhaLigada(false);
-    expect(armazem.get(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('false');
+    definirMusicaLigada(false);
+    expect(armazem.get(STORAGE_KEYS.SOUND_MUSIC_OFF)).toBe('true'); // polaridade OFF
+    expect(musicaLigada()).toBe(false);
     expect(trilhaLigada()).toBe(false);
   });
 
@@ -263,15 +267,15 @@ describe('a trilha de combate nasce LIGADA, em chave própria (decisão do dono,
   });
 
   it('com `false` gravado o bus da trilha nasce em 0', () => {
-    armazem.set(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
+    armazem.set(STORAGE_KEYS.SOUND_MUSIC_OFF, 'true');
     tocarNa('cuidado', umaFonte());
     expect(barramentoAtual()!.busTrilha.gain.value).toBe(0);
   });
 
   it('a chave da trilha é OUTRA, não o `SOUND_MUTED`', () => {
     definirTrilhaLigada(true);
-    expect(STORAGE_KEYS.SOUND_TRACK_ENABLED).not.toBe(STORAGE_KEYS.SOUND_MUTED);
-    expect(armazem.has(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe(true);
+    expect(STORAGE_KEYS.SOUND_MUSIC_OFF).not.toBe(STORAGE_KEYS.SOUND_MUTED);
+    expect(armazem.has(STORAGE_KEYS.SOUND_MUSIC_OFF)).toBe(true);
     expect(
       armazem.has(STORAGE_KEYS.SOUND_MUTED),
       'ligar a trilha escreveu no mudo global: os dois estados foram fundidos, e é a fusão que a S2 proíbe',

@@ -10,7 +10,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const estado = vi.hoisted(() => ({ muted: false, barramentos: 0, busConexoes: 0 }));
 
-vi.mock('./audioBus', () => {
+vi.mock('./audioBus', async (orig) => {
+  const real = await orig<typeof import('./audioBus')>(); // a preferência de música (§129) é a REAL, no localStorage
+
   const gain = () => ({
     gain: { value: 1, cancelScheduledValues: () => {}, setValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
     connect: () => { estado.busConexoes++; }, disconnect: () => {},
@@ -21,7 +23,7 @@ vi.mock('./audioBus', () => {
     createMediaElementSource: () => ({ connect: () => { estado.busConexoes++; } }),
   };
   const bus = { ctx, busTema: gain() };
-  return { garantirBarramento: () => { estado.barramentos++; return bus; } };
+  return { ...real, garantirBarramento: () => { estado.barramentos++; return bus; } };
 });
 vi.mock('./sounds', () => ({ isMuted: () => estado.muted }));
 
@@ -71,7 +73,7 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 describe('S17 — nasce ligado, mas NADA acontece antes do gesto (D11)', () => {
   it('sem chave salva a preferência é LIGADA', () => {
     expect(temaPreferido()).toBe(true);
-    localStorage.setItem(STORAGE_KEYS.SOUND_THEME_OFF, 'true');
+    localStorage.setItem(STORAGE_KEYS.SOUND_MUSIC_OFF, 'true');
     expect(temaPreferido()).toBe(false);
   });
 
@@ -95,7 +97,7 @@ describe('S17 — nasce ligado, mas NADA acontece antes do gesto (D11)', () => {
   });
 
   it('com o tema desligado pelo jogador, armar não instala nada e o gesto não toca', () => {
-    localStorage.setItem(STORAGE_KEYS.SOUND_THEME_OFF, 'true');
+    localStorage.setItem(STORAGE_KEYS.SOUND_MUSIC_OFF, 'true');
     armarTemaNoPrimeiroGesto();
     gesto();
     expect(fakes.length).toBe(0);
@@ -125,7 +127,7 @@ describe('S17 (07/10/2026) — a tela de abertura inicia o tema por gesto, antes
     expect(temaTocando()).toBe(true);
   });
   it('preferência desligada, mudo ou aba escondida: a abertura não toca nada', () => {
-    localStorage.setItem(STORAGE_KEYS.SOUND_THEME_OFF, 'true');
+    localStorage.setItem(STORAGE_KEYS.SOUND_MUSIC_OFF, 'true');
     iniciarTemaNoGesto();
     expect(fakes.length).toBe(0);
     localStorage.clear(); estado.muted = true;

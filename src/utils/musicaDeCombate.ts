@@ -5,8 +5,8 @@
  * Trocar `combate` ↔ `pesadelo` é crossfade: a velha desce, a nova sobe (`pedirMusicaDeCombate`).
  *
  * Este módulo é o DONO DO ESTADO delas (qual foi pedida, se há consentimento, as pausas por motivo); o `<audio>` em si é
- * de `streamMusica.ts` (o mesmo player do tema), ligado ao `busTrilha` — então o interruptor "Música de combate"
- * (`SOUND_TRACK_ENABLED`, nasce LIGADO desde 19/10/2026) e o duck do Marco valem para elas como valem para a trilha.
+ * de `streamMusica.ts` (o mesmo player do tema), ligado ao `busTrilha` — então o interruptor "Música"
+ * (`musicaLigada`, nasce LIGADA desde 19/10/2026, §129) e o duck do Marco valem para elas como valem para a trilha.
  *
  * - **D11 / autoplay**: nada toca sem `consentirMusicaDeCombate(true)`, que o `trilha.ts` só dá depois de um gesto
  *   (o interruptor ligado + o primeiro gesto sonoro ou o toque que abriu a superfície). Ligado é preferência.

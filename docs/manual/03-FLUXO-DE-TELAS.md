@@ -2036,7 +2036,7 @@ modal monta, mudo ou não; o que muda com `soundMuted` é só o hint.
 
 **Estados**: `trilha` é estado local lido uma vez na montagem
 (`useState(() => trilhaPreferida())`, isto é, a chave
-`STORAGE_KEYS.SOUND_TRACK_ENABLED`); não reage a mudança externa enquanto o
+`STORAGE_KEYS.SOUND_TRACK_ENABLED`; ⚰️ desde 19/10/2026, §129, é a preferência única `SOUND_MUSIC_OFF`); não reage a mudança externa enquanto o
 modal está aberto. A trilha em si para sozinha em `document.hidden`, no sono
 (`handleSleep` chama `pausarTrilha`/`retomarTrilha`) e no mudo — regra em
 [`02` §58-A](02-REGRAS-DE-NEGOCIO.md#som).
