@@ -133,7 +133,7 @@ describe('LibraryPage — o sprite do diretorio publico', () => {
 
 describe('isSafeSpriteSrc — as bordas que o render nao alcanca', () => {
   it('aceita o caminho de raiz, e SO ele', () => {
-    expect(isSafeSpriteSrc('/assets/ignar-rookie-C6FBPY0e.png')).toBe(true);
+    expect(isSafeSpriteSrc('/assets/kaelen-rookie-C6FBPY0e.png')).toBe(true);
     expect(isSafeSpriteSrc('/src/assets/soulmon/rookie.png')).toBe(true);
     // `//host` herda o esquema da pagina; `/\host` o parser de URL do
     // navegador normaliza para `//host`. Os dois saem da origem.
@@ -159,7 +159,7 @@ describe('isSafeSpriteSrc — as bordas que o render nao alcanca', () => {
   });
 
   it('o ramo novo mora SO na guarda de componente — o save nao mudou', () => {
-    expect(isSafeSpriteUrl('/assets/ignar-rookie-C6FBPY0e.png')).toBe(false);
+    expect(isSafeSpriteUrl('/assets/kaelen-rookie-C6FBPY0e.png')).toBe(false);
   });
 });
 
@@ -247,7 +247,7 @@ describe('isSafeSpriteSrc — allowlist de HOST no caminho de terceiro', () => {
   });
 
   it('os dois outros ramos continuam intactos — asset do Vite e data: de imagem', () => {
-    expect(isSafeSpriteSrc('/assets/ignar-rookie-C6FBPY0e.png')).toBe(true);
+    expect(isSafeSpriteSrc('/assets/kaelen-rookie-C6FBPY0e.png')).toBe(true);
     // O fallback Gemini devolve `data:` e ele NAO faz requisicao externa: nao
     // ha beacon a fechar aqui, e recusa-lo desligaria o provedor secundario.
     expect(isSafeSpriteSrc('data:image/png;base64,AAAA')).toBe(true);

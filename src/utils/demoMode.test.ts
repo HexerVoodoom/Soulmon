@@ -231,8 +231,8 @@ describe('saves antigos com `demoCharacterId` de um dos seis de antes', () => {
     }
   });
 
-  it('o roster da masmorra NÃO ganhou os iniciais (6 linhas desde D-78)', () => {
-    expect(Object.keys(DUNGEON_LINE_SPRITES).length).toBe(6);
+  it('o roster da masmorra NÃO ganhou os iniciais (4 linhas desde 20/10/2026)', () => {
+    expect(Object.keys(DUNGEON_LINE_SPRITES).length).toBe(4);
     for (const id of STARTER_IDS) expect(DUNGEON_LINE_SPRITES[id]).toBeUndefined();
   });
 

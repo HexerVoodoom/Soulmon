@@ -50,7 +50,7 @@ function ficha(basica: string, especial: string, elementoId: string): Ficha {
   });
   return { rookie: { basica: mk('basica', basica), especial: mk('especial', especial) } as unknown as StageSkills };
 }
-const onda = (): DungeonEnemy[] => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, points: 1, slot: 0, floor: 1, foe: dungeonFoe(1, 0, 1) }];
+const onda = (): DungeonEnemy[] => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.thalindra.rookie, points: 1, slot: 0, floor: 1, foe: dungeonFoe(1, 0, 1) }];
 
 const PVE: Record<string, (skills: Ficha | undefined, el: string) => void> = {
   Arena: (skills) => { render(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={skills} onExit={() => {}} />); },

@@ -48,7 +48,7 @@ const SAVE_LEGADO = {
   equippedFurniture: 'furn-sofa',
   foodInventory: { '💗': 2, '👊': 1 },
   trophies: [{ season: '2026-W30', place: 1 }],
-  eggType: 'lumel',
+  eggType: 'lumel', // fixture de save LEGADO (linha aposentada em 20/10/2026)
 };
 
 function Espiao() {
@@ -142,9 +142,9 @@ describe('save legado do DigiApp — nada de valor pode sumir na primeira carga'
     // ⚠️ Este caso testava a tradução `'agumon' → 'tapirmon'`: um nome de
     // franquia virando OUTRO nome de franquia. Os três ids de linha genérica
     // eram `tapirmon`/`veemon`/`salamon` e o migrador cobria um quarto. Todos
-    // saíram em 07/09/2026 — hoje as linhas são as nossas (`ignar`/`lumel`/
-    // `serah`, de `DUNGEON_LINE_SPRITES`) e não há o que traduzir.
-    expect(montar().eggType).toBe('lumel');
+    // saíram em 07/09/2026. Em 20/10/2026 Ignar/Lumel/Serah foram aposentados: o save
+    // legado com `eggType: 'lumel'` carrega e migra para o inicial de reserva (Zefi).
+    expect(montar().eggType).toBe('alento');
   });
 
   it('a primeira carga NÃO dispara cloud save (não sobrescreve a nuvem com o local)', () => {

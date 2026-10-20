@@ -25,14 +25,6 @@ export { default as DUNGEON_SPIRIT_SPRITE } from '../assets/soulmon/dungeon-spir
 
 // 3 linhas completas de Soulmon (placeholder, até o Higgsfield gerar as do
 // usuário) — usadas como inimigos "de verdade" na masmorra, uma por tier.
-import ignarRookie from '../assets/soulmon/lines/ignar-rookie.png';
-import ignarChampion from '../assets/soulmon/lines/ignar-champion.png';
-import ignarUltimate from '../assets/soulmon/lines/ignar-ultimate.png';
-import ignarMega from '../assets/soulmon/lines/ignar-mega.png';
-import lumelRookie from '../assets/soulmon/lines/lumel-rookie.png';
-import lumelChampion from '../assets/soulmon/lines/lumel-champion.png';
-import lumelUltimate from '../assets/soulmon/lines/lumel-ultimate.png';
-import lumelMega from '../assets/soulmon/lines/lumel-mega.png';
 import kaelenRookie from '../assets/soulmon/lines/kaelen-rookie.png';
 import kaelenChampion from '../assets/soulmon/lines/kaelen-champion-power.png';
 import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate-power.png';
@@ -61,8 +53,6 @@ import starterVida from '../assets/soulmon/starters/vida.png';
 import starterMeteoro from '../assets/soulmon/starters/meteoro.png';
 
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
-  ignar: { rookie: ignarRookie, champion: ignarChampion, ultimate: ignarUltimate, mega: ignarMega },
-  lumel: { rookie: lumelRookie, champion: lumelChampion, ultimate: lumelUltimate, mega: lumelMega },
   kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
   thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
   igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
@@ -88,15 +78,14 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
  * os arquivos de arte.
  */
 export const DUNGEON_LINE_NAMES: Record<string, string> = {
-  ignar: 'Ignar', lumel: 'Lumel',
   kaelen: 'Pyraka', thalindra: 'Nimbrata',
   igni: 'Igni', astrase: 'Astria',
 };
 
 /**
- * AS 3 LINHAS APOSENTADAS (D-78, decisão R4 do dono, 19/10/2026) — dono único.
+ * AS LINHAS APOSENTADAS (D-78, 19/10/2026; Ignar e Lumel somados em 20/10/2026) — dono único.
  *
- * Akashai (`orrin`), Serah (`serah`) e Nautil (`nautilu`) são linhas DEFASADAS: o dono
+ * Akashai (`orrin`), Serah (`serah`), Nautil (`nautilu`), Ignar (`ignar`) e Lumel (`lumel`) são linhas DEFASADAS: o dono
  * mandou tirar o SPRITE delas de todo lugar visível (Match 3, masmorra, bestiário, sombras
  * do Pesadelo, NPC da Biblioteca, fallback por hash). Elas saíram de `DUNGEON_LINE_SPRITES`
  * e de `DUNGEON_LINE_NAMES` (roster hoje = 6 linhas × 4 tiers); os PNGs foram removidos.
@@ -107,15 +96,26 @@ export const DUNGEON_LINE_NAMES: Record<string, string> = {
  * (`RETIRED_LINE_STAND_IN`) — o mesmo mecanismo de reserva do `opponentArt.ts`.
  * Id novo de linha aposentada? Acrescente aqui; nunca devolva o id ao roster.
  */
-export const RETIRED_LINE_IDS = ['orrin', 'serah', 'nautilu'] as const;
+export const RETIRED_LINE_IDS = ['orrin', 'serah', 'nautilu', 'ignar', 'lumel'] as const;
 export const RETIRED_LINE_STAND_IN: Readonly<Record<typeof RETIRED_LINE_IDS[number], StarterId>> = {
   orrin: 'industrial', serah: 'vida', nautilu: 'nascente',
+  // 20/10/2026 (dono: "defasados, troca pelo Soulmon novo"): fogo -> Bolid; luz/ar -> Zefi.
+  ignar: 'meteoro', lumel: 'alento',
 };
 export const isRetiredLineId = (id: unknown): id is typeof RETIRED_LINE_IDS[number] =>
   typeof id === 'string' && (RETIRED_LINE_IDS as readonly string[]).includes(id);
 /** O id de arte a DESENHAR: linha aposentada vira o inicial de reserva; o resto passa igual. */
 export const resolveArtLineId = (id: string | undefined): string | undefined =>
   isRetiredLineId(id) ? RETIRED_LINE_STAND_IN[id] : id;
+
+/**
+ * O `eggType` de um save (campo legado, só o HUD o lê): id aposentado (`ignar`/`lumel`/`serah`...) vira o inicial de
+ * reserva, inicial atual passa igual, qualquer outra coisa (lixo, `undefined`) vira `fallback`. Dono único da migração.
+ */
+export function migrateEggType(raw: unknown, fallback: StarterId = 'meteoro'): StarterId {
+  const r = typeof raw === 'string' ? resolveArtLineId(raw) : undefined;
+  return isStarterId(r) ? r : fallback;
+}
 
 /**
  * OS 5 INICIAIS — dono único de id, arte e NOME (07/10/2026).
@@ -216,7 +216,7 @@ export function resolveLineForStage(stage: string, demoCharacterIdRaw?: string):
  * A regra antiga ("toda arte nossa olha para a DIREITA") era falsa para parte do
  * acervo — conferido sprite a sprite: estas linhas são desenhadas olhando para a
  * ESQUERDA, e o espelhamento do passeio (`scaleX(-1)` ao ir para a esquerda) as
- * fazia andar de costas. O resto (linhas de frente, `ignar`, a árvore do Soulmon,
+ * fazia andar de costas. O resto (linhas de frente, a árvore do Soulmon,
  * `nascente`) olha para a direita ou de frente, e segue sem mudança. Arte gerada
  * pelo jogador (acervo) não declara lado: tratada como direita.
  * Linha NOVA com arte de perfil: declare aqui, senão anda de costas.

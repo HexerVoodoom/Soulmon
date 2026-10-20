@@ -46,7 +46,7 @@ describe('opponentArt', () => {
 
   it('icone-ficha so existe para linha da masmorra', () => {
     expect(opponentIcon({ stage: 'champion-power', artLine: 'meteoro' }, 64)).toBeUndefined();
-    expect(isKnownArtLine('ignar')).toBe(true);
+    expect(isKnownArtLine('ignar')).toBe(true); // id aposentado segue lido (save/perfil antigo)
     expect(isKnownArtLine('zzz')).toBe(false);
   });
 });

@@ -20,7 +20,7 @@ import { sessaoEncerrando, marcarMudancaPendente, marcarSincronizado } from '../
 // só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
 type PushProfileArg = Parameters<typeof import('../utils/community').pushProfile>[0];
 const pushProfile = (p: PushProfileArg) => import('../utils/community').then(m => m.pushProfile(p));
-import { DEMO_CHARACTER_IDS, type DemoCharacterId } from '../utils/sprites';
+import { DEMO_CHARACTER_IDS, migrateEggType, type DemoCharacterId, type StarterId } from '../utils/sprites';
 import { isDemoMode } from '../utils/demoMode';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
@@ -341,7 +341,7 @@ export interface GameState {
   /** Não é mais escolha do jogador (era o "tipo de ovo") — hoje é a linha de
    *  sprite GENÉRICO sorteada uma vez no onboarding (utils/sprites.ts), usada
    *  como visual provisório até a Fase 2 (imagem gerada por IA) assumir. */
-  eggType?: 'ignar' | 'lumel' | 'serah';
+  eggType?: StarterId;
   /** A árvore de 11 formas ÚNICA do jogador, gerada pelo oráculo no onboarding
    *  (utils/oracle.ts generateOracle().creature.stages) e congelada — nomes,
    *  descrições e prompts de imagem de cada forma. */
@@ -1230,13 +1230,13 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         /* ⚠️ Havia aqui uma migração de um id de espécie de outra franquia
            para a linha genérica, apagada em 07/09/2026: os três ids de linha
            também ERAM nomes de franquia, então o migrador traduzia um nome
-           proibido em outro. Hoje as linhas são as nossas (`ignar`/`lumel`/
-           `serah`, de `DUNGEON_LINE_SPRITES`) e não há save de terceiro para
+           proibido em outro. Ignar/Lumel/Serah foram aposentados em 20/10/2026 e `migrateEggType` os leva ao
+           inicial de reserva (`RETIRED_LINE_STAND_IN`) e não há save de terceiro para
            migrar — em 07/09/2026 ninguém tinha usado o app (desde 20/10/2026 há
            usuários reais na Play; ver CLAUDE.md › Compatibilidade). Um id que a arte não
            conheça cai em `fallbackSpriteForStage`, que responde com arte
            NOSSA por hash do id. */
-        eggType: loadedState.eggType ?? savedEggType ?? 'ignar',
+        eggType: migrateEggType(loadedState.eggType ?? savedEggType), // 20/10/2026: ignar/lumel/serah -> inicial de reserva
         attributesSinceLastEvolution: {
           power: num(loadedState.attributesSinceLastEvolution?.power, 0),
           harmony: num(loadedState.attributesSinceLastEvolution?.harmony, 0),
@@ -1654,7 +1654,7 @@ function freshGameState(): GameState {
       currentBranch: 'harmony',
       lastDayWasPerfect: false,
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
-      eggType: savedEggType ?? 'ignar',
+      eggType: migrateEggType(savedEggType),
       attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
       foodInventory: {},
       poopEventsShown: [],

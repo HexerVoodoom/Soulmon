@@ -173,7 +173,7 @@ diz "—", o campo é opcional e o padrão É a ausência.
 | `soulmonClassTitles?` | `Record<FichaStage, ClassTitle>` | A classe (arquétipo do class-system) de cada estágio. Mesmo motivo de cache. | `src/utils/soulProfile/ficha/classTitle.ts` | — | sim |
 | `soulmonMeta?` | objeto (§2.10) | Metadados do Oráculo usados fora da árvore. | `src/utils/oracle.ts`, `petName.ts` | — | sim |
 | `spriteLibrary?` | `SpriteLibrary` | O acervo de sprites GERADOS, por forma, e o estado da adoção do visor. **Guarda só a URL** (~120 bytes): base64 aqui iria ao `localStorage` e subiria à KV a cada debounce. | `src/utils/spriteLibrary.ts` | `normalizeSpriteLibrary` devolve acervo vazio para qualquer coisa estranha — e acervo vazio é a arte de RESERVA, que nunca é erro | sim |
-| `eggType?` | `'ignar' \| 'lumel' \| 'serah'` | A linha de sprite GENÉRICO sorteada no onboarding. Não é mais escolha do jogador. | `src/utils/sprites.ts` (`DUNGEON_LINE_SPRITES`) | `loaded ?? localStorage(EGG_TYPE) ?? 'ignar'` | sim |
+| `eggType?` | `StarterId` (`industrial`\|`nascente`\|`alento`\|`vida`\|`meteoro`) | Campo legado só lido pelo HUD, sorteado entre os 5 iniciais. **Migração (20/10/2026):** save com `'ignar'`/`'lumel'`/`'serah'` (e id desconhecido) passa por `migrateEggType` → `meteoro`/`alento`/`vida`/`meteoro`; nenhum outro campo muda. | `src/utils/sprites.ts` (`migrateEggType`, `RETIRED_LINE_STAND_IN`) | `migrateEggType(loaded ?? localStorage(EGG_TYPE))` (padrão `meteoro`) | sim |
 | `demoCharacterId?` | `DemoCharacterId` = os 5 iniciais (`industrial`/`nascente`/`alento`/`vida`/`meteoro`, desde 07/10/2026) **ou** os 6 antigos (`kaelen`/`orrin`/`thalindra`/`igni`/`nautilu`/`astrase`) | Qual personagem pronto foi escolhido. Os 6 antigos não são mais oferecidos, mas save antigo continua carregando e renderizando. | `src/utils/sprites.ts` (`DEMO_CHARACTER_IDS`) | só os 11 ids conhecidos sobrevivem (`hydrateSave`, `DEMO_CHARACTER_IDS.find`) | sim |
 | `demoLocal?` | `true` | **Demo local** (07/10/2026): save que nunca sai do aparelho — sem nuvem, sem XP, sem compra, sem PvP (`02-REGRAS-DE-NEGOCIO.md` §62). NÃO é `accountTier: 'demo'`. | `src/utils/demoMode.ts` (`isDemoMode`) | só `true` literal sobrevive | **não**: `cloudSave` recusa o save demo |
 | `demoTint?` | `number` | Tonalidade do personagem do demo. `0` = original; `1..3` = as três. **Cosmético, zero mecânica.** | `src/utils/monetization.ts` | `0` | sim |
@@ -544,8 +544,8 @@ teste travando isso.
 
 ⚰️ **A migração de id de espécie de outra franquia foi apagada em 07/09/2026.**
 Os três ids de linha também ERAM nomes de franquia, então o migrador traduzia um
-nome proibido em outro. Hoje as linhas são `ignar`/`lumel`/`serah`
-(`DUNGEON_LINE_SPRITES` em `src/utils/sprites.ts`), e um id que a arte não
+nome proibido em outro. Ignar/Lumel/Serah foram aposentados em 20/10/2026 (`migrateEggType` os leva ao
+inicial de reserva), e um id que a arte não
 conheça cai em `fallbackSpriteForStage`, que responde com arte NOSSA por hash do
 id — determinístico: o mesmo save renderiza sempre a mesma criatura.
 

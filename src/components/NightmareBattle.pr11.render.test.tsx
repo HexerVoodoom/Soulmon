@@ -61,7 +61,7 @@ const foeDe = (o: { hpMul?: number; bonus?: number; special?: boolean } = {}): F
   return { combatant: { ...b, hp: b.hp * (o.hpMul ?? 1), bonus: o.bonus ?? -0.95 }, special: o.special ? specialOf('direct') : null };
 };
 const inimigo = (o: Parameters<typeof foeDe>[0] = {}): DungeonEnemy => ({
-  name: 'Sombra', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, points: 1, slot: 0, floor: 1, foe: foeDe(o),
+  name: 'Sombra', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.thalindra.rookie, points: 1, slot: 0, floor: 1, foe: foeDe(o),
 });
 
 function montar(wave: DungeonEnemy[], cbs: { onWin?: () => void; onLose?: () => void; onClose?: () => void; language?: 'pt-BR' | 'en-US'; profissao?: string } = {}) {

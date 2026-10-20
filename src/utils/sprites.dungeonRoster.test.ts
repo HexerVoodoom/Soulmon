@@ -28,9 +28,9 @@ import { SHADOW_SLOTS } from './nightmareShadows';
 describe('roster da masmorra (WP4.9)', () => {
   const lines = Object.keys(DUNGEON_LINE_SPRITES);
 
-  it('tem exatamente 6 linhas (D-78: sem orrin/serah/nautilu), cada uma com as 4 artes = 24 artes', () => {
-    expect(lines).toHaveLength(6);
-    expect(lines.length * 4).toBe(24);
+  it('tem exatamente 4 linhas (sem orrin/serah/nautilu/ignar/lumel), cada uma com as 4 artes = 16 artes', () => {
+    expect(lines).toHaveLength(4);
+    expect(lines.length * 4).toBe(16);
     for (const l of lines) {
       for (const stage of ['rookie', 'champion', 'ultimate', 'mega'] as const) {
         expect(typeof DUNGEON_LINE_SPRITES[l][stage]).toBe('string');
@@ -49,7 +49,7 @@ describe('roster da masmorra (WP4.9)', () => {
   });
 
   it('excludeLine tira a linha do jogador do sorteio', () => {
-    for (let i = 0; i < 50; i++) expect(getDungeonEnemySprite('rookie', 'ignar').line).not.toBe('ignar');
+    for (let i = 0; i < 50; i++) expect(getDungeonEnemySprite('rookie', 'igni').line).not.toBe('igni');
   });
 });
 
@@ -159,7 +159,7 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
     // 15/09/2026: +igni/nautilu/astrase (D1) — acrescentar é permitido, renomear não.
     // D-78 (19/10/2026): orrin/serah/nautilu aposentadas — SAIR do roster é permitido (R4 do dono), renomear não.
     expect(Object.keys(DUNGEON_LINE_SPRITES).sort())
-      .toEqual(['astrase', 'ignar', 'igni', 'kaelen', 'lumel', 'thalindra']);
+      .toEqual(['astrase', 'igni', 'kaelen', 'thalindra']); // 20/10/2026: ignar/lumel saíram
   });
 
   it('D-78: as 3 linhas aposentadas não aparecem em NENHUMA lista visível (arte nem nome)', () => {
@@ -181,7 +181,9 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
         expect(getSpriteForStage(stage, id), `${id}:${stage}`).toBe(STARTER_SPRITES[reserva]);
       }
     }
-    expect(resolveArtLineId('ignar')).toBe('ignar');
+    expect(resolveArtLineId('ignar')).toBe('meteoro'); // 20/10/2026
+    expect(resolveArtLineId('lumel')).toBe('alento');
+    expect(resolveArtLineId('igni')).toBe('igni');
     expect(resolveArtLineId(undefined)).toBeUndefined();
   });
 });
@@ -206,8 +208,8 @@ describe('D-104: arte defasada reprovada em todo o app', () => {
     expect(genericos).toEqual([]);
   });
 
-  it('nenhum arquivo de arte das linhas aposentadas (orrin/serah/nautilu) em assets/soulmon', () => {
-    const velhos = todos(ASSETS).filter(f => /(^|[\/])(orrin|serah|nautilu)-[^\/]*\.png$/.test(f));
+  it('nenhum arquivo de arte das linhas aposentadas (orrin/serah/nautilu/ignar/lumel) em assets/soulmon', () => {
+    const velhos = todos(ASSETS).filter(f => /(^|[\/])(orrin|serah|nautilu|ignar|lumel)-[^\/]*\.png$/.test(f));
     expect(velhos).toEqual([]);
   });
 

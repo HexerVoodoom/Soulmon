@@ -56,7 +56,7 @@ import { emptyIncubation, incubationFor, incubationReady, isIncubating } from '.
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
-import { getSpriteForStage, isStarterId, setOwnSprites } from './utils/sprites';
+import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -2293,7 +2293,7 @@ export default function App() {
       // O nome da Home, não o estágio — dono: `widgetPetName` (utils/petName por baixo).
       petName: widgetPetName(gameState.soulmonMeta),
       currentStage: gameState.evolutionStage,
-      eggType: gameState.eggType ?? 'ignar',
+      eggType: gameState.eggType ?? 'meteoro',
       branchType: gameState.currentBranch,
       completedTasks: dailyDone,
       totalTasks: dailyTotal,
@@ -4519,7 +4519,7 @@ export default function App() {
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed, readings: leituras });
-    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
+    const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
@@ -4682,7 +4682,7 @@ export default function App() {
     revealSprite?: { url: string; formId: string; at: number },
   ) => {
     setUpgradeRitual(false);
-    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
+    const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
@@ -6023,7 +6023,7 @@ export default function App() {
     const isPt = language === 'pt-BR';
     const patch = buildDemoPatch(characterId, { isPt, dayKey: playerDayKey(now, gameState.playerDayTz), now });
     if (!patch) return;
-    writeLocal(STORAGE_KEYS.EGG_TYPE, 'ignar');
+    writeLocal(STORAGE_KEYS.EGG_TYPE, characterId);
     writeLocal(STORAGE_KEYS.USER_NAME, isPt ? 'Visitante' : 'Guest');
     writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
     writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
@@ -6031,7 +6031,7 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       ...patch,
-      eggType: 'ignar',
+      eggType: characterId,
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       petPassive: rollPetPassive(),
       firstDay: emptyFirstDay(playerDayKey(now, prev.playerDayTz)),
@@ -6150,12 +6150,13 @@ export default function App() {
     // via demoCharacterId, ver utils/sprites.ts).
     if (data.mode === 'demo') {
       const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
-      writeLocal(STORAGE_KEYS.EGG_TYPE, 'ignar');
+      const demoEgg = migrateEggType(data.demoCharacterId);
+      writeLocal(STORAGE_KEYS.EGG_TYPE, demoEgg);
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
         tasks: firstTasks,
-        eggType: 'ignar',
+        eggType: demoEgg,
         evolutionStage: 'rookie',
         unlockedEvolutions: ['rookie'],
         healthPoints: getMaxHPForStage('rookie'),
@@ -6202,7 +6203,7 @@ export default function App() {
     // Linha de sprite GENÉRICA (visual provisório até a Fase 2 assumir) —
     // sorteada uma vez, determinística pela seed do oráculo. Não é mais uma
     // escolha do jogador; a árvore de verdade é a de soulmonStages.
-    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
+    const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
 

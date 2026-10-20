@@ -1138,9 +1138,6 @@ só ele** (`src/utils/sprites.ts`).
 
 | id da linha | nome exibido | artes |
 |---|---|---|
-| `ignar` | Ignar | rookie · champion · ultimate · mega |
-| `lumel` | Lumel | idem |
-| `serah` | Serah | idem |
 | `kaelen` | **Pyraka** | idem |
 | `orrin` | **Akashai** | idem |
 | `thalindra` | **Nimbrata** | idem |
