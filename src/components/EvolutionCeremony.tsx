@@ -7,6 +7,8 @@ import { usePrefersReducedMotion } from './ui/Viewport';
 import { Icon } from './ui/Icon';
 import { ritualLabel } from './ritual/RitualKit';
 import { sm2Button, sm2Hint } from './form/FormKit';
+import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
+import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 import evolutionBgVideo from '../assets/video/evolution-bg.mp4';
 import evolutionBgThumb from '../assets/video/evolution-bg-thumb.webp';
 
@@ -54,6 +56,8 @@ interface EvolutionCeremonyProps {
   toSpriteUrl?: string;
   /** `formReachedAt[toStage]` — a data que a faixa mostra. Ausente = hoje. */
   reachedAt?: string;
+  /** Fragmentos de Alma que esta evolução USA (o custo do estágio). Dito uma vez, ao terminar; ausente = não mostra a linha. */
+  fragmentsSpent?: number;
   /** Chamado quando a animação termina (commit da evolução no estado). */
   onEvolved: () => void;
   /** Fecha a tela (depois do resultado). */
@@ -86,7 +90,7 @@ const SPARK = 128;
 const pixel: CSSProperties = { position: 'absolute', imageRendering: 'pixelated', display: 'block', maxWidth: 'none' };
 
 export function EvolutionCeremony({
-  fromStage, toStage, toName, language, demoCharacterId, fromSpriteUrl, toSpriteUrl, reachedAt, onEvolved, onClose,
+  fromStage, toStage, toName, language, demoCharacterId, fromSpriteUrl, toSpriteUrl, reachedAt, fragmentsSpent, onEvolved, onClose,
 }: EvolutionCeremonyProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
@@ -263,6 +267,15 @@ export function EvolutionCeremony({
           {done ? toName : '…'}
         </h1>
         <p style={sm2Hint} aria-hidden={!done}>{done ? data : ' '}</p>
+        {/* O CONSUMO (REGISTRO §151): os Fragmentos de Alma juntados são usados
+            aqui. Dito como o que deu forma à evolução — uma vez, no ato, sem
+            número que desce nem conta do que sobrou. */}
+        {fragmentsSpent !== undefined && fragmentsSpent > 0 && (
+          <p data-cer-fragments style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <SoulFragmentIcon size={16} />
+            <span>{done ? fragmentsSpentLine(fragmentsSpent, language) : fragmentsGatherLine(language)}</span>
+          </p>
+        )}
         {/* A saída é do jogador — a cerimônia espera o gesto (RIT-20). O
             botão só existe quando há o que sair; antes, a faixa é status. */}
         {done ? (

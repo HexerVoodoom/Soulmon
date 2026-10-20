@@ -37,7 +37,7 @@
   `spriteUrlFacesLeft` em `utils/sprites.ts`). Conferir no aparelho, lado a lado, antes de dar como feito.
 
 ## Evolução
-- **"Steps" viram Fragmentos de Alma** (20/10/2026, dono): trocar o nome/medida "steps" da evolução por uma MOEDA nova, **Fragmento de Alma**,
+- ✅ **FEITO (20/10/2026, REGISTRO §151; fragmento por esforço, `utils/soulFragment.ts`)** — **"Steps" viram Fragmentos de Alma** (20/10/2026, dono): trocar o nome/medida "steps" da evolução por uma MOEDA nova, **Fragmento de Alma**,
   para ficar claro. Ideia do dono: cada ação concluída dá 1 fragmento; ao juntar X fragmentos eles são CONSUMIDOS e o Soulmon evolui.
   A pensar antes de construir (hoje a regra mora em `utils/evolutionGauge.ts`, decisão de 11/10/2026):
   - **Choque com a linha vermelha do gauge**: hoje a barra enche pelo PESO DE ESFORÇO (hábito = `HABIT_WEIGHT`, tarefa = `effort` 1–3), tem

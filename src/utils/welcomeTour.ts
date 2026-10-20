@@ -71,7 +71,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'evolution', part: 1,
     title: { en: 'Evolution' },
-    speech: { en: 'Every habit or task you finish is a step on the path to the next form, and the path only ever adds. When it fills, you pick the moment: open Evolution and tap your Soulmon. A slow day just goes slowly.' },
+    speech: { en: 'Every habit or task you finish earns Soul Fragments toward the next form, and they only ever add up. When you have gathered enough, you pick the moment: open Evolution and tap your Soulmon. A slow day just goes slowly.' },
   },
   {
     id: 'care', part: 1,
@@ -114,7 +114,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     },
   },
   mapStep('laboratorio', { en: 'Where your Soulmon is looked at up close.', pt: 'Onde o seu Soulmon é visto de perto.' }, [
-    bRow('laboratorio.evolucao', 'Its attributes and the path to the next form.', 'Os atributos e o caminho até a próxima forma.'),
+    bRow('laboratorio.evolucao', 'Its attributes and the Soul Fragments for the next form.', 'Os atributos e os Fragmentos de Alma para a próxima forma.'),
     bRow('laboratorio.pet', 'Its sheet: element, moves and the creatures you have met.', 'A ficha: elemento, golpes e as criaturas que você já encontrou.'),
     bRow('laboratorio.stats', 'Your stats and your Bond.', 'Suas estatísticas e o seu Vínculo.'),
     bRow('laboratorio.perfil', 'Your profile card.', 'O seu cartão de perfil.'),

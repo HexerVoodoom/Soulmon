@@ -836,7 +836,7 @@ export default function App() {
   const [catalogBrowserOpen, setCatalogBrowserOpen] = useState(false);
   const [evolveModalStage, setEvolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
-  const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
+  const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string; spent?: number } | null>(null);
   // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
   // Estatísticas e desempata o galho na evolução. useMemo porque percorre o
   // histórico e o CompanionHUD é memo().
@@ -3438,7 +3438,7 @@ export default function App() {
     // causa de uma queda, e o `handleEvolve` do outro lado recusaria de
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
-    if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
+    if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
   }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId]);
 
   const handleEvolve = useCallback(() => {
@@ -8374,6 +8374,7 @@ export default function App() {
           fromSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.from)?.url}
           toSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.to)?.url}
           reachedAt={gameState.formReachedAt?.[evolutionCeremony.to]}
+          fragmentsSpent={evolutionCeremony.spent}
           onEvolved={handleEvolve}
           onClose={() => setEvolutionCeremony(null)}
         />

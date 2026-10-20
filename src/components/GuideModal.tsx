@@ -83,8 +83,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             {L(
               // 🧬 11/10/2026 (decisão do dono): o critério de evolução é o
               // GAUGE (`utils/evolutionGauge.ts`), não mais o dia completo.
-              'Cada forma tem uma barra: o caminho até a próxima. Todo hábito ou tarefa concluída é um passo — tarefas maiores valem mais (1 a 3) — e o dia soma no máximo a meta diária do estágio. A barra entra na virada do dia e nunca volta para trás.',
-              'Each form has a bar: the path to the next one. Every habit or task you finish is a step — bigger tasks count more (1 to 3) — and a day adds at most your stage’s daily goal. The bar fills at the turn of the day and never goes back.',
+              'Cada forma tem uma barra de Fragmentos de Alma. Todo hábito ou tarefa concluída rende fragmentos — tarefas maiores rendem mais (1 a 3) — e o dia soma no máximo a meta diária do estágio. Eles entram na virada do dia e nunca diminuem; quando você junta o bastante, são usados para abrir a próxima forma.',
+              'Each form has a Soul Fragment bar. Every habit or task you finish earns fragments — bigger tasks earn more (1 to 3) — and a day adds at most your stage’s daily goal. They join at the turn of the day and never shrink; when you have gathered enough, they are used to open the next form.',
             )}
           </p>
           <p style={para}>
