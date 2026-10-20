@@ -131,7 +131,7 @@ import {
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
 import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
-import { heartDropBonus, rollPetPassive } from './utils/passives';
+import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { evolutionTarget } from './utils/evolutionTarget';
@@ -6249,7 +6249,7 @@ export default function App() {
       soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
       ...catalogSeen,
       consent: data.consent ?? prev.consent,
-      petPassive: rollPetPassive(),
+      petPassive: getPassive(data.petPassive)?.id ?? rollPetPassive(),
       bornAt: playerDayKey(new Date(), prev.playerDayTz),
       // WP1.3 — idem ao caminho demo: o ritual de planejamento não abre em
       // cima de quem acabou de conhecer a criatura. Ver a nota lá em cima.
@@ -6563,6 +6563,8 @@ export default function App() {
           mode="upgrade"
           // 01/10/2026: com as 20 do teste já no save (grátis), o ritual pula o teste.
           savedTestAnswers={gameState.soulTestAnswers}
+          introPetPassive={gameState.petPassive}
+          introCategories={gameState.activities.map(a => a.category)}
           onComplete={handleCompleteOnboarding}
           onRevealed={handleUpgradeRevealed}
           onCancel={() => setUpgradeRitual(false)}

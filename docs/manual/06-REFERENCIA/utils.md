@@ -2645,6 +2645,16 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/utils/sounds.ts` (`assetPronto`, `prepararAssets`, `tocarBuffer`), `src/utils/trilha.ts` (`carregarAsset`, `CAMADAS_DA_TRILHA`)
 **Régua:** `sfxCombateLivres.contract.test.ts` (os 7 samples: arquivo, hash, WebM/Opus, ≤ 40 KB, fonte/licença CC0 por arquivo, Attributions, loudness/pico, sample = padrão e procedural = fallback, mudo); `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; as camadas têm a mesma `duracaoS`, múltiplo inteiro do compasso de 100 BPM (2,4 s); sem número de loudness no manifesto)
 
+### `src/utils/soulmonIntro.ts`
+**Dono de:** As falas da apresentação do Soulmon depois do batismo (20/10/2026, REGISTRO §150). Função pura e determinística: sem IA, sem rede, sem efeito de jogo.
+**Exports:**
+- `function soulmonIntroLines(input: SoulmonIntroInput, lang: 'en' | 'pt'): string[]` — pelo menos 3 balões (cada um com `\n` entre frases): apresentação ("contraparte digital da sua alma", exceção à L1), elemento e o que leva vantagem sobre ele (`COUNTERS`), comida da categoria mais frequente (`FOOD_BY_CATEGORY`) + traço, e o caminho. Nenhuma fala repete a bio do reveal.
+- `interface SoulmonIntroInput` — `name`, `element`, `alignment`, `petPassive?`, `categories?`, `bio?`.
+- `const INTRO_FRASE_MAX` — teto de caracteres de cada frase (90).
+- `const INTRO_CLICHES_PROIBIDOS` — clichês que nenhuma fala pode conter.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx` (passo `SOULMON_INTRO`)
+**Régua:** `src/narrativa.contract.test.ts` (a exceção do termo 'contraparte digital da alma', só neste arquivo)
+
 ### `src/utils/sounds.ts`
 **Dono de:** Os sons do app (16 `play*`), sintetizados, sem `AudioContext` por chamada. ⚰️ "Zero asset" valeu até 21/09/2026: desde a S16 os três eventos longos (`playEvolve`, `playDegenerate`, `playTaskComplete`) passam pela função privada `playComAsset` — `prepararAssets` + `assetPronto`/`tocarBuffer` de `sonsAssets.ts`, com o procedural como fallback quando o buffer ainda não decodificou; os cinco curtos são só síntese. A função privada `play` é o gate de mudo e, desde 21/09/2026, chama `aoGestoSonoro` (`trilha.ts`) antes de `tocarNa` — o primeiro gesto sonoro da sessão é o que liga a trilha persistida.
 **Exports:**
