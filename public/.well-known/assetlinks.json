@@ -4,7 +4,9 @@
     "namespace": "android_app",
     "package_name": "com.soulmon",
     "sha256_cert_fingerprints": [
-      "F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84"
+      "5C:DA:25:A4:F7:18:D4:FD:36:BB:8B:88:1F:B5:20:A1:99:AD:D3:AD:C4:94:FF:94:79:A6:4F:07:4D:56:C4:8C",
+      "8B:CC:C0:A6:E0:92:85:9E:33:49:D2:24:1E:8C:6D:92:92:13:FD:70:DE:08:F8:72:5E:A7:A3:63:DE:8C:09:45",
+      "2A:DC:74:74:F9:40:62:DF:EB:E1:80:A9:9B:A3:E9:4C:F2:12:BB:A0:8D:B8:52:59:A0:D6:2E:12:81:F6:17:C9"
     ]
   }
 }]
