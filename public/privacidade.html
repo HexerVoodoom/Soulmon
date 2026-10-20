@@ -31,7 +31,7 @@
 
 <div id="en-doc" lang="en">
 <h1 id="en">Privacy Policy — Soulmon</h1>
-<p class="sub">Last updated: October 19, 2026</p>
+<p class="sub">Last updated: October 20, 2026</p>
 
 <p class="lang">
   <a href="#pt">Versão em português abaixo ↓</a> ·
@@ -93,22 +93,23 @@
         are erased with your account.</td>
   </tr>
   <tr>
-    <td>Notification subscription (only if you turn notifications on)</td>
+    <td>Notification subscription (while notifications are on)</td>
     <td>The technical address your device gives us to receive push (FCM token on
         Android, Web Push endpoint in the browser), your language, time zone and
         reminder hour. The subscription is <strong>linked to your account
         identifier</strong> (the code derived from your email, not the email
         itself) <strong>so that it can be deleted when you delete your
         account</strong> — without that link the server could not tell which
-        subscription is yours. Turning notifications off deletes it too.</td>
+        subscription is yours. Notifications start on if you allow them when the
+        app first asks (or later in your device settings). Turning notifications off deletes it too.</td>
   </tr>
   <tr>
-    <td>Meal reminders (only if you turn <em>Meal reminders</em> on in Settings &mdash; it starts off)</td>
+    <td>Meal check-ins (<em>Meal check-ins</em> in Settings &mdash; it starts on; the notification part only works with notifications on)</td>
     <td>Stored with the notification subscription: your three meal times, your
         time zone offset and, if you set one, your rest window, so the server can
-        send each reminder at your local time and never inside your rest window.
-        <strong>None of it is sent while the switch is off</strong>, and turning
-        it off (or notifications off) stops sending it and deletes it from the
+        send each check-in at your local time and never inside your rest window.
+        <strong>Nothing is sent while the switch or notifications are off</strong>, and turning
+        either one off stops sending it and deletes it from the
         subscription. The times stay in your save so they follow you between
         devices.</td>
   </tr>
@@ -192,8 +193,10 @@
       AI chat — that is <strong>your text</strong>, and it goes as a style
       instruction (sanitized so it cannot become a command); and the
       <strong>tone settings</strong> from that same screen (tone, emojis,
-      motivation style).</li>
+      motivation style);</li>
+  <li>a <strong>summary of your recent days, in numbers only</strong> — only when you ask the creature how you are doing, or if you turn on <strong>Daily comment</strong> in Settings → AI chat: how many days in the window you were active, how many habits and tasks you closed and still have open, habit steadiness as a percentage, rest shields used, your average mood (only if you marked it), and which category and part of the day had the most activity. <strong>No habit or task names and nothing you typed</strong> go with it.</li>
 </ul>
+<p>You can stop all of this: <strong>Settings → Your data → “Send chat to AI provider”</strong>. With it off, nothing goes to the AI provider and the creature answers with simple built-in lines instead.</p>
 <p>
   Outside the chat, the same AI receives your text in two places, and only when
   you press the button: the <strong>task suggestions field</strong> — the goal
@@ -353,7 +356,7 @@
     <td>Messages you write in the pet chat, with the last three exchanges of the
         same conversation; the creature's name, stage, branch and mood; life,
         energy, bond and days away (numbers); your mood of the day, if marked;
-        the personality keywords and tone settings you configured. Outside the
+        the personality keywords and tone settings you configured. When you ask how you are doing or turn on Daily comment: the summary of your recent days in numbers (section 2b). Outside the
         chat: the goal text you type when asking for task suggestions (in the
         tutorial, pre-filled with your onboarding goal) and the name of the task
         you ask to break down. See <a href="#chat-context">section 2b</a>.
@@ -444,6 +447,7 @@
   (LGPD art. 7, IX). We also keep, for the same reason, the count of images already
   drawn for your e-mail (numbers only), even after the account is deleted.
 </p>
+<p><strong>AI usage counters.</strong> To keep the free AI providers within their limits, the server counts how many times per day each account used the chat, voice transcription, task suggestions and image generation. The counter is stored under your account identifier (the code derived from your email, never the email), holds only a number and <strong>erases itself after about 30 hours</strong>; for images there is also a lifetime count, described above. Nothing you wrote goes into it. Legal basis: legitimate interest in keeping the service available (LGPD art. 7, IX).</p>
 
 <h2>7. Minimum age</h2>
 <p>
@@ -524,7 +528,7 @@
 
 <div id="pt" lang="pt-BR">
 <h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 19 de outubro de 2026</p>
+<p class="sub">Última atualização: 20 de outubro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version ↑</a> ·
@@ -589,13 +593,15 @@
         chat com IA, e são apagadas junto com a conta.</td>
   </tr>
   <tr>
-    <td>Inscrição de notificações (só se você ligar as notificações)</td>
+    <td>Inscrição de notificações (enquanto as notificações estiverem ligadas)</td>
     <td>O endereço técnico que o seu aparelho nos dá para receber push (token do
         FCM no Android, endpoint do Web Push no navegador), o idioma, o fuso e a
         hora do lembrete. A inscrição fica <strong>ligada ao identificador da
         sua conta</strong> (o código derivado do e-mail, não o e-mail em si)
         <strong>para poder ser apagada na exclusão da conta</strong> — sem esse
-        vínculo o servidor não saberia qual inscrição é sua. Desligar as
+        vínculo o servidor não saberia qual inscrição é sua. As notificações
+        começam ligadas se você as permitir quando o app pedir na primeira
+        abertura (ou depois, nas configurações do aparelho). Desligar as
         notificações também a apaga.
         <!-- 2026-09-21 (QA rodada 1, compliance #7): subscribe.js/fcm-subscribe.js
              passaram a gravar saveId no registro; account.js › deletePushSubscriptions
@@ -603,13 +609,13 @@
              são apagados pelo próprio aparelho (DELETE /api/subscribe). --></td>
   </tr>
   <tr>
-    <td>Lembretes das refeições (só se você ligar <em>Lembretes das refeições</em> nas Configurações &mdash; ele começa desligado)</td>
+    <td>Check-ins das refeições (<em>Check-ins das refeições</em> nas Configurações &mdash; começa ligado; a parte da notificação só funciona com as notificações ligadas)</td>
     <td>Guardados junto da inscrição de notificação: os seus três horários de
         refeição, o deslocamento do seu fuso e, se você tiver uma, a sua janela
-        de descanso &mdash; para o servidor mandar cada lembrete na sua hora
+        de descanso &mdash; para o servidor mandar cada check-in na sua hora
         local e nunca dentro da janela de descanso. <strong>Nada disso é enviado
-        com a chave desligada</strong>, e desligá-la (ou desligar as
-        notificações) para de enviar e apaga da inscrição. Os horários ficam no
+        com a chave ou as notificações desligadas</strong>, e desligar qualquer
+        uma das duas para de enviar e apaga da inscrição. Os horários ficam no
         seu save para acompanharem você entre aparelhos.</td>
   </tr>
   <tr>
@@ -704,8 +710,10 @@
       escreveu em Configurações → Conversa com IA — isso é <strong>texto
       seu</strong>, e vai como instrução de estilo (higienizado para não virar
       comando); e os <strong>ajustes de tom</strong> dessa mesma tela (tom,
-      emojis, estilo de motivação).</li>
+      emojis, estilo de motivação);</li>
+  <li>um <strong>resumo dos seus últimos dias, só em números</strong> — só quando você pergunta à criatura como está indo, ou se você ligar o <strong>Comentário do dia</strong> em Configurações → Conversa com IA: em quantos dias da janela você esteve ativo, quantos hábitos e tarefas fechou e quantos seguem abertos, a constância dos hábitos em porcentagem, escudos de descanso usados, o seu humor médio (só se você o marcou) e qual categoria e qual parte do dia tiveram mais atividade. <strong>Nenhum nome de hábito ou tarefa e nada que você digitou</strong> vai junto.</li>
 </ul>
+<p>Você pode parar tudo isso: <strong>Configurações → Seus dados → “Enviar a conversa ao provedor de IA”</strong>. Desligado, nada vai ao provedor de IA e a criatura responde com falas simples do próprio app.</p>
 <p>
   Fora do chat, a mesma IA recebe texto seu em dois lugares, e só quando você
   aperta o botão: o <strong>campo de sugestões de tarefas</strong> — o objetivo
@@ -866,7 +874,7 @@
     <td>As mensagens que você escreve no chat do pet, com as três últimas trocas
         da mesma conversa; o nome, estágio, galho e humor da criatura; vida,
         energia, vínculo e dias fora (números); seu humor do dia, se marcado; as
-        palavras-chave de personalidade e os ajustes de tom que você configurou.
+        palavras-chave de personalidade e os ajustes de tom que você configurou. Quando você pergunta como está indo ou liga o Comentário do dia: o resumo dos seus últimos dias em números (seção 2b).
         Fora do chat: o texto do objetivo que você digita ao pedir sugestões de
         tarefas (no tutorial, pré-preenchido com o seu objetivo do onboarding)
         e o nome da tarefa que você pede para decompor. Ver a
@@ -961,6 +969,7 @@
   serviço disponível (LGPD art. 7º, IX). Pelo mesmo motivo guardamos a contagem de
   imagens já desenhadas para o seu e-mail (só números), mesmo depois da exclusão da conta.
 </p>
+<p><strong>Contadores de uso da IA.</strong> Para manter os provedores gratuitos de IA dentro dos limites, o servidor conta quantas vezes por dia cada conta usou o chat, a transcrição de voz, as sugestões de tarefa e a geração de imagem. O contador fica sob o identificador da sua conta (o código derivado do e-mail, nunca o e-mail), guarda só um número e <strong>se apaga sozinho em cerca de 30 horas</strong>; para imagens há também a contagem total, descrita acima. Nada do que você escreveu entra nele. Base legal: legítimo interesse em manter o serviço disponível (LGPD art. 7º, IX).</p>
 
 <h2>7. Idade mínima</h2>
 <p>
