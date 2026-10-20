@@ -3011,6 +3011,14 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** esperar o próximo APK/arte final e deixar o gato-coruja no widget.
 - **O que falsificaria:** widget quebrado ou sem sprite em aparelho real (o Kotlin NÃO foi compilado nem rodado nesta entrega; só lido e coberto por teste de contrato sobre o fonte) ou criatura do widget diferente da Home para um jogador com inicial.
 
+## 145. Arena nas 4 vagas marcadas pelo dono: Guerra em P2, Torneio em P3, Arena livre em P4, P1 vazia (dono, 20/10/2026; emenda o §140)
+
+- **Pedido:** "a posição dos prédios da arena não ficou bom", com a captura do app (720×1397) marcada: dois losangos pretos (a área) e quatro marcas rosa (as vagas). Os três prédios ocupam P2, P3 e P4; P1 (cima-esquerda) fica vazia, como decidido no §140.
+- **Antes → depois (390×844, % da cena; base = left/top do lote, centro visual = caixa opaca):** Torneio base 18,5/49 w33,4 → 18,1/49,5 w32 (centro 18,1/43,0; marca P3 19,0/43,6). Arena livre 47,3/48,2 w42,8 → 46,1/61,1 w41 (centro 46,1/53,3; P4 43,1/52,2). Guerra 80,2/40,8 w40 → 77,4/46,7 w38 (centro 77,4/39,3; P2 76,3/38,3). O Arena livre agora fica 10 pontos abaixo do Torneio, na diagonal do losango, e não na mesma linha de chão.
+- **O que cedeu:** a Guerra coube em P2 (opaco 35,0% = 1,28× o do Torneio). Torneio e Arena livre encolheram de 28,5% para 27,3% de largura opaca (≥ 24% do H12) e se afastaram até 3 pontos de largura do centro exato das marcas (as marcas são manchas grandes): a 390 px as marcas P3 e P4 estão a só 94 px na horizontal e 73 na vertical, e as caixas opacas de dois prédios de 27% não cabem nesse vão sem se encostar (H11). Nenhuma tolerância dos guards mudou. A posição em % é fixa e o `cover` do fundo desloca as marcas com a proporção da tela (a de 360×740 a 412×915 varia ~3 pontos em x), então o encaixe exato vale para 390×844 e fica a até ~40 px do fundo nos demais.
+- **Alternativa que perdeu:** Torneio e Arena livre lado a lado na mesma linha de chão (§140, W14-A), que não acompanha a diagonal do losango.
+- **O que falsificaria:** o dono ainda achar a Arena fora de lugar na tela dele (proporção 0,515) ou o par de baixo parecer apertado.
+
 ## 140. Arena em grade de 4 espaços e halo preto padronizado em todos os prédios (dono, 20/10/2026)
 
 - **Pedido (ditado):** "cabe um do lado do outro, na perspectiva, alinhado com o retângulo: o Tournament e o Open Arena. O Clan War sempre MAIOR e CENTRALIZADO ali. Ou considerando como se fossem 4 espaços e deixa o vazio do quarto." Decidido em modal: grade de 4 espaços, o 4º vazio. E: "usa o mesmo efeito que você usou na exploração, um outer glow preto, em todos os prédios; tem alguns que estão sem".
