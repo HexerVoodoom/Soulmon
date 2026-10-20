@@ -52,10 +52,10 @@ interface AreaLotSpec<K extends string> {
 // pé do tablado) e a ponta quase saindo do quadro por cima; a Decoração DESCE para o losango de baixo
 // (um pouco maior, 42%, para cobrir o losango do fundo). Itens e Background não mudam.
 const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
-  { id: 'itens', labelPt: 'Itens', labelEn: 'Items', ariaPt: 'Entrar na lojinha de Itens', ariaEn: 'Enter the Items stall', left: '26%', top: '33%' },
-  { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '72%', top: '29%', width: '64%' },
-  { id: 'background', labelPt: 'Background', labelEn: 'Background', ariaPt: 'Entrar na lojinha de Background', ariaEn: 'Enter the Background stall', left: '26%', top: '55%' },
-  { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '72%', top: '55%', width: '42%' },
+  { id: 'itens', labelPt: 'Itens', labelEn: 'Items', ariaPt: 'Entrar na lojinha de Itens', ariaEn: 'Enter the Items stall', left: '24.3%', top: '29.5%' },
+  { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '70%', top: '28%', width: '64%' },
+  { id: 'background', labelPt: 'Background', labelEn: 'Background', ariaPt: 'Entrar na lojinha de Background', ariaEn: 'Enter the Background stall', left: '24.3%', top: '51%' },
+  { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '70%', top: '53.5%', width: '42%' },
   // ⚒️ 07/10/2026 (reforma dos lotes, pedido do dono): o Soulsmith — os EQUIPAMENTOS. Coluna da ESQUERDA, alinhada com Itens e Background, no chão livre de baixo;
   // a direita de baixo fica livre para uma futura loja.
   { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '26%', top: '81%', width: '44%' },
@@ -70,9 +70,9 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // por espaço, um em cada metade da diagonal), e a Feira fica sozinha no da
 // direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '19%', top: '49%', width: '40%' },
-  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '68%', top: '45%', width: '44%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
-  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '44%', top: '74%', width: '36%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '17%', top: '48.9%', width: '36%' },
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '48%', top: '48.1%', width: '44%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
+  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '80.4%', top: '40.8%', width: '36%' },
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];
@@ -98,27 +98,35 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // Laboratório: o hexágono GRANDE subiu (centro ~50/41, o Santuário do Vínculo) e os dois menores desceram
 // (~22/66 e ~78/66). O `top` é o pé do prédio, um pouco à frente do centro da plataforma. Prévia:
 // `E:/Soulmon-assets/out/instalacao-20261004/areas/prancha-01-hall-lab-lotes.png`.
+// 🧩 W12 (20/10/2026, dono: "encaixa bem certinho os prédios nas áreas"): fundos NOVOS do Laboratório (`Enchanted Treehouse Alchemy Lab`) e do Hall (sem o escurecimento da W8-A) e
+// prédio novo da Guerra. Todas as posições REMEDIDAS nos PNG por `tools/w12-mapas.py` (centro/largura/altura de cada plataforma; tela de referência 390×844; prévias com as caixas
+// em `_gemini_out/w5-arte-20261019/previas/w12-*-diag.png`). Plataformas medidas (px do PNG): Lab — Santuário 383/472 (265×175), Biblioteca 170/569, Amigos 590/566, Evolução 235/875,
+// Arquivo 529/881, Perfil 383/1124; Hall — losangos de cima 196/428 e 586/427 (300×148), o de baixo 385/993 (508×246); Arena — DOIS retângulos: o de baixo-esquerda 500/810 (450×330)
+// e o de cima-direita 755/650 (435×302): Torneio + Arena livre no da esquerda, Guerra de Clãs no da direita. Mercado: só o ajuste fino (os pés sobem 1 a 4 pontos; as linhas de cima e de
+// baixo ficam ≥ 22 pontos separadas por causa do guard H11 — as plataformas distam só 18).
+// ⚠️ Laboratório: o rótulo "Santuário do Vínculo" (a estimativa do guard H11 usa ~170 px de largura) corta o caminho de Biblioteca e Amigos em 360 de largura — por isso os dois só
+// descem ~0,3 ponto em relação ao pé do Santuário (centro das plataformas deles seria ~44%); decisão pendente do dono no relatório da W12.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '29%', top: '66%', width: '44%' },
-  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '71%', top: '67%', width: '48%' },
-  { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '40%', width: '62%' },
+  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '26.7%', top: '66.9%', width: '40%' },
+  { id: 'pet', labelPt: 'Arquivo', labelEn: 'Archive', ariaPt: 'Entrar no Arquivo', ariaEn: 'Enter the Archive', left: '74%', top: '66.6%', width: '46%' },
+  { id: 'stats', labelPt: 'Santuário do Vínculo', labelEn: 'Bond Sanctum', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50%', top: '39.4%', width: '64%' },
   // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
   // D-44 (19/10/2026, dono): "só pode ser um pouco maior" — 36% → 41% (~+15%); o guard H11 (geometria dos lotes) segue verde nos 5 viewports.
-  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50%', top: '89%', width: '41%' },
+  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50.5%', top: '85.8%', width: '41%' },
   // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
   // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
   // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 32% (W5; antes 34%): com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '17%', top: '39%', width: '32%' },
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83%', top: '39%', width: '32%' },
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '16%', top: '39.3%', width: '32%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '83.5%', top: '39.3%', width: '32%' },
 ];
 
 // D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo
 // (dois losangos em cima, o grande embaixo). A Biblioteca e o Círculo de Amigos foram para o Laboratório (`LABORATORIO_LOTS`). A ordem do array é a ordem de pintura.
 // O Grove tem arte própria desde W5 (19/10/2026): pavilhão de cristal em volta de uma árvore jovem.
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '27%', top: '44%', width: '44%' },
-  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '74%', top: '44%', width: '44%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '73%', width: '58%' },
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '20.4%', top: '32.9%', width: '58%' },
+  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '79%', top: '33.3%', width: '50%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50.8%', top: '75.2%', width: '64%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {

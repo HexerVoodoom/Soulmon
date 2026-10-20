@@ -31,7 +31,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
   'arena:torneio': [0.073, 0, 0.927, 1],
   'arena:duelo': [0.167, 0, 0.833, 1],
-  'arena:guerra': [0.072, 0.039, 0.928, 0.961], // arte escolhida pelo dono (18/10/2026): arena-coliseu com grifo e serpente de ossos, alfa > 20
+  'arena:guerra': [0.039, 0.059, 0.959, 0.939], // W12 (20/10/2026): prédio do banco isométrico de 23/09 (`hf_20260923_193918_c287e46f…`, coliseu em cabeça de pedra com cristais), alfa > 20
   'hall:feira': [0.188, 0.039, 0.811, 0.961],
   'exploracao:masmorra': [0.23, 0, 0.767, 1],
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],

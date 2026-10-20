@@ -15,15 +15,19 @@ describe('lotes novos (29/09/2026)', () => {
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats', 'perfil', 'biblioteca', 'amigos']); // beta-2 (11): o Perfil do Soulmon
   });
 
-  it('H15/H16/H17 (01/10/2026; Arena revista no beta-2 9.3: Torneio num tablado e Arena livre no OUTRO); Santuário do Vínculo bem maior; Hall maior', () => {
+  it('H15/H16/H17 + W12 (20/10/2026): Torneio e Arena livre dividem UM retângulo do fundo e a Guerra fica no OUTRO; Santuário do Vínculo bem maior; Hall maior', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
-    expect(pct(arena.torneio.left)).toBeLessThan(50);
-    // 9.3 (beta-2): cada modo no seu bloco — Torneio no tablado da esquerda, Arena livre no da direita.
-    expect(pct(arena.duelo.left)).toBeGreaterThan(50);
-    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeGreaterThanOrEqual(40);
-    // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — bem visiveis.
-    expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(40);
+    // W12 (dono, 20/10/2026): o fundo da Arena tem DOIS retângulos (medidos: o de baixo-esquerda e o de cima-direita). Torneio e Arena livre
+    // dividem o da esquerda (um em cada metade, ±15 pontos do centro 33%), e a Guerra de Clãs assenta no da direita (centro 65%).
+    expect(pct(arena.torneio.left)).toBeLessThan(pct(arena.duelo.left));
+    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeGreaterThanOrEqual(28); // antes ≥ 40 (um em cada tablado)
+    expect(pct(arena.duelo.left) - pct(arena.torneio.left)).toBeLessThanOrEqual(36);    // juntos: cabem no mesmo retângulo (57% da cena)
+    expect(pct(arena.duelo.left)).toBeLessThan(55);
+    expect(pct(arena.guerra.left)).toBeGreaterThanOrEqual(pct(arena.duelo.left) + 25);  // a Guerra no outro retângulo
+    expect(pct(arena.guerra.top)).toBeLessThan(pct(arena.duelo.top));                   // o da direita é o de cima
+    // G4 (02/10/2026) pedia ≥ 40%; com os dois no mesmo retângulo o teto é ~36–44% (a caixa opaca de cada um segue ≥ 24% da cena, H12).
+    expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(34);
     expect(pct((arena.duelo as { width?: string }).width)).toBeGreaterThanOrEqual(40);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);

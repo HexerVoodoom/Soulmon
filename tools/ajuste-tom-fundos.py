@@ -234,6 +234,10 @@ def main():
         print(json.dumps(rows, indent=1, ensure_ascii=False))
         return
 
+    # W12 (20/10/2026): os fundos do Laboratorio e do Hall foram SUBSTITUIDOS (`tools/instalar-w12.py`) e o dono pediu SEM o efeito de escurecer.
+    # Este ajuste nao se aplica mais a eles: rodar `aplicar` regravaria os fundos W5 escurecidos por cima dos novos.
+    print('aplicar desativado: fundos do Lab/Hall sao os da W12 (sem ajuste de tom); ver tools/instalar-w12.py')
+    return
     for area in ('laboratorio', 'hall'):
         bgf, lots = AREAS[area]
         o = ORIG_DIR / bgf

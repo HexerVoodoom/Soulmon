@@ -41,6 +41,10 @@ interface PlayLotSpec<K extends string> {
   width?: string;
 }
 
+// 🧩 W12 (20/10/2026, dono: "encaixa bem certinho os prédios nas áreas"): posições REMEDIDAS nos PNG (`tools/w12-mapas.py`, tabela PLAT; prévias em
+// `_gemini_out/w5-arte-20261019/previas/w12-*`). Referência: tela 390×844 (o `cover` corta ~11% de cada lado). Jogos: o círculo de cima (centro 52/31, 74%×24% da cena),
+// o lobo de cima da clareira de baixo (53/59) e o de baixo (51/76). Exploração: Masmorra e Passeio recentrados nos tablados (os dois de baixo ficam como estavam: chão
+// livre, sem borda).
 // 🔭 02/10/2026 (H10 de Jogos + auditoria de proporção do H12): os sprites de torre/casa são ALTOS e
 // ESTREITOS (opaco ~52% da largura), então no lote padrão de 38% o prédio ocupava ~20% da tela, pequeno
 // perto do tablado/clareira. Lotes maiores (46–56%) mantendo o centro do tablado/clareira (o `top` foi
@@ -49,13 +53,13 @@ interface PlayLotSpec<K extends string> {
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '24%', top: '23%', width: '52%' }, // tablado de cima, à esquerda
+  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '22.7%', top: '22.1%', width: '50%' }, // tablado de cima, à esquerda
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
   // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
   // menores veta para as Travessias (04 R-3).
-  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '76%', top: '37%', width: '56%' }, // tablado do meio, à direita
+  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '79.9%', top: '34.1%', width: '56%' }, // tablado do meio, à direita
   // 🛠️ 04/10/2026 (pedido do dono, `docs/PLANO-OFICINA-FOCO.md`): a GRANDE clareira de baixo, que estava
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
@@ -68,9 +72,9 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 // longe da borda; o Refúgio desce para o meio da clareira de baixo, longe da
 // escadinha (antes encostava nela).
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
-  { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '44%', top: '28%', width: '52%' }, // adendo do dono (11/10): maior (46→52%), sobe 4 pontos para caber; 52% é o teto sem a área de toque encostar no Ateliê (guard H11) // 11/10/2026 (dono): mais ao centro da clareira de cima (antes 31%)
-  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '72%', top: '63%', width: '50%' }, // D-75 (19/10/2026): desce 54→63 e o Refúgio desce/encolhe junto (H11); adendo do dono (11/10): maior (46→50%) e mais à DIREITA (64→72%); descer além de 54% faz a área de toque encostar na do Refúgio em 360×780/390×844 (guard H11) — o tamanho venceu a descida // 11/10/2026 (dono): desce para a clareira de baixo, abaixo da escadinha e acima do Refúgio, um pouco à direita (antes 69%/39%, clareira de cima)
-  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '50%', top: '92%', width: '56%' },
+  { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '51.7%', top: '31.2%', width: '58%' }, // W12 (20/10/2026): DESCE 28→31 e centraliza na clareira de cima (centro medido ~52/31), maior 52→58%
+  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '53.2%', top: '58.5%', width: '55%' }, // W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
+  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '51.2%', top: '87.2%', width: '60%' }, // W12: maior 56→60%; no lobo de baixo da clareira (o pé na borda da terra, 86–87%: acima disso a caixa do Refúgio encostaria no rótulo do Ateliê, H11)
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {
