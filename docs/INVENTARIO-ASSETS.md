@@ -56,7 +56,7 @@
 |---|---|---|
 | `repo/src/assets/` | **1.723** imagens/vídeos (`find src/assets -type f \| wc -l` → 1 726 = 1 723 + 2 `.md` + 1 `.ts`; por família: soulmon 1 618 · backgrounds 58 · decor 33 · brand 8 · icons 4 · raiz 3 · video 2; por extensão: png 1 716 · webp 3 · mp4 3 · svg 1; `du -sh src/assets` → **121 MB**, bg 43 M · backgrounds 36 M · fx-ataque 20 M; medido em 22/09/2026) — ⚰️ dizia **1.352** e "≈150 sem referência" (15/09): não contava os 371 que entraram depois (lines/icons 72, sigilos 45, elementos/fx-ataque…) e contava pastas já apagadas | instalado; **102 sem nenhum consumidor** (9,6 MB — §2b; nada disso entra em `dist/`) |
 | `repo/public/` | 6 (3 favicons + 3 screenshots) | instalado |
-| `repo/android/.../drawable/` | 21 (11 sprites `sprite_*`, splash, partner_area, ui_t_bg_01) | instalado no widget |
+| `repo/android/.../drawable-nodpi/` | 5 `sprite_starter_*` (256², derivados dos iniciais) + 11 `sprite_corvo_*` | instalado no widget (§138, 20/10/2026: a árvore genérica de 11 `sprite_*` foi removida) |
 | `D:\Soulmon\_gemini_out\` | ~1.900 (contando `raw/` e derivados) | **5 levas não instaladas** (§3) |
 | `E:\Soulmon-assets\out\` | 179 (kit de UI pixel: botões, nav, ícones, barras, nós, janelas, logo) | **nunca instalado; quase todo FORA do visor** (§4) |
 | `D:\Soulmon\Class-System\assets\` | 137 elementos (já no repo) + **45 sigilos** (não instalados) | §5 |
@@ -82,7 +82,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/rookie.png` … `ultra.png` | 11 · 384² — árvore genérica do jogador (rookie, 3×champion, 3×ultimate, 3×mega, ultra) | `SOULMON_SPRITES` | Home (`PetDeckEstados`, `TrilhaEvolucao`), Pet (`FichaEstados`), Evolução (`EvoSpriteEstados`), Onboarding-oráculo (`Reveal`) |
 | `soulmon/dungeon-spirit.png` | 1 · 128² | `DUNGEON_SPIRIT_SPRITE` | Jogos (`MasmorraLobby`) |
 | `soulmon/mascot-raven.png` | 1 · 512² | IntroScreen | Onboarding-funil (`IntroEstados`) |
-| `android/res/drawable/sprite_*.png` | 11 — a mesma árvore genérica, para o widget | `WidgetRenderer.kt` | Fora do app (`Tamanhos`, `Escada`) |
+| `android/res/drawable-nodpi/sprite_starter_<id>.png` | 5 · 256² · gerados por `tools/gerar-sprites-widget.mjs` a partir de `soulmon/starters/<id>.png` (fonte canônica; ⚰️ a árvore genérica de 11 `sprite_*` saiu — §138) | `WidgetRenderer.kt` (`pet_line` = inicial do jogador; sem linha, hash do estágio) | Fora do app (`Tamanhos`, `Escada`) |
 
 ### 1.2 Cenários (dentro do visor)
 
@@ -266,7 +266,7 @@ Legenda: ✅ existe e está ligado · 📦 existe, falta instalar · ❓ decisã
 | **Estatísticas** | `Album`, `Bestiario` (criaturas do pool procedural) | ✏️ ❓ o bestiário mostra imagem? Hoje só texto; se sim, é geração em massa (decisão) |
 | **Social** | sprite do outro jogador (`PerfilJogador`), NPCs | ✅ (linhas) · depende do "sprite do jogador" |
 | **Conta** | nenhuma | — |
-| **Fora do app** | widget Android (11 `sprite_*`, `partner_area`, `ui_t_bg_01`, barras/corações em XML) · overlay desktop (🫶 🫧 — `A21.1`) · pushes | ✅ sprites · ✏️ glifos do overlay (2) · ✏️ **ícone monocromático de notificação** (Android `small icon` — não existe) · ❓ `ui_t_bg_01`/`partner_area` são arte antiga: conferir origem |
+| **Fora do app** | widget Android (5 `sprite_starter_*` + 11 `sprite_corvo_*`, `partner_area`, `ui_t_bg_01`, barras/corações em XML) · overlay desktop (🫶 🫧 — `A21.1`) · pushes | ✅ sprites · ✏️ glifos do overlay (2) · ✏️ **ícone monocromático de notificação** (Android `small icon` — não existe) · ❓ `ui_t_bg_01`/`partner_area` são arte antiga: conferir origem |
 
 ---
 

@@ -102,7 +102,7 @@ object WidgetRenderer {
      * A criatura nos dois quadros do ViewFlipper, como BITMAP no tamanho exato em dp
      * (decisão (a) do §30: `setImageViewBitmap`, uma cara só por estágio).
      *
-     * Por que bitmap e não `setImageViewResource`: os `sprite_*.png` são 384² e ficavam
+     * Por que bitmap e não `setImageViewResource`: os `sprite_*.png` eram 384² e ficavam
      * em `drawable/` (= mdpi), então um xxxhdpi pré-escalava para 1056² antes de o
      * ImageView reduzir para 64dp — duas reamostragens e ~4 MB por quadro. Agora vivem
      * em `drawable-nodpi/`, são decodificados crus (`inScaled = false`) e reduzidos UMA
@@ -290,37 +290,52 @@ object WidgetRenderer {
     }
 
     /**
-     * O sprite do estágio, SEMPRE arte nossa.
+     * O sprite do widget, SEMPRE arte nossa (20/10/2026, §138: a árvore genérica do gato-coruja
+     * foi aposentada, como no app web — D-104).
      *
-     * ⚠️ Até 07/09/2026 o fallback era `R.drawable.triceramon_dot` — arte da
-     * Bandai —, e ele não era um caso de borda: os drawables existentes eram
-     * os 40 nomes da franquia (`sprite_agumon`, `sprite_veemon`…) e nenhum
-     * casava com os estágios REAIS da árvore de hoje (`rookie`,
-     * `champion-power`, `ultra`…). Ou seja, `getIdentifier` falhava sempre e
-     * **o widget mostrava um personagem registrado para todo usuário, o
-     * tempo todo** — no APK que vai para a Play Store.
+     * Mesma regra do app (`getSpriteForStage`, src/utils/sprites.ts):
+     *  1. `pet_line == "corvo"` → a forma do corvinho (`CORVO_SPRITES`);
+     *  2. `pet_line` = id de um dos 5 INICIAIS (`STARTER_SPRITES`) → o sprite do jogador
+     *     (um só, o mesmo em todos os estágios — limitação declarada da arte);
+     *  3. sem linha (app antigo, linha aposentada, save sem `demoCharacterId`) → um inicial
+     *     por HASH ESTÁVEL do id do estágio (`fallbackStarterId`, igual a `fallbackStarterFor`).
      *
-     * O `docs/Attributions.md` declarava que a arte da Bandai "saiu tudo".
-     * Saiu do bundle WEB; `android/res/drawable` é outra árvore e ninguém
-     * olhou. Os 40 arquivos foram apagados e os 11 estágios da árvore ganharam
-     * a arte de `src/assets/soulmon/`.
-     *
-     * `eggType` e `branchType` continuam na assinatura porque os dois
-     * chamadores os passam, mas o id do estágio já carrega o galho
-     * (`champion-power`) — não há o que resolver a mais.
+     * `eggType` e `branchType` seguem na assinatura (os chamadores os passam); o id do
+     * estágio já carrega o galho.
      */
     private fun resolveSprite(context: Context, stage: String, eggType: String, branchType: String): Int {
-        // O corvinho do administrador (29/09/2026, decisão do dono): `pet_line == "corvo"`
-        // resolve pela tabela FECHADA abaixo; forma desconhecida cai no `sprite_rookie`.
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getString("pet_line", "") == "corvo") {
-            return CORVO_SPRITES[stage.lowercase()] ?: R.drawable.sprite_rookie
+        val line = prefs.getString("pet_line", "") ?: ""
+        if (line == "corvo") {
+            return CORVO_SPRITES[stage.lowercase()] ?: R.drawable.sprite_corvo_rookie
         }
-        val candidateName = "sprite_${stage.replace("-", "_")}"
-        val id = context.resources.getIdentifier(candidateName, "drawable", context.packageName)
-        // Sem correspondência (save adulterado, estágio de uma versão futura):
-        // o rookie, que é onde a árvore nasce. NUNCA arte de terceiro.
-        return if (id != 0) id else R.drawable.sprite_rookie
+        return STARTER_SPRITES[line] ?: STARTER_SPRITES.getValue(fallbackStarterId(stage))
+    }
+
+    /**
+     * Os 5 iniciais → drawable em `drawable-nodpi/` (256², gerados por
+     * `tools/gerar-sprites-widget.mjs` a partir de `src/assets/soulmon/starters/<id>.png`).
+     * A ORDEM é a de `STARTER_IDS` (src/utils/sprites.ts): o hash abaixo indexa por ela.
+     * Paridade travada por `widgetSprites.contract.test.ts`, que lê este fonte.
+     */
+    val STARTER_SPRITES: Map<String, Int> = linkedMapOf(
+        "industrial" to R.drawable.sprite_starter_industrial,
+        "nascente" to R.drawable.sprite_starter_nascente,
+        "alento" to R.drawable.sprite_starter_alento,
+        "vida" to R.drawable.sprite_starter_vida,
+        "meteoro" to R.drawable.sprite_starter_meteoro,
+    )
+
+    /**
+     * Espelho EXATO de `fallbackStarterFor`/`hashId` (src/utils/sprites.ts):
+     * `h = (h * 31 + charCode) >>> 0` sobre o id em minúsculas, módulo 5, indexando os iniciais
+     * na ordem acima. `Long` mascarado em 32 bits imita o `>>> 0` do JS (sem sinal).
+     */
+    private fun fallbackStarterId(stage: String): String {
+        var h = 0L
+        for (c in stage.lowercase()) h = (h * 31L + c.code.toLong()) and 0xFFFFFFFFL
+        val ids = STARTER_SPRITES.keys.toList()
+        return ids[(h % ids.size).toInt()]
     }
 
     /**

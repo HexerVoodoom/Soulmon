@@ -1,6 +1,9 @@
-// Gera sprites placeholder da árvore do Soulmon (estética espiritual-digital
-// minimalista) até o Higgsfield ser integrado ao app. 128×128 PNG, um por
-// forma jogável + 1 inimigo de masmorra. Rode: node scripts/gen-soulmon-placeholders.mjs
+// APOSENTADO em parte (20/10/2026, §138): a árvore genérica (11 formas rookie…ultra, gato-coruja)
+// foi removida do app (D-104) e do widget Android. Este script NÃO as regenera mais — antes ele
+// recriava `rookie.png`…`ultra.png` em src/assets/soulmon/ e ressuscitava a arte descartada.
+// Sobrou só o inimigo de masmorra (`dungeon-spirit.png`, ainda usado).
+// Os sprites do widget vêm dos INICIAIS: `node tools/gerar-sprites-widget.mjs`.
+// Rode: node scripts/gen-soulmon-placeholders.mjs
 import sharp from 'sharp';
 import { mkdirSync } from 'fs';
 import { join } from 'path';
@@ -66,17 +69,6 @@ function creature({ c, level, spiky = false }) {
 }
 
 const FORMS = [
-  { file: 'rookie', c: BRANCH_COLORS.neutral, level: 1 },
-  { file: 'champion-power', c: BRANCH_COLORS.power, level: 2 },
-  { file: 'champion-harmony', c: BRANCH_COLORS.data, level: 2 },
-  { file: 'champion-benevolence', c: BRANCH_COLORS.benevolence, level: 2 },
-  { file: 'ultimate-power', c: BRANCH_COLORS.power, level: 3 },
-  { file: 'ultimate-harmony', c: BRANCH_COLORS.data, level: 3 },
-  { file: 'ultimate-benevolence', c: BRANCH_COLORS.benevolence, level: 3 },
-  { file: 'mega-power', c: BRANCH_COLORS.power, level: 4 },
-  { file: 'mega-harmony', c: BRANCH_COLORS.data, level: 4 },
-  { file: 'mega-benevolence', c: BRANCH_COLORS.benevolence, level: 4 },
-  { file: 'ultra', c: BRANCH_COLORS.ultra, level: 4 },
   { file: 'dungeon-spirit', c: BRANCH_COLORS.enemy, level: 2, spiky: true },
 ];
 

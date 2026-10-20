@@ -140,8 +140,8 @@ describe('pet_line e grove_stage: chaves novas, allowlist dos dois lados', () =>
     expect(app).toMatch(/groveStage: widgetGroveStage\(grove\)/);
   });
 
-  it('o plugin grava pet_line SÓ quando é "corvo" e remove caso contrário', () => {
-    expect(plug).toMatch(/if \(petLine == "corvo"\) editor\.putString\("pet_line", petLine\) else editor\.remove\("pet_line"\)/);
+  it('o plugin grava pet_line SÓ com "corvo" ou id de inicial e remove caso contrário', () => {
+    expect(plug).toMatch(/if \(petLine == "corvo" \|\| WidgetRenderer\.STARTER_SPRITES\.containsKey\(petLine\)\) editor\.putString\("pet_line", petLine\) else editor\.remove\("pet_line"\)/);
   });
 
   it('o plugin grava grove_stage SÓ com id da allowlist e remove caso contrário', () => {
@@ -158,9 +158,12 @@ describe('pet_line e grove_stage: chaves novas, allowlist dos dois lados', () =>
     expect(rend).toMatch(/setViewVisibility\(R\.id\.widget_grove, View\.GONE\)/);
   });
 
-  it('TS: widgetPetLine só devolve "corvo" ou vazio; widgetGroveStage só id de estágio', () => {
+  it('TS: widgetPetLine só devolve "corvo", id de inicial ou vazio; widgetGroveStage só id de estágio', () => {
     expect(widgetPetLine({ soulmonMeta: { creature: 'corvo' } })).toBe('corvo');
     expect(widgetPetLine({ demoCharacterId: 'kaelen' })).toBe('');
+    expect(widgetPetLine({ demoCharacterId: 'vida' })).toBe('vida');
+    expect(widgetPetLine({ demoCharacterId: 'orrin' })).toBe('industrial'); // linha aposentada -> inicial de reserva (D-78)
+    expect(widgetPetLine({})).toBe('');
     expect(widgetGroveStage(null)).toBe('');
     const base = { gid: 'g', base: 0, tracked: 0, joinedDay: '', marks: {}, pending: null, scenes: 0 };
     expect(widgetGroveStage({ ...base, index: 0 })).toBe('');
@@ -206,8 +209,8 @@ describe('paridade: as 11 formas do corvo (src) ↔ drawables ↔ mapa Kotlin', 
     expect(pares).toEqual(CORVO_FORM_IDS.map(f => [f, nome(f)]));
   });
 
-  it('o corvo cai no sprite_rookie e só é resolvido com pet_line == "corvo"', () => {
-    expect(rend).toMatch(/prefs\.getString\("pet_line", ""\) == "corvo"/);
-    expect(rend).toMatch(/CORVO_SPRITES\[stage\.lowercase\(\)\] \?: R\.drawable\.sprite_rookie/);
+  it('o corvo cai na forma rookie do corvo e só é resolvido com pet_line == "corvo"', () => {
+    expect(rend).toMatch(/line == "corvo"/);
+    expect(rend).toMatch(/CORVO_SPRITES\[stage\.lowercase\(\)\] \?: R\.drawable\.sprite_corvo_rookie/);
   });
 });

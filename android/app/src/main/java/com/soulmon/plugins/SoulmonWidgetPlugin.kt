@@ -81,12 +81,13 @@ class SoulmonWidgetPlugin : Plugin() {
         editor.remove("bond_level")
         /*
          * 29/09/2026 (decisão do dono) — duas chaves NOVAS (só se acrescenta):
-         *  · `pet_line`: só "corvo"; qualquer outro valor (ou vazio) REMOVE a chave.
+         *  · `pet_line`: "corvo" ou o id de um dos 5 iniciais (WidgetRenderer.STARTER_SPRITES; 20/10/2026, §138);
+         *    qualquer outro valor (ou vazio) REMOVE a chave e o renderer cai no inicial por hash do estágio.
          *  · `grove_stage`: só um id de estágio do Bosque; qualquer outro REMOVE.
          * Allowlist aqui porque o SharedPreferences é lido pelo renderer sem mais filtro.
          */
         val petLine = call.getString("petLine") ?: ""
-        if (petLine == "corvo") editor.putString("pet_line", petLine) else editor.remove("pet_line")
+        if (petLine == "corvo" || WidgetRenderer.STARTER_SPRITES.containsKey(petLine)) editor.putString("pet_line", petLine) else editor.remove("pet_line")
         val groveStage = call.getString("groveStage") ?: ""
         if (groveStage in GROVE_STAGE_IDS) editor.putString("grove_stage", groveStage) else editor.remove("grove_stage")
         editor.putBoolean("needs_intervention", call.data.optBoolean("needsIntervention", false))

@@ -583,7 +583,8 @@ ficam valendo:
   `android/res/drawable` tinha **40 sprites** da Bandai, e `resolveSprite` caía
   em `triceramon_dot` **para todo usuário, sempre** — nenhum drawable casava com
   os estágios reais (`rookie`, `champion-power`…). Os 11 estágios ganharam a
-  arte de `src/assets/soulmon/`; o fallback hoje é `sprite_rookie`.
+  arte de `src/assets/soulmon/`; desde 20/10/2026 (§138) o widget usa os 5 INICIAIS
+  (`sprite_starter_*`, `pet_line` = inicial do jogador; sem linha, hash do estágio).
 - ⚠️ **O pool do bestiário tinha 242 criaturas de franquia protegida** com a
   descrição oficial copiada (Pokémon, D&D, Warcraft, Digimon, Ragnarok, FF,
   Warhammer, LotR), num JSON de 947 KB que entra no bundle. O filtro de origem
