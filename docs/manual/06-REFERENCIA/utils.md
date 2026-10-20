@@ -85,6 +85,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `anniversary.test.ts`
 **Regra de negócio:** Aniversário de mês/ano da relação, contado a partir de `bornAt`. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/elementoDoOraculo.ts`
+**Dono de:** o mapa oráculo → classe (dono, 20/10/2026, REGISTRO §150): `planta` → `vida`, `industrial` → `aco` (Arena: base dominante `marcial`). Normalização NA LEITURA, nada no save.
+**Exports:**
+- `ORACULO_PARA_CLASSE` — o mapa (tipado por `ElementoSoDoOraculo`: elemento novo só-do-oráculo obriga entrada).
+- `elementoDoOraculo(id)` — id do oráculo ou da classe → elemento conhecido (17 base + pares) ou `undefined`.
+- `aliasDoOraculo(id)` — só traduz, sem validar (mapas de arte).
+**Chamado por:** `starterElements.ts` (`petElementOf`), `combatFx.ts`, `attackFxArt.ts`, `combatArt.ts`, `soulmonPerfil.ts`. A Arena usa `arenaElementsFor` (`arena.ts`): sem ficha, a vantagem vem da base dominante da identidade.
+**Régua:** `src/utils/elementoDoOraculo.test.ts` (mapa, consistência com `ELEMENT_BRIDGE`, guard de grep contra literal duplicado).
+
 ### `src/utils/arena.ts`
 **Dono de:** o motor da Arena no **núcleo do Combate v3, em GRUPO (N × 1)** (PR3b, 06/10/2026, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.15–§2.17): o jogador é `soulCombatant(estado)` (level e ramo), o especial é `specialOf(família)` com a área da skill (`StageSkill.area`), os inimigos são RELATIVOS ao level dele (`arenaFoe`) e lutam ao mesmo tempo (`groupFightSteps`, `combate/group.ts`). O bestiário só dá o SABOR (nome gerado, elemento, sprite — nunca o `nome` do pool). Tudo puro e determinístico pela semente (um teste de fonte proíbe `Math.random` — `arena.semRandom.contract.test.ts`).
 **Exports:**
@@ -93,7 +102,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - Inimigos: `ARENA_FOES` (weak 0,45/0,12 · medium 0,95/0,235 · boss 1,2/0,495 com especial `direct` de alvo único), `ARENA_ROUND_GROWTH` (hp 0,04 · power 0,13), `ARENA_ROUND_COMP` (1·2·1·3·1; a régua `combate/ruler.ts` lê ESTA composição), `ARENA_ROUNDS`, `ROUND_CLEAR_HEAL` (0,3), `arenaFoe(L, cls, r)`, `buildArenaRound(r, dificuldade, rng, pool)` (só o sabor + Bits; o inimigo é sorteado ESTRATIFICADO por elemento — primeiro o elemento, chance igual entre os do pool, depois a criatura dentro dele — desde o #232, 06/10/2026, porque o corpus de 7.386 criaturas tem `vida` em 18% e tirava ~9pp de vitória de quem usa vida/terra/gravidade), `loadBestiaryPool`, tipos `ArenaEnemy`, `BestiaryCreature`.
 - Jogador e rodada: `ROLE_SHAPE` (HP e golpe básico por escola básica; recalibrado no PR3b para ser neutro em vitória), `ESCOLA_FAMILY_PROVISORIO` + `familyOfEscola` (família do especial por escola, PROVISÓRIO até o PR9 — um teste reprova quando `StageSkill.familia` existir), `arenaPlayerSide`, `arenaPlayerHitScale`, `arenaFoeSides`/`arenaFoeWithElement` (o elemento move a vida do inimigo e o bônus dele em ±1 golpe), `arenaRoundSeed`, `arenaSpecialElementScale`, `arenaPlayerCastScale` (anel × `PVE_FAMILY_POWER.arena`), `arenaFoeCastScale` (1 − esquiva), `autoDefenseHitScale` (a defesa automática como `hitScale` do inimigo), `PERFECT_ACC`.
 - Simulação: `ArenaSkill` (`nenhuma`/`media`/`boa`), `ARENA_SKILL_ODDS`, `simulateArenaRunV3(cfg, seed, skill, areaEfficiency?)` (a run de 5 rodadas; `knobs` só para os RED dos gates), `ArenaRunConfig`, `ArenaRunResult`.
-- `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
+- `arenaElementsFor(ficha, ident, attrs)` (elementos da vantagem: ficha, senão base dominante da identidade), `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
 **Saiu no PR3b:** `STAGE_BUDGET`, `getArenaPlayerStats`, `SPECIAL_EFFECTS`, `SPECIAL_CHARGE_TURNS`, `playerHitDamage`, `enemyHitDamage`, `ADVANTAGE_MULT`/`DISADVANTAGE_MULT`, `simulateArenaRun`, `simulateArenaRunEnergy`, `ARENA_HP_SCALE`, `ARENA_FOE_HP_EXTRA`, `ARENA_TORCIDA_MULT`, `arenaTorcidaTurn`, `arenaTurnIsSpecial`, `CLASS_SHAPE`, `ARENA_ENERGY_ENABLED`, `ARENA_TIMING_ATTACK_ENABLED`, `ARENA_AUTO_ACC`.
 **Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
 ### `src/utils/atividadesLista.ts`

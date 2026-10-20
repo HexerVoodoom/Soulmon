@@ -18,6 +18,7 @@
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { aliasDoOraculo } from './elementoDoOraculo';
 import sombraClara from '../assets/soulmon/combate/sombra-clara.png';
 import sombraEscura from '../assets/soulmon/combate/sombra-escura.png';
 
@@ -43,13 +44,13 @@ const BG_MEAN: Record<string, string> = {
   vigor: '#274a48', vileza: '#204c42', neutro: '#285558',
 };
 
-const ORACLE_TO_BASE: Record<string, string> = { planta: 'vida', industrial: 'marcial' };
 const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes[0]]));
 
 /** Qualquer id de elemento → o elemento BASE que tem arte de cena, ou `undefined`. */
 export function combatBaseElement(id: string | null | undefined): string | undefined {
   if (!id) return undefined;
-  const base = ORACLE_TO_BASE[id] ?? DERIVED_TO_BASE[id] ?? id;
+  const mapped = aliasDoOraculo(id);
+  const base = DERIVED_TO_BASE[mapped] ?? mapped;
   return BG[base] ? base : undefined;
 }
 

@@ -4,7 +4,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   getArenaAttributes, COUNTERS, buildArenaRound, ESCOLA_FAMILY_PADRAO, familyOfSkill, elementAdvantage, type BestiaryCreature,
+  arenaElementsFor, arenaFoe, arenaFoeWithElement, type ArenaElements, type ArenaPlayerCfg,
 } from './arena';
+import { combatantAt, REFERENCE_BUILDS } from './combate/level';
+import { elementHits } from './combate/curve';
+import { fighterIdentity } from './fighterIdentity';
+import { petElementOf } from './starterElements';
 import { buildStageSkills } from './soulProfile/ficha/skills';
 import { SPECIAL_FAMILIES } from './combate/specials';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
@@ -134,5 +139,32 @@ describe('sorteio estratificado por elemento (06/10/2026)', () => {
     const fatias = CLASS_ELEMENT_ORDER.map(el => (cont[el] ?? 0) / total);
     expect(Math.min(...fatias), JSON.stringify(cont)).toBeGreaterThanOrEqual(0.045);
     expect(Math.max(...fatias), JSON.stringify(cont)).toBeLessThanOrEqual(0.075);
+  });
+});
+
+describe('arenaElementsFor — o oráculo sem ficha entra na vantagem pela base dominante (dono, 20/10/2026, §150)', () => {
+  const attrs = { principal: 'vigor', secundario: 'vigor' };
+  const cfg = (els: ArenaElements): ArenaPlayerCfg => ({
+    combatant: combatantAt(21, REFERENCE_BUILDS.balanced), family: 'direct', area: 'single', elements: els,
+  });
+  const foe = arenaFoe(21, 'medium', 0);
+  const ident = (dom: string) => fighterIdentity(null, petElementOf({ soulmonMeta: { dominantElement: dom } }));
+
+  it('planta → vida: vantagem +1 contra terra', () => {
+    const els = arenaElementsFor({}, ident('planta'), attrs);
+    expect(els.basica).toBe('vida');
+    expect(arenaFoeWithElement(foe, cfg(els), ['terra']).combatant.hp).toBeCloseTo(foe.combatant.hp * elementHits(1), 6);
+  });
+  it('industrial → aco → marcial: vantagem +1 contra arcano e tempo', () => {
+    const els = arenaElementsFor({}, ident('industrial'), attrs);
+    expect(els.basica).toBe('marcial');
+    expect(els.especial).toBe('marcial');
+    for (const d of ['arcano', 'tempo']) {
+      expect(arenaFoeWithElement(foe, cfg(els), [d]).combatant.hp).toBeCloseTo(foe.combatant.hp * elementHits(1), 6);
+    }
+  });
+  it('com ficha, o elemento da ficha vale inalterado', () => {
+    const els = arenaElementsFor({ basica: 'fogo', especial: 'agua' }, ident('planta'), attrs);
+    expect(els).toEqual({ basica: 'fogo', especial: 'agua', attrs });
   });
 });

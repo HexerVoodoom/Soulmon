@@ -16,6 +16,7 @@
  */
 import { soulCombatant, type SoulXPState } from './soulXP';
 import { fighterIdentity } from './fighterIdentity';
+import { elementoDoOraculo } from './elementoDoOraculo';
 import { elementoConhecido } from './soulProfile/ficha/elementoNome';
 import { getStageLevel } from '../types/progression';
 import { pieceLevel } from './forge';
@@ -81,7 +82,7 @@ export function nivelDoEquipamento(equipment: unknown, forge: unknown): number |
 
 export function buildPerfil(input: PerfilInput): Perfil {
   const par = input.skills?.[fichaStageOf(input.evolutionStage)];
-  const ident = fighterIdentity(par, input.petElement);
+  const ident = fighterIdentity(par, elementoDoOraculo(input.petElement) ?? input.petElement); // defesa: o oráculo cru vira o da classe
   const c = soulCombatant(input);
   const esp = par?.especial;
   const elEsp = ident.especial.elemento;

@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 20/10/2026 — Hotfix: elemento do oráculo no Perfil e na Arena (`fix/elemento-oraculo-perfil`, REGISTRO §150)
+>
+> - Perfil mostrava `planta` cru e ícone neutro; agora `planta` → Vida/Life e `industrial` → Aço/Steel, com o ícone do elemento. Dono único do mapa: `src/utils/elementoDoOraculo.ts`; os três mapas duplicados (`combatFx`, `attackFxArt`, `combatArt`) importam dele.
+> - Arena sem ficha: a vantagem elemental volta (vida > terra/gravidade; aço pela base `marcial`). Regra de produto muda para quem tem criatura planta/industrial sem ficha.
+> - Sem save novo, sem servidor; rollback = reverter o commit.
+
 > ## 20/10/2026 — No ar em teste fechado na Play: há usuários reais e a compatibilidade do save vira regra (`docs/compat-usuarios-reais`, REGISTRO §148)
 >
 > - **Fato (dono, 20/10/2026):** o app está em **teste fechado** na Google Play; o dono vai divulgar para recrutar testadores; o próximo passo do roteiro é **produção**. A premissa "ninguém nunca usou o app em produção" (07/09/2026) venceu e virou lápide neste arquivo, em `SEPARACAO-DIGIAPP.md`, `wrangler.jsonc`, `HANDOFF-SESSAO-LOCAL.md`, `REGISTRO-DE-DECISOES.md` e `DEPENDE-DE-VOCE.md`. Estado exato da faixa no Console: [a conferir pelo dono no Play Console].
