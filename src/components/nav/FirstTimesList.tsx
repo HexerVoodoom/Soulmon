@@ -1,4 +1,4 @@
-import { missionsDoneFirst } from '../../utils/missionOrder';
+import { missionsInQueueOrder } from '../../utils/missionOrder';
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
 import { firstStatus, firstTimesFor, type FirstTime, type FirstTimesState } from '../../utils/dailyMissions';
@@ -49,7 +49,7 @@ export function FirstTimesList({ language, state, bondLevel, onClaim, nav }: Fir
   return (
     <div data-first-times style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <MissionCardList>
-        {missionsDoneFirst(abertas, f => (firstStatus(state, f.id) === 'ready' ? 'ready' : 'open')).map(f => {
+        {missionsInQueueOrder(abertas, f => (firstStatus(state, f.id) === 'ready' ? 'ready' : 'open')).map(f => {
           const st = firstStatus(state, f.id);
           const go = resolveGo(nav, f.building, language);
           return (

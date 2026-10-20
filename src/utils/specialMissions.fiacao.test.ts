@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const app = readFileSync('src/App.tsx', 'utf8');
 const card = readFileSync('src/components/nav/SpecialMissionCard.tsx', 'utf8');
+const board = readFileSync('src/components/nav/DailyMissionBoard.tsx', 'utf8');
 const sheet = readFileSync('src/components/nav/MissionsSheet.tsx', 'utf8');
 
 describe('a missão especial está plugada', () => {
@@ -19,8 +20,10 @@ describe('a missão especial está plugada', () => {
     expect(card).not.toMatch(/\bplay[A-Z]\w*\(/);
     expect(card).not.toContain('useSound');
   });
-  it('a folha renderiza o cartão e o App passa special', () => {
-    expect(sheet).toContain('<SpecialMissionCard');
+  it('a folha renderiza o quadro (que usa a entrada especial) e o App passa special', () => {
+    expect(sheet).toContain('<DailyMissionBoard');
+    expect(sheet).toContain('special={special}');
+    expect(board).toContain('specialMissionEntries(');
     expect(app).toMatch(/special=\{\{/);
   });
   it('o cartão só recebe a missão do dia de hoje (ontem some)', () => {

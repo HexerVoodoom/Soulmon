@@ -1097,7 +1097,7 @@ type ShopSegment = 'shop' | 'tournament';
   e a folha do prédio **não** tem painel de missão (**exceção: o Passeio**, cuja experiência inteira fica no lote — 08/10/2026; a Home só lista a linha "Take a stroll"): a UI das demais vive só no menu de Missões da Home
   (`MissionsSheet`, **UMA folha com três ABAS compactas** — `PixelTabs variant="compact"`, o mesmo componente do Centro de Evolução —
   desde 14/10/2026 (REGISTRO §52): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio, Caderno e as 3 missões do dia dos outros
-  recursos, `DailyMissionList`), **Semanal** ("Esta semana"/"This week") e **Conquistas**; toque ou deslize troca de aba, as já visitadas
+  recursos, numa lista só, o `DailyMissionBoard`: especial do dia aberta no topo com o rótulo "Missão especial", linha fina, prontas "?", abertas e as resgatadas no fim, REGISTRO §132), **Semanal** (mesma ordem: prontas, abertas, resgatadas no fim) ("Esta semana"/"This week") e **Conquistas**; toque ou deslize troca de aba, as já visitadas
   ficam montadas; **um ícone só** na Home (`MissionsLink`), sempre presente — esmaecido sem pendência — com um ponto discreto na aba que
   tem "!"/"?" (§54: até 6 diárias; seção "Primeiras vezes" na aba Diárias; botão Avisos oculto). **Conquistas (§56):** a aba tem Resgatar explícito (cumpriu → Resgatar → a compra abre no Mercado, prédio Conquistas; resgatar não concede o item) e os avisos acionáveis viram balão na fila (`noticeToast`). Os dois ícones antigos (diário/semanal) saíram; linha aponta, pronta, Resgatar). Ver
   [§50-B](02-REGRAS-DE-NEGOCIO.md#50-b-missao-por-predio--materiais-decisao-do-dono-07102026).

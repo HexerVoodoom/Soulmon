@@ -1,11 +1,10 @@
-import { missionsDoneFirst } from '../../utils/missionOrder';
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { arenaLots, laboratorioLots, hallLots } from '../../utils/areaSheetCopy';
 import { LISTED_QUEST_BUILDINGS, questStatus, type BuildingQuestState } from '../../utils/buildingQuests';
 import { questText } from '../../utils/buildingQuestsCopy';
-import { ClaimButton, MissionCard, MissionCardList } from './MissionCard';
+import { ClaimButton, MissionCard, type MissionEntry } from './MissionCard';
 
 export interface BuildingQuestsProps {
   state: BuildingQuestState | undefined;
@@ -34,31 +33,29 @@ export function nameOf(id: BuildingId, language: Language): string {
  * continua sendo pago pelo modelo, mas nenhuma tela de missão o mostra. Só vive no menu da Home,
  * nunca dentro do prédio. Sem cobrança: quem não escreveu não perde nada.
  */
-export function BuildingQuestList({ language, state, day, bondLevel, onClaim, onGo }: BuildingQuestsProps & { language: Language }) {
+export function buildingQuestEntries({ language, state, day, bondLevel, onClaim, onGo }: BuildingQuestsProps & { language: Language }): MissionEntry[] {
   const isPt = language === 'pt-BR';
-  const open = LISTED_QUEST_BUILDINGS.filter(id => questStatus(state, day, id, bondLevel) !== 'locked');
-  if (open.length === 0) return null;
-  const ordered = missionsDoneFirst(open, id => { const st = questStatus(state, day, id, bondLevel); return st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open'; });
-  return (
-    <MissionCardList attrs={{ 'data-building-quests': '' }}>
-      {ordered.map(id => {
-        const st = questStatus(state, day, id, bondLevel);
-        return (
-          <MissionCard
-            key={id}
-            language={language}
-            attrs={{ 'data-building-quest': id, 'data-status': st }}
-            status={st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open'}
-            title={questText(day, id, isPt)}
-            reward={isPt ? '+1 material' : '+1 material'}
-            /* Toda missão com lugar próprio NAVEGA até ele (dono, 11/10/2026) — mesmo desenho do Passeio. */
-            onGo={onGo ? () => onGo(id) : undefined}
-            goAttr="data-building-go"
-            goValue={id}
-            action={<ClaimButton language={language} attrs={{ 'data-claim': id }} onClick={() => onClaim(id)} />}
-          />
-        );
-      })}
-    </MissionCardList>
-  );
+  return LISTED_QUEST_BUILDINGS.filter(id => questStatus(state, day, id, bondLevel) !== 'locked').map(id => {
+    const st = questStatus(state, day, id, bondLevel);
+    const status = st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open';
+    return {
+      key: `building:${id}`,
+      state: status,
+      node: (
+        <MissionCard
+          key={`building:${id}`}
+          language={language}
+          attrs={{ 'data-building-quest': id, 'data-status': st }}
+          status={status}
+          title={questText(day, id, isPt)}
+          reward={isPt ? '+1 material' : '+1 material'}
+          /* Toda missão com lugar próprio NAVEGA até ele (dono, 11/10/2026) — mesmo desenho do Passeio. */
+          onGo={onGo ? () => onGo(id) : undefined}
+          goAttr="data-building-go"
+          goValue={id}
+          action={<ClaimButton language={language} attrs={{ 'data-claim': id }} onClick={() => onClaim(id)} />}
+        />
+      ),
+    };
+  });
 }

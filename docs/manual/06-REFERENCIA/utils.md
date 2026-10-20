@@ -1278,9 +1278,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/mercadoCatalog.test.ts` (moeda por aba, Emblemas só cosmético, sem 🌀/💗, nada vendável sumiu na repartição, toda missão com categoria).
 
 ### `src/utils/missionOrder.ts`
-**Dono de:** a ORDEM das listas de missão (revisão 2, A5): prontas para resgatar no topo, depois as concluídas/resgatadas, depois as em aberto; estável dentro de cada grupo. PURA.
-**Exports:** `MissionRankState` (`ready`|`claimed`|`open`), `missionsDoneFirst(items, stateOf)`.
-**Chamado por:** `nav/DailyMissionList.tsx`, `nav/BuildingQuestList.tsx`, `nav/FirstTimesList.tsx`, `mercado/ShopShelf.tsx` (semanais), `mercado/MercadoSheets.tsx` (conquistas).
+**Dono de:** a ORDEM das listas de missão (dono, 20/10/2026, REGISTRO §132; revoga a A5): prontas para resgatar ("?") no topo, depois as em aberto, e as resgatadas/entregues no FIM; estável dentro de cada grupo. `layoutMissionBoard` monta a aba Diárias: especiais não concluídas no topo (`top`), linha fina (`divider`), depois o resto em ordem de fila (a especial concluída desce para o fim). PURA.
+**Exports:** `MissionRankState` (`ready`|`claimed`|`open`), `missionsInQueueOrder(items, stateOf)`, `layoutMissionBoard(items, stateOf, isSpecial)`, `boardHasDivider(layout)`.
+**Chamado por:** `nav/DailyMissionBoard.tsx`, `nav/FirstTimesList.tsx`, `mercado/ShopShelf.tsx` (semanais), `mercado/MercadoSheets.tsx` (conquistas).
 **Régua:** `src/utils/missionOrder.test.ts`.
 
 ### `src/utils/questMarks.ts`

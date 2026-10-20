@@ -4492,7 +4492,7 @@ Cada ícone **some** quando não há nada a fazer nem a entregar ("?" vence "!",
 A experiência inteira do Passeio — as três propostas, a escolha de região/destino, o card da
 missão, o Registro/Logbook, "abre amanhã" — vive na folha do lote `exploracao:passeio`
 (`PasseioSheet`, NPC Brume), exatamente como era. A Home só lista a LINHA **"Take a stroll" /
-"Faça um passeio"** (`StrollQuestLine`, seção Hoje): aponta ("!"), fica pronta ("?" + **Claim /
+"Faça um passeio"** (`strollEntries`, seção Hoje): aponta ("!"), fica pronta ("?" + **Claim /
 Resgatar**, única ação) quando o passeio foi concluído no NPC hoje, e resgatada. **O Claim é só
 RECIBO**: o pagamento (Marcos, região guardada, viagem da noite) sai no `markDone` do NPC; o
 Claim grava `crossings.claimDay` (`claimStroll`, idempotente por dia do jogador — a 2ª chamada
@@ -4528,7 +4528,7 @@ higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) 
 - **Fora de:** selo "dia completo", `perfectDays`, `totalPerfectDays`, `missionPerfectDays`, Bits do dia, coração/HP, `dailyGoalFor`, `registeredForDay`. **Sem punição.**
 - **Decisões do dono (19/10/2026):** bônus ACIMA do teto; meta de passos trava no dia; a missão não exige tarefa real feita no dia.
 
-**A tela.** Cartão "Especial do dia" / "Today's special" na folha Missões, aba Diárias, acima de "Hoje". `MissionCard` em modo `quiet`: sem "!", rótulo "Feita"/"Done", recompensa visível. Sem resgate, sem som, não é modal, fora da fila. A meta se escolhe no `StepsCard`.
+**A tela.** Desde 20/10/2026 (REGISTRO §132) o cartão fica DENTRO da lista "Hoje" da aba Diárias, no topo, com o rótulo "Special mission" / "Missão especial" e uma linha fina antes das normais; cumprida, desce para o fim (entre as resgatadas). Com sensor, num dia de descanso, a dica "A especial de amanhã é de passos." avisa que existe a de passos; se o dia foi resolvido como descanso sem sensor e o sensor aparece num dia de passos, a missão vira a de passos (nunca se já estava cumprida). `MissionCard` em modo `quiet`: sem "!", rótulo "Feita"/"Done", recompensa visível. Sem resgate, sem som, não é modal, fora da fila. A meta se escolhe no `StepsCard`.
 
 **Limite honesto.** A recompensa é local ao save; o servidor não valida o gauge. Passo forjado rende no máximo +1/dia.
 
