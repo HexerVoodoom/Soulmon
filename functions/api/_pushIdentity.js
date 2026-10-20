@@ -104,6 +104,45 @@ export function suprimidosDeInscricao(v) {
 }
 
 /**
+ * A AGENDA DE COCÔ DO DIA na inscrição (REGISTRO §137): `{ d, tz, t: [[slot, instante], ...] }`.
+ *
+ * Só INSTANTES — nenhum dado pessoal: `d` = dia local `YYYY-MM-DD` do jogador,
+ * `tz` = fuso em minutos a leste de UTC (múltiplo de 15, -12h..+14h, igual às
+ * refeições), `t` = até `POOP_AGENDA_MAX` pares `[slot, epoch ms]` (slot 0..3 é o
+ * índice na agenda do save e vira a tag `poop-event-<slot>`, a MESMA do alarme
+ * local do APK e do aviso de dentro do app — é isso que impede o duplicado).
+ *
+ * Expira sozinha: o worker só dispara no dia `d` do fuso `tz`, e cada instante
+ * precisa CAIR nesse dia (senão é descartado). `agora` fora de ±3 dias de `d`
+ * descarta o campo inteiro. Qualquer defeito DESCARTA o campo (= sem push de
+ * cocô com o app fechado; o resto da inscrição segue igual). Ausente = desligado.
+ */
+export const POOP_AGENDA_MAX = 2;
+export function agendaCocoDeInscricao(v, agora = Date.now()) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+  const { d, tz, t } = v;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d ?? ''))) return undefined;
+  if (!Number.isInteger(tz) || tz < -720 || tz > 840 || tz % 15 !== 0) return undefined;
+  if (!Array.isArray(t) || t.length === 0 || t.length > 8) return undefined;
+  const base = Date.parse(`${d}T00:00:00Z`);
+  if (!Number.isFinite(base) || Math.abs(base - agora) > 3 * 86_400_000) return undefined;
+  const vistos = new Set();
+  const itens = [];
+  for (const par of t) {
+    if (!Array.isArray(par) || par.length !== 2) continue;
+    const [slot, at] = par;
+    if (!Number.isInteger(slot) || slot < 0 || slot > 3 || vistos.has(slot)) continue;
+    if (!Number.isSafeInteger(at)) continue;
+    if (new Date(at + tz * 60_000).toISOString().slice(0, 10) !== d) continue;
+    vistos.add(slot);
+    itens.push([slot, at]);
+  }
+  if (!itens.length) return undefined;
+  itens.sort((a, b) => a[1] - b[1]);
+  return { d, tz, t: itens.slice(0, POOP_AGENDA_MAX) };
+}
+
+/**
  * Token de registro do FCM. O formato do Google não é publicado como contrato,
  * então o teste aqui é de FORMA e de TETO, não de validade: o que ele precisa
  * impedir é `{token: {}}`, `{token: []}` e um megabyte de lixo virarem uma

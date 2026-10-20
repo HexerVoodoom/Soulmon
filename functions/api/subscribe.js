@@ -7,7 +7,7 @@ import { VALID_ID } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
-  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, suprimidosDeInscricao, gravarSeMudou, LIMITE_INSCRICAO,
+  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, suprimidosDeInscricao, agendaCocoDeInscricao, gravarSeMudou, LIMITE_INSCRICAO,
   desindexarInscricao,
 } from './_pushIdentity.js';
 
@@ -53,7 +53,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip, poop } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -125,6 +125,8 @@ export async function onRequestPost({ request, env }) {
     ...(lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {}),
     // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
     ...(suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {}),
+    // Agenda de cocô do dia (REGISTRO §137): só instantes; ausente/inválida = sem push de cocô com o app fechado.
+    ...(agendaCocoDeInscricao(poop) ? { poop: agendaCocoDeInscricao(poop) } : {}),
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
        `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   ledgerWithPlan, localDayKey, localDayStart, planDayPushes, progressSlotMinute, rollLedger, sanitizeLedger,
-  serverSkipPayload,
+  serverPoopPayload, serverSkipPayload,
 } from './petPushEvents';
 import type { PetPushInput } from './petPushEvents';
 import { HUNGER_FULL_TO_EMPTY_HOURS, HUNGER_MAX, msToFullEnergy } from './hunger';
@@ -230,5 +230,28 @@ describe('a copy dos pushes de evento: só convite, nunca culpa nem medo (REGIST
       expect(`${c.title} ${c.body}`).toMatch(/pastinha|pantry/i);
       expect(`${c.title} ${c.body}`).not.toMatch(/fome|hungry|coraç|heart|drain|dreno/i);
     }
+  });
+});
+
+describe('§137 — agenda de cocô do dia na inscrição de push', () => {
+  const poop = (sched: number[], over: Partial<PetPushInput> = {}) =>
+    planDayPushes(base({ state: { ...base().state, poopEventsScheduled: sched }, ...over }));
+
+  it('manda só [slot, instante] dos cocôs futuros do dia, no fuso do aparelho', () => {
+    const payload = serverPoopPayload(poop([at(10, 20), at(18, 40)]), -180);
+    expect(payload).toEqual({ d: localDayKey(at(8)), tz: -180, t: [[0, at(10, 20)], [1, at(18, 40)]] });
+  });
+  it('não leva o que já apareceu, o que cai no descanso nem nada se não há agenda', () => {
+    expect(serverPoopPayload(poop([at(7, 30), at(23, 30)], { nowMs: at(8) }), -180)).toBeNull();
+    expect(serverPoopPayload(poop([]), -180)).toBeNull();
+    const p = planDayPushes(base({ nowMs: at(12), state: { ...base().state, poopEventsScheduled: [at(10), at(18)], poopEventsShown: [0] } }));
+    expect(serverPoopPayload(p, -180)?.t).toEqual([[1, at(18)]]);
+  });
+  it('notificações desligadas: plano vazio, nenhum campo vai (o toggle apaga)', () => {
+    expect(serverPoopPayload(poop([at(10), at(18)], { enabled: false }), -180)).toBeNull();
+  });
+  it('o cocô sobrevive ao teto: com refeições + lembrete + fome + energia, os 2 cocôs ficam', () => {
+    const p = poop([at(10), at(18)], { state: { ...base().state, poopEventsScheduled: [at(10), at(18)], hunger: hungerCrossing(at(12)), energyPoints: 4 } });
+    expect(serverPoopPayload(p, -180)?.t).toHaveLength(2);
   });
 });

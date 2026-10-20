@@ -19,7 +19,7 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { VALID_ID } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import {
-  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, suprimidosDeInscricao, ehTokenFcm, gravarSeMudou,
+  nomeDePet, idiomaDePush, dataDeNascimento, refeicoesDeInscricao, lembreteDeInscricao, suprimidosDeInscricao, agendaCocoDeInscricao, ehTokenFcm, gravarSeMudou,
   LIMITE_INSCRICAO, desindexarInscricao,
 } from './_pushIdentity.js';
 
@@ -65,7 +65,7 @@ export async function onRequestPost({ request, env }) {
   const body = await corpoDe(request);
   if (!body) return json({ error: 'Invalid JSON' }, 400);
 
-  const { token, petName, language, bornAt, saveId, meals, sleep, skip } = body;
+  const { token, petName, language, bornAt, saveId, meals, sleep, skip, poop } = body;
   if (!token) return json({ error: 'Missing token' }, 400);
   // Recusar AQUI é o que impede `{token: []}` (que passava, porque `[]` é
   // truthy) e um megabyte de lixo virarem uma linha de um ano que o cron tenta
@@ -88,6 +88,8 @@ export async function onRequestPost({ request, env }) {
     ...(lembreteDeInscricao(sleep) ? { sleep: lembreteDeInscricao(sleep) } : {}),
     // O que o teto diário cortou hoje (REGISTRO §113): ausente/inválido = nada cortado.
     ...(suprimidosDeInscricao(skip) ? { x: suprimidosDeInscricao(skip) } : {}),
+    // Agenda de cocô do dia (REGISTRO §137): só instantes; ausente/inválida = sem push de cocô com o app fechado.
+    ...(agendaCocoDeInscricao(poop) ? { poop: agendaCocoDeInscricao(poop) } : {}),
     // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois

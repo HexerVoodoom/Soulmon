@@ -22,11 +22,11 @@
 import { sendWebPush } from './webpush.js';
 import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
-import { pushCopy, mealInviteCopy, mealPushKind, sleepReminderCopy } from '../functions/api/_pushCopy.js';
+import { pushCopy, mealInviteCopy, mealPushKind, sleepReminderCopy, poopPushCopy } from '../functions/api/_pushCopy.js';
 import {
   MEAL_KEYS, MEAL_TICK_CRON, MEAL_STEP_MIN, mealAtTick, localMinutes, inRestArc, tickOf,
 } from '../functions/api/_mealRhythm.js';
-import { ehTokenFcm, lembreteDeInscricao, suprimidosDeInscricao } from '../functions/api/_pushIdentity.js';
+import { ehTokenFcm, lembreteDeInscricao, suprimidosDeInscricao, agendaCocoDeInscricao } from '../functions/api/_pushIdentity.js';
 
 const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo';
 // Endereço de contato do VAPID (RFC 8292 `sub`): é para onde o SERVIÇO DE
@@ -181,6 +181,9 @@ export function sleepNotifFor(sub, date) {
   return sleepReminderCopy(sub.petName, sub.language);
 }
 
+/** A passada do cron é de 30 min (`MEAL_STEP_MIN`). */
+const PASSADA_MS = MEAL_STEP_MIN * 60_000;
+
 /** Dia local da inscrição (`YYYY-MM-DD`) — semente do convite do dia. */
 function dayKeyLocal(date, tz) {
   return new Date(date.getTime() + tz * 60_000).toISOString().slice(0, 10);
@@ -221,6 +224,43 @@ export function mealNotifFor(sub, date) {
   return mealInviteCopy(meal, kind, sub.petName, sub.language);
 }
 
+/**
+ * O PUSH DE COCÔ desta inscrição neste instante, ou `null` (REGISTRO §137).
+ *
+ * O worker NÃO lê o save: só a AGENDA DO DIA que o cliente mandou na inscrição
+ * (`poop = { d, tz, t: [[slot, instante]] }`, só instantes). O push sai na
+ * 1ª passada de 30 min em ou DEPOIS do instante (arredondado PARA CIMA: o cocô
+ * só "apareceu" quando o instante chegou — nunca avisar antes). Cada instante
+ * cai em UMA passada só, então reexecutar a mesma passada não repete outra.
+ * A tag é `poop-event-<slot>`, a do alarme local do APK e do aviso de dentro do
+ * app: se dois chegarem, o sistema troca um pelo outro.
+ *
+ * `null` quando: sem agenda válida (inscrição antiga, toggle desligado), agenda
+ * de OUTRO dia local (expirada), não é a passada do instante, D0, ou o instante
+ * cai na janela de descanso (`meals.rest`; só com `sleep` assume 10 h a partir
+ * do início). Nunca é cortado pelo `x`: cocô é a maior prioridade (`_pushBudget.js`).
+ */
+export function poopNotifFor(sub, date) {
+  const agenda = agendaCocoDeInscricao(sub?.poop, date.getTime());
+  if (!agenda) return null;
+  if (dayKeyLocal(date, agenda.tz) !== agenda.d) return null;
+  if (ageDaysOf(sub, date) === 0) return null;
+  const passada = Math.round(date.getTime() / PASSADA_MS);
+  const slotDaPassada = agenda.t.find(([, at]) => Math.ceil(at / PASSADA_MS) === passada);
+  if (!slotDaPassada) return null;
+  const [slot, at] = slotDaPassada;
+  const rest = Array.isArray(sub?.meals?.rest) && Number.isInteger(sub.meals.tz) ? sub.meals.rest : null;
+  if (rest && inRestArc(localMinutes(new Date(at), sub.meals.tz), rest)) return null;
+  const sleep = lembreteDeInscricao(sub?.sleep);
+  if (sleep && !rest && inRestArc(localMinutes(new Date(at), sleep.tz), [sleep.s, (sleep.s + 600) % 1440])) return null;
+  return poopPushCopy(sub.petName, sub.language, slot);
+}
+
+/** `notifFor` devolve uma notificação, uma LISTA delas (cocô + refeição na mesma passada) ou `null`. */
+function notifsDe(r) {
+  return (Array.isArray(r) ? r : [r]).filter(Boolean);
+}
+
 async function entregar(env, label, notifFor, { lazyFcm = false } = {}) {
   const webPushCounts = { sent: 0, failed: 0, removed: 0 };
   const fcmCounts = { sent: 0, failed: 0, removed: 0 };
@@ -243,20 +283,24 @@ async function entregar(env, label, notifFor, { lazyFcm = false } = {}) {
         await env.PUSH_SUBSCRIPTIONS.delete(name);
         return 'removed';
       }
-      const notif = notifFor(sub);
-      if (!notif) return 'skipped';
-      const result = await sendWebPush(
-        { endpoint: sub.endpoint, keys: sub.keys },
-        notif,
-        vapidJWK,
-        VAPID_PUBLIC_KEY,
-        CONTACT,
-      );
-      if (result.status === 410 || result.status === 404) {
-        await env.PUSH_SUBSCRIPTIONS.delete(name);
-        return 'removed';
+      const notifs = notifsDe(notifFor(sub));
+      if (!notifs.length) return 'skipped';
+      let outcome = 'sent';
+      for (const notif of notifs) {
+        const result = await sendWebPush(
+          { endpoint: sub.endpoint, keys: sub.keys },
+          notif,
+          vapidJWK,
+          VAPID_PUBLIC_KEY,
+          CONTACT,
+        );
+        if (result.status === 410 || result.status === 404) {
+          await env.PUSH_SUBSCRIPTIONS.delete(name);
+          return 'removed';
+        }
+        if (!result.ok) outcome = 'failed';
       }
-      return result.ok ? 'sent' : 'failed';
+      return outcome;
     }, webPushCounts);
   }
 
@@ -288,24 +332,28 @@ async function entregar(env, label, notifFor, { lazyFcm = false } = {}) {
         await env.PUSH_SUBSCRIPTIONS.delete(name);
         return 'removed';
       }
-      const notif = notifFor(sub);
-      if (!notif) return 'skipped';
+      const notifs = notifsDe(notifFor(sub));
+      if (!notifs.length) return 'skipped';
       accessToken ??= await getFcmAccessToken(serviceAccount);
-      const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
-      if (result.ok) return 'sent';
-      // `NOT_FOUND` é o irmão de `UNREGISTERED` na v1 do FCM: o registro não
-      // existe mais do lado do Google. Os dois são permanentes e por TOKEN.
-      //
-      // ⚠️ `INVALID_ARGUMENT` NÃO entra nesta lista de propósito. Ele também
-      // sai quando o defeito é NOSSO (payload malformado por um deploy ruim),
-      // e aí apagar significaria apagar TODAS as inscrições de uma vez. O
-      // token torto — que é o caso legítimo dele — já foi removido acima, por
-      // exame do próprio token, sem depender do que o Google respondeu.
-      if (result.error === 'UNREGISTERED' || result.error === 'NOT_FOUND') {
-        await env.PUSH_SUBSCRIPTIONS.delete(name);
-        return 'removed';
+      let outcome = 'sent';
+      for (const notif of notifs) {
+        const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
+        if (result.ok) continue;
+        // `NOT_FOUND` é o irmão de `UNREGISTERED` na v1 do FCM: o registro não
+        // existe mais do lado do Google. Os dois são permanentes e por TOKEN.
+        //
+        // ⚠️ `INVALID_ARGUMENT` NÃO entra nesta lista de propósito. Ele também
+        // sai quando o defeito é NOSSO (payload malformado por um deploy ruim),
+        // e aí apagar significaria apagar TODAS as inscrições de uma vez. O
+        // token torto — que é o caso legítimo dele — já foi removido acima, por
+        // exame do próprio token, sem depender do que o Google respondeu.
+        if (result.error === 'UNREGISTERED' || result.error === 'NOT_FOUND') {
+          await env.PUSH_SUBSCRIPTIONS.delete(name);
+          return 'removed';
+        }
+        outcome = 'failed';
       }
-      return 'failed';
+      return outcome;
     }, fcmCounts);
   }
 
@@ -321,9 +369,9 @@ export default {
     const date = new Date(event.scheduledTime);
 
     // A passada de 30 min do RITMO DAS REFEIÇÕES. Só mexe em quem ligou (a
-    // inscrição tem `meals`); o resto sai como 'skipped' sem custo de envio.
+    // inscrição tem `meals`) e do COCÔ AGENDADO (`poop`, REGISTRO §137); o resto sai como 'skipped' sem custo de envio.
     if (event.cron === MEAL_TICK_CRON) {
-      await entregar(env, `meal tick ${date.toISOString()}`, sub => mealNotifFor(sub, date) ?? sleepNotifFor(sub, date), { lazyFcm: true });
+      await entregar(env, `meal tick ${date.toISOString()}`, sub => [poopNotifFor(sub, date), mealNotifFor(sub, date) ?? sleepNotifFor(sub, date)], { lazyFcm: true });
       return;
     }
 
