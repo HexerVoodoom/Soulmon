@@ -191,6 +191,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** os seis componentes de jogo que o importam (`BolhasGame`, `EcoGame`, `PicrossGame`, `RevisaoGame`, `TrocaGame` em `src/components/mente/` e `RespiracaoGame` em `src/components/refugio/`; `grep -rl "types'" src/components/mente src/components/refugio`, 30/09/2026).
 **Régua:** indireta (tsc); a fiação em `src/components/play/playArea.render.test.tsx`.
 
+### `src/components/nav/lotHalo.ts`
+**Dono de:** o HALO PRETO dos prédios (20/10/2026, REGISTRO §140): `lotArtFilter({ locked?, accent? })` devolve o `filter` único dos sprites de lote — contorno preto (`LOT_HALO_BLACK`) + sombra de chão; trancado = cinza (`LOT_LOCKED_FILTER`) com o mesmo halo; `LOT_HALO_ACCENT` é o acento claro do Caderno. **Chamado por:** `AreaScene` e `MapPage`. **Régua:** `lotHalo.contract.test.ts` (as 6 áreas, abertos e trancados; só o `AreaScene` desenha sprite de lote).
+
 ### `src/components/nav/AreaTopBar.tsx`
 **Dono de:** o topo de uma área do Mapa e das páginas do menu da Home — voltar (seta em círculo, exceção D1 do dono) + título centralizado.
 **Props principais:** `icon?` (`'map'` nas áreas, `'arrow_back'` padrão — 29/09/2026), `overScene?` (topo sobre o fundo full-screen: tinta `#E9F5F2` + scrim), `covered?` (há folha/jogo/duelo aberto: o topo some por `visibility:hidden`, sai do foco e da árvore de acessibilidade), `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`; desde a F5 o `App` não passa mais — nenhuma área tem página dona do `<h1>` —, fica o padrão `true`).
