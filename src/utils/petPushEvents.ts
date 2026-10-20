@@ -299,3 +299,28 @@ export type ServerSkip = { d: string; k: string[] };
 export function serverSkipPayload(plan: PetPushPlan): ServerSkip | null {
   return plan.serverSkip.length ? { d: plan.day, k: [...plan.serverSkip] } : null;
 }
+
+/**
+ * A AGENDA DE COCÔ DO DIA na inscrição de push (REGISTRO §137): `{ d, tz, t }` — o
+ * dia local, o fuso (min a leste de UTC) e os pares `[slot, instante]` dos cocôs que
+ * AINDA vão aparecer hoje e FICARAM no teto. Só instantes, nenhum dado pessoal: é o
+ * que o worker lê para avisar com o app/PWA FECHADO (ele não lê o save).
+ *
+ * O plano já tirou o que cai na janela de descanso, o que passou da hora e o que o
+ * teto cortou (cocô tem a maior prioridade, então na prática nada). `null` quando
+ * não sobra nenhum — e aí o campo some da inscrição (o servidor regrava o registro
+ * inteiro), que é também o que acontece ao desligar as notificações (DELETE).
+ */
+export type ServerPoop = { d: string; tz: number; t: Array<[number, number]> };
+
+export function serverPoopPayload(plan: PetPushPlan, tzOffsetMin: number): ServerPoop | null {
+  const t: Array<[number, number]> = [];
+  for (const p of plan.kept) {
+    if (p.kind !== 'poop') continue;
+    const slot = Number(p.id.slice('poop-'.length));
+    if (Number.isInteger(slot) && slot >= 0 && slot <= 3) t.push([slot, p.at]);
+  }
+  if (!t.length) return null;
+  t.sort((a, b) => a[1] - b[1]);
+  return { d: plan.day, tz: tzOffsetMin, t };
+}

@@ -12,7 +12,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { MEAL_KEYS, inRestArc, parseHHMM, restArc, serverMeals } from '../utils/mealRhythm';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
 import {
-  ledgerWithPlan, planDayPushes, rollLedger, sanitizeLedger, serverSkipPayload,
+  ledgerWithPlan, planDayPushes, rollLedger, sanitizeLedger, serverPoopPayload, serverSkipPayload,
 } from '../utils/petPushEvents';
 import type { PetPushState } from '../utils/petPushEvents';
 import { daysTogether } from '../utils/anniversary';
@@ -160,6 +160,11 @@ export function NotificationManager({
   }, [planKey, planTick]);
   const skipPayload = enabled && plan ? serverSkipPayload(plan) : null;
   const skipKey = JSON.stringify(skipPayload);
+  /* A AGENDA DE COCÔ do dia (REGISTRO §137): os instantes dos cocôs que ainda vão aparecer hoje, para
+     o worker avisar com o app/PWA FECHADO. Só instantes + fuso; `null` (nenhum, ou notificações
+     desligadas) tira o campo da inscrição — o servidor regrava o registro inteiro. */
+  const poopPayload = enabled && plan ? serverPoopPayload(plan, -new Date().getTimezoneOffset()) : null;
+  const poopKey = JSON.stringify(poopPayload);
   /* O que o teto cortou, por REF: os efeitos de alarme abaixo leem sem reiniciar o intervalo. */
   const skipRef = useRef<string[]>([]);
   skipRef.current = plan?.serverSkip ?? [];
@@ -212,10 +217,10 @@ export function NotificationManager({
       if (isNativeAndroid) {
         registerForPushNotifications(petName, language, (title, body) => {
           toast(title, { description: body });
-        }, saveId, mealsPayload, sleepPayload, skipPayload);
+        }, saveId, mealsPayload, sleepPayload, skipPayload, poopPayload);
       } else {
         // WP1.17 — a idade vai junto: é ela que dá voz própria aos dias 1 e 2.
-        subscribeToPush(petName, language, bornAt, saveId, mealsPayload, sleepPayload, skipPayload);
+        subscribeToPush(petName, language, bornAt, saveId, mealsPayload, sleepPayload, skipPayload, poopPayload);
       }
     } else {
       if (isNativeAndroid) {
@@ -226,7 +231,7 @@ export function NotificationManager({
         unsubscribeFromPush();
       }
     }
-  }, [enabled, petName, language, saveId, mealsKey, sleepKey, skipKey]);
+  }, [enabled, petName, language, saveId, mealsKey, sleepKey, skipKey, poopKey]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {
