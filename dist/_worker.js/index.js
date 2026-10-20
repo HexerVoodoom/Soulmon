@@ -11119,7 +11119,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-L2rPhy/functionsRoutes-0.980088860318691.mjs
+// ../.wrangler/tmp/pages-UX2qO2/functionsRoutes-0.052144633380456495.mjs
 var routes = [
   {
     routePath: "/api/account",
