@@ -278,7 +278,7 @@ Na mesma tela, uma por uma:
 | **Público-alvo e conteúdo** | 18 anos ou mais; "não atrai crianças" | decisão #15; `PLAY-DATA-SAFETY.md` §0 |
 | **Apps de notícias** | Não | — |
 | **Apps de saúde** (inclui COVID) | **Declarar**: o Console exige a declaração por causa de `ACTIVITY_RECOGNITION`. Categoria "Atividade e condicionamento físicos"; justificativa: contador de passos nativo, só o total diário, sem Health Connect/Google Fit, o app funciona sem a permissão. (Não é app médico nem de COVID.) | `PLAY-DATA-SAFETY.md` §2.6 |
-| **Segurança de dados** | transcrever `PLAY-DATA-SAFETY.md` §3 (a lista-resumo — é dela que se preenche), item por item. Groq, Higgsfield/Gemini e Supabase+Groq (áudio) já estão declarados em §2.3/§2.4 | `PLAY-DATA-SAFETY.md` |
+| **Segurança de dados** | transcrever `PLAY-DATA-SAFETY.md` §3 (a lista-resumo — é dela que se preenche), item por item. Groq (reserva Gemini), Higgsfield/Gemini e Groq direto do nosso Worker (áudio, sem Supabase) já estão declarados em §2.3/§2.4 | `PLAY-DATA-SAFETY.md` |
 | **Apps governamentais** | Não | — |
 | **Recursos financeiros** | Nenhum (compras digitais não contam aqui) | — |
 | **Recursos de IA generativa** | Sim — responder com `PLAY-FICHA.md` §5 | decisão #22 |
