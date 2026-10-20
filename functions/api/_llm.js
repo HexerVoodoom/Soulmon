@@ -33,7 +33,13 @@
  */
 
 export const GROQ_MODEL_DEFAULT = 'openai/gpt-oss-120b';
-export const GEMINI_MODEL = 'gemini-2.5-flash';
+// 20/10/2026: `gemini-2.5-flash` passou a responder 404 (modelo aposentado).
+// O alias `-latest` acompanha o Flash vigente; troca sem deploy: var `GEMINI_CHAT_MODEL`.
+export const GEMINI_MODEL = 'gemini-flash-latest';
+export function geminiModel(env) {
+  const m = typeof env?.GEMINI_CHAT_MODEL === 'string' ? env.GEMINI_CHAT_MODEL.trim() : '';
+  return /^[\w.-]{3,60}$/.test(m) ? m : GEMINI_MODEL;
+}
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // Timeouts separados. O gpt-oss-120b raciocina (mesmo com effort 'low'), então o
 // Groq ganha mais tempo; o Gemini (thinkingBudget 0) é rápido. Soma no pior
@@ -79,17 +85,29 @@ async function callGroq(env, req, withTools) {
   return res;
 }
 
+/** Classifica a mensagem de erro do provedor por palavra-chave FIXA: nunca
+ *  devolve trecho da mensagem (ela pode ecoar o prompt). */
+export function errorHint(message) {
+  if (typeof message !== 'string') return '';
+  const m = message.toLowerCase();
+  const KEYS = ['decommission', 'deprecated', 'terms', 'does not exist', 'not found',
+    'reasoning_effort', 'max_completion_tokens', 'temperature', 'tool', 'context', 'too large',
+    'thinking', 'api key', 'permission', 'quota', 'billing', 'organization', 'restricted', 'invalid'];
+  return KEYS.filter(k => m.includes(k)).join('|').slice(0, 80);
+}
+
 /** Só metadados do erro do Groq: `error.code`, `error.type` e o modelo.
  *  NUNCA `message`/`failed_generation` (ecoam o prompt). Valores passam por
  *  lista de caracteres seguros para não carregar texto livre. */
 async function logGroqError(env, res) {
-  let code = '', type = '';
+  let code = '', type = '', hint = '';
   try {
     const e = JSON.parse(await res.text())?.error ?? {};
     const safe = v => (typeof v === 'string' && /^[\w.-]{1,40}$/.test(v) ? v : '');
     code = safe(e.code); type = safe(e.type);
+    hint = errorHint(e.message);
   } catch { /* corpo não-JSON: sem metadados */ }
-  console.error('[chat] groq 400', { code, type, model: chatModel(env) });
+  console.error('[chat] groq 400', { code, type, hint, model: chatModel(env) });
 }
 
 // Falha de CONTA/CONFIG do Groq (modelo, chave, termos): 400 final (já sem
@@ -169,7 +187,7 @@ async function gemini(env, req) {
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: String(m.content) }],
   }));
-  const res = await timedFetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+  const call = generationConfig => timedFetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel(env)}:generateContent`, {
     method: 'POST',
     // Chave em header, não na URL: URL vai parar em log de proxy.
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
@@ -177,10 +195,20 @@ async function gemini(env, req) {
       systemInstruction: { parts: [{ text: system }] },
       contents,
       tools: geminiTools(tools),
-      generationConfig: { temperature: Math.min(temperature, 2), maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } },
+      generationConfig,
     }),
   }, GEMINI_TIMEOUT_MS);
-  if (!res.ok) return { ok: false, status: res.status };
+  const base = { temperature: Math.min(temperature, 2) };
+  let res = await call({ ...base, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } });
+  // Modelos novos podem recusar `thinkingBudget: 0` (400): repete sem ele, com folga
+  // para o raciocínio não comer a resposta inteira.
+  if (res.status === 400) res = await call({ ...base, maxOutputTokens: maxTokens + 400 });
+  if (!res.ok) {
+    let hint = '';
+    try { hint = errorHint(JSON.parse(await res.text())?.error?.message); } catch { /* sem corpo */ }
+    console.error('[chat] gemini erro', { status: res.status, hint, model: geminiModel(env) });
+    return { ok: false, status: res.status };
+  }
   const data = await res.json();
   const parts = data.candidates?.[0]?.content?.parts ?? [];
   return {
