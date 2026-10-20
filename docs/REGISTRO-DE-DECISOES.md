@@ -3025,3 +3025,9 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Como:** `tools/mood-dono.py` fatia o original do dono (projeção de colunas de alfa, mesma escala nos 5, 128 px) e grava os cinco PNG; idempotente; `tools/mood-tint.py` foi desativado para não regravar os tingidos.
 - **Alternativa que perdeu:** tingir a arte L6 (§142).
 - **O que falsificaria:** os 5 não se distinguirem a 32–40 px sem legenda (a progressão agora é de forma E cor: chuva → triste → neutro → feliz → brilho dourado).
+
+## 139. Textos longos cortados: os 10 piores corpos de modal/intro/tela passam a parágrafos de ≤ ~140 caracteres (dono, 20/10/2026; D-72; 2ª rodada pelo modal do dono)
+- **Decisão do dono:** "o texto no geral tem que ser mais conciso; cortar os 10 piores textos longos".
+- **Como:** Masmorra (descida e autonomia), Renascimento, plano da Oficina, muro de idade, Passeio (missões), Caderno, Torneio (faixas), Duelo/Arena (como lutar, resumo da Arena, rodadas). Mantidos: vocabulário canônico, `${}` das constantes, aria-labels e a voz sem cobrança/culpa/veredito. Os detalhes cortados (marcos e Glitchtama, profundidade por Lv, fome e energia) já vivem no Guia/Ajuda; as regras que não cabem viram parágrafos curtos separados no "i" da própria tela; "apagar a conta apaga o Caderno" está em `public/privacidade.html`, e "nada aqui conta nem pontua" voltou ao "i" do Caderno. Tabela em `prompts/d72-aplicado.md`.
+- **Alternativa que perdeu:** manter os textos como estavam.
+- **O que falsificaria:** jogador sem entender uma regra por falta de texto (ex.: não saber que a descida precisa de HP mínimo, ou o que é uma Travessia) apontado em relato ou teste de uso.

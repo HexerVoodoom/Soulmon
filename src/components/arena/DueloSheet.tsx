@@ -119,14 +119,26 @@ export function DueloSheet({ language, onStart }: {
                 : "Your Soulmon's element and strikes: see them in the Profile, in the Laboratory."}
             </span>
             <span data-duelo-como-lutar style={{ display: 'block', marginTop: 6 }}>
-              {isPt
-                ? 'Na luta, seu Soulmon ataca e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele. Com a energia cheia, ele solta o especial — toque no anel na hora certa para render mais. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
-                : 'In the fight, your Soulmon attacks and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it. With full energy it unleashes its special — tap the ring at the right moment to hit harder. When the enemy unleashes its own, swipe sideways to dodge.'}
+              <span style={{ display: 'block' }}>
+                {isPt
+                  ? 'Na luta, seu Soulmon ataca e se defende sozinho. Toque na tela (ou no mascote) para torcer.'
+                  : 'In the fight, your Soulmon attacks and defends on its own. Tap the screen (or the mascot) to cheer.'}
+              </span>
+              <span style={{ display: 'block' }}>
+                {isPt
+                  ? 'No especial, toque no anel na hora certa; para esquivar do inimigo, deslize para o lado.'
+                  : 'On its special, tap the ring at the right moment; to dodge the enemy’s, swipe sideways.'}
+              </span>
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, sempre de poder parecido com o seu (acompanham o nível do seu Soulmon). Vencer rende Bits; perder não custa nada. O Torneio é o modo ranqueado: lá o servidor sorteia os oponentes pela sua faixa.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, always of power similar to yours (they scale to your Soulmon's level). Wins earn Bits; losses cost nothing. The Tournament is the ranked mode: there the server draws opponents for you by your tier.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido com o seu. Vencer rende Bits; perder não custa nada.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, of power similar to yours. Wins earn Bits; losses cost nothing.`}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? 'O Torneio é o modo ranqueado: o servidor sorteia os oponentes pela sua faixa.'
+                : 'The Tournament is the ranked mode: the server draws opponents by your tier.'}
             </span>
           </span>
         </ModalInfo>

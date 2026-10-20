@@ -1886,8 +1886,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               : `Soulmon asks for ${MIN_AGE_YEARS}+.`}>
             <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 20px' }}>
               {isPt
-                ? 'O Soulmon é feito para maiores de 18 anos, e pelo que você respondeu você ainda não chegou lá. Não é nada que você tenha feito errado — é só o tanto que o app pede pra funcionar do jeito que ele foi pensado. Volte quando fizer 18 anos; vamos estar aqui.'
-                : "Soulmon is built for people 18 and older, and based on what you entered, you're not there yet. This isn't about anything you did wrong — it's just what the app needs to work the way it was designed. Come back when you turn 18; we'll be here."}
+                ? 'O Soulmon é para maiores de 18 anos, e você ainda não chegou lá — nada que tenha feito errado. Volte quando fizer 18 anos.'
+                : "Soulmon is for people 18 and older, and you're not there yet — nothing you did wrong. Come back when you turn 18."}
             </p>
             <button
               type="button"

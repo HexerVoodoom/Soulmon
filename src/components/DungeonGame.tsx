@@ -901,8 +901,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           <span data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span>
                   {isPt
-                    ? `A descida é automática: as lutas vêm sozinhas, e a cada ${ladderLen} lutas você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia — a mesma da Home, que volta com o tempo (mais depressa quando ele está bem alimentado: a comida que você ganha concluindo atividades enche a fome). Há um limite de ${DUNGEON_DAILY_LAYERS} camadas por dia. O HP volta com o tempo, até com o app fechado (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio; precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer). Cada ${DUNGEON_MILESTONE_FLOOR} camadas são um marco: a descida seguinte começa dali, e o primeiro marco de cada descida rende um Glitchtama. Quanto mais Lv, mais fundo ele vai. Subir de nível enche a energia e o HP. Nunca custa seus corações.`
-                    : `The descent is automatic: fights come one after another on their own, and every ${ladderLen} fights you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy — the same energy as Home, which returns with time (faster when he is well fed: the food you earn by finishing activities fills his hunger). There is a limit of ${DUNGEON_DAILY_LAYERS} layers a day. HP comes back over time, even with the app closed (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full; you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns a Glitchtama. The higher his Lv, the deeper he goes. Leveling up refills energy and HP. It never costs your hearts.`}
+                    ? `A descida é automática: a cada ${ladderLen} lutas, uma camada (${DUNGEON_ENERGY_PER_LAYER} de energia, a da Home; até ${DUNGEON_DAILY_LAYERS} por dia).`
+                    : `The descent is automatic: every ${ladderLen} fights, a layer (${DUNGEON_ENERGY_PER_LAYER} energy, the Home energy; up to ${DUNGEON_DAILY_LAYERS} a day).`}
+                </span>
+                <span>
+                  {isPt
+                    ? `O HP volta com o tempo e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer. Perder nunca custa seus corações.`
+                    : `HP comes back over time and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down. Losing never costs your hearts.`}
                 </span>
                 <span>
                   {isPt
@@ -911,8 +916,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Seu Soulmon vai sozinho: golpeia, se defende e solta o especial sozinho quando a energia enche (ela passa de um inimigo para o outro). O botão do canto de baixo acelera a cena (1× ou 3×) sem mudar o resultado. Pode sair da tela: ele continua descendo e o que render fica esperando você. Enquanto estiver na masmorra ele não faz outra coisa; para chamá-lo de volta, use "Retirar da masmorra".'
-                    : 'Your Soulmon goes alone: it strikes, defends and unleashes its special by itself when the energy fills (it carries over from one enemy to the next). The button in the bottom corner speeds the scene up (1× or 3×) without changing the outcome. You can leave the screen: he keeps going down and whatever he earns waits for you. While he is in the dungeon he does nothing else; to call him back, use "Take him out".'}
+                    ? 'Seu Soulmon luta e solta o especial sozinho (a energia passa de um inimigo para o outro). O botão do canto acelera a cena (1× ou 3×).'
+                    : 'Your Soulmon fights and unleashes its special by itself (energy carries over between enemies). The corner button speeds up the scene (1× or 3×).'}
+                </span>
+                <span>
+                  {isPt
+                    ? 'Pode sair da tela: a descida segue. Para chamá-lo de volta, use "Retirar da masmorra".'
+                    : 'You can leave the screen: the descent goes on. To call him back, use "Take him out".'}
                 </span>
           </span>
         </InfoTip>
