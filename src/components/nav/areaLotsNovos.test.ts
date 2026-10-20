@@ -32,18 +32,15 @@ describe('lotes novos (29/09/2026)', () => {
     expect([arena.guerra.left, arena.guerra.top, (arena.guerra as { width?: string }).width]).toEqual(['77.4%', '46.7%', '38%']); // a Guerra não mudou (§146)
     const rects = (id: string, w: number, h: number) => lotHitRects('arena', arenaLots('pt-BR').find(l => l.id === id) as never, w, h)[0];
     const centro = (id: string) => { const art = rects(id, 390, 844); return [((art.x0 + art.x1) / 2 / 390) * 100, ((art.y0 + art.y1) / 2 / 844) * 100]; };
-    // §146: diagonal preservada (centro visual do Arena livre − o do Torneio ≈ 27,4 / 10,1 pontos; era 28,0 / 10,3) e PEGADA do par (centro do diamante do
-    // rodapé = base − 0,18 × largura opaca; o modelo de `tools/w12-mapas.py`) no centro do piso interno medido no PNG: polígono (280,775) (490,645) (735,832) (520,972)
-    // em px do fundo → centroide (506,25 / 806) = (33,7% / 47,4%) da cena em 390×844 (cover). Folga: ≤ 1,2 pt em x (a Guerra empurra o par ~0,9 pt para a esquerda) e ≤ 0,6 em y.
-    expect(centro('duelo')[0] - centro('torneio')[0]).toBeCloseTo(27.4, 0);
-    expect(Math.abs(centro('duelo')[1] - centro('torneio')[1] - 10.1)).toBeLessThanOrEqual(0.6);
-    const pegada = (id: string) => { const a = rects(id, 390, 844); return [(a.x0 + a.x1) / 2, a.y1 - 0.18 * (a.x1 - a.x0)]; };
-    const PISO: Array<[number, number]> = [[280, 775], [490, 645], [735, 832], [520, 972]];
-    const escala = Math.max(390 / 1269, 844 / 1700), offX = (1269 * escala - 390) / 2;
-    const centroPiso = [(PISO.reduce((s, p) => s + p[0], 0) / 4) * escala - offX, (PISO.reduce((s, p) => s + p[1], 0) / 4) * escala];
-    const par = [(pegada('torneio')[0] + pegada('duelo')[0]) / 2, (pegada('torneio')[1] + pegada('duelo')[1]) / 2];
-    expect(Math.abs(par[0] - centroPiso[0]) / 390 * 100, 'par × piso, x').toBeLessThanOrEqual(1.2);
-    expect(Math.abs(par[1] - centroPiso[1]) / 844 * 100, 'par × piso, y').toBeLessThanOrEqual(0.6);
+    // §147 (W19): o dono marcou na captura 390×844 onde a BASE do Torneio deve ficar: o ponto (70,328) do sprite (a escadaria vermelha, dentro do círculo
+    // branco dele) tem de cair no centro do círculo vermelho (95,366): Δ = (+25, +38) px. A Arena livre desceu o MÍNIMO que o H11 deixa (Torneio e Guerra
+    // fecham o vão em x): centro visual do Arena livre − o do Torneio ≈ 21,0 / 20,6 pontos (era 27,4 / 10,1 no §146: a diagonal ficou mais vertical).
+    expect(centro('duelo')[0] - centro('torneio')[0]).toBeCloseTo(21.0, 0);
+    expect(Math.abs(centro('duelo')[1] - centro('torneio')[1] - 20.6)).toBeLessThanOrEqual(0.6);
+    const tArt = rects('torneio', 390, 844);
+    const ancora = [tArt.x0 + 46.8, tArt.y0 + 80.46]; // ponto da escadaria no sprite, medido na captura do dono (antes em (70,328))
+    expect(Math.abs(ancora[0] - 95), 'base do Torneio × alvo do dono, x').toBeLessThanOrEqual(3);
+    expect(Math.abs(ancora[1] - 366), 'base do Torneio × alvo do dono, y').toBeLessThanOrEqual(3);
     // a vaga P1 (50,8%/35,1%) segue vazia: nenhum prédio tem o centro por lá
     for (const id of ['torneio', 'duelo', 'guerra']) expect(Math.hypot(centro(id)[0] - 50.8, (centro(id)[1] - 35.1) * 2)).toBeGreaterThan(15);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
