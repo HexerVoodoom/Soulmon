@@ -18,7 +18,8 @@ import {
   M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, hintAction, newCombat, playTurn, type M3Combat, type M3Element,
 } from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
-import { powerShots, type PowerShot } from '../utils/match3Powers';
+import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
+import { fxFrame } from '../utils/combatFx';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 
 /**
@@ -46,9 +47,8 @@ const CONFIRM_MS = 3000;
 /** A arte do inimigo 1→3 sobe de estágio: o último do time é o mais imponente. */
 const ENEMY_STAGES = ['rookie', 'champion', 'ultimate'] as const;
 const ENEMY_SPRITE = 64;
-/** D-100: a viagem do poder e a vida do número de dano (ms). */
-const FX_TRAVEL = 300;
-const FX_MS = 1200;
+/** D-102: os tempos do poder (aura → viagem → burst → número) estão em `utils/match3Powers.ts`; aqui só o tamanho da aura (como a do especial do `BattleStage`: 1,3× o sprite). */
+const AURA_SCALE = 1.3;
 const CAN_ANIMATE = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
 const PLAYER_SPRITE = 88;
 
@@ -115,6 +115,9 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const [extraFlash, setExtraFlash] = useState(0);
   const [fx, setFx] = useState<Fx[]>([]);
   const fxId = useRef(0);
+  /** D-102: quando cada uma das 2 pistas de poder fica livre e onde começou a janela de 2,5 s do lado da jogada (ms de `Date.now()`). */
+  const fxLanes = useRef<number[]>([0, 0]);
+  const fxWindow = useRef(0);
   const fieldRef = useRef<HTMLDivElement | null>(null);
   const streakRef = useRef(1);
 
@@ -176,7 +179,14 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     setHint(null);
   }, []);
 
-  /** D-100: solta os poderes de um passo — de cada combo (célula) até o alvo, com o dano que a conta já aplicou. Só mede e guarda; a animação é da `PowerFx`. */
+  /** D-102: abre a janela de efeitos de um lado da jogada (jogador ou inimigo): o teto de 2,5 s e as 2 pistas contam daqui. */
+  const openFxWindow = useCallback(() => { fxWindow.current = Date.now(); }, []);
+
+  /**
+   * D-100/D-102: solta os poderes de um passo — aura no atacante, depois o poder (da célula do combo ao alvo) e o burst no alvo, com o dano
+   * que a conta já aplicou. Só mede, agenda e guarda; a animação é da `PowerFx`. A LÓGICA NÃO ESPERA por isto: os passos seguem no ritmo de
+   * sempre (limpar 280 ms + cair 240 ms) e o HP já está no valor final quando o poder chega (a animação é decorativa e dura até 2,5 s).
+   */
   const launch = useCallback((shots: readonly PowerShot[]) => {
     const field = fieldRef.current;
     if (!field || shots.length === 0) return;
@@ -184,17 +194,26 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     const mid = (el: Element | null) => {
       if (!el) return null;
       const r = el.getBoundingClientRect();
-      return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+      return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2, w: r.width };
     };
+    const now = Date.now();
+    const plan = reducedRef.current
+      ? { slots: shots.map<FxSlot>(() => ({ mode: 'quick', start: now, end: now + FX_NUM_MS })), lanes: fxLanes.current }
+      : planFx(shots.length, fxLanes.current, now, fxWindow.current || now);
     const made: Fx[] = [];
     shots.forEach((shot, i) => {
       const a = mid(btnRefs.current[key(shot.from)] ?? null);
       const b = mid(field.querySelector(shot.target === 'player' ? '[data-m3-player] img' : `[data-m3-enemy="${shot.target + 1}"] img`));
-      if (a && b) made.push({ id: ++fxId.current, shot, x0: a.x, y0: a.y, x1: b.x, y1: b.y, delay: i * 90 });
+      if (!a || !b) return;
+      // quem ataca ganha a aura: o jogador, ou o inimigo ATIVO (o que responde)
+      const att = mid(field.querySelector(shot.by === 'player' ? '[data-m3-player] img' : '[data-m3-enemy][data-m3-active="1"] img'));
+      made.push({ id: ++fxId.current, shot, x0: a.x, y0: a.y, x1: b.x, y1: b.y, att: att ? { x: att.x, y: att.y, size: att.w } : null, slot: plan.slots[i], delay: Math.max(0, plan.slots[i].start - now) });
     });
     if (made.length === 0) return;
+    fxLanes.current = plan.lanes;
     setFx(f => [...f, ...made]);
-    const t = setTimeout(() => { timers.current.delete(t); setFx(f => f.filter(x => !made.some(m => m.id === x.id))); }, FX_MS + shots.length * 90);
+    const last = Math.max(...made.map(m => m.slot.end)) - now;
+    const t = setTimeout(() => { timers.current.delete(t); setFx(f => f.filter(x => !made.some(m => m.id === x.id))); }, last + 60);
     timers.current.add(t);
   }, []);
 
@@ -229,6 +248,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     busyRef.current = true;
     setBusy(true);
     setSel(null);
+    openFxWindow();
     clearHint();
     setConfirmBuy(false);
     say('', '');
@@ -258,6 +278,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       return;
     }
     streakRef.current = 1;
+    openFxWindow();
     // D-83: a vez do inimigo — ele MEXE as peças (uma troca; 4+ dá outra, até o teto) e os combos tiram HP do jogador
     for (let i = 0; i < ex.enemyMoves.length; i++) {
       const m = ex.enemyMoves[i];
@@ -283,7 +304,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     busyRef.current = false;
     setBusy(false);
     if (ex.state.outcome !== 'playing') finish();
-  }, [clearHint, finish, flashExtra, runSteps, say, setSel, turnNote, wait]);
+  }, [clearHint, finish, flashExtra, openFxWindow, runSteps, say, setSel, turnNote, wait]);
 
   const pick = useCallback((p: Pos) => {
     if (busyRef.current || overRef.current) return;
@@ -361,7 +382,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     overRef.current = false;
     busyRef.current = false;
     setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
-    setBusy(false); setFx([]); setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
+    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
   };
 
   const score = combatScore(combat);
@@ -565,40 +586,113 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   );
 }
 
-// ── o poder que sai do combo (D-100) ───────────────────────────────────────────────────────────────────────────────────
+// ── o poder que sai do combo (D-100, D-102) ────────────────────────────────────────────────────────────────────────────
 
-/** Um poder em voo: onde nasceu (célula do combo), o alvo e o dano mostrado (o que a conta aplicou). Posições relativas ao campo. */
-interface Fx { id: number; shot: PowerShot; x0: number; y0: number; x1: number; y1: number; delay: number }
+/** Um poder agendado: onde nasceu (célula do combo), o alvo, onde está quem ataca (aura) e o horário (`slot`; `delay` = ms até começar). Posições relativas ao campo. */
+interface Fx { id: number; shot: PowerShot; x0: number; y0: number; x1: number; y1: number; att: { x: number; y: number; size: number } | null; slot: FxSlot; delay: number }
+
+/** Os quadros de um arco suave (curva quadrática) até `(dx, dy)`, `lift` px acima do meio — a viagem não é uma reta seca. Entra e sai com fade. */
+function arcFrames(dx: number, dy: number, lift: number, peak: number): Keyframe[] {
+  return [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1].map(t => {
+    const x = 2 * (1 - t) * t * (dx / 2) + t * t * dx;
+    const y = 2 * (1 - t) * t * (dy / 2 - lift) + t * t * dy;
+    const sc = t < 0.1 ? 0.6 : t > 0.9 ? 1.4 : 1.1;
+    return { transform: `translate(${x}px, ${y}px) scale(${sc})`, opacity: t === 0 || t === 1 ? 0 : peak, offset: t };
+  });
+}
 
 /**
- * O ícone do elemento viaja da célula do combo ao alvo e o número do dano aparece NO alvo. Web Animations (transform/opacity, 1 animação
- * por poder e 1 pelo número; sem JS por frame); sem `animate` (jsdom) ou com movimento reduzido: nada viaja e o número já está no alvo. Mudo.
+ * O efeito do combo, em 4 tempos: (1) a AURA do especial (a mesma arte `aura` do `BattleStage`, na cor do elemento, com a classe `sm-bs-pop` e o
+ * brilho dourado de `sm-bs-charge`) acende no Soulmon que ataca por ~0,45 s; (2) o poder (arte `orb` do elemento, 56 px; 84 px nos combos 4+) sai
+ * da célula do combo e viaja ~0,95 s em arco, com 2 de rastro; (3) no alvo: BURST (arte `impact` + anel; mais uma onda nos 4+) e uma tremida curta
+ * do alvo; (4) o número do dano, maior, sobe do alvo. Só `transform`/`opacity`, Web Animations (1 por figura), sem JS por quadro, ≤ 7 elementos por
+ * poder. `quick` (cascata longa): só burst + número. Movimento reduzido: sem aura nem viagem — o número já no alvo e um flash estático curto. Mudo.
  */
 function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
   const orb = useRef<HTMLSpanElement | null>(null);
+  const trail1 = useRef<HTMLSpanElement | null>(null);
+  const trail2 = useRef<HTMLSpanElement | null>(null);
+  const burst = useRef<HTMLSpanElement | null>(null);
+  const wave = useRef<HTMLSpanElement | null>(null);
   const num = useRef<HTMLSpanElement | null>(null);
-  const { shot, x0, y0, x1, y1, delay } = fx;
+  const { shot, x0, y0, x1, y1, att, slot, delay } = fx;
+  const full = slot.mode === 'full' && !reduced;
+  const impactAt = delay + (full ? FX_AURA_MS + FX_TRAVEL_MS : 0);
+  const orbPx = shot.big ? FX_ORB_PX_BIG : FX_ORB_PX;
   useEffect(() => {
     if (reduced) return;
-    const o = orb.current;
-    const n = num.current;
-    if (o && typeof o.animate === 'function') {
-      o.animate([{ transform: 'translate(0px, 0px) scale(0.6)', opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${x1 - x0}px, ${y1 - y0}px) scale(1.1)`, opacity: 1, offset: 0.9 }, { transform: `translate(${x1 - x0}px, ${y1 - y0}px) scale(1.4)`, opacity: 0 }], { duration: FX_TRAVEL, delay, easing: 'ease-in', fill: 'both' });
+    const go = (el: HTMLElement | null, frames: Keyframe[], opts: KeyframeAnimationOptions) => { if (el && typeof el.animate === 'function') el.animate(frames, { fill: 'both', ...opts }); };
+    if (full) {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const lift = Math.min(70, Math.hypot(dx, dy) * 0.28);
+      const fly = { duration: FX_TRAVEL_MS, easing: 'cubic-bezier(.45,0,.35,1)' };
+      const t0 = delay + FX_AURA_MS;
+      go(orb.current, arcFrames(dx, dy, lift, 1), { ...fly, delay: t0 });
+      go(trail1.current, arcFrames(dx, dy, lift, 0.55), { ...fly, delay: t0 + 70 });
+      go(trail2.current, arcFrames(dx, dy, lift, 0.3), { ...fly, delay: t0 + 140 });
+      // o alvo treme um instante quando o poder bate
+      const tgt = num.current?.parentElement?.querySelector(shot.target === 'player' ? '[data-m3-player] img' : `[data-m3-enemy="${shot.target + 1}"] img`);
+      if (tgt instanceof HTMLElement && typeof tgt.animate === 'function') {
+        tgt.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(0)' }], { duration: 240, delay: impactAt });
+      }
     }
-    if (n && typeof n.animate === 'function') {
-      n.animate([{ transform: 'translate(-50%, 0px)', opacity: 0 }, { transform: 'translate(-50%, -6px)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%, -24px)', opacity: 0 }], { duration: 800, delay: delay + FX_TRAVEL, easing: 'ease-out', fill: 'both' });
-    }
-  }, [reduced, x0, y0, x1, y1, delay]);
-  const icon = elementIcon(shot.element);
+    go(burst.current, [{ transform: 'scale(0.3)', opacity: 0 }, { transform: 'scale(0.9)', opacity: 1, offset: 0.3 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: FX_BURST_MS, delay: impactAt, easing: 'ease-out' });
+    go(wave.current, [{ transform: 'scale(0.3)', opacity: 0 }, { transform: 'scale(1)', opacity: 0.9, offset: 0.25 }, { transform: 'scale(2.1)', opacity: 0 }], { duration: FX_BURST_MS + 160, delay: impactAt + 110, easing: 'ease-out' });
+    go(num.current, [
+      { transform: 'translate(-50%, 6px) scale(0.5)', opacity: 0 },
+      { transform: 'translate(-50%, -6px) scale(1.3)', opacity: 1, offset: 0.18 },
+      { transform: 'translate(-50%, -12px) scale(1)', opacity: 1, offset: 0.7 },
+      { transform: 'translate(-50%, -34px) scale(1)', opacity: 0 },
+    ], { duration: FX_NUM_MS, delay: impactAt, easing: 'ease-out' });
+  }, [reduced, full, x0, y0, x1, y1, delay, impactAt, shot.target]);
+  const orbSrc = fxFrame(shot.element, 'orb') ?? elementIcon(shot.element);
+  const impactSrc = fxFrame(shot.element, 'impact') ?? elementIcon(shot.element);
+  const auraSrc = fxFrame(shot.element, 'aura');
   const base: CSSProperties = { position: 'absolute', pointerEvents: 'none', zIndex: 3 };
+  const glow = `drop-shadow(0 0 ${shot.big ? 10 : 6}px var(--sm2-gold-fill))`;
+  const flyer = (ref: React.Ref<HTMLSpanElement>, extra: Record<string, string>) => (
+    <span ref={ref} aria-hidden="true" {...extra} style={{ ...base, left: x0 - orbPx / 2, top: y0 - orbPx / 2, width: orbPx, height: orbPx, opacity: 0, filter: glow }}>
+      {orbSrc && <img src={orbSrc} alt="" draggable={false} width={orbPx} height={orbPx} style={{ width: orbPx, height: orbPx, imageRendering: 'pixelated', display: 'block' }} />}
+    </span>
+  );
+  const auraPx = att ? att.size * AURA_SCALE * (shot.big ? 1.4 : 1) : 0;
+  const ringPx = shot.big ? 96 : 72;
+  const ring: CSSProperties = { ...base, left: x1 - ringPx / 2, top: y1 - ringPx / 2, width: ringPx, height: ringPx, boxSizing: 'border-box', borderRadius: '50%', opacity: 0 };
   return (
     <>
-      {!reduced && icon && (
-        <span ref={orb} aria-hidden="true" data-m3-shot data-m3-shot-element={shot.element} data-m3-shot-by={shot.by} data-m3-shot-from={`${Math.round(x0)},${Math.round(y0)}`} style={{ ...base, left: x0 - 12, top: y0 - 12, width: 24, height: 24, opacity: 0, filter: 'drop-shadow(0 0 4px var(--sm2-gold-fill))' }}>
-          <img src={icon} alt="" draggable={false} width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />
+      {full && att && auraSrc && (
+        <span
+          aria-hidden="true"
+          data-m3-aura
+          data-m3-aura-element={shot.element}
+          data-m3-aura-by={shot.by}
+          data-m3-aura-px={Math.round(auraPx)}
+          data-m3-fx-start={Math.round(delay)}
+          data-m3-fx-dur={FX_AURA_MS + 150}
+          className="sm-bs-pop"
+          style={{
+            ...base, zIndex: 2, left: att.x - auraPx / 2, top: att.y - auraPx / 2, width: auraPx, height: auraPx, borderRadius: '50%',
+            background: 'radial-gradient(circle, color-mix(in srgb, var(--sm2-gold-fill) 50%, transparent), transparent 66%)',
+            ['--bs-delay' as string]: `${delay}ms`, ['--bs-dur' as string]: `${FX_AURA_MS + 150}ms`,
+          } as CSSProperties}
+        >
+          <img src={auraSrc} alt="" draggable={false} style={{ width: '100%', height: '100%', imageRendering: 'pixelated', display: 'block' }} />
         </span>
       )}
-      <span ref={num} aria-hidden="true" className="sm2-num" data-m3-dmg={shot.dmg} data-m3-dmg-target={shot.target} data-m3-dmg-by={shot.by} style={{ ...base, left: x1, top: y1 - 18, transform: 'translate(-50%, 0)', fontWeight: 700, fontSize: 18, color: shot.by === 'player' ? 'var(--sm2-gold-ink)' : 'var(--sm2-primary-ink)', textShadow: '0 1px 0 var(--sm2-surface), 0 0 3px var(--sm2-surface)', whiteSpace: 'nowrap', opacity: reduced || !CAN_ANIMATE ? 1 : 0 }}>
+      {full && flyer(orb, { 'data-m3-shot': '', 'data-m3-shot-element': shot.element, 'data-m3-shot-by': shot.by, 'data-m3-shot-from': `${Math.round(x0)},${Math.round(y0)}`, 'data-m3-shot-px': String(orbPx), 'data-m3-shot-big': shot.big ? '1' : '0', 'data-m3-fx-start': String(Math.round(delay + FX_AURA_MS)), 'data-m3-fx-dur': String(FX_TRAVEL_MS) })}
+      {full && flyer(trail1, { 'data-m3-trail': '' })}
+      {full && flyer(trail2, { 'data-m3-trail': '' })}
+      {!reduced && (
+        <span ref={burst} aria-hidden="true" data-m3-burst data-m3-fx-start={Math.round(impactAt)} data-m3-fx-dur={FX_BURST_MS} style={{ ...ring, border: '3px solid var(--sm2-gold-ink)', boxShadow: '0 0 12px var(--sm2-gold-fill), inset 0 0 8px var(--sm2-gold-fill)' }}>
+          {impactSrc && <img src={impactSrc} alt="" draggable={false} style={{ position: 'absolute', inset: '8%', width: '84%', height: '84%', imageRendering: 'pixelated' }} />}
+        </span>
+      )}
+      {!reduced && shot.big && <span ref={wave} aria-hidden="true" data-m3-wave style={{ ...ring, border: '2px solid var(--sm2-gold-ink)' }} />}
+      {reduced && impactSrc && (
+        <img src={impactSrc} alt="" aria-hidden="true" draggable={false} data-m3-flash className="sm-bs-pop" style={{ ...base, left: x1 - 24, top: y1 - 24, width: 48, height: 48, imageRendering: 'pixelated', ['--bs-delay' as string]: '0ms', ['--bs-dur' as string]: '350ms' } as CSSProperties} />
+      )}
+      <span ref={num} aria-hidden="true" className="sm2-num" data-m3-dmg={shot.dmg} data-m3-dmg-target={shot.target} data-m3-dmg-by={shot.by} data-m3-dmg-big={shot.big ? '1' : '0'} style={{ ...base, zIndex: 4, left: x1, top: y1 - 22, transform: 'translate(-50%, 0)', fontWeight: 800, fontSize: shot.big ? 36 : 30, lineHeight: 1, color: shot.by === 'player' ? 'var(--sm2-gold-ink)' : 'var(--sm2-primary-ink)', textShadow: '0 2px 0 var(--sm2-surface), 0 0 2px var(--sm2-surface), 0 0 6px var(--sm2-surface), 0 0 10px var(--sm2-surface)', whiteSpace: 'nowrap', opacity: reduced || !CAN_ANIMATE ? 1 : 0 }}>
         {shot.dmg}
       </span>
     </>
