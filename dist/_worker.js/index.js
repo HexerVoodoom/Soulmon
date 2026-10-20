@@ -3900,7 +3900,7 @@ var KNOWLEDGE = [
   { "id": "termo-palco", "t": "Palco", "x": "A \xE1rea do pet como COMPOSI\xC7\xC3O, n\xE3o um canto onde se joga \xEDcone: linha do ch\xE3o \xFAnica, cinco espa\xE7os de tamanho fixo em px, horizonte declarado por cen\xE1rio." },
   { "id": "termo-passos", "t": "Passos", "x": "Contador opcional de passos, com degrada\xE7\xE3o graciosa: sem sensor ou sem permiss\xE3o, o app segue inteiro. Agregado di\xE1rio e nada mais sai do aparelho." },
   { "id": "termo-perdao-por-ausencia", "t": "Perd\xE3o por aus\xEAncia", "x": "A partir de certo n\xFAmero de dias sem abrir o app, a virada para de cobrar HP. Quem volta encontra saudade, n\xE3o fatura. Tem parentes: car\xEAncia de save novo e rampa de retorno." },
-  { "id": "termo-pesadelo", "t": "Pesadelo", "x": "O combate curto da MANH\xC3 que transforma o sono em conte\xFAdo de jogo. Um por noite registrada, teto absoluto; vencer restaura energia e no m\xE1ximo meio cora\xE7\xE3o. Pesadelo n\xE3o combatido expira sem custo nenhum." },
+  { "id": "termo-pesadelo", "t": "Pesadelo", "x": "O combate curto da primeira abertura do dia (qualquer hora, s\xF3 com noite registrada) que transforma o sono em conte\xFAdo de jogo. Um por noite registrada, teto absoluto; vencer restaura energia e no m\xE1ximo meio cora\xE7\xE3o. Pesadelo n\xE3o combatido expira sem custo nenhum." },
   { "id": "termo-pixelizador", "t": "Pixelizador", "x": "O pipeline que transforma a imagem gerada pela IA em sprite v-pet: recorte, redu\xE7\xE3o ao grid, quantiza\xE7\xE3o de paleta e reamplia\xE7\xE3o com pixels duros." },
   { "id": "termo-ppt", "t": "PPT", "x": "Pedra-papel-tesoura \u2014 o minijogo r\xE1pido que paga Bits por vit\xF3ria." },
   { "id": "termo-priming", "t": "Priming", "x": 'O convite para ligar notifica\xE7\xF5es, oferecido numa janela estreita de dias de vida da criatura e nunca menos de um dia depois de um "agora n\xE3o". A frase \xE9 do PET, na primeira pessoa, e pergunta.' },
@@ -11164,7 +11164,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-iNJ1e1/functionsRoutes-0.030603496221465742.mjs
+// ../.wrangler/tmp/pages-52aGYr/functionsRoutes-0.501538052831464.mjs
 var routes = [
   {
     routePath: "/api/account",
