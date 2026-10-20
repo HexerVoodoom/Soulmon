@@ -24,6 +24,34 @@ export const BUBBLE_SPAN_MS = 25_000;
 /** Quantas frases existem em `guild.bosque.fala.1..N`. */
 export const BUBBLE_PHRASES = 8;
 
+/** D-105: a caminhada da janela do Clã era rápida demais; a duração da travessia é multiplicada por isto (14..26 s -> 35..65 s). */
+export const WALK_SLOW = 2.5;
+
+/**
+ * D-105: ao ENTRAR no Bosque (panorama) ninguém anda: cada membro fica num SLOT FIXO ENTRE AS ÁRVORES. Os slots ficam nas 3 clareiras
+ * entre as 4 árvores (x em % da largura da cena), em dois degraus de profundidade (y = onde os pés pisam, % da altura, mais acima
+ * que o antigo 86..91), 4 por clareira = 12 (o máximo do clã). Posições são só função do índice: sem sorteio, sem sobreposição.
+ */
+export const STAND_GAPS_X = [25.8, 48.8, 72] as const;
+export const STAND_DX = 3.5;
+export const STAND_ROWS_Y = [77, 85] as const;
+
+export interface StandSlot { x: number; y: number }
+
+/** Os 12 slots por prioridade: o fundo de cada clareira (centro primeiro) antes da frente. O mais prioritário é o de quem olha. */
+export const STAND_SLOTS: readonly StandSlot[] = (() => {
+  const ordem = [1, 0, 2];
+  const out: StandSlot[] = [];
+  for (const row of STAND_ROWS_Y) for (const side of [-1, 1]) for (const g of ordem) out.push({ x: Math.round((STAND_GAPS_X[g] + side * STAND_DX) * 10) / 10, y: row });
+  return out;
+})();
+
+/** Slot de cada walker (mesma ordem de `walkers`): quem olha fica no primeiro slot; os outros, nos seguintes por ordem de chegada. */
+export function groveStandSlots(walkers: ReadonlyArray<Pick<GroveWalker, 'own'>>): StandSlot[] {
+  let prox = 1;
+  return walkers.map(w => (w.own ? STAND_SLOTS[0] : STAND_SLOTS[Math.min(prox++, STAND_SLOTS.length - 1)]));
+}
+
 export interface GroveWalker {
   /** Chave estável (id público do membro, ou a posição). */
   key: string;
@@ -65,7 +93,7 @@ export function groveWalkers(guild: Pick<GuildView, 'members'>): GroveWalker[] {
     const key = own ? 'eu' : (m!.id ?? `m${i}`);
     const h = hash(own ? `eu-${i}` : key);
     const home = Math.max(amp + 2, Math.min(100 - amp - 2, ((i + 0.5) / n) * 100));
-    const dur = 14 + (h % 7) * 2; // 14..26 s por travessia
+    const dur = (14 + (h % 7) * 2) * WALK_SLOW; // 35..65 s por travessia (D-105: devagar)
     return {
       key: own ? 'eu' : key,
       own,

@@ -36,10 +36,11 @@ afterEach(cleanup);
 const base = { saveId: 'x'.repeat(32), language: 'pt-BR' as const, metaDoDiaCumprida: false };
 
 describe('a Casa da guilda no Salão', () => {
-  it('mostra a cena do Bosque (sem o antigo visor vetorial), o estágio e "perto" sem número', async () => {
+  it('mostra o estágio da Casa e "perto" sem número (a cena do Bosque mora no prédio Grove, não no Clan Hall)', async () => {
     mockServer(casaVista());
     const { container } = render(<GuildSheet {...base} casa={{ bits: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
-    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-casa-nivel]')).not.toBeNull());
+    expect(container.querySelector('[data-grove-cena]')).toBeNull();
     expect(container.querySelector('[data-casa-nivel]')!.textContent).toBe('Haste');
     expect(container.querySelector('[data-casa-perto]')!.textContent).toMatch(/perto de virar Folhas de latão/);
     // nenhum número de progresso: o texto do estágio e do "perto" não tem dígito (os botões trazem a doação, que é constante).
@@ -88,7 +89,7 @@ describe('a Casa da guilda no Salão', () => {
   });
 });
 
-describe('a Missão no Salão', () => {
+describe('a Missão na Feira (prédio da Feira do Hall)', () => {
   const raid = { weekKey: '2026-W41', phenomenon: 'mare', state: 'aberta', ferido: false, lastWeek: null, mine: {} };
   const comRaid = (casa: unknown) => ({ ...vista(casa), raid });
   const subir = (state: { day: string; returnAt: number } | null, onSend = vi.fn()) => ({ state, onSend });
@@ -96,7 +97,7 @@ describe('a Missão no Salão', () => {
   it('sem ida: botão "Mandar investigar"; tocar chama onSend (e NÃO a rodada de um toque)', async () => {
     globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
     const onSend = vi.fn();
-    const { container } = render(<GuildSheet {...base} missao={subir(null, onSend)} />);
+    const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null, onSend)} />);
     await waitFor(() => expect(container.querySelector('[data-missao-mandar]')).not.toBeNull());
     expect(container.querySelector('[data-feira-rodada]')).toBeNull();
     fireEvent.click(container.querySelector('[data-missao-mandar]')!);
@@ -105,14 +106,14 @@ describe('a Missão no Salão', () => {
 
   it('com o Solmon fora: diz a HORA da volta (nunca contagem) e não oferece mandar de novo', async () => {
     globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
-    const { container } = render(<GuildSheet {...base} missao={subir({ day: '2026-10-11', returnAt: Date.now() + 20 * 60_000 })} />);
+    const { container } = render(<GuildSheet {...base} room="feira" missao={subir({ day: '2026-10-11', returnAt: Date.now() + 20 * 60_000 })} />);
     await waitFor(() => expect(container.querySelector('[data-missao-fora]')).not.toBeNull());
     expect(container.querySelector('[data-missao-mandar]')).toBeNull();
     expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}/);
   });
 });
 
-describe('a Guerra no Salão', () => {
+describe('a Guerra no lote da Arena', () => {
   const guerraMock = (war: unknown, seek?: () => unknown) => {
     globalThis.fetch = vi.fn(async (url: string) => {
       const action = new URL(url, 'https://x.dev').searchParams.get('action');
@@ -125,7 +126,7 @@ describe('a Guerra no Salão', () => {
 
   it('sem guerra: botão de procurar; ao tocar o servidor responde "na fila" e a tela diz que espera', async () => {
     guerraMock({ waiting: null, last: null });
-    const { container } = render(<GuildSheet {...base} />);
+    const { container } = render(<GuildSheet {...base} room="guerra" />);
     await waitFor(() => expect(container.querySelector('[data-guerra-buscar]')).not.toBeNull());
     expect(container.querySelector('[data-guerra-visor]')).not.toBeNull();
     fireEvent.click(container.querySelector('[data-guerra-buscar]')!);
@@ -136,7 +137,7 @@ describe('a Guerra no Salão', () => {
   it('com resultado de hoje: marcas por confronto (sem números), a frase e nenhum botão de novo', async () => {
     const hoje = playerDayKey(new Date(), undefined);
     guerraMock({ waiting: null, last: { day: hoje, outcome: 'loss', duels: ['win', 'loss'], size: 2, enemy: 'Rivais' } });
-    const { container } = render(<GuildSheet {...base} />);
+    const { container } = render(<GuildSheet {...base} room="guerra" />);
     await waitFor(() => expect(container.querySelector('[data-guerra-resultado="loss"]')).not.toBeNull());
     expect(container.querySelectorAll('[data-guerra-duelo]').length).toBe(2);
     expect(container.querySelector('[data-guerra-resultado]')!.textContent).toMatch(/Rivais/);
@@ -150,8 +151,8 @@ describe('a Guerra no Salão', () => {
       if (action === 'guildWar') return new Response('{}', { status: 400 });
       return new Response(JSON.stringify({ guild: vista(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
     }) as never;
-    const { container } = render(<GuildSheet {...base} />);
-    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
+    const { container } = render(<GuildSheet {...base} room="guerra" />);
+    await new Promise(r => setTimeout(r, 30));
     expect(container.querySelector('[data-guild-room="guerra"]')).toBeNull();
   });
 });
@@ -159,36 +160,40 @@ describe('a Guerra no Salão', () => {
 describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall é o administrativo', () => {
   it('o desenho vetorial (retângulos de cobre/turquesa e o cristal em losango) sumiu da tela da Guilda', async () => {
     mockServer(casaVista());
-    const { container } = render(<GuildSheet {...base} />);
+    const { container } = render(<GuildSheet {...base} room="grove" />);
     await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
     expect(container.querySelector('[data-casa-visor], [data-casa-arvore], [data-casa-tronco], [data-casa-nucleo], [data-casa-cristal], [data-casa-folha], [data-casa-ramo]')).toBeNull();
     expect(container.querySelector('[data-grove-cena] svg')).toBeNull();
   });
 
-  it('o Bosque no Clã tem os membros andando (os dois da roda), sem nome na tela até tocar', async () => {
+  it('o Bosque (prédio Grove) tem os membros andando devagar (os dois da roda), sem nome na tela até tocar', async () => {
     mockServer(casaVista());
-    const { container } = render(<GuildSheet {...base} />);
+    const { container } = render(<GuildSheet {...base} room="grove" />);
     await waitFor(() => expect(container.querySelectorAll('[data-grove-cena] [data-grove-creature]')).toHaveLength(2));
     expect(container.querySelector('[data-grove-nome]')).toBeNull();
   });
 
-  it('cada assunto tem o seu card: Clan Hall (ficha, membros, código) separado do Bosque, da Casa e do Mural', async () => {
-    mockServer(casaVista());
+  it('D-107: o Clan Hall é só administrativo — sem Bosque, Feira nem Guerra (cada um mora no seu prédio)', async () => {
+    mockServer({ ...casaVista() });
+    globalThis.fetch = vi.fn(async (url: string) => {
+      const action = new URL(url, 'https://x.dev').searchParams.get('action');
+      if (action === 'guildWar') return new Response(JSON.stringify({ war: { waiting: null, last: null } }), { status: 200 });
+      if (action === 'guildRewards') return new Response(JSON.stringify({ rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
+      return new Response(JSON.stringify({ guild: { ...vista(casaVista()), raid: { weekKey: '2026-W41', phenomenon: 'mare', state: 'aberta', ferido: false, lastWeek: null, mine: {} } } }), { status: 200 });
+    }) as never;
     const { container } = render(<GuildSheet {...base} />);
-    await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-guild-room="casa"]')).not.toBeNull());
+    await new Promise(r => setTimeout(r, 30)); // a guerra só é perguntada no lote da Arena
+    for (const sel of ['[data-guild-room="bosque"]', '[data-guild-room="feira"]', '[data-guild-room="guerra"]', '[data-guild-bosque-entrar]', '[data-grove-cena]', '[data-guild-card="bosque"]', '[data-guild-card="feira"]', '[data-guild-card="guerra"]']) {
+      expect(container.querySelector(sel), sel).toBeNull();
+    }
     const cards = Array.from(container.querySelectorAll<HTMLElement>('.sm2-stats-card'));
     const donoDe = (sel: string) => cards.filter(c => c.querySelector(sel));
-    // um e só um card por assunto
-    for (const sel of ['[data-cla-info]', '[data-guild-room="bosque"]', '[data-guild-room="casa"]', '[data-guild-room="roda"]', '[data-guild-room="mural"]']) {
-      expect(donoDe(sel), sel).toHaveLength(1);
-    }
+    for (const sel of ['[data-cla-info]', '[data-guild-room="casa"]', '[data-guild-room="roda"]', '[data-guild-room="mural"]']) expect(donoDe(sel), sel).toHaveLength(1);
     const [hall] = donoDe('[data-cla-info]');
     expect(hall.querySelector('[data-guild-room="roda"]')).not.toBeNull(); // membros: administrativo
-    expect(hall.querySelector('[data-guild-room="bosque"]')).toBeNull();
     expect(hall.querySelector('[data-guild-room="casa"]')).toBeNull();
     expect(hall.querySelector('[data-guild-room="mural"]')).toBeNull();
-    expect(donoDe('[data-guild-room="bosque"]')[0]).not.toBe(donoDe('[data-guild-room="casa"]')[0]);
-    expect(donoDe('[data-guild-room="casa"]')[0]).not.toBe(donoDe('[data-guild-room="mural"]')[0]);
   });
 
   it('o antigo CasaVisor.tsx não existe mais', async () => {

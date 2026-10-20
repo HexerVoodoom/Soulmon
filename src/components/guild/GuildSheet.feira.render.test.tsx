@@ -555,11 +555,9 @@ describe('salas: a Feira e o Salão não se misturam', () => {
     expect(screen.queryByText(PT('guild.sair.botao'))).toBeNull();
     cleanup();
     await montar({ room: 'salao' });
-    // PR3: no Salão a Feira é a MISSÃO (mesma sala, com o botão de mandar o Solmon em vez da rodada de um toque).
-    expect(document.querySelector('[data-guild-room="feira"]')).toBeTruthy();
-    expect(document.querySelector('[data-missao-mandar]')).toBeTruthy();
-    expect(document.querySelector('[data-feira-rodada]')).toBeNull();
-    expect(document.querySelector('[data-guild-room="bosque"]')).toBeTruthy();
+    expect(document.querySelector('[data-guild-room="feira"]')).toBeNull();
+    expect(document.querySelector('[data-guild-room="bosque"]')).toBeNull();
+    // D-107: o Salão (Clan Hall) não desenha mais a Feira nem o Bosque — a Feira abre pelo prédio Feira do Hall (room="feira").
   });
 
   it('o resgate também aparece no Salão (a pessoa colhe onde abrir primeiro)', async () => {

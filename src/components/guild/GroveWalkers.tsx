@@ -12,7 +12,7 @@
  *    superfície nova nasce muda (K-12).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { groveWalkers, nextBubbleDelay, pickBubble } from '../../utils/groveWalkers';
+import { groveStandSlots, groveWalkers, nextBubbleDelay, pickBubble } from '../../utils/groveWalkers';
 import { guildText, type GuildKey } from '../../utils/guildCopy';
 import type { GuildView } from '../../utils/community';
 import type { Language } from '../../utils/i18n';
@@ -32,10 +32,14 @@ export interface GroveWalkersProps {
   /** Onde os pés pisam (% da altura da cena) na faixa mais ao fundo; as outras faixas descem `faixa` pontos. */
   baseY: number;
   faixa?: number;
+  /** 'walk' (padrão, janela do Clã: caminha devagar) ou 'stand' (D-105, ao entrar no Bosque: parados em slots fixos entre as árvores). */
+  mode?: 'walk' | 'stand';
 }
 
-export function GroveWalkers({ language, guild, mySprite, reducedMotion, sizes, baseY, faixa = 3 }: GroveWalkersProps) {
+export function GroveWalkers({ language, guild, mySprite, reducedMotion, sizes, baseY, faixa = 3, mode = 'walk' }: GroveWalkersProps) {
   const walkers = useMemo(() => groveWalkers(guild), [guild]);
+  const parado = mode === 'stand';
+  const slots = useMemo(() => groveStandSlots(walkers), [walkers]);
   const [fala, setFala] = useState<{ key: string; phrase: number } | null>(null);
   const [toque, setToque] = useState<{ key: string; n: number } | null>(null);
   const [nome, setNome] = useState<string | null>(null);
@@ -74,8 +78,8 @@ export function GroveWalkers({ language, guild, mySprite, reducedMotion, sizes, 
   };
 
   return (
-    <div className="sm2-grove-walkers" data-grove-walkers data-count={walkers.length} data-reduced-motion={reducedMotion ? 'true' : undefined}>
-      {walkers.map(w => {
+    <div className="sm2-grove-walkers" data-grove-walkers data-count={walkers.length} data-mode={mode} data-reduced-motion={reducedMotion ? 'true' : undefined}>
+      {walkers.map((w, i) => {
         const size = w.own ? sizes.own : sizes.other;
         const titulo = w.own ? t('guild.bosque.eu') : (w.nome ?? t('guild.roda.alguem'));
         const reage = toque?.key === w.key;
@@ -85,15 +89,16 @@ export function GroveWalkers({ language, guild, mySprite, reducedMotion, sizes, 
             className="sm2-grove-walker"
             data-grove-walker={w.own ? 'own' : 'other'}
             data-lane={w.lane}
+            {...(parado ? { 'data-stand': '' } : {})}
             style={{
-              left: `${w.home}%`,
-              top: `${baseY + w.lane * faixa}%`,
-              ...(reducedMotion ? { animation: 'none' } : {
+              left: `${parado ? slots[i].x : w.home}%`,
+              top: `${parado ? slots[i].y : baseY + w.lane * faixa}%`,
+              ...(reducedMotion || parado ? { animation: 'none' } : {
                 ['--gw-amp' as string]: String(w.amp),
                 ['--gw-dur' as string]: `${w.dur}s`,
                 ['--gw-delay' as string]: `${w.delay}s`,
               }),
-              zIndex: w.lane + 1,
+              zIndex: parado ? Math.round(slots[i].y) : w.lane + 1,
             }}
           >
             <button
@@ -103,7 +108,7 @@ export function GroveWalkers({ language, guild, mySprite, reducedMotion, sizes, 
               onClick={() => tocar(w.key)}
               style={{ width: size, height: size, left: -Math.round(size / 2), top: -Math.round(size * 0.94) }}
             >
-              <span className="sm2-grove-walker-flip" style={reducedMotion ? { animation: 'none' } : undefined}>
+              <span className="sm2-grove-walker-flip" style={reducedMotion || parado ? { animation: 'none' } : undefined}>
                 <span key={reage ? toque!.n : 0} className={reage ? 'sm2-grove-walker-pulse sm2-grove-walker-pulse-on' : 'sm2-grove-walker-pulse'} data-grove-reacao={reage ? 'true' : undefined}>
                   <img
                     src={w.own ? mySprite : (w.sprite ?? undefined)}

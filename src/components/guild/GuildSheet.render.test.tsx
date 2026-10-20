@@ -183,7 +183,7 @@ describe('sem roda', () => {
   it('a roda sumiu com a folha aberta (404 no fio): conta o fato e volta ao começo', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     vi.mocked(guildThread).mockRejectedValue(erro('noGuild'));
-    await montar();
+    await montar({ room: 'grove' });
     fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
     expect((await screen.findByRole('alert')).textContent).toBe(PT('guild.esvaziada.mundo'));
     expect(screen.getByText(PT('guild.criar.botao'))).toBeTruthy();
@@ -313,7 +313,7 @@ describe('a roda por tamanho', () => {
 
   it('5 membros COM fio: UMA frase qualitativa, sem número, sem {n}', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(5, { threadedToday: true }));
-    await montar();
+    await montar({ room: 'grove' });
     const frase = screen.getByText(PT('guild.bosque.agregado.um'));
     expect(frase.textContent).not.toMatch(/\d|\{/);
     expect(document.body.textContent).not.toMatch(/\{n\}/);
@@ -355,7 +355,7 @@ describe('o fio (presença de quem pergunta)', () => {
   it('com a meta cumprida: firma, anuncia na região viva e mostra "seu fio firmou hoje"', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     vi.mocked(guildThread).mockResolvedValue(vista(2, {}, [0]));
-    await montar();
+    await montar({ room: 'grove' });
     fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
     await screen.findByText(PT('guild.bosque.fio.hoje'));
     expect(screen.queryByText(PT('guild.bosque.fio.botao'))).toBeNull();
@@ -366,7 +366,7 @@ describe('o fio (presença de quem pergunta)', () => {
   it('duplo toque no mesmo frame chama o servidor UMA vez (trava síncrona)', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     vi.mocked(guildThread).mockImplementation(() => new Promise(() => {}));
-    await montar();
+    await montar({ room: 'grove' });
     const b = screen.getByText(PT('guild.bosque.fio.botao')).closest('button')!;
     // Dois toques no MESMO lote do React: o `disabled` ainda não chegou ao DOM.
     act(() => { b.click(); b.click(); });
@@ -375,7 +375,7 @@ describe('o fio (presença de quem pergunta)', () => {
 
   it('já firmado hoje: sem botão de novo', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, [0]));
-    await montar();
+    await montar({ room: 'grove' });
     expect(screen.queryByText(PT('guild.bosque.fio.botao'))).toBeNull();
     expect(screen.getByText(PT('guild.bosque.fio.hoje'))).toBeTruthy();
   });
@@ -496,7 +496,7 @@ describe('copiar o código, sem setState depois de desmontar', () => {
     let resolver!: (v: GuildView) => void;
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     vi.mocked(guildThread).mockImplementation(() => new Promise(r => { resolver = r; }));
-    const r = renderWithCss(<GuildSheet {...props()} />);
+    const r = renderWithCss(<GuildSheet {...props({ room: 'grove' })} />);
     fireEvent.click(await screen.findByText(PT('guild.bosque.fio.botao')));
     r.unmount();
     await act(async () => { resolver(vista(2, {}, [0])); });
@@ -640,7 +640,7 @@ describe('a folha aberta de verdade (Hall → Salão da Guilda): foco, fundo ine
     vi.mocked(getGuild).mockResolvedValue(vista(4, {}, []));
     vi.mocked(guildThread).mockResolvedValue(vista(4, {}, [0]));
     const r = renderWithCss(hall());
-    fireEvent.click(r.container.querySelector('[data-area-lot="guilda"]')!);
+    fireEvent.click(r.container.querySelector('[data-area-lot="grove"]')!);
     const b = await screen.findByText(PT('guild.bosque.fio.botao'));
     (b.closest('button') as HTMLElement).focus();
     fireEvent.click(b);
@@ -702,7 +702,7 @@ describe('o Bosque por estágio', () => {
     for (const [language, nomes] of [['pt-BR', NOME_PT], ['en-US', NOME_EN]] as const) {
       cleanup();
       localStorage.clear();
-      await montar({ language });
+      await montar({ room: 'grove', language });
       expect(visor()).toBeNull(); // D-32: a folha não embute visor; o panorama abre pelo botão
       expect(screen.getByRole('heading', { name: nomes[idx - 1] })).toBeTruthy();
       const chaveLinha = ['clareira', 'ramagem', 'copa', 'mata', 'bosqueAntigo'][idx - 1];
@@ -713,7 +713,7 @@ describe('o Bosque por estágio', () => {
 
   it('D-32: a folha não embute visor; o botão abre o panorama de tela cheia (só no Hall), fecha por botão e por Escape', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3));
-    await montar();
+    await montar({ room: 'grove' });
     expect(visor()).toBeNull();
     expect(document.querySelector('[data-grove-folha]')).toBeNull();
     fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
@@ -733,7 +733,7 @@ describe('o Bosque por estágio', () => {
 
   it('`perto` é UMA frase binária que aponta para o PRÓXIMO estágio, sem número, sem razão, sem barra', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2, {}, { perto: true }));
-    await montar();
+    await montar({ room: 'grove' });
     const frase = screen.getByText('Perto de Copa.');
     expect(frase.textContent).not.toMatch(/\d|%|faltam|falta/i);
     expect(screen.queryByRole('progressbar')).toBeNull();
@@ -742,11 +742,11 @@ describe('o Bosque por estágio', () => {
 
   it('`perto` em inglês, e sem `perto` nada é escrito (silêncio, não "longe")', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { perto: true }));
-    await montar({ language: 'en-US' });
+    await montar({ room: 'grove', language: 'en-US' });
     expect(screen.getByText('Near Boughs.')).toBeTruthy();
     cleanup();
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { perto: false }));
-    await montar({ language: 'en-US' });
+    await montar({ room: 'grove', language: 'en-US' });
     expect(document.querySelector('[data-guild-perto]')).toBeNull();
     expect(screen.queryByText(/Near|Far|far/)).toBeNull();
   });
@@ -759,12 +759,12 @@ describe('o Bosque por estágio', () => {
 
   it('a regra sóbria é linha FIXA do Bosque, nos dois idiomas', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    await montar();
+    await montar({ room: 'grove' });
     // K6: a regra mora atrás do "?" (InfoTip) — um toque a lê.
     fireEvent.click(screen.getByRole('button', { name: 'Como o bosque cresce' }));
     expect(screen.getByText(PT('guild.bosque.regra'))).toBeTruthy();
     cleanup();
-    await montar({ language: 'en-US' });
+    await montar({ room: 'grove', language: 'en-US' });
     fireEvent.click(screen.getByRole('button', { name: 'How the grove grows' }));
     expect(screen.getByText(EN('guild.bosque.regra'))).toBeTruthy();
   });
@@ -773,7 +773,7 @@ describe('o Bosque por estágio', () => {
     for (const idx of [0, 1, 2, 3, 4, 5]) {
       cleanup();
       vi.mocked(getGuild).mockResolvedValue(noEstagio(6, idx, { progress: 41, target: 90 }, { perto: idx < 5, progressCru: 41.5 }));
-      await montar();
+      await montar({ room: 'grove' });
       const sala = document.querySelector('[data-guild-room="bosque"]')!.textContent!;
       expect(sala).not.toMatch(/\d/);
       expect(sala).not.toMatch(/41|90/);
@@ -793,7 +793,7 @@ describe('o Bosque por estágio', () => {
 describe('o palco do Bosque: a folha entrega a roda e a criatura ao panorama', () => {
   it('a criatura própria é a que o App manda, e a roda de 4 vira 4 criaturas no panorama', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
-    await montar({ mySprite: '/meu-sprite.png' });
+    await montar({ room: 'grove', mySprite: '/meu-sprite.png' });
     fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
     await waitFor(() => expect(document.querySelectorAll('[data-grove-folha] [data-grove-creature]')).toHaveLength(4));
     expect(document.querySelector('[data-grove-folha] [data-grove-creature]')!.getAttribute('src')).toBe('/meu-sprite.png');
@@ -807,7 +807,7 @@ describe('o fio (guildThread) — fora de updater, com a meta como o servidor a 
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
     vi.mocked(guildThread).mockResolvedValue(noEstagio(2, 1, {}, {}, {}, [0]));
     const tz = { tz: 'America/Sao_Paulo', offsetMs: -10_800_000 } as never;
-    await montar({ fioGoal: meta, playerDayTz: tz });
+    await montar({ room: 'grove', fioGoal: meta, playerDayTz: tz });
     fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
     await screen.findByText(PT('guild.bosque.fio.hoje'));
     expect(guildThread).toHaveBeenCalledWith('save-12345678', meta, tz);
@@ -818,7 +818,7 @@ describe('o fio (guildThread) — fora de updater, com a meta como o servidor a 
   it('o servidor recusa a meta de coração (400 goal not met): SILÊNCIO — recarrega, nenhum alerta, nenhuma frase', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
     vi.mocked(guildThread).mockRejectedValue(erro('goalNotMet'));
-    await montar({ fioGoal: meta });
+    await montar({ room: 'grove', fioGoal: meta });
     fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
     await waitFor(() => expect(getGuild).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole('alert')).toBeNull();
@@ -833,7 +833,7 @@ describe('o fio (guildThread) — fora de updater, com a meta como o servidor a 
 
   it('meta de CORAÇÃO basta: o App manda `metaDoDiaCumprida` pela régua de coração, e a folha só obedece', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    await montar({ metaDoDiaCumprida: true, fioGoal: { done: 2, heart: 2, full: 4 } });
+    await montar({ room: 'grove', metaDoDiaCumprida: true, fioGoal: { done: 2, heart: 2, full: 4 } });
     expect(screen.getByText(PT('guild.bosque.fio.botao'))).toBeTruthy();
   });
 });
@@ -914,7 +914,7 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
 
   it('recebidos: chegam EM LOTE, só o tipo — sem quem, sem quantos — e nada quando não veio nenhum', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 1, { gestures: ['luz', 'descanso'] }));
-    await montar();
+    await montar({ room: 'grove' });
     const lote = document.querySelector('[data-guild-recebidos]')!;
     expect(Array.from(lote.querySelectorAll('li')).map(li => li.lastElementChild!.textContent)).toEqual(['Alguém deixou uma luz.', 'Alguém desejou bom descanso.']);
     // NO TOPO, colados ao visor do Bosque (não abaixo da lista de nomes) e com estilo próprio, nunca o de um membro (L3 M3/B7)
@@ -924,18 +924,18 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     expect(lote.textContent).not.toMatch(/\d|Ana|Bia|Caio|Dani/);
     cleanup();
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 1, { gestures: [] }));
-    await montar();
+    await montar({ room: 'grove' });
     expect(document.querySelector('[data-guild-recebidos]')).toBeNull();
   });
 
   it('roda de 2: o servidor NÃO manda o tipo (B5) — só o fato; a UI diz "alguém deixou um gesto", sem tipo, sem ícone', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1, { gestures: [], gestureReceived: true }));
-    await montar();
+    await montar({ room: 'grove' });
     const linha = document.querySelector('[data-guild-recebidos]')!;
     expect(linha.textContent).toBe('Alguém deixou um gesto para a roda.');
     expect(linha.textContent).not.toMatch(/luz|aceno|descanso|light|wave|rest/i);
     cleanup();
-    await montar({ language: 'en-US' });
+    await montar({ room: 'grove', language: 'en-US' });
     expect(document.querySelector('[data-guild-recebidos]')!.textContent).toBe('Someone left a gesture for the circle.');
   });
 
@@ -948,7 +948,7 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
 
   it('com 3+ a lista de TIPOS vence o agregado (nunca as duas coisas juntas)', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, { gestures: ['luz'], gestureReceived: true }));
-    await montar();
+    await montar({ room: 'grove' });
     expect(document.querySelectorAll('[data-guild-recebidos]')).toHaveLength(1);
     expect(document.body.textContent).toContain('Alguém deixou uma luz.');
     expect(document.body.textContent).not.toContain('Alguém fez um gesto');
@@ -958,7 +958,7 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     const v = sanitizeGuildView({ ...noEstagio(3, 1), gestures: ['aceno', 'soco', 'luz'] })!;
     expect(v.gestures).toEqual(['aceno', 'luz']);
     vi.mocked(getGuild).mockResolvedValue(v);
-    await montar({ language: 'en-US' });
+    await montar({ room: 'grove', language: 'en-US' });
     expect(Array.from(document.querySelectorAll('[data-guild-recebidos] li')).map(li => li.lastElementChild!.textContent))
       .toEqual(['Someone waved at the circle.', 'Someone left a little light.']);
   });
@@ -1155,7 +1155,7 @@ describe('movimento reduzido reduz o movimento, nunca a informação', () => {
   it('sem preferência: o panorama anima o rolar; com `reduce`: salto instantâneo, e o MESMO nome e as MESMAS árvores', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 3));
     comMediaQuery(false);
-    await montar();
+    await montar({ room: 'grove' });
     fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
     await waitFor(() => expect(document.querySelector('[data-grove-panorama]')).not.toBeNull());
     expect(document.querySelector('[data-grove-panorama]')!.getAttribute('data-reduced-motion')).toBeNull();
@@ -1163,7 +1163,7 @@ describe('movimento reduzido reduz o movimento, nunca a informação', () => {
     cleanup();
     localStorage.clear();
     comMediaQuery(true);
-    await montar();
+    await montar({ room: 'grove' });
     fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
     await waitFor(() => expect(document.querySelector('[data-grove-panorama]')!.getAttribute('data-reduced-motion')).toBe('true'));
     expect((document.querySelector('.sm2-grove-pan') as HTMLElement).style.scrollBehavior).toBe('auto');
