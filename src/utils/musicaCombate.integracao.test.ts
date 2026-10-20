@@ -59,14 +59,15 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('entrar na superfície de combate com a chave AUSENTE (aparelho novo): a música de combate toca', () => {
   it.each([
-    ['masmorra', 'musica-masmorra'],
-    ['duelo', 'musica-pvp'],
-    ['torneio', 'musica-pvp'],
+    // 19/10/2026 (REGISTRO §126, trilhas licenciadas): UMA faixa ('Stone Hall Combat') para todos os combates.
+    ['masmorra', 'musica-combate'],
+    ['duelo', 'musica-combate'],
+    ['torneio', 'musica-combate'],
   ] as const)('%s → %s', (s, arquivo) => {
     iniciarMusica();
     const sair = entrarNaSuperficie(s);
     expect(tocandoArquivo(arquivo)).toBe(true);
-    expect(musicaDeCombateTocando()).toBe(arquivo === 'musica-pvp' ? 'pvp' : 'masmorra');
+    expect(musicaDeCombateTocando()).toBe('combate');
     sair();
   });
 });
@@ -77,7 +78,7 @@ describe('chave "false" ESCOLHIDA (marca de versão presente): a música de comb
     localStorage.setItem(STORAGE_KEYS.SOUND_PREFS_VERSION, '1');
     iniciarMusica();
     entrarNaSuperficie('masmorra');
-    expect(tocandoArquivo('musica-masmorra')).toBe(false);
+    expect(tocandoArquivo('musica-combate')).toBe(false);
     expect(musicaDeCombateTocando()).toBeNull();
     expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBe('false');
   });
@@ -90,7 +91,7 @@ describe('§127: "false" HERDADO (sem marca de versão) é apagado uma vez e a m
     expect(localStorage.getItem(STORAGE_KEYS.SOUND_TRACK_ENABLED)).toBeNull();
     expect(localStorage.getItem(STORAGE_KEYS.SOUND_PREFS_VERSION)).toBe('1');
     entrarNaSuperficie('masmorra');
-    expect(musicaDeCombateTocando()).toBe('masmorra');
+    expect(musicaDeCombateTocando()).toBe('combate');
   });
   it('idempotente: depois da migração, desligar pelo interruptor vale e uma 2ª partida NÃO religa', () => {
     localStorage.setItem(STORAGE_KEYS.SOUND_TRACK_ENABLED, 'false');
@@ -118,6 +119,6 @@ describe('o primeiro gesto sonoro antes de entrar não atrapalha', () => {
     iniciarMusica();
     aoGestoSonoro();
     entrarNaSuperficie('masmorra');
-    expect(musicaDeCombateTocando()).toBe('masmorra');
+    expect(musicaDeCombateTocando()).toBe('combate');
   });
 });
