@@ -92,7 +92,7 @@ describe('LibraryPage — o sprite do diretorio publico', () => {
 
     // Recusar NAO pode virar sprite vazio: o visor nao tem estado de erro.
     // D-60 (19/10/2026): a reserva e um inicial atual, NUNCA a arvore generica (gato-coruja descartado).
-    expect(srcs()).not.toContain(getSpriteForStage('rookie'));
+    expect(srcs().some(s => /\/soulmon\/(rookie|ultra|(champion|ultimate|mega)-(power|harmony|benevolence))\./.test(s))).toBe(false); // D-104: árvore genérica aposentada
     expect(srcs().some(s => s.includes('/assets/soulmon/'))).toBe(true);
   });
 
@@ -103,7 +103,7 @@ describe('LibraryPage — o sprite do diretorio publico', () => {
     await waitFor(() => expect(screen.getByText('Vitima')).toBeTruthy());
 
     expect(srcs().some(s => s.includes('atacante.example'))).toBe(false);
-    expect(srcs()).not.toContain(getSpriteForStage('rookie'));
+    expect(srcs().some(s => /\/soulmon\/(rookie|ultra|(champion|ultimate|mega)-(power|harmony|benevolence))\./.test(s))).toBe(false); // D-104: árvore genérica aposentada
     expect(srcs().some(s => s.includes('/assets/soulmon/'))).toBe(true);
   });
 
@@ -169,7 +169,7 @@ describe('PlayerDetailModal — o mesmo dado, na tela de perfil', () => {
       <PlayerDetailModal player={jogadorHostil() as DirectoryPlayer & { spriteUrl?: string }} language="pt-BR" onClose={() => {}} />,
     );
     expect(srcs().some(s => s.includes('atacante.example'))).toBe(false);
-    expect(srcs()).not.toContain(getSpriteForStage('rookie'));
+    expect(srcs().some(s => /\/soulmon\/(rookie|ultra|(champion|ultimate|mega)-(power|harmony|benevolence))\./.test(s))).toBe(false); // D-104: árvore genérica aposentada
     expect(srcs().some(s => s.includes('/assets/soulmon/'))).toBe(true);
   });
 

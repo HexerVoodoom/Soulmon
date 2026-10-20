@@ -159,8 +159,8 @@ describe('árvore completa das linhas — assets/soulmon/lines/full ↔ lineFull
     expect(orfaos, `PNG em lines/full fora do mapa: ${orfaos.join(', ')}`).toEqual([]);
     expect(Object.keys(LINE_FULL_ART).length).toBe(ls('soulmon/lines/full').length);
   });
-  it('(a) ignar, lumel, serah e igni têm os 3 estágios × 3 galhos + o ultra', () => {
-    for (const line of ['ignar', 'lumel', 'serah', 'igni']) {
+  it('(a) ignar, lumel e igni têm os 3 estágios × 3 galhos + o ultra', () => {
+    for (const line of ['ignar', 'lumel', 'igni']) {
       for (const stage of ['champion', 'ultimate', 'mega'] as const) {
         for (const branch of ['power', 'harmony', 'benevolence'] as const) {
           expect(lineFullSprite(line, stage, branch), `${line}-${stage}-${branch}`).toBeTruthy();
@@ -169,8 +169,8 @@ describe('árvore completa das linhas — assets/soulmon/lines/full ↔ lineFull
       expect(lineFullSprite(line, 'ultra'), `${line}-ultra`).toBeTruthy();
     }
   });
-  it('nautilu e astrase ainda não têm arte (pendentes) e id inventado devolve undefined', () => {
-    expect(lineFullSprite('nautilu', 'ultra')).toBeUndefined();
+  it('D-104: orrin, serah e nautilu (aposentadas) não têm arte aqui; astrase ainda não tem; id inventado devolve undefined', () => {
+    for (const l of ['orrin', 'serah', 'nautilu']) expect(lineFullSprite(l, 'ultra'), l).toBeUndefined();
     expect(lineFullSprite('astrase', 'mega', 'power')).toBeUndefined();
     expect(lineFullSprite('zzz', 'champion', 'power')).toBeUndefined();
   });

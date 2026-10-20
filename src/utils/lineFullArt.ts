@@ -1,7 +1,8 @@
 // ÁRVORE COMPLETA das linhas curadas (`assets/soulmon/lines/full/`): as formas por GALHO
-// (power/harmony/benevolence) e o ultra — kaelen/orrin/thalindra (29, desde a rodada 1) e
-// ignar/lumel/serah/igni (40, rodada 3, 01/10/2026; `igni-*-power` é cópia dos sprites que
-// a linha já tinha em `lines/`, é a mesma forma do oráculo).
+// (power/harmony/benevolence) e o ultra — kaelen/thalindra (desde a rodada 1) e
+// ignar/lumel/igni (rodada 3, 01/10/2026; `igni-*-power` é cópia dos sprites que
+// a linha já tinha em `lines/`, é a mesma forma do oráculo). D-104 (20/10/2026): as formas de
+// `orrin` e `serah` (linhas aposentadas, D-78) foram REMOVIDAS daqui.
 //
 // ⚠️ SEM CONSUMIDOR (registrado em `docs/INVENTARIO-ASSETS.md` e no STATUS): hoje
 // `DUNGEON_LINE_SPRITES` usa só 4 por linha. O mapa existe para o dia em que a pré-seleção,

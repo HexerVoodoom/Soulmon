@@ -185,3 +185,55 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
     expect(resolveArtLineId(undefined)).toBeUndefined();
   });
 });
+
+/**
+ * D-104 (20/10/2026) — RÉGUA: nenhuma tela desenha arte DEFASADA. A árvore genérica (gato-coruja) e as formas das linhas aposentadas
+ * saíram do repositório; o piso de quem não tem linha nem sprite próprio é um INICIAL atual. Esta régua reprova a volta de qualquer um.
+ */
+describe('D-104: arte defasada reprovada em todo o app', () => {
+  const ASSETS = join(__dirname, '..', 'assets', 'soulmon');
+  const SRC_DIR = join(__dirname, '..');
+  const todos = (dir: string, out: string[] = []): string[] => {
+    for (const n of readdirSync(dir)) {
+      const p = join(dir, n);
+      if (statSync(p).isDirectory()) todos(p, out); else out.push(p);
+    }
+    return out;
+  };
+
+  it('os 11 PNG da árvore genérica não existem mais em assets/soulmon', () => {
+    const genericos = readdirSync(ASSETS).filter(f => /^(rookie|ultra|(champion|ultimate|mega)-(power|harmony|benevolence))\.png$/.test(f));
+    expect(genericos).toEqual([]);
+  });
+
+  it('nenhum arquivo de arte das linhas aposentadas (orrin/serah/nautilu) em assets/soulmon', () => {
+    const velhos = todos(ASSETS).filter(f => /(^|[\/])(orrin|serah|nautilu)-[^\/]*\.png$/.test(f));
+    expect(velhos).toEqual([]);
+  });
+
+  it('nenhum código importa a árvore genérica nem `SOULMON_SPRITES`', () => {
+    const ruins: string[] = [];
+    for (const f of todos(SRC_DIR)) {
+      if (!/\.(ts|tsx)$/.test(f) || /\.test\./.test(f)) continue;
+      const src = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      if (/assets\/soulmon\/(rookie|ultra|(champion|ultimate|mega)-(power|harmony|benevolence))\.png/.test(src) || /\bSOULMON_SPRITES\b/.test(src)) ruins.push(f);
+    }
+    expect(ruins).toEqual([]);
+  });
+
+  it('todo PNG de assets/soulmon/lines/*.png é importado por sprites.ts (nenhuma arte de linha órfã)', () => {
+    const fonte = readFileSync(join(SRC_DIR, 'utils', 'sprites.ts'), 'utf8');
+    const orfaos = readdirSync(join(ASSETS, 'lines')).filter(f => f.endsWith('.png') && !fonte.includes(`lines/${f}`));
+    expect(orfaos).toEqual([]);
+  });
+
+  it('sem linha de arte (jogador sem demoCharacterId, id legado, ramo da árvore) → SEMPRE um inicial atual, estável por estágio', () => {
+    const iniciais = new Set(Object.values(STARTER_SPRITES));
+    for (const st of ['rookie', 'champion-power', 'champion-harmony', 'ultimate-benevolence', 'mega-power', 'ultra', 'agumon', 'xyz-123']) {
+      const a = getSpriteForStage(st);
+      expect(iniciais.has(a), st).toBe(true);
+      expect(getSpriteForStage(st)).toBe(a);
+      expect(getSpriteForStage(st, undefined, 256)).toBe(a);
+    }
+  });
+});

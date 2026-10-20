@@ -68,6 +68,11 @@ describe('D-102: o ritmo do efeito (aura → poder maior e mais longo → burst)
     expect(FX_TRAVEL_MS).toBeLessThanOrEqual(1200);
     expect(FX_ORB_PX / 24).toBeGreaterThanOrEqual(2);
     expect(FX_ORB_PX / 24).toBeLessThanOrEqual(3);
+    // D-103: +25% sobre os 56/84 px de D-102
+    expect(FX_ORB_PX / 56).toBeGreaterThanOrEqual(1.2);
+    expect(FX_ORB_PX / 56).toBeLessThanOrEqual(1.3);
+    expect(FX_ORB_PX_BIG / 84).toBeGreaterThanOrEqual(1.2);
+    expect(FX_ORB_PX_BIG / 84).toBeLessThanOrEqual(1.3);
     expect(FX_ORB_PX_BIG).toBeGreaterThan(FX_ORB_PX);
     expect(FX_FULL_MS).toBeLessThanOrEqual(FX_CAP_MS);
   });
@@ -110,5 +115,18 @@ describe('D-102: combo 4+ ganha a versão enfeitada', () => {
     const comum = powerShots(base, ev as never, []);
     expect(grande[0].big).toBe(true);
     expect(comum[0].big).toBe(false);
+  });
+});
+
+describe('D-103: um poder por COMBO', () => {
+  it('combo de 3 (ou 4, 5) peças do mesmo elemento = UM tiro; dois elementos no mesmo passo = um tiro cada', () => {
+    const trio = step([[2, 1], [2, 2], [2, 3]], [0, 0, 0]);
+    const ev = [{ by: 'player' as const, element: M3_TILE_ELEMENTS[0], dmg: 6, target: 0 as const }];
+    expect(powerShots(trio, ev as never, [])).toHaveLength(1);
+    const cinco = step([[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], [0, 0, 0, 0, 0]);
+    expect(powerShots(cinco, ev as never, [])).toHaveLength(1);
+    const dois = step([[2, 1], [2, 2], [2, 3], [4, 1], [4, 2], [4, 3]], [0, 0, 0, 1, 1, 1]);
+    const ev2 = [...ev, { by: 'player' as const, element: M3_TILE_ELEMENTS[1], dmg: 6, target: 0 as const }];
+    expect(powerShots(dois, ev2 as never, [])).toHaveLength(2);
   });
 });
