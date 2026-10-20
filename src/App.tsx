@@ -156,6 +156,7 @@ import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/ter
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
+import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightmareWake';
 import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
 import { NoticeToast, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
@@ -1160,7 +1161,7 @@ export default function App() {
     writeLocal(STORAGE_KEYS.TERMS_NOTICE_SHOWN, marcaAvisoTermos(TERMS_VERSION, PRIVACY_VERSION), { silent: true });
   }, [termsNoticePrimeiraVez, gameState.consent, termsNoticeSeen]);
   // O COMBATE do pesadelo: a outra face da mesma noite que rendeu o sonho.
-  // Também só de manhã, também nunca à noite (ver o efeito lá embaixo).
+  // Abre no primeiro acordar do dia, a qualquer hora (ver o efeito lá embaixo).
   const [nightmareOpen, setNightmareOpen] = useState(false);
   /** O slot do pesadelo mostra o SONHO BOM (a cada 6 dias de pesadelo), não a luta. */
   const [goodDreamNow, setGoodDreamNow] = useState(false);
@@ -2196,8 +2197,15 @@ export default function App() {
      para o app, para o widget Android e para o overlay de desktop, que concluem sem abrir a Home — nenhum deles consulta o bloqueio.
      Espera a virada do dia rodar (`rolloverPending`): antes dela o save ainda traz os feitos de ontem. */
   const concluiuHoje = useMemo(() => didCompleteToday(gameState, new Date()), [gameState]);
+  /* Pedido do dono 20/10/2026 (Q5): o instante em que o Soulmon acordou SOZINHO por concluir algo. Estado de SESSÃO (não vai ao save): o pesadelo da manhã espera a
+     celebração/toast passar (`nightmareGateOpen`). `nightmareTick` re-dispara o efeito do pesadelo quando o prazo vence. */
+  const [completionWokeAt, setCompletionWokeAt] = useState<number | null>(null);
+  const [nightmareTick, setNightmareTick] = useState(0);
   useEffect(() => {
-    if (wakesByCompletion(dayWakePending && !rolloverPending, concluiuHoje)) markDayAwake();
+    if (wakesByCompletion(dayWakePending && !rolloverPending, concluiuHoje)) {
+      setCompletionWokeAt(Date.now());
+      markDayAwake();
+    }
   }, [dayWakePending, rolloverPending, concluiuHoje, markDayAwake]);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
   // `utils/dailyReset.ts`, derivada da própria fórmula da perda.
@@ -5447,9 +5455,11 @@ export default function App() {
     if (isSleeping) return;
     const now = new Date();
     const hour = now.getHours();
-    if (hour < 4 || hour >= 12) return; // só de manhã
     const rest = gameState.rest;
     if (!rest) return;
+    /* D-06: dentro de 4h–12h é o modal de sempre. Fora, o sonho só é COLETADO (em silêncio) quando o slot do sono já é do pesadelo/sonho bom — senão não há o que fazer. */
+    const modo = dreamMode(hour, hasPendingGoodDream(gameState.nightmares) || hasPendingNightmare(gameState.nightmares ?? EMPTY_NIGHTMARES, rest, now));
+    if (modo === 'none') return;
     // `playerDayKey` e NÃO `dayKeyOf`: esta chave é comparada contra
     // `RestNight.date`, que `recordNight` passou a carimbar no dia do JOGADOR.
     // Lida do aparelho, ela não encontraria a noite que o outro aparelho
@@ -5491,28 +5501,42 @@ export default function App() {
     // Só o sonho INÉDITO conta: a missão é de coleção, e repetir um que já
     // está no dex não acrescenta nada ao acervo.
     if (isNew) contarMissao('dream-new');
-    setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
-  }, [gameState.rest, isSleeping, setGameState]);
+    if (modo === 'modal') setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
+  }, [gameState.rest, gameState.nightmares, isSleeping, setGameState]);
 
   /**
-   * O PESADELO DA MANHÃ — a face jogável da mesma noite que rendeu o sonho.
+   * O PESADELO — a face jogável da mesma noite que rendeu o sonho.
    *
    * O sonho é a COLETA (passiva, colecionável) e o pesadelo é o COMBATE: as
-   * duas metades da noite, e por isso os dois vivem no MESMO momento e sob a
-   * MESMA janela de horas do sonho (4h–12h). Nada de sono aparece à noite —
-   * ortossonia é ansiedade ANTES de dormir, e um app que às 23h avisa que há
-   * uma luta pendente é o estímulo exato que a Janela de Descanso existe para
-   * não produzir.
+   * duas metades da noite. Pedido do dono 20/10/2026: o pesadelo abre no
+   * PRIMEIRO acordar do dia, a QUALQUER hora (sem a janela 4h–12h; 1×/dia por
+   * `nightmareDayKey`). Espera o Soulmon sair da masmorra/missão (Q6), o gesto
+   * de "Acordar" e, se ele acordou por concluir algo, a celebração/toast (Q5:
+   * Home + `NIGHTMARE_AFTER_COMPLETION_MS`). Ver `utils/nightmareWake.ts`.
    *
    * Aparece depois do sonho (`!morningDream`) porque dois modais empilhados
    * fazem o de cima roubar o clique do de baixo — já visto em teste.
    */
   useEffect(() => {
     if (nightmareOpen) return;
-    if (isSleeping) return;
     const now = new Date();
-    const hour = now.getHours();
-    if (hour < 4 || hour >= 12) return; // só de manhã
+    const gate = {
+      nowMs: now.getTime(),
+      sleeping: isSleeping,
+      wakePending: dayWakePending,
+      busy: naMasmorra || isMissionAway(guildMission, now.getTime()),
+      onHome: currentView === 'home',
+      completionWokeAt,
+    };
+    if (!nightmareGateOpen(gate)) {
+      // Fechado só pelo prazo pós-conclusão: re-dispara o efeito quando vencer.
+      const retry = nightmareRetryInMs(gate);
+      if (retry != null && retry > 0) {
+        const t = setTimeout(() => setNightmareTick(n => n + 1), retry);
+        return () => clearTimeout(t);
+      }
+      return;
+    }
     // O SONHO BOM (6 dias de pesadelo fechados) vem ANTES de qualquer luta nova e não depende de noite registrada.
     if (hasPendingGoodDream(gameState.nightmares)) {
       setGoodDreamNow(true);
@@ -5523,7 +5547,7 @@ export default function App() {
     if (!rest) return;
     if (!hasPendingNightmare(gameState.nightmares ?? EMPTY_NIGHTMARES, rest, now)) return;
     setNightmareOpen(true);
-  }, [gameState.rest, gameState.nightmares, isSleeping, nightmareOpen]);
+  }, [gameState.rest, gameState.nightmares, isSleeping, nightmareOpen, dayWakePending, naMasmorra, guildMission, currentView, completionWokeAt, nightmareTick]);
 
   /**
    * A onda vem PRONTA de `buildNightmareWave` — o componente não decide inimigo
@@ -8605,8 +8629,9 @@ export default function App() {
         </PresentationSlot>
       )}
 
-      {/* O PESADELO DA MANHÃ — a face jogável da mesma noite do sonho. Entra
-          DEPOIS dele (posição na fila), e nunca à noite. Perder não custa nada,
+      {/* O PESADELO — a face jogável da mesma noite do sonho. Abre no primeiro
+          acordar do dia, a qualquer hora; espera masmorra/missão e a celebração
+          da conclusão (utils/nightmareWake.ts). Perder não custa nada,
           e a tela diz isso. */}
       {interstitial === 'nightmare' && (
         <PresentationSlot id="nightmare" onFail={() => presentation.fail('nightmare')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>

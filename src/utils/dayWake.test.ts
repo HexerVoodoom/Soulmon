@@ -113,7 +113,7 @@ describe('D-67 — tarefa/hábito nunca bloqueados, nos 3 caminhos (app, widget 
   });
 
   it('APP: concluir acorda sozinho, lido do SAVE (vale também para o que o widget e o desktop concluíram sem abrir a Home)', () => {
-    expect(app).toMatch(/wakesByCompletion\(dayWakePending && !rolloverPending, concluiuHoje\)\) markDayAwake\(\)/);
+    expect(app).toMatch(/wakesByCompletion\(dayWakePending && !rolloverPending, concluiuHoje\)\) \{\s*setCompletionWokeAt\(Date\.now\(\)\);\s*markDayAwake\(\);/);
     expect(app).toContain('const concluiuHoje = useMemo(() => didCompleteToday(gameState, new Date()), [gameState]);');
   });
 

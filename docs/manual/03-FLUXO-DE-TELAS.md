@@ -1566,16 +1566,26 @@ novo: ⚰️ o ponto de montagem era `{openGame === '<id>' && (…)}` na
 
 ```ts
 if (nightmareOpen) return;
-if (isSleeping) return;
-const hour = now.getHours();
-if (hour < 4 || hour >= 12) return; // só de manhã
+const gate = {
+  nowMs: now.getTime(),
+  sleeping: isSleeping,
+  wakePending: dayWakePending,
+  busy: naMasmorra || isMissionAway(guildMission, now.getTime()),
+  onHome: currentView === 'home',
+  completionWokeAt,
+};
+if (!nightmareGateOpen(gate)) { /* timer de nightmareRetryInMs(gate) re-dispara */ return; }
+if (hasPendingGoodDream(gameState.nightmares)) { setGoodDreamNow(true); setNightmareOpen(true); return; }
 const rest = gameState.rest;
 if (!rest) return;
 if (!hasPendingNightmare(gameState.nightmares ?? EMPTY_NIGHTMARES, rest, now)) return;
 setNightmareOpen(true);
 ```
 
-`não percorrida` — depende de noite registrada e da janela 4h–12h.
+`não percorrida` — depende de noite registrada. Desde o REGISTRO §149 não há
+janela de horas: é a primeira coisa do dia do jogador, a qualquer hora, depois
+de acordar o Soulmon (depois da celebração se ele acordou por conclusão;
+esperando se ele está na Masmorra ou em missão da guilda).
 
 **Brincar — a célula `play` do deck**: `available: jaConcluiuAlgo` (`playDeck`,
 `useMemo` no `App.tsx`). ⚰️ O `PlayCard` era montado sob `{jaConcluiuAlgo && (…)}`;
@@ -1760,6 +1770,9 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   if (readLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN) === key) return;
   ```
 
+- **Modo silencioso**: o modal só abre entre 4h e 12h (`DREAM_MODAL_HOURS`).
+  Fora dessa janela, ou com o pesadelo (ou sonho bom) no slot do dia, `dreamMode`
+  manda coletar o sonho em silêncio no dex (`rest.dreams`), sem modal.
 - **Sai para**: `onClose={() => setMorningDream(null)}`.
 - **Estados**: `dream === null` → um bom-dia neutro. **Nenhuma variante julga a
   noite** — sem score, sem duração, sem nota.

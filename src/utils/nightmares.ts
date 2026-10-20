@@ -4,7 +4,8 @@
  *
  * Parte 3 do `docs/PLANO-TAREFAS.md`, camada de cima da Janela de Descanso
  * (`utils/restWindow.ts`). Enquanto os SONHOS são a coleção passiva (o Sleep
- * Style Dex), o PESADELO é a parte jogável: de manhã, o Soulmon conta que
+ * Style Dex), o PESADELO é a parte jogável: ao acordar (a qualquer hora, no
+ * primeiro acordar do dia — `utils/nightmareWake.ts`), o Soulmon conta que
  * enfrentou algo enquanto o dono dormia, e o jogador entra numa luta curta.
  *
  * O enquadramento importa e é regra, não enfeite: o pesadelo NÃO é uma ameaça
@@ -370,7 +371,7 @@ export function buildNightmareWave(
 // 3. Pendência
 // ---------------------------------------------------------------------------
 
-/** Há um pesadelo desta manhã ainda não combatido? */
+/** Há um pesadelo do dia de hoje (a noite que acabou) ainda não combatido? */
 export function hasPendingNightmare(
   nm: NightmareState,
   rest: RestState,

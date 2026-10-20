@@ -3078,3 +3078,18 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** (a) **só texto, sem régua** — o dono escolheu régua + texto, porque regra escrita sem teste se esquece no primeiro PR apressado; (b) **uma constante nova `SAVE_SCHEMA_VERSION`** — descartada: não existe hoje e seria um mecanismo grande; ancoramos no que já existe (`hydrateSave` + sanitizadores do servidor + `STORAGE_KEYS`).
 - **O que falsificaria:** um save real quebrado por um campo novo que passou na régua (a régua é curta demais e precisa de um caso novo), ou a régua travar PR legítimo com frequência (ela é rígida demais).
 - **Onde vive:** `CLAUDE.md` › Compatibilidade; `src/contexts/saveCompat.contract.test.ts`; `src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx`; `docs/SEPARACAO-DIGIAPP.md` (aviso D-04); `wrangler.jsonc` (comentários).
+
+## 149. Pesadelo é a primeira coisa do dia, a qualquer hora (dono, 20/10/2026; D-01..; emenda §99, §110, §111, §65)
+
+- **Pedido (literal):** "no começo do dia, quando o usuário entrar no aplicativo e acordar o Soulmon, a primeira coisa que acontece é o pesadelo".
+- **Decisão (Q2–Q6, D-06, D-07):**
+  - **Q2:** só há pesadelo com noite registrada no horário (`onTime`) para a manhã de hoje. Sem noite registrada não há pesadelo e nada se perde.
+  - **Q3:** QUALQUER hora. O portão de relógio 4h–12h do pesadelo saiu. "Começo do dia" é a primeira abertura/acordar do dia do jogador (`playerDayKey`, fuso fixo). Acordar → pesadelo (1º de `DAY_START_IDS`) → resumo → "Hoje".
+  - **Q4:** pode pular sem custo: fechar expira e não volta no dia; perder ou pular deixa HP, Bits e energia iguais.
+  - **Q5:** se o Soulmon acordou sozinho por concluir tarefa/hábito (app, widget, desktop), o pesadelo entra DEPOIS da celebração/toast, na próxima vez que a Home ficar livre (≥ 5 s, `NIGHTMARE_AFTER_COMPLETION_MS`, estando na Home). A conclusão nunca é interrompida (G-01).
+  - **Q6:** com o Soulmon ocupado (Masmorra `dungeonAway` ou missão da guilda `guildMission`) o pesadelo ESPERA ele voltar no mesmo dia; virou o dia, expira sem custo; não traz o pet de volta. Sono real (`isSleeping`) continua segurando.
+  - **D-07:** dia de sonho bom (`goodDream`) usa o mesmo slot (o GoodDream vem no lugar do pesadelo, §65); no dia seguinte volta o pesadelo.
+  - **D-06:** o SONHO (modal) continua só entre 4h e 12h; fora da janela, se o pesadelo (ou sonho bom) ocupa o slot, o sonho do dia é coletado em silêncio no dex (`rest.dreams`), sem modal. "Nunca os dois" (§111) segue. Máx. 1 por dia do jogador (`nightmares.fought`, no save: o 2º aparelho não repete). Dia 1 (`bornToday`), demo e onboarding incompleto: sem pesadelo. Nenhum campo novo no save.
+- **Alternativa que perdeu:** a janela 4h–12h com "pesadelo só de manhã" (§99/§110). Perdeu porque o dono quer que seja a primeira coisa ao acordar o Soulmon, seja qual for a hora. O risco de feedback de sono à noite foi ACEITO pelo dono e mitigado por exigir noite registrada e por poder pular sem custo.
+- **O que falsificaria:** a taxa de "fechar sem lutar" subir muito nas aberturas da tarde/noite, ou queixa de pesadelo à noite (relato ou suporte).
+- **Onde vive:** `src/utils/nightmareWake.ts` (`nightmareGateOpen`, `NIGHTMARE_AFTER_COMPLETION_MS`, `dreamMode`, `DREAM_MODAL_HOURS`, `nightmareRetryInMs`; testes em `nightmareWake.test.ts`) e os efeitos do pesadelo e do sonho no `App.tsx`.

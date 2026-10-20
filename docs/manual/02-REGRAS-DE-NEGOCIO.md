@@ -3396,7 +3396,8 @@ mecânica é o de DEITAR, ele não dispara com o pet dormindo e é 1×/dia (ver
 
 **Onde a UI mostra.** `src/components/RestWindowCard.tsx`, em **Configurações**,
 ao lado da janela de sono automático — é preferência, não conteúdo de jogo. O
-feedback do usuário é só de manhã, e vem em forma de sonho ([§41](#sonhos)).
+feedback do usuário vem no começo do dia, em forma de sonho ([§41](#sonhos)) ou
+de pesadelo ([§42](#pesadelos)), nunca em notificação noturna.
 
 ---
 
@@ -3440,6 +3441,12 @@ só se existir uma `RestNight` com a chave do dia do jogador, uma vez por dia
 (trava em `STORAGE_KEYS.MORNING_DREAM_SHOWN` + `dreamShownRef`), com
 `seed = hashString(playerDayKey)`. Sonho inédito conta a missão semanal
 `dream-new`.
+
+**Modo silencioso (REGISTRO §149).** O MODAL do sonho continua só entre 4h e 12h
+(`DREAM_MODAL_HOURS`). `dreamMode` em `src/utils/nightmareWake.ts` decide: fora
+dessa janela, ou quando o pesadelo (ou o sonho bom) ocupa o slot do dia, o sonho
+é coletado em silêncio no dex (`rest.dreams`), sem modal. "Nunca os dois" segue
+valendo.
 
 **Dono.** `src/utils/restWindow.ts` → `DREAM_CATALOG`, `DREAMS_BY_RARITY`,
 `dreamRarity`, `rollDream`, `collectDream`, `dexProgress`. A arte é de
@@ -3551,6 +3558,13 @@ Masmorra em [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.6.
 - **Noite sem registro ou fora da janela** → `count: 0` e nada mais acontece.
 - **Pesadelo de ontem expirou**: `pendingNightmare` só olha a manhã de hoje. Não
   vira dívida, não acumula fila, não gera aviso.
+- **Qualquer hora (§149)**: não há portão de relógio. O pesadelo é a primeira
+  coisa do dia do jogador depois de acordar o Soulmon, sempre com noite
+  registrada no horário. Se o Soulmon acordou por concluir tarefa ou hábito, ele
+  entra depois da celebração, quando a Home ficar livre (5 s,
+  `NIGHTMARE_AFTER_COMPLETION_MS`). Com o Soulmon na Masmorra ou em missão da
+  guilda, espera ele voltar no mesmo dia; virou o dia, expira sem custo. Pular
+  não custa nada.
 - **A chave da ESCRITA tem de bater com a do PORTÃO**: `markFought` é carimbado
   DENTRO do updater, com `prev.rest?.playerDayTz`. Uma âncora capturada por
   fechamento gravaria um nome que `hasPendingNightmare` não reconhece — e o modal
@@ -3569,7 +3583,8 @@ semanal da Masmorra. Não assusta: nomes e descrições são fofos por regra.
 
 **Onde a UI mostra.** `src/components/NightmareBattle.tsx` — 5º na fila de
 intersticiais, sempre DEPOIS do sonho (dois modais empilhados fazem o de cima
-roubar o clique do de baixo). Mesma janela de horas do sonho, 4h–12h.
+roubar o clique do de baixo). Sem janela de horas desde o §149: o portão é
+`nightmareGateOpen` em `src/utils/nightmareWake.ts`.
 
 ---
 

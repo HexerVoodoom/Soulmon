@@ -654,8 +654,8 @@ export function SettingsPage({
           language={language}
           infoLabel={isPt ? 'Sobre o lembrete de deitar' : 'About the bedtime reminder'}
           info={isPt
-            ? 'Um aviso 30 minutos antes da hora de dormir. Sem o lembrete, a noite pode não ser registrada e o pesadelo da manhã não aparece.'
-            : 'A nudge 30 minutes before bedtime. Without the reminder, the night may not be recorded and the morning nightmare will not show up.'}
+            ? 'Um aviso 30 minutos antes da hora de dormir. Sem o lembrete, a noite pode não ser registrada e o pesadelo do dia não aparece.'
+            : 'A nudge 30 minutes before bedtime. Without the reminder, the night may not be recorded and the day\'s nightmare will not show up.'}
         />
       </Group>
 

@@ -40,8 +40,8 @@ describe('App — fiação do sonho bom', () => {
     expect(m).toMatch(/emblems: \(prev\.emblems \?\? 0\) \+ r\.honor/);
     expect(m).toMatch(/r\.honor <= 0\) return prev/);
   });
-  it('o sonho bom ocupa o slot do pesadelo só de manhã e antes de qualquer luta nova', () => {
+  it('o sonho bom ocupa o slot do pesadelo, sob o mesmo portão, e antes de qualquer luta nova', () => {
     expect(app).toMatch(/if \(hasPendingGoodDream\(gameState\.nightmares\)\) \{\s*setGoodDreamNow\(true\);/);
-    expect(app.indexOf('hasPendingGoodDream(gameState.nightmares)')).toBeGreaterThan(app.indexOf('if (hour < 4 || hour >= 12) return;'));
+    expect(app.indexOf('setGoodDreamNow(true);')).toBeGreaterThan(app.indexOf('if (!nightmareGateOpen(gate))'));
   });
 });

@@ -1061,7 +1061,7 @@ clampado.
 
 **Três cenas FIXAS, fora do sorteio** (novas na Fase 2, exportadas de
 `dungeonScenes.ts` como índices de `SPIRIT_BG_SCENES`): `NIGHTMARE_SCENE` (a
-Forja das Almas, `dungeon-7` — o pesadelo é uma luta só, de manhã, e o vidro do
+Forja das Almas, `dungeon-7` — o pesadelo é uma luta só, ao acordar o Soulmon, e o vidro do
 diálogo é o mesmo todas as noites; canvas Jogos, `PesadeloIntro`/`PesadeloFim`),
 `ARENA_SCENE` (o Abismo Violeta, `dungeon-4`, canvas Arena) e `DINO_SCENE` (o
 corredor em ruínas atrás do parallax da Corrida com obstáculos; o identificador `DINO_SCENE` é mantido).

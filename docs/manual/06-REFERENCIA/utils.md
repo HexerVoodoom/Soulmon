@@ -1397,6 +1397,19 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `nightmares.test.ts`
 **Regra de negócio:** Combate a pesadelos: 1 por noite registrada, cura no máximo meio coração. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/nightmareWake.ts`
+**Dono de:** QUANDO o pesadelo (ou o sonho bom) abre: o portão do acordar, a qualquer hora (REGISTRO §149). SE há pesadelo continua em `nightmares.ts`.
+**Exports:**
+- `NIGHTMARE_AFTER_COMPLETION_MS` — 5000: depois de acordar por concluir tarefa/hábito, a celebração/toast passa primeiro.
+- `NightmareGateInput` (interface) — campos: `nowMs`, `sleeping`, `wakePending`, `busy`, `onHome`, `completionWokeAt`.
+- `function nightmareGateOpen(i): boolean` — fechado com sono real, Soulmon à espera do "Acordar" ou ocupado (Masmorra/missão); se acordou por conclusão, exige Home + o prazo. Não lê o relógio.
+- `function nightmareRetryInMs(i): number | null` — quanto falta para o prazo pós-conclusão (o timer do `App.tsx`).
+- `DREAM_MODAL_HOURS` — `{ from: 4, to: 12 }`: só o MODAL do sonho mora nessa janela.
+- `function dreamMode(hour, sleepSlotPending)` — `'modal'` na janela; fora, `'silent'` (coleta sem modal) se o pesadelo/sonho bom ocupa o slot, senão `'none'`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `nightmareWake.test.ts`
+**Regra de negócio:** O pesadelo é a primeira coisa do dia, ao acordar o Soulmon, a qualquer hora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/notificationPermission.ts`
 **Dono de:** a decisão (PURA) de PEDIR a permissão de notificação (07/10/2026): cruza plataforma (APK × web), estado da permissão e gatilho (`first-open` × `toggle`) e devolve a ação — pedir o modal nativo, só registrar, orientar às configurações do sistema ou nada. Também lê/pede a permissão da plataforma (Capacitor `PushNotifications` no APK, `Notification` na web, que exige gesto) e abre as configurações de notificação do app. Quem pediu e foi negado nunca é cobrado de novo sozinho.
 **Exports:** `decidePermissionAction`, `platformForPermission`, `readPlatformPermission`, `requestPlatformPermission`, `openSystemNotificationSettings`, `settingsGuidance` e os tipos `PermissionPlatform`/`PermissionTrigger`/`PermissionAction`/`PermissionDecisionInput`.
