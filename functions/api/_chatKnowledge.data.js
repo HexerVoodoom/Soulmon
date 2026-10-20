@@ -1,7 +1,7 @@
 // GERADO por scripts/gen-chat-knowledge.mjs — NÃO EDITE À MÃO.
 // Fontes: docs/manual/02-REGRAS-DE-NEGOCIO.md, docs/manual/11-GLOSSARIO.md
 // Regerar: npm run gen:chat-kb  (o teste chatKnowledge.stale reprova se ficar velho)
-export const KNOWLEDGE_HASH = 'c45b50670294b7e1';
+export const KNOWLEDGE_HASH = 'd253067780ffc709';
 export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia","x":"Uma vez por dia o jogo compara o que a pessoa fez com a meta dela e, se faltou muito, tira no máximo um coração — e há cinco mecanismos que podem impedir até isso."},
 {"id":"regra-2","t":"Carinho","x":"Esfregar o pet cura HP — meio coração por gesto, no máximo um por dia — e é a cura principal do jogo. O gesto é um pointer drag sobre o pet; a animação de explosão de corações toca sempre, inclusive quando a cura é recusada — quem decide isso é o App.tsx, não a regra."},
 {"id":"regra-3","t":"Comida","x":"Comer enche a fome e dá pontos de atributo — nunca cura HP e nunca dá energia — e há um teto por hora, não por dia. Por que o teto é derivado. Era o literal 5 enquanto mega/ultra pedem 6 tarefas. Quem fechava as 6 numa sessão só dava 5 comidas e perdia o dia completo tendo feito 100% da própria meta — punido por ritmo, não por esforço."},
@@ -173,7 +173,7 @@ export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia
 {"id":"termo-palco","t":"Palco","x":"A área do pet como COMPOSIÇÃO, não um canto onde se joga ícone: linha do chão única, cinco espaços de tamanho fixo em px, horizonte declarado por cenário."},
 {"id":"termo-passos","t":"Passos","x":"Contador opcional de passos, com degradação graciosa: sem sensor ou sem permissão, o app segue inteiro. Agregado diário e nada mais sai do aparelho."},
 {"id":"termo-perdao-por-ausencia","t":"Perdão por ausência","x":"A partir de certo número de dias sem abrir o app, a virada para de cobrar HP. Quem volta encontra saudade, não fatura. Tem parentes: carência de save novo e rampa de retorno."},
-{"id":"termo-pesadelo","t":"Pesadelo","x":"O combate curto da MANHÃ que transforma o sono em conteúdo de jogo. Um por noite registrada, teto absoluto; vencer restaura energia e no máximo meio coração. Pesadelo não combatido expira sem custo nenhum."},
+{"id":"termo-pesadelo","t":"Pesadelo","x":"O combate curto da primeira abertura do dia (qualquer hora, só com noite registrada) que transforma o sono em conteúdo de jogo. Um por noite registrada, teto absoluto; vencer restaura energia e no máximo meio coração. Pesadelo não combatido expira sem custo nenhum."},
 {"id":"termo-pixelizador","t":"Pixelizador","x":"O pipeline que transforma a imagem gerada pela IA em sprite v-pet: recorte, redução ao grid, quantização de paleta e reampliação com pixels duros."},
 {"id":"termo-ppt","t":"PPT","x":"Pedra-papel-tesoura — o minijogo rápido que paga Bits por vitória."},
 {"id":"termo-priming","t":"Priming","x":"O convite para ligar notificações, oferecido numa janela estreita de dias de vida da criatura e nunca menos de um dia depois de um \"agora não\". A frase é do PET, na primeira pessoa, e pergunta."},
