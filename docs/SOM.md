@@ -18,9 +18,9 @@
 |---|---|
 | Os sons — **16 símbolos** (+ `playLevelUp` e, desde 19/10/2026, `playDefend`/`playCharge`/`playDefeat` — §10.5) (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 4 do combate, abaixo: `playAttack`, `playAttackRanged`, `playSpecial`, `playVictory`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Os sons — **12 símbolos** (`playLevelUp` desde 11/10/2026, §3.2; `playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune` + os 3 do combate, abaixo), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
-| Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
+| Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha; ⚰️ 20/10/2026 (§136): as 2 camadas foram removidas), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **música-TEMA** "Stone Hall Decay" (S17, 07/10/2026): `<audio>` em streaming → `busTema`, nasce LIGADA mas só começa no 1º gesto da sessão, 2 formatos por `canPlayType`, 30 s de silêncio entre voltas | `src/utils/tema.ts` + `TEMA_DO_JOGO` em `sonsAssets.ts` |
-| A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) + a **faixa da Arena** (derivada, §10) | `src/utils/trilha.ts` + `src/utils/trilhaArena.ts` |
+| A **trilha** (⚰️ 20/10/2026 (§136): o loop de 2 camadas foi removido; o módulo fica para consentimento e pausas) (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) + a **faixa da Arena** (derivada, §10) | `src/utils/trilha.ts` + `src/utils/trilhaArena.ts` |
 | ⚠️ 19/10 O **diretor de música** (§10, §11): casa = tema, masmorra = "dungeon theme", torneio (lobby) e duelo = "pvp theme", arena = faixa derivada, pesadelo = terror; crossfade | `src/utils/musica.ts` |
 | ⚠️ 19/10 O **player de `<audio>` em streaming** (extraído do `tema.ts`: formato por `canPlayType`, troca no erro, refaz no bfcache, pausa entre voltas, fade-in) — dono único | `src/utils/streamMusica.ts` |
 | ⚠️ 19/10 O estado das **faixas de combate** (pedida, consentimento, pausas sono/descanso/mudo) no `busTrilha`, crossfade de `CROSSFADE_MUSICA_S`; manifesto `MUSICAS_DE_COMBATE` | `src/utils/musicaDeCombate.ts` + `src/utils/sonsAssets.ts` |
@@ -442,7 +442,7 @@ antes (tema velho + dungeon + pvp) 13 589 741 B; depois 13 452 938 B (−136 803
 - ⚠️ **Nome de terceiro no título.** No Suno, as faixas de combate e Pesadelo tinham no título o nome de uma trilha de terceiro, por erro de digitação (declaração do dono).
   O repo não consegue provar por escuta a ausência de material de terceiro.
 - ⚠️ **Falta o gate humano de escuta (S8)** das três faixas e do nível relativo entre elas. Os números são de medição.
-- **Loop de 2 camadas sem uso.** `trilha-base` e `trilha-ritmo` (~244 KB) seguem no repo, mas nenhuma superfície as pede mais. Decidir se saem.
+- ✅ Resolvido em 20/10/2026 (REGISTRO §136): os dois arquivos saíram, com `CAMADAS_DA_TRILHA` e o motor do loop em `trilha.ts`. ~~**Loop de 2 camadas sem uso.** `trilha-base` e `trilha-ritmo` (~244 KB) seguem no repo, mas nenhuma superfície as pede mais. Decidir se saem.~~
 - **Decisões do orquestrador, a confirmar com o dono:** o procedural foi apagado sem fallback; com o interruptor desligado, o Pesadelo cai no tema. (O segundo ponto foi superado pela §13: desligada = silêncio.)
 
 ## 13. Um interruptor só de música (19/10/2026, pedido do dono)

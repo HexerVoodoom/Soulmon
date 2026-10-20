@@ -12,10 +12,10 @@ import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { ASSETS_DE_SOM, CAMADAS_DA_TRILHA, MUSICAS_DE_COMBATE, SFX_DE_COMBATE_LIVRES, TEMA_DO_JOGO, recortarSilencio } from './sonsAssets';
+import { ASSETS_DE_SOM, MUSICAS_DE_COMBATE, SFX_DE_COMBATE_LIVRES, TEMA_DO_JOGO, recortarSilencio } from './sonsAssets';
 
 const raiz = join(__dirname, '..', '..');
-const TODOS = [...Object.values(ASSETS_DE_SOM), ...Object.values(CAMADAS_DA_TRILHA)];
+const TODOS = [...Object.values(ASSETS_DE_SOM)];
 /** S17 (07/10/2026): a música-tema — manifesto próprio, fora do S6 de 300 KB, com orçamento por formato. */
 const FORMATOS_DO_TEMA = TEMA_DO_JOGO.formatos;
 /** 19/10/2026: o tema e as músicas de combate (Stone Hall Combat/Nightmare) têm a mesma forma e o mesmo orçamento. */
@@ -31,7 +31,7 @@ const sha256 = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 
 describe('S9 — procedência nas duas direções', () => {
   it('a amostra não é vazia (o teste não pode passar por lista vazia)', () => {
-    expect(TODOS.length).toBeGreaterThanOrEqual(5);
+    expect(TODOS.length).toBeGreaterThanOrEqual(3); // evolve + degenerate + task-complete (eram 5 com as 2 camadas da trilha, removidas em 20/10/2026)
   });
 
   it('todo asset do manifesto existe em public/ com o SHA-256 e os bytes declarados', () => {
@@ -160,15 +160,6 @@ describe('S6 — 300 KB no total, zero no bundle inicial', () => {
       const src = readFileSync(f, 'utf8');
       expect(/import\s[^;]*\.(webm|m4a)/.test(src), `${f} importa um .webm/.m4a`).toBe(false);
     }
-  });
-});
-
-describe('as camadas da trilha fecham o loop no mesmo ponto (mesmo BPM, mesmo compasso)', () => {
-  it('toda camada tem a mesma duracaoS, e ela é múltiplo inteiro do compasso de 100 BPM (2,4 s)', () => {
-    const durs = new Set(Object.values(CAMADAS_DA_TRILHA).map(c => c.duracaoS));
-    expect(durs.size).toBe(1);
-    const [d] = [...durs];
-    expect(Math.abs(d / 2.4 - Math.round(d / 2.4))).toBeLessThan(1e-9);
   });
 });
 

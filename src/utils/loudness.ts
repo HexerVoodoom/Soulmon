@@ -105,21 +105,6 @@ export const OFFSET_MUSICA_EM_COMBATE_DB = -3.0;
 export const TRIM_MUSICAS_DE_COMBATE_DB: Record<'combate' | 'pesadelo', number> = { combate: 0, pesadelo: 0 };
 
 /**
- * Trim da trilha por NÚMERO de camadas tocando ao mesmo tempo, em dB: o que leva a SOMA ao nível de masterização
- * (`ALVO_MASTERIZACAO_MUSICA_LUFS_S`), medido com a MESMA estatística da música-tema — LUFS-S mediano do filtro
- * `ebur128` do ffmpeg, BS.1770, sobre o arquivo `.webm` que o app serve.
- *
- * ⚠️ **Corrigido em 11/10/2026 (auditoria "a música está muito baixa").** Os valores antigos (`{1: 0, 2: −2,024}`)
- * vinham de `mix-camadas.mjs`, que anunciava a soma em "−28,00 LUFS-S" — mas medida sobre o arquivo servido, com a
- * estatística do tema, a soma das duas camadas com aquele trim dá **−32,6** (mediano; integrado −31,5, que bate com o
- * "−31,46" do próprio registro antigo): a trilha tocava **4,6 dB abaixo** do que a política dizia e do que o tema
- * toca. Medido hoje: `base` sozinha −32,1 · `ritmo` sozinha −33,5 · soma SEM trim −30,6. Trim = referência (−28) menos
- * o mediano sem trim: 2 camadas **+2,6 dB**; 1 camada (média das duas sozinhas, −32,8) **+4,8 dB**. Pico da soma sem trim:
- * −14,1 dBFS; com este trim e o `GANHO_MUSICA_DB`, −5,5 dBFS (≤ teto S3 com folga). Camada nova = medir de novo.
- */
-export const TRIM_TRILHA_POR_CAMADAS_DB: Record<1 | 2, number> = { 1: 4.8, 2: 2.6 };
-
-/**
  * A ordem da escada, do mais alto ao mais baixo. Existe como declaração
  * SEPARADA do mapa acima para o teste poder provar que a ordem foi preservada —
  * um `Object.keys` provaria só que o mapa é igual a si mesmo.

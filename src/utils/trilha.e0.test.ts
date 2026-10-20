@@ -11,27 +11,14 @@
  *     a trilha (`comecar()` não sabia de sono);
  *  3. desligar o mudo com o pet dormindo apagava a pausa do sono.
  *
- * O motor de áudio é FALSO (só o bastante para `comecar()` chegar a `start`):
- * o que se mede é `trilhaTocando()`, nunca som.
+ * O loop saiu em 20/10/2026 (REGISTRO §136): "livre para tocar" = `trilhaConsentida() && !trilhaPausada()`.
+ * O que se mede é o estado, nunca som.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('./audioBus', () => {
-  const gain = () => ({ gain: { value: 1 }, connect: () => {}, disconnect: () => {} });
-  const ctx = {
-    state: 'running',
-    currentTime: 0,
-    resume: () => Promise.resolve(),
-    createGain: gain,
-    createBufferSource: () => ({
-      buffer: null, loop: false, loopStart: 0, loopEnd: 0,
-      connect: () => {}, disconnect: () => {}, start: () => {}, stop: () => {},
-    }),
-  };
   let ligada = false;
   return {
-    garantirBarramento: () => ({ ctx, busTrilha: gain() }),
-    retomarContexto: () => {},
     definirTrilhaLigada: (v: boolean) => { ligada = v; },
     trilhaLigada: () => ligada,
   };
@@ -41,20 +28,19 @@ const M_STREAM = vi.hoisted(() => ({
   formatos: [{ url: '/x.webm', mime: 'audio/webm', sha256: '', bytes: 0 }],
 }));
 vi.mock('./sonsAssets', () => ({
-  CAMADAS_DA_TRILHA: { base: { duracaoS: 10 }, ritmo: { duracaoS: 10 } },
-  CROSSFADE_MUSICA_S: 1.2, BPM_DA_TRILHA: 100, COMPASSOS_DA_TRILHA: 12,
-  carregarAsset: async () => ({ duration: 11 }),
+  CROSSFADE_MUSICA_S: 1.2,
   // O tema e as músicas de combate (streaming) são importados de verdade por `trilha.ts`; aqui só precisam de forma.
   TEMA_DO_JOGO: M_STREAM, MUSICAS_DE_COMBATE: { combate: M_STREAM, pesadelo: M_STREAM },
 }));
 vi.mock('./sounds', () => ({ isMuted: () => false }));
 
 import {
-  ligarTrilha, pausarTrilha, retomarTrilha, trilhaTocando, trilhaPausada,
+  ligarTrilha, pausarTrilha, retomarTrilha, trilhaConsentida, trilhaPausada,
   esquecerTrilha, aoGestoSonoro,
 } from './trilha';
 
 const tick = () => new Promise(r => setTimeout(r, 0));
+const livre = () => trilhaConsentida() && !trilhaPausada();
 
 beforeEach(() => { esquecerTrilha(); });
 
@@ -62,26 +48,26 @@ describe('E0 — a trilha obedece ao sono, à janela de descanso e ao mudo', () 
   it('ligada por gesto, toca; dormir para; acordar retoma', async () => {
     ligarTrilha();
     await tick();
-    expect(trilhaTocando()).toBe(true);
+    expect(livre()).toBe(true);
     pausarTrilha('sono');
-    expect(trilhaTocando()).toBe(false);
+    expect(livre()).toBe(false);
     expect(trilhaPausada()).toBe(true);
     retomarTrilha('sono');
     await tick();
-    expect(trilhaTocando()).toBe(true);
+    expect(livre()).toBe(true);
   });
 
   it('furo 2: com o pet já dormindo, o primeiro gesto sonoro NÃO religa a trilha', async () => {
     pausarTrilha('sono');
     ligarTrilha();          // preferência persistida + gesto
     await tick();
-    expect(trilhaTocando()).toBe(false);
+    expect(livre()).toBe(false);
     aoGestoSonoro();
     await tick();
-    expect(trilhaTocando()).toBe(false);
+    expect(livre()).toBe(false);
     retomarTrilha('sono');  // acordou
     await tick();
-    expect(trilhaTocando()).toBe(true);
+    expect(livre()).toBe(true);
   });
 
   it('furo 3: desligar o mudo com o pet dormindo não acorda a trilha', async () => {
@@ -91,11 +77,11 @@ describe('E0 — a trilha obedece ao sono, à janela de descanso e ao mudo', () 
     pausarTrilha('mudo');
     retomarTrilha('mudo');
     await tick();
-    expect(trilhaTocando()).toBe(false);
+    expect(livre()).toBe(false);
     expect(trilhaPausada()).toBe(true);
     retomarTrilha('sono');
     await tick();
-    expect(trilhaTocando()).toBe(true);
+    expect(livre()).toBe(true);
   });
 
   it('a janela de descanso é um motivo próprio: acordar dentro dela não religa', async () => {
@@ -105,16 +91,16 @@ describe('E0 — a trilha obedece ao sono, à janela de descanso e ao mudo', () 
     pausarTrilha('sono');
     retomarTrilha('sono');
     await tick();
-    expect(trilhaTocando()).toBe(false);
+    expect(livre()).toBe(false);
     retomarTrilha('descanso');
     await tick();
-    expect(trilhaTocando()).toBe(true);
+    expect(livre()).toBe(true);
   });
 
   it('retomar sem gesto prévio nesta sessão não toca nada (o gesto é o consentimento)', async () => {
     pausarTrilha('sono');
     retomarTrilha('sono');
     await tick();
-    expect(trilhaTocando()).toBe(false);
+    expect(livre()).toBe(false);
   });
 });

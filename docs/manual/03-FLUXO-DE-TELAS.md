@@ -2052,7 +2052,7 @@ grupo "Som"; `grep -rln "ligarTrilha" src/components` → `SettingsModal.tsx`,
 (`handleToggleSound`; `grep -rn "setMuted(" src --include=*.tsx` → só
 `App.tsx`), agora alcançável pela página. Registrado como fechado no
 [`../STATUS.md`](../STATUS.md). ⚰️ O hint dizia "Uma camada" com a trilha em
-**duas** (`CAMADAS_DA_TRILHA`, `8a930657`) — D33 em
+**duas** (`CAMADAS_DA_TRILHA`, `8a930657`; ⚰️ 20/10/2026 (§136): removido) — D33 em
 [`02` §59](02-REGRAS-DE-NEGOCIO.md#divergencias), fechada em `980bc84c`.
 
 **Dono (era)**: `src/components/SettingsModal.tsx` (⚰️ `4a8b8049`) · `src/App.tsx`

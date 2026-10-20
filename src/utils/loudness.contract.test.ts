@@ -49,7 +49,6 @@ import {
   GANHO_MUSICA_DB,
   OFFSET_MUSICA_EM_COMBATE_DB,
   TRIM_MUSICAS_DE_COMBATE_DB,
-  TRIM_TRILHA_POR_CAMADAS_DB,
   CATEGORIA_DO_SOM,
   DEGRAU_DB,
   OFFSET_MAX_DB,
@@ -187,19 +186,16 @@ describe('a escada: teto S3, ordem e degrau derivado', () => {
   it('o ganho de reprodução da música é DERIVADO (alvo − masterização) e cabe no teto de true peak', () => {
     expect(GANHO_MUSICA_DB).toBeCloseTo(ALVO_TRILHA_LUFS_S - ALVO_MASTERIZACAO_MUSICA_LUFS_S, 12);
     expect(GANHO_MUSICA_DB).toBeGreaterThan(0); // o pedido foi "mais alto"
-    // picos medidos (ffmpeg, 11/10/2026) ANTES de qualquer ganho: tema −15 dBFS; soma das camadas −14,1; músicas de combate (19/10/2026, pior true peak entre os formatos) −15,8 / −17,2.
+    // picos medidos (ffmpeg, 11/10/2026) ANTES de qualquer ganho: tema −15 dBFS; músicas de combate (19/10/2026, pior true peak entre os formatos) −15,8 / −17,2.
     // Com o trim e o ganho de reprodução, cada voz tem de ficar ≤ teto S3 (o limitador do master é rede, não plano).
     expect(-15 + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
-    expect(-14.1 + TRIM_TRILHA_POR_CAMADAS_DB[2] + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
     // tema novo (pior true peak −15,8) e combate/pesadelo (pior −16,3 / −17,2): com o ganho de reprodução ficam em −9,8 dBTP
     expect(-15.8 + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
     expect(-16.3 + TRIM_MUSICAS_DE_COMBATE_DB.combate + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
     expect(-17.2 + TRIM_MUSICAS_DE_COMBATE_DB.pesadelo + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
   });
 
-  it('a trilha toca no MESMO nível da música-tema: o trim leva a soma ao nível de masterização (o antigo −2,024 deixava −4,6 dB abaixo)', () => {
-    // medido: soma das 2 camadas sem trim = −30,6 LUFS-S mediano; com o trim vigente tem de dar a referência (±0,1)
-    expect(-30.6 + TRIM_TRILHA_POR_CAMADAS_DB[2]).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
+  it('as músicas de combate tocam no MESMO nível da música-tema (trim 0 sobre o alvo de masterização)', () => {
     // músicas de combate (19/10/2026): medidas já no alvo de masterização (pior formato: combate −28,0; pesadelo −28,1), trim 0
     expect(-28.0 + TRIM_MUSICAS_DE_COMBATE_DB.combate).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
     expect(-28.1 + TRIM_MUSICAS_DE_COMBATE_DB.pesadelo).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);

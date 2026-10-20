@@ -2975,3 +2975,21 @@ Pedido: "Remova o botão de PAUSE dos combates, como nas dungeons, e coloque o b
 - **Limite conhecido:** no Laboratório o rótulo "Santuário do Vínculo" (~170 px) impede Biblioteca/Amigos de descer até o centro das plataformas (44%) em 360 de largura sem encurtar o rótulo; ficaram em 39,3% (pergunta ao dono).
 - **Alternativa que perdeu:** manter os fundos W5 escurecidos (W8-A) e as posições antigas.
 - **O que falsificaria:** prédio visivelmente fora da plataforma em aparelho real (a referência é 390×844; telas mais largas deslocam o `cover`) ou o dono achar os fundos novos claros demais e pedir a vinheta de volta.
+
+## 136. Padrões da rodada de lançamento aprovados (L1–L9) e loop de 2 camadas removido (dono, modal, 20/10/2026)
+- Decisão do dono: "Aprovar todos os padrões" (L1–L9 de `PERGUNTAS-DO-DONO.md`); e remover o loop de 2 camadas sem uso.
+
+| Linha | Decisão (valor vigente) | Onde vive | Alternativa que perdeu | Gatilho para reabrir |
+|---|---|---|---|---|
+| L1 | Aprovada EM PARTE: 1 drop/dia, 3/semana, 1 uso/dia. ⚠️ O "+5 de energia" está superado pela §40 (13/10/2026): a premium enche a fome (`HUNGER_PER_PREMIUM` 100) e não dá energia | `premiumFood.ts:27-29`, `hunger.ts:40` | Outras constantes de teto | A premium virar a comida dominante na telemetria da semana |
+| L2 | Work no caminho de Harmonia | `attributes.ts:33` | Work em Poder | Queixa de que "trabalho" não dá Poder |
+| L3 | Teto de peso por subitens é retroativo (conta pura, derivada na leitura) | `taskModel.ts:149-158` (`effortWithSteps`/`taskEffort`) | Guardar o peso na criação da tarefa | Queixa de tarefa antiga perdendo peso |
+| L4 | Masmorra idle: 4 h para regenerar, piso de 25%, 4000 ms entre lutas | `dungeonIdle.ts:24,33,36` | Outras constantes | Queixa de espera ou masmorra farmável |
+| L5 | Gauge 30/45/60/60, energia ×2, crédito só na virada do dia | `progression.ts:34-37,208`; `creditGauge` em `dailyReset.ts:966` | Crédito imediato | Jogador não entender por que não evoluiu no mesmo dia |
+| L6 | "Dia completo" é selo cosmético, sem peso na evolução | `dailyReset.ts:641-647` | Voltar a ser critério (reabre §30) | Pedido de recompensa de evolução pelo dia completo |
+| L7 | SUPERADA em 14/10/2026 pela §56, sem aprovação: Conquistas têm "Resgatar" e o "?" acende com conquista cumprida e não resgatada. ⚠️ O comentário em `questMarks.ts:93-97` ("Fica sempre nula") está defasado | `questMarks.ts:98` (`hasUnclaimedMission`), commit `01d18fab1` | Remover o "?" das Conquistas | Conquista pronta sem "?" no aparelho |
+| L8 | XP do Vínculo oculto no demo (demo não ganha XP) | `App.tsx:2021-2023` | Exibir sem gravar | Demo parecer quebrado por falta do XP |
+| L9 | Padrão provisório mantido: `mascot-raven.png` com rótulo `TOUR_GUIDE_NAME`. Nenhuma arte gerada | `welcomeTour.ts:26`; pedido em `ASSETS-A-GERAR.md` | Arte própria agora | A arte própria do Mysterious Soulmon ser gerada e aprovada |
+
+- **Loop de 2 camadas (SOM §12.5):** `public/sounds/trilha-base.webm` e `trilha-ritmo.webm` (122 447 + 122 092 B) removidos, com o manifesto `CAMADAS_DA_TRILHA` e o motor de reprodução do loop em `trilha.ts` (o módulo fica para consentimento e pausas). Alternativa que perdeu: manter como reserva. O que falsificaria: o dono pedir de novo um loop adaptativo por camadas (aí volta como asset novo, com Attributions e guard).
+- **O que NÃO mudou:** nenhuma constante de regra; nenhum código de regra alterado.
