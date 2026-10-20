@@ -26,3 +26,12 @@
 
 ## Som
 - **Trocar o som do poder do ataque mágico** (20/10/2026, dono): hoje soa como um "plim", muito ruim. Procurar outro barulhinho, algo tipo "push" (impulso/rajada). O "plim" é o D-88 `attack-ranged` (confirmado pelo dono) em `SFX_DE_COMBATE_LIVRES` (`sonsAssets.ts`); trocar o arquivo `sfx-combate-attack-ranged.webm`. Entra no próximo update.
+
+## Combate (efeitos de ataque)
+- **Poderzinhos (FX de ataque) virados ao contrário** (20/10/2026, dono; pedido REPETIDO e ainda não corrigido): o efeito tem que
+  apontar do atacante para o alvo, nos DOIS lados do palco. Casos vistos: o ataque de **espaço** do inimigo sai "de trás pra frente";
+  o **especial de luz** do jogador também; o ataque **físico** do inimigo **Nocterix** (sombra) está espelhado na horizontal e tem que ser
+  flipado para o outro lado. "Acontece com vários": NÃO consertar caso a caso. Auditar TODOS os elementos × (ataque básico, especial,
+  físico) × (jogador, inimigo) em `utils/attackFxArt.ts` / `utils/combatFx.ts` / `BattleStage` / `ArenaGame` / `DungeonGame`, com uma
+  tabela "arte olha para onde" por FX + um teste que reprova FX do inimigo sem o espelho inverso do do jogador (mesmo molde de
+  `spriteUrlFacesLeft` em `utils/sprites.ts`). Conferir no aparelho, lado a lado, antes de dar como feito.
