@@ -34,8 +34,9 @@
 
 export const GROQ_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 // 20/10/2026: `gemini-2.5-flash` passou a responder 404 (modelo aposentado).
-// O alias `-latest` acompanha o Flash vigente; troca sem deploy: var `GEMINI_CHAT_MODEL`.
-export const GEMINI_MODEL = 'gemini-flash-latest';
+// `gemini-flash-latest` deu 503 (alta demanda) e o 3.8-flash levou 32 s: a reserva
+// é o flash-lite vigente. Troca sem deploy: var `GEMINI_CHAT_MODEL`.
+export const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 export function geminiModel(env) {
   const m = typeof env?.GEMINI_CHAT_MODEL === 'string' ? env.GEMINI_CHAT_MODEL.trim() : '';
   return /^[\w.-]{3,60}$/.test(m) ? m : GEMINI_MODEL;
@@ -48,6 +49,11 @@ export const GROQ_TIMEOUT_MS = 10000;
 // 20/10/2026: o Flash vigente raciocina e passou de 8 s; o Groq que falha por
 // conta volta em < 1 s, então o Gemini fica com a maior parte dos 25 s.
 export const GEMINI_TIMEOUT_MS = 14000;
+
+/** Chave de API sem caracteres invisíveis. Achado de 20/10/2026: a `GROQ_API_KEY`
+ *  do painel foi colada com um `` (Ctrl+V) na frente, e o Groq devolvia 400
+ *  vazio em toda chamada. Chave válida só tem ASCII imprimível. */
+export const cleanKey = k => (typeof k === 'string' ? k.replace(/[^!-~]/g, '') : '');
 
 /** @returns {Promise<Response>} */
 async function timedFetch(url, init, timeoutMs) {
@@ -81,7 +87,7 @@ async function callGroq(env, req, withTools) {
   if (withTools && tools?.length) { body.tools = tools; body.tool_choice = 'auto'; }
   const res = await timedFetch(GROQ_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.GROQ_API_KEY}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cleanKey(env.GROQ_API_KEY)}` },
     body: JSON.stringify(body),
   }, GROQ_TIMEOUT_MS);
   return res;
@@ -192,7 +198,7 @@ async function gemini(env, req) {
   const call = generationConfig => timedFetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel(env)}:generateContent`, {
     method: 'POST',
     // Chave em header, não na URL: URL vai parar em log de proxy.
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey(env.GEMINI_API_KEY) },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents,

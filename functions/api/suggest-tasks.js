@@ -1,3 +1,4 @@
+import { cleanKey } from './_llm.js';
 // Cloudflare Pages Function — sugestão de tarefas via IA (mesmo provedor/chave
 // do chat do pet, ver functions/api/chat.js: Groq llama-3.1-8b-instant).
 // Usada no segundo onboarding (tutorial + criação da 1ª tarefa obrigatória):
@@ -48,7 +49,7 @@ export async function onRequestPost({ request, env }) {
     // onboarding, com criação de 1ª tarefa obrigatória, e tem o MENOR teto do
     // sistema (30/dia). Debitar antes de saber que não há chave esvaziava a cota
     // do jogador no caminho de primeira impressão.
-    const groqKey = env.GROQ_API_KEY;
+    const groqKey = cleanKey(env.GROQ_API_KEY);
     if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });
 
     const gate = await guardAiRequest(request, env, 'suggest', body.id);

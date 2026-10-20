@@ -1,3 +1,4 @@
+import { cleanKey } from './_llm.js';
 /**
  * POST /api/transcribe — a VOZ do jogador vira texto.
  *
@@ -156,7 +157,7 @@ export async function onRequestPost({ request, env }) {
   try {
     upstream = await fetch(GROQ_URL, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
+      headers: { Authorization: `Bearer ${cleanKey(env.GROQ_API_KEY)}` },
       body: repasse,
       // Sem teto a requisição fica pendurada até o limite do isolate e o app
       // mostra "falhou" tarde. 25 s < 30 s do cliente.
