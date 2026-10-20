@@ -55,6 +55,7 @@ export const GUILD_COPY = {
   'guild.casa.doar.titulo': ['Trazer Bits', 'Bring Bits'],
   // W14b: o total de Bits do clã (um número do clã; nunca por pessoa).
   'guild.casa.bits.total': ['Bits do clã: {n}', 'Clan Bits: {n}'],
+  'guild.feira.predios.titulo': ['Mistério da feira', 'Fair mystery'],
   'guild.bosque.predios.titulo': ['Cuidar do bosque', 'Tend the grove'],
   'guild.casa.doar.botao': ['Trazer {bits} Bits', 'Bring {bits} Bits'],
   'guild.casa.doar.ok': ['A casa recebeu o que você trouxe.', 'The house received what you brought.'],

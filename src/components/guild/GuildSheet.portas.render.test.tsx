@@ -93,19 +93,21 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     expect(document.querySelector('[data-guild-room="roda"]')).toBeTruthy(); // membros seguem
   });
 
-  it('Grove: tem plantio, mistério e gestos (o que saiu do Clan Hall existe aqui)', async () => {
+  it('Grove: tem plantio e gestos e NÃO tem o mistério (o mistério é da Feira)', async () => {
     const r = renderWithCss(area('hall'));
     fireEvent.click(r.container.querySelector('[data-area-lot="grove"]')!);
     await waitFor(() => expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="plantio"]')).toBeTruthy(), { timeout: 8000 });
-    expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="misterio"]')).toBeTruthy();
+    expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="misterio"]')).toBeNull();
     expect(document.querySelector('[data-guild-room-open="grove"] [data-guild-gestos]')).toBeTruthy();
     expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="praca"]')).toBeNull();
   });
 
-  it('Feira: a missão/rodada (nome do fenômeno) existe aqui e não no Clan Hall nem no Grove', async () => {
+  it('Feira: a missão/rodada (nome do fenômeno) existe aqui e o Mistério também (não no Clan Hall nem no Grove)', async () => {
     const r = renderWithCss(area('hall'));
     fireEvent.click(r.container.querySelector('[data-area-lot="feira"]')!);
     await waitFor(() => expect(document.querySelector('[data-guild-room-open="feira"] [data-feira-fenomeno]')).toBeTruthy(), { timeout: 8000 });
-    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio]')).toBeNull();
+    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="misterio"]')).toBeTruthy();
+    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="plantio"]')).toBeNull();
+    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="praca"]')).toBeNull();
   });
 });
