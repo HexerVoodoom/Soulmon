@@ -35,3 +35,16 @@
   físico) × (jogador, inimigo) em `utils/attackFxArt.ts` / `utils/combatFx.ts` / `BattleStage` / `ArenaGame` / `DungeonGame`, com uma
   tabela "arte olha para onde" por FX + um teste que reprova FX do inimigo sem o espelho inverso do do jogador (mesmo molde de
   `spriteUrlFacesLeft` em `utils/sprites.ts`). Conferir no aparelho, lado a lado, antes de dar como feito.
+
+## Evolução
+- **"Steps" viram Fragmentos de Alma** (20/10/2026, dono): trocar o nome/medida "steps" da evolução por uma MOEDA nova, **Fragmento de Alma**,
+  para ficar claro. Ideia do dono: cada ação concluída dá 1 fragmento; ao juntar X fragmentos eles são CONSUMIDOS e o Soulmon evolui.
+  A pensar antes de construir (hoje a regra mora em `utils/evolutionGauge.ts`, decisão de 11/10/2026):
+  - **Choque com a linha vermelha do gauge**: hoje a barra enche pelo PESO DE ESFORÇO (hábito = `HABIT_WEIGHT`, tarefa = `effort` 1–3), tem
+    TETO DIÁRIO igual à meta do estágio e é creditada na VIRADA do dia — "recompensa por contagem de tarefas é proibida" (anti-farm).
+    "1 ação = 1 fragmento" é contagem. Decidir: (a) fragmento = unidade do mesmo peso de esforço (tarefa de esforço 3 dá 3), mantendo teto
+    diário e crédito na virada; ou (b) 1 por ação com teto diário de fragmentos. O dono decide (registrar em REGISTRO-DE-DECISOES).
+  - X por estágio (hoje `FORM_REQUIREMENTS[estágio].required` e `ULTRA_PATIENCE_POINTS`), consumo ao evoluir (já "zera ao evoluir") e o piso na
+    queda por HP (`degeneratedEvolutionPoints`) precisam virar o mesmo número em fragmentos.
+  - Nova moeda = novo ícone de alma (nada de reuso de Bits/Emblemas), texto PT/EN, migração do save (progresso atual do gauge convertido sem perder nada),
+    e a Home/Evolução mostrando "fragmentos" no lugar dos pontos.
