@@ -45,6 +45,7 @@ export type MotivoSaida = 'logout' | 'beta-closed' | 'account-deleted';
  *    CONTA (`tier`, `week`) NÃO está aqui e é apagado;
  *  · `CONFLICT_BACKUP`/`PREVIOUS_SAVE_ID` → rastro forense: apagar derrotaria o
  *    propósito (recuperar progresso por suporte/exportar);
+ *  · `SAVE_QUARANTINE` → idem: texto cru de um save ilegível; apagar no logout destruiria a única cópia;
  *  · `ACCOUNT_DELETED_NOTICE` → o portão lê UMA vez depois do reload;
  *  · `PENDING_LOGIN_EMAIL` → reconfirmação do login por link em andamento.
  */
@@ -65,6 +66,7 @@ export const SOBREVIVEM_AO_LOGOUT: readonly string[] = [
   STORAGE_KEYS.TERMS_NOTICE_SHOWN,
   STORAGE_KEYS.ACCOUNT_DELETED_NOTICE,
   STORAGE_KEYS.PENDING_LOGIN_EMAIL,
+  STORAGE_KEYS.SAVE_QUARANTINE,
   RECONCILE_KEYS.CONFLICT_BACKUP,
   RECONCILE_KEYS.PREVIOUS_SAVE_ID,
   // telemetria (literais: as chaves moram privadas em `telemetry.ts` — o contrato confere)

@@ -210,6 +210,13 @@ export const STORAGE_KEYS = {
    *  já digitou a fala uma vez — dali em diante a fala aparece inteira. Conveniência por aparelho,
    *  fora do save. Dono: `components/nav/NpcSpeech.tsx`. */
   NPC_FALA_VISTA: 'soulmon-npc-fala-vista',
+  /** L08-01 (20/10/2026) — QUARENTENA do save local que NÃO virou estado (JSON truncado, array/string, `hydrateSave`
+   *  lançou, ou o local ficou atrás por cota cheia). Guarda `{formato, salvoEm, saveId, motivo, cru, cortado?}`
+   *  ANTES de qualquer sobrescrita. SOBREVIVE ao logout (rastro forense, como `CONFLICT_BACKUP`). Dono: `saveQuarantine.ts`. */
+  SAVE_QUARANTINE: 'soulmon-save-quarantine-v1',
+  /** L08-02 (20/10/2026) — `writeLocal(GAME_STATE)` falhou (cota): o local ficou ATRÁS da nuvem. No boot seguinte
+   *  vale "carga degradada": lê a nuvem antes de postar. É da CONTA: o logout apaga. Dono: `GameStateContext`. */
+  LOCAL_STALE: 'soulmon-local-stale-v1',
 } as const;
 
 /**
