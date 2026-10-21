@@ -33,8 +33,18 @@ const GRID_MAX_W = 348;
 
 type Mode = 'fill' | 'cross';
 
-const cellSizeFor = (n: number) => (n <= 7 ? 44 : 30);
-const clueColFor = (n: number) => GRID_MAX_W - n * cellSizeFor(n);
+/** Respiro lateral do visor (px) — a grade nunca passa de `innerWidth - 2×` isto (QA L11-14: 320 px). */
+const VIEW_GUTTER = 16;
+/** Largura da grade com as pistas para uma janela de `viewportW` px. */
+export const gridWidthFor = (viewportW: number) =>
+  Math.max(240, Math.min(GRID_MAX_W, viewportW - VIEW_GUTTER * 2));
+/** Célula: 44 (até 7×7) ou 30 (maior), encolhida só o necessário para a grade caber em `gridW`. */
+export const cellSizeFor = (n: number, gridW: number = GRID_MAX_W) => {
+  const base = n <= 7 ? 44 : 30;
+  const clueMin = n <= 7 ? 40 : 48;
+  return Math.min(base, Math.floor((gridW - clueMin) / n));
+};
+export const clueColFor = (n: number, gridW: number = GRID_MAX_W) => gridW - n * cellSizeFor(n, gridW);
 
 export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: EarningGameProps & { todayKey: string }) {
   const isPt = language === 'pt-BR';
@@ -63,8 +73,15 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
 
   const clues = useMemo(() => cluesOf(parsePattern(pattern.rows)), [pattern]);
   const n = pattern.rows.length;
-  const cell = cellSizeFor(n);
-  const clueW = clueColFor(n);
+  const [viewportW, setViewportW] = useState(() => (typeof window === 'undefined' ? GRID_MAX_W + VIEW_GUTTER * 2 : window.innerWidth));
+  useEffect(() => {
+    const onResize = () => setViewportW(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const gridW = gridWidthFor(viewportW);
+  const cell = cellSizeFor(n, gridW);
+  const clueW = clueColFor(n, gridW);
   const isDaily = pattern.id === daily.id;
 
   const load = (p: PicrossPattern) => {
@@ -311,7 +328,7 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           </div>
 
           {/* A grade com as pistas: coluna de pistas à esquerda, linha em cima. */}
-          <div style={{ alignSelf: 'center', width: GRID_MAX_W, flex: 'none' }}>
+          <div style={{ alignSelf: 'center', width: gridW, flex: 'none' }}>
             <div style={{ display: 'flex' }}>
               <div style={{ width: clueW, flex: 'none' }} />
               {clues.cols.map((cl, c) => (
