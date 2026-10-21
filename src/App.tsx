@@ -6336,6 +6336,27 @@ export default function App() {
   };
 
 
+  const [generatingCharacter, setGeneratingCharacter] = useState(false);
+  const handleGenerateCharacter = useCallback(async () => {
+    if (generatingCharacter) return;
+    setGeneratingCharacter(true);
+    try {
+      const ent = await fetchEntitlement();
+      const pago = ent ? ent.tier === 'paid' : gameState.accountTier === 'paid';
+      if (!pago) { setUnlockReason('evolution'); return; }
+      if (ent && gameState.accountTier !== 'paid') setGameState(prev => ({ ...prev, credits: ent.credits, accountTier: ent.tier }));
+      if ((gameState.soulmonStages?.length ?? 0) === 0 || gameState.demoCharacterId) { setUpgradeRitual(true); return; }
+      if (!isNewbornLibrary(spriteAcervo)) {
+        toast.success(language === 'pt-BR' ? 'Seu Soulmon já está pronto.' : 'Your Soulmon is ready.');
+        return;
+      }
+      spriteGen.retry(gameState.evolutionStage);
+      toast.success(language === 'pt-BR' ? 'Gerando o seu Soulmon…' : 'Generating your Soulmon…');
+    } finally {
+      setGeneratingCharacter(false);
+    }
+  }, [generatingCharacter, gameState.accountTier, gameState.soulmonStages, gameState.demoCharacterId, gameState.evolutionStage, spriteAcervo, spriteGen, language, setGameState, setUnlockReason]);
+
   // Handle reset onboarding (DEBUG ONLY)
   const handleResetOnboarding = () => setResetOnboardingOpen(true);
   const handleConfirmResetOnboarding = () => {
@@ -6787,6 +6808,24 @@ export default function App() {
               própria página já conta isso) e `already-used` é registro, não
               oferta repetida. O motivo de telemetria continua sendo
               `evolution` porque é literalmente onde o card está. */}
+          {/* GERAR PERSONAGEM (dono, 21/10/2026): quem não tem a criatura própria (nunca gerou, ou pagou e a geração falhou) não
+              fica preso no personagem de reserva. Confere o pagamento no servidor; sem pagamento leva ao desbloqueio; pago, tenta
+              de novo o desenho (ou abre o ritual se a árvore própria ainda não existe). */}
+          {labTab === 'evolution' && !demo && !petIsCorvo && (
+            !!gameState.demoCharacterId || ((gameState.soulmonStages?.length ?? 0) > 0 && isNewbornLibrary(spriteAcervo))
+          ) && (
+            <div style={{ padding: '0 4px 10px' }} data-generate-character>
+              <button
+                type="button"
+                disabled={generatingCharacter}
+                style={{ ...sm2Button('primary', generatingCharacter), width: '100%' }}
+                onClick={handleGenerateCharacter}
+              >
+                {language === 'pt-BR' ? 'Gerar personagem' : 'Generate character'}
+              </button>
+            </div>
+          )}
+
           {/* Canvas Evolução EVO-20: a recusa `not-paid` é o MESMO card-convite
               âmbar, sem frase em cima — a frase antiga dizia "chegou ao topo"
               para um rookie demo, porque `rebirthRefusal` responde `not-paid`
