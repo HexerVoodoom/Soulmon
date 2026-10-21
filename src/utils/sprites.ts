@@ -285,7 +285,8 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
   // por forma. O 2º parâmetro é a LINHA de arte do save — `spriteLineOf`.
   if (demoCharacterId === CORVO_LINE) return corvoSpriteFor(key, size);
   // Os 5 iniciais: o MESMO sprite em todos os estágios (limitação declarada).
-  if (isStarterId(demoCharacterId)) return STARTER_SPRITES[demoCharacterId];
+  // 21/10/2026 (dono): se o jogador já tem o sprite GERADO dele, ele vence o inicial de reserva (contas que mostravam o Meteoro).
+  if (isStarterId(demoCharacterId)) return ownSprites[key] ?? STARTER_SPRITES[demoCharacterId];
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
   // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {
