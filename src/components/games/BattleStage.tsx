@@ -30,7 +30,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
-
 import { petScaleStyle } from '../../utils/spriteScale';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
