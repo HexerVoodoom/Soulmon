@@ -48,6 +48,17 @@ export interface AreaLot {
 /** Largura padrão de um lote, em % da cena (o molde F4). */
 export const LOT_WIDTH_DEFAULT = '38%';
 
+/**
+ * Ordem de empilhamento dos lotes (QA L06-12, decisão do dono 21/10/2026): quanto mais ALTO o lote na cena (`top` menor), mais
+ * PARA CIMA ele fica — o rótulo mora na base de cada lote e cai sobre o topo da arte do vizinho de baixo, que antes o cobria
+ * ("SALÃO DE JOGOS", "ATELIÊ DA MENTE", "CONQUISTAS"). Sem `top` legível, 1 (ordem do DOM). Puro.
+ */
+export function lotZIndex(top: string | number | undefined): number {
+  const n = typeof top === 'number' ? top : parseFloat(String(top ?? ''));
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(1, 1000 - Math.round(n * 10));
+}
+
 /** Lotes cuja arte é teal sobre o fundo teal e some no cenário: ganham um HALO claro (pedido do dono, 11/10/2026, "o prédio do jornal
  *  não tá legal" / "muito misturado com o background"). É filtro — nenhuma arte nova. Chave `área:lote`. */
 const LOT_HALO: ReadonlySet<string> = new Set(['exploracao:caderno']);
@@ -115,6 +126,8 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             // só o que é opaco no sprite (`data-area-lot-hit`) e o rótulo. Sem isso, o alfa de um
             // prédio grande roubava o toque do vizinho (Santuário do Vínculo × Centro de Evolução).
             pointerEvents: 'none',
+            // O lote mais ALTO da cena fica por cima: o rótulo dele (na base) nunca é tapado pela arte do vizinho de baixo (QA L06-12).
+            zIndex: lotZIndex(lot.top),
           }}
         >
           {lot.art ? (
