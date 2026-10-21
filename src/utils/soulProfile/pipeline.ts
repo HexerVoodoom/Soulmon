@@ -17,7 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { generateOracleAsync } from '../oracle';
-import type { OracleInput, OracleInputWithClass, OracleResult } from '../oracle';
+import type { OracleInput, OracleInputWithClass, OracleOverrides, OracleResult } from '../oracle';
 import type { SoulProfile } from './profile';
 import { buildFichaESkills } from './ficha/fromInput';
 import { selectCompanion, type CapturaAvaliacao } from './ficha/capture';
@@ -66,7 +66,7 @@ function baseDeInspiracao(nome: string): string {
   return (m ? m[1] : nome).trim();
 }
 
-export async function generateOracleComplete(input: OracleInput, seed?: number): Promise<OracleComplete> {
+export async function generateOracleComplete(input: OracleInput, seed?: number, overrides?: OracleOverrides): Promise<OracleComplete> {
   const soul: SoulProfile | undefined = input.soulProfile;
   if (!soul) throw new Error('generateOracleComplete exige soulProfile — use generateOracleAsync para o caminho legado');
 
@@ -172,7 +172,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
     companionName: companion ? companheiroNome(companion.id) : undefined,
     promptClassFlavor,
   };
-  const result = await generateOracleAsync(entrada, salt);
+  const result = await generateOracleAsync(entrada, salt, overrides);
 
   return { result, fichaByStage, companion, bestiaryPick, bestiaryLineage, stageSkills };
 }

@@ -96,6 +96,7 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
   { termo: 'domador/treinador/tamer', re: /\b(domador|domadora|treinador|treinadora|tamer)\b/i, motivo: 'fronteira de PI direta; o jogador é "você" (bíblia §12).' },
   { termo: 'digievolução/digievoluir', re: /\bdigi[ée]volu/i, motivo: 'marca de terceiro; o termo é forma / mudar de forma (§12).' },
   { termo: 'mundo digital', re: /\b(mundo digital|digital world)\b/i, motivo: 'colisão com o mundo de outra franquia; o lugar é a Malha / the Mesh (§3).' },
+  { termo: 'contraparte digital da alma', re: /(contraparte digital|digital counterpart)/i, motivo: 'premissa "parte da alma vive num aparelho" é camada pesada de mundo (§16); só a apresentação do Soulmon recém-nascido diz a frase (REGISTRO §150).' },
 ];
 
 /**

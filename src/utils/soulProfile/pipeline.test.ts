@@ -407,3 +407,19 @@ describe('dados sincronizados dos repositórios', () => {
     }
   });
 });
+
+describe('pipeline: override de elemento (D-150, tela de decisão)', () => {
+  it('mesma seed + mesmo override = resultado idêntico, com o elemento pedido; sem override nada muda', async () => {
+    const input = makeInput('Mateus Sperandio', QUIZ, true);
+    const base = await generateOracleComplete(input, 77);
+    const outro = base.result.dominantElement === 'fogo' ? 'agua' : 'fogo';
+    const a = await generateOracleComplete(input, 77, { dominantElement: outro });
+    const b = await generateOracleComplete(input, 77, { dominantElement: outro });
+    expect(a.result.dominantElement).toBe(outro);
+    expect(JSON.stringify(a.result)).toBe(JSON.stringify(b.result));
+    expect(a.result.seed).toBe(base.result.seed);
+    const semOverride = await generateOracleComplete(input, 77);
+    expect(JSON.stringify(semOverride.result)).toBe(JSON.stringify(base.result));
+    expect(a.fichaByStage.rookie).toEqual(base.fichaByStage.rookie);
+  });
+});

@@ -30,9 +30,10 @@ import {
   type ConsentRecord,
 } from '../utils/consent';
 import {
-  generateOracleAsync, ORACLE_QUESTIONS,
-  type OracleInput, type OracleResult, type LText,
+  generateOracleAsync, ORACLE_QUESTIONS, ELEMENT_INFO,
+  type OracleInput, type OracleResult, type LText, type ElementId,
 } from '../utils/oracle';
+import { elementChoiceCandidates, falaDaIris, descricaoCurtaElemento } from '../utils/revealEscolha';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
 import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/types';
 import { cityLabel, type City } from '../utils/soulProfile/cities';
@@ -404,6 +405,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const REVEAL = GENERATING + 1;
   /** Depois do batismo: o Soulmon se apresenta (NpcSequence). Não é testado por `>=`/`<=` em lugar nenhum. */
   const SOULMON_INTRO = REVEAL + 1;
+  /** D-150: a Iris diz o elemento ANTES do desenho; "Gostei" abre o REVEAL (e só aí o sprite é pedido). Id novo, sem
+   *  renumerar nada. Fica FORA da telemetria `onboarding_step`: 36+ já são códigos de passos negativos (36 = AMBRA_INTRO). */
+  const ELEMENT_DECIDE = SOULMON_INTRO + 1;
   const DEMO_PICK = -1;
   // REGISTRO §81 (15/10/2026): o REVEAL DEMO (-4, a leitura em silhueta + a oferta da 13.1) e a escolha grátis/própria
   // (`CHOICE_STEP`) SAÍRAM. O fim do ritual de perguntas é a tela do OVO-CRISTAL (`CHOICE_STEP`, abaixo); o -4 ficou livre.
@@ -623,9 +627,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     () => ({ ...(savedTestAnswers ?? {}), ...(draft?.testAnswers ?? gate?.testAnswers ?? {}) }),
   );
   const [result, setResult] = useState<OracleResult | null>(null);
-  /** Essência do class-system + ofício, calculados pelo pipeline completo —
-   *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
-  const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
+  /** D-150: o resultado ORIGINAL (e o que o gerou) — a escolha do elemento regera a partir daqui, com a MESMA seed. */
+  const [escolha, setEscolha] = useState<{ original: OracleResult; input: OracleInput; completo: boolean } | null>(null);
+  /** A tela de decisão está mostrando a lista "Escolha outro lado". */
+  const [escolhendo, setEscolhendo] = useState(false);
+  const [regerando, setRegerando] = useState(false);
+  /** Travas no MESMO tick (o estado só vale no próximo render): um "Gostei" por resultado, uma regeração por vez. */
+  const gosteiRef = useRef(false);
+  const regerandoRef = useRef(false);
+  const pedidoRef = useRef(0);
+  const escolhendoAntesRef = useRef(false);
+  useEffect(() => {
+    if (step !== ELEMENT_DECIDE) { escolhendoAntesRef.current = false; return; }
+    if (escolhendo) {
+      document.querySelector<HTMLElement>('[data-element-option][aria-current="true"]')?.focus();
+    } else if (escolhendoAntesRef.current) {
+      document.querySelector<HTMLElement>('[data-gostei]')?.focus();
+    }
+    escolhendoAntesRef.current = escolhendo;
+  }, [step, escolhendo, ELEMENT_DECIDE]);
   /* ── WP1.1 — A CERIMÔNIA DE ESPERA DO REVEAL ────────────────────────────
      O reveal é o momento mais importante do app e acontecia SEM a criatura:
      nome, descrição e nenhuma imagem — o desenho só chegava depois, já dentro
@@ -759,10 +779,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       ? TELEMETRY_FUNNEL.demo
       : TELEMETRY_FUNNEL.unknown;
   useEffect(() => {
+    if (step === ELEMENT_DECIDE) return; // sem código livre na allowlist (ver ELEMENT_DECIDE)
     const code = onboardingStepCode(step);
     if (code === null) return;
     track('onboarding_step', { step: code, funnel });
-  }, [step, funnel]);
+  }, [step, funnel, ELEMENT_DECIDE]);
   // `unlock_view` COM O MOTIVO (G-5): o modal de compra do ovo conta na MESMA faixa do antigo convite do reveal demo
   // (`unlockReasonCode('ovo')` → `revealDemo`), que é a casa que esta tela substituiu — o funil continua comparável.
   useEffect(() => {
@@ -922,21 +943,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // Pipeline completo: distribui os pontos na ficha do class-system,
       // captura o companheiro e busca a criatura-inspiração no bestiário —
       // a geração da criatura já sai alinhada com tudo isso.
-      const { generateOracleComplete, essenceLabel, CLASS_DATA, PROFISSAO_EN } = await import('../utils/soulProfile');
+      const { generateOracleComplete } = await import('../utils/soulProfile');
       const complete = await generateOracleComplete(input);
       r = complete.result;
-      const dominant = soulProfile.oracle.dominantClassElements[0];
-      const profId = Object.keys(complete.fichaByStage.rookie.profissoes)[0];
-      const profPt = CLASS_DATA.profissoes[profId as keyof typeof CLASS_DATA.profissoes]?.nome ?? profId;
-      setEssence({
-        pt: `Essência ${essenceLabel(dominant, true)} · Ofício ${profPt}`,
-        en: `${essenceLabel(dominant, false)} essence · ${PROFISSAO_EN[profId] ?? profId}`,
-      });
     } else {
       r = await generateOracleAsync(input);
-      setEssence(null);
     }
     setResult(r);
+    setEscolha({ original: r, input, completo: !!soulProfile });
+    setEscolhendo(false);
     // O ritual acabou: o rascunho sai AGORA, antes do reveal. Quem fechar no
     // reveal tem o perfil com `seed` abaixo — retomar no item 20 regeneraria
     // a criatura, e geração custa.
@@ -945,9 +960,45 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
     // jogador o reroll pelo qual ele pode ter pagado. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, profile);
+    // D-150: primeiro a Iris diz o elemento; o desenho (e o custo dele) só começam no "Gostei".
+    setStep(ELEMENT_DECIDE);
+  };
+
+  /** "Gostei": segue para o reveal de sempre (casulo, batismo, Hatch) com o resultado ATUAL. */
+  const gostei = () => {
+    if (!result || gosteiRef.current) return;
+    gosteiRef.current = true;
     setStep(REVEAL);
     revealAbertoEmRef.current = Date.now();
-    iniciarCerimoniaDoReveal(r);
+    iniciarCerimoniaDoReveal(result);
+  };
+
+  /** Escolhe o elemento dominante. Mesma seed, só o override muda — nada de acaso, nada gravado. */
+  const escolherElemento = async (x: ElementId) => {
+    if (!escolha || regerandoRef.current) return;
+    const { original, input, completo } = escolha;
+    if (result && x === result.dominantElement) { setEscolhendo(false); return; }
+    if (x === original.dominantElement) { setResult(original); setEscolhendo(false); return; }
+    regerandoRef.current = true;
+    const pedido = ++pedidoRef.current;
+    setRegerando(true);
+    try {
+      const overrides = { dominantElement: x };
+      let nr: OracleResult;
+      if (completo) {
+        const { generateOracleComplete } = await import('../utils/soulProfile');
+        nr = (await generateOracleComplete(input, original.seed, overrides)).result;
+      } else {
+        nr = await generateOracleAsync(input, original.seed, overrides);
+      }
+      if (pedido !== pedidoRef.current) return; // "Ficar com" foi tocado enquanto isto corria: descarta
+      setResult(nr);
+      setEscolhendo(false);
+    } catch {
+      /* falhou: fica com o resultado atual, a lista continua aberta */
+    } finally {
+      if (pedido === pedidoRef.current) { regerandoRef.current = false; setRegerando(false); }
+    }
   };
 
   /**
@@ -2176,6 +2227,84 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </div>
         )}
 
+        {/* ELEMENT_DECIDE (D-150..D-160) — a Iris diz o elemento ANTES do desenho. Sem sprite, sem casulo, sem pontos. */}
+        {step === ELEMENT_DECIDE && result && escolha && (() => {
+          const lingua = isPt ? 'pt' : 'en';
+          const original = escolha.original;
+          const candidatos = elementChoiceCandidates(original);
+          const nomeEl = (e: ElementId) => ELEMENT_INFO[e].name[lingua];
+          if (escolhendo) {
+            const opcoes = [original.dominantElement, ...candidatos];
+            return (
+              <StepShell
+                title={isPt ? 'Escolha outro lado' : 'Pick another side'}
+                hint={isPt ? 'Posso olhar sua alma por outro lado. Qual parece certo?' : 'I can look at your soul from another side. Which one feels right?'}
+              >
+                <div role="group" aria-label={isPt ? 'Escolha outro lado' : 'Pick another side'} aria-busy={regerando || undefined}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {opcoes.map(e => {
+                    const atual = e === result.dominantElement;
+                    return (
+                      <button
+                        key={e}
+                        type="button"
+                        data-element-option={e}
+                        aria-current={atual ? 'true' : undefined}
+                        disabled={regerando}
+                        onClick={() => { void escolherElemento(e); }}
+                        style={{
+                          textAlign: 'left', padding: '12px 14px', borderRadius: 12, minHeight: 44, cursor: 'pointer',
+                          border: `1px solid ${atual ? 'var(--sm2-gold-fill)' : 'var(--sm2-line)'}`,
+                          backgroundColor: 'var(--sm2-surface)', color: 'inherit', font: 'inherit',
+                        }}
+                      >
+                        <strong style={{ display: 'block', ...sm2Text, fontWeight: 600 }}>
+                          {nomeEl(e)}{atual ? (isPt ? ' · atual' : ' · current') : ''}
+                        </strong>
+                        <span style={{ ...sm2Hint, display: 'block', margin: 0 }}>{descricaoCurtaElemento(e, lingua)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" style={{ ...sm2Button('outline'), width: '100%', marginTop: 16 }}
+                  onClick={() => { pedidoRef.current++; regerandoRef.current = false; setRegerando(false); setEscolhendo(false); }}>
+                  {isPt ? `Ficar com ${nomeEl(result.dominantElement)}` : `Keep ${nomeEl(result.dominantElement)}`}
+                </button>
+              </StepShell>
+            );
+          }
+          return (
+            <div style={{ paddingTop: 24 }}>
+              <div data-iris-card style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 16, borderRadius: 16,
+                border: '2px solid var(--sm2-gold-fill)', backgroundColor: 'var(--sm2-surface)',
+              }}>
+                <img src={FUNCTION_NPC_ART.oraculo} alt="" aria-hidden="true" width={96} height={96}
+                  style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
+                <div role="status" aria-live="polite" aria-label={isPt ? 'Iris, a Oráculo, fala' : 'Iris, the Oracle, speaks'} style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block', marginBottom: 4, fontSize: 12, letterSpacing: '0.06em', color: 'var(--sm2-gold-ink)' }}>Iris</b>
+                  <p style={{ ...sm2Text, margin: 0 }}>{falaDaIris(result, lingua)}</p>
+                </div>
+              </div>
+              <h2 className="sm2-title" style={{ ...tituloOnboarding, textAlign: 'center', marginBottom: 12 }}>{result.creature.baseName}</h2>
+              <div style={{
+                padding: '16px 16px', marginBottom: 20, borderRadius: 12,
+                border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', textAlign: 'left',
+              }}>
+                <p style={{ ...sm2Text, margin: 0 }}>{L(result.creature.bio)}</p>
+              </div>
+              <button type="button" data-gostei style={{ ...sm2Button('primary'), width: '100%' }} onClick={gostei}>
+                {isPt ? 'Gostei' : 'I love it'}
+              </button>
+              {candidatos.length >= 1 && (
+                <button type="button" style={{ ...sm2Button('outline'), width: '100%', marginTop: 10 }} onClick={() => setEscolhendo(true)}>
+                  {isPt ? 'Me deixa tentar de novo' : 'Let me try again'}
+                </button>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Reveal — apenas nome + descrição breve */}
         {step === REVEAL && result && (
           <div style={{ textAlign: 'center', paddingTop: 40 }}>
@@ -2202,7 +2331,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 spriteUrl={revealSprite?.url}
                 pending={revealSprite ? null : revealEsperando ? 'forming' : 'dormant'}
                 name={result.creature.baseName}
-                epithet={essence ? (isPt ? essence.pt : essence.en) : null}
+                epithet={null}
                 soulGoal={soulGoal}
                 language={isPt ? 'pt-BR' : 'en-US'}
               />

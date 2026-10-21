@@ -59,6 +59,12 @@ async function ateOReveal(onComplete: (d: OnboardingCompleteData) => void) {
   fireEvent.click(btn('Hatch'));
   await act(async () => { await vi.advanceTimersByTimeAsync(LUZ_EXPANDE_MS + LUZ_SOME_MS); });
   // a geração real do Oráculo corre em promessas/imports dinâmicos: avança o relógio até o reveal aparecer
+  // D-150: antes do reveal vem a tela da Iris; o desenho só começa no "I love it"
+  await vi.waitFor(async () => {
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    if (!screen.queryByRole('button', { name: 'I love it' })) throw new Error('tela da Iris ainda não abriu');
+  }, { timeout: 60_000, interval: 50 });
+  fireEvent.click(btn('I love it'));
   const batizado = await vi.waitFor(async () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
     const hatch = screen.queryByRole('button', { name: /^Hatch .+/ });

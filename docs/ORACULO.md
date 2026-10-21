@@ -161,6 +161,14 @@ Depois delas vem uma **bifurcação**, e ela é oferecida **antes do reveal**:
 - *Responder mais 20 perguntas* → a mesma leitura, com a camada psicométrica
   preenchida, que passa a ser o sinal mais forte.
 
+**Escolha de elemento (20/10/2026, REGISTRO §151).** No fluxo pago, antes do
+desenho, o Oráculo (Iris) diz o elemento lido e a pessoa pode aceitar ("Gostei")
+ou escolher outro lado ("Me deixa tentar de novo"). Regra: o jogador vê só o
+**nome e a descrição** de cada elemento, nunca pontos. Os candidatos são o 2º
+colocado e os empatados no 1º/2º. A escolha regera com o mesmo seed e o elemento
+dominante trocado; ficha de combate e essência ficam como lidas. Nada é desenhado
+nem cobrado antes do "Gostei".
+
 Duas decisões de produto que o código precisa respeitar:
 
 1. **A escolha é antes do reveal, e isso é o desenho.** Se o convite viesse

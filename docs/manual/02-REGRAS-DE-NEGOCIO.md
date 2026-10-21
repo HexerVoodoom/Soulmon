@@ -1526,6 +1526,16 @@ raro: os cinco têm a mesma chance.
 (`getPassive(data.petPassive)?.id ?? rollPetPassive()` no `App.tsx`): o que a
 apresentação do Soulmon fala é o mesmo traço que o save recebe.
 
+**Escolha de elemento antes do desenho (20/10/2026, §151).** No nascimento pago e
+no upgrade demo->pago, o passo `ELEMENT_DECIDE` vem entre a geração e o reveal. O
+jogador lê o elemento e escolhe "Gostei" ou "Me deixa tentar de novo". Tentar de
+novo mostra o dominante original e os candidatos (`elementChoiceCandidates`);
+escolher regera com o MESMO seed e `OracleOverrides.dominantElement`. O
+`requestSprite` só sai no "Gostei": a retentativa não custa cota, imagem nem
+Créditos. Sem campo novo no save. Demo grátis não vê; Nova Leitura e Renascimento
+regeram com seed nova e voltam ao elemento lido. Régua:
+`SoulmonOnboarding.elemento.render.test.tsx`.
+
 **A apresentação do Soulmon (20/10/2026, §150).** Depois do batismo e antes de
 entrar no app, o Soulmon fala em uma `NpcSequence` (passo `SOULMON_INTRO`, com
 Pular). Roda UMA vez, no nascimento pago e no upgrade demo->pago; demo grátis,
