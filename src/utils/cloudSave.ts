@@ -209,16 +209,55 @@ export function __resetContaExcluida(): void { contaExcluidaTratada = false; }
 export async function cloudSave(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
   // DEMO LOCAL (`utils/demoMode.ts`): nada sai do aparelho — nem aqui, que é a porta de TODA gravação.
   if (ehDemo(state)) return RECUSA_DEMO;
+  // ADR-004 (correção do gate): POSTs do mesmo `saveId` são SERIALIZADOS. Sem isso o efeito de
+  // save podia disparar o POST2 com o POST1 ainda em voo; POST2 saía com a base velha, tomava
+  // 409 contra a escrita do PRÓPRIO aparelho e a reconciliação adotava a nuvem por cima de S2.
+  // O próximo só lê a base (`lerRevisao`) e envia DEPOIS que o anterior terminou.
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(() => enviarSerializado(saveId, state));
+  filaDePosts.set(saveId, minha);
+  void minha.then(() => { if (filaDePosts.get(saveId) === minha) filaDePosts.delete(saveId); });
+  return minha;
+}
+
+/** Cauda da fila de POSTs por `saveId`. `enviarSerializado` nunca rejeita, então a cadeia não quebra. */
+const filaDePosts = new Map<string, Promise<unknown>>();
+/**
+ * "Envio em dúvida": o último POST deste `saveId` com base N terminou em falha de rede (status 0),
+ * então a requisição PODE ter chegado e o 200 se perdido. Limpa em qualquer resposta HTTP.
+ * Memória de módulo, de propósito: some no reload (aí a leitura de boot/409 decide como antes).
+ */
+const enviosEmDuvida = new Map<string, number>();
+
+/** Só para teste: zera fila e dúvidas. */
+export function __resetEnviosEmDuvida(): void { filaDePosts.clear(); enviosEmDuvida.clear(); }
+
+async function enviarSerializado(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
   // ADR-004: com revisão conhecida DESTE saveId, o POST é condicional (`baseRevision`).
   // TRANSIÇÃO: cliente sem revisão gravada (primeiro POST depois da atualização, ou conta
   // adotada de servidor antigo) grava CEGO como sempre e, na resposta, passa a ter revisão.
   const base = lerRevisao(saveId);
+  const duvida = enviosEmDuvida.get(saveId);
+  const r = await postar(saveId, state, base);
+  // Um 409 com `revision === base + 1` depois de um envio em dúvida COM ESSA base é, quase certamente,
+  // a escrita do próprio aparelho cujo 200 se perdeu: adota a revisão e reenvia o mesmo corpo UMA vez.
+  // RESIDUAL: se OUTRO aparelho escreveu exatamente essa revisão e o nosso envio de fato não chegou,
+  // este reenvio sobrescreve como antes da ADR-004 (put cego) — só nesse caso raro.
+  if (!r.ok && r.kind === 'conflict' && base !== null && duvida === base && r.revision === base + 1) {
+    gravarRevisao(saveId, base + 1);
+    return postar(saveId, state, base + 1);
+  }
+  return r;
+}
+
+async function postar(saveId: string, state: unknown, base: number | null): Promise<CloudSaveOutcome> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(base === null ? { state } : { state, baseRevision: base }),
     });
+    enviosEmDuvida.delete(saveId); // o servidor respondeu: não há mais dúvida
     if (!res.ok) {
       let rev409: number | undefined;
       if (res.status === 409) {
@@ -243,7 +282,9 @@ export async function cloudSave(saveId: string, state: unknown): Promise<CloudSa
     writeLocal(STORAGE_KEYS.LAST_CLOUD_SYNC, new Date().toISOString());
     return { ok: true };
   } catch {
-    // Local save já persistido; a requisição nem saiu.
+    // Local save já persistido; a requisição pode ou não ter chegado. Com base conhecida, fica
+    // "em dúvida": um 409 base+1 no próximo envio é lido como escrita própria (ver acima).
+    if (base !== null) enviosEmDuvida.set(saveId, base);
     return falha(0);
   }
 }
@@ -279,6 +320,7 @@ const ordemDeChamada = new Map<string, number>();
 export function __resetRetryBudgets(): void {
   orcamentos.clear();
   ordemDeChamada.clear();
+  __resetEnviosEmDuvida();
 }
 
 /**

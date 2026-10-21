@@ -28,6 +28,18 @@ describe('decidirReconciliacao (ADR-004 D2/D3)', () => {
     ['visivel: maior com pendência: ignora', { motivo: 'visivel', leitura: enc(9), revisaoLocal: 7, pendente: true }, 'ignorar'],
     ['visivel: revisão 0 local, nuvem 1: adota', { motivo: 'visivel', leitura: enc(1), revisaoLocal: 0, pendente: false }, 'adotar'],
   ];
+  // Leitura atrasada (KV eventual entre PoPs): o GET pode devolver revisão MENOR que a do 409.
+  const atrasada: Array<[string, Parameters<typeof decidirReconciliacao>[0], string]> = [
+    ['409 + encontrado com revisão < revisaoMinima: espera (leitura atrasada)', { motivo: '409', leitura: enc(5), revisaoLocal: 3, pendente: true, revisaoMinima: 7 }, 'esperar'],
+    ['409 + encontrado com revisão == revisaoMinima: adota', { motivo: '409', leitura: enc(7), revisaoLocal: 3, pendente: true, revisaoMinima: 7 }, 'adotar'],
+    ['409 + encontrado com revisão > revisaoMinima: adota', { motivo: '409', leitura: enc(8), revisaoLocal: 3, pendente: true, revisaoMinima: 7 }, 'adotar'],
+    ['409 + encontrado sem revisão e com revisaoMinima: adota (servidor antigo)', { motivo: '409', leitura: enc(), revisaoLocal: 3, pendente: true, revisaoMinima: 7 }, 'adotar'],
+    ['409 + vazio com revisaoMinima: libera', { motivo: '409', leitura: vazio, revisaoLocal: 3, pendente: true, revisaoMinima: 7 }, 'liberar'],
+    ['boot ignora revisaoMinima', { motivo: 'boot', leitura: enc(8), revisaoLocal: 7, pendente: false, revisaoMinima: 20 }, 'adotar'],
+  ];
+  for (const [nome, entrada, esperado] of atrasada) {
+    it(nome, () => { expect(decidirReconciliacao(entrada)).toBe(esperado); });
+  }
   for (const [nome, entrada, esperado] of tabela) {
     it(nome, () => { expect(decidirReconciliacao(entrada)).toBe(esperado); });
   }

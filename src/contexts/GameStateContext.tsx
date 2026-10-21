@@ -14,11 +14,9 @@ import { sanitizeCheckIns } from '../utils/checkIns';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
-import { cloudSaveComRetry, reagirContaExcluida, lerNuvem } from '../utils/cloudSave';
+import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
 import { quarentenarSaveLocal } from '../utils/saveQuarantine';
-import { empurrarNoAnel, saveTemProgresso } from '../utils/backupRing';
-import { lerRevisao, gravarRevisao, esquecerRevisao } from '../utils/saveRevision';
-import { decidirReconciliacao, type MotivoReconciliacao } from '../utils/saveReconcile';
+import type { MotivoReconciliacao } from '../utils/saveReconcile';
 import { sessaoEncerrando, marcarMudancaPendente, marcarSincronizado } from '../utils/sessionReset';
 // `community.ts` (cliente do Torneio/Guilda) só serve DEPOIS do primeiro paint e
 // só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
@@ -1749,6 +1747,9 @@ function cloudSaveWarning(kind: string, pt: boolean): string {
   }
 }
 
+/** UM só ponto de `import()` do corpo da reconciliação (cada site custa um preload no chunk de entrada). */
+const carregarReconcileRun = () => import('../utils/saveReconcileRun');
+
 export function GameStateProvider({ children }: { children: ReactNode }) {
   // Um aviso por sessão, com par PT/EN. O idioma é lido pelo mesmo caminho
   // defensivo — num storage bloqueado, `readLocal` devolve null e cai no padrão.
@@ -1852,34 +1853,24 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!cargaDegradada.current) return;
     let cancelado = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let parar: (() => void) | undefined;
     const liberar = () => {
       cargaDegradada.current = null;
       localAtrasadoMarcado.current = false;
       removeLocal(STORAGE_KEYS.LOCAL_STALE, { silent: true });
     };
-    const tentar = async (tentativa: number) => {
-      const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
-      if (!saveId || isDemoMode(estadoRef.current)) { liberar(); return; }
-      const r = await lerNuvem(saveId);
-      if (cancelado || sessaoEncerrando()) return;
-      if (r.estado === 'excluida') { void reagirContaExcluida({ excluidaEm: r.excluidaEm }); return; }
-      if (r.estado === 'vazio') { liberar(); return; }
-      if (r.estado === 'encontrado') {
-        try {
-          const nuvem = migrateBranchIds(r.state);
-          if (nuvem && typeof nuvem === 'object' && !Array.isArray(nuvem)) {
-            const hidratado = hydrateSave(nuvem as Partial<GameState>);
-            liberar();
-            setGameState(hidratado);
-            return;
-          }
-        } catch { /* nuvem ilegível: trata como indeterminado, nada é postado */ }
-      }
-      if (tentativa < 4) timer = setTimeout(() => { void tentar(tentativa + 1); }, 30000 * 2 ** tentativa);
-    };
-    void tentar(0);
-    return () => { cancelado = true; if (timer) clearTimeout(timer); };
+    // Corpo em `utils/saveReconcileRun.ts` (sob demanda: orçamento de bytes do chunk de entrada).
+    void carregarReconcileRun().then(m => {
+      if (cancelado) return;
+      parar = m.repetirComRecuo(() => m.lerParaSairDaCargaDegradada<GameState>({
+        estadoAtual: () => estadoRef.current,
+        hidratar: nuvem => hydrateSave(nuvem as Partial<GameState>),
+        aplicar: setGameState,
+        liberar,
+        cancelado: () => cancelado,
+      }));
+    });
+    return () => { cancelado = true; parar?.(); };
   }, []);
 
   // ADR-004 (D2/D3) — RECONCILIAÇÃO POR REVISÃO. Via PRÓPRIA (R-1): o callback do POST só
@@ -1893,63 +1884,26 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const montado = useRef(true);
   useEffect(() => { montado.current = true; return () => { montado.current = false; }; }, []);
 
-  /** Lê a nuvem e aplica `decidirReconciliacao`. Devolve `true` se a decisão foi final (não precisa repetir). */
+  /** 409: a revisão que o servidor informou; a leitura da reconciliação abaixo dela é réplica atrasada. */
+  const revisaoDo409 = useRef<number | undefined>(undefined);
+  /**
+   * Lê a nuvem e aplica `decidirReconciliacao`. Devolve `true` se a decisão foi final (não precisa
+   * repetir). O corpo mora em `utils/saveReconcileRun.ts`, carregado sob demanda (orçamento de bytes
+   * do chunk de entrada); aqui fica só a casca com o que toca o provider.
+   */
   const reconciliarComNuvem = async (motivo: MotivoReconciliacao): Promise<boolean> => {
-    const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
-    if (!saveId || isDemoMode(estadoRef.current)) { reconciliando.current = false; return true; }
-    const leitura = await lerNuvem(saveId);
-    if (!montado.current || sessaoEncerrando()) return true;
-    const pendente = readLocal(STORAGE_KEYS.SYNC_PENDING) === '1' || rajadaComecouEm.current !== null;
-    const decisao = decidirReconciliacao({ motivo, leitura, revisaoLocal: lerRevisao(saveId), pendente });
-    if (decisao === 'excluida') {
-      void reagirContaExcluida({ excluidaEm: leitura.estado === 'excluida' ? leitura.excluidaEm : undefined });
-      return true;
-    }
-    if (decisao === 'liberar') { esquecerRevisao(); reconciliando.current = false; return true; }
-    if (decisao === 'ignorar') return true;
-    if (decisao === 'esperar' || leitura.estado !== 'encontrado') return false;
-
-    // adotar — a nuvem vence, o local recusado vai ANTES para o anel (ou quarentena).
-    let hidratado: GameState;
-    try {
-      const nuvem = migrateBranchIds(leitura.state);
-      if (!nuvem || typeof nuvem !== 'object' || Array.isArray(nuvem)) return false;
-      hidratado = hydrateSave(nuvem as Partial<GameState>);
-    } catch { return false; /* nuvem ilegível: nada é trocado nem postado */ }
-    const local = estadoRef.current;
-    const temLocal = saveTemProgresso(local);
-    if (temLocal) {
-      const copiado = empurrarNoAnel({
-        saveId,
-        salvoEm: new Date().toISOString(),
-        motivo: motivo === '409' ? 'conflito-409' : 'revisao-nuvem-mais-nova',
-        state: local,
-      }) || quarentenarSaveLocal(JSON.stringify(local), motivo === '409' ? 'conflito-409' : 'revisao-nuvem-mais-nova');
-      if (!copiado) {
-        // Nem anel nem quarentena: trocar seria destrutivo. POST segue suspenso; avisa UMA vez.
-        if (!avisoSuspensoDado.current) {
-          avisoSuspensoDado.current = true;
-          const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
-          toast.warning(pt
-            ? 'Há progresso mais novo em outro aparelho, mas não há espaço para guardar o deste. Libere espaço no aparelho para sincronizar.'
-            : 'Newer progress exists on another device, but there is no room to keep this one. Free up space on this device to sync.',
-          { duration: 10000 });
-        }
-        return false;
-      }
-    }
-    // Dado e revisão antes de liberar o POST: o próximo envio já leva a base certa.
-    gravarRevisao(saveId, leitura.revision ?? 0);
-    reconciliando.current = false; // (no D2 já é false; no 409 libera o POST junto com a troca)
-    setGameState(hidratado);
-    if (temLocal) {
-      const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
-      toast(pt
-        ? 'Trouxemos o progresso de outro aparelho. A versão deste aparelho ficou guardada em Configurações > Seus dados.'
-        : "Brought in your progress from another device. This device's version is saved in Settings > Your data.",
-      { duration: 10000 });
-    }
-    return true;
+    const { reconciliarComNuvem: roda } = await carregarReconcileRun();
+    return roda<GameState>({
+      motivo,
+      revisaoMinima: motivo === '409' ? revisaoDo409.current : undefined,
+      estadoAtual: () => estadoRef.current,
+      hidratar: nuvem => hydrateSave(nuvem as Partial<GameState>),
+      aplicar: setGameState,
+      rajada: rajadaComecouEm,
+      montado,
+      reconciliando,
+      avisoSemEspacoDado: avisoSuspensoDado,
+    });
   };
   const reconciliarRef = useRef(reconciliarComNuvem);
   reconciliarRef.current = reconciliarComNuvem;
@@ -1958,39 +1912,30 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (pedidoReconciliar === 0) return;
     let cancelado = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const tentar = async (tentativa: number) => {
-      const fim = await reconciliarRef.current('409');
-      if (cancelado || fim) return;
-      if (tentativa < 4) timer = setTimeout(() => { void tentar(tentativa + 1); }, 30000 * 2 ** tentativa);
-    };
-    void tentar(0);
-    return () => { cancelado = true; if (timer) clearTimeout(timer); };
+    let parar: (() => void) | undefined;
+    void carregarReconcileRun().then(m => {
+      if (!cancelado) parar = m.repetirComRecuo(() => reconciliarRef.current('409'));
+    });
+    return () => { cancelado = true; parar?.(); };
   }, [pedidoReconciliar]);
 
   // D2 — no boot e ao voltar de >= 5 min escondido: a MESMA leitura, só adota se a revisão da
   // nuvem for maior e não houver mudança pendente. Nunca depende de `[gameState]`.
   useEffect(() => {
-    const roda = (motivo: 'boot' | 'visivel') => {
-      if (cargaDegradada.current || reconciliando.current || lendoD2.current) return;
-      const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
-      if (!saveId || lerRevisao(saveId) === null || isDemoMode(estadoRef.current)) return;
-      // D2 NÃO suspende o POST: é só uma leitura; sem adoção, o 409 do próximo POST decide.
-      lendoD2.current = true;
-      void reconciliarRef.current(motivo)
-        .catch(() => {})
-        .finally(() => { lendoD2.current = false; });
-    };
-    roda('boot');
-    let escondidoEm: number | null = null;
-    const onVis = () => {
-      if (document.visibilityState === 'hidden') { escondidoEm = Date.now(); return; }
-      const ficou = escondidoEm === null ? 0 : Date.now() - escondidoEm;
-      escondidoEm = null;
-      if (ficou >= 5 * 60_000) roda('visivel');
-    };
-    document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
+    // A instalação mora em `utils/saveReconcileRun.ts` (sob demanda, orçamento de bytes).
+    let desfazer: (() => void) | undefined;
+    let saiu = false;
+    void carregarReconcileRun().then(m => {
+      if (saiu) return;
+      desfazer = m.instalarLeituraD2({
+        degradada: cargaDegradada,
+        reconciliando,
+        lendo: lendoD2,
+        estadoAtual: () => estadoRef.current,
+        reconciliar: motivo => reconciliarRef.current(motivo),
+      });
+    });
+    return () => { saiu = true; desfazer?.(); };
   }, []);
 
   useEffect(() => {
@@ -2086,6 +2031,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // 409 (ADR-004): outro aparelho escreveu antes. Via PRÓPRIA — só levanta o ref e um
         // contador SEPARADO do jogo; a leitura e a troca de estado moram no efeito de reconciliação.
         if (resultado.kind === 'conflict') {
+          if (resultado.revision !== undefined) revisaoDo409.current = Math.max(revisaoDo409.current ?? 0, resultado.revision);
           if (!reconciliando.current) {
             reconciliando.current = true;
             setPedidoReconciliar(n => n + 1);
