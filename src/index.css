@@ -8841,7 +8841,11 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   border: 1px solid #b87333;
   border-radius: 999px;
   pointer-events: none;
+  transition: opacity 120ms ease;
 }
+/* QA L11-05 (decisão do dono, 21/10/2026): com uma folha de lote ou qualquer diálogo aberto, o selo sai de cima do conteúdo
+   (cobria o nome do NPC "Brickle, o pedreiro"); a demo segue indicada na tela de baixo e volta quando a folha fecha. */
+body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacity: 0; }
 
 /* Convite do pesadelo (REGISTRO §88): a sombra com glitch e aberração cromática (violeta/ciano, nunca vermelho). */
 .nm-glitch{position:relative;width:160px;height:160px;margin:4px auto 0;display:flex;align-items:center;justify-content:center}
