@@ -167,7 +167,16 @@ export function Field({ warn = false, ...props }: React.InputHTMLAttributes<HTML
       {...rest}
       className={className ? `sm2-form-field ${className}` : 'sm2-form-field'}
       spellCheck={false}
-      onFocus={(e) => { setFocus(true); onFocus?.(e); }}
+      onFocus={(e) => {
+        setFocus(true);
+        onFocus?.(e);
+        // Teclado virtual (QA L06-02): sem isto o campo e o botão "Continuar" ficavam sob o teclado e a página
+        // não se mexia. Espera o teclado abrir (o viewport encolhe) e traz o campo para o meio da área visível.
+        const el = e.currentTarget;
+        if (typeof window !== 'undefined' && typeof el.scrollIntoView === 'function') {
+          window.setTimeout(() => { try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* enfeite */ } }, 320);
+        }
+      }}
       onBlur={(e) => { setFocus(false); onBlur?.(e); }}
       style={{
         width: '100%',
