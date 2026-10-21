@@ -802,8 +802,11 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
   // comprou criaria um registro no KV só para anotar a data da conferência.
   if (pending.length === 0) return { ent, revoked: [] };
 
-  const revoked = [];
-
+  // FASE 1 — só consulta a loja (até 20 chamadas, centenas de ms cada). Nada
+  // aqui muda nem grava o `ent` lido: durante essa espera o jogador pode comprar,
+  // gastar ou ter o RTDN aplicado, e gravar o objeto inteiro depois apagaria isso
+  // (L07-01: crédito pago sumia e, com D1, o retry respondia duplicate sem creditar).
+  const voidedIds = [];
   for (const order of pending) {
     let voided;
     try {
@@ -811,14 +814,28 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     } catch {
       voided = null;
     }
-    if (voided !== true) continue;
+    if (voided === true) voidedIds.push(order.orderId);
+  }
+
+  // FASE 2 — relê o registro ATUAL e aplica só o delta. Entre a releitura e a
+  // gravação não há await de rede; a janela que sobra é a de todo RMW deste
+  // arquivo (KV sem CAS, ADR-005, já conhecida).
+  const fresh = await readEntitlement(env, saveId);
+  // Outra auditoria concorrente terminou enquanto esta esperava a loja.
+  if (now - (fresh.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent: fresh, revoked: [] };
+
+  const revoked = [];
+  for (const id of voidedIds) {
+    const order = fresh.orderDetails.find(o => o.orderId === id);
+    // Sumiu ou já desfeito: idempotente, não desconta crédito duas vezes.
+    if (!order || order.voided) continue;
 
     order.voided = true;
     revoked.push(order.orderId);
     // Créditos já gastos não voltam do nada: o saldo nunca fica negativo.
     // O jogador que reembolsa depois de gastar sai no lucro dessa diferença —
     // cobrar dele um saldo que não existe mais só criaria uma conta travada.
-    if (order.grantCredits > 0) ent.credits = Math.max(0, ent.credits - order.grantCredits);
+    if (order.grantCredits > 0) fresh.credits = Math.max(0, fresh.credits - order.grantCredits);
   }
 
   // O TIER É DERIVADO, não decrementado. A versão anterior fazia
@@ -835,9 +852,9 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
   // desfazer um pedido que não é dela. Se o dono decidir que reembolso derruba
   // a cortesia também, o conserto é marcar o pedido `courtesy:*` como `voided`
   // aqui — a derivação abaixo continua certa.
-  ent.tier = paidProviderOf(ent) ? 'paid' : 'demo';
+  fresh.tier = paidProviderOf(fresh) ? 'paid' : 'demo';
 
-  ent.auditedAt = now;
-  await writeEntitlement(env, saveId, ent);
-  return { ent, revoked };
+  fresh.auditedAt = now;
+  await writeEntitlement(env, saveId, fresh);
+  return { ent: fresh, revoked };
 }
