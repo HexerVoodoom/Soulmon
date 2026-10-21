@@ -3259,3 +3259,11 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
   (notificação só após o aceite), L06-09 (Combina 3 compacta até 800 px), L09-01, L09-02, L11-01/02/04/07/09/12/14/15/16.
 - **Em espera por decisão do dono (21/10/2026):** a tela "Sobre / Licenças" (atribuições; o nome não pode ser "Créditos", que é a moeda) e a margem do Voltar fixo (L11-03, o dono quer ver antes/depois). Implementados em branches à parte, NÃO publicados.
 - **Abertos:** L05-01 (FAB "Sair da demo", só demo), L05-04, L05-08/09, L06-07/08/12/14/15, L11-05/08/11 (L11-08 é frente de arte).
+
+## 163. Presentes só somem depois da confirmação do aparelho (dono, 21/10/2026; L03-01 residual)
+
+- **Pedido:** o resgate de presentes apagava a fila na própria leitura; se a resposta se perdesse na rede, o presente sumia. O dono decidiu adicionar o ack do cliente.
+- **Decisão:** `gifts?claim=1&ack=1` entrega sem apagar; o app credita só os `gid` que ainda não creditou (conjunto local `soulmon-gifts-credited-v1`) e confirma com `POST giftsAck`, que apaga os confirmados. Com D1 o presente fica reservado 10 min para quem o recebeu. Cliente antigo sem `ack` continua com o resgate destrutivo de antes.
+- **Alternativa que perdeu:** aceitar o residual (presente grátis, 20 Bits); apagar só por TTL (a fila crescia e o presente reapareceria).
+- **O que falsificaria:** relato de presente creditado duas vezes no mesmo aparelho; fila `gifts:` que não esvazia (ack nunca chega); com D1, `order_claims` com `gift:` reservados e nunca confirmados crescendo.
+- **Onde vive:** `functions/api/community.js` (`gifts`, `giftsAck`, `GIFT_ACK_LEASE_MS`), `src/utils/community.ts` (`resgatarPresentes`), `src/App.tsx` (efeito de presentes), `src/utils/storageKeys.ts`; manual 02 (diretório e amigos).

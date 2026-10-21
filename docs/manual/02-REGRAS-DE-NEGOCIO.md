@@ -5305,6 +5305,16 @@ Cliente: `src/utils/community.ts`. Toda chamada leva o token, **inclusive as
 GET** — o servidor autoriza o ATOR de `friends`, `gift`, `match`, `trophies` e
 `gifts` (o `claim=1` das duas últimas é **destrutivo**: quem lesse o troféu
 alheio apagava a conquista da pessoa para sempre).
+**Presentes com confirmação (desde 21/10/2026, L03-01, REGISTRO §163):** o app
+atual resgata com `gifts?claim=1&ack=1`, que NÃO apaga a fila; credita os
+presentes cujo `gid` ainda não está em `soulmon-gifts-credited-v1` (conjunto
+local, teto 200) e só então manda `POST giftsAck { id, gids }`, que apaga os
+confirmados (preservando o que chegou no meio). Com D1, cada presente fica
+reservado por `GIFT_ACK_LEASE_MS` (10 min) para o aparelho que o recebeu.
+Cliente antigo sem `ack` mantém o `claim=1` destrutivo de antes. **Residual
+declarado:** sem D1, dois aparelhos resgatando ao mesmo tempo recebem os
+mesmos presentes; com D1, um ack perdido devolve o presente a OUTRO aparelho
+depois de 10 min (o mesmo aparelho não recredita).
 
 **O que trafega de outra pessoa** é `DirectoryPlayer`: id público, nome, nome do
 pet, estágio, formas desbloqueadas, `pvpEnabled` e `daysPlaying`. ⚰️

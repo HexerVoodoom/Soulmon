@@ -4,6 +4,8 @@ import type { FightEvent } from './combate/fight';
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
+import { readLocal, writeLocal } from './safeStorage';
+import { STORAGE_KEYS } from './storageKeys';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
   GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
@@ -188,8 +190,39 @@ export const removeFriend = (id: string, friendId: string) =>
 
 export const sendGift = (id: string, friendId: string) =>
   call<{ ok: true }>('gift', { method: 'POST', body: { id, friendId } });
+export interface GiftItem { from: string; bits: number; at: number; gid?: string }
 export const getGifts = (id: string, claim = false) =>
-  call<{ gifts: Array<{ from: string; bits: number; at: number }> }>('gifts', { params: { id, ...(claim ? { claim: '1' } : {}) } });
+  call<{ gifts: GiftItem[]; ack?: boolean }>('gifts', { params: { id, ...(claim ? { claim: '1' } : {}) } });
+
+const GIFTS_CREDITED_MAX = 200;
+const lerCreditados = (): string[] => {
+  try {
+    const v = JSON.parse(readLocal(STORAGE_KEYS.GIFTS_CREDITED) ?? '[]');
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch { return []; }
+};
+
+/** L03-01: resgate com ack. O servidor (modo `ack=1`) NÃO apaga; o presente só sai da fila depois de `confirmar()`.
+ *  `confirmar()` grava os gids no conjunto local ANTES de avisar o servidor (rede que cai não recredita) e engole falha
+ *  de rede (o próximo resgate reenvia o ack). Servidor antigo (resposta sem `ack`): comportamento antigo, `confirmar` é no-op. */
+export async function resgatarPresentes(id: string): Promise<{ gifts: GiftItem[]; confirmar: () => Promise<void> | void }> {
+  const res = await call<{ gifts: GiftItem[]; ack?: boolean }>('gifts', { params: { id, claim: '1', ack: '1' } });
+  const recebidos = Array.isArray(res.gifts) ? res.gifts : [];
+  if (res.ack !== true) return { gifts: recebidos, confirmar: () => {} };
+  const jaCreditados = new Set(lerCreditados());
+  const novos = recebidos.filter(g => !(typeof g.gid === 'string' && jaCreditados.has(g.gid)));
+  const gids = recebidos.map(g => g.gid).filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= 100);
+  return {
+    gifts: novos,
+    confirmar: async () => {
+      if (!gids.length) return;
+      const lista = lerCreditados();
+      for (const g of gids) if (!lista.includes(g)) lista.push(g);
+      writeLocal(STORAGE_KEYS.GIFTS_CREDITED, JSON.stringify(lista.slice(-GIFTS_CREDITED_MAX)), { silent: true });
+      try { await call<{ ok: true }>('giftsAck', { method: 'POST', body: { id, gids: gids.slice(0, 50) } }); } catch { /* o próximo resgate reenvia */ }
+    },
+  };
+}
 
 export const getPendingTrophies = (id: string, claim = false) =>
   call<{ trophies: Array<{ season: string; place: 1 | 2 | 3 }> }>('trophies', { params: { id, ...(claim ? { claim: '1' } : {}) } });

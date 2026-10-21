@@ -76,6 +76,7 @@ const ACOES_COM_ATOR = [
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'trophies', method: 'GET', params: { id: VITIMA, claim: '1' } },
   { action: 'gifts', method: 'GET', params: { id: VITIMA, claim: '1' } },
+  { action: 'giftsAck', method: 'POST', body: { id: VITIMA, gids: ['g1'] } },
   // Cooperativo (Fase 4.3). `coopLeave` entra aqui por ser DESTRUTIVO — sem
   // autorização, uma requisição expulsaria qualquer pessoa do grupo dela.
   { action: 'coop', method: 'GET', params: { id: VITIMA } },

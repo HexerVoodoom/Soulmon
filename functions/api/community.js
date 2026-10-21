@@ -25,7 +25,9 @@
 //   GET  trophies  ?id=&claim=1         → troféus pendentes do jogador (e zera)
 //   POST friends   {id, friendId, remove?} → até 5 amigos
 //   POST gift      {id, friendId}      → 20 bits (1x/dia por amigo; grátis)
-//   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes
+//   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes (legado, destrutivo)
+//   GET  gifts     ?id=&claim=1&ack=1  → entrega SEM apagar; resposta `{ gifts, ack: true }` (L03-01)
+//   POST giftsAck  {id, gids[]}        → o cliente confirma o crédito; só aqui o servidor apaga (idempotente)
 // COOPERATIVO (Fase 4.3 — `docs/PLANO-COOP.md`) — desde o WPG-1 são ALIASES de
 // `guild.js` (`COOP_ALIASES`), respondendo no envelope antigo `{ group }`:
 //   POST coopCreate  {id, name}        → cria o grupo e devolve o código de convite
@@ -66,6 +68,8 @@ const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 const attrFinito = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
 const MATCHES_PER_DAY = 5;
 /** Prazo da marca `closed:<season>` ("já premiei"). Ver o fechamento de season. */
+/** L03-01: validade da trava D1 de um presente entregue em modo ack (10 min). Sem `giftsAck` nesse prazo, outro aparelho pode receber de novo. */
+export const GIFT_ACK_LEASE_MS = 10 * 60 * 1000;
 export const CLOSED_SEASON_TTL = 86400 * 400;
 
 const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
@@ -957,6 +961,7 @@ async function handleCommunity({ request, env }) {
     };
     const gifts = await lerLista();
     if (url.searchParams.get('claim') !== '1' || !gifts.length) return json({ gifts });
+    const modoAck = url.searchParams.get('ack') === '1';
 
     // Com D1, só entrega o presente quem ganha o INSERT de `gift:<saveId>:<gid>` (sem dobro em claims concorrentes).
     let entregues = gifts;
@@ -964,17 +969,30 @@ async function handleCommunity({ request, env }) {
       entregues = [];
       const agora = Date.now();
       for (const g of gifts) {
+        const orderId = `gift:${id}:${g.gid}`;
         try {
           await env.DB
             .prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
-            .bind(`gift:${id}:${g.gid}`, id, agora, agora + 86400 * 90 * 1000)
+            .bind(orderId, id, agora, agora + 86400 * 90 * 1000)
             .run();
           entregues.push(g);
         } catch (err) {
           if (!ehViolacaoDeChave(err)) throw err; // já entregue por outro claim
+          if (!modoAck) continue;
+          // Modo ack: a trava só vale por GIFT_ACK_LEASE_MS. Passado o prazo (ack perdido), quem trocar
+          // `claimed_at` com UPDATE condicional (1 linha) reentrega; o aparelho que já creditou não recredita.
+          const row = await env.DB.prepare('SELECT claimed_at FROM order_claims WHERE order_id = ?').bind(orderId).first();
+          const anterior = row && Number(row.claimed_at);
+          if (!Number.isFinite(anterior) || agora - anterior <= GIFT_ACK_LEASE_MS) continue;
+          const upd = await env.DB
+            .prepare('UPDATE order_claims SET claimed_at = ? WHERE order_id = ? AND claimed_at = ?')
+            .bind(agora, orderId, anterior)
+            .run();
+          if ((upd?.meta?.changes ?? upd?.changes ?? 0) === 1) entregues.push(g);
         }
       }
     }
+    if (modoAck) return json({ gifts: entregues, ack: true }); // NÃO apaga: `giftsAck` apaga depois da confirmação
     // Releitura: remove SÓ o que foi entregue; presente que chegou no meio fica para o próximo claim.
     const idsEntregues = new Set(entregues.map(g => g.gid));
     const restantes = (await lerLista()).filter(g => !idsEntregues.has(g.gid));
@@ -983,8 +1001,35 @@ async function handleCommunity({ request, env }) {
     } else {
       await kvOrThrow(env).delete(`gifts:${id}`);
     }
-    // Residual (3): GET destrutivo — resposta perdida ainda perde a entrega; exigiria ack do cliente.
+    // Residual (3) — SÓ do legado (sem `ack=1`): GET destrutivo, resposta perdida perde a entrega. O cliente novo usa `ack=1`.
+    // Residuais declarados do modo ack (decisão do dono, 21/10/2026): SEM D1, dois aparelhos que resgatam ao mesmo
+    // tempo recebem os mesmos presentes (cada um credita; o conjunto local só deduplica no MESMO aparelho). COM D1, um
+    // ack perdido faz o presente voltar para outro aparelho depois de GIFT_ACK_LEASE_MS (o mesmo aparelho não recredita).
     return json({ gifts: entregues });
+  }
+
+  if (action === 'giftsAck' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const gids = body.gids;
+    if (!Array.isArray(gids) || gids.length > 50 || !gids.every(x => typeof x === 'string' && x.length > 0 && x.length <= 100)) {
+      return json({ error: 'invalid gids' }, 400);
+    }
+    const alvo = new Set(gids);
+    // Releitura (mesma técnica do claim): remove SÓ os gids confirmados; o que chegou no meio fica.
+    const raw = await kvOrThrow(env).get(`gifts:${id}`);
+    let lista = [];
+    try { lista = raw ? JSON.parse(raw) : []; } catch { lista = []; }
+    if (!Array.isArray(lista)) lista = [];
+    const gidDe = (g, i) => (typeof g.gid === 'string' && g.gid ? g.gid : `${g.at}:${g.from}:${g.bits}:${i}`);
+    const validos = lista.filter(g => g && typeof g === 'object');
+    const restantes = validos.filter((g, i) => !alvo.has(gidDe(g, i)));
+    const removed = validos.length - restantes.length;
+    if (removed > 0) {
+      if (restantes.length) await kvOrThrow(env).put(`gifts:${id}`, JSON.stringify(restantes.slice(-50)), { expirationTtl: 86400 * 60 });
+      else await kvOrThrow(env).delete(`gifts:${id}`);
+    }
+    return json({ ok: true, removed });
   }
 
   return json({ error: 'unknown action' }, 400);

@@ -228,6 +228,9 @@ export const STORAGE_KEYS = {
   /** L08-03 (20/10/2026) — ANEL de até 3 cópias de segurança `{formato:'soulmon-backup-ring-v1', copias:[{saveId,salvoEm,motivo,state}]}`:
    *  recebe as cópias de logout e a que iria ser sobrescrita em `CONFLICT_BACKUP`. SOBREVIVE ao logout. Dono: `backupRing.ts`. */
   BACKUP_RING: 'soulmon-backup-ring-v1',
+  /** L03-01 (21/10/2026) — gids dos presentes de amigos JÁ CREDITADOS neste aparelho (lista JSON, teto 200, FIFO).
+   *  Impede recrédito quando o ack ao servidor se perde. É da CONTA: o logout apaga. Dono: `community.ts` (`resgatarPresentes`). */
+  GIFTS_CREDITED: 'soulmon-gifts-credited-v1',
 } as const;
 
 /**

@@ -138,7 +138,7 @@ import { computeCarePattern, resolveBranch, careHistory } from './utils/carePatt
 import { evolutionTarget } from './utils/evolutionTarget';
 import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
-const getGifts = (...a: Parameters<typeof import('./utils/community').getGifts>) => import('./utils/community').then(m => m.getGifts(...a));
+const resgatarPresentes = (...a: Parameters<typeof import('./utils/community').resgatarPresentes>) => import('./utils/community').then(m => m.resgatarPresentes(...a));
 const getPendingTrophies = (...a: Parameters<typeof import('./utils/community').getPendingTrophies>) => import('./utils/community').then(m => m.getPendingTrophies(...a));
 import {
   PREMADE_CHARACTERS, getDemoCreatureStages, canCreateActivity, activityCapFor,
@@ -1314,13 +1314,14 @@ export default function App() {
 
   // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
   useEffect(() => {
-    getGifts(saveId, true).then(({ gifts }) => {
-      if (!gifts.length) return;
+    resgatarPresentes(saveId).then(({ gifts, confirmar }) => {
+      if (!gifts.length) { confirmar(); return; }
       const total = gifts.reduce((sum, g) => sum + g.bits, 0);
       setGameState(prev => noteFreeBits({ ...prev, gamePoints: (prev.gamePoints ?? 0) + total }, total, playerDayKey(new Date(), prev.playerDayTz)));
       toast.success(
         <>{language === 'pt-BR' ? 'Você recebeu ' : 'You received '}<BitsAmount value={total} size={14} />{language === 'pt-BR' ? ' de amigos!' : ' from friends!'}</>,
       );
+      confirmar();
     }).catch(() => {});
     getPendingTrophies(saveId, true).then(({ trophies }) => {
       if (!trophies.length) return;
