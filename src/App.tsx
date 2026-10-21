@@ -54,6 +54,7 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
+import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
@@ -6340,6 +6341,14 @@ export default function App() {
   /** Espera depois do toque: ~ o tempo estimado de o Higgsfield gerar o desenho e ele chegar ao app (21/10/2026, dono). */
   const GENERATE_CHARACTER_COOLDOWN_MS = 4 * 60 * 1000;
   const [generateUntil, setGenerateUntil] = useState<number>(() => Number(readLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL)) || 0);
+  // A geração parou por conta NÃO paga (`avisarContaNaoPaga`, spriteGen): a ação do aviso abre o MESMO desbloqueio do "Gerar personagem"
+  // (`setUnlockReason('evolution')`), e só se a conta não for paga — conta paga que recebeu um 402 velho não ganha convite.
+  useEffect(() => {
+    const abrir = () => { if (gameState.accountTier !== 'paid') setUnlockReason('evolution'); };
+    window.addEventListener(UNLOCK_NEEDED_EVENT, abrir);
+    return () => window.removeEventListener(UNLOCK_NEEDED_EVENT, abrir);
+  }, [gameState.accountTier]);
+
   const handleGenerateCharacter = useCallback(async () => {
     if (generatingCharacter || Date.now() < generateUntil) return;
     setGeneratingCharacter(true);

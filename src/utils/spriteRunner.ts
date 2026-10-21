@@ -17,7 +17,7 @@
  *
  * `sleep` entra por parâmetro para o teste não esperar 10 minutos de verdade.
  */
-import { SpriteGenError, type SpriteGenReason } from './spriteGen';
+import { SpriteGenError, avisarContaNaoPaga, type SpriteGenReason } from './spriteGen';
 import type { SpriteEntry, SpriteFailKind } from './spriteLibrary';
 
 /** Recuo entre as duas retentativas automáticas, em ms. */
@@ -70,6 +70,7 @@ function kindOf(err: unknown): SpriteFailKind {
   if (err instanceof SpriteGenError) {
     switch (err.reason) {
       case 'lifetime-cap': return 'lifetime-cap';
+      case 'paid-required': return 'paid-required';
       case 'form-cap': return 'form-cap';
       case 'daily-limit': return 'daily-limit';
       case 'budget': return 'budget';
@@ -130,6 +131,8 @@ export async function runSpriteBatch(
         out.failed.push({ formId, kind: pending ? 'offline' : kind });
         // A conta inteira parou: nada mais neste lote pode dar certo.
         if (kind === 'lifetime-cap') { out.aborted = true; return out; }
+        // Conta não paga: cada forma seguinte levaria o MESMO 402 — para o lote e avisa (uma vez), em vez de repetir em silêncio.
+        if (kind === 'paid-required') { avisarContaNaoPaga(); out.aborted = true; return out; }
         break;
       }
     }

@@ -35,6 +35,10 @@ export const SPRITE_COPY = {
     pt: 'O Oráculo não reconheceu você. Entre de novo para ele continuar o traço.',
     en: "The Oracle didn't recognize you. Sign in again for it to keep drawing.",
   },
+  paidFail: {
+    pt: 'Desenhar o seu próprio Soulmon pede a conta completa. Desbloqueie e o Oráculo volta a desenhar.',
+    en: 'Drawing your own Soulmon needs the full account. Unlock it and the Oracle draws again.',
+  },
   identityFail: {
     pt: 'Este aparelho está com outro caderno. Sincronize o progresso e o Oráculo volta a desenhar.',
     en: 'This device is holding a different notebook. Sync your progress and the Oracle draws again.',
@@ -53,13 +57,15 @@ export function spriteText(key: SpriteCopyKey, language: Language): string {
  *
  * `null` é resposta legítima e é a maioria: `offline` já tem card próprio,
  * `error` é transitório (o lote volta sozinho) e os tetos são o card
- * `RESERVA_FINAL` — dizer algo ali seria ruído. Só 401 e 403 travam por
- * credencial, e são as duas únicas em que ficar calado deixa o jogador sem
+ * `RESERVA_FINAL` — dizer algo ali seria ruído. 401 e 403 travam por
+ * credencial e a conta não paga (402 `paid-tier-required`) pede o desbloqueio, e são as duas únicas em que ficar calado deixa o jogador sem
  * saber que existe um gesto capaz de destravar.
  */
 const COPY_POR_FALHA: Partial<Record<SpriteFailKind, SpriteCopyKey>> = {
   auth: 'authFail',
   identity: 'identityFail',
+  // 402 `paid-tier-required` (QA, 21/10/2026): antes caía no teto vitalício e o card ficava MUDO; agora diz o porquê.
+  'paid-required': 'paidFail',
 };
 
 export function spriteFailText(kind: SpriteFailKind, language: Language): string | null {

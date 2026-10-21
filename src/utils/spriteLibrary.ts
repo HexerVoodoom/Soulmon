@@ -56,6 +56,8 @@ export interface SpriteEntry {
 export type SpriteFailKind =
   | 'form-cap'
   | 'lifetime-cap'
+  /** 402 `paid-tier-required` (QA, 21/10/2026): a conta não é paga. NÃO é terminal — pagar reabre a geração. */
+  | 'paid-required'
   | 'daily-limit'
   | 'budget'
   | 'offline'

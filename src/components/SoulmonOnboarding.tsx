@@ -51,6 +51,7 @@ import {
 import { resolveLanguage, type Language } from '../utils/i18n';
 import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket, unlockReasonCode } from '../utils/telemetry';
 import { UnlockAccountModal } from './UnlockAccountModal';
+import { RevealContaNaoPaga } from './RevealContaNaoPaga';
 import { NpcSequence, type NpcSequenceLine } from './NpcSequence';
 import { ConfirmDialog } from './ConfirmDialog';
 import { OvoCristal, LuzBranca, useLuzDeChocar } from './OnboardingOvo';
@@ -656,6 +657,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
      virar tela travada no primeiro minuto de uso de alguém. */
   const [revealSprite, setRevealSprite] = useState<{ url: string; formId: string; at: number } | null>(null);
   const [revealEsperando, setRevealEsperando] = useState(false);
+  /** A geração do reveal foi RECUSADA por conta não paga (402 `paid-tier-required`): o cristal parado agora diz por quê e oferece o desbloqueio. */
+  const [revealContaNaoPaga, setRevealContaNaoPaga] = useState(false);
+  const [revealCompraAberta, setRevealCompraAberta] = useState(false);
   /** Quando o reveal apareceu — vira FAIXA em `reveal_seen.duration` (WP0.12). */
   const revealAbertoEmRef = useRef(0);
   const [nickname, setNickname] = useState(gate?.nickname ?? '');
@@ -1021,6 +1025,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const iniciarCerimoniaDoReveal = (r: OracleResult) => {
     const inicial = r.creature.stages.find(st => st.stage === 'rookie') ?? r.creature.stages[0];
     if (!inicial) return;
+    setRevealContaNaoPaga(false);
     setRevealEsperando(true);
     let encerrado = false;
     const encerra = () => { if (!encerrado) { encerrado = true; setRevealEsperando(false); } };
@@ -1036,8 +1041,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         // já leu como "sem imagem" — o acervo entrega no jogo, no tempo dele.
         if (encerrado) return;
         setRevealSprite({ url: image, formId: 'rookie', at: Date.now() });
-      } catch {
-        /* falha de geração não é falha do ritual */
+      } catch (err) {
+        /* falha de geração não é falha do ritual — mas a recusa por CONTA NÃO PAGA não pode ser muda: o cristal ficava parado
+           sem aviso (QA, 21/10/2026). O ritual segue; a tela diz o porquê e oferece o desbloqueio. */
+        if ((err as { reason?: string } | null)?.reason === 'paid-required') setRevealContaNaoPaga(true);
       } finally {
         clearTimeout(relogio);
         encerra();
@@ -2353,7 +2360,18 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 soulGoal={soulGoal}
                 language={isPt ? 'pt-BR' : 'en-US'}
               />
-              {!revealSprite && !revealEsperando && (
+              {!revealSprite && !revealEsperando && revealContaNaoPaga && (
+                <RevealContaNaoPaga isPt={isPt} onDesbloquear={() => setRevealCompraAberta(true)} />
+              )}
+              {revealCompraAberta && (
+                <UnlockAccountModal
+                  language={lang}
+                  reason="ovo"
+                  onUnlocked={() => { setRevealCompraAberta(false); setRevealContaNaoPaga(false); if (result) iniciarCerimoniaDoReveal(result); }}
+                  onClose={() => setRevealCompraAberta(false)}
+                />
+              )}
+              {!revealSprite && !revealEsperando && !revealContaNaoPaga && (
                 /* §17 V6 / achado e — a frase sob a moldura sem sprite (copy
                    proposta pelo canvas, `RevealSemSprite`): 12 `muted`, sem
                    `role`, sem "retry", sem erro. */

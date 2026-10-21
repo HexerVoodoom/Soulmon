@@ -197,3 +197,15 @@ describe('o que NAO pode mudar com essa passada', () => {
     expect(outAcc.done).toEqual([]);
   });
 });
+
+describe('conta não paga (402 `paid-tier-required`, QA 21/10/2026)', () => {
+  it('não retenta, grava `paid-required` (NÃO terminal) e PARA o lote: as outras formas levariam o mesmo 402', async () => {
+    let chamadas = 0;
+    const h = harness(async () => { chamadas += 1; throw new SpriteGenError('paid-required', 402, 'paid-tier-required'); });
+    const r = await runSpriteBatch(['rookie', 'champion-power', 'champion-harmony'], h.deps);
+    expect(chamadas).toBe(1);
+    expect(h.waits).toEqual([]);
+    expect(h.failures).toEqual([{ formId: 'rookie', kind: 'paid-required' }]);
+    expect(r.aborted).toBe(true);
+  });
+});

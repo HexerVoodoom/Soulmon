@@ -4,6 +4,7 @@
 import { pixelizeBuffer } from './pixelizer';
 import { isSafeSpriteUrl } from './spriteLibrary';
 import { aiFetch } from './aiClient';
+import { UNLOCK_NEEDED_EVENT } from './unlockEvent';
 import { classifyCloudSaveStatus, CLOUD_SAVE_POLICY } from './cloudSave';
 import { toast } from 'sonner';
 import { readLocal } from './safeStorage';
@@ -24,6 +25,33 @@ export function avisarRecusaDeSprite(code: unknown, message: { 'pt-BR': string; 
   toast(en ? message.en : message['pt-BR']);
   return true;
 }
+
+/** O texto calmo da recusa por conta não paga, nos dois idiomas (sem culpa nem cobrança). */
+export const AVISO_CONTA_NAO_PAGA = {
+  en: 'Drawing your own Soulmon needs the full account. Your stand-in art stays until then.',
+  'pt-BR': 'Desenhar o seu próprio Soulmon pede a conta completa. A arte de reserva fica até lá.',
+  acao: { en: 'Unlock', 'pt-BR': 'Desbloquear' },
+} as const;
+let avisouContaNaoPaga = false;
+/**
+ * Avisa UMA vez por sessão que a geração parou por conta não paga e oferece o desbloqueio (a ação do aviso abre o
+ * modal existente). Só o jogo chama isto: o ritual de nascimento mostra o aviso na própria tela (`SoulmonOnboarding`).
+ */
+export function avisarContaNaoPaga(): boolean {
+  if (avisouContaNaoPaga) return false;
+  avisouContaNaoPaga = true;
+  const en = String(readLocal(STORAGE_KEYS.LANGUAGE) ?? '').startsWith('en');
+  toast(en ? AVISO_CONTA_NAO_PAGA.en : AVISO_CONTA_NAO_PAGA['pt-BR'], {
+    duration: 9000,
+    action: {
+      label: en ? AVISO_CONTA_NAO_PAGA.acao.en : AVISO_CONTA_NAO_PAGA.acao['pt-BR'],
+      onClick: () => { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(UNLOCK_NEEDED_EVENT)); },
+    },
+  });
+  return true;
+}
+/** Só para teste. */
+export function _resetAvisoContaNaoPaga(): void { avisouContaNaoPaga = false; }
 /** Só para teste. */
 export function _resetAvisosDeSprite(): void { avisadas.clear(); }
 
@@ -69,6 +97,7 @@ export interface SpriteGenOptions {
  */
 export type SpriteGenReason =
   | 'pending'
+  | 'paid-required'
   | 'lifetime-cap'
   | 'form-cap'
   | 'daily-limit'
@@ -121,10 +150,15 @@ const POLITICA_COMPARTILHADA: Partial<Record<SpriteGenReason, { retentavel: bool
   identity: CLOUD_SAVE_POLICY.identity,
 };
 
+/** O 402 do servidor para quem NÃO é conta paga (`requirePaidTier`, `generate-sprite.js`). */
+export const PAID_TIER_REQUIRED = 'paid-tier-required';
+
 /** Traduz o par (status, `error`) do servidor no motivo do cliente. */
 function reasonFor(status: number, code: unknown): SpriteGenReason {
   if (status === 202) return 'pending';
-  if (status === 402) return 'lifetime-cap';
+  // 402 tem DOIS sentidos: a conta não é paga (`paid-tier-required`: abre o desbloqueio, nada se esgotou) e o teto
+  // vitalício (`sprite-lifetime-cap`: para para sempre). Tratar tudo como teto escondia a causa de quem só precisa pagar.
+  if (status === 402) return code === PAID_TIER_REQUIRED ? 'paid-required' : 'lifetime-cap';
   if (status === 409) return 'form-cap';
   if (status === 429) return 'daily-limit';
   // 401/403: o classificador do save é a fonte única. Ele não serve para os

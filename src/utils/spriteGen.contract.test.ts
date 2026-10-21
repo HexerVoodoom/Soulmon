@@ -56,6 +56,23 @@ describe('`formId` vai no corpo do POST', () => {
   });
 });
 
+describe('402 tem DOIS sentidos: conta não paga × teto vitalício (QA, 21/10/2026)', () => {
+  it('402 `paid-tier-required` → `paid-required`: não é teto, não retenta, e hoje avisa em vez de calar', async () => {
+    mockFetch(jsonResponse(402, { error: 'paid-tier-required' }));
+    const err = await requestSprite('p', { formId: 'rookie' }).catch(e => e);
+    expect(err).toBeInstanceOf(SpriteGenError);
+    expect(err.reason).toBe('paid-required');
+    expect(err.reason).not.toBe('lifetime-cap'); // antes: QUALQUER 402 virava teto vitalício e o card ficava mudo
+    expect(err.status).toBe(402);
+    expect(err.retryable).toBe(false);
+  });
+  it('402 sem código legível segue sendo o teto vitalício (compatível com o que havia)', async () => {
+    mockFetch(jsonResponse(402, {}));
+    const err = await requestSprite('p', { formId: 'ultra' }).catch(e => e);
+    expect(err.reason).toBe('lifetime-cap');
+  });
+});
+
 describe('409 e 402 são contratos diferentes', () => {
   it('402 `sprite-lifetime-cap` → a CONTA parou', async () => {
     mockFetch(jsonResponse(402, { error: 'sprite-lifetime-cap' }));
