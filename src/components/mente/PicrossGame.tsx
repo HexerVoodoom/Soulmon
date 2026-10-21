@@ -5,7 +5,7 @@ import { sm2Button, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
-import { readLocal, writeLocal } from '../../utils/safeStorage';
+import { readJson, readLocal, writeJson, writeLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { PICROSS_PATTERNS, type PicrossPattern } from '../../utils/mente/picrossPatterns';
 import {
@@ -108,9 +108,13 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
       // repagava o bônus). O teto diário de Bits segue sendo do funil do App.
       const payDaily = isDaily && !dailyPaid.current && readLocal(STORAGE_KEYS.PICROSS_DAILY_PAID) !== todayKey;
       if (payDaily) { dailyPaid.current = true; writeLocal(STORAGE_KEYS.PICROSS_DAILY_PAID, todayKey); }
-      // O mesmo desenho, já resolvido NESTA visita, não paga de novo a base (QA L04-02): são desenhos fixos que dá
-      // para decorar, e sem isto repetir o 5×5 virava a forma mais rápida de fazer Bits. A visita seguinte paga como antes.
-      const repetido = done.has(pattern.id) && !payDaily;
+      // A BASE paga na 1ª vez DO DIA por desenho (QA L04-02, decisão do dono 21/10/2026): são desenhos fixos que dá para
+      // decorar, e sem isto repetir o 5×5 virava a forma mais rápida de fazer Bits. Persistido por dia (sair e voltar não
+      // repaga); o bônus do dia segue como era (uma vez por dia, no desenho do dia).
+      const jaPagos = readJson<{ day?: string; ids?: string[] }>(STORAGE_KEYS.PICROSS_BASE_PAID, {});
+      const idsHoje = jaPagos.day === todayKey && Array.isArray(jaPagos.ids) ? jaPagos.ids : [];
+      const repetido = idsHoje.includes(pattern.id) && !payDaily;
+      if (!idsHoje.includes(pattern.id)) writeJson(STORAGE_KEYS.PICROSS_BASE_PAID, { day: todayKey, ids: [...idsHoje, pattern.id] });
       const bits = repetido ? 0 : picrossBits(n, payDaily);
       setSolved(true);
       setEarned(bits);

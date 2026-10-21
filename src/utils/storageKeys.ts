@@ -90,6 +90,8 @@ export const STORAGE_KEYS = {
   LIBRARY_SEEN: 'soulmon-library-seen',
   /** Dia (ISO do jogador) em que o bônus do Picross do dia já foi pago neste aparelho. */
   PICROSS_DAILY_PAID: 'soulmon-picross-daily-paid',
+  /** Desenhos do Picross cuja BASE já foi paga hoje: `{ day, ids }` (QA L04-02; repetir o mesmo desenho no mesmo dia não paga de novo). */
+  PICROSS_BASE_PAID: 'soulmon-picross-base-paid',
   SOUND_MUTED: 'soulmon-sound-muted',
   /** Volume por categoria (`utils/loudness.ts`), 0..1, JSON. Chave NOVA — a
    *  proibição #20 vale: `SOUND_MUTED` não é renomeada, só se ACRESCENTA. */

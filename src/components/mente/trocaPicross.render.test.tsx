@@ -108,7 +108,23 @@ describe('PicrossGame', () => {
     const again = vi.fn();
     renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={again} todayKey={todayKey} />);
     solve(p.rows);
-    expect(again).toHaveBeenCalledWith(picrossBits(p.rows.length, false));
+    // nem o bônus do dia NEM a base: a base também só paga na 1ª vez do dia por desenho (QA L04-02)
+    expect(again).not.toHaveBeenCalled();
+  });
+
+  it('a base paga de novo no DIA SEGUINTE e o desenho de outro tamanho/ID paga no mesmo dia (QA L04-02)', () => {
+    const p = dailyPattern(todayKey);
+    const hoje = vi.fn();
+    const a = renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={hoje} todayKey={todayKey} />);
+    solve(p.rows);
+    expect(hoje).toHaveBeenCalledTimes(1);
+    a.unmount();
+    const amanhaKey = '2026-10-01';
+    const amanha = vi.fn();
+    renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={amanha} todayKey={amanhaKey} />);
+    const pa = dailyPattern(amanhaKey);
+    solve(pa.rows);
+    expect(amanha).toHaveBeenCalledTimes(1);
   });
 
   it('repetir o MESMO desenho na mesma visita não paga a base de novo (QA L04-02)', () => {
