@@ -97,6 +97,9 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
             width: CORNER_RING, height: CORNER_RING, boxSizing: 'border-box',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent',
+            // O fundo segue SEM preenchimento (exceção D1: anel de traço), mas o que rola por baixo do voltar fixo
+            // fica DESFOCADO: antes dava para ler (e tocar) "AJUDA" através do anel e sair da tela (QA L11-03).
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
             border: '2px solid var(--sm2-line)',
             borderRadius: '50%',
           }),

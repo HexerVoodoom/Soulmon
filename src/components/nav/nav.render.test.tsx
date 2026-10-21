@@ -157,6 +157,8 @@ describe('AreaTopBar', () => {
     expect(back.getAttribute('aria-label')).toBe('Back to map');
     expect(back.style.borderRadius).toBe('50%');
     expect(back.style.background).toBe('transparent');
+    // L11-03: o conteúdo que rola sob o voltar fixo fica desfocado (sem preencher o anel)
+    expect(back.style.backdropFilter).toContain('blur');
     fireEvent.click(back);
     expect(onBack).toHaveBeenCalledOnce();
   });
