@@ -30,6 +30,7 @@
  *    filtro e ordem (revisão 2, A3/A4): NÃO marca nada, é o ÚNICO lugar que edita.
  *    Na Home, tocar em qualquer lugar da linha marca como feita (A1).
  */
+import { useOrdemCongelada } from '../hooks/useOrdemCongelada';
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
@@ -174,13 +175,18 @@ export function DailyRituals({
   };
 
   const todayString = now.toDateString();
+  /* L06-07: o que acabou de ser concluído fica ~2 s no lugar, para o toque seguinte acertar o item certo. */
+  const congelados = useOrdemCongelada([
+    ...tasks.filter(t => t.completed).map(t => `t:${t.id}`),
+    ...activities.filter(a => (a.steps.length > 0 ? a.steps.every(s => s.completed) : !!(a.completedToday && a.lastCompletedDate === todayString))).map(a => `h:${a.id}`),
+  ]);
   const diasCurtos = isPt
     ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const ativas = tasks
     .filter(t => isActive(t))
-    .sort((a, b) => Number(a.completed) - Number(b.completed));
+    .sort((a, b) => Number(a.completed && !congelados.has(`t:${a.id}`)) - Number(b.completed && !congelados.has(`t:${b.id}`)));
   const oculto = (id: string) => !!dayPlan && isHiddenByPlan(dayPlan.view, String(id));
   const tarefas = ativas.filter(t => taskIsForToday(t, now)).filter(t => t.completed || !oculto(t.id));
   const guardadas = tasks.filter(t => !isActive(t));
@@ -198,7 +204,7 @@ export function DailyRituals({
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),
   })).map(a => (a.isComplete && !a.disponivelHoje ? { ...a, disponivelHoje: true } : a))
-    .sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
+    .sort((a, b) => Number(a.isComplete && !congelados.has(`h:${a.id}`)) - Number(b.isComplete && !congelados.has(`h:${b.id}`)));
 
   /* A4: devido hoje + concluídas de hoje. O hábito fora do dia não é devido. */
   const devidos = atividades.filter(a => a.disponivelHoje && (a.isComplete || !oculto(a.id)));
