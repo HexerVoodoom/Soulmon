@@ -225,7 +225,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   'laboratorio:perfil': {
     // 14/10/2026 (dono): o Perfil é do Corvo, o mascote (`mascot-raven.png`) — não da Iris (Oráculo) nem da Oriel.
-    namePt: 'Soulmon Misterioso', nameEn: 'Mysterious Soulmon',
+    namePt: 'Soulmon misterioso', nameEn: 'Mysterious Soulmon',
     linePt: 'Aqui se vê quem ele é, do jeito que ele é.',
     lineEn: 'Here you see who they are, just as they are.',
   },

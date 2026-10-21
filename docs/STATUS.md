@@ -5363,7 +5363,7 @@ QA geral e auditoria de segurança continuam fora desta rodada (pedido anterior 
 ### 11/10/2026 — lote do dono (missões iniciais, "?", abas, +, XP, pets)
 - Primeiro dia: carinho marcava só se a cura acontecesse (pet novo está com vida cheia e recusa) e concluir HÁBITO não marcava "atividade"; ambos ligados (`firstDay.gestos.contract.test.ts`).
 - "?" de missão só com algo resgatável: Conquistas (sem "Resgatar") nunca acendem (`questMarks.ts`).
-- Corvo do tour: "Mysterious Soulmon" / "Solmon misterioso" (`tourGuideName`).
+- Corvo do tour: "Mysterious Soulmon" / "Soulmon misterioso" (era "Solmon" até 21/10/2026; revogada) (`tourGuideName`).
 - XP visível antes de concluir (tarefa/hábito) em `DailyRituals`; carinho e missões NÃO têm evento de XP (regra, não bug).
 - "+" abre "Novo hábito / Nova tarefa"; Home com abas Hoje/Semanal (só lista, não pontuação).
 - Pets andavam de costas: `artFacesLeft` (`utils/sprites.ts`) para linhas de perfil esquerdo (igni, nautilu, kaelen, corvo).

@@ -70,8 +70,22 @@ describe('Lista única (sem abas)', () => {
 });
 
 describe('nome do guia', () => {
-  it('Mysterious Soulmon / Solmon misterioso', () => {
+  it('Mysterious Soulmon / Soulmon misterioso', () => {
     expect(tourGuideName('en-US')).toBe('Mysterious Soulmon');
-    expect(tourGuideName('pt-BR')).toBe('Solmon misterioso');
+    expect(tourGuideName('pt-BR')).toBe('Soulmon misterioso');
+  });
+});
+
+describe('nome do guia — uma grafia só em PT (QA L06-11, dono 21/10/2026)', () => {
+  it("todos os pontos escrevem 'Soulmon misterioso' (nunca 'Solmon' nem 'Misterioso' maiúsculo)", async () => {
+    const { readFileSync } = await import('node:fs');
+    const tour = readFileSync('src/utils/welcomeTour.ts', 'utf8');
+    const voz = readFileSync('src/utils/areaNpcVoice.ts', 'utf8');
+    expect(tour).toContain("TOUR_GUIDE_NAME_PT = 'Soulmon misterioso'");
+    expect(voz).toContain("namePt: 'Soulmon misterioso'");
+    for (const src of [tour, voz]) {
+      expect(src).not.toMatch(/Solmon misterioso/);
+      expect(src).not.toMatch(/Soulmon Misterioso/);
+    }
   });
 });
