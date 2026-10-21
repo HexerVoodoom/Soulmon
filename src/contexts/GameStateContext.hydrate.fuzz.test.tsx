@@ -272,7 +272,7 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
       ['dreamRarity com rest:{}', () => dreamRarity({} as never, agora)],
       ['hasPendingNightmare com rest:{}', () => hasPendingNightmare({ fought: [] } as never, {} as never, agora)],
       ['hasPendingNightmare com nightmares:{fought:{}}',
-        () => hasPendingNightmare({ fought: {} } as never, { nights: [{ date: agora.toDateString(), onTime: true }], dreams: [], window: { start: '23:00', end: '07:00' } } as never, agora)],
+        () => hasPendingNightmare({ fought: {} } as never, { nights: [{ date: agora.toDateString(), onTime: true, sleptAt: new Date(agora.getTime() - 8 * 3600_000).toISOString(), wokeAt: agora.toISOString() }], dreams: [], window: { start: '23:00', end: '07:00' } } as never, agora)],
       ['tiredness com rest:{}', () => tiredness({ energyPoints: 0, foodInventory: {}, rest: {} } as never, agora)],
       ['applyMissedDay com rhythm:{}', () => applyMissedDay({} as never, agora.toDateString())],
       ['constancy com rhythm:{done:"x"}', () => constancy({ done: 'x', missed: [], shielded: [] } as never, agora)],

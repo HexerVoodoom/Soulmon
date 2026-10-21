@@ -113,7 +113,7 @@ describe('nightmares: a noite gravada pelo outro aparelho NÃO some', () => {
   /* O gesto real: o celular gravou a noite ao acordar, com a chave do JOGADOR.
      O tablet do outro fuso abre o mesmo save, no mesmo instante, e pergunta ao
      módulo puro "há pesadelo esta manhã?". */
-  const rest = descanso([{ date: DIA_JOGADOR, onTime: true }], ANCORA);
+  const rest = descanso([{ date: DIA_JOGADOR, onTime: true, sleptAt: new Date(2026, 7, 25, 22, 0).toISOString(), wokeAt: new Date(2026, 7, 26, 7, 0).toISOString() }], ANCORA);
 
   it('a manhã do jogador rende o pesadelo, lida de qualquer aparelho', () => {
     expect(
@@ -183,7 +183,7 @@ describe('migração invisível: save SEM âncora se comporta byte a byte como a
      vale igual aqui: sem âncora, `playerDayKey` devolve exatamente
      `toDateString()`. Save antigo não perde a noite nem ganha uma de graça. */
   it('sem âncora, a manhã é a do aparelho — e o pesadelo dela continua valendo', () => {
-    const rest = descanso([{ date: DIA_APARELHO, onTime: true }]);
+    const rest = descanso([{ date: DIA_APARELHO, onTime: true, sleptAt: new Date(2026, 7, 25, 22, 0).toISOString(), wokeAt: new Date(2026, 7, 26, 7, 0).toISOString() }]);
     expect(morningKey(DEITOU, ACORDOU, undefined)).toBe(DIA_APARELHO);
     expect(nightmaresFor(rest, ACORDOU).count).toBe(NIGHTMARES_PER_NIGHT);
     expect(nightmareDayKey(ACORDOU, undefined)).toBe(DIA_APARELHO);
