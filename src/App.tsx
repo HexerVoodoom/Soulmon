@@ -1220,13 +1220,14 @@ export default function App() {
   }, [language]);
   // Os hábitos semente da demo acompanham o idioma (QA L05-08): trocar o idioma depois de criar a demo deixava
   // "Drink a glass of water" numa UI em português. Só toca o nome idêntico ao semente do outro idioma.
+  const emDemoLocal = isDemoMode(gameState);
   useEffect(() => {
-    if (!gameState.demoLocal) return;
+    if (!emDemoLocal) return;
     setGameState(prev => {
       const next = localizeDemoActivities(prev.activities, language === 'pt-BR');
       return next === prev.activities ? prev : { ...prev, activities: next as typeof prev.activities };
     });
-  }, [language, gameState.demoLocal, setGameState]);
+  }, [language, emDemoLocal, setGameState]);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE);
   });
