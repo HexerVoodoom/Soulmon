@@ -84,8 +84,9 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
  * os arquivos de arte.
  */
 export const DUNGEON_LINE_NAMES: Record<string, string> = {
-  kaelen: 'Pyraka', thalindra: 'Nimbrata',
-  igni: 'Igni', astrase: 'Astria',
+  // 21/10/2026 (dono): os nomes da 1ª geração (Pyraka, Nimbrata, Igni, Astria) saíram; cada linha leva o nome da criatura nova.
+  kaelen: 'Cinderhorn', thalindra: 'Corallume',
+  igni: 'Obsidarch', astrase: 'Glimmerswarm',
 };
 
 /**
