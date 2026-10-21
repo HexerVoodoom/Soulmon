@@ -64,7 +64,7 @@ describe('410 account-deleted — classe `deleted`', () => {
   });
 
   it('`reagirContaExcluida`: limpa save + identidade, desloga, grava a mensagem e volta ao portão (reload); idempotente', async () => {
-    memoria.set(STORAGE_KEYS.GAME_STATE, '{"a":1}');
+    memoria.set(STORAGE_KEYS.GAME_STATE, '{"a":1,"totalXP":5}');
     memoria.set(STORAGE_KEYS.SAVE_ID, ID);
     memoria.set(STORAGE_KEYS.LAST_CLOUD_SYNC, 'x');
     memoria.set(STORAGE_KEYS.USER_EMAIL, 'a@b.c');
@@ -77,8 +77,8 @@ describe('410 account-deleted — classe `deleted`', () => {
     expect(memoria.has(STORAGE_KEYS.USER_EMAIL)).toBe(false);
     expect(memoria.get(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE)).toBe(MSG_PT);
     // 1b (skeptic R2): o save local vai para o backup ANTES de sumir.
-    const backup = JSON.parse(memoria.get(RECONCILE_KEYS.CONFLICT_BACKUP)!);
-    expect(backup.state).toEqual({ a: 1 });
+    const backup = JSON.parse(memoria.get(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1); // L08-03: logout vai ao anel
+    expect(backup.state).toEqual({ a: 1, totalXP: 5 });
     expect(backup.saveId).toBe(ID);
     expect(backup.motivo).toBe('account-deleted');
     expect(signOut).toHaveBeenCalledTimes(1);
@@ -170,14 +170,14 @@ describe('F1 (QA rodada 2, FATAL): lápide no LOGIN barra antes do onboarding', 
   it('`reconcileSaveId` com 410 na chave derivada NÃO migra (não sobe o local) — para, faz backup, desloga', async () => {
     const chamadas = servidor410();
     memoria.set(STORAGE_KEYS.SAVE_ID, 'c'.repeat(32)); // id antigo, diferente do derivado
-    memoria.set(STORAGE_KEYS.GAME_STATE, '{"hp":3}');
+    memoria.set(STORAGE_KEYS.GAME_STATE, '{"hp":3,"totalXP":5}');
     vi.stubGlobal('location', { reload: vi.fn() });
-    const r = await reconcileSaveId('a@b.c', { hp: 3 });
+    const r = await reconcileSaveId('a@b.c', { hp: 3, totalXP: 5 });
     expect(r.estado).toBe('excluida');
     // Só o GET de leitura — nenhum POST subiu o estado local por cima da lápide.
     expect(chamadas).toEqual(['GET']);
     expect(memoria.has(STORAGE_KEYS.SAVE_ID)).toBe(false);
-    expect(JSON.parse(memoria.get(RECONCILE_KEYS.CONFLICT_BACKUP)!).state).toEqual({ hp: 3 });
+    expect(JSON.parse(memoria.get(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1).state).toEqual({ hp: 3, totalXP: 5 });
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 });

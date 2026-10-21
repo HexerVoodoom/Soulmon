@@ -48,6 +48,7 @@ const GAME_STATE = 'soulmon_state_v1';
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-save-quarantine-v1',
   'soulmon-local-stale-v1',
+  'soulmon-backup-ring-v1',
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */

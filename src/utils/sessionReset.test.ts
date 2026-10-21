@@ -109,7 +109,7 @@ describe('encerrarSessao', () => {
     const recarregar = vi.fn(() => { ordem.push('reload'); });
     await encerrarSessao({ motivo: 'logout', recarregar });
     expect(ordem).toEqual(['push', 'signOut', 'reload']);
-    const copia = JSON.parse(mem.get(RECONCILE_KEYS.CONFLICT_BACKUP)!);
+    const copia = JSON.parse(mem.get(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1); // L08-03: anel
     expect(copia.motivo).toBe('logout');
     expect(copia.state).toEqual({ totalXP: 900 });
     expect(copia.saveId).toBe(ID);

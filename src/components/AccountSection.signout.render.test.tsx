@@ -21,7 +21,7 @@ vi.mock('../utils/entitlements', () => ({ fetchEntitlement: async () => null }))
 vi.mock('../utils/playBilling', () => ({ isBillingAvailable: () => false }));
 
 import { AccountSection } from './AccountSection';
-import { STORAGE_KEYS, RECONCILE_KEYS } from '../utils/storageKeys';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 import { marcarMudancaPendente, __resetSessaoEncerrando } from '../utils/sessionReset';
 
 let storage: Storage;
@@ -45,7 +45,7 @@ describe('Sair da conta', () => {
     expect(signOut).toHaveBeenCalledTimes(1);
     expect(storage.getItem(STORAGE_KEYS.GAME_STATE)).toBeNull();
     expect(storage.getItem(STORAGE_KEYS.SAVE_ID)).toBeNull();
-    expect(JSON.parse(storage.getItem(RECONCILE_KEYS.CONFLICT_BACKUP)!).motivo).toBe('logout');
+    expect(JSON.parse(storage.getItem(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1).motivo).toBe('logout');
   });
 
   it('falha de sync (PT): avisa, oferece backup, NÃO apaga nem desloga até a pessoa escolher', async () => {
@@ -87,7 +87,7 @@ describe('Sair da conta', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Sair e apagar daqui' }));
       await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
       expect(storage.getItem(STORAGE_KEYS.GAME_STATE)).toBeNull();
-      const copia = JSON.parse(storage.getItem(RECONCILE_KEYS.CONFLICT_BACKUP)!);
+      const copia = JSON.parse(storage.getItem(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1);
       expect(copia.motivo).toBe('logout-sem-sync');
       expect(copia.state).toEqual({ totalXP: 321 });
     } finally {
