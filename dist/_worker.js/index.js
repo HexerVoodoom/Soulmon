@@ -7969,19 +7969,46 @@ async function handleCommunity({ request, env }) {
     await putProfile(env, id, me);
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
-    gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now() });
+    gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json3({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await kvOrThrow(env).get(`gifts:${id}`);
-    const gifts = raw ? JSON.parse(raw) : [];
-    if (url.searchParams.get("claim") === "1" && gifts.length) {
+    const comGid = /* @__PURE__ */ __name((lista) => (Array.isArray(lista) ? lista : []).filter((g) => g && typeof g === "object").map((g, i2) => typeof g.gid === "string" && g.gid ? g : { ...g, gid: `${g.at}:${g.from}:${g.bits}:${i2}` }), "comGid");
+    const lerLista = /* @__PURE__ */ __name(async () => {
+      const raw = await kvOrThrow(env).get(`gifts:${id}`);
+      if (!raw) return [];
+      try {
+        return comGid(JSON.parse(raw));
+      } catch {
+        return [];
+      }
+    }, "lerLista");
+    const gifts = await lerLista();
+    if (url.searchParams.get("claim") !== "1" || !gifts.length) return json3({ gifts });
+    let entregues = gifts;
+    if (env.DB) {
+      entregues = [];
+      const agora = Date.now();
+      for (const g of gifts) {
+        try {
+          await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(`gift:${id}:${g.gid}`, id, agora, agora + 86400 * 90 * 1e3).run();
+          entregues.push(g);
+        } catch (err2) {
+          if (!ehViolacaoDeChave(err2)) throw err2;
+        }
+      }
+    }
+    const idsEntregues = new Set(entregues.map((g) => g.gid));
+    const restantes = (await lerLista()).filter((g) => !idsEntregues.has(g.gid));
+    if (restantes.length) {
+      await kvOrThrow(env).put(`gifts:${id}`, JSON.stringify(restantes.slice(-50)), { expirationTtl: 86400 * 60 });
+    } else {
       await kvOrThrow(env).delete(`gifts:${id}`);
     }
-    return json3({ gifts });
+    return json3({ gifts: entregues });
   }
   return json3({ error: "unknown action" }, 400);
 }
@@ -11180,7 +11207,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-xPsjid/functionsRoutes-0.6904205360206913.mjs
+// ../.wrangler/tmp/pages-YJ7KHg/functionsRoutes-0.6951001738375969.mjs
 var routes = [
   {
     routePath: "/api/account",
