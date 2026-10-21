@@ -4530,7 +4530,7 @@ Cada ícone **some** quando não há nada a fazer nem a entregar ("?" vence "!",
 **EXCEÇÃO: o Passeio fica com o NPC (decisão do dono, 08/10/2026, "Stroll fica com o NPC").**
 A experiência inteira do Passeio — as três propostas, a escolha de região/destino, o card da
 missão, o Registro/Logbook, "abre amanhã" — vive na folha do lote `exploracao:passeio`
-(`PasseioSheet`, NPC Brume), exatamente como era. A Home só lista a LINHA **"Take a stroll" /
+(`PasseioSheet`, NPC Mirk), exatamente como era. A Home só lista a LINHA **"Take a stroll" /
 "Faça um passeio"** (`strollEntries`, seção Hoje): aponta ("!"), fica pronta ("?" + **Claim /
 Resgatar**, única ação) quando o passeio foi concluído no NPC hoje, e resgatada. **O Claim é só
 RECIBO**: o pagamento (Marcos, região guardada, viagem da noite) sai no `markDone` do NPC; o

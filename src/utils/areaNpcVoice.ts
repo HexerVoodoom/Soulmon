@@ -134,7 +134,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   // 🏗️ Restaurante em obra (14/10/2026, dono): caranguejo pedreiro de tijolo. Só fala; sem ação, sem preço, sem cobrança.
   'mercado:restaurante': {
-    namePt: 'Tijolino, o pedreiro', nameEn: 'Tijolino, the bricklayer',
+    namePt: 'Brickle, o pedreiro', nameEn: 'Brickle, the bricklayer',
     linePt: 'Estamos em obra! Em breve o restaurante abre as portas e eu vou poder cozinhar comidas especiais por aqui. Volte logo!',
     lineEn: "We're under construction! Soon the restaurant will open its doors and I'll be able to cook special meals here. Come back soon!",
   },

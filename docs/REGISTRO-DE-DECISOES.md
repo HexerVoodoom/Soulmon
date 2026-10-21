@@ -3199,3 +3199,9 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** `revision` + 409 no save (ADR-004) — fecha o caso geral, mas é decisão do dono (pergunta em `PERGUNTAS-DO-DONO.md`, 20/10/2026). Heurística "maior XP ganha" — perdeu porque o renascimento baixa XP de propósito.
 - **O que falsificaria:** relato de progresso perdido depois de abrir o app num aparelho com local íntegro (caso que só a ADR-004 cobre); `order_claims` com linhas `gift:` crescendo sem limpeza; quarentena/anel estourando cota com frequência.
 - **Onde vive:** `functions/api/_entitlements.js` (`auditRefunds`), `functions/api/_redact.js`, `suggest-tasks.js`, `chat.js`, `generate-sprite.js`, `community.js`; `src/utils/saveQuarantine.ts`, `src/utils/backupRing.ts`, `src/utils/storageKeys.ts`, `src/contexts/GameStateContext.tsx` (carga degradada), `src/utils/sessionReset.ts`, `src/utils/cloudSave.ts`. Testes `*.qa.test.*` de cada item.
+
+## 159. Nomes dos NPCs do Passeio e do Restaurante em obra (dono, 21/10/2026)
+- **Decisão:** o NPC do Passeio passa de Brume (e do rascunho Amandha) para **Mirk**, e o do Restaurante em obra (o caranguejo pedreiro) passa de Tijolino para **Brickle**. Só nome: arte, falas e regras ficam iguais.
+- **Como:** `src/utils/areaNpcVoice.ts` (`namePt`/`nameEn`), `npcs/index.ts` (comentários) e os testes `playArea.render`, `areaLotsNovos`, `DailyReportModal.secoes` e `restauranteEmObra`; manual 02, 03 e 06 e `INVENTARIO-ASSETS.md`. Os registros datados antigos (§73 e outros) seguem citando os nomes da época: é histórico.
+- **Alternativa que perdeu:** manter Brume/Tijolino. Brume e Brumefar/Rubrume coexistiam como nomes do Oráculo; Mirk não colide com nada.
+- **O que falsificaria:** um teste de nome de NPC citando o nome antigo, ou estranheza dos testadores com o nome novo.

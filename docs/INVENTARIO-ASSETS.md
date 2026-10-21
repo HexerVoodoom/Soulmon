@@ -380,7 +380,7 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 | Arquivo | Pasta | Tamanho | Uso |
 |---|---|---|---|
 | `npc-perfil-corvo.png` | `soulmon/npcs/` | 768² (RGBA, alfa real) | busto do NPC do Perfil (`LOT_NPC_ART['laboratorio:perfil']`); `mascot-raven.png` (384²) segue como mascote nos outros lugares |
-| `npc-mercado-restaurante.png` | `soulmon/npcs/` | 768² (RGBA, alfa real) | busto do NPC do Restaurante em obra, Tijolino (`LOT_NPC_ART['mercado:restaurante']`); arte do dono, vem de `dominios/industrial/npcs/npc-industrial-caranguejo-argila-pedreiro.png` (512², Lanczos para 768², alfa ≥250 → 255); a original em `dominios/` segue intacta |
+| `npc-mercado-restaurante.png` | `soulmon/npcs/` | 768² (RGBA, alfa real) | busto do NPC do Restaurante em obra, Brickle (`LOT_NPC_ART['mercado:restaurante']`); arte do dono, vem de `dominios/industrial/npcs/npc-industrial-caranguejo-argila-pedreiro.png` (512², Lanczos para 768², alfa ≥250 → 255); a original em `dominios/` segue intacta |
 
 > **15/10/2026:** `fx/gain-levelup.png` redesenhado (chevron sem franja clara, `tools/gerar-gain-levelup.py`) e `gain-chest/confetti/focus-seal/perfect-day` defringeados (`tools/defringe-gain.py`); mesmo nome e 96². Guard: `src/assets/gainFringe.contract.test.ts`. REGISTRO §77.
 

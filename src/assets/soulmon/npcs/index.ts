@@ -85,7 +85,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcMercadoConquistas, // Medra
   'mercado:ferreiro': FERREIRO_NPC_ART,
-  'mercado:restaurante': npcMercadoRestaurante, // Tijolino, o caranguejo pedreiro (14/10/2026; restaurante em obra)
+  'mercado:restaurante': npcMercadoRestaurante, // Brickle, o caranguejo pedreiro (14/10/2026; restaurante em obra)
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
   'arena:guerra': npcArenaGuerra, // Mirevesper: arte escolhida pelo dono em 18/10/2026 — ver docs/ARTE-MELHORIAS-FUTURAS.md

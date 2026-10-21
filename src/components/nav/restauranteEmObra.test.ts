@@ -8,12 +8,12 @@ import { firstTimesFor } from '../../utils/dailyMissions';
 import { MAP_TOUR_STEPS } from '../../utils/welcomeTour';
 
 describe('Restaurante em obra (14/10/2026): só vitrine, sem ação', () => {
-  it('é um lote do Mercado com arte e com o NPC próprio (Tijolino), nos dois idiomas', () => {
+  it('é um lote do Mercado com arte e com o NPC próprio (Brickle), nos dois idiomas', () => {
     expect(mercadoLots('pt-BR').map(l => l.id)).toContain('restaurante');
     expect(MERCADO_LOT_ART.restaurante).toBeTruthy();
     expect(lotNpcArt('mercado', 'restaurante')).toMatch(/npc-mercado-restaurante/);
     expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt('mercado', 'restaurante'));
-    expect(lotNpcVoice('mercado', 'restaurante', 'pt-BR').name).toContain('Tijolino');
+    expect(lotNpcVoice('mercado', 'restaurante', 'pt-BR').name).toContain('Brickle');
     expect(lotNpcVoice('mercado', 'restaurante', 'pt-BR').line).toMatch(/em obra/i);
     expect(lotNpcVoice('mercado', 'restaurante', 'en-US').line).toMatch(/under construction/i);
   });
