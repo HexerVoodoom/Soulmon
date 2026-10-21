@@ -1,0 +1,5 @@
+<<<<<<<< HEAD:dist/assets/MiniGlass-Bs9KDbg1.js
+import{j as e}from"./index-BScMYycj.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
+========
+import{j as e}from"./index-CDovz-q_.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
+>>>>>>>> origin/main:dist/assets/MiniGlass-BPKxpkwH.js

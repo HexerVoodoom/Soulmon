@@ -10,7 +10,7 @@ import { EvolutionGaugeMini } from './EvolutionGaugeMini';
 describe('EvolutionGaugeMini', () => {
   it('EN: rótulo, contagem, prévia de hoje e progressbar com os números do gauge', () => {
     render(<EvolutionGaugeMini language="en-US" evolutionPoints={12} evolutionStage="rookie" todayWeight={2} />);
-    expect(screen.getByText('Path to the next form')).toBeTruthy();
+    expect(screen.getByText('Soul Fragments gathered')).toBeTruthy();
     const bar = screen.getByRole('progressbar');
     expect(bar.getAttribute('aria-valuemax')).toBe('30');
     expect(bar.getAttribute('aria-valuenow')).toBe('12');

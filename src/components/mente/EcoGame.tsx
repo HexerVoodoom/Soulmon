@@ -6,6 +6,8 @@ import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, ph
 import { BitsAmount } from '../ui/BitsAmount';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
+import { usePetScale } from '../../hooks/usePetScale';
+import { petScaleStyle } from '../../utils/spriteScale';
 import { ATELIE_SCENE_SUAVE, MINI_FX } from '../../utils/visorScenes';
 import {
   checkTap, ecoBits, growSequence, playbackIntervalMs, startSequence,
@@ -132,6 +134,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   };
 
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petScale = usePetScale(evolutionStage, pet);
   const title = isPt ? 'Eco do Pet' : 'Pet Echo';
   const sub = reverse
     ? (isPt ? 'Repita as pedras de trás para frente.' : 'Repeat the stones backwards.')
@@ -186,7 +189,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
           idle={!reduced}
           hop={hits}
           style={{
-            left: 110, top: 24,
+            left: 110, top: 24, ...petScaleStyle(petScale, 'center'),
             transform: !reduced && lit !== null && phase === 'show' ? 'translateY(-6px)' : undefined,
           }}
         />

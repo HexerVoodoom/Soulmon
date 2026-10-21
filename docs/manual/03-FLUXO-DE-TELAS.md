@@ -350,13 +350,13 @@ sequência inteira. **Os passos negativos existem para não renumerar o ritual**
 | `REFINE_OFFER` | 12 | a bifurcação do teste longo | é a própria escolha |
 | `DEEP_START`..`DEEP_END − 1` | 13..32 | os 20 de `SOUL_TEST_ITEMS` (`DEEP_END` = 33, que é o próprio `GENERATING`) | só quem aceitou |
 | `GENERATING` | — | tela de geração — o `role="status"` é o casulo `forming` num `BirthCard`/vidro, pulsando por posição (`55d02ccc`; ⚰️ o corvo e o `Spinner` saíram) | — |
-| `ELEMENT_DECIDE` | `SOULMON_INTRO` + 1 | **novo em 20/10/2026 (§151)** — entre `GENERATING` e `REVEAL`. O Oráculo (Iris) diz "seu Soulmon é X, alma de Elemento (, tocada por Secundário): personalidade". CTAs "Gostei" (primário) e "Me deixa tentar de novo" (secundário). O segundo abre "Escolha outro lado": o dominante original + `elementChoiceCandidates`; só nome e descrição, sem pontos. Escolher regera com o MESMO seed + `overrides.dominantElement`. O `requestSprite` só sai no "Gostei". Só no fluxo pago (nascimento e upgrade demo->pago); demo grátis não vê. Fora de `onboarding_step` | "Gostei" segue para `REVEAL`; a escolha volta à decisão com o result novo |
+| `ELEMENT_DECIDE` | `SOULMON_INTRO` + 1 | **novo em 20/10/2026 (§157)** — entre `GENERATING` e `REVEAL`. O Oráculo (Iris) diz "seu Soulmon é X, alma de Elemento (, tocada por Secundário): personalidade". CTAs "Gostei" (primário) e "Me deixa tentar de novo" (secundário). O segundo abre "Escolha outro lado": o dominante original + `elementChoiceCandidates`; só nome e descrição, sem pontos. Escolher regera com o MESMO seed + `overrides.dominantElement`. O `requestSprite` só sai no "Gostei". Só no fluxo pago (nascimento e upgrade demo->pago); demo grátis não vê. Fora de `onboarding_step` | "Gostei" segue para `REVEAL`; a escolha volta à decisão com o result novo |
 | `REVEAL` | — | `BirthCard` (nome + epíteto + batismo). **Estados do sprite**: `pending='forming'` enquanto `revealEsperando`; passado `REVEAL_WAIT_MS`, `pending='dormant'` (cristal apagado) e a frase "The drawing is still being made — it arrives on its own, later." — nunca arte de reserva | — |
 | `REGISTER` | — | apelido (+ tonalidade, no demo) | — |
 
-Fluxo pago antes do `REVEAL` (20/10/2026, §151): Geração -> `ELEMENT_DECIDE` (Gostei / tentar de novo, sem custo de cota, imagem ou Créditos) -> Reveal. A linha "Essência" saiu do cartão do `REVEAL`.
+Fluxo pago antes do `REVEAL` (20/10/2026, §157): Geração -> `ELEMENT_DECIDE` (Gostei / tentar de novo, sem custo de cota, imagem ou Créditos) -> Reveal. A linha "Essência" saiu do cartão do `REVEAL`.
 
-Fluxo pago depois do `REVEAL` (20/10/2026, §150): Reveal -> Hatch -> apresentação do Soulmon (`SOULMON_INTRO`, uma `NpcSequence` de fundo escuro com Pular; a arte é o sprite do reveal ou o casulo) -> app. No upgrade demo->pago a mesma apresentação roda antes do `onRevealed`. Demo grátis não tem.
+Fluxo pago depois do `REVEAL` (20/10/2026, §156): Reveal -> Hatch -> apresentação do Soulmon (`SOULMON_INTRO`, uma `NpcSequence` de fundo escuro com Pular; a arte é o sprite do reveal ou o casulo) -> app. No upgrade demo->pago a mesma apresentação roda antes do `onRevealed`. Demo grátis não tem.
 
 Os números 1..5 e 6..11 vêm das constantes derivadas
 (`QUIZ_START = FAVORITE_STEP + 1`, `QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length`),

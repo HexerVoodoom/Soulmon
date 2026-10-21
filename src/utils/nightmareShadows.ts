@@ -31,10 +31,10 @@ export interface ShadowSlot { id: string; line: string; stage: ShadowStage }
  * 4 = voadores. As linhas são os 6 Solmons próprios ATIVOS (`DUNGEON_LINE_NAMES`) — nenhuma de terceiros.
  */
 export const SHADOW_SLOTS: ReadonlyArray<ReadonlyArray<ShadowSlot>> = [
-  [{ id: '1', line: 'lumel', stage: 'rookie' }, { id: '1b', line: 'thalindra', stage: 'rookie' }, { id: '1c', line: 'igni', stage: 'rookie' }],
-  [{ id: '2', line: 'ignar', stage: 'champion' }, { id: '2b', line: 'kaelen', stage: 'champion' }, { id: '2c', line: 'astrase', stage: 'champion' }],
+  [{ id: '1', line: 'kaelen', stage: 'rookie' }, { id: '1b', line: 'thalindra', stage: 'rookie' }, { id: '1c', line: 'igni', stage: 'rookie' }],
+  [{ id: '2', line: 'igni', stage: 'champion' }, { id: '2b', line: 'kaelen', stage: 'champion' }, { id: '2c', line: 'astrase', stage: 'champion' }],
   [{ id: '3', line: 'kaelen', stage: 'ultimate' }, { id: '3b', line: 'thalindra', stage: 'ultimate' }, { id: '3c', line: 'astrase', stage: 'ultimate' }],
-  [{ id: '4', line: 'lumel', stage: 'mega' }, { id: '4b', line: 'ignar', stage: 'mega' }, { id: '4c', line: 'astrase', stage: 'mega' }],
+  [{ id: '4', line: 'thalindra', stage: 'mega' }, { id: '4b', line: 'igni', stage: 'mega' }, { id: '4c', line: 'astrase', stage: 'mega' }],
 ];
 
 /** A arte real, por id (`dino-shadow-<id>.png`, 128², alfa). Instalada em 13/10/2026 (leva low do Higgsfield). */

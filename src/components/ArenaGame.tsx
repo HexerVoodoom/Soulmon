@@ -47,6 +47,8 @@ import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 import { novoSoulmonById } from '../utils/novosSoulmon';
 import {
   ARENA_ROUNDS,
@@ -57,6 +59,7 @@ import {
   arenaFoeSides,
   arenaPlayerCastScale,
   arenaPlayerHitScale,
+  arenaElementsFor,
   arenaPlayerSide,
   arenaRoundSeed,
   arenaSpecialElementScale,
@@ -161,7 +164,7 @@ export function ArenaGame({
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): segue como estava, na base da ficha (`basica.elementoId`); o que se VÊ é a identidade.
-    elements: { basica: basica?.elementoId ?? ident.basico.elemento, especial: especial?.elementoId ?? ident.especial.elemento, attrs: atributos },
+    elements: arenaElementsFor({ basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos),
   }), [estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
@@ -286,6 +289,7 @@ export function ArenaGame({
   const nomeDe = (e: ArenaEnemy) => (isPt ? e.namePt : e.nameEn);
   const sair = isPt ? 'Sair' : 'Leave';
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  const petScale = usePetScale(evolutionStage, petSprite);
 
   /* A LUTA: tela cheia, profundidade de Game Boy, barra de HP e de energia nos pés, golpes com a arte do
      elemento. Enquanto o estado do relógio ainda é o da rodada anterior (`stateKey`), a cena pinta a rodada
@@ -314,7 +318,7 @@ export function ArenaGame({
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           isPt={isPt}
           me={{
-            key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
             element: fxElementId(basica ? ident.basico.elemento : atributos.principal), // o que se VÊ = a identidade (par incluso); a vantagem segue em `elements` (base)
             energy: (pronto ? batalha.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? batalha.status.me : undefined,
@@ -376,7 +380,7 @@ export function ArenaGame({
       {fase === 'carregando' && (
         <>
           <GameVisor height={80} scene={ARENA_SCENE.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8 }} data-visor-pet />
+            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
           </GameVisor>
           <p style={{ ...phaseLine, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>
             <Icon name="sync" size={24} tone="primary" className="animate-spin" />
@@ -410,7 +414,7 @@ export function ArenaGame({
       {fase === 'intro' && (
         <>
           <GameVisor height={80} scene={ARENA_SCENE.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8 }} data-visor-pet />
+            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
           </GameVisor>
           {/* A ficha em `.chip.tag` (D-J11): HP/Power/Essence, valor em `ink`. */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -469,7 +473,7 @@ export function ArenaGame({
       {fase === 'rodada-limpa' && (
         <>
           <GameVisor height={80} scene={ARENA_SCENE.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8 }} data-visor-pet />
+            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
             <VisorFx icon="🏳️" style={{ right: 16, top: 8 }} data-visor-fx="defeat" />
           </GameVisor>
           <p style={phaseTitle}>{isPt ? `Rodada ${rodada} vencida` : `Round ${rodada} cleared`}</p>
@@ -491,7 +495,7 @@ export function ArenaGame({
           {/* Vitória: a faísca no lugar do último inimigo; derrota e empate: o pet
               inteiro — na MESMA tinta (D-J8). */}
           <GameVisor height={80} scene={ARENA_SCENE.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8 }} data-visor-pet />
+            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
             {fase === 'venceu' && <><VisorFx icon="✨" style={{ right: 16, top: 8 }} data-visor-fx="sparkle" /><VisorSparks style={{ marginRight: 8 }} /></>}
           </GameVisor>
           <p style={phaseTitle}>

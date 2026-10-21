@@ -13,6 +13,8 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameVisor, VisorSprite, VisorFx, VisorSparks, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
 import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
 import { getSpriteForStage } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 import type { Language } from '../utils/i18n';
 
 export interface GoodDreamProps {
@@ -27,9 +29,10 @@ export interface GoodDreamProps {
 }
 
 export function GoodDream({ open, honor, petStage, demoCharacterId, language, onClaim }: GoodDreamProps) {
+  const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
+  const petScale = usePetScale(petStage, petSprite);
   if (!open) return null;
   const isPt = language === 'pt-BR';
-  const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
   const title = isPt ? 'Um sonho bom' : 'A good dream';
   const btn: CSSProperties = { ...sm2Button('primary'), width: '100%', maxWidth: 260, alignSelf: 'center' };
   return (
@@ -44,7 +47,7 @@ export function GoodDream({ open, honor, petStage, demoCharacterId, language, on
       <GameVisor width={DIALOG_VISOR_W} height={72} scene={NIGHTMARE_SCENE.bg}>
         <VisorFx icon="✨" style={{ right: 8, top: 8 }} data-visor-fx="sparkle" />
         <VisorSparks />
-        <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8 }} data-visor-pet />
+        <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
       </GameVisor>
       <p style={phaseTitle} data-good-dream>{title}</p>
       <p style={{ ...sm2Text, margin: 0 }}>

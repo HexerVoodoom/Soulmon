@@ -1,6 +1,6 @@
 // ÁRVORE COMPLETA das linhas curadas (`assets/soulmon/lines/full/`): as formas por GALHO
 // (power/harmony/benevolence) e o ultra — kaelen/thalindra (desde a rodada 1) e
-// ignar/lumel/igni (rodada 3, 01/10/2026; `igni-*-power` é cópia dos sprites que
+// igni (rodada 3, 01/10/2026; ignar/lumel saíram em 20/10/2026; `igni-*-power` é cópia dos sprites que
 // a linha já tinha em `lines/`, é a mesma forma do oráculo). D-104 (20/10/2026): as formas de
 // `orrin` e `serah` (linhas aposentadas, D-78) foram REMOVIDAS daqui.
 //

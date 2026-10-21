@@ -1522,11 +1522,11 @@ desvantagem"** e "save antigo sem traço não quebra nada".
 velocidade. Não é escolhido, comprado, rerrolado nem melhorado. Não existe traço
 raro: os cinco têm a mesma chance.
 
-**Quem sorteia (20/10/2026, §150).** No nascimento pago o traço vem do onboarding
+**Quem sorteia (20/10/2026, §156).** No nascimento pago o traço vem do onboarding
 (`getPassive(data.petPassive)?.id ?? rollPetPassive()` no `App.tsx`): o que a
 apresentação do Soulmon fala é o mesmo traço que o save recebe.
 
-**Escolha de elemento antes do desenho (20/10/2026, §151).** No nascimento pago e
+**Escolha de elemento antes do desenho (20/10/2026, §157).** No nascimento pago e
 no upgrade demo->pago, o passo `ELEMENT_DECIDE` vem entre a geração e o reveal. O
 jogador lê o elemento e escolhe "Gostei" ou "Me deixa tentar de novo". Tentar de
 novo mostra o dominante original e os candidatos (`elementChoiceCandidates`);
@@ -1536,7 +1536,7 @@ Créditos. Sem campo novo no save. Demo grátis não vê; Nova Leitura e Renasci
 regeram com seed nova e voltam ao elemento lido. Régua:
 `SoulmonOnboarding.elemento.render.test.tsx`.
 
-**A apresentação do Soulmon (20/10/2026, §150).** Depois do batismo e antes de
+**A apresentação do Soulmon (20/10/2026, §156).** Depois do batismo e antes de
 entrar no app, o Soulmon fala em uma `NpcSequence` (passo `SOULMON_INTRO`, com
 Pular). Roda UMA vez, no nascimento pago e no upgrade demo->pago; demo grátis,
 Nova Leitura e Renascimento não têm. Conteúdo, de `soulmonIntroLines`: o nome,
@@ -6112,6 +6112,8 @@ Tudo abaixo é o que o código de `f3acead1` faz. Cada item aponta o dono; a
 decisão em aberto vai para [`PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md).
 
 **🧬 Gauge de evolução (substitui o dia completo como critério).** Dono único: `utils/evolutionGauge.ts`. `evolutionPoints` (no save) enche com o **peso de esforço** concluído, nunca contagem de itens. Três travas: teto diário = `FORM_REQUIREMENTS[estágio].required` (`dailyGaugeCap`); nunca decresce por dia ruim (só zera ao evoluir e cai a um piso na degeneração, `degeneratedEvolutionPoints` em `dailyReset.ts`); creditado **só na virada** (`computeDailyReset`), sobre o mesmo `dailyDone` que julga o coração. Metas por estágio em `FORM_REQUIREMENTS`: rookie 30 · champion 45 · ultimate 60 · mega 60 (sem a coleção das três megas vale `ULTRA_PATIENCE_POINTS`) · ultra 0 (`gaugeGoalFor`). Save antigo migra por `migrateEvolutionPoints` (`perfectDays` na mesma fração da barra, arredondando para cima) e a hidratação é idempotente (`hydrateEvolutionPoints`). A Glitchtama (1 por dia) rende um dia de teto (`dayItemGaugeGain`). O **dia completo** continua existindo como **selo cosmético** (`perfectDays` segue acumulando, mas não é mais o critério). O cadeado (§17) segue travando a cerimônia; o gesto de evoluir só acende com o gauge cheio (`gaugeFull`).
+
+**💠 Fragmento de Alma (20/10/2026, REGISTRO §153).** É o NOME visível do `evolutionPoints`: 1 ponto do gauge = 1 Fragmento de Alma, mesmo campo e mesmo significado no save (sem migração). Continua por **esforço** (tarefa 1–3, hábito `HABIT_WEIGHT`), com teto diário = meta do estágio e crédito na virada; é CONSUMIDO ao evoluir (a cerimônia diz o custo uma vez). Vocabulário e frases: `utils/soulFragment.ts`; glifo: `components/ui/SoulFragmentIcon.tsx`. Nenhuma regra de jogo mudou.
 
 **⚡ Energia ×2.** `getMaxEnergyForStage` = `required × ENERGY_HEADROOM` (2): 8/10/10/12/12 barras. A energia **saiu** da condição do dia completo; `required` continua a meta diária e o teto do gauge.
 

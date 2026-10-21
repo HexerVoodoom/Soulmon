@@ -111,9 +111,9 @@ const TERMS: Term[] = [
     // P5: o glossário é uma das duas superfícies que a convenção do CLAUDE.md
     // manda atualizar junto com regra de jogo (a outra é o `GuideModal`, que
     // foi atualizado). Esta entrada ficou para trás.
-    icon: '🧬', en: 'Path to the next form', pt: 'Caminho até a próxima forma',
-    descEn: 'The evolution bar. Every habit or task you finish is a step (bigger tasks count more), up to your stage’s daily goal per day. It fills at the turn of the day, never goes back, and when full the next form opens.',
-    descPt: 'A barra de evolução. Todo hábito ou tarefa concluída é um passo (tarefas maiores valem mais), até a meta diária do estágio por dia. Entra na virada do dia, nunca volta para trás, e cheia abre a próxima forma.',
+    icon: '🧬', en: 'Soul Fragments', pt: 'Fragmentos de Alma',
+    descEn: 'The evolution currency. Every habit or task you finish earns Soul Fragments (bigger tasks earn more), up to your stage’s daily goal per day. They join at the turn of the day, never shrink, and when you have gathered enough they are used and the next form opens.',
+    descPt: 'A moeda da evolução. Todo hábito ou tarefa concluída rende Fragmentos de Alma (tarefas maiores rendem mais), até a meta diária do estágio por dia. Entram na virada do dia, nunca diminuem, e quando você junta o bastante são usados e a próxima forma abre.',
   },
   {
     icon: '📊', en: 'Complete Day', pt: 'Dia Completo',

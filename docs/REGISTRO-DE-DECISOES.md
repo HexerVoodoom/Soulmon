@@ -3094,7 +3094,70 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **O que falsificaria:** a taxa de "fechar sem lutar" subir muito nas aberturas da tarde/noite, ou queixa de pesadelo à noite (relato ou suporte).
 - **Onde vive:** `src/utils/nightmareWake.ts` (`nightmareGateOpen`, `NIGHTMARE_AFTER_COMPLETION_MS`, `dreamMode`, `DREAM_MODAL_HOURS`, `nightmareRetryInMs`; testes em `nightmareWake.test.ts`) e os efeitos do pesadelo e do sonho no `App.tsx`.
 
-## 150. O Soulmon se apresenta depois do batismo (dono, 20/10/2026; D-110..D-117; exceção à L1/§16)
+## 150. O elemento do oráculo vira o da classe na leitura: planta → Vida, industrial → Aço (dono, 20/10/2026; hotfix do Perfil; emenda §75)
+
+- **Bug (dono, 20/10/2026):** no Perfil do Soulmon (Laboratório › Perfil) a linha "Elemento" mostrava `planta` cru e o ícone caía no `neutro`. Causa: `petElementOf` devolvia o id CRU do oráculo (`soulmonMeta.dominantElement`), e `planta`/`industrial` não estão nos 17 base nem nos 136 pares. Sem ficha do estágio, a mesma id crua ia para a Arena, onde `COUNTERS['planta']` não existe: a vantagem elemental era SEMPRE neutra para essas criaturas.
+- **Decisão:** o elemento existe e é da classe. `planta` → `vida` (Vida/Life, base); `industrial` → `aco` (Aço/Steel, par marcial+terra). Na Arena, sem ficha, a vantagem usa a BASE DOMINANTE (`baseDominanteDoElemento`): `vida` (+1 contra terra e gravidade) e `aco` → `marcial` (+1 contra arcano e tempo). A arte, a aura e a cena não mudam (já usavam `vida`/`aco`/`marcial`).
+- **Regra de produto que muda de verdade:** quem tem criatura do oráculo planta/industrial e ainda não tem ficha do estágio passa a ter vantagem/desvantagem elemental na Arena (antes, neutra). Com ficha, nada muda.
+- **Como:** dono único do mapa `src/utils/elementoDoOraculo.ts` (`ORACULO_PARA_CLASSE`, `elementoDoOraculo`, `aliasDoOraculo`); `petElementOf` devolve o id normalizado; `combatFx`, `attackFxArt` e `combatArt` importam o dono (os três literais duplicados saíram); `ELEMENT_BRIDGE` (pesos) é conferido por teste de consistência; `arena.ts › arenaElementsFor` aplica a base dominante sem ficha. Guard de grep em `elementoDoOraculo.test.ts` reprova literal novo do mapa fora do dono.
+- **Compatibilidade:** normalização NA LEITURA; nenhum campo novo no save; servidor/PvP não leem `dominantElement` (`functions/api/_duel.js`). Rollback = reverter o commit.
+- **Alternativa que perdeu:** manter o id cru e só traduzir o rótulo do Perfil. Perdeu porque deixava o ícone errado e a vantagem da Arena neutra, e mantinha três mapas divergentes (um dizia `industrial → marcial`, dois `→ aco`).
+- **O que falsificaria:** relato de criatura planta/industrial com elemento diferente entre Perfil, golpe e aura, ou balanço da Arena desses jogadores fora da faixa dos demais.
+- **Onde vive:** `src/utils/elementoDoOraculo.ts` (+ `.test.ts`), `src/utils/starterElements.ts › petElementOf`, `src/utils/arena.ts › arenaElementsFor`.
+
+## 151. FX de ataque: o espelho sai de "para onde a arte olha" × "para onde o golpe vai", nunca do lado (dono, 20/10/2026; pedido repetido do backlog "Combate (efeitos de ataque)")
+
+- **Bug (dono, pedido REPETIDO):** os poderzinhos do combate saíam virados ao contrário — ataque de espaço do inimigo "de trás pra frente", especial de luz do jogador também, físico do Nocterix (sombra) espelhado — e "acontece com vários".
+- **Causa:** `BattleStage` assumia toda arte desenhada "para a direita" e espelhava só o golpe do inimigo (`flipX = actor === 'foe'`). Medido nos PNG: dos 155 elementos com arte (154 + `pesadelo`), **48 projéteis têm a cabeça à esquerda** (gravidade, marcial, tempo, espaço, luz, sombra, morte…), **116 cortes têm o bojo à esquerda**, e a arte de escudo (`defended`) entra por lados diferentes. O projétil do inimigo ainda girava 180°, saindo de cabeça para baixo.
+- **Decisão (convenção):** "olha para" = a direção para onde o efeito aponta/viaja — projétil: a cabeça; corte: o BOJO (lado convexo) do crescente; `defended`: para onde o golpe recebido anda; cast/aura/impact são simétricos por contrato. O jogador (esquerda) golpeia para a direita, o inimigo para a esquerda; o espelho é `arte ≠ sentido do golpe`, uma conta só. O projétil ainda gira até o alvo, e indo para a esquerda gira `ang−180` + espelha (nunca de cabeça para baixo).
+- **⚠️ Muda também o lado do JOGADOR:** os 116 cortes de bojo à esquerda passam a vir espelhados para o jogador (antes só o inimigo era espelhado). É a consequência de "bojo aponta para o alvo", que é o que o dono pediu para o Nocterix; se o dono preferir o oposto para o corte do jogador, é inverter UMA letra da convenção em `fxFacing.ts` (`slash`) e regerar a tabela.
+- **Como:** dono único `src/utils/fxFacing.ts` (`fxFacing`, `fxMirror`, `orbPose`, `travelOf`); tabela `src/utils/fxFacingTable.ts` GERADA por `node scripts/fx-facing.mjs` (mede o PNG; um único override visual por inspeção, `onda_de_choque:orb`); `fxArtId` em `combatFx.ts` resolve a arte que de fato é desenhada (fallback `neutro`). Consumidores: `BattleStage` (orb, corte, escudo-fallback) e `Match3Game` (orb). Molde: `spriteUrlFacesLeft`/`LEFT_FACING_*` em `utils/sprites.ts`.
+- **Régua:** `src/utils/fxFacing.contract.test.ts` remede os PNG e reprova tabela velha, exige cobertura dos 155 elementos × orb/slash/defended × jogador/inimigo, exige que o espelho do inimigo seja o inverso do do jogador e que o palco não volte a decidir por lado.
+- **Compatibilidade:** só apresentação; nenhum campo de save, servidor ou regra muda.
+- **Alternativa que perdeu:** corrigir caso a caso (espaço, luz, sombra) — o dono disse que não.
+- **O que falsificaria:** qualquer FX de um dos dois lados saindo com a cabeça/bojo apontando para longe do alvo no aparelho (arte nova entra: rode o gerador; o teste avisa).
+- **Não conferido no aparelho:** só medição do PNG + teste; olhar lado a lado no jogo (Arena, Masmorra, Pesadelo, Duelo, Match3).
+
+## 152. O poder do ataque mágico (D-88) deixa de ser o "plim" e vira um "push": jato de ar CC0, curto e grave (dono, 20/10/2026; emenda o §130)
+- **Decisão do dono:** o som do poder do ataque mágico "soa como um plim, muito ruim"; quer "alguma coisa tipo push" (impulso/rajada). Troca só o arquivo do D-88 (`public/sounds/sfx-combate-attack-ranged.webm`); evento, categoria `arcade`, nome `playAttackRanged` e caminho não mudam.
+- **Como:** três candidatos derivados só de material CC0 da Kenney (Sci-Fi Sounds), em `D:/Soulmon/_gemini_out/w10-sfx/para-ouvir/`: **`D-88-push-a`** (instalado) = rajada de ar, recorte de `thrusterFire_001` com passa-baixa 3 kHz, ataque de 6 ms e queda rápida, 0,41 s; **`D-88-push-b`** = empurrão grave (`lowFrequency_explosion_001` + corpo de `explosionCrunch_000` passa-baixa), 0,36 s, mais "whump" e parecido com o especial; **`D-88-push-c`** = pulso de campo de força (`forceField_001` meio tom abaixo, passa-baixa 1,4 kHz), 0,47 s. Mestrados em −25 LUFS-M, codificados em Opus 64 kbps pelo MediaRecorder do Chrome e medidos no arquivo decodificado (instalado: 0,414 s, −24,65 LUFS-M, −4,3 dBTP, 3 698 B). Manifesto e `Attributions.md` atualizados; a fonte JaggedStone sai do uso.
+- **Alternativa que perdeu:** outro sample mágico de banco (todos têm o tinido do "plim"); b e c ficam prontos para troca (basta substituir o arquivo e refazer hash/medidas).
+- **O que falsificaria:** o dono ouvir o `a` e ainda achar fraco ou "ar demais" → trocar por b ou c. **Limite honesto:** a escolha foi feita sem escuta (por forma de onda e espectro); só o ouvido do dono valida (gate S8).
+
+## 153. "Steps" da evolução viram Fragmentos de Alma — a MOEDA visível do gauge, ganha por ESFORÇO (dono, 20/10/2026; item do BACKLOG-PRODUTO › Evolução; emenda a decisão do gauge de 11/10/2026)
+
+- **Pedido (dono):** trocar o nome/medida "steps" da evolução por uma moeda visível, **Fragmento de Alma** (EN *Soul Fragment*); ao juntar o custo do estágio os fragmentos são CONSUMIDOS e o Soulmon evolui.
+- **Decisão (modal, 20/10/2026):** o fragmento é ganho **por ESFORÇO** — tarefa de esforço 1–3 rende 1–3, hábito rende `HABIT_WEIGHT` — mantendo o **teto diário** (= meta do estágio, `FORM_REQUIREMENTS[estágio].required`) e o **crédito na virada**. NÃO é "1 por ação": recompensa por contagem de tarefas segue linha vermelha. O que muda é só o NOME e o ícone; o número e a mecânica continuam.
+- **O que NÃO mudou:** o campo do save continua `evolutionPoints` (1 ponto antigo = 1 fragmento, sem migração e sem perder progresso; `hydrateEvolutionPoints` intacta e idempotente); nunca decresce por dia ruim; zera ao evoluir (é o consumo); piso na queda por HP (`degeneratedEvolutionPoints`) e `ULTRA_PATIENCE_POINTS` inalterados; servidor não conhece o termo. Nenhum campo, chave ou contrato novo.
+- **Como:** dono único do VOCABULÁRIO `src/utils/soulFragment.ts` (nome/plural PT+EN, frases da barra, da prévia de hoje, da ajuda e da cerimônia); glifo próprio `src/components/ui/SoulFragmentIcon.tsx` (cristal pixel 8×8 em SVG de `rect`s com tokens, mesma família do `BitsIcon`, forma distinta da moeda; sem imagem gerada). Aparece em: barra da página de Evolução (`EvolutionPath`: "X / Y" com o glifo, prévia "+N de hoje entram amanhã"), `EvolutionGaugeMini`, texto de ajuda, `GuideModal`, `HelpModal`, `EvolveTaskModal`, tour de boas-vindas, `i18n` e a **cerimônia de evolução** (`EvolutionCeremony`): durante o ritual "Seus Fragmentos de Alma se reúnem…"; ao concluir, uma vez, "N fragmentos de alma deram forma a esta evolução." (N = custo do estágio, `gaugeGoalFor`).
+- **Tom (sem cobrança):** a frase principal da página trocou "Mais N passos de caminho até a próxima forma" (texto de falta) por "Você já juntou N fragmentos de alma a caminho da próxima forma" — descreve o que JÁ existe. Nenhum número desce; o consumo é dito uma vez, no ato.
+- **Alternativa que perdeu:** (b) 1 fragmento por ação com teto diário próprio — perdeu por ser contagem de tarefas (anti-farm) e criar um segundo número ao lado do esforço.
+- **O que falsificaria:** jogador lendo "fragmentos" como "1 por tarefa" e reclamando de tarefa grande valer mais (se for o caso, o texto de ajuda precisa dizer o peso na hora de criar a tarefa); ou relato de a cerimônia mostrar custo diferente do que a barra mostrava.
+- **Compatibilidade / rollback:** só texto, glifo e UI; save e servidor intocados — reverter o commit não corrompe nada. Ainda não conferido no aparelho (APK/WebView): o glifo 16 px na barra e o texto da cerimônia.
+- **Onde vive:** `src/utils/soulFragment.ts` (+ `.test.ts`), `src/components/ui/SoulFragmentIcon.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx` (+ `.fragmentos.render.test.tsx`), `src/components/EvolutionGaugeMini.tsx`.
+
+## 154. O tamanho do Soulmon depende do estágio: rookie pequeno, rookie grande é exceção rara (dono, 20/10/2026; BACKLOG-PRODUTO › Tamanho do Soulmon)
+
+- **Pedido (dono, ditado):** o primeiro Soulmon (rookie) aparecia ENORME. O tamanho na tela depende do estágio: rookie pequeno por padrão, pode crescer (ou não) ao evoluir; pode existir Soulmon que fica pequenininho até o mega; um rookie grande pode existir, mas EXTREMAMENTE raro.
+- **Medição:** cada tela dimensionava o sprite sozinha (Home em `PET_RENDER` 128 × zoom 1,5; visores a 128/64; `BattleStage` por `spot.size`; Dino no canvas). A arte de linha tem a caixa visível (lado maior da bbox do alfa ÷ canvas) em ~0,75–0,80 no rookie e 0,9–1,0 no mega; o sprite do Oráculo vem 512² com bbox variável — escalar pelo canvas faria o "enorme" voltar.
+- **Decisão:** UM dono, `src/utils/spriteScale.ts`. Alvo por estágio = fração da caixa de render que o lado maior da CAIXA VISÍVEL ocupa: rookie 0,54 · champion 0,66 · ultimate 0,78 · mega 0,90 · ultra 0,96; fator = alvo ÷ preenchimento medido, preso a 0,3..1,25. Porte por criatura determinístico (hash da semente do save: `demoCharacterId` › `bornAt` › `createdAt`): 68% padrão, 20% `small` (cresce 65% da escada), 10% `tiny` (30% — o mega fica menor que um champion padrão), 2% `bigRookie` (rookie com alvo 0,84, nunca encolhe depois). A escada é monótona em TODO porte.
+- **Aplicação:** `usePetScale`/`petScaleStyle` (propriedade CSS `scale`, origem nos pés) nas 14 telas que desenham o bicho do jogador (Home, Pet, Masmorra, Arena, Pesadelo, Duelo/Torneio via `BattleStage`, Match3, Dino, GoodDream, 3 jogos da Mente, Respiração). Só o desenho encolhe: hitbox do Dino, alvos de toque e chão não mudam. Retratos e cerimônias (evolução, nascimento, memórias, marcos) ficam fora de propósito.
+- **Compatibilidade:** nenhum campo novo no save nem chave nova; a semente vem de campos que já existem. Rollback = reverter o commit (nada migrado).
+- **Alternativa que perdeu:** escalar pelo tamanho do canvas (o acervo 512² preenche tudo e voltaria enorme) e sorteio por render (o bicho mudaria de tamanho a cada abertura).
+- **O que falsificaria:** relato de Soulmon ainda enorme/minúsculo na Home em aparelho real, ou da mesma criatura com tamanhos diferentes entre telas.
+- **Onde vive:** `src/utils/spriteScale.ts` (+ `.test.ts`), `src/hooks/usePetScale.ts`, `src/components/games/BattleStage.tsx` (`StageFighter.scale`), `docs/manual/06-REFERENCIA/utils.md`.
+
+## 155. Pesadelo: só abre com 6 h de sono; e basta SOLTAR o especial, o anel não decide mais (dono, 20/10/2026)
+
+- **Pedido do dono:** "para liberar o pesadelo o Soulmon tem que dormir pelo menos 6 horas" e "tira a necessidade de acertar o especial direitinho; basta soltar o especial".
+- **Decisão (sono):** `nightmaresFor` só conta o pesadelo da manhã se a noite foi `onTime` E `wokeAt − sleptAt ≥ 6 h` (`NIGHTMARE_MIN_SLEEP_HOURS`, `sleptEnoughForNightmare`). Sem `wokeAt` registrado não há prova das 6 h: não abre (erro seguro). Acima de 6 h a duração não rende mais nada (tier e prêmio idênticos). **Isto muda a regra antiga "nunca em função de quanto tempo a pessoa dormiu"** (REGISTRO do pesadelo): a duração passa a ser um limiar, não um placar.
+- **Decisão (especial):** `NIGHTMARE_KNOBS.ring.ruim` sobe de 0 para 1,6 (= `bom`): errar o anel não anula o golpe; `specialLanded` é sempre verdadeiro (o chip "Especial n/n" conta toda descarga). O anel `ótimo` continua dando o bônus cheio (2×). A torcida segue obrigatória (sem ela o Soulmon cai em ≥ 70% das sementes).
+- **Alternativa que perdeu:** manter o piso do anel e só avisar. Perdeu: o dono quer o especial sem pontaria.
+- **O que falsificaria:** pesadelo abrindo com noite < 6 h, ou luta de pesadelo sem torcida ficando fácil demais (> 30% de vitória) — ver `nightmares.pesadelo.test.ts`.
+- **Compatibilidade:** nenhum campo novo no save; lê `sleptAt`/`wokeAt` que já existem. Noites antigas sem `wokeAt` simplesmente não geram pesadelo.
+- **Onde vive:** `src/utils/nightmares.ts`, `src/utils/dungeonFight.ts` (`NIGHTMARE_KNOBS`), `src/components/NightmareBattle.tsx`.
+
+## 156. O Soulmon se apresenta depois do batismo (dono, 20/10/2026; D-110..D-117; exceção à L1/§16)
 
 - **Pedido (literal):** o Soulmon se apresenta ao jogador logo depois do batismo, dizendo que é "uma contraparte digital da sua alma" / "a digital counterpart of your soul".
 - **Decisão:**
@@ -3109,9 +3172,9 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **O que falsificaria:** testador relatar a frase como estranha ou pesada, ou queixa de "o app disse que minha alma está no celular"; taxa de Skip alta.
 - **Onde vive:** `src/utils/soulmonIntro.ts` (`soulmonIntroLines`, `INTRO_CLICHES_PROIBIDOS`, `INTRO_FRASE_MAX`); o passo `SOULMON_INTRO` em `src/components/SoulmonOnboarding.tsx`; o `petPassive` e as props do upgrade no `App.tsx`; a exceção em `src/narrativa.contract.test.ts`.
 
-## 151. O jogador pode escolher outro elemento antes do desenho (dono, 20/10/2026; D-150..D-161)
+## 157. O jogador pode escolher outro elemento antes do desenho (dono, 20/10/2026; D-150..D-161)
 
-> Aviso de numeração: a `main` tem uma §150 diferente desta branch; este número pode colidir na junção release->main. Renumere na junção.
+> Aviso de numeração: a `main` tem uma §156 diferente desta branch; este número pode colidir na junção release->main. Renumere na junção.
 
 - **Pedido (literal):** na tela do Hatch o Oráculo (Iris) diz "seu Soulmon é X, alma de Elemento (, tocada por Secundário): personalidade", com "Gostei" (primário) e "Me deixa tentar de novo" (secundário).
 - **Decisão:**
@@ -3125,7 +3188,7 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **O que falsificaria:** a maioria dos jogadores trocar o elemento (a leitura do Oráculo não convence), ou queixa de que a troca "estraga" a surpresa do batismo.
 - **Onde vive:** `src/utils/revealEscolha.ts` (`elementChoiceCandidates`); `generateOracleComplete(input, seed?, overrides?)`; o passo `ELEMENT_DECIDE` em `src/components/SoulmonOnboarding.tsx`; teste `SoulmonOnboarding.elemento.render.test.tsx`.
 
-## 152. QA servidor + persistência: corridas de dinheiro, save que apaga a nuvem e backup forense (frente QA, 20/10/2026; L07-01..06, L08-01..04, L03-01)
+## 158. QA servidor + persistência: corridas de dinheiro, save que apaga a nuvem e backup forense (frente QA, 20/10/2026; L07-01..06, L08-01..04, L03-01)
 
 - **Pedido:** corrigir os bugs de servidor e persistência do QA consolidado (`E:\Projetos\Soulmon-qa\BUGS-CONSOLIDADO.md`), com o app em produção e sem decidir a ADR-004.
 - **Decisão:**

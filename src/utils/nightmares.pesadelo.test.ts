@@ -47,7 +47,7 @@ describe('REGRESSÃO — o pesadelo CAUSA dano', () => {
   it('GREEN: o pesadelo derruba o Soulmon de verdade (HP chega a zero) quando o jogador não ajuda; e com ajuda ele machuca sem matar', () => {
     for (const top of [1, 2, 3, 4, 5]) {
       const sem = Array.from({ length: 40 }, (_, s) => simulateNightmareScenario(cfg, top, s + 1, SCENARIO_NONE));
-      expect(sem.filter((x) => !x.won).length / sem.length, `top ${top}`).toBeGreaterThanOrEqual(0.9); // o Soulmon cai
+      expect(sem.filter((x) => !x.won).length / sem.length, `top ${top}`).toBeGreaterThanOrEqual(0.7); // sem torcida o Soulmon cai (o anel não importa mais)
       const com = Array.from({ length: 40 }, (_, s) => simulateNightmareScenario(cfg, top, s + 1, SCENARIO_FULL));
       expect(com.some((x) => x.won && x.hpLeft < 0.95), `top ${top}`).toBe(true); // há dano real mesmo vencendo
     }
@@ -102,15 +102,15 @@ describe('CALIBRAGEM — a vitória é o HP; a dificuldade é o pesadelo derruba
     expect(NIGHTMARE_POWER).toBe(1.2);
     expect(NIGHTMARE_MEGA_EASE).toBe(0.8);
   });
-  it('A: sem torcida e sem especiais certeiros o Soulmon perde em >= 90% das sementes', () => {
-    for (const m of medido) expect(1 - m.A, `tier ${m.top}`).toBeGreaterThanOrEqual(0.9);
+  it('A: sem torcida (o anel não importa mais: basta soltar o especial) o Soulmon perde em >= 70% das sementes', () => {
+    for (const m of medido) expect(1 - m.A, `tier ${m.top}`).toBeGreaterThanOrEqual(0.7);
   });
   it('B: com torcida e especiais ao menos parciais o jogador vence em >= 75% (tiers 1-3) e >= 50% (tiers 4-5)', () => {
     for (const m of medido) expect(m.B, `tier ${m.top}`).toBeGreaterThanOrEqual(m.top <= 3 ? 0.75 : 0.5);
   });
-  it('C: torcida sem acertar especiais, e especiais sem torcida: derrota na maioria (>= 70%)', () => {
+  it('C: errar o anel não pesa (C1 = B); e especiais sem torcida: derrota na maioria (>= 70%)', () => {
     for (const m of medido) {
-      expect(1 - m.C1, `C1 tier ${m.top}`).toBeGreaterThanOrEqual(0.7);
+      expect(m.C1, `C1 tier ${m.top}`).toBeCloseTo(m.B, 5);
       expect(1 - m.C2, `C2 tier ${m.top}`).toBeGreaterThanOrEqual(0.7);
     }
   });
@@ -118,15 +118,16 @@ describe('CALIBRAGEM — a vitória é o HP; a dificuldade é o pesadelo derruba
     const a = simulateNightmareScenario(cfg, 3, 7, SCENARIO_FULL);
     expect(simulateNightmareScenario(cfg, 3, 7, SCENARIO_FULL)).toEqual(a);
   });
-  it('o acerto parcial conta: bom e ótimo acertam, ruim erra', () => {
+  it('soltar o especial basta (dono, 20/10/2026): qualquer anel conta, até o ruim', () => {
     expect(specialLanded('otimo')).toBe(true);
     expect(specialLanded('bom')).toBe(true);
-    expect(specialLanded('ruim')).toBe(false);
-    expect(specialLanded(null)).toBe(false);
+    expect(specialLanded('ruim')).toBe(true);
+    expect(specialLanded(null)).toBe(true);
   });
-  it('a dica da luta (PT/EN) diz que só com a torcida e os especiais certeiros o Soulmon aguenta', () => {
-    expect(NIGHTMARE_HINT.pt).toMatch(/torcida e os especiais certeiros/);
-    expect(NIGHTMARE_HINT.en).toMatch(/cheer and well-aimed specials/);
+  it('a dica da luta (PT/EN) diz que só com a torcida e os especiais o Soulmon aguenta', () => {
+    expect(NIGHTMARE_HINT.pt).toMatch(/torcida e os especiais/);
+    expect(NIGHTMARE_HINT.pt).not.toMatch(/certeiros|anel/);
+    expect(NIGHTMARE_HINT.en).toMatch(/cheer and the specials/);
   });
 });
 

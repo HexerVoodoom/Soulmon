@@ -118,7 +118,7 @@ describe('quota de localStorage — o storage pode estar cheio ou bloqueado', ()
     });
     const s = montar();
     expect(s.evolutionStage).toBe('rookie');
-    expect(s.eggType).toBe('ignar');      // o fallback do EGG_TYPE também aguenta
+    expect(s.eggType).toBe('meteoro');      // o fallback do EGG_TYPE também aguenta
   });
 
   it('save ilegível com storage FUNCIONANDO continua degradando bem (não regrediu)', () => {

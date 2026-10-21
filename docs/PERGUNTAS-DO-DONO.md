@@ -499,7 +499,7 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - **Dúvida:** no ditado, "Isso aqui fica toda na Feira" ficou ambíguo (qual bloco?). Leitura conservadora adotada: a missão/rodada (High Tide) já morava só na sala da Feira, então nada se moveu por essa frase. Se o dono apontava outro bloco (por exemplo a Praça ou o Mistério), é só dizer qual.
 - **Dúvida:** a Praça (decoração e presentes) ficou no Clan Hall, na porta "Prédios", por não ser do Grove nem da Feira. O Mistério foi para o Grove (ditado: "mistério do bosque").
 
-## 20/10/2026 — Frente QA servidor + persistência (`fix/qa-servidor-persistencia`, REGISTRO §152)
+## 20/10/2026 — Frente QA servidor + persistência (`fix/qa-servidor-persistencia`, REGISTRO §158)
 
 - **ADR-004 — `revision` + 409 no `POST /api/save` (decide o L08-01/L08-02 de vez).**
   - **O que é:** cada save na nuvem passa a ter um número de revisão. O cliente manda a revisão que leu; se a nuvem já estiver em outra, o servidor responde 409 em vez de gravar por cima, e o cliente reconcilia. Texto completo em `docs/adr/ADR-004-concorrencia-do-save.md`.

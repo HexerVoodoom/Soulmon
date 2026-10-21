@@ -56,7 +56,8 @@ import { emptyIncubation, incubationFor, incubationReady, isIncubating } from '.
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
-import { getSpriteForStage, isStarterId, setOwnSprites } from './utils/sprites';
+import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
+import { setPetSizeSeed, sizeSeedOf } from './utils/spriteScale';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -836,7 +837,7 @@ export default function App() {
   const [catalogBrowserOpen, setCatalogBrowserOpen] = useState(false);
   const [evolveModalStage, setEvolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
-  const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
+  const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string; spent?: number } | null>(null);
   // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
   // Estatísticas e desempata o galho na evolução. useMemo porque percorre o
   // histórico e o CompanionHUD é memo().
@@ -1112,6 +1113,8 @@ export default function App() {
   const petChocando = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
     && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
   // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
+  // Porte da criatura (utils/spriteScale.ts): semente estável do save, escrita em render como `setOwnSprites` logo abaixo.
+  setPetSizeSeed(sizeSeedOf(gameState));
   // Render-time de propósito: telas abertas depois já leem o valor certo; `setOwnSprites` é idempotente (ver utils/sprites.ts).
   useMemo(() => {
     const map: Record<string, string> = {};
@@ -2293,7 +2296,7 @@ export default function App() {
       // O nome da Home, não o estágio — dono: `widgetPetName` (utils/petName por baixo).
       petName: widgetPetName(gameState.soulmonMeta),
       currentStage: gameState.evolutionStage,
-      eggType: gameState.eggType ?? 'ignar',
+      eggType: gameState.eggType ?? 'meteoro',
       branchType: gameState.currentBranch,
       completedTasks: dailyDone,
       totalTasks: dailyTotal,
@@ -3438,7 +3441,7 @@ export default function App() {
     // causa de uma queda, e o `handleEvolve` do outro lado recusaria de
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
-    if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
+    if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
   }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId]);
 
   const handleEvolve = useCallback(() => {
@@ -4519,7 +4522,7 @@ export default function App() {
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed, readings: leituras });
-    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
+    const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
@@ -4682,7 +4685,7 @@ export default function App() {
     revealSprite?: { url: string; formId: string; at: number },
   ) => {
     setUpgradeRitual(false);
-    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
+    const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
@@ -6023,7 +6026,7 @@ export default function App() {
     const isPt = language === 'pt-BR';
     const patch = buildDemoPatch(characterId, { isPt, dayKey: playerDayKey(now, gameState.playerDayTz), now });
     if (!patch) return;
-    writeLocal(STORAGE_KEYS.EGG_TYPE, 'ignar');
+    writeLocal(STORAGE_KEYS.EGG_TYPE, characterId);
     writeLocal(STORAGE_KEYS.USER_NAME, isPt ? 'Visitante' : 'Guest');
     writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
     writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
@@ -6031,7 +6034,7 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       ...patch,
-      eggType: 'ignar',
+      eggType: characterId,
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       petPassive: rollPetPassive(),
       firstDay: emptyFirstDay(playerDayKey(now, prev.playerDayTz)),
@@ -6150,12 +6153,13 @@ export default function App() {
     // via demoCharacterId, ver utils/sprites.ts).
     if (data.mode === 'demo') {
       const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
-      writeLocal(STORAGE_KEYS.EGG_TYPE, 'ignar');
+      const demoEgg = migrateEggType(data.demoCharacterId);
+      writeLocal(STORAGE_KEYS.EGG_TYPE, demoEgg);
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
         tasks: firstTasks,
-        eggType: 'ignar',
+        eggType: demoEgg,
         evolutionStage: 'rookie',
         unlockedEvolutions: ['rookie'],
         healthPoints: getMaxHPForStage('rookie'),
@@ -6202,7 +6206,7 @@ export default function App() {
     // Linha de sprite GENÉRICA (visual provisório até a Fase 2 assumir) —
     // sorteada uma vez, determinística pela seed do oráculo. Não é mais uma
     // escolha do jogador; a árvore de verdade é a de soulmonStages.
-    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
+    const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
 
@@ -8376,6 +8380,7 @@ export default function App() {
           fromSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.from)?.url}
           toSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.to)?.url}
           reachedAt={gameState.formReachedAt?.[evolutionCeremony.to]}
+          fragmentsSpent={evolutionCeremony.spent}
           onEvolved={handleEvolve}
           onClose={() => setEvolutionCeremony(null)}
         />

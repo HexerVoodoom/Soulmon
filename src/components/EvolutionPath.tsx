@@ -31,7 +31,7 @@
  */
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
-import { getSpriteForStage, isStarterId } from '../utils/sprites';
+import { getSpriteForStage, isStarterId, type StarterId } from '../utils/sprites';
 import { useAdmin } from '../utils/adminFlag';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
@@ -39,6 +39,8 @@ import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_POINTS } from '../types/progression';
 import { dailyGaugeCap } from '../utils/evolutionGauge';
+import { fragmentBarLabel, fragmentTodayHint, fragmentHowText, fragmentsGatheredLine } from '../utils/soulFragment';
+import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { PixelTabs } from './pixel/PixelKit';
@@ -96,7 +98,7 @@ interface EvolutionPathProps {
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
-  eggType?: 'ignar' | 'lumel' | 'serah';
+  eggType?: StarterId;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
   unlockedEvolutions?: string[];
@@ -462,15 +464,15 @@ export function EvolutionPath({
            padrão espera, não expira (nunca "não perca"). A 2ª oração continua
            ensinando o gesto: `evolucaoManual.contract.test.ts` exige. */
         : (isPt ? 'O padrão está pronto. Ele espera você encostar. Toque no seu Soulmon para evoluir.' : 'The pattern is ready. It waits for you to touch it. Tap your Soulmon to evolve.'))
-    : (isPt
+    : (
         // "completo", não "perfeito" (P5). O docblock deste arquivo já dizia
         // "Faltam 4 dias completos" — a renomeação passou pelo COMENTÁRIO e
         // não pela string, no mesmo arquivo. É a frase que responde "quanto
         // falta para meu bicho evoluir", ou seja, a mais lida da página.
-        // 🧬 11/10/2026: o gauge mede PASSOS (peso de esforço), não dias.
-        // Descreve o caminho, nunca cobra: sem "só", sem prazo.
-        ? `Mais ${faltam} passo${faltam === 1 ? '' : 's'} de caminho até a próxima forma.`
-        : `${faltam} more step${faltam === 1 ? '' : 's'} of path to the next form.`);
+        // 🧬 11/10/2026: o gauge mede esforço, não dias; desde 20/10/2026 a moeda se
+        // chama Fragmento de Alma (REGISTRO §153). Descreve o que JÁ se juntou,
+        // nunca o que falta: sem "faltam", sem prazo.
+        fragmentsGatheredLine(evolutionPoints, language));
 
   /* O TOQUE no visor (V2): com a barra cheia e o cadeado aberto, evolui; nos
      outros casos alterna o cadeado. O rótulo diz qual dos dois vai acontecer
@@ -1042,7 +1044,7 @@ export function EvolutionPath({
             aria-valuemin={0}
             aria-valuemax={gaugeGoal}
             aria-valuenow={Math.min(evolutionPoints, gaugeGoal)}
-            aria-label={isPt ? 'Caminho até a próxima forma' : 'Path to the next form'}
+            aria-label={fragmentBarLabel(false, language)}
             style={{ height: 12, position: 'relative', ['--sm2-kit-tone' as string]: 'var(--sm2-primary-fill)' } as CSSProperties}
           >
             {/* A prévia de hoje: mais clara, atrás do creditado. Entra na virada. */}
@@ -1056,19 +1058,18 @@ export function EvolutionPath({
             <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(ratio * 100)}%`, position: 'relative' }} />
           </div>
           {gaugeGoal > 0 && (
-            <p data-evo-gauge-count style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-              {`${Math.min(evolutionPoints, gaugeGoal)} / ${gaugeGoal}`}
-              {todayGauge > 0 && !prontoParaEvoluir
-                ? (isPt ? ` · +${todayGauge} de hoje entram amanhã` : ` · +${todayGauge} from today join tomorrow`)
-                : ''}
+            <p data-evo-gauge-count style={{ ...sm2Hint, margin: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
+              <SoulFragmentIcon size={16} />
+              <span data-evo-gauge-count-text>
+                {`${Math.min(evolutionPoints, gaugeGoal)} / ${gaugeGoal}`}
+                {todayGauge > 0 && !prontoParaEvoluir ? fragmentTodayHint(todayGauge, language) : ''}
+              </span>
             </p>
           )}
           <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{fraseProgresso}</p>
           {!prontoParaEvoluir && gaugeGoal > 0 && (
             <p data-evo-gauge-unlock style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-              {isPt
-                ? 'Cada hábito ou tarefa concluída é um passo (tarefas maiores valem mais, até a meta do dia). Cheio, a próxima forma abre — e nada aqui volta para trás.'
-                : 'Every habit or task you finish is a step (bigger tasks count more, up to the day’s goal). When it fills, the next form opens — and nothing here ever goes back.'}
+              {fragmentHowText(language)}
             </p>
           )}
         </div>}

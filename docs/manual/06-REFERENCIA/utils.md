@@ -85,6 +85,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `anniversary.test.ts`
 **Regra de negócio:** Aniversário de mês/ano da relação, contado a partir de `bornAt`. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/elementoDoOraculo.ts`
+**Dono de:** o mapa oráculo → classe (dono, 20/10/2026, REGISTRO §150): `planta` → `vida`, `industrial` → `aco` (Arena: base dominante `marcial`). Normalização NA LEITURA, nada no save.
+**Exports:**
+- `ORACULO_PARA_CLASSE` — o mapa (tipado por `ElementoSoDoOraculo`: elemento novo só-do-oráculo obriga entrada).
+- `elementoDoOraculo(id)` — id do oráculo ou da classe → elemento conhecido (17 base + pares) ou `undefined`.
+- `aliasDoOraculo(id)` — só traduz, sem validar (mapas de arte).
+**Chamado por:** `starterElements.ts` (`petElementOf`), `combatFx.ts`, `attackFxArt.ts`, `combatArt.ts`, `soulmonPerfil.ts`. A Arena usa `arenaElementsFor` (`arena.ts`): sem ficha, a vantagem vem da base dominante da identidade.
+**Régua:** `src/utils/elementoDoOraculo.test.ts` (mapa, consistência com `ELEMENT_BRIDGE`, guard de grep contra literal duplicado).
+
 ### `src/utils/arena.ts`
 **Dono de:** o motor da Arena no **núcleo do Combate v3, em GRUPO (N × 1)** (PR3b, 06/10/2026, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.15–§2.17): o jogador é `soulCombatant(estado)` (level e ramo), o especial é `specialOf(família)` com a área da skill (`StageSkill.area`), os inimigos são RELATIVOS ao level dele (`arenaFoe`) e lutam ao mesmo tempo (`groupFightSteps`, `combate/group.ts`). O bestiário só dá o SABOR (nome gerado, elemento, sprite — nunca o `nome` do pool). Tudo puro e determinístico pela semente (um teste de fonte proíbe `Math.random` — `arena.semRandom.contract.test.ts`).
 **Exports:**
@@ -93,7 +102,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - Inimigos: `ARENA_FOES` (weak 0,45/0,12 · medium 0,95/0,235 · boss 1,2/0,495 com especial `direct` de alvo único), `ARENA_ROUND_GROWTH` (hp 0,04 · power 0,13), `ARENA_ROUND_COMP` (1·2·1·3·1; a régua `combate/ruler.ts` lê ESTA composição), `ARENA_ROUNDS`, `ROUND_CLEAR_HEAL` (0,3), `arenaFoe(L, cls, r)`, `buildArenaRound(r, dificuldade, rng, pool)` (só o sabor + Bits; o inimigo é sorteado ESTRATIFICADO por elemento — primeiro o elemento, chance igual entre os do pool, depois a criatura dentro dele — desde o #232, 06/10/2026, porque o corpus de 7.386 criaturas tem `vida` em 18% e tirava ~9pp de vitória de quem usa vida/terra/gravidade), `loadBestiaryPool`, tipos `ArenaEnemy`, `BestiaryCreature`.
 - Jogador e rodada: `ROLE_SHAPE` (HP e golpe básico por escola básica; recalibrado no PR3b para ser neutro em vitória), `ESCOLA_FAMILY_PROVISORIO` + `familyOfEscola` (família do especial por escola, PROVISÓRIO até o PR9 — um teste reprova quando `StageSkill.familia` existir), `arenaPlayerSide`, `arenaPlayerHitScale`, `arenaFoeSides`/`arenaFoeWithElement` (o elemento move a vida do inimigo e o bônus dele em ±1 golpe), `arenaRoundSeed`, `arenaSpecialElementScale`, `arenaPlayerCastScale` (anel × `PVE_FAMILY_POWER.arena`), `arenaFoeCastScale` (1 − esquiva), `autoDefenseHitScale` (a defesa automática como `hitScale` do inimigo), `PERFECT_ACC`.
 - Simulação: `ArenaSkill` (`nenhuma`/`media`/`boa`), `ARENA_SKILL_ODDS`, `simulateArenaRunV3(cfg, seed, skill, areaEfficiency?)` (a run de 5 rodadas; `knobs` só para os RED dos gates), `ArenaRunConfig`, `ArenaRunResult`.
-- `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
+- `arenaElementsFor(ficha, ident, attrs)` (elementos da vantagem: ficha, senão base dominante da identidade), `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
 **Saiu no PR3b:** `STAGE_BUDGET`, `getArenaPlayerStats`, `SPECIAL_EFFECTS`, `SPECIAL_CHARGE_TURNS`, `playerHitDamage`, `enemyHitDamage`, `ADVANTAGE_MULT`/`DISADVANTAGE_MULT`, `simulateArenaRun`, `simulateArenaRunEnergy`, `ARENA_HP_SCALE`, `ARENA_FOE_HP_EXTRA`, `ARENA_TORCIDA_MULT`, `arenaTorcidaTurn`, `arenaTurnIsSpecial`, `CLASS_SHAPE`, `ARENA_ENERGY_ENABLED`, `ARENA_TIMING_ATTACK_ENABLED`, `ARENA_AUTO_ACC`.
 **Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
 ### `src/utils/atividadesLista.ts`
@@ -799,6 +808,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** `components/games/useCombatV3Art.ts` (e `combatFx.status.test.ts` para provar que a tabela só cita arte instalada).
 **Régua:** `src/utils/combatFx.status.test.ts`, `src/components/games/BattleStage.status.test.tsx` (sem arte × com arte).
 
+### `src/utils/fxFacing.ts`
+**Dono de:** PARA ONDE A ARTE de cada FX de ataque olha e o espelho que cada caso recebe (REGISTRO §151, 20/10/2026). O espelho nunca é escolhido por lado ("inimigo espelha"): é `arte ≠ sentido do golpe`. Convenção: projétil = cabeça; corte = bojo do crescente; `defended` = para onde o golpe recebido anda; cast/aura/impact simétricos. O jogador golpeia para a direita, o inimigo para a esquerda.
+**Exports:** `fxFacing(elementId, estado)` (`'R' | 'L' | 'S'`, da arte que de fato é desenhada, com o fallback `neutro`) · `fxMirror(elementId, estado, travel)` · `orbPose(elementId, travel, angDeg)` (`{rot, flip}`, nunca de cabeça para baixo) · `travelOf('me' | 'foe')` · `DIRECTIONAL_FX_STATES` · tipos `FxFacing`/`FxTravel`.
+**Quem chama:** `components/games/BattleStage.tsx` (projétil, corte, escudo-fallback) e `components/Match3Game.tsx` (projétil).
+**Régua:** `src/utils/fxFacing.contract.test.ts` (remede os PNG, cobre 155 elementos × orb/slash/defended × jogador/inimigo, exige o espelho do inimigo inverso ao do jogador e a fiação no palco).
+
+### `src/utils/fxFacingTable.ts`
+**Dono de:** a tabela GERADA de direção da arte (`node scripts/fx-facing.mjs` mede os PNG de `fx-ataque/` e `pesadelo/`; não editar à mão). Três letras por elemento: orb · slash · defended (`R`/`L`/`S`).
+**Exports:** `FX_FACING_TABLE`.
+**Quem chama:** só `utils/fxFacing.ts`.
+**Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
+
 ### `src/utils/combatArt.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
 **Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatShadow(sceneElement)` (escura só sobre o cenário de `luz`) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
@@ -932,6 +953,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `dayItemGaugeGain`, `gaugeView`, `GaugeView`.
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
+
+### `src/utils/soulFragment.ts`
+**Dono de:** o VOCABULÁRIO do Fragmento de Alma (20/10/2026, REGISTRO §153) — o nome visível do gauge de evolução. Singular/plural PT+EN, frases da barra, da prévia de hoje ("entram amanhã"), da ajuda, do que JÁ se juntou (nunca o que falta) e do consumo na cerimônia. NÃO decide regra: o fragmento é o `evolutionPoints` do `evolutionGauge.ts` (por esforço, teto diário, crédito na virada, zera ao evoluir), com o mesmo significado no save.
+**Exports:** `SOUL_FRAGMENT_SAVE_FIELD`, `soulFragmentName`, `soulFragmentWord`, `soulFragmentCount`, `fragmentBarLabel`, `fragmentTodayHint`, `fragmentHowText`, `fragmentsSpentLine`, `fragmentsGatherLine`, `fragmentsGatheredLine`.
+**Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
+**Régua:** `src/utils/soulFragment.test.ts` (vocabulário sem cobrança; save antigo vira fragmentos 1:1, idempotente; por esforço com teto).
 
 ### `src/utils/evolutionTarget.ts`
 **Dono de:** Fonte ÚNICA da forma-destino da evolução manual — antes existiam três derivações divergentes no `App.tsx`.
@@ -1225,7 +1252,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Estado:** verificado em 21/09/2026 por doc-mantenedor (entrada nasceu no mesmo commit da rodada 2).
 
 ### `src/utils/lineFullArt.ts`
-**Dono de:** mapa `<linha>-<estágio>[-<galho>]` → URL da árvore completa das linhas curadas (`assets/soulmon/lines/full/`, 69 PNG: kaelen/orrin/thalindra + ignar/lumel/serah/igni da rodada 3).
+**Dono de:** mapa `<linha>-<estágio>[-<galho>]` → URL da árvore completa das linhas curadas (`assets/soulmon/lines/full/`, 69 PNG: kaelen/orrin/thalindra + igni da rodada 3; as formas de ignar/lumel/serah foram apagadas em 20/10/2026).
 **Exports:**
 - `LineFullStage`, `LineFullBranch` (types).
 - `LINE_FULL_ART` — o mapa por glob eager.
@@ -2646,7 +2673,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `sfxCombateLivres.contract.test.ts` (os 7 samples: arquivo, hash, WebM/Opus, ≤ 40 KB, fonte/licença CC0 por arquivo, Attributions, loudness/pico, sample = padrão e procedural = fallback, mudo); `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; as camadas têm a mesma `duracaoS`, múltiplo inteiro do compasso de 100 BPM (2,4 s); sem número de loudness no manifesto)
 
 ### `src/utils/revealEscolha.ts`
-**Dono de:** Os candidatos da "Escolha outro lado" do passo `ELEMENT_DECIDE` (20/10/2026, REGISTRO §151). Função pura: sem rede, sem `Math.random`.
+**Dono de:** Os candidatos da "Escolha outro lado" do passo `ELEMENT_DECIDE` (20/10/2026, REGISTRO §157). Função pura: sem rede, sem `Math.random`.
 **Exports:**
 - `function elementChoiceCandidates(result: OracleResult): ElementId[]` — o 2º colocado sempre, mais os empatados no 1º/2º; ordem por pontuação desc e `ELEMENT_ORDER`. O jogador vê só nome e descrição, nunca pontos.
 - `function falaDaIris(result, lang: 'pt' | 'en'): string` — a fala da Iris ("Your Soulmon is {name}. A {Element} soul, touched by {Secondary}: {personality}.").
@@ -2656,7 +2683,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/revealEscolha.test.ts` (candidatos, falas EN/PT, grep sem acaso); `src/components/SoulmonOnboarding.elemento.render.test.tsx` (sprite só depois do "Gostei", troca, intro com o nome novo)
 
 ### `src/utils/soulmonIntro.ts`
-**Dono de:** As falas da apresentação do Soulmon depois do batismo (20/10/2026, REGISTRO §150). Função pura e determinística: sem IA, sem rede, sem efeito de jogo.
+**Dono de:** As falas da apresentação do Soulmon depois do batismo (20/10/2026, REGISTRO §156). Função pura e determinística: sem IA, sem rede, sem efeito de jogo.
 **Exports:**
 - `function soulmonIntroLines(input: SoulmonIntroInput, lang: 'en' | 'pt'): string[]` — pelo menos 3 balões (cada um com `\n` entre frases): apresentação ("contraparte digital da sua alma", exceção à L1), elemento e o que leva vantagem sobre ele (`COUNTERS`), comida da categoria mais frequente (`FOOD_BY_CATEGORY`) + traço, e o caminho. Nenhuma fala repete a bio do reveal.
 - `interface SoulmonIntroInput` — `name`, `element`, `alignment`, `petPassive?`, `categories?`, `bio?`.
@@ -2933,6 +2960,18 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `spriteTrigger.test.ts`, `spriteTrigger.esperaMinima.test.ts`, `spriteBirth.contract.test.ts`, `spriteTrigger.semPrazo.contract.test.ts` (varre o fonte: nenhuma comparação de data além de `incubationReady`, nenhuma cópia de `INCUBATION_MIN_MS`)
 **Avisos do arquivo:** é PISO, nunca prazo — passados os 30 min a evolução espera indefinidamente, nada expira; não reintroduza a véspera (B) nem o champion no nascimento achando que caíram por descuido; o `since` é por forma DENTRO da mesma vida — Renascimento e troca de criatura do upgrade zeram.
 
+### `src/utils/spriteScale.ts`
+**Dono de:** o TAMANHO do Soulmon do jogador na tela (REGISTRO §154, 20/10/2026) — alvo por estágio, porte por criatura (determinístico), normalização pela CAIXA VISÍVEL (bbox do alfa) e o estilo `scale` que toda tela aplica. Funções puras; só `measureVisibleFill` toca canvas.
+**Exports:**
+- `ScaleStage`, `SCALE_STAGES`, `STAGE_TARGET` — alvo (fração da caixa de render `PET_RENDER` ocupada pelo lado maior da caixa visível): rookie 0,54 · champion 0,66 · ultimate 0,78 · mega 0,90 · ultra 0,96.
+- `SizeProfile` (`standard`/`small`/`tiny`/`bigRookie`), `RARE_BIG_ROOKIE_RATE` (0,02) · `TINY_RATE` (0,10) · `SMALL_RATE` (0,20), `BIG_ROOKIE_TARGET` (0,84), `sizeProfileFor(seed)`, `seedUnit(seed)` (FNV-1a), `scaleStageOf`, `targetFor(stage, profile)` (monótono em todo porte).
+- `petScaleFor(stage, seed, fill?)` — alvo ÷ preenchimento medido, preso a `SCALE_MIN`(0,3)..`SCALE_MAX`(1,25); `petScaleStyle(fator, origin?)` — `{scale, transformOrigin}` (propriedade CSS `scale`, origem nos pés; `'center'` para sprite pendurado por `top`).
+- `setPetSizeSeed`/`getPetSizeSeed`/`sizeSeedOf(state)` — semente do save (`demoCharacterId` › `bornAt` › `createdAt`), escrita em render no `App.tsx` como `setOwnSprites`.
+- `DEFAULT_FILL`, `fillFromRGBA`, `measureVisibleFill(url)`, `visibleFillOf(url)`, `subscribeFill` — medição e cache da bbox; sem canvas/CORS cai no padrão.
+**Chamado por:** `src/hooks/usePetScale.ts`, `src/App.tsx`, `src/components/games/BattleStage.tsx`, e as telas do jogador (`CompanionHUD`, `PetPage`, `DungeonGame`, `ArenaGame`, `NightmareBattle`, `DuelScreen`, `TournamentPage`, `Match3Game`, `DinoGame`, `GoodDream`, `mente/*`, `refugio/RespiracaoGame`).
+**Régua:** `src/utils/spriteScale.test.ts` (monotonia por estágio e por porte, raridade do rookie grande < 3%, "pequenininho até o mega", caixa visível, fiação nas 14 telas).
+**Avisos do arquivo:** só o DESENHO encolhe — hitbox do Dino, alvos de toque e linha do chão não mudam; retratos e cerimônias (`EvolutionCeremony`, `EvolutionPath`, `LevelUpOverlay`, `BirthCard`, `MemoriesCard`…) ficam fora de propósito. Alvo de estágio nunca se escreve à mão em tela.
+
 ### `src/utils/sprites.ts`
 **Dono de:** O filtro de tonalidade do modo demo (WP1.12) e o resolvedor de sprite por estágio/linha.
 **Exports:**
@@ -2940,7 +2979,7 @@ dominância populacional — por isso ±15%. Régua nova:
 - `function demoTintFilter(tint: number | undefined): string | undefined` — O filtro CSS `hue-rotate` do tint do personagem demo, ou `undefined` para o tint 0.
 - `DUNGEON_SPIRIT_SPRITE` (re-export) — reexportado por conveniência; a descrição mora no módulo de origem.
 - `RETIRED_LINE_IDS` / `RETIRED_LINE_STAND_IN` / `isRetiredLineId` / `resolveArtLineId` — (19/10/2026, D-78, REGISTRO §119) as 3 linhas aposentadas (`orrin`/`serah`/`nautilu`): o id segue válido em save/perfil, mas a arte desenhada é o inicial de reserva; `getSpriteForStage`, `resolveLineForStage` e `artFacesLeft` passam por `resolveArtLineId`.
-- `DUNGEON_LINE_SPRITES` — tabela/dado de configuração (**6 linhas desde 19/10/2026**: `ignar`/`lumel`/`kaelen`/`thalindra`/`igni`/`astrase`; `orrin`/`serah`/`nautilu` saíram — D-78. Histórico: 9 linhas jogáveis desde 15/09/2026: `ignar`/`lumel`/`serah`/`kaelen`/`orrin`/`thalindra` + `igni`/`nautilu`/`astrase`, as 3 novas com seed fixo dos runs 18/08/2026, recortadas para entrar na pré-seleção do free — D1).
+- `DUNGEON_LINE_SPRITES` — tabela/dado de configuração (**4 linhas desde 20/10/2026**: `kaelen`/`thalindra`/`igni`/`astrase`; `ignar`/`lumel` saíram em 20/10/2026 e `orrin`/`serah`/`nautilu` em D-78 — ids aposentados resolvem para um inicial via `RETIRED_LINE_STAND_IN`; `migrateEggType` migra o `eggType` do save. Histórico: 9 linhas jogáveis desde 15/09/2026: `ignar`/`lumel`/`serah`/`kaelen`/`orrin`/`thalindra` + `igni`/`nautilu`/`astrase`, as 3 novas com seed fixo dos runs 18/08/2026, recortadas para entrar na pré-seleção do free — D1).
 - `DUNGEON_LINE_NAMES` — O NOME DE EXIBIÇÃO DE CADA LINHA — dono único. Desde 30/09/2026 (`3a56de2f`, inglês como língua principal): `orrin` → `Akashai` (era `Akashaoi`), `nautilu` → `Nautil`, `astrase` → `Astria`. ⚠️ Estes três nomes estavam escritos à mão em TRÊS arquivos: aqui, no `PREMADE_CHARACTERS` (`monetization.ts`) e no `petName` dos NPCs da Biblioteca (`libraryNpcs.ts`).
 - `STARTER_IDS` / `STARTER_SPRITES` / `STARTER_NAMES` / `StarterId` / `isStarterId` — (07/10/2026) os 5 personagens iniciais: id (= nome do arquivo em `assets/soulmon/starters/`), arte (UM sprite 512² por criatura, o MESMO em todos os estágios — limitação declarada) e nome (Crato, Brooka, Zefi, Oaken, Bolid). Ficam FORA de `DUNGEON_LINE_SPRITES`. `getSpriteForStage` os resolve antes das linhas; `resolveLineForStage` devolve `null` para eles.
 - `LEGACY_PREMADE_IDS` / `DemoCharacterId` / `DEMO_CHARACTER_IDS` — os 6 ids antigos (seguem resolvendo sprite em save antigo) e a união com os 5 novos, que o `hydrateSave` usa como lista de ids válidos.
@@ -3577,11 +3616,11 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Dono de:** o FIM DE SESSÃO — `encerrarSessao({motivo})` (cópia de segurança → revoga push → `signOut` → apaga o estado local da conta → zera assinatura/admin em memória → recarrega na entrada), `sincronizarAntesDeSair()` (tenta enviar o save pendente; falha = a tela avisa e oferece "Exportar backup", nunca apaga em silêncio), `SOBREVIVEM_AO_LOGOUT` (allowlist do que é do APARELHO: idioma, tema, som, consentimento/id de telemetria, avisos de Termos, rastro forense `soulmon-reconcile-backup`), `chavesDaConta()`, `sessaoEncerrando()` (o `GameStateContext` não regrava nem sobe depois do logout), `marcarMudancaPendente`/`marcarSincronizado` (chave `soulmon-sync-pending`, persistida), `baixarBackupLocal`. **Por quê:** "Sair da conta" só chamava `signOut` e o login seguinte subia o save da conta anterior para a conta nova.
 **Chamado por:** `components/AccountSection.tsx` (Sair da conta), `components/AccountDataSection.tsx` (exclusão de conta, sem reload até "Voltar ao início"), `utils/betaClosed.ts` (`trocarContaBetaFechado`), `utils/cloudSave.ts` (`reagirContaExcluida`), `contexts/GameStateContext.tsx`. Os quatro caminhos usam a MESMA função. **Régua:** `src/utils/sessionReset.contract.test.ts` (allowlist travada, toda chave decidida, só este módulo apaga save/identidade), `sessionReset.test.ts`, `sessionReset.cenarios.test.ts` (A→B→A + controle), `src/components/AccountSection.signout.render.test.tsx`.
 
-### `src/utils/saveQuarantine.ts` (fix/qa-servidor-persistencia, 20/10/2026 — REGISTRO §152)
+### `src/utils/saveQuarantine.ts` (fix/qa-servidor-persistencia, 20/10/2026 — REGISTRO §158)
 **Dono de:** a QUARENTENA do save local — `quarentenarSaveLocal(cru, motivo)` grava em `STORAGE_KEYS.SAVE_QUARANTINE` o texto do `GAME_STATE` que não virou estado (ou o local atrasado antes de adotar a nuvem), corte em 1.000.000 caracteres (50.000 se a cota negar), idempotente, nunca lança.
 **Quem usa:** `contexts/GameStateContext.tsx` (inicializador, carga degradada L08-01/L08-02). Módulo próprio para não ser apanhado pelos `vi.mock('../utils/cloudSave')`. **Régua:** `src/contexts/GameStateContext.l08corrupcao.qa.test.tsx`.
 
-### `src/utils/backupRing.ts` (fix/qa-srv-l08-backup, 20/10/2026 — REGISTRO §152)
+### `src/utils/backupRing.ts` (fix/qa-srv-l08-backup, 20/10/2026 — REGISTRO §158)
 **Dono de:** o ANEL de cópias de segurança — `lerAnel()` (tolerante), `empurrarNoAnel()` (até 3, idempotente, encolhe sob cota, nunca lança), `preservarConflictBackup()` (empurra o `CONFLICT_BACKUP` atual antes de sobrescrevê-lo) e `saveTemProgresso()` (a régua que `saveTemOnboardingConcluido` usa).
 **Quem usa:** `utils/sessionReset.ts` (`guardarCopiaDeSeguranca`), `utils/cloudSave.ts` (adoção e reconciliação). Não importa `cloudSave` nem `sessionReset` (sem ciclo). **Régua:** `src/utils/backupRing.l08.qa.test.ts`.
 

@@ -89,6 +89,9 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   const lojaAberta = useStoreOpen();
   const lojaFechada = isBillingAvailable() && lojaAberta === false;
 
+  /** O código do motivo (`billing-error-5`, `product-not-found`…) vai no fim da mensagem: é o que o suporte precisa para saber o que a Play respondeu. */
+  const motivoCurto = (reason: string | undefined) => (reason && /^[a-z0-9-]{3,40}$/.test(reason) ? ` (${reason})` : '');
+
   const handleBuy = async () => {
     if (!isBillingAvailable()) { setMessage(unavailable); return; }
     setLoading('buy');
@@ -99,8 +102,8 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
     setMessage(result.reason === 'billing-disabled' ? billingDisabledMessage(isPt) : result.reason === 'cancelled'
       ? (isPt ? 'Compra cancelada.' : 'Purchase cancelled.')
       : (isPt
-        ? 'Não foi possível concluir a compra agora. Tente de novo em instantes.'
-        : "Couldn't complete the purchase right now. Please try again shortly."));
+        ? `Não foi possível concluir a compra agora. Tente de novo em instantes.${motivoCurto(result.reason)}`
+        : `Couldn't complete the purchase right now. Please try again shortly.${motivoCurto(result.reason)}`));
   };
 
   // Quem reinstalou o app (ou trocou de aparelho) já pagou — sem isto,

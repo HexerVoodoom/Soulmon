@@ -77,24 +77,29 @@ describe('nightmaresFor — teto por noite', () => {
   });
 });
 
-describe('a DURAÇÃO do sono não afeta NADA', () => {
-  it('mesma regularidade + noites de 3h e de 11h → resultado IDÊNTICO', () => {
+describe('o pesadelo exige 6 h de sono (dono, 20/10/2026) e dormir MAIS não rende mais', () => {
+  it('3 h de sono → 0 pesadelos; 6 h ou mais → 1', () => {
     const now = at(2026, 7, 20, 8);
-    const short = withNights(7, now, { hours: 3, onTime: true });
-    const long = withNights(7, now, { hours: 11, onTime: true });
+    expect(nightmaresFor(withNights(7, now, { hours: 3, onTime: true }), now).count).toBe(0);
+    expect(nightmaresFor(withNights(7, now, { hours: 5.9, onTime: true }), now).count).toBe(0);
+    expect(nightmaresFor(withNights(7, now, { hours: 6, onTime: true }), now).count).toBe(1);
+    expect(nightmaresFor(withNights(7, now, { hours: 11, onTime: true }), now).count).toBe(1);
+  });
 
-    expect(nightmaresFor(short, now, 'mega')).toEqual(nightmaresFor(long, now, 'mega'));
-    expect(nightmareRewards(nightmaresFor(short, now).rarity, true)).toEqual(
+  it('acima do limiar a duração não muda NADA: 6 h e 14 h → resultado idêntico (tier e prêmio)', () => {
+    const now = at(2026, 7, 20, 8);
+    const six = withNights(7, now, { hours: 6, onTime: true });
+    const long = withNights(7, now, { hours: 14, onTime: true });
+    expect(nightmaresFor(six, now, 'mega')).toEqual(nightmaresFor(long, now, 'mega'));
+    expect(nightmareRewards(nightmaresFor(six, now).rarity, true)).toEqual(
       nightmareRewards(nightmaresFor(long, now).rarity, true),
     );
   });
 
-  it('dormir MAIS não rende mais pesadelos que dormir pouco', () => {
+  it('sem o acordar registrado não dá para provar as 6 h: não abre', () => {
     const now = at(2026, 7, 20, 8);
-    const short = withNights(4, now, { hours: 2, onTime: true });
-    const long = withNights(4, now, { hours: 14, onTime: true });
-    expect(long.nights.length).toBe(short.nights.length);
-    expect(nightmaresFor(long, now).count).toBe(nightmaresFor(short, now).count);
+    const rest = recordNight(createRestState(), at(2026, 7, 19, 23, 30));
+    expect(nightmaresFor(rest, now).count).toBe(0);
   });
 });
 

@@ -20,7 +20,10 @@ import {
 import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
+import { fxMirror } from '../utils/fxFacing';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 
 /**
  * COMBINA 3 — o jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36), agora um COMBATE (18/10/2026, D-03…D-07):
@@ -404,12 +407,13 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   };
 
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petScale = usePetScale(evolutionStage, playerSprite);
 
   // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (
     <div data-m3-arena style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
       <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
-        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain' }} />
+        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
       <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
@@ -647,6 +651,8 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
     ], { duration: FX_NUM_MS, delay: impactAt, easing: 'ease-out' });
   }, [reduced, full, x0, y0, x1, y1, delay, impactAt, shot.target]);
   const orbSrc = fxFrame(shot.element, 'orb') ?? elementIcon(shot.element);
+  // o projétil aponta para o alvo (a arte tem lado: `utils/fxFacing.ts`)
+  const orbMirror = fxFrame(shot.element, 'orb') ? fxMirror(shot.element, 'orb', x1 >= x0 ? 'right' : 'left') : false;
   const impactSrc = fxFrame(shot.element, 'impact') ?? elementIcon(shot.element);
   const auraSrc = fxFrame(shot.element, 'aura');
   const base: CSSProperties = { position: 'absolute', pointerEvents: 'none', zIndex: 3 };
@@ -654,7 +660,7 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
   // D-103: UM único ícone do poder por combo. O rastro NÃO repete o ícone (eram 3 foguinhos): é só um brilho (sem imagem) que segue o poder.
   const flyer = (ref: React.Ref<HTMLSpanElement>, extra: Record<string, string>) => (
     <span ref={ref} aria-hidden="true" {...extra} style={{ ...base, left: x0 - orbPx / 2, top: y0 - orbPx / 2, width: orbPx, height: orbPx, opacity: 0, filter: glow }}>
-      {orbSrc && <img src={orbSrc} alt="" draggable={false} width={orbPx} height={orbPx} style={{ width: orbPx, height: orbPx, imageRendering: 'pixelated', display: 'block' }} />}
+      {orbSrc && <img src={orbSrc} alt="" draggable={false} width={orbPx} height={orbPx} style={{ width: orbPx, height: orbPx, imageRendering: 'pixelated', display: 'block', ...(orbMirror ? { transform: 'scaleX(-1)' } : null) }} />}
     </span>
   );
   const glowTrail = (ref: React.Ref<HTMLSpanElement>, k: number) => {

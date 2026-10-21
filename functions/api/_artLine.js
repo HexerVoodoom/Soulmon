@@ -5,6 +5,7 @@
 export const ART_LINE_IDS = new Set([
   'industrial', 'nascente', 'alento', 'vida', 'meteoro',
   'kaelen', 'orrin', 'thalindra', 'igni', 'nautilu', 'astrase',
+  // Linhas APOSENTADAS (20/10/2026): aceitas só na LEITURA (perfil/save antigo); o servidor nunca as produz.
   'ignar', 'lumel', 'serah',
   'corvo',
 ]);

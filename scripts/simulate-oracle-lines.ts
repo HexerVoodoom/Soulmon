@@ -1,3 +1,4 @@
+// ⚠️ OBSOLETO (20/10/2026): as linhas Ignar/Lumel/Serah foram aposentadas; script mantido só como registro do método.
 // Simula 3 usuários passando pelo oráculo (utils/oracle.ts) — o MESMO sistema
 // real do onboarding — para gerar os prompts de imagem oficiais do jogo
 // (CreatureStage.imagePrompt) usados nas linhas placeholder da masmorra

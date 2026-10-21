@@ -15,6 +15,7 @@ import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
+import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 import type { Ficha } from './soulProfile/ficha/types';
 import { escolaSkillSegura, type EscolaSkillId, type RecursoId } from './soulProfile/ficha/types';
 import type { StageSkills } from './soulProfile/ficha/skills';
@@ -314,6 +315,22 @@ export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number): FightSide 
   return {
     combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r), bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) - 1 },
     special: 'special' in s ? specialOf('direct') : null,
+  };
+}
+
+/**
+ * Os elementos da MECÂNICA da vantagem (tabela só das 17 bases): a base da ficha (`elementoId`); sem ficha, a BASE DOMINANTE
+ * da identidade (par → componente de maior peso; `industrial`→`aco`→`marcial`, `planta`→`vida`). Puro: testável sem a tela.
+ */
+export function arenaElementsFor(
+  ficha: { basica?: string; especial?: string },
+  ident: { basico: { elemento: string }; especial: { elemento: string } },
+  attrs: { principal: string; secundario: string },
+): ArenaElements {
+  return {
+    basica: ficha.basica ?? baseDominanteDoElemento(ident.basico.elemento),
+    especial: ficha.especial ?? baseDominanteDoElemento(ident.especial.elemento),
+    attrs,
   };
 }
 

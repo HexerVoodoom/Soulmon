@@ -1,3 +1,4 @@
+// ⚠️ OBSOLETO (20/10/2026): gerou as linhas placeholder Ignar/Lumel/Serah, todas aposentadas. NÃO rode: recriaria as artes removidas.
 // Gera 3 LINHAS completas de Soulmon placeholder (uma por branch/alinhamento)
 // + backgrounds do Tournament e da Dungeon. Usadas na dungeon e como
 // placeholder de pets até o Higgsfield gerar os sprites de cada usuário.

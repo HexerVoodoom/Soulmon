@@ -131,7 +131,7 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.equippedDecor).toEqual({});
     expect(s.equippedBackground).toBeNull();
     expect(s.ownedBackgrounds).toEqual(['bg-room']);
-    expect(s.eggType).toBe('ignar');
+    expect(s.eggType).toBe('meteoro');
 
     // Conta e "porquê": save antigo é adotado como PAGO — nunca rebaixado.
     expect(s.accountTier).toBe('paid');
@@ -275,25 +275,28 @@ describe('linha de sprite genérica na carga', () => {
      › Compatibilidade). Hoje as linhas são `ignar`/`lumel`/`serah`, de
      `DUNGEON_LINE_SPRITES`, e o que ficou testado é a PRECEDÊNCIA — que é a
      regra de verdade, e continua valendo. */
-  it('linha desconhecida do save é preservada como veio', () => {
-    // Sem tradução: o que o save disser vale. Um id que a arte não conhece cai
-    // em `fallbackSpriteForStage`, que responde com arte NOSSA por hash.
-    expect(abrirComSave({ activities: [], tasks: [], eggType: 'ignar' }).eggType).toBe('ignar');
+  it('linha aposentada do save (ignar/lumel/serah) migra para o inicial de reserva; id lixo cai no padrão', () => {
+    // 20/10/2026: nenhuma perda de progresso — só o `eggType` (campo de HUD) é reescrito.
+    expect(abrirComSave({ activities: [], tasks: [], eggType: 'ignar' }).eggType).toBe('meteoro');
+  });
+
+  it.each([['lumel', 'alento'], ['serah', 'vida'], ['zzz', 'meteoro'], ['nascente', 'nascente']])('eggType %s do save carrega como %s', (de, para) => {
+    expect(abrirComSave({ activities: [], tasks: [], eggType: de }).eggType).toBe(para);
   });
 
   it('linha do save manda sobre a do storage', () => {
     localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'serah');
-    expect(abrirComSave({ activities: [], tasks: [], eggType: 'lumel' }).eggType).toBe('lumel');
+    expect(abrirComSave({ activities: [], tasks: [], eggType: 'lumel' }).eggType).toBe('alento');
   });
 
   it('sem linha no save, usa a do storage', () => {
     localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'serah');
-    expect(abrirComSave({ activities: [], tasks: [] }).eggType).toBe('serah');
+    expect(abrirComSave({ activities: [], tasks: [] }).eggType).toBe('vida');
   });
 
   it('INSTALAÇÃO NOVA respeita a linha própria já guardada no storage', () => {
     localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'serah');
-    expect(abrirComSave(undefined).eggType).toBe('serah');
+    expect(abrirComSave(undefined).eggType).toBe('vida');
   });
 });
 
@@ -398,7 +401,7 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.pvpEnabled).toBe(true); // H13: todo personagem nasce no PvP
     expect(s.activities).toEqual([]);
     expect(s.tasks).toEqual([]);
-    expect(s.eggType).toBe('ignar');
+    expect(s.eggType).toBe('meteoro');
     // O onboarding segue gravando a vida cheia ao terminar (App.tsx) — o
     // nascimento é ritual. O que mudou é que o estado inicial deixou de
     // MENTIR enquanto o ritual não termina.

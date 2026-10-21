@@ -6,6 +6,8 @@ import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, ph
 import { BitsAmount } from '../ui/BitsAmount';
 import { ATELIE_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
+import { usePetScale } from '../../hooks/usePetScale';
+import { petScaleStyle } from '../../utils/spriteScale';
 import {
   REVIEW_MAX_CARDS, REVIEW_TEXT_MAX, addCard, editCard, removeCard, dueCards, answerCard,
   completeSession, type ReviewCard, type ReviewState,
@@ -67,6 +69,7 @@ export function RevisaoGame({
 
   const due = dueCards(review, todayKey);
   const sprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petScale = usePetScale(evolutionStage, sprite);
   const explain = isPt
     ? 'Revisar no intervalo certo ajuda a lembrar: o que você lembra volta mais tarde, o que não lembra volta amanhã.'
     : 'Reviewing at the right interval helps you remember: what you remember comes back later, what you don’t comes back tomorrow.';
@@ -123,7 +126,7 @@ export function RevisaoGame({
 
   const petVisor = (
     <GameVisor height={72} scene={ATELIE_SCENE_SUAVE}>
-      <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
+      <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8, ...petScaleStyle(petScale, 'center') }} />
     </GameVisor>
   );
 

@@ -66,7 +66,7 @@ function esperado(f: Ficha) {
   };
 }
 
-const onda = (): DungeonEnemy[] => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.lumel.rookie, points: 1, slot: 0, floor: 1, foe: dungeonFoe(1, 0, 1) }];
+const onda = (): DungeonEnemy[] => [{ name: 'S', stage: 'rookie', sprite: DUNGEON_LINE_SPRITES.thalindra.rookie, points: 1, slot: 0, floor: 1, foe: dungeonFoe(1, 0, 1) }];
 type Skills = Partial<Record<'rookie', StageSkills>>;
 const PVE: Record<string, (skills: Skills) => void> = {
   Arena: (skills) => { render(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={skills} petElement={ORACULO} onExit={() => {}} />); },

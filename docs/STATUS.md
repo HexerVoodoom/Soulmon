@@ -1,5 +1,17 @@
 # Status do Soulmon — registro vivo
 
+> ## 20/10/2026 — Tamanho do Soulmon por estágio (`feat/backlog-size`, REGISTRO §154)
+>
+> - Rookie pequeno por padrão, cresce com o estágio; "pequenininho até o mega" (10%) e rookie grande (2%) são portes raros, determinísticos pela semente do save. Normaliza pela CAIXA VISÍVEL do sprite (bbox do alfa), não pelo canvas.
+> - Dono único `src/utils/spriteScale.ts` + `src/hooks/usePetScale.ts`; aplicado em 14 telas (Home, Pet, Masmorra, Arena, Pesadelo, Duelo/Torneio, Match3, Dino, Mente, Respiração, GoodDream). Só o desenho encolhe (hitbox/toque/chão iguais). Sem campo novo no save; rollback = reverter o commit.
+> - **Não conferido no aparelho:** a legibilidade da Home em APK real e a bbox de um sprite do Oráculo real (a medição roda no WebView; sem canvas ou com CORS cai no padrão 0,85).
+
+> ## 20/10/2026 — Hotfix: elemento do oráculo no Perfil e na Arena (`fix/elemento-oraculo-perfil`, REGISTRO §150)
+>
+> - Perfil mostrava `planta` cru e ícone neutro; agora `planta` → Vida/Life e `industrial` → Aço/Steel, com o ícone do elemento. Dono único do mapa: `src/utils/elementoDoOraculo.ts`; os três mapas duplicados (`combatFx`, `attackFxArt`, `combatArt`) importam dele.
+> - Arena sem ficha: a vantagem elemental volta (vida > terra/gravidade; aço pela base `marcial`). Regra de produto muda para quem tem criatura planta/industrial sem ficha.
+> - Sem save novo, sem servidor; rollback = reverter o commit.
+
 > ## 20/10/2026 — Escolha de elemento antes do desenho (`feat/reveal-escolha-elemento`, REGISTRO §151)
 >
 > - Passo novo `ELEMENT_DECIDE` entre a geração e o reveal (fluxo pago e upgrade demo->pago). "Gostei" segue; "Me deixa tentar de novo" abre "Escolha outro lado" (`elementChoiceCandidates`). Regera com o mesmo seed e `OracleOverrides.dominantElement`. O desenho só é pedido no "Gostei": sem custo de cota, imagem ou Créditos. Linha "Essência" saiu do cartão do reveal.
