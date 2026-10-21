@@ -192,9 +192,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
   // 15/10/2026 (corte do index.js, §80): 172_242 -> 180_815 em build limpo pós-merge da `main` (selo Welcome da intro, §79, e as
   // frentes anteriores sem re-medir; o `dist/` commitado da main media 179_728). Esta PR não mexe em CSS.
-  'index.css': 180_815,
+  // 21/10/2026 (splash sem texto assado, REGISTRO §168, L11-08): 180_815 -> 190_071 em build limpo sobre a main (a main já media 188_832; esta
+  // PR soma +1,2 KB: o texto/barra de carregamento da intro em DOM). O vídeo da intro caiu de 2,5 MB para 0,7 MB.
+  'index.css': 190_071,
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
-  'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
 };
 
 const RAIZ = resolve(__dirname, '../..');
@@ -296,7 +297,7 @@ describe('orçamento de bytes (decisão #31) — lido do dist/', () => {
     expect(problema).toContain('gigante-Abcdefgh.webp');
     expect(problema).toMatch(/arquivo novo/);
     // Vídeo em dívida que CRESCEU 1 byte (mídia não tem folga) → reprovado.
-    expect(avaliar('intro-Abcdefgh.mp4', DIVIDA_ATUAL['intro.mp4'] + 1, TETO_VIDEO, 0)).toMatch(/cresceu/);
+    expect(avaliar('evolution-bg-Abcdefgh.mp4', DIVIDA_ATUAL['evolution-bg.mp4'] + 1, TETO_VIDEO, 0)).toMatch(/cresceu/);
     // Dívida registrada para arquivo que não existe → linha morta (o guard cobra a remoção).
     const medidor = (n: string) => (n === 'index-Abcdefgh.js' ? DIVIDA_ATUAL['index.js'] : 0);
     expect(dividasMortas({ 'index.js': 1, 'fantasma.webp': 999_999 }, ['index-Abcdefgh.js'], medidor, tetoPorExtensao)).toEqual(['fantasma.webp']);

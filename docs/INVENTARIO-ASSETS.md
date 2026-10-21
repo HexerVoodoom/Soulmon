@@ -101,7 +101,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `backgrounds/thumbs/` | 41 · **96×52** (+6 em 04/10/2026) — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026); as 7 de fundos-v2 vieram prontas da leva. as 27 dos cenários retonados em 30/09 (tom da Home v2) foram rederivadas pelo mesmo método | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
 | `backgrounds/home-scene-1547.png` | 1 · 1376×3058 | `CompanionHUD.tsx` | Home (fundo do palco) — é a "image 1547" da pasta do Desktop |
 | `video/evolution-bg.mp4` + thumb | 1 | `EvolutionCeremony.tsx` | Evolução (`Cerimonia`) |
-| `brand/intro.mp4` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil (`IntroEstados`) |
+| `brand/intro.mp4` + `intro-poster.webp` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil; Gemini 21/10/2026 sem texto e sem marca (REGISTRO §168); pôster = 1º quadro do vídeo |
 
 ### 1.3 Decoração, itens, sonhos, aventuras (dentro do visor)
 

@@ -154,6 +154,44 @@ describe('IntroScreen — tela de abertura (tema na intro)', () => {
   });
 });
 
+/**
+ * 21/10/2026 (L11-08) — o vídeo e o pôster NÃO trazem mais texto assado
+ * ("LOADING DATA...", "SOUL_LINK ESTABLISHED", "VERSION 1.2", estrela do Gemini):
+ * o texto de carregamento é desenhado em DOM, PT e EN.
+ */
+describe('IntroScreen — texto de carregamento em DOM (sem texto assado)', () => {
+  it('EN "Loading data..." + "Soul link established"; PT "Carregando dados..." + "Vínculo de alma estabelecido"; decorativo', () => {
+    const { unmount } = render(<IntroScreen onFinish={() => {}} />);
+    expect(screen.getByTestId('intro-loading-label').textContent).toBe('Loading data...');
+    expect(screen.getByTestId('intro-loading-done').textContent).toBe('Soul link established');
+    const palco = screen.getByTestId('intro-loading-stage');
+    expect(palco.getAttribute('aria-hidden')).toBe('true');
+    expect(computed(palco, 'pointer-events')).toBe('none');
+    unmount();
+    localStorage.setItem('soulmon-language', 'pt-BR');
+    render(<IntroScreen onFinish={() => {}} />);
+    expect(screen.getByTestId('intro-loading-label').textContent).toBe('Carregando dados...');
+    expect(screen.getByTestId('intro-loading-done').textContent).toBe('Vínculo de alma estabelecido');
+  });
+
+  it('erro do vídeo: o texto de carregamento some junto (o quadro vira corvo + wordmark)', () => {
+    render(<IntroScreen onFinish={() => {}} />);
+    fireEvent.error(document.querySelector('video')!);
+    expect(screen.queryByTestId('intro-loading-stage')).toBeNull();
+  });
+
+  it('CSS: só tokens (sem hex), barra enche no tempo da intro e reduced-motion mostra tudo pronto', () => {
+    const css = readFileSync(join(__dirname, '../index.css'), 'utf8');
+    const ini = css.indexOf('.sm2-intro-load {');
+    const bloco = css.slice(ini, css.indexOf('@keyframes sm2-intro-done', ini));
+    expect(bloco).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+    expect(bloco).toContain('animation: sm2-intro-fill var(--intro-ms');
+    const canonico = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(canonico).toMatch(/\.sm2-intro-bar-fill \{ animation: none; transform: scaleX\(1\)/);
+    expect(canonico).toMatch(/\.sm2-intro-load-done \{ animation: none; opacity: 1/);
+  });
+});
+
 /** REGISTRO §79 — pílula "Welcome" sobre o texto pintado da arte. */
 describe('IntroScreen — pílula Welcome', () => {
   it('EN "Welcome" / PT "Bem-vindo", decorativa e sem pegar o toque', () => {

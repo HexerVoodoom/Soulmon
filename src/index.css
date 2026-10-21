@@ -5792,6 +5792,8 @@ select:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */
+  .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
@@ -7291,6 +7293,33 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 }
 
 .sm2-splash[role="button"]:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -4px; }
+
+/* TEXTO DE CARREGAMENTO da intro (L11-08, 21/10/2026): a arte não traz mais texto
+   assado. Ancorado na caixa 9:16 da arte (como o selo): faixa entre as silhuetas e
+   os cristais, y 59-69% do quadro. Tokens do visor; a barra enche no tempo da intro
+   (`--intro-ms`) e o selo final aparece no fim. */
+.sm2-intro-load {
+  position: absolute; left: 50%; top: 63%; width: 56%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 1.6cqw;
+  font-family: var(--sm2-font-pixel); text-transform: uppercase; white-space: nowrap;
+  font-size: max(var(--sm2-text-sm), 3.2cqw); letter-spacing: .08em; line-height: 1;
+  color: var(--sm2-primary-ink);
+  text-shadow: 0 1px 3px var(--sm2-viewport-bg), 0 0 8px var(--sm2-viewport-bg);
+}
+.sm2-intro-load-label { display: block; }
+.sm2-intro-bar {
+  width: 100%; height: 3cqw; box-sizing: border-box; padding: .5cqw;
+  background: var(--sm2-viewport-bg); border: 1px solid var(--sm2-primary-deep); border-radius: 999px; overflow: hidden;
+}
+.sm2-intro-bar-fill {
+  display: block; width: 100%; height: 100%; border-radius: 999px; background: var(--sm2-primary-ink);
+  transform-origin: left center; transform: scaleX(0);
+  animation: sm2-intro-fill var(--intro-ms, 4s) linear forwards;
+}
+.sm2-intro-load-done { opacity: 0; animation: sm2-intro-done var(--intro-ms, 4s) steps(1, end) forwards; }
+@keyframes sm2-intro-fill { to { transform: scaleX(1); } }
+@keyframes sm2-intro-done { 0%, 85% { opacity: 0; } 85.01%, 100% { opacity: 1; } }
+
 
 /* ── BARRA DE CARREGAMENTO (REGISTRO §50, 14/10/2026) ────────────────────────
    O ÚNICO indicador de carregando: 3px, turquesa, enche da esquerda para a

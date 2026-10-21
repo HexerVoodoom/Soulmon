@@ -3282,3 +3282,11 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Abertos, dependem de decisão de design do dono:** L05-01 (o "Sair da demo" fixo no canto inferior esquerdo foi PEDIDO dele em 20/10/2026 e cobre conteúdo na demo),
   L05-09 (estados de vazio), L06-07 (a lista da Home reordena ao concluir), L06-12 (rótulos do mapa sob a arte), L06-14 (folha "Nova tarefa" sob o teclado: mitigado pelo
   `interactive-widget=resizes-content`, falta confirmar no aparelho), L06-15 (a meta do dia não sobe ao criar tarefa), L11-05 (selo DEMO sobre o NPC), L11-11 (Esc nas telas cheias).
+
+## 168. Splash/intro sem marca d'água e sem texto assado (dono, 21/10/2026; L11-08)
+
+- **Problema:** `intro-poster.webp` e `intro.mp4` tinham a estrela do Gemini no canto e "LOADING DATA...", "SOUL_LINK ESTABLISHED" e "VERSION 1.2" pintados em inglês.
+- **Decisão do dono:** regenerar no Gemini (imagem e vídeo) sem marca e sem texto; o texto passa a ser desenhado no app em PT e EN.
+- **Feito:** vídeo novo do Gemini (saiu em paisagem 1280×720 com o quadro retrato no meio; cortado no centro para 9:16 e reescalado a 720×1280, sem áudio — a intro sempre tocou muda), pôster = 1º quadro desse corte (sem salto na troca), `IntroLoading` em DOM ("Carregando dados..." / "Vínculo de alma estabelecido", barra enchendo em 10 s, só tokens, `prefers-reduced-motion` mostra tudo pronto). `intro.mp4`: 2,52 MB → 0,73 MB (a dívida do guard de bytes pode baixar). A pílula "Welcome" (§79) ficou.
+- **Honestidade:** a barra é o relógio da intro, não mede carga real; é identidade, não indicador de progresso.
+- **Trade-off:** o corte 9:16 reaproveita só 402×715 px do vídeo (upscale ~1,8×), então fica mais macio que o pôster antigo; os lados escuros com folhas e monstros do vídeo original se perdem.

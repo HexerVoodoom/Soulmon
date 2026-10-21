@@ -173,6 +173,7 @@ function IntroVideo({ onFinish }: { onFinish: () => void }) {
         </>
       )}
       {!videoFailed && <IntroWelcomePill />}
+      {!videoFailed && <IntroLoading isPt={isPt} ms={INTRO_VIDEO_MS} />}
       <span className="sm2-viewport-glass" aria-hidden="true" />
       {!videoFailed && (
         <span className="sm2-splash-tap" aria-hidden="true">
@@ -182,5 +183,28 @@ function IntroVideo({ onFinish }: { onFinish: () => void }) {
         </span>
       )}
     </div>
+  );
+}
+
+/** Duração do vídeo da intro (10,01 s): a barra de carregamento enche neste tempo. */
+const INTRO_VIDEO_MS = 10000;
+
+/**
+ * Texto de carregamento DESENHADO no app (21/10/2026, L11-08): o vídeo e o pôster não
+ * trazem mais texto assado. "Carregando dados…" + barra enchendo no tempo da intro +
+ * "Vínculo de alma estabelecido" ao fim. Decorativo (`aria-hidden`): o alvo do pai dá
+ * o nome. `prefers-reduced-motion`: a barra já aparece cheia e o selo final visível.
+ */
+function IntroLoading({ isPt, ms }: { isPt: boolean; ms: number }) {
+  return (
+    <span className="sm2-intro-stage" aria-hidden="true" data-testid="intro-loading-stage">
+      <span className="sm2-intro-art">
+        <span className="sm2-intro-load" style={{ ['--intro-ms' as string]: `${ms}ms` }}>
+          <span className="sm2-intro-load-label" data-testid="intro-loading-label">{isPt ? 'Carregando dados...' : 'Loading data...'}</span>
+          <span className="sm2-intro-bar"><span className="sm2-intro-bar-fill" /></span>
+          <span className="sm2-intro-load-done" data-testid="intro-loading-done">{isPt ? 'Vínculo de alma estabelecido' : 'Soul link established'}</span>
+        </span>
+      </span>
+    </span>
   );
 }

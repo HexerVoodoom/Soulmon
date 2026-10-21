@@ -34,6 +34,7 @@ Motivos (a coluna "Motivo" usa estas siglas):
 | `MorningCheckIn.tsx` (`data-checkin-why`) | a linha única de benefício do check-in (decisão C9) | HON |
 | `mercado/MercadoSheets.tsx` ("Sem pressa: isto fica aqui…") | o convite passivo da conta, sem urgência (guarda de cobrança) | HON |
 | `GmPanel.tsx` | dicas das ações do painel de GM (só admin) | INT |
+| `IntroScreen.tsx` (`IntroLoading`) | "Carregando dados..." / "Vínculo de alma estabelecido" desenhados sobre a arte da intro, decorativos | EST |
 | `PlayCard.tsx`, `CompanionHUD.tsx` (energia insuficiente para brincar) | estado do botão | EST |
 
 ## O que a 2ª passada moveu (para o "?")
