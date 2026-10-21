@@ -82,7 +82,11 @@ const RULES = [
  */
 export function minimizeForAi(input, maxLength = 500) {
   const original = (input ?? '').toString();
-  let text = original;
+  // L07-02: `email` e `digits` são quadráticas. Cortar ANTES das regex, com folga
+  // (2x) para um identificador que cruze o limite ainda ser redigido por inteiro.
+  const cutAt = Math.max(maxLength * 2, maxLength + 256);
+  const preCut = original.length > cutAt;
+  let text = preCut ? original.slice(0, cutAt) : original;
   /** @type {Record<string, number>} */
   const redactions = {};
 
@@ -95,7 +99,7 @@ export function minimizeForAi(input, maxLength = 500) {
     });
   }
 
-  const truncated = text.length > maxLength;
+  const truncated = preCut || text.length > maxLength;
   if (truncated) text = text.slice(0, maxLength);
 
   return { text, redactions, truncated };

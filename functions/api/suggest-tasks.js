@@ -30,7 +30,7 @@ export async function onRequestPost({ request, env }) {
     const body = (await request.json().catch(() => null)) ?? {};
     // N-3: o objetivo é texto livre do usuário e sai para um processador nos
     // EUA. Identificadores diretos não ajudam a sugerir hábito — não saem daqui.
-    const goalMin = minimizeForAi((body.goalText || '').toString().trim(), 300);
+    const goalMin = minimizeForAi(String(body.goalText || '').slice(0, 2000).trim(), 300);
     const goalText = goalMin.text;
     if (redactionCount(goalMin.redactions) || goalMin.truncated) {
       console.log('[suggest-tasks] entrada minimizada', {
