@@ -106,13 +106,14 @@ describe('compra', () => {
     expect(vazio.container.querySelector('[data-shop-owned]')).toBeNull();
   });
 
-  it('equipado = anel por fora do vidro + tag na coluna de texto; nome não quebra; nenhuma opacidade', () => {
+  it('equipado = anel por fora do vidro + tag na coluna de texto; nome com até 2 linhas e title (QA L11-04); nenhuma opacidade', () => {
     const { container } = abrir({ stall: 'background' });
     const card = screen.getByRole('button', { name: 'Bedroom — Equipped' });
     const glass = card.querySelector('[data-mini-glass]') as HTMLElement;
     expect(glass.style.boxShadow).toContain('var(--sm2-primary-ink)');
     const name = Array.from(card.querySelectorAll('span')).find(s => s.textContent === 'Bedroom') as HTMLElement;
-    expect(name.style.whiteSpace).toBe('nowrap');
+    expect(name.style.whiteSpace).not.toBe('nowrap');
+    expect(name.getAttribute('title')).toBe('Bedroom');
     const fraca = Array.from(container.querySelectorAll<HTMLElement>('[style*="opacity"]'))
       .filter(el => !el.closest('svg') && el.style.opacity !== '' && Number(el.style.opacity) < 1);
     expect(fraca).toEqual([]);

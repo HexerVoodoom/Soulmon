@@ -43,7 +43,7 @@ export function FrameShelf({ language, currency, balance, owned, onBuy }: {
               <AvatarFrame frame={f} size={40}><span aria-hidden="true" style={{ display: 'block', width: 40, height: 40 }} /></AvatarFrame>
             </MiniGlass>
             <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+              <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'anywhere' }} title={name}>{name}</span>
               {aviso?.id === f.id && <span role="status" style={sm2Hint}>{aviso.msg}</span>}
             </span>
             {mine ? (

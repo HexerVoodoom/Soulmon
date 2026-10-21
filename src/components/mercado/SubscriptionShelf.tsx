@@ -120,7 +120,7 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
                 style={mainBtn}
               >
               <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'anywhere' }} title={name}>{name}</span>
                 {equipped && (
                   <span style={{ ...shopTagStyle, alignSelf: 'flex-start', color: 'var(--sm2-primary-ink)' }}>
                     <Icon name="check_circle" size={20} fill={1} tone="primary" />
@@ -145,7 +145,7 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
                 style={mainBtn}
               >
               <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'anywhere' }} title={name}>{name}</span>
                 <span style={sm2Hint}>{isPt ? item.descPt : item.descEn}</span>
               </span>
               <span style={{ ...sm2Button('primary', false, 'sm'), padding: '0 12px', flex: 'none' }}>{isPt ? 'Resgatar' : 'Claim'}</span>
@@ -163,7 +163,7 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
           >
             {art(item, false, true)}
             <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ ...sm2Text, fontWeight: 500, color: 'var(--sm2-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+              <span style={{ ...sm2Text, fontWeight: 500, color: 'var(--sm2-muted)', overflow: 'hidden', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'anywhere' }} title={name}>{name}</span>
               <span style={sm2Hint}>{why}</span>
             </span>
             <span aria-hidden="true" style={{ ...shopTagStyle, color: 'var(--sm2-muted)' }}>

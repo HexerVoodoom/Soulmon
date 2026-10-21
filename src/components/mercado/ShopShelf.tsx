@@ -365,7 +365,7 @@ export function ShopShelf({
         {art(item, !unlocked, equipped)}
 
         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ ...sm2Text, fontWeight: 500, color: unlocked ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+          <span style={{ ...sm2Text, fontWeight: 500, color: unlocked ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflow: 'hidden', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'anywhere' }} title={name}>{name}</span>
           {item.kind === 'furniture' && <DecorFitTag fits={item.fits} isPt={isPt} />}
           {sub && <span style={sm2Hint}>{sub}</span>}
           {unlocked && blocked && (
