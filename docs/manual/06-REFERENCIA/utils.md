@@ -2645,6 +2645,16 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/utils/sounds.ts` (`assetPronto`, `prepararAssets`, `tocarBuffer`), `src/utils/trilha.ts` (`carregarAsset`, `CAMADAS_DA_TRILHA`)
 **Régua:** `sfxCombateLivres.contract.test.ts` (os 7 samples: arquivo, hash, WebM/Opus, ≤ 40 KB, fonte/licença CC0 por arquivo, Attributions, loudness/pico, sample = padrão e procedural = fallback, mudo); `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; as camadas têm a mesma `duracaoS`, múltiplo inteiro do compasso de 100 BPM (2,4 s); sem número de loudness no manifesto)
 
+### `src/utils/revealEscolha.ts`
+**Dono de:** Os candidatos da "Escolha outro lado" do passo `ELEMENT_DECIDE` (20/10/2026, REGISTRO §151). Função pura: sem rede, sem `Math.random`.
+**Exports:**
+- `function elementChoiceCandidates(result: OracleResult): ElementId[]` — o 2º colocado sempre, mais os empatados no 1º/2º; ordem por pontuação desc e `ELEMENT_ORDER`. O jogador vê só nome e descrição, nunca pontos.
+- `function falaDaIris(result, lang: 'pt' | 'en'): string` — a fala da Iris ("Your Soulmon is {name}. A {Element} soul, touched by {Secondary}: {personality}.").
+- `function descricaoCurtaElemento(el, lang): string` — a parte de `ELEMENT_INFO[el].personality` antes do travessão, para a lista.
+- ⚠️ `generateOracleComplete(input, seed?, overrides?)` (módulo de origem do pipeline do Oráculo) ganhou o 3º parâmetro aditivo `overrides: OracleOverrides` (`dominantElement`): regera com o MESMO seed; muda nome sugerido, bio, as 11 formas/prompts e `dominantElement`; ficha de combate e essência ficam como lidas.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx` (passo `ELEMENT_DECIDE`)
+**Régua:** `src/utils/revealEscolha.test.ts` (candidatos, falas EN/PT, grep sem acaso); `src/components/SoulmonOnboarding.elemento.render.test.tsx` (sprite só depois do "Gostei", troca, intro com o nome novo)
+
 ### `src/utils/soulmonIntro.ts`
 **Dono de:** As falas da apresentação do Soulmon depois do batismo (20/10/2026, REGISTRO §150). Função pura e determinística: sem IA, sem rede, sem efeito de jogo.
 **Exports:**

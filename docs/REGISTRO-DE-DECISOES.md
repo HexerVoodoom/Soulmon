@@ -3108,3 +3108,19 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** reescrever a frase sem alma/digital (o dono preferiu a literal); fala por IA (custo, offline).
 - **O que falsificaria:** testador relatar a frase como estranha ou pesada, ou queixa de "o app disse que minha alma está no celular"; taxa de Skip alta.
 - **Onde vive:** `src/utils/soulmonIntro.ts` (`soulmonIntroLines`, `INTRO_CLICHES_PROIBIDOS`, `INTRO_FRASE_MAX`); o passo `SOULMON_INTRO` em `src/components/SoulmonOnboarding.tsx`; o `petPassive` e as props do upgrade no `App.tsx`; a exceção em `src/narrativa.contract.test.ts`.
+
+## 151. O jogador pode escolher outro elemento antes do desenho (dono, 20/10/2026; D-150..D-161)
+
+> Aviso de numeração: a `main` tem uma §150 diferente desta branch; este número pode colidir na junção release->main. Renumere na junção.
+
+- **Pedido (literal):** na tela do Hatch o Oráculo (Iris) diz "seu Soulmon é X, alma de Elemento (, tocada por Secundário): personalidade", com "Gostei" (primário) e "Me deixa tentar de novo" (secundário).
+- **Decisão:**
+  - **(a) A troca vem ANTES do desenho.** Passo novo `ELEMENT_DECIDE` (id `SOULMON_INTRO`+1) entre GENERATING e REVEAL. O `requestSprite` só sai no "Gostei". Tentar de novo não gasta cota, imagem nem Créditos. `generate-sprite.js` e `_aiGuard` ficam intactos.
+  - **(b) "Escolha outro lado":** mostra o elemento dominante original e os candidatos de `elementChoiceCandidates`: o 2º colocado sempre, mais os empatados no 1º/2º. Ordem: pontuação desc, depois `ELEMENT_ORDER`. Função pura. O jogador vê só nome e descrição, nunca pontos.
+  - **(c) Regera com o MESMO seed** e `OracleOverrides.dominantElement` (sem `Math.random`). Muda nome sugerido, bio, as 11 formas/prompts e `dominantElement`. Ficha de combate e essência ficam como lidas. A linha "Essência" saiu do cartão do REVEAL.
+  - **(d) Sem campo novo no save.** O `SOULMON_PROFILE` segue `{input, seed}`; o result escolhido entra no save no lugar do primeiro.
+  - **Escopo:** nascimento pago e upgrade demo->pago SIM; demo grátis NÃO. Nova Leitura e Renascimento sem mudança: regeram com seed nova e voltam ao elemento lido (declarado e aceito).
+  - **Telemetria:** `reveal_retry` NÃO feita. O schema do cliente tem cópia em `functions/api/metrics.js` com teste de paridade; mexer é contrato de servidor. Dúvida aberta para o dono. `ELEMENT_DECIDE` fica fora de `onboarding_step`.
+- **Alternativa que perdeu:** deixar trocar depois do desenho (custaria cota/Créditos e imagem descartada); sortear de novo com seed nova (resultado imprevisível, não é "escolher").
+- **O que falsificaria:** a maioria dos jogadores trocar o elemento (a leitura do Oráculo não convence), ou queixa de que a troca "estraga" a surpresa do batismo.
+- **Onde vive:** `src/utils/revealEscolha.ts` (`elementChoiceCandidates`); `generateOracleComplete(input, seed?, overrides?)`; o passo `ELEMENT_DECIDE` em `src/components/SoulmonOnboarding.tsx`; teste `SoulmonOnboarding.elemento.render.test.tsx`.
