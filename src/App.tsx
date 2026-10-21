@@ -1096,7 +1096,7 @@ export default function App() {
     busy: rolloverPending || !!evolutionCeremony || showDailyReport || !!careEvent || !!feedAnim,
     // NÃO é pré-checagem de tier (quem decide é o servidor): é o corte de quem
     // não tem árvore própria e portanto não teria prompt para mandar.
-    enabled: !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0,
+    enabled: (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0,
     // F-1: a ocasiao A (`birthBatch`) nao tinha chamador, e quem paga chegava ao
     // reveal vendo a MESMA arte de reserva do demo gratis -- o primeiro sprite
     // proprio so nascia na vespera da primeira evolucao, dias depois.
@@ -1110,10 +1110,10 @@ export default function App() {
   /* "CHOCANDO" (20/10/2026, dono): quem tem criatura do oráculo mas ainda não recebeu NENHUM sprite próprio (a geração leva um tempo) vê o cristal com
      o ser dentro e "seu Soulmon está chocando", em vez do inicial de reserva. Entra no jogo e no tutorial normalmente; quando o sprite chega o visor
      troca com o fade de sempre. Para quando a geração para de vez (teto da conta ou da forma): aí volta a arte de reserva, nunca um cristal eterno. */
-  const petChocando = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
+  const petChocando = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
     && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
   // Criatura do oráculo (nunca o inicial de fogo de reserva, mesmo se a geração falhar/estiver no teto).
-  const petOraculo = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
+  const petOraculo = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
   // Porte da criatura (utils/spriteScale.ts): semente estável do save, escrita em render como `setOwnSprites` logo abaixo.
   setPetSizeSeed(sizeSeedOf(gameState));

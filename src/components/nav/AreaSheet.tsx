@@ -68,7 +68,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
       className="sm2-sheet-fade"
       onClick={onClose}
       style={{
-        position: 'absolute', inset: 0, zIndex: 20,
+        position: 'absolute', inset: 0, zIndex: 5000,
         background: 'rgba(4,10,10,.6)',
       }}
     >
