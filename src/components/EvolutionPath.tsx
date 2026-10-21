@@ -31,7 +31,7 @@
  */
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
-import { getSpriteForStage, isStarterId } from '../utils/sprites';
+import { getSpriteForStage, isStarterId, type StarterId } from '../utils/sprites';
 import { useAdmin } from '../utils/adminFlag';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
@@ -98,7 +98,7 @@ interface EvolutionPathProps {
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
-  eggType?: 'ignar' | 'lumel' | 'serah';
+  eggType?: StarterId;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
   unlockedEvolutions?: string[];

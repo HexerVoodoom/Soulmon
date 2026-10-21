@@ -198,7 +198,7 @@ export function isSafeSpriteUrl(url: unknown): url is string {
 //    beacon do F-1, por um diretorio PUBLICO que qualquer um alimenta.
 //  - `getSpriteForStage(...)` e `DUNGEON_LINE_SPRITES` sao asset EMPACOTADO
 //    pelo Vite. Verificado no `dist/` deste worktree: o bundle referencia
-//    `/assets/ignar-rookie-C6FBPY0e.png` — caminho ABSOLUTO de raiz, same
+//    `/assets/kaelen-rookie-C6FBPY0e.png` — caminho ABSOLUTO de raiz, same
 //    origin (`base` e o padrao `/`). Sob vitest/dev o mesmo import resolve
 //    para `/src/assets/soulmon/rookie.png` — mesma forma, outro prefixo.
 //

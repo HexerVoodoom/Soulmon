@@ -15,7 +15,7 @@ import { ACHIEVEMENT_IDS, unlockedAchievements } from '../utils/achievements';
 
 const BASE = {
   activities: [], tasks: [], completedTasks: [], perfectDays: 3, evolutionStage: 'rookie',
-  unlockedEvolutions: ['rookie'], gamePoints: 0, eggType: 'lumel',
+  unlockedEvolutions: ['rookie'], gamePoints: 0, eggType: 'alento',
 };
 
 function Espiao() {

@@ -9,7 +9,7 @@
 // (`STARTER_SPRITES`), escolhido por hash estável da identidade — o mesmo oponente é sempre o mesmo
 // bicho, e oponentes diferentes se distinguem. É um stand-in declarado, não a criatura real dele.
 import { CORVO_LINE } from './corvoPet';
-import { DUNGEON_LINE_SPRITES, STARTER_IDS, getSpriteForStage, isStarterId } from './sprites';
+import { DUNGEON_LINE_SPRITES, STARTER_IDS, getSpriteForStage, isStarterId, isRetiredLineId } from './sprites';
 import { lineIcon } from './lineIcons';
 
 /** O que um oponente/perfil público traz para a arte: só ids, nunca URL. */
@@ -29,7 +29,7 @@ const hash = (s: string): number => {
 
 /** `true` quando o id aponta arte que existe neste cliente. */
 export const isKnownArtLine = (v: unknown): v is string =>
-  typeof v === 'string' && (v === CORVO_LINE || isStarterId(v) || !!DUNGEON_LINE_SPRITES[v]);
+  typeof v === 'string' && (v === CORVO_LINE || isStarterId(v) || isRetiredLineId(v) || !!DUNGEON_LINE_SPRITES[v]);
 
 /** A linha de arte a desenhar: a do oponente, ou (perfil antigo) um inicial atual por hash. */
 export const resolveOpponentLine = (o: OpponentArtSource): string =>

@@ -7,7 +7,7 @@ describe('para onde a arte olha', () => {
     expect(artFacesLeft('champion', 'nautilu')).toBe(false); // D-78: aposentada → inicial de reserva (de frente)
     expect(artFacesLeft('rookie', 'kaelen')).toBe(true);
     expect(artFacesLeft('rookie', 'corvo')).toBe(true);
-    expect(artFacesLeft('rookie', 'ignar')).toBe(false);
+    expect(artFacesLeft('rookie', 'thalindra')).toBe(false);
     expect(artFacesLeft('champion-power')).toBe(false); // árvore do Soulmon
   });
   it('só declara linhas que existem', () => {
@@ -30,7 +30,7 @@ describe('spriteUrlFacesLeft (o combate lê a URL)', () => {
     const { spriteUrlFacesLeft, getSpriteForStage } = await import('./sprites');
     expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'igni'))).toBe(true);
     expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'meteoro'))).toBe(false);
-    expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'ignar'))).toBe(false);
+    expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'thalindra'))).toBe(false);
     expect(spriteUrlFacesLeft(getSpriteForStage('rookie', 'nascente'))).toBe(false);
     expect(spriteUrlFacesLeft('https://cdn/sprite-gerado.png')).toBe(false);
     expect(spriteUrlFacesLeft(undefined)).toBe(false);

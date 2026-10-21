@@ -7,8 +7,8 @@ import { lineIcon, lineIconForStage, LINE_ICON_COUNT } from './lineIcons';
 import { DUNGEON_LINE_SPRITES } from './sprites';
 
 describe('lineIcons', () => {
-  it('48 ícones no mapa (6 linhas × 4 tiers × 32/64; D-78 tirou orrin/serah/nautilu)', () => {
-    expect(LINE_ICON_COUNT).toBe(48);
+  it('32 ícones no mapa (4 linhas × 4 tiers × 32/64; D-78 tirou orrin/serah/nautilu; 20/10 tirou ignar/lumel)', () => {
+    expect(LINE_ICON_COUNT).toBe(32);
   });
 
   it('toda linha × tier é encontrável nos dois tamanhos (inclusive kaelen, cujo arquivo tem `-power`)', () => {
@@ -21,8 +21,10 @@ describe('lineIcons', () => {
   });
 
   it('lineIconForStage: demo → a linha escolhida; legado → inicial de reserva (sem ícone); árvore do jogador → undefined', () => {
-    expect(lineIconForStage('champion-power', 64, 'ignar')).toMatch(/ignar-champion-64\.png$/);
-    expect(lineIconForStage('ultra', 32, 'lumel')).toMatch(/lumel-mega-32\.png$/);
+    expect(lineIconForStage('champion-power', 64, 'igni')).toMatch(/igni-champion-64\.png$/);
+    expect(lineIconForStage('ultra', 32, 'thalindra')).toMatch(/thalindra-mega-32\.png$/);
+    expect(lineIconForStage('ultra', 32, 'ignar')).toBeUndefined();
+    expect(lineIconForStage('ultra', 32, 'lumel')).toBeUndefined();
     // D-78: linha aposentada → inicial de reserva (sem ícone-ficha), nunca o ícone da linha velha
     expect(lineIconForStage('ultra', 32, 'serah')).toBeUndefined();
     // D-104: id legado sem linha → piso = inicial atual (sem ícone-ficha); a arte vem de getSpriteForStage

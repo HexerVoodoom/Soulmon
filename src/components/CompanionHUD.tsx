@@ -5,7 +5,7 @@ import { EnergyTimer, HungerTimer } from './home/EnergyTimer';
 import { HungerIndicator } from './home/HungerIndicator';
 import type { EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
-import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
+import { getSpriteForStage, demoTintFilter, artFacesLeft, type StarterId } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
@@ -169,7 +169,7 @@ interface CompanionHUDProps {
   currentStage: string;
   evolutionStage: string;
   /** Linha genérica de sprite (fallback visual até a Fase 2 assumir) — ver utils/sprites.ts. */
-  eggType?: 'ignar' | 'lumel' | 'serah';
+  eggType?: StarterId;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
   /** Sprite PRÓPRIO da forma atual, quando existe **e já foi adotado**
@@ -317,7 +317,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   message, 
   currentStage,
   evolutionStage,
-  eggType = 'ignar',
+  eggType = 'meteoro',
   demoCharacterId,
   ownSpriteUrl,
   chocando,
