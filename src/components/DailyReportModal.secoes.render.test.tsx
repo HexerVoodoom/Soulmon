@@ -97,8 +97,8 @@ describe('4.4 — uma seção por vez; o NPC só no Passeio; nenhum em `Stretch 
     proximo();
     expect(npc()).not.toBeNull();
     expect(document.querySelector('[data-area-sheet]')).not.toBeNull();
-    // a fala/nome do NPC do Passeio (Brume)
-    expect(document.body.textContent).toContain('Brume');
+    // a fala/nome do NPC do Passeio (Amandha)
+    expect(document.body.textContent).toContain('Amandha');
     // e nada de tarefas misturado nessa folha
     expect(document.querySelector('[data-area-sheet]')!.textContent).not.toMatch(/Yesterday Tasks|Hearts/);
   });

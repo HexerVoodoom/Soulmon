@@ -5,7 +5,7 @@ import { ClaimButton, MissionCard, type MissionEntry } from './MissionCard';
 
 /**
  * A LINHA "Take a stroll" do menu de Missões da Home (07/10/2026, pedido do dono: "Stroll fica com o NPC!").
- * O Passeio inteiro — propostas, card, relógio de 30 min, "Concluir" — mora no lote do Passeio (NPC Brume);
+ * O Passeio inteiro — propostas, card, relógio de 30 min, "Concluir" — mora no lote do Passeio (NPC Amandha);
  * aqui o cartão só APONTA ("!"), fica PRONTO ("?" + Resgatar) quando o passeio foi concluído lá hoje, e depois
  * mostra "Resgatada". Não abre o `PasseioSheet`, não tem timer. O Resgatar é só o recibo do dia
  * (`claimStroll`): o pagamento já saiu no "Concluir" do NPC e não se paga duas vezes.

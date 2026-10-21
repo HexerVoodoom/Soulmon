@@ -172,11 +172,11 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Aqui nada precisa ser entregue. Só a maré indo e vindo.',
     lineEn: 'Nothing needs delivering here. Just the tide coming and going.',
   },
-  // 🧭 O Passeio: Brume (nome novo aprovado pelo dono em 30/09/2026, espírito
+  // 🧭 O Passeio: Amandha (nome novo aprovado pelo dono em 30/09/2026 (era Brume; renomeada para Amandha em 21/10/2026), espírito
   // do charco). Convite, nunca cobrança — e nenhuma palavra sobre o que as
   // Travessias "rendem".
   'exploracao:passeio': {
-    namePt: 'Brume, o espírito do charco', nameEn: 'Brume, the marsh spirit',
+    namePt: 'Amandha, o espírito do charco', nameEn: 'Amandha, the marsh spirit',
     linePt: 'A névoa abre um pouco mais a cada passo. Ande devagar o quanto quiser.',
     lineEn: 'The mist opens a little further each step. Walk as slow as you like.',
   },
