@@ -66,6 +66,14 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(document.querySelectorAll('[role="progressbar"]').length).toBe(2); // sem energia informada: só HP
   });
 
+  it('a placa de vida termina ACIMA do topo do sprite, sem cobrir a cabeça (QA L11-10)', () => {
+    render(<BattleStage {...baseProps} me={{ ...me, energy: 0.4 }} foes={[foe(0, { energy: 1 })]} />);
+    const plate = document.querySelector('[data-stage-plate="me"]') as HTMLElement;
+    const spriteBox = (document.querySelector('[data-stage-sprite="me"]') as HTMLElement).closest('div[style*="position: absolute"]') as HTMLElement;
+    const barsH = 50; // BARS_H: altura do bloco HP + energia
+    expect(parseFloat(plate.style.top) + barsH).toBeLessThanOrEqual(parseFloat(spriteBox.style.top));
+  });
+
   it('as barras ficam EM CIMA do personagem (coladas nele): HP e, logo abaixo, ENERGIA', () => {
     render(<BattleStage {...baseProps} me={{ ...me, energy: 0.4 }} foes={[foe(0, { energy: 1 })]} />);
     expect(document.querySelectorAll('[role="progressbar"]').length).toBe(4); // HP + energia de cada um

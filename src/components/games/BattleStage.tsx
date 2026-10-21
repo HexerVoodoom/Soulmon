@@ -118,6 +118,8 @@ export interface StageLayout {
 
 const PLATE_H = 14;
 const BARS_H = 50;
+/** Folga entre o bloco de barras e o topo do sprite (px): as barras ficam ACIMA da cabeça, sem cobri-la (QA L11-10; antes entravam 12 px nela). */
+const BARS_LIFT = 2;
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
 
@@ -221,7 +223,7 @@ function FighterBars({ fighter, spot, tone, numeric, barsH }: {
       data-stage-plate={tone === 'cyan' ? 'me' : 'foe'}
       data-stage-energy-full={energy === undefined ? undefined : full ? '1' : '0'}
       style={{
-        position: 'absolute', left: Math.round(spot.x - width / 2), top: Math.round(spot.y - spot.size * SPRITE_TOP - barsH + 12), width,
+        position: 'absolute', left: Math.round(spot.x - width / 2), top: Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT), width,
         boxSizing: 'border-box', padding: '3px 6px 4px', borderRadius: 8,
         backgroundColor: SCRIM, border: '1px solid var(--sm2-line)',
         display: 'flex', flexDirection: 'column', gap: 3, zIndex: 3, pointerEvents: 'none',
@@ -459,7 +461,7 @@ function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStat
   const art = useCombatV3Art(ids);
   const c = bodyCenter(spot);
   const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
-  const barsTop = Math.round(spot.y - spot.size * SPRITE_TOP - barsH + 12);
+  const barsTop = Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT);
   const loopSrc = !reduced && loopOf ? art[STATUS_FX[loopOf.kind].loop ?? ''] : undefined;
   return (
     <>
