@@ -114,7 +114,7 @@ export interface FonteLivre {
   /** A página de onde veio. */
   urlOrigem: string;
   autor: string;
-  licenca: 'CC0 1.0' | 'CC BY 4.0';
+  licenca: 'CC0 1.0';
   urlLicenca: string;
   /** Data em que a página e a licença foram lidas e o arquivo baixado. */
   acessadoEm: string;
@@ -160,15 +160,13 @@ export const SFX_DE_COMBATE_LIVRES = {
     fonte: KENNEY('Impact Sounds', 'impact-sounds', 'impactPlate_medium_000.ogg', 'b670d30452983369771081319c268475edaaafe782bf4e8d70bd7eef09d8823c'),
   },
   playAttackRanged: {
-    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 0.474, medidoLufsM: -24.89, medidoTruePeakDbtp: -11.27,
-    sha256: '082a48a16e2c7f6abfa16f21f739cfee7bf1aa4e7295280c7ee4c73d66772dbf', bytes: 4184,
-    // 21/10/2026 (§160): o dono escolheu este efeito (Freesound 732245) para o golpe à distância, mais curto. CC BY 4.0: o crédito é obrigatório.
+    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 0.414, medidoLufsM: -24.65, medidoTruePeakDbtp: -4.3,
+    sha256: '48825c636a07c7be3202d27d60125bb83ffc6bb52edc0ea4c3c2faf8168e8f59', bytes: 3698,
+    // 20/10/2026 (§152): o dono achou o "plim" de `magical_3` muito ruim e pediu "algo tipo push" (rajada/impulso, sem sino). Sai o
+    // tinido mágico; entra o jato de ar de um propulsor CC0, recortado, passa-baixa e com ataque seco + queda rápida.
     fonte: {
-      arquivo: '732245__silverillusionist__slow-spell-less-powerful.wav', pacote: 'Slow Spell (Less Powerful)',
-      urlOrigem: 'https://freesound.org/people/SilverIllusionist/sounds/732245/', autor: 'SilverIllusionist',
-      licenca: 'CC BY 4.0', urlLicenca: 'https://creativecommons.org/licenses/by/4.0/', acessadoEm: '2026-10-21', atribuicaoObrigatoria: true,
-      sha256Original: '6e36a2abbba977946d4aa6318bf361546ac1b81fffa49750b4db5da5ba03c6f1',
-      processamento: 'derivado: mono (média dos canais), 44,1→48 kHz, recorte de 0,5 s do início (cauda de 3,2 s descartada), fade-in de 2 ms e fade-out em cosseno de 0,30 a 0,50 s',
+      ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'thrusterFire_001.ogg', '924636edc923fe4aab5829b69dc5dc1c5d659dec5739865434dabee752a3bb79'),
+      processamento: 'derivado: recorte de 0,5 s do jato (1,10–1,60 s), passa-baixa 3 kHz (2 polos) e passa-altas 90 Hz, ataque de 6 ms e queda exponencial (tau 110 ms) de 0,42 s',
     },
   },
   playCharge: {

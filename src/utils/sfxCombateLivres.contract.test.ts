@@ -69,12 +69,11 @@ describe('S9 — procedência por arquivo, nas duas direções', () => {
       const f = SFX_DE_COMBATE_LIVRES[n].fonte;
       expect(f.arquivo.length, n).toBeGreaterThan(3);
       expect(f.pacote.length, n).toBeGreaterThan(2);
-      expect(f.urlOrigem, n).toMatch(/^https:\/\/(kenney\.nl\/assets\/|opengameart\.org\/content\/|freesound\.org\/people\/)/);
+      expect(f.urlOrigem, n).toMatch(/^https:\/\/(kenney\.nl\/assets\/|opengameart\.org\/content\/)/);
       expect(f.autor.length, n).toBeGreaterThan(2);
-      // Só licença que permite uso comercial: CC0, ou CC BY 4.0 COM atribuição obrigatória registrada. (NC/ND/SA/Sampling+ estão fora.)
-      expect(['CC0 1.0', 'CC BY 4.0'], n).toContain(f.licenca);
-      expect(f.urlLicenca, n).toBe(f.licenca === 'CC0 1.0' ? 'https://creativecommons.org/publicdomain/zero/1.0/' : 'https://creativecommons.org/licenses/by/4.0/');
-      if (f.licenca === 'CC BY 4.0') expect(f.atribuicaoObrigatoria, `${n}: CC BY exige crédito`).toBe(true);
+      // Só licença que permite uso comercial sem condição: CC0. (CC-BY exigiria atribuição; NC/Sampling+ estão fora.)
+      expect(f.licenca, n).toBe('CC0 1.0');
+      expect(f.urlLicenca, n).toBe('https://creativecommons.org/publicdomain/zero/1.0/');
       expect(f.acessadoEm, n).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(f.sha256Original, n).toMatch(/^[0-9a-f]{64}$/);
       expect(typeof f.atribuicaoObrigatoria, n).toBe('boolean');
