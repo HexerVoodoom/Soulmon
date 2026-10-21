@@ -7389,6 +7389,7 @@ var attrFinito = /* @__PURE__ */ __name((v) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }, "attrFinito");
 var MATCHES_PER_DAY = 5;
+var GIFT_ACK_LEASE_MS = 10 * 60 * 1e3;
 var CLOSED_SEASON_TTL = 86400 * 400;
 var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
 var duelLocks = /* @__PURE__ */ new Map();
@@ -7996,19 +7997,28 @@ async function handleCommunity({ request, env }) {
     }, "lerLista");
     const gifts = await lerLista();
     if (url.searchParams.get("claim") !== "1" || !gifts.length) return json3({ gifts });
+    const modoAck = url.searchParams.get("ack") === "1";
     let entregues = gifts;
     if (env.DB) {
       entregues = [];
       const agora = Date.now();
       for (const g of gifts) {
+        const orderId = `gift:${id}:${g.gid}`;
         try {
-          await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(`gift:${id}:${g.gid}`, id, agora, agora + 86400 * 90 * 1e3).run();
+          await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(orderId, id, agora, agora + 86400 * 90 * 1e3).run();
           entregues.push(g);
         } catch (err2) {
           if (!ehViolacaoDeChave(err2)) throw err2;
+          if (!modoAck) continue;
+          const row = await env.DB.prepare("SELECT claimed_at FROM order_claims WHERE order_id = ?").bind(orderId).first();
+          const anterior = row && Number(row.claimed_at);
+          if (!Number.isFinite(anterior) || agora - anterior <= GIFT_ACK_LEASE_MS) continue;
+          const upd = await env.DB.prepare("UPDATE order_claims SET claimed_at = ? WHERE order_id = ? AND claimed_at = ?").bind(agora, orderId, anterior).run();
+          if ((upd?.meta?.changes ?? upd?.changes ?? 0) === 1) entregues.push(g);
         }
       }
     }
+    if (modoAck) return json3({ gifts: entregues, ack: true });
     const idsEntregues = new Set(entregues.map((g) => g.gid));
     const restantes = (await lerLista()).filter((g) => !idsEntregues.has(g.gid));
     if (restantes.length) {
@@ -8017,6 +8027,32 @@ async function handleCommunity({ request, env }) {
       await kvOrThrow(env).delete(`gifts:${id}`);
     }
     return json3({ gifts: entregues });
+  }
+  if (action === "giftsAck" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const gids = body.gids;
+    if (!Array.isArray(gids) || gids.length > 50 || !gids.every((x2) => typeof x2 === "string" && x2.length > 0 && x2.length <= 100)) {
+      return json3({ error: "invalid gids" }, 400);
+    }
+    const alvo = new Set(gids);
+    const raw = await kvOrThrow(env).get(`gifts:${id}`);
+    let lista = [];
+    try {
+      lista = raw ? JSON.parse(raw) : [];
+    } catch {
+      lista = [];
+    }
+    if (!Array.isArray(lista)) lista = [];
+    const gidDe = /* @__PURE__ */ __name((g, i2) => typeof g.gid === "string" && g.gid ? g.gid : `${g.at}:${g.from}:${g.bits}:${i2}`, "gidDe");
+    const validos = lista.filter((g) => g && typeof g === "object");
+    const restantes = validos.filter((g, i2) => !alvo.has(gidDe(g, i2)));
+    const removed = validos.length - restantes.length;
+    if (removed > 0) {
+      if (restantes.length) await kvOrThrow(env).put(`gifts:${id}`, JSON.stringify(restantes.slice(-50)), { expirationTtl: 86400 * 60 });
+      else await kvOrThrow(env).delete(`gifts:${id}`);
+    }
+    return json3({ ok: true, removed });
   }
   return json3({ error: "unknown action" }, 400);
 }
@@ -8440,7 +8476,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
+// E:/soulmon-release/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11256,7 +11292,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-WltqQC/functionsRoutes-0.5024303342121813.mjs
+// ../.wrangler/tmp/pages-OGyQV8/functionsRoutes-0.8071346425015001.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11533,7 +11569,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// E:/soulmon-release/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11859,7 +11895,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// E:/soulmon-release/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

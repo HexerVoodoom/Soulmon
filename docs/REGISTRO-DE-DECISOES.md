@@ -3260,8 +3260,6 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Em espera por decisão do dono (21/10/2026):** a tela "Sobre / Licenças" (atribuições; o nome não pode ser "Créditos", que é a moeda) e a margem do Voltar fixo (L11-03, o dono quer ver antes/depois). Implementados em branches à parte, NÃO publicados.
 - **Abertos:** L05-01 (FAB "Sair da demo", só demo), L05-04, L05-08/09, L06-07/08/12/14/15, L11-05/08/11 (L11-08 é frente de arte).
 
-## 163. Presentes só somem depois da confirmação do aparelho (dono, 21/10/2026; L03-01 residual)
-
 ## 166. Presentes só somem depois da confirmação do aparelho (dono, 21/10/2026; L03-01 residual)
 
 - **Pedido:** o resgate de presentes apagava a fila na própria leitura; se a resposta se perdesse na rede, o presente sumia. O dono decidiu adicionar o ack do cliente.
@@ -3269,4 +3267,5 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** aceitar o residual (presente grátis, 20 Bits); apagar só por TTL (a fila crescia e o presente reapareceria).
 - **O que falsificaria:** relato de presente creditado duas vezes no mesmo aparelho; fila `gifts:` que não esvazia (ack nunca chega); com D1, `order_claims` com `gift:` reservados e nunca confirmados crescendo.
 - **Rollback:** reverter o commit. A fila `gifts:` não muda de formato; o servidor antigo ignora `ack=1` e volta ao resgate destrutivo; a chave local `soulmon-gifts-credited-v1` fica sem uso (o app antigo não a lê). Correção do gate adversarial incluída: o ack só sai depois de um save confirmado na nuvem que já contém o crédito, e a adoção da nuvem (409/boot) descarta os créditos ainda não confirmados para o próximo resgate creditar de novo.
+- **Publicação:** fast-forward na `main` depois do lote 3 (§165) e do CI verde, por instrução da coordenação da frente (a confirmação direta do dono em modal registrada nos §163/§164 cobre A e B).
 - **Onde vive:** `functions/api/community.js` (`gifts`, `giftsAck`, `GIFT_ACK_LEASE_MS`), `src/utils/community.ts` (`resgatarPresentes`), `src/App.tsx` (efeito de presentes), `src/utils/storageKeys.ts`; manual 02 (diretório e amigos).
