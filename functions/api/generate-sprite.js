@@ -743,7 +743,9 @@ export async function onRequestPost({ request, env }) {
         // existe para limitar.
         if (!isRefusal(err)) await gate.release(err.notConfigured ? 'provedor não configurado' : `falha do provedor: ${err.message}`);
         if (err.notConfigured) {
-          return Response.json({ error: err.message }, { status: 503, headers: CORS });
+          // L07-05: código fixo; a mensagem crua (nomes de variável) fica só no log.
+          console.warn('sprite: provedor não configurado:', err.message);
+          return Response.json({ error: 'sprite-provider-not-configured' }, { status: 503, headers: CORS });
         }
         throw err;
       }
@@ -764,7 +766,7 @@ export async function onRequestPost({ request, env }) {
       console.warn('Prompt com referências recusado, refazendo sem elas:', err.message);
       try {
         const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-        return await responder({ ...out, usedFallbackPrompt: true, refusal: err.message });
+        return await responder({ ...out, usedFallbackPrompt: true, refusal: 'content-refused' });
       } catch (err2) {
         // Mesma regra da 1ª tentativa, aplicada à unidade EXTRA. A unidade da 1ª
         // segue debitada: aquela foi uma recusa de conteúdo, e recusa custa.

@@ -1,4 +1,6 @@
 import { guardAiRequest, perMinuteGate } from './_aiGuard.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
+import { VALID_ID } from './_entitlements.js';
 import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
 
 /** Os dois provedores gratuitos no limite (429): a fala cansada do Soulmon. */
@@ -590,9 +592,20 @@ export async function onRequestPost({ request, env }) {
 
     // Sem portão, esta rota gasta a nossa cota do Groq para qualquer um com um
     // `curl`. Ver functions/api/_aiGuard.js.
+    // L07-03: AUTENTICA antes do balde por minuto (como `transcribe.js`). Com o
+    // balde primeiro, um anônimo com o `id` da vítima o esgotava. Sem
+    // `FIREBASE_PROJECT_ID` (login desligado) não há como autenticar: segue como
+    // antes. Id inválido segue para `guardAiRequest`, que devolve o 400 de sempre.
+    /** @type {{ ok: boolean, email?: string } | null} */
+    let preAuth = null;
+    if (env.FIREBASE_PROJECT_ID && typeof body.id === 'string' && VALID_ID.test(body.id)) {
+      const a = await authorizeSaveAccess(request, env, body.id);
+      if (!a.ok) return Response.json({ error: a.reason }, { status: authStatus(a), headers: CORS });
+      if (a.email) preAuth = { ok: true, email: a.email };
+    }
     const rajada = perMinuteGate('chat', body.id);
     if (rajada) return Response.json({ error: rajada.reason, response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS });
-    const gate = await guardAiRequest(request, env, 'chat', body.id);
+    const gate = await guardAiRequest(request, env, 'chat', body.id, 1, null, preAuth);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 
     // N-3: minimização na fronteira. O que o usuário digita para o pet é a
