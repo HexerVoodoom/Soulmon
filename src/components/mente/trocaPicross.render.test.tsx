@@ -87,6 +87,25 @@ describe('PicrossGame', () => {
     expect(screen.getByRole('status').textContent).toBe(`You revealed: ${p.nameEn}`);
   });
 
+  it('arrastar o dedo pinta várias casas com o valor da primeira e o clique seguinte não desfaz (QA L06-08)', () => {
+    renderWithCss(<PicrossGame {...base} language="pt-BR" onEarnPoints={() => {}} todayKey={todayKey} />);
+    const cell = (r: number, c: number) => document.querySelector(`[data-cell="${r}-${c}"]`) as HTMLElement;
+    const grid = document.querySelector('[role="group"]') as HTMLElement;
+    const sobre = (r: number, c: number) => { document.elementFromPoint = (() => cell(r, c)) as typeof document.elementFromPoint; };
+    fireEvent.pointerDown(cell(0, 0));
+    sobre(0, 1); fireEvent.pointerMove(grid, { clientX: 1, clientY: 1 });
+    sobre(0, 2); fireEvent.pointerMove(grid, { clientX: 2, clientY: 1 });
+    fireEvent.pointerUp(grid);
+    fireEvent.click(cell(0, 2)); // o clique que o navegador dispara depois do arrasto: descartado
+    expect(['0-0', '0-1', '0-2'].map(k => (document.querySelector(`[data-cell="${k}"]`) as HTMLElement).getAttribute('data-state'))).toEqual(['1', '1', '1']);
+    // um toque simples continua sendo um toque (alterna só aquela casa)
+    fireEvent.pointerDown(cell(1, 0)); fireEvent.pointerUp(grid); fireEvent.click(cell(1, 0));
+    expect(cell(1, 0).getAttribute('data-state')).toBe('1');
+    expect(cell(1, 1).getAttribute('data-state')).toBe('0');
+    // o container não deixa o navegador roubar o gesto (era o `pointercancel` do aparelho)
+    expect(grid.style.touchAction).toBe('none');
+  });
+
   it('cada casa diz linha, coluna e estado; X e desfazer funcionam por botão', () => {
     renderWithCss(<PicrossGame {...base} language="pt-BR" onEarnPoints={() => {}} todayKey={todayKey} />);
     const cell = () => document.querySelector('[data-cell="0-0"]') as HTMLElement;

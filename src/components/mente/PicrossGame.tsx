@@ -157,9 +157,44 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
     }, LONG_PRESS_MS);
   };
   const cancelPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
+
+  // ARRASTAR PARA PINTAR (QA L06-08): o dedo que passa por várias casas pinta todas com o valor da PRIMEIRA (se ela
+  // ficou cheia, as outras enchem; se ficou vazia, esvaziam), como todo nonograma de celular. A 1ª casa só decide o valor.
+  const drag = useRef<{ value: CellMark; last: string; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const paintCell = (r: number, c: number, v: CellMark) => {
+    if (solvedRef.current || boardRef.current[r][c] === v) return;
+    commit(boardRef.current.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)));
+  };
+  const onGridDown = (r: number, c: number) => {
+    onDown(r, c);
+    const cur = boardRef.current[r][c];
+    const target = mode === 'fill' ? (cur === FILLED ? EMPTY : FILLED) : (cur === CROSSED ? EMPTY : CROSSED);
+    drag.current = { value: target, last: `${r}-${c}`, moved: false };
+    suppressClick.current = false;
+  };
+  const onGridMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || solvedRef.current) return;
+    const el = (typeof document !== 'undefined' && typeof document.elementFromPoint === 'function'
+      ? document.elementFromPoint(e.clientX, e.clientY) : null) as HTMLElement | null;
+    const key = el?.closest<HTMLElement>('[data-cell]')?.getAttribute('data-cell');
+    if (!key || key === d.last) return;
+    if (!d.moved) {
+      // saiu da casa inicial: é arrasto, não toque — a 1ª casa também recebe o valor e o clique seguinte é descartado
+      d.moved = true; suppressClick.current = true; cancelPress();
+      const [r0, c0] = d.last.split('-').map(Number);
+      paintCell(r0, c0, d.value);
+    }
+    d.last = key;
+    const [r, c] = key.split('-').map(Number);
+    paintCell(r, c, d.value);
+  };
+  const onGridUp = () => { cancelPress(); drag.current = null; };
   const onCellClick = (r: number, c: number) => {
     cancelPress();
     setFocus([r, c]);
+    if (suppressClick.current) { suppressClick.current = false; return; }
     if (longFired.current) { longFired.current = false; return; }
     setCell(r, c, mode);
   };
@@ -358,6 +393,10 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
               role="group"
               aria-label={isPt ? `Grade ${n} por ${n}` : `${n} by ${n} grid`}
               onKeyDown={onGridKey}
+              onPointerMove={onGridMove}
+              onPointerUp={onGridUp}
+              onPointerCancel={onGridUp}
+              style={{ touchAction: 'none' }}
             >
               {board.map((row, r) => (
                 <div key={r} style={{ display: 'flex' }}>
@@ -381,10 +420,7 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
                       aria-label={isPt
                         ? `Linha ${r + 1}, coluna ${c + 1}: ${stateWord(v)}. Pistas ${clues.rows[r].join(' ') || '0'} e ${clues.cols[c].join(' ') || '0'}`
                         : `Row ${r + 1}, column ${c + 1}: ${stateWord(v)}. Clues ${clues.rows[r].join(' ') || '0'} and ${clues.cols[c].join(' ') || '0'}`}
-                      onPointerDown={() => onDown(r, c)}
-                      onPointerUp={cancelPress}
-                      onPointerLeave={cancelPress}
-                      onPointerCancel={cancelPress}
+                      onPointerDown={() => onGridDown(r, c)}
                       onContextMenu={e => e.preventDefault()}
                       onClick={() => onCellClick(r, c)}
                       style={cellStyle(v, r, c)}
