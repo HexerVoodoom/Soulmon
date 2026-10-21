@@ -384,7 +384,7 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
   if (now - (ent.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent, revoked: [] };
   const pending = ent.orderDetails.filter((o) => !o.voided).slice(-AUDIT_MAX_ORDERS);
   if (pending.length === 0) return { ent, revoked: [] };
-  const revoked = [];
+  const voidedIds = [];
   for (const order of pending) {
     let voided;
     try {
@@ -392,15 +392,22 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     } catch {
       voided = null;
     }
-    if (voided !== true) continue;
+    if (voided === true) voidedIds.push(order.orderId);
+  }
+  const fresh = await readEntitlement(env, saveId);
+  if (now - (fresh.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent: fresh, revoked: [] };
+  const revoked = [];
+  for (const id of voidedIds) {
+    const order = fresh.orderDetails.find((o) => o.orderId === id);
+    if (!order || order.voided) continue;
     order.voided = true;
     revoked.push(order.orderId);
-    if (order.grantCredits > 0) ent.credits = Math.max(0, ent.credits - order.grantCredits);
+    if (order.grantCredits > 0) fresh.credits = Math.max(0, fresh.credits - order.grantCredits);
   }
-  ent.tier = paidProviderOf(ent) ? "paid" : "demo";
-  ent.auditedAt = now;
-  await writeEntitlement(env, saveId, ent);
-  return { ent, revoked };
+  fresh.tier = paidProviderOf(fresh) ? "paid" : "demo";
+  fresh.auditedAt = now;
+  await writeEntitlement(env, saveId, fresh);
+  return { ent: fresh, revoked };
 }
 __name(auditRefunds, "auditRefunds");
 
@@ -8390,7 +8397,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// E:/soulmon-integ-cla/node_modules/fflate/esm/browser.js
+// ../../soulmon-integ-cla/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11164,7 +11171,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-eeewjP/functionsRoutes-0.12823989950228742.mjs
+// ../.wrangler/tmp/pages-NPHTld/functionsRoutes-0.3209765096687971.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11441,7 +11448,7 @@ var routes = [
   }
 ];
 
-// E:/soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../soulmon-integ-cla/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11767,7 +11774,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// E:/soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../soulmon-integ-cla/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
