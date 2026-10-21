@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { resetStorageNotice } from './safeStorage';
+import { sessaoEncerrando, __resetSessaoEncerrando } from './sessionReset';
 
 // L08-04 — restaurar backup. A nuvem é mockada (lerNuvem/cloudSave); o resto é real.
 const lerNuvem = vi.fn();
@@ -25,6 +26,7 @@ const estado = (nome: string, extra: Record<string, unknown> = {}) => ({
 const ring = () => (JSON.parse(store.get(RING) ?? '{"copias":[]}') as { copias: Array<{ motivo: string; saveId: string; state: { soulmonMeta?: { baseName: string } } }> }).copias;
 
 beforeEach(() => {
+  __resetSessaoEncerrando();
   store.clear(); ordem = []; falhaChave = null;
   lerNuvem.mockReset(); cloudSave.mockReset();
   resetStorageNotice();
@@ -150,12 +152,55 @@ describe('restaurarCopia', () => {
     expect(ring().filter(c => c.motivo === 'nuvem-antes-de-restaurar').map(c => c.state.soulmonMeta?.baseName)).toEqual(['N1', 'N2']);
   });
 
-  it('nuvem fora do ar não desfaz a restauração local', async () => {
+  it('nuvem indeterminada (offline): sem-rede, NADA muda (local e revisão intactos)', async () => {
     store.set(STORAGE_KEYS.SAVE_ID, 'conta1');
+    store.set(STORAGE_KEYS.GAME_STATE, JSON.stringify(estado('Atual')));
     lerNuvem.mockResolvedValue({ estado: 'indeterminado' });
-    await expect(restaurarCopia(estado('Velha'))).resolves.toBe('ok');
+    await expect(restaurarCopia(estado('Velha'))).resolves.toBe('sem-rede');
     expect(cloudSave).not.toHaveBeenCalled();
+    expect(JSON.parse(store.get(STORAGE_KEYS.GAME_STATE)!).soulmonMeta.baseName).toBe('Atual');
+    expect(store.has(STORAGE_KEYS.SAVE_REVISION)).toBe(false);
+    expect(sessaoEncerrando()).toBe(false);
+  });
+
+  it('nuvem excluída: resultado próprio, nada muda', async () => {
+    store.set(STORAGE_KEYS.SAVE_ID, 'conta1');
+    store.set(STORAGE_KEYS.GAME_STATE, JSON.stringify(estado('Atual')));
+    lerNuvem.mockResolvedValue({ estado: 'excluida' });
+    await expect(restaurarCopia(estado('Velha'))).resolves.toBe('excluida');
+    expect(JSON.parse(store.get(STORAGE_KEYS.GAME_STATE)!).soulmonMeta.baseName).toBe('Atual');
+  });
+
+  it('cópia da nuvem não coube no anel: sem-copia, GAME_STATE e revisão intactos', async () => {
+    store.set(STORAGE_KEYS.SAVE_ID, 'conta1');
+    store.set(STORAGE_KEYS.GAME_STATE, JSON.stringify({ naoTemProgresso: true }));
+    lerNuvem.mockResolvedValue({ estado: 'encontrado', state: estado('Nuvem'), revision: 7 });
+    falhaChave = RING;
+    await expect(restaurarCopia(estado('Velha'))).resolves.toBe('sem-copia');
+    expect(JSON.parse(store.get(STORAGE_KEYS.GAME_STATE)!)).toEqual({ naoTemProgresso: true });
+    expect(cloudSave).not.toHaveBeenCalled();
+    expect(sessaoEncerrando()).toBe(false);
+  });
+
+  it('congela as gravações do provider antes de gravar; upload falho mantém o local e a revisão', async () => {
+    store.set(STORAGE_KEYS.SAVE_ID, 'conta1');
+    lerNuvem.mockResolvedValue({ estado: 'encontrado', state: estado('Nuvem'), revision: 7 });
+    cloudSave.mockResolvedValue({ ok: false, kind: 'offline', status: 0 });
+    await expect(restaurarCopia(estado('Velha'))).resolves.toBe('ok');
+    expect(sessaoEncerrando()).toBe(true);
     expect(JSON.parse(store.get(STORAGE_KEYS.GAME_STATE)!).soulmonMeta.baseName).toBe('Velha');
+    expect(JSON.parse(store.get(STORAGE_KEYS.SAVE_REVISION)!)).toEqual({ saveId: 'conta1', r: 7 });
+  });
+
+  it('o flag já está ligado quando o GAME_STATE é gravado', async () => {
+    let vistoNaGravacao: boolean | null = null;
+    const base = (globalThis.localStorage as Storage).setItem.bind(globalThis.localStorage);
+    (globalThis.localStorage as Storage).setItem = (k: string, v: string) => {
+      if (k === STORAGE_KEYS.GAME_STATE) vistoNaGravacao = sessaoEncerrando();
+      base(k, v);
+    };
+    await restaurarCopia(estado('Velha'));
+    expect(vistoNaGravacao).toBe(true);
   });
 
   it('demo local não sobe', async () => {

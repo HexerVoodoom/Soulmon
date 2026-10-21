@@ -1948,10 +1948,16 @@ Três blocos, com condições literais:
   data** (sem XP, percentual nem contagem). "Importar arquivo" aceita o
   `soulmon-local-backup-v1` exportado. Restaurar pede confirmação ("o que você
   tem agora fica guardado antes como cópia"), guarda o estado atual no anel
-  ANTES (sem cópia, não troca nada), grava o local sem mexer na identidade, sobe
-  para a nuvem com a revisão recém-lida (cópia da nuvem também vai para o anel;
-  409 = relê e tenta uma vez) e recarrega. Rede falhando não desfaz a
-  restauração local. Lógica em `src/utils/backupRestore.ts`. Régua:
+  ANTES (sem cópia, não troca nada). Com conta, lê a nuvem ANTES de trocar:
+  sem resposta mostra "Conecte-se à internet para restaurar esta cópia." (nada
+  muda), conta excluída tem aviso próprio, e a cópia da nuvem também vai para o
+  anel (não coube = nada muda); só então grava a revisão lida, congela as
+  gravações do app (`congelarGravacoes`), grava o local sem mexer na identidade,
+  sobe para a nuvem (409 = relê e tenta uma vez) e recarrega. Rede falhando
+  depois disso não desfaz a restauração local (a revisão já está gravada, o
+  próximo save sobe). Se a gravação local negar por cota, não há reload: a tela
+  pede "Libere espaço e abra o app de novo" (as gravações ficam congeladas).
+  Lógica em `src/utils/backupRestore.ts`. Régua:
   `backupRestore.test.ts`, `RestoreBackupSection.render.test.tsx`.
 - **`RestWindowCard`**: escolhe a janela (`onChangeWindow`), o switch "não quero
   ver métricas" (`onToggleMetrics`) e pede a permissão de push no momento-ouro

@@ -3637,7 +3637,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Quem usa:** `utils/sessionReset.ts` (`guardarCopiaDeSeguranca`), `utils/cloudSave.ts` (adoção e reconciliação). Não importa `cloudSave` nem `sessionReset` (sem ciclo). **Régua:** `src/utils/backupRing.l08.qa.test.ts`.
 
 ### `src/utils/backupRestore.ts` (fix/qa-restaurar-backup, 21/10/2026 — L08-04)
-**Dono de:** "Restaurar backup" — `listarCopiasDoAparelho()` (anel, quarentena legível e vaga da adoção), `lerArquivoDeBackup(texto)` (erro nomeado `json|formato|estado`, nunca lança), `restaurarCopia(state)` (guarda o atual no anel ANTES de gravar; sem a cópia aborta; não troca `SAVE_ID`; com conta e fora da demo sobe já, com `baseRevision`, e retenta 1x no 409; falha de rede não desfaz o local) e os textos sem número (`resumoDaCopia`, `origemDaCopia`, `dataDaCopia`).
+**Dono de:** "Restaurar backup" — `listarCopiasDoAparelho()` (anel, quarentena legível e vaga da adoção), `lerArquivoDeBackup(texto)` (erro nomeado `json|formato|estado`, nunca lança), `restaurarCopia(state)` (ordem fixa: valida; guarda o atual no anel; com conta lê a nuvem — `indeterminado` = `'sem-rede'` e `excluida` = `'excluida'` sem trocar nada, cópia da nuvem no anel ou `'sem-copia'`, grava a revisão lida; então `congelarGravacoes()` de `sessionReset`, grava o local — `'storage'` sem reload, app precisa ser reaberto —, sobe com `baseRevision` e retenta 1x no 409; não troca `SAVE_ID`; falha de upload não desfaz o local) e os textos sem número (`resumoDaCopia`, `origemDaCopia`, `dataDaCopia`).
 **Quem usa:** `components/RestoreBackupSection.tsx`. **Régua:** `src/utils/backupRestore.test.ts`.
 
 ### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)

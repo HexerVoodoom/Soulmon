@@ -5,6 +5,7 @@ import { migrateBranchIds } from './branchMigration';
 import { gravarRevisao } from './saveRevision';
 import { isDemoMode, type DemoCarrier } from './demoMode';
 import { lerNuvem, cloudSave } from './cloudSave';
+import { congelarGravacoes } from './sessionReset';
 import { soulmonDisplayName } from './petName';
 import { STAGE_NAMES } from './oracle/base';
 
@@ -14,17 +15,17 @@ import { STAGE_NAMES } from './oracle/base';
  * LISTA as cópias que o aparelho guarda (anel, quarentena, vaga única da adoção)
  * e restaura uma delas — ou o arquivo exportado por `montarBackupLocal`.
  *
- * Restaurar é destrutivo para o que está no aparelho agora, então a ordem é
- * fixa e cada passo só avança se o anterior deu certo:
- *   1. valida a cópia (objeto simples que o `migrateBranchIds` aceita; o hydrate
- *      do boot sanea o resto);
- *   2. guarda o estado ATUAL no anel (`antes-de-restaurar`). Falhou = aborta,
- *      nada é trocado ('sem-copia');
- *   3. grava `GAME_STATE` ('storage' se a cota negar);
- *   4. NÃO troca a identidade (`SAVE_ID` fica);
- *   5. com conta e fora da demo, sobe para a nuvem agora (gesto explícito).
- *      Falha de rede aqui NÃO desfaz a restauração local: o próximo save do app
- *      sobe. Quem chama recarrega a página depois de 'ok'.
+ * Restaurar é destrutivo para o que está no aparelho agora e para a nuvem, então a
+ * ordem é fixa e cada passo só avança se o anterior deu certo:
+ *   a. valida a cópia (objeto simples que o `migrateBranchIds` aceita);
+ *   b. guarda o estado ATUAL no anel (`antes-de-restaurar`). Falhou = 'sem-copia';
+ *   c. com conta e fora da demo: `lerNuvem`. Indeterminado = 'sem-rede', excluída
+ *      = 'excluida' (nada muda); encontrada com progresso e diferente vai ao anel
+ *      (falhou = 'sem-copia'); grava a revisão lida;
+ *   d. `congelarGravacoes()` (o provider não regrava o estado antigo), grava
+ *      `GAME_STATE` ('storage' se a cota negar), NÃO troca `SAVE_ID`, e sobe
+ *      (409 = relê e tenta uma vez). Falha de rede aqui NÃO desfaz o local.
+ * Quem chama recarrega a página depois de 'ok'.
  * Nunca lança.
  */
 
@@ -43,7 +44,7 @@ export interface CopiaDoAparelho {
 
 export type ErroDeArquivo = 'json' | 'formato' | 'estado';
 export type LeituraDeArquivo = { ok: true; copia: CopiaDoAparelho } | { ok: false; erro: ErroDeArquivo };
-export type ResultadoRestauracao = 'ok' | 'invalido' | 'sem-copia' | 'storage';
+export type ResultadoRestauracao = 'ok' | 'invalido' | 'sem-copia' | 'storage' | 'sem-rede' | 'excluida';
 
 export const ARQUIVO_FORMATO = 'soulmon-local-backup-v1';
 
@@ -176,34 +177,51 @@ function iguais(a: unknown, b: unknown): boolean {
   try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
 }
 
-/** Sobe a cópia restaurada. Melhor esforço: o local já está trocado e o próximo save do app sobe. */
+/** Guarda a nuvem no anel antes de ser sobrescrita. `false` = não coube. */
+function guardarNuvem(saveId: string, nuvem: unknown, state: unknown, agora: () => Date): boolean {
+  if (!saveTemProgresso(nuvem) || iguais(nuvem, state)) return true;
+  return empurrarNoAnel({ saveId, salvoEm: agora().toISOString(), motivo: 'nuvem-antes-de-restaurar', state: nuvem });
+}
+
+/** Sobe a cópia restaurada (passo d). Melhor esforço: o local já está trocado, a revisão já foi gravada e o próximo save do app sobe. */
 async function subirParaNuvem(saveId: string, state: unknown, agora: () => Date): Promise<void> {
-  const guardarNuvem = (nuvem: unknown): boolean => {
-    if (!saveTemProgresso(nuvem) || iguais(nuvem, state)) return true;
-    return empurrarNoAnel({ saveId, salvoEm: agora().toISOString(), motivo: 'nuvem-antes-de-restaurar', state: nuvem });
-  };
   for (let tentativa = 0; tentativa < 2; tentativa++) {
-    const leitura = await lerNuvem(saveId);
-    if (leitura.estado === 'encontrado') {
-      // A cópia da nuvem vai para o anel ANTES de ser sobrescrita; sem ela, não sobe.
-      if (!guardarNuvem(leitura.state)) return;
-      gravarRevisao(saveId, leitura.revision ?? 0);
-    } else if (leitura.estado !== 'vazio') {
-      return; // indeterminado ou excluída: não decide por cima
+    if (tentativa > 0) {
+      // 409: a nuvem andou. Relê, guarda a nova versão no anel e usa a revisão nova.
+      const leitura = await lerNuvem(saveId);
+      if (leitura.estado === 'encontrado') {
+        if (!guardarNuvem(saveId, leitura.state, state, agora)) return;
+        gravarRevisao(saveId, leitura.revision ?? 0);
+      } else if (leitura.estado !== 'vazio') {
+        return; // indeterminado ou excluída: não decide por cima
+      }
     }
     const r = await cloudSave(saveId, state);
     if (r.ok || r.status !== 409) return;
   }
 }
 
-/** Restaura `state` como o save deste aparelho. Ver a ordem no topo do arquivo. Nunca lança. */
+/**
+ * Restaura `state` como o save deste aparelho. Ver a ordem no topo do arquivo. Nunca lança.
+ *
+ * Resultados novos (com conta, fora da demo), SEM trocar nada:
+ *  · 'sem-rede'  — a nuvem não respondeu (offline/5xx/401): sem revisão atualizada
+ *                  o próximo POST tomaria 409 e desfaria a restauração;
+ *  · 'excluida'  — a nuvem responde 410 (conta excluída): resultado próprio, a
+ *                  tela explica sem culpar a rede.
+ * Falha do upload depois do passo (d) mantém o local ('ok'): a revisão já foi
+ * gravada, então o próximo save do app sobe com a base certa.
+ * Passo (d) congela as gravações do provider; se a gravação local falhar
+ * ('storage') não há reload e o app precisa ser reaberto.
+ */
 export async function restaurarCopia(state: unknown, opts: RestaurarOpts = {}): Promise<ResultadoRestauracao> {
   try {
     const agora = opts.agora ?? (() => new Date());
+    // (a) valida.
     if (!estadoRestauravel(state)) return 'invalido';
     const saveId = readLocal(STORAGE_KEYS.SAVE_ID) ?? '';
 
-    // (2) o que há agora vai para o anel primeiro.
+    // (b) o que há agora vai para o anel primeiro.
     const atualCru = readLocal(STORAGE_KEYS.GAME_STATE);
     if (atualCru) {
       const atual = jsonOuNada(atualCru);
@@ -219,11 +237,22 @@ export async function restaurarCopia(state: unknown, opts: RestaurarOpts = {}): 
       }
     }
 
-    // (3) troca. (4) SAVE_ID fica como está.
-    if (!writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(state), { silent: true })) return 'storage';
+    // (c) com conta: lê a nuvem, guarda a cópia dela e grava a revisão lida.
+    const comNuvem = !!saveId && !isDemoMode(state as DemoCarrier);
+    if (comNuvem) {
+      const leitura = await lerNuvem(saveId);
+      if (leitura.estado === 'indeterminado') return 'sem-rede';
+      if (leitura.estado === 'excluida') return 'excluida';
+      if (leitura.estado === 'encontrado') {
+        if (!guardarNuvem(saveId, leitura.state, state, agora)) return 'sem-copia';
+        gravarRevisao(saveId, leitura.revision ?? 0);
+      }
+    }
 
-    // (5) nuvem.
-    if (saveId && !isDemoMode(state as DemoCarrier)) {
+    // (d) todas as cópias garantidas: congela o provider e troca. SAVE_ID fica.
+    congelarGravacoes();
+    if (!writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(state), { silent: true })) return 'storage';
+    if (comNuvem) {
       try { await subirParaNuvem(saveId, state, agora); } catch { /* o próximo save do app sobe */ }
     }
     return 'ok';

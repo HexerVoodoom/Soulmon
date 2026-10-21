@@ -104,6 +104,12 @@ export function limparEstadoLocalDaConta(): string[] {
 let encerrando = false;
 /** O `GameStateContext` consulta isto antes de gravar/enviar: estado em memória não ressuscita o que foi apagado. */
 export function sessaoEncerrando(): boolean { return encerrando; }
+/**
+ * Usada pela restauração de backup imediatamente antes de gravar o estado
+ * restaurado e recarregar: liga o mesmo flag, para o provider não regravar o
+ * estado antigo. O reload zera o módulo.
+ */
+export function congelarGravacoes(): void { encerrando = true; }
 /** Só para teste. */
 export function __resetSessaoEncerrando(): void { encerrando = false; }
 

@@ -64,7 +64,21 @@ export function RestoreBackupSection({ language, reload }: RestoreBackupSectionP
   };
 
   const mensagemDeFalha = (r: ResultadoRestauracao): string => {
-    if (r === 'sem-copia' || r === 'storage') {
+    if (r === 'sem-rede') {
+      return isPt ? 'Conecte-se à internet para restaurar esta cópia.' : 'Connect to the internet to restore this copy.';
+    }
+    if (r === 'excluida') {
+      return isPt
+        ? 'A conta deste aparelho foi excluída, então esta cópia não pode ser restaurada aqui. Nada foi alterado.'
+        : 'The account on this device was deleted, so this copy cannot be restored here. Nothing changed.';
+    }
+    if (r === 'storage') {
+      // O app congelou as gravações antes de gravar: só reabrindo.
+      return isPt
+        ? 'Sem espaço no aparelho. Libere espaço e abra o app de novo.'
+        : 'Your device is out of space. Free up space and reopen the app.';
+    }
+    if (r === 'sem-copia') {
       return isPt
         ? 'Não há espaço neste aparelho para guardar o que você tem agora. Nada foi alterado. Libere espaço e tente de novo.'
         : 'There is no room on this device to keep what you have now. Nothing changed. Free up space and try again.';
