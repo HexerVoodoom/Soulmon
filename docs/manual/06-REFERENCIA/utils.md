@@ -3620,6 +3620,14 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Dono de:** a QUARENTENA do save local — `quarentenarSaveLocal(cru, motivo)` grava em `STORAGE_KEYS.SAVE_QUARANTINE` o texto do `GAME_STATE` que não virou estado (ou o local atrasado antes de adotar a nuvem), corte em 1.000.000 caracteres (50.000 se a cota negar), idempotente, nunca lança.
 **Quem usa:** `contexts/GameStateContext.tsx` (inicializador, carga degradada L08-01/L08-02). Módulo próprio para não ser apanhado pelos `vi.mock('../utils/cloudSave')`. **Régua:** `src/contexts/GameStateContext.l08corrupcao.qa.test.tsx`.
 
+### `src/utils/saveRevision.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §161, ADR-004)
+
+A revisão do save na nuvem que este aparelho viu por último: `lerRevisao(saveId)` (só vale para o mesmo `saveId`; leitura tolerante, `null` em dúvida), `gravarRevisao(saveId, r)` e `esquecerRevisao()`. Chave `soulmon-save-revision-v1` (`{ saveId, r }`), fora do `GameState`, apagada no logout. Módulo próprio para o provider não depender do `cloudSave` que os testes de contexto mockam; `cloudSave.ts` reexporta. **Quem usa:** `utils/cloudSave.ts` (`baseRevision` no POST, adoção), `contexts/GameStateContext.tsx` (reconciliação). **Régua:** `src/utils/cloudSave.revision.test.ts`.
+
+### `src/utils/saveReconcile.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §161, ADR-004)
+
+`decidirReconciliacao({ motivo: '409' | 'boot' | 'visivel', leitura, revisaoLocal, pendente })` → `'adotar' | 'liberar' | 'esperar' | 'excluida' | 'ignorar'`. Função pura: no 409 a nuvem encontrada é adotada (o provider guarda o local no anel antes), vazia libera, indeterminada espera; no boot/volta à tela só adota revisão MAIOR sem mudança pendente. Nunca olha XP. **Quem usa:** `contexts/GameStateContext.tsx`. **Régua:** `src/utils/saveReconcile.test.ts`, `src/contexts/GameStateContext.revision409.test.tsx`.
+
 ### `src/utils/backupRing.ts` (fix/qa-srv-l08-backup, 20/10/2026 — REGISTRO §158)
 **Dono de:** o ANEL de cópias de segurança — `lerAnel()` (tolerante), `empurrarNoAnel()` (até 3, idempotente, encolhe sob cota, nunca lança), `preservarConflictBackup()` (empurra o `CONFLICT_BACKUP` atual antes de sobrescrevê-lo) e `saveTemProgresso()` (a régua que `saveTemOnboardingConcluido` usa).
 **Quem usa:** `utils/sessionReset.ts` (`guardarCopiaDeSeguranca`), `utils/cloudSave.ts` (adoção e reconciliação). Não importa `cloudSave` nem `sessionReset` (sem ciclo). **Régua:** `src/utils/backupRing.l08.qa.test.ts`.

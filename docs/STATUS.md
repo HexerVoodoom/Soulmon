@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 21/10/2026 — Save com revisão e 409 (`fix/qa-revisao-restaurar`, REGISTRO §161, ADR-004 adotada)
+>
+> - `POST /api/save` com `baseRevision`: aparelho atrasado toma 409 em vez de sobrescrever a nuvem; o cliente relê, adota a nuvem e guarda o local no anel de backup (aviso calmo PT/EN). Cliente em cache sem base grava como antes. Revisão no metadata da KV: rollback = reverter o commit, sem migração.
+> - **Residual declarado:** KV sem compare-and-set (janela de segundos, ADR-005); overlay de desktop ainda grava sem base. **Não conferido no aparelho:** dois aparelhos reais na mesma conta.
+
 > ## 20/10/2026 — Tamanho do Soulmon por estágio (`feat/backlog-size`, REGISTRO §154)
 >
 > - Rookie pequeno por padrão, cresce com o estágio; "pequenininho até o mega" (10%) e rookie grande (2%) são portes raros, determinísticos pela semente do save. Normaliza pela CAIXA VISÍVEL do sprite (bbox do alfa), não pelo canvas.

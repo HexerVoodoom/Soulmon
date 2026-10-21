@@ -42,6 +42,12 @@ export const STORAGE_KEYS = {
   SCHEDULED_NOTIFICATIONS: 'soulmon-scheduled-notifications',
   DAILY_NOTIFICATION_CHECK: 'soulmon-daily-notification-check',
   SAVE_ID: 'soulmon-save-id',
+  /**
+   * ADR-004 — revisão do save na nuvem vista por este aparelho: `{"saveId":string,"r":number}`.
+   * Fora do GameState; dono `cloudSave.ts` (`utils/saveRevision.ts`). NÃO sobrevive ao
+   * logout (é da conta, como SAVE_ID): fica fora da allowlist de `sessionReset`.
+   */
+  SAVE_REVISION: 'soulmon-save-revision-v1',
   /** Mensagem do portão depois de um 410 `account-deleted` (cloudSave.ts › reagirContaExcluida). Lida e apagada uma vez. */
   ACCOUNT_DELETED_NOTICE: 'soulmon-account-deleted-notice',
   USER_EMAIL: 'soulmon-user-email',

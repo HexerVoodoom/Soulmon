@@ -131,6 +131,33 @@ function firstSeenMeta(metadata) {
 }
 const RENEW_AFTER_SECONDS = 86400 * 30;
 
+/**
+ * Revisão (ADR-004, contrato ADITIVO): `r` no METADATA da chave; o VALOR segue sendo o state JSON cru, então o código
+ * antigo (rollback) lê igual e só perde `r`/`h` no próximo put (volta à revisão 0). Sem `r` válido = revisão 0.
+ * @param {unknown} metadata
+ * @returns {number}
+ */
+function revisionOf(metadata) {
+  const r = metadata && typeof metadata === 'object' ? /** @type {any} */ (metadata).r : undefined;
+  return Number.isInteger(r) && r >= 0 ? r : 0;
+}
+
+/** `r`/`h` do metadata a PRESERVAR na renovação de TTL (só o que é válido; nunca inventa). */
+function revisionMeta(metadata) {
+  const h = metadata && typeof metadata === 'object' ? /** @type {any} */ (metadata).h : undefined;
+  const out = {};
+  const r = metadata && typeof metadata === 'object' ? /** @type {any} */ (metadata).r : undefined;
+  if (Number.isInteger(r) && r >= 0) out.r = r;
+  if (typeof h === 'string' && h) out.h = h;
+  return out;
+}
+
+/** SHA-256 hex do texto gravado (reconhece reenvio idempotente de um 200 perdido). */
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
@@ -229,8 +256,9 @@ export async function onRequest({ request, env }) {
     // conserto: reler imediatamente antes do `put` e só renovar se o disco
     // ainda tem o MESMO raw que foi lido. Isso encolhe a janela ao intervalo
     // `get`→`put` (a mesma técnica de `community.js` › `renovarPrazos`); não
-    // a fecha. A saída real é a ADR-004 (`revision` + 409), decisão do dono
-    // (#52) — e o `it.fails` daquele arquivo continua aberto de propósito.
+    // a fecha. A revisão (ADR-004) agora existe e protege o POST contra save velho,
+    // mas esta renovação NÃO passa por ela: a corrida segue mitigada como antes
+    // (reler antes do put) — e o `it.fails` daquele arquivo continua aberto de propósito.
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1000 > RENEW_AFTER_SECONDS) {
       try {
@@ -239,7 +267,7 @@ export async function onRequest({ request, env }) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS,
             // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
-            metadata: { t: Date.now(), ...firstSeenMeta(metadata) },
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata) },
           });
         } else {
           console.info('save: renovação de TTL pulada, conteúdo mudou entre leitura e renovação', { saveIdPrefix: saveId.slice(0, 8) });
@@ -258,7 +286,7 @@ export async function onRequest({ request, env }) {
     const betaFull = admin ? false : (await verifiedBetaFull(env, request, saveId)).betaFull;
     state.accountTier = (admin || betaFull) ? 'paid' : ent.tier;
     state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
-    return Response.json({ found: true, state }, { headers: CORS });
+    return Response.json({ found: true, state, revision: revisionOf(metadata) }, { headers: CORS });
   }
 
   if (request.method === 'POST') {
@@ -379,12 +407,28 @@ export async function onRequest({ request, env }) {
         return Response.json({ error: porIp.reason }, { status: 429, headers: CORS });
       }
     }
+    // Concorrência (ADR-004): `baseRevision` do cliente contra a revisão gravada. O KV NÃO tem compare-and-set: dois POST
+    // dentro da janela get→put (e da consistência eventual ~60 s entre PoPs, ADR-005) ainda podem ler a mesma revisão
+    // e ambos gravar — intervalo residual declarado. Isto fecha a janela de HORAS (aparelho velho sobrescrevendo), não a de segundos.
+    const cur = revisionOf(prev?.metadata);
+    const base = body?.baseRevision;
+    const temBase = Number.isInteger(base) && base >= 0;
+    const h = await sha256Hex(serialized);
+    if (!temBase) {
+      console.info('save: escrita sem baseRevision', { saveIdPrefix: saveId.slice(0, 8) });
+    } else if (base !== cur) {
+      if (typeof prev?.metadata?.h === 'string' && prev.metadata.h === h) {
+        return Response.json({ ok: true, revision: cur, duplicate: true }, { headers: CORS });
+      }
+      console.warn('save: 409 conflito de revisão', { saveIdPrefix: saveId.slice(0, 8), base, cur });
+      return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
-      metadata: { t: Date.now(), f },
+      metadata: { t: Date.now(), f, r: cur + 1, h },
     });
-    return Response.json({ ok: true }, { headers: CORS });
+    return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS });
   }
 
   return Response.json({ error: 'Method not allowed' }, { status: 405, headers: CORS });

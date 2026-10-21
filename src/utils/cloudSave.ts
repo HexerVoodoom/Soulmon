@@ -19,6 +19,9 @@ import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal, writeFlag } from './safeStorage';
 import { preservarConflictBackup, saveTemProgresso } from './backupRing';
 import { resolveLanguage } from './i18n';
+import { lerRevisao, gravarRevisao, esquecerRevisao } from './saveRevision';
+
+export { lerRevisao, gravarRevisao, esquecerRevisao };
 
 export async function emailToSaveId(email: string): Promise<string> {
   const norm = email.trim().toLowerCase();
@@ -102,6 +105,8 @@ export interface CloudSaveFailure extends CloudSavePolicy {
   ok: false;
   kind: CloudSaveFailureKind;
   status: number;
+  /** 409: a revisão atual da nuvem, se o servidor mandou (inteiro >= 0). */
+  revision?: number;
 }
 export type CloudSaveOutcome = { ok: true } | CloudSaveFailure;
 
@@ -109,9 +114,15 @@ export type CloudSaveOutcome = { ok: true } | CloudSaveFailure;
 const RECUSA_DEMO: CloudSaveFailure = { ok: false, kind: 'client', status: 0, retentavel: false, avisaJogador: false };
 const ehDemo = (state: unknown): boolean => isDemoMode(state as DemoCarrier | null | undefined);
 
-function falha(status: number): CloudSaveFailure {
+function falha(status: number, revision?: number): CloudSaveFailure {
   const kind = classifyCloudSaveStatus(status);
-  return { ok: false, kind, status, ...CLOUD_SAVE_POLICY[kind] };
+  return { ok: false, kind, status, ...CLOUD_SAVE_POLICY[kind], ...(revision !== undefined ? { revision } : {}) };
+}
+
+/** Revisão válida do corpo do servidor: inteiro >= 0; qualquer outra coisa = ausente. */
+function revisaoDoCorpo(data: unknown): number | undefined {
+  const v = (data as { revision?: unknown } | null)?.revision;
+  return typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : undefined;
 }
 
 /** `DD/MM` do carimbo da lápide, no fuso do aparelho. Vazio se não veio. */
@@ -198,20 +209,33 @@ export function __resetContaExcluida(): void { contaExcluidaTratada = false; }
 export async function cloudSave(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
   // DEMO LOCAL (`utils/demoMode.ts`): nada sai do aparelho — nem aqui, que é a porta de TODA gravação.
   if (ehDemo(state)) return RECUSA_DEMO;
+  // ADR-004: com revisão conhecida DESTE saveId, o POST é condicional (`baseRevision`).
+  // TRANSIÇÃO: cliente sem revisão gravada (primeiro POST depois da atualização, ou conta
+  // adotada de servidor antigo) grava CEGO como sempre e, na resposta, passa a ter revisão.
+  const base = lerRevisao(saveId);
   try {
     const res = await fetch(`/api/save?id=${saveId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-      body: JSON.stringify({ state }),
+      body: JSON.stringify(base === null ? { state } : { state, baseRevision: base }),
     });
     if (!res.ok) {
+      let rev409: number | undefined;
+      if (res.status === 409) {
+        try { rev409 = revisaoDoCorpo(await res.clone().json()); } catch { /* corpo ilegível */ }
+      }
       await detectBetaClosed(res);
       console.warn('cloudSave: servidor recusou o save', {
         status: res.status,
         classe: classifyCloudSaveStatus(res.status),
       });
-      return falha(res.status);
+      return falha(res.status, rev409);
     }
+    // Revisão nova (tolerante: corpo sem revision = não grava). Resposta atrasada não faz recuar.
+    try {
+      const r = revisaoDoCorpo(await res.json());
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+    } catch { /* corpo vazio ou não-JSON */ }
     // `writeLocal`, não `setItem` cru: com o storage cheio o `setItem` lançava
     // DENTRO deste try e o `catch` devolvia falha — o servidor tinha aceitado
     // o save e o app relatava erro. O carimbo é conveniência; o resultado da
@@ -326,7 +350,7 @@ export async function cloudSaveComRetry(
 
 /** Leitura do save da nuvem que distingue "não existe" de "não sei". */
 export type LeituraNuvem =
-  | { estado: 'encontrado'; state: unknown }
+  | { estado: 'encontrado'; state: unknown; /** revisão do servidor (inteiro >= 0); ausente em servidor antigo */ revision?: number }
   | { estado: 'vazio' }
   /** 410 `account-deleted`. `excluidaEm` é o `deletedAt` (ms) do corpo, se o servidor mandou. */
   | { estado: 'excluida'; excluidaEm?: number }
@@ -356,7 +380,9 @@ export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
     if (res.status === 410) return { estado: 'excluida', excluidaEm: await lerDeletedAt(res) };
     if (!res.ok) { await detectBetaClosed(res); return { estado: 'indeterminado' }; }
     const data = await res.json();
-    return data.found ? { estado: 'encontrado', state: data.state } : { estado: 'vazio' };
+    if (!data.found) return { estado: 'vazio' };
+    const revision = revisaoDoCorpo(data);
+    return { estado: 'encontrado', state: data.state, ...(revision !== undefined ? { revision } : {}) };
   } catch {
     return { estado: 'indeterminado' };
   }
@@ -485,7 +511,7 @@ export function adoptCloudSave(
   saveId: string,
   rawState: unknown,
   email?: string,
-  opts: { semCopia?: boolean } = {},
+  opts: { semCopia?: boolean; revision?: number } = {},
 ): AdoptResult {
   const state = migrateBranchIds(rawState);
   if (!isPlainState(state)) {
@@ -515,6 +541,8 @@ export function adoptCloudSave(
   if (!writeLocal(STORAGE_KEYS.GAME_STATE, serialized)) return 'storage';
   writeLocal(STORAGE_KEYS.SAVE_ID, saveId);
   if (email) writeLocal(STORAGE_KEYS.USER_EMAIL, email.trim().toLowerCase());
+  // ADR-004: a revisão só DEPOIS do dado e da identidade (nunca uma revisão sem o dado dela).
+  if (opts.revision !== undefined) gravarRevisao(saveId, opts.revision);
   // H3 (02/10/2026): "onboarding concluído" e "tutorial visto" moram em flags
   // LOCAIS, fora do save. Adotar o save num aparelho novo sem religá-las fazia
   // o reload cair no onboarding como conta nova — com o save certo gravado e
@@ -550,7 +578,7 @@ export async function restaurarContaNoLogin(email: string): Promise<RestauracaoN
     const r = await lerNuvem(id);
     if (r.estado === 'indeterminado' || r.estado === 'excluida') return 'indeterminado';
     if (r.estado === 'vazio') return 'sem-save';
-    return adoptCloudSave(id, r.state, norm) === 'ok' ? 'restaurada' : 'storage';
+    return adoptCloudSave(id, r.state, norm, { revision: r.revision }) === 'ok' ? 'restaurada' : 'storage';
   } catch {
     return 'indeterminado';
   }
@@ -668,7 +696,7 @@ export async function reconcileSaveId(
       return { estado: 'storage', saveId: derivado };
     }
     // `adoptCloudSave` grava o DADO e só então troca a identidade, e não lança.
-    if (adoptCloudSave(derivado, naNuvem.state, norm, { semCopia: true }) !== 'ok') {
+    if (adoptCloudSave(derivado, naNuvem.state, norm, { semCopia: true, revision: naNuvem.revision }) !== 'ok') {
       return { estado: 'storage', saveId: derivado };
     }
     writeLocal(RECONCILE_KEYS.PREVIOUS_SAVE_ID, anterior, { silent: true });
