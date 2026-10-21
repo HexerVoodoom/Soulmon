@@ -1112,6 +1112,8 @@ export default function App() {
      troca com o fade de sempre. Para quando a geração para de vez (teto da conta ou da forma): aí volta a arte de reserva, nunca um cristal eterno. */
   const petChocando = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
     && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
+  // Criatura do oráculo (nunca o inicial de fogo de reserva, mesmo se a geração falhar/estiver no teto).
+  const petOraculo = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
   // Porte da criatura (utils/spriteScale.ts): semente estável do save, escrita em render como `setOwnSprites` logo abaixo.
   setPetSizeSeed(sizeSeedOf(gameState));
@@ -1122,8 +1124,8 @@ export default function App() {
       const url = displaySprite(spriteAcervo, formId)?.url;
       if (url) map[formId.toLowerCase()] = url;
     }
-    setOwnSprites(map, petChocando ? PLACEHOLDER_ART.forming : undefined);
-  }, [spriteAcervo, petChocando]);
+    setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
+  }, [spriteAcervo, petChocando, petOraculo]);
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
   /* O botao "Tentar de novo" do card de falha de credencial. Nasceu INERTE no
      commit 60b0c89b: `onRetrySprite` e opcional, entao a prop faltando nao

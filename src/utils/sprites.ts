@@ -295,6 +295,6 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
     return line[level] ?? line.rookie;
   }
   // O Soulmon PRÓPRIO (criatura do Oráculo) já adotado no acervo; enquanto ele ainda não nasceu, o cristal (`setOwnSprites`).
-  return ownSprites[key] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
+  return ownSprites[key] ?? Object.values(ownSprites)[0] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
 }
 
