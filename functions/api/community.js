@@ -41,8 +41,9 @@ import { gateFor } from './_gates.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
-  getProfile, putProfile,
+  getProfile, putProfile, pidSoLeitura,
 } from './_profile.js';
+import { secretEquals } from './metrics.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -811,7 +812,9 @@ async function handleCommunity({ request, env }) {
       rows.push({
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
-        id: p ? await ensurePid(env, p) : null,
+        // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
+        // autenticado (meId passou por denyUnlessOwner) migra o pid legado.
+        id: p ? (meId && ownerSave === meId ? await ensurePid(env, p) : await pidSoLeitura(p)) : null,
         name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
         avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId), artLine: artLineOrNull(p?.artLine),
         points: rec.points, wins: rec.wins, losses: rec.losses,
@@ -835,7 +838,7 @@ async function handleCommunity({ request, env }) {
   // mês seguinte. Protegido por SEASON_ADMIN_KEY (secret do wrangler).
   if (action === 'closeSeason' && method === 'POST') {
     const { season, adminKey } = body;
-    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json({ error: 'unauthorized' }, 401);
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(adminKey, env.SEASON_ADMIN_KEY)) return json({ error: 'unauthorized' }, 401);
     if (!/^\d{4}-\d{2}$/.test(season || '')) return json({ error: 'invalid season' }, 400);
     // Idempotência do FECHAMENTO, e ela é do SERVIDOR de propósito: a partir do
     // WP4.18 quem chama é um cron, e cron repete (retry, deploy duplicado, dois
