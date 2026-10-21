@@ -45,6 +45,12 @@
 **Régua:** `src/hooks/useDialogA11y.test.tsx`.
 **Avisos do arquivo:** trata de propósito quatro casos que a versão ingênua erra — diálogos empilhados (contagem de referência em `lockCount`/`inertRefs`), restauro exato do `overflow` original, `inert` ausente em WebView antigo (cai em `aria-hidden` + o trap de Tab), e desmontagem abrupta (nada em estado React, tudo no cleanup do efeito, contagens saneadas com `Math.max(0, …)`). O hook **não** desenha véu — cada diálogo continua dono do próprio véu.
 
+### `src/hooks/useOrdemCongelada.ts`
+**Dono de:** a ordem da lista da Home não saltar sob o dedo (QA L06-07, dono 21/10/2026): devolve os ids recém-concluídos, que ficam ~2 s no lugar antes de descer.
+**Exports:** `useOrdemCongelada(doneIds, ms = ORDEM_CONGELADA_MS)` — `ReadonlySet<string>` dos ids congelados; `ORDEM_CONGELADA_MS` (2000). Quem já estava concluído na 1ª pintura nunca congela; cada conclusão tem prazo próprio e os prazos só caem com o componente.
+**Chamado por:** `src/components/DailyRituals.tsx` (os dois `sort`: tarefas `t:<id>` e hábitos `h:<id>`).
+**Régua:** `src/hooks/useOrdemCongelada.test.ts`.
+
 ### `src/hooks/usePresentationQueue.ts`
 **Dono de:** ligar a fila pura de apresentação (`utils/presentationQueue.ts`) ao React (14/10/2026, REGISTRO §42): deriva quem está na tela a cada render (guardando o item atual num `ref`, para não ser expulso por um mais prioritário), chama `onShow(id)` UMA vez por entrada na tela (onde cada dono grava o "visto"), registra a camada de "voltar" (Android/navegador) que fecha o item da tela por `onDismiss(id)`, e expõe `fail(id)` (erro de render, chunk que não carrega, fechamento que lança: pula o item e tenta o fechamento dele).
 **Exports:** `usePresentationQueue({ ready, holdDayStart?, onShow?, onDismiss? })` → `{ current, dismiss, fail, dayStartActive }`. Desde 19/10/2026 (REGISTRO §111) acumula num `ref` o que já foi mostrado NESTA abertura do app (teto de 3 modais) e `holdDayStart` segura o início de dia enquanto o Soulmon dorme à espera de ser acordado.
