@@ -108,11 +108,14 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
       // repagava o bônus). O teto diário de Bits segue sendo do funil do App.
       const payDaily = isDaily && !dailyPaid.current && readLocal(STORAGE_KEYS.PICROSS_DAILY_PAID) !== todayKey;
       if (payDaily) { dailyPaid.current = true; writeLocal(STORAGE_KEYS.PICROSS_DAILY_PAID, todayKey); }
-      const bits = picrossBits(n, payDaily);
+      // O mesmo desenho, já resolvido NESTA visita, não paga de novo a base (QA L04-02): são desenhos fixos que dá
+      // para decorar, e sem isto repetir o 5×5 virava a forma mais rápida de fazer Bits. A visita seguinte paga como antes.
+      const repetido = done.has(pattern.id) && !payDaily;
+      const bits = repetido ? 0 : picrossBits(n, payDaily);
       setSolved(true);
       setEarned(bits);
       setDone(s => new Set(s).add(pattern.id));
-      onEarnPoints(bits);
+      if (bits > 0) onEarnPoints(bits);
     }
   };
 

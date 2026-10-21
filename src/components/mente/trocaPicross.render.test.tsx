@@ -111,6 +111,23 @@ describe('PicrossGame', () => {
     expect(again).toHaveBeenCalledWith(picrossBits(p.rows.length, false));
   });
 
+  it('repetir o MESMO desenho na mesma visita não paga a base de novo (QA L04-02)', () => {
+    const onEarn = vi.fn();
+    renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={onEarn} todayKey={todayKey} />);
+    const other = PICROSS_PATTERNS.find(p => p.id !== dailyPattern(todayKey).id && p.rows.length === 5)!;
+    const abrirOutro = () => {
+      fireEvent.click(screen.getAllByText('More')[0]);
+      fireEvent.click(document.querySelector(`[data-picross-pick="${other.id}"]`)!);
+    };
+    abrirOutro();
+    solve(other.rows);
+    expect(onEarn).toHaveBeenCalledTimes(1);
+    expect(onEarn).toHaveBeenCalledWith(picrossBits(5, false));
+    abrirOutro();
+    solve(other.rows);
+    expect(onEarn).toHaveBeenCalledTimes(1); // a 2ª resolução do mesmo desenho não paga
+  });
+
   it('um desenho 5×5 de "Outros" paga o valor do tamanho', () => {
     const onEarn = vi.fn();
     renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={onEarn} todayKey={todayKey} />);
