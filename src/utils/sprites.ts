@@ -54,7 +54,7 @@ import starterMeteoro from '../assets/soulmon/starters/meteoro.png';
 
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
-  thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
+  thalindra: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega }, // 21/10/2026 (dono): o sprite antigo da Nimbrata não aparece mais em lugar nenhum
   igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
   astrase: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega },
 };
@@ -285,7 +285,8 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
   // por forma. O 2º parâmetro é a LINHA de arte do save — `spriteLineOf`.
   if (demoCharacterId === CORVO_LINE) return corvoSpriteFor(key, size);
   // Os 5 iniciais: o MESMO sprite em todos os estágios (limitação declarada).
-  if (isStarterId(demoCharacterId)) return STARTER_SPRITES[demoCharacterId];
+  // 21/10/2026 (dono): se o jogador já tem o sprite GERADO dele, ele vence o inicial de reserva (contas que mostravam o Meteoro).
+  if (isStarterId(demoCharacterId)) return ownSprites[key] ?? STARTER_SPRITES[demoCharacterId];
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
   // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {
@@ -295,6 +296,6 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
     return line[level] ?? line.rookie;
   }
   // O Soulmon PRÓPRIO (criatura do Oráculo) já adotado no acervo; enquanto ele ainda não nasceu, o cristal (`setOwnSprites`).
-  return ownSprites[key] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
+  return ownSprites[key] ?? Object.values(ownSprites)[0] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
 }
 
