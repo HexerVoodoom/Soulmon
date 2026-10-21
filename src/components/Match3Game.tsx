@@ -54,6 +54,10 @@ const ENEMY_SPRITE = 64;
 const AURA_SCALE = 1.3;
 const CAN_ANIMATE = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
 const PLAYER_SPRITE = 88;
+/** Abaixo desta altura de janela (px) a arena do Combina 3 compacta (QA L11-15). */
+const COMPACT_BELOW_H = 700;
+const PLAYER_SPRITE_COMPACT = 56;
+const ENEMY_SPRITE_COMPACT = 44;
 
 const key = (p: Pos) => p.r * M3_COLS + p.c;
 const same = (a: Pos | null, b: Pos | null) => !!a && !!b && a.r === b.r && a.c === b.c;
@@ -406,14 +410,26 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     backgroundColor: 'var(--sm2-surface-2)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
   };
 
+  // Tela baixa (QA L11-15: 320×568, tabuleiro e "Dica" abaixo da dobra): a arena vira UMA linha
+  // (você à esquerda, o time inimigo à direita) e os sprites encolhem, sem mexer na regra.
+  const [viewportH, setViewportH] = useState(() => (typeof window === 'undefined' ? 800 : window.innerHeight));
+  useEffect(() => {
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const compact = viewportH < COMPACT_BELOW_H;
+  const playerPx = compact ? PLAYER_SPRITE_COMPACT : PLAYER_SPRITE;
+  const enemyPx = compact ? ENEMY_SPRITE_COMPACT : ENEMY_SPRITE;
+
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
   const petScale = usePetScale(evolutionStage, playerSprite);
 
   // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (
-    <div data-m3-arena style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
-      <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
-        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
+    <div data-m3-arena data-m3-compact={compact ? '' : undefined} style={{ display: 'flex', flexDirection: compact ? 'row' : 'column', justifyContent: 'space-between', alignItems: compact ? 'flex-end' : undefined, gap: 8, flex: '1 0 auto', minHeight: compact ? 0 : 130 }}>
+      <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: playerPx + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: compact ? 'flex-end' : 'flex-start' }}>
+        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={playerPx} height={playerPx} style={{ width: playerPx, height: playerPx, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
       <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
@@ -443,7 +459,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
                 <span>{isActive ? '▸' : ''}{i + 1}</span>
                 {icon && <img src={icon} alt="" draggable={false} width={14} height={14} style={{ imageRendering: 'pixelated' }} />}
               </p>
-              <img src={src} alt="" aria-hidden="true" draggable={false} width={ENEMY_SPRITE} height={ENEMY_SPRITE} style={{ width: ENEMY_SPRITE, height: ENEMY_SPRITE, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
+              <img src={src} alt="" aria-hidden="true" draggable={false} width={enemyPx} height={enemyPx} style={{ width: enemyPx, height: enemyPx, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
               <HpBars bars={[{ label: DUNGEON_LINE_NAMES[line], cur: e.hp, max: e.max, tone: 'gold' }]} />
             </div>
           );
