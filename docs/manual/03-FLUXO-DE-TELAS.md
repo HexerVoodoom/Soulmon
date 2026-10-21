@@ -1941,7 +1941,7 @@ Três blocos, com condições literais:
   **Estados do `AccountDataSection`**: `503` é **estado**, não erro — o botão
   nasce desabilitado com o motivo escrito, em tinta neutra.
   **"Restaurar backup" (`RestoreBackupSection`, dentro do `AccountDataSection`,
-  desde 21/10/2026 — L08-04, REGISTRO §162):** o botão abre a lista das cópias
+  desde 21/10/2026 — L08-04, REGISTRO §164):** o botão abre a lista das cópias
   do aparelho (anel `soulmon-backup-ring-v1`, `soulmon-reconcile-backup` e a
   quarentena só quando inteira e legível), da mais nova para a mais antiga, cada
   uma com data, "nome · estágio" e a origem em palavras — **nenhum número além da

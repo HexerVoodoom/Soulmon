@@ -3229,10 +3229,11 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 
 - **Onde vive:** `functions/api/save.js`, `src/utils/saveRevision.ts`, `src/utils/saveReconcile.ts`, `src/utils/cloudSave.ts`, `src/contexts/GameStateContext.tsx`, `src/utils/storageKeys.ts` (`soulmon-save-revision-v1`); manual 07 §3.3-A; `docs/adr/ADR-004-concorrencia-do-save.md`.
 
-## 162. Restaurar backup pelo app (dono, 21/10/2026; L08-04)
+## 164. Restaurar backup pelo app (dono, 21/10/2026; L08-04)
 
 - **Pedido:** o "Exportar backup" e as cópias do aparelho não tinham volta; o dono decidiu fazer a tela de restauração.
 - **Decisão:** em Configurações > Seus dados, "Restaurar backup" lista as cópias do aparelho (anel de 3, cópia da reconciliação e a quarentena legível) e importa o arquivo `soulmon-local-backup-v1`. Cada cópia mostra data, nome e estágio da criatura e a origem em palavras, sem número de progresso. Restaurar pede confirmação, guarda o estado atual no anel antes (sem cópia não troca), não mexe na identidade, sobe para a nuvem com a revisão recém-lida (ADR-004) e recarrega.
 - **Alternativa que perdeu:** restaurar só via suporte (o L08-04 viraria S4 proposital); mostrar XP na lista para ajudar a escolher (número vetado pela régua de linguagem; e o renascimento baixa XP de propósito).
 - **O que falsificaria:** relato de restauração que apagou o progresso atual sem cópia; cópia listada que quebra o boot (o hydrate sanea, mas fica a vigiar); jogador que não acha a tela depois do aviso do 409.
+- **Publicação:** direto na `main` (fast-forward) depois da ADR-004 (§163), com **confirmação direta do dono em modal (21/10/2026)** e CI verde. **Rollback:** reverter o commit (nenhuma chave nem campo novo no save; `congelarGravacoes` só existe até o reload). Correções do gate adversarial incluídas: só troca o local com a cópia do atual E da nuvem garantidas; offline não restaura; gravações do provider congeladas antes de gravar e recarregar.
 - **Onde vive:** `src/utils/backupRestore.ts`, `src/components/RestoreBackupSection.tsx`, `src/components/AccountDataSection.tsx`; manual 03 (Configurações) e 06-REFERENCIA.
