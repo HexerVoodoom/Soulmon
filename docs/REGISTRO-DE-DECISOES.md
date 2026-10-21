@@ -3298,6 +3298,6 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
   estava concluído na primeira pintura nunca congela; conclusões em sequência têm prazo próprio (um teste pegou o bug de a 2ª cancelar o prazo da 1ª).
 - **L05-01 — nada a mudar** (resposta do dono): o "Sair da demo" fixo no canto inferior esquerdo fica como foi pedido em 20/10/2026.
 - **L11-11 — nada a mudar** (resposta do dono): o Esc não fecha as telas cheias (luta da Arena, Combina 3), para ninguém perder a rodada por um Esc sem querer.
-- **L06-15 — NÃO implementado, pendente de confirmação.** O dono pediu que o cabeçalho mostre o estado real ao criar tarefa nova (ex. 5/5, faltando 1). Mas a meta é
-  `min(cadastradas no dia, requisito do estágio)` e o contador `Missão N/G` mostra a META, não o número de itens (o N pode passar de G, `6/4`; comentário de `RitualPanel`):
-  mudar o denominador para o total de itens trocaria uma regra documentada (e a leitura de "Dia completo"). Falta o dono dizer qual leitura vale.
+- **L06-15 — DEIXAR COMO ESTÁ (dono, modal, 21/10/2026).** Ele chegou a pedir que o cabeçalho mostrasse o estado real ao criar tarefa nova, e depois de ver a regra
+  decidiu manter: **meta = `min(cadastradas no dia, requisito do estágio)`** fica CONFIRMADA, o contador `Missão N/G` segue mostrando a META (N pode passar de G: `6/4` é aceito),
+  sem "N pendentes" e sem trocar o denominador. Nada mudou no app.

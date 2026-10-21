@@ -533,4 +533,4 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ✅ **L05-01 (Sair da demo):** deixar como está.
 - ✅ **L06-07 (lista da Home):** congelar a ordem por ~2 s; feito.
 - ✅ **L11-11 (Esc nas telas cheias):** não mudar.
-- ⏳ **L06-15 (meta do dia × tarefa nova):** você pediu "o cabeçalho mostra o estado real (5/5, faltando 1)". Hoje a meta é `min(cadastradas, requisito do estágio)` (rookie = 4) e o contador mostra a META, não o total de itens; com 6 tarefas o cabeçalho mostra `0/4`. Qual vale? (a) manter a meta do estágio e só acrescentar um aviso de "N pendentes" ao lado do selo "Dia completo"; (b) trocar o denominador pelo total de itens do dia (muda a leitura de "Dia completo"). Não mexi até você escolher.
+- ✅ **L06-15 (meta do dia × tarefa nova): deixar como está** — a meta segue `min(cadastradas no dia, requisito do estágio)`, o contador mostra a META e `6/4` é aceito (sem "N pendentes", sem trocar o denominador). Regra confirmada; nada mudou no app.
