@@ -52,6 +52,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-save-revision-v1',
   'soulmon-picross-base-paid',
   'soulmon-gifts-credited-v1',
+  'soulmon-generate-character-until',
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */
