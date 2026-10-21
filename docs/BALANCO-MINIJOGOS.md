@@ -48,7 +48,7 @@ produção. Quando houver telemetria, é esta tabela que se confronta.
 | Revisão da Malha (1×/dia) | 5 · 1,25 · **4,0** | 5 · 0,75 · **6,7** |
 | **Combina 3** (11/10/2026) | 3 · 1,22 · **3,3** | 6 · 0,82 · **7,3** |
 
-> **Combina 3** (REGISTRO §36): 20 movimentos, 1 Bit a cada 250 pontos, teto 8. Medido com as funções reais (mediana de 41 sementes; típico = qualquer jogada válida a 3,5 s por lance, experiente = sempre a melhor troca a 2,3 s). Tabela: `BALANCO_PRINT=1 npx vitest run src/utils/mente/balanco.test.ts --disable-console-intercept`.
+> **Combina 3** (REGISTRO §36): 20 movimentos, 1 Bit a cada 130 pontos (`M3_POINTS_PER_BIT`; eram 250 no §36, antes do combate de 18/10), teto 8. Medido com as funções reais (mediana de 41 sementes; típico = qualquer jogada válida a 3,5 s por lance, experiente = sempre a melhor troca a 2,3 s). Tabela: `BALANCO_PRINT=1 npx vitest run src/utils/mente/balanco.test.ts --disable-console-intercept`.
 
 O Picross fica de propósito no piso da faixa: é o jogo calmo, sem relógio, e o
 desenho do dia soma **+5** uma vez por dia.
