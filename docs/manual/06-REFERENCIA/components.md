@@ -51,6 +51,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/LevelUpOverlay.render.test.tsx` · `src/components/filaDeAvisos.contract.test.ts` (posição e montagem única).
 **Avisos do arquivo:** movimento reduzido reduz o MOVIMENTO, nunca a pausa (regra no bloco canônico do `index.css`); nunca "faltam N"; demo local não celebra.
 
+### `src/components/RestoreBackupSection.tsx`
+**Dono de:** a tela "Restaurar backup" (L08-04): lista as cópias do aparelho (data, "Nome · Estágio", origem em palavras, nunca XP/percentual/contagem), importa o arquivo exportado e pede confirmação antes de restaurar. Props: `language`, `reload?` (injeção de teste).
+**Chamado por:** `AccountDataSection.tsx` (fim da seção). **Régua:** `src/components/RestoreBackupSection.render.test.tsx`.
+**Avisos do arquivo:** recarrega a página só depois de `restaurarCopia` devolver `'ok'`; voz calma, sem cobrança.
+
 ### `src/components/AccountDataSection.tsx`
 **Dono de:** seção "Seus dados" nas Configurações — exportar (levar embora) e apagar a conta, consumindo `functions/api/account.js`.
 **Props principais:** `AccountDataSectionProps` — `language`, `saveId?` (injeção de teste; produção lê do localStorage), `authAvailable?` (injeção de teste).

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { RestoreBackupSection } from './RestoreBackupSection';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import type { Language } from '../utils/i18n';
 import { isAuthConfigured } from '../utils/auth';
@@ -383,6 +384,9 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
         )}
         {deleteFail?.kind === 'unavailable' && <p style={sm2Hint}>{failText(deleteFail)}</p>}
       </div>
+
+      {/* ── RESTAURAR BACKUP (L08-04): cópias do aparelho + arquivo exportado ── */}
+      <RestoreBackupSection language={language} />
     </div>
   );
 }

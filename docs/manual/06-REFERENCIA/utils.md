@@ -3636,6 +3636,10 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** o ANEL de cópias de segurança — `lerAnel()` (tolerante), `empurrarNoAnel()` (até 3, idempotente, encolhe sob cota, nunca lança), `preservarConflictBackup()` (empurra o `CONFLICT_BACKUP` atual antes de sobrescrevê-lo) e `saveTemProgresso()` (a régua que `saveTemOnboardingConcluido` usa).
 **Quem usa:** `utils/sessionReset.ts` (`guardarCopiaDeSeguranca`), `utils/cloudSave.ts` (adoção e reconciliação). Não importa `cloudSave` nem `sessionReset` (sem ciclo). **Régua:** `src/utils/backupRing.l08.qa.test.ts`.
 
+### `src/utils/backupRestore.ts` (fix/qa-restaurar-backup, 21/10/2026 — L08-04)
+**Dono de:** "Restaurar backup" — `listarCopiasDoAparelho()` (anel, quarentena legível e vaga da adoção), `lerArquivoDeBackup(texto)` (erro nomeado `json|formato|estado`, nunca lança), `restaurarCopia(state)` (guarda o atual no anel ANTES de gravar; sem a cópia aborta; não troca `SAVE_ID`; com conta e fora da demo sobe já, com `baseRevision`, e retenta 1x no 409; falha de rede não desfaz o local) e os textos sem número (`resumoDaCopia`, `origemDaCopia`, `dataDaCopia`).
+**Quem usa:** `components/RestoreBackupSection.tsx`. **Régua:** `src/utils/backupRestore.test.ts`.
+
 ### `src/utils/betaClosed.ts` (release/beta-1, 11/10/2026)
 **Dono de:** o veredito "beta fechado" da sessão — `detectBetaClosed(res)` (403 `beta-closed` marca), `markBetaClosed`, `isBetaClosedNow`, `useBetaClosed`. Nada persiste.
 **Quem usa:** `utils/cloudSave.ts` (`cloudSave`, `lerNuvem`), `components/BetaClosedGate.tsx`. **Régua:** `src/utils/betaClosed.render.test.tsx`.

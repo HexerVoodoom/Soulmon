@@ -1940,6 +1940,19 @@ Três blocos, com condições literais:
   Regra em [`02` §58-A](02-REGRAS-DE-NEGOCIO.md#som).
   **Estados do `AccountDataSection`**: `503` é **estado**, não erro — o botão
   nasce desabilitado com o motivo escrito, em tinta neutra.
+  **"Restaurar backup" (`RestoreBackupSection`, dentro do `AccountDataSection`,
+  desde 21/10/2026 — L08-04, REGISTRO §162):** o botão abre a lista das cópias
+  do aparelho (anel `soulmon-backup-ring-v1`, `soulmon-reconcile-backup` e a
+  quarentena só quando inteira e legível), da mais nova para a mais antiga, cada
+  uma com data, "nome · estágio" e a origem em palavras — **nenhum número além da
+  data** (sem XP, percentual nem contagem). "Importar arquivo" aceita o
+  `soulmon-local-backup-v1` exportado. Restaurar pede confirmação ("o que você
+  tem agora fica guardado antes como cópia"), guarda o estado atual no anel
+  ANTES (sem cópia, não troca nada), grava o local sem mexer na identidade, sobe
+  para a nuvem com a revisão recém-lida (cópia da nuvem também vai para o anel;
+  409 = relê e tenta uma vez) e recarrega. Rede falhando não desfaz a
+  restauração local. Lógica em `src/utils/backupRestore.ts`. Régua:
+  `backupRestore.test.ts`, `RestoreBackupSection.render.test.tsx`.
 - **`RestWindowCard`**: escolhe a janela (`onChangeWindow`), o switch "não quero
   ver métricas" (`onToggleMetrics`) e pede a permissão de push no momento-ouro
   (`onEnableReminder`, com `reminderPreview`). **Proibido nesta tela**: score de
