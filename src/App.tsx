@@ -1213,6 +1213,11 @@ export default function App() {
   const [language, setLanguage] = useState<Language>(
     () => resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)),
   );
+  // `<html lang>` acompanha o idioma do app (QA L09-01): leitor de tela e
+  // hifenização escolhem a voz/regra pelo atributo, e o HTML nasce `en`.
+  useEffect(() => {
+    document.documentElement.lang = language === 'pt-BR' ? 'pt-BR' : 'en';
+  }, [language]);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE);
   });

@@ -171,7 +171,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" disabled={!!recusa} data-forge-upgrade-btn={piece.id}
                 onClick={() => abrir({ mode: 'upgrade', id: piece.id })}
                 aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
-                Upgrade
+                {isPt ? 'Aprimorar' : 'Upgrade'}
               </button>
               <span className="sm2-stats-s" style={{ display: 'grid', gap: 2, justifyItems: 'end' }}>
                 {custos.map(({ m, n, have }) => (

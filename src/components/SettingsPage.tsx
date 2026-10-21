@@ -549,7 +549,7 @@ export function SettingsPage({
       {/* ── AJUDA ─────────────────────────────────────────────────────────── */}
       <Group title={isPt ? 'Ajuda' : 'Help'}>
         <ActionRow label={t.settings.openGuide} onClick={onOpenGuide} />
-        {onReplayWelcomeTour && <ActionRow label="Replay tutorial" onClick={onReplayWelcomeTour} />}
+        {onReplayWelcomeTour && <ActionRow label={isPt ? 'Rever o tutorial' : 'Replay tutorial'} onClick={onReplayWelcomeTour} />}
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
         {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
         {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
