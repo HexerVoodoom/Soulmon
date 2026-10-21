@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
 } from './form/FormKit';
@@ -67,6 +67,8 @@ interface SettingsPageProps {
   onOpenGlossary: () => void;
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
+  /** "Gerar personagem": só existe para quem está sem a criatura própria; `until` = fim da espera (ms epoch). */
+  generateCharacter?: { onGenerate: () => void; until: number };
   /** Ritmo das refeições (`utils/mealRhythm.ts`). Sem o callback a linha não existe. */
   mealRhythm?: MealRhythmSettings;
   onChangeMealRhythm?: (next: MealRhythmSettings) => void;
@@ -203,6 +205,33 @@ function TelemetrySection({ language }: { language: Language }) {
   );
 }
 
+/** "Gerar personagem": confere o pagamento e gera; depois do toque fica em espera até o desenho chegar (`until`). */
+function GenerateCharacterButton({ isPt, onGenerate, until }: { isPt: boolean; onGenerate: () => void; until: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (until <= Date.now()) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [until]);
+  const left = Math.max(0, Math.ceil((until - now) / 1000));
+  const wait = left > 0;
+  const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  return (
+    <div style={{ marginTop: 8 }} data-generate-character>
+      <button type="button" disabled={wait} style={{ ...sm2Button('primary', wait), width: '100%' }} onClick={onGenerate}>
+        {wait
+          ? (isPt ? `Gerando… volte em ${mmss}` : `Generating… check back in ${mmss}`)
+          : (isPt ? 'Gerar personagem' : 'Generate character')}
+      </button>
+      <p style={{ ...sm2Hint, margin: '6px 0 0' }}>
+        {isPt
+          ? 'Sem o seu Soulmon próprio? Isto confere o pagamento e pede o desenho de novo. Leva alguns minutos.'
+          : 'No Soulmon of your own yet? This checks your purchase and asks for the drawing again. It takes a few minutes.'}
+      </p>
+    </div>
+  );
+}
+
 export function SettingsPage({
   soundMuted = false,
   onToggleSound,
@@ -215,6 +244,7 @@ export function SettingsPage({
   onOpenGlossary,
   notificationsEnabled,
   onToggleNotifications,
+  generateCharacter,
   mealRhythm,
   onChangeMealRhythm,
   spritePose,
@@ -330,6 +360,8 @@ export function SettingsPage({
             Google do portão. Quem está sem sessão ganha o botão do Google
             DENTRO da `AccountSection`, que é quem sabe se há sessão. */}
         <AccountSection language={language} onSignedIn={onLoginWithEmail} />
+
+        {generateCharacter && <GenerateCharacterButton isPt={isPt} {...generateCharacter} />}
 
         {/* Assinatura cosmética trimestral (D10): divulgação pré-compra, "Assinar" e
             "Gerenciar assinatura". Só enfeite — não toca em Créditos nem em cuidado. */}
