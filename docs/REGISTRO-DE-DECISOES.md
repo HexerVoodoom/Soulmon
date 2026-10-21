@@ -3269,3 +3269,16 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Rollback:** reverter o commit. A fila `gifts:` não muda de formato; o servidor antigo ignora `ack=1` e volta ao resgate destrutivo; a chave local `soulmon-gifts-credited-v1` fica sem uso (o app antigo não a lê). Correção do gate adversarial incluída: o ack só sai depois de um save confirmado na nuvem que já contém o crédito, e a adoção da nuvem (409/boot) descarta os créditos ainda não confirmados para o próximo resgate creditar de novo.
 - **Publicação:** fast-forward na `main` depois do lote 3 (§165) e do CI verde, por instrução da coordenação da frente (a confirmação direta do dono em modal registrada nos §163/§164 cobre A e B).
 - **Onde vive:** `functions/api/community.js` (`gifts`, `giftsAck`, `GIFT_ACK_LEASE_MS`), `src/utils/community.ts` (`resgatarPresentes`), `src/App.tsx` (efeito de presentes), `src/utils/storageKeys.ts`; manual 02 (diretório e amigos).
+
+## 167. QA de cliente, lote 4: demo no idioma certo, número legível e arrastar no Nonograma (frente `fix/qa-cliente-4`, 21/10/2026)
+
+- **L05-08 — demo bilíngue.** Os hábitos semente da demo (`DEMO_ACTIVITIES`) acompanham o idioma: trocar `soulmon-language` depois de criar a demo
+  não deixa "Drink a glass of water" numa UI em português (e o contrário). Só se troca o nome idêntico ao semente do outro idioma (`localizeDemoActivities`);
+  hábito renomeado ou criado pela pessoa nunca é tocado. O 0 do Cinzel lia-se "o" ("0 Honra"): o NÚMERO das pílulas de Honra e Créditos do Mapa vai na fonte de texto.
+  A moeda "R$ 29,90" em EN vem do preço da loja (Play), não do app: fora do escopo.
+- **L06-08 — o Nonograma aceita arrastar.** O dedo que passa por várias casas pinta todas com o valor da primeira (cheia → enche, vazia → esvazia); o container
+  usa `touch-action: none` (o navegador roubava o gesto com `pointercancel`); o clique que vem depois do arrasto é descartado. Toque simples e toque longo (X) seguem como eram.
+- **Já resolvidos antes do lote (reclassificados):** L05-04 (a fileira de abas já mostra o corte com máscara, `data-cut` em `PixelTabs`).
+- **Abertos, dependem de decisão de design do dono:** L05-01 (o "Sair da demo" fixo no canto inferior esquerdo foi PEDIDO dele em 20/10/2026 e cobre conteúdo na demo),
+  L05-09 (estados de vazio), L06-07 (a lista da Home reordena ao concluir), L06-12 (rótulos do mapa sob a arte), L06-14 (folha "Nova tarefa" sob o teclado: mitigado pelo
+  `interactive-widget=resizes-content`, falta confirmar no aparelho), L06-15 (a meta do dia não sobe ao criar tarefa), L11-05 (selo DEMO sobre o NPC), L11-11 (Esc nas telas cheias).
