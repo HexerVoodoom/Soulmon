@@ -513,3 +513,16 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - **L03-01 residual — resposta perdida apaga presente.** O resgate agora não entrega em dobro nem apaga o que chegou no meio, mas o GET continua destrutivo: se a resposta se perder na rede, o presente marcado como entregue some. **Recomendação:** ack aditivo do cliente (`claim=1&ack=<gids>`) numa próxima frente de cliente. **Decide:** vale o ack, ou aceita o residual (presente é grátis, 20 Bits).
 - ✅ **L07-04 respondida (dono, 21/10/2026): nada a fazer** — o pid legado continua migrando na leitura (REGISTRO §163).
 - **L07-04 — amigo com pid legado.** O ranking anônimo não regrava mais perfil de terceiro; quem tem pid legado aparece sem id (não clicável) até abrir o app. A lista de amigos ainda migra o pid do amigo na leitura (trocar quebraria o presente para amigo legado). **Decide:** aceitar como está (recomendado) ou migrar todos os pids legados de uma vez com backup do KV antes.
+
+## 21/10/2026 — QA de cliente, lotes 2 e 3 (respondidas por modal; REGISTRO §165)
+
+- ✅ **L05-05 (consentimento × data de nascimento):** corrigir o TEXTO (pedimos a data, para o ritual do Oráculo, fica no aparelho); termos/política não sobem de versão.
+- ⏳ **L11-03 (voltar fixo sobre a lista):** o dono quer VER antes/depois; implementado à parte (desfoque do que passa sob o anel), não publicado.
+- ✅ **L11-10 (placa de vida na Arena):** subir a placa; feito.
+- ✅ **L11-06 (cristal):** o cristal mexe e mostra "crack" grande a cada toque, mantendo as 5 batidas; feito.
+- ✅ **L04-01 (NPC do treino):** curva ~60–70% em todo level; feito (handicap de ataque, gate por level).
+- ✅ **L04-02 (Picross):** base só na 1ª vez do dia por desenho; feito.
+- ✅ **L05-02/L09-04 (alvos < 44 px):** ampliar a área sem mudar o visual; feito nos links de missão e nos "i".
+- ✅ **L06-13 (orientação):** travar em retrato; feito no manifest — **precisa de APK novo** (`DEPENDE-DE-VOCE.md`).
+- ✅ **L06-11 (nome do guia):** "Soulmon misterioso"; "Solmon" revogado. **Pergunta nova:** `guildCopy.ts` escreve "Solmon" para a criatura num texto de ajuda da Missão; troco por "Soulmon"?
+- ⏳ **Créditos/atribuições (tela "Sobre / Licenças"):** o dono está reavaliando se é necessária; implementada em branch à parte, não publicada. (O nome não é "Créditos": é a moeda.) L11-08 (marca d'água/texto na arte da splash) vai para a frente de arte.

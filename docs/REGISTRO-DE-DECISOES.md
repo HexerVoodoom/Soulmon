@@ -3237,3 +3237,25 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **O que falsificaria:** relato de restauração que apagou o progresso atual sem cópia; cópia listada que quebra o boot (o hydrate sanea, mas fica a vigiar); jogador que não acha a tela depois do aviso do 409.
 - **Publicação:** direto na `main` (fast-forward) depois da ADR-004 (§163), com **confirmação direta do dono em modal (21/10/2026)** e CI verde. **Rollback:** reverter o commit (nenhuma chave nem campo novo no save; `congelarGravacoes` só existe até o reload). Correções do gate adversarial incluídas: só troca o local com a cópia do atual E da nuvem garantidas; offline não restaura; gravações do provider congeladas antes de gravar e recarregar.
 - **Onde vive:** `src/utils/backupRestore.ts`, `src/components/RestoreBackupSection.tsx`, `src/components/AccountDataSection.tsx`; manual 03 (Configurações) e 06-REFERENCIA.
+
+## 165. QA de cliente, lotes 2 e 3: decisões do dono de 21/10/2026 (frente `fix/qa-cliente-2` e `-3`)
+
+- **L05-05 — o consentimento diz que PEDIMOS a data de nascimento.** Antes: "Não pedimos nem guardamos sua data de nascimento",
+  e o ritual pede a data logo depois. Agora o texto do aceite diz, em PT e EN, que pedimos a data, para quê (o ritual do Oráculo) e
+  onde fica (só no aparelho, como já diz `public/privacidade.html`). `TERMS_VERSION` e `PRIVACY_VERSION` **não mudaram** (QA-13: sem reaceite).
+- **L11-06 — o cristal do onboarding mostra "crack".** A cada toque do usuário a palavra aparece sobre o cristal, maior que o texto de
+  torcida do combate (30 px contra 13 px), decorativa (`aria-hidden`). O balanço do cristal já existia e não foi duplicado; as 5 batidas seguem.
+- **L11-10 — a placa de vida sobe acima do sprite** na luta da Arena (`BARS_LIFT`, antes entravam 12 px na cabeça).
+- **L04-02 — o Picross paga a BASE só na 1ª vez do DIA por desenho** (persistido em `soulmon-picross-base-paid`); o bônus do dia segue como era.
+- **L04-01 — o NPC do treino do PvP: curva plana.** Antes "2 levels abaixo, dentro do estágio": o piso zerava a folga no 1º level de cada
+  estágio (vitória do jogador ~46%) e no meio do rookie a folga era plena (~100%). Agora é o espelho do MESMO level com um handicap de
+  ataque (`NPC_ATK_HANDICAP` = 0,055): 61–71% em todo level amostrado. O gate AC9 mede CADA level (1º, meio e último de cada estágio), não só a média do estágio.
+- **L05-02/L09-04 — alvos de toque ≥ 44 px sem mudar o visual:** a área sobe (padding compensado por margem negativa) no link da missão e no "i".
+- **L06-13 — o app trava em RETRATO** (`android:screenOrientation="portrait"` na `MainActivity`); só vale com APK novo (build de release é do dono; `DEPENDE-DE-VOCE.md`). Capacitor não tem chave de orientação.
+- **L06-11 — o guia do tour se chama "Soulmon misterioso"** em PT (EN: "Mysterious Soulmon"). A grafia proposital "Solmon" de 11/10/2026 foi **revogada** em 21/10/2026.
+  (`guildCopy.ts` ainda usa "Solmon" como palavra para a criatura em um texto de ajuda: fora desta decisão, fica para o dono dizer.)
+- **Corrigidos sem decisão do dono (bugs):** G9 (loop de render do dreno de cocô), L02-01..05 (hábito "a cada N dias" no dia da conclusão, janela da virada,
+  âncora por calendário, prazo da repetição), L05-06/07 (aviso de data impossível), L06-02 (campo acima do teclado + `interactive-widget`), L06-04
+  (notificação só após o aceite), L06-09 (Combina 3 compacta até 800 px), L09-01, L09-02, L11-01/02/04/07/09/12/14/15/16.
+- **Em espera por decisão do dono (21/10/2026):** a tela "Sobre / Licenças" (atribuições; o nome não pode ser "Créditos", que é a moeda) e a margem do Voltar fixo (L11-03, o dono quer ver antes/depois). Implementados em branches à parte, NÃO publicados.
+- **Abertos:** L05-01 (FAB "Sair da demo", só demo), L05-04, L05-08/09, L06-07/08/12/14/15, L11-05/08/11 (L11-08 é frente de arte).

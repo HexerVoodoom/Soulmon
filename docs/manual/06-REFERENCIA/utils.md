@@ -3345,8 +3345,8 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/welcomeTour.ts`
 **Dono de:** o roteiro do tour do corvo e a regra de entrada (07/10/2026). Puro.
 **Exports:**
-- `TOUR_GUIDE_NAME` ("Rook") · `TOUR_STEPS` (8 passos: 5 do básico, 3 do mapa; cada texto é `{ en }`, `pt` ainda não existe) · `TOUR_STARTING_GOAL` (= `FORM_REQUIREMENTS.rookie.required`, nunca número à mão).
-- `tourText(t, language)` — devolve `pt` só se existir; hoje cai no inglês. `needsWelcomeTour({ shown, jaConcluiuAlgo })` — nunca visto neste aparelho E sem conclusão no save.
+- `TOUR_GUIDE_NAME` ("Rook") · `TOUR_STEPS` (passos do básico; cada texto é `{ en, pt }` desde 21/10/2026, L11-01) · `TOUR_STARTING_GOAL` (= `FORM_REQUIREMENTS.rookie.required`, nunca número à mão).
+- `tourText(t, language)` — devolve `pt` quando existe e o idioma é pt-BR; senão o inglês. `needsWelcomeTour({ shown, jaConcluiuAlgo })` — nunca visto neste aparelho E sem conclusão no save.
 **Chamado por:** `src/components/WelcomeTour.tsx`, `src/App.tsx`.
 **Régua:** `src/components/WelcomeTour.render.test.tsx`.
 **Regra de negócio:** nenhuma — apresenta as regras de [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) (dia completo, evolução manual) sem decidir nenhuma.
