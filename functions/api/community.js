@@ -38,6 +38,7 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf } from './_bond.js';
 import { gateFor } from './_gates.js';
+import { ehViolacaoDeChave } from './_entitlements.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
@@ -936,7 +937,7 @@ async function handleCommunity({ request, env }) {
 
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
-    gifts.push({ from: isHidden(me) ? '' : me.name, bits: 20, at: Date.now() });
+    gifts.push({ from: isHidden(me) ? '' : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json({ ok: true });
   }
@@ -945,12 +946,45 @@ async function handleCommunity({ request, env }) {
     // Mesmo caso do `trophies`: `claim=1` apaga a fila do jogador.
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await kvOrThrow(env).get(`gifts:${id}`);
-    const gifts = raw ? JSON.parse(raw) : [];
-    if (url.searchParams.get('claim') === '1' && gifts.length) {
+    // L03-01: id estável por presente (aditivo; legado sem `gid` ganha um derivado na leitura).
+    const comGid = (lista) => (Array.isArray(lista) ? lista : [])
+      .filter(g => g && typeof g === 'object')
+      .map((g, i) => (typeof g.gid === 'string' && g.gid ? g : { ...g, gid: `${g.at}:${g.from}:${g.bits}:${i}` }));
+    const lerLista = async () => {
+      const raw = await kvOrThrow(env).get(`gifts:${id}`);
+      if (!raw) return [];
+      try { return comGid(JSON.parse(raw)); } catch { return []; }
+    };
+    const gifts = await lerLista();
+    if (url.searchParams.get('claim') !== '1' || !gifts.length) return json({ gifts });
+
+    // Com D1, só entrega o presente quem ganha o INSERT de `gift:<saveId>:<gid>` (sem dobro em claims concorrentes).
+    let entregues = gifts;
+    if (env.DB) {
+      entregues = [];
+      const agora = Date.now();
+      for (const g of gifts) {
+        try {
+          await env.DB
+            .prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
+            .bind(`gift:${id}:${g.gid}`, id, agora, agora + 86400 * 90 * 1000)
+            .run();
+          entregues.push(g);
+        } catch (err) {
+          if (!ehViolacaoDeChave(err)) throw err; // já entregue por outro claim
+        }
+      }
+    }
+    // Releitura: remove SÓ o que foi entregue; presente que chegou no meio fica para o próximo claim.
+    const idsEntregues = new Set(entregues.map(g => g.gid));
+    const restantes = (await lerLista()).filter(g => !idsEntregues.has(g.gid));
+    if (restantes.length) {
+      await kvOrThrow(env).put(`gifts:${id}`, JSON.stringify(restantes.slice(-50)), { expirationTtl: 86400 * 60 });
+    } else {
       await kvOrThrow(env).delete(`gifts:${id}`);
     }
-    return json({ gifts });
+    // Residual (3): GET destrutivo — resposta perdida ainda perde a entrega; exigiria ack do cliente.
+    return json({ gifts: entregues });
   }
 
   return json({ error: 'unknown action' }, 400);
