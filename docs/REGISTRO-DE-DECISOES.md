@@ -3205,3 +3205,11 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Como:** `src/utils/areaNpcVoice.ts` (`namePt`/`nameEn`), `npcs/index.ts` (comentários) e os testes `playArea.render`, `areaLotsNovos`, `DailyReportModal.secoes` e `restauranteEmObra`; manual 02, 03 e 06 e `INVENTARIO-ASSETS.md`. Os registros datados antigos (§73 e outros) seguem citando os nomes da época: é histórico.
 - **Alternativa que perdeu:** manter Brume/Tijolino. Brume e Brumefar/Rubrume coexistiam como nomes do Oráculo; Mirk não colide com nada.
 - **O que falsificaria:** um teste de nome de NPC citando o nome antigo, ou estranheza dos testadores com o nome novo.
+
+## 160. O golpe à distância (D-88) passa a usar o "Slow Spell (Less Powerful)" do Freesound, cortado em 0,5 s (dono, 21/10/2026; emenda o §152)
+- **Decisão do dono:** o efeito escolhido por ele (`732245__silverillusionist__slow-spell-less-powerful.wav`) vira o som do `playAttackRanged`, mais curto e seco, no lugar do "push" do §152.
+- **Licença:** a página do Freesound (lida em 21/10/2026) traz **CC BY 4.0** com pedido de crédito ("Slow Spell (Less)" by SilverIllusionist + link). Uso comercial permitido, **crédito obrigatório**: `atribuicaoObrigatoria: true` no manifesto e bloco de crédito em `docs/Attributions.md`. A régua `sfxCombateLivres.contract.test.ts` passa a aceitar CC BY 4.0, mas só com atribuição obrigatória marcada; NC/ND/SA continuam fora.
+- **Como:** o original (WAV float32 estéreo 44,1 kHz, 3,7 s, energia concentrada nos primeiros 0,8 s) vira mono 48 kHz, recorte de 0,5 s com fade-in de 2 ms e fade-out em cosseno de 0,30 a 0,50 s, mestrado em −25 LUFS-M, Opus 64 kbps pelo MediaRecorder do Chrome. Medido no arquivo decodificado: 0,474 s, −24,89 LUFS-M, −11,27 dBTP, 4 184 B. Para ouvir antes: `E:\dowloadanged-ajustado.wav`.
+- **Alternativa que perdeu:** o "push" CC0 do §152 (fica nas alternativas de `para-ouvir/`).
+- **O que falsificaria:** o dono achar o som longo/curto demais (o corte é um parâmetro: refazer com outro comprimento), ou o crédito CC BY não ser publicado onde o dono expõe créditos (pendência: o app não tem tela de Sobre/Créditos).
+
