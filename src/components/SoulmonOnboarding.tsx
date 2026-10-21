@@ -973,6 +973,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     iniciarCerimoniaDoReveal(result);
   };
 
+  const TELA_GOSTEI_OCULTA = true as boolean;
   // Tela "Gostei / Tentar de novo" OCULTA por ora (dono, 21/10/2026): segue direto como se tivesse tocado "Gostei".
   useEffect(() => {
     if (step === ELEMENT_DECIDE && result) gostei();
@@ -2245,7 +2246,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         )}
 
         {/* ELEMENT_DECIDE (D-150..D-160) — a Iris diz o elemento ANTES do desenho. Sem sprite, sem casulo, sem pontos. */}
-        {false && step === ELEMENT_DECIDE && result && escolha && (() => {
+        {step === ELEMENT_DECIDE && result && escolha && !TELA_GOSTEI_OCULTA && (() => {
           const lingua = isPt ? 'pt' : 'en';
           const original = escolha.original;
           const candidatos = elementChoiceCandidates(original);
