@@ -52,11 +52,17 @@ import starterAlento from '../assets/soulmon/starters/alento.png';
 import starterVida from '../assets/soulmon/starters/vida.png';
 import starterMeteoro from '../assets/soulmon/starters/meteoro.png';
 
+import bossCinderhorn from '../assets/soulmon/bosses/boss-cinderhorn.png';
+import bossCorallume from '../assets/soulmon/bosses/boss-corallume.png';
+import bossObsidarch from '../assets/soulmon/bosses/boss-obsidarch.png';
+import bossGlimmerswarm from '../assets/soulmon/bosses/boss-glimmerswarm.png';
+
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
-  kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
-  thalindra: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega }, // 21/10/2026 (dono): o sprite antigo da Nimbrata não aparece mais em lugar nenhum
-  igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
-  astrase: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega },
+  // 21/10/2026 (dono): os monstros da 1ª geração saíram; as linhas antigas apontam para criaturas novas (arte de chefes), um sprite por linha.
+  kaelen: { rookie: bossCinderhorn, champion: bossCinderhorn, ultimate: bossCinderhorn, mega: bossCinderhorn },
+  thalindra: { rookie: bossCorallume, champion: bossCorallume, ultimate: bossCorallume, mega: bossCorallume },
+  igni: { rookie: bossObsidarch, champion: bossObsidarch, ultimate: bossObsidarch, mega: bossObsidarch },
+  astrase: { rookie: bossGlimmerswarm, champion: bossGlimmerswarm, ultimate: bossGlimmerswarm, mega: bossGlimmerswarm },
 };
 /**
  * O NOME DE EXIBIÇÃO DE CADA LINHA — dono único.
