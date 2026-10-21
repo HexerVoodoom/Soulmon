@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // ADR-004 D3 no PROVEDOR: POST -> 409, o cliente relê a nuvem, guarda o local no anel (motivo
 // 'conflito-409'), adota a nuvem, grava a revisão e só então volta a postar (com a base certa).
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import React, { useEffect } from 'react';
 import { render, act } from '@testing-library/react';
 import { GameStateProvider, useGameState } from './GameStateContext';
@@ -45,6 +45,10 @@ function instalaRede() {
   }) as any;
 }
 
+// A reconciliação e a saída da carga degradada moram em `saveReconcileRun.ts`, carregado por `import()`
+// (orçamento do JS de entrada). O carregamento a frio leva tempo REAL, que o relógio falso não avança:
+// no CI lento o 1º caso terminava antes do módulo chegar. Pré-carregar torna o teste determinístico.
+beforeAll(async () => { await import('../utils/saveReconcileRun'); });
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] }); localStorage.clear(); ultimo = null; reqs = []; houve409 = false; avisos.length = 0;
   localStorage.setItem('soulmon_state_v1', JSON.stringify(LOCAL));

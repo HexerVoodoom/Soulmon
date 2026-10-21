@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // L08-01 / L08-02 — save local corrompido ou atrasado NUNCA pode virar POST de estado novo sobre a nuvem.
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import React, { useEffect } from 'react';
 import { render, act } from '@testing-library/react';
 import { GameStateProvider, useGameState } from './GameStateContext';
@@ -44,6 +44,10 @@ const boot = async (xp?: number) => {
   return h;
 };
 
+// A reconciliação e a saída da carga degradada moram em `saveReconcileRun.ts`, carregado por `import()`
+// (orçamento do JS de entrada). O carregamento a frio leva tempo REAL, que o relógio falso não avança:
+// no CI lento o 1º caso terminava antes do módulo chegar. Pré-carregar torna o teste determinístico.
+beforeAll(async () => { await import('../utils/saveReconcileRun'); });
 beforeEach(() => { vi.useFakeTimers(); localStorage.clear(); ultimo = null; });
 afterEach(() => { vi.useRealTimers(); });
 

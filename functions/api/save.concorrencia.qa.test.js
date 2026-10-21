@@ -48,6 +48,9 @@ const post = (state) => new Request(`https://x/api/save?id=${ID}`, {
 });
 const tick = () => new Promise(r => setTimeout(r, 0));
 
+// Desde 21/10/2026 (ADR-004 adotada) isto documenta o caminho do CLIENTE ANTIGO (POST sem `baseRevision`), que o
+// contrato aditivo mantém de propósito, e a janela de SEGUNDOS que a KV sem compare-and-set deixa aberta mesmo com
+// base (os dois leem a mesma revisão). A janela de horas (aparelho atrasado) é coberta por `save.revision.test.js`.
 describe('DOCUMENTAÇÃO — último POST vence em silêncio (ADR-004 §Contexto)', () => {
   it('dois POSTs intercalados: ambos 200, só o segundo sobrevive, e o primeiro nunca sabe', async () => {
     const kv = kvComLatencia();
@@ -55,7 +58,9 @@ describe('DOCUMENTAÇÃO — último POST vence em silêncio (ADR-004 §Contexto
     const pA = onRequest({ request: post({ perfectDays: 10, comida: 'desktop' }), env });
     await tick(); await tick();
     const pB = onRequest({ request: post({ perfectDays: 10, tarefa: 'celular' }), env });
-    await tick(); await tick();
+    // Desde a ADR-004 o POST calcula o SHA-256 do texto (`crypto.subtle`, assíncrono) antes do `put`: o número de
+    // ticks até o portão varia por máquina. Espera os dois chegarem em vez de contar ticks (o CI lento reprovava).
+    for (let i = 0; i < 200 && kv.portoes.filter(Boolean).length < 2; i++) await tick();
     expect(kv.portoes.filter(Boolean)).toHaveLength(2);
     // A chegou primeiro à rede mas o disco atende B primeiro e A depois (KV eventual)
     kv.soltar(1); kv.soltar(0);
