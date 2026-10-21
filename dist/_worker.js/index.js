@@ -8440,7 +8440,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
+// E:/soulmon-release/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10512,6 +10512,34 @@ function firstSeenMeta(metadata) {
 }
 __name(firstSeenMeta, "firstSeenMeta");
 var RENEW_AFTER_SECONDS = 86400 * 30;
+function revisionOf(metadata) {
+  const r = metadata && typeof metadata === "object" ? (
+    /** @type {any} */
+    metadata.r
+  ) : void 0;
+  return Number.isInteger(r) && r >= 0 ? r : 0;
+}
+__name(revisionOf, "revisionOf");
+function revisionMeta(metadata) {
+  const h = metadata && typeof metadata === "object" ? (
+    /** @type {any} */
+    metadata.h
+  ) : void 0;
+  const out = {};
+  const r = metadata && typeof metadata === "object" ? (
+    /** @type {any} */
+    metadata.r
+  ) : void 0;
+  if (Number.isInteger(r) && r >= 0) out.r = r;
+  if (typeof h === "string" && h) out.h = h;
+  return out;
+}
+__name(revisionMeta, "revisionMeta");
+async function sha256Hex2(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(sha256Hex2, "sha256Hex");
 async function onRequestOptions11() {
   return new Response(null, { headers: CORS11 });
 }
@@ -10577,7 +10605,7 @@ async function onRequest6({ request, env }) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS,
             // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
-            metadata: { t: Date.now(), ...firstSeenMeta(metadata) }
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata) }
           });
         } else {
           console.info("save: renova\xE7\xE3o de TTL pulada, conte\xFAdo mudou entre leitura e renova\xE7\xE3o", { saveIdPrefix: saveId.slice(0, 8) });
@@ -10592,7 +10620,7 @@ async function onRequest6({ request, env }) {
     const betaFull = admin ? false : (await verifiedBetaFull(env, request, saveId)).betaFull;
     state.accountTier = admin || betaFull ? "paid" : ent.tier;
     state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
-    return Response.json({ found: true, state }, { headers: CORS11 });
+    return Response.json({ found: true, state, revision: revisionOf(metadata) }, { headers: CORS11 });
   }
   if (request.method === "POST") {
     const acctGate = takeToken("save-write", saveId, SAVE_WRITE_RATE_ACCOUNT);
@@ -10700,12 +10728,25 @@ async function onRequest6({ request, env }) {
         return Response.json({ error: porIp.reason }, { status: 429, headers: CORS11 });
       }
     }
+    const cur = revisionOf(prev?.metadata);
+    const base = body?.baseRevision;
+    const temBase = Number.isInteger(base) && base >= 0;
+    const h = await sha256Hex2(serialized);
+    if (!temBase) {
+      console.info("save: escrita sem baseRevision", { saveIdPrefix: saveId.slice(0, 8) });
+    } else if (base !== cur) {
+      if (typeof prev?.metadata?.h === "string" && prev.metadata.h === h) {
+        return Response.json({ ok: true, revision: cur, duplicate: true }, { headers: CORS11 });
+      }
+      console.warn("save: 409 conflito de revis\xE3o", { saveIdPrefix: saveId.slice(0, 8), base, cur });
+      return Response.json({ error: "conflict", revision: cur }, { status: 409, headers: CORS11 });
+    }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
-      metadata: { t: Date.now(), f }
+      metadata: { t: Date.now(), f, r: cur + 1, h }
     });
-    return Response.json({ ok: true }, { headers: CORS11 });
+    return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS11 });
   }
   return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS11 });
 }
@@ -11215,7 +11256,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-BLiTfu/functionsRoutes-0.9051072376372357.mjs
+// ../.wrangler/tmp/pages-CERLdS/functionsRoutes-0.35469587525210255.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11492,7 +11533,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// E:/soulmon-release/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11818,7 +11859,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// E:/soulmon-release/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
