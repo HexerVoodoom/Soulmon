@@ -3311,3 +3311,17 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
   o cartão calmo (missão especial) ainda não feito não reserva a coluna de ícone vazia.
 - **L06-14 — pendente de confirmação no aparelho** (dono, modal): o viewport `interactive-widget=resizes-content` + `scrollIntoView` do `Field` devem manter Cancelar/Salvar acima do teclado;
   o dono confirma depois do próximo AAB. Se persistir, abre-se um botão fixo acima do teclado.
+
+## 171. Geração recusada por conta não paga deixa de ser muda (dono, 21/10/2026; frente `fix/qa-cliente-7`)
+
+- **O achado:** uma conta de teste voltou à demo (conta excluída) e o cristal do reveal ficava parado SEM aviso: o servidor responde 402 `paid-tier-required`
+  (`generate-sprite.js`, `requirePaidTier`) e o cliente engolia o erro (`catch { /* falha de geração não é falha do ritual */ }`); no acervo, QUALQUER 402 virava `lifetime-cap`
+  ("a conta estourou o teto vitalício, para para sempre") e o card ficava mudo.
+- **O que mudou (só web, contrato do servidor intacto):** `spriteGen` ganhou a razão `paid-required` (402 com `error: 'paid-tier-required'`; o 402 sem código segue `lifetime-cap`), não retentável.
+  No **ritual de nascimento** a tela do reveal troca a frase "o desenho ainda está sendo feito" por um aviso calmo (PT/EN, sem culpa) e um botão "Desbloquear a conta" que abre o MESMO modal de compra
+  (`UnlockAccountModal`, motivo `ovo`); comprado, pede o desenho de novo. O ritual NÃO bloqueia: dá para chocar com a arte de reserva.
+  No **jogo**, o lote do acervo grava `paid-required` (NÃO terminal: pagar reabre a geração), PARA (as outras formas levariam o mesmo 402) e avisa uma vez por sessão com um toast cuja ação abre o
+  desbloqueio já existente (`soulmon:unlock-needed` → `setUnlockReason('evolution')`, o mesmo caminho do "Gerar personagem"; só se a conta não for paga). O card da Evolução passa a ter a frase
+  (`spriteFailText('paid-required')`). O texto vive em `AVISO_CONTA_NAO_PAGA`/`SPRITE_COPY.paidFail`/`RevealContaNaoPaga`, sem string solta.
+- **Régua:** `spriteGen.contract.test.ts` (402 `paid-tier-required` ≠ teto), `spriteRunner.test.ts` (não retenta, para o lote), `spriteCopy.paga.test.ts` (aviso uma vez, ação = evento do desbloqueio),
+  `RevealContaNaoPaga.render.test.tsx` (aviso + ligação no onboarding).

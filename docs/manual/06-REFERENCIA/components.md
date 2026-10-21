@@ -33,6 +33,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/settingsTelemetry.render.test.tsx` (cobre a superfície de configurações, incluindo este modal).
 **Avisos do arquivo:** número que o usuário não usa para decidir vira palavra (Previsível/Equilibrado/Criativo), não `0.85` — régua nº 2 do cabeçalho; instruções livres e criatividade são avançado, atrás de "Mais opções" — régua nº 3; uma ação dominante (Salvar).
 
+### `src/components/RevealContaNaoPaga.tsx`
+**Dono de:** o aviso do reveal do onboarding quando a geração do desenho foi recusada por conta não paga (402 `paid-tier-required`): diz o porquê (PT/EN, sem culpa) e oferece "Desbloquear a conta" pelo MESMO modal de compra do jogo. Antes o cristal ficava parado e a tela dizia "o desenho ainda está sendo feito".
+**Props principais:** `isPt`, `onDesbloquear`.
+**Exports:** `RevealContaNaoPaga(props)` (nomeado e default).
+**Chamado por:** `src/components/SoulmonOnboarding.tsx` (no reveal, no lugar da frase "ainda está sendo feito").
+**Régua:** `src/components/RevealContaNaoPaga.render.test.tsx`.
+
 ### `src/components/XpGainDisplay.tsx`
 **Dono de:** o display transitório "+N EXP" do ganho de XP do Vínculo (entra pela esquerda, 1 s no centro, sai pela direita).
 **Props principais:** `totalXP`, `language`, `demo?`.
