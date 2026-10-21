@@ -3262,8 +3262,11 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 
 ## 163. Presentes só somem depois da confirmação do aparelho (dono, 21/10/2026; L03-01 residual)
 
+## 166. Presentes só somem depois da confirmação do aparelho (dono, 21/10/2026; L03-01 residual)
+
 - **Pedido:** o resgate de presentes apagava a fila na própria leitura; se a resposta se perdesse na rede, o presente sumia. O dono decidiu adicionar o ack do cliente.
 - **Decisão:** `gifts?claim=1&ack=1` entrega sem apagar; o app credita só os `gid` que ainda não creditou (conjunto local `soulmon-gifts-credited-v1`) e confirma com `POST giftsAck`, que apaga os confirmados. Com D1 o presente fica reservado 10 min para quem o recebeu. Cliente antigo sem `ack` continua com o resgate destrutivo de antes.
 - **Alternativa que perdeu:** aceitar o residual (presente grátis, 20 Bits); apagar só por TTL (a fila crescia e o presente reapareceria).
 - **O que falsificaria:** relato de presente creditado duas vezes no mesmo aparelho; fila `gifts:` que não esvazia (ack nunca chega); com D1, `order_claims` com `gift:` reservados e nunca confirmados crescendo.
+- **Rollback:** reverter o commit. A fila `gifts:` não muda de formato; o servidor antigo ignora `ack=1` e volta ao resgate destrutivo; a chave local `soulmon-gifts-credited-v1` fica sem uso (o app antigo não a lê). Correção do gate adversarial incluída: o ack só sai depois de um save confirmado na nuvem que já contém o crédito, e a adoção da nuvem (409/boot) descarta os créditos ainda não confirmados para o próximo resgate creditar de novo.
 - **Onde vive:** `functions/api/community.js` (`gifts`, `giftsAck`, `GIFT_ACK_LEASE_MS`), `src/utils/community.ts` (`resgatarPresentes`), `src/App.tsx` (efeito de presentes), `src/utils/storageKeys.ts`; manual 02 (diretório e amigos).

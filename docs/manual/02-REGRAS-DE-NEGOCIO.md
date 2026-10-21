@@ -5305,7 +5305,7 @@ Cliente: `src/utils/community.ts`. Toda chamada leva o token, **inclusive as
 GET** — o servidor autoriza o ATOR de `friends`, `gift`, `match`, `trophies` e
 `gifts` (o `claim=1` das duas últimas é **destrutivo**: quem lesse o troféu
 alheio apagava a conquista da pessoa para sempre).
-**Presentes com confirmação (desde 21/10/2026, L03-01, REGISTRO §163):** o app
+**Presentes com confirmação (desde 21/10/2026, L03-01, REGISTRO §166):** o app
 atual resgata com `gifts?claim=1&ack=1`, que NÃO apaga a fila; credita os
 presentes cujo `gid` ainda não está em `soulmon-gifts-credited-v1` (conjunto
 local, teto 200) e só então manda `POST giftsAck { id, gids }`, que apaga os

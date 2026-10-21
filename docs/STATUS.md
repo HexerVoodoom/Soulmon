@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 21/10/2026 — Presentes com confirmação do aparelho (`fix/qa-ack-presentes`, REGISTRO §163, L03-01)
+> ## 21/10/2026 — Presentes com confirmação do aparelho (`fix/qa-ack-presentes`, REGISTRO §166, L03-01)
 >
 > - O servidor só apaga o presente depois do `giftsAck`; o app credita uma vez por `gid`. Cliente antigo segue como antes. Rollback = reverter o commit (a chave local nova só fica sem uso).
 > - **Residual declarado:** sem D1, dois aparelhos ao mesmo tempo podem receber o mesmo presente; com D1, ack perdido devolve o presente a outro aparelho depois de 10 min. Não validado contra o D1 real.
