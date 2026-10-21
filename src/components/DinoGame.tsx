@@ -4,6 +4,7 @@ import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 /** A corrida SEMPRE corre para a DIREITA: arte de perfil esquerdo (`artFacesLeft`, mesma regra da Home) é espelhada. */
 export const dinoPetMirrored = (stage: string, demoCharacterId?: string): boolean => artFacesLeft(stage, demoCharacterId);
 import { lineIconForStage } from '../utils/lineIcons';
+import { usePetScale } from '../hooks/usePetScale';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
@@ -131,12 +132,13 @@ function drawDust(ctx: CanvasRenderingContext2D, list: Dust[], colors: string[])
   ctx.globalAlpha = 1;
 }
 /** Desenha o pet com a pose (origem nos pés, centro da base); sprite sempre nítido. */
-function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose, mirror = false) {
+function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose, mirror = false, vis = 1) {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(DINO_X + DINO_S / 2, groundY - h + pose.dy);
   if (pose.rot) ctx.rotate(pose.rot);
-  ctx.scale(mirror ? -pose.sx : pose.sx, pose.sy);
+  // `vis` = porte do bicho (utils/spriteScale.ts): só o DESENHO encolhe, com origem nos pés; a caixa de colisão não muda.
+  ctx.scale((mirror ? -pose.sx : pose.sx) * vis, pose.sy * vis);
   ctx.drawImage(img, -DINO_S / 2, -DINO_S, DINO_S, DINO_S);
   ctx.restore();
 }
@@ -155,6 +157,9 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scoreElRef = useRef<HTMLSpanElement>(null);
   const petImgRef = useRef<HTMLImageElement | null>(null);
+  const petUrl = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  const petScaleRef = useRef(1);
+  petScaleRef.current = usePetScale(evolutionStage, petUrl);
   const tierImgsRef = useRef<HTMLImageElement[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
@@ -231,7 +236,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       if (ground.complete && ground.naturalWidth) strip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
       if (pet.complete && pet.naturalWidth) {
         const pose = idlePose((performance.now() - t0) / 1000, reducedMotionNow());
-        drawPet(ctx, pet, groundYRef.current, 0, pose, petMirror);
+        drawPet(ctx, pet, groundYRef.current, 0, pose, petMirror, petScaleRef.current);
       }
     };
     for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
@@ -360,7 +365,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       drawDust(ctx, s.dust, dustColors);
       if (pet?.complete) {
         const pose = runPose({ t: s.t, speed: s.speed, h: s.h, vy: s.vy, sinceLand: s.sinceLand, reduced });
-        drawPet(ctx, pet, GROUND, s.h, pose, petMirror);
+        drawPet(ctx, pet, GROUND, s.h, pose, petMirror, petScaleRef.current);
       }
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 

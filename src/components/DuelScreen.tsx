@@ -28,6 +28,8 @@
  * Som (PR18): o golpe/especial soam na cena (`BattleStage`); aqui só a vitória (`playVictory`, `docs/SOM.md` §3.1).
  */
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
@@ -105,6 +107,7 @@ export function DuelScreen({
   // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
   const par = stageSkillsFor(skills, petStage);
+  const petScale = usePetScale(petStage, petSprite);
   // A identidade de combate (dono único): a SUA vem da ficha (sem ela, do `fx` que o servidor publicou do seu save); a do
   // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
   const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
@@ -313,7 +316,7 @@ export function DuelScreen({
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
-        me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
+        me={{ key: 'me', sprite: petSprite, scale: petScale, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}

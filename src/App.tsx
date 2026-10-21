@@ -57,6 +57,7 @@ import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, setOwnSprites } from './utils/sprites';
+import { setPetSizeSeed, sizeSeedOf } from './utils/spriteScale';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -1112,6 +1113,8 @@ export default function App() {
   const petChocando = !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
     && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
   // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
+  // Porte da criatura (utils/spriteScale.ts): semente estável do save, escrita em render como `setOwnSprites` logo abaixo.
+  setPetSizeSeed(sizeSeedOf(gameState));
   // Render-time de propósito: telas abertas depois já leem o valor certo; `setOwnSprites` é idempotente (ver utils/sprites.ts).
   useMemo(() => {
     const map: Record<string, string> = {};

@@ -60,6 +60,8 @@ import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils
 import { availableFrames, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { TOURNAMENT_NPCS, npcSide, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 import { lineIconForStage } from '../utils/lineIcons';
 import { opponentSprite, opponentIcon } from '../utils/opponentArt';
 import { getStageLevel } from '../types/progression';
@@ -966,6 +968,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
  */
 function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: MatchResult; isPt: boolean; petStage: string; petLine?: string; onClose: () => void }) {
   const draw = result.draw === true;
+  const petSpriteSrc = getSpriteForStage(petStage, petLine, 256);
+  const petScale = usePetScale(petStage, petSpriteSrc);
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <RitualDialog label={title} onClose={onClose} zIndex={400} maxWidth={340} style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}>
@@ -974,7 +978,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       </h2>
       {result.won && (
         <GameVisor width={DIALOG_VISOR_W} height={56} scene={`url(${tournamentFinal}) center/cover`}>
-          <VisorSprite src={getSpriteForStage(petStage, petLine, 256)} alt="" size={64} idle={false} style={{ left: 56, bottom: 8 }} data-visor-pet />
+          <VisorSprite src={petSpriteSrc} alt="" size={64} idle={false} style={{ left: 56, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
           <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" size={64} idle={false} flip style={{ right: 56, bottom: 8 }} data-visor-enemy />
         </GameVisor>
       )}

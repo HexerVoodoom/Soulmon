@@ -7,6 +7,8 @@ import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, ph
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
+import { usePetScale } from '../../hooks/usePetScale';
+import { petScaleStyle } from '../../utils/spriteScale';
 import {
   BREATH_PATTERNS, BREATH_DURATIONS_MIN, phaseAt, fillLevel, sessionMs, type BreathPhase,
 } from '../../utils/refugio/respiracao';
@@ -86,6 +88,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   const { phase, progress } = phaseAt(pattern, elapsed);
   const level = fillLevel(phase, progress);
   const sprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petBodyScale = usePetScale(evolutionStage, sprite);
   const title = isPt ? 'Respirar com o pet' : 'Breathe with your pet';
   const closeLabel = isPt ? 'Sair' : 'Exit';
 
@@ -112,7 +115,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
         />
         <GameStory id="respiracao" language={language} />
         <GameVisor height={72} scene={REFUGIO_SCENE_SUAVE}>
-          <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
+          <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8, ...petScaleStyle(petBodyScale, 'center') }} />
         </GameVisor>
         <div role="group" aria-label={isPt ? 'Ritmo' : 'Rhythm'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{isPt ? 'Ritmo' : 'Rhythm'}</p>
@@ -151,7 +154,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
       <GameRoot>
         <GameHeader title={title} closeLabel={closeLabel} onClose={onExit} />
         <GameVisor height={72} scene={REFUGIO_SCENE_SUAVE}>
-          <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
+          <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8, ...petScaleStyle(petBodyScale, 'center') }} />
         </GameVisor>
         <p role="status" data-respiracao-done style={phaseTitle}>
           {isPt ? 'Tudo bem. Volte quando precisar.' : 'All good. Come back whenever you need.'}
@@ -200,7 +203,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           size={64}
           idle={false}
           data-visor-pet
-          style={{ left: 'calc(50% - 32px)', top: 'calc(50% - 32px)', transform: `scale(${petScale})`, transition: reduced ? undefined : `transform ${ease}` }}
+          style={{ left: 'calc(50% - 32px)', top: 'calc(50% - 32px)', ...petScaleStyle(petBodyScale, 'center'), transform: `scale(${petScale})`, transition: reduced ? undefined : `transform ${ease}` }}
         />
       </GameVisor>
       <p aria-live="polite" data-respiracao-phase style={{ ...phaseTitle, fontSize: 'var(--sm2-text-lg)' }}>

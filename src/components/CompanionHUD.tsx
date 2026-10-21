@@ -6,6 +6,7 @@ import { HungerIndicator } from './home/HungerIndicator';
 import type { EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
@@ -903,6 +904,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [spriteQuebrado, setSpriteQuebrado] = useState<string | null>(null);
   const sprite = (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
     ?? (chocando ? PLACEHOLDER_ART.forming : getSpriteForStage(evolutionStage, demoCharacterId));
+  /* Porte por estágio (utils/spriteScale.ts): escala a CAIXA VISÍVEL do bicho, com origem nos pés — layout, chão e alvo de toque ficam. */
+  const petScale = usePetScale(evolutionStage, sprite);
 
   /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
      A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
@@ -1521,8 +1524,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                   left: '50%',
                   bottom: PET_GROUND_KEEP + PET_LIFT,
                   transform: 'translateX(-50%)',
-                  width: Math.round(PET_RENDER * 0.52),
-                  height: Math.round(PET_RENDER * 0.12),
+                  width: Math.round(PET_RENDER * 0.52 * Math.min(1, petScale + 0.15)),
+                  height: Math.round(PET_RENDER * 0.12 * Math.min(1, petScale + 0.15)),
                   pointerEvents: 'none',
                   /* No ar a sombra fica NO CHÃO, menor e mais fraca: é ela que diz "voando". */
                   ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
@@ -1602,6 +1605,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     filter: getCompanionFilter(isBlinking),
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
+                    scale: petScale,
                     /* Prioridade: o que o USUÁRIO acabou de fazer vence o que o
                        bicho faz sozinho. Piscada e saudação são as últimas. */
                     animation: isRubbing
