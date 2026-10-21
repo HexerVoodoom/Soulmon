@@ -56,7 +56,8 @@ export function FirstTaskCompletedPopup({
           ? 'Seu Soulmon cresceu um pouquinho agora. Uma coisa de cada vez, no seu ritmo.'
           : 'It grew a little just now. One thing at a time, at your pace.'}
       </p>
-      <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+      {/* `autoFocus`: o foco entra no diálogo ao abrir (antes ficava no BODY até o 1º Tab; QA L05-09). */}
+      <button type="button" autoFocus onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Entendi' : 'Got it'}
       </button>
     </RitualDialog>

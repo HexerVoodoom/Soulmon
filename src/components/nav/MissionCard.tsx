@@ -69,11 +69,14 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
         borderRadius: 'var(--sm2-radius-lg)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
       }}
     >
-      <span aria-hidden={claimed ? undefined : true} style={{ flex: 'none', width: 28, display: 'flex', justifyContent: 'center' }}>
-        {claimed
-          ? <Icon name="check_circle" size={24} fill={1} tone="primary" label={quiet ? (isPt ? 'feita' : 'done') : (isPt ? 'resgatada' : 'claimed')} />
-          : (quiet ? null : <MissionMark kind="available" tone="gold" size={28} isPt={isPt} />)}
-      </span>
+      {/* Cartão calmo (missão especial) ainda não feito: SEM coluna de ícone (era um vão vazio de 28 px; QA L05-09). */}
+      {(claimed || !quiet) && (
+        <span aria-hidden={claimed ? undefined : true} style={{ flex: 'none', width: 28, display: 'flex', justifyContent: 'center' }}>
+          {claimed
+            ? <Icon name="check_circle" size={24} fill={1} tone="primary" label={quiet ? (isPt ? 'feita' : 'done') : (isPt ? 'resgatada' : 'claimed')} />
+            : <MissionMark kind="available" tone="gold" size={28} isPt={isPt} />}
+        </span>
+      )}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {onGo && !claimed ? (
           <button

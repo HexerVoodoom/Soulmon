@@ -408,9 +408,14 @@ export function DailyRituals({
             </>
           ) : (
             <p data-all-empty style={{ color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-sm)' }}>
-              {busca.trim() || filtro !== 'all'
-                ? (isPt ? 'Nada encontrado.' : 'Nothing found.')
-                : (isPt ? 'Nenhuma tarefa ainda. Crie uma com o botão +.' : 'No tasks yet. Create one with the + button.')}
+              {/* QA L05-09: cada vazio diz a SUA causa (busca, filtro de tarefas, filtro de hábitos), em vez de um "Nothing found." só. */}
+              {busca.trim()
+                ? (isPt ? `Nada encontrado para “${busca.trim()}”.` : `Nothing found for “${busca.trim()}”.`)
+                : filtro === 'tasks'
+                  ? (isPt ? 'Nenhuma tarefa por aqui.' : 'No tasks here.')
+                  : filtro === 'habits'
+                    ? (isPt ? 'Nenhum hábito por aqui.' : 'No habits here.')
+                    : (isPt ? 'Nenhuma tarefa ainda. Crie uma com o botão +.' : 'No tasks yet. Create one with the + button.')}
             </p>
           )}
         </AllActivitiesScreen>,
