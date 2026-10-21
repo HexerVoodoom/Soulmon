@@ -31,6 +31,7 @@ export const LUZ_REDUZIDA_MS = 400;
 const OVO_CSS = `
 @keyframes sm-ovo-balanco{0%{transform:rotate(0) scale(1)}18%{transform:rotate(-7deg) scale(1.03)}38%{transform:rotate(6deg) scale(1.02)}58%{transform:rotate(-4deg)}78%{transform:rotate(2deg)}100%{transform:rotate(0) scale(1)}}
 @keyframes sm-ovo-fade{from{opacity:.55}to{opacity:1}}
+@keyframes sm-ovo-crack{0%{opacity:0;transform:translate(-50%,6px) scale(.8)}20%{opacity:1;transform:translate(-50%,0) scale(1.08)}70%{opacity:1;transform:translate(-50%,-6px) scale(1)}100%{opacity:0;transform:translate(-50%,-14px) scale(1)}}
 @keyframes sm-luz-expande{from{transform:translate(-50%,-50%) scale(0)}to{transform:translate(-50%,-50%) scale(1)}}
 @keyframes sm-luz-some{from{opacity:1}to{opacity:0}}
 @keyframes sm-luz-entra{from{opacity:0}to{opacity:1}}
@@ -69,7 +70,7 @@ export function OvoCristal({ language, comprado, ocupado, onConhecer, onGuia, on
       : (isPt ? 'Toque no cristal.' : 'Tap the crystal.');
 
   return (
-    <div data-ovo style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+    <div data-ovo style={{ position: 'relative', paddingTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <style>{OVO_CSS}</style>
       <button
         type="button"
@@ -109,6 +110,19 @@ export function OvoCristal({ language, comprado, ocupado, onConhecer, onGuia, on
           </Viewport>
         </span>
       </button>
+
+      {/* O "crack" (decisão do dono, 21/10/2026, QA L11-06): a cada toque do usuário a palavra aparece sobre o cristal, MAIOR que
+          o texto de torcida do combate (13 px); a palavra é onomatopeia, igual em PT e EN, e decorativa (a dica abaixo é o que se anuncia).
+          A key reinicia a animação a cada toque; só existe depois do 1º. */}
+      {pulso > 0 && !comprado && (
+        <span key={`crack-${pulso}`} data-ovo-crack aria-hidden="true" style={{
+          position: 'absolute', left: '50%', top: 0, pointerEvents: 'none', zIndex: 2,
+          fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 30, lineHeight: 1, letterSpacing: '.04em',
+          color: 'var(--sm2-ink)', textShadow: '0 1px 3px rgba(0,0,0,.45)',
+          animation: reduced ? 'sm-ovo-fade 400ms ease-out 1 both' : 'sm-ovo-crack 620ms ease-out 1 both',
+          transform: 'translate(-50%, 0)',
+        }}>crack</span>
+      )}
 
       {/* Região viva presente desde a primeira pintura (leitor de tela não anuncia `role=status` que já nasce com texto):
           ela existe vazia no DOM e a dica entra depois — aqui o texto troca a cada fase, o que a faz anunciar. */}
