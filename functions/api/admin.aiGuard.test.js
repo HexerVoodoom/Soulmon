@@ -6,6 +6,10 @@ import { emailToSaveId } from './_auth.js';
 import { ENT_PREFIX } from './_entitlements.js';
 import { onRequestPost as gerarSprite } from './generate-sprite.js';
 import { ADMIN, OTHER, installJwks, token, envWith, reqWith } from './admin.testkit.js';
+import { usarTetosDeSpriteDeProducao } from '../../src/test/tetosSprite.js';
+
+// O commit 372df3132 liberou os tetos de produção para os testes iniciais; estes testes provam a máquina do teto COM os números de produção (ver `src/test/tetosSprite.js`).
+usarTetosDeSpriteDeProducao();
 
 let ADMIN_ID, OTHER_ID;
 beforeAll(async () => {
@@ -15,7 +19,8 @@ beforeAll(async () => {
 });
 afterAll(() => vi.unstubAllGlobals());
 
-const L = AI_LIMITS.sprite;
+// Visão VIVA dos tetos: `usarTetosDeSpriteDeProducao` troca `AI_LIMITS.sprite` a cada teste, e uma cópia tirada no carregamento ficaria velha.
+const L = new Proxy({}, { get: (_alvo, k) => AI_LIMITS.sprite[k] });
 const run = async (env, email, id, n, formId = null) => {
   const tok = await token(email);
   let last;

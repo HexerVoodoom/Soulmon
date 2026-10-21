@@ -6,6 +6,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { onRequestPost as admin } from './sprite-admin.js';
 import { onRequestPost as gerar } from './generate-sprite.js';
 import { ENT_PREFIX } from './_entitlements.js';
+import { usarTetosDeSpriteDeProducao } from '../../src/test/tetosSprite.js';
+
+// O commit 372df3132 liberou os tetos de produção para os testes iniciais; estes testes provam a máquina do teto COM os números de produção (ver `src/test/tetosSprite.js`).
+usarTetosDeSpriteDeProducao();
 
 const SAVE = 'abcdefgh12345678';
 function env() {

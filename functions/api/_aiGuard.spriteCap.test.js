@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { guardAiRequest, AI_LIMITS, AI_REFUSAL_MESSAGES } from './_aiGuard.js';
 import { ENT_PREFIX } from './_entitlements.js';
+import { readFileSync } from 'node:fs';
+import { usarTetosDeSpriteDeProducao, SPRITE_PRODUCAO, SPRITE_LIBERADO, SPRITE_VIGENTE } from '../../src/test/tetosSprite.js';
+
+// O commit 372df3132 liberou os tetos de produção para os testes iniciais; estes testes provam a máquina do teto COM os números de produção (ver `src/test/tetosSprite.js`).
+usarTetosDeSpriteDeProducao();
 
 // O teto ANTIGO (`sprite: { perAccount: 20, global: 400 }`, os dois por DIA)
 // não era um teto de orçamento: 400 × R$ 0,101 = R$ 40,40 POR DIA ⇒
@@ -39,6 +44,13 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('sprite: os três tetos', () => {
+  it('o valor VIGENTE é o de produção OU o liberado para os testes iniciais (dono, 21/10/2026) — voltar à produção não quebra nada', () => {
+    expect([SPRITE_PRODUCAO, SPRITE_LIBERADO]).toContainEqual(SPRITE_VIGENTE);
+    // Os números de produção seguem GRAVADOS no comentário de `_aiGuard.js` para quem for desfazer a liberação.
+    const fonte = readFileSync('functions/api/_aiGuard.js', 'utf8');
+    expect(fonte).toContain('Valores de produção: perAccount 6, perAccountLifetime 15, perFormLifetime 1.');
+  });
+
   it('os números são os aprovados — 6/dia, 15 vitalício, 1 por forma, 800/mês e 40/dia global', () => {
     // Decisão do dono (11/10/2026): "o usuário NÃO pode ficar regerando o
     // Soulmon". UMA geração por forma; vitalício = 11 formas + 4 de folga para

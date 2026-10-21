@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { guardAiRequest, AI_LIMITS } from './_aiGuard.js';
+import { usarTetosDeSpriteDeProducao } from '../../src/test/tetosSprite.js';
+
+// O commit 372df3132 liberou os tetos de produção para os testes iniciais; estes testes provam a máquina do teto COM os números de produção (ver `src/test/tetosSprite.js`).
+usarTetosDeSpriteDeProducao();
 
 // Este portão é o que separa "a IA custa o que os usuários pagam" de "a IA
 // custa o que a internet inteira quiser gastar". Se algum destes testes cair,

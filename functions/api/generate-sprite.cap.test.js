@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { onRequestPost } from './generate-sprite.js';
 import { ENT_PREFIX } from './_entitlements.js';
 import { AI_LIMITS } from './_aiGuard.js';
+import { usarTetosDeSpriteDeProducao } from '../../src/test/tetosSprite.js';
+
+// O commit 372df3132 liberou os tetos de produção para os testes iniciais; estes testes provam a máquina do teto COM os números de produção (ver `src/test/tetosSprite.js`).
+usarTetosDeSpriteDeProducao();
 
 // O que interessa medir aqui NÃO é o corpo da resposta (ele pode dizer qualquer
 // coisa): é se o provedor de IA foi CHAMADO. Chamada que não aconteceu é fatura
