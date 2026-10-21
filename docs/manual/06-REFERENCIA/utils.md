@@ -3620,15 +3620,15 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Dono de:** a QUARENTENA do save local — `quarentenarSaveLocal(cru, motivo)` grava em `STORAGE_KEYS.SAVE_QUARANTINE` o texto do `GAME_STATE` que não virou estado (ou o local atrasado antes de adotar a nuvem), corte em 1.000.000 caracteres (50.000 se a cota negar), idempotente, nunca lança.
 **Quem usa:** `contexts/GameStateContext.tsx` (inicializador, carga degradada L08-01/L08-02). Módulo próprio para não ser apanhado pelos `vi.mock('../utils/cloudSave')`. **Régua:** `src/contexts/GameStateContext.l08corrupcao.qa.test.tsx`.
 
-### `src/utils/saveRevision.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §161, ADR-004)
+### `src/utils/saveRevision.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §163, ADR-004)
 
 A revisão do save na nuvem que este aparelho viu por último: `lerRevisao(saveId)` (só vale para o mesmo `saveId`; leitura tolerante, `null` em dúvida), `gravarRevisao(saveId, r)` e `esquecerRevisao()`. Chave `soulmon-save-revision-v1` (`{ saveId, r }`), fora do `GameState`, apagada no logout. Módulo próprio para o provider não depender do `cloudSave` que os testes de contexto mockam; `cloudSave.ts` reexporta. **Quem usa:** `utils/cloudSave.ts` (`baseRevision` no POST, adoção), `contexts/GameStateContext.tsx` (reconciliação). **Régua:** `src/utils/cloudSave.revision.test.ts`.
 
-### `src/utils/saveReconcile.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §161, ADR-004)
+### `src/utils/saveReconcile.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §163, ADR-004)
 
 `decidirReconciliacao({ motivo: '409' | 'boot' | 'visivel', leitura, revisaoLocal, pendente, revisaoMinima? })` → `'adotar' | 'liberar' | 'esperar' | 'excluida' | 'ignorar'`. Função pura: no 409 a nuvem encontrada é adotada (o provider guarda o local no anel antes), vazia libera, indeterminada espera; no boot/volta à tela só adota revisão MAIOR sem mudança pendente. `revisaoMinima` (só no 409): leitura com revisão menor que a do 409 = `esperar` (réplica atrasada do KV). Nunca olha XP. **Quem usa:** `utils/saveReconcileRun.ts`. **Régua:** `src/utils/saveReconcile.test.ts`, `src/contexts/GameStateContext.revision409.test.tsx`.
 
-### `src/utils/saveReconcileRun.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §161, ADR-004)
+### `src/utils/saveReconcileRun.ts` (fix/qa-revisao-restaurar, 21/10/2026 — REGISTRO §163, ADR-004)
 
 O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `reconciliarComNuvem(ctx)` (lê a nuvem, aplica `decidirReconciliacao`, guarda o local no anel/quarentena, grava a revisão, aplica o estado e avisa), `lerParaSairDaCargaDegradada(ctx)` (L08), `instalarLeituraD2(ctx)` (boot e volta de ≥ 5 min escondido) e `repetirComRecuo(passo)` (até 4 repetições, 30 s dobrando). Recebe do provider, por parâmetro, o estado atual, `hidratar`, `aplicar` e os refs — não importa o provider, e o provider o carrega por UM `import()`. R-1: só `aplicar` toca o estado, nunca o callback do POST. **Quem usa:** `contexts/GameStateContext.tsx`. **Régua:** `src/contexts/GameStateContext.revision409.test.tsx`, `src/contexts/GameStateContext.l08corrupcao.qa.test.tsx`.
 

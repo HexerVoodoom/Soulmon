@@ -182,7 +182,7 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 19/10/2026 (re-medida pós refino W3+W4 e Frente IA, REGISTRO §124): a main já estava em 677_043 (inicio de dia, notificações, carta,
   // marcadores: o teste ficou vermelho ali, sem ninguém re-medir); a Frente IA (transcrição direta no Groq, chat sem IA ociosa, erros
   // distintos) REMOVE o caminho Supabase e fecha em 675_858 (-1,2 KB sobre a main). 661_170 -> 675_858. Corte real segue = partir o `App.tsx`.
-  // 21/10/2026 (ADR-004 revisão + 409, REGISTRO §161): release já em 682_676 (lotes de cliente do QA, sem re-medir; a folga era de 1,3 KB);
+  // 21/10/2026 (ADR-004 revisão + 409, REGISTRO §163): release já em 682_676 (lotes de cliente do QA, sem re-medir; a folga era de 1,3 KB);
   // esta PR soma +2,2 KB no chunk de entrada (revisão no `cloudSave`, fila de POSTs, casca da reconciliação no provider) DEPOIS de pagar
   // o corpo da reconciliação e a saída da carga degradada para `saveReconcileRun.ts` (`import()`). 675_858 -> 684_919. Proteção de save
   // de jogador real; corte real segue = partir o `App.tsx`.

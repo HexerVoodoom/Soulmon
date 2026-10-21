@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 21/10/2026 — Save com revisão e 409 (`fix/qa-revisao-restaurar`, REGISTRO §161, ADR-004 adotada)
+> ## 21/10/2026 — Save com revisão e 409 (`fix/qa-revisao-restaurar`, REGISTRO §163, ADR-004 adotada)
 >
 > - `POST /api/save` com `baseRevision`: aparelho atrasado toma 409 em vez de sobrescrever a nuvem; o cliente relê, adota a nuvem e guarda o local no anel de backup (aviso calmo PT/EN). Cliente em cache sem base grava como antes. Revisão no metadata da KV: rollback = reverter o commit, sem migração.
 > - **Residual declarado:** KV sem compare-and-set (janela de segundos, ADR-005); overlay de desktop ainda grava sem base. **Não conferido no aparelho:** dois aparelhos reais na mesma conta.
