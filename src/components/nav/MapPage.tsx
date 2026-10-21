@@ -91,7 +91,7 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
       aria-labelledby="sm-map-title"
       data-map-page
       style={{
-        position: 'relative',
+        position: 'relative', zIndex: 0, isolation: 'isolate',
         width: '100%', height: '100%', minHeight: 0,
         margin: 0,
         overflow: 'hidden',
