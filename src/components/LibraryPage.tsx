@@ -414,7 +414,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
             {isPt ? 'Não deu para falar com o servidor.' : "Couldn't reach the server."}
           </p>
           <p className="sm2-lib-s" style={{ margin: 0 }}>
-            {isPt ? 'Pode ser a sua conexão. Os personagens de demonstração continuam aqui.' : 'It may be your connection. The demo characters are still here.'}
+            {isPt ? 'Pode ser a sua conexão. Tente de novo em instantes.' : 'It may be your connection. Try again in a moment.'}
           </p>
           {/* Saída com fronteira (`outline`), nunca `ghost` (D-S10). */}
           <button type="button" onClick={() => setReloadKey(k => k + 1)} style={{ ...sm2Button('outline', false, 'sm'), marginTop: 6, width: '100%', maxWidth: 200 }}>

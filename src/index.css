@@ -7563,8 +7563,9 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-conta-cd {
   font-family: var(--sm2-font-mono); letter-spacing: .1em; font-size: var(--sm2-text-sm); color: var(--sm2-ink);
   min-height: 32px; display: inline-flex; align-items: center; padding: 0 var(--sm2-space-3);
-  border-radius: 999px; background-color: var(--sm2-surface-2);
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-radius: var(--sm2-radius-md); background-color: var(--sm2-surface-2);
+  /* o código inteiro tem que ser legível (QA L11-12): quebra em vez de cortar com reticências */
+  max-width: 100%; padding-block: var(--sm2-space-1); overflow-wrap: anywhere; white-space: normal; line-height: var(--sm2-leading-body);
 }
 .sm2-conta-copy {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-1);
