@@ -4,6 +4,7 @@ import type { ActivityCategory } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { COUNTERS } from './arena';
 import { elementoConhecido, elementoNomeDe, baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
+import { elementoDoOraculo } from './elementoDoOraculo';
 
 export interface SoulmonIntroInput {
   /** Nome escolhido no batismo (petNameFinal) ou baseName no upgrade. */
@@ -28,9 +29,6 @@ export const INTRO_CLICHES_PROIBIDOS: readonly string[] = [
   'journey', 'embark', "I'm here to", "together we'll grow", 'jornada', 'estou aqui para',
 ];
 
-// TODO rebasear: a frente fix/elemento-oraculo-perfil cria o dono único do mapa oráculo->classe;
-// trocar esta normalização por ele. Hoje só os dois ids do oráculo que não existem no class-system.
-const ORACULO_PARA_CLASSE: Record<string, string> = { planta: 'vida', industrial: 'aco' };
 
 // Mesma tabela de src/utils/premiumFood.ts (PT_NAMES), em minúsculo e já traduzida.
 const COMIDA_PT: Record<string, string> = {
@@ -79,8 +77,8 @@ export function soulmonIntroLines(input: SoulmonIntroInput, lang: 'en' | 'pt'): 
     ? `Oi, eu sou ${nome}.\nSou uma contraparte digital da sua alma, e juntos vamos crescer.`
     : `Hi, I'm ${nome}.\nI'm a digital counterpart of your soul, and we grow together.`);
 
-  const el = ORACULO_PARA_CLASSE[input.element] ?? input.element;
-  if (elementoConhecido(el)) {
+  const el = elementoDoOraculo(input.element); // dono único do mapa oráculo→classe (REGISTRO §150 da main)
+  if (el) {
     const rotulo = elementoNomeDe(el)[pt ? 'pt' : 'en'];
     const contra = elementoQueLevaVantagem(baseDominanteDoElemento(el));
     const l1 = pt ? `Meu elemento principal é ${rotulo}.` : `My main element is ${rotulo}.`;
