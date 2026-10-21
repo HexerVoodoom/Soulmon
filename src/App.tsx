@@ -103,7 +103,7 @@ const ACTIVITY_LOG_CAP = 90;
 const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -2658,7 +2658,9 @@ export default function App() {
     if (activity?.completedToday && activity?.lastCompletedDate === today) return;
     if (activity) contarMisterio(`a:${activityId}`, true);
 
-    setGameState(prev => {
+    setGameState(prevRaw => {
+      // Virada pendente (até 30 s depois da meia-noite): fecha ontem ANTES de escrever hoje (QA L02-02).
+      const prev = settlePendingRollover(prevRaw);
       const activity = prev.activities.find(a => a.id === activityId);
       if (!activity) return prev;
 

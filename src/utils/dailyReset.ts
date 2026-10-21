@@ -817,6 +817,20 @@ export interface DailyResetOptions {
  * Calcula o estado do dia seguinte. Função PURA — não toca em localStorage nem
  * dispara efeito nenhum (StrictMode invoca updaters 2×).
  */
+/**
+ * Fecha a virada PENDENTE antes de um toque que escreve no dia (QA L02-02).
+ *
+ * O gatilho da virada só roda a cada 30 s: um toque entre a meia-noite e esse tick
+ * gravava `lastCompletedDate = hoje` por cima do crédito de ONTEM, e a virada depois
+ * julgava ontem como não feito (−dia completo, −1 coração) e deixava o hábito
+ * marcável de novo (comida em dobro). Quem escreve no dia chama isto primeiro:
+ * sem virada pendente devolve o MESMO objeto (nenhum re-render à toa).
+ */
+export function settlePendingRollover<T extends Record<string, any>>(prev: T, now: Date = new Date()): T {
+  if (now.toDateString() === prev.lastResetDate) return prev;
+  return computeDailyReset(prev, { now });
+}
+
 export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: DailyResetOptions = {}): T {
   const now = opts.now ?? new Date();
   const ontem = new Date(now);
