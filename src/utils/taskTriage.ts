@@ -563,8 +563,19 @@ export function nextOccurrence<T extends TriageTask & {
   if (!(n >= 1)) return null;
   const wake = new Date(now.getFullYear(), now.getMonth(), now.getDate() + n);
   const wakeOn = localDayKey(wake);
+  // O PRAZO acompanha a repetição (QA L02-04): copiar o antigo fazia cada ocorrência
+  // nascer vencida e "assombrada" (e pagar o bônus de alívio). Mantém a mesma folga que
+  // havia entre a conclusão e o prazo; prazo já vencido na conclusão vira o dia em que acorda.
+  const prazoAntigo = deadlineAt(task);
+  let deadline = task.deadline;
+  if (prazoAntigo && deadline) {
+    const folgaDias = Math.max(0, Math.round((new Date(prazoAntigo.getFullYear(), prazoAntigo.getMonth(), prazoAntigo.getDate()).getTime()
+      - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86_400_000));
+    deadline = { ...deadline, date: localDayKey(new Date(wake.getFullYear(), wake.getMonth(), wake.getDate() + folgaDias)) };
+  }
   return {
     ...task,
+    deadline,
     id: `${String(task.id).replace(/~r\d{8}$/, '')}~r${wakeOn.replace(/-/g, '')}`,
     completed: false,
     status: 'someday',
