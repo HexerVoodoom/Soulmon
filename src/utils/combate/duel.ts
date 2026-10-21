@@ -6,7 +6,7 @@
  * with the seed and the combatants the server sent, and to play the local training:
  *  - the bucket cheer (`sanitizeTaps`, `bucketTapTimes`, `duelCheerEvents`): the same maths as the server's;
  *  - `simulatePvp`: `fightSteps` with `PVP_HP_SCALE` and the cheer, folded into events + winner + scores;
- *  - `npcCombatant`: the training NPC, "2 levels below" the player (inside the player's stage).
+ *  - `npcCombatant`: the training NPC, the player's level mirror with a small attack handicap (flat ~65% curve).
  *
  * The client NEVER derives the opponent: `me` and `opp` come from `duelStart`.
  */
@@ -92,16 +92,23 @@ export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' |
 }
 
 /**
- * Levels the training NPC sits below the player (§2.19: "2 levels abaixo"). The NPC never leaves the player's
- * STAGE: crossing a stage boundary drops the base stats by a whole step and the player wins 99% (measured), so
- * the NPC level is `max(first level of the stage, L − NPC_LEVEL_GAP)`. Measured 77.8–91.3% per stage (`combate/duel.test.ts`).
+ * The training NPC (QA L04-01, decisão do dono 21/10/2026): the balanced MIRROR of the player's own level, with a small
+ * ATTACK HANDICAP (`NPC_ATK_HANDICAP`, folded into `Combatant.bonus` as a negative bonus → the NPC needs more hits).
+ *
+ * Antes era "2 levels abaixo, dentro do estágio" (§2.19): no 1º level de cada estágio o piso do estágio zerava a folga
+ * (espelho puro → o jogador vencia só 46–48%) e no meio do rookie a folga era plena (~100%) — a curva tinha um pico e um
+ * vale por estágio, e o gate media só a MÉDIA do estágio. Mesmo nível + handicap constante dá uma curva PLANA:
+ * medido 60–71% em TODO nível amostrado (primeiro, meio e último de cada estágio; `combate/duel.test.ts`).
  */
-export const NPC_LEVEL_GAP = 2;
+export const NPC_LEVEL_GAP = 0;
+/** Handicap de ataque do NPC (bônus negativo no `Combatant.bonus`): calibrado para ~65% de vitória do jogador. */
+export const NPC_ATK_HANDICAP = 0.055;
 
-/** The training NPC for a player level: the balanced mirror `NPC_LEVEL_GAP` levels below, inside the same stage. */
+/** The training NPC for a player level: the balanced mirror of the same level, with the attack handicap. */
 export function npcCombatant(playerLevel: number): Combatant {
   const floor = firstLevelOfStage(stageOfLevel(playerLevel));
-  return combatantAt(Math.max(floor, Math.floor(playerLevel) - NPC_LEVEL_GAP), REFERENCE_BUILDS.balanced);
+  const base = combatantAt(Math.max(floor, Math.floor(playerLevel) - NPC_LEVEL_GAP), REFERENCE_BUILDS.balanced);
+  return { ...base, bonus: base.bonus - NPC_ATK_HANDICAP };
 }
 
 /** The NPC's side: a plain `direct` special (the training teaches the cheer, not the families). */

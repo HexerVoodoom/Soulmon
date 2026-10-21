@@ -8,7 +8,7 @@ import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, STAGE_LEVEL_CAPS, combatantAt,
 import { CHEER, SPECIAL_FAMILIES, specialOf } from './specials';
 import { fight, PVP_HP_SCALE } from './fight';
 import {
-  DUEL_CHEER_BUCKETS, NPC_LEVEL_GAP, bucketTapTimes, duelCheerEvents, npcCombatant, npcSide, sanitizeTaps, simulatePvp,
+  DUEL_CHEER_BUCKETS, NPC_ATK_HANDICAP, NPC_LEVEL_GAP, bucketTapTimes, duelCheerEvents, npcCombatant, npcSide, sanitizeTaps, simulatePvp,
 } from './duel';
 
 const N = 1200;
@@ -31,40 +31,49 @@ function vitoriaPorEstagio(npcLevel: (L: number) => ReturnType<typeof combatantA
   });
 }
 
-describe('AC9. o NPC do treino: 2 levels abaixo, dentro do estágio, e o jogador vence 75–92% em cada estágio', () => {
-  it('NPC_LEVEL_GAP = 2 e o NPC é o espelho EQUILIBRADO, nunca abaixo do 1º level do estágio do jogador', () => {
-    expect(NPC_LEVEL_GAP).toBe(2);
+describe('AC9. o NPC do treino: o espelho do MESMO level com um handicap de ataque; o jogador vence 55–75% em CADA level (QA L04-01)', () => {
+  it('NPC_LEVEL_GAP = 0 e o NPC é o espelho EQUILIBRADO do level do jogador, com bônus de ataque negativo (o handicap)', () => {
+    expect(NPC_LEVEL_GAP).toBe(0);
+    expect(NPC_ATK_HANDICAP).toBeGreaterThan(0);
     for (let L = 1; L <= 40; L++) {
       const npc = npcCombatant(L);
-      expect(npc).toEqual(combatantAt(Math.max(firstLevelOfStage(stageOfLevel(L)), L - 2), REFERENCE_BUILDS.balanced));
+      expect(npc).toEqual({ ...combatantAt(L, REFERENCE_BUILDS.balanced), bonus: -NPC_ATK_HANDICAP });
       expect(stageOfLevel(npc.level)).toBe(stageOfLevel(L));
-      expect(npc.bonus).toBe(0);
     }
     expect(npcCombatant(1).level).toBe(1);
-    expect(npcCombatant(9).level).toBe(7);
-    expect(npcCombatant(7).level).toBe(7); // o 1º level do estágio: não desce para o estágio de baixo
+    expect(npcCombatant(9).level).toBe(9);
     expect(npcSide(20).special.family).toBe('direct');
   });
 
-  it('a vitória do jogador por estágio fica entre 75% e 92% (impressa)', () => {
-    const v = vitoriaPorEstagio((L) => npcCombatant(L));
-    console.log('[PR5] NPC do treino, vitória do jogador por estágio (rookie..ultra):', v.map(pct).join(' · '));
-    for (const [st, w] of v.entries()) {
-      expect(w, `estágio ${st}`).toBeGreaterThanOrEqual(0.75);
-      expect(w, `estágio ${st}`).toBeLessThanOrEqual(0.92);
+  /** A vitória do jogador (qualquer build e família) em UM level contra o NPC do treino. */
+  const vitoriaNoLevel = (L: number, npcOf: (L: number) => ReturnType<typeof combatantAt>, n = 400) => {
+    let w = 0;
+    for (let s = 0; s < n; s++) {
+      const me = { combatant: combatantAt(L, REFERENCE_BUILDS[REFERENCE_BUILD_NAMES[s % 4]]), special: specialOf(fam(s >> 2)) };
+      const npc = { combatant: npcOf(L), special: specialOf('direct') };
+      const r = fight(me, npc, { seed: s * 17 + 3, hpScale: PVP_HP_SCALE });
+      w += r.winner === 'A' ? 1 : r.winner === 'draw' ? 0.5 : 0;
+    }
+    return w / n;
+  };
+  /** O 1º, o do meio e o último level de cada estágio (a régua de 15 levels): o gate de antes só media a média do estágio. */
+  const NIVEIS = [...new Set(STAGE_LEVEL_CAPS.flatMap((hi, st) => { const lo = firstLevelOfStage(st); return [lo, Math.round((lo + hi) / 2), hi]; }))];
+
+  it('a vitória do jogador fica entre 55% e 75% em TODO level amostrado, o 1º level de cada estágio incluído (impressa)', () => {
+    const linhas = NIVEIS.map(L => [L, vitoriaNoLevel(L, npcCombatant)] as const);
+    console.log('[QA L04-01] NPC do treino, vitória do jogador por level:', linhas.map(([L, w]) => `${L}:${pct(w)}`).join(' '));
+    for (const [L, w] of linhas) {
+      expect(w, `level ${L}`).toBeGreaterThanOrEqual(0.55);
+      expect(w, `level ${L}`).toBeLessThanOrEqual(0.75);
     }
   });
 
-  it('RED: o NPC "2 levels abaixo" SEM o piso do estágio (cruza para o estágio de baixo) estoura os 92%', () => {
-    const v = vitoriaPorEstagio((L) => combatantAt(Math.max(1, L - 2), REFERENCE_BUILDS.balanced));
-    console.log('[PR5] RED sem o piso do estágio:', v.map(pct).join(' · '));
-    expect(Math.max(...v)).toBeGreaterThan(0.92);
-  });
-
-  it('RED: com 1 level de folga o estágio mais alto cai abaixo dos 75%', () => {
-    const v = vitoriaPorEstagio((L) => combatantAt(Math.max(firstLevelOfStage(stageOfLevel(L)), L - 1), REFERENCE_BUILDS.balanced));
-    console.log('[PR5] RED com gap 1:', v.map(pct).join(' · '));
-    expect(Math.min(...v)).toBeLessThan(0.75);
+  it('RED: o NPC antigo ("2 levels abaixo", piso no estágio) tinha o pico e o vale que o gate por média escondia', () => {
+    const antigo = (L: number) => combatantAt(Math.max(firstLevelOfStage(stageOfLevel(L)), L - 2), REFERENCE_BUILDS.balanced);
+    const v = NIVEIS.map(L => vitoriaNoLevel(L, antigo, 240));
+    console.log('[QA L04-01] RED NPC antigo por level:', NIVEIS.map((L, i) => `${L}:${pct(v[i])}`).join(' '));
+    expect(Math.min(...v)).toBeLessThan(0.55); // o vale do 1º level de cada estágio (espelho puro)
+    expect(Math.max(...v)).toBeGreaterThan(0.92); // o pico no meio do estágio
   });
 });
 

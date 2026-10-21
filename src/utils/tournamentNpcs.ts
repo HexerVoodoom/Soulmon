@@ -37,8 +37,8 @@ export const TOURNAMENT_NPCS: readonly TournamentNpc[] = [
 ] as const;
 
 /**
- * O desafiante NPC do treino no núcleo v3 (PR5, contexto §2.19): o espelho EQUILIBRADO 2 levels abaixo do jogador
- * (`NPC_LEVEL_GAP`), sem sair do estágio dele. Substitui o `npcAtk` (ataque ×0,85 sobre a ficha do próprio pet).
- * A faixa de aceite é a vitória do jogador entre 75% e 92% em cada estágio (`combate/duel.test.ts`).
+ * O desafiante NPC do treino no núcleo v3 (PR5, contexto §2.19; curva achatada em 21/10/2026, QA L04-01): o espelho
+ * EQUILIBRADO do MESMO level do jogador, com um handicap pequeno de ataque (`NPC_ATK_HANDICAP`). A faixa de aceite é a
+ * vitória do jogador entre 55% e 75% em CADA level amostrado, o 1º de cada estágio incluído (`combate/duel.test.ts`).
  */
-export { NPC_LEVEL_GAP, npcCombatant, npcSide } from './combate/duel';
+export { NPC_LEVEL_GAP, NPC_ATK_HANDICAP, npcCombatant, npcSide } from './combate/duel';
