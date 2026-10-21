@@ -50,6 +50,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-local-stale-v1',
   'soulmon-backup-ring-v1',
   'soulmon-save-revision-v1',
+  'soulmon-picross-base-paid',
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */
