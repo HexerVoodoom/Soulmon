@@ -17,7 +17,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { LUZ_EXPANDE_MS, LUZ_SOME_MS, LUZ_REDUZIDA_MS, OVO_TOQUES_PARA_BOTOES } from './OnboardingOvo';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
-import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
+import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra, ateAsMetas, responderMetas } from '../test/metasOnboarding';
 import { tocarOvo, abrirGuias, escolherGuiaEConfirmar, passarDespedidaDaAmbra } from '../test/ovoOnboarding';
 import { pendingTelemetry, resetTelemetryForTest, TELEMETRY_UNLOCK_REASON } from '../utils/telemetry';
 import { paidArrivalVitals, hungerAt, tierOf, hungerLevelOf, starvingSince, HUNGER_FAIR_MIN, maxEnergyOf } from '../utils/hunger';
@@ -101,6 +101,40 @@ describe('§81 — a Ambra depois dos Termos', () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(document.querySelector('[data-npc-sequence]')).toBeNull();
+  });
+});
+
+describe('QA L05-06/L05-07 — data de nascimento impossível avisa', () => {
+  beforeEach(async () => { vi.useFakeTimers(); installFakeStorage(); resetTelemetryForTest(); movimentoReduzido(false); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  async function atePassoDaData(pt = false) {
+    if (pt) localStorage.setItem('soulmon-language', 'pt-BR');
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    passarTermos(pt);
+    await ateAsMetas(pt);
+    responderMetas(pt);
+    fireEvent.change(screen.getByPlaceholderText(pt ? 'Ex.: Maria da Silva' : 'E.g.: Jane Doe'), { target: { value: 'Jane Doe' } });
+    fireEvent.click(btn(pt ? 'Continuar' : 'Continue'));
+    return screen.getByPlaceholderText(pt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)') as HTMLInputElement;
+  }
+
+  for (const pt of [false, true]) {
+    it(`31/02/2000 (${pt ? 'PT' : 'EN'}): não avança e diz por quê; uma data real some o aviso`, async () => {
+      const campo = await atePassoDaData(pt);
+      fireEvent.change(campo, { target: { value: '31/02/2000' } });
+      const aviso = document.getElementById('onb-birth-warn');
+      expect(aviso?.textContent).toBe(pt ? 'Essa data não existe. Confira o dia, o mês e o ano.' : "That date doesn't exist. Check the day, month and year.");
+      expect(campo.getAttribute('aria-invalid')).toBe('true');
+      fireEvent.change(campo, { target: { value: '28/02/2000' } });
+      expect(document.getElementById('onb-birth-warn')).toBeNull();
+    });
+  }
+
+  it('data incompleta (digitando) não acusa nada', async () => {
+    const campo = await atePassoDaData(false);
+    fireEvent.change(campo, { target: { value: '31/02' } });
+    expect(document.getElementById('onb-birth-warn')).toBeNull();
   });
 });
 

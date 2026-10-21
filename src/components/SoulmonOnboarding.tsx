@@ -20,7 +20,7 @@ import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { soulmonIntroLines } from '../utils/soulmonIntro';
 import { getPassive, rollPetPassive } from '../utils/passives';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
-import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow, Chip } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, FieldWarn, CheckRow, Chip } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
@@ -1162,6 +1162,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
 
   // Máscara DD/MM/AAAA: só dígitos, insere as barras sozinho enquanto digita.
+  /** Oito dígitos digitados que não formam uma data real (31/02, ano fora de 1900..hoje): `birthDate` fica vazio. */
+  const dataImpossivel = birthDateText.replace(/\D/g, '').length === 8 && !birthDate;
   const handleBirthDateChange = (raw: string) => {
     const digits = raw.replace(/\D/g, '').slice(0, 8);
     let masked = digits;
@@ -2040,12 +2042,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? `Sua data de nascimento faz duas coisas aqui: define os elementos do seu mapa astral e confirma que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon.`
               : `Your birth date does two things here: it sets your astral chart's elements and confirms you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age.`}>
+            {/* QA L05-06/L05-07: data completa que não existe (31/02, ano fora de 1900..hoje) antes só "não avançava", sem dizer
+                por quê. O aviso é âmbar, em texto, e liga ao campo por aria-describedby. */}
             <Field type="text" inputMode="numeric" autoComplete="off"
               value={birthDateText} autoFocus
               placeholder={isPt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'}
               onChange={e => handleBirthDateChange(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && next()}
+              warn={dataImpossivel} aria-invalid={dataImpossivel || undefined}
+              aria-describedby={dataImpossivel ? 'onb-birth-warn' : undefined}
               maxLength={10} />
+            {dataImpossivel && (
+              <FieldWarn id="onb-birth-warn">
+                {isPt ? 'Essa data não existe. Confira o dia, o mês e o ano.' : "That date doesn't exist. Check the day, month and year."}
+              </FieldWarn>
+            )}
           </StepShell>
         )}
 
