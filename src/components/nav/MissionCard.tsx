@@ -78,7 +78,8 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
         {onGo && !claimed ? (
           <button
             type="button" {...{ [goAttr]: goValue }} onClick={onGo}
-            style={{ ...titleStyle, minHeight: 32, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            // alvo de toque 44 (QA L05-02): +6 px de cada lado na ÁREA, tirados de volta por margem negativa — o desenho não muda
+            style={{ ...titleStyle, minHeight: 44, margin: '-6px 0', padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
           >
             {title}
           </button>

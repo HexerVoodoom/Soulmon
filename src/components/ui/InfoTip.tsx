@@ -1,6 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
+
+/** Garante área de toque ≥ 44 sem mudar o espaço que o "i" ocupa no layout (padding + margem negativa iguais). */
+export function alvo44(style: CSSProperties | undefined): CSSProperties {
+  const h = typeof style?.minHeight === 'number' ? style.minHeight : 44;
+  const w = typeof style?.minWidth === 'number' ? style.minWidth : 44;
+  const extraV = Math.max(0, 44 - h) / 2;
+  const extraH = Math.max(0, 44 - w) / 2;
+  if (!extraV && !extraH) return {};
+  return { minHeight: Math.max(h, 44), minWidth: Math.max(w, 44), margin: `-${extraV}px -${extraH}px` };
+}
 
 /**
  * `InfoTip` — o "i" PADRÃO do app (pedido do dono, 02/10/2026; o "?" virou "i"
@@ -112,6 +122,9 @@ export function InfoTip({
           minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--sm2-muted)', flexShrink: 0,
           ...style,
+          // O alvo de toque nunca fica abaixo de 44 (QA L05-02/L09-04): quem pede um `minHeight` menor para caber na linha
+          // (ex.: 24) continua ocupando 24 no layout — a área extra vem de padding compensado por margem negativa.
+          ...alvo44(style),
         }}
       >
         <Icon name="info" size={20} tone="inherit" />
