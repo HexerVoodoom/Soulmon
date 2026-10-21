@@ -567,7 +567,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                       <div style={{ height: 6, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${trait.score}%`, background: '#0d9488' }} />
                       </div>
-                      <p className="text-[10px]" style={{ color: '#9ca3af' }}>
+                      <p className="text-[10px]" style={{ color: 'var(--sm2-muted)' }}>
                         {L(traitLabels[dim].low)} ↔ {L(traitLabels[dim].high)}
                       </p>
                     </div>
@@ -583,13 +583,13 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
               {/* Índices de validade: não medem personalidade, medem se o
                   protocolo PODE ser lido como um resultado de personalidade. */}
               {!soulProfile.psychometric.validity.trustworthy && (
-                <div className="mt-2" style={{ color: '#b45309', fontSize: 11 }}>
+                <div className="mt-2" style={{ color: 'var(--sm2-gold-ink)', fontSize: 11 }}>
                   {soulProfile.psychometric.validity.flags.map((f, i) => (
                     <p key={i} style={{ margin: 0 }}>⚠️ {L(f)}</p>
                   ))}
                 </div>
               )}
-              <p className="text-[10px] mt-2" style={{ color: '#9ca3af' }}>
+              <p className="text-[10px] mt-2" style={{ color: 'var(--sm2-muted)' }}>
                 {isPt
                   ? '* Teste construído segundo princípios psicométricos, mas NÃO validado: os itens nunca passaram por análise fatorial ou normatização. Não serve para uso clínico nem para decisão sobre ninguém.'
                   : '* Test built according to psychometric principles, but NOT validated: the items never went through factor analysis or norming. Not for clinical use or decisions about anyone.'}
@@ -653,7 +653,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                     {' · '}{soulProfile.onboarding.timeZone}
                   </div>
                   {soulProfile.astrology.warnings.map((w, i) => (
-                    <p key={i} className="text-[10px]" style={{ color: '#b45309' }}>⚠️ {L(w)}</p>
+                    <p key={i} className="text-[10px]" style={{ color: 'var(--sm2-gold-ink)' }}>⚠️ {L(w)}</p>
                   ))}
                   <p className={`text-[10px] ${mutedCls}`}>
                     {isPt
