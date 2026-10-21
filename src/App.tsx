@@ -1354,6 +1354,9 @@ export default function App() {
   // Web: o navegador exige gesto (`click` ativa; `pointerdown` de toque não), então o pedido vai no PRIMEIRO TOQUE.
   useEffect(() => {
     if (showIntro) return;
+    // Só depois do ritual (que traz o aceite dos Termos + 18+): o pedido nativo aparecia sobre "Antes de começar",
+    // ANTES do consentimento (QA L06-04).
+    if (!hasCompletedOnboarding) return;
     if (isEmbedMode()) return; // /embed: iframe de outra origem, o pedido seria negado em silêncio
     if (readFlag(STORAGE_KEYS.NOTIFICATION_FIRST_OPEN_ASKED)) return;
     let cancelled = false;
@@ -1379,7 +1382,7 @@ export default function App() {
     const removeGesture = () => window.removeEventListener('click', onGesture, true);
     window.addEventListener('click', onGesture, { capture: true, once: true });
     return () => { cancelled = true; removeGesture(); };
-  }, [showIntro]);
+  }, [showIntro, hasCompletedOnboarding]);
 
   // ─────────────────────────────────────────────────────────── B-R1
   //
