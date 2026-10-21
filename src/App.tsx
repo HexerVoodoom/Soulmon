@@ -3747,18 +3747,26 @@ export default function App() {
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
   const poopDrainWarnedAtRef = useRef(0);
+  // O efeito LÊ o estado por ref e NÃO lista `poopPenaltyClockAt` nas deps: o
+  // próprio dreno reancora esse relógio em `now` (carências, perdão, sono) e
+  // devolve objeto novo; com o relógio nas deps cada reancoragem re-disparava o
+  // efeito, que reancorava de novo — "Maximum update depth exceeded" contínuo
+  // (QA G9, L05-03/L06-01). O intervalo de 60 s já relê o relógio a cada tick.
+  const poopDrainStateRef = useRef(gameState);
+  poopDrainStateRef.current = gameState;
   useEffect(() => {
     const drain = () => {
+      const gs = poopDrainStateRef.current;
       // Warn ~30min before a drain tick so the user can react (bath) in time.
       {
-        const shown = gameState.poopEventsShown || [];
-        const cleaned = gameState.poopEventsCompleted || [];
-        const clock = gameState.poopPenaltyClockAt ?? 0;
+        const shown = gs.poopEventsShown || [];
+        const cleaned = gs.poopEventsCompleted || [];
+        const clock = gs.poopPenaltyClockAt ?? 0;
         const now = Date.now();
         // Só avisa se o tick FOR cobrar: com o teto do dia já gasto, o aviso
         // prometeria um dano que não acontece.
         if (!isSleeping && clock !== 0 && shown.some(i => !cleaned.includes(i))
-            && remainingDrainToday(gameState, now) > 0) {
+            && remainingDrainToday(gs, now) > 0) {
           const periodStart = clock + Math.floor((now - clock) / POOP_DRAIN_PERIOD_MS) * POOP_DRAIN_PERIOD_MS;
           const msToNextTick = periodStart + POOP_DRAIN_PERIOD_MS - now;
           if (msToNextTick <= 30 * 60000 && poopDrainWarnedAtRef.current !== periodStart) {
@@ -3784,7 +3792,7 @@ export default function App() {
     drain();
     const id = setInterval(drain, 60000);
     return () => clearInterval(id);
-  }, [isSleeping, setGameState, gameState.poopEventsShown, gameState.poopEventsCompleted, gameState.poopPenaltyClockAt, language]);
+  }, [isSleeping, setGameState, gameState.poopEventsShown, gameState.poopEventsCompleted, language]);
 
   const handleSleep = useCallback(() => {
     /* O GESTO DE ACORDAR do início de dia (D-66, REGISTRO §110): o MESMO botão do deck, 1 toque, mudo. Com o Soulmon dormindo "para
