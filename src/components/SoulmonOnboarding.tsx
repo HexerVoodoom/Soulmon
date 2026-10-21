@@ -1349,8 +1349,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </CheckRow>
           <p style={{ ...sm2Hint, marginTop: 6 }}>
             {isPt
-              ? `${MIN_AGE_YEARS} anos é a idade mínima do Soulmon. Não pedimos nem guardamos sua data de nascimento.`
-              : `${MIN_AGE_YEARS} is Soulmon's minimum age. We don't ask for or store your date of birth.`}
+              ? `${MIN_AGE_YEARS} anos é a idade mínima do Soulmon. Mais adiante pedimos sua data de nascimento, para o ritual do Oráculo; ela fica só no seu aparelho.`
+              : `${MIN_AGE_YEARS} is Soulmon's minimum age. Further on we ask for your date of birth, for the Oracle ritual; it stays only on your device.`}
           </p>
         </div>
       )}
