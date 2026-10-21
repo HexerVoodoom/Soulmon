@@ -3146,3 +3146,13 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** escalar pelo tamanho do canvas (o acervo 512² preenche tudo e voltaria enorme) e sorteio por render (o bicho mudaria de tamanho a cada abertura).
 - **O que falsificaria:** relato de Soulmon ainda enorme/minúsculo na Home em aparelho real, ou da mesma criatura com tamanhos diferentes entre telas.
 - **Onde vive:** `src/utils/spriteScale.ts` (+ `.test.ts`), `src/hooks/usePetScale.ts`, `src/components/games/BattleStage.tsx` (`StageFighter.scale`), `docs/manual/06-REFERENCIA/utils.md`.
+
+## 155. Pesadelo: só abre com 6 h de sono; e basta SOLTAR o especial, o anel não decide mais (dono, 20/10/2026)
+
+- **Pedido do dono:** "para liberar o pesadelo o Soulmon tem que dormir pelo menos 6 horas" e "tira a necessidade de acertar o especial direitinho; basta soltar o especial".
+- **Decisão (sono):** `nightmaresFor` só conta o pesadelo da manhã se a noite foi `onTime` E `wokeAt − sleptAt ≥ 6 h` (`NIGHTMARE_MIN_SLEEP_HOURS`, `sleptEnoughForNightmare`). Sem `wokeAt` registrado não há prova das 6 h: não abre (erro seguro). Acima de 6 h a duração não rende mais nada (tier e prêmio idênticos). **Isto muda a regra antiga "nunca em função de quanto tempo a pessoa dormiu"** (REGISTRO do pesadelo): a duração passa a ser um limiar, não um placar.
+- **Decisão (especial):** `NIGHTMARE_KNOBS.ring.ruim` sobe de 0 para 1,6 (= `bom`): errar o anel não anula o golpe; `specialLanded` é sempre verdadeiro (o chip "Especial n/n" conta toda descarga). O anel `ótimo` continua dando o bônus cheio (2×). A torcida segue obrigatória (sem ela o Soulmon cai em ≥ 70% das sementes).
+- **Alternativa que perdeu:** manter o piso do anel e só avisar. Perdeu: o dono quer o especial sem pontaria.
+- **O que falsificaria:** pesadelo abrindo com noite < 6 h, ou luta de pesadelo sem torcida ficando fácil demais (> 30% de vitória) — ver `nightmares.pesadelo.test.ts`.
+- **Compatibilidade:** nenhum campo novo no save; lê `sleptAt`/`wokeAt` que já existem. Noites antigas sem `wokeAt` simplesmente não geram pesadelo.
+- **Onde vive:** `src/utils/nightmares.ts`, `src/utils/dungeonFight.ts` (`NIGHTMARE_KNOBS`), `src/components/NightmareBattle.tsx`.

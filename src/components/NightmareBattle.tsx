@@ -308,7 +308,7 @@ export function NightmareBattle({
     const pronto = battle.stateKey === fightKey;
     const foeHpFrac = pronto ? (battle.foesHp[0] ?? 1) : 1;
     const meHpFrac = pronto ? battle.hp : hpFrac;
-    // Os dois apoios da noite, sempre à vista: a torcida (guarda do Soulmon) e os especiais certeiros.
+    // Os dois apoios da noite, sempre à vista: a torcida (guarda do Soulmon) e os especiais.
     const t = tallyRef.current;
     const cond = { cheer: pronto && battle.cheersUsed() >= 1, special: t.landed >= 1 };
     const chip = (ok: boolean, label: string, key: string) => (

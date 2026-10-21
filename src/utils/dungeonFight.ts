@@ -267,7 +267,8 @@ export interface NightmareKnobs {
 
 export const NIGHTMARE_KNOBS: NightmareKnobs = {
   basic: 0.4,
-  ring: { ruim: 0, bom: 1.6, otimo: 2 },
+  // 20/10/2026 (dono): "basta soltar o especial" — errar o anel (`ruim`) já vale como o acerto parcial.
+  ring: { ruim: 1.6, bom: 1.6, otimo: 2 },
   guardPerCheer: 0.24,
   guardMax: 0.72,
 };

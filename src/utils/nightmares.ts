@@ -269,13 +269,24 @@ function capTier(tier: EnemyTier, petStage: string): EnemyTier {
 // 1. Quantos pesadelos, de que tier
 // ---------------------------------------------------------------------------
 
+/** O sono mínimo para o pesadelo abrir (dono, 20/10/2026). */
+export const NIGHTMARE_MIN_SLEEP_HOURS = 6;
+
+/** A noite tem `sleptAt` e `wokeAt` e dura pelo menos `NIGHTMARE_MIN_SLEEP_HOURS`? Sem as duas pontas: não. */
+export function sleptEnoughForNightmare(night: { sleptAt?: string; wokeAt?: string } | undefined): boolean {
+  if (!night?.sleptAt || !night.wokeAt) return false;
+  const ms = Date.parse(night.wokeAt) - Date.parse(night.sleptAt);
+  return Number.isFinite(ms) && ms >= NIGHTMARE_MIN_SLEEP_HOURS * 3600_000;
+}
+
 /**
  * O pesadelo da noite de `now`.
  *
- * **Contagem**: 1 se existe uma noite REGISTRADA para esta manhã e ela entrou
- * na janela (`onTime`); 0 caso contrário. Nunca mais que
- * `NIGHTMARES_PER_NIGHT`, e nunca em função de quanto tempo a pessoa dormiu —
- * `sleptAt`/`wokeAt` não são lidos aqui.
+ * **Contagem**: 1 se existe uma noite REGISTRADA para esta manhã, ela entrou
+ * na janela (`onTime`) E o Soulmon dormiu pelo menos `NIGHTMARE_MIN_SLEEP_HOURS`
+ * (6 h, pedido do dono de 20/10/2026 — `sleptAt`→`wokeAt`; sem o acordar registrado
+ * não há como provar as 6 h, então não abre); 0 caso contrário. Nunca mais que
+ * `NIGHTMARES_PER_NIGHT`. Dormir MAIS não rende nada além do limiar.
  *
  * **Noite sem registro ou fora da janela → `count: 0`, e nada mais acontece.**
  * Não há penalidade, não há dívida, não há número que diminua.
@@ -298,7 +309,7 @@ export function nightmaresFor(
 
   const key = nightmareDayKey(now, rest?.playerDayTz);
   const night = rest.nights.find((n) => n.date === key);
-  const count = night?.onTime ? NIGHTMARES_PER_NIGHT : 0;
+  const count = night?.onTime && sleptEnoughForNightmare(night) ? NIGHTMARES_PER_NIGHT : 0;
 
   return { count, tier, rarity };
 }
@@ -571,7 +582,7 @@ export function nightmareFlavorShort(rarity: DreamRarity, language: string): str
 //
 // É uma batalha comum: o veredito é o HP. Pesadelo a zero = EXTINTO; Soulmon a zero = o pesadelo VENCE (desvanece e
 // continua à espreita). A dificuldade mora na luta (`dungeonFight.nightmareFight`): sem a torcida e sem os especiais
-// certeiros o pesadelo derruba o Soulmon antes. Aqui só ficam o placar para a tela (`NightmareTally`) e os textos.
+// soltos o pesadelo derruba o Soulmon antes. Aqui só ficam o placar para a tela (`NightmareTally`) e os textos.
 
 /** O que a tela mostra durante a luta: descargas de torcida, especiais lançados e os que acertaram (ao menos em parte). */
 export interface NightmareTally {
@@ -582,8 +593,8 @@ export interface NightmareTally {
 
 export const EMPTY_TALLY: NightmareTally = { cheers: 0, casts: 0, landed: 0 };
 
-/** O anel acertou? `ruim` é erro; `bom` é acerto parcial; `ótimo` é cheio. */
-export const specialLanded = (grade: RingGrade | null | undefined): boolean => grade === 'bom' || grade === 'otimo';
+/** O especial conta como lançado? Desde 20/10/2026 (dono: "basta soltar o especial") NÃO depende do anel: qualquer descarga conta. */
+export const specialLanded = (_grade?: RingGrade | null): boolean => true;
 
 export type NightmareEnd = 'extinct' | 'faded';
 
@@ -600,6 +611,6 @@ export const nightmareEndText = (v: NightmareEnd, language: string): string => (
 
 /** A dica da luta (voz que encoraja, sem cobrança). */
 export const NIGHTMARE_HINT = {
-  pt: 'Só com a torcida e os especiais certeiros o Soulmon aguenta o pesadelo. Toque na tela para torcer e acerte o anel!',
-  en: 'Only with the cheer and well-aimed specials can your Soulmon hold out against the nightmare. Tap the screen to cheer and hit the ring!',
+  pt: 'Só com a torcida e os especiais o Soulmon aguenta o pesadelo. Toque na tela para torcer e solte o especial!',
+  en: 'Only with the cheer and the specials can your Soulmon hold out against the nightmare. Tap the screen to cheer and release the special!',
 } as const;
