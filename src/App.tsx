@@ -78,7 +78,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
-import { buildDemoPatch, leaveDemo, keepDemoVitalsFull } from './utils/demoStart';
+import { buildDemoPatch, leaveDemo, keepDemoVitalsFull, localizeDemoActivities } from './utils/demoStart';
 import { DemoExitButton } from './components/home/DemoExitButton';
 import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
@@ -1218,6 +1218,15 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = language === 'pt-BR' ? 'pt-BR' : 'en';
   }, [language]);
+  // Os hábitos semente da demo acompanham o idioma (QA L05-08): trocar o idioma depois de criar a demo deixava
+  // "Drink a glass of water" numa UI em português. Só toca o nome idêntico ao semente do outro idioma.
+  useEffect(() => {
+    if (!gameState.demoLocal) return;
+    setGameState(prev => {
+      const next = localizeDemoActivities(prev.activities, language === 'pt-BR');
+      return next === prev.activities ? prev : { ...prev, activities: next as typeof prev.activities };
+    });
+  }, [language, gameState.demoLocal, setGameState]);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE);
   });

@@ -97,3 +97,21 @@ export function keepDemoVitalsFull<T extends { healthPoints: number; maxHealthPo
   if (full) return prev;
   return { ...prev, healthPoints: prev.maxHealthPoints, energyPoints: maxE, hunger: { v: HUNGER_MAX, at: now }, energyClock: { at: now, carry: 0 } };
 }
+
+/**
+ * Troca o IDIOMA dos hábitos semente da demo (QA L05-08): o save nascia no idioma da hora e, trocado `soulmon-language`
+ * depois, "Drink a glass of water" seguia em inglês numa UI em português (e o contrário). Só mexe no nome que é EXATAMENTE
+ * o do outro idioma — um hábito que a pessoa renomeou nunca é tocado. Devolve o MESMO array quando nada muda.
+ */
+export function localizeDemoActivities<T extends { name: string }>(activities: readonly T[], isPt: boolean): readonly T[] {
+  let changed = false;
+  const out = activities.map(a => {
+    const seed = DEMO_ACTIVITIES.find(d => d.name.en === a.name || d.name.pt === a.name);
+    if (!seed) return a;
+    const want = isPt ? seed.name.pt : seed.name.en;
+    if (want === a.name) return a;
+    changed = true;
+    return { ...a, name: want };
+  });
+  return changed ? out : activities;
+}

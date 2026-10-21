@@ -148,14 +148,15 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
           <BitsAmount value={bits} size={16} />
         </span>
         <span data-map-chip aria-label={isPt ? `${emblems} de Honra` : `${emblems} Honor`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
-          {emblems} {isPt ? 'Honra' : 'Honor'}
+          {/* O número vai na fonte de texto: o 0 do Cinzel é um "O" e lia-se "o Honra" (QA L05-08). */}
+          <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{emblems}</span> {isPt ? 'Honra' : 'Honor'}
         </span>
         <span
           data-map-chip
           aria-label={isPt ? `${credits} Créditos` : `${credits} Credits`}
           style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
         >
-          {credits} {isPt ? 'Créditos' : 'Credits'}
+          <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{credits}</span> {isPt ? 'Créditos' : 'Credits'}
         </span>
       </div>
 
