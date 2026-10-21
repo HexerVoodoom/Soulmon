@@ -973,6 +973,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     iniciarCerimoniaDoReveal(result);
   };
 
+  const TELA_GOSTEI_OCULTA = true as boolean;
+  // Tela "Gostei / Tentar de novo" OCULTA por ora (dono, 21/10/2026): segue direto como se tivesse tocado "Gostei".
+  useEffect(() => {
+    if (step === ELEMENT_DECIDE && result) gostei();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, result]);
+
   /** Escolhe o elemento dominante. Mesma seed, só o override muda — nada de acaso, nada gravado. */
   const escolherElemento = async (x: ElementId) => {
     if (!escolha || regerandoRef.current) return;
@@ -2239,7 +2246,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         )}
 
         {/* ELEMENT_DECIDE (D-150..D-160) — a Iris diz o elemento ANTES do desenho. Sem sprite, sem casulo, sem pontos. */}
-        {step === ELEMENT_DECIDE && result && escolha && (() => {
+        {step === ELEMENT_DECIDE && result && escolha && !TELA_GOSTEI_OCULTA && (() => {
           const lingua = isPt ? 'pt' : 'en';
           const original = escolha.original;
           const candidatos = elementChoiceCandidates(original);

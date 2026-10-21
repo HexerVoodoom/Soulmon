@@ -6077,6 +6077,18 @@ export default function App() {
   /** Sai da demo: apaga o save local e volta ao portão (`utils/demoStart.ts`). */
   const handleLeaveDemo = useCallback(() => { leaveDemo(); }, []);
 
+  /** Tarefa padrão do nascimento (dono, 21/10/2026): execução única, sem perguntar nada — substitui o tutorial de 1ª atividade. */
+  const conhecerTask = (): Task => ({
+    id: `meet-${Date.now()}`,
+    name: language === 'pt-BR' ? 'Conhecer o seu Soulmon' : 'Get to know your Soulmon',
+    category: 'Wellness' as ActivityCategory,
+    emoji: '💫',
+    completed: false,
+    status: 'open',
+    effort: 1,
+    createdAt: new Date().toISOString(),
+  });
+
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
     /* O ponto de partida (B4) é resolvido ANTES de qualquer `await`, e o
        tutorial é dado como feito NO MESMO lote em que o onboarding é dado
@@ -6158,7 +6170,7 @@ export default function App() {
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
     // 11/10/2026: a primeira TAREFA do onboarding (esforço 1, sem prazo — o
     // motor de tarefas a trata como qualquer outra; nada de recompensa extra).
-    const firstTasks: Task[] = data.firstTask
+    const firstTasks: Task[] = [conhecerTask(), ...(data.firstTask
       ? [{
           id: `onb-${Date.now().toString(36)}`,
           name: data.firstTask.name,
@@ -6168,8 +6180,8 @@ export default function App() {
           effort: 1,
           status: 'open',
           createdAt: new Date().toISOString(),
-        }]
-      : [];
+        } as Task]
+      : [])];
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
     // save nos DOIS caminhos; quem lê é a personalidade do Soulmon.
     const onboardingProfile = onboardingProfileFrom(data.catalogChoice);

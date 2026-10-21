@@ -317,7 +317,8 @@ export function GameTutorialFlow({
               <button
                 type="button"
                 style={{ ...sm2Button('primary'), width: '100%' }}
-                onClick={() => setStep(GOAL_STEP)}
+                disabled={loading}
+                onClick={async () => { await handleGenerate(); setStep(PICK_STEP); }}
               >
                 {isPt ? 'Começar' : "Let's start"}
               </button>
@@ -328,7 +329,7 @@ export function GameTutorialFlow({
             {dots}
             {/* Bloco 2: objetivo e áreas; o envio à IA só ocorre após toque explícito. */}
             {/* I3: voltar = seta no canto superior ESQUERDO, acima do título. */}
-              <BackArrow onClick={() => setStep(step === PICK_STEP ? GOAL_STEP : 0)} language={isPt ? 'pt-BR' : 'en-US'} />
+              <BackArrow onClick={() => setStep(0)} language={isPt ? 'pt-BR' : 'en-US'} />
             <h2 className="sm2-title" style={sm2TitleStyle}>
               {step === GOAL_STEP
                 ? (isPt ? 'Qual é o seu objetivo?' : "What's your goal?")
