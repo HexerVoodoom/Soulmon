@@ -56,7 +56,7 @@ export const LOT_WIDTH_DEFAULT = '38%';
 export function lotZIndex(top: string | number | undefined): number {
   const n = typeof top === 'number' ? top : parseFloat(String(top ?? ''));
   if (!Number.isFinite(n)) return 1;
-  return Math.max(1, 1000 - Math.round(n * 10));
+  return Math.max(1, 100 - Math.round(n));
 }
 
 /** Lotes cuja arte é teal sobre o fundo teal e some no cenário: ganham um HALO claro (pedido do dono, 11/10/2026, "o prédio do jornal

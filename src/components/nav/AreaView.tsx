@@ -438,6 +438,7 @@ export function AreaView(props: AreaViewProps) {
           </Suspense>
         </AreaSheet>
         {game && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             {game === 'masmorra' && (
               <DungeonGame
@@ -502,6 +503,7 @@ export function AreaView(props: AreaViewProps) {
             {game === 'respiracao' && <RespiracaoGame {...base} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}
           </Suspense>
+          </div>
         )}
       </AreaScene>
     );
