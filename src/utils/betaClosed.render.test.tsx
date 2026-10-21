@@ -15,7 +15,6 @@ import { detectBetaClosed, _resetBetaClosed, isBetaClosedNow, trocarContaBetaFec
 import { cloudSave, cloudLoad } from './cloudSave';
 import { useEffect } from 'react';
 import { fireEvent } from '@testing-library/react';
-import { RECONCILE_KEYS } from './storageKeys';
 import { BetaClosedGate } from '../components/BetaClosedGate';
 import { avisarRecusaDeSprite, _resetAvisosDeSprite } from './spriteGen';
 import { STORAGE_KEYS } from './storageKeys';
@@ -74,12 +73,12 @@ describe('C1: a tela mostra o e-mail da sessão e deixa trocar de conta', () => 
     await vi.waitFor(() => expect(document.querySelector('[data-beta-email]')!.textContent).toContain('a.na@gmail.com'));
     expect(document.body.textContent).toMatch(/peça ao Mateus para incluir este e-mail/);
     expect(await screen.findByRole('button', { name: 'Trocar de conta' })).toBeTruthy();
-    localStorage.setItem(STORAGE_KEYS.GAME_STATE, '{"petName":"Rascunho"}');
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, '{"petName":"Rascunho","totalXP":5}');
     localStorage.setItem(STORAGE_KEYS.SAVE_ID, 'b'.repeat(32));
     await trocarContaBetaFechado(recarregar);
     expect(localStorage.getItem(STORAGE_KEYS.GAME_STATE)).toBeNull();
     expect(localStorage.getItem(STORAGE_KEYS.SAVE_ID)).toBeNull();
-    expect(JSON.parse(localStorage.getItem(RECONCILE_KEYS.CONFLICT_BACKUP)!).motivo).toBe('beta-closed');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1).motivo).toBe('beta-closed');
     expect(authMock.signOut).toHaveBeenCalled();
     expect(recarregar).toHaveBeenCalledTimes(1);
   });

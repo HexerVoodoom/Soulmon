@@ -217,6 +217,9 @@ export const STORAGE_KEYS = {
   /** L08-02 (20/10/2026) — `writeLocal(GAME_STATE)` falhou (cota): o local ficou ATRÁS da nuvem. No boot seguinte
    *  vale "carga degradada": lê a nuvem antes de postar. É da CONTA: o logout apaga. Dono: `GameStateContext`. */
   LOCAL_STALE: 'soulmon-local-stale-v1',
+  /** L08-03 (20/10/2026) — ANEL de até 3 cópias de segurança `{formato:'soulmon-backup-ring-v1', copias:[{saveId,salvoEm,motivo,state}]}`:
+   *  recebe as cópias de logout e a que iria ser sobrescrita em `CONFLICT_BACKUP`. SOBREVIVE ao logout. Dono: `backupRing.ts`. */
+  BACKUP_RING: 'soulmon-backup-ring-v1',
 } as const;
 
 /**

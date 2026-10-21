@@ -28,6 +28,7 @@
  */
 import { readLocal, writeLocal, removeLocal, listLocalKeys } from './safeStorage';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
+import { empurrarNoAnel, saveTemProgresso } from './backupRing';
 import { isDemoMode, type DemoCarrier } from './demoMode';
 
 export type MotivoSaida = 'logout' | 'beta-closed' | 'account-deleted';
@@ -67,6 +68,7 @@ export const SOBREVIVEM_AO_LOGOUT: readonly string[] = [
   STORAGE_KEYS.ACCOUNT_DELETED_NOTICE,
   STORAGE_KEYS.PENDING_LOGIN_EMAIL,
   STORAGE_KEYS.SAVE_QUARANTINE,
+  STORAGE_KEYS.BACKUP_RING,
   RECONCILE_KEYS.CONFLICT_BACKUP,
   RECONCILE_KEYS.PREVIOUS_SAVE_ID,
   // telemetria (literais: as chaves moram privadas em `telemetry.ts` — o contrato confere)
@@ -165,13 +167,17 @@ export function guardarCopiaDeSeguranca(motivo: string): boolean {
   const bruto = readLocal(STORAGE_KEYS.GAME_STATE);
   if (!bruto) return false;
   let state: unknown = bruto;
-  try { state = JSON.parse(bruto); } catch { /* guarda o texto cru */ }
-  return writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, JSON.stringify({
+  let legivel = true;
+  try { state = JSON.parse(bruto); } catch { legivel = false; /* guarda o texto cru */ }
+  // L08-03: vai para o ANEL (nunca sobrescreve a vaga única da adoção) e só com
+  // progresso; texto ilegível também vale (pode ser a única cópia).
+  if (legivel && !saveTemProgresso(state)) return false;
+  return empurrarNoAnel({
     saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? '',
     salvoEm: new Date().toISOString(),
     motivo,
     state,
-  }), { silent: true });
+  });
 }
 
 /** Conteúdo do arquivo "Exportar backup": o save local, como está. `null` = não há save. */

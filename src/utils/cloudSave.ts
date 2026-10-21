@@ -17,6 +17,7 @@ import { isDemoMode, type DemoCarrier } from './demoMode';
 import { migrateBranchIds } from './branchMigration';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal, writeFlag } from './safeStorage';
+import { preservarConflictBackup, saveTemProgresso } from './backupRing';
 import { resolveLanguage } from './i18n';
 
 export async function emailToSaveId(email: string): Promise<string> {
@@ -465,6 +466,7 @@ function copiarLocalAntesDeSubstituir(): void {
   let local: unknown;
   try { local = JSON.parse(cru); } catch { return; }
   if (!saveTemOnboardingConcluido(local)) return;
+  preservarConflictBackup();
   writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, JSON.stringify({
     saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? '',
     salvoEm: new Date().toISOString(),
@@ -527,12 +529,7 @@ export function adoptCloudSave(
 
 /** O save já passou pelo onboarding? (criatura nascida ou uso registrado) */
 export function saveTemOnboardingConcluido(state: unknown): boolean {
-  if (!isPlainState(state)) return false;
-  const s = state as Record<string, unknown>;
-  const len = (v: unknown) => (Array.isArray(v) ? v.length : 0);
-  return !!s.soulmonMeta || !!s.demoCharacterId
-    || len(s.activities) > 0 || len(s.completedTasks) > 0
-    || (typeof s.totalXP === 'number' && s.totalXP > 0);
+  return saveTemProgresso(state); // régua única em backupRing.ts (o logout usa a mesma)
 }
 
 export type RestauracaoNoLogin = 'restaurada' | 'sem-save' | 'indeterminado' | 'storage';
@@ -666,6 +663,7 @@ export async function reconcileSaveId(
       salvoEm: new Date().toISOString(),
       state: estadoLocal,
     });
+    preservarConflictBackup();
     if (!writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, copia)) {
       return { estado: 'storage', saveId: derivado };
     }

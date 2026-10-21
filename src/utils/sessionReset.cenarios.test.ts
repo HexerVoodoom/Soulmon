@@ -8,7 +8,7 @@
  * a conta nova com o progresso de A.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
+import { STORAGE_KEYS } from './storageKeys';
 
 const { signOut } = vi.hoisted(() => ({ signOut: vi.fn(async () => {}) }));
 vi.mock('./auth', () => ({ authHeaders: async () => ({}), signOut }));
@@ -125,7 +125,7 @@ describe('A → B → A no mesmo aparelho', () => {
   it('sair sem sync guarda a cópia de segurança com o save de A (recuperável por suporte/exportação)', async () => {
     const idA = await entrarComoA();
     await encerrarSessao({ motivo: 'logout', recarregar: () => {} });
-    const copia = JSON.parse(readLocal(RECONCILE_KEYS.CONFLICT_BACKUP)!);
+    const copia = JSON.parse(readLocal(STORAGE_KEYS.BACKUP_RING)!).copias.at(-1); // L08-03: anel
     expect(copia.saveId).toBe(idA);
     expect(copia.state).toEqual(estadoA);
   });
