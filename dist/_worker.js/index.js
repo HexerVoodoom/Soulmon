@@ -7342,6 +7342,7 @@ var ART_LINE_IDS = /* @__PURE__ */ new Set([
   "igni",
   "nautilu",
   "astrase",
+  // Linhas APOSENTADAS (20/10/2026): aceitas só na LEITURA (perfil/save antigo); o servidor nunca as produz.
   "ignar",
   "lumel",
   "serah",
@@ -11214,7 +11215,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-Go1OZh/functionsRoutes-0.8347863952492759.mjs
+// ../.wrangler/tmp/pages-8rOzjl/functionsRoutes-0.8338391450043631.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -176,7 +176,7 @@ export interface AreaViewProps {
   play: PlayHandlers;
   /** 🧭 Passeio + Travessias (30/09/2026): o estado do save e o único caminho de
    *  escrita — uma função PURA de `utils/travessias` aplicada sobre `prev` no `App`.
-   *  O Passeio vive INTEIRO no lote (NPC Brume); a Home só lista a linha "Take a stroll" (07/10/2026). */
+   *  O Passeio vive INTEIRO no lote (NPC Mirk); a Home só lista a linha "Take a stroll" (07/10/2026). */
   passeio?: {
     crossings: CrossingsState;
     onChange: (f: (c: CrossingsState) => CrossingsState) => void;
