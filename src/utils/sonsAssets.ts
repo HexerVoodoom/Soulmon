@@ -162,7 +162,7 @@ export const SFX_DE_COMBATE_LIVRES = {
   playAttackRanged: {
     id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 0.414, medidoLufsM: -24.65, medidoTruePeakDbtp: -4.3,
     sha256: '48825c636a07c7be3202d27d60125bb83ffc6bb52edc0ea4c3c2faf8168e8f59', bytes: 3698,
-    // 20/10/2026 (§151): o dono achou o "plim" de `magical_3` muito ruim e pediu "algo tipo push" (rajada/impulso, sem sino). Sai o
+    // 20/10/2026 (§152): o dono achou o "plim" de `magical_3` muito ruim e pediu "algo tipo push" (rajada/impulso, sem sino). Sai o
     // tinido mágico; entra o jato de ar de um propulsor CC0, recortado, passa-baixa e com ataque seco + queda rápida.
     fonte: {
       ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'thrusterFire_001.ogg', '924636edc923fe4aab5829b69dc5dc1c5d659dec5739865434dabee752a3bb79'),
