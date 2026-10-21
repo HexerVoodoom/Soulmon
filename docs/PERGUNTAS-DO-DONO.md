@@ -534,3 +534,10 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ✅ **L06-07 (lista da Home):** congelar a ordem por ~2 s; feito.
 - ✅ **L11-11 (Esc nas telas cheias):** não mudar.
 - ✅ **L06-15 (meta do dia × tarefa nova): deixar como está** — a meta segue `min(cadastradas no dia, requisito do estágio)`, o contador mostra a META e `6/4` é aceito (sem "N pendentes", sem trocar o denominador). Regra confirmada; nada mudou no app.
+
+## 21/10/2026 — QA de cliente, lote 6 (respondidas por modal; REGISTRO §170)
+
+- ✅ **L06-12 (rótulos do mapa):** rótulo sempre por cima; feito.
+- ✅ **L11-05 (selo DEMO):** sair de cima do conteúdo; feito (some com folha/diálogo aberto).
+- ✅ **L05-09 (estados):** os 3 ajustes pequenos; feito.
+- ⏳ **L06-14 (folha "Nova tarefa" e o teclado):** o dono confirma no aparelho depois do próximo AAB; se persistir, botão fixo acima do teclado.

@@ -3301,3 +3301,13 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **L06-15 — DEIXAR COMO ESTÁ (dono, modal, 21/10/2026).** Ele chegou a pedir que o cabeçalho mostrasse o estado real ao criar tarefa nova, e depois de ver a regra
   decidiu manter: **meta = `min(cadastradas no dia, requisito do estágio)`** fica CONFIRMADA, o contador `Missão N/G` segue mostrando a META (N pode passar de G: `6/4` é aceito),
   sem "N pendentes" e sem trocar o denominador. Nada mudou no app.
+
+## 170. QA de cliente, lote 6: rótulos do mapa por cima, selo DEMO fora das folhas, estados com causa (dono, modal, 21/10/2026)
+
+- **L06-12 — o lote mais alto fica por cima.** O rótulo mora na base de cada lote e a arte do vizinho de baixo o cobria ("SALÃO DE JOGOS", "ATELIÊ DA MENTE", "CONQUISTAS").
+  `AreaScene` empilha por `top` (`lotZIndex`: quanto mais alto na cena, mais para cima); a posição dos prédios não mudou.
+- **L11-05 — o selo DEMO some com folha de lote ou diálogo aberto** (`body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal`); cobria o nome do NPC do Restaurante.
+- **L05-09 — três ajustes pequenos.** O vazio do "View all" diz a causa (busca, filtro de tarefas, filtro de hábitos), em PT e EN; o modal "Primeira tarefa feita!" abre com o foco no botão primário;
+  o cartão calmo (missão especial) ainda não feito não reserva a coluna de ícone vazia.
+- **L06-14 — pendente de confirmação no aparelho** (dono, modal): o viewport `interactive-widget=resizes-content` + `scrollIntoView` do `Field` devem manter Cancelar/Salvar acima do teclado;
+  o dono confirma depois do próximo AAB. Se persistir, abre-se um botão fixo acima do teclado.
