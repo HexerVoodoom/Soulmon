@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { InfoTip } from './InfoTip';
 
 afterEach(cleanup);
@@ -29,6 +29,20 @@ describe('InfoTip — o "i" padrão', () => {
     fireEvent.click(b);
     fireEvent.pointerDown(screen.getByText('fora'));
     expect(screen.queryByRole('note')).toBeNull();
+  });
+
+  it('um diálogo novo (aria-modal) abrindo por cima fecha a dica (QA L11-07); um que já existia não', async () => {
+    const velho = document.createElement('div');
+    velho.setAttribute('aria-modal', 'true');
+    document.body.appendChild(velho);
+    render(<InfoTip language="pt-BR" label="Ajuda">x</InfoTip>);
+    fireEvent.click(screen.getByRole('button', { name: 'Ajuda' }));
+    expect(screen.getByRole('note')).toBeTruthy();
+    const novo = document.createElement('div');
+    novo.setAttribute('aria-modal', 'true');
+    document.body.appendChild(novo);
+    await waitFor(() => expect(screen.queryByRole('note')).toBeNull());
+    velho.remove(); novo.remove();
   });
 
   it('Esc fecha só o tooltip, sem chegar ao modal em volta', () => {

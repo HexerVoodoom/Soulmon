@@ -73,6 +73,14 @@ export function InfoTip({
     // levar junto o modal/folha em volta (`useDialogA11y` também escuta o Esc).
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
     const reflow = () => place();
+    // Um diálogo NOVO (aria-modal) abrindo por cima fecha a dica (QA L11-07): ela é
+    // `fixed` com z-index 9000 e, aberta, cobria o paywall e comia o 1º Esc.
+    const modais = () => document.querySelectorAll('[aria-modal="true"]').length;
+    const modaisAoAbrir = modais();
+    const obs = typeof MutationObserver !== 'undefined'
+      ? new MutationObserver(() => { if (modais() > modaisAoAbrir) setOpen(false); })
+      : null;
+    obs?.observe(document.body, { childList: true, subtree: true });
     document.addEventListener('pointerdown', fora);
     // `window` (e não `document`): na captura o `window` vem ANTES, então a dica trata o Esc primeiro
     // e o modal em volta (que ouve o `document`) nem chega a vê-lo.
@@ -80,6 +88,7 @@ export function InfoTip({
     window.addEventListener('resize', reflow);
     window.addEventListener('scroll', reflow, true);
     return () => {
+      obs?.disconnect();
       document.removeEventListener('pointerdown', fora);
       window.removeEventListener('keydown', esc, true);
       window.removeEventListener('resize', reflow);
