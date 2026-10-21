@@ -160,13 +160,13 @@ export const SFX_DE_COMBATE_LIVRES = {
     fonte: KENNEY('Impact Sounds', 'impact-sounds', 'impactPlate_medium_000.ogg', 'b670d30452983369771081319c268475edaaafe782bf4e8d70bd7eef09d8823c'),
   },
   playAttackRanged: {
-    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 0.414, medidoLufsM: -24.65, medidoTruePeakDbtp: -4.3,
-    sha256: '48825c636a07c7be3202d27d60125bb83ffc6bb52edc0ea4c3c2faf8168e8f59', bytes: 3698,
-    // 20/10/2026 (§152): o dono achou o "plim" de `magical_3` muito ruim e pediu "algo tipo push" (rajada/impulso, sem sino). Sai o
-    // tinido mágico; entra o jato de ar de um propulsor CC0, recortado, passa-baixa e com ataque seco + queda rápida.
+    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 0.415, medidoLufsM: -24.97, medidoTruePeakDbtp: -10.6,
+    sha256: '6c5ce452751423a312893b8d67d3daa2d3df3cb90562992062665767ea215ab1', bytes: 3698,
+    // 21/10/2026 (§162): o dono ouviu 3 candidatos CC0 e escolheu o zap de energia da Kenney para o golpe à distância (o "plim" de
+    // `magical_3` e o "push" do §152 saíram).
     fonte: {
-      ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'thrusterFire_001.ogg', '924636edc923fe4aab5829b69dc5dc1c5d659dec5739865434dabee752a3bb79'),
-      processamento: 'derivado: recorte de 0,5 s do jato (1,10–1,60 s), passa-baixa 3 kHz (2 polos) e passa-altas 90 Hz, ataque de 6 ms e queda exponencial (tau 110 ms) de 0,42 s',
+      ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'laserLarge_002.ogg', 'e5e0b6ccc4d5720c8174a3e5b7cc6f9be3057352a89cbb2e99a00efc6fe5cc11'),
+      processamento: 'derivado: leitura com velocidade 0,85x (meio tom abaixo), passa-baixa 5 kHz, recorte de 0,5 s com fade-in de 3 ms e fade-out em cosseno de 0,25 a 0,50 s',
     },
   },
   playCharge: {

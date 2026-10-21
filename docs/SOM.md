@@ -385,7 +385,7 @@ retomada a usam).
 Registro §120. Para OUVIR (gate S8): `node scripts/render-sfx-combate.mjs` grava os 7 WAV; `--medir` só imprime LUFS-M, pico e offset.
 
 **10.6 ⚠️ Os 7 efeitos de combate viraram samples de banco gratuito CC0 (20/10/2026, §130).** O dono não gostou do timbre procedural e pediu
-um banco gratuito. O PADRÃO agora são 7 arquivos `public/sounds/sfx-combate-*.webm` (Opus mono, 3–12 KB cada) de Kenney (CC0; o D-88 veio de JaggedStone até 20/10/2026, §152),
+um banco gratuito. O PADRÃO agora são 7 arquivos `public/sounds/sfx-combate-*.webm` (Opus mono, 3–12 KB cada) de Kenney (CC0; o D-88 é o zap `laserLarge_002`, §162),
 manifesto `SFX_DE_COMBATE_LIVRES` em `sonsAssets.ts` (arquivo original, pacote, URL, autor, licença, data, hash), já mestrados no alvo `arcade` e
 tocados a ganho 1. A síntese de `sfxCombate.ts` ficou como FALLBACK (arquivo que não chegou/decodificou). A cena de luta baixa/decodifica ao
 montar (`sfxCombateCarga.ts`); mudo não baixa nada. Procedência: `Attributions.md` ("Os 7 efeitos de combate — banco GRATUITO livre"). Régua:

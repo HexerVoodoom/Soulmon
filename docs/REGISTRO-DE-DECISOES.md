@@ -3212,3 +3212,9 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** manter o CC BY e publicar o crédito numa tela "Sobre / Licenças" (o dono não quer a tela).
 - **O que falsificaria:** o dono voltar a querer um som CC BY (aí exige tela de créditos e a régua precisa aceitar CC BY de novo).
 
+## 162. O golpe à distância (D-88) usa o zap `laserLarge_002` da Kenney (CC0), escolhido pelo dono entre 3 candidatos (dono, 21/10/2026; fecha o §160)
+- **Decisão do dono:** depois de ouvir `ranged-cc0-1/2/3.wav`, escolheu o **candidato 3**: `laserLarge_002.ogg` (Kenney Sci-Fi Sounds, CC0 1.0), um zap de energia grave, sem sino.
+- **Como:** velocidade 0,85x, passa-baixa 5 kHz, recorte de 0,5 s com fade-in de 3 ms e fade-out em cosseno de 0,25 a 0,50 s; mestrado em −25 LUFS-M e codificado em Opus 64 kbps pelo MediaRecorder do Chrome. Medido no arquivo decodificado: 0,415 s, −24,97 LUFS-M, −10,6 dBTP, 3 698 B. Manifesto `SFX_DE_COMBATE_LIVRES` (autor Kenney, `CC0 1.0`, `atribuicaoObrigatoria: false`) e `Attributions.md` atualizados; a régua segue só CC0.
+- **Alternativa que perdeu:** candidatos 1 e 2 (JaggedStone `magical_6_0` e `magical_2`, CC0, da mesma série do "plim" reprovado); o "push" do §152.
+- **O que falsificaria:** o dono achar o zap curto/agudo demais em jogo (o corte e o filtro são parâmetros).
+
