@@ -72,7 +72,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: { en: 'Why they matter', pt: 'Por que importam' },
     speech: {
       en: `Each thing you finish feeds your Soulmon: food for energy, and a nudge toward the path it will grow along. A day is complete when you reach today's goal — at first about ${TOUR_STARTING_GOAL} tasks' worth, and bigger tasks count for more.`,
-      pt: `Cada coisa que você termina alimenta o seu Soulmon: comida para a energia e um empurrãozinho para o caminho em que ele vai crescer. O dia fica completo quando você alcança a meta de hoje — no começo, o equivalente a uns ${TOUR_STARTING_GOAL} tarefas, e as tarefas maiores valem mais.`,
+      pt: `Cada coisa que você termina alimenta o seu Soulmon: comida para a energia e um empurrãozinho para o caminho em que ele vai crescer. O dia fica completo quando você alcança a meta de hoje — no começo, o equivalente a umas ${TOUR_STARTING_GOAL} tarefas, e as tarefas maiores valem mais.`,
     },
   },
   {

@@ -24,7 +24,7 @@ describe('Combina 3 — tela baixa (QA L11-15, 320×568)', () => {
   const hOriginal = window.innerHeight;
   afterEach(() => comAltura(hOriginal));
 
-  it('abaixo de 700 px de altura a arena compacta: uma linha e sprites menores', () => {
+  it('abaixo de 800 px de altura a arena compacta: uma linha e sprites menores', () => {
     comAltura(568);
     montar();
     const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
@@ -35,7 +35,7 @@ describe('Combina 3 — tela baixa (QA L11-15, 320×568)', () => {
   });
 
   it('em tela alta a arena segue em coluna, com os sprites de sempre', () => {
-    comAltura(844);
+    comAltura(900);
     montar();
     const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
     expect(arena.hasAttribute('data-m3-compact')).toBe(false);
@@ -43,7 +43,8 @@ describe('Combina 3 — tela baixa (QA L11-15, 320×568)', () => {
     expect((document.querySelector('[data-m3-player] img') as HTMLImageElement).width).toBe(88);
   });
 });
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); });
+// jsdom nasce com innerHeight 768 (< 800 = arena compacta): os testes de layout em coluna fixam uma tela alta (900).
+beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); comAltura(900); });
 afterEach(() => { cleanup(); vi.useRealTimers(); localStorage.clear(); });
 
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };

@@ -54,8 +54,8 @@ const ENEMY_SPRITE = 64;
 const AURA_SCALE = 1.3;
 const CAN_ANIMATE = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
 const PLAYER_SPRITE = 88;
-/** Abaixo desta altura de janela (px) a arena do Combina 3 compacta (QA L11-15). */
-const COMPACT_BELOW_H = 700;
+/** Abaixo desta altura de janela (px) a arena do Combina 3 compacta (QA L11-15; subiu de 700 para 800 no L06-09: em 411×766 a Dica ficava na dobra). */
+const COMPACT_BELOW_H = 800;
 const PLAYER_SPRITE_COMPACT = 56;
 const ENEMY_SPRITE_COMPACT = 44;
 
