@@ -3124,3 +3124,15 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Alternativa que perdeu:** deixar trocar depois do desenho (custaria cota/Créditos e imagem descartada); sortear de novo com seed nova (resultado imprevisível, não é "escolher").
 - **O que falsificaria:** a maioria dos jogadores trocar o elemento (a leitura do Oráculo não convence), ou queixa de que a troca "estraga" a surpresa do batismo.
 - **Onde vive:** `src/utils/revealEscolha.ts` (`elementChoiceCandidates`); `generateOracleComplete(input, seed?, overrides?)`; o passo `ELEMENT_DECIDE` em `src/components/SoulmonOnboarding.tsx`; teste `SoulmonOnboarding.elemento.render.test.tsx`.
+
+## 152. QA servidor + persistência: corridas de dinheiro, save que apaga a nuvem e backup forense (frente QA, 20/10/2026; L07-01..06, L08-01..04, L03-01)
+
+- **Pedido:** corrigir os bugs de servidor e persistência do QA consolidado (`E:\Projetos\Soulmon-qa\BUGS-CONSOLIDADO.md`), com o app em produção e sem decidir a ADR-004.
+- **Decisão:**
+  - **(a) L07-01:** `auditRefunds` consulta a loja sem mexer no `ent:` e só depois RELÊ o registro e aplica o delta (voided, desconto idempotente, tier derivado, `auditedAt`). A janela que sobra é a de todo RMW do KV (ADR-005).
+  - **(b) L08-01/02:** texto ilegível do save vai para a quarentena `soulmon-save-quarantine-v1`; carga degradada (ilegível, `GAME_STATE` ausente com `SAVE_ID`, ou marca `soulmon-local-stale-v1` de cota cheia) não posta até ler a nuvem; nuvem encontrada é adotada. Local íntegro não muda nada (sem GET novo no boot).
+  - **(c) L08-03:** o logout grava num anel de 3 cópias (`soulmon-backup-ring-v1`) e só com progresso; o `soulmon-reconcile-backup` deixa de ser sobrescrito (o valor anterior vai para o anel).
+  - **(d) L07-02/03/05/04/06, L03-01:** corte antes das regex; chat autentica antes do balde; erro do provedor sai como código; rank anônimo só lê pid; `secretEquals` no closeSeason; presentes com `gid` e trava D1 por presente.
+- **Alternativa que perdeu:** `revision` + 409 no save (ADR-004) — fecha o caso geral, mas é decisão do dono (pergunta em `PERGUNTAS-DO-DONO.md`, 20/10/2026). Heurística "maior XP ganha" — perdeu porque o renascimento baixa XP de propósito.
+- **O que falsificaria:** relato de progresso perdido depois de abrir o app num aparelho com local íntegro (caso que só a ADR-004 cobre); `order_claims` com linhas `gift:` crescendo sem limpeza; quarentena/anel estourando cota com frequência.
+- **Onde vive:** `functions/api/_entitlements.js` (`auditRefunds`), `functions/api/_redact.js`, `suggest-tasks.js`, `chat.js`, `generate-sprite.js`, `community.js`; `src/utils/saveQuarantine.ts`, `src/utils/backupRing.ts`, `src/utils/storageKeys.ts`, `src/contexts/GameStateContext.tsx` (carga degradada), `src/utils/sessionReset.ts`, `src/utils/cloudSave.ts`. Testes `*.qa.test.*` de cada item.

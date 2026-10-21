@@ -45,7 +45,10 @@ const GAME_STATE = 'soulmon_state_v1';
  * Chaves que nasceram DEPOIS de 20/10/2026. Chave nova em STORAGE_KEYS entra
  * aqui no mesmo PR (e daí em diante também não pode sumir).
  */
-const NOVAS_DESDE_20_10_2026: readonly string[] = [];
+const NOVAS_DESDE_20_10_2026: readonly string[] = [
+  'soulmon-save-quarantine-v1',
+  'soulmon-local-stale-v1',
+];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */
 const CHAVES_EM_20_10_2026: readonly string[] = [

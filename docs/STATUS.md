@@ -6,6 +6,11 @@
 > - Sem campo novo no save; `generate-sprite.js` e `_aiGuard` intactos. Numeração §151 pode colidir com a `main` na junção release->main.
 > - **Pendente do dono:** telemetria `reveal_retry` não feita (contrato de servidor: `functions/api/metrics.js` tem paridade com o schema do cliente). Portões (tsc/vitest/build): ver PR.
 
+> ## 20/10/2026 — Frente QA servidor + persistência (5 PRs contra `release/1.3.0-beta2`, REGISTRO §152)
+>
+> - L07-01 (auditoria de reembolso apagava compra), L08-01/02 (save estragado ou atrasado apagava a nuvem), L08-03 (backup de logout sobrescrevia a cópia da adoção), L07-02..06 (CPU anônima no suggest-tasks, balde do chat, erro cru do provedor, rank regravando perfil, comparação de chave) e L03-01 (presentes em dobro/perdidos). Um teste por bug, falhando antes e passando depois.
+> - **Pendente do dono:** ADR-004 (`revision` + 409) e a política do mesmo saveId; restauração de backup (L08-04); ack de presentes; pid legado de amigo. Ver `PERGUNTAS-DO-DONO.md` (20/10/2026).
+
 > ## 20/10/2026 — No ar em teste fechado na Play: há usuários reais e a compatibilidade do save vira regra (`docs/compat-usuarios-reais`, REGISTRO §148)
 >
 > - **Fato (dono, 20/10/2026):** o app está em **teste fechado** na Google Play; o dono vai divulgar para recrutar testadores; o próximo passo do roteiro é **produção**. A premissa "ninguém nunca usou o app em produção" (07/09/2026) venceu e virou lápide neste arquivo, em `SEPARACAO-DIGIAPP.md`, `wrangler.jsonc`, `HANDOFF-SESSAO-LOCAL.md`, `REGISTRO-DE-DECISOES.md` e `DEPENDE-DE-VOCE.md`. Estado exato da faixa no Console: [a conferir pelo dono no Play Console].

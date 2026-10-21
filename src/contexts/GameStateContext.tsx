@@ -14,7 +14,8 @@ import { sanitizeCheckIns } from '../utils/checkIns';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
-import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
+import { cloudSaveComRetry, reagirContaExcluida, lerNuvem } from '../utils/cloudSave';
+import { quarentenarSaveLocal } from '../utils/saveQuarantine';
 import { sessaoEncerrando, marcarMudancaPendente, marcarSincronizado } from '../utils/sessionReset';
 // `community.ts` (cliente do Torneio/Guilda) só serve DEPOIS do primeiro paint e
 // só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
@@ -1756,6 +1757,20 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     return () => onStorageDegraded(null);
   }, []);
 
+  /**
+   * L08 — CARGA DEGRADADA. `true` quando o aparelho aponta para uma conta (SAVE_ID)
+   * mas o estado carregado NÃO é o que a conta tem: o texto local não virou estado
+   * (corrompido), o GAME_STATE sumiu, ou o local ficou atrás (flag LOCAL_STALE, cota
+   * cheia). Enquanto `true`: grava local, NÃO posta. Um `freshGameState` (totalXP 0)
+   * subindo para o saveId de uma conta existente apagava aparelho E nuvem.
+   * Ref, não estado: mudar isto não pode reagendar o efeito de save (R-1).
+   * A saída é o efeito de mount abaixo (lê a nuvem; 'encontrado' adota).
+   * ADR-004 (revision + 409) é o que fecha o caso geral; isto só cobre o que não precisa dela.
+   * Caso residual: se nem a flag LOCAL_STALE couber no storage cheio, o boot seguinte não sabe
+   * que o local ficou atrás — fica para a ADR-004.
+   */
+  const cargaDegradada = useRef<string | null>(null);
+
   const [gameState, setGameState] = useState<GameState>(() => {
     // Nada aqui pode lançar. Um save corrompido, um storage bloqueado
     // (`SecurityError` do Safari em modo privado) ou um campo com tipo hostil
@@ -1763,6 +1778,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     // branca permanente que este provider já produziu uma vez.
     let loadedState: Partial<GameState> | null = null;
     const saved = readLocal(STORAGE_KEYS.GAME_STATE);
+    const temConta = !!readLocal(STORAGE_KEYS.SAVE_ID);
+    let motivoQuarentena: string | null = null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -1771,25 +1788,42 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           loadedState = parsed as Partial<GameState>;
         } else {
+          motivoQuarentena = 'nao-e-objeto';
           console.warn('[GameState] save ignorado: não é objeto', { type: typeof parsed });
         }
       } catch (err) {
+        motivoQuarentena = 'json-ilegivel';
         console.warn('[GameState] save ilegível, começando do zero', {
           error: (err as Error)?.name,
         });
       }
     }
+    let resultado: GameState | null = null;
     if (loadedState) {
       try {
-        return hydrateSave(loadedState);
+        resultado = hydrateSave(loadedState);
       } catch (err) {
+        motivoQuarentena = 'hydrate-lancou';
         console.error('[GameState] falha ao migrar o save; caindo para estado novo', {
           error: (err as Error)?.name,
           message: (err as Error)?.message,
         });
       }
     }
-    return freshGameState();
+    // L08-01: o texto original vai para a quarentena ANTES de o efeito de save
+    // (que roda no 1º render) gravar o estado novo por cima dele.
+    if (saved && motivoQuarentena) {
+      quarentenarSaveLocal(saved, motivoQuarentena);
+      if (temConta) cargaDegradada.current = motivoQuarentena;
+    } else if (!saved && temConta) {
+      cargaDegradada.current = 'game-state-ausente';
+    } else if (saved && resultado && readLocal(STORAGE_KEYS.LOCAL_STALE) && temConta) {
+      // L08-02: o último writeLocal(GAME_STATE) falhou — o local está atrás da nuvem.
+      quarentenarSaveLocal(saved, 'local-atrasado');
+      cargaDegradada.current = 'local-atrasado';
+    }
+    if (cargaDegradada.current) removeLocal(STORAGE_KEYS.SYNC_PENDING, { silent: true });
+    return resultado ?? freshGameState();
   });
 
   const isFirstRender = useRef(true);
@@ -1804,6 +1838,46 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
    * o aviso. Um aviso por classe, por sessão.
    */
   const falhaJaAvisada = useRef<string | null>(null);
+  /** L08-02 — a flag LOCAL_STALE já foi gravada nesta sessão (evita regravar a cada gesto). */
+  const localAtrasadoMarcado = useRef(readLocal(STORAGE_KEYS.LOCAL_STALE) != null);
+  const estadoRef = useRef(gameState);
+  estadoRef.current = gameState;
+
+  // L08 — saída da carga degradada. Fora do callback do POST (R-1). Só LÊ a nuvem;
+  // 'encontrado' adota (a nuvem é a fonte quando o local não é confiável), 'vazio'
+  // libera o POST, 'indeterminado' mantém suspenso e tenta de novo com recuo (4 vezes).
+  useEffect(() => {
+    if (!cargaDegradada.current) return;
+    let cancelado = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const liberar = () => {
+      cargaDegradada.current = null;
+      localAtrasadoMarcado.current = false;
+      removeLocal(STORAGE_KEYS.LOCAL_STALE, { silent: true });
+    };
+    const tentar = async (tentativa: number) => {
+      const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
+      if (!saveId || isDemoMode(estadoRef.current)) { liberar(); return; }
+      const r = await lerNuvem(saveId);
+      if (cancelado || sessaoEncerrando()) return;
+      if (r.estado === 'excluida') { void reagirContaExcluida({ excluidaEm: r.excluidaEm }); return; }
+      if (r.estado === 'vazio') { liberar(); return; }
+      if (r.estado === 'encontrado') {
+        try {
+          const nuvem = migrateBranchIds(r.state);
+          if (nuvem && typeof nuvem === 'object' && !Array.isArray(nuvem)) {
+            const hidratado = hydrateSave(nuvem as Partial<GameState>);
+            liberar();
+            setGameState(hidratado);
+            return;
+          }
+        } catch { /* nuvem ilegível: trata como indeterminado, nada é postado */ }
+      }
+      if (tentativa < 4) timer = setTimeout(() => { void tentar(tentativa + 1); }, 30000 * 2 ** tentativa);
+    };
+    void tentar(0);
+    return () => { cancelado = true; if (timer) clearTimeout(timer); };
+  }, []);
 
   useEffect(() => {
     // FIM DE SESSÃO (`utils/sessionReset.ts`): depois de "Sair da conta" o estado
@@ -1811,7 +1885,16 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     if (sessaoEncerrando()) return;
     // Storage cheio (`QuotaExceededError`) OU bloqueado não pode derrubar a
     // árvore do React: o jogo segue em memória e o usuário é avisado uma vez.
-    writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
+    if (writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState))) {
+      // Voltou a gravar: o local não está mais atrás. Com adoção pendente a flag fica até ela.
+      if (!cargaDegradada.current && localAtrasadoMarcado.current) {
+        localAtrasadoMarcado.current = false;
+        removeLocal(STORAGE_KEYS.LOCAL_STALE, { silent: true });
+      }
+    } else if (!cargaDegradada.current && !localAtrasadoMarcado.current) {
+      // L08-02: a nuvem pode ficar à frente do aparelho; o próximo boot lê a nuvem antes de postar.
+      localAtrasadoMarcado.current = writeLocal(STORAGE_KEYS.LOCAL_STALE, '1', { silent: true });
+    }
 
     // Skip cloud backup on first render (initial load from localStorage)
     if (isFirstRender.current) {
@@ -1822,6 +1905,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     // DEMO LOCAL (`utils/demoMode.ts`): salva SÓ no aparelho. Sem POST, sem
     // `saveId` gerado e sem perfil publicado — a demo não tem conta nem nuvem.
     if (isDemoMode(gameState)) return;
+
+    // L08: carga degradada = grava local, não posta nem marca pendência (o logout
+    // também posta o local se houver pendência). O efeito de mount libera.
+    if (cargaDegradada.current) return;
 
     // Há mudança que a nuvem ainda não confirmou (o logout lê isto para tentar enviar antes de apagar).
     const versaoDaMudanca = marcarMudancaPendente();
@@ -1860,6 +1947,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     const timer = setTimeout(() => {
       rajadaComecouEm.current = null;
       if (sessaoEncerrando()) return;
+      if (cargaDegradada.current) return;
       // R-3 — o retorno é LIDO. Antes este `false` era jogado fora: o servidor
       // podia recusar o dia inteiro e a única pista era um `console.warn`.
       //

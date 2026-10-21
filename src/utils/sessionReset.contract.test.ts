@@ -22,7 +22,7 @@ const ESPERADO = [
   'soulmon-dungeon-speed', 'soulmon-foco-vibrate', 'soulmon-pwa-install-dismissed',
   'soulmon-terms-notice-seen', 'soulmon-terms-notice-shown',
   'soulmon-account-deleted-notice', 'soulmon-pending-login-email',
-  'soulmon-reconcile-backup', 'soulmon-previous-save-id',
+  'soulmon-reconcile-backup', 'soulmon-previous-save-id', 'soulmon-save-quarantine-v1',
   'soulmon-telemetry-enabled', 'soulmon-telemetry-id', 'soulmon-telemetry-queue', 'soulmon-telemetry-hidden',
   'soulmon-telemetry-seen', 'soulmon-telemetry-install', 'soulmon-telemetry-music-day',
 ].sort();
