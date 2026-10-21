@@ -154,6 +154,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/guild/claUi.tsx': 'só tipo de erro (`GuildError`) da Praça/Plantio/Mistério, montados dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
       'utils/claApi.ts': 'cliente dos prédios do clã (Praça/Plantio/Mistério) sobre o `guildCall`; só chega pelo GuildSheet, e o Mistério por tarefa só dispara com memória de clã no aparelho (a demo não tem)',
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
+      'utils/giftsCredited.ts': 'confirma presentes (giftsAck) só depois de um save confirmado na nuvem — na demo não há POST de save, então nunca dispara',
       'hooks/useGroveWatch.ts': 'só consulta quem já tem memória de roda no aparelho — a demo não tem (Guilda bloqueada)',
     };
     // Só import de VALOR conta: `import type` não executa nada (fairArt, groveLocal, groveStage, guildCopy e

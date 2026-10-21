@@ -4,8 +4,6 @@ import type { FightEvent } from './combate/fight';
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
-import { readLocal, writeLocal } from './safeStorage';
-import { STORAGE_KEYS } from './storageKeys';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
   GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
@@ -194,32 +192,34 @@ export interface GiftItem { from: string; bits: number; at: number; gid?: string
 export const getGifts = (id: string, claim = false) =>
   call<{ gifts: GiftItem[]; ack?: boolean }>('gifts', { params: { id, ...(claim ? { claim: '1' } : {}) } });
 
-const GIFTS_CREDITED_MAX = 200;
-const lerCreditados = (): string[] => {
-  try {
-    const v = JSON.parse(readLocal(STORAGE_KEYS.GIFTS_CREDITED) ?? '[]');
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-  } catch { return []; }
-};
+/** `giftsAck` em lotes de 50; falha de rede é engolida (o próximo resgate reenvia). */
+export async function enviarGiftsAck(id: string, gids: string[]): Promise<void> {
+  for (let i = 0; i < gids.length; i += 50) {
+    try { await call<{ ok: true }>('giftsAck', { method: 'POST', body: { id, gids: gids.slice(i, i + 50) } }); } catch { /* o próximo resgate reenvia */ }
+  }
+}
 
-/** L03-01: resgate com ack. O servidor (modo `ack=1`) NÃO apaga; o presente só sai da fila depois de `confirmar()`.
- *  `confirmar()` grava os gids no conjunto local ANTES de avisar o servidor (rede que cai não recredita) e engole falha
- *  de rede (o próximo resgate reenvia o ack). Servidor antigo (resposta sem `ack`): comportamento antigo, `confirmar` é no-op. */
+/** L03-01: resgate com ack. O servidor (modo `ack=1`) NÃO apaga. `confirmar()` NÃO manda o ack: registra os gids creditados
+ *  como PENDENTES (`giftsCredited.ts`); o ack sai só depois que um save ok prova o crédito na nuvem (GameStateContext) e os
+ *  pendentes são descartados se a nuvem for adotada antes. Gid já confirmado que reaparece (ack perdido) não recredita e
+ *  tem o ack reenviado aqui. Servidor antigo (resposta sem `ack`): comportamento antigo, `confirmar` é no-op.
+ *  Residual: presente legado sem `gid` (fila pré-L03) tem gid derivado do índice; com D1 o presente descartado volta após o lease de 10 min. */
 export async function resgatarPresentes(id: string): Promise<{ gifts: GiftItem[]; confirmar: () => Promise<void> | void }> {
   const res = await call<{ gifts: GiftItem[]; ack?: boolean }>('gifts', { params: { id, claim: '1', ack: '1' } });
   const recebidos = Array.isArray(res.gifts) ? res.gifts : [];
   if (res.ack !== true) return { gifts: recebidos, confirmar: () => {} };
-  const jaCreditados = new Set(lerCreditados());
-  const novos = recebidos.filter(g => !(typeof g.gid === 'string' && jaCreditados.has(g.gid)));
-  const gids = recebidos.map(g => g.gid).filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= 100);
+  const { lerCreditados, registrarPendentes } = await import('./giftsCredited');
+  const antes = lerCreditados();
+  const conf = new Set(antes.confirmados);
+  const pend = new Set(antes.pendentes.map(p => p.gid));
+  const gidDe = (g: GiftItem) => (typeof g.gid === 'string' && g.gid.length > 0 && g.gid.length <= 100 ? g.gid : null);
+  const novos = recebidos.filter(g => { const x = gidDe(g); return !(x && (conf.has(x) || pend.has(x))); });
+  const reenviar = recebidos.map(gidDe).filter((x): x is string => !!x && conf.has(x));
   return {
     gifts: novos,
     confirmar: async () => {
-      if (!gids.length) return;
-      const lista = lerCreditados();
-      for (const g of gids) if (!lista.includes(g)) lista.push(g);
-      writeLocal(STORAGE_KEYS.GIFTS_CREDITED, JSON.stringify(lista.slice(-GIFTS_CREDITED_MAX)), { silent: true });
-      try { await call<{ ok: true }>('giftsAck', { method: 'POST', body: { id, gids: gids.slice(0, 50) } }); } catch { /* o próximo resgate reenvia */ }
+      registrarPendentes(novos.map(gidDe).filter((x): x is string => !!x));
+      if (reenviar.length) await enviarGiftsAck(id, reenviar);
     },
   };
 }

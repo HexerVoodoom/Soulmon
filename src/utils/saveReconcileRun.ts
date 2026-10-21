@@ -38,6 +38,8 @@ export interface ContextoReconciliacao<T> {
   avisoSemEspacoDado: { current: boolean };
 }
 
+const descartarPendentesDePresente = () => { void import('./giftsCredited').then(m => m.descartarPendentes()).catch(() => {}); };
+
 /** Devolve `true` se a decisão foi final (não precisa repetir). */
 export async function reconciliarComNuvem<T>(c: ContextoReconciliacao<T>): Promise<boolean> {
   const { motivo } = c;
@@ -90,6 +92,7 @@ export async function reconciliarComNuvem<T>(c: ContextoReconciliacao<T>): Promi
   gravarRevisao(saveId, leitura.revision ?? 0);
   c.reconciliando.current = false; // (no D2 já está liberado; no 409 libera o POST junto com a troca)
   c.aplicar(hidratado);
+  descartarPendentesDePresente(); // L03-01: o estado adotado não tem o crédito; o próximo resgate credita de novo
   if (temLocal) {
     const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
     toast(pt
@@ -125,6 +128,7 @@ export async function lerParaSairDaCargaDegradada<T>(c: {
         const hidratado = c.hidratar(nuvem as Record<string, unknown>);
         c.liberar();
         c.aplicar(hidratado);
+        descartarPendentesDePresente();
         return true;
       }
     } catch { /* nuvem ilegível: trata como indeterminado, nada é postado */ }

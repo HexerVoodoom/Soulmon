@@ -122,6 +122,8 @@ export function marcarMudancaPendente(): number {
   writeLocal(STORAGE_KEYS.SYNC_PENDING, '1', { silent: true });
   return versao;
 }
+/** Leitor do contador de mutações (L03-01: ancora o ack de presentes ao save que carrega o crédito). */
+export const versaoAtual = (): number => versao;
 export function marcarSincronizado(daVersao: number): void {
   if (daVersao === versao) removeLocal(STORAGE_KEYS.SYNC_PENDING, { silent: true });
 }

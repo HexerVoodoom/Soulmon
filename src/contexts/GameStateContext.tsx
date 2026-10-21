@@ -2024,7 +2024,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // introduzir: a reconciliação de conflito precisa de uma via própria,
       // fora deste efeito. Avisar por `toast` é seguro (não é estado do jogo).
       void cloudSaveComRetry(saveId!, gameState).then(resultado => {
-        if (resultado.ok) { falhaJaAvisada.current = null; marcarSincronizado(versaoDaMudanca); publicarPerfil(); return; }
+        if (resultado.ok) { falhaJaAvisada.current = null; marcarSincronizado(versaoDaMudanca); publicarPerfil();
+          // L03-01: presente creditado só é confirmado ao servidor (ack) depois que o crédito está NA NUVEM. Não toca o estado (R-1).
+          if ((readLocal(STORAGE_KEYS.GIFTS_CREDITED) ?? '').includes('"aPartirDaVersao"')) void import('../utils/giftsCredited').then(m => m.confirmarAteVersao(versaoDaMudanca)).catch(() => {});
+          return; }
         // 410: a conta foi excluída. Não é aviso — é parada: limpa, desloga e
         // volta ao portão (não toca em `setGameState`, R-1 respeitado).
         if (resultado.kind === 'deleted') { void reagirContaExcluida(); return; }

@@ -5315,6 +5315,7 @@ Cliente antigo sem `ack` mantém o `claim=1` destrutivo de antes. **Residual
 declarado:** sem D1, dois aparelhos resgatando ao mesmo tempo recebem os
 mesmos presentes; com D1, um ack perdido devolve o presente a OUTRO aparelho
 depois de 10 min (o mesmo aparelho não recredita).
+**Quando o ack sai (correção do gate adversarial):** o app NÃO manda `giftsAck` ao creditar. O gid vira *pendente* em `soulmon-gifts-credited-v1` (`{confirmados, pendentes:[{gid, aPartirDaVersao, sessao}]}`; a lista de strings antiga é lida como confirmados) e só vira confirmado + `giftsAck` depois de um POST de save ok de versão >= `aPartirDaVersao` (o crédito está na nuvem). Se a nuvem for ADOTADA antes (409 ou leitura D2), os pendentes são descartados e o presente é creditado de novo no próximo resgate — o servidor ainda o tem; com D1 ele volta só depois do lease de 10 min. Residual: presente legado sem `gid` (fila pré-L03) usa gid derivado do índice na fila — raro, só fila antiga cheia.
 
 **O que trafega de outra pessoa** é `DirectoryPlayer`: id público, nome, nome do
 pet, estágio, formas desbloqueadas, `pvpEnabled` e `daysPlaying`. ⚰️
