@@ -413,3 +413,15 @@ describe('habitCountsOn — "a cada N dias" da conclusão (QA L02-01)', () => {
     expect(habitCountsOn({ schedule }, emptyRhythm(), TODAY)).toBe(true);
   });
 });
+
+describe("everyNDays from:'schedule' sem histórico — independe do fuso (QA L02-03)", () => {
+  it('o dia devido depende só do dia-calendário (dias desde 1/jan/1970), não do fuso do aparelho', () => {
+    const n = 2;
+    const schedule = { kind: 'everyNDays', n, from: 'schedule' } as const;
+    for (let d = 0; d < 14; d++) {
+      const date = new Date(2026, 9, 14 + d, 12);
+      const diasDesdeEpoca = Math.round((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(1970, 0, 1)) / DAY_MS);
+      expect(isDueOn(schedule, emptyRhythm(), date)).toBe(diasDesdeEpoca % n === 0);
+    }
+  });
+});

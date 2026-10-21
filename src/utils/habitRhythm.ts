@@ -155,12 +155,15 @@ function capped(keys: string[]): string[] {
  * Precisa ser ESTÁVEL: se ela mudasse a cada render (ex.: "hoje"), o hábito
  * seria devido todo dia e o `n` não significaria nada. Usa a primeira
  * conclusão registrada quando existe (o dia em que a pessoa realmente começou,
- * que é o que ela espera ver no calendário) e, antes disso, a época — que é
- * arbitrária mas fixa, e portanto responde igual em qualquer aparelho.
+ * que é o que ela espera ver no calendário) e, antes disso, o dia-calendário 1/jan/1970 — arbitrário mas
+ * fixo, e portanto igual em qualquer aparelho e fuso.
  */
 function scheduleAnchor(rhythm: HabitRhythm): Date {
   const first = rhythm.done.length > 0 ? rhythm.done[0] : null;
-  return first ? dayKeyToDate(first) : midnight(new Date(0));
+  // Dia-calendário FIXO (1/jan/1970 LOCAL), e não `midnight(new Date(0))`: esse instante cai em
+  // 31/12/1969 em UTC− e em 01/01/1970 em UTC+, então o mesmo save mostrava dias devidos
+  // diferentes em aparelhos de fusos diferentes (QA L02-03).
+  return first ? dayKeyToDate(first) : new Date(1970, 0, 1);
 }
 
 /**
