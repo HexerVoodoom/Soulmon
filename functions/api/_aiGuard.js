@@ -124,7 +124,8 @@ export const AI_LIMITS = {
   // forma, só no vitalício. Vitalício 15 = 11 formas + 4 de folga para recusas.
   // Renascer NÃO zera mais nada (ver `resetSpriteLifetimeOnRebirth`). Teto
   // GLOBAL DIÁRIO 40 (Higgsfield) além do mensal de 800.
-  sprite: { perAccount: 6, perAccountLifetime: 15, perFormLifetime: 1, globalMonth: 800, globalDay: 40 },
+  // 21/10/2026 (dono): tetos de geração LIBERADOS só para os testes iniciais. Valores de produção: perAccount 6, perAccountLifetime 15, perFormLifetime 1.
+  sprite: { perAccount: 60, perAccountLifetime: 500, perFormLifetime: 20, globalMonth: 800, globalDay: 40 },
 };
 
 const day = (now = new Date()) => now.toISOString().slice(0, 10);
