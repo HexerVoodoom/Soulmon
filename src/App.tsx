@@ -6337,8 +6337,11 @@ export default function App() {
 
 
   const [generatingCharacter, setGeneratingCharacter] = useState(false);
+  /** Espera depois do toque: ~ o tempo estimado de o Higgsfield gerar o desenho e ele chegar ao app (21/10/2026, dono). */
+  const GENERATE_CHARACTER_COOLDOWN_MS = 4 * 60 * 1000;
+  const [generateUntil, setGenerateUntil] = useState<number>(() => Number(readLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL)) || 0);
   const handleGenerateCharacter = useCallback(async () => {
-    if (generatingCharacter) return;
+    if (generatingCharacter || Date.now() < generateUntil) return;
     setGeneratingCharacter(true);
     try {
       const ent = await fetchEntitlement();
@@ -6350,12 +6353,18 @@ export default function App() {
         toast.success(language === 'pt-BR' ? 'Seu Soulmon já está pronto.' : 'Your Soulmon is ready.');
         return;
       }
-      spriteGen.retry(gameState.evolutionStage);
-      toast.success(language === 'pt-BR' ? 'Gerando o seu Soulmon…' : 'Generating your Soulmon…');
+      if (!spriteGen.force(gameState.evolutionStage)) {
+        toast.error(language === 'pt-BR' ? 'Já há uma geração em andamento. Aguarde um pouco.' : 'A generation is already running. Please wait a bit.');
+        return;
+      }
+      const ate = Date.now() + GENERATE_CHARACTER_COOLDOWN_MS;
+      writeLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL, String(ate));
+      setGenerateUntil(ate);
+      toast.success(language === 'pt-BR' ? 'Gerando o seu Soulmon… pode levar alguns minutos.' : 'Generating your Soulmon… this can take a few minutes.');
     } finally {
       setGeneratingCharacter(false);
     }
-  }, [generatingCharacter, gameState.accountTier, gameState.soulmonStages, gameState.demoCharacterId, gameState.evolutionStage, spriteAcervo, spriteGen, language, setGameState, setUnlockReason]);
+  }, [generatingCharacter, generateUntil, GENERATE_CHARACTER_COOLDOWN_MS, gameState.accountTier, gameState.soulmonStages, gameState.demoCharacterId, gameState.evolutionStage, spriteAcervo, spriteGen, language, setGameState, setUnlockReason]);
 
   // Handle reset onboarding (DEBUG ONLY)
   const handleResetOnboarding = () => setResetOnboardingOpen(true);
@@ -6808,24 +6817,6 @@ export default function App() {
               própria página já conta isso) e `already-used` é registro, não
               oferta repetida. O motivo de telemetria continua sendo
               `evolution` porque é literalmente onde o card está. */}
-          {/* GERAR PERSONAGEM (dono, 21/10/2026): quem não tem a criatura própria (nunca gerou, ou pagou e a geração falhou) não
-              fica preso no personagem de reserva. Confere o pagamento no servidor; sem pagamento leva ao desbloqueio; pago, tenta
-              de novo o desenho (ou abre o ritual se a árvore própria ainda não existe). */}
-          {labTab === 'evolution' && !demo && !petIsCorvo && (
-            !!gameState.demoCharacterId || ((gameState.soulmonStages?.length ?? 0) > 0 && isNewbornLibrary(spriteAcervo))
-          ) && (
-            <div style={{ padding: '0 4px 10px' }} data-generate-character>
-              <button
-                type="button"
-                disabled={generatingCharacter}
-                style={{ ...sm2Button('primary', generatingCharacter), width: '100%' }}
-                onClick={handleGenerateCharacter}
-              >
-                {language === 'pt-BR' ? 'Gerar personagem' : 'Generate character'}
-              </button>
-            </div>
-          )}
-
           {/* Canvas Evolução EVO-20: a recusa `not-paid` é o MESMO card-convite
               âmbar, sem frase em cima — a frase antiga dizia "chegou ao topo"
               para um rookie demo, porque `rebirthRefusal` responde `not-paid`
@@ -8053,6 +8044,7 @@ export default function App() {
               showInPublicList={gameState.hideFromPublicList !== true}
               onToggleShowInPublicList={() => setGameState(prev => ({ ...prev, hideFromPublicList: prev.hideFromPublicList !== true }))}
               gm={isAdmin ? gmActions : undefined}
+              generateCharacter={!petIsCorvo && (!!gameState.demoCharacterId || ((gameState.soulmonStages?.length ?? 0) > 0 && isNewbornLibrary(spriteAcervo))) ? { onGenerate: handleGenerateCharacter, until: generateUntil } : undefined}
               profile={{
                 saveId,
                 email: readLocal(STORAGE_KEYS.USER_EMAIL),

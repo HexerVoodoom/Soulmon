@@ -85,6 +85,7 @@ export interface SpriteGenerationStatus {
    * existe um segundo caminho de geração neste app.
    */
   retry: (formId: string) => void;
+  force: (formId: string) => boolean;
 }
 
 export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenerationStatus {
@@ -203,6 +204,25 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
     });
   }, [executarLote]);
 
+  /**
+   * "Gerar personagem" (Configurações › Sua conta, 21/10/2026): gesto do dono da conta, já com o pagamento conferido.
+   * Zera as falhas locais da forma (e o teto vitalício local — quem decide de verdade é o servidor) e pede o desenho
+   * ignorando o cooldown/teto manual do "Tentar de novo". Um lote por vez (`running`). Devolve se o pedido partiu.
+   */
+  const force = useCallback((formId: string): boolean => {
+    if (running.current) return false;
+    const a = argsRef.current;
+    if (!(a.stages ?? []).some(st => creatureFormId(st) === formId)) return false;
+    updateLibrary(prev => {
+      const failures = { ...prev.failures };
+      delete failures[formId];
+      for (const [k, f] of Object.entries(failures)) if (f.terminal === 'lifetime-cap') delete failures[k];
+      return { ...prev, failures };
+    });
+    executarLote([formId], { adoptCurrentNow: true });
+    return true;
+  }, [executarLote, updateLibrary]);
+
   // ── Adoção automática (§2.3.1): a oferta expira, o sprite não. Mesma janela
   //    do lote — nunca no meio da virada, do relatório ou da cerimônia.
   useEffect(() => {
@@ -235,7 +255,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
     // "duas vésperas acumuladas viram dois lotes em sequência".
   }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.evolutionPoints, newborn, executarLote]);
 
-  return { generating, tunedAnnouncement, clearAnnouncement, tune, retry };
+  return { generating, tunedAnnouncement, clearAnnouncement, tune, retry, force };
 }
 
 /** Acervo com fallback — save antigo não tem o campo (`?? padrão` de sempre). */
