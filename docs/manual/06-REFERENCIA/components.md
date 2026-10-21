@@ -711,7 +711,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/EvolutionCeremony.tsx`
 **Dono de:** a tela dedicada da cerimônia de evolução manual — sprites atual/próxima intercalando em velocidade progressiva sobre vídeo cósmico em loop.
-**Props principais:** `EvolutionCeremonyProps` — `fromStage`, `toStage`, `toName`, `language`, `demoCharacterId?`, `onEvolved()` (commit da evolução no estado), `onClose()`.
+**Props principais:** `EvolutionCeremonyProps` — `fromStage`, `toStage`, `toName`, `language`, `demoCharacterId?`, `fragmentsSpent?` (custo em Fragmentos de Alma, dito uma vez ao concluir), `onEvolved()` (commit da evolução no estado), `onClose()`.
 **Exports:** `TOTAL_MS` (3000ms, duração total da troca de sprites) · `MIN_STEP_MS` (340ms, piso do intervalo) · `buildSchedule()` — monta os intervalos decrescentes que somam `TOTAL_MS` · `EvolutionCeremony(props)`.
 **Estado/efeitos relevantes:** `useState` (`showNext`, `done`); `useRef` (`evolvedRef`); `useEffect` roda o `buildSchedule()` (intervalos decrescentes somando `TOTAL_MS`=3000ms) que alterna os sprites até estabilizar.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/EvolutionCeremony'" src`, 09/09/2026).
@@ -1560,6 +1560,13 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Exports:** `BitsIcon`.
 **Chamado por:** `src/components/mercado/ShopShelf.tsx` (`Bits`), `src/components/nav/MapPage.tsx` (chip de saldo).
 **Régua:** `src/components/ui/BitsIcon.render.test.tsx`, `src/components/mercado/MercadoSheets.render.test.tsx`.
+
+### `src/components/ui/SoulFragmentIcon.tsx`
+**Dono de:** o glifo do Fragmento de Alma (20/10/2026, REGISTRO §153): cristal losango pixel 8×8 em SVG de `rect`s (`primary-ink`/`primary-fill`/`surface`), mesma família do `BitsIcon` com forma própria. Decorativo (`aria-hidden`) salvo com `label`.
+**Props principais:** `size?` (20), `label?`, `style?`.
+**Exports:** `SoulFragmentIcon`.
+**Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
+**Régua:** `src/components/EvolutionPath.gauge.render.test.tsx`, `src/components/EvolutionCeremony.fragmentos.render.test.tsx`.
 
 ### `src/components/nav/playPrefetch.ts`
 **Dono de:** o prefetch dos chunks de jogar (rodada 7 · J1, 04/10/2026). Causa do "Opening…" demorado: o APK carrega o app de URL remota e cada `lazy()` só baixava no toque (cascata `PlaySheets` → jogo → `GameKit`/`BattleStage` → arte; chunks de 6–30 KB, o custo é a latência de cada ida). Os `load*` são os MESMOS `import()` que o `lazy()` do `AreaView`/`App` usa (o Vite deduplica), chamados em tempo ocioso, um por tick, com falha silenciosa.

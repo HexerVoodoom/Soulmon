@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
 import { gaugeView } from '../utils/evolutionGauge';
+import { fragmentBarLabel, fragmentTodayHint } from '../utils/soulFragment';
+import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 
 /**
  * 🧬 O GAUGE DE EVOLUÇÃO, compacto, na Home (decisão do dono, 11/10/2026).
@@ -33,13 +35,11 @@ export function EvolutionGaugeMini({
     position: 'relative', height: 8, borderRadius: 4, overflow: 'hidden',
     background: 'var(--sm2-surface-2)', border: '1px solid var(--sm2-line)',
   };
-  const rotulo = v.full
-    ? (isPt ? 'A próxima forma está pronta' : 'The next form is ready')
-    : (isPt ? 'Caminho até a próxima forma' : 'Path to the next form');
+  const rotulo = fragmentBarLabel(v.full, language);
   return (
     <section data-evo-gauge-mini style={{ display: 'grid', gap: 4, padding: '0 2px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 'var(--sm2-text-xs, 12px)', color: 'var(--sm2-muted)' }}>
-        <span>{rotulo}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><SoulFragmentIcon size={14} />{rotulo}</span>
         <span data-evo-gauge-mini-count>
           {`${Math.min(v.points, v.goal)}/${v.goal}`}
           {v.today > 0 && !v.full ? ` · +${v.today} ${isPt ? 'hoje' : 'today'}` : ''}

@@ -59,16 +59,16 @@ export function EvolveTaskModal({
   const goal = isPt
     // 🧬 11/10/2026: a evolução é o gauge — cada conclusão é um passo, até a
     // meta diária do estágio por dia. Energia não entra mais.
-    ? `Nesta nova fase, cada hábito ou tarefa concluída anda o caminho até a próxima forma — até ${tarefas(requiredTasks, true)} por dia contam.`
-    : `In this new stage, every habit or task you finish walks the path to the next form — up to ${tarefas(requiredTasks, false)} a day count.`;
+    ? `Nesta nova fase, cada hábito ou tarefa concluída rende Fragmentos de Alma para a próxima forma — até ${tarefas(requiredTasks, true)} por dia contam.`
+    : `In this new stage, every habit or task you finish earns Soul Fragments toward the next form — up to ${tarefas(requiredTasks, false)} a day count.`;
 
   const statusOk = isPt
     ? `Você já tem ${tarefas(registeredTasks, true)} cadastrada${registeredTasks === 1 ? '' : 's'}. Continue assim!`
     : `You already have ${tarefas(registeredTasks, false)} registered. Keep it up!`;
 
   const statusMissing = isPt
-    ? `Você tem só ${tarefas(registeredTasks, true)} cadastrada${registeredTasks === 1 ? '' : 's'}. Cadastre mais ${missing} para garantir o ponto de evolução.`
-    : `You only have ${tarefas(registeredTasks, false)} registered. Add ${missing} more to guarantee the evolution point.`;
+    ? `Você tem só ${tarefas(registeredTasks, true)} cadastrada${registeredTasks === 1 ? '' : 's'}. Cadastre mais ${missing} para garantir os Fragmentos de Alma do dia.`
+    : `You only have ${tarefas(registeredTasks, false)} registered. Add ${missing} more to secure the day’s Soul Fragments.`;
 
   return (
     <RitualDialog label={title} onClose={onClose} zIndex={200} maxWidth={340} style={{ alignItems: 'center', textAlign: 'center' }}>
@@ -78,7 +78,7 @@ export function EvolveTaskModal({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <p style={{ ...sm2Text, margin: 0 }}>{intro}</p>
         {/* K6 (04/10/2026): a regra do dia completo mora atrás do "?". */}
-        <InfoTip language={language} label={isPt ? 'Como garantir o ponto de evolução' : 'How to secure the evolution point'} style={{ minHeight: 28 }}>{goal}</InfoTip>
+        <InfoTip language={language} label={isPt ? 'Como garantir os Fragmentos de Alma do dia' : 'How to secure the day’s Soul Fragments'} style={{ minHeight: 28 }}>{goal}</InfoTip>
       </div>
       <p style={{ ...sm2Text, margin: 0 }}>{hasEnough ? statusOk : statusMissing}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
