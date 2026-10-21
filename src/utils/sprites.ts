@@ -54,7 +54,7 @@ import starterMeteoro from '../assets/soulmon/starters/meteoro.png';
 
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
-  thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
+  thalindra: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega }, // 21/10/2026 (dono): o sprite antigo da Nimbrata não aparece mais em lugar nenhum
   igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
   astrase: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega },
 };
