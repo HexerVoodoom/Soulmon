@@ -88,6 +88,7 @@ bancário.
 | **Steam** (conta Steamworks, App ID, `STEAM_PUBLISHER_KEY`) | fora do beta |
 | **Conta de organização / Health Connect** | só se os passos migrarem do sensor para o Health Connect |
 | **Revogar o JWT anônimo do Supabase do fork** (aparece no histórico) | decisão sua sobre o histórico (`STATUS.md`) |
+| **APK novo para travar retrato** | o `AndroidManifest.xml` já tem `screenOrientation="portrait"` (QA L06-13, decisão de 21/10/2026), mas só vale com APK novo: o build de release é seu (`E:\soulmon-apkuild-release.ps1`, senha da keystore). Não subi `versionCode` nem gerei APK. Na web/PWA a orientação não muda |
 
 ## 4. Já resolvido (não volte a esta lista)
 
