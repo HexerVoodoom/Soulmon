@@ -470,7 +470,7 @@ export function EvolutionPath({
         // não pela string, no mesmo arquivo. É a frase que responde "quanto
         // falta para meu bicho evoluir", ou seja, a mais lida da página.
         // 🧬 11/10/2026: o gauge mede esforço, não dias; desde 20/10/2026 a moeda se
-        // chama Fragmento de Alma (REGISTRO §151). Descreve o que JÁ se juntou,
+        // chama Fragmento de Alma (REGISTRO §153). Descreve o que JÁ se juntou,
         // nunca o que falta: sem "faltam", sem prazo.
         fragmentsGatheredLine(evolutionPoints, language));
 

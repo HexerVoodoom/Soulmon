@@ -1562,7 +1562,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/ui/BitsIcon.render.test.tsx`, `src/components/mercado/MercadoSheets.render.test.tsx`.
 
 ### `src/components/ui/SoulFragmentIcon.tsx`
-**Dono de:** o glifo do Fragmento de Alma (20/10/2026, REGISTRO §151): cristal losango pixel 8×8 em SVG de `rect`s (`primary-ink`/`primary-fill`/`surface`), mesma família do `BitsIcon` com forma própria. Decorativo (`aria-hidden`) salvo com `label`.
+**Dono de:** o glifo do Fragmento de Alma (20/10/2026, REGISTRO §153): cristal losango pixel 8×8 em SVG de `rect`s (`primary-ink`/`primary-fill`/`surface`), mesma família do `BitsIcon` com forma própria. Decorativo (`aria-hidden`) salvo com `label`.
 **Props principais:** `size?` (20), `label?`, `style?`.
 **Exports:** `SoulFragmentIcon`.
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.

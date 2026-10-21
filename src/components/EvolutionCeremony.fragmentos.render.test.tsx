@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-// REGISTRO §151: a cerimônia diz, uma vez, que os Fragmentos de Alma foram USADOS — sem número que desce.
+// REGISTRO §153: a cerimônia diz, uma vez, que os Fragmentos de Alma foram USADOS — sem número que desce.
 import { describe, it, expect, afterEach, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { EvolutionCeremony } from './EvolutionCeremony';

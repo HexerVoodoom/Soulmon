@@ -1,6 +1,6 @@
 /**
  * 💠 FRAGMENTO DE ALMA — o NOME visível do gauge de evolução (decisão do dono,
- * 20/10/2026, REGISTRO §151). Dono único do VOCABULÁRIO; a regra continua em
+ * 20/10/2026, REGISTRO §153). Dono único do VOCABULÁRIO; a regra continua em
  * `utils/evolutionGauge.ts`.
  *
  * O que NÃO mudou (e o teste `soulFragment.test.ts` trava):

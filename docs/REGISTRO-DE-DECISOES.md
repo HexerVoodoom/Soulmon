@@ -3105,7 +3105,7 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **O que falsificaria:** relato de criatura planta/industrial com elemento diferente entre Perfil, golpe e aura, ou balanço da Arena desses jogadores fora da faixa dos demais.
 - **Onde vive:** `src/utils/elementoDoOraculo.ts` (+ `.test.ts`), `src/utils/starterElements.ts › petElementOf`, `src/utils/arena.ts › arenaElementsFor`.
 
-## 151. "Steps" da evolução viram Fragmentos de Alma — a MOEDA visível do gauge, ganha por ESFORÇO (dono, 20/10/2026; item do BACKLOG-PRODUTO › Evolução; emenda a decisão do gauge de 11/10/2026)
+## 153. "Steps" da evolução viram Fragmentos de Alma — a MOEDA visível do gauge, ganha por ESFORÇO (dono, 20/10/2026; item do BACKLOG-PRODUTO › Evolução; emenda a decisão do gauge de 11/10/2026)
 
 - **Pedido (dono):** trocar o nome/medida "steps" da evolução por uma moeda visível, **Fragmento de Alma** (EN *Soul Fragment*); ao juntar o custo do estágio os fragmentos são CONSUMIDOS e o Soulmon evolui.
 - **Decisão (modal, 20/10/2026):** o fragmento é ganho **por ESFORÇO** — tarefa de esforço 1–3 rende 1–3, hábito rende `HABIT_WEIGHT` — mantendo o **teto diário** (= meta do estágio, `FORM_REQUIREMENTS[estágio].required`) e o **crédito na virada**. NÃO é "1 por ação": recompensa por contagem de tarefas segue linha vermelha. O que muda é só o NOME e o ícone; o número e a mecânica continuam.

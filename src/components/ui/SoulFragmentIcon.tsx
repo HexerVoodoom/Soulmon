@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 
 /**
- * `SoulFragmentIcon` — o glifo do FRAGMENTO DE ALMA (20/10/2026, REGISTRO §151).
+ * `SoulFragmentIcon` — o glifo do FRAGMENTO DE ALMA (20/10/2026, REGISTRO §153).
  * Cristal losango em pixel 8×8, na mesma família do `BitsIcon` (SVG de `rect`s
  * `crispEdges`, cores por token — responde ao tema claro/escuro), mas com forma
  * própria: Bits é MOEDA redonda, o fragmento é uma lasca pontuda. Nunca usa o

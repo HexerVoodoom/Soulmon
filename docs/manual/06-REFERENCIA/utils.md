@@ -943,7 +943,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
 ### `src/utils/soulFragment.ts`
-**Dono de:** o VOCABULÁRIO do Fragmento de Alma (20/10/2026, REGISTRO §151) — o nome visível do gauge de evolução. Singular/plural PT+EN, frases da barra, da prévia de hoje ("entram amanhã"), da ajuda, do que JÁ se juntou (nunca o que falta) e do consumo na cerimônia. NÃO decide regra: o fragmento é o `evolutionPoints` do `evolutionGauge.ts` (por esforço, teto diário, crédito na virada, zera ao evoluir), com o mesmo significado no save.
+**Dono de:** o VOCABULÁRIO do Fragmento de Alma (20/10/2026, REGISTRO §153) — o nome visível do gauge de evolução. Singular/plural PT+EN, frases da barra, da prévia de hoje ("entram amanhã"), da ajuda, do que JÁ se juntou (nunca o que falta) e do consumo na cerimônia. NÃO decide regra: o fragmento é o `evolutionPoints` do `evolutionGauge.ts` (por esforço, teto diário, crédito na virada, zera ao evoluir), com o mesmo significado no save.
 **Exports:** `SOUL_FRAGMENT_SAVE_FIELD`, `soulFragmentName`, `soulFragmentWord`, `soulFragmentCount`, `fragmentBarLabel`, `fragmentTodayHint`, `fragmentHowText`, `fragmentsSpentLine`, `fragmentsGatherLine`, `fragmentsGatheredLine`.
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/soulFragment.test.ts` (vocabulário sem cobrança; save antigo vira fragmentos 1:1, idempotente; por esforço com teto).

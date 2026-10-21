@@ -267,7 +267,7 @@ export function EvolutionCeremony({
           {done ? toName : '…'}
         </h1>
         <p style={sm2Hint} aria-hidden={!done}>{done ? data : ' '}</p>
-        {/* O CONSUMO (REGISTRO §151): os Fragmentos de Alma juntados são usados
+        {/* O CONSUMO (REGISTRO §153): os Fragmentos de Alma juntados são usados
             aqui. Dito como o que deu forma à evolução — uma vez, no ato, sem
             número que desce nem conta do que sobrou. */}
         {fragmentsSpent !== undefined && fragmentsSpent > 0 && (
