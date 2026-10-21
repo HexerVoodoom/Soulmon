@@ -3,7 +3,7 @@
 > ## 🟢 LEIA PRIMEIRO — O SOULMON ESTÁ EM PRODUÇÃO (desde 20/10/2026)
 >
 > - **Google Play:** app `com.soulmon` no Play Console (conta Mojoceramon), **teste interno ativo** com o
->   `versionCode 21` (1.3.0-beta1). Próximo passo: **teste fechado** com 12+ testadores por 14 dias — o dono
+>   `versionCode 21` (1.3.0-beta1) no ar; o `22` (1.3.0-beta2, com o app travado em retrato e os sprites novos do widget) está preparado para upload. Próximo passo: **teste fechado** com 12+ testadores por 14 dias — o dono
 >   está coletando os e-mails e divulgando o vídeo. Ficha da loja (EN), Segurança dos dados, categoria
 >   (Jogo › Simulação), produtos e assinatura já estão no Console.
 > - **Servidor:** `https://soulmon.mateus-sprnd.workers.dev` é PRODUÇÃO com usuários de teste reais. O APK
