@@ -95,8 +95,7 @@ export const CROSSFADE_MUSICA_S = 1.2;
  * `sfxCombate.ts` (§120), que continua como FALLBACK (arquivo que não chegou/decodificou → o procedural toca naquele golpe).
  *
  * Regras (travadas por `sfxCombateLivres.contract.test.ts`):
- * - **Só licença que permite uso comercial, sem API paga**: aqui tudo é CC0 1.0 (domínio público) — Kenney (kenney.nl) e
- *   JaggedStone (OpenGameArt). Atribuição NÃO é obrigatória, mas está em `docs/Attributions.md` por boa prática.
+ * - **Só licença que permite uso comercial, sem API paga**: aqui tudo é CC0 1.0 (domínio público) — Kenney (kenney.nl). Atribuição NÃO é obrigatória, mas está em `docs/Attributions.md` por boa prática.
  * - **Procedência por arquivo**: `fonte` (arquivo original, pacote, URL, autor, licença, data de acesso, SHA-256 do original).
  *   Sample sem `fonte` completa reprova o teste de contrato.
  * - **Orçamento próprio**: ≤ 40 KB por arquivo (a soma NÃO entra nos 300 KB do S6, que é dos 5 assets de IA); zero no bundle
@@ -148,10 +147,6 @@ const KENNEY = (pacote: string, slug: string, arquivo: string, sha256Original: s
   arquivo, pacote, urlOrigem: `https://kenney.nl/assets/${slug}`, autor: 'Kenney Vleugels (Kenney.nl)', licenca: 'CC0 1.0',
   urlLicenca: CC0_URL, acessadoEm: '2026-10-20', atribuicaoObrigatoria: false, sha256Original,
 });
-const JAGGEDSTONE = (arquivo: string, sha256Original: string): FonteLivre => ({
-  arquivo, pacote: 'magic spell sfx', urlOrigem: 'https://opengameart.org/content/magic-spell-sfx', autor: 'JaggedStone',
-  licenca: 'CC0 1.0', urlLicenca: CC0_URL, acessadoEm: '2026-10-20', atribuicaoObrigatoria: false, sha256Original,
-});
 
 export const SFX_DE_COMBATE_LIVRES = {
   playAttack: {
@@ -165,9 +160,14 @@ export const SFX_DE_COMBATE_LIVRES = {
     fonte: KENNEY('Impact Sounds', 'impact-sounds', 'impactPlate_medium_000.ogg', 'b670d30452983369771081319c268475edaaafe782bf4e8d70bd7eef09d8823c'),
   },
   playAttackRanged: {
-    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 1.134, medidoLufsM: -25.01, medidoTruePeakDbtp: -16.35,
-    sha256: '2da3e11f6bb3569896c8a6a483b5b7c150975570e84303b4a879f605da13ed03', bytes: 9530,
-    fonte: JAGGEDSTONE('magical_3.ogg', '9fac648a1de869cf9ca2f4b3f1cd47f1766a3ee9d2fdec45831234401d7b2392'),
+    id: 'D-88', url: '/sounds/sfx-combate-attack-ranged.webm', categoria: 'arcade', duracaoS: 0.414, medidoLufsM: -24.65, medidoTruePeakDbtp: -4.3,
+    sha256: '48825c636a07c7be3202d27d60125bb83ffc6bb52edc0ea4c3c2faf8168e8f59', bytes: 3698,
+    // 20/10/2026 (§152): o dono achou o "plim" de `magical_3` muito ruim e pediu "algo tipo push" (rajada/impulso, sem sino). Sai o
+    // tinido mágico; entra o jato de ar de um propulsor CC0, recortado, passa-baixa e com ataque seco + queda rápida.
+    fonte: {
+      ...KENNEY('Sci-Fi Sounds', 'sci-fi-sounds', 'thrusterFire_001.ogg', '924636edc923fe4aab5829b69dc5dc1c5d659dec5739865434dabee752a3bb79'),
+      processamento: 'derivado: recorte de 0,5 s do jato (1,10–1,60 s), passa-baixa 3 kHz (2 polos) e passa-altas 90 Hz, ataque de 6 ms e queda exponencial (tau 110 ms) de 0,42 s',
+    },
   },
   playCharge: {
     id: 'D-89', url: '/sounds/sfx-combate-charge.webm', categoria: 'arcade', duracaoS: 1.191, medidoLufsM: -25.02, medidoTruePeakDbtp: -13.53,
