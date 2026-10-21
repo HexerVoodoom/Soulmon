@@ -6911,6 +6911,7 @@ var ART_LINE_IDS = /* @__PURE__ */ new Set([
   "igni",
   "nautilu",
   "astrase",
+  // Linhas APOSENTADAS (20/10/2026): aceitas só na LEITURA (perfil/save antigo); o servidor nunca as produz.
   "ignar",
   "lumel",
   "serah",
@@ -8390,7 +8391,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../../Soulmon/repo/node_modules/fflate/esm/browser.js
+// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -11164,7 +11165,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-R7XmsV/functionsRoutes-0.34480030518281746.mjs
+// ../.wrangler/tmp/pages-0n5hS2/functionsRoutes-0.5861486055177568.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11441,7 +11442,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -11767,7 +11768,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
