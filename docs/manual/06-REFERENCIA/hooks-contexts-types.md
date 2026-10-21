@@ -7,7 +7,7 @@
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
 ## Índice
-- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `usePresentationQueue.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `useSpriteGeneration.ts`
+- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `usePresentationQueue.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `usePetScale.ts` · `useSpriteGeneration.ts`
 - [src/contexts](#src-contexts) — `GameStateContext.tsx` · `LanguageContext.tsx` · `ThemeContext.tsx`
 - [src/types](#src-types) — `attributes.ts` · `category-icons.ts` · `progression.ts` · `taskModel.ts`
 
@@ -81,6 +81,14 @@
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/hooks/useProgressTracking.test.ts`.
 **Avisos do arquivo:** o denominador NÃO É o cadastro cru — antes ele contava `activities.length + tasks.length + completedTasks.length`, o que fazia o widget Android mostrar "6/9" mesmo quando 6 já cumpria a meta do dia. Também NÃO existe uma segunda definição de "dia perfeito" aqui (havia uma, morta, comentário no corpo diz para não recriá-la — a real vive em `computeDailyReset`/`lastDayReport.wasPerfect`). Passo de atividade não move mais a barra sozinho — só quando todos os passos fecham (antes punia visualmente quem quebra tarefa grande em passos pequenos).
+
+### `src/hooks/usePetScale.ts`
+**Dono de:** a fiação React do porte do Soulmon — mede a caixa visível do sprite (uma vez, em cache) e devolve o fator de `utils/spriteScale.ts`; a regra é do módulo, não do hook.
+**Exports:**
+- `usePetScale(stage, url, seed?)` — fator numérico; re-renderiza quando a medição chega.
+- `usePetScaleStyle(stage, url, seed?)` — o estilo `{scale, transformOrigin}` pronto para o `<img>`.
+**Chamado por:** `src/components/CompanionHUD.tsx`, `PetPage.tsx`, `DungeonGame.tsx`, `ArenaGame.tsx`, `NightmareBattle.tsx`, `DuelScreen.tsx`, `TournamentPage.tsx`, `Match3Game.tsx`, `DinoGame.tsx`, `GoodDream.tsx`, `mente/RevisaoGame.tsx`, `mente/EcoGame.tsx`, `mente/BolhasGame.tsx`, `refugio/RespiracaoGame.tsx`.
+**Régua:** `src/utils/spriteScale.test.ts` (fiação).
 
 ### `src/hooks/useSpriteGeneration.ts`
 **Dono de:** a FIAÇÃO de quando um lote de geração incremental de sprite parte — não a regra (gatilho é de `utils/spriteTrigger.ts`, acervo é de `utils/spriteLibrary.ts`, execução é de `utils/spriteRunner.ts`).

@@ -22,6 +22,8 @@ import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL
 import { fxFrame } from '../utils/combatFx';
 import { fxMirror } from '../utils/fxFacing';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 
 /**
  * COMBINA 3 — o jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36), agora um COMBATE (18/10/2026, D-03…D-07):
@@ -405,12 +407,13 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   };
 
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petScale = usePetScale(evolutionStage, playerSprite);
 
   // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (
     <div data-m3-arena style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8, flex: '1 0 auto', minHeight: 130 }}>
       <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: PLAYER_SPRITE + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
-        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain' }} />
+        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={PLAYER_SPRITE} height={PLAYER_SPRITE} style={{ width: PLAYER_SPRITE, height: PLAYER_SPRITE, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
       <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>

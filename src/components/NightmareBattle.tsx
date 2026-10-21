@@ -47,6 +47,8 @@ import { GameVisor, VisorSprite, VisorFx, VisorSparks, DIALOG_VISOR_W, phaseTitl
 import { nightmareScene } from '../utils/dungeonScenes';
 import { entrarNaSuperficie } from '../utils/musica';
 import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { CHEER_TAPS_FULL, type RingGrade } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
@@ -281,6 +283,7 @@ export function NightmareBattle({
   if (!open) return null;
 
   const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
+  const petScale = usePetScale(petStage, petSprite);
   const title = nightmareName(rarity, language);
   const flavor = nightmareFlavorShort(rarity, language);
 
@@ -337,7 +340,7 @@ export function NightmareBattle({
           isPt={isPt}
           scene={sceneBg}
           me={{
-            key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
             // o trecho da barra de especial que a torcida em andamento já encheu (só UI; o núcleo soma na descarga)
@@ -386,7 +389,7 @@ export function NightmareBattle({
   const visor = (height: 80 | 72, other: React.ReactNode) => (
     <GameVisor width={DIALOG_VISOR_W} height={height} scene={sceneBg}>
       {other}
-      <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8 }} data-visor-pet />
+      <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
     </GameVisor>
   );
   const btn = (variant: 'primary' | 'outline'): CSSProperties => ({ ...sm2Button(variant), width: '100%', maxWidth: 260, alignSelf: 'center' });

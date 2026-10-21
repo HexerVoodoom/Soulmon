@@ -2940,6 +2940,18 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `spriteTrigger.test.ts`, `spriteTrigger.esperaMinima.test.ts`, `spriteBirth.contract.test.ts`, `spriteTrigger.semPrazo.contract.test.ts` (varre o fonte: nenhuma comparação de data além de `incubationReady`, nenhuma cópia de `INCUBATION_MIN_MS`)
 **Avisos do arquivo:** é PISO, nunca prazo — passados os 30 min a evolução espera indefinidamente, nada expira; não reintroduza a véspera (B) nem o champion no nascimento achando que caíram por descuido; o `since` é por forma DENTRO da mesma vida — Renascimento e troca de criatura do upgrade zeram.
 
+### `src/utils/spriteScale.ts`
+**Dono de:** o TAMANHO do Soulmon do jogador na tela (REGISTRO §154, 20/10/2026) — alvo por estágio, porte por criatura (determinístico), normalização pela CAIXA VISÍVEL (bbox do alfa) e o estilo `scale` que toda tela aplica. Funções puras; só `measureVisibleFill` toca canvas.
+**Exports:**
+- `ScaleStage`, `SCALE_STAGES`, `STAGE_TARGET` — alvo (fração da caixa de render `PET_RENDER` ocupada pelo lado maior da caixa visível): rookie 0,54 · champion 0,66 · ultimate 0,78 · mega 0,90 · ultra 0,96.
+- `SizeProfile` (`standard`/`small`/`tiny`/`bigRookie`), `RARE_BIG_ROOKIE_RATE` (0,02) · `TINY_RATE` (0,10) · `SMALL_RATE` (0,20), `BIG_ROOKIE_TARGET` (0,84), `sizeProfileFor(seed)`, `seedUnit(seed)` (FNV-1a), `scaleStageOf`, `targetFor(stage, profile)` (monótono em todo porte).
+- `petScaleFor(stage, seed, fill?)` — alvo ÷ preenchimento medido, preso a `SCALE_MIN`(0,3)..`SCALE_MAX`(1,25); `petScaleStyle(fator, origin?)` — `{scale, transformOrigin}` (propriedade CSS `scale`, origem nos pés; `'center'` para sprite pendurado por `top`).
+- `setPetSizeSeed`/`getPetSizeSeed`/`sizeSeedOf(state)` — semente do save (`demoCharacterId` › `bornAt` › `createdAt`), escrita em render no `App.tsx` como `setOwnSprites`.
+- `DEFAULT_FILL`, `fillFromRGBA`, `measureVisibleFill(url)`, `visibleFillOf(url)`, `subscribeFill` — medição e cache da bbox; sem canvas/CORS cai no padrão.
+**Chamado por:** `src/hooks/usePetScale.ts`, `src/App.tsx`, `src/components/games/BattleStage.tsx`, e as telas do jogador (`CompanionHUD`, `PetPage`, `DungeonGame`, `ArenaGame`, `NightmareBattle`, `DuelScreen`, `TournamentPage`, `Match3Game`, `DinoGame`, `GoodDream`, `mente/*`, `refugio/RespiracaoGame`).
+**Régua:** `src/utils/spriteScale.test.ts` (monotonia por estágio e por porte, raridade do rookie grande < 3%, "pequenininho até o mega", caixa visível, fiação nas 14 telas).
+**Avisos do arquivo:** só o DESENHO encolhe — hitbox do Dino, alvos de toque e linha do chão não mudam; retratos e cerimônias (`EvolutionCeremony`, `EvolutionPath`, `LevelUpOverlay`, `BirthCard`, `MemoriesCard`…) ficam fora de propósito. Alvo de estágio nunca se escreve à mão em tela.
+
 ### `src/utils/sprites.ts`
 **Dono de:** O filtro de tonalidade do modo demo (WP1.12) e o resolvedor de sprite por estágio/linha.
 **Exports:**

@@ -29,6 +29,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { CreatureStage, OracleInput } from '../utils/oracle';
 import { creatureFormId } from '../utils/oracle';
 import { getSpriteForStage } from '../utils/sprites';
+import { usePetScaleStyle } from '../hooks/usePetScale';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readJson } from '../utils/safeStorage';
@@ -302,6 +303,8 @@ export function PetPage({
   // lista desbloqueada (save antigo), cai na última alcançada — a tela nunca
   // fica sem protagonista.
   const atual = formas.find(f => creatureFormId(f) === currentStageId) ?? formas[formas.length - 1] ?? null;
+  const heroSrc = atual ? getSpriteForStage(creatureFormId(atual), demoCharacterId) : undefined;
+  const heroScale = usePetScaleStyle(currentStageId, heroSrc);
 
   const nome = petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon');
   const classeAtual = atual ? classTitles?.[getStageLevel(creatureFormId(atual)) as FichaStage] : undefined;
@@ -345,7 +348,7 @@ export function PetPage({
             screenStyle={{ position: 'relative' }}
           >
             {aura && <img src={aura} alt="" aria-hidden="true" data-aura style={auraStyle} />}
-            <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" data-hero style={HERO} />
+            <img src={heroSrc!} alt="" data-hero style={{ ...HERO, ...heroScale }} />
             {classeAtual?.sigilo && sigilArt(classeAtual.sigilo) && (
               <img src={sigilArt(classeAtual.sigilo)} alt="" aria-hidden="true" data-sigil={classeAtual.sigilo} style={SIGIL} />
             )}

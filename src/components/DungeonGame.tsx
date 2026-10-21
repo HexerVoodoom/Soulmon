@@ -7,6 +7,8 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { getSpriteForStage } from '../utils/sprites';
+import { usePetScale } from '../hooks/usePetScale';
+import { petScaleStyle } from '../utils/spriteScale';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { clearBonus } from '../utils/dungeon';
 import {
@@ -261,6 +263,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  const petScale = usePetScale(evolutionStage, petSprite);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
@@ -689,7 +692,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           isPt={isPt}
           scene={scene.bg}
           me={{
-            key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
             cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
@@ -886,7 +889,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         <VisorSprite
           src={petSprite}
           alt=""
-          style={{ left: '50%', marginLeft: -64, bottom: 8 }}
+          style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }}
           data-visor-pet
         />
       </GameVisor>

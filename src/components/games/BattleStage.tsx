@@ -30,6 +30,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
+
+import { petScaleStyle } from '../../utils/spriteScale';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
@@ -52,6 +54,8 @@ export const BATTLE_LAYER_STYLE: CSSProperties = {
 export interface StageFighter {
   key: string | number;
   sprite: string;
+  /** Porte do bicho do jogador (`utils/spriteScale.ts`); ausente = 1 (inimigos). Escala com origem nos pés. */
+  scale?: number;
   name: string;
   hp: number;
   maxHp: number;
@@ -310,6 +314,7 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
               ['--sm-idle-dur' as string]: flip ? '1.25s' : '1.05s',
               // O palco fixa os lados; a arte de perfil ESQUERDO inverte o espelho (`spriteUrlFacesLeft`), senão luta de costas.
               ...(espelha ? { transform: 'scaleX(-1)' } : null),
+              ...(f.scale !== undefined ? petScaleStyle(f.scale) : null),
             } as CSSProperties}
           />
         </div>

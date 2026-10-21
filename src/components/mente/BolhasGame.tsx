@@ -7,6 +7,8 @@ import { BitsAmount } from '../ui/BitsAmount';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { MINI_FX, REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
+import { usePetScale } from '../../hooks/usePetScale';
+import { petScaleStyle } from '../../utils/spriteScale';
 import {
   bolhasBits, bubbleProgress, hasEscaped, initialStaircase, recordOutcome, spawnBubble, timeLeftMs,
   BOLHAS_CALMA_INTERVAL_MS, BOLHAS_MAX_BITS, BOLHAS_POINTS_PER_BIT,
@@ -165,6 +167,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
 
   const now = Date.now();
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petScale = usePetScale(evolutionStage, pet);
   const secondsLeft = phase === 'play' && !calma ? Math.ceil(timeLeftMs(startedAt.current, now) / 1000) : 60;
 
   const title = calma ? (isPt ? 'Bolhas calmas' : 'Calm bubbles') : (isPt ? 'Bolhas do Sonho' : 'Dream Bubbles');
@@ -177,6 +180,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
     : `60 seconds. 1 Bit per ${BOLHAS_POINTS_PER_BIT} dreams, up to ${BOLHAS_MAX_BITS}.`);
 
   const petStyle: CSSProperties = {
+    ...petScaleStyle(petScale),
     left: VISOR_W / 2 - 32, top: VISOR_H - 68,
     ['--sm-idle-dur' as string]: calma ? '3.2s' : '1.5s',
     transform: blowing && !reduced ? 'rotate(-8deg)' : undefined,
