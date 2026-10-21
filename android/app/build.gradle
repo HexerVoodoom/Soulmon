@@ -15,8 +15,11 @@ android {
         // localizado vindo da Play, WP2.6 widget com constância/escudos/oferta.
         // A Play recusa AAB com versionCode repetido — bump manual, sem
         // automação no CI (15-superficies-secundarias.md §B "Versão").
-        versionCode 21
-        versionName "1.3.0-beta1"
+        // 21/10/2026: 21/1.3.0-beta1 → 22/1.3.0-beta2 (versionName por decisão do dono). Primeiro AAB com o NATIVO novo desde o 21:
+        // AndroidManifest com `screenOrientation="portrait"` (QA L06-13) e os 5 drawables do widget regenerados
+        // (sprite_starter_*); o resto do beta 2 vai pelo Worker (`server.url`). Cada upload à Play precisa de versionCode maior.
+        versionCode 22
+        versionName "1.3.0-beta2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
