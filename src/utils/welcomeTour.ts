@@ -9,10 +9,8 @@
  * `MAP_TOUR_STEPS`, abaixo, que abre UMA vez, na primeira abertura do Mapa. A essência é a do produto: o Soulmon é um avatar que evolui COM a
  * pessoa — o corvo apresenta, nunca cobra.
  *
- * ⚠️ O texto é EN por enquanto (pedido do dono). Cada string é um objeto
- * `{ en }` e `tourText` cai no `en` para qualquer idioma: quando o PT-BR entrar,
- * acrescenta-se `pt` ao objeto e NADA mais muda. Não escreva string só em
- * português aqui.
+ * O texto é EN + PT-BR: cada string é `{ en, pt }` e `tourText` cai no `en` quando
+ * falta `pt`. Não escreva string só em português aqui.
  *
  * Números NUNCA à mão: a meta inicial do dia vem de `FORM_REQUIREMENTS.rookie`.
  */
@@ -32,7 +30,7 @@ export function tourGuideName(language: Language): string {
 
 export interface LocalizedText { en: string; pt?: string }
 
-/** `pt` ainda não existe: o fallback é o inglês (decisão do dono, 07/10/2026). */
+/** Sem `pt` na string, o fallback é o inglês. */
 export function tourText(t: LocalizedText, language: Language): string {
   return language === 'pt-BR' && t.pt ? t.pt : t.en;
 }
@@ -55,33 +53,51 @@ export const TOUR_STARTING_GOAL = FORM_REQUIREMENTS.rookie.required;
 export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'hello', part: 1,
-    title: { en: 'Welcome' },
-    speech: { en: `Hi, I'm ${TOUR_GUIDE_NAME}. I'll show you around — about a minute. Your Soulmon grows with you, and I'm here to help, not to keep score. You can skip whenever you like.` },
+    title: { en: 'Welcome', pt: 'Boas-vindas' },
+    speech: {
+      en: `Hi, I'm ${TOUR_GUIDE_NAME}. I'll show you around — about a minute. Your Soulmon grows with you, and I'm here to help, not to keep score. You can skip whenever you like.`,
+      pt: `Oi, eu sou o ${TOUR_GUIDE_NAME_PT}. Vou te mostrar o caminho — leva cerca de um minuto. O seu Soulmon cresce junto com você, e eu estou aqui para ajudar, não para dar nota. Você pode pular quando quiser.`,
+    },
   },
   {
     id: 'tasks', part: 1,
-    title: { en: 'Habits and tasks' },
-    speech: { en: 'Your day is made of habits and tasks. Habits come back on the days you choose; tasks are one-offs. When you finish one, tap it. That is the whole move.' },
+    title: { en: 'Habits and tasks', pt: 'Hábitos e tarefas' },
+    speech: {
+      en: 'Your day is made of habits and tasks. Habits come back on the days you choose; tasks are one-offs. When you finish one, tap it. That is the whole move.',
+      pt: 'O seu dia é feito de hábitos e tarefas. Os hábitos voltam nos dias que você escolhe; as tarefas são avulsas. Quando terminar uma, toque nela. É só isso.',
+    },
   },
   {
     id: 'why', part: 1,
-    title: { en: 'Why they matter' },
-    speech: { en: `Each thing you finish feeds your Soulmon: food for energy, and a nudge toward the path it will grow along. A day is complete when you reach today's goal — at first about ${TOUR_STARTING_GOAL} tasks' worth, and bigger tasks count for more.` },
+    title: { en: 'Why they matter', pt: 'Por que importam' },
+    speech: {
+      en: `Each thing you finish feeds your Soulmon: food for energy, and a nudge toward the path it will grow along. A day is complete when you reach today's goal — at first about ${TOUR_STARTING_GOAL} tasks' worth, and bigger tasks count for more.`,
+      pt: `Cada coisa que você termina alimenta o seu Soulmon: comida para a energia e um empurrãozinho para o caminho em que ele vai crescer. O dia fica completo quando você alcança a meta de hoje — no começo, o equivalente a uns ${TOUR_STARTING_GOAL} tarefas, e as tarefas maiores valem mais.`,
+    },
   },
   {
     id: 'evolution', part: 1,
-    title: { en: 'Evolution' },
-    speech: { en: 'Every habit or task you finish earns Soul Fragments toward the next form, and they only ever add up. When you have gathered enough, you pick the moment: open Evolution and tap your Soulmon. A slow day just goes slowly.' },
+    title: { en: 'Evolution', pt: 'Evolução' },
+    speech: {
+      en: 'Every habit or task you finish earns Soul Fragments toward the next form, and they only ever add up. When you have gathered enough, you pick the moment: open Evolution and tap your Soulmon. A slow day just goes slowly.',
+      pt: 'Cada hábito ou tarefa que você termina rende Fragmentos de Alma para a próxima forma, e eles só somam. Quando juntar o bastante, o momento é seu: abra a Evolução e toque no seu Soulmon. Um dia devagar só anda devagar.',
+    },
   },
   {
     id: 'care', part: 1,
-    title: { en: 'A little care' },
-    speech: { en: 'Day to day: pet it, feed it, wash it, and let it sleep. A little is plenty.' },
+    title: { en: 'A little care', pt: 'Um pouco de cuidado' },
+    speech: {
+      en: 'Day to day: pet it, feed it, wash it, and let it sleep. A little is plenty.',
+      pt: 'No dia a dia: faça carinho, dê comida, dê banho e deixe dormir. Um pouco já é bastante.',
+    },
   },
   {
     id: 'corners', part: 1,
-    title: { en: 'Missions and the Bag' },
-    speech: { en: "Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon — your items wait there. The first time you open the map, I'll show you around it. You can replay this tour from Settings any time." },
+    title: { en: 'Missions and the Bag', pt: 'Missões e a Mochila' },
+    speech: {
+      en: "Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon — your items wait there. The first time you open the map, I'll show you around it. You can replay this tour from Settings any time.",
+      pt: 'As missões ficam no ícone do canto da Home. A Mochila fica junto dos botões de cuidado, embaixo do seu Soulmon — seus itens esperam lá. Na primeira vez que abrir o mapa, eu mostro o caminho. Você pode rever este tour nas Configurações quando quiser.',
+    },
   },
 ];
 

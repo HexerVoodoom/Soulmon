@@ -21,7 +21,7 @@ import type { Language } from '../utils/i18n';
  *  · não navega o app à força: o mapa é descrito em cartões;
  *  · movimento reduzido reduz o balanço do corvo (classe no bloco canônico do
  *    `index.css`) e MANTÉM a pausa — os passos esperam o toque;
- *  · texto em EN por enquanto, por chave `{ en }` (`utils/welcomeTour.ts`).
+ *  · texto EN + PT-BR, por chave `{ en, pt }` (`utils/welcomeTour.ts`).
  */
 export type WelcomeTourEnd = 'finished' | 'skipped';
 
@@ -37,16 +37,17 @@ export function WelcomeTour({ language, onDone }: { language: Language; onDone: 
   const back = useCallback(() => setI(n => Math.max(0, n - 1)), []);
 
   const t = (x: { en: string; pt?: string }) => tourText(x, language);
+  const isPt = language === 'pt-BR';
 
   return (
     <RitualDialog labelledBy="wt-title" onClose={skip} zIndex={200} maxWidth={380}>
       <div data-welcome-tour data-step={step.id} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <p style={ritualLabel} data-wt-progress>
-            {step.part === 1 ? 'The basics' : 'The map'} · {i + 1} / {TOUR_STEPS.length}
+            {step.part === 1 ? (isPt ? 'O básico' : 'The basics') : (isPt ? 'O mapa' : 'The map')} · {i + 1} / {TOUR_STEPS.length}
           </p>
           <button type="button" onClick={skip} data-wt-skip style={sm2Button('quiet', false, 'sm')}>
-            Skip
+            {isPt ? 'Pular' : 'Skip'}
           </button>
         </div>
 
@@ -87,11 +88,11 @@ export function WelcomeTour({ language, onDone }: { language: Language; onDone: 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
           {i > 0 && (
             <button type="button" onClick={back} data-wt-back style={sm2Button('ghost', false, 'sm')}>
-              Back
+              {isPt ? 'Voltar' : 'Back'}
             </button>
           )}
           <button type="button" onClick={next} data-wt-next style={{ ...sm2Button('primary'), flex: 1 }}>
-            {i === last ? "Let's go" : 'Next'}
+            {i === last ? (isPt ? 'Vamos lá' : "Let's go") : (isPt ? 'Próximo' : 'Next')}
           </button>
         </div>
       </div>

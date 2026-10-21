@@ -140,10 +140,19 @@ describe('WelcomeTour — conteúdo', () => {
     for (const t of todos) expect(t).not.toMatch(vetado);
   });
 
-  it('é inglês: nenhuma string só-português, e o pt-BR cai no inglês por enquanto', () => {
+  it('pt-BR (QA L11-01): o chrome inteiro do tour está em português', () => {
+    const { container } = render(<WelcomeTour language="pt-BR" onDone={() => {}} />);
+    expect(container.querySelector('[data-wt-progress]')!.textContent).toMatch(/^O básico · 1 \//);
+    expect(container.querySelector('[data-wt-skip]')!.textContent).toBe('Pular');
+    expect(container.querySelector('[data-wt-next]')!.textContent).toBe('Próximo');
+    expect(container.textContent).not.toMatch(/The basics|Skip|Next|Let's go/);
+  });
+
+  it('EN + PT-BR (QA L11-01): todo passo tem `pt`, o pt-BR lê o `pt` e o en-US lê o `en`', () => {
     for (const s of TOUR_STEPS) {
-      expect(s.speech.pt).toBeUndefined();
-      expect(tourText(s.speech, 'pt-BR')).toBe(s.speech.en);
+      expect(s.speech.pt).toBeTruthy();
+      expect(s.title.pt).toBeTruthy();
+      expect(tourText(s.speech, 'pt-BR')).toBe(s.speech.pt);
       expect(tourText(s.speech, 'en-US')).toBe(s.speech.en);
     }
     expect(tourText({ en: 'a', pt: 'b' }, 'pt-BR')).toBe('b');
