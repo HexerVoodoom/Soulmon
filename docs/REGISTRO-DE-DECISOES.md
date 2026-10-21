@@ -3290,3 +3290,14 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **Feito:** vídeo novo do Gemini (saiu em paisagem 1280×720 com o quadro retrato no meio; cortado no centro para 9:16 e reescalado a 720×1280, sem áudio — a intro sempre tocou muda), pôster = 1º quadro desse corte (sem salto na troca), `IntroLoading` em DOM ("Carregando dados..." / "Vínculo de alma estabelecido", barra enchendo em 10 s, só tokens, `prefers-reduced-motion` mostra tudo pronto). `intro.mp4`: 2,52 MB → 0,73 MB (a dívida do guard de bytes pode baixar). A pílula "Welcome" (§79) ficou.
 - **Honestidade:** a barra é o relógio da intro, não mede carga real; é identidade, não indicador de progresso.
 - **Trade-off:** o corte 9:16 reaproveita só 402×715 px do vídeo (upscale ~1,8×), então fica mais macio que o pôster antigo; os lados escuros com folhas e monstros do vídeo original se perdem.
+
+## 169. QA de cliente, lote 5: a lista da Home não reordena sob o dedo (dono, modal, 21/10/2026)
+
+- **L06-07 — congelar a ordem por ~2 s.** Ao concluir um item da Home os concluídos desciam na hora e o toque seguinte no mesmo ponto acertava OUTRO item.
+  Agora o item recém-concluído fica ~2 s no lugar e só então desce (`hooks/useOrdemCongelada.ts`, usado pelos dois `sort` de `DailyRituals`); quem já
+  estava concluído na primeira pintura nunca congela; conclusões em sequência têm prazo próprio (um teste pegou o bug de a 2ª cancelar o prazo da 1ª).
+- **L05-01 — nada a mudar** (resposta do dono): o "Sair da demo" fixo no canto inferior esquerdo fica como foi pedido em 20/10/2026.
+- **L11-11 — nada a mudar** (resposta do dono): o Esc não fecha as telas cheias (luta da Arena, Combina 3), para ninguém perder a rodada por um Esc sem querer.
+- **L06-15 — NÃO implementado, pendente de confirmação.** O dono pediu que o cabeçalho mostre o estado real ao criar tarefa nova (ex. 5/5, faltando 1). Mas a meta é
+  `min(cadastradas no dia, requisito do estágio)` e o contador `Missão N/G` mostra a META, não o número de itens (o N pode passar de G, `6/4`; comentário de `RitualPanel`):
+  mudar o denominador para o total de itens trocaria uma regra documentada (e a leitura de "Dia completo"). Falta o dono dizer qual leitura vale.
