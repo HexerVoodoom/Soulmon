@@ -2923,7 +2923,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Avisos do arquivo:** é PISO, nunca prazo — passados os 30 min a evolução espera indefinidamente, nada expira; não reintroduza a véspera (B) nem o champion no nascimento achando que caíram por descuido; o `since` é por forma DENTRO da mesma vida — Renascimento e troca de criatura do upgrade zeram.
 
 ### `src/utils/spriteScale.ts`
-**Dono de:** o TAMANHO do Soulmon do jogador na tela (REGISTRO §151, 20/10/2026) — alvo por estágio, porte por criatura (determinístico), normalização pela CAIXA VISÍVEL (bbox do alfa) e o estilo `scale` que toda tela aplica. Funções puras; só `measureVisibleFill` toca canvas.
+**Dono de:** o TAMANHO do Soulmon do jogador na tela (REGISTRO §154, 20/10/2026) — alvo por estágio, porte por criatura (determinístico), normalização pela CAIXA VISÍVEL (bbox do alfa) e o estilo `scale` que toda tela aplica. Funções puras; só `measureVisibleFill` toca canvas.
 **Exports:**
 - `ScaleStage`, `SCALE_STAGES`, `STAGE_TARGET` — alvo (fração da caixa de render `PET_RENDER` ocupada pelo lado maior da caixa visível): rookie 0,54 · champion 0,66 · ultimate 0,78 · mega 0,90 · ultra 0,96.
 - `SizeProfile` (`standard`/`small`/`tiny`/`bigRookie`), `RARE_BIG_ROOKIE_RATE` (0,02) · `TINY_RATE` (0,10) · `SMALL_RATE` (0,20), `BIG_ROOKIE_TARGET` (0,84), `sizeProfileFor(seed)`, `seedUnit(seed)` (FNV-1a), `scaleStageOf`, `targetFor(stage, profile)` (monótono em todo porte).

@@ -3105,7 +3105,7 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 - **O que falsificaria:** relato de criatura planta/industrial com elemento diferente entre Perfil, golpe e aura, ou balanço da Arena desses jogadores fora da faixa dos demais.
 - **Onde vive:** `src/utils/elementoDoOraculo.ts` (+ `.test.ts`), `src/utils/starterElements.ts › petElementOf`, `src/utils/arena.ts › arenaElementsFor`.
 
-## 151. O tamanho do Soulmon depende do estágio: rookie pequeno, rookie grande é exceção rara (dono, 20/10/2026; BACKLOG-PRODUTO › Tamanho do Soulmon)
+## 154. O tamanho do Soulmon depende do estágio: rookie pequeno, rookie grande é exceção rara (dono, 20/10/2026; BACKLOG-PRODUTO › Tamanho do Soulmon)
 
 - **Pedido (dono, ditado):** o primeiro Soulmon (rookie) aparecia ENORME. O tamanho na tela depende do estágio: rookie pequeno por padrão, pode crescer (ou não) ao evoluir; pode existir Soulmon que fica pequenininho até o mega; um rookie grande pode existir, mas EXTREMAMENTE raro.
 - **Medição:** cada tela dimensionava o sprite sozinha (Home em `PET_RENDER` 128 × zoom 1,5; visores a 128/64; `BattleStage` por `spot.size`; Dino no canvas). A arte de linha tem a caixa visível (lado maior da bbox do alfa ÷ canvas) em ~0,75–0,80 no rookie e 0,9–1,0 no mega; o sprite do Oráculo vem 512² com bbox variável — escalar pelo canvas faria o "enorme" voltar.

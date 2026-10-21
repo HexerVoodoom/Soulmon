@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 20/10/2026 — Tamanho do Soulmon por estágio (`feat/backlog-size`, REGISTRO §151)
+> ## 20/10/2026 — Tamanho do Soulmon por estágio (`feat/backlog-size`, REGISTRO §154)
 >
 > - Rookie pequeno por padrão, cresce com o estágio; "pequenininho até o mega" (10%) e rookie grande (2%) são portes raros, determinísticos pela semente do save. Normaliza pela CAIXA VISÍVEL do sprite (bbox do alfa), não pelo canvas.
 > - Dono único `src/utils/spriteScale.ts` + `src/hooks/usePetScale.ts`; aplicado em 14 telas (Home, Pet, Masmorra, Arena, Pesadelo, Duelo/Torneio, Match3, Dino, Mente, Respiração, GoodDream). Só o desenho encolhe (hitbox/toque/chão iguais). Sem campo novo no save; rollback = reverter o commit.
