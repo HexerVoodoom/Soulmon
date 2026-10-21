@@ -1,5 +1,1 @@
-<<<<<<<< HEAD:dist/assets/MiniGlass-Cuha0eLJ.js
-import{j as e}from"./index-CI-Mc8Pm.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
-========
 import{j as e}from"./index-BScMYycj.js";function t({size:s,children:r,style:a}){return e.jsxs("span",{className:"sm2-viewport-screen sm2-visor","aria-hidden":"true","data-mini-glass":!0,style:{width:s,height:s,flex:"none",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"var(--sm2-radius-sm)",...a},children:[r,e.jsx("span",{className:"sm2-viewport-glass",style:{borderRadius:"var(--sm2-radius-sm)"}})]})}export{t as M};
->>>>>>>> origin/fix/qa-srv-l08-backup:dist/assets/MiniGlass-Bs9KDbg1.js

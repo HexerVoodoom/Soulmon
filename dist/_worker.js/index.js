@@ -940,7 +940,9 @@ var RULES = [
 ];
 function minimizeForAi(input, maxLength = 500) {
   const original = (input ?? "").toString();
-  let text = original;
+  const cutAt = Math.max(maxLength * 2, maxLength + 256);
+  const preCut = original.length > cutAt;
+  let text = preCut ? original.slice(0, cutAt) : original;
   const redactions = {};
   for (const { kind, re, tag, keep } of RULES) {
     text = text.replace(re, (match2, ...rest) => {
@@ -949,7 +951,7 @@ function minimizeForAi(input, maxLength = 500) {
       return tag.includes("$1") ? `${rest[0] ?? ""}${tag.replace("$1", "")}` : tag;
     });
   }
-  const truncated = text.length > maxLength;
+  const truncated = preCut || text.length > maxLength;
   if (truncated) text = text.slice(0, maxLength);
   return { text, redactions, truncated };
 }
@@ -4382,9 +4384,15 @@ async function onRequestPost2({ request, env }) {
     if (feedbackMode && !behavior) return Response.json({ error: "Behavior summary required" }, { status: 400, headers: CORS3 });
     if (isChatDisabled(env)) return Response.json({ error: "chat-disabled", message: CHAT_DISABLED_MESSAGE }, { status: 503, headers: CORS3 });
     if (!hasChatProvider(env)) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS3 });
+    let preAuth = null;
+    if (env.FIREBASE_PROJECT_ID && typeof body.id === "string" && VALID_ID.test(body.id)) {
+      const a = await authorizeSaveAccess(request, env, body.id);
+      if (!a.ok) return Response.json({ error: a.reason }, { status: authStatus(a), headers: CORS3 });
+      if (a.email) preAuth = { ok: true, email: a.email };
+    }
     const rajada = perMinuteGate("chat", body.id);
     if (rajada) return Response.json({ error: rajada.reason, response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS3 });
-    const gate = await guardAiRequest(request, env, "chat", body.id);
+    const gate = await guardAiRequest(request, env, "chat", body.id, 1, null, preAuth);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS3 });
     const min = minimizeForAi(message, 500);
     const safeMessage = min.text;
@@ -4578,6 +4586,11 @@ async function ensurePid(env, p) {
   return p.pid;
 }
 __name(ensurePid, "ensurePid");
+async function pidSoLeitura(p) {
+  if (!p?.pid || p.pid === await legacyPidFor(p.id)) return null;
+  return p.pid;
+}
+__name(pidSoLeitura, "pidSoLeitura");
 async function indexPublicId(env, saveId, pid) {
   await kvOrThrow(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
@@ -4591,6 +4604,417 @@ async function putProfile(env, id, profile) {
   await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
 }
 __name(putProfile, "putProfile");
+
+// api/metrics.js
+var CORS4 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-Metrics-Key"
+};
+var METRICS_PREFIX = "m:";
+var EVENT_SCHEMA = {
+  install: null,
+  onboarding_step: { step: { min: 0, max: 50 }, funnel: { min: 0, max: 2 } },
+  demo_pick: null,
+  first_task_done: { tier: { min: 0, max: 2 } },
+  day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
+  // WP0.9 — espelho de `src/utils/telemetry.ts` (há teste de paridade).
+  purchase: { tier: { min: 0, max: 2 }, reason: { min: 0, max: 4 } },
+  demo_cap_hit: { path: { min: 0, max: 4 } },
+  activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
+  week_active: {
+    active_days: { min: 1, max: 7 },
+    goal_days: { min: 0, max: 7 },
+    tier: { min: 0, max: 2 }
+  },
+  // Rodada 2/3 do PLANO-MELHORIAS (WP0.5). ESPELHO de src/utils/telemetry.ts —
+  // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
+  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 }, duration: { min: 0, max: 3 } },
+  checkin_commit: { focus_count: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 4 } },
+  haunted_done: null,
+  checkin_shown: null,
+  milestone: { level: { min: 1, max: 3 } },
+  shield_used: null,
+  welcome_back: { days: { min: 0, max: 3 } },
+  evolve: { level: { min: 1, max: 4 } },
+  dungeon_run: { floors: { min: 1, max: 5 } },
+  bond_level: { level: { min: 1, max: 30 } },
+  after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
+  app_open: { source: { min: 0, max: 4 } },
+  // 4 = invite (?src=convite, E0 — 22/09/2026)
+  push_optout: null,
+  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
+  // som-01 (SQUAD-SOM) — ESPELHO de src/utils/telemetry.ts. Sem `tier` de
+  // propósito: a decisão do eixo sonoro não se parte por demo/pago.
+  // `sound_state` é a fotografia diária (o cliente se cala quando não consegue
+  // ler a preferência: evento faltando é honesto, evento no balde errado não);
+  // `sound_off` é a transição por gesto, com `age` em FAIXA e nunca data.
+  sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
+  sound_off: { age: { min: 0, max: 2 } },
+  // Guilda (WPG-7, `PLANO-GUILDA.md` §10.8) — ESPELHO de src/utils/telemetry.ts.
+  // Sem id de guilda, sem pid, sem saveId: só inteiros em faixa. `size` é o
+  // tamanho da roda (nunca quem), `weeks` a FAIXA de permanência (0..3),
+  // `kind` 0 = fio (1 reservado à semente, G3), `outcome` 0 = rodada, 1 =
+  // dissipada vista, 2 = recuou vista, `level` o estágio do Bosque visto.
+  guild_create: null,
+  guild_join: { size: { min: 2, max: 12 } },
+  guild_leave: { size: { min: 0, max: 11 }, weeks: { min: 0, max: 3 } },
+  guild_thread: { kind: { min: 0, max: 1 } },
+  guild_raid: { outcome: { min: 0, max: 2 } },
+  guild_stage: { level: { min: 1, max: 5 } },
+  // Ritmo das refeições — ESPELHO de src/utils/telemetry.ts (há teste de paridade).
+  meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } }
+};
+var MAX_BODY_BYTES = 16 * 1024;
+var MAX_EVENTS = 100;
+var MAX_DAY_SKEW_DAYS = 7;
+var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+var ID_RE = /^[0-9a-f]{32}$/;
+var RATE = { limit: 60, windowMs: 6e4 };
+function serverDay(now = /* @__PURE__ */ new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+__name(serverDay, "serverDay");
+function dayDistance(a, b) {
+  const ta = Date.parse(`${a}T00:00:00Z`);
+  const tb = Date.parse(`${b}T00:00:00Z`);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return NaN;
+  return Math.abs(ta - tb) / 864e5;
+}
+__name(dayDistance, "dayDistance");
+function sanitizeRecord(record, today3) {
+  if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+  const event = record.e;
+  if (typeof event !== "string") return null;
+  if (!Object.prototype.hasOwnProperty.call(EVENT_SCHEMA, event)) return null;
+  const schema = EVENT_SCHEMA[event];
+  const day2 = record.d;
+  if (typeof day2 !== "string" || !DAY_RE.test(day2)) return null;
+  const skew = dayDistance(day2, today3);
+  if (!Number.isFinite(skew) || skew > MAX_DAY_SKEW_DAYS) return null;
+  for (const key of Object.keys(record)) {
+    if (key !== "e" && key !== "d" && key !== "p") return null;
+  }
+  const props = record.p;
+  if (!schema) {
+    if (props !== void 0) return null;
+    return { e: event, d: day2 };
+  }
+  if (!props || typeof props !== "object" || Array.isArray(props)) return null;
+  const out = {};
+  for (const key of Object.keys(props)) {
+    if (!Object.prototype.hasOwnProperty.call(schema, key)) return null;
+    const rule = schema[key];
+    if (!rule || typeof rule !== "object") return null;
+    const raw = props[key];
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+    const n = Math.round(raw);
+    if (n < rule.min || n > rule.max) return null;
+    out[key] = n;
+  }
+  for (const key of Object.keys(schema)) if (!(key in out)) return null;
+  return { e: event, d: day2, p: out };
+}
+__name(sanitizeRecord, "sanitizeRecord");
+function sanitizeBatch(body, today3 = serverDay()) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { ok: false, reason: "body" };
+  }
+  if (body.v !== 1) return { ok: false, reason: "version" };
+  if (typeof body.id !== "string" || !ID_RE.test(body.id)) {
+    return { ok: false, reason: "id" };
+  }
+  if (!Array.isArray(body.events)) return { ok: false, reason: "events" };
+  if (body.events.length === 0 || body.events.length > MAX_EVENTS) {
+    return { ok: false, reason: "events" };
+  }
+  for (const key of Object.keys(body)) {
+    if (key !== "v" && key !== "id" && key !== "events") return { ok: false, reason: "body" };
+  }
+  const events = [];
+  for (const record of body.events) {
+    const clean = sanitizeRecord(record, today3);
+    if (clean) events.push(clean);
+  }
+  return { ok: true, events };
+}
+__name(sanitizeBatch, "sanitizeBatch");
+var FUNNEL_LABEL = ["unknown", "demo", "paid"];
+var TIER_LABEL = ["unknown", "demo", "paid"];
+function effortBucket(effort) {
+  const e = typeof effort === "number" && Number.isFinite(effort) ? effort : 0;
+  if (e <= 2) return 0;
+  if (e <= 4) return 1;
+  if (e <= 6) return 2;
+  if (e <= 9) return 3;
+  return 4;
+}
+__name(effortBucket, "effortBucket");
+var REASON_LABEL = ["task_limit", "evolution", "report", "shop", "reveal_demo"];
+var PURCHASE_REASON_LABEL = [...REASON_LABEL.slice(0, 4), "onboarding"];
+var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
+var KIND_LABEL = ["task", "habit"];
+var RETENTION_LABEL = ["d1", "d7", "d30"];
+var OPEN_SOURCE_LABEL = ["direct", "push", "widget", "shortcut", "invite"];
+var BUCKET_LABEL = ["0", "1", "2", "3"];
+var WEEK_GOAL_PREFIX = "week_active";
+var NORTH_STAR_GOAL_DAYS = 4;
+function applyAggregate(agg, events) {
+  const out = { ...agg && typeof agg === "object" && !Array.isArray(agg) ? agg : {} };
+  const bump = /* @__PURE__ */ __name((key, by = 1) => {
+    const cur = typeof out[key] === "number" && Number.isFinite(out[key]) ? out[key] : 0;
+    out[key] = cur + by;
+  }, "bump");
+  for (const record of events) {
+    bump(record.e);
+    const p = record.p;
+    if (record.e === "onboarding_step") {
+      const funnel = FUNNEL_LABEL[p.funnel] ?? "unknown";
+      bump(`onboarding_step.${funnel}.${p.step}`);
+    }
+    const tier = p && typeof p.tier === "number" ? TIER_LABEL[p.tier] ?? "unknown" : null;
+    if (tier) bump(`${record.e}.${tier}`);
+    if (record.e === "day_active") {
+      bump("effort_sum", p.effort);
+      if (tier) bump(`effort_sum.${tier}`, p.effort);
+      bump(`effort_bucket.${effortBucket(p.effort)}`);
+      if (tier) bump(`effort_bucket.${tier}.${effortBucket(p.effort)}`);
+    }
+    if (record.e === "unlock_view") {
+      bump(`unlock_view.${REASON_LABEL[p.reason] ?? "unknown"}`);
+    }
+    if (record.e === "unlock_dismiss") {
+      bump(`unlock_dismiss.${REASON_LABEL[p.reason] ?? "unknown"}`);
+    }
+    if (record.e === "retained" && p) {
+      bump(`retained.${RETENTION_LABEL[p.bucket] ?? "unknown"}`);
+      if (tier) bump(`retained.${tier}.${RETENTION_LABEL[p.bucket] ?? "unknown"}`);
+    }
+    if (record.e === "app_open" && p) {
+      bump(`app_open.${OPEN_SOURCE_LABEL[p.source] ?? "unknown"}`);
+    }
+    if (record.e === "welcome_back" && p) {
+      bump(`welcome_back.${BUCKET_LABEL[p.days] ?? "unknown"}`);
+    }
+    if (record.e === "after_bad_day" && p) {
+      bump(`after_bad_day.${BUCKET_LABEL[p.gap] ?? "unknown"}`);
+    }
+    if (record.e === "reveal_seen" && p) {
+      const funnel = FUNNEL_LABEL[p.funnel] ?? "unknown";
+      bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? "yes" : "no"}`);
+      bump(`reveal_seen.duration.${p.duration}`);
+    }
+    if (record.e === "checkin_commit" && p) {
+      bump(`checkin_commit.focus_${p.focus_count}`);
+    }
+    if (record.e === "dungeon_run" && p) {
+      bump(`dungeon_run.floors_${p.floors}`);
+    }
+    if (record.e === "evolve" && p) {
+      bump(`evolve.level_${p.level}`);
+    }
+    if (record.e === "bond_level" && p) {
+      bump(`bond_level.level_${p.level}`);
+    }
+    if (record.e === "milestone" && p) {
+      bump(`milestone.days_${p.level}`);
+    }
+    if (record.e.startsWith("guild_") && p) {
+      const regra = EVENT_SCHEMA[record.e] || {};
+      for (const k of Object.keys(regra)) if (Object.prototype.hasOwnProperty.call(p, k)) bump(`${record.e}.${k}_${p[k]}`);
+    }
+    if (record.e === "purchase" && p) {
+      bump(`purchase.${PURCHASE_REASON_LABEL[p.reason] ?? "unknown"}`);
+    }
+    if (record.e === "demo_cap_hit") {
+      bump(`demo_cap_hit.${PATH_LABEL[p.path] ?? "unknown"}`);
+    }
+    if (record.e === "activity_create") {
+      const path = PATH_LABEL[p.path] ?? "unknown";
+      bump(`activity_create.${path}.${KIND_LABEL[p.kind] ?? "unknown"}`);
+    }
+    if (record.e === "sound_state" && p) {
+      bump(`sound_state.muted_${p.muted ? "yes" : "no"}`);
+      bump(`sound_state.music_${p.music ? "yes" : "no"}`);
+    }
+    if (record.e === "sound_off" && p) {
+      bump(`sound_off.age_${p.age}`);
+    }
+    if (record.e === "meal_ritual" && p) {
+      bump(`meal_ritual.meal_${p.meal}`);
+      bump(`meal_ritual.kind_${p.kind}`);
+    }
+    if (record.e === "week_active") {
+      bump(`week_active.goal_days.${p.goal_days}`);
+      if (tier) bump(`week_active.${tier}.goal_days.${p.goal_days}`);
+      if (Number.isInteger(p.active_days)) {
+        bump(`week_active.active_days.${p.active_days}`);
+        if (tier) bump(`week_active.${tier}.active_days.${p.active_days}`);
+      }
+    }
+  }
+  return out;
+}
+__name(applyAggregate, "applyAggregate");
+function summarizeNorthStar(totals) {
+  const t = totals && typeof totals === "object" ? totals : {};
+  const num = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
+  const read = /* @__PURE__ */ __name((prefix) => {
+    const active = num(prefix);
+    let onTarget = 0;
+    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num(`${prefix}.goal_days.${n}`);
+    return { weekly_active: active, on_target: onTarget, rate: active > 0 ? onTarget / active : null };
+  }, "read");
+  const by_tier = {};
+  for (const label of TIER_LABEL) by_tier[label] = read(`${WEEK_GOAL_PREFIX}.${label}`);
+  return { ...read(WEEK_GOAL_PREFIX), goal_days_threshold: NORTH_STAR_GOAL_DAYS, by_tier };
+}
+__name(summarizeNorthStar, "summarizeNorthStar");
+function groupByDay(events) {
+  const byDay = /* @__PURE__ */ new Map();
+  for (const record of events) {
+    if (!byDay.has(record.d)) byDay.set(record.d, []);
+    byDay.get(record.d).push(record);
+  }
+  return byDay;
+}
+__name(groupByDay, "groupByDay");
+async function onRequestOptions4() {
+  return new Response(null, { headers: CORS4 });
+}
+__name(onRequestOptions4, "onRequestOptions");
+var MAX_READ_DAYS = 92;
+var METRICS_KEY_HEADER = "X-Metrics-Key";
+function secretEquals(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i2 = 0; i2 < a.length; i2++) diff |= a.charCodeAt(i2) ^ b.charCodeAt(i2);
+  return diff === 0;
+}
+__name(secretEquals, "secretEquals");
+function dayRange(from, to, max2 = MAX_READ_DAYS) {
+  if (!DAY_RE.test(String(from)) || !DAY_RE.test(String(to))) return null;
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+  const count = Math.round((end - start) / 864e5) + 1;
+  if (count > max2) return null;
+  const days = [];
+  for (let i2 = 0; i2 < count; i2++) days.push(new Date(start + i2 * 864e5).toISOString().slice(0, 10));
+  return days;
+}
+__name(dayRange, "dayRange");
+function mergeTotals(byDay) {
+  const out = {};
+  for (const agg of Object.values(byDay || {})) {
+    if (!agg || typeof agg !== "object") continue;
+    for (const [k, v] of Object.entries(agg)) {
+      if (typeof v !== "number" || !Number.isFinite(v)) continue;
+      out[k] = (out[k] ?? 0) + v;
+    }
+  }
+  return out;
+}
+__name(mergeTotals, "mergeTotals");
+async function onRequestGet({ request, env }) {
+  if (!env?.METRICS_ADMIN_KEY) {
+    return Response.json({ error: "Not found" }, { status: 404, headers: CORS4 });
+  }
+  const gate = takeToken("metrics-read", clientKey(request), RATE);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  const given = request.headers.get(METRICS_KEY_HEADER);
+  if (!secretEquals(given ?? "", env.METRICS_ADMIN_KEY)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401, headers: CORS4 });
+  }
+  const url = new URL(request.url);
+  const from = url.searchParams.get("from");
+  const to = url.searchParams.get("to");
+  const days = dayRange(from, to);
+  if (!days) {
+    return Response.json(
+      { error: "Invalid range", max_days: MAX_READ_DAYS },
+      { status: 400, headers: CORS4 }
+    );
+  }
+  if (!kv(env)) {
+    return Response.json({ error: "Unavailable" }, { status: 503, headers: CORS4 });
+  }
+  const byDay = {};
+  for (const day2 of days) {
+    const agg = await kvOrThrow(env).get(METRICS_PREFIX + day2, { type: "json" }).catch(() => null);
+    if (agg && typeof agg === "object" && !Array.isArray(agg)) byDay[day2] = agg;
+  }
+  const totals = mergeTotals(byDay);
+  return Response.json({
+    ok: true,
+    from,
+    to,
+    days: byDay,
+    totals,
+    north_star: summarizeNorthStar(totals),
+    // Dito na própria resposta, para quem ler o JSON não inferir o que ele não
+    // diz: o agregado é por dia de EVENTO, nunca por coorte de instalação.
+    // "Conversão em N dias" e qualquer série por usuário NÃO são calculáveis a
+    // partir daqui. `retained.d1/d7/d30` EXISTE (marco cruzado, contado no
+    // aparelho e emitido 1× por marco — `applyAggregate`), então a nota
+    // antiga que listava "D7" como ilegível estava errada e contradizia o
+    // próprio JSON que a carregava (QA rodada 1, review 07). O que continua
+    // ilegível é a retenção CLÁSSICA por coorte: `d7` aqui é "voltou em algum
+    // dia de D7–D29 desde a primeira carga", não "% da coorte de instalação
+    // viva no 7º dia".
+    notes: {
+      cohort: "nao existe: agregado por dia de evento, sem identidade nem dia de instalacao",
+      retained: "retained.d1/d7/d30 = maior marco cruzado por pessoa, emitido 1x na vida (d7 = voltou em algum dia de D7-D29); nao e retencao por coorte",
+      unreadable: ["retencao por coorte de instalacao", "conversao em N dias", "qualquer serie por usuario"]
+    }
+  }, { headers: CORS4 });
+}
+__name(onRequestGet, "onRequestGet");
+async function onRequest2({ request, env }) {
+  if (request.method === "GET") return onRequestGet({ request, env });
+  if (request.method !== "POST") {
+    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS4 });
+  }
+  const gate = takeToken("metrics", clientKey(request), RATE);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  const raw = await request.text().catch(() => null);
+  if (raw === null || raw.length > MAX_BODY_BYTES) {
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS4 });
+  }
+  let body = null;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS4 });
+  }
+  const result = sanitizeBatch(body);
+  if (!result.ok) {
+    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS4 });
+  }
+  if (result.events.length === 0) {
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS4 });
+  }
+  if (!kv(env)) {
+    console.warn("metrics: KV de saves n\xE3o vinculada \u2014 agregado descartado");
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS4 });
+  }
+  let accepted = 0;
+  for (const [day2, records] of groupByDay(result.events)) {
+    const key = METRICS_PREFIX + day2;
+    try {
+      const current = await kvOrThrow(env).get(key, { type: "json" }).catch(() => null);
+      const next = applyAggregate(current, records);
+      await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      accepted += records.length;
+    } catch (err2) {
+      console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err2?.name ?? err2) });
+    }
+  }
+  return Response.json({ ok: true, accepted }, { headers: CORS4 });
+}
+__name(onRequest2, "onRequest");
 
 // api/_soulXP.js
 var STAGE_ORDER = ["rookie", "champion", "ultimate", "mega", "ultra"];
@@ -4811,7 +5235,7 @@ var HIT_UNIT_H0 = 10;
 var PVP_HP_SCALE = 1.7;
 var EPS = 1e-9;
 var DRAW_EPS = 1e-6;
-var MAX_EVENTS = 2e5;
+var MAX_EVENTS2 = 2e5;
 function windowSeconds(level) {
   const d = combatantAt(level, REFERENCE_BUILDS.balanced);
   return MIRROR_SECONDS * attacksPerWindow(d.spd) / hitsToKnockOut(d, d);
@@ -4955,7 +5379,7 @@ function* fightSteps(a, b, opts) {
       energyB: F[1].en
     };
   }, "finish");
-  for (let g = 0; g < MAX_EVENTS; g++) {
+  for (let g = 0; g < MAX_EVENTS2; g++) {
     let tt = Infinity;
     for (const e of timed) if (e.t < tt) tt = e.t;
     let tEn = Infinity;
@@ -5010,7 +5434,7 @@ function* fightSteps(a, b, opts) {
     const over = opts.stopAtFirstKo ? F[0].dead < Infinity || F[1].dead < Infinity : F[0].dead < Infinity && F[1].dead < Infinity;
     if (over) return finish();
   }
-  throw new Error(`combate: fight did not end within ${MAX_EVENTS} events (seed ${seed})`);
+  throw new Error(`combate: fight did not end within ${MAX_EVENTS2} events (seed ${seed})`);
 }
 __name(fightSteps, "fightSteps");
 function safe2(n) {
@@ -6342,7 +6766,7 @@ async function vistaDoMisterio(env, g, eu, hoje) {
 __name(vistaDoMisterio, "vistaDoMisterio");
 
 // api/guild.js
-var CORS4 = {
+var CORS5 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
@@ -6388,16 +6812,16 @@ var GUILD_ACTIONS = Object.freeze({
   guildNewCode: "POST"
 });
 var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
-async function onRequestOptions4() {
-  return new Response(null, { headers: CORS4 });
+async function onRequestOptions5() {
+  return new Response(null, { headers: CORS5 });
 }
-__name(onRequestOptions4, "onRequestOptions");
-async function onRequest2(context) {
+__name(onRequestOptions5, "onRequestOptions");
+async function onRequest3(context) {
   const gate = takeToken("guild", clientKey(context.request), limiteDaGuilda());
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS5);
   return handleGuild(context);
 }
-__name(onRequest2, "onRequest");
+__name(onRequest3, "onRequest");
 async function reciboDoResgate(save, week) {
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-guild-claim|${save}|${week}`)));
   return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
@@ -6512,7 +6936,7 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
 }
 __name(vistaDaGuilda, "vistaDaGuilda");
 async function handleGuild({ request, env }) {
-  const json11 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
+  const json11 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
   if (!kv(env)) return json11({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const pedida = url.searchParams.get("action") ?? "";
@@ -6951,7 +7375,7 @@ function frameIdOrNull(raw) {
 __name(frameIdOrNull, "frameIdOrNull");
 
 // api/community.js
-var CORS5 = {
+var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` é obrigatório nas 6 ações que passam por denyUnlessOwner.
@@ -6965,7 +7389,7 @@ var attrFinito = /* @__PURE__ */ __name((v) => {
 }, "attrFinito");
 var MATCHES_PER_DAY = 5;
 var CLOSED_SEASON_TTL = 86400 * 400;
-var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
+var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
 var duelLocks = /* @__PURE__ */ new Map();
 async function withDuelLock(key, fn) {
   const prev = duelLocks.get(key) || Promise.resolve();
@@ -7054,11 +7478,11 @@ async function listPrefix2(env, prefix, limit = 100) {
   return out;
 }
 __name(listPrefix2, "listPrefix");
-async function onRequestOptions5() {
-  return new Response(null, { headers: CORS5 });
+async function onRequestOptions6() {
+  return new Response(null, { headers: CORS6 });
 }
-__name(onRequestOptions5, "onRequestOptions");
-async function onRequest3(context) {
+__name(onRequestOptions6, "onRequestOptions");
+async function onRequest4(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "";
@@ -7076,7 +7500,7 @@ async function onRequest3(context) {
   );
   if (!gate.ok) {
     console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS5);
+    return tooManyRequests(gate.retryAfter, CORS6);
   }
   if (hit) return hit;
   const res = await handleCommunity(context);
@@ -7091,7 +7515,7 @@ async function onRequest3(context) {
   }
   return res;
 }
-__name(onRequest3, "onRequest");
+__name(onRequest4, "onRequest");
 async function handleCommunity({ request, env }) {
   if (!kv(env)) return json3({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
@@ -7451,7 +7875,9 @@ async function handleCommunity({ request, env }) {
       rows.push({
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
-        id: p ? await ensurePid(env, p) : null,
+        // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
+        // autenticado (meId passou por denyUnlessOwner) migra o pid legado.
+        id: p ? meId && ownerSave === meId ? await ensurePid(env, p) : await pidSoLeitura(p) : null,
         name: p?.name || "An\xF4nimo",
         petName: p?.petName || "",
         stage: p?.stage || "rookie",
@@ -7477,7 +7903,7 @@ async function handleCommunity({ request, env }) {
   }
   if (action === "closeSeason" && method === "POST") {
     const { season, adminKey } = body;
-    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json3({ error: "unauthorized" }, 401);
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(adminKey, env.SEASON_ADMIN_KEY)) return json3({ error: "unauthorized" }, 401);
     if (!/^\d{4}-\d{2}$/.test(season || "")) return json3({ error: "invalid season" }, 400);
     const closedKey = `closed:${season}`;
     if (await kvOrThrow(env).get(closedKey)) {
@@ -7550,35 +7976,62 @@ async function handleCommunity({ request, env }) {
     await putProfile(env, id, me);
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
-    gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now() });
+    gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json3({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await kvOrThrow(env).get(`gifts:${id}`);
-    const gifts = raw ? JSON.parse(raw) : [];
-    if (url.searchParams.get("claim") === "1" && gifts.length) {
+    const comGid = /* @__PURE__ */ __name((lista) => (Array.isArray(lista) ? lista : []).filter((g) => g && typeof g === "object").map((g, i2) => typeof g.gid === "string" && g.gid ? g : { ...g, gid: `${g.at}:${g.from}:${g.bits}:${i2}` }), "comGid");
+    const lerLista = /* @__PURE__ */ __name(async () => {
+      const raw = await kvOrThrow(env).get(`gifts:${id}`);
+      if (!raw) return [];
+      try {
+        return comGid(JSON.parse(raw));
+      } catch {
+        return [];
+      }
+    }, "lerLista");
+    const gifts = await lerLista();
+    if (url.searchParams.get("claim") !== "1" || !gifts.length) return json3({ gifts });
+    let entregues = gifts;
+    if (env.DB) {
+      entregues = [];
+      const agora = Date.now();
+      for (const g of gifts) {
+        try {
+          await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(`gift:${id}:${g.gid}`, id, agora, agora + 86400 * 90 * 1e3).run();
+          entregues.push(g);
+        } catch (err2) {
+          if (!ehViolacaoDeChave(err2)) throw err2;
+        }
+      }
+    }
+    const idsEntregues = new Set(entregues.map((g) => g.gid));
+    const restantes = (await lerLista()).filter((g) => !idsEntregues.has(g.gid));
+    if (restantes.length) {
+      await kvOrThrow(env).put(`gifts:${id}`, JSON.stringify(restantes.slice(-50)), { expirationTtl: 86400 * 60 });
+    } else {
       await kvOrThrow(env).delete(`gifts:${id}`);
     }
-    return json3({ gifts });
+    return json3({ gifts: entregues });
   }
   return json3({ error: "unknown action" }, 400);
 }
 __name(handleCommunity, "handleCommunity");
 
 // api/config.js
-var CORS6 = {
+var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions6() {
-  return new Response(null, { headers: CORS6 });
+async function onRequestOptions7() {
+  return new Response(null, { headers: CORS7 });
 }
-__name(onRequestOptions6, "onRequestOptions");
-async function onRequestGet({ env }) {
+__name(onRequestOptions7, "onRequestOptions");
+async function onRequestGet2({ env }) {
   return Response.json({
     // true = todas as rotas de save/dinheiro exigem ID token do Firebase.
     authRequired: !!env.FIREBASE_PROJECT_ID,
@@ -7592,421 +8045,10 @@ async function onRequestGet({ env }) {
     billingDisabled: isBillingDisabled(env),
     chatDisabled: isChatDisabled(env)
   }, {
-    headers: { ...CORS6, "Cache-Control": "public, max-age=300" }
+    headers: { ...CORS7, "Cache-Control": "public, max-age=300" }
   });
 }
-__name(onRequestGet, "onRequestGet");
-
-// api/metrics.js
-var CORS7 = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Metrics-Key"
-};
-var METRICS_PREFIX = "m:";
-var EVENT_SCHEMA = {
-  install: null,
-  onboarding_step: { step: { min: 0, max: 50 }, funnel: { min: 0, max: 2 } },
-  demo_pick: null,
-  first_task_done: { tier: { min: 0, max: 2 } },
-  day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
-  // WP0.9 — espelho de `src/utils/telemetry.ts` (há teste de paridade).
-  purchase: { tier: { min: 0, max: 2 }, reason: { min: 0, max: 4 } },
-  demo_cap_hit: { path: { min: 0, max: 4 } },
-  activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
-  week_active: {
-    active_days: { min: 1, max: 7 },
-    goal_days: { min: 0, max: 7 },
-    tier: { min: 0, max: 2 }
-  },
-  // Rodada 2/3 do PLANO-MELHORIAS (WP0.5). ESPELHO de src/utils/telemetry.ts —
-  // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
-  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 }, duration: { min: 0, max: 3 } },
-  checkin_commit: { focus_count: { min: 0, max: 3 } },
-  unlock_dismiss: { reason: { min: 0, max: 4 } },
-  haunted_done: null,
-  checkin_shown: null,
-  milestone: { level: { min: 1, max: 3 } },
-  shield_used: null,
-  welcome_back: { days: { min: 0, max: 3 } },
-  evolve: { level: { min: 1, max: 4 } },
-  dungeon_run: { floors: { min: 1, max: 5 } },
-  bond_level: { level: { min: 1, max: 30 } },
-  after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
-  app_open: { source: { min: 0, max: 4 } },
-  // 4 = invite (?src=convite, E0 — 22/09/2026)
-  push_optout: null,
-  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
-  // som-01 (SQUAD-SOM) — ESPELHO de src/utils/telemetry.ts. Sem `tier` de
-  // propósito: a decisão do eixo sonoro não se parte por demo/pago.
-  // `sound_state` é a fotografia diária (o cliente se cala quando não consegue
-  // ler a preferência: evento faltando é honesto, evento no balde errado não);
-  // `sound_off` é a transição por gesto, com `age` em FAIXA e nunca data.
-  sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
-  sound_off: { age: { min: 0, max: 2 } },
-  // Guilda (WPG-7, `PLANO-GUILDA.md` §10.8) — ESPELHO de src/utils/telemetry.ts.
-  // Sem id de guilda, sem pid, sem saveId: só inteiros em faixa. `size` é o
-  // tamanho da roda (nunca quem), `weeks` a FAIXA de permanência (0..3),
-  // `kind` 0 = fio (1 reservado à semente, G3), `outcome` 0 = rodada, 1 =
-  // dissipada vista, 2 = recuou vista, `level` o estágio do Bosque visto.
-  guild_create: null,
-  guild_join: { size: { min: 2, max: 12 } },
-  guild_leave: { size: { min: 0, max: 11 }, weeks: { min: 0, max: 3 } },
-  guild_thread: { kind: { min: 0, max: 1 } },
-  guild_raid: { outcome: { min: 0, max: 2 } },
-  guild_stage: { level: { min: 1, max: 5 } },
-  // Ritmo das refeições — ESPELHO de src/utils/telemetry.ts (há teste de paridade).
-  meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } }
-};
-var MAX_BODY_BYTES = 16 * 1024;
-var MAX_EVENTS2 = 100;
-var MAX_DAY_SKEW_DAYS = 7;
-var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
-var ID_RE = /^[0-9a-f]{32}$/;
-var RATE = { limit: 60, windowMs: 6e4 };
-function serverDay(now = /* @__PURE__ */ new Date()) {
-  return now.toISOString().slice(0, 10);
-}
-__name(serverDay, "serverDay");
-function dayDistance(a, b) {
-  const ta = Date.parse(`${a}T00:00:00Z`);
-  const tb = Date.parse(`${b}T00:00:00Z`);
-  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return NaN;
-  return Math.abs(ta - tb) / 864e5;
-}
-__name(dayDistance, "dayDistance");
-function sanitizeRecord(record, today3) {
-  if (!record || typeof record !== "object" || Array.isArray(record)) return null;
-  const event = record.e;
-  if (typeof event !== "string") return null;
-  if (!Object.prototype.hasOwnProperty.call(EVENT_SCHEMA, event)) return null;
-  const schema = EVENT_SCHEMA[event];
-  const day2 = record.d;
-  if (typeof day2 !== "string" || !DAY_RE.test(day2)) return null;
-  const skew = dayDistance(day2, today3);
-  if (!Number.isFinite(skew) || skew > MAX_DAY_SKEW_DAYS) return null;
-  for (const key of Object.keys(record)) {
-    if (key !== "e" && key !== "d" && key !== "p") return null;
-  }
-  const props = record.p;
-  if (!schema) {
-    if (props !== void 0) return null;
-    return { e: event, d: day2 };
-  }
-  if (!props || typeof props !== "object" || Array.isArray(props)) return null;
-  const out = {};
-  for (const key of Object.keys(props)) {
-    if (!Object.prototype.hasOwnProperty.call(schema, key)) return null;
-    const rule = schema[key];
-    if (!rule || typeof rule !== "object") return null;
-    const raw = props[key];
-    if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
-    const n = Math.round(raw);
-    if (n < rule.min || n > rule.max) return null;
-    out[key] = n;
-  }
-  for (const key of Object.keys(schema)) if (!(key in out)) return null;
-  return { e: event, d: day2, p: out };
-}
-__name(sanitizeRecord, "sanitizeRecord");
-function sanitizeBatch(body, today3 = serverDay()) {
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return { ok: false, reason: "body" };
-  }
-  if (body.v !== 1) return { ok: false, reason: "version" };
-  if (typeof body.id !== "string" || !ID_RE.test(body.id)) {
-    return { ok: false, reason: "id" };
-  }
-  if (!Array.isArray(body.events)) return { ok: false, reason: "events" };
-  if (body.events.length === 0 || body.events.length > MAX_EVENTS2) {
-    return { ok: false, reason: "events" };
-  }
-  for (const key of Object.keys(body)) {
-    if (key !== "v" && key !== "id" && key !== "events") return { ok: false, reason: "body" };
-  }
-  const events = [];
-  for (const record of body.events) {
-    const clean = sanitizeRecord(record, today3);
-    if (clean) events.push(clean);
-  }
-  return { ok: true, events };
-}
-__name(sanitizeBatch, "sanitizeBatch");
-var FUNNEL_LABEL = ["unknown", "demo", "paid"];
-var TIER_LABEL = ["unknown", "demo", "paid"];
-function effortBucket(effort) {
-  const e = typeof effort === "number" && Number.isFinite(effort) ? effort : 0;
-  if (e <= 2) return 0;
-  if (e <= 4) return 1;
-  if (e <= 6) return 2;
-  if (e <= 9) return 3;
-  return 4;
-}
-__name(effortBucket, "effortBucket");
-var REASON_LABEL = ["task_limit", "evolution", "report", "shop", "reveal_demo"];
-var PURCHASE_REASON_LABEL = [...REASON_LABEL.slice(0, 4), "onboarding"];
-var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
-var KIND_LABEL = ["task", "habit"];
-var RETENTION_LABEL = ["d1", "d7", "d30"];
-var OPEN_SOURCE_LABEL = ["direct", "push", "widget", "shortcut", "invite"];
-var BUCKET_LABEL = ["0", "1", "2", "3"];
-var WEEK_GOAL_PREFIX = "week_active";
-var NORTH_STAR_GOAL_DAYS = 4;
-function applyAggregate(agg, events) {
-  const out = { ...agg && typeof agg === "object" && !Array.isArray(agg) ? agg : {} };
-  const bump = /* @__PURE__ */ __name((key, by = 1) => {
-    const cur = typeof out[key] === "number" && Number.isFinite(out[key]) ? out[key] : 0;
-    out[key] = cur + by;
-  }, "bump");
-  for (const record of events) {
-    bump(record.e);
-    const p = record.p;
-    if (record.e === "onboarding_step") {
-      const funnel = FUNNEL_LABEL[p.funnel] ?? "unknown";
-      bump(`onboarding_step.${funnel}.${p.step}`);
-    }
-    const tier = p && typeof p.tier === "number" ? TIER_LABEL[p.tier] ?? "unknown" : null;
-    if (tier) bump(`${record.e}.${tier}`);
-    if (record.e === "day_active") {
-      bump("effort_sum", p.effort);
-      if (tier) bump(`effort_sum.${tier}`, p.effort);
-      bump(`effort_bucket.${effortBucket(p.effort)}`);
-      if (tier) bump(`effort_bucket.${tier}.${effortBucket(p.effort)}`);
-    }
-    if (record.e === "unlock_view") {
-      bump(`unlock_view.${REASON_LABEL[p.reason] ?? "unknown"}`);
-    }
-    if (record.e === "unlock_dismiss") {
-      bump(`unlock_dismiss.${REASON_LABEL[p.reason] ?? "unknown"}`);
-    }
-    if (record.e === "retained" && p) {
-      bump(`retained.${RETENTION_LABEL[p.bucket] ?? "unknown"}`);
-      if (tier) bump(`retained.${tier}.${RETENTION_LABEL[p.bucket] ?? "unknown"}`);
-    }
-    if (record.e === "app_open" && p) {
-      bump(`app_open.${OPEN_SOURCE_LABEL[p.source] ?? "unknown"}`);
-    }
-    if (record.e === "welcome_back" && p) {
-      bump(`welcome_back.${BUCKET_LABEL[p.days] ?? "unknown"}`);
-    }
-    if (record.e === "after_bad_day" && p) {
-      bump(`after_bad_day.${BUCKET_LABEL[p.gap] ?? "unknown"}`);
-    }
-    if (record.e === "reveal_seen" && p) {
-      const funnel = FUNNEL_LABEL[p.funnel] ?? "unknown";
-      bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? "yes" : "no"}`);
-      bump(`reveal_seen.duration.${p.duration}`);
-    }
-    if (record.e === "checkin_commit" && p) {
-      bump(`checkin_commit.focus_${p.focus_count}`);
-    }
-    if (record.e === "dungeon_run" && p) {
-      bump(`dungeon_run.floors_${p.floors}`);
-    }
-    if (record.e === "evolve" && p) {
-      bump(`evolve.level_${p.level}`);
-    }
-    if (record.e === "bond_level" && p) {
-      bump(`bond_level.level_${p.level}`);
-    }
-    if (record.e === "milestone" && p) {
-      bump(`milestone.days_${p.level}`);
-    }
-    if (record.e.startsWith("guild_") && p) {
-      const regra = EVENT_SCHEMA[record.e] || {};
-      for (const k of Object.keys(regra)) if (Object.prototype.hasOwnProperty.call(p, k)) bump(`${record.e}.${k}_${p[k]}`);
-    }
-    if (record.e === "purchase" && p) {
-      bump(`purchase.${PURCHASE_REASON_LABEL[p.reason] ?? "unknown"}`);
-    }
-    if (record.e === "demo_cap_hit") {
-      bump(`demo_cap_hit.${PATH_LABEL[p.path] ?? "unknown"}`);
-    }
-    if (record.e === "activity_create") {
-      const path = PATH_LABEL[p.path] ?? "unknown";
-      bump(`activity_create.${path}.${KIND_LABEL[p.kind] ?? "unknown"}`);
-    }
-    if (record.e === "sound_state" && p) {
-      bump(`sound_state.muted_${p.muted ? "yes" : "no"}`);
-      bump(`sound_state.music_${p.music ? "yes" : "no"}`);
-    }
-    if (record.e === "sound_off" && p) {
-      bump(`sound_off.age_${p.age}`);
-    }
-    if (record.e === "meal_ritual" && p) {
-      bump(`meal_ritual.meal_${p.meal}`);
-      bump(`meal_ritual.kind_${p.kind}`);
-    }
-    if (record.e === "week_active") {
-      bump(`week_active.goal_days.${p.goal_days}`);
-      if (tier) bump(`week_active.${tier}.goal_days.${p.goal_days}`);
-      if (Number.isInteger(p.active_days)) {
-        bump(`week_active.active_days.${p.active_days}`);
-        if (tier) bump(`week_active.${tier}.active_days.${p.active_days}`);
-      }
-    }
-  }
-  return out;
-}
-__name(applyAggregate, "applyAggregate");
-function summarizeNorthStar(totals) {
-  const t = totals && typeof totals === "object" ? totals : {};
-  const num = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
-  const read = /* @__PURE__ */ __name((prefix) => {
-    const active = num(prefix);
-    let onTarget = 0;
-    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num(`${prefix}.goal_days.${n}`);
-    return { weekly_active: active, on_target: onTarget, rate: active > 0 ? onTarget / active : null };
-  }, "read");
-  const by_tier = {};
-  for (const label of TIER_LABEL) by_tier[label] = read(`${WEEK_GOAL_PREFIX}.${label}`);
-  return { ...read(WEEK_GOAL_PREFIX), goal_days_threshold: NORTH_STAR_GOAL_DAYS, by_tier };
-}
-__name(summarizeNorthStar, "summarizeNorthStar");
-function groupByDay(events) {
-  const byDay = /* @__PURE__ */ new Map();
-  for (const record of events) {
-    if (!byDay.has(record.d)) byDay.set(record.d, []);
-    byDay.get(record.d).push(record);
-  }
-  return byDay;
-}
-__name(groupByDay, "groupByDay");
-async function onRequestOptions7() {
-  return new Response(null, { headers: CORS7 });
-}
-__name(onRequestOptions7, "onRequestOptions");
-var MAX_READ_DAYS = 92;
-var METRICS_KEY_HEADER = "X-Metrics-Key";
-function secretEquals(a, b) {
-  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
-  let diff = 0;
-  for (let i2 = 0; i2 < a.length; i2++) diff |= a.charCodeAt(i2) ^ b.charCodeAt(i2);
-  return diff === 0;
-}
-__name(secretEquals, "secretEquals");
-function dayRange(from, to, max2 = MAX_READ_DAYS) {
-  if (!DAY_RE.test(String(from)) || !DAY_RE.test(String(to))) return null;
-  const start = Date.parse(`${from}T00:00:00Z`);
-  const end = Date.parse(`${to}T00:00:00Z`);
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
-  const count = Math.round((end - start) / 864e5) + 1;
-  if (count > max2) return null;
-  const days = [];
-  for (let i2 = 0; i2 < count; i2++) days.push(new Date(start + i2 * 864e5).toISOString().slice(0, 10));
-  return days;
-}
-__name(dayRange, "dayRange");
-function mergeTotals(byDay) {
-  const out = {};
-  for (const agg of Object.values(byDay || {})) {
-    if (!agg || typeof agg !== "object") continue;
-    for (const [k, v] of Object.entries(agg)) {
-      if (typeof v !== "number" || !Number.isFinite(v)) continue;
-      out[k] = (out[k] ?? 0) + v;
-    }
-  }
-  return out;
-}
-__name(mergeTotals, "mergeTotals");
-async function onRequestGet2({ request, env }) {
-  if (!env?.METRICS_ADMIN_KEY) {
-    return Response.json({ error: "Not found" }, { status: 404, headers: CORS7 });
-  }
-  const gate = takeToken("metrics-read", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS7);
-  const given = request.headers.get(METRICS_KEY_HEADER);
-  if (!secretEquals(given ?? "", env.METRICS_ADMIN_KEY)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401, headers: CORS7 });
-  }
-  const url = new URL(request.url);
-  const from = url.searchParams.get("from");
-  const to = url.searchParams.get("to");
-  const days = dayRange(from, to);
-  if (!days) {
-    return Response.json(
-      { error: "Invalid range", max_days: MAX_READ_DAYS },
-      { status: 400, headers: CORS7 }
-    );
-  }
-  if (!kv(env)) {
-    return Response.json({ error: "Unavailable" }, { status: 503, headers: CORS7 });
-  }
-  const byDay = {};
-  for (const day2 of days) {
-    const agg = await kvOrThrow(env).get(METRICS_PREFIX + day2, { type: "json" }).catch(() => null);
-    if (agg && typeof agg === "object" && !Array.isArray(agg)) byDay[day2] = agg;
-  }
-  const totals = mergeTotals(byDay);
-  return Response.json({
-    ok: true,
-    from,
-    to,
-    days: byDay,
-    totals,
-    north_star: summarizeNorthStar(totals),
-    // Dito na própria resposta, para quem ler o JSON não inferir o que ele não
-    // diz: o agregado é por dia de EVENTO, nunca por coorte de instalação.
-    // "Conversão em N dias" e qualquer série por usuário NÃO são calculáveis a
-    // partir daqui. `retained.d1/d7/d30` EXISTE (marco cruzado, contado no
-    // aparelho e emitido 1× por marco — `applyAggregate`), então a nota
-    // antiga que listava "D7" como ilegível estava errada e contradizia o
-    // próprio JSON que a carregava (QA rodada 1, review 07). O que continua
-    // ilegível é a retenção CLÁSSICA por coorte: `d7` aqui é "voltou em algum
-    // dia de D7–D29 desde a primeira carga", não "% da coorte de instalação
-    // viva no 7º dia".
-    notes: {
-      cohort: "nao existe: agregado por dia de evento, sem identidade nem dia de instalacao",
-      retained: "retained.d1/d7/d30 = maior marco cruzado por pessoa, emitido 1x na vida (d7 = voltou em algum dia de D7-D29); nao e retencao por coorte",
-      unreadable: ["retencao por coorte de instalacao", "conversao em N dias", "qualquer serie por usuario"]
-    }
-  }, { headers: CORS7 });
-}
 __name(onRequestGet2, "onRequestGet");
-async function onRequest4({ request, env }) {
-  if (request.method === "GET") return onRequestGet2({ request, env });
-  if (request.method !== "POST") {
-    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS7 });
-  }
-  const gate = takeToken("metrics", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS7);
-  const raw = await request.text().catch(() => null);
-  if (raw === null || raw.length > MAX_BODY_BYTES) {
-    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS7 });
-  }
-  let body = null;
-  try {
-    body = JSON.parse(raw);
-  } catch {
-    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS7 });
-  }
-  const result = sanitizeBatch(body);
-  if (!result.ok) {
-    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS7 });
-  }
-  if (result.events.length === 0) {
-    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS7 });
-  }
-  if (!kv(env)) {
-    console.warn("metrics: KV de saves n\xE3o vinculada \u2014 agregado descartado");
-    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS7 });
-  }
-  let accepted = 0;
-  for (const [day2, records] of groupByDay(result.events)) {
-    const key = METRICS_PREFIX + day2;
-    try {
-      const current = await kvOrThrow(env).get(key, { type: "json" }).catch(() => null);
-      const next = applyAggregate(current, records);
-      await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
-      accepted += records.length;
-    } catch (err2) {
-      console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err2?.name ?? err2) });
-    }
-  }
-  return Response.json({ ok: true, accepted }, { headers: CORS7 });
-}
-__name(onRequest4, "onRequest");
 
 // api/crash.js
 var FLUSH_EVERY_MS = 60 * 60 * 1e3;
@@ -9911,7 +9953,8 @@ async function onRequestPost5({ request, env }) {
       if (!canRetry || !isRefusal(err2)) {
         if (!isRefusal(err2)) await gate.release(err2.notConfigured ? "provedor n\xE3o configurado" : `falha do provedor: ${err2.message}`);
         if (err2.notConfigured) {
-          return Response.json({ error: err2.message }, { status: 503, headers: CORS10 });
+          console.warn("sprite: provedor n\xE3o configurado:", err2.message);
+          return Response.json({ error: "sprite-provider-not-configured" }, { status: 503, headers: CORS10 });
         }
         throw err2;
       }
@@ -9925,7 +9968,7 @@ async function onRequestPost5({ request, env }) {
       console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err2.message);
       try {
         const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-        return await responder({ ...out, usedFallbackPrompt: true, refusal: err2.message });
+        return await responder({ ...out, usedFallbackPrompt: true, refusal: "content-refused" });
       } catch (err22) {
         if (!isRefusal(err22)) await extra.release(`falha do provedor na refeitura: ${err22.message}`);
         throw err22;
@@ -10942,7 +10985,7 @@ __name(onRequestOptions13, "onRequestOptions");
 async function onRequestPost9({ request, env }) {
   try {
     const body = await request.json().catch(() => null) ?? {};
-    const goalMin = minimizeForAi((body.goalText || "").toString().trim(), 300);
+    const goalMin = minimizeForAi(String(body.goalText || "").slice(0, 2e3).trim(), 300);
     const goalText = goalMin.text;
     if (redactionCount(goalMin.redactions) || goalMin.truncated) {
       console.log("[suggest-tasks] entrada minimizada", {
@@ -11171,7 +11214,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-NPHTld/functionsRoutes-0.3209765096687971.mjs
+// ../.wrangler/tmp/pages-Go1OZh/functionsRoutes-0.8347863952492759.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11213,21 +11256,21 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions5]
+    modules: [onRequestOptions6]
   },
   {
     routePath: "/api/config",
     mountPath: "/api",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet]
+    modules: [onRequestGet2]
   },
   {
     routePath: "/api/config",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions6]
+    modules: [onRequestOptions7]
   },
   {
     routePath: "/api/crash",
@@ -11297,21 +11340,21 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions4]
+    modules: [onRequestOptions5]
   },
   {
     routePath: "/api/metrics",
     mountPath: "/api",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet2]
+    modules: [onRequestGet]
   },
   {
     routePath: "/api/metrics",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions7]
+    modules: [onRequestOptions4]
   },
   {
     routePath: "/api/rtdn",
@@ -11416,7 +11459,7 @@ var routes = [
     mountPath: "/api",
     method: "",
     middlewares: [],
-    modules: [onRequest3]
+    modules: [onRequest4]
   },
   {
     routePath: "/api/crash",
@@ -11430,14 +11473,14 @@ var routes = [
     mountPath: "/api",
     method: "",
     middlewares: [],
-    modules: [onRequest2]
+    modules: [onRequest3]
   },
   {
     routePath: "/api/metrics",
     mountPath: "/api",
     method: "",
     middlewares: [],
-    modules: [onRequest4]
+    modules: [onRequest2]
   },
   {
     routePath: "/api/save",
