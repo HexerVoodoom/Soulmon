@@ -366,6 +366,11 @@ export function habitCountsOn(
     if (r.done.includes(dayKeyOf(date))) return true;
     return weeklyProgress(r, s, date).done < s.target;
   }
+  // "A cada N dias" contado da CONCLUSÃO (o padrão): feito HOJE ele deixa de ser
+  // "devido" (a próxima é daqui a N dias), então sem este ramo o hábito SAÍA do
+  // feito/total no próprio dia da conclusão e um hábito único nunca fechava o dia
+  // (QA L02-01/L02-05). É o mesmo ramo do `timesPerWeek`: feito hoje, conta hoje.
+  if (r.done.includes(dayKeyOf(date))) return true;
   return isDueOn(s, r, date);
 }
 

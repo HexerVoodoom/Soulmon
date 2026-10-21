@@ -4,6 +4,7 @@ import {
   steadyWindow,
   dayKeyOf,
   isDueOn,
+  habitCountsOn,
   weeklyProgress,
   constancy,
   habitTier,
@@ -388,5 +389,27 @@ describe('WP2.2 — a aura de janela pura é estética, e só', () => {
     steadyWindow(r, HOJE);
     expect(r.shields).toBe(antesShields);
     expect(constancy(r, HOJE)).toEqual(antesConst);
+  });
+});
+
+describe('habitCountsOn — "a cada N dias" da conclusão (QA L02-01)', () => {
+  const schedule = { kind: 'everyNDays', n: 3, from: 'completion' } as const;
+
+  it('feito HOJE o hábito continua no feito/total do dia (antes sumia no dia da conclusão)', () => {
+    const feito = completeHabit(emptyRhythm(), dayKeyOf(TODAY));
+    expect(isDueOn(schedule, feito, TODAY)).toBe(false); // não é "devido": a próxima é em 3 dias
+    expect(habitCountsOn({ schedule }, feito, TODAY)).toBe(true);
+  });
+
+  it('nos dias seguintes (antes de N) não conta; no dia N volta a contar', () => {
+    const feito = completeHabit(emptyRhythm(), dayKeyOf(TODAY));
+    const dia = (d: number) => new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + d, 12);
+    expect(habitCountsOn({ schedule }, feito, dia(1))).toBe(false);
+    expect(habitCountsOn({ schedule }, feito, dia(2))).toBe(false);
+    expect(habitCountsOn({ schedule }, feito, dia(3))).toBe(true);
+  });
+
+  it('nunca feito: conta (devido hoje), como antes', () => {
+    expect(habitCountsOn({ schedule }, emptyRhythm(), TODAY)).toBe(true);
   });
 });
