@@ -69,7 +69,7 @@ describe('lotes novos (29/09/2026)', () => {
       ['arena', 'duelo', 'Naia'], ['hall', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
       ['jogos', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['laboratorio', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
-      ['exploracao', 'passeio', 'Mirk'],
+      ['exploracao', 'passeio', 'Lisel'],
     ];
     const artes = lotes.map(([a, l]) => lotNpcArt(a, l));
     expect(new Set(artes).size).toBe(lotes.length);

@@ -172,11 +172,10 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Aqui nada precisa ser entregue. Só a maré indo e vindo.',
     lineEn: 'Nothing needs delivering here. Just the tide coming and going.',
   },
-  // 🧭 O Passeio: Mirk (nome novo aprovado pelo dono em 30/09/2026 (era Brume; renomeada para Mirk em 21/10/2026), espírito
-  // do charco). Convite, nunca cobrança — e nenhuma palavra sobre o que as
+  // 🧭 O Passeio: Lisel, a mariposa arquivista (22/10/2026; antes Mirk, o espírito do charco, antes Brume). Convite, nunca cobrança — e nenhuma palavra sobre o que as
   // Travessias "rendem".
   'exploracao:passeio': {
-    namePt: 'Mirk, o espírito do charco', nameEn: 'Mirk, the marsh spirit',
+    namePt: 'Lisel, a mariposa do caminho', nameEn: 'Lisel, the path moth', // 22/10/2026 (pedido do dono): busto trocado pela mariposa arquivista (era Mirk, o espírito do charco)
     linePt: 'A névoa abre um pouco mais a cada passo. Ande devagar o quanto quiser.',
     lineEn: 'The mist opens a little further each step. Walk as slow as you like.',
   },
