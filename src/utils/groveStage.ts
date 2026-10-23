@@ -12,14 +12,12 @@
  *  · **até 4, todos, na ORDEM DE CHEGADA** que o servidor manda: nada de ordenar
  *    por presença, e nenhuma criatura "apagada" ou vazia para quem não veio hoje
  *    (o palco nem lê `apareceuHoje`);
- *  · **nunca o estágio, a linha ou o HP de outra pessoa** (LV-G10): o servidor não
- *    os manda, então a criatura dos OUTROS é uma das nossas linhas escolhida por
- *    hash do id público — a mesma decisão do `legacySpriteForStage`: o mesmo
- *    membro renderiza sempre a mesma criatura. Nunca URL de sprite alheia
- *    (`isSafeSpriteUrl` não fixa host).
+ *  · usa o sprite real de cada membro quando disponível e validado, caindo numa das
+ *    nossas linhas escolhida por hash do id público.
  */
 import { GUILD_PRESENCE_NOMINAL_MAX } from './guildRules';
-import { DUNGEON_LINE_SPRITES } from './sprites';
+import { DUNGEON_LINE_SPRITES, getLineSpriteForStage } from './sprites';
+import { isKnownArtLine, normalizePublicSpriteUrl } from './opponentArt';
 import type { GuildView } from './community';
 
 /** Escalas INTEIRAS do sprite de 256² (2× e 4×): escala fracionária borra pixel art. */
@@ -34,7 +32,7 @@ export interface GroveCreature {
   x: number;
   /** Lado renderizado, em px. */
   size: number;
-  /** Só existe para as dos OUTROS (a própria vem do App, que sabe o estágio). */
+  /** Só existe para as dos OUTROS (a própria vem do App). */
   sprite: string | null;
 }
 
@@ -46,8 +44,11 @@ function hash(id: string): number {
 
 const LINES = Object.keys(DUNGEON_LINE_SPRITES);
 
-/** A criatura de um membro que não sou eu: uma das nossas linhas, por hash — nunca o estágio dele. */
-export function spriteForMember(key: string): string {
+/** A criatura de um membro que não sou eu: usa o sprite real do membro se válido, senão uma das nossas linhas por hash. */
+export function spriteForMember(key: string, customSprite?: string | null): string {
+  const safeUrl = normalizePublicSpriteUrl(customSprite);
+  if (safeUrl) return safeUrl;
+  if (isKnownArtLine(customSprite)) return getLineSpriteForStage('rookie', customSprite);
   return DUNGEON_LINE_SPRITES[LINES[hash(key) % LINES.length]].rookie;
 }
 
@@ -83,6 +84,6 @@ export function groveCreatures(guild: Pick<GuildView, 'size' | 'members'>): Grov
     own: m.euMesmo,
     x: xs[i],
     size: sizes[i],
-    sprite: m.euMesmo ? null : spriteForMember(m.id ?? `m${i}`),
+    sprite: m.euMesmo ? null : spriteForMember(m.id ?? `m${i}`, m.sprite),
   }));
 }

@@ -9,16 +9,28 @@
 // (`STARTER_SPRITES`), escolhido por hash estável da identidade — o mesmo oponente é sempre o mesmo
 // bicho, e oponentes diferentes se distinguem. É um stand-in declarado, não a criatura real dele.
 import { CORVO_LINE } from './corvoPet';
-import { DUNGEON_LINE_SPRITES, STARTER_IDS, getSpriteForStage, isStarterId, isRetiredLineId } from './sprites';
+import { DUNGEON_LINE_SPRITES, STARTER_IDS, getLineSpriteForStage, isStarterId, isRetiredLineId } from './sprites';
 import { lineIcon } from './lineIcons';
+import { isSafeSpriteSrc } from './spriteLibrary';
 
-/** O que um oponente/perfil público traz para a arte: só ids, nunca URL. */
+/** O que um oponente/perfil público traz para a arte: ids de linha ou URL de sprite gerado (higienizada). */
 export interface OpponentArtSource {
   /** Id da linha de arte (`spriteLineOf` do dono): inicial, linha ou o corvinho. */
   artLine?: string | null;
+  /** URL do sprite próprio gerado pelo jogador (validada por `isSafeSpriteSrc`; normalizada quando vem de `/api/sprite-image`). */
+  spriteUrl?: string | null;
   stage: string;
   /** Identidade estável (id público) — só semeia o stand-in dos perfis antigos. */
   id?: string;
+}
+
+/** Normaliza URLs do nosso próprio endpoint `/api/sprite-image?k=<32hex>` para caminho de raiz same-origin. */
+export function normalizePublicSpriteUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const limpa = raw.replace(/[\t\n\r]/g, '').trim();
+  const m = /(?:^https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(limpa);
+  if (m) return m[1];
+  return isSafeSpriteSrc(limpa) ? limpa : null;
 }
 
 const hash = (s: string): number => {
@@ -35,12 +47,16 @@ export const isKnownArtLine = (v: unknown): v is string =>
 export const resolveOpponentLine = (o: OpponentArtSource): string =>
   isKnownArtLine(o.artLine) ? o.artLine : STARTER_IDS[hash(o.id ?? o.stage) % STARTER_IDS.length];
 
-/** Sprite do oponente — NUNCA a árvore genérica. */
-export const opponentSprite = (o: OpponentArtSource, size?: 256): string =>
-  getSpriteForStage(o.stage, resolveOpponentLine(o), size);
+/** Sprite do oponente — primeiro o sprite próprio gerado (`spriteUrl`, se seguro), senão a linha dele (NUNCA `ownSprites` do usuário logado). */
+export const opponentSprite = (o: OpponentArtSource, size?: 256): string => {
+  const custom = normalizePublicSpriteUrl(o.spriteUrl);
+  if (custom) return custom;
+  return getLineSpriteForStage(o.stage, resolveOpponentLine(o), size);
+};
 
-/** Ícone-ficha (só existe para as linhas da masmorra; inicial e corvo devolvem `undefined`). */
+/** Ícone-ficha (só existe para as linhas da masmorra quando não há sprite próprio gerado; inicial, corvo e sprite próprio devolvem `undefined`). */
 export const opponentIcon = (o: OpponentArtSource, size: 32 | 64): string | undefined => {
+  if (normalizePublicSpriteUrl(o.spriteUrl)) return undefined;
   const line = resolveOpponentLine(o);
   if (!DUNGEON_LINE_SPRITES[line]) return undefined;
   const lvl = o.stage.toLowerCase().split('-')[0];

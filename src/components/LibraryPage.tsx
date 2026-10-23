@@ -58,6 +58,8 @@ interface LibraryPageProps {
   metaDoDiaCumprida?: boolean;
   /** Âncora do dia do jogador — o dia que a Guilda envia ao servidor. */
   playerDayTz?: PlayerDayAnchor;
+  /** Sprite próprio do jogador (para o CoopPanel/GuildSheet quando aberto por aqui). */
+  mySprite?: string | null;
   language: Language;
   /** minimal-ui F5 — dentro da folha do Hall (`AreaSheet`), que já nomeia a
    *  Biblioteca no próprio título: a página não repete o `<h1>` (uma tela, um
@@ -70,7 +72,7 @@ interface LibraryPageProps {
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
 // utils/libraryNpcs.ts); isNpc/spriteUrl ficam undefined pros reais.
-type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string; unresolved?: boolean };
+type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string | null; unresolved?: boolean };
 
 const MAX_FRIENDS = 5;
 
@@ -133,7 +135,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, language, embedded = false, view }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -388,7 +390,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
 
       {/* ── Grupo (Fase 4.3) ── */}
       {tab === 'coop' && (
-        <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} playerDayTz={playerDayTz} />
+        <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} playerDayTz={playerDayTz} mySprite={mySprite} />
       )}
 
       {/* O alerta é ÂMBAR (D-S6): filete + tinta `gold-ink` — "tente de novo" é

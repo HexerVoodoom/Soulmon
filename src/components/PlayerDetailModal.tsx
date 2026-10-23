@@ -38,7 +38,7 @@ import type { Language } from '../utils/i18n';
 const ATTR_GLYPH = { power: PowerIcon, harmony: HarmonyIcon, benevolence: BenevolenceIcon } as const;
 
 interface PlayerDetailModalProps {
-  player: DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string };
+  player: DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string | null };
   language: Language;
   onClose: () => void;
 }

@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ART_LINE_IDS } from '../../functions/api/_artLine.js';
 import { CORVO_LINE } from './corvoPet';
-import { DEMO_CHARACTER_IDS, DUNGEON_LINE_SPRITES, RETIRED_LINE_IDS, STARTER_SPRITES, getSpriteForStage } from './sprites';
+import { DEMO_CHARACTER_IDS, DUNGEON_LINE_SPRITES, RETIRED_LINE_IDS, STARTER_SPRITES, getSpriteForStage, setOwnSprites } from './sprites';
 import { isKnownArtLine, opponentIcon, opponentSprite, resolveOpponentLine } from './opponentArt';
 
 // D-60: oponente NUNCA e desenhado com a arvore generica (gato-coruja, arte descartada).
@@ -48,6 +48,22 @@ describe('opponentArt', () => {
     expect(opponentIcon({ stage: 'champion-power', artLine: 'meteoro' }, 64)).toBeUndefined();
     expect(isKnownArtLine('ignar')).toBe(true); // id aposentado segue lido (save/perfil antigo)
     expect(isKnownArtLine('zzz')).toBe(false);
+  });
+
+  it('oponente nunca herda ownSprites do jogador logado e usa spriteUrl proprio quando presente', () => {
+    setOwnSprites({ rookie: '/api/sprite-image?k=11111111111111111111111111111111' });
+    try {
+      expect(opponentSprite({ stage: 'rookie', artLine: 'kaelen', id: 'opp1' })).toBe(DUNGEON_LINE_SPRITES.kaelen.rookie);
+      expect(opponentSprite({ stage: 'rookie', artLine: 'meteoro', id: 'opp1' })).toBe(STARTER_SPRITES.meteoro);
+      expect(opponentSprite({ stage: 'rookie', artLine: null, id: 'opp1' })).not.toBe('/api/sprite-image?k=11111111111111111111111111111111');
+      const oppCustom = '/api/sprite-image?k=22222222222222222222222222222222';
+      expect(opponentSprite({ stage: 'rookie', artLine: 'kaelen', spriteUrl: oppCustom, id: 'opp1' })).toBe(oppCustom);
+      expect(opponentIcon({ stage: 'champion-power', artLine: 'kaelen', spriteUrl: oppCustom, id: 'opp1' }, 64)).toBeUndefined();
+      // Jogador logado em estagio evoluido com sprite gerado no estagio rookie continua vendo seu proprio sprite
+      expect(getSpriteForStage('champion-power', 'meteoro')).toBe('/api/sprite-image?k=11111111111111111111111111111111');
+    } finally {
+      setOwnSprites({});
+    }
   });
 });
 

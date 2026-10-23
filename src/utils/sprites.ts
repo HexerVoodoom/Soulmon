@@ -285,6 +285,25 @@ export function setOwnSprites(map: Readonly<Record<string, string>>, fallback?: 
   ownFallback = fallback;
 }
 
+/**
+ * O sprite da LINHA de arte (starter, linha da masmorra, corvinho ou inicial de reserva), SEM consultar `ownSprites`.
+ * Usado por `opponentArt.ts` para desenhar OUTRO jogador: o sprite gerado da conta logada (`ownSprites`) nunca pode
+ * vazar para o oponente/terceiro quando o estágio coincide.
+ */
+export function getLineSpriteForStage(stage: string, demoCharacterIdRaw?: string, size?: 256): string {
+  const demoCharacterId = resolveArtLineId(demoCharacterIdRaw); // D-78: linha aposentada → inicial de reserva
+  const key = stage.toLowerCase();
+  if (demoCharacterId === CORVO_LINE) return corvoSpriteFor(key, size);
+  if (isStarterId(demoCharacterId)) return STARTER_SPRITES[demoCharacterId];
+  if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {
+    const levelRaw = key === 'rookie' || key === 'ultra' ? key : key.split('-')[0];
+    const level = (levelRaw === 'ultra' ? 'mega' : levelRaw) as 'rookie' | 'champion' | 'ultimate' | 'mega';
+    const line = DUNGEON_LINE_SPRITES[demoCharacterId];
+    return line[level] ?? line.rookie;
+  }
+  return STARTER_SPRITES[fallbackStarterFor(key)];
+}
+
 export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, size?: 256): string {
   const demoCharacterId = resolveArtLineId(demoCharacterIdRaw); // D-78: linha aposentada → inicial de reserva
   const key = stage.toLowerCase();
@@ -292,8 +311,9 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
   // por forma. O 2º parâmetro é a LINHA de arte do save — `spriteLineOf`.
   if (demoCharacterId === CORVO_LINE) return corvoSpriteFor(key, size);
   // Os 5 iniciais: o MESMO sprite em todos os estágios (limitação declarada).
-  // 21/10/2026 (dono): se o jogador já tem o sprite GERADO dele, ele vence o inicial de reserva (contas que mostravam o Meteoro).
-  if (isStarterId(demoCharacterId)) return ownSprites[key] ?? STARTER_SPRITES[demoCharacterId];
+  // 21/10/2026 (dono): se o jogador já tem o sprite GERADO dele, ele vence o inicial de reserva (contas que mostravam o Meteoro),
+  // mesmo que o jogador já tenha evoluído e só tenha a arte gerada de outra forma no acervo (`Object.values(ownSprites)[0]`).
+  if (isStarterId(demoCharacterId)) return ownSprites[key] ?? Object.values(ownSprites)[0] ?? STARTER_SPRITES[demoCharacterId];
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
   // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {

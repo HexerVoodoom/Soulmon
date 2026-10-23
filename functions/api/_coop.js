@@ -16,6 +16,8 @@ import { VALID_ID } from './_entitlements.js';
 import { kvOrThrow } from './_kv.js';
 import { minimizeForAi, redactionCount } from './_redact.js';
 import { lerCasa, recolherCasaDetalhe } from './_casa.js';
+import { artLineOrNull, spriteUrlOrNull, spriteFromSaveState } from './_artLine.js';
+import { DUEL_SAVE_MAX_CHARS } from './_duel.js';
 
 /** Teto da Guilda (D-G1: o coop EVOLUI para guilda de até 12). Era 4. */
 export const COOP_MAX_MEMBERS = 12;
@@ -890,9 +892,19 @@ export async function montarCartao(env, gid, save, now = new Date()) {
     lerCasa(env, gid, save),
     ...semanas.map(w => lerGolpes(env, gid, w, save)),
   ]);
+  let sprite = spriteUrlOrNull(perfil?.spriteUrl) ?? artLineOrNull(perfil?.artLine);
+  // Se o perfil não existe (ex.: membro abaixo do Vínculo 5), tenta extrair o sprite direto do save:
+  if (!sprite && !perfil) {
+    const rawSave = await kvs.get(save);
+    if (typeof rawSave === 'string' && rawSave.length <= DUEL_SAVE_MAX_CHARS) {
+      const fromSave = spriteFromSaveState(parse(rawSave));
+      sprite = fromSave.spriteUrl ?? fromSave.artLine;
+    }
+  }
   return {
     v: 1,
     name: typeof perfil?.name === 'string' ? perfil.name : null,
+    ...(sprite ? { sprite } : {}),
     ck: ck && typeof ck === 'object' ? { weekKey: ck.weekKey, days: Array.isArray(ck.days) ? ck.days : [] } : null,
     fio,
     gest: gest && typeof gest === 'object' ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,

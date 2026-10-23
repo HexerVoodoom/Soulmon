@@ -35,7 +35,7 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import { migrateBranchIds } from '../utils/branchMigration';
-import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
+import { normalizeSpriteLibrary, displaySprite, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
@@ -87,7 +87,7 @@ import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
-import { spriteLineOf } from '../utils/corvoPet';
+import { spriteLineOf, isCorvo } from '../utils/corvoPet';
 import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
@@ -2078,6 +2078,15 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         frameId: sanitizeEquippedFrame(gameState.equippedFrame),
         // Linha de arte (D-60): é por ela que o oponente é desenhado com a arte DELE. `null` limpa no servidor.
         artLine: spriteLineOf(gameState) ?? null,
+        // Sprite próprio gerado (quando existe): permite mostrar o Soulmon real do jogador no Torneio, Biblioteca e Bosque.
+        spriteUrl: (() => {
+          if (isCorvo(gameState)) return null;
+          const lib = normalizeSpriteLibrary(gameState.spriteLibrary);
+          const rawUrl = displaySprite(lib, gameState.evolutionStage)?.url ?? Object.values(lib.sprites)[0]?.url ?? null;
+          if (!rawUrl) return null;
+          const m = /(?:^https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(rawUrl.trim());
+          return m ? m[1] : rawUrl;
+        })(),
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
         // Sempre enviado (inclusive `false`): é assim que o servidor RETIRA ou

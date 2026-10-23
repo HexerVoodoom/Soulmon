@@ -1068,6 +1068,1283 @@ function bitsDaCasa(g, cartoes) {
 }
 __name(bitsDaCasa, "bitsDaCasa");
 
+// api/_artLine.js
+var ART_LINE_IDS = /* @__PURE__ */ new Set([
+  "industrial",
+  "nascente",
+  "alento",
+  "vida",
+  "meteoro",
+  "kaelen",
+  "orrin",
+  "thalindra",
+  "igni",
+  "nautilu",
+  "astrase",
+  // Linhas APOSENTADAS (20/10/2026): aceitas só na LEITURA (perfil/save antigo); o servidor nunca as produz.
+  "ignar",
+  "lumel",
+  "serah",
+  "corvo"
+]);
+function artLineOrNull(raw) {
+  return typeof raw === "string" && ART_LINE_IDS.has(raw) ? raw : null;
+}
+__name(artLineOrNull, "artLineOrNull");
+var HOSTS_DE_SPRITE = /* @__PURE__ */ new Set([
+  "d8j0ntlcm91z4.cloudfront.net",
+  "images.higgs.ai",
+  "platform.higgsfield.ai"
+]);
+function spriteUrlOrNull(raw) {
+  if (typeof raw !== "string") return null;
+  const limpa = raw.replace(/[\t\n\r]/g, "").trim().slice(0, 500);
+  if (!limpa) return null;
+  const blobMatch = /^(?:https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(limpa);
+  if (blobMatch) return `/api/sprite-image?k=${blobMatch[1].slice("/api/sprite-image?k=".length).toLowerCase()}`;
+  try {
+    const u = new URL(limpa);
+    if (u.protocol !== "https:" || u.username || u.password) return null;
+    if (!HOSTS_DE_SPRITE.has(u.hostname.toLowerCase())) return null;
+    return limpa;
+  } catch {
+    return null;
+  }
+}
+__name(spriteUrlOrNull, "spriteUrlOrNull");
+function spriteFromSaveState(state) {
+  if (!state || typeof state !== "object" || Array.isArray(state)) return { spriteUrl: null, artLine: null };
+  const isCorvo = state.soulmonMeta && typeof state.soulmonMeta === "object" && state.soulmonMeta.creature === "corvo";
+  const artLine = isCorvo ? "corvo" : artLineOrNull(state.demoCharacterId);
+  if (isCorvo) return { spriteUrl: null, artLine: "corvo" };
+  const lib = state.spriteLibrary && typeof state.spriteLibrary === "object" ? state.spriteLibrary : null;
+  const sprites = lib?.sprites && typeof lib.sprites === "object" ? lib.sprites : null;
+  if (!sprites) return { spriteUrl: null, artLine };
+  const stage = typeof state.evolutionStage === "string" ? state.evolutionStage : "rookie";
+  const reverted = Array.isArray(lib?.reverted) ? lib.reverted : [];
+  const pendingForm = lib?.pendingTune && typeof lib.pendingTune === "object" ? lib.pendingTune.formId : null;
+  const prevSprites = lib?.previousSprites && typeof lib.previousSprites === "object" ? lib.previousSprites : null;
+  let entry = null;
+  if (pendingForm === stage || reverted.includes(stage)) {
+    entry = prevSprites?.[stage] ?? null;
+  } else {
+    entry = sprites[stage] ?? null;
+  }
+  const fallbackEntry = Object.values(sprites).find((e) => e && typeof e === "object" && typeof e.url === "string");
+  const rawUrl = (entry && typeof entry === "object" && typeof entry.url === "string" ? entry.url : null) ?? (fallbackEntry && typeof fallbackEntry.url === "string" ? fallbackEntry.url : null);
+  return { spriteUrl: spriteUrlOrNull(rawUrl), artLine };
+}
+__name(spriteFromSaveState, "spriteFromSaveState");
+
+// api/_soulXP.js
+var STAGE_ORDER = ["rookie", "champion", "ultimate", "mega", "ultra"];
+var STAGE_CAPS_EACH = [6, 7, 8, 9, 10];
+var STAGE_LEVEL_CAPS = STAGE_CAPS_EACH.reduce((acc, c) => [...acc, (acc[acc.length - 1] ?? 0) + c], []);
+var MAX_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
+var XP_PER_LEVEL = 100;
+var XP_FULL_DAY = 100;
+function safe(n) {
+  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : 0;
+}
+__name(safe, "safe");
+function stageIndexOf(stage) {
+  if (typeof stage !== "string") return 0;
+  const prefix = stage.split("-")[0];
+  const i2 = STAGE_ORDER.indexOf(prefix);
+  return i2 < 0 ? 0 : i2;
+}
+__name(stageIndexOf, "stageIndexOf");
+function levelCapFor(stage) {
+  return STAGE_LEVEL_CAPS[stageIndexOf(stage)];
+}
+__name(levelCapFor, "levelCapFor");
+function soulXP(state) {
+  const s = stageIndexOf(state?.evolutionStage);
+  const firstLevel = s <= 0 ? 1 : STAGE_LEVEL_CAPS[s - 1] + 1;
+  return (firstLevel - 1) * XP_PER_LEVEL + Math.floor(safe(state?.perfectDays)) * XP_FULL_DAY;
+}
+__name(soulXP, "soulXP");
+function levelFor(xp) {
+  return Math.min(MAX_LEVEL, 1 + Math.floor(safe(xp) / XP_PER_LEVEL));
+}
+__name(levelFor, "levelFor");
+function soulLevel(state) {
+  return Math.min(levelFor(soulXP(state)), levelCapFor(state?.evolutionStage));
+}
+__name(soulLevel, "soulLevel");
+
+// api/_combate.js
+function mulberry32(seed) {
+  let a = seed | 0;
+  return () => {
+    a = a + 1831565813 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+__name(mulberry32, "mulberry32");
+function sideSeed(seed, side) {
+  return Math.imul(seed ^ 2654435769, 2246822507) + side * 1663821211 | 0;
+}
+__name(sideSeed, "sideSeed");
+var PHASE_SALT = 20973;
+function gaussian(r) {
+  return Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+}
+__name(gaussian, "gaussian");
+var VARIANCE = { rho: 0.9, sigma: 0.08, floor: 0.05 };
+function ar1Multiplier(r, cfg) {
+  let z = gaussian(r);
+  const k = Math.sqrt(1 - cfg.rho * cfg.rho);
+  return () => {
+    z = cfg.rho * z + k * gaussian(r);
+    return Math.max(cfg.floor, 1 + cfg.sigma * z);
+  };
+}
+__name(ar1Multiplier, "ar1Multiplier");
+var CURVE_K = 8;
+var BASE_ATTACKS_PER_WINDOW = 9;
+function hitsToKnockOut(attacker, defender) {
+  return defender.hp * (1 + defender.def / CURVE_K) / (1 + attacker.atk / CURVE_K) / (1 + attacker.bonus);
+}
+__name(hitsToKnockOut, "hitsToKnockOut");
+function attacksPerWindow(spd) {
+  return BASE_ATTACKS_PER_WINDOW * (1 + spd / CURVE_K) / (1 + 1 / CURVE_K);
+}
+__name(attacksPerWindow, "attacksPerWindow");
+var MAX_SHARE = 0.45;
+var MIN_SHARE = 0.15;
+var HP_BASE = 10;
+var HP_LEVEL_DIVISOR = 10;
+var STAGE_FACTOR = 1.5;
+var REFERENCE_BUILDS = {
+  atk: { atk: 1, def: 0, spd: 0 },
+  def: { atk: 0, def: 1, spd: 0 },
+  spd: { atk: 0, def: 0, spd: 1 },
+  balanced: { atk: 1 / 3, def: 1 / 3, spd: 1 / 3 }
+};
+function clampLevel(level) {
+  if (!Number.isFinite(level)) return 1;
+  return Math.min(MAX_LEVEL, Math.max(1, Math.floor(level)));
+}
+__name(clampLevel, "clampLevel");
+function stageOfLevel(level) {
+  const L = clampLevel(level);
+  return STAGE_LEVEL_CAPS.findIndex((cap) => L <= cap);
+}
+__name(stageOfLevel, "stageOfLevel");
+function stageBase(stage) {
+  return Math.ceil(STAGE_FACTOR ** stage);
+}
+__name(stageBase, "stageBase");
+function autoHp(level) {
+  const L = clampLevel(level);
+  return HP_BASE * STAGE_FACTOR ** stageOfLevel(L) * (1 + L / HP_LEVEL_DIVISOR);
+}
+__name(autoHp, "autoHp");
+var ORDER = ["atk", "spd", "def"];
+function cleanWeights(w) {
+  const c = /* @__PURE__ */ __name((x2) => typeof x2 === "number" && Number.isFinite(x2) && x2 > 0 ? x2 : 0, "c");
+  const atk = c(w?.atk), def = c(w?.def), spd = c(w?.spd);
+  const sum = atk + def + spd;
+  return sum > 0 ? { atk: atk / sum, def: def / sum, spd: spd / sum } : REFERENCE_BUILDS.balanced;
+}
+__name(cleanWeights, "cleanWeights");
+function distributePoints(level, weights) {
+  const L = clampLevel(level);
+  const w = cleanWeights(weights);
+  const cap = Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
+  const floor = Math.min(Math.floor(MIN_SHARE * L), Math.floor(L / 3));
+  const p = { atk: floor, def: floor, spd: floor };
+  for (let n = 3 * floor + 1; n <= L; n++) {
+    let best = null;
+    let bestNeed = -Infinity;
+    for (const a of ORDER) {
+      if (p[a] >= cap) continue;
+      const need = w[a] * n - p[a];
+      if (need > bestNeed + 1e-9) {
+        best = a;
+        bestNeed = need;
+      }
+    }
+    p[best]++;
+  }
+  return p;
+}
+__name(distributePoints, "distributePoints");
+function combatantAt(level, weights, bonus = 0) {
+  const L = clampLevel(level);
+  const b = stageBase(stageOfLevel(L));
+  const p = distributePoints(L, weights);
+  if (typeof bonus === "number") return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  const ab = toAttrBonus(bonus);
+  const fold = /* @__PURE__ */ __name((v, x2) => x2 > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x2) - 1) : v, "fold");
+  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
+}
+__name(combatantAt, "combatantAt");
+var COMBAT_BONUS_CAP = 0.05;
+var cleanN = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0, "cleanN");
+function combinedAttrBonus(sources) {
+  const sum = { atk: 0, def: 0, spd: 0 };
+  for (const src of [sources?.talent, sources?.equipment, sources?.commerce, sources?.rebirth]) {
+    if (!src || typeof src !== "object") continue;
+    sum.atk += cleanN(src.atk);
+    sum.def += cleanN(src.def);
+    sum.spd += cleanN(src.spd);
+  }
+  const total = sum.atk + sum.def + sum.spd;
+  const k = total > COMBAT_BONUS_CAP ? COMBAT_BONUS_CAP / total : 1;
+  return { atk: sum.atk * k, def: sum.def * k, spd: sum.spd * k };
+}
+__name(combinedAttrBonus, "combinedAttrBonus");
+function toAttrBonus(b) {
+  if (typeof b === "number") return { atk: cleanN(b), def: 0, spd: 0 };
+  return { atk: cleanN(b?.atk), def: cleanN(b?.def), spd: cleanN(b?.spd) };
+}
+__name(toAttrBonus, "toAttrBonus");
+var SPECIAL_BUDGET_HITS = 3;
+var SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
+function specialOf(family) {
+  const f = typeof family === "string" && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : "direct";
+  return { family: f, power: SPECIAL_POWER[f] };
+}
+__name(specialOf, "specialOf");
+var ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
+var ENERGY_TRIGGER = 100;
+var CHEER = {
+  tapsFull: 24,
+  tapsCapPerBucket: 16,
+  bucketSeconds: 3,
+  energyPerDischarge: 9,
+  pvpEnergyPerDischarge: 2.5
+};
+var CHEER_SCALE_MAX = 1.15;
+var START_ENERGY_MAX = 9;
+var DOT_RESIST_MAX = 0.18;
+function cleanStartEnergy(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(START_ENERGY_MAX, Math.max(0, x2)) : 0;
+}
+__name(cleanStartEnergy, "cleanStartEnergy");
+function cleanDotResist(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(DOT_RESIST_MAX, Math.max(0, x2)) : 0;
+}
+__name(cleanDotResist, "cleanDotResist");
+function cleanCheerScale(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x2)) : 1;
+}
+__name(cleanCheerScale, "cleanCheerScale");
+function cheerEvents(taps, side, scale = 1) {
+  const out = [];
+  const k = cleanCheerScale(scale);
+  const perBucket = /* @__PURE__ */ new Map();
+  let acc = 0;
+  for (const tap of [...taps].filter((x2) => Number.isFinite(x2) && x2 >= 0).sort((x2, y) => x2 - y)) {
+    const b = Math.floor(tap / CHEER.bucketSeconds);
+    const n = perBucket.get(b) ?? 0;
+    if (n >= CHEER.tapsCapPerBucket) continue;
+    perBucket.set(b, n + 1);
+    acc++;
+    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
+  }
+  return out;
+}
+__name(cheerEvents, "cheerEvents");
+var MIRROR_SECONDS = 25;
+var HIT_UNIT_H0 = 10;
+var PVP_HP_SCALE = 1.7;
+var EPS = 1e-9;
+var DRAW_EPS = 1e-6;
+var MAX_EVENTS = 2e5;
+function windowSeconds(level) {
+  const d = combatantAt(level, REFERENCE_BUILDS.balanced);
+  return MIRROR_SECONDS * attacksPerWindow(d.spd) / hitsToKnockOut(d, d);
+}
+__name(windowSeconds, "windowSeconds");
+function hitUnit(level, h0 = HIT_UNIT_H0) {
+  const bal = combatantAt(level, REFERENCE_BUILDS.balanced);
+  return hitsToKnockOut(bal, bal) / h0;
+}
+__name(hitUnit, "hitUnit");
+function* fightSteps(a, b, opts) {
+  const seed = opts.seed | 0;
+  const hpScale = opts.hpScale ?? 1;
+  const variance = opts.variance === void 0 ? VARIANCE : opts.variance;
+  const wl = opts.windowLevel ?? Math.max(a.combatant.level, b.combatant.level);
+  const win = windowSeconds(wl);
+  const u = opts.unitH0 === null ? 1 : hitUnit(wl, opts.unitH0 ?? HIT_UNIT_H0);
+  const interval = /* @__PURE__ */ __name((spd) => win / attacksPerWindow(spd) * u, "interval");
+  const phaseRng = mulberry32(seed ^ PHASE_SALT);
+  const drawn = [phaseRng(), phaseRng()];
+  const phases = opts.phases ?? drawn;
+  const mk = /* @__PURE__ */ __name((s, i2) => {
+    const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
+    const r = mulberry32(sideSeed(seed, i2 + 1));
+    const mult = variance ? ar1Multiplier(r, variance) : () => 1;
+    return {
+      c,
+      sp: s.special,
+      mult,
+      hp: opts.startHp?.[i2] ?? 1,
+      en: opts.startEnergy?.[i2] ?? 0,
+      shield: 0,
+      next: interval(c.spd) * phases[i2],
+      casts: 0,
+      dead: Infinity,
+      nAtk: 0,
+      nVuln: 0,
+      nSpd: 0,
+      nHit: 0,
+      dotResist: cleanDotResist(s.dotResist)
+    };
+  }, "mk");
+  const F = [mk(a, 0), mk(b, 1)];
+  const timed = [];
+  for (const ch of opts.cheer ?? []) {
+    timed.push({
+      t: ch.t,
+      fn: /* @__PURE__ */ __name(() => {
+        const f = F[ch.side];
+        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge * cleanCheerScale(ch.scale);
+      }, "fn")
+    });
+  }
+  let t = 0;
+  let tPrev = 0;
+  const pending = [];
+  const ev = /* @__PURE__ */ __name((kind, side, frac, at) => ({ kind, t: at, side, frac, hp: [F[0].hp, F[1].hp], energy: [F[0].en, F[1].en] }), "ev");
+  const hitsOn = /* @__PURE__ */ __name((me, foe) => hitsToKnockOut(me.c, foe.c) / u, "hitsOn");
+  const gain = /* @__PURE__ */ __name((f, x2, per) => {
+    if (f.sp && f.dead === Infinity) f.en += per * x2;
+  }, "gain");
+  const hit = /* @__PURE__ */ __name((src, v, frac, kind) => {
+    if (v.dead < Infinity) return;
+    let amt = frac;
+    if (v.shield > EPS) {
+      const ab = Math.min(v.shield, amt);
+      v.shield -= ab;
+      amt -= ab;
+    }
+    v.hp -= amt;
+    gain(src, frac, ENERGY.perDealt);
+    gain(v, frac, ENERGY.perReceived);
+    pending.push(ev(kind, src === F[0] ? 0 : 1, frac, t));
+  }, "hit");
+  const cast = /* @__PURE__ */ __name((me, foe, t0, scale) => {
+    const sp = me.sp;
+    const E = SPECIAL_BUDGET_HITS * sp.power * scale;
+    const iv = interval(me.c.spd);
+    switch (sp.family) {
+      case "direct":
+        hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack");
+        break;
+      case "dot":
+        for (let k = 1; k <= 3; k++) {
+          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), "tick"), "fn") });
+        }
+        break;
+      case "heal":
+        me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
+        break;
+      case "shield":
+        me.shield += E / hitsOn(foe, me);
+        break;
+      case "atkBuff":
+        me.nAtk += E;
+        break;
+      case "defDebuff":
+        foe.nVuln += E;
+        break;
+      case "spdBuff":
+        me.nSpd += E;
+        me.next = Math.min(me.next, t0 + iv / 2);
+        break;
+    }
+  }, "cast");
+  function* flush() {
+    while (pending.length) yield pending.shift();
+  }
+  __name(flush, "flush");
+  function* markDead() {
+    for (const i2 of [0, 1]) {
+      if (F[i2].hp <= EPS && F[i2].dead === Infinity) {
+        F[i2].dead = t;
+        yield ev("ko", i2, 0, t);
+      }
+    }
+  }
+  __name(markDead, "markDead");
+  function* tryCast(i2, tt) {
+    const me = F[i2];
+    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+      me.en = Math.max(0, me.en - ENERGY_TRIGGER);
+      me.casts++;
+      const m = yield ev("cast", i2, 0, tt);
+      cast(me, F[1 - i2], tt, m ?? 1);
+    }
+  }
+  __name(tryCast, "tryCast");
+  const finish = /* @__PURE__ */ __name(() => {
+    const timeA = F[0].dead, timeB = F[1].dead;
+    const winner = Math.abs(timeA - timeB) < DRAW_EPS ? "draw" : timeA > timeB ? "A" : "B";
+    return {
+      timeA,
+      timeB,
+      castsA: F[0].casts,
+      castsB: F[1].casts,
+      winner,
+      hpA: Math.max(0, F[0].hp),
+      hpB: Math.max(0, F[1].hp),
+      energyA: F[0].en,
+      energyB: F[1].en
+    };
+  }, "finish");
+  for (let g = 0; g < MAX_EVENTS; g++) {
+    let tt = Infinity;
+    for (const e of timed) if (e.t < tt) tt = e.t;
+    let tEn = Infinity;
+    for (const f of F) {
+      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+    }
+    t = Math.min(F[0].next, F[1].next, tt, tEn);
+    for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
+    tPrev = t;
+    for (let i2 = timed.length - 1; i2 >= 0; i2--) {
+      if (timed[i2].t - t < EPS) timed.splice(i2, 1)[0].fn();
+    }
+    for (
+      const i2 of
+      /** @type {(0 | 1)[]} */
+      [0, 1]
+    ) {
+      const me = F[i2];
+      const foe = F[1 - i2];
+      if (me.next - t >= EPS) continue;
+      let mulN = 1;
+      if (me.nAtk > EPS) {
+        const x2 = Math.min(1, me.nAtk);
+        mulN += x2;
+        me.nAtk -= x2;
+      }
+      if (foe.nVuln > EPS) {
+        const x2 = Math.min(1, foe.nVuln);
+        mulN += x2;
+        foe.nVuln -= x2;
+      }
+      const hs = opts.hitScale ? opts.hitScale(i2, me.nHit) : 1;
+      me.nHit++;
+      hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack");
+      if (me.nSpd > EPS) {
+        const x2 = Math.min(1, me.nSpd);
+        me.nSpd -= x2;
+        me.next = t + interval(me.c.spd) / (1 + x2);
+      } else {
+        me.next = t + interval(me.c.spd);
+      }
+    }
+    yield* flush();
+    yield* markDead();
+    yield* tryCast(0, t);
+    yield* tryCast(1, t);
+    yield* flush();
+    yield* markDead();
+    for (const i2 of [0, 1]) {
+      if (F[i2].dead < Infinity && F[1 - i2].dead === Infinity && t > 10 * F[i2].dead + 60) F[1 - i2].dead = t;
+    }
+    const over = opts.stopAtFirstKo ? F[0].dead < Infinity || F[1].dead < Infinity : F[0].dead < Infinity && F[1].dead < Infinity;
+    if (over) return finish();
+  }
+  throw new Error(`combate: fight did not end within ${MAX_EVENTS} events (seed ${seed})`);
+}
+__name(fightSteps, "fightSteps");
+function safe2(n) {
+  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : 0;
+}
+__name(safe2, "safe");
+function soulWeights(state) {
+  return { atk: safe2(state?.powerPoints), spd: safe2(state?.harmonyPoints), def: safe2(state?.benevolencePoints) };
+}
+__name(soulWeights, "soulWeights");
+function soulCombatant(state, opts = {}) {
+  let level = soulLevel(state);
+  if (typeof opts.maxLevel === "number" && Number.isFinite(opts.maxLevel)) level = Math.min(level, Math.max(1, Math.floor(opts.maxLevel)));
+  return combatantAt(level, soulWeights(state), opts.bonus ?? 0);
+}
+__name(soulCombatant, "soulCombatant");
+
+// api/_gates.js
+var GATES = {
+  pvp: { minBond: 5 },
+  torneio: { minBond: 5 },
+  masmorraAlto: { minBond: 8 },
+  renascimento: { minBond: 12 }
+};
+function gateFor(feature, bondLevel) {
+  const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
+  const minBond = GATES[feature].minBond;
+  return { open: lvl >= minBond, minBond, bondLevel: lvl };
+}
+__name(gateFor, "gateFor");
+var BUILDING_GATES = {
+  "mercado.itens": { minBond: 1 },
+  "mercado.conquistas": { minBond: 1 },
+  "mercado.decoracao": { minBond: 2 },
+  "mercado.background": { minBond: 3 },
+  "mercado.ferreiro": { minBond: 2 },
+  "jogos.salao": { minBond: 1 },
+  "jogos.refugio": { minBond: 1 },
+  "jogos.mente": { minBond: 3 },
+  "exploracao.masmorra": { minBond: 1 },
+  "exploracao.caderno": { minBond: 2 },
+  "exploracao.oficina": { minBond: 3 },
+  "arena.duelo": { minBond: GATES.pvp.minBond },
+  "arena.torneio": { minBond: GATES.torneio.minBond },
+  "arena.guerra": { minBond: 5 },
+  "laboratorio.evolucao": { minBond: 1 },
+  "laboratorio.pet": { minBond: 2 },
+  "laboratorio.stats": { minBond: 3 },
+  "laboratorio.perfil": { minBond: 2 },
+  "laboratorio.biblioteca": { minBond: 2 },
+  "laboratorio.amigos": { minBond: 2 },
+  "hall.guilda": { minBond: 4 },
+  "hall.grove": { minBond: 4 },
+  "hall.feira": { minBond: GATES.pvp.minBond }
+};
+var MOVED_BUILDINGS = {
+  "arena.feira": "hall.feira",
+  "hall.biblioteca": "laboratorio.biblioteca",
+  "hall.amigos": "laboratorio.amigos"
+};
+function currentBuildingId(x2) {
+  return typeof x2 === "string" && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x2) ? (
+    /** @type {Record<string, string>} */
+    MOVED_BUILDINGS[x2]
+  ) : x2;
+}
+__name(currentBuildingId, "currentBuildingId");
+
+// api/_bond.js
+var EARLY_STEPS = [75, 125, 200, 300, 400];
+var STEP_BASE = 400;
+var STEP_GROWTH = 100;
+var BOND_PVP_MIN_LEVEL = GATES.pvp.minBond;
+function stepFor(level) {
+  if (level <= 0) return 0;
+  if (level <= EARLY_STEPS.length) return EARLY_STEPS[level - 1];
+  return STEP_BASE + STEP_GROWTH * (level - EARLY_STEPS.length);
+}
+__name(stepFor, "stepFor");
+var BOND_MAX_LEVEL = 1e3;
+function bondLevelFor(totalXP) {
+  const xp = typeof totalXP === "number" && Number.isFinite(totalXP) ? Math.max(0, totalXP) : 0;
+  let level = 1;
+  let acumulado = 0;
+  while (level < BOND_MAX_LEVEL) {
+    acumulado += stepFor(level);
+    if (xp < acumulado) break;
+    level++;
+  }
+  return level;
+}
+__name(bondLevelFor, "bondLevelFor");
+async function bondLevelOf(env, saveId) {
+  try {
+    const raw = await kvOrThrow(env).get(saveId);
+    if (!raw) return 0;
+    const state = JSON.parse(raw);
+    if (!state || typeof state !== "object") return 0;
+    return bondLevelFor(state.totalXP);
+  } catch {
+    return 0;
+  }
+}
+__name(bondLevelOf, "bondLevelOf");
+
+// api/_talents.js
+var TALENT_POINTS_MAX = 20;
+var req = /* @__PURE__ */ __name((id, rank) => ({ id, rank }), "req");
+var PICKABLE = {
+  "tal-pvp-01": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "atk", perRank: 4e-3 },
+  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "def", perRank: 4e-3, requires: [req("tal-pvp-01", 2)] },
+  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "spd", perRank: 4e-3, requires: [req("tal-pvp-01", 2)] },
+  "tal-pvp-04": { maxRank: 3, kind: "startEnergy", perRank: 3, requires: [req("tal-pvp-03", 2)] },
+  "tal-pvp-05": { maxRank: 3, kind: "cheerBoost", perRank: 0.05, requiresAny: [req("tal-pvp-02", 2), req("tal-pvp-03", 2)] },
+  "tal-pvp-06": { maxRank: 3, kind: "dotResist", perRank: 0.06, requires: [req("tal-pvp-02", 2)] },
+  "tal-pvp-07": { maxRank: 1, kind: "allAttr", perRank: 2e-3, requires: [req("tal-pvp-05", 3), req("tal-pvp-04", 1), req("tal-pvp-06", 1)] },
+  "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
+  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", attr: "def", perRank: 6e-3, requires: [req("tal-pve-01", 2)] },
+  "tal-pve-03": { maxRank: 3, kind: "healBoost", perRank: 5e-3, requires: [req("tal-pve-01", 2)] },
+  "tal-pve-04": { maxRank: 3, kind: "riftBits", perRank: 0.03, requires: [req("tal-pve-03", 1)] },
+  "tal-pve-05": { maxRank: 3, kind: "combatBonus", scope: "nightmare", perRank: 4e-3, requires: [req("tal-pve-03", 1)] },
+  "tal-pve-06": { maxRank: 3, kind: "combatBonus", scope: "pve", attr: "spd", perRank: 4e-3, requires: [req("tal-pve-02", 2)] },
+  "tal-pve-07": { maxRank: 1, kind: "startShield", perRank: 0.01, requires: [req("tal-pve-05", 1), req("tal-pve-06", 1)] },
+  "tal-com-01": { maxRank: 3, kind: "equipPrice" },
+  "tal-com-02": { maxRank: 3, kind: "fragmentGain", requires: [req("tal-com-01", 2)] },
+  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1, requires: [req("tal-com-01", 2)] },
+  "tal-com-04": { maxRank: 3, kind: "backpack", requires: [req("tal-com-02", 2)] },
+  "tal-com-05": { maxRank: 1, kind: "respecOne", requires: [req("tal-com-03", 2)] },
+  "tal-com-06": { maxRank: 3, kind: "missionBits", requires: [req("tal-com-02", 1)] }
+};
+var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function talentPointsFor(bondLevel) {
+  const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
+  return Math.min(TALENT_POINTS_MAX, lvl);
+}
+__name(talentPointsFor, "talentPointsFor");
+var reqOk = /* @__PURE__ */ __name((r, ranks) => (ranks[r.id] ?? 0) >= r.rank, "reqOk");
+function prereqsMet(id, ranks) {
+  const n = PICKABLE[id];
+  if (n.requires && !n.requires.every((r) => reqOk(r, ranks))) return false;
+  if (n.requiresAny && !n.requiresAny.some((r) => reqOk(r, ranks))) return false;
+  return true;
+}
+__name(prereqsMet, "prereqsMet");
+function isWellFormed(raw, bondLevel) {
+  if (!Array.isArray(raw)) return false;
+  if (raw.length > talentPointsFor(bondLevel)) return false;
+  const counts = /* @__PURE__ */ Object.create(null);
+  for (const id of raw) {
+    if (typeof id !== "string" || !has(PICKABLE, id)) return false;
+    counts[id] = (counts[id] ?? 0) + 1;
+    if (counts[id] > PICKABLE[id].maxRank) return false;
+  }
+  return true;
+}
+__name(isWellFormed, "isWellFormed");
+function replay(picks) {
+  const kept = [];
+  const ranks = /* @__PURE__ */ Object.create(null);
+  let rest = [...picks];
+  for (let moved = true; moved && rest.length > 0; ) {
+    moved = false;
+    const next = [];
+    for (const id of rest) {
+      if (prereqsMet(id, ranks)) {
+        kept.push(id);
+        ranks[id] = (ranks[id] ?? 0) + 1;
+        moved = true;
+      } else next.push(id);
+    }
+    rest = next;
+  }
+  return { kept, dropped: rest };
+}
+__name(replay, "replay");
+function isValidPicks(raw, bondLevel) {
+  return isWellFormed(raw, bondLevel) && replay(raw).dropped.length === 0;
+}
+__name(isValidPicks, "isValidPicks");
+function sanitizeTalentPicks(rawIn, bondLevel) {
+  const raw = Array.isArray(rawIn) ? rawIn.filter((id) => id !== "tal-com-07") : rawIn;
+  if (!isWellFormed(raw, bondLevel)) return [];
+  const { kept, dropped } = replay(raw);
+  return dropped.length === 0 ? [...raw] : kept;
+}
+__name(sanitizeTalentPicks, "sanitizeTalentPicks");
+function talentAttrBonus(picks, bondLevel) {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!isValidPicks(picks, bondLevel)) return out;
+  for (const id of picks) {
+    const n = PICKABLE[id];
+    if (n.kind === "combatBonus" && n.scope === "pvp" && n.attr) out[n.attr] += n.perRank ?? 0;
+    if (n.kind === "allAttr") {
+      out.atk += n.perRank ?? 0;
+      out.def += n.perRank ?? 0;
+      out.spd += n.perRank ?? 0;
+    }
+  }
+  return out;
+}
+__name(talentAttrBonus, "talentAttrBonus");
+function sumKind(picks, bondLevel, kind, max2) {
+  if (!isValidPicks(picks, bondLevel)) return 0;
+  let sum = 0;
+  for (
+    const id of
+    /** @type {string[]} */
+    picks
+  ) if (PICKABLE[id].kind === kind) sum += PICKABLE[id].perRank ?? 0;
+  return Math.min(max2, sum);
+}
+__name(sumKind, "sumKind");
+var talentStartEnergy = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "startEnergy", START_ENERGY_MAX), "talentStartEnergy");
+var talentDotResist = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "dotResist", DOT_RESIST_MAX), "talentDotResist");
+function talentCheerScale(picks, bondLevel) {
+  if (!isValidPicks(picks, bondLevel)) return 1;
+  let sum = 0;
+  for (
+    const id of
+    /** @type {string[]} */
+    picks
+  ) if (PICKABLE[id].kind === "cheerBoost") sum += PICKABLE[id].perRank ?? 0;
+  return cleanCheerScale(1 + sum);
+}
+__name(talentCheerScale, "talentCheerScale");
+
+// api/_forge.js
+var FORGE_MAX_LEVEL = 15;
+var FORGE_SCHEMA = 2;
+var LEVEL_PCT = Array.from({ length: FORGE_MAX_LEVEL }, () => 1e-3);
+var PRIMARY_ATTR = { nucleo: "atk", carapaca: "def", rastro: "spd" };
+var ALT_ATTR = { nucleo: "def", carapaca: "spd", rastro: "atk" };
+var LEGACY_LEVEL = [5, 11, 15];
+var OLD_LEVEL_TO_NEW = [3, 5, 8, 11, 15];
+var OLD_LEVEL_SPAN = [3, 2, 3, 3, 4];
+var FORGE_PIECES = {
+  "eq-nucleo-t1": { slot: "nucleo", tier: 1 },
+  "eq-nucleo-t2": { slot: "nucleo", tier: 2 },
+  "eq-nucleo-t3": { slot: "nucleo", tier: 3 },
+  "eq-carapaca-t1": { slot: "carapaca", tier: 1 },
+  "eq-carapaca-t2": { slot: "carapaca", tier: 2 },
+  "eq-carapaca-t3": { slot: "carapaca", tier: 3 },
+  "eq-rastro-t1": { slot: "rastro", tier: 1 },
+  "eq-rastro-t2": { slot: "rastro", tier: 2 },
+  "eq-rastro-t3": { slot: "rastro", tier: 3 }
+};
+var has2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function sanitizeForge(raw) {
+  const empty = { levels: {}, picks: {} };
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return empty;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const legacy = r.v !== FORGE_SCHEMA;
+  const lv = r.levels && typeof r.levels === "object" && !Array.isArray(r.levels) ? (
+    /** @type {Record<string, unknown>} */
+    r.levels
+  ) : {};
+  const pk = r.picks && typeof r.picks === "object" && !Array.isArray(r.picks) ? (
+    /** @type {Record<string, unknown>} */
+    r.picks
+  ) : {};
+  const levels = {};
+  const picks = {};
+  for (const id of Object.keys(FORGE_PIECES)) {
+    const v = has2(lv, id) ? lv[id] : void 0;
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    const arr = has2(pk, id) && Array.isArray(pk[id]) ? (
+      /** @type {unknown[]} */
+      pk[id]
+    ) : [];
+    if (legacy) {
+      const old = Math.min(OLD_LEVEL_TO_NEW.length, Math.max(1, Math.floor(v)));
+      const list2 = [];
+      for (let k = 1; k <= old; k++) {
+        const c = k >= 2 && arr[k - 2] === "b" ? "b" : "a";
+        const span = OLD_LEVEL_SPAN[k - 1] - (k === 1 ? 1 : 0);
+        for (let i2 = 0; i2 < span; i2++) list2.push(c);
+      }
+      levels[id] = OLD_LEVEL_TO_NEW[old - 1];
+      if (list2.includes("b")) picks[id] = list2;
+      continue;
+    }
+    const level = Math.min(FORGE_MAX_LEVEL, Math.max(1, Math.floor(v)));
+    levels[id] = level;
+    const list = [];
+    for (let i2 = 0; i2 < level - 1; i2++) list.push(arr[i2] === "b" ? "b" : "a");
+    if (list.includes("b")) picks[id] = list;
+  }
+  return Object.keys(levels).length === 0 ? empty : { v: FORGE_SCHEMA, levels, picks };
+}
+__name(sanitizeForge, "sanitizeForge");
+function ownedPieceBonus(id, forge) {
+  const out = { atk: 0, def: 0, spd: 0 };
+  if (!has2(FORGE_PIECES, id)) return out;
+  const piece = FORGE_PIECES[id];
+  const f = sanitizeForge(forge);
+  const level = has2(f.levels, id) ? f.levels[id] : LEGACY_LEVEL[piece.tier - 1];
+  const saved = has2(f.picks, id) ? f.picks[id] : [];
+  const main = PRIMARY_ATTR[piece.slot];
+  out[main] += LEVEL_PCT[0];
+  for (let k = 2; k <= Math.min(FORGE_MAX_LEVEL, level); k++) out[saved[k - 2] === "b" ? ALT_ATTR[piece.slot] : main] += LEVEL_PCT[k - 1];
+  out.atk = Math.round(out.atk * 1e9) / 1e9;
+  out.def = Math.round(out.def * 1e9) / 1e9;
+  out.spd = Math.round(out.spd * 1e9) / 1e9;
+  return out;
+}
+__name(ownedPieceBonus, "ownedPieceBonus");
+
+// api/_equipment.js
+var EQUIP_SLOTS = ["nucleo", "carapaca", "rastro"];
+var TIER_PCT = [5e-3, 0.01, 0.015];
+var FRAGMENTS_MAX = 999;
+var EQUIP = Object.fromEntries(
+  EQUIP_SLOTS.flatMap((slot) => [1, 2, 3].map((tier) => [`eq-${slot}-t${tier}`, { slot, pct: TIER_PCT[tier - 1] }]))
+);
+var has3 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
+function sanitizeEquipment(raw) {
+  if (!raw || typeof raw !== "object") return { owned: [], equipped: {}, fragments: 0 };
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const seen = [];
+  if (Array.isArray(r.owned)) {
+    for (const id of r.owned) if (typeof id === "string" && has3(EQUIP, id) && !seen.includes(id)) seen.push(id);
+  }
+  const best = {};
+  for (const id of seen) {
+    const slot = EQUIP[id].slot;
+    if (!best[slot] || Number(best[slot].slice(-1)) < Number(id.slice(-1))) best[slot] = id;
+  }
+  const owned = seen.filter((id) => best[EQUIP[id].slot] === id);
+  const equipped = {};
+  for (const slot of EQUIP_SLOTS) if (best[slot]) equipped[slot] = best[slot];
+  const f = typeof r.fragments === "number" && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
+  return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
+}
+__name(sanitizeEquipment, "sanitizeEquipment");
+function equipAttrBonus(raw, forge) {
+  const eq = sanitizeEquipment(raw);
+  const out = { atk: 0, def: 0, spd: 0 };
+  for (const slot of EQUIP_SLOTS) {
+    const id = eq.equipped[slot];
+    if (!id) continue;
+    const b = ownedPieceBonus(id, forge);
+    out.atk += b.atk;
+    out.def += b.def;
+    out.spd += b.spd;
+  }
+  return out;
+}
+__name(equipAttrBonus, "equipAttrBonus");
+var fin = /* @__PURE__ */ __name((n) => typeof n === "number" && Number.isFinite(n) && n > 0 ? Math.min(1e9, Math.floor(n)) : 0, "fin");
+function sanitizeBitsOrigin(raw) {
+  if (!raw || typeof raw !== "object") return void 0;
+  const o = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof o.day !== "string" || o.day.length === 0 || o.day.length > 40) return void 0;
+  return { day: o.day, free: fin(o.free), fromCredits: fin(o.fromCredits), paidLeft: fin(o.paidLeft) };
+}
+__name(sanitizeBitsOrigin, "sanitizeBitsOrigin");
+
+// api/_fichaJornada.js
+var MIN_AMOSTRA = 30;
+var GALHO_MAX = 1e5;
+var ESTAGIOS_COM_JANELA = ["champion", "ultimate", "mega", "ultra"];
+var FAMILIAS_VALIDAS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
+var GALHOS = [["poder", "power"], ["harmonia", "harmony"], ["benevolencia", "benevolence"]];
+var GALHO_PARA_ELEMENTO = {
+  poder: {
+    fogo: 0.26,
+    vileza: 0.1,
+    eletricidade: 0.1,
+    marcial: 0.1,
+    morte: 0.08,
+    vigor: 0.08,
+    terra: 0.06,
+    arcano: 0.05,
+    sombra: 0.05,
+    gravidade: 0.04,
+    ar: 0.03,
+    som: 0.03,
+    vida: 0.02
+  },
+  harmonia: {
+    arcano: 0.2,
+    ar: 0.15,
+    agua: 0.12,
+    luz: 0.1,
+    tempo: 0.08,
+    som: 0.08,
+    espaco: 0.08,
+    marcial: 0.05,
+    eletricidade: 0.04,
+    sombra: 0.04,
+    vida: 0.02,
+    terra: 0.02,
+    morte: 0.02
+  },
+  benevolencia: {
+    vida: 0.28,
+    terra: 0.22,
+    vigor: 0.16,
+    agua: 0.1,
+    luz: 0.1,
+    gravidade: 0.06,
+    sombra: 0.03,
+    arcano: 0.03,
+    marcial: 0.02
+  }
+};
+var MESES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function pts(v) {
+  return typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.min(v, GALHO_MAX) : 0;
+}
+__name(pts, "pts");
+function cleanGalhos(g) {
+  const o = g && typeof g === "object" ? g : {};
+  return { power: pts(o.power), harmony: pts(o.harmony), benevolence: pts(o.benevolence) };
+}
+__name(cleanGalhos, "cleanGalhos");
+function planoDoComportamento(janela) {
+  const b = GALHOS.map(([, k]) => janela && typeof janela === "object" ? typeof janela[k] === "number" && Number.isFinite(janela[k]) && janela[k] > 0 ? janela[k] : 0 : 0);
+  const total = b.reduce((a, x2) => a + x2, 0);
+  if (total < MIN_AMOSTRA) return null;
+  const fatias = b.map((x2) => x2 / total);
+  const plano = {};
+  const els = new Set(GALHOS.flatMap(([g]) => Object.keys(GALHO_PARA_ELEMENTO[g])));
+  for (const el of els) {
+    let p = 0;
+    GALHOS.forEach(([g], i2) => {
+      p += fatias[i2] * (GALHO_PARA_ELEMENTO[g][el] ?? 0);
+    });
+    if (p > 0) plano[el] = p;
+  }
+  return plano;
+}
+__name(planoDoComportamento, "planoDoComportamento");
+function cleanAt(at, agora = Date.now()) {
+  if (typeof at !== "string") return "";
+  const s = at.trim();
+  let y;
+  let m;
+  let d;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) {
+    y = +iso[1];
+    m = +iso[2];
+    d = +iso[3];
+  } else {
+    const nat = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
+    if (!nat) return "";
+    m = MESES.indexOf(nat[1]) + 1;
+    d = +nat[2];
+    y = +nat[3];
+  }
+  const anoMax = new Date(agora).getUTCFullYear() + 1;
+  return m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2024 && y <= anoMax ? s : "";
+}
+__name(cleanAt, "cleanAt");
+var own = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
+function sanitizeFichaJornada(raw, agora = Date.now()) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const est = (
+    /** @type {any} */
+    raw.estagios
+  );
+  if (!est || typeof est !== "object" || Array.isArray(est)) return void 0;
+  const estagios = {};
+  for (const stage of ESTAGIOS_COM_JANELA) {
+    if (!own(est, stage)) continue;
+    const e = est[stage];
+    if (!e || typeof e !== "object" || Array.isArray(e)) continue;
+    const galhos = cleanGalhos(e.galhos);
+    const out = { galhos, at: cleanAt(e.at, agora) };
+    const plano = planoDoComportamento(galhos);
+    if (plano) out.plano = plano;
+    if (typeof e.familia === "string" && FAMILIAS_VALIDAS.includes(e.familia)) out.familia = e.familia;
+    estagios[stage] = out;
+  }
+  return Object.keys(estagios).length > 0 ? { v: 1, estagios } : void 0;
+}
+__name(sanitizeFichaJornada, "sanitizeFichaJornada");
+function enforceImmutableFicha(incoming, stored, agora = Date.now()) {
+  const novo = sanitizeFichaJornada(incoming, agora);
+  const antigo = sanitizeFichaJornada(stored, agora);
+  if (!novo || !antigo) return { ficha: novo, mexeu: [] };
+  const mexeu = [];
+  const estagios = { ...novo.estagios };
+  for (const stage of ESTAGIOS_COM_JANELA) {
+    const a = antigo.estagios[stage];
+    if (!a) continue;
+    const n = estagios[stage];
+    if (n && (n.at !== a.at || n.galhos.power !== a.galhos.power || n.galhos.harmony !== a.galhos.harmony || n.galhos.benevolence !== a.galhos.benevolence || a.familia && n.familia !== a.familia)) mexeu.push(stage);
+    const familia = a.familia ?? n?.familia;
+    estagios[stage] = { ...a, ...familia ? { familia } : {} };
+  }
+  return { ficha: { v: 1, estagios }, mexeu };
+}
+__name(enforceImmutableFicha, "enforceImmutableFicha");
+function fichaJornadaFamilia(ficha, stage) {
+  if (!ESTAGIOS_COM_JANELA.includes(stage) || !ficha || typeof ficha !== "object") return null;
+  const est = (
+    /** @type {any} */
+    ficha.estagios
+  );
+  const f = est && typeof est === "object" && own(est, stage) ? est[stage]?.familia : null;
+  return typeof f === "string" && FAMILIAS_VALIDAS.includes(f) ? f : null;
+}
+__name(fichaJornadaFamilia, "fichaJornadaFamilia");
+
+// api/_duel.js
+var DUEL_PENDING_MS = 5 * 60 * 1e3;
+var DUEL_TAPS_FULL = CHEER.tapsFull;
+var DUEL_TAPS_CAP = CHEER.tapsCapPerBucket;
+var DUEL_CHEER_BUCKETS = Math.ceil(60 / CHEER.bucketSeconds);
+var DUEL_SAVE_MAX_CHARS = 1e6;
+var DUEL_DAY_MS = 864e5;
+function sanitizeTaps(raw) {
+  const arr = Array.isArray(raw) ? raw : [];
+  return Array.from({ length: DUEL_CHEER_BUCKETS }, (_, i2) => {
+    const n = Math.floor(Number(arr[i2]));
+    return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
+  });
+}
+__name(sanitizeTaps, "sanitizeTaps");
+function bucketTapTimes(counts) {
+  const out = [];
+  counts.forEach((n, b) => {
+    for (let k = 0; k < n; k++) out.push((b + 1) * CHEER.bucketSeconds);
+  });
+  return out;
+}
+__name(bucketTapTimes, "bucketTapTimes");
+function duelCheerEvents(rawTaps, side = 0, scale = 1) {
+  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side, scale);
+}
+__name(duelCheerEvents, "duelCheerEvents");
+function maxLevelFor(firstSeen, now) {
+  if (typeof firstSeen !== "number" || !Number.isFinite(firstSeen) || firstSeen <= 0) return 1;
+  return 1 + Math.max(0, Math.floor((now - firstSeen) / DUEL_DAY_MS));
+}
+__name(maxLevelFor, "maxLevelFor");
+var ESCOLA_FAMILY = {
+  combate_fisico: "direct",
+  longo_alcance: "dot",
+  conjuracao: "direct",
+  benca: "heal",
+  maldicao: "defDebuff"
+};
+var SPECIAL_FAMILY_IDS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
+var FICHA_STAGES = ["rookie", "champion", "ultimate", "mega", "ultra"];
+var own2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
+function fichaStageOf(evolutionStage) {
+  const nivel = typeof evolutionStage === "string" ? evolutionStage.split("-")[0] : "";
+  return FICHA_STAGES.includes(nivel) ? nivel : "rookie";
+}
+__name(fichaStageOf, "fichaStageOf");
+var LEXICO_POR_FAMILIA = 8;
+var ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
+function lexOf(especial, basica, familia) {
+  const lex = especial && typeof especial === "object" ? especial.lex : null;
+  if (!lex || typeof lex !== "object" || !familia) return null;
+  const { n, f } = lex;
+  if (typeof n !== "number" || !Number.isInteger(n) || n < 0 || n >= LEXICO_POR_FAMILIA) return null;
+  if (f !== 0 && f !== 1 && f !== 2) return null;
+  const el = especial.elementoId, elB = basica && typeof basica === "object" ? basica.elementoId : null;
+  if (typeof el !== "string" || !ELEMENTO_ID.test(el) || typeof elB !== "string" || !ELEMENTO_ID.test(elB)) return null;
+  return { n, f, el, elB };
+}
+__name(lexOf, "lexOf");
+var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" ? own2(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : "conjuracao" : null, "escolaOf");
+var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
+  "fogo",
+  "agua",
+  "terra",
+  "ar",
+  "eletricidade",
+  "arcano",
+  "sombra",
+  "luz",
+  "vileza",
+  "morte",
+  "vida",
+  "vigor",
+  "marcial",
+  "tempo",
+  "som",
+  "gravidade",
+  "espaco",
+  "vapor",
+  "lava",
+  "incendio",
+  "plasma",
+  "fogo_feiticeiro",
+  "fogo_negro",
+  "chama_solar",
+  "fogo_infernal",
+  "chama_azul",
+  "fenix",
+  "fervor",
+  "pantano",
+  "gelo",
+  "agua_viva",
+  "mare",
+  "abismo",
+  "prisma",
+  "acido",
+  "veneno",
+  "nascente",
+  "correnteza",
+  "areia",
+  "magnetismo",
+  "cristal",
+  "obsidiana",
+  "ouro_vivo",
+  "solo_profano",
+  "ossuario",
+  "flora",
+  "tita",
+  "tempestade",
+  "eter",
+  "murmurio",
+  "aurora",
+  "enxofre",
+  "miasma",
+  "alento",
+  "impeto",
+  "fluxo",
+  "trovao_negro",
+  "fulgor",
+  "tormento",
+  "galvanismo",
+  "sinapse",
+  "reflexo",
+  "ocultismo",
+  "runa",
+  "pacto",
+  "alma",
+  "essencia",
+  "encantamento",
+  "crepusculo",
+  "terror",
+  "espectro",
+  "parasita",
+  "assassinio",
+  "heresia",
+  "julgamento",
+  "santidade",
+  "bravura",
+  "praga",
+  "mutacao",
+  "carnificina",
+  "equilibrio",
+  "ceifa",
+  "vitalidade",
+  "forja",
+  "tempera",
+  "aco",
+  "esgrima",
+  "aco_voltaico",
+  "arsenal",
+  "lamina_oculta",
+  "lamina_radiante",
+  "serrilha",
+  "fio_funebre",
+  "lamina_viva",
+  "maestria",
+  "pira_eterna",
+  "erosao",
+  "fossil",
+  "aceleracao",
+  "instante",
+  "cronomancia",
+  "entropia",
+  "eon",
+  "ruina",
+  "ocaso",
+  "florescer",
+  "frenesi",
+  "contratempo",
+  "estrondo",
+  "sonar",
+  "terremoto",
+  "estampido",
+  "trovao",
+  "cantico",
+  "sussurro",
+  "harmonia",
+  "dissonancia",
+  "requiem",
+  "melodia",
+  "brado",
+  "cadencia",
+  "eco",
+  "fornalha_estelar",
+  "voragem",
+  "colapso",
+  "vacuo",
+  "magnetar",
+  "singularidade",
+  "buraco_negro",
+  "halo_gravitacional",
+  "jugo",
+  "implosao",
+  "ancora_vital",
+  "peso_descomunal",
+  "ariete",
+  "dilatacao",
+  "onda_de_choque",
+  "meteoro",
+  "cometa",
+  "asteroide",
+  "estratosfera",
+  "pulsar",
+  "portal",
+  "vazio",
+  "constelacao",
+  "devorador",
+  "nebulosa",
+  "semente_estelar",
+  "gigante_estelar",
+  "lamina_sideral",
+  "continuum",
+  "silencio_cosmico",
+  "dobra"
+]);
+var idElemento = /* @__PURE__ */ __name((id) => typeof id === "string" && ELEMENTOS_FICHA.has(id) ? id : null, "idElemento");
+function elementoDoBasico(skills) {
+  const dom = skills && typeof skills === "object" && skills.elementoDominante && typeof skills.elementoDominante === "object" ? skills.elementoDominante.id : null;
+  return idElemento(dom) ?? idElemento(skills?.basica?.elementoId);
+}
+__name(elementoDoBasico, "elementoDoBasico");
+function duelSide(save, opts = {}) {
+  const state = save && typeof save === "object" ? save : {};
+  const bondLvl = bondLevelFor(state.totalXP);
+  const bonus = combinedAttrBonus({
+    talent: talentAttrBonus(state.talentPicks, bondLvl),
+    // PR8: equipamento por slot (Nucleo ATK, Carapaca DEF, Rastro SPD), percentual, saneado do save; o teto de 5% e a SOMA dos tres.
+    equipment: equipAttrBonus(state.equipment, state.forge)
+  });
+  const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
+  const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
+  const basica = escolaOf(skills?.basica);
+  const especial = escolaOf(skills?.especial);
+  const familiaSalva = skills?.especial?.familia;
+  const gravada = fichaJornadaFamilia(state.fichaJornada, fichaStageOf(state.evolutionStage));
+  const family = especial ? gravada ?? (typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]) : "direct";
+  const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
+}
+__name(duelSide, "duelSide");
+function duelSeed(...parts) {
+  let h = 2166136261;
+  const s = parts.join("|");
+  for (let i2 = 0; i2 < s.length; i2++) {
+    h ^= s.charCodeAt(i2);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+__name(duelSeed, "duelSeed");
+function simulateDuel({ me, opp, seed, taps }) {
+  const g = fightSteps(
+    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
+    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
+    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) }
+  );
+  const events = [];
+  let hpMe = null, hpOpp = null;
+  let r = g.next();
+  while (!r.done) {
+    const e = r.value;
+    events.push(e);
+    if (e.kind === "ko" && hpMe === null) {
+      hpMe = Math.max(0, Math.min(1, e.hp[0]));
+      hpOpp = Math.max(0, Math.min(1, e.hp[1]));
+    }
+    r = g.next(1);
+  }
+  const res = r.value;
+  const winner = res.winner === "draw" ? "draw" : res.winner === "A" ? "me" : "opp";
+  return { events, winner, hpMe: hpMe ?? res.hpA, hpOpp: hpOpp ?? res.hpB, timeMe: res.timeA, timeOpp: res.timeB };
+}
+__name(simulateDuel, "simulateDuel");
+
 // api/_coop.js
 var COOP_MAX_MEMBERS = 12;
 var PRESENCA_NOMINAL_MAX = 4;
@@ -1080,7 +2357,7 @@ function semanaDe(d = /* @__PURE__ */ new Date()) {
   return `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`;
 }
 __name(semanaDe, "semanaDe");
-var MESES = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+var MESES2 = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 function diaDoJogador(raw, now = /* @__PURE__ */ new Date()) {
   const hojeUtc = now.toISOString().slice(0, 10);
   if (raw === void 0 || raw === null || raw === "") return { ok: true, day: hojeUtc };
@@ -1093,9 +2370,9 @@ function diaDoJogador(raw, now = /* @__PURE__ */ new Date()) {
     d = +r[3];
   } else {
     r = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
-    if (!r || !(r[1] in MESES)) return { ok: false };
+    if (!r || !(r[1] in MESES2)) return { ok: false };
     y = +r[3];
-    m = MESES[r[1]];
+    m = MESES2[r[1]];
     d = +r[2];
   }
   const t = Date.UTC(y, m, d);
@@ -1628,9 +2905,18 @@ async function montarCartao(env, gid, save, now = /* @__PURE__ */ new Date()) {
     lerCasa(env, gid, save),
     ...semanas.map((w) => lerGolpes(env, gid, w, save))
   ]);
+  let sprite = spriteUrlOrNull(perfil?.spriteUrl) ?? artLineOrNull(perfil?.artLine);
+  if (!sprite && !perfil) {
+    const rawSave = await kvs.get(save);
+    if (typeof rawSave === "string" && rawSave.length <= DUEL_SAVE_MAX_CHARS) {
+      const fromSave = spriteFromSaveState(parse(rawSave));
+      sprite = fromSave.spriteUrl ?? fromSave.artLine;
+    }
+  }
   return {
     v: 1,
     name: typeof perfil?.name === "string" ? perfil.name : null,
+    ...sprite ? { sprite } : {},
     ck: ck && typeof ck === "object" ? { weekKey: ck.weekKey, days: Array.isArray(ck.days) ? ck.days : [] } : null,
     fio,
     gest: gest && typeof gest === "object" ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,
@@ -4471,94 +5757,6 @@ async function onRequestPost2({ request, env }) {
 }
 __name(onRequestPost2, "onRequestPost");
 
-// api/_gates.js
-var GATES = {
-  pvp: { minBond: 5 },
-  torneio: { minBond: 5 },
-  masmorraAlto: { minBond: 8 },
-  renascimento: { minBond: 12 }
-};
-function gateFor(feature, bondLevel) {
-  const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
-  const minBond = GATES[feature].minBond;
-  return { open: lvl >= minBond, minBond, bondLevel: lvl };
-}
-__name(gateFor, "gateFor");
-var BUILDING_GATES = {
-  "mercado.itens": { minBond: 1 },
-  "mercado.conquistas": { minBond: 1 },
-  "mercado.decoracao": { minBond: 2 },
-  "mercado.background": { minBond: 3 },
-  "mercado.ferreiro": { minBond: 2 },
-  "jogos.salao": { minBond: 1 },
-  "jogos.refugio": { minBond: 1 },
-  "jogos.mente": { minBond: 3 },
-  "exploracao.masmorra": { minBond: 1 },
-  "exploracao.caderno": { minBond: 2 },
-  "exploracao.oficina": { minBond: 3 },
-  "arena.duelo": { minBond: GATES.pvp.minBond },
-  "arena.torneio": { minBond: GATES.torneio.minBond },
-  "arena.guerra": { minBond: 5 },
-  "laboratorio.evolucao": { minBond: 1 },
-  "laboratorio.pet": { minBond: 2 },
-  "laboratorio.stats": { minBond: 3 },
-  "laboratorio.perfil": { minBond: 2 },
-  "laboratorio.biblioteca": { minBond: 2 },
-  "laboratorio.amigos": { minBond: 2 },
-  "hall.guilda": { minBond: 4 },
-  "hall.grove": { minBond: 4 },
-  "hall.feira": { minBond: GATES.pvp.minBond }
-};
-var MOVED_BUILDINGS = {
-  "arena.feira": "hall.feira",
-  "hall.biblioteca": "laboratorio.biblioteca",
-  "hall.amigos": "laboratorio.amigos"
-};
-function currentBuildingId(x2) {
-  return typeof x2 === "string" && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x2) ? (
-    /** @type {Record<string, string>} */
-    MOVED_BUILDINGS[x2]
-  ) : x2;
-}
-__name(currentBuildingId, "currentBuildingId");
-
-// api/_bond.js
-var EARLY_STEPS = [75, 125, 200, 300, 400];
-var STEP_BASE = 400;
-var STEP_GROWTH = 100;
-var BOND_PVP_MIN_LEVEL = GATES.pvp.minBond;
-function stepFor(level) {
-  if (level <= 0) return 0;
-  if (level <= EARLY_STEPS.length) return EARLY_STEPS[level - 1];
-  return STEP_BASE + STEP_GROWTH * (level - EARLY_STEPS.length);
-}
-__name(stepFor, "stepFor");
-var BOND_MAX_LEVEL = 1e3;
-function bondLevelFor(totalXP) {
-  const xp = typeof totalXP === "number" && Number.isFinite(totalXP) ? Math.max(0, totalXP) : 0;
-  let level = 1;
-  let acumulado = 0;
-  while (level < BOND_MAX_LEVEL) {
-    acumulado += stepFor(level);
-    if (xp < acumulado) break;
-    level++;
-  }
-  return level;
-}
-__name(bondLevelFor, "bondLevelFor");
-async function bondLevelOf(env, saveId) {
-  try {
-    const raw = await kvOrThrow(env).get(saveId);
-    if (!raw) return 0;
-    const state = JSON.parse(raw);
-    if (!state || typeof state !== "object") return 0;
-    return bondLevelFor(state.totalXP);
-  } catch {
-    return 0;
-  }
-}
-__name(bondLevelOf, "bondLevelOf");
-
 // api/_profile.js
 function stagePower(stage) {
   if (!stage) return 1;
@@ -4669,7 +5867,7 @@ var EVENT_SCHEMA = {
   meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
-var MAX_EVENTS = 100;
+var MAX_EVENTS2 = 100;
 var MAX_DAY_SKEW_DAYS = 7;
 var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 var ID_RE = /^[0-9a-f]{32}$/;
@@ -4728,7 +5926,7 @@ function sanitizeBatch(body, today3 = serverDay()) {
     return { ok: false, reason: "id" };
   }
   if (!Array.isArray(body.events)) return { ok: false, reason: "events" };
-  if (body.events.length === 0 || body.events.length > MAX_EVENTS) {
+  if (body.events.length === 0 || body.events.length > MAX_EVENTS2) {
     return { ok: false, reason: "events" };
   }
   for (const key of Object.keys(body)) {
@@ -5017,1145 +6215,30 @@ async function onRequest2({ request, env }) {
 }
 __name(onRequest2, "onRequest");
 
-// api/_soulXP.js
-var STAGE_ORDER = ["rookie", "champion", "ultimate", "mega", "ultra"];
-var STAGE_CAPS_EACH = [6, 7, 8, 9, 10];
-var STAGE_LEVEL_CAPS = STAGE_CAPS_EACH.reduce((acc, c) => [...acc, (acc[acc.length - 1] ?? 0) + c], []);
-var MAX_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
-var XP_PER_LEVEL = 100;
-var XP_FULL_DAY = 100;
-function safe(n) {
-  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : 0;
-}
-__name(safe, "safe");
-function stageIndexOf(stage) {
-  if (typeof stage !== "string") return 0;
-  const prefix = stage.split("-")[0];
-  const i2 = STAGE_ORDER.indexOf(prefix);
-  return i2 < 0 ? 0 : i2;
-}
-__name(stageIndexOf, "stageIndexOf");
-function levelCapFor(stage) {
-  return STAGE_LEVEL_CAPS[stageIndexOf(stage)];
-}
-__name(levelCapFor, "levelCapFor");
-function soulXP(state) {
-  const s = stageIndexOf(state?.evolutionStage);
-  const firstLevel = s <= 0 ? 1 : STAGE_LEVEL_CAPS[s - 1] + 1;
-  return (firstLevel - 1) * XP_PER_LEVEL + Math.floor(safe(state?.perfectDays)) * XP_FULL_DAY;
-}
-__name(soulXP, "soulXP");
-function levelFor(xp) {
-  return Math.min(MAX_LEVEL, 1 + Math.floor(safe(xp) / XP_PER_LEVEL));
-}
-__name(levelFor, "levelFor");
-function soulLevel(state) {
-  return Math.min(levelFor(soulXP(state)), levelCapFor(state?.evolutionStage));
-}
-__name(soulLevel, "soulLevel");
-
-// api/_combate.js
-function mulberry32(seed) {
-  let a = seed | 0;
-  return () => {
-    a = a + 1831565813 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-__name(mulberry32, "mulberry32");
-function sideSeed(seed, side) {
-  return Math.imul(seed ^ 2654435769, 2246822507) + side * 1663821211 | 0;
-}
-__name(sideSeed, "sideSeed");
-var PHASE_SALT = 20973;
-function gaussian(r) {
-  return Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
-}
-__name(gaussian, "gaussian");
-var VARIANCE = { rho: 0.9, sigma: 0.08, floor: 0.05 };
-function ar1Multiplier(r, cfg) {
-  let z = gaussian(r);
-  const k = Math.sqrt(1 - cfg.rho * cfg.rho);
-  return () => {
-    z = cfg.rho * z + k * gaussian(r);
-    return Math.max(cfg.floor, 1 + cfg.sigma * z);
-  };
-}
-__name(ar1Multiplier, "ar1Multiplier");
-var CURVE_K = 8;
-var BASE_ATTACKS_PER_WINDOW = 9;
-function hitsToKnockOut(attacker, defender) {
-  return defender.hp * (1 + defender.def / CURVE_K) / (1 + attacker.atk / CURVE_K) / (1 + attacker.bonus);
-}
-__name(hitsToKnockOut, "hitsToKnockOut");
-function attacksPerWindow(spd) {
-  return BASE_ATTACKS_PER_WINDOW * (1 + spd / CURVE_K) / (1 + 1 / CURVE_K);
-}
-__name(attacksPerWindow, "attacksPerWindow");
-var MAX_SHARE = 0.45;
-var MIN_SHARE = 0.15;
-var HP_BASE = 10;
-var HP_LEVEL_DIVISOR = 10;
-var STAGE_FACTOR = 1.5;
-var REFERENCE_BUILDS = {
-  atk: { atk: 1, def: 0, spd: 0 },
-  def: { atk: 0, def: 1, spd: 0 },
-  spd: { atk: 0, def: 0, spd: 1 },
-  balanced: { atk: 1 / 3, def: 1 / 3, spd: 1 / 3 }
-};
-function clampLevel(level) {
-  if (!Number.isFinite(level)) return 1;
-  return Math.min(MAX_LEVEL, Math.max(1, Math.floor(level)));
-}
-__name(clampLevel, "clampLevel");
-function stageOfLevel(level) {
-  const L = clampLevel(level);
-  return STAGE_LEVEL_CAPS.findIndex((cap) => L <= cap);
-}
-__name(stageOfLevel, "stageOfLevel");
-function stageBase(stage) {
-  return Math.ceil(STAGE_FACTOR ** stage);
-}
-__name(stageBase, "stageBase");
-function autoHp(level) {
-  const L = clampLevel(level);
-  return HP_BASE * STAGE_FACTOR ** stageOfLevel(L) * (1 + L / HP_LEVEL_DIVISOR);
-}
-__name(autoHp, "autoHp");
-var ORDER = ["atk", "spd", "def"];
-function cleanWeights(w) {
-  const c = /* @__PURE__ */ __name((x2) => typeof x2 === "number" && Number.isFinite(x2) && x2 > 0 ? x2 : 0, "c");
-  const atk = c(w?.atk), def = c(w?.def), spd = c(w?.spd);
-  const sum = atk + def + spd;
-  return sum > 0 ? { atk: atk / sum, def: def / sum, spd: spd / sum } : REFERENCE_BUILDS.balanced;
-}
-__name(cleanWeights, "cleanWeights");
-function distributePoints(level, weights) {
-  const L = clampLevel(level);
-  const w = cleanWeights(weights);
-  const cap = Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
-  const floor = Math.min(Math.floor(MIN_SHARE * L), Math.floor(L / 3));
-  const p = { atk: floor, def: floor, spd: floor };
-  for (let n = 3 * floor + 1; n <= L; n++) {
-    let best = null;
-    let bestNeed = -Infinity;
-    for (const a of ORDER) {
-      if (p[a] >= cap) continue;
-      const need = w[a] * n - p[a];
-      if (need > bestNeed + 1e-9) {
-        best = a;
-        bestNeed = need;
-      }
-    }
-    p[best]++;
-  }
-  return p;
-}
-__name(distributePoints, "distributePoints");
-function combatantAt(level, weights, bonus = 0) {
-  const L = clampLevel(level);
-  const b = stageBase(stageOfLevel(L));
-  const p = distributePoints(L, weights);
-  if (typeof bonus === "number") return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
-  const ab = toAttrBonus(bonus);
-  const fold = /* @__PURE__ */ __name((v, x2) => x2 > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x2) - 1) : v, "fold");
-  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
-}
-__name(combatantAt, "combatantAt");
-var COMBAT_BONUS_CAP = 0.05;
-var cleanN = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0, "cleanN");
-function combinedAttrBonus(sources) {
-  const sum = { atk: 0, def: 0, spd: 0 };
-  for (const src of [sources?.talent, sources?.equipment, sources?.commerce, sources?.rebirth]) {
-    if (!src || typeof src !== "object") continue;
-    sum.atk += cleanN(src.atk);
-    sum.def += cleanN(src.def);
-    sum.spd += cleanN(src.spd);
-  }
-  const total = sum.atk + sum.def + sum.spd;
-  const k = total > COMBAT_BONUS_CAP ? COMBAT_BONUS_CAP / total : 1;
-  return { atk: sum.atk * k, def: sum.def * k, spd: sum.spd * k };
-}
-__name(combinedAttrBonus, "combinedAttrBonus");
-function toAttrBonus(b) {
-  if (typeof b === "number") return { atk: cleanN(b), def: 0, spd: 0 };
-  return { atk: cleanN(b?.atk), def: cleanN(b?.def), spd: cleanN(b?.spd) };
-}
-__name(toAttrBonus, "toAttrBonus");
-var SPECIAL_BUDGET_HITS = 3;
-var SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
-function specialOf(family) {
-  const f = typeof family === "string" && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : "direct";
-  return { family: f, power: SPECIAL_POWER[f] };
-}
-__name(specialOf, "specialOf");
-var ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
-var ENERGY_TRIGGER = 100;
-var CHEER = {
-  tapsFull: 24,
-  tapsCapPerBucket: 16,
-  bucketSeconds: 3,
-  energyPerDischarge: 9,
-  pvpEnergyPerDischarge: 2.5
-};
-var CHEER_SCALE_MAX = 1.15;
-var START_ENERGY_MAX = 9;
-var DOT_RESIST_MAX = 0.18;
-function cleanStartEnergy(x2) {
-  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(START_ENERGY_MAX, Math.max(0, x2)) : 0;
-}
-__name(cleanStartEnergy, "cleanStartEnergy");
-function cleanDotResist(x2) {
-  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(DOT_RESIST_MAX, Math.max(0, x2)) : 0;
-}
-__name(cleanDotResist, "cleanDotResist");
-function cleanCheerScale(x2) {
-  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x2)) : 1;
-}
-__name(cleanCheerScale, "cleanCheerScale");
-function cheerEvents(taps, side, scale = 1) {
-  const out = [];
-  const k = cleanCheerScale(scale);
-  const perBucket = /* @__PURE__ */ new Map();
-  let acc = 0;
-  for (const tap of [...taps].filter((x2) => Number.isFinite(x2) && x2 >= 0).sort((x2, y) => x2 - y)) {
-    const b = Math.floor(tap / CHEER.bucketSeconds);
-    const n = perBucket.get(b) ?? 0;
-    if (n >= CHEER.tapsCapPerBucket) continue;
-    perBucket.set(b, n + 1);
-    acc++;
-    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
-  }
-  return out;
-}
-__name(cheerEvents, "cheerEvents");
-var MIRROR_SECONDS = 25;
-var HIT_UNIT_H0 = 10;
-var PVP_HP_SCALE = 1.7;
-var EPS = 1e-9;
-var DRAW_EPS = 1e-6;
-var MAX_EVENTS2 = 2e5;
-function windowSeconds(level) {
-  const d = combatantAt(level, REFERENCE_BUILDS.balanced);
-  return MIRROR_SECONDS * attacksPerWindow(d.spd) / hitsToKnockOut(d, d);
-}
-__name(windowSeconds, "windowSeconds");
-function hitUnit(level, h0 = HIT_UNIT_H0) {
-  const bal = combatantAt(level, REFERENCE_BUILDS.balanced);
-  return hitsToKnockOut(bal, bal) / h0;
-}
-__name(hitUnit, "hitUnit");
-function* fightSteps(a, b, opts) {
-  const seed = opts.seed | 0;
-  const hpScale = opts.hpScale ?? 1;
-  const variance = opts.variance === void 0 ? VARIANCE : opts.variance;
-  const wl = opts.windowLevel ?? Math.max(a.combatant.level, b.combatant.level);
-  const win = windowSeconds(wl);
-  const u = opts.unitH0 === null ? 1 : hitUnit(wl, opts.unitH0 ?? HIT_UNIT_H0);
-  const interval = /* @__PURE__ */ __name((spd) => win / attacksPerWindow(spd) * u, "interval");
-  const phaseRng = mulberry32(seed ^ PHASE_SALT);
-  const drawn = [phaseRng(), phaseRng()];
-  const phases = opts.phases ?? drawn;
-  const mk = /* @__PURE__ */ __name((s, i2) => {
-    const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
-    const r = mulberry32(sideSeed(seed, i2 + 1));
-    const mult = variance ? ar1Multiplier(r, variance) : () => 1;
-    return {
-      c,
-      sp: s.special,
-      mult,
-      hp: opts.startHp?.[i2] ?? 1,
-      en: opts.startEnergy?.[i2] ?? 0,
-      shield: 0,
-      next: interval(c.spd) * phases[i2],
-      casts: 0,
-      dead: Infinity,
-      nAtk: 0,
-      nVuln: 0,
-      nSpd: 0,
-      nHit: 0,
-      dotResist: cleanDotResist(s.dotResist)
-    };
-  }, "mk");
-  const F = [mk(a, 0), mk(b, 1)];
-  const timed = [];
-  for (const ch of opts.cheer ?? []) {
-    timed.push({
-      t: ch.t,
-      fn: /* @__PURE__ */ __name(() => {
-        const f = F[ch.side];
-        if (f.sp && f.dead === Infinity) f.en += CHEER.pvpEnergyPerDischarge * cleanCheerScale(ch.scale);
-      }, "fn")
-    });
-  }
-  let t = 0;
-  let tPrev = 0;
-  const pending = [];
-  const ev = /* @__PURE__ */ __name((kind, side, frac, at) => ({ kind, t: at, side, frac, hp: [F[0].hp, F[1].hp], energy: [F[0].en, F[1].en] }), "ev");
-  const hitsOn = /* @__PURE__ */ __name((me, foe) => hitsToKnockOut(me.c, foe.c) / u, "hitsOn");
-  const gain = /* @__PURE__ */ __name((f, x2, per) => {
-    if (f.sp && f.dead === Infinity) f.en += per * x2;
-  }, "gain");
-  const hit = /* @__PURE__ */ __name((src, v, frac, kind) => {
-    if (v.dead < Infinity) return;
-    let amt = frac;
-    if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt);
-      v.shield -= ab;
-      amt -= ab;
-    }
-    v.hp -= amt;
-    gain(src, frac, ENERGY.perDealt);
-    gain(v, frac, ENERGY.perReceived);
-    pending.push(ev(kind, src === F[0] ? 0 : 1, frac, t));
-  }, "hit");
-  const cast = /* @__PURE__ */ __name((me, foe, t0, scale) => {
-    const sp = me.sp;
-    const E = SPECIAL_BUDGET_HITS * sp.power * scale;
-    const iv = interval(me.c.spd);
-    switch (sp.family) {
-      case "direct":
-        hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack");
-        break;
-      case "dot":
-        for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), "tick"), "fn") });
-        }
-        break;
-      case "heal":
-        me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
-        break;
-      case "shield":
-        me.shield += E / hitsOn(foe, me);
-        break;
-      case "atkBuff":
-        me.nAtk += E;
-        break;
-      case "defDebuff":
-        foe.nVuln += E;
-        break;
-      case "spdBuff":
-        me.nSpd += E;
-        me.next = Math.min(me.next, t0 + iv / 2);
-        break;
-    }
-  }, "cast");
-  function* flush() {
-    while (pending.length) yield pending.shift();
-  }
-  __name(flush, "flush");
-  function* markDead() {
-    for (const i2 of [0, 1]) {
-      if (F[i2].hp <= EPS && F[i2].dead === Infinity) {
-        F[i2].dead = t;
-        yield ev("ko", i2, 0, t);
-      }
-    }
-  }
-  __name(markDead, "markDead");
-  function* tryCast(i2, tt) {
-    const me = F[i2];
-    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
-      me.en = Math.max(0, me.en - ENERGY_TRIGGER);
-      me.casts++;
-      const m = yield ev("cast", i2, 0, tt);
-      cast(me, F[1 - i2], tt, m ?? 1);
-    }
-  }
-  __name(tryCast, "tryCast");
-  const finish = /* @__PURE__ */ __name(() => {
-    const timeA = F[0].dead, timeB = F[1].dead;
-    const winner = Math.abs(timeA - timeB) < DRAW_EPS ? "draw" : timeA > timeB ? "A" : "B";
-    return {
-      timeA,
-      timeB,
-      castsA: F[0].casts,
-      castsB: F[1].casts,
-      winner,
-      hpA: Math.max(0, F[0].hp),
-      hpB: Math.max(0, F[1].hp),
-      energyA: F[0].en,
-      energyB: F[1].en
-    };
-  }, "finish");
-  for (let g = 0; g < MAX_EVENTS2; g++) {
-    let tt = Infinity;
-    for (const e of timed) if (e.t < tt) tt = e.t;
-    let tEn = Infinity;
-    for (const f of F) {
-      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
-    }
-    t = Math.min(F[0].next, F[1].next, tt, tEn);
-    for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
-    tPrev = t;
-    for (let i2 = timed.length - 1; i2 >= 0; i2--) {
-      if (timed[i2].t - t < EPS) timed.splice(i2, 1)[0].fn();
-    }
-    for (
-      const i2 of
-      /** @type {(0 | 1)[]} */
-      [0, 1]
-    ) {
-      const me = F[i2];
-      const foe = F[1 - i2];
-      if (me.next - t >= EPS) continue;
-      let mulN = 1;
-      if (me.nAtk > EPS) {
-        const x2 = Math.min(1, me.nAtk);
-        mulN += x2;
-        me.nAtk -= x2;
-      }
-      if (foe.nVuln > EPS) {
-        const x2 = Math.min(1, foe.nVuln);
-        mulN += x2;
-        foe.nVuln -= x2;
-      }
-      const hs = opts.hitScale ? opts.hitScale(i2, me.nHit) : 1;
-      me.nHit++;
-      hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack");
-      if (me.nSpd > EPS) {
-        const x2 = Math.min(1, me.nSpd);
-        me.nSpd -= x2;
-        me.next = t + interval(me.c.spd) / (1 + x2);
-      } else {
-        me.next = t + interval(me.c.spd);
-      }
-    }
-    yield* flush();
-    yield* markDead();
-    yield* tryCast(0, t);
-    yield* tryCast(1, t);
-    yield* flush();
-    yield* markDead();
-    for (const i2 of [0, 1]) {
-      if (F[i2].dead < Infinity && F[1 - i2].dead === Infinity && t > 10 * F[i2].dead + 60) F[1 - i2].dead = t;
-    }
-    const over = opts.stopAtFirstKo ? F[0].dead < Infinity || F[1].dead < Infinity : F[0].dead < Infinity && F[1].dead < Infinity;
-    if (over) return finish();
-  }
-  throw new Error(`combate: fight did not end within ${MAX_EVENTS2} events (seed ${seed})`);
-}
-__name(fightSteps, "fightSteps");
-function safe2(n) {
-  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : 0;
-}
-__name(safe2, "safe");
-function soulWeights(state) {
-  return { atk: safe2(state?.powerPoints), spd: safe2(state?.harmonyPoints), def: safe2(state?.benevolencePoints) };
-}
-__name(soulWeights, "soulWeights");
-function soulCombatant(state, opts = {}) {
-  let level = soulLevel(state);
-  if (typeof opts.maxLevel === "number" && Number.isFinite(opts.maxLevel)) level = Math.min(level, Math.max(1, Math.floor(opts.maxLevel)));
-  return combatantAt(level, soulWeights(state), opts.bonus ?? 0);
-}
-__name(soulCombatant, "soulCombatant");
-
-// api/_talents.js
-var TALENT_POINTS_MAX = 20;
-var req = /* @__PURE__ */ __name((id, rank) => ({ id, rank }), "req");
-var PICKABLE = {
-  "tal-pvp-01": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "atk", perRank: 4e-3 },
-  "tal-pvp-02": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "def", perRank: 4e-3, requires: [req("tal-pvp-01", 2)] },
-  "tal-pvp-03": { maxRank: 4, kind: "combatBonus", scope: "pvp", attr: "spd", perRank: 4e-3, requires: [req("tal-pvp-01", 2)] },
-  "tal-pvp-04": { maxRank: 3, kind: "startEnergy", perRank: 3, requires: [req("tal-pvp-03", 2)] },
-  "tal-pvp-05": { maxRank: 3, kind: "cheerBoost", perRank: 0.05, requiresAny: [req("tal-pvp-02", 2), req("tal-pvp-03", 2)] },
-  "tal-pvp-06": { maxRank: 3, kind: "dotResist", perRank: 0.06, requires: [req("tal-pvp-02", 2)] },
-  "tal-pvp-07": { maxRank: 1, kind: "allAttr", perRank: 2e-3, requires: [req("tal-pvp-05", 3), req("tal-pvp-04", 1), req("tal-pvp-06", 1)] },
-  "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
-  "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", attr: "def", perRank: 6e-3, requires: [req("tal-pve-01", 2)] },
-  "tal-pve-03": { maxRank: 3, kind: "healBoost", perRank: 5e-3, requires: [req("tal-pve-01", 2)] },
-  "tal-pve-04": { maxRank: 3, kind: "riftBits", perRank: 0.03, requires: [req("tal-pve-03", 1)] },
-  "tal-pve-05": { maxRank: 3, kind: "combatBonus", scope: "nightmare", perRank: 4e-3, requires: [req("tal-pve-03", 1)] },
-  "tal-pve-06": { maxRank: 3, kind: "combatBonus", scope: "pve", attr: "spd", perRank: 4e-3, requires: [req("tal-pve-02", 2)] },
-  "tal-pve-07": { maxRank: 1, kind: "startShield", perRank: 0.01, requires: [req("tal-pve-05", 1), req("tal-pve-06", 1)] },
-  "tal-com-01": { maxRank: 3, kind: "equipPrice" },
-  "tal-com-02": { maxRank: 3, kind: "fragmentGain", requires: [req("tal-com-01", 2)] },
-  "tal-com-03": { maxRank: 4, kind: "respecDiscount", perRank: 0.1, requires: [req("tal-com-01", 2)] },
-  "tal-com-04": { maxRank: 3, kind: "backpack", requires: [req("tal-com-02", 2)] },
-  "tal-com-05": { maxRank: 1, kind: "respecOne", requires: [req("tal-com-03", 2)] },
-  "tal-com-06": { maxRank: 3, kind: "missionBits", requires: [req("tal-com-02", 1)] }
-};
-var has = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
-function talentPointsFor(bondLevel) {
-  const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
-  return Math.min(TALENT_POINTS_MAX, lvl);
-}
-__name(talentPointsFor, "talentPointsFor");
-var reqOk = /* @__PURE__ */ __name((r, ranks) => (ranks[r.id] ?? 0) >= r.rank, "reqOk");
-function prereqsMet(id, ranks) {
-  const n = PICKABLE[id];
-  if (n.requires && !n.requires.every((r) => reqOk(r, ranks))) return false;
-  if (n.requiresAny && !n.requiresAny.some((r) => reqOk(r, ranks))) return false;
-  return true;
-}
-__name(prereqsMet, "prereqsMet");
-function isWellFormed(raw, bondLevel) {
-  if (!Array.isArray(raw)) return false;
-  if (raw.length > talentPointsFor(bondLevel)) return false;
-  const counts = /* @__PURE__ */ Object.create(null);
-  for (const id of raw) {
-    if (typeof id !== "string" || !has(PICKABLE, id)) return false;
-    counts[id] = (counts[id] ?? 0) + 1;
-    if (counts[id] > PICKABLE[id].maxRank) return false;
-  }
-  return true;
-}
-__name(isWellFormed, "isWellFormed");
-function replay(picks) {
-  const kept = [];
-  const ranks = /* @__PURE__ */ Object.create(null);
-  let rest = [...picks];
-  for (let moved = true; moved && rest.length > 0; ) {
-    moved = false;
-    const next = [];
-    for (const id of rest) {
-      if (prereqsMet(id, ranks)) {
-        kept.push(id);
-        ranks[id] = (ranks[id] ?? 0) + 1;
-        moved = true;
-      } else next.push(id);
-    }
-    rest = next;
-  }
-  return { kept, dropped: rest };
-}
-__name(replay, "replay");
-function isValidPicks(raw, bondLevel) {
-  return isWellFormed(raw, bondLevel) && replay(raw).dropped.length === 0;
-}
-__name(isValidPicks, "isValidPicks");
-function sanitizeTalentPicks(rawIn, bondLevel) {
-  const raw = Array.isArray(rawIn) ? rawIn.filter((id) => id !== "tal-com-07") : rawIn;
-  if (!isWellFormed(raw, bondLevel)) return [];
-  const { kept, dropped } = replay(raw);
-  return dropped.length === 0 ? [...raw] : kept;
-}
-__name(sanitizeTalentPicks, "sanitizeTalentPicks");
-function talentAttrBonus(picks, bondLevel) {
-  const out = { atk: 0, def: 0, spd: 0 };
-  if (!isValidPicks(picks, bondLevel)) return out;
-  for (const id of picks) {
-    const n = PICKABLE[id];
-    if (n.kind === "combatBonus" && n.scope === "pvp" && n.attr) out[n.attr] += n.perRank ?? 0;
-    if (n.kind === "allAttr") {
-      out.atk += n.perRank ?? 0;
-      out.def += n.perRank ?? 0;
-      out.spd += n.perRank ?? 0;
-    }
-  }
-  return out;
-}
-__name(talentAttrBonus, "talentAttrBonus");
-function sumKind(picks, bondLevel, kind, max2) {
-  if (!isValidPicks(picks, bondLevel)) return 0;
-  let sum = 0;
-  for (
-    const id of
-    /** @type {string[]} */
-    picks
-  ) if (PICKABLE[id].kind === kind) sum += PICKABLE[id].perRank ?? 0;
-  return Math.min(max2, sum);
-}
-__name(sumKind, "sumKind");
-var talentStartEnergy = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "startEnergy", START_ENERGY_MAX), "talentStartEnergy");
-var talentDotResist = /* @__PURE__ */ __name((picks, bondLevel) => sumKind(picks, bondLevel, "dotResist", DOT_RESIST_MAX), "talentDotResist");
-function talentCheerScale(picks, bondLevel) {
-  if (!isValidPicks(picks, bondLevel)) return 1;
-  let sum = 0;
-  for (
-    const id of
-    /** @type {string[]} */
-    picks
-  ) if (PICKABLE[id].kind === "cheerBoost") sum += PICKABLE[id].perRank ?? 0;
-  return cleanCheerScale(1 + sum);
-}
-__name(talentCheerScale, "talentCheerScale");
-
-// api/_forge.js
-var FORGE_MAX_LEVEL = 15;
-var FORGE_SCHEMA = 2;
-var LEVEL_PCT = Array.from({ length: FORGE_MAX_LEVEL }, () => 1e-3);
-var PRIMARY_ATTR = { nucleo: "atk", carapaca: "def", rastro: "spd" };
-var ALT_ATTR = { nucleo: "def", carapaca: "spd", rastro: "atk" };
-var LEGACY_LEVEL = [5, 11, 15];
-var OLD_LEVEL_TO_NEW = [3, 5, 8, 11, 15];
-var OLD_LEVEL_SPAN = [3, 2, 3, 3, 4];
-var FORGE_PIECES = {
-  "eq-nucleo-t1": { slot: "nucleo", tier: 1 },
-  "eq-nucleo-t2": { slot: "nucleo", tier: 2 },
-  "eq-nucleo-t3": { slot: "nucleo", tier: 3 },
-  "eq-carapaca-t1": { slot: "carapaca", tier: 1 },
-  "eq-carapaca-t2": { slot: "carapaca", tier: 2 },
-  "eq-carapaca-t3": { slot: "carapaca", tier: 3 },
-  "eq-rastro-t1": { slot: "rastro", tier: 1 },
-  "eq-rastro-t2": { slot: "rastro", tier: 2 },
-  "eq-rastro-t3": { slot: "rastro", tier: 3 }
-};
-var has2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
-function sanitizeForge(raw) {
-  const empty = { levels: {}, picks: {} };
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return empty;
-  const r = (
-    /** @type {Record<string, unknown>} */
-    raw
-  );
-  const legacy = r.v !== FORGE_SCHEMA;
-  const lv = r.levels && typeof r.levels === "object" && !Array.isArray(r.levels) ? (
-    /** @type {Record<string, unknown>} */
-    r.levels
-  ) : {};
-  const pk = r.picks && typeof r.picks === "object" && !Array.isArray(r.picks) ? (
-    /** @type {Record<string, unknown>} */
-    r.picks
-  ) : {};
-  const levels = {};
-  const picks = {};
-  for (const id of Object.keys(FORGE_PIECES)) {
-    const v = has2(lv, id) ? lv[id] : void 0;
-    if (typeof v !== "number" || !Number.isFinite(v)) continue;
-    const arr = has2(pk, id) && Array.isArray(pk[id]) ? (
-      /** @type {unknown[]} */
-      pk[id]
-    ) : [];
-    if (legacy) {
-      const old = Math.min(OLD_LEVEL_TO_NEW.length, Math.max(1, Math.floor(v)));
-      const list2 = [];
-      for (let k = 1; k <= old; k++) {
-        const c = k >= 2 && arr[k - 2] === "b" ? "b" : "a";
-        const span = OLD_LEVEL_SPAN[k - 1] - (k === 1 ? 1 : 0);
-        for (let i2 = 0; i2 < span; i2++) list2.push(c);
-      }
-      levels[id] = OLD_LEVEL_TO_NEW[old - 1];
-      if (list2.includes("b")) picks[id] = list2;
-      continue;
-    }
-    const level = Math.min(FORGE_MAX_LEVEL, Math.max(1, Math.floor(v)));
-    levels[id] = level;
-    const list = [];
-    for (let i2 = 0; i2 < level - 1; i2++) list.push(arr[i2] === "b" ? "b" : "a");
-    if (list.includes("b")) picks[id] = list;
-  }
-  return Object.keys(levels).length === 0 ? empty : { v: FORGE_SCHEMA, levels, picks };
-}
-__name(sanitizeForge, "sanitizeForge");
-function ownedPieceBonus(id, forge) {
-  const out = { atk: 0, def: 0, spd: 0 };
-  if (!has2(FORGE_PIECES, id)) return out;
-  const piece = FORGE_PIECES[id];
-  const f = sanitizeForge(forge);
-  const level = has2(f.levels, id) ? f.levels[id] : LEGACY_LEVEL[piece.tier - 1];
-  const saved = has2(f.picks, id) ? f.picks[id] : [];
-  const main = PRIMARY_ATTR[piece.slot];
-  out[main] += LEVEL_PCT[0];
-  for (let k = 2; k <= Math.min(FORGE_MAX_LEVEL, level); k++) out[saved[k - 2] === "b" ? ALT_ATTR[piece.slot] : main] += LEVEL_PCT[k - 1];
-  out.atk = Math.round(out.atk * 1e9) / 1e9;
-  out.def = Math.round(out.def * 1e9) / 1e9;
-  out.spd = Math.round(out.spd * 1e9) / 1e9;
-  return out;
-}
-__name(ownedPieceBonus, "ownedPieceBonus");
-
-// api/_equipment.js
-var EQUIP_SLOTS = ["nucleo", "carapaca", "rastro"];
-var TIER_PCT = [5e-3, 0.01, 0.015];
-var FRAGMENTS_MAX = 999;
-var EQUIP = Object.fromEntries(
-  EQUIP_SLOTS.flatMap((slot) => [1, 2, 3].map((tier) => [`eq-${slot}-t${tier}`, { slot, pct: TIER_PCT[tier - 1] }]))
-);
-var has3 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
-function sanitizeEquipment(raw) {
-  if (!raw || typeof raw !== "object") return { owned: [], equipped: {}, fragments: 0 };
-  const r = (
-    /** @type {Record<string, unknown>} */
-    raw
-  );
-  const seen = [];
-  if (Array.isArray(r.owned)) {
-    for (const id of r.owned) if (typeof id === "string" && has3(EQUIP, id) && !seen.includes(id)) seen.push(id);
-  }
-  const best = {};
-  for (const id of seen) {
-    const slot = EQUIP[id].slot;
-    if (!best[slot] || Number(best[slot].slice(-1)) < Number(id.slice(-1))) best[slot] = id;
-  }
-  const owned = seen.filter((id) => best[EQUIP[id].slot] === id);
-  const equipped = {};
-  for (const slot of EQUIP_SLOTS) if (best[slot]) equipped[slot] = best[slot];
-  const f = typeof r.fragments === "number" && Number.isFinite(r.fragments) ? Math.floor(r.fragments) : 0;
-  return { owned, equipped, fragments: Math.min(FRAGMENTS_MAX, Math.max(0, f)) };
-}
-__name(sanitizeEquipment, "sanitizeEquipment");
-function equipAttrBonus(raw, forge) {
-  const eq = sanitizeEquipment(raw);
-  const out = { atk: 0, def: 0, spd: 0 };
-  for (const slot of EQUIP_SLOTS) {
-    const id = eq.equipped[slot];
-    if (!id) continue;
-    const b = ownedPieceBonus(id, forge);
-    out.atk += b.atk;
-    out.def += b.def;
-    out.spd += b.spd;
-  }
-  return out;
-}
-__name(equipAttrBonus, "equipAttrBonus");
-var fin = /* @__PURE__ */ __name((n) => typeof n === "number" && Number.isFinite(n) && n > 0 ? Math.min(1e9, Math.floor(n)) : 0, "fin");
-function sanitizeBitsOrigin(raw) {
-  if (!raw || typeof raw !== "object") return void 0;
-  const o = (
-    /** @type {Record<string, unknown>} */
-    raw
-  );
-  if (typeof o.day !== "string" || o.day.length === 0 || o.day.length > 40) return void 0;
-  return { day: o.day, free: fin(o.free), fromCredits: fin(o.fromCredits), paidLeft: fin(o.paidLeft) };
-}
-__name(sanitizeBitsOrigin, "sanitizeBitsOrigin");
-
-// api/_fichaJornada.js
-var MIN_AMOSTRA = 30;
-var GALHO_MAX = 1e5;
-var ESTAGIOS_COM_JANELA = ["champion", "ultimate", "mega", "ultra"];
-var FAMILIAS_VALIDAS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
-var GALHOS = [["poder", "power"], ["harmonia", "harmony"], ["benevolencia", "benevolence"]];
-var GALHO_PARA_ELEMENTO = {
-  poder: {
-    fogo: 0.26,
-    vileza: 0.1,
-    eletricidade: 0.1,
-    marcial: 0.1,
-    morte: 0.08,
-    vigor: 0.08,
-    terra: 0.06,
-    arcano: 0.05,
-    sombra: 0.05,
-    gravidade: 0.04,
-    ar: 0.03,
-    som: 0.03,
-    vida: 0.02
-  },
-  harmonia: {
-    arcano: 0.2,
-    ar: 0.15,
-    agua: 0.12,
-    luz: 0.1,
-    tempo: 0.08,
-    som: 0.08,
-    espaco: 0.08,
-    marcial: 0.05,
-    eletricidade: 0.04,
-    sombra: 0.04,
-    vida: 0.02,
-    terra: 0.02,
-    morte: 0.02
-  },
-  benevolencia: {
-    vida: 0.28,
-    terra: 0.22,
-    vigor: 0.16,
-    agua: 0.1,
-    luz: 0.1,
-    gravidade: 0.06,
-    sombra: 0.03,
-    arcano: 0.03,
-    marcial: 0.02
-  }
-};
-var MESES2 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-function pts(v) {
-  return typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.min(v, GALHO_MAX) : 0;
-}
-__name(pts, "pts");
-function cleanGalhos(g) {
-  const o = g && typeof g === "object" ? g : {};
-  return { power: pts(o.power), harmony: pts(o.harmony), benevolence: pts(o.benevolence) };
-}
-__name(cleanGalhos, "cleanGalhos");
-function planoDoComportamento(janela) {
-  const b = GALHOS.map(([, k]) => janela && typeof janela === "object" ? typeof janela[k] === "number" && Number.isFinite(janela[k]) && janela[k] > 0 ? janela[k] : 0 : 0);
-  const total = b.reduce((a, x2) => a + x2, 0);
-  if (total < MIN_AMOSTRA) return null;
-  const fatias = b.map((x2) => x2 / total);
-  const plano = {};
-  const els = new Set(GALHOS.flatMap(([g]) => Object.keys(GALHO_PARA_ELEMENTO[g])));
-  for (const el of els) {
-    let p = 0;
-    GALHOS.forEach(([g], i2) => {
-      p += fatias[i2] * (GALHO_PARA_ELEMENTO[g][el] ?? 0);
-    });
-    if (p > 0) plano[el] = p;
-  }
-  return plano;
-}
-__name(planoDoComportamento, "planoDoComportamento");
-function cleanAt(at, agora = Date.now()) {
-  if (typeof at !== "string") return "";
-  const s = at.trim();
-  let y;
-  let m;
-  let d;
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (iso) {
-    y = +iso[1];
-    m = +iso[2];
-    d = +iso[3];
-  } else {
-    const nat = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
-    if (!nat) return "";
-    m = MESES2.indexOf(nat[1]) + 1;
-    d = +nat[2];
-    y = +nat[3];
-  }
-  const anoMax = new Date(agora).getUTCFullYear() + 1;
-  return m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2024 && y <= anoMax ? s : "";
-}
-__name(cleanAt, "cleanAt");
-var own = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
-function sanitizeFichaJornada(raw, agora = Date.now()) {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
-  const est = (
-    /** @type {any} */
-    raw.estagios
-  );
-  if (!est || typeof est !== "object" || Array.isArray(est)) return void 0;
-  const estagios = {};
-  for (const stage of ESTAGIOS_COM_JANELA) {
-    if (!own(est, stage)) continue;
-    const e = est[stage];
-    if (!e || typeof e !== "object" || Array.isArray(e)) continue;
-    const galhos = cleanGalhos(e.galhos);
-    const out = { galhos, at: cleanAt(e.at, agora) };
-    const plano = planoDoComportamento(galhos);
-    if (plano) out.plano = plano;
-    if (typeof e.familia === "string" && FAMILIAS_VALIDAS.includes(e.familia)) out.familia = e.familia;
-    estagios[stage] = out;
-  }
-  return Object.keys(estagios).length > 0 ? { v: 1, estagios } : void 0;
-}
-__name(sanitizeFichaJornada, "sanitizeFichaJornada");
-function enforceImmutableFicha(incoming, stored, agora = Date.now()) {
-  const novo = sanitizeFichaJornada(incoming, agora);
-  const antigo = sanitizeFichaJornada(stored, agora);
-  if (!novo || !antigo) return { ficha: novo, mexeu: [] };
-  const mexeu = [];
-  const estagios = { ...novo.estagios };
-  for (const stage of ESTAGIOS_COM_JANELA) {
-    const a = antigo.estagios[stage];
-    if (!a) continue;
-    const n = estagios[stage];
-    if (n && (n.at !== a.at || n.galhos.power !== a.galhos.power || n.galhos.harmony !== a.galhos.harmony || n.galhos.benevolence !== a.galhos.benevolence || a.familia && n.familia !== a.familia)) mexeu.push(stage);
-    const familia = a.familia ?? n?.familia;
-    estagios[stage] = { ...a, ...familia ? { familia } : {} };
-  }
-  return { ficha: { v: 1, estagios }, mexeu };
-}
-__name(enforceImmutableFicha, "enforceImmutableFicha");
-function fichaJornadaFamilia(ficha, stage) {
-  if (!ESTAGIOS_COM_JANELA.includes(stage) || !ficha || typeof ficha !== "object") return null;
-  const est = (
-    /** @type {any} */
-    ficha.estagios
-  );
-  const f = est && typeof est === "object" && own(est, stage) ? est[stage]?.familia : null;
-  return typeof f === "string" && FAMILIAS_VALIDAS.includes(f) ? f : null;
-}
-__name(fichaJornadaFamilia, "fichaJornadaFamilia");
-
-// api/_duel.js
-var DUEL_PENDING_MS = 5 * 60 * 1e3;
-var DUEL_TAPS_FULL = CHEER.tapsFull;
-var DUEL_TAPS_CAP = CHEER.tapsCapPerBucket;
-var DUEL_CHEER_BUCKETS = Math.ceil(60 / CHEER.bucketSeconds);
-var DUEL_SAVE_MAX_CHARS = 1e6;
-var DUEL_DAY_MS = 864e5;
-function sanitizeTaps(raw) {
-  const arr = Array.isArray(raw) ? raw : [];
-  return Array.from({ length: DUEL_CHEER_BUCKETS }, (_, i2) => {
-    const n = Math.floor(Number(arr[i2]));
-    return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
-  });
-}
-__name(sanitizeTaps, "sanitizeTaps");
-function bucketTapTimes(counts) {
-  const out = [];
-  counts.forEach((n, b) => {
-    for (let k = 0; k < n; k++) out.push((b + 1) * CHEER.bucketSeconds);
-  });
-  return out;
-}
-__name(bucketTapTimes, "bucketTapTimes");
-function duelCheerEvents(rawTaps, side = 0, scale = 1) {
-  return cheerEvents(bucketTapTimes(sanitizeTaps(rawTaps)), side, scale);
-}
-__name(duelCheerEvents, "duelCheerEvents");
-function maxLevelFor(firstSeen, now) {
-  if (typeof firstSeen !== "number" || !Number.isFinite(firstSeen) || firstSeen <= 0) return 1;
-  return 1 + Math.max(0, Math.floor((now - firstSeen) / DUEL_DAY_MS));
-}
-__name(maxLevelFor, "maxLevelFor");
-var ESCOLA_FAMILY = {
-  combate_fisico: "direct",
-  longo_alcance: "dot",
-  conjuracao: "direct",
-  benca: "heal",
-  maldicao: "defDebuff"
-};
-var SPECIAL_FAMILY_IDS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
-var FICHA_STAGES = ["rookie", "champion", "ultimate", "mega", "ultra"];
-var own2 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "own");
-function fichaStageOf(evolutionStage) {
-  const nivel = typeof evolutionStage === "string" ? evolutionStage.split("-")[0] : "";
-  return FICHA_STAGES.includes(nivel) ? nivel : "rookie";
-}
-__name(fichaStageOf, "fichaStageOf");
-var LEXICO_POR_FAMILIA = 8;
-var ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
-function lexOf(especial, basica, familia) {
-  const lex = especial && typeof especial === "object" ? especial.lex : null;
-  if (!lex || typeof lex !== "object" || !familia) return null;
-  const { n, f } = lex;
-  if (typeof n !== "number" || !Number.isInteger(n) || n < 0 || n >= LEXICO_POR_FAMILIA) return null;
-  if (f !== 0 && f !== 1 && f !== 2) return null;
-  const el = especial.elementoId, elB = basica && typeof basica === "object" ? basica.elementoId : null;
-  if (typeof el !== "string" || !ELEMENTO_ID.test(el) || typeof elB !== "string" || !ELEMENTO_ID.test(elB)) return null;
-  return { n, f, el, elB };
-}
-__name(lexOf, "lexOf");
-var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" ? own2(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : "conjuracao" : null, "escolaOf");
-var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
-  "fogo",
-  "agua",
-  "terra",
-  "ar",
-  "eletricidade",
-  "arcano",
-  "sombra",
-  "luz",
-  "vileza",
-  "morte",
-  "vida",
-  "vigor",
-  "marcial",
-  "tempo",
-  "som",
-  "gravidade",
-  "espaco",
-  "vapor",
-  "lava",
-  "incendio",
-  "plasma",
-  "fogo_feiticeiro",
-  "fogo_negro",
-  "chama_solar",
-  "fogo_infernal",
-  "chama_azul",
-  "fenix",
-  "fervor",
-  "pantano",
-  "gelo",
-  "agua_viva",
-  "mare",
-  "abismo",
-  "prisma",
-  "acido",
-  "veneno",
-  "nascente",
-  "correnteza",
-  "areia",
-  "magnetismo",
-  "cristal",
-  "obsidiana",
-  "ouro_vivo",
-  "solo_profano",
-  "ossuario",
-  "flora",
-  "tita",
-  "tempestade",
-  "eter",
-  "murmurio",
-  "aurora",
-  "enxofre",
-  "miasma",
-  "alento",
-  "impeto",
-  "fluxo",
-  "trovao_negro",
-  "fulgor",
-  "tormento",
-  "galvanismo",
-  "sinapse",
-  "reflexo",
-  "ocultismo",
-  "runa",
-  "pacto",
-  "alma",
-  "essencia",
-  "encantamento",
-  "crepusculo",
-  "terror",
-  "espectro",
-  "parasita",
-  "assassinio",
-  "heresia",
-  "julgamento",
-  "santidade",
-  "bravura",
-  "praga",
-  "mutacao",
-  "carnificina",
-  "equilibrio",
-  "ceifa",
-  "vitalidade",
-  "forja",
-  "tempera",
-  "aco",
-  "esgrima",
-  "aco_voltaico",
-  "arsenal",
-  "lamina_oculta",
-  "lamina_radiante",
-  "serrilha",
-  "fio_funebre",
-  "lamina_viva",
-  "maestria",
-  "pira_eterna",
-  "erosao",
-  "fossil",
-  "aceleracao",
-  "instante",
-  "cronomancia",
-  "entropia",
-  "eon",
-  "ruina",
-  "ocaso",
-  "florescer",
-  "frenesi",
-  "contratempo",
-  "estrondo",
-  "sonar",
-  "terremoto",
-  "estampido",
-  "trovao",
-  "cantico",
-  "sussurro",
-  "harmonia",
-  "dissonancia",
-  "requiem",
-  "melodia",
-  "brado",
-  "cadencia",
-  "eco",
-  "fornalha_estelar",
-  "voragem",
-  "colapso",
-  "vacuo",
-  "magnetar",
-  "singularidade",
-  "buraco_negro",
-  "halo_gravitacional",
-  "jugo",
-  "implosao",
-  "ancora_vital",
-  "peso_descomunal",
-  "ariete",
-  "dilatacao",
-  "onda_de_choque",
-  "meteoro",
-  "cometa",
-  "asteroide",
-  "estratosfera",
-  "pulsar",
-  "portal",
-  "vazio",
-  "constelacao",
-  "devorador",
-  "nebulosa",
-  "semente_estelar",
-  "gigante_estelar",
-  "lamina_sideral",
-  "continuum",
-  "silencio_cosmico",
-  "dobra"
-]);
-var idElemento = /* @__PURE__ */ __name((id) => typeof id === "string" && ELEMENTOS_FICHA.has(id) ? id : null, "idElemento");
-function elementoDoBasico(skills) {
-  const dom = skills && typeof skills === "object" && skills.elementoDominante && typeof skills.elementoDominante === "object" ? skills.elementoDominante.id : null;
-  return idElemento(dom) ?? idElemento(skills?.basica?.elementoId);
-}
-__name(elementoDoBasico, "elementoDoBasico");
-function duelSide(save, opts = {}) {
-  const state = save && typeof save === "object" ? save : {};
-  const bondLvl = bondLevelFor(state.totalXP);
-  const bonus = combinedAttrBonus({
-    talent: talentAttrBonus(state.talentPicks, bondLvl),
-    // PR8: equipamento por slot (Nucleo ATK, Carapaca DEF, Rastro SPD), percentual, saneado do save; o teto de 5% e a SOMA dos tres.
-    equipment: equipAttrBonus(state.equipment, state.forge)
-  });
-  const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
-  const skills = state.soulmonSkills && typeof state.soulmonSkills === "object" ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
-  const basica = escolaOf(skills?.basica);
-  const especial = escolaOf(skills?.especial);
-  const familiaSalva = skills?.especial?.familia;
-  const gravada = fichaJornadaFamilia(state.fichaJornada, fichaStageOf(state.evolutionStage));
-  const family = especial ? gravada ?? (typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]) : "direct";
-  const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
-}
-__name(duelSide, "duelSide");
-function duelSeed(...parts) {
-  let h = 2166136261;
-  const s = parts.join("|");
-  for (let i2 = 0; i2 < s.length; i2++) {
-    h ^= s.charCodeAt(i2);
-    h = Math.imul(h, 16777619) >>> 0;
-  }
-  return h >>> 0;
-}
-__name(duelSeed, "duelSeed");
-function simulateDuel({ me, opp, seed, taps }) {
-  const g = fightSteps(
-    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
-    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
-    { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) }
-  );
-  const events = [];
-  let hpMe = null, hpOpp = null;
-  let r = g.next();
-  while (!r.done) {
-    const e = r.value;
-    events.push(e);
-    if (e.kind === "ko" && hpMe === null) {
-      hpMe = Math.max(0, Math.min(1, e.hp[0]));
-      hpOpp = Math.max(0, Math.min(1, e.hp[1]));
-    }
-    r = g.next(1);
-  }
-  const res = r.value;
-  const winner = res.winner === "draw" ? "draw" : res.winner === "A" ? "me" : "opp";
-  return { events, winner, hpMe: hpMe ?? res.hpA, hpOpp: hpOpp ?? res.hpB, timeMe: res.timeA, timeOpp: res.timeB };
-}
-__name(simulateDuel, "simulateDuel");
-
 // api/_duelLoad.js
 var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
-async function loadDuelSide(env, saveId) {
-  if (!VALID_ID2.test(saveId || "")) return null;
+async function loadDuelSideWithSprite(env, saveId) {
+  if (!VALID_ID2.test(saveId || "")) return { side: null, spriteUrl: null, artLine: null };
   try {
     const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
-    if (!value) return null;
+    if (!value) return { side: null, spriteUrl: null, artLine: null };
     if (typeof value !== "string" || value.length > DUEL_SAVE_MAX_CHARS) {
       console.warn("duel: save grande demais para lutar", { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
-      return null;
+      return { side: null, spriteUrl: null, artLine: null };
     }
     const state = JSON.parse(value);
-    if (!state || typeof state !== "object" || Array.isArray(state)) return null;
-    return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
+    if (!state || typeof state !== "object" || Array.isArray(state)) return { side: null, spriteUrl: null, artLine: null };
+    const { spriteUrl, artLine } = spriteFromSaveState(state);
+    return { side: duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) }), spriteUrl, artLine };
   } catch (err2) {
     console.warn("duel: ficha indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err2) });
-    return null;
+    return { side: null, spriteUrl: null, artLine: null };
   }
+}
+__name(loadDuelSideWithSprite, "loadDuelSideWithSprite");
+async function loadDuelSide(env, saveId) {
+  const { side } = await loadDuelSideWithSprite(env, saveId);
+  return side;
 }
 __name(loadDuelSide, "loadDuelSide");
 
@@ -6857,6 +6940,7 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
       id: memberId,
       memberId,
       name: cart[i2]?.name ?? null,
+      ...cart[i2]?.sprite ? { sprite: cart[i2].sprite } : {},
       euMesmo: m === euSave,
       ...nominal && veio[i2] ? { apareceuHoje: true } : {}
     };
@@ -7330,30 +7414,6 @@ function avatarIdOrNull(raw) {
 }
 __name(avatarIdOrNull, "avatarIdOrNull");
 
-// api/_artLine.js
-var ART_LINE_IDS = /* @__PURE__ */ new Set([
-  "industrial",
-  "nascente",
-  "alento",
-  "vida",
-  "meteoro",
-  "kaelen",
-  "orrin",
-  "thalindra",
-  "igni",
-  "nautilu",
-  "astrase",
-  // Linhas APOSENTADAS (20/10/2026): aceitas só na LEITURA (perfil/save antigo); o servidor nunca as produz.
-  "ignar",
-  "lumel",
-  "serah",
-  "corvo"
-]);
-function artLineOrNull(raw) {
-  return typeof raw === "string" && ART_LINE_IDS.has(raw) ? raw : null;
-}
-__name(artLineOrNull, "artLineOrNull");
-
 // api/_frames.js
 var FRAME_IDS = /* @__PURE__ */ new Set([
   "rank-madeira",
@@ -7436,6 +7496,7 @@ async function pidDeSaveId(env, saveId, { semEscondidos = false } = {}) {
 __name(pidDeSaveId, "pidDeSaveId");
 async function publicProfile(env, p, extra = {}) {
   const pid = await ensurePid(env, p);
+  const sUrl = spriteUrlOrNull(p.spriteUrl);
   return {
     id: pid,
     name: p.name,
@@ -7444,6 +7505,7 @@ async function publicProfile(env, p, extra = {}) {
     avatarId: avatarIdOrNull(p.avatarId),
     frameId: frameIdOrNull(p.frameId),
     artLine: artLineOrNull(p.artLine),
+    ...sUrl ? { spriteUrl: sUrl } : {},
     unlockedStages: p.unlockedStages,
     pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
@@ -7635,6 +7697,8 @@ async function handleCommunity({ request, env }) {
       frameId: "frameId" in body ? frameIdOrNull(body.frameId) : frameIdOrNull(prev.frameId),
       // Linha de arte (D-60): só id de lista fechada (`_artLine.js`); ausência herda o gravado, `null` limpa.
       artLine: "artLine" in body ? artLineOrNull(body.artLine) : artLineOrNull(prev.artLine),
+      // URL do sprite gerado pelo jogador (`/api/sprite-image?k=...` ou allowlist CDN): ausência herda o gravado, `null` limpa.
+      spriteUrl: "spriteUrl" in body ? spriteUrlOrNull(body.spriteUrl) : spriteUrlOrNull(prev.spriteUrl),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
@@ -7736,7 +7800,16 @@ async function handleCommunity({ request, env }) {
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
     const publicDuel = /* @__PURE__ */ __name((side) => side ? { level: side.combatant.level } : null, "publicDuel");
     const meSide = id ? await loadDuelSide2(id) : null;
-    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => ({ ...pub, duel: publicDuel(await loadDuelSide2(saveId)) })));
+    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
+      const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
+      const effectiveSprite = pub.spriteUrl ?? spriteUrl;
+      return {
+        ...pub,
+        artLine: pub.artLine ?? artLine,
+        ...effectiveSprite ? { spriteUrl: effectiveSprite } : {},
+        duel: publicDuel(side)
+      };
+    }));
     return json3({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
   }
   const matchContext = /* @__PURE__ */ __name(async () => {
@@ -7791,7 +7864,16 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine) };
+    const oppSpriteUrl = spriteUrlOrNull(opp.spriteUrl);
+    const opponent = {
+      name: opp.name,
+      petName: opp.petName,
+      stage: opp.stage,
+      avatarId: avatarIdOrNull(opp.avatarId),
+      frameId: frameIdOrNull(opp.frameId),
+      artLine: artLineOrNull(opp.artLine),
+      ...oppSpriteUrl ? { spriteUrl: oppSpriteUrl } : {}
+    };
     const pend = myRank.pending;
     if (pend && pend.opp !== opponentId) await forfeitPending({ id, me, myRank });
     const open = myRank.pending && myRank.pending.opp === opponentId ? myRank.pending : null;
@@ -7875,6 +7957,7 @@ async function handleCommunity({ request, env }) {
         }
         continue;
       }
+      const rowSpriteUrl = spriteUrlOrNull(p?.spriteUrl);
       rows.push({
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
@@ -7887,6 +7970,7 @@ async function handleCommunity({ request, env }) {
         avatarId: avatarIdOrNull(p?.avatarId),
         frameId: frameIdOrNull(p?.frameId),
         artLine: artLineOrNull(p?.artLine),
+        ...rowSpriteUrl ? { spriteUrl: rowSpriteUrl } : {},
         points: rec.points,
         wins: rec.wins,
         losses: rec.losses,
@@ -11294,7 +11378,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-RGDr6M/functionsRoutes-0.9649583294607617.mjs
+// ../.wrangler/tmp/pages-acaG5C/functionsRoutes-0.16933600723650222.mjs
 var routes = [
   {
     routePath: "/api/account",

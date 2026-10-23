@@ -195,6 +195,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       id: memberId,
       memberId,
       name: cart[i]?.name ?? null,
+      ...(cart[i]?.sprite ? { sprite: cart[i].sprite } : {}),
       euMesmo: m === euSave,
       ...(nominal && veio[i] ? { apareceuHoje: true } : {}),
     };

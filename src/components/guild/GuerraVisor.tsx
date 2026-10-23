@@ -25,7 +25,7 @@ interface Props {
 export function GuerraVisor({ guild, mySprite, enemyCount, reducedMotion, label }: Props) {
   const bg = PET_BACKGROUNDS['bg-arena-spotlight'];
   const outros = guild.members.filter(m => !m.euMesmo).slice(0, 3);
-  const nossos = [{ key: 'own', sprite: mySprite }, ...outros.map(m => ({ key: m.id ?? m.name ?? 'm', sprite: spriteForMember(m.id ?? m.name ?? 'm') }))];
+  const nossos = [{ key: 'own', sprite: mySprite }, ...outros.map(m => ({ key: m.id ?? m.name ?? 'm', sprite: spriteForMember(m.id ?? m.name ?? 'm', m.sprite) }))];
   const n = Math.min(4, Math.max(2, enemyCount));
   const xsNossos = nossos.length === 1 ? [26] : [10, 22, 34, 46].slice(0, nossos.length);
   const xsDeles = [90, 78, 66, 54].slice(0, n);

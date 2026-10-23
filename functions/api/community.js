@@ -52,9 +52,9 @@ import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHA
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { pickRankedOpponents } from './_rankedPick.js';
-import { loadDuelSide as loadDuelSideShared } from './_duelLoad.js';
+import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
-import { artLineOrNull } from './_artLine.js';
+import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { frameIdOrNull } from './_frames.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -176,10 +176,12 @@ async function pidDeSaveId(env, saveId, { semEscondidos = false } = {}) {
  */
 async function publicProfile(env, p, extra = {}) {
   const pid = await ensurePid(env, p);
+  const sUrl = spriteUrlOrNull(p.spriteUrl);
   return {
     id: pid,
     name: p.name, petName: p.petName, stage: p.stage,
     avatarId: avatarIdOrNull(p.avatarId), frameId: frameIdOrNull(p.frameId), artLine: artLineOrNull(p.artLine),
+    ...(sUrl ? { spriteUrl: sUrl } : {}),
     unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
     // "X tarefas feitas" de outro jogador é score de vida real num diretório
@@ -490,6 +492,8 @@ async function handleCommunity({ request, env }) {
       frameId: 'frameId' in body ? frameIdOrNull(body.frameId) : frameIdOrNull(prev.frameId),
       // Linha de arte (D-60): só id de lista fechada (`_artLine.js`); ausência herda o gravado, `null` limpa.
       artLine: 'artLine' in body ? artLineOrNull(body.artLine) : artLineOrNull(prev.artLine),
+      // URL do sprite gerado pelo jogador (`/api/sprite-image?k=...` ou allowlist CDN): ausência herda o gravado, `null` limpa.
+      spriteUrl: 'spriteUrl' in body ? spriteUrlOrNull(body.spriteUrl) : spriteUrlOrNull(prev.spriteUrl),
       unlockedStages: Array.isArray(body.unlockedStages)
         ? body.unlockedStages.filter(s => typeof s === 'string' && ID_ESTAGIO.test(s)).slice(0, 16)
         : (prev.unlockedStages || []),
@@ -639,7 +643,16 @@ async function handleCommunity({ request, env }) {
     // (stats, família, forma do golpe) só sai em `duelStart`, junto da semente. +1 leitura de KV por oponente.
     const publicDuel = (side) => (side ? { level: side.combatant.level } : null);
     const meSide = id ? await loadDuelSide(id) : null;
-    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => ({ ...pub, duel: publicDuel(await loadDuelSide(saveId)) })));
+    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
+      const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
+      const effectiveSprite = pub.spriteUrl ?? spriteUrl;
+      return {
+        ...pub,
+        artLine: pub.artLine ?? artLine,
+        ...(effectiveSprite ? { spriteUrl: effectiveSprite } : {}),
+        duel: publicDuel(side),
+      };
+    }));
     return json({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
   }
 
@@ -711,7 +724,12 @@ async function handleCommunity({ request, env }) {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
     const { opponentId, oppSave, me, opp, myRank } = ctx;
-    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage, avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine) };
+    const oppSpriteUrl = spriteUrlOrNull(opp.spriteUrl);
+    const opponent = {
+      name: opp.name, petName: opp.petName, stage: opp.stage,
+      avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine),
+      ...(oppSpriteUrl ? { spriteUrl: oppSpriteUrl } : {}),
+    };
 
     // Um duelo aberto contra OUTRO oponente fica para trás: é desistência.
     const pend = myRank.pending;
@@ -814,6 +832,7 @@ async function handleCommunity({ request, env }) {
         }
         continue;
       }
+      const rowSpriteUrl = spriteUrlOrNull(p?.spriteUrl);
       rows.push({
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
@@ -822,6 +841,7 @@ async function handleCommunity({ request, env }) {
         id: p ? (meId && ownerSave === meId ? await ensurePid(env, p) : await pidSoLeitura(p)) : null,
         name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
         avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId), artLine: artLineOrNull(p?.artLine),
+        ...(rowSpriteUrl ? { spriteUrl: rowSpriteUrl } : {}),
         points: rec.points, wins: rec.wins, losses: rec.losses,
         // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
         lifetime: p?.lifetimePoints ?? 0,

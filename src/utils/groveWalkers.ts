@@ -97,7 +97,7 @@ export function groveWalkers(guild: Pick<GuildView, 'members'>): GroveWalker[] {
     return {
       key: own ? 'eu' : key,
       own,
-      sprite: own ? null : spriteForMember(key),
+      sprite: own ? null : spriteForMember(key, m!.sprite),
       nome: own ? null : (m!.name ?? null),
       home: Math.round(home * 10) / 10,
       amp,

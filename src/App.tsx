@@ -2260,7 +2260,9 @@ export default function App() {
   const heartGoalHoje = heartGoalFor(gameState, new Date().getDay(), new Date().toDateString());
   const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
-  const minhaCriaturaUrl = displaySprite(spriteAcervo, gameState.evolutionStage)?.url
+  const minhaCriaturaUrl = (!petIsCorvo
+    ? (displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
+    : undefined)
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
      `completeDayReached`, a mesma função que `computeDailyReset` usa para
@@ -7038,6 +7040,7 @@ export default function App() {
                 onVisitPlayer={() => contarMissao('friend-visit')}
                 metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
                 playerDayTz={gameState.playerDayTz}
+                mySprite={minhaCriaturaUrl}
                 language={language}
                 embedded
               />

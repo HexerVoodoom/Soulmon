@@ -68,6 +68,8 @@ export interface PublicProfileInput {
   frameId?: string | null;
   /** Linha de arte (D-60, `spriteLineOf`): só um id; o servidor confere contra a lista fechada. */
   artLine?: string | null;
+  /** URL do sprite próprio gerado pelo jogador (validada no servidor e no cliente). */
+  spriteUrl?: string | null;
   unlockedStages?: string[];
   pvpEnabled: boolean;
   /** TORC-5: `true` = a pessoa saiu da lista pública do Torneio (Configurações).
@@ -118,7 +120,7 @@ export const pushProfile = (p: PublicProfileInput) =>
  */
 export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string;
-  avatarId?: string | null; frameId?: string | null; artLine?: string | null;
+  avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
 }
 export const listPlayers = (search = '') =>
@@ -132,7 +134,7 @@ export const getPlayer = (id: string) =>
 
 export interface Opponent {
   id: string; name: string; petName: string; stage: string;
-  avatarId?: string | null; frameId?: string | null; artLine?: string | null;
+  avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
   duel?: { level: number } | null;
 }
@@ -146,7 +148,7 @@ export interface MatchResult {
   /** `won` + `draw` num campo só: 'win' | 'loss' | 'draw'. */
   outcome?: 'win' | 'loss' | 'draw';
   myScore: number; oppScore: number; points: number; matchesLeft: number;
-  opponent: { name: string; petName: string; stage: string; avatarId?: string | null; frameId?: string | null; artLine?: string | null };
+  opponent: { name: string; petName: string; stage: string; avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null };
   /** A luta do SERVIDOR (autoritativa): os eventos do núcleo e a ficha dos dois lados. */
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
@@ -167,7 +169,7 @@ export const playMatch = (id: string, opponentId: string, taps: number[] = [], f
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
-  avatarId?: string | null; frameId?: string | null; artLine?: string | null;
+  avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   points: number; wins: number; losses: number;
   /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
    *  `points` acima são da season e caem (derrota, ser sorteado, virada de
@@ -253,6 +255,8 @@ export interface GuildMember {
    */
   id: string | null;
   name: string | null;
+  /** Sprite próprio do membro (`/api/sprite-image?k=...`, CDN permitido ou id de `artLine`). */
+  sprite?: string | null;
   euMesmo: boolean;
   /** SÓ com até `GUILD_PRESENCE_NOMINAL_MAX` membros, e só do dia de quem pergunta. */
   apareceuHoje?: boolean;
@@ -418,9 +422,11 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
   const nominal = size <= GUILD_PRESENCE_NOMINAL_MAX && r.presence !== null;
   const members: GuildMember[] = list.map((m): GuildMember => {
     const o = (m && typeof m === 'object' ? m : {}) as Record<string, unknown>;
+    const rawSprite = typeof o.sprite === 'string' && o.sprite.trim() ? o.sprite.trim().slice(0, 500) : null;
     return {
       id: typeof o.id === 'string' ? o.id : null,
       name: typeof o.name === 'string' && o.name.trim() ? o.name.slice(0, 60) : null,
+      ...(rawSprite ? { sprite: rawSprite } : {}),
       euMesmo: o.euMesmo === true,
       ...(nominal ? { apareceuHoje: o.apareceuHoje === true } : {}),
     };

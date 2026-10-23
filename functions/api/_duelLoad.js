@@ -4,24 +4,31 @@
 // de servidor desde a 1ª gravação do save, `metadata.f`). Save ausente/ilegível/gigante = `null` ("não luta").
 import { kvOrThrow } from './_kv.js';
 import { duelSide, maxLevelFor, DUEL_SAVE_MAX_CHARS } from './_duel.js';
+import { spriteFromSaveState } from './_artLine.js';
 
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
-export async function loadDuelSide(env, saveId) {
-  if (!VALID_ID.test(saveId || '')) return null;
+export async function loadDuelSideWithSprite(env, saveId) {
+  if (!VALID_ID.test(saveId || '')) return { side: null, spriteUrl: null, artLine: null };
   try {
     const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
-    if (!value) return null;
+    if (!value) return { side: null, spriteUrl: null, artLine: null };
     // PR13 (ALTO-3): save acima do teto = "este lado não luta", ANTES do parse (CPU do worker).
     if (typeof value !== 'string' || value.length > DUEL_SAVE_MAX_CHARS) {
       console.warn('duel: save grande demais para lutar', { saveIdPrefix: String(saveId).slice(0, 8), chars: String(value?.length) });
-      return null;
+      return { side: null, spriteUrl: null, artLine: null };
     }
     const state = JSON.parse(value);
-    if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
-    return duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
+    if (!state || typeof state !== 'object' || Array.isArray(state)) return { side: null, spriteUrl: null, artLine: null };
+    const { spriteUrl, artLine } = spriteFromSaveState(state);
+    return { side: duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) }), spriteUrl, artLine };
   } catch (err) {
     console.warn('duel: ficha indisponível', { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
-    return null;
+    return { side: null, spriteUrl: null, artLine: null };
   }
+}
+
+export async function loadDuelSide(env, saveId) {
+  const { side } = await loadDuelSideWithSprite(env, saveId);
+  return side;
 }
