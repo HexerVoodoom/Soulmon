@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ModalSheet, Field, Segment, sm2Hint, sm2Text } from '../form/FormKit';
+import { ModalSheet, Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { FrameSelector } from '../ui/AvatarFrame';
 import { UserAvatar } from '../ui/UserAvatar';
 import { AvatarImg } from '../ui/AvatarImg';
@@ -32,12 +32,14 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame, userName = '', onChangeName, onOpenFrameShop }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onChangePetName, onOpenFrameShop }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
   avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   /** Nome público do jogador (B8). Sem `onChangeName` o campo não aparece. */
   userName?: string; onChangeName?: (name: string) => void;
+  /** Nome do Soulmon (`soulmonMeta.petName`). Sem `onChangePetName` o campo não aparece. */
+  petName?: string; onChangePetName?: (name: string) => void;
   /** D-16: o Perfil NÃO compra moldura. A de loja que a pessoa não tem aparece trancada e o toque abre Mercado > Frames
    *  (por padrão, o pedido vai pelo evento de `utils/frameShopNav`, que o `App` atende). */
   onOpenFrameShop?: () => void;
@@ -47,8 +49,19 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   const frame = resolveEquippedFrame(equippedFrame, ctx);
   const [q, setQ] = useState('');
   const [nameDraft, setNameDraft] = useState(userName);
-  useEffect(() => { setNameDraft(userName); }, [userName, open]);
-  const nameOk = nameDraft.trim().length >= 2;
+  const [nameSaved, setNameSaved] = useState(false);
+  useEffect(() => { setNameDraft(userName); setNameSaved(false); }, [userName, open]);
+  const nameTrim = nameDraft.trim();
+  const nameOk = nameTrim.length >= 2;
+  const nameCanSave = nameOk && nameTrim !== userName;
+
+  const [petNameDraft, setPetNameDraft] = useState(petName);
+  const [petNameSaved, setPetNameSaved] = useState(false);
+  useEffect(() => { setPetNameDraft(petName); setPetNameSaved(false); }, [petName, open]);
+  const petNameTrim = petNameDraft.trim();
+  const petNameOk = petNameTrim.length >= 1;
+  const petNameCanSave = petNameOk && petNameTrim !== petName;
+
   const [group, setGroup] = useState('all');
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -67,11 +80,52 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         {onChangeName && (
           <>
             <label style={sm2Text} htmlFor="sm-profile-name">{isPt ? 'Apelido' : 'Nickname'}</label>
-            <Field id="sm-profile-name" type="text" value={nameDraft} maxLength={24} autoComplete="nickname"
-              onChange={e => setNameDraft(e.target.value)}
-              onBlur={() => { if (nameOk && nameDraft.trim() !== userName) onChangeName(nameDraft.trim()); else setNameDraft(userName); }} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+              <Field id="sm-profile-name" type="text" value={nameDraft} maxLength={24} autoComplete="nickname"
+                style={{ flex: 1 }}
+                onChange={e => { setNameDraft(e.target.value); setNameSaved(false); }}
+                onBlur={() => { if (nameOk && nameTrim !== userName) { onChangeName(nameTrim); setNameSaved(true); } }} />
+              <button
+                type="button"
+                data-save-user-name
+                disabled={!nameCanSave}
+                style={sm2Button('primary', !nameCanSave, 'sm')}
+                onClick={() => {
+                  if (!nameCanSave) return;
+                  onChangeName(nameTrim);
+                  setNameSaved(true);
+                }}
+              >
+                {nameSaved && !nameCanSave ? (isPt ? 'Salvo' : 'Saved') : (isPt ? 'Salvar' : 'Save')}
+              </button>
+            </div>
             <p style={sm2Hint}>{isPt ? 'É o nome que outros jogadores veem. Mínimo de 2 letras.' : 'The name other players see. At least 2 letters.'}</p>
           </>
+        )}
+        {onChangePetName && (
+          <div style={{ marginTop: 12 }}>
+            <label style={sm2Text} htmlFor="sm-profile-pet-name">{isPt ? 'Nome do Soulmon' : 'Soulmon name'}</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+              <Field id="sm-profile-pet-name" type="text" value={petNameDraft} maxLength={24}
+                style={{ flex: 1 }}
+                onChange={e => { setPetNameDraft(e.target.value); setPetNameSaved(false); }}
+                onBlur={() => { if (petNameOk && petNameTrim !== petName) { onChangePetName(petNameTrim); setPetNameSaved(true); } }} />
+              <button
+                type="button"
+                data-save-pet-name
+                disabled={!petNameCanSave}
+                style={sm2Button('primary', !petNameCanSave, 'sm')}
+                onClick={() => {
+                  if (!petNameCanSave) return;
+                  onChangePetName(petNameTrim);
+                  setPetNameSaved(true);
+                }}
+              >
+                {petNameSaved && !petNameCanSave ? (isPt ? 'Salvo' : 'Saved') : (isPt ? 'Salvar' : 'Save')}
+              </button>
+            </div>
+            <p style={sm2Hint}>{isPt ? 'O nome exibido na tela principal e na comunidade.' : 'The name shown on the home screen and in the community.'}</p>
+          </div>
         )}
         <label style={sm2Text} htmlFor="sm-profile-email">{isPt ? 'E-mail' : 'Email'}</label>
         <Field id="sm-profile-email" type="email" value={email ?? ''} disabled readOnly placeholder={isPt ? 'em breve' : 'coming soon'} />

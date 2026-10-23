@@ -131,7 +131,7 @@ describe('D-16: moldura de loja trancada leva ao Mercado; nada de comprar no Per
   });
 });
 
-describe('D-15: "Name" vira "Nickname" no editor de perfil', () => {
+describe('D-15: "Name" vira "Nickname" no editor de perfil, com botão Salvar e campo para o nome do Soulmon', () => {
   it('EN: Nickname; PT: Apelido', () => {
     const ed = (language: 'en-US' | 'pt-BR') => renderWithCss(
       <ProfileEditor open onClose={() => {}} language={language} saveId={'a'.repeat(32)} avatarId={null} equippedFrame={null} ownedFrames={[]}
@@ -143,5 +143,32 @@ describe('D-15: "Name" vira "Nickname" no editor de perfil', () => {
     cleanup();
     ed('pt-BR');
     expect(document.querySelector('label[for="sm-profile-name"]')!.textContent).toBe('Apelido');
+  });
+
+  it('botão Salvar do apelido e campo + botão Salvar do nome do Soulmon salvam ao clicar', () => {
+    const onChangeName = vi.fn();
+    const onChangePetName = vi.fn();
+    renderWithCss(
+      <ProfileEditor open onClose={() => {}} language="pt-BR" saveId={'a'.repeat(32)} avatarId={null} equippedFrame={null} ownedFrames={[]}
+        petStage="rookie" onChangeAvatar={() => {}} onChangeFrame={() => {}}
+        userName="Lia" onChangeName={onChangeName}
+        petName="Pyraka" onChangePetName={onChangePetName} />,
+    );
+    const nameInput = document.querySelector('#sm-profile-name') as HTMLInputElement;
+    const saveNameBtn = document.querySelector('[data-save-user-name]') as HTMLButtonElement;
+    expect(saveNameBtn.disabled).toBe(true);
+    fireEvent.change(nameInput, { target: { value: '  Mateus  ' } });
+    expect(saveNameBtn.disabled).toBe(false);
+    fireEvent.click(saveNameBtn);
+    expect(onChangeName).toHaveBeenCalledWith('Mateus');
+
+    const petInput = document.querySelector('#sm-profile-pet-name') as HTMLInputElement;
+    const savePetBtn = document.querySelector('[data-save-pet-name]') as HTMLButtonElement;
+    expect(document.querySelector('label[for="sm-profile-pet-name"]')!.textContent).toBe('Nome do Soulmon');
+    expect(savePetBtn.disabled).toBe(true);
+    fireEvent.change(petInput, { target: { value: '  Bito  ' } });
+    expect(savePetBtn.disabled).toBe(false);
+    fireEvent.click(savePetBtn);
+    expect(onChangePetName).toHaveBeenCalledWith('Bito');
   });
 });

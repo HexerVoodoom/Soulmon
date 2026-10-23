@@ -96,6 +96,7 @@ interface SettingsPageProps {
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
+    petName?: string; onChangePetName?: (name: string) => void;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -344,6 +345,8 @@ export function SettingsPage({
             onChangeFrame={profile.onChangeFrame}
             userName={profile.userName}
             onChangeName={profile.onChangeName}
+            petName={profile.petName}
+            onChangePetName={profile.onChangePetName}
             onOpenFrameShop={requestOpenFrameShop}
           />
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />

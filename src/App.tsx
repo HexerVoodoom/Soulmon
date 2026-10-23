@@ -4446,7 +4446,26 @@ export default function App() {
     writeLocal(STORAGE_KEYS.USER_NAME, limpo);
     setUserName(limpo);
     setGameState(prev => ({ ...prev }));
-  }, [setGameState]);
+    toast.success(language === 'pt-BR' ? 'Apelido salvo!' : 'Nickname saved!');
+  }, [setGameState, language]);
+
+  /** Nome do Soulmon (`soulmonMeta.petName`): atualiza no save e preserva `baseName` intacto. */
+  const handleChangePetName = useCallback((nome: string) => {
+    const limpo = nome.trim().slice(0, 24);
+    if (!limpo) return;
+    setGameState(prev => {
+      const baseName = prev.soulmonMeta?.baseName || '';
+      return {
+        ...prev,
+        soulmonMeta: {
+          ...prev.soulmonMeta,
+          baseName,
+          petName: limpo,
+        },
+      };
+    });
+    toast.success(language === 'pt-BR' ? 'Nome do Soulmon salvo!' : 'Soulmon name saved!');
+  }, [setGameState, language]);
 
   /**
    * Equipa/desequipa decoração. `id` null limpa o espaço; caso contrário o item
@@ -4580,6 +4599,7 @@ export default function App() {
       soulmonStages: result.creature.stages,
       fichaJornada: undefined,
       soulmonMeta: {
+        ...prev.soulmonMeta,
         seed: result.seed,
         baseName: result.creature.baseName,
         dominantElement: result.dominantElement,
@@ -4670,6 +4690,7 @@ export default function App() {
         soulmonStages: result.creature.stages,
         fichaJornada: undefined,
         soulmonMeta: {
+          ...prev.soulmonMeta,
           seed: result.seed,
           baseName: result.creature.baseName,
           dominantElement: result.dominantElement,
@@ -4753,6 +4774,7 @@ export default function App() {
         ? recordSprite(prev.spriteLibrary ?? emptySpriteLibrary(), revealSprite, { adopt: 'now' })
         : prev.spriteLibrary,
       soulmonMeta: {
+        ...prev.soulmonMeta,
         seed: result.seed,
         baseName: result.creature.baseName,
         dominantElement: result.dominantElement,
@@ -8108,6 +8130,8 @@ export default function App() {
                 onChangeFrame: handleEquipFrame,
                 userName,
                 onChangeName: handleChangeUserName,
+                petName: soulmonDisplayName(gameState.soulmonMeta),
+                onChangePetName: handleChangePetName,
               }}
               onOpenCredits={demo ? undefined : openCredits}
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
