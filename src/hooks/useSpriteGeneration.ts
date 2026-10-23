@@ -85,7 +85,7 @@ export interface SpriteGenerationStatus {
    * existe um segundo caminho de geração neste app.
    */
   retry: (formId: string) => void;
-  force: (formId: string) => boolean;
+  force: (formId: string, stagesOverride?: CreatureStage[]) => boolean;
 }
 
 export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenerationStatus {
@@ -120,10 +120,10 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
    * o teto de 3 nunca chegaria e o botão viraria uma torneira aberta.
    */
   const executarLote = useCallback(
-    (formIds: readonly string[], opts: { adoptCurrentNow: boolean; manual?: boolean; regenerate?: boolean }) => {
+    (formIds: readonly string[], opts: { adoptCurrentNow: boolean; manual?: boolean; regenerate?: boolean; stagesOverride?: CreatureStage[] }) => {
       const a = argsRef.current;
       const byForm = new Map<string, CreatureStage>(
-        (a.stages ?? []).map(s => [creatureFormId(s), s]),
+        (opts.stagesOverride ?? a.stages ?? []).map(s => [creatureFormId(s), s]),
       );
       // Forma sem prompt na árvore não vira requisição: `generate` lançaria, e
       // uma falha inventada aqui gastaria o teto manual do jogador por um erro
@@ -140,7 +140,11 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
           if (!stage) throw new Error(`forma sem prompt: ${formId}`);
           // Cadeia image2image: a forma anterior já existe quando a próxima é
           // pedida — é o que a geração incremental compra de graça (§8.6).
-          const anterior = displaySprite(argsRef.current.library, argsRef.current.trigger.evolutionStage);
+          // Na regeneração manual (`opts.regenerate`) ou quando a forma gerada é a PRÓPRIA forma atual,
+          // não envia o sprite atual como referência (senão o provedor copia o desenho antigo).
+          const anterior = opts.regenerate || formId === argsRef.current.trigger.evolutionStage
+            ? null
+            : displaySprite(argsRef.current.library, argsRef.current.trigger.evolutionStage);
           const { image, provider } = await requestSprite(stage.imagePrompt, {
             promptFallback: stage.imagePromptFallback,
             formId,
@@ -164,7 +168,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
           setGenerating(prev => prev.filter(id => id !== formId));
           argsRef.current.updateLibrary(prev => recordFailure(prev, formId, kind, { manual: opts.manual }));
         },
-        isCancelled: () => argsRef.current.busy,
+        isCancelled: () => !opts.regenerate && argsRef.current.busy,
       }).finally(() => {
         running.current = false;
         setGenerating([]);
@@ -210,17 +214,18 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
    * Zera as falhas locais da forma (e o teto vitalício local — quem decide de verdade é o servidor) e pede o desenho
    * ignorando o cooldown/teto manual do "Tentar de novo". Um lote por vez (`running`). Devolve se o pedido partiu.
    */
-  const force = useCallback((formId: string): boolean => {
+  const force = useCallback((formId: string, stagesOverride?: CreatureStage[]): boolean => {
     if (running.current) return false;
     const a = argsRef.current;
-    if (!(a.stages ?? []).some(st => creatureFormId(st) === formId)) return false;
+    const fonte = stagesOverride ?? a.stages ?? [];
+    if (!fonte.some(st => creatureFormId(st) === formId)) return false;
     updateLibrary(prev => {
       const failures = { ...prev.failures };
       delete failures[formId];
       for (const [k, f] of Object.entries(failures)) if (f.terminal === 'lifetime-cap') delete failures[k];
       return { ...prev, failures };
     });
-    executarLote([formId], { adoptCurrentNow: true, regenerate: true });
+    executarLote([formId], { adoptCurrentNow: true, regenerate: true, stagesOverride });
     return true;
   }, [executarLote, updateLibrary]);
 

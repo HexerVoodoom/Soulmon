@@ -180,6 +180,26 @@ describe('generate-sprite: UMA geração por forma, nunca regenerar', () => {
     expect(lifetimeDe(env)).toBe(1);
   });
 
+  it('`regenerate: true` pula o cache da forma e chama a IA de novo, respeitando o teto por forma', async () => {
+    const env = fakeEnv();
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid' }));
+    // Com teto de produção (perFormLifetime: 1), a 2ª chamada com regenerate bate no teto por forma (409);
+    // quando há vaga na forma (ex.: teto do beta = 20), chama o provedor e gera uma nova URL.
+    const a = await (await onRequestPost({ request: reqForma('mega-power'), env })).json();
+    expect(a.image).toBeTruthy();
+    const bloqueada = await onRequestPost({ request: reqForma('mega-power', { regenerate: true }), env });
+    expect(bloqueada.status).toBe(409);
+    AI_LIMITS.sprite.perFormLifetime = 3;
+    try {
+      const nova = await (await onRequestPost({ request: reqForma('mega-power', { regenerate: true }), env })).json();
+      expect(nova.image).toBeTruthy();
+      expect(nova.image).not.toBe(a.image);
+      expect(chamadasDeIA).toHaveLength(2);
+    } finally {
+      AI_LIMITS.sprite.perFormLifetime = 1;
+    }
+  });
+
   it('forma já gerada SEM cache (ex.: conta excluída e relogada) → 409, nunca regenera', async () => {
     const env = fakeEnv();
     env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { 'mega-power': 1 }, aiLifetime: { sprite: 1 } }));

@@ -59,6 +59,19 @@ describe('adoção do sprite da forma ATUAL (§2.3.1)', () => {
     expect(displaySprite(lib, 'champion-power')).not.toBeNull();
   });
 
+  it('ao regenerar uma forma que já tinha sprite próprio, guarda o anterior em `previousSprites` e "Voltar ao traço antigo" o restaura', () => {
+    const antigo = { url: 'https://cdn/rookie-v1.png', formId: 'rookie', at: 1000 };
+    const novo = { url: 'https://cdn/rookie-v2.png', formId: 'rookie', at: 2000 };
+    let lib = recordSprite(emptySpriteLibrary(), antigo, { adopt: 'now' });
+    lib = recordSprite(lib, novo, { adopt: 'now' });
+    expect(displaySprite(lib, 'rookie')?.url).toBe(novo.url);
+    expect(lib.previousSprites?.rookie?.url).toBe(antigo.url);
+    lib = revertVisor(lib, 'rookie');
+    expect(displaySprite(lib, 'rookie')?.url).toBe(antigo.url);
+    lib = tuneVisor(lib, 'rookie');
+    expect(displaySprite(lib, 'rookie')?.url).toBe(novo.url);
+  });
+
   it('a oferta expira numa virada de dia; o sprite, nunca', () => {
     const lib = recordSprite(emptySpriteLibrary(), entry('champion-power'), { adopt: 'ask', dayKey: '2026-08-25' });
     expect(autoTuneDue(lib, '2026-08-25')).toBeNull();      // mesmo dia: espera o jogador

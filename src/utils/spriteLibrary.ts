@@ -86,6 +86,11 @@ export interface PendingTune {
 
 export interface SpriteLibrary {
   sprites: Record<string, SpriteEntry>;
+  /**
+   * Último sprite próprio substituído por regeneração manual ("Gerar Soulmon", 23/10/2026).
+   * Permite que "Voltar ao traço antigo" (`reverted`) devolva o desenho anterior em vez do cristal de reserva.
+   */
+  previousSprites?: Record<string, SpriteEntry>;
   failures: Record<string, SpriteFormFailure>;
   /** Forma atual com sprite próprio pronto e ainda não adotado. */
   pendingTune: PendingTune | null;
@@ -329,6 +334,21 @@ export function normalizeSpriteLibrary(raw: unknown): SpriteLibrary {
       }
     }
   }
+  if (r.previousSprites && typeof r.previousSprites === 'object') {
+    const prevSprites: Record<string, SpriteEntry> = {};
+    for (const [formId, entry] of Object.entries(r.previousSprites)) {
+      if (entry && typeof entry === 'object' && isSafeSpriteUrl((entry as SpriteEntry).url)) {
+        const e = entry as SpriteEntry;
+        prevSprites[formId] = {
+          url: e.url,
+          formId,
+          provider: typeof e.provider === 'string' ? e.provider : undefined,
+          at: Number.isFinite(e.at) ? e.at : 0,
+        };
+      }
+    }
+    if (Object.keys(prevSprites).length > 0) lib.previousSprites = prevSprites;
+  }
   if (r.failures && typeof r.failures === 'object') {
     for (const [formId, f] of Object.entries(r.failures)) {
       if (!f || typeof f !== 'object') continue;
@@ -364,8 +384,8 @@ export function hasSprite(lib: SpriteLibrary, formId: string): boolean {
  * (`pendingTune`) ou o jogador voltou ao traço antigo (`reverted`).
  */
 export function displaySprite(lib: SpriteLibrary, formId: string): SpriteEntry | null {
-  if (lib.pendingTune?.formId === formId) return null;
-  if (lib.reverted.includes(formId)) return null;
+  if (lib.pendingTune?.formId === formId) return lib.previousSprites?.[formId] ?? null;
+  if (lib.reverted.includes(formId)) return lib.previousSprites?.[formId] ?? null;
   return lib.sprites[formId] ?? null;
 }
 
@@ -419,11 +439,16 @@ export function recordSprite(
   // normalização (`useSpriteGeneration.ts` grava `url: image` direto), e só
   // seria validada no reload seguinte. Mesma guarda, mesmo lugar da decisão.
   if (!isSafeSpriteUrl(entry.url)) return lib;
+  const anterior = lib.sprites[entry.formId];
+  const previousSprites = anterior && anterior.url !== entry.url
+    ? { ...(lib.previousSprites ?? {}), [entry.formId]: { ...anterior } }
+    : lib.previousSprites;
   const sprites = { ...lib.sprites, [entry.formId]: { ...entry } };
   const failures = { ...lib.failures };
   delete failures[entry.formId];
   const next: SpriteLibrary = {
     ...lib,
+    ...(previousSprites ? { previousSprites } : {}),
     sprites,
     failures,
     reverted: lib.reverted.filter(id => id !== entry.formId),

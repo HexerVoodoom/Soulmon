@@ -6368,9 +6368,44 @@ export default function App() {
       if (!pago) { setUnlockReason('evolution'); return; }
       if (ent && gameState.accountTier !== 'paid') setGameState(prev => ({ ...prev, credits: ent.credits, accountTier: ent.tier }));
       if ((gameState.soulmonStages?.length ?? 0) === 0 || gameState.demoCharacterId) { setUpgradeRitual(true); return; }
-      if (!spriteGen.force(gameState.evolutionStage)) {
+      let stagesParaGerar = gameState.soulmonStages;
+      const saved = readJson<(OracleInput & { seed: number; readings?: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+      let novoResultado: OracleResult | null = null;
+      if (saved) {
+        const leituras = Number(saved.readings ?? 0) + 1;
+        const newSeed = ((Number(saved.seed ?? 0) + Math.imul(leituras, 0x9e3779b9)) >>> 0) || 1;
+        try {
+          if (saved.soulProfile) {
+            const { generateOracleComplete } = await import('./utils/soulProfile');
+            novoResultado = (await generateOracleComplete(saved, newSeed)).result;
+          } else {
+            const { generateOracleAsync } = await import('./utils/oracle/gerar');
+            novoResultado = await generateOracleAsync(saved, newSeed);
+          }
+          stagesParaGerar = novoResultado.creature.stages;
+          writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: novoResultado.seed, readings: leituras });
+        } catch {
+          novoResultado = null;
+        }
+      }
+      if (!spriteGen.force(gameState.evolutionStage, stagesParaGerar)) {
         toast.error(language === 'pt-BR' ? 'Já há uma geração em andamento. Aguarde um pouco.' : 'A generation is already running. Please wait a bit.');
         return;
+      }
+      if (novoResultado) {
+        const res = novoResultado;
+        setGameState(prev => ({
+          ...prev,
+          soulmonStages: res.creature.stages,
+          soulmonMeta: {
+            ...prev.soulmonMeta,
+            seed: res.seed,
+            baseName: res.creature.baseName,
+            dominantElement: res.dominantElement,
+            dominantAlignment: res.dominantAlignment,
+            dominantRealm: res.dominantRealm,
+          },
+        }));
       }
       setGenerateUsesLeft(spendGenerateCharacterUse());
       const ate = Date.now() + GENERATE_CHARACTER_COOLDOWN_MS;

@@ -9912,7 +9912,7 @@ async function onRequestPost5({ request, env }) {
     if (typeof formId === "string" && formId.length > 0) {
       let pronta = null;
       let ocupada = null;
-      const regenerar = corpo.regenerate === true && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull);
+      const regenerar = corpo.regenerate === true;
       try {
         pronta = regenerar ? null : await kvOrThrow(env).get(cacheKey(id, formId));
         const antigo = legacyFormIdOf(formId);
@@ -11294,7 +11294,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-ZrCWIw/functionsRoutes-0.21309613506303537.mjs
+// ../.wrangler/tmp/pages-W1iLJB/functionsRoutes-0.6932643610074508.mjs
 var routes = [
   {
     routePath: "/api/account",

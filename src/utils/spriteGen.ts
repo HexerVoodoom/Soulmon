@@ -195,8 +195,7 @@ export interface RequestSpriteOptions {
   formId?: string;
   /**
    * "Gerar Soulmon" (teste fechado, 23/10/2026): pede um desenho NOVO mesmo com a forma já no cache do servidor.
-   * Só o servidor decide: ele honra a flag apenas para admin/beta-full com token verificado (`generate-sprite.js`);
-   * para qualquer outra conta ela é ignorada e o cache continua valendo.
+   * Só o servidor decide: exige autorização do save, conta habilitada (`tierOk`) e respeita os tetos por forma e da conta.
    */
   regenerate?: boolean;
   signal?: AbortSignal;
