@@ -68,7 +68,8 @@ interface SettingsPageProps {
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
   /** "Gerar personagem": só existe para quem está sem a criatura própria; `until` = fim da espera (ms epoch). */
-  generateCharacter?: { onGenerate: () => void; until: number };
+  /** "Gerar Soulmon" (teste fechado): aparece para todo testador, na demo ou não; `until` = fim da espera (ms epoch); `usesLeft`/`maxUses` = usos restantes e total. */
+  generateCharacter?: { onGenerate: () => void; until: number; usesLeft: number; maxUses: number };
   /** Ritmo das refeições (`utils/mealRhythm.ts`). Sem o callback a linha não existe. */
   mealRhythm?: MealRhythmSettings;
   onChangeMealRhythm?: (next: MealRhythmSettings) => void;
@@ -205,8 +206,12 @@ function TelemetrySection({ language }: { language: Language }) {
   );
 }
 
-/** "Gerar personagem": confere o pagamento e gera; depois do toque fica em espera até o desenho chegar (`until`). */
-function GenerateCharacterButton({ isPt, onGenerate, until }: { isPt: boolean; onGenerate: () => void; until: number }) {
+/**
+ * "Gerar Soulmon" (teste fechado, 23/10/2026): confere o pagamento e gera; depois do toque fica em espera até o
+ * desenho chegar (`until`). Mostra os usos que restam (`usesLeft` de `maxUses`) e avisa para usar o "Keep the old look"
+ * (`spriteCopy` › `revert`) no Centro de Evolução antes de gerar de novo. Sem usos, o botão fica desligado.
+ */
+function GenerateCharacterButton({ isPt, onGenerate, until, usesLeft, maxUses }: { isPt: boolean; onGenerate: () => void; until: number; usesLeft: number; maxUses: number }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (until <= Date.now()) return;
@@ -215,18 +220,24 @@ function GenerateCharacterButton({ isPt, onGenerate, until }: { isPt: boolean; o
   }, [until]);
   const left = Math.max(0, Math.ceil((until - now) / 1000));
   const wait = left > 0;
+  const semUsos = usesLeft <= 0;
   const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   return (
     <div style={{ marginTop: 8 }} data-generate-character>
-      <button type="button" disabled={wait} style={{ ...sm2Button('primary', wait), width: '100%' }} onClick={onGenerate}>
-        {wait
-          ? (isPt ? `Gerando… volte em ${mmss}` : `Generating… check back in ${mmss}`)
-          : (isPt ? 'Gerar personagem' : 'Generate character')}
+      <button type="button" disabled={wait || semUsos} style={{ ...sm2Button('primary', wait || semUsos), width: '100%' }} onClick={onGenerate}>
+        {semUsos
+          ? (isPt ? `Gerar Soulmon (0/${maxUses})` : `Generate Soulmon (0/${maxUses})`)
+          : wait
+            ? (isPt ? `Gerando… volte em ${mmss} (${usesLeft}/${maxUses})` : `Generating… check back in ${mmss} (${usesLeft}/${maxUses})`)
+            : (isPt ? `Gerar Soulmon (${usesLeft}/${maxUses})` : `Generate Soulmon (${usesLeft}/${maxUses})`)}
       </button>
+      <p style={{ ...sm2Hint, margin: '6px 0 0' }} data-generate-character-uses>
+        {isPt ? `Usos disponíveis: ${usesLeft} de ${maxUses}` : `Uses available: ${usesLeft} of ${maxUses}`}
+      </p>
       <p style={{ ...sm2Hint, margin: '6px 0 0' }}>
         {isPt
-          ? 'Sem o seu Soulmon próprio? Isto confere o pagamento e pede o desenho de novo. Leva alguns minutos.'
-          : 'No Soulmon of your own yet? This checks your purchase and asks for the drawing again. It takes a few minutes.'}
+          ? 'Antes de gerar de novo, use o recurso "Voltar ao traço antigo" no Centro de Evolução se preferir a versão anterior.'
+          : 'Before regenerating again, use the "keep the old look" resource on Evolution Center if you prefer the previous version.'}
       </p>
     </div>
   );
@@ -349,6 +360,7 @@ export function SettingsPage({
               ? 'Você está na demo: Vínculo nível 5, salva só neste aparelho. Sem XP, sem compras e sem PvP.'
               : 'You are in the demo: Bond level 5, saved on this device only. No XP, no purchases and no PvP.'}
           </p>
+          {generateCharacter && <GenerateCharacterButton isPt={isPt} {...generateCharacter} />}
           <ActionRow label={isPt ? 'Sair da demo' : 'Leave the demo'} onClick={demo.onLeave} />
         </Group>
       )}

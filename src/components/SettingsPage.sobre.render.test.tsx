@@ -168,3 +168,52 @@ describe('QA rodada 2 — Ajuda: Termos, #en e "(abre em nova aba)" (A4/A5/A6)',
     expect(en.get('body')).toContain(`Build: ${BUILD_ID}`);
   });
 });
+
+
+describe('Gerar Soulmon — 3 usos, cooldown e dica do Centro de Evolução', () => {
+  it('aparece em "Sua conta" e também no modo Demo, mostrando usos disponíveis e o texto de aviso em EN e PT-BR', () => {
+    const rEn = renderWithCss(
+      <ThemeProvider>
+        <SettingsPage
+          useAI={false} onToggleAI={() => {}}
+          language="en-US" onChangeLanguage={() => {}} onOpenGuide={() => {}} onOpenGlossary={() => {}}
+          notificationsEnabled={false} onToggleNotifications={() => {}}
+          onRestoreFromCloud={async () => true} onLoginWithEmail={async () => 'loaded' as const}
+          generateCharacter={{ onGenerate: () => {}, until: 0, usesLeft: 3, maxUses: 3 }}
+        />
+      </ThemeProvider>,
+    );
+    abrirGrupos();
+    expect(screen.getByRole('button', { name: 'Generate Soulmon (3/3)' })).toBeTruthy();
+    expect(screen.getByText('Uses available: 3 of 3')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Before regenerating again, use the "keep the old look" resource on Evolution Center if you prefer the previous version.',
+      ),
+    ).toBeTruthy();
+    rEn.unmount();
+
+    const rPtDemo = renderWithCss(
+      <ThemeProvider>
+        <SettingsPage
+          useAI={false} onToggleAI={() => {}}
+          language="pt-BR" onChangeLanguage={() => {}} onOpenGuide={() => {}} onOpenGlossary={() => {}}
+          notificationsEnabled={false} onToggleNotifications={() => {}}
+          onRestoreFromCloud={async () => true} onLoginWithEmail={async () => 'loaded' as const}
+          demo={{ onLeave: () => {} }}
+          generateCharacter={{ onGenerate: () => {}, until: Date.now() + 120_000, usesLeft: 2, maxUses: 3 }}
+        />
+      </ThemeProvider>,
+    );
+    abrirGrupos();
+    const btn = screen.getByRole('button', { name: /Gerando… volte em \d:\d{2} \(2\/3\)/ }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(screen.getByText('Usos disponíveis: 2 de 3')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Antes de gerar de novo, use o recurso "Voltar ao traço antigo" no Centro de Evolução se preferir a versão anterior.',
+      ),
+    ).toBeTruthy();
+    rPtDemo.unmount();
+  });
+});

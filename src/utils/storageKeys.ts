@@ -152,6 +152,8 @@ export const STORAGE_KEYS = {
   TUTORIAL_COMPLETE: 'soulmon-tutorial-complete',
   /** Até quando o botão "Gerar personagem" (Configurações › Sua conta) fica em espera (ms epoch). */
   GENERATE_CHARACTER_UNTIL: 'soulmon-generate-character-until',
+  /** Quantos dos usos do botão "Gerar Soulmon" (teste fechado, `utils/generateCharacterUses.ts`) já foram gastos neste aparelho. */
+  GENERATE_CHARACTER_USES: 'soulmon-generate-character-uses',
   /** O tour do corvo (`utils/welcomeTour.ts`): visto ou pulado, uma vez por aparelho. */
   WELCOME_TOUR_SHOWN: 'soulmon-welcome-tour-shown',
   // Login por link de e-mail: o Firebase exige reconfirmar o e-mail ao

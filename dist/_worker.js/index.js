@@ -9912,10 +9912,11 @@ async function onRequestPost5({ request, env }) {
     if (typeof formId === "string" && formId.length > 0) {
       let pronta = null;
       let ocupada = null;
+      const regenerar = corpo.regenerate === true && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull);
       try {
-        pronta = await kvOrThrow(env).get(cacheKey(id, formId));
+        pronta = regenerar ? null : await kvOrThrow(env).get(cacheKey(id, formId));
         const antigo = legacyFormIdOf(formId);
-        if (!pronta && antigo) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
+        if (!pronta && antigo && !regenerar) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err2) {
         console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err2?.message);
@@ -11293,7 +11294,7 @@ async function onRequest7({ env }) {
 }
 __name(onRequest7, "onRequest");
 
-// ../.wrangler/tmp/pages-0HX2me/functionsRoutes-0.3605227324283482.mjs
+// ../.wrangler/tmp/pages-ZrCWIw/functionsRoutes-0.21309613506303537.mjs
 var routes = [
   {
     routePath: "/api/account",

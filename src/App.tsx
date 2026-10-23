@@ -55,6 +55,7 @@ import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
+import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
@@ -4708,6 +4709,12 @@ export default function App() {
     setUpgradeRitual(true);
   }, [syncEntitlement]);
 
+  const [generatingCharacter, setGeneratingCharacter] = useState(false);
+  /** Espera depois do toque: ~ o tempo estimado de o Higgsfield gerar o desenho e ele chegar ao app (21/10/2026, dono). */
+  const GENERATE_CHARACTER_COOLDOWN_MS = 4 * 60 * 1000;
+  const [generateUntil, setGenerateUntil] = useState<number>(() => Number(readLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL)) || 0);
+  const [generateUsesLeft, setGenerateUsesLeft] = useState<number>(() => generateCharacterUsesLeft());
+
   // Fim do ritual pós-compra: troca SÓ a criatura. Estágio, atividades,
   // tarefas, Bits e histórico continuam de pé — mandar quem acabou de pagar de
   // volta pro Rookie seria punir a compra (diferente do reroll, que é escolha
@@ -4717,6 +4724,10 @@ export default function App() {
     revealSprite?: { url: string; formId: string; at: number },
   ) => {
     setUpgradeRitual(false);
+    setGenerateUsesLeft(spendGenerateCharacterUse());
+    const ate = Date.now() + GENERATE_CHARACTER_COOLDOWN_MS;
+    writeLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL, String(ate));
+    setGenerateUntil(ate);
     const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
@@ -6336,11 +6347,6 @@ export default function App() {
     commitHabitCreate([habit], TELEMETRY_CREATE_PATH.tutorial);
   };
 
-
-  const [generatingCharacter, setGeneratingCharacter] = useState(false);
-  /** Espera depois do toque: ~ o tempo estimado de o Higgsfield gerar o desenho e ele chegar ao app (21/10/2026, dono). */
-  const GENERATE_CHARACTER_COOLDOWN_MS = 4 * 60 * 1000;
-  const [generateUntil, setGenerateUntil] = useState<number>(() => Number(readLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL)) || 0);
   // A geração parou por conta NÃO paga (`avisarContaNaoPaga`, spriteGen): a ação do aviso abre o MESMO desbloqueio do "Gerar personagem"
   // (`setUnlockReason('evolution')`), e só se a conta não for paga — conta paga que recebeu um 402 velho não ganha convite.
   useEffect(() => {
@@ -6350,7 +6356,11 @@ export default function App() {
   }, [gameState.accountTier]);
 
   const handleGenerateCharacter = useCallback(async () => {
-    if (generatingCharacter || Date.now() < generateUntil) return;
+    if (generatingCharacter || Date.now() < generateUntil || generateUsesLeft <= 0) return;
+    if (isDemoMode(gameState)) {
+      toast.error(language === 'pt-BR' ? 'Saia da demo e entre com a sua conta para gerar o seu Soulmon.' : 'Leave the demo and sign in with your account to generate your Soulmon.');
+      return;
+    }
     setGeneratingCharacter(true);
     try {
       const ent = await fetchEntitlement();
@@ -6358,14 +6368,11 @@ export default function App() {
       if (!pago) { setUnlockReason('evolution'); return; }
       if (ent && gameState.accountTier !== 'paid') setGameState(prev => ({ ...prev, credits: ent.credits, accountTier: ent.tier }));
       if ((gameState.soulmonStages?.length ?? 0) === 0 || gameState.demoCharacterId) { setUpgradeRitual(true); return; }
-      if (!isNewbornLibrary(spriteAcervo)) {
-        toast.success(language === 'pt-BR' ? 'Seu Soulmon já está pronto.' : 'Your Soulmon is ready.');
-        return;
-      }
       if (!spriteGen.force(gameState.evolutionStage)) {
         toast.error(language === 'pt-BR' ? 'Já há uma geração em andamento. Aguarde um pouco.' : 'A generation is already running. Please wait a bit.');
         return;
       }
+      setGenerateUsesLeft(spendGenerateCharacterUse());
       const ate = Date.now() + GENERATE_CHARACTER_COOLDOWN_MS;
       writeLocal(STORAGE_KEYS.GENERATE_CHARACTER_UNTIL, String(ate));
       setGenerateUntil(ate);
@@ -6373,7 +6380,7 @@ export default function App() {
     } finally {
       setGeneratingCharacter(false);
     }
-  }, [generatingCharacter, generateUntil, GENERATE_CHARACTER_COOLDOWN_MS, gameState.accountTier, gameState.soulmonStages, gameState.demoCharacterId, gameState.evolutionStage, spriteAcervo, spriteGen, language, setGameState, setUnlockReason]);
+  }, [generatingCharacter, generateUntil, generateUsesLeft, GENERATE_CHARACTER_COOLDOWN_MS, gameState, spriteGen, language, setGameState, setUnlockReason]);
 
   // Handle reset onboarding (DEBUG ONLY)
   const handleResetOnboarding = () => setResetOnboardingOpen(true);
@@ -8053,7 +8060,7 @@ export default function App() {
               showInPublicList={gameState.hideFromPublicList !== true}
               onToggleShowInPublicList={() => setGameState(prev => ({ ...prev, hideFromPublicList: prev.hideFromPublicList !== true }))}
               gm={isAdmin ? gmActions : undefined}
-              generateCharacter={!petIsCorvo && (!!gameState.demoCharacterId || ((gameState.soulmonStages?.length ?? 0) > 0 && isNewbornLibrary(spriteAcervo))) ? { onGenerate: handleGenerateCharacter, until: generateUntil } : undefined}
+              generateCharacter={{ onGenerate: handleGenerateCharacter, until: generateUntil, usesLeft: generateUsesLeft, maxUses: MAX_GENERATE_CHARACTER_USES }}
               profile={{
                 saveId,
                 email: readLocal(STORAGE_KEYS.USER_EMAIL),

@@ -120,7 +120,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
    * o teto de 3 nunca chegaria e o botão viraria uma torneira aberta.
    */
   const executarLote = useCallback(
-    (formIds: readonly string[], opts: { adoptCurrentNow: boolean; manual?: boolean }) => {
+    (formIds: readonly string[], opts: { adoptCurrentNow: boolean; manual?: boolean; regenerate?: boolean }) => {
       const a = argsRef.current;
       const byForm = new Map<string, CreatureStage>(
         (a.stages ?? []).map(s => [creatureFormId(s), s]),
@@ -145,6 +145,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
             promptFallback: stage.imagePromptFallback,
             formId,
             referenceImageUrls: anterior ? [anterior.url] : undefined,
+            ...(opts.regenerate ? { regenerate: true } : {}),
           });
           return { url: image, formId, provider, at: Date.now() };
         },
@@ -219,7 +220,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
       for (const [k, f] of Object.entries(failures)) if (f.terminal === 'lifetime-cap') delete failures[k];
       return { ...prev, failures };
     });
-    executarLote([formId], { adoptCurrentNow: true });
+    executarLote([formId], { adoptCurrentNow: true, regenerate: true });
     return true;
   }, [executarLote, updateLibrary]);
 

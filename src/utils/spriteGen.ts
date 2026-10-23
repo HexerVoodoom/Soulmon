@@ -193,6 +193,12 @@ export interface RequestSpriteOptions {
    * consumir o vitalício de 26 da conta inteira.
    */
   formId?: string;
+  /**
+   * "Gerar Soulmon" (teste fechado, 23/10/2026): pede um desenho NOVO mesmo com a forma já no cache do servidor.
+   * Só o servidor decide: ele honra a flag apenas para admin/beta-full com token verificado (`generate-sprite.js`);
+   * para qualquer outra conta ela é ignorada e o cache continua valendo.
+   */
+  regenerate?: boolean;
   signal?: AbortSignal;
 }
 
@@ -201,14 +207,14 @@ export async function requestSprite(
   prompt: string,
   options: RequestSpriteOptions = {},
 ): Promise<{ image: string; provider?: string; cached?: boolean }> {
-  const { referenceImageUrls, promptFallback, formId, signal } = options;
+  const { referenceImageUrls, promptFallback, formId, regenerate, signal } = options;
   // aiFetch acrescenta o saveId e o token — o servidor recusa sem eles
   // (_aiGuard.js). Esta é a rota que custa dinheiro de verdade.
   let res: Response;
   try {
     res = await aiFetch(
       '/api/generate-sprite',
-      { prompt, referenceImageUrls, promptFallback, formId },
+      { prompt, referenceImageUrls, promptFallback, formId, ...(regenerate ? { regenerate: true } : {}) },
       { signal },
     );
   } catch (err) {

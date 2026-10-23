@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 23/10/2026 — Botão "Gerar Soulmon" com 3 usos para todo testador
+>
+> - Nas Configurações ("Sua conta" e modo Demo), o botão **"Gerar Soulmon" / "Generate Soulmon"** agora aparece para todo usuário do teste fechado com **3 usos** (`MAX_GENERATE_CHARACTER_USES = 3`, chave local `soulmon-generate-character-uses`), independentemente de já ter arte no acervo (`spriteLibrary`), estar com inicial da demo ou em demo local.
+> - Mantém o cooldown de 4 minutos no botão (`soulmon-generate-character-until`) mostrando o timer regressivo e os usos disponíveis (`(X/3)` + `"Usos disponíveis: X de 3"`), além do aviso `"Before regenerating again, use the "keep the old look" resource on Evolution Center if you prefer the previous version"` (e equivalente PT-BR `"Antes de gerar de novo, use o recurso "Voltar ao traço antigo" no Centro de Evolução se preferir a versão anterior."`).
+> - No servidor (`functions/api/generate-sprite.js`), pedidos com `regenerate: true` de contas autorizadas (admin ou `betaFull`) pulam o cache de imagem da forma para desenhar uma versão nova. `CACHE_VERSION` subiu para `v204`.
+> - Sem campo novo no save; rollback = reverter o commit.
+
 > ## 23/10/2026 — Conciliação da `main`: `fix/main-verde` + NPC Lisel no Passeio (#454)
 >
 > - Integrados na `main`: `fix/main-verde` (congela `soulmon-generate-character-until` em `saveCompat.contract.test.ts` e isola a fixture de teto de sprites em `src/test/tetosSprite.js`, restaurando as 6 suítes quebradas pelos PRs #450–#452) + PR #454 (`ccr-c62ca41c-q71f8d`: troca o busto e nome do NPC do Passeio de Mirk para **Lisel, a mariposa do caminho / Lisel, the path moth**) + exclusão de `docs/squad-alpha-runs` (pasta gitignored) da varredura de `docsManual.contract.test.ts` + rebuild de `dist/`.

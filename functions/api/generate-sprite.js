@@ -622,11 +622,16 @@ export async function onRequestPost({ request, env }) {
     if (typeof formId === 'string' && formId.length > 0) {
       let pronta = null;
       let ocupada = null;
+      // "Gerar Soulmon" (teste fechado, 23/10/2026): `regenerate: true` pula o resultado em cache e pede desenho NOVO.
+      // Só vale para admin/beta-full com token verificado do PRÓPRIO save; para qualquer outra conta a flag é
+      // ignorada (cache = custo zero continua valendo). O lock, o teto por conta e o teto por forma seguem valendo.
+      const regenerar = corpo.regenerate === true
+        && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull);
       try {
-        pronta = await kvOrThrow(env).get(cacheKey(id, formId));
+        pronta = regenerar ? null : await kvOrThrow(env).get(cacheKey(id, formId));
         // Cache gravado com o id de forma ANTIGO (antes de 29/09/2026): só leitura.
         const antigo = legacyFormIdOf(formId);
-        if (!pronta && antigo) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
+        if (!pronta && antigo && !regenerar) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err) {
         // Não deu para ler o dedupe → seguir gerando duplicaria a cobrança.
