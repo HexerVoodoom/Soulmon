@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 23/10/2026 — Conciliação da `main`: `fix/main-verde` + NPC Lisel no Passeio (#454)
+>
+> - Integrados na `main`: `fix/main-verde` (congela `soulmon-generate-character-until` em `saveCompat.contract.test.ts` e isola a fixture de teto de sprites em `src/test/tetosSprite.js`, restaurando as 6 suítes quebradas pelos PRs #450–#452) + PR #454 (`ccr-c62ca41c-q71f8d`: troca o busto e nome do NPC do Passeio de Mirk para **Lisel, a mariposa do caminho / Lisel, the path moth**) + exclusão de `docs/squad-alpha-runs` (pasta gitignored) da varredura de `docsManual.contract.test.ts` + rebuild de `dist/`.
+> - Sem campo novo no save; rollback = reverter o merge.
+
 > ## 21/10/2026 — Presentes com confirmação do aparelho (`fix/qa-ack-presentes`, REGISTRO §166, L03-01)
 >
 > - O servidor só apaga o presente depois do `giftsAck`; o app credita uma vez por `gid`. Cliente antigo segue como antes. Rollback = reverter o commit (a chave local nova só fica sem uso).

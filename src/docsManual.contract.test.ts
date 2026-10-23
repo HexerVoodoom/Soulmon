@@ -51,7 +51,7 @@ describe('docs/manual — o mapa alcança tudo e não mente por endereço', () =
 
   it('(a) todo doc de docs/ é citado no 00-MAPA.md', () => {
     const mapa = readFileSync(MAPA, 'utf8');
-    const faltam = mdEm(DOCS, ['historico-digiapp'])
+    const faltam = mdEm(DOCS, ['historico-digiapp', 'squad-alpha-runs'])
       .map(p => relative(DOCS, p).replace(/\\/g, '/'))
       .filter(rel => rel !== 'manual/00-MAPA.md')
       .filter(rel => !mapa.includes(rel) && !mapa.includes(rel.replace(/^manual\//, '')));
