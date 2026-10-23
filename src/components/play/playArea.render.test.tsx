@@ -240,7 +240,7 @@ describe('Exploração — o Passeio fica com o NPC (07/10/2026: "Stroll fica co
     const [c, set] = useState<CrossingsState>(CROSSINGS_EMPTY);
     return <PlayAreaView {...props({ language, todayKey: DIA } as Partial<PlayProps>)} passeio={{ crossings: c, onChange: f => set(f), seed: 'seed' }} />;
   }
-  it('a folha do lote traz o Passeio INTEIRO (três propostas, escolha) com Mirk falando; sem texto que aponta para a Home', async () => {
+  it('a folha do lote traz o Passeio INTEIRO (três propostas, escolha) com Lisel falando; sem texto que aponta para a Home', async () => {
     const { container, getByRole } = renderWithCss(<Viva />);
     fireEvent.click(container.querySelector('[data-area-lot="passeio"]')!);
     await achar(container, '[data-travessia-card]');
@@ -248,7 +248,7 @@ describe('Exploração — o Passeio fica com o NPC (07/10/2026: "Stroll fica co
     expect(folha.querySelectorAll('[data-travessia-card]').length).toBe(3);
     expect(folha.querySelector('[data-passeio-pointer]')).toBeNull();
     expect(folha.textContent).not.toMatch(/Missions menu|menu de Missões/);
-    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Mirk');
+    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Lisel');
     // escolher uma proposta mostra o card da missão com o botão de concluir travado pelo relógio
     fireEvent.click(folha.querySelector('[data-travessia-card] [data-travessia-abrir]')!);
     fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
