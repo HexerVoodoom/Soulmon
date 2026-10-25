@@ -23,10 +23,10 @@ import type { CreatureStage } from '../utils/oracle';
 afterEach(() => cleanup());
 
 describe('9.1 — Salão de Jogos', () => {
-  it('três cards, com respiro de 16 e sem o velociraptor nem a tesoura; cada título tem ícone', () => {
+  it('quatro cards (Soul Barrage é o 4º), com respiro de 16 e sem o velociraptor nem a tesoura; cada título tem ícone', () => {
     const { container } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const cards = container.querySelectorAll('li');
-    expect(cards).toHaveLength(3);
+    expect(cards).toHaveLength(4);
     const lista = container.querySelector('ul') as HTMLElement;
     expect(lista.style.gap).toContain('--sm2-space-4');
     for (const li of cards) expect(li.querySelector('img[data-pixel-icon]')).not.toBeNull();

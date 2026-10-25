@@ -575,3 +575,15 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 ### `functions/api/_claPraca.js`, `_claPlantio.js`, `_claMisterio.js` e `_claKv.testkit.js` (18/10/2026, prédios do clã)
 **Dono de:** as regras de servidor dos três prédios do clã, em chaves KV próprias e aditivas. `functions/api/_claPraca.js` (`PRACA_SLOTS`, `PRESENTE_VALE_DIAS`, `pracaKey`): decoração e o presente diário por par. `functions/api/_claPlantio.js` (`PLANTIO_DIAS`, `ESTACOES`, `plantioKey`): o plantio coletivo. `functions/api/_claMisterio.js` (`MISTERIO_ALVO`, `MISTERIO_TETO_DIA`, `MISTERIO_PESOS`, `misKey`): o mistério diário. `functions/api/_claKv.testkit.js` (`fakeKV`, `seeded`): KV falso só para teste.
 **Chamado por:** `functions/api/guild.js`. **Régua:** `functions/api/_claPraca.test.js`, `_claPlantio.test.js`, `_claMisterio.test.js`.
+
+### `functions/api/_rankings.js`
+Ranking genérico (M8): um módulo para todos os jogos. Allowlist FECHADA `RANKED_GAMES` (dino, ppt, match3, eco, endless-rift, rogue-dungeon, soul-barrage); períodos `weekly` (`YYYY-Www`, ISO, UTC) e `monthly` (`YYYY-MM`); faixas `TIER_IDS`/`TIER_CUTS` (madeira a diamante); `MAX_SCORE`, `TOP_DEFAULT`, `TOP_MAX`. Guarda o melhor score por período na KV.
+
+### `functions/api/_riftPayout.js`
+Fechamento mensal do Endless Rift (M6): Créditos 50/25/10 para o top 3, pagos SÓ pelo servidor (exceção "Crédito como prêmio", decisão do dono de 25/10/2026). Fechamento preguiçoso no primeiro acesso a um endpoint de ranking do mês seguinte (`closePreviousMonth`); idempotente por trava `rift-payout:<YYYY-MM>` e por usuário `rift-paid:<YYYY-MM>:<saveId>`, gravadas ANTES de pagar (melhor perder um pagamento que pagar duas vezes). Também `readMyPrize`.
+
+### `functions/api/gm-soulmons.js`
+`GET /api/gm-soulmons?cursor=` — lista de Soulmons gerados, só para o GM (M12). Exige Bearer ID token cujo e-mail verificado esteja em `ADMIN_EMAILS`; qualquer outro caso é 403 `forbidden` idêntico. Fonte: `sprite:img:<saveId>:<formId>`; nome do perfil público; paginação por cursor da KV, 24 por página.
+
+### `functions/api/rankings.js`
+`/api/rankings` (M8): `POST { id, game, score, period? }` submete (melhor score do período) e `GET ?game=&period=&id=&top=` devolve o top N e a posição/faixa de `id`. As duas exigem ID token que derive o saveId (`authorizeSaveAccess`); rate limit por IP (`LIMIT_IP` 60/min) e por submissão (`LIMIT_SUBMIT` 20/min). Regras em `_rankings.js`.

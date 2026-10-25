@@ -23,11 +23,11 @@ describe('MapTutorial', () => {
   it('as falas de área listam os prédios e a Masmorra está aberta desde o 1º dia', () => {
     const { container } = render(<MapTutorial language="en-US" onFinish={() => {}} />);
     for (let i = 0; i < MAP_TOUR_STEPS.length - 1; i++) {
-      if (container.textContent!.includes('Dungeon')) break;
+      if (container.textContent!.includes('Endless Rift')) break;
       fireEvent.click(container.querySelector('[data-npc-advance]')!);
     }
     expect(container.textContent).toContain('open from day one');
-    expect(container.textContent).toContain('Dungeon');
+    expect(container.textContent).toContain('Endless Rift');
   });
   it('Pular encerra a sequência inteira como skip', () => {
     const onFinish = vi.fn();
