@@ -92,3 +92,21 @@ export async function putProfile(env, id, profile) {
   await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
 }
 
+
+// ── Apelido único (case-insensitive) ─────────────────────────────────────────
+// `nick:<minúsculas>` → saveId dono; `nickof:<saveId>` → chave que ele segura (para soltar ao renomear).
+export const nickKey = (name) => `nick:${encodeURIComponent(String(name).normalize('NFKC').trim().toLowerCase()).slice(0, 200)}`;
+/** Reivindica o apelido. `true` = é seu agora (ou já era); `false` = outra conta o usa. */
+export async function claimNick(env, saveId, name) {
+  if (/^(an[ôo]nimo|anonymous)$/i.test(String(name).trim())) return true; // nomes-padrão não são reservados
+  const kv = kvOrThrow(env);
+  const key = nickKey(name);
+  const dono = await kv.get(key);
+  if (dono && dono !== saveId) return false;
+  const antiga = await kv.get(`nickof:${saveId}`);
+  if (antiga && antiga !== key && (await kv.get(antiga)) === saveId) await kv.delete(antiga);
+  const ttl = { expirationTtl: 86400 * 400 };
+  await kv.put(key, saveId, ttl);
+  await kv.put(`nickof:${saveId}`, key, ttl);
+  return true;
+}

@@ -27,7 +27,7 @@
 // `src/utils/tournamentTiers.ts` (madeira…diamante). Cortes = PROPOSTOS, o dono
 // calibra (ainda não há dado real).
 //
-// SIMULADO: o perfil terá a flag interna `simulated` (lane futura). Esses
+// SIMULADO: o perfil tem a flag interna `simulated` (M11, `_simulados.js`). Esses
 // jogadores APARECEM no ranking (a sala não fica vazia), mas
 // `payablePlacements` os PULA ao decidir quem recebe prêmio.
 // ---------------------------------------------------------------------------
@@ -211,6 +211,9 @@ export function payablePlacements(entries, n) {
   for (const e of entries ?? []) {
     if (out.length >= n) break;
     if (e?.simulated === true || e?.sim === true) continue;
+    // Rede de segurança do M11: o id estável dos simulados (`sim_NNNN`, `_simulados.data.js`) nunca recebe prêmio,
+    // mesmo se o `metadata.sim` do placar faltar.
+    if (typeof e?.saveId === 'string' && /^sim_[0-9]{4}$/.test(e.saveId)) continue;
     out.push(e);
   }
   return out;
