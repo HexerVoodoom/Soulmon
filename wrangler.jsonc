@@ -45,7 +45,8 @@
   // (elas sao inlinadas no build). Ligar antes derruba o login de todos: o
   // servidor passa a exigir token e o cliente nao sabe emitir nenhum.
   "vars": {
-    "FIREBASE_PROJECT_ID": "soulmon-app"
+    "FIREBASE_PROJECT_ID": "soulmon-app",
+    "SIMULADOS_ON": "1"
   },
   "d1_databases": [
     { "binding": "DB", "database_name": "soulmon-billing", "database_id": "43546903-7f12-4541-9a67-4b0e8ac736da" }
