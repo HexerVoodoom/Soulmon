@@ -100,7 +100,7 @@ async function withDuelLock(key, fn) {
 // Duas classes, porque o custo delas é diferente em uma ordem de grandeza:
 // `players`/`opponents`/`rank` varrem até 300 chaves do KV por chamada; as
 // demais leem uma ou duas. Ver `_rateLimit.js` para o que este teto NÃO é.
-const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult']);
+const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names']);
 const HEAVY_LIMIT = { limit: 20, windowMs: 60_000 };   // 20 varreduras/min/IP
 const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 
@@ -225,6 +225,24 @@ async function listPrefix(env, prefix, limit = 100) {
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
   return out;
+}
+
+// ── Apelido único (case-insensitive) ─────────────────────────────────────────
+// `nick:<minúsculas>` → saveId dono; `nickof:<saveId>` → chave que ele segura (para soltar ao renomear).
+const nickKey = (name) => `nick:${encodeURIComponent(String(name).normalize('NFKC').trim().toLowerCase()).slice(0, 200)}`;
+/** Reivindica o apelido. `true` = é seu agora (ou já era); `false` = outra conta o usa. */
+async function claimNick(env, saveId, name) {
+  if (/^(an[ôo]nimo|anonymous)$/i.test(String(name).trim())) return true; // nomes-padrão não são reservados
+  const kv = kvOrThrow(env);
+  const key = nickKey(name);
+  const dono = await kv.get(key);
+  if (dono && dono !== saveId) return false;
+  const antiga = await kv.get(`nickof:${saveId}`);
+  if (antiga && antiga !== key && (await kv.get(antiga)) === saveId) await kv.delete(antiga);
+  const ttl = { expirationTtl: 86400 * 400 };
+  await kv.put(key, saveId, ttl);
+  await kv.put(`nickof:${saveId}`, key, ttl);
+  return true;
 }
 
 export async function onRequestOptions() {
@@ -472,7 +490,11 @@ async function handleCommunity({ request, env }) {
     // do cloud save, então recusar derrubaria a sincronização inteira — o
     // apelido com contato é DESCARTADO (fica o anterior) e a resposta avisa.
     const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
-    const nameRejected = !!body.name && !apelidoPedido;
+    let nameRejected = !!body.name && !apelidoPedido;
+    // Apelido único: outra conta com o mesmo nome (sem diferenciar maiúsculas) => fica o anterior.
+    let nameTaken = false;
+    let apelidoFinal = apelidoPedido;
+    if (apelidoPedido && !(await claimNick(env, id, apelidoPedido))) { nameTaken = true; apelidoFinal = null; }
     // Opt-out da lista pública. Cliente antigo (sem o campo) NÃO desfaz a
     // escolha feita em outro aparelho: ausência herda o valor gravado.
     // `petName`, `stage` e `unlockedStages` também saem na lista PÚBLICA e eram texto livre: a mesma régua
@@ -483,7 +505,7 @@ async function handleCommunity({ request, env }) {
     const publicHidden = typeof body.publicHidden === 'boolean' ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
-      name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
+      name: apelidoFinal || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
       stage: (typeof body.stage === 'string' && ID_ESTAGIO.test(body.stage) ? body.stage : (ID_ESTAGIO.test(String(prev.stage ?? '')) ? prev.stage : 'rookie')),
       petName: petNameOk(body.petName) ? body.petName.slice(0, 32) : prevPet,
       // Foto e moldura (Tarefa C): so IDs das listas fechadas. Ausencia herda o gravado (cliente antigo nao apaga);
@@ -527,8 +549,38 @@ async function handleCommunity({ request, env }) {
     return json({
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled, publicHidden,
       ...(nameRejected ? { nameRejected: true } : {}),
+      ...(nameTaken ? { nameTaken: true } : {}),
       ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor('pvp', bondLevel).minBond } : {}),
     });
+  }
+
+  // ── Apelido: reserva (o cliente chama ao salvar; 409 = já em uso) ─────────
+  if (action === 'nickname' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const nome = sanitizarNomeDeGuilda(body.name);
+    if (!nome) return json({ error: 'invalid name', nameRejected: true }, 400);
+    if (!(await claimNick(env, id, nome))) return json({ error: 'name taken', nameTaken: true }, 409);
+    return json({ ok: true, name: nome });
+  }
+
+  // ── Sugestões de nome por prefixo (só nomes do diretório público; nunca e-mail/id) ──
+  if (action === 'names' && method === 'GET') {
+    const prefixo = (url.searchParams.get('prefix') || '').normalize('NFKC').trim().toLowerCase().slice(0, 40);
+    if (!prefixo) return json({ names: [] });
+    const keys = await listPrefix(env, 'profile:', 300);
+    const nomes = [];
+    for (const k of keys) {
+      const raw = await kvOrThrow(env).get(k);
+      if (!raw) continue;
+      const p = JSON.parse(raw);
+      if (!p.pvpEnabled || isHidden(p)) continue;
+      const n = String(p.name ?? '');
+      if (!n.toLowerCase().startsWith(prefixo)) continue;
+      if (!nomes.includes(n)) nomes.push(n);
+    }
+    nomes.sort((a, b) => a.localeCompare(b));
+    return json({ names: nomes.slice(0, 8) });
   }
 
   // ── Diretório / busca ─────────────────────────────────────────────────────

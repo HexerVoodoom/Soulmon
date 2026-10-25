@@ -106,7 +106,16 @@ export interface ProfilePushResult {
   bondLevel?: number | null;
   /** O nível exigido, dito pelo servidor — nunca reimplementado aqui. */
   minBondLevel?: number;
+  /** Outra conta já usa este apelido: o servidor manteve o anterior. */
+  nameTaken?: boolean;
 }
+
+/** Reserva o apelido (único, sem diferenciar maiúsculas). Lança `Error('name taken')` quando outra conta já o usa. */
+export const reserveNickname = (id: string, name: string) =>
+  call<{ ok: true; name: string }>('nickname', { method: 'POST', body: { id, name } });
+/** Sugestões de nomes do diretório que começam com o prefixo (no máximo 8; só nomes). */
+export const suggestNames = (prefix: string) =>
+  call<{ names: string[] }>('names', { params: { prefix } });
 
 export const pushProfile = (p: PublicProfileInput) =>
   call<ProfilePushResult>('profile', { method: 'POST', body: p });
