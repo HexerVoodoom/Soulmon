@@ -1,3 +1,4 @@
+import { RankingPanel } from './RankingPanel';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './mente/types';
@@ -89,7 +90,7 @@ function combatFor(sd: number, playerLine: string | undefined): { combat: M3Comb
   return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine), rng: mulberry32(sd ^ 0x5eed) };
 }
 
-export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName }: Match3Props) {
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, rankSaveId }: Match3Props) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
@@ -625,6 +626,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
           <p className="sm2-num" style={phaseLine}>
             {isPt ? `Seu recorde: ${best}` : `Your best: ${best}`}{newBest ? (isPt ? ' · novo recorde' : ' · new best') : ''}
           </p>
+          <RankingPanel game="match3" saveId={rankSaveId} language={language} score={score} />
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={restart} data-m3-again style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'De novo' : 'Again'}

@@ -1,3 +1,4 @@
+import { RankingPanel } from './RankingPanel';
 import { useState, useRef, useEffect } from 'react';
 import { BitsAmount } from './ui/BitsAmount';
 import type { CSSProperties } from 'react';
@@ -42,7 +43,8 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit }: {
+export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId }: {
+  rankSaveId?: string;
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts). Sem uso visual desde o canvas Jogos
    *  (o pet não aparece na cena do PPT — só as mãos), mantido pela assinatura
@@ -230,6 +232,8 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit }: {
           </button>
         </div>
       ) : matchOver ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <RankingPanel game="ppt" saveId={rankSaveId} language={language} score={playerWins * 10 + (matchOver === 'won' ? 10 : 0)} />
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
             {isPt ? 'Revanche' : 'Rematch'}
@@ -237,6 +241,7 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit }: {
           <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
             {isPt ? 'Sair' : 'Exit'}
           </button>
+        </div>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>

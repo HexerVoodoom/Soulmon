@@ -486,6 +486,7 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
                 onScore={play.onDinoScore}
+                rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
             )}
@@ -496,13 +497,14 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 onEarnPoints={props.onEarnPoints}
                 onMatchEnd={() => props.onDailyEvent?.('ppt')}
+                rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} petName={props.petName} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} rankSaveId={props.guild.saveId} petName={props.petName} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
-            {game === 'eco' && <EcoGame {...base} onEarnPoints={props.onEarnPoints} />}
+            {game === 'eco' && <EcoGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
             {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}
             {game === 'troca' && <TrocaGame {...base} onEarnPoints={props.onEarnPoints} />}
             {game === 'picross' && <PicrossGame {...base} todayKey={todayKey} onEarnPoints={props.onEarnPoints} />}

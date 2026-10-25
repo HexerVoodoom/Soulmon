@@ -1,3 +1,4 @@
+import { RankingPanel } from '../RankingPanel';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { EarningGameProps } from './types';
@@ -54,7 +55,7 @@ function StoneShape({ stone, size }: { stone: Stone; size: number }) {
   );
 }
 
-export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit }: EarningGameProps) {
+export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId }: EarningGameProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const [phase, setPhase] = useState<Phase>('intro');
@@ -268,6 +269,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
         </>
       )}
 
+      {phase === 'done' && <RankingPanel key={longest} game="eco" saveId={rankSaveId} language={language} score={longest} />}
       {phase === 'done' && (
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-eco-again>
