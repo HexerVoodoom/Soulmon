@@ -20,7 +20,7 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import type { OcupadoAcao } from '../DungeonBusyModal';
-import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
+import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
 import type { QuestMark } from '../../utils/questMarks';
@@ -29,8 +29,8 @@ import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
-  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame,
-  loadTrocaGame, loadPicrossGame, loadRevisaoGame, loadRespiracaoGame,
+  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadPatchesGame,
+  loadRespiracaoGame,
 } from './playPrefetch';
 
 /**
@@ -74,9 +74,8 @@ const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })))
 const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGame })));
-const TrocaGame = lazy(() => loadTrocaGame().then(m => ({ default: m.TrocaGame })));
-const PicrossGame = lazy(() => loadPicrossGame().then(m => ({ default: m.PicrossGame })));
-const RevisaoGame = lazy(() => loadRevisaoGame().then(m => ({ default: m.RevisaoGame })));
+const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
+const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
 const RespiracaoGame = lazy(() => loadRespiracaoGame().then(m => ({ default: m.RespiracaoGame })));
 
 /** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
@@ -416,8 +415,6 @@ export function AreaView(props: AreaViewProps) {
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
-    const todayKey = play.todayKey ?? new Date().toISOString().slice(0, 10);
-    const review = play.review ?? REVIEW_EMPTY;
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -448,7 +445,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
-            {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} reviewDue={dueCards(review, todayKey).length} onStart={start} />}
+            {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
           </Suspense>
         </AreaSheet>
@@ -505,18 +502,8 @@ export function AreaView(props: AreaViewProps) {
             {game === 'match3' && <Match3Game {...base} rankSaveId={props.guild.saveId} petName={props.petName} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
-            {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}
-            {game === 'troca' && <TrocaGame {...base} onEarnPoints={props.onEarnPoints} />}
-            {game === 'picross' && <PicrossGame {...base} todayKey={todayKey} onEarnPoints={props.onEarnPoints} />}
-            {game === 'revisao' && (
-              <RevisaoGame
-                {...base}
-                todayKey={todayKey}
-                review={review}
-                onReviewChange={next => play.onReviewChange?.(next)}
-                onEarnPoints={props.onEarnPoints}
-              />
-            )}
+            {game === 'zip' && <ZipGame {...base} onEarnPoints={props.onEarnPoints} />}
+            {game === 'patches' && <PatchesGame {...base} onEarnPoints={props.onEarnPoints} />}
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
             {game === 'respiracao' && <RespiracaoGame {...base} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}

@@ -21,7 +21,7 @@ export const WAKE_ALL_ACTIONS = [
   // ── PET ── seguram até acordar
   'feed', 'shower', 'pet', 'play',
   // ── JOGOS ── seguram até acordar (Masmorra + minijogos do Salão e do Ateliê da Mente)
-  'masmorra', 'dino', 'ppt', 'match3', 'eco', 'bolhas', 'troca', 'picross', 'revisao',
+  'masmorra', 'dino', 'ppt', 'match3', 'eco', 'bolhas', 'troca', 'picross', 'revisao', 'zip', 'patches',
 ] as const;
 
 export type WakeBlockedAction = (typeof WAKE_ALL_ACTIONS)[number];
@@ -33,7 +33,7 @@ export const WAKE_BLOCKED_ACTIONS: readonly WakeBlockedAction[] = WAKE_ALL_ACTIO
 export const WAKE_BLOCKED_PET: readonly WakeBlockedAction[] = ['feed', 'shower', 'pet', 'play'];
 
 /** Jogos: a Masmorra e os minijogos pagos/pontuados. O Refúgio (respiração, bolhas calmas) NÃO entra: não paga, não pontua. */
-export const WAKE_BLOCKED_GAMES: readonly WakeBlockedAction[] = ['masmorra', 'dino', 'ppt', 'match3', 'eco', 'bolhas', 'troca', 'picross', 'revisao'];
+export const WAKE_BLOCKED_GAMES: readonly WakeBlockedAction[] = ['masmorra', 'dino', 'ppt', 'match3', 'eco', 'bolhas', 'troca', 'picross', 'revisao', 'zip', 'patches'];
 
 /**
  * O que NUNCA para por causa do sono diário (G-01 — nada reduz nem adia o impacto de concluir tarefa/hábito; REGISTRO §96).
