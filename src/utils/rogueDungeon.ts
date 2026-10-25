@@ -165,41 +165,35 @@ export function simulateRogueCombat(
   return { won: res.winner === 'player', hpLeft: res.hpLeft };
 }
 
-// ── Desafios leves próprios (não-combate) ───────────────────────────────────────────────────────────────────────────
-// NOTA (M7): os jogos do Mind Workshop/Salão e as ferramentas da Exploração NÃO ganharam modo "desafio" — adaptar cada
-// componente (fim com vitória/derrota + sem a recompensa normal) fugia do MVP; cada caminho usa um desafio leve próprio,
-// determinístico por (dia, passo), que só reaproveita o tema. Anotado em docs/PERGUNTAS-DO-DONO.md.
+// ── Desafios de JOGOS REAIS (não-combate) ───────────────────────────────────────────────────────────────────────────
+// Cada caminho que não é combate sorteia (determinístico por dia+passo) um minigame real do app em "modo desafio"
+// (`challenge` do componente: meta curta, sem Bits/recorde/ranking do jogo; o que conta é o ranking do Calabouço).
 
+export type ChallengeGame = 'match3' | 'dino' | 'rps' | 'zip' | 'patches' | 'eco' | 'barrage';
 export type LightKind = Exclude<PathKind, 'combat'>;
-export interface RogueChallenge {
-  kind: LightKind;
-  options: string[];
-  /** Índice da opção certa; `-1` no minigame (a resposta é a ordem crescente). */
-  answer: number;
-  prompt: { en: string; pt: string };
+/** Pool por caminho: puzzle = Zip/Patches; minigame = Match 3/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
+export const CHALLENGE_POOL: Record<LightKind, readonly ChallengeGame[]> = {
+  puzzle: ['zip', 'patches'],
+  minigame: ['match3', 'dino', 'rps', 'barrage'],
+  explore: ['eco'],
+};
+
+export interface RogueChallenge { kind: LightKind; game: ChallengeGame; goal: number }
+
+/** Meta de cada jogo (cresce com o andar). match3 = vencer 1 inimigo; zip/patches = resolver 1 puzzle (goal 1). */
+export function goalFor(game: ChallengeGame, floor: number): number {
+  switch (game) {
+    case 'dino': return 150 + 50 * floor;      // pontos de corrida (~10/s)
+    case 'rps': return floor >= 3 ? 3 : 2;     // rodadas ganhas antes do Soulmon
+    case 'eco': return 3 + floor;              // comprimento do eco repetido (início = 3)
+    case 'barrage': return 12 + 4 * floor;     // segundos sobrevividos
+    default: return 1;
+  }
 }
 
-/** Puzzle: qual número continua a série. Minigame: tocar as pedras em ordem crescente. Explore: seguir as pegadas até a porta. */
 export function challengeFor(day: string, step: number, kind: LightKind): RogueChallenge {
+  const pool = CHALLENGE_POOL[kind];
   const rng = mulberry32(seedOf(day, step, `ch-${kind}`));
-  const level = floorOf(step);
-  if (kind === 'puzzle') {
-    const start = 1 + Math.floor(rng() * 6);
-    const d = 2 + Math.floor(rng() * (2 + level));
-    const right = start + d * 4;
-    const set = new Set<number>([right]);
-    let off = 1;
-    while (set.size < 3) { set.add(right + (rng() < 0.5 ? -off : off)); off += 1; }
-    const opts = shuffled([...set], rng);
-    const seq = [0, 1, 2, 3].map(i => start + d * i).join(', ');
-    return { kind, options: opts.map(String), answer: opts.indexOf(right), prompt: { en: `Which number continues: ${seq}, ?`, pt: `Qual número continua: ${seq}, ?` } };
-  }
-  if (kind === 'minigame') {
-    const nums = new Set<number>();
-    while (nums.size < 3) nums.add(1 + Math.floor(rng() * 9 * level));
-    const sorted = [...nums].sort((a, b) => a - b);
-    return { kind, options: shuffled(sorted.map(String), rng), answer: -1, prompt: { en: 'Tap the stones from smallest to largest.', pt: 'Toque nas pedras da menor para a maior.' } };
-  }
-  const door = Math.floor(rng() * 3);
-  return { kind, options: ['1', '2', '3'], answer: door, prompt: { en: `Fresh footprints lead to door ${door + 1}. Which door do you open?`, pt: `Pegadas frescas levam à porta ${door + 1}. Qual porta você abre?` } };
+  const game = pool[Math.floor(rng() * pool.length)];
+  return { kind, game, goal: goalFor(game, floorOf(step)) };
 }

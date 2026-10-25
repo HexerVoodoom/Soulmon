@@ -103,8 +103,10 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, playerLevel, onEnemySeen, rankSaveId }: Match3Props) {
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, playerLevel, onEnemySeen, rankSaveId, challenge }: Match3Props) {
   const isPt = language === 'pt-BR';
+  const challengeRef = useRef(challenge);
+  challengeRef.current = challenge;
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
@@ -179,6 +181,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const finish = useCallback(() => {
     if (overRef.current) return;
     overRef.current = true;
+    if (challengeRef.current) { challengeRef.current.onResult(combatRef.current.outcome === 'win'); return; }
     const final = combatScore(combatRef.current);
     const bits = match3Bits(final);
     setEarned(bits);

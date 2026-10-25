@@ -459,7 +459,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && (play.rogue
-              ? <RogueDungeon language={language} todayKey={play.todayKey ?? new Date().toISOString().slice(0, 10)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />
+              ? <RogueDungeon language={language} todayKey={play.todayKey ?? new Date().toISOString().slice(0, 10)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} />
               : <RogueDungeonPlaceholder language={language} />)}
           </Suspense>
         </AreaSheet>

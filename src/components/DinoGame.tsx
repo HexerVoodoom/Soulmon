@@ -1,4 +1,5 @@
 import { RankingPanel } from './RankingPanel';
+import type { GameChallenge } from '../utils/gameChallenge';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 
@@ -162,7 +163,9 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge }: {
+  /** Modo desafio (Calabouço): vence ao atingir `goal` de score; sem Bits/recorde/ranking. */
+  challenge?: GameChallenge;
   rankSaveId?: string;
   /** Elemento dominante do Soulmon: o dash mostra o golpe físico `fx-<el>-slash` dele. */
   petElement?: string;
@@ -176,6 +179,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const challengeRef = useRef(challenge);
+  challengeRef.current = challenge;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scoreElRef = useRef<HTMLSpanElement>(null);
   const petImgRef = useRef<HTMLImageElement | null>(null);
@@ -473,7 +478,10 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       if (chargesElRef.current) chargesElRef.current.textContent = String(s.charges);
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 
-      if (!dead) { raf = requestAnimationFrame(tick); return; }
+      const ch = challengeRef.current;
+      const reached = !!ch && s.score >= ch.goal;
+      if (!dead && !reached) { raf = requestAnimationFrame(tick); return; }
+      if (ch) { ch.onResult(reached); return; }
 
       // Game over
       const score = Math.floor(s.score);

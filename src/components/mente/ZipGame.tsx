@@ -24,7 +24,7 @@ import {
 
 const GRID_MAX_W = 348;
 
-export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit }: EarningGameProps) {
+export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, challenge }: EarningGameProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const [level, setLevel] = useState(1);
@@ -58,8 +58,8 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     setSolved(true);
     const bits = zipBits(size);
     setEarned(bits);
-    if (!paid.current) { paid.current = true; onEarnPoints(bits); }
-  }, [path, solved, puzzle, size, onEarnPoints]);
+    if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
+  }, [path, solved, puzzle, size, onEarnPoints, challenge]);
 
   /** Entra numa casa: começa, estende, desfaz até ela ou volta um passo. */
   const enter = (c: number) => {

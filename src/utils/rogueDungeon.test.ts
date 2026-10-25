@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_SCORE, ROGUE_MAX_STEPS, applyBonus, bonusChoices, challengeFor, emptyRun, floorsCleared, isFinished,
+  ROGUE_FLOORS, ROGUE_MAX_SCORE, ROGUE_MAX_STEPS, applyBonus, bonusChoices, CHALLENGE_POOL, challengeFor, emptyRun, floorsCleared, isFinished,
   isForcedCombat, pathsFor, resolveStep, rogueScore, runForDay, sanitizeRogueRun, simulateRogueCombat,
 } from './rogueDungeon';
 
@@ -61,14 +61,18 @@ describe('rogueDungeon', () => {
     expect(r.power).toBe(0);
     expect(r.over).toBe(false);
   });
-  it('desafios leves têm resposta válida', () => {
+  it('desafios são jogos reais do pool do caminho, com meta positiva e determinísticos', () => {
+    const seen = new Set<string>();
     for (let s = 0; s < 24; s++) {
-      const p = challengeFor(D, s, 'puzzle');
-      expect(p.options).toHaveLength(3);
-      expect(p.answer).toBeGreaterThanOrEqual(0);
-      const m = challengeFor(D, s, 'minigame');
-      expect(new Set(m.options).size).toBe(3);
+      for (const k of ['puzzle', 'minigame', 'explore'] as const) {
+        const c = challengeFor(D, s, k);
+        expect(CHALLENGE_POOL[k]).toContain(c.game);
+        expect(c.goal).toBeGreaterThan(0);
+        expect(challengeFor(D, s, k)).toEqual(c);
+        seen.add(c.game);
+      }
     }
+    expect(seen.size).toBe(7);
   });
   it('combate usa o núcleo: determinístico; forte vence o 1º, fraco perde o chefe do 3º andar', () => {
     const strong = combatantAt(20, REFERENCE_BUILDS.balanced);
