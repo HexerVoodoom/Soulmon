@@ -117,7 +117,7 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -148,6 +148,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
    *  `dungeonFloor` da tabela do §55 nunca tinha emissor. Opcional para não
    *  obrigar quem monta a masmorra fora da Home a saber do Vínculo. */
   onFloorCleared?: () => void;
+  /** beta3 A4: uma descida que terminou (energia/HP/teto) com ≥1 camada limpa = UMA run para a missão semanal. */
+  onRunEnd?: () => void;
   /** Mission counter: called once per defeated enemy.
    *  WP4.6 — recebe também a CHAVE do inimigo, para o bestiário registrar o
    *  que o jogador enfrentou. A chave é a mesma do sprite (`stage`), que já é
@@ -466,6 +468,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   const endDescent = (why: 'hp' | 'sealed' | 'energy' | 'deep' | 'daily') => {
     setResumo({ ...resumoRef.current });
+    if (resumoRef.current.layers > 0) onRunEnd?.();
     recordDungeonScore(runScoreRef.current);
     setBest(getDungeonBest());
     setRunScore(runScoreRef.current);

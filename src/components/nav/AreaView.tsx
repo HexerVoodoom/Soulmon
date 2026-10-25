@@ -88,6 +88,8 @@ export interface PlayHandlers {
   onDungeonHeartDrop: () => boolean;
   onGlitchtama: () => void;
   onFloorCleared?: () => void;
+  /** beta3 A4: a descida terminou com ao menos 1 camada limpa (conta a missão "runs da masmorra"). */
+  onRunEnd?: () => void;
   onDungeonEnemyDefeated: (enemyKey?: string) => void;
   onDinoScore: (score: number) => void;
   onSpendBits?: (pts: number) => boolean;
@@ -455,6 +457,7 @@ export function AreaView(props: AreaViewProps) {
                 onHeartDrop={play.onDungeonHeartDrop}
                 onGlitchtama={play.onGlitchtama}
                 onFloorCleared={play.onFloorCleared}
+                onRunEnd={play.onRunEnd}
                 onEnemyDefeated={play.onDungeonEnemyDefeated}
                 onEarnPoints={props.onEarnPoints}
                 /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */

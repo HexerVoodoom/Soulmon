@@ -221,11 +221,13 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     if (isMilestoneLayer(layer) && !ms) {
       ms = true;
       report.glitchtama += 1;
-      s = countWeeklyMission(applyMilestoneItem(s, now), 'dungeon-runs', now);
+      s = applyMilestoneItem(s, now);
     }
     hp = Math.min(1, hp + cura);
   }
 
+  // beta3 A4: a descida que ACABOU (energia/HP/teto/retirada) com ≥1 camada limpa fora da tela é UMA run da missão semanal.
+  if ((opts.retire || ended) && report.layers > 0) s = countWeeklyMission(s, 'dungeon-runs', now);
   if (opts.retire && !ended) ended = 'retired'; // retirar acerta o que rendeu até agora e o Soulmon volta para casa
   report.ended = ended;
   report.toLayer = layer;

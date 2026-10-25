@@ -4080,8 +4080,11 @@ export default function App() {
     // A conta (Vínculo pelo teto diário suave de `bond.ts`, o Glitchtama, `dungeonRunsCompleted` e os fragmentos da run com o
     // Comércio) é de `utils/dungeonRewards.ts` — a MESMA que a descida que continua sozinha usa.
     setGameState(prev => applyMilestoneItem(prev, new Date()));
-    contarMissao('dungeon-runs');
-  }, [contarMissao]);
+  }, []);
+
+  // beta3 A4: a missão "completar 2 runs" conta a DESCIDA que terminou com ≥1 camada limpa (antes só contava ao bater o marco da camada 5,
+  // então descidas curtas por falta de energia nunca contavam).
+  const handleDungeonRunEnd = useCallback(() => { contarMissao('dungeon-runs'); }, [contarMissao]);
 
   /* 🔗 #59b — 🧱 ANDAR LIMPO DA MASMORRA. Um dos 6 `BondEvent` mudos que a
      QA rodada 2 (§2.4) mediu: a tabela do §55 declarava `dungeonFloor` e
@@ -7445,6 +7448,7 @@ export default function App() {
                      (`bond.ts`) é quem decide quanto uma segunda run ainda
                      rende; aqui só se emite o evento. */
                   onFloorCleared: handleDungeonFloorCleared,
+                  onRunEnd: handleDungeonRunEnd,
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
                   onDinoScore: handleDinoScore,
                   /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO
