@@ -7427,6 +7427,7 @@ export default function App() {
                 }}
                 evolutionStage={gameState.evolutionStage}
                 demoCharacterId={petLine}
+                petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
                 skills={gameState.soulmonSkills}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}

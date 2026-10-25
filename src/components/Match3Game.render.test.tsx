@@ -53,8 +53,8 @@ const num = (attr: string) => Number(document.querySelector(`[${attr}]`)!.getAtt
 /** Deixa a cascata inteira correr (cada passo ~0,5 s). */
 const assentar = async () => { await avancar(8000); };
 
-function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void; bits?: number; onSpendBits?: (n: number) => boolean } = {}) {
-  return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} bits={over.bits} onSpendBits={over.onSpendBits} />);
+function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void; bits?: number; onSpendBits?: (n: number) => boolean; petName?: string } = {}) {
+  return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" petName={over.petName} onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} bits={over.bits} onSpendBits={over.onSpendBits} />);
 }
 /** A mesma rodada, jogada pela conta pura (tabuleiro + combate com os MESMOS rngs da tela), para prever o que a tela deve mostrar. */
 function previsao(n: number): { moves: Array<{ a: Pos; b: Pos }>; total: number; boards: Board[]; combates: M3Combat[] } {
@@ -578,5 +578,41 @@ describe('D-99/D-100: posição dos Soulmon e o poder do combo', () => {
     expect(n.length).toBeGreaterThan(0);
     expect(n.every(s => s.style.opacity === '1')).toBe(true);
     vi.unstubAllGlobals();
+  });
+
+  it('transição de turno: mostra "<nome> turn", espera 1s, acende aura pré-ataque no inimigo e destaca as peças inimigas com contorno vermelho', async () => {
+    montar({ petName: 'Drako' });
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    let sawEnemyTurnBanner = false;
+    let sawPlayerTurnBanner = false;
+    let sawPreAura = false;
+    let sawEnemyRedPick = false;
+    for (let i = 0; i < 65; i++) {
+      await avancar(100);
+      const banner = document.querySelector('[data-m3-turn-banner]') as HTMLElement | null;
+      if (banner?.getAttribute('data-m3-turn-banner') === 'enemy' && / turn$/.test(banner.textContent ?? '')) {
+        sawEnemyTurnBanner = true;
+      }
+      if (banner?.getAttribute('data-m3-turn-banner') === 'player' && banner.textContent === 'Drako turn') {
+        sawPlayerTurnBanner = true;
+      }
+      if (document.querySelector('[data-m3-enemy-pre-aura]')) {
+        sawPreAura = true;
+      }
+      const picked = [...document.querySelectorAll('[data-m3-enemy-pick="1"]')] as HTMLElement[];
+      if (picked.length === 2 && picked.every(el => el.style.border.includes('danger'))) {
+        sawEnemyRedPick = true;
+      }
+    }
+    expect(sawEnemyTurnBanner).toBe(true);
+    expect(sawPreAura).toBe(true);
+    expect(sawEnemyRedPick).toBe(true);
+    expect(sawPlayerTurnBanner).toBe(true);
+    await assentar();
+    expect(document.querySelector('[data-m3-turn-banner]')).toBeNull();
+    expect(document.querySelector('[data-m3-enemy-pre-aura]')).toBeNull();
+    expect(document.querySelectorAll('[data-m3-enemy-pick="1"]').length).toBe(0);
   });
 });

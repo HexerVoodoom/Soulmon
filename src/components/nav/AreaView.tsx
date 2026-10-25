@@ -162,6 +162,7 @@ export interface AreaViewProps {
   /** Duelo → `ArenaGame`. */
   evolutionStage: string;
   demoCharacterId?: string;
+  petName?: string;
   skills?: Partial<Record<FichaStage, StageSkills>>;
   /** Fase 3 do Oráculo — a profissão da ficha (`ficha/manifestacao.ts`), o
    *  jeito de agir na fenda (`utils/profissaoMasmorra.ts`). Só a masmorra lê. */
@@ -484,7 +485,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} petName={props.petName} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} onEarnPoints={props.onEarnPoints} />}
             {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}

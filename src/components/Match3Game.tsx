@@ -43,6 +43,10 @@ import { petScaleStyle } from '../utils/spriteScale';
 
 const SWIPE_PX = 22;
 const T_SWAP = 170;
+const T_ENEMY_SELECT = 320;
+const T_ENEMY_DELAY = 1000;
+const T_TURN_BANNER = 700;
+const T_ENEMY_PRE_AURA = 450;
 const T_CLEAR = 280;
 const T_FALL = 240;
 const HINT_MS = 2600;
@@ -74,6 +78,8 @@ export interface Match3Props extends EarningGameProps {
   /** D-85: saldo de Bits e a via de gasto do app (`play.onSpendBits`, devolve `false` se não cobrou). Sem elas, não dá para comprar dica. */
   bits?: number;
   onSpendBits?: (n: number) => boolean;
+  /** Nome do Soulmon do jogador (para o banner de turno). */
+  petName?: string;
 }
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
@@ -83,7 +89,7 @@ function combatFor(sd: number, playerLine: string | undefined): { combat: M3Comb
   return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine), rng: mulberry32(sd ^ 0x5eed) };
 }
 
-export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits }: Match3Props) {
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName }: Match3Props) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
@@ -115,6 +121,9 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   const [newBest, setNewBest] = useState(false);
   const [hint, setHint] = useState<{ a: Pos; b: Pos } | null>(null);
+  const [enemyPick, setEnemyPick] = useState<{ a: Pos; b: Pos } | null>(null);
+  const [turnBanner, setTurnBanner] = useState<{ text: string; by: 'player' | 'enemy' } | null>(null);
+  const [enemyAura, setEnemyAura] = useState<{ element: M3Element; activeIndex: number } | null>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hintsLeft, setHintsLeft] = useState(M3_HINTS_PER_GAME);
   const [confirmBuy, setConfirmBuy] = useState(false);
@@ -248,6 +257,24 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const flashExtra = useCallback(() => setExtraFlash(n => n + 1), []);
 
+  const enemyNameAt = useCallback((c: M3Combat, idx: number = c.active): string => {
+    const e = c.enemies[idx];
+    const line = e?.line && DUNGEON_LINE_SPRITES[e.line] ? e.line : LINES[idx] ?? LINES[0];
+    return DUNGEON_LINE_NAMES[line] ?? 'Soulmon';
+  }, []);
+
+  const playerLabel = petName?.trim() || (isPt ? 'Seu Soulmon' : 'Your Soulmon');
+
+  const showTurnBanner = useCallback((name: string, by: 'player' | 'enemy') => {
+    if (reducedRef.current) return;
+    setTurnBanner({ text: `${name} turn`, by });
+    const id = setTimeout(() => {
+      timers.current.delete(id);
+      setTurnBanner(null);
+    }, T_TURN_BANNER);
+    timers.current.add(id);
+  }, []);
+
   const play = useCallback(async (a: Pos, d: Pos) => {
     if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;
     const res = trySwap(boardRef.current, a, d, rngRef.current);
@@ -285,15 +312,43 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       return;
     }
     streakRef.current = 1;
+    // Se o jogador já encerrou a partida na sua jogada (venceu os 3 inimigos), fecha sem turno inimigo
+    if (ex.enemyMoves.length === 0) {
+      boardRef.current = ex.board;
+      setBoard(ex.board);
+      combatRef.current = ex.state;
+      setCombat(ex.state);
+      if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
+      busyRef.current = false;
+      setBusy(false);
+      if (ex.state.outcome !== 'playing') finish();
+      return;
+    }
+    // 1 segundo entre o turno do jogador e o turno do inimigo, com o banner "<nome do monstro> turn"
+    const activeIdx = preview.active;
+    const activeEnemy = preview.enemies[activeIdx];
+    showTurnBanner(enemyNameAt(preview, activeIdx), 'enemy');
+    await wait(T_ENEMY_DELAY);
+    if (!alive.current) return;
+    // Efeito de aura de magia no inimigo ativo antes que ele use algum ataque
+    if (!reducedRef.current && activeEnemy) {
+      setEnemyAura({ element: activeEnemy.element, activeIndex: activeIdx });
+      await wait(T_ENEMY_PRE_AURA);
+      if (!alive.current) return;
+      setEnemyAura(null);
+    }
     openFxWindow();
     // D-83: a vez do inimigo — ele MEXE as peças (uma troca; 4+ dá outra, até o teto) e os combos tiram HP do jogador
     for (let i = 0; i < ex.enemyMoves.length; i++) {
       const m = ex.enemyMoves[i];
       if (!alive.current) return;
-      setHint({ a: m.a, b: m.b });
+      // Mostra as peças selecionadas pelo inimigo com contorno vermelho antes e durante a troca
+      setEnemyPick({ a: m.a, b: m.b });
+      await wait(T_ENEMY_SELECT);
+      if (!alive.current) return;
       setBoard(m.swapped);
       await wait(T_SWAP);
-      setHint(null);
+      setEnemyPick(null);
       const after = await runSteps(m.steps, preview, applyEnemySteps, [m.a, m.b]);
       if (!after || !alive.current) return;
       preview = after;
@@ -308,10 +363,13 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     combatRef.current = ex.state;
     setCombat(ex.state);
     if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
+    if (ex.state.outcome === 'playing') {
+      showTurnBanner(playerLabel, 'player');
+    }
     busyRef.current = false;
     setBusy(false);
     if (ex.state.outcome !== 'playing') finish();
-  }, [clearHint, finish, flashExtra, openFxWindow, runSteps, say, setSel, turnNote, wait]);
+  }, [clearHint, enemyNameAt, finish, flashExtra, openFxWindow, playerLabel, runSteps, say, setSel, showTurnBanner, turnNote, wait]);
 
   const pick = useCallback((p: Pos) => {
     if (busyRef.current || overRef.current) return;
@@ -389,7 +447,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     overRef.current = false;
     busyRef.current = false;
     setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
-    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
+    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setEnemyPick(null); setTurnBanner(null); setEnemyAura(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
   };
 
   const score = combatScore(combat);
@@ -440,6 +498,8 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);
           const nome = `${DUNGEON_LINE_NAMES[line]}, ${elementName(e.element, isPt)}${isActive ? (isPt ? ', ativo' : ', active') : ''}${down ? (isPt ? ', recuou' : ', stepped back') : ''}`;
+          const preAuraSrc = enemyAura && enemyAura.activeIndex === i ? fxFrame(enemyAura.element, 'aura') : undefined;
+          const preAuraPx = Math.round(enemyPx * AURA_SCALE);
           return (
             <div
               key={i}
@@ -459,7 +519,25 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
                 <span>{isActive ? '▸' : ''}{i + 1}</span>
                 {icon && <img src={icon} alt="" draggable={false} width={14} height={14} style={{ imageRendering: 'pixelated' }} />}
               </p>
-              <img src={src} alt="" aria-hidden="true" draggable={false} width={enemyPx} height={enemyPx} style={{ width: enemyPx, height: enemyPx, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
+              <div style={{ position: 'relative', width: enemyPx, height: enemyPx, maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {preAuraSrc && (
+                  <span
+                    aria-hidden="true"
+                    data-m3-enemy-pre-aura
+                    data-m3-aura-element={enemyAura!.element}
+                    className="sm-bs-pop"
+                    style={{
+                      position: 'absolute', left: '50%', top: '50%', width: preAuraPx, height: preAuraPx,
+                      transform: 'translate(-50%, -50%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 2,
+                      background: 'radial-gradient(circle, color-mix(in srgb, var(--sm2-gold-fill) 50%, transparent), transparent 66%)',
+                      ['--bs-delay' as string]: '0ms', ['--bs-dur' as string]: `${T_ENEMY_PRE_AURA + 150}ms`,
+                    } as CSSProperties}
+                  >
+                    <img src={preAuraSrc} alt="" draggable={false} style={{ width: '100%', height: '100%', imageRendering: 'pixelated', display: 'block' }} />
+                  </span>
+                )}
+                <img src={src} alt="" aria-hidden="true" draggable={false} width={enemyPx} height={enemyPx} style={{ position: 'relative', zIndex: 1, width: enemyPx, height: enemyPx, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
+              </div>
               <HpBars bars={[{ label: DUNGEON_LINE_NAMES[line], cur: e.hp, max: e.max, tone: 'gold' }]} />
             </div>
           );
@@ -503,6 +581,27 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
           {isPt ? 'Placar' : 'Score'} <span data-m3-score={score}>{score}</span> · Bits <span data-m3-bits={bitsNow}>{bitsNow}</span>
         </span>
         {arena}
+        {turnBanner && (
+          <div
+            aria-hidden="true"
+            data-m3-turn-banner={turnBanner.by}
+            style={{
+              position: 'fixed', left: '50%', top: '44%', transform: 'translate(-50%, -50%)',
+              width: 'min(92vw, 380px)', zIndex: 30, pointerEvents: 'none',
+              padding: '10px 18px', borderRadius: 12,
+              backgroundColor: 'color-mix(in srgb, var(--sm2-surface) 88%, transparent)',
+              border: `2px solid ${turnBanner.by === 'enemy' ? 'var(--sm2-danger-ink)' : 'var(--sm2-gold-ink)'}`,
+              boxShadow: '0 6px 24px rgba(0,0,0,0.45)',
+              fontFamily: 'var(--sm2-font-display)', fontWeight: 700,
+              fontSize: 'clamp(22px, 7vw, 34px)', lineHeight: 1.15, letterSpacing: '.06em',
+              textAlign: 'center',
+              color: turnBanner.by === 'enemy' ? 'var(--sm2-danger-ink)' : 'var(--sm2-gold-ink)',
+              textShadow: '0 2px 0 var(--sm2-surface)',
+            }}
+          >
+            {turnBanner.text}
+          </div>
+        )}
         {fx.map(f => <PowerFx key={f.id} fx={f} reduced={reduced} />)}
         {/* o aviso vivo: golpes, resposta, dica, embaralhada. Sem vermelho; fica fora da área do tabuleiro. */}
         <p role="status" aria-live="polite" data-m3-note className="sm2-sr-only">
@@ -552,6 +651,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
               const k = key(p);
               const isSel = same(sel, p);
               const isHint = !!hint && (same(hint.a, p) || same(hint.b, p));
+              const isEnemyPick = !!enemyPick && (same(enemyPick.a, p) || same(enemyPick.b, p));
               return (
                 <div key={k} role="gridcell" aria-colindex={c + 1} aria-rowindex={r + 1} aria-selected={isSel} style={{ display: 'contents' }}>
                   <TileButton
@@ -562,6 +662,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
                     focusable={same(cursor, p)}
                     selected={isSel}
                     hint={isHint}
+                    enemyPick={isEnemyPick}
                     clearing={clearing.has(k)}
                     fresh={fresh.cells.has(k) ? fresh.id : 0}
                     shake={shake.cells.has(k) ? shake.id : 0}
@@ -732,13 +833,13 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
 
 
 interface TileButtonProps {
-  tile: Tile | null; label: string; pos: Pos; focusable: boolean; selected: boolean; hint: boolean; clearing: boolean;
+  tile: Tile | null; label: string; pos: Pos; focusable: boolean; selected: boolean; hint: boolean; enemyPick?: boolean; clearing: boolean;
   fresh: number; shake: number; reduced: boolean; disabled: boolean;
   onPick: () => void; onPointerDown: (e: ReactPointerEvent) => void; onPointerUp: (e: ReactPointerEvent) => void;
 }
 
 const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileButton(
-  { tile, label, pos, focusable, selected, hint, clearing, fresh, shake, reduced, disabled, onPick, onPointerDown, onPointerUp }, ref,
+  { tile, label, pos, focusable, selected, hint, enemyPick = false, clearing, fresh, shake, reduced, disabled, onPick, onPointerDown, onPointerUp }, ref,
 ) {
   const inner = useRef<HTMLButtonElement | null>(null);
   const setRefs = (el: HTMLButtonElement | null) => {
@@ -763,10 +864,10 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
   const st: CSSProperties = {
     ...sm2Text, position: 'relative', aspectRatio: '1 / 1', minWidth: 0, minHeight: 0, padding: 2, boxSizing: 'border-box', cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: selected ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)',
-    border: `2px solid ${selected ? 'var(--sm2-primary-ink)' : hint ? 'var(--sm2-gold-ink)' : tile.sp ? 'var(--sm2-gold-ink)' : 'var(--sm2-line)'}`,
+    backgroundColor: selected ? 'var(--sm2-primary-fill)' : enemyPick ? 'color-mix(in srgb, var(--sm2-danger-fill) 18%, var(--sm2-surface))' : 'var(--sm2-surface)',
+    border: `2px solid ${selected ? 'var(--sm2-primary-ink)' : enemyPick ? 'var(--sm2-danger-ink)' : hint ? 'var(--sm2-gold-ink)' : tile.sp ? 'var(--sm2-gold-ink)' : 'var(--sm2-line)'}`,
     borderRadius: 8,
-    boxShadow: hint ? '0 0 0 3px var(--sm2-gold-fill)' : undefined,
+    boxShadow: enemyPick ? '0 0 0 3px var(--sm2-danger-ink)' : hint ? '0 0 0 3px var(--sm2-gold-fill)' : undefined,
     opacity: clearing ? 0 : 1,
     transform: clearing && !reduced ? 'scale(0.55)' : 'none',
     transition: reduced ? 'none' : 'opacity 240ms var(--sm2-ease), transform 240ms var(--sm2-ease)',
@@ -785,6 +886,7 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
       data-m3-special={tile.sp ?? ''}
       data-m3-selected={selected ? '1' : '0'}
       data-m3-hint={hint ? '1' : '0'}
+      data-m3-enemy-pick={enemyPick ? '1' : '0'}
       onClick={onPick}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
