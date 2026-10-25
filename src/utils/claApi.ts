@@ -118,6 +118,14 @@ export interface PlantioView {
   /** SEU: já reguei hoje / posso colher esta semana. */
   wateredToday: boolean;
   canHarvest: boolean;
+  /** Dias cuidados / total (a semente mostra 'x / y'). */
+  progressDays: number;
+  totalDays: number;
+  /** A planta está sob ataque hoje (ninguém protegeu ainda). Nunca diz QUEM ataca. */
+  underAttack: boolean;
+  /** A ação do dia sorteada pelo SERVIDOR e ainda por fazer; canDraw = ainda não sorteou hoje. */
+  task: 'water' | 'protect' | null;
+  canDraw: boolean;
 }
 
 const int = (v: unknown, lo: number, hi: number): number | null => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.floor(v))) : null);
@@ -144,13 +152,18 @@ export function sanitizePlantio(raw: unknown): PlantioView | null {
     protectedToday: today.protectedToday === true,
     wateredToday: mine.wateredToday === true,
     canHarvest: mine.canHarvest === true,
+    progressDays: int(r.progressDays, 0, 99) ?? 0,
+    totalDays: int(r.totalDays, 1, 99) ?? 14,
+    underAttack: r.underAttack === true,
+    task: mine.task === 'water' || mine.task === 'protect' ? mine.task : null,
+    canDraw: mine.canDraw === true,
   };
 }
 
 export const getPlantio = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<{ plantio?: unknown }>('claPlantio', { params: { id, dayKey: dia(tz) } }).then(r => sanitizePlantio(r.plantio));
 
-export type PlantioAction = 'claPlantar' | 'claRegar' | 'claProteger' | 'claColher';
+export type PlantioAction = 'claPlantar' | 'claRegar' | 'claProteger' | 'claColher' | 'claSortear';
 export interface FruitHarvest { id: string; tier: number; bits: number; receipt: string }
 export interface PlantioResult { plantio: PlantioView | null; fruit: FruitHarvest | null }
 

@@ -611,14 +611,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         {resgate}
         <div className="sm2-stats-card">{salaBosque}</div>
         {/* W14b: o gesto (fio/gestos) e o PLANTIO do Bosque moram só aqui; o Clan Hall é informativo. O MISTÉRIO é da Feira (dono, 20/10: "o mistério é da feira"). */}
-        {g.size >= 2 && (
-          <div className="sm2-stats-card" data-guild-card="gestos">
-            <SalaGestos guild={g} t={t} language={language} ocupado={ocupado} onGesto={(k) => void agir(() => guildGesture(saveId, k, tz.current), { anunciar: `guild.gesto.${k}.enviado` })} />
-          </div>
-        )}
+        {/* L5-D2: sem Aceno/Luz/Descanso e sem 'Entrar'/'Fechar' do predio: o jardim abre direto. */}
         {cla && (
           <div className="sm2-stats-card" data-guild-card="plantio">
-            <SalaPredios t={t} ids={['plantio']} titulo="guild.bosque.predios.titulo" aberto={predio} onAbrir={setPredio} render={renderPredio} />
+            {renderPredio('plantio')}
           </div>
         )}
       </>
@@ -765,7 +761,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         </div>
         )}
 
-        {cla && (
+        {MOSTRAR_ITEM_E_PREDIOS && cla && (
         <div className="sm2-stats-card" data-guild-card="predios">
             <SalaPredios t={t} ids={['praca']} aberto={predio} onAbrir={setPredio} render={renderPredio} />
         </div>
@@ -844,12 +840,15 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
       {/* D-49/D-55/D-56: o Bosque é UM cenário; aqui a janela dele (membros andando), no lugar do antigo visor vetorial da Casa. */}
-      <GroveCena language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} />
+      <div style={{ position: 'relative' }}>
+        <GroveCena language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} />
+        {/* L5-D2: entrar e secundario e discreto, DENTRO do box do preview. */}
+        <button type="button" data-guild-bosque-entrar onClick={() => setPanorama(true)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" style={{ position: 'absolute', right: 8, bottom: 8, opacity: 0.85 }}>
+          <Icon name="eco" size={20} />
+          {t('guild.bosque.entrar')}
+        </button>
+      </div>
       {/* D-32: o panorama do Bosque abre AQUI (Hall > Guilda), em tela cheia; não há visor embutido na folha. */}
-      <button type="button" data-guild-bosque-entrar onClick={() => setPanorama(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
-        <Icon name="eco" size={20} />
-        {t('guild.bosque.entrar')}
-      </button>
       {panorama && (
         <Suspense fallback={null}>
           <GroveFolha saveId={saveId} language={language} guild={guild} mySprite={mySprite} tz={tz} reducedMotion={reducedMotion} arvores={arvores} onPlantio={onPlantio} onClose={() => setPanorama(false)} />
@@ -1001,6 +1000,9 @@ function SalaPredios({ t, ids, titulo = 'guild.predios.titulo', aberto, onAbrir,
  * Nada aqui tem número por pessoa: a doação mostra só os botões e a constatação ("a casa recebeu o que
  * você trouxe"); o teto do dia é "é o bastante", nunca contagem. O visor mora no topo do Bosque.
  */
+/** L5-D1: 'Place an Item' e 'Clan Buildings' ficam ocultos no Clan Hall (nao apagados). */
+const MOSTRAR_ITEM_E_PREDIOS = false;
+
 function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean;
   casa: GuildSheetProps['casa']; onDoar: (bits: number) => void; onSlot: (item: string | null) => void;
@@ -1050,6 +1052,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
             </div>
           )}
 
+          {MOSTRAR_ITEM_E_PREDIOS && <>
           <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.casa.slot.titulo')}</p>
           {meu ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-casa-meu-slot>
@@ -1085,6 +1088,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
               <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.casa.slot.aviso')}</p>
             </>
           )}
+          </>}
         </>
       )}
     </section>

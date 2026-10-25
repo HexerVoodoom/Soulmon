@@ -29,6 +29,7 @@
 //   POST claPresenteClaim {id, dayKey, giftId} → { claimed:{item,receipt}, praca }   404 nothing to claim
 //   GET  claPlantio   ?id=&dayKey=         → { plantio }   404 no guild   (o PLANTIO: `_claPlantio.js`)
 //   POST claPlantar|claRegar|claProteger|claColher {id, dayKey} → { plantio, fruit? }
+//   POST claSortear {id, dayKey} → { plantio, task:'water'|'protect' } (o servidor sorteia a ação do dia; aditivo)
 //        409 already planted|already watered|already protected|already harvested|not grown|grown · 404 no plant
 //   GET  claMisterio  ?id=&dayKey=         → { misterio }   404 no guild   (o MISTÉRIO: `_claMisterio.js`)
 //   POST claMisterioEnviar {id, dayKey}    → { misterio }   409 already sent|reward pending
@@ -63,7 +64,7 @@ import {
 } from './_coop.js';
 import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
-import { vistaDoPlantio, plantar, regar, proteger, colher } from './_claPlantio.js';
+import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
 import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio } from './_claMisterio.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
@@ -110,6 +111,7 @@ export const GUILD_ACTIONS = Object.freeze({
   claPlantar: 'POST',
   claRegar: 'POST',
   claProteger: 'POST',
+  claSortear: 'POST',
   claColher: 'POST',
   claMisterio: 'GET',
   claMisterioEnviar: 'POST',
@@ -534,6 +536,11 @@ export async function handleGuild({ request, env }) {
       const r = await plantar(env, g.id, id, hoje);
       if (!r.ok) return erro('already planted', 409);
       return json({ plantio: await plantio() });
+    }
+    if (action === 'claSortear') {
+      const r = await sortear(env, g, id, hoje);
+      if (!r.ok) return conflito(r);
+      return json({ plantio: await plantio(), task: r.kind });
     }
     if (action === 'claRegar' || action === 'claProteger' || action === 'claColher') {
       const r = await (action === 'claRegar' ? regar : action === 'claProteger' ? proteger : colher)(env, g, id, hoje);

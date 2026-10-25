@@ -12,6 +12,10 @@
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import type { SoulXPState } from '../../utils/soulXP';
+import { DEFESA_INIMIGOS, inimigosDaDefesa, lutarDefesa } from '../../utils/plantioDefesa';
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
 import { fruitRewards } from '../../utils/claCredit';
 import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
@@ -20,7 +24,7 @@ import { SPRITES } from './GroveVisor';
 import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
-import { useClaBuilding, type ClaSalaProps } from './claUi';
+import { useClaBuilding, type ClaSalaProps, type ClaT } from './claUi';
 
 export const PLANTIO_VISOR_HEIGHT = 220;
 const H = PLANTIO_VISOR_HEIGHT;
@@ -75,7 +79,7 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, l
 
 const ACOES_OK: Record<PlantioAction, GuildKey> = {
   claPlantar: 'guild.plantio.ok.plantar', claRegar: 'guild.plantio.ok.regar',
-  claProteger: 'guild.plantio.ok.proteger', claColher: 'guild.plantio.ok.colher',
+  claProteger: 'guild.plantio.ok.proteger', claColher: 'guild.plantio.ok.colher', claSortear: 'guild.plantio.cuidar',
 };
 
 /** O painel do Plantio: espécie da estação, estágio, "atrasada", Plantar/Regar/Proteger/Colher e a árvore do clã. */
@@ -88,6 +92,30 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
     if (r.plantio) setView(r.plantio);
     if (r.fruit) onReward(r.fruit.receipt, fruitRewards(r.fruit.id, r.fruit.bits));
     onAnnounce(t(ACOES_OK[acao]));
+  };
+
+  const gs = useGameStateOptional()?.gameState;
+  const estado = useMemo<SoulXPState>(() => (gs ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP } : { evolutionStage: 'rookie' }), [gs]);
+  const linha = gs?.demoCharacterId;
+  const [defendendo, setDefendendo] = useState(false);
+  // L5-D2: sem botao 'Plantar' — a terra da estacao e plantada sozinha (idempotente; 409 = outro membro ja plantou).
+  const plantando = useRef(false);
+  useEffect(() => {
+    if (view && !view.planted && view.canPlant && !plantando.current) { plantando.current = true; void fazer('claPlantar').finally(() => { plantando.current = false; }); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view?.planted, view?.canPlant]);
+
+  /** O servidor sorteia a acao (aguar ou defender); aguar acontece na hora, defender abre o combate. */
+  const cuidar = async () => {
+    let tarefa = view?.task ?? null;
+    if (!tarefa) {
+      const r = await agir(() => actPlantio('claSortear', saveId, tz));
+      if (!r) return;
+      if (r.plantio) setView(r.plantio);
+      tarefa = r.plantio?.task ?? null;
+    }
+    if (tarefa === 'water') await fazer('claRegar');
+    else if (tarefa === 'protect') setDefendendo(true);
   };
 
   const v: PlantioView | null = view;
@@ -128,22 +156,19 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
               <div aria-hidden="true" data-plantio-barra style={{ height: 6, borderRadius: 3, background: 'var(--sm2-line, rgba(255,255,255,0.15))', overflow: 'hidden' }}>
                 <div style={{ width: `${v.progress}%`, height: '100%', background: 'var(--sm2-primary, #6EFFFB)' }} />
               </div>
+              {!v.mature && <p className="sm2-lib-s sm2-num" style={{ margin: 0 }} data-plantio-dias>{v.progressDays} / {v.totalDays}</p>}
               {v.delayed && !v.mature && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-atrasada>{t('guild.plantio.atrasada')}</p>}
 
               {!v.mature && (
                 <>
-                  {v.wateredToday ? (
-                    <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-regado>{t('guild.plantio.regado')}</p>
-                  ) : (
-                    <button type="button" data-plantio-regar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void fazer('claRegar')} className={btn}>
-                      <Icon name="water_drop" size={20} />{t('guild.plantio.regar')}
-                    </button>
-                  )}
-                  {v.protectedToday ? (
-                    <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-protegido>{t('guild.plantio.protegido')}</p>
-                  ) : (
-                    <button type="button" data-plantio-proteger disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void fazer('claProteger')} className={btn}>
-                      <Icon name="visibility" size={20} />{t('guild.plantio.proteger')}
+                  {v.underAttack && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-atacada>{t('guild.plantio.atacada')}</p>}
+                  {v.wateredToday && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-regado>{t('guild.plantio.regado')}</p>}
+                  {v.protectedToday && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-protegido>{t('guild.plantio.protegido')}</p>}
+                  {defendendo && v.task === 'protect' ? (
+                    <Defesa t={t} estado={estado} linha={linha} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
+                  ) : (v.canDraw || v.task) && (
+                    <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void cuidar()} className={btn}>
+                      <Icon name="eco" size={20} />{t('guild.plantio.cuidar')}
                     </button>
                   )}
                 </>
@@ -166,5 +191,30 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
         </>
       )}
     </section>
+  );
+}
+
+/** L5-D2: o combate fácil de proteger o jardim (3 inimigos sorteados, só o sprite). Perder não custa nada. */
+function Defesa({ t, estado, linha, ocupado, onVenceu }: { t: ClaT; estado: SoulXPState; linha?: string; ocupado: boolean; onVenceu: () => void }) {
+  const [seed, setSeed] = useState(() => (Math.random() * 2 ** 31) | 0);
+  const [perdeu, setPerdeu] = useState(false);
+  const inimigos = useMemo(() => inimigosDaDefesa(seed, linha), [seed, linha]);
+  const lutar = () => {
+    if (lutarDefesa(estado, seed).won) { onVenceu(); return; }
+    setPerdeu(true);
+    setSeed((Math.random() * 2 ** 31) | 0);
+  };
+  return (
+    <div data-plantio-defesa style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <ul aria-label={t('guild.plantio.defesa.aria')} style={{ display: 'flex', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
+        {inimigos.slice(0, DEFESA_INIMIGOS).map((src, i) => (
+          <li key={i}><img src={src} alt="" width={64} height={64} draggable={false} style={{ width: 64, height: 64, imageRendering: 'pixelated' }} /></li>
+        ))}
+      </ul>
+      {perdeu && <p role="status" className="sm2-lib-s" style={{ margin: 0 }} data-plantio-defesa-perdeu>{t('guild.plantio.defesa.perdeu')}</p>}
+      <button type="button" data-plantio-lutar disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={lutar} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+        <Icon name="swords" size={20} />{t('guild.plantio.defesa.lutar')}
+      </button>
+    </div>
   );
 }
