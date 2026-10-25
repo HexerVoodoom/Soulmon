@@ -42,7 +42,7 @@ describe('eixos de forma da evolução', () => {
         for (const p of [s.imagePrompt, s.imagePromptFallback]) {
           expect(p).toMatch(/-attribute design language/);
           expect(p).toContain('Distinguishing features: ');
-          expect(p).toContain('#00FF00');
+          expect(p).toMatch(/#(00FF00|FF00FF)/);
           expect(p.length).toBeLessThan(2500);
         }
       }

@@ -57,7 +57,7 @@
 // para os dois provedores igualmente.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { chromaKeyPng, BadChromaError } from './_chroma.js';
+import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier } from './_entitlements.js';
@@ -242,7 +242,9 @@ function refusalError(message) {
 // `HF_CREDENTIALS` = "keyId:keySecret" (`Authorization: Key id:secret`). Ausente -> Soul/Gemini.
 // A API NÃO gera transparência (testado: `background`, `remove_bg` e "transparent
 // background" são ignorados e vem PNG RGB branco): o prompt pede fundo verde #00FF00 e o
-// servidor aplica chroma-key (`_chroma.js`) DEPOIS de baixar. Por isso o corpo NÃO leva
+// servidor aplica chroma-key (`_chroma.js`) DEPOIS de baixar.
+// M14 (25/10/2026): criatura com verde (ou elemento planta) pede fundo MAGENTA #FF00FF no
+// prompt; `chromaKeyOfPrompt` lê a cor do próprio prompt e o recorte usa a certa. Por isso o corpo NÃO leva
 // `background`. `SPRITE_MODEL`: 'alpha' (padrão) | 'flare' | 'soul'.
 const HF_API = 'https://api.higgsfield.ai';
 const HF_ROUTES = { alpha: '/marketing-studio/image', flare: '/marketing-studio/image/flare' };
@@ -286,13 +288,13 @@ function bytesToDataUrl(bytes, mime) {
 }
 
 /** Baixa a imagem do provedor e devolve o PNG com fundo removido (data URL). */
-async function baixarEChavear(url) {
+async function baixarEChavear(url, key = 'green') {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`higgsfield: download ${res.status}`);
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length > MAX_IMAGE_BYTES) throw new Error('higgsfield: imagem grande demais');
   try {
-    return bytesToDataUrl(chromaKeyPng(buf), 'image/png');
+    return bytesToDataUrl(chromaKeyPng(buf, key), 'image/png');
   } catch (err) {
     if (err instanceof BadChromaError) {
       console.error('generate-sprite:', err.message);
@@ -337,7 +339,7 @@ async function generateHf(env, model, prompt, referenceImageUrls) {
     if (data.status === 'failed' || data.status === 'canceled') throw new Error(`higgsfield ${model}: generation failed`);
     if (data.status === 'completed') {
       const url = data.images?.[0]?.url;
-      if (typeof url === 'string' && /^https:\/\//i.test(url)) return baixarEChavear(url);
+      if (typeof url === 'string' && /^https:\/\//i.test(url)) return baixarEChavear(url, chromaKeyOfPrompt(prompt));
       throw new Error(`higgsfield ${model}: completed without url`);
     }
   }
@@ -450,15 +452,15 @@ async function generateGemini(env, prompt) {
 }
 
 /** Chroma-key "se der" para Soul/Gemini: qualquer falha devolve a imagem original. */
-async function chaveioOpcional(image) {
+async function chaveioOpcional(image, key = 'green') {
   try {
     if (image.startsWith('data:image/png;base64,')) {
       const bin = atob(image.slice(22));
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      return bytesToDataUrl(chromaKeyPng(bytes), 'image/png');
+      return bytesToDataUrl(chromaKeyPng(bytes, key), 'image/png');
     }
-    if (/^https:\/\//i.test(image)) return await baixarEChavear(image);
+    if (/^https:\/\//i.test(image)) return await baixarEChavear(image, key);
   } catch (err) {
     console.error('generate-sprite: chroma opcional falhou, imagem mantida:', err?.message);
   }
@@ -477,7 +479,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
       const hf = await generateHiggsfield(env, prompt, referenceImageUrls);
       // Soul (e Gemini abaixo) também recebem o prompt de fundo verde: tira o fundo se der,
       // senão entrega como veio (nunca derruba uma geração já paga).
-      const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image);
+      const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image, chromaKeyOfPrompt(prompt));
       return { image, provider: 'higgsfield', hfError: null };
     } catch (err) {
       hfError = err.message;
@@ -492,7 +494,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   // `SPRITE_GEMINI_IMAGE=1` E uma chave de OUTRO projeto (decisão do dono).
   if (env.GEMINI_API_KEY && flagOn(env.SPRITE_GEMINI_IMAGE)) {
     try {
-      const image = await chaveioOpcional(await generateGemini(env, prompt));
+      const image = await chaveioOpcional(await generateGemini(env, prompt), chromaKeyOfPrompt(prompt));
       return { image, provider: 'gemini', hfError };
     } catch (err) {
       // Se QUALQUER provedor recusou o texto, o erro que sobe é de recusa —

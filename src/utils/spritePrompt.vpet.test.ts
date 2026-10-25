@@ -15,7 +15,8 @@ describe('template v-pet', () => {
         `Generate this RPG creature inspired by ${REFS}. Do not copy any existing franchise character. ` +
         `Tamagotchi-style v-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: ` +
         `${ex.concept}. ${ex.levelBlock}. ${NEUTRAL_FACE_CLAUSE} ${SPRITE_FACING_PROMPT} ` +
-        `Flat ${ex.colorDesc} colors with ${ex.accent} accents, no shading, no outlines, no anti-aliasing.`,
+        `Flat ${ex.colorDesc} colors with ${ex.accent} accents, no shading, no outlines, no anti-aliasing. ` +
+        `Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.`,
       );
     });
     it(`${nome}: fallback sem franquia, com cláusulas de segurança`, () => {
