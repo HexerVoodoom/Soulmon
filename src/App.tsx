@@ -7073,9 +7073,7 @@ export default function App() {
                 view={view}
                 saveId={saveId}
                 friends={gameState.friends ?? []}
-                canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
-                onGiftSent={() => {}}
                 onVisitPlayer={() => contarMissao('friend-visit')}
                 metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
                 playerDayTz={gameState.playerDayTz}

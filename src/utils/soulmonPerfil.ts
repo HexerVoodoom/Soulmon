@@ -9,7 +9,7 @@
  *  · elemento principal   ← `fighterIdentity(...).basico.elemento` (dono único da identidade de combate — o mesmo da luta);
  *  · tipo de ataque       ← `fighterIdentity(...).basico.forma` (corpo a corpo × à distância);
  *  · especial (nome e efeito) ← a skill especial da ficha do estágio e `fighterIdentity(...).especial.familia`; sem ficha, `null`;
- *  · elemento do especial ← só quando EXISTE ficha e é DIFERENTE do elemento principal (senão seria repetir).
+ *  · elemento do especial ← sempre que há ficha (igual ao do principal também aparece; o card mostra o especial sempre).
  *
  * 11.3: o elemento e o tipo de ataque saíram da Arena livre (`DueloSheet`) e moram SÓ aqui — a fonte continua uma (`fighterIdentity`).
  * Sem React, sem relógio, sem localStorage.
@@ -48,8 +48,10 @@ export interface Perfil {
   equipamentoNivel: number | null;
   elementoId: string;
   forma: StrikeForm;
-  /** Só com ficha do estágio. */
-  especial: { nome: { pt: string; en: string }; familia: SpecialFamily; elementoId: string | null } | null;
+  /** Nome do ataque básico da ficha; `null` sem ficha. */
+  basicoNome: { pt: string; en: string } | null;
+  /** Só com ficha do estágio. O elemento do especial aparece SEMPRE (inclusive igual ao do básico). */
+  especial: { nome: { pt: string; en: string }; familia: SpecialFamily; elementoId: string } | null;
 }
 
 /** O estágio da ficha (mesma regra do `DueloSheet` de antes e do `ArenaGame`). */
@@ -92,12 +94,13 @@ export function buildPerfil(input: PerfilInput): Perfil {
     equipamentoNivel: nivelDoEquipamento(input.equipment, input.forge),
     elementoId: ident.basico.elemento,
     forma: ident.basico.forma,
+    basicoNome: par?.basica?.nome ? (par.basica.nome as { pt: string; en: string }) : null,
     especial: esp?.nome
       ? {
           nome: esp.nome as { pt: string; en: string },
           familia: ident.especial.familia,
-          // "só quando relevante e disponível": existe, é conhecido e difere do principal.
-          elementoId: elementoConhecido(elEsp) && elEsp !== ident.basico.elemento ? elEsp : null,
+          // sempre presente: o do especial se conhecido; senão o do básico (igual não some mais).
+          elementoId: elementoConhecido(elEsp) ? elEsp : ident.basico.elemento,
         }
       : null,
   };
@@ -123,3 +126,24 @@ export const PERFIL_EFEITO: Readonly<Record<SpecialFamily, { pt: string; en: str
   defDebuff: { pt: 'Enfraquece a defesa', en: 'Weakens defense' },
   spdBuff: { pt: 'Apoio: mais ritmo', en: 'Support: more speed' },
 };
+
+/** O IMPACTO de cada campo no jogo (curto; só o que a regra do código faz — combate `utils/combate/`, `bonus.ts`, anel de elementos). */
+export const PERFIL_IMPACTO = {
+  atributo: {
+    forca: { pt: 'Seus golpes pesam mais em toda luta.', en: 'Your hits land harder in every fight.' },
+    resistencia: { pt: 'Aguenta mais dano em toda luta.', en: 'You take less damage in every fight.' },
+    agilidade: { pt: 'Seus ataques saem mais rápido em toda luta.', en: 'Your attacks come faster in every fight.' },
+  } as Readonly<Record<MainAttr, { pt: string; en: string }>>,
+  equipamento: {
+    pt: 'Peças do Soulsmith dão um bônus pequeno em combate; melhorar a peça aumenta o bônus, e nenhuma fonte passa do teto.',
+    en: 'Soulsmith pieces give a small combat bonus; upgrading a piece raises it, and no source goes past the ceiling.',
+  },
+  basico: {
+    pt: 'O elemento do golpe básico decide contra quem você é forte ou fraco no anel de elementos.',
+    en: 'The basic strike element decides who you are strong or weak against on the element ring.',
+  },
+  especial: {
+    pt: 'O efeito mostra o que o especial faz na luta: machuca, cura, protege ou apoia.',
+    en: 'The effect shows what the special does in a fight: hurt, heal, shield or support.',
+  },
+} as const;

@@ -54,9 +54,7 @@ const RESERVADO = perfil({ id: 'pid-reservado', name: 'Reservado', pvpEnabled: f
 const props = (friends: string[]) => ({
   saveId: 'save-1',
   friends,
-  canGiftToday: true,
   onFriendsChange: () => {},
-  onGiftSent: () => {},
   language: 'pt-BR' as const,
 });
 
@@ -85,8 +83,8 @@ describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
     abrirAmigos();
 
     await waitFor(() => expect(screen.getByText('Reservado')).toBeTruthy());
-    // E o botao de presente, que era o que a pessoa perdia na pratica.
-    expect(screen.getByRole('button', { name: 'Enviar 20 Bits para Reservado' })).toBeTruthy();
+    // E a acao de remover amigo, que prova que a linha e de amigo (o presente saiu da Biblioteca, M4).
+    expect(screen.getByRole('button', { name: 'Remover Reservado dos amigos' })).toBeTruthy();
   });
 
   it('NAO deixa o contador Amigos N/5 divergir da lista renderizada', async () => {
@@ -238,13 +236,13 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     expect(addFriend).not.toHaveBeenCalled();
   });
 
-  it('o presente é a mãozinha com coração (volunteer_activism), não a moeda', async () => {
+  it('M4: a Biblioteca não oferece presente/doação, nem para amigo (isso é só do Friend Circle)', async () => {
     vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
     renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    const btn = await screen.findByRole('button', { name: /Enviar 20 Bits para Lia/ });
-    expect(btn.textContent).toContain('volunteer_activism');
-    expect(btn.textContent).not.toContain('paid');
+    await screen.findByRole('button', { name: /Remover Lia/ });
+    const labels = Array.from(document.querySelectorAll('button')).map(b => `${b.getAttribute('aria-label') ?? ''} ${b.textContent}`).join('|');
+    expect(labels).not.toMatch(/presente|gift|volunteer_activism|Bits/i);
   });
 });

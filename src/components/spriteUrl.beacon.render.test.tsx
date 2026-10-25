@@ -58,9 +58,7 @@ const jogadorHostil = (over: Partial<DirectoryPlayer> = {}) => ({
 const propsLib = {
   saveId: 'save-1',
   friends: [] as string[],
-  canGiftToday: false,
   onFriendsChange: () => {},
-  onGiftSent: () => {},
   language: 'pt-BR' as const,
 };
 

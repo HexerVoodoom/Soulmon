@@ -28,7 +28,7 @@ const rows = (c: HTMLElement) => [...c.querySelectorAll('[data-perfil-row]')].ma
 describe('SoulmonPerfil', () => {
   it('completo (PT): personalidade, atributo, equipamento, elemento, ataque, especial, efeito e elemento do especial', () => {
     const { container } = render(<SoulmonPerfil language="pt-BR" input={full} />);
-    expect(rows(container)).toEqual(['personalidade', 'atributo', 'equipamento', 'elemento', 'ataque', 'especial', 'efeito', 'elemento-especial']);
+    expect(rows(container)).toEqual(['personalidade', 'atributo', 'equipamento', 'elemento', 'especial']);
     const txt = container.textContent!;
     expect(txt).toContain('Guloso');
     expect(txt).toContain('Nv 6');
@@ -50,18 +50,37 @@ describe('SoulmonPerfil', () => {
 
   it('sem ficha, sem traço e sem peça: some o que o app não tem (nada inventado) e o equipamento diz "Nenhuma peça"', () => {
     const { container } = render(<SoulmonPerfil language="pt-BR" input={{ evolutionStage: 'rookie', petElement: 'agua' }} />);
-    expect(rows(container)).toEqual(['atributo', 'equipamento', 'elemento', 'ataque']);
+    expect(rows(container)).toEqual(['atributo', 'equipamento', 'elemento']);
     expect(container.querySelector('[data-perfil-row="equipamento"]')!.textContent).toContain('Nenhuma peça');
   });
 
-  it('o elemento do especial some quando é o mesmo do principal (não repete)', () => {
+  it('elemento do especial igual ao do básico: o especial continua na linha 2, com nome, ícone do elemento e efeito', () => {
     const sk = { rookie: { ...(skills as { rookie: object }).rookie, especial: golpe('especial', 'fogo') } } as never;
-    const { container } = render(<SoulmonPerfil language="pt-BR" input={{ ...full, skills: sk }} />);
-    expect(rows(container)).not.toContain('elemento-especial');
+    const { container } = render(<SoulmonPerfil language="en-US" input={{ ...full, skills: sk }} />);
+    expect(rows(container)).toEqual(['personalidade', 'atributo', 'equipamento', 'elemento', 'especial']);
+    const esp = container.querySelector('[data-perfil-row="especial"]')!;
+    expect(esp.textContent).toContain('Fire Fury');
+    expect(esp.textContent).toMatch(/Damage|Healing|Shield|Support|Weakens/);
+    expect(esp.querySelector('img')!.getAttribute('src')).toBe(elementIcon('fogo'));
+    const bas = container.querySelector('[data-perfil-row="elemento"]')!;
+    expect(bas.textContent).toContain('Claw');
+    expect(bas.querySelector('img')!.getAttribute('src')).toBe(elementIcon('fogo'));
+  });
+
+  it('cada campo explica o impacto no jogo (PT e EN)', () => {
+    for (const lang of ['pt-BR', 'en-US'] as const) {
+      const { container } = render(<SoulmonPerfil language={lang} input={full} />);
+      for (const id of ['personalidade', 'atributo', 'equipamento', 'elemento', 'especial']) {
+        const hint = container.querySelector(`[data-perfil-row="${id}"] [data-perfil-hint]`);
+        expect(hint?.textContent?.length, `${lang}:${id}`).toBeGreaterThan(10);
+      }
+      cleanup();
+    }
   });
 
   it('sem pontuação: o único dígito da folha é o nível do equipamento', () => {
     const { container } = render(<SoulmonPerfil language="pt-BR" input={full} />);
+    container.querySelectorAll('[data-perfil-hint]').forEach(h => h.remove()); // o subtítulo de impacto é prosa (a descrição do traço cita número de regra)
     const sem = container.textContent!.replace('Nv 6', '');
     expect(sem).not.toMatch(/\d/);
   });

@@ -114,8 +114,8 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
 
   it('LibraryPage embutida não repete o <h1> (a folha já nomeia a Biblioteca); solta, mantém', () => {
     const base = {
-      saveId: 's', friends: [], canGiftToday: false,
-      onFriendsChange: () => {}, onGiftSent: () => {}, language: 'pt-BR' as const,
+      saveId: 's', friends: [],
+      onFriendsChange: () => {}, language: 'pt-BR' as const,
     };
     const solta = renderWithCss(<LibraryPage {...base} />);
     expect(solta.container.querySelector('h1')?.textContent).toContain('Biblioteca');
