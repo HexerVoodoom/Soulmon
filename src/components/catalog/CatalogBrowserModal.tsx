@@ -3,6 +3,9 @@ import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { ModalSheet, Segment, sm2Button, sm2Hint, sm2Text, Field } from '../form/FormKit';
+import { AttributePointsRow } from '../CreateModal';
+import { CATEGORY_ATTRIBUTES, type ActivityCategory } from '../../types/attributes';
+import { categoryLabel } from '../../types/category-icons';
 import { CatalogMindNotice } from './CatalogMindNotice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
 import { LIFE_AREA_LABEL, LIFE_AREAS, type CatalogItem, type LifeArea } from '../../types/activityCatalog';
@@ -40,6 +43,17 @@ const lupa = {
   background: 'none', border: 'none', padding: 0, cursor: 'pointer',
   color: 'var(--sm2-ink)',
 } as const;
+
+/** Categoria dominante de uma área do catálogo: a que tem MAIS itens na área
+ *  (empate: a que aparece primeiro no catálogo). Os pontos da área são os da
+ *  regra real, `CATEGORY_ATTRIBUTES[categoria dominante]`. */
+export function dominantCategoryOfArea(area: LifeArea): ActivityCategory | null {
+  const count = new Map<ActivityCategory, number>();
+  for (const i of ACTIVITY_CATALOG) if (i.area === area) count.set(i.category, (count.get(i.category) ?? 0) + 1);
+  let best: ActivityCategory | null = null;
+  for (const [c, n] of count) if (best === null || n > count.get(best)!) best = c;
+  return best;
+}
 
 export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch, existingActivities }: CatalogBrowserModalProps) {
   const isPt = language === 'pt-BR';
@@ -132,6 +146,19 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
               </>
             )}
           </div>
+
+          {area !== 'todas' && (() => {
+            const dom = dominantCategoryOfArea(area);
+            if (!dom) return null;
+            return (
+              <div data-testid="area-points">
+                <AttributePointsRow attributes={CATEGORY_ATTRIBUTES[dom]} isPt={isPt} />
+                <p style={{ ...sm2Hint, margin: '2px 0 0' }}>
+                  {isPt ? `Por atividade, conforme a categoria mais comum da área: ${categoryLabel(dom, true)}.` : `Per activity, based on the most common category in this area: ${categoryLabel(dom, false)}.`}
+                </p>
+              </div>
+            );
+          })()}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {items.map((item) => (
