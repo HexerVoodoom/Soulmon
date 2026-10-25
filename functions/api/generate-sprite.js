@@ -719,7 +719,7 @@ export async function onRequestPost({ request, env }) {
         try {
           await kvOrThrow(env).put(
             cacheKey(id, formId),
-            JSON.stringify({ image, provider: out.provider, at: Date.now() }),
+            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
           );
         } catch (err) {
           // Cache que não gravou custa uma regeração futura, não a resposta de
