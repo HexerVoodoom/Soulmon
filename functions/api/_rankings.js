@@ -36,7 +36,7 @@ import { kvOrThrow } from './_kv.js';
 import { getProfile } from './_profile.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
-export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco', 'endless-rift']);
+export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco', 'endless-rift', 'rogue-dungeon']);
 
 export const PERIODS = Object.freeze(['weekly', 'monthly']);
 /** Período padrão — minigames: semanal. O Endless Rift (M6) usa `monthly` (score = camada mais funda do mês). */
@@ -61,10 +61,18 @@ export const TIER_CUTS = Object.freeze({
   // Endless Rift: camada mais funda do mês. Espelha os limiares de recompensa de `utils/endlessRift.ts`
   // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
   'endless-rift': [0, 25, 100, 250, 500, 999],
+  'rogue-dungeon': [0, 6, 12, 18, 24, 30],
 });
 
-/** Teto de sanidade POR JOGO (abaixo do `MAX_SCORE` global): a Fenda não passa da camada 999. */
-export const MAX_SCORE_BY_GAME = Object.freeze({ 'endless-rift': 999 });
+/**
+ * Teto de sanidade POR JOGO (abaixo do `MAX_SCORE` global). Fenda: camada 999. `rogue-dungeon`: 24 desafios/dia
+ * + 3 andares x 3 de bônus = 33 (espelho de `ROGUE_MAX_SCORE` em `src/utils/rogueDungeon.ts`; há teste de paridade).
+ */
+export const MAX_SCORE_BY_GAME = Object.freeze({ 'endless-rift': 999, 'rogue-dungeon': 33 });
+export function scoreIsPlausible(game, score) {
+  const cap = MAX_SCORE_BY_GAME[game];
+  return cap === undefined || score <= cap;
+}
 
 export function isRankedGame(game) {
   return typeof game === 'string' && RANKED_GAMES.includes(game);

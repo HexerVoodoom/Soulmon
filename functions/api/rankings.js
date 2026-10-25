@@ -13,7 +13,7 @@ import { kv } from './_kv.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
-  DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, submitScore, TOP_DEFAULT,
+  DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, scoreIsPlausible, submitScore, TOP_DEFAULT,
 } from './_rankings.js';
 import { closePreviousMonth, readMyPrize, RIFT_GAME } from './_riftPayout.js';
 
@@ -67,7 +67,7 @@ export async function onRequest(context) {
 
   if (request.method === 'POST') {
     const score = cleanScore(q.score, game);
-    if (score === null) return json({ error: 'invalid score' }, 400);
+    if (score === null || !scoreIsPlausible(game, score)) return json({ error: 'invalid score' }, 400);
     const g2 = takeToken('rankings-submit', id, LIMIT_SUBMIT);
     if (!g2.ok) return tooManyRequests(g2.retryAfter, CORS);
     const r = await submitScore(env, { game, period, saveId: id, score });
