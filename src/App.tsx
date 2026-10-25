@@ -194,6 +194,7 @@ import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
+import type { DungeonReturnSummary } from './components/DungeonReturnModal';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -590,6 +591,7 @@ function PostponeNudgeSheet({
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
+const DungeonReturnModal = lazy(() => import('./components/DungeonReturnModal').then(m => ({ default: m.DungeonReturnModal })));
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
 const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ default: m.MapPage })));
 const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
@@ -798,6 +800,7 @@ export default function App() {
   const { gameState, setGameState } = useGameState();
   const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('home');
+  const [dungeonReturnSummary, setDungeonReturnSummary] = useState<DungeonReturnSummary | null>(null);
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
   const pane = paneFor(currentView, labTab);
@@ -2151,6 +2154,7 @@ export default function App() {
     ready: readyFor(demo || !hasCompletedOnboarding, {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
+      dungeonReturn: dungeonReturnSummary !== null,
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
       buildingIntro: introShown.length > 0,
@@ -2207,6 +2211,7 @@ export default function App() {
       switch (id) {
         case 'welcomeTour': handleWelcomeTourDone(); break;
         case 'triage': setTriageTasks(null); break;
+        case 'dungeonReturn': setDungeonReturnSummary(null); break;
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
         case 'buildingIntro': setIntroShown([]); break;
@@ -3429,6 +3434,29 @@ export default function App() {
   const masmorraRetorno = useDungeonReturn(gameState);
   const [ocupadoAviso, setOcupadoAviso] = useState<{ acao: OcupadoAcao | null } | null>(null);
   const [retirando, setRetirando] = useState(false);
+  /* beta3 A2: quando a descida ACABA (energia/HP/teto) o Soulmon volta SOZINHO — sem plaquinha esperando toque. Acerta a conta na hora (app aberto na Home)
+     ou na próxima abertura, e mostra o resumo num modal centralizado (fila: `dungeonReturn`). */
+  const autoVoltaRef = useRef(false);
+  const masmorraRetornoAt = masmorraRetorno.returnAt;
+  useEffect(() => {
+    if (!naMasmorra || masmorraRetornoAt === null || currentView !== 'home') return;
+    const acertar = async () => {
+      if (autoVoltaRef.current || !naMasmorraRef.current) return;
+      autoVoltaRef.current = true;
+      try {
+        const { settleDungeonAwayNow } = await import('./utils/dungeonAway');
+        const r = settleDungeonAwayNow(gameStateRef.current, setGameState, Date.now(), false);
+        if (r && r.report.ended) {
+          const { layers, bits, fragments, hearts, glitchtama, ended } = r.report;
+          setDungeonReturnSummary({ layers, bits, fragments, hearts, glitchtama, ended });
+        }
+      } finally { autoVoltaRef.current = false; }
+    };
+    const ms = masmorraRetornoAt - Date.now();
+    if (ms <= 0) { void acertar(); return; }
+    const id = setTimeout(() => { void acertar(); }, Math.min(ms, 2_147_000_000));
+    return () => clearTimeout(id);
+  }, [naMasmorra, masmorraRetornoAt, currentView, setGameState]);
   const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
     if (!naMasmorraRef.current) return false;
     setOcupadoAviso({ acao });
@@ -8755,6 +8783,13 @@ export default function App() {
           language={language}
           onDone={acknowledgeGroveMilestone}
         />
+        </PresentationSlot>
+      )}
+
+      {/* 🏠 A VOLTA SOZINHA DA MASMORRA (beta3 A2): resumo centralizado do que a descida rendeu. */}
+      {interstitial === 'dungeonReturn' && dungeonReturnSummary && (
+        <PresentationSlot id="dungeonReturn" onFail={() => presentation.fail('dungeonReturn')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <DungeonReturnModal summary={dungeonReturnSummary} language={language} onClose={() => setDungeonReturnSummary(null)} />
         </PresentationSlot>
       )}
 
