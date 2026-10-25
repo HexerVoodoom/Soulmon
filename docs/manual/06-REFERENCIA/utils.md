@@ -3751,3 +3751,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
 **Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.
 **Chamado por:** `src/components/SoulBarrage.tsx`
+
+### `src/utils/demoDaySuggestions.ts` (beta3, demo)
+**Dono de:** as sugestões do "Plan my day" na DEMO. `demoDaySuggestions` chama `recommendStarterSet` (`src/utils/recommend.ts`) sobre o `ACTIVITY_CATALOG`, prioriza a área do `soulGoal` e, sem foco, devolve de 3 a 5 atividades fáceis e variadas, sem repetir o que já está na lista. As sugestões nascem desmarcadas: só o que o jogador marca vira atividade (`commitHabitCreate`, que respeita o teto da demo).
+**Chamado por:** `src/components/DayGoalsModal.tsx`. **Régua:** `src/components/DayGoalsModal.demoSuggestions.render.test.tsx`.
