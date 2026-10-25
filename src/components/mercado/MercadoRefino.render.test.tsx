@@ -4,7 +4,7 @@
  * D-58 (missões da semana no topo da aba Honra) e D-16 (a moldura de loja trancada no Perfil leva ao Mercado > Frames).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, fireEvent, within, cleanup } from '@testing-library/react';
+import { screen, fireEvent, within, cleanup, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { MercadoStallSheet, STALL_KIND_ORDER } from './MercadoSheets';
 import { FrameSelector } from '../ui/AvatarFrame';
@@ -145,7 +145,7 @@ describe('D-15: "Name" vira "Nickname" no editor de perfil, com botão Salvar e 
     expect(document.querySelector('label[for="sm-profile-name"]')!.textContent).toBe('Apelido');
   });
 
-  it('botão Salvar do apelido e campo + botão Salvar do nome do Soulmon salvam ao clicar', () => {
+  it('botão Salvar do apelido e campo + botão Salvar do nome do Soulmon salvam ao clicar', async () => {
     const onChangeName = vi.fn();
     const onChangePetName = vi.fn();
     renderWithCss(
@@ -160,7 +160,8 @@ describe('D-15: "Name" vira "Nickname" no editor de perfil, com botão Salvar e 
     fireEvent.change(nameInput, { target: { value: '  Mateus  ' } });
     expect(saveNameBtn.disabled).toBe(false);
     fireEvent.click(saveNameBtn);
-    expect(onChangeName).toHaveBeenCalledWith('Mateus');
+    // o apelido reserva o nome no servidor antes de gravar (biblioteca: apelido único): grava assim que a reserva responde
+    await waitFor(() => expect(onChangeName).toHaveBeenCalledWith('Mateus'));
 
     const petInput = document.querySelector('#sm-profile-pet-name') as HTMLInputElement;
     const savePetBtn = document.querySelector('[data-save-pet-name]') as HTMLButtonElement;

@@ -38,7 +38,7 @@ export function PrepararFocoSheet({ language, todayKey, tasks = [], keyActive = 
         </>
         : <article data-preparar-chave style={{ ...sheetCard, alignItems: 'stretch', gap: 8 }}>
           <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="key" size={24} tone="primary" />
+            <Icon name="lock_open" size={24} tone="primary" />
             <h3 style={{ ...sheetCardTitle, margin: 0 }}>{isPt ? 'Chave da Oficina do Foco' : 'Focus Workshop key'}</h3>
           </header>
           <p role="status" style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Pronto: a Oficina do Foco está liberada hoje. Quando o timer de foco rodar, o Soulmon desce a masmorra sozinho.' : 'Done: the Focus Workshop is open today. While the focus timer runs, your Soulmon goes down the dungeon on its own.'}</p>

@@ -22,8 +22,9 @@ describe('missões "em N dias" contam um por dia', () => {
     expect(bloco).not.toMatch(/\n\s*contarMissao\('mood-checkins'\)/);
   });
 
-  it('carinho: só a primeira cura do dia chama contarMissao', () => {
-    expect(app).toMatch(/if \(rubHealFor\(gameState\.careCaps, today\)\.healed <= 0\) contarMissao\('rub-days'\)/);
+  it('carinho: conta todo carinho (A3 beta3), mas só o primeiro do dia chama contarMissao', () => {
+    expect(app).toMatch(/if \(rubContadoDiaRef\.current !== today\) \{/);
+    expect(app).toMatch(/if \(\(dailyForDay\(gameState\.dailyMissions, today\)\.counts\.carinho \?\? 0\) === 0\) contarMissao\('rub-days'\)/);
     expect(app).not.toMatch(/\n\s*contarMissao\('rub-days'\)/);
   });
 });

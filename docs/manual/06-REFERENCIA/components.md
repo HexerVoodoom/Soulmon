@@ -1753,3 +1753,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Exports:** `GroveFolha` (default e nomeado), `OnPlantio`; `GroveVisor`, `SLOTS_X`. A folha é o diálogo de tela cheia (`createPortal`, `useDialogA11y`, `useBackLayer`) que o botão "Entrar no bosque" do Salão da Guilda abre, sob demanda (`lazy` no `GuildSheet`): lê o plantio do clã (`getPlantio`) e junta ao pico guardado no save. O `GroveVisor` é a pintura de ~3 telas de largura com rolagem horizontal (deslize, arrastar com mouse, setas do teclado movem UMA tela, `prefers-reduced-motion` salta sem animar) e 4 lugares, um por estação, cada um com a árvore no nível atual ou o lugar vazio. Sem `image-rendering: pixelated`. O Bosque só se alcança pelo Hall (teste de fonte em `GroveVisor.render.test.tsx`).
 **Chamado por:** `src/components/guild/GuildSheet.tsx` (sala `bosque`). **Régua:** `src/components/guild/GroveVisor.render.test.tsx`, `GuildSheet.render.test.tsx`.
 
+### `src/components/DungeonReturnModal.tsx` · `src/components/play/PrepararFocoSheet.tsx`
+**Props principais:** `DungeonReturnModal` — resumo centralizado de quando o Soulmon volta sozinho da masmorra (beta3 A2), sem cobrança. `PrepararFocoSheet` — folha do prédio Prepare to Focus (beta3 F1): planejar a sessão (`OficinaPlano`) e salvar dá a chave da Oficina do Foco.
+**Chamado por:** `src/App.tsx` e as folhas do Play. **Régua:** nenhuma específica; a regra da chave é de `src/utils/focusKey.ts`.
+

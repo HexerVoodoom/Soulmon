@@ -70,6 +70,7 @@ function req(action, { method = 'GET', body, params = {}, token } = {}) {
 // confere a lista contra o arquivo.
 const ACOES_COM_ATOR = [
   { action: 'profile', method: 'POST', body: { id: VITIMA, name: 'hackeado' } },
+  { action: 'nickname', method: 'POST', body: { id: VITIMA, name: 'hackeado' } },
   { action: 'match', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'duelStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
@@ -181,7 +182,7 @@ describe('community — a lista de ações com ator está completa', () => {
 
     const declaradas = new Set(ACOES_COM_ATOR.map(a => a.action));
     // Ações públicas de leitura: não agem em nome de ninguém.
-    const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult']);
+    const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names']);
     // Protegida por chave de admin, não por dono.
     const admin = new Set(['closeSeason']);
 

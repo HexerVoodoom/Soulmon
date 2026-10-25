@@ -3703,3 +3703,11 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** `src/utils/bosqueArvores.ts` — o nível de cada árvore do Bosque (`nivelDoPlantio`, `registrarPlantio`, `nivelDaArvore`, `aperfeicoadaDisponivel`, `cicloDoDia`, `sanitizeBosqueArvores`): 4 estações (hemisfério sul), 5 níveis; a aperfeiçoada (5) só nasce no ciclo da MESMA estação do ano seguinte à completa, lido do campo `bosqueArvores` do `GameState` e do dia ISO (`playerDayIso`), nunca de relógio solto. `src/utils/bosqueArvoresSave.ts` — só os tipos e `sanitizeBosqueArvores` do que vai ao save, mínimo para o chunk de entrada. `src/utils/plantSpecies.ts` — `PLANT_SPECIES` (abóbora, pinheiro, cerejeira, cacto) e `migrarEspecie` (girassol→cerejeira, melancia→cacto, idempotente), pequeno de propósito para o `claCredit` não arrastar o cliente HTTP ao chunk de entrada.
 **Chamado por:** `src/components/guild/GroveFolha.tsx`, `src/components/guild/PlantioVisor.tsx`, `src/utils/claApi.ts`, `src/utils/claCredit.ts`, `src/contexts/GameStateContext.tsx`, `src/App.tsx`. **Régua:** `src/utils/bosqueArvores.test.ts`, `src/utils/claCredit.test.ts`.
 
+### `src/utils/focusKey.ts` · `src/utils/focusDescent.ts` (beta3 F1)
+**Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (`exploracao.preparar`) dá a chave que libera a Oficina. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
+**Chamado por:** `src/App.tsx`, `src/components/play/PrepararFocoSheet.tsx`. **Régua:** `src/utils/focusKey.test.ts`, `src/utils/focusDescent.test.ts`.
+
+### `src/utils/plantioDefesa.ts` · `src/utils/rpsLevel2.ts`
+**Dono de:** `src/utils/plantioDefesa.ts` — a defesa do jardim (L5-D2): combate fácil contra 3 inimigos pelo motor da Masmorra, sem custo; o servidor decide o dia de proteger. `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
+**Chamado por:** os visores de guilda e o minijogo de PPT.
+

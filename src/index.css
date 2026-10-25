@@ -7453,6 +7453,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   font-family: var(--sm2-font-display); font-weight: 600;
   font-size: var(--sm2-text-lg); line-height: var(--sm2-leading-title); color: var(--sm2-ink);
 }
+.sm2-lib-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .sm2-lib-list { display: flex; flex-direction: column; }
 .sm2-lib-row { display: flex; align-items: center; gap: var(--sm2-space-1); border-top: 1px solid var(--sm2-line); }
 .sm2-lib-row:first-child { border-top: 0; }
