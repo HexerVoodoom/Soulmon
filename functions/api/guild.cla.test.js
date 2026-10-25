@@ -107,6 +107,22 @@ describe('rotas do clã: plantio', () => {
   });
 });
 
+describe('rotas do clã: sorteio da ação do dia (L5-D2)', () => {
+  it('o servidor sorteia aguar OU proteger, uma vez por dia por pessoa (idempotente), sem nome de atacante', async () => {
+    const { e } = await setup();
+    expect((await post(e, 'claSortear', { id: A })).status).toBe(404);
+    await post(e, 'claPlantar', { id: A });
+    const r1 = await post(e, 'claSortear', { id: A });
+    expect(r1.status).toBe(200);
+    expect(['water', 'protect']).toContain(r1.json.task);
+    expect(r1.json.plantio.mine.task).toBe(r1.json.task);
+    expect((await post(e, 'claSortear', { id: A })).json.task).toBe(r1.json.task);
+    expect(r1.json.plantio.underAttack).toBe(true);
+    expect(r1.json.plantio.totalDays).toBeGreaterThan(0);
+    expect(JSON.stringify(r1.json)).not.toMatch(/yeti|corvo|crow/i);
+  });
+});
+
 describe('rotas do clã: mistério', () => {
   it('envio único, tarefa idempotente, taskId inválido 400, resgate sem barra cheia 404', async () => {
     const { e } = await setup();

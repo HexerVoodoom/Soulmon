@@ -127,6 +127,7 @@ export function normalizarMembro(r) {
     v: 1,
     water: diasLista(r?.water),
     prot: diasLista(r?.prot),
+    sorteio: r?.sorteio && DIA_RE.test(r.sorteio.day) && (r.sorteio.kind === 'water' || r.sorteio.kind === 'protect') ? { day: r.sorteio.day, kind: r.sorteio.kind } : null,
     last: r?.last && typeof r.last.week === 'string' && r.last.fruit && typeof r.last.receipt === 'string' ? { week: r.last.week, fruit: migrarFruto(r.last.fruit), receipt: r.last.receipt } : null,
     harvest: (Array.isArray(r?.harvest) ? r.harvest.filter(w => typeof w === 'string') : []).slice(-12),
   };
@@ -187,6 +188,23 @@ export async function regar(env, g, save, hoje) {
   return { ok: true };
 }
 
+/**
+ * L5-D2: UMA ação por vez por pessoa, SORTEADA AQUI entre aguar e proteger (o cliente não escolhe).
+ * Idempotente no dia: repetir devolve o mesmo sorteio. Se a proteção do dia já foi feita por alguém, só sobra aguar.
+ * Concluir a ação do sorteio (rega ou proteção) fecha o dia; eason: 'no-plant' | 'grown'.
+ */
+export async function sortear(env, g, save, hoje, moeda = () => crypto.getRandomValues(new Uint8Array(1))[0] & 1) {
+  const s = await estado(env, g, hoje);
+  if (!s.planta) return { ok: false, reason: 'no-plant' };
+  if (s.cresc.mature) return { ok: false, reason: 'grown' };
+  const m = s.membro[save];
+  if (m.sorteio?.day === hoje) return { ok: true, kind: m.sorteio.kind };
+  const kind = s.cresc.todayProtected || moeda() === 0 ? 'water' : 'protect';
+  m.sorteio = { day: hoje, kind };
+  await gravarMembro(env, g.id, save, m);
+  return { ok: true, kind };
+}
+
 /** Proteção: 1 membro por dia (selo `claProt:<gid>:<dia>`, relido como no `guildClaim`). */
 export async function proteger(env, g, save, hoje, selo = Math.random().toString(36).slice(2)) {
   const s = await estado(env, g, hoje);
@@ -226,6 +244,13 @@ export async function colher(env, g, save, hoje) {
  * A VISTA do plantio. Coletiva: nenhum número por pessoa (quem regou, quantos).
  * `stage` 0..4 derivado de dias cuidados; `rainhaRega` binário (`waterOk`).
  */
+/** A tarefa de hoje da pessoa (só o que o servidor sorteou e ainda não foi feito): 'water' | 'protect' | null. */
+function tarefaDe(m, hoje, c) {
+  if (c.mature || m.sorteio?.day !== hoje) return null;
+  if (m.sorteio.kind === 'water') return m.water.includes(hoje) ? null : 'water';
+  return m.prot.includes(hoje) || c.todayProtected ? null : 'protect';
+}
+
 export async function vistaDoPlantio(env, g, eu, hoje) {
   const s = await estado(env, g, hoje);
   const base = { season: s.est.estacao, seasonKey: s.est.key, species: s.est.especie, planted: !!s.planta };
@@ -240,6 +265,8 @@ export async function vistaDoPlantio(env, g, eu, hoje) {
     delayed: c.delays > 0,
     level: s.planta.nivel, tier: s.planta.tier,
     today: { waterOk: c.todayWatered, protectedToday: c.todayProtected },
-    mine: { wateredToday: mine.water.includes(hoje), canHarvest: c.mature && !mine.harvest.includes(semanaDoDia(hoje)) },
+    progressDays: c.cared, totalDays: PLANTIO_DIAS,
+    underAttack: !c.mature && !c.todayProtected,
+    mine: { wateredToday: mine.water.includes(hoje), canHarvest: c.mature && !mine.harvest.includes(semanaDoDia(hoje)), task: tarefaDe(mine, hoje, c), canDraw: !c.mature && mine.sorteio?.day !== hoje },
   };
 }
