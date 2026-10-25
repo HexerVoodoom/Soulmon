@@ -24,7 +24,7 @@
 import { useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
+import { listPlayers, getPlayer, addFriend, removeFriend, suggestNames, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
@@ -48,9 +48,7 @@ function readSeen(): string[] {
 interface LibraryPageProps {
   saveId: string;
   friends: string[];
-  canGiftToday: boolean; // energia cheia
   onFriendsChange: (friends: string[]) => void;
-  onGiftSent: (friendId: string) => void;
   /** WP4.7 — abriu a criatura de alguém. A missão é sobre VISITAR, então o
    *  gatilho é a abertura do detalhe, não a amizade nem o presente. */
   onVisitPlayer?: () => void;
@@ -139,7 +137,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -151,7 +149,6 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tabState, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
   const tab = view ?? tabState;
-  const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
@@ -252,21 +249,6 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       onFriendsChange(r.friends);
     } catch {
       setActionError(isPt ? 'Não deu para mudar a amizade agora. Tente de novo.' : "Couldn't change that friendship right now. Try again.");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const gift = async (friendId: string) => {
-    setBusyId(friendId);
-    setActionError(null);
-    try {
-      await sendGift(saveId, friendId);
-      setGiftedToday(prev => new Set(prev).add(friendId));
-      onGiftSent(friendId);
-      setAddMsg(isPt ? '20 Bits enviados!' : 'Sent 20 Bits!');
-    } catch {
-      setActionError(isPt ? 'O presente não chegou. Tente de novo daqui a pouco.' : "The gift didn't go through. Try again in a bit.");
     } finally {
       setBusyId(null);
     }
@@ -517,7 +499,6 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         {!(seenOnly && tab === 'directory') && list?.map(p => {
           const isNpc = !!p.isNpc;
           const isFriend = friends.includes(p.id);
-          const gifted = giftedToday.has(p.id);
           const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : opponentSprite(p);
           return (
             <div key={p.id} className="sm2-lib-row">
@@ -565,25 +546,6 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                 </span>
               </button>
 
-              {!isNpc && isFriend && (
-                <RowAction
-                  /* C7: presente = `volunteer_activism` (mão com coração, já usado na aba Amigos), não a moeda `paid`.
-                     Nome fora do inventário da fonte subsetada renderiza VAZIO. */
-                  icon="volunteer_activism"
-                  tone="ink"
-                  busy={busyId === p.id}
-                  disabled={!canGiftToday || gifted}
-                  label={!canGiftToday
-                    ? (isPt ? 'Precisa de energia cheia para presentear' : 'Needs full energy to gift')
-                    : gifted
-                      ? (isPt ? 'Já presenteado hoje' : 'Already gifted today')
-                      : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
-                  onClick={() => gift(p.id)}
-                  onInert={() => setAddMsg(!canGiftToday
-                    ? (isPt ? 'Para presentear, a energia do seu Soulmon precisa estar cheia.' : 'To send a gift, your Soulmon needs full energy.')
-                    : (isPt ? 'Você já presenteou essa pessoa hoje.' : 'You already gifted this person today.'))}
-                />
-              )}
               {!isNpc && (
                 <RowAction
                   icon={isFriend ? 'do_not_disturb_on' : 'add'}

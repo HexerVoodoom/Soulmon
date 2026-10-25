@@ -61,10 +61,10 @@ describe('não inventa dado', () => {
     expect(SPECIAL_FAMILIES).toContain(p.especial!.familia);
     expect(PERFIL_EFEITO[p.especial!.familia].pt.length).toBeGreaterThan(0);
   });
-  it('elemento do especial só aparece quando difere do principal e é conhecido', () => {
+  it('elemento do especial aparece sempre (igual ao principal também; desconhecido cai no principal)', () => {
     expect(buildPerfil({ ...base, skills: skills('fogo', 'agua') }).especial!.elementoId).toBe('agua');
-    expect(buildPerfil({ ...base, skills: skills('fogo', 'fogo') }).especial!.elementoId).toBeNull();
-    expect(buildPerfil({ ...base, skills: skills('fogo', 'elemento-que-nao-existe') }).especial!.elementoId).toBeNull();
+    expect(buildPerfil({ ...base, skills: skills('fogo', 'fogo') }).especial!.elementoId).toBe('fogo');
+    expect(buildPerfil({ ...base, skills: skills('fogo', 'elemento-que-nao-existe') }).especial!.elementoId).toBe('fogo');
   });
   it('a personalidade é o traço de nascimento real; id desconhecido ou ausente = sem linha', () => {
     for (const ps of PET_PASSIVES) expect(buildPerfil({ ...base, petPassive: ps.id }).personalidade?.id).toBe(ps.id);
