@@ -192,8 +192,8 @@ export function layersAffordable(energy: unknown): number {
 //  · Bater o limite NUNCA custa coração nem Bits: o botão não acende e a frase é calma. O que já foi limpo fica.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Camadas que a descida pode COMEÇAR por dia do jogador (default proposto; o dono decide). */
-export const DUNGEON_DAILY_LAYERS = 10;
+// beta3 F2: o LIMITE diário de camadas SAIU (pedido do dono, 25/10/2026) — só a energia limita. O contador `dungeonDaily` segue no save
+// (estatística e compatibilidade), mas nada o compara a um teto.
 
 /** O contador do dia, no SAVE (`dungeonDaily`). `day` é `playerDayIso` (AAAA-MM-DD, ordenável). */
 export interface DungeonDaily { day: string; layers: number }
@@ -223,12 +223,12 @@ export function layersToday(state: DungeonDailyState, nowMs: number): number {
   return rec && rec.day === dungeonDayOf(state, nowMs) ? rec.layers : 0;
 }
 
-/** Camadas que o limite diário ainda deixa começar hoje. */
-export function layersLeftToday(state: DungeonDailyState, nowMs: number): number {
-  return Math.max(0, DUNGEON_DAILY_LAYERS - layersToday(state, nowMs));
+/** Sem teto diário (beta3 F2): sempre infinito. Mantido só para quem ainda pergunta. */
+export function layersLeftToday(_state: DungeonDailyState, _nowMs: number): number {
+  return Number.POSITIVE_INFINITY;
 }
 
-export type LayerRefusal = 'no-energy' | 'daily-limit';
+export type LayerRefusal = 'no-energy';
 
 export interface LayerState extends DungeonDailyState {
   energyPoints: number;
@@ -239,7 +239,6 @@ export interface LayerState extends DungeonDailyState {
 
 /** Por que a próxima camada NÃO pode começar agora (energia de AGORA, com a regeneração acertada). `undefined` = pode. */
 export function layerRefusal(state: LayerState, nowMs: number): LayerRefusal | undefined {
-  if (layersLeftToday(state, nowMs) <= 0) return 'daily-limit';
   if (!canPayLayer(settleEnergy(state, nowMs).energyPoints)) return 'no-energy';
   return undefined;
 }

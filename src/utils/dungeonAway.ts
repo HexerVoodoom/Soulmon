@@ -186,7 +186,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
       // limite diário de camadas do dia daquele instante. Sem isto a conta fora do app furaria o limite que a tela respeita.
       t += DUNGEON_AUTO_FIGHT_MS;
       const refusal = layerRefusal(s, t);
-      if (refusal) { ended = refusal === 'daily-limit' ? 'daily' : 'energy'; t -= DUNGEON_AUTO_FIGHT_MS; break; }
+      if (refusal) { ended = 'energy'; t -= DUNGEON_AUTO_FIGHT_MS; break; }
       s = spendLayer(s, t);
       report.energy += DUNGEON_ENERGY_PER_LAYER;
       layer = next; slot = 0;

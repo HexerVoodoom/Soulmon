@@ -453,7 +453,7 @@ export interface GameState {
   energyClock?: { at: number; carry: number };
   /** 🍽️ Penalidade de fome (REGISTRO §45, `utils/hungerPenalty.ts`): meio coração a cada 12 h CONTÍNUAS de faminto. `since` = a âncora da fome, `paid` = janelas já resolvidas (anti-dupla), `unreported` = o que o resumo do dia ainda vai contar. Ausente = nada cobrado. */
   hungerPenalty?: { since: number; paid: number; unreported: number };
-  /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (`DUNGEON_DAILY_LAYERS`, `utils/dungeonIdle.ts`) mora no
+  /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (REMOVIDO em beta3 F2; o contador segue) morava no
    *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
   dungeonDaily?: { day: string; layers: number };
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */

@@ -16,7 +16,7 @@
  */
 import { MAX_HEARTS_LOST_PER_DAY, WEEKLY_RELIEF_HEARTS } from '../../utils/dailyReset';
 import { RUB_HEAL_DAILY_CAP } from '../../utils/careRules';
-import { DUNGEON_DAILY_LAYERS, DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
+import { DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
 import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS } from '../../utils/hunger';
 
 export type StatTipKind = 'hp' | 'energy' | 'hunger';
@@ -80,7 +80,7 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
       : `starts again from zero each day, and each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,
     useLabel: isPt ? 'Serve para' : 'Used for',
     use: isPt
-      ? `descer a Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada, até ${DUNGEON_DAILY_LAYERS} camadas por dia. Subir de nível enche de novo.`
-      : `going down the Dungeon: ${DUNGEON_ENERGY_PER_LAYER} per layer, up to ${DUNGEON_DAILY_LAYERS} layers a day. Leveling up fills it again.`,
+      ? `descer a Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada. Subir de nível enche de novo.`
+      : `going down the Dungeon: ${DUNGEON_ENERGY_PER_LAYER} per layer. Leveling up fills it again.`,
   };
 }

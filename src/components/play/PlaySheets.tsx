@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
-import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, DUNGEON_DAILY_LAYERS, sanitizeDepthRecord } from '../../utils/dungeonIdle';
+import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
@@ -131,8 +131,8 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
           <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
           {isPt
-            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que volta com o tempo), até ${DUNGEON_DAILY_LAYERS} camadas por dia e até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
-            : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, which returns with time), up to ${DUNGEON_DAILY_LAYERS} layers a day and down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
+            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que volta com o tempo) e até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
+            : `Fights run on their own and HP comes back over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy, which returns with time) and down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent — never your hearts.`}
           </InfoTipSection>
           {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
               vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
