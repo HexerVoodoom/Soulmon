@@ -61,6 +61,9 @@ export const DREAM_MODAL_HOURS = { from: 4, to: 12 } as const;
  * do sono já é do pesadelo/sonho bom (`sleepSlotPending`), senão nada.
  */
 export function dreamMode(hour: number, sleepSlotPending: boolean): 'modal' | 'silent' | 'none' {
+  /* A1: o slot do sono é UM só. Com pesadelo/sonho bom pendente o sonho nunca abre modal — enquanto o portão do pesadelo
+     estava fechado (celebração 5 s, Masmorra, missão) o sonho entrava na fila primeiro e `shown.has('dream')` barrava o pesadelo no dia inteiro. */
+  if (sleepSlotPending) return 'silent';
   if (hour >= DREAM_MODAL_HOURS.from && hour < DREAM_MODAL_HOURS.to) return 'modal';
-  return sleepSlotPending ? 'silent' : 'none';
+  return 'none';
 }

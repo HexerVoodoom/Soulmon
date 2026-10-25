@@ -168,6 +168,14 @@ describe('k) dreamMode', () => {
     expect(dreamMode(DREAM_MODAL_HOURS.to, false)).toBe('none');
     expect(dreamMode(12, true)).toBe('silent');
   });
+  it('A1: 7h com pesadelo/sonho bom pendente NUNCA abre o modal do sonho (ele tomaria o slot e o pesadelo seria barrado por shown.has(dream))', () => {
+    expect(dreamMode(7, true)).toBe('silent');
+  });
+  it('A1 (fila): sonho pronto com o portão do pesadelo ainda fechado entra primeiro e barra o pesadelo', async () => {
+    const { pickPresentation } = await import('./presentationQueue');
+    const shown = new Set<any>(['dream']);
+    expect(pickPresentation({ nightmare: true }, null, undefined, { shown })).not.toBe('nightmare'); // documenta o efeito que o modo silent evita
+  });
   it('15h: silent com slot pendente, none sem', () => {
     expect(dreamMode(15, true)).toBe('silent');
     expect(dreamMode(15, false)).toBe('none');
